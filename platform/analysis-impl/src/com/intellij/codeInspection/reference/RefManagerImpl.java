@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.codeInspection.reference;
 
@@ -29,10 +29,7 @@ import com.intellij.openapi.util.NullableFactory;
 import com.intellij.openapi.util.Segment;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.VfsUtilCore;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileManager;
-import com.intellij.openapi.vfs.VirtualFileWithId;
+import com.intellij.openapi.vfs.*;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.light.LightElement;
 import com.intellij.psi.util.PsiUtilCore;
@@ -61,7 +58,7 @@ public class RefManagerImpl extends RefManager {
   private AnalysisScope myScope;
   private RefProject myRefProject;
 
-  private final BitSet myUnprocessedFiles = new BitSet();
+  private final Set<VirtualFile> myUnprocessedFiles = VfsUtilCore.createCompactVirtualFileSet();
   private final boolean processExternalElements = Registry.is("batch.inspections.process.external.elements");
   private final ConcurrentMap<PsiAnchor, RefElement> myRefTable = new ConcurrentHashMap<>();
 
@@ -399,7 +396,7 @@ public class RefManagerImpl extends RefManager {
 
   @Override
   public synchronized boolean isInGraph(VirtualFile file) {
-    return !myUnprocessedFiles.get(((VirtualFileWithId)file).getId());
+    return !myUnprocessedFiles.contains(file);
   }
 
   @Override
@@ -410,8 +407,8 @@ public class RefManagerImpl extends RefManager {
     return extension.getElementContainer(element);
   }
 
-  private synchronized void registerUnprocessed(VirtualFileWithId virtualFile) {
-    myUnprocessedFiles.set(virtualFile.getId());
+  private synchronized void registerUnprocessed(VirtualFile virtualFile) {
+    myUnprocessedFiles.add(virtualFile);
   }
 
   void removeReference(@NotNull RefElement refElem) {
@@ -463,7 +460,7 @@ public class RefManagerImpl extends RefManager {
             if (element instanceof PsiFile) {
               VirtualFile virtualFile = PsiUtilCore.getVirtualFile(element);
               if (virtualFile instanceof VirtualFileWithId) {
-                registerUnprocessed((VirtualFileWithId)virtualFile);
+                registerUnprocessed(virtualFile);
               }
             }
           } else {
@@ -527,7 +524,12 @@ public class RefManagerImpl extends RefManager {
           throw e;
         }
         catch (Throwable e) {
-          LOG.error(new RuntimeExceptionWithAttachments(e, new Attachment("diagnostics.txt", file.getName())));
+          if (ApplicationManager.getApplication().isHeadlessEnvironment()) {
+            LOG.error(file.getName(), e);
+          }
+          else {
+            LOG.error(new RuntimeExceptionWithAttachments(e, new Attachment("diagnostics.txt", file.getName())));
+          }
         }
       }
       myPsiManager.dropResolveCaches();

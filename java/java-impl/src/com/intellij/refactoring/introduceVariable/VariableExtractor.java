@@ -19,6 +19,8 @@ import com.intellij.openapi.util.Computable;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.impl.light.LightJavaToken;
+import com.intellij.psi.search.LocalSearchScope;
+import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
@@ -48,6 +50,7 @@ final class VariableExtractor {
   private final @Nullable Editor myEditor;
   private final @NotNull IntroduceVariableSettings mySettings;
   private final @NotNull PsiExpression myExpression;
+  private final PsiFile myContainingFile;
   private @NotNull PsiElement myAnchor;
   private final PsiElement myContainer;
   private final PsiExpression @NotNull [] myOccurrences;
@@ -68,6 +71,7 @@ final class VariableExtractor {
     mySettings = settings;
     myContainer = anchorStatement.getParent();
     myAnchor = correctAnchor(expression, anchorStatement, occurrences);
+    myContainingFile = myContainer.getContainingFile();
     myReplaceSelf = settings.isReplaceLValues() || !RefactoringUtil.isAssignmentLHS(expression);
     PsiCodeBlock newDeclarationScope = PsiTreeUtil.getParentOfType(myContainer, PsiCodeBlock.class, false);
     myFieldConflictsResolver = new FieldConflictsResolver(settings.getEnteredName(), newDeclarationScope);
@@ -112,7 +116,7 @@ final class VariableExtractor {
 
     highlight(var);
 
-    if (!(var instanceof PsiPatternVariable) || PsiUtil.isLanguageLevel16OrHigher(myContainer.getContainingFile())) {
+    if (!(var instanceof PsiPatternVariable) || PsiUtil.isLanguageLevel16OrHigher(myContainingFile)) {
       PsiUtil.setModifierProperty(var, PsiModifier.FINAL, mySettings.isDeclareFinal());
     }
     if (!(var instanceof PsiPatternVariable)) {
@@ -148,7 +152,9 @@ final class VariableExtractor {
   private void highlight(@NotNull PsiVariable var) {
     if (myEditor != null) {
       PsiElement[] occurrences =
-        PsiTreeUtil.collectElements(myContainer, e -> e instanceof PsiReference && ((PsiReference)e).isReferenceTo(var));
+        ContainerUtil.map2Array(ReferencesSearch.search(var, new LocalSearchScope(myContainingFile)).findAll(), 
+                                PsiElement.class,
+                                ref -> ref.getElement());
       IntroduceVariableBase.highlightReplacedOccurrences(myProject, myEditor, occurrences);
     }
   }

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 {
   generate = [
     psi = 'no'
@@ -931,12 +931,12 @@ string_injection ::= '$' string_injection_body
 private string_injection_body ::= qualified_reference_expression | unqualified_reference_expression | lazy_closure | clear_variants <<unexpected "identifier.or.block.expected">>
 
 parenthesized_expression ::= p_parenthesized_expression_inner
-private p_parenthesized_expression_inner ::= '(' <<enableNlBeforeAnonymousBody expression>> ')' { pin = 1}
+private p_parenthesized_expression_inner ::= '(' mb_nl <<insideParentheses expression>> mb_nl ')' { pin = 1 }
 
 private priority1_1 ::= new_anonymous_expression | new_expression
 
 new_anonymous_expression ::= 'new' type_argument_list? anonymous_type_definition { elementType = new_expression }
-anonymous_type_definition ::= <<annotated code_reference>> call_argument_list <<nlBeforeAnonymousBody mb_nl>> class_body
+anonymous_type_definition ::= <<annotated code_reference>> call_argument_list mb_nl_inside_parentheses class_body
 {
   elementTypeClass = 'org.jetbrains.plugins.groovy.lang.psi.stubs.elements.GrAnonymousElementType'
 }
@@ -1089,7 +1089,7 @@ prefix_unary_expression ::= ('++' | '--' | '-' | '+') mb_nl <<disableNlBeforeClo
 
 multiplicative_expression ::= expression mb_nl ('*' | '/' | '%') mb_nl <<disableNlBeforeClosure>> expression
 
-additive_expression ::= expression ('+' | '-') mb_nl <<disableNlBeforeClosure>> expression
+additive_expression ::= expression mb_nl_inside_parentheses ('+' | '-') mb_nl <<disableNlBeforeClosure>> expression
 
 private shift_or_range ::= shift_expression | range_expression
 shift_expression ::= expression mb_nl shift_sign mb_nl <<disableNlBeforeClosure>> expression
@@ -1140,8 +1140,8 @@ private single_tuple_assignment ::= single_tuple mb_nl tuple_initializer // don'
 private multi_tuple_assignment ::= tuple  mb_nl !'->' tuple_initializer { // pin only if it's not a part of "(foo, bar) -> baz"
   pin = 3
 }
-single_tuple ::= '(' unqualified_reference_expression ')' { elementType = tuple }
-tuple ::= '(' unqualified_reference_expression (',' unqualified_reference_expression)+ ')'
+single_tuple ::= '(' mb_nl unqualified_reference_expression mb_nl ')' { elementType = tuple }
+tuple ::= '(' mb_nl unqualified_reference_expression (mb_nl ',' mb_nl unqualified_reference_expression)+ mb_nl ')'
 {
   consumeTokenMethod = 'consumeTokenFast'
 }
@@ -1181,7 +1181,7 @@ call_argument_list ::= !<<isParameterizedLambda>> (empty_parens | non_empty_argu
   elementType = argument_list
 }
 
-private non_empty_argument_list::= '(' <<notApplicationArguments paren_argument_list_inner>> (mb_nl ')') {
+private non_empty_argument_list::= '(' <<insideParentheses <<notApplicationArguments paren_argument_list_inner>>>> (mb_nl ')') {
   pin = 1
   consumeTokenMethod = 'consumeTokenFast'
 }
@@ -1306,6 +1306,7 @@ private mb_initializer ::= [mb_nl ('=') mb_nl expression_or_application]
 
 
 // region Other
+private mb_nl_inside_parentheses ::= [<<insideParentheses>> mb_nl]
 private mb_nl ::= nl*
 private nls ::= nl+
 private nl ::= NL { consumeTokenMethod = 'consumeTokenFast' }

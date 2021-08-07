@@ -184,7 +184,8 @@ class IntroduceConstantDialog extends DialogWrapper {
       }
     }
     myTfTargetClassName =
-      new ReferenceEditorComboWithBrowseButton(new ChooseClassAction(), "", myProject, true, RECENTS_KEY);
+      new ReferenceEditorComboWithBrowseButton(new ChooseClassAction(), "", myProject, true,
+                                               JavaCodeFragment.VisibilityChecker.PROJECT_SCOPE_VISIBLE, RECENTS_KEY);
     myTargetClassNamePanel.setLayout(new BorderLayout());
     myTargetClassNamePanel.add(myTfTargetClassName, BorderLayout.CENTER);
     myTargetClassNameLabel.setLabelFor(myTfTargetClassName);
@@ -232,6 +233,7 @@ class IntroduceConstantDialog extends DialogWrapper {
         }
       });
       myCbReplaceAll.setText(RefactoringBundle.message("replace.all.occurences", myOccurrencesCount));
+      myCbReplaceAll.setSelected(JavaRefactoringSettings.getInstance().INTRODUCE_CONSTANT_REPLACE_ALL);
     }
     else {
       myCbReplaceAll.setVisible(false);
@@ -467,7 +469,11 @@ class IntroduceConstantDialog extends DialogWrapper {
       }
     }
 
-    JavaRefactoringSettings.getInstance().INTRODUCE_CONSTANT_VISIBILITY = getFieldVisibility();
+    JavaRefactoringSettings javaRefactoringSettings = JavaRefactoringSettings.getInstance();
+    javaRefactoringSettings.INTRODUCE_CONSTANT_VISIBILITY = getFieldVisibility();
+    if (myOccurrencesCount > 1) {
+      javaRefactoringSettings.INTRODUCE_CONSTANT_REPLACE_ALL = isReplaceAllOccurrences();
+    }
 
     RecentsManager.getInstance(myProject).registerRecentEntry(RECENTS_KEY, targetClassName);
     super.doOKAction();

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.statistic.eventLog.uploader
 
 import com.google.gson.Gson
@@ -60,18 +60,17 @@ object EventLogExternalUploader {
   }
 
   fun startExternalUpload(recorderId: String, isTest: Boolean) {
-    val recorder = EventLogInternalRecorderConfig(recorderId)
+    val recorder = EventLogInternalRecorderConfig(recorderId, false)
     if (!recorder.isSendEnabled()) {
       LOG.info("Don't start external process because sending logs is disabled")
       return
     }
 
     EventLogSystemLogger.logCreatingExternalSendCommand(recorderId)
-    val config = EventLogConfiguration.getOrCreate(recorderId)
-    val device = DeviceConfiguration(config.deviceId, config.bucket)
+    val config = EventLogConfiguration.getInstance().getOrCreate(recorderId)
     val application = EventLogInternalApplicationInfo(recorderId, isTest)
     try {
-      val command = prepareUploadCommand(device, recorder, application)
+      val command = prepareUploadCommand(config, recorder, application)
       EventLogSystemLogger.logFinishedCreatingExternalSendCommand(recorderId, null)
       Runtime.getRuntime().exec(command)
       LOG.info("Started external process for uploading event log")
@@ -82,17 +81,17 @@ object EventLogExternalUploader {
     }
   }
 
-  private fun prepareUploadCommand(device: DeviceConfiguration,
+  private fun prepareUploadCommand(config: EventLogRecorderConfiguration,
                                    recorder: EventLogRecorderConfig,
                                    applicationInfo: EventLogApplicationInfo): Array<out String> {
-    val logFiles = logsToSend(recorder)
+    val logFiles = recorder.getFilesToSendProvider().getFilesToSend().map { it.file.absolutePath }
     if (logFiles.isEmpty()) {
       throw EventLogUploadException("No available logs to send", NO_LOGS)
     }
 
     val tempDir = getOrCreateTempDir()
     val uploader = findUploader()
-    val libs = findLibsByPrefixes("kotlin-stdlib", "commons-logging", "http-client")
+    val libs = findLibsByPrefixes("kotlin-stdlib", "commons-logging")
 
     val libPaths = libs.map { it.path }.toMutableList()
     libPaths.add(findLibraryByClass(NotNull::class.java))
@@ -113,8 +112,10 @@ object EventLogExternalUploader {
     addArgument(args, RECORDER_OPTION, recorder.getRecorderId())
 
     addArgument(args, LOGS_OPTION, logFiles.joinToString(separator = File.pathSeparator))
-    addArgument(args, DEVICE_OPTION, device.deviceId)
-    addArgument(args, BUCKET_OPTION, device.bucket.toString())
+    addArgument(args, DEVICE_OPTION, config.deviceId)
+    addArgument(args, BUCKET_OPTION, config.bucket.toString())
+    addArgument(args, MACHINE_ID_OPTION, config.machineId.id)
+    addArgument(args, ID_REVISION_OPTION, config.machineId.revision.toString())
     addArgument(args, URL_OPTION, applicationInfo.templateUrl)
     addArgument(args, PRODUCT_OPTION, applicationInfo.productCode)
     addArgument(args, PRODUCT_VERSION_OPTION, applicationInfo.productVersion)
@@ -137,14 +138,6 @@ object EventLogExternalUploader {
   private fun addArgument(args: ArrayList<String>, name: String, value: String) {
     args += name
     args += value
-  }
-
-  private fun logsToSend(recorder: EventLogRecorderConfig): List<String> {
-    val dir = recorder.getLogFilesProvider().getLogFilesDir()
-    if (dir != null && Files.exists(dir)) {
-      return dir.toFile().listFiles()?.take(5)?.map { it.absolutePath } ?: emptyList()
-    }
-    return emptyList()
   }
 
   private fun joinAsClasspath(libCopies: List<String>, uploaderCopy: Path): String {

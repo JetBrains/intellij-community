@@ -96,6 +96,8 @@ public final class XDebuggerWatchesManager {
       VirtualFile file = fileManager.findFileByUrl(inlineWatchState.getFileUrl());
       XSourcePosition position = debuggerUtil.createPosition(file, inlineWatchState.getLine());
       XExpression expression = inlineWatchState.getWatchState().toXExpression();
+      if (position == null || expression == null) continue;
+
       InlineWatch watch = new InlineWatch(expression, position);
       inlineWatches.computeIfAbsent(inlineWatchState.getFileUrl(), (k) -> new HashSet<>()).add(watch);
     }
@@ -114,7 +116,7 @@ public final class XDebuggerWatchesManager {
   }
 
   public void inlineWatchesRemoved(List<InlineWatch> removed, XInlineWatchesView watchesView) {
-    inlineWatches.values().forEach(set -> set.removeAll(removed));
+    inlineWatches.values().forEach(set -> removed.forEach(set::remove));
     getWatchesViews().filter(v -> v != watchesView).forEach(view -> view.removeInlineWatches(removed));
   }
 

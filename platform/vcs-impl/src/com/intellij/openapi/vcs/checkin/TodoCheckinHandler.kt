@@ -1,15 +1,17 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.checkin
 
 import com.intellij.CommonBundle.getCancelButtonText
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.todo.*
+import com.intellij.ide.util.DelegatingProgressIndicator
 import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.components.service
 import com.intellij.openapi.progress.ProgressIndicator
+import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.Task
 import com.intellij.openapi.project.DumbService.isDumb
 import com.intellij.openapi.project.Project
@@ -59,11 +61,18 @@ class TodoCheckinHandler(private val commitPanel: CheckinProjectPanel) : Checkin
 
   override fun isEnabled(): Boolean = settings.CHECK_NEW_TODO
 
-  override suspend fun runCheck(): TodoCommitProblem? {
+  override suspend fun runCheck(indicator: ProgressIndicator): TodoCommitProblem? {
+    indicator.text = message("progress.text.checking.for.todo")
+
     val changes = commitPanel.selectedChanges
     val worker = TodoCheckinHandlerWorker(project, changes, todoFilter)
 
-    withContext(Dispatchers.Default) { worker.execute() }
+    withContext(Dispatchers.Default) {
+      ProgressManager.getInstance().executeProcessUnderProgress(
+        { worker.execute() },
+        TextToText2Indicator(indicator)
+      )
+    }
 
     val todoItems = worker.inOneList()
     return if (todoItems.isNotEmpty()) TodoCommitProblem(changes, todoItems) else null
@@ -143,10 +152,15 @@ class TodoCheckinHandler(private val commitPanel: CheckinProjectPanel) : Checkin
   }
 }
 
+internal class TextToText2Indicator(indicator: ProgressIndicator) : DelegatingProgressIndicator(indicator) {
+  override fun setText(text: String?) = super.setText2(text)
+  override fun setText2(text: String?) = Unit
+}
+
 private class FindTodoItemsTask(project: Project, changes: Collection<Change>, todoFilter: TodoFilter?) :
   Task.Modal(project, message("checkin.dialog.title.looking.for.new.edited.todo.items"), true) {
 
-  private val worker = TodoCheckinHandlerWorker(myProject, changes, todoFilter)
+  private val worker = TodoCheckinHandlerWorker(project, changes, todoFilter)
   private var result: TodoCheckinHandlerWorker? = null
 
   fun find(): TodoCheckinHandlerWorker? {
@@ -155,7 +169,7 @@ private class FindTodoItemsTask(project: Project, changes: Collection<Change>, t
   }
 
   override fun run(indicator: ProgressIndicator) {
-    indicator.isIndeterminate = true
+    indicator.isIndeterminate = false
     worker.execute()
   }
 

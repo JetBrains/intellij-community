@@ -1,6 +1,22 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
+  <component name="KotlinIdeAnchorService">
+    <option name="moduleNameToAnchorName">
+      <map>
+        <entry key="kotlinc.kotlin-compiler" value="kotlin.util.compiler-classpath" />
+        <entry key="kotlinc.kotlin-scripting-compiler" value="kotlin.util.compiler-classpath" />
+        <entry key="kotlin-script-runtime" value="kotlin.util.compiler-classpath" />
+        <entry key="kotlinc.kotlin-script-util" value="kotlin.util.compiler-classpath" />
+        <entry key="kotlinc.allopen-compiler-plugin" value="kotlin.util.compiler-classpath" />
+        <entry key="kotlinc.kotlinx-serialization-compiler-plugin" value="kotlin.util.compiler-classpath" />
+        <entry key="kotlinc.noarg-compiler-plugin" value="kotlin.util.compiler-classpath" />
+        <entry key="kotlinc.sam-with-receiver-compiler-plugin" value="kotlin.util.compiler-classpath" />
+        <entry key="kotlinc.kotlin-gradle-statistics" value="kotlin.util.compiler-classpath" />
+        <entry key="kotlinc.android-extensions-compiler-plugin" value="kotlin.util.compiler-classpath" />
+      </map>
+    </option>
+  </component>
   <component name="LibraryToSourceAnalysisState">
-    <option name="isEnabled" value="false" />
+    <option name="isEnabled" value="true" />
   </component>
 </project>

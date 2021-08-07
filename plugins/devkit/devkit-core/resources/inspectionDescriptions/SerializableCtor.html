@@ -1,5 +1,11 @@
 <html>
 <body>
-  Detects non-default constructor in serializable classes (which is not allowed by IonObjectSerializer)
+Reports non-default constructor in serializable classes.
+<p>
+  The platform's <code>IonObjectSerializer</code> requires specifying <code>@PropertyMapping</code> explicitly.
+</p>
+<p>
+  Quick-fix generates necessary <code>@PropertyMapping</code> annotation for the constructor.
+</p>
 </body>
 </html>

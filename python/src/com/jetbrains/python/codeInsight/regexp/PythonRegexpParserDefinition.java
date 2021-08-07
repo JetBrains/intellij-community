@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.codeInsight.regexp;
 
 import com.intellij.lang.PsiParser;
@@ -14,9 +14,7 @@ import java.util.EnumSet;
 
 import static org.intellij.lang.regexp.RegExpCapability.*;
 
-/**
- * @author yole
- */
+
 public class PythonRegexpParserDefinition extends RegExpParserDefinition {
   public static final IFileElementType PYTHON_REGEXP_FILE = new IFileElementType("PYTHON_REGEXP_FILE", PythonRegexpLanguage.INSTANCE);
   protected final EnumSet<RegExpCapability> CAPABILITIES = EnumSet.of(DANGLING_METACHARACTERS,

@@ -8,7 +8,6 @@ import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonShortcuts;
 import com.intellij.openapi.actionSystem.DataProvider;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.VcsDataKeys;
@@ -37,7 +36,10 @@ import com.intellij.vcs.log.ui.VcsLogActionPlaces;
 import com.intellij.vcs.log.ui.details.commit.CommitDetailsPanel;
 import kotlin.Unit;
 import one.util.streamex.StreamEx;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.border.Border;
@@ -224,7 +226,7 @@ public final class PushLog extends JPanel implements DataProvider {
     collapseAll.registerCustomShortcutSet(ActionManager.getInstance().getAction(ACTION_COLLAPSE_ALL).getShortcutSet(), myTree);
 
     ToolTipManager.sharedInstance().registerComponent(myTree);
-    PopupHandler.installPopupHandler(myTree, VcsLogActionPlaces.POPUP_ACTION_GROUP, CONTEXT_MENU);
+    PopupHandler.installPopupMenu(myTree, VcsLogActionPlaces.POPUP_ACTION_GROUP, CONTEXT_MENU);
 
     myChangesBrowser = new SimpleChangesBrowser(project, false, false) {
       @NotNull
@@ -756,7 +758,7 @@ public final class PushLog extends JPanel implements DataProvider {
 
     MyShowDetailsAction(@NotNull Project project, @NotNull Consumer<Boolean> onUpdate) {
       super(DvcsBundle.message("push.show.details"), AllIcons.Actions.PreviewDetailsVertically);
-      mySettings = ServiceManager.getService(project, PushSettings.class);
+      mySettings = project.getService(PushSettings.class);
       myOnUpdate = onUpdate;
     }
 

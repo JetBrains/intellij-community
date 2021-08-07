@@ -19,6 +19,7 @@ import com.intellij.execution.runners.ExecutionEnvironmentBuilder;
 import com.intellij.execution.target.LanguageRuntimeType;
 import com.intellij.execution.target.TargetEnvironmentAwareRunProfile;
 import com.intellij.execution.target.TargetEnvironmentConfiguration;
+import com.intellij.execution.target.TargetEnvironmentConfigurations;
 import com.intellij.execution.target.java.JavaLanguageRuntimeConfiguration;
 import com.intellij.execution.target.java.JavaLanguageRuntimeType;
 import com.intellij.execution.testframework.TestRunnerBundle;
@@ -645,7 +646,7 @@ public class JUnitConfiguration extends JavaTestConfigurationWithDiscoverySuppor
 
   @Override
   public boolean needPrepareTarget() {
-    return getDefaultTargetName() != null || runsUnderWslJdk();
+    return TargetEnvironmentAwareRunProfile.super.needPrepareTarget() || runsUnderWslJdk();
   }
 
   public static class Data implements Cloneable {
@@ -768,6 +769,10 @@ public class JUnitConfiguration extends JavaTestConfigurationWithDiscoverySuppor
       METHOD_NAME = getMethodPresentation(method);
       TEST_OBJECT = TEST_METHOD;
       return setMainClass(methodLocation instanceof MethodLocation ? ((MethodLocation)methodLocation).getContainingClass() : method.getContainingClass());
+    }
+    
+    public void setTestMethodName(String methodName) {
+      METHOD_NAME = methodName;
     }
 
     public @NlsSafe String getTags() {

@@ -1,12 +1,20 @@
 <html>
 <body>
-Reports <b>protected</b> nested classes.
+Reports a <code>protected</code> nested class.
+<p><b>Example:</b></p>
+<pre><code>
+  public class Outer {
+    protected static class Nested {} // warning
+    protected class Inner {}         // warning
+    protected enum Mode {}           // warning depends on the setting
+    protected interface I {}         // warning depends on the setting
+  }
+</code></pre>
 <!-- tooltip end -->
-<p>
-Use the first checkbox below to ignore <b>protected</b> inner enums.
-<p>
-Use the seconds checkbox below to ignore <b>protected</b> inner interface.
-<p>
-
+<p>Configure the inspection:</p>
+<ul>
+  <li>Use the <b>Ignore 'protected' inner enums</b> option to ignore <code>protected</code> inner enums.</li>
+  <li>Use the <b>Ignore 'protected' inner interfaces</b> option to ignore <code>protected</code> inner interfaces.</li>
+</ul>
 </body>
 </html>

@@ -110,7 +110,7 @@ public final class AntTasksProvider {
   }
 
   private static final class AntClassLoader extends UrlClassLoader {
-    private static final boolean isParallelCapable = USE_PARALLEL_LOADING && registerAsParallelCapable();
+    private static final boolean isParallelCapable = registerAsParallelCapable();
 
     private final Future<Map<String, Class<?>>> myFuture;
 
@@ -146,7 +146,8 @@ public final class AntTasksProvider {
 
     @NotNull
     Map<String, Class<?>> getAntObjects() {
-      return ProgressIndicatorUtils.awaitWithCheckCanceled(myFuture);
+      Map<String, Class<?>> result = ProgressIndicatorUtils.awaitWithCheckCanceled(myFuture);
+      return result == null ? Collections.emptyMap() : result;
     }
   }
 }

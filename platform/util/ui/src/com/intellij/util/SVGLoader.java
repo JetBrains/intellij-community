@@ -29,9 +29,10 @@ import org.w3c.dom.NodeList;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.image.BufferedImage;
-import java.io.*;
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.io.InputStream;
 import java.net.URL;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Map;
@@ -58,7 +59,7 @@ public final class SVGLoader {
           String dbPath = System.getProperty("idea.ui.icons.prebuilt.db");
           if (!"false".equals(dbPath)) {
             if (dbPath == null || dbPath.isEmpty()) {
-              dbFile = Path.of(PathManager.getHomePath()).resolve("bin/icons.db");
+              dbFile = Path.of(PathManager.getBinPath() + "/icons.db");
             }
             else {
               dbFile = Path.of(dbPath);
@@ -77,7 +78,7 @@ public final class SVGLoader {
 
       SvgCacheManager cache;
       try {
-        cache = USE_CACHE ? new SvgCacheManager(Path.of(PathManager.getSystemPath(), "icons-v2.db")) : null;
+        cache = USE_CACHE ? new SvgCacheManager(Path.of(PathManager.getSystemPath(), "icons-v3.db")) : null;
       }
       catch (Exception e) {
         Logger.getInstance(SVGLoader.class).error(e);
@@ -268,6 +269,8 @@ public final class SVGLoader {
 
   /**
    * Loads an image with the specified {@code width} and {@code height} (in user space). Size specified in svg file is ignored.
+   * <p></p>
+   * Note: always pass {@code url} when it is available.
    */
   public static Image load(@Nullable URL url, @NotNull InputStream stream, @NotNull ScaleContext scaleContext, double width, double height) throws IOException {
     try {
@@ -307,8 +310,8 @@ public final class SVGLoader {
       }
       else if (checkClosingBracket && ch == '>') {
         buffer.write(new byte[]{'<', '/', 's', 'v', 'g', '>'});
-        String string = new String(buffer.getInternalBuffer(), 0, buffer.size(), StandardCharsets.UTF_8);
-        return SvgTranscoder.getDocumentSize(scale, SvgDocumentFactoryKt.createSvgDocument(null, new StringReader(string)));
+        ByteArrayInputStream input = new ByteArrayInputStream(buffer.getInternalBuffer(), 0, buffer.size());
+        return SvgTranscoder.getDocumentSize(scale, SvgDocumentFactoryKt.createSvgDocument(null, input));
       }
     }
     return new ImageLoader.Dimension2DDouble(ICON_DEFAULT_SIZE * scale, ICON_DEFAULT_SIZE * scale);
@@ -321,7 +324,7 @@ public final class SVGLoader {
   }
 
   private static @NotNull Document createDocument(@Nullable String url, @NotNull InputStream inputStream) {
-    Document document = SvgDocumentFactoryKt.createSvgDocument(url, new InputStreamReader(inputStream, StandardCharsets.UTF_8));
+    Document document = SvgDocumentFactoryKt.createSvgDocument(url, inputStream);
     patchColors(url, document);
     return document;
   }

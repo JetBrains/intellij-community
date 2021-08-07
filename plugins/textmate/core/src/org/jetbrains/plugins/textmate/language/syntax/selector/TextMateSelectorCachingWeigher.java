@@ -1,23 +1,25 @@
 package org.jetbrains.plugins.textmate.language.syntax.selector;
 
-import com.intellij.util.containers.ContainerUtil;
+import com.github.benmanes.caffeine.cache.Cache;
+import com.github.benmanes.caffeine.cache.Caffeine;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.textmate.language.syntax.lexer.TextMateScope;
 
 import java.util.Objects;
-import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.TimeUnit;
 
 public class TextMateSelectorCachingWeigher implements TextMateSelectorWeigher {
   @NotNull private final TextMateSelectorWeigher myOriginalWeigher;
-  @NotNull private final ConcurrentMap<CacheKey, TextMateWeigh> myCache;
+  private final Cache<@NotNull CacheKey, @NotNull TextMateWeigh> myCache;
 
   public TextMateSelectorCachingWeigher(@NotNull TextMateSelectorWeigher originalWeigher) {
     myOriginalWeigher = originalWeigher;
-    myCache = ContainerUtil.createConcurrentSoftKeySoftValueMap();
+    myCache = Caffeine.newBuilder().maximumSize(100_000).expireAfterAccess(1, TimeUnit.MINUTES).build();
   }
 
   @Override
-  public TextMateWeigh weigh(@NotNull final CharSequence scopeSelector, @NotNull final CharSequence scope) {
-    return myCache.computeIfAbsent(new CacheKey(scopeSelector, scope), this::weigh);
+  public TextMateWeigh weigh(@NotNull final CharSequence scopeSelector, final @NotNull TextMateScope scope) {
+    return myCache.get(new CacheKey(scopeSelector, scope), this::weigh);
   }
 
   private TextMateWeigh weigh(@NotNull CacheKey pair) {
@@ -26,9 +28,9 @@ public class TextMateSelectorCachingWeigher implements TextMateSelectorWeigher {
 
   private static final class CacheKey {
     final CharSequence selector;
-    final CharSequence scope;
+    final TextMateScope scope;
 
-    private CacheKey(CharSequence selector, CharSequence scope) {
+    private CacheKey(CharSequence selector, TextMateScope scope) {
       this.selector = selector;
       this.scope = scope;
     }

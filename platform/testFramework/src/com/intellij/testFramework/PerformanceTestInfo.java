@@ -12,7 +12,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.concurrent.TimeUnit;
 
-@SuppressWarnings("UseOfSystemOutOrSystemErr")
 public class PerformanceTestInfo {
   private final ThrowableRunnable<?> test; // runnable to measure
   private final int expectedMs;           // millis the test is expected to run
@@ -88,6 +87,7 @@ public class PerformanceTestInfo {
     return this;
   }
 
+  @SuppressWarnings("UseOfSystemOutOrSystemErr")
   public void assertTiming() {
     if (PlatformTestUtil.COVERAGE_ENABLED_BUILD) return;
     Timings.getStatistics(); // warm-up, measure
@@ -97,6 +97,7 @@ public class PerformanceTestInfo {
       //noinspection CallToSystemGC
       System.gc();
     }
+    int initialMaxRetries = maxRetries;
 
     boolean testPassed = false;
     String logMessage;
@@ -118,7 +119,7 @@ public class PerformanceTestInfo {
 
       testPassed |= iterationResult == IterationResult.ACCEPTABLE || iterationResult == IterationResult.BORDERLINE;
 
-      logMessage = formatMessage(data, expectedOnMyMachine, iterationResult);
+      logMessage = formatMessage(data, expectedOnMyMachine, iterationResult, initialMaxRetries);
 
       if (iterationResult == IterationResult.ACCEPTABLE) {
         TeamCityLogger.info(logMessage);
@@ -131,14 +132,16 @@ public class PerformanceTestInfo {
       }
 
       JitUsageResult jitUsage = updateJitUsage();
-      if (attempt == maxRetries && jitUsage == JitUsageResult.DEFINITELY_LOW) {
+      if (attempt == maxRetries) {
         if (testPassed) return;
         throw new AssertionFailedError(logMessage);
       }
-      if ((iterationResult == IterationResult.DISTRACTED || jitUsage == JitUsageResult.UNCLEAR) && attempt < 30 && maxRetries != 1) {
+      if ((iterationResult == IterationResult.DISTRACTED || jitUsage == JitUsageResult.UNCLEAR) && attempt < initialMaxRetries+30 && maxRetries != 1) {
+        // completely ignore this attempt (by incrementing maxRetries) and retry (but do no more than 30 extra retries caused by JIT)
         maxRetries++;
       }
-      String s = "  " + (maxRetries - attempt) + " " + StringUtil.pluralize("attempt", maxRetries - attempt) + " remain" + (jitUsage == JitUsageResult.UNCLEAR ? " (waiting for JITc; its usage was " + jitUsage + " in this iteration)" : "");
+      String s = "  " + (maxRetries - attempt) + " " + StringUtil.pluralize("attempt", maxRetries - attempt) + " remain" +
+                 (jitUsage == JitUsageResult.UNCLEAR ? " (waiting for JITc; its usage was " + jitUsage + " in this iteration)" : "");
       TeamCityLogger.warning(s, null);
       if (UsefulTestCase.IS_UNDER_TEAMCITY) {
         System.out.println(s);
@@ -148,7 +151,10 @@ public class PerformanceTestInfo {
     }
   }
 
-  private String formatMessage(CpuUsageData data, int expectedOnMyMachine, IterationResult iterationResult) {
+  private @NotNull String formatMessage(@NotNull CpuUsageData data,
+                                        int expectedOnMyMachine,
+                                        @NotNull IterationResult iterationResult,
+                                        int initialMaxRetries) {
     long duration = data.durationMs;
     int percentage = (int)(100.0 * (duration - expectedOnMyMachine) / expectedOnMyMachine);
     String colorCode = iterationResult == IterationResult.ACCEPTABLE ? "32;1m" : // green
@@ -156,7 +162,7 @@ public class PerformanceTestInfo {
                        "31;1m"; // red
     return
       what+" took \u001B[" + colorCode + Math.abs(percentage) + "% " + (percentage > 0 ? "more" : "less") + " time\u001B[0m than expected" +
-      (iterationResult == IterationResult.DISTRACTED ? " (but JIT compilation took too long, will retry anyway)" : "") +
+      (iterationResult == IterationResult.DISTRACTED && initialMaxRetries != 1 ? " (but JIT compilation took too long, will retry anyway)" : "") +
       "\n  Expected: " + expectedOnMyMachine + "ms (" + StringUtil.formatDuration(expectedOnMyMachine) + ")" +
       "\n  Actual:   " + duration + "ms (" + StringUtil.formatDuration(duration) + ")" +
       "\n  Timings:  " + Timings.getStatistics() +
@@ -198,7 +204,7 @@ public class PerformanceTestInfo {
     ACCEPTABLE, // test was completed within specified range
     BORDERLINE, // test barely managed to complete within specified range
     SLOW,       // test was too slow
-    DISTRACTED  // CPU was occupied by irrelevant computations for too long (e.g. JIT or GC)
+    DISTRACTED  // CPU was occupied by irrelevant computations for too long (e.g., JIT or GC)
   }
 
   private int getExpectedTimeOnThisMachine() {

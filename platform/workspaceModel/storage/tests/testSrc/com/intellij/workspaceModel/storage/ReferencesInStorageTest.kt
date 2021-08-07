@@ -2,14 +2,20 @@
 package com.intellij.workspaceModel.storage
 
 import com.intellij.testFramework.UsefulTestCase.assertEmpty
+import com.intellij.testFramework.UsefulTestCase.assertInstanceOf
 import com.intellij.workspaceModel.storage.entities.*
+import com.intellij.workspaceModel.storage.impl.ChangeEntry
+import com.intellij.workspaceModel.storage.impl.EntityStorageSerializerImpl
+import com.intellij.workspaceModel.storage.impl.WorkspaceEntityStorageBuilderImpl
+import com.intellij.workspaceModel.storage.impl.assertConsistency
 import com.intellij.workspaceModel.storage.impl.url.VirtualFileUrlManagerImpl
 import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
-import org.junit.Assert
-import org.junit.Assert.assertEquals
+import org.junit.Assert.*
 import org.junit.Before
 import org.junit.Ignore
 import org.junit.Test
+import java.io.ByteArrayInputStream
+import java.io.ByteArrayOutputStream
 
 private fun WorkspaceEntityStorage.singleParent() = entities(ParentEntity::class.java).single()
 
@@ -19,6 +25,7 @@ class ReferencesInStorageTest {
   private lateinit var virtualFileManager: VirtualFileUrlManager
   @Before
   fun setUp() {
+    //ClassToIntConverter.clear()
     virtualFileManager = VirtualFileUrlManagerImpl()
   }
 
@@ -357,7 +364,7 @@ class ReferencesInStorageTest {
   fun `modify optional parent property`() {
     val builder = createEmptyBuilder()
     val child = builder.addChildWithOptionalParentEntity(null)
-    Assert.assertNull(child.optionalParent)
+    assertNull(child.optionalParent)
     val newParent = builder.addParentEntity()
     assertEquals(emptyList<ChildWithOptionalParentEntity>(), newParent.optionalChildren.toList())
     val newChild = builder.modifyEntity(ModifiableChildWithOptionalParentEntity::class.java, child) {
@@ -370,7 +377,7 @@ class ReferencesInStorageTest {
     val veryNewChild = builder.modifyEntity(ModifiableChildWithOptionalParentEntity::class.java, newChild) {
       optionalParent = null
     }
-    Assert.assertNull(veryNewChild.optionalParent)
+    assertNull(veryNewChild.optionalParent)
     assertEquals(emptyList<ChildWithOptionalParentEntity>(), newParent.optionalChildren.toList())
   }
 
@@ -400,7 +407,145 @@ class ReferencesInStorageTest {
   }
 
   @Test
-  @Ignore("Not property supported yet")
+  fun `test replace by source one to one nullable ref with parent persistent Id and child without it`() {
+    val builder = createEmptyBuilder()
+    var parentEntity = builder.addOoParentWithPidEntity("parent")
+    builder.addOoChildForParentWithPidEntity(parentEntity, "child")
+    builder.checkConsistency()
+
+    val newBuilder = createEmptyBuilder()
+    parentEntity = newBuilder.addOoParentWithPidEntity("parent", AnotherSource)
+    newBuilder.addOoChildForParentWithPidEntity(parentEntity, "child", source = AnotherSource)
+    newBuilder.checkConsistency()
+
+    builder.replaceBySource({ it is AnotherSource }, newBuilder)
+    builder.checkConsistency()
+
+    val parent = builder.entities(OoParentWithPidEntity::class.java).single()
+    val child = builder.entities(OoChildForParentWithPidEntity::class.java).single()
+    assertEquals(AnotherSource, parent.entitySource)
+    assertEquals(AnotherSource, child.entitySource)
+    assertEquals(child, parent.childOne)
+  }
+
+  @Test
+  @Ignore("Skip because of unstable rbs")
+  fun `test replace by source one to one ref with parent persistent Id and child with persistent Id`() {
+    val builder = createEmptyBuilder()
+    var parentEntity = builder.addOoParentWithPidEntity("parent")
+    builder.addOoChildForParentWithPidEntity(parentEntity, "childOne")
+    builder.addOoChildAlsoWithPidEntity(parentEntity, "childTwo")
+    builder.checkConsistency()
+
+    val newBuilder = createEmptyBuilder()
+    parentEntity = newBuilder.addOoParentWithPidEntity("parent", AnotherSource)
+    newBuilder.addOoChildForParentWithPidEntity(parentEntity, "childOneOne", source = AnotherSource)
+    newBuilder.addOoChildAlsoWithPidEntity(parentEntity, "childTwo", source = AnotherSource)
+    newBuilder.checkConsistency()
+
+    builder.replaceBySource({ it is AnotherSource }, newBuilder)
+    builder.checkConsistency()
+
+    val parent = builder.entities(OoParentWithPidEntity::class.java).single()
+    val firstChild = builder.entities(OoChildForParentWithPidEntity::class.java).single()
+    val secondChild = builder.entities(OoChildAlsoWithPidEntity::class.java).single()
+    assertEquals(AnotherSource, parent.entitySource)
+    assertEquals(AnotherSource, firstChild.entitySource)
+    assertEquals(AnotherSource, secondChild.entitySource)
+    assertEquals("childOneOne", firstChild.childProperty)
+    assertEquals(parent, firstChild.parent)
+    assertEquals("childTwo", secondChild.childProperty)
+    assertEquals(parent, secondChild.parent)
+  }
+
+  @Test
+  fun `test replace by source with parent persistent Id and without children`() {
+    val builder = createEmptyBuilder()
+    val parentEntity = builder.addOoParentWithPidEntity("parent")
+    builder.addOoChildForParentWithPidEntity(parentEntity, "child")
+    builder.checkConsistency()
+
+    val newBuilder = createEmptyBuilder()
+    newBuilder.addOoParentWithPidEntity("parent", AnotherSource)
+    newBuilder.checkConsistency()
+
+    builder.replaceBySource({ it is AnotherSource }, newBuilder)
+    builder.checkConsistency()
+    val parent = builder.entities(OoParentWithPidEntity::class.java).single()
+    val child = builder.entities(OoChildForParentWithPidEntity::class.java).single()
+    assertEquals(AnotherSource, parent.entitySource)
+    assertEquals(MySource, child.entitySource)
+    assertEquals(child, parent.childOne)
+  }
+
+  @Test
+  fun `test replace by source one to one ref with parent persistent Id and child without it and parent entity source intersection`() {
+    val builder = createEmptyBuilder()
+    var parentEntity = builder.addOoParentWithPidEntity("parent", AnotherSource)
+    builder.addOoChildForParentWithPidEntity(parentEntity, "child")
+    builder.checkConsistency()
+
+    val newBuilder = createEmptyBuilder()
+    parentEntity = newBuilder.addOoParentWithPidEntity("parent", AnotherSource)
+    newBuilder.addOoChildForParentWithPidEntity(parentEntity, "child", source = AnotherSource)
+    newBuilder.checkConsistency()
+
+    builder.replaceBySource({ it is AnotherSource }, newBuilder)
+    builder.checkConsistency()
+    val parent = builder.entities(OoParentWithPidEntity::class.java).single()
+    val child = builder.entities(OoChildForParentWithPidEntity::class.java).single()
+    assertEquals(AnotherSource, parent.entitySource)
+    assertEquals(AnotherSource, child.entitySource)
+    assertEquals(child, parent.childOne)
+  }
+
+  @Test
+  fun `test replace by source one to one ref with parent persistent Id and child without it and child entity source intersection`() {
+    val builder = createEmptyBuilder()
+    var parentEntity = builder.addOoParentWithPidEntity("parent")
+    builder.addOoChildForParentWithPidEntity(parentEntity, "child", AnotherSource)
+    builder.checkConsistency()
+
+    val newBuilder = createEmptyBuilder()
+    parentEntity = newBuilder.addOoParentWithPidEntity("parent", AnotherSource)
+    newBuilder.addOoChildForParentWithPidEntity(parentEntity, "child", source = AnotherSource)
+    newBuilder.checkConsistency()
+
+    builder.replaceBySource({ it is AnotherSource }, newBuilder)
+    builder.checkConsistency()
+    val parent = builder.entities(OoParentWithPidEntity::class.java).single()
+    val child = builder.entities(OoChildForParentWithPidEntity::class.java).single()
+    assertEquals(AnotherSource, parent.entitySource)
+    assertEquals(AnotherSource, child.entitySource)
+    assertEquals(child, parent.childOne)
+  }
+
+  @Test
+  fun `test replace by source one to one nullable ref with child persistent Id and parent without it`() {
+    val builder = createEmptyBuilder()
+    var parentEntity = builder.addOoParentWithoutPidEntity("parent")
+    builder.addOoChildWithPidEntity(parentEntity, "child")
+    builder.checkConsistency()
+
+    val newBuilder = createEmptyBuilder()
+    parentEntity = newBuilder.addOoParentWithoutPidEntity("parent", AnotherSource)
+    newBuilder.addOoChildWithPidEntity(parentEntity, "child", source = AnotherSource)
+    newBuilder.checkConsistency()
+
+    builder.replaceBySource({ it is AnotherSource }, newBuilder)
+    builder.checkConsistency()
+
+    val listOfParent = builder.entities(OoParentWithoutPidEntity::class.java).toList()
+    val child = builder.entities(OoChildWithPidEntity::class.java).single()
+    assertEquals(2, listOfParent.size)
+    assertEquals(MySource, listOfParent[0].entitySource)
+    assertEquals(AnotherSource, listOfParent[1].entitySource)
+    assertEquals(AnotherSource, child.entitySource)
+    assertEquals("child", child.childProperty)
+    assertEquals(listOfParent[1], child.parent)
+  }
+
+  @Test
   fun `add child to a single parent`() {
     val builder = createEmptyBuilder()
     val parentEntity = builder.addOoParentEntity()
@@ -408,5 +553,91 @@ class ReferencesInStorageTest {
     builder.addOoChildEntity(parentEntity)
 
     builder.assertConsistency()
+
+    // Child has a not-null parent, so we remove it one field replace
+    val children = builder.entities(OoChildEntity::class.java).toList()
+    assertEquals(1, children.size)
+  }
+
+  @Test
+  fun `double child adding`() {
+    val builder = createEmptyBuilder()
+    val parentEntity = builder.addOoParentEntity()
+    builder.addOoChildWithNullableParentEntity(parentEntity)
+    builder.addOoChildWithNullableParentEntity(parentEntity)
+
+    builder.assertConsistency()
+
+    // Child has a nullable parent. So we just unlink a parent from one of the entities
+    val children = builder.entities(OoChildWithNullableParentEntity::class.java).toList()
+    assertEquals(2, children.size)
+
+    if (children[0].parent == null) {
+      assertNotNull(children[1].parent)
+    }
+    else {
+      assertNull(children[1].parent)
+    }
+  }
+
+  @Test
+  fun `remove children`() {
+    val builder = createEmptyBuilder()
+    val parentEntity = builder.addParentEntity()
+    val childEntity = builder.addChildEntity(parentEntity)
+
+    builder.changeLog.clear()
+
+    builder.modifyEntity(ModifiableParentEntity::class.java, parentEntity) {
+      this.children = emptyList<ChildEntity>().asSequence()
+    }
+
+    builder.assertConsistency()
+
+    assertTrue(builder.entities(ChildEntity::class.java).toList().isEmpty())
+
+    assertInstanceOf(builder.changeLog.changeLog[childEntity.id], ChangeEntry.RemoveEntity::class.java)
+  }
+
+  @Test
+  fun `remove multiple children`() {
+    val builder = createEmptyBuilder()
+    val parentEntity = builder.addParentEntity()
+    val childEntity1 = builder.addChildEntity(parentEntity)
+    val childEntity2 = builder.addChildEntity(parentEntity)
+
+    builder.changeLog.clear()
+
+    builder.modifyEntity(ModifiableParentEntity::class.java, parentEntity) {
+      this.children = sequenceOf(childEntity2)
+    }
+
+    builder.assertConsistency()
+
+    assertEquals(1, builder.entities(ChildEntity::class.java).toList().size)
+
+    assertInstanceOf(builder.changeLog.changeLog[childEntity1.id], ChangeEntry.RemoveEntity::class.java)
+  }
+
+  @Test
+  fun `check store consistency after deserialization`() {
+    val builder = createEmptyBuilder()
+    val parentEntity = builder.addParentEntity()
+    builder.addChildEntity(parentEntity)
+    builder.addChildEntity(parentEntity)
+    builder.assertConsistency()
+
+    builder.removeEntity(parentEntity.id)
+    builder.assertConsistency()
+
+    val stream = ByteArrayOutputStream()
+    val serializer = EntityStorageSerializerImpl(TestEntityTypesResolver(), VirtualFileUrlManagerImpl())
+    serializer.serializeCache(stream, builder.toStorage())
+    val byteArray = stream.toByteArray()
+
+    // Deserialization won't create collection which consists only from null elements
+    val deserializer = EntityStorageSerializerImpl(TestEntityTypesResolver(), VirtualFileUrlManagerImpl())
+    val deserialized = (deserializer.deserializeCache(ByteArrayInputStream(byteArray)) as? WorkspaceEntityStorageBuilderImpl)?.toStorage()
+    deserialized!!.assertConsistency()
   }
 }

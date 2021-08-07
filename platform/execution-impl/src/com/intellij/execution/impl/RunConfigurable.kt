@@ -1,12 +1,16 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.impl
 
-import com.intellij.execution.*
+import com.intellij.execution.ExecutionBundle
+import com.intellij.execution.Executor
+import com.intellij.execution.RunManager
+import com.intellij.execution.RunnerAndConfigurationSettings
 import com.intellij.execution.configuration.ConfigurationFactoryEx
 import com.intellij.execution.configurations.*
 import com.intellij.execution.configurations.ConfigurationTypeUtil.isEditableInDumbMode
 import com.intellij.execution.impl.RunConfigurable.Companion.collectNodesRecursively
 import com.intellij.execution.impl.RunConfigurableNodeKind.*
+import com.intellij.execution.impl.statistics.RunConfigurationOptionUsagesCollector
 import com.intellij.icons.AllIcons
 import com.intellij.ide.DataManager
 import com.intellij.ide.IdeBundle
@@ -21,20 +25,17 @@ import com.intellij.openapi.keymap.KeymapUtil
 import com.intellij.openapi.options.Configurable
 import com.intellij.openapi.options.ConfigurationException
 import com.intellij.openapi.options.SettingsEditorConfigurable
-import com.intellij.openapi.options.UnnamedConfigurable
 import com.intellij.openapi.project.*
-import com.intellij.openapi.ui.LabeledComponent.create
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.NlsActions
-import com.intellij.openapi.util.Pair
 import com.intellij.openapi.util.Trinity
-import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.openapi.wm.IdeFocusManager.getGlobalInstance
 import com.intellij.ui.*
 import com.intellij.ui.RowsDnDSupport.RefinedDropSupport.Position.*
 import com.intellij.ui.SimpleTextAttributes.LINK_PLAIN_ATTRIBUTES
+import com.intellij.ui.awt.RelativePoint
 import com.intellij.ui.components.JBPanelWithEmptyText
 import com.intellij.ui.mac.TouchbarDataKeys
 import com.intellij.ui.popup.PopupState
@@ -45,7 +46,6 @@ import com.intellij.util.PlatformIcons
 import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.containers.TreeTraversal
 import com.intellij.util.ui.EditableModel
-import com.intellij.util.ui.GridBag
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.tree.TreeUtil
@@ -53,17 +53,15 @@ import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap
 import net.miginfocom.swing.MigLayout
 import org.jetbrains.annotations.Nls
 import java.awt.BorderLayout
-import java.awt.GridBagConstraints
-import java.awt.GridBagLayout
 import java.awt.datatransfer.Transferable
 import java.awt.event.KeyEvent
+import java.awt.event.MouseEvent
 import java.util.concurrent.Callable
 import java.util.function.ToIntFunction
 import javax.swing.*
 import javax.swing.event.DocumentEvent
 import javax.swing.tree.*
 
-private const val INITIAL_VALUE_KEY = "initialValue"
 private val LOG = logger<RunConfigurable>()
 
 @Nls
@@ -96,16 +94,10 @@ open class RunConfigurable @JvmOverloads constructor(protected val project: Proj
   private val splitter = JBSplitter("RunConfigurable.dividerProportion", 0.3f)
   private var wholePanel: JPanel? = null
   private var selectedConfigurable: Configurable? = null
-  private val recentsLimit = JTextField("5", 5)
-  private val confirmation = JCheckBox(ExecutionBundle.message("rerun.confirmation.checkbox"), true)
-  private val confirmationDeletionFromPopup = JCheckBox(ExecutionBundle.message("popup.deletion.confirmation"), true)
-  private val additionalSettings = ArrayList<Pair<UnnamedConfigurable, JComponent>>()
   private val storedComponents = HashMap<ConfigurationFactory, Configurable>()
   protected var toolbarDecorator: ToolbarDecorator? = null
   private var isFolderCreating = false
   protected val toolbarAddAction = MyToolbarAddAction()
-  private val runDashboardTypesPanel = RunDashboardTypesPanel(project)
-
   private var isModified = false
 
   companion object {
@@ -150,7 +142,7 @@ open class RunConfigurable @JvmOverloads constructor(protected val project: Proj
       getTypesToShow(project, showApplicableTypesOnly, allTypes, hideVirtualConfigurations)
         .sortedWith(kotlin.Comparator { type1, type2 -> compareTypesForUi(type1!!, type2!!) })
 
-    internal fun getTypesToShow(project: Project, showApplicableTypesOnly: Boolean, allTypes: List<ConfigurationType>, hideVirtualConfigurations : Boolean = false): List<ConfigurationType> {
+    fun getTypesToShow(project: Project, showApplicableTypesOnly: Boolean, allTypes: List<ConfigurationType>, hideVirtualConfigurations : Boolean = false): List<ConfigurationType> {
       val allVisibleTypes = if (hideVirtualConfigurations) allTypes.filter { it !is VirtualConfigurationType } else allTypes
       if (showApplicableTypesOnly) {
         val applicableTypes = allVisibleTypes.filter { configurationType -> configurationType.configurationFactories.any { it.isApplicable(project) } }
@@ -217,17 +209,8 @@ open class RunConfigurable @JvmOverloads constructor(protected val project: Proj
         else if (userObject is String) {
           showFolderField(node, userObject)
         }
-        else if (userObject is ConfigurationFactory) {
-          showTemplateConfigurable(userObject)
-        }
-        else if (userObject is ConfigurationType) {
-          val factories = userObject.configurationFactories
-          if (factories.size == 1) {
-            showTemplateConfigurable(factories[0])
-          }
-          else {
-            drawPressAddButtonMessage(userObject)
-          }
+        else if (userObject is ConfigurationFactory || userObject is ConfigurationType) {
+          typeOrFactorySelected(userObject);
         }
       }
       updateDialog()
@@ -236,10 +219,22 @@ open class RunConfigurable @JvmOverloads constructor(protected val project: Proj
     sortTopLevelBranches()
     tree.emptyText.appendText(ExecutionBundle.message("status.text.no.run.configurations.added")).appendLine(
       ExecutionBundle.message("status.text.add.new"), LINK_PLAIN_ATTRIBUTES) {
-      toolbarAddAction.showAddPopup(true, tree)}
+      toolbarAddAction.showAddPopup(true, it.source as MouseEvent)}
     val shortcut = KeymapUtil.getShortcutsText(toolbarAddAction.shortcutSet.shortcuts)
     if (shortcut.isNotEmpty()) tree.emptyText.appendText(" $shortcut")
     (tree.model as DefaultTreeModel).reload()
+  }
+
+  protected open fun typeOrFactorySelected(userObject: Any) {
+    if (userObject is ConfigurationType && userObject.configurationFactories.size == 1) {
+      showTemplateConfigurable(userObject.configurationFactories.first())
+    }
+    else if (userObject is ConfigurationFactory) {
+      showTemplateConfigurable(userObject)
+    }
+    else {
+      updateRightPanel(null)
+    }
   }
 
   protected open fun addRunConfigurationsToModel(model: DefaultMutableTreeNode) {
@@ -266,6 +261,12 @@ open class RunConfigurable @JvmOverloads constructor(protected val project: Proj
   }
 
   private fun selectConfiguration(configuration: RunConfiguration): Boolean {
+    val node = findNode(configuration) ?: return false
+    TreeUtil.selectInTree(node, true, tree)
+    return true
+  }
+
+  private fun findNode(configuration: RunConfiguration): DefaultMutableTreeNode? {
     val enumeration = root.breadthFirstEnumeration()
     while (enumeration.hasMoreElements()) {
       val node = enumeration.nextElement() as DefaultMutableTreeNode
@@ -276,12 +277,11 @@ open class RunConfigurable @JvmOverloads constructor(protected val project: Proj
       if (userObject is RunnerAndConfigurationSettingsImpl) {
         val otherConfiguration = (userObject as RunnerAndConfigurationSettings).configuration
         if (otherConfiguration.factory?.type?.id == configuration.factory?.type?.id && otherConfiguration.name == configuration.name) {
-          TreeUtil.selectInTree(node, true, tree)
-          return true
+          return node
         }
       }
     }
-    return false
+    return null
   }
 
   private fun showTemplateConfigurable(factory: ConfigurationFactory) {
@@ -329,9 +329,13 @@ open class RunConfigurable @JvmOverloads constructor(protected val project: Proj
     return userObject
   }
 
-  fun updateRightPanel(configurable: Configurable) {
+  fun updateRightPanel(configurable: Configurable?) {
     rightPanel.removeAll()
     selectedConfigurable = configurable
+    if (configurable == null) {
+      rightPanel.repaint()
+      return
+    }
 
     val configurableComponent = if (!project.isDefault && DumbService.getInstance(project).isDumb && !mayBeEditedInDumbMode(configurable)) {
       JBPanelWithEmptyText().withEmptyText(IdeBundle.message("empty.text.this.view.is.not.available.until.indices.are.built"))
@@ -379,23 +383,26 @@ open class RunConfigurable @JvmOverloads constructor(protected val project: Proj
   private fun installUpdateListeners(info: SingleConfigurationConfigurable<RunConfiguration>) {
     var changed = false
     info.editor.addSettingsEditorListener { editor ->
-      update()
-      val configuration = info.configuration
-      if (configuration is LocatableConfiguration) {
-        if (configuration.isGeneratedName && !changed) {
-          try {
-            val snapshot = editor.snapshot.configuration as LocatableConfiguration
-            val generatedName = snapshot.suggestedName()
-            if (generatedName != null && generatedName.isNotEmpty()) {
-              info.nameText = generatedName
-              changed = false
+      ApplicationManager.getApplication().invokeLater(
+        {
+          update()
+          val configuration = info.configuration
+          if (configuration is LocatableConfiguration) {
+            if (configuration.isGeneratedName && !changed) {
+              try {
+                val snapshot = editor.snapshot.configuration as LocatableConfiguration
+                val generatedName = snapshot.suggestedName()
+                if (generatedName != null && generatedName.isNotEmpty()) {
+                  info.nameText = generatedName
+                  changed = false
+                }
+              }
+              catch (ignore: ConfigurationException) {
+              }
             }
           }
-          catch (ignore: ConfigurationException) {
-          }
-        }
-      }
-      setupDialogBounds()
+          setupDialogBounds()
+        }, { isDisposed })
     }
 
     info.addNameListener(object : DocumentAdapter() {
@@ -409,32 +416,19 @@ open class RunConfigurable @JvmOverloads constructor(protected val project: Proj
       changed = true
       update()
     }
+
+    info.addValidationListener {
+      val node = findNode(info.configuration) ?: return@addValidationListener
+      treeModel.nodeChanged(node)
+    }
   }
 
-  private fun drawPressAddButtonMessage(configurationType: ConfigurationType?) {
+  protected fun drawPressAddButtonMessage(configurationType: ConfigurationType?) {
     val panel = JPanel(BorderLayout())
-    if (configurationType == null) {
-      val wrapper = JPanel(BorderLayout())
-      if (project.isDefault || !DumbService.isDumb(project)) {
-        val settingsPanel = JPanel(GridBagLayout())
-        val grid = GridBag().setDefaultAnchor(GridBagConstraints.NORTHWEST)
-
-        for (each in additionalSettings) {
-          settingsPanel.add(each.second, grid.nextLine().next())
-        }
-        settingsPanel.add(createSettingsPanel(), grid.nextLine().next())
-
-        val settingsWrapper = JPanel(BorderLayout())
-        settingsWrapper.add(settingsPanel, BorderLayout.WEST)
-        settingsWrapper.add(Box.createGlue(), BorderLayout.CENTER)
-
-        wrapper.add(runDashboardTypesPanel, BorderLayout.CENTER)
-        runDashboardTypesPanel.addChangeListener(this::defaultsSettingsChanged)
-        runDashboardTypesPanel.border = JBUI.Borders.empty(0, 0, 20, 0)
-        wrapper.add(settingsWrapper, BorderLayout.SOUTH)
+    if (!(configurationType is UnknownConfigurationType)) {
+      createTipPanelAboutAddingNewRunConfiguration(configurationType)?.let {
+        panel.add(it, BorderLayout.CENTER)
       }
-
-      panel.add(wrapper, BorderLayout.SOUTH)
     }
 
     rightPanel.removeAll()
@@ -443,39 +437,11 @@ open class RunConfigurable @JvmOverloads constructor(protected val project: Proj
     rightPanel.repaint()
   }
 
+  protected open fun createTipPanelAboutAddingNewRunConfiguration(configurationType: ConfigurationType?): JComponent? = null
+
   protected open fun createLeftPanel(): JComponent {
     initTree()
     return ScrollPaneFactory.createScrollPane(tree)
-  }
-
-  private fun defaultsSettingsChanged() {
-    isModified = recentsLimit.text != recentsLimit.getClientProperty(INITIAL_VALUE_KEY) ||
-                 confirmation.isSelected != confirmation.getClientProperty(INITIAL_VALUE_KEY) ||
-                 confirmationDeletionFromPopup.isSelected != confirmationDeletionFromPopup.getClientProperty(INITIAL_VALUE_KEY) ||
-                 runDashboardTypesPanel.isModified()
-  }
-
-  private fun createSettingsPanel(): JPanel {
-    val bottomPanel = JPanel(GridBagLayout())
-    val g = GridBag().setDefaultAnchor(GridBagConstraints.WEST)
-
-    bottomPanel.add(confirmation, g.nextLine().coverLine())
-    bottomPanel.add(confirmationDeletionFromPopup, g.nextLine().coverLine())
-    bottomPanel.add(create(recentsLimit, ExecutionBundle.message("temporary.configurations.limit"), BorderLayout.WEST),
-                    g.nextLine().insets(JBUI.insets(10, 0, 0, 0)))
-
-    recentsLimit.document.addDocumentListener(object : DocumentAdapter() {
-      override fun textChanged(e: DocumentEvent) {
-        defaultsSettingsChanged()
-      }
-    })
-    confirmation.addChangeListener {
-      defaultsSettingsChanged()
-    }
-    confirmationDeletionFromPopup.addChangeListener {
-      defaultsSettingsChanged()
-    }
-    return bottomPanel
   }
 
   protected val selectedConfigurationType: ConfigurationType?
@@ -485,11 +451,6 @@ open class RunConfigurable @JvmOverloads constructor(protected val project: Proj
     }
 
   override fun createComponent(): JComponent? {
-    for (each in RunConfigurationsSettings.EXTENSION_POINT.getExtensions(project)) {
-      val configurable = each.createConfigurable()
-      additionalSettings.add(Pair.create(configurable, configurable.createComponent()))
-    }
-
     val touchbarActions = DefaultActionGroup(toolbarAddAction)
     TouchbarDataKeys.putActionDescriptor(touchbarActions).setShowText(true).isCombineWithDlgButtons = true
 
@@ -523,21 +484,6 @@ open class RunConfigurable @JvmOverloads constructor(protected val project: Proj
   }
 
   override fun reset() {
-    val manager = runManager
-    val config = manager.config
-    recentsLimit.text = Integer.toString(config.recentsLimit)
-    recentsLimit.putClientProperty(INITIAL_VALUE_KEY, recentsLimit.text)
-    confirmation.isSelected = config.isRestartRequiresConfirmation
-    confirmation.putClientProperty(INITIAL_VALUE_KEY, confirmation.isSelected)
-    confirmationDeletionFromPopup.isSelected = config.isDeletionFromPopupRequiresConfirmation
-    confirmationDeletionFromPopup.putClientProperty(INITIAL_VALUE_KEY, confirmationDeletionFromPopup.isSelected)
-
-    runDashboardTypesPanel.reset()
-
-    for (each in additionalSettings) {
-      each.first.reset()
-    }
-
     isModified = false
   }
 
@@ -561,22 +507,6 @@ open class RunConfigurable @JvmOverloads constructor(protected val project: Proj
         }
       }
       manager.removeConfigurations(toDeleteSettings)
-
-      val recentLimit = Math.max(RunManagerConfig.MIN_RECENT_LIMIT, StringUtil.parseInt(recentsLimit.text, 0))
-      if (manager.config.recentsLimit != recentLimit) {
-        manager.config.recentsLimit = recentLimit
-        manager.checkRecentsLimit()
-      }
-      recentsLimit.text = recentLimit.toString()
-      recentsLimit.putClientProperty(INITIAL_VALUE_KEY, recentsLimit.text)
-      manager.config.isRestartRequiresConfirmation = confirmation.isSelected
-      confirmation.putClientProperty(INITIAL_VALUE_KEY, confirmation.isSelected)
-      manager.config.isDeletionFromPopupRequiresConfirmation = confirmationDeletionFromPopup.isSelected
-      confirmationDeletionFromPopup.putClientProperty(INITIAL_VALUE_KEY, confirmationDeletionFromPopup.isSelected)
-
-      runDashboardTypesPanel.apply()
-      additionalSettings.forEach { it.first.apply() }
-
       manager.setOrder(Comparator.comparingInt(ToIntFunction { settingsToOrder.getInt(it) }), isApplyAdditionalSortByTypeAndGroup = false)
     }
     finally {
@@ -748,7 +678,7 @@ open class RunConfigurable @JvmOverloads constructor(protected val project: Proj
       }
     }
 
-    return allSettings.size != currentSettingCount || storedComponents.values.any { it.isModified } || additionalSettings.any { it.first.isModified }
+    return allSettings.size != currentSettingCount || storedComponents.values.any { it.isModified }
   }
 
   override fun disposeUIResources() {
@@ -759,8 +689,6 @@ open class RunConfigurable @JvmOverloads constructor(protected val project: Proj
     isDisposed = true
     storedComponents.values.forEach { it.disposeUIResources() }
     storedComponents.clear()
-
-    additionalSettings.forEach { it.first.disposeUIResources() }
 
     TreeUtil.treeNodeTraverser(root)
       .traverse(TreeTraversal.PRE_ORDER_DFS)
@@ -924,6 +852,7 @@ open class RunConfigurable @JvmOverloads constructor(protected val project: Proj
     configuration.name = createUniqueName(typeNode, suggestName(configuration), CONFIGURATION, TEMPORARY_CONFIGURATION)
     (configuration as? LocatableConfigurationBase<*>)?.setNameChangedByUser(false)
     callNewConfigurationCreated(factory, configuration)
+    RunConfigurationOptionUsagesCollector.logAddNew(project, factory.type.id, ActionPlaces.RUN_CONFIGURATION_EDITOR)
     return createNewConfiguration(settings, node, selectedNode)
   }
 
@@ -954,7 +883,7 @@ open class RunConfigurable @JvmOverloads constructor(protected val project: Proj
       showAddPopup(true, null)
     }
 
-    fun showAddPopup(showApplicableTypesOnly: Boolean, component: JComponent?) {
+    fun showAddPopup(showApplicableTypesOnly: Boolean, clickEvent: MouseEvent?) {
       if (showApplicableTypesOnly && myPopupState.isRecentlyHidden) return // do not show new popup
       val allTypes = ConfigurationType.CONFIGURATION_TYPE_EP.extensionList
       val configurationTypes: MutableList<ConfigurationType?> = configurationTypeSorted(project, showApplicableTypesOnly, allTypes, true).toMutableList()
@@ -970,8 +899,8 @@ open class RunConfigurable @JvmOverloads constructor(protected val project: Proj
                                                           { showAddPopup(false, null) }, true)
       //new TreeSpeedSearch(myTree);
       myPopupState.prepareToShow(popup)
-      if (component == null) popup.showUnderneathOf(toolbarDecorator!!.actionsPanel)
-      else popup.showInBestPositionFor(DataManager.getInstance().getDataContext(component))
+      if (clickEvent == null) popup.showUnderneathOf(toolbarDecorator!!.actionsPanel)
+      else popup.show(RelativePoint(clickEvent))
     }
   }
 
@@ -1008,7 +937,9 @@ open class RunConfigurable @JvmOverloads constructor(protected val project: Proj
           continue
 
         if (node.userObject is SingleConfigurationConfigurable<*>) {
-          (node.userObject as SingleConfigurationConfigurable<*>).disposeUIResources()
+          val configurable = node.userObject as SingleConfigurationConfigurable<*>
+          RunConfigurationOptionUsagesCollector.logRemove(project, configurable.configuration.type.id, ActionPlaces.RUN_CONFIGURATION_EDITOR)
+          configurable.disposeUIResources()
         }
 
         nodeIndexToSelect = parent.getIndex(node)
@@ -1135,6 +1066,7 @@ open class RunConfigurable @JvmOverloads constructor(protected val project: Proj
         val configurable = createNewConfiguration(settings, node, selectedNode)
         configurable.nameTextField.selectionStart = 0
         configurable.nameTextField.selectionEnd = copyName.length
+        RunConfigurationOptionUsagesCollector.logCopy(project, configurable.configuration.type.id, ActionPlaces.RUN_CONFIGURATION_EDITOR)
       }
       catch (e: ConfigurationException) {
         Messages.showErrorDialog(toolbarDecorator!!.actionsPanel, e.message, e.title)

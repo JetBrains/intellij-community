@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.ide.navigationToolbar;
 
@@ -21,7 +21,10 @@ import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
-import com.intellij.util.*;
+import com.intellij.util.CommonProcessors;
+import com.intellij.util.ObjectUtils;
+import com.intellij.util.PairProcessor;
+import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -99,12 +102,6 @@ public class NavBarModel {
       return;
     }
 
-    //rider calls edt-only method getFocusOwner() in the updating
-    if (PlatformUtils.isRider()) {
-      updateModel(dataContext);
-      if (callback != null) callback.run();
-      return;
-    }
     DataContext wrappedDataContext = wrapDataContext(dataContext);
     ReadAction.nonBlocking(() -> createModel(wrappedDataContext))
       .expireWith(myProject)
@@ -170,7 +167,7 @@ public class NavBarModel {
     if (!myModel.isEmpty() && Objects.equals(get(myModel.size() - 1), psiElement) && !myChanged) return null;
 
     if (psiElement != null && psiElement.isValid()) {
-      return createModel(psiElement, ownerExtension);
+      return createModel(psiElement, dataContext, ownerExtension);
     }
     else {
       if (UISettings.getInstance().getShowNavigationBar() && !myModel.isEmpty()) return null;
@@ -207,11 +204,11 @@ public class NavBarModel {
   }
 
   protected void updateModel(final PsiElement psiElement, @Nullable NavBarModelExtension ownerExtension) {
-    setModel(createModel(psiElement, ownerExtension));
+    setModel(createModel(psiElement, null, ownerExtension));
   }
 
   @NotNull
-  private List<Object> createModel(final PsiElement psiElement, @Nullable NavBarModelExtension ownerExtension) {
+  private List<Object> createModel(final PsiElement psiElement, @Nullable DataContext dataContext, @Nullable NavBarModelExtension ownerExtension) {
     final Set<VirtualFile> roots = new HashSet<>();
     final ProjectRootManager projectRootManager = ProjectRootManager.getInstance(myProject);
     final ProjectFileIndex projectFileIndex = projectRootManager.getFileIndex();
@@ -233,7 +230,7 @@ public class NavBarModel {
     }
 
     List<Object> updatedModel =
-      ReadAction.compute(() -> isValid(psiElement) ? myBuilder.createModel(psiElement, roots, ownerExtension) : Collections.emptyList());
+      ReadAction.compute(() -> isValid(psiElement) ? myBuilder.createModel(psiElement, roots, dataContext, ownerExtension) : Collections.emptyList());
 
     return ContainerUtil.reverse(updatedModel);
   }
@@ -326,7 +323,7 @@ public class NavBarModel {
     return child;
   }
 
-  protected List<Object> getChildren(final Object object) {
+  public List<Object> getChildren(final Object object) {
     final List<Object> result = new ArrayList<>();
     PairProcessor<Object, NavBarModelExtension> processor = (o, ext) -> {
       ContainerUtil.addIfNotNull(result, o instanceof PsiElement && ext.normalizeChildren() ? normalize((PsiElement)o) : o);

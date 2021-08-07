@@ -1,20 +1,5 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.troubleshooting.ui;
-
 
 import com.intellij.CommonBundle;
 import com.intellij.ide.IdeBundle;
@@ -32,8 +17,6 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.datatransfer.StringSelection;
 import java.awt.event.ActionEvent;
-import java.awt.event.ItemEvent;
-import java.awt.event.ItemListener;
 
 public class CollectTroubleshootingInformationDialog extends DialogWrapper {
   private JTextArea summary;
@@ -46,21 +29,18 @@ public class CollectTroubleshootingInformationDialog extends DialogWrapper {
     CompositeGeneralTroubleInfoCollector generalInfoCollector = new CompositeGeneralTroubleInfoCollector();
     troubleTypeBox.addItem(generalInfoCollector);
     TroubleInfoCollector[] extensions = TroubleInfoCollector.EP_SETTINGS.getExtensions();
-    for (TroubleInfoCollector troubleInfoCollector : extensions){
+    for (TroubleInfoCollector troubleInfoCollector : extensions) {
       troubleTypeBox.addItem(troubleInfoCollector);
     }
-    troubleTypeBox.addItemListener(new ItemListener() {
-      @Override
-      public void itemStateChanged(final ItemEvent e) {
-        summary.setText(CommonBundle.getLoadingTreeNodeText());
-        ApplicationManager.getApplication().executeOnPooledThread(() -> {
-          TroubleInfoCollector item = (TroubleInfoCollector)e.getItem();
-          String collectedInfo = item.collectInfo(project);
-          if (e.getItem() == troubleTypeBox.getSelectedItem()) {
-            summary.setText(collectedInfo);
-          }
-        });
-      }
+    troubleTypeBox.addItemListener(e -> {
+      summary.setText(CommonBundle.getLoadingTreeNodeText());
+      ApplicationManager.getApplication().executeOnPooledThread(() -> {
+        TroubleInfoCollector item = (TroubleInfoCollector)e.getItem();
+        String collectedInfo = item.collectInfo(project);
+        if (e.getItem() == troubleTypeBox.getSelectedItem()) {
+          summary.setText(collectedInfo);
+        }
+      });
     });
     summary.setText(generalInfoCollector.collectInfo(project));
     summary.setLineWrap(true);
@@ -69,9 +49,8 @@ public class CollectTroubleshootingInformationDialog extends DialogWrapper {
     pack();
   }
 
-  @Nullable
   @Override
-  protected String getDimensionServiceKey() {
+  protected @Nullable String getDimensionServiceKey() {
     return getClass().getName();
   }
 
@@ -86,9 +65,8 @@ public class CollectTroubleshootingInformationDialog extends DialogWrapper {
     return new Action[]{copy, getOKAction()};
   }
 
-  @Nullable
   @Override
-  protected JComponent createCenterPanel() {
+  protected @Nullable JComponent createCenterPanel() {
     centerPanel.setMinimumSize(new Dimension(500, 600));
     return centerPanel;
   }

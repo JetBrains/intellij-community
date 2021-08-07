@@ -25,7 +25,7 @@ class GHPRRepositoryDataServiceImpl internal constructor(progressManager: Progre
                                                          override val repositoryCoordinates: GHRepositoryCoordinates,
                                                          private val repoOwner: GHRepositoryOwnerName,
                                                          override val repositoryId: String,
-                                                         override val defaultBranchName: String,
+                                                         override val defaultBranchName: String?,
                                                          override val isFork: Boolean)
   : GHPRRepositoryDataService {
 

@@ -1,5 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.navigation;
 
 import com.intellij.codeInsight.CodeInsightBundle;
@@ -18,6 +17,7 @@ import com.intellij.openapi.editor.impl.DocumentMarkupModel;
 import com.intellij.openapi.editor.markup.HighlighterTargetArea;
 import com.intellij.openapi.editor.markup.MarkupModel;
 import com.intellij.openapi.editor.markup.TextAttributes;
+import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.TextEditor;
@@ -32,7 +32,7 @@ import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
 import com.intellij.openapi.util.NlsContexts.PopupTitle;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.text.Strings;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiElement;
@@ -45,6 +45,7 @@ import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.popup.list.ListPopupImpl;
 import com.intellij.ui.popup.list.PopupListElementRenderer;
 import com.intellij.util.Processor;
+import com.intellij.util.TextWithIcon;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
@@ -56,10 +57,8 @@ import java.awt.event.ActionEvent;
 import java.util.List;
 import java.util.*;
 
-/**
- * @author ven
- */
 public final class NavigationUtil {
+  private static final ExtensionPointName<GotoRelatedProvider> GO_TO_EP_NAME = new ExtensionPointName<>("com.intellij.gotoRelatedProvider");
 
   private NavigationUtil() {
   }
@@ -71,7 +70,7 @@ public final class NavigationUtil {
 
   @NotNull
   public static JBPopup getPsiElementPopup(PsiElement @NotNull [] elements,
-                                           @NotNull final PsiElementListCellRenderer<? super PsiElement> renderer,
+                                           @NotNull PsiElementListCellRenderer<? super PsiElement> renderer,
                                            @PopupTitle String title) {
     return getPsiElementPopup(elements, renderer, title, element -> {
       Navigatable descriptor = EditSourceUtil.getDescriptor(element);
@@ -84,18 +83,18 @@ public final class NavigationUtil {
 
   @NotNull
   public static <T extends PsiElement> JBPopup getPsiElementPopup(T @NotNull [] elements,
-                                                                  @NotNull final PsiElementListCellRenderer<? super T> renderer,
+                                                                  @NotNull PsiElementListCellRenderer<? super T> renderer,
                                                                   @PopupTitle String title,
-                                                                  @NotNull final PsiElementProcessor<? super T> processor) {
+                                                                  @NotNull PsiElementProcessor<? super T> processor) {
     return getPsiElementPopup(elements, renderer, title, processor, null);
   }
 
   @NotNull
   public static <T extends PsiElement> JBPopup getPsiElementPopup(T @NotNull [] elements,
-                                                                  @NotNull final PsiElementListCellRenderer<? super T> renderer,
+                                                                  @NotNull PsiElementListCellRenderer<? super T> renderer,
                                                                   @Nullable @PopupTitle String title,
-                                                                  @NotNull final PsiElementProcessor<? super T> processor,
-                                                                  @Nullable final T initialSelection) {
+                                                                  @NotNull PsiElementProcessor<? super T> processor,
+                                                                  @Nullable T initialSelection) {
     assert elements.length > 0 : "Attempted to show a navigation popup with zero elements";
     IPopupChooserBuilder<T> builder = JBPopupFactory.getInstance()
       .createPopupChooserBuilder(ContainerUtil.newArrayList(elements))
@@ -198,7 +197,8 @@ public final class NavigationUtil {
     if (!EditorHistoryManager.getInstance(elt.getProject()).hasBeenOpen(vFile)) return false;
 
     final FileEditorManager fem = FileEditorManager.getInstance(elt.getProject());
-    if (!fem.isFileOpen(vFile)) {
+    boolean wasAlreadyOpen = fem.isFileOpen(vFile);
+    if (!wasAlreadyOpen) {
       fem.openFile(vFile, requestFocus, searchForOpen);
     }
 
@@ -212,8 +212,10 @@ public final class NavigationUtil {
         final int offset = text.getCaretModel().getOffset();
 
         if (range.containsOffset(offset)) {
-          // select the file
-          fem.openFile(vFile, requestFocus, searchForOpen);
+          if (wasAlreadyOpen) {
+            // select the file
+            fem.openFile(vFile, requestFocus, searchForOpen);
+          }
           return true;
         }
       }
@@ -230,17 +232,16 @@ public final class NavigationUtil {
     if (attributes.getForegroundColor() == null && attributes.getEffectColor() == null) return attributes;
     MarkupModel model = DocumentMarkupModel.forDocument(editor.getDocument(), editor.getProject(), false);
     if (model != null) {
-      if (!((MarkupModelEx)model).processRangeHighlightersOverlappingWith(range.getStartOffset(), range.getEndOffset(),
-                                                                          highlighter -> {
-                                                                            if (highlighter.isValid() && highlighter.getTargetArea() == HighlighterTargetArea.LINES_IN_RANGE) {
-                                                                              TextAttributes textAttributes = highlighter.getTextAttributes(editor.getColorsScheme());
-                                                                              if (textAttributes != null) {
-                                                                                Color color = textAttributes.getBackgroundColor();
-                                                                                return !(color != null && color.getBlue() > 128 && color.getRed() < 128 && color.getGreen() < 128);
-                                                                              }
-                                                                            }
-                                                                            return true;
-                                                                          })) {
+      if (!((MarkupModelEx)model).processRangeHighlightersOverlappingWith(range.getStartOffset(), range.getEndOffset(), highlighter -> {
+        if (highlighter.isValid() && highlighter.getTargetArea() == HighlighterTargetArea.LINES_IN_RANGE) {
+          TextAttributes textAttributes = highlighter.getTextAttributes(editor.getColorsScheme());
+          if (textAttributes != null) {
+            Color color = textAttributes.getBackgroundColor();
+            return !(color != null && color.getBlue() > 128 && color.getRed() < 128 && color.getGreen() < 128);
+          }
+        }
+        return true;
+      })) {
         TextAttributes clone = attributes.clone();
         clone.setForegroundColor(Color.orange);
         clone.setEffectColor(Color.orange);
@@ -293,9 +294,6 @@ public final class NavigationUtil {
 
     final Ref<Boolean> hasMnemonic = Ref.create(false);
     final DefaultPsiElementCellRenderer renderer = new DefaultPsiElementCellRenderer() {
-      {
-        setFocusBorderEnabled(false);
-      }
 
       @Override
       public String getElementText(PsiElement element) {
@@ -323,8 +321,8 @@ public final class NavigationUtil {
       }
 
       @Override
-      protected DefaultListCellRenderer getRightCellRenderer(Object value) {
-        return showContainingModules ? super.getRightCellRenderer(value) : null;
+      protected @Nullable TextWithIcon getItemLocation(Object value) {
+        return showContainingModules ? super.getItemLocation(value) : null;
       }
 
       @Override
@@ -341,13 +339,21 @@ public final class NavigationUtil {
         if (name == null) return false;
         renderer.append(name, nameAttributes);
         renderer.setIcon(item.getCustomIcon());
+        final String containerName = item.getCustomContainerName();
+        if (containerName != null) {
+          renderer.append(" " + containerName, SimpleTextAttributes.GRAYED_ATTRIBUTES);
+        }
+
         return true;
       }
 
       @Override
       public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
-        final JPanel component = (JPanel)super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
-        if (!hasMnemonic.get()) return component;
+        final Component psiComponent = super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+        if (!hasMnemonic.get() || !(psiComponent instanceof JPanel)) {
+          return psiComponent;
+        }
+        JPanel component = (JPanel)psiComponent;
 
         final JPanel panelWithMnemonic = new JPanel(new BorderLayout());
         final int mnemonic = getMnemonic(value, itemsMap);
@@ -377,12 +383,12 @@ public final class NavigationUtil {
         boolean hasTitle = false;
         for (Object element : elements) {
           final GotoRelatedItem item = itemsMap.get(element);
-          if (item != null && !StringUtil.equals(current, item.getGroup())) {
+          if (item != null && !Objects.equals(current, item.getGroup())) {
             current = item.getGroup();
             separators.put(element, new ListSeparator(
-              hasTitle && StringUtil.isEmpty(current) ? CodeInsightBundle.message("goto.related.items.separator.other") : current)
+              hasTitle && Strings.isEmpty(current) ? CodeInsightBundle.message("goto.related.items.separator.other") : current)
             );
-            if (!hasTitle && !StringUtil.isEmpty(current)) {
+            if (!hasTitle && !Strings.isEmpty(current)) {
               hasTitle = true;
             }
           }
@@ -483,7 +489,7 @@ public final class NavigationUtil {
   @NotNull
   public static List<GotoRelatedItem> collectRelatedItems(@NotNull PsiElement contextElement, @Nullable DataContext dataContext) {
     Set<GotoRelatedItem> items = new LinkedHashSet<>();
-    for (GotoRelatedProvider provider : GotoRelatedProvider.EP_NAME.getExtensionList()) {
+    for (GotoRelatedProvider provider : GO_TO_EP_NAME.getExtensionList()) {
       items.addAll(provider.getItems(contextElement));
       if (dataContext != null) {
         items.addAll(provider.getItems(dataContext));
@@ -493,7 +499,7 @@ public final class NavigationUtil {
     Arrays.sort(result, (i1, i2) -> {
       String o1 = i1.getGroup();
       String o2 = i2.getGroup();
-      return StringUtil.isEmpty(o1) ? 1 : StringUtil.isEmpty(o2) ? -1 : o1.compareTo(o2);
+      return Strings.isEmpty(o1) ? 1 : Strings.isEmpty(o2) ? -1 : o1.compareTo(o2);
     });
     return Arrays.asList(result);
   }

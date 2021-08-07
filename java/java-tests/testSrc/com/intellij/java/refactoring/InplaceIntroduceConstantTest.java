@@ -19,6 +19,12 @@ import org.jetbrains.annotations.Nullable;
 public class InplaceIntroduceConstantTest extends AbstractJavaInplaceIntroduceTest {
   private static final String BASE_PATH = "/refactoring/inplaceIntroduceConstant/";
 
+  @Override
+  protected void tearDown() throws Exception {
+    super.tearDown();
+    JavaRefactoringSettings.getInstance().INTRODUCE_CONSTANT_REPLACE_ALL = false;
+  }
+
   public void testReplaceAll() {
     doTest(introducer -> introducer.setReplaceAllOccurrences(true));
   }
@@ -93,6 +99,10 @@ public class InplaceIntroduceConstantTest extends AbstractJavaInplaceIntroduceTe
   }
 
   public void testCorrectConstantPosition() {
+    doTest(introducer -> type("R"));
+  }
+
+  public void testConstantBeforeUsage() {
     doTest(introducer -> type("R"));
   }
 

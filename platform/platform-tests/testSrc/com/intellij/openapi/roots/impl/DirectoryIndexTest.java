@@ -16,8 +16,10 @@ import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
 import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.*;
-import com.intellij.openapi.vfs.ex.http.HttpFileSystem;
-import com.intellij.testFramework.*;
+import com.intellij.testFramework.ExtensionTestUtil;
+import com.intellij.testFramework.HeavyPlatformTestCase;
+import com.intellij.testFramework.PsiTestUtil;
+import com.intellij.testFramework.VfsTestUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -231,6 +233,7 @@ public class DirectoryIndexTest extends DirectoryIndexTestCase {
     checkInfo(myModule2Dir, myModule2, false, false, null, null, null);
     checkInfo(mySrcDir2, myModule2, false, false, "", mySrcDir2Folder, JavaSourceRootType.SOURCE, myModule2, myModule3);
     assertNotInProject(myCvsDir);
+    assertIgnored(myCvsDir);
     assertExcluded(myExcludeDir, myModule2);
     assertExcluded(myExcludedLibClsDir, myModule);
     assertExcluded(myExcludedLibSrcDir, myModule);
@@ -241,6 +244,7 @@ public class DirectoryIndexTest extends DirectoryIndexTestCase {
 
     VirtualFile cvs = createChildDirectory(myPack1Dir, "CVS");
     assertNotInProject(cvs);
+    assertIgnored(cvs);
     assertNull(myFileIndex.getPackageNameByDirectory(cvs));
   }
 
@@ -363,6 +367,10 @@ public class DirectoryIndexTest extends DirectoryIndexTestCase {
 
   public void testIgnoredFile() {
     VirtualFile ignoredFile = createChildData(myModule1Dir, "CVS");
+    assertIgnored(ignoredFile);
+  }
+
+  private void assertIgnored(@NotNull VirtualFile ignoredFile) {
     DirectoryInfo info = myIndex.getInfoForFile(ignoredFile);
     assertTrue(info.isIgnored());
     assertTrue(myFileIndex.isExcluded(ignoredFile));

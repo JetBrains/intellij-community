@@ -2,8 +2,8 @@
 package com.intellij.serialization
 
 import com.intellij.util.SystemProperties
-import it.unimi.dsi.fastutil.Hash
-import it.unimi.dsi.fastutil.objects.Object2ObjectOpenCustomHashMap
+import com.intellij.util.containers.CollectionFactory
+import com.intellij.util.containers.HashingStrategy
 import org.jetbrains.annotations.TestOnly
 import java.lang.reflect.ParameterizedType
 import java.lang.reflect.Type
@@ -13,7 +13,7 @@ import kotlin.concurrent.read
 import kotlin.concurrent.write
 
 internal abstract class BindingProducer : BindingInitializationContext {
-  private val cache: MutableMap<Type, Binding> = Object2ObjectOpenCustomHashMap(object : Hash.Strategy<Type> {
+  private val cache: MutableMap<Type, Binding> = CollectionFactory.createCustomHashingStrategyMap(object : HashingStrategy<Type> {
     override fun equals(o1: Type?, o2: Type?): Boolean {
       if (o1 is ParameterizedType && o2 is ParameterizedType) {
         return o1 === o2 || (Arrays.equals(o1.actualTypeArguments, o2.actualTypeArguments) && o1.rawType == o2.rawType)

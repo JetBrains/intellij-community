@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.gradle.tooling;
 
 import com.intellij.openapi.externalSystem.model.ExternalSystemException;
@@ -37,22 +37,22 @@ public final class MessageBuilder {
     return new MessageBuilder(title, text);
   }
 
-  public final MessageBuilder warning() {
+  public MessageBuilder warning() {
     myKind = WARNING;
     return this;
   }
 
-  public final MessageBuilder error() {
+  public MessageBuilder error() {
     myKind = Kind.ERROR;
     return this;
   }
 
-  public final MessageBuilder withGroup(String group) {
+  public MessageBuilder withGroup(String group) {
     myGroup = group;
     return this;
   }
 
-  public final MessageBuilder withException(Exception e) {
+  public MessageBuilder withException(Exception e) {
     myException = e;
     return this;
   }

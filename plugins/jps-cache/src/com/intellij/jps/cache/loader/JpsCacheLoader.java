@@ -17,7 +17,7 @@ import java.io.File;
 import java.io.IOException;
 
 class JpsCacheLoader implements JpsOutputLoader<File> {
-  private static final Logger LOG = Logger.getInstance("com.intellij.jps.loader.JpsCacheLoader");
+  private static final Logger LOG = Logger.getInstance(JpsCacheLoader.class);
   private static final String TIMESTAMPS_FOLDER_NAME = "timestamps";
   private static final String FS_STATE_FILE = "fs_state.dat";
   private final BuildManager myBuildManager;
@@ -39,7 +39,7 @@ class JpsCacheLoader implements JpsOutputLoader<File> {
 
     long start = System.currentTimeMillis();
     File zipFile = myClient.downloadCacheById(context.getDownloadIndicatorManager(), context.getCommitId(),
-                                              myBuildManager.getBuildSystemDirectory().toFile());
+                                              myBuildManager.getBuildSystemDirectory(myProject).toFile());
     LOG.info("Download of jps caches took: " + (System.currentTimeMillis() - start));
     return zipFile;
   }
@@ -48,8 +48,8 @@ class JpsCacheLoader implements JpsOutputLoader<File> {
   public LoaderStatus extract(@Nullable Object loadResults, @NotNull SegmentedProgressIndicatorManager extractIndicatorManager) {
     if (!(loadResults instanceof File)) return LoaderStatus.FAILED;
 
-    File zipFile = (File) loadResults;
-    File targetDir = myBuildManager.getBuildSystemDirectory().toFile();
+    File zipFile = (File)loadResults;
+    File targetDir = myBuildManager.getBuildSystemDirectory(myProject).toFile();
     File tmpFolder = new File(targetDir, "tmp");
     try {
       // Start extracting after download

@@ -2,7 +2,7 @@
 package com.intellij.openapi.project
 
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.runWriteAction
+import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.components.BaseState
 import com.intellij.openapi.components.SimplePersistentStateComponent
 import com.intellij.openapi.components.State
@@ -28,20 +28,28 @@ internal class ExternalStorageConfigurationManagerImpl(private val project: Proj
    */
   override fun setEnabled(value: Boolean) {
     state.enabled = value
-    if (WorkspaceModel.isEnabled) {
-      ApplicationManager.getApplication().invokeAndWait(Runnable {
-        runWriteAction {
-          WorkspaceModel.getInstance(project).updateProjectModel { updater ->
-            val entitiesMap = updater.entitiesBySource { it is JpsImportedEntitySource && it.storedExternally != value }
-            entitiesMap.values.asSequence().flatMap { it.values.asSequence().flatMap { entities -> entities.asSequence() } }.forEach { entity ->
-              val source = entity.entitySource
-              if (source is JpsImportedEntitySource) {
-                updater.changeSource(entity, JpsImportedEntitySource(source.internalFile, source.externalSystemId, value))
-              }
-            }
-          }
+    if (project.isDefault) return
+    val app = ApplicationManager.getApplication()
+    app.invokeAndWait { app.runWriteAction(::updateEntitySource) }
+  }
+
+  override fun loadState(state: ExternalStorageConfiguration) {
+    super.loadState(state)
+    if (project.isDefault) return
+    val app = ApplicationManager.getApplication()
+    app.invokeLater { app.runWriteAction(::updateEntitySource) }
+  }
+
+  private fun updateEntitySource() {
+    val value = state.enabled
+    WorkspaceModel.getInstance(project).updateProjectModel { updater ->
+      val entitiesMap = updater.entitiesBySource { it is JpsImportedEntitySource && it.storedExternally != value }
+      entitiesMap.values.asSequence().flatMap { it.values.asSequence().flatMap { entities -> entities.asSequence() } }.forEach { entity ->
+        val source = entity.entitySource
+        if (source is JpsImportedEntitySource) {
+          updater.changeSource(entity, JpsImportedEntitySource(source.internalFile, source.externalSystemId, value))
         }
-      })
+      }
     }
   }
 }

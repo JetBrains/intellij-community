@@ -62,7 +62,6 @@ public class EditorSearchSession implements SearchSession,
                                             SelectionListener,
                                             SearchResults.SearchResultsListener,
                                             SearchReplaceComponent.Listener {
-  private static final String FIND_TYPE = "FindInFile";
   public static final DataKey<EditorSearchSession> SESSION_KEY = DataKey.create("EditorSearchSession");
   public static final Logger SELECTION_UPDATE_LOGGER = Logger.getInstance("com.intellij.find.selection");
 
@@ -103,8 +102,6 @@ public class EditorSearchSession implements SearchSession,
     myComponent = SearchReplaceComponent
       .buildFor(project, myEditor.getContentComponent())
       .addPrimarySearchActions(createPrimarySearchActions())
-      .addSecondarySearchActions(createSecondarySearchActions())
-      .addPrimarySearchActions(new ToggleSelectionOnlyAction())
       .addExtraSearchActions(new ToggleMatchCase(),
                              new ToggleWholeWordsOnlyAction(),
                              new ToggleRegex(),
@@ -119,7 +116,6 @@ public class EditorSearchSession implements SearchSession,
       .withDataProvider(this)
       .withCloseAction(this::close)
       .withReplaceAction(this::replaceCurrent)
-      .withSecondarySearchActionsIsModifiedGetter(() -> myFindModel.getSearchContext() != FindModel.SearchContext.ANY)
       .build();
 
     myComponent.addListener(this);
@@ -197,7 +193,7 @@ public class EditorSearchSession implements SearchSession,
 
     myEditor.getSelectionModel().addSelectionListener(this, myDisposable);
 
-    FindUtil.triggerUsedOptionsStats(project, FIND_TYPE, findModel);
+    FindUsagesCollector.triggerUsedOptionsStats(project, FindUsagesCollector.FIND_IN_FILE, findModel);
   }
 
   @NotNull
@@ -211,19 +207,9 @@ public class EditorSearchSession implements SearchSession,
       new AddOccurrenceAction(),
       new RemoveOccurrenceAction(),
       new SelectAllAction(),
-      new Separator()
-    };
-  }
-
-  @NotNull
-  protected AnAction[] createSecondarySearchActions() {
-    return new AnAction[] {
-      new ToggleAnywhereAction(),
-      new ToggleInCommentsAction(),
-      new ToggleInLiteralsOnlyAction(),
-      new ToggleExceptCommentsAction(),
-      new ToggleExceptLiteralsAction(),
-      new ToggleExceptCommentsAndLiteralsAction()
+      new Separator(),
+      new ToggleSelectionOnlyAction(),
+      new ShowFilterPopupGroup()
     };
   }
 
@@ -400,6 +386,10 @@ public class EditorSearchSession implements SearchSession,
   public void searchBackward() {
     moveCursor(SearchResults.Direction.UP);
     addTextToRecent(myComponent.getSearchTextComponent());
+  }
+
+  public boolean isLast(boolean forward) {
+    return myLivePreviewController.isLast(forward ? SearchResults.Direction.DOWN : SearchResults.Direction.UP);
   }
 
   private void updateUIWithFindModel() {

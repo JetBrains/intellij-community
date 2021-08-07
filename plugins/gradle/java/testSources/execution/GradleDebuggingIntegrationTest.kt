@@ -12,9 +12,8 @@ import com.intellij.openapi.externalSystem.service.execution.ExternalSystemTaskD
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.io.systemIndependentPath
 import org.assertj.core.api.Assertions.assertThat
-import org.jetbrains.plugins.gradle.importing.GradleBuildScriptBuilderEx
+import org.jetbrains.plugins.gradle.importing.GradleBuildScriptBuilder
 import org.jetbrains.plugins.gradle.importing.GradleImportingTestCase
-import org.jetbrains.plugins.gradle.importing.withMavenCentral
 import org.jetbrains.plugins.gradle.service.execution.GradleRunConfiguration
 import org.junit.Test
 import java.io.File
@@ -29,7 +28,7 @@ class GradleDebuggingIntegrationTest : GradleImportingTestCase() {
   @Test
   fun `daemon is started with debug flags only if script debugging is enabled`() {
     importProject(
-      GradleBuildScriptBuilderEx()
+      createBuildScriptBuilder()
         .withMavenCentral()
         .applyPlugin("'java'")
         .addPostfix("""
@@ -113,7 +112,7 @@ class GradleDebuggingIntegrationTest : GradleImportingTestCase() {
     val explicitArgsFileName = "explicitTaskArgs.txt"
 
     importProject(
-      GradleBuildScriptBuilderEx()
+      createBuildScriptBuilder()
         .withMavenCentral()
         .applyPlugin("'java'")
         .addPostfix("""
@@ -180,7 +179,7 @@ class GradleDebuggingIntegrationTest : GradleImportingTestCase() {
     val argsFileName = "args.txt"
 
     importProject(
-      GradleBuildScriptBuilderEx()
+      createBuildScriptBuilder()
         .withJavaPlugin()
         .withMavenCentral()
         .addPostfix("""
@@ -235,7 +234,7 @@ class GradleDebuggingIntegrationTest : GradleImportingTestCase() {
     val argsFileName = "args.txt"
 
     importProject(
-      GradleBuildScriptBuilderEx()
+      createBuildScriptBuilder()
         .withJavaPlugin()
         .withMavenCentral()
         .addPostfix("""          
@@ -278,9 +277,9 @@ class GradleDebuggingIntegrationTest : GradleImportingTestCase() {
       withMavenCentral()
       withTask("simple")
       withTask("printArgs", "JavaExec") {
-        property("classpath", "rootProject.sourceSets.main.runtimeClasspath")
-        property("main", "'pack.AClass'")
-        call("args", "'${subProjectArgsFile.systemIndependentPath}'")
+        assign("classpath", code("rootProject.sourceSets.main.runtimeClasspath"))
+        assign("main", "pack.AClass")
+        call("args", subProjectArgsFile.systemIndependentPath)
       }
     }
 
@@ -320,8 +319,8 @@ class GradleDebuggingIntegrationTest : GradleImportingTestCase() {
       .contains(debugString)
   }
 
-  fun importProject(configure: GradleBuildScriptBuilderEx.() -> Unit) {
-    val buildScript = GradleBuildScriptBuilderEx()
+  fun importProject(configure: GradleBuildScriptBuilder.() -> Unit) {
+    val buildScript = createBuildScriptBuilder()
     buildScript.configure()
     importProject(buildScript.generate())
   }

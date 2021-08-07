@@ -60,7 +60,7 @@ class ProcessMediatorClient private constructor(
 
   suspend fun createProcess(handleId: Long,
                             command: List<String>, workingDir: File, environVars: Map<String, String>,
-                            inFile: File?, outFile: File?, errFile: File?): Long {
+                            inFile: File?, outFile: File?, errFile: File?, redirectErrorStream: Boolean): Long {
     val commandLine = CommandLine.newBuilder().apply {
       addAllCommand(command)
       this.workingDir = workingDir.absolutePath
@@ -68,6 +68,7 @@ class ProcessMediatorClient private constructor(
       inFile?.let { this.inFile = it.absolutePath }
       outFile?.let { this.outFile = it.absolutePath }
       errFile?.let { this.errFile = it.absolutePath }
+      this.redirectErrorStream = redirectErrorStream
     }.build()
     val request = CreateProcessRequest.newBuilder().apply {
       this.handleId = handleId

@@ -5,7 +5,7 @@ import com.intellij.codeWithMe.ClientId.Companion.withClientId
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.Logger
-import com.intellij.openapi.progress.ProcessCanceledException
+import com.intellij.openapi.diagnostic.trace
 import com.intellij.openapi.util.Disposer
 import com.intellij.util.Processor
 import java.util.concurrent.Callable
@@ -31,6 +31,9 @@ data class ClientId(val value: String) {
     }
 
     companion object {
+
+        private val LOG = Logger.getInstance(ClientId::class.java)
+        fun getClientIdLogger() = LOG
 
         /**
          * Default client id for local application
@@ -144,12 +147,13 @@ data class ClientId(val value: String) {
          * Computes a value under given ClientId
          */
         @JvmStatic
-        inline fun <T> withClientId(clientId: ClientId?, action: () -> T): T {
+        inline fun <T> withClientId(clientIdRaw: ClientId?, action: () -> T): T {
             val clientIdService = ClientIdService.tryGetInstance() ?: return action()
 
-            if (!clientIdService.isValid(clientId)) {
-                Logger.getInstance(ClientId::class.java).warn("Invalid clientId: $clientId", Throwable())
-            }
+            val clientId = if (!clientIdService.isValid(clientIdRaw)) {
+              getClientIdLogger().trace { "Invalid ClientId $clientIdRaw replaced with null at ${Throwable().fillInStackTrace()}" }
+              null
+            } else clientIdRaw
 
             val foreignMainThreadActivity = clientIdService.checkLongActivity &&
                                             ApplicationManager.getApplication().isDispatchThread &&
@@ -162,7 +166,7 @@ data class ClientId(val value: String) {
                     val result = action()
                     val delta = System.currentTimeMillis() - beforeActionTime
                     if (delta > 1000) {
-                        Logger.getInstance(ClientId::class.java).warn("LONG MAIN THREAD ACTIVITY by ${clientId?.value}. Stack trace:\n${getStackTrace()}")
+                        getClientIdLogger().warn("LONG MAIN THREAD ACTIVITY by ${clientId?.value}. Stack trace:\n${getStackTrace()}")
                     }
                     return result
                 } else
@@ -170,6 +174,17 @@ data class ClientId(val value: String) {
             } finally {
                 clientIdService.clientIdValue = old
             }
+        }
+
+        @JvmStatic
+        fun <T> decorateFunction(action: () -> T): () -> T {
+          if (propagateAcrossThreads) return action
+          val currentId = currentOrNull
+          return {
+            withClientId(currentId) {
+              return@withClientId action()
+            }
+          }
         }
 
         @JvmStatic
@@ -229,6 +244,10 @@ data class ClientId(val value: String) {
 
 fun isForeignClientOnServer(): Boolean {
     return !ClientId.isCurrentlyUnderLocalId && ClientId.localId == ClientId.defaultLocalId
+}
+
+fun isOnGuest(): Boolean {
+    return ClientId.localId != ClientId.defaultLocalId
 }
 
 fun getStackTrace(): String {

@@ -1,26 +1,31 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.util;
 
-import org.jdom.*;
+import org.codehaus.stax2.XMLStreamReader2;
+import org.jdom.Document;
+import org.jdom.Element;
+import org.jdom.Namespace;
+import org.jdom.Verifier;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import javax.xml.stream.XMLStreamException;
-import javax.xml.stream.XMLStreamReader;
 
 import static javax.xml.stream.XMLStreamConstants.*;
 
 // DTD, COMMENT and PROCESSING_INSTRUCTION are ignored
-final class SafeStAXStreamBuilder {
-  static final SafeJdomFactory FACTORY = new SafeJdomFactory.BaseSafeJdomFactory();
+@ApiStatus.Internal
+public final class SafeStAXStreamBuilder {
+  public static final SafeJdomFactory FACTORY = new SafeJdomFactory.BaseSafeJdomFactory();
 
-  static Document buildDocument(@NotNull XMLStreamReader stream, @SuppressWarnings("SameParameterValue") boolean isIgnoreBoundaryWhitespace) throws JDOMException, XMLStreamException {
+  static Document buildDocument(@NotNull XMLStreamReader2 stream) throws XMLStreamException {
     int state = stream.getEventType();
 
     if (START_DOCUMENT != state) {
-      throw new JDOMException("JDOM requires that XMLStreamReaders are at their beginning when being processed.");
+      throw new XMLStreamException("JDOM requires that XMLStreamReaders are at their beginning when being processed.");
     }
 
-    final Document document = new Document();
+    Document document = new Document();
 
     while (state != END_DOCUMENT) {
       switch (state) {
@@ -39,36 +44,39 @@ final class SafeStAXStreamBuilder {
           break;
 
         case START_ELEMENT:
-          document.setRootElement(processElementFragment(stream, isIgnoreBoundaryWhitespace, FACTORY));
+          document.setRootElement(processElementFragment(stream, true, true, FACTORY));
           break;
 
         case CHARACTERS:
-          final String badTxt = stream.getText();
+          String badTxt = stream.getText();
           if (!Verifier.isAllXMLWhitespace(badTxt)) {
-            throw new JDOMException("Unexpected XMLStream event at Document level: CHARACTERS (" + badTxt + ")");
+            throw new XMLStreamException("Unexpected XMLStream event at Document level: CHARACTERS (" + badTxt + ")");
           }
           // otherwise ignore the chars.
           break;
 
         default:
-          throw new JDOMException("Unexpected XMLStream event at Document level:" + state);
+          throw new XMLStreamException("Unexpected XMLStream event at Document level:" + state);
       }
 
       if (stream.hasNext()) {
         state = stream.next();
       }
       else {
-        throw new JDOMException("Unexpected end-of-XMLStreamReader");
+        throw new XMLStreamException("Unexpected end-of-XMLStreamReader");
       }
     }
     return document;
   }
 
-  static Element build(@NotNull XMLStreamReader stream, @SuppressWarnings("SameParameterValue") boolean isIgnoreBoundaryWhitespace, @NotNull SafeJdomFactory factory) throws JDOMException, XMLStreamException {
+  public static Element build(@NotNull XMLStreamReader2 stream,
+                              @SuppressWarnings("SameParameterValue") boolean isIgnoreBoundaryWhitespace,
+                              boolean isNsSupported,
+                              @NotNull SafeJdomFactory factory) throws XMLStreamException {
     int state = stream.getEventType();
 
-    if (START_DOCUMENT != state) {
-      throw new JDOMException("JDOM requires that XMLStreamReaders are at their beginning when being processed");
+    if (state != START_DOCUMENT) {
+      throw new XMLStreamException("JDOM requires that XMLStreamReaders are at their beginning when being processed");
     }
 
     Element rootElement = null;
@@ -83,18 +91,18 @@ final class SafeStAXStreamBuilder {
           break;
 
         case START_ELEMENT:
-          rootElement = processElementFragment(stream, isIgnoreBoundaryWhitespace, factory);
+          rootElement = processElementFragment(stream, isIgnoreBoundaryWhitespace, isNsSupported, factory);
           break;
 
         default:
-          throw new JDOMException("Unexpected XMLStream event " + state);
+          throw new XMLStreamException("Unexpected XMLStream event " + state);
       }
 
       if (stream.hasNext()) {
         state = stream.next();
       }
       else {
-        throw new JDOMException("Unexpected end-of-XMLStreamReader");
+        throw new XMLStreamException("Unexpected end-of-XMLStreamReader");
       }
     }
 
@@ -105,18 +113,17 @@ final class SafeStAXStreamBuilder {
     return rootElement;
   }
 
-  private static Element processElementFragment(@NotNull XMLStreamReader reader, boolean isIgnoreBoundaryWhitespace, @NotNull SafeJdomFactory factory) throws XMLStreamException, JDOMException {
-    if (reader.getEventType() != START_ELEMENT) {
-      throw new JDOMException("JDOM requires that the XMLStreamReader is at the START_ELEMENT state when retrieving an Element Fragment.");
-    }
-
-    final Element fragment = processElement(reader, factory);
+  public static @NotNull Element processElementFragment(@NotNull XMLStreamReader2 reader,
+                                                        boolean isIgnoreBoundaryWhitespace,
+                                                        boolean isNsSupported,
+                                                        @NotNull SafeJdomFactory factory) throws XMLStreamException {
+    Element fragment = processElement(reader, isNsSupported, factory);
     Element current = fragment;
     int depth = 1;
     while (depth > 0 && reader.hasNext()) {
       switch (reader.next()) {
         case START_ELEMENT:
-          Element tmp = processElement(reader, factory);
+          Element tmp = processElement(reader, isNsSupported, factory);
           current.addContent(tmp);
           current = tmp;
           depth++;
@@ -133,6 +140,7 @@ final class SafeStAXStreamBuilder {
           if (!isIgnoreBoundaryWhitespace) {
             current.addContent(factory.text(reader.getText(), current));
           }
+          break;
 
         case CHARACTERS:
           if (!isIgnoreBoundaryWhitespace || !reader.isWhiteSpace()) {
@@ -146,29 +154,33 @@ final class SafeStAXStreamBuilder {
           break;
 
         default:
-          throw new JDOMException("Unexpected XMLStream event " + reader.getEventType());
+          throw new XMLStreamException("Unexpected XMLStream event " + reader.getEventType(), reader.getLocation());
       }
     }
 
     return fragment;
   }
 
-  @NotNull
-  private static Element processElement(@NotNull XMLStreamReader reader, @NotNull SafeJdomFactory factory) {
-    final Element element = factory.element(reader.getLocalName(), Namespace.getNamespace(reader.getPrefix(), reader.getNamespaceURI()));
-
-    // Handle attributes
+  private static @NotNull Element processElement(@NotNull XMLStreamReader2 reader,
+                                                 boolean isNsSupported,
+                                                 @NotNull SafeJdomFactory factory) {
+    Element element = factory.element(reader.getLocalName(), isNsSupported
+                                                             ? Namespace.getNamespace(reader.getPrefix(), reader.getNamespaceURI())
+                                                             : Namespace.NO_NAMESPACE);
+    // handle attributes
     for (int i = 0, len = reader.getAttributeCount(); i < len; i++) {
       element.setAttribute(factory.attribute(
         reader.getAttributeLocalName(i),
         reader.getAttributeValue(i),
-        AttributeType.getAttributeType(reader.getAttributeType(i)),
-        Namespace.getNamespace(reader.getAttributePrefix(i), reader.getAttributeNamespace(i))));
+        isNsSupported ? Namespace.getNamespace(reader.getAttributePrefix(i), reader.getAttributeNamespace(i)) : Namespace.NO_NAMESPACE
+      ));
     }
 
-    // Handle Namespaces
-    for (int i = 0, len = reader.getNamespaceCount(); i < len; i++) {
-      element.addNamespaceDeclaration(Namespace.getNamespace(reader.getNamespacePrefix(i), reader.getNamespaceURI(i)));
+    if (isNsSupported) {
+      // handle namespaces
+      for (int i = 0, len = reader.getNamespaceCount(); i < len; i++) {
+        element.addNamespaceDeclaration(Namespace.getNamespace(reader.getNamespacePrefix(i), reader.getNamespaceURI(i)));
+      }
     }
 
     return element;

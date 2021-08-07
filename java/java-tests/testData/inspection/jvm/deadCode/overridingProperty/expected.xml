@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<problems>
+  <problem>
+    <file>TC.kt</file>
+    <line>1</line>
+    <entry_point TYPE="method" FQNAME="Type Type(T default)"/>
+    <description>All constructor usages belong to the calls chain that has no members reachable from entry points.</description>
+  </problem>
+
+
+  <problem>
+    <file>TC.kt</file>
+    <line>5</line>
+    <entry_point TYPE="field" FQNAME="TCKt nullability"/>
+    <description>Field has no usages.</description>
+  </problem>
+
+
+  <problem>
+    <file>TC.kt</file>
+    <line>2</line>
+    <entry_point TYPE="field" FQNAME="Type forEnumConstant"/>
+    <description>Field has no usages.</description>
+  </problem>
+
+  <problem>
+    <file>TC.kt</file>
+    <line>11</line>
+    <entry_point TYPE="field" FQNAME="Nullability Nullable"/>
+    <description>Field has no usages.</description>
+  </problem>
+
+  <!-- wrong, to be removed later -->
+  <problem>
+    <file>In.kt</file>
+    <line>2</line>
+    <entry_point TYPE="method" FQNAME="In java.lang.String getPr()" />
+    <description>Method is never used.</description>
+  </problem>
+
+</problems>

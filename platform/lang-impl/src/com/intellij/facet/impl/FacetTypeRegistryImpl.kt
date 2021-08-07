@@ -13,6 +13,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectBundle
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.roots.ex.ProjectRootManagerEx
+import com.intellij.workspaceModel.ide.impl.legacyBridge.facet.FacetManagerBridge
 import org.jetbrains.jps.model.serialization.facet.FacetState
 import java.util.*
 
@@ -41,8 +42,8 @@ class FacetTypeRegistryImpl : FacetTypeRegistry() {
       val model = FacetManager.getInstance(module).createModifiableModel()
       val invalidFacets = model.getFacetsByType(InvalidFacetType.TYPE_ID).filter { it.configuration.facetState.facetType == facetType.stringId }
       for (invalidFacet in invalidFacets) {
-        val newFacet = FacetManagerImpl.createFacetFromStateRaw(module, facetType, invalidFacet.configuration.facetState,
-                                                                invalidFacet.underlyingFacet)
+        val newFacet = FacetManagerBridge.createFacetFromStateRaw(module, facetType, invalidFacet.configuration.facetState,
+                                                                       invalidFacet.underlyingFacet)
         model.replaceFacet(invalidFacet, newFacet)
         for (subFacet in invalidFacet.configuration.facetState.subFacets) {
           model.addFacet(FacetManagerBase.createInvalidFacet(module, subFacet, newFacet, invalidFacet.configuration.errorMessage, false, false))
@@ -96,8 +97,8 @@ class FacetTypeRegistryImpl : FacetTypeRegistry() {
     }
   }
 
-  private fun saveFacetWithSubFacets(facet: Facet<*>?, subFacets: Map<Facet<FacetConfiguration>, List<Facet<*>>>): FacetState? {
-    val state = FacetManagerImpl.saveFacetConfiguration(facet) ?: return null
+  private fun saveFacetWithSubFacets(facet: Facet<*>, subFacets: Map<Facet<FacetConfiguration>, List<Facet<*>>>): FacetState? {
+    val state = FacetManagerBridge.saveFacetConfiguration(facet) ?: return null
     (subFacets[facet] ?: emptyList()).mapNotNullTo(state.subFacets) { saveFacetWithSubFacets(it, subFacets) }
     return state
   }

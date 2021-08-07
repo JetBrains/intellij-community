@@ -3,6 +3,7 @@ package com.intellij.execution.junit.codeInsight.references;
 
 import com.intellij.codeInsight.lookup.AutoCompletionPolicy;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
+import com.intellij.lang.jvm.JvmMethod;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.search.searches.ClassInheritorsSearch;
@@ -10,6 +11,7 @@ import com.intellij.psi.util.ClassUtil;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.SmartList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.uast.*;
@@ -97,9 +99,25 @@ public abstract class BaseJunitAnnotationReference extends PsiReferenceBase<PsiL
         methodName = StringUtil.getShortName(methodName, '#');
       }
     }
+    final String finalMethodName = methodName;
     PsiMethod[] clazzMethods = psiClazz.findMethodsByName(methodName, true);
+    SmartList<JvmMethod> methodsInner = new SmartList<>();
+    if (clazzMethods.length == 0) {
+      PsiClass[] classes = psiClazz.getInnerClasses();
+      for (PsiClass cl : classes) {
+        JvmMethod[] name = cl.findMethodsByName(finalMethodName);
+        if (name.length > 0) {
+          methodsInner.addAll(Arrays.asList(name));
+        }
+      }
+      if (methodsInner.size() > 0) {
+        clazzMethods = methodsInner.stream()
+          .filter(jm -> jm instanceof PsiMethod)
+          .map(jm -> (PsiMethod)jm)
+          .toArray(size -> new PsiMethod[size]);
+      }
+    }
     if (clazzMethods.length == 0 && (psiClazz.isInterface() || PsiUtil.isAbstractClass(psiClazz))) {
-      final String finalMethodName = methodName;
       PsiElementResolveResult neededMethod = ClassInheritorsSearch.search(psiClazz, psiClazz.getResolveScope(), false)
         .mapping(aClazz -> {
           final PsiMethod[] methods = aClazz.findMethodsByName(finalMethodName, false);

@@ -1,5 +1,33 @@
 <html>
 <body>
-Reports usages of @classmethod or @staticmethod decorators on functions outside of a class.
+<p>Reports usages of <code>@classmethod</code> or <code>@staticmethod</code> decorators
+  in methods outside a class.</p>
+<p><b>Example:</b></p>
+<pre style="font-family: monospace">
+class State(object):
+
+    @classmethod
+    def my_state(cls, name):
+        cls.name = name
+
+
+@classmethod
+def change_state(self):
+    pass
+</pre>
+<p>The <code>change_state</code> method should not use the <code>@classmethod</code> decorator or it should be
+  moved to the <code>State</code> class declaration. </p>
+<p>If you apply the <code>Remove decorator</code> action, the code changes to:</p>
+<pre style="font-family: monospace">
+class State(object):
+
+    @classmethod
+    def my_state(cls, name):
+        cls.name = name
+
+
+def change_state(self):
+    pass
+</pre>
 </body>
 </html>

@@ -1,6 +1,7 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.mock;
 
+import com.intellij.diagnostic.ActivityCategory;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.components.ComponentManager;
 import com.intellij.openapi.extensions.PluginDescriptor;
@@ -51,7 +52,7 @@ public class MockComponentManager extends UserDataHolderBase implements Componen
       }
     };
 
-    myPicoContainer.registerComponentInstance(this);
+    myPicoContainer.registerComponentInstance(getClass(), this);
     myExtensionArea = new ExtensionsAreaImpl(this);
     Disposer.register(parentDisposable, this);
   }
@@ -60,6 +61,13 @@ public class MockComponentManager extends UserDataHolderBase implements Componen
   @Override
   public ExtensionsAreaImpl getExtensionArea() {
     return myExtensionArea;
+  }
+
+  @Override
+  public <T> T instantiateClassWithConstructorInjection(@NotNull Class<T> aClass,
+                                                        @NotNull Object key,
+                                                        @NotNull PluginId pluginId) {
+    throw new UnsupportedOperationException();
   }
 
   @Override
@@ -75,6 +83,7 @@ public class MockComponentManager extends UserDataHolderBase implements Componen
 
   @Override
   public @NotNull RuntimeException createError(@NotNull @NonNls String message,
+                                               @Nullable Throwable error,
                                                @NotNull PluginId pluginId,
                                                @Nullable Map<String, String> attachments) {
     return new RuntimeException(message);
@@ -120,6 +129,11 @@ public class MockComponentManager extends UserDataHolderBase implements Componen
   }
 
   @Override
+  public <T> T @NotNull [] getComponents(@NotNull Class<T> baseClass) {
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
   public <T> T getService(@NotNull Class<T> serviceClass) {
     T result = myPicoContainer.getService(serviceClass);
     registerComponentInDisposer(result);
@@ -130,6 +144,11 @@ public class MockComponentManager extends UserDataHolderBase implements Componen
   @NotNull
   public final MutablePicoContainer getPicoContainer() {
     return myPicoContainer;
+  }
+
+  @Override
+  public boolean isInjectionForExtensionSupported() {
+    return false;
   }
 
   @NotNull
@@ -164,5 +183,10 @@ public class MockComponentManager extends UserDataHolderBase implements Componen
   public <T> @NotNull Class<T> loadClass(@NotNull String className, @NotNull PluginDescriptor pluginDescriptor) throws ClassNotFoundException {
     //noinspection unchecked
     return (Class<T>)Class.forName(className);
+  }
+
+  @Override
+  public @NotNull ActivityCategory getActivityCategory(boolean isExtension) {
+    return isExtension ? ActivityCategory.APP_EXTENSION : ActivityCategory.APP_SERVICE;
   }
 }

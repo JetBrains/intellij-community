@@ -24,7 +24,7 @@ abstract class JButtonAction(text: @ActionText String?, @ActionDescription descr
       val event = AnActionEvent.createFromInputEvent(null, place, presentation, dataContext)
 
       if (ActionUtil.lastUpdateAndCheckDumb(action, event, true)) {
-        ActionUtil.performActionDumbAware(action, event)
+        ActionUtil.performActionDumbAwareWithCallbacks(action, event)
       }
     }
 
@@ -49,7 +49,7 @@ abstract class JButtonAction(text: @ActionText String?, @ActionDescription descr
   protected open fun updateButtonFromPresentation(button: JButton, presentation: Presentation) {
     button.isEnabled = presentation.isEnabled
     button.isVisible = presentation.isVisible
-    button.text = presentation.text
+    button.text = presentation.getText(true)
     button.icon = presentation.icon
     button.mnemonic = presentation.mnemonic
     button.displayedMnemonicIndex = presentation.displayedMnemonicIndex

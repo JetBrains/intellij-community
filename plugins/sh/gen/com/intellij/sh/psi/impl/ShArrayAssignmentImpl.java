@@ -28,8 +28,8 @@ public class ShArrayAssignmentImpl extends ShCompositeElementImpl implements ShA
 
   @Override
   @NotNull
-  public ShExpression getExpression() {
-    return findNotNullChildByClass(ShExpression.class);
+  public ShOperation getOperation() {
+    return findNotNullChildByClass(ShOperation.class);
   }
 
   @Override

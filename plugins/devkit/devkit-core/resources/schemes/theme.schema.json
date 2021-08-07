@@ -130,9 +130,6 @@
         "Objects.RedStatus": {
           "$ref": "#/definitions/color"
         },
-        "Objects.GreenAndroid": {
-          "$ref": "#/definitions/color"
-        },
         "Objects.BlackText": {
           "$ref": "#/definitions/color"
         },

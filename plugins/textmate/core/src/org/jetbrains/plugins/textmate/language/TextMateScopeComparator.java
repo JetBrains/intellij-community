@@ -2,6 +2,7 @@ package org.jetbrains.plugins.textmate.language;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.textmate.language.syntax.lexer.TextMateScope;
 import org.jetbrains.plugins.textmate.language.syntax.selector.TextMateSelectorCachingWeigher;
 import org.jetbrains.plugins.textmate.language.syntax.selector.TextMateSelectorWeigher;
 import org.jetbrains.plugins.textmate.language.syntax.selector.TextMateSelectorWeigherImpl;
@@ -13,16 +14,17 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public class TextMateScopeComparator<T> implements Comparator<T> {
   @NotNull
   private static final TextMateSelectorWeigher myWeigher = new TextMateSelectorCachingWeigher(new TextMateSelectorWeigherImpl());
 
   @NotNull
-  private final CharSequence myScope;
+  private final TextMateScope myScope;
   private final @NotNull Function<? super T, ? extends CharSequence> myScopeSupplier;
 
-  public TextMateScopeComparator(@NotNull CharSequence scope, @NotNull Function<? super T, ? extends CharSequence> scopeSupplier) {
+  public TextMateScopeComparator(@NotNull TextMateScope scope, @NotNull Function<? super T, ? extends CharSequence> scopeSupplier) {
     myScope = scope;
     myScopeSupplier = scopeSupplier;
   }
@@ -35,7 +37,12 @@ public class TextMateScopeComparator<T> implements Comparator<T> {
 
   @NotNull
   public List<T> sortAndFilter(@NotNull Collection<? extends T> objects) {
-    return objects.stream().filter(t -> myWeigher.weigh(myScopeSupplier.apply(t), myScope).weigh > 0)
+    return sortAndFilter(objects.stream());
+  }
+
+  @NotNull
+  public List<T> sortAndFilter(Stream<? extends T> stream) {
+    return stream.filter(t -> myWeigher.weigh(myScopeSupplier.apply(t), myScope).weigh > 0)
       .sorted(Collections.reverseOrder(this)).collect(Collectors.toList());
   }
 

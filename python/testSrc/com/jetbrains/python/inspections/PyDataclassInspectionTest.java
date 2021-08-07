@@ -3,10 +3,8 @@
  */
 package com.jetbrains.python.inspections;
 
-import com.intellij.testFramework.LightProjectDescriptor;
 import com.jetbrains.python.fixtures.PyInspectionTestCase;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 public class PyDataclassInspectionTest extends PyInspectionTestCase {
 
@@ -319,12 +317,6 @@ public class PyDataclassInspectionTest extends PyInspectionTestCase {
     myFixture.copyFileToProject(getTestCaseDirectory() + "/dataclasses.py", "dataclasses.py");
     super.doTest();
     assertProjectFilesNotParsed(myFixture.getFile());
-  }
-
-  @Nullable
-  @Override
-  protected LightProjectDescriptor getProjectDescriptor() {
-    return ourPyLatestDescriptor;
   }
 
   @NotNull

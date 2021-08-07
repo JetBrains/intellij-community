@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package training.ui.welcomeScreen
 
 import com.intellij.openapi.actionSystem.ActionManager
@@ -13,22 +13,27 @@ import com.intellij.openapi.wm.impl.welcomeScreen.learnIde.HeightLimitedPane
 import com.intellij.openapi.wm.impl.welcomeScreen.learnIde.LearnIdeContentColorsAndFonts
 import com.intellij.ui.components.labels.LinkLabel
 import com.intellij.ui.scale.JBUIScale
-import icons.FeaturesTrainerIcons.Img.PluginIcon
+import training.FeaturesTrainerIcons
 import training.learn.CourseManager
 import training.learn.LearnBundle
+import training.learn.OpenLessonActivities
 import training.learn.course.IftModule
+import training.learn.course.KLesson
 import training.statistic.StatisticBase
+import training.ui.views.NewContentLabel
+import training.util.iftPluginIsUsing
+import training.util.learningPanelWasOpenedInCurrentVersion
 import training.util.rigid
 import java.awt.event.ActionEvent
 import javax.swing.*
 import javax.swing.plaf.FontUIResource
 import javax.swing.plaf.LabelUI
 
-class IFTInteractiveCourse : InteractiveCourseFactory {
+internal class IFTInteractiveCourse : InteractiveCourseFactory {
   override fun getInteractiveCourseData(): InteractiveCourseData = IFTInteractiveCourseData()
 }
 
-class IFTInteractiveCourseData : InteractiveCourseData {
+private class IFTInteractiveCourseData : InteractiveCourseData {
 
   override fun getName(): String {
     return LearnBundle.message("welcome.tab.header.learn.ide.features")
@@ -39,7 +44,7 @@ class IFTInteractiveCourseData : InteractiveCourseData {
   }
 
   override fun getIcon(): Icon {
-    return PluginIcon
+    return FeaturesTrainerIcons.Img.PluginIcon
   }
 
   override fun getActionButtonName(): String {
@@ -62,7 +67,21 @@ class IFTInteractiveCourseData : InteractiveCourseData {
 
     panel.add(rigid(16, 1))
     for (module in modules) {
-      panel.add(moduleHeader(module))
+      val moduleHeader = moduleHeader(module)
+      if (!moduleHasNewContent(module)) {
+        panel.add(moduleHeader)
+      } else {
+        val nameLine = JPanel()
+        nameLine.isOpaque = false
+        nameLine.layout = BoxLayout(nameLine, BoxLayout.X_AXIS)
+        nameLine.alignmentX = JPanel.LEFT_ALIGNMENT
+
+        nameLine.add(moduleHeader)
+        nameLine.add(rigid(10, 0))
+        nameLine.add(NewContentLabel())
+
+        panel.add(nameLine)
+      }
       panel.add(rigid(2, 2))
       panel.add(moduleDescription(module))
       panel.add(rigid(16, 16))
@@ -72,8 +91,25 @@ class IFTInteractiveCourseData : InteractiveCourseData {
     return panel
   }
 
+  private fun moduleHasNewContent(module: IftModule): Boolean {
+    if (!iftPluginIsUsing) {
+      return false
+    }
+    return module.lessons.any { it.isNewLesson() }
+  }
+
+  override fun newContentMarker(): JComponent? {
+    if (learningPanelWasOpenedInCurrentVersion) {
+      return null
+    }
+    if (CourseManager.instance.modules.any { moduleHasNewContent(it) }) {
+      return NewContentLabel()
+    }
+    return null
+  }
+
   private fun moduleDescription(module: IftModule): HeightLimitedPane {
-    return HeightLimitedPane(module.description ?: "", -1, LearnIdeContentColorsAndFonts.ModuleDescriptionColor)
+    return HeightLimitedPane(module.description, -1, LearnIdeContentColorsAndFonts.ModuleDescriptionColor)
   }
 
   private fun moduleHeader(module: IftModule): LinkLabel<Any> {
@@ -97,12 +133,19 @@ class IFTInteractiveCourseData : InteractiveCourseData {
   private fun openLearningFromWelcomeScreen(module: IftModule?) {
     val action = ActionManager.getInstance().getAction("ShowLearnPanel")
 
-    //val context = if (module != null) SimpleDataContext.getSimpleContext(OpenLearnPanel.LEARNING_MODULE_KEY.name, module)
-    //else DataContext.EMPTY_CONTEXT
+    val onboardingLesson = findOnboardingLesson(module)
+    if (onboardingLesson != null) {
+      OpenLessonActivities.openOnboardingFromWelcomeScreen(onboardingLesson)
+    }
+    else {
+      CourseManager.instance.unfoldModuleOnInit = module ?: CourseManager.instance.modules.firstOrNull()
+      val anActionEvent = AnActionEvent.createFromAnAction(action, null, ActionPlaces.WELCOME_SCREEN, DataContext.EMPTY_CONTEXT)
+      ActionUtil.performActionDumbAwareWithCallbacks(action, anActionEvent)
+    }
+  }
 
-    CourseManager.instance.unfoldModuleOnInit = module ?: CourseManager.instance.modules.firstOrNull()
-
-    val anActionEvent = AnActionEvent.createFromAnAction(action, null, ActionPlaces.WELCOME_SCREEN, DataContext.EMPTY_CONTEXT)
-    ActionUtil.performActionDumbAware(action, anActionEvent)
+  private fun findOnboardingLesson(module: IftModule?): KLesson? {
+    val firstLesson = module?.lessons?.singleOrNull()
+    return firstLesson?.takeIf { it.id.contains("onboarding") }
   }
 }

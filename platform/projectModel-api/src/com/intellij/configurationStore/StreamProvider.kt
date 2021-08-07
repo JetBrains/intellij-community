@@ -21,11 +21,6 @@ interface StreamProvider {
    */
   val isExclusive: Boolean
 
-  @get:Deprecated("Export action is not disabled by StreamProviders anymore", ReplaceWith("false"))
-  @get:ApiStatus.ScheduledForRemoval(inVersion = "2021.2")
-  val isDisableExportAction: Boolean
-    get() = false
-
   /**
    * Called only on `write`
    */

@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2012 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2021 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,13 +17,13 @@ package com.siyeh.ig.naming;
 
 import com.intellij.codeInspection.ui.ListTable;
 import com.intellij.codeInspection.ui.ListWrappingTableModel;
+import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.CommonClassNames;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiType;
-import com.intellij.util.ui.CheckBox;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -37,7 +37,6 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -61,34 +60,16 @@ public class BooleanMethodNameMustStartWithQuestionInspection extends BaseInspec
 
   @Override
   public JComponent createOptionsPanel() {
-    final JPanel panel = new JPanel(new GridBagLayout());
+    final var panel = new MultipleCheckboxOptionsPanel(this);
+
     final ListTable table = new ListTable(new ListWrappingTableModel(questionList, InspectionGadgetsBundle
       .message("boolean.method.name.must.start.with.question.table.column.name")));
-    final JPanel tablePanel = UiUtils.createAddRemovePanel(table);
+    final JPanel tablePanel = UiUtils.createAddRemovePanel(table, InspectionGadgetsBundle.message("boolean.method.name.must.start.with.question.table.label"), true);
+    panel.addGrowing(tablePanel);
 
-    final GridBagConstraints constraints = new GridBagConstraints();
-    constraints.gridx = 0;
-    constraints.gridy = 0;
-    constraints.weightx = 1.0;
-    constraints.weighty = 1.0;
-    constraints.fill = GridBagConstraints.BOTH;
-    panel.add(tablePanel, constraints);
-
-    final CheckBox checkBox1 =
-      new CheckBox(InspectionGadgetsBundle.message("ignore.methods.with.boolean.return.type.option"), this, "ignoreBooleanMethods");
-    constraints.gridy = 1;
-    constraints.weighty = 0.0;
-    panel.add(checkBox1, constraints);
-
-    final CheckBox checkBox2 =
-      new CheckBox(InspectionGadgetsBundle.message("ignore.boolean.methods.in.an.interface.option"), this, "ignoreInAnnotationInterface");
-    constraints.gridy = 2;
-    panel.add(checkBox2, constraints);
-
-    final CheckBox checkBox3 =
-      new CheckBox(InspectionGadgetsBundle.message("ignore.methods.overriding.super.method"), this, "onlyWarnOnBaseMethods");
-    constraints.gridy = 3;
-    panel.add(checkBox3, constraints);
+    panel.addCheckbox(InspectionGadgetsBundle.message("ignore.methods.with.boolean.return.type.option"), "ignoreBooleanMethods");
+    panel.addCheckbox(InspectionGadgetsBundle.message("ignore.boolean.methods.in.an.interface.option"), "ignoreInAnnotationInterface");
+    panel.addCheckbox(InspectionGadgetsBundle.message("ignore.methods.overriding.super.method"), "onlyWarnOnBaseMethods");
     return panel;
   }
 

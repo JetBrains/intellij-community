@@ -1,34 +1,30 @@
-/*
- * Copyright 2000-2013 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.codeStyle.arrangement.std;
 
+import com.intellij.lang.Language;
+import com.intellij.openapi.extensions.ExtensionPoint;
+import com.intellij.openapi.fileTypes.FileTypeRegistry;
+import com.intellij.openapi.fileTypes.LanguageFileType;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.psi.codeStyle.arrangement.Rearranger;
 import com.intellij.psi.codeStyle.arrangement.match.ArrangementEntryMatcher;
 import com.intellij.psi.codeStyle.arrangement.model.ArrangementMatchCondition;
+import com.intellij.util.KeyedLazyInstance;
+import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
 /**
  * Defines a contract for {@link Rearranger} implementation which wants to use standard platform UI for configuring
  * and managing arrangement settings.
- * 
+ *
  * @author Denis Zhdanov
  */
 public interface ArrangementStandardSettingsAware {
@@ -60,7 +56,7 @@ public interface ArrangementStandardSettingsAware {
    * Example: say, current rearranger is for java and given condition is like 'public class'. This method is expected to
    * return {@code false} for token 'volatile' (because it can be applied only to fields) but {@code true}
    * for token 'abstract' (a java class can be abstract).
-   * 
+   *
    * @param token    target token to check
    * @param current  an object which represents currently chosen tokens; {@code null} if no other token is selected
    * @return         {@code true} if given token is enabled with the given condition; {@code false} otherwise
@@ -70,14 +66,14 @@ public interface ArrangementStandardSettingsAware {
   /**
    * This method is assumed to be used only by third-party developers. All built-in IJ conditions are supposed
    * to be implemented in terms of {@link StdArrangementTokens}.
-   * 
+   *
    * @param condition  target condition
    * @return           a matcher for the given condition
    * @throws IllegalArgumentException   if current rearranger doesn't know how to build a matcher from the given condition
    */
   @NotNull
   ArrangementEntryMatcher buildMatcher(@NotNull ArrangementMatchCondition condition) throws IllegalArgumentException;
-  
+
   /**
    * @return    collections of mutual exclusion settings. It's is used by standard arrangement settings UI to automatically
    *            deselect elements on selection change. Example: 'private' modifier was selected. When any other modifier is selected
@@ -85,4 +81,43 @@ public interface ArrangementStandardSettingsAware {
    */
   @NotNull
   Collection<Set<ArrangementSettingsToken>> getMutexes();
+
+  /**
+   * Helps to create links from the 'Actions on Save' page in Settings (Preferences) to the Arrangement tab of the language-specific
+   * Code Style page.
+   */
+  default @NotNull Collection<ArrangementTabInfo> getArrangementTabInfos() {
+    ExtensionPoint<KeyedLazyInstance<Rearranger<?>>> point = Rearranger.EXTENSION.getPoint();
+    if (point == null) return Collections.emptyList();
+
+    KeyedLazyInstance<Rearranger<?>> instance = ContainerUtil.find(point.getExtensionList(), lazyInst -> lazyInst.getInstance() == this);
+    // Rearranger.EXTENSION is a LanguageExtension, key is language ID.
+    Language language = instance != null ? Language.findLanguageByID(instance.getKey()) : null;
+    if (language == null) return Collections.emptyList();
+
+    LanguageFileType fileType = FileTypeRegistry.getInstance().findFileTypeByLanguage(language);
+    Icon icon = fileType != null ? fileType.getIcon() : null;
+
+    return List.of(new ArrangementTabInfo(icon, language.getDisplayName(), language.getDisplayName()));
+  }
+
+  class ArrangementTabInfo {
+    public final @Nullable Icon icon;
+    public final @NotNull @NlsSafe String languageDisplayName;
+    public final @NotNull @NonNls String configurableId;
+
+    /**
+     * This information is used to create links from the 'Actions on Save' page in Settings (Preferences) to the Arrangement tab of the
+     * language-specific Code Style page.
+     *
+     * @param configurableId must be equal to what the {@link com.intellij.psi.codeStyle.CodeStyleSettingsProvider#getConfigurableDisplayName()}
+     *                       returns for the corresponding language-specific Code Style page. By default, it is {@link Language#getDisplayName()}
+     *                       but some configurables override this method.
+     */
+    public ArrangementTabInfo(@Nullable Icon icon, @NotNull @NlsSafe String languageDisplayName, @NotNull @NonNls String configurableId) {
+      this.icon = icon;
+      this.languageDisplayName = languageDisplayName;
+      this.configurableId = configurableId;
+    }
+  }
 }

@@ -1,8 +1,7 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.testFramework.vcs;
 
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Getter;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsDirectoryMapping;
@@ -18,6 +17,7 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.function.Supplier;
 
 public class DuringChangeListManagerUpdateTestScheme {
   private final MockDelayingChangeProvider myChangeProvider;
@@ -69,7 +69,7 @@ public class DuringChangeListManagerUpdateTestScheme {
     assert test.get() : (test.getException() == null ? null : test.getException().getMessage());
   }
 
-  private class DuringUpdateTest implements Runnable, Getter<Boolean> {
+  private class DuringUpdateTest implements Runnable, Supplier<Boolean> {
     private boolean myDone;
     private final TimeoutWaiter myWaiter;
     private final Runnable myRunnable;

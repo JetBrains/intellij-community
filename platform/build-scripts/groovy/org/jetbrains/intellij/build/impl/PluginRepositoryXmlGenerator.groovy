@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build.impl
 
 import com.intellij.openapi.util.io.FileUtil
@@ -20,7 +20,7 @@ final class PluginRepositoryXmlGenerator {
   void generate(List<PluginRepositorySpec> pluginSpecs, String targetDirectory) {
     def categories = new TreeMap<String, List<Plugin>>()
     pluginSpecs.each { spec ->
-      def p = readPlugin(new File(spec.pluginZip), new File(spec.pluginXml), buildContext.buildNumber, new File(targetDirectory))
+      Plugin p = readPlugin(new File(spec.pluginZip), new File(spec.pluginXml), buildContext.buildNumber, new File(targetDirectory))
       categories.putIfAbsent(p.category, [])
       categories[p.category] << p
     }

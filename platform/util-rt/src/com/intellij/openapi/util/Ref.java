@@ -46,11 +46,11 @@ public class Ref<T> {
   }
 
   public final boolean setIfNull(@Nullable T value) {
-    if (myValue == null) {
+    boolean result = myValue == null && value != null;
+    if (result) {
       myValue = value;
-      return true;
     }
-    return false;
+    return result;
   }
 
   @NotNull

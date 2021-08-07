@@ -16,7 +16,7 @@ import javax.swing.*;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
-import java.util.function.Supplier;
+import java.util.function.Function;
 import java.util.stream.Stream;
 
 public class LombokLightClassBuilder extends LightPsiClassBuilder implements PsiExtensibleClass, SyntheticElement {
@@ -29,8 +29,8 @@ public class LombokLightClassBuilder extends LightPsiClassBuilder implements Psi
   private PsiField[] myFields;
   private PsiMethod[] myMethods;
 
-  private Supplier<? extends Collection<PsiField>> fieldSupplier = Collections::emptyList;
-  private Supplier<? extends Collection<PsiMethod>> methodSupplier = Collections::emptyList;
+  private Function<PsiClass, ? extends Collection<PsiField>> fieldSupplier = c -> Collections.emptyList();
+  private Function<PsiClass, ? extends Collection<PsiMethod>> methodSupplier = c -> Collections.emptyList();
 
   public LombokLightClassBuilder(@NotNull PsiElement context, @NotNull String simpleName, @NotNull String qualifiedName) {
     super(context, simpleName);
@@ -94,9 +94,9 @@ public class LombokLightClassBuilder extends LightPsiClassBuilder implements Psi
   @Override
   public PsiField @NotNull [] getFields() {
     if (null == myFields) {
-      Collection<PsiField> generatedFields = fieldSupplier.get();
+      Collection<PsiField> generatedFields = fieldSupplier.apply(this);
       myFields = generatedFields.toArray(PsiField.EMPTY_ARRAY);
-      fieldSupplier = Collections::emptyList;
+      fieldSupplier = c -> Collections.emptyList();
     }
     return myFields;
   }
@@ -104,9 +104,9 @@ public class LombokLightClassBuilder extends LightPsiClassBuilder implements Psi
   @Override
   public PsiMethod @NotNull [] getMethods() {
     if (null == myMethods) {
-      Collection<PsiMethod> generatedMethods = methodSupplier.get();
+      Collection<PsiMethod> generatedMethods = methodSupplier.apply(this);
       myMethods = generatedMethods.toArray(PsiMethod.EMPTY_ARRAY);
-      methodSupplier = Collections::emptyList;
+      methodSupplier = c -> Collections.emptyList();
     }
     return myMethods;
   }
@@ -126,12 +126,12 @@ public class LombokLightClassBuilder extends LightPsiClassBuilder implements Psi
     return Collections.emptyList();
   }
 
-  public LombokLightClassBuilder withFieldSupplier(final Supplier<? extends Collection<PsiField>> fieldSupplier) {
+  public LombokLightClassBuilder withFieldSupplier(final Function<PsiClass, ? extends Collection<PsiField>> fieldSupplier) {
     this.fieldSupplier = fieldSupplier;
     return this;
   }
 
-  public LombokLightClassBuilder withMethodSupplier(final Supplier<? extends Collection<PsiMethod>> methodSupplier) {
+  public LombokLightClassBuilder withMethodSupplier(final Function<PsiClass, ? extends Collection<PsiMethod>> methodSupplier) {
     this.methodSupplier = methodSupplier;
     return this;
   }

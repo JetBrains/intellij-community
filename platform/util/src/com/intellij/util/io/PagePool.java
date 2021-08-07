@@ -23,7 +23,6 @@ public class PagePool {
 
   private final Object lock = new Object();
   private final Object finalizationMonitor = new Object();
-  private final PoolPageKey keyInstance = new PoolPageKey(null, -1);
 
   private PoolPageKey lastFinalizedKey = null;
 
@@ -69,8 +68,9 @@ public class PagePool {
 
   @SuppressWarnings({"AssignmentToStaticFieldFromInstanceMethod"})
   @NotNull
-  public Page alloc(RandomAccessDataFile owner, long offset) {
+  public Page alloc(@NotNull RandomAccessDataFile owner, long offset) {
     synchronized (lock) {
+      RandomAccessDataFile.ensureNonNegative(offset, "offset");
       offset -= offset % Page.PAGE_SIZE;
       hits++;
 
@@ -89,8 +89,8 @@ public class PagePool {
     }
   }
 
-  private Page hitQueues(final RandomAccessDataFile owner, final long offset) {
-    PoolPageKey key = setupKey(owner, offset);
+  private Page hitQueues(@NotNull RandomAccessDataFile owner, final long offset) {
+    PoolPageKey key = new PoolPageKey(owner, offset);
 
     Page page = myProtectedQueue.get(key);
     if (page != null) {
@@ -146,11 +146,6 @@ public class PagePool {
 
   private void toProtectedQueue(final Page page) {
     myProtectedQueue.put(keyForPage(page), page);
-  }
-
-  private PoolPageKey setupKey(RandomAccessDataFile owner, long offset) {
-    keyInstance.setup(owner, offset);
-    return keyInstance;
   }
 
   public void flushPages(final RandomAccessDataFile owner) {

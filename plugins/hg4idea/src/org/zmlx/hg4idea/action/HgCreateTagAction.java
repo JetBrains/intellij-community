@@ -12,6 +12,7 @@
 // limitations under the License.
 package org.zmlx.hg4idea.action;
 
+import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -60,7 +61,7 @@ public class HgCreateTagAction extends HgAbstractGlobalSingleRepoAction {
   @Override
   protected void execute(@NotNull final Project project,
                          @NotNull Collection<HgRepository> repositories,
-                         @Nullable HgRepository selectedRepo) {
-    execute(project, repositories, selectedRepo, null);
+                         @Nullable HgRepository selectedRepo, @NotNull DataContext dataContext) {
+    execute(project, repositories, selectedRepo, "");
   }
 }

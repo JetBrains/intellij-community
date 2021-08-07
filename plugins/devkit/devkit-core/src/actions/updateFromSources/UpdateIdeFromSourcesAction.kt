@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.devkit.actions.updateFromSources
 
 import com.intellij.CommonBundle
@@ -13,6 +13,7 @@ import com.intellij.ide.plugins.marketplace.MarketplaceRequests
 import com.intellij.notification.*
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.UpdateInBackground
 import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.PathManager
@@ -50,7 +51,6 @@ import org.jetbrains.idea.devkit.util.PsiUtil
 import java.io.File
 import java.nio.file.Paths
 import java.util.*
-import kotlin.collections.LinkedHashSet
 
 private val LOG = logger<UpdateIdeFromSourcesAction>()
 
@@ -62,7 +62,7 @@ internal open class UpdateIdeFromSourcesAction
 @JvmOverloads constructor(private val forceShowSettings: Boolean = false)
   : AnAction(if (forceShowSettings) DevKitBundle.message("action.UpdateIdeFromSourcesAction.update.show.settings.text")
              else DevKitBundle.message("action.UpdateIdeFromSourcesAction.update.text"),
-             DevKitBundle.message("action.UpdateIdeFromSourcesAction.update.description"), null), DumbAware {
+             DevKitBundle.message("action.UpdateIdeFromSourcesAction.update.description"), null), DumbAware, UpdateInBackground {
   override fun actionPerformed(e: AnActionEvent) {
     val project = e.project ?: return
     if (forceShowSettings || UpdateFromSourcesSettings.getState().showSettings) {
@@ -231,9 +231,10 @@ internal open class UpdateIdeFromSourcesAction
   }
 
   private fun showRestartNotification(command: Array<String>, deployDirPath: String, project: Project) {
-    notificationGroup.createNotification(title = DevKitBundle.message("action.UpdateIdeFromSourcesAction.task.success.title"),
-                                         content = DevKitBundle.message("action.UpdateIdeFromSourcesAction.task.success.content"),
-                                         listener = NotificationListener { _, _ -> restartWithCommand(command, deployDirPath) }).notify(project)
+    notificationGroup
+      .createNotification(DevKitBundle.message("action.UpdateIdeFromSourcesAction.task.success.title"), DevKitBundle.message("action.UpdateIdeFromSourcesAction.task.success.content"), NotificationType.INFORMATION)
+      .setListener(NotificationListener { _, _ -> restartWithCommand(command, deployDirPath) })
+      .notify(project)
   }
 
   private fun scheduleRestart(command: Array<String>, deployDirPath: String, project: Project) {
@@ -409,7 +410,8 @@ internal open class UpdateIdeFromSourcesAction
       "org.apache.tools.ant.BuildException",   //ant
       "org.apache.tools.ant.launch.AntMain",   //ant-launcher
       "org.apache.commons.cli.ParseException", //commons-cli
-      "groovy.util.CliBuilder"                 //groovy-cli-commons
+      "groovy.util.CliBuilder",                //groovy-cli-commons
+      "org.codehaus.groovy.runtime.NioGroovyMethods", //groovy-nio
     )
     val coreClassPath = classpath.rootDirs.filter { root ->
       classesFromCoreJars.any { LibraryUtil.isClassAvailableInLibrary(listOf(root), it) }

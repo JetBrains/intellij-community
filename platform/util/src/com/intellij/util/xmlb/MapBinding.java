@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.xmlb;
 
 import com.intellij.openapi.util.JDOMUtil;
@@ -6,6 +6,7 @@ import com.intellij.serialization.ClassUtil;
 import com.intellij.serialization.MutableAccessor;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ReflectionUtil;
+import com.intellij.util.XmlElement;
 import com.intellij.util.xmlb.annotations.MapAnnotation;
 import com.intellij.util.xmlb.annotations.XMap;
 import org.jdom.Attribute;
@@ -21,10 +22,12 @@ import java.util.*;
 import static com.intellij.util.xmlb.Constants.*;
 
 final class MapBinding implements MultiNodeBinding, NestedBinding {
+  @SuppressWarnings("rawtypes")
   private static final Comparator<Object> KEY_COMPARATOR = (o1, o2) -> {
     if (o1 instanceof Comparable && o2 instanceof Comparable) {
       Comparable c1 = (Comparable)o1;
       Comparable c2 = (Comparable)o2;
+      //noinspection unchecked
       return c1.compareTo(c2);
     }
     return 0;
@@ -33,6 +36,7 @@ final class MapBinding implements MultiNodeBinding, NestedBinding {
   private final MapAnnotation oldAnnotation;
   private final XMap annotation;
 
+  @SuppressWarnings("rawtypes")
   private final @NotNull Class<? extends Map> mapClass;
 
   private Class<?> keyClass;
@@ -41,10 +45,10 @@ final class MapBinding implements MultiNodeBinding, NestedBinding {
   private Binding keyBinding;
   private Binding valueBinding;
 
-  private final MutableAccessor myAccessor;
+  private final MutableAccessor accessor;
 
-  MapBinding(@Nullable MutableAccessor accessor, @NotNull Class<? extends Map> mapClass) {
-    myAccessor = accessor;
+  MapBinding(@Nullable MutableAccessor accessor, @NotNull Class<? extends Map<?, ?>> mapClass) {
+    this.accessor = accessor;
 
     oldAnnotation = accessor == null ? null : accessor.getAnnotation(MapAnnotation.class);
     annotation = accessor == null ? null : accessor.getAnnotation(XMap.class);
@@ -53,7 +57,7 @@ final class MapBinding implements MultiNodeBinding, NestedBinding {
 
   @Override
   public @NotNull MutableAccessor getAccessor() {
-    return myAccessor;
+    return accessor;
   }
 
   @Override
@@ -101,6 +105,7 @@ final class MapBinding implements MultiNodeBinding, NestedBinding {
     Element serialized = isSurroundWithTag() ? new Element(MAP) : (Element)context;
     assert serialized != null;
 
+    @SuppressWarnings("rawtypes")
     Map map = (Map)o;
     Object[] keys = ArrayUtil.toObjectArray(map.keySet());
     if (isSortMap(map)) {
@@ -118,7 +123,7 @@ final class MapBinding implements MultiNodeBinding, NestedBinding {
     return serialized == context ? null : serialized;
   }
 
-  protected boolean isSurroundWithTag() {
+  private boolean isSurroundWithTag() {
     if (annotation != null) {
       return false;
     }
@@ -148,8 +153,8 @@ final class MapBinding implements MultiNodeBinding, NestedBinding {
   }
 
   @Override
-  public @Nullable Object deserializeList(@Nullable Object context, @NotNull List<? extends Element> elements) {
-    List<? extends Element> childNodes;
+  public @Nullable Object deserializeList(@Nullable Object context, @NotNull List<Element> elements) {
+    List<Element> childNodes;
     if (isSurroundWithTag()) {
       assert elements.size() == 1;
       childNodes = elements.get(0).getChildren();
@@ -161,7 +166,25 @@ final class MapBinding implements MultiNodeBinding, NestedBinding {
   }
 
   @Override
+  public @Nullable Object deserializeList2(@Nullable Object context, @NotNull List<XmlElement> elements) {
+    List<XmlElement> childNodes;
+    if (isSurroundWithTag()) {
+      assert elements.size() == 1;
+      childNodes = elements.get(0).children;
+    }
+    else {
+      childNodes = elements;
+    }
+    return deserialize2(context, childNodes);
+  }
+
+  @Override
   public Object deserializeUnsafe(Object context, @NotNull Element element) {
+    return null;
+  }
+
+  @Override
+  public Object deserializeUnsafe(Object context, @NotNull XmlElement element) {
     return null;
   }
 
@@ -174,9 +197,10 @@ final class MapBinding implements MultiNodeBinding, NestedBinding {
     }
   }
 
-  private @Nullable Map deserialize(@Nullable Object context, @NotNull List<? extends Element> childNodes) {
+  @SuppressWarnings({"rawtypes", "DuplicatedCode"})
+  private @Nullable Map<?, ?> deserialize(@Nullable Object context, @NotNull List<Element> childNodes) {
     // if accessor is null, it is sub-map and we must not use context
-    Map map = myAccessor == null ? null : (Map)context;
+    Map map = accessor == null ? null : (Map<?, ?>)context;
     if (map != null) {
       if (ClassUtil.isMutableMap(map)) {
         map.clear();
@@ -188,6 +212,47 @@ final class MapBinding implements MultiNodeBinding, NestedBinding {
 
     for (Element childNode : childNodes) {
       if (!childNode.getName().equals(getEntryElementName())) {
+        LOG.warn("unexpected entry for serialized Map will be skipped: " + childNode);
+        continue;
+      }
+
+      if (map == null) {
+        if (mapClass == Map.class) {
+          map = new HashMap();
+        }
+        else {
+          try {
+            map = ReflectionUtil.newInstance(mapClass);
+          }
+          catch (Exception e) {
+            LOG.warn(e);
+            map = new HashMap();
+          }
+        }
+      }
+
+      //noinspection unchecked
+      map.put(deserializeKeyOrValue(childNode, getKeyAttributeName(), context, keyBinding, keyClass),
+              deserializeKeyOrValue(childNode, getValueAttributeName(), context, valueBinding, valueClass));
+    }
+    return map;
+  }
+
+  @SuppressWarnings({"rawtypes", "DuplicatedCode"})
+  private @Nullable Map<?, ?> deserialize2(@Nullable Object context, @NotNull List<XmlElement> childNodes) {
+    // if accessor is null, it is sub-map and we must not use context
+    Map map = accessor == null ? null : (Map<?, ?>)context;
+    if (map != null) {
+      if (ClassUtil.isMutableMap(map)) {
+        map.clear();
+      }
+      else {
+        map = null;
+      }
+    }
+
+    for (XmlElement childNode : childNodes) {
+      if (!childNode.name.equals(getEntryElementName())) {
         LOG.warn("unexpected entry for serialized Map will be skipped: " + childNode);
         continue;
       }
@@ -272,6 +337,37 @@ final class MapBinding implements MultiNodeBinding, NestedBinding {
     return null;
   }
 
+  private Object deserializeKeyOrValue(@NotNull XmlElement entry,
+                                       @NotNull String attributeName,
+                                       Object context,
+                                       @Nullable Binding binding,
+                                       @NotNull Class<?> valueClass) {
+    String attribute = entry.attributes.get(attributeName);
+    if (attribute != null) {
+      return XmlSerializerImpl.convert(attribute, valueClass);
+    }
+    else if (!isSurroundKey()) {
+      assert binding != null;
+      for (XmlElement element : entry.children) {
+        if (binding.isBoundTo(element)) {
+          return binding.deserializeUnsafe(context, element);
+        }
+      }
+    }
+    else {
+      XmlElement entryChild = entry.getChild(attributeName);
+      List<XmlElement> children = entryChild == null ? Collections.emptyList() : entryChild.children;
+      if (children.isEmpty()) {
+        return null;
+      }
+      else {
+        assert binding != null;
+        return Binding.deserializeList2(binding, null, children);
+      }
+    }
+    return null;
+  }
+
   private boolean isSurroundKey() {
     if (annotation != null) {
       return false;
@@ -279,8 +375,7 @@ final class MapBinding implements MultiNodeBinding, NestedBinding {
     return oldAnnotation == null || oldAnnotation.surroundKeyWithTag();
   }
 
-  boolean isBoundToWithoutProperty(@NotNull Element element) {
-    String elementName = element.getName();
+  boolean isBoundToWithoutProperty(@NotNull String elementName) {
     if (annotation != null) {
       return elementName.equals(annotation.entryTagName());
     }
@@ -302,6 +397,19 @@ final class MapBinding implements MultiNodeBinding, NestedBinding {
     }
     else {
       return element.getName().equals(MAP);
+    }
+  }
+
+  @Override
+  public boolean isBoundTo(@NotNull XmlElement element) {
+    if (oldAnnotation != null && !oldAnnotation.surroundWithTag()) {
+      return oldAnnotation.entryTagName().equals(element.name);
+    }
+    else if (annotation != null) {
+      return annotation.propertyElementName().equals(element.name);
+    }
+    else {
+      return element.name.equals(MAP);
     }
   }
 }

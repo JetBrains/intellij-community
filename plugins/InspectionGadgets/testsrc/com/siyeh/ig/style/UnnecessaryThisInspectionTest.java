@@ -164,6 +164,43 @@ public class UnnecessaryThisInspectionTest extends LightJavaInspectionTestCase {
            "}");
   }
 
+  public void testNewExpression(){
+    doTest("class Main {" +
+           "  class Nested {}" +
+           "  void test(){" +
+           "    Nested nested = /*'this' is unnecessary in this context*/this/**/.new Nested();" +
+           "  }" +
+           "}");
+  }
+
+  public void testNewParenthesizedExpression(){
+    doTest("class Main {" +
+           "  class Nested {}" +
+           "  void test(){" +
+           "    Nested nested = (/*'this' is unnecessary in this context*/this/**/).new Nested();" +
+           "  }" +
+           "}");
+  }
+
+  public void testNewQualifiedExpression(){
+    doTest("class Main {" +
+           "  class Nested {}" +
+           "  void test(){" +
+           "    Nested nested = (/*'Main.this' is unnecessary in this context*/Main.this/**/).new Nested();" +
+           "  }" +
+           "}");
+  }
+
+  public void testNewExpressionIsIgnored(){
+    doTest("class Outer {" +
+           "  class Nested {" +
+           "    void test(){" +
+           "      Outer.this.new Nested();" +
+           "    }" +
+           "  }" +
+           "}");
+  }
+
   @Override
   protected LocalInspectionTool getInspection() {
     return new UnnecessaryThisInspection();

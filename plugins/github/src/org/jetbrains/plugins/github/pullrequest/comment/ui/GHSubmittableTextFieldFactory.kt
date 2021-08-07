@@ -6,9 +6,9 @@ import com.intellij.openapi.util.NlsActions
 import com.intellij.ui.components.labels.LinkLabel
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
-import com.intellij.util.ui.codereview.timeline.comment.SubmittableTextField
-import com.intellij.util.ui.codereview.timeline.comment.SubmittableTextField.Companion.getEditorTextFieldVerticalOffset
-import com.intellij.util.ui.codereview.timeline.comment.SubmittableTextFieldModel
+import com.intellij.collaboration.ui.codereview.timeline.comment.SubmittableTextField
+import com.intellij.collaboration.ui.codereview.timeline.comment.SubmittableTextField.Companion.getEditorTextFieldVerticalOffset
+import com.intellij.collaboration.ui.codereview.timeline.comment.SubmittableTextFieldModel
 import org.jetbrains.plugins.github.api.data.GHUser
 import org.jetbrains.plugins.github.i18n.GithubBundle
 import org.jetbrains.plugins.github.ui.avatars.GHAvatarIconsProvider

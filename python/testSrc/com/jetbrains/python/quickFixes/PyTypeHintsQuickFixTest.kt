@@ -157,7 +157,7 @@ class PyTypeHintsQuickFixTest : PyQuickFixTestCase() {
   // PY-42418
   fun testBatchReplacingParameterizedBuiltinsWithTheirTypingAliasesBefore39() {
     doQuickFixTest(PyTypeHintsInspection::class.java,
-                   "Fix all 'Type hints definitions and usages' problems in file",
+                   "Fix all 'Invalid type hints definitions and usages' problems in file",
                    LanguageLevel.PYTHON38)
   }
 }

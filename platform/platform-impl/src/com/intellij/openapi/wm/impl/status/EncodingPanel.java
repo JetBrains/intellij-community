@@ -2,6 +2,8 @@
 package com.intellij.openapi.wm.impl.status;
 
 import com.intellij.ide.IdeBundle;
+import com.intellij.openapi.actionSystem.ActionGroup;
+import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
@@ -50,7 +52,7 @@ public class EncodingPanel extends EditorBasedStatusBarPopup {
   protected ListPopup createPopup(DataContext context) {
     ChangeFileEncodingAction action = new ChangeFileEncodingAction();
     action.getTemplatePresentation().setText(IdeBundle.messagePointer("action.presentation.EncodingPanel.text"));
-    return action.createPopup(context);
+    return action.createPopup(context, (ActionGroup)ActionManager.getInstance().getAction("EncodingPanelActions"));
   }
 
   @Override

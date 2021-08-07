@@ -1,11 +1,11 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.jsonSchema.impl;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.diagnostic.PluginException;
+import com.intellij.ide.lightEdit.LightEdit;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.DumbService;
@@ -152,6 +152,15 @@ public class JsonSchemaServiceImpl implements JsonSchemaService, ModificationTra
   @NotNull
   public Collection<VirtualFile> getSchemaFilesForFile(@NotNull final VirtualFile file) {
     return getSchemasForFile(file, false, false);
+  }
+
+  @Nullable
+  public VirtualFile getDynamicSchemaForFile(@NotNull PsiFile psiFile) {
+    return ContentAwareJsonSchemaFileProvider.EP_NAME.extensions()
+      .map(provider -> provider.getSchemaFile(psiFile))
+      .filter(schemaFile -> schemaFile != null)
+      .findFirst()
+      .orElse(null);
   }
 
   @NotNull
@@ -502,12 +511,12 @@ public class JsonSchemaServiceImpl implements JsonSchemaService, ModificationTra
 
         @NotNull
         @Override
-        public final synchronized Map<VirtualFile, List<JsonSchemaFileProvider>> getValue() {
+        public synchronized Map<VirtualFile, List<JsonSchemaFileProvider>> getValue() {
           return super.getValue();
         }
 
         @Override
-        public final synchronized void drop() {
+        public synchronized void drop() {
           myIsComputed.set(false);
           super.drop();
         }
@@ -638,9 +647,10 @@ public class JsonSchemaServiceImpl implements JsonSchemaService, ModificationTra
       }
       List<JsonSchemaFileProvider> providers = getProvidersFromFactories(readyFactories);
       myProviders = providers;
-      if (!notReadyFactories.isEmpty()) {
-        DumbService.getInstance(myProject).runWhenSmart(() -> {
-          ApplicationManager.getApplication().executeOnPooledThread(() -> ReadAction.run(() -> {
+      if (!notReadyFactories.isEmpty() && !LightEdit.owns(myProject)) {
+        ApplicationManager.getApplication().executeOnPooledThread(() -> {
+          if (myProject.isDisposed()) return;
+          DumbService.getInstance(myProject).runReadActionInSmartMode(() -> {
             if (myProviders == providers) {
               List<JsonSchemaFileProvider> newProviders = getProvidersFromFactories(notReadyFactories);
               if (!newProviders.isEmpty()) {
@@ -649,7 +659,7 @@ public class JsonSchemaServiceImpl implements JsonSchemaService, ModificationTra
                 JsonSchemaServiceImpl.this.resetWithCurrentFactories();
               }
             }
-          }));
+          });
         });
       }
       return providers;

@@ -1,5 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.history.integration.ui.views;
 
 import com.intellij.diff.DiffDialogHints;
@@ -9,6 +8,7 @@ import com.intellij.history.integration.IdeaGateway;
 import com.intellij.history.integration.ui.models.DirectoryHistoryDialogModel;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsActions;
@@ -20,9 +20,11 @@ import com.intellij.openapi.vcs.changes.ui.ChangesTree;
 import com.intellij.openapi.vcs.changes.ui.ChangesTreeImpl;
 import com.intellij.openapi.vcs.changes.ui.TreeActionsToolbarPanel;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.ui.*;
+import com.intellij.ui.DocumentAdapter;
+import com.intellij.ui.ExcludingTraversalPolicy;
+import com.intellij.ui.ScrollPaneFactory;
+import com.intellij.ui.SearchTextField;
 import com.intellij.util.containers.ContainerUtil;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -30,6 +32,7 @@ import javax.swing.border.Border;
 import javax.swing.event.DocumentEvent;
 import java.awt.*;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -93,7 +96,11 @@ public class DirectoryHistoryDialog extends HistoryDialog<DirectoryHistoryDialog
       protected void textChanged(@NotNull DocumentEvent e) {
         scheduleRevisionsUpdate(m -> {
           m.setFilter(field.getText());
-          field.addCurrentTextToHistory();
+          ApplicationManager.getApplication().invokeLater(()-> {
+            if (!isDisposed()) {
+              field.addCurrentTextToHistory();
+            }
+          });
         });
       }
     });
@@ -154,7 +161,7 @@ public class DirectoryHistoryDialog extends HistoryDialog<DirectoryHistoryDialog
 
     @Override
     protected void doPerform(DirectoryHistoryDialogModel model, List<? extends DirectoryChange> selected) {
-      final Set<DirectoryChange> selectedSet = new THashSet<>(selected);
+      final Set<DirectoryChange> selectedSet = new HashSet<>(selected);
 
       int index = 0;
       List<Change> changes = new ArrayList<>();

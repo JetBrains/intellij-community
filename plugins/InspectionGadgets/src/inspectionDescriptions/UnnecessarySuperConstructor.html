@@ -1,9 +1,22 @@
 <html>
 <body>
-Reports any no-argument calls to a superclass
-constructor as the first call of a constructor. Such calls are unnecessary, and may be removed.<p>
+Reports calls to no-arg superclass constructors during object construction.
+<p>Such calls are unnecessary and may be removed.</p>
+<p><b>Example:</b></p>
+<pre>
+  class Foo {
+    Foo() {
+      super();
+    }
+  }
+</pre>
+<p>After the quick-fix is applied:</p>
+<pre>
+  class Foo {
+    Foo() {
+    }
+  }
+</pre>
 <!-- tooltip end -->
-<p>
-
 </body>
 </html>

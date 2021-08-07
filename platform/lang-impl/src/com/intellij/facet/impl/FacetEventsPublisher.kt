@@ -25,16 +25,6 @@ internal class FacetEventsPublisher(private val project: Project) {
         onModuleAdded(module)
       }
 
-      override fun beforeModuleRemoved(project: Project, module: Module) {
-        val facetManager = FacetManager.getInstance(module)
-        //in workspace model removal of a module causes cascade removal of facet entities and beforeFacetRemoved events are sent from FacetEntityChangeListener
-        if (facetManager is FacetManagerImpl) {
-          for (facet in facetManager.allFacets) {
-            onFacetRemoved(facet, true)
-          }
-        }
-      }
-
       override fun moduleRemoved(project: Project, module: Module) {
         onModuleRemoved(module)
       }

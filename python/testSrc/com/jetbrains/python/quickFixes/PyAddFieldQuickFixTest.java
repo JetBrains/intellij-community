@@ -38,7 +38,9 @@ public class PyAddFieldQuickFixTest extends PyQuickFixTestCase {
   }
 
   public void testAddFieldAddConstructor() {
-    doQuickFixTest(PyUnresolvedReferencesInspection.class, PyPsiBundle.message("QFIX.add.field.to.class", "x", "B"));
+    doQuickFixTest(PyUnresolvedReferencesInspection.class,
+                   PyPsiBundle.message("QFIX.add.field.to.class", "x", "B"),
+                   LanguageLevel.PYTHON27);
   }
 
   public void testAddFieldNewConstructor() {
@@ -60,7 +62,6 @@ public class PyAddFieldQuickFixTest extends PyQuickFixTestCase {
 
   // PY-21284
   public void testAddFieldAddConstructorWithTypeAnnotation() {
-    runWithLanguageLevel(LanguageLevel.getLatest(), () -> doQuickFixTest(PyUnresolvedReferencesInspection.class, "Add field 'param' to class DerivedClass"));
+    doQuickFixTest(PyUnresolvedReferencesInspection.class, "Add field 'param' to class DerivedClass");
   }
-
 }

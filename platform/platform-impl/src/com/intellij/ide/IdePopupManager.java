@@ -8,6 +8,7 @@ import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.IdeFrame;
+import com.intellij.ui.jcef.JBCefBrowserBase;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -46,6 +47,13 @@ public final class IdePopupManager implements IdeEventQueue.EventDispatcher {
       Window focused = ((WindowEvent)e).getOppositeWindow();
       if (focused == null) {
         focused = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusedWindow();
+        if (focused == null) {
+          // Check if any browser is in focus (java focus can be in the process of transfer).
+          JBCefBrowserBase browser = JBCefBrowserBase.getFocusedBrowser();
+          if (browser != null && browser.getComponent() != null) {
+            focused = SwingUtilities.getWindowAncestor(browser.getComponent());
+          }
+        }
       }
 
       Component ultimateParentForFocusedComponent = UIUtil.findUltimateParent(focused);

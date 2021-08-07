@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build.impl.productInfo
 
 import com.google.gson.GsonBuilder
@@ -10,6 +10,7 @@ import org.jetbrains.intellij.build.OsFamily
 
 import java.nio.file.Files
 import java.nio.file.Path
+
 /**
  * Generates product-info.json file containing meta-information about product installation.
  */

@@ -6,6 +6,7 @@ import com.intellij.openapi.util.IconLoader;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.imageio.ImageIO;
 import javax.swing.*;
@@ -55,6 +56,8 @@ public class JBHtmlEditorKit extends HTMLEditorKit {
   private final HyperlinkListener myHyperlinkListener;
   private final boolean myDisableLinkedCss;
 
+  private FontResolver myFontResolver;
+
   public JBHtmlEditorKit() {
     this(true);
   }
@@ -99,6 +102,13 @@ public class JBHtmlEditorKit extends HTMLEditorKit {
     };
   }
 
+  /**
+   * This allows to impact resolution of fonts from CSS attributes of text
+   */
+  public void setFontResolver(@Nullable FontResolver fontResolver) {
+    myFontResolver = fontResolver;
+  }
+
   @Override
   public StyleSheet getStyleSheet() {
     return style;
@@ -107,11 +117,10 @@ public class JBHtmlEditorKit extends HTMLEditorKit {
   @Override
   public Document createDefaultDocument() {
     StyleSheet styles = getStyleSheet();
-    // static class instead anonymous for exclude $this [memory leak]
     StyleSheet ss = new StyleSheetCompressionThreshold();
     ss.addStyleSheet(styles);
 
-    HTMLDocument doc = myDisableLinkedCss ? new HTMLDocumentNoLinkedCss(ss) : new HTMLDocument(ss);
+    HTMLDocument doc = new OurDocument(ss);
     doc.setParser(getParser());
     doc.setAsynchronousLoadPriority(4);
     doc.setTokenThreshold(100);
@@ -120,8 +129,8 @@ public class JBHtmlEditorKit extends HTMLEditorKit {
 
   public static StyleSheet createStyleSheet() {
     StyleSheet style = new StyleSheet();
-    style.addStyleSheet(StartupUiUtil.isUnderDarcula() ? (StyleSheet)UIManager.getDefaults().get("StyledEditorKit.JBDefaultStyle")
-                                                       : StartupUiUtil.getDefaultHtmlKitCss());
+    style.addStyleSheet(ObjectUtils.notNull((StyleSheet)UIManager.getDefaults().get("StyledEditorKit.JBDefaultStyle"),
+                                            StartupUiUtil.getDefaultHtmlKitCss()));
     style.addStyleSheet(ourCommonStyle);
     return style;
   }
@@ -179,6 +188,9 @@ public class JBHtmlEditorKit extends HTMLEditorKit {
     super.deinstall(c);
   }
 
+  // This needs to be a static class to avoid memory leaks.
+  // It's because StyleSheet instance gets leaked into parent (global) StyleSheet
+  // due to JDK implementation nuances (see javax.swing.text.html.CSS#getStyleSheet)
   private static class StyleSheetCompressionThreshold extends StyleSheet {
     @Override
     protected int getCompressionThreshold() {
@@ -423,22 +435,30 @@ public class JBHtmlEditorKit extends HTMLEditorKit {
     }
   }
 
-  private static final class HTMLDocumentNoLinkedCss extends HTMLDocument {
-    private HTMLDocumentNoLinkedCss(StyleSheet styles) {
+  private final class OurDocument extends HTMLDocument {
+    private OurDocument(StyleSheet styles) {
       super(styles);
     }
 
     @Override
+    public Font getFont(AttributeSet a) {
+      Font font = super.getFont(a);
+      return myFontResolver == null ? font : myFontResolver.getFont(font, a);
+    }
+
+    @Override
     public ParserCallback getReader(int pos) {
-      return new CallbackWrapper(super.getReader(pos));
+      ParserCallback reader = super.getReader(pos);
+      return myDisableLinkedCss ? new CallbackWrapper(reader) : reader;
     }
 
     @Override
     public ParserCallback getReader(int pos, int popDepth, int pushDepth, HTML.Tag insertTag) {
-      return new CallbackWrapper(super.getReader(pos, popDepth, pushDepth, insertTag));
+      ParserCallback reader = super.getReader(pos, popDepth, pushDepth, insertTag);
+      return myDisableLinkedCss ? new CallbackWrapper(reader) : reader;
     }
 
-    private static final class CallbackWrapper extends ParserCallback {
+    private final class CallbackWrapper extends ParserCallback {
       private final ParserCallback delegate;
       private int depth;
 
@@ -492,5 +512,15 @@ public class JBHtmlEditorKit extends HTMLEditorKit {
         delegate.handleEndOfLineString(eol);
       }
     }
+  }
+
+  /**
+   * @see #setFontResolver(FontResolver)
+   */
+  public interface FontResolver {
+    /**
+     * Resolves a font for a piece of text, given its CSS attributes. {@code defaultFont} is the result of default resolution algorithm.
+     */
+    @NotNull Font getFont(@NotNull Font defaultFont, @NotNull AttributeSet attributeSet);
   }
 }

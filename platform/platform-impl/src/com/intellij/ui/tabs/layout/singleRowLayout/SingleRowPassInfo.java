@@ -53,18 +53,6 @@ public class SingleRowPassInfo extends LayoutPassInfoBase {
     return 1;
   }
 
-  @Deprecated
-  @Override
-  public int getColumnCount(final int row) {
-    return myVisibleInfos.size();
-  }
-
-  @Deprecated
-  @Override
-  public TabInfo getTabAt(final int row, final int column) {
-    return myVisibleInfos.get(column);
-  }
-
   @Override
   public Rectangle getHeaderRectangle() {
     return (Rectangle)tabRectangle.clone();

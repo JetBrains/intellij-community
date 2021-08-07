@@ -123,6 +123,13 @@ public class SpecifyTypeInPy3AnnotationsIntention extends TypeIntention {
   static String parameterType(PyParameter parameter) {
     String paramType = PyNames.OBJECT;
 
+    if (parameter instanceof PyNamedParameter) {
+      PyAnnotation annotation = ((PyNamedParameter)parameter).getAnnotation();
+      if (annotation != null && annotation.getValue() != null) {
+        return annotation.getValue().getText();
+      }
+    }
+
     PyFunction function = PsiTreeUtil.getParentOfType(parameter, PyFunction.class);
     if (function != null) {
       final PySignature signature = PySignatureCacheManager.getInstance(parameter.getProject()).findSignature(
@@ -132,17 +139,23 @@ public class SpecifyTypeInPy3AnnotationsIntention extends TypeIntention {
         paramType = ObjectUtils.chooseNotNull(signature.getArgTypeQualifiedName(parameterName), paramType);
       }
     }
+
     return paramType;
   }
 
 
   static String returnType(@NotNull PyFunction function) {
-    String returnType = PyNames.OBJECT;
+    if (function.getAnnotation() != null && function.getAnnotation().getValue() != null) {
+      return function.getAnnotation().getValue().getText();
+    }
+
     final PySignature signature = PySignatureCacheManager.getInstance(function.getProject()).findSignature(function);
     if (signature != null) {
-      returnType = ObjectUtils.chooseNotNull(signature.getReturnTypeQualifiedName(), returnType);
+      final String qualifiedName = signature.getReturnTypeQualifiedName();
+      if (qualifiedName != null) return qualifiedName;
     }
-    return returnType;
+
+    return PyNames.OBJECT;
   }
 
   public static PyExpression annotateReturnType(Project project, PyFunction function, boolean createTemplate) {
@@ -194,12 +207,15 @@ public class SpecifyTypeInPy3AnnotationsIntention extends TypeIntention {
 
   @Override
   protected boolean isParamTypeDefined(@NotNull PyNamedParameter parameter) {
-    return parameter.getAnnotation() != null;
+    if (parameter.getAnnotation() != null) return true;
+    if (parameter.getTypeComment() != null) return true;
+    PyFunction function = PsiTreeUtil.getParentOfType(parameter, PyFunction.class);
+    return function != null && function.getTypeComment() != null;
   }
 
   @Override
   protected boolean isReturnTypeDefined(@NotNull PyFunction function) {
-    return function.getAnnotation() != null;
+    return function.getAnnotation() != null || function.getTypeComment() != null;
   }
 
   @Override

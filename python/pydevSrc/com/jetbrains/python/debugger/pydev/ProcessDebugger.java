@@ -32,6 +32,9 @@ public interface ProcessDebugger {
 
   void consoleExec(String threadId, String frameId, String expression, PyDebugCallback<String> callback);
 
+  @Nullable
+  String execTableCommand(String threadId, String frameId, String command, TableCommandType commandType) throws PyDebuggerException;
+
   XValueChildrenList loadFrame(String threadId, String frameId) throws PyDebuggerException;
 
   List<Pair<String, Boolean>> getSmartStepIntoVariants(String threadId, String frameId, int startContextLine, int endContextLine)
@@ -136,4 +139,6 @@ public interface ProcessDebugger {
   void removeExceptionBreakpoint(ExceptionBreakpointCommandFactory factory);
 
   void suspendOtherThreads(PyThreadInfo thread);
+
+  default void interruptDebugConsole() {}
 }

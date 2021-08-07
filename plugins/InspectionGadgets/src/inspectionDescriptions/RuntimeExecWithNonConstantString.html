@@ -1,16 +1,22 @@
 <html>
 <body>
-Reports calls to <b>java.lang.Runtime.exec()</b> or any
-of its variants which take a dynamically-constructed string as the command to execute.
-Constructed execution strings are a common source of security breaches.
-By default this inspection ignores compile-time constants.
+Reports calls to <code>java.lang.Runtime.exec()</code> which take a dynamically-constructed string as the command to execute.
+<p>
+  Constructed execution strings are a common source of security breaches.
+  By default, this inspection ignores compile-time constants.
+</p>
+<p><b>Example:</b></p>
+<pre>
+  String i = getUserInput();
+  Runtime runtime = Runtime.getRuntime();
+  runtime.exec("foo" + i); // reports warning
+</pre>
 <!-- tooltip end -->
 <p>
-Use the checkbox below to consider any <b>static</b> <b>final</b> fields as constant.
+Use the inspection settings to consider any <code>static</code> <code>final</code> fields as constant.
 Be careful, because strings like the following will be ignored when the option is enabled:
 <pre>
-<code><b>private static final</b> String COMMAND =
-  "ping " + getDomainFromUserInput() + "'";</code>
+  static final String COMMAND = "ping " + getDomainFromUserInput() + "'";
 </pre>
 <p>
 </body>

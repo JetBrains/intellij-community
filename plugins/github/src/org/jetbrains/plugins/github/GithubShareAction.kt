@@ -102,7 +102,7 @@ class GithubShareAction : DumbAwareAction(GithubBundle.messagePointer("share.act
       val gitRepository = GithubGitHelper.findGitRepository(project, file)
       val possibleRemotes = gitRepository
         ?.let(project.service<GHProjectRepositoriesManager>()::findKnownRepositories)
-        ?.map { it.gitRemote.url }.orEmpty()
+        ?.map { it.gitRemoteUrlCoordinates.url }.orEmpty()
       if (possibleRemotes.isNotEmpty()) {
         val existingRemotesDialog = GithubExistingRemotesDialog(project, possibleRemotes)
         DialogManager.show(existingRemotesDialog)
@@ -111,7 +111,6 @@ class GithubShareAction : DumbAwareAction(GithubBundle.messagePointer("share.act
         }
       }
 
-      if (!service<GithubAccountsMigrationHelper>().migrate(project)) return
       val authManager = service<GithubAuthenticationManager>()
       val progressManager = service<ProgressManager>()
       val requestExecutorManager = service<GithubApiRequestExecutorManager>()

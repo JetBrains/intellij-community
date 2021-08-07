@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.xml.util;
 
 import com.intellij.lang.ASTNode;
@@ -12,8 +12,8 @@ import com.intellij.psi.xml.XmlTagValue;
 import com.intellij.psi.xml.XmlToken;
 import com.intellij.psi.xml.XmlTokenType;
 import com.intellij.util.ArrayUtilRt;
-import it.unimi.dsi.fastutil.objects.Object2IntMap;
-import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
+import com.intellij.util.containers.ObjectIntHashMap;
+import com.intellij.util.containers.ObjectIntMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -21,9 +21,8 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @author peter
  */
-@SuppressWarnings({"HardCodedStringLiteral"})
-public final class XmlTagUtil extends XmlTagUtilBase {
-  private static final Object2IntMap<String> ourCharacterEntities = new Object2IntOpenHashMap<>();
+public final class XmlTagUtil {
+  private static final ObjectIntMap<String> ourCharacterEntities = new ObjectIntHashMap<>(6);
 
   static {
     ourCharacterEntities.put("lt", '<');
@@ -86,7 +85,8 @@ public final class XmlTagUtil extends XmlTagUtilBase {
   }
 
   public static char getCharacterByEntityName(String entityName) {
-    return (char)ourCharacterEntities.getInt(entityName);
+    int c = ourCharacterEntities.get(entityName);
+    return c==-1?0:(char)c;
   }
 
   @Nullable
@@ -145,7 +145,6 @@ public final class XmlTagUtil extends XmlTagUtilBase {
   @Nullable
   public static TextRange getEndTagRange(@NotNull XmlTag tag) {
     XmlToken tagName = getEndTagNameElement(tag);
-
     return getTagRange(tagName, XmlTokenType.XML_END_TAG_START);
   }
 

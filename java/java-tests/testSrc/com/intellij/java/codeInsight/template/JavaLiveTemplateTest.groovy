@@ -1,22 +1,14 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.codeInsight.template
 
 import com.intellij.JavaTestUtil
 import com.intellij.codeInsight.CodeInsightSettings
 import com.intellij.codeInsight.daemon.impl.quickfix.EmptyExpression
 import com.intellij.codeInsight.lookup.Lookup
-import com.intellij.codeInsight.template.JavaCodeContextType
-import com.intellij.codeInsight.template.JavaStringContextType
-import com.intellij.codeInsight.template.Template
-import com.intellij.codeInsight.template.TemplateActionContext
-import com.intellij.codeInsight.template.TemplateContextType
+import com.intellij.codeInsight.template.*
 import com.intellij.codeInsight.template.actions.SaveAsTemplateAction
 import com.intellij.codeInsight.template.impl.*
-import com.intellij.codeInsight.template.macro.BaseCompleteMacro
-import com.intellij.codeInsight.template.macro.CompleteMacro
-import com.intellij.codeInsight.template.macro.CompleteSmartMacro
-import com.intellij.codeInsight.template.macro.MethodReturnTypeMacro
-import com.intellij.codeInsight.template.macro.VariableOfTypeMacro
+import com.intellij.codeInsight.template.macro.*
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.editor.impl.DocumentImpl
 import com.intellij.psi.PsiDocumentManager
@@ -340,6 +332,22 @@ class Foo {
 
     startTemplate(template)
     assert myFixture.editor.document.text.contains('List<Map.Entry<String, Integer>> result;')
+  }
+
+  void "test method name in annotation"() {
+    myFixture.configureByText 'a.java', '''
+class Foo {
+  <caret>
+  void foo() {}
+}
+'''
+
+    Template template = templateManager.createTemplate("result", "user", '@SuppressWarnings("$T$")')
+    template.addVariable('T', new MacroCallNode(new MethodNameMacro()), new EmptyNode(), false)
+    template.toReformat = true
+
+    startTemplate(template)
+    assert myFixture.editor.document.text.contains('@SuppressWarnings("foo")')
   }
 
 

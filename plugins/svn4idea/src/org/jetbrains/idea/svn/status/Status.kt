@@ -1,7 +1,6 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.status
 
-import com.intellij.openapi.util.Getter
 import com.intellij.openapi.vcs.FileStatus
 import org.jetbrains.idea.svn.SvnFileStatus
 import org.jetbrains.idea.svn.api.BaseNodeDescription
@@ -13,6 +12,7 @@ import org.jetbrains.idea.svn.info.Info
 import org.jetbrains.idea.svn.lock.Lock
 import org.jetbrains.idea.svn.status.StatusType.*
 import java.io.File
+import java.util.function.Supplier
 
 class Status private constructor(builder: Builder) : BaseNodeDescription(builder.nodeKind) {
   private val infoProvider = builder.infoProvider
@@ -51,7 +51,7 @@ class Status private constructor(builder: Builder) : BaseNodeDescription(builder
   fun isProperty(vararg types: StatusType) = propertyStatus in types
 
   class Builder(var file: File) {
-    var infoProvider = Getter<Info?> { null }
+    var infoProvider = Supplier<Info?> { null }
 
     var url: Url? = null
     var fileExists = false

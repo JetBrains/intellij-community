@@ -47,7 +47,7 @@ final class GradleLibraryPresentationProvider extends GroovyLibraryPresentationP
 
   @Override
   public boolean isSDKHome(@NotNull VirtualFile file) {
-    return myLibraryManager.isGradleSdkHome(file);
+    return myLibraryManager.isGradleSdkHome(null, file);
   }
 
   @Override

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.rename;
 
 import com.intellij.codeInsight.ChangeContextUtil;
@@ -34,9 +34,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 import java.util.regex.Pattern;
 
-/**
- * @author yole
- */
+
 public class RenameJavaClassProcessor extends RenamePsiElementProcessor {
   private static final Logger LOG = Logger.getInstance(RenameJavaClassProcessor.class);
 
@@ -72,7 +70,9 @@ public class RenameJavaClassProcessor extends RenamePsiElementProcessor {
     }
 
     // do actual rename
-    ChangeContextUtil.encodeContextInfo(aClass.getContainingFile(), true, false);
+    PsiElement topLevelScope = aClass.getContainingClass() != null ? PsiTreeUtil.getTopmostParentOfType(aClass, PsiClass.class) //allow conflict resolution 
+                                                                   : aClass.getContainingFile();
+    ChangeContextUtil.encodeContextInfo(topLevelScope, true, false);
     aClass.setName(newName);
 
     for (UsageInfo usage : usages) {

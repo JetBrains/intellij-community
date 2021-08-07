@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.lang;
 
 import com.intellij.openapi.diagnostic.LoggerRt;
@@ -23,6 +23,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.BiConsumer;
+import java.util.function.Function;
 import java.util.function.Predicate;
 
 @ApiStatus.Internal
@@ -43,7 +44,8 @@ public final class ClassPath {
   private static final AtomicLong classDefineTotalTime = new AtomicLong();
 
   private final List<Path> files;
-  private final @Nullable ResourceFileFactory resourceFileFactory;
+  private final @Nullable Function<Path, ResourceFile> resourceFileFactory;
+  final boolean mimicJarUrlConnection;
   private final List<Loader> loaders = new ArrayList<>();
 
   private volatile boolean allUrlsWereProcessed;
@@ -56,14 +58,10 @@ public final class ClassPath {
   // true implies that the .jar file will not be modified in the lifetime of the JarLoader
   final boolean lockJars;
   private final boolean useCache;
-  final boolean preloadJarContents;
   final boolean isClassPathIndexEnabled;
   private final @Nullable CachePoolImpl cachePool;
   private final @Nullable Predicate<? super Path> cachingCondition;
   final boolean errorOnMissingJar;
-
-  private final @NotNull ClassPath.ClassDataConsumer classDataConsumer;
-
   static {
     // insertion order must be preserved
     loadedClasses = recordLoadingInfo ? new ConcurrentLinkedQueue<>() : null;
@@ -86,25 +84,23 @@ public final class ClassPath {
     Class<?> consumeClassData(String name, ByteBuffer data, Loader loader, @Nullable ProtectionDomain protectionDomain) throws IOException;
   }
 
-  public @Nullable ResourceFileFactory getResourceFileFactory() {
+  public @Nullable Function<Path, ResourceFile> getResourceFileFactory() {
     return resourceFileFactory;
   }
 
-  ClassPath(@NotNull List<Path> files,
-            @NotNull Set<Path> filesWithProtectionDomain,
-            @NotNull UrlClassLoader.Builder configuration,
-            @Nullable ResourceFileFactory resourceFileFactory,
-            @NotNull ClassPath.ClassDataConsumer classDataConsumer) {
+  public ClassPath(@NotNull List<Path> files,
+                   @NotNull Set<Path> filesWithProtectionDomain,
+                   @NotNull UrlClassLoader.Builder configuration,
+                   @Nullable Function<Path, ResourceFile> resourceFileFactory,
+                   boolean mimicJarUrlConnection) {
     lockJars = configuration.lockJars;
     useCache = configuration.useCache;
-    preloadJarContents = configuration.preloadJarContents;
     cachePool = configuration.cachePool;
     cachingCondition = configuration.cachingCondition;
     isClassPathIndexEnabled = configuration.isClassPathIndexEnabled;
     errorOnMissingJar = configuration.errorOnMissingJar;
     this.filesWithProtectionDomain = filesWithProtectionDomain;
-
-    this.classDataConsumer = recordLoadingTime ? new MeasuringClassDataConsumer(classDataConsumer) : classDataConsumer;
+    this.mimicJarUrlConnection = mimicJarUrlConnection;
 
     this.files = new ArrayList<>(files.size());
     this.resourceFileFactory = resourceFileFactory;
@@ -167,7 +163,7 @@ public final class ClassPath {
     allUrlsWereProcessed = false;
   }
 
-  public @Nullable Class<?> findClass(@NotNull String className) throws IOException {
+  public @Nullable Class<?> findClass(@NotNull String className, @NotNull ClassDataConsumer classDataConsumer) throws IOException {
     long start = classLoading.startTiming();
     try {
       String fileName = className.replace('.', '/') + CLASS_EXTENSION;
@@ -385,10 +381,10 @@ public final class ClassPath {
     else {
       ResourceFile zipFile;
       if (resourceFileFactory == null) {
-        zipFile = new JdkZipResourceFile(file, lockJars, preloadJarContents, false);
+        zipFile = new JdkZipResourceFile(file, lockJars, false);
       }
       else {
-        zipFile = resourceFileFactory.create(file);
+        zipFile = resourceFileFactory.apply(file);
       }
       loader = new JarLoader(file, this, zipFile);
     }
@@ -568,7 +564,7 @@ public final class ClassPath {
     return null;
   }
 
-  private static final class MeasuringClassDataConsumer implements ClassDataConsumer {
+  static final class MeasuringClassDataConsumer implements ClassDataConsumer {
     private static final ThreadLocal<Boolean> doingClassDefineTiming = new ThreadLocal<>();
 
     private final ClassDataConsumer classDataConsumer;

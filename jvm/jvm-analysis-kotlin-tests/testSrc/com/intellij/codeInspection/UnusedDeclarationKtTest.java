@@ -29,6 +29,20 @@ public class UnusedDeclarationKtTest extends AbstractUnusedDeclarationTest {
     doTest();
   }
 
+  public void testOverridingProperty() {
+    myTool.getSharedLocalInspectionTool().PARAMETER = true;
+    myTool.getSharedLocalInspectionTool().LOCAL_VARIABLE = false;
+    doTest("deadCode/" + getTestName(true), myToolWrapper);
+  }
+
+  public void testPrimaryConstructor() {
+    doTest();
+  }
+  
+  public void testReceiverParameter() {
+    doTest();
+  }
+
   public void testStaticMethods() {
     doTest();
   }
@@ -71,6 +85,10 @@ public class UnusedDeclarationKtTest extends AbstractUnusedDeclarationTest {
   }
 
   public void testClassLiteralRef() {
+    doTest();
+  }
+
+  public void testTopLevelFunction() {
     doTest();
   }
 }

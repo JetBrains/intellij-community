@@ -1,7 +1,8 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 @file:Suppress("HardCodedStringLiteral")
 package com.intellij.ui.layout
 
+import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.ui.JBIntSpinner
@@ -9,6 +10,7 @@ import com.intellij.ui.UIBundle
 import com.intellij.ui.components.*
 import java.awt.Dimension
 import java.awt.GridLayout
+import java.util.function.Supplier
 import javax.swing.*
 
 /**
@@ -288,7 +290,29 @@ fun hideableRow(): JPanel {
       textField(dummyTextBinding)
     }
     hideableRow("Bar") {
-      textField(dummyTextBinding)
+      row {
+        textField(dummyTextBinding)
+      }
+      hideableRow("Nested hideable") {
+        row {
+          label("Label 1")
+        }
+        row {
+          label("Label 2")
+        }
+      }
+      row {
+        label("Text with largeGapAfter")
+      }.largeGapAfter()
+      row {
+        label("Text without largeGapAfter")
+      }
+      row {
+        label("Last Text with largeGapAfter")
+      }.largeGapAfter()
+    }
+    row {
+      label("Non hideable text")
     }
   }
 }
@@ -451,6 +475,50 @@ fun rowWithIndent(): JPanel {
 
       row("Bar 2") {
       }
+    }
+  }
+}
+
+fun rowWithHiddenComponents(): JPanel {
+  val label1 = JLabel("test1")
+  val label2 = JLabel("test2")
+  val label3 = JLabel("test3")
+  val button1 = object : ToggleAction(Supplier{"button"}, null) {
+    override fun isSelected(e: AnActionEvent): Boolean {
+      return label1.isVisible
+    }
+    override fun setSelected(e: AnActionEvent, state: Boolean) {
+      label1.isVisible = state
+    }
+  }
+  val button2 = object : ToggleAction(Supplier{"button"}, null) {
+    override fun isSelected(e: AnActionEvent): Boolean {
+      return label2.isVisible
+    }
+    override fun setSelected(e: AnActionEvent, state: Boolean) {
+      label2.isVisible = state
+    }
+  }
+  val button3 = object : ToggleAction(Supplier{"button"}, null) {
+    override fun isSelected(e: AnActionEvent): Boolean {
+      return label3.isVisible
+    }
+    override fun setSelected(e: AnActionEvent, state: Boolean) {
+      label3.isVisible = state
+    }
+  }
+  return panel {
+    row {
+      component(ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, DefaultActionGroup(button1, button2, button3), true).component)
+    }
+    row {
+      component(label1)
+    }
+    row {
+      component(label2)
+    }
+    row {
+      component(label3)
     }
   }
 }

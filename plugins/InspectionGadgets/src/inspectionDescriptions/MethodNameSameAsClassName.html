@@ -1,9 +1,31 @@
 <html>
 <body>
-Reports methods being named identically to their class.
-A method with such a name may be easily mistaken for a constructor.
-<!-- tooltip end -->
-<p>
+<p>Reports methods that are named identically to their class.</p>
+<p>While such naming is allowed by the Java language, it's usually a mistake, as it was intended to create a constructor.
+Such naming is bad practice.</p>
+<p><b>Example:</b></p>
+<pre><code>
+  class MyClass {
+    int val;
 
+    // Method MyClass named identically to its containing class.
+    // Likely, 'void' was added by mistake.
+    void MyClass(int val) {
+      this.val = val;
+    }
+  }
+</code></pre>
+<p>When appropriate, a quick-fix converts the method to a constructor:</p>
+<pre><code>
+  class MyClass {
+    int val;
+
+    MyClass(int val) {
+      this.val = val;
+    }
+  }
+</code></pre>
+<p>Another quick-fix renames the method.</p>
+<!-- tooltip end -->
 </body>
 </html>

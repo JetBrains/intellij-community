@@ -1,28 +1,20 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build.impl
 
+import com.intellij.openapi.util.io.FileUtil
+import groovy.transform.CompileDynamic
 import groovy.transform.CompileStatic
+import org.jetbrains.intellij.build.BuildOptions
 import org.jetbrains.intellij.build.CompilationContext
 import org.jetbrains.intellij.build.CompilationTasks
+import org.jetbrains.intellij.build.impl.compilation.CompilationPartsUtil
 import org.jetbrains.intellij.build.impl.compilation.PortableCompilationCache
 import org.jetbrains.jps.model.java.JdkVersionDetector
 
+import java.util.stream.Collectors
+
 @CompileStatic
-class CompilationTasksImpl extends CompilationTasks {
+final class CompilationTasksImpl extends CompilationTasks {
   private final CompilationContext context
   private final PortableCompilationCache jpsCache
 
@@ -32,7 +24,8 @@ class CompilationTasksImpl extends CompilationTasks {
   }
 
   @Override
-  void compileModules(List<String> moduleNames, List<String> includingTestsInModules) {
+  void compileModules(Collection<String> moduleNames, List<String> includingTestsInModules) {
+    reuseCompiledClassesIfProvided()
     if (context.options.useCompiledClassesFromProjectOutput) {
       context.messages.info("Compilation skipped, the compiled classes from the project output will be used")
       resolveProjectDependencies()
@@ -56,7 +49,7 @@ class CompilationTasksImpl extends CompilationTasks {
       if (jdkInfo.version.feature != 11) {
         context.messages.error("Build script must be executed under Java 11 to compile intellij project, but it's executed under Java $jdkInfo.version ($currentJdk)")
       }
-
+      resolveProjectDependencies()
       context.messages.progress("Compiling project")
       JpsCompilationRunner runner = new JpsCompilationRunner(context)
       try {
@@ -69,7 +62,9 @@ class CompilationTasksImpl extends CompilationTasks {
           }
         }
         else {
-          List<String> invalidModules = moduleNames.findAll { context.findModule(it) == null }
+          List<String> invalidModules = moduleNames.stream()
+            .filter { context.findModule(it) == null }
+            .collect(Collectors.toUnmodifiableList())
           if (!invalidModules.empty) {
             context.messages.warning("The following modules won't be compiled: $invalidModules")
           }
@@ -91,10 +86,12 @@ class CompilationTasksImpl extends CompilationTasks {
   @Override
   void buildProjectArtifacts(Collection<String> artifactNames) {
     if (!artifactNames.isEmpty()) {
-      boolean buildIncludedModules = !context.options.useCompiledClassesFromProjectOutput &&
-                                     context.options.pathToCompiledClassesArchive == null &&
-                                     context.options.pathToCompiledClassesArchivesMetadata == null
       try {
+        def buildIncludedModules = !areCompiledClassesProvided(context.options)
+        if (buildIncludedModules && jpsCache.canBeUsed) {
+          jpsCache.downloadCacheAndCompileProject()
+          buildIncludedModules = false
+        }
         new JpsCompilationRunner(context).buildArtifacts(artifactNames, buildIncludedModules)
       }
       catch (Throwable e) {
@@ -118,5 +115,72 @@ class CompilationTasksImpl extends CompilationTasks {
     resolveProjectDependencies()
     context.compilationData.statisticsReported = false
     compileAllModulesAndTests()
+  }
+
+  static boolean areCompiledClassesProvided(BuildOptions options) {
+    return options.useCompiledClassesFromProjectOutput ||
+           options.pathToCompiledClassesArchive != null ||
+           options.pathToCompiledClassesArchivesMetadata != null
+  }
+
+  @Override
+  void reuseCompiledClassesIfProvided() {
+    synchronized (CompilationTasksImpl) {
+      if (context.compilationData.compiledClassesAreLoaded) {
+        return
+      }
+      if (context.options.cleanOutputFolder) {
+        cleanOutput()
+      }
+      else {
+        context.messages.info("cleanOutput step was skipped")
+      }
+      if (context.options.useCompiledClassesFromProjectOutput) {
+        context.messages.info("Compiled classes reused from project output")
+      }
+      else if (context.options.pathToCompiledClassesArchivesMetadata != null) {
+        CompilationPartsUtil.fetchAndUnpackCompiledClasses(context.messages, context.projectOutputDirectory, context.options)
+      }
+      else if (context.options.pathToCompiledClassesArchive != null) {
+        unpackCompiledClasses(context.projectOutputDirectory)
+      }
+      else if (jpsCache.canBeUsed && !jpsCache.isCompilationRequired()) {
+        jpsCache.downloadCacheAndCompileProject()
+      }
+      context.compilationData.compiledClassesAreLoaded = true
+    }
+  }
+
+  @CompileDynamic
+  private void unpackCompiledClasses(File classesOutput) {
+    context.messages.block("Unpack compiled classes archive") {
+      FileUtil.delete(classesOutput)
+      context.ant.unzip(src: context.options.pathToCompiledClassesArchive, dest: classesOutput.absolutePath)
+    }
+  }
+
+  private void cleanOutput() {
+    List<String> outputDirectoriesToKeep = ["log"]
+    if (areCompiledClassesProvided(context.options)) {
+      outputDirectoriesToKeep.add("classes")
+    }
+    if (context.options.incrementalCompilation) {
+      outputDirectoriesToKeep.add(context.compilationData.dataStorageRoot.name)
+      outputDirectoriesToKeep.add("classes")
+      outputDirectoriesToKeep.add("project-artifacts")
+    }
+    context.messages.block("Clean output") {
+      def outputPath = context.paths.buildOutputRoot
+      context.messages.progress("Cleaning output directory $outputPath")
+      new File(outputPath).listFiles()?.each { File file ->
+        if (outputDirectoriesToKeep.contains(file.name)) {
+          context.messages.info("Skipped cleaning for $file.absolutePath")
+        }
+        else {
+          context.messages.info("Deleting $file.absolutePath")
+          FileUtil.delete(file)
+        }
+      }
+    }
   }
 }

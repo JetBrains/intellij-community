@@ -74,7 +74,7 @@ public final class TransactionGuardImpl extends TransactionGuard {
     if (!isWriteSafeModality(state)) {
       LOG.error("Cannot run synchronous submitTransactionAndWait from a background thread created in a write-unsafe context");
     }
-    WriteThread.invokeAndWait(runnable);
+    app.invokeAndWait(runnable, state);
   }
 
   /**
@@ -90,12 +90,8 @@ public final class TransactionGuardImpl extends TransactionGuard {
    */
   public void performUserActivity(Runnable activity) {
     ApplicationManager.getApplication().assertIsDispatchThread();
-    AccessToken token = startActivity(true);
-    try {
+    try (AccessToken ignore = startActivity(true)) {
       activity.run();
-    }
-    finally {
-      token.finish();
     }
   }
 

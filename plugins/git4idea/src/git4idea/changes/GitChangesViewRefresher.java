@@ -31,7 +31,6 @@ public class GitChangesViewRefresher implements ChangesViewRefresher {
     GitRepositoryManager repositoryManager = GitRepositoryManager.getInstance(project);
     for (GitRepository repository : repositoryManager.getRepositories()) {
       repository.getUntrackedFilesHolder().invalidate();
-      repository.getIgnoredFilesHolder().startRescan();
     }
   }
 }

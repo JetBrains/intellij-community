@@ -4,10 +4,16 @@ package com.intellij.ui.tabs.impl.themes
 import com.intellij.openapi.editor.colors.EditorColors
 import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.editor.colors.EditorColorsScheme
+import com.intellij.openapi.util.registry.ExperimentalUI
+import com.intellij.openapi.util.registry.Registry
+import com.intellij.ui.ColorUtil
+import com.intellij.ui.JBColor
 import com.intellij.util.ui.JBUI
 import java.awt.Color
 
 interface TabTheme {
+  val topBorderThickness: Int
+    get() = JBUI.scale(1)
   val background: Color?
   val borderColor: Color
   val underlineColor: Color
@@ -43,11 +49,15 @@ open class DefaultTabTheme : TabTheme {
 }
 
 class EditorTabTheme : TabTheme {
+  override val topBorderThickness: Int
+    get() = newUIAware(1, super.topBorderThickness)
+
   val globalScheme: EditorColorsScheme
     get() = EditorColorsManager.getInstance().globalScheme
 
   override val background: Color
-    get() = JBUI.CurrentTheme.EditorTabs.background()
+    get() = newUIAware(JBColor.PanelBackground, JBUI.CurrentTheme.EditorTabs.background())
+
   override val borderColor: Color
     get() = JBUI.CurrentTheme.EditorTabs.borderColor()
 
@@ -58,18 +68,18 @@ class EditorTabTheme : TabTheme {
     get() = globalScheme.getColor(EditorColors.TAB_UNDERLINE_INACTIVE) ?: JBUI.CurrentTheme.EditorTabs.inactiveUnderlineColor()
 
   override val hoverBackground: Color
-    get() = JBUI.CurrentTheme.EditorTabs.hoverBackground()
+    get() = newUIAware(ColorUtil.mix(JBColor.PanelBackground, globalScheme.defaultBackground, 0.5), JBUI.CurrentTheme.EditorTabs.hoverBackground())
   override val underlinedTabBackground: Color?
-    get() = globalScheme.getAttributes(EditorColors.TAB_SELECTED).backgroundColor?: JBUI.CurrentTheme.EditorTabs.underlinedTabBackground()
+    get() = newUIAware(globalScheme.defaultBackground as Color?, globalScheme.getAttributes(EditorColors.TAB_SELECTED).backgroundColor?: JBUI.CurrentTheme.EditorTabs.underlinedTabBackground())
 
   override val underlinedTabForeground: Color
     get() = globalScheme.getAttributes(EditorColors.TAB_SELECTED).foregroundColor?: JBUI.CurrentTheme.EditorTabs.underlinedTabForeground()
 
   override val underlineHeight: Int
-    get() = JBUI.CurrentTheme.EditorTabs.underlineHeight()
+    get() = newUIAware(0, JBUI.CurrentTheme.EditorTabs.underlineHeight())
 
   override val hoverInactiveBackground: Color
-    get() = hoverBackground
+    get() = newUIAware(ColorUtil.mix(JBColor.PanelBackground, globalScheme.defaultBackground, 0.5), hoverBackground)
 
   override val underlinedTabInactiveBackground: Color?
     get() = globalScheme.getAttributes(EditorColors.TAB_SELECTED_INACTIVE).backgroundColor?: underlinedTabBackground
@@ -78,7 +88,9 @@ class EditorTabTheme : TabTheme {
     get() = globalScheme.getAttributes(EditorColors.TAB_SELECTED_INACTIVE).foregroundColor?: underlinedTabForeground
 
   override val inactiveColoredTabBackground: Color
-    get() = JBUI.CurrentTheme.EditorTabs.inactiveColoredFileBackground()
+    get() = newUIAware(JBColor.PanelBackground, JBUI.CurrentTheme.EditorTabs.inactiveColoredFileBackground())
+
+  fun <T> newUIAware(newUI: T, oldUI:T):T = if (ExperimentalUI.isNewEditorTabs()) newUI else oldUI
 }
 
 internal class ToolWindowTabTheme : DefaultTabTheme() {

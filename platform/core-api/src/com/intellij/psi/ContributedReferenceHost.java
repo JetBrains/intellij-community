@@ -22,7 +22,7 @@ import org.jetbrains.annotations.NotNull;
  */
 public interface ContributedReferenceHost extends PsiElement {
   /**
-   * By contributed reference host contract must always return
+   * By the contributed reference host contract, this must always return
    * {@link PsiReferenceService#getReferences(PsiElement, PsiReferenceService.Hints)}
    * @return {@link PsiReferenceService#getContributedReferences(PsiElement)}
    */

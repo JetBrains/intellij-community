@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.editorActions;
 
 import com.intellij.openapi.actionSystem.DataContext;
@@ -16,8 +16,6 @@ import org.jetbrains.annotations.NotNull;
  * Note that {@code PsiFile} passed to handler's methods isn't guaranteed to be in sync with the document at the time of invocation
  * (due to performance considerations). {@link com.intellij.psi.PsiDocumentManager#commitDocument(Document)} should be invoked explicitly,
  * if an up-to-date PSI is required.
- *
- * @author yole
  */
 public abstract class TypedHandlerDelegate {
   public static final ExtensionPointName<TypedHandlerDelegate> EP_NAME = new ExtensionPointName<>("com.intellij.typedHandler");

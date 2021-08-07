@@ -301,8 +301,8 @@ public class MoveInstanceMethodProcessor extends BaseRefactoringProcessor{
     }
 
     try {
+      final PsiModifierList modifierList = patternMethod.getModifierList();
       if (myTargetClass.isInterface()) {
-        final PsiModifierList modifierList = patternMethod.getModifierList();
         if (!PsiUtil.isLanguageLevel8OrHigher(myTargetClass)) {
           patternMethod.getBody().delete();
           modifierList.setModifierProperty(PsiModifier.DEFAULT, false);
@@ -311,6 +311,10 @@ public class MoveInstanceMethodProcessor extends BaseRefactoringProcessor{
           modifierList.setModifierProperty(PsiModifier.DEFAULT, true);
         }
         RefactoringUtil.makeMethodAbstract(myTargetClass, patternMethod);
+      }
+      else if (myMethod.hasModifierProperty(PsiModifier.DEFAULT)) {
+        modifierList.setModifierProperty(PsiModifier.DEFAULT, false);
+        VisibilityUtil.setVisibility(modifierList, PsiModifier.PUBLIC);
       }
 
       final PsiMethod method = addMethodToClass(myTargetClass, patternMethod, false);

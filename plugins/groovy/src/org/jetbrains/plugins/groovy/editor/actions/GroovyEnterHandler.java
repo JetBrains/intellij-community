@@ -12,7 +12,6 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorModificationUtil;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
-import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.editor.highlighter.HighlighterIterator;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -132,7 +131,7 @@ public class GroovyEnterHandler extends EnterHandlerDelegateAdapter {
     }
 
     final int caret = caretModel.getOffset();
-    final EditorHighlighter highlighter = ((EditorEx)editor).getHighlighter();
+    final EditorHighlighter highlighter = editor.getHighlighter();
     if (caret >= 1 && caret < docLength && CodeInsightSettings.getInstance().SMART_INDENT_ON_ENTER) {
       HighlighterIterator iterator = highlighter.createIterator(caret);
       iterator.retreat();
@@ -244,7 +243,7 @@ public class GroovyEnterHandler extends EnterHandlerDelegateAdapter {
                                                    EditorActionHandler originalHandler) {
     String text = editor.getDocument().getText();
     if (text == null || text.isEmpty()) return false;
-    final EditorHighlighter highlighter = ((EditorEx)editor).getHighlighter();
+    final EditorHighlighter highlighter = editor.getHighlighter();
     if (caret < 1 || caret > text.length() - 1) {
       return false;
     }

@@ -1,9 +1,11 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.diagnostic.startUpPerformanceReporter
 
 import com.intellij.diagnostic.ActivityImpl
 import com.intellij.diagnostic.ThreadNameManager
 import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap
+
+private const val pooledPrefix = "ApplicationImpl pooled thread "
 
 internal class IdeThreadNameManager : ThreadNameManager {
   // ConcurrencyUtil.runUnderThreadName is used in our code (to make thread dumps more clear) and changes thread name,
@@ -16,10 +18,8 @@ internal class IdeThreadNameManager : ThreadNameManager {
       return result
     }
 
-    val pooledPrefix = "ApplicationImpl pooled thread "
-
     var name = event.threadName
-    if (name.endsWith("]") && name.contains(pooledPrefix)) {
+    if (name.endsWith(']') && name.contains(pooledPrefix)) {
       val lastOpen = name.lastIndexOf('[')
       if (lastOpen > 0) {
         name = name.substring(lastOpen + 1, name.length - 1)
@@ -27,6 +27,7 @@ internal class IdeThreadNameManager : ThreadNameManager {
     }
 
     result = when {
+      name.startsWith("JobScheduler FJ pool ") -> name.replace("JobScheduler FJ pool ", "fj ")
       name.startsWith("AWT-EventQueue-") -> "edt"
       name.startsWith("Idea Main Thread") -> "idea main"
       name.startsWith(pooledPrefix) -> name.replace(pooledPrefix, "pooled ")

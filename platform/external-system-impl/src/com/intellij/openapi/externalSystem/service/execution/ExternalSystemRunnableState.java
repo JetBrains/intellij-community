@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.externalSystem.service.execution;
 
 import com.intellij.build.*;
@@ -23,7 +23,6 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.externalSystem.execution.ExternalSystemExecutionConsoleManager;
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.openapi.externalSystem.model.execution.ExternalSystemTaskExecutionSettings;
@@ -32,6 +31,7 @@ import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotifica
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListenerAdapter;
 import com.intellij.openapi.externalSystem.model.task.event.ExternalSystemBuildEvent;
 import com.intellij.openapi.externalSystem.model.task.event.ExternalSystemTaskExecutionEvent;
+import com.intellij.openapi.externalSystem.service.execution.configuration.ExternalSystemRunConfigurationExtensionManager;
 import com.intellij.openapi.externalSystem.service.internal.ExternalSystemExecuteTaskTask;
 import com.intellij.openapi.externalSystem.util.ExternalSystemBundle;
 import com.intellij.openapi.externalSystem.util.ExternalSystemUtil;
@@ -55,6 +55,7 @@ import java.net.*;
 import java.util.Arrays;
 import java.util.Enumeration;
 
+import static com.intellij.openapi.externalSystem.service.execution.configuration.ExternalSystemRunConfigurationExtensionManager.createVMParameters;
 import static com.intellij.openapi.externalSystem.util.ExternalSystemUtil.convert;
 import static com.intellij.openapi.externalSystem.util.ExternalSystemUtil.getConsoleManagerFor;
 import static com.intellij.openapi.util.text.StringUtil.nullize;
@@ -210,23 +211,17 @@ public class ExternalSystemRunnableState extends UserDataHolderBase implements R
     Filter[] filters = consoleManager.getCustomExecutionFilters(myProject, task, myEnv);
     Arrays.stream(filters).forEach(buildDescriptor::withExecutionFilter);
     final BuildProgressListener progressListener =
-      progressListenerClazz != null ? ServiceManager.getService(myProject, progressListenerClazz)
+      progressListenerClazz != null ? myProject.getService(progressListenerClazz)
                                     : createBuildView(buildDescriptor, consoleView);
 
-    ExternalSystemRunConfiguration.EP_NAME
-      .forEachExtensionSafe(extension -> extension.attachToProcess(myConfiguration, processHandler, myEnv.getRunnerSettings()));
+    ExternalSystemRunConfigurationExtensionManager.attachToProcess(myConfiguration, processHandler, myEnv.getRunnerSettings());
 
     ApplicationManager.getApplication().executeOnPooledThread(() -> {
       final String startDateTime = DateFormatUtil.formatTimeWithSeconds(System.currentTimeMillis());
-      final String greeting;
-      final String settingsDescription = StringUtil.isEmpty(mySettings.toString()) ? "" : String.format(" '%s'", mySettings.toString());
-      if (mySettings.getTaskNames().size() > 1) {
-        greeting = ExternalSystemBundle.message("run.text.starting.multiple.task", startDateTime, settingsDescription) + "\n";
-      }
-      else {
-        greeting = ExternalSystemBundle.message("run.text.starting.single.task", startDateTime, settingsDescription) + "\n";
-      }
+      final String settingsDescription = StringUtil.isEmpty(mySettings.toString()) ? "" : String.format(" '%s'", mySettings);
+      final String greeting = ExternalSystemBundle.message("run.text.starting.task", startDateTime, settingsDescription) + "\n";
       processHandler.notifyTextAvailable(greeting + "\n", ProcessOutputTypes.SYSTEM);
+
       try (BuildEventDispatcher eventDispatcher = new ExternalSystemEventDispatcher(task.getId(), progressListener, false)) {
         ExternalSystemTaskNotificationListenerAdapter taskListener = new ExternalSystemTaskNotificationListenerAdapter() {
           @Override
@@ -303,13 +298,7 @@ public class ExternalSystemRunnableState extends UserDataHolderBase implements R
           @Override
           public void onEnd(@NotNull ExternalSystemTaskId id) {
             final String endDateTime = DateFormatUtil.formatTimeWithSeconds(System.currentTimeMillis());
-            final String farewell;
-            if (mySettings.getTaskNames().size() > 1) {
-              farewell = ExternalSystemBundle.message("run.text.ended.multiple.task", endDateTime, settingsDescription);
-            }
-            else {
-              farewell = ExternalSystemBundle.message("run.text.ended.single.task", endDateTime, settingsDescription);
-            }
+            final String farewell = ExternalSystemBundle.message("run.text.ended.task", endDateTime, settingsDescription);
             processHandler.notifyTextAvailable(farewell + "\n", ProcessOutputTypes.SYSTEM);
             ExternalSystemRunConfiguration.foldGreetingOrFarewell(consoleView, farewell, false);
             processHandler.notifyProcessTerminated(0);
@@ -349,10 +338,8 @@ public class ExternalSystemRunnableState extends UserDataHolderBase implements R
 
   @Nullable
   private String getJvmParametersSetup() throws ExecutionException {
-    final SimpleJavaParameters extensionsJP = new SimpleJavaParameters();
-    for (ExternalSystemRunConfigurationExtension extension : ExternalSystemRunConfiguration.EP_NAME.getExtensionList()) {
-      extension.updateVMParameters(myConfiguration, extensionsJP, myEnv.getRunnerSettings(), myEnv.getExecutor());
-    }
+    SimpleJavaParameters extensionsJP = createVMParameters(myConfiguration, myEnv.getRunnerSettings(), myEnv.getExecutor());
+
     String jvmParametersSetup = "";
     if (myDebugPort <= 0) {
       final ParametersList allVMParameters = new ParametersList();

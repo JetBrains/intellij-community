@@ -24,6 +24,9 @@ public enum MarkdownPsiFactory {
     if (elementType == MarkdownElementTypes.CODE_FENCE) {
       return ((MarkdownCodeFenceImpl)node);
     }
+    if (elementType == MarkdownElementTypes.IMAGE) {
+      return new MarkdownImageImpl(node);
+    }
     if (MarkdownTokenTypeSets.LISTS.contains(elementType)) {
       return new MarkdownListImpl(node);
     }
@@ -33,11 +36,17 @@ public enum MarkdownPsiFactory {
     if (elementType == MarkdownElementTypes.BLOCK_QUOTE) {
       return new MarkdownBlockQuoteImpl(node);
     }
+    if (elementType == MarkdownElementTypes.SHORT_REFERENCE_LINK) {
+      return new MarkdownShortReferenceLinkImpl(node);
+    }
     if (elementType == MarkdownElementTypes.LINK_DEFINITION) {
       return new MarkdownLinkDefinitionImpl(node);
     }
     if (elementType == MarkdownElementTypes.LINK_DESTINATION) {
       return new MarkdownLinkDestinationImpl(node);
+    }
+    if (elementType == MarkdownElementTypes.LINK_LABEL) {
+      return new MarkdownLinkLabelImpl(node);
     }
     if (elementType == MarkdownElementTypes.CODE_BLOCK) {
       return new MarkdownCodeBlockImpl(node);

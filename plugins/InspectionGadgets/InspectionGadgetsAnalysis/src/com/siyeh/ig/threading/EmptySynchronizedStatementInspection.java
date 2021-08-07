@@ -17,13 +17,17 @@ package com.siyeh.ig.threading;
 
 import com.intellij.psi.PsiCodeBlock;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiKeyword;
 import com.intellij.psi.PsiSynchronizedStatement;
 import com.intellij.psi.util.FileTypeUtils;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
+import com.siyeh.ig.InspectionGadgetsFix;
+import com.siyeh.ig.fixes.DeleteUnnecessaryStatementFix;
 import com.siyeh.ig.psiutils.ControlFlowUtils;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class EmptySynchronizedStatementInspection extends BaseInspection {
 
@@ -35,7 +39,12 @@ public class EmptySynchronizedStatementInspection extends BaseInspection {
   }
 
   @Override
-  public boolean shouldInspect(PsiFile file) {
+  protected @Nullable InspectionGadgetsFix buildFix(Object... infos) {
+    return new DeleteUnnecessaryStatementFix(PsiKeyword.SYNCHRONIZED);
+  }
+
+  @Override
+  public boolean shouldInspect(@NotNull PsiFile file) {
     return !FileTypeUtils.isInServerPageFile(file);
   }
 

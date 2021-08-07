@@ -112,5 +112,7 @@ class RankingProvidersTest : LightPlatformTestCase() {
     override fun predict(features: DoubleArray?): Double = 0.0
   }
 
-  private class TestLanguage : Language("RankingProvidersTest_TEST_LANG_ID")
+  private class TestLanguage : Language("RankingProvidersTest_TEST_LANG_ID") {
+    override fun getDisplayName(): String = "unique unusable blah-blah" + System.identityHashCode(this)
+  }
 }

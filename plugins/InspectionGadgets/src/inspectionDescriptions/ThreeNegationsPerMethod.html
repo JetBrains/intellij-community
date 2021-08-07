@@ -1,11 +1,29 @@
 <html>
 <body>
-Reports methods with three or more negation operations (<b>!</b> or <b>!=</b>).
-Such methods may be unnecessarily confusing.
+Reports a method with three or more negation operators <code>!</code> or <code>!=</code>.
+<p>Such methods may be confusing.</p>
+<p><b>Example:</b></p>
+<pre><code>
+  void doSmth(int a, int b, boolean flag1, boolean flag2) {
+    if (!flag && !flag2) {
+      if (a != b) {
+        doOther();
+      }
+    }
+  }
+</code></pre>
+<p>Without negations, the method becomes easier to understand:</p>
+<pre><code>
+  void doSmth(int a, int b, boolean flag1, boolean flag2) {
+    if (flag1 || flag2 || a == b) return;
+    doOther();
+  }
+</code></pre>
 <!-- tooltip end -->
-<p>
-Use the checkbox below to disable this inspection within 'equals()' methods.
-<p>
-
+<p>Configure the inspection:</p>
+<ul>
+  <li>Use the <b>Ignore negations in 'equals()' methods</b> option to disable the inspection within <code>equals()</code> methods.</li>
+  <li>Use the <b>Ignore negations in 'assert' statements</b> to disable the inspection within <code>assert</code> statements.</li>
+</ul>
 </body>
 </html>

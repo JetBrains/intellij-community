@@ -27,19 +27,21 @@ public interface Constants {
   @NonNls String DESCRIPTION_KEY = "description";
 
   enum StringKey {
-    CONTENT("content"),
-    NAME("name"),
-    CONTENT_NAME("contentName"),
-    WHILE("while"),
-    END("end"),
-    SCOPE_NAME("scopeName"),
-    MATCH("match"),
-    BEGIN("begin");
+    CONTENT("content", '$'),
+    NAME("name", '$'),
+    CONTENT_NAME("contentName", '$'),
+    WHILE("while", '\\'),
+    END("end", '\\'),
+    SCOPE_NAME("scopeName", '$'),
+    MATCH("match", '\\'),
+    BEGIN("begin", '\\');
 
     public final String value;
+    public final char backReferencePrefix;
 
-    StringKey(String name) {
+    StringKey(String name, char backReferencePrefix) {
       value = name;
+      this.backReferencePrefix = backReferencePrefix;
     }
 
     @Nullable

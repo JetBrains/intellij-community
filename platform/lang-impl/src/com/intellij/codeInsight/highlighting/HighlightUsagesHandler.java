@@ -273,26 +273,6 @@ public class HighlightUsagesHandler extends HighlightHandlerBase {
   }
 
   /**
-   * @deprecated internal API
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.2")
-  public static void doHighlightElements(@NotNull Editor editor,
-                                         PsiElement @NotNull [] elements,
-                                         @NotNull TextAttributes attributes,
-                                         boolean clearHighlights) {
-    HighlightManager highlightManager = HighlightManager.getInstance(editor.getProject());
-    List<TextRange> textRanges = new ArrayList<>(elements.length);
-    for (PsiElement element : elements) {
-      TextRange range = element.getTextRange();
-      // injection occurs
-      range = InjectedLanguageManager.getInstance(element.getProject()).injectedToHost(element, range);
-      textRanges.add(range);
-    }
-    highlightRanges(highlightManager, editor, attributes, null, clearHighlights, textRanges);
-  }
-
-  /**
    * @deprecated Use the overload with TextAttributesKey
    */
   @Deprecated

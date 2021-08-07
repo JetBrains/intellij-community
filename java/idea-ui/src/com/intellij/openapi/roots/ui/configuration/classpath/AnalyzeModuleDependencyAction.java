@@ -48,9 +48,9 @@ class AnalyzeModuleDependencyAction extends AnAction {
     if (selectedEntry instanceof ModuleOrderEntry) {
       Module depModule = ((ModuleOrderEntry)selectedEntry).getModule();
       LOG.assertTrue(depModule != null);
-      Map<OrderEntry, OrderEntry> additionalDependencies = JavaProjectRootsUtil
-        .findExportedDependenciesReachableViaThisDependencyOnly(myPanel.getRootModel().getModule(),
-                                                                depModule, modulesProvider);
+      Map<OrderEntry, OrderEntry> additionalDependencies =
+        JavaProjectDependenciesAnalyzer.findExportedDependenciesReachableViaThisDependencyOnly(myPanel.getRootModel().getModule(),
+                                                                                               depModule, modulesProvider);
       additionalScopes = new LinkedHashMap<>();
       for (Map.Entry<OrderEntry, OrderEntry> entry : additionalDependencies.entrySet()) {
         additionalScopes.put(getScopeForOrderEntry(entry.getKey()), entry.getValue());

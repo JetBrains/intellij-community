@@ -9,10 +9,7 @@ import com.intellij.execution.testframework.TestTreeViewAction;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationType;
 import com.intellij.notification.Notifications;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.progress.ProgressManager;
@@ -20,7 +17,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
-import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.ui.awt.RelativePoint;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -30,10 +26,8 @@ import org.jetbrains.uast.*;
 import java.util.Collections;
 import java.util.List;
 
-/**
- * @author yole
- */
-public class NavigateToTestDataAction extends AnAction implements TestTreeViewAction {
+
+public class NavigateToTestDataAction extends AnAction implements TestTreeViewAction, UpdateInBackground {
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
@@ -127,8 +121,7 @@ public class NavigateToTestDataAction extends AnAction implements TestTreeViewAc
   private static PsiMethod findTargetMethod(@NotNull DataContext context) {
     final Location<?> location = Location.DATA_KEY.getData(context);
     if (location != null) {
-      final PsiElement element = location.getPsiElement();
-      PsiMethod method = PsiTreeUtil.getParentOfType(element, PsiMethod.class, false);
+      UMethod method = UastContextKt.getUastParentOfType(location.getPsiElement(), UMethod.class, false);
       if (method != null) {
         return method;
       }

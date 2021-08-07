@@ -67,10 +67,14 @@
                      level="WARNING"
                      implementationClass="com.intellij.codeInspection.SuspiciousLocalesLanguagesInspection"
                      key="inspection.suspicious.locales.languages.display.name" bundle="messages.JavaI18nBundle"/>
-
+    <localInspection groupPath="Java" language="JAVA" shortName="ConvertToBasicLatin" bundle="messages.JavaI18nBundle" key="inspection.convert.to.basic.latin"
+                     groupKey="group.names.internationalization.issues" groupBundle="messages.InspectionsBundle"
+                     enabledByDefault="true" level="INFORMATION"
+                     implementationClass="com.intellij.codeInspection.i18n.ConvertToBasicLatinInspection" />
     <intentionAction>
       <className>com.intellij.codeInspection.capitalization.AnnotateCapitalizationIntention</className>
-      <category>Java/I18N</category>
+      <bundleName>messages.JavaBundle</bundleName>
+      <categoryKey>intention.category.i18n</categoryKey>
     </intentionAction>
     <intentionAction>
       <className>com.intellij.codeInspection.i18n.folding.EditPropertyValueIntentionAction</className>
@@ -78,9 +82,6 @@
 
     <completion.confidence language="UAST" implementationClass="com.intellij.lang.properties.PropertyKeyLiteralConfidence" id="propertyKeys" order="before javaSkipAutopopupInStrings"/>
 
-    <experimentalFeature id="property.value.inplace.editing" percentOfUsers="100">
-      <description>Edit property value at usage location, where it's displayed in folding placeholder</description>
-    </experimentalFeature>
     <applicationService serviceImplementation="com.intellij.lang.properties.PropertiesFoldingSettings"/>
     <codeFoldingOptionsProvider instance="com.intellij.lang.properties.PropertiesFoldingOptionsProvider"/>
   </extensions>
@@ -89,7 +90,6 @@
       <add-to-group group-id="RefactoringMenu" anchor="last" />
     </action>
     <action id="EditPropertyValue" class="com.intellij.codeInspection.i18n.folding.EditPropertyValueAction">
-      <add-to-group group-id="RefactoringMenu" anchor="after" relative-to-action="ChangeSignature"/>
       <keyboard-shortcut first-keystroke="alt F6" keymap="$default"/>
     </action>
   </actions>

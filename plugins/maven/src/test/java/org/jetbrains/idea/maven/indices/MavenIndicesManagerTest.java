@@ -5,6 +5,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.WaitFor;
 import org.jetbrains.idea.maven.model.MavenArchetype;
+import org.junit.Test;
 
 import java.io.File;
 import java.io.IOException;
@@ -39,6 +40,7 @@ public class MavenIndicesManagerTest extends MavenIndicesTestCase {
   }
 
 
+  @Test
   public void testEnsuringRemoteRepositoryIndex() {
     Pair<String, String> remote1 = Pair.create("id1", "http://foo/bar");
     Pair<String, String> remote2 = Pair.create("id1", "  http://foo\\bar\\\\  ");
@@ -54,10 +56,12 @@ public class MavenIndicesManagerTest extends MavenIndicesTestCase {
       .size());
   }
 
+  @Test 
   public void testDefaultArchetypes() {
     assertArchetypeExists("org.apache.maven.archetypes:maven-archetype-quickstart:RELEASE");
   }
 
+  @Test 
   public void testIndexedArchetypes() throws Exception {
     myIndicesFixture.getRepositoryHelper().addTestData("archetypes");
     myIndicesFixture.getIndicesManager()
@@ -66,23 +70,7 @@ public class MavenIndicesManagerTest extends MavenIndicesTestCase {
     assertArchetypeExists("org.apache.maven.archetypes:maven-archetype-foobar:1.0");
   }
 
-  public void testIndexedArchetypesWithSeveralIndicesAfterReopening() throws Exception {
-    myIndicesFixture.getRepositoryHelper().addTestData("archetypes");
-    /*myIndicesFixture.getIndicesManager().ensureIndicesExist(myProject,
-                                                            Collections.singleton(Pair.create("id", "foo://bar.baz")));*/
-
-    myIndicesFixture.getIndicesManager()
-      .createIndexForLocalRepo(myProject, myIndicesFixture.getRepositoryHelper().getTestData("archetypes"));
-
-
-    assertArchetypeExists("org.apache.maven.archetypes:maven-archetype-foobar:1.0");
-
-    myIndicesFixture.tearDown();
-    myIndicesFixture.setUp();
-
-    assertArchetypeExists("org.apache.maven.archetypes:maven-archetype-foobar:1.0");
-  }
-
+  @Test 
   public void testAddingArchetypes() throws Exception {
     myIndicesFixture.getIndicesManager().addArchetype(new MavenArchetype("myGroup",
                                                                          "myArtifact",
@@ -98,6 +86,7 @@ public class MavenIndicesManagerTest extends MavenIndicesTestCase {
     assertArchetypeExists("myGroup:myArtifact:666");
   }
 
+  @Test 
   public void testAddingFilesToIndex() throws IOException {
     File localRepo = myIndicesFixture.getRepositoryHelper().getTestData("local2");
     MavenIndex localIndex = myIndicesFixture.getIndicesManager()

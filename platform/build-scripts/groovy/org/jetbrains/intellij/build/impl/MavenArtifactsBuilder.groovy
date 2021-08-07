@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build.impl
 
 import com.intellij.openapi.util.io.FileUtil
@@ -157,7 +157,7 @@ class MavenArtifactsBuilder {
 
   private Map<JpsModule, MavenArtifactData> generateMavenArtifactData(List<String> moduleNames) {
     buildContext.messages.debug("Collecting platform modules which can be published as Maven artifacts")
-    def allPlatformModules = moduleNames.collect {
+    List<JpsModule> allPlatformModules = moduleNames.collect {
       buildContext.findRequiredModule(it)
     }
 
@@ -230,7 +230,7 @@ class MavenArtifactsBuilder {
           buildContext.messages.warning(" module '$module.name': skip recursive dependency on '$depModule.name'")
         }
         else {
-          def depArtifact = generateMavenArtifactData(depModule, results, nonMavenizableModules, computationInProgress)
+          MavenArtifactData depArtifact = generateMavenArtifactData(depModule, results, nonMavenizableModules, computationInProgress)
           if (depArtifact == null) {
             buildContext.messages.warning(" module '$module.name' depends on non-mavenizable module '$depModule.name' so it cannot be published")
             mavenizable = false
@@ -256,7 +256,7 @@ class MavenArtifactsBuilder {
       nonMavenizableModules << module
       return null
     }
-    def artifactData = new MavenArtifactData(generateMavenCoordinatesForModule(module), dependencies)
+    MavenArtifactData artifactData = new MavenArtifactData(generateMavenCoordinatesForModule(module), dependencies)
     results[module] = artifactData
     return artifactData
   }
@@ -275,7 +275,7 @@ class MavenArtifactsBuilder {
     // it's unlikely that code which depend on these libraries will be used when running tests so skipping these dependencies shouldn't cause real problems.
     //  'microba' contains UI elements which are used in few places (IDEA-200834),
     //  'precompiled_jshell-frontend' is used by "JShell Console" action only (IDEA-222381).
-    library.name == "microba" || library.name == "precompiled_jshell-frontend"
+    library.name == "microba" || library.name == "jshell-frontend"
   }
 
   private static MavenArtifactDependency createArtifactDependencyByLibrary(JpsMavenRepositoryLibraryDescriptor descriptor, DependencyScope scope) {

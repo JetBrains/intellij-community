@@ -1,21 +1,34 @@
 <html>
 <body>
-Reports any JDBC resource which is not safely closed in a <b>finally</b> block. Such resources may
-be inadvertently leaked if an exception is thrown before the resource is closed. JDBC resources reported
-by this inspection include <b>java.sql.Connection</b>,
-<b>java.sql.Statement</b>,
-<b>java.sql.PreparedStatement</b>,
-<b>java.sql.CallableStatement</b>,
-and <b>java.sql.ResultSet</b>.
+Reports JDBC resources that are not safely closed. JDBC resources reported
+by this inspection include <code>java.sql.Connection</code>,
+<code>java.sql.Statement</code>, <code>java.sql.PreparedStatement</code>,
+<code>java.sql.CallableStatement</code>, and <code>java.sql.ResultSet</code>.
+<p>
+  By default, the inspection assumes that the resources can be closed by any method with
+  'close' or 'cleanup' in its name.
+</p>
+<p><b>Example:</b></p>
+<pre><code>
+  ResultSet findAllElements(Connection connection) throws SQLException {
+    PreparedStatement statement = connection.prepareStatement("SELECT * FROM TABLE");//statement is not closed
+    statement.execute();
+    return statement.getResultSet();
+  }
+</code></pre>
 <!-- tooltip end -->
 <p>
-Use the first checkbox below to specify if a JDBC resource is allowed to be opened <i>inside</i> a <b>try</b>
-block. This style is less desirable because it is more verbose than opening a resource
-<i>in front of</i> a <b>try</b> block.
-<p>
-Use the second checkbox below to specify that the inspection should not warn if a JDBC resource is passed as a method call argument.
-If enabled the inspection assumes the resource is closed in the called method.
-Method calls inside a <b>finally</b> block with <i>close</i> in the name and an JDBC resource argument will not be ignored.
-<p>
+  Use the following options to configure the inspection:
+</p>
+<ul>
+  <li>
+    Whether a JDBC resource is allowed to be opened inside a <code>try</code>
+    block. This style is less desirable because it is more verbose than opening a resource
+    in front of a <code>try</code> block.
+  </li>
+  <li>
+    Whether the resource can be closed by any method call with the resource passed as argument.
+  </li>
+</ul>
 </body>
 </html>

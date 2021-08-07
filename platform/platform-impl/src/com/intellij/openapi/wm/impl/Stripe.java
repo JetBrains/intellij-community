@@ -1,14 +1,18 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.wm.impl;
 
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.UISettingsListener;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.ToolWindowAnchor;
 import com.intellij.ui.ColorUtil;
 import com.intellij.ui.Gray;
+import com.intellij.ui.JBColor;
 import com.intellij.ui.paint.LinePainter2D;
+import com.intellij.ui.paint.RectanglePainter;
 import com.intellij.util.ui.JBSwingUtilities;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.UIUtil;
 import org.intellij.lang.annotations.MagicConstant;
@@ -29,19 +33,22 @@ import java.util.List;
  */
 class Stripe extends JPanel implements UISettingsListener {
   private static final Dimension EMPTY_SIZE = new Dimension();
+  static final Key<Rectangle> VIRTUAL_BOUNDS = Key.create("Virtual stripe bounds");
 
+  @MagicConstant(intValues = {SwingConstants.CENTER, SwingConstants.TOP, SwingConstants.LEFT, SwingConstants.BOTTOM, SwingConstants.RIGHT})
   private final int anchor;
   private final List<StripeButton> buttons = new ArrayList<>();
 
   private Dimension preferredSize;
   private StripeButton myDragButton;
   private Rectangle myDropRectangle;
+  private final Rectangle myDrawRectangle = new Rectangle();
   private JComponent myDragButtonImage;
   private LayoutData myLastLayoutData;
   private boolean myFinishingDrop;
-  static final int DROP_DISTANCE_SENSITIVITY = 20;
+  static final int DROP_DISTANCE_SENSITIVITY = 200;
 
-  Stripe(@MagicConstant(valuesFromClass = SwingConstants.class) int anchor) {
+  Stripe(@MagicConstant(intValues = {SwingConstants.CENTER, SwingConstants.TOP, SwingConstants.LEFT, SwingConstants.BOTTOM, SwingConstants.RIGHT}) int anchor) {
     super(new GridBagLayout());
 
     setOpaque(true);
@@ -171,7 +178,6 @@ class Stripe extends JPanel implements UISettingsListener {
 
     data.eachY = 0;
     data.size = new Dimension();
-    data.gap = 0;
     data.horizontal = isHorizontal();
     data.dragInsertPosition = -1;
     if (data.horizontal) {
@@ -181,12 +187,15 @@ class Stripe extends JPanel implements UISettingsListener {
     else {
       data.eachX = 0;
     }
+    if (myDragButton != null) {
+      data.shouldSwapCoordinates = getAnchor().isHorizontal() != myDragButton.getAnchor().isHorizontal();
+    }
 
     data.fitSize = toFitWith != null ? toFitWith : new Dimension();
 
-    Rectangle stripeSensitiveRectangle = new Rectangle(-DROP_DISTANCE_SENSITIVITY, -DROP_DISTANCE_SENSITIVITY,
-                                                       getWidth() + DROP_DISTANCE_SENSITIVITY * 2, getHeight() + DROP_DISTANCE_SENSITIVITY * 2);
-    boolean processDrop = isDroppingButton() && stripeSensitiveRectangle.intersects(myDropRectangle) && !noDrop;
+    Point point = myDropRectangle != null ? myDropRectangle.getLocation() : new Point(-1, -1);
+    SwingUtilities.convertPointToScreen(point, this);
+    boolean processDrop = isDroppingButton() && containsPoint(point) && !noDrop;
 
     if (toFitWith == null) {
       for (StripeButton button : buttons) {
@@ -212,10 +221,10 @@ class Stripe extends JPanel implements UISettingsListener {
 
       if (processDrop) {
         if (data.horizontal) {
-          gap -= myDropRectangle.width + data.gap;
+          gap -= data.shouldSwapCoordinates ? myDropRectangle.height : myDropRectangle.width;
         }
         else {
-          gap -= myDropRectangle.height + data.gap;
+          gap -= data.shouldSwapCoordinates ? myDropRectangle.width : myDropRectangle.height;
         }
       }
       gap = Math.max(gap, 0);
@@ -246,19 +255,21 @@ class Stripe extends JPanel implements UISettingsListener {
       if (processDrop && !data.dragTargetChosen) {
         if (data.horizontal) {
           int distance = myDropRectangle.x - data.eachX;
-          if (distance < eachSize.width / 2 || (myDropRectangle.x + myDropRectangle.width) < eachSize.width / 2) {
-            layoutButton(data, myDragButtonImage, false);
+          if (distance < eachSize.width / 2 ||
+              (myDropRectangle.x + (data.shouldSwapCoordinates ? myDropRectangle.height : myDropRectangle.width)) < eachSize.width / 2) {
             data.dragInsertPosition = insertOrder;
             data.dragToSide = sidesStarted;
+            layoutDragButton(data);
             data.dragTargetChosen = true;
           }
         }
         else {
           int distance = myDropRectangle.y - data.eachY;
-          if (distance < eachSize.height / 2 || (myDropRectangle.y + myDropRectangle.height) < eachSize.height / 2) {
-            layoutButton(data, myDragButtonImage, false);
+          if (distance < eachSize.height / 2 ||
+              (myDropRectangle.y + (data.shouldSwapCoordinates ? myDropRectangle.width : myDropRectangle.height)) < eachSize.height / 2) {
             data.dragInsertPosition = insertOrder;
             data.dragToSide = sidesStarted;
+            layoutDragButton(data);
             data.dragTargetChosen = true;
           }
         }
@@ -273,19 +284,17 @@ class Stripe extends JPanel implements UISettingsListener {
 
     if (isDroppingButton()) {
       Dimension dragSize = myDragButton.getPreferredSize();
-      if (getAnchor().isHorizontal() == myDragButton.getWindowInfo().getAnchor().isHorizontal()) {
-        data.size.width = Math.max(data.size.width, dragSize.width);
-        data.size.height = Math.max(data.size.height, dragSize.height);
+      if (data.shouldSwapCoordinates) {
+        swap(dragSize);
       }
-      else {
-        data.size.width = Math.max(data.size.width, dragSize.height);
-        data.size.height = Math.max(data.size.height, dragSize.width);
-      }
+      data.size.width = Math.max(data.size.width, dragSize.width);
+      data.size.height = Math.max(data.size.height, dragSize.height);
     }
 
     if (processDrop && !data.dragTargetChosen) {
       data.dragInsertPosition = -1;
       data.dragToSide = true;
+      layoutDragButton(data);
       data.dragTargetChosen = true;
     }
 
@@ -319,8 +328,38 @@ class Stripe extends JPanel implements UISettingsListener {
         data.dragToSide = false;
       }
       data.dragTargetChosen = true;
+      layoutDragButton(data, gap);
+    }
+  }
 
-      layoutButton(data, myDragButtonImage, false);
+  private void layoutDragButton(LayoutData data) {
+    layoutDragButton(data, 0);
+  }
+
+  private void layoutDragButton(LayoutData data, int gap) {
+    myDrawRectangle.x = data.eachX;
+    myDrawRectangle.y = data.eachY;
+    layoutButton(data, myDragButtonImage, false);
+    if (data.horizontal) {
+      myDrawRectangle.width = data.eachX - myDrawRectangle.x;
+      myDrawRectangle.height = data.fitSize.height;
+      if (data.dragToSide) {
+        if (data.dragInsertPosition == -1) {
+          myDrawRectangle.x = getWidth() - getHeight() - myDrawRectangle.width;
+        } else {
+          myDrawRectangle.x += gap;
+        }
+      }
+    } else {
+      myDrawRectangle.width = data.fitSize.width;
+      myDrawRectangle.height = data.eachY - myDrawRectangle.y;
+      if (data.dragToSide) {
+        if (data.dragInsertPosition == -1) {
+          myDrawRectangle.y = getHeight() - myDrawRectangle.height;
+        } else {
+          myDrawRectangle.y += gap;
+        }
+      }
     }
   }
 
@@ -355,24 +394,33 @@ class Stripe extends JPanel implements UISettingsListener {
 
   private static void layoutButton(@NotNull LayoutData data, @NotNull JComponent button, boolean setBounds) {
     Dimension eachSize = button.getPreferredSize();
+    if (data.shouldSwapCoordinates && !(button instanceof StripeButton)) {
+      swap(eachSize);
+    }
     if (setBounds) {
       final int width = data.horizontal ? eachSize.width : data.fitSize.width;
       final int height = data.horizontal ? data.fitSize.height : eachSize.height;
       button.setBounds(data.eachX, data.eachY, width, height);
     }
     if (data.horizontal) {
-      final int deltaX = eachSize.width + data.gap;
+      final int deltaX = eachSize.width;
       data.eachX += deltaX;
       data.size.width += deltaX;
-      data.size.height = eachSize.height;
+      data.size.height = Math.max(data.size.height, eachSize.height);
     }
     else {
-      final int deltaY = eachSize.height + data.gap;
+      final int deltaY = eachSize.height;
       data.eachY += deltaY;
-      data.size.width = eachSize.width;
+      data.size.width = Math.max(data.size.width, eachSize.width);
       data.size.height += deltaY;
     }
-    data.processedComponents++;
+  }
+
+  private static void swap(Dimension d) {
+    int tmp = d.width;
+    //noinspection SuspiciousNameCombination
+    d.width = d.height;
+    d.height = tmp;
   }
 
   public void startDrag() {
@@ -411,14 +459,13 @@ class Stripe extends JPanel implements UISettingsListener {
   private static final class LayoutData {
     int eachX;
     int eachY;
-    int gap;
     Dimension size;
     Dimension fitSize;
     boolean horizontal;
-    int processedComponents;
 
     boolean dragTargetChosen;
     boolean dragToSide;
+    boolean shouldSwapCoordinates;
     int dragInsertPosition;
   }
 
@@ -445,15 +492,51 @@ class Stripe extends JPanel implements UISettingsListener {
     }
   }
 
-  public boolean containsScreen(@NotNull Rectangle screenRec) {
-    Point point = screenRec.getLocation();
-    SwingUtilities.convertPointFromScreen(point, this);
-    return new Rectangle(point, screenRec.getSize()).intersects(
-      new Rectangle(-DROP_DISTANCE_SENSITIVITY,
-                    -DROP_DISTANCE_SENSITIVITY,
-                    getWidth() + DROP_DISTANCE_SENSITIVITY,
-                    getHeight() + DROP_DISTANCE_SENSITIVITY)
-    );
+  boolean containsPoint(@NotNull Point screenPoint) {
+    Point point = screenPoint.getLocation();
+    SwingUtilities.convertPointFromScreen(point, isVisible() ? this : getParent());
+    int width = getWidth();
+    int height = getHeight();
+    if (!isVisible()) {
+      Rectangle bounds = UIUtil.getClientProperty(this, VIRTUAL_BOUNDS);
+      if (bounds != null) {
+        point.x -= bounds.x;
+        point.y -= bounds.y;
+        width = bounds.width;
+        height = bounds.height;
+      }
+    }
+    int areaSize = Math.min(Math.min(getParent().getWidth() / 2, getParent().getHeight() / 2), JBUI.scale(DROP_DISTANCE_SENSITIVITY));
+    Point[] points = {new Point(0, 0), new Point(width, 0), new Point(width, height), new Point(0, height)};
+    switch (anchor) {
+      //Top area should be is empty due to IDEA-271100
+      case SwingConstants.TOP: {
+        updateLocation(points, 1, 2, 0, 0, areaSize);
+        updateLocation(points, 0, 3, 0, 0, areaSize);
+        break;
+      }
+      case SwingConstants.LEFT: {
+        updateLocation(points, 0, 1, 1, 0, areaSize);
+        updateLocation(points, 3, 2, 1, -1, areaSize);
+        break;
+      }
+      case SwingConstants.BOTTOM: {
+        updateLocation(points, 3, 0, 1, -1, areaSize);
+        updateLocation(points, 2, 1, -1, -1, areaSize);
+        break;
+      }
+
+      case SwingConstants.RIGHT: {
+        updateLocation(points, 1, 0, -1, 0, areaSize);
+        updateLocation(points, 2, 3, -1, 1, areaSize);
+      }
+    }
+    return new Polygon(new int[]{points[0].x, points[1].x, points[2].x, points[3].x},
+                       new int[]{points[0].y, points[1].y, points[2].y, points[3].y}, 4).contains(point);
+  }
+
+  private static void updateLocation(Point[] points, int indexBase, int indexDest, int xSign, int ySign, int areaSize) {
+    points[indexDest].setLocation(points[indexBase].x + xSign * areaSize, points[indexBase].y + ySign * areaSize);
   }
 
   public void finishDrop(@NotNull ToolWindowManagerImpl manager) {
@@ -478,7 +561,7 @@ class Stripe extends JPanel implements UISettingsListener {
 
   void processDropButton(@NotNull StripeButton button, @NotNull JComponent buttonImage, Point screenPoint) {
     if (!isDroppingButton()) {
-      final BufferedImage image = UIUtil.createImage(button, button.getWidth(), button.getHeight(), BufferedImage.TYPE_INT_RGB);
+      final BufferedImage image = button.createDragImage();
       buttonImage.paint(image.getGraphics());
       myDragButton = button;
       myDragButtonImage = buttonImage;
@@ -492,6 +575,12 @@ class Stripe extends JPanel implements UISettingsListener {
 
     revalidate();
     repaint();
+  }
+
+  @Nullable
+  Boolean getDropToSide() {
+    if (myLastLayoutData == null || !myLastLayoutData.dragTargetChosen) return null;
+    return myLastLayoutData.dragToSide;
   }
 
   private boolean isDroppingButton() {
@@ -527,9 +616,14 @@ class Stripe extends JPanel implements UISettingsListener {
   protected void paintComponent(@NotNull Graphics g) {
     super.paintComponent(g);
 
-    if (!myFinishingDrop && isDroppingButton() && myDragButton.getParent() != this) {
+    if (!myFinishingDrop && isDroppingButton()) {
       g.setColor(getBackground().brighter());
       g.fillRect(0, 0, getWidth(), getHeight());
+      if (myDrawRectangle != null) {
+        g.setColor(JBUI.CurrentTheme.DragAndDrop.Area.BACKGROUND);
+        RectanglePainter.FILL.paint((Graphics2D)g, myDrawRectangle.x, myDrawRectangle.y, myDrawRectangle.width, myDrawRectangle.height,
+                                    null);
+      }
     }
 
     if (StartupUiUtil.isUnderDarcula()) {

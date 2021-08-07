@@ -1,13 +1,13 @@
 <html>
 <body>
-Reports methods which are highly coupled, i.e. that reference too many other classes.
-Methods with too high a coupling can be very fragile, and should probably be broken up. References to system classes
-(those in the <b>java.</b>or <b>javax.</b> packages), are not
-counted for purposes of this inspection.
-<!-- tooltip end -->
-<p>
-Use the field below to specify the maximum coupling a method is allowed to have.
-<p>
-
+Reports a method that references too many other classes. Each referenced class is counted only once no matter how many times it is referenced.
+<p>Methods with too high coupling can be very fragile and should be probably split into smaller methods.<p>
+  <!-- tooltip end -->
+<p>Configure the inspection:</p>
+<ul>
+  <li>Use the <b>Method coupling limit</b> field to specify the maximum allowed coupling for a method.</li>
+  <li>Use the <b>Include couplings to java system classes</b> option to count references to classes from <code>java</code>or <code>javax</code> packages.</li>
+  <li>Use the <b>Include couplings to library classes</b> option to count references to third-party library classes.</li>
+</ul>
 </body>
 </html>

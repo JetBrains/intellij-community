@@ -33,14 +33,14 @@ class GithubPullRequestsProjectUISettings(private val project: Project)
     get() {
       val (url, accountId) = state.selectedUrlAndAccountId ?: return null
       val repo = project.service<GHProjectRepositoriesManager>().knownRepositories.find {
-        it.gitRemote.url == url
+        it.gitRemoteUrlCoordinates.url == url
       } ?: return null
       val account = GHAccountSerializer.deserialize(accountId) ?: return null
       return repo to account
     }
     set(value) {
       state.selectedUrlAndAccountId = value?.let { (repo, account) ->
-        UrlAndAccount(repo.gitRemote.url, GHAccountSerializer.serialize(account))
+        UrlAndAccount(repo.gitRemoteUrlCoordinates.url, GHAccountSerializer.serialize(account))
       }
     }
 

@@ -1,14 +1,21 @@
 package com.jetbrains.packagesearch.intellij.plugin
 
-import com.intellij.AbstractBundle
+import com.intellij.DynamicBundle
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.PropertyKey
+import java.util.function.Supplier
 
-object PackageSearchBundle : AbstractBundle("messages.packageSearchBundle") {
+private const val BUNDLE_NAME = "messages.packageSearchBundle"
+
+object PackageSearchBundle : DynamicBundle(BUNDLE_NAME) {
 
     @Nls
     fun message(
-        @PropertyKey(resourceBundle = "messages.packageSearchBundle") key: String,
+        @PropertyKey(resourceBundle = BUNDLE_NAME) key: String,
         vararg params: Any
     ): String = getMessage(key, *params)
+
+    @Nls
+    fun messagePointer(@PropertyKey(resourceBundle = BUNDLE_NAME) key: String, vararg params: Any): Supplier<String> =
+        getLazyMessage(key, *params)
 }

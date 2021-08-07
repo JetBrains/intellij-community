@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.hints
 
 import com.intellij.codeInsight.hints.presentation.InlayPresentation
@@ -25,10 +25,6 @@ class JavaTypeHintsPresentationFactory(private val myFactory: PresentationFactor
     is PsiClassType -> classTypeHint(type, level, context)
     is PsiCapturedWildcardType -> myFactory.seq(myFactory.smallText(captureOfLabel), hint(type.wildcard, level, context))
     is PsiWildcardType -> wildcardHint(type, level, context)
-    is PsiEllipsisType -> {
-      context.lengthAvailable -= 3
-      myFactory.seq(hint(type.componentType, level, context), myFactory.smallText("..."))
-    }
     is PsiDisjunctionType -> {
       context.lengthAvailable -= 3
       join(type.disjunctions.map { hint(it, level, context) }, " | ", context)
@@ -51,7 +47,7 @@ class JavaTypeHintsPresentationFactory(private val myFactory: PresentationFactor
       }
     }
 
-    val className = myFactory.psiSingleReference(myFactory.smallText(classType.className ?: ANONYMOUS_MARK)) {
+    val className = myFactory.psiSingleReference(myFactory.smallText(classType.className ?: ANONYMOUS_MARK), withDebugToString = true) {
       classType.resolve()
     }
     if (classType.parameterCount == 0) {
@@ -115,7 +111,7 @@ class JavaTypeHintsPresentationFactory(private val myFactory: PresentationFactor
 
   private fun reference(named: PsiNamedElement, context: Context): InlayPresentation {
     val pointer = SmartPointerManager.createPointer(named)
-    return myFactory.psiSingleReference(getName(named, context), resolve = { pointer.element })
+    return myFactory.psiSingleReference(getName(named, context), withDebugToString = true, resolve = { pointer.element })
   }
 
 

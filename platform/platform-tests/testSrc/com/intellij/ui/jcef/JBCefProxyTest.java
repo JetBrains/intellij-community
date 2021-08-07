@@ -9,6 +9,7 @@ import org.cef.browser.CefFrame;
 import org.cef.handler.CefLoadHandlerAdapter;
 import org.jetbrains.annotations.NotNull;
 import org.junit.After;
+import org.junit.Before;
 import org.junit.ClassRule;
 import org.junit.Test;
 
@@ -38,6 +39,11 @@ public class JBCefProxyTest {
 
   @ClassRule public static final ApplicationRule appRule = new ApplicationRule();
 
+  @Before
+  public void before() {
+    TestScaleHelper.assumeStandalone();
+  }
+
   @After
   public void after() {
     TestScaleHelper.restoreSystemProperties();
@@ -45,8 +51,6 @@ public class JBCefProxyTest {
 
   @Test
   public void test() {
-    TestScaleHelper.assumeStandalone();
-
     JBCefProxySettings.setTestInstance(true,
                                        false,
                                        false,

@@ -2,7 +2,6 @@
 package com.intellij.slicer;
 
 import com.intellij.codeInspection.dataFlow.types.DfType;
-import com.intellij.codeInspection.dataFlow.types.DfTypes;
 import com.intellij.execution.filters.ExceptionAnalysisProvider;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
@@ -15,7 +14,7 @@ import java.util.List;
 
 public class JavaValueFilter implements SliceValueFilter {
   public static final JavaValueFilter ALLOW_EVERYTHING = new JavaValueFilter(null, null);
-  
+
   private final @Nullable DfaBasedFilter myDfaFilter;
   private final @Nullable StackFilter myStackFilter;
 
@@ -34,7 +33,7 @@ public class JavaValueFilter implements SliceValueFilter {
     return (myDfaFilter == null || myDfaFilter.allowed(element)) &&
            (myStackFilter == null || myStackFilter.isAcceptable(element));
   }
-  
+
   public @NotNull JavaValueFilter withStack(List<ExceptionAnalysisProvider.StackLine> lines) {
     return new JavaValueFilter(myDfaFilter, StackFilter.from(lines));
   }
@@ -52,7 +51,7 @@ public class JavaValueFilter implements SliceValueFilter {
     if (myStackFilter == null) return this;
     return new JavaValueFilter(myDfaFilter, myStackFilter.popFrame(project));
   }
-  
+
   @NotNull JavaValueFilter dropFrameFilter() {
     if (myStackFilter == null) return this;
     return new JavaValueFilter(myDfaFilter, null);
@@ -79,18 +78,18 @@ public class JavaValueFilter implements SliceValueFilter {
   }
 
   JavaValueFilter mergeFilter(PsiElement expression) {
-    DfaBasedFilter dfaFilter = myDfaFilter == null ? new DfaBasedFilter(DfTypes.TOP) : myDfaFilter;
+    DfaBasedFilter dfaFilter = myDfaFilter == null ? new DfaBasedFilter(DfType.TOP) : myDfaFilter;
     DfaBasedFilter newFilter = dfaFilter.mergeFilter(expression);
     return dfaFilter == newFilter ? this : new JavaValueFilter(newFilter, myStackFilter);
   }
 
   DfType getDfType() {
-    return myDfaFilter == null ? DfTypes.TOP : myDfaFilter.getDfType();
+    return myDfaFilter == null ? DfType.TOP : myDfaFilter.getDfType();
   }
 
   @Override
   public String toString() {
-    return ((myDfaFilter == null ? "" : myDfaFilter.toString()) + 
+    return ((myDfaFilter == null ? "" : myDfaFilter.toString()) +
            " " + (myStackFilter == null ? "" : myStackFilter.toString())).trim();
   }
 

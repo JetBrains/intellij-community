@@ -62,6 +62,37 @@ class GradleTaskManagerTest: UsefulTestCase() {
   }
 
   @Test
+  fun `test gradle-version-specific init scripts executed`() {
+    writeBuildScript(
+      """
+       | wrapper { gradleVersion = "4.9" }
+      """.trimMargin())
+
+    val oldMessage = "this should be executed for gradle 3.0"
+    val oldVer = VersionSpecificInitScript("""println('$oldMessage')""") { v ->
+      v == GradleVersion.version("3.0")
+    }
+    val intervalMessage = "this should be executed for gradle between 4 and 6"
+    val intervalVer = VersionSpecificInitScript("println('$intervalMessage')") { v ->
+      v > GradleVersion.version("4.0") && v <= GradleVersion.version("6.0")
+    }
+    val newerVerMessage = "this should be executed for gradle 4.8 and newer"
+    val newerVer = VersionSpecificInitScript("println('$newerVerMessage')") { v ->
+      v >= GradleVersion.version("4.8")
+    }
+
+    val initScripts = listOf(oldVer, intervalVer, newerVer)
+    gradleExecSettings.putUserData(GradleTaskManager.VERSION_SPECIFIC_SCRIPTS_KEY, initScripts)
+
+    val listener = MyListener()
+    runHelpTask(listener)
+
+    assertFalse(listener.anyLineContains(oldMessage))
+    assertTrue(listener.anyLineContains(intervalMessage))
+    assertTrue(listener.anyLineContains(newerVerMessage))
+  }
+
+  @Test
   fun `test task manager uses wrapper task when wrapper already exists`() {
     runWriteAction {
       val baseDir = PlatformTestUtil.getOrCreateProjectBaseDir(myProject)

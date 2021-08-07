@@ -9,6 +9,7 @@ import kotlin.reflect.KCallable
 
 internal class PyTestCustomOption(property: KCallable<*>, vararg supportedTypes: PyRunTargetVariant) {
   val name: String = property.name
+  val isBooleanType: Boolean = property.returnType.classifier == Boolean::class
 
   @field:Nls
   val localizedName: String

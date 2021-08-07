@@ -1,7 +1,6 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.log;
 
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VfsUtil;
@@ -28,7 +27,7 @@ public abstract class VcsLogUserFilterTest {
   public VcsLogUserFilterTest(@NotNull VcsLogProvider logProvider, @NotNull Project project) {
     myProject = project;
     myLogProvider = logProvider;
-    myObjectsFactory = ServiceManager.getService(myProject, VcsLogObjectsFactory.class);
+    myObjectsFactory = myProject.getService(VcsLogObjectsFactory.class);
   }
 
   /*

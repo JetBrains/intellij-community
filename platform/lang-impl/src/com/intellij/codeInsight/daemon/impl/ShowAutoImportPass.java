@@ -22,7 +22,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.EditorActivityManager;
 import com.intellij.openapi.editor.impl.ImaginaryEditor;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -39,6 +38,7 @@ import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.SlowOperations;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -81,7 +81,7 @@ public class ShowAutoImportPass extends TextEditorHighlightingPass {
   private void showImports() {
     Application application = ApplicationManager.getApplication();
     application.assertIsDispatchThread();
-    if (!EditorActivityManager.getInstance().isFocused(myEditor)) return;
+    if (!UIUtil.hasFocus(myEditor.getContentComponent())) return;
     if (DumbService.isDumb(myProject) || !myFile.isValid()) return;
     if (myEditor.isDisposed() || myEditor instanceof EditorWindow && !((EditorWindow)myEditor).isValid()) return;
 

@@ -7,6 +7,7 @@ import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.actionSystem.Presentation
 import com.intellij.openapi.actionSystem.ex.ComboBoxAction
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.fileEditor.TextEditorWithPreview
 import com.intellij.openapi.observable.properties.GraphPropertyImpl.Companion.graphProperty
 import com.intellij.openapi.observable.properties.PropertyGraph
 import com.intellij.ui.ComboboxSpeedSearch
@@ -77,10 +78,16 @@ class MarkdownFontSettingsAction() : ComboBoxAction() {
     newFontSize,
     newFontFamily)
 
-  override fun update(e: AnActionEvent) {
+  override fun update(event: AnActionEvent) {
     val isCustomCssEnabled = markdownCssSettings.isTextEnabled && markdownCssSettings.customStylesheetText.isNotEmpty()
-    if (MarkdownActionUtil.findSplitEditor(e) != null) {
-      e.presentation.isEnabledAndVisible = MarkdownActionUtil.findSplitEditor(e)!!.currentEditorLayout.showSecond && !isCustomCssEnabled
-    }
+    val editor = MarkdownActionUtil.findSplitEditor(event)
+    event.presentation.isEnabledAndVisible = editor?.layout in allowedLayouts && !isCustomCssEnabled
+  }
+
+  companion object {
+    private val allowedLayouts = arrayOf(
+      TextEditorWithPreview.Layout.SHOW_PREVIEW,
+      TextEditorWithPreview.Layout.SHOW_EDITOR_AND_PREVIEW
+    )
   }
 }

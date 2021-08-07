@@ -49,7 +49,12 @@ public class ControlFlow
         System.out.println("equal: "+obj+":"+obj2);
       }
     }
-  } 
+  }
+
+  void usedInSameExpression() {
+    Object obj = new Object();
+    if (obj == getObject(obj)) {}
+  }
   
   private Object getObject(Object obj) {
     return Math.random() > 0.5 ? obj : new Object();

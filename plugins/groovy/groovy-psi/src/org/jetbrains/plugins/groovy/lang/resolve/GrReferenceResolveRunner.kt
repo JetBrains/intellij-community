@@ -1,11 +1,11 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.resolve
 
 import com.intellij.psi.*
 import com.intellij.psi.impl.file.PsiPackageImpl
 import com.intellij.psi.scope.PsiScopeProcessor
 import com.intellij.psi.search.GlobalSearchScope
-import com.intellij.psi.util.InheritanceUtil.isInheritor
+import com.intellij.psi.util.InheritanceUtil
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.parents
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes
@@ -71,12 +71,20 @@ class GrReferenceResolveRunner(val place: GrReferenceExpression, val processor: 
     }
     else {
       if (!qualifierType.processReceiverType(processor, state, place)) return false
-      if (place.parent !is GrMethodCall && isInheritor(qualifierType, CommonClassNames.JAVA_UTIL_COLLECTION)) {
-        return qualifierType.processSpread(processor, state, place, true)
+      if (place.parent !is GrMethodCall && !processImplicitSpread(qualifierType, processor, state, place)) {
+        return false
       }
     }
     return true
   }
+}
+
+private fun processImplicitSpread(type: PsiType, processor: PsiScopeProcessor, state: ResolveState, place: PsiElement): Boolean {
+  if (InheritanceUtil.isInheritor(type, CommonClassNames.JAVA_UTIL_COLLECTION) ||
+      (type is PsiArrayType && !processor.checkName("length", state))) {
+    return type.processSpread(processor, state, place, true)
+  }
+  else return true
 }
 
 

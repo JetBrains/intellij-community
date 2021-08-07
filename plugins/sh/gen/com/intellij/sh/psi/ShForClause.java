@@ -35,12 +35,6 @@ public interface ShForClause extends ShCompositeElement {
   List<ShVariable> getVariableList();
 
   @Nullable
-  PsiElement getLeftDoubleParen();
-
-  @Nullable
-  PsiElement getRightDoubleParen();
-
-  @Nullable
   PsiElement getIn();
 
 }

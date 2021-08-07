@@ -25,10 +25,10 @@ public interface Position {
   //
   //////////////////////////////////////////////////////////////////////////////////////////
   int NONE = 0;
-  int NORTH = 1 << 0;
-  int SOUTH = 1 << 1;
-  int WEST = 1 << 2;
-  int EAST = 1 << 3;
+  int NORTH = 0b0001;
+  int SOUTH = 0b0010;
+  int WEST  = 0b0100;
+  int EAST  = 0b1000;
   int NORTH_EAST = NORTH | EAST;
   int NORTH_WEST = NORTH | WEST;
   int SOUTH_EAST = SOUTH | EAST;

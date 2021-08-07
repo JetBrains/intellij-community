@@ -17,7 +17,7 @@ package org.jetbrains.idea.maven.project.importing;
 
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.vfs.VirtualFile;
-import org.jetbrains.idea.maven.MavenImportingTestCase;
+import org.jetbrains.idea.maven.MavenMultiVersionImportingTestCase;
 import org.jetbrains.idea.maven.model.MavenExplicitProfiles;
 import org.jetbrains.idea.maven.project.MavenProjectsTree;
 
@@ -27,13 +27,13 @@ import java.util.List;
 
 import static java.util.Arrays.asList;
 
-public abstract class MavenProjectsTreeTestCase extends MavenImportingTestCase {
+public abstract class MavenProjectsTreeTestCase extends MavenMultiVersionImportingTestCase {
   protected MavenProjectsTree myTree;
 
 
   @Override
-  protected void setUp() throws Exception {
-    super.setUp();
+  protected void setUpInWriteAction() throws Exception {
+    super.setUpInWriteAction();
     myTree = new MavenProjectsTree(myProject);
   }
 

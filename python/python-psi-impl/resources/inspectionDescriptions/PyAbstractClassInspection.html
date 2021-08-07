@@ -1,5 +1,41 @@
 <html>
 <body>
-This inspection detects when not all abstract properties/methods are defined in a subclass
+<p>Reports cases when not all abstract properties or methods are defined in
+  a subclass.</p>
+<p><b>Example:</b></p>
+<pre style="font-family: monospace">
+from abc import abstractmethod, ABC
+
+
+class Figure(ABC):
+
+    @abstractmethod
+    def do_figure(self):
+        pass
+
+
+class Triangle(Figure):
+    def do_triangle(self):
+        pass
+</pre>
+<p>When the quick-fix is applied, the IDE implements an abstract method for the <code>Triangle</code> class:</p>
+<pre style="font-family: monospace">
+from abc import abstractmethod, ABC
+
+
+class Figure(ABC):
+
+    @abstractmethod
+    def do_figure(self):
+        pass
+
+
+class Triangle(Figure):
+    def do_figure(self):
+        pass
+
+    def do_triangle(self):
+        pass
+</pre>
 </body>
 </html>

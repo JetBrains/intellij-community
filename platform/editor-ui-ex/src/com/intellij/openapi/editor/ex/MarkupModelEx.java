@@ -11,7 +11,6 @@ import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.util.Consumer;
 import com.intellij.util.Processor;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -56,19 +55,6 @@ public interface MarkupModelEx extends MarkupModel {
 
   @NotNull
   MarkupIterator<RangeHighlighterEx> overlappingIterator(int startOffset, int endOffset);
-
-  /**
-   * @deprecated onlyRenderedInScrollBar doesn't affect anything
-   */
-  @Deprecated
-  @NotNull
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.2")
-  default MarkupIterator<RangeHighlighterEx> overlappingIterator(int startOffset,
-                                                         int endOffset,
-                                                         boolean onlyRenderedInGutter,
-                                                         boolean onlyRenderedInScrollBar) {
-    return overlappingIterator(startOffset, endOffset, onlyRenderedInGutter);
-  }
 
   @NotNull
   MarkupIterator<RangeHighlighterEx> overlappingIterator(int startOffset,

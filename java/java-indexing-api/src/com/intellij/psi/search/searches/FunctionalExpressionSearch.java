@@ -2,6 +2,7 @@
 package com.intellij.psi.search.searches;
 
 import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiSearchHelper;
@@ -17,45 +18,56 @@ public final class FunctionalExpressionSearch extends ExtensibleQueryFactory<Psi
   public static class SearchParameters {
     private final PsiClass myElementToSearch;
     private final SearchScope myScope;
+    private final @NotNull Project myProject;
 
     public SearchParameters(@NotNull PsiClass aClass, @NotNull SearchScope scope) {
+      myProject = aClass.getProject();
       myElementToSearch = aClass;
       myScope = scope;
     }
 
+    @NotNull
     public PsiClass getElementToSearch() {
       return myElementToSearch;
     }
 
     @NotNull
     public SearchScope getEffectiveSearchScope () {
-      return myScope
-        .intersectWith(PsiSearchHelper.getInstance(myElementToSearch.getProject()).getUseScope(myElementToSearch));
+      return myScope.intersectWith(PsiSearchHelper.getInstance(myProject).getUseScope(myElementToSearch));
+    }
+
+    @NotNull
+    public Project getProject() {
+      return myProject;
     }
   }
 
-  public static Query<PsiFunctionalExpression> search(@NotNull final PsiClass aClass, @NotNull SearchScope scope) {
-    return INSTANCE.createUniqueResultsQuery(new SearchParameters(aClass, scope), SmartPointerManager::createPointer);
+  @NotNull
+  public static Query<PsiFunctionalExpression> search(@NotNull PsiClass aClass, @NotNull SearchScope scope) {
+    SearchParameters parameters = ReadAction.compute(() -> new SearchParameters(aClass, scope));
+    return INSTANCE.createUniqueResultsQuery(parameters, element -> ReadAction.compute(()->SmartPointerManager.getInstance(parameters.myProject).createSmartPsiElementPointer(element)));
   }
 
-  public static Query<PsiFunctionalExpression> search(@NotNull final PsiMethod psiMethod) {
+  @NotNull
+  public static Query<PsiFunctionalExpression> search(@NotNull PsiMethod psiMethod) {
     return search(psiMethod, GlobalSearchScope.allScope(PsiUtilCore.getProjectInReadAction(psiMethod)));
   }
 
-  public static Query<PsiFunctionalExpression> search(@NotNull final PsiMethod psiMethod, @NotNull final SearchScope scope) {
+  @NotNull
+  public static Query<PsiFunctionalExpression> search(@NotNull PsiMethod psiMethod, @NotNull SearchScope scope) {
     return ReadAction.compute(() -> {
       if (!psiMethod.hasModifierProperty(PsiModifier.STATIC) && !psiMethod.hasModifierProperty(PsiModifier.DEFAULT)) {
-        final PsiClass containingClass = psiMethod.getContainingClass();
+        PsiClass containingClass = psiMethod.getContainingClass();
         if (containingClass != null) {
           return INSTANCE.createUniqueResultsQuery(new SearchParameters(containingClass, scope));
         }
       }
-
       return EmptyQuery.getEmptyQuery();
     });
   }
 
-  public static Query<PsiFunctionalExpression> search(@NotNull final PsiClass aClass) {
+  @NotNull
+  public static Query<PsiFunctionalExpression> search(@NotNull PsiClass aClass) {
     return search(aClass, GlobalSearchScope.allScope(PsiUtilCore.getProjectInReadAction(aClass)));
   }
 }

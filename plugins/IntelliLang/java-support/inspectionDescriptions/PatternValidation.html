@@ -1,6 +1,12 @@
 <html>
 <body>
-Validates expressions passed as arguments for <code>@Pattern</code> parameters and
-values returned from <code>@Pattern</code>-annotated methods.
+Reports expressions passed as arguments for <code>@Pattern</code> parameters and
+returned from <code>@Pattern</code>-annotated methods that do not match the specified pattern.
+<p><b>Example:</b></p>
+<pre><code>
+  @Pattern("\\d\\d-\\d\\d\\d") String getId() {
+    <b>return</b> "1";
+  }
+</code></pre>
 </body>
 </html>

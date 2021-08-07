@@ -6,6 +6,8 @@ import com.intellij.openapi.externalSystem.model.ProjectKeys;
 import com.intellij.openapi.externalSystem.model.project.*;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListener;
+import com.intellij.openapi.externalSystem.service.execution.ExternalSystemExecutionAware;
+import com.intellij.openapi.externalSystem.service.execution.TargetEnvironmentConfigurationProvider;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
@@ -24,6 +26,7 @@ import org.jetbrains.plugins.gradle.model.data.GradleSourceSetData;
 import org.jetbrains.plugins.gradle.settings.DistributionType;
 import org.jetbrains.plugins.gradle.settings.GradleExecutionSettings;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
+import org.jetbrains.plugins.gradle.util.GradleModuleDataKt;
 
 import java.io.File;
 import java.nio.file.Path;
@@ -138,6 +141,7 @@ public final class GradleBuildSrcProjectsResolver {
             .withEnvironmentVariables(myMainBuildExecutionSettings.getEnv())
             .passParentEnvs(myMainBuildExecutionSettings.isPassParentEnvs())
             .withVmOptions(jvmOptions);
+          reuseTargetEnvironmentConfigurationProvider(buildSrcProjectSettings, myMainBuildExecutionSettings);
         }
         else {
           buildSrcProjectSettings = new GradleExecutionSettings(gradleHome, null, DistributionType.LOCAL, false);
@@ -164,6 +168,14 @@ public final class GradleBuildSrcProjectsResolver {
                             buildSrcResolverCtx,
                             myProjectResolver.getProjectDataFunction(buildSrcResolverCtx, myResolverChain, true));
     });
+  }
+
+  private static void reuseTargetEnvironmentConfigurationProvider(@NotNull GradleExecutionSettings buildSrcProjectSettings,
+                                                                  @NotNull GradleExecutionSettings mainBuildExecutionSettings) {
+    TargetEnvironmentConfigurationProvider targetEnvironmentConfigurationProvider =
+      ExternalSystemExecutionAware.Companion.getEnvironmentConfigurationProvider(mainBuildExecutionSettings);
+    ExternalSystemExecutionAware.Companion
+      .setEnvironmentConfigurationProvider(buildSrcProjectSettings, targetEnvironmentConfigurationProvider);
   }
 
   private void includeRootBuildIncludedBuildsIfNeeded(@NotNull GradleExecutionSettings buildSrcProjectSettings,
@@ -217,7 +229,7 @@ public final class GradleBuildSrcProjectsResolver {
     if (buildSrcResolverCtx.isPreviewMode()) {
       ModuleData buildSrcModuleData =
         new ModuleData(":buildSrc", GradleConstants.SYSTEM_ID, getDefaultModuleTypeId(), BUILD_SRC_NAME, projectPath, projectPath);
-      buildSrcModuleData.setProperty(BUILD_SRC_MODULE_PROPERTY, "true");
+      GradleModuleDataKt.setBuildSrcModule(buildSrcModuleData);
       resultProjectDataNode.createChild(ProjectKeys.MODULE, buildSrcModuleData);
       return;
     }
@@ -253,7 +265,7 @@ public final class GradleBuildSrcProjectsResolver {
 
       DataNode<ModuleData> includedModule = includedModulesPaths.get(moduleData.getLinkedExternalProjectPath());
       if (includedModule == null) {
-        moduleData.setProperty(BUILD_SRC_MODULE_PROPERTY, "true");
+        GradleModuleDataKt.setBuildSrcModule(moduleData);
         resultProjectDataNode.addChild(moduleNode);
         String[] moduleGroup = getModuleGroup(resultProjectDataNode, buildName, buildSrcResolverCtx, moduleData);
         if (moduleGroup != null) {
@@ -268,7 +280,7 @@ public final class GradleBuildSrcProjectsResolver {
         }
       }
       else {
-        includedModule.getData().setProperty(BUILD_SRC_MODULE_PROPERTY, "true");
+        GradleModuleDataKt.setBuildSrcModule(includedModule.getData());
       }
     }
     if (buildSrcModuleNode != null) {

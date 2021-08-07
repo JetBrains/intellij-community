@@ -20,14 +20,6 @@ public final class StdLanguages {
   public static final Language JAVA = StdFileTypes.JAVA.getLanguage();
 
   /**
-   * The definition for the DTD language.
-   *
-   * @deprecated use {@linkplain com.intellij.lang.dtd.DTDLanguage#INSTANCE} instead.
-   */
-  @Deprecated @ApiStatus.ScheduledForRemoval(inVersion = "2021.2")
-  public static final Language DTD = StdFileTypes.DTD.getLanguage();
-
-  /**
    * The definition for the XML language.
    *
    * @deprecated use {@linkplain com.intellij.lang.xml.XMLLanguage#INSTANCE} instead.

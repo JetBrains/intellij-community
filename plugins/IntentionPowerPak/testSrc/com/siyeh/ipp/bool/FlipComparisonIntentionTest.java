@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.siyeh.ipp.bool;
 
 import com.siyeh.ipp.IPPTestCase;
@@ -94,5 +94,13 @@ public class FlipComparisonIntentionTest extends IPPTestCase {
            "    ((LookupElementBuilder)variants[0]).rendeFragment>/*_Flip '>' to '<'*/ fragments = presentation.getTailFragments();" +
            "  }\n" +
            "}");
+  }
+
+  public void testNoop() {
+    doTestIntentionNotAvailable("class X {" +
+                                "  void x(String x) {" +
+                                "    if (x /*_Flip '=='*/== x) {}" +
+                                "  }" +
+                                "}");
   }
 }

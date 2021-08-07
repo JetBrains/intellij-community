@@ -33,7 +33,7 @@ public class RestoreHiddenConfigurationsAction extends DumbAwareAction {
       e.getPresentation().setEnabledAndVisible(false);
       return;
     }
-    if (ActionPlaces.SERVICES_TOOLBAR.equals(e.getPlace())) {
+    if (ActionPlaces.getActionGroupPopupPlace(ActionPlaces.SERVICES_TOOLBAR).equals(e.getPlace())) {
       e.getPresentation().setEnabledAndVisible(hasHiddenConfiguration(project));
       e.getPresentation().setText(ExecutionBundle.message("run.dashboard.restore.hidden.configurations.toolbar.action.name"));
       return;
@@ -67,7 +67,7 @@ public class RestoreHiddenConfigurationsAction extends DumbAwareAction {
     if (project == null) return;
 
     RunDashboardServiceViewContributor root = ServiceViewActionUtils.getTarget(e, RunDashboardServiceViewContributor.class);
-    if (ActionPlaces.SERVICES_TOOLBAR.equals(e.getPlace()) ||
+    if (ActionPlaces.getActionGroupPopupPlace(ActionPlaces.SERVICES_TOOLBAR).equals(e.getPlace()) ||
         root != null ||
         !PropertiesComponent.getInstance(project).getBoolean(ConfigurationTypeDashboardGroupingRule.NAME, true)) {
       // Restore all hidden configurations if action is invoked from Services toolbar, or on Run Dashboard contributor root node,

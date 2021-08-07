@@ -78,7 +78,7 @@ public final class ActionMacroManager implements PersistentStateComponent<Elemen
   ActionMacroManager() {
     ApplicationManager.getApplication().getMessageBus().connect(this).subscribe(AnActionListener.TOPIC, new AnActionListener() {
       @Override
-      public void beforeActionPerformed(@NotNull AnAction action, @NotNull DataContext dataContext, @NotNull AnActionEvent event) {
+      public void beforeActionPerformed(@NotNull AnAction action, @NotNull AnActionEvent event) {
         String id = ActionManager.getInstance().getId(action);
         if (id == null) {
           return;
@@ -519,7 +519,7 @@ public final class ActionMacroManager implements PersistentStateComponent<Elemen
 
       final boolean ready = IdeEventQueue.getInstance().getKeyEventDispatcher().isReady();
       final boolean isChar = UIUtil.isReallyTypedEvent(e);
-      final boolean hasActionModifiers = e.isAltDown() | e.isControlDown() | e.isMetaDown();
+      final boolean hasActionModifiers = e.isAltDown() || e.isControlDown() || e.isMetaDown();
       final boolean plainType = isChar && !hasActionModifiers;
       final boolean isEnter = e.getKeyCode() == KeyEvent.VK_ENTER;
 

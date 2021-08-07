@@ -1,9 +1,10 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.api;
 
+import com.intellij.collaboration.api.ServerPath;
+import com.intellij.collaboration.hosting.GitHostingUrlUtil;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.hosting.GitHostingUrlUtil;
 import com.intellij.util.io.URLUtil;
 import com.intellij.util.xmlb.annotations.Attribute;
 import com.intellij.util.xmlb.annotations.Tag;
@@ -21,7 +22,7 @@ import java.util.regex.Pattern;
  * Github server reference allowing to specify custom port and path to instance
  */
 @Tag("server")
-public class GithubServerPath {
+public class GithubServerPath implements ServerPath {
   public static final String DEFAULT_HOST = "github.com";
   public static final GithubServerPath DEFAULT_SERVER = new GithubServerPath(DEFAULT_HOST);
   private static final String API_PREFIX = "api.";
@@ -170,7 +171,7 @@ public class GithubServerPath {
     return myHost.equalsIgnoreCase(DEFAULT_HOST);
   }
 
-  public @NlsSafe String toString() {
+  public @NlsSafe @NotNull String toString() {
     String schema = myUseHttp != null ? getSchemaUrlPart() : "";
     return schema + myHost + getPortUrlPart() + StringUtil.notNullize(mySuffix);
   }

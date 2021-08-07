@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.xml;
 
 import com.intellij.openapi.util.Pair;
@@ -198,12 +198,12 @@ public final class ModelMergerImpl implements ModelMerger {
   }
 
   @Override
-  public final <T> void addInvocationStrategy(Class<T> aClass, InvocationStrategy<T> strategy) {
+  public <T> void addInvocationStrategy(Class<T> aClass, InvocationStrategy<T> strategy) {
     myInvocationStrategies.add(Pair.create(strategy, aClass));
   }
 
   @Override
-  public final <T> void addMergingStrategy(Class<T> aClass, MergingStrategy<T> strategy) {
+  public <T> void addMergingStrategy(Class<T> aClass, MergingStrategy<T> strategy) {
     myMergingStrategies.add(strategy);
     myMergingStrategyClasses.add(aClass);
   }
@@ -385,7 +385,7 @@ public final class ModelMergerImpl implements ModelMerger {
     return results;
   }
 
-  protected final Object mergeImplementations(final Class returnType, final List<Object> implementations) {
+  private Object mergeImplementations(final Class returnType, final List<Object> implementations) {
     for (int i = myMergingStrategies.size() - 1; i >= 0; i--) {
       if (ReflectionUtil.isAssignable(myMergingStrategyClasses.get(i), returnType)) {
         final Object o = myMergingStrategies.get(i).mergeChildren(returnType, implementations);

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.ui
 
 import com.intellij.openapi.components.BaseState
@@ -74,8 +74,6 @@ class UISettingsState : BaseState() {
   var rightHorizontalSplit by property(false)
   @get:OptionTag("SHOW_EDITOR_TOOLTIP")
   var showEditorToolTip by property(true)
-  @get:OptionTag("SHOW_MEMORY_INDICATOR")
-  var showMemoryIndicator by property(false)
   @get:OptionTag("SHOW_WRITE_THREAD_INDICATOR")
   var showWriteThreadIndicator by property(false)
   @get:OptionTag("ALLOW_MERGE_BUTTONS")

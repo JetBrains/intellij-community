@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.editor.impl.view;
 
 import com.intellij.diagnostic.Dumpable;
@@ -20,7 +20,8 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.util.DocumentEventUtil;
 import com.intellij.util.DocumentUtil;
 import com.intellij.util.IntPair;
-import gnu.trove.TIntArrayList;
+import it.unimi.dsi.fastutil.ints.IntArrayList;
+import it.unimi.dsi.fastutil.ints.IntList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -43,7 +44,7 @@ final class EditorSizeManager implements PrioritizedDocumentListener, Disposable
   private final EditorImpl myEditor;
   private final DocumentEx myDocument;
 
-  private final TIntArrayList myLineWidths = new TIntArrayList(); // cached widths of visual lines (in pixels)
+  private final IntList myLineWidths = new IntArrayList(); // cached widths of visual lines (in pixels)
                                                                   // negative value means an estimated (not precise) width
                                                                   // UNKNOWN_WIDTH(Integer.MAX_VALUE) means no value
   private boolean myWidthIsValid = true;
@@ -135,6 +136,23 @@ final class EditorSizeManager implements PrioritizedDocumentListener, Disposable
       myFoldingChangeStartOffset = Math.min(myFoldingChangeStartOffset, region.getStartOffset());
       myFoldingChangeEndOffset = Math.max(myFoldingChangeEndOffset, region.getEndOffset());
     }
+  }
+
+  @Override
+  public void beforeFoldRegionDisposed(@NotNull FoldRegion region) {
+    if (!myDuringDocumentUpdate || myDocument.isInBulkUpdate() || !(region instanceof CustomFoldRegion)) return;
+    myDocumentChangeStartOffset = Math.min(myDocumentChangeStartOffset, region.getStartOffset());
+    myDocumentChangeEndOffset = Math.max(myDocumentChangeEndOffset, region.getEndOffset());
+  }
+
+  @Override
+  public void onCustomFoldRegionPropertiesChange(@NotNull CustomFoldRegion region, int flags) {
+    if ((flags & ChangeFlags.WIDTH_CHANGED) == 0 || myDocument.isInBulkUpdate() || checkDirty()) return;
+    int startOffset = region.getStartOffset();
+    if (myEditor.getFoldingModel().getCollapsedRegionAtOffset(startOffset) != region) return;
+    int visualLine = myEditor.offsetToVisualLine(startOffset);
+    myLineWidths.set(visualLine, region.getWidthInPixels());
+    invalidateWidth(true, visualLine);
   }
 
   @Override
@@ -359,7 +377,7 @@ final class EditorSizeManager implements PrioritizedDocumentListener, Disposable
     }
     int maxWidth = beginLine == 0 && endLine == 0 ? (int)myView.getPrefixTextWidthInPixels() : 0;
     for (int i = beginLine; i < endLine && i < myLineWidths.size(); i++) {
-      maxWidth = Math.max(maxWidth, Math.abs(myLineWidths.get(i)));
+      maxWidth = Math.max(maxWidth, Math.abs(myLineWidths.getInt(i)));
     }
     validateMaxLineWithExtension();
     return Math.max(maxWidth, myMaxLineWithExtensionWidth);
@@ -383,13 +401,15 @@ final class EditorSizeManager implements PrioritizedDocumentListener, Disposable
     VisualLinesIterator iterator = new VisualLinesIterator(myEditor, startVisualLine);
     int maxWidth = 0;
     int largestLineNumber = 0;
+    int caretVisualLine = myEditor.getCaretModel().getVisualPosition().line;
     while (!iterator.atEnd()) {
-      int width = getVisualLineWidth(iterator, true);
+      int visualLine = iterator.getVisualLine();
+      int width = getVisualLineWidth(iterator, visualLine != caretVisualLine);
       if (width > maxWidth) {
         maxWidth = width;
-        largestLineNumber = iterator.getVisualLine();
+        largestLineNumber = visualLine;
       }
-      if (iterator.getVisualLine() >= endVisualLine) break;
+      if (visualLine >= endVisualLine) break;
       iterator.advance();
     }
     return new IntPair(maxWidth, largestLineNumber);
@@ -399,8 +419,10 @@ final class EditorSizeManager implements PrioritizedDocumentListener, Disposable
     assert !visualLinesIterator.atEnd();
     int visualLine = visualLinesIterator.getVisualLine();
     boolean useCache = shouldUseLineWidthCache();
-    int cached = useCache ? myLineWidths.get(visualLine) : UNKNOWN_WIDTH;
-    if (cached != UNKNOWN_WIDTH && (cached >= 0 || allowQuickCalculation)) return Math.abs(cached);
+    int cached = useCache ? myLineWidths.getInt(visualLine) : UNKNOWN_WIDTH;
+    if (cached != UNKNOWN_WIDTH && (cached >= 0 || allowQuickCalculation)) {
+      return Math.abs(cached);
+    }
     Ref<Boolean> evaluatedQuick = Ref.create(Boolean.FALSE);
     int width = calculateLineWidth(visualLinesIterator, allowQuickCalculation ? () -> evaluatedQuick.set(Boolean.TRUE) : null);
     if (useCache) myLineWidths.set(visualLine, evaluatedQuick.get() ? -width : width);
@@ -408,6 +430,10 @@ final class EditorSizeManager implements PrioritizedDocumentListener, Disposable
   }
 
   private int calculateLineWidth(@NotNull VisualLinesIterator iterator, @Nullable Runnable quickEvaluationListener) {
+    CustomFoldRegion customFoldRegion = iterator.getCustomFoldRegion();
+    if (customFoldRegion != null) {
+      return customFoldRegion.getWidthInPixels();
+    }
     int visualLine = iterator.getVisualLine();
     FoldRegion[] topLevelRegions = myEditor.getFoldingModel().fetchTopLevel();
     if (quickEvaluationListener != null &&
@@ -493,10 +519,10 @@ final class EditorSizeManager implements PrioritizedDocumentListener, Disposable
     invalidateWidth(lineDiff == 0 && startVisualLine == endVisualLine, startVisualLine);
     if (lineDiff > 0) {
       int[] newEntries = new int[lineDiff];
-      myLineWidths.insert(startVisualLine, newEntries);
+      myLineWidths.addAll(startVisualLine, IntArrayList.wrap(newEntries));
     }
     else if (lineDiff < 0) {
-      myLineWidths.remove(startVisualLine, -lineDiff);
+      myLineWidths.removeElements(startVisualLine, startVisualLine - lineDiff);
     }
     for (int i = startVisualLine; i <= endVisualLine && i < myLineWidths.size(); i++) {
       myLineWidths.set(i, UNKNOWN_WIDTH);
@@ -557,7 +583,7 @@ final class EditorSizeManager implements PrioritizedDocumentListener, Disposable
       int endVisualLine = myView.offsetToVisualLine(endOffset, true);
       boolean sizeInvalidated = false;
       for (int i = startVisualLine; i <= endVisualLine; i++) {
-        if (myLineWidths.get(i) < 0) {
+        if (myLineWidths.getInt(i) < 0) {
           myLineWidths.set(i, UNKNOWN_WIDTH);
           sizeInvalidated = true;
         }
@@ -593,8 +619,12 @@ final class EditorSizeManager implements PrioritizedDocumentListener, Disposable
     if (myDirty) {
       int visibleLineCount = myEditor.getVisibleLineCount();
       int lineDiff = visibleLineCount - myLineWidths.size();
-      if (lineDiff > 0) myLineWidths.add(new int[lineDiff]);
-      else if (lineDiff < 0) myLineWidths.remove(visibleLineCount, -lineDiff);
+      if (lineDiff > 0) {
+        myLineWidths.addAll(IntArrayList.wrap(new int[lineDiff]));
+      }
+      else if (lineDiff < 0) {
+        myLineWidths.removeElements(visibleLineCount, visibleLineCount - lineDiff);
+      }
       for (int i = 0; i < visibleLineCount; i++) {
         myLineWidths.set(i, UNKNOWN_WIDTH);
       }
@@ -629,7 +659,7 @@ final class EditorSizeManager implements PrioritizedDocumentListener, Disposable
   private void assertCorrectCachedWidths() {
     if (myDocument.isInBulkUpdate() || myEditor.getInlayModel().isInBatchMode() || myDirty) return;
     for (int visualLine = 0; visualLine < myLineWidths.size(); visualLine++) {
-      int cachedWidth = myLineWidths.get(visualLine);
+      int cachedWidth = myLineWidths.getInt(visualLine);
       if (cachedWidth < 0 || cachedWidth == UNKNOWN_WIDTH) continue;
       Ref<Boolean> quickEvaluation = new Ref<>();
       int actualWidth = calculateLineWidth(new VisualLinesIterator(myEditor, visualLine), () -> quickEvaluation.set(Boolean.TRUE));

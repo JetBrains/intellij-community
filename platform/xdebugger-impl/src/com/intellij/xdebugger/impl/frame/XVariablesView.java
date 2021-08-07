@@ -1,14 +1,16 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.xdebugger.impl.frame;
 
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.editor.Inlay;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.components.BorderLayoutPanel;
 import com.intellij.xdebugger.XDebugProcess;
@@ -134,11 +136,13 @@ public class XVariablesView extends XVariablesViewBase implements DataProvider {
     private final Map<Pair<VirtualFile, Integer>, Set<Entry>> myData = new HashMap<>();
     private final Object2LongMap<VirtualFile> myTimestamps = new Object2LongOpenHashMap<>();
     private static final Key<InlineVariablesInfo> DEBUG_VARIABLES = Key.create("debug.variables");
+    private List<Inlay> myInlays = null;
 
     public InlineVariablesInfo() {
       myTimestamps.defaultReturnValue(-1);
     }
 
+    @Nullable
     public static InlineVariablesInfo get(@Nullable XDebugSession session) {
       if (session != null) {
         return DEBUG_VARIABLES.get(((XDebugSessionImpl)session).getSessionData());
@@ -167,6 +171,15 @@ public class XVariablesView extends XVariablesViewBase implements DataProvider {
       myTimestamps.put(file, timestamp);
       Pair<VirtualFile, Integer> key = new Pair<>(file, position.getLine());
       myData.computeIfAbsent(key, k -> new TreeSet<>()).add(new Entry(position.getOffset(), node));
+    }
+
+    public void setInlays(List<Inlay> inlays) {
+      myInlays = inlays;
+    }
+
+    @NotNull
+    public List<Inlay> getInlays() {
+      return ObjectUtils.notNull(myInlays, Collections::emptyList);
     }
 
     private static class Entry implements Comparable<Entry> {

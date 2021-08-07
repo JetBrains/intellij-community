@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.actionSystem;
 
 import com.intellij.ide.IdeBundle;
@@ -15,7 +15,7 @@ import java.util.function.Supplier;
  * Represents a separator.
  */
 @SuppressWarnings("ComponentNotRegistered")
-public final class Separator extends AnAction implements DumbAware, LightEditCompatible {
+public final class Separator extends AnAction implements DumbAware, UpdateInBackground, LightEditCompatible, SeparatorAction {
 
   private static final Separator ourInstance = new Separator();
   private final Supplier<@NlsContexts.Separator String> myDynamicText;

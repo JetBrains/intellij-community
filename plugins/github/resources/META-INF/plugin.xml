@@ -17,22 +17,25 @@
 
   <resource-bundle>messages.GithubBundle</resource-bundle>
 
-  <depends>com.intellij.modules.lang</depends>
-  <depends>Git4Idea</depends>
-  <depends optional="true" config-file="github-tracker.xml">com.intellij.tasks</depends>
+  <content>
+    <module name="intellij.vcs.github/tracker"/>
+  </content>
+  <dependencies>
+    <plugin id="com.intellij.modules.lang"/>
+    <plugin id="Git4Idea"/>
+    <plugin id="org.intellij.plugins.markdown"/>
+  </dependencies>
 
   <extensions defaultExtensionNs="com.intellij">
-    <registryKey key="github.use.oauth" description="Use OAuth to log in to github.com" defaultValue="true"/>
     <httpRequestHandler implementation="org.jetbrains.plugins.github.authentication.GHOAuthCallbackHandler"/>
 
     <applicationService serviceImplementation="org.jetbrains.plugins.github.util.GithubSettings"/>
 
-    <applicationService serviceImplementation="org.jetbrains.plugins.github.authentication.accounts.GithubAccountManager"/>
+    <applicationService serviceImplementation="org.jetbrains.plugins.github.authentication.accounts.GHPersistentAccounts"/>
     <applicationService serviceImplementation="org.jetbrains.plugins.github.authentication.GithubAuthenticationManager"/>
     <applicationService serviceImplementation="org.jetbrains.plugins.github.api.GithubApiRequestExecutor$Factory"/>
     <applicationService serviceImplementation="org.jetbrains.plugins.github.api.GithubApiRequestExecutorManager"/>
     <applicationService serviceImplementation="org.jetbrains.plugins.github.authentication.accounts.GithubAccountInformationProvider"/>
-    <applicationService serviceImplementation="org.jetbrains.plugins.github.util.GithubAccountsMigrationHelper"/>
     <applicationService serviceImplementation="org.jetbrains.plugins.github.util.CachingGHUserAvatarLoader"/>
 
     <projectService serviceImplementation="org.jetbrains.plugins.github.extensions.GHGitAuthenticationFailureManager"/>
@@ -65,33 +68,13 @@
 
     <diff.actions.ShowDiffAction.ExtensionProvider
       implementation="org.jetbrains.plugins.github.pullrequest.action.GHPRShowDiffActionProvider"/>
+    <diff.actions.ShowStandaloneDiffAction.ExtensionProvider
+      implementation="org.jetbrains.plugins.github.pullrequest.action.GHPRShowDiffActionProvider"/>
 
     <fileIconProvider implementation="org.jetbrains.plugins.github.extensions.GithubYamlIconProvider"/>
   </extensions>
 
-  <applicationListeners>
-    <listener class="org.jetbrains.plugins.github.authentication.accounts.GithubAccountManager$PasswordStorageClearedListener"
-              topic="com.intellij.credentialStore.PasswordSafeSettingsListener"
-              activeInHeadlessMode="false" activeInTestMode="false"/>
-
-    <listener class="org.jetbrains.plugins.github.authentication.accounts.GithubAccountInformationProvider$AccountTokenListener"
-              topic="org.jetbrains.plugins.github.authentication.accounts.AccountTokenChangedListener"
-              activeInHeadlessMode="false" activeInTestMode="false"/>
-
-    <listener class="org.jetbrains.plugins.github.util.GHProjectRepositoriesManager$AccountsListener"
-              topic="org.jetbrains.plugins.github.authentication.accounts.AccountRemovedListener"/>
-    <listener class="org.jetbrains.plugins.github.util.GHProjectRepositoriesManager$AccountsListener"
-              topic="org.jetbrains.plugins.github.authentication.accounts.AccountTokenChangedListener"/>
-  </applicationListeners>
-
   <projectListeners>
-    <listener class="org.jetbrains.plugins.github.authentication.accounts.GithubProjectDefaultAccountHolder$RemovalListener"
-              topic="org.jetbrains.plugins.github.authentication.accounts.AccountRemovedListener"
-              activeInHeadlessMode="false" activeInTestMode="false"/>
-    <listener class="org.jetbrains.plugins.github.extensions.GHGitAuthenticationFailureManager$AccountTokenListener"
-              topic="org.jetbrains.plugins.github.authentication.accounts.AccountTokenChangedListener"
-              activeInHeadlessMode="false" activeInTestMode="false"/>
-
     <listener class="org.jetbrains.plugins.github.util.GHProjectRepositoriesManager$RemoteUrlsListener"
               topic="com.intellij.dvcs.repo.VcsRepositoryMappingListener"/>
     <listener class="org.jetbrains.plugins.github.util.GHProjectRepositoriesManager$RemoteUrlsListener"
@@ -181,6 +164,7 @@
 
     <group id="Github.PullRequest.Changes.Popup">
       <reference id="Diff.ShowDiff"/>
+      <reference id="Diff.ShowStandaloneDiff"/>
       <reference id="Github.PullRequest.Changes.Reload"/>
     </group>
 

@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.execution.build
 
+import com.intellij.execution.ExecutionException
 import com.intellij.execution.configurations.RunProfileState
 import com.intellij.execution.impl.DefaultJavaProgramRunner
 import com.intellij.execution.runners.ExecutionEnvironment
@@ -16,6 +17,7 @@ import java.util.concurrent.atomic.AtomicReference
 internal class DelegateBuildRunner : DefaultJavaProgramRunner() {
   override fun getRunnerId() = ID
 
+  @Throws(ExecutionException::class)
   override fun doExecute(state: RunProfileState, environment: ExecutionEnvironment): RunContentDescriptor? {
     val executionResult = state.execute(environment.executor, this) ?: return null
     val result = AtomicReference<RunContentDescriptor?>()
@@ -31,7 +33,7 @@ internal class DelegateBuildRunner : DefaultJavaProgramRunner() {
         override fun isHiddenContent() = true
       }
       descriptor.runnerLayoutUi = runContentDescriptor.runnerLayoutUi
-      result.set(descriptor)    
+      result.set(descriptor)
     }
     return result.get()
   }

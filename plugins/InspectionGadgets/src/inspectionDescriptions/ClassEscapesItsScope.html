@@ -1,21 +1,24 @@
 <html>
 <body>
-Reports usages of classes in field types and in method signatures where the class is less visible than the field or the method.
-<p>
-  Examples are a <b>public</b> method which returns a <b>private</b> inner class, or a <b>protected</b> field
-  whose type is a package-visible class.<br>
-  While legal Java, such fields and methods aren't useful outside of the visibility scope of the classes used in the field or the method.
-<p>
-  In addition to that, in Java 9 a module may hide some of its classes by not exporting their packages.<br>
-  If the public API of a class in an exported package references a class from non-exported package,
-  such API isn't useful outside of the module.
-<!-- tooltip end -->
-<p>
-  The options of what is checked are:
+Reports usages of classes in a field or method signature when a class in a signature is less visible than the member itself.
+While legal Java, such members are useless outside of the visibility scope.
+<p>Example:</p>
 <ul>
-  <li>The module API - the public&protected fields&methods within exported packages (for Java 9+)</li>
-  <li>The public&protected fields&methods (the "public API") in all packages</li>
-  <li>The package-local fields&methods</li>
+  <li><code>public</code> method which returns a <code>private</code> inner <code>class</code>.</li>
+  <li><code>protected</code> field whose type is a package-local <code>class</code>.</li>
+</ul>
+<p>
+In Java 9, a module may hide some of its classes by excluding their packages from export.
+So, if the signature of exported API contains a non-exported class, such an API is useless outside of the module.
+<!-- tooltip end -->
+<p>Configure the inspection:</p>
+<ul>
+  <li>Use the <b>Module's API exposes not exported classes (Java 9+)</b> option to report about the module API
+    that exposes unexported classes.<br>Note that the option works if the language level of the project or module is 9 or higher.</li>
+  <li>Use the <b>Public API exposes non-accessible classes</b> option to report about a public API
+    that exposes non-accessible classes.</li>
+  <li>Use the <b>Package-local API exposes private classes</b> option to report about package-local API
+    that exposes <code>private</code> classes.</li>
 </ul>
 </body>
 </html>

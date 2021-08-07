@@ -7,12 +7,14 @@ import com.intellij.execution.application.JavaSettingsEditorBase;
 import com.intellij.execution.junit.JUnitConfiguration;
 import com.intellij.execution.testframework.TestSearchScope;
 import com.intellij.execution.ui.*;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.ui.LabeledComponent;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.psi.PsiJavaModule;
 import com.intellij.psi.search.FilenameIndex;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.rt.execution.junit.RepeatCount;
+import com.intellij.util.concurrency.NonUrgentExecutor;
 
 import javax.swing.*;
 import java.awt.*;
@@ -36,12 +38,17 @@ public class JUnitSettingsEditor extends JavaSettingsEditorBase<JUnitConfigurati
     SettingsEditorFragment<JUnitConfiguration, JrePathEditor> jrePath = CommonJavaFragments.createJrePath(jreSelector);
     fragments.add(jrePath);
     fragments.add(createShortenClasspath(moduleClasspath.component(), jrePath, false));
-    if (FilenameIndex.getFilesByName(mySettings.getProject(), PsiJavaModule.MODULE_INFO_FILE, GlobalSearchScope.projectScope(mySettings.getProject())).length > 0) {
-      fragments.add(SettingsEditorFragment.createTag("test.use.module.path",
-                                                     ExecutionBundle.message("do.not.use.module.path.tag"),
-                                                     ExecutionBundle.message("group.java.options"),
-                                                           configuration -> !configuration.isUseModulePath(),
-                                                     (configuration, value) -> configuration.setUseModulePath(!value)));
+    if (!getProject().isDefault()) {
+      SettingsEditorFragment<JUnitConfiguration, TagButton> fragment =
+        SettingsEditorFragment.createTag("test.use.module.path",
+                                         ExecutionBundle.message("do.not.use.module.path.tag"),
+                                         ExecutionBundle.message("group.java.options"),
+                                         configuration -> !configuration.isUseModulePath(),
+                                         (configuration, value) -> configuration.setUseModulePath(!value));
+      fragments.add(fragment);
+      ReadAction.nonBlocking(() -> fragment.setRemovable(
+        FilenameIndex.getFilesByName(getProject(), PsiJavaModule.MODULE_INFO_FILE, GlobalSearchScope.projectScope(getProject())).length > 0))
+        .expireWith(fragment).submit(NonUrgentExecutor.getInstance());
     }
 
     ConfigurationModuleSelector moduleSelector = new ConfigurationModuleSelector(getProject(), moduleClasspath.component());
@@ -64,7 +71,7 @@ public class JUnitSettingsEditor extends JavaSettingsEditorBase<JUnitConfigurati
     scopeFragment.addSettingsEditorListener(editor -> {
 
       boolean disableModuleClasspath = testKind.disableModuleClasspath(scopeFragment.getSelectedVariant() == TestSearchScope.WHOLE_PROJECT);
-      moduleClasspath.setSelected(!disableModuleClasspath);
+      moduleClasspath.setSelected(!disableModuleClasspath && moduleClasspath.isInitiallyVisible(mySettings));
       if (disableModuleClasspath) {
         moduleClasspath.component().setSelectedModule(null);
       }
@@ -77,7 +84,7 @@ public class JUnitSettingsEditor extends JavaSettingsEditorBase<JUnitConfigurati
                                         configuration -> configuration.getRepeatMode(),
                                         (configuration, mode) -> configuration.setRepeatMode(mode),
                                         configuration -> !RepeatCount.ONCE.equals(configuration.getRepeatMode()));
-    repeat.setVariantNameProvider(s -> JUnitBundle.message("repeat." + s.replace(' ', '.').toLowerCase(Locale.ENGLISH)));
+    repeat.setVariantNameProvider(s -> JUnitBundle.message("junit.configuration.repeat.mode." + s.replace(' ', '.').toLowerCase(Locale.ENGLISH)));
     fragments.add(repeat);
 
     LabeledComponent<JTextField> countField =
@@ -112,13 +119,14 @@ public class JUnitSettingsEditor extends JavaSettingsEditorBase<JUnitConfigurati
                                         configuration -> configuration.getForkMode(),
                                         (configuration, s) -> configuration.setForkMode(s),
                                         configuration -> !FORK_NONE.equals(configuration.getForkMode()));
-    forkMode.setVariantNameProvider(s -> JUnitBundle.message("fork.mode." + s.toLowerCase(Locale.ENGLISH)));
+    forkMode.setVariantNameProvider(s -> JUnitBundle.message("junit.configuration.fork.mode." + s.toLowerCase(Locale.ENGLISH)));
     fragments.add(forkMode);
 
     testKind.addSettingsEditorListener(
       editor -> {
         int selectedType = testKind.getTestKind();
-        forkMode.setSelectedVariant(JUnitConfigurable.updateForkMethod(selectedType, forkMode.getSelectedVariant()));
+        forkMode.setSelectedVariant(JUnitConfigurable.updateForkMethod(selectedType, forkMode.getSelectedVariant(),
+                                                                       repeat.getSelectedVariant()));
         scopeFragment.setRemovable(selectedType == JUnitConfigurationModel.PATTERN ||
                                    selectedType == JUnitConfigurationModel.ALL_IN_PACKAGE ||
                                    selectedType == JUnitConfigurationModel.TAGS ||

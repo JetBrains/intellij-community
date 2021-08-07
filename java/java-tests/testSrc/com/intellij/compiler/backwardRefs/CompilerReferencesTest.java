@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.compiler.backwardRefs;
 
 import com.intellij.JavaTestUtil;
@@ -150,7 +150,7 @@ public class CompilerReferencesTest extends CompilerReferencesTestBase {
     assertNotNull(foo);
     final CompilerReferenceServiceImpl compilerReferenceService = (CompilerReferenceServiceImpl) CompilerReferenceService
       .getInstance(myFixture.getProject());
-    compilerReferenceService.getScopeWithoutCodeReferences(foo);
+    compilerReferenceService.getScopeWithCodeReferences(foo);
     assertOneElement(compilerReferenceService.getDirtyScopeHolder().getAllDirtyModules());
   }
 
@@ -195,7 +195,7 @@ public class CompilerReferencesTest extends CompilerReferencesTestBase {
     assertNotNull(atCaret);
     final PsiMember memberAtCaret = PsiTreeUtil.getParentOfType(atCaret, PsiMember.class, false);
     assertNotNull(memberAtCaret);
-    return ((CompilerReferenceServiceImpl)CompilerReferenceService.getInstance(myFixture.getProject())).getReferentFiles(memberAtCaret);
+    return ((CompilerReferenceServiceImpl)CompilerReferenceService.getInstance(myFixture.getProject())).getReferentFilesForTests(memberAtCaret);
   }
 
   @Override

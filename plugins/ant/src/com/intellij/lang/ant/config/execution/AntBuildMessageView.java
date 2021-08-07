@@ -16,6 +16,7 @@ import com.intellij.lang.ant.config.impl.AntBuildFileImpl;
 import com.intellij.lang.ant.config.impl.BuildFileProperty;
 import com.intellij.lang.ant.config.impl.HelpID;
 import com.intellij.lang.ant.segments.OutputPacketProcessor;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
@@ -54,7 +55,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-public final class AntBuildMessageView extends JPanel implements DataProvider, OccurenceNavigator {
+public final class AntBuildMessageView extends JPanel implements DataProvider, OccurenceNavigator, Disposable {
   private static final Logger LOG = Logger.getInstance(AntBuildMessageView.class);
 
   public enum MessageType {
@@ -153,6 +154,13 @@ public final class AntBuildMessageView extends JPanel implements DataProvider, O
     add(myMessagePanel, BorderLayout.CENTER);
 
     showAntView(AntBuildFileImpl.TREE_VIEW.value(buildFile.getAllOptions()));
+  }
+
+  @Override
+  public void dispose() {
+    Disposer.dispose(myAlarm);
+    myBuildFile = null;
+    myPlainTextView.dispose();
   }
 
   public void changeView() {
@@ -279,7 +287,7 @@ public final class AntBuildMessageView extends JPanel implements DataProvider, O
     content.putUserData(KEY, messageView);
     ijMessageView.getContentManager().addContent(content);
     ijMessageView.getContentManager().setSelectedContent(content);
-    content.setDisposer(() -> Disposer.dispose(messageView.myAlarm));
+    content.setDisposer(() -> Disposer.dispose(messageView));
     new CloseListener(content, ijMessageView.getContentManager(), project);
 
     if (!buildFile.isRunInBackground()) {
@@ -346,9 +354,11 @@ public final class AntBuildMessageView extends JPanel implements DataProvider, O
     rightActionGroup.add(myTreeView.createToggleAutoscrollAction());
 
     myLeftToolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.ANT_MESSAGES_TOOLBAR, leftActionGroup, false);
+    myLeftToolbar.setTargetComponent(this);
     JPanel toolbarPanel = new JPanel(new GridLayout(1, 2, 2, 0));
     toolbarPanel.add(myLeftToolbar.getComponent());
     myRightToolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.ANT_MESSAGES_TOOLBAR, rightActionGroup, false);
+    myRightToolbar.setTargetComponent(this);
     toolbarPanel.add(myRightToolbar.getComponent());
 
     return toolbarPanel;
@@ -541,21 +551,22 @@ public final class AntBuildMessageView extends JPanel implements DataProvider, O
       myProject = project;
       contentManager.addContentManagerListener(this);
       ProjectManager.getInstance().addProjectManagerListener(myProject, this);
+
+      Disposer.register(content, () -> {
+        myContentManager.removeContentManagerListener(this);
+        ProjectManager.getInstance().removeProjectManagerListener(myProject, this);
+      });
     }
 
     @Override
     public void contentRemoved(@NotNull ContentManagerEvent event) {
       if (event.getContent() == myContent) {
-        myContentManager.removeContentManagerListener(this);
         AntBuildMessageView buildMessageView = myContent.getUserData(KEY);
         if (!myCloseAllowed) {
           buildMessageView.stopProcess();
         }
-        ProjectManager.getInstance().removeProjectManagerListener(myProject, this);
         myContent.release();
         myContent = null;
-        buildMessageView.myBuildFile = null;
-        buildMessageView.myPlainTextView.dispose();
       }
     }
 

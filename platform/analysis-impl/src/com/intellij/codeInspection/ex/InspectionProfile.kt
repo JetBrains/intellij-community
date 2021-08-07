@@ -52,6 +52,8 @@ abstract class NewInspectionProfile(name: String, private var profileManager: Ba
     return initialized
   }
 
+  override abstract fun getDisplayName(): String
+
   protected val pathMacroManager: PathMacroManager
     get() {
       val profileManager = profileManager

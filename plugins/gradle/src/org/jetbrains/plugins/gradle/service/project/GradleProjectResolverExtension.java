@@ -220,6 +220,9 @@ public interface GradleProjectResolverExtension extends ParametersEnhancer {
   // options passed from project to Gradle
   String DEBUG_OPTIONS_KEY = "DEBUG_OPTIONS";
 
+  // for Gradle version specific init scripts
+  String GRADLE_VERSION = "GRADLE_VERSION";
+
   /**
    * Allows extension to contribute to init script
    * @param taskNames gradle task names to be executed

@@ -4,6 +4,7 @@ package com.intellij.openapi.diff.impl.patch;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsException;
@@ -124,6 +125,12 @@ public class PatchBuilderTest extends LightPlatformTestCase {
 
   public void testUnchangedFile() throws Exception {
     doTest(getProject(), true);
+  }
+
+  public void testContextLineCount() throws Exception {
+    Registry.get("patch.context.line.count").setValue(5);
+    doTest(getProject(), true, null);
+    Registry.get("patch.context.line.count").resetToDefault();
   }
 
   private void doTest() throws IOException, VcsException {

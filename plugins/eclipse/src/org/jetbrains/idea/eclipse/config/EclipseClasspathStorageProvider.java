@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.eclipse.config;
 
 import com.intellij.openapi.application.WriteAction;
@@ -30,8 +16,7 @@ import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.workspaceModel.ide.JpsFileEntitySource;
 import com.intellij.workspaceModel.ide.VirtualFileUrlManagerUtil;
-import com.intellij.workspaceModel.ide.WorkspaceModel;
-import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleManagerComponentBridge;
+import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleManagerBridgeImpl;
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleBridge;
 import com.intellij.workspaceModel.storage.EntitySource;
 import com.intellij.workspaceModel.storage.WorkspaceEntityStorage;
@@ -53,7 +38,7 @@ import java.util.function.Function;
 /**
  * @author Vladislav.Kaznacheev
  */
-public class EclipseClasspathStorageProvider implements ClasspathStorageProvider {
+public final class EclipseClasspathStorageProvider implements ClasspathStorageProvider {
   @NotNull
   @Override
   @NonNls
@@ -104,14 +89,13 @@ public class EclipseClasspathStorageProvider implements ClasspathStorageProvider
   }
 
   private static void updateEntitySource(Module module, Function<? super EntitySource, ? extends EntitySource> updateSource) {
-    if (WorkspaceModel.isEnabled()) {
-      ModuleBridge moduleBridge = (ModuleBridge)module;
-      WorkspaceEntityStorage moduleEntityStorage = moduleBridge.getEntityStorage().getCurrent();
-      ModuleEntity moduleEntity = ModuleManagerComponentBridge.findModuleEntity(moduleEntityStorage, moduleBridge);
-      if (moduleEntity != null) {
-        EntitySource entitySource = moduleEntity.getEntitySource();
-        ModuleManagerComponentBridge.changeModuleEntitySource(moduleBridge, moduleEntityStorage, updateSource.apply(entitySource), moduleBridge.getDiff());
-      }
+    ModuleBridge moduleBridge = (ModuleBridge)module;
+    WorkspaceEntityStorage moduleEntityStorage = moduleBridge.getEntityStorage().getCurrent();
+    ModuleEntity moduleEntity = ModuleManagerBridgeImpl.Companion.findModuleEntity(moduleEntityStorage, moduleBridge);
+    if (moduleEntity != null) {
+      EntitySource entitySource = moduleEntity.getEntitySource();
+      ModuleManagerBridgeImpl
+        .changeModuleEntitySource(moduleBridge, moduleEntityStorage, updateSource.apply(entitySource), moduleBridge.getDiff());
     }
   }
 
@@ -123,12 +107,6 @@ public class EclipseClasspathStorageProvider implements ClasspathStorageProvider
       String classpathFileUrl = VfsUtilCore.pathToUrl(contentRoot) + "/" + EclipseXml.CLASSPATH_FILE;
       return new EclipseProjectFile(virtualFileUrlManager.fromUrl(classpathFileUrl), (JpsFileEntitySource)source);
     });
-  }
-
-  @NotNull
-  @Override
-  public ClasspathConverter createConverter(@NotNull Module module) {
-    return new EclipseClasspathConverter(module);
   }
 
   @Override

@@ -32,7 +32,7 @@ public abstract class BaseCoverageAnnotator implements CoverageAnnotator {
     final Runnable request = createRenewRequest(suite, dataManager);
     if (request != null) {
       if (myProject.isDisposed()) return;
-      ProgressManager.getInstance().run(new Task.Backgroundable(myProject, CoverageBundle.message("coverage.view.loading.data"), false) {
+      ProgressManager.getInstance().run(new Task.Backgroundable(myProject, CoverageBundle.message("coverage.view.loading.data"), true) {
         @Override
         public void run(@NotNull ProgressIndicator indicator) {
           request.run();
@@ -44,6 +44,12 @@ public abstract class BaseCoverageAnnotator implements CoverageAnnotator {
           if (coverageView != null) {
             coverageView.updateParentTitle();
           }
+        }
+
+        @Override
+        public void onCancel() {
+          super.onCancel();
+          CoverageDataManager.getInstance(myProject).chooseSuitesBundle(null);
         }
       });
     }

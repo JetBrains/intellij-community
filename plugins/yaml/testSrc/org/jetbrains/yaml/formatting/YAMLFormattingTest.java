@@ -30,6 +30,10 @@ public class YAMLFormattingTest extends BasePlatformTestCase {
     doWholeFileTest();
   }
 
+  public void testSample_disableReformattingLineBreaks() {
+    doWholeFileTest(() -> getCommonSettings().KEEP_LINE_BREAKS = false);
+  }
+
   public void testSample_indent4() {
     doWholeFileTest(() -> getCommonSettings().getIndentOptions().INDENT_SIZE = 4);
   }

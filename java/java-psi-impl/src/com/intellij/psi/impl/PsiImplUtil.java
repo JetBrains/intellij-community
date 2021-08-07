@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl;
 
 import com.intellij.codeInsight.AnnotationTargetUtil;
@@ -31,6 +31,7 @@ import com.intellij.psi.search.PackageScope;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
+import com.intellij.psi.util.JavaPsiPatternUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.PsiUtilCore;
@@ -685,15 +686,17 @@ public final class PsiImplUtil {
   }
 
   /**
-   * Returns enclosing label statement for given label expression
+   * Returns enclosing label statement for given case label element
    *
-   * @param expression switch label expression
-   * @return enclosing label statement or null if given expression is not a label statement expression
+   * @param labelElement case label element
+   * @return enclosing label statement or null if {@param labelElement} is an expression but not a label statement expression
    */
   @Nullable
-  public static PsiSwitchLabelStatementBase getSwitchLabel(@NotNull PsiExpression expression) {
-    PsiElement parent = PsiUtil.skipParenthesizedExprUp(expression.getParent());
-    if (parent instanceof PsiExpressionList) {
+  public static PsiSwitchLabelStatementBase getSwitchLabel(@NotNull PsiCaseLabelElement labelElement) {
+    PsiElement parent = labelElement instanceof PsiParenthesizedPattern
+                        ? JavaPsiPatternUtil.skipParenthesizedPatternUp(labelElement.getParent())
+                        : PsiUtil.skipParenthesizedExprUp(labelElement.getParent());
+    if (parent instanceof PsiCaseLabelElementList) {
       PsiElement grand = parent.getParent();
       if (grand instanceof PsiSwitchLabelStatementBase) {
         return (PsiSwitchLabelStatementBase)grand;
@@ -787,7 +790,16 @@ public final class PsiImplUtil {
     return results.length == 0 ? JavaResolveResult.EMPTY_ARRAY : (JavaResolveResult[])results;
   }
 
-  public static VirtualFile getModuleVirtualFile(@NotNull PsiJavaModule module) {
-    return module instanceof LightJavaModule ? ((LightJavaModule)module).getRootVirtualFile() : module.getContainingFile().getVirtualFile();
+  public static @NotNull VirtualFile getModuleVirtualFile(@NotNull PsiJavaModule module) {
+    if (module instanceof LightJavaModule) {
+      return ((LightJavaModule)module).getRootVirtualFile();
+    }
+    else {
+      VirtualFile file = PsiUtilCore.getVirtualFile(module);
+      if (file == null) {
+        throw new IllegalArgumentException("Module '" + module + "' lost its VF; file=" + module.getContainingFile() + "; valid=" + module.isValid());
+      }
+      return file;
+    }
   }
 }

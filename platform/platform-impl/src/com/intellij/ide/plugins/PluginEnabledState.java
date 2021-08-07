@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.plugins;
 
 import com.intellij.ide.IdeBundle;
@@ -8,68 +8,58 @@ import org.jetbrains.annotations.PropertyKey;
 
 public enum PluginEnabledState {
 
-  ENABLED(
-    "plugins.configurable.enabled.for.all.projects",
-    true,
-    false
-  ),
-  ENABLED_FOR_PROJECT(
-    "plugins.configurable.enabled.for.current.project",
-    true,
-    true
-  ),
-  DISABLED(
-    "plugins.configurable.disabled.for.all.projects",
-    false,
-    false
-  ),
-  DISABLED_FOR_PROJECT(
-    "plugins.configurable.disabled.for.current.project",
-    false,
-    true
-  );
+  ENABLED {
+    @Override
+    protected @NotNull @PropertyKey(resourceBundle = IdeBundle.BUNDLE) String getPropertyKey() {
+      return PluginEnabler.isPerProjectEnabled() ? "plugins.configurable.enabled.for.all.projects" : "plugins.configurable.enabled";
+    }
+  },
+  ENABLED_FOR_PROJECT {
+    @Override
+    protected @NotNull @PropertyKey(resourceBundle = IdeBundle.BUNDLE) String getPropertyKey() {
+      return "plugins.configurable.enabled.for.current.project";
+    }
+  },
+  DISABLED {
+    @Override
+    protected @NotNull @PropertyKey(resourceBundle = IdeBundle.BUNDLE) String getPropertyKey() {
+      return PluginEnabler.isPerProjectEnabled() ? "plugins.configurable.disabled.for.all.projects" : "plugins.configurable.disabled";
+    }
+  },
+  DISABLED_FOR_PROJECT {
+    @Override
+    protected @NotNull @PropertyKey(resourceBundle = IdeBundle.BUNDLE) String getPropertyKey() {
+      return "plugins.configurable.disabled.for.current.project";
+    }
+  };
 
-  private final @NotNull @PropertyKey(resourceBundle = IdeBundle.BUNDLE) String myPropertyKey;
-  private final boolean myEnabled;
-  private final boolean myPerProject;
+  protected abstract @NotNull @PropertyKey(resourceBundle = IdeBundle.BUNDLE) String getPropertyKey();
 
-  PluginEnabledState(@NotNull @PropertyKey(resourceBundle = IdeBundle.BUNDLE) String propertyKey,
-                     boolean enabled,
-                     boolean perProject) {
-    myPropertyKey = propertyKey;
-    myEnabled = enabled;
-    myPerProject = perProject;
-  }
-
-  public @NotNull @Nls String toString() {
-    return IdeBundle.message(myPropertyKey);
+  public @NotNull @Nls String getPresentableText() {
+    return IdeBundle.message(getPropertyKey());
   }
 
   public boolean isEnabled() {
-    return myEnabled;
+    return this == ENABLED || this == ENABLED_FOR_PROJECT;
   }
 
   public boolean isDisabled() {
-    return !myEnabled;
+    return this == DISABLED || this == DISABLED_FOR_PROJECT;
   }
 
   public boolean isPerProject() {
-    return myPerProject;
+    return this == ENABLED_FOR_PROJECT || this == DISABLED_FOR_PROJECT;
   }
 
   public @NotNull PluginEnabledState getInverted() {
-    return getState(!myEnabled, isPerProject());
+    return getState(isDisabled(), isPerProject());
   }
 
-  public static @NotNull PluginEnabledState getState(boolean enabled,
-                                                     boolean perProject) {
-    for (PluginEnabledState value : values()) {
-      if (value.myEnabled == enabled &&
-          value.myPerProject == perProject) {
-        return value;
-      }
-    }
+  public static @NotNull PluginEnabledState getState(boolean enabled, boolean perProject) {
+    return perProject ? enabled ? ENABLED_FOR_PROJECT : DISABLED_FOR_PROJECT : globally(enabled);
+  }
 
-    throw new IllegalArgumentException("Target state not found: enabled='" + enabled + "', perProject='" + perProject + "'");
+  public static @NotNull PluginEnabledState globally(boolean enabled) {
+    return enabled ? ENABLED : DISABLED;
   }
 }

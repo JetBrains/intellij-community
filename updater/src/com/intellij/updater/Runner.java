@@ -1,12 +1,5 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.updater;
-
-import org.apache.log4j.FileAppender;
-import org.apache.log4j.Level;
-import org.apache.log4j.Logger;
-import org.apache.log4j.PatternLayout;
-import org.apache.log4j.spi.NOPLogger;
-import org.apache.log4j.spi.NOPLoggerRepository;
 
 import java.io.*;
 import java.net.URI;
@@ -14,6 +7,11 @@ import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.file.*;
 import java.util.*;
+import java.util.logging.FileHandler;
+import java.util.logging.Formatter;
+import java.util.logging.Level;
+import java.util.logging.LogRecord;
+import java.util.logging.Logger;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 import java.util.zip.ZipInputStream;
@@ -23,13 +21,10 @@ public class Runner {
   private static final String LOG_FILE_NAME = "idea_updater.log";
   private static final String ERROR_LOG_FILE_NAME = "idea_updater_error.log";  // must be equal to UpdateCheckerComponent.ERROR_LOG_FILE_NAME
 
-  private static Logger logger = null;
   private static String logPath = null;
   private static boolean ourCaseSensitiveFs;
 
-  public static Logger logger() {
-    return logger;
-  }
+  static final Logger LOG = createLogger();
 
   public static boolean isCaseSensitiveFs() {
     return ourCaseSensitiveFs;
@@ -37,8 +32,9 @@ public class Runner {
 
   @SuppressWarnings("UseOfSystemOutOrSystemErr")
   public static void main(String[] args) {
-    initLogger();
     try {
+      initLogger();
+
       List<String> effectiveArgs = new ArrayList<>();
       for (String arg : args) {
         if (arg.startsWith("@")) {
@@ -52,36 +48,62 @@ public class Runner {
       _main(effectiveArgs.toArray(new String[0]));
     }
     catch (Throwable t) {
-      logger().error("internal error", t);
+      LOG.log(Level.SEVERE, "internal error", t);
       t.printStackTrace(System.err);
       System.exit(2);
     }
   }
 
-  private static void initLogger() {
+  private static Logger createLogger() {
+    System.setProperty("java.util.logging.config.class", Object.class.getName());
+    Logger logger = Logger.getLogger("com.intellij.updater");
+    logger.setLevel(Level.OFF);
+    return logger;
+  }
+
+  private static void initLogger() throws IOException {
+    System.setProperty("java.util.logging.config.class", Object.class.getName());
+
     String dirPath = System.getProperty("idea.updater.log", System.getProperty("java.io.tmpdir", System.getProperty("user.home", ".")));
     Path logDir = Paths.get(dirPath).toAbsolutePath().normalize();
     logPath = logDir.resolve(LOG_FILE_NAME).toString();
+    String errorLogPath = logDir.resolve(ERROR_LOG_FILE_NAME).toString();
 
-    FileAppender update = new FileAppender();
-    update.setFile(logPath);
-    update.setLayout(new PatternLayout("%d{dd/MM HH:mm:ss} %-5p %C{1}.%M - %m%n"));
-    update.setThreshold(Level.ALL);
-    update.setAppend(true);
-    update.activateOptions();
+    Formatter formatter = new Formatter() {
+      @Override
+      public String format(LogRecord record) {
+        Level level = record.getLevel();
+        String levelName = level == Level.SEVERE ? "ERROR" : level == Level.WARNING ? "WARN" : "INFO";
 
-    FileAppender updateError = new FileAppender();
-    updateError.setFile(logDir.resolve(ERROR_LOG_FILE_NAME).toString());
-    updateError.setLayout(new PatternLayout("%d{dd/MM HH:mm:ss} %-5p %C{1}.%M - %m%n"));
-    updateError.setThreshold(Level.ERROR);
-    updateError.setAppend(false);
-    updateError.activateOptions();
+        String className = record.getSourceClassName();
+        if (className != null) {
+          className = className.substring(className.lastIndexOf('.') + 1);
+        }
 
-    logger = Logger.getLogger("com.intellij.updater");
-    logger.addAppender(updateError);
-    logger.addAppender(update);
-    logger.setLevel(Level.ALL);
-    logger.info("--- Updater started ---");
+        String stacktrace = "";
+        if (record.getThrown() != null) {
+          StringWriter writer = new StringWriter().append(System.lineSeparator());
+          record.getThrown().printStackTrace(new PrintWriter(writer));
+          stacktrace = writer.getBuffer().toString();
+        }
+
+        return String.format("%1$td/%1$tm %1$tH:%1$tM:%1$tS %2$-5s %3$s.%4$s - %5$s%6$s%n",
+                             record.getMillis(), levelName, className, record.getSourceMethodName(), record.getMessage(), stacktrace);
+      }
+    };
+
+    FileHandler cumulativeLog = new FileHandler(logPath, 0, 1, true);
+    cumulativeLog.setLevel(Level.ALL);
+    cumulativeLog.setFormatter(formatter);
+
+    FileHandler errorLog = new FileHandler(errorLogPath, 0, 1, false);
+    errorLog.setLevel(Level.SEVERE);
+    errorLog.setFormatter(formatter);
+
+    LOG.addHandler(cumulativeLog);
+    LOG.addHandler(errorLog);
+    LOG.setLevel(Level.ALL);
+    LOG.info("--- Updater started ---");
   }
 
   private static void _main(String[] args) {
@@ -99,8 +121,8 @@ public class Runner {
 
       checkCaseSensitivity(newFolder);
 
-      logger().info("args: " + Arrays.toString(args));
-      logger().info("case-sensitive: " + ourCaseSensitiveFs);
+      LOG.info("args: " + Arrays.toString(args));
+      LOG.info("case-sensitive: " + ourCaseSensitiveFs);
 
       boolean binary = hasArgument(args, "zip_as_binary");
       boolean strict = hasArgument(args, "strict");
@@ -151,13 +173,13 @@ public class Runner {
         destDirectory = destDirectory.toRealPath();
       }
       catch (InvalidPathException | IOException e) {
-        logger().error(e);
+        LOG.log(Level.SEVERE, destPath, e);
       }
 
       checkCaseSensitivity(destDirectory.toString());
 
-      logger().info("args: " + Arrays.toString(args));
-      logger().info("destination: " + destPath + " (" + destDirectory + "), case-sensitive: " + ourCaseSensitiveFs);
+      LOG.info("args: " + Arrays.toString(args));
+      LOG.info("destination: " + destPath + " (" + destDirectory + "), case-sensitive: " + ourCaseSensitiveFs);
 
       UpdaterUI ui;
       if ("install".equals(args[0]) || "batch-install".equals(args[0])) {
@@ -281,7 +303,7 @@ public class Runner {
       File tempPatchFile = Utils.getTempFile("patch");
       PatchFileCreator.create(spec, tempPatchFile, ui);
 
-      logger().info("Packing JAR file: " + spec.getPatchFile() );
+      LOG.info("Packing JAR file: " + spec.getPatchFile());
       ui.startProcess("Packing JAR file '" + spec.getPatchFile() + "'...");
 
       try (ZipOutputWrapper out = new ZipOutputWrapper(new FileOutputStream(spec.getPatchFile()));
@@ -298,7 +320,7 @@ public class Runner {
       success = true;
     }
     catch (Throwable t) {
-      logger().error("create failed", t);
+      LOG.log(Level.SEVERE, "create failed", t);
       ui.showError(printStackTrace(t));
     }
     finally {
@@ -307,7 +329,7 @@ public class Runner {
       }
       catch (Throwable t) {
         success = false;
-        logger().error("cleanup failed", t);
+        LOG.log(Level.SEVERE, "cleanup failed", t);
         ui.showError(printStackTrace(t));
       }
     }
@@ -322,7 +344,7 @@ public class Runner {
   }
 
   private static void cleanup(UpdaterUI ui) throws IOException {
-    logger().info("Cleaning up...");
+    LOG.info("Cleaning up...");
     ui.startProcess("Cleaning up...");
     ui.setProgressIndeterminate();
     Utils.cleanup();
@@ -337,7 +359,7 @@ public class Runner {
       try {
         File patchFile = Utils.getTempFile("patch");
 
-        logger().info("Extracting patch file...");
+        LOG.info("Extracting patch file...");
         ui.startProcess("Extracting patch file...");
         ui.setProgressIndeterminate();
         try (ZipFile zipFile = new ZipFile(patch);
@@ -361,11 +383,11 @@ public class Runner {
         applicationResult = PatchFileCreator.apply(preparationResult, resolutions, backupDir, ui);
       }
       catch (OperationCancelledException e) {
-        logger().warn("cancelled", e);
+        LOG.log(Level.WARNING, "cancelled", e);
         return false;
       }
       catch (Throwable t) {
-        logger().error("prepare failed", t);
+        LOG.log(Level.SEVERE, "prepare failed", t);
         String message = "An error occurred when preparing the patch:\n" +
                          t.getClass().getSimpleName() + ": " + t.getMessage() + "\n\n" +
                          ui.bold("No files were changed. Please retry applying the patch.") + "\n\n" +
@@ -399,7 +421,7 @@ public class Runner {
             PatchFileCreator.revert(preparationResult, appliedActions, backupDir, ui);
           }
           catch (Throwable t) {
-            logger().error("revert failed", t);
+            LOG.log(Level.SEVERE, "revert failed", t);
             String message = "An error occurred when reverting the patch:\n" +
                              t.getClass().getSimpleName() + ": " + t.getMessage() + "\n\n" +
                              ui.bold("Files may be corrupted. Please reinstall the IDE.") + "\n\n" +
@@ -417,7 +439,7 @@ public class Runner {
         refreshApplicationIcon(dest.toString());
       }
       catch (Throwable t) {
-        logger().warn("cleanup failed", t);
+        LOG.log(Level.WARNING, "cleanup failed", t);
       }
     }
   }
@@ -430,11 +452,11 @@ public class Runner {
 
       String jarName = null;
       try {
-        logger().info("Extracting patch files...");
+        LOG.info("Extracting patch files...");
         ui.startProcess("Extracting patch files...");
         for (int i = 0; i < patches.length; i++) {
           jarName = new File(patches[i]).getName();
-          logger().info("Unpacking " + jarName);
+          LOG.info("Unpacking " + jarName);
           ui.setProgress(100 * i / patches.length);
           File patchFile = Utils.getTempFile("patch" + i);
           patchFiles.add(patchFile);
@@ -451,18 +473,18 @@ public class Runner {
           backupDir = Utils.getTempFile("backup");
           if (!backupDir.mkdir()) throw new IOException("Cannot create a backup directory: " + backupDir);
 
-          logger().info("Backing up files...");
+          LOG.info("Backing up files...");
           ui.startProcess("Backing up files...");
           ui.setProgressIndeterminate();
           Utils.copyDirectory(destDir.toPath(), backupDir.toPath());
         }
       }
       catch (OperationCancelledException e) {
-        logger().warn("cancelled", e);
+        LOG.log(Level.WARNING, "cancelled", e);
         return false;
       }
       catch (Throwable t) {
-        logger().error("prepare failed", t);
+        LOG.log(Level.SEVERE, "prepare failed", t);
         String message = "An error occurred when " + (jarName != null ? "extracting " + jarName : "preparing the patch") + ":\n" +
                          t.getClass().getSimpleName() + ": " + t.getMessage() + "\n\n" +
                          ui.bold("No files were changed. Please retry applying the patch.") + "\n\n" +
@@ -489,10 +511,10 @@ public class Runner {
         completed = true;
       }
       catch (OperationCancelledException e) {
-        logger().warn("cancelled", e);
+        LOG.log(Level.WARNING, "cancelled", e);
       }
       catch (Throwable t) {
-        logger().error("batch failed", t);
+        LOG.log(Level.SEVERE, "batch failed", t);
         error = t;
       }
 
@@ -515,24 +537,24 @@ public class Runner {
       ui.setDescription("");
 
       if (!completed && needRestore && backupDir != null) {
-        logger().info("Reverting...");
+        LOG.info("Reverting...");
         ui.startProcess("Reverting...");
         ui.setProgressIndeterminate();
 
         try {
           Utils.delete(destDir);
           try {
-            logger().info("move: " + backupDir + " -> " + destDir);
+            LOG.info("move: " + backupDir + " -> " + destDir);
             Files.move(backupDir.toPath(), destDir.toPath());
           }
           catch (IOException e) {
-            logger().error("move failed", e);
+            LOG.log(Level.SEVERE, "move failed", e);
             Utils.delete(destDir);
             Utils.copyDirectory(backupDir.toPath(), destDir.toPath());
           }
         }
         catch (Throwable t) {
-          logger().error("revert failed", t);
+          LOG.log(Level.SEVERE, "revert failed", t);
           String message = "An error occurred when reverting the patch:\n" +
                            t.getClass().getSimpleName() + ": " + t.getMessage() + "\n\n" +
                            ui.bold("Files may be corrupted. Please reinstall the IDE.") + "\n\n" +
@@ -549,23 +571,23 @@ public class Runner {
         refreshApplicationIcon(dest.toString());
       }
       catch (Throwable t) {
-        logger().warn("cleanup failed", t);
+        LOG.log(Level.WARNING, "cleanup failed", t);
       }
     }
   }
 
-  private static Map<String, ValidationResult.Option> askForResolutions(
-    List<ValidationResult> problems, UpdaterUI ui
-  ) throws OperationCancelledException {
+  private static Map<String, ValidationResult.Option> askForResolutions(List<ValidationResult> problems, UpdaterUI ui) throws OperationCancelledException {
     if (problems.isEmpty()) return Collections.emptyMap();
-    logger().warn("conflicts:");
+    LOG.warning("conflicts:");
     for (ValidationResult problem : problems) {
-      logger().warn("  " + problem.action.name() + " @ " + problem.path + ": " + problem.message);
+      String record = "  " + problem.action.name() + ' ' + problem.path + ": " + problem.message;
+      if (!problem.details.isEmpty()) record += " (" + problem.details + ')';
+      LOG.warning(record);
     }
     Map<String, ValidationResult.Option> resolutions = ui.askUser(problems);
-    logger().warn("resolutions:");
+    LOG.warning("resolutions:");
     for (Map.Entry<String, ValidationResult.Option> entry : resolutions.entrySet()) {
-      logger().warn("  " + entry.getKey() + ": " + entry.getValue());
+      LOG.warning("  " + entry.getKey() + ": " + entry.getValue());
     }
     return resolutions;
   }
@@ -574,13 +596,13 @@ public class Runner {
     if (Utils.IS_MAC) {
       try {
         String applicationPath = destPath.contains("/Contents") ? destPath.substring(0, destPath.lastIndexOf("/Contents")) : destPath;
-        logger().info("refreshApplicationIcon for: " + applicationPath);
+        LOG.info("refreshApplicationIcon for: " + applicationPath);
         Runtime runtime = Runtime.getRuntime();
         String[] args = {"touch", applicationPath};
         runtime.exec(args);
       }
       catch (IOException e) {
-        logger().warn("refreshApplicationIcon failed", e);
+        LOG.log(Level.WARNING, "refreshApplicationIcon failed", e);
       }
     }
   }
@@ -603,15 +625,6 @@ public class Runner {
     }
     catch (URISyntaxException e) {
       throw new IllegalArgumentException(e);
-    }
-  }
-
-  static void initTestLogger() {
-    if (logger == null) {
-      logger = new NOPLogger(new NOPLoggerRepository(), "root");
-    }
-    else if (!(logger instanceof NOPLogger)) {
-      throw new IllegalStateException("Non-test logger already defined");
     }
   }
 }

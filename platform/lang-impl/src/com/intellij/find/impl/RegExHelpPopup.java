@@ -1,8 +1,8 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.find.impl;
 
 import com.intellij.codeInsight.hint.HintUtil;
-import com.intellij.find.FindUtil;
+import com.intellij.find.FindUsagesCollector;
 import com.intellij.ide.BrowserUtil;
 import com.intellij.lang.LangBundle;
 import com.intellij.openapi.Disposable;
@@ -20,6 +20,7 @@ import com.intellij.ui.components.labels.LinkLabel;
 import com.intellij.ui.components.labels.LinkListener;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -76,6 +77,7 @@ public final class RegExHelpPopup extends JPanel {
   /**
    * @deprecated Use {@link #createRegExLink(String, Component)}
    */
+  @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
   @Deprecated
   public static LinkLabel createRegExLink(@NotNull @NlsContexts.LinkLabel String title, @Nullable Component owner, @SuppressWarnings("unused") @Nullable Logger logger) {
     return createRegExLink(title, owner, (String)null);
@@ -89,7 +91,7 @@ public final class RegExHelpPopup extends JPanel {
     return new LinkLabel<>(title, null, new LinkListener<>() {
       @Override
       public void linkSelected(LinkLabel<Object> aSource, Object aLinkData) {
-        FindUtil.triggerRegexHelpClicked(place);
+        FindUsagesCollector.triggerRegexHelpClicked(place);
         action.run();
       }
     });

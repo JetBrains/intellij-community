@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.packaging.impl.artifacts;
 
 import com.intellij.compiler.server.BuildManager;
@@ -22,9 +22,9 @@ import com.intellij.openapi.util.ModificationTracker;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SimpleModificationTracker;
 import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.packaging.artifacts.*;
 import com.intellij.packaging.elements.*;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashSet;
 import org.jdom.Element;
@@ -106,8 +106,8 @@ public final class ArtifactManagerImpl extends ArtifactManager implements Persis
 
   ArtifactState saveArtifact(Artifact artifact) {
     ArtifactState artifactState;
-    if (artifact instanceof InvalidArtifact) {
-      artifactState = ((InvalidArtifact)artifact).getState();
+    if (artifact instanceof InvalidArtifactImpl) {
+      artifactState = ((InvalidArtifactImpl)artifact).getState();
     }
     else {
       artifactState = new ArtifactState();
@@ -117,9 +117,15 @@ public final class ArtifactManagerImpl extends ArtifactManager implements Persis
       artifactState.setRootElement(serializePackagingElement(artifact.getRootElement()));
       artifactState.setArtifactType(artifact.getArtifactType().getId());
       ProjectModelExternalSource externalSource = artifact.getExternalSource();
-      if (externalSource != null && ProjectUtilCore.isExternalStorageEnabled(myProject)) {
-        //we can add this attribute only if the artifact configuration will be stored separately, otherwise we will get modified files in .idea/artifacts.
-        artifactState.setExternalSystemId(externalSource.getId());
+      if (externalSource != null) {
+        //we can add this attribute only if the artifact configuration will be stored separately or if the attribute was present in artifact configuration file,
+        // otherwise we will get modified files in .idea/artifacts.
+        if (ProjectUtilCore.isExternalStorageEnabled(myProject)) {
+          artifactState.setExternalSystemId(externalSource.getId());
+        }
+        else if (artifact instanceof ArtifactImpl && ((ArtifactImpl)artifact).shouldKeepExternalSystemAttribute()) {
+          artifactState.setExternalSystemIdInInternalStorage(externalSource.getId());
+        }
       }
 
       for (ArtifactPropertiesProvider provider : artifact.getPropertiesProviders()) {
@@ -218,7 +224,7 @@ public final class ArtifactManagerImpl extends ArtifactManager implements Persis
 
   ArtifactImpl loadArtifact(ArtifactState state) {
     ArtifactType type = ArtifactType.findById(state.getArtifactType());
-    ProjectModelExternalSource externalSource = findExternalSource(state.getExternalSystemId());
+    ProjectModelExternalSource externalSource = findExternalSource(ObjectUtils.chooseNotNull(state.getExternalSystemId(), state.getExternalSystemIdInInternalStorage()));
     if (type == null) {
       return createInvalidArtifact(state, externalSource, JavaCompilerBundle.message("unknown.artifact.type.0", state.getArtifactType()));
     }
@@ -254,12 +260,12 @@ public final class ArtifactManagerImpl extends ArtifactManager implements Persis
     return artifact;
   }
 
-  private InvalidArtifact createInvalidArtifact(ArtifactState state,
-                                                ProjectModelExternalSource externalSource,
-                                                @Nls(capitalization = Nls.Capitalization.Sentence) String errorMessage) {
-    final InvalidArtifact artifact = new InvalidArtifact(state, errorMessage, externalSource);
+  private InvalidArtifactImpl createInvalidArtifact(ArtifactState state,
+                                                    ProjectModelExternalSource externalSource,
+                                                    @Nls(capitalization = Nls.Capitalization.Sentence) String errorMessage) {
+    final InvalidArtifactImpl artifact = new InvalidArtifactImpl(state, errorMessage, externalSource);
     ProjectLoadingErrorsNotifier.getInstance(myProject).registerError(new ArtifactLoadingErrorDescription(myProject, artifact));
-    UnknownFeaturesCollector.getInstance(myProject).registerUnknownFeature(FEATURE_TYPE, state.getArtifactType(), "Artifact");
+    UnknownFeaturesCollector.getInstance(myProject).registerUnknownFeature(FEATURE_TYPE, state.getArtifactType(), JavaCompilerBundle.message("plugins.advertiser.feature.artifact"));
     return artifact;
   }
 
@@ -287,7 +293,6 @@ public final class ArtifactManagerImpl extends ArtifactManager implements Persis
 
   @Override
   public void initializeComponent() {
-    myProject.getMessageBus().connect(this).subscribe(VirtualFileManager.VFS_CHANGES, new ArtifactVirtualFileListener(myProject, this));
     updateWatchedRoots();
   }
 

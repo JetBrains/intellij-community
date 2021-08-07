@@ -7,12 +7,49 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.lang.reflect.Array;
 import java.nio.file.Files;
+import java.util.List;
+import java.util.ArrayList;
 
 /**
  * @author lambdamix
  */
 @SuppressWarnings({"unused", "IOResourceOpenedButNotSafelyClosed"})
 public class Test01 {
+  @ExpectContract("null,_->fail;_,_->param1")
+  static <T> T checkNotNull(T object, String s) {
+    check(object != null, s, s);
+    return object;
+  }
+
+  @ExpectContract("null,_->fail")
+  static void checkNotNullVoid(Object object, String s) {
+    check(object != null, s, s);
+  }
+
+  @ExpectContract("!null,_->fail")
+  static void checkNull(Object object, String s) {
+    check(object == null, s, s);
+  }
+
+  @ExpectContract("true,_->fail")
+  static void checkNegate(boolean val, String s1) {
+    check(!val, s1, null);
+  }
+
+  @ExpectContract("false,_->fail")
+  static void check1(boolean val, String s1) {
+    check(val, s1, null);
+  }
+
+  @ExpectContract("false,_,_->fail")
+  static void check(boolean val, String s1, String s2) {
+    if (!val) {
+      throw new RuntimeException(createMessage(s1, s2));
+    }
+  }
+
+  native static String createMessage(String s1, String s2);
+
   @ExpectNotNull
   @ExpectContract(pure = true)
   public static MySupplier methodReference(@ExpectNotNull String s) {
@@ -120,7 +157,7 @@ public class Test01 {
   }
 
   @ExpectContract(value="null,_->fail", pure = true)
-  public static void assertNotNull(@ExpectNotNull Object obj, String message) {
+  public static void assertNotNull(Object obj, String message) {
     if (obj == null) {
       throw new IllegalArgumentException(message);
     }
@@ -284,5 +321,11 @@ public class Test01 {
     String[] res = arr.clone();
     res[0] = null;
     return res;
+  }
+
+  @ExpectNotNull
+  @ExpectContract(pure = true)
+  List<String> getCollection() {
+    return new ArrayList<>();
   }
 }

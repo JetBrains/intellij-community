@@ -15,9 +15,12 @@ import com.intellij.xdebugger.impl.DebuggerSupport;
 import com.intellij.xdebugger.impl.actions.MarkObjectActionHandler;
 import com.intellij.xdebugger.impl.breakpoints.ui.BreakpointItem;
 import com.intellij.xdebugger.impl.breakpoints.ui.BreakpointPanelProvider;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
+
+import static com.intellij.openapi.project.ProjectCoreUtil.theOnlyOpenProject;
 
 public class JavaDebuggerSupport extends DebuggerSupport {
   private final JavaBreakpointPanelProvider myBreakpointPanelProvider = new JavaBreakpointPanelProvider();
@@ -99,6 +102,7 @@ public class JavaDebuggerSupport extends DebuggerSupport {
   }
 
   /** @deprecated This method is an unreliable hack, find another way to locate a project instance. */
+  @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
   @Deprecated
   public static Project getContextProjectForEditorFieldsInDebuggerConfigurables() {
     //todo[nik] improve
@@ -109,6 +113,7 @@ public class JavaDebuggerSupport extends DebuggerSupport {
         return project;
       }
     }
-    return ProjectManager.getInstance().getDefaultProject();
+    Project project = theOnlyOpenProject();
+    return project != null ? project : ProjectManager.getInstance().getDefaultProject();
   }
 }

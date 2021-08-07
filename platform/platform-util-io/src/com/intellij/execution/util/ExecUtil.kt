@@ -18,7 +18,6 @@ import com.intellij.openapi.util.io.PathExecLazyValue
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.io.IdeUtilIoBundle
-import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import java.io.*
 import java.nio.charset.Charset
@@ -296,15 +295,4 @@ object ExecUtil {
       commandLine.parametersList.prependAll(executablePath)
     }
   }
-
-  //<editor-fold desc="Deprecated stuff.">
-  @Deprecated("use {@link #execAndGetOutput(GeneralCommandLine)} instead")
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
-  @JvmStatic
-  @Throws(ExecutionException::class)
-  fun execAndGetOutput(command: List<String>, workDir: String?): ProcessOutput {
-    val commandLine = GeneralCommandLine(command).withWorkDirectory(workDir)
-    return CapturingProcessHandler(commandLine).runProcess()
-  }
-  //</editor-fold>
 }

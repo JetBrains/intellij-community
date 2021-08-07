@@ -38,7 +38,7 @@ internal class SegmentedBarPainter {
 
       if (c.isEnabled()) {
         g2.paint = paint
-        c.getClientProperty(SegmentedBarActionComponent.CONTROL_BAR_PROPERTY)?.let {
+        c.getClientProperty(SegmentedActionToolbarComponent.CONTROL_BAR_PROPERTY)?.let {
           paintComponent(g2, Rectangle(c.getSize()), it.toString())
         } ?: g2.fill(RoundRectangle2D.Float(bw, bw, r.width - bw * 2, r.height - bw * 2, arc, arc))
       }
@@ -61,15 +61,15 @@ internal class SegmentedBarPainter {
     val bw = 0f
 
     val area = when (position) {
-      SegmentedBarActionComponent.CONTROL_BAR_FIRST -> {
+      SegmentedActionToolbarComponent.CONTROL_BAR_FIRST -> {
         val area = Area(RoundRectangle2D.Float(bw, bw, wdth - bw, r.height.toFloat() - (2*bw), arc, arc))
         area.add(Area(Rectangle2D.Float(wdth - offs, bw, offs, r.height.toFloat() - (2*bw))))
         area
       }
-      SegmentedBarActionComponent.CONTROL_BAR_MIDDLE -> {
+      SegmentedActionToolbarComponent.CONTROL_BAR_MIDDLE -> {
         Area(Rectangle2D.Float(0f, bw, wdth, r.height.toFloat() - (2*bw)))
       }
-      SegmentedBarActionComponent.CONTROL_BAR_LAST -> {
+      SegmentedActionToolbarComponent.CONTROL_BAR_LAST -> {
         val area = Area(RoundRectangle2D.Float(0f, bw, wdth - bw, r.height.toFloat() - (2*bw), arc, arc))
         area.add(Area(Rectangle2D.Float(0f, bw, offs, r.height.toFloat() - (2*bw))))
         area
@@ -80,6 +80,9 @@ internal class SegmentedBarPainter {
     }
 
     g2.fill(area)
+
+    //componentBorder(g2, r.height, area)
+
   }
 
   fun paintActionButtonBackground(g: Graphics, component: JComponent, state: Int) {
@@ -93,7 +96,7 @@ internal class SegmentedBarPainter {
     val rect = Rectangle(component.size)
     val insets = component.insets
     JBInsets.removeFrom(rect, JBUI.insets(insets.top, 0, insets.bottom, 0))
-    component.getClientProperty(SegmentedBarActionComponent.CONTROL_BAR_PROPERTY)?.let {
+    component.getClientProperty(SegmentedActionToolbarComponent.CONTROL_BAR_PROPERTY)?.let {
       paintComponent(g as Graphics2D, Rectangle(component.getSize()), it.toString())
     } ?: g.fillRect(rect.x, rect.y, rect.width, rect.height)
   }
@@ -148,6 +151,32 @@ internal class SegmentedBarPainter {
     finally {
       g2.dispose()
     }
+  }
+
+  private fun componentBorder(g: Graphics, h: Int, shape: Shape) {
+    val bw = 0f
+
+    val g2 = g.create() as Graphics2D
+    g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON)
+    g2.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL,
+                        if (MacUIUtil.USE_QUARTZ) RenderingHints.VALUE_STROKE_PURE else RenderingHints.VALUE_STROKE_NORMALIZE)
+
+
+    val paint = GradientPaint(bw, bw,
+                              JBColor.namedColor(
+                                "Button.startBorderColor",
+                                JBColor.namedColor("Button.darcula.outlineStartColor", 0xbfbfbf)),
+                              bw, h - (bw * 2),
+                              JBColor
+                                .namedColor("Button.endBorderColor",
+                                            JBColor.namedColor(
+                                              "Button.darcula.outlineEndColor",
+                                              0xb8b8b8)))
+
+    val border: Path2D = Path2D.Float(Path2D.WIND_EVEN_ODD)
+    border.append(shape, true)
+    g2.paint = paint
+    g2.draw(border)
   }
 
   fun paintActionBarBackground(component: JComponent, g: Graphics) {

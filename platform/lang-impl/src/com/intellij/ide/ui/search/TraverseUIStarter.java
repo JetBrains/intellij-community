@@ -64,6 +64,7 @@ public final class TraverseUIStarter implements ApplicationStarter {
 
   private String OUTPUT_PATH;
   private boolean SPLIT_BY_RESOURCE_PATH;
+  private boolean I18N_OPTION;
 
   @Override
   public String getCommandName() {
@@ -79,13 +80,14 @@ public final class TraverseUIStarter implements ApplicationStarter {
   public void premain(@NotNull List<String> args) {
     OUTPUT_PATH = args.get(1);
     SPLIT_BY_RESOURCE_PATH = args.size() > 2 && Boolean.parseBoolean(args.get(2));
+    I18N_OPTION = Boolean.getBoolean("intellij.searchableOptions.i18n.enabled");
   }
 
   @Override
   public void main(@NotNull List<String> args) {
     System.out.println("Starting searchable options index builder");
     try {
-      startup(Path.of(OUTPUT_PATH), SPLIT_BY_RESOURCE_PATH);
+      startup(Path.of(OUTPUT_PATH), SPLIT_BY_RESOURCE_PATH, I18N_OPTION);
       ApplicationManagerEx.getApplicationEx().exit(ApplicationEx.FORCE_EXIT | ApplicationEx.EXIT_CONFIRMED);
       System.out.println("Searchable options index builder completed");
     }
@@ -97,6 +99,10 @@ public final class TraverseUIStarter implements ApplicationStarter {
   }
 
   public static void startup(@NotNull Path outputPath, boolean splitByResourcePath) throws IOException {
+    startup(outputPath, splitByResourcePath, false);
+  }
+
+  public static void startup(@NotNull Path outputPath, boolean splitByResourcePath, boolean i18n) throws IOException {
     Map<SearchableConfigurable, Set<OptionDescription>> options = new LinkedHashMap<>();
     Map<String, Element> roots = new HashMap<>();
     try {
@@ -105,7 +111,7 @@ public final class TraverseUIStarter implements ApplicationStarter {
           extension.beforeStart();
         }
 
-        SearchUtil.processConfigurables(ShowSettingsUtilImpl.getConfigurables(ProjectManager.getInstance().getDefaultProject(), true), options);
+        SearchUtil.processConfigurables(ShowSettingsUtilImpl.getConfigurables(ProjectManager.getInstance().getDefaultProject(), true), options, i18n);
 
         for (TraverseUIHelper extension : TraverseUIHelper.helperExtensionPoint.getExtensionList()) {
           extension.afterTraversal(options);
@@ -169,12 +175,12 @@ public final class TraverseUIStarter implements ApplicationStarter {
       String module = entry.getKey();
       Path output;
       if (module.isEmpty()) {
-        output = outputPath.resolve(SearchableOptionsRegistrar.SEARCHABLE_OPTIONS_XML);
+        output = outputPath.resolve(SearchableOptionsRegistrar.getSearchableOptionsXmlName());
       }
       else {
         Path moduleDir = outputPath.resolve(module);
         Files.deleteIfExists(moduleDir.resolve("classpath.index"));
-        output = moduleDir.resolve("search/" + module + '.' + SearchableOptionsRegistrar.SEARCHABLE_OPTIONS_XML);
+        output = moduleDir.resolve("search/" + module + '.' + SearchableOptionsRegistrar.getSearchableOptionsXmlName());
       }
       JDOMUtil.write(entry.getValue(), output);
     }
@@ -288,7 +294,7 @@ public final class TraverseUIStarter implements ApplicationStarter {
   private static Map<String, PluginId> getActionToPluginId() {
     ActionManagerEx actionManager = ActionManagerEx.getInstanceEx();
     Map<String, PluginId> actionToPluginId = new HashMap<>();
-    for (PluginId id : PluginId.getRegisteredIdList()) {
+    for (PluginId id : PluginId.getRegisteredIds()) {
       for (String action : actionManager.getPluginActions(id)) {
         actionToPluginId.put(action, id);
       }
@@ -314,7 +320,7 @@ public final class TraverseUIStarter implements ApplicationStarter {
     final PluginId id = actionToPluginId.get(actionManager.getId(rootAction));
     if (id != null) {
       final IdeaPluginDescriptor plugin = PluginManagerCore.getPlugin(id);
-      if (plugin != null && !plugin.getName().equals("IDEA CORE")) {
+      if (plugin != null && !plugin.getName().equals(PluginManagerCore.SPECIAL_IDEA_PLUGIN_ID.getIdString())) {
         return PathUtil.getFileName(plugin.getPluginPath().toString());
       }
     }

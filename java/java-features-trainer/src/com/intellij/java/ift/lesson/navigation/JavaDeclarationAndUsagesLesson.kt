@@ -7,4 +7,5 @@ import training.learn.lesson.general.navigation.DeclarationAndUsagesLesson
 class JavaDeclarationAndUsagesLesson : DeclarationAndUsagesLesson() {
   override fun LessonContext.setInitialPosition() = caret("foo()")
   override val existedFile: String get() = "src/DerivedClass2.java"
+  override val entityName = "foo"
 }

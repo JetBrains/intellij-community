@@ -1,6 +1,5 @@
 package de.plushnikov.intellij.plugin.processor.clazz.builder;
 
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.psi.PsiAnnotation;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
@@ -28,7 +27,7 @@ public class BuilderClassProcessor extends AbstractClassProcessor {
   }
 
   private BuilderHandler getBuilderHandler() {
-    return ApplicationManager.getApplication().getService(BuilderHandler.class);
+    return new BuilderHandler();
   }
 
   @Override
@@ -38,7 +37,7 @@ public class BuilderClassProcessor extends AbstractClassProcessor {
       return true;
     }
 
-    final String innerBuilderClassName = getBuilderHandler().getBuilderClassName(psiClass, psiAnnotation, null);
+    final String innerBuilderClassName = BuilderHandler.getBuilderClassName(psiClass, psiAnnotation, null);
     return Objects.equals(nameHint, innerBuilderClassName);
   }
 

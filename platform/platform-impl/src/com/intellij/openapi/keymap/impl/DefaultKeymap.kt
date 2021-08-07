@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.keymap.impl
 
 import com.intellij.configurationStore.SchemeDataHolder
@@ -19,18 +19,17 @@ import java.util.function.BiConsumer
 private val LOG = logger<DefaultKeymap>()
 
 open class DefaultKeymap {
-  internal val keymaps = ArrayList<Keymap>()
+  internal val keymaps: MutableList<Keymap> = ArrayList()
 
   private val nameToScheme = HashMap<String, Keymap>()
 
   companion object {
     @JvmStatic
-    val instance: DefaultKeymap
-      get() = service()
+    fun getInstance(): DefaultKeymap = service()
 
-    @JvmStatic
     fun isBundledKeymapHidden(keymapName: String?): Boolean {
-      return ((SystemInfoRt.isWindows || SystemInfoRt.isMac) && isKnownLinuxKeymap(keymapName)) || (!SystemInfoRt.isMac && isKnownMacOSKeymap(keymapName))
+      return ((SystemInfoRt.isWindows || SystemInfoRt.isMac) &&
+              isKnownLinuxKeymap(keymapName)) || (!SystemInfoRt.isMac && isKnownMacOSKeymap(keymapName))
     }
   }
 

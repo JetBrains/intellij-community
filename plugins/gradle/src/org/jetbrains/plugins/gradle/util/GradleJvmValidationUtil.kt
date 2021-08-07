@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 @file:ApiStatus.Internal
 @file:JvmName("GradleJvmValidationUtil")
 
@@ -27,7 +27,7 @@ import java.nio.file.Path
 import javax.swing.event.HyperlinkEvent
 
 fun validateJavaHome(project: Project, externalProjectPath: Path, gradleVersion: GradleVersion) {
-  val gradleProperties = getGradleProperties(externalProjectPath)
+  val gradleProperties = getGradleProperties(project, externalProjectPath)
   val javaHomeProperty = gradleProperties.javaHomeProperty
   if (javaHomeProperty != null) {
     val javaHome = javaHomeProperty.value
@@ -55,47 +55,9 @@ fun validateGradleJavaHome(gradleVersion: GradleVersion, javaHome: String?): Jav
   return JavaHomeValidationStatus.Success(javaHome)
 }
 
-/**
- * @see org.jetbrains.plugins.gradle.util.suggestGradleVersion
- */
-fun isSupported(gradleVersion: GradleVersion, javaVersion: JavaVersion): Boolean {
-  val baseVersion = gradleVersion.baseVersion
-  return when {
-    baseVersion >= GradleVersion.version("6.7") -> javaVersion.feature >= 8 //..15 https://docs.gradle.org/6.7/release-notes.html#java-15
-    baseVersion >= GradleVersion.version("6.3") -> javaVersion.feature in 8..14 // many builds might work with Java 15 but there are some known issues https://github.com/gradle/gradle/issues/13532
-    baseVersion >= GradleVersion.version("6.0") -> javaVersion.feature in 8..13
-    baseVersion >= GradleVersion.version("5.4.1") -> javaVersion.feature in 8..12
-    baseVersion >= GradleVersion.version("5.0") -> javaVersion.feature in 8..11
-    baseVersion >= GradleVersion.version("4.1") -> javaVersion.feature in 7..9
-    baseVersion >= GradleVersion.version("4.0") -> javaVersion.feature in 7..8
-    else -> javaVersion.feature in 7..8
-  }
-}
-
 fun isSupported(gradleVersion: GradleVersion, javaVersionString: String): Boolean {
   val javaVersion = JavaVersion.tryParse(javaVersionString) ?: return false
   return isSupported(gradleVersion, javaVersion)
-}
-
-fun suggestJavaVersion(gradleVersion: GradleVersion): JavaVersion {
-  val baseVersion = gradleVersion.baseVersion
-  return when {
-    baseVersion >= GradleVersion.version("6.7") -> JavaVersion.compose(15)
-    baseVersion >= GradleVersion.version("6.3") -> JavaVersion.compose(14)
-    baseVersion >= GradleVersion.version("6.0") -> JavaVersion.compose(13)
-    baseVersion >= GradleVersion.version("5.4.1") -> JavaVersion.compose(12)
-    baseVersion >= GradleVersion.version("5.0") -> JavaVersion.compose(11)
-    baseVersion >= GradleVersion.version("4.1") -> JavaVersion.compose(9)
-    else -> JavaVersion.compose(8)
-  }
-}
-
-fun suggestOldestCompatibleJavaVersion(gradleVersion: GradleVersion): JavaVersion {
-  val baseVersion = gradleVersion.baseVersion
-  return when {
-    baseVersion >= GradleVersion.version("5.0") -> JavaVersion.compose(8)
-    else -> JavaVersion.compose(7)
-  }
 }
 
 private fun notifyInvalidGradleJavaHomeInfo(
@@ -142,8 +104,9 @@ private fun notifyInvalidGradleJvmInfo(project: Project, @NlsContexts.HintText n
       EditorHelper.openInEditor(psiFile)
     }
   }
-  val notification = NOTIFICATION_GROUP.createNotification(notificationTitle, notificationContent, INFORMATION, hyperLinkProcessor)
-  notification.notify(project)
+  NOTIFICATION_GROUP.createNotification(notificationTitle, notificationContent, INFORMATION)
+    .setListener(hyperLinkProcessor)
+    .notify(project)
 }
 
 sealed class JavaHomeValidationStatus {

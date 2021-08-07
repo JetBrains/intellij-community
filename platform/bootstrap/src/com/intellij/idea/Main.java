@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.idea;
 
 import com.intellij.ide.BootstrapBundle;
@@ -23,7 +23,6 @@ import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Properties;
@@ -37,7 +36,7 @@ public final class Main {
   public static final int INSTANCE_CHECK_FAILED = 6;
   public static final int LICENSE_ERROR = 7;
   public static final int PLUGIN_ERROR = 8;
-  // reserved (doesn't seem to ever be used): public static final int OUT_OF_MEMORY = 9;
+  public static final int UNKNOWN_COMMAND = 9;
   // reserved (permanently if launchers will perform the check): public static final int UNSUPPORTED_JAVA_VERSION = 10;
   public static final int PRIVACY_POLICY_REJECTION = 11;
   public static final int INSTALLATION_CORRUPTED = 12;
@@ -47,13 +46,14 @@ public final class Main {
   public static final int ACTIVATE_DISPOSING = 16;
 
   public static final String FORCE_PLUGIN_UPDATES = "idea.force.plugin.updates";
+  public static final String CWM_HOST_COMMAND_PREFIX = "cwmHost";
 
-  private static final String MAIN_RUNNER_CLASS_NAME = "com.intellij.ide.plugins.MainRunner";
+  private static final String MAIN_RUNNER_CLASS_NAME = "com.intellij.idea.StartupUtil";
   private static final String AWT_HEADLESS = "java.awt.headless";
   private static final String PLATFORM_PREFIX_PROPERTY = "idea.platform.prefix";
   private static final List<String> HEADLESS_COMMANDS = List.of(
     "ant", "duplocate", "dump-shared-index", "traverseUI", "buildAppcodeCache", "format", "keymap", "update", "inspections", "intentions",
-    "rdserver-headless", "thinClient-headless");
+    "rdserver-headless", "thinClient-headless", "installPlugins", "dumpActions", "cwmHostStatus", "warmup");
   private static final List<String> GUI_COMMANDS = List.of("diff", "merge");
 
   private static boolean isHeadless;
@@ -80,10 +80,6 @@ public final class Main {
 
     setFlags(args);
 
-    if (!isHeadless() && !checkGraphics()) {
-      System.exit(NO_GRAPHICS);
-    }
-
     try {
       bootstrap(args, startupTimings);
     }
@@ -109,6 +105,11 @@ public final class Main {
     startupTimings.put("classloader init", System.nanoTime());
     PathClassLoader newClassLoader = BootstrapClassLoaderUtil.initClassLoader();
     Thread.currentThread().setContextClassLoader(newClassLoader);
+    if (args.length > 0 && args[0].startsWith(CWM_HOST_COMMAND_PREFIX)) {
+      // AWT can only use builtin and system class loaders to load classes, so set the system loader to something that can find projector libs
+      Class<ClassLoader> aClass = ClassLoader.class;
+      MethodHandles.privateLookupIn(aClass, MethodHandles.lookup()).findStaticSetter(aClass, "scl", aClass).invoke(newClassLoader);
+    }
 
     startupTimings.put("MainRunner search", System.nanoTime());
     Class<?> mainClass = newClassLoader.loadClassInsideSelf(MAIN_RUNNER_CLASS_NAME, true);
@@ -129,8 +130,7 @@ public final class Main {
     }
     catch (IOException e) {
       showMessage("Plugin Installation Error",
-                  "The IDE failed to install some plugins.\n\n" +
-                  "Most probably, this happened because of a change in a serialization format.\n" +
+                  "The IDE failed to install or update some plugins.\n" +
                   "Please try again, and if the problem persists, please report it\n" +
                   "to https://jb.gg/ide/critical-startup-errors\n\n" +
                   "The cause: " + e, false);
@@ -162,7 +162,7 @@ public final class Main {
     for (String arg : args) {
       if (!arg.startsWith("-")) { // If not an option
         try {
-          Path path = Paths.get(arg);
+          Path path = Path.of(arg);
           return Files.isRegularFile(path) || !Files.exists(path);
         }
         catch (Throwable t) {
@@ -194,16 +194,6 @@ public final class Main {
 
     String firstArg = args[0];
     return HEADLESS_COMMANDS.contains(firstArg) || firstArg.length() < 20 && firstArg.endsWith("inspect"); //NON-NLS
-  }
-
-  private static boolean checkGraphics() {
-    if (GraphicsEnvironment.isHeadless()) {
-      showMessage(BootstrapBundle.message("bootstrap.error.title.startup.error"),
-                  BootstrapBundle.message("bootstrap.error.message.no.graphics.environment"),
-                  true);
-      return false;
-    }
-    return true;
   }
 
   public static void showMessage(@Nls(capitalization = Nls.Capitalization.Title) String title, Throwable t) {
@@ -275,9 +265,8 @@ public final class Main {
       textPane.setText(message.replaceAll("\t", "    "));
       textPane.setBackground(UIManager.getColor("Panel.background"));
       textPane.setCaretPosition(0);
-      JScrollPane scrollPane = new JScrollPane(textPane,
-                                               ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED,
-                                               ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
+      JScrollPane scrollPane =
+        new JScrollPane(textPane, ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED, ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
       scrollPane.setBorder(null);
 
       int maxHeight = Toolkit.getDefaultToolkit().getScreenSize().height / 2;

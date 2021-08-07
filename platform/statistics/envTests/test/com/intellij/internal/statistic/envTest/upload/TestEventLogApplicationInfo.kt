@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.statistic.envTest.upload
 
 import com.intellij.internal.statistic.envTest.ApacheContainer
@@ -7,7 +7,6 @@ import com.intellij.internal.statistic.eventLog.connection.EventLogSendListener
 import com.intellij.internal.statistic.eventLog.connection.EventLogStatisticsService
 import com.intellij.internal.statistic.eventLog.connection.EventLogUploadSettingsService
 import java.io.File
-import java.nio.file.Path
 
 internal const val SETTINGS_ROOT = "settings/%s/%s.json"
 
@@ -24,25 +23,24 @@ internal class TestEventLogApplicationInfo(recorderId: String, private val setti
 
 internal class TestEventLogRecorderConfig(recorderId: String, logFiles: List<File>, val sendEnabled: Boolean = true)
   : EventLogInternalRecorderConfig(recorderId) {
-  private val evenLogFilesProvider = object : EventLogFilesProvider {
-    override fun getLogFilesDir(): Path? = null
-
-    override fun getLogFiles(): List<EventLogFile> = logFiles.map { EventLogFile(it) }
+  private val evenLogFilesProvider = object : FilesToSendProvider {
+    override fun getFilesToSend(): List<EventLogFile> = logFiles.map { EventLogFile(it) }
   }
 
   override fun isSendEnabled(): Boolean = sendEnabled
 
-  override fun getLogFilesProvider(): EventLogFilesProvider = evenLogFilesProvider
+  override fun getFilesToSendProvider(): FilesToSendProvider = evenLogFilesProvider
 }
 
 internal fun newSendService(container: ApacheContainer,
                             logFiles: List<File>,
                             settingsResponseFile: String = SETTINGS_ROOT,
-                            sendEnabled: Boolean = true): EventLogStatisticsService {
+                            sendEnabled: Boolean = true,
+                            machineId: MachineId? = null): EventLogStatisticsService {
   val applicationInfo = TestEventLogApplicationInfo(RECORDER_ID, container.getBaseUrl(settingsResponseFile).toString())
-  val config = EventLogConfiguration.getOrCreate(RECORDER_ID)
+  val config = EventLogConfiguration.getInstance().getOrCreate(RECORDER_ID)
   return EventLogStatisticsService(
-    DeviceConfiguration(config.deviceId, config.bucket),
+    DeviceConfiguration(config.deviceId, config.bucket, machineId ?: config.machineId),
     TestEventLogRecorderConfig(RECORDER_ID, logFiles, sendEnabled),
     EventLogSendListener { _, _, _ -> Unit },
     EventLogUploadSettingsService(RECORDER_ID, applicationInfo)

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.retype
 
 import com.intellij.ide.util.propComponentProperty
@@ -15,9 +15,7 @@ import javax.swing.JLabel
 import javax.swing.JRadioButton
 import javax.swing.JTextField
 
-/**
- * @author yole
- */
+
 
 class RetypeOptions(val project: Project) {
   var retypeDelay: Int by propComponentProperty(project, 400)

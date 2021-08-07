@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.configurationStore
 
 import com.intellij.AbstractBundle
@@ -24,7 +24,6 @@ import com.intellij.openapi.ui.showOkCancelDialog
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.serviceContainer.ComponentManagerImpl
-import com.intellij.serviceContainer.processAllImplementationClasses
 import com.intellij.util.ArrayUtil
 import com.intellij.util.ReflectionUtil
 import com.intellij.util.containers.putValue
@@ -161,7 +160,8 @@ fun exportInstalledPlugins(zip: Compressor) {
 }
 
 fun getExportableComponentsMap(isComputePresentableNames: Boolean,
-                               storageManager: StateStorageManager = getAppStorageManager()): Map<FileSpec, List<ExportableItem>> {
+                               storageManager: StateStorageManager = getAppStorageManager(),
+                               withDeprecated: Boolean = false): Map<FileSpec, List<ExportableItem>> {
   val result = LinkedHashMap<FileSpec, MutableList<ExportableItem>>()
 
   @Suppress("DEPRECATION")
@@ -179,34 +179,43 @@ fun getExportableComponentsMap(isComputePresentableNames: Boolean,
   val app = ApplicationManager.getApplication() as ComponentManagerImpl
 
   @Suppress("DEPRECATION")
-  app.getComponentInstancesOfType(ExportableApplicationComponent::class.java).forEach(processor)
-  @Suppress("DEPRECATION")
   ServiceBean.loadServicesFromBeans(ExportableComponent.EXTENSION_POINT, ExportableComponent::class.java).forEach(processor)
 
-  processAllImplementationClasses(app.picoContainer) { aClass, pluginDescriptor ->
+  app.processAllImplementationClasses { aClass, pluginDescriptor ->
     val stateAnnotation = getStateSpec(aClass)
     @Suppress("DEPRECATION")
     if (stateAnnotation == null || stateAnnotation.name.isEmpty() || ExportableComponent::class.java.isAssignableFrom(aClass)) {
-      return@processAllImplementationClasses true
+      return@processAllImplementationClasses
     }
 
-    val storage = stateAnnotation.storages.sortByDeprecated().firstOrNull() ?: return@processAllImplementationClasses true
-    val isRoamable = getEffectiveRoamingType(storage.roamingType, storage.path) != RoamingType.DISABLED
-    if (!isStorageExportable(storage, isRoamable)) {
-      return@processAllImplementationClasses true
-    }
+    val storages =
+      if (!withDeprecated) stateAnnotation.storages.filter { !it.deprecated }
+      else stateAnnotation.storages.sortByDeprecated()
+
+    if (storages.isEmpty()) return@processAllImplementationClasses
 
     val presentableName = if (isComputePresentableNames) getComponentPresentableName(stateAnnotation, aClass, pluginDescriptor) else ""
-    val path = getRelativePath(storage, storageManager)
-    val fileSpec = FileSpec(path, looksLikeDirectory(storage))
-    result.putValue(fileSpec, ExportableItem(fileSpec, presentableName, stateAnnotation.name, storage.roamingType))
 
-    val additionalExportFile = getAdditionalExportFile(stateAnnotation)
-    if (additionalExportFile != null) {
-      val additionalFileSpec = FileSpec(additionalExportFile, true)
-      result.putValue(additionalFileSpec, ExportableItem(additionalFileSpec, "$presentableName (schemes)"))
+    var thereIsExportableStorage = false
+    for (storage in storages) {
+      val isRoamable = getEffectiveRoamingType(storage.roamingType, storage.path) != RoamingType.DISABLED
+      if (isStorageExportable(storage, isRoamable)) {
+        thereIsExportableStorage = true
+        val paths = getRelativePaths(storage, storageManager, withDeprecated)
+        for (path in paths) {
+          val fileSpec = FileSpec(path, looksLikeDirectory(storage))
+          result.putValue(fileSpec, ExportableItem(fileSpec, presentableName, stateAnnotation.name, storage.roamingType))
+        }
+      }
     }
-    true
+
+    if (thereIsExportableStorage) {
+      val additionalExportFile = getAdditionalExportFile(stateAnnotation)
+      if (additionalExportFile != null) {
+        val additionalFileSpec = FileSpec(additionalExportFile, true)
+        result.putValue(additionalFileSpec, ExportableItem(additionalFileSpec, "$presentableName (schemes)"))
+      }
+    }
   }
 
   // must be in the end - because most of SchemeManager clients specify additionalExportFile in the State spec
@@ -227,10 +236,23 @@ fun looksLikeDirectory(storage: Storage): Boolean {
 
 private fun looksLikeDirectory(fileSpec: String) = !fileSpec.endsWith(PathManager.DEFAULT_EXT)
 
-private fun getRelativePath(storage: Storage, storageManager: StateStorageManager): String {
-  val storagePath = storageManager.expandMacro(storage.path)
-  val fileSpec = getRelativePathOrNull(storagePath)
-  return fileSpec ?: storagePath.toString()
+private fun getRelativePaths(storage: Storage, storageManager: StateStorageManager, withDeprecated: Boolean): List<String> {
+  val storagePath = storage.path
+  val relativePaths = mutableListOf<String>()
+  if (storage.roamingType == RoamingType.PER_OS) {
+    relativePaths += getOsDependentStorage(storagePath)
+    if (withDeprecated) {
+      relativePaths += storagePath
+    }
+  }
+  else {
+    relativePaths += storagePath
+  }
+
+  return relativePaths.map {
+    val expandedPath = storageManager.expandMacro(it)
+    getRelativePathOrNull(expandedPath) ?: expandedPath.toString()
+  }
 }
 
 private fun getRelativePathOrNull(fullPath: Path): String? {

@@ -65,7 +65,7 @@ public final class ArtifactModelImpl extends ArtifactModelBase implements Modifi
                                                  @Nullable ProjectModelExternalSource externalSource) {
     String uniqueName = generateUniqueName(name);
     String outputPath = ArtifactUtil.getDefaultArtifactOutputPath(uniqueName, myArtifactManager.getProject());
-    ArtifactImpl artifact = new ArtifactImpl(uniqueName, artifactType, false, rootElement, outputPath, externalSource, myDispatcher);
+    ArtifactImpl artifact = new ArtifactImpl(uniqueName, artifactType, false, rootElement, outputPath, externalSource, myDispatcher, false);
     addArtifact(artifact);
     return artifact;
   }
@@ -172,7 +172,7 @@ public final class ArtifactModelImpl extends ArtifactModelBase implements Modifi
 
   @Override
   @Nullable
-  public ArtifactImpl getModifiableCopy(Artifact artifact) {
+  public ArtifactImpl getModifiableCopy(@NotNull Artifact artifact) {
     //noinspection SuspiciousMethodCalls
     return myArtifact2ModifiableCopy.get(artifact);
   }

@@ -18,6 +18,7 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.LazyInitializer;
 import com.intellij.util.PathUtilRt;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
@@ -35,11 +36,14 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.DefaultExternalDependencyId;
 import org.jetbrains.plugins.gradle.ExternalDependencyId;
+import org.jetbrains.plugins.gradle.execution.build.CachedModuleDataFinder;
 import org.jetbrains.plugins.gradle.issue.UnresolvedDependencySyncIssue;
 import org.jetbrains.plugins.gradle.model.*;
 import org.jetbrains.plugins.gradle.model.data.GradleSourceSetData;
 import org.jetbrains.plugins.gradle.settings.GradleExecutionWorkspace;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
+import org.jetbrains.plugins.gradle.util.GradleModuleData;
+import org.jetbrains.plugins.gradle.util.GradleModuleDataKt;
 import org.jetbrains.plugins.gradle.util.GradleUtil;
 
 import java.io.File;
@@ -50,6 +54,8 @@ import java.nio.file.attribute.BasicFileAttributes;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+
+import static com.intellij.openapi.util.text.StringUtil.trimEnd;
 
 /**
  * @author Vladislav.Soroka
@@ -64,8 +70,9 @@ public final class GradleProjectResolverUtil {
   public static DataNode<ModuleData> createMainModule(@NotNull ProjectResolverContext resolverCtx,
                                                       @NotNull IdeaModule gradleModule,
                                                       @NotNull DataNode<ProjectData> projectDataNode) {
+    GradleProject gradleProject = gradleModule.getGradleProject();
     final String moduleName = resolverCtx.isUseQualifiedModuleNames()
-                              ? gradleModule.getGradleProject().getName()
+                              ? gradleProject.getName()
                               : gradleModule.getName();
 
     if (moduleName == null) {
@@ -76,7 +83,8 @@ public final class GradleProjectResolverUtil {
     final String mainModuleConfigPath = getModuleConfigPath(resolverCtx, gradleModule, projectData.getLinkedExternalProjectPath());
     final String ideProjectPath = resolverCtx.getIdeProjectPath();
     final String relativePath;
-    if (FileUtil.isAncestor(projectData.getLinkedExternalProjectPath(), mainModuleConfigPath, false)) {
+    boolean isUnderProjectRoot = FileUtil.isAncestor(projectData.getLinkedExternalProjectPath(), mainModuleConfigPath, false);
+    if (isUnderProjectRoot) {
       relativePath = FileUtil.getRelativePath(projectData.getLinkedExternalProjectPath(), mainModuleConfigPath, '/');
     }
     else {
@@ -88,7 +96,7 @@ public final class GradleProjectResolverUtil {
       : ideProjectPath + '/' + (relativePath == null || relativePath.equals(".") ? "" : relativePath);
     if (ExternalSystemDebugEnvironment.DEBUG_ORPHAN_MODULES_PROCESSING) {
       LOG.info(String.format(
-        "Creating module data ('%s') with the external config path: '%s'", gradleModule.getGradleProject().getPath(), mainModuleConfigPath
+        "Creating module data ('%s') with the external config path: '%s'", gradleProject.getPath(), mainModuleConfigPath
       ));
     }
 
@@ -112,7 +120,39 @@ public final class GradleProjectResolverUtil {
       }
     }
 
+    File rootDir = gradleProject.getProjectIdentifier().getBuildIdentifier().getRootDir();
+    String rootProjectPath = ExternalSystemApiUtil.toCanonicalPath(rootDir.getPath());
+    boolean isComposite = !resolverCtx.getModels().getIncludedBuilds().isEmpty();
+    boolean isIncludedBuildTaskRunningSupported = isComposite && isIncludedBuildTaskRunningSupported(projectDataNode, resolverCtx);
+    File mainBuildRootDir = resolverCtx.getModels().getMainBuild().getBuildIdentifier().getRootDir();
+    String mainBuildRootPath = ExternalSystemApiUtil.toCanonicalPath(mainBuildRootDir.getPath());
+    boolean isFromIncludedBuild = !rootProjectPath.equals(mainBuildRootPath);
+
+    boolean useIncludedBuildPathPrefix = isFromIncludedBuild && isIncludedBuildTaskRunningSupported;
+    String compositeBuildGradlePath = useIncludedBuildPathPrefix ? ":" + rootDir.getName() : "";
+    GradleModuleDataKt.setCompositeBuildGradlePath(moduleData, compositeBuildGradlePath);
+
+    String directoryToRunTask;
+    if (compositeBuildGradlePath.isEmpty()) {
+      directoryToRunTask = isUnderProjectRoot ? mainModuleConfigPath : rootProjectPath;
+    }
+    else {
+      directoryToRunTask = mainBuildRootPath;
+    }
+    GradleModuleDataKt.setDirectoryToRunTask(moduleData, directoryToRunTask);
     return projectDataNode.createChild(ProjectKeys.MODULE, moduleData);
+  }
+
+  private static final Key<Boolean> IS_INCLUDED_BUILD_TASK_RUN_SUPPORTED = Key.create("is included build task running supported");
+  private static boolean isIncludedBuildTaskRunningSupported(@NotNull DataNode<ProjectData> project,
+                                                             @NotNull ProjectResolverContext resolverCtx) {
+    Boolean isSupported = IS_INCLUDED_BUILD_TASK_RUN_SUPPORTED.get(project);
+    if (isSupported == null) {
+      String gradleVersion = resolverCtx.getProjectGradleVersion();
+      isSupported = gradleVersion != null && GradleVersion.version(gradleVersion).compareTo(GradleVersion.version("6.8")) >= 0;
+      IS_INCLUDED_BUILD_TASK_RUN_SUPPORTED.set(project, isSupported);
+    }
+    return isSupported;
   }
 
   public static String getDefaultModuleTypeId() {

@@ -22,6 +22,8 @@
     <extensionPoint name="rearranger.ui" interface="com.intellij.psi.codeStyle.arrangement.std.ArrangementUiComponent$Factory" dynamic="true"/>
 
     <extensionPoint name="externalFormatProcessor" interface="com.intellij.psi.codeStyle.ExternalFormatProcessor" dynamic="true"/>
+    <extensionPoint name="formattingService" interface="com.intellij.formatting.service.FormattingService" dynamic="true"/>
+    <extensionPoint name="documentMerger" interface="com.intellij.formatting.service.DocumentMerger" dynamic="true"/>
     <extensionPoint name="preFormatProcessor" interface="com.intellij.psi.impl.source.codeStyle.PreFormatProcessor" dynamic="true"/>
     <extensionPoint name="postFormatProcessor" interface="com.intellij.psi.impl.source.codeStyle.PostFormatProcessor" dynamic="true"/>
     <extensionPoint name="disabledIndentRangesProvider" interface="com.intellij.psi.impl.source.DisabledIndentRangesProvider" dynamic="true"/>

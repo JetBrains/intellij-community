@@ -1,0 +1,18 @@
+PyFile:PatternMatchingRecoveryNoSubjectAfterMatch.py
+  PyMatchStatement
+    PsiElement(Py:MATCH_KEYWORD)('match')
+    PsiErrorElement:Expression expected
+      <empty list>
+    PsiElement(Py:COLON)(':')
+    PsiWhiteSpace('\n    ')
+    PyCaseClause
+      PsiElement(Py:CASE_KEYWORD)('case')
+      PsiWhiteSpace(' ')
+      PyLiteralPattern
+        PyNumericLiteralExpression
+          PsiElement(Py:INTEGER_LITERAL)('1')
+      PsiElement(Py:COLON)(':')
+      PsiWhiteSpace('\n        ')
+      PyStatementList
+        PyPassStatement
+          PsiElement(Py:PASS_KEYWORD)('pass')

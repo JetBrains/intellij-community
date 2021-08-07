@@ -1,4 +1,4 @@
-// "Add 'Locale.ENGLISH' argument" "true"
+// "Add 'Locale.ROOT' argument" "true"
 import java.util.Optional;
 
 class X {

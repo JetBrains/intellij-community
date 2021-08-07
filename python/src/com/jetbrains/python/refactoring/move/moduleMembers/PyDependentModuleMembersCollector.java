@@ -22,6 +22,7 @@ import com.jetbrains.python.psi.PyFile;
 import com.jetbrains.python.psi.PyRecursiveElementVisitor;
 import com.jetbrains.python.psi.PyUtil;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
+import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -43,7 +44,7 @@ public class PyDependentModuleMembersCollector extends DependentMembersCollector
   @Override
   public void collect(final PsiNamedElement member) {
     if (member.getContainingFile() == myModule) {
-      final PyResolveContext resolveContext = PyResolveContext.defaultContext();
+      final PyResolveContext resolveContext = PyResolveContext.defaultContext(TypeEvalContext.codeInsightFallback(member.getProject()));
       final PsiElement memberBody = PyMoveModuleMembersHelper.expandNamedElementBody(member);
       assert memberBody != null;
       memberBody.accept(new PyRecursiveElementVisitor() {

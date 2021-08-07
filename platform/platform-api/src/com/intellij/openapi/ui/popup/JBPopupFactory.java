@@ -8,6 +8,7 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.util.Condition;
 import com.intellij.ui.awt.RelativePoint;
@@ -21,6 +22,7 @@ import javax.swing.*;
 import javax.swing.event.HyperlinkListener;
 import java.awt.*;
 import java.util.List;
+import java.util.function.Function;
 
 /**
  * Factory class for creating popup chooser windows (similar to the Code | Generate... popup) and various notifications/confirmations.
@@ -371,12 +373,19 @@ public abstract class JBPopupFactory {
   public abstract ListPopup createListPopup(@NotNull ListPopupStep step, int maxRowCount);
 
   @NotNull
+  public abstract ListPopup createListPopup(@NotNull Project project,
+                                            @NotNull ListPopupStep step,
+                                            @NotNull Function<ListCellRenderer, ListCellRenderer> cellRendererProducer);
+
+  @NotNull
   public abstract TreePopup createTree(JBPopup parent, @NotNull TreePopupStep step, Object parentValue);
+
   @NotNull
   public abstract TreePopup createTree(@NotNull TreePopupStep step);
 
   @NotNull
-  public abstract ComponentPopupBuilder createComponentPopupBuilder(@NotNull JComponent content, @Nullable JComponent preferableFocusComponent);
+  public abstract ComponentPopupBuilder createComponentPopupBuilder(@NotNull JComponent content,
+                                                                    @Nullable JComponent preferableFocusComponent);
 
   /**
    * Returns the location where a popup with the specified data context is displayed.

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.ui;
 
 import com.google.common.collect.ImmutableList;
@@ -264,7 +264,7 @@ public class ComponentPanelTestAction extends DumbAwareAction {
             }
           }).createPanel(), gc);
 
-      // Abracadaba button
+      // Abracadabra button
       gc.gridy++;
       abracadabraButton = new JButton("Abracadabra");
       new HelpTooltip().setDescription(LONG_TEXT2).installOn(abracadabraButton);
@@ -396,7 +396,7 @@ public class ComponentPanelTestAction extends DumbAwareAction {
           else {
             try {
               int iv = Integer.parseInt(value.toString());
-              return iv <= 8 ? null : new ValidationInfo("Value " + value.toString() + " is not preferred").asWarning();
+              return iv <= 8 ? null : new ValidationInfo("Value " + value + " is not preferred").asWarning();
             } catch (NumberFormatException nfe) {
               return NAN_VALUE_ERROR;
             }
@@ -576,6 +576,18 @@ public class ComponentPanelTestAction extends DumbAwareAction {
                                                  "Open file", () -> System.out.println("Browse file clicked"));
 
       ComboBox<String> eComboBox = new ComboBox<>(STRING_VALUES);
+      ComponentValidator eComboBoxValidator = new ComponentValidator(getDisposable()).withValidator(() -> {
+        Object item = eComboBox.getEditor().getItem();
+        String text = item == null ? "" : item.toString();
+        if (text.isBlank()) return new ValidationInfo("Blank lines are not supported", eComboBox);
+        if (text.contains("e")) return new ValidationInfo("Letter 'e' is prohibited", eComboBox);
+        return null; // text is valid
+      });
+
+      eComboBoxValidator.installOn(eComboBox);
+      eComboBoxValidator.revalidate(); // needed because text is already set
+      eComboBox.addActionListener(event -> eComboBoxValidator.revalidate());
+
       eComboBox.setEditable(true);
       eComboBox.setEditor(new BasicComboBoxEditor(){
         @Override
@@ -583,13 +595,15 @@ public class ComponentPanelTestAction extends DumbAwareAction {
           ExtendableTextField ecbEditor = new ExtendableTextField();
           ecbEditor.addExtension(browseExtension);
           ecbEditor.setBorder(null);
+          ecbEditor.getDocument().addDocumentListener(new DocumentAdapter() {
+            @Override
+            protected void textChanged(@NotNull DocumentEvent event) {
+              eComboBoxValidator.revalidate();
+            }
+          });
           return ecbEditor;
         }
       });
-
-      new ComponentValidator(getDisposable())
-        .withValidator(() -> "Two".equals(eComboBox.getSelectedItem()) ? new ValidationInfo("Two is not preferred", eComboBox).asWarning() : null)
-        .installOn(eComboBox);
 
       ComboBox<String> animatedIconComboBox = new ComboBox<>();
       animatedIconComboBox.setEditable(true);
@@ -836,7 +850,8 @@ public class ComponentPanelTestAction extends DumbAwareAction {
       toolbarActions.add(new MyAction("Short", AllIcons.Ide.Rating1) {
         {
           GotItTooltip actionGotIt = new GotItTooltip("short.action", "Short action text", project).withHeader("Header");
-          actionGotIt.assignTo(getTemplatePresentation(), GotItTooltip.BOTTOM_MIDDLE);
+          actionGotIt.assignTo(getTemplatePresentation(),
+                               GotItTooltip.BOTTOM_MIDDLE);
         }
       }.withShortCut("control K"));
       toolbarActions.add(new MyAction("Long", AllIcons.Ide.Rating2).withShortCut("control N"));
@@ -850,7 +865,7 @@ public class ComponentPanelTestAction extends DumbAwareAction {
 
     private JComponent createJSliderTab() {
       JPanel panel = new JPanel(new MigLayout("fillx, ins 0, gap 10, flowy"));
-      JSlider hSlider = new JSlider(JSlider.HORIZONTAL){
+      JSlider hSlider = new JSlider(SwingConstants.HORIZONTAL){
         @Override
         public void updateUI() {
           setUI(DarculaSliderUI.createUI(this));
@@ -866,7 +881,7 @@ public class ComponentPanelTestAction extends DumbAwareAction {
         }
       };
 
-      JSlider hSliderBase = new JSlider(JSlider.HORIZONTAL);
+      JSlider hSliderBase = new JSlider(SwingConstants.HORIZONTAL);
 
       JPanel pane1 = new JPanel(new MigLayout("fillx, debug, ins 0, gap 5"));
       pane1.add(new JLabel("A color key and IntelliJ: "), "baseline");
@@ -984,7 +999,8 @@ public class ComponentPanelTestAction extends DumbAwareAction {
 
       slider.setSnapToTicks(true);
 
-      Hashtable<Integer, JLabel> position = new Hashtable<>();
+      @SuppressWarnings("UseOfObsoleteCollectionType") 
+      var position = new Hashtable<Integer, JLabel>();
       position.put(0, new JLabel("Hashtable"));
       position.put(25, new JLabel("Hash"));
       position.put(50, new JLabel("Ha"));

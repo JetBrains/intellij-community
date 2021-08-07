@@ -111,6 +111,8 @@
     },
 
     "DragAndDrop": {
+      "borderColor": "#3366FF",
+      "rowBackground": "#3366FF80",
       "areaForeground": "#FFFFFF",
       "areaBackground": "#00EAFF7F",
       "areaBorderColor": "#1AEBFF"
@@ -142,7 +144,8 @@
       "Blue": "#00004D",
       "Violet": "#471747",
       "Orange": "#733000",
-      "Rose": "#4D0F22"
+      "Rose": "#4D0F22",
+      "Gray": "#062329"
     },
 
     "FlameGraph": {

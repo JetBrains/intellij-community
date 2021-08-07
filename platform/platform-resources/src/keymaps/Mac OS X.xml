@@ -162,16 +162,16 @@
     <keyboard-shortcut first-keystroke="control RIGHT"/>
   </action>
   <action id="Diff.PrevChange">
-    <keyboard-shortcut first-keystroke="control LEFT"/>
+    <keyboard-shortcut first-keystroke="control shift LEFT"/>
   </action>
   <action id="Diff.NextChange">
-    <keyboard-shortcut first-keystroke="control RIGHT"/>
-  </action>
-  <action id="Diff.ApplyLeftSide">
     <keyboard-shortcut first-keystroke="control shift RIGHT"/>
   </action>
+  <action id="Diff.ApplyLeftSide">
+    <keyboard-shortcut first-keystroke="control meta RIGHT"/>
+  </action>
   <action id="Diff.ApplyRightSide">
-    <keyboard-shortcut first-keystroke="control shift LEFT"/>
+    <keyboard-shortcut first-keystroke="control meta LEFT"/>
   </action>
   <action id="ShowContent">
   </action>
@@ -357,9 +357,6 @@
     <keyboard-shortcut first-keystroke="ctrl shift TAB"/>
   </action>
   <action id="Diff.FocusOppositePane">
-    <keyboard-shortcut first-keystroke="control TAB"/>
-  </action>
-  <action id="Diff.FocusOppositePaneAndScroll">
     <keyboard-shortcut first-keystroke="control shift TAB"/>
   </action>
   <action id="Vcs.QuickListPopupAction">
@@ -512,6 +509,15 @@
   </action>
   <action id="UsageGrouping.DirectoryStructure">
     <keyboard-shortcut first-keystroke="control D"/>
+  </action>
+  <action id="UsageFiltering.ReadAccess">
+    <keyboard-shortcut first-keystroke="control R"/>
+  </action>
+  <action id="UsageFiltering.WriteAccess">
+    <keyboard-shortcut first-keystroke="control W"/>
+  </action>
+  <action id="UsageFiltering.Imports">
+    <keyboard-shortcut first-keystroke="control I"/>
   </action>
   <action id="UiInspector">
     <mouse-shortcut keystroke="control alt button1"/>

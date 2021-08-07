@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.completion;
 
 import com.intellij.application.options.CodeStyle;
@@ -11,6 +11,7 @@ import com.intellij.codeInsight.completion.scope.JavaCompletionProcessor;
 import com.intellij.codeInsight.daemon.impl.analysis.GenericsHighlightUtil;
 import com.intellij.codeInsight.daemon.impl.analysis.JavaModuleGraphUtil;
 import com.intellij.codeInsight.daemon.impl.analysis.LambdaHighlightingUtil;
+import com.intellij.codeInsight.daemon.impl.quickfix.BringVariableIntoScopeFix;
 import com.intellij.codeInsight.lookup.*;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.icons.AllIcons;
@@ -65,10 +66,9 @@ import com.intellij.util.ProcessingContext;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashSet;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.VisibleForTesting;
+import one.util.streamex.EntryStream;
+import one.util.streamex.StreamEx;
+import org.jetbrains.annotations.*;
 
 import java.util.*;
 
@@ -96,9 +96,9 @@ public final class JavaCompletionContributor extends CompletionContributor imple
       psiElement(PsiReferenceList.class).withParent(PsiTypeParameter.class));
 
   public static final ElementPattern<PsiElement> IN_SWITCH_LABEL =
-    psiElement().withSuperParent(2, psiElement(PsiExpressionList.class).withParent(psiElement(PsiSwitchLabelStatementBase.class).withSuperParent(2, PsiSwitchBlock.class)));
+    psiElement().withSuperParent(2, psiElement(PsiCaseLabelElementList.class).withParent(psiElement(PsiSwitchLabelStatementBase.class).withSuperParent(2, PsiSwitchBlock.class)));
   private static final ElementPattern<PsiElement> IN_ENUM_SWITCH_LABEL =
-    psiElement().withSuperParent(2, psiElement(PsiExpressionList.class).withParent(psiElement(PsiSwitchLabelStatementBase.class).withSuperParent(2,
+    psiElement().withSuperParent(2, psiElement(PsiCaseLabelElementList.class).withParent(psiElement(PsiSwitchLabelStatementBase.class).withSuperParent(2,
       psiElement(PsiSwitchBlock.class).with(new PatternCondition<>("enumExpressionType") {
         @Override
         public boolean accepts(@NotNull PsiSwitchBlock psiSwitchBlock, ProcessingContext context) {
@@ -675,9 +675,11 @@ public final class JavaCompletionContributor extends CompletionContributor imple
       }
 
       LookupItem<?> item = element.as(LookupItem.CLASS_CONDITION_KEY);
-      if (forcedTail != null) {
+
+      if (forcedTail != null && !(element instanceof JavaPsiClassReferenceElement)) {
         element = TailTypeDecorator.withTail(element, forcedTail);
       }
+
       if (inSwitchLabel && !smart) {
         element = new IndentingDecorator(element);
       }
@@ -701,9 +703,64 @@ public final class JavaCompletionContributor extends CompletionContributor imple
       items.add(element);
 
       ContainerUtil.addIfNotNull(items, ArrayMemberAccess.accessFirstElement(position, element));
-
+    }
+    if (parameters.getInvocationCount() > 0) {
+      items.addAll(getInnerScopeVariables(parameters, position));
     }
     return items;
+  }
+
+  private static Collection<LookupElement> getInnerScopeVariables(CompletionParameters parameters, PsiElement position) {
+    PsiElement container = BringVariableIntoScopeFix.getContainer(position);
+    if (container == null) return Collections.emptyList();
+    Map<String, Optional<PsiLocalVariable>> variableMap =
+      EntryStream.ofTree(container, (depth, element) -> depth > 2 ? null : StreamEx.of(element.getChildren()))
+      .values()
+      .select(PsiCodeBlock.class)
+      .flatArray(PsiCodeBlock::getStatements)
+      .select(PsiDeclarationStatement.class)
+      .flatArray(PsiDeclarationStatement::getDeclaredElements)
+      .select(PsiLocalVariable.class)
+      .toMap(PsiLocalVariable::getName, Optional::of, (v1, v2) -> Optional.empty());
+    PsiResolveHelper helper = JavaPsiFacade.getInstance(parameters.getOriginalFile().getProject()).getResolveHelper();
+    variableMap.values().removeAll(Collections.singleton(Optional.<PsiLocalVariable>empty()));
+    variableMap.keySet().removeIf(name -> helper.resolveReferencedVariable(name, position) != null);
+    int offset = position.getTextRange().getStartOffset();
+    variableMap.values().removeIf(v -> v.orElseThrow().getTextRange().getStartOffset() > offset);
+    if (variableMap.isEmpty()) return Collections.emptyList();
+    return ContainerUtil.map(variableMap.values(), optVar -> {
+      assert optVar.isPresent();
+      PsiLocalVariable variable = optVar.get();
+      String place = getPlace(variable);
+      return new VariableLookupItem(variable, JavaBundle.message("completion.inner.scope.tail.text", place)).setPriority(-1);
+    });
+  }
+
+  @Nls
+  @NotNull
+  private static String getPlace(PsiLocalVariable variable) {
+    String place = JavaBundle.message("completion.inner.scope");
+    PsiCodeBlock block = PsiTreeUtil.getParentOfType(variable, PsiCodeBlock.class);
+    PsiElement statement = block == null ? null : block.getParent();
+    if (statement instanceof PsiTryStatement) {
+      place = ((PsiTryStatement)statement).getFinallyBlock() == block ? PsiKeyword.TRY + "-" + PsiKeyword.FINALLY : PsiKeyword.TRY;
+    }
+    else if (statement instanceof PsiCatchSection) {
+      place = PsiKeyword.CATCH;
+    }
+    else if (statement instanceof PsiSynchronizedStatement) {
+      place = PsiKeyword.SYNCHRONIZED;
+    }
+    else if (statement instanceof PsiBlockStatement) {
+      PsiElement parent = statement.getParent();
+      if (parent instanceof PsiWhileStatement) {
+        place = PsiKeyword.WHILE;
+      }
+      else if (parent instanceof PsiIfStatement) {
+        place = ((PsiIfStatement)parent).getThenBranch() == statement ? PsiKeyword.IF + "-then" : PsiKeyword.IF + "-" + PsiKeyword.ELSE;
+      }
+    }
+    return place;
   }
 
   private static @NotNull List<LookupElement> completePermitsListReference(@NotNull CompletionParameters parameters,
@@ -719,7 +776,7 @@ public final class JavaCompletionContributor extends CompletionContributor imple
       if (psiPackage == null) return lookupElements;
       for (PsiClass psiClass : psiPackage.getClasses(referenceElement.getResolveScope())) {
         CompletionElement completionElement = new CompletionElement(psiClass, PsiSubstitutor.EMPTY);
-        JavaCompletionUtil.createLookupElements(completionElement, referenceElement).forEach(e -> lookupElements.add(e));
+        JavaCompletionUtil.createLookupElements(completionElement, referenceElement).forEach(lookupElements::add);
       }
     }
     else {
@@ -772,11 +829,7 @@ public final class JavaCompletionContributor extends CompletionContributor imple
       return false;
     }
 
-    if (JavaKeywordCompletion.isAfterPrimitiveOrArrayType(position)) {
-      return false;
-    }
-
-    return true;
+    return !JavaKeywordCompletion.isAfterPrimitiveOrArrayType(position);
   }
 
   public static boolean mayStartClassName(CompletionResultSet result) {
@@ -1213,7 +1266,7 @@ public final class JavaCompletionContributor extends CompletionContributor imple
   private static class EnumStaticFieldsFilter implements ElementFilter {
     private final PsiClass myEnumClass;
 
-    public EnumStaticFieldsFilter(PsiClass enumClass) {myEnumClass = enumClass;}
+    private EnumStaticFieldsFilter(PsiClass enumClass) { myEnumClass = enumClass;}
 
     @Override
     public boolean isAcceptable(Object element, @Nullable PsiElement context) {

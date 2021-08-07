@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.analysis.problemsView.toolWindow
 
 import com.intellij.analysis.problemsView.FileProblem
@@ -6,15 +6,14 @@ import com.intellij.analysis.problemsView.Problem
 import com.intellij.ide.projectView.PresentationData
 import com.intellij.openapi.fileEditor.OpenFileDescriptor
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.pom.Navigatable
 import com.intellij.ui.SimpleTextAttributes.GRAYED_ATTRIBUTES
 import com.intellij.ui.SimpleTextAttributes.REGULAR_ATTRIBUTES
 import com.intellij.ui.tree.LeafState
 import java.util.Objects.hash
 
-internal class ProblemNode(parent: FileNode, val problem: Problem) : Node(parent) {
-
-  val file = parent.file
+class ProblemNode(parent: Node, val file: VirtualFile, val problem: Problem) : Node(parent) {
 
   var text: String = ""
     private set
@@ -28,15 +27,16 @@ internal class ProblemNode(parent: FileNode, val problem: Problem) : Node(parent
   var severity: Int = 0
     private set
 
+  override val descriptor
+    get() = project?.let { OpenFileDescriptor(it, file, line, column) }
+
   override fun getLeafState() = LeafState.ALWAYS
 
   override fun getName() = text
 
   override fun getVirtualFile() = file
 
-  override fun getDescriptor() = project?.let { OpenFileDescriptor(it, file, line, column) }
-
-  override fun getNavigatable() = problem as? Navigatable ?: getDescriptor()
+  override fun getNavigatable() = problem as? Navigatable ?: descriptor
 
   override fun update(project: Project, presentation: PresentationData) {
     // update values before comparison because of general contract

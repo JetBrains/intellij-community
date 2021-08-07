@@ -16,6 +16,7 @@
 package com.intellij.refactoring.migration;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.psi.search.GlobalSearchScope;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -35,7 +36,10 @@ public class MigrationManager {
     MigrationMap migrationMap = migrationDialog.getMigrationMap();
     if (migrationMap == null) return;
 
-    new MigrationProcessor(myProject, migrationMap).run();
+    GlobalSearchScope migrationScope = migrationDialog.getMigrationScope();
+    if (migrationScope == null) return;
+
+    new MigrationProcessor(myProject, migrationMap, migrationScope).run();
   }
 
   @Nullable

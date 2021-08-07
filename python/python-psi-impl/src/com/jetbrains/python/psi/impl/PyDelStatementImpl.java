@@ -8,9 +8,7 @@ import com.jetbrains.python.psi.PyElementVisitor;
 import com.jetbrains.python.psi.PyExpression;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author yole
- */
+
 public class PyDelStatementImpl extends PyElementImpl implements PyDelStatement {
   public PyDelStatementImpl(ASTNode astNode) {
     super(astNode);

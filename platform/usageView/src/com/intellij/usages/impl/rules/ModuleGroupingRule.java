@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.usages.impl.rules;
 
 import com.intellij.icons.AllIcons;
@@ -17,7 +17,6 @@ import com.intellij.usageView.UsageViewBundle;
 import com.intellij.usages.Usage;
 import com.intellij.usages.UsageGroup;
 import com.intellij.usages.UsageTarget;
-import com.intellij.usages.UsageView;
 import com.intellij.usages.rules.UsageGroupingRuleEx;
 import com.intellij.usages.rules.UsageInLibrary;
 import com.intellij.usages.rules.UsageInModule;
@@ -76,6 +75,11 @@ class ModuleGroupingRule implements UsageGroupingRuleEx, DumbAware {
   }
 
   @Override
+  public int getRank() {
+    return UsageGroupingRulesDefaultRanks.MODULE.getAbsoluteRank();
+  }
+
+  @Override
   public @Nullable String getGroupingActionId() {
     return "UsageGrouping.Module";
   }
@@ -90,13 +94,13 @@ class ModuleGroupingRule implements UsageGroupingRuleEx, DumbAware {
     }
 
     @Override
-    public Icon getIcon(boolean isOpen) {
+    public Icon getIcon() {
       return AllIcons.Nodes.PpLibFolder;
     }
 
     @Override
     @NotNull
-    public String getText(UsageView view) {
+    public String getPresentableGroupText() {
       return myEntry.getPresentableName();
     }
 
@@ -119,13 +123,13 @@ class ModuleGroupingRule implements UsageGroupingRuleEx, DumbAware {
     }
 
     @Override
-    public Icon getIcon(boolean isOpen) {
+    public Icon getIcon() {
       return myItemPresentation.getIcon(false);
     }
 
     @Override
     @NotNull
-    public String getText(UsageView view) {
+    public String getPresentableGroupText() {
       return StringUtil.notNullize(myItemPresentation.getPresentableText(), UsageViewBundle.message("list.item.library"));
     }
 
@@ -163,13 +167,13 @@ class ModuleGroupingRule implements UsageGroupingRuleEx, DumbAware {
     }
 
     @Override
-    public Icon getIcon(boolean isOpen) {
+    public Icon getIcon() {
       return myModule.isDisposed() ? null : ModuleType.get(myModule).getIcon();
     }
 
     @Override
     @NotNull
-    public String getText(UsageView view) {
+    public String getPresentableGroupText() {
       return myModule.isDisposed() ? "" : myGrouper != null ? myGrouper.getShortenedName(myModule) : myModule.getName();
     }
 
@@ -179,7 +183,7 @@ class ModuleGroupingRule implements UsageGroupingRuleEx, DumbAware {
     }
 
     public String toString() {
-      return UsageViewBundle.message("node.group.module", getText(null));
+      return UsageViewBundle.message("node.group.module", getPresentableGroupText());
     }
 
     @Nullable
@@ -211,18 +215,18 @@ class ModuleGroupingRule implements UsageGroupingRuleEx, DumbAware {
     }
 
     @Override
-    public Icon getIcon(boolean isOpen) {
+    public Icon getIcon() {
       return AllIcons.Nodes.ModuleGroup;
     }
 
     @Override
     @NotNull
-    public String getText(UsageView view) {
+    public String getPresentableGroupText() {
       return myGroupPath.get(myGroupPath.size()-1);
     }
 
     public String toString() {
-      return UsageViewBundle.message("node.group.module.group", getText(null));
+      return UsageViewBundle.message("node.group.module.group", getPresentableGroupText());
     }
   }
 }

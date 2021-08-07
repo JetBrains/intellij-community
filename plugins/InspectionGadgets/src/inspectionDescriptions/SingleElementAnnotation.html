@@ -1,7 +1,13 @@
 <html>
 <body>
-Reports annotations in the 'single element' shorthand form, like <code>@Retention(RUNTIME)</code>.
-<p>The quick fix for this inspection converts annotation to the 'normal' form (with attribute name),
-e.g. <code>@Retention(value=RUNTIME)</code>.
+Reports annotations in a shorthand form and suggests rewriting them in a normal form with an attribute name.
+<p>Example:</p>
+<pre><code>
+  @SuppressWarnings("foo")
+</code></pre>
+<p>After the quick-fix is applied:</p>
+<pre><code>
+  @SuppressWarnings(value = "foo")
+</code></pre>
 </body>
 </html>

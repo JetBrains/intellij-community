@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.psi;
 
@@ -7,7 +7,7 @@ import com.intellij.injected.editor.VirtualFileWindow;
 import com.intellij.lang.Language;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
-import com.intellij.openapi.application.impl.ApplicationInfoImpl;
+import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -45,11 +45,11 @@ public abstract class PsiAnchor {
   public abstract int getEndOffset();
 
   @NotNull
-  public static PsiAnchor create(@NotNull final PsiElement element) {
+  public static PsiAnchor create(@NotNull PsiElement element) {
     PsiUtilCore.ensureValid(element);
 
     PsiAnchor anchor = doCreateAnchor(element);
-    if (ApplicationManager.getApplication().isUnitTestMode() && !ApplicationInfoImpl.isInStressTest()) {
+    if (ApplicationManager.getApplication().isUnitTestMode() && !ApplicationManagerEx.isInStressTest()) {
       PsiElement restored = anchor.retrieve();
       if (!element.equals(restored)) {
         LOG.error("Cannot restore element " + element + " of " + element.getClass() + " from anchor " + anchor + ", getting " + restored + " instead");
@@ -90,7 +90,7 @@ public abstract class PsiAnchor {
     }
 
     Language lang = null;
-    final FileViewProvider viewProvider = file.getViewProvider();
+    FileViewProvider viewProvider = file.getViewProvider();
     for (Language l : viewProvider.getLanguages()) {
       if (viewProvider.getPsi(l) == file) {
         lang = l;
@@ -124,10 +124,10 @@ public abstract class PsiAnchor {
     if (element instanceof StubBasedPsiElement &&
         element.isPhysical() &&
         (element instanceof PsiCompiledElement || canHaveStub(containingFile))) {
-      final StubBasedPsiElement elt = (StubBasedPsiElement)element;
-      final IStubElementType elementType = elt.getElementType();
+      StubBasedPsiElement<?> elt = (StubBasedPsiElement<?>)element;
+      IStubElementType<?,?> elementType = elt.getElementType();
       if (elt.getStub() != null || elementType.shouldCreateStub(element.getNode())) {
-        int index = calcStubIndex((StubBasedPsiElement)element);
+        int index = calcStubIndex((StubBasedPsiElement<?>)element);
         if (index != -1) {
           return new StubIndexReference(containingFile, index, containingFile.getLanguage(), elementType);
         }
@@ -141,18 +141,18 @@ public abstract class PsiAnchor {
 
     VirtualFile vFile = file.getVirtualFile();
 
-    IStubFileElementType elementType = ((PsiFileImpl)file).getElementTypeForStubBuilder();
+    IStubFileElementType<?> elementType = ((PsiFileImpl)file).getElementTypeForStubBuilder();
     return elementType != null && vFile != null && elementType.shouldBuildStubFor(vFile);
   }
 
-  public static int calcStubIndex(@NotNull StubBasedPsiElement psi) {
+  public static int calcStubIndex(@NotNull StubBasedPsiElement<?> psi) {
     if (psi instanceof PsiFile) {
       return 0;
     }
 
-    StubElement liveStub = psi instanceof StubBasedPsiElementBase ? ((StubBasedPsiElementBase)psi).getGreenStub() : psi.getStub();
+    StubElement<?> liveStub = psi instanceof StubBasedPsiElementBase ? ((StubBasedPsiElementBase<?>)psi).getGreenStub() : psi.getStub();
     if (liveStub != null) {
-      return ((StubBase)liveStub).getStubId();
+      return ((StubBase<?>)liveStub).getStubId();
     }
 
     return ((PsiFileImpl)psi.getContainingFile()).calcTreeElement().getStubbedSpine().getStubIndex(psi);
@@ -208,7 +208,7 @@ public abstract class PsiAnchor {
       if (this == o) return true;
       if (!(o instanceof TreeRangeReference)) return false;
 
-      final TreeRangeReference that = (TreeRangeReference)o;
+      TreeRangeReference that = (TreeRangeReference)o;
 
       return myEndOffset == that.myEndOffset &&
              myStartOffset == that.myStartOffset &&
@@ -254,11 +254,11 @@ public abstract class PsiAnchor {
     }
 
 
-    public boolean equals(final Object o) {
+    public boolean equals(Object o) {
       if (this == o) return true;
       if (!(o instanceof HardReference)) return false;
 
-      final HardReference that = (HardReference)o;
+      HardReference that = (HardReference)o;
 
       return myElement.equals(that.myElement);
     }
@@ -386,7 +386,7 @@ public abstract class PsiAnchor {
   @Nullable
   public static PsiElement restoreFromStubIndex(PsiFileWithStubSupport fileImpl,
                                                 int index,
-                                                @NotNull IStubElementType elementType,
+                                                @NotNull IStubElementType<?,?> elementType,
                                                 boolean throwIfNull) {
     if (fileImpl == null) {
       if (throwIfNull) throw new AssertionError("Null file");
@@ -396,7 +396,7 @@ public abstract class PsiAnchor {
     if (index == 0) return fileImpl;
 
     StubbedSpine spine = fileImpl.getStubbedSpine();
-    StubBasedPsiElement psi = (StubBasedPsiElement)spine.getStubPsi(index);
+    StubBasedPsiElement<?> psi = (StubBasedPsiElement<?>)spine.getStubPsi(index);
     if (psi == null) {
       if (throwIfNull) throw new AssertionError("Too large index: " + index + ">=" + spine.getStubCount());
       return null;
@@ -419,9 +419,9 @@ public abstract class PsiAnchor {
     @NotNull
     private final Language myLanguage;
     @NotNull
-    private final IStubElementType myElementType;
+    private final IStubElementType<?,?> myElementType;
 
-    private StubIndexReference(@NotNull final PsiFile file, final int index, @NotNull Language language, @NotNull IStubElementType elementType) {
+    private StubIndexReference(@NotNull PsiFile file, int index, @NotNull Language language, @NotNull IStubElementType<?,?> elementType) {
       myLanguage = language;
       myElementType = elementType;
       myVirtualFile = file.getVirtualFile();
@@ -450,7 +450,7 @@ public abstract class PsiAnchor {
 
     @NotNull
     public @NonNls String diagnoseNull() {
-      final PsiFile file = ReadAction.compute(this::getFile);
+      PsiFile file = ReadAction.compute(this::getFile);
       try {
         PsiElement element = ReadAction.compute(() -> restoreFromStubIndex((PsiFileWithStubSupport)file, myIndex, myElementType, true));
         return "No diagnostics, element=" + element + "@" + (element == null ? 0 : System.identityHashCode(element));
@@ -458,7 +458,7 @@ public abstract class PsiAnchor {
       catch (AssertionError e) {
         String msg = e.getMessage();
         msg += file == null ? "\n no PSI file" : "\n current file stamp=" + (short)file.getModificationStamp();
-        final Document document = FileDocumentManager.getInstance().getCachedDocument(myVirtualFile);
+        Document document = FileDocumentManager.getInstance().getCachedDocument(myVirtualFile);
         if (document != null) {
           msg += "\n committed=" + PsiDocumentManager.getInstance(myProject).isCommitted(document);
           msg += "\n saved=" + !FileDocumentManager.getInstance().isDocumentUnsaved(document);
@@ -468,11 +468,11 @@ public abstract class PsiAnchor {
     }
 
     @Override
-    public boolean equals(final Object o) {
+    public boolean equals(Object o) {
       if (this == o) return true;
       if (!(o instanceof StubIndexReference)) return false;
 
-      final StubIndexReference that = (StubIndexReference)o;
+      StubIndexReference that = (StubIndexReference)o;
 
       return myIndex == that.myIndex &&
              myVirtualFile.equals(that.myVirtualFile) &&
@@ -509,7 +509,7 @@ public abstract class PsiAnchor {
 
     @NotNull
     private TextRange getTextRange() {
-      final PsiElement resolved = retrieve();
+      PsiElement resolved = retrieve();
       if (resolved == null) throw new PsiInvalidElementAccessException(null, "Element type: " + myElementType + "; " + myVirtualFile);
       return resolved.getTextRange();
     }

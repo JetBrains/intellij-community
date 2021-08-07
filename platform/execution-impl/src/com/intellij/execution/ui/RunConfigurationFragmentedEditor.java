@@ -56,8 +56,10 @@ public abstract class RunConfigurationFragmentedEditor<Settings extends RunConfi
   @Override
   protected final List<SettingsEditorFragment<Settings, ?>> createFragments() {
     List<SettingsEditorFragment<Settings, ?>> fragments = new ArrayList<>(createRunFragments());
-    for (SettingsEditorFragment<RunConfigurationBase<?>, ?> wrapper : myExtensionsManager.createFragments(mySettings)) {
-      fragments.add((SettingsEditorFragment<Settings, ?>)wrapper);
+    for (SettingsEditor<Settings> editor: myExtensionsManager.createFragments(mySettings)) {
+      if (editor instanceof SettingsEditorFragment<?, ?>) {
+        fragments.add((SettingsEditorFragment<Settings, ?>) editor);
+      }
     }
     addRunnerSettingsEditors(fragments);
 //    dump fragment ids for FUS
@@ -67,6 +69,13 @@ public abstract class RunConfigurationFragmentedEditor<Settings extends RunConfi
       fragment.setConfigId(configId);
     }
     return fragments;
+  }
+
+  @Override
+  public @NotNull FragmentedSettingsBuilder<Settings> getBuilder() {
+    FragmentedSettingsBuilder<Settings> builder = super.getBuilder();
+    builder.setConfigId(mySettings.getType().getId());
+    return builder;
   }
 
   private void addRunnerSettingsEditors(List<? super SettingsEditorFragment<Settings, ?>> fragments) {
@@ -185,7 +194,7 @@ public abstract class RunConfigurationFragmentedEditor<Settings extends RunConfi
         String text = fragment.getName().replace("\u001B", "");
         new GotItTooltip("fragment.hidden." + fragment.getId(), ExecutionBundle.message("gotIt.popup.message", text), fragment).
           withHeader(ExecutionBundle.message("gotIt.popup.title")).
-          show(component, (c) -> new Point(GotItTooltip.ARROW_SHIFT, c.getHeight()));
+          show(component, (c, b) -> new Point(GotItTooltip.ARROW_SHIFT, c.getHeight()));
       }
     }
   }

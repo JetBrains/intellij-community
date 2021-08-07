@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.wm.impl;
 
 import com.intellij.openapi.Disposable;
@@ -29,7 +29,6 @@ import java.awt.*;
 import java.awt.event.InputEvent;
 import java.util.List;
 import java.util.*;
-import java.util.function.Predicate;
 
 // not final for android
 public class ToolWindowHeadlessManagerImpl extends ToolWindowManagerEx {
@@ -127,12 +126,6 @@ public class ToolWindowHeadlessManagerImpl extends ToolWindowManagerEx {
 
   @Override
   public void setMaximized(@NotNull ToolWindow window, boolean maximized) {
-  }
-
-  @Nullable
-  @Override
-  public ToolWindow getLastActiveToolWindow(@Nullable Predicate<? super JComponent> condition) {
-    return null;
   }
 
   @Override
@@ -234,6 +227,15 @@ public class ToolWindowHeadlessManagerImpl extends ToolWindowManagerEx {
 
     @Override
     public void setShowStripeButton(boolean show) {
+    }
+
+    @Override
+    public void setOrderOnLargeStripe(int order) {
+    }
+
+    @Override
+    public int getOrderOnLargeStripe() {
+      return -1;
     }
 
     @Override
@@ -422,7 +424,7 @@ public class ToolWindowHeadlessManagerImpl extends ToolWindowManagerEx {
     }
 
     @Override
-    public void setTitleActions(@NotNull List<AnAction> actions) {
+    public void setTitleActions(@NotNull List<? extends AnAction> actions) {
     }
 
     @Override

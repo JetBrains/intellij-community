@@ -39,9 +39,9 @@ public interface Module extends ComponentManager, AreaInstance, Disposable {
   /**
    * Returns the {@code VirtualFile} for the module .iml file. Note that location if .iml file may not be related to location of the module
    * files, it may be stored in a different directory, under .idea/modules or doesn't exist at all if the module configuration is imported
-   * from external project system (e.g. Gradle). So only internal subsystems which deal with serialization are supposed to use this method.
+   * from external project system (e.g., Gradle). So only internal subsystems which deal with serialization are supposed to use this method.
    * If you need to find a directory (directories) where source files for the module are located, get its {@link com.intellij.openapi.roots.ModuleRootModel#getContentRoots() content roots}.
-   * If you need to get just some directory near to module files (e.g. to select by default in a file chooser), use {@link com.intellij.openapi.project.ProjectUtil#guessModuleDir(com.intellij.openapi.module.Module)}.
+   * If you need to get just some directory near to module files (e.g., to select by default in a file chooser), use {@link com.intellij.openapi.project.ProjectUtil#guessModuleDir(Module)}.
    */
   @ApiStatus.Internal
   @Nullable VirtualFile getModuleFile();
@@ -170,12 +170,23 @@ public interface Module extends ComponentManager, AreaInstance, Disposable {
   @NotNull
   GlobalSearchScope getModuleRuntimeScope(boolean includeTests);
 
+  /**
+   * This method isn't supposed to be used from plugins. If you really need to determine type of a module, use
+   * {@link com.intellij.openapi.module.ModuleType#get(Module) ModuleType.get}. However it would be better to make your functionality work regaradless
+   * of type of the module, see {@link com.intellij.openapi.module.ModuleType ModuleType}'s javadoc for details.
+   */
+  @ApiStatus.Internal
   @Nullable @NonNls
   default String getModuleTypeName() {
     //noinspection deprecation
     return getOptionValue(ELEMENT_TYPE);
   }
 
+  /**
+   * This method isn't supposed to be used from plugins, module type should be passed as a parameter to {@link com.intellij.openapi.module.ModuleManager#newModule}
+   * when module is created.
+   */
+  @ApiStatus.Internal
   default void setModuleType(@NotNull @NonNls String name) {
     //noinspection deprecation
     setOption(ELEMENT_TYPE, name);

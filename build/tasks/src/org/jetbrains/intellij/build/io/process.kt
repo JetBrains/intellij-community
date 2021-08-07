@@ -34,6 +34,7 @@ fun runJava(mainClass: String,
     Files.writeString(classpathFile, classPathStringBuilder)
 
     val processArgs = mutableListOf<String>()
+    // FIXME: enforce JBR
     processArgs.add(ProcessHandle.current().info().command().orElseThrow())
     processArgs.add("-ea")
     @Suppress("SpellCheckingInspection")

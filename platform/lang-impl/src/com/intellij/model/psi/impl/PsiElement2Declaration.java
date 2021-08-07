@@ -161,4 +161,12 @@ class PsiElement2Declaration implements PsiSymbolDeclaration {
   private static TextRange rangeOf(@NotNull PsiElement element) {
     return TextRange.from(0, element.getTextLength());
   }
+
+  @Override
+  public String toString() {
+    return String.format(
+      "PsiElement2Declaration(targetElement=%s, declaringElement=%s, declarationRange=%s)",
+      myTargetElement, myDeclaringElement, myDeclarationRange
+    );
+  }
 }

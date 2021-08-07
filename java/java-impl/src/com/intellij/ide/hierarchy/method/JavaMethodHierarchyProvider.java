@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.hierarchy.method;
 
 import com.intellij.ide.hierarchy.HierarchyBrowser;
@@ -13,13 +13,11 @@ import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author yole
- */
+
 public class JavaMethodHierarchyProvider implements HierarchyProvider {
   @Override
-  public PsiElement getTarget(@NotNull final DataContext dataContext) {
-    final PsiMethod method = getMethodImpl(dataContext);
+  public PsiElement getTarget(@NotNull DataContext dataContext) {
+    PsiMethod method = getMethodImpl(dataContext);
     if (
       method != null &&
       method.getContainingClass() != null &&
@@ -34,28 +32,28 @@ public class JavaMethodHierarchyProvider implements HierarchyProvider {
   }
 
   @Nullable
-  private static PsiMethod getMethodImpl(final DataContext dataContext){
-    final Project project = CommonDataKeys.PROJECT.getData(dataContext);
+  private static PsiMethod getMethodImpl(DataContext dataContext){
+    Project project = CommonDataKeys.PROJECT.getData(dataContext);
     if (project == null) return null;
 
     PsiElement element = CommonDataKeys.PSI_ELEMENT.getData(dataContext);
-    final PsiMethod method = PsiTreeUtil.getParentOfType(element, PsiMethod.class, false);
+    PsiMethod method = PsiTreeUtil.getParentOfType(element, PsiMethod.class, false);
 
     if (method != null) {
       return method;
     }
 
-    final Editor editor = CommonDataKeys.EDITOR.getData(dataContext);
+    Editor editor = CommonDataKeys.EDITOR.getData(dataContext);
     if (editor == null) {
       return null;
     }
 
-    final PsiFile psiFile = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
+    PsiFile psiFile = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
     if (psiFile == null) {
       return null;
     }
 
-    final int offset = editor.getCaretModel().getOffset();
+    int offset = editor.getCaretModel().getOffset();
     if (offset < 1) {
       return null;
     }
@@ -80,7 +78,7 @@ public class JavaMethodHierarchyProvider implements HierarchyProvider {
   }
 
   @Override
-  public void browserActivated(@NotNull final HierarchyBrowser hierarchyBrowser) {
+  public void browserActivated(@NotNull HierarchyBrowser hierarchyBrowser) {
     ((MethodHierarchyBrowser) hierarchyBrowser).changeView(MethodHierarchyBrowserBase.getMethodType());
   }
 }

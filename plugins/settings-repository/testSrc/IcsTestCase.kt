@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.settingsRepository.test
 
 import com.intellij.configurationStore.schemeManager.SchemeManagerFactoryBase
@@ -52,10 +52,13 @@ abstract class IcsTestCase {
   val fs: FileSystem
     get() = fsRule.fs
 
+  val configDir = lazy { tempDirManager.newPath() }
+  private val settingsRepositoryDir: Path get() = configDir.value.resolve("settingsRepository")
+  val repositoryDir: Path get() = settingsRepositoryDir.resolve("repository")
+
   val icsManager by lazy(LazyThreadSafetyMode.NONE) {
-    val path = tempDirManager.newPath().resolve("settingsRepository")
-    val icsManager = IcsManager(path, disposableRule.disposable,
-                                lazy { SchemeManagerFactoryBase.TestSchemeManagerFactory(path.resolve("repository")) })
+    val icsManager = IcsManager(settingsRepositoryDir, disposableRule.disposable,
+                                lazy { SchemeManagerFactoryBase.TestSchemeManagerFactory(repositoryDir) })
 
     if (createAndActivateRepository()) {
       icsManager.repositoryManager.createRepositoryIfNeeded()
@@ -66,7 +69,7 @@ abstract class IcsTestCase {
 
   open fun createAndActivateRepository() : Boolean = true
 
-  val provider by lazy(LazyThreadSafetyMode.NONE) { icsManager.ApplicationLevelProvider() }
+  val provider by lazy(LazyThreadSafetyMode.NONE) { icsManager.IcsStreamProvider() }
 
 }
 

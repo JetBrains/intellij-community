@@ -14,7 +14,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.util.registry.ExperimentalUI;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.IdeRootPaneNorthExtension;
 import com.intellij.openapi.wm.impl.customFrameDecorations.header.MenuFrameHeader;
@@ -120,7 +120,7 @@ public class IdeRootPane extends JRootPane implements UISettingsListener {
 
     updateMainMenuVisibility();
 
-    if (Registry.is("ide.new.stripes.ui")) {
+    if (ExperimentalUI.isNewToolWindowsStripes()) {
       myLeftToolwindowToolbar = new ToolwindowLeftToolbar();
       myRightToolwindowToolbar = new ToolwindowRightToolbar();
       myContentPane.add(myLeftToolwindowToolbar, BorderLayout.WEST);
@@ -129,7 +129,7 @@ public class IdeRootPane extends JRootPane implements UISettingsListener {
 
     myContentPane.add(getCenterComponent(frame, parentDisposable), BorderLayout.CENTER);
 
-    if (Registry.is("ide.new.stripes.ui")) {
+    if (ExperimentalUI.isNewToolWindowsStripes()) {
       myLeftToolwindowToolbar.toolwindowPane = myToolWindowsPane;
       myRightToolwindowToolbar.toolwindowPane = myToolWindowsPane;
     }
@@ -254,12 +254,13 @@ public class IdeRootPane extends JRootPane implements UISettingsListener {
     ActionGroup group = (ActionGroup)CustomActionsSchema.getInstance().getCorrectedAction(IdeActions.GROUP_MAIN_TOOLBAR);
     ActionToolbar toolBar = ActionManagerEx.getInstanceEx()
       .createActionToolbar(ActionPlaces.MAIN_TOOLBAR, Objects.requireNonNull(group), true);
+    toolBar.setTargetComponent(null);
     toolBar.setLayoutPolicy(ActionToolbar.WRAP_LAYOUT_POLICY);
 
     DefaultActionGroup menuGroup = new DefaultActionGroup();
     menuGroup.add(new ViewToolbarAction());
     menuGroup.add(new CustomizeUIAction());
-    PopupHandler.installUnknownPopupHandler(toolBar.getComponent(), menuGroup);
+    PopupHandler.installPopupMenu(toolBar.getComponent(), menuGroup, "MainToolbarPopup");
 
     return toolBar.getComponent();
   }
@@ -273,7 +274,7 @@ public class IdeRootPane extends JRootPane implements UISettingsListener {
   }
 
   protected @NotNull IdeStatusBarImpl createStatusBar(@NotNull IdeFrame frame) {
-    return new IdeStatusBarImpl(frame, !Registry.is("ide.new.stripes.ui"));
+    return new IdeStatusBarImpl(frame, !ExperimentalUI.isNewToolWindowsStripes());
   }
 
   final @Nullable IdeStatusBarImpl getStatusBar() {

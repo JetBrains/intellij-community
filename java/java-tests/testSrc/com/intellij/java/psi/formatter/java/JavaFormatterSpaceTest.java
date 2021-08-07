@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.psi.formatter.java;
 
 import com.intellij.JavaTestUtil;
@@ -319,11 +319,11 @@ public class JavaFormatterSpaceTest extends AbstractJavaFormatterTest {
 
     getSettings().SPACE_AROUND_BITWISE_OPERATORS = true;
     doMethodTest("try { } catch (E1|E2 e) { }",
-                 "try { } catch (E1 | E2 e) { }");
+                 "try {} catch (E1 | E2 e) {}");
 
     getSettings().SPACE_AROUND_BITWISE_OPERATORS = false;
     doMethodTest("try { } catch (E1 | E2 e) { }",
-                 "try { } catch (E1|E2 e) { }");
+                 "try {} catch (E1|E2 e) {}");
   }
 
   public void testSpacesInsideLambda() {
@@ -361,12 +361,12 @@ public class JavaFormatterSpaceTest extends AbstractJavaFormatterTest {
     getSettings().SPACE_BEFORE_TRY_PARENTHESES = true;
     getSettings().SPACE_BEFORE_TRY_LBRACE = true;
     doMethodTest("try(AutoCloseable r = null){ }",
-                 "try (AutoCloseable r = null) { }");
+                 "try (AutoCloseable r = null) {}");
 
     getSettings().SPACE_BEFORE_TRY_PARENTHESES = false;
     getSettings().SPACE_BEFORE_TRY_LBRACE = false;
     doMethodTest("try (AutoCloseable r = null) { }",
-                 "try(AutoCloseable r = null){ }");
+                 "try(AutoCloseable r = null){}");
   }
 
   public void testSpacesWithinResourceList() {
@@ -374,17 +374,17 @@ public class JavaFormatterSpaceTest extends AbstractJavaFormatterTest {
 
     getSettings().SPACE_WITHIN_TRY_PARENTHESES = false;
     doMethodTest("try (  R r = null  ) { }",
-                 "try (R r = null) { }");
+                 "try (R r = null) {}");
     getSettings().SPACE_AFTER_SEMICOLON = false;
     doMethodTest("try (  R r1 = null    ; R r2 = null; ) { }",
-                 "try (R r1 = null;R r2 = null;) { }");
+                 "try (R r1 = null;R r2 = null;) {}");
 
     getSettings().SPACE_WITHIN_TRY_PARENTHESES = true;
     doMethodTest("try (R r = null) { }",
-                 "try ( R r = null ) { }");
+                 "try ( R r = null ) {}");
     getSettings().SPACE_AFTER_SEMICOLON = true;
     doMethodTest("try (R r1 = null    ; R r2 = null;) { }",
-                 "try ( R r1 = null; R r2 = null; ) { }");
+                 "try ( R r1 = null; R r2 = null; ) {}");
   }
 
   public void testSpacesBetweenResources() {
@@ -393,12 +393,12 @@ public class JavaFormatterSpaceTest extends AbstractJavaFormatterTest {
     getSettings().SPACE_BEFORE_SEMICOLON = false;
     getSettings().SPACE_AFTER_SEMICOLON = true;
     doMethodTest("try (R r1 = null    ; R r2 = null;) { }",
-                 "try (R r1 = null; R r2 = null;) { }");
+                 "try (R r1 = null; R r2 = null;) {}");
 
     getSettings().SPACE_BEFORE_SEMICOLON = true;
     getSettings().SPACE_AFTER_SEMICOLON = false;
     doMethodTest("try (R r1 = null;   R r2 = null;) { }",
-                 "try (R r1 = null ;R r2 = null ;) { }");
+                 "try (R r1 = null ;R r2 = null ;) {}");
   }
 
   public void testSpacesInResourceAssignment() {
@@ -406,11 +406,11 @@ public class JavaFormatterSpaceTest extends AbstractJavaFormatterTest {
 
     getSettings().SPACE_AROUND_ASSIGNMENT_OPERATORS = true;
     doMethodTest("try (R r=null) { }",
-                 "try (R r = null) { }");
+                 "try (R r = null) {}");
 
     getSettings().SPACE_AROUND_ASSIGNMENT_OPERATORS = false;
     doMethodTest("try (R r =  null) { }",
-                 "try (R r=null) { }");
+                 "try (R r=null) {}");
   }
 
   public void testBetweenMethodCallArguments() {
@@ -763,7 +763,7 @@ public class JavaFormatterSpaceTest extends AbstractJavaFormatterTest {
                  "    case 4: yield  ;\n" +
                  "}",
                  "String s = switch (i) {\n" +
-                 "    case 0: yield(foo);\n" +
+                 "    case 0: yield (foo);\n" +
                  "    case 1: yield 42;\n" +
                  "    case 3: yield label;\n" +
                  "    case 4: yield ;\n" +
@@ -833,5 +833,30 @@ public class JavaFormatterSpaceTest extends AbstractJavaFormatterTest {
       "    }\n" +
       "}"
     );
+  }
+
+  public void testIdea250968() {
+    getSettings().KEEP_SIMPLE_METHODS_IN_ONE_LINE = true;
+    getSettings().SPACE_WITHIN_BRACES = true;
+    doClassTest(
+      "public Long getId (){return id;}",
+
+      "public Long getId() { return id; }"
+    );
+  }
+
+  public void testAndAndInGuardedPattern() {
+    doClassTest(
+      "void test(Object obj){\n" +
+      "  switch(obj){\n" +
+      "  case String s&&s.isEmpty()->System.out.println();\n" +
+      "  }\n" +
+      "}\n",
+
+      "void test(Object obj) {\n" +
+      "    switch (obj) {\n" +
+      "        case String s && s.isEmpty() -> System.out.println();\n" +
+      "    }\n" +
+      "}\n");
   }
 }

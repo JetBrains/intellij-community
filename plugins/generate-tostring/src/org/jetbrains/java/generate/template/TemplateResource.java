@@ -223,6 +223,7 @@ public final class TemplateResource implements Serializable {
   /**
    * Class fqn to detect applicability
    */
+  @NlsSafe
   public String getClassName() {
     return className;
   }

@@ -9,7 +9,6 @@
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="library" name="kotlin-stdlib-jdk8" level="project" />
     <orderEntry type="library" name="kotlin-reflect" level="project" />
-    <orderEntry type="module" module-name="intellij.platform.util" />
     <orderEntry type="module" module-name="intellij.platform.core" />
     <orderEntry type="library" name="JDOM" level="project" />
     <orderEntry type="library" name="kotlinx-coroutines-jdk8" level="project" />
@@ -17,7 +16,7 @@
     <orderEntry type="library" name="Trove4j" level="project" />
     <orderEntry type="library" name="lz4-java" level="project" />
     <orderEntry type="library" name="netty-buffer" level="project" />
-    <orderEntry type="library" name="roaringBitmap" level="project" />
     <orderEntry type="library" name="caffeine" level="project" />
+    <orderEntry type="module" module-name="intellij.platform.util.strings" />
   </component>
 </module>

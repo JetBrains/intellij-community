@@ -116,8 +116,10 @@ class GitRepositoryReader {
 
   @NotNull
   GitHooksInfo readHooksInfo() {
-    return new GitHooksInfo(isExistingExecutableFile(myGitFiles.getPreCommitHookFile()) || isExistingExecutableFile(myGitFiles.getCommitMsgHookFile()),
-                            isExistingExecutableFile(myGitFiles.getPrePushHookFile()));
+    boolean hasCommitHook = isExistingExecutableFile(myGitFiles.getPreCommitHookFile()) ||
+                            isExistingExecutableFile(myGitFiles.getCommitMsgHookFile());
+    boolean hasPushHook = isExistingExecutableFile(myGitFiles.getPrePushHookFile());
+    return new GitHooksInfo(hasCommitHook, hasPushHook);
   }
 
   private static boolean isExistingExecutableFile(@NotNull File file) {

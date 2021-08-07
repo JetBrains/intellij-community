@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.wm.impl
 
+import com.intellij.icons.AllIcons
 import com.intellij.ide.HelpTooltip
 import com.intellij.ide.actions.ActivateToolWindowAction
 import com.intellij.openapi.actionSystem.*
@@ -12,6 +13,7 @@ import com.intellij.openapi.wm.ToolWindow
 import com.intellij.openapi.wm.ToolWindowAnchor
 import com.intellij.openapi.wm.WindowManager
 import com.intellij.openapi.wm.ex.ToolWindowManagerListener
+import com.intellij.openapi.wm.impl.SquareStripeButton.Companion.scaleIcon
 import com.intellij.ui.PopupHandler
 import com.intellij.ui.ToggleActionButton
 import com.intellij.ui.UIBundle
@@ -30,13 +32,22 @@ class SquareStripeButton(val project: Project, val button: StripeButton) :
     })
   }
 
-  override fun updateToolTipText() {
-    HelpTooltip().apply {
-      setTitle(button.toolWindow.stripeTitle)
-      setLocation(getAlignment(button.toolWindow.largeStripeAnchor))
-      setShortcut(ActionManager.getInstance().getKeyboardShortcut(ActivateToolWindowAction.getActionIdForToolWindow(button.id)))
-      installOn(this@SquareStripeButton)
+  override fun updateUI() {
+    super.updateUI()
+    myPresentation.apply {
+      icon = button.icon ?: AllIcons.Toolbar.Unknown
+      scaleIcon()
+      isEnabledAndVisible = true
     }
+  }
+
+  override fun updateToolTipText() {
+    HelpTooltip().
+      setTitle(button.toolWindow.stripeTitle).
+      setLocation(getAlignment(button.toolWindow.largeStripeAnchor)).
+      setShortcut(ActionManager.getInstance().getKeyboardShortcut(ActivateToolWindowAction.getActionIdForToolWindow(button.id))).
+      setInitialDelay(0).setHideDelay(0).
+      installOn(this)
   }
 
   private fun showPopup(component: Component?, x: Int, y: Int) {
@@ -48,7 +59,7 @@ class SquareStripeButton(val project: Project, val button: StripeButton) :
   companion object {
     private fun createPresentation(button: StripeButton) =
       Presentation(button.text).apply {
-        icon = button.icon
+        icon = button.icon ?: AllIcons.Toolbar.Unknown
         scaleIcon()
         isEnabledAndVisible = true
       }
@@ -107,18 +118,21 @@ class SquareStripeButton(val project: Project, val button: StripeButton) :
     AnAction(UIBundle.message("tool.window.new.stripe.hide.action.name")), DumbAware {
     override fun actionPerformed(e: AnActionEvent) {
       toolWindowsPane.onStripeButtonRemoved(e.project!!, toolWindow)
+      toolWindow.isVisibleOnLargeStripe = false
       (toolWindow as? ToolWindowImpl)?.toolWindowManager?.hideToolWindow(toolWindow.id, false, true, ToolWindowEventSource.SquareStripeButton)
     }
   }
 
   private class SquareAnActionButton(val project: Project, val button: StripeButton) : ToggleActionButton(button.text, null), DumbAware {
     override fun isSelected(e: AnActionEvent): Boolean {
-      e.presentation.icon = button.toolWindow.icon!!
+      e.presentation.icon = button.toolWindow.icon ?: AllIcons.Toolbar.Unknown
       e.presentation.scaleIcon()
       return button.toolWindow.isVisible
     }
 
     override fun setSelected(e: AnActionEvent, state: Boolean) {
+      if (e.project!!.isDisposed) return
+
       val manager = button.toolWindow.toolWindowManager
       if (!state) {
         manager.hideToolWindow(button.id, false, true, ToolWindowEventSource.SquareStripeButton)

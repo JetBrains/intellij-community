@@ -36,6 +36,10 @@ public class YAMLEnterAtIndentHandler extends EnterHandlerDelegateAdapter {
                                 @NotNull Ref<Integer> caretAdvance,
                                 @NotNull DataContext dataContext,
                                 EditorActionHandler originalHandler) {
+    // this call is not related to YAMLEnterAtIndentHandler, but is needed for `YAMLInjectedElementEnterHandler`
+    // this call is placed here to avoid creating another `EnterHandlerDelegate` with `order="first"`
+    YAMLInjectedElementEnterHandlerKt.preserveIndentStateBeforeProcessing(file, dataContext);
+    
     if (!(file instanceof YAMLFile)) {
       return Result.Continue;
     }

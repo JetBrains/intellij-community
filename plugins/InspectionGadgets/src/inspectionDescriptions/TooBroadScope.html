@@ -1,16 +1,53 @@
 <html>
 <body>
-Reports any variable declarations which can be moved to a smaller scope. Especially
-useful for <i>Pascal style</i> declarations at the start of a method, but variables with too broad
-a scope are also often left over after refactorings.
+Reports any variable declarations that can be moved to a smaller scope.
+<p>This inspection is especially
+useful for <i>Pascal style</i> declarations at the beginning of a method. Moreover, variables with a too broad
+  scope also often remain after refactorings.</p>
+<p>Example of <code>sb</code> movement:</p>
+<pre><code>
+  StringBuilder sb = new StringBuilder();
+  System.out.println();
+  sb.append(1);
+</code></pre>
+<p>After quick-fix is applied:</p>
+<pre><code>
+  System.out.println();
+  StringBuilder sb = new StringBuilder();
+  sb.append(1);
+</code></pre>
 <!-- tooltip end -->
-<p>
-Use the first checkbox below to only report variables that can be moved inside deeper code blocks.
-<p>
-Use the second checkbox below to report variables which are initialized
-with a new expression. This makes the inspection potentially unsafe in cases where the
-constructor has non-local side-effects.
-<p>
+<p>Configure the inspection:</p>
+<ul>
+  <li>Use the <b>Only report variables that can be moved into inner blocks</b> option to report only those variables that can be moved inside deeper code blocks.
+    For example, when the option is enabled, the movement will be suggested for <code>sb</code> variable, but not for the following code:
+<pre><code>
+  StringBuilder sb = new StringBuilder(a);
+  if (flag) {
+    sb.append(1);
+  }
+</code></pre></li>
+  <li>Use the <b>Report variables with a new expression as initializer
+    (potentially unsafe)</b> option to report variables that are initialized with a new expression. This makes the inspection potentially
+    unsafe when the constructor has non-local side-effects. For example, when the option is enabled, the movement will be
+    suggested for the <code>foo</code> variable:
+  <pre><code>
+  class Foo {
+    static List&lt;Foo&gt; fooList = new ArrayList&lt;&gt;();
+    String bar;
 
+    Foo(String bar) {
+        this.bar = bar;
+        fooList.add(this);
+    }
+
+    public static void main(String[] args) {
+      Foo foo = new Foo("bar"); // the movement is possible even though is unsafe
+      System.out.println(fooList.size());
+      System.out.println(foo.bar);
+    }
+  }
+</code></pre></li>
+</ul>
 </body>
 </html>

@@ -6,7 +6,7 @@ layoutConstraints:
   gridGapY:
     min: &id002 {horizontal: false, value: 12.0}
     preferred: *id002
-  hideMode: 2
+  hideMode: 3
   insets:
   - &id003 {horizontal: false, unit: 0, value: 0.0}
   - &id004 {horizontal: true, unit: 0, value: 0.0}
@@ -20,13 +20,18 @@ rowConstraints:
   - align: *id005
   - align: *id005
   - align: *id005
-  count: 6
+    gapAfter:
+      max: &id006 {horizontal: true, unit: 0, value: 0.0}
+      min: *id006
+      preferred: *id006
+  - {}
+  count: 7
 columnConstraints:
   constraints:
   - gapAfter:
-      max: &id006 {horizontal: true, value: 6.0}
-      min: *id006
-      preferred: *id006
+      max: &id007 {horizontal: true, value: 6.0}
+      min: *id007
+      preferred: *id007
     grow: 0.0
   - {}
   count: 2
@@ -37,15 +42,15 @@ componentConstrains:
   Bar 1 [label]:
     horizontal:
       gapBefore:
-        min: &id007 {horizontal: true, value: 20.0}
-        preferred: *id007
+        min: &id008 {horizontal: true, value: 20.0}
+        preferred: *id008
     spanX: INF
     wrap: true
   Two [label]: {spanX: INF, wrap: true}
   Bar 2 [label]:
     horizontal:
       gapBefore:
-        min: &id008 {horizontal: true, value: 40.0}
-        preferred: *id008
+        min: &id009 {horizontal: true, value: 40.0}
+        preferred: *id009
     spanX: INF
     wrap: true

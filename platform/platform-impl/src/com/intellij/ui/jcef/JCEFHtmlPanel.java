@@ -10,8 +10,6 @@ import org.cef.callback.CefMenuModel;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Objects;
-
 /**
  * @author tav
  */
@@ -29,9 +27,13 @@ public class JCEFHtmlPanel extends JBCefBrowser {
   }
 
   public JCEFHtmlPanel(JBCefClient client, String url) {
-    super(client, null); // should no pass url to ctor
-    myUrl = Objects.requireNonNullElse(url, "about:blank");
-    if (client != ourCefClient) {
+    this(false, client, url); // should no pass url to ctor
+  }
+
+  public JCEFHtmlPanel(boolean isOffScreenRendering, @Nullable JBCefClient client, @Nullable String url) {
+    super(JBCefBrowser.createBuilder().setOffScreenRendering(isOffScreenRendering).setClient(client).setUrl(url));
+    myUrl = getCefBrowser().getURL();
+    if (client != null && client != ourCefClient) {
       Disposer.register(this, client);
     }
   }

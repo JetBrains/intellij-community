@@ -25,10 +25,10 @@ import javax.swing.JLabel
 
 class LearnToolWindow internal constructor(val project: Project, private val wholeToolWindow: ToolWindow)
   : SimpleToolWindowPanel(true, true), DataProvider {
-  val parentDisposable: Disposable = wholeToolWindow.disposable
+  internal val parentDisposable: Disposable = wholeToolWindow.disposable
 
-  val learnPanel: LearnPanel = LearnPanel(this)
-  private val modulesPanel: ModulesPanel = ModulesPanel()
+  internal val learnPanel: LearnPanel = LearnPanel(this)
+  private val modulesPanel: ModulesPanel = ModulesPanel(project)
   private val scrollPane: JBScrollPane = if (LangManager.getInstance().languages.isEmpty()) {
     JBScrollPane(JLabel(LearnBundle.message("no.supported.languages.found")))
   }
@@ -51,14 +51,14 @@ class LearnToolWindow internal constructor(val project: Project, private val who
     modulesPanel.updateMainPanel()
   }
 
-  fun setLearnPanel() {
+  internal fun setLearnPanel() {
     wholeToolWindow.setTitleActions(listOf(restartAction()))
     scrollPane.setViewportView(learnPanel)
     scrollPane.revalidate()
     scrollPane.repaint()
   }
 
-  fun showGotItAboutRestart() {
+  internal fun showGotItAboutRestart() {
     val gotIt = GotItTooltip("reset.lesson.got.it",
                              LearnBundle.message("completed.lessons.got.it"),
                              parentDisposable)
@@ -77,7 +77,7 @@ class LearnToolWindow internal constructor(val project: Project, private val who
 
   private fun restartAction() = ActionManager.getInstance().getAction("RestartLessonAction")
 
-  fun setModulesPanel() {
+  internal fun setModulesPanel() {
     setChooseLanguageButton()
     modulesPanel.updateMainPanel()
     scrollPane.setViewportView(modulesPanel)
@@ -99,22 +99,22 @@ class LearnToolWindow internal constructor(val project: Project, private val who
     scrollPane.repaint()
   }
 
-  fun reinitViews() {
+  internal fun reinitViews() {
     reinitViewsInternal()
     updateScrollPane()
   }
 
-  fun scrollToTheEnd() {
+  internal fun scrollToTheEnd() {
     val vertical = scrollPane.verticalScrollBar
     if (useAnimation()) stepAnimator.startAnimation(vertical.maximum)
     else vertical.value = vertical.maximum
   }
 
-  fun scrollToTheStart() {
+  internal fun scrollToTheStart() {
     scrollPane.verticalScrollBar.value = 0
   }
 
-  fun scrollTo(needTo: Int) {
+  internal fun scrollTo(needTo: Int) {
     if (useAnimation()) stepAnimator.startAnimation(needTo)
     else {
       scrollPane.verticalScrollBar.value = needTo

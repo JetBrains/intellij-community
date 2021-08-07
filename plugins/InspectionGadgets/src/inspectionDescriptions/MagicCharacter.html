@@ -1,11 +1,10 @@
 <html>
 <body>
-Reports "magic characters", which are character literals used without being named by a constant declaration.
-Magic characters can result in code whose intention is unclear, and may result in errors if a magic
-character is changed in one code location but not another. Such use can complicate internationalization
-efforts.
+Reports character literals that are used without constant declaration. These characters might result in
+bad code readability. Also, there might be errors if a character is changed only in one location
+but not everywhere in code.
+<p><b>Example:</b></p>
+<pre><code>char c = 'c';</code></pre>
 <!-- tooltip end -->
-<p>
-
 </body>
 </html>

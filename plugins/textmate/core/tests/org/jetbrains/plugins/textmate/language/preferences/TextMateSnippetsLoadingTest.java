@@ -1,10 +1,11 @@
 package org.jetbrains.plugins.textmate.language.preferences;
 
+import com.intellij.util.containers.HashSetInterner;
 import com.intellij.util.containers.Interner;
-import com.intellij.util.containers.PathInterner;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.textmate.bundles.Bundle;
 import org.jetbrains.plugins.textmate.language.PreferencesReadUtil;
+import org.jetbrains.plugins.textmate.language.syntax.lexer.TextMateScope;
 import org.jetbrains.plugins.textmate.plist.CompositePlistReader;
 import org.junit.Test;
 
@@ -19,7 +20,7 @@ public class TextMateSnippetsLoadingTest {
   @Test
   public void testLoadTextMateSnippets() throws IOException {
     SnippetsRegistry snippetsRegistry = loadSnippets(CHEF);
-    Collection<TextMateSnippet> snippets = snippetsRegistry.findSnippet("log", "source.ruby.chef.something");
+    Collection<TextMateSnippet> snippets = snippetsRegistry.findSnippet("log", scopeFromString("source.ruby.chef.something"));
     assertEquals(1, snippets.size());
     TextMateSnippet snippet = snippets.iterator().next();
     assertNotNull(snippet);
@@ -32,14 +33,14 @@ public class TextMateSnippetsLoadingTest {
   @Test
   public void testLoadTextMateSnippetsWithInvalidSelector() throws IOException {
     SnippetsRegistry snippetsRegistry = loadSnippets(CHEF);
-    Collection<TextMateSnippet> snippets = snippetsRegistry.findSnippet("log", "source");
+    Collection<TextMateSnippet> snippets = snippetsRegistry.findSnippet("log", new TextMateScope("source", null));
     assertTrue(snippets.isEmpty());
   }
   
   @Test
   public void testLoadTextMateSnippetsFromPlist() throws IOException {
     SnippetsRegistry snippetsRegistry = loadSnippets(HTML);
-    Collection<TextMateSnippet> snippets = snippetsRegistry.findSnippet("div", "text.html");
+    Collection<TextMateSnippet> snippets = snippetsRegistry.findSnippet("div", new TextMateScope("text.html", null));
     assertEquals(1, snippets.size());
     TextMateSnippet snippet = snippets.iterator().next();
     assertNotNull(snippet);
@@ -56,7 +57,7 @@ public class TextMateSnippetsLoadingTest {
     final Bundle bundle = getBundle(bundleName);
     assertNotNull(bundle);
     final SnippetsRegistry snippetsRegistry = new SnippetsRegistry();
-    Interner<CharSequence> interner = new PathInterner.PathEnumerator();
+    Interner<CharSequence> interner = new HashSetInterner<>();
     for (File file : bundle.getSnippetFiles()) {
       final TextMateSnippet snippet = PreferencesReadUtil.loadSnippet(file, new CompositePlistReader().read(file), interner);
       if (snippet != null) {

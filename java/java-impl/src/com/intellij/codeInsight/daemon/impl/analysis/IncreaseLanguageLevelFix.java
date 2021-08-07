@@ -10,12 +10,12 @@ import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.command.undo.BasicUndoableAction;
 import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.module.LanguageLevelUtil;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.ex.JavaSdkUtil;
 import com.intellij.openapi.roots.JavaProjectModelModificationService;
-import com.intellij.openapi.roots.LanguageLevelModuleExtensionImpl;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.AcceptedLanguageLevelsSettings;
 import com.intellij.pom.java.LanguageLevel;
@@ -76,8 +76,8 @@ public class IncreaseLanguageLevelFix implements IntentionAction, LocalQuickFix,
     }
     WriteAction.run(() -> {
       Module module = ModuleUtilCore.findModuleForPsiElement(file);
-      LanguageLevel oldLevel = LanguageLevelModuleExtensionImpl.getInstance(module).getLanguageLevel();
       if (module != null) {
+        LanguageLevel oldLevel = LanguageLevelUtil.getCustomLanguageLevel(module);
         JavaProjectModelModificationService.getInstance(project).changeLanguageLevel(module, myLevel);
         VirtualFile vFile = file.getVirtualFile();
         if (oldLevel != null) {

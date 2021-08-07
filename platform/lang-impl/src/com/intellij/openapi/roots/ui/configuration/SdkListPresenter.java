@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.roots.ui.configuration;
 
 import com.intellij.icons.AllIcons;
@@ -7,18 +7,17 @@ import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkType;
 import com.intellij.openapi.roots.ui.SdkAppearanceService;
-import com.intellij.openapi.roots.ui.configuration.SdkListItem.GroupItem;
-import com.intellij.openapi.roots.ui.configuration.SdkListItem.SdkItem;
-import com.intellij.openapi.roots.ui.configuration.SdkListItem.SdkReferenceItem;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBLabel;
+import com.intellij.ui.components.panels.OpaquePanel;
 import com.intellij.util.Function;
 import com.intellij.util.IconUtil;
 import com.intellij.util.Producer;
 import com.intellij.util.ui.EmptyIcon;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.accessibility.AccessibleContextDelegate;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -28,7 +27,6 @@ import javax.accessibility.AccessibleContext;
 import javax.swing.*;
 import javax.swing.border.Border;
 import java.awt.*;
-import java.util.Objects;
 
 import static com.intellij.openapi.roots.ui.configuration.SdkListItem.*;
 
@@ -59,7 +57,7 @@ public class SdkListPresenter extends ColoredListCellRenderer<SdkListItem> {
                                                 boolean selected,
                                                 boolean hasFocus) {
     SimpleColoredComponent component = (SimpleColoredComponent)super.getListCellRendererComponent(list, value, index, selected, hasFocus);
-    JPanel panel = new CellRendererPanel() {
+    JPanel panel = new CellRendererPanel(new BorderLayout()) {
       private final AccessibleContext myContext = component.getAccessibleContext();
 
       @Override
@@ -74,7 +72,6 @@ public class SdkListPresenter extends ColoredListCellRenderer<SdkListItem> {
         component.setBorder(border);
       }
     };
-    panel.setLayout(new BorderLayout());
     panel.add(component, BorderLayout.CENTER);
 
     SdkListModel model = myGetModel.produce();
@@ -91,12 +88,12 @@ public class SdkListPresenter extends ColoredListCellRenderer<SdkListItem> {
 
     component.setOpaque(true);
     panel.setOpaque(true);
-    Color background = selected ? list.getSelectionBackground() : list.getBackground();
-    panel.setBackground(background);
+    panel.setBackground(list.getBackground());
     if (value instanceof GroupItem) {
-      JBLabel toggle = new JBLabel(selected ? AllIcons.Icons.Ide.NextStepInverted : AllIcons.Icons.Ide.NextStep);
+      JBLabel toggle = new JBLabel(selected ? AllIcons.Icons.Ide.MenuArrowSelected : AllIcons.Icons.Ide.MenuArrow);
       toggle.setOpaque(true);
-      toggle.setBackground(background);
+      toggle.setBorder(JBUI.Borders.emptyRight(JBUI.scale(5)));
+      toggle.setBackground(selected ? list.getSelectionBackground() : list.getBackground());
       panel.add(toggle, BorderLayout.EAST);
     }
 
@@ -106,14 +103,10 @@ public class SdkListPresenter extends ColoredListCellRenderer<SdkListItem> {
       if (!separatorTextAbove.isEmpty()) {
         separator.setCaption(separatorTextAbove);
       }
-      separator.setOpaque(false);
-      separator.setBackground(list.getBackground());
 
-      JPanel wrapper = new CellRendererPanel();
-      wrapper.setLayout(new BorderLayout());
+      OpaquePanel wrapper = new OpaquePanel(new BorderLayout());
       wrapper.add(separator, BorderLayout.CENTER);
       wrapper.setBackground(list.getBackground());
-      wrapper.setOpaque(true);
 
       panel.add(wrapper, BorderLayout.NORTH);
     }
@@ -151,8 +144,7 @@ public class SdkListPresenter extends ColoredListCellRenderer<SdkListItem> {
       String home = item.homePath;
       String version = item.version;
 
-      Icon icon = type.getIconForAddAction();
-      if (Objects.equals(icon, IconUtil.getAddIcon())) icon = type.getIcon();
+      Icon icon = type.getIcon();
       if (icon == null) icon = IconUtil.getAddIcon();
       setIcon(icon);
       append(presentDetectedSdkPath(home));
@@ -204,6 +196,7 @@ public class SdkListPresenter extends ColoredListCellRenderer<SdkListItem> {
         .forNullSdk(selected)
         .customize(this);
       getAccessibleContext().setAccessibleName(ProjectBundle.message("jdk.combo.box.no.sdk.item.accessibility"));
+      setIcon(null);
     }
     else if (value instanceof SdkReferenceItem) {
       SdkReferenceItem item = (SdkReferenceItem)value;

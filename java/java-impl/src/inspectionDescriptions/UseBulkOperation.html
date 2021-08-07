@@ -1,13 +1,29 @@
 <html>
 <body>
-Warns when calling some method in a loop (e.g. <code>collection.add(x)</code>) could be replaced when calling a bulk method
-(e.g. <code>collection.addAll(listOfX)</code>.
+Reports single operations inside loops that could be replaced with a bulk method.
 <p>
-  If checkbox "Use Arrays.asList() to wrap arrays" is checked, the inspection will warn even if the original code iterates over
-  an array while bulk method requires a <code>Collection</code>. In this case the quick-fix action will automatically
-  wrap an array with <code>Arrays.asList()</code> call.
+  Not only bulk methods are shorter, but in some cases they may be more performant as well.
 </p>
+<p><b>Example:</b></p>
+<pre><code>  void test(Collection&lt;Integer&gt; numbers) {
+    List&lt;Integer&gt; result = new ArrayList&lt;>();
+    for (Integer i : numbers) {
+      result.add(i);
+    }
+  }
+</code></pre>
+<p>After the fix is applied:</p>
+<pre>
+  void test(Collection&lt;Integer&gt; numbers) {
+    List&lt;Integer&gt; result = new ArrayList&lt;>();
+    result.addAll(numbers);
+  }
+</pre>
 <!-- tooltip end -->
-<small>New in 2017.1</small>
+<p>
+  The <b>Use Arrays.asList() to wrap arrays</b> option allows you to also look out for arrays, even if the bulk method requires a collection.
+  In this case the quick-fix will automatically wrap the array in <code>Arrays.asList()</code> call.
+</p>
+<p><small>New in 2017.1</small></p>
 </body>
 </html>

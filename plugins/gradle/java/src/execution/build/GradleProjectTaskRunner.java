@@ -11,10 +11,9 @@ import com.intellij.execution.executors.DefaultRunExecutor;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.openapi.compiler.CompilerPaths;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.externalSystem.model.DataNode;
 import com.intellij.openapi.externalSystem.model.ProjectKeys;
 import com.intellij.openapi.externalSystem.model.execution.ExternalSystemTaskExecutionSettings;
-import com.intellij.openapi.externalSystem.model.project.ModuleData;
+import com.intellij.openapi.externalSystem.model.task.TaskData;
 import com.intellij.openapi.externalSystem.service.execution.ProgressExecutionMode;
 import com.intellij.openapi.externalSystem.task.TaskCallback;
 import com.intellij.openapi.externalSystem.util.ExternalSystemUtil;
@@ -34,18 +33,20 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FactoryMap;
 import com.intellij.util.containers.MultiMap;
 import org.gradle.api.internal.jvm.ClassDirectoryBinaryNamingScheme;
+import org.gradle.util.GradleVersion;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.concurrency.AsyncPromise;
 import org.jetbrains.concurrency.Promise;
-import org.jetbrains.plugins.gradle.service.project.GradleBuildSrcProjectsResolver;
 import org.jetbrains.plugins.gradle.service.project.GradleProjectResolverUtil;
 import org.jetbrains.plugins.gradle.service.task.GradleTaskManager;
+import org.jetbrains.plugins.gradle.service.task.VersionSpecificInitScript;
 import org.jetbrains.plugins.gradle.settings.GradleProjectSettings;
 import org.jetbrains.plugins.gradle.settings.GradleSettings;
 import org.jetbrains.plugins.gradle.util.GradleBundle;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
+import org.jetbrains.plugins.gradle.util.GradleModuleData;
 
 import java.io.File;
 import java.io.IOException;
@@ -77,6 +78,57 @@ public class GradleProjectTaskRunner extends ProjectTaskRunner {
                                                                          "    outputs.upToDateWhen { false } \n" +
                                                                          "  } \n" +
                                                                          "}\n";
+
+  @Language("Groovy")
+  private static final String COLLECT_OUTPUT_PATHS_USING_SERVICES_INIT_SCRIPT_TEMPLATE = "import org.gradle.tooling.events.OperationCompletionListener\n" +
+                                                                                         "import org.gradle.tooling.events.FinishEvent\n" +
+                                                                                         "import org.gradle.api.services.BuildService\n" +
+                                                                                         "import org.gradle.api.services.BuildServiceParameters\n" +
+                                                                                         "import org.gradle.util.GradleVersion\n" +
+                                                                                         "import org.gradle.api.Task\n" +
+                                                                                         "\n" +
+                                                                                         "def outputFile = new File(\"%s\")\n" +
+                                                                                         "\n" +
+                                                                                         "abstract class OutputPathCollectorService\n" +
+                                                                                         "        implements BuildService<OutputPathCollectorService.Params>, AutoCloseable {\n" +
+                                                                                         "\n" +
+                                                                                         "    interface Params extends BuildServiceParameters {\n" +
+                                                                                         "        Property<File> getOutputFile()\n" +
+                                                                                         "    }\n" +
+                                                                                         "\n" +
+                                                                                         "    Set<Task> tasks = new HashSet<Task>()\n" +
+                                                                                         "\n" +
+                                                                                         "    void registerTask(Task t) {\n" +
+                                                                                         "        tasks.add(t)\n" +
+                                                                                         "    }\n" +
+                                                                                         "\n" +
+                                                                                         "    @Override\n" +
+                                                                                         "    void close() throws Exception {\n" +
+                                                                                         "        def outputFile = getParameters().outputFile.get()\n" +
+                                                                                         "        tasks.each { Task task ->\n" +
+                                                                                         "            def state = task.state\n" +
+                                                                                         "            def work = state.didWork\n" +
+                                                                                         "            def fromCache = state.skipped && state.skipMessage == 'FROM-CACHE'\n" +
+                                                                                         "            def hasOutput = task.outputs.hasOutput\n" +
+                                                                                         "            if ((work || fromCache) && hasOutput) {\n" +
+                                                                                         "                task.outputs.files.files.each { outputFile.append(it.path + '\\n') }\n" +
+                                                                                         "            }\n" +
+                                                                                         "        }\n" +
+                                                                                         "    }\n" +
+                                                                                         "}\n" +
+                                                                                         "\n" +
+                                                                                         "Provider<OutputPathCollectorService> provider = gradle.sharedServices.registerIfAbsent(\"outputPathCollectorService\",\n" +
+                                                                                         "        OutputPathCollectorService) { it.parameters.outputFile.set(outputFile)  }\n" +
+                                                                                         "\n" +
+                                                                                         "gradle.taskGraph.whenReady { TaskExecutionGraph tg ->\n" +
+                                                                                         "    tg.allTasks.each { Task t ->\n" +
+                                                                                         "        t.onlyIf {\n" +
+                                                                                         "            provider.get().registerTask(t)\n" +
+                                                                                         "            return true\n" +
+                                                                                         "        }\n" +
+                                                                                         "    }\n" +
+                                                                                         "}\n";
+
   @Language("Groovy")
   private static final String COLLECT_OUTPUT_PATHS_INIT_SCRIPT_TEMPLATE = "def outputFile = new File(\"%s\")\n" +
                                                                           "def effectiveTasks = []\n" +
@@ -112,8 +164,13 @@ public class GradleProjectTaskRunner extends ProjectTaskRunner {
     List<Module> modulesOfFiles = addModulesBuildTasks(taskMap.get(ModuleFilesBuildTask.class), buildTasksMap, initScripts);
     addArtifactsBuildTasks(taskMap.get(ProjectModelBuildTask.class), cleanTasksMap, buildTasksMap);
 
-    // TODO send a message if nothing to build
     Set<String> rootPaths = buildTasksMap.keySet();
+    if (rootPaths.isEmpty()) {
+      LOG.warn("Nothing will be run for: " + Arrays.toString(tasks));
+      resultPromise.setResult(TaskRunnerResults.SUCCESS);
+      return resultPromise;
+    }
+
     AtomicInteger successCounter = new AtomicInteger();
     AtomicInteger errorCounter = new AtomicInteger();
 
@@ -135,15 +192,19 @@ public class GradleProjectTaskRunner extends ProjectTaskRunner {
         if (successes + errors == rootPaths.size()) {
           if (!project.isDisposed()) {
             try {
-              Set<String> affectedRoots = getAffectedOutputRoots(
-                outputPathsFile, context, modulesToBuild, modulesOfResourcesToBuild, modulesOfFiles);
-              if (!affectedRoots.isEmpty()) {
-                if (context.isCollectionOfGeneratedFilesEnabled()) {
-                  context.addDirtyOutputPathsProvider(() -> affectedRoots);
+              if (GradleImprovedHotswapDetection.isEnabled()) {
+                GradleImprovedHotswapDetection.processInitScriptOutput(context, outputPathsFile);
+              } else {
+                Set<String> affectedRoots = getAffectedOutputRoots(
+                  outputPathsFile, context, modulesToBuild, modulesOfResourcesToBuild, modulesOfFiles);
+                if (!affectedRoots.isEmpty()) {
+                  if (context.isCollectionOfGeneratedFilesEnabled()) {
+                    context.addDirtyOutputPathsProvider(() -> affectedRoots);
+                  }
+                  // refresh on output roots is required in order for the order enumerator to see all roots via VFS
+                  // have to refresh in case of errors too, because run configuration may be set to ignore errors
+                  CompilerUtil.refreshOutputRoots(affectedRoots);
                 }
-                // refresh on output roots is required in order for the order enumerator to see all roots via VFS
-                // have to refresh in case of errors too, because run configuration may be set to ignore errors
-                CompilerUtil.refreshOutputRoots(affectedRoots);
               }
             }
             finally {
@@ -154,14 +215,23 @@ public class GradleProjectTaskRunner extends ProjectTaskRunner {
           }
           resultPromise.setResult(errors > 0 ? TaskRunnerResults.FAILURE : TaskRunnerResults.SUCCESS);
         }
+        else {
+          if (successes + errors > rootPaths.size()) {
+            LOG.error("Unexpected callback!");
+          }
+        }
       }
     };
 
     String gradleVmOptions = GradleSettings.getInstance(project).getGradleVmOptions();
     for (String rootProjectPath : rootPaths) {
       Collection<String> buildTasks = buildTasksMap.get(rootProjectPath);
-      if (buildTasks.isEmpty()) continue;
       Collection<String> cleanTasks = cleanTasksMap.get(rootProjectPath);
+      if (buildTasks.isEmpty() && cleanTasks.isEmpty()) {
+        taskCallback.onSuccess();
+        LOG.warn("Nothing will be run for: " + Arrays.toString(tasks) + " at '" + rootProjectPath + "'");
+        continue;
+      }
 
       ExternalSystemTaskExecutionSettings settings = new ExternalSystemTaskExecutionSettings();
 
@@ -177,7 +247,6 @@ public class GradleProjectTaskRunner extends ProjectTaskRunner {
       settings.setExecutionName(executionName);
       settings.setExternalProjectPath(rootProjectPath);
       settings.setTaskNames(ContainerUtil.collect(ContainerUtil.concat(cleanTasks, buildTasks).iterator()));
-      //settings.setScriptParameters(scriptParameters);
       settings.setVmOptions(gradleVmOptions);
       settings.setExternalSystemIdString(GradleConstants.SYSTEM_ID.getId());
 
@@ -186,8 +255,26 @@ public class GradleProjectTaskRunner extends ProjectTaskRunner {
 
       Collection<String> scripts = initScripts.getModifiable(rootProjectPath);
       if (outputPathsFile != null && context.isCollectionOfGeneratedFilesEnabled()) {
-        scripts.add(String.format(COLLECT_OUTPUT_PATHS_INIT_SCRIPT_TEMPLATE, FileUtil.toCanonicalPath(outputPathsFile.getAbsolutePath())));
+        String outputFilePath = FileUtil.toCanonicalPath(outputPathsFile.getAbsolutePath());
+        GradleVersion v68 = GradleVersion.version("6.8");
+
+        String initScript;
+        String initScriptUsingService;
+
+        if (GradleImprovedHotswapDetection.isEnabled()) {
+          initScript = GradleImprovedHotswapDetection.getInitScript(outputPathsFile);
+          initScriptUsingService = GradleImprovedHotswapDetection.getInitScriptUsingService(outputPathsFile);
+        } else {
+          initScript = String.format(COLLECT_OUTPUT_PATHS_INIT_SCRIPT_TEMPLATE, outputFilePath);
+          initScriptUsingService = String.format(COLLECT_OUTPUT_PATHS_USING_SERVICES_INIT_SCRIPT_TEMPLATE, outputFilePath);
+        }
+
+        var simple = new VersionSpecificInitScript(initScript, "ijpathcollect", v -> v.compareTo(v68) < 0);
+        var services = new VersionSpecificInitScript(initScriptUsingService, "ijpathcollect", v -> v.compareTo(v68) >= 0);
+
+        userData.putUserData(GradleTaskManager.VERSION_SPECIFIC_SCRIPTS_KEY, Arrays.asList(simple, services));
       }
+
       userData.putUserData(GradleTaskManager.INIT_SCRIPT_KEY, join(scripts, System.lineSeparator()));
       userData.putUserData(GradleTaskManager.INIT_SCRIPT_PREFIX_KEY, executionName);
 
@@ -294,7 +381,6 @@ public class GradleProjectTaskRunner extends ProjectTaskRunner {
 
     List<Module> affectedModules = new SmartList<>();
     Map<Module, String> rootPathsMap = FactoryMap.create(module -> notNullize(resolveProjectPath(module)));
-    final CachedModuleDataFinder moduleDataFinder = new CachedModuleDataFinder();
     for (ProjectTask projectTask : projectTasks) {
       if (!(projectTask instanceof ModuleBuildTask)) continue;
 
@@ -302,29 +388,34 @@ public class GradleProjectTaskRunner extends ProjectTaskRunner {
       collectAffectedModules(affectedModules, moduleBuildTask);
 
       Module module = moduleBuildTask.getModule();
-      final String rootProjectPath = rootPathsMap.get(module);
+      String rootProjectPath = rootPathsMap.get(module);
       if (isEmpty(rootProjectPath)) continue;
 
       final String projectId = getExternalProjectId(module);
       if (projectId == null) continue;
-      final String externalProjectPath = getExternalProjectPath(module);
-      if (externalProjectPath == null || endsWith(externalProjectPath, "buildSrc")) continue;
+      String externalProjectPath = getExternalProjectPath(module);
+      if (externalProjectPath == null) continue;
 
-      final DataNode<? extends ModuleData> moduleDataNode = moduleDataFinder.findMainModuleData(module);
-      if (moduleDataNode == null) continue;
+      GradleModuleData gradleModuleData = CachedModuleDataFinder.getGradleModuleData(module);
+      if (gradleModuleData == null) continue;
+
+      boolean isGradleProjectDirUsedToRunTasks = gradleModuleData.getDirectoryToRunTask().equals(gradleModuleData.getGradleProjectDir());
+      if (!isGradleProjectDirUsedToRunTasks) {
+        rootProjectPath = gradleModuleData.getDirectoryToRunTask();
+      }
 
       // all buildSrc runtime projects will be built by gradle implicitly
-      if (Boolean.parseBoolean(moduleDataNode.getData().getProperty(GradleBuildSrcProjectsResolver.BUILD_SRC_MODULE_PROPERTY))) {
+      if (gradleModuleData.isBuildSrcModule()) {
         continue;
       }
 
-      String gradlePath = GradleProjectResolverUtil.getGradlePath(module);
-      if (gradlePath == null) continue;
-      String taskPathPrefix = endsWithChar(gradlePath, ':') ? gradlePath : (gradlePath + ':');
+      String gradlePath = gradleModuleData.getGradlePath();
+      List<TaskData> taskDataList =
+        ContainerUtil.mapNotNull(gradleModuleData.findAll(ProjectKeys.TASK), taskData -> taskData.isInherited() ? null : taskData);
+      if (projectTasks.isEmpty()) continue;
 
-      List<String> gradleModuleTasks = ContainerUtil.mapNotNull(
-        findAll(moduleDataNode, ProjectKeys.TASK), node ->
-          node.getData().isInherited() ? null : trimStart(node.getData().getName(), taskPathPrefix));
+      String taskPathPrefix = trimEnd(gradleModuleData.getFullGradlePath(), ":") + ":";
+      List<String> gradleModuleTasks = ContainerUtil.map(taskDataList, data -> trimStart(data.getName(), taskPathPrefix));
 
       Collection<String> projectInitScripts = initScripts.getModifiable(rootProjectPath);
       Collection<String> buildRootTasks = buildTasksMap.getModifiable(rootProjectPath);

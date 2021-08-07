@@ -29,4 +29,13 @@ public class DataFlowInspection16Test extends DataFlowInspectionTestCase {
   public void testRecordAccessorStability() { doTest(); }
   public void testSealedClassCast() { doTest(); }
   public void testCastToSealedInterface() { doTest(); }
+  public void testRecordAccessorContainerAnnotation() {
+    DataFlowInspectionTest.addJavaxNullabilityAnnotations(myFixture);
+    myFixture.addClass("package foo;" +
+                       "import static java.lang.annotation.ElementType.*;" +
+                       "@javax.annotation.meta.TypeQualifierDefault({PARAMETER, METHOD}) " +
+                       "@javax.annotation.Nonnull " +
+                       "public @interface NonnullByDefault {}");
+    doTest(); 
+  }
 }

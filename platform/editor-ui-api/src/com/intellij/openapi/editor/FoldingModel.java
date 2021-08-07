@@ -119,4 +119,20 @@ public interface FoldingModel {
    *                                  of editor will be used as an anchor instead). If {@code false}, no scrolling adjustment will be done.
    */
   void runBatchFoldingOperation(@NotNull Runnable operation, boolean allowMovingCaret, boolean keepRelativeCaretPosition);
+
+  /**
+   * Creates a fold region with custom representation (defined by the provided renderer). Created region spans whole document lines, and
+   * always remains in a collapsed state (it can be removed, but not expanded).
+   *
+   * @param startLine starting document line in a target line range to fold (inclusive)
+   * @param endLine ending document line in a target line range to fold (inclusive)
+   * @param renderer Renderer defining the representation of fold region (size and rendered content). One renderer can be re-used for
+   *                 multiple fold regions.
+   * @return resulting fold region, or {@code null} if it cannot be created (e.g. due to unsupported overlapping with already existing
+   * regions)
+   */
+  @ApiStatus.Experimental
+  default @Nullable CustomFoldRegion addCustomLinesFolding(int startLine, int endLine, @NotNull CustomFoldRegionRenderer renderer) {
+    return null;
+  }
 }

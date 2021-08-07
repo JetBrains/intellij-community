@@ -50,7 +50,7 @@ public final class TargetElementUtilBase {
   public static int adjustOffset(@Nullable PsiFile file, @NotNull Document document, final int offset) {
     CharSequence text = document.getCharsSequence();
     int correctedOffset = offset;
-    int textLength = document.getTextLength();
+    int textLength = text.length();
     if (offset >= textLength) {
       correctedOffset = textLength - 1;
     }
@@ -246,19 +246,16 @@ public final class TargetElementUtilBase {
                                                  @NotNull Editor editor,
                                                  @Nullable PsiElement leafElement) {
     final PsiElement referenceOrReferencedElement = getReferenceOrReferencedElement(file, editor, flags, offset);
-    //if (referenceOrReferencedElement == null) {
-    //  return getReferenceOrReferencedElement(file, editor, flags, offset);
-    //}
     if (isAcceptableReferencedElement(leafElement, referenceOrReferencedElement)) {
       return referenceOrReferencedElement;
     }
     return null;
   }
 
-  static boolean isAcceptableReferencedElement(@Nullable PsiElement element, @Nullable PsiElement referenceOrReferencedElement) {
+  private static boolean isAcceptableReferencedElement(@Nullable PsiElement element, @Nullable PsiElement referenceOrReferencedElement) {
     if (referenceOrReferencedElement == null || !referenceOrReferencedElement.isValid()) return false;
 
-    TargetElementEvaluatorEx2 evaluator = element != null ? getElementEvaluatorsEx2(element.getLanguage()) : null;
+    TargetElementEvaluatorEx2 evaluator = element == null ? null : getElementEvaluatorsEx2(element.getLanguage());
     if (evaluator != null) {
       ThreeState answer = evaluator.isAcceptableReferencedElement(element, referenceOrReferencedElement);
       if (answer == ThreeState.YES) return true;

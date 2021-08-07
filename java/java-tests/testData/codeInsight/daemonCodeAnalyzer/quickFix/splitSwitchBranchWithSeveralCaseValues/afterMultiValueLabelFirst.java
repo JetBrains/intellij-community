@@ -5,7 +5,7 @@ class C {
             case 2:
                 System.out.println("hello");
                 break;
-            <caret>case 1:
+            case 1:
                 System.out.println("hello");
                 break;
         }

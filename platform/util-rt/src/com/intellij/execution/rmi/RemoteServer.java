@@ -19,7 +19,6 @@ import com.intellij.execution.rmi.ssl.SslKeyStore;
 import com.intellij.execution.rmi.ssl.SslSocketFactory;
 import com.intellij.execution.rmi.ssl.SslTrustStore;
 import com.intellij.execution.rmi.ssl.SslUtil;
-import com.intellij.openapi.util.Pair;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -34,9 +33,7 @@ import java.net.Inet6Address;
 import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.rmi.NotBoundException;
 import java.rmi.Remote;
-import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
 import java.rmi.server.ExportException;
@@ -45,10 +42,13 @@ import java.rmi.server.UnicastRemoteObject;
 import java.security.Security;
 import java.util.Hashtable;
 import java.util.Random;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class RemoteServer {
 
   public static final String SERVER_HOSTNAME = "java.rmi.server.hostname";
+  private static final Pattern REF_ENDPOINT_PATTERN = Pattern.compile("endpoint:\\[.*:(\\d+)]");
 
   static {
     // Radar #5755208: Command line Java applications need a way to launch without a Dock icon.
@@ -58,14 +58,11 @@ public class RemoteServer {
   private static Remote ourRemote;
 
   protected static void start(Remote remote) throws Exception {
-    start(remote, false, true);
+    start(remote, true);
   }
 
-  /**
-   * @param requireKnownPort when true, the port for the exported Remote will be written to stdout together with serverPort/name pair
-   */
   @SuppressWarnings("UseOfSystemOutOrSystemErr")
-  protected static void start(Remote remote, boolean requireKnownPort, boolean localHostOnly) throws Exception {
+  protected static void start(Remote remote, boolean localHostOnly) throws Exception {
     setupRMI(localHostOnly);
     banJNDI();
     setupSSL();
@@ -94,25 +91,20 @@ public class RemoteServer {
     }
 
     try {
-      Remote stub;
-      String portSuffix;
-      if (requireKnownPort) {
-        Pair<Remote, Integer> exported = export(ourRemote);
-        stub = exported.first;
-        portSuffix = "#" + exported.second;
-      }
-      else {
-        stub = UnicastRemoteObject.exportObject(ourRemote, 0);
-        portSuffix = "";
-      }
+      Remote stub = UnicastRemoteObject.exportObject(ourRemote, 0);
       String name = remote.getClass().getSimpleName() + Integer.toHexString(stub.hashCode());
       registry.bind(name, stub);
+
+      // the first used port will be reused for all further exported objects,
+      // unless they're exported with explicit port other than 0, or with custom socket factories
+      Matcher matcher = REF_ENDPOINT_PATTERN.matcher(stub.toString());
+      String servicesPort = matcher.find() ? matcher.group(1) : "0";
 
       IdeaWatchdog watchdog = new IdeaWatchdogImpl();
       Remote watchdogStub = UnicastRemoteObject.exportObject(watchdog, 0);
       registry.bind(IdeaWatchdog.BINDING_NAME, watchdogStub);
-      String id = port + "/" + name + portSuffix;
-      System.out.println("Port/ID: " + id);
+
+      System.out.println("Port/ServicesPort/ID: " + (port + "/" + servicesPort + "/" + name));
       System.out.println();
 
       spinUntilWatchdogAlive(watchdog);
@@ -133,22 +125,6 @@ public class RemoteServer {
       }
       if (!watchdog.isAlive()) {
         System.exit(1);
-      }
-    }
-  }
-
-  private static Pair<Remote, Integer> export(Remote toExport) {
-    //[Mihail Muhin] wasn't able to find a better way to know the port. A good alternative would be exporting to port 0 and extracting
-    // serving port number after, but there seem to be no way to extract port for a Remote
-    int port;
-    for (Random random = new Random(); ; ) {
-      port = random.nextInt(0xffff);
-      if (port < 4000) continue;
-      try {
-        Remote remote = UnicastRemoteObject.exportObject(toExport, port);
-        return new Pair<Remote, Integer>(remote, port);
-      }
-      catch (RemoteException ignored) {
       }
     }
   }
@@ -192,6 +168,7 @@ public class RemoteServer {
   }
 
   private static void setupSSL() {
+    setupDisabledAlgorithms();
     boolean caCert = System.getProperty(SslUtil.SSL_CA_CERT_PATH) != null;
     boolean clientCert = System.getProperty(SslUtil.SSL_CLIENT_CERT_PATH) != null;
     boolean clientKey = System.getProperty(SslUtil.SSL_CLIENT_KEY_PATH) != null;
@@ -208,6 +185,15 @@ public class RemoteServer {
     }
   }
 
+  private static void setupDisabledAlgorithms() {
+    passSecurityProperty("jdk.certpath.disabledAlgorithms");
+    passSecurityProperty("jdk.tls.disabledAlgorithms");
+  }
+
+  private static void passSecurityProperty(String propertyName) {
+    String value = System.getProperty(propertyName);
+    if (value != null) Security.setProperty(propertyName, value);
+  }
 
   private static String getListenAddress(boolean localHostOnly) {
     if (localHostOnly) {

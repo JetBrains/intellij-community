@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2015 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2021 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package com.siyeh.ig.resources;
 
+import com.intellij.codeInspection.ui.InspectionOptionsPanel;
 import com.intellij.codeInspection.ui.ListTable;
 import com.intellij.codeInspection.ui.ListWrappingTableModel;
 import com.intellij.openapi.util.InvalidDataException;
@@ -27,7 +28,6 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -52,14 +52,19 @@ public class IOResourceInspection extends ResourceInspection {
   }
 
   @Override
-  public JComponent createOptionsPanel() {
-    final JComponent panel = new JPanel(new BorderLayout());
+  public @NotNull JComponent createOptionsPanel() {
+    final InspectionOptionsPanel panel = new InspectionOptionsPanel();
     final ListTable table =
       new ListTable(new ListWrappingTableModel(ignoredTypes, InspectionGadgetsBundle.message("ignored.io.resource.types")));
     final JPanel tablePanel =
-      UiUtils.createAddRemoveTreeClassChooserPanel(table, InspectionGadgetsBundle.message("choose.io.resource.type.to.ignore"), IO_TYPES);
-    panel.add(tablePanel, BorderLayout.CENTER);
-    panel.add(super.createOptionsPanel(), BorderLayout.SOUTH);
+      UiUtils.createAddRemoveTreeClassChooserPanel(
+        InspectionGadgetsBundle.message("choose.io.resource.type.to.ignore"),
+        InspectionGadgetsBundle.message("ignored.io.resource.types.label"),
+        table,
+        true,
+        IO_TYPES);
+    panel.addGrowing(tablePanel);
+    panel.add(super.createOptionsPanel());
     return panel;
   }
 

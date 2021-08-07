@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.components
 
 import com.intellij.openapi.diagnostic.logger
@@ -8,15 +8,17 @@ import com.intellij.util.xmlb.Accessor
 import com.intellij.util.xmlb.SerializationFilter
 import com.intellij.util.xmlb.annotations.Transient
 import org.jetbrains.annotations.ApiStatus
+import java.lang.invoke.MethodHandles
+import java.lang.invoke.MethodType
 import java.nio.charset.Charset
-import java.util.*
 import java.util.concurrent.atomic.AtomicLongFieldUpdater
-import kotlin.collections.ArrayList
-import kotlin.collections.LinkedHashMap
 
 internal val LOG = logger<BaseState>()
 
-private val factory: StatePropertyFactory = ServiceLoader.load(StatePropertyFactory::class.java, BaseState::class.java.classLoader).first()
+private val factory: StatePropertyFactory = run {
+  val implClass = BaseState::class.java.classLoader.loadClass("com.intellij.serialization.stateProperties.StatePropertyFactoryImpl")
+  MethodHandles.lookup().findConstructor(implClass, MethodType.methodType(Void.TYPE)).invoke() as StatePropertyFactory
+}
 
 abstract class BaseState : SerializationFilter, ModificationTracker {
   companion object {
@@ -68,7 +70,7 @@ abstract class BaseState : SerializationFilter, ModificationTracker {
    * Collection considered as default if empty. It is *your* responsibility to call `incrementModificationCount` on collection modification.
    * You cannot set value to a new collection - on set current collection is cleared and new collection is added to current.
    */
-  protected fun <E> treeSet(): StoredPropertyBase<MutableSet<E>> where E : Comparable<E>, E : BaseState = addProperty(factory.treeSet<E>())
+  protected fun <E> treeSet(): StoredPropertyBase<MutableSet<E>> where E : Comparable<E>, E : BaseState = addProperty(factory.treeSet())
 
   /**
    * Charset is an immutable, so, it is safe to use it as default value.
@@ -88,11 +90,11 @@ abstract class BaseState : SerializationFilter, ModificationTracker {
   /**
    * Not-null list. Initialized as SmartList.
    */
-  protected fun <T : Any> list(): StoredPropertyBase<MutableList<T>> = addProperty(factory.list<T>())
+  protected fun <T : Any> list(): StoredPropertyBase<MutableList<T>> = addProperty(factory.list())
 
-  protected fun <K : Any, V: Any> map(): StoredPropertyBase<MutableMap<K, V>> = addProperty(factory.map<K, V>(null))
+  protected fun <K : Any, V: Any> map(): StoredPropertyBase<MutableMap<K, V>> = addProperty(factory.map(null))
 
-  protected fun <K : Any, V: Any> linkedMap(): StoredPropertyBase<MutableMap<K, V>> = addProperty(factory.map<K, V>(LinkedHashMap()))
+  protected fun <K : Any, V: Any> linkedMap(): StoredPropertyBase<MutableMap<K, V>> = addProperty(factory.map(LinkedHashMap()))
 
   /**
    * Empty string is always normalized to null.
@@ -164,16 +166,7 @@ abstract class BaseState : SerializationFilter, ModificationTracker {
   override fun hashCode(): Int = properties.hashCode()
 
   override fun toString(): String {
-    if (properties.isEmpty()) {
-      return ""
-    }
-
-    val builder = StringBuilder()
-    for (property in properties) {
-      builder.append(property.toString()).append(" ")
-    }
-    builder.setLength(builder.length - 1)
-    return builder.toString()
+    return properties.joinToString(" ")
   }
 
   @JvmOverloads

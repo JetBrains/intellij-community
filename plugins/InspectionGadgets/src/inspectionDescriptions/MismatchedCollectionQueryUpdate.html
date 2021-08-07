@@ -1,14 +1,32 @@
 <html>
 <body>
-Reports collection fields or variables whose contents are either queried and
-not updated, or updated and not queried. Such mismatched queries and updates are pointless, and may indicate
-either dead code or a typographical error.
+Reports collections whose contents are either queried and
+not updated, or updated and not queried.
 <!-- tooltip end -->
 <p>
-Use the tables below to specify which methods are update and/or query methods. The names are matched with
-the beginning of the method name. Query methods which return their result are automatically detected, only
-query methods which return their result in an argument (e.g. write to OutputStream) need to be specified.
+  Such inconsistent queries and updates are pointless and may indicate
+  either dead code or a typo.
+</p>
 <p>
-
+  Use the inspection settings to specify name patterns that correspond to update/query methods.
+  Query methods that return an element are automatically detected, and only
+  those that write data to an output parameter (for example, an <code>OutputStream</code>) need to be specified.
+<p>
+<p><b>Example:</b></p>
+<p>Suppose you have your custom <code>FixedStack</code> class with method <code>store()</code>:
+<pre>
+  public class FixedStack&lt;T&gt; extends Collection&lt;T&gt; {
+    public T store(T t) {
+      // implementation
+    }
+  }
+</pre>
+<p>You can add <code>store</code> to the update methods table in order to report mismatched queries like:
+<pre>
+  void test(int i) {
+    FixedStack&lt;Integer&gt; stack = new FixedStack&lt;&gt;();
+    stack.store(i);
+  }
+</pre>
 </body>
 </html>

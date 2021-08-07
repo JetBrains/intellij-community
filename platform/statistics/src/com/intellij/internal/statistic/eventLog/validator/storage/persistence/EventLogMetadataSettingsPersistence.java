@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.statistic.eventLog.validator.storage.persistence;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -11,10 +11,7 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 @State(name = "EventLogWhitelist", storages = @Storage(StoragePathMacros.CACHE_FILE))
 public class EventLogMetadataSettingsPersistence implements PersistentStateComponent<Element> {
@@ -32,22 +29,43 @@ public class EventLogMetadataSettingsPersistence implements PersistentStateCompo
   private static final String OPTION = "option";
   private static final String OPTION_NAME = "name";
   private static final String OPTION_VALUE = "value";
+  private final Object myOptionsLock = new Object();
 
   public static EventLogMetadataSettingsPersistence getInstance() {
     return ApplicationManager.getApplication().getService(EventLogMetadataSettingsPersistence.class);
   }
 
-  @Nullable
-  public String getOptionValue(@NotNull String recorderId, @NotNull String name) {
-    EventLogExternalOptions options = myOptions.get(recorderId);
-    return options != null ? options.get(name) : null;
+  public @NotNull Map<String, String> getOptions(@NotNull String recorderId) {
+    synchronized (myOptionsLock) {
+      EventLogExternalOptions options = myOptions.get(recorderId);
+      if (options == null) return Collections.emptyMap();
+      return options.getOptions();
+    }
   }
 
-  public void setOptionValue(@NotNull String recorderId, @NotNull String name, @NotNull String value) {
-    if (!myOptions.containsKey(recorderId)) {
-      myOptions.put(recorderId, new EventLogExternalOptions());
+  public void setOptions(@NotNull String recorderId, Map<String, String> options) {
+    synchronized (myOptionsLock) {
+      if (!myOptions.containsKey(recorderId)) {
+        myOptions.put(recorderId, new EventLogExternalOptions());
+      }
+      myOptions.get(recorderId).putOptions(options);
     }
-    myOptions.get(recorderId).put(name, value);
+  }
+
+  public @NotNull Map<String, String> updateOptions(@NotNull String recorderId, @NotNull Map<String, String> newOptions) {
+    synchronized (myOptionsLock) {
+      Map<String, String> persistedOptions = getOptions(recorderId);
+      Map<String, String> changedOptions = new HashMap<>();
+      for (Map.Entry<String, String> newOption : newOptions.entrySet()) {
+        String value = persistedOptions.get(newOption.getKey());
+        String newValue = newOption.getValue();
+        if (newValue != null && !StringUtil.equals(value, newValue)) {
+          changedOptions.put(newOption.getKey(), newValue);
+        }
+      }
+      setOptions(recorderId, changedOptions);
+      return changedOptions;
+    }
   }
 
   public long getLastModified(@NotNull String recorderId) {
@@ -89,11 +107,13 @@ public class EventLogMetadataSettingsPersistence implements PersistentStateCompo
       }
     }
 
-    myOptions.clear();
-    for (Element options : element.getChildren(OPTIONS)) {
-      String recorderId = options.getAttributeValue(RECORDER_ID);
-      if (recorderId != null) {
-        myOptions.put(recorderId, new EventLogExternalOptions().deserialize(options));
+    synchronized (myOptionsLock) {
+      myOptions.clear();
+      for (Element options : element.getChildren(OPTIONS)) {
+        String recorderId = options.getAttributeValue(RECORDER_ID);
+        if (recorderId != null) {
+          myOptions.put(recorderId, new EventLogExternalOptions().deserialize(options));
+        }
       }
     }
   }
@@ -151,13 +171,12 @@ public class EventLogMetadataSettingsPersistence implements PersistentStateCompo
   private static class EventLogExternalOptions {
     private final Map<String, String> myOptions = new HashMap<>();
 
-    public void put(@NotNull String key, @NotNull String value) {
-      myOptions.put(key, value);
+    public @NotNull Map<String, String> getOptions() {
+      return new HashMap<>(myOptions);
     }
 
-    @Nullable
-    public String get(@NotNull String key) {
-      return myOptions.get(key);
+    public void putOptions(@NotNull Map<String, String> options) {
+      myOptions.putAll(options);
     }
 
     @NotNull

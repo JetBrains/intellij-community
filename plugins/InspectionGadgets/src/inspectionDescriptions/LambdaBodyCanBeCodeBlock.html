@@ -1,7 +1,11 @@
 <html>
 <body>
-Reports lambdas which body is an expression, e.g. <code>n&nbsp;-&gt;&nbsp;n&nbsp;+&nbsp;1</code>
-<p>The quick fix converts lambda's expression body to a code block, like the following:
+Reports lambdas whose body is an expression and suggests converting expression bodies to code blocks.
+<p>Example:</p>
+<pre><code>
+  n&nbsp;-&gt;&nbsp;n&nbsp;+&nbsp;1
+</code></pre>
+<p>After the quick-fix is applied:</p>
 <pre><code>n -&gt; {
   return n + 1;
 }</code></pre>

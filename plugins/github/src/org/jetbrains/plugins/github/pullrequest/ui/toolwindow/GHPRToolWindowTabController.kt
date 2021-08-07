@@ -7,8 +7,9 @@ interface GHPRToolWindowTabController {
 
   /**
    * Initial view that will be displayed after login and data pre-loading
+   * Only viable options are [GHPRToolWindowViewType.LIST] and [GHPRToolWindowViewType.NEW]
    */
-  var initialView: GHPRToolWindowInitialView
+  var initialView: GHPRToolWindowViewType
 
   val componentController: GHPRToolWindowTabComponentController?
 

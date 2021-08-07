@@ -6,7 +6,6 @@ import com.intellij.ui.paint.PaintUtil.ParityMode;
 import com.intellij.ui.paint.PaintUtil.RoundingMode;
 import com.intellij.ui.scale.ScaleContext;
 import com.intellij.ui.scale.ScaleType;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
@@ -232,7 +231,6 @@ public final class LinePainter2D {
    * @param strokeWidth the stroke width
    * @param valueAA     overrides current {@link RenderingHints#KEY_ANTIALIASING} to {@code valueAA}
    */
-  @ApiStatus.Experimental
   public static void fillPolygon(@NotNull final Graphics2D g,
                                  double @NotNull [] xPoints, double @NotNull [] yPoints,
                                  int nPoints,
@@ -260,7 +258,6 @@ public final class LinePainter2D {
    * @param strokeWidth the stroke width
    * @param valueAA     overrides current {@link RenderingHints#KEY_ANTIALIASING} to {@code valueAA}
    */
-  @ApiStatus.Experimental
   public static void paintPolygon(@NotNull Graphics2D g,
                                   double @NotNull [] xPoints, double @NotNull [] yPoints,
                                   int nPoints,

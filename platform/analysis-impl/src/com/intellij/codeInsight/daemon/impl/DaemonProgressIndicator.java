@@ -39,14 +39,15 @@ public class DaemonProgressIndicator extends AbstractProgressIndicatorBase imple
     }
   }
 
-  public void stopIfRunning() {
+  // return true if was stopped
+  boolean stopIfRunning() {
     synchronized (getLock()) {
       if (isRunning()) {
         stop();
+        return true;
       }
-      else {
-        cancel();
-      }
+      cancel();
+      return false;
     }
   }
 

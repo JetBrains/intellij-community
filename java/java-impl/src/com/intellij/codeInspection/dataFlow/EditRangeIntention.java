@@ -7,6 +7,7 @@ import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.intention.AddAnnotationPsiFix;
 import com.intellij.codeInsight.intention.LowPriorityAction;
 import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
+import com.intellij.codeInspection.dataFlow.jvm.JvmPsiRangeSetUtil;
 import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet;
 import com.intellij.java.JavaBundle;
 import com.intellij.openapi.editor.Editor;
@@ -58,14 +59,14 @@ public class EditRangeIntention extends BaseIntentionAction implements LowPriori
     } else {
       type = null;
     }
-    return LongRangeSet.fromType(type);
+    return JvmPsiRangeSetUtil.typeRange(type);
   }
 
   @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
     final PsiModifierListOwner owner = getTarget(editor, file);
     if (owner != null) {
-      boolean hasRange = !LongRangeSet.fromPsiElement(owner).equals(LongRangeSet.all());
+      boolean hasRange = !JvmPsiRangeSetUtil.fromPsiElement(owner).equals(LongRangeSet.all());
       String name = ((PsiNamedElement)owner).getName();
       setText(hasRange ? JavaBundle.message("intention.text.edit.range.of.0", name) : JavaBundle.message("intention.text.add.range.to.0", name));
       return true;
@@ -77,7 +78,7 @@ public class EditRangeIntention extends BaseIntentionAction implements LowPriori
   public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
     final PsiModifierListOwner owner = getTarget(editor, file);
     assert owner != null;
-    LongRangeSet existingRange = LongRangeSet.fromPsiElement(owner);
+    LongRangeSet existingRange = JvmPsiRangeSetUtil.fromPsiElement(owner);
     LongRangeSet fromType = rangeFromType(owner);
     assert fromType != null;
 
@@ -114,17 +115,17 @@ public class EditRangeIntention extends BaseIntentionAction implements LowPriori
                                             JBTextField minText,
                                             JBTextField maxText) {
     JPanel panel = new JPanel(new GridBagLayout());
-    
+
     GridBag c = new GridBag().setDefaultAnchor(GridBagConstraints.WEST).setDefaultFill(GridBagConstraints.HORIZONTAL)
       .setDefaultInsets(JBUI.insets(2)).setDefaultWeightX(0, 1.0).setDefaultWeightX(1, 3.0).setDefaultWeightY(1.0);
     panel.add(Messages.configureMessagePaneUi(new JTextPane(), JavaBundle.message("edit.range.dialog.message")), c.nextLine().next().coverLine());
-    
+
     JLabel fromLabel = new JLabel(JavaBundle.message("label.from.inclusive"));
     fromLabel.setDisplayedMnemonic('f');
     fromLabel.setLabelFor(minText);
     panel.add(fromLabel, c.nextLine().next());
     panel.add(minText, c.next());
-    
+
     JLabel toLabel = new JLabel(JavaBundle.message("label.to.inclusive"));
     toLabel.setDisplayedMnemonic('t');
     toLabel.setLabelFor(maxText);

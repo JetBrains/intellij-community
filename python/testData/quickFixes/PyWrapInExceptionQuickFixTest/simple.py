@@ -1,1 +1,0 @@
-raise <error descr="Raising a string exception">"Some<caret> String"</error>

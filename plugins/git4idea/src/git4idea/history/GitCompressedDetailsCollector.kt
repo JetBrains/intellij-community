@@ -4,7 +4,6 @@ package git4idea.history
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.changes.Change
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.util.PathUtil
 import com.intellij.vcs.log.VcsLogObjectsFactory
 import com.intellij.vcs.log.impl.VcsLogIndexer
 import git4idea.log.GitCompressedDetails
@@ -51,7 +50,7 @@ internal class CompressedRecordBuilder(private val root: VirtualFile,
   }
 
   private fun addParents(path: String) {
-    var parentPath = PathUtil.getParentPath(path)
+    var parentPath = getParentPath(path)
     var parentPathId = pathsEncoder.encode(root, parentPath, true)
 
     while (!parents.contains(parentPathId)) {
@@ -59,9 +58,18 @@ internal class CompressedRecordBuilder(private val root: VirtualFile,
 
       parents.add(parentPathId)
 
-      parentPath = PathUtil.getParentPath(parentPath)
+      parentPath = getParentPath(parentPath)
       parentPathId = pathsEncoder.encode(root, parentPath, true)
     }
+  }
+
+  private fun getParentPath(path: String): String {
+    if (path.isEmpty()) return ""
+    val end = path.lastIndexOf('/')
+    if (end == -1 || end == 0) {
+      return ""
+    }
+    return path.substring(0, end)
   }
 
   override fun build(options: MutableMap<GitLogParser.GitLogOption, String>, supportsRawBody: Boolean): GitCompressedRecord {

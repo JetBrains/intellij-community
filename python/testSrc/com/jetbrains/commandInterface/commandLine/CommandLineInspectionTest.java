@@ -32,7 +32,7 @@ public final class CommandLineInspectionTest extends PyTestCase {
   @Override
   public void setUp() throws Exception {
     super.setUp();
-    CommandTestTools.initFileType();
+    CommandTestTools.initFileType(getTestRootDisposable());
   }
 
   /**

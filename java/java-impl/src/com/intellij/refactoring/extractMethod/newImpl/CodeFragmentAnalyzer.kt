@@ -3,13 +3,16 @@ package com.intellij.refactoring.extractMethod.newImpl
 
 import com.intellij.codeInsight.ExceptionUtil
 import com.intellij.codeInsight.Nullability
-import com.intellij.codeInspection.dataFlow.*
+import com.intellij.codeInspection.dataFlow.DfaNullability
+import com.intellij.codeInspection.dataFlow.StandardDataFlowRunner
+import com.intellij.codeInspection.dataFlow.interpreter.RunnerResult
+import com.intellij.codeInspection.dataFlow.java.JavaDfaListener
+import com.intellij.codeInspection.dataFlow.memory.DfaMemoryState
 import com.intellij.codeInspection.dataFlow.value.DfaValue
 import com.intellij.java.refactoring.JavaRefactoringBundle
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.*
 import com.intellij.psi.controlFlow.*
-import com.intellij.psi.controlFlow.ControlFlow
 import com.intellij.psi.controlFlow.ControlFlowUtil.DEFAULT_EXIT_STATEMENTS_CLASSES
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.PsiUtil
@@ -179,9 +182,8 @@ class CodeFragmentAnalyzer(val elements: List<PsiElement>) {
 
     val gotoInstructions = (flowRange.first until flowRange.last)
       .asSequence()
-      .filter { offset -> isNonLocalJump(offset) }
+      .filter { offset -> isNonLocalJump(offset) && isInstructionReachable(offset) }
       .distinctBy { offset -> (flow.instructions[offset] as BranchingInstruction).offset }
-      .filter { offset -> isInstructionReachable(offset) }
       .toList()
 
     val jumpPoints = gotoInstructions
@@ -238,25 +240,20 @@ class CodeFragmentAnalyzer(val elements: List<PsiElement>) {
 
       if (expressionSet.isEmpty()) return Nullability.UNKNOWN
       val fragmentToAnalyze = ControlFlowUtil.findCodeFragment(expressionSet.first())
-      val dfaRunner = DataFlowRunner(fragmentToAnalyze.project)
+      val dfaRunner = StandardDataFlowRunner(fragmentToAnalyze.project)
 
       var nullability = DfaNullability.NOT_NULL
 
-      class Visitor : StandardInstructionVisitor() {
-        override fun beforeExpressionPush(value: DfaValue, expr: PsiExpression, range: TextRange?, state: DfaMemoryState) {
+      class Listener : JavaDfaListener {
+        override fun beforeExpressionPush(value: DfaValue, expr: PsiExpression, state: DfaMemoryState) {
           if (expr in expressionSet) {
-            val expressionNullability = when {
-              state.isNotNull(value) -> DfaNullability.NOT_NULL
-              state.isNull(value) -> DfaNullability.NULL
-              else -> DfaNullability.fromDfType(state.getDfType(value))
-            }
+            val expressionNullability = DfaNullability.fromDfType(state.getDfType(value))
             nullability = nullability.unite(expressionNullability)
           }
         }
       }
 
-      val visitor = Visitor()
-      val runnerState = dfaRunner.analyzeMethod(fragmentToAnalyze, visitor)
+      val runnerState = dfaRunner.analyzeMethod(fragmentToAnalyze, Listener())
       return if (runnerState == RunnerResult.OK) {
         DfaNullability.toNullability(nullability)
       } else {

@@ -1,10 +1,11 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.engine;
 
 import com.intellij.debugger.JavaDebuggerBundle;
 import com.intellij.debugger.actions.AsyncStacksToggleAction;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.events.SuspendContextCommandImpl;
+import com.intellij.debugger.impl.DebuggerUtilsAsync;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.debugger.jdi.StackFrameProxyImpl;
 import com.intellij.debugger.jdi.ThreadGroupReferenceProxyImpl;
@@ -23,6 +24,8 @@ import com.intellij.xdebugger.frame.XExecutionStack;
 import com.intellij.xdebugger.frame.XStackFrame;
 import com.intellij.xdebugger.impl.XDebugSessionImpl;
 import com.intellij.xdebugger.settings.XDebuggerSettingsManager;
+import com.jetbrains.jdi.ThreadGroupReferenceImpl;
+import com.jetbrains.jdi.ThreadReferenceImpl;
 import com.sun.jdi.Method;
 import com.sun.jdi.ThreadReference;
 import org.jetbrains.annotations.NotNull;
@@ -32,6 +35,7 @@ import javax.swing.*;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 
 public class JavaExecutionStack extends XExecutionStack {
   private static final Logger LOG = Logger.getInstance(JavaExecutionStack.class);
@@ -48,6 +52,25 @@ public class JavaExecutionStack extends XExecutionStack {
     myDebugProcess = debugProcess;
   }
 
+  private JavaExecutionStack(@NlsContexts.ListItem @NotNull String displayName,
+                             @Nullable Icon icon,
+                             @NotNull ThreadReferenceProxyImpl threadProxy,
+                             @NotNull DebugProcessImpl debugProcess) {
+    super(displayName, icon);
+    myThreadProxy = threadProxy;
+    myDebugProcess = debugProcess;
+  }
+
+  public static CompletableFuture<JavaExecutionStack> create(@NotNull ThreadReferenceProxyImpl threadProxy,
+                                                             @NotNull DebugProcessImpl debugProcess,
+                                                             boolean current) {
+    return calcRepresentationAsync(threadProxy)
+      .thenCombine(calcIconAsync(threadProxy, current),
+                   (@NlsContexts.ListItem var text, var icon) -> {
+                     return new JavaExecutionStack(text, icon, threadProxy, debugProcess);
+                   });
+  }
+
   private static Icon calcIcon(ThreadReferenceProxyImpl threadProxy, boolean current) {
     if (current) {
       return threadProxy.isSuspended() ? AllIcons.Debugger.ThreadCurrent : AllIcons.Debugger.ThreadRunning;
@@ -61,6 +84,39 @@ public class JavaExecutionStack extends XExecutionStack {
     else {
       return AllIcons.Debugger.ThreadRunning;
     }
+  }
+
+  private static CompletableFuture<Icon> calcIconAsync(ThreadReferenceProxyImpl threadProxy, boolean current) {
+    ThreadReference ref = threadProxy.getThreadReference();
+    if (!DebuggerUtilsAsync.isAsyncEnabled() || !(ref instanceof ThreadReferenceImpl)) {
+      return CompletableFuture.completedFuture(calcIcon(threadProxy, current));
+    }
+    ThreadReferenceImpl threadReference = ((ThreadReferenceImpl)ref);
+    if (current) {
+      return calcThreadIconAsync(threadReference, true);
+    }
+    return threadReference.isAtBreakpointAsync().thenCompose(r -> {
+      if (r) {
+        return CompletableFuture.completedFuture(AllIcons.Debugger.ThreadAtBreakpoint);
+      }
+      else {
+        return calcThreadIconAsync(threadReference, false);
+      }
+    });
+  }
+
+  private static CompletableFuture<Icon> calcThreadIconAsync(ThreadReferenceImpl threadReference, boolean current) {
+    return threadReference.isSuspendedAsync().thenApply(suspended -> {
+      if (suspended) {
+        if (current) {
+          return AllIcons.Debugger.ThreadCurrent;
+        }
+        else {
+          return AllIcons.Debugger.ThreadSuspended;
+        }
+      }
+      return AllIcons.Debugger.ThreadRunning;
+    });
   }
 
   @NotNull
@@ -126,7 +182,8 @@ public class JavaExecutionStack extends XExecutionStack {
         if (status == ThreadReference.THREAD_STATUS_ZOMBIE) {
           container.errorOccurred(JavaDebuggerBundle.message("frame.panel.thread.finished"));
         }
-        else if (!myThreadProxy.isCollected() && myDebugProcess.getSuspendManager().isSuspended(myThreadProxy)) {
+        // isCollected is not needed as ObjectCollectedException was handled in status call
+        else if (/*!myThreadProxy.isCollected() && */myDebugProcess.getSuspendManager().isSuspended(myThreadProxy)) {
           if (!(status == ThreadReference.THREAD_STATUS_UNKNOWN) && !(status == ThreadReference.THREAD_STATUS_NOT_STARTED)) {
             try {
               int added = 0;
@@ -287,6 +344,33 @@ public class JavaExecutionStack extends XExecutionStack {
       return JavaDebuggerBundle.message("label.thread.node.in.group", name, thread.uniqueID(), threadStatusText, grname);
     }
     return JavaDebuggerBundle.message("label.thread.node", name, thread.uniqueID(), threadStatusText);
+  }
+
+  private static @NlsContexts.ListItem CompletableFuture<String> calcRepresentationAsync(ThreadReferenceProxyImpl thread) {
+    DebuggerManagerThreadImpl.assertIsManagerThread();
+    ThreadReference ref = thread.getThreadReference();
+    if (!DebuggerUtilsAsync.isAsyncEnabled() || !(ref instanceof ThreadReferenceImpl)) {
+      return CompletableFuture.completedFuture(calcRepresentation(thread));
+    }
+    ThreadReferenceImpl threadReference = ((ThreadReferenceImpl)ref);
+    CompletableFuture<String> nameFuture = threadReference.nameAsync();
+    CompletableFuture<String> groupNameFuture = threadReference.threadGroupAsync().thenCompose(gr -> {
+      if (gr instanceof ThreadGroupReferenceImpl) {
+        return ((ThreadGroupReferenceImpl)gr).nameAsync();
+      }
+      return CompletableFuture.completedFuture(null);
+    });
+    CompletableFuture<String> statusTextFuture = threadReference.statusAsync().thenApply(DebuggerUtilsEx::getThreadStatusText);
+
+    long uniqueID = threadReference.uniqueID();
+    return DebuggerUtilsAsync.reschedule(groupNameFuture).thenCompose(grname -> {
+      return nameFuture.thenCombine(statusTextFuture, (name, threadStatusText) -> {
+        if (grname != null && !"SYSTEM".equalsIgnoreCase(grname)) {
+          return JavaDebuggerBundle.message("label.thread.node.in.group", name, uniqueID, threadStatusText, grname);
+        }
+        return JavaDebuggerBundle.message("label.thread.node", name, uniqueID, threadStatusText);
+      });
+    });
   }
 
   @Override

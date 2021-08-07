@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.dvcs.branch;
 
 import com.intellij.dvcs.DvcsUtil;
@@ -7,13 +7,9 @@ import com.intellij.dvcs.repo.Repository;
 import com.intellij.dvcs.ui.BranchActionGroupPopup;
 import com.intellij.dvcs.ui.DvcsBundle;
 import com.intellij.dvcs.ui.LightActionGroup;
-import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationAction;
 import com.intellij.notification.NotificationType;
-import com.intellij.openapi.actionSystem.ActionGroup;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.ToggleAction;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
@@ -45,7 +41,9 @@ public abstract class DvcsBranchPopup<Repo extends Repository> {
                             @NotNull AbstractRepositoryManager<Repo> repositoryManager,
                             @NotNull DvcsMultiRootBranchConfig<Repo> multiRootBranchConfig,
                             @NotNull DvcsSyncSettings vcsSettings,
-                            @NotNull Condition<AnAction> preselectActionCondition, @Nullable String dimensionKey) {
+                            @NotNull Condition<AnAction> preselectActionCondition,
+                            @Nullable String dimensionKey,
+                            @NotNull DataContext dataContext) {
     myProject = currentRepository.getProject();
     myCurrentRepository = currentRepository;
     myRepositoryManager = repositoryManager;
@@ -57,11 +55,7 @@ public abstract class DvcsBranchPopup<Repo extends Repository> {
                    DvcsBundle.message("branch.popup.vcs.name.branches", myVcs.getDisplayName()) :
                    DvcsBundle.message("branch.popup.vcs.name.branches.in.repo", myVcs.getDisplayName(),
                                       DvcsUtil.getShortRepositoryName(currentRepository));
-    myPopup = new BranchActionGroupPopup(title,
-                                         myProject,
-                                         preselectActionCondition,
-                                         createActions(),
-                                         dimensionKey);
+    myPopup = new BranchActionGroupPopup(title, myProject, preselectActionCondition, createActions(), dimensionKey, dataContext);
     initBranchSyncPolicyIfNotInitialized();
     warnThatBranchesDivergedIfNeeded();
     if (myRepositoryManager.moreThanOneRoot()) {
@@ -87,18 +81,17 @@ public abstract class DvcsBranchPopup<Repo extends Repository> {
   }
 
   private void notifyAboutSyncedBranches() {
-    Notification notification = STANDARD_NOTIFICATION.createNotification(
-      DvcsBundle.message("notification.message.branch.operations.are.executed.on.all.roots"),
-      NotificationType.INFORMATION,
-      "vcs.branch.operations.are.executed.on.all.roots");
-    notification
-      .addAction(NotificationAction.createSimple(DvcsBundle.messagePointer("action.NotificationAction.DvcsBranchPopup.text.disable"), () -> {
-      ShowSettingsUtil.getInstance().showSettingsDialog(myProject, myVcs.getDisplayName());
-      if (myVcsSettings.getSyncSetting() == DvcsSyncSettings.Value.DONT_SYNC) {
-        notification.expire();
-      }
-    }));
-    VcsNotifier.getInstance(myProject).notify(notification);
+    VcsNotifier.getInstance(myProject).notify(
+      STANDARD_NOTIFICATION
+        .createNotification(DvcsBundle.message("notification.message.branch.operations.are.executed.on.all.roots"), NotificationType.INFORMATION)
+        .setDisplayId("vcs.branch.operations.are.executed.on.all.roots")
+        .addAction(
+          NotificationAction.create(DvcsBundle.message("action.NotificationAction.DvcsBranchPopup.text.disable"), (event, notification) -> {
+            ShowSettingsUtil.getInstance().showSettingsDialog(myProject, myVcs.getDisplayName());
+            if (myVcsSettings.getSyncSetting() == DvcsSyncSettings.Value.DONT_SYNC) {
+              notification.expire();
+            }
+          })));
   }
 
   @NotNull

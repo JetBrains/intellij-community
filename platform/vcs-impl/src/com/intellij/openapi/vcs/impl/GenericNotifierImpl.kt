@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.impl
 
 import com.intellij.notification.Notification
@@ -8,9 +8,8 @@ import com.intellij.notification.Notifications
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsContexts
-import com.intellij.ui.GuiUtils.invokeLaterIfNeeded
+import com.intellij.util.ModalityUiUtil.invokeLaterIfNeeded
 import com.intellij.util.ui.UIUtil
-import java.util.*
 import javax.swing.event.HyperlinkEvent
 
 abstract class GenericNotifierImpl<T, Key>(@JvmField protected val myProject: Project,
@@ -37,11 +36,11 @@ abstract class GenericNotifierImpl<T, Key>(@JvmField protected val myProject: Pr
       myState.clear()
       currentNotifications
     }
-    invokeLaterIfNeeded(Runnable {
+    invokeLaterIfNeeded(ModalityState.NON_MODAL, myProject.disposed) {
       for (notification in notifications) {
         notification.expire()
       }
-    }, ModalityState.NON_MODAL, myProject.disposed)
+    }
   }
 
   private fun expireNotification(notification: MyNotification) = UIUtil.invokeLaterIfNeeded { notification.expire() }
@@ -92,7 +91,10 @@ abstract class GenericNotifierImpl<T, Key>(@JvmField protected val myProject: Pr
                                        @NlsContexts.NotificationContent content: String,
                                        type: NotificationType,
                                        listener: NotificationListener?,
-                                       val obj: T) : Notification(groupId, title, content, type, listener) {
+                                       val obj: T) : Notification(groupId, title, content, type) {
+    init {
+      listener?.let { setListener(listener) }
+    }
 
     override fun expire() {
       super.expire()

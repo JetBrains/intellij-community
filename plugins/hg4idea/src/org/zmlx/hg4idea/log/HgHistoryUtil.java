@@ -1,7 +1,6 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.zmlx.hg4idea.log;
 
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsSafe;
@@ -154,8 +153,8 @@ public final class HgHistoryUtil {
   }
 
   @NotNull
-  protected static List<VcsFileStatusInfo> getChangesFromParent(@NotNull Project project, @NotNull VirtualFile root,
-                                                                @NotNull HgRevisionNumber commit, @NotNull HgRevisionNumber parent) {
+  private static List<VcsFileStatusInfo> getChangesFromParent(@NotNull Project project, @NotNull VirtualFile root,
+                                                              @NotNull HgRevisionNumber commit, @NotNull HgRevisionNumber parent) {
     HgStatusCommand status = new HgStatusCommand.Builder(true).ignored(false).unknown(false).copySource(true)
       .baseRevision(parent).targetRevision(commit).build(project);
     return convertHgChanges(status.executeInCurrentThread(root));
@@ -429,7 +428,7 @@ public final class HgHistoryUtil {
   @Nullable
   static VcsLogObjectsFactory getObjectsFactoryWithDisposeCheck(Project project) {
     if (!project.isDisposed()) {
-      return ServiceManager.getService(project, VcsLogObjectsFactory.class);
+      return project.getService(VcsLogObjectsFactory.class);
     }
     return null;
   }

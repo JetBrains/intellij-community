@@ -59,7 +59,7 @@ class KeyHashLog<Key> implements Closeable {
   }
 
   @NotNull
-  private static AppendableStorageBackedByResizableMappedFile<int[]> openMapping(@NotNull Path dataFile, int size) {
+  private static AppendableStorageBackedByResizableMappedFile<int[]> openMapping(@NotNull Path dataFile, int size) throws IOException {
     return new AppendableStorageBackedByResizableMappedFile<>(dataFile,
                                                               size,
                                                               null,
@@ -80,7 +80,7 @@ class KeyHashLog<Key> implements Closeable {
   IntSet getSuitableKeyHashes(@NotNull IdFilter filter, @NotNull Project project) throws StorageException {
     IdFilter.FilterScopeType filteringScopeType = filter.getFilteringScopeType();
     if (filteringScopeType == IdFilter.FilterScopeType.OTHER) {
-      return null;
+      filteringScopeType = IdFilter.FilterScopeType.PROJECT_AND_LIBRARIES;
     }
     IntSet hashMaskSet = null;
     long l = System.currentTimeMillis();
@@ -148,7 +148,7 @@ class KeyHashLog<Key> implements Closeable {
       withLock(() -> {
         ProgressManager.checkCanceled();
 
-        myKeyHashToVirtualFileMapping.processAll(key -> {
+        myKeyHashToVirtualFileMapping.processAll((offset, key) -> {
           ProgressManager.checkCanceled();
           int inputId = key[1];
           int absInputId = Math.abs(inputId);
@@ -209,7 +209,7 @@ class KeyHashLog<Key> implements Closeable {
       AppendableStorageBackedByResizableMappedFile<int[]> oldMapping = openMapping(oldDataFile, 0);
       oldMapping.lockRead();
       try {
-        oldMapping.processAll(key -> {
+        oldMapping.processAll((offset, key) -> {
           int inputId = key[1];
           int keyHash = key[0];
           int absInputId = Math.abs(inputId);
@@ -365,6 +365,7 @@ class KeyHashLog<Key> implements Closeable {
       return;
     }
     try {
+      Files.createDirectories(marker.getParent());
       Files.createFile(marker);
     }
     catch (FileAlreadyExistsException ignored) { }

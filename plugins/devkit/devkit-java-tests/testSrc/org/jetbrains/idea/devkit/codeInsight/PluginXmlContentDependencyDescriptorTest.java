@@ -11,11 +11,11 @@ import com.intellij.openapi.roots.ModuleRootModificationUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.testFramework.TestDataPath;
-import com.intellij.testFramework.builders.JavaModuleFixtureBuilder;
 import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.PathUtil;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.idea.devkit.DevkitJavaTestsUtil;
 import org.jetbrains.idea.devkit.inspections.PluginXmlDomInspection;
 
@@ -24,15 +24,12 @@ import java.util.List;
 @TestDataPath("$CONTENT_ROOT/testData/codeInsight/contentDependencyDescriptor")
 public class PluginXmlContentDependencyDescriptorTest extends JavaCodeInsightFixtureTestCase {
 
+  @NonNls
+  private static final String MAIN_MODULE_NAME = "mainModule";
+
   @Override
   protected String getBasePath() {
     return DevkitJavaTestsUtil.TESTDATA_PATH + "codeInsight/contentDependencyDescriptor";
-  }
-
-  @Override
-  protected void tuneFixture(JavaModuleFixtureBuilder<?> moduleBuilder) throws Exception {
-    String editorUIApi = PathUtil.getJarPathForClass(AnAction.class);
-    moduleBuilder.addLibrary("editor-ui-api", editorUIApi);
   }
 
   public void testNonJetBrainsHighlighting() {
@@ -50,13 +47,19 @@ public class PluginXmlContentDependencyDescriptorTest extends JavaCodeInsightFix
   public void testContentDescriptorModuleNameCompletion() {
     setupModules("anotherModule");
 
-    List<String> lookupElements = myFixture.getCompletionVariants("META-INF/plugin.xml");
-    assertSameElements(lookupElements, "anotherModule");
+    myFixture.configureFromTempProjectFile(MAIN_MODULE_NAME + "/META-INF/plugin.xml");
+    myFixture.completeBasic();
+    List<String> lookupElements = myFixture.getLookupElementStrings();
+    assertSameElements(lookupElements, "anotherModule", "anotherModule/secondary-descriptor");
 
     final LookupElementPresentation anotherModule = getLookupElementPresentation("anotherModule");
     assertEquals(AllIcons.Nodes.Module, anotherModule.getIcon());
+    assertFalse(anotherModule.isItemTextBold());
     //noinspection SpellCheckingInspection
     assertEquals("mypackage.subpackage", anotherModule.getTypeText());
+
+    final LookupElementPresentation anotherModuleSecondary = getLookupElementPresentation("anotherModule/secondary-descriptor");
+    assertTrue(anotherModuleSecondary.isItemTextBold());
   }
 
   public void testContentDescriptorHighlighting() {
@@ -75,6 +78,10 @@ public class PluginXmlContentDependencyDescriptorTest extends JavaCodeInsightFix
     doHighlightingTest();
   }
 
+  public void testContentDescriptorNoPackageInMainHighlighting() {
+    doHighlightingTest();
+  }
+
   private void doHighlightingTest() {
     doHighlightingTest("anotherModule");
   }
@@ -83,22 +90,28 @@ public class PluginXmlContentDependencyDescriptorTest extends JavaCodeInsightFix
     setupModules(dependencyModuleNames);
 
     myFixture.enableInspections(new PluginXmlDomInspection());
-    myFixture.testHighlighting(true, false, false, "META-INF/plugin.xml");
+    myFixture.testHighlighting(true, false, false, "mainModule/META-INF/plugin.xml");
   }
 
   private void setupModules(String... dependencyModuleNames) {
-    String testName = getTestName(true);
-    myFixture.copyDirectoryToProject("/" + testName + "/mainModule", "/");
 
-    if (dependencyModuleNames.length == 0) return;
-
+    final Module mainModule = addModule(MAIN_MODULE_NAME);
     for (String moduleName : dependencyModuleNames) {
-      final VirtualFile dependencyModuleRoot =
-        myFixture.copyDirectoryToProject("/" + testName + "/" + moduleName, "/" + moduleName);
-
-      Module dependencyModule = PsiTestUtil.addModule(getProject(), StdModuleTypes.JAVA, moduleName, dependencyModuleRoot);
-      ModuleRootModificationUtil.addDependency(getModule(), dependencyModule);
+      final Module dependencyModule = addModule(moduleName);
+      ModuleRootModificationUtil.addDependency(mainModule, dependencyModule);
     }
+  }
+
+  private Module addModule(String moduleName) {
+    String testName = getTestName(true);
+
+    final VirtualFile dependencyModuleRoot =
+      myFixture.copyDirectoryToProject("/" + testName + "/" + moduleName, "/" + moduleName);
+
+    Module dependencyModule = PsiTestUtil.addModule(getProject(), StdModuleTypes.JAVA, moduleName, dependencyModuleRoot);
+    PsiTestUtil.addLibrary(dependencyModule, "editor-ui-api", PathUtil.getJarPathForClass(AnAction.class));
+
+    return dependencyModule;
   }
 
   private LookupElementPresentation getLookupElementPresentation(String lookupString) {

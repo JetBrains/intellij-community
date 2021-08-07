@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.documentation;
 
 import com.intellij.ide.BrowserUtil;
@@ -33,7 +33,7 @@ public abstract class AbstractExternalFilter {
 
   private static final Pattern CLASS_DATA_START = Pattern.compile("START OF CLASS DATA", Pattern.CASE_INSENSITIVE);
   private static final Pattern CLASS_DATA_END = Pattern.compile("SUMMARY ========", Pattern.CASE_INSENSITIVE);
-  private static final Pattern NON_CLASS_DATA_END = Pattern.compile("<A (NAME|ID)=", Pattern.CASE_INSENSITIVE);
+  private static final Pattern NON_CLASS_DATA_END = Pattern.compile(" (NAME|ID)=", Pattern.CASE_INSENSITIVE);
   private static final Pattern ANNIHILATOR = Pattern.compile("/[^/^.]*/[.][.]/");
   private static final Pattern CHARSET_META = Pattern.compile("<meta[^>]+\\s*charset=\"?([\\w\\-]*)\\s*\">", Pattern.CASE_INSENSITIVE);
 
@@ -279,7 +279,7 @@ public abstract class AbstractExternalFilter {
     Matcher anchorMatcher = ourAnchorSuffix.matcher(url);
     if (anchorMatcher.find()) {
       anchorPresent = true;
-      startSection = Pattern.compile("<a (name|id)=\"" + Pattern.quote(StringUtil.escapeXmlEntities(anchorMatcher.group(1))) + "\"",
+      startSection = Pattern.compile(" (name|id)=\"" + Pattern.quote(StringUtil.escapeXmlEntities(anchorMatcher.group(1))) + "\"",
                                      Pattern.CASE_INSENSITIVE);
       endSection = NON_CLASS_DATA_END;
     }

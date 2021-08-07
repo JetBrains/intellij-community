@@ -2,10 +2,13 @@
 package training.learn.course
 
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.BuildNumber
+import com.intellij.openapi.wm.ToolWindowAnchor
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls
 import training.dsl.TaskTestContext
+import training.learn.CourseManager
 import training.learn.lesson.LessonListener
 import training.learn.lesson.LessonState
 import training.learn.lesson.LessonStateManager
@@ -16,25 +19,40 @@ abstract class Lesson(@NonNls val id: String, @Nls val name: String) {
 
   /** This name will be used for generated file with lesson sample */
   open val fileName: String
-    get() = module.sanitizedName + "." + findLanguageByID(languageId)!!.associatedFileType!!.defaultExtension
+    get() {
+      val id = languageId
+      return module.sanitizedName + if (id != null) "." + findLanguageByID(id)!!.associatedFileType!!.defaultExtension else ""
+    }
 
-  open val languageId: String get() = module.primaryLanguage.primaryLanguage
+  open val languageId: String? get() = module.primaryLanguage?.primaryLanguage
 
   open val lessonType: LessonType get() = module.moduleType
+
+  open fun preferredLearnWindowAnchor(project: Project): ToolWindowAnchor = module.preferredLearnWindowAnchor(project)
 
   /** Relative path to existed file in the learning project */
   open val existedFile: String? = null
 
   /** This method is called for all project-based lessons before the start of any project-based lesson */
   @RequiresBackgroundThread
-  open fun cleanup(project: Project) = Unit
+  open fun prepare(project: Project) = Unit
 
   open val properties: LessonProperties = LessonProperties()
 
   /** Map: name -> url */
   open val helpLinks: Map<String, String> get() = emptyMap()
 
-  open val testScriptProperties : TaskTestContext.TestScriptProperties = TaskTestContext.TestScriptProperties()
+  open val testScriptProperties: TaskTestContext.TestScriptProperties = TaskTestContext.TestScriptProperties()
+
+  open fun onLessonEnd(project: Project, lessonPassed: Boolean) = Unit
+
+  fun addLessonListener(lessonListener: LessonListener) {
+    lessonListeners.add(lessonListener)
+  }
+
+  fun removeLessonListener(lessonListener: LessonListener) {
+    lessonListeners.remove(lessonListener)
+  }
 
   //-------------------------------------------------------------
 
@@ -43,20 +61,24 @@ abstract class Lesson(@NonNls val id: String, @Nls val name: String) {
 
   internal val lessonListeners: MutableList<LessonListener> = mutableListOf()
 
-  internal fun addLessonListener(lessonListener: LessonListener) {
-    lessonListeners.add(lessonListener)
-  }
-
   internal fun onStart() {
     lessonListeners.forEach { it.lessonStarted(this) }
   }
 
-  internal fun onStop() {
+  internal fun onStop(project: Project, lessonPassed: Boolean) {
     lessonListeners.forEach { it.lessonStopped(this) }
+    onLessonEnd(project, lessonPassed)
   }
 
   internal fun pass() {
     LessonStateManager.setPassed(this)
     lessonListeners.forEach { it.lessonPassed(this) }
+  }
+
+  internal fun isNewLesson(): Boolean {
+    val availableSince = properties.availableSince ?: return false
+    val lessonVersion = BuildNumber.fromString(availableSince) ?: return false
+    val previousOpenedVersion = CourseManager.instance.previousOpenedVersion ?: return true
+    return previousOpenedVersion < lessonVersion
   }
 }

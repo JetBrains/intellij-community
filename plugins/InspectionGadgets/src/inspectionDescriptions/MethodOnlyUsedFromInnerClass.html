@@ -1,17 +1,36 @@
 <html>
 <body>
-Reports <b>private</b> methods, which
+Reports <code>private</code> methods which
 are only called from an inner class of the class containing the method. Such
-methods could be safely moved into that inner class.
+methods can be safely moved into that inner class.
+<p>Example:</p>
+<pre>
+public class Outer {
+  public static void main(String[] args) {
+    new Inner().run(args[0]);
+  }
+
+  static class Inner {
+    void run(String arg) {
+      // Method isEmpty() is used from Inner class only
+      // consider moving it to the Inner class
+      if (!isEmpty(arg)) {
+        System.out.println("Argument is supplied");
+      }
+    }
+  }
+
+  private static boolean isEmpty(String s) {
+    return s != null && s.trim().isEmpty();
+  }
+}
+</pre>
 <!-- tooltip end -->
 <p>
-Use the first checkbox below to ignore <b>private</b>
-methods which are called from an anonymous class.
+Use the first checkbox below to ignore <code>private</code>
+methods which are called from an anonymous or local class.
 <p>
-Use the second checkbox to ignore <b>private static</b>
-methods which are accessed from a non-static inner class.
-<p>
-Use the third checkbox to only report <b>static</b> methods.
+Use the third checkbox to only report <code>static</code> methods.
 <p>
 
 </body>

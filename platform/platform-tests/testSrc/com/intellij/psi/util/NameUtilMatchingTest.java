@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.psi.util;
 
@@ -12,6 +12,8 @@ import com.intellij.ui.SpeedSearchComparator;
 import com.intellij.util.text.Matcher;
 import junit.framework.TestCase;
 import org.jetbrains.annotations.NonNls;
+
+import java.util.function.ToIntFunction;
 
 public class NameUtilMatchingTest extends TestCase {
   public void testSimpleCases() {
@@ -224,28 +226,26 @@ public class NameUtilMatchingTest extends TestCase {
     assertMatches("text*:sh", "textField:shouldChangeCharactersInRange:replacementString:");
   }
 
-  private static MinusculeMatcher fileStructureMatcher(String pattern) {
-    return FileStructureDialog.createFileStructureMatcher(pattern);
-  }
+  public void testFileStructureComparator() {
+    SpeedSearchComparator comparator = FileStructureDialog.createSpeedSearchComparator();
 
-  public void testFileStructure() {
-    assert !fileStructureMatcher("hint").matches("height: int");
-    assert  fileStructureMatcher("Hint").matches("Height:int");
-    assert !fileStructureMatcher("Hint").matches("Height: int");
-    assert  fileStructureMatcher("hI").  matches("Height: int");
+    assert comparator.matchingDegree("hint", "height: int") <= 0; // does not match
+    assert comparator.matchingDegree("Hint", "Height:int") > 0;
+    assert comparator.matchingDegree("Hint", "Height: int") <= 0; // does not match
+    assert comparator.matchingDegree("hI", "Height: int") > 0;
 
-    assert  fileStructureMatcher("getColor"). matches("getBackground(): Color");
-    assert  fileStructureMatcher("get color").matches("getBackground(): Color");
-    assert !fileStructureMatcher("getcolor"). matches("getBackground(): Color");
+    assert comparator.matchingDegree("getColor", "getBackground(): Color") > 0;
+    assert comparator.matchingDegree("get color", "getBackground(): Color") > 0;
+    assert comparator.matchingDegree("getcolor", "getBackground(): Color") <= 0; // does not match
 
-    assert  fileStructureMatcher("get()").matches("getBackground(): Color");
+    assert comparator.matchingDegree("get()", "getBackground(): Color") > 0;
 
-    assert  fileStructureMatcher("setColor").  matches("setBackground(Color): void");
-    assert  fileStructureMatcher("set color"). matches("setBackground(Color): void");
-    assert  fileStructureMatcher("set Color"). matches("setBackground(Color): void");
-    assert  fileStructureMatcher("set(color"). matches("setBackground(Color): void");
-    assert  fileStructureMatcher("set(color)").matches("setBackground(Color): void");
-    assert !fileStructureMatcher("setcolor").  matches("setBackground(Color): void");
+    assert comparator.matchingDegree("setColor", "setBackground(Color): void") > 0;
+    assert comparator.matchingDegree("set color", "setBackground(Color): void") > 0;
+    assert comparator.matchingDegree("set Color", "setBackground(Color): void") > 0;
+    assert comparator.matchingDegree("set(color", "setBackground(Color): void") > 0;
+    assert comparator.matchingDegree("set(color)", "setBackground(Color): void") > 0;
+    assert comparator.matchingDegree("setcolor", "setBackground(Color): void") <= 0; // does not match
   }
 
   public void testMiddleMatchingMinimumTwoConsecutiveLettersInWordMiddle() {
@@ -576,7 +576,8 @@ public class NameUtilMatchingTest extends TestCase {
   }
 
   public void testPreferBeforeSeparators() {
-    assertPreference(fileStructureMatcher("*point"), "getLocation(): Point", "getPoint(): Point");
+    SpeedSearchComparator comparator = FileStructureDialog.createSpeedSearchComparator();
+    assertPreference("getLocation(): Point", "getPoint(): Point", text -> comparator.matchingDegree("*point", text));
   }
 
   public void testPreferNoWordSkipping() {
@@ -615,8 +616,12 @@ public class NameUtilMatchingTest extends TestCase {
   }
 
   private static void assertPreference(MinusculeMatcher matcher, String less, String more) {
-    int iLess = matcher.matchingDegree(less);
-    int iMore = matcher.matchingDegree(more);
+    assertPreference(less, more, matcher::matchingDegree);
+  }
+
+  private static void assertPreference(String less, String more, ToIntFunction<String> matchingDegree) {
+    int iLess = matchingDegree.applyAsInt(less);
+    int iMore = matchingDegree.applyAsInt(more);
     assertTrue(iLess + ">=" + iMore + "; " + less + ">=" + more, iLess < iMore);
   }
 

@@ -1,9 +1,9 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.bookmarks.actions
 
+import com.intellij.ide.bookmark.BookmarkType
 import com.intellij.ide.bookmarks.BookmarkBundle.messagePointer
 import com.intellij.ide.bookmarks.BookmarkManager
-import com.intellij.ide.bookmarks.BookmarkType
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.project.DumbAwareAction
 

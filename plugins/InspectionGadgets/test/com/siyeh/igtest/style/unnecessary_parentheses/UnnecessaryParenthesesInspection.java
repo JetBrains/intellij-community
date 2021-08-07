@@ -147,10 +147,14 @@ public class UnnecessaryParenthesesInspection
   public java.util.function.IntFunction context() {
     return <error descr="Incompatible types. Found: 'int', required: '<lambda expression>'">(a -> a)=1</error>;
   }
+
+  void conditionals(boolean prevConnect, boolean nextConnect) {
+    char c = prevConnect ? <warning descr="Parentheses around '(nextConnect ? 'a' : 'b')' are unnecessary">(nextConnect ? 'a' : 'b')</warning> : <warning descr="Parentheses around '(nextConnect ? 'c' : 'd')' are unnecessary">(nextConnect ? 'c' : 'd')</warning>;
+  }
 }
 class A{
 
   A() {
-    ((<error descr="Expression expected"><</error><error descr="Cannot resolve symbol 'x'">x</error>><error descr="Expression expected">)</error><EOLError descr="';' expected"></EOLError>
+    ((<error descr="Expression expected"><</error><error descr="Cannot resolve symbol 'x'">x</error>><error descr="Expression expected">)</error>
   }
 }

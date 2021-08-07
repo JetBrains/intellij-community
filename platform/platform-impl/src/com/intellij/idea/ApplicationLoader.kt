@@ -1,240 +1,190 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 @file:JvmName("ApplicationLoader")
+@file:ApiStatus.Internal
 package com.intellij.idea
 
+import com.intellij.BundleBase
 import com.intellij.diagnostic.*
 import com.intellij.diagnostic.StartUpMeasurer.Activities
 import com.intellij.icons.AllIcons
 import com.intellij.ide.*
-import com.intellij.ide.plugins.*
+import com.intellij.ide.plugins.IdeaPluginDescriptorImpl
+import com.intellij.ide.plugins.PluginManagerCore
+import com.intellij.ide.plugins.StartupAbortedException
+import com.intellij.ide.ui.laf.darcula.DarculaLaf
 import com.intellij.openapi.application.*
 import com.intellij.openapi.application.ex.ApplicationEx
+import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.application.impl.ApplicationImpl
 import com.intellij.openapi.components.stateStore
 import com.intellij.openapi.diagnostic.Logger
-import com.intellij.openapi.diagnostic.runAndLogException
-import com.intellij.openapi.extensions.ExtensionNotApplicableException
-import com.intellij.openapi.extensions.impl.ExtensionsAreaImpl
+import com.intellij.openapi.extensions.PluginDescriptor
 import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.progress.ProcessCanceledException
+import com.intellij.openapi.progress.ProgressManager
+import com.intellij.openapi.progress.util.AbstractProgressIndicatorBase
 import com.intellij.openapi.ui.DialogEarthquakeShaker
 import com.intellij.openapi.util.IconLoader
-import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.util.SystemPropertyBean
-import com.intellij.openapi.util.registry.RegistryKeyBean
-import com.intellij.openapi.wm.WeakFocusStackManager
 import com.intellij.openapi.wm.WindowManager
 import com.intellij.serviceContainer.ComponentManagerImpl
 import com.intellij.ui.AnimatedIcon
 import com.intellij.ui.AppIcon
-import com.intellij.ui.mac.MacOSApplicationProvider
-import com.intellij.ui.mac.foundation.Foundation
-import com.intellij.ui.mac.touchbar.TouchBarsManager
-import com.intellij.util.concurrency.AppExecutorUtil
-import com.intellij.util.concurrency.NonUrgentExecutor
-import com.intellij.util.io.write
+import com.intellij.util.PlatformUtils
+import com.intellij.util.TimeoutUtil
+import com.intellij.util.io.createDirectories
+import com.intellij.util.io.storage.HeavyProcessLatch
+import com.intellij.util.lang.ZipFilePool
 import com.intellij.util.ui.AsyncProcessIcon
+import com.intellij.util.ui.EDT
 import net.miginfocom.layout.PlatformDefaults
 import org.jetbrains.annotations.ApiStatus
-import java.awt.EventQueue
-import java.awt.Font
-import java.awt.GraphicsEnvironment
-import java.awt.dnd.DragSource
+import org.jetbrains.annotations.VisibleForTesting
 import java.io.IOException
-import java.nio.file.Paths
-import java.util.concurrent.CompletableFuture
-import java.util.concurrent.CompletionStage
-import java.util.concurrent.Executor
+import java.nio.charset.StandardCharsets
+import java.nio.file.Files
+import java.nio.file.Path
+import java.util.*
+import java.util.concurrent.*
 import java.util.function.BiFunction
-import java.util.function.Function
+import javax.swing.UIManager
 import kotlin.system.exitProcess
 
 private val SAFE_JAVA_ENV_PARAMETERS = arrayOf(JetBrainsProtocolHandler.REQUIRED_PLUGINS_KEY)
+@Suppress("SSBasedInspection")
 private val LOG = Logger.getInstance("#com.intellij.idea.ApplicationLoader")
 
-private fun executeInitAppInEdt(args: List<String>,
-                                initAppActivity: Activity,
-                                pluginDescriptorFuture: CompletableFuture<List<IdeaPluginDescriptorImpl>>) {
-  StartupUtil.patchSystem(LOG)
-  val app = runActivity("create app") {
-    ApplicationImpl(java.lang.Boolean.getBoolean(PluginManagerCore.IDEA_IS_INTERNAL_PROPERTY), false, Main.isHeadless(),
-                    Main.isCommandLine())
-  }
-  val registerFuture = registerAppComponents(pluginDescriptorFuture, app)
+fun initApplication(rawArgs: List<String>, prepareUiFuture: CompletionStage<*>) {
+  val args = processProgramArguments(rawArgs)
 
-  if (args.isEmpty()) {
-    startApp(app, IdeStarter(), initAppActivity, registerFuture, args)
-    return
-  }
+  val initAppActivity = StartupUtil.startupStart.endAndStart(Activities.INIT_APP)
+  val loadAndInitPluginFutureActivity = initAppActivity.startChild("plugin descriptor init waiting")
+  val loadAndInitPluginFuture = PluginManagerCore.initPlugins(StartupUtil::class.java.classLoader)
+  loadAndInitPluginFuture.thenRun(loadAndInitPluginFutureActivity::end)
 
-  // `ApplicationStarter` is an extension, so to find a starter extensions must be registered first
-  registerFuture
-    .thenRun {
-      val starter = findStarter(args.first()) ?: IdeStarter()
-      if (Main.isHeadless() && !starter.isHeadless) {
-        val commandName = starter.commandName
-        val message = IdeBundle.message(
-          "application.cannot.start.in.a.headless.mode",
-          when {
-            starter is IdeStarter -> 0
-            commandName != null -> 1
-            else -> 2
-          },
-          commandName,
-          starter.javaClass.name,
-          if (args.isEmpty()) 0 else 1,
-          args.joinToString(" ")
-        )
-        Main.showMessage(IdeBundle.message("main.startup.error"), message, true)
-        exitProcess(Main.NO_GRAPHICS)
-      }
-
-      starter.premain(args)
-      startApp(app, starter, initAppActivity, registerFuture, args)
+  prepareUiFuture.thenComposeAsync({
+    val isInternal = java.lang.Boolean.getBoolean(ApplicationManagerEx.IS_INTERNAL_PROPERTY)
+    val app = ApplicationImpl(isInternal, false, Main.isHeadless(), Main.isCommandLine())
+    (UIManager.getLookAndFeel() as? DarculaLaf)?.appCreated(app)
+     ApplicationImpl.preventAwtAutoShutdown(app)
+     if (isInternal) {
+      BundleBase.assertOnMissedKeys(true)
     }
+
+    loadAndInitPluginFuture
+      .thenAccept { plugins ->
+        runActivity("app component registration") {
+          app.registerComponents(plugins, app, null, null)
+        }
+
+        if (args.isEmpty()) {
+          startApp(app, IdeStarter(), initAppActivity, plugins, args)
+        }
+        else {
+          // `ApplicationStarter` is an extension, so to find a starter, extensions must be registered first
+          findCustomAppStarterAndStart(plugins, args, app, initAppActivity)
+        }
+
+        if (!Main.isHeadless()) {
+          ForkJoinPool.commonPool().execute {
+            runActivity("icons preloading") {
+              if (isInternal) {
+                IconLoader.setStrictGlobally(true)
+              }
+
+              AsyncProcessIcon("")
+              AnimatedIcon.Blinking(AllIcons.Ide.FatalError)
+              AnimatedIcon.FS()
+            }
+
+            runActivity("migLayout") {
+              // IDEA-170295
+              PlatformDefaults.setLogicalPixelBase(PlatformDefaults.BASE_FONT_SIZE)
+            }
+          }
+        }
+      }
+  }, Executor { if (EDT.isCurrentThreadEdt()) ForkJoinPool.commonPool().execute(it) else it.run() } )
     .exceptionally {
       StartupAbortedException.processException(it)
       null
     }
 }
 
-@ApiStatus.Internal
-fun registerAppComponents(pluginFuture: CompletableFuture<List<IdeaPluginDescriptorImpl>>,
-                          app: ApplicationImpl): CompletableFuture<List<IdeaPluginDescriptor>> {
-  return pluginFuture.thenApply {
-    runMainActivity("app component registration") {
-      app.registerComponents(it, null)
-    }
-    it
-  }
-}
-
 private fun startApp(app: ApplicationImpl,
                      starter: ApplicationStarter,
                      initAppActivity: Activity,
-                     registerFuture: CompletableFuture<List<IdeaPluginDescriptor>>,
+                     plugins: List<IdeaPluginDescriptorImpl>,
                      args: List<String>) {
-  // this code is here for one simple reason - here we have application,
-  // and after plugin loading we don't have - ApplicationManager.getApplication() can be used, but it doesn't matter
-  // but it is very important to call registerRegistryAndMessageBusAndComponent immediately after application creation
-  // and do not place any time-consuming code in between (e.g. showLicenseeInfoOnSplash)
-  val registerRegistryAndInitStoreFuture = registerRegistryAndInitStore(registerFuture, app)
+    // initSystemProperties or RegistryKeyBean.addKeysFromPlugins maybe not yet performed,
+    // but it is OK, because registry is not and should not be used.
+    initConfigurationStore(app)
+    val preloadSyncServiceFuture = preloadServices(plugins, app, activityPrefix = "")
 
-  val headless = app.isHeadlessEnvironment
-  if (!headless) {
-    runActivity("icon loader activation") {
-      // todo investigate why in test mode dummy icon manager is not suitable
-      IconLoader.activate()
-      IconLoader.setStrictGlobally(app.isInternal)
-    }
-  }
+    val placeOnEventQueueActivity = initAppActivity.startChild(Activities.PLACE_ON_EVENT_QUEUE)
+    val loadComponentInEdtFuture = CompletableFuture.runAsync({
+      placeOnEventQueueActivity.end()
 
-  val nonEdtExecutor = Executor {
-    when {
-      app.isDispatchThread -> AppExecutorUtil.getAppExecutorService().execute(it)
-      else -> it.run()
-    }
-  }
-
-  val boundedExecutor = createExecutorToPreloadServices()
-
-  // preload services only after icon activation
-  val preloadSyncServiceFuture = registerRegistryAndInitStoreFuture
-    .thenComposeAsync<Void?>(Function {
-      preloadServices(it, app, activityPrefix = "", executor = boundedExecutor)
-    }, nonEdtExecutor)
-
-  if (!headless) {
-    if (SystemInfoRt.isMac) {
-      runActivity("mac app init") {
-        MacOSApplicationProvider.initApplication()
+      val indicator = if (SplashManager.SPLASH_WINDOW == null) {
+        null
       }
-
-      registerFuture.thenRunAsync(Runnable {
-        // ensure that TouchBarsManager is loaded before WelcomeFrame/project
-        // do not wait completion - it is thread safe and not required for application start
-        runActivity("mac touchbar") {
-          if (app.isDisposed) {
-            return@Runnable
-          }
-
-          Foundation.init()
-          if (app.isDisposed) {
-            return@Runnable
-          }
-          TouchBarsManager.initialize()
+      else object : EmptyProgressIndicator() {
+        override fun setFraction(fraction: Double) {
+          SplashManager.SPLASH_WINDOW.showProgress(fraction)
         }
-      }, NonUrgentExecutor.getInstance())
-    }
-
-    WeakFocusStackManager.getInstance()
-
-    NonUrgentExecutor.getInstance().execute {
-      runActivity("migLayout") {
-        PlatformDefaults.setLogicalPixelBase(PlatformDefaults.BASE_FONT_SIZE)  // IDEA-170295
       }
-    }
+      app.loadComponents(indicator)
+    }, Executor(app::invokeLater))
 
-    NonUrgentExecutor.getInstance().execute {
-      runActivity("icons preloading") {
-        AsyncProcessIcon("")
-        AnimatedIcon.Blinking(AllIcons.Ide.FatalError)
-        AnimatedIcon.FS()
-      }
-    }
-  }
+  CompletableFuture.allOf(loadComponentInEdtFuture, preloadSyncServiceFuture, StartupUtil.getServerFuture())
+    .thenComposeAsync({
+      val pool = ForkJoinPool.commonPool()
 
-  val edtExecutor = Executor { ApplicationManager.getApplication().invokeLater(it) }
-
-  @Suppress("RemoveExplicitTypeArguments")
-  CompletableFuture.allOf(registerRegistryAndInitStoreFuture, StartupUtil.getServerFuture())
-    .thenCompose {
-      // `invokeLater()` is needed to place the app starting code on a freshly minted `IdeEventQueue` instance
-      val placeOnEventQueueActivity = initAppActivity.startChild(Activities.PLACE_ON_EVENT_QUEUE)
-
-      val loadComponentInEdtFuture = CompletableFuture.runAsync(Runnable {
-        placeOnEventQueueActivity.end()
-
-        app.loadComponents(if (SplashManager.SPLASH_WINDOW == null) {
-          null
+      val future = CompletableFuture.runAsync({
+        initAppActivity.runChild("app initialized callback") {
+          ForkJoinTask.invokeAll(callAppInitialized(app))
         }
-        else object : EmptyProgressIndicator() {
-          override fun setFraction(fraction: Double) {
-            SplashManager.SPLASH_WINDOW.showProgress(fraction)
-          }
-        })
-      }, edtExecutor)
+      }, pool)
 
-      CompletableFuture.allOf(loadComponentInEdtFuture, preloadSyncServiceFuture)
-    }
-    .thenComposeAsync<Void?>(Function {
-      val activity = initAppActivity.startChild("app initialized callback")
-      val future = callAppInitialized(app, boundedExecutor)
+      if (!app.isUnitTestMode && !app.isHeadlessEnvironment &&
+          java.lang.Boolean.parseBoolean(System.getProperty("enable.activity.preloading", "true"))) {
+        pool.execute { executePreloadActivities(app) }
+      }
 
-      // should be after scheduling all app initialized listeners (because this activity is not important)
+      pool.execute {
+        runActivity("create locator file") {
+          createAppLocatorFile()
+        }
+      }
+
       if (!Main.isLightEdit()) {
-        NonUrgentExecutor.getInstance().execute {
-          // execute in parallel to component loading - this functionality should be used only by plugin functionality that is used after start-up
+        // this functionality should be used only by plugin functionality that is used after start-up
+        pool.execute {
           runActivity("system properties setting") {
             SystemPropertyBean.initSystemProperties()
           }
         }
       }
 
-      future.thenRun {
-        activity.end()
-        if (!headless) {
-          addActivateAndWindowsCliListeners()
-        }
-
-        initAppActivity.end()
+      future
+    }, Executor {
+      // if `loadComponentInEdtFuture` is completed after `preloadSyncServiceFuture`,
+      // then this task will be executed in EDT, so force execution out of EDT
+      if (app.isDispatchThread) {
+        ForkJoinPool.commonPool().execute(it)
       }
-    },
-      // if `loadComponentInEdtFuture` is completed after `preloadSyncServiceFuture`, then this task will be executed in EDT, so force execution out of EDT
-                             nonEdtExecutor)
+      else {
+        it.run()
+      }
+    })
     .thenRun {
+      addActivateAndWindowsCliListeners()
+      initAppActivity.end()
+
       if (starter.requiredModality == ApplicationStarter.NOT_IN_EDT) {
         starter.main(args)
+        // no need to use pool once plugins are loaded
+        ZipFilePool.POOL = null
       }
       else {
         // backward compatibility
@@ -251,55 +201,64 @@ private fun startApp(app: ApplicationImpl,
     }
 }
 
-@ApiStatus.Internal
-fun createExecutorToPreloadServices(): Executor {
-  return AppExecutorUtil.createBoundedApplicationPoolExecutor("Preload Services", Runtime.getRuntime().availableProcessors(), false)
+private fun findCustomAppStarterAndStart(plugins: List<IdeaPluginDescriptorImpl>,
+                                         args: List<String>,
+                                         app: ApplicationImpl,
+                                         initAppActivity: Activity) {
+  val starter = findStarter(args.first())
+                ?: if (PlatformUtils.getPlatformPrefix() == "LightEdit") IdeStarter.StandaloneLightEditStarter() else IdeStarter()
+  if (Main.isHeadless() && !starter.isHeadless) {
+    val commandName = starter.commandName
+    val message = IdeBundle.message(
+      "application.cannot.start.in.a.headless.mode",
+      when {
+        starter is IdeStarter -> 0
+        commandName != null -> 1
+        else -> 2
+      },
+      commandName,
+      starter.javaClass.name,
+      if (args.isEmpty()) 0 else 1,
+      args.joinToString(" ")
+    )
+    Main.showMessage(IdeBundle.message("main.startup.error"), message, true)
+    exitProcess(Main.NO_GRAPHICS)
+  }
+
+  starter.premain(args)
+  startApp(app, starter, initAppActivity, plugins, args)
 }
 
-@ApiStatus.Internal
+@VisibleForTesting
+internal fun createAppLocatorFile() {
+  val locatorFile = Path.of(PathManager.getSystemPath(), ApplicationEx.LOCATOR_FILE_NAME)
+  try {
+    locatorFile.parent?.createDirectories()
+    Files.writeString(locatorFile, PathManager.getHomePath(), StandardCharsets.UTF_8)
+  }
+  catch (e: IOException) {
+    LOG.warn("Can't store a location in '$locatorFile'", e)
+  }
+}
+
 @JvmOverloads
 fun preloadServices(plugins: List<IdeaPluginDescriptorImpl>,
                     container: ComponentManagerImpl,
                     activityPrefix: String,
-                    onlyIfAwait: Boolean = false,
-                    executor: Executor = createExecutorToPreloadServices()): CompletableFuture<Void?> {
-  val syncActivity = StartUpMeasurer.startActivity("${activityPrefix}service sync preloading")
-  val asyncActivity = StartUpMeasurer.startActivity("${activityPrefix}service async preloading")
+                    onlyIfAwait: Boolean = false): CompletableFuture<Void?> {
+  val result = container.preloadServices(plugins, activityPrefix, onlyIfAwait)
 
-  val result = container.preloadServices(plugins, executor, onlyIfAwait)
-
-  fun endActivityAndLogError(future: CompletableFuture<Void?>, activity: Activity): CompletableFuture<Void?> {
+  fun logError(future: CompletableFuture<Void?>): CompletableFuture<Void?> {
     return future
       .whenComplete { _, error ->
-        activity.end()
         if (error != null && error !is ProcessCanceledException) {
           StartupAbortedException.processException(error)
         }
       }
   }
 
-  endActivityAndLogError(result.asyncPreloadedServices, asyncActivity)
-  return endActivityAndLogError(result.syncPreloadedServices, syncActivity)
-}
-
-@ApiStatus.Internal
-fun registerRegistryAndInitStore(registerFuture: CompletableFuture<List<IdeaPluginDescriptor>>,
-                                 app: ApplicationImpl): CompletableFuture<List<IdeaPluginDescriptorImpl>> {
-  return registerFuture.thenCompose { plugins ->
-    val future = CompletableFuture.runAsync(Runnable {
-      runActivity("add registry keys") {
-        RegistryKeyBean.addKeysFromPlugins()
-      }
-    }, AppExecutorUtil.getAppExecutorService())
-
-    // initSystemProperties or RegistryKeyBean.addKeysFromPlugins maybe not yet performed, but it doesn't affect because not used
-    initConfigurationStore(app)
-
-    future.thenApply {
-      @Suppress("UNCHECKED_CAST")
-      plugins as List<IdeaPluginDescriptorImpl>
-    }
-  }
+  logError(result.first)
+  return logError(result.second)
 }
 
 private fun addActivateAndWindowsCliListeners() {
@@ -311,7 +270,7 @@ private fun addActivateAndWindowsCliListeners() {
     result.future
   }
 
-  MainRunner.LISTENER = BiFunction { currentDirectory, args ->
+  StartupUtil.LISTENER = BiFunction { currentDirectory, args ->
     LOG.info("External Windows command received")
     if (args.isEmpty()) {
       return@BiFunction 0
@@ -324,7 +283,7 @@ private fun addActivateAndWindowsCliListeners() {
   ApplicationManager.getApplication().messageBus.connect().subscribe(AppLifecycleListener.TOPIC, object : AppLifecycleListener {
     override fun appWillBeClosed(isRestart: Boolean) {
       StartupUtil.addExternalInstanceListener { CliResult.error(Main.ACTIVATE_DISPOSING, IdeBundle.message("activation.shutting.down")) }
-      MainRunner.LISTENER = BiFunction { _, _ -> Main.ACTIVATE_DISPOSING }
+      StartupUtil.LISTENER = BiFunction { _, _ -> Main.ACTIVATE_DISPOSING }
     }
   })
 }
@@ -353,64 +312,10 @@ private fun handleExternalCommand(args: List<String>, currentDirectory: String?)
   return result
 }
 
-fun initApplication(rawArgs: List<String>, initUiTask: CompletionStage<*>) {
-  val initAppActivity = MainRunner.startupStart.endAndStart(Activities.INIT_APP)
-  val loadAndInitPluginFuture = CompletableFuture<List<IdeaPluginDescriptorImpl>>()
-  initUiTask
-    .thenRunAsync(Runnable {
-      val args = processProgramArguments(rawArgs)
-      EventQueue.invokeLater {
-        executeInitAppInEdt(args, initAppActivity, loadAndInitPluginFuture)
-      }
-
-      if (!Main.isHeadless()) {
-        runActivity("system fonts loading") {
-          // editor and other UI components need the list of system fonts to implement font fallback
-          // this list is pre-loaded here, in parallel to other activities, to speed up project opening
-          // ideally, it shouldn't overlap with other font-related activities to avoid contention on JDK-internal font manager locks
-          loadSystemFonts()
-        }
-
-        // pre-load cursors used by drag-n-drop AWT subsystem
-        runActivity("DnD setup") {
-          DragSource.getDefaultDragSource()
-        }
-      }
-    }, AppExecutorUtil.getAppExecutorService()) // must not be executed neither in IDE main thread nor in EDT
-
-  try {
-    val activity = initAppActivity.startChild("plugin descriptor init waiting")
-    PluginManagerCore.initPlugins(MainRunner::class.java.classLoader)
-      .whenComplete { result, error ->
-        activity.end()
-        if (error == null) {
-          loadAndInitPluginFuture.complete(result)
-        }
-        else {
-          loadAndInitPluginFuture.completeExceptionally(error)
-        }
-      }
-  }
-  catch (e: Throwable) {
-    loadAndInitPluginFuture.completeExceptionally(e)
-    return
-  }
-}
-
-private fun loadSystemFonts() {
-  // This forces loading of all system fonts, the following statement itself might not do it (see JBR-1825)
-  Font("N0nEx1st5ntF0nt", Font.PLAIN, 1).family
-  // This caches available font family names (for the default locale) to make corresponding call
-  // during editors reopening (in ComplementaryFontsRegistry's initialization code) instantaneous
-  GraphicsEnvironment.getLocalGraphicsEnvironment().availableFontFamilyNames
-}
-
-@ApiStatus.Internal
 fun findStarter(key: String) = ApplicationStarter.EP_NAME.iterable.find { it == null || it.commandName == key }
 
-@ApiStatus.Internal
 fun initConfigurationStore(app: ApplicationImpl) {
-  var activity = StartUpMeasurer.startMainActivity("beforeApplicationLoaded")
+  var activity = StartUpMeasurer.startActivity("beforeApplicationLoaded")
   val configPath = PathManager.getConfigDir()
   for (listener in ApplicationLoadListener.EP_NAME.iterable) {
     try {
@@ -426,7 +331,7 @@ fun initConfigurationStore(app: ApplicationImpl) {
 
   activity = activity.endAndStart("init app store")
 
-  // we set it after beforeApplicationLoaded call, because app store can depend on stream provider state
+  // we set it after beforeApplicationLoaded call, because the app store can depend on stream provider state
   app.stateStore.setPath(configPath)
   StartUpMeasurer.setCurrentState(LoadingState.CONFIGURATION_STORE_INITIALIZED)
   activity.end()
@@ -441,7 +346,7 @@ fun initConfigurationStore(app: ApplicationImpl) {
 @Suppress("SpellCheckingInspection")
 private fun processProgramArguments(args: List<String>): List<String> {
   if (args.isEmpty()) {
-    return emptyList()
+    return Collections.emptyList()
   }
 
   val arguments = mutableListOf<String>()
@@ -460,38 +365,112 @@ private fun processProgramArguments(args: List<String>): List<String> {
   return arguments
 }
 
-private fun createLocatorFile() {
-  runActivity("create locator file") {
-    val locatorFile = Paths.get(PathManager.getSystemPath(), ApplicationEx.LOCATOR_FILE_NAME)
-    try {
-      locatorFile.write(PathManager.getHomePath())
-    }
-    catch (e: IOException) {
-      LOG.warn("can't store a location in '$locatorFile'", e)
-    }
+
+fun callAppInitialized(app: ApplicationImpl): List<ForkJoinTask<*>> {
+  val extensionArea = app.extensionArea
+  val extensionPoint = extensionArea.getExtensionPoint<ApplicationInitializedListener>("com.intellij.applicationInitializedListener")
+  val result = ArrayList<ForkJoinTask<*>>(extensionPoint.size())
+  extensionPoint.processImplementations(/* shouldBeSorted = */ false) { supplier, _ ->
+    result.add(ForkJoinTask.adapt {
+      try {
+        supplier.get()?.componentsInitialized()
+      }
+      catch (e: Throwable) {
+        LOG.error(e)
+      }
+    })
+  }
+  extensionPoint.reset()
+  return result
+}
+
+private fun checkHeavyProcessRunning() {
+  if (HeavyProcessLatch.INSTANCE.isRunning) {
+    TimeoutUtil.sleep(1)
   }
 }
 
-@ApiStatus.Internal
-fun callAppInitialized(app: Application, executor: Executor): CompletableFuture<Void?> {
-  NonUrgentExecutor.getInstance().execute {
-    createLocatorFile()
+private fun executePreloadActivity(activity: PreloadingActivity, descriptor: PluginDescriptor?, app: ApplicationImpl) {
+  checkHeavyProcessRunning()
+
+  val indicator = AbstractProgressIndicatorBase()
+  if (app.isDisposed) {
+    return
   }
 
-  val result = mutableListOf<CompletableFuture<Void>>()
-  val extensionArea = app.extensionArea as ExtensionsAreaImpl
-  val extensionPoint = extensionArea.getExtensionPoint<ApplicationInitializedListener>("com.intellij.applicationInitializedListener")
-  extensionPoint.processImplementations(/* shouldBeSorted = */ false) { supplier, _ ->
-    CompletableFuture.runAsync(Runnable {
-      LOG.runAndLogException {
-        try {
-          supplier.get().componentsInitialized()
+  val isDebugEnabled = LOG.isDebugEnabled
+  ProgressManager.getInstance().executeProcessUnderProgress({
+    val measureActivity = if (descriptor == null) {
+      null
+    }
+    else {
+      StartUpMeasurer.startActivity(activity.javaClass.name, ActivityCategory.PRELOAD_ACTIVITY, descriptor.pluginId.idString)
+    }
+
+    try {
+      indicator.start()
+      activity.preload(object : AbstractProgressIndicatorBase() {
+        override fun checkCanceled() {
+          checkHeavyProcessRunning()
+          indicator.checkCanceled()
         }
-        catch (ignore: ExtensionNotApplicableException) {
-        }
+
+        override fun isCanceled() = indicator.isCanceled || app.isDisposed
+      })
+      if (isDebugEnabled) {
+        LOG.debug("${activity.javaClass.name} finished")
       }
-    }, executor)
+    }
+    catch (ignore: ProcessCanceledException) {
+      return@executeProcessUnderProgress
+    }
+    finally {
+      measureActivity?.end()
+      if (indicator.isRunning) {
+        indicator.stop()
+      }
+    }
+  }, indicator)
+}
+
+private fun executePreloadActivities(app: ApplicationImpl) {
+  val activity = StartUpMeasurer.startActivity("preloading activity executing")
+  val list = mutableListOf<Pair<PreloadingActivity, PluginDescriptor>>()
+  val extensionPoint = app.extensionArea.getExtensionPoint<PreloadingActivity>("com.intellij.preloadingActivity")
+  extensionPoint.processImplementations(/* shouldBeSorted = */ false) { supplier, pluginDescriptor ->
+    val preloadingActivity: PreloadingActivity
+    try {
+      preloadingActivity = supplier.get() ?: return@processImplementations
+    }
+    catch (e: Throwable) {
+      LOG.error(e)
+      return@processImplementations
+    }
+    list.add(Pair(preloadingActivity, pluginDescriptor))
   }
   extensionPoint.reset()
-  return CompletableFuture.allOf(*result.toTypedArray())
+
+  if (list.isEmpty()) {
+    return
+  }
+
+  // do not execute as a single long task, make sure that other more important tasks may slip in between
+  ForkJoinPool.commonPool().execute(object : Runnable {
+    private var index = 0
+
+    override fun run() {
+      if (app.isDisposed) {
+        return
+      }
+
+      val item = list[index++]
+      executePreloadActivity(item.first, item.second, app)
+      if (index == list.size || app.isDisposed) {
+        activity.end()
+      }
+      else {
+        ForkJoinPool.commonPool().execute(this)
+      }
+    }
+  })
 }

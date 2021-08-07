@@ -40,6 +40,7 @@ import com.intellij.util.progress.ComponentVisibilityProgressManager;
 import com.intellij.util.ui.JBDimension;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
+import com.intellij.xml.util.XmlStringUtil;
 import org.jetbrains.annotations.*;
 
 import javax.swing.*;
@@ -205,8 +206,7 @@ public abstract class CloneDvcsDialog extends DialogWrapper {
   private Map<String, RepositoryListLoader> initUrlAutocomplete() {
     Collection<RepositoryHostingService> repositoryHostingServices = getRepositoryHostingServices();
     if (repositoryHostingServices.size() > 1) {
-      myRepositoryUrlAutoCompletionTooltipAlarm = new Alarm(getDisposable());
-      myRepositoryUrlAutoCompletionTooltipAlarm.setActivationComponent(myRepositoryUrlCombobox);
+      myRepositoryUrlAutoCompletionTooltipAlarm = new Alarm(myRepositoryUrlCombobox, getDisposable());
     }
 
     List<Action> loginActions = new ArrayList<>();
@@ -350,7 +350,8 @@ public abstract class CloneDvcsDialog extends DialogWrapper {
             }
             else {
               myRepositoryTestValidationInfo =
-                new ValidationInfo(DvcsBundle.message("clone.repository.url.test.failed.message", myTestResult.myErrorMessage),
+                new ValidationInfo(DvcsBundle.message("clone.repository.url.test.failed.message",
+                                                      XmlStringUtil.escapeString(myTestResult.myErrorMessage)),
                                    myRepositoryUrlCombobox);
               startTrackingValidation();
             }

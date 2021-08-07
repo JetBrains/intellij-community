@@ -90,7 +90,9 @@ public class Group implements KeymapGroup {
       else if (child instanceof Group) {
         Group childGroup = (Group)child;
         myIds.addAll(childGroup.initIds());
-        if (childGroup.myId != null) myIds.add(childGroup.myId);
+        if (childGroup.myId != null) {
+          myIds.add(childGroup.myId);
+        }
       }
     }
     return myIds;
@@ -199,6 +201,9 @@ public class Group implements KeymapGroup {
       else if (o instanceof Separator) {
         addSeparator();
       }
+    }
+    if (group.myId != null) {
+      myIds.add(group.myId);
     }
   }
 

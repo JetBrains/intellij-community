@@ -22,6 +22,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.psi.impl.PsiTreeChangeEventImpl;
 import com.intellij.psi.impl.source.tree.TreeElement;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -44,6 +45,7 @@ public class ChangeInfoImpl implements ChangeInfo {
    * @deprecated for API compatibility with Kotlin plugin
    */
   @Nullable
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   @Deprecated
   public TreeElement getOldChild() {
     return (TreeElement)myOldChild;

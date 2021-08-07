@@ -1,15 +1,13 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.editor.colors.impl;
 
-import com.intellij.openapi.util.JDOMUtil;
-import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.HashMap;
 import java.util.Map;
 
 final class Option {
-  private final HashMap<String, String> myMap = new HashMap<>();
+  private final Map<String, String> myMap = new HashMap<>();
 
   Option(String value) {
     if (value != null) {
@@ -45,10 +43,5 @@ final class Option {
       sb.append('"').append(entry.getValue()).append('"');
     }
     return sb.append("/>").toString();
-  }
-
-  static Element element(Object object) throws Exception {
-    String xml = object == null ? null : object.toString();
-    return xml == null ? null : JDOMUtil.load(xml);
   }
 }

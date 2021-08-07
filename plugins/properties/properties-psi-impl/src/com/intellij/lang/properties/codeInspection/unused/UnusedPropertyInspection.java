@@ -1,10 +1,11 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.lang.properties.codeInspection.unused;
 
 import com.intellij.codeInspection.LocalInspectionToolSession;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.ProblemsHolder;
+import com.intellij.codeInspection.ex.InspectionProfileWrapper;
 import com.intellij.codeInspection.ui.InspectionOptionsPanel;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.properties.*;
@@ -37,6 +38,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.LinkedHashSet;
+import java.util.Map;
 import java.util.Set;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
@@ -125,11 +127,15 @@ public final class UnusedPropertyInspection extends PropertiesInspectionBase {
     if (module == null) return PsiElementVisitor.EMPTY_VISITOR;
 
     final UnusedPropertiesSearchHelper helper = new UnusedPropertiesSearchHelper(module);
+
+    final Set<PsiElement> propertiesBeingCommitted = getBeingCommittedProperties(file);
+
     return new PsiElementVisitor() {
       @Override
       public void visitElement(@NotNull PsiElement element) {
         if (!(element instanceof Property)) return;
         Property property = (Property)element;
+        if (propertiesBeingCommitted != null && !propertiesBeingCommitted.contains(property)) return;
 
         if (isPropertyUsed(property, helper, isOnTheFly)) return;
 
@@ -145,6 +151,21 @@ public final class UnusedPropertyInspection extends PropertiesInspectionBase {
                                ProblemHighlightType.LIKE_UNUSED_SYMBOL, fix);
       }
     };
+  }
+
+  /**
+   * Extract the properties that are being committed. If no commit is in progress, return null.
+   * The {@link com.intellij.openapi.vcs.checkin.CodeAnalysisBeforeCheckinHandler#getBeforeCheckinConfigurationPanel} method puts
+   * into the {@link PsiFile}'s user data a closure that accepts a class and returns all the {@link PsiElement}s being committed.
+   * @param file the properties file that is supposed to contain the closure to extract properties that are being committed
+   * @return a {@link Set} of properties that are being committed or null if no commit is in progress.
+   */
+  @Nullable
+  private static Set<PsiElement> getBeingCommittedProperties(@NotNull PsiFile file) {
+    final Map<Class<? extends PsiElement>, Set<PsiElement>> data = file.getUserData(InspectionProfileWrapper.PSI_ELEMENTS_BEING_COMMITTED);
+    if (data == null) return null;
+
+    return data.get(Property.class);
   }
 
   private static boolean isImplicitlyUsed(@NotNull Property property) {

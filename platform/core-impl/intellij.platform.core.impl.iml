@@ -13,5 +13,8 @@
     <orderEntry type="library" name="JDOM" level="project" />
     <orderEntry type="library" name="fastutil-min" level="project" />
     <orderEntry type="module" module-name="intellij.platform.util.classLoader" />
+    <orderEntry type="library" name="aalto-xml" level="project" />
+    <orderEntry type="module" module-name="intellij.platform.util.xmlDom" />
+    <orderEntry type="library" name="automaton" level="project" />
   </component>
 </module>

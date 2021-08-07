@@ -1,7 +1,6 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.find;
 
-import com.intellij.execution.runners.ExecutionUtil;
 import com.intellij.find.editorHeaderActions.*;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
@@ -10,15 +9,16 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.impl.EditorHeaderComponent;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.ui.VerticalFlowLayout;
-import com.intellij.openapi.util.BooleanGetter;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.registry.ExperimentalUI;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
@@ -66,7 +66,6 @@ public final class SearchReplaceComponent extends EditorHeaderComponent implemen
   private final ActionToolbarImpl mySearchActionsToolbar;
   private final List<AnAction> myEmbeddedSearchActions = new ArrayList<>();
   private final List<Component> myExtraSearchButtons = new ArrayList<>();
-  private final BooleanGetter mySearchToolbarModifiedFlagGetter;
 
   private final DefaultActionGroup myReplaceFieldActions;
   private final ActionToolbarImpl myReplaceActionsToolbar;
@@ -101,7 +100,6 @@ public final class SearchReplaceComponent extends EditorHeaderComponent implemen
   private SearchReplaceComponent(@Nullable Project project,
                                  @NotNull JComponent targetComponent,
                                  @NotNull DefaultActionGroup searchToolbar1Actions,
-                                 @NotNull final BooleanGetter searchToolbar1ModifiedFlagGetter,
                                  @NotNull DefaultActionGroup searchToolbar2Actions,
                                  @NotNull DefaultActionGroup searchFieldActions,
                                  @NotNull DefaultActionGroup replaceToolbar1Actions,
@@ -117,7 +115,6 @@ public final class SearchReplaceComponent extends EditorHeaderComponent implemen
                                  boolean useSearchField) {
     myProject = project;
     myTargetComponent = targetComponent;
-    mySearchToolbarModifiedFlagGetter = searchToolbar1ModifiedFlagGetter;
     mySearchFieldActions = searchFieldActions;
     myReplaceFieldActions = replaceFieldActions;
     myReplaceAction = replaceAction;
@@ -180,10 +177,14 @@ public final class SearchReplaceComponent extends EditorHeaderComponent implemen
     searchToolbar1Actions.addAll(searchToolbar2Actions.getChildren(null));
     replaceToolbar1Actions.addAll(replaceToolbar2Actions.getChildren(null));
 
-    mySearchActionsToolbar = createSearchToolbar1(searchToolbar1Actions);
+    mySearchActionsToolbar = createToolbar(searchToolbar1Actions);
     mySearchActionsToolbar.setForceShowFirstComponent(true);
     JPanel searchPair = new NonOpaquePanel(new BorderLayout());
     searchPair.add(mySearchActionsToolbar, BorderLayout.CENTER);
+    if (ExperimentalUI.isNewEditorTabs()) {
+      mySearchActionsToolbar.setBackground(EditorColorsManager.getInstance().getGlobalScheme().getDefaultBackground());
+      searchPair.setBackground(EditorColorsManager.getInstance().getGlobalScheme().getDefaultBackground());
+    }
 
     myReplaceActionsToolbar = createReplaceToolbar1(replaceToolbar1Actions);
     myReplaceActionsToolbar.setBorder(JBUI.Borders.empty());
@@ -220,7 +221,13 @@ public final class SearchReplaceComponent extends EditorHeaderComponent implemen
       }
       mySplitter.setFirstComponent(leftPanel);
       mySplitter.setSecondComponent(rightPanel);
-      mySplitter.setOpaque(false);
+      if (ExperimentalUI.isNewEditorTabs()) {
+        mySearchActionsToolbar.setBackground(EditorColorsManager.getInstance().getGlobalScheme().getDefaultBackground());
+        mySplitter.setBackground(EditorColorsManager.getInstance().getGlobalScheme().getDefaultBackground());
+        mySplitter.setOpaque(true);
+      } else {
+        mySplitter.setOpaque(false);
+      }
       mySplitter.getDivider().setOpaque(false);
       add(mySplitter, BorderLayout.CENTER);
 
@@ -631,31 +638,6 @@ public final class SearchReplaceComponent extends EditorHeaderComponent implemen
 
 
   @NotNull
-  private ActionToolbarImpl createSearchToolbar1(@NotNull DefaultActionGroup group) {
-    ActionToolbarImpl toolbar = createToolbar(group);
-    toolbar.setSecondaryActionsTooltip(FindBundle.message("find.popup.show.filter.popup"));
-    toolbar.setSecondaryActionsIcon(AllIcons.General.Filter, true);
-    toolbar.setNoGapMode();
-    toolbar.setSecondaryButtonPopupStateModifier(new ActionToolbarImpl.SecondaryGroupUpdater() {
-      @Override
-      public void update(@NotNull AnActionEvent e) {
-        Icon icon = e.getPresentation().getIcon();
-        if (icon != null && mySearchToolbarModifiedFlagGetter.get()) {
-          e.getPresentation().setIcon(ExecutionUtil.getLiveIndicator(icon));
-        }
-      }
-    });
-
-    KeyboardShortcut keyboardShortcut = ActionManager.getInstance().getKeyboardShortcut("ShowFilterPopup");
-    if (keyboardShortcut != null) {
-      toolbar.setSecondaryActionsShortcut(KeymapUtil.getShortcutText(keyboardShortcut));
-    }
-
-    new ShowMoreOptions(toolbar, mySearchFieldWrapper);
-    return toolbar;
-  }
-
-  @NotNull
   private ActionToolbarImpl createReplaceToolbar1(@NotNull DefaultActionGroup group) {
     ActionToolbarImpl toolbar = createToolbar(group);
     toolbar.setForceMinimumSize(true);
@@ -694,7 +676,6 @@ public final class SearchReplaceComponent extends EditorHeaderComponent implemen
     private final DefaultActionGroup mySearchActions = DefaultActionGroup.createFlatGroup(() -> "search bar 1");
     private final DefaultActionGroup myExtraSearchActions = DefaultActionGroup.createFlatGroup(() -> "search bar 2");
     private final DefaultActionGroup mySearchFieldActions = DefaultActionGroup.createFlatGroup(() -> "search field actions");
-    private BooleanGetter mySearchToolbarModifiedFlagGetter = BooleanGetter.FALSE;
 
     private final DefaultActionGroup myReplaceActions = DefaultActionGroup.createFlatGroup(() -> "replace bar 1");
     private final DefaultActionGroup myExtraReplaceActions = DefaultActionGroup.createFlatGroup(() -> "replace bar 1");
@@ -756,12 +737,6 @@ public final class SearchReplaceComponent extends EditorHeaderComponent implemen
     }
 
     @NotNull
-    public Builder withSecondarySearchActionsIsModifiedGetter(@NotNull BooleanGetter getter) {
-      mySearchToolbarModifiedFlagGetter = getter;
-      return this;
-    }
-
-    @NotNull
     public Builder addExtraSearchActions(AnAction @NotNull ... actions) {
       myExtraSearchActions.addAll(actions);
       return this;
@@ -796,7 +771,6 @@ public final class SearchReplaceComponent extends EditorHeaderComponent implemen
       return new SearchReplaceComponent(myProject,
                                         myTargetComponent,
                                         mySearchActions,
-                                        mySearchToolbarModifiedFlagGetter,
                                         myExtraSearchActions,
                                         mySearchFieldActions,
                                         myReplaceActions,

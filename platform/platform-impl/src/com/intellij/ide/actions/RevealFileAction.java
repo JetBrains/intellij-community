@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.actions;
 
 import com.intellij.execution.configurations.GeneralCommandLine;
@@ -79,7 +79,9 @@ public class RevealFileAction extends DumbAwareAction implements LightEditCompat
   public void update(@NotNull AnActionEvent e) {
     Editor editor = e.getData(CommonDataKeys.EDITOR);
     e.getPresentation().setEnabledAndVisible(isSupported() && getFile(e) != null &&
-                                             (!ActionPlaces.isPopupPlace(e.getPlace()) || editor == null || !editor.getSelectionModel().hasSelection()));
+                                             (!ActionPlaces.isPopupPlace(e.getPlace()) ||
+                                              editor == null ||
+                                              !editor.getSelectionModel().hasSelection()));
     e.getPresentation().setText(getActionName(e.getPlace()));
   }
 
@@ -110,7 +112,9 @@ public class RevealFileAction extends DumbAwareAction implements LightEditCompat
         ActionPlaces.PROJECT_VIEW_POPUP.equals(place)) {
       return getFileManagerName();
     }
-    return SystemInfo.isMac ? ActionsBundle.message("action.RevealIn.name.mac") : ActionsBundle.message("action.RevealIn.name.other", getFileManagerName());
+    return SystemInfo.isMac
+           ? ActionsBundle.message("action.RevealIn.name.mac")
+           : ActionsBundle.message("action.RevealIn.name.other", getFileManagerName());
   }
 
   public static @NlsSafe @NotNull String getFileManagerName() {
@@ -168,6 +172,13 @@ public class RevealFileAction extends DumbAwareAction implements LightEditCompat
    */
   public static void openDirectory(@NotNull File directory) {
     doOpen(directory.toPath(), null);
+  }
+
+  /**
+   * Opens a system file manager with given directory open in it.
+   */
+  public static void openDirectory(@NotNull Path directory) {
+    doOpen(directory, null);
   }
 
   /**

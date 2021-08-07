@@ -240,6 +240,7 @@ public class AntExplorer extends SimpleToolWindowPanel implements DataProvider, 
     group.add(myAntBuildFilePropertiesAction);
 
     final ActionToolbar actionToolBar = ActionManager.getInstance().createActionToolbar(ActionPlaces.ANT_EXPLORER_TOOLBAR, group, true);
+    actionToolBar.setTargetComponent(this);
     return JBUI.Panels.simplePanel(actionToolBar.getComponent());
   }
 

@@ -1,14 +1,22 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.customize
 
 import com.intellij.ide.ApplicationInitializedListener
+import com.intellij.internal.statistic.FeaturedPluginsInfoProvider
 import com.intellij.internal.statistic.eventLog.FeatureUsageData
 import com.intellij.internal.statistic.service.fus.collectors.FUCounterUsageLogger
-import com.intellij.internal.statistic.utils.getPluginInfoByDescriptor
-import com.intellij.openapi.application.ApplicationManager
+import com.intellij.internal.statistic.utils.getPluginInfoByDescriptorWithFeaturedPlugins
 import com.intellij.openapi.extensions.PluginDescriptor
+import com.intellij.openapi.extensions.PluginId
+import java.util.concurrent.ForkJoinPool
+import java.util.concurrent.atomic.AtomicReference
 
 object CustomizeIDEWizardInteractions {
+  /**
+   * Featured plugins group which are suggested in IDE Customization Wizard.
+   */
+  val featuredPluginGroups = AtomicReference<PluginGroups>()
+
   var skippedOnPage = -1
   val interactions = mutableListOf<CustomizeIDEWizardInteraction>()
 
@@ -36,23 +44,40 @@ data class CustomizeIDEWizardInteraction(
   val groupId: String?
 )
 
-class CustomizeIDEWizardCollectorActivity : ApplicationInitializedListener {
+internal class CustomizeIDEWizardCollectorActivity : ApplicationInitializedListener {
   override fun componentsInitialized() {
-    if (CustomizeIDEWizardInteractions.interactions.isEmpty()) return
+    if (CustomizeIDEWizardInteractions.interactions.isEmpty()) {
+      return
+    }
 
-    ApplicationManager.getApplication().executeOnPooledThread {
+    ForkJoinPool.commonPool().execute {
       if (CustomizeIDEWizardInteractions.skippedOnPage != -1) {
         FUCounterUsageLogger.getInstance().logEvent("customize.wizard", "remaining.pages.skipped",
                                                     FeatureUsageData().addData("page", CustomizeIDEWizardInteractions.skippedOnPage))
       }
 
+      val featuredPluginsProvider = CustomizeIDEWizardFeaturedPluginsProvider(CustomizeIDEWizardInteractions.featuredPluginGroups.get())
       for (interaction in CustomizeIDEWizardInteractions.interactions) {
         val data = FeatureUsageData()
         data.addData("timestamp", interaction.timestamp)
-        interaction.pluginDescriptor?.let { data.addPluginInfo(getPluginInfoByDescriptor(it)) }
+        interaction.pluginDescriptor?.let { data.addPluginInfo(getPluginInfoByDescriptorWithFeaturedPlugins(it, featuredPluginsProvider)) }
         interaction.groupId?.let { data.addData("group", it) }
         FUCounterUsageLogger.getInstance().logEvent("customize.wizard", interaction.type.toString(), data)
       }
     }
   }
+}
+
+private class CustomizeIDEWizardFeaturedPluginsProvider(private val pluginGroups: PluginGroups?) : FeaturedPluginsInfoProvider {
+  private val validatedPlugins: Set<PluginId> by lazy {
+    if (pluginGroups != null) {
+      val fromRepository = pluginGroups.pluginsFromRepository
+      if (fromRepository.isNotEmpty()) {
+        return@lazy fromRepository.map { it.pluginId }.toSet()
+      }
+    }
+    return@lazy emptySet()
+  }
+
+  override fun getFeaturedPluginsFromMarketplace(): Set<PluginId> = validatedPlugins
 }

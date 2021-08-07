@@ -69,6 +69,7 @@ public class PyUnresolvedReferencesInspection extends PyUnresolvedReferencesInsp
   @Override
   public JComponent createOptionsPanel() {
     final ListEditForm form = new ListEditForm(PyPsiBundle.message("INSP.unresolved.refs.column.name.ignore.references"),
+                                               PyPsiBundle.message("INSP.unresolved.refs.ignore.references.label"),
                                                ignoredIdentifiers);
     return form.getContentPanel();
   }
@@ -198,12 +199,10 @@ public class PyUnresolvedReferencesInspection extends PyUnresolvedReferencesInsp
     }
 
     @Override
-    public Iterable<LocalQuickFix> getPluginQuickFixes(PsiReference reference) {
-      List<LocalQuickFix> result = new ArrayList<>();
+    void getPluginQuickFixes(List<LocalQuickFix> fixes, PsiReference reference) {
       for (PyUnresolvedReferenceQuickFixProvider provider : PyUnresolvedReferenceQuickFixProvider.EP_NAME.getExtensionList()) {
-        provider.registerQuickFixes(reference, result::add);
+        provider.registerQuickFixes(reference, fixes);
       }
-      return result;
     }
   }
 }

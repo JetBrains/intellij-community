@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl.file.impl;
 
 import com.intellij.ProjectTopics;
@@ -49,7 +49,7 @@ public final class JavaFileManagerImpl implements JavaFileManager, Disposable {
     myManager = PsiManagerEx.getInstanceEx(project);
     project.getMessageBus().connect().subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootListener() {
       @Override
-      public void rootsChanged(@NotNull final ModuleRootEvent event) {
+      public void rootsChanged(@NotNull ModuleRootEvent event) {
         myNontrivialPackagePrefixes = null;
       }
     });
@@ -61,15 +61,14 @@ public final class JavaFileManagerImpl implements JavaFileManager, Disposable {
   }
 
   @Override
-  @Nullable
-  public PsiPackage findPackage(@NotNull String packageName) {
+  public @Nullable PsiPackage findPackage(@NotNull String packageName) {
     Query<VirtualFile> dirs = PackageIndex.getInstance(myManager.getProject()).getDirsByPackageName(packageName, true);
     if (dirs.findFirst() == null) return null;
     return new PsiPackageImpl(myManager, packageName);
   }
 
   @Override
-  public PsiClass @NotNull [] findClasses(@NotNull String qName, @NotNull final GlobalSearchScope scope) {
+  public PsiClass @NotNull [] findClasses(@NotNull String qName, @NotNull GlobalSearchScope scope) {
     List<Pair<PsiClass, VirtualFile>> result = doFindClasses(qName, scope);
 
     int count = result.size();
@@ -81,13 +80,13 @@ public final class JavaFileManagerImpl implements JavaFileManager, Disposable {
     return result.stream().map(p -> p.getFirst()).toArray(PsiClass[]::new);
   }
 
-  @NotNull
-  private List<Pair<PsiClass, VirtualFile>> doFindClasses(@NotNull String qName, @NotNull final GlobalSearchScope scope) {
-    final Collection<PsiClass> classes = JavaFullClassNameIndex.getInstance().get(qName.hashCode(), myManager.getProject(), scope);
+  private @NotNull List<Pair<PsiClass, VirtualFile>> doFindClasses(@NotNull String qName, @NotNull GlobalSearchScope scope) {
+    Collection<PsiClass> classes = JavaFullClassNameIndex.getInstance().get(qName.hashCode(), myManager.getProject(), scope);
     if (classes.isEmpty()) return Collections.emptyList();
+
     List<Pair<PsiClass, VirtualFile>> result = new ArrayList<>(classes.size());
     for (PsiClass aClass : classes) {
-      final String qualifiedName = aClass.getQualifiedName();
+      String qualifiedName = aClass.getQualifiedName();
       if (!qName.equals(qualifiedName)) continue;
 
       PsiFile file = aClass.getContainingFile();
@@ -104,8 +103,7 @@ public final class JavaFileManagerImpl implements JavaFileManager, Disposable {
   }
 
   @Override
-  @Nullable
-  public PsiClass findClass(@NotNull String qName, @NotNull GlobalSearchScope scope) {
+  public @Nullable PsiClass findClass(@NotNull String qName, @NotNull GlobalSearchScope scope) {
     LOG.assertTrue(!myDisposed);
     VirtualFile bestFile = null;
     PsiClass bestClass = null;
@@ -127,9 +125,9 @@ public final class JavaFileManagerImpl implements JavaFileManager, Disposable {
   private boolean hasAcceptablePackage(@NotNull VirtualFile vFile) {
     if (FileTypeRegistry.getInstance().isFileOfType(vFile, JavaClassFileType.INSTANCE)) {
       // See IDEADEV-5626
-      final VirtualFile root = ProjectRootManager.getInstance(myManager.getProject()).getFileIndex().getClassRootForFile(vFile);
+      VirtualFile root = ProjectRootManager.getInstance(myManager.getProject()).getFileIndex().getClassRootForFile(vFile);
       VirtualFile parent = vFile.getParent();
-      final PsiNameHelper nameHelper = PsiNameHelper.getInstance(myManager.getProject());
+      PsiNameHelper nameHelper = PsiNameHelper.getInstance(myManager.getProject());
       while (parent != null && !Comparing.equal(parent, root)) {
         if (!nameHelper.isIdentifier(parent.getName())) return false;
         parent = parent.getParent();
@@ -139,18 +137,17 @@ public final class JavaFileManagerImpl implements JavaFileManager, Disposable {
     return true;
   }
 
-  @NotNull
   @Override
-  public Collection<String> getNonTrivialPackagePrefixes() {
+  public @NotNull Collection<String> getNonTrivialPackagePrefixes() {
     Set<String> names = myNontrivialPackagePrefixes;
     if (names == null) {
       names = new HashSet<>();
-      final ProjectRootManager rootManager = ProjectRootManager.getInstance(myManager.getProject());
-      final List<VirtualFile> sourceRoots = rootManager.getModuleSourceRoots(JavaModuleSourceRootTypes.SOURCES);
-      final ProjectFileIndex fileIndex = rootManager.getFileIndex();
-      for (final VirtualFile sourceRoot : sourceRoots) {
+      ProjectRootManager rootManager = ProjectRootManager.getInstance(myManager.getProject());
+      List<VirtualFile> sourceRoots = rootManager.getModuleSourceRoots(JavaModuleSourceRootTypes.SOURCES);
+      ProjectFileIndex fileIndex = rootManager.getFileIndex();
+      for (VirtualFile sourceRoot : sourceRoots) {
         if (sourceRoot.isDirectory()) {
-          final String packageName = fileIndex.getPackageNameByDirectory(sourceRoot);
+          String packageName = fileIndex.getPackageNameByDirectory(sourceRoot);
           if (packageName != null && !packageName.isEmpty()) {
             names.add(packageName);
           }
@@ -161,9 +158,8 @@ public final class JavaFileManagerImpl implements JavaFileManager, Disposable {
     return names;
   }
 
-  @NotNull
   @Override
-  public Collection<PsiJavaModule> findModules(@NotNull String moduleName, @NotNull GlobalSearchScope scope) {
+  public @NotNull Collection<PsiJavaModule> findModules(@NotNull String moduleName, @NotNull GlobalSearchScope scope) {
     GlobalSearchScope excludingScope = new LibSrcExcludingScope(scope);
 
     List<PsiJavaModule> results = new ArrayList<>(JavaModuleNameIndex.getInstance().get(moduleName, myManager.getProject(), excludingScope));

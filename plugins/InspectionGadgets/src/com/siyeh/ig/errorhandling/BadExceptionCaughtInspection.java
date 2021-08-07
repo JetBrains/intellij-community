@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2014 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2021 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package com.siyeh.ig.errorhandling;
 
+import com.intellij.codeInspection.ui.InspectionOptionsPanel;
 import com.intellij.codeInspection.ui.ListTable;
 import com.intellij.codeInspection.ui.ListWrappingTableModel;
 import com.intellij.openapi.util.text.StringUtil;
@@ -65,8 +66,14 @@ public class BadExceptionCaughtInspection extends BaseInspection {
   public JComponent createOptionsPanel() {
     final ListTable table =
       new ListTable(new ListWrappingTableModel(exceptions, InspectionGadgetsBundle.message("exception.class.column.name")));
-    return UiUtils.createAddRemoveTreeClassChooserPanel(table, InspectionGadgetsBundle.message("choose.exception.class"),
-                                                        CommonClassNames.JAVA_LANG_THROWABLE);
+    final var panel = new InspectionOptionsPanel();
+    panel.addGrowing(UiUtils.createAddRemoveTreeClassChooserPanel(
+      InspectionGadgetsBundle.message("choose.exception.class"),
+      InspectionGadgetsBundle.message("choose.exception.label"),
+      table,
+      true,
+      CommonClassNames.JAVA_LANG_THROWABLE));
+    return panel;
   }
 
   @Override

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.usages.impl.rules;
 
 import com.intellij.icons.AllIcons;
@@ -7,7 +7,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.roots.TestSourcesFilter;
-import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiUtilCore;
@@ -15,7 +14,6 @@ import com.intellij.usageView.UsageViewBundle;
 import com.intellij.usages.Usage;
 import com.intellij.usages.UsageGroup;
 import com.intellij.usages.UsageTarget;
-import com.intellij.usages.UsageView;
 import com.intellij.usages.rules.PsiElementUsage;
 import com.intellij.usages.rules.SingleParentUsageGroupingRule;
 import com.intellij.usages.rules.UsageGroupingRuleEx;
@@ -48,43 +46,48 @@ class UsageScopeGroupingRule extends SingleParentUsageGroupingRule implements Du
   }
 
   @Override
+  public int getRank() {
+    return UsageGroupingRulesDefaultRanks.SCOPE.getAbsoluteRank();
+  }
+
+  @Override
   public String getGroupingActionId() {
     return "UsageGrouping.Scope";
   }
 
   private static final UsageScopeGroup TEST = new UsageScopeGroup(0) {
     @Override
-    public Icon getIcon(boolean isOpen) {
+    public Icon getIcon() {
       return AllIcons.Nodes.TestSourceFolder;
     }
 
     @Override
     @NotNull
-    public String getText(UsageView view) {
+    public String getPresentableGroupText() {
       return UsageViewBundle.message("list.item.test");
     }
   };
   private static final UsageScopeGroup PRODUCTION = new UsageScopeGroup(1) {
     @Override
-    public Icon getIcon(boolean isOpen) {
+    public Icon getIcon() {
       return PlatformIcons.SOURCE_FOLDERS_ICON;
     }
 
     @Override
     @NotNull
-    public String getText(UsageView view) {
+    public String getPresentableGroupText() {
       return UsageViewBundle.message("list.item.production");
     }
   };
   private static final UsageScopeGroup LIBRARY = new UsageScopeGroup(2) {
     @Override
-    public Icon getIcon(boolean isOpen) {
+    public Icon getIcon() {
       return PlatformIcons.LIBRARY_ICON;
     }
 
     @Override
     @NotNull
-    public String getText(UsageView view) {
+    public String getPresentableGroupText() {
       return UsageViewBundle.message("list.item.library");
     }
   };
@@ -95,17 +98,6 @@ class UsageScopeGroupingRule extends SingleParentUsageGroupingRule implements Du
       myCode = code;
     }
 
-    @Override
-    public void update() {
-    }
-
-    @Override
-    public FileStatus getFileStatus() {
-      return null;
-    }
-
-    @Override
-    public boolean isValid() { return true; }
     @Override
     public void navigate(boolean focus) { }
     @Override
@@ -118,7 +110,7 @@ class UsageScopeGroupingRule extends SingleParentUsageGroupingRule implements Du
 
     @Override
     public int compareTo(@NotNull UsageGroup usageGroup) {
-      return getText(null).compareTo(usageGroup.getText(null));
+      return getPresentableGroupText().compareTo(usageGroup.getPresentableGroupText());
     }
 
     public boolean equals(Object o) {

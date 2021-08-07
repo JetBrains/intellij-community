@@ -48,6 +48,7 @@ private class EditorCodePreviewImpl(val editor: Editor): EditorCodePreview, Disp
 
   private val documentListener = object : BulkAwareDocumentListener.Simple {
     override fun afterDocumentChange(document: Document) {
+      if (editor.isDisposed) return
       popups.forEach(CodeFragmentPopup::updateCodePreview)
       updatePopupPositions()
     }
@@ -74,6 +75,7 @@ private class EditorCodePreviewImpl(val editor: Editor): EditorCodePreview, Disp
   }
 
   private fun updatePopupPositions() {
+    if (editor.isDisposed) return
     var visibleArea = editor.scrollingModel.visibleArea
     var positions = popups.reversed()
       .map { popup ->

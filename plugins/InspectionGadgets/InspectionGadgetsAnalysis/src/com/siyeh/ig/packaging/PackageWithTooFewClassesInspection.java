@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2015 Dave Griffith, Bas Leijdekkers
+ * Copyright 2006-2021 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,7 +33,7 @@ import java.util.List;
 
 public class PackageWithTooFewClassesInspection extends BaseGlobalInspection {
 
-  @SuppressWarnings({"PublicField"})
+  @SuppressWarnings("PublicField")
   public int limit = 3;
 
   @Override
@@ -56,7 +56,7 @@ public class PackageWithTooFewClassesInspection extends BaseGlobalInspection {
         subpackage = true;
       }
     }
-    if (numClasses >= limit || (numClasses == 0 && subpackage)) {
+    if (numClasses >= limit || subpackage) {
       return null;
     }
     final String errorString = InspectionGadgetsBundle.message(

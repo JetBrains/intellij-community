@@ -10,8 +10,21 @@ public interface JsonWidgetSuppressor {
   ExtensionPointName<JsonWidgetSuppressor> EXTENSION_POINT_NAME = ExtensionPointName.create("com.intellij.json.jsonWidgetSuppressor");
 
   /**
-   * Allows to suppress JSON widget for particular files
-   * This method can access indexes and PSI
+   * Allows to check whether widget for the file should be suppressed or not.
+   * This method is called on EDT.
+   */
+  default boolean isCandidateForSuppress(@NotNull VirtualFile file, @NotNull Project project) {
+    return false;
+  }
+
+  /**
+   * Allows to suppress JSON widget for particular files.
+   * This method is called only if {@link #isCandidateForSuppress(VirtualFile, Project)}
+   * return {@code true} for the given file in the given project.
+   * <br>This method is called on a background thread under read action with progress indicator.
+   * Implementors might want to call {@link com.intellij.openapi.progress.ProgressManager#checkCanceled()}
+   * time to time to check whether widget suppression is still actual for the given file.
+   * For instance progress indicator is canceled if another editor tab is selected.
    */
   boolean suppressSwitcherWidget(@NotNull VirtualFile file, @NotNull Project project);
 }

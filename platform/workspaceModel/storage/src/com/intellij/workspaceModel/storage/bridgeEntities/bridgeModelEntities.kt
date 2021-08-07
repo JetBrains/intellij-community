@@ -63,7 +63,7 @@ class ModuleEntityData : WorkspaceEntityData.WithCalculablePersistentId<ModuleEn
   }
 
   override fun createEntity(snapshot: WorkspaceEntityStorage): ModuleEntity = ModuleEntity(name, type, dependencies).also {
-    addMetaData(it, snapshot)
+    addMetaData(it, snapshot, classId)
   }
 
   override fun persistentId(): ModuleId = ModuleId(name)
@@ -107,6 +107,11 @@ class ModuleEntityData : WorkspaceEntityData.WithCalculablePersistentId<ModuleEn
     result = 31 * result + entitySource.hashCode()
     return result
   }
+
+  companion object {
+    @Transient
+    private val classId: Int = ClassToIntConverter.getInt(ModuleEntity::class.java)
+  }
 }
 
 class ModuleEntity(
@@ -142,9 +147,10 @@ class JavaModuleSettingsEntityData : WorkspaceEntityData<JavaModuleSettingsEntit
   var excludeOutput: Boolean = false
   var compilerOutput: VirtualFileUrl? = null
   var compilerOutputForTests: VirtualFileUrl? = null
+  var languageLevelId: String? = null
 
   override fun createEntity(snapshot: WorkspaceEntityStorage): JavaModuleSettingsEntity {
-    return JavaModuleSettingsEntity(inheritedCompilerOutput, excludeOutput, compilerOutput, compilerOutputForTests)
+    return JavaModuleSettingsEntity(inheritedCompilerOutput, excludeOutput, compilerOutput, compilerOutputForTests, languageLevelId)
       .also { addMetaData(it, snapshot) }
   }
 }
@@ -153,12 +159,13 @@ class JavaModuleSettingsEntity(
   val inheritedCompilerOutput: Boolean,
   val excludeOutput: Boolean,
   val compilerOutput: VirtualFileUrl?,
-  val compilerOutputForTests: VirtualFileUrl?
+  val compilerOutputForTests: VirtualFileUrl?,
+  val languageLevelId: String?
 ) : WorkspaceEntityBase() {
   val module: ModuleEntity by moduleDelegate
 
   companion object {
-    val moduleDelegate = ManyToOne.NotNull<ModuleEntity, JavaModuleSettingsEntity>(ModuleEntity::class.java)
+    val moduleDelegate = OneToOneChild.NotNull<JavaModuleSettingsEntity, ModuleEntity>(ModuleEntity::class.java)
   }
 }
 
@@ -179,7 +186,7 @@ class ModuleCustomImlDataEntity(
   val module: ModuleEntity by moduleDelegate
 
   companion object {
-    val moduleDelegate = ManyToOne.NotNull<ModuleEntity, ModuleCustomImlDataEntity>(ModuleEntity::class.java)
+    val moduleDelegate = OneToOneChild.NotNull< ModuleCustomImlDataEntity, ModuleEntity>(ModuleEntity::class.java)
   }
 }
 
@@ -207,6 +214,14 @@ data class ModuleId(val name: String) : PersistentEntityId<ModuleEntity>() {
     get() = null
   override val presentableName: String
     get() = name
+
+  override fun equals(other: Any?): Boolean {
+    if (this === other) return true
+    if (other !is ModuleId) return false
+    return name == other.name
+  }
+
+  override fun hashCode(): Int  = name.hashCode()
 }
 
 sealed class ModuleDependencyItem : Serializable {
@@ -248,17 +263,15 @@ sealed class ModuleDependencyItem : Serializable {
 @Suppress("unused")
 class SourceRootEntityData : WorkspaceEntityData<SourceRootEntity>() {
   lateinit var url: VirtualFileUrl
-  var tests: Boolean = false
   lateinit var rootType: String
 
-  override fun createEntity(snapshot: WorkspaceEntityStorage): SourceRootEntity = SourceRootEntity(url, tests, rootType).also {
+  override fun createEntity(snapshot: WorkspaceEntityStorage): SourceRootEntity = SourceRootEntity(url, rootType).also {
     addMetaData(it, snapshot)
   }
 }
 
 open class SourceRootEntity(
   val url: VirtualFileUrl,
-  val tests: Boolean,
   val rootType: String
 ) : WorkspaceEntityBase() {
   val contentRoot: ContentRootEntity by contentRootDelegate
@@ -489,15 +502,15 @@ class SourceRootOrderEntity(
   val contentRootEntity: ContentRootEntity by contentRootDelegate
 
   companion object {
-    val contentRootDelegate = OneToOneChild.NotNull<SourceRootOrderEntity, ContentRootEntity>(ContentRootEntity::class.java, true)
+    val contentRootDelegate = OneToOneChild.NotNull<SourceRootOrderEntity, ContentRootEntity>(ContentRootEntity::class.java)
   }
 }
 
 class ModifiableSourceRootOrderEntity : ModifiableWorkspaceEntityBase<SourceRootOrderEntity>() {
   var orderOfSourceRoots: List<VirtualFileUrl> by VirtualFileUrlListProperty()
 
-  var contentRootEntity: ContentRootEntity by MutableOneToOneChild.NotNull(SourceRootOrderEntity::class.java, ContentRootEntity::class.java,
-                                                                           true)
+  var contentRootEntity: ContentRootEntity by MutableOneToOneChild.NotNull(SourceRootOrderEntity::class.java, ContentRootEntity::class.java
+  )
 }
 
 fun ContentRootEntity.getSourceRootOrder() = referrers(SourceRootOrderEntity::contentRootEntity).firstOrNull()
@@ -549,10 +562,15 @@ class LibraryEntityData : WorkspaceEntityData.WithCalculablePersistentId<Library
   }
 
   override fun createEntity(snapshot: WorkspaceEntityStorage): LibraryEntity {
-    return LibraryEntity(tableId, name, roots, excludedRoots).also { addMetaData(it, snapshot) }
+    return LibraryEntity(tableId, name, roots, excludedRoots).also { addMetaData(it, snapshot, classId) }
   }
 
   override fun persistentId(): LibraryId = LibraryId(name, tableId)
+
+  companion object {
+    @Transient
+    private val classId: Int = ClassToIntConverter.getInt(LibraryEntity::class.java)
+  }
 }
 
 class LibraryEntity(
@@ -569,6 +587,28 @@ data class LibraryId(val name: String, val tableId: LibraryTableId) : Persistent
     get() = null
   override val presentableName: String
     get() = name
+
+  @Transient
+  private var codeCache: Int = 0
+
+  override fun equals(other: Any?): Boolean {
+    if (this === other) return true
+    if (other !is LibraryId) return false
+
+    if (this.codeCache != 0 && other.codeCache != 0 && this.codeCache != other.codeCache) return false
+    if (name != other.name) return false
+    if (tableId != other.tableId) return false
+
+    return true
+  }
+
+  override fun hashCode(): Int {
+    if (codeCache != 0) return codeCache
+    var result = name.hashCode()
+    result = 31 * result + tableId.hashCode()
+    this.codeCache = result
+    return result
+  }
 }
 
 data class LibraryRootTypeId(val name: String) : Serializable {
@@ -618,7 +658,7 @@ class LibraryPropertiesEntity(
   val library: LibraryEntity by libraryDelegate
 
   companion object {
-    val libraryDelegate = OneToOneChild.NotNull<LibraryPropertiesEntity, LibraryEntity>(LibraryEntity::class.java, true)
+    val libraryDelegate = OneToOneChild.NotNull<LibraryPropertiesEntity, LibraryEntity>(LibraryEntity::class.java)
   }
 }
 
@@ -637,7 +677,7 @@ class SdkEntity(
   val library: LibraryEntity by libraryDelegate
 
   companion object {
-    val libraryDelegate = OneToOneChild.NotNull<SdkEntity, LibraryEntity>(LibraryEntity::class.java, true)
+    val libraryDelegate = OneToOneChild.NotNull<SdkEntity, LibraryEntity>(LibraryEntity::class.java)
   }
 }
 
@@ -675,7 +715,7 @@ class ExternalSystemModuleOptionsEntity(
   val module: ModuleEntity by moduleDelegate
 
   companion object {
-    val moduleDelegate = OneToOneChild.NotNull<ExternalSystemModuleOptionsEntity, ModuleEntity>(ModuleEntity::class.java, true)
+    val moduleDelegate = OneToOneChild.NotNull<ExternalSystemModuleOptionsEntity, ModuleEntity>(ModuleEntity::class.java)
   }
 }
 
@@ -719,7 +759,7 @@ class FacetEntity(
 
   companion object {
     val moduleDelegate = ManyToOne.NotNull<ModuleEntity, FacetEntity>(ModuleEntity::class.java)
-    val facetDelegate = OneToOneChild.Nullable<FacetEntity, FacetEntity>(FacetEntity::class.java, true)
+    val facetDelegate = ManyToOne.Nullable<FacetEntity, FacetEntity>(FacetEntity::class.java)
   }
 
   override fun persistentId(): FacetId = FacetId(name, facetType, moduleId)
@@ -749,7 +789,7 @@ class ArtifactEntityData : WorkspaceEntityData.WithCalculablePersistentId<Artifa
   lateinit var name: String
   lateinit var artifactType: String
   var includeInProjectBuild: Boolean = false
-  lateinit var outputUrl: VirtualFileUrl
+  var outputUrl: VirtualFileUrl? = null
 
   override fun createEntity(snapshot: WorkspaceEntityStorage): ArtifactEntity {
     return ArtifactEntity(name, artifactType, includeInProjectBuild, outputUrl).also { addMetaData(it, snapshot) }
@@ -762,16 +802,16 @@ class ArtifactEntity(
   val name: String,
   val artifactType: String,
   val includeInProjectBuild: Boolean,
-  val outputUrl: VirtualFileUrl
+  val outputUrl: VirtualFileUrl?
 ) : WorkspaceEntityWithPersistentId, WorkspaceEntityBase() {
   override fun persistentId(): ArtifactId = ArtifactId(name)
 
-  val rootElement: CompositePackagingElementEntity by rootElementDelegate
+  val rootElement: CompositePackagingElementEntity? by rootElementDelegate
 
   val customProperties: Sequence<ArtifactPropertiesEntity> by customPropertiesDelegate
 
   companion object {
-    val rootElementDelegate = OneToAbstractOneChild<CompositePackagingElementEntity, ArtifactEntity>(
+    val rootElementDelegate = OneToAbstractOneParent<ArtifactEntity, CompositePackagingElementEntity>(
       CompositePackagingElementEntity::class.java)
     val customPropertiesDelegate = OneToMany<ArtifactEntity, ArtifactPropertiesEntity>(ArtifactPropertiesEntity::class.java, false)
   }
@@ -839,12 +879,11 @@ class ArtifactRootElementEntity : CompositePackagingElementEntity()
 
 @Suppress("unused")
 class ArtifactOutputPackagingElementEntityData : WorkspaceEntityData<ArtifactOutputPackagingElementEntity>(), SoftLinkable {
-  lateinit var artifact: ArtifactId
+  var artifact: ArtifactId? = null
 
-  override fun getLinks(): Set<PersistentEntityId<*>> = setOf(artifact)
+  override fun getLinks(): Set<PersistentEntityId<*>> = artifact?.let { setOf(it) } ?: emptySet()
 
-  override fun updateLink(oldLink: PersistentEntityId<*>,
-                          newLink: PersistentEntityId<*>): Boolean {
+  override fun updateLink(oldLink: PersistentEntityId<*>, newLink: PersistentEntityId<*>): Boolean {
     if (oldLink != artifact) return false
     this.artifact = newLink as ArtifactId
     return true
@@ -855,18 +894,15 @@ class ArtifactOutputPackagingElementEntityData : WorkspaceEntityData<ArtifactOut
   }
 }
 
-class ArtifactOutputPackagingElementEntity(
-  val artifact: ArtifactId
-) : PackagingElementEntity()
+class ArtifactOutputPackagingElementEntity(val artifact: ArtifactId?) : PackagingElementEntity()
 
 @Suppress("unused")
 class ModuleOutputPackagingElementEntityData : WorkspaceEntityData<ModuleOutputPackagingElementEntity>(), SoftLinkable {
-  lateinit var module: ModuleId
+  var module: ModuleId? = null
 
-  override fun getLinks(): Set<PersistentEntityId<*>> = setOf(module)
+  override fun getLinks(): Set<PersistentEntityId<*>> = module?.let { setOf(it) } ?: emptySet()
 
-  override fun updateLink(oldLink: PersistentEntityId<*>,
-                          newLink: PersistentEntityId<*>): Boolean {
+  override fun updateLink(oldLink: PersistentEntityId<*>, newLink: PersistentEntityId<*>): Boolean {
     if (module != oldLink) return false
     this.module = newLink as ModuleId
     return true
@@ -877,18 +913,15 @@ class ModuleOutputPackagingElementEntityData : WorkspaceEntityData<ModuleOutputP
   }
 }
 
-class ModuleOutputPackagingElementEntity(
-  val module: ModuleId
-) : PackagingElementEntity()
+class ModuleOutputPackagingElementEntity(val module: ModuleId?) : PackagingElementEntity()
 
 @Suppress("unused")
 class LibraryFilesPackagingElementEntityData : WorkspaceEntityData<LibraryFilesPackagingElementEntity>(), SoftLinkable {
-  lateinit var library: LibraryId
+  var library: LibraryId? = null
 
-  override fun getLinks(): Set<PersistentEntityId<*>> = setOf(library)
+  override fun getLinks(): Set<PersistentEntityId<*>> = library?.let { setOf(it) } ?: emptySet()
 
-  override fun updateLink(oldLink: PersistentEntityId<*>,
-                          newLink: PersistentEntityId<*>): Boolean {
+  override fun updateLink(oldLink: PersistentEntityId<*>, newLink: PersistentEntityId<*>): Boolean {
     if (oldLink == library) {
       this.library = newLink as LibraryId
       return true
@@ -902,20 +935,15 @@ class LibraryFilesPackagingElementEntityData : WorkspaceEntityData<LibraryFilesP
   }
 }
 
-class LibraryFilesPackagingElementEntity(
-  val library: LibraryId
-) : PackagingElementEntity()
+class LibraryFilesPackagingElementEntity(val library: LibraryId?) : PackagingElementEntity()
 
 @Suppress("unused")
 class ModuleSourcePackagingElementEntityData : WorkspaceEntityData<ModuleSourcePackagingElementEntity>(), SoftLinkable {
-  lateinit var module: ModuleId
+  var module: ModuleId? = null
 
-  override fun getLinks(): Set<PersistentEntityId<*>> {
-    return setOf(module)
-  }
+  override fun getLinks(): Set<PersistentEntityId<*>> = module?.let { setOf(it) } ?: emptySet()
 
-  override fun updateLink(oldLink: PersistentEntityId<*>,
-                          newLink: PersistentEntityId<*>): Boolean {
+  override fun updateLink(oldLink: PersistentEntityId<*>, newLink: PersistentEntityId<*>): Boolean {
     if (module != oldLink) return false
     this.module = newLink as ModuleId
     return true
@@ -926,18 +954,15 @@ class ModuleSourcePackagingElementEntityData : WorkspaceEntityData<ModuleSourceP
   }
 }
 
-class ModuleSourcePackagingElementEntity(
-  val module: ModuleId
-) : PackagingElementEntity()
+class ModuleSourcePackagingElementEntity(val module: ModuleId?) : PackagingElementEntity()
 
 @Suppress("unused")
 class ModuleTestOutputPackagingElementEntityData : WorkspaceEntityData<ModuleTestOutputPackagingElementEntity>(), SoftLinkable {
-  lateinit var module: ModuleId
+  var module: ModuleId? = null
 
-  override fun getLinks(): Set<PersistentEntityId<*>> = setOf(module)
+  override fun getLinks(): Set<PersistentEntityId<*>> = module?.let { setOf(it) } ?: emptySet()
 
-  override fun updateLink(oldLink: PersistentEntityId<*>,
-                          newLink: PersistentEntityId<*>): Boolean {
+  override fun updateLink(oldLink: PersistentEntityId<*>, newLink: PersistentEntityId<*>): Boolean {
     if (module != oldLink) return false
     this.module = newLink as ModuleId
     return true
@@ -948,50 +973,50 @@ class ModuleTestOutputPackagingElementEntityData : WorkspaceEntityData<ModuleTes
   }
 }
 
-class ModuleTestOutputPackagingElementEntity(
-  val module: ModuleId
-) : PackagingElementEntity()
+class ModuleTestOutputPackagingElementEntity(val module: ModuleId?) : PackagingElementEntity()
+
+abstract class FileOrDirectoryPackagingElementEntity(val filePath: VirtualFileUrl) : PackagingElementEntity()
 
 @Suppress("unused")
 class DirectoryCopyPackagingElementEntityData : WorkspaceEntityData<DirectoryCopyPackagingElementEntity>() {
-  lateinit var directory: VirtualFileUrl
+  lateinit var filePath: VirtualFileUrl
+
   override fun createEntity(snapshot: WorkspaceEntityStorage): DirectoryCopyPackagingElementEntity {
-    return DirectoryCopyPackagingElementEntity(directory).also { addMetaData(it, snapshot) }
+    return DirectoryCopyPackagingElementEntity(filePath).also { addMetaData(it, snapshot) }
   }
 }
 
-class DirectoryCopyPackagingElementEntity(
-  val directory: VirtualFileUrl
-) : PackagingElementEntity()
+class DirectoryCopyPackagingElementEntity(filePath: VirtualFileUrl) : FileOrDirectoryPackagingElementEntity(filePath)
 
 @Suppress("unused")
 class ExtractedDirectoryPackagingElementEntityData : WorkspaceEntityData<ExtractedDirectoryPackagingElementEntity>() {
-  lateinit var archive: VirtualFileUrl
+  lateinit var filePath: VirtualFileUrl
   lateinit var pathInArchive: String
 
   override fun createEntity(snapshot: WorkspaceEntityStorage): ExtractedDirectoryPackagingElementEntity {
-    return ExtractedDirectoryPackagingElementEntity(archive, pathInArchive).also { addMetaData(it, snapshot) }
+    return ExtractedDirectoryPackagingElementEntity(filePath, pathInArchive).also { addMetaData(it, snapshot) }
   }
 }
 
 class ExtractedDirectoryPackagingElementEntity(
-  val archive: VirtualFileUrl,
+  filePath: VirtualFileUrl,
   val pathInArchive: String
-) : PackagingElementEntity()
+) : FileOrDirectoryPackagingElementEntity(filePath)
 
 @Suppress("unused")
 class FileCopyPackagingElementEntityData : WorkspaceEntityData<FileCopyPackagingElementEntity>() {
-  lateinit var file: VirtualFileUrl
+  lateinit var filePath: VirtualFileUrl
   var renamedOutputFileName: String? = null
+
   override fun createEntity(snapshot: WorkspaceEntityStorage): FileCopyPackagingElementEntity {
-    return FileCopyPackagingElementEntity(file, renamedOutputFileName).also { addMetaData(it, snapshot) }
+    return FileCopyPackagingElementEntity(filePath, renamedOutputFileName).also { addMetaData(it, snapshot) }
   }
 }
 
 class FileCopyPackagingElementEntity(
-  val file: VirtualFileUrl,
+  filePath: VirtualFileUrl,
   val renamedOutputFileName: String?
-) : PackagingElementEntity()
+) : FileOrDirectoryPackagingElementEntity(filePath)
 
 @Suppress("unused")
 class CustomPackagingElementEntityData : WorkspaceEntityData<CustomPackagingElementEntity>() {
@@ -1006,4 +1031,4 @@ class CustomPackagingElementEntityData : WorkspaceEntityData<CustomPackagingElem
 class CustomPackagingElementEntity(
   val typeId: String,
   val propertiesXmlTag: String
-) : PackagingElementEntity()
+) : CompositePackagingElementEntity()

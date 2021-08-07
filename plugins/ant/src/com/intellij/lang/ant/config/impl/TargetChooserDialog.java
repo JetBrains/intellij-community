@@ -170,7 +170,7 @@ public class TargetChooserDialog extends DialogWrapper {
 
   private static class MyTreeCellRenderer extends ColoredTreeCellRenderer {
     @Override
-    public void customizeCellRenderer(JTree tree,
+    public void customizeCellRenderer(@NotNull JTree tree,
                                       Object value,
                                       boolean selected,
                                       boolean expanded,

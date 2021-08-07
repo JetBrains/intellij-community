@@ -10,8 +10,8 @@ import com.intellij.dvcs.ui.BranchActionGroupPopup;
 import com.intellij.dvcs.ui.LightActionGroup;
 import com.intellij.dvcs.ui.RootAction;
 import com.intellij.icons.AllIcons;
+import com.intellij.ide.ActivityTracker;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.DumbAwareAction;
@@ -67,7 +67,7 @@ public final class GitBranchPopup extends DvcsBranchPopup<GitRepository> {
    *                          In the case of synchronized branch operations current repository matter much less, but sometimes is used,
    *                          for example, it is preselected in the repositories combobox in the compare branches dialog.
    */
-  public static GitBranchPopup getInstance(@NotNull final Project project, @NotNull GitRepository currentRepository) {
+  public static GitBranchPopup getInstance(@NotNull final Project project, @NotNull GitRepository currentRepository, @NotNull DataContext dataContext) {
     final GitVcsSettings vcsSettings = GitVcsSettings.getInstance(project);
     Condition<AnAction> preselectActionCondition = action -> {
      GitBranchPopupActions.LocalBranchActions branchAction = getBranchAction(action);
@@ -89,7 +89,7 @@ public final class GitBranchPopup extends DvcsBranchPopup<GitRepository> {
       }
       return false;
     };
-    return new GitBranchPopup(currentRepository, getRepositoryManager(project), vcsSettings, preselectActionCondition);
+    return new GitBranchPopup(currentRepository, getRepositoryManager(project), vcsSettings, preselectActionCondition, dataContext);
   }
 
   @Nullable
@@ -102,9 +102,10 @@ public final class GitBranchPopup extends DvcsBranchPopup<GitRepository> {
   private GitBranchPopup(@NotNull GitRepository currentRepository,
                          @NotNull GitRepositoryManager repositoryManager,
                          @NotNull GitVcsSettings vcsSettings,
-                         @NotNull Condition<AnAction> preselectActionCondition) {
+                         @NotNull Condition<AnAction> preselectActionCondition,
+                         @NotNull DataContext dataContext) {
     super(currentRepository, repositoryManager, new GitMultiRootBranchConfig(repositoryManager.getRepositories()), vcsSettings,
-          preselectActionCondition, DIMENSION_SERVICE_KEY);
+          preselectActionCondition, DIMENSION_SERVICE_KEY, dataContext);
 
     final GitBranchIncomingOutgoingManager gitBranchIncomingOutgoingManager = GitBranchIncomingOutgoingManager.getInstance(myProject);
     if (gitBranchIncomingOutgoingManager.shouldCheckIncoming() && !gitBranchIncomingOutgoingManager.supportsIncomingOutgoing()) {
@@ -129,7 +130,8 @@ public final class GitBranchPopup extends DvcsBranchPopup<GitRepository> {
 
       @Override
       protected void onFetchFinished(@NotNull GitFetchResult result) {
-        GitBranchIncomingOutgoingManager.getInstance(project).forceUpdateBranches(() -> ActionToolbarImpl.updateAllToolbarsImmediately());
+        GitBranchIncomingOutgoingManager.getInstance(project)
+          .forceUpdateBranches(() -> ActivityTracker.getInstance().inc());
         showNotificationIfNeeded(result);
       }
 

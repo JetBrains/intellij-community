@@ -17,7 +17,6 @@ package com.jetbrains.python.debugger;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.util.NlsActions.ActionText;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.xdebugger.frame.XCompositeNode;
 import com.intellij.xdebugger.frame.XDebuggerTreeNodeHyperlink;
@@ -34,14 +33,12 @@ import java.util.List;
 public class PyVariableViewSettings {
   public static class SimplifiedView extends ToggleAction {
     private final PyDebugProcess myProcess;
-    private final @ActionText String myText;
     private volatile boolean mySimplifiedView;
 
     public SimplifiedView(@Nullable PyDebugProcess debugProcess) {
-      super("", PyBundle.message("debugger.simplified.view.description"), null);
+      super(PyBundle.message("debugger.simplified.view.text"), PyBundle.message("debugger.simplified.view.description"), null);
       mySimplifiedView = PyDebuggerSettings.getInstance().isSimplifiedView();
       myProcess = debugProcess;
-      myText = PyBundle.message("debugger.simplified.view.text");
     }
 
     @Override
@@ -49,7 +46,6 @@ public class PyVariableViewSettings {
       super.update(e);
       final Presentation presentation = e.getPresentation();
       presentation.setEnabled(true);
-      presentation.setText(myText);
     }
 
     @Override
@@ -142,7 +138,6 @@ public class PyVariableViewSettings {
   }
 
   public static class PolicyAction extends ToggleAction {
-    @NotNull private final @ActionText String myText;
     @NotNull private final PyDebugValue.ValuesPolicy myPolicy;
     @NotNull private final VariablesPolicyGroup myActionGroup;
     private volatile boolean isEnabled;
@@ -151,8 +146,7 @@ public class PyVariableViewSettings {
                         @NotNull @Nls String description,
                         @NotNull PyDebugValue.ValuesPolicy policy,
                         @NotNull VariablesPolicyGroup actionGroup) {
-      super("", description, null);
-      myText = text;
+      super(text, description, null);
       myPolicy = policy;
       myActionGroup = actionGroup;
       isEnabled = PyDebuggerSettings.getInstance().getValuesPolicy() == policy;
@@ -164,7 +158,6 @@ public class PyVariableViewSettings {
       myActionGroup.updatePolicyActions();
       final Presentation presentation = e.getPresentation();
       presentation.setEnabled(true);
-      presentation.setText(myText);
     }
 
     @NotNull

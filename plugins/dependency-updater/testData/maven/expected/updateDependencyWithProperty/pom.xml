@@ -19,11 +19,13 @@
             <groupId>anothergroup</groupId>
             <artifactId>someartifact</artifactId>
             <version>${second}</version>
+            <scope>compile</scope>
         </dependency>
         <dependency>
             <groupId>somegroup</groupId>
             <artifactId>someartifact</artifactId>
             <version>${first}</version>
+            <scope>test</scope>
         </dependency>
     </dependencies>
 

@@ -1,4 +1,4 @@
-// "Cast 1st parameter to 'char'" "false"
+// "Cast 1st parameter to 'char'" "true"
 class a {
     private void test()  {}
     private void test(int i)  {}

@@ -1,0 +1,9 @@
+// WITH_RUNTIME
+
+fun test() {
+    foo(buildString {
+        append("bar")
+    })
+}
+
+fun foo(s: String) {}

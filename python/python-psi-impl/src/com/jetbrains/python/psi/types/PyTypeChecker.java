@@ -288,15 +288,8 @@ public final class PyTypeChecker {
     }
 
     if (actual instanceof PyTypedDictType) {
-      if (!((PyTypedDictType)actual).isInferred()) {
-        final Optional<Boolean> match = PyTypedDictType.Companion.checkStructuralCompatibility(expected, (PyTypedDictType)actual, context);
-        if (match.isPresent()) {
-          return match;
-        }
-      }
-      if (expected instanceof PyTypedDictType) {
-        return Optional.of(PyTypedDictType.Companion.match((PyTypedDictType)expected, (PyTypedDictType)actual, context));
-      }
+      final Optional<Boolean> match = PyTypedDictType.Companion.match(expected, (PyTypedDictType)actual, context);
+      if (match.isPresent()) return match;
     }
 
     final PyClass superClass = expected.getPyClass();
@@ -443,7 +436,7 @@ public final class PyTypeChecker {
       }
     }
 
-    final PyResolveContext resolveContext = PyResolveContext.defaultContext().withTypeEvalContext(context);
+    final PyResolveContext resolveContext = PyResolveContext.defaultContext(context);
     return !ContainerUtil.exists(expected.getAttributeNames(), attribute -> ContainerUtil
       .isEmpty(actual.resolveMember(attribute, null, AccessDirection.READ, resolveContext)));
   }
@@ -472,14 +465,15 @@ public final class PyTypeChecker {
       return Optional.of(true);
     }
 
-    if (expected instanceof PyClassLikeType) {
+    final TypeEvalContext context = matchContext.context;
+
+    if (expected instanceof PyClassLikeType && !isCallableProtocol((PyClassLikeType)expected, context)) {
       return PyTypingTypeProvider.CALLABLE.equals(((PyClassLikeType)expected).getClassQName())
              ? Optional.of(actual.isCallable())
              : Optional.empty();
     }
 
     if (expected.isCallable() && actual.isCallable()) {
-      final TypeEvalContext context = matchContext.context;
       final List<PyCallableParameter> expectedParameters = expected.getParameters(context);
       final List<PyCallableParameter> actualParameters = actual.getParameters(context);
       if (expectedParameters != null && actualParameters != null) {
@@ -512,6 +506,10 @@ public final class PyTypeChecker {
       return Optional.of(true);
     }
     return Optional.empty();
+  }
+
+  private static boolean isCallableProtocol(@NotNull PyClassLikeType expected, @NotNull TypeEvalContext context) {
+    return PyProtocolsKt.isProtocol(expected, context) && expected.getMemberNames(false, context).contains(PyNames.CALL);
   }
 
   private static @Nullable PyType getActualReturnType(@NotNull PyCallableType actual, @NotNull TypeEvalContext context) {
@@ -808,7 +806,8 @@ public final class PyTypeChecker {
     for (Map.Entry<PyExpression, PyCallableParameter> entry : getRegularMappedParameters(arguments).entrySet()) {
       final PyCallableParameter paramWrapper = entry.getValue();
       final PyType expectedType = paramWrapper.getArgumentType(context);
-      PyType actualType = PyLiteralType.Companion.promoteToLiteral(entry.getKey(), expectedType, context);
+      final PyType promotedToLiteral = PyLiteralType.Companion.promoteToLiteral(entry.getKey(), expectedType, context);
+      var actualType = promotedToLiteral != null ? promotedToLiteral : context.getType(entry.getKey());
       if (paramWrapper.isSelf()) {
         // TODO find out a better way to pass the corresponding function inside
         final PyParameter param = paramWrapper.getParameter();
@@ -1006,7 +1005,7 @@ public final class PyTypeChecker {
 
   @Nullable
   private static PsiElement resolveTypeMember(@NotNull PyType type, @NotNull String name, @NotNull TypeEvalContext context) {
-    final PyResolveContext resolveContext = PyResolveContext.defaultContext().withTypeEvalContext(context);
+    final PyResolveContext resolveContext = PyResolveContext.defaultContext(context);
     final List<? extends RatedResolveResult> results = type.resolveMember(name, null, AccessDirection.READ, resolveContext);
     return !ContainerUtil.isEmpty(results) ? results.get(0).getElement() : null;
   }

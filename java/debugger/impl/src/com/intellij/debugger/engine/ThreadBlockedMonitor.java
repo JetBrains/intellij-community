@@ -1,10 +1,11 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.engine;
 
 import com.intellij.concurrency.JobScheduler;
 import com.intellij.debugger.JavaDebuggerBundle;
 import com.intellij.debugger.engine.events.DebuggerCommandImpl;
 import com.intellij.debugger.engine.jdi.ThreadReferenceProxy;
+import com.intellij.debugger.impl.DebuggerUtilsAsync;
 import com.intellij.debugger.jdi.JvmtiError;
 import com.intellij.debugger.jdi.ThreadReferenceProxyImpl;
 import com.intellij.debugger.jdi.VirtualMachineProxyImpl;
@@ -91,10 +92,11 @@ public class ThreadBlockedMonitor {
   private static void onThreadBlocked(@NotNull final ThreadReference blockedThread,
                                       @NotNull final ThreadReference blockingThread,
                                       final DebugProcessImpl process) {
-    XDebuggerManagerImpl.getNotificationGroup().createNotification(
-      JavaDebuggerBundle.message("status.thread.blocked.by", blockedThread.name(), blockingThread.name()),
-      JavaDebuggerBundle.message("status.thread.blocked.by.resume", blockingThread.name()),
-      NotificationType.INFORMATION, (notification, event) -> {
+    XDebuggerManagerImpl.getNotificationGroup()
+      .createNotification(JavaDebuggerBundle.message("status.thread.blocked.by", blockedThread.name(), blockingThread.name()),
+                          JavaDebuggerBundle.message("status.thread.blocked.by.resume", blockingThread.name()),
+                          NotificationType.INFORMATION)
+      .setListener((notification, event) -> {
         if (event.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
           notification.expire();
           process.getManagerThread().schedule(new DebuggerCommandImpl() {
@@ -107,7 +109,8 @@ public class ThreadBlockedMonitor {
             }
           });
         }
-      }).notify(process.getProject());
+      })
+      .notify(process.getProject());
   }
 
   private ThreadReference getCurrentThread() {
@@ -150,7 +153,7 @@ public class ThreadBlockedMonitor {
           }
         }
         finally {
-          vmProxy.getVirtualMachine().resume();
+          DebuggerUtilsAsync.resume(vmProxy.getVirtualMachine());
         }
       }
     });
@@ -174,7 +177,7 @@ public class ThreadBlockedMonitor {
       if (myTask.isDone() && myAllResumed.get()) {
         // suspend all threads but the current one (which should be suspended already
         myThread.getVirtualMachine().getVirtualMachine().suspend();
-        myThread.getThreadReference().resume();
+        DebuggerUtilsAsync.resume(myThread.getThreadReference());
       }
       else {
         myTask.cancel(true);
@@ -194,11 +197,11 @@ public class ThreadBlockedMonitor {
               // resume all but this
               myAllResumed.set(true);
               threadReference.suspend();
-              virtualMachine.resume();
+              DebuggerUtilsAsync.resume(virtualMachine);
             }
           }
           finally {
-            virtualMachine.resume();
+            DebuggerUtilsAsync.resume(virtualMachine);
           }
         }
       });

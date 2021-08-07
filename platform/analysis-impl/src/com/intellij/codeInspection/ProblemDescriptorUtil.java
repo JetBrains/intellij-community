@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection;
 
 import com.intellij.analysis.AnalysisBundle;
@@ -54,7 +54,7 @@ public final class ProblemDescriptorUtil {
       final TextRange elementRange = psiElement.getTextRange();
       if (elementRange != null) {
         range = range.shiftRight(-elementRange.getStartOffset());
-        if (range.getStartOffset() >= 0 && range.getEndOffset() <= elementRange.getLength()) {
+        if (range.getStartOffset() >= 0 && ref.length() > range.getLength()) {
           ref = range.substring(ref);
         }
       }
@@ -88,9 +88,7 @@ public final class ProblemDescriptorUtil {
       }
     }
     message = unescapeTags(message);
-    message = StringUtil.replace(message, LOC_REFERENCE + " ", "");
-    message = StringUtil.replace(message, " " + LOC_REFERENCE, "");
-    message = StringUtil.replace(message, LOC_REFERENCE, "");
+    message = removeLocReference(message);
 
     if ((flags & TRIM_AT_TREE_END) != 0) {
       if (XmlStringUtil.isWrappedInHtml(message)) {
@@ -112,6 +110,15 @@ public final class ProblemDescriptorUtil {
     message = StringUtil.replace(message, "#treeend", "");
 
     return message.trim();
+  }
+
+  @Contract(pure = true)
+  @NotNull
+  public static String removeLocReference(@NotNull String message) {
+    message = StringUtil.replace(message, LOC_REFERENCE + " ", "");
+    message = StringUtil.replace(message, " " + LOC_REFERENCE, "");
+    message = StringUtil.replace(message, LOC_REFERENCE, "");
+    return message;
   }
 
   @Contract(pure = true)
@@ -192,6 +199,8 @@ public final class ProblemDescriptorUtil {
         return HighlightInfoType.ERROR;
       case INFORMATION:
         return HighlightInfoType.INFORMATION;
+      case POSSIBLE_PROBLEM:
+        return HighlightInfoType.POSSIBLE_PROBLEM;
     }
     throw new RuntimeException("Cannot map " + highlightType);
   }

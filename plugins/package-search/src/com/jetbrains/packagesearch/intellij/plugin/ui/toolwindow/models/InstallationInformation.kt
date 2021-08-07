@@ -1,12 +1,17 @@
 package com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models
 
+import com.jetbrains.packagesearch.intellij.plugin.PackageSearchBundle
 import com.jetbrains.packagesearch.intellij.plugin.extensibility.ProjectModule
+import org.jetbrains.annotations.NonNls
 
-data class InstallationInformation(val projectModule: ProjectModule, val installedVersion: String, val rawScope: String?) {
+internal data class InstallationInformation(val projectModule: ProjectModule, val installedVersion: String, val rawScope: String?) {
 
+    @NonNls
     val scope = rawScope ?: DEFAULT_SCOPE
 
     companion object {
-        const val DEFAULT_SCOPE = "(default)" // Non-nls?
+
+        @NonNls
+        val DEFAULT_SCOPE = PackageSearchBundle.message("packagesearch.ui.missingScope")
     }
 }

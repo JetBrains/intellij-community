@@ -7,22 +7,22 @@ import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.openapi.ui.Splitter;
-import com.intellij.util.ui.JBUI;
+import com.intellij.openapi.util.NlsSafe;
+import com.intellij.ui.components.JBTabbedPane;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.util.Collections;
-import java.util.HashSet;
 
 public class NullableNotNullDialog extends DialogWrapper {
   private final Project myProject;
   private final AnnotationsPanel myNullablePanel;
   private final AnnotationsPanel myNotNullPanel;
   private final boolean myShowInstrumentationOptions;
+  public static final @NlsSafe String NULLABLE = "Nullable";
+  public static final @NlsSafe String NOT_NULL = "NotNull";
 
   public NullableNotNullDialog(@NotNull Project project) {
     this(project, false);
@@ -35,15 +35,11 @@ public class NullableNotNullDialog extends DialogWrapper {
 
     NullableNotNullManager manager = NullableNotNullManager.getInstance(myProject);
     myNullablePanel = new AnnotationsPanel(project,
-                                           "Nullable",
-                                           manager.getDefaultNullable(),
-                                           manager.getNullables(), manager.getDefaultNullables(),
-                                           Collections.emptySet(), false, true);
+                                           new NullabilityAnnotationPanelModel.NullableModel(manager),
+                                           false, true);
     myNotNullPanel = new AnnotationsPanel(project,
-                                          "NotNull",
-                                          manager.getDefaultNotNull(),
-                                          manager.getNotNulls(), manager.getDefaultNotNulls(),
-                                          new HashSet<>(manager.getInstrumentedNotNulls()), showInstrumentationOptions, true);
+                                          new NullabilityAnnotationPanelModel.NotNullModel(manager),
+                                          showInstrumentationOptions, true);
 
     init();
     setTitle(JavaBundle.message("nullable.notnull.configuration.dialog.title"));
@@ -82,12 +78,10 @@ public class NullableNotNullDialog extends DialogWrapper {
 
   @Override
   protected JComponent createCenterPanel() {
-    final Splitter splitter = new Splitter(true);
-    splitter.setFirstComponent(myNullablePanel.getComponent());
-    splitter.setSecondComponent(myNotNullPanel.getComponent());
-    splitter.setHonorComponentsMinimumSize(true);
-    splitter.setPreferredSize(JBUI.size(300, 400));
-    return splitter;
+    final var pane = new JBTabbedPane();
+    pane.insertTab(NULLABLE, null, myNullablePanel.getComponent(), "", 0);
+    pane.insertTab(NOT_NULL, null, myNotNullPanel.getComponent(), "", 1);
+    return pane;
   }
 
   @Override

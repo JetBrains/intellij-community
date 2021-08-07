@@ -67,7 +67,7 @@ public class SvnIntegrateChangesTask extends Task.Backgroundable {
     final boolean dryRun,
     String branchName
   ) {
-    super(vcs.getProject(), title, true, VcsConfiguration.getInstance(vcs.getProject()).getUpdateOption());
+    super(vcs.getProject(), title, true);
     myDryRun = dryRun;
 
     myProjectLevelVcsManager = ProjectLevelVcsManagerEx.getInstanceEx(myProject);
@@ -153,7 +153,7 @@ public class SvnIntegrateChangesTask extends Task.Backgroundable {
   }
 
   private void onTaskFinished(boolean wasCancelled) {
-    TransactionGuard.submitTransaction(myProject, () -> {
+    TransactionGuard.submitTransaction(getProject(), () -> {
       try {
         afterExecution(wasCancelled);
       }
@@ -178,7 +178,7 @@ public class SvnIntegrateChangesTask extends Task.Backgroundable {
     if ((!myMerger.hasNext()) || haveConflicts || (!myExceptions.isEmpty()) || myAccumulatedFiles.containErrors() || wasCanceled) {
       initMergeTarget();
       if (myAccumulatedFiles.isEmpty() && myExceptions.isEmpty() && (myMergeTarget == null) && (!wasCanceled)) {
-        Messages.showMessageDialog(message("action.Subversion.integrate.changes.message.files.up.to.date.text"), myTitle,
+        Messages.showMessageDialog(message("action.Subversion.integrate.changes.message.files.up.to.date.text"), getTitle(),
                                    Messages.getInformationIcon());
       } else {
         if (haveConflicts) {
@@ -210,7 +210,7 @@ public class SvnIntegrateChangesTask extends Task.Backgroundable {
     }
 
     final Collection<FilePath> files = gatherChangedPaths();
-    VcsDirtyScopeManager.getInstance(myProject).filePathsDirty(files, null);
+    VcsDirtyScopeManager.getInstance(getProject()).filePathsDirty(files, null);
     prepareAndShowResults();
   }
 
@@ -226,11 +226,12 @@ public class SvnIntegrateChangesTask extends Task.Backgroundable {
   }
 
   private void showUpdateTree() {
-    RestoreUpdateTree restoreUpdateTree = RestoreUpdateTree.getInstance(myProject);
+    RestoreUpdateTree restoreUpdateTree = RestoreUpdateTree.getInstance(getProject());
     // action info is actually NOT used
     restoreUpdateTree.registerUpdateInformation(myAccumulatedFiles.getUpdatedFiles(), INTEGRATE);
-    UpdateInfoTree tree = myProjectLevelVcsManager.showUpdateProjectInfo(myAccumulatedFiles.getUpdatedFiles(), myTitle, INTEGRATE, false);
-    if (tree != null) ViewUpdateInfoNotification.focusUpdateInfoTree(myProject, tree);
+    UpdateInfoTree tree =
+      myProjectLevelVcsManager.showUpdateProjectInfo(myAccumulatedFiles.getUpdatedFiles(), getTitle(), INTEGRATE, false);
+    if (tree != null) ViewUpdateInfoNotification.focusUpdateInfoTree(getProject(), tree);
   }
 
   private void stepToNextChangeList() {
@@ -255,15 +256,15 @@ public class SvnIntegrateChangesTask extends Task.Backgroundable {
 
     // for changes to be detected, we need switch to background change list manager update thread and back to dispatch thread
     // so callback is used; ok to be called after VCS update markup closed: no remote operations
-    VcsDirtyScopeManager.getInstance(myProject).filePathsDirty(files, null);
-    final ChangeListManager changeListManager = ChangeListManager.getInstance(myProject);
-    changeListManager.invokeAfterUpdateWithModal(true, myTitle, () -> {
+    VcsDirtyScopeManager.getInstance(getProject()).filePathsDirty(files, null);
+    final ChangeListManager changeListManager = ChangeListManager.getInstance(getProject());
+    changeListManager.invokeAfterUpdateWithModal(true, getTitle(), () -> {
       Collection<Change> changes = new ArrayList<>();
       for (FilePath file : files) {
         ContainerUtil.addIfNotNull(changes, changeListManager.getChange(file));
       }
 
-      CommitChangeListDialog.commitChanges(myProject, changes, null, null, myMerger.getComment());
+      CommitChangeListDialog.commitChanges(getProject(), changes, null, null, myMerger.getComment());
       prepareAndShowResults();
     });
   }

@@ -207,7 +207,7 @@ public class TryFinallyCanBeTryWithResourcesInspection extends BaseInspection {
   }
 
   @Override
-  public boolean shouldInspect(PsiFile file) {
+  public boolean shouldInspect(@NotNull PsiFile file) {
     return PsiUtil.isLanguageLevel7OrHigher(file);
   }
 
@@ -297,10 +297,10 @@ public class TryFinallyCanBeTryWithResourcesInspection extends BaseInspection {
       }
 
       resourceVariables.sort(Comparator.comparing(o -> o.getInitializedElement(), PsiElementOrderComparator.getInstance()));
-      Optional<ResourceVariable> lastNonTryVar = StreamEx.of(ContainerUtil.reverse(resourceVariables))
-        .findFirst(r -> !PsiTreeUtil.isAncestor(tryStatement, r.myVariable, false));
-      if (lastNonTryVar.isPresent()) {
-        PsiVariable variable = lastNonTryVar.get().myVariable;
+      ResourceVariable lastNonTryVar = ContainerUtil.findLast(resourceVariables,
+                                                              r -> !PsiTreeUtil.isAncestor(tryStatement, r.myVariable, false));
+      if (lastNonTryVar != null) {
+        PsiVariable variable = lastNonTryVar.myVariable;
         PsiStatement statement = PsiTreeUtil.getParentOfType(variable, PsiStatement.class);
         List<PsiStatement> statements = collectStatementsBetween(statement, tryStatement);
         boolean varUsedNotInTry = StreamEx.of(statements)

@@ -23,6 +23,10 @@ To create an EditorConfig file in a directory, right-click this directory and se
     <action id="CreateEditorConfigFile" class="org.editorconfig.configmanagement.create.CreateEditorConfigAction">
       <add-to-group group-id="NewGroup" anchor="after" relative-to-action="NewFromTemplate"/>
     </action>
+      <action id="org.editorconfig.configmanagement.generate.EditorConfigGenerateLanguagePropertiesAction"
+              class="org.editorconfig.configmanagement.generate.EditorConfigGenerateLanguagePropertiesAction">
+          <add-to-group group-id="GenerateGroup" anchor="last"/>
+      </action>
   </actions>
 
   <extensions defaultExtensionNs="com.intellij">
@@ -369,11 +373,13 @@ To create an EditorConfig file in a directory, right-click this directory and se
     <!-- Intention actions -->
     <intentionAction>
       <className>org.editorconfig.language.codeinsight.actions.intention.EditorConfigInvertValueIntention</className>
-      <category>EditorConfig</category>
+      <bundleName>messages.EditorConfigBundle</bundleName>
+      <categoryKey>editorconfig</categoryKey>
     </intentionAction>
     <intentionAction>
       <className>org.editorconfig.language.codeinsight.actions.intention.EditorConfigAddDeclarationPartIntention</className>
-      <category>EditorConfig</category>
+      <bundleName>messages.EditorConfigBundle</bundleName>
+      <categoryKey>editorconfig</categoryKey>
     </intentionAction>
 
     <!-- Services -->

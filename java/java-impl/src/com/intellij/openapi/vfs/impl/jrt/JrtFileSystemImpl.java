@@ -87,7 +87,7 @@ public class JrtFileSystemImpl extends JrtFileSystem {
     if (app.isDisposed()) return;  // we might perform a shutdown activity that includes visiting archives (IDEA-181620)
     app.getMessageBus().connect(app).subscribe(VirtualFileManager.VFS_CHANGES, new BulkFileListener() {
       @Override
-      public void after(@NotNull List<? extends VFileEvent> events) {
+      public void after(@NotNull List<? extends @NotNull VFileEvent> events) {
         Set<VirtualFile> toRefresh = null;
 
         for (VFileEvent e : events) {

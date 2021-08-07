@@ -1,10 +1,9 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.structuralsearch.plugin.ui;
 
 import com.intellij.find.FindManager;
 import com.intellij.find.FindSettings;
 import com.intellij.find.impl.FindManagerImpl;
-import com.intellij.notification.NotificationGroup;
 import com.intellij.notification.NotificationGroupManager;
 import com.intellij.notification.NotificationType;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -148,12 +147,13 @@ public class SearchCommand {
     }
     catch (StructuralSearchException e) {
       myProcessPresentation.setShowNotFoundMessage(false);
-      final NotificationGroup notificationGroup = NotificationGroupManager.getInstance().getNotificationGroup(UIUtil.SSR_NOTIFICATION_GROUP_ID);
-      //noinspection InstanceofCatchParameter
-      notificationGroup.createNotification(NotificationType.ERROR)
-        .setContent(e instanceof StructuralSearchScriptException
-                    ? SSRBundle.message("search.script.problem", e.getCause())
-                    : SSRBundle.message("search.template.problem", e.getMessage()))
+      @SuppressWarnings("InstanceofCatchParameter") String content =
+        e instanceof StructuralSearchScriptException
+        ? SSRBundle.message("search.script.problem", e.getCause())
+        : SSRBundle.message("search.template.problem", e.getMessage());
+      NotificationGroupManager.getInstance()
+        .getNotificationGroup(UIUtil.SSR_NOTIFICATION_GROUP_ID)
+        .createNotification(content, NotificationType.ERROR)
         .setImportant(true)
         .notify(mySearchContext.getProject());
     }

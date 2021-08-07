@@ -11,9 +11,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Map;
 
-/**
- * @author yole
- */
+
 public final class CoreJarFileSystem extends DeprecatedVirtualFileSystem {
   private final Map<String, CoreJarHandler> myHandlers =
     ConcurrentFactoryMap.createMap(key -> new CoreJarHandler(CoreJarFileSystem.this, key));

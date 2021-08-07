@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.util;
 
 import com.intellij.model.ModelBranch;
@@ -20,7 +20,7 @@ public final class PsiCacheKey<T, H extends PsiElement> extends Key<SoftReferenc
     myFunction = function;
   }
 
-  public final T getValue(@NotNull H h) {
+  public T getValue(@NotNull H h) {
     T result = getCachedValueOrNull(h);
     if (result != null) {
       return result;
@@ -33,7 +33,7 @@ public final class PsiCacheKey<T, H extends PsiElement> extends Key<SoftReferenc
   }
 
   @Nullable
-  public final T getCachedValueOrNull(@NotNull H h) {
+  public T getCachedValueOrNull(@NotNull H h) {
     SoftReference<Pair<Long, T>> ref = h.getUserData(this);
     Pair<Long, T> data = SoftReference.dereference(ref);
     if (data == null || data.getFirst() != getModificationCount(h)) {
@@ -67,7 +67,7 @@ public final class PsiCacheKey<T, H extends PsiElement> extends Key<SoftReferenc
    * Creates cache key value
    *
    * @param name        key name
-   * @param function    function to reproduce new value when old value is stale
+   * @param function    function to reproduce new value when the old value is stale
    * @param <T>         cached value type
    * @param <H>         PSI element type that holds the user data with the cache
    * @return instance

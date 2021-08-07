@@ -1,9 +1,9 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.workspaceModel.ide.impl.legacyBridge.project
 
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.debug
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.projectRoots.Sdk
@@ -18,48 +18,51 @@ import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar.APPLICATION_L
 import com.intellij.openapi.util.EmptyRunnable
 import com.intellij.util.containers.BidirectionalMultiMap
 import com.intellij.util.containers.MultiMap
-import com.intellij.workspaceModel.storage.EntityChange
-import com.intellij.workspaceModel.storage.VersionedStorageChange
 import com.intellij.workspaceModel.ide.WorkspaceModel
 import com.intellij.workspaceModel.ide.WorkspaceModelChangeListener
 import com.intellij.workspaceModel.ide.WorkspaceModelTopics
-import com.intellij.workspaceModel.ide.impl.jps.serialization.levelToLibraryTableId
+import com.intellij.workspaceModel.ide.impl.legacyBridge.library.LibraryNameGenerator
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.roots.OrderRootsCacheBridge
+import com.intellij.workspaceModel.storage.EntityChange
+import com.intellij.workspaceModel.storage.VersionedStorageChange
 import com.intellij.workspaceModel.storage.bridgeEntities.*
 
-@Suppress("ComponentNotRegistered")
 class ProjectRootManagerBridge(project: Project) : ProjectRootManagerComponent(project) {
   companion object {
     private const val LIBRARY_NAME_DELIMITER = ":"
+
+    @JvmStatic
+    private val LOG = logger<ProjectRootManagerBridge>()
   }
 
-  private val LOG = Logger.getInstance(javaClass)
   private val globalLibraryTableListener = GlobalLibraryTableListener()
   private val jdkChangeListener = JdkChangeListener()
 
   init {
-    val bus = project.messageBus.connect(this)
+    if (!project.isDefault) {
+      val bus = project.messageBus.connect(this)
 
-    WorkspaceModelTopics.getInstance(project).subscribeAfterModuleLoading(bus, object : WorkspaceModelChangeListener {
-      override fun changed(event: VersionedStorageChange) {
-        if (myProject.isDisposed) return
+      WorkspaceModelTopics.getInstance(project).subscribeAfterModuleLoading(bus, object : WorkspaceModelChangeListener {
+        override fun changed(event: VersionedStorageChange) {
+          if (myProject.isDisposed) return
 
-        // Roots changed event should be fired for the global libraries linked with module
-        val moduleChanges = event.getChanges(ModuleEntity::class.java)
-        for (change in moduleChanges) {
-          when (change) {
-            is EntityChange.Added -> addTrackedLibraryAndJdkFromEntity(change.entity)
-            is EntityChange.Removed -> removeTrackedLibrariesAndJdkFromEntity(change.entity)
-            is EntityChange.Replaced -> {
-              removeTrackedLibrariesAndJdkFromEntity(change.oldEntity)
-              addTrackedLibraryAndJdkFromEntity(change.newEntity)
+          // Roots changed event should be fired for the global libraries linked with module
+          val moduleChanges = event.getChanges(ModuleEntity::class.java)
+          for (change in moduleChanges) {
+            when (change) {
+              is EntityChange.Added -> addTrackedLibraryAndJdkFromEntity(change.entity)
+              is EntityChange.Removed -> removeTrackedLibrariesAndJdkFromEntity(change.entity)
+              is EntityChange.Replaced -> {
+                removeTrackedLibrariesAndJdkFromEntity(change.oldEntity)
+                addTrackedLibraryAndJdkFromEntity(change.newEntity)
+              }
             }
           }
         }
-      }
-    })
+      })
 
-    bus.subscribe(ProjectJdkTable.JDK_TABLE_TOPIC, jdkChangeListener)
+      bus.subscribe(ProjectJdkTable.JDK_TABLE_TOPIC, jdkChangeListener)
+    }
   }
 
   override fun getActionToRunWhenProjectJdkChanges(): Runnable {
@@ -86,6 +89,8 @@ class ProjectRootManagerBridge(project: Project) : ProjectRootManagerComponent(p
   fun isFiringEvent(): Boolean = isFiringEvent
 
   private fun unsubscribeListeners() {
+    if (project.isDefault) return
+    
     val libraryTablesRegistrar = LibraryTablesRegistrar.getInstance()
     val globalLibraryTable = libraryTablesRegistrar.libraryTable
     globalLibraryTableListener.getLibraryLevels().forEach { libraryLevel ->
@@ -103,7 +108,7 @@ class ProjectRootManagerBridge(project: Project) : ProjectRootManagerComponent(p
   fun setupTrackedLibrariesAndJdks() {
     val currentStorage = WorkspaceModel.getInstance(project).entityStorage.current
     for (moduleEntity in currentStorage.entities(ModuleEntity::class.java)) {
-      addTrackedLibraryAndJdkFromEntity(moduleEntity);
+      addTrackedLibraryAndJdkFromEntity(moduleEntity)
     }
   }
 
@@ -176,7 +181,7 @@ class ProjectRootManagerBridge(project: Project) : ProjectRootManagerComponent(p
       }
     }
 
-    fun isEmpty(libraryLevel: String) = librariesPerModuleMap.values.none{ it.startsWith("$libraryLevel$LIBRARY_NAME_DELIMITER") }
+    fun isEmpty(libraryLevel: String) = librariesPerModuleMap.values.none { it.startsWith("$libraryLevel$LIBRARY_NAME_DELIMITER") }
 
     fun getLibraryLevels() = librariesPerModuleMap.values.mapTo(HashSet()) { it.substringBefore(LIBRARY_NAME_DELIMITER) }
 
@@ -194,7 +199,7 @@ class ProjectRootManagerBridge(project: Project) : ProjectRootManagerComponent(p
       if (libraryTable != null && oldName != null && newName != null) {
         val affectedModules = librariesPerModuleMap.getKeys(getLibraryIdentifier(libraryTable, oldName))
         if (affectedModules.isNotEmpty()) {
-          val libraryTableId = levelToLibraryTableId(libraryTable.tableLevel)
+          val libraryTableId = LibraryNameGenerator.getLibraryTableId(libraryTable.tableLevel)
           WorkspaceModel.getInstance(myProject).updateProjectModel { builder ->
             //maybe it makes sense to simplify this code by reusing code from PEntityStorageBuilder.updateSoftReferences
             affectedModules.mapNotNull { builder.resolve(it) }.forEach { module ->

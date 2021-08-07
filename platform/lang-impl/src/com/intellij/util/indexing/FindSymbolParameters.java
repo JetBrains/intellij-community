@@ -15,6 +15,11 @@ public class FindSymbolParameters {
   private final GlobalSearchScope mySearchScope;
   private final IdFilter myIdFilter;
 
+  /**
+   * @deprecated use {@link FindSymbolParameters#FindSymbolParameters(String, String, GlobalSearchScope)} instead.
+   * No one should pass `idFilter` explicitly. {@link FileBasedIndex} is responsible to find a proper `idFilter` for provided `scope`.
+   */
+  @Deprecated
   public FindSymbolParameters(@NotNull String pattern,
                               @NotNull String name,
                               @NotNull GlobalSearchScope scope,
@@ -23,6 +28,12 @@ public class FindSymbolParameters {
     myLocalPatternName = name;
     mySearchScope = scope;
     myIdFilter = idFilter;
+  }
+
+  public FindSymbolParameters(@NotNull String pattern,
+                              @NotNull String name,
+                              @NotNull GlobalSearchScope scope) {
+    this(pattern, name, scope, null);
   }
 
   public FindSymbolParameters withCompletePattern(@NotNull String pattern) {

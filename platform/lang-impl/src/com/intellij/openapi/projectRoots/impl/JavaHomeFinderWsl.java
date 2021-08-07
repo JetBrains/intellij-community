@@ -2,11 +2,14 @@
 package com.intellij.openapi.projectRoots.impl;
 
 import com.intellij.execution.wsl.WSLDistribution;
+import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -23,7 +26,18 @@ class JavaHomeFinderWsl extends JavaHomeFinderBasic {
   }
 
   private static String[] lookupPaths(WSLDistribution distro) {
-    return Stream.of(JavaHomeFinder.DEFAULT_JAVA_LINUX_PATHS).map(distro::getWindowsPath).filter(Objects::nonNull).toArray(String[]::new);
+    List<String> list = new ArrayList<>();
+    for (String defaultPath : JavaHomeFinder.DEFAULT_JAVA_LINUX_PATHS) {
+      String path = distro.getWindowsPath(defaultPath);
+      if (path != null) {
+        list.add(path);
+      }
+    }
+    String home = distro.getUserHome();
+    if (home != null) {
+      list.add(distro.getWindowsPath(home + "/.jdks"));
+    }
+    return ArrayUtil.toStringArray(list);
   }
 
   @Override
@@ -40,7 +54,6 @@ class JavaHomeFinderWsl extends JavaHomeFinderBasic {
       String converted = Stream.of(value.split(":"))
         .filter(p -> !DEFAULT_PATHS.contains(p) && !p.startsWith(mntRoot))
         .map(myDistro::getWindowsPath)
-        .filter(Objects::nonNull)
         .collect(Collectors.joining(File.pathSeparator));
       return converted.isEmpty() ? null : converted;
     }

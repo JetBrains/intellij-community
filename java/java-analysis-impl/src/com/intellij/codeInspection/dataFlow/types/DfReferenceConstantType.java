@@ -2,40 +2,35 @@
 package com.intellij.codeInspection.dataFlow.types;
 
 import com.intellij.codeInspection.dataFlow.*;
+import com.intellij.codeInspection.dataFlow.jvm.SpecialField;
 import com.intellij.psi.PsiModifierListOwner;
-import com.intellij.psi.PsiType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Objects;
 import java.util.Set;
 
-import static com.intellij.codeInspection.dataFlow.types.DfTypes.BOTTOM;
-import static com.intellij.codeInspection.dataFlow.types.DfTypes.TOP;
-
 public class DfReferenceConstantType extends DfConstantType<Object> implements DfReferenceType {
-  private final @NotNull PsiType myPsiType;
   private final @NotNull TypeConstraint myConstraint;
   private final @NotNull Mutability myMutability;
-  private final @Nullable SpecialField mySpecialField;
+  private final @Nullable SpecialField myJvmSpecialField;
   private final @NotNull DfType mySpecialFieldType;
   private final boolean myDropConstantOnWiden;
-  
-  DfReferenceConstantType(@NotNull Object constant, @NotNull PsiType psiType, @NotNull TypeConstraint type, boolean dropConstantOnWiden) {
+
+  DfReferenceConstantType(@NotNull Object constant, @NotNull TypeConstraint type, boolean dropConstantOnWiden) {
     super(constant);
-    myPsiType = psiType;
     myConstraint = type;
     myMutability = constant instanceof PsiModifierListOwner ? Mutability.getMutability((PsiModifierListOwner)constant) : Mutability.UNKNOWN;
-    mySpecialField = SpecialField.fromQualifierType(psiType);
-    mySpecialFieldType = mySpecialField == null ? BOTTOM : mySpecialField.fromConstant(constant);
+    myJvmSpecialField = SpecialField.fromQualifierType(this);
+    mySpecialFieldType = myJvmSpecialField == null ? BOTTOM : myJvmSpecialField.fromConstant(constant);
     myDropConstantOnWiden = dropConstantOnWiden;
   }
 
   @Override
   public DfType widen() {
     if (myDropConstantOnWiden) {
-      return new DfGenericObjectType(Set.of(), myConstraint, DfaNullability.NOT_NULL, myMutability, 
-                                     mySpecialField, mySpecialFieldType.widen(), false);
+      return new DfGenericObjectType(Set.of(), myConstraint, DfaNullability.NOT_NULL, myMutability,
+                                     myJvmSpecialField, mySpecialFieldType.widen(), false);
     }
     return this;
   }
@@ -50,17 +45,11 @@ public class DfReferenceConstantType extends DfConstantType<Object> implements D
       if (type.isSuperType(this)) return this;
       TypeConstraint constraint = type.getConstraint().meet(myConstraint);
       if (constraint != TypeConstraints.BOTTOM) {
-        DfReferenceConstantType subConstant = new DfReferenceConstantType(getValue(), myPsiType, constraint, myDropConstantOnWiden);
+        DfReferenceConstantType subConstant = new DfReferenceConstantType(getValue(), constraint, myDropConstantOnWiden);
         if (type.isSuperType(subConstant)) return subConstant;
       }
     }
     return BOTTOM;
-  }
-
-  @NotNull
-  @Override
-  public PsiType getPsiType() {
-    return myPsiType;
   }
 
   @NotNull
@@ -84,7 +73,7 @@ public class DfReferenceConstantType extends DfConstantType<Object> implements D
   @Nullable
   @Override
   public SpecialField getSpecialField() {
-    return mySpecialField;
+    return myJvmSpecialField;
   }
 
   @NotNull
@@ -122,5 +111,20 @@ public class DfReferenceConstantType extends DfConstantType<Object> implements D
     SpecialField sf = Objects.equals(getSpecialField(), type.getSpecialField()) ? getSpecialField() : null;
     DfType sfType = sf == null ? BOTTOM : getSpecialFieldType().join(type.getSpecialFieldType());
     return new DfGenericObjectType(Set.of(), constraint, nullability, mutability, sf, sfType, locality);
+  }
+
+  @Override
+  public @Nullable DfType tryJoinExactly(@NotNull DfType other) {
+    if (isMergeable(other)) return this;
+    if (other.isMergeable(this)) return other;
+    if (other instanceof DfGenericObjectType) {
+      other.tryJoinExactly(this);
+    }
+    return null;
+  }
+
+  @Override
+  public @NotNull String toString() {
+    return DfaPsiUtil.renderValue(getValue());
   }
 }

@@ -1,6 +1,15 @@
 import java.util.*;
 
 public class CollectionAddRemove {
+  void testPutKeySet() {
+    Map<String, Integer> testMap = new HashMap<>();
+    Set<String> keys = testMap.keySet();
+    if (<warning descr="Condition 'keys.isEmpty()' is always 'true'">keys.isEmpty()</warning>) {}
+    testMap.put("a", 1);
+    if (keys.isEmpty()) {}
+    if (keys.contains("a")) {}
+  }
+  
   void testAdd(List<String> list) {
     list.add("foo");
     if (<warning descr="Condition 'list.isEmpty()' is always 'false'">list.isEmpty()</warning>) { }

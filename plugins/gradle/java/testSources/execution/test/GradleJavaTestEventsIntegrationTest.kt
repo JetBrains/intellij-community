@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.gradle.execution.test
 
 import com.intellij.openapi.externalSystem.model.task.*
@@ -6,17 +6,16 @@ import com.intellij.openapi.externalSystem.model.task.event.ExternalSystemTaskEx
 import com.intellij.openapi.externalSystem.model.task.event.TestOperationDescriptor
 import com.intellij.openapi.util.Pair
 import com.intellij.openapi.util.registry.Registry
-import com.intellij.testFramework.RunAll
-import com.intellij.util.ThrowableRunnable
+import com.intellij.testFramework.runAll
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.assertj.core.api.Condition
 import org.jetbrains.plugins.gradle.GradleManager
-import org.jetbrains.plugins.gradle.importing.GradleBuildScriptBuilderEx
+import org.jetbrains.plugins.gradle.importing.GradleBuildScriptBuilder.Companion.buildscript
 import org.jetbrains.plugins.gradle.importing.GradleImportingTestCase
-import org.jetbrains.plugins.gradle.importing.withMavenCentral
 import org.jetbrains.plugins.gradle.service.task.GradleTaskManager
 import org.jetbrains.plugins.gradle.settings.GradleExecutionSettings
+import org.jetbrains.plugins.gradle.tooling.annotation.TargetVersions
 import org.jetbrains.plugins.gradle.util.GradleConstants
 import org.junit.Test
 
@@ -25,20 +24,13 @@ open class GradleJavaTestEventsIntegrationTest: GradleImportingTestCase() {
   override fun setUp() {
     super.setUp()
     if (testLauncherAPISupported()) {
-      Registry.get("gradle.testLauncherAPI.enabled").setValue(true)
+      Registry.get("gradle.testLauncherAPI.enabled").setValue(true, testRootDisposable)
     }
   }
 
-  override fun tearDown() {
-    RunAll(
-      ThrowableRunnable { Registry.get("gradle.testLauncherAPI.enabled").setValue(false) },
-      ThrowableRunnable { super.tearDown() }
-    ).run()
-  }
-
   @Test
+  @TargetVersions("!6.9")
   fun test() {
-
     val gradleSupportsJunitPlatform = isGradleNewerOrSameAs("4.6")
     createProjectSubFile("src/main/java/my/pack/AClass.java",
                          "package my.pack;\n" +
@@ -89,40 +81,55 @@ open class GradleJavaTestEventsIntegrationTest: GradleImportingTestCase() {
                            }
                          """.trimIndent())
 
-    importProject(
-      GradleBuildScriptBuilderEx()
-        .withMavenCentral()
-        .applyPlugin("'java'")
-        .addPostfix("dependencies {",
-                    "  testCompile 'junit:junit:4.12'",
-                    "}",
-                    if (gradleSupportsJunitPlatform) {
-                    """
-                      sourceSets {
-                        junit5test
-                      }
-                      
-                      dependencies {
-                        junit5testImplementation 'org.junit.jupiter:junit-jupiter-api:5.7.0'
-                        junit5testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.7.0'
-                      }
-                      
-                      task junit5test(type: Test) {
-                        useJUnitPlatform()
-                         testClassesDirs = sourceSets.junit5test.output.classesDirs
-                         classpath = sourceSets.junit5test.runtimeClasspath
-                      }
-                    """.trimIndent() } else { "" },
-                    "test { filter { includeTestsMatching 'my.pack.*' } }")
-        .generate()
-    )
+    importProject(buildscript {
+      withJavaPlugin()
+      withJUnit4()
+      if (gradleSupportsJunitPlatform) {
+        addPostfix("""
+          sourceSets {
+            junit5test
+          }
+          
+          dependencies {
+            junit5testImplementation 'org.junit.jupiter:junit-jupiter-api:5.7.0'
+            junit5testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.7.0'
+          }
+          
+          task junit5test(type: Test) {
+            useJUnitPlatform()
+            testClassesDirs = sourceSets.junit5test.output.classesDirs
+            classpath = sourceSets.junit5test.runtimeClasspath
+          }
+        """.trimIndent())
+      }
+      addPostfix("test { filter { includeTestsMatching 'my.pack.*' } }")
+      addPostfix("""
+        import java.util.concurrent.atomic.AtomicBoolean;
+        def resolutionAllowed = new AtomicBoolean(false)
 
-    RunAll(
-      ThrowableRunnable { `call test task produces test events`() },
-      ThrowableRunnable { `call build task does not produce test events`() },
-      ThrowableRunnable { `call task for specific test overrides existing filters`() },
-      ThrowableRunnable { if (gradleSupportsJunitPlatform) `test events use display name`() }
-    ).run()
+        if (configurations.findByName("testRuntimeClasspath") != null) {
+          configurations.testRuntimeClasspath.incoming.beforeResolve {
+              if (!resolutionAllowed.get() && !System.properties["idea.sync.active"]) {
+                  logger.warn("Attempt to resolve configuration too early")
+              }
+          }
+        }
+        
+        gradle.taskGraph.beforeTask { Task task ->
+            if (task.path == ":test" ) {
+                println("Greenlight to resolving the configuration!")
+                resolutionAllowed.set(true)
+            }
+        }
+      """.trimIndent())
+    })
+
+    runAll(
+      { `call test task produces test events`() },
+      { `call build task does not produce test events`() },
+      { `call task for specific test overrides existing filters`() },
+      { if (gradleSupportsJunitPlatform) `test events use display name`() }
+    )
   }
 
   private fun testLauncherAPISupported(): Boolean = isGradleNewerOrSameAs("6.1")
@@ -170,6 +177,8 @@ open class GradleJavaTestEventsIntegrationTest: GradleImportingTestCase() {
           "<descriptor name='testSuccess' className='my.pack.AClassTest' />")
         .doesNotContain(
           "<descriptor name='testSuccess' className='my.otherpack.AClassTest' />")
+        .doesNotContain(
+          "Attempt to resolve configuration too early")
     }
   }
 

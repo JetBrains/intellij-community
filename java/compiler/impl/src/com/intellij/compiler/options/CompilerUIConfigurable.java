@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.compiler.options;
 
 import com.intellij.codeInsight.NullableNotNullDialog;
@@ -22,8 +22,10 @@ import com.intellij.ui.Gray;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.RawCommandLineEditor;
 import com.intellij.ui.components.JBLabel;
+import com.intellij.ui.components.fields.ExpandableTextField;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.execution.ParametersListUtil;
+import com.intellij.util.ui.UIUtil;
 import com.intellij.xml.util.XmlStringUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -38,7 +40,7 @@ import static com.intellij.compiler.options.CompilerOptionsFilter.Setting;
 public class CompilerUIConfigurable implements SearchableConfigurable, Configurable.NoScroll {
   private static final Logger LOG = Logger.getInstance(CompilerUIConfigurable.class);
 
-  private static final Set<Setting> EXTERNAL_BUILD_SETTINGS = EnumSet.of(
+  static final Set<Setting> EXTERNAL_BUILD_SETTINGS = EnumSet.of(
     Setting.EXTERNAL_BUILD, Setting.AUTO_MAKE, Setting.PARALLEL_COMPILATION, Setting.REBUILD_MODULE_ON_DEPENDENCY_CHANGE,
     Setting.HEAP_SIZE, Setting.COMPILER_VM_OPTIONS
   );
@@ -57,9 +59,9 @@ public class CompilerUIConfigurable implements SearchableConfigurable, Configura
   private JCheckBox            myCbEnableAutomake;
   private JCheckBox            myCbParallelCompilation;
   private JTextField           mySharedHeapSizeField;
-  private JTextField           mySharedVMOptionsField;
+  private ExpandableTextField  mySharedVMOptionsField;
   private JTextField           myHeapSizeField;
-  private JTextField           myVMOptionsField;
+  private ExpandableTextField  myVMOptionsField;
   private JLabel               mySharedHeapSizeLabel;
   private JLabel               mySharedVMOptionsLabel;
   private JLabel               myHeapSizeLabel;
@@ -86,7 +88,9 @@ public class CompilerUIConfigurable implements SearchableConfigurable, Configura
     DocumentAdapter updateStateListener = new DocumentAdapter() {
       @Override
       protected void textChanged(@NotNull DocumentEvent e) {
-        mySharedVMOptionsField.setEnabled(myVMOptionsField.getDocument().getLength() == 0);
+        mySharedVMOptionsField.setEditable(myVMOptionsField.getDocument().getLength() == 0);
+        mySharedVMOptionsField.setBackground(myVMOptionsField.getDocument().getLength() == 0 ?
+                                             UIUtil.getTextFieldBackground() : UIUtil.getTextFieldDisabledBackground());
         mySharedHeapSizeField.setEnabled(
           myHeapSizeField.getDocument().getLength() == 0 &&
           ContainerUtil.find(ParametersListUtil.parse(myVMOptionsField.getText()),
@@ -334,6 +338,10 @@ public class CompilerUIConfigurable implements SearchableConfigurable, Configura
   @Override
   public JComponent createComponent() {
     return myPanel;
+  }
+
+  JCheckBox getBuildOnSaveCheckBox() {
+    return myCbEnableAutomake;
   }
 
   private void createUIComponents() {

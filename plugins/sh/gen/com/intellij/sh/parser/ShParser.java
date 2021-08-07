@@ -67,6 +67,12 @@ public class ShParser implements PsiParser, LightPsiParser {
       EXP_EXPRESSION, INDEX_EXPRESSION, LITERAL_EXPRESSION, LOGICAL_AND_EXPRESSION,
       LOGICAL_BITWISE_NEGATION_EXPRESSION, LOGICAL_OR_EXPRESSION, MUL_EXPRESSION, PARENTHESES_EXPRESSION,
       POST_EXPRESSION, PRE_EXPRESSION, UNARY_EXPRESSION),
+    create_token_set_(ADD_OPERATION, ARRAY_OPERATION, ASSIGNMENT_OPERATION, BITWISE_AND_OPERATION,
+      BITWISE_EXCLUSIVE_OR_OPERATION, BITWISE_OR_OPERATION, BITWISE_SHIFT_OPERATION, COMMA_OPERATION,
+      COMPARISON_OPERATION, CONDITIONAL_OPERATION, EQUALITY_OPERATION, EXP_OPERATION,
+      INDEX_OPERATION, LITERAL_OPERATION, LOGICAL_AND_OPERATION, LOGICAL_BITWISE_NEGATION_OPERATION,
+      LOGICAL_OR_OPERATION, MUL_OPERATION, OPERATION, PARENTHESES_OPERATION,
+      POST_OPERATION, PRE_OPERATION, UNARY_OPERATION),
   };
 
   /* ********************************************************** */
@@ -114,47 +120,46 @@ public class ShParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // '((' expression? '))'
+  // '(''(' expression? ')'')'
   public static boolean arithmetic_expansion(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "arithmetic_expansion")) return false;
-    if (!nextTokenIs(b, LEFT_DOUBLE_PAREN)) return false;
-    boolean r, p;
-    Marker m = enter_section_(b, l, _NONE_, ARITHMETIC_EXPANSION, null);
-    r = consumeToken(b, LEFT_DOUBLE_PAREN);
-    p = r; // pin = 1
-    r = r && report_error_(b, arithmetic_expansion_1(b, l + 1));
-    r = p && consumeToken(b, RIGHT_DOUBLE_PAREN) && r;
-    exit_section_(b, l, m, r, p, null);
-    return r || p;
+    if (!nextTokenIs(b, LEFT_PAREN)) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = consumeTokens(b, 0, LEFT_PAREN, LEFT_PAREN);
+    r = r && arithmetic_expansion_2(b, l + 1);
+    r = r && consumeTokens(b, 0, RIGHT_PAREN, RIGHT_PAREN);
+    exit_section_(b, m, ARITHMETIC_EXPANSION, r);
+    return r;
   }
 
   // expression?
-  private static boolean arithmetic_expansion_1(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "arithmetic_expansion_1")) return false;
+  private static boolean arithmetic_expansion_2(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "arithmetic_expansion_2")) return false;
     expression(b, l + 1, -1);
     return true;
   }
 
   /* ********************************************************** */
-  // '((' arithmetic_for_expression '))' list_terminator? newlines
+  // '(''(' arithmetic_for_expression ')'')' list_terminator? newlines
   static boolean arithmetic_for_clause(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "arithmetic_for_clause")) return false;
-    if (!nextTokenIs(b, LEFT_DOUBLE_PAREN)) return false;
+    if (!nextTokenIs(b, LEFT_PAREN)) return false;
     boolean r, p;
     Marker m = enter_section_(b, l, _NONE_);
-    r = consumeToken(b, LEFT_DOUBLE_PAREN);
+    r = consumeTokens(b, 1, LEFT_PAREN, LEFT_PAREN);
     p = r; // pin = 1
     r = r && report_error_(b, arithmetic_for_expression(b, l + 1));
-    r = p && report_error_(b, consumeToken(b, RIGHT_DOUBLE_PAREN)) && r;
-    r = p && report_error_(b, arithmetic_for_clause_3(b, l + 1)) && r;
+    r = p && report_error_(b, consumeTokens(b, -1, RIGHT_PAREN, RIGHT_PAREN)) && r;
+    r = p && report_error_(b, arithmetic_for_clause_5(b, l + 1)) && r;
     r = p && newlines(b, l + 1) && r;
     exit_section_(b, l, m, r, p, null);
     return r || p;
   }
 
   // list_terminator?
-  private static boolean arithmetic_for_clause_3(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "arithmetic_for_clause_3")) return false;
+  private static boolean arithmetic_for_clause_5(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "arithmetic_for_clause_5")) return false;
     list_terminator(b, l + 1);
     return true;
   }
@@ -198,25 +203,35 @@ public class ShParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // !('))')
+  // !(')'')')
   static boolean arithmetic_for_expression_recover(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "arithmetic_for_expression_recover")) return false;
     boolean r;
     Marker m = enter_section_(b, l, _NOT_);
-    r = !consumeToken(b, RIGHT_DOUBLE_PAREN);
+    r = !arithmetic_for_expression_recover_0(b, l + 1);
     exit_section_(b, l, m, r, false, null);
     return r;
   }
 
+  // ')'')'
+  private static boolean arithmetic_for_expression_recover_0(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "arithmetic_for_expression_recover_0")) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = consumeTokens(b, 0, RIGHT_PAREN, RIGHT_PAREN);
+    exit_section_(b, m, null, r);
+    return r;
+  }
+
   /* ********************************************************** */
-  // newlines '='? expression newlines
+  // newlines '='? operation newlines
   public static boolean array_assignment(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "array_assignment")) return false;
     boolean r;
     Marker m = enter_section_(b, l, _NONE_, ARRAY_ASSIGNMENT, "<array assignment>");
     r = newlines(b, l + 1);
     r = r && array_assignment_1(b, l + 1);
-    r = r && expression(b, l + 1, -1);
+    r = r && operation(b, l + 1, -1);
     r = r && newlines(b, l + 1);
     exit_section_(b, l, m, r, false, null);
     return r;
@@ -782,7 +797,7 @@ public class ShParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // '$' &('(' | '((' | '{') composed_var_inner
+  // '$' &('(' | '{') composed_var_inner
   static boolean composed_var(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "composed_var")) return false;
     if (!nextTokenIs(b, DOLLAR)) return false;
@@ -796,7 +811,7 @@ public class ShParser implements PsiParser, LightPsiParser {
     return r || p;
   }
 
-  // &('(' | '((' | '{')
+  // &('(' | '{')
   private static boolean composed_var_1(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "composed_var_1")) return false;
     boolean r;
@@ -806,12 +821,11 @@ public class ShParser implements PsiParser, LightPsiParser {
     return r;
   }
 
-  // '(' | '((' | '{'
+  // '(' | '{'
   private static boolean composed_var_1_0(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "composed_var_1_0")) return false;
     boolean r;
     r = consumeToken(b, LEFT_PAREN);
-    if (!r) r = consumeToken(b, LEFT_DOUBLE_PAREN);
     if (!r) r = consumeToken(b, LEFT_CURLY);
     return r;
   }
@@ -822,6 +836,7 @@ public class ShParser implements PsiParser, LightPsiParser {
   //                               | shell_parameter_expansion
   static boolean composed_var_inner(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "composed_var_inner")) return false;
+    if (!nextTokenIs(b, "", LEFT_CURLY, LEFT_PAREN)) return false;
     boolean r;
     r = arithmetic_expansion(b, l + 1);
     if (!r) r = subshell_command(b, l + 1);
@@ -1623,7 +1638,7 @@ public class ShParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // word | string | number | variable
+  // word | string | number | variable | <<arithmeticOperationsRemapped>>
   public static boolean literal(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "literal")) return false;
     boolean r;
@@ -1632,6 +1647,7 @@ public class ShParser implements PsiParser, LightPsiParser {
     if (!r) r = string(b, l + 1);
     if (!r) r = number(b, l + 1);
     if (!r) r = variable(b, l + 1);
+    if (!r) r = arithmeticOperationsRemapped(b, l + 1);
     exit_section_(b, l, m, r, false, null);
     return r;
   }
@@ -1957,7 +1973,7 @@ public class ShParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // !(case|if|while|until|select|'{'|function|'$'|'&&'|';'|';;'|'||'|'&'|'!'|'['|'[['|'('|')'|'|'|'|&'|'\n'|'(('|
+  // !(case|if|while|until|select|'{'|function|'$'|'&&'|';'|';;'|'||'|'&'|'!'|'['|'[['|'('|')'|'|'|'|&'|'\n'|
   //                                var | word|EXPR_CONDITIONAL_LEFT|ARITH_SQUARE_LEFT | CLOSE_BACKQUOTE | do | done | '}')
   static boolean pipeline_recover(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "pipeline_recover")) return false;
@@ -1968,7 +1984,7 @@ public class ShParser implements PsiParser, LightPsiParser {
     return r;
   }
 
-  // case|if|while|until|select|'{'|function|'$'|'&&'|';'|';;'|'||'|'&'|'!'|'['|'[['|'('|')'|'|'|'|&'|'\n'|'(('|
+  // case|if|while|until|select|'{'|function|'$'|'&&'|';'|';;'|'||'|'&'|'!'|'['|'[['|'('|')'|'|'|'|&'|'\n'|
   //                                var | word|EXPR_CONDITIONAL_LEFT|ARITH_SQUARE_LEFT | CLOSE_BACKQUOTE | do | done | '}'
   private static boolean pipeline_recover_0(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "pipeline_recover_0")) return false;
@@ -1994,7 +2010,6 @@ public class ShParser implements PsiParser, LightPsiParser {
     if (!r) r = consumeToken(b, PIPE);
     if (!r) r = consumeToken(b, PIPE_AMP);
     if (!r) r = consumeToken(b, LINEFEED);
-    if (!r) r = consumeToken(b, LEFT_DOUBLE_PAREN);
     if (!r) r = consumeToken(b, VAR);
     if (!r) r = consumeToken(b, WORD);
     if (!r) r = consumeToken(b, EXPR_CONDITIONAL_LEFT);
@@ -2149,15 +2164,15 @@ public class ShParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // w+
+  // word_in_condition+
   public static boolean regex_pattern(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "regex_pattern")) return false;
     boolean r;
     Marker m = enter_section_(b, l, _NONE_, REGEX_PATTERN, "<regex pattern>");
-    r = w(b, l + 1);
+    r = word_in_condition(b, l + 1);
     while (r) {
       int c = current_position_(b);
-      if (!w(b, l + 1)) break;
+      if (!word_in_condition(b, l + 1)) break;
       if (!empty_element_parsed_guard_(b, "regex_pattern", c)) break;
     }
     exit_section_(b, l, m, r, false, null);
@@ -2207,6 +2222,7 @@ public class ShParser implements PsiParser, LightPsiParser {
   //                   | while_command
   //                   | until_command
   //                   | select_command
+  //                   | arithmetic_expansion
   //                   | subshell_command
   //                   | block
   //                   | function_definition
@@ -2220,6 +2236,7 @@ public class ShParser implements PsiParser, LightPsiParser {
     if (!r) r = while_command(b, l + 1);
     if (!r) r = until_command(b, l + 1);
     if (!r) r = select_command(b, l + 1);
+    if (!r) r = arithmetic_expansion(b, l + 1);
     if (!r) r = subshell_command(b, l + 1);
     if (!r) r = block(b, l + 1);
     if (!r) r = function_definition(b, l + 1);
@@ -2530,14 +2547,16 @@ public class ShParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // word | string | number | not_lvalue
+  // string | number | not_lvalue | <<arithmeticOperationsRemapped>>
   static boolean w(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "w")) return false;
     boolean r;
-    r = consumeToken(b, WORD);
-    if (!r) r = string(b, l + 1);
+    Marker m = enter_section_(b);
+    r = string(b, l + 1);
     if (!r) r = number(b, l + 1);
     if (!r) r = not_lvalue(b, l + 1);
+    if (!r) r = arithmeticOperationsRemapped(b, l + 1);
+    exit_section_(b, m, null, r);
     return r;
   }
 
@@ -2554,6 +2573,30 @@ public class ShParser implements PsiParser, LightPsiParser {
     r = p && do_block(b, l + 1) && r;
     exit_section_(b, l, m, r, p, null);
     return r || p;
+  }
+
+  /* ********************************************************** */
+  // word | string | number | not_lvalue
+  static boolean word_in_condition(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "word_in_condition")) return false;
+    boolean r;
+    r = consumeToken(b, WORD);
+    if (!r) r = string(b, l + 1);
+    if (!r) r = number(b, l + 1);
+    if (!r) r = not_lvalue(b, l + 1);
+    return r;
+  }
+
+  /* ********************************************************** */
+  // word | string | number | not_lvalue
+  static boolean word_in_expression(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "word_in_expression")) return false;
+    boolean r;
+    r = consumeToken(b, WORD);
+    if (!r) r = string(b, l + 1);
+    if (!r) r = number(b, l + 1);
+    if (!r) r = not_lvalue(b, l + 1);
+    return r;
   }
 
   /* ********************************************************** */
@@ -2684,7 +2727,7 @@ public class ShParser implements PsiParser, LightPsiParser {
     return r;
   }
 
-  // w newlines | newlines w
+  // word_in_condition newlines | newlines word_in_condition
   public static boolean literal_condition(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "literal_condition")) return false;
     boolean r;
@@ -2695,24 +2738,24 @@ public class ShParser implements PsiParser, LightPsiParser {
     return r;
   }
 
-  // w newlines
+  // word_in_condition newlines
   private static boolean literal_condition_0(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "literal_condition_0")) return false;
     boolean r;
     Marker m = enter_section_(b);
-    r = w(b, l + 1);
+    r = word_in_condition(b, l + 1);
     r = r && newlines(b, l + 1);
     exit_section_(b, m, null, r);
     return r;
   }
 
-  // newlines w
+  // newlines word_in_condition
   private static boolean literal_condition_1(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "literal_condition_1")) return false;
     boolean r;
     Marker m = enter_section_(b);
     r = newlines(b, l + 1);
-    r = r && w(b, l + 1);
+    r = r && word_in_condition(b, l + 1);
     exit_section_(b, m, null, r);
     return r;
   }
@@ -3013,15 +3056,15 @@ public class ShParser implements PsiParser, LightPsiParser {
     return r || p;
   }
 
-  // w+
+  // word_in_expression+
   public static boolean literal_expression(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "literal_expression")) return false;
     boolean r;
     Marker m = enter_section_(b, l, _NONE_, LITERAL_EXPRESSION, "<literal expression>");
-    r = w(b, l + 1);
+    r = word_in_expression(b, l + 1);
     while (r) {
       int c = current_position_(b);
-      if (!w(b, l + 1)) break;
+      if (!word_in_expression(b, l + 1)) break;
       if (!empty_element_parsed_guard_(b, "literal_expression", c)) break;
     }
     exit_section_(b, l, m, r, false, null);
@@ -3037,6 +3080,318 @@ public class ShParser implements PsiParser, LightPsiParser {
     r = consumeTokenSmart(b, LEFT_PAREN);
     p = r; // pin = 1
     r = r && report_error_(b, expression(b, l + 1, -1));
+    r = p && consumeToken(b, RIGHT_PAREN) && r;
+    exit_section_(b, l, m, r, p, null);
+    return r || p;
+  }
+
+  /* ********************************************************** */
+  // Expression root: operation
+  // Operator priority table:
+  // 0: BINARY(comma_operation)
+  // 1: BINARY(assignment_operation)
+  // 2: BINARY(conditional_operation)
+  // 3: BINARY(logical_or_operation)
+  // 4: BINARY(logical_and_operation)
+  // 5: BINARY(bitwise_or_operation)
+  // 6: BINARY(bitwise_exclusive_or_operation)
+  // 7: BINARY(bitwise_and_operation)
+  // 8: BINARY(equality_operation)
+  // 9: BINARY(comparison_operation)
+  // 10: BINARY(bitwise_shift_operation)
+  // 11: BINARY(add_operation)
+  // 12: BINARY(mul_operation)
+  // 13: BINARY(exp_operation)
+  // 14: PREFIX(logical_bitwise_negation_operation)
+  // 15: PREFIX(unary_operation)
+  // 16: PREFIX(pre_operation)
+  // 17: POSTFIX(post_operation)
+  // 18: BINARY(index_operation)
+  // 19: PREFIX(array_operation)
+  // 20: ATOM(literal_operation)
+  // 21: ATOM(parentheses_operation)
+  public static boolean operation(PsiBuilder b, int l, int g) {
+    if (!recursion_guard_(b, l, "operation")) return false;
+    addVariant(b, "<operation>");
+    boolean r, p;
+    Marker m = enter_section_(b, l, _NONE_, "<operation>");
+    r = logical_bitwise_negation_operation(b, l + 1);
+    if (!r) r = unary_operation(b, l + 1);
+    if (!r) r = pre_operation(b, l + 1);
+    if (!r) r = array_operation(b, l + 1);
+    if (!r) r = literal_operation(b, l + 1);
+    if (!r) r = parentheses_operation(b, l + 1);
+    p = r;
+    r = r && operation_0(b, l + 1, g);
+    exit_section_(b, l, m, null, r, p, null);
+    return r || p;
+  }
+
+  public static boolean operation_0(PsiBuilder b, int l, int g) {
+    if (!recursion_guard_(b, l, "operation_0")) return false;
+    boolean r = true;
+    while (true) {
+      Marker m = enter_section_(b, l, _LEFT_, null);
+      if (g < 0 && consumeTokenSmart(b, COMMA)) {
+        r = operation(b, l, 0);
+        exit_section_(b, l, m, COMMA_OPERATION, r, true, null);
+      }
+      else if (g < 1 && assignment_operation_0(b, l + 1)) {
+        r = operation(b, l, 1);
+        exit_section_(b, l, m, ASSIGNMENT_OPERATION, r, true, null);
+      }
+      else if (g < 2 && consumeTokenSmart(b, QMARK)) {
+        r = report_error_(b, operation(b, l, 2));
+        r = conditional_operation_1(b, l + 1) && r;
+        exit_section_(b, l, m, CONDITIONAL_OPERATION, r, true, null);
+      }
+      else if (g < 3 && consumeTokenSmart(b, OR_OR)) {
+        r = operation(b, l, 3);
+        exit_section_(b, l, m, LOGICAL_OR_OPERATION, r, true, null);
+      }
+      else if (g < 4 && consumeTokenSmart(b, AND_AND)) {
+        r = operation(b, l, 4);
+        exit_section_(b, l, m, LOGICAL_AND_OPERATION, r, true, null);
+      }
+      else if (g < 5 && consumeTokenSmart(b, PIPE)) {
+        r = operation(b, l, 5);
+        exit_section_(b, l, m, BITWISE_OR_OPERATION, r, true, null);
+      }
+      else if (g < 6 && consumeTokenSmart(b, XOR)) {
+        r = operation(b, l, 6);
+        exit_section_(b, l, m, BITWISE_EXCLUSIVE_OR_OPERATION, r, true, null);
+      }
+      else if (g < 7 && consumeTokenSmart(b, AMP)) {
+        r = operation(b, l, 7);
+        exit_section_(b, l, m, BITWISE_AND_OPERATION, r, true, null);
+      }
+      else if (g < 8 && equality_operation_0(b, l + 1)) {
+        r = operation(b, l, 8);
+        exit_section_(b, l, m, EQUALITY_OPERATION, r, true, null);
+      }
+      else if (g < 9 && comparison_operation_0(b, l + 1)) {
+        r = operation(b, l, 9);
+        exit_section_(b, l, m, COMPARISON_OPERATION, r, true, null);
+      }
+      else if (g < 10 && bitwise_shift_operation_0(b, l + 1)) {
+        r = operation(b, l, 10);
+        exit_section_(b, l, m, BITWISE_SHIFT_OPERATION, r, true, null);
+      }
+      else if (g < 11 && add_operation_0(b, l + 1)) {
+        r = operation(b, l, 11);
+        exit_section_(b, l, m, ADD_OPERATION, r, true, null);
+      }
+      else if (g < 12 && mul_operation_0(b, l + 1)) {
+        r = operation(b, l, 12);
+        exit_section_(b, l, m, MUL_OPERATION, r, true, null);
+      }
+      else if (g < 13 && consumeTokenSmart(b, EXPONENT)) {
+        r = operation(b, l, 13);
+        exit_section_(b, l, m, EXP_OPERATION, r, true, null);
+      }
+      else if (g < 17 && post_operation_0(b, l + 1)) {
+        r = true;
+        exit_section_(b, l, m, POST_OPERATION, r, true, null);
+      }
+      else if (g < 18 && consumeTokenSmart(b, LEFT_SQUARE)) {
+        r = report_error_(b, operation(b, l, 18));
+        r = consumeToken(b, RIGHT_SQUARE) && r;
+        exit_section_(b, l, m, INDEX_OPERATION, r, true, null);
+      }
+      else {
+        exit_section_(b, l, m, null, false, false, null);
+        break;
+      }
+    }
+    return r;
+  }
+
+  // '=' |'*=' |'/=' |'%=' |'+=' |'-=' |'<<=' |'>>=' |'&=' |'^=' |'|='
+  private static boolean assignment_operation_0(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "assignment_operation_0")) return false;
+    boolean r;
+    r = consumeTokenSmart(b, ASSIGN);
+    if (!r) r = consumeTokenSmart(b, MULT_ASSIGN);
+    if (!r) r = consumeTokenSmart(b, DIV_ASSIGN);
+    if (!r) r = consumeTokenSmart(b, MOD_ASSIGN);
+    if (!r) r = consumeTokenSmart(b, PLUS_ASSIGN);
+    if (!r) r = consumeTokenSmart(b, MINUS_ASSIGN);
+    if (!r) r = consumeTokenSmart(b, SHIFT_LEFT_ASSIGN);
+    if (!r) r = consumeTokenSmart(b, SHIFT_RIGHT_ASSIGN);
+    if (!r) r = consumeTokenSmart(b, BIT_AND_ASSIGN);
+    if (!r) r = consumeTokenSmart(b, BIT_XOR_ASSIGN);
+    if (!r) r = consumeTokenSmart(b, BIT_OR_ASSIGN);
+    return r;
+  }
+
+  // ':' operation
+  private static boolean conditional_operation_1(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "conditional_operation_1")) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = consumeToken(b, COLON);
+    r = r && operation(b, l + 1, -1);
+    exit_section_(b, m, null, r);
+    return r;
+  }
+
+  // '==' | '!='
+  private static boolean equality_operation_0(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "equality_operation_0")) return false;
+    boolean r;
+    r = consumeTokenSmart(b, EQ);
+    if (!r) r = consumeTokenSmart(b, NE);
+    return r;
+  }
+
+  // '<=' | '>=' | '<' | '>'
+  private static boolean comparison_operation_0(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "comparison_operation_0")) return false;
+    boolean r;
+    r = consumeTokenSmart(b, LE);
+    if (!r) r = consumeTokenSmart(b, GE);
+    if (!r) r = consumeTokenSmart(b, LT);
+    if (!r) r = consumeTokenSmart(b, GT);
+    return r;
+  }
+
+  // '<<' | '>>'
+  private static boolean bitwise_shift_operation_0(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "bitwise_shift_operation_0")) return false;
+    boolean r;
+    r = consumeTokenSmart(b, SHIFT_LEFT);
+    if (!r) r = consumeTokenSmart(b, SHIFT_RIGHT);
+    return r;
+  }
+
+  // '+' | '-'
+  private static boolean add_operation_0(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "add_operation_0")) return false;
+    boolean r;
+    r = consumeTokenSmart(b, PLUS);
+    if (!r) r = consumeTokenSmart(b, MINUS);
+    return r;
+  }
+
+  // '*' | '/' | '%'
+  private static boolean mul_operation_0(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "mul_operation_0")) return false;
+    boolean r;
+    r = consumeTokenSmart(b, MULT);
+    if (!r) r = consumeTokenSmart(b, DIV);
+    if (!r) r = consumeTokenSmart(b, MOD);
+    return r;
+  }
+
+  public static boolean logical_bitwise_negation_operation(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "logical_bitwise_negation_operation")) return false;
+    if (!nextTokenIsSmart(b, BANG, BITWISE_NEGATION)) return false;
+    boolean r, p;
+    Marker m = enter_section_(b, l, _NONE_, null);
+    r = logical_bitwise_negation_operation_0(b, l + 1);
+    p = r;
+    r = p && operation(b, l, 14);
+    exit_section_(b, l, m, LOGICAL_BITWISE_NEGATION_OPERATION, r, p, null);
+    return r || p;
+  }
+
+  // '!' | '~'
+  private static boolean logical_bitwise_negation_operation_0(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "logical_bitwise_negation_operation_0")) return false;
+    boolean r;
+    r = consumeTokenSmart(b, BANG);
+    if (!r) r = consumeTokenSmart(b, BITWISE_NEGATION);
+    return r;
+  }
+
+  public static boolean unary_operation(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "unary_operation")) return false;
+    if (!nextTokenIsSmart(b, MINUS, PLUS)) return false;
+    boolean r, p;
+    Marker m = enter_section_(b, l, _NONE_, null);
+    r = unary_operation_0(b, l + 1);
+    p = r;
+    r = p && operation(b, l, 15);
+    exit_section_(b, l, m, UNARY_OPERATION, r, p, null);
+    return r || p;
+  }
+
+  // '-' | '+'
+  private static boolean unary_operation_0(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "unary_operation_0")) return false;
+    boolean r;
+    r = consumeTokenSmart(b, MINUS);
+    if (!r) r = consumeTokenSmart(b, PLUS);
+    return r;
+  }
+
+  public static boolean pre_operation(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "pre_operation")) return false;
+    if (!nextTokenIsSmart(b, MINUS_MINUS, PLUS_PLUS)) return false;
+    boolean r, p;
+    Marker m = enter_section_(b, l, _NONE_, null);
+    r = pre_operation_0(b, l + 1);
+    p = r;
+    r = p && operation(b, l, 16);
+    exit_section_(b, l, m, PRE_OPERATION, r, p, null);
+    return r || p;
+  }
+
+  // '--' | '++'
+  private static boolean pre_operation_0(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "pre_operation_0")) return false;
+    boolean r;
+    r = consumeTokenSmart(b, MINUS_MINUS);
+    if (!r) r = consumeTokenSmart(b, PLUS_PLUS);
+    return r;
+  }
+
+  // '--' | '++'
+  private static boolean post_operation_0(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "post_operation_0")) return false;
+    boolean r;
+    r = consumeTokenSmart(b, MINUS_MINUS);
+    if (!r) r = consumeTokenSmart(b, PLUS_PLUS);
+    return r;
+  }
+
+  public static boolean array_operation(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "array_operation")) return false;
+    if (!nextTokenIsSmart(b, LEFT_SQUARE)) return false;
+    boolean r, p;
+    Marker m = enter_section_(b, l, _NONE_, null);
+    r = consumeTokenSmart(b, LEFT_SQUARE);
+    p = r;
+    r = p && operation(b, l, 19);
+    r = p && report_error_(b, consumeToken(b, RIGHT_SQUARE)) && r;
+    exit_section_(b, l, m, ARRAY_OPERATION, r, p, null);
+    return r || p;
+  }
+
+  // w+
+  public static boolean literal_operation(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "literal_operation")) return false;
+    boolean r;
+    Marker m = enter_section_(b, l, _COLLAPSE_, LITERAL_OPERATION, "<literal operation>");
+    r = w(b, l + 1);
+    while (r) {
+      int c = current_position_(b);
+      if (!w(b, l + 1)) break;
+      if (!empty_element_parsed_guard_(b, "literal_operation", c)) break;
+    }
+    exit_section_(b, l, m, r, false, null);
+    return r;
+  }
+
+  // '(' operation ')'
+  public static boolean parentheses_operation(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "parentheses_operation")) return false;
+    if (!nextTokenIsSmart(b, LEFT_PAREN)) return false;
+    boolean r, p;
+    Marker m = enter_section_(b, l, _NONE_, PARENTHESES_OPERATION, null);
+    r = consumeTokenSmart(b, LEFT_PAREN);
+    p = r; // pin = 1
+    r = r && report_error_(b, operation(b, l + 1, -1));
     r = p && consumeToken(b, RIGHT_PAREN) && r;
     exit_section_(b, l, m, r, p, null);
     return r || p;

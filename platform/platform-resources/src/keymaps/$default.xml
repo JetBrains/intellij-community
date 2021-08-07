@@ -269,9 +269,7 @@
   <action id="GotoClass">
     <keyboard-shortcut first-keystroke="control N"/>
   </action>
-  <action id="GotoChangedFile">
-    <keyboard-shortcut first-keystroke="control N"/>
-  </action>
+  <action id="GotoChangedFile"/>
   <action id="GotoSymbol">
     <keyboard-shortcut first-keystroke="control shift alt N"/>
   </action>
@@ -605,22 +603,21 @@
     <keyboard-shortcut first-keystroke="F7"/>
   </action>
   <action id="Diff.PrevChange">
-    <keyboard-shortcut first-keystroke="alt LEFT"/>
+    <keyboard-shortcut first-keystroke="alt shift LEFT"/>
   </action>
   <action id="Diff.NextChange">
-    <keyboard-shortcut first-keystroke="alt RIGHT"/>
-  </action>
-  <action id="Diff.FocusOppositePane">
-    <keyboard-shortcut first-keystroke="control TAB"/>
-  </action>
-  <action id="Diff.FocusOppositePaneAndScroll">
-    <keyboard-shortcut first-keystroke="control shift TAB"/>
-  </action>
-  <action id="Diff.ApplyLeftSide">
     <keyboard-shortcut first-keystroke="alt shift RIGHT"/>
   </action>
+  <action id="Diff.FocusOppositePane">
+    <keyboard-shortcut first-keystroke="control shift TAB"/>
+  </action>
+  <action id="Diff.FocusOppositePaneAndScroll">
+  </action>
+  <action id="Diff.ApplyLeftSide">
+    <keyboard-shortcut first-keystroke="control alt R"/>
+  </action>
   <action id="Diff.ApplyRightSide">
-    <keyboard-shortcut first-keystroke="alt shift LEFT"/>
+    <keyboard-shortcut first-keystroke="control alt A"/>
   </action>
   <action id="Move">
     <keyboard-shortcut first-keystroke="F6"/>
@@ -867,16 +864,16 @@
     <keyboard-shortcut first-keystroke="control shift F12"/>
   </action>
   <action id="ResizeToolWindowLeft">
-    <keyboard-shortcut first-keystroke="control shift LEFT"/>
+    <keyboard-shortcut first-keystroke="control alt shift LEFT"/>
   </action>
   <action id="ResizeToolWindowRight">
-    <keyboard-shortcut first-keystroke="control shift RIGHT"/>
+    <keyboard-shortcut first-keystroke="control alt shift RIGHT"/>
   </action>
   <action id="ResizeToolWindowUp">
-    <keyboard-shortcut first-keystroke="control shift UP"/>
+    <keyboard-shortcut first-keystroke="control alt shift UP"/>
   </action>
   <action id="ResizeToolWindowDown">
-    <keyboard-shortcut first-keystroke="control shift DOWN"/>
+    <keyboard-shortcut first-keystroke="control alt shift DOWN"/>
   </action>
   <action id="MaximizeToolWindow">
     <keyboard-shortcut first-keystroke="control shift QUOTE"/>
@@ -1249,6 +1246,15 @@
   </action>
   <action id="UsageGrouping.DirectoryStructure">
     <keyboard-shortcut first-keystroke="control alt D"/>
+  </action>
+  <action id="UsageFiltering.ReadAccess">
+    <keyboard-shortcut first-keystroke="control R"/>
+  </action>
+  <action id="UsageFiltering.WriteAccess">
+    <keyboard-shortcut first-keystroke="control W"/>
+  </action>
+  <action id="UsageFiltering.Imports">
+    <keyboard-shortcut first-keystroke="control I"/>
   </action>
   <action id="SwitchHeaderSource">
     <keyboard-shortcut first-keystroke="F10"/>

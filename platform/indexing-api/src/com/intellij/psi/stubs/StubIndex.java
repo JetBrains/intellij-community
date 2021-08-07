@@ -3,6 +3,7 @@ package com.intellij.psi.stubs;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.Processor;
@@ -17,6 +18,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
+import java.util.Set;
 
 public abstract class StubIndex {
   private static class StubIndexHolder {
@@ -66,6 +68,12 @@ public abstract class StubIndex {
     return processAllKeys(indexKey, processor, GlobalSearchScope.allScope(project), null);
   }
 
+  public <K> boolean processAllKeys(@NotNull StubIndexKey<K, ?> indexKey,
+                                    @NotNull Processor<? super K> processor,
+                                    @NotNull GlobalSearchScope scope) {
+    return processAllKeys(indexKey, processor, scope, null);
+  }
+
   public <K> boolean processAllKeys(@NotNull StubIndexKey<K, ?> indexKey, @NotNull Processor<? super K> processor,
                                     @NotNull GlobalSearchScope scope, @Nullable IdFilter idFilter) {
     return processAllKeys(indexKey, Objects.requireNonNull(scope.getProject()), processor);
@@ -93,10 +101,22 @@ public abstract class StubIndex {
     return result;
   }
 
+  /**
+   * @deprecated use {@link StubIndex#getContainingFiles(StubIndexKey, Object, Project, GlobalSearchScope)}.
+   */
+  @Deprecated
   @NotNull
   public abstract <Key> IdIterator getContainingIds(@NotNull StubIndexKey<Key, ?> indexKey, @NotNull @NonNls Key dataKey,
                                                     @NotNull Project project,
                                                     @NotNull final GlobalSearchScope scope);
+
+  /**
+   * @return lazily reified set of VirtualFile's, namely {@link CompactVirtualFileSet}.
+   */
+  @NotNull
+  public abstract <Key> Set<VirtualFile> getContainingFiles(@NotNull StubIndexKey<Key, ?> indexKey, @NotNull @NonNls Key dataKey,
+                                                            @NotNull Project project,
+                                                            @NotNull final GlobalSearchScope scope);
 
   public abstract void forceRebuild(@NotNull Throwable e);
 }

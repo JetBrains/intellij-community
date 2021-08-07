@@ -41,11 +41,17 @@
 
     <moduleService serviceImplementation="org.jetbrains.idea.eclipse.config.EclipseModuleManagerImpl"/>
     <notificationGroup id="Unknown Natures Detected" displayType="BALLOON"/>
+    <welcome.projectDetector implementation="org.jetbrains.idea.eclipse.detect.EclipseProjectDetector"/>
+    <statistics.counterUsagesCollector implementationClass="org.jetbrains.idea.eclipse.detect.EclipseProjectDetectorUsagesCollector"/>
   </extensions>
   <actions>
     <action id="ExportToEclipse" class="org.jetbrains.idea.eclipse.export.ExportEclipseProjectsAction">
       <override-text place="MainMenu"/>
       <add-to-group group-id="FileExportGroup" anchor="last"/>
+    </action>
+    <!--suppress PluginXmlCapitalization -->
+    <action id="WelcomeScreen.OpenEclipseProject" class="org.jetbrains.idea.eclipse.detect.OpenEclipseProjectAction">
+      <add-to-group group-id="WelcomeScreen.QuickStart.EmptyState"/>
     </action>
   </actions>
   <extensionPoints>

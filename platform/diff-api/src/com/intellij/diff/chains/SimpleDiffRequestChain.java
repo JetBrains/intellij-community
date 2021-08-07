@@ -48,7 +48,13 @@ public class SimpleDiffRequestChain extends DiffRequestChainBase {
   }
 
   public static SimpleDiffRequestChain fromProducers(@NotNull List<? extends DiffRequestProducer> producers) {
-    return new SimpleDiffRequestChain(producers, null);
+    return fromProducers(producers, -1);
+  }
+
+  public static SimpleDiffRequestChain fromProducers(@NotNull List<? extends DiffRequestProducer> producers, int selectedIndex) {
+    SimpleDiffRequestChain chain = new SimpleDiffRequestChain(producers, null);
+    if (selectedIndex > 0) chain.setIndex(selectedIndex);
+    return chain;
   }
 
   @Override

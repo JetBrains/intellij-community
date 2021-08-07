@@ -1,8 +1,9 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.messages.impl;
 
+import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.openapi.extensions.ExtensionNotApplicableException;
-import com.intellij.openapi.extensions.PluginId;
+import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.util.ArrayUtilRt;
@@ -74,7 +75,7 @@ class CompositeMessageBus extends MessageBusImpl implements MessageBusEx {
   }
 
   @Override
-  final <L> @NotNull MessagePublisher<L> createPublisher(@NotNull Topic<L> topic, @NotNull BroadcastDirection direction) {
+  final @NotNull <L> MessagePublisher<L> createPublisher(@NotNull Topic<L> topic, @NotNull BroadcastDirection direction) {
     if (direction == BroadcastDirection.TO_PARENT) {
       return new ToParentMessagePublisher<>(topic, this);
     }
@@ -95,7 +96,7 @@ class CompositeMessageBus extends MessageBusImpl implements MessageBusEx {
     }
 
     @Override
-    final boolean publish(@NotNull Method method, Object[] args, @Nullable MessageQueue jobQueue) {
+    boolean publish(@NotNull Method method, Object[] args, @Nullable MessageQueue jobQueue) {
       List<Throwable> exceptions = null;
       boolean hasHandlers = false;
 
@@ -168,11 +169,11 @@ class CompositeMessageBus extends MessageBusImpl implements MessageBusEx {
     }
 
     // use linked hash map for repeatable results
-    Map<PluginId, List<L>> listenerMap = new LinkedHashMap<>();
+    Map<PluginDescriptor, List<L>> listenerMap = new LinkedHashMap<>();
     for (ListenerDescriptor listenerDescriptor : listenerDescriptors) {
       try {
         //noinspection unchecked
-        listenerMap.computeIfAbsent(listenerDescriptor.pluginDescriptor.getPluginId(), __ -> new ArrayList<>())
+        listenerMap.computeIfAbsent(listenerDescriptor.pluginDescriptor, __ -> new ArrayList<>())
           .add((L)owner.createListener(listenerDescriptor));
       }
       catch (ExtensionNotApplicableException ignore) {
@@ -252,9 +253,9 @@ class CompositeMessageBus extends MessageBusImpl implements MessageBusEx {
   }
 
   @Override
-  public final void unsubscribeLazyListeners(@NotNull PluginId pluginId, @NotNull List<ListenerDescriptor> listenerDescriptors) {
+  public final void unsubscribeLazyListeners(@NotNull IdeaPluginDescriptor module, @NotNull List<ListenerDescriptor> listenerDescriptors) {
     topicClassToListenerDescriptor.values().removeIf(descriptors -> {
-      if (descriptors.removeIf(descriptor -> descriptor.pluginDescriptor.getPluginId().equals(pluginId))) {
+      if (descriptors.removeIf(descriptor -> descriptor.pluginDescriptor == module)) {
         return descriptors.isEmpty();
       }
       return false;
@@ -279,7 +280,7 @@ class CompositeMessageBus extends MessageBusImpl implements MessageBusEx {
 
       //noinspection unchecked
       DescriptorBasedMessageBusConnection<Object> connection = (DescriptorBasedMessageBusConnection<Object>)holder;
-      if (connection.pluginId != pluginId) {
+      if (module != connection.module) {
         continue;
       }
 
@@ -299,7 +300,7 @@ class CompositeMessageBus extends MessageBusImpl implements MessageBusEx {
         if (newSubscribers == null) {
           newSubscribers = new ArrayList<>();
         }
-        newSubscribers.add(new DescriptorBasedMessageBusConnection<>(pluginId, connection.topic, newHandlers));
+        newSubscribers.add(new DescriptorBasedMessageBusConnection<>(module, connection.topic, newHandlers));
       }
     }
 

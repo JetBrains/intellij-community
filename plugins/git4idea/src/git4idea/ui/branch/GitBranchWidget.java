@@ -7,6 +7,7 @@ import com.intellij.dvcs.repo.Repository;
 import com.intellij.dvcs.repo.VcsRepositoryMappingListener;
 import com.intellij.dvcs.ui.DvcsStatusWidget;
 import com.intellij.icons.AllIcons;
+import com.intellij.ide.DataManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.util.Disposer;
@@ -102,7 +103,8 @@ public class GitBranchWidget extends DvcsStatusWidget<GitRepository> {
   @NotNull
   @Override
   protected ListPopup getPopup(@NotNull Project project, @NotNull GitRepository repository) {
-    return GitBranchPopup.getInstance(project, repository).asListPopup();
+    return GitBranchPopup.getInstance(project, repository, DataManager.getInstance().getDataContext(myStatusBar.getComponent()))
+      .asListPopup();
   }
 
   @Override

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.ui.tree;
 
 import com.intellij.CommonBundle;
@@ -58,7 +58,6 @@ import java.awt.*;
 import java.awt.event.MouseEvent;
 import java.util.List;
 import java.util.*;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
@@ -95,7 +94,7 @@ public abstract class PerFileConfigurableBase<T> implements SearchableConfigurab
   private VirtualFile myFileToSelect;
   private final Trinity<@NlsContexts.Label String, Supplier<? extends T>, Consumer<? super T>> myProjectMapping;
 
-  protected interface Value<T> extends Setter<T>, Getter<T> {
+  protected interface Value<T> extends Setter<T>, Supplier<T> {
     void commit();
   }
 
@@ -147,9 +146,11 @@ public abstract class PerFileConfigurableBase<T> implements SearchableConfigurab
   @NotNull
   @Override
   public JComponent createComponent() {
+    ApplicationManager.getApplication().assertIsDispatchThread();
     //todo multi-editing, separate project/ide combos _if_ needed by specific configurable (SQL, no Web)
     myPanel = new JPanel(new BorderLayout());
-    myTable = new JBTable(myModel = new MyModel<>(param(TARGET_TITLE), param(MAPPING_TITLE))) {
+    myModel = new MyModel<>(param(TARGET_TITLE), param(MAPPING_TITLE));
+    myTable = new JBTable(myModel) {
       @SuppressWarnings("unchecked")
       @Override
       public String getToolTipText(@NotNull MouseEvent event) {
@@ -311,6 +312,11 @@ public abstract class PerFileConfigurableBase<T> implements SearchableConfigurab
         if (t != null) return t;
       }
     }
+    return getDefaultNewMapping(file);
+  }
+
+  @Nullable
+  protected T getDefaultNewMapping(@Nullable VirtualFile file) {
     return myMappings.getDefaultMapping(file);
   }
 
@@ -382,6 +388,10 @@ public abstract class PerFileConfigurableBase<T> implements SearchableConfigurab
   }
 
   protected Map<VirtualFile, T> getNewMappings() {
+    ApplicationManager.getApplication().assertIsDispatchThread();
+    if (myModel == null) {
+      throw new AssertionError("createComponent() was not called first on " + getClass().getName());
+    }
     HashMap<VirtualFile, T> map = new HashMap<>();
     for (Pair<Object, T> p : myModel.data) {
       if (p.second != null) {
@@ -574,18 +584,6 @@ public abstract class PerFileConfigurableBase<T> implements SearchableConfigurab
               selectRows(new int[]{modelRow}, true);
             }          }
         }, true);
-
-        AbstractButton button = UIUtil.uiTraverser(panel).filter(JButton.class).first();
-        if (button != null) {
-          AtomicInteger clickCount = new AtomicInteger();
-          button.addActionListener(e -> clickCount.incrementAndGet());
-          SwingUtilities.invokeLater(() -> {
-            if (clickCount.get() == 0 && myTable.getEditorComponent() == panel) {
-              button.doClick();
-            }
-          });
-        }
-
         return panel;
       }
 
@@ -604,6 +602,14 @@ public abstract class PerFileConfigurableBase<T> implements SearchableConfigurab
   @NotNull
   private JPanel createActionPanel(@Nullable Object target, @NotNull Value<T> value, boolean editor) {
     AnAction changeAction = createValueAction(target, value);
+    return createActionPanel(editor, changeAction);
+  }
+
+  protected JPanel createActionPanel(AnAction changeAction) {
+    return createActionPanel(false, changeAction);
+  }
+
+  private @NotNull JPanel createActionPanel(boolean editor, AnAction changeAction) {
     JComponent comboComponent = ((CustomComponentAction)changeAction).createCustomComponent(
       changeAction.getTemplatePresentation(), ActionPlaces.UNKNOWN);
     JPanel panel = new JPanel(new BorderLayout()) {
@@ -706,45 +712,7 @@ public abstract class PerFileConfigurableBase<T> implements SearchableConfigurab
 
   @NotNull
   protected final AnAction createValueAction(@Nullable Object target, @NotNull Value<T> value) {
-    return new ComboBoxAction() {
-      void updateText(Presentation p) {
-        String text = renderValue(value.get(), StringUtil.notNullize(getNullValueText(target)));
-        p.setText(StringUtil.shortenTextWithEllipsis(text, 40, 0));
-      }
-
-      @Override
-      public void update(@NotNull AnActionEvent e) {
-        updateText(getTemplatePresentation());
-      }
-
-      @NotNull
-      @Override
-      protected DefaultActionGroup createPopupActionGroup(JComponent button) {
-        throw new UnsupportedOperationException();
-      }
-
-      @Override
-      protected ComboBoxButton createComboBoxButton(Presentation presentation) {
-        return new ComboBoxButton(presentation) {
-          @Override
-          protected JBPopup createPopup(Runnable onDispose) {
-            JBPopup popup = createValueEditorPopup(target, value.get(), onDispose, getDataContext(), o -> {
-              value.set(o);
-              updateText(presentation);
-            }, value::commit);
-            popup.setMinimumSize(new Dimension(getMinWidth(), getMinHeight()));
-            return popup;
-          }
-
-          @Nullable
-          @Override
-          public String getToolTipText() {
-            boolean cellEditor = UIUtil.uiParents(this, true).take(4).filter(JBTable.class).first() != null;
-            return cellEditor ? null : getToolTipFor(value.get());
-          }
-        };
-      }
-    };
+    return new PerFileConfigurableComboBoxAction(value, target, StringUtil.notNullize(getNullValueText(target)));
   }
 
   @NotNull
@@ -877,6 +845,58 @@ public abstract class PerFileConfigurableBase<T> implements SearchableConfigurab
     public void fireTableDataChanged() {
       data.sort((o1, o2) -> StringUtil.naturalCompare(keyToString(o1.first), keyToString(o2.first)));
       super.fireTableDataChanged();
+    }
+  }
+
+  public final class PerFileConfigurableComboBoxAction extends ComboBoxAction {
+    private final @NotNull Value<T> myValue;
+    private @Nullable final Object myTarget;
+    private final @NlsActions.ActionText @NotNull String myNullValue;
+
+    public PerFileConfigurableComboBoxAction(@NotNull Value<T> value,
+                                             @Nullable Object target,
+                                             @NotNull @NlsActions.ActionText String nullValue) {
+      myValue = value;
+      myTarget = target;
+      myNullValue = nullValue;
+    }
+
+    private void updateText(Presentation p) {
+      final String text = renderValue(myValue.get(), myNullValue);
+      p.setText(StringUtil.shortenTextWithEllipsis(text, 40, 0));
+    }
+
+    @Override
+    public void update(@NotNull AnActionEvent e) {
+      updateText(getTemplatePresentation());
+    }
+
+    @NotNull
+    @Override
+    protected DefaultActionGroup createPopupActionGroup(JComponent button) {
+      throw new UnsupportedOperationException();
+    }
+
+    @Override
+    protected @NotNull ComboBoxButton createComboBoxButton(@NotNull Presentation presentation) {
+      return new ComboBoxButton(presentation) {
+        @Override
+        protected @NotNull JBPopup createPopup(Runnable onDispose) {
+          JBPopup popup = createValueEditorPopup(myTarget, myValue.get(), onDispose, getDataContext(), o -> {
+            myValue.set(o);
+            updateText(presentation);
+          }, myValue::commit);
+          popup.setMinimumSize(new Dimension(getMinWidth(), getMinHeight()));
+          return popup;
+        }
+
+        @Nullable
+        @Override
+        public String getToolTipText() {
+          boolean cellEditor = UIUtil.uiParents(this, true).take(4).filter(JBTable.class).first() != null;
+          return cellEditor ? null : getToolTipFor(myValue.get());
+        }
+      };
     }
   }
 }

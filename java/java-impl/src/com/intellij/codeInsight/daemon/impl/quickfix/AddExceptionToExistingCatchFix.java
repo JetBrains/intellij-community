@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.google.common.collect.Lists;
@@ -18,6 +18,7 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.IntroduceTargetChooser;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.SmartList;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -83,31 +84,28 @@ public class AddExceptionToExistingCatchFix extends PsiElementBaseIntentionActio
   private static void addTypeToCatch(@NotNull List<? extends PsiClassType> exceptionsToAdd, @NotNull PsiCatchSection catchSection) {
     Project project = catchSection.getProject();
     WriteCommandAction.runWriteCommandAction(project, QuickFixBundle.message("add.exception.to.existing.catch.family"), null, () -> {
-      if (!catchSection.isValid() || !exceptionsToAdd.stream().allMatch(type -> type.isValid())) return;
+      if (!catchSection.isValid() || !ContainerUtil.and(exceptionsToAdd, type -> type.isValid())) return;
       PsiParameter parameter = catchSection.getParameter();
       if (parameter == null) return;
       PsiTypeElement typeElement = parameter.getTypeElement();
       if (typeElement == null) return;
       PsiType parameterType = parameter.getType();
       PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
-      String flattenText = getTypeText(exceptionsToAdd, parameter, parameterType, factory);
+      String flattenText = getTypeText(exceptionsToAdd, parameterType);
       PsiElement newTypeElement = typeElement.replace(factory.createTypeElementFromText(flattenText, parameter));
       CodeStyleManager.getInstance(project).reformat(JavaCodeStyleManager.getInstance(project).shortenClassReferences(newTypeElement));
     });
   }
 
   private static String getTypeText(@NotNull List<? extends PsiClassType> exceptionsToAdd,
-                                    PsiParameter parameter,
-                                    PsiType parameterType,
-                                    PsiElementFactory factory) {
-    String typeText = parameterType.getCanonicalText() + " | " + exceptionsToAdd.stream()
-                                                                                .map(type -> type.getCanonicalText())
-                                                                                .collect(Collectors.joining(" | "));
-    PsiTypeElement element = factory.createTypeElementFromText(typeText, parameter);
-    List<PsiType> flatten = PsiDisjunctionType.flattenAndRemoveDuplicates(((PsiDisjunctionType)element.getType()).getDisjunctions());
-    return flatten.stream()
-                  .map(type -> type.getCanonicalText())
-                  .collect(Collectors.joining(" | "));
+                                    PsiType parameterType) {
+    ArrayList<PsiType> types = new ArrayList<>();
+    types.add(parameterType);
+    types.addAll(exceptionsToAdd);
+    return PsiDisjunctionType.flattenAndRemoveDuplicates(types)
+      .stream()
+      .map(type -> type.getCanonicalText())
+      .collect(Collectors.joining(" | "));
   }
 
   @Override

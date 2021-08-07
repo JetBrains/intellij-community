@@ -4,8 +4,6 @@ package org.jetbrains.idea.maven.wizards
 import com.intellij.ide.util.projectWizard.WizardContext
 import com.intellij.openapi.externalSystem.service.project.wizard.MavenizedStructureWizardStep
 import com.intellij.openapi.externalSystem.util.ui.DataView
-import com.intellij.openapi.module.Module
-import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.openapi.util.io.FileUtil.createSequentFileName
 import com.intellij.ui.layout.*
@@ -22,6 +20,8 @@ class MavenStructureWizardStep(
 ) : MavenizedStructureWizardStep<MavenProject>(context) {
 
   override fun getHelpId() = "reference.dialogs.new.project.fromScratch.maven"
+
+  override fun getBuilderId(): String? = builder.builderId
 
   override fun createView(data: MavenProject) = MavenDataView(data)
 
@@ -62,16 +62,6 @@ class MavenStructureWizardStep(
     }
   }
 
-  override fun ValidationInfoBuilder.validateName(): ValidationInfo? {
-    val moduleNames = findAllModules().map { it.name }.toSet()
-    if (entityName in moduleNames) {
-      val message = MavenWizardBundle.message("maven.structure.wizard.entity.name.exists.error",
-                                              context.presentationName.capitalize(), entityName)
-      return error(message)
-    }
-    return superValidateName()
-  }
-
   override fun ValidationInfoBuilder.validateGroupId(): ValidationInfo? {
     return validateCoordinates() ?: superValidateGroupId()
   }
@@ -88,12 +78,6 @@ class MavenStructureWizardStep(
       return error(message)
     }
     return null
-  }
-
-  private fun findAllModules(): List<Module> {
-    val project = context.project ?: return emptyList()
-    val moduleManager = ModuleManager.getInstance(project)
-    return moduleManager.modules.toList()
   }
 
   class MavenDataView(override val data: MavenProject) : DataView<MavenProject>() {

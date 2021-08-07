@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.lang.injection.general;
 
+import com.intellij.lang.Language;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
@@ -15,6 +16,9 @@ public interface Injection {
   @NotNull
   @NlsSafe
   String getInjectedLanguageId();
+  
+  @Nullable
+  Language getInjectedLanguage();
 
   /**
    * @return a string (in the injected language), which is prepended to the code in the host literal to form a parseable code fragment.

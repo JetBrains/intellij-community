@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.codeInsight.daemon.quickFix;
 
 import com.intellij.codeInsight.daemon.quickFix.LightQuickFixParameterizedTestCase;
@@ -7,6 +7,7 @@ import com.intellij.codeInspection.bulkOperation.BulkMethodInfo;
 import com.intellij.codeInspection.bulkOperation.BulkMethodInfoProvider;
 import com.intellij.codeInspection.bulkOperation.UseBulkOperationInspection;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.psi.CommonClassNames;
 import com.intellij.testFramework.ServiceContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -19,7 +20,7 @@ public class UseBulkOperationInspectionTest extends LightQuickFixParameterizedTe
     @NotNull
     @Override
     public Stream<BulkMethodInfo> consumers() {
-      return Stream.of(new BulkMethodInfo("testpackage.TestClass", "test", "test"));
+      return Stream.of(new BulkMethodInfo("testpackage.TestClass", "test", "test", CommonClassNames.JAVA_LANG_ITERABLE));
     }
   };
 

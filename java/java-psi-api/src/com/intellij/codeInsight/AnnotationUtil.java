@@ -21,6 +21,7 @@ import java.util.stream.Stream;
 @ApiStatus.NonExtendable
 public class AnnotationUtil {
   public static final String NULLABLE = "org.jetbrains.annotations.Nullable";
+  public static final String UNKNOWN_NULLABILITY = "org.jetbrains.annotations.UnknownNullability";
   public static final String NOT_NULL = "org.jetbrains.annotations.NotNull";
 
   public static final String NON_NLS = "org.jetbrains.annotations.NonNls";
@@ -220,7 +221,7 @@ public class AnnotationUtil {
     AnnotationAndOwner result = findAnnotationAndOwnerInHierarchy(listOwner, annotationNames, skipExternal);
     return result == null ? null : result.annotation;
   }
-  
+
   static final class AnnotationAndOwner {
     final @NotNull PsiModifierListOwner owner;
     final @NotNull PsiAnnotation annotation;
@@ -731,15 +732,6 @@ public class AnnotationUtil {
   @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
   public static boolean isAnnotated(@NotNull PsiModifierListOwner listOwner, @NotNull Collection<String> annotations) {
     return isAnnotated(listOwner, annotations, CHECK_TYPE);
-  }
-
-  /** @deprecated use {@link #isAnnotated(PsiModifierListOwner, Collection, int)} */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
-  public static boolean isAnnotated(@NotNull PsiModifierListOwner listOwner,
-                                    @NotNull Collection<String> annotations,
-                                    boolean checkHierarchy) {
-    return isAnnotated(listOwner, annotations, flags(checkHierarchy, true, true));
   }
 
   /** @deprecated use {@link #isAnnotated(PsiModifierListOwner, String, int)} */

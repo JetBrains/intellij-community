@@ -28,6 +28,9 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.logging.Level;
+
+import static com.intellij.updater.Runner.LOG;
 
 /**
  * <p>A utility class to find processes that hold a lock to a file. This relies on a Windows API called
@@ -55,14 +58,14 @@ public class NativeFileManager {
     public boolean terminate() {
       Kernel32.HANDLE process = Kernel32.INSTANCE.OpenProcess(WinNT.PROCESS_TERMINATE | WinNT.SYNCHRONIZE, false, pid);
       if (process == null || process.getPointer() == null) {
-        Runner.logger().warn("Unable to find process " + name + '[' + pid + ']');
+        LOG.warning("Unable to find process " + name + '[' + pid + ']');
         return false;
       }
       else {
         Kernel32.INSTANCE.TerminateProcess(process, 1);
         int wait = Kernel32.INSTANCE.WaitForSingleObject(process, 1000);
         if (wait != WinBase.WAIT_OBJECT_0) {
-          Runner.logger().warn("Timed out while waiting for process " + name + '[' + pid + "] to end");
+          LOG.warning("Timed out while waiting for process " + name + '[' + pid + "] to end");
           return false;
         }
         Kernel32.INSTANCE.CloseHandle(process);
@@ -79,14 +82,14 @@ public class NativeFileManager {
         char[] sessionKey = new char[Win32RestartManager.CCH_RM_SESSION_KEY + 1];
         int error = Win32RestartManager.INSTANCE.RmStartSession(session, 0, sessionKey);
         if (error != 0) {
-          Runner.logger().warn("Unable to start restart manager session");
+          LOG.warning("RmStartSession(): " + error);
         }
         else {
           try {
             StringArray resources = new StringArray(new WString[]{new WString(file.toString())});
             error = Win32RestartManager.INSTANCE.RmRegisterResources(session.getValue(), 1, resources, 0, Pointer.NULL, 0, null);
             if (error != 0) {
-              Runner.logger().warn("Unable to register restart manager resource " + file.getAbsolutePath());
+              LOG.warning("RmRegisterResources('" + file + "'): " + error);
             }
             else {
               IntByReference procInfoNeeded = new IntByReference();
@@ -95,7 +98,7 @@ public class NativeFileManager {
               IntByReference procInfo = new IntByReference(infos.length);
               error = Win32RestartManager.INSTANCE.RmGetList(session.getValue(), procInfoNeeded, procInfo, info, new LongByReference());
               if (error != 0) {
-                Runner.logger().warn("Unable to get the list of processes using " + file.getAbsolutePath());
+                LOG.warning("RmGetList('" + file + "'): " + error);
               }
               else {
                 int n = procInfo.getValue();
@@ -115,7 +118,7 @@ public class NativeFileManager {
       catch (Throwable t) {
         // Best effort approach, if no DLL is found ignore.
         ourFailed = true;
-        Runner.logger().warn(t);
+        LOG.log(Level.WARNING, "Missing or dysfunctional restart manager DLL", t);
       }
     }
 
@@ -124,7 +127,7 @@ public class NativeFileManager {
 
   @SuppressWarnings({"SpellCheckingInspection", "unused", "UnusedReturnValue"})
   private interface Win32RestartManager extends StdCallLibrary {
-    Win32RestartManager INSTANCE = Native.load("Rstrtmgr", Win32RestartManager.class);
+    Win32RestartManager INSTANCE = Native.load("RstrtMgr", Win32RestartManager.class);
 
     int CCH_RM_SESSION_KEY = 32;
     int CCH_RM_MAX_APP_NAME = 255;

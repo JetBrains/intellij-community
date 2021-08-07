@@ -61,7 +61,7 @@ abstract class GithubGitRepoTest : GithubTest() {
   protected fun checkRemoteConfigured() {
     assertNotNull(repository)
     assertTrue("GitHub remote is not configured", project.service<GHProjectRepositoriesManager>().knownRepositories.any {
-      it.gitRemote.repository == repository
+      it.gitRemoteUrlCoordinates.repository == repository
     })
   }
 

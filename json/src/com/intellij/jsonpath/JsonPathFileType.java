@@ -25,7 +25,7 @@ public final class JsonPathFileType extends LanguageFileType {
   @NotNull
   @Override
   public String getDescription() {
-    return JsonBundle.message("file.type.description.jsonpath");
+    return JsonBundle.message("filetype.jsonpath.description");
   }
 
   @NotNull

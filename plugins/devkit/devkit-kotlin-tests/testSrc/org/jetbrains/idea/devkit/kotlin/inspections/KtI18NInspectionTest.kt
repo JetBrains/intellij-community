@@ -1,6 +1,7 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.devkit.kotlin.inspections
 
+import com.intellij.codeInsight.daemon.QuickFixBundle
 import com.intellij.codeInspection.i18n.I18nInspection
 import com.intellij.codeInspection.i18n.NlsInfo
 import com.intellij.psi.PsiClassOwner
@@ -74,6 +75,34 @@ class KtI18NInspectionTest : LightJavaCodeInsightFixtureTestCase() {
     assertTrue(parameterNls is NlsInfo.Localized)
     assertEquals(Nls.Capitalization.Title, (parameterNls as NlsInfo.Localized).capitalization)
     myFixture.testHighlighting()
+  }
+
+  fun testPropagateThroughLocalNlsFix() {
+    val inspection = I18nInspection()
+    inspection.setIgnoreForAllButNls(true)
+    inspection.setReportUnannotatedReferences(true)
+    myFixture.enableInspections(inspection)
+    myFixture.configureByText("Foo.kt", """
+       fun foo(@org.jetbrains.annotations.Nls(capitalization=org.jetbrains.annotations.Nls.Capitalization.Title) message: String) { }
+       fun bar(text : String) {
+         foo(te<caret>xt)
+       }
+    """.trimIndent())
+    val parameterNls = NlsInfo.forModifierListOwner((file as PsiClassOwner).classes[0].methods[0].parameterList.parameters[0])
+    assertTrue(parameterNls is NlsInfo.Localized)
+    assertEquals(Nls.Capitalization.Title, (parameterNls as NlsInfo.Localized).capitalization)
+    myFixture.doHighlighting()
+    val action = myFixture.getAvailableIntention(QuickFixBundle.message("create.annotation.text", "Nls"))
+    assertNotNull(action)
+    myFixture.launchAction(action!!)
+    myFixture.checkResult("""
+      import org.jetbrains.annotations.Nls
+
+      fun foo(@org.jetbrains.annotations.Nls(capitalization=org.jetbrains.annotations.Nls.Capitalization.Title) message: String) { }
+      fun bar(@Nls text : String) {
+        foo(text)
+      }
+    """.trimIndent())
   }
   
   fun testPropagateThroughElvisNls() {
@@ -516,6 +545,19 @@ class KtI18NInspectionTest : LightJavaCodeInsightFixtureTestCase() {
           LEFT -> message("combobox.tab.placement.left")
           RIGHT -> message("combobox.tab.placement.right")
           else -> message("combobox.tab.placement.none")
+        }
+    """.trimIndent())
+    myFixture.testHighlighting()
+  }
+
+  fun testStartsWith() {
+    val inspection = I18nInspection()
+    inspection.setIgnoreForAllButNls(true)
+    myFixture.enableInspections(inspection)
+    myFixture.configureByText("Foo.kt", """
+        import org.jetbrains.annotations.*
+        fun test(@Nls x : <warning descr="[PLATFORM_CLASS_MAPPED_TO_KOTLIN] This class shouldn't be used in Kotlin. Use kotlin.String instead.">java.lang.String</warning>) {
+            if (x.startsWith(<warning descr="Hardcoded string literal: \"Hello\"">"Hello"</warning>)) {}
         }
     """.trimIndent())
     myFixture.testHighlighting()

@@ -6,7 +6,7 @@ import com.intellij.facet.Facet;
 import com.intellij.facet.impl.ProjectFacetsConfigurator;
 import com.intellij.facet.impl.ui.actions.AddFacetToModuleAction;
 import com.intellij.icons.AllIcons;
-import com.intellij.ide.IdeBundle;
+import com.intellij.ide.IdeCoreBundle;
 import com.intellij.ide.JavaUiBundle;
 import com.intellij.ide.highlighter.ModuleFileType;
 import com.intellij.ide.impl.FlattenModulesToggleAction;
@@ -50,6 +50,7 @@ import com.intellij.util.PlatformIcons;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.PathKt;
 import com.intellij.util.ui.tree.TreeUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -471,6 +472,7 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
   /**
    * @deprecated use {@link ProjectStructureConfigurable#getModulesConfig()} instead
    */
+  @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
   @Deprecated
   public static ModuleStructureConfigurable getInstance(final Project project) {
     return ProjectStructureConfigurable.getInstance(project).getModulesConfig();
@@ -708,14 +710,21 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
     @NotNull
     @Override
     public String getDisplayName() {
+      List<String> parentGroupPath;
       if (parent instanceof ModuleGroupNode) {
         ModuleGroup parentGroup = ((ModuleGroupNode)parent).getModuleGroup();
-        List<String> groupPath = myModuleGroup.getGroupPathList();
-        if (parentGroup != null && ContainerUtil.startsWith(groupPath, parentGroup.getGroupPathList())) {
-          return StringUtil.join(groupPath.subList(parentGroup.getGroupPathList().size(), groupPath.size()), ".");
-        }
+        parentGroupPath = parentGroup != null ? parentGroup.getGroupPathList() : Collections.emptyList();
       }
-      return super.getDisplayName();
+      else {
+        parentGroupPath = Collections.emptyList();
+      }
+      List<String> groupPath = myModuleGroup.getGroupPathList();
+      if (ContainerUtil.startsWith(groupPath, parentGroupPath)) {
+        return StringUtil.join(groupPath.subList(parentGroupPath.size(), groupPath.size()), ".");
+      }
+      else {
+        return StringUtil.join(groupPath, ".");
+      }
     }
 
     @Override
@@ -748,13 +757,17 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
     @Override
     public boolean remove(@NotNull Collection<? extends Module> modules) {
       ModulesConfigurator modulesConfigurator = myContext.myModulesConfigurator;
-      List<Module> deleted = modulesConfigurator.deleteModules(modules);
-      if (deleted.isEmpty()) {
-        return false;
-      }
-      for (Module module : deleted) {
+      List<ModuleEditor> moduleEditors = ContainerUtil.mapNotNull(modules, modulesConfigurator::getModuleEditor);
+      if (moduleEditors.isEmpty()) return false;
+      if (!modulesConfigurator.canDeleteModules(moduleEditors)) return false;
+
+      List<Module> modulesToDelete = ContainerUtil.mapNotNull(moduleEditors, ModuleEditor::getModule);
+      for (Module module : modulesToDelete) {
         List<Facet> removed = modulesConfigurator.getFacetsConfigurator().removeAllFacets(module);
         myProjectStructureConfigurable.getFacetStructureConfigurable().removeFacetNodes(removed);
+      }
+      modulesConfigurator.deleteModules(moduleEditors);
+      for (Module module : modulesToDelete) {
         myContext.getDaemonAnalyzer().removeElement(new ModuleProjectStructureElement(myContext, module));
 
         for (final ModuleStructureExtension extension : ModuleStructureExtension.EP_NAME.getExtensions()) {
@@ -924,7 +937,7 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
 
       try {
         ModuleEditor moduleEditor = ((ModuleConfigurable)namedConfigurable).getModuleEditor();
-        String modulePresentation = IdeBundle.message("project.new.wizard.module.identification");
+        String modulePresentation = IdeCoreBundle.message("project.new.wizard.module.identification");
         NamePathComponent component = new NamePathComponent(JavaUiBundle.message("label.module.name"),
                                                             JavaUiBundle.message("label.component.file.location", StringUtil.capitalize(modulePresentation)),
                                                             JavaUiBundle
@@ -1001,9 +1014,9 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
   }
 
   static final class CopiedModuleBuilder extends ModuleBuilder {
-    @NotNull ModifiableRootModel myRootModel;
-    @NotNull Path myComponentPath;
-    @NotNull Project myProject;
+    @NotNull private final ModifiableRootModel myRootModel;
+    @NotNull private final Path myComponentPath;
+    @NotNull private final Project myProject;
 
     CopiedModuleBuilder(@NotNull ModifiableRootModel rootModel, @NotNull Path componentPath, @NotNull Project project) {
       this.myRootModel = rootModel;
@@ -1023,7 +1036,7 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
       modifiableRootModel.getModuleExtension(CompilerModuleExtension.class).inheritCompilerOutputPath(true);
 
       modifiableRootModel.getModuleExtension(LanguageLevelModuleExtension.class)
-        .setLanguageLevel(LanguageLevelModuleExtensionImpl.getInstance(myRootModel.getModule()).getLanguageLevel());
+        .setLanguageLevel(LanguageLevelUtil.getCustomLanguageLevel(myRootModel.getModule()));
 
       for (OrderEntry entry : myRootModel.getOrderEntries()) {
         if (entry instanceof JdkOrderEntry) continue;

@@ -1,12 +1,9 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.codeInsight.completion
 
-import com.intellij.codeInsight.AutoPopupController
 import com.intellij.codeInsight.completion.CompletionContributor
 import com.intellij.codeInsight.completion.CompletionParameters
 import com.intellij.codeInsight.completion.CompletionResultSet
-import com.intellij.codeInsight.completion.InsertHandler
-import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupElementBuilder
 import com.intellij.psi.MultiplePsiFilesPerDocumentFileViewProvider
 import com.intellij.psi.PsiDirectory
@@ -15,8 +12,10 @@ import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.QualifiedName
 import com.intellij.util.ProcessingContext
 import com.jetbrains.python.PyNames
-import com.jetbrains.python.inspections.unresolvedReference.PyPackageAliasesProvider
-import com.jetbrains.python.psi.*
+import com.jetbrains.python.PythonRuntimeService
+import com.jetbrains.python.psi.PyFile
+import com.jetbrains.python.psi.PyImportStatementBase
+import com.jetbrains.python.psi.PyReferenceExpression
 import com.jetbrains.python.psi.resolve.fromFoothold
 import com.jetbrains.python.psi.resolve.resolveQualifiedName
 import com.jetbrains.python.psi.types.PyModuleType
@@ -45,26 +44,10 @@ class PyModuleNameCompletionContributor : CompletionContributor() {
   }
 
   fun doFillCompletionVariants(parameters: CompletionParameters, result: CompletionResultSet) {
-    val autoPopupController = AutoPopupController.getInstance(parameters.originalFile.project)
-    val packageInsertHandler = InsertHandler<LookupElement> { context, _ ->
-      // add dot for PyUnresolvedModuleAttributeCompletionContributor to work
-      context.document.insertString(context.tailOffset, ".")
-      context.editor.caretModel.moveToOffset(context.tailOffset)
-      autoPopupController.autoPopupMemberLookup(context.editor, null)
-    }
-    val commonAlias = PyPackageAliasesProvider.commonImportAliases[result.prefixMatcher.prefix]
-    if (commonAlias != null) {
-      result.addElement(
-        LookupElementBuilder.create(result.prefixMatcher.prefix).withTypeText(commonAlias).withInsertHandler(packageInsertHandler))
-      return
-    }
     getCompletionVariants(parameters.position.parent, parameters.originalFile).asSequence()
       .filterIsInstance<LookupElementBuilder>()
       .filter { result.prefixMatcher.prefixMatches(it.lookupString) }
       .filterNot { it.lookupString.startsWith('_') }
-      .map {
-        it.withInsertHandler(packageInsertHandler)
-      }
       .forEach { result.addElement(it) }
   }
 
@@ -91,7 +74,9 @@ class PyModuleNameCompletionContributor : CompletionContributor() {
   }
 
   private fun shouldDoCompletion(parameters: CompletionParameters): Boolean {
-    if (!ENABLED) return false
+    if (!ENABLED || PythonRuntimeService.getInstance().isInPydevConsole(parameters.originalFile)) {
+      return false
+    }
 
     val element = parameters.position
     val parent = element.parent

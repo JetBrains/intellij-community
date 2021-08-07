@@ -390,6 +390,7 @@ abstract class TreeUiTestCase extends AbstractTreeBuilderTest {
 
     final Ref<Boolean> done = new Ref<>();
     doAndWaitForBuilder(() -> getBuilder().expandAll(() -> done.set(true)));
+    assertTrue(done.get());
 
     assertTree("-/\n"
                + " -com\n"

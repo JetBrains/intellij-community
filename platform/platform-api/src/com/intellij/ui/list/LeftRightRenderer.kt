@@ -14,10 +14,10 @@ import javax.swing.ListCellRenderer
  * [mainRenderer] component is aligned to the left, [rightRenderer] component is aligned to the right.
  * This renderer uses background from [mainRenderer] component.
  */
-abstract class LeftRightRenderer<T> : ListCellRenderer<T> {
-
-  protected abstract val mainRenderer: ListCellRenderer<T>
-  protected abstract val rightRenderer: ListCellRenderer<T>
+class LeftRightRenderer<T>(
+  private val mainRenderer: ListCellRenderer<T>,
+  private val rightRenderer: ListCellRenderer<T>,
+) : ListCellRenderer<T> {
 
   private val spacer = JPanel().apply {
     border = JBUI.Borders.empty(0, 2)
@@ -25,11 +25,11 @@ abstract class LeftRightRenderer<T> : ListCellRenderer<T> {
 
   private val component = JPanel(BorderLayout())
 
-  final override fun getListCellRendererComponent(list: JList<out T>,
-                                                  value: T,
-                                                  index: Int,
-                                                  isSelected: Boolean,
-                                                  cellHasFocus: Boolean): Component {
+  override fun getListCellRendererComponent(list: JList<out T>,
+                                            value: T,
+                                            index: Int,
+                                            isSelected: Boolean,
+                                            cellHasFocus: Boolean): Component {
     val mainComponent = mainRenderer.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus)
     val rightComponent = rightRenderer.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus)
     mainComponent.background.let {

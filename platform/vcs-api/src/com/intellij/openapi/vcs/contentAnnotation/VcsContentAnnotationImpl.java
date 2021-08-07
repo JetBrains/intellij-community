@@ -1,7 +1,6 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.contentAnnotation;
 
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
@@ -25,7 +24,7 @@ public final class VcsContentAnnotationImpl implements VcsContentAnnotation {
   private static final Logger LOG = Logger.getInstance(VcsContentAnnotationImpl.class);
 
   public static VcsContentAnnotation getInstance(final Project project) {
-    return ServiceManager.getService(project, VcsContentAnnotation.class);
+    return project.getService(VcsContentAnnotation.class);
   }
 
   public VcsContentAnnotationImpl(Project project) {

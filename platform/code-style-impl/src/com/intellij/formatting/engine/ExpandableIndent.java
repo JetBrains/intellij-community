@@ -30,8 +30,8 @@ public class ExpandableIndent extends IndentImpl {
     return myEnforceIndent;
   }
 
-  void setEnforceIndent(boolean value) {
-    myEnforceIndent = value;
+  void enforceIndent() {
+    myEnforceIndent = true;
   }
 
   @Override

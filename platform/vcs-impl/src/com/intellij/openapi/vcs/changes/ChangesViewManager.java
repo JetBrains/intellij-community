@@ -1,8 +1,7 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.openapi.vcs.changes;
 
-import com.intellij.diff.util.DiffPlaces;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.CommonActionsManager;
 import com.intellij.ide.TreeExpander;
@@ -31,6 +30,7 @@ import com.intellij.openapi.util.registry.RegistryValue;
 import com.intellij.openapi.util.registry.RegistryValueListener;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.actions.ShowDiffPreviewAction;
+import com.intellij.openapi.vcs.changes.actions.diff.ShowDiffFromLocalChangesActionProvider;
 import com.intellij.openapi.vcs.changes.shelf.ShelveChangesManager;
 import com.intellij.openapi.vcs.changes.ui.*;
 import com.intellij.openapi.vcs.impl.LineStatusTrackerSettingListener;
@@ -41,12 +41,12 @@ import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.openapi.wm.ex.ToolWindowManagerListener;
 import com.intellij.problems.ProblemListener;
 import com.intellij.ui.ExpandableItemsHandler;
-import com.intellij.ui.GuiUtils;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.ui.content.Content;
 import com.intellij.util.Alarm;
-import com.intellij.util.NotNullFunction;
+import com.intellij.util.ModalityUiUtil;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBusConnection;
@@ -57,6 +57,7 @@ import com.intellij.util.ui.tree.TreeUtil;
 import com.intellij.util.xmlb.annotations.Attribute;
 import com.intellij.util.xmlb.annotations.XCollection;
 import com.intellij.vcs.commit.*;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -70,6 +71,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.function.Function;
+import java.util.function.Predicate;
 import java.util.function.Supplier;
 
 import static com.intellij.openapi.actionSystem.EmptyAction.registerWithShortcutSet;
@@ -131,13 +133,12 @@ public class ChangesViewManager implements ChangesViewEx,
     }
   }
 
-  public static class ContentPredicate implements NotNullFunction<Project, Boolean> {
+  final static class ContentPredicate implements Predicate<Project> {
     @NotNull
     @Override
-    public Boolean fun(Project project) {
-      if (!ProjectLevelVcsManager.getInstance(project).hasActiveVcss()) return false;
-      if (CommitModeManager.getInstance(project).getCurrentCommitMode().hideLocalChangesTab()) return false;
-      return true;
+    public boolean test(Project project) {
+      return ProjectLevelVcsManager.getInstance(project).hasActiveVcss() &&
+             !CommitModeManager.getInstance(project).getCurrentCommitMode().hideLocalChangesTab();
     }
   }
 
@@ -150,7 +151,7 @@ public class ChangesViewManager implements ChangesViewEx,
 
     @Override
     public String get() {
-      return isCommitToolWindowShown(myProject) ? VcsBundle.message("tab.title.commit") : VcsBundle.message("local.changes.tab");
+      return getLocalChangesToolWindowName(myProject);
     }
   }
 
@@ -292,13 +293,13 @@ public class ChangesViewManager implements ChangesViewEx,
     return myToolWindowPanel.isAllowExcludeFromCommit();
   }
 
-  public boolean isEditorPreview() {
-    return myToolWindowPanel != null && !myToolWindowPanel.isSplitterPreview();
+  public static boolean isEditorPreview(@NotNull Project project) {
+    return EditorTabDiffPreviewManager.getInstance(project).isEditorDiffPreviewAvailable();
   }
 
   public void openEditorPreview() {
     if (myToolWindowPanel == null) return;
-    myToolWindowPanel.openEditorPreview();
+    myToolWindowPanel.openEditorPreview(false);
   }
 
   public void closeEditorPreview() {
@@ -312,7 +313,6 @@ public class ChangesViewManager implements ChangesViewEx,
 
   public static final class ChangesViewToolWindowPanel extends SimpleToolWindowPanel implements Disposable {
     @NotNull private static final RegistryValue isToolbarHorizontalSetting = Registry.get("vcs.local.changes.toolbar.horizontal");
-    @NotNull private static final RegistryValue isEditorDiffPreview = Registry.get("show.diff.preview.as.editor.tab");
     @NotNull private static final RegistryValue isOpenEditorDiffPreviewWithSingleClick =
       Registry.get("show.diff.preview.as.editor.tab.with.single.click");
 
@@ -326,8 +326,10 @@ public class ChangesViewManager implements ChangesViewEx,
     @NotNull private final ChangesListView myView;
 
     @NotNull private final ChangesViewCommitPanelSplitter myCommitPanelSplitter;
-    private ChangesViewDiffPreviewProcessor myChangeProcessor;
-    private DiffPreview myDiffPreview;
+    private ChangesViewDiffPreviewProcessor myEditorChangeProcessor;
+    private ChangesViewDiffPreviewProcessor mySplitterChangeProcessor;
+    private EditorTabPreview myEditorDiffPreview;
+    private PreviewDiffSplitterComponent mySplitterDiffPreview;
     @NotNull private final Wrapper myProgressLabel = new Wrapper();
 
     @Nullable private ChangesViewCommitPanel myCommitPanel;
@@ -386,19 +388,14 @@ public class ChangesViewManager implements ChangesViewEx,
       myMainPanel = simplePanel(myContentPanel);
 
       setDiffPreview();
-      isEditorDiffPreview.addListener(new RegistryValueListener() {
-        @Override
-        public void afterValueChanged(@NotNull RegistryValue value) {
-          setDiffPreview();
-        }
-      }, this);
+
+      EditorTabDiffPreviewManager.getInstance(project).subscribeToPreviewVisibilityChange(this, this::setDiffPreview);
       isOpenEditorDiffPreviewWithSingleClick.addListener(new RegistryValueListener() {
         @Override
         public void afterValueChanged(@NotNull RegistryValue value) {
-          if (!isSplitterPreview()) setDiffPreview(true);
+          if (myEditorDiffPreview != null) setDiffPreview();
         }
       }, this);
-      busConnection.subscribe(ChangesViewContentManagerListener.TOPIC, () -> setDiffPreview());
 
       setContent(myMainPanel.addToBottom(myProgressLabel));
 
@@ -423,11 +420,19 @@ public class ChangesViewManager implements ChangesViewEx,
       });
       busConnection.subscribe(ChangeListListener.TOPIC, new MyChangeListListener());
       busConnection.subscribe(LineStatusTrackerSettingListener.TOPIC, () -> {
-        if (myChangeProcessor != null) myChangeProcessor.fireDiffSettingsChanged();
+        if (myEditorChangeProcessor != null) myEditorChangeProcessor.fireDiffSettingsChanged();
+        if (mySplitterChangeProcessor != null) mySplitterChangeProcessor.fireDiffSettingsChanged();
+      });
+
+      busConnection.subscribe(ChangesViewModifier.TOPIC, () -> scheduleRefresh());
+      busConnection.subscribe(VcsManagedFilesHolder.TOPIC, () -> {
+        ApplicationManager.getApplication().invokeLater(() -> {
+          myView.repaint();
+        });
       });
 
       scheduleRefresh();
-      myDiffPreview.updatePreview(false);
+      updatePreview(false);
     }
 
     @Override
@@ -441,25 +446,32 @@ public class ChangesViewManager implements ChangesViewEx,
     }
 
     private void setDiffPreview() {
-      setDiffPreview(false);
-    }
-
-    private void setDiffPreview(boolean force) {
       if (myDisposed) return;
 
-      boolean isEditorPreview = isCommitToolWindowShown(myProject) || isEditorDiffPreview.asBoolean();
-      if (!force) {
-        if (isEditorPreview && myDiffPreview instanceof EditorTabPreview) return;
-        if (!isEditorPreview && isSplitterPreview()) return;
+      boolean isEditorPreview = isEditorPreview(myProject);
+      boolean hasSplitterPreview = !isCommitToolWindowShown(myProject) && !isOpenEditorDiffPreviewWithSingleClick.asBoolean();
+
+      if (myEditorChangeProcessor != null) Disposer.dispose(myEditorChangeProcessor);
+      if (mySplitterChangeProcessor != null) Disposer.dispose(mySplitterChangeProcessor);
+
+      if (isEditorPreview) {
+        myEditorChangeProcessor = new ChangesViewDiffPreviewProcessor(myView, true);
+        Disposer.register(this, myEditorChangeProcessor);
+        myEditorDiffPreview = installEditorPreview(myEditorChangeProcessor);
+      }
+      else {
+        myEditorDiffPreview = null;
       }
 
-      if (myChangeProcessor != null) Disposer.dispose(myChangeProcessor);
+      if (hasSplitterPreview) {
+        mySplitterChangeProcessor = new ChangesViewDiffPreviewProcessor(myView, false);
+        Disposer.register(this, mySplitterChangeProcessor);
+        mySplitterDiffPreview = installSplitterPreview(mySplitterChangeProcessor);
+      }
+      else {
+        mySplitterDiffPreview = null;
+      }
 
-      String place = isEditorPreview ? DiffPlaces.DEFAULT : DiffPlaces.CHANGES_VIEW;
-      myChangeProcessor = new ChangesViewDiffPreviewProcessor(myView, place);
-      Disposer.register(this, myChangeProcessor);
-
-      myDiffPreview = isEditorPreview ? installEditorPreview(myChangeProcessor) : installSplitterPreview(myChangeProcessor);
       configureDiffPreview();
     }
 
@@ -467,8 +479,16 @@ public class ChangesViewManager implements ChangesViewEx,
     private EditorTabPreview installEditorPreview(@NotNull ChangesViewDiffPreviewProcessor changeProcessor) {
       EditorTabPreview editorPreview = new EditorTabPreview(changeProcessor) {
         @Override
+        public void updateAvailability(@NotNull AnActionEvent e) {
+          ShowDiffFromLocalChangesActionProvider.updateAvailability(e);
+        }
+
+        @Override
         protected String getCurrentName() {
-          return changeProcessor.getCurrentChangeName();
+          String changeName = changeProcessor.getCurrentChangeName();
+          return changeName != null
+                 ? VcsBundle.message("commit.editor.diff.preview.title", changeName)
+                 : VcsBundle.message("commit.editor.diff.preview.empty.title");
         }
 
         @Override
@@ -480,19 +500,21 @@ public class ChangesViewManager implements ChangesViewEx,
         protected boolean skipPreviewUpdate() {
           if (super.skipPreviewUpdate()) return true;
           if (!myView.equals(IdeFocusManager.getInstance(myProject).getFocusOwner())) return true;
-          if (!isEditorPreviewAllowed()) return true;
+          if (!isPreviewOpen() && !isEditorPreviewAllowed()) return true;
 
           return myModelUpdateInProgress;
         }
 
         @Override
         protected boolean isPreviewOnDoubleClickAllowed() {
-          return VcsApplicationSettings.getInstance().SHOW_EDITOR_PREVIEW_ON_DOUBLE_CLICK;
+          return isCommitToolWindowShown(myProject) ? VcsApplicationSettings.getInstance().SHOW_EDITOR_PREVIEW_ON_DOUBLE_CLICK :
+                 VcsApplicationSettings.getInstance().SHOW_DIFF_ON_DOUBLE_CLICK;
         }
 
         @Override
         protected boolean isPreviewOnEnterAllowed() {
-          return VcsApplicationSettings.getInstance().SHOW_EDITOR_PREVIEW_ON_DOUBLE_CLICK;
+          return isCommitToolWindowShown(myProject) ? VcsApplicationSettings.getInstance().SHOW_EDITOR_PREVIEW_ON_DOUBLE_CLICK :
+                 VcsApplicationSettings.getInstance().SHOW_DIFF_ON_DOUBLE_CLICK;
         }
       };
       editorPreview.setEscapeHandler(() -> {
@@ -501,12 +523,8 @@ public class ChangesViewManager implements ChangesViewEx,
         ToolWindow toolWindow = getToolWindowFor(myProject, LOCAL_CHANGES);
         if (toolWindow != null) toolWindow.activate(null);
       });
-      if (isOpenEditorDiffPreviewWithSingleClick.asBoolean()) {
-        editorPreview.openWithSingleClick(myView);
-      }
-      else {
-        editorPreview.openWithDoubleClick(myView);
-      }
+
+      editorPreview.installListeners(myView, isOpenEditorDiffPreviewWithSingleClick.asBoolean());
       editorPreview.installNextDiffActionOn(myContentPanel);
 
       UIUtil.putClientProperty(myView, ExpandableItemsHandler.IGNORE_ITEM_SELECTION, true);
@@ -519,7 +537,7 @@ public class ChangesViewManager implements ChangesViewEx,
       PreviewDiffSplitterComponent previewSplitter =
         new PreviewDiffSplitterComponent(changeProcessor, CHANGES_VIEW_PREVIEW_SPLITTER_PROPORTION);
       previewSplitter.setFirstComponent(myContentPanel);
-      previewSplitter.setPreviewVisible(myVcsConfiguration.LOCAL_CHANGES_DETAILS_PREVIEW_SHOWN);
+      previewSplitter.setPreviewVisible(myVcsConfiguration.LOCAL_CHANGES_DETAILS_PREVIEW_SHOWN, false);
 
       myView.addSelectionListener(() -> {
         boolean fromModelRefresh = myModelUpdateInProgress;
@@ -528,6 +546,7 @@ public class ChangesViewManager implements ChangesViewEx,
 
       myMainPanel.addToCenter(previewSplitter);
       Disposer.register(changeProcessor, () -> {
+        if (Disposer.isDisposed(this)) return;
         myMainPanel.remove(previewSplitter);
         myMainPanel.addToCenter(myContentPanel);
 
@@ -538,28 +557,33 @@ public class ChangesViewManager implements ChangesViewEx,
       return previewSplitter;
     }
 
-    private boolean isSplitterPreview() {
-      return myDiffPreview instanceof PreviewDiffSplitterComponent;
-    }
-
     private boolean isEditorPreviewAllowed() {
       return !isOpenEditorDiffPreviewWithSingleClick.asBoolean() || myVcsConfiguration.LOCAL_CHANGES_DETAILS_PREVIEW_SHOWN;
     }
 
-    private void openEditorPreview() {
-      if (isSplitterPreview()) return;
+    private void openEditorPreview(boolean focusEditor) {
+      if (myEditorDiffPreview == null) return;
       if (!isEditorPreviewAllowed()) return;
 
-      ((EditorTabPreview)myDiffPreview).openPreview(false);
+      myEditorDiffPreview.openPreview(focusEditor);
     }
 
     private void closeEditorPreview(boolean onlyIfEmpty) {
-      if (isSplitterPreview()) return;
+      if (myEditorDiffPreview == null) return;
 
-      EditorTabPreview editorPreview = (EditorTabPreview)myDiffPreview;
+      EditorTabPreview editorPreview = myEditorDiffPreview;
 
       if (onlyIfEmpty && editorPreview.hasContent()) return;
       editorPreview.closePreview();
+    }
+
+    private void updatePreview(boolean fromModelRefresh) {
+      if (myEditorDiffPreview != null) {
+        myEditorDiffPreview.updatePreview(fromModelRefresh);
+      }
+      if (mySplitterDiffPreview != null) {
+        mySplitterDiffPreview.updatePreview(fromModelRefresh);
+      }
     }
 
     @Nullable
@@ -600,7 +624,12 @@ public class ChangesViewManager implements ChangesViewEx,
     }
 
     private void configureDiffPreview() {
-      myChangeProcessor.setAllowExcludeFromCommit(isAllowExcludeFromCommit());
+      if (myEditorChangeProcessor != null) {
+        myEditorChangeProcessor.setAllowExcludeFromCommit(isAllowExcludeFromCommit());
+      }
+      if (mySplitterChangeProcessor != null) {
+        mySplitterChangeProcessor.setAllowExcludeFromCommit(isAllowExcludeFromCommit());
+      }
     }
 
     private void configureToolbars() {
@@ -611,7 +640,7 @@ public class ChangesViewManager implements ChangesViewEx,
     }
 
     private void setCommitSplitOrientation() {
-      boolean hasPreviewPanel = myVcsConfiguration.LOCAL_CHANGES_DETAILS_PREVIEW_SHOWN && isSplitterPreview();
+      boolean hasPreviewPanel = myVcsConfiguration.LOCAL_CHANGES_DETAILS_PREVIEW_SHOWN && mySplitterDiffPreview != null;
       ToolWindow tw = getToolWindowFor(myProject, LOCAL_CHANGES);
       if (tw != null) {
         boolean toolwindowIsHorizontal = tw.getAnchor().isHorizontal();
@@ -635,6 +664,9 @@ public class ChangesViewManager implements ChangesViewEx,
     public Object getData(@NotNull String dataId) {
       Object data = super.getData(dataId);
       if (data != null) return data;
+      if (EditorTabDiffPreviewManager.EDITOR_TAB_DIFF_PREVIEW.is(dataId)) {
+        return myEditorDiffPreview;
+      }
       // This makes COMMIT_WORKFLOW_HANDLER available anywhere in "Local Changes" - so commit executor actions are enabled.
       return myCommitPanel != null ? myCommitPanel.getDataFromProviders(dataId) : null;
     }
@@ -719,8 +751,10 @@ public class ChangesViewManager implements ChangesViewEx,
         List<LocalChangeList> changeLists = changeListManager.getChangeListsCopy();
         List<FilePath> unversionedFiles = changeListManager.getUnversionedFilesPaths();
 
+        boolean skipSingleDefaultChangeList = Registry.is("vcs.skip.single.default.changelist") ||
+                                              !ChangeListManager.getInstance(myProject).areChangeListsEnabled();
         TreeModelBuilder treeModelBuilder = new TreeModelBuilder(myProject, myView.getGrouping())
-          .setChangeLists(changeLists, Registry.is("vcs.skip.single.default.changelist"), getChangeDecoratorProvider())
+          .setChangeLists(changeLists, skipSingleDefaultChangeList, getChangeDecoratorProvider())
           .setLocallyDeletedPaths(changeListManager.getDeletedFiles())
           .setModifiedWithoutEditing(changeListManager.getModifiedWithoutEditing())
           .setSwitchedFiles(changeListManager.getSwitchedFilesMap())
@@ -729,7 +763,7 @@ public class ChangesViewManager implements ChangesViewEx,
           .setLogicallyLockedFiles(changeListManager.getLogicallyLockedFolders())
           .setUnversioned(unversionedFiles);
         if (myChangesViewManager.myState.myShowIgnored) {
-          treeModelBuilder.setIgnored(changeListManager.getIgnoredFilePaths(), changeListManager.isIgnoredInUpdateMode());
+          treeModelBuilder.setIgnored(changeListManager.getIgnoredFilePaths());
         }
 
         invokeLaterIfNeeded(() -> {
@@ -749,7 +783,7 @@ public class ChangesViewManager implements ChangesViewEx,
           finally {
             myModelUpdateInProgress = false;
           }
-          myDiffPreview.updatePreview(true);
+          updatePreview(true);
         });
       }, canBeCancelled ? indicator : null);
     }
@@ -804,7 +838,7 @@ public class ChangesViewManager implements ChangesViewEx,
     }
 
     private void invokeLaterIfNeeded(Runnable runnable) {
-      GuiUtils.invokeLaterIfNeeded(runnable, ModalityState.NON_MODAL, myProject.getDisposed());
+      ModalityUiUtil.invokeLaterIfNeeded(ModalityState.NON_MODAL, myProject.getDisposed(), runnable);
     }
 
     private class MyChangeListListener extends ChangeListAdapter {
@@ -814,7 +848,12 @@ public class ChangesViewManager implements ChangesViewEx,
       }
 
       @Override
-      public void changeListUpdateDone() {
+      public void unchangedFileStatusChanged() {
+        scheduleRefresh();
+      }
+
+      @Override
+      public void changedFileStatusChanged() {
         setBusy(false);
         scheduleRefresh();
 
@@ -851,13 +890,13 @@ public class ChangesViewManager implements ChangesViewEx,
       @Override
       public void update(@NotNull AnActionEvent e) {
         super.update(e);
-        e.getPresentation().setEnabledAndVisible(isSplitterPreview() || isOpenEditorDiffPreviewWithSingleClick.asBoolean());
+        e.getPresentation().setEnabledAndVisible(mySplitterDiffPreview != null || isOpenEditorDiffPreviewWithSingleClick.asBoolean());
       }
 
       @Override
       public void setSelected(@NotNull AnActionEvent e, boolean state) {
         myVcsConfiguration.LOCAL_CHANGES_DETAILS_PREVIEW_SHOWN = state;
-        myDiffPreview.setPreviewVisible(state);
+        ObjectUtils.chooseNotNull(mySplitterDiffPreview, myEditorDiffPreview).setPreviewVisible(state, false);
         setCommitSplitOrientation();
       }
 
@@ -900,5 +939,9 @@ public class ChangesViewManager implements ChangesViewEx,
       label.setForeground(isError ? JBColor.RED : UIUtil.getLabelForeground());
       return label;
     };
+  }
+
+  static @NotNull @Nls String getLocalChangesToolWindowName(@NotNull Project project) {
+    return isCommitToolWindowShown(project) ? VcsBundle.message("tab.title.commit") : VcsBundle.message("local.changes.tab");
   }
 }

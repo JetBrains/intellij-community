@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vfs;
 
 import com.intellij.core.CoreBundle;
@@ -314,7 +314,7 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
    * Gets the child files. The returned files are guaranteed to be valid, if the method is called in a read action.
    *
    * @return array of the child files or {@code null} if this file is not a directory
-   * @throws InvalidVirtualFileAccessException if this method is called inside read actin on an invalid file
+   * @throws InvalidVirtualFileAccessException if this method is called inside read action on an invalid file
    */
   public abstract VirtualFile[] getChildren();
 
@@ -323,7 +323,7 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
    *
    * @param name the file name to search by
    * @return the file if found any, {@code null} otherwise
-   * @throws InvalidVirtualFileAccessException if this method is called inside read actin on an invalid file
+   * @throws InvalidVirtualFileAccessException if this method is called inside read action on an invalid file
    */
   public @Nullable VirtualFile findChild(@NotNull @NonNls String name) {
     VirtualFile[] children = getChildren();
@@ -725,15 +725,11 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
     return isValid();
   }
 
+  /**
+   * @return true if filesystem inherits {@link LocalFileSystem} (including temporary)
+   */
   public boolean isInLocalFileSystem() {
     return false;
-  }
-
-  /** @deprecated use {@link VirtualFileSystem#isValidName(String)} */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
-  public static boolean isValidName(@NotNull String name) {
-    return !name.isEmpty() && name.indexOf('\\') < 0 && name.indexOf('/') < 0;
   }
 
   private static final Key<String> DETECTED_LINE_SEPARATOR_KEY = Key.create("DETECTED_LINE_SEPARATOR_KEY");

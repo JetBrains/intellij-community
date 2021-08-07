@@ -49,14 +49,15 @@ public class WSLUtilTest extends BareTestFixtureTestCase {
 
   @Test
   public void testWslToWinPath() {
-    assertNull(wsl.getWindowsPath("/mnt/cd"));
+    assertEquals("\\\\wsl$\\" + wsl.getMsId() + "\\mnt\\cd", wsl.getWindowsPath("/mnt/cd"));
     assertEquals("\\\\wsl$\\" + wsl.getMsId() + "\\mnt", wsl.getWindowsPath("/mnt"));
     assertEquals("\\\\wsl$\\" + wsl.getMsId(), wsl.getWindowsPath(""));
-    assertNull(wsl.getWindowsPath("/mnt//test"));
-    assertNull(wsl.getWindowsPath("/mnt/1/test"));
+    assertEquals("\\\\wsl$\\" + wsl.getMsId() + "\\mnt\\test", wsl.getWindowsPath("/mnt//test"));
+    assertEquals("\\\\wsl$\\" + wsl.getMsId() + "\\mnt\\1\\test", wsl.getWindowsPath("/mnt/1/test"));
 
     assertEquals("C:", wsl.getWindowsPath("/mnt/c"));
     assertEquals("X:\\", wsl.getWindowsPath("/mnt/x/"));
+
     assertEquals("C:\\temp\\foo", wsl.getWindowsPath("/mnt/c/temp/foo"));
     assertEquals("C:\\temp\\KeepCase", wsl.getWindowsPath("/mnt/c/temp/KeepCase"));
     assertEquals("C:\\name with spaces\\another name with spaces", wsl.getWindowsPath("/mnt/c/name with spaces/another name with spaces"));

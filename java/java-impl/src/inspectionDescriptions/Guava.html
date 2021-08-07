@@ -1,9 +1,20 @@
 <html>
 <body>
-Inspection detects usages of Guava's functional primitives like
-<b>FluentIterable</b>, <b>Optional</b>, <b>Function</b>, <b>Predicate</b> and <b>Supplier</b>.
-<br>
-May change semantic: some of lazy-evaluated guava's iterables could be transformed to eager-evaluated iterable.
-<p>This inspection only reports if the language level of the project or module is 8 or higher</p>
+Reports usages of Guava's functional primitives that can be replaced with Java API.
+<p>For example, the inspection reports usages of classes and interfaces like <code>FluentIterable</code>, <code>Optional</code>, <code>Function</code>,
+  <code>Predicate</code>, or <code>Supplier</code>.</p>
+<p>Example:</p>
+<pre>
+  ImmutableList&lt;String&gt; results = FluentIterable.from(List.of(1, 2, 3)).transform(Object::toString).toList();
+</pre>
+<p>After the quick-fix is applied:</p>
+<pre>
+  List&lt;String&gt; results = List.of(1, 2, 3).stream().map(Object::toString).collect(Collectors.toList());
+</pre>
+<p>
+The quick-fix may change the semantics. Some lazy-evaluated Guava's iterables can be transformed to eager-evaluated.
+</p>
+<!-- tooltip end -->
+<p>This inspection only reports if the language level of the project or module is 8 or higher.</p>
 </body>
 </html>

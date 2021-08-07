@@ -47,16 +47,16 @@ public final class TestProxyPrinterProvider {
     private final Filter myFilter;
 
     HyperlinkPrinter(@NotNull BaseTestsOutputConsoleView testsOutputConsoleView,
-                            @NotNull Condition<? super ConsoleViewContentType> contentTypeCondition,
-                            @NotNull Filter filter) {
+                     @NotNull Condition<? super ConsoleViewContentType> contentTypeCondition,
+                     @NotNull Filter filter) {
       super(testsOutputConsoleView, testsOutputConsoleView.getProperties(), null);
       myContentTypeCondition = contentTypeCondition;
       myFilter = filter;
     }
 
     @Override
-    public void print(String text, ConsoleViewContentType contentType) {
-      if (contentType == null || !myContentTypeCondition.value(contentType)) {
+    public void print(@NotNull String text, @NotNull ConsoleViewContentType contentType) {
+      if (!myContentTypeCondition.value(contentType)) {
         defaultPrint(text, contentType);
         return;
       }

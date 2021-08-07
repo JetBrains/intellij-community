@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal;
 
 import com.intellij.ide.plugins.PluginManagerCore;
@@ -9,7 +9,6 @@ import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.concurrency.AppExecutorUtil;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -88,8 +87,13 @@ public final class DebugAttachDetector {
   @Nullable
   private static final String DEBUG_ARGS = getDebugArgs();
 
-  private static String getDebugArgs() {
-    return ContainerUtil.find(ManagementFactory.getRuntimeMXBean().getInputArguments(), s -> s.contains("-agentlib:jdwp"));
+  private static @Nullable String getDebugArgs() {
+    for (String value : ManagementFactory.getRuntimeMXBean().getInputArguments()) {
+      if (value.contains("-agentlib:jdwp")) {
+        return value;
+      }
+    }
+    return null;
   }
 
   public static boolean isDebugEnabled() {

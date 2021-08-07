@@ -1,9 +1,10 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.plugins.cl;
 
 import com.intellij.diagnostic.PluginException;
 import com.intellij.diagnostic.StartUpMeasurer;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
+import com.intellij.ide.plugins.IdeaPluginDescriptorImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.extensions.PluginId;
@@ -33,11 +34,10 @@ import java.util.function.BiFunction;
 import java.util.function.Function;
 
 @ApiStatus.Internal
-@ApiStatus.NonExtendable
-public class PluginClassLoader extends UrlClassLoader implements PluginAwareClassLoader {
+public final class PluginClassLoader extends UrlClassLoader implements PluginAwareClassLoader {
   public static final ClassLoader[] EMPTY_CLASS_LOADER_ARRAY = new ClassLoader[0];
 
-  private static final boolean isParallelCapable = USE_PARALLEL_LOADING && registerAsParallelCapable();
+  private static final boolean isParallelCapable = registerAsParallelCapable();
 
   private static final @Nullable Writer logStream;
   private static final AtomicInteger instanceIdProducer = new AtomicInteger();
@@ -86,6 +86,10 @@ public class PluginClassLoader extends UrlClassLoader implements PluginAwareClas
     String debugFilePath = System.getProperty("plugin.classloader.debug", "");
     if (!debugFilePath.isEmpty()) {
       try {
+        if (debugFilePath.startsWith("~/") || debugFilePath.startsWith("~\\")) {
+          debugFilePath = System.getProperty("user.home") + debugFilePath.substring(1);
+        }
+
         logStreamCandidate = Files.newBufferedWriter(Paths.get(debugFilePath));
         ShutDownTracker.getInstance().registerShutdownTask(new Runnable() {
           @Override
@@ -109,7 +113,8 @@ public class PluginClassLoader extends UrlClassLoader implements PluginAwareClas
     logStream = logStreamCandidate;
   }
 
-  private ClassLoader[] parents;
+  private IdeaPluginDescriptorImpl[] parents;
+
   // cache of computed list of all parents (not only direct)
   private volatile ClassLoader[] allParents;
   private volatile int allParentsLastCacheId;
@@ -129,38 +134,28 @@ public class PluginClassLoader extends UrlClassLoader implements PluginAwareClas
   private final int instanceId;
   private volatile int state = ACTIVE;
 
+  @SuppressWarnings("FieldNameHidesFieldInSuperclass")
   private final ResolveScopeManager resolveScopeManager;
 
   public interface ResolveScopeManager {
-    boolean isDefinitelyAlienClass(String name, String packagePrefix, boolean force);
+    String isDefinitelyAlienClass(String name, String packagePrefix, boolean force);
   }
 
   public PluginClassLoader(@NotNull UrlClassLoader.Builder builder,
-                           @NotNull ClassLoader @NotNull [] parents,
+                           @NotNull IdeaPluginDescriptorImpl @NotNull [] dependencies,
                            @NotNull PluginDescriptor pluginDescriptor,
                            @Nullable Path pluginRoot,
-                           @NotNull ClassLoader coreLoader,
-                           @Nullable ResolveScopeManager resolveScopeManager,
-                           @Nullable String packagePrefix,
-                           @Nullable ClassPath.ResourceFileFactory resourceFileFactory) {
-    super(builder, resourceFileFactory, isParallelCapable);
+                           @NotNull ClassLoader coreLoader) {
+    super(builder, null, isParallelCapable, false);
 
     instanceId = instanceIdProducer.incrementAndGet();
 
-    this.resolveScopeManager = resolveScopeManager == null ? (p1, p2, p3) -> false : resolveScopeManager;
-    this.parents = parents;
+    this.resolveScopeManager = (p1, p2, p3) -> null;
     this.pluginDescriptor = pluginDescriptor;
     pluginId = pluginDescriptor.getPluginId();
-    this.packagePrefix = (packagePrefix == null || packagePrefix.endsWith(".")) ? packagePrefix : (packagePrefix + '.');
+    this.packagePrefix = null;
     this.coreLoader = coreLoader;
-    if (PluginClassLoader.class.desiredAssertionStatus()) {
-      for (ClassLoader parent : this.parents) {
-        if (parent == coreLoader) {
-          Logger.getInstance(PluginClassLoader.class).error("Core loader must be not specified in parents " +
-                                                            "(parents=" + Arrays.toString(parents) + ", coreLoader=" + coreLoader + ")");
-        }
-      }
-    }
+    this.parents = dependencies;
 
     libDirectories = new SmartList<>();
     if (pluginRoot != null) {
@@ -171,44 +166,69 @@ public class PluginClassLoader extends UrlClassLoader implements PluginAwareClas
     }
   }
 
+  public PluginClassLoader(@NotNull List<Path> files,
+                           @NotNull ClassPath classPath,
+                           @NotNull IdeaPluginDescriptorImpl @NotNull [] dependencies,
+                           @NotNull PluginDescriptor pluginDescriptor,
+                           @NotNull ClassLoader coreLoader,
+                           @Nullable ResolveScopeManager resolveScopeManager,
+                           @Nullable String packagePrefix,
+                           @NotNull List<String> libDirectories) {
+    super(files, classPath);
+
+    instanceId = instanceIdProducer.incrementAndGet();
+
+    this.resolveScopeManager = resolveScopeManager == null ? (p1, p2, p3) -> null : resolveScopeManager;
+    this.parents = dependencies;
+    this.pluginDescriptor = pluginDescriptor;
+    pluginId = pluginDescriptor.getPluginId();
+    this.packagePrefix = (packagePrefix == null || packagePrefix.endsWith(".")) ? packagePrefix : (packagePrefix + '.');
+    this.coreLoader = coreLoader;
+    this.libDirectories = libDirectories;
+  }
+
+  public @NotNull List<String> getLibDirectories() {
+    return libDirectories;
+  }
+
   @Override
-  public final @Nullable String getPackagePrefix() {
+  public @Nullable String getPackagePrefix() {
     return packagePrefix;
   }
 
   @Override
   @ApiStatus.Internal
-  public final int getState() {
+  public int getState() {
     return state;
   }
 
   @ApiStatus.Internal
-  public final void setState(int state) {
+  public void setState(int state) {
     this.state = state;
   }
 
   @Override
-  public final int getInstanceId() {
+  public int getInstanceId() {
     return instanceId;
   }
 
   @Override
-  public final long getEdtTime() {
+  public long getEdtTime() {
     return edtTime.get();
   }
 
   @Override
-  public final long getBackgroundTime() {
+  public long getBackgroundTime() {
     return backgroundTime.get();
   }
 
   @Override
-  public final long getLoadedClassCount() {
+  public long getLoadedClassCount() {
     return loadedClassCounter.get();
   }
 
   @Override
-  public final Class<?> loadClass(@NotNull String name, boolean resolve) throws ClassNotFoundException {
+  public Class<?> loadClass(@NotNull String name, boolean resolve) throws ClassNotFoundException {
     Class<?> c = tryLoadingClass(name, false);
     if (c == null) {
       flushDebugLog();
@@ -221,7 +241,7 @@ public class PluginClassLoader extends UrlClassLoader implements PluginAwareClas
    * See https://stackoverflow.com/a/5428795 about resolve flag.
    */
   @Override
-  public final @Nullable Class<?> tryLoadingClass(@NotNull String name, boolean forceLoadFromSubPluginClassloader)
+  public @Nullable Class<?> tryLoadingClass(@NotNull String name, boolean forceLoadFromSubPluginClassloader)
     throws ClassNotFoundException {
     if (mustBeLoadedByPlatform(name)) {
       return coreLoader.loadClass(name);
@@ -229,8 +249,18 @@ public class PluginClassLoader extends UrlClassLoader implements PluginAwareClas
 
     long startTime = StartUpMeasurer.measuringPluginStartupCosts ? StartUpMeasurer.getCurrentTime() : -1;
     Class<?> c;
+    PluginException error = null;
     try {
-      c = loadClassInsideSelf(name, forceLoadFromSubPluginClassloader);
+      String consistencyError = resolveScopeManager.isDefinitelyAlienClass(name, packagePrefix, forceLoadFromSubPluginClassloader);
+      if (consistencyError == null) {
+        c = loadClassInsideSelf(name, forceLoadFromSubPluginClassloader);
+      }
+      else {
+        if (!consistencyError.isEmpty()) {
+          error = new PluginException(consistencyError, pluginId);
+        }
+        c = null;
+      }
     }
     catch (IOException e) {
       throw new ClassNotFoundException(name, e);
@@ -238,7 +268,29 @@ public class PluginClassLoader extends UrlClassLoader implements PluginAwareClas
 
     if (c == null) {
       for (ClassLoader classloader : getAllParents()) {
-        if (classloader instanceof UrlClassLoader) {
+        if (classloader instanceof PluginClassLoader) {
+          try {
+            PluginClassLoader pluginClassLoader = (PluginClassLoader)classloader;
+            String consistencyError = pluginClassLoader.resolveScopeManager.isDefinitelyAlienClass(name,
+                                                                                                   pluginClassLoader.packagePrefix,
+                                                                                                   forceLoadFromSubPluginClassloader);
+            if (consistencyError != null) {
+              if (!consistencyError.isEmpty() && error == null) {
+                // yes, we blame requestor plugin
+                error = new PluginException(consistencyError, pluginId);
+              }
+              continue;
+            }
+            c = pluginClassLoader.loadClassInsideSelf(name, false);
+          }
+          catch (IOException e) {
+            throw new ClassNotFoundException(name, e);
+          }
+          if (c != null) {
+            break;
+          }
+        }
+        else if (classloader instanceof UrlClassLoader) {
           try {
             c = ((UrlClassLoader)classloader).loadClassInsideSelf(name, false);
           }
@@ -260,6 +312,10 @@ public class PluginClassLoader extends UrlClassLoader implements PluginAwareClas
             // ignore and continue
           }
         }
+      }
+
+      if (error != null) {
+        throw error;
       }
     }
 
@@ -285,15 +341,15 @@ public class PluginClassLoader extends UrlClassLoader implements PluginAwareClas
 
     Set<ClassLoader> parentSet = new LinkedHashSet<>();
     Deque<ClassLoader> queue = new ArrayDeque<>();
-    Collections.addAll(queue, parents);
+    collectClassLoaders(queue);
     ClassLoader classLoader;
     while ((classLoader = queue.pollFirst()) != null) {
-      if (classLoader == coreLoader || !parentSet.add(classLoader)) {
+      if (!parentSet.add(classLoader)) {
         continue;
       }
 
       if (classLoader instanceof PluginClassLoader) {
-        Collections.addAll(queue, ((PluginClassLoader)classLoader).parents);
+        ((PluginClassLoader)classLoader).collectClassLoaders(queue);
       }
     }
     parentSet.add(coreLoader);
@@ -303,7 +359,16 @@ public class PluginClassLoader extends UrlClassLoader implements PluginAwareClas
     return result;
   }
 
-  public final void clearParentListCache() {
+  private void collectClassLoaders(@NotNull Deque<ClassLoader> queue) {
+    for (IdeaPluginDescriptorImpl parent : parents) {
+      ClassLoader classLoader = parent.classLoader;
+      if (classLoader != null && classLoader != coreLoader) {
+        queue.add(classLoader);
+      }
+    }
+  }
+
+  public void clearParentListCache() {
     allParents = null;
   }
 
@@ -312,9 +377,9 @@ public class PluginClassLoader extends UrlClassLoader implements PluginAwareClas
       return true;
     }
 
-    // some commonly used classes from kotlin-runtime must be loaded by the platform classloader. Otherwise if a plugin bundles its own version
+    // some commonly used classes from kotlin-runtime must be loaded by the platform classloader. Otherwise, if a plugin bundles its own version
     // of kotlin-runtime.jar it won't be possible to call platform's methods with these types in signatures from such a plugin.
-    // We assume that these classes don't change between Kotlin versions so it's safe to always load them from platform's kotlin-runtime.
+    // We assume that these classes don't change between Kotlin versions, so it's safe to always load them from platform's kotlin-runtime.
     return className.startsWith("kotlin.") && (className.startsWith("kotlin.jvm.functions.") ||
                                                (className.startsWith("kotlin.reflect.") &&
                                                 className.indexOf('.', 15 /* "kotlin.reflect".length */) < 0) ||
@@ -323,10 +388,6 @@ public class PluginClassLoader extends UrlClassLoader implements PluginAwareClas
 
   @Override
   public @Nullable Class<?> loadClassInsideSelf(@NotNull String name, boolean forceLoadFromSubPluginClassloader) throws IOException {
-    if (resolveScopeManager.isDefinitelyAlienClass(name, packagePrefix, forceLoadFromSubPluginClassloader)) {
-      return null;
-    }
-
     synchronized (getClassLoadingLock(name)) {
       Class<?> c = findLoadedClass(name);
       if (c != null && c.getClassLoader() == this) {
@@ -335,7 +396,7 @@ public class PluginClassLoader extends UrlClassLoader implements PluginAwareClas
 
       Writer logStream = PluginClassLoader.logStream;
       try {
-        c = classPath.findClass(name);
+        c = classPath.findClass(name, classDataConsumer);
       }
       catch (LinkageError e) {
         if (logStream != null) {
@@ -372,12 +433,12 @@ public class PluginClassLoader extends UrlClassLoader implements PluginAwareClas
   }
 
   @Override
-  public final @Nullable URL findResource(@NotNull String name) {
+  public @Nullable URL findResource(@NotNull String name) {
     return findResource(name, Resource::getURL, ClassLoader::getResource);
   }
 
   @Override
-  public final @Nullable InputStream getResourceAsStream(@NotNull String name) {
+  public @Nullable InputStream getResourceAsStream(@NotNull String name) {
     Function<Resource, InputStream> f1 = resource -> {
       try {
         return resource.getInputStream();
@@ -403,12 +464,12 @@ public class PluginClassLoader extends UrlClassLoader implements PluginAwareClas
     String canonicalPath = toCanonicalPath(name);
 
     if (canonicalPath.startsWith("/")) {
-      canonicalPath = canonicalPath.substring(1);
       //noinspection SpellCheckingInspection
       if (!canonicalPath.startsWith("/org/bridj/")) {
         String message = "Do not request resource from classloader using path with leading slash";
         Logger.getInstance(PluginClassLoader.class).error(message, new PluginException(name, pluginId));
       }
+      canonicalPath = canonicalPath.substring(1);
     }
 
     Resource resource = classPath.findResource(canonicalPath);
@@ -435,7 +496,7 @@ public class PluginClassLoader extends UrlClassLoader implements PluginAwareClas
   }
 
   @Override
-  public final @NotNull Enumeration<URL> findResources(@NotNull String name) throws IOException {
+  public @NotNull Enumeration<URL> findResources(@NotNull String name) throws IOException {
     List<Enumeration<URL>> resources = new ArrayList<>();
     resources.add(classPath.getResources(name));
     for (ClassLoader classloader : getAllParents()) {
@@ -453,12 +514,12 @@ public class PluginClassLoader extends UrlClassLoader implements PluginAwareClas
   }
 
   @SuppressWarnings("UnusedDeclaration")
-  public final void addLibDirectories(@NotNull Collection<String> libDirectories) {
+  public void addLibDirectories(@NotNull Collection<String> libDirectories) {
     this.libDirectories.addAll(libDirectories);
   }
 
   @Override
-  protected final String findLibrary(String libName) {
+  protected String findLibrary(String libName) {
     if (!libDirectories.isEmpty()) {
       String libFileName = System.mapLibraryName(libName);
       ListIterator<String> i = libDirectories.listIterator(libDirectories.size());
@@ -473,17 +534,17 @@ public class PluginClassLoader extends UrlClassLoader implements PluginAwareClas
   }
 
   @Override
-  public final @NotNull PluginId getPluginId() {
+  public @NotNull PluginId getPluginId() {
     return pluginId;
   }
 
   @Override
-  public final @NotNull PluginDescriptor getPluginDescriptor() {
+  public @NotNull PluginDescriptor getPluginDescriptor() {
     return pluginDescriptor;
   }
 
   @Override
-  public final String toString() {
+  public String toString() {
     return getClass().getSimpleName() + "(plugin=" + pluginDescriptor +
            ", packagePrefix=" + packagePrefix +
            ", instanceId=" + instanceId +
@@ -522,18 +583,24 @@ public class PluginClassLoader extends UrlClassLoader implements PluginAwareClas
 
   @TestOnly
   @ApiStatus.Internal
-  public final @NotNull List<ClassLoader> _getParents() {
+  public @NotNull List<IdeaPluginDescriptorImpl> _getParents() {
     //noinspection SSBasedInspection
     return Collections.unmodifiableList(Arrays.asList(parents));
   }
 
   @ApiStatus.Internal
-  public final void attachParent(@NotNull ClassLoader classLoader) {
+  public void attachParent(@NotNull IdeaPluginDescriptorImpl parent) {
+    //noinspection SSBasedInspection
+    if (Arrays.stream(parents).anyMatch(it -> it == parent)) {
+      return;
+    }
+
     int length = parents.length;
-    ClassLoader[] result = new ClassLoader[length + 1];
+    IdeaPluginDescriptorImpl[] result = new IdeaPluginDescriptorImpl[length + 1];
     System.arraycopy(parents, 0, result, 0, length);
-    result[length] = classLoader;
+    result[length] = parent;
     parents = result;
+    allParents = null;
     parentListCacheIdCounter.incrementAndGet();
   }
 
@@ -541,17 +608,18 @@ public class PluginClassLoader extends UrlClassLoader implements PluginAwareClas
    * You must clear allParents cache for all loaded plugins.
    */
   @ApiStatus.Internal
-  public final boolean detachParent(@NotNull ClassLoader classLoader) {
+  public boolean detachParent(@NotNull IdeaPluginDescriptorImpl parent) {
     for (int i = 0; i < parents.length; i++) {
-      if (classLoader != parents[i]) {
+      if (parent != parents[i]) {
         continue;
       }
 
       int length = parents.length;
-      ClassLoader[] result = new ClassLoader[length - 1];
+      IdeaPluginDescriptorImpl[] result = new IdeaPluginDescriptorImpl[length - 1];
       System.arraycopy(parents, 0, result, 0, i);
       System.arraycopy(parents, i + 1, result, i, length - i - 1);
       parents = result;
+      allParents = null;
       parentListCacheIdCounter.incrementAndGet();
       return true;
     }
@@ -559,7 +627,7 @@ public class PluginClassLoader extends UrlClassLoader implements PluginAwareClas
   }
 
   @Override
-  protected final ProtectionDomain getProtectionDomain() {
+  protected ProtectionDomain getProtectionDomain() {
     return PROTECTION_DOMAIN;
   }
 

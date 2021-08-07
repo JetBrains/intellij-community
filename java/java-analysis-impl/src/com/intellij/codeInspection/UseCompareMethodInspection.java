@@ -63,7 +63,7 @@ public class UseCompareMethodInspection extends AbstractBaseJavaLocalInspectionT
       }
 
       private void register(CompareInfo info, PsiElement nameElement) {
-        holder.registerProblem(nameElement, JavaAnalysisBundle.message("inspection.can.be.replaced.with.message", info.myClass.getClassName() + ".compare"),
+        holder.registerProblem(nameElement, JavaAnalysisBundle.message("inspection.expression.can.be.replaced.with.message", info.myClass.getClassName() + ".compare"),
                                new ReplaceWithPrimitiveCompareFix(info.getReplacementText()));
       }
     };
@@ -124,7 +124,9 @@ public class UseCompareMethodInspection extends AbstractBaseJavaLocalInspectionT
     if (elseExpression instanceof PsiConditionalExpression) {
       Map<Integer, PsiExpression> m = extractConditions((PsiConditionalExpression)elseExpression);
       if (m == null) return null;
-      result.putAll(m);
+      for (var entry : m.entrySet()) {
+        if (result.put(entry.getKey(), entry.getValue()) != null) return null;
+      }
       return result;
     }
     return storeCondition(result, null, elseExpression) ? result : null;

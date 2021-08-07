@@ -1,7 +1,6 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.serviceContainer
 
-import com.intellij.diagnostic.ActivityCategory
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.components.ServiceDescriptor
@@ -22,7 +21,7 @@ internal class ServiceComponentAdapter(val descriptor: ServiceDescriptor,
 
   override fun getComponentKey(): String = descriptor.getInterface()
 
-  override fun getActivityCategory(componentManager: ComponentManagerImpl) = getServiceActivityCategory(componentManager)
+  override fun getActivityCategory(componentManager: ComponentManagerImpl) = componentManager.getActivityCategory(isExtension = false)
 
   override fun <T : Any> doCreateInstance(componentManager: ComponentManagerImpl, implementationClass: Class<T>, indicator: ProgressIndicator?): T {
     if (LOG.isDebugEnabled) {
@@ -55,13 +54,4 @@ internal class ServiceComponentAdapter(val descriptor: ServiceDescriptor,
   }
 
   override fun toString() = "ServiceAdapter(descriptor=$descriptor, pluginDescriptor=$pluginDescriptor)"
-}
-
-internal fun getServiceActivityCategory(componentManager: ComponentManagerImpl): ActivityCategory {
-  val parent = componentManager.picoContainer.parent
-  return when {
-    parent == null -> ActivityCategory.APP_SERVICE
-    parent.parent == null -> ActivityCategory.PROJECT_SERVICE
-    else -> ActivityCategory.MODULE_SERVICE
-  }
 }

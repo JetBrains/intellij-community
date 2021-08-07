@@ -13,6 +13,7 @@ import com.jetbrains.python.console.protocol.PythonConsoleFrontendService
 import com.jetbrains.python.console.transport.client.TNettyClientTransport
 import com.jetbrains.python.console.transport.server.TNettyServer
 import com.jetbrains.python.debugger.PyDebugValueExecutionService
+import com.jetbrains.python.debugger.PyFrameListener
 import org.apache.thrift.protocol.TBinaryProtocol
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.Future
@@ -101,7 +102,15 @@ class PydevConsoleCommunicationClient(project: Project,
 
       val executionService = PyDebugValueExecutionService.getInstance(myProject)
       executionService.sessionStarted(this)
-      addFrameListener { executionService.cancelSubmittedTasks(this@PydevConsoleCommunicationClient) }
+      addFrameListener(object : PyFrameListener {
+        override fun frameChanged() {
+          executionService.cancelSubmittedTasks(this@PydevConsoleCommunicationClient)
+        }
+
+        override fun sessionStopped() {
+          executionService.cancelSubmittedTasks(this@PydevConsoleCommunicationClient)
+        }
+      })
     }
   }
 

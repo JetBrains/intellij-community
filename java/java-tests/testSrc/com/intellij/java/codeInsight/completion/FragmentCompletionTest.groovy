@@ -57,6 +57,19 @@ class FragmentCompletionTest extends LightJavaCodeInsightFixtureTestCase {
     myFixture.checkResult(text)
   }
 
+  @NeedsIndex.Full
+  void testPreferClassOverPackage() {
+    myFixture.addClass("package Xyz; public class Xyz {}")
+
+    def text = "Xy<caret>"
+    PsiFile file = JavaCodeFragmentFactory.getInstance(project).createReferenceCodeFragment(text, null, true, true)
+    myFixture.configureFromExistingVirtualFile(file.getVirtualFile())
+    def elements = myFixture.completeBasic()
+    assert elements.length == 2
+    assert elements[0].getPsiElement() instanceof PsiClass
+    assert elements[1].getPsiElement() instanceof PsiPackage
+  }
+
   void "test no constants in reference code fragment"() throws Throwable {
     myFixture.addClass("package foo; public interface FooIntf { int constant = 2 }")
 
@@ -110,7 +123,7 @@ class FragmentCompletionTest extends LightJavaCodeInsightFixtureTestCase {
     final ctxFile = createLightFile(JavaFileType.INSTANCE, ctxText)
     final context = ctxFile.findElementAt(ctxText.indexOf("map="))
     assert context
-    
+
     PsiFile file = JavaCodeFragmentFactory.getInstance(project).createExpressionCodeFragment("map.entry<caret>", context, null, true)
     myFixture.configureFromExistingVirtualFile(file.getVirtualFile())
     myFixture.file.putCopyableUserData(JavaCompletionUtil.DYNAMIC_TYPE_EVALUATOR, new PairFunction<PsiExpression, CompletionParameters, PsiType>() {

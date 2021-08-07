@@ -57,95 +57,97 @@ package org.jdom.output;
 
 import org.jdom.Namespace;
 
-import java.util.Stack;
+import java.util.ArrayDeque;
+import java.util.Deque;
+import java.util.Iterator;
 
 /**
  * A non-public utility class used by both <code>{@link XMLOutputter}</code> and
  * <code>{@link SAXOutputter}</code> to manage namespaces in a JDOM Document
  * during output.
  *
+ * @author Elliotte Rusty Harolde
+ * @author Fred Trimble
+ * @author Brett McLaughlin
  * @version $Revision: 1.13 $, $Date: 2004/02/06 09:28:32 $
- * @author  Elliotte Rusty Harolde
- * @author  Fred Trimble
- * @author  Brett McLaughlin
  */
 public class EclipseNamespaceStack {
+  static class NamespaceInfo {
+    final String prefix;
+    final String uri;
 
-    /** The prefixes available */
-    private final Stack prefixes;
-
-    /** The URIs available */
-    private final Stack uris;
-
-    /**
-     * This creates the needed storage.
-     */
-    EclipseNamespaceStack() {
-        prefixes = new Stack();
-        uris = new Stack();
+    NamespaceInfo(String prefix, String uri) {
+      this.prefix = prefix;
+      this.uri = uri;
     }
 
-    /**
-     * This will add a new <code>{@link Namespace}</code>
-     * to those currently available.
-     *
-     * @param ns <code>Namespace</code> to add.
-     */
-    public void push(Namespace ns) {
-        prefixes.push(ns.getPrefix());
-        uris.push(ns.getURI());
-    }
-
-    /**
-     * This will remove the topmost (most recently added)
-     * <code>{@link Namespace}</code>, and return its prefix.
-     *
-     * @return <code>String</code> - the popped namespace prefix.
-     */
-    public String pop() {
-        String prefix = (String)prefixes.pop();
-        uris.pop();
-
-        return prefix;
-    }
-
-    /**
-     * This returns the number of available namespaces.
-     *
-     * @return <code>int</code> - size of the namespace stack.
-     */
-    public int size() {
-        return prefixes.size();
-    }
-
-    /**
-     * Given a prefix, this will return the namespace URI most
-     * rencently (topmost) associated with that prefix.
-     *
-     * @param prefix <code>String</code> namespace prefix.
-     * @return <code>String</code> - the namespace URI for that prefix.
-     */
-    public String getURI(String prefix) {
-        int index = prefixes.lastIndexOf(prefix);
-        if (index == -1) {
-            return null;
-        }
-        String uri = (String)uris.elementAt(index);
-        return uri;
-    }
-
-    /**
-     * This will print out the size and current stack, from the
-     * most recently added <code>{@link Namespace}</code> to
-     * the "oldest," all to <code>System.out</code>.
-     */
+    @Override
     public String toString() {
-        StringBuilder buf = new StringBuilder();
-        String sep = System.lineSeparator();
-        buf.append("Stack: ").append(prefixes.size()).append(sep);
-        for (int i = 0; i < prefixes.size(); i++) {
-            buf.append(prefixes.elementAt(i)).append('&').append(uris.elementAt(i)).append(sep);
-        }
-        return buf.toString();
+      return prefix + "&" + uri;
     }
+  }
+
+  private final Deque<NamespaceInfo> myNamespaces = new ArrayDeque<>();
+
+  /**
+   * This will add a new <code>{@link Namespace}</code>
+   * to those currently available.
+   *
+   * @param ns <code>Namespace</code> to add.
+   */
+  public void push(Namespace ns) {
+    myNamespaces.push(new NamespaceInfo(ns.getPrefix(), ns.getURI()));
+  }
+
+  /**
+   * This will remove the topmost (most recently added)
+   * <code>{@link Namespace}</code>, and return its prefix.
+   *
+   * @return <code>String</code> - the popped namespace prefix.
+   */
+  public String pop() {
+    return myNamespaces.pop().prefix;
+  }
+
+  /**
+   * This returns the number of available namespaces.
+   *
+   * @return <code>int</code> - size of the namespace stack.
+   */
+  public int size() {
+    return myNamespaces.size();
+  }
+
+  /**
+   * Given a prefix, this will return the namespace URI most
+   * recently (topmost) associated with that prefix.
+   *
+   * @param prefix <code>String</code> namespace prefix.
+   * @return <code>String</code> - the namespace URI for that prefix.
+   */
+  public String getURI(String prefix) {
+    Iterator<NamespaceInfo> iterator = myNamespaces.descendingIterator();
+    while (iterator.hasNext()) {
+      NamespaceInfo ns = iterator.next();
+      if (ns.prefix.equals(prefix)) {
+        return ns.uri;
+      }
+    }
+    return null;
+  }
+
+  /**
+   * This will print out the size and current stack, from the
+   * most recently added <code>{@link Namespace}</code> to
+   * the "oldest," all to <code>System.out</code>.
+   */
+  public String toString() {
+    StringBuilder buf = new StringBuilder();
+    String sep = System.lineSeparator();
+    buf.append("Stack: ").append(myNamespaces.size()).append(sep);
+    for (NamespaceInfo info : myNamespaces) {
+      buf.append(info).append(sep);
+    }
+    return buf.toString();
+  }
 }

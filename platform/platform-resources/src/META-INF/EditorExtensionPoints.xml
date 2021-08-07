@@ -18,7 +18,6 @@
     <extensionPoint name="basicWordSelectionFilter" interface="com.intellij.openapi.util.Condition" dynamic="true"/>
     <extensionPoint name="typedHandler" interface="com.intellij.codeInsight.editorActions.TypedHandlerDelegate" dynamic="true"/>
     <extensionPoint name="selectionUnquotingFilter" interface="com.intellij.codeInsight.editorActions.SelectionQuotingTypedHandler$UnquotingFilter" dynamic="true"/>
-    <extensionPoint name="selectionDequotingFilter" interface="com.intellij.codeInsight.editorActions.SelectionQuotingTypedHandler$DequotingFilter" dynamic="true"/>
     <extensionPoint name="joinLinesHandler" interface="com.intellij.codeInsight.editorActions.JoinLinesHandlerDelegate" dynamic="true"/>
     <extensionPoint name="enterHandlerDelegate" interface="com.intellij.codeInsight.editorActions.enter.EnterHandlerDelegate" dynamic="true"/>
     <extensionPoint name="backspaceHandlerDelegate" interface="com.intellij.codeInsight.editorActions.BackspaceHandlerDelegate" dynamic="true"/>
@@ -27,6 +26,8 @@
       <with attribute="instance" implements="com.intellij.openapi.options.UnnamedConfigurable" />
     </extensionPoint>
 
+    <extensionPoint dynamic="true" name="generalEditorOptionsCustomizer" interface="com.intellij.application.options.editor.EditorOptionsPageCustomizer"/>
+
     <!--quote handlers-->
     <extensionPoint name="quoteHandler" beanClass="com.intellij.codeInsight.editorActions.QuoteHandlerEP" dynamic="true">
       <with attribute="className" implements="com.intellij.codeInsight.editorActions.QuoteHandler"/>
@@ -34,6 +35,8 @@
     <extensionPoint name="lang.quoteHandler" beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
       <with attribute="implementationClass" implements="com.intellij.codeInsight.editorActions.QuoteHandler"/>
     </extensionPoint>
+
+    <extensionPoint name="typingActionsExtension" interface="com.intellij.codeInsight.editorActions.TypingActionsExtension" dynamic="true"/>
 
     <!--copy/paste-->
     <extensionPoint name="customPasteProvider" interface="com.intellij.ide.PasteProvider" dynamic="true"/>

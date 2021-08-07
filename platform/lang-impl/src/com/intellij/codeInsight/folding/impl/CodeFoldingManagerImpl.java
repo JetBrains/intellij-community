@@ -155,6 +155,10 @@ public final class CodeFoldingManagerImpl extends CodeFoldingManager implements 
     return region.getUserData(UpdateFoldRegionsOperation.COLLAPSED_BY_DEFAULT);
   }
 
+  public void markForUpdate(FoldRegion region) {
+    UpdateFoldRegionsOperation.UPDATE_REGION.set(region, Boolean.TRUE);
+  }
+
   @Override
   public void scheduleAsyncFoldingUpdate(@NotNull Editor editor) {
     FoldingUpdate.clearFoldingCache(editor);

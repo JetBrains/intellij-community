@@ -48,7 +48,7 @@ public final class HintUtil {
   public static final Color QUESTION_UNDERSCORE_COLOR = JBColor.foreground();
 
   public static final ColorKey RECENT_LOCATIONS_SELECTION_KEY = ColorKey.createColorKey("RECENT_LOCATIONS_SELECTION", new JBColor(0xE9EEF5, 0x383838));
-  public static final ColorKey PROMOTION_PANE_KEY = ColorKey.createColorKey("PROMOTION_PANE", new JBColor(0xE6EDF7, 0x3B4C57));
+  public static final ColorKey PROMOTION_PANE_KEY = ColorKey.createColorKey("PROMOTION_PANE", new JBColor(0xE6EDF7, 0x233953));
 
   private HintUtil() {
   }
@@ -173,13 +173,13 @@ public final class HintUtil {
     return label;
   }
 
-  @NotNull
-  public static JComponent createErrorLabel(@NotNull @HintText String text) {
+  public static @NotNull JComponent createErrorLabel(@NotNull @HintText String text) {
     return createErrorLabel(text, null, null);
   }
 
-  @NotNull
-  private static HintLabel createLabel(@HintText String text, @Nullable Icon icon, @NotNull Color color, @NotNull HintHint hintHint) {
+  @ApiStatus.Internal
+  public static @NotNull HintLabel createLabel(@HintText String text, @Nullable Icon icon,
+                                               @NotNull Color color, @NotNull HintHint hintHint) {
     HintLabel label = new HintLabel();
     label.setText(text, hintHint);
     label.setIcon(icon);
@@ -248,7 +248,8 @@ public final class HintUtil {
     }
   }
 
-  private static final class HintLabel extends JPanel {
+  @ApiStatus.Internal
+  public static final class HintLabel extends JPanel {
     private JEditorPane myPane;
     private SimpleColoredComponent myColored;
     private JLabel myIcon;

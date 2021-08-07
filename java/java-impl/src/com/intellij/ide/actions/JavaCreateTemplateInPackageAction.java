@@ -15,9 +15,29 @@
  */
 package com.intellij.ide.actions;
 
+import com.intellij.java.JavaBundle;
+import com.intellij.notification.Notification;
+import com.intellij.notification.NotificationAction;
+import com.intellij.notification.NotificationType;
+import com.intellij.notification.Notifications;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleUtilCore;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.Task;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.projectRoots.JavaSdk;
+import com.intellij.openapi.projectRoots.JavaSdkType;
+import com.intellij.openapi.projectRoots.ex.JavaSdkUtil;
+import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.roots.ModuleRootModificationUtil;
+import com.intellij.openapi.roots.ui.configuration.SdkLookupUtil;
+import com.intellij.openapi.roots.ui.configuration.SdkPopupFactory;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes;
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
 
@@ -58,5 +78,40 @@ public abstract class JavaCreateTemplateInPackageAction<T extends PsiElement> ex
 
     String name = pkg.getQualifiedName();
     return StringUtil.isEmpty(name) || PsiNameHelper.getInstance(directory.getProject()).isQualifiedName(name);
+  }
+
+  @Override
+  protected @Nullable T createFile(String name, String templateName, PsiDirectory dir) {
+    T file = super.createFile(name, templateName, dir);
+    Module module = ModuleUtilCore.findModuleForPsiElement(dir);
+    if (file != null && module != null && ModuleRootManager.getInstance(module).getSdk() == null) {
+      Project project = dir.getProject();
+      ModuleRootModificationUtil.setSdkInherited(module);
+      ProgressManager.getInstance().run(new Task.Backgroundable(project, JavaBundle.message("progress.title.looking.for.jdk"), true) {
+        @Override
+        public void run(@NotNull ProgressIndicator indicator) {
+          SdkLookupUtil.findAndSetupSdk(project, indicator, JavaSdk.getInstance(), sdk -> {
+            JavaSdkUtil.applyJdkToProject(project, sdk);
+            Notifications.Bus.notify(new Notification("Setup SDK", JavaBundle.message("notification.content.was.set.up", sdk.getVersionString()), NotificationType.INFORMATION).addAction(
+              new NotificationAction(JavaBundle.message("notification.content.change.jdk")) {
+                @Override
+                public void actionPerformed(@NotNull AnActionEvent e,
+                                            @NotNull Notification notification) {
+                  SdkPopupFactory
+                    .newBuilder()
+                    .withProject(project)
+                    .withSdkTypeFilter(type -> type instanceof JavaSdkType)
+                    .updateProjectSdkFromSelection()
+                    .onPopupClosed(() -> notification.hideBalloon())
+                    .buildPopup()
+                    .showPopup(e);
+                }
+              }));
+            return null;
+          });
+        }
+      });
+    }
+    return file;
   }
 }

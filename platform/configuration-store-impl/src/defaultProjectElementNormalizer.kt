@@ -1,11 +1,11 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.configurationStore
 
 import com.intellij.openapi.components.StoragePathMacros
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.util.io.FileUtil
-import com.intellij.serviceContainer.processAllImplementationClasses
+import com.intellij.serviceContainer.ComponentManagerImpl
 import com.intellij.util.LineSeparator
 import com.intellij.util.SmartList
 import com.intellij.util.io.exists
@@ -27,7 +27,7 @@ internal fun normalizeDefaultProjectElement(defaultProject: Project, element: El
       "InspectionProjectProfileManager" -> {
         iterator.remove()
         val schemeDir = projectConfigDir.resolve("inspectionProfiles")
-        convertProfiles(component.getChildren("profile").iterator(), componentName, schemeDir)
+        convertProfiles(component.getChildren("profile").iterator(), componentName, schemeDir, ::getProfileName)
         component.removeChild("version")
         writeProfileSettings(schemeDir, componentName, component)
       }
@@ -35,8 +35,16 @@ internal fun normalizeDefaultProjectElement(defaultProject: Project, element: El
       "CopyrightManager" -> {
         iterator.remove()
         val schemeDir = projectConfigDir.resolve("copyright")
-        convertProfiles(component.getChildren("copyright").iterator(), componentName, schemeDir)
+        convertProfiles(component.getChildren("copyright").iterator(), componentName, schemeDir, ::getProfileName)
         writeProfileSettings(schemeDir, componentName, component)
+      }
+
+      "libraryTable" -> {
+        iterator.remove()
+        val librariesDir = projectConfigDir.resolve("libraries")
+        convertProfiles(component.getChildren("library").iterator(), componentName, librariesDir) { library ->
+          library.getAttributeValue("name")
+        }
       }
 
       JpsProjectLoader.MODULE_MANAGER_COMPONENT -> {
@@ -47,6 +55,9 @@ internal fun normalizeDefaultProjectElement(defaultProject: Project, element: El
 
   moveComponentConfiguration(defaultProject, element, { it }) { projectConfigDir.resolve(it) }
 }
+
+private fun getProfileName(profile: Element) =
+  profile.getChildren("option").find { it.getAttributeValue("name") == "myName" }?.getAttributeValue("value")
 
 private fun writeProfileSettings(schemeDir: Path, componentName: String, component: Element) {
   component.removeAttribute("name")
@@ -64,9 +75,12 @@ private fun writeProfileSettings(schemeDir: Path, componentName: String, compone
   }
 }
 
-private fun convertProfiles(profileIterator: MutableIterator<Element>, componentName: String, schemeDir: Path) {
+private fun convertProfiles(profileIterator: MutableIterator<Element>,
+                            componentName: String,
+                            schemeDir: Path,
+                            nameCallback: (Element) -> String?) {
   for (profile in profileIterator) {
-    val schemeName = profile.getChildren("option").find { it.getAttributeValue("name") == "myName" }?.getAttributeValue("value") ?: continue
+    val schemeName = nameCallback(profile) ?: continue
 
     profileIterator.remove()
     val wrapper = Element("component").setAttribute("name", componentName)
@@ -109,9 +123,8 @@ internal fun moveComponentConfiguration(defaultProject: Project,
     }
   }
 
-  processAllImplementationClasses(defaultProject.picoContainer) { aClass, _ ->
+  (defaultProject.picoContainer as ComponentManagerImpl).processAllImplementationClasses { aClass, _ ->
     processComponents(aClass)
-    true
   }
 
   // fileResolver may return the same file for different storage names (e.g. for IPR project)

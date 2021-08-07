@@ -8,6 +8,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReference;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.jetbrains.NotNullPredicate;
 import com.jetbrains.python.PyNames;
@@ -18,6 +19,7 @@ import com.jetbrains.python.psi.impl.PyFunctionBuilder;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import com.jetbrains.python.refactoring.PyPsiRefactoringUtil;
 import com.jetbrains.python.refactoring.classes.PyClassRefactoringUtil;
+import com.jetbrains.python.refactoring.classes.PyDependenciesComparator;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -93,7 +95,9 @@ class MethodsManager extends MembersManager<PyFunction> {
       for (final PyClass destClass : to) {
         final PyFunctionBuilder functionBuilder = PyFunctionBuilder.copySignature(function, DECORATORS_MAY_BE_COPIED_TO_ABSTRACT);
         functionBuilder.decorate(PyNames.ABSTRACTMETHOD);
-        PyClassRefactoringUtil.addMethods(destClass, false, functionBuilder.buildFunction());
+        PyFunction abstractMethod = functionBuilder.buildFunction();
+        PyDependenciesComparator.copyDependencyInfo(function, abstractMethod);
+        PyClassRefactoringUtil.addMethods(destClass, false, abstractMethod);
         classesToAddMetaAbc.add(destClass);
       }
     }
@@ -127,20 +131,18 @@ class MethodsManager extends MembersManager<PyFunction> {
    * @param skipIfExist skip (do not add) if method already exists
    * @return newly added methods
    */
-  static List<PyElement> moveMethods(final PyClass from, final Collection<? extends PyFunction> methodsToMove, final boolean skipIfExist, final PyClass... to) {
+  static List<PyElement> moveMethods(@NotNull PyClass from,
+                                     @NotNull Collection<? extends PyFunction> methodsToMove,
+                                     boolean skipIfExist,
+                                     PyClass @NotNull... to) {
+    if (methodsToMove.isEmpty() || to.length == 0) return Collections.emptyList();
     final List<PyElement> result = new ArrayList<>();
-    for (final PyClass destClass : to) {
+    for (PyClass destClass : to) {
       //We move copies here because there may be several destinations
-      final List<PyFunction> copies = new ArrayList<>(methodsToMove.size());
-      for (final PyFunction element : methodsToMove) {
-        final PyFunction newMethod = (PyFunction)element.copy();
-        copies.add(newMethod);
-      }
-
-      result.addAll(PyClassRefactoringUtil.copyMethods(copies, destClass, skipIfExist));
+      PyFunction[] copies = ContainerUtil.map2Array(methodsToMove, PyFunction.EMPTY_ARRAY, m -> (PyFunction)m.copy());
+      result.addAll(PyClassRefactoringUtil.addMethods(destClass, skipIfExist, copies));
     }
     deleteElements(methodsToMove);
-
     return result;
   }
 

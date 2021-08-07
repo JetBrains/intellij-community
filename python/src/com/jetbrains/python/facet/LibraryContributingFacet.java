@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.facet;
 
 import com.intellij.facet.*;
@@ -9,9 +9,7 @@ import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author yole
- */
+
 public abstract class LibraryContributingFacet<T extends FacetConfiguration> extends Facet<T> {
   @NonNls public static final String PYTHON_FACET_LIBRARY_NAME_SUFFIX = " interpreter library";
 
@@ -24,14 +22,14 @@ public abstract class LibraryContributingFacet<T extends FacetConfiguration> ext
       @Override
       public void beforeFacetRemoved(@NotNull Facet facet) {
         if (facet == LibraryContributingFacet.this) {
-          ApplicationManager.getApplication().invokeLater(() -> ((LibraryContributingFacet<?>)facet).removeLibrary());
+          ApplicationManager.getApplication().invokeLater(() -> ((LibraryContributingFacet<?>)facet).removeLibrary(), module.getDisposed());
         }
       }
 
       @Override
       public void facetConfigurationChanged(@NotNull Facet facet) {
         if (facet == LibraryContributingFacet.this) {
-          ApplicationManager.getApplication().invokeLater(() -> ((LibraryContributingFacet<?>) facet).updateLibrary());
+          ApplicationManager.getApplication().invokeLater(() -> ((LibraryContributingFacet<?>) facet).updateLibrary(), module.getDisposed());
         }
       }
     });

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.externalSystem.service.project;
 
 import com.intellij.facet.ModifiableFacetModel;
@@ -6,7 +6,6 @@ import com.intellij.ide.highlighter.ModuleFileType;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.externalSystem.ExternalSystemManager;
 import com.intellij.openapi.externalSystem.model.DataNode;
@@ -267,9 +266,8 @@ public abstract class AbstractIdeModifiableModelsProvider extends IdeModelsProvi
   }
 
   private ModifiableWorkspace doGetModifiableWorkspace() {
-    return ReadAction.compute(() ->
-                                ServiceManager.getService(myProject, ExternalProjectsWorkspaceImpl.class)
-                                              .createModifiableWorkspace(this));
+    return ReadAction.compute(() -> myProject.getService(ExternalProjectsWorkspaceImpl.class)
+                  .createModifiableWorkspace(this));
   }
 
   private Graph<Module> getModuleGraph() {
@@ -306,7 +304,8 @@ public abstract class AbstractIdeModifiableModelsProvider extends IdeModelsProvi
         Library.ModifiableModel modifiableModel = entry.getValue();
         // removed and (previously) not committed library is being disposed by LibraryTableBase.LibraryModel.removeLibrary
         // the modifiable model of such library shouldn't be committed
-        if (fromLibrary instanceof LibraryEx && ((LibraryEx)fromLibrary).isDisposed()) {
+        if ((fromLibrary instanceof LibraryEx && ((LibraryEx)fromLibrary).isDisposed()) ||
+            (getModifiableWorkspace() != null && getModifiableWorkspace().isSubstituted(fromLibrary.getName()))) {
           Disposer.dispose(modifiableModel);
         }
         else {
@@ -391,10 +390,13 @@ public abstract class AbstractIdeModifiableModelsProvider extends IdeModelsProvi
     }
     else {
       ModifiableRootModel modifiableRootModel = getModifiableRootModel(ownerModule);
-      ModuleOrderEntry moduleOrderEntry = modifiableRootModel.addModuleOrderEntry(workspaceModule);
+      ModuleOrderEntry moduleOrderEntry = modifiableRootModel.findModuleOrderEntry(workspaceModule);
+      if (moduleOrderEntry == null) // if that module exists already (after re-import)
+        moduleOrderEntry = modifiableRootModel.addModuleOrderEntry(workspaceModule);
       moduleOrderEntry.setScope(libraryOrderEntry.getScope());
       moduleOrderEntry.setExported(libraryOrderEntry.isExported());
       ModifiableWorkspace workspace = getModifiableWorkspace();
+
       assert workspace != null;
       workspace.addSubstitution(ownerModule.getName(),
                                 workspaceModule.getName(),
@@ -509,6 +511,7 @@ public abstract class AbstractIdeModifiableModelsProvider extends IdeModelsProvi
               workspace.addSubstitution(module.getName(), workspaceModule,
                                         libraryOrderEntry.getLibraryName(),
                                         libraryOrderEntry.getScope());
+
             }
           }
         }

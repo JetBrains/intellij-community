@@ -12,6 +12,7 @@ import com.intellij.ide.highlighter.XmlFileType;
 import com.intellij.ide.plugins.DynamicPluginListener;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.java.JavaBundle;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.WriteCommandAction;
@@ -42,6 +43,9 @@ import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.NlsActions;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.util.registry.RegistryValue;
+import com.intellij.openapi.util.registry.RegistryValueListener;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.openapi.vfs.VfsUtilCore;
@@ -81,16 +85,17 @@ import java.util.stream.Collectors;
 /**
  * @author anna
  */
-public final class ExternalAnnotationsManagerImpl extends ReadableExternalAnnotationsManager {
+public final class ExternalAnnotationsManagerImpl extends ReadableExternalAnnotationsManager implements Disposable {
   private static final Logger LOG = Logger.getInstance(ExternalAnnotationsManagerImpl.class);
 
   private final MessageBus myBus;
+  private @Nullable VirtualFile myAdditionalAnnotationsRoot;
 
   public ExternalAnnotationsManagerImpl(@NotNull Project project) {
     super(PsiManager.getInstance(project));
 
     myBus = project.getMessageBus();
-    MessageBusConnection connection = myBus.connect();
+    MessageBusConnection connection = myBus.connect(this);
     connection.subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootListener() {
       @Override
       public void rootsChanged(@NotNull ModuleRootEvent event) {
@@ -100,7 +105,7 @@ public final class ExternalAnnotationsManagerImpl extends ReadableExternalAnnota
 
     connection.subscribe(VirtualFileManager.VFS_CHANGES, new BulkFileListener() {
       @Override
-      public void after(@NotNull List<? extends VFileEvent> events) {
+      public void after(@NotNull List<? extends @NotNull VFileEvent> events) {
         for (VFileEvent event : events) {
           if (!event.isFromRefresh()) {
             continue;
@@ -132,8 +137,25 @@ public final class ExternalAnnotationsManagerImpl extends ReadableExternalAnnota
         dropAnnotationsCache();
       }
     });
+    RegistryValue additionalRootRegistryValue = Registry.get("java.additional.external.annotations.root.url");
+    String additionalRootUrl = additionalRootRegistryValue.asString();
+    if (!StringUtil.isEmptyOrSpaces(additionalRootUrl)) {
+      myAdditionalAnnotationsRoot = VirtualFileManager.getInstance().refreshAndFindFileByUrl(additionalRootUrl);
+    }
+    additionalRootRegistryValue.addListener(new RegistryValueListener() {
+      @Override
+      public void afterValueChanged(@NotNull RegistryValue value) {
+        String url = value.asString();
+        myAdditionalAnnotationsRoot = !StringUtil.isEmptyOrSpaces(url) ? VirtualFileManager.getInstance().refreshAndFindFileByUrl(url) : null;
+        dropAnnotationsCache();
+      }
+    }, this);
 
-    EditorFactory.getInstance().getEventMulticaster().addDocumentListener(new MyDocumentListener(), project);
+    EditorFactory.getInstance().getEventMulticaster().addDocumentListener(new MyDocumentListener(), this);
+  }
+
+  @Override
+  public void dispose() {
   }
 
   private void notifyAfterAnnotationChanging(@NotNull PsiModifierListOwner owner, @NotNull String annotationFQName, boolean successful) {
@@ -301,6 +323,11 @@ public final class ExternalAnnotationsManagerImpl extends ReadableExternalAnnota
     commitChanges(annotationsFile);
     savedAnnotations.forEach(annotation ->
                                notifyAfterAnnotationChanging(annotation.getOwner(), annotation.getAnnotationFQName(), true));
+  }
+
+  @Override
+  protected @Nullable VirtualFile getAdditionalAnnotationRoot() {
+    return myAdditionalAnnotationsRoot;
   }
 
   @Contract("null -> null")

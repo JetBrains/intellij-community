@@ -1,13 +1,14 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl.source.tree.java;
 
 import com.intellij.psi.*;
+import com.intellij.psi.impl.light.LightExpressionList;
 import com.intellij.psi.impl.source.tree.CompositePsiElement;
-import com.intellij.psi.impl.source.tree.JavaElementType;
 import com.intellij.psi.scope.ElementClassFilter;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.scope.processor.FilterScopeProcessor;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -23,7 +24,11 @@ public abstract class PsiSwitchLabelStatementBaseImpl extends CompositePsiElemen
 
   @Override
   public PsiExpressionList getCaseValues() {
-    return (PsiExpressionList)findPsiChildByType(JavaElementType.EXPRESSION_LIST);
+    PsiCaseLabelElementList elementList = getCaseLabelElementList();
+    if (elementList == null) return null;
+    PsiExpression[] expressions = PsiTreeUtil.getChildrenOfType(elementList, PsiExpression.class);
+    expressions = expressions != null ? expressions : PsiExpression.EMPTY_ARRAY;
+    return new LightExpressionList(getManager(), getLanguage(), expressions, elementList, elementList.getTextRange());
   }
 
   @Nullable
@@ -44,7 +49,7 @@ public abstract class PsiSwitchLabelStatementBaseImpl extends CompositePsiElemen
                                      @NotNull ResolveState state,
                                      PsiElement lastParent,
                                      @NotNull PsiElement place) {
-    if (lastParent instanceof PsiExpressionList) {
+    if (lastParent instanceof PsiCaseLabelElementList) {
       PsiSwitchBlock switchStatement = getEnclosingSwitchBlock();
       if (switchStatement != null) {
         PsiExpression expression = switchStatement.getExpression();
@@ -61,5 +66,10 @@ public abstract class PsiSwitchLabelStatementBaseImpl extends CompositePsiElemen
     }
 
     return true;
+  }
+
+  @Override
+  public @Nullable PsiCaseLabelElementList getCaseLabelElementList() {
+    return PsiTreeUtil.getChildOfType(this, PsiCaseLabelElementList.class);
   }
 }

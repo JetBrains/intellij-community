@@ -104,3 +104,18 @@ class WithNullable {
   @org.jetbrains.annotations.Nullable
   private String str;
 }
+
+class JUnit5Test {
+
+  private String myField;
+
+  @org.<error descr="Cannot resolve symbol 'junit'">junit</error>.jupiter.api.BeforeEach
+  void init() {
+    myField = "";
+  }
+
+  @org.<error descr="Cannot resolve symbol 'junit'">junit</error>.jupiter.api.Test
+  void checkJUnit5() {
+    System.out.println(myField);
+  }
+}

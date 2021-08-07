@@ -21,10 +21,6 @@ import com.jetbrains.python.psi.PyStubElementType;
 import com.jetbrains.python.psi.impl.PyFileImpl;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author yole
- * @author Keith Lea
- */
 public class PythonParserDefinition implements ParserDefinition {
 
   @Override

@@ -1,6 +1,7 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.jcef;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Disposer;
 import org.cef.CefClient;
 import org.cef.browser.CefBrowser;
@@ -9,6 +10,7 @@ import org.cef.browser.CefMessageRouter;
 import org.cef.callback.CefQueryCallback;
 import org.cef.handler.CefMessageRouterHandler;
 import org.cef.handler.CefMessageRouterHandlerAdapter;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -39,21 +41,21 @@ public final class JBCefJSQuery implements JBCefDisposable {
    * @return name of the global function JS must call to send query to Java
    */
   @NotNull
-  public final String getFuncName() {
+  public String getFuncName() {
     return myFunc.myFuncName;
   }
 
   /**
    * Creates a unique JS query.
    *
-   * @see JBCefClient#JS_QUERY_POOL_SIZE
+   * @see JBCefClient.Properties#JS_QUERY_POOL_SIZE
    * @param browser the associated cef browser
    */
   public static JBCefJSQuery create(@NotNull JBCefBrowserBase browser) {
     Function<Void, JBCefJSQuery> create = (v) -> {
       return new JBCefJSQuery(browser, new JSQueryFunc(browser.getJBCefClient()));
     };
-    if (!browser.isCefBrowserCreated()) {
+    if (!browser.isCefBrowserCreateStarted()) {
       return create.apply(null);
     }
     JBCefClient.JSQueryPool pool = browser.getJBCefClient().getJSQueryPool();
@@ -61,13 +63,17 @@ public final class JBCefJSQuery implements JBCefDisposable {
     if (pool != null && (slot = pool.getFreeSlot()) != null) {
       return new JBCefJSQuery(browser, slot);
     }
-    // this query will produce en error in JS debug console
+    Logger.getInstance(JBCefJSQuery.class).
+      warn("Set the property JBCefClient.Properties.JS_QUERY_POOL_SIZE to use JBCefJSQuery after the browser has been created",
+            new IllegalStateException());
+    // this query will produce en error in JS debug console like: "Uncaught TypeError: window.cefQuery_0123456789_1 is not a function"
     return create.apply(null);
   }
 
   /**
    * @deprecated use {@link #create(JBCefBrowserBase)}
    */
+  @ApiStatus.ScheduledForRemoval(inVersion = "2022.2")
   @Deprecated
   public static JBCefJSQuery create(@NotNull JBCefBrowser browser) {
     return create((JBCefBrowserBase)browser);

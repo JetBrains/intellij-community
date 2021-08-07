@@ -2,6 +2,7 @@
 package com.intellij.packaging.impl.elements;
 
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.LibraryOrderEntry;
 import com.intellij.openapi.roots.OrderEntry;
 import com.intellij.openapi.roots.OrderRootType;
@@ -19,6 +20,11 @@ import com.intellij.packaging.ui.ArtifactEditorContext;
 import com.intellij.packaging.ui.PackagingElementPresentation;
 import com.intellij.util.PathUtil;
 import com.intellij.util.xmlb.annotations.Attribute;
+import com.intellij.workspaceModel.storage.EntitySource;
+import com.intellij.workspaceModel.storage.WorkspaceEntity;
+import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder;
+import com.intellij.workspaceModel.storage.bridgeEntities.*;
+import kotlin.Unit;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -107,7 +113,31 @@ public class LibraryPackagingElement extends ComplexPackagingElement<LibraryPack
   }
 
   public void setLevel(String level) {
-    myLevel = level;
+    String levelBefore = myLevel;
+    this.update(
+      () -> myLevel = level,
+      (builder, entity) -> {
+        if (levelBefore.equals(level)) return;
+
+        builder.modifyEntity(ModifiableLibraryFilesPackagingElementEntity.class, entity, ent -> {
+          LibraryId libraryId = ent.getLibrary();
+          if (libraryId != null) {
+            LibraryTableId newTableId;
+            if ("project".equals(level)) {
+              newTableId = LibraryTableId.ProjectLibraryTableId.INSTANCE;
+            }
+            else if ("module".equals(level)) {
+              throw new RuntimeException("Cannot set module level without module name");
+            }
+            else {
+              newTableId = new LibraryTableId.GlobalLibraryTableId(level);
+            }
+            ent.setLibrary(libraryId.copy(libraryId.getName(), newTableId));
+          }
+          return Unit.INSTANCE;
+        });
+      }
+    );
   }
 
   @Attribute(LIBRARY_NAME_ATTRIBUTE)
@@ -116,7 +146,18 @@ public class LibraryPackagingElement extends ComplexPackagingElement<LibraryPack
   }
 
   public void setLibraryName(String libraryName) {
-    myLibraryName = libraryName;
+    this.update(
+      () -> myLibraryName = libraryName,
+      (builder, entity) -> {
+        builder.modifyEntity(ModifiableLibraryFilesPackagingElementEntity.class, entity, ent -> {
+          LibraryId libraryId = ent.getLibrary();
+          if (libraryId != null) {
+            ent.setLibrary(libraryId.copy(libraryName, libraryId.getTableId()));
+          }
+          return Unit.INSTANCE;
+        });
+      }
+    );
   }
 
   @Attribute(MODULE_NAME_ATTRIBUTE)
@@ -125,12 +166,55 @@ public class LibraryPackagingElement extends ComplexPackagingElement<LibraryPack
   }
 
   public void setModuleName(String moduleName) {
-    myModuleName = moduleName;
+    String moduleNameBefore = myModuleName;
+    this.update(
+      () -> myModuleName = moduleName,
+      (builder, entity) -> {
+        if (moduleNameBefore.equals(moduleName)) return;
+
+        builder.modifyEntity(ModifiableLibraryFilesPackagingElementEntity.class, entity, ent -> {
+          LibraryId libraryId = ent.getLibrary();
+          if (libraryId != null) {
+            LibraryTableId newTableId = new LibraryTableId.ModuleLibraryTableId(new ModuleId(moduleName));
+            ent.setLibrary(libraryId.copy(libraryId.getName(), newTableId));
+          }
+          return Unit.INSTANCE;
+        });
+      }
+    );
   }
 
   @Override
   public String toString() {
     return "lib:" + myLibraryName + "(" + (myModuleName != null ? "module " + myModuleName: myLevel ) + ")";
+  }
+
+  @Override
+  public WorkspaceEntity getOrAddEntity(@NotNull WorkspaceEntityStorageBuilder diff,
+                                        @NotNull EntitySource source,
+                                        @NotNull Project project) {
+    WorkspaceEntity existingEntity = getExistingEntity(diff);
+    if (existingEntity != null) return existingEntity;
+
+    LibraryFilesPackagingElementEntity entity;
+    if (myLibraryName == null) {
+      entity = BridgeModelModifiableEntitiesKt.addLibraryFilesPackagingElementEntity(diff, null, source);
+    }
+    else {
+      LibraryId id;
+      if (myLevel.equals("module")) {
+        id = new LibraryId(myLibraryName, new LibraryTableId.ModuleLibraryTableId(new ModuleId(myModuleName)));
+      }
+      else if (myLevel.equals("project")) {
+        id = new LibraryId(myLibraryName, LibraryTableId.ProjectLibraryTableId.INSTANCE);
+      }
+      else {
+        id = new LibraryId(myLibraryName, new LibraryTableId.GlobalLibraryTableId(myLevel));
+      }
+      entity = BridgeModelModifiableEntitiesKt.addLibraryFilesPackagingElementEntity(diff, id, source);
+    }
+    diff.getMutableExternalMapping("intellij.artifacts.packaging.elements").addMapping(entity, this);
+    return entity;
   }
 
   @Nullable

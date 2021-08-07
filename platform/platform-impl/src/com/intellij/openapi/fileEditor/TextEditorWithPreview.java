@@ -8,22 +8,33 @@ import com.intellij.ide.structureView.StructureViewBuilder;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.impl.EditorComponentImpl;
 import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.UserDataHolderBase;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.pom.Navigatable;
 import com.intellij.ui.JBSplitter;
+import com.intellij.ui.components.JBLayeredPane;
+import com.intellij.util.Alarm;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.components.BorderLayoutPanel;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.AWTEventListener;
+import java.awt.event.KeyAdapter;
+import java.awt.event.KeyEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.HashMap;
@@ -45,7 +56,9 @@ public class TextEditorWithPreview extends UserDataHolderBase implements TextEdi
   private final MyListenersMultimap myListenersGenerator = new MyListenersMultimap();
   private final Layout myDefaultLayout;
   private Layout myLayout;
+  private boolean myIsVerticalSplit;
   private JComponent myComponent;
+  private JBSplitter mySplitter;
   private SplitEditorToolbar myToolbarWrapper;
   private final @Nls String myName;
   public static final Key<Layout> DEFAULT_LAYOUT_FOR_FILE = Key.create("TextEditorWithPreview.DefaultLayout");
@@ -53,11 +66,20 @@ public class TextEditorWithPreview extends UserDataHolderBase implements TextEdi
   public TextEditorWithPreview(@NotNull TextEditor editor,
                                @NotNull FileEditor preview,
                                @NotNull @Nls String editorName,
-                               @NotNull Layout defaultLayout) {
+                               @NotNull Layout defaultLayout,
+                               boolean isVerticalSplit) {
     myEditor = editor;
     myPreview = preview;
     myName = editorName;
-    myDefaultLayout = defaultLayout;
+    myDefaultLayout = ObjectUtils.notNull(getLayoutForFile(myEditor.getFile()), defaultLayout);
+    myIsVerticalSplit = isVerticalSplit;
+  }
+
+  public TextEditorWithPreview(@NotNull TextEditor editor,
+                               @NotNull FileEditor preview,
+                               @NotNull @Nls String editorName,
+                               @NotNull Layout defaultLayout) {
+    this(editor, preview, editorName, defaultLayout, false);
   }
 
   public TextEditorWithPreview(@NotNull TextEditor editor, @NotNull FileEditor preview, @NotNull @Nls String editorName) {
@@ -107,24 +129,64 @@ public class TextEditorWithPreview extends UserDataHolderBase implements TextEdi
   @NotNull
   @Override
   public JComponent getComponent() {
-    if (myComponent == null) {
-      final JBSplitter splitter = new JBSplitter(false, 0.5f, 0.15f, 0.85f);
-      splitter.setSplitterProportionKey(getSplitterProportionKey());
-      splitter.setFirstComponent(myEditor.getComponent());
-      splitter.setSecondComponent(myPreview.getComponent());
-      splitter.setDividerWidth(3);
-
-      myToolbarWrapper = createMarkdownToolbarWrapper(splitter);
-
-      if (myLayout == null) {
-        String lastUsed = PropertiesComponent.getInstance().getValue(getLayoutPropertyName());
-        myLayout = Layout.fromId(lastUsed, myDefaultLayout);
-      }
-      adjustEditorsVisibility();
-
-      myComponent = JBUI.Panels.simplePanel(splitter).addToTop(myToolbarWrapper);
+    if (myComponent != null) {
+      return myComponent;
     }
+    mySplitter = new JBSplitter(myIsVerticalSplit, 0.5f, 0.15f, 0.85f);
+    mySplitter.setSplitterProportionKey(getSplitterProportionKey());
+    mySplitter.setFirstComponent(myEditor.getComponent());
+    mySplitter.setSecondComponent(myPreview.getComponent());
+    mySplitter.setDividerWidth(2);
+
+    myToolbarWrapper = createMarkdownToolbarWrapper(mySplitter);
+
+    if (myLayout == null) {
+      String lastUsed = PropertiesComponent.getInstance().getValue(getLayoutPropertyName());
+      myLayout = Layout.fromId(lastUsed, myDefaultLayout);
+    }
+    adjustEditorsVisibility();
+
+    BorderLayoutPanel panel = JBUI.Panels.simplePanel(mySplitter).addToTop(myToolbarWrapper);
+    if (!Registry.is("ide.text.editor.with.preview.show.floating.toolbar") || !myToolbarWrapper.isLeftToolbarEmpty()) {
+      myComponent = panel;
+      return myComponent;
+    }
+
+    myToolbarWrapper.setVisible(false);
+    MyEditorLayeredComponentWrapper layeredPane = new MyEditorLayeredComponentWrapper(panel);
+    myComponent = layeredPane;
+    LayoutActionsFloatingToolbar toolbar = new LayoutActionsFloatingToolbar(myComponent, new DefaultActionGroup(myToolbarWrapper.getRightToolbar().getActions()));
+    Disposer.register(this, toolbar);
+    layeredPane.add(panel, JLayeredPane.DEFAULT_LAYER);
+    myComponent.add(toolbar, JLayeredPane.POPUP_LAYER);
+    registerToolbarListeners(panel, toolbar);
     return myComponent;
+  }
+
+  private void registerToolbarListeners(JComponent actualComponent, LayoutActionsFloatingToolbar toolbar) {
+    UIUtil.addAwtListener(new MyMouseListener(toolbar), AWTEvent.MOUSE_MOTION_EVENT_MASK, toolbar);
+    final var actualEditor = UIUtil.findComponentOfType(actualComponent, EditorComponentImpl.class);
+    if (actualEditor != null) {
+      final var editorKeyListener = new KeyAdapter() {
+        @Override
+        public void keyPressed(KeyEvent event) {
+          toolbar.getVisibilityController().scheduleHide();
+        }
+      };
+      actualEditor.getEditor().getContentComponent().addKeyListener(editorKeyListener);
+      Disposer.register(toolbar, () -> {
+        actualEditor.getEditor().getContentComponent().removeKeyListener(editorKeyListener);
+      });
+    }
+  }
+
+  public boolean isVerticalSplit() {
+    return myIsVerticalSplit;
+  }
+
+  public void setVerticalSplit(boolean verticalSplit) {
+    myIsVerticalSplit = verticalSplit;
+    mySplitter.setOrientation(verticalSplit);
   }
 
   @NotNull
@@ -159,9 +221,20 @@ public class TextEditorWithPreview extends UserDataHolderBase implements TextEdi
     }
   }
 
+  @SuppressWarnings("unused")
+  protected void onLayoutChange(Layout oldValue, Layout newValue) { }
+
   private void adjustEditorsVisibility() {
     myEditor.getComponent().setVisible(myLayout == Layout.SHOW_EDITOR || myLayout == Layout.SHOW_EDITOR_AND_PREVIEW);
     myPreview.getComponent().setVisible(myLayout == Layout.SHOW_PREVIEW || myLayout == Layout.SHOW_EDITOR_AND_PREVIEW);
+  }
+
+  protected void setLayout(@NotNull Layout layout) {
+    Layout oldLayout = myLayout;
+    myLayout = layout;
+    PropertiesComponent.getInstance().setValue(getLayoutPropertyName(), myLayout.myId, myDefaultLayout.myId);
+    adjustEditorsVisibility();
+    onLayoutChange(oldLayout, myLayout);
   }
 
   private void invalidateLayout() {
@@ -232,6 +305,11 @@ public class TextEditorWithPreview extends UserDataHolderBase implements TextEdi
   @NotNull
   public TextEditor getTextEditor() {
     return myEditor;
+  }
+
+  @NotNull
+  public FileEditor getPreviewEditor() {
+    return myPreview;
   }
 
   public Layout getLayout() {
@@ -359,10 +437,10 @@ public class TextEditorWithPreview extends UserDataHolderBase implements TextEdi
   @NotNull
   protected ActionGroup createViewActionGroup() {
     return new DefaultActionGroup(
-        getShowEditorAction(),
-        getShowEditorAndPreviewAction(),
-        getShowPreviewAction()
-      );
+      getShowEditorAction(),
+      getShowEditorAndPreviewAction(),
+      getShowPreviewAction()
+    );
   }
 
   @Nullable
@@ -386,22 +464,20 @@ public class TextEditorWithPreview extends UserDataHolderBase implements TextEdi
   }
 
   public enum Layout {
-    SHOW_EDITOR("Editor only", IdeBundle.messagePointer("tab.title.editor.only"), AllIcons.General.LayoutEditorOnly),
-    SHOW_PREVIEW("Preview only", IdeBundle.messagePointer("tab.title.preview.only"), AllIcons.General.LayoutPreviewOnly),
-    SHOW_EDITOR_AND_PREVIEW("Editor and Preview", IdeBundle.messagePointer("tab.title.editor.and.preview"), AllIcons.General.LayoutEditorPreview);
+    SHOW_EDITOR("Editor only", IdeBundle.messagePointer("tab.title.editor.only")),
+    SHOW_PREVIEW("Preview only", IdeBundle.messagePointer("tab.title.preview.only")),
+    SHOW_EDITOR_AND_PREVIEW("Editor and Preview", IdeBundle.messagePointer("tab.title.editor.and.preview"));
 
     private final @NotNull Supplier<@Nls String> myName;
-    private final Icon myIcon;
     private final String myId;
 
-    Layout(String id, @NotNull Supplier<String> name, Icon icon) {
+    Layout(String id, @NotNull Supplier<String> name) {
       myId = id;
       myName = name;
-      myIcon = icon;
     }
 
     public static Layout fromId(String id, Layout defaultValue) {
-      for (Layout layout : Layout.values()) {
+      for (Layout layout : values()) {
         if (layout.myId.equals(id)) {
           return layout;
         }
@@ -413,8 +489,10 @@ public class TextEditorWithPreview extends UserDataHolderBase implements TextEdi
       return myName.get();
     }
 
-    public Icon getIcon() {
-      return myIcon;
+    public Icon getIcon(@Nullable TextEditorWithPreview editor) {
+      if (this == SHOW_EDITOR) return AllIcons.General.LayoutEditorOnly;
+      if (this == SHOW_PREVIEW) return AllIcons.General.LayoutPreviewOnly;
+      return editor != null && editor.myIsVerticalSplit ? AllIcons.Actions.PreviewDetailsVertically : AllIcons.Actions.PreviewDetails;
     }
   }
 
@@ -422,7 +500,7 @@ public class TextEditorWithPreview extends UserDataHolderBase implements TextEdi
     private final Layout myActionLayout;
 
     ChangeViewModeAction(Layout layout) {
-      super(layout.getName(), layout.getName(), layout.getIcon());
+      super(layout.getName(), layout.getName(), layout.getIcon(TextEditorWithPreview.this));
       myActionLayout = layout;
     }
 
@@ -434,10 +512,20 @@ public class TextEditorWithPreview extends UserDataHolderBase implements TextEdi
     @Override
     public void setSelected(@NotNull AnActionEvent e, boolean state) {
       if (state) {
-        myLayout = myActionLayout;
-        PropertiesComponent.getInstance().setValue(getLayoutPropertyName(), myLayout.myId, myDefaultLayout.myId);
-        adjustEditorsVisibility();
+        setLayout(myActionLayout);
       }
+      else {
+        if (myActionLayout == Layout.SHOW_EDITOR_AND_PREVIEW) {
+          mySplitter.setOrientation(!myIsVerticalSplit);
+          myIsVerticalSplit = !myIsVerticalSplit;
+        }
+      }
+    }
+
+    @Override
+    public void update(@NotNull AnActionEvent e) {
+      super.update(e);
+      e.getPresentation().setIcon(myActionLayout.getIcon(TextEditorWithPreview.this));
     }
   }
 
@@ -464,5 +552,91 @@ public class TextEditorWithPreview extends UserDataHolderBase implements TextEdi
   @Override
   public void navigateTo(@NotNull Navigatable navigatable) {
     getTextEditor().navigateTo(navigatable);
+  }
+
+  protected void handleLayoutChange(boolean isVerticalSplit) {
+    if (myIsVerticalSplit == isVerticalSplit) return;
+    myIsVerticalSplit = isVerticalSplit;
+
+    myToolbarWrapper.refresh();
+    mySplitter.setOrientation(myIsVerticalSplit);
+    myComponent.repaint();
+  }
+
+  @Nullable
+  private static Layout getLayoutForFile(@Nullable VirtualFile file) {
+    if (file != null) {
+      return file.getUserData(DEFAULT_LAYOUT_FOR_FILE);
+    }
+    return null;
+  }
+
+  public static void openPreviewForFile(@NotNull Project project, @NotNull VirtualFile file) {
+    file.putUserData(DEFAULT_LAYOUT_FOR_FILE, Layout.SHOW_PREVIEW);
+    FileEditorManager.getInstance(project).openFile(file, true);
+  }
+
+  private static class MyEditorLayeredComponentWrapper extends JBLayeredPane {
+    private final JComponent editorComponent;
+
+    static final int toolbarTopPadding = 25;
+    static final int toolbarRightPadding = 20;
+
+    private MyEditorLayeredComponentWrapper(JComponent component) {
+      editorComponent = component;
+    }
+
+    @Override
+    public void doLayout() {
+      final var components = getComponents();
+      final var bounds = getBounds();
+      for (Component component : components) {
+        if (component == editorComponent) {
+          component.setBounds(0, 0, bounds.width, bounds.height);
+        }
+        else {
+          final var preferredComponentSize = component.getPreferredSize();
+          var x = 0;
+          var y = 0;
+          if (component instanceof LayoutActionsFloatingToolbar) {
+            x = bounds.width - preferredComponentSize.width - toolbarRightPadding;
+            y = toolbarTopPadding;
+          }
+          component.setBounds(x, y, preferredComponentSize.width, preferredComponentSize.height);
+        }
+      }
+    }
+
+    @Override
+    public Dimension getPreferredSize() {
+      return editorComponent.getPreferredSize();
+    }
+  }
+
+  private class MyMouseListener implements AWTEventListener {
+    private final LayoutActionsFloatingToolbar toolbar;
+    private final Alarm alarm;
+
+    MyMouseListener(LayoutActionsFloatingToolbar toolbar) {
+      this.toolbar = toolbar;
+      alarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, toolbar);
+    }
+
+    @Override
+    public void eventDispatched(AWTEvent event) {
+      var isMouseOutsideToolbar = toolbar.getMousePosition() == null;
+      if (myComponent.getMousePosition() != null) {
+        alarm.cancelAllRequests();
+        toolbar.getVisibilityController().scheduleShow();
+        if (isMouseOutsideToolbar) {
+          alarm.addRequest(() -> {
+            toolbar.getVisibilityController().scheduleHide();
+          }, 1400);
+        }
+      }
+      else if (isMouseOutsideToolbar) {
+        toolbar.getVisibilityController().scheduleHide();
+      }
+    }
   }
 }

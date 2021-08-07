@@ -24,12 +24,11 @@ final class PluginTroubleInfoCollector implements GeneralTroubleInfoCollector {
     List<String> loadedCustom = new ArrayList<>();
     List<String> disabled = new ArrayList<>();
 
-    String SPECIAL_IDEA_PLUGIN = "IDEA CORE";
     for (IdeaPluginDescriptor descriptor : ourPlugins) {
       final String version = descriptor.getVersion();
       String s = descriptor.getName() + (version != null ? " (" + version + ")" : "");
       if (descriptor.isEnabled()) {
-        if (!descriptor.isBundled() && !SPECIAL_IDEA_PLUGIN.equals(descriptor.getName())) {
+        if (!descriptor.isBundled() && !PluginManagerCore.SPECIAL_IDEA_PLUGIN_ID.getIdString().equals(descriptor.getName())) {
           loadedCustom.add(s);
         }
       }

@@ -80,16 +80,11 @@ public abstract class YamlScalarType extends YamlMetaType {
       }
       case SEQUENCE_ITEM: {
         markup.append(":");
-        markup.increaseTabs(2);
-        try {
-          markup.newLineAndTabs(true);
+        markup.doTabbedBlockForSequenceItem(() -> {
           if (iteration.isEndOfPathReached()) {
             markup.appendCaret();
           }
-        }
-        finally {
-          markup.decreaseTabs(2);
-        }
+        });
         break;
       }
       default:

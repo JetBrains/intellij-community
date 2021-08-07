@@ -19,7 +19,6 @@ import com.intellij.application.options.CodeStyle;
 import com.intellij.formatting.Indent;
 import com.intellij.lang.Language;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.highlighter.HighlighterIterator;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
@@ -406,13 +405,15 @@ public abstract class JavaLikeLangLineIndentProvider implements LineIndentProvid
         SemanticEditorPosition candidate = curr.copy();
         curr.moveBefore();
         curr.moveBeforeOptionalMix(Whitespace, LineComment, BlockComment);
-        if (!curr.isAt(RightParenthesis)) {
-          return candidate.getStartOffset();
-        }
-        else {
+        if (curr.isAt(RightParenthesis)) {
           curr.moveBeforeParentheses(LeftParenthesis, RightParenthesis);
-          continue;
+          SemanticEditorPosition controlStructureCheck = curr.copy();
+          controlStructureCheck.moveBeforeOptionalMix(Whitespace, LineComment, BlockComment);
+          if (isStartOfStatementWithOptionalBlock(controlStructureCheck)) {
+            continue;
+          }
         }
+        return candidate.getStartOffset();
       }
       else if (curr.isAt(BlockClosingBrace)) {
         curr.moveBeforeParentheses(BlockOpeningBrace, BlockClosingBrace);
@@ -441,13 +442,13 @@ public abstract class JavaLikeLangLineIndentProvider implements LineIndentProvid
    * @param offset the offset in the {@code editor}    
    */
   public SemanticEditorPosition getPosition(@NotNull Editor editor, int offset) {
-    return SemanticEditorPosition.createEditorPosition((EditorEx)editor, offset,
+    return SemanticEditorPosition.createEditorPosition(editor, offset,
                                                        (_editor, _offset) -> getIteratorAtPosition(_editor, _offset),
                                                        tokenType -> mapType(tokenType));
   }
 
   @NotNull
-  protected HighlighterIterator getIteratorAtPosition(@NotNull EditorEx editor, int offset) {
+  protected HighlighterIterator getIteratorAtPosition(@NotNull Editor editor, int offset) {
     return editor.getHighlighter().createIterator(offset);
   }
 

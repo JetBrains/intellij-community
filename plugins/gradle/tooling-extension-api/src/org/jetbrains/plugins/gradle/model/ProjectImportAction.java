@@ -72,6 +72,18 @@ public class ProjectImportAction implements BuildAction<ProjectImportAction.AllM
     }
   }
 
+  @ApiStatus.Internal
+  public Set<Class<?>> getModelProvidersClasses() {
+    Set<Class<?>> result = new LinkedHashSet<Class<?>>();
+    for (ProjectImportModelProvider provider : myProjectsLoadedModelProviders) {
+      result.add(provider.getClass());
+    }
+    for (ProjectImportModelProvider provider : myBuildFinishedModelProviders) {
+      result.add(provider.getClass());
+    }
+    return result;
+  }
+
   public void addTargetTypes(@NotNull Set<Class<?>> targetTypes) {
     myTargetTypes.addAll(targetTypes);
   }
@@ -424,8 +436,8 @@ public class ProjectImportAction implements BuildAction<ProjectImportAction.AllM
     }
 
     @Override
-    public void convertPaths(@NotNull Consumer<Object> pathsConverter) {
-      super.convertPaths(pathsConverter);
+    public void applyPathsConverter(@NotNull Consumer<Object> pathsConverter) {
+      super.applyPathsConverter(pathsConverter);
       BuildEnvironment buildEnvironment = getBuildEnvironment();
       if (buildEnvironment != null) {
         pathsConverter.consume(buildEnvironment);

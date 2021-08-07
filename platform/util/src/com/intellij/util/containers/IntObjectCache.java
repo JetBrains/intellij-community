@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.util.containers;
 
@@ -91,7 +91,7 @@ public final class IntObjectCache<T> extends ObjectCacheBase implements Iterable
 
       myCache[index].value = null;
 
-      fireListenersAboutDeletion(deletedKey, deletedValue);
+      fireListenersAboutDeletion(deletedKey, (T)deletedValue);
     }
   }
 
@@ -111,7 +111,7 @@ public final class IntObjectCache<T> extends ObjectCacheBase implements Iterable
 
   // Some AbstractMap functions finished
 
-  public final void cacheObject(int key, T x) {
+  public void cacheObject(int key, T x) {
     int deletedKey = 0;
     Object deletedValue = null;
 
@@ -144,11 +144,11 @@ public final class IntObjectCache<T> extends ObjectCacheBase implements Iterable
     add2Top(index);
 
     if (deletedValue != null) {
-      fireListenersAboutDeletion(deletedKey, deletedValue);
+      fireListenersAboutDeletion(deletedKey, (T)deletedValue);
     }
   }
 
-  public final T tryKey(int key) {
+  public T tryKey(int key) {
     ++myAttempts;
     final int index = searchForCacheEntry(key);
     if (index == 0) {
@@ -175,7 +175,7 @@ public final class IntObjectCache<T> extends ObjectCacheBase implements Iterable
     return cacheEntry.value;
   }
 
-  public final boolean isCached(int key) {
+  public boolean isCached(int key) {
     return searchForCacheEntry(key) != 0;
   }
 
@@ -307,11 +307,12 @@ public final class IntObjectCache<T> extends ObjectCacheBase implements Iterable
 
   // start of listening features
 
-  public interface DeletedPairsListener extends EventListener {
-    void objectRemoved(int key, Object value);
+  @FunctionalInterface
+  public interface DeletedPairsListener<T> extends EventListener {
+    void objectRemoved(int key, T value);
   }
 
-  public void addDeletedPairsListener(DeletedPairsListener listener) {
+  public void addDeletedPairsListener(DeletedPairsListener<T> listener) {
     if (myListeners == null) {
       myListeners = new DeletedPairsListener[1];
     }
@@ -321,15 +322,15 @@ public final class IntObjectCache<T> extends ObjectCacheBase implements Iterable
     myListeners[myListeners.length - 1] = listener;
   }
 
-  public void removeDeletedPairsListener(DeletedPairsListener listener) {
+  public void removeDeletedPairsListener(DeletedPairsListener<T> listener) {
     if (myListeners != null) {
       if (myListeners.length == 1) {
         myListeners = null;
       }
       else {
-        DeletedPairsListener[] newListeners = new DeletedPairsListener[myListeners.length - 1];
+        DeletedPairsListener<?>[] newListeners = new DeletedPairsListener[myListeners.length - 1];
         int i = 0;
-        for (DeletedPairsListener myListener : myListeners) {
+        for (DeletedPairsListener<?> myListener : myListeners) {
           if (myListener != listener) {
             newListeners[i++] = myListener;
           }
@@ -339,10 +340,10 @@ public final class IntObjectCache<T> extends ObjectCacheBase implements Iterable
     }
   }
 
-  private void fireListenersAboutDeletion(final int key, final Object value) {
+  private void fireListenersAboutDeletion(int key, T value) {
     if (myListeners != null) {
-      for (DeletedPairsListener myListener : myListeners) {
-        myListener.objectRemoved(key, value);
+      for (DeletedPairsListener<?> myListener : myListeners) {
+        ((DeletedPairsListener<T>)myListener).objectRemoved(key, value);
       }
     }
   }

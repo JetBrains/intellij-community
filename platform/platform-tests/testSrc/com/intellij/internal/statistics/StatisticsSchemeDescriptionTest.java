@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.statistics;
 
 import com.intellij.internal.statistic.FUCounterCollectorTestCase;
@@ -37,7 +37,7 @@ public class StatisticsSchemeDescriptionTest extends BasePlatformTestCase {
   public <T> void doTestField(@NotNull EventField<T> field, @NotNull T value, @NotNull String expected) {
     doTestField(field, value, obj -> {
       TestCase.assertNotNull(obj);
-      TestCase.assertEquals(obj.toString(), expected);
+      TestCase.assertEquals(expected, obj.toString());
     });
   }
 
@@ -135,8 +135,32 @@ public class StatisticsSchemeDescriptionTest extends BasePlatformTestCase {
     doTestField(EventFields.Int("count"), 123, "123");
   }
 
+  public void testPrimitiveRoundedIntField() {
+    doTestField(EventFields.RoundedInt("rounded_count"), 123, "128");
+  }
+
+  public void testPrimitiveNegativeAsRoundedIntField() {
+    doTestField(EventFields.RoundedInt("rounded_count"), -1, "-1");
+  }
+
+  public void testPrimitiveZeroAsRoundedIntField() {
+    doTestField(EventFields.RoundedInt("rounded_count"), 0, "0");
+  }
+
   public void testPrimitiveLongField() {
     doTestField(EventFields.Long("duration_ms"), 123L, "123");
+  }
+
+  public void testPrimitiveRoundedLongField() {
+    doTestField(EventFields.RoundedLong("rounded_duration_ms"), 60L, "64");
+  }
+
+  public void testPrimitiveNegativeAsRoundedLongField() {
+    doTestField(EventFields.RoundedLong("rounded_duration_ms"), -1424612L, "-2097152");
+  }
+
+  public void testPrimitiveZeroAsRoundedLongField() {
+    doTestField(EventFields.RoundedLong("rounded_duration_ms"), 0L, "0");
   }
 
   public void testPrimitiveDoubleField() {

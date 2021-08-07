@@ -2,8 +2,10 @@
 package org.jetbrains.plugins.github.api.data
 
 import com.fasterxml.jackson.annotation.JsonProperty
+import com.intellij.collaboration.api.dto.GraphQLFragment
 import com.intellij.openapi.util.NlsSafe
 
+@GraphQLFragment("/graphql/fragment/commit.graphql")
 class GHCommit(id: String,
                oid: String,
                abbreviatedOid: String,

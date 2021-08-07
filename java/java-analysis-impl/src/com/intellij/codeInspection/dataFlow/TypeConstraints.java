@@ -1,6 +1,10 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.dataFlow;
 
+import com.intellij.codeInsight.Nullability;
+import com.intellij.codeInspection.dataFlow.jvm.JvmPsiRangeSetUtil;
+import com.intellij.codeInspection.dataFlow.types.DfType;
+import com.intellij.codeInspection.dataFlow.types.DfTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.InheritanceUtil;
@@ -13,6 +17,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
+import static com.intellij.psi.CommonClassNames.*;
 import static com.intellij.psi.util.TypeConversionUtil.canConvertSealedTo;
 
 public final class TypeConstraints {
@@ -21,18 +26,23 @@ public final class TypeConstraints {
    */
   public static final TypeConstraint TOP = new TypeConstraint() {
     @NotNull @Override public TypeConstraint join(@NotNull TypeConstraint other) { return this;}
+    @NotNull @Override public TypeConstraint tryJoinExactly(@NotNull TypeConstraint other) { return this;}
     @NotNull @Override public TypeConstraint meet(@NotNull TypeConstraint other) { return other; }
     @Override public boolean isSuperConstraintOf(@NotNull TypeConstraint other) { return true; }
+    @Override public boolean isSubtypeOf(@NotNull String className) { return false;}
     @Override public TypeConstraint tryNegate() { return BOTTOM; }
     @Override public String toString() { return ""; }
+    @Override public DfType getUnboxedType() { return DfType.TOP; }
   };
   /**
    * Bottom constraint (no actual type satisfies this)
    */
   public static final TypeConstraint BOTTOM = new TypeConstraint() {
     @NotNull @Override public TypeConstraint join(@NotNull TypeConstraint other) { return other;}
+    @NotNull @Override public TypeConstraint tryJoinExactly(@NotNull TypeConstraint other) { return other;}
     @NotNull @Override public TypeConstraint meet(@NotNull TypeConstraint other) { return this;}
     @Override public boolean isSuperConstraintOf(@NotNull TypeConstraint other) { return other == this; }
+    @Override public boolean isSubtypeOf(@NotNull String className) { return false;}
     @Override public TypeConstraint tryNegate() { return TOP; }
     @Override public String toString() { return "<impossible type>"; }
   };
@@ -47,11 +57,11 @@ public final class TypeConstraints {
     @Override public boolean isConvertibleFrom(@NotNull Exact other) { return true;}
     @NotNull @Override public TypeConstraint instanceOf() { return TOP;}
     @NotNull @Override public TypeConstraint notInstanceOf() { return BOTTOM;}
-    @Override public String toString() { return CommonClassNames.JAVA_LANG_OBJECT;}
+    @Override public String toString() { return JAVA_LANG_OBJECT;}
 
     @Override
     public PsiType getPsiType(Project project) {
-      return JavaPsiFacade.getElementFactory(project).createTypeByFQClassName(CommonClassNames.JAVA_LANG_OBJECT);
+      return JavaPsiFacade.getElementFactory(project).createTypeByFQClassName(JAVA_LANG_OBJECT);
     }
   };
 
@@ -130,7 +140,15 @@ public final class TypeConstraints {
   @NotNull
   private static PsiType normalizeType(@NotNull PsiType psiType) {
     if (psiType instanceof PsiArrayType) {
-      return PsiTypesUtil.createArrayType(normalizeType(psiType.getDeepComponentType()), psiType.getArrayDimensions());
+      PsiType normalized = normalizeType(psiType.getDeepComponentType());
+      int dimensions = psiType.getArrayDimensions();
+      if (normalized instanceof PsiIntersectionType) {
+        PsiType[] types = StreamEx.of(((PsiIntersectionType)normalized).getConjuncts())
+          .map(t -> PsiTypesUtil.createArrayType(t, dimensions))
+          .toArray(PsiType.EMPTY_ARRAY);
+        return PsiIntersectionType.createIntersection(true, types);
+      }
+      return PsiTypesUtil.createArrayType(normalized, dimensions);
     }
     if (psiType instanceof PsiWildcardType) {
       return normalizeType(((PsiWildcardType)psiType).getExtendsBound());
@@ -173,15 +191,15 @@ public final class TypeConstraints {
   }
 
   @NotNull
-  private static TypeConstraint.Exact exactClass(@NotNull PsiClass psiClass) {
+  public static TypeConstraint.Exact exactClass(@NotNull PsiClass psiClass) {
     String name = psiClass.getQualifiedName();
     if (name != null) {
       switch (name) {
-        case CommonClassNames.JAVA_LANG_OBJECT:
+        case JAVA_LANG_OBJECT:
           return EXACTLY_OBJECT;
-        case CommonClassNames.JAVA_LANG_CLONEABLE:
+        case JAVA_LANG_CLONEABLE:
           return ArraySuperInterface.CLONEABLE;
-        case CommonClassNames.JAVA_IO_SERIALIZABLE:
+        case JAVA_IO_SERIALIZABLE:
           return ArraySuperInterface.SERIALIZABLE;
       }
     }
@@ -215,7 +233,17 @@ public final class TypeConstraints {
     }
 
     @Override
+    public @NotNull DfType getArrayComponentType() {
+      return DfTypes.typedObject(myType, Nullability.UNKNOWN);
+    }
+
+    @Override
     public boolean isFinal() {
+      return true;
+    }
+
+    @Override
+    public boolean isArray() {
       return true;
     }
 
@@ -236,8 +264,8 @@ public final class TypeConstraints {
   }
 
   private enum ArraySuperInterface implements TypeConstraint.Exact {
-    CLONEABLE(CommonClassNames.JAVA_LANG_CLONEABLE),
-    SERIALIZABLE(CommonClassNames.JAVA_IO_SERIALIZABLE);
+    CLONEABLE(JAVA_LANG_CLONEABLE),
+    SERIALIZABLE(JAVA_IO_SERIALIZABLE);
     private final @NotNull String myReference;
 
     ArraySuperInterface(@NotNull String reference) {
@@ -307,17 +335,49 @@ public final class TypeConstraints {
     }
 
     @Override
+    public DfType getUnboxedType() {
+      String name = myClass.getQualifiedName();
+      if (name == null) return DfType.BOTTOM;
+      switch (name) {
+        case JAVA_LANG_BOOLEAN:
+          return DfTypes.BOOLEAN;
+        case JAVA_LANG_INTEGER:
+          return DfTypes.INT;
+        case JAVA_LANG_LONG:
+          return DfTypes.LONG;
+        case JAVA_LANG_DOUBLE:
+          return DfTypes.DOUBLE;
+        case JAVA_LANG_FLOAT:
+          return DfTypes.FLOAT;
+        case JAVA_LANG_BYTE:
+          return DfTypes.intRange(Objects.requireNonNull(JvmPsiRangeSetUtil.typeRange(PsiType.BYTE)));
+        case JAVA_LANG_SHORT:
+          return DfTypes.intRange(Objects.requireNonNull(JvmPsiRangeSetUtil.typeRange(PsiType.SHORT)));
+        case JAVA_LANG_CHARACTER:
+          return DfTypes.intRange(Objects.requireNonNull(JvmPsiRangeSetUtil.typeRange(PsiType.CHAR)));
+        default:
+          return DfType.BOTTOM;
+      }
+    }
+
+    @Override
+    public boolean isPrimitiveWrapper() {
+      String name = myClass.getQualifiedName();
+      return name != null && TypeConversionUtil.isPrimitiveWrapper(name);
+    }
+
+    @Override
     public boolean canBeInstantiated() {
       // Abstract final type is incorrect. We, however, assume that final wins: it can be instantiated
       // otherwise TypeConstraints.instanceOf(type) would return impossible type
       return (myClass.hasModifierProperty(PsiModifier.FINAL) || !myClass.hasModifierProperty(PsiModifier.ABSTRACT)) &&
-             !CommonClassNames.JAVA_LANG_VOID.equals(myClass.getQualifiedName());
+             !JAVA_LANG_VOID.equals(myClass.getQualifiedName());
     }
 
     @Override
     public boolean isComparedByEquals() {
       String name = myClass.getQualifiedName();
-      return name != null && (CommonClassNames.JAVA_LANG_STRING.equals(name) || TypeConversionUtil.isPrimitiveWrapper(name));
+      return name != null && (JAVA_LANG_STRING.equals(name) || TypeConversionUtil.isPrimitiveWrapper(name));
     }
 
     @NotNull
@@ -347,14 +407,14 @@ public final class TypeConstraints {
 
     @Override
     public StreamEx<Exact> superTypes() {
-      List<Exact> superTypes = new ArrayList<>();
+      Set<PsiClass> superTypes = new LinkedHashSet<>();
       InheritanceUtil.processSupers(myClass, false, t -> {
-        if (!t.hasModifierProperty(PsiModifier.FINAL)) {
-          superTypes.add(exactClass(t));
+        if (!(t instanceof PsiTypeParameter) && !t.hasModifierProperty(PsiModifier.FINAL)) {
+          superTypes.add(t);
         }
         return true;
       });
-      return StreamEx.of(superTypes);
+      return StreamEx.of(superTypes).map(TypeConstraints::exactClass);
     }
 
     @Override
@@ -384,7 +444,7 @@ public final class TypeConstraints {
         if (myClass.isInterface() && !otherClass.hasModifierProperty(PsiModifier.FINAL)) return true;
         if (otherClass.isInterface() && !myClass.hasModifierProperty(PsiModifier.FINAL)) return true;
         PsiManager manager = myClass.getManager();
-        return manager.areElementsEquivalent(myClass, otherClass) || 
+        return manager.areElementsEquivalent(myClass, otherClass) ||
                otherClass.isInheritor(myClass, true) ||
                myClass.isInheritor(otherClass, true);
       }
@@ -445,14 +505,19 @@ public final class TypeConstraints {
       }
       if (other instanceof ArraySuperInterface) return true;
       if (other instanceof ExactClass) {
-        return CommonClassNames.JAVA_LANG_OBJECT.equals(((ExactClass)other).myClass.getQualifiedName());
+        return JAVA_LANG_OBJECT.equals(((ExactClass)other).myClass.getQualifiedName());
       }
       return false;
     }
 
     @Override
-    public @NotNull Exact getArrayComponent() {
-      return myComponent;
+    public @NotNull DfType getArrayComponentType() {
+      return myComponent.instanceOf().asDfType();
+    }
+
+    @Override
+    public boolean isArray() {
+      return true;
     }
   }
 

@@ -15,11 +15,14 @@
  */
 package org.jetbrains.idea.maven.dom
 
+import org.junit.Test
+
 /**
  * @author Sergey Evdokimov
  */
 class MavenDontCheckDependencyInManagementSectionTest extends MavenDomTestCase {
 
+  @Test
   void testHighlighting() {
     importProject("""
 <groupId>test</groupId>

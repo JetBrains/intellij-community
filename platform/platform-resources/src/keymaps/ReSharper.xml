@@ -28,9 +28,7 @@
   <action id="SearchEverywhere">
     <keyboard-shortcut first-keystroke="control N"/>
   </action>
-  <action id="GotoChangedFile">
-    <keyboard-shortcut first-keystroke="control N"/>
-  </action>
+  <action id="GotoChangedFile"/>
   <action id="GotoFile">
     <keyboard-shortcut first-keystroke="control shift N"/>
   </action>
@@ -38,8 +36,7 @@
     <keyboard-shortcut first-keystroke="control shift alt N"/>
   </action>
   <action id="GotoImplementation">
-    <keyboard-shortcut first-keystroke="control alt b" />
-    <mouse-shortcut keystroke="ctrl alt button1"/>
+    <keyboard-shortcut first-keystroke="control alt B" />
   </action>
   <action id="GotoRelated">
     <keyboard-shortcut first-keystroke="ctrl shift alt G"/>

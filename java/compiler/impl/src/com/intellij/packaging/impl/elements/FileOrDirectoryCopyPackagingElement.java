@@ -22,6 +22,11 @@ import com.intellij.packaging.elements.PackagingElementOutputKind;
 import com.intellij.packaging.elements.PackagingElementResolvingContext;
 import com.intellij.packaging.elements.PackagingElementType;
 import com.intellij.util.xmlb.annotations.Attribute;
+import com.intellij.workspaceModel.ide.VirtualFileUrlManagerUtil;
+import com.intellij.workspaceModel.storage.bridgeEntities.ModifiableFileOrDirectoryPackagingElement;
+import com.intellij.workspaceModel.storage.url.VirtualFileUrl;
+import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager;
+import kotlin.Unit;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -57,7 +62,24 @@ public abstract class FileOrDirectoryCopyPackagingElement<T extends FileOrDirect
   }
 
   public void setFilePath(String filePath) {
-    myFilePath = filePath;
+    String filePathBefore = myFilePath;
+    this.update(
+      () -> myFilePath = filePath,
+      (builder, entity) -> {
+        if (filePathBefore.equals(filePath)) return;
+
+        builder.modifyEntity(ModifiableFileOrDirectoryPackagingElement.class, entity, ent -> {
+          VirtualFileUrlManager manager = VirtualFileUrlManagerUtil.getInstance(VirtualFileUrlManager.Companion, myProject);
+          if (filePath != null) {
+            VirtualFileUrl fileUrl = manager.fromPath(filePath);
+            ent.setFilePath(fileUrl);
+          }
+          else {
+            ent.setFilePath(null);
+          }
+          return Unit.INSTANCE;
+        });
+      });
   }
 
   @NotNull

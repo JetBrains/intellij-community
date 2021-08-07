@@ -1,13 +1,23 @@
 <html>
 <body>
-Reports any public method which does not contain a logging statement. This inspection does not report
+Reports any public methods that do not contain a logging statement. This inspection does not report
 simple getters and setters.
+<p>For example:</p>
+<pre><code>
+  <b>public class</b> Crucial {
+    <b>private static final </b>Logger LOG = LoggerFactory.getLogger(Crucial.class);
+    <b>public void</b> doImportantStuff() {
+      // warning on this method
+    }
+
+    <b>public void</b> doOtherStuff() {
+      LOG.info("do other stuff");
+    }
+  }
+</code></pre>
 <!-- tooltip end -->
 <p>
 Use the table below to specify Logger class names.
-Public methods which do not contain a call to a method of a variable with the type of one of the classes specified,
-  will be reported by this inspection.
-<p>
-
+Public methods that do not use instance methods of the specified classes will be reported by this inspection.
 </body>
 </html>

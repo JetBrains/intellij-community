@@ -1,17 +1,16 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.wm.impl;
 
 import com.intellij.diagnostic.LoadingState;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.StatusBar;
 import com.intellij.ui.BalloonLayout;
+import com.intellij.util.ui.EdtInvocationManager;
 import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -24,13 +23,6 @@ import java.util.Objects;
 
 @ApiStatus.Internal
 public final class IdeFrameImpl extends JFrame implements IdeFrame, DataProvider {
-  /**
-   * @deprecated Not used anymore. Will be opened in fullscreen in any case if needed.
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  public static final Key<Boolean> SHOULD_OPEN_IN_FULL_SCREEN = Key.create("should.open.in.full.screen");
-
   public static final String NORMAL_STATE_BOUNDS = "normalBounds";
   //When this client property is used (Boolean.TRUE is set for the key) we have to ignore 'resizing' events and not spoil 'normal bounds' value for frame
   public static final String TOGGLING_FULL_SCREEN_IN_PROGRESS = "togglingFullScreenInProgress";
@@ -71,7 +63,18 @@ public final class IdeFrameImpl extends JFrame implements IdeFrame, DataProvider
   interface FrameDecorator {
     boolean isInFullScreen();
 
+    default void frameInit() {
+    }
+
     default void frameShow() {
+    }
+  }
+
+  @Override
+  public void addNotify() {
+    super.addNotify();
+    if (myFrameDecorator != null) {
+      myFrameDecorator.frameInit();
     }
   }
 
@@ -160,7 +163,7 @@ public final class IdeFrameImpl extends JFrame implements IdeFrame, DataProvider
   }
 
   void doDispose() {
-    UIUtil.invokeLaterIfNeeded(() -> super.dispose());
+    EdtInvocationManager.invokeLaterIfNeeded(() -> super.dispose());
   }
 
   protected final class AccessibleIdeFrameImpl extends AccessibleJFrame {
@@ -173,20 +176,11 @@ public final class IdeFrameImpl extends JFrame implements IdeFrame, DataProvider
   @Nullable
   public static Window getActiveFrame() {
     for (Frame frame : Frame.getFrames()) {
-      if (frame.isActive()) return frame;
+      if (frame.isActive()) {
+        return frame;
+      }
     }
     return null;
-  }
-
-  /**
-   * @deprecated Use {@link ProjectFrameHelper#updateView()} instead.
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  public void updateView() {
-    if (myFrameHelper != null) {
-      myFrameHelper.updateView();
-    }
   }
 
   /**

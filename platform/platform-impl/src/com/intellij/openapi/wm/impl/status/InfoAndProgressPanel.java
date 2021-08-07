@@ -54,6 +54,8 @@ import java.util.List;
 import java.util.*;
 
 public final class InfoAndProgressPanel extends JPanel implements CustomStatusBarWidget {
+  public static final Object FAKE_BALLOON = new Object();
+
   private final ProcessPopup myPopup;
   private final ProcessBalloon myBalloon = new ProcessBalloon(3);
 
@@ -240,6 +242,13 @@ public final class InfoAndProgressPanel extends JPanel implements CustomStatusBa
       }
       if (myInfos.size() > 1 && Registry.is("ide.windowSystem.autoShowProcessPopup")) {
         openProcessPopup(false);
+      }
+
+      if (original.isFinished(info)) {
+        // already finished, progress might not send another finished message
+        removeProgress(expanded);
+        removeProgress(compact);
+        return;
       }
 
       runQuery();

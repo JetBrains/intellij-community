@@ -7,7 +7,9 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
+import com.intellij.xml.util.XmlStringUtil;
 import git4idea.GitUtil;
+import git4idea.i18n.GitBundle;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -105,7 +107,7 @@ public class GitCommandResult {
   @NotNull
   @NlsSafe
   public @NlsContexts.NotificationContent String getErrorOutputAsHtmlString() {
-    return StringUtil.join(cleanup(getErrorOrStdOutput()), UIUtil.BR);
+    return StringUtil.join(cleanup(getErrorOrStdOutput()), XmlStringUtil::escapeString, UIUtil.BR);
   }
 
   @NotNull
@@ -118,7 +120,10 @@ public class GitCommandResult {
   @NotNull
   @NlsSafe
   private List<String> getErrorOrStdOutput() {
-    return myErrorOutput.isEmpty() && !success() ? myOutput : myErrorOutput;
+    if (!myErrorOutput.isEmpty()) return myErrorOutput;
+    if (success()) return Collections.emptyList();
+    if (!myOutput.isEmpty()) return myOutput;
+    return Collections.singletonList(GitBundle.message("git.error.exit", myExitCode));
   }
 
   @NotNull

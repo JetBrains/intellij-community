@@ -20,6 +20,7 @@ import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.DistinctRootsCollection;
 import com.intellij.util.io.URLUtil;
+import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.*;
 
 import java.io.*;
@@ -202,8 +203,8 @@ public class VfsUtilCore {
 
   public static @Nullable VirtualFile getVirtualFileForJar(@Nullable VirtualFile entryVFile) {
     if (entryVFile == null) return null;
-    final String path = entryVFile.getPath();
-    final int separatorIndex = path.indexOf("!/");
+    String path = entryVFile.getPath();
+    int separatorIndex = path.indexOf("!/");
     if (separatorIndex < 0) return null;
 
     String localPath = path.substring(0, separatorIndex);
@@ -260,17 +261,17 @@ public class VfsUtilCore {
     return stream;
   }
 
-  public static boolean iterateChildrenRecursively(final @NotNull VirtualFile root,
-                                                   final @Nullable VirtualFileFilter filter,
-                                                   final @NotNull ContentIterator iterator) {
+  public static boolean iterateChildrenRecursively(@NotNull VirtualFile root,
+                                                   @Nullable VirtualFileFilter filter,
+                                                   @NotNull ContentIterator iterator) {
     return iterateChildrenRecursively(root, filter, iterator, new VirtualFileVisitor.Option[0]);
   }
 
-  public static boolean iterateChildrenRecursively(final @NotNull VirtualFile root,
-                                                   final @Nullable VirtualFileFilter filter,
-                                                   final @NotNull ContentIterator iterator,
+  public static boolean iterateChildrenRecursively(@NotNull VirtualFile root,
+                                                   @Nullable VirtualFileFilter filter,
+                                                   @NotNull ContentIterator iterator,
                                                    VirtualFileVisitor.@NotNull Option... options) {
-    final VirtualFileVisitor.Result result = visitChildrenRecursively(root, new VirtualFileVisitor<Void>(options) {
+    VirtualFileVisitor.Result result = visitChildrenRecursively(root, new VirtualFileVisitor<Void>(options) {
       @Override
       public @NotNull Result visitFileEx(@NotNull VirtualFile file) {
         if (filter != null && !filter.accept(file)) return SKIP_CHILDREN;
@@ -283,12 +284,11 @@ public class VfsUtilCore {
 
   @SuppressWarnings("UnsafeVfsRecursion")
   public static @NotNull VirtualFileVisitor.Result visitChildrenRecursively(@NotNull VirtualFile file,
-                                                                            @NotNull VirtualFileVisitor<?> visitor) throws
-                                                                                                           VirtualFileVisitor.VisitorException {
+                                                                            @NotNull VirtualFileVisitor<?> visitor) throws VirtualFileVisitor.VisitorException {
     ProgressManager.checkCanceled();
     boolean pushed = false;
     try {
-      final boolean allowVisitFile = visitor.allowVisitFile(file);
+      boolean allowVisitFile = visitor.allowVisitFile(file);
       if (allowVisitFile) {
         VirtualFileVisitor.Result result = visitor.visitFileEx(file);
         if (result.skipChildren) return result;
@@ -345,7 +345,7 @@ public class VfsUtilCore {
       return visitChildrenRecursively(file, visitor);
     }
     catch (VirtualFileVisitor.VisitorException e) {
-      final Throwable cause = e.getCause();
+      Throwable cause = e.getCause();
       if (eClass.isInstance(cause)) {
         throw eClass.cast(cause);
       }
@@ -626,7 +626,7 @@ public class VfsUtilCore {
     return file;
   }
 
-  public static boolean processFilesRecursively(final @NotNull VirtualFile root, final @NotNull Processor<? super VirtualFile> processor) {
+  public static boolean processFilesRecursively(@NotNull VirtualFile root, @NotNull Processor<? super VirtualFile> processor) {
     Ref<Boolean> result = new Ref<>(true);
     visitChildrenRecursively(root, new VirtualFileVisitor<Void>() {
       @Override
@@ -731,19 +731,17 @@ public class VfsUtilCore {
     path = FileUtil.toCanonicalPath(path);
     int li = path.length();
     while (file != null && li != -1) {
-      int i = path.lastIndexOf('/', li - 1);
+      int sepIndex = path.lastIndexOf('/', li - 1);
       CharSequence fileName = file.getNameSequence();
-      if (i == 6 && StringUtil.startsWith(fileName, "//wsl$")) {
-        i = -1;
+      int fileNameEnd = fileName.length() + (StringUtil.endsWithChar(fileName, '/') ? -1 : 0);
+      if (sepIndex == 6 && StringUtil.startsWith(fileName, "//wsl$")) {
+        sepIndex = -1;
       }
-      if (StringUtil.endsWithChar(fileName, '/')) {
-        fileName = fileName.subSequence(0, fileName.length() - 1);
-      }
-      if (!StringUtilRt.equal(fileName, path.substring(i + 1, li), file.isCaseSensitive())) {
+      if (!CharArrayUtil.regionMatches(fileName, 0, fileNameEnd, path, sepIndex + 1, li, file.isCaseSensitive())) {
         return false;
       }
       file = file.getParent();
-      li = i;
+      li = sepIndex;
     }
     return li == -1 && file == null;
   }
@@ -821,5 +819,14 @@ public class VfsUtilCore {
       file = parent;
     }
     return file;
+  }
+
+  @NotNull
+  public static VirtualFileSet createCompactVirtualFileSet() {
+    return new CompactVirtualFileSet();
+  }
+  @NotNull
+  public static VirtualFileSet createCompactVirtualFileSet(@NotNull Collection<? extends VirtualFile> files) {
+    return new CompactVirtualFileSet(files);
   }
 }

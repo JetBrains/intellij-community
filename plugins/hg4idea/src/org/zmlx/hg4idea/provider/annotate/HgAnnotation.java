@@ -14,7 +14,7 @@ import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
-import git4idea.annotate.AnnotationTooltipBuilder;
+import com.intellij.openapi.vcs.annotate.AnnotationTooltipBuilder;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -132,9 +132,9 @@ public class HgAnnotation extends FileAnnotation {
   @Override
   @Nullable
   public Date getLineDate(int lineNumber) {
-    if (lineNumber >= myLines.size() || lineNumber < 0) {
-      return null;
-    }
+    //if (lineNumber >= myLines.size() || lineNumber < 0) {
+    //  return null;
+    //}
     //lines.get(lineNumber).get(HgAnnotation.FIELD.DATE)
     // todo : parse date
     return null;

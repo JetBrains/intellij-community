@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.wm.impl;
 
 import com.intellij.openapi.Disposable;
@@ -34,15 +34,15 @@ public final class TestWindowManager extends WindowManagerEx {
   private final DesktopLayout myLayout = new DesktopLayout();
 
   @Override
-  public final void doNotSuggestAsParent(final Window window) { }
+  public void doNotSuggestAsParent(final Window window) { }
 
   @Override
-  public final Window suggestParentWindow(final @Nullable Project project) {
+  public Window suggestParentWindow(final @Nullable Project project) {
     return null;
   }
 
   @Override
-  public final StatusBar getStatusBar(@NotNull Project project) {
+  public StatusBar getStatusBar(@NotNull Project project) {
     synchronized (STATUS_BAR) {
       StatusBar statusBar = project.getUserData(STATUS_BAR);
       if (statusBar == null) {
@@ -89,22 +89,22 @@ public final class TestWindowManager extends WindowManagerEx {
   }
 
   @Override
-  public final @Nullable IdeFrameImpl getFrame(Project project) {
+  public @Nullable IdeFrameImpl getFrame(Project project) {
     return null;
   }
 
   @Override
-  public final Component getFocusedComponent(@NotNull Window window) {
+  public Component getFocusedComponent(@NotNull Window window) {
     throw new UnsupportedOperationException();
   }
 
   @Override
-  public final Component getFocusedComponent(Project project) {
+  public Component getFocusedComponent(Project project) {
     return null;
   }
 
   @Override
-  public final Window getMostRecentFocusedWindow() {
+  public Window getMostRecentFocusedWindow() {
     return null;
   }
 
@@ -119,42 +119,42 @@ public final class TestWindowManager extends WindowManagerEx {
   }
 
   @Override
-  public final void setLayout(@NotNull DesktopLayout layout) {
+  public void setLayout(@NotNull DesktopLayout layout) {
     throw new UnsupportedOperationException();
   }
 
   @Override
-  public final void dispatchComponentEvent(final ComponentEvent e) {
+  public void dispatchComponentEvent(final ComponentEvent e) {
     throw new UnsupportedOperationException();
   }
 
   @Override
-  public final @NotNull Rectangle getScreenBounds() {
+  public @NotNull Rectangle getScreenBounds() {
     throw new UnsupportedOperationException();
   }
 
   @Override
-  public final boolean isInsideScreenBounds(final int x, final int y, final int width) {
+  public boolean isInsideScreenBounds(final int x, final int y, final int width) {
     throw new UnsupportedOperationException();
   }
 
   @Override
-  public final boolean isAlphaModeSupported() {
+  public boolean isAlphaModeSupported() {
     return false;
   }
 
   @Override
-  public final void setAlphaModeRatio(final Window window, final float ratio) {
+  public void setAlphaModeRatio(final Window window, final float ratio) {
     throw new UnsupportedOperationException();
   }
 
   @Override
-  public final boolean isAlphaModeEnabled(final Window window) {
+  public boolean isAlphaModeEnabled(final Window window) {
     throw new UnsupportedOperationException();
   }
 
   @Override
-  public final void setAlphaModeEnabled(final Window window, final boolean state) {
+  public void setAlphaModeEnabled(final Window window, final boolean state) {
     throw new UnsupportedOperationException();
   }
 
@@ -162,9 +162,6 @@ public final class TestWindowManager extends WindowManagerEx {
   public void setWindowShadow(Window window, WindowShadowMode mode) {
     throw new UnsupportedOperationException();
   }
-
-  @Override
-  public void adjustContainerWindow(@NotNull Component c, Dimension oldSize, Dimension newSize) { }
 
   @Override
   public boolean isFullScreenSupportedInCurrentOS() {
@@ -266,12 +263,12 @@ public final class TestWindowManager extends WindowManagerEx {
     }
 
     @Override
-    public final String getInfo() {
+    public String getInfo() {
       return null;
     }
 
     @Override
-    public final void setInfo(final String s) {}
+    public void setInfo(final String s) {}
 
     @Override
     public void startRefreshIndication(final String tooltipText) { }

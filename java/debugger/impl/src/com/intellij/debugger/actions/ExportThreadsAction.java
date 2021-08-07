@@ -7,7 +7,7 @@ import com.intellij.debugger.engine.DebugProcessImpl;
 import com.intellij.debugger.engine.events.DebuggerCommandImpl;
 import com.intellij.debugger.impl.DebuggerContextImpl;
 import com.intellij.debugger.impl.DebuggerSession;
-import com.intellij.ide.actions.ExportToTextFileAction;
+import com.intellij.ide.util.ExportToFileUtil;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
@@ -37,7 +37,7 @@ public class ExportThreadsAction extends AnAction {
           @Override
           protected void action() {
             final List<ThreadState> threads = ThreadDumpAction.buildThreadStates(process.getVirtualMachineProxy());
-            ApplicationManager.getApplication().invokeLater(() -> ExportToTextFileAction.export(project, ThreadDumpPanel.createToFileExporter(project, threads)), ModalityState.NON_MODAL);
+            ApplicationManager.getApplication().invokeLater(() -> ExportToFileUtil.chooseFileAndExport(project, ThreadDumpPanel.createToFileExporter(project, threads)), ModalityState.NON_MODAL);
           }
         });
       }

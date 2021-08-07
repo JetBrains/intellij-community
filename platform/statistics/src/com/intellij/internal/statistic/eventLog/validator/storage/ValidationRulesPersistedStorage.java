@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.statistic.eventLog.validator.storage;
 
 import com.intellij.internal.statistic.eventLog.*;
@@ -76,7 +76,7 @@ public class ValidationRulesPersistedStorage implements IntellijValidationRulesS
     mySemaphore.down();
     try {
       EventGroupRemoteDescriptors groups = EventLogMetadataUtils.parseGroupRemoteDescriptors(rawEventsScheme);
-      EventLogBuild build = EventLogBuild.fromString(EventLogConfiguration.INSTANCE.getBuild());
+      EventLogBuild build = EventLogBuild.fromString(EventLogConfiguration.getInstance().getBuild());
       Map<String, EventGroupRules> result = createValidators(build, groups);
       myIsInitialized.set(false);
       eventsValidators.clear();

@@ -1,14 +1,10 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 @file:JvmName("TypeUtils")
 
 package org.jetbrains.plugins.groovy.lang.typing
 
 import com.intellij.lang.java.beans.PropertyKind
-import com.intellij.psi.PsiMethod
-import com.intellij.psi.PsiPrimitiveType
-import com.intellij.psi.PsiType
-import com.intellij.psi.PsiVariable
-import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement
+import com.intellij.psi.*
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil
 import org.jetbrains.plugins.groovy.lang.psi.util.checkKind
@@ -17,7 +13,7 @@ import org.jetbrains.plugins.groovy.lang.resolve.api.GroovyProperty
 /**
  * @return boxed type if [this] is a primitive type, otherwise [this] type
  */
-fun PsiType.box(context: GroovyPsiElement): PsiType? {
+fun PsiType.box(context: PsiElement): PsiType {
   if (this !is PsiPrimitiveType || this == PsiType.NULL) return this
   val typeName = boxedTypeName ?: error("This type is not NULL and still doesn't have boxed type name")
   return TypesUtil.createType(typeName, context)

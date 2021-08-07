@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.codeInsight.typing
 
 import com.google.common.cache.Cache
@@ -9,7 +9,6 @@ import com.intellij.codeInspection.ui.ListEditForm
 import com.intellij.execution.ExecutionException
 import com.intellij.notification.*
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.components.ServiceManager
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleUtilCore
 import com.intellij.openapi.project.Project
@@ -60,6 +59,7 @@ private class PyStubPackagesAdvertiser : PyInspection() {
   var ignoredPackages: MutableList<String> = mutableListOf()
 
   override fun createOptionsPanel(): JComponent = ListEditForm(PyPsiBundle.message("INSP.stub.packages.compatibility.ignored.packages"),
+                                                               PyPsiBundle.message("INSP.stub.packages.compatibility.ignored.packages.label"),
                                                                ignoredPackages).contentPanel
 
   override fun buildVisitor(holder: ProblemsHolder,
@@ -178,34 +178,27 @@ private class PyStubPackagesAdvertiser : PyInspection() {
 
         BALLOON_NOTIFICATIONS
           .createNotification(
-            title = PyBundle.message("code.insight.type.hints.are.not.installed"),
-            content = PyBundle.message("code.insight.install.type.hints.content")
+            PyBundle.message("code.insight.type.hints.are.not.installed"),
+            PyBundle.message("code.insight.install.type.hints.content"),
+            NotificationType.INFORMATION)
+          .addAction(
+            NotificationAction.createSimpleExpiring(
+              if (plural) PyBundle.message("code.insight.install.type.hints.action")
+              else "${PyBundle.message("python.packaging.install")} $reqsToString"
+            ) { createInstallStubPackagesQuickFix(reqs, args, module, sdk, packageManager).applyFix(project, problemDescriptor) }
           )
-          .apply {
-            addAction(
-              NotificationAction.createSimpleExpiring(
-                if (plural) PyBundle.message("code.insight.install.type.hints.action")
-                else "${PyBundle.message("python.packaging.install")} $reqsToString"
-              ) { createInstallStubPackagesQuickFix(reqs, args, module, sdk, packageManager).applyFix(project, problemDescriptor) }
-            )
-
-            addAction(
-              NotificationAction.createSimpleExpiring(
-                PyBundle.message("code.insight.ignore.type.hints")
-              ) { createIgnorePackagesQuickFix(reqs, packageManager).applyFix(project, problemDescriptor) }
-            )
-
-            addAction(
-              NotificationAction.createSimpleExpiring(
-                InspectionsBundle.message("inspection.action.edit.settings")
-              ) {
-                val profile = ProjectInspectionProfileManager.getInstance(project).currentProfile
-                EditInspectionToolsSettingsAction.editToolSettings(project, profile, PyStubPackagesAdvertiser::class.simpleName)
-              }
-            )
-
-            collapseActionsDirection = Notification.CollapseActionsDirection.KEEP_LEFTMOST
-          }
+          .addAction(
+            NotificationAction.createSimpleExpiring(PyBundle.message("code.insight.ignore.type.hints")) {
+              createIgnorePackagesQuickFix(reqs, packageManager).applyFix(project, problemDescriptor)
+            }
+          )
+          .addAction(
+            NotificationAction.createSimpleExpiring(PyBundle.message("notification.action.edit.settings")) {
+              val profile = ProjectInspectionProfileManager.getInstance(project).currentProfile
+              EditInspectionToolsSettingsAction.editToolSettings(project, profile, PyStubPackagesAdvertiser::class.simpleName)
+            }
+          )
+          .setCollapseDirection(Notification.CollapseActionsDirection.KEEP_LEFTMOST)
           .whenExpired { project.putUserData(BALLOON_SHOWING, false) }
           .notify(project)
       }
@@ -276,11 +269,11 @@ private class PyStubPackagesAdvertiser : PyInspection() {
 
       val installationListener = object : PyPackageManagerUI.Listener {
         override fun started() {
-          ServiceManager.getService(project, PyStubPackagesInstallingStatus::class.java).markAsInstalling(stubPkgNamesToInstall)
+          project.getService(PyStubPackagesInstallingStatus::class.java).markAsInstalling(stubPkgNamesToInstall)
         }
 
         override fun finished(exceptions: MutableList<ExecutionException>?) {
-          val status = ServiceManager.getService(project, PyStubPackagesInstallingStatus::class.java)
+          val status = project.getService(PyStubPackagesInstallingStatus::class.java)
 
           val stubPkgsToUninstall = PyStubPackagesCompatibilityInspection
             .findIncompatibleRuntimeToStubPackages(sdk) { it.name in stubPkgNamesToInstall }

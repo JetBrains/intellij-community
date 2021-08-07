@@ -4,13 +4,14 @@ package com.jetbrains.python.console;
 import com.google.common.collect.Maps;
 import com.intellij.execution.console.LanguageConsoleView;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
 import com.intellij.util.PathMapper;
@@ -151,13 +152,18 @@ public class PydevConsoleRunnerFactory extends PythonConsoleRunnerFactory {
         workingDir = ModuleRootManager.getInstance(module).getContentRoots()[0].getPath();
       }
       else {
-        if (ModuleManager.getInstance(project).getModules().length > 0) {
-          VirtualFile[] roots = ModuleRootManager.getInstance(ModuleManager.getInstance(project).getModules()[0]).getContentRoots();
-          if (roots.length > 0) {
-            workingDir = roots[0].getPath();
+        VirtualFile[] projectRoots = ProjectRootManager.getInstance(project).getContentRoots();
+        for (VirtualFile root: projectRoots) {
+          if (root.getFileSystem() instanceof LocalFileSystem) {
+            // we can't start Python Console in remote folder without additional connection configurations
+            workingDir = root.getPath();
+            break;
           }
         }
       }
+    }
+    if (workingDir.isEmpty()) {
+      workingDir = System.getProperty("user.home");
     }
 
     if (pathMapper != null && workingDir != null) {

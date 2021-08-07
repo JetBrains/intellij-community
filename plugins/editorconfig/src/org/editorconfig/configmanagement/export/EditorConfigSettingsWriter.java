@@ -36,6 +36,8 @@ public class EditorConfigSettingsWriter extends OutputStreamWriter {
   private final           boolean             myAddRootFlag;
   private final           boolean             myCommentOutProperties;
 
+  private boolean myNoHeaders;
+
   private final static Comparator<OutPair> PAIR_COMPARATOR = (pair1, pair2) -> {
     EditorConfigPropertyKind pKind1 = getPropertyKind(pair1.getKey());
     EditorConfigPropertyKind pKind2 = getPropertyKind(pair2.getKey());
@@ -102,6 +104,11 @@ public class EditorConfigSettingsWriter extends OutputStreamWriter {
     return this;
   }
 
+  public EditorConfigSettingsWriter withoutHeaders() {
+    myNoHeaders = true;
+    return this;
+  }
+
   public void writeSettings() throws IOException {
     if (myAddRootFlag) {
       writeProperties(Collections.singletonList(new OutPair("root", "true")), false);
@@ -132,7 +139,9 @@ public class EditorConfigSettingsWriter extends OutputStreamWriter {
   }
 
   private void writeGeneralSection() throws IOException {
-    write("[*]\n");
+    if (!myNoHeaders) {
+      write("[*]\n");
+    }
     List<OutPair> pairs = myGeneralOptions.keySet().stream()
       .map(key -> new OutPair(key, myGeneralOptions.get(key)))
       .filter(pair -> isNameAllowed(pair.getKey()))
@@ -145,7 +154,7 @@ public class EditorConfigSettingsWriter extends OutputStreamWriter {
     if (myLanguages == null || myLanguages.contains(language)) {
       List<OutPair> optionValueList = getKeyValuePairs(mapper);
       if (!optionValueList.isEmpty()) {
-        if (pattern != null) {
+        if (pattern != null && !myNoHeaders) {
           write("\n[" + pattern + "]\n");
         }
         optionValueList.sort(PAIR_COMPARATOR);

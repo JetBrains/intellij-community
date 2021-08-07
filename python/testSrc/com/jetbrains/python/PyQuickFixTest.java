@@ -5,6 +5,7 @@ import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.ex.InspectionProfileImpl;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.TestDataFile;
 import com.intellij.testFramework.TestDataPath;
 import com.intellij.util.containers.ContainerUtil;
@@ -18,6 +19,7 @@ import com.jetbrains.python.quickFixes.PyRenameElementQuickFixTest;
 import org.intellij.lang.regexp.inspection.RedundantEscapeInspection;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
@@ -26,6 +28,11 @@ import java.util.List;
  */
 @TestDataPath("$CONTENT_ROOT/../testData/inspections/")
 public class PyQuickFixTest extends PyTestCase {
+
+  @Override
+  protected @Nullable LightProjectDescriptor getProjectDescriptor() {
+    return ourPy2Descriptor;
+  }
 
   @Override
   protected void setUp() throws Exception {
@@ -126,7 +133,12 @@ public class PyQuickFixTest extends PyTestCase {
 
   // PY-22045
   public void testBatchReplacePrintInsertsFutureImportOnlyOnce() {
-    doInspectionTest(PyCompatibilityInspection.class, "Fix all 'Code compatibility inspection' problems in file", true, true);
+    doInspectionTest(
+      PyCompatibilityInspection.class,
+      "Fix all 'Code is incompatible with specific Python versions' problems in file",
+      true,
+      true
+    );
   }
 
   // PY-4556

@@ -17,8 +17,7 @@ class Test {
     }
 
     @Language("HTML")
-    @Nls
-    private String newMethod(@Language("HTML") @Nls String sample) {
+    private @Nls String newMethod(@Language("HTML") @Nls String sample) {
         return sample;
     }
 }

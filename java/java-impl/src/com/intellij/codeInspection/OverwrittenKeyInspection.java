@@ -1,7 +1,9 @@
 // Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection;
 
+import com.intellij.codeInsight.ExpressionUtil;
 import com.intellij.codeInsight.PsiEquivalenceUtil;
+import com.intellij.codeInsight.daemon.impl.analysis.HighlightControlFlowUtil;
 import com.intellij.codeInspection.util.InspectionMessage;
 import com.intellij.ide.util.PsiNavigationSupport;
 import com.intellij.java.JavaBundle;
@@ -16,6 +18,7 @@ import one.util.streamex.IntStreamEx;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -31,7 +34,9 @@ public class OverwrittenKeyInspection extends AbstractBaseJavaLocalInspectionToo
   private static final CallMatcher MAP_PUT =
     CallMatcher.instanceCall(CommonClassNames.JAVA_UTIL_MAP, "put").parameterCount(2);
   private static final CallMatcher SET_OF =
-    CallMatcher.staticCall(CommonClassNames.JAVA_UTIL_SET, "of");
+    CallMatcher.anyOf(
+      CallMatcher.staticCall(CommonClassNames.JAVA_UTIL_SET, "of"),
+      CallMatcher.staticCall("java.util.EnumSet", "of"));
   private static final CallMatcher MAP_OF =
     CallMatcher.staticCall(CommonClassNames.JAVA_UTIL_MAP, "of");
   private static final CallMatcher MAP_OF_ENTRIES =
@@ -56,12 +61,17 @@ public class OverwrittenKeyInspection extends AbstractBaseJavaLocalInspectionToo
     public void visitCodeBlock(PsiCodeBlock block) {
       PsiExpressionStatement statement = PsiTreeUtil.getChildOfType(block, PsiExpressionStatement.class);
       while (statement != null) {
-        PsiMethodCallExpression call = tryCast(statement.getExpression(), PsiMethodCallExpression.class);
+        PsiExpression expression = statement.getExpression();
+        PsiMethodCallExpression call = tryCast(expression, PsiMethodCallExpression.class);
         if (SET_ADD.test(call)) {
           statement = processCallSequence(call, statement, SET_ADD, JavaBundle.message("inspection.overwritten.key.set.message"));
         }
         else if (MAP_PUT.test(call)) {
           statement = processCallSequence(call, statement, MAP_PUT, JavaBundle.message("inspection.overwritten.key.map.message"));
+        }
+        if (expression instanceof PsiAssignmentExpression) {
+          statement = processArraySequence((PsiAssignmentExpression)expression, statement,
+                                           JavaBundle.message("inspection.overwritten.key.array.message"));
         }
         statement = PsiTreeUtil.getNextSiblingOfType(statement, PsiExpressionStatement.class);
       }
@@ -91,6 +101,43 @@ public class OverwrittenKeyInspection extends AbstractBaseJavaLocalInspectionToo
       registerDuplicates(message, groups);
     }
 
+    private @NotNull PsiExpressionStatement processArraySequence(PsiAssignmentExpression assignment,
+                                                        PsiExpressionStatement statement,
+                                                        @InspectionMessage String message) {
+      if (!assignment.getOperationTokenType().equals(JavaTokenType.EQ)) return statement;
+      var arrayAccessExpression = tryCast(assignment.getLExpression(), PsiArrayAccessExpression.class);
+      if (arrayAccessExpression == null) return statement;
+      PsiExpression qualifier = PsiUtil.skipParenthesizedExprDown(arrayAccessExpression.getArrayExpression());
+      PsiExpression arg = arrayAccessExpression.getIndexExpression();
+      Object key = getKey(arg);
+      if (key == null) return statement;
+      if (qualifier == null) return statement;
+      PsiVariable qualifierVar =
+        qualifier instanceof PsiReferenceExpression ? tryCast(((PsiReferenceExpression)qualifier).resolve(), PsiVariable.class) : null;
+      if (qualifierVar != null && VariableAccessUtils.variableIsUsed(qualifierVar, assignment.getRExpression())) return statement;
+      Map<Object, List<PsiExpression>> map = new HashMap<>();
+      map.computeIfAbsent(key, k -> new ArrayList<>()).add(arg);
+      while (true) {
+        PsiExpressionStatement nextStatement = findNextStatement(statement);
+        if (nextStatement == null) break;
+        PsiAssignmentExpression nextExpression = tryCast(nextStatement.getExpression(), PsiAssignmentExpression.class);
+        if (nextExpression == null || !nextExpression.getOperationTokenType().equals(JavaTokenType.EQ)) break;
+        var nextArrayAccess = tryCast(nextExpression.getLExpression(), PsiArrayAccessExpression.class);
+        if (nextArrayAccess == null) break;
+        PsiExpression nextQualifier = PsiUtil.skipParenthesizedExprDown(nextArrayAccess.getArrayExpression());
+        if (nextQualifier == null || !PsiEquivalenceUtil.areElementsEquivalent(qualifier, nextQualifier)) break;
+        if (qualifierVar != null && VariableAccessUtils.variableIsUsed(qualifierVar, nextExpression.getRExpression())) break;
+        PsiExpression nextArg = nextArrayAccess.getIndexExpression();
+        Object nextKey = getKey(nextArg);
+        if (nextKey != null) {
+          map.computeIfAbsent(nextKey, k -> new ArrayList<>()).add(nextArg);
+        }
+        statement = nextStatement;
+      }
+      registerDuplicates(message, map);
+      return statement;
+    }
+
     /**
      * @param call      a starting method call
      * @param statement a statement containing the call
@@ -98,22 +145,22 @@ public class OverwrittenKeyInspection extends AbstractBaseJavaLocalInspectionToo
      * @param message   a message to use in warning
      * @return last processed statement
      */
-    private PsiExpressionStatement processCallSequence(PsiMethodCallExpression call,
+    private @NotNull PsiExpressionStatement processCallSequence(PsiMethodCallExpression call,
                                                        PsiExpressionStatement statement,
                                                        CallMatcher myMatcher,
                                                        @InspectionMessage String message) {
       PsiExpression arg = call.getArgumentList().getExpressions()[0];
+      PsiExpression qualifier = PsiUtil.skipParenthesizedExprDown(ExpressionUtils.getEffectiveQualifier(call.getMethodExpression()));
       Object key = getKey(arg);
       if (key == null) return statement;
-      PsiExpression qualifier = PsiUtil.skipParenthesizedExprDown(ExpressionUtils.getEffectiveQualifier(call.getMethodExpression()));
       if (qualifier == null) return statement;
       PsiVariable qualifierVar =
         qualifier instanceof PsiReferenceExpression ? tryCast(((PsiReferenceExpression)qualifier).resolve(), PsiVariable.class) : null;
+      if (qualifierVar != null && VariableAccessUtils.variableIsUsed(qualifierVar, call.getArgumentList())) return statement;
       Map<Object, List<PsiExpression>> map = new HashMap<>();
       map.computeIfAbsent(key, k -> new ArrayList<>()).add(arg);
       while (true) {
-        PsiExpressionStatement nextStatement =
-          tryCast(PsiTreeUtil.getNextSiblingOfType(statement, PsiStatement.class), PsiExpressionStatement.class);
+        PsiExpressionStatement nextStatement = findNextStatement(statement);
         if (nextStatement == null) break;
         PsiMethodCallExpression nextCall = tryCast(nextStatement.getExpression(), PsiMethodCallExpression.class);
         if (!myMatcher.test(nextCall)) break;
@@ -132,6 +179,16 @@ public class OverwrittenKeyInspection extends AbstractBaseJavaLocalInspectionToo
       return statement;
     }
 
+    private static @Nullable PsiExpressionStatement findNextStatement(@NotNull PsiExpressionStatement statement) {
+      for (PsiElement child = statement.getNextSibling(); child != null; child = child.getNextSibling()) {
+        if (child instanceof PsiStatement) {
+          if (child instanceof PsiSwitchLabelStatement) continue;
+          return tryCast(child, PsiExpressionStatement.class);
+        }
+      }
+      return null;
+    }
+
     private void registerDuplicates(@InspectionMessage String message, Map<Object, List<PsiExpression>> map) {
       for (List<PsiExpression> args : map.values()) {
         if (args.size() < 2) continue;
@@ -145,15 +202,25 @@ public class OverwrittenKeyInspection extends AbstractBaseJavaLocalInspectionToo
     }
 
     private static Object getKey(PsiExpression key) {
+      key = PsiUtil.skipParenthesizedExprDown(key);
       Object constant = ExpressionUtils.computeConstantExpression(key);
       if (constant != null) {
         return constant;
       }
       if (key instanceof PsiReferenceExpression) {
-        PsiField field = tryCast(((PsiReferenceExpression)key).resolve(), PsiField.class);
-        if (field instanceof PsiEnumConstant ||
-            field != null && field.hasModifierProperty(PsiModifier.FINAL) && field.hasModifierProperty(PsiModifier.STATIC)) {
-          return field;
+        PsiVariable var = tryCast(((PsiReferenceExpression)key).resolve(), PsiVariable.class);
+        if (var instanceof PsiEnumConstant) return var;
+        if (var != null) {
+          if (var.hasModifierProperty(PsiModifier.FINAL) &&
+              (var.hasModifierProperty(PsiModifier.STATIC) || ExpressionUtil.isEffectivelyUnqualified((PsiReferenceExpression)key))) {
+            return var;
+          }
+          if (PsiUtil.isJvmLocalVariable(var)) {
+            PsiElement scope = PsiUtil.getVariableCodeBlock(var, null);
+            if (scope != null && HighlightControlFlowUtil.isEffectivelyFinal(var, scope, null)) {
+              return var;
+            }
+          }
         }
       }
       return null;

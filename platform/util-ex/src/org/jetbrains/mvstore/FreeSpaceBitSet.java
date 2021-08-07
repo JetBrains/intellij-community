@@ -37,7 +37,6 @@ final class FreeSpaceBitSet {
      */
     private int failureFlags;
 
-
     /**
      * Create a new free space map.
      *

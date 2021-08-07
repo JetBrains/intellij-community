@@ -5,14 +5,22 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.impl.source.PsiFileImpl;
+import com.intellij.testFramework.LightProjectDescriptor;
 import com.jetbrains.python.fixtures.PyInspectionTestCase;
 import com.jetbrains.python.psi.LanguageLevel;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author vlan
  */
 public class PyTypeCheckerInspectionTest extends PyInspectionTestCase {
+
+  @Override
+  protected @Nullable LightProjectDescriptor getProjectDescriptor() {
+    return ourPy2Descriptor;
+  }
+
   @NotNull
   @Override
   protected Class<? extends PyInspection> getInspectionClass() {
@@ -1278,5 +1286,83 @@ public class PyTypeCheckerInspectionTest extends PyInspectionTestCase {
   // PY-43841
   public void testPyFunctionAgainstBuiltinFunction() {
     runWithLanguageLevel(LanguageLevel.getLatest(), this::doTest);
+  }
+
+  // PY-39762
+  public void testOverloadsAndPureStubInSamePyiScope() {
+    doMultiFileTest();
+  }
+
+  // PY-45438
+  public void testFunctionAgainstCallbackProtocol() {
+    runWithLanguageLevel(LanguageLevel.getLatest(), this::doTest);
+  }
+
+  // PY-38065
+  public void testTupleLiteralAgainstTypingLiteral() {
+    runWithLanguageLevel(LanguageLevel.getLatest(), this::doTest);
+  }
+
+  // PY-41268
+  public void testListLiteralAgainstTypingLiteral() {
+    runWithLanguageLevel(LanguageLevel.getLatest(), this::doTest);
+  }
+
+  // PY-41268
+  public void testSetLiteralAgainstTypingLiteral() {
+    runWithLanguageLevel(LanguageLevel.getLatest(), this::doTest);
+  }
+
+  // PY-41578
+  public void testDictLiteralAgainstTypingLiteral() {
+    runWithLanguageLevel(LanguageLevel.getLatest(), this::doTest);
+  }
+
+  // PY-48798
+  public void testDictLiteralInKeywordArguments() {
+    runWithLanguageLevel(
+      LanguageLevel.getLatest(),
+      () -> doTestByText("from typing import TypedDict\n" +
+                         "class Movie(TypedDict):\n" +
+                         "    name: str\n" +
+                         "def record_movie(movie: Movie) -> None: ...\n" +
+                         "record_movie(movie={'name': 'Blade Runner'})\n" +
+                         "record_movie(<warning descr=\"Expected type 'Movie', got 'dict' instead\">movie={}</warning>)")
+    );
+  }
+
+  // PY-48799
+  public void testDictLiteralInVariable() {
+    runWithLanguageLevel(
+      LanguageLevel.getLatest(),
+      () -> doTestByText("from typing import TypedDict\n" +
+                         "class C(TypedDict):\n" +
+                         "    foo: str\n" +
+                         "def f(x: C) -> None:\n" +
+                         "    pass\n" +
+                         "y = {}\n" +
+                         "z = {'foo': 'bar'}\n" +
+                         "n = {\"foo\": \"\", \"quux\": 3}\n" +
+                         "f(<warning descr=\"Expected type 'C', got 'dict' instead\">y</warning>)\n" +
+                         "f(<warning descr=\"Expected type 'C', got 'dict[str, int | str]' instead\">n</warning>)\n" +
+                         "f(z)\n" +
+                         "f(<warning descr=\"Expected type 'C', got 'dict' instead\">x=y</warning>)\n" +
+                         "f(<warning descr=\"Expected type 'C', got 'dict[str, int | str]' instead\">x=n</warning>)\n" +
+                         "f(x=z)\n" +
+                         "z2: C = <warning descr=\"Expected type 'C', got 'dict' instead\">y</warning>\n" +
+                         "z2: C = <warning descr=\"Expected type 'C', got 'dict[str, int | str]' instead\">n</warning>\n" +
+                         "z2: C = z" )
+    );
+  }
+
+  public void testLiteralTypeInTypedDict() {
+    runWithLanguageLevel(
+      LanguageLevel.getLatest(),
+      () -> doTestByText("from typing import TypedDict, Literal\n" +
+                         "class Foo(TypedDict):\n" +
+                         "    foo: Literal['bar']\n" +
+                         "a: Foo = {'foo': 'bar'}\n" +
+                         "b: Foo = <warning descr=\"Expected type 'Foo', got 'dict[str, str]' instead\">{'foo': 'baz'}</warning>")
+    );
   }
 }

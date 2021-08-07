@@ -23,6 +23,7 @@ import com.intellij.openapi.fileEditor.ex.IdeDocumentHistory;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.registry.ExperimentalUI;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.FocusWatcher;
 import com.intellij.openapi.wm.IdeFocusManager;
@@ -568,7 +569,11 @@ public class EditorComposite implements Disposable {
 
     @Override
     public Color getBackground() {
-      Color color = EditorColorsManager.getInstance().getGlobalScheme().getColor(EditorColors.GUTTER_BACKGROUND);
+      EditorColorsScheme globalScheme = EditorColorsManager.getInstance().getGlobalScheme();
+      if (ExperimentalUI.isNewEditorTabs()) {
+        return globalScheme.getDefaultBackground();
+      }
+      Color color = globalScheme.getColor(EditorColors.GUTTER_BACKGROUND);
       return color == null ? EditorColors.GUTTER_BACKGROUND.getDefaultColor() : color;
     }
   }
@@ -579,6 +584,9 @@ public class EditorComposite implements Disposable {
       @Override
       public Color getLineColor() {
         EditorColorsScheme scheme = EditorColorsManager.getInstance().getGlobalScheme();
+        if (ExperimentalUI.isNewEditorTabs()) {
+          return scheme.getDefaultBackground();
+        }
         Color result = scheme.getColor(top ? EditorColors.SEPARATOR_ABOVE_COLOR : EditorColors.SEPARATOR_BELOW_COLOR);
         if (result == null) result = scheme.getColor(EditorColors.TEARLINE_COLOR);
         return result == null ? JBColor.BLACK : result;

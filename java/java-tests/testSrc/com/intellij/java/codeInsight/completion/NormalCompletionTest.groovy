@@ -218,6 +218,7 @@ class NormalCompletionTest extends NormalCompletionTestCase {
   protected void tearDown() throws Exception {
     CodeInsightSettings.instance.AUTOCOMPLETE_ON_CODE_COMPLETION = true
     CodeInsightSettings.instance.setCompletionCaseSensitive(CodeInsightSettings.FIRST_LETTER)
+    CodeInsightSettings.instance.setSelectAutopopupSuggestionsByChars(false)
     CodeInsightSettings.getInstance().AUTOINSERT_PAIR_BRACKET = true
     super.tearDown()
   }
@@ -2048,6 +2049,13 @@ class Bar {{
     checkResultByFile(getTestName(false) + "_after.java")
   }
 
+  @NeedsIndex.SmartMode(reason = "MethodCallFixer and MissingCommaFixer need resolve in smart mode")
+  void testCompletionShouldNotAddExtraComma() {
+    configureByTestName()
+    myFixture.performEditorAction(IdeActions.ACTION_CHOOSE_LOOKUP_ITEM_COMPLETE_STATEMENT)
+    checkResultByFile(getTestName(false) + "_after.java")
+  }
+
   @NeedsIndex.Full
   void testCompletingClassWithSameNameAsPackage() {
     myFixture.addClass("package Apple; public class Apple {}")
@@ -2375,6 +2383,211 @@ class Abc {
     myFixture.checkResult("class C {\n" +
                           "  void m() {\n" +
                           "    @SuppressWarnings(\"x\") boolean\n" +
+                          "  }\n" +
+                          "}")
+  }
+
+  void testAfterTry() {
+    myFixture.configureByText("Test.java", "class X{X() {try {}<caret>}}");
+    myFixture.completeBasic()
+    assert myFixture.lookupElementStrings == ['catch', 'finally']
+  }
+
+  @NeedsIndex.ForStandardLibrary
+  void testInsertNullable() {
+    myFixture.configureByText("Test.java", "class X {Stri<caret>}")
+    myFixture.completeBasic()
+    myFixture.type('?')
+    myFixture.checkResult("import org.jetbrains.annotations.Nullable;\n" +
+                          "\n" +
+                          "class X {\n" +
+                          "    @Nullable String\n" +
+                          "}")
+  }
+
+  @NeedsIndex.ForStandardLibrary
+  void testInsertNotNull() {
+    myFixture.configureByText("Test.java", "class X {Stri<caret>}")
+    myFixture.completeBasic()
+    myFixture.type('!')
+    myFixture.checkResult("import org.jetbrains.annotations.NotNull;\n" +
+                          "\n" +
+                          "class X {\n" +
+                          "    @NotNull String\n" +
+                          "}")
+  }
+
+  @NeedsIndex.Full
+  void testSuperClassFieldShadowsParameter() {
+    myFixture.configureByText("Test.java", "class Test {\n" +
+                                           "  static class X {\n" +
+                                           "    int variable;\n" +
+                                           "  }\n" +
+                                           "  \n" +
+                                           "  void test(long variable) {\n" +
+                                           "    new X() {\n" +
+                                           "      double myDouble = vari<caret>\n" +
+                                           "    };\n" +
+                                           "  }\n" +
+                                           "}")
+    def lookupElements = myFixture.completeBasic()
+    assert lookupElements == null
+    myFixture.checkResult("class Test {\n" +
+                          "  static class X {\n" +
+                          "    int variable;\n" +
+                          "  }\n" +
+                          "  \n" +
+                          "  void test(long variable) {\n" +
+                          "    new X() {\n" +
+                          "      double myDouble = variable\n" +
+                          "    };\n" +
+                          "  }\n" +
+                          "}")
+  }
+
+  @NeedsIndex.Full
+  void testVariableNameByTypeName() {
+    myFixture.configureByText("Test.java", "class DemoEntity {} class Test {DemoEntity <caret>}")
+    myFixture.completeBasic()
+    assert myFixture.getLookupElementStrings() == ["demoEntity", "demo", "entity"]
+  }
+
+  @NeedsIndex.Full
+  void testCompleteByEqualsAssignment() {
+    CodeInsightSettings.instance.setSelectAutopopupSuggestionsByChars(true)
+    myFixture.configureByText("Test.java", "public class Test {\n" +
+                                         "  public static void main(final String[] args) {\n" +
+                                         "    Test test = new Test();\n" +
+                                         "    Test test2 = new Test();\n" +
+                                         "    tes<caret>\n" +
+                                         "  }\n" +
+                                         "}")
+    myFixture.completeBasic()
+    myFixture.type('=')
+    myFixture.checkResult("public class Test {\n" +
+                          "  public static void main(final String[] args) {\n" +
+                          "    Test test = new Test();\n" +
+                          "    Test test2 = new Test();\n" +
+                          "    test = <caret>\n" +
+                          "  }\n" +
+                          "}")
+  }
+
+  @NeedsIndex.Full
+  void testCompleteByEqualsDeclaration() {
+    CodeInsightSettings.instance.setSelectAutopopupSuggestionsByChars(true)
+    CodeInsightSettings.instance.AUTOCOMPLETE_ON_CODE_COMPLETION = false
+    myFixture.configureByText("Test.java", "public class Test {\n" +
+                                         "  public static void main(final String[] args) {\n" +
+                                         "    String str<caret>\n" +
+                                         "  }\n" +
+                                         "}")
+    myFixture.completeBasic()
+    myFixture.type('=')
+    myFixture.checkResult("public class Test {\n" +
+                          "  public static void main(final String[] args) {\n" +
+                          "    String string = <caret>\n" +
+                          "  }\n" +
+                          "}")
+  }
+
+  @NeedsIndex.Full
+  void testCompleteByEquals() {
+    CodeInsightSettings.instance.setSelectAutopopupSuggestionsByChars(true)
+    myFixture.configureByText("Test.java", "public class Test {\n" +
+                                         "  public static void main(final String[] args) {\n" +
+                                         "    final Test test = new Test();\n" +
+                                         "    if (test.get<caret>)\n" +
+                                         "  }\n" +
+                                         "\n" +
+                                         "  public String getFoo() {\n" +
+                                         "    return \"\";\n" +
+                                         "  }\n" +
+                                         "}")
+    myFixture.completeBasic()
+    myFixture.type('=')
+    myFixture.checkResult("public class Test {\n" +
+                          "  public static void main(final String[] args) {\n" +
+                          "    final Test test = new Test();\n" +
+                          "    if (test.getFoo()=)\n" +
+                          "  }\n" +
+                          "\n" +
+                          "  public String getFoo() {\n" +
+                          "    return \"\";\n" +
+                          "  }\n" +
+                          "}")
+  }
+
+  @NeedsIndex.ForStandardLibrary
+  void testSystemOutNoInitializer() {
+    myFixture.configureByText("System.java", "package java.lang;\n" +
+                                             "public class System {\n" +
+                                             "public static final PrintStream out = null;\n" +
+                                             "public static void setOut(PrintStream out) {}\n" +
+                                             "void test() {System.o<caret>}\n" +
+                                             "}")
+    def elements = myFixture.completeBasic()
+    assert elements.length > 0
+    def element = elements[0]
+    assert element.lookupString == "out"
+    LookupElementPresentation presentation = renderElement(element)
+    assert presentation.tailText == null
+  }
+
+  @NeedsIndex.ForStandardLibrary(reason = "Control flow analysis needs standard library and necessary to provide variable initializer")
+  void testLocalFromTryBlock() {
+    myFixture.configureByText("Test.java", "class Test {\n" +
+                                           "  void test() {\n" +
+                                           "    try {\n" +
+                                           "      int myvar = foo();\n" +
+                                           "    }\n" +
+                                           "    catch (RuntimeException ex) {\n" +
+                                           "    }\n" +
+                                           "    my<caret>\n" +
+                                           "  }\n" +
+                                           "\n" +
+                                           "  native int foo();\n" +
+                                           "}")
+    myFixture.completeBasic()
+    myFixture.checkResult("class Test {\n" +
+                          "  void test() {\n" +
+                          "      int myvar = 0;\n" +
+                          "      try {\n" +
+                          "          myvar = foo();\n" +
+                          "      } catch (RuntimeException ex) {\n" +
+                          "      }\n" +
+                          "      myvar\n" +
+                          "  }\n" +
+                          "\n" +
+                          "  native int foo();\n" +
+                          "}")
+  }
+
+  void testLocalFromAnotherIfBranch() {
+    myFixture.configureByText("Test.java", "class Test {\n" +
+                                           "  void test(int x) {\n" +
+                                           "    if (x > 0) {\n" +
+                                           "      String result = \"positive\";\n" +
+                                           "    } else if (x < 0) {\n" +
+                                           "      re<caret>\n" +
+                                           "    }\n" +
+                                           "  }\n" +
+                                           "}")
+    myFixture.completeBasic()
+    assert myFixture.lookupElements[0].lookupString == "return"
+    def element = myFixture.lookupElements[1]
+    assert element.lookupString == "result"
+    LookupElementPresentation presentation = renderElement(element)
+    assert presentation.tailText == " (from if-then block)"
+    selectItem(element)
+    myFixture.checkResult("class Test {\n" +
+                          "  void test(int x) {\n" +
+                          "      String result = null;\n" +
+                          "      if (x > 0) {\n" +
+                          "          result = \"positive\";\n" +
+                          "      } else if (x < 0) {\n" +
+                          "          result\n" +
+                          "      }\n" +
                           "  }\n" +
                           "}")
   }

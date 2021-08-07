@@ -24,7 +24,6 @@ import org.w3c.dom.svg.SVGDocument
 import java.awt.*
 import java.awt.geom.AffineTransform
 import java.awt.image.BufferedImage
-import java.io.StringReader
 import java.lang.ref.WeakReference
 import kotlin.math.max
 import kotlin.math.min
@@ -37,6 +36,11 @@ private val supportedFeatures = HashSet<String>()
 @ApiStatus.Internal
 class SvgTranscoder private constructor(private var width: Float, private var height: Float) : UserAgent {
   companion object {
+    // An SVG tag custom attribute, optional for @2x SVG icons.
+    // When provided and is set to "true" the document size should be treated as double-scaled of the base size.
+    // See https://youtrack.jetbrains.com/issue/IDEA-267073
+    const val DATA_SCALED_ATTR = "data-scaled"
+
     init {
       SVGFeatureStrings.addSupportedFeatureStrings(supportedFeatures)
     }
@@ -93,12 +97,25 @@ class SvgTranscoder private constructor(private var width: Float, private var he
         val docWidth = bridgeContext.documentSize.width.toFloat()
         val docHeight = bridgeContext.documentSize.height.toFloat()
 
-        transcoder.setImageSize(docWidth * scale, docHeight * scale, overriddenWidth, overriddenHeight, iconMaxSize)
+        var normalizingScale = 1f
+        if ((document.url?.contains("@2x") == true) and
+            document.rootElement?.attributes?.getNamedItem(DATA_SCALED_ATTR)?.nodeValue?.toLowerCase().equals("true"))
+        {
+          normalizingScale = 2f
+        }
+        val imageScale = scale / normalizingScale
+        transcoder.setImageSize(docWidth * imageScale, docHeight * imageScale, overriddenWidth, overriddenHeight, iconMaxSize)
         val transform = computeTransform(document, gvtRoot, bridgeContext, docWidth, docHeight, transcoder.width, transcoder.height)
         transcoder.currentTransform = transform
 
         val image = render((transcoder.width + 0.5f).toInt(), (transcoder.height + 0.5f).toInt(), transform, gvtRoot)
-        outDimensions?.setSize(docWidth.toDouble(), docHeight.toDouble())
+
+        // Take into account the image size rounding and correct the original user size in order to compensate the inaccuracy.
+        val effectiveUserWidth = image.width / scale;
+        val effectiveUserHeight = image.height / scale;
+
+        // outDimensions should contain the base size
+        outDimensions?.setSize(effectiveUserWidth.toDouble() / normalizingScale, effectiveUserHeight.toDouble() / normalizingScale)
         return image
       }
       catch (e: TranscoderException) {
@@ -153,7 +170,7 @@ class SvgTranscoder private constructor(private var width: Float, private var he
                        "  <line x1=\"1\" y1=\"1\" x2=\"15\" y2=\"15\" stroke=\"red\" stroke-width=\"2\"/>\n" +
                        "  <line x1=\"1\" y1=\"15\" x2=\"15\" y2=\"1\" stroke=\"red\" stroke-width=\"2\"/>\n" +
                        "</svg>\n"
-    return createSvgDocument(null, StringReader(fallbackIcon)) as SVGDocument
+    return createSvgDocument(null, fallbackIcon.byteInputStream()) as SVGDocument
   }
 
   override fun getTransform() = currentTransform!!

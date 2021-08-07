@@ -136,7 +136,9 @@ public abstract class IntroduceParameterObjectClassDescriptor<M extends PsiNamed
    * Corresponding field accessors how they should appear inside changed method body
    */
   public abstract String getSetterName(P paramInfo, @NotNull PsiElement context);
-  public abstract String getGetterName(P paramInfo, @NotNull PsiElement context);
+  public abstract String getGetterName(P paramInfo,
+                                       @NotNull PsiElement context,
+                                       ReadWriteAccessDetector.Access access);
 
   /**
    * Called if use existing class is chosen only. Should find constructor to use

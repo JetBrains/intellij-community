@@ -61,13 +61,13 @@ public abstract class AttachableProjectViewPane extends ProjectViewPane {
   }
 
   @Override
-  protected void beforeDnDUpdate() {
-    myDecorator.processDnD(true);
+  protected void beforeDnDUpdate(DnDEvent event) {
+    myDecorator.processDnD(event);
   }
 
   @Override
   protected void beforeDnDLeave() {
-    myDecorator.processDnD(false);
+    myDecorator.processDnD(null);
   }
 
   @NotNull
@@ -103,6 +103,18 @@ public abstract class AttachableProjectViewPane extends ProjectViewPane {
   @Override
   public Object getData(@NotNull String dataId) {
     return super.getData(dataId);
+  }
+
+  protected void processDroppedDirectories(@NotNull List<VirtualFile> dirs) {
+    if (dirs.isEmpty()) return;
+    Module[] modules = ModuleManager.getInstance(myProject).getModules();
+    if (modules.length == 0) return;
+    final Module module = modules[0];
+    ModuleRootModificationUtil.updateModel(module, model -> {
+      for (VirtualFile file : dirs) {
+        model.addContentEntry(file);
+      }
+    });
   }
 
   private class DropAreaDecorator extends JPanel implements DnDTargetChecker, DnDDropHandler {
@@ -161,30 +173,24 @@ public abstract class AttachableProjectViewPane extends ProjectViewPane {
 
     @Override
     public void drop(@NotNull final DnDEvent event) {
-      if (doDrop(event)) return;
       hideDropArea();
-    }
-
-    private boolean doDrop(@NotNull DnDEvent event) {
-      final List<VirtualFile> dirs = getDirectories(event);
-      if (dirs.isEmpty()) return true;
-      Module[] modules = ModuleManager.getInstance(myProject).getModules();
-      if (modules.length == 0) return true;
-      final Module module = modules[0];
-      ModuleRootModificationUtil.updateModel(module, model -> {
-        for (VirtualFile file : dirs) {
-          model.addContentEntry(file);
-        }
-      });
-      return false;
+      processDroppedDirectories(getDirectories(event));
     }
 
     @Override
     public boolean update(@NotNull DnDEvent event) {
-      if (!FileCopyPasteUtil.isFileListFlavorAvailable(event)) return false;
+      if (!isDroppable(event)) {
+        hideDropArea();
+        return false;
+      }
       event.setHighlighting(myLabel, DnDEvent.DropTargetHighlightingType.RECTANGLE);
       event.setDropPossible(true);
+      myDropArea.setVisible(true);
       return false;
+    }
+
+    private boolean isDroppable(@NotNull DnDEvent event) {
+      return FileCopyPasteUtil.isFileListFlavorAvailable(event);
     }
 
     private boolean isOverComponent(@Nullable JComponent component) {
@@ -195,8 +201,13 @@ public abstract class AttachableProjectViewPane extends ProjectViewPane {
       return component.getVisibleRect().contains(p);
     }
 
-    private void processDnD(boolean value) {
-      if (value || !isOverComponent(myLabel)) myLabel.setVisible(value);
+    private void processDnD(DnDEvent event) {
+      if (event != null) {
+        myLabel.setVisible(isDroppable(event));
+      }
+      else if (!isOverComponent(myLabel)) {
+        hideDropArea();
+      }
     }
   }
 }

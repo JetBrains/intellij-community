@@ -1,7 +1,8 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui;
 
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.ui.icons.CompositeIcon;
 import com.intellij.util.TimeoutUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
@@ -16,17 +17,35 @@ import java.util.Collections;
 import java.util.List;
 
 public final class IconTestUtil {
-  @Nullable
-  public static String getIconPath(Icon icon) {
+  public static @Nullable String getIconPath(@NotNull Icon icon) {
     icon = unwrapRetrievableIcon(icon);
-    return ((IconLoader.CachedImageIcon)icon).getOriginalPath();
+    if (icon instanceof IconLoader.CachedImageIcon) {
+      return ((IconLoader.CachedImageIcon)icon).getOriginalPath();
+    }
+    else {
+      // DummyIcon
+      return icon.toString();
+    }
   }
 
-  public static Icon unwrapRetrievableIcon(Icon icon) {
+  public static @NotNull Icon unwrapRetrievableIcon(@NotNull Icon icon) {
     while (icon instanceof RetrievableIcon) {
       icon = ((RetrievableIcon)icon).retrieveIcon();
     }
     return icon;
+  }
+
+  public static @NotNull Icon unwrapIcon(@NotNull Icon icon) {
+    while (icon instanceof CompositeIcon) {
+      CompositeIcon compositeIcon = (CompositeIcon)icon;
+      if (compositeIcon.getIconCount() == 0) {
+        break;
+      }
+
+      icon = compositeIcon.getIcon(0);
+    }
+    assert icon != null;
+    return unwrapRetrievableIcon(icon);
   }
 
   @NotNull

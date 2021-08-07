@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.configurationStore
 
 import com.intellij.openapi.Disposable
@@ -17,6 +17,7 @@ import org.jdom.Element
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.annotations.TestOnly
 import java.nio.file.Path
+import java.util.*
 import java.util.concurrent.locks.ReentrantReadWriteLock
 import kotlin.concurrent.read
 import kotlin.concurrent.write
@@ -29,7 +30,7 @@ open class StateStorageManagerImpl(@NonNls private val rootTagName: String,
                                    override val componentManager: ComponentManager? = null,
                                    private val virtualFileTracker: StorageVirtualFileTracker? = createDefaultVirtualTracker(componentManager)) : StateStorageManager {
   @Volatile
-  protected var macros: List<Macro> = emptyList()
+  protected var macros: List<Macro> = Collections.emptyList()
 
   protected val storageLock = ReentrantReadWriteLock()
   private val storages = HashMap<String, StateStorage>()

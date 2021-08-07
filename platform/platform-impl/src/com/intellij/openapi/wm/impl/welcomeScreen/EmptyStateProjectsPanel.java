@@ -10,28 +10,35 @@ import com.intellij.openapi.ui.VerticalFlowLayout;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.wm.IdeFocusManager;
+import com.intellij.openapi.wm.StartPagePromoter;
 import com.intellij.ui.components.AnActionLink;
 import com.intellij.ui.components.DropDownLink;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.ui.scale.JBUIScale;
+import com.intellij.util.Function;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.FocusUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.components.BorderLayoutPanel;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.List;
 
 import static com.intellij.openapi.wm.impl.welcomeScreen.ProjectsTabFactory.PRIMARY_BUTTONS_NUM;
 import static com.intellij.openapi.wm.impl.welcomeScreen.WelcomeScreenActionsUtil.LargeIconWithTextWrapper;
 import static com.intellij.openapi.wm.impl.welcomeScreen.WelcomeScreenActionsUtil.splitAndWrapActions;
 import static com.intellij.openapi.wm.impl.welcomeScreen.WelcomeScreenComponentFactory.getApplicationTitle;
 
-public class EmptyStateProjectsPanel extends JPanel {
+class EmptyStateProjectsPanel extends BorderLayoutPanel {
 
-  public EmptyStateProjectsPanel(@NotNull Disposable parentDisposable) {
+  EmptyStateProjectsPanel(@NotNull Disposable parentDisposable) {
     setBackground(WelcomeScreenUIManager.getMainAssociatedComponentBackground());
     JPanel mainPanel = new NonOpaquePanel(new VerticalFlowLayout());
     mainPanel.setBorder(JBUI.Borders.emptyTop(103));
@@ -52,27 +59,54 @@ public class EmptyStateProjectsPanel extends JPanel {
 
     DefaultActionGroup moreActionGroup = mainAndMore.getSecond();
     if (moreActionGroup.getChildrenCount() > 0) {
-      JPanel moreLinkPanel = new Wrapper(new FlowLayout(), moreActionGroup.getChildrenCount() == 1
-                                                           ? new AnActionLink(moreActionGroup.getChildren(null)[0], ActionPlaces.WELCOME_SCREEN)
-                                                           : createLinkWithPopup(moreActionGroup));
+      JComponent actionLink;
+      if (moreActionGroup.getChildrenCount() == 1) {
+        AnAction action = moreActionGroup.getChildren(null)[0];
+        actionLink = new AnActionLink(action, ActionPlaces.WELCOME_SCREEN);
+        if (action instanceof OpenAlienProjectAction) {
+          ((OpenAlienProjectAction)action).scheduleUpdate(actionLink);
+        }
+      }
+      else {
+        actionLink = createLinkWithPopup(moreActionGroup);
+      }
+
+      JPanel moreLinkPanel = new Wrapper(new FlowLayout(), actionLink);
       moreLinkPanel.setBorder(JBUI.Borders.emptyTop(5));
       mainPanel.add(moreLinkPanel);
     }
 
-    add(mainPanel);
+    addToCenter(mainPanel);
+    addToBottom(createBottomPanelForEmptyState(parentDisposable));
   }
 
   @NotNull
-  static ActionToolbarImpl createActionsToolbar(ActionGroup actionGroup) {
-    ActionToolbarImpl actionToolbar = new ActionToolbarImpl(ActionPlaces.WELCOME_SCREEN, actionGroup, true);
+  private static ActionToolbarImpl createActionsToolbar(ActionGroup actionGroup) {
+    ActionToolbarImpl actionToolbar = new ActionToolbarImpl(ActionPlaces.WELCOME_SCREEN, actionGroup, true) {
+      private boolean wasFocusRequested = false;
+      @Override
+      protected void actionsUpdated(boolean forced,
+                                    @NotNull List<? extends AnAction> newVisibleActions) {
+        super.actionsUpdated(forced, newVisibleActions);
+        if (forced && !newVisibleActions.isEmpty() && getComponents().length > 0 && !wasFocusRequested) {
+          ObjectUtils.doIfNotNull(FocusUtil.findFocusableComponentIn(getComponents()[0], null),
+                                  (Function<Component, Object>)component -> {
+                                    wasFocusRequested =true;
+                                    return IdeFocusManager.getGlobalInstance().requestFocus(component, true);
+                                  });
+        }
+      }
+    };
     actionToolbar.setLayoutPolicy(ActionToolbar.NOWRAP_LAYOUT_POLICY);
+    actionToolbar.setTargetComponent(actionToolbar.getComponent());
     actionToolbar.setBorder(JBUI.Borders.emptyTop(27));
+    actionToolbar.setTargetComponent(actionToolbar.getComponent());
     actionToolbar.setOpaque(false);
     return actionToolbar;
   }
 
   @NotNull
-  static DropDownLink<String> createLinkWithPopup(@NotNull ActionGroup group) {
+  private static DropDownLink<String> createLinkWithPopup(@NotNull ActionGroup group) {
     return new DropDownLink<>(group.getTemplateText(), link
       -> JBPopupFactory.getInstance().createActionGroupPopup(
       null, group, DataManager.getInstance().getDataContext(link),
@@ -80,7 +114,7 @@ public class EmptyStateProjectsPanel extends JPanel {
   }
 
   @NotNull
-  static JBLabel createTitle() {
+  private static JBLabel createTitle() {
     JBLabel titleLabel = new JBLabel(getApplicationTitle(), SwingConstants.CENTER);
     titleLabel.setOpaque(false);
     Font componentFont = titleLabel.getFont();
@@ -95,5 +129,22 @@ public class EmptyStateProjectsPanel extends JPanel {
     commentFirstLabel.setOpaque(false);
     commentFirstLabel.setForeground(UIUtil.getContextHelpForeground());
     return commentFirstLabel;
+  }
+
+  private static JPanel createBottomPanelForEmptyState(@NotNull Disposable parentDisposable) {
+    JPanel vPanel = new NonOpaquePanel();
+    vPanel.setLayout(new BoxLayout(vPanel, BoxLayout.PAGE_AXIS));
+    StartPagePromoter[] extensions = StartPagePromoter.START_PAGE_PROMOTER_EP.getExtensions();
+    boolean hasPromotion = false;
+    for (StartPagePromoter x : extensions) {
+      JPanel promotion = x.getPromotionForInitialState();
+      if (promotion == null) continue;
+      vPanel.add(promotion);
+      hasPromotion = true;
+    }
+    JPanel notification = ProjectsTabFactory.createNotificationsPanel(parentDisposable);
+    if (!hasPromotion) return notification;
+    vPanel.add(notification);
+    return vPanel;
   }
 }

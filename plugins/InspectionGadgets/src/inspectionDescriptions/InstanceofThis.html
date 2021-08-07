@@ -1,11 +1,11 @@
 <html>
 <body>
-Reports on uses of <code>instanceof</code> or <code>getClass() == SomeClass.class</code> where the
-expression checked is <code>this</code>. Such expressions
-are indicative of a failure of object-oriented design, and should be replaced by
-polymorphic constructions.
+Reports usages of <code>instanceof</code> or <code>getClass() == SomeClass.class</code> in which a
+<code>this</code> expression is checked.
+<p>Such expressions indicate a failure of the object-oriented design, and should be replaced by
+  polymorphic constructions.</p>
 <p>Example:</p>
-<pre>
+<pre><code>
 class Super {
   void process() {
     if (this instanceof Sub) { // warning
@@ -16,23 +16,23 @@ class Super {
   }
 }
   
-class Sub {}  
-</pre>
-To fix the problem, the method overriding should be used:
-<pre>
+class Sub extends Super {}
+</code></pre>
+<p>To fix the problem, use an overriding method:</p>
+<pre><code>
 class Super {
   void process() {
     doSomethingElse();
   }
 }
   
-class Sub {
+class Sub extends Super {
   @Override
   void process() {
     doSomething();
   }
 }  
-</pre>
+</code></pre>
 <!-- tooltip end -->
 </body>
 </html>

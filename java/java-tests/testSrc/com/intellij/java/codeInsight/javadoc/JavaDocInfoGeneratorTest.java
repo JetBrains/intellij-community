@@ -4,6 +4,7 @@ package com.intellij.java.codeInsight.javadoc;
 import com.intellij.JavaTestUtil;
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.JavaCodeInsightTestCase;
+import com.intellij.codeInsight.javadoc.JavaDocInfoGenerator;
 import com.intellij.java.codeInsight.JavaExternalDocumentationTest;
 import com.intellij.lang.java.JavaDocumentationProvider;
 import com.intellij.openapi.application.ApplicationManager;
@@ -36,9 +37,7 @@ import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
 
-/**
- * @author yole
- */
+
 public class JavaDocInfoGeneratorTest extends JavaCodeInsightTestCase {
   private static final String TEST_DATA_FOLDER = "/codeInsight/javadocIG/";
 
@@ -115,6 +114,15 @@ public class JavaDocInfoGeneratorTest extends JavaCodeInsightTestCase {
   public void testTypeAnnotationArray() { useJava8(); doTestAtCaret(); }
   public void testTypeAnnotationClass() { useJava8(); doTestClass(); }
 
+  public void testRepeatableAnnotations() {
+    useJava8();
+    assertEquals("@R(&quot;a&quot;)&nbsp;\n" +
+                 "@R(&quot;b&quot;)&nbsp;\n" +
+                 "class <b>repeatableAnnotations</b>\n" +
+                 "extends <a href=\"psi_element://java.lang.Object\"><code>Object</code></a>",
+                 JavaDocInfoGenerator.generateSignature(getTestClass()));
+  }
+  
   public void testAnonymousAndSuperJavadoc() {
     PsiClass psiClass = PsiTreeUtil.findChildOfType(getTestClass(), PsiAnonymousClass.class);
     assertNotNull(psiClass);

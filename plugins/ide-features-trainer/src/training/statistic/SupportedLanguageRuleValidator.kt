@@ -7,7 +7,7 @@ import com.intellij.internal.statistic.eventLog.validator.rules.impl.CustomValid
 import training.lang.LangManager
 import training.statistic.FeatureUsageStatisticConsts.LANGUAGE
 
-class SupportedLanguageRuleValidator : CustomValidationRule() {
+private class SupportedLanguageRuleValidator : CustomValidationRule() {
   override fun acceptRuleId(ruleId: String?): Boolean = (LANGUAGE == ruleId)
 
   override fun doValidate(data: String, context: EventContext): ValidationResultType {

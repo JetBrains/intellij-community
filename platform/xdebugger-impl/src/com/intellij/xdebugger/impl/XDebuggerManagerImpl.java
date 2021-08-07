@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.xdebugger.impl;
 
 import com.intellij.AppTopics;
@@ -14,6 +14,7 @@ import com.intellij.execution.ui.ExecutionConsole;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.execution.ui.RunContentManager;
 import com.intellij.execution.ui.RunContentWithExecutorListener;
+import com.intellij.ide.DataManager;
 import com.intellij.ide.plugins.CannotUnloadPluginException;
 import com.intellij.ide.plugins.DynamicPluginListener;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
@@ -21,9 +22,8 @@ import com.intellij.idea.ActionsBundle;
 import com.intellij.notification.NotificationGroup;
 import com.intellij.notification.NotificationGroupManager;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.ActionPlaces;
-import com.intellij.openapi.actionSystem.IdeActions;
-import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
+import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
@@ -60,7 +60,6 @@ import com.intellij.xdebugger.impl.breakpoints.XBreakpointManagerImpl;
 import com.intellij.xdebugger.impl.evaluate.quick.common.ValueLookupManager;
 import com.intellij.xdebugger.impl.pinned.items.XDebuggerPinToTopManager;
 import com.intellij.xdebugger.impl.settings.XDebuggerSettingManagerImpl;
-import com.intellij.xdebugger.impl.ui.DebuggerUIUtil;
 import com.intellij.xdebugger.impl.ui.ExecutionPointHighlighter;
 import com.intellij.xdebugger.impl.ui.XDebugSessionTab;
 import com.intellij.xdebugger.ui.DebuggerColors;
@@ -311,7 +310,6 @@ public final class XDebuggerManagerImpl extends XDebuggerManager implements Pers
     myBreakpointManager.getLineBreakpointManager().queueAllBreakpointsUpdate();
     ApplicationManager.getApplication().invokeLater(() -> {
       ValueLookupManager.getInstance(myProject).hideHint();
-      DebuggerUIUtil.repaintCurrentEditor(myProject); // to update inline debugger data
     }, myProject.getDisposed());
     if (!myProject.isDisposed()) {
       myProject.getMessageBus().syncPublisher(TOPIC).currentSessionChanged(previousSession, currentSession);
@@ -481,11 +479,12 @@ public final class XDebuggerManagerImpl extends XDebuggerManager implements Pers
         if (session != null && lineNumber >= 0) {
           XSourcePositionImpl position = XSourcePositionImpl.create(((EditorEx)e.getEditor()).getVirtualFile(), lineNumber);
           if (position != null) {
-            ActionManagerEx am = ActionManagerEx.getInstanceEx();
-            am.fireBeforeActionPerformed(IdeActions.ACTION_RUN_TO_CURSOR, e.getMouseEvent(), ActionPlaces.EDITOR_GUTTER);
-            session.runToPosition(position, false);
-            am.fireAfterActionPerformed(IdeActions.ACTION_RUN_TO_CURSOR, e.getMouseEvent(), ActionPlaces.EDITOR_GUTTER);
             e.consume();
+            AnAction action = ActionManager.getInstance().getAction(IdeActions.ACTION_RUN_TO_CURSOR);
+            if (action == null) throw new AssertionError("'" + IdeActions.ACTION_RUN_TO_CURSOR + "' action not found");
+            DataContext dataContext = DataManager.getInstance().getDataContext(e.getMouseEvent().getComponent());
+            AnActionEvent event = AnActionEvent.createFromAnAction(action, e.getMouseEvent(), ActionPlaces.EDITOR_GUTTER, dataContext);
+            ActionUtil.performDumbAwareWithCallbacks(action, event, () -> session.runToPosition(position, false));
           }
         }
       }

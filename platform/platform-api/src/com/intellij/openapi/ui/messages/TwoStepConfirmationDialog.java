@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.ui.messages;
 
 import com.intellij.util.PairFunction;
@@ -28,7 +28,7 @@ public class TwoStepConfirmationDialog extends MessageDialog {
     myChecked = checked;
     myExitFunc = exitFunc;
 
-    _init(title, message, options, defaultOptionIndexed, focusedOptionIndex, icon, null);
+    _init(title, message, options, defaultOptionIndexed, focusedOptionIndex, icon, null, null);
   }
 
   @Override

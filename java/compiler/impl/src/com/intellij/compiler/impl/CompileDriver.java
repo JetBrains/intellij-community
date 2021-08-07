@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.compiler.impl;
 
 import com.intellij.CommonBundle;
@@ -18,7 +18,7 @@ import com.intellij.openapi.compiler.*;
 import com.intellij.openapi.deployment.DeploymentUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.module.EffectiveLanguageLevelUtil;
+import com.intellij.openapi.module.LanguageLevelUtil;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -582,11 +582,9 @@ public final class CompileDriver {
 
         final String wrappedMessage = _status != ExitStatus.UP_TO_DATE ?
                                       HtmlChunk.link("#", statusMessage).toString() : statusMessage;
-        final Notification notification = CompilerManager.NOTIFICATION_GROUP.createNotification(
-          "", wrappedMessage,
-          messageType.toNotificationType(),
-          new BuildToolWindowActivationListener(compileContext)
-        ).setImportant(false);
+        final Notification notification = CompilerManager.NOTIFICATION_GROUP.createNotification(wrappedMessage, messageType.toNotificationType())
+          .setListener(new BuildToolWindowActivationListener(compileContext))
+          .setImportant(false);
         compileContext.getBuildSession().registerCloseAction(notification::expire);
         notification.notify(myProject);
 
@@ -807,7 +805,7 @@ public final class CompileDriver {
           }
         }
 
-        LanguageLevel moduleLanguageLevel = EffectiveLanguageLevelUtil.getEffectiveLanguageLevel(module);
+        LanguageLevel moduleLanguageLevel = LanguageLevelUtil.getEffectiveLanguageLevel(module);
         if (languageLevel == null) {
           languageLevel = moduleLanguageLevel;
         }

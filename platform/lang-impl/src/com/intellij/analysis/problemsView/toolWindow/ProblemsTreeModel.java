@@ -57,7 +57,7 @@ public final class ProblemsTreeModel extends BaseTreeModel<Node> implements Invo
     return children.stream().sorted(comparator.get()).collect(toList());
   }
 
-  void setComparator(@NotNull Comparator<Node> comparator) {
+  public void setComparator(@NotNull Comparator<Node> comparator) {
     if (!comparator.equals(this.comparator.getAndSet(comparator))) structureChanged(null);
   }
 
@@ -65,13 +65,13 @@ public final class ProblemsTreeModel extends BaseTreeModel<Node> implements Invo
     return root == this.root.get();
   }
 
-  void setRoot(@Nullable Root root) {
+  public void setRoot(@Nullable Root root) {
     Root old = this.root.getAndSet(root);
     if (old != root && old != null) Disposer.dispose(old);
     structureChanged(null);
   }
 
-  void structureChanged(@Nullable TreePath path) {
+  public void structureChanged(@Nullable TreePath path) {
     treeStructureChanged(path, null, null);
   }
 

@@ -8,15 +8,15 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.application.ApplicationManager.getApplication
 import com.intellij.openapi.application.ConfigImportHelper.isNewUser
 import com.intellij.openapi.application.runInEdt
-import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
+import com.intellij.openapi.options.advanced.AdvancedSettings
+import com.intellij.openapi.options.advanced.AdvancedSettingsChangeListener
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.registry.RegistryValue
 import com.intellij.openapi.util.registry.RegistryValueListener
 import com.intellij.openapi.vcs.*
 import com.intellij.openapi.vcs.ProjectLevelVcsManager.VCS_CONFIGURATION_CHANGED
-import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManagerListener
 import com.intellij.openapi.vcs.impl.VcsEP
 import com.intellij.openapi.vcs.impl.VcsInitObject
 import com.intellij.openapi.vcs.impl.VcsStartupActivity
@@ -25,7 +25,9 @@ import com.intellij.util.messages.Topic
 import com.intellij.vcs.commit.NonModalCommitUsagesCollector.logStateChanged
 import java.util.*
 
-private val isToggleCommitUi get() = Registry.get("vcs.non.modal.commit.toggle.ui")
+private val TOGGLE_COMMIT_UI = "vcs.non.modal.commit.toggle.ui"
+
+private val isToggleCommitUi get() = AdvancedSettings.getBoolean(TOGGLE_COMMIT_UI)
 private val isForceNonModalCommit get() = Registry.get("vcs.force.non.modal.commit")
 private val appSettings get() = VcsApplicationSettings.getInstance()
 
@@ -86,8 +88,7 @@ class CommitModeManager(private val project: Project) {
     }
 
     if (isNonModalInSettings() && canSetNonModal()) {
-      val isToggleMode = isToggleCommitUi.asBoolean()
-      return CommitMode.NonModalCommitMode(isToggleMode)
+      return CommitMode.NonModalCommitMode(isToggleCommitUi)
     }
 
     return CommitMode.ModalCommitMode
@@ -109,9 +110,13 @@ class CommitModeManager(private val project: Project) {
     isForceNonModalCommit.addListener(object : RegistryValueListener {
       override fun afterValueChanged(value: RegistryValue) = updateCommitMode()
     }, project)
-    isToggleCommitUi.addListener(object : RegistryValueListener {
-      override fun afterValueChanged(value: RegistryValue) = updateCommitMode()
-    }, project)
+    getApplication().messageBus.connect(project).subscribe(AdvancedSettingsChangeListener.TOPIC, object : AdvancedSettingsChangeListener {
+      override fun advancedSettingChanged(id: String, oldValue: Any, newValue: Any) {
+        if (id == TOGGLE_COMMIT_UI) {
+          updateCommitMode()
+        }
+      }
+    })
     SETTINGS.subscribe(project, object : SettingsListener {
       override fun settingsChanged() = updateCommitMode()
     })
@@ -156,6 +161,7 @@ class CommitModeManager(private val project: Project) {
 sealed class CommitMode {
   abstract fun useCommitToolWindow(): Boolean
   open fun hideLocalChangesTab(): Boolean = false
+  open fun disableDefaultCommitAction(): Boolean = false
 
   object PendingCommitMode : CommitMode() {
     override fun useCommitToolWindow(): Boolean {
@@ -175,5 +181,6 @@ sealed class CommitMode {
   data class ExternalCommitMode(val vcs: AbstractVcs) : CommitMode() {
     override fun useCommitToolWindow(): Boolean = true
     override fun hideLocalChangesTab(): Boolean = true
+    override fun disableDefaultCommitAction(): Boolean = true
   }
 }

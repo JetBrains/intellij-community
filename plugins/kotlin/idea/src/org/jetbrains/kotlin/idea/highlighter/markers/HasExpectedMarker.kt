@@ -1,0 +1,46 @@
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+
+package org.jetbrains.kotlin.idea.highlighter.markers
+
+import com.intellij.openapi.util.NlsContexts
+import com.intellij.psi.PsiElement
+import org.jetbrains.kotlin.descriptors.MemberDescriptor
+import org.jetbrains.kotlin.idea.KotlinBundle
+import org.jetbrains.kotlin.idea.caches.project.implementedDescriptors
+import org.jetbrains.kotlin.idea.caches.resolve.findModuleDescriptor
+import org.jetbrains.kotlin.idea.core.toDescriptor
+import org.jetbrains.kotlin.idea.util.expectedDeclarationIfAny
+import org.jetbrains.kotlin.idea.util.hasDeclarationOf
+import org.jetbrains.kotlin.psi.KtDeclaration
+
+fun getExpectedDeclarationTooltip(declaration: KtDeclaration): String? {
+    val descriptor = declaration.toDescriptor() as? MemberDescriptor ?: return null
+    val platformModuleDescriptor = declaration.containingKtFile.findModuleDescriptor()
+
+    val commonModuleDescriptors = platformModuleDescriptor.implementedDescriptors
+    if (!commonModuleDescriptors.any { it.hasDeclarationOf(descriptor) }) return null
+
+    return KotlinBundle.message("highlighter.tool.tip.has.declaration.in.common.module")
+}
+
+fun KtDeclaration.allNavigatableExpectedDeclarations(): List<KtDeclaration> =
+    listOfNotNull(expectedDeclarationIfAny()) + findMarkerBoundDeclarations().mapNotNull { it.expectedDeclarationIfAny() }
+
+@NlsContexts.PopupTitle
+fun KtDeclaration.navigateToExpectedTitle() = KotlinBundle.message("highlighter.title.choose.expected.for", name.toString())
+
+@NlsContexts.TabTitle
+fun KtDeclaration.navigateToExpectedUsagesTitle() = KotlinBundle.message("highlighter.title.expected.for", name.toString())
+
+fun buildNavigateToExpectedDeclarationsPopup(element: PsiElement?): NavigationPopupDescriptor? {
+    return element?.markerDeclaration?.let {
+        val navigatableExpectedDeclarations = it.allNavigatableExpectedDeclarations()
+        if (navigatableExpectedDeclarations.isEmpty()) return null
+        return NavigationPopupDescriptor(
+            navigatableExpectedDeclarations,
+            it.navigateToExpectedTitle(),
+            it.navigateToExpectedUsagesTitle(),
+            ActualExpectedPsiElementCellRenderer()
+        )
+    }
+}

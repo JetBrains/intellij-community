@@ -162,6 +162,7 @@ public class PathReferenceManagerImpl extends PathReferenceManager {
 
     List<PsiReference> result = doMerge(element, intersecting);
     result.addAll(notIntersecting);
+    result.sort(START_OFFSET_COMPARATOR);
 
     return result.toArray(PsiReference.EMPTY_ARRAY);
   }

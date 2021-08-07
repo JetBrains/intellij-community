@@ -11,6 +11,8 @@
     <extensionPoint qualifiedName="org.jetbrains.jsonRpcDomain" beanClass="org.jetbrains.io.jsonRpc.JsonRpcDomainBean" dynamic="true">
       <with attribute="implementation" implements="java.lang.Object"/>
     </extensionPoint>
+
+    <extensionPoint qualifiedName="com.intellij.toolboxServiceHandler" interface="org.jetbrains.ide.ToolboxServiceHandler" dynamic="true" />
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
@@ -32,10 +34,15 @@
     <httpRequestHandler implementation="org.jetbrains.ide.StartUpMeasurementService"/>
     <httpRequestHandler implementation="org.jetbrains.ide.OpenSettingsService"/>
     <httpRequestHandler implementation="org.jetbrains.ide.InstallPluginService"/>
+
+    <applicationService serviceImplementation="org.jetbrains.ide.ToolboxRestServiceConfig" preload="true"/>
+    <httpRequestHandler implementation="org.jetbrains.ide.ToolboxRestService"/>
+    <toolboxServiceHandler implementation="org.jetbrains.ide.ToolboxUpdateNotificationHandler"/>
+    <toolboxServiceHandler implementation="org.jetbrains.ide.ToolboxRestartNotificationHandler"/>
+
+    <settingsEntryPointActionProvider implementation="org.jetbrains.ide.ToolboxSettingsActionRegistryActionProvider"/>
+
     <httpRequestHandler implementation="org.jetbrains.builtInWebServer.liveReload.WebServerPageConnectionService$WebServerPageRequestHandler"/>
-    <registryKey description="Enables automatic reloading of a web page loaded from built-in web server when a related file is changed and saved."
-                 key="ide.built.in.web.server.reload.on.save"
-                 defaultValue="false"/>
 
     <jbProtocolCommand implementation="org.jetbrains.ide.OpenSettingsJbProtocolService"/>
 

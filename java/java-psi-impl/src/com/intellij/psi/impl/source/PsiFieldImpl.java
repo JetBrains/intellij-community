@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl.source;
 
 import com.intellij.lang.ASTNode;
@@ -309,9 +309,10 @@ public class PsiFieldImpl extends JavaStubPsiElement<PsiFieldStub> implements Ps
     }
     else {
       ASTNode prevField = treeElement.getTreePrev();
-      while(prevField.getElementType() != JavaElementType.FIELD){
+      while (prevField != null && prevField.getElementType() != JavaElementType.FIELD){
         prevField = prevField.getTreePrev();
       }
+      if (prevField == null) return null;
       return ((PsiField)SourceTreeToPsiMap.treeElementToPsi(prevField)).getDocComment();
     }
   }

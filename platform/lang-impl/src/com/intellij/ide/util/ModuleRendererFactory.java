@@ -1,32 +1,22 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.util;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.util.ReflectionUtil;
+import com.intellij.util.TextWithIcon;
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
+import com.intellij.util.concurrency.annotations.RequiresReadLock;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.awt.*;
 
-/**
- * @author yole
- */
 public abstract class ModuleRendererFactory {
+
   private static final ExtensionPointName<ModuleRendererFactory> EP_NAME = ExtensionPointName.create("com.intellij.moduleRendererFactory");
 
-  public static ModuleRendererFactory findInstance(Object element) {
+  public static @NotNull ModuleRendererFactory findInstance(Object element) {
     for (ModuleRendererFactory factory : EP_NAME.getExtensions()) {
       if (factory.handles(element)) {
         return factory;
@@ -36,13 +26,47 @@ public abstract class ModuleRendererFactory {
     return null;
   }
 
+  public boolean rendersLocationString() {
+    return false;
+  }
+
   protected boolean handles(final Object element) {
     return true;
   }
 
-  public abstract DefaultListCellRenderer getModuleRenderer();
+  /**
+   * This method might be invoked in the background, which will lock {@link Component.AWTTreeLock}.
+   * In fact, this method is not needed since implementation only needs to provide a text and an icon.
+   *
+   * @deprecated call/implement {@link #getModuleTextWithIcon} instead
+   */
+  @Deprecated
+  public @NotNull DefaultListCellRenderer getModuleRenderer() {
+    if (isGetModuleTextWithIconOverridden) {
+      return new PsiElementModuleRenderer(this::getModuleTextWithIcon);
+    }
+    throw new AbstractMethodError("getModuleTextWithIcon(Object) must be implemented");
+  }
 
-  public boolean rendersLocationString() {
-    return false;
+  private final boolean isGetModuleTextWithIconOverridden = ReflectionUtil.getMethodDeclaringClass(
+    getClass(), "getModuleTextWithIcon", Object.class
+  ) != ModuleRendererFactory.class;
+
+  @RequiresReadLock
+  @RequiresBackgroundThread(generateAssertion = false)
+  public @Nullable TextWithIcon getModuleTextWithIcon(Object element) {
+    return getTextWithIcon(getModuleRenderer(), element);
+  }
+
+  static @Nullable TextWithIcon getTextWithIcon(@Nullable ListCellRenderer<Object> renderer, Object element) {
+    if (renderer == null) {
+      return null;
+    }
+    Component component = renderer.getListCellRendererComponent(new JList<>(), element, -1, false, false);
+    if (!(component instanceof JLabel)) {
+      return null;
+    }
+    JLabel label = (JLabel)component;
+    return new TextWithIcon(label.getText(), label.getIcon());
   }
 }

@@ -1,8 +1,7 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.util;
 
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -11,6 +10,11 @@ import java.awt.*;
 
 public abstract class WindowStateService {
   private final Project project;
+
+  /**
+   * (DialogWrapper.getDimensionServiceKey()) Start your key with this string to store state independently of the project
+   */
+  public static final String USE_APPLICATION_WIDE_STORE_KEY_PREFIX = "APPLICATION_WIDE_STORE_";
 
   protected WindowStateService(@Nullable Project project) {
     this.project = project;
@@ -29,7 +33,7 @@ public abstract class WindowStateService {
    * @return an instance of the service for the specified project
    */
   public static WindowStateService getInstance(@NotNull Project project) {
-    return ServiceManager.getService(project, WindowStateService.class);
+    return project.getService(WindowStateService.class);
   }
 
 

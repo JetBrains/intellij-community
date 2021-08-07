@@ -30,5 +30,5 @@ class JavaUInstanceCheckExpression(
     get() = sourcePsi.checkType?.type ?: UastErrorType
 
   override val operationKind: UastBinaryExpressionWithTypeKind.InstanceCheck
-    get() = UastBinaryExpressionWithTypeKind.INSTANCE_CHECK
+    get() = UastBinaryExpressionWithTypeKind.InstanceCheck.INSTANCE
 }

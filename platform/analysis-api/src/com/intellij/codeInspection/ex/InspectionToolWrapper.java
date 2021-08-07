@@ -107,7 +107,7 @@ public abstract class InspectionToolWrapper<T extends InspectionProfileEntry, E 
     return isApplicable(language, langId);
   }
 
-  private boolean isApplicable(@NotNull Language language, String toolLang) {
+  private boolean isApplicable(@NotNull Language language, @Nullable String toolLang) {
     if (toolLang == null) {
       return true;
     }
@@ -140,6 +140,7 @@ public abstract class InspectionToolWrapper<T extends InspectionProfileEntry, E 
     return myEP != null ? myEP.getShortName() : getTool().getShortName();
   }
 
+  @NotNull
   public String getID() {
     return getShortName();
   }

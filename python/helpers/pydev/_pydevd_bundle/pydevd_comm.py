@@ -73,7 +73,7 @@ from _pydev_imps._pydev_saved_modules import socket
 from socket import socket, AF_INET, SOCK_STREAM, SHUT_RD, SHUT_WR, SOL_SOCKET, SO_REUSEADDR, SHUT_RDWR, timeout
 from _pydevd_bundle.pydevd_constants import DebugInfoHolder, get_thread_id, IS_JYTHON, IS_PY2, IS_PY3K, \
     IS_PY36_OR_GREATER, STATE_RUN, dict_keys, ASYNC_EVAL_TIMEOUT_SEC, IS_IRONPYTHON, GlobalDebuggerHolder, \
-    get_global_debugger, GetGlobalDebugger, set_global_debugger # Keep for backward compatibility @UnusedImport
+    get_global_debugger, GetGlobalDebugger, set_global_debugger, NEXT_VALUE_SEPARATOR
 from _pydev_bundle.pydev_override import overrides
 import json
 import weakref
@@ -105,6 +105,7 @@ from _pydevd_bundle.pydevd_utils import quote_smart as quote, compare_object_att
 from _pydev_bundle.pydev_is_thread_alive import is_thread_alive
 from _pydev_bundle import pydev_log
 from _pydev_bundle import _pydev_completer
+from _pydevd_bundle.pydevd_tables import exec_table_command
 
 from pydevd_tracing import get_exception_traceback_str
 from _pydevd_bundle import pydevd_console
@@ -141,7 +142,8 @@ from _pydevd_bundle.pydevd_comm_constants import (
     CMD_STOP_ON_START, CMD_GET_EXCEPTION_DETAILS, CMD_PROCESS_CREATED_MSG_RECEIVED, CMD_PYDEVD_JSON_CONFIG,
     CMD_THREAD_SUSPEND_SINGLE_NOTIFICATION, CMD_THREAD_RESUME_SINGLE_NOTIFICATION,
     CMD_REDIRECT_OUTPUT, CMD_GET_NEXT_STATEMENT_TARGETS, CMD_SET_PROJECT_ROOTS, CMD_VERSION,
-    CMD_RETURN, CMD_SET_PROTOCOL, CMD_ERROR, CMD_GET_SMART_STEP_INTO_VARIANTS, CMD_DATAVIEWER_ACTION,)
+    CMD_RETURN, CMD_SET_PROTOCOL, CMD_ERROR, CMD_GET_SMART_STEP_INTO_VARIANTS, CMD_DATAVIEWER_ACTION,
+    CMD_TABLE_EXEC, CMD_INTERRUPT_DEBUG_CONSOLE)
 MAX_IO_MSG_SIZE = 1000  #if the io is too big, we'll not send all (could make the debugger too non-responsive)
 #this number can be changed if there's need to do so
 
@@ -1363,6 +1365,38 @@ class InternalDataViewerAction(InternalThreadCommand):
 
         else:
             raise AttributeError("Type {} is not supported".format(type(var)))
+
+
+#=======================================================================================================================
+# InternalDataViewerAction
+#=======================================================================================================================
+class InternalTableCommand(InternalThreadCommand):
+    def __init__(self, sequence, thread_id, frame_id, init_command, command_type):
+        super().__init__(thread_id)
+        self.sequence = sequence
+        self.frame_id = frame_id
+        self.init_command = init_command
+        self.command_type = command_type
+
+    def do_it(self, dbg):
+        try:
+            frame = pydevd_vars.find_frame(self.thread_id, self.frame_id)
+            success, res = self.exec_command(frame)
+
+            if success:
+                cmd = NetCommand(CMD_TABLE_EXEC, self.sequence, res)
+                dbg.writer.add_command(cmd)
+            else:
+                cmd = dbg.cmd_factory.make_error_message(self.sequence, str(res))
+                dbg.writer.add_command(cmd)
+        except Exception as e:
+            cmd = dbg.cmd_factory.make_error_message(self.sequence, get_exception_traceback_str())
+            dbg.writer.add_command(cmd)
+
+    def exec_command(self, frame):
+        return exec_table_command(self.init_command, self.command_type, frame.f_globals,
+                                  frame.f_locals)
+
 
 #=======================================================================================================================
 # InternalChangeVariable

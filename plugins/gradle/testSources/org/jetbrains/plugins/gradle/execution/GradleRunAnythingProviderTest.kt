@@ -2,7 +2,6 @@
 package org.jetbrains.plugins.gradle.execution
 
 import org.assertj.core.api.Assertions.assertThat
-import org.jetbrains.plugins.gradle.importing.GradleBuildScriptBuilderEx
 import org.jetbrains.plugins.gradle.importing.GradleSettingScriptBuilder
 import org.junit.Test
 
@@ -19,9 +18,9 @@ class GradleRunAnythingProviderTest : GradleRunAnythingProviderTestCase() {
     createTestJavaClass("ClassE")
     createTestJavaClass("ClassF")
     createTestJavaClass("ClassG")
-    val buildScript = GradleBuildScriptBuilderEx()
+    val buildScript = createBuildScriptBuilder()
       .withJavaPlugin()
-      .withJUnit("4.12")
+      .withJUnit4()
     importProject(buildScript.generate())
 
     val wcCompletions = arrayOf(
@@ -72,11 +71,11 @@ class GradleRunAnythingProviderTest : GradleRunAnythingProviderTestCase() {
 
   @Test
   fun `test single project`() {
-    importProject(GradleBuildScriptBuilderEx().generate())
+    importProject(createBuildScriptBuilder().generate())
     withVariantsFor("") {
       assertCollection(it, getGradleOptions(), getCommonTasks(), getCommonTasks(":"))
     }
-    importProject(GradleBuildScriptBuilderEx().withTask("my-task").generate())
+    importProject(createBuildScriptBuilder().withTask("my-task").generate())
     withVariantsFor("") {
       assertCollection(it, getGradleOptions(), getCommonTasks(), getCommonTasks(":"))
       assertCollection(it, "my-task", ":my-task")
@@ -96,10 +95,10 @@ class GradleRunAnythingProviderTest : GradleRunAnythingProviderTestCase() {
 
   @Test
   fun `test multi-module project`() {
-    createProjectSubFile("build.gradle", GradleBuildScriptBuilderEx().withTask("taskP").generate())
-    createProjectSubFile("module/build.gradle", GradleBuildScriptBuilderEx().withTask("taskM").generate())
-    createProjectSubFile("composite/build.gradle", GradleBuildScriptBuilderEx().withTask("taskC").generate())
-    createProjectSubFile("composite/module/build.gradle", GradleBuildScriptBuilderEx().withTask("taskCM").generate())
+    createProjectSubFile("build.gradle", createBuildScriptBuilder().withTask("taskP").generate())
+    createProjectSubFile("module/build.gradle", createBuildScriptBuilder().withTask("taskM").generate())
+    createProjectSubFile("composite/build.gradle", createBuildScriptBuilder().withTask("taskC").generate())
+    createProjectSubFile("composite/module/build.gradle", createBuildScriptBuilder().withTask("taskCM").generate())
     createProjectSubFile("settings.gradle", GradleSettingScriptBuilder("project").withModule("module").withBuild("composite").generate())
     createProjectSubFile("composite/settings.gradle", GradleSettingScriptBuilder("composite").withModule("module").generate())
     importProject()
@@ -115,6 +114,12 @@ class GradleRunAnythingProviderTest : GradleRunAnythingProviderTestCase() {
       assertCollection(it, "taskM", !":taskM", ":module:taskM")
       assertCollection(it, !"taskC", !":taskC", !":module:taskC")
       assertCollection(it, !"taskCM", !":taskCM", !":module:taskCM")
+
+      if (isGradleNewerOrSameAs("6.8")) {
+        assertCollection(it,
+                         getCommonTasks(":composite:") - ":composite:prepareKotlinBuildScriptModel",
+                         getCommonTasks(":composite:module:") - ":composite:module:prepareKotlinBuildScriptModel")
+      }
     }
     withVariantsFor("", "project") {
       assertCollection(it, getGradleOptions())
@@ -145,6 +150,10 @@ class GradleRunAnythingProviderTest : GradleRunAnythingProviderTestCase() {
       assertCollection(it, !"taskCM", !":taskCM", !":module:taskCM")
     }
     withVariantsFor("", "composite") {
+      if (isGradleNewerOrSameAs("6.8")) {
+        assertThat(it).containsExactlyInAnyOrderElementsOf(getGradleOptions())
+        return@withVariantsFor
+      }
       assertCollection(it, getGradleOptions())
       assertCollection(it, getRootProjectTasks(), getRootProjectTasks(":"), !getRootProjectTasks(":module:"))
       if (isGradleNewerOrSameAs("6.5.1")) {
@@ -158,6 +167,10 @@ class GradleRunAnythingProviderTest : GradleRunAnythingProviderTestCase() {
       assertCollection(it, "taskCM", !":taskCM", ":module:taskCM")
     }
     withVariantsFor("", "composite.module") {
+      if (isGradleNewerOrSameAs("6.8")) {
+        assertThat(it).containsExactlyInAnyOrderElementsOf(getGradleOptions())
+        return@withVariantsFor
+      }
       assertCollection(it, getGradleOptions())
       assertCollection(it, !getRootProjectTasks(), !getRootProjectTasks(":"), !getRootProjectTasks(":module:"))
       if (isGradleNewerOrSameAs("6.5.1")) {
@@ -202,13 +215,24 @@ class GradleRunAnythingProviderTest : GradleRunAnythingProviderTestCase() {
         "  Unknown command-line option '--unknown-option'"
       )
 
-    executeAndWait("taskWithArgs")
-      .assertExecutionTree(
-        "-\n" +
-        " -failed\n" +
-        "  :taskWithArgs\n" +
-        "  No value has been specified for property 'myArgs'"
-      )
+    if (isGradleNewerOrSameAs("7.0")) {
+      executeAndWait("taskWithArgs")
+        .assertExecutionTree(
+          "-\n" +
+          " -failed\n" +
+          "  :taskWithArgs\n" +
+          "  A problem was found with the configuration of task ':taskWithArgs' (type 'ArgsTask')."
+        )
+    }
+    else {
+      executeAndWait("taskWithArgs")
+        .assertExecutionTree(
+          "-\n" +
+          " -failed\n" +
+          "  :taskWithArgs\n" +
+          "  No value has been specified for property 'myArgs'"
+        )
+    }
 
     // test known build CLI option before tasks and with task quoted argument with apostrophe (')
     // (<build_option> <task> <arg>='<arg_value>')
@@ -222,12 +246,12 @@ class GradleRunAnythingProviderTest : GradleRunAnythingProviderTestCase() {
         "successful",
         {
           assertThat(it).matches(
-            "(\\d+):(\\d+):(\\d+)( AM| PM)?: Executing tasks 'taskWithArgs --my_args='test args' --quiet'...\n" +
+            "(\\d+):(\\d+):(\\d+)( AM| PM)?: Executing 'taskWithArgs --my_args='test args' --quiet'...\n" +
             "\n" +
             "(?:Starting Gradle Daemon...\n" +
             "Gradle Daemon started in .* ms\n)?" +
             "test args\n" +
-            "(\\d+):(\\d+):(\\d+)( AM| PM)?: Tasks execution finished 'taskWithArgs --my_args='test args' --quiet'.\n"
+            "(\\d+):(\\d+):(\\d+)( AM| PM)?: Execution finished 'taskWithArgs --my_args='test args' --quiet'.\n"
           )
         }
       )
@@ -273,12 +297,12 @@ class GradleRunAnythingProviderTest : GradleRunAnythingProviderTestCase() {
         "successful",
         {
           assertThat(it).matches(
-            "(\\d+):(\\d+):(\\d+)( AM| PM)?: Executing tasks 'taskWithArgs --my_args=test_args --quiet'...\n" +
+            "(\\d+):(\\d+):(\\d+)( AM| PM)?: Executing 'taskWithArgs --my_args=test_args --quiet'...\n" +
             "\n" +
             "(?:Starting Gradle Daemon...\n" +
             "Gradle Daemon started in .* ms\n)?" +
             "test_args\n" +
-            "(\\d+):(\\d+):(\\d+)( AM| PM)?: Tasks execution finished 'taskWithArgs --my_args=test_args --quiet'.\n"
+            "(\\d+):(\\d+):(\\d+)( AM| PM)?: Execution finished 'taskWithArgs --my_args=test_args --quiet'.\n"
           )
         }
       )
@@ -295,12 +319,12 @@ class GradleRunAnythingProviderTest : GradleRunAnythingProviderTestCase() {
         "successful",
         {
           assertThat(it).matches(
-            "(\\d+):(\\d+):(\\d+)( AM| PM)?: Executing tasks 'taskWithArgs --my_args test_args --quiet'...\n" +
+            "(\\d+):(\\d+):(\\d+)( AM| PM)?: Executing 'taskWithArgs --my_args test_args --quiet'...\n" +
             "\n" +
             "(?:Starting Gradle Daemon...\n" +
             "Gradle Daemon started in .* ms\n)?" +
             "test_args\n" +
-            "(\\d+):(\\d+):(\\d+)( AM| PM)?: Tasks execution finished 'taskWithArgs --my_args test_args --quiet'.\n"
+            "(\\d+):(\\d+):(\\d+)( AM| PM)?: Execution finished 'taskWithArgs --my_args test_args --quiet'.\n"
           )
         }
       )

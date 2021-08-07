@@ -4,7 +4,7 @@ package org.jetbrains.plugins.gradle.dsl
 import com.intellij.psi.PsiMethod
 import com.intellij.testFramework.RunAll
 import groovy.transform.CompileStatic
-import org.jetbrains.plugins.gradle.highlighting.GradleHighlightingBaseTest
+import org.jetbrains.plugins.gradle.importing.highlighting.GradleHighlightingBaseTest
 import org.jetbrains.plugins.groovy.codeInspection.assignment.GroovyAssignabilityCheckInspection
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall
 import org.jetbrains.plugins.groovy.util.ResolveTest
@@ -24,7 +24,10 @@ class GradleWithGroovyTest extends GradleHighlightingBaseTest implements Resolve
 
   @Test
   void artifactsTest() {
-    importProject("apply plugin: 'java'; dependencies { compile 'org.codehaus.groovy:groovy:2.5.6' }")
+    importProject(script {
+      it.withJavaPlugin()
+        .addImplementationDependency("org.codehaus.groovy:groovy:2.5.6")
+    })
     new RunAll(
       { 'Project#allprojects call'() },
       { 'DomainObjectCollection#all call'() },

@@ -1,44 +1,55 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.updateSettings.impl
 
 import com.intellij.openapi.updateSettings.UpdateStrategyCustomization
 import com.intellij.openapi.util.BuildNumber
 import com.intellij.util.containers.MultiMap
-import com.intellij.util.graph.GraphAlgorithms
 import com.intellij.util.graph.InboundSemiGraph
-import java.util.*
+import com.intellij.util.graph.impl.ShortestPathFinder
+import org.jetbrains.annotations.ApiStatus
 
-private val NUMBER = Regex("\\d+")
+class UpdateStrategy @JvmOverloads constructor(
+  private val currentBuild: BuildNumber,
+  private val product: Product? = null,
+  private val settings: UpdateSettings = UpdateSettings.getInstance(),
+  private val customization: UpdateStrategyCustomization = UpdateStrategyCustomization.getInstance(),
+) {
 
-class UpdateStrategy(private val currentBuild: BuildNumber, private val product: Product?, private val settings: UpdateSettings) {
-  constructor(currentBuild: BuildNumber, updates: UpdatesInfo, settings: UpdateSettings) :
-    this(currentBuild, updates[currentBuild.productCode], settings)
+  @Deprecated("Please use `UpdateStrategy(BuildNumber, Product, UpdateSettings)` instead")
+  @ApiStatus.ScheduledForRemoval(inVersion = "2022.2")
+  @Suppress("DEPRECATION")
+  constructor(
+    currentBuild: BuildNumber,
+    updates: UpdatesInfo,
+    settings: UpdateSettings = UpdateSettings.getInstance(),
+  ) : this(
+    currentBuild,
+    updates.product,
+    settings,
+  )
 
-  private val customization = UpdateStrategyCustomization.getInstance()
-
-  enum class State {
-    LOADED, CONNECTION_ERROR, NOTHING_LOADED
-  }
-
-  fun checkForUpdates(): CheckForUpdateResult {
+  fun checkForUpdates(): PlatformUpdates {
     if (product == null || product.channels.isEmpty()) {
-      return CheckForUpdateResult(State.NOTHING_LOADED, null)
+      return PlatformUpdates.Empty
     }
 
     val selectedChannel = settings.selectedChannelStatus
     val ignoredBuilds = settings.ignoredBuildNumbers.toSet()
 
-    val result = product.channels.asSequence()
-      .filter { ch -> ch.status >= selectedChannel }                                            // filters out inapplicable channels
-      .sortedBy { ch -> ch.status }                                                             // reorders channels (EAPs first)
-      .flatMap { ch -> ch.builds.asSequence().map { build -> build to ch } }                    // maps into a sequence of <build, channel> pairs
-      .filter { p -> isApplicable(p.first, ignoredBuilds) }                                     // filters out inapplicable builds
-      .maxWithOrNull(Comparator { p1, p2 -> compareBuilds(p1.first.number, p2.first.number) })  // a build with the max number, preferring the same baseline
-
-    val newBuild = result?.first
-    val updatedChannel = result?.second
-    val patches = if (newBuild != null) patches(newBuild, product, currentBuild) else null
-    return CheckForUpdateResult(newBuild, updatedChannel, patches)
+    return product.channels
+             .asSequence()
+             .filter { ch -> ch.status >= selectedChannel }                                            // filters out inapplicable channels
+             .sortedBy { ch -> ch.status }                                                             // reorders channels (EAPs first)
+             .flatMap { ch -> ch.builds.asSequence().map { build -> build to ch } }                    // maps into a sequence of <build, channel> pairs
+             .filter { p -> isApplicable(p.first, ignoredBuilds) }                                     // filters out inapplicable builds
+             .maxWithOrNull(Comparator { p1, p2 -> compareBuilds(p1.first.number, p2.first.number) })  // a build with the max number, preferring the same baseline
+             ?.let { (newBuild, channel) ->
+               PlatformUpdates.Loaded(
+                 newBuild,
+                 channel,
+                 patches(newBuild, product, currentBuild),
+               )
+             } ?: PlatformUpdates.Empty
   }
 
   private fun isApplicable(candidate: BuildInfo, ignoredBuilds: Set<String>): Boolean =
@@ -59,6 +70,7 @@ class UpdateStrategy(private val currentBuild: BuildNumber, private val product:
 
     val upgrades = MultiMap<BuildNumber, BuildNumber>()
     val sizes = mutableMapOf<Pair<BuildNumber, BuildNumber>, Int>()
+    val number = Regex("\\d+")
 
     product.channels.forEach { channel ->
       channel.builds.forEach { build ->
@@ -68,7 +80,7 @@ class UpdateStrategy(private val currentBuild: BuildNumber, private val product:
             val fromBuild = patch.fromBuild.withoutProductCode()
             upgrades.putValue(toBuild, fromBuild)
             if (patch.size != null) {
-              val maxSize = NUMBER.findAll(patch.size).map { it.value.toIntOrNull() }.filterNotNull().maxOrNull()
+              val maxSize = number.findAll(patch.size).map { it.value.toIntOrNull() }.filterNotNull().maxOrNull()
               if (maxSize != null) sizes += (fromBuild to toBuild) to maxSize
             }
           }
@@ -80,7 +92,7 @@ class UpdateStrategy(private val currentBuild: BuildNumber, private val product:
       override fun getNodes() = upgrades.keySet() + upgrades.values()
       override fun getIn(n: BuildNumber) = upgrades[n].iterator()
     }
-    val path = GraphAlgorithms.getInstance().findShortestPath(graph, from.withoutProductCode(), newBuild.number.withoutProductCode())
+    val path = ShortestPathFinder(graph).findPath(from.withoutProductCode(), newBuild.number.withoutProductCode())
     if (path == null || path.size <= 2) return null
 
     var total = 0

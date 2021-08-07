@@ -52,7 +52,7 @@ public abstract class ModelsHolder<B extends BuildModel, P extends ProjectModel>
   }
 
   @ApiStatus.Internal
-  void convertPaths(@NotNull Consumer<Object> pathsConverter) {
+  void applyPathsConverter(@NotNull Consumer<Object> pathsConverter) {
     myPathsConverter = pathsConverter;
   }
 

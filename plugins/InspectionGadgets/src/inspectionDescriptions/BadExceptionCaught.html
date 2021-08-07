@@ -1,14 +1,21 @@
 <html>
 <body>
-Reports <b>catch</b> clauses
-which catch inappropriate exceptions. Some exceptions, for instance
-<b>java.lang.NullPointerException</b> and
-<b>java.lang.IllegalMonitorStateException</b> represent programming errors
-and so should almost certainly not be caught in production code.
+Reports a <code>catch</code> clause
+that catches an inappropriate exception.
+<p>Some exceptions, for example
+  <code>java.lang.NullPointerException</code> or
+  <code>java.lang.IllegalMonitorStateException</code>, represent programming errors
+  and therefore almost certainly should not be caught in production code.
+<p><b>Example:</b></p>
+<pre><code>
+  try {
+    return component.getMousePosition(true) != null;
+  }
+  catch (NullPointerException e) { // warning: Prohibited exception 'NullPointerException' caught
+    return false;
+  }
+</code></pre>
 <!-- tooltip end -->
-<p>
-Use the list below to specify which exceptions should be flagged by this inspection.
-<p>
-
+<p>Use the <b>Prohibited exceptions</b> list to specify which exceptions should be reported.<p>
 </body>
 </html>

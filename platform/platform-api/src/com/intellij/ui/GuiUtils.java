@@ -4,18 +4,12 @@ package com.intellij.ui;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.fileChooser.FileChooser;
-import com.intellij.openapi.fileChooser.FileChooserDescriptor;
-import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.ui.FixedSizeButton;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.Condition;
-import com.intellij.openapi.util.NlsContexts;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.CharFilter;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.components.JBTextField;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Consumer;
@@ -51,8 +45,10 @@ public final class GuiUtils {
 
   private static JPanel constructFieldWithBrowseButton(final JComponent aComponent, final ActionListener aActionListener, int delta) {
     JPanel result = new JPanel(new GridBagLayout());
-    result.add(aComponent, new GridBagConstraints(0, 0, 1, 1, 1, 0, GridBagConstraints.CENTER, GridBagConstraints.BOTH, JBUI.emptyInsets(), 0, 0));
-    FixedSizeButton browseButton = new FixedSizeButton(aComponent.getPreferredSize().height - delta);//ignore border in case of browse button
+    result.add(aComponent,
+               new GridBagConstraints(0, 0, 1, 1, 1, 0, GridBagConstraints.CENTER, GridBagConstraints.BOTH, JBUI.emptyInsets(), 0, 0));
+    FixedSizeButton browseButton =
+      new FixedSizeButton(aComponent.getPreferredSize().height - delta);//ignore border in case of browse button
     TextFieldWithBrowseButton.MyDoClickAction.addTo(browseButton, aComponent);
     result.add(browseButton, new GridBagConstraints(1, 0, 1, 1, 0, 1, GridBagConstraints.CENTER, GridBagConstraints.NONE,
                                                     JBUI.emptyInsets(), 0, 0));
@@ -61,63 +57,8 @@ public final class GuiUtils {
     return result;
   }
 
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.2")
-  public static JPanel constructDirectoryBrowserField(final JTextField field, final String objectName) {
-    return constructFieldWithBrowseButton(field, new ActionListener() {
-      @SuppressWarnings("HardCodedStringLiteral")
-      @Override
-      public void actionPerformed(ActionEvent e) {
-        FileChooserDescriptor descriptor = FileChooserDescriptorFactory.createSingleFolderDescriptor().withTitle("Select " + objectName);
-        VirtualFile file = FileChooser.chooseFile(descriptor, field, null, null);
-        if (file != null) {
-          field.setText(FileUtil.toSystemDependentName(file.getPath()));
-          field.postActionEvent();
-        }
-      }
-    });
-  }
-
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.2")
-  public static JPanel makeTitledPanel(JComponent aComponent, @NlsContexts.BorderTitle String aTitle) {
-    JPanel result = makePaddedPanel(aComponent, false, true, false, true);
-    return wrapWithBorder(result, IdeBorderFactory.createTitledBorder(aTitle));
-  }
-
-  private static JPanel wrapWithBorder(JComponent aPanel, Border aBorder) {
-    JPanel wrapper = new JPanel(new BorderLayout());
-    wrapper.add(aPanel, BorderLayout.CENTER);
-    wrapper.setBorder(aBorder);
-    return wrapper;
-  }
-
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.2")
-  public static BorderLayout createBorderLayout() {
-    return new BorderLayout(paddingInsideDialog.left, paddingInsideDialog.top);
-  }
-
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.2")
-  public static GridLayout createGridLayout(int aRows, int aColumns) {
-    return new GridLayout(aRows, aColumns, paddingInsideDialog.left, paddingInsideDialog.top);
-  }
-
   public static Component createVerticalStrut() {
     return Box.createRigidArea(new Dimension(0, paddingInsideDialog.top));
-  }
-
-  private static JPanel makePaddedPanel(JComponent aComponent,
-                                        boolean aTop,
-                                        boolean aLeft,
-                                        boolean aBottom,
-                                        boolean aRight) {
-    return wrapWithBorder(aComponent, BorderFactory.createEmptyBorder(
-      aTop ? paddingInsideDialog.top : 0,
-      aLeft ? paddingInsideDialog.left : 0,
-      aBottom ? paddingInsideDialog.bottom : 0,
-      aRight ? paddingInsideDialog.right : 0));
   }
 
   public static String getTextWithoutMnemonicEscaping(String text) {
@@ -150,13 +91,13 @@ public final class GuiUtils {
       final int orientation = pane.getOrientation();
       boolean vertical = orientation == JSplitPane.VERTICAL_SPLIT;
       final Splitter splitter = useOnePixelDivider ? new OnePixelSplitter(vertical) : new JBSplitter(vertical);
-      splitter.setFirstComponent((JComponent) component1);
-      splitter.setSecondComponent((JComponent) component2);
+      splitter.setFirstComponent((JComponent)component1);
+      splitter.setSecondComponent((JComponent)component2);
       splitter.setShowDividerControls(pane.isOneTouchExpandable());
       splitter.setHonorComponentsMinimumSize(true);
 
       if (pane.getDividerLocation() > 0) {
-// let the component chance to resize itself
+        // let the component chance to resize itself
         SwingUtilities.invokeLater(() -> {
           double proportion;
           if (pane.getOrientation() == JSplitPane.VERTICAL_SPLIT) {
@@ -172,19 +113,21 @@ public final class GuiUtils {
       }
 
       if (parent instanceof Splitter) {
-        final Splitter psplitter = (Splitter) parent;
-        if (psplitter.getFirstComponent() == root)
+        final Splitter psplitter = (Splitter)parent;
+        if (psplitter.getFirstComponent() == root) {
           psplitter.setFirstComponent(splitter);
-        else
+        }
+        else {
           psplitter.setSecondComponent(splitter);
+        }
       }
       else {
         parent.remove(0);
         parent.setLayout(new BorderLayout());
         parent.add(splitter, BorderLayout.CENTER);
       }
-      replaceJSplitPaneWithIDEASplitter((JComponent) component1, useOnePixelDivider);
-      replaceJSplitPaneWithIDEASplitter((JComponent) component2, useOnePixelDivider);
+      replaceJSplitPaneWithIDEASplitter((JComponent)component1, useOnePixelDivider);
+      replaceJSplitPaneWithIDEASplitter((JComponent)component2, useOnePixelDivider);
     }
     else {
       final Component[] components = root.getComponents();
@@ -235,22 +178,22 @@ public final class GuiUtils {
     }
     else if (component instanceof JLabel) {
       Color color = UIUtil.getInactiveTextColor();
-      @NonNls String changeColorString = "<font color=#" + colorToHex(color) +">";
+      @NonNls String changeColorString = "<font color=#" + colorToHex(color) + ">";
       final JLabel label = (JLabel)component;
       @NonNls String text = label.getText();
       if (text != null && text.startsWith("<html>")) {
         if (StringUtil.startsWithConcatenation(text, "<html>", changeColorString) && enabled) {
-          text = "<html>"+text.substring(("<html>"+changeColorString).length());
+          text = "<html>" + text.substring(("<html>" + changeColorString).length());
         }
         else if (!StringUtil.startsWithConcatenation(text, "<html>", changeColorString) && !enabled) {
-          text = "<html>"+changeColorString+text.substring("<html>".length());
+          text = "<html>" + changeColorString + text.substring("<html>".length());
         }
         label.setText(text);
       }
     }
     else if (component instanceof JTable) {
       TableColumnModel columnModel = ((JTable)component).getColumnModel();
-      for (int i=0; i<columnModel.getColumnCount();i++) {
+      for (int i = 0; i < columnModel.getColumnCount(); i++) {
         TableCellRenderer cellRenderer = columnModel.getColumn(0).getCellRenderer();
         if (cellRenderer instanceof Component) {
           enableComponent((Component)cellRenderer, enabled);
@@ -260,15 +203,7 @@ public final class GuiUtils {
   }
 
   public static String colorToHex(final Color color) {
-    return to2DigitsHex(color.getRed())
-           +to2DigitsHex(color.getGreen())
-           +to2DigitsHex(color.getBlue());
-  }
-
-  private static String to2DigitsHex(int i) {
-    String s = Integer.toHexString(i);
-    if (s.length() < 2) s = "0" + s;
-    return s;
+    return UIUtil.colorToHex(color);
   }
 
   /**
@@ -281,6 +216,11 @@ public final class GuiUtils {
     ApplicationManager.getApplication().invokeAndWait(runnable);
   }
 
+  /**
+   * @deprecated Use ModalityUiUtil instead
+   */
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
   public static void invokeLaterIfNeeded(@NotNull Runnable runnable, @NotNull ModalityState modalityState) {
     Application app = ApplicationManager.getApplication();
     if (app.isDispatchThread()) {
@@ -291,6 +231,11 @@ public final class GuiUtils {
     }
   }
 
+  /**
+   * @deprecated Use ModalityUiUtil instead
+   */
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
   public static void invokeLaterIfNeeded(@NotNull Runnable runnable, @NotNull ModalityState modalityState, @NotNull Condition expired) {
     Application app = ApplicationManager.getApplication();
     if (app.isDispatchThread()) {
@@ -307,8 +252,9 @@ public final class GuiUtils {
 
   /**
    * Returns dimension with width required to type certain number of chars in provided component
+   *
    * @param charCount number of chars
-   * @param comp component
+   * @param comp      component
    * @return dimension with width enough to insert provided number of chars into component
    */
   @NotNull

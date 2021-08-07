@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util;
 
 import com.intellij.openapi.application.PathManager;
@@ -33,9 +33,8 @@ public final class PathUtil {
     return FileUtil.toSystemDependentName(StringUtil.trimEnd(path, URLUtil.JAR_SEPARATOR));
   }
 
-  @NotNull
-  public static String getJarPathForClass(@NotNull Class<?> aClass) {
-    final String pathForClass = PathManager.getJarPathForClass(aClass);
+  public static @NotNull String getJarPathForClass(@NotNull Class<?> aClass) {
+    String pathForClass = PathManager.getJarPathForClass(aClass);
     assert pathForClass != null : aClass;
     return pathForClass;
   }

@@ -5,4 +5,4 @@ class C:
 
     @staticmethod
     def baz():
-        print "hello world"
+        print("hello world")

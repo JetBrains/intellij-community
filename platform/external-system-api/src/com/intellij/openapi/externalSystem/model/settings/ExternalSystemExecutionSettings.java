@@ -24,10 +24,9 @@ public class ExternalSystemExecutionSettings implements Serializable, UserDataHo
 
   private long myRemoteProcessIdleTtlInMs;
   private boolean myVerboseProcessing;
-  @NotNull private final List<String> myJvmArguments;
-  @NotNull private final List<String> myArguments;
-  @NotNull
-  private final Map<String, String> myEnv;
+  private final @NotNull List<String> myJvmArguments;
+  private @NotNull List<String> myArguments;
+  private final @NotNull Map<String, String> myEnv;
   private boolean myPassParentEnvs = true;
 
   @NotNull private final transient UserDataHolderBase myUserData = new UserDataHolderBase();
@@ -69,6 +68,10 @@ public class ExternalSystemExecutionSettings implements Serializable, UserDataHo
     return Collections.unmodifiableList(myArguments);
   }
 
+  public void setArguments(@NotNull List<String> arguments) {
+    myArguments = new ArrayList<>(arguments);
+  }
+
   @NotNull
   public Map<String, String> getEnv() {
     return Collections.unmodifiableMap(myEnv);
@@ -106,6 +109,10 @@ public class ExternalSystemExecutionSettings implements Serializable, UserDataHo
   public ExternalSystemExecutionSettings withArgument(String argument) {
     myArguments.add(argument);
     return this;
+  }
+
+  public void prependArguments(String... arguments) {
+    myArguments.addAll(0, Arrays.asList(arguments));
   }
 
   public ExternalSystemExecutionSettings withEnvironmentVariables(Map<String, String> envs) {

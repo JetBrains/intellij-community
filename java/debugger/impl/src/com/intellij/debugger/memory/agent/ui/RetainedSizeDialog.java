@@ -117,8 +117,12 @@ public class RetainedSizeDialog extends DialogWrapper {
     init();
   }
 
-  public void setCalculationTimeout() {
+  public void setCalculationTimeoutMessage() {
     myRetainedSizeLabel.setText(JavaDebuggerBundle.message("debugger.memory.agent.timeout.error"));
+  }
+
+  public void setAgentCouldntBeLoadedMessage() {
+    myRetainedSizeLabel.setText(JavaDebuggerBundle.message("debugger.memory.agent.loading.error"));
   }
 
   public void setHeldObjectsAndSizes(@NotNull Collection<? extends ObjectReference> heldObjects, long shallowSize, long retainedSize) {

@@ -23,14 +23,7 @@ internal class GHPRSearchQuery(private val terms: List<Term<*>>) {
 
   fun isEmpty() = terms.isEmpty()
 
-  override fun toString(): String {
-    val builder = StringBuilder()
-    for (term in terms) {
-      builder.append(term.toString())
-      if (builder.isNotEmpty()) builder.append(" ")
-    }
-    return builder.toString()
-  }
+  override fun toString(): String = terms.joinToString(" ")
 
   override fun equals(other: Any?): Boolean {
     if (this === other) return true
@@ -46,12 +39,13 @@ internal class GHPRSearchQuery(private val terms: List<Term<*>>) {
 
   companion object {
     val DEFAULT = GHPRSearchQuery(listOf(Term.Qualifier.Enum(QualifierName.state, GithubIssueState.open)))
+    val EMPTY = GHPRSearchQuery(listOf())
 
     private val DATE_FORMAT = SimpleDateFormat("yyyy-MM-dd")
 
     fun parseFromString(string: String): GHPRSearchQuery {
       val result = mutableListOf<Term<*>>()
-      val terms = string.split(' ')
+      val terms = string.trim().split(' ')
       for (term in terms) {
         if (term.isEmpty()) continue
 

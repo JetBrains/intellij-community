@@ -8,6 +8,6 @@ class CharPlusAppend {
   public String testStringBuilder() {
       <caret>String sb = Character.toLowerCase(s.charAt(prefixLen)) +
               s.substring(prefixLen + 1, totalLen - suffixLen);
-      return sb;
+    return sb;
   }
 }

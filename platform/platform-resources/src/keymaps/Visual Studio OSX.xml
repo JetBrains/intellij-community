@@ -68,9 +68,7 @@
   <action id="SearchEverywhere">
     <keyboard-shortcut first-keystroke="meta T"/>
   </action>
-  <action id="GotoChangedFile">
-    <keyboard-shortcut first-keystroke="meta T"/>
-  </action>
+  <action id="GotoChangedFile"/>
   <action id="GotoFile">
     <keyboard-shortcut first-keystroke="meta shift T"/>
   </action>
@@ -84,7 +82,7 @@
   </action>
   <action id="ExpressionTypeInfo"/>
   <action id="RunClass">
-    <keyboard-shortcut first-keystroke="meta F5"/>
+    <keyboard-shortcut first-keystroke="control alt F5"/>
   </action>
   <action id="FindNext">
     <keyboard-shortcut first-keystroke="F3"/>
@@ -168,7 +166,7 @@
     <keyboard-shortcut first-keystroke="meta E" second-keystroke="meta H"/>
   </action>
   <action id="Run">
-    <keyboard-shortcut first-keystroke="alt F5"/>
+    <keyboard-shortcut first-keystroke="control F5"/>
   </action>
   <action id="Replace">
     <keyboard-shortcut first-keystroke="control H"/>

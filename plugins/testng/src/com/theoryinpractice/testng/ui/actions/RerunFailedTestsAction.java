@@ -60,7 +60,7 @@ public class RerunFailedTestsAction extends JavaRerunFailedTestsAction {
 
           @Override
           public SearchForTestsTask createSearchingForTestsTask(@NotNull TargetEnvironment targetEnvironment) {
-            return new SearchingForTestsTask(myServerSocket, getConfiguration(), myTempFile) {
+            return new SearchingForTestsTask(getServerSocket(), getConfiguration(), myTempFile) {
               @Override
               protected void fillTestObjects(final Map<PsiClass, Map<PsiMethod, List<String>>> classes) throws CantRunException {
                 final HashMap<PsiClass, Map<PsiMethod, List<String>>> fullClassList = new HashMap<>();

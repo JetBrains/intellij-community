@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.project;
 
 import org.jetbrains.annotations.NotNull;
@@ -6,13 +6,14 @@ import org.jetbrains.annotations.NotNull;
 import java.util.EventListener;
 
 /**
- * Listener for Project.
+ * Listener for the {@link Project} lifecycle events.
+ * @see ProjectManager#TOPIC
  */
 public interface ProjectManagerListener extends EventListener {
   ProjectManagerListener[] EMPTY_ARRAY = new ProjectManagerListener[0];
 
   /**
-   * Invoked on project open.
+   * Invoked on project open. Executed in EDT.
    *
    * @param project opening project
    */
@@ -20,7 +21,7 @@ public interface ProjectManagerListener extends EventListener {
   }
 
   /**
-   * @deprecated Please use {@link VetoableProjectManagerListener}
+   * @deprecated Use {@link VetoableProjectManagerListener} instead
    */
   @Deprecated
   default boolean canCloseProject(@NotNull Project project) {

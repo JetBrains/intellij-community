@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2016 Dave Griffith, Bas Leijdekkers
+ * Copyright 2006-2021 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,7 +19,10 @@ import com.intellij.analysis.AnalysisScope;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.reference.RefClass;
 import com.intellij.codeInspection.reference.RefEntity;
+import com.intellij.codeInspection.reference.RefPackage;
+import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.codeInspection.util.RefEntityAlphabeticalComparator;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseGlobalInspection;
@@ -27,11 +30,21 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.uast.UDeclarationKt;
 
+import javax.swing.*;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.function.Predicate;
 
 public class CyclicClassDependencyInspection extends BaseGlobalInspection {
+
+  public boolean ignoreInSameFile = false;
+
+  @Override
+  public @Nullable JComponent createOptionsPanel() {
+    return new SingleCheckboxOptionsPanel(InspectionGadgetsBundle.message("cyclic.class.dependency.ignore.in.same.file"),
+                                          this, "ignoreInSameFile");
+  }
 
   @Override
   public CommonProblemDescriptor @Nullable [] checkElement(
@@ -48,6 +61,12 @@ public class CyclicClassDependencyInspection extends BaseGlobalInspection {
     }
     final Set<RefClass> dependencies = DependencyUtils.calculateTransitiveDependenciesForClass(refClass);
     final Set<RefClass> dependents = DependencyUtils.calculateTransitiveDependentsForClass(refClass);
+    final VirtualFile vFile = refClass.getPointer().getVirtualFile();
+    if (ignoreInSameFile) {
+      final Predicate<RefClass> filter = aClass -> aClass.getPointer().getVirtualFile().equals(vFile);
+      dependencies.removeIf(filter);
+      dependents.removeIf(filter);
+    }
     final Set<RefClass> mutualDependents = new HashSet<>(dependencies);
     mutualDependents.retainAll(dependents);
     final int numMutualDependents = mutualDependents.size();

@@ -1,16 +1,14 @@
 <html>
 <body>
-Reports any classes with too many methods. Classes with
-a large number of methods are often trying to 'do too much', and may need to be
-refactored into multiple smaller classes.
+Reports a class where the number of methods exceeds the specified maximum.
+<p>Classes with too many methods are often trying to 'do too much'. Consider splitting such a class into multiple smaller classes.</p>
 <!-- tooltip end -->
-<p>
-Use the field below to specify the maximum number of methods a class is allowed to have.
-<p>
-Use the first checkbox below to ignore simple getters and setters in the method count.
-<p>
-Use the second checkbox below to ignore methods overriding or implementing a method from a superclass
-<p>
-
+<p>Configure the inspection:</p>
+<ul>
+  <li>Use the <b>Method count limit</b> field to specify the maximum allowed number of methods in a class.</li>
+  <li>Use the <b>Ignore simple getter and setter methods</b> option to ignore simple getters and setters in method count.</li>
+  <li>Use the <b>Ignore methods overriding/implementing a super method</b> to ignore methods that override or implement a method
+    from a superclass.</li>
+</ul>
 </body>
 </html>

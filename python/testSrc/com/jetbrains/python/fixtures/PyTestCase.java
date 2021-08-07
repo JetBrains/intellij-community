@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.fixtures;
 
 import com.google.common.base.Joiner;
@@ -66,13 +66,11 @@ import java.io.File;
 import java.util.*;
 import java.util.function.Consumer;
 
-/**
- * @author yole
- */
+
 @TestDataPath("$CONTENT_ROOT/../testData/")
 public abstract class PyTestCase extends UsefulTestCase {
 
-  protected static final PyLightProjectDescriptor ourPyDescriptor = new PyLightProjectDescriptor(LanguageLevel.PYTHON27);
+  protected static final PyLightProjectDescriptor ourPy2Descriptor = new PyLightProjectDescriptor(LanguageLevel.PYTHON27);
   protected static final PyLightProjectDescriptor ourPyLatestDescriptor = new PyLightProjectDescriptor(LanguageLevel.getLatest());
 
   protected CodeInsightTestFixture myFixture;
@@ -282,7 +280,7 @@ public abstract class PyTestCase extends UsefulTestCase {
 
   @Nullable
   protected LightProjectDescriptor getProjectDescriptor() {
-    return ourPyDescriptor;
+    return ourPyLatestDescriptor;
   }
 
   @Nullable
@@ -300,7 +298,7 @@ public abstract class PyTestCase extends UsefulTestCase {
     return PsiDocumentManager.getInstance(myFixture.getProject()).getDocument(myFixture.getFile()).getText().indexOf(signature);
   }
 
-  protected void setLanguageLevel(@Nullable LanguageLevel languageLevel) {
+  private void setLanguageLevel(@Nullable LanguageLevel languageLevel) {
     PythonLanguageLevelPusher.setForcedLanguageLevel(myFixture.getProject(), languageLevel);
   }
 
@@ -449,20 +447,6 @@ public abstract class PyTestCase extends UsefulTestCase {
     final Editor editor = myFixture.getEditor();
     assertInstanceOf(editor, EditorEx.class);
     handler.invoke(myFixture.getProject(), editor, myFixture.getFile(), ((EditorEx)editor).getDataContext());
-  }
-
-  /**
-   * Configures project by some path. It is here to emulate {@link com.intellij.platform.PlatformProjectOpenProcessor}
-   *
-   * @param path         path to open
-   * @param configurator configurator to use
-   */
-  protected void configureProjectByProjectConfigurators(@NotNull final String path,
-                                                        @NotNull final DirectoryProjectConfigurator configurator) {
-    final VirtualFile newPath =
-      myFixture.copyDirectoryToProject(path, String.format("%s%s%s", "temp_for_project_conf", File.pathSeparator, path));
-    final Ref<Module> moduleRef = new Ref<>(myFixture.getModule());
-    configurator.configureProject(myFixture.getProject(), newPath, moduleRef, false);
   }
 
   public static String getHelpersPath() {

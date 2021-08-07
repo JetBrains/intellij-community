@@ -17,7 +17,7 @@ class AnnotationProcessorConfigImportingTest: GradleImportingTestCase() {
   @TargetVersions("4.6+")
   fun `test annotation processor config imported in module per project mode`() {
     importProjectUsingSingeModulePerGradleProject(
-      GradleBuildScriptBuilderEx()
+      createBuildScriptBuilder()
         .withJavaPlugin()
         .withMavenCentral()
         .addPostfix(
@@ -56,7 +56,7 @@ class AnnotationProcessorConfigImportingTest: GradleImportingTestCase() {
   @TargetVersions("4.6+")
   fun `test annotation processor modification`() {
     importProjectUsingSingeModulePerGradleProject(
-      GradleBuildScriptBuilderEx()
+      createBuildScriptBuilder()
         .withJavaPlugin()
         .withMavenCentral()
         .addPostfix(
@@ -77,7 +77,7 @@ class AnnotationProcessorConfigImportingTest: GradleImportingTestCase() {
       .hasSize(1)
 
     importProjectUsingSingeModulePerGradleProject(
-      GradleBuildScriptBuilderEx()
+      createBuildScriptBuilder()
         .withJavaPlugin()
         .withMavenCentral()
         .addPostfix(
@@ -110,7 +110,7 @@ class AnnotationProcessorConfigImportingTest: GradleImportingTestCase() {
   @TargetVersions("4.6+")
   fun `test annotation processor config imported in modules per source set mode`() {
     importProject(
-      GradleBuildScriptBuilderEx()
+      createBuildScriptBuilder()
         .withJavaPlugin()
         .withMavenCentral()
         .addPostfix(
@@ -145,7 +145,7 @@ class AnnotationProcessorConfigImportingTest: GradleImportingTestCase() {
     createProjectSubFile("settings.gradle", "include 'projectA', 'projectB'")
 
     importProject(
-      GradleBuildScriptBuilderEx()
+      createBuildScriptBuilder()
         .addPostfix(
           """
             allprojects {
@@ -192,7 +192,7 @@ class AnnotationProcessorConfigImportingTest: GradleImportingTestCase() {
     createProjectSubFile("$gradleGeneratedDir/Generated.java",
                          "public class Generated {}");
 
-    val config = GradleBuildScriptBuilderEx()
+    val config = createBuildScriptBuilder()
       .withJavaPlugin()
       .withMavenCentral()
       .addPostfix(
@@ -234,7 +234,7 @@ class AnnotationProcessorConfigImportingTest: GradleImportingTestCase() {
   fun `test two different annotation processors`() {
     createProjectSubFile("settings.gradle", "include 'project1','project2'")
     importProject(
-      GradleBuildScriptBuilderEx()
+      createBuildScriptBuilder()
         .withMavenCentral()
         .addPostfix(
           """
@@ -277,7 +277,7 @@ class AnnotationProcessorConfigImportingTest: GradleImportingTestCase() {
    fun `test change modules included in processor profile`() {
        createProjectSubFile("settings.gradle", "include 'project1','project2'")
        importProject(
-         GradleBuildScriptBuilderEx()
+         createBuildScriptBuilder()
            .withMavenCentral()
            .addPostfix(
              """
@@ -297,7 +297,7 @@ class AnnotationProcessorConfigImportingTest: GradleImportingTestCase() {
       .containsExactly(setOf("project.project1.main"))
 
     importProject(
-      GradleBuildScriptBuilderEx()
+      createBuildScriptBuilder()
         .withMavenCentral()
         .addPostfix(
           """
@@ -321,7 +321,7 @@ class AnnotationProcessorConfigImportingTest: GradleImportingTestCase() {
   @TargetVersions("4.6+")
   fun `test annotation processor with transitive deps`() {
     importProject(
-      GradleBuildScriptBuilderEx()
+      createBuildScriptBuilder()
         .withJavaPlugin()
         .withMavenCentral()
         .addPostfix(
@@ -344,31 +344,19 @@ class AnnotationProcessorConfigImportingTest: GradleImportingTestCase() {
   @TargetVersions("4.3+")
   fun `test gradle-apt-plugin settings are imported`() {
     importProject(
-      GradleBuildScriptBuilderEx()
-        .withJavaPlugin()
+      createBuildScriptBuilder()
         .withMavenCentral()
-        .addPrefix(
-          """
-      buildscript {
-        repositories {
-          maven {
-            url 'https://repo.labs.intellij.net/plugins-gradle-org'
-          }
-        }
-        dependencies {
-          classpath "net.ltgt.gradle:gradle-apt-plugin:0.21"
-        }
-      }
-      """.trimIndent())
+        .addBuildScriptRepository("maven { url 'https://repo.labs.intellij.net/plugins-gradle-org' }")
+        .addBuildScriptClasspath("net.ltgt.gradle:gradle-apt-plugin:0.21")
         .addPostfix("""
-      apply plugin: "net.ltgt.apt"
-      apply plugin: 'java'
-      
-      dependencies {
-        compileOnly("org.immutables:value-annotations:2.7.1")
-        annotationProcessor("org.immutables:value:2.7.1")
-      }
-    """.trimIndent()).generate());
+          apply plugin: "net.ltgt.apt"
+          apply plugin: 'java'
+          
+          dependencies {
+            compileOnly("org.immutables:value-annotations:2.7.1")
+            annotationProcessor("org.immutables:value:2.7.1")
+          }
+        """.trimIndent()).generate());
 
     val config = CompilerConfiguration.getInstance(myProject) as CompilerConfigurationImpl
     val moduleProcessorProfiles = config.moduleProcessorProfiles
@@ -390,7 +378,7 @@ class AnnotationProcessorConfigImportingTest: GradleImportingTestCase() {
   @TargetVersions("3.4+")
   fun `test custom annotation processor configurations are imported`() {
     importProject(
-      GradleBuildScriptBuilderEx()
+      createBuildScriptBuilder()
         .withJavaPlugin()
         .withMavenCentral()
         .addPostfix("""

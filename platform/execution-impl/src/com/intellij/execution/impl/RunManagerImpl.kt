@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.impl
 
 import com.intellij.ProjectTopics
@@ -35,12 +35,8 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.project.isDirectoryBased
-import com.intellij.ui.GuiUtils
-import com.intellij.util.IconUtil
-import com.intellij.util.SmartList
-import com.intellij.util.ThreeState
+import com.intellij.util.*
 import com.intellij.util.containers.*
-import com.intellij.util.getAttributeBooleanValue
 import com.intellij.util.text.UniqueNameGenerator
 import org.jdom.Element
 import org.jetbrains.annotations.TestOnly
@@ -347,58 +343,54 @@ open class RunManagerImpl @JvmOverloads constructor(val project: Project, shared
   }
 
   private fun deleteRunConfigsFromArbitraryFilesNotWithinProjectContent() {
-    lock.write {
-      val deletedConfigs = rcInArbitraryFileManager.findRunConfigsThatAreNotWithinProjectContent()
-      // don't delete file just because it has become excluded
-      removeConfigurations(deletedConfigs, deleteFileIfStoredInArbitraryFile = false)
-    }
+    val deletedConfigs = lock.write { rcInArbitraryFileManager.findRunConfigsThatAreNotWithinProjectContent() }
+    // don't delete file just because it has become excluded
+    removeConfigurations(deletedConfigs, deleteFileIfStoredInArbitraryFile = false)
   }
 
   // Paths in <code>deletedFilePaths</code> and <code>updatedFilePaths</code> may be not related to the project, use ProjectIndex.isInContent() when needed
   internal fun updateRunConfigsFromArbitraryFiles(deletedFilePaths: Collection<String>, updatedFilePaths: Collection<String>) {
-    lock.write {
-      val oldSelectedId = selectedConfigurationId
+    val oldSelectedId = selectedConfigurationId
+    val deletedRunConfigs = lock.read { rcInArbitraryFileManager.getRunConfigsFromFiles(deletedFilePaths) }
 
-      val deletedRunConfigs = rcInArbitraryFileManager.getRunConfigsFromFiles(deletedFilePaths)
-      // file is already deleted - no need to delete it once again
-      removeConfigurations(deletedRunConfigs, deleteFileIfStoredInArbitraryFile = false)
+    // file is already deleted - no need to delete it once again
+    removeConfigurations(deletedRunConfigs, deleteFileIfStoredInArbitraryFile = false)
 
-      for (filePath in updatedFilePaths) {
-        val deletedAndAddedRunConfigs = rcInArbitraryFileManager.loadChangedRunConfigsFromFile(this, filePath)
+    for (filePath in updatedFilePaths) {
+      val deletedAndAddedRunConfigs = lock.write { rcInArbitraryFileManager.loadChangedRunConfigsFromFile(this, filePath) }
 
-        for (runConfig in deletedAndAddedRunConfigs.addedRunConfigs) {
-          addConfiguration(runConfig)
+      for (runConfig in deletedAndAddedRunConfigs.addedRunConfigs) {
+        addConfiguration(runConfig)
 
-          if (runConfig.isTemplate) continue
+        if (runConfig.isTemplate) continue
 
-          if (!StartupManager.getInstance(project).postStartupActivityPassed()) {
-            // Empty string means that there's no information about initially selected RC in workspace.xml => IDE should select any.
-            if (!selectedRCSetupScheduled && (notYetAppliedInitialSelectedConfigurationId == runConfig.uniqueID ||
-                                              notYetAppliedInitialSelectedConfigurationId == "" && runConfig.type.isManaged)) {
-              selectedRCSetupScheduled = true
-              // Project is being loaded. Finally we can set the right RC as 'selected' in the RC combo box.
-              // Need to set selectedConfiguration in EDT to avoid deadlock with ExecutionTargetManagerImpl or similar implementations of runConfigurationSelected()
-              StartupManager.getInstance(project).runAfterOpened {
-                GuiUtils.invokeLaterIfNeeded(Runnable {
-                  // Empty string means that there's no information about initially selected RC in workspace.xml
-                  // => IDE should select any if still none selected (CLion could have set the selected RC itself).
-                  if (selectedConfiguration == null || notYetAppliedInitialSelectedConfigurationId != "") {
-                    selectedConfiguration = runConfig
-                  }
-                  notYetAppliedInitialSelectedConfigurationId = null
-                }, ModalityState.NON_MODAL, project.disposed)
-              }
+        if (!StartupManager.getInstance(project).postStartupActivityPassed()) {
+          // Empty string means that there's no information about initially selected RC in workspace.xml => IDE should select any.
+          if (!selectedRCSetupScheduled && (notYetAppliedInitialSelectedConfigurationId == runConfig.uniqueID ||
+                                            notYetAppliedInitialSelectedConfigurationId == "" && runConfig.type.isManaged)) {
+            selectedRCSetupScheduled = true
+            // Project is being loaded. Finally we can set the right RC as 'selected' in the RC combo box.
+            // Need to set selectedConfiguration in EDT to avoid deadlock with ExecutionTargetManagerImpl or similar implementations of runConfigurationSelected()
+            StartupManager.getInstance(project).runAfterOpened {
+              ModalityUiUtil.invokeLaterIfNeeded(ModalityState.NON_MODAL, project.disposed, Runnable {
+                // Empty string means that there's no information about initially selected RC in workspace.xml
+                // => IDE should select any if still none selected (CLion could have set the selected RC itself).
+                if (selectedConfiguration == null || notYetAppliedInitialSelectedConfigurationId != "") {
+                  selectedConfiguration = runConfig
+                }
+                notYetAppliedInitialSelectedConfigurationId = null
+              })
             }
           }
-          else if (selectedConfigurationId == null && runConfig.uniqueID == oldSelectedId) {
-            // don't loose currently selected RC in case of any external changes in the file
-            selectedConfigurationId = oldSelectedId
-          }
         }
-
-        // some VFS event caused RC to disappear (probably manual editing) - but the file itself shouldn't be deleted
-        removeConfigurations(deletedAndAddedRunConfigs.deletedRunConfigs, deleteFileIfStoredInArbitraryFile = false)
+        else if (selectedConfigurationId == null && runConfig.uniqueID == oldSelectedId) {
+          // don't loose currently selected RC in case of any external changes in the file
+          selectedConfigurationId = oldSelectedId
+        }
       }
+
+      // some VFS event caused RC to disappear (probably manual editing) - but the file itself shouldn't be deleted
+      removeConfigurations(deletedAndAddedRunConfigs.deletedRunConfigs, deleteFileIfStoredInArbitraryFile = false)
     }
   }
 
@@ -583,7 +575,7 @@ open class RunManagerImpl @JvmOverloads constructor(val project: Project, shared
     }
 
   internal fun selectConfigurationStoredInFile(file: VirtualFile) {
-    val runConfigs = rcInArbitraryFileManager.getRunConfigsFromFiles(listOf(file.path))
+    val runConfigs = lock.read { rcInArbitraryFileManager.getRunConfigsFromFiles(listOf(file.path)) }
     runConfigs.find { idToSettings.containsKey(it.uniqueID) }?.let { selectedConfiguration = it }
   }
 
@@ -755,6 +747,7 @@ open class RunManagerImpl @JvmOverloads constructor(val project: Project, shared
   }
 
   override fun loadState(parentNode: Element) {
+    config.migrateToRegistry()
     val oldSelectedConfigurationId: String?
     val isFirstLoadState = isFirstLoadState.compareAndSet(true, false)
     if (isFirstLoadState) {
@@ -1003,9 +996,9 @@ open class RunManagerImpl @JvmOverloads constructor(val project: Project, shared
              if (checkUnknown && typeId != null) {
                UnknownFeaturesCollector.getInstance(project).registerUnknownFeature(
                  CONFIGURATION_TYPE_FEATURE_ID,
-                 "Run Configuration",
+                 ExecutionBundle.message("plugins.advertiser.feature.run.configuration"),
                  typeId,
-                 factoryId ?: typeId,
+                 null
                )
              }
            }
@@ -1206,13 +1199,14 @@ open class RunManagerImpl @JvmOverloads constructor(val project: Project, shared
       return
     }
 
-    val runConfigsToRemove = removeTemplatesAndReturnRemaining(_toRemove, deleteFileIfStoredInArbitraryFile, onSchemeManagerDeleteEvent)
-    val runConfigsToRemoveButNotYetRemoved = runConfigsToRemove.toMutableList()
-
     val changedSettings = SmartList<RunnerAndConfigurationSettings>()
     val removed = SmartList<RunnerAndConfigurationSettings>()
     var selectedConfigurationWasRemoved = false
+
     lock.write {
+      val runConfigsToRemove = removeTemplatesAndReturnRemaining(_toRemove, deleteFileIfStoredInArbitraryFile, onSchemeManagerDeleteEvent)
+      val runConfigsToRemoveButNotYetRemoved = runConfigsToRemove.toMutableList()
+
       listManager.immutableSortedSettingsList = null
 
       val iterator = idToSettings.values.iterator()

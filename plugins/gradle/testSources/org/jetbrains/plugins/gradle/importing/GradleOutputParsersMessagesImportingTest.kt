@@ -131,7 +131,7 @@ open class GradleOutputParsersMessagesImportingTest : BuildViewMessagesImporting
 
   @Test
   fun `test unresolved dependencies errors on Sync`() {
-    val buildScript = GradleBuildScriptBuilderEx().withJavaPlugin()
+    val buildScript = createBuildScriptBuilder().withJavaPlugin()
 
     // check sunny case
     importProject(buildScript.generate())
@@ -139,7 +139,7 @@ open class GradleOutputParsersMessagesImportingTest : BuildViewMessagesImporting
                              " finished")
 
     // check unresolved dependency w/o repositories
-    buildScript.addDependency("testCompile 'junit:junit:4.12'")
+    buildScript.addTestImplementationDependency("junit:junit:4.12")
     importProject(buildScript.generate())
     assertSyncViewTreeEquals("-\n" +
                              " -finished\n" +
@@ -164,7 +164,7 @@ open class GradleOutputParsersMessagesImportingTest : BuildViewMessagesImporting
 
     // check unresolved dependency for offline mode
     GradleSettings.getInstance(myProject).isOfflineWork = true
-    buildScript.addDependency("testCompile 'junit:junit:99.99'")
+    buildScript.addTestImplementationDependency("junit:junit:99.99")
     importProject(buildScript.generate())
     assertSyncViewTreeEquals("-\n" +
                              " -finished\n" +
@@ -218,7 +218,7 @@ open class GradleOutputParsersMessagesImportingTest : BuildViewMessagesImporting
 
   @Test
   fun `test unresolved build script dependencies errors on Sync`() {
-    val buildScript = GradleBuildScriptBuilderEx()
+    val buildScript = createBuildScriptBuilder()
     val requiredByProject = if (currentGradleVersion < GradleVersion.version("3.1")) ":project:unspecified" else "project :"
     val artifacts = when {
       currentGradleVersion < GradleVersion.version("4.0") -> "dependencies"
@@ -302,15 +302,25 @@ open class GradleOutputParsersMessagesImportingTest : BuildViewMessagesImporting
 
   @Test
   fun `test startup build script errors with column info`() {
-    importProject("apply plugin: 'java'\n" +
-                  "dependencies { \n" +
-                  "  testCompile group: 'junit', name: 'junit', version: '4.12\n" +
-                  "}")
+    val builder = createBuildScriptBuilder()
+    importProject(
+      builder
+        .withJavaPlugin()
+        .addTestImplementationDependency(builder.code("group: 'junit', name: 'junit', version: '4.12"))
+        .generate())
 
-    assertSyncViewTreeEquals("-\n" +
-                             " -failed\n" +
-                             "  -build.gradle\n" +
-                             "   expecting ''', found '\\n'")
+    if (isGradleOlderThan("7.0")) {
+      assertSyncViewTreeEquals("-\n" +
+                               " -failed\n" +
+                               "  -build.gradle\n" +
+                               "   expecting ''', found '\\n'")
+    }
+    else {
+      assertSyncViewTreeEquals("-\n" +
+                               " -failed\n" +
+                               "  -build.gradle\n" +
+                               "   Unexpected input: '{'")
+    }
   }
 
   @Test

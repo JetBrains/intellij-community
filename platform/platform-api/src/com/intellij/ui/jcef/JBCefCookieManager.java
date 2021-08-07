@@ -3,6 +3,7 @@ package com.intellij.ui.jcef;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.concurrency.AppExecutorUtil;
+import com.intellij.util.containers.ContainerUtil;
 import org.cef.callback.CefCookieVisitor;
 import org.cef.misc.BoolRef;
 import org.cef.network.CefCookie;
@@ -278,7 +279,7 @@ public final class JBCefCookieManager {
       if (cookies == null) {
         return false;
       }
-      return cookies.stream().noneMatch(cefCookie -> cefCookie.getName().equals(cookieName));
+      return !ContainerUtil.exists(cookies, cefCookie -> cefCookie.getName().equals(cookieName));
     };
 
     return deleteCookies(url, cookieName, checkFunction, maxTimeToWait);

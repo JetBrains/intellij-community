@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.analysis.problemsView.toolWindow
 
 import com.intellij.analysis.problemsView.FileProblem
@@ -13,12 +13,14 @@ internal interface ProblemsTreeVisitor : TreeVisitor {
   override fun visit(path: TreePath) = when (val node = TreeUtil.getLastUserObject(path)) {
     is Root -> visitRoot(node)
     is FileNode -> visitFile(node)
+    is GroupNode -> visitGroup(node)
     is ProblemNode -> visitProblem(node)
     else -> TreeVisitor.Action.SKIP_CHILDREN
   }
 
   fun visitRoot(root: Root) = TreeVisitor.Action.CONTINUE
   fun visitFile(node: FileNode): TreeVisitor.Action
+  fun visitGroup(node: GroupNode) = TreeVisitor.Action.SKIP_CHILDREN
   fun visitProblem(node: ProblemNode) = TreeVisitor.Action.SKIP_CHILDREN
 }
 
@@ -36,6 +38,11 @@ internal class ProblemNodeFinder(private val problem: Problem) : ProblemsTreeVis
   override fun visitFile(node: FileNode) = when {
     problem !is FileProblem -> TreeVisitor.Action.SKIP_CHILDREN
     isAncestor(node.file, problem.file, false) -> TreeVisitor.Action.CONTINUE
+    else -> TreeVisitor.Action.SKIP_CHILDREN
+  }
+
+  override fun visitGroup(node: GroupNode) = when (node.group) {
+    problem.group -> TreeVisitor.Action.CONTINUE
     else -> TreeVisitor.Action.SKIP_CHILDREN
   }
 

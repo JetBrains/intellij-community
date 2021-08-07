@@ -7,8 +7,8 @@ import com.intellij.codeInsight.NullableNotNullManager
 import com.intellij.java.refactoring.JavaRefactoringBundle
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.*
-import com.intellij.psi.GenericsUtil
 import com.intellij.psi.search.GlobalSearchScope
+import com.intellij.psi.search.LocalSearchScope
 import com.intellij.psi.search.searches.ReferencesSearch
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.PsiTypesUtil
@@ -101,6 +101,9 @@ fun findExtractOptions(elements: List<PsiElement>): ExtractOptions {
   }
 
   checkLocalClass(extractOptions)
+
+  val foldedParameters = ExtractMethodPipeline.foldParameters(extractOptions.inputParameters, LocalSearchScope(extractOptions.elements.toTypedArray()))
+  extractOptions = extractOptions.copy(inputParameters = foldedParameters)
 
   return ExtractMethodPipeline.withDefaultStatic(extractOptions)
 }

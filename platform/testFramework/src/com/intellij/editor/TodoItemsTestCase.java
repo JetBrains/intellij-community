@@ -24,9 +24,6 @@ import com.intellij.psi.search.TodoPattern;
 import com.intellij.testFramework.EditorTestUtil;
 import com.intellij.testFramework.LightPlatformCodeInsightTestCase;
 import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl;
-import com.intellij.util.ArrayUtilRt;
-import it.unimi.dsi.fastutil.ints.IntArrayList;
-import it.unimi.dsi.fastutil.ints.IntList;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -53,14 +50,7 @@ public abstract class TodoItemsTestCase extends LightPlatformCodeInsightTestCase
   protected List<HighlightInfo> doHighlighting() {
     PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
 
-    IntList toIgnoreList = new IntArrayList();
-
-    toIgnoreList.add(Pass.UPDATE_FOLDING);
-
-    toIgnoreList.add(Pass.LOCAL_INSPECTIONS);
-    toIgnoreList.add(Pass.WHOLE_FILE_LOCAL_INSPECTIONS);
-
-    int[] toIgnore = toIgnoreList.isEmpty() ? ArrayUtilRt.EMPTY_INT_ARRAY : toIgnoreList.toIntArray();
+    int[] toIgnore = {Pass.UPDATE_FOLDING, Pass.LOCAL_INSPECTIONS, Pass.WHOLE_FILE_LOCAL_INSPECTIONS};
     Editor editor = getEditor();
     PsiFile file = getFile();
     if (editor instanceof EditorWindow) {

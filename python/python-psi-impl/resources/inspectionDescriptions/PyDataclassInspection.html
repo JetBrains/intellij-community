@@ -1,5 +1,17 @@
 <html>
 <body>
-This inspection detects invalid definitions and usages of classes created with `dataclasses` or `attr` modules.
+<p>Reports invalid definitions and usages of classes created with
+  <code>dataclasses</code> or <code>attr</code> modules.</p>
+<p><b>Example:</b></p>
+<pre style="font-family: monospace">
+import dataclasses
+
+
+@dataclasses.dataclass
+class FullName:
+    first: str
+    middle: str = ""
+    last: str
+</pre>
 </body>
 </html>

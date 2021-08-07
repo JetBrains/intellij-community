@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.wsl;
 
 import com.intellij.execution.ExecutionException;
@@ -13,10 +13,12 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.TimeoutUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
@@ -35,6 +37,8 @@ public final class WslDistributionManagerImpl extends WslDistributionManager {
     try {
       long startNano = System.nanoTime();
       Pair<GeneralCommandLine, List<String>> result = doFetchDistributionsFromWslCli();
+      if (result == null) return Collections.emptyList();
+
       LOG.info("Fetched WSL distributions: " + result.second +
                " (\"" + result.first.getCommandLineString() + "\" done in " + TimeoutUtil.getDurationMillis(startNano) + " ms)");
       return result.second;
@@ -45,36 +49,101 @@ public final class WslDistributionManagerImpl extends WslDistributionManager {
     }
   }
 
-  private static @NotNull Pair<GeneralCommandLine, List<String>> doFetchDistributionsFromWslCli() throws IOException {
-    GeneralCommandLine commandLine = createCommandLine();
+  @Override
+  public @NotNull List<WslDistributionAndVersion> loadInstalledDistributionsWithVersions() throws IOException, IllegalStateException {
+    checkEdtAndReadAction();
+    Path wslExe = WSLDistribution.findWslExe();
+    if (wslExe == null) {
+      LOG.info("Cannot load WSL distributions with versions: wsl.exe is not found in %PATH%");
+      return List.of();
+    }
+
+    GeneralCommandLine commandLine = new GeneralCommandLine(wslExe.toString(), "--list", "--verbose").
+      withCharset(StandardCharsets.UTF_16LE);
+
+    long startNano = System.nanoTime();
     ProcessOutput output;
     try {
-      output = ExecUtil.execAndGetOutput(commandLine, 10_000);
+      output = ExecUtil.execAndGetOutput(commandLine, WSLDistribution.DEFAULT_TIMEOUT);
+    }
+    catch (ExecutionException e) {
+      throw new IOException("Failed to run " + commandLine.getCommandLineString(), e);
+    }
+    // Windows Subsystem for Linux has no installed distributions
+    if (output.getExitCode() != 0 && output.getStdout().endsWith("https://aka.ms/wslstore")) {
+      LOG.info("Windows Subsystem for Linux has no installed distributions");
+      return Collections.emptyList();
+    }
+    if (output.isTimeout() || output.getExitCode() != 0 || !output.getStderr().isEmpty()) {
+      throw new IOException("Failed to run " + commandLine.getCommandLineString() + ": " + output);
+    }
+    List<WslDistributionAndVersion> versions = parseWslVerboseListOutput(output.getStdoutLines());
+    LOG.info("Fetched WSL distributions: " + versions +
+             " (\"" + commandLine.getCommandLineString() + "\" done in " + TimeoutUtil.getDurationMillis(startNano) + " ms)");
+    return versions;
+  }
+
+  /**
+   * @throws IllegalStateException in case of parsing error
+   */
+  static @NotNull List<WslDistributionAndVersion> parseWslVerboseListOutput(@NotNull List<String> stdoutLines)
+    throws IllegalStateException {
+    if (stdoutLines.isEmpty()) {
+      throw new IllegalStateException("[wsl -l -v] parsing error: stdout is empty");
+    }
+
+    // skip the first line: "NAME  STATE  VERSION"
+    stdoutLines = ContainerUtil.subList(stdoutLines, 1);
+    final List<WslDistributionAndVersion> result = new ArrayList<>(stdoutLines.size());
+
+    for (String l: stdoutLines) {
+      List<String> words = StringUtil.split(l, " ");
+      if ("*".equals(ContainerUtil.getFirstItem(words))) {
+        words = ContainerUtil.subList(words, 1);
+      }
+
+      final String distributionName = ContainerUtil.getFirstItem(words);
+      if (StringUtil.isEmpty(distributionName)) {
+        throw new IllegalStateException("[wsl -l -v] parsing error: malformed distribution name" +
+                                        "\nline: " + l +
+                                        "\nstdout: " + StringUtil.join(stdoutLines, "\n"));
+      }
+      final int version = StringUtil.parseInt(ContainerUtil.getLastItem(words), -1);
+      if (version == -1) {
+        throw new IllegalStateException("[wsl -l -v] parsing error: malformed version" +
+                                        "\nline: " + l +
+                                        "\nstdout: " + StringUtil.join(stdoutLines, "\n"));
+      }
+      if (!INTERNAL_DISTRIBUTIONS.contains(distributionName)) {
+        result.add(new WslDistributionAndVersion(distributionName, version));
+      }
+    }
+    return result;
+  }
+
+  private static @Nullable Pair<GeneralCommandLine, List<String>> doFetchDistributionsFromWslCli() throws IOException {
+    Path wslExe = WSLDistribution.findWslExe();
+    if (wslExe == null) {
+      LOG.info("Cannot parse WSL distributions: wsl.exe is not found in %PATH%");
+      return null;
+    }
+
+    GeneralCommandLine commandLine = new GeneralCommandLine(wslExe.toString(), "--list", "--quiet").withCharset(StandardCharsets.UTF_16LE);
+
+    ProcessOutput output;
+    try {
+      output = ExecUtil.execAndGetOutput(commandLine, WSLDistribution.DEFAULT_TIMEOUT);
     }
     catch (ExecutionException e) {
       throw new IOException("Failed to run " + commandLine.getCommandLineString(), e);
     }
     if (output.isTimeout() || output.getExitCode() != 0 || !output.getStderr().isEmpty()) {
-      String details = StringUtil.join(ContainerUtil.newArrayList(
-        "timeout: " + output.isTimeout(),
-        "exitCode: " + output.getExitCode(),
-        "stdout: " + output.getStdout(),
-        "stderr: " + output.getStderr()
-      ), ", ");
-      throw new IOException("Failed to run " + commandLine.getCommandLineString() + ": " + details);
+      throw new IOException("Failed to run " + commandLine.getCommandLineString() + ": " + output);
     }
     List<@NlsSafe String> msIds = ContainerUtil.filter(output.getStdoutLines(true), distribution -> {
       return !INTERNAL_DISTRIBUTIONS.contains(distribution);
     });
     return Pair.create(commandLine, msIds);
-  }
-
-  private static @NotNull GeneralCommandLine createCommandLine() throws IOException {
-    Path wslExe = WSLDistribution.findWslExe();
-    if (wslExe == null) {
-      throw new IOException("No wsl.exe found in %PATH%");
-    }
-    return new GeneralCommandLine(wslExe.toString(), "--list", "--quiet").withCharset(StandardCharsets.UTF_16LE);
   }
 
   private static void checkEdtAndReadAction() {

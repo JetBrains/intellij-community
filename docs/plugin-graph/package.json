@@ -1,0 +1,27 @@
+{
+  "version": "0.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build --emptyOutDir",
+    "deploy": "pnpm run build && space hosting publish --public ij plugingraph ./dist",
+    "serve": "vite preview"
+  },
+  "dependencies": {
+    "@fontsource/jetbrains-mono": "^4.4.5",
+    "comlink": "^4.3.1",
+    "cytoscape": "^3.19.0",
+    "cytoscape-cola": "^2.4.0",
+    "cytoscape-elk": "^2.0.2",
+    "cytoscape-expand-collapse": "^4.1.0",
+    "cytoscape-fcose": "^2.0.0",
+    "cytoscape-popper": "^2.0.0",
+    "flexsearch": "^0.7.11",
+    "p-debounce": "^4.0.0",
+    "tippy.js": "^6.3.1"
+  },
+  "devDependencies": {
+    "sass": "^1.35.1",
+    "vite": "^2.3.8"
+  }
+}

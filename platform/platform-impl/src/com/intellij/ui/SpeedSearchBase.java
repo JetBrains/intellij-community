@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui;
 
 import com.intellij.featureStatistics.FeatureUsageTracker;
@@ -15,6 +15,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowManager;
@@ -27,6 +28,7 @@ import com.intellij.ui.speedSearch.SpeedSearchSupply;
 import com.intellij.util.text.NameUtilCore;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -44,6 +46,9 @@ import java.util.NoSuchElementException;
 
 import static com.intellij.util.ReflectionUtil.getMethodDeclaringClass;
 
+/**
+ * Use {@link com.intellij.ui.speedSearch.SpeedSearchUtil} in renderer to highlight matching results
+ */
 public abstract class SpeedSearchBase<Comp extends JComponent> extends SpeedSearchSupply {
   private static final Logger LOG = Logger.getInstance(SpeedSearchBase.class);
 
@@ -109,7 +114,7 @@ public abstract class SpeedSearchBase<Comp extends JComponent> extends SpeedSear
         if (StringUtil.isEmpty(text)) return;
         ApplicationManager.getApplication().invokeLater(() -> {
           if (myComponent.hasFocus()) {
-            showPopup(text);
+            manageSearchPopup(createPopup(text)); // keep selection
           }
         });
       }
@@ -187,6 +192,7 @@ public abstract class SpeedSearchBase<Comp extends JComponent> extends SpeedSear
   protected abstract int getSelectedIndex();
 
   /** @deprecated Please implement {@link #getElementCount()} and {@link #getElementAt(int)} instead. */
+  @ApiStatus.ScheduledForRemoval(inVersion = "2022.2")
   @Deprecated
   protected Object @NotNull [] getAllElements() {
     throw new UnsupportedOperationException("See `SpeedSearchBase.getElementIterator(int)` javadoc");
@@ -205,6 +211,7 @@ public abstract class SpeedSearchBase<Comp extends JComponent> extends SpeedSear
   }
 
   /** @deprecated Please implement {@link #getElementCount()} and {@link #getElementAt(int)} instead. */
+  @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
   @Deprecated
   protected int convertIndexToModel(final int viewIndex) {
     return viewIndex;
@@ -239,7 +246,8 @@ public abstract class SpeedSearchBase<Comp extends JComponent> extends SpeedSear
     myChangeSupport.removePropertyChangeListener(listener);
   }
 
-  private void fireStateChanged() {
+  @ApiStatus.Internal
+  protected void fireStateChanged() {
     String enteredPrefix = getEnteredPrefix();
     myChangeSupport.firePropertyChange(ENTERED_PREFIX_PROPERTY_NAME, myRecentEnteredPrefix, enteredPrefix);
     myRecentEnteredPrefix = enteredPrefix;
@@ -365,6 +373,9 @@ public abstract class SpeedSearchBase<Comp extends JComponent> extends SpeedSear
 
   public void showPopup(String searchText) {
     manageSearchPopup(createPopup(searchText));
+    if (mySearchPopup != null && myComponent.isDisplayable()) {
+      mySearchPopup.refreshSelection();
+    }
   }
 
   public void showPopup() {
@@ -390,7 +401,7 @@ public abstract class SpeedSearchBase<Comp extends JComponent> extends SpeedSear
 
       char c = e.getKeyChar();
       if (Character.isLetterOrDigit(c) || !Character.isWhitespace(c) && SpeedSearch.PUNCTUATION_MARKS.indexOf(c) != -1) {
-        manageSearchPopup(createPopup(String.valueOf(c)));
+        showPopup(String.valueOf(c));
         e.consume();
       }
     }
@@ -458,6 +469,7 @@ public abstract class SpeedSearchBase<Comp extends JComponent> extends SpeedSear
 
   protected class SearchPopup extends JPanel {
     protected final SearchField mySearchField;
+    private String myLastPattern = "";
 
     protected SearchPopup(String initialString) {
       mySearchField = new SearchField();
@@ -488,9 +500,15 @@ public abstract class SpeedSearchBase<Comp extends JComponent> extends SpeedSear
       add(mySearchField, BorderLayout.CENTER);
       mySearchField.setText(initialString);
 
-      onSearchFieldUpdated(initialString);
-      Object element = findElement(mySearchField.getText());
-      updateSelection(element);
+      updateLastPattern();
+    }
+
+    private void updateLastPattern() {
+      String pattern = StringUtil.notNullize(mySearchField.getText());
+      if (!pattern.equals(myLastPattern)) {
+        myLastPattern = pattern;
+        onSearchFieldUpdated(pattern);
+      }
     }
 
     protected void handleInsert(String newText) {
@@ -506,8 +524,8 @@ public abstract class SpeedSearchBase<Comp extends JComponent> extends SpeedSear
     public void processKeyEvent(KeyEvent e) {
       mySearchField.processKeyEvent(e);
       if (e.isConsumed()) {
+        updateLastPattern();
         String s = mySearchField.getText();
-        onSearchFieldUpdated(s);
         int keyCode = e.getKeyCode();
         Object element;
         if (isUpDownHomeEnd(keyCode)) {
@@ -547,6 +565,7 @@ public abstract class SpeedSearchBase<Comp extends JComponent> extends SpeedSear
   }
 
   protected void onSearchFieldUpdated(String pattern) {
+    if (Registry.is("ide.speed.search.close.when.empty") && StringUtil.isEmpty(pattern)) hidePopup();
   }
 
   protected class SearchField extends ExtendableTextField {
@@ -690,8 +709,6 @@ public abstract class SpeedSearchBase<Comp extends JComponent> extends SpeedSear
     }
     myPopupLayeredPane.add(mySearchPopup, JLayeredPane.POPUP_LAYER);
     moveSearchPopup();
-
-    mySearchPopup.refreshSelection();
   }
 
   private void moveSearchPopup() {

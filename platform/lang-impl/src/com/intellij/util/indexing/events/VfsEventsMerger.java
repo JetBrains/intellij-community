@@ -27,7 +27,6 @@ import java.util.stream.Stream;
 
 public final class VfsEventsMerger {
   private static final boolean DEBUG = FileBasedIndexImpl.DO_TRACE_STUB_INDEX_UPDATE || SystemProperties.is("log.index.vfs.events");
-  @Nullable
   public static final Logger LOG = MyLoggerFactory.getLoggerInstance();
 
   void recordFileEvent(@NotNull VirtualFile file, boolean contentChange) {
@@ -35,9 +34,9 @@ public final class VfsEventsMerger {
     updateChange(file, contentChange ? FILE_CONTENT_CHANGED : FILE_ADDED);
   }
 
-  void recordBeforeFileEvent(@NotNull VirtualFile file, boolean contentChanged) {
-    if (LOG != null) LOG.info("Request invalidate indices for file:" + file.getPath() + ", contentChange:" + contentChanged);
-    updateChange(file, contentChanged ? BEFORE_FILE_CONTENT_CHANGED : FILE_REMOVED);
+  void recordFileRemovedEvent(@NotNull VirtualFile file) {
+    //if (LOG != null) LOG.info("Request invalidate indices for file:" + file.getPath() + ", deletion");
+    updateChange(file, FILE_REMOVED);
   }
 
   void recordTransientStateChangeEvent(@NotNull VirtualFile file) {
@@ -66,12 +65,6 @@ public final class VfsEventsMerger {
         myPublishedEventIndex.incrementAndGet();
         break;
       }
-    }
-  }
-
-  void applyMergedEvents(@NotNull VfsEventsMerger merger) {
-    for(ChangeInfo info:merger.myChangeInfos.values()) {
-      updateChange(info.getFileId(), info.file, info.eventMask);
     }
   }
 
@@ -127,10 +120,9 @@ public final class VfsEventsMerger {
   private static final short FILE_ADDED = 1;
   private static final short FILE_REMOVED = 2;
   private static final short FILE_CONTENT_CHANGED = 4;
-  private static final short BEFORE_FILE_CONTENT_CHANGED = 8;
-  private static final short FILE_TRANSIENT_STATE_CHANGED = 16;
+  private static final short FILE_TRANSIENT_STATE_CHANGED = 8;
 
-  @MagicConstant(flags = {FILE_ADDED, FILE_REMOVED, FILE_CONTENT_CHANGED, BEFORE_FILE_CONTENT_CHANGED, FILE_TRANSIENT_STATE_CHANGED})
+  @MagicConstant(flags = {FILE_ADDED, FILE_REMOVED, FILE_CONTENT_CHANGED, FILE_TRANSIENT_STATE_CHANGED})
   @interface EventMask { }
 
   static class ChangeInfo {
@@ -158,15 +150,10 @@ public final class VfsEventsMerger {
       builder.append("file: ").append(file.getPath()).append("; ")
         .append("operation: ");
       if ((eventMask & FILE_TRANSIENT_STATE_CHANGED) != 0) builder.append("TRANSIENT_STATE_CHANGE ");
-      if ((eventMask & BEFORE_FILE_CONTENT_CHANGED) != 0) builder.append("UPDATE-REMOVE ");
       if ((eventMask & FILE_CONTENT_CHANGED) != 0) builder.append("UPDATE ");
       if ((eventMask & FILE_REMOVED) != 0) builder.append("REMOVE ");
       if ((eventMask & FILE_ADDED) != 0) builder.append("ADD ");
       return builder.toString().trim();
-    }
-
-    boolean isBeforeContentChanged() {
-      return (eventMask & BEFORE_FILE_CONTENT_CHANGED) != 0;
     }
 
     boolean isContentChanged() {

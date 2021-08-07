@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.impl;
 
 import com.intellij.configurationStore.Scheme_implKt;
@@ -42,7 +42,6 @@ import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.*;
 
 import javax.swing.*;
-import javax.swing.event.HyperlinkEvent;
 import javax.swing.text.JTextComponent;
 import java.awt.*;
 import java.awt.event.ActionListener;
@@ -70,7 +69,6 @@ public class RunConfigurationStorageUi {
   private @Nullable @SystemIndependent @NonNls String myFolderPathIfStoredInArbitraryFile;
 
   private @Nullable Boolean myDotIdeaStorageVcsIgnored = null; // used as cache; null means not initialized yet
-  private boolean myShowCompatibilityHint;
 
   public RunConfigurationStorageUi(@NotNull Project project, @Nullable Runnable onModifiedRunnable) {
     if (project.isDefault()) LOG.error("Don't use RunConfigurationStorageUi for default project");
@@ -124,17 +122,12 @@ public class RunConfigurationStorageUi {
     };
   }
 
-  void setShowCompatibilityHint(boolean showCompatibilityHint) {
-    myShowCompatibilityHint = showCompatibilityHint;
-  }
-
   private void manageStorageFileLocation() {
     Disposable balloonDisposable = Disposer.newDisposable();
 
     Function<String, String> pathToErrorMessage = path -> getErrorIfBadFolderPathForStoringInArbitraryFile(myProject, path);
     RunConfigurationStoragePopup popup =
-      new RunConfigurationStoragePopup(myProject, getDotIdeaStoragePath(myProject), pathToErrorMessage, balloonDisposable,
-                                       myShowCompatibilityHint);
+      new RunConfigurationStoragePopup(myProject, getDotIdeaStoragePath(myProject), pathToErrorMessage, balloonDisposable);
 
     Balloon balloon = JBPopupFactory.getInstance().createBalloonBuilder(popup.getMainPanel())
       .setDialogMode(true)
@@ -299,7 +292,8 @@ public class RunConfigurationStorageUi {
     LOG.assertTrue(baseDir != null);
 
     // 5. If project base dir is not within project content, use .idea/runConfigurations
-    if (!ProjectFileIndex.getInstance(myProject).isInContent(baseDir)) {
+    // In Rider baseDir always not in the project content by design after migration to the new workspace model.
+    if (!PlatformUtils.isRider() && !ProjectFileIndex.getInstance(myProject).isInContent(baseDir)) {
       myRCStorageType = RCStorageType.DotIdeaFolder;
       myFolderPathIfStoredInArbitraryFile = null;
       return;
@@ -404,6 +398,8 @@ public class RunConfigurationStorageUi {
       default:
         throw new IllegalStateException("Unexpected value: " + myRCStorageType);
     }
+    myRCStorageTypeInitial = myRCStorageType;
+    myFolderPathIfStoredInArbitraryFileInitial = myFolderPathIfStoredInArbitraryFile;
   }
 
   private static class RunConfigurationStoragePopup {
@@ -417,8 +413,7 @@ public class RunConfigurationStorageUi {
     RunConfigurationStoragePopup(@NotNull Project project,
                                  @NotNull String dotIdeaStoragePath,
                                  @NotNull Function<? super String, @NlsContexts.DialogMessage String> pathToErrorMessage,
-                                 @NotNull Disposable uiDisposable,
-                                 boolean showCompatibilityHint) {
+                                 @NotNull Disposable uiDisposable) {
       myDotIdeaStoragePath = dotIdeaStoragePath;
       myPathComboBox = createPathComboBox(project, uiDisposable);
 
@@ -433,14 +428,6 @@ public class RunConfigurationStorageUi {
 
       ComponentPanelBuilder builder = UI.PanelFactory.panel(myPathComboBox)
         .withLabel(ExecutionBundle.message("run.configuration.store.in")).moveLabelOnTop();
-      if (showCompatibilityHint) {
-        builder = builder.withComment(getCompatibilityHintText(project), false)
-          .withCommentHyperlinkListener(e -> {
-            if (e.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
-              myPathComboBox.getEditor().setItem(FileUtil.toSystemDependentName(myDotIdeaStoragePath));
-            }
-          });
-      }
       JPanel comboBoxPanel = builder.createPanel();
 
       JButton doneButton = new JButton(ExecutionBundle.message("run.configuration.done.button"));
@@ -499,13 +486,6 @@ public class RunConfigurationStorageUi {
 
       comboBox.initBrowsableEditor(selectFolderAction, uiDisposable);
       return comboBox;
-    }
-
-    private static @NotNull @NlsContexts.DetailedDescription String getCompatibilityHintText(@NotNull Project project) {
-      String oldStorage = ProjectKt.isDirectoryBased(project)
-                          ? FileUtil.toSystemDependentName(".idea/runConfigurations")
-                          : PathUtil.getFileName(StringUtil.notNullize(project.getProjectFilePath()));
-      return ExecutionBundle.message("run.configuration.storage.compatibility.hint", oldStorage);
     }
 
     JPanel getMainPanel() {

@@ -117,8 +117,14 @@ public interface ProgressIndicator {
    */
   void setFraction(double fraction);
 
+  /**
+   * Stores {@link #getText()}, {@link #getText2()}, {@link #isIndeterminate()} and {@link #getFraction()} to the temporary stack, to be restored later via {@link #popState()}
+   */
   void pushState();
 
+  /**
+   * Restores {@link #getText()}, {@link #getText2()}, {@link #isIndeterminate()} and {@link #getFraction()} from the temporary stack, stored earlier by {@link #pushState()}
+   */
   void popState();
 
   /**

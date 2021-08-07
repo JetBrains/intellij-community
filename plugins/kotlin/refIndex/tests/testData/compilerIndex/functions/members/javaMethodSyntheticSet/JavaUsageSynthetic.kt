@@ -1,0 +1,3 @@
+fun JavaUsageSynthetic() {
+    Main().smth = ""
+}

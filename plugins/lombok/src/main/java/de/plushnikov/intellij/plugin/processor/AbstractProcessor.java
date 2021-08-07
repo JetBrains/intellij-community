@@ -1,23 +1,20 @@
 package de.plushnikov.intellij.plugin.processor;
 
-import com.intellij.codeInsight.AnnotationUtil;
-import com.intellij.codeInsight.intention.AddAnnotationPsiFix;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.util.containers.ContainerUtil;
 import de.plushnikov.intellij.plugin.LombokClassNames;
 import de.plushnikov.intellij.plugin.lombokconfig.ConfigDiscovery;
 import de.plushnikov.intellij.plugin.lombokconfig.ConfigKey;
-import de.plushnikov.intellij.plugin.thirdparty.LombokUtils;
+import de.plushnikov.intellij.plugin.psi.LombokLightModifierList;
+import de.plushnikov.intellij.plugin.thirdparty.LombokCopyableAnnotations;
 import de.plushnikov.intellij.plugin.util.LombokProcessorUtil;
 import de.plushnikov.intellij.plugin.util.PsiAnnotationSearchUtil;
 import de.plushnikov.intellij.plugin.util.PsiAnnotationUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.List;
+import java.util.*;
 
 /**
  * Base lombok processor class
@@ -97,34 +94,36 @@ public abstract class AbstractProcessor implements Processor {
     annotationsToAdd.forEach(modifierList::addAnnotation);
   }
 
-  protected static List<String> copyableAnnotations(@NotNull PsiField psiField, final List<String> copyableAnnotations) {
-    final List<String> combinedListOfCopyableAnnotations = new ArrayList<>(copyableAnnotations);
-
-    final PsiClass containingClass = psiField.getContainingClass();
-    // append only for BASE_COPYABLE
-    if (copyableAnnotations == LombokUtils.BASE_COPYABLE_ANNOTATIONS && null != containingClass) {
-      String[] configuredCopyableAnnotations =
-        ConfigDiscovery.getInstance().getMultipleValueLombokConfigProperty(ConfigKey.COPYABLE_ANNOTATIONS, containingClass);
-      combinedListOfCopyableAnnotations.addAll(Arrays.asList(configuredCopyableAnnotations));
+  protected static @NotNull List<PsiAnnotation> copyableAnnotations(@NotNull PsiField psiField,
+                                                                    @NotNull LombokCopyableAnnotations copyableAnnotations) {
+    final PsiAnnotation[] fieldAnnotations = psiField.getAnnotations();
+    if (0 == fieldAnnotations.length) {
+      // nothing to copy if no annotations defined
+      return Collections.emptyList();
     }
 
-    final List<String> existingAnnotations = ContainerUtil.map(psiField.getAnnotations(), PsiAnnotation::getQualifiedName);
-    existingAnnotations.retainAll(combinedListOfCopyableAnnotations);
+    final Map<String, String> fullQualifiedToShortNames = new HashMap<>(copyableAnnotations.getFullQualifiedToShortNames());
+    final PsiClass containingClass = psiField.getContainingClass();
+    // append only for BASE_COPYABLE
+    if (LombokCopyableAnnotations.BASE_COPYABLE.equals(copyableAnnotations) && null != containingClass) {
+      Collection<String> configuredCopyableAnnotations =
+        ConfigDiscovery.getInstance().getMultipleValueLombokConfigProperty(ConfigKey.COPYABLE_ANNOTATIONS, containingClass);
 
-    return existingAnnotations;
+      configuredCopyableAnnotations.forEach(fqn->fullQualifiedToShortNames.put(fqn, StringUtil.getShortName(fqn)));
+    }
+
+    final Collection<String> existedShortAnnotationNames = ContainerUtil.map(fieldAnnotations, PsiAnnotationSearchUtil::getShortNameOf);
+    // reduce copyableAnnotations to only matching existed annotations by shortName
+    fullQualifiedToShortNames.values().retainAll(existedShortAnnotationNames);
+    // collect existing annotations to copy
+    return PsiAnnotationSearchUtil.findAllAnnotations(psiField, fullQualifiedToShortNames.keySet());
   }
 
   protected static void copyCopyableAnnotations(@NotNull PsiField fromPsiElement,
-                                                @NotNull PsiModifierList toModifierList,
-                                                List<String> copyableAnnotations) {
-    List<String> existingAnnotations = copyableAnnotations(fromPsiElement, copyableAnnotations);
-
-    for (String annotation : existingAnnotations) {
-      PsiAnnotation srcAnnotation = AnnotationUtil.findAnnotation(fromPsiElement, annotation);
-      PsiNameValuePair[] valuePairs =
-        srcAnnotation != null ? srcAnnotation.getParameterList().getAttributes() : PsiNameValuePair.EMPTY_ARRAY;
-      AddAnnotationPsiFix.addPhysicalAnnotationIfAbsent(annotation, valuePairs, toModifierList);
-    }
+                                                @NotNull LombokLightModifierList toModifierList,
+                                                @NotNull LombokCopyableAnnotations copyableAnnotations) {
+    List<PsiAnnotation> annotationsToAdd = copyableAnnotations(fromPsiElement, copyableAnnotations);
+    annotationsToAdd.forEach(toModifierList::withAnnotation);
   }
 
   @Override

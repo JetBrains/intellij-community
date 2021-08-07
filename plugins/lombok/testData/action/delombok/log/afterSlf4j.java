@@ -1,8 +1,10 @@
+import org.slf4j.Logger;
+
 class Test {
 
-    private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(Test.class);
+  private static final Logger log = org.slf4j.LoggerFactory.getLogger(Test.class);
 
-    public void logHallo() {
+  public void logHallo() {
     log.info("Hello!");
   }
 
@@ -10,5 +12,4 @@ class Test {
     Test test = new Test();
     test.logHallo();
   }
-
 }

@@ -1,8 +1,9 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.treeStructure;
 
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.util.treeView.*;
+import com.intellij.openapi.options.advanced.AdvancedSettings;
 import com.intellij.openapi.ui.GraphicsConfig;
 import com.intellij.openapi.ui.Queryable;
 import com.intellij.openapi.util.*;
@@ -10,7 +11,6 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.*;
 import com.intellij.ui.tree.TreePathBackgroundSupplier;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.SlowOperations;
 import com.intellij.util.ThreeState;
 import com.intellij.util.ui.*;
 import com.intellij.util.ui.tree.TreeUtil;
@@ -46,6 +46,8 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
    */
   @ApiStatus.Internal
   public static final Key<Boolean> AUTO_SELECT_ON_MOUSE_PRESSED = Key.create("allows to select a node automatically on right click");
+  @ApiStatus.Internal
+  public static final Key<Boolean> MOUSE_PRESSED_NON_FOCUSED = Key.create("mouse pressed state");
 
   private final StatusText myEmptyText;
   private final ExpandableItemsHandler<Integer> myExpandableItemsHandler;
@@ -337,7 +339,7 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
 
     for (int row = firstVisibleRow; row <= lastVisibleRow; row++) {
       TreePath path = getPathForRow(row);
-      Color color = path == null ? null : SlowOperations.allowSlowOperations(() -> getFileColorForPath(path));
+      Color color = path == null ? null : getFileColorForPath(path);
       if (color != null) {
         Rectangle bounds = getRowBounds(row);
         g.setColor(color);
@@ -595,7 +597,7 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
 
   @Override
   public void collapsePath(TreePath path) {
-    int row = Registry.is("ide.tree.collapse.recursively") ? getRowForPath(path) : -1;
+    int row = AdvancedSettings.getBoolean("ide.tree.collapse.recursively") ? getRowForPath(path) : -1;
     if (row < 0) {
       super.collapsePath(path);
     }
@@ -698,6 +700,7 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
     }
 
     private void setPressed(MouseEvent e, boolean pressed) {
+      putClientProperty(MOUSE_PRESSED_NON_FOCUSED, pressed && !hasFocus());
       if (UIUtil.isUnderWin10LookAndFeel()) {
         Point p = e.getPoint();
         TreePath path = getPathForLocation(p.x, p.y);

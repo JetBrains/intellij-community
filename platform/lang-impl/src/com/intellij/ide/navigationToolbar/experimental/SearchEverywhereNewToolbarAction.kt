@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.navigationToolbar.experimental
 
 import com.intellij.icons.AllIcons
@@ -12,6 +12,7 @@ import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ex.AnActionListener
 import com.intellij.openapi.actionSystem.impl.ActionButtonWithText
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.util.ui.JBInsets
 import com.intellij.util.ui.JBUI
@@ -27,7 +28,7 @@ import javax.swing.plaf.basic.BasicGraphicsUtils.drawStringUnderlineCharAt
 
 class SearchEverywhereNewToolbarAction : SearchEverywhereAction(), AnActionListener {
   private val margin = JBUI.scale(4)
-  private var hotKeyWasUsed = Registry.`is`("ide.suppress.double.click.handler")
+  private var hotKeyWasUsed = AdvancedSettings.getBoolean("ide.suppress.double.click.handler")
   private var subscribedForDoubleShift = false
 
   init {
@@ -80,12 +81,10 @@ class SearchEverywhereNewToolbarAction : SearchEverywhereAction(), AnActionListe
         }
       }
 
-      override fun actionPerformed(e: AnActionEvent?) {
-        if (e != null) {
-          super.actionPerformed(
-            AnActionEvent(e.inputEvent, e.dataContext, ActionPlaces.NEW_TOOLBAR, templatePresentation,
-                          ActionManager.getInstance(), 0))
-        }
+      override fun actionPerformed(e: AnActionEvent) {
+        super.actionPerformed(AnActionEvent(
+          e.inputEvent, e.dataContext, ActionPlaces.RUN_TOOLBAR, templatePresentation,
+          ActionManager.getInstance(), 0))
       }
 
       override fun paint(g: Graphics?) {
@@ -107,7 +106,7 @@ class SearchEverywhereNewToolbarAction : SearchEverywhereAction(), AnActionListe
         JBInsets.removeFrom(viewRect, margins)
         val iconRect = Rectangle()
         val textRect = Rectangle()
-        val text = SwingUtilities.layoutCompoundLabel(this, fm, presentation.text, icon,
+        val text = SwingUtilities.layoutCompoundLabel(this, fm, presentation.getText(true), icon,
                                                       SwingConstants.CENTER, horizontalTextAlignment(),
                                                       SwingConstants.CENTER, horizontalTextPosition(),
                                                       viewRect, iconRect, textRect, iconTextSpace())
@@ -123,10 +122,10 @@ class SearchEverywhereNewToolbarAction : SearchEverywhereAction(), AnActionListe
     }
   }
 
-  override fun afterActionPerformed(action: AnAction, dataContext: DataContext, e: AnActionEvent) {
+  override fun afterActionPerformed(action: AnAction, event: AnActionEvent, result: AnActionResult) {
     if (action is SearchEverywhereAction && !hotKeyWasUsed) {
-      if (e.inputEvent is KeyEvent) {
-        if ((e.inputEvent as KeyEvent).keyCode == KeyEvent.VK_SHIFT) {
+      if (event.inputEvent is KeyEvent) {
+        if ((event.inputEvent as KeyEvent).keyCode == KeyEvent.VK_SHIFT) {
           hotKeyWasUsed = true
         }
       }

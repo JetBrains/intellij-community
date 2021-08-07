@@ -98,6 +98,7 @@ public class InplaceIntroduceConstantPopup extends AbstractInplaceIntroduceField
     myReplaceAllCb.setMnemonic('a');
     myReplaceAllCb.setFocusable(false);
     myReplaceAllCb.setVisible(myOccurrences.length > 1);
+    myReplaceAllCb.setSelected(JavaRefactoringSettings.getInstance().INTRODUCE_CONSTANT_REPLACE_ALL);
     right.add(myReplaceAllCb, rgc);
 
     return right;
@@ -147,11 +148,9 @@ public class InplaceIntroduceConstantPopup extends AbstractInplaceIntroduceField
       PsiUtil.setModifierProperty(field, PsiModifier.STATIC, true);
       myVisibility = getSelectedVisibility();
       PsiUtil.setModifierProperty(field, myVisibility, true);
-      final PsiElement anchorElementIfAll = getAnchorElementIfAll();
-      PsiElement finalAnchorElement;
-      for (finalAnchorElement = anchorElementIfAll;
-           finalAnchorElement != null && finalAnchorElement.getParent() != parentClass;
-           finalAnchorElement = finalAnchorElement.getParent()) {
+      PsiElement finalAnchorElement = getAnchorElementIfAll();
+      while (finalAnchorElement != null && finalAnchorElement.getParent() != parentClass) {
+        finalAnchorElement = finalAnchorElement.getParent();
       }
       PsiMember anchorMember = finalAnchorElement instanceof PsiMember ? (PsiMember)finalAnchorElement : null;
       field = BaseExpressionToFieldHandler.ConvertToFieldRunnable
@@ -265,11 +264,13 @@ public class InplaceIntroduceConstantPopup extends AbstractInplaceIntroduceField
                                                 getType(),
                                                 true,
                                                 getParentClass(), false, false);
+    if (myReplaceAllCb.isVisible()) {
+      JavaRefactoringSettings.getInstance().INTRODUCE_CONSTANT_REPLACE_ALL = isReplaceAllOccurrences();
+    }
     WriteCommandAction.writeCommandAction(myProject).withName(getCommandName()).withGroupId(getCommandName()).run(() -> {
       if (getLocalVariable() != null) {
         final LocalToFieldHandler.IntroduceFieldRunnable fieldRunnable =
-          new LocalToFieldHandler.IntroduceFieldRunnable(false, (PsiLocalVariable)getLocalVariable(), getParentClass(), settings, true,
-                                                         myOccurrences);
+          new LocalToFieldHandler.IntroduceFieldRunnable(false, (PsiLocalVariable)getLocalVariable(), getParentClass(), settings, myOccurrences);
         fieldRunnable.run();
       }
       else {

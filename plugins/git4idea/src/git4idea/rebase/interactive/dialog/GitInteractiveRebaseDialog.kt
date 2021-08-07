@@ -29,11 +29,15 @@ import git4idea.history.GitLogUtil
 import git4idea.i18n.GitBundle
 import git4idea.rebase.GitRebaseEntryWithDetails
 import git4idea.rebase.interactive.GitRebaseTodoModel
+import org.jetbrains.annotations.ApiStatus
 import java.awt.BorderLayout
 import java.awt.Dimension
 import javax.swing.JComponent
 import javax.swing.JSeparator
 import javax.swing.SwingConstants
+
+@ApiStatus.Internal
+const val GIT_INTERACTIVE_REBASE_DIALOG_DIMENSION_KEY = "Git.Interactive.Rebase.Dialog"
 
 internal class GitInteractiveRebaseDialog<T : GitRebaseEntryWithDetails>(
   private val project: Project,
@@ -42,7 +46,6 @@ internal class GitInteractiveRebaseDialog<T : GitRebaseEntryWithDetails>(
 ) : DialogWrapper(project, true) {
   companion object {
     private const val DETAILS_PROPORTION = "Git.Interactive.Rebase.Details.Proportion"
-    private const val DIMENSION_KEY = "Git.Interactive.Rebase.Dialog"
     internal const val PLACE = "Git.Interactive.Rebase.Dialog"
 
     private const val DIALOG_HEIGHT = 550
@@ -111,8 +114,7 @@ internal class GitInteractiveRebaseDialog<T : GitRebaseEntryWithDetails>(
         addSeparator()
         addAll(contextMenuOnlyActions)
       },
-      PLACE,
-      ActionManager.getInstance()
+      PLACE
     )
 
     title = GitBundle.message("rebase.interactive.dialog.title")
@@ -120,7 +122,7 @@ internal class GitInteractiveRebaseDialog<T : GitRebaseEntryWithDetails>(
     init()
   }
 
-  override fun getDimensionServiceKey() = DIMENSION_KEY
+  override fun getDimensionServiceKey() = GIT_INTERACTIVE_REBASE_DIALOG_DIMENSION_KEY
 
   override fun createCenterPanel() = BorderLayoutPanel().apply {
     val decorator = ToolbarDecorator.createDecorator(commitsTable)

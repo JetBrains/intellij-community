@@ -248,6 +248,26 @@ public class PyStatementMoverTest extends PyTestCase {
     doTest();
   }
 
+  // PY-41375
+  public void testMultiLineSelectionDifferentLevelsMoveOutFromFunction() {
+    doTest();
+  }
+
+  // PY-37765
+  public void testMultiLineSelectionDifferentLevelsMoveIntoFunction() {
+    doTest();
+  }
+
+  // PY-41375
+  public void testSingleLineSelectionOutFromFunction() {
+    doTest();
+  }
+
+  // PY-41375
+  public void testMultiLineSelectionDifferentLevelsMoveOutFromNestedFunction() {
+    doTest();
+  }
+
   public void testTheSameLevelMultiple() { //PY-10947
     doTest();
   }

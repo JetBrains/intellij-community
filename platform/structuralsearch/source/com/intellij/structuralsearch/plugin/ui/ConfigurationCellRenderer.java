@@ -3,6 +3,7 @@ package com.intellij.structuralsearch.plugin.ui;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.fileTypes.LanguageFileType;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.structuralsearch.MatchOptions;
 import com.intellij.structuralsearch.SSRBundle;
 import com.intellij.structuralsearch.plugin.replace.ui.ReplaceConfiguration;
@@ -29,13 +30,14 @@ public class ConfigurationCellRenderer extends SimpleListCellRenderer<Configurat
     final LanguageFileType fileType = matchOptions.getFileType();
     setIcon((fileType == null) ? AllIcons.FileTypes.Unknown : fileType.getIcon());
     final String text;
+    @NlsSafe final String searchPattern = collapseWhiteSpace(matchOptions.getSearchPattern());
     if (value instanceof ReplaceConfiguration) {
       text = SSRBundle.message("replace.configuration.display.text",
-                               shortenTextWithEllipsis(collapseWhiteSpace(matchOptions.getSearchPattern()), 49, 0, true),
+                               shortenTextWithEllipsis(searchPattern, 49, 0, true),
                                shortenTextWithEllipsis(collapseWhiteSpace(value.getReplaceOptions().getReplacement()), 49, 0, true));
     }
     else {
-      text = shortenTextWithEllipsis(collapseWhiteSpace(matchOptions.getSearchPattern()), 100, 0, true);
+      text = shortenTextWithEllipsis(searchPattern, 100, 0, true);
     }
     setText(text);
     setEnabled(list.isEnabled());

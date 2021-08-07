@@ -5,6 +5,7 @@ import com.intellij.openapi.externalSystem.model.execution.ExternalSystemTaskExe
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiManager
 import org.jetbrains.plugins.gradle.execution.test.runner.applyTestConfiguration
+import org.jetbrains.plugins.gradle.importing.GradleBuildScriptBuilder.Companion.buildscript
 import org.jetbrains.plugins.gradle.util.GradleExecutionSettingsUtil
 import org.jetbrains.plugins.gradle.util.findChildByType
 import org.jetbrains.plugins.gradle.util.runReadActionAndWait
@@ -55,9 +56,9 @@ class TestGradleConfigurationProducerUtilTest : GradleImportingTestCase() {
           }
       }
     """.trimIndent())
-    val moduleBuildScript = GradleBuildScriptBuilderEx()
+    val moduleBuildScript = createBuildScriptBuilder()
       .withJavaPlugin()
-      .withJUnit("4.12")
+      .withJUnit4()
       .addPostfix("""
         task myTestsJar(type: Jar, dependsOn: testClasses) {
             baseName = "test-${'$'}{project.archivesBaseName}"
@@ -72,13 +73,13 @@ class TestGradleConfigurationProducerUtilTest : GradleImportingTestCase() {
             testArtifacts  myTestsJar
         }
       """.trimIndent())
-    val depModuleBuildScript = GradleBuildScriptBuilderEx()
-      .withJavaPlugin()
-      .withJUnit("4.12")
-      .addDependency("compile project(':module')")
-      .addDependency("testCompile project(path: ':module', configuration: 'testArtifacts')")
     createProjectSubFile("module/build.gradle", moduleBuildScript.generate())
-    createProjectSubFile("dep-module/build.gradle", depModuleBuildScript.generate())
+    createProjectSubFile("dep-module/build.gradle", buildscript {
+      withJavaPlugin()
+      withJUnit4()
+      addImplementationDependency(project(":module"))
+      addImplementationDependency(project(":module", "testArtifacts"))
+    })
     createSettingsFile("""
       rootProject.name = 'project'
       include 'module'

@@ -1,32 +1,38 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+@file:JvmName("UpdateData")
 package com.intellij.openapi.updateSettings.impl
 
-import com.intellij.openapi.application.impl.ApplicationInfoImpl
-import com.intellij.openapi.diagnostic.Logger
-import com.intellij.openapi.util.BuildNumber
-import com.intellij.openapi.util.BuildRange
-import com.intellij.openapi.util.NlsSafe
-import com.intellij.openapi.util.SystemInfo
+import com.intellij.openapi.application.ApplicationInfo
+import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.util.*
 import org.jdom.Element
 import org.jdom.JDOMException
+import org.jetbrains.annotations.ApiStatus
+import java.io.IOException
 import java.text.ParseException
 import java.text.SimpleDateFormat
 import java.util.*
 
-class UpdatesInfo(node: Element) {
-  private val products = node.getChildren("product").map(::Product)
-  operator fun get(code: String): Product? = products.find { code in it.codes }
+@Throws(IOException::class, JDOMException::class)
+fun parseUpdateData(
+  text: String,
+  productCode: String = ApplicationInfo.getInstance().build.productCode,
+): Product? = parseUpdateData(JDOMUtil.load(text), productCode)
+
+fun parseUpdateData(node: Element, productCode: String = ApplicationInfo.getInstance().build.productCode): Product? =
+  node.getChildren("product")
+    .find { it.getChildren("code").any { code -> code.value.trim() == productCode } }
+    ?.let { Product(it, productCode) }
+
+class Product internal constructor(node: Element, private val productCode: String) {
+  val name: @NlsSafe String = node.getMandatoryAttributeValue("name")
+  val channels: List<UpdateChannel> = node.getChildren("channel").map { UpdateChannel(it, productCode) }
+  val disableMachineId: Boolean = node.getAttributeValue("disableMachineId", "false") == "true"
+
+  override fun toString(): String = productCode
 }
 
-class Product internal constructor(node: Element) {
-  @NlsSafe val name: String = node.getMandatoryAttributeValue("name")
-  val codes: Set<String> = node.getChildren("code").map { it.value.trim() }.toSet()
-  val channels: List<UpdateChannel> = node.getChildren("channel").map(::UpdateChannel)
-
-  override fun toString(): String = codes.firstOrNull() ?: "-"
-}
-
-class UpdateChannel internal constructor(node: Element) {
+class UpdateChannel internal constructor(node: Element, productCode: String) {
   enum class Licensing { EAP, RELEASE; }
 
   val id: String = node.getMandatoryAttributeValue("id")
@@ -34,29 +40,25 @@ class UpdateChannel internal constructor(node: Element) {
   val licensing: Licensing = if (node.getAttributeValue("licensing") == "eap") Licensing.EAP else Licensing.RELEASE
   val evalDays: Int = node.getAttributeValue("evalDays")?.toInt() ?: 30
   val url: String? = node.getAttributeValue("url")
-  val builds: List<BuildInfo> = node.getChildren("build").map(::BuildInfo)
+  val builds: List<BuildInfo> = node.getChildren("build").map { BuildInfo(it, productCode) }
 
   override fun toString(): String = id
 }
 
-class BuildInfo internal constructor(node: Element) {
-  val number: BuildNumber = parseBuildNumber(node.getMandatoryAttributeValue("fullNumber", "number"))
+class BuildInfo internal constructor(node: Element, productCode: String) {
+  val number: BuildNumber = parseBuildNumber(node.getMandatoryAttributeValue("fullNumber", "number"), productCode)
   val apiVersion: BuildNumber = node.getAttributeValue("apiVersion")?.let { BuildNumber.fromStringWithProductCode(it, number.productCode) } ?: number
   val version: String = node.getAttributeValue("version") ?: ""
-  @NlsSafe val message: String = node.getChild("message")?.value ?: ""
+  val message: @NlsSafe String = node.getChild("message")?.value ?: ""
   val blogPost: String? = node.getChild("blogPost")?.getAttributeValue("url")
   val releaseDate: Date? = parseDate(node.getAttributeValue("releaseDate"))
   val target: BuildRange? = BuildRange.fromStrings(node.getAttributeValue("targetSince"), node.getAttributeValue("targetUntil"))
   val patches: List<PatchInfo> = node.getChildren("patch").map(::PatchInfo)
+  val downloadUrl: String? = node.getChildren("button").find { it.getAttributeValue("download") != null }?.getMandatoryAttributeValue("url")
 
-  private val buttons: List<ButtonInfo> = node.getChildren("button").map(::ButtonInfo)
-
-  private fun parseBuildNumber(value: String): BuildNumber {
-    var buildNumber = BuildNumber.fromString(value)!!
-    if (buildNumber.productCode.isEmpty()) {
-      buildNumber = BuildNumber(ApplicationInfoImpl.getShadowInstance().build.productCode, *buildNumber.components)
-    }
-    return buildNumber
+  private fun parseBuildNumber(value: String, productCode: String): BuildNumber {
+    val buildNumber = BuildNumber.fromString(value)!!
+    return if (buildNumber.productCode.isNotEmpty()) buildNumber else BuildNumber(productCode, *buildNumber.components)
   }
 
   private fun parseDate(value: String?): Date? =
@@ -65,20 +67,11 @@ class BuildInfo internal constructor(node: Element) {
       SimpleDateFormat("yyyyMMdd", Locale.US).parse(value)  // same as the 'majorReleaseDate' in ApplicationInfo.xml
     }
     catch (e: ParseException) {
-      Logger.getInstance(BuildInfo::class.java).info("invalid build release date: $value")
+      logger<BuildInfo>().info("invalid build release date: ${value}")
       null
     }
 
-  val downloadUrl: String?
-    get() = buttons.find(ButtonInfo::isDownload)?.url
-
   override fun toString(): String = "${number}/${version}"
-
-  private class ButtonInfo constructor(node: Element) {
-    // "name" is no longer used
-    val url: String = node.getMandatoryAttributeValue("url")
-    val isDownload: Boolean = node.getAttributeValue("download") != null
-  }
 }
 
 class PatchInfo internal constructor(node: Element) {
@@ -96,3 +89,11 @@ private fun Element.getMandatoryAttributeValue(attribute: String) =
 
 private fun Element.getMandatoryAttributeValue(attribute: String, fallback: String) =
   getAttributeValue(attribute) ?: getMandatoryAttributeValue(fallback)
+
+//<editor-fold desc="Deprecated stuff.">
+@Deprecated("Please use `parseUpdateData` instead")
+@ApiStatus.ScheduledForRemoval(inVersion = "2022.2")
+class UpdatesInfo(node: Element) {
+  val product: Product? = parseUpdateData(node)
+}
+//</editor-fold>

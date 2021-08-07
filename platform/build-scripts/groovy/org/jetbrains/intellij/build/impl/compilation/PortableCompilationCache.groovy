@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build.impl.compilation
 
+import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
 import groovy.transform.CompileStatic
@@ -35,17 +36,19 @@ final class PortableCompilationCache {
     private final CompilationContext context
     final boolean skipDownload = bool(SKIP_DOWNLOAD_PROPERTY, false)
     final boolean skipUpload = bool(SKIP_UPLOAD_PROPERTY, false)
-    final File dir = context.compilationData.dataStorageRoot
+    @Lazy
+    File dir = { context.compilationData.dataStorageRoot }()
 
     JpsCaches(CompilationContext context) {
       this.context = context
     }
 
-    def maybeAvailableLocally() {
+    @Lazy
+    boolean maybeAvailableLocally = {
       def files = dir.list()
       context.messages.info("$dir.absolutePath: $files")
       dir.isDirectory() && files != null && files.length > 0
-    }
+    }()
   }
 
   /**
@@ -74,6 +77,7 @@ final class PortableCompilationCache {
   }
 
   private final CompilationContext context
+  private final Git git
   /**
    * IntelliJ repository git remote url
    */
@@ -106,7 +110,8 @@ final class PortableCompilationCache {
   private final boolean forceDownload = bool(FORCE_DOWNLOAD_PROPERTY, false)
   private final boolean forceRebuild = bool(FORCE_REBUILD_PROPERTY, false)
   private final RemoteCache remoteCache = new RemoteCache()
-  private final JpsCaches jpsCaches = new JpsCaches(context)
+  @Lazy
+  private JpsCaches jpsCaches = { new JpsCaches(context) }()
   final boolean canBeUsed = CAN_BE_USED
 
   @Lazy
@@ -119,7 +124,7 @@ final class PortableCompilationCache {
   @Lazy
   private PortableCompilationCacheDownloader downloader = {
     def availableForHeadCommit = bool(AVAILABLE_FOR_HEAD_PROPERTY, false)
-    new PortableCompilationCacheDownloader(context, remoteCache.url, remoteGitUrl,
+    new PortableCompilationCacheDownloader(context, git, remoteCache.url, remoteGitUrl,
                                            availableForHeadCommit, jpsCaches.skipDownload)
   }()
 
@@ -132,8 +137,11 @@ final class PortableCompilationCache {
                                          syncFolder, jpsCaches.skipUpload, forceRebuild)
   }()
 
+  private static boolean isAlreadyUpdated
+
   PortableCompilationCache(CompilationContext context) {
     this.context = context
+    this.git = new Git(context.paths.projectHome.trim())
   }
 
   /**
@@ -145,22 +153,39 @@ final class PortableCompilationCache {
    * For more details see {@link JavaBackwardReferenceIndexWriter#initialize}
    */
   def downloadCacheAndCompileProject() {
-    def cachesAreDownloaded = false
-    if (forceRebuild) {
-      clean()
+    //noinspection GroovySynchronizationOnNonFinalField
+    synchronized (PortableCompilationCache) {
+      if (isAlreadyUpdated) {
+        context.messages.info("${getClass().simpleName} is already updated")
+        return
+      }
+      if (forceRebuild) {
+        clean()
+      }
+      else if (!isLocalCacheUsed()) {
+        downloadCache()
+      }
+      CompilationTasks.create(context).resolveProjectDependencies()
+      if (isCompilationRequired()) {
+        context.options.incrementalCompilation = !forceRebuild
+        compileProject()
+      }
+      isAlreadyUpdated = true
+      context.options.incrementalCompilation = true
+      context.options.useCompiledClassesFromProjectOutput = false
     }
-    else if (forceDownload || !jpsCaches.maybeAvailableLocally()) {
-      downloadCache()
-      cachesAreDownloaded = true
-    }
-    // ensure that all Maven dependencies are resolved before compilation
-    CompilationTasks.create(context).resolveProjectDependencies()
-    if (!cachesAreDownloaded || !downloader.availableForHeadCommit || downloader.anyLocalChanges) {
-      context.options.incrementalCompilation = !forceRebuild
-      compileProject()
-    }
-    context.options.incrementalCompilation = false
-    context.options.useCompiledClassesFromProjectOutput = true
+  }
+
+  boolean isCompilationRequired() {
+    return forceRebuild || isLocalCacheUsed() || isRemoteCacheStale()
+  }
+
+  private boolean isLocalCacheUsed() {
+    return !forceRebuild && !forceDownload && jpsCaches.maybeAvailableLocally
+  }
+
+  private boolean isRemoteCacheStale() {
+    return !downloader.availableForHeadCommit || downloader.anyLocalChanges
   }
 
   /**
@@ -196,14 +221,20 @@ final class PortableCompilationCache {
   }
 
   private def clean() {
-    [jpsCaches.dir, new File(context.paths.buildOutputRoot, 'classes')].each {
+    [jpsCaches.dir, context.projectOutputDirectory].each {
       context.messages.info("Cleaning $it")
       FileUtil.delete(it)
     }
   }
 
   private def compileProject() {
-    // ensure that JBR and Kotlin plugin are downloaded before compilation
+    // fail-fast in case of KTIJ-17296
+    if (SystemInfo.isWindows && git.lineBreaksConfig() != "input") {
+      context.messages.error("${getClass().simpleName} cannot be used with CRLF line breaks, " +
+                             "please execute `git config --global core.autocrlf input` before checkout " +
+                             "and upvote https://youtrack.jetbrains.com/issue/KTIJ-17296")
+    }
+    // ensure that JBR and Kotlin compiler are downloaded before compilation
     CompilationContextImpl.setupCompilationDependencies(context.gradle, context.options)
     def jps = new JpsCompilationRunner(context)
     try {

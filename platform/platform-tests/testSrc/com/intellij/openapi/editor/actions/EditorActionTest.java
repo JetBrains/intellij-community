@@ -185,6 +185,54 @@ public class EditorActionTest extends AbstractEditorTest {
                       "blah bl<caret></selection>ah");
   }
   
+  public void testUpOnCaretOnSelectionEnd() {
+    initText("A mad boxer shot\n" +
+             "a quick<selection>, gloved jab\n" +
+             "to the jaw of<caret></selection> his \n" +
+             "dizzy opponent.\n");
+    up();
+    checkResultByText("A mad b<caret>oxer shot\n" +
+                      "a quick, gloved jab\n" +
+                      "to the jaw of his \n" +
+                      "dizzy opponent.\n");
+  }
+
+  public void testUpOnCaretInsideSelection() {
+    initText("A mad boxer shot\n" +
+             "a quick<selection>, gloved<caret> jab\n" +
+             "to the jaw of</selection> his \n" +
+             "dizzy opponent.\n");
+    up();
+    checkResultByText("A mad b<caret>oxer shot\n" +
+                      "a quick, gloved jab\n" +
+                      "to the jaw of his \n" +
+                      "dizzy opponent.\n");
+  }
+
+  public void testDownOnCaretOnSelectionStart() {
+    initText("A mad boxer shot\n" +
+             "a quick<selection><caret>, gloved jab\n" +
+             "to the jaw of</selection> his \n" +
+             "dizzy opponent.\n");
+    down();
+    checkResultByText("A mad boxer shot\n" +
+                      "a quick, gloved jab\n" +
+                      "to the jaw of his \n" +
+                      "dizzy opponen<caret>t.\n");
+  }
+
+  public void testDownOnCaretInsideSelection() {
+    initText("A mad boxer shot\n" +
+             "a quick<selection>, gloved<caret> jab\n" +
+             "to the jaw of</selection> his \n" +
+             "dizzy opponent.\n");
+    down();
+    checkResultByText("A mad boxer shot\n" +
+                      "a quick, gloved jab\n" +
+                      "to the jaw of his \n" +
+                      "dizzy opponen<caret>t.\n");
+  }
+
   public void testCaretComesBeforeTextOnUnindent() {
     initText("      <caret>  text");
     unindent();

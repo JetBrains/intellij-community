@@ -1,13 +1,23 @@
 <html>
 <body>
-Reports any use of <b>==</b> or <b>!=</b>to test for Object equality, rather than the <b>equals()</b> method.
-Comparisons to <b>null</b> are not reported.
-Comparison of arrays, Strings or Numbers using <b>==</b> are also not reported, there are separate inspections for these three problems.
+Reports code that uses <code>==</code> or <code>!=</code> rather than <code>equals()</code> to test for <code>Object</code> equality.
+<p>Comparing objects using <code>==</code> or <code>!=</code> is often a bug, because it compares objects by identity instead of
+  equality.
+  Comparisons to <code>null</code> are not reported.
+  Array, <code>String</code> and <code>Number</code> comparisons are reported by separate inspections.
+</p>
+<p><b>Example:</b></p>
+<pre><code>  <b>if</b> (list1 == list2) {
+    <b>return</b>;
+  }
+</code></pre>
+<p>After the quick-fix is applied:</p>
+<pre><code>  <b>if</b> (Object.equals(list1, list2)) {
+    <b>return</b>;
+  }
+</code></pre>
 <!-- tooltip end -->
 <p>
-Use the checkboxes below to indicate whether uses of <b>==</b> between objects of
-an enumerated type, final class types without equals implementation or types with private constructors should be reported by this inspection.
-<p>
-
+<p>Use the inspection settings to configure exceptions for this inspection.</p>
 </body>
 </html>

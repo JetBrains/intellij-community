@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl.search;
 
 import com.intellij.concurrency.AsyncFuture;
@@ -72,8 +72,16 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
   }
 
   @Override
-  @NotNull
-  public SearchScope getUseScope(@NotNull PsiElement element) {
+  public @NotNull SearchScope getUseScope(@NotNull PsiElement element) {
+    return getUseScope(element, false);
+  }
+
+  @Override
+  public @NotNull SearchScope getCodeUsageScope(@NotNull PsiElement element) {
+    return getUseScope(element, true);
+  }
+
+  private static @NotNull SearchScope getUseScope(@NotNull PsiElement element, boolean restrictToCodeUsageScope) {
     SearchScope scope = element.getUseScope();
     for (UseScopeEnlarger enlarger : UseScopeEnlarger.EP_NAME.getExtensions()) {
       ProgressManager.checkCanceled();
@@ -83,11 +91,23 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
       }
     }
 
-    SearchScope scopeToRestrict = ScopeOptimizer.calculateOverallRestrictedUseScope(USE_SCOPE_OPTIMIZER_EP_NAME.getExtensions(), element);
-    if (scopeToRestrict != null) {
-      scope = scope.intersectWith(scopeToRestrict);
+    scope = restrictScope(scope, USE_SCOPE_OPTIMIZER_EP_NAME.getExtensions(), element);
+    if (restrictToCodeUsageScope) {
+      scope = restrictScope(scope, CODE_USAGE_SCOPE_OPTIMIZER_EP_NAME.getExtensions(), element);
     }
+
     return scope;
+  }
+
+  private static @NotNull SearchScope restrictScope(@NotNull SearchScope baseScope,
+                                                    @NotNull ScopeOptimizer @NotNull [] optimizers,
+                                                    @NotNull PsiElement element) {
+    SearchScope scopeToRestrict = ScopeOptimizer.calculateOverallRestrictedUseScope(optimizers, element);
+    if (scopeToRestrict != null) {
+      return baseScope.intersectWith(scopeToRestrict);
+    }
+
+    return baseScope;
   }
 
   public PsiSearchHelperImpl(@NotNull Project project) {
@@ -288,10 +308,10 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
                                                        @NotNull SearchSession session,
                                                        @NotNull ProgressIndicator progress,
                                                        @NotNull BulkOccurrenceProcessor processor) {
+    progress.setIndeterminate(false);
     progress.pushState();
     try {
       progress.setText(IndexingBundle.message("psi.scanning.files.progress"));
-
 
       Processor<PsiElement> localProcessor = localProcessor(searcher, processor);
 

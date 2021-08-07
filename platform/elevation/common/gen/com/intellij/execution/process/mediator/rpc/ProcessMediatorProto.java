@@ -132,37 +132,38 @@ public final class ProcessMediatorProto {
       "handle\030\001 \001(\0132).intellij.process.mediator" +
       ".rpc.FileHandleH\000\0229\n\005chunk\030\002 \001(\0132(.intel" +
       "lij.process.mediator.rpc.DataChunkH\000B\024\n\022" +
-      "FileHandleOrBuffer\"\342\001\n\013CommandLine\022\017\n\007co" +
+      "FileHandleOrBuffer\"\201\002\n\013CommandLine\022\017\n\007co" +
       "mmand\030\001 \003(\t\022\023\n\013working_dir\030\002 \001(\t\022\017\n\007in_f" +
       "ile\030\003 \001(\t\022\020\n\010out_file\030\004 \001(\t\022\020\n\010err_file\030" +
-      "\005 \001(\t\022H\n\007environ\030\006 \003(\01327.intellij.proces" +
-      "s.mediator.rpc.CommandLine.EnvironEntry\032" +
-      ".\n\014EnvironEntry\022\013\n\003key\030\001 \001(\t\022\r\n\005value\030\002 " +
-      "\001(\t:\0028\0012\370\001\n\006Daemon\022R\n\013AdjustQuota\022+.inte" +
-      "llij.process.mediator.rpc.QuotaOptions\032\026" +
-      ".google.protobuf.Empty\022^\n\027ListenQuotaSta" +
-      "teUpdates\022\026.google.protobuf.Empty\032).inte" +
-      "llij.process.mediator.rpc.QuotaState0\001\022:" +
-      "\n\010Shutdown\022\026.google.protobuf.Empty\032\026.goo" +
-      "gle.protobuf.Empty2\216\005\n\016ProcessManager\022V\n" +
-      "\nOpenHandle\022\026.google.protobuf.Empty\032..in" +
-      "tellij.process.mediator.rpc.OpenHandleRe" +
-      "ply0\001\022w\n\rCreateProcess\0223.intellij.proces" +
-      "s.mediator.rpc.CreateProcessRequest\0321.in" +
-      "tellij.process.mediator.rpc.CreateProces" +
-      "sReply\022^\n\016DestroyProcess\0224.intellij.proc" +
-      "ess.mediator.rpc.DestroyProcessRequest\032\026" +
-      ".google.protobuf.Empty\022\200\001\n\020AwaitTerminat" +
-      "ion\0226.intellij.process.mediator.rpc.Awai" +
-      "tTerminationRequest\0324.intellij.process.m" +
-      "ediator.rpc.AwaitTerminationReply\022\\\n\013Wri" +
-      "teStream\0221.intellij.process.mediator.rpc" +
-      ".WriteStreamRequest\032\026.google.protobuf.Em" +
-      "pty(\0010\001\022j\n\nReadStream\0220.intellij.process" +
-      ".mediator.rpc.ReadStreamRequest\032(.intell" +
-      "ij.process.mediator.rpc.DataChunk0\001BE\n+c" +
-      "om.intellij.execution.process.mediator.r" +
-      "pcB\024ProcessMediatorProtoP\001b\006proto3"
+      "\005 \001(\t\022\035\n\025redirect_error_stream\030\006 \001(\010\022H\n\007" +
+      "environ\030\007 \003(\01327.intellij.process.mediato" +
+      "r.rpc.CommandLine.EnvironEntry\032.\n\014Enviro" +
+      "nEntry\022\013\n\003key\030\001 \001(\t\022\r\n\005value\030\002 \001(\t:\0028\0012\370" +
+      "\001\n\006Daemon\022R\n\013AdjustQuota\022+.intellij.proc" +
+      "ess.mediator.rpc.QuotaOptions\032\026.google.p" +
+      "rotobuf.Empty\022^\n\027ListenQuotaStateUpdates" +
+      "\022\026.google.protobuf.Empty\032).intellij.proc" +
+      "ess.mediator.rpc.QuotaState0\001\022:\n\010Shutdow" +
+      "n\022\026.google.protobuf.Empty\032\026.google.proto" +
+      "buf.Empty2\216\005\n\016ProcessManager\022V\n\nOpenHand" +
+      "le\022\026.google.protobuf.Empty\032..intellij.pr" +
+      "ocess.mediator.rpc.OpenHandleReply0\001\022w\n\r" +
+      "CreateProcess\0223.intellij.process.mediato" +
+      "r.rpc.CreateProcessRequest\0321.intellij.pr" +
+      "ocess.mediator.rpc.CreateProcessReply\022^\n" +
+      "\016DestroyProcess\0224.intellij.process.media" +
+      "tor.rpc.DestroyProcessRequest\032\026.google.p" +
+      "rotobuf.Empty\022\200\001\n\020AwaitTermination\0226.int" +
+      "ellij.process.mediator.rpc.AwaitTerminat" +
+      "ionRequest\0324.intellij.process.mediator.r" +
+      "pc.AwaitTerminationReply\022\\\n\013WriteStream\022" +
+      "1.intellij.process.mediator.rpc.WriteStr" +
+      "eamRequest\032\026.google.protobuf.Empty(\0010\001\022j" +
+      "\n\nReadStream\0220.intellij.process.mediator" +
+      ".rpc.ReadStreamRequest\032(.intellij.proces" +
+      "s.mediator.rpc.DataChunk0\001BE\n+com.intell" +
+      "ij.execution.process.mediator.rpcB\024Proce" +
+      "ssMediatorProtoP\001b\006proto3"
     };
     descriptor = com.google.protobuf.Descriptors.FileDescriptor
       .internalBuildGeneratedFileFrom(descriptorData,
@@ -258,7 +259,7 @@ public final class ProcessMediatorProto {
     internal_static_intellij_process_mediator_rpc_CommandLine_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_intellij_process_mediator_rpc_CommandLine_descriptor,
-        new java.lang.String[] { "Command", "WorkingDir", "InFile", "OutFile", "ErrFile", "Environ", });
+        new java.lang.String[] { "Command", "WorkingDir", "InFile", "OutFile", "ErrFile", "RedirectErrorStream", "Environ", });
     internal_static_intellij_process_mediator_rpc_CommandLine_EnvironEntry_descriptor =
       internal_static_intellij_process_mediator_rpc_CommandLine_descriptor.getNestedTypes().get(0);
     internal_static_intellij_process_mediator_rpc_CommandLine_EnvironEntry_fieldAccessorTable = new

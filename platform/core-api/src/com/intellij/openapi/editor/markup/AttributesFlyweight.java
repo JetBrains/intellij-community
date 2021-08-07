@@ -14,7 +14,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
 import java.util.Collections;
-import java.util.HashMap;
+import java.util.EnumMap;
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
@@ -31,7 +31,7 @@ public final class AttributesFlyweight {
   private final int myFontType;
   private final Color myEffectColor;
   private final EffectType myEffectType;
-  private final @NotNull Map<EffectType, Color> myAdditionalEffects;
+  private final @NotNull Map<@NotNull EffectType, ? extends @NotNull Color> myAdditionalEffects; // unmodifiable map
   private final Color myErrorStripeColor;
 
   private static final class FlyweightKey implements Cloneable {
@@ -42,7 +42,7 @@ public final class AttributesFlyweight {
     private Color effectColor;
     private EffectType effectType;
     private Color errorStripeColor;
-    private @NotNull Map<EffectType, Color> myAdditionalEffects = Collections.emptyMap();
+    private @NotNull Map<@NotNull EffectType, ? extends @NotNull Color> myAdditionalEffects = Collections.emptyMap();
 
     private FlyweightKey() {
     }
@@ -103,7 +103,7 @@ public final class AttributesFlyweight {
                                                     @JdkConstants.FontStyle int fontType,
                                                     Color effectColor,
                                                     EffectType effectType,
-                                                    @NotNull Map<EffectType, Color> additionalEffects,
+                                                    @NotNull Map<@NotNull EffectType, ? extends @NotNull Color> additionalEffects,
                                                     Color errorStripeColor) {
     FlyweightKey key = ourKey.get();
     if (key == null) {
@@ -114,7 +114,7 @@ public final class AttributesFlyweight {
     key.fontType = fontType;
     key.effectColor = effectColor;
     key.effectType = effectType;
-    key.myAdditionalEffects = additionalEffects.isEmpty() ? Collections.emptyMap() : new HashMap<>(additionalEffects);
+    key.myAdditionalEffects = additionalEffects.isEmpty() ? Collections.emptyMap() : new EnumMap<>(additionalEffects);
     key.errorStripeColor = errorStripeColor;
 
     AttributesFlyweight flyweight = entries.get(key);
@@ -136,7 +136,7 @@ public final class AttributesFlyweight {
     myHashCode = key.hashCode();
   }
 
-  public static @NotNull AttributesFlyweight create(@NotNull  Element element) throws InvalidDataException {
+  static @NotNull AttributesFlyweight create(@NotNull  Element element) throws InvalidDataException {
     Color FOREGROUND = DefaultJDOMExternalizer.toColor(JDOMExternalizerUtil.readField(element, "FOREGROUND"));
     Color BACKGROUND = DefaultJDOMExternalizer.toColor(JDOMExternalizerUtil.readField(element, "BACKGROUND"));
     Color EFFECT_COLOR = DefaultJDOMExternalizer.toColor(JDOMExternalizerUtil.readField(element, "EFFECT_COLOR"));
@@ -151,7 +151,7 @@ public final class AttributesFlyweight {
     return create(FOREGROUND, BACKGROUND, FONT_TYPE, EFFECT_COLOR, toEffectType(EFFECT_TYPE), Collections.emptyMap(), ERROR_STRIPE_COLOR);
   }
 
-  private static void writeColor(Element element, String fieldName, Color color) {
+  private static void writeColor(@NotNull Element element, @NotNull String fieldName, Color color) {
     if (color != null) {
       String string = Integer.toString(color.getRGB() & 0xFFFFFF, 16);
       JDOMExternalizerUtil.writeField(element, fieldName, string);
@@ -228,7 +228,7 @@ public final class AttributesFlyweight {
   }
 
   @NotNull
-  Map<EffectType, Color> getAdditionalEffects() {
+  Map<@NotNull EffectType, ? extends @NotNull Color> getAdditionalEffects() {
     return myAdditionalEffects;
   }
 
@@ -254,7 +254,7 @@ public final class AttributesFlyweight {
     return builder.getEffectsMap();
   }
 
-  public Color getErrorStripeColor() {
+  Color getErrorStripeColor() {
     return myErrorStripeColor;
   }
 
@@ -298,7 +298,7 @@ public final class AttributesFlyweight {
    * @see TextAttributes#setAdditionalEffects(Map)
    */
   @ApiStatus.Experimental
-  public @NotNull AttributesFlyweight withAdditionalEffects(@NotNull Map<EffectType, Color> additionalEffects) {
+  public @NotNull AttributesFlyweight withAdditionalEffects(@NotNull Map<@NotNull EffectType, ? extends @NotNull Color> additionalEffects) {
     return Comparing.equal(additionalEffects, myAdditionalEffects)
            ? this
            : create(myForeground, myBackground, myFontType, myEffectColor, myEffectType, additionalEffects, myErrorStripeColor);

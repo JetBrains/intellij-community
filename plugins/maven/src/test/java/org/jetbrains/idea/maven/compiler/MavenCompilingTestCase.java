@@ -20,7 +20,7 @@ import com.intellij.util.ExceptionUtil;
 import com.intellij.util.io.TestFileSystemBuilder;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.maven.MavenImportingTestCase;
+import org.jetbrains.idea.maven.MavenMultiVersionImportingTestCase;
 
 import java.io.File;
 import java.io.IOException;
@@ -29,7 +29,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 
-public abstract class MavenCompilingTestCase extends MavenImportingTestCase {
+public abstract class MavenCompilingTestCase extends MavenMultiVersionImportingTestCase {
   protected void compileModules(final String... moduleNames) {
     compile(createModulesCompileScope(moduleNames));
   }
@@ -127,5 +127,19 @@ public abstract class MavenCompilingTestCase extends MavenImportingTestCase {
     }
 
     return jdkVersion;
+  }
+
+  protected void assertCopied(String path) {
+    assertTrue(new File(myProjectPom.getParent().getPath(), path).exists());
+  }
+
+  protected void assertCopied(String path, String content) throws IOException {
+    final File file = new File(myProjectPom.getParent().getPath(), path);
+    assertTrue(file.exists());
+    assertEquals(content, FileUtil.loadFile(file));
+  }
+
+  protected void assertNotCopied(String path) {
+    assertFalse(new File(myProjectPom.getParent().getPath(), path).exists());
   }
 }

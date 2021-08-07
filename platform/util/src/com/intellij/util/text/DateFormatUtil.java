@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.text;
 
 import com.intellij.UtilBundle;
@@ -19,6 +19,8 @@ import java.util.Calendar;
 import java.util.Date;
 import java.util.Locale;
 import java.util.TimeZone;
+
+import static com.intellij.openapi.util.Pair.pair;
 
 public final class DateFormatUtil {
   private static final Logger LOG = Logger.getInstance(DateFormatUtil.class);
@@ -64,100 +66,71 @@ public final class DateFormatUtil {
     return (endDate.getTime() - startDate.getTime() + DAY_FACTOR - 1000) / DAY_FACTOR;
   }
 
-  @NotNull
-  public static SyncDateFormat getDateFormat() {
+  public static @NotNull SyncDateFormat getDateFormat() {
     return DATE_FORMAT;
   }
 
-  @NotNull
-  public static SyncDateFormat getTimeFormat() {
+  public static @NotNull SyncDateFormat getTimeFormat() {
     return TIME_FORMAT;
   }
 
-  @NotNull
-  public static SyncDateFormat getTimeWithSecondsFormat() {
+  public static @NotNull SyncDateFormat getTimeWithSecondsFormat() {
     return TIME_WITH_SECONDS_FORMAT;
   }
 
-  @NotNull
-  public static SyncDateFormat getDateTimeFormat() {
+  public static @NotNull SyncDateFormat getDateTimeFormat() {
     return DATE_TIME_FORMAT;
   }
 
-  @NotNull
-  public static SyncDateFormat getIso8601Format() {
+  public static @NotNull SyncDateFormat getIso8601Format() {
     return ISO8601_FORMAT;
   }
 
-  @NlsSafe
-  @NotNull
-  public static String formatTime(@NotNull Date time) {
+  public static @NlsSafe @NotNull String formatTime(@NotNull Date time) {
     return formatTime(time.getTime());
   }
 
-  @NlsSafe
-  @NotNull
-  public static String formatTime(long time) {
+  public static @NlsSafe @NotNull String formatTime(long time) {
     return getTimeFormat().format(time);
   }
 
-  @NlsSafe
-  @NotNull
-  public static String formatTimeWithSeconds(@NotNull Date time) {
+  public static @NlsSafe @NotNull String formatTimeWithSeconds(@NotNull Date time) {
     return formatTimeWithSeconds(time.getTime());
   }
 
-  @NlsSafe
-  @NotNull
-  public static String formatTimeWithSeconds(long time) {
+  public static @NlsSafe @NotNull String formatTimeWithSeconds(long time) {
     return getTimeWithSecondsFormat().format(time);
   }
 
-  @NlsSafe
-  @NotNull
-  public static String formatDate(@NotNull Date time) {
+  public static @NlsSafe @NotNull String formatDate(@NotNull Date time) {
     return formatDate(time.getTime());
   }
 
-  @NlsSafe
-  @NotNull
-  public static String formatDate(long time) {
+  public static @NlsSafe @NotNull String formatDate(long time) {
     return getDateFormat().format(time);
   }
 
-  @NlsSafe
-  @NotNull
-  public static String formatPrettyDate(@NotNull Date date) {
+  public static @NlsSafe @NotNull String formatPrettyDate(@NotNull Date date) {
     return formatPrettyDate(date.getTime());
   }
 
-  @NlsSafe
-  @NotNull
-  public static String formatPrettyDate(long time) {
+  public static @NlsSafe @NotNull String formatPrettyDate(long time) {
     return doFormatPretty(time, false);
   }
 
-  @NlsSafe
-  @NotNull
-  public static String formatDateTime(Date date) {
+  public static @NlsSafe @NotNull String formatDateTime(Date date) {
     return formatDateTime(date.getTime());
   }
 
-  @NlsSafe
-  @NotNull
-  public static String formatDateTime(long time) {
+  public static @NlsSafe @NotNull String formatDateTime(long time) {
     return getDateTimeFormat().format(time);
   }
 
-  @NlsSafe
-  @NotNull
-  public static String formatPrettyDateTime(@NotNull Date date) {
+  public static @NlsSafe @NotNull String formatPrettyDateTime(@NotNull Date date) {
     return formatPrettyDateTime(date.getTime());
   }
 
-  @NlsSafe
-  @NotNull
-  public static String formatPrettyDateTime(long time) {
+  public static @NlsSafe @NotNull String formatPrettyDateTime(long time) {
     return doFormatPretty(time, true);
   }
 
@@ -168,7 +141,7 @@ public final class DateFormatUtil {
   private static String doFormatPretty(long time, boolean formatTime) {
     return _doFormatPretty(time, formatTime).first;
   }
-  @NotNull
+
   private static Pair<String, Boolean> _doFormatPretty(long time, boolean formatTime) {
     long currentTime = Clock.getTime();
     Calendar c = Calendar.getInstance();
@@ -188,14 +161,14 @@ public final class DateFormatUtil {
     if (formatTime) {
       long delta = currentTime - time;
       if (delta >= 0 && delta <= HOUR + MINUTE) {
-        return Pair.create(UtilBundle.message("date.format.minutes.ago", (int)Math.rint(delta / (double)MINUTE)), Boolean.TRUE);
+        return pair(UtilBundle.message("date.format.minutes.ago", (int)Math.rint(delta / (double)MINUTE)), Boolean.TRUE);
       }
     }
 
     boolean isToday = currentYear == year && currentDayOfYear == dayOfYear;
     if (isToday) {
       String result = UtilBundle.message("date.format.today");
-      return Pair.create(formatTime ? result + " " + TIME_FORMAT.format(time) : result, Boolean.TRUE);
+      return pair(formatTime ? result + " " + TIME_FORMAT.format(time) : result, Boolean.TRUE);
     }
 
     boolean isYesterdayOnPreviousYear =
@@ -203,21 +176,17 @@ public final class DateFormatUtil {
     boolean isYesterday = isYesterdayOnPreviousYear || (currentYear == year && currentDayOfYear == dayOfYear + 1);
     if (isYesterday) {
       String result = UtilBundle.message("date.format.yesterday");
-      return Pair.create(formatTime ? result + " " + TIME_FORMAT.format(time) : result, Boolean.TRUE);
+      return pair(formatTime ? result + " " + TIME_FORMAT.format(time) : result, Boolean.TRUE);
     }
 
-    return Pair.create(formatTime ? DATE_TIME_FORMAT.format(time) : DATE_FORMAT.format(time), Boolean.FALSE);
+    return pair(formatTime ? DATE_TIME_FORMAT.format(time) : DATE_FORMAT.format(time), Boolean.FALSE);
   }
 
-  @NlsSafe
-  @NotNull
-  public static String formatFrequency(long time) {
+  public static @NlsSafe @NotNull String formatFrequency(long time) {
     return UtilBundle.message("date.frequency", formatBetweenDates(time, 0));
   }
 
-  @NlsSafe
-  @NotNull
-  public static String formatBetweenDates(long d1, long d2) {
+  public static @NlsSafe @NotNull String formatBetweenDates(long d1, long d2) {
     long delta = Math.abs(d1 - d2);
     if (delta == 0) return UtilBundle.message("date.format.right.now");
 
@@ -251,15 +220,19 @@ public final class DateFormatUtil {
     return "";
   }
 
-  @NlsSafe
-  @NotNull
-  public static String formatAboutDialogDate(@NotNull Date date) {
+  /**
+   * @deprecated use NlsMessages.formatDateLong
+   */
+  @Deprecated
+  public static @NlsSafe @NotNull String formatAboutDialogDate(@NotNull Date date) {
     return formatAboutDialogDate(date.getTime());
   }
 
-  @NlsSafe
-  @NotNull
-  public static String formatAboutDialogDate(long time) {
+  /**
+   * @deprecated use NlsMessages.formatDateLong
+   */
+  @Deprecated
+  public static @NlsSafe @NotNull String formatAboutDialogDate(long time) {
     return ABOUT_DATE_FORMAT.format(time);
   }
 
@@ -269,10 +242,9 @@ public final class DateFormatUtil {
    * We should not use {@code new Date()} to ensure results are reproducible (and to avoid "Today" for pretty formats).
    * Returned date is expected to return maximum width string for date formats like "d.m.yy H:M".
    */
-  @NotNull
-  public static Date getSampleDateTime() {
-    //noinspection deprecation
-    return new Date(100, Calendar.DECEMBER, 31, 23, 59);
+  public static @NotNull Date getSampleDateTime() {
+    @SuppressWarnings("deprecation") Date date = new Date(100, Calendar.DECEMBER, 31, 23, 59);
+    return date;
   }
 
   //<editor-fold desc="Helpers.">

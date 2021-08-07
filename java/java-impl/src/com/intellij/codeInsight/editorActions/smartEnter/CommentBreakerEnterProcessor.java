@@ -20,7 +20,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorModificationUtil;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 import com.intellij.openapi.editor.actionSystem.EditorActionManager;
-import com.intellij.openapi.editor.ex.EditorEx;
+import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.PsiComment;
 import com.intellij.psi.PsiElement;
@@ -43,7 +43,7 @@ public class CommentBreakerEnterProcessor implements EnterProcessor {
   }
 
   private static void plainEnter(Editor editor) {
-    getEnterHandler().execute(editor, editor.getCaretModel().getCurrentCaret(), ((EditorEx) editor).getDataContext());
+    getEnterHandler().execute(editor, editor.getCaretModel().getCurrentCaret(), EditorUtil.getEditorDataContext(editor));
   }
 
   private static EditorActionHandler getEnterHandler() {

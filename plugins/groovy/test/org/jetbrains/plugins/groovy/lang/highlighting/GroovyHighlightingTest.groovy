@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.highlighting
 
 import com.siyeh.ig.junit.AbstractTestClassNamingConvention
@@ -7,6 +7,7 @@ import org.jetbrains.plugins.groovy.codeInspection.assignment.GroovyAssignabilit
 import org.jetbrains.plugins.groovy.codeInspection.bugs.GroovyConstructorNamedArgumentsInspection
 import org.jetbrains.plugins.groovy.codeInspection.naming.NewGroovyClassNamingConventionInspection
 import org.jetbrains.plugins.groovy.codeInspection.untypedUnresolvedAccess.GrUnresolvedAccessInspection
+import org.jetbrains.plugins.groovy.codeInspection.unusedDef.UnusedDefInspection
 import org.jetbrains.plugins.groovy.transformations.TransformationUtilKt
 
 /**
@@ -2120,5 +2121,37 @@ A a = [<warning>s</warning> : "asd"]
 
   void testIllegalMethodName() {
     doTest()
+  }
+
+  void 'test method reference with just type argument'() {
+    testHighlighting """
+@groovy.transform.CompileStatic
+class A {
+  String key = ""
+  String foo(int x) {return key}
+  
+  public static void main() {
+    def ref = A.&foo
+    A a = new A()
+    ref(a, 1)
+  }
+}
+"""
+  }
+
+  void 'test variable in anonymous class constructor'() {
+    testHighlighting """
+class Foo {
+    int y;
+
+    Foo(int x) { this.y = x }
+
+    static void test() {
+        int x = 5
+        Foo foo = new Foo(x) {}
+        println foo
+    }
+}
+""", UnusedDefInspection
   }
 }

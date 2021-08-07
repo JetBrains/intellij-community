@@ -100,14 +100,12 @@ public class LineMarkersPass extends TextEditorHighlightingPass {
 
   @NotNull
   private static List<LineMarkerInfo<?>> mergeLineMarkers(@NotNull List<LineMarkerInfo<?>> markers, @NotNull Document document) {
-    List<MergeableLineMarkerInfo<?>> forMerge = new ArrayList<>();
     TIntObjectHashMap<List<MergeableLineMarkerInfo<?>>> sameLineMarkers = new TIntObjectHashMap<>();
 
     for (int i = markers.size() - 1; i >= 0; i--) {
       LineMarkerInfo<?> marker = markers.get(i);
       if (marker instanceof MergeableLineMarkerInfo) {
         MergeableLineMarkerInfo<?> mergeable = (MergeableLineMarkerInfo<?>)marker;
-        forMerge.add(mergeable);
         markers.remove(i);
 
         int line = document.getLineNumber(marker.startOffset);
@@ -120,7 +118,7 @@ public class LineMarkersPass extends TextEditorHighlightingPass {
       }
     }
 
-    if (forMerge.isEmpty()) return markers;
+    if (sameLineMarkers.isEmpty()) return markers;
 
     List<LineMarkerInfo<?>> result = new ArrayList<>(markers);
 
@@ -168,6 +166,12 @@ public class LineMarkersPass extends TextEditorHighlightingPass {
           consumer.consume(element, info);
         }
       }
+    }
+
+    // line markers for injected could be slow
+    //noinspection ForLoopReplaceableByForEach
+    for (int i = 0; i < elements.size(); i++) {
+      PsiElement element = elements.get(i);
 
       queryLineMarkersForInjected(element, containingFile, visitedInjectedFiles, consumer);
     }

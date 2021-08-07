@@ -23,7 +23,6 @@ public class MavenDependencyUpdaterTest extends MavenDependencyUpdaterTestBase {
 
     assertEquals(someArtifact, dependencies.get(0).getPsiElement());
     assertEquals(another, dependencies.get(1).getPsiElement());
-
   }
 
   public void testAddDependency() throws IOException {
@@ -54,7 +53,23 @@ public class MavenDependencyUpdaterTest extends MavenDependencyUpdaterTestBase {
 
   public void testUpdateDependency() throws IOException {
     myModifierService.updateDependency(getModule("project"),
+                                       new UnifiedDependency("somegroup", "someartifact", "1.0", "compile"),
+                                       new UnifiedDependency("somegroup", "someartifact", "2.0", "test")
+    );
+    assertFilesAsExpected();
+  }
+
+  public void testUpdateDependencyNoScope() throws IOException {
+    myModifierService.updateDependency(getModule("project"),
                                        new UnifiedDependency("somegroup", "someartifact", "1.0", null),
+                                       new UnifiedDependency("somegroup", "someartifact", "2.0", null)
+    );
+    assertFilesAsExpected();
+  }
+
+  public void testUpdateDependencyRemoveScope() throws IOException {
+    myModifierService.updateDependency(getModule("project"),
+                                       new UnifiedDependency("somegroup", "someartifact", "1.0", "compile"),
                                        new UnifiedDependency("somegroup", "someartifact", "2.0", null)
     );
     assertFilesAsExpected();
@@ -62,7 +77,23 @@ public class MavenDependencyUpdaterTest extends MavenDependencyUpdaterTestBase {
 
   public void testUpdateManagedDependency() throws IOException {
     myModifierService.updateDependency(getModule("m1"),
+                                       new UnifiedDependency("somegroup", "someartifact", "1.0", "compile"),
+                                       new UnifiedDependency("somegroup", "someartifact", "2.0", "test")
+    );
+    assertFilesAsExpected();
+  }
+
+  public void testUpdateManagedDependencyNoScope() throws IOException {
+    myModifierService.updateDependency(getModule("m1"),
                                        new UnifiedDependency("somegroup", "someartifact", "1.0", null),
+                                       new UnifiedDependency("somegroup", "someartifact", "2.0", null)
+    );
+    assertFilesAsExpected();
+  }
+
+  public void testUpdateManagedDependencyRemoveScope() throws IOException {
+    myModifierService.updateDependency(getModule("m1"),
+                                       new UnifiedDependency("somegroup", "someartifact", "1.0", "compile"),
                                        new UnifiedDependency("somegroup", "someartifact", "2.0", null)
     );
     assertFilesAsExpected();
@@ -70,7 +101,23 @@ public class MavenDependencyUpdaterTest extends MavenDependencyUpdaterTestBase {
 
   public void testUpdateDependencyWithProperty() throws IOException {
     myModifierService.updateDependency(getModule("project"),
+                                       new UnifiedDependency("somegroup", "someartifact", "1.0", "compile"),
+                                       new UnifiedDependency("somegroup", "someartifact", "2.0", "test")
+    );
+    assertFilesAsExpected();
+  }
+
+  public void testUpdateDependencyWithPropertyNoScope() throws IOException {
+    myModifierService.updateDependency(getModule("project"),
                                        new UnifiedDependency("somegroup", "someartifact", "1.0", null),
+                                       new UnifiedDependency("somegroup", "someartifact", "2.0", null)
+    );
+    assertFilesAsExpected();
+  }
+
+  public void testUpdateDependencyWithPropertyRemoveScope() throws IOException {
+    myModifierService.updateDependency(getModule("project"),
+                                       new UnifiedDependency("somegroup", "someartifact", "1.0", "compile"),
                                        new UnifiedDependency("somegroup", "someartifact", "2.0", null)
     );
     assertFilesAsExpected();

@@ -19,6 +19,11 @@
                      enabledByDefault="true" level="WARNING"
                      key="jvm.inspections.blocking.method.display.name" bundle="messages.JvmAnalysisBundle"
                      implementationClass="com.intellij.codeInspection.blockingCallsDetection.BlockingMethodInNonBlockingContextInspection"/>
+    <localInspection language="UAST" shortName="SourceToSinkFlow"
+                     groupBundle="messages.JvmAnalysisBundle" groupKey="jvm.inspections.group.name"
+                     enabledByDefault="true" level="WARNING"
+                     implementationClass="com.intellij.codeInspection.sourceToSink.SourceToSinkFlowInspection"
+                     key="jvm.inspections.source.to.sink.flow.display.name" bundle="messages.JvmAnalysisBundle"/>
     <localInspection language="UAST" enabledByDefault="true" level="WARNING" shortName="NonExtendableApiUsage"
                      groupBundle="messages.JvmAnalysisBundle" bundle="messages.JvmAnalysisBundle"
                      groupKey="jvm.inspections.group.name" key="jvm.inspections.api.no.extension.display.name"
@@ -44,6 +49,22 @@
                      groupBundle="messages.JvmAnalysisBundle" bundle="messages.JvmAnalysisBundle"
                      groupKey="jvm.inspections.group.name" key="jvm.inspections.junit.rule.display.name"
                      implementationClass="com.intellij.codeInspection.JUnitRuleInspection"/>
+    <localInspection language="UAST" enabledByDefault="false" level="WARNING" shortName="TestOnlyProblems"
+                     groupBundle="messages.JvmAnalysisBundle" bundle="messages.JvmAnalysisBundle"
+                     groupKey="jvm.inspections.group.name" key="jvm.inspections.testonly.display.name"
+                     implementationClass="com.intellij.codeInspection.TestOnlyInspection"/>
+    <localInspection language="UAST" enabledByDefault="true" level="WARNING" shortName="TestFailedLine"
+                     groupBundle="messages.JvmAnalysisBundle" bundle="messages.JvmAnalysisBundle"
+                     groupKey="jvm.inspections.group.name" key="jvm.inspection.test.failed.line.display.name"
+                     implementationClass="com.intellij.codeInspection.TestFailedLineInspection"/>
+    <localInspection language="UAST" enabledByDefault="true" level="WARNING" shortName="JUnit5AssertionsConverter"
+                     groupBundle="messages.JvmAnalysisBundle" bundle="messages.JvmAnalysisBundle"
+                     groupKey="jvm.inspections.group.name" key="jvm.inspections.junit5.assertions.converter.display.name"
+                     implementationClass="com.intellij.codeInspection.JUnit5AssertionsConverterInspection"/>
+    <localInspection language="UAST" enabledByDefault="false" level="WARNING" shortName="JUnit5Converter"
+                     groupBundle="messages.JvmAnalysisBundle" bundle="messages.JvmAnalysisBundle"
+                     groupKey="jvm.inspections.group.name" key="jvm.inspections.junit5.converter.display.name"
+                     implementationClass="com.intellij.codeInspection.JUnit5ConverterInspection"/>
     <notificationGroup id="UAST" displayType="BALLOON"/>
   </extensions>
   <extensions defaultExtensionNs="com.intellij.codeInsight">

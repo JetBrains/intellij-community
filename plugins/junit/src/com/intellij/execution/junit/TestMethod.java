@@ -13,6 +13,8 @@ import com.intellij.refactoring.listeners.RefactoringElementListener;
 import com.intellij.refactoring.listeners.UndoRefactoringElementListener;
 import com.intellij.testIntegration.TestFramework;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.uast.UElement;
+import org.jetbrains.uast.UastContextKt;
 
 import java.util.List;
 import java.util.Objects;
@@ -52,8 +54,9 @@ public class TestMethod extends TestObject {
 
   @Override
   public RefactoringElementListener getListener(final PsiElement element, final JUnitConfiguration configuration) {
-    if (element instanceof PsiMethod) {
-      final PsiMethod method = (PsiMethod)element;
+    UElement uElement = UastContextKt.toUElement(element);
+    if (uElement instanceof PsiMethod) {
+      final PsiMethod method = (PsiMethod)uElement;
       if (!method.getName().equals(configuration.getPersistentData().getMethodName())) return null;
       //noinspection ConstantConditions
       if (!method.getContainingClass().equals(configuration.myClass.getPsiElement())) return null;
@@ -61,7 +64,7 @@ public class TestMethod extends TestObject {
         @Override
         public void elementRenamedOrMoved(@NotNull final PsiElement newElement) {
           final boolean generatedName = configuration.isGeneratedName();
-          configuration.getPersistentData().setTestMethod(PsiLocation.fromPsiElement((PsiMethod)newElement));
+          configuration.getPersistentData().setTestMethod(PsiLocation.fromPsiElement((PsiMethod)UastContextKt.toUElement(newElement)));
           if (generatedName) configuration.setGeneratedName();
         }
 

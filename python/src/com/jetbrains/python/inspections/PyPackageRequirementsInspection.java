@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.inspections;
 
 import com.google.common.collect.ImmutableSet;
@@ -30,6 +30,7 @@ import com.intellij.psi.*;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
+import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyPsiBundle;
 import com.jetbrains.python.PyPsiPackageUtil;
 import com.jetbrains.python.PythonLanguage;
@@ -63,7 +64,7 @@ public class PyPackageRequirementsInspection extends PyInspection {
 
   @Override
   public JComponent createOptionsPanel() {
-    final ListEditForm form = new ListEditForm(PyPsiBundle.message("INSP.requirements.column.name.ignore.packages"), ignoredPackages);
+    final ListEditForm form = new ListEditForm(PyPsiBundle.message("INSP.requirements.column.name.ignore.packages"), PyPsiBundle.message("INSP.requirements.ignore.packages.label"), ignoredPackages);
     return form.getContentPanel();
   }
 
@@ -656,7 +657,7 @@ public class PyPackageRequirementsInspection extends PyInspection {
             notification.addAction(
               NotificationAction
                 .createSimpleExpiring(
-                  InspectionsBundle.message("inspection.action.edit.settings"),
+                  PyBundle.message("notification.action.edit.settings"),
                   () -> {
                     final InspectionProfileImpl profile = profileManager.getCurrentProfile();
                     final String toolName = PyPackageRequirementsInspection.class.getSimpleName();

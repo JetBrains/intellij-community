@@ -17,6 +17,7 @@
 package org.jetbrains.uast
 
 import com.intellij.psi.PsiElement
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.uast.internal.log
 
 open class UIdentifier(
@@ -32,6 +33,8 @@ open class UIdentifier(
   override fun asLogString(): String = log("Identifier ($name)")
 
   @Suppress("OverridingDeprecatedMember")
+  @get:ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
+  @get:Deprecated("see the base property description")
   @Deprecated("see the base property description", ReplaceWith("sourcePsi"))
   override val psi: PsiElement?
     get() = sourcePsi

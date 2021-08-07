@@ -5,6 +5,7 @@ import com.google.common.annotations.VisibleForTesting;
 import com.intellij.execution.configurations.PathEnvironmentVariableUtil;
 import com.intellij.execution.wsl.WSLDistribution;
 import com.intellij.execution.wsl.WSLUtil;
+import com.intellij.execution.wsl.WslDistributionManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
@@ -40,6 +41,7 @@ public class GitExecutableDetector {
   private static final @NonNls String UNIX_EXECUTABLE = GIT;
 
   private static final File WIN_ROOT = new File("C:\\"); // the constant is extracted to be able to create files in "Program Files" in tests
+  private static final List<String> WIN_BIN_DIRS = Arrays.asList("cmd", "bin");
   private static final @NonNls String GIT_EXE = "git.exe";
 
   private static final String WIN_EXECUTABLE = GIT_EXE;
@@ -51,6 +53,12 @@ public class GitExecutableDetector {
 
   @Nullable
   public String detect(@Nullable WSLDistribution distribution) {
+    synchronized (DETECTED_EXECUTABLE_LOCK) {
+      if (myDetectionComplete) {
+        return getExecutable(distribution);
+      }
+    }
+
     return runUnderProgressIfNeeded(null, GitBundle.message("git.executable.detect.progress.title"), () -> {
       synchronized (DETECTED_EXECUTABLE_LOCK) {
         if (!myDetectionComplete) {
@@ -176,7 +184,7 @@ public class GitExecutableDetector {
   private void detectAvailableWsl() {
     if (!GitExecutableManager.supportWslExecutable()) return;
 
-    List<WSLDistribution> distributions = WSLUtil.getAvailableDistributions();
+    List<WSLDistribution> distributions = WslDistributionManager.getInstance().getInstalledDistributions();
     for (WSLDistribution distribution : distributions) {
       String path = checkWslDistribution(distribution);
       if (path != null) myWslExecutables.put(distribution, path);
@@ -210,8 +218,7 @@ public class GitExecutableDetector {
       return null;
     }
 
-    final String[] binDirs = {"cmd", "bin"};
-    for (String binDir : binDirs) {
+    for (String binDir : WIN_BIN_DIRS) {
       String exec = checkBinDir(new File(gitDir, binDir));
       if (exec != null) {
         return exec;
@@ -244,11 +251,24 @@ public class GitExecutableDetector {
   @Nullable
   public static String patchExecutablePath(@NotNull String path) {
     if (SystemInfo.isWindows) {
-      File file = new File(path);
+      File file = new File(path.trim());
       if (file.getName().equals("git-cmd.exe") || file.getName().equals("git-bash.exe")) {
         File patchedFile = new File(file.getParent(), "bin/git.exe");
         if (patchedFile.exists()) return patchedFile.getPath();
       }
+    }
+    return null;
+  }
+
+  @Nullable
+  public static String getBashExecutablePath(@NotNull String gitExecutable) {
+    if (!SystemInfo.isWindows) return null;
+
+    File gitFile = new File(gitExecutable.trim());
+    File gitDirFile = gitFile.getParentFile();
+    if (gitDirFile != null && WIN_BIN_DIRS.contains(gitDirFile.getName())) {
+      File bashFile = new File(gitDirFile.getParentFile(), "bin/bash.exe");
+      if (bashFile.exists()) return bashFile.getPath();
     }
     return null;
   }

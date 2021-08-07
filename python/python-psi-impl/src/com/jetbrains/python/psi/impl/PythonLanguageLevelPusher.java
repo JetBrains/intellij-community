@@ -351,7 +351,7 @@ public final class PythonLanguageLevelPusher implements FilePropertyPusher<Strin
         @Override
         public boolean visitFile(@NotNull VirtualFile file) {
           return ReadAction.compute(() -> {
-            if (PyModuleService.getInstance().isFileIgnored(file)) {
+            if (!file.isValid() || PyModuleService.getInstance().isFileIgnored(file)) {
               return false;
             }
             if (file.isDirectory()) {

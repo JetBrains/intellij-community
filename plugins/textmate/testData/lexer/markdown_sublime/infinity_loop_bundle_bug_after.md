@@ -25,7 +25,7 @@ text.html.markdown markup.list.unnumbered.markdown meta.paragraph.list.markdown:
 }
 text.html.markdown markup.list.unnumbered.markdown meta.paragraph.list.markdown: [419, 420], {
 }
-text.html.markdown meta.block-level.markdown meta.separator.markdown: [420, 501], {--------------------------------------------------------------------------------
+text.html.markdown: [420, 501], {--------------------------------------------------------------------------------
 }
 text.html.markdown: [501, 502], {
 }
@@ -153,7 +153,7 @@ text.html.markdown markup.list.unnumbered.markdown meta.paragraph.list.markdown:
 }
 text.html.markdown markup.list.unnumbered.markdown meta.paragraph.list.markdown: [2920, 2921], {
 }
-text.html.markdown meta.paragraph.markdown: [2921, 2997], {Choose these in certain, specific cases. It's the opinion of the Rails team
+text.html.markdown: [2921, 2997], {Choose these in certain, specific cases. It's the opinion of the Rails team
 }
 text.html.markdown meta.paragraph.markdown: [2997, 3074], {that model-level validations are the most appropriate in most circumstances.
 }
@@ -218,43 +218,31 @@ text.html.markdown meta.paragraph.markdown: [3729, 3737], {```ruby
 }
 text.html.markdown meta.paragraph.markdown: [3737, 3753], {$ rails console
 }
-text.html.markdown meta.block-level.markdown markup.quote.markdown punctuation.definition.blockquote.markdown: [3753, 3754], {>}
-text.html.markdown meta.block-level.markdown markup.quote.markdown markup.quote.markdown punctuation.definition.blockquote.markdown: [3754, 3755], {>}
-text.html.markdown meta.block-level.markdown markup.quote.markdown markup.quote.markdown: [3755, 3756], { }
-text.html.markdown meta.block-level.markdown markup.quote.markdown markup.quote.markdown: [3756, 3789], {p = Person.new(name: "John Doe")
+text.html.markdown: [3753, 3789], {>> p = Person.new(name: "John Doe")
 }
-text.html.markdown meta.block-level.markdown markup.quote.markdown markup.quote.markdown: [3789, 3793], {=> #}
-text.html.markdown meta.block-level.markdown markup.quote.markdown markup.quote.markdown meta.other.valid-bracket.markdown: [3793, 3794], {<}
-text.html.markdown meta.block-level.markdown markup.quote.markdown markup.quote.markdown: [3794, 3835], {Person id: nil, name: "John Doe", created}
-text.html.markdown meta.block-level.markdown markup.quote.markdown markup.quote.markdown markup.italic.markdown punctuation.definition.italic.markdown: [3835, 3836], {_}
-text.html.markdown meta.block-level.markdown markup.quote.markdown markup.quote.markdown markup.italic.markdown: [3836, 3852], {at: nil, updated}
-text.html.markdown meta.block-level.markdown markup.quote.markdown markup.quote.markdown markup.italic.markdown punctuation.definition.italic.markdown: [3852, 3853], {_}
-text.html.markdown meta.block-level.markdown markup.quote.markdown markup.quote.markdown: [3853, 3862], {at: nil>
+text.html.markdown meta.paragraph.markdown: [3789, 3793], {=> #}
+text.html.markdown meta.paragraph.markdown meta.other.valid-bracket.markdown: [3793, 3794], {<}
+text.html.markdown meta.paragraph.markdown: [3794, 3835], {Person id: nil, name: "John Doe", created}
+text.html.markdown meta.paragraph.markdown markup.italic.markdown punctuation.definition.italic.markdown: [3835, 3836], {_}
+text.html.markdown meta.paragraph.markdown markup.italic.markdown: [3836, 3852], {at: nil, updated}
+text.html.markdown meta.paragraph.markdown markup.italic.markdown punctuation.definition.italic.markdown: [3852, 3853], {_}
+text.html.markdown meta.paragraph.markdown: [3853, 3862], {at: nil>
 }
-text.html.markdown meta.block-level.markdown markup.quote.markdown punctuation.definition.blockquote.markdown: [3862, 3863], {>}
-text.html.markdown meta.block-level.markdown markup.quote.markdown markup.quote.markdown punctuation.definition.blockquote.markdown: [3863, 3864], {>}
-text.html.markdown meta.block-level.markdown markup.quote.markdown markup.quote.markdown: [3864, 3865], { }
-text.html.markdown meta.block-level.markdown markup.quote.markdown markup.quote.markdown: [3865, 3879], {p.new_record?
+text.html.markdown: [3862, 3879], {>> p.new_record?
 }
-text.html.markdown meta.block-level.markdown markup.quote.markdown markup.quote.markdown: [3879, 3887], {=> true
+text.html.markdown meta.paragraph.markdown: [3879, 3887], {=> true
 }
-text.html.markdown meta.block-level.markdown markup.quote.markdown punctuation.definition.blockquote.markdown: [3887, 3888], {>}
-text.html.markdown meta.block-level.markdown markup.quote.markdown markup.quote.markdown punctuation.definition.blockquote.markdown: [3888, 3889], {>}
-text.html.markdown meta.block-level.markdown markup.quote.markdown markup.quote.markdown: [3889, 3890], { }
-text.html.markdown meta.block-level.markdown markup.quote.markdown markup.quote.markdown: [3890, 3897], {p.save
+text.html.markdown: [3887, 3897], {>> p.save
 }
-text.html.markdown meta.block-level.markdown markup.quote.markdown markup.quote.markdown: [3897, 3905], {=> true
+text.html.markdown meta.paragraph.markdown: [3897, 3905], {=> true
 }
-text.html.markdown meta.block-level.markdown markup.quote.markdown punctuation.definition.blockquote.markdown: [3905, 3906], {>}
-text.html.markdown meta.block-level.markdown markup.quote.markdown markup.quote.markdown punctuation.definition.blockquote.markdown: [3906, 3907], {>}
-text.html.markdown meta.block-level.markdown markup.quote.markdown markup.quote.markdown: [3907, 3908], { }
-text.html.markdown meta.block-level.markdown markup.quote.markdown markup.quote.markdown: [3908, 3922], {p.new_record?
+text.html.markdown: [3905, 3922], {>> p.new_record?
 }
-text.html.markdown meta.block-level.markdown markup.quote.markdown markup.quote.markdown: [3922, 3931], {=> false
+text.html.markdown meta.paragraph.markdown: [3922, 3931], {=> false
 }
-text.html.markdown meta.block-level.markdown markup.quote.markdown markup.quote.markdown: [3931, 3935], {```
+text.html.markdown meta.paragraph.markdown: [3931, 3935], {```
 }
-text.html.markdown: [3935, 3936], {
+text.html.markdown meta.paragraph.markdown: [3935, 3936], {
 }
 text.html.markdown meta.paragraph.markdown: [3936, 3986], {Creating and saving a new record will send an SQL }
 text.html.markdown meta.paragraph.markdown markup.raw.inline.markdown punctuation.definition.raw.markdown: [3986, 3987], {`}
@@ -343,11 +331,7 @@ text.html.markdown markup.list.unnumbered.markdown meta.paragraph.list.markdown:
 }
 text.html.markdown markup.list.unnumbered.markdown meta.paragraph.list.markdown: [4880, 4881], {
 }
-text.html.markdown meta.paragraph.markdown: [4881, 4905], {The bang versions (e.g. }
-text.html.markdown meta.paragraph.markdown markup.raw.inline.markdown punctuation.definition.raw.markdown: [4905, 4906], {`}
-text.html.markdown meta.paragraph.markdown markup.raw.inline.markdown: [4906, 4911], {save!}
-text.html.markdown meta.paragraph.markdown markup.raw.inline.markdown punctuation.definition.raw.markdown: [4911, 4912], {`}
-text.html.markdown meta.paragraph.markdown: [4912, 4959], {) raise an exception if the record is invalid.
+text.html.markdown: [4881, 4959], {The bang versions (e.g. `save!`) raise an exception if the record is invalid.
 }
 text.html.markdown meta.paragraph.markdown: [4959, 4988], {The non-bang versions don't: }
 text.html.markdown meta.paragraph.markdown markup.raw.inline.markdown punctuation.definition.raw.markdown: [4988, 4989], {`}
@@ -456,11 +440,7 @@ text.html.markdown markup.list.unnumbered.markdown meta.paragraph.list.markdown:
 }
 text.html.markdown markup.list.unnumbered.markdown meta.paragraph.list.markdown: [5431, 5432], {
 }
-text.html.markdown meta.paragraph.markdown: [5432, 5442], {Note that }
-text.html.markdown meta.paragraph.markdown markup.raw.inline.markdown punctuation.definition.raw.markdown: [5442, 5443], {`}
-text.html.markdown meta.paragraph.markdown markup.raw.inline.markdown: [5443, 5447], {save}
-text.html.markdown meta.paragraph.markdown markup.raw.inline.markdown punctuation.definition.raw.markdown: [5447, 5448], {`}
-text.html.markdown meta.paragraph.markdown: [5448, 5511], { also has the ability to skip validations if passed `validate:
+text.html.markdown: [5432, 5511], {Note that `save` also has the ability to skip validations if passed `validate:
 }
 text.html.markdown meta.paragraph.markdown: [5511, 5575], {false` as argument. This technique should be used with caution.
 }
@@ -475,16 +455,7 @@ text.html.markdown markup.list.unnumbered.markdown meta.paragraph.list.markdown:
 }
 text.html.markdown markup.list.unnumbered.markdown meta.paragraph.list.markdown: [5602, 5603], {
 }
-text.html.markdown meta.block-level.markdown markup.heading.markdown punctuation.definition.heading.markdown: [5603, 5606], {###}
-text.html.markdown meta.block-level.markdown markup.heading.markdown: [5606, 5607], { }
-text.html.markdown meta.block-level.markdown markup.heading.markdown entity.name.section.markdown markup.raw.inline.markdown punctuation.definition.raw.markdown: [5607, 5608], {`}
-text.html.markdown meta.block-level.markdown markup.heading.markdown entity.name.section.markdown markup.raw.inline.markdown: [5608, 5614], {valid?}
-text.html.markdown meta.block-level.markdown markup.heading.markdown entity.name.section.markdown markup.raw.inline.markdown punctuation.definition.raw.markdown: [5614, 5615], {`}
-text.html.markdown meta.block-level.markdown markup.heading.markdown entity.name.section.markdown: [5615, 5620], { and }
-text.html.markdown meta.block-level.markdown markup.heading.markdown entity.name.section.markdown markup.raw.inline.markdown punctuation.definition.raw.markdown: [5620, 5621], {`}
-text.html.markdown meta.block-level.markdown markup.heading.markdown entity.name.section.markdown markup.raw.inline.markdown: [5621, 5629], {invalid?}
-text.html.markdown meta.block-level.markdown markup.heading.markdown entity.name.section.markdown markup.raw.inline.markdown punctuation.definition.raw.markdown: [5629, 5630], {`}
-text.html.markdown meta.block-level.markdown markup.heading.markdown: [5630, 5631], {
+text.html.markdown: [5603, 5631], {### `valid?` and `invalid?`
 }
 text.html.markdown: [5631, 5632], {
 }
@@ -573,12 +544,11 @@ text.html.markdown meta.block-level.markdown markup.quote.markdown markup.quote.
 }
 text.html.markdown meta.block-level.markdown markup.quote.markdown markup.quote.markdown: [6557, 6590], {#=> #<Person id: nil, name: nil>
 }
-text.html.markdown meta.block-level.markdown markup.quote.markdown punctuation.definition.blockquote.markdown: [6590, 6591], {>}
-text.html.markdown meta.block-level.markdown markup.quote.markdown markup.quote.markdown punctuation.definition.blockquote.markdown: [6591, 6592], {>}
-text.html.markdown meta.block-level.markdown markup.quote.markdown markup.quote.markdown: [6592, 6593], { }
-text.html.markdown meta.block-level.markdown markup.quote.markdown markup.quote.markdown: [6593, 6602], {p.errors
+text.html.markdown meta.block-level.markdown: [6590, 6602], {>> p.errors
 }
-text.html.markdown meta.block-level.markdown markup.quote.markdown markup.quote.markdown: [6602, 6609], {#=> {}
+text.html.markdown meta.block-level.markdown markup.heading.markdown punctuation.definition.heading.markdown: [6602, 6603], {#}
+text.html.markdown meta.block-level.markdown markup.heading.markdown entity.name.section.markdown: [6603, 6608], {=> {}}
+text.html.markdown meta.block-level.markdown markup.heading.markdown: [6608, 6609], {
 }
 text.html.markdown: [6609, 6610], {
 }
@@ -589,12 +559,11 @@ text.html.markdown meta.block-level.markdown markup.quote.markdown markup.quote.
 }
 text.html.markdown meta.block-level.markdown markup.quote.markdown markup.quote.markdown: [6622, 6632], {#=> false
 }
-text.html.markdown meta.block-level.markdown markup.quote.markdown punctuation.definition.blockquote.markdown: [6632, 6633], {>}
-text.html.markdown meta.block-level.markdown markup.quote.markdown markup.quote.markdown punctuation.definition.blockquote.markdown: [6633, 6634], {>}
-text.html.markdown meta.block-level.markdown markup.quote.markdown markup.quote.markdown: [6634, 6635], { }
-text.html.markdown meta.block-level.markdown markup.quote.markdown markup.quote.markdown: [6635, 6644], {p.errors
+text.html.markdown meta.block-level.markdown: [6632, 6644], {>> p.errors
 }
-text.html.markdown meta.block-level.markdown markup.quote.markdown markup.quote.markdown: [6644, 6674], {#=> {name:["can't be blank"]}
+text.html.markdown meta.block-level.markdown markup.heading.markdown punctuation.definition.heading.markdown: [6644, 6645], {#}
+text.html.markdown meta.block-level.markdown markup.heading.markdown entity.name.section.markdown: [6645, 6673], {=> {name:["can't be blank"]}}
+text.html.markdown meta.block-level.markdown markup.heading.markdown: [6673, 6674], {
 }
 text.html.markdown: [6674, 6675], {
 }
@@ -605,12 +574,11 @@ text.html.markdown meta.block-level.markdown markup.quote.markdown markup.quote.
 }
 text.html.markdown meta.block-level.markdown markup.quote.markdown markup.quote.markdown: [6696, 6729], {#=> #<Person id: nil, name: nil>
 }
-text.html.markdown meta.block-level.markdown markup.quote.markdown punctuation.definition.blockquote.markdown: [6729, 6730], {>}
-text.html.markdown meta.block-level.markdown markup.quote.markdown markup.quote.markdown punctuation.definition.blockquote.markdown: [6730, 6731], {>}
-text.html.markdown meta.block-level.markdown markup.quote.markdown markup.quote.markdown: [6731, 6732], { }
-text.html.markdown meta.block-level.markdown markup.quote.markdown markup.quote.markdown: [6732, 6741], {p.errors
+text.html.markdown meta.block-level.markdown: [6729, 6741], {>> p.errors
 }
-text.html.markdown meta.block-level.markdown markup.quote.markdown markup.quote.markdown: [6741, 6771], {#=> {name:["can't be blank"]}
+text.html.markdown meta.block-level.markdown markup.heading.markdown punctuation.definition.heading.markdown: [6741, 6742], {#}
+text.html.markdown meta.block-level.markdown markup.heading.markdown entity.name.section.markdown: [6742, 6770], {=> {name:["can't be blank"]}}
+text.html.markdown meta.block-level.markdown markup.heading.markdown: [6770, 6771], {
 }
 text.html.markdown: [6771, 6772], {
 }
@@ -621,7 +589,7 @@ text.html.markdown meta.block-level.markdown markup.quote.markdown markup.quote.
 }
 text.html.markdown meta.block-level.markdown markup.quote.markdown markup.quote.markdown: [6782, 6792], {#=> false
 }
-text.html.markdown: [6792, 6793], {
+text.html.markdown meta.block-level.markdown: [6792, 6793], {
 }
 text.html.markdown meta.block-level.markdown markup.quote.markdown punctuation.definition.blockquote.markdown: [6793, 6794], {>}
 text.html.markdown meta.block-level.markdown markup.quote.markdown markup.quote.markdown punctuation.definition.blockquote.markdown: [6794, 6795], {>}
@@ -630,7 +598,7 @@ text.html.markdown meta.block-level.markdown markup.quote.markdown markup.quote.
 }
 text.html.markdown meta.block-level.markdown markup.quote.markdown markup.quote.markdown: [6804, 6876], {#=> ActiveRecord::RecordInvalid: Validation failed: Name can't be blank
 }
-text.html.markdown: [6876, 6877], {
+text.html.markdown meta.block-level.markdown: [6876, 6877], {
 }
 text.html.markdown meta.block-level.markdown markup.quote.markdown punctuation.definition.blockquote.markdown: [6877, 6878], {>}
 text.html.markdown meta.block-level.markdown markup.quote.markdown markup.quote.markdown punctuation.definition.blockquote.markdown: [6878, 6879], {>}
@@ -641,16 +609,9 @@ text.html.markdown meta.block-level.markdown markup.quote.markdown markup.quote.
 }
 text.html.markdown meta.block-level.markdown markup.quote.markdown markup.quote.markdown: [6967, 6971], {```
 }
-text.html.markdown: [6971, 6972], {
+text.html.markdown meta.block-level.markdown: [6971, 6972], {
 }
-text.html.markdown meta.paragraph.markdown markup.raw.inline.markdown punctuation.definition.raw.markdown: [6972, 6973], {`}
-text.html.markdown meta.paragraph.markdown markup.raw.inline.markdown: [6973, 6981], {invalid?}
-text.html.markdown meta.paragraph.markdown markup.raw.inline.markdown punctuation.definition.raw.markdown: [6981, 6982], {`}
-text.html.markdown meta.paragraph.markdown: [6982, 7008], { is simply the inverse of }
-text.html.markdown meta.paragraph.markdown markup.raw.inline.markdown punctuation.definition.raw.markdown: [7008, 7009], {`}
-text.html.markdown meta.paragraph.markdown markup.raw.inline.markdown: [7009, 7015], {valid?}
-text.html.markdown meta.paragraph.markdown markup.raw.inline.markdown punctuation.definition.raw.markdown: [7015, 7016], {`}
-text.html.markdown meta.paragraph.markdown: [7016, 7048], {. It triggers your validations,
+text.html.markdown: [6972, 7048], {`invalid?` is simply the inverse of `valid?`. It triggers your validations,
 }
 text.html.markdown meta.paragraph.markdown: [7048, 7124], {returning true if any errors were found in the object, and false otherwise.
 }
@@ -719,12 +680,9 @@ text.html.markdown meta.block-level.markdown markup.quote.markdown markup.quote.
 text.html.markdown meta.block-level.markdown markup.quote.markdown markup.quote.markdown: [7853, 7854], { }
 text.html.markdown meta.block-level.markdown markup.quote.markdown markup.quote.markdown: [7854, 7895], {Person.new.errors[:name].any? # => false
 }
-text.html.markdown meta.block-level.markdown markup.quote.markdown punctuation.definition.blockquote.markdown: [7895, 7896], {>}
-text.html.markdown meta.block-level.markdown markup.quote.markdown markup.quote.markdown punctuation.definition.blockquote.markdown: [7896, 7897], {>}
-text.html.markdown meta.block-level.markdown markup.quote.markdown markup.quote.markdown: [7897, 7898], { }
-text.html.markdown meta.block-level.markdown markup.quote.markdown markup.quote.markdown: [7898, 7941], {Person.create.errors[:name].any? # => true
+text.html.markdown meta.block-level.markdown: [7895, 7941], {>> Person.create.errors[:name].any? # => true
 }
-text.html.markdown meta.block-level.markdown markup.quote.markdown markup.quote.markdown: [7941, 7945], {```
+text.html.markdown: [7941, 7945], {```
 }
 text.html.markdown: [7945, 7946], {
 }
@@ -1310,7 +1268,7 @@ text.html.markdown markup.list.unnumbered.markdown meta.paragraph.list.markdown:
 }
 text.html.markdown markup.list.unnumbered.markdown meta.paragraph.list.markdown: [14279, 14280], {
 }
-text.html.markdown meta.paragraph.markdown: [14280, 14353], {The default error messages depend on the type of length validation being
+text.html.markdown: [14280, 14353], {The default error messages depend on the type of length validation being
 }
 text.html.markdown meta.paragraph.markdown: [14353, 14409], {performed. You can personalize these messages using the }
 text.html.markdown meta.paragraph.markdown markup.raw.inline.markdown punctuation.definition.raw.markdown: [14409, 14410], {`}
@@ -1612,13 +1570,9 @@ text.html.markdown markup.list.unnumbered.markdown meta.paragraph.list.markdown:
 }
 text.html.markdown markup.list.unnumbered.markdown meta.paragraph.list.markdown: [17547, 17548], {
 }
-text.html.markdown meta.paragraph.markdown: [17548, 17577], {The default error message is }
-text.html.markdown meta.paragraph.markdown markup.italic.markdown punctuation.definition.italic.markdown: [17577, 17578], {_}
-text.html.markdown meta.paragraph.markdown markup.italic.markdown: [17578, 17595], {"is not a number"}
-text.html.markdown meta.paragraph.markdown markup.italic.markdown punctuation.definition.italic.markdown: [17595, 17596], {_}
-text.html.markdown meta.paragraph.markdown: [17596, 17598], {.
+text.html.markdown: [17548, 17598], {The default error message is _"is not a number"_.
 }
-text.html.markdown meta.paragraph.markdown: [17598, 17599], {
+text.html.markdown: [17598, 17599], {
 }
 text.html.markdown meta.block-level.markdown markup.heading.markdown punctuation.definition.heading.markdown: [17599, 17602], {###}
 text.html.markdown meta.block-level.markdown markup.heading.markdown: [17602, 17603], { }
@@ -3358,10 +3312,7 @@ text.html.markdown meta.paragraph.markdown: [35172, 35173], {
 }
 text.html.markdown meta.paragraph.markdown: [35173, 35189], {p.errors[:name]
 }
-text.html.markdown meta.block-level.markdown markup.heading.markdown punctuation.definition.heading.markdown: [35189, 35190], {#}
-text.html.markdown meta.block-level.markdown markup.heading.markdown: [35190, 35191], { }
-text.html.markdown meta.block-level.markdown markup.heading.markdown entity.name.section.markdown: [35191, 35254], {=> ["can't be blank", "is too short (minimum is 3 characters)"]}
-text.html.markdown meta.block-level.markdown markup.heading.markdown: [35254, 35255], {
+text.html.markdown: [35189, 35255], {# => ["can't be blank", "is too short (minimum is 3 characters)"]
 }
 text.html.markdown meta.paragraph.markdown: [35255, 35259], {```
 }

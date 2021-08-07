@@ -3,11 +3,13 @@ package org.jetbrains.plugins.github.api.data.pullrequest
 
 import com.fasterxml.jackson.annotation.JsonIgnore
 import com.fasterxml.jackson.annotation.JsonProperty
+import com.intellij.collaboration.api.dto.GraphQLFragment
 import com.intellij.openapi.util.NlsSafe
 import org.jetbrains.plugins.github.api.data.*
 import org.jetbrains.plugins.github.pullrequest.data.GHPRIdentifier
 import java.util.*
 
+@GraphQLFragment("/graphql/fragment/pullRequestInfoShort.graphql")
 open class GHPullRequestShort(id: String,
                               val url: String,
                               override val number: Long,

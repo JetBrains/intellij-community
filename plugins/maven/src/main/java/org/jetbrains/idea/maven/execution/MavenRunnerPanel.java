@@ -91,6 +91,15 @@ public class MavenRunnerPanel implements MavenSettingsObservable {
     c.weightx = 1;
     c.insets.left = 10;
     panel.add(myVMParametersEditor, c);
+
+    JLabel labelOverrideJvmConfig = new JLabel(MavenConfigurableBundle.message("maven.settings.vm.options.tooltip"));
+    Font font = labelOverrideJvmConfig.getFont();
+    labelOverrideJvmConfig.setFont(new Font(font.getName(), font.getStyle(), font.getSize() - 2));
+    c.gridx = 1;
+    c.gridy++;
+    c.weightx = 1;
+    c.insets.left = 20;
+    panel.add(labelOverrideJvmConfig, c);
     c.insets.left = 0;
 
     myJdkLabel = new JLabel(MavenConfigurableBundle.message("maven.settings.runner.jre"));

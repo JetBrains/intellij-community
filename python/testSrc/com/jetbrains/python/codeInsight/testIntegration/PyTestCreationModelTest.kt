@@ -5,11 +5,11 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.WriteAction
 import com.intellij.psi.PsiElement
 import com.intellij.testFramework.VfsTestUtil
-import com.jetbrains.python.PyNames
 import com.jetbrains.python.fixtures.PyTestCase
 import com.jetbrains.python.psi.PyFile
-import com.jetbrains.python.testing.PyTestFrameworkService
-import com.jetbrains.python.testing.PythonTestConfigurationsModel
+import com.jetbrains.python.testing.PyTestFactory
+import com.jetbrains.python.testing.PyUnitTestFactory
+import com.jetbrains.python.testing.PythonTestConfigurationType
 import com.jetbrains.python.testing.TestRunnerService
 
 class PyTestCreationModelTest : PyTestCase() {
@@ -24,7 +24,7 @@ class PyTestCreationModelTest : PyTestCase() {
   }
 
   fun testWithUnitTest() {
-    service.projectConfiguration = PythonTestConfigurationsModel.getPythonsUnittestName()
+    service.projectConfiguration = PythonTestConfigurationType.getInstance().unitTestFactory.name
     val modelToTestClass = getModel()!!
     assertEquals("test_create_tst.py", modelToTestClass.fileName)
     assertEquals("TestSpam", modelToTestClass.className)
@@ -45,7 +45,7 @@ class PyTestCreationModelTest : PyTestCase() {
   }
 
   fun testWithPyTest() {
-    service.projectConfiguration = PyTestFrameworkService.getSdkReadableNameByFramework(PyNames.PY_TEST)
+    service.projectConfiguration = PyTestFactory(PythonTestConfigurationType.getInstance()).id
     val modelToTestClass = getModel()!!
     assertEquals("test_create_tst.py", modelToTestClass.fileName)
     assertEquals("", modelToTestClass.className)

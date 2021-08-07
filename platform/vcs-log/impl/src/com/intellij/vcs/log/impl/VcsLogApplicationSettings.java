@@ -1,15 +1,13 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.log.impl;
 
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
-import com.intellij.openapi.util.registry.Registry;
+import com.intellij.util.EventDispatcher;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.vcs.log.ui.table.VcsLogColumnDeprecated;
 import com.intellij.vcs.log.ui.table.column.Date;
 import com.intellij.vcs.log.ui.table.column.*;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -20,8 +18,8 @@ import static com.intellij.vcs.log.impl.CommonUiProperties.*;
 import static com.intellij.vcs.log.impl.MainVcsLogUiProperties.*;
 
 @State(name = "Vcs.Log.App.Settings", storages = @Storage("vcs.xml"))
-public class VcsLogApplicationSettings implements PersistentStateComponent<VcsLogApplicationSettings.State>, VcsLogUiProperties {
-  @NotNull private final Set<VcsLogUiProperties.PropertiesChangeListener> myListeners = new LinkedHashSet<>();
+public final class VcsLogApplicationSettings implements PersistentStateComponent<VcsLogApplicationSettings.State>, VcsLogUiProperties {
+  @NotNull private final EventDispatcher<PropertiesChangeListener> myEventDispatcher = EventDispatcher.create(PropertiesChangeListener.class);
   private State myState = new State();
 
   @Nullable
@@ -77,13 +75,6 @@ public class VcsLogApplicationSettings implements PersistentStateComponent<VcsLo
         if (order != null && !order.isEmpty()) {
           return order;
         }
-        List<Integer> oldOrder = myState.COLUMN_ORDER;
-        if (oldOrder != null && !oldOrder.isEmpty()) {
-          List<String> oldIdOrder = ContainerUtil.map(oldOrder, it -> VcsLogColumnDeprecated.getVcsLogColumnEx(it).getId());
-          myState.COLUMN_ID_ORDER = oldIdOrder;
-          myState.COLUMN_ORDER = new ArrayList<>();
-          return oldIdOrder;
-        }
         return ContainerUtil.map(Arrays.asList(Root.INSTANCE, Commit.INSTANCE, Author.INSTANCE, Date.INSTANCE), VcsLogColumn::getId);
       })
       .get();
@@ -125,7 +116,7 @@ public class VcsLogApplicationSettings implements PersistentStateComponent<VcsLo
     else {
       throw new UnsupportedOperationException("Property " + property + " does not exist");
     }
-    myListeners.forEach(l -> l.onPropertyChanged(property));
+    myEventDispatcher.getMulticaster().onPropertyChanged(property);
   }
 
   @Override
@@ -139,25 +130,22 @@ public class VcsLogApplicationSettings implements PersistentStateComponent<VcsLo
 
   @Override
   public void addChangeListener(@NotNull VcsLogUiProperties.PropertiesChangeListener listener) {
-    myListeners.add(listener);
+    myEventDispatcher.addListener(listener);
   }
 
   @Override
   public void removeChangeListener(@NotNull VcsLogUiProperties.PropertiesChangeListener listener) {
-    myListeners.remove(listener);
+    myEventDispatcher.removeListener(listener);
   }
 
   public static class State {
     public boolean COMPACT_REFERENCES_VIEW = true;
     public boolean SHOW_TAG_NAMES = false;
-    public boolean LABELS_LEFT_ALIGNED = Registry.is("vcs.log.labels.left.aligned");
+    public boolean LABELS_LEFT_ALIGNED = false;
     public boolean SHOW_CHANGES_FROM_PARENTS = false;
     public boolean SHOW_DIFF_PREVIEW = false;
     public boolean DIFF_PREVIEW_VERTICAL_SPLIT = true;
     public boolean PREFER_COMMIT_DATE = false;
-    @Deprecated
-    @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
-    public List<Integer> COLUMN_ORDER = new ArrayList<>();
     public List<String> COLUMN_ID_ORDER = new ArrayList<>();
     public Map<String, Boolean> COLUMN_ID_VISIBILITY = new HashMap<>();
     public Map<String, Boolean> CUSTOM_BOOLEAN_PROPERTIES = new HashMap<>();

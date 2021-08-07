@@ -8,6 +8,7 @@ intellij.emojipicker
 intellij.featuresTrainer
 intellij.grazie
 intellij.markdown
+intellij.marketplace
 intellij.platform.langInjection
 intellij.properties
 intellij.reStructuredText
@@ -19,6 +20,7 @@ intellij.terminal
 intellij.textmate
 intellij.vcs.changeReminder
 intellij.vcs.git
+intellij.vcs.git.featuresTrainer
 intellij.vcs.github
 intellij.vcs.hg
 intellij.vcs.svn

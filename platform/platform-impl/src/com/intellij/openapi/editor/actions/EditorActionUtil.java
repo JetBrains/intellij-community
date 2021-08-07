@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.openapi.editor.actions;
 
@@ -25,7 +25,7 @@ import java.awt.*;
 import static java.lang.Character.*;
 
 public final class EditorActionUtil {
-  protected static final Object EDIT_COMMAND_GROUP = Key.create("EditGroup");
+  static final Object EDIT_COMMAND_GROUP = Key.create("EditGroup");
   public static final Object DELETE_COMMAND_GROUP = Key.create("DeleteGroup");
 
   private EditorActionUtil() {
@@ -314,8 +314,7 @@ public final class EditorActionUtil {
 
   @Nullable
   private static HighlighterIterator createHighlighterIteratorAtOffset(@NotNull Editor editor, int offset) {
-    if (!(editor instanceof EditorEx)) return null;
-    return ((EditorEx)editor).getHighlighter().createIterator(offset);
+    return editor.getHighlighter().createIterator(offset);
   }
 
   private static boolean isLexemeBoundary(@Nullable IElementType leftTokenType,
@@ -394,13 +393,12 @@ public final class EditorActionUtil {
    * Finds out whether there's a boundary between two lexemes of different type at given offset.
    */
   public static boolean isLexemeBoundary(@NotNull Editor editor, int offset) {
-    if (!(editor instanceof EditorEx) ||
-        offset <= 0 || offset >= editor.getDocument().getTextLength() ||
+    if (offset <= 0 || offset >= editor.getDocument().getTextLength() ||
         DocumentUtil.isInsideSurrogatePair(editor.getDocument(), offset) ||
         isBetweenWhitespaces(editor.getDocument().getCharsSequence(), offset)) {
       return false;
     }
-    EditorHighlighter highlighter = ((EditorEx)editor).getHighlighter();
+    EditorHighlighter highlighter = editor.getHighlighter();
     HighlighterIterator it = highlighter.createIterator(offset);
     return retreatTokenOnBoundary(it, editor.getDocument().getCharsSequence(), offset);
   }
@@ -483,7 +481,7 @@ public final class EditorActionUtil {
     }
 
     setupSelection(editor, isWithSelection, selectionStart, blockSelectionStart);
-    EditorModificationUtil.scrollToCaret(editor);
+    EditorModificationUtilEx.scrollToCaret(editor);
   }
 
   private static void moveCaretToStartOfSoftWrappedLine(@NotNull Editor editor, VisualPosition currentVisual) {
@@ -594,7 +592,7 @@ public final class EditorActionUtil {
       LogicalPosition pos = new LogicalPosition(lineNumber, 0);
       editor.getCaretModel().moveToLogicalPosition(pos);
       setupSelection(editor, isWithSelection, selectionStart, blockSelectionStart);
-      EditorModificationUtil.scrollToCaret(editor);
+      EditorModificationUtilEx.scrollToCaret(editor);
       return;
     }
     VisualPosition currentVisualCaret = editor.getCaretModel().getVisualPosition();
@@ -642,7 +640,7 @@ public final class EditorActionUtil {
       }
     }
 
-    EditorModificationUtil.scrollToCaret(editor);
+    EditorModificationUtilEx.scrollToCaret(editor);
 
     setupSelection(editor, isWithSelection, selectionStart, blockSelectionStart);
   }
@@ -687,7 +685,7 @@ public final class EditorActionUtil {
       }
     }
     caretModel.moveToOffset(newOffset);
-    EditorModificationUtil.scrollToCaret(editor);
+    EditorModificationUtilEx.scrollToCaret(editor);
 
     setupSelection(editor, isWithSelection, selectionStart, blockSelectionStart);
   }
@@ -781,7 +779,7 @@ public final class EditorActionUtil {
     else {
       editor.getCaretModel().moveToOffset(newOffset);
     }
-    EditorModificationUtil.scrollToCaret(editor);
+    EditorModificationUtilEx.scrollToCaret(editor);
 
     setupSelection(editor, isWithSelection, selectionStart, blockSelectionStart);
   }
@@ -947,6 +945,6 @@ public final class EditorActionUtil {
       caret.removeSelection();
     }
     caret.moveToOffset(offset);
-    EditorModificationUtil.scrollToCaret(caret.getEditor());
+    EditorModificationUtilEx.scrollToCaret(caret.getEditor());
   }
 }

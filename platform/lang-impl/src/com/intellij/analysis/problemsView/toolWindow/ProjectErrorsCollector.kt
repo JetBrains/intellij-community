@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.analysis.problemsView.toolWindow
 
 import com.intellij.analysis.problemsView.FileProblem
@@ -6,13 +6,21 @@ import com.intellij.analysis.problemsView.HighlightingDuplicate
 import com.intellij.analysis.problemsView.Problem
 import com.intellij.analysis.problemsView.ProblemsCollector
 import com.intellij.analysis.problemsView.ProblemsListener
+import com.intellij.analysis.problemsView.ProblemsProvider
 import com.intellij.icons.AllIcons.Toolwindows
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.VirtualFileManager
+import com.intellij.openapi.vfs.newvfs.events.VFileDeleteEvent
+import com.intellij.openapi.vfs.newvfs.events.VFileEvent
+import com.intellij.openapi.vfs.newvfs.events.VFileMoveEvent
 import com.intellij.ui.AppUIUtil
 import java.util.concurrent.atomic.AtomicInteger
 
 private class ProjectErrorsCollector(val project: Project) : ProblemsCollector {
+  private val providerClassFilter = Registry.stringValue("ide.problems.view.provider.class.filter").split(" ,/|").toSet()
   private val fileProblems = mutableMapOf<VirtualFile, MutableSet<FileProblem>>()
   private val otherProblems = mutableSetOf<Problem>()
   private val problemCount = AtomicInteger()
@@ -40,8 +48,9 @@ private class ProjectErrorsCollector(val project: Project) : ProblemsCollector {
   }
 
   override fun problemAppeared(problem: Problem) {
+    val ignored = isIgnored(problem.provider)
     notify(problem, when {
-      problem.provider.project != project -> SetUpdateState.IGNORED
+      ignored -> SetUpdateState.IGNORED
       problem is FileProblem -> process(problem, true) { set ->
         when {
           // do not add HighlightingDuplicate if there is any HighlightingProblem
@@ -51,7 +60,7 @@ private class ProjectErrorsCollector(val project: Project) : ProblemsCollector {
       }
       else -> synchronized(otherProblems) { SetUpdateState.add(problem, otherProblems) }
     })
-    if (problem is HighlightingProblem) {
+    if (!ignored && problem is HighlightingProblem) {
       // remove any HighlightingDuplicate if HighlightingProblem is appeared
       synchronized(fileProblems) {
         fileProblems[problem.file]?.filter { it is HighlightingDuplicate }
@@ -60,16 +69,18 @@ private class ProjectErrorsCollector(val project: Project) : ProblemsCollector {
   }
 
   override fun problemDisappeared(problem: Problem) = notify(problem, when {
-    problem.provider.project != project -> SetUpdateState.IGNORED
+    isIgnored(problem.provider) -> SetUpdateState.IGNORED
     problem is FileProblem -> process(problem, false) { SetUpdateState.remove(problem, it) }
     else -> synchronized(otherProblems) { SetUpdateState.remove(problem, otherProblems) }
   })
 
   override fun problemUpdated(problem: Problem) = notify(problem, when {
-    problem.provider.project != project -> SetUpdateState.IGNORED
+    isIgnored(problem.provider) -> SetUpdateState.IGNORED
     problem is FileProblem -> process(problem, false) { SetUpdateState.update(problem, it) }
     else -> synchronized(otherProblems) { SetUpdateState.update(problem, otherProblems) }
   })
+
+  private fun isIgnored(provider: ProblemsProvider) = provider.project != project || providerClassFilter.contains(provider.javaClass.name)
 
   private fun process(problem: FileProblem, create: Boolean, function: (MutableSet<FileProblem>) -> SetUpdateState): SetUpdateState {
     val file = problem.file
@@ -84,8 +95,12 @@ private class ProjectErrorsCollector(val project: Project) : ProblemsCollector {
     }
   }
 
-  private fun notify(problem: Problem, state: SetUpdateState) {
-    if (project.isDisposed) return
+  private fun notify(problem: Problem, state: SetUpdateState, later: Boolean = true) {
+    if (state == SetUpdateState.IGNORED || project.isDisposed) return
+    if (later && Registry.`is`("ide.problems.view.notify.later")) {
+      ApplicationManager.getApplication().invokeLater { notify(problem, state, false) }
+      return // notify listeners later on EDT
+    }
     when (state) {
       SetUpdateState.ADDED -> {
         project.messageBus.syncPublisher(ProblemsListener.TOPIC).problemAppeared(problem)
@@ -113,5 +128,16 @@ private class ProjectErrorsCollector(val project: Project) : ProblemsCollector {
   private fun getToolWindowIcon() = when (getProblemCount() == 0) {
     true -> Toolwindows.ToolWindowProblemsEmpty
     else -> Toolwindows.ToolWindowProblems
+  }
+
+  private fun onVfsChanges(events: List<VFileEvent>) = events
+    .filter { it is VFileDeleteEvent || it is VFileMoveEvent }
+    .mapNotNull { it.file }
+    .distinct()
+    .flatMap { getFileProblems(it) }
+    .forEach { problemDisappeared(it) }
+
+  init {
+    VirtualFileManager.getInstance().addAsyncFileListener({ onVfsChanges(it);null }, project)
   }
 }

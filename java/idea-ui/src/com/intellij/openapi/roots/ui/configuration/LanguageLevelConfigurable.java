@@ -20,7 +20,8 @@ import com.intellij.ide.JavaUiBundle;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.UnnamedConfigurable;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.LanguageLevelModuleExtensionImpl;
+import com.intellij.openapi.roots.LanguageLevelModuleExtension;
+import com.intellij.openapi.roots.ModuleExtension;
 import com.intellij.openapi.roots.impl.LanguageLevelProjectExtensionImpl;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.util.ui.JBUI;
@@ -67,7 +68,7 @@ public abstract class LanguageLevelConfigurable implements UnnamedConfigurable {
 
   @Override
   public boolean isModified() {
-    return getLanguageLevelExtension().isChanged();
+    return ((ModuleExtension)getLanguageLevelExtension()).isChanged();
   }
 
   @Override
@@ -84,6 +85,5 @@ public abstract class LanguageLevelConfigurable implements UnnamedConfigurable {
     myLanguageLevelCombo = null;
   }
 
-  @NotNull
-  public abstract LanguageLevelModuleExtensionImpl getLanguageLevelExtension();
+  public abstract @NotNull LanguageLevelModuleExtension getLanguageLevelExtension();
 }

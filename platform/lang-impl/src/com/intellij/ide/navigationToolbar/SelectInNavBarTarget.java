@@ -13,8 +13,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.IdeRootPaneNorthExtension;
 import com.intellij.openapi.wm.ex.IdeFrameEx;
-import com.intellij.psi.PsiDirectory;
-import com.intellij.psi.PsiDirectoryContainer;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFileSystemItem;
 import com.intellij.util.Consumer;
@@ -67,7 +65,7 @@ final class SelectInNavBarTarget extends SelectInTargetPsiWrapper implements Dum
             final NavBarPanel panel = (NavBarPanel)c.getClientProperty("NavBarPanel");
             panel.rebuildAndSelectItem((list) -> {
               if (UISettings.getInstance().getShowMembersInNavigationBar()) {
-                int lastDirectory = ContainerUtil.lastIndexOf(list, (item) -> item.getObject() instanceof PsiDirectory || item.getObject() instanceof PsiDirectoryContainer);
+                int lastDirectory = ContainerUtil.lastIndexOf(list, (item) -> NavBarPanel.isExpandable(item.getObject()));
                 if (lastDirectory >= 0 && lastDirectory < list.size() - 1) return lastDirectory;
               }
               return list.size() - 1;

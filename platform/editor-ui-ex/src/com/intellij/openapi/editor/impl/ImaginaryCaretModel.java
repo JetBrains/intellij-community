@@ -11,16 +11,16 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Collections;
 import java.util.List;
 
-class ImaginaryCaretModel implements CaretModel {
+public class ImaginaryCaretModel implements CaretModel {
   private final ImaginaryEditor myEditor;
   private final ImaginaryCaret myCaret;
 
-  ImaginaryCaretModel(ImaginaryEditor editor) {
+  public ImaginaryCaretModel(ImaginaryEditor editor) {
     myEditor = editor;
     myCaret = new ImaginaryCaret(this);
   }
 
-  ImaginaryEditor getEditor() {
+  protected ImaginaryEditor getEditor() {
     return myEditor;
   }
 

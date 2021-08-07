@@ -91,7 +91,7 @@ public final class StartMarkAction extends BasicUndoableAction {
   }
   
   /**
-   * @deprecated use {@link StartMarkAction#canStart(com.intellij.openapi.editor.Editor)} instead to allow inplace refactorings in different editors in parallel
+   * @deprecated use {@link StartMarkAction#canStart(Editor)} instead to allow inplace refactorings in different editors in parallel
    */
   @Deprecated
   public static StartMarkAction canStart(@NotNull Project project) {

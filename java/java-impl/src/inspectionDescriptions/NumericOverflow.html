@@ -1,8 +1,12 @@
 <html>
 <body>
-This inspection checks for expressions which overflow during computation, i.e.: <br>
-
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <b><font color="#000080">a = 1.0/0.0;</font></b>
-
+<p>Reports expressions that overflow during computation.</p>
+<p>Usually, this happens by accident and indicates a bug. For example, a wrong type is used or a shift should be done in an opposite direction .</p>
+<p><b>Examples:</b></p>
+<pre><code>
+  float a = 1.0f/0.0f;
+  long b = 30 * 24 * 60 * 60 * 1000;
+  long c = 1000L &lt;&lt; 62;
+</code></pre>
 </body>
 </html>

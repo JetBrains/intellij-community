@@ -90,27 +90,7 @@ final class IntKeyManager implements KeyManager<Integer> {
     }
 
     keys = new int[count];
-    //for (int i = 0; i < count; i++) {
-    //  keys[i] = DataUtil.readVarInt(buf);
-    //}
-
-    int variableEncodingLength = count % IntegratedBinaryPacking.INT_BLOCK_SIZE;
-    int initValue;
-    if (variableEncodingLength == 0) {
-      initValue = 0;
-    }
-    else {
-      IntBitPacker.decompressVariable(buf, keys, variableEncodingLength);
-      initValue = keys[variableEncodingLength - 1];
-      if (variableEncodingLength == count) {
-        return;
-      }
-    }
-
-    int compressedArrayLength = IntBitPacker.readVar(buf);
-    int[] compressed = new int[compressedArrayLength];
-    DataUtil.readIntArray(compressed, buf, compressedArrayLength);
-    IntBitPacker.decompressIntegrated(compressed, 0, keys, variableEncodingLength, count, initValue);
+    DataUtil.unpackInts(keys, buf);
   }
 
   @Override
@@ -203,32 +183,9 @@ final class IntKeyManager implements KeyManager<Integer> {
 
   @Override
   public void write(int count, MVMap<Integer, ?> map, ByteBuf buf) {
-    if (count == 0) {
-      return;
+    if (count != 0) {
+      DataUtil.packInts(keys, buf);
     }
-
-    //for (int key : keys) {
-    //  DataUtil.writeVarInt(buf, key);
-    //}
-
-    int variableEncodingLength = count % IntegratedBinaryPacking.INT_BLOCK_SIZE;
-    int initValue;
-    if (variableEncodingLength == 0) {
-      initValue = 0;
-    }
-    else {
-      IntBitPacker.compressVariable(keys, 0, variableEncodingLength, buf);
-      if (count == variableEncodingLength) {
-        return;
-      }
-
-      initValue = keys[variableEncodingLength - 1];
-    }
-
-    int[] compressed = new int[IntegratedBinaryPacking.estimateCompressedArrayLength(keys, variableEncodingLength, count, initValue)];
-    int compressedArrayLength = IntBitPacker.compressIntegrated(keys, variableEncodingLength, count, compressed, initValue);
-    IntBitPacker.writeVar(buf, compressedArrayLength);
-    DataUtil.writeIntArray(compressed, buf, compressedArrayLength);
   }
 
   @Override

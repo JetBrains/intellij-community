@@ -8,7 +8,9 @@ import com.intellij.openapi.extensions.impl.ExtensionPointImpl
 import com.intellij.openapi.extensions.impl.ExtensionsAreaImpl
 import com.intellij.openapi.util.KeyedExtensionCollector
 import com.intellij.util.KeyedLazyInstance
+import org.jetbrains.annotations.TestOnly
 
+@TestOnly
 object ExtensionTestUtil {
   /**
    * @see ExtensionPointImpl.maskAll

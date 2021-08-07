@@ -46,7 +46,7 @@ class MavenTargetConfigurationIntrospector(private val config: MavenRuntimeTarge
                                   mavenHomeEnvVariable: String?,
                                   isWindows: Boolean): CompletableFuture<Pair<String?, String?>> {
     if (mavenHomeEnvVariable == null) {
-      return subject.promiseExecuteScript("mvn -version").handle { output, _ -> output?.run { null to output } ?: null to null }
+      return subject.promiseExecuteScript("mvn -version").handle { output, _ -> output?.run { null to output } ?: (null to null) }
     }
 
     return subject.promiseEnvironmentVariable(mavenHomeEnvVariable).thenCompose { mavenHome ->

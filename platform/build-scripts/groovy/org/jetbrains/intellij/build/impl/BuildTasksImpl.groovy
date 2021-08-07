@@ -1,35 +1,40 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build.impl
 
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.util.Pair
-import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.util.text.Formats
+import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.util.text.Strings
+import com.intellij.util.containers.ContainerUtil
+import com.intellij.util.system.CpuArch
 import groovy.io.FileType
 import groovy.transform.CompileStatic
 import groovy.transform.TypeCheckingMode
 import org.jetbrains.annotations.NotNull
+import org.jetbrains.idea.maven.aether.ArtifactKind
+import org.jetbrains.idea.maven.aether.ArtifactRepositoryManager
+import org.jetbrains.idea.maven.aether.ProgressConsumer
 import org.jetbrains.intellij.build.*
+import org.jetbrains.jps.model.JpsGlobal
 import org.jetbrains.jps.model.artifact.JpsArtifactService
+import org.jetbrains.jps.model.jarRepository.JpsRemoteRepositoryService
 import org.jetbrains.jps.model.java.*
 import org.jetbrains.jps.model.library.JpsLibrary
 import org.jetbrains.jps.model.library.JpsOrderRootType
+import org.jetbrains.jps.model.library.JpsRepositoryLibraryType
 import org.jetbrains.jps.model.module.JpsModule
 import org.jetbrains.jps.model.module.JpsTypedModuleSourceRoot
+import org.jetbrains.jps.model.serialization.JpsModelSerializationDataService
+import org.jetbrains.jps.util.JpsPathUtil
 
-import java.nio.file.Files
-import java.nio.file.Path
-import java.nio.file.Paths
-import java.nio.file.StandardCopyOption
-import java.time.ZoneOffset
-import java.time.ZonedDateTime
-import java.time.format.DateTimeFormatter
+import java.nio.file.*
 import java.util.concurrent.*
 import java.util.function.Function
+import java.util.function.Supplier
 
 @CompileStatic
 final class BuildTasksImpl extends BuildTasks {
@@ -64,25 +69,89 @@ final class BuildTasksImpl extends BuildTasks {
 
   @Override
   @CompileStatic(TypeCheckingMode.SKIP)
-  void zipSourcesOfModules(Collection<String> modules, Path targetFile) {
+  void zipSourcesOfModules(Collection<String> modules, Path targetFile, boolean includeLibraries) {
     buildContext.executeStep("Build sources of modules archive", BuildOptions.SOURCES_ARCHIVE_STEP) {
       buildContext.messages.progress("Building archive of ${modules.size()} modules to $targetFile")
       Files.createDirectories(targetFile.parent)
       Files.deleteIfExists(targetFile)
+
+      String sourceFilesId = "source.files.only"
+      buildContext.ant.patternset(id: sourceFilesId) {
+        ["java", "groovy", "kt"].each {
+          include(name: "**/*.$it")
+        }
+      }
+
+      def includedLibraries = new LinkedHashSet<JpsLibrary>()
+      if (includeLibraries) {
+        buildContext.messages.debug("Collecting libraries to include into archive:")
+        for (String moduleName in modules) {
+          JpsModule module = buildContext.findRequiredModule(moduleName)
+          if (moduleName.startsWith("intellij.platform.") && buildContext.findModule("${moduleName}.impl") != null) {
+            def libraries = JpsJavaExtensionService.dependencies(module).productionOnly().compileOnly().recursivelyExportedOnly().libraries
+            includedLibraries.addAll(libraries)
+            libraries.each {
+              buildContext.messages.debug(" ${it.name} for $moduleName")
+            }
+          }
+        }
+        def librariesWithMissingSources = includedLibraries
+          .collect { it.asTyped(JpsRepositoryLibraryType.INSTANCE) }
+          .findAll { library ->
+            library != null && library.getFiles(JpsOrderRootType.SOURCES).any { !it.exists() }
+          }
+        if (!librariesWithMissingSources.isEmpty()) {
+          buildContext.messages.debug("Download missing sources for ${librariesWithMissingSources.size()} libraries")
+          def repositories = JpsRemoteRepositoryService.instance.getRemoteRepositoriesConfiguration(buildContext.project)?.repositories?.collect {
+            ArtifactRepositoryManager.createRemoteRepository(it.id, it.url)
+          } ?: []
+          def repositoryManager = new ArtifactRepositoryManager(getLocalArtifactRepositoryRoot(buildContext.projectModel.global), repositories, ProgressConsumer.DEAF)
+          librariesWithMissingSources.each { library ->
+            def descriptor = library.properties.data
+            buildContext.messages.progress("Downloading sources for library '${library.name}' ($descriptor.mavenId)")
+            def downloaded = repositoryManager.resolveDependencyAsArtifact(descriptor.groupId, descriptor.artifactId, descriptor.version,
+                                                                           EnumSet.of(ArtifactKind.SOURCES),
+                                                                           descriptor.includeTransitiveDependencies,
+                                                                           descriptor.excludedDependencies)
+            buildContext.messages.debug(" $library.name: downloaded ${downloaded.join(", ")}")
+          }
+        }
+      }
+
+      buildContext.messages.debug("Packing sources into $targetFile")
       buildContext.ant.zip(destfile: targetFile) {
         for (String moduleName in modules) {
-          JpsModule module = buildContext.findModule(moduleName)
-          if (module == null) {
-            buildContext.messages.error("Cannot build sources archive: '$moduleName' module doesn't exist")
-          }
+          buildContext.messages.debug(" include module $moduleName")
+          JpsModule module = buildContext.findRequiredModule(moduleName)
           for (JpsTypedModuleSourceRoot<JavaSourceRootProperties> root in module.getSourceRoots(JavaSourceRootType.SOURCE)) {
             buildContext.ant.zipfileset(dir: root.file.absolutePath,
-                                        prefix: root.properties.packagePrefix.replace('.', '/'), erroronmissingdir: false)
+                                        prefix: root.properties.packagePrefix.replace('.', '/'), erroronmissingdir: false) {
+              patternset(refid: sourceFilesId)
+            }
           }
           for (JpsTypedModuleSourceRoot<JavaResourceRootProperties> root in module.getSourceRoots(JavaResourceRootType.RESOURCE)) {
             buildContext.ant.zipfileset(dir: root.file.absolutePath, prefix: root.properties.relativeOutputPath, erroronmissingdir: false) {
-              exclude(name: "**/*.png")
+              patternset(refid: sourceFilesId)
             }
+          }
+        }
+        def libraryRootUrls = includedLibraries.collectMany { it.getRootUrls(JpsOrderRootType.SOURCES) }
+        buildContext.messages.debug(" include ${libraryRootUrls.size()} roots from ${includedLibraries.size()} libraries:")
+        for (url in libraryRootUrls) {
+          if (url.startsWith(JpsPathUtil.JAR_URL_PREFIX) && url.endsWith(JpsPathUtil.JAR_SEPARATOR)) {
+            def file = JpsPathUtil.urlToFile(url)
+            if (file.isFile()) {
+              buildContext.messages.debug("  $file.absolutePath, ${StringUtil.formatFileSize(file.length())}, ${file.length().toString().padLeft(9, "0")} bytes")
+              buildContext.ant.zipfileset(src: file.absolutePath) {
+                patternset(refid: sourceFilesId)
+              }
+            }
+            else {
+              buildContext.messages.debug("  skipped root $file: file doesn't exist")
+            }
+          }
+          else {
+            buildContext.messages.debug("  skipped root $url: not a jar file")
           }
         }
       }
@@ -91,31 +160,58 @@ final class BuildTasksImpl extends BuildTasks {
     }
   }
 
+  //todo replace by DependencyResolvingBuilder#getLocalArtifactRepositoryRoot call after next update of jps-build-script-dependencies-bootstrap
+  private static File getLocalArtifactRepositoryRoot(@NotNull JpsGlobal global) {
+    def localRepoPath = JpsModelSerializationDataService.getPathVariablesConfiguration(global)?.getUserVariableValue("MAVEN_REPOSITORY")
+    if (localRepoPath != null) {
+      return new File(localRepoPath)
+    }
+    def root = System.getProperty("user.home", null)
+    return root != null ? new File(root, ".m2/repository") : new File(".m2/repository")
+  }
+
+
   /**
    * Build a list with modules that the IDE will provide for plugins.
    */
-  private void buildProvidedModulesList(Path targetFile, List<String> modules) {
-    buildContext.executeStep("Build provided modules list", BuildOptions.PROVIDED_MODULES_LIST_STEP, {
-      buildContext.messages.progress("Building provided modules list for ${modules.size()} modules")
-      buildContext.messages.debug("Building provided modules list for the following modules: $modules")
-      FileUtil.delete(targetFile)
-      // start the product in headless mode using com.intellij.ide.plugins.BundledPluginsLister
-      runApplicationStarter(buildContext, buildContext.paths.tempDir.resolve("builtinModules"), modules, ["listBundledPlugins", targetFile.toString()])
-      if (!Files.exists(targetFile)) {
-        buildContext.messages.error("Failed to build provided modules list: $targetFile doesn't exist")
+  private static void buildProvidedModulesList(BuildContext buildContext, Path targetFile, @NotNull Collection<String> modules) {
+    buildContext.executeStep("Build provided modules list", BuildOptions.PROVIDED_MODULES_LIST_STEP, new Runnable() {
+      @Override
+      void run() {
+        buildContext.messages.progress("Building provided modules list for ${modules.size()} modules")
+        buildContext.messages.debug("Building provided modules list for the following modules: $modules")
+        FileUtil.delete(targetFile)
+        // start the product in headless mode using com.intellij.ide.plugins.BundledPluginsLister
+        runApplicationStarter(buildContext, buildContext.paths.tempDir.resolve("builtinModules"), modules,
+                              List.of("listBundledPlugins", targetFile.toString()))
+        if (!Files.exists(targetFile)) {
+          buildContext.messages.error("Failed to build provided modules list: $targetFile doesn't exist")
+        }
+        buildContext.notifyArtifactWasBuilt(targetFile)
       }
-      buildContext.notifyArtifactWasBuilt(targetFile)
     })
+  }
+
+  static class ApplicationStarterClasspathCustomizer {
+    private BuildContext buildContext
+
+    ApplicationStarterClasspathCustomizer(BuildContext buildContext) {
+      this.buildContext = buildContext
+    }
+
+    Set<String> customize(Set<String> ideClasspath) {
+      return ideClasspath
+    }
   }
 
   static void runApplicationStarter(@NotNull BuildContext context,
                                     @NotNull Path tempDir,
-                                    List<String> modules,
+                                    @NotNull Collection<String> modules,
                                     List<String> arguments,
                                     Map<String, Object> systemProperties = Collections.emptyMap(),
                                     List<String> vmOptions = List.of("-Xmx512m"),
-                                    List<String> pluginsToDisable = Collections.emptyList(),
-                                    long timeoutMillis = TimeUnit.MINUTES.toMillis(10L)) {
+                                    long timeoutMillis = TimeUnit.MINUTES.toMillis(10L),
+                                    ApplicationStarterClasspathCustomizer classpathCustomizer = new ApplicationStarterClasspathCustomizer(context)) {
     Files.createDirectories(tempDir)
 
     Set<String> ideClasspath = new LinkedHashSet<String>()
@@ -128,6 +224,14 @@ final class BuildTasksImpl extends BuildTasks {
       }
     }
 
+    //todo remove this when KTIJ-11539 is fixed; currently if we add kotlin.idea module to the classpath as a transitive dependency of some other module,
+    //     it'll cause conflicts with Kotlin plugin loaded from JAR
+    String pathToIgnore = new File(context.projectOutputDirectory, "production/kotlin.idea").absolutePath
+    if (ideClasspath.remove(pathToIgnore)) {
+      context.messages.debug(" remove $pathToIgnore from classpath to avoid conflicts")
+    }
+
+
     List<String> jvmArgs = new ArrayList<>(BuildUtils.propertiesToJvmArgs(new HashMap<String, Object>([
       "idea.home.path"   : context.paths.projectHome,
       "idea.system.path" : "${FileUtilRt.toSystemIndependentName(tempDir.toString())}/system",
@@ -139,19 +243,24 @@ final class BuildTasksImpl extends BuildTasks {
     }
     jvmArgs.addAll(BuildUtils.propertiesToJvmArgs(systemProperties))
     jvmArgs.addAll(vmOptions)
+    String debugPort = System.getProperty("intellij.build.${arguments.first()}.debug.port")
+    if (debugPort != null) {
+      jvmArgs.add("-agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address=*:$debugPort".toString())
+    }
 
     List<Path> additionalPluginPaths = context.productProperties.getAdditionalPluginPaths(context)
+    Set<String> additionalPluginIds = new HashSet<>()
     for (Path pluginPath : additionalPluginPaths) {
-      File libFile = pluginPath.resolve("lib").toFile()
-      for (String jarName : libFile.list { _, name -> FileUtil.extensionEquals(name, "jar") }) {
-        File jarFile = new File(libFile, jarName)
+      for (File jarFile : BuildUtils.getPluginJars(pluginPath.toString())) {
         if (ideClasspath.add(jarFile.absolutePath)) {
-          context.messages.debug("$jarFile from plugin ${libFile.parentFile.name}")
+          context.messages.debug("$jarFile from plugin $pluginPath")
+          ContainerUtil.addIfNotNull(additionalPluginIds, BuildUtils.readPluginId(jarFile))
         }
       }
     }
+    ideClasspath = classpathCustomizer.customize(ideClasspath)
 
-    disableCompatibleIgnoredPlugins(context, tempDir.resolve("config"), pluginsToDisable)
+    disableCompatibleIgnoredPlugins(context, tempDir.resolve("config"), additionalPluginIds)
 
     BuildHelper.runJava(
       context,
@@ -164,11 +273,15 @@ final class BuildTasksImpl extends BuildTasks {
 
   private static void disableCompatibleIgnoredPlugins(@NotNull BuildContext context,
                                                       @NotNull Path configDir,
-                                                      @NotNull List<String> pluginsToDisable) {
-    Set<String> toDisable = new HashSet<>(pluginsToDisable)
+                                                      @NotNull Set<String> explicitlyEnabledPlugins) {
+    Set<String> toDisable = new HashSet<>()
     for (String moduleName : context.productProperties.productLayout.compatiblePluginsToIgnore) {
       Path pluginXml = context.findFileInModuleSources(moduleName, "META-INF/plugin.xml")
-      toDisable.add(JDOMUtil.load(pluginXml).getChildTextTrim("id"))
+      def pluginId = JDOMUtil.load(pluginXml).getChildTextTrim("id")
+      if (!explicitlyEnabledPlugins.contains(pluginId)) {
+        toDisable.add(pluginId)
+        context.messages.debug("runApplicationStarter: '$pluginId' will be disabled, because it's mentioned in 'compatiblePluginsToIgnore'")
+      }
     }
     if (!toDisable.isEmpty()) {
       Files.createDirectories(configDir)
@@ -211,25 +324,6 @@ idea.fatal.error.notification=disabled
     Path propertiesFile = buildContext.paths.tempDir.resolve("idea.properties")
     Files.writeString(propertiesFile, builder)
     return propertiesFile
-  }
-
-  @NotNull Path patchApplicationInfo() {
-    Path sourceFile = BuildContextImpl.findApplicationInfoInSources(buildContext.project, buildContext.productProperties, buildContext.messages)
-    Path targetFile = Paths.get(buildContext.paths.temp).resolve(sourceFile.fileName)
-    def date = ZonedDateTime.now(ZoneOffset.UTC).format(DateTimeFormatter.ofPattern("uuuuMMddHHmm"))
-
-    def artifactsServer = buildContext.proprietaryBuildTools.artifactsServer
-    def builtinPluginsRepoUrl = ""
-    if (artifactsServer != null && buildContext.productProperties.productLayout.prepareCustomPluginRepositoryForPublishedPlugins) {
-      builtinPluginsRepoUrl = artifactsServer.urlToArtifact(buildContext, "${buildContext.applicationInfo.productCode}-plugins/plugins.xml")
-      if (builtinPluginsRepoUrl.startsWith("http:")) {
-        buildContext.messages.error("Insecure artifact server: " + builtinPluginsRepoUrl)
-      }
-    }
-    BuildUtils.copyAndPatchFile(sourceFile, targetFile,
-                                ["BUILD_NUMBER": buildContext.fullBuildNumber, "BUILD_DATE": date, "BUILD": buildContext.buildNumber,
-                                "BUILTIN_PLUGINS_URL": builtinPluginsRepoUrl ?: ""])
-    return targetFile
   }
 
   @CompileStatic(TypeCheckingMode.SKIP)
@@ -280,7 +374,10 @@ idea.fatal.error.notification=disabled
         return file
       }
     }
-    buildContext.messages.error("Cannot find '$normalizedRelativePath' in sources of '$buildContext.productProperties.applicationInfoModule' and in $buildContext.productProperties.brandingResourcePaths")
+
+    buildContext.messages.error(
+      "Cannot find '$normalizedRelativePath' neither in sources of '$buildContext.productProperties.applicationInfoModule'" +
+      " nor in $buildContext.productProperties.brandingResourcePaths")
     return null
   }
 
@@ -312,44 +409,52 @@ idea.fatal.error.notification=disabled
   @Override
   void compileModulesFromProduct() {
     checkProductProperties()
-    Path patchedApplicationInfo = patchApplicationInfo()
-    compileModulesForDistribution(patchedApplicationInfo)
+    compileModulesForDistribution()
   }
 
-  private DistributionJARsBuilder compileModulesForDistribution(@NotNull Path patchedApplicationInfo) {
-    def productLayout = buildContext.productProperties.productLayout
-    List<String> moduleNames = DistributionJARsBuilder.getModulesToCompile(buildContext)
-    def mavenArtifacts = buildContext.productProperties.mavenArtifacts
-    compileModules(moduleNames + ((buildContext.proprietaryBuildTools.scrambleTool?.additionalModulesToCompile ?: Collections.emptyList()) as List<String>) +
-                   productLayout.mainModules + mavenArtifacts.additionalModules + mavenArtifacts.proprietaryModules,
-                   buildContext.productProperties.modulesToCompileTests)
+  private DistributionJARsBuilder compileModulesForDistribution() {
+    ProductModulesLayout productLayout = buildContext.productProperties.productLayout
+    Collection<String> moduleNames = DistributionJARsBuilder.getModulesToCompile(buildContext)
+    MavenArtifactsProperties mavenArtifacts = buildContext.productProperties.mavenArtifacts
+
+    Set<String> toCompile = new LinkedHashSet<>()
+    toCompile.addAll(moduleNames)
+    toCompile.addAll(buildContext.proprietaryBuildTools.scrambleTool?.additionalModulesToCompile ?: Collections.<String>emptyList())
+    toCompile.addAll(productLayout.mainModules)
+    toCompile.addAll(mavenArtifacts.additionalModules)
+    toCompile.addAll(mavenArtifacts.proprietaryModules)
+    toCompile.addAll(buildContext.productProperties.modulesToCompileTests)
+    compileModules(toCompile)
 
     def pluginsToPublish = new LinkedHashSet<>(
       DistributionJARsBuilder.getPluginsByModules(buildContext, buildContext.productProperties.productLayout.pluginModulesToPublish))
 
     if (buildContext.shouldBuildDistributions()) {
-      Path providedModulesFile = Paths.get(buildContext.paths.artifacts, "${buildContext.applicationInfo.productCode}-builtinModules.json")
-      buildProvidedModulesList(providedModulesFile, moduleNames)
+      Path providedModulesFile = Path.of(buildContext.paths.artifacts, "${buildContext.applicationInfo.productCode}-builtinModules.json")
+      buildProvidedModulesList(buildContext, providedModulesFile, moduleNames)
       if (buildContext.productProperties.productLayout.buildAllCompatiblePlugins) {
         if (!buildContext.options.buildStepsToSkip.contains(BuildOptions.PROVIDED_MODULES_LIST_STEP)) {
-          pluginsToPublish.addAll(new PluginsCollector(buildContext, providedModulesFile.toString()).collectCompatiblePluginsToPublish())
+          PluginsCollector collector = new PluginsCollector(buildContext)
+          pluginsToPublish.addAll(collector.collectCompatiblePluginsToPublish(providedModulesFile.toString()))
         }
         else {
           buildContext.messages.info("Skipping collecting compatible plugins because PROVIDED_MODULES_LIST_STEP was skipped")
         }
       }
     }
-    return compilePlatformAndPluginModules(patchedApplicationInfo, pluginsToPublish)
+    return compilePlatformAndPluginModules(pluginsToPublish)
   }
 
-  private DistributionJARsBuilder compilePlatformAndPluginModules(@NotNull Path patchedApplicationInfo, @NotNull Set<PluginLayout> pluginsToPublish) {
-    def distributionJARsBuilder = new DistributionJARsBuilder(buildContext, patchedApplicationInfo, pluginsToPublish)
-    compileModules(distributionJARsBuilder.getModulesForPluginsToPublish())
+  private DistributionJARsBuilder compilePlatformAndPluginModules(@NotNull Set<PluginLayout> pluginsToPublish) {
+    DistributionJARsBuilder distBuilder = new DistributionJARsBuilder(buildContext, pluginsToPublish)
+    compileModules(distBuilder.getModulesForPluginsToPublish())
 
-    //we need this to ensure that all libraries which may be used in the distribution are resolved, even if product modules don't depend on them (e.g. JUnit5)
-    CompilationTasks.create(buildContext).resolveProjectDependencies()
-    CompilationTasks.create(buildContext).buildProjectArtifacts(distributionJARsBuilder.includedProjectArtifacts)
-    return distributionJARsBuilder
+    // we need this to ensure that all libraries which may be used in the distribution are resolved,
+    // even if product modules don't depend on them (e.g. JUnit5)
+    CompilationTasks compilationTasks = CompilationTasks.create(buildContext)
+    compilationTasks.resolveProjectDependencies()
+    compilationTasks.buildProjectArtifacts(distBuilder.includedProjectArtifacts)
+    return distBuilder
   }
 
   @Override
@@ -358,46 +463,50 @@ idea.fatal.error.notification=disabled
     copyDependenciesFile()
     setupBundledMaven()
 
-    Path patchedApplicationInfo = patchApplicationInfo()
     logFreeDiskSpace("before compilation")
-    DistributionJARsBuilder distributionJARsBuilder = compileModulesForDistribution(patchedApplicationInfo)
+    DistributionJARsBuilder distributionJARsBuilder = compileModulesForDistribution()
     logFreeDiskSpace("after compilation")
-    def mavenArtifacts = buildContext.productProperties.mavenArtifacts
+    MavenArtifactsProperties mavenArtifacts = buildContext.productProperties.mavenArtifacts
     if (mavenArtifacts.forIdeModules || !mavenArtifacts.additionalModules.isEmpty() || !mavenArtifacts.proprietaryModules.isEmpty()) {
-      buildContext.executeStep("Generate Maven artifacts", BuildOptions.MAVEN_ARTIFACTS_STEP) {
-        def mavenArtifactsBuilder = new MavenArtifactsBuilder(buildContext)
-        List<String> ideModuleNames
-        if (mavenArtifacts.forIdeModules) {
-          def bundledPlugins = buildContext.productProperties.productLayout.bundledPluginModules as Set<String>
-          ideModuleNames = distributionJARsBuilder.platformModules + buildContext.productProperties.productLayout.getIncludedPluginModules(bundledPlugins)
+      buildContext.executeStep("Generate Maven artifacts", BuildOptions.MAVEN_ARTIFACTS_STEP, new Runnable() {
+        @Override
+        void run() {
+          MavenArtifactsBuilder mavenArtifactsBuilder = new MavenArtifactsBuilder(buildContext)
+          List<String> moduleNames = new ArrayList<>()
+          if (mavenArtifacts.forIdeModules) {
+            Set<String> bundledPlugins = Set.copyOf(buildContext.productProperties.productLayout.bundledPluginModules)
+            moduleNames.addAll(distributionJARsBuilder.platformModules)
+            moduleNames.addAll(buildContext.productProperties.productLayout.getIncludedPluginModules(bundledPlugins))
+          }
+          moduleNames.addAll(mavenArtifacts.additionalModules)
+          if (!moduleNames.isEmpty()) {
+            mavenArtifactsBuilder.generateMavenArtifacts(moduleNames, 'maven-artifacts')
+          }
+          if (!mavenArtifacts.proprietaryModules.isEmpty()) {
+            mavenArtifactsBuilder.generateMavenArtifacts(mavenArtifacts.proprietaryModules, 'proprietary-maven-artifacts')
+          }
         }
-        else {
-          ideModuleNames = []
-        }
-        def moduleNames = ideModuleNames + mavenArtifacts.additionalModules
-        if (!moduleNames.isEmpty()) {
-          mavenArtifactsBuilder.generateMavenArtifacts(moduleNames, 'maven-artifacts')
-        }
-        if (!mavenArtifacts.proprietaryModules.isEmpty()) {
-          mavenArtifactsBuilder.generateMavenArtifacts(mavenArtifacts.proprietaryModules, 'proprietary-maven-artifacts')
-        }
-      }
+      })
     }
 
-    buildContext.messages.block("Build platform and plugin JARs") {
-      if (buildContext.shouldBuildDistributions()) {
-        distributionJARsBuilder.buildJARs()
-        DistributionJARsBuilder.buildAdditionalArtifacts(buildContext, distributionJARsBuilder.projectStructureMapping)
-        scramble(buildContext)
-        DistributionJARsBuilder.reorderJars(buildContext)
+    buildContext.messages.block("Build platform and plugin JARs", new Supplier<Void>() {
+      @Override
+      Void get() {
+        if (buildContext.shouldBuildDistributions()) {
+           distributionJARsBuilder.buildJARs()
+           DistributionJARsBuilder.buildAdditionalArtifacts(buildContext, distributionJARsBuilder.projectStructureMapping)
+           scramble(buildContext)
+           reorderJars(buildContext)
+         }
+         else {
+           buildContext.messages.info("Skipped building product distributions because 'intellij.build.target.os' property is set to '$BuildOptions.OS_NONE'")
+           reorderJars(buildContext)
+           DistributionJARsBuilder.buildSearchableOptions(buildContext, distributionJARsBuilder.getModulesForPluginsToPublish())
+           distributionJARsBuilder.buildNonBundledPlugins(true)
+         }
+        return null
       }
-      else {
-        buildContext.messages.info("Skipped building product distributions because 'intellij.build.target.os' property is set to '$BuildOptions.OS_NONE'")
-        DistributionJARsBuilder.reorderJars(buildContext)
-        DistributionJARsBuilder.createBuildSearchableOptionsTask(distributionJARsBuilder.getModulesForPluginsToPublish()).execute(buildContext)
-        distributionJARsBuilder.buildNonBundledPlugins(true)
-      }
-    }
+    })
 
     if (buildContext.shouldBuildDistributions()) {
       setupJBre()
@@ -408,7 +517,7 @@ idea.fatal.error.notification=disabled
       if (buildContext.shouldBuildDistributionForOS(BuildOptions.OS_WINDOWS)) {
         tasks.add(createDistributionForOsTask("win", { BuildContext context ->
           context.windowsDistributionCustomizer?.
-            with { new WindowsDistributionBuilder(context, it, propertiesFile, patchedApplicationInfo) }
+            with { new WindowsDistributionBuilder(context, it, propertiesFile, "$buildContext.applicationInfo") }
         }))
       }
       if (buildContext.shouldBuildDistributionForOS(BuildOptions.OS_LINUX)) {
@@ -480,17 +589,15 @@ idea.fatal.error.notification=disabled
     checkProductProperties()
     checkPluginModules(mainPluginModules, "mainPluginModules", buildContext.productProperties.productLayout.allNonTrivialPlugins)
     copyDependenciesFile()
-    def pluginsToPublish = new LinkedHashSet<PluginLayout>(
-      DistributionJARsBuilder.getPluginsByModules(buildContext, mainPluginModules))
-    def distributionJARsBuilder = compilePlatformAndPluginModules(patchApplicationInfo(), pluginsToPublish)
-    DistributionJARsBuilder.createBuildSearchableOptionsTask(distributionJARsBuilder.getModulesForPluginsToPublish()).execute(buildContext)
+    Set<PluginLayout> pluginsToPublish = DistributionJARsBuilder.getPluginsByModules(buildContext, mainPluginModules)
+    DistributionJARsBuilder distributionJARsBuilder = compilePlatformAndPluginModules(pluginsToPublish)
+    DistributionJARsBuilder.buildSearchableOptions(buildContext, distributionJARsBuilder.getModulesForPluginsToPublish())
     distributionJARsBuilder.buildNonBundledPlugins(true)
   }
 
   @Override
   void generateProjectStructureMapping(File targetFile) {
-    def jarsBuilder = new DistributionJARsBuilder(buildContext, patchApplicationInfo())
-    jarsBuilder.generateProjectStructureMapping(targetFile)
+    new DistributionJARsBuilder(buildContext).generateProjectStructureMapping(targetFile.toPath())
   }
 
   private void setupJBre(String targetArch = null) {
@@ -520,7 +627,7 @@ idea.fatal.error.notification=disabled
   }
 
   @CompileStatic(TypeCheckingMode.SKIP)
-  static def unpackPty4jNative(BuildContext buildContext, @NotNull Path distDir, String pty4jOsSubpackageName) {
+  static @NotNull Path unpackPty4jNative(BuildContext buildContext, @NotNull Path distDir, String pty4jOsSubpackageName) {
     def pty4jNativeDir = "$distDir/lib/pty4j-native"
     def nativePkg = "resources/com/pty4j/native"
     def includedNativePkg = Strings.trimEnd(nativePkg + "/" + Strings.notNullize(pty4jOsSubpackageName), '/')
@@ -539,18 +646,68 @@ idea.fatal.error.notification=disabled
     if (files.empty) {
       buildContext.messages.error("Cannot layout pty4j native: no files extracted")
     }
+    return Path.of(pty4jNativeDir)
   }
 
   //dbus-java is used only on linux for KWallet integration.
   //It relies on native libraries, causing notarization issues on mac.
   //So it is excluded from all distributions and manually re-included on linux.
-  static void addDbusJava(BuildContext buildContext, @NotNull Path distDir) {
+  static List<String> addDbusJava(BuildContext buildContext, @NotNull Path distDir) {
     JpsLibrary library = buildContext.findModule("intellij.platform.credentialStore").libraryCollection.findLibrary("dbus-java")
     Path destLibDir = distDir.resolve("lib")
+    List<String> extraJars = new ArrayList<>()
     Files.createDirectories(destLibDir)
     for (File file : library.getFiles(JpsOrderRootType.COMPILED)) {
       Files.copy(file.toPath(), destLibDir.resolve(file.name), StandardCopyOption.REPLACE_EXISTING)
+      extraJars += file.name
     }
+    return extraJars
+  }
+
+  static void appendLibsToClasspathJar(BuildContext buildContext, @NotNull Path distDir, @NotNull List<String> extraJars) {
+    def srcClassPathTxt = Paths.get("$buildContext.paths.distAll/lib/classpath.txt")
+    Path destLibDir = distDir.resolve("lib")
+    //no file in fleet
+    if (Files.exists(srcClassPathTxt)) {
+      def classPathTxt = destLibDir.resolve("classpath.txt")
+      Files.copy(srcClassPathTxt, classPathTxt, StandardCopyOption.REPLACE_EXISTING)
+      Files.writeString(classPathTxt, "\n" + extraJars.join("\n"), StandardOpenOption.APPEND)
+      buildContext.messages.warning("added ${extraJars.size()} extra jars to classpath.txt")
+    }
+    else {
+      buildContext.messages.warning("no classpath.txt - no patching")
+    }
+  }
+
+  static List<String> addProjectorServer(BuildContext buildContext, @NotNull Path distDir) {
+    Path destLibDir = distDir.resolve("lib")
+    Path destProjectorLibDir = destLibDir.resolve("projector")
+    List<String> extraJars = new ArrayList<>()
+    Files.createDirectories(destProjectorLibDir)
+
+    def libNamesToCopy = new ArrayList<String>()
+    libNamesToCopy.addAll("projector-server", "kotlinx-serialization-protobuf", "Java-WebSocket", "projector-common", "projector-common-jvm", "projector-util-logging-jvm")
+
+    ArrayList<File> projectorLibsToCopy = new ArrayList<>()
+    ArrayList<String> failedLibs = new ArrayList<>()
+    for (String libName : libNamesToCopy) {
+      try {
+        projectorLibsToCopy.addAll(buildContext.project.libraryCollection.findLibrary(libName).getFiles(JpsOrderRootType.COMPILED))
+      } catch (Throwable ignored) {
+        failedLibs.add(libName)
+      }
+    }
+
+    if (!failedLibs.isEmpty()) {
+      buildContext.messages.error("Failed to get projector libraries: ${failedLibs.join(", ")}")
+    }
+
+    for (File file : projectorLibsToCopy) {
+      Files.copy(file.toPath(), destProjectorLibDir.resolve(file.name), StandardCopyOption.REPLACE_EXISTING)
+      extraJars += "projector/" + file.name
+    }
+
+    return extraJars
   }
 
   private void logFreeDiskSpace(String phase) {
@@ -565,7 +722,7 @@ idea.fatal.error.notification=disabled
   }
 
   @CompileStatic(TypeCheckingMode.SKIP)
-  private void scramble(BuildContext buildContext) {
+  private static void scramble(BuildContext buildContext) {
     if (!buildContext.productProperties.scrambleMainJar) {
       return
     }
@@ -617,7 +774,8 @@ idea.fatal.error.notification=disabled
 
     checkModules(properties.mavenArtifacts.additionalModules, "productProperties.mavenArtifacts.additionalModules")
     if (buildContext.productProperties.scrambleMainJar) {
-      checkModules(buildContext.proprietaryBuildTools.scrambleTool?.namesOfModulesRequiredToBeScrambled, "ProprietaryBuildTools.scrambleTool.namesOfModulesRequiredToBeScrambled")
+      checkModules(buildContext.proprietaryBuildTools.scrambleTool?.namesOfModulesRequiredToBeScrambled,
+                   "ProprietaryBuildTools.scrambleTool.namesOfModulesRequiredToBeScrambled")
     }
   }
 
@@ -632,6 +790,7 @@ idea.fatal.error.notification=disabled
 
     checkPluginModules(layout.bundledPluginModules, "productProperties.productLayout.bundledPluginModules", nonTrivialPlugins)
     checkPluginModules(layout.pluginModulesToPublish, "productProperties.productLayout.pluginModulesToPublish", nonTrivialPlugins)
+    checkPluginModules(layout.compatiblePluginsToIgnore, "productProperties.productLayout.compatiblePluginsToIgnore", nonTrivialPlugins)
 
     if (!layout.buildAllCompatiblePlugins && !layout.compatiblePluginsToIgnore.isEmpty()) {
       buildContext.messages.warning("layout.buildAllCompatiblePlugins option isn't enabled. Value of " +
@@ -647,7 +806,8 @@ idea.fatal.error.notification=disabled
     }
     if (layout.prepareCustomPluginRepositoryForPublishedPlugins && layout.pluginModulesToPublish.isEmpty() &&
         !layout.buildAllCompatiblePlugins) {
-      buildContext.messages.error("productProperties.productLayout.prepareCustomPluginRepositoryForPublishedPlugins option is enabled but no pluginModulesToPublish are specified")
+      buildContext.messages.error("productProperties.productLayout.prepareCustomPluginRepositoryForPublishedPlugins option is enabled" +
+                                  " but no pluginModulesToPublish are specified")
     }
 
     checkModules(layout.productApiModules, "productProperties.productLayout.productApiModules")
@@ -743,7 +903,7 @@ idea.fatal.error.notification=disabled
   }
 
   @Override
-  void compileModules(List<String> moduleNames, List<String> includingTestsInModules = []) {
+  void compileModules(Collection<String> moduleNames, List<String> includingTestsInModules = []) {
     CompilationTasks.create(buildContext).compileModules(moduleNames, includingTestsInModules)
   }
 
@@ -844,7 +1004,7 @@ idea.fatal.error.notification=disabled
       .runtimeOnly()
       .libraries.collectMany {it.getFiles(JpsOrderRootType.COMPILED)}
     new LayoutBuilder(buildContext, false).layout(buildContext.paths.artifacts) {
-      jar("updater-full.jar") {
+      jar("updater-full.jar", true) {
         module(updaterModule)
         for (file in libraryFiles) {
           ant.zipfileset(src: file.absolutePath)
@@ -856,12 +1016,12 @@ idea.fatal.error.notification=disabled
   @Override
   void runTestBuild() {
     checkProductProperties()
-    Path patchedApplicationInfo = patchApplicationInfo()
-    DistributionJARsBuilder distributionJARsBuilder = compileModulesForDistribution(patchedApplicationInfo)
+    setupBundledMaven()
+    DistributionJARsBuilder distributionJARsBuilder = compileModulesForDistribution()
     distributionJARsBuilder.buildJARs()
     DistributionJARsBuilder.buildInternalUtilities(buildContext)
     scramble(buildContext)
-    DistributionJARsBuilder.reorderJars(buildContext)
+    reorderJars(buildContext)
     layoutShared()
     Map<String, String> checkerConfig = buildContext.productProperties.versionCheckerConfig
     if (checkerConfig != null) {
@@ -883,8 +1043,7 @@ idea.fatal.error.notification=disabled
     buildContext.options.targetOS = currentOs.osId
 
     setupBundledMaven()
-    Path patchedApplicationInfo = patchApplicationInfo()
-    compileModulesForDistribution(patchedApplicationInfo).buildJARs(true)
+    compileModulesForDistribution().buildJARs(true)
     def osSpecificPlugins = DistributionJARsBuilder.getOsSpecificDistDirectory(currentOs, buildContext).resolve("plugins")
     if (Files.isDirectory(osSpecificPlugins)) {
       Files.newDirectoryStream(osSpecificPlugins).withCloseable { children ->
@@ -892,8 +1051,8 @@ idea.fatal.error.notification=disabled
       }
     }
 
-    DistributionJARsBuilder.reorderJars(buildContext)
-    JvmArchitecture arch = SystemInfo.isArm64 ? JvmArchitecture.aarch64 : SystemInfo.is64Bit ? JvmArchitecture.x64 : JvmArchitecture.x32
+    reorderJars(buildContext)
+    JvmArchitecture arch = CpuArch.isArm64() ? JvmArchitecture.aarch64 : JvmArchitecture.x64
     if (includeBinAndRuntime) {
       setupJBre(arch.name())
     }
@@ -904,7 +1063,7 @@ idea.fatal.error.notification=disabled
       OsSpecificDistributionBuilder builder
       switch (currentOs) {
         case OsFamily.WINDOWS:
-          builder = new WindowsDistributionBuilder(buildContext, buildContext.windowsDistributionCustomizer, propertiesFile, patchedApplicationInfo)
+          builder = new WindowsDistributionBuilder(buildContext, buildContext.windowsDistributionCustomizer, propertiesFile, "$buildContext.applicationInfo")
           break
         case OsFamily.LINUX:
           builder = new LinuxDistributionBuilder(buildContext, buildContext.linuxDistributionCustomizer, propertiesFile)
@@ -943,7 +1102,6 @@ idea.fatal.error.notification=disabled
     Files.createDirectories(newDir)
     for (Pair<Path, String> item : buildContext.distFiles) {
       Path file = item.getFirst()
-
       Path dir = newDir.resolve(item.getSecond())
       Files.createDirectories(dir)
       Files.copy(file, dir.resolve(file.fileName), StandardCopyOption.REPLACE_EXISTING)
@@ -957,5 +1115,19 @@ idea.fatal.error.notification=disabled
       Files.move(distBinDir.resolve("inspect.sh"), targetPath, StandardCopyOption.REPLACE_EXISTING)
       buildContext.patchInspectScript(targetPath)
     }
+  }
+
+  private static void reorderJars(@NotNull BuildContext buildContext) {
+    if (buildContext.options.buildStepsToSkip.contains(BuildOptions.GENERATE_JAR_ORDER_STEP)) {
+      return
+    }
+
+    BuildHelper.getInstance(buildContext).reorderJars
+      .invokeWithArguments(buildContext.paths.distAllDir, buildContext.paths.distAllDir,
+                           buildContext.getBootClassPathJarNames(),
+                           buildContext.paths.tempDir,
+                           buildContext.productProperties.productLayout.mainJarName,
+                           buildContext.productProperties.isAntRequired ? Path.of(buildContext.paths.communityHome, "lib/ant/lib") : null,
+                           buildContext.messages)
   }
 }

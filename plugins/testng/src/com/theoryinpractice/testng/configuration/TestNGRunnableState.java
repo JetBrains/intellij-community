@@ -133,7 +133,7 @@ public class TestNGRunnableState extends JavaTestFrameworkRunnableState<TestNGCo
 
   @Override
   public @Nullable SearchForTestsTask createSearchingForTestsTask(@NotNull TargetEnvironment targetEnvironment) {
-    return new SearchingForTestsTask(myServerSocket, config, myTempFile) {
+    return new SearchingForTestsTask(getServerSocket(), config, myTempFile) {
       @Override
       protected void onFound() {
         super.onFound();

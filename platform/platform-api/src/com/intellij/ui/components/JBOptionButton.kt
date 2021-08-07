@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.components
 
 import com.intellij.openapi.actionSystem.AnAction
@@ -7,7 +7,6 @@ import com.intellij.openapi.keymap.KeymapUtil.getFirstKeyboardShortcutText
 import com.intellij.openapi.ui.OptionAction
 import com.intellij.openapi.util.Weighted
 import com.intellij.ui.UIBundle
-import com.intellij.util.containers.ContainerUtil.unmodifiableOrEmptySet
 import org.jetbrains.annotations.ApiStatus
 import java.awt.event.ActionEvent
 import java.awt.event.InputEvent
@@ -26,7 +25,6 @@ open class JBOptionButton(action: Action?, options: Array<Action>?) : JButton(ac
       val oldOptions = options
       field = value
 
-      fillOptionInfos()
       firePropertyChange(PROP_OPTIONS, oldOptions, options)
       if (!Arrays.equals(oldOptions, options)) {
         revalidate()
@@ -45,12 +43,7 @@ open class JBOptionButton(action: Action?, options: Array<Action>?) : JButton(ac
       firePropertyChange(PROP_OPTION_TOOLTIP, oldValue, optionTooltipText)
     }
 
-  var isOkToProcessDefaultMnemonics = false
-
   val isSimpleButton: Boolean get() = options.isNullOrEmpty()
-
-  private val _optionInfos = mutableSetOf<OptionInfo>()
-  val optionInfos: Set<OptionInfo> get() = unmodifiableOrEmptySet(_optionInfos)
 
   init {
     this.options = options
@@ -70,40 +63,6 @@ open class JBOptionButton(action: Action?, options: Array<Action>?) : JButton(ac
   fun updateOptions(options: Array<Action>?) {
     this.options = options
   }
-
-  private fun fillOptionInfos() {
-    _optionInfos.clear()
-    _optionInfos += options.orEmpty().filter { it !== action }.map { getMenuInfo(it) }
-  }
-
-  private fun getMenuInfo(each: Action): OptionInfo {
-    val text = (each.getValue(Action.NAME) as? String).orEmpty()
-    var mnemonic = -1
-    var mnemonicIndex = -1
-    val plainText = StringBuilder()
-    for (i in 0 until text.length) {
-      val ch = text[i]
-      if (ch == '&' || ch == '_') {
-        if (i + 1 < text.length) {
-          val mnemonicsChar = text[i + 1]
-          mnemonic = Character.toUpperCase(mnemonicsChar).toInt()
-          mnemonicIndex = i
-        }
-        continue
-      }
-      plainText.append(ch)
-    }
-
-    return OptionInfo(plainText.toString(), mnemonic, mnemonicIndex, this, each)
-  }
-
-  class OptionInfo internal constructor(
-    val plainText: String,
-    val mnemonic: Int,
-    val mnemonicIndex: Int,
-    val button: JBOptionButton,
-    val action: Action
-  )
 
   companion object {
     const val PROP_OPTIONS = "OptionActions"

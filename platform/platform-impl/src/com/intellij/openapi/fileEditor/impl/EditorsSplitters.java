@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.fileEditor.impl;
 
 import com.intellij.diagnostic.Activity;
@@ -42,7 +42,6 @@ import com.intellij.ui.DirtyUI;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.OnePixelSplitter;
 import com.intellij.ui.awt.RelativePoint;
-import com.intellij.ui.docking.DockManager;
 import com.intellij.ui.tabs.JBTabs;
 import com.intellij.ui.tabs.impl.JBTabsImpl;
 import com.intellij.ui.tabs.impl.tabsLayout.TabsLayoutInfo;
@@ -53,6 +52,7 @@ import com.intellij.util.PathUtil;
 import com.intellij.util.concurrency.NonUrgentExecutor;
 import com.intellij.util.containers.ArrayListSet;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jdom.Element;
@@ -68,6 +68,7 @@ import java.awt.datatransfer.Transferable;
 import java.awt.event.ContainerEvent;
 import java.awt.event.FocusEvent;
 import java.beans.PropertyChangeListener;
+import java.lang.ref.Reference;
 import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -78,13 +79,12 @@ import java.util.concurrent.CopyOnWriteArraySet;
 import static com.intellij.openapi.wm.ToolWindowId.PROJECT_VIEW;
 
 @DirtyUI
-public class EditorsSplitters extends IdePanePanel implements UISettingsListener {
+public class EditorsSplitters extends IdePanePanel implements UISettingsListener, Disposable {
   private static final Key<Activity> OPEN_FILES_ACTIVITY = Key.create("open.files.activity");
   private static final Logger LOG = Logger.getInstance(EditorsSplitters.class);
   @NonNls private static final String PINNED = "pinned";
   private static final String CURRENT_IN_TAB = "current-in-tab";
 
-  private static final Key<Object> DUMMY_KEY = Key.create("EditorsSplitters.dummy.key");
   private static final Key<Boolean> OPENED_IN_BULK = Key.create("EditorSplitters.opened.in.bulk");
   @NonNls public static final String SPLITTER_KEY = "EditorsSplitters";
 
@@ -97,15 +97,13 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
   int myInsideChange;
   private final MyFocusWatcher myFocusWatcher;
   private final Alarm myIconUpdaterAlarm;
-  final Disposable parentDisposable;
   private final UIBuilder myUIBuilder = new UIBuilder();
   private EditorColorsScheme colorScheme;
 
-  EditorsSplitters(@NotNull FileEditorManagerImpl manager, boolean createOwnDockableContainer, @NotNull Disposable parentDisposable) {
+  EditorsSplitters(@NotNull FileEditorManagerImpl manager) {
     super(new BorderLayout());
 
-    myIconUpdaterAlarm = new Alarm(parentDisposable);
-    this.parentDisposable = parentDisposable;
+    myIconUpdaterAlarm = new Alarm(this);
 
     setBackground(JBColor.namedColor("Editor.background", IdeBackgroundUtil.getIdeBackgroundColor()));
     PropertyChangeListener l = e -> {
@@ -116,23 +114,19 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
     };
 
     UIManager.getDefaults().addPropertyChangeListener(l);
-    Disposer.register(parentDisposable, () -> UIManager.getDefaults().removePropertyChangeListener(l));
+    Disposer.register(this, () -> UIManager.getDefaults().removePropertyChangeListener(l));
 
     myManager = manager;
 
     myFocusWatcher = new MyFocusWatcher();
-    Disposer.register(parentDisposable, () -> myFocusWatcher.deinstall(this));
+    Disposer.register(this, () -> myFocusWatcher.deinstall(this));
 
     setFocusTraversalPolicy(new MyFocusTraversalPolicy());
     setTransferHandler(new MyTransferHandler());
     clear();
 
-    if (createOwnDockableContainer) {
-      DockableEditorTabbedContainer dockable = new DockableEditorTabbedContainer(myManager.getProject(), this, false);
-      DockManager.getInstance(manager.getProject()).register(dockable, parentDisposable);
-    }
-
-    ApplicationManager.getApplication().getMessageBus().connect(parentDisposable).subscribe(KeymapManagerListener.TOPIC, new KeymapManagerListener() {
+    MessageBusConnection busConnection = ApplicationManager.getApplication().getMessageBus().connect(this);
+    busConnection.subscribe(KeymapManagerListener.TOPIC, new KeymapManagerListener() {
       @Override
       public void activeKeymapChanged(@Nullable Keymap keymap) {
         invalidate();
@@ -141,11 +135,14 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
     });
 
     colorScheme = EditorColorsManager.getInstance().getSchemeForCurrentUITheme();
-    ApplicationManager.getApplication().getMessageBus().connect(myManager).subscribe(LafManagerListener.TOPIC, laf -> {
+    busConnection.subscribe(LafManagerListener.TOPIC, laf -> {
       colorScheme = EditorColorsManager.getInstance().getSchemeForCurrentUITheme();
     });
+  }
 
-    Disposer.register(parentDisposable, () -> setDropTarget(null));
+  @Override
+  public void dispose() {
+    setDropTarget(null);
   }
 
   @NotNull
@@ -261,8 +258,9 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
       return null;
     }
 
-    myManager.getProject().putUserData(OPEN_FILES_ACTIVITY, StartUpMeasurer.startActivity(Activities.EDITOR_RESTORING_TILL_PAINT));
-    Activity restoringEditors = StartUpMeasurer.startMainActivity(Activities.EDITOR_RESTORING);
+    myManager.getProject().putUserData(OPEN_FILES_ACTIVITY,
+                                       StartUpMeasurer.startActivity(Activities.EDITOR_RESTORING_TILL_PAINT, ActivityCategory.DEFAULT));
+    Activity restoringEditors = StartUpMeasurer.startActivity(Activities.EDITOR_RESTORING);
     JPanel component = myUIBuilder.process(element, getTopPanel());
     if (component != null) {
       component.setFocusable(false);
@@ -289,6 +287,16 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
         if (!result.contains(editor)) {
           result.add(editor);
         }
+      }
+    }
+  }
+
+  public void closeAllFiles() {
+    ArrayList<EditorWindow> windows = new ArrayList<>(myWindows);
+    clear();
+    for (EditorWindow window : windows) {
+      for (VirtualFile file : window.getFiles()) {
+        window.closeFile(file, false, false);
       }
     }
   }
@@ -418,7 +426,7 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
     ReadAction
       .nonBlocking(() -> IconUtil.computeFileIcon(file, Iconable.ICON_FLAG_READ_STATUS, myManager.getProject()))
       .coalesceBy(this, "icon", file)
-      .expireWith(parentDisposable)
+      .expireWith(this)
       .expireWhen(() -> !file.isValid())
       .finishOnUiThread(ModalityState.any(), icon -> updateFileIconImmediately(file, icon))
       .submit(NonUrgentExecutor.getInstance());
@@ -428,11 +436,12 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
     Collection<EditorWindow> windows = findWindows(file);
     for (EditorWindow window : windows) {
       EditorWithProviderComposite composite = window.findFileComposite(file);
+      LOG.assertTrue(composite != null);
       int index = window.findEditorIndex(composite);
       LOG.assertTrue(index != -1);
       window.setForegroundAt(index, getManager().getFileColor(file));
       TextAttributes attributes = getManager().isProblem(file) ? colorScheme.getAttributes(CodeInsightColors.ERRORS_ATTRIBUTES) : null;
-      if (composite != null && composite.isPreview()) {
+      if (composite.isPreview()) {
         var italic = new TextAttributes(null, null, null, null, Font.ITALIC);
         attributes = (attributes == null) ? italic : TextAttributes.merge(italic, attributes);
       }
@@ -598,7 +607,9 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
       window.closeFile(file, false, moveFocus);
       if (window.getTabCount() == 0 && nextFile != null && isProjectOpen && !FileEditorManagerImpl.forbidSplitFor(nextFile)) {
         EditorWithProviderComposite newComposite = myManager.newEditorComposite(nextFile);
-        window.setEditor(newComposite, moveFocus); // newComposite can be null
+        if (newComposite != null) {
+          window.setEditor(newComposite, moveFocus);
+        }
       }
     }
     // cleanup windows with no tabs
@@ -632,7 +643,7 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
 
   private final class MyFocusTraversalPolicy extends IdeFocusTraversalPolicy {
     @Override
-    public final Component getDefaultComponent(Container focusCycleRoot) {
+    public Component getDefaultComponent(Container focusCycleRoot) {
       if (myCurrentWindow != null) {
         EditorWithProviderComposite selectedEditor = myCurrentWindow.getSelectedEditor();
         if (selectedEditor != null) {
@@ -694,7 +705,7 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
 
   @NotNull
   private EditorWindow createEditorWindow() {
-    return new EditorWindow(this, parentDisposable);
+    return new EditorWindow(this, this);
   }
 
   /**
@@ -740,15 +751,6 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
 
   boolean containsWindow(@NotNull EditorWindow window) {
     return myWindows.contains(window);
-  }
-
-  /**
-   * @deprecated Use {@link #getEditorComposites()}
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.2")
-  public EditorWithProviderComposite @NotNull [] getEditorsComposites() {
-    return getEditorComposites().toArray(new EditorWithProviderComposite[0]);
   }
 
   public @NotNull List<EditorWithProviderComposite> getEditorComposites() {
@@ -938,6 +940,7 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
         EditorWindow editorWindow = context == null ? createEditorWindow() : findWindowWith(context);
         windowRef.set(editorWindow);
         if (editorWindow != null) {
+          setCurrentWindow(editorWindow, false);
           if (tabSizeLimit != 1) {
             ComponentUtil.putClientProperty(editorWindow.getTabbedPane().getComponent(), JBTabsImpl.SIDE_TABS_SIZE_LIMIT_KEY, tabSizeLimit);
           }
@@ -962,9 +965,10 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
         }
         else {
           FileEditorOpenOptions openOptions = new FileEditorOpenOptions()
+            .withSelectAsCurrent(false)
             .withPin(Boolean.valueOf(file.getAttributeValue(PINNED)))
             .withIndex(i)
-            .withReopeningEditorsOnStartup();
+            .withReopeningOnStartup();
           try {
             virtualFile.putUserData(OPENED_IN_BULK, Boolean.TRUE);
             Document document = ReadAction.compute(() -> {
@@ -974,12 +978,10 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
             boolean isCurrentTab = Boolean.parseBoolean(file.getAttributeValue(CURRENT_IN_TAB));
 
             fileEditorManager.openFileImpl4(window, virtualFile, entry, openOptions);
-            if (document != null) {
-              // This is just to make sure document reference is kept on stack till this point
-              // so that document is available for folding state deserialization in HistoryEntry constructor
-              // and that document will be created only once during file opening
-              document.putUserData(DUMMY_KEY, null);
-            }
+            // This is just to make sure document reference is kept on stack till this point
+            // so that document is available for folding state deserialization in HistoryEntry constructor
+            // and that document will be created only once during file opening
+            Reference.reachabilityFence(document);
             if (isCurrentTab) {
               focusedFile = virtualFile;
             }
@@ -1013,7 +1015,7 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
         UIUtil.invokeLaterIfNeeded(() -> {
           EditorWithProviderComposite editor = window.findFileComposite(finalFocusedFile);
           if (editor != null) {
-            window.setEditor(editor, true, true);
+            window.setEditor(editor, true);
           }
         });
       }

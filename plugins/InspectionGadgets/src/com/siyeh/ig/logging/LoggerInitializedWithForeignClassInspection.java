@@ -1,14 +1,17 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.siyeh.ig.logging;
 
 import com.intellij.codeInspection.CommonQuickFixBundle;
 import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.ProblemHighlightType;
+import com.intellij.codeInspection.ui.InspectionOptionsPanel;
 import com.intellij.codeInspection.ui.ListTable;
 import com.intellij.codeInspection.ui.ListWrappingTableModel;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.xmlb.Accessor;
 import com.intellij.util.xmlb.SerializationFilterBase;
@@ -64,11 +67,14 @@ public class LoggerInitializedWithForeignClassInspection extends BaseInspection 
   @SuppressWarnings("PublicField")
   public @NonNls String loggerFactoryMethodName = DEFAULT_FACTORY_METHOD_NAMES;
 
+  public boolean ignoreSuperClass = false;
+  public boolean ignoreNonPublicClasses = false;
 
   {
     parseString(loggerClassName, loggerFactoryClassNames);
     parseString(loggerFactoryMethodName, loggerFactoryMethodNames);
   }
+
   @Override
   public JComponent createOptionsPanel() {
     final ListTable table = new ListTable(
@@ -76,7 +82,11 @@ public class LoggerInitializedWithForeignClassInspection extends BaseInspection 
                                  InspectionGadgetsBundle.message("logger.factory.class.name"),
                                  InspectionGadgetsBundle.message("logger.factory.method.name")));
     final String title = InspectionGadgetsBundle.message("logger.initialized.with.foreign.options.title");
-    return UiUtils.createAddRemoveTreeClassChooserPanel(table, title);
+    final var panel = new InspectionOptionsPanel(this);
+    panel.addGrowing(UiUtils.createAddRemoveTreeClassChooserPanel(table, title));
+    panel.addCheckbox(InspectionGadgetsBundle.message("logger.initialized.with.foreign.class.ignore.super.class.option"), "ignoreSuperClass");
+    panel.addCheckboxEx(InspectionGadgetsBundle.message("logger.initialized.with.foreign.class.ignore.non.public.classes.option"), "ignoreNonPublicClasses");
+    return panel;
   }
 
   @Override
@@ -123,12 +133,10 @@ public class LoggerInitializedWithForeignClassInspection extends BaseInspection 
       @Override
       protected boolean accepts(@NotNull Accessor accessor, @NotNull Object bean, @Nullable Object beanValue) {
         final @NonNls String factoryName = accessor.getName();
-        if ("loggerClassName".equals(factoryName) && DEFAULT_FACTORY_CLASS_NAMES.equals(beanValue)) {
-          return false;
-        }
-        if ("loggerFactoryMethodNames".equals(factoryName) && DEFAULT_FACTORY_METHOD_NAMES.equals(beanValue)) {
-          return false;
-        }
+        if ("loggerClassName".equals(factoryName) && DEFAULT_FACTORY_CLASS_NAMES.equals(beanValue)) return false;
+        if ("loggerFactoryMethodNames".equals(factoryName) && DEFAULT_FACTORY_METHOD_NAMES.equals(beanValue)) return false;
+        if ("ignoreSuperClass".equals(factoryName) && !ignoreSuperClass) return false;
+        if ("ignoreNonPublicClasses".equals(factoryName) && !ignoreNonPublicClasses) return false;
         return true;
       }
     });
@@ -211,6 +219,9 @@ public class LoggerInitializedWithForeignClassInspection extends BaseInspection 
       if (containingClass == null) {
         return;
       }
+      if (ignoreNonPublicClasses && !containingClass.hasModifierProperty(PsiModifier.PUBLIC)) {
+        return;
+      }
       final String containingClassName = containingClass.getName();
       if (containingClassName == null) {
         return;
@@ -240,6 +251,13 @@ public class LoggerInitializedWithForeignClassInspection extends BaseInspection 
         return;
       }
       if (containingClass.equals(initializerClass)) {
+        return;
+      }
+      if (ignoreSuperClass && containingClass.isInheritor(initializerClass, true) ||
+          PsiTreeUtil.isAncestor(initializerClass, containingClass, true)) {
+        if (isOnTheFly()) {
+          registerError(expression, ProblemHighlightType.INFORMATION, containingClassName);
+        }
         return;
       }
       registerError(expression, containingClassName);

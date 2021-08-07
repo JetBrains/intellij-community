@@ -320,6 +320,11 @@ public class LossyEncodingInspection extends LocalInspectionTool {
       super(file);
     }
 
+    @Override
+    public boolean startInWriteAction() {
+      return false;
+    }
+
     @NotNull
     @Override
     public String getText() {
@@ -341,7 +346,7 @@ public class LossyEncodingInspection extends LocalInspectionTool {
       VirtualFile virtualFile = file.getVirtualFile();
 
       DataContext dataContext = createDataContext(editor, editor == null ? null : editor.getComponent(), virtualFile, project);
-      ListPopup popup = new ChangeFileEncodingAction().createPopup(dataContext);
+      ListPopup popup = new ChangeFileEncodingAction().createPopup(dataContext, null);
       if (popup != null) {
         popup.showInBestPositionFor(dataContext);
       }

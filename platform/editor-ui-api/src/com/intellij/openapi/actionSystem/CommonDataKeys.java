@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.actionSystem;
 
+import com.intellij.lang.Language;
 import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -93,6 +94,8 @@ public class CommonDataKeys {
    * Returns {@link PsiElement} instance.
    */
   public static final DataKey<PsiElement> PSI_ELEMENT = DataKey.create("psi.Element");
+
+  public static final DataKey<Language> LANGUAGE = DataKey.create("Language");
 
   /**
    * Returns currently selected {@link PsiFile} instance.

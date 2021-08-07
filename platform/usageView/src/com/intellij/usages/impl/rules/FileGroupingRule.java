@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.usages.impl.rules;
 
 import com.intellij.injected.editor.VirtualFileWindow;
@@ -14,7 +14,10 @@ import com.intellij.openapi.vcs.FileStatusManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
-import com.intellij.usages.*;
+import com.intellij.usages.NamedPresentably;
+import com.intellij.usages.Usage;
+import com.intellij.usages.UsageGroup;
+import com.intellij.usages.UsageTarget;
 import com.intellij.usages.rules.SingleParentUsageGroupingRule;
 import com.intellij.usages.rules.UsageGroupingRuleEx;
 import com.intellij.usages.rules.UsageInFile;
@@ -39,6 +42,11 @@ public class FileGroupingRule extends SingleParentUsageGroupingRule implements D
       return new FileUsageGroup(myProject, virtualFile);
     }
     return null;
+  }
+
+  @Override
+  public int getRank() {
+    return UsageGroupingRulesDefaultRanks.FILE_STRUCTURE.getAbsoluteRank();
   }
 
   @Override
@@ -90,13 +98,13 @@ public class FileGroupingRule extends SingleParentUsageGroupingRule implements D
     }
 
     @Override
-    public Icon getIcon(boolean isOpen) {
+    public Icon getIcon() {
       return myIcon;
     }
 
     @Override
     @NotNull
-    public String getText(UsageView view) {
+    public String getPresentableGroupText() {
       return myPresentableName;
     }
 
@@ -127,7 +135,7 @@ public class FileGroupingRule extends SingleParentUsageGroupingRule implements D
 
     @Override
     public int compareTo(@NotNull UsageGroup otherGroup) {
-      int compareTexts = getText(null).compareToIgnoreCase(otherGroup.getText(null));
+      int compareTexts = getPresentableGroupText().compareToIgnoreCase(otherGroup.getPresentableGroupText());
       if (compareTexts != 0) return compareTexts;
       if (otherGroup instanceof FileUsageGroup) {
         return myFile.getPath().compareTo(((FileUsageGroup)otherGroup).myFile.getPath());

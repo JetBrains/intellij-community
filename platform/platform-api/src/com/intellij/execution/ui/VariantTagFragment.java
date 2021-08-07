@@ -1,15 +1,24 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.ui;
 
+import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.project.DumbAwareAction;
+import com.intellij.openapi.ui.popup.JBPopup;
+import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.ui.components.DropDownLink;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
+import java.awt.*;
+import java.util.Objects;
 import java.util.function.*;
 
 public class VariantTagFragment<T, V> extends SettingsEditorFragment<T, TagButton> {
@@ -22,6 +31,10 @@ public class VariantTagFragment<T, V> extends SettingsEditorFragment<T, TagButto
     myToggleListener = toggleListener;
   }
 
+  public void setDefaultVariant(V defaultVariant) {
+    myDefaultVariant = defaultVariant;
+  }
+
   public static <T, V> VariantTagFragment<T, V> createFragment(String id,
                                                                @Nls(capitalization = Nls.Capitalization.Sentence) String name,
                                                                @Nls(capitalization = Nls.Capitalization.Title) String group,
@@ -30,14 +43,16 @@ public class VariantTagFragment<T, V> extends SettingsEditorFragment<T, TagButto
                                                                BiConsumer<? super T, ? super V> setter,
                                                                Predicate<? super T> initialSelection) {
     Ref<VariantTagFragment<T, V>> ref = new Ref<>();
-    TagButton tagButton = new TagButton(name, (e) -> ref.get().toggle(false, null));
+    VariantTagButton<V> tagButton = new VariantTagButton<>(name, (e) -> ref.get().toggle(false, null));
     VariantTagFragment<T, V> fragment = new VariantTagFragment<>(id, name, group, tagButton, variantsProvider, getter, setter, initialSelection);
+    tagButton.myFragment = fragment;
     Disposer.register(fragment, tagButton);
     ref.set(fragment);
     return fragment;
   }
 
   private V mySelectedVariant;
+  private V myDefaultVariant;
   private final Supplier<? extends V[]> myVariantsProvider;
   private final Function<? super T, ? extends V> myGetter;
   private final BiConsumer<? super T, ? super V> mySetter;
@@ -56,8 +71,8 @@ public class VariantTagFragment<T, V> extends SettingsEditorFragment<T, TagButto
     myVariantsProvider = variantsProvider;
     myGetter = getter;
     mySetter = setter;
+    myDefaultVariant = getVariants()[0];
   }
-
 
   public V getSelectedVariant() {
     return mySelectedVariant;
@@ -65,8 +80,9 @@ public class VariantTagFragment<T, V> extends SettingsEditorFragment<T, TagButto
 
   public void setSelectedVariant(V variant) {
     mySelectedVariant = variant;
-    setSelected(!variant.equals(getVariants()[0]));
-    component().updateButton(getName() + ": " + getVariantName(variant), null, true);
+    setSelected(!Objects.equals(myDefaultVariant, variant));
+    String name = variant == null ? getName() : getName() + ": " + getVariantName(variant);
+    component().updateButton(name, null, true);
   }
 
   protected V[] getVariants() {
@@ -77,7 +93,7 @@ public class VariantTagFragment<T, V> extends SettingsEditorFragment<T, TagButto
   public void toggle(boolean selected, AnActionEvent e) {
     super.toggle(selected, e);
     if (!selected) {
-      setSelectedVariant(getVariants()[0]);
+      setSelectedVariant(myDefaultVariant);
     }
   }
 
@@ -130,8 +146,69 @@ public class VariantTagFragment<T, V> extends SettingsEditorFragment<T, TagButto
         e.getPresentation().putClientProperty(Presentation.PROP_VALUE, getVariantName(mySelectedVariant));
         e.getPresentation().setVisible(isRemovable());
       }
+
+      @Override
+      public boolean isDumbAware() {
+        return true;
+      }
     };
     group.setPopup(true);
     return group;
+  }
+
+  private static class VariantTagButton<V> extends TagButton {
+
+    private final DropDownLink<V> myDropDown;
+    private VariantTagFragment<?, V> myFragment;
+
+    private VariantTagButton(@Nls String text, Consumer<AnActionEvent> action) {
+      super(text, action);
+      myDropDown = new DropDownLink<>(null, link -> showPopup());
+      myDropDown.setForeground(JBUI.CurrentTheme.Label.foreground());
+      add(myDropDown, JLayeredPane.POPUP_LAYER);
+    }
+
+    private JBPopup showPopup() {
+      DataContext context = DataManager.getInstance().getDataContext(myDropDown);
+      DefaultActionGroup group = new DefaultActionGroup(ContainerUtil.map(myFragment.getVariants(), v -> new DumbAwareAction(myFragment.getVariantName(v)) {
+        @Override
+        public void actionPerformed(@NotNull AnActionEvent e) {
+          myFragment.setSelectedVariant(v);
+        }
+      }));
+      return JBPopupFactory.getInstance().createActionGroupPopup(null, group, context, JBPopupFactory.ActionSelectionAid.SPEEDSEARCH, true);
+    }
+
+    @Override
+    protected void layoutButtons() {
+      super.layoutButtons();
+      int dropDownWidth = 0;
+      if (myDropDown != null) {
+        Dimension preferredSize = myDropDown.getPreferredSize();
+        dropDownWidth = preferredSize.width - ourInset * 2;
+        myDropDown.setBounds(new Rectangle(myCloseButton.getX() - ourInset * 2, 0, preferredSize.width, myButton.getHeight()));
+      }
+
+      Insets insets = myButton.getMargin();
+      insets.right += dropDownWidth;
+      myButton.setMargin(insets);
+      Rectangle closeButtonBounds = myCloseButton.getBounds();
+      closeButtonBounds.x += dropDownWidth;
+      myCloseButton.setBounds(closeButtonBounds);
+
+      Rectangle bounds = myButton.getBounds();
+      bounds.width += dropDownWidth;
+      myButton.setBounds(bounds);
+      setPreferredSize(bounds.getSize());
+    }
+
+    @Override
+    protected void updateButton(String text, Icon icon, boolean isEnabled) {
+      String[] split = text.split(": ");
+      myButton.setText(split[0] + ": ");
+      myDropDown.setText(split.length > 1 ? split[1] : null);
+      myButton.setEnabled(isEnabled);
+      layoutButtons();
+    }
   }
 }

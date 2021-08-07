@@ -224,10 +224,17 @@ public class JavaReplaceHandler extends StructuralReplaceHandler {
     else if (originalClass.isInterface() && !patternClass.isInterface()) {
       transform(replacementClass, ClassType.INTERFACE);
     }
+    else if (originalClass.isRecord() && !patternClass.isRecord()) {
+      transform(replacementClass, ClassType.RECORD);
+      final PsiRecordHeader recordHeader = originalClass.getRecordHeader();
+      if (recordHeader != null) {
+        replacementClass.addBefore(recordHeader, replacementClass.getExtendsList());
+      }
+    }
   }
 
   enum ClassType {
-    ENUM, INTERFACE, ANNOTATION
+    ENUM, INTERFACE, ANNOTATION, RECORD
   }
 
   private static void transform(PsiClass replacementClass, ClassType type) {
@@ -250,6 +257,9 @@ public class JavaReplaceHandler extends StructuralReplaceHandler {
         break;
       case INTERFACE:
         aClass = factory.createInterface("X");
+        break;
+      case RECORD:
+        aClass = factory.createRecord("X");
         break;
       default:
         throw new AssertionError();

@@ -102,7 +102,7 @@ public class IElementType {
   }
 
   /**
-   * Allows to construct element types for some temporary purposes without registering them.
+   * Allows constructing element types for some temporary purposes without registering them.
    * This is not default behavior and not recommended. A lot of other functionality (e.g. {@link TokenSet}) won't work with such element types.
    * Please use {@link #IElementType(String, Language)} unless you know what you're doing.
    */
@@ -114,7 +114,7 @@ public class IElementType {
         myIndex = size++;
         if (myIndex >= MAX_INDEXED_TYPES) {
           Map<Language, List<IElementType>> byLang = Stream.of(ourRegistry).filter(Objects::nonNull).collect(Collectors.groupingBy(ie -> ie.myLanguage));
-          Map.Entry<Language, List<IElementType>> max = byLang.entrySet().stream().max(Comparator.comparingInt(e -> e.getValue().size())).get();
+          Map.Entry<Language, List<IElementType>> max = Collections.max(byLang.entrySet(), Comparator.comparingInt(e -> e.getValue().size()));
           List<IElementType> types = max.getValue();
           LOG.error("Too many element types registered. Out of (short) range. Most of element types (" + types.size() + ")" +
                     " were registered for '" + max.getKey() + "': " + StringUtil.first(StringUtil.join(types, ", "), 300, true));

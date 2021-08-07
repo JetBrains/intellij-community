@@ -1,24 +1,16 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.facet.impl.pointers;
 
-import com.intellij.ProjectTopics;
 import com.intellij.facet.Facet;
-import com.intellij.facet.FacetManager;
-import com.intellij.facet.FacetManagerAdapter;
 import com.intellij.facet.impl.FacetUtil;
 import com.intellij.facet.pointers.FacetPointer;
 import com.intellij.facet.pointers.FacetPointerListener;
 import com.intellij.facet.pointers.FacetPointersManager;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleManager;
-import com.intellij.openapi.project.ModuleListener;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.util.EventDispatcher;
-import com.intellij.util.Function;
-import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -33,7 +25,6 @@ public final class FacetPointersManagerImpl extends FacetPointersManager {
 
   public FacetPointersManagerImpl(@NotNull Project project) {
     myProject = project;
-    initComponent();
   }
 
   @Override
@@ -66,46 +57,7 @@ public final class FacetPointersManagerImpl extends FacetPointersManager {
     myPointers.remove(pointer.getId());
   }
 
-  private void initComponent() {
-    MessageBusConnection connection = myProject.getMessageBus().connect();
-    connection.subscribe(ProjectTopics.MODULES, new ModuleListener() {
-      @Override
-      public void moduleAdded(@NotNull Project project, @NotNull Module module) {
-        refreshPointers(module);
-      }
-
-      @Override
-      public void modulesRenamed(@NotNull Project project, @NotNull List<? extends Module> modules, @NotNull Function<? super Module, String> oldNameProvider) {
-        for (Module module : modules) {
-          refreshPointers(module);
-        }
-      }
-    });
-    connection.subscribe(FacetManager.FACETS_TOPIC, new FacetManagerAdapter() {
-      @Override
-      public void facetAdded(@NotNull Facet facet) {
-        refreshPointers(facet.getModule());
-      }
-
-      @Override
-      public void beforeFacetRenamed(@NotNull Facet facet) {
-        final FacetPointerImpl pointer = myPointers.get(constructId(facet));
-        if (pointer != null) {
-          pointer.refresh();
-        }
-      }
-
-      @Override
-      public void facetRenamed(@NotNull final Facet facet, @NotNull final String oldName) {
-        refreshPointers(facet.getModule());
-      }
-    });
-    for (Module module : ModuleManager.getInstance(myProject).getModules()) {
-      refreshPointers(module);
-    }
-  }
-
-  private void refreshPointers(@NotNull final Module module) {
+  void refreshPointers() {
     //todo[nik] refresh only pointers related to renamed module/facet?
     List<Pair<FacetPointerImpl, String>> changed = new ArrayList<>();
 
@@ -134,6 +86,10 @@ public final class FacetPointersManagerImpl extends FacetPointersManager {
 
   public boolean isRegistered(FacetPointer<?> pointer) {
     return myPointers.containsKey(pointer.getId());
+  }
+
+  FacetPointerImpl get(String id) {
+    return myPointers.get(id);
   }
 
   @Override

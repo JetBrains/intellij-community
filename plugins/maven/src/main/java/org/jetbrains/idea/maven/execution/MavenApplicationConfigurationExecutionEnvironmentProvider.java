@@ -190,7 +190,6 @@ public class MavenApplicationConfigurationExecutionEnvironmentProvider implement
             RemoteConnection connection = new RemoteConnectionBuilder(false, DebuggerSettings.getInstance().getTransport(), "")
               .asyncAgent(true)
               .project(environment.getProject())
-              .memoryAgent(DebuggerSettings.getInstance().ENABLE_MEMORY_AGENT)
               .create(parameters);
 
             ParametersList programParametersList = javaParameters.getProgramParametersList();

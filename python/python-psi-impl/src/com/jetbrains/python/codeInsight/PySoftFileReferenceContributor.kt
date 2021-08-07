@@ -10,12 +10,13 @@ import com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReferen
 import com.intellij.psi.util.QualifiedName
 import com.intellij.util.ProcessingContext
 import com.intellij.util.SystemProperties
-import com.jetbrains.python.PyNames
 import com.jetbrains.python.psi.*
 import com.jetbrains.python.psi.impl.PyBuiltinCache
 import com.jetbrains.python.psi.impl.PyCallExpressionHelper
 import com.jetbrains.python.psi.resolve.PyResolveContext
 import com.jetbrains.python.psi.resolve.PyResolveUtil
+import com.jetbrains.python.psi.resolve.fromFoothold
+import com.jetbrains.python.psi.resolve.resolveTopLevelMember
 import com.jetbrains.python.psi.types.PyTypeChecker
 import com.jetbrains.python.psi.types.PyUnionType
 import com.jetbrains.python.psi.types.TypeEvalContext
@@ -61,7 +62,7 @@ open class PySoftFileReferenceContributor : PsiReferenceContributor() {
       val argList = expr.parent as? PyArgumentList ?: return false
       val callExpr = argList.parent as? PyCallExpression ?: return false
       val typeEvalContext = TypeEvalContext.codeInsightFallback(expr.project)
-      val resolveContext = PyResolveContext.defaultContext().withTypeEvalContext(typeEvalContext)
+      val resolveContext = PyResolveContext.defaultContext(typeEvalContext)
 
       return callExpr.multiResolveCallee(resolveContext)
         .asSequence()
@@ -92,11 +93,16 @@ open class PySoftFileReferenceContributor : PsiReferenceContributor() {
           builtinCache.getUnicodeType(languageLevel)
         )
       ) ?: return false
-      val osPathLikeType = builtinCache.getObjectType(PyNames.BUILTIN_PATH_LIKE) ?: return false
 
       val typeEvalContext = TypeEvalContext.codeInsightFallback(expr.project)
 
-      return callExpr.multiResolveCallee(PyResolveContext.defaultContext().withTypeEvalContext(typeEvalContext))
+      val osPathLike = resolveTopLevelMember(
+        QualifiedName.fromComponents("os", "PathLike"),
+        fromFoothold(expr)
+      ) as? PyTypedElement ?: return false
+      val osPathLikeType = typeEvalContext.getType(osPathLike) ?: return false
+
+      return callExpr.multiResolveCallee(PyResolveContext.defaultContext(typeEvalContext))
         .asSequence()
         .mapNotNull {
           val mapping = PyCallExpressionHelper.mapArguments(callExpr, it, typeEvalContext)
@@ -207,7 +213,7 @@ open class PySoftFileReferenceContributor : PsiReferenceContributor() {
     override fun isAbsolutePathReference(): Boolean =
       super.isAbsolutePathReference() || pathString.startsWith("~")
 
-    private fun expandUserHome(text: String): String? =
+    private fun expandUserHome(text: String): String =
       when (text) {
         "~" -> SystemProperties.getUserHome()
         else -> text

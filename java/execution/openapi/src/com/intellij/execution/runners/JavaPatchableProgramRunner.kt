@@ -11,25 +11,6 @@ import com.intellij.execution.ui.RunContentDescriptor
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.concurrency.resolvedPromise
 
-@Deprecated(message = "Not required and not used anymore")
-@ApiStatus.ScheduledForRemoval(inVersion = "2021.2")
-abstract class JavaPatchableProgramRunner<Settings : RunnerSettings> : ProgramRunner<Settings> {
-  @Throws(ExecutionException::class)
-  final override fun execute(environment: ExecutionEnvironment) {
-    execute(environment, environment.callback, environment.state ?: return)
-  }
-
-  abstract fun patch(javaParameters: JavaParameters?, settings: RunnerSettings?, runProfile: RunProfile?, beforeExecution: Boolean)
-
-  fun execute(environment: ExecutionEnvironment, @Suppress("UNUSED_PARAMETER") callback: ProgramRunner.Callback?, state: RunProfileState) {
-    ExecutionManager.getInstance(environment.project).startRunProfile(environment) {
-      resolvedPromise(doExecute(state, environment))
-    }
-  }
-
-  abstract fun doExecute(state: RunProfileState, environment: ExecutionEnvironment): RunContentDescriptor?
-}
-
 interface JvmPatchableProgramRunner<Settings : RunnerSettings> : ProgramRunner<Settings> {
   @Throws(ExecutionException::class)
   fun patch(javaParameters: JavaParameters, settings: RunnerSettings?, runProfile: RunProfile, beforeExecution: Boolean)

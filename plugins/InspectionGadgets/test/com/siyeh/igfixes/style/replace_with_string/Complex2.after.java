@@ -9,7 +9,7 @@ class Complex2 {
               executeAndDumpGetRequest("/repositories/" + toPathComponent(repository.name()) + "/workingCopies/" + toPathComponent(workingCopyId.toString()) + "/changes/_") +
               System.lineSeparator() +
               executeAndDumpGetRequest("/repositories/" + toPathComponent(repository.name()) + "/workingCopies/" + toPathComponent(workingCopyId.toString()) + "/changes/__");
-      checkOutputFiles(new TestDataFile[]{new TestDataFile(testName(), builder)});
+    checkOutputFiles(new TestDataFile[]{new TestDataFile(testName(), builder)});
   }
 
   private void checkOutputFiles(TestDataFile[] testDataFiles) {

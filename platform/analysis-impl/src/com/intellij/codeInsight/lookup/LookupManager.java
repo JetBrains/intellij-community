@@ -1,14 +1,11 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.lookup;
 
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageEditorUtil;
 import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -16,11 +13,10 @@ import java.beans.PropertyChangeListener;
 
 public abstract class LookupManager {
   public static LookupManager getInstance(@NotNull Project project){
-    return ServiceManager.getService(project, LookupManager.class);
+    return project.getService(LookupManager.class);
   }
 
-  @Nullable
-  public static LookupEx getActiveLookup(@Nullable Editor editor) {
+  public static @Nullable LookupEx getActiveLookup(@Nullable Editor editor) {
     if (editor == null) return null;
 
     final Project project = editor.getProject();
@@ -32,21 +28,18 @@ public abstract class LookupManager {
     return lookup.getTopLevelEditor() == InjectedLanguageEditorUtil.getTopLevelEditor(editor) ? lookup : null;
   }
 
-  @Nullable
-  public LookupEx showLookup(@NotNull Editor editor, LookupElement @NotNull ... items) {
+  public @Nullable LookupEx showLookup(@NotNull Editor editor, LookupElement @NotNull ... items) {
     return showLookup(editor, items, "", new LookupArranger.DefaultArranger());
   }
 
-  @Nullable
-  public LookupEx showLookup(@NotNull Editor editor, LookupElement @NotNull [] items, @NotNull String prefix) {
+  public @Nullable LookupEx showLookup(@NotNull Editor editor, LookupElement @NotNull [] items, @NotNull String prefix) {
     return showLookup(editor, items, prefix, new LookupArranger.DefaultArranger());
   }
 
-  @Nullable
-  public abstract LookupEx showLookup(@NotNull Editor editor,
-                                      LookupElement @NotNull [] items,
-                                      @NotNull String prefix,
-                                      @NotNull LookupArranger arranger);
+  public abstract @Nullable LookupEx showLookup(@NotNull Editor editor,
+                                                LookupElement @NotNull [] items,
+                                                @NotNull String prefix,
+                                                @NotNull LookupArranger arranger);
 
   public abstract void hideActiveLookup();
 
@@ -57,30 +50,23 @@ public abstract class LookupManager {
     }
   }
 
-  @Nullable
-  public abstract LookupEx getActiveLookup();
+  public abstract @Nullable LookupEx getActiveLookup();
 
-  @NonNls public static final String PROP_ACTIVE_LOOKUP = "activeLookup";
+  public static final String PROP_ACTIVE_LOOKUP = "activeLookup";
 
-  /**
-   * @deprecated Use {@link LookupManagerListener#TOPIC}
-   */
+  /** @deprecated Use {@link LookupManagerListener#TOPIC} */
   @Deprecated
   public abstract void addPropertyChangeListener(@NotNull PropertyChangeListener listener);
-  /**
-   * @deprecated Use {@link LookupManagerListener#TOPIC}
-   */
+
+  /** @deprecated Use {@link LookupManagerListener#TOPIC} */
   @Deprecated
   @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public abstract void addPropertyChangeListener(@NotNull PropertyChangeListener listener, @NotNull Disposable disposable);
-  /**
-   * @deprecated Use {@link LookupManagerListener#TOPIC}
-   */
+
+  /** @deprecated Use {@link LookupManagerListener#TOPIC} */
   @Deprecated
   @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public abstract void removePropertyChangeListener(@NotNull PropertyChangeListener listener);
 
-  @NotNull
-  public abstract Lookup createLookup(@NotNull Editor editor, LookupElement @NotNull [] items, @NotNull final String prefix, @NotNull LookupArranger arranger);
-
+  public abstract @NotNull Lookup createLookup(@NotNull Editor editor, LookupElement @NotNull [] items, final @NotNull String prefix, @NotNull LookupArranger arranger);
 }

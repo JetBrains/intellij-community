@@ -1,19 +1,36 @@
 <html>
 <body>
-Reports on <b>while</b> loops which spin on the
-value of a non-volatile field, waiting for it to be changed by another thread.
+Reports <code>while</code> loops that spin on the
+value of a non-<code>volatile</code> field, waiting for it to be changed by another thread.
 <p>
 In addition to being potentially extremely CPU intensive when little work is done inside the loop, such
-loops are likely have different semantics than intended, as the Java Memory Model allows such field accesses
-to be hoisted out of the loop, causing the loop to never complete even if another thread does change the
-field's value.
+loops are likely to have different semantics from what was intended. The Java Memory Model allows such loop to never complete even
+if another thread changes the field's value.
 </p>
+<p><b>Example:</b></p>
+<pre>
+  class SpinsOnField {
+    boolean ready = false;
+
+    void run() {
+      while (!ready) { // the loop may never complete even after markAsReady call
+                       // from the other thread
+      }
+      // do some work
+    }
+
+    void markAsReady() {
+      ready = true;
+    }
+  }
+</pre>
 <p>
-  Additionally since Java 9 it's recommended to call <code>Thread.onSpinWait()</code> inside spin loop
-  on a volatile field which may significantly improve performance on some hardware.
+Additionally, since Java 9 it's recommended to call <code>Thread.onSpinWait()</code> inside a spin loop
+on a <code>volatile</code> field, which may significantly improve performance on some hardware.
 </p>
 <!-- tooltip end -->
 <p>
-
+Use the inspection options to only report empty <code>while</code> loops.
+<p>
 </body>
 </html>

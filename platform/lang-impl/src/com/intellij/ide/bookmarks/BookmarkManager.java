@@ -1,12 +1,16 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.bookmarks;
 
+import com.intellij.ide.bookmark.BookmarkType;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.UISettingsListener;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
-import com.intellij.openapi.components.*;
+import com.intellij.openapi.components.PersistentStateComponent;
+import com.intellij.openapi.components.State;
+import com.intellij.openapi.components.Storage;
+import com.intellij.openapi.components.StoragePathMacros;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
@@ -56,7 +60,7 @@ public final class BookmarkManager implements PersistentStateComponent<Element> 
   private final AtomicReference<List<Bookmark>> myPendingState = new AtomicReference<>();
 
   public static BookmarkManager getInstance(@NotNull Project project) {
-    return ServiceManager.getService(project, BookmarkManager.class);
+    return project.getService(BookmarkManager.class);
   }
 
   public BookmarkManager(@NotNull Project project) {
@@ -83,6 +87,10 @@ public final class BookmarkManager implements PersistentStateComponent<Element> 
   static final class MyStartupActivity implements StartupActivity.DumbAware {
     @Override
     public void runActivity(@NotNull Project project) {
+      if (ApplicationManager.getApplication().isHeadlessEnvironment()) {
+        return;
+      }
+
       project.getMessageBus().connect().subscribe(PsiDocumentListener.TOPIC, MyStartupActivity::documentCreated);
 
       BookmarkManager bookmarkManager = getInstance(project);
@@ -458,11 +466,18 @@ public final class BookmarkManager implements PersistentStateComponent<Element> 
     return isWrapped && !bookmarksForDocument.isEmpty() ? bookmarksForDocument.get(0) : null;
   }
 
+  public void deleteMnemonic(@NotNull Bookmark bookmark) {
+    if (BookmarkType.DEFAULT != bookmark.getType()) updateMnemonic(bookmark, BookmarkType.DEFAULT.getMnemonic());
+  }
+
   public void setMnemonic(@NotNull Bookmark bookmark, char c) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     final Bookmark old = findBookmarkForMnemonic(c);
     if (old != null) removeBookmark(old);
+    updateMnemonic(bookmark, c);
+  }
 
+  private void updateMnemonic(@NotNull Bookmark bookmark, char c) {
     bookmark.setMnemonic(c);
     getPublisher().bookmarkChanged(bookmark);
     bookmark.updateHighlighter();

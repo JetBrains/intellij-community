@@ -9,14 +9,13 @@ import com.intellij.codeInspection.CommonQuickFixBundle;
 import com.intellij.codeInspection.dataFlow.NullabilityUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.PsiReplacementUtil;
 import com.siyeh.ig.psiutils.ClassUtils;
 import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ipp.base.Intention;
 import com.siyeh.ipp.base.PsiElementPredicate;
 import org.jetbrains.annotations.NotNull;
-
-import java.util.Arrays;
 
 /**
  * @author Bas Leijdekkers
@@ -77,7 +76,7 @@ public class ReplaceWithArraysAsListIntention extends Intention implements HighP
       return "java.util.Collections.singletonList";
     }
     if (methodName.equals("emptyList") || methodName.equals("singletonList")) {
-      if (Arrays.stream(arguments).noneMatch(ReplaceWithArraysAsListIntention::isPossiblyNull)) {
+      if (!ContainerUtil.exists(arguments, ReplaceWithArraysAsListIntention::isPossiblyNull)) {
         if (PsiUtil.isLanguageLevel9OrHigher(context)) {
           return "java.util.List.of";
         }

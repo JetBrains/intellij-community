@@ -4,7 +4,9 @@ package com.intellij.codeInspection.bytecodeAnalysis;
 import com.intellij.codeInspection.bytecodeAnalysis.asm.ASMUtils;
 import com.intellij.codeInspection.dataFlow.ContractReturnValue;
 import com.intellij.codeInspection.dataFlow.StandardMethodContract;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.org.objectweb.asm.Type;
+import org.jetbrains.org.objectweb.asm.tree.analysis.BasicValue;
 
 import java.util.List;
 
@@ -17,6 +19,22 @@ enum Value implements Result {
     if (ASMUtils.isReferenceType(type)) return OBJECT;
     if (ASMUtils.isBooleanType(type)) return BOOLEAN;
     return List.of();
+  }
+
+  static @Nullable Value fromBasicValue(BasicValue value) {
+    if (value == AbstractValues.TrueValue) {
+      return True;
+    }
+    if (value == AbstractValues.FalseValue) {
+      return False;
+    }
+    if (value == AbstractValues.NullValue) {
+      return Null;
+    }
+    if (value instanceof AbstractValues.NotNullValue) {
+      return NotNull;
+    }
+    return null;
   }
 
   ContractReturnValue toReturnValue() {

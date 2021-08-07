@@ -1,4 +1,5 @@
 #!/bin/bash
+# Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 # make sure only one dmg is built at a given moment
 
 #immediately exit script with an error if a command fails
@@ -67,6 +68,8 @@ if [ -d "/Volumes/$1" ]; then
   done
 fi
 
+rm -rf "$EXPLODED"
+
 # mount this image
 log "Mounting unpacked r/w disk image..."
 device=$(hdiutil attach -readwrite -noverify -mountpoint "/Volumes/$1" -noautoopen "$TEMP_DMG" | grep '^/dev/' | awk 'NR==1{print $1}')
@@ -88,6 +91,5 @@ hdiutil convert "$TEMP_DMG" -quiet -format ULFO -imagekey lzfse-level=9 -o "$RES
 rm -f "$TEMP_DMG"
 
 hdiutil internet-enable -no "$RESULT_DMG"
-rm -rf "$EXPLODED"
 
 log "Done"

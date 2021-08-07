@@ -1,7 +1,7 @@
 import typeUse.*;
 
-public class IncorrectPlacementAmbiguous extends <warning descr="Nullability annotation is not applicable to extends/implements lists">@Nullable</warning> Object
-        implements <warning descr="Nullability annotation is not applicable to extends/implements lists">@Nullable</warning> Cloneable {
+public class IncorrectPlacementAmbiguous extends <warning descr="Nullability annotation is not applicable to extends/implements clause">@Nullable</warning> Object
+        implements <warning descr="Nullability annotation is not applicable to extends/implements clause">@Nullable</warning> Cloneable {
   
   <warning descr="Nullability annotation is not applicable to constructors">@Nullable</warning> IncorrectPlacementAmbiguous() {}
   

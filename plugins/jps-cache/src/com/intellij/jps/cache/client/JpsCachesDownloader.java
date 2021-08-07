@@ -16,17 +16,18 @@ import java.io.File;
 import java.io.IOException;
 import java.net.URLConnection;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicLong;
 
 import static com.intellij.jps.cache.JpsCachesPluginUtil.EXECUTOR_SERVICE;
+import static com.intellij.jps.cache.statistics.JpsCacheUsagesCollector.DOWNLOAD_SIZE_EVENT_ID;
 
 class JpsCachesDownloader {
-  private static final Logger LOG = Logger.getInstance("com.intellij.jps.cache.client.JpsOutputsDownloader");
+  private static final Logger LOG = Logger.getInstance(JpsCachesDownloader.class);
   private static final byte MAX_RETRY_COUNT = 3;
   private static final String CDN_CACHE_HEADER = "X-Cache";
   private int hitsCount = 0;
@@ -41,8 +42,8 @@ class JpsCachesDownloader {
 
   @NotNull
   List<Pair<File, DownloadableFileDescription>> download(@NotNull File targetDir, @NotNull Map<String, String> requestHeaders) throws IOException {
-    List<Pair<File, DownloadableFileDescription>> downloadedFiles = Collections.synchronizedList(new ArrayList<>());
-    List<Pair<File, DownloadableFileDescription>> existingFiles = Collections.synchronizedList(new ArrayList<>());
+    List<Pair<File, DownloadableFileDescription>> downloadedFiles = new CopyOnWriteArrayList<>();
+    List<Pair<File, DownloadableFileDescription>> existingFiles = new CopyOnWriteArrayList<>();
 
     try {
       myProgressIndicatorManager.setText(this, IdeBundle.message("progress.downloading.0.files.text", myFilesDescriptions.size()));
@@ -61,15 +62,23 @@ class JpsCachesDownloader {
             try {
               downloaded = downloadFile(description, existing, requestHeaders, indicator);
             } catch (IOException e) {
-              if (e  instanceof HttpRequests.HttpStatusException && ((HttpRequests.HttpStatusException)e).getStatusCode() == 404) {
-                LOG.info("File not found to download " + description.getDownloadUrl());
-                indicator.finished();
-                return null;
+              int httpStatusCode = -1;
+              if (e  instanceof HttpRequests.HttpStatusException) {
+                httpStatusCode = ((HttpRequests.HttpStatusException)e).getStatusCode();
+                if (httpStatusCode == 404) {
+                  LOG.info("File not found to download " + description.getDownloadUrl());
+                  indicator.finished();
+                  return null;
+                }
               }
 
               // If max attempt count exceeded, rethrow exception further
               if (attempt != MAX_RETRY_COUNT) {
-                LOG.info("Failed to download " + description.getDownloadUrl() + ". Attempt " + attempt + " to download file again");
+                if (httpStatusCode != -1) {
+                  LOG.info("Failed to download " + description.getDownloadUrl() + " HTTP code: " + httpStatusCode + ". Attempt " + attempt + " to download file again");
+                } else {
+                  LOG.info("Failed to download " + description.getDownloadUrl() + ". Attempt " + attempt + " to download file again");
+                }
               } else {
                 throw new IOException(IdeBundle.message("error.file.download.failed", description.getDownloadUrl(), e.getMessage()), e);
               }
@@ -107,6 +116,7 @@ class JpsCachesDownloader {
         }
       }
       long duration = System.currentTimeMillis() - start;
+      DOWNLOAD_SIZE_EVENT_ID.log(totalSize.get());
       LOG.info("Downloaded " + StringUtil.formatFileSize(totalSize.get()) + " in " + StringUtil.formatDuration(duration) +
                "(" + duration + "ms). Percentage of CDN cache hits: " + (hitsCount * 100/myFilesDescriptions.size()) + "%");
 

@@ -202,7 +202,7 @@ public class PluginHostsConfigurable implements Configurable.NoScroll, Configura
       public void run(@NotNull ProgressIndicator indicator) {
         for (int i = 0, size = infos.size(); i < size; i++) {
           try {
-            if (RepositoryHelper.loadPlugins(infos.get(i).name, indicator).size() == 0) {
+            if (RepositoryHelper.loadPlugins(infos.get(i).name, null, indicator).isEmpty()) {
               results.set(i, IdeBundle.message("error.no.plugins.found"));
             }
           }

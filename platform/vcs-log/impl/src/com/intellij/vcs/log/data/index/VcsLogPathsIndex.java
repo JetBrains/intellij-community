@@ -20,11 +20,11 @@ import com.intellij.vcs.log.impl.VcsLogIndexer;
 import com.intellij.vcs.log.util.StorageId;
 import com.intellij.vcsUtil.VcsFileUtil;
 import com.intellij.vcsUtil.VcsUtil;
-import gnu.trove.TByteObjectHashMap;
-import gnu.trove.TObjectIntHashMap;
 import it.unimi.dsi.fastutil.ints.Int2IntMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
+import it.unimi.dsi.fastutil.objects.Object2IntMap;
+import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -47,10 +47,12 @@ public final class VcsLogPathsIndex extends VcsLogFullDetailsIndex<List<VcsLogPa
   public VcsLogPathsIndex(@NotNull StorageId storageId,
                           @NotNull VcsLogStorage storage,
                           @NotNull Set<VirtualFile> roots,
+                          @Nullable StorageLockContext storageLockContext,
                           @NotNull FatalErrorHandler fatalErrorHandler,
                           @NotNull Disposable disposableParent) throws IOException {
-    super(storageId, PATHS, new PathsIndexer(storage, createPathsEnumerator(roots, storageId), createRenamesMap(storageId)),
-          new ChangeKindListKeyDescriptor(), fatalErrorHandler, disposableParent);
+    super(storageId, PATHS, new PathsIndexer(storage, createPathsEnumerator(roots, storageId, storageLockContext),
+                                             createRenamesMap(storageId, storageLockContext)),
+          new ChangeKindListKeyDescriptor(), storageLockContext, fatalErrorHandler, disposableParent);
 
     myPathsIndexer = (PathsIndexer)myIndexer;
     myPathsIndexer.setFatalErrorConsumer(e -> fatalErrorHandler.consume(this, e));
@@ -58,18 +60,20 @@ public final class VcsLogPathsIndex extends VcsLogFullDetailsIndex<List<VcsLogPa
 
   @NotNull
   private static PersistentEnumerator<LightFilePath> createPathsEnumerator(@NotNull Collection<VirtualFile> roots,
-                                                                           @NotNull StorageId storageId) throws IOException {
+                                                                           @NotNull StorageId storageId,
+                                                                           @Nullable StorageLockContext storageLockContext) throws IOException {
     Path storageFile = storageId.getStorageFile(INDEX_PATHS_IDS);
     return new PersistentEnumerator<>(storageFile, new LightFilePathKeyDescriptor(roots),
-                                      Page.PAGE_SIZE, null, storageId.getVersion());
+                                      Page.PAGE_SIZE, storageLockContext, storageId.getVersion());
   }
 
   @NotNull
-  private static PersistentHashMap<Couple<Integer>, Collection<Couple<Integer>>> createRenamesMap(@NotNull StorageId storageId)
+  private static PersistentHashMap<Couple<Integer>, Collection<Couple<Integer>>> createRenamesMap(@NotNull StorageId storageId,
+                                                                                                  @Nullable StorageLockContext storageLockContext)
     throws IOException {
     Path storageFile = storageId.getStorageFile(RENAMES_MAP);
     return new PersistentHashMap<>(storageFile, new CoupleKeyDescriptor(), new CollectionDataExternalizer(), Page.PAGE_SIZE,
-                                   storageId.getVersion());
+                                   storageId.getVersion(), storageLockContext);
   }
 
   @Nullable
@@ -169,7 +173,7 @@ public final class VcsLogPathsIndex extends VcsLogFullDetailsIndex<List<VcsLogPa
     @NotNull
     @Override
     public Map<Integer, List<ChangeKind>> map(@NotNull VcsLogIndexer.CompressedDetails inputData) {
-      Int2ObjectMap<List<ChangeKind>> result=new Int2ObjectOpenHashMap<>();
+      Int2ObjectMap<List<ChangeKind>> result = new Int2ObjectOpenHashMap<>();
 
       // its not exactly parents count since it is very convenient to assume that initial commit has one parent
       int parentsCount = inputData.getParents().isEmpty() ? 1 : inputData.getParents().size();
@@ -206,9 +210,14 @@ public final class VcsLogPathsIndex extends VcsLogFullDetailsIndex<List<VcsLogPa
                                                               int parentsCount) {
       List<ChangeKind> changeDataList = pathIdToChangeDataListsMap.get(pathId);
       if (changeDataList == null) {
-        changeDataList = new SmartList<>();
-        for (int i = 0; i < parentsCount; i++) {
-          changeDataList.add(ChangeKind.NOT_CHANGED);
+        if (parentsCount == 1) {
+          changeDataList = new SmartList<>(ChangeKind.NOT_CHANGED);
+        }
+        else {
+          changeDataList = new ArrayList<>(parentsCount);
+          for (int i = 0; i < parentsCount; i++) {
+            changeDataList.add(ChangeKind.NOT_CHANGED);
+          }
         }
         pathIdToChangeDataListsMap.put(pathId, changeDataList);
       }
@@ -267,17 +276,18 @@ public final class VcsLogPathsIndex extends VcsLogFullDetailsIndex<List<VcsLogPa
       this.id = id;
     }
 
-    private static final TByteObjectHashMap<ChangeKind> KINDS = new TByteObjectHashMap<>();
+    private static final ChangeKind[] KINDS;
 
     static {
+      KINDS = new ChangeKind[4];
       for (ChangeKind kind : values()) {
-        KINDS.put(kind.id, kind);
+        KINDS[kind.id] = kind;
       }
     }
 
     @NotNull
     public static ChangeKind getChangeKindById(byte id) throws IOException {
-      ChangeKind kind = KINDS.get(id);
+      ChangeKind kind = id >= 0 && id < KINDS.length ? KINDS[id] : null;
       if (kind == null) throw new IOException("Change kind by id " + id + " not found.");
       return kind;
     }
@@ -323,12 +333,12 @@ public final class VcsLogPathsIndex extends VcsLogFullDetailsIndex<List<VcsLogPa
 
   private static final class LightFilePathKeyDescriptor implements KeyDescriptor<LightFilePath> {
     @NotNull private final List<VirtualFile> myRoots;
-    @NotNull private final TObjectIntHashMap<VirtualFile> myRootsReversed;
+    @NotNull private final Object2IntMap<VirtualFile> myRootsReversed;
 
     private LightFilePathKeyDescriptor(@NotNull Collection<VirtualFile> roots) {
       myRoots = ContainerUtil.sorted(roots, Comparator.comparing(VirtualFile::getPath));
 
-      myRootsReversed = new TObjectIntHashMap<>();
+      myRootsReversed = new Object2IntOpenHashMap<>();
       for (int i = 0; i < myRoots.size(); i++) {
         myRootsReversed.put(myRoots.get(i), i);
       }
@@ -346,7 +356,7 @@ public final class VcsLogPathsIndex extends VcsLogFullDetailsIndex<List<VcsLogPa
 
     @Override
     public void save(@NotNull DataOutput out, LightFilePath value) throws IOException {
-      out.writeInt(myRootsReversed.get(value.getRoot()));
+      out.writeInt(myRootsReversed.getInt(value.getRoot()));
       IOUtil.writeUTF(out, value.getRelativePath());
     }
 

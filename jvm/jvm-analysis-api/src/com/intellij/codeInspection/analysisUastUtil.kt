@@ -11,6 +11,7 @@ import com.intellij.lang.jvm.actions.createModifierActions
 import com.intellij.lang.jvm.actions.modifierRequest
 import com.intellij.util.SmartList
 import org.jetbrains.uast.UField
+import org.jetbrains.uast.UMethod
 import org.jetbrains.uast.UastVisibility
 
 /**
@@ -26,6 +27,20 @@ fun UField.createMakePublicActions(): List<IntentionAction> {
       jPsi is JvmModifiersOwner && !jPsi.hasAnnotation("kotlin.jvm.JvmField")
   ) {
     actions.addAll(createAddAnnotationActions(jPsi, annotationRequest("kotlin.jvm.JvmField")))
+  }
+  return actions
+}
+
+fun UMethod.createMakeStaticActions(): List<IntentionAction> {
+  val jPsi = javaPsi
+  val isStatic = isStatic
+  val actions = SmartList<IntentionAction>()
+  if (!isStatic) actions.addAll(createModifierActions(this, modifierRequest(JvmModifier.STATIC, true)))
+  val containingClass = jPsi.containingClass
+  if (sourcePsi?.language == Language.findLanguageByID("kotlin") &&
+      !jPsi.hasAnnotation("kotlin.jvm.JvmStatic") && ("Companion" == containingClass?.name)
+  ) {
+    actions.addAll(createAddAnnotationActions(jPsi, annotationRequest("kotlin.jvm.JvmStatic")))
   }
   return actions
 }

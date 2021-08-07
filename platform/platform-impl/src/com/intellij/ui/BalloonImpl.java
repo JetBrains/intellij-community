@@ -13,7 +13,6 @@ import com.intellij.ide.ui.ScreenAreaConsumer;
 import com.intellij.openapi.MnemonicHelper;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.ex.AnActionListener;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -189,7 +188,8 @@ public final class BalloonImpl implements Balloon, IdeTooltip.Ui, ScreenAreaCons
         if (ke.getKeyCode() != KeyEvent.VK_SHIFT &&
             ke.getKeyCode() != KeyEvent.VK_CONTROL &&
             ke.getKeyCode() != KeyEvent.VK_ALT &&
-            ke.getKeyCode() != KeyEvent.VK_META) {
+            ke.getKeyCode() != KeyEvent.VK_META &&
+            ke.getKeyCode() != KeyEvent.VK_WINDOWS) {
           boolean doHide = false;
           // Close the balloon is ESC is pressed inside the balloon
           if (ke.getKeyCode() == KeyEvent.VK_ESCAPE && SwingUtilities.isDescendingFrom(ke.getComponent(), myComp)) {
@@ -431,7 +431,7 @@ public final class BalloonImpl implements Balloon, IdeTooltip.Ui, ScreenAreaCons
     return result;
   }
 
-  private static AbstractPosition getAbstractPositionFor(@NotNull Position position) {
+  public static AbstractPosition getAbstractPositionFor(@NotNull Position position) {
     switch (position) {
       case atLeft:
         return AT_LEFT;
@@ -631,7 +631,7 @@ public final class BalloonImpl implements Balloon, IdeTooltip.Ui, ScreenAreaCons
     if (ApplicationManager.getApplication() != null) {
       ApplicationManager.getApplication().getMessageBus().connect(this).subscribe(AnActionListener.TOPIC, new AnActionListener() {
         @Override
-        public void beforeActionPerformed(@NotNull AnAction action, @NotNull DataContext dataContext, @NotNull AnActionEvent event) {
+        public void beforeActionPerformed(@NotNull AnAction action, @NotNull AnActionEvent event) {
           if (myHideOnAction && !(action instanceof HintManagerImpl.ActionToIgnore)) {
             hide();
           }
@@ -650,6 +650,10 @@ public final class BalloonImpl implements Balloon, IdeTooltip.Ui, ScreenAreaCons
         });
       }
     }
+  }
+
+  public AbstractPosition getPosition() {
+    return myPosition;
   }
 
   /**
@@ -1178,7 +1182,7 @@ public final class BalloonImpl implements Balloon, IdeTooltip.Ui, ScreenAreaCons
                          : new Point(point.x - preferredSize.width / 2, point.y - preferredSize.height / 2);
         bounds = new Rectangle(location.x, location.y, preferredSize.width, preferredSize.height);
 
-        ScreenUtil.moveToFit(bounds, new Rectangle(0, 0, layeredPaneSize.width, layeredPaneSize.height), balloon.myContainerInsets);
+        ScreenUtil.moveToFit(bounds, new Rectangle(0, 0, layeredPaneSize.width, layeredPaneSize.height), balloon.myContainerInsets, true);
       }
 
       return bounds;
@@ -1854,23 +1858,26 @@ public final class BalloonImpl implements Balloon, IdeTooltip.Ui, ScreenAreaCons
 
       Point pointTarget = SwingUtilities.convertPoint(myLayeredPane, myBalloon.myTargetPoint, this);
       Rectangle shapeBounds = myContent.getBounds();
-      int shadowSize = myBalloon.getShadowBorderSize();
 
-      if (shadowSize > 0 && myShadow == null && myShadowBorderProvider == null) {
-        initComponentImage(pointTarget, shapeBounds);
-        myShadow = ShadowBorderPainter.createShadow(myImage, 0, 0, false, shadowSize / 2);
-      }
+      if (!DrawUtil.isSimplifiedUI()) {
+        int shadowSize = myBalloon.getShadowBorderSize();
 
-      if (myImage == null && myAlpha != -1) {
-        initComponentImage(pointTarget, shapeBounds);
-      }
+        if (shadowSize > 0 && myShadow == null && myShadowBorderProvider == null) {
+          initComponentImage(pointTarget, shapeBounds);
+          myShadow = ShadowBorderPainter.createShadow(myImage, 0, 0, false, shadowSize / 2);
+        }
 
-      if (myImage != null && myAlpha != -1) {
-        g2d.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, myAlpha));
-      }
+        if (myImage == null && myAlpha != -1) {
+          initComponentImage(pointTarget, shapeBounds);
+        }
 
-      if (myShadowBorderProvider != null) {
-        myShadowBorderProvider.paintShadow(this, g);
+        if (myImage != null && myAlpha != -1) {
+          g2d.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, myAlpha));
+        }
+
+        if (myShadowBorderProvider != null) {
+          myShadowBorderProvider.paintShadow(this, g);
+        }
       }
 
       if (myImage != null && myAlpha != -1) {

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.find.replaceInProject;
 
 import com.intellij.find.*;
@@ -15,7 +15,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.application.impl.ApplicationImpl;
 import com.intellij.openapi.command.CommandProcessor;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.keymap.KeymapUtil;
@@ -58,7 +57,7 @@ public final class ReplaceInProjectManager {
   private boolean myIsFindInProgress;
 
   public static ReplaceInProjectManager getInstance(Project project) {
-    return ServiceManager.getService(project, ReplaceInProjectManager.class);
+    return project.getService(ReplaceInProjectManager.class);
   }
 
   public ReplaceInProjectManager(Project project) {
@@ -402,7 +401,7 @@ public final class ReplaceInProjectManager {
     int[] replacedCount = {0};
     boolean[] success = {true};
     boolean result = ((ApplicationImpl)ApplicationManager.getApplication()).runWriteActionWithCancellableProgressInDispatchThread(
-      FindBundle.message("find.replace.all.confirmation.title"),
+      FindBundle.message("find.replace.all.progress.title"),
       myProject,
       null,
       indicator -> {
@@ -469,7 +468,7 @@ public final class ReplaceInProjectManager {
       }
 
       final Document document = ((UsageInfo2UsageAdapter)usage).getDocument();
-      if (!document.isWritable()) return false;
+      if (document == null || !document.isWritable()) return false;
 
       return ((UsageInfo2UsageAdapter)usage).processRangeMarkers(segment -> {
         final int textOffset = segment.getStartOffset();

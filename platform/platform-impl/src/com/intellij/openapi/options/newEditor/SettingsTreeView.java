@@ -638,41 +638,30 @@ public class SettingsTreeView extends JComponent implements Accessible, Disposab
         }
       }
       // configure project icon
-      Project project = null;
-      if (node != null) {
-        project = findConfigurableProject(node);
-      }
-      Configurable configurable = null;
-      if (node != null) {
-        configurable = node.myConfigurable;
-      }
+      Project project = node != null ? findConfigurableProject(node) : null;
+      Configurable configurable = node != null ? node.myConfigurable : null;
       setProjectIcon(myProjectIcon, configurable, project, selected);
       prepareRenderer(node != null, node, configurable, selected);
       // configure node icon
-      Icon nodeIcon = null;
-      if (value instanceof DefaultMutableTreeNode) {
-        nodeIcon = getIcon((DefaultMutableTreeNode)value, selected);
-      }
+      Icon nodeIcon = value instanceof DefaultMutableTreeNode ?
+                      getIcon((DefaultMutableTreeNode)value, selected) :
+                      null;
       myNodeIcon.setIcon(nodeIcon);
+
       if (node != null && UISettings.getInstance().getShowInplaceCommentsInternal()) {
-        @NonNls String id = node.myConfigurable instanceof ConfigurableWrapper ? ((ConfigurableWrapper)node.myConfigurable).getId() :
-                            node.myConfigurable instanceof SearchableConfigurable ? ((SearchableConfigurable)node.myConfigurable).getId() :
-                            node.myConfigurable.getClass().getSimpleName();
-        PluginDescriptor plugin;
-        if (node.myConfigurable instanceof ConfigurableWrapper) {
-          plugin = ((ConfigurableWrapper)node.myConfigurable).getExtensionPoint().getPluginDescriptor();
-        }
-        else {
-          plugin = null;
-        }
+        ConfigurableWrapper wrapper = configurable instanceof ConfigurableWrapper ?
+                                      ((ConfigurableWrapper)configurable) :
+                                      null;
+
+        @NonNls String id = wrapper != null ? wrapper.getId() :
+                            configurable instanceof SearchableConfigurable ? ((SearchableConfigurable)configurable).getId() :
+                            configurable.getClass().getSimpleName();
+        PluginDescriptor plugin = wrapper != null ?
+                                  wrapper.getExtensionPoint().getPluginDescriptor() :
+                                  null;
+
         PluginId pluginId = plugin == null ? null : plugin.getPluginId();
-        String pluginName;
-        if (pluginId == null || PluginManagerCore.CORE_ID == pluginId) {
-          pluginName = null;
-        }
-        else {
-          pluginName = plugin.getName();
-        }
+        String pluginName = pluginId == null || PluginManagerCore.CORE_ID.equals(pluginId) ? null : plugin.getName();
         myTextLabel.append("   ", SimpleTextAttributes.REGULAR_ATTRIBUTES, false);
         myTextLabel.append(pluginName == null ? id : id + " (" + pluginName + ")", SimpleTextAttributes.GRAYED_SMALL_ATTRIBUTES, false);
       }

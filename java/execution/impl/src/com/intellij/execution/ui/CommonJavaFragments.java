@@ -23,8 +23,6 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 import java.util.ArrayList;
-import java.util.function.BiConsumer;
-import java.util.function.Predicate;
 
 import static com.intellij.execution.ui.CommandLinePanel.setMinimumWidth;
 import static com.intellij.util.containers.ContainerUtil.exists;
@@ -92,39 +90,26 @@ public final class CommonJavaFragments {
     return fragment;
   }
 
-  public static <S extends ModuleBasedConfiguration<?,?>> SettingsEditorFragment<S, ModuleClasspathCombo> moduleClasspath(
-    @Nullable ModuleClasspathCombo.Item option, Predicate<? super S> getter, BiConsumer<? super S, ? super Boolean> setter) {
-    ModuleClasspathCombo comboBox = option == null ? new ModuleClasspathCombo() : new ModuleClasspathCombo(option);
+  public static <S extends ModuleBasedConfiguration<?,?>> SettingsEditorFragment<S, ModuleClasspathCombo> moduleClasspath() {
+    ModuleClasspathCombo comboBox = new ModuleClasspathCombo();
     String name = ExecutionBundle.message("application.configuration.use.classpath.and.jdk.of.module");
     comboBox.getAccessibleContext().setAccessibleName(name);
     setMinimumWidth(comboBox, 400);
     CommonParameterFragments.setMonospaced(comboBox);
     SettingsEditorFragment<S, ModuleClasspathCombo> fragment =
       new SettingsEditorFragment<>("module.classpath", name, ExecutionBundle.message("group.java.options"), comboBox, 10,
-                                   (s, c) -> {
-                                     comboBox.reset(s);
-                                     if (option != null) {
-                                       option.myOptionValue = getter.test(s);
-                                     }
-                                   },
+                                   (s, c) -> comboBox.reset(s),
                                    (s, c) -> {
                                      if (comboBox.isVisible()) {
                                        comboBox.applyTo(s);
-                                       if (option != null) {
-                                         setter.accept(s, option.myOptionValue);
-                                       }
                                      }
                                      else {
                                        s.setModule(s.getDefaultModule());
-                                       if (option != null) {
-                                         setter.accept(s, false);
-                                       }
                                      }
                                    },
                                    s -> s.getDefaultModule() != s.getConfigurationModule().getModule() &&
                                         s.getConfigurationModule().getModule() != null ||
-                                        ModuleManager.getInstance(s.getProject()).getModules().length > 1 ||
-                                        option != null && getter.test(s));
+                                        ModuleManager.getInstance(s.getProject()).getModules().length > 1);
     fragment.setHint(ExecutionBundle.message("application.configuration.use.classpath.and.jdk.of.module.hint"));
     fragment.setActionHint(
       ExecutionBundle.message("the.module.whose.classpath.will.be.used.the.classpath.specified.in.the.vm.options.takes.precedence.over.this.one"));

@@ -25,6 +25,8 @@ import java.util.Collection;
 import java.util.Collections;
 
 public class ChangeListViewerDialog extends DialogWrapper {
+  public static final String DIMENSION_SERVICE_KEY = "VCS.ChangeListViewerDialog";
+
   private final LoadingChangesPanel myLoadingPanel;
   private final CommittedChangeListPanel myChangesPanel;
 
@@ -86,7 +88,7 @@ public class ChangeListViewerDialog extends DialogWrapper {
 
   @Override
   protected String getDimensionServiceKey() {
-    return "VCS.ChangeListViewerDialog";
+    return DIMENSION_SERVICE_KEY;
   }
 
   @Override

@@ -46,25 +46,9 @@
 
   <extensions defaultExtensionNs="com.intellij">
     <postStartupActivity implementation="de.plushnikov.intellij.plugin.activity.LombokProjectValidatorActivity"/>
-
-    <applicationService serviceImplementation="de.plushnikov.intellij.plugin.processor.handler.BuilderHandler"/>
-    <applicationService serviceImplementation="de.plushnikov.intellij.plugin.processor.handler.SuperBuilderHandler"/>
-    <applicationService serviceImplementation="de.plushnikov.intellij.plugin.processor.handler.DelegateHandler"/>
-    <applicationService
-      serviceImplementation="de.plushnikov.intellij.plugin.processor.handler.EqualsAndHashCodeToStringHandler"/>
+    <projectService serviceImplementation="de.plushnikov.intellij.plugin.activity.LombokPluginDisposable"/>
 
     <!-- Start of lombok Processors-->
-    <applicationService serviceImplementation="de.plushnikov.intellij.plugin.processor.ValProcessor"/>
-
-    <applicationService
-      serviceImplementation="de.plushnikov.intellij.plugin.processor.modifier.ValueModifierProcessor"/>
-    <applicationService
-      serviceImplementation="de.plushnikov.intellij.plugin.processor.modifier.ValModifierProcessor"/>
-    <applicationService
-      serviceImplementation="de.plushnikov.intellij.plugin.processor.modifier.UtilityClassModifierProcessor"/>
-    <applicationService
-      serviceImplementation="de.plushnikov.intellij.plugin.processor.modifier.FieldDefaultsModifierProcessor"/>
-
     <applicationService
       serviceImplementation="de.plushnikov.intellij.plugin.processor.clazz.constructor.AllArgsConstructorProcessor"/>
     <applicationService
@@ -133,8 +117,6 @@
 
     <applicationService serviceImplementation="de.plushnikov.intellij.plugin.processor.CleanupProcessor"/>
     <!--    <applicationService serviceImplementation="de.plushnikov.intellij.plugin.processor.SynchronizedProcessor"/>-->
-
-    <projectService serviceImplementation="de.plushnikov.intellij.plugin.provider.LombokProcessorProvider"/>
     <!-- END of lombok Processors-->
 
     <applicationService serviceImplementation="de.plushnikov.intellij.plugin.lombokconfig.ConfigDiscovery"/>
@@ -142,6 +124,7 @@
 
     <lang.psiAugmentProvider implementation="de.plushnikov.intellij.plugin.provider.LombokAugmentProvider"/>
     <lang.jvm.annotationPackageSupport implementation="de.plushnikov.intellij.plugin.provider.LombokAnnotationSupport"/>
+    <lang.jvm.ignoreAnnotationParamSupport implementation="de.plushnikov.intellij.plugin.provider.LombokDefaultAnnotationParamSupport"/>
     <implicitUsageProvider implementation="de.plushnikov.intellij.plugin.provider.LombokImplicitUsageProvider"/>
     <projectConfigurable groupId="language"
                          instance="de.plushnikov.intellij.plugin.settings.ProjectSettingsPage"/>
@@ -190,6 +173,8 @@
     <canBeFinal implementation="de.plushnikov.intellij.plugin.extension.LombokCanBeFinalHandler"/>
 
     <localInspection
+      language="JAVA"
+      groupPath="Java"
       groupKey="inspection.lombok.group.name.lombok"
       groupBundle="messages.LombokBundle"
       shortName="Lombok"
@@ -199,6 +184,8 @@
       bundle="messages.LombokBundle"/>
 
     <localInspection
+      language="JAVA"
+      groupPath="Java"
       groupKey="inspection.lombok.group.name.lombok"
       groupBundle="messages.LombokBundle"
       shortName="SpringQualifierCopyableLombok"
@@ -208,6 +195,8 @@
       bundle="messages.LombokBundle"/>
 
     <localInspection
+      language="JAVA"
+      groupPath="Java"
       groupKey="inspection.lombok.group.name.lombok"
       groupBundle="messages.LombokBundle"
       shortName="DeprecatedLombok"
@@ -216,7 +205,8 @@
       key="inspection.deprecated.lombok.display.name" bundle="messages.LombokBundle"/>
 
     <localInspection
-      groupPath="Lombok"
+      language="JAVA"
+      groupPath="Java,Lombok"
       groupKey="inspection.lombok.group.name.redundant.modifiers"
       groupBundle="messages.LombokBundle"
       shortName="RedundantModifiersValueLombok"
@@ -225,7 +215,8 @@
       key="inspection.redundant.modifiers.value.lombok.display.name" bundle="messages.LombokBundle"/>
 
     <localInspection
-      groupPath="Lombok"
+      language="JAVA"
+      groupPath="Java,Lombok"
       groupKey="inspection.lombok.group.name.redundant.modifiers"
       groupBundle="messages.LombokBundle"
       shortName="RedundantModifiersUtilityClassLombok"
@@ -234,16 +225,8 @@
       key="inspection.redundant.modifiers.utility.class.lombok.display.name" bundle="messages.LombokBundle"/>
 
     <localInspection
-      groupPath="Lombok"
-      groupKey="inspection.lombok.group.name.redundant.definitions"
-      groupBundle="messages.LombokBundle"
-      shortName="RedundantSlf4jDefinition"
-      enabledByDefault="true"
-      implementationClass="de.plushnikov.intellij.plugin.inspection.RedundantSlf4jDefinitionInspection"
-      key="inspection.redundant.slf.4.j.definition.display.name" bundle="messages.LombokBundle"/>
-
-    <localInspection
-      groupPath="Lombok"
+      language="JAVA"
+      groupPath="Java,Lombok"
       groupKey="inspection.lombok.group.name.redundant.modifiers"
       groupBundle="messages.LombokBundle"
       shortName="RedundantModifiersValLombok"
@@ -251,25 +234,40 @@
       implementationClass="de.plushnikov.intellij.plugin.inspection.modifiers.RedundantModifiersOnValLombokAnnotationInspection"
       key="inspection.redundant.modifiers.val.lombok.display.name" bundle="messages.LombokBundle"/>
 
+    <localInspection
+      language="JAVA"
+      groupPath="Java,Lombok"
+      groupKey="inspection.lombok.group.name.redundant.definitions"
+      groupBundle="messages.LombokBundle"
+      shortName="RedundantSlf4jDefinition"
+      enabledByDefault="true"
+      implementationClass="de.plushnikov.intellij.plugin.inspection.RedundantSlf4jDefinitionInspection"
+      key="inspection.redundant.slf.4.j.definition.display.name" bundle="messages.LombokBundle"/>
+
     <intentionAction>
       <className>de.plushnikov.intellij.plugin.intention.valvar.to.ReplaceExplicitTypeWithValIntentionAction</className>
-      <category>Lombok</category>
+      <bundleName>messages.LombokBundle</bundleName>
+      <categoryKey>intention.category.lombok</categoryKey>
     </intentionAction>
     <intentionAction>
       <className>de.plushnikov.intellij.plugin.intention.valvar.to.ReplaceExplicitTypeWithVarIntentionAction</className>
-      <category>Lombok</category>
+      <bundleName>messages.LombokBundle</bundleName>
+      <categoryKey>intention.category.lombok</categoryKey>
     </intentionAction>
     <intentionAction>
       <className>de.plushnikov.intellij.plugin.intention.valvar.from.ReplaceValWithExplicitTypeIntentionAction</className>
-      <category>Lombok</category>
+      <bundleName>messages.LombokBundle</bundleName>
+      <categoryKey>intention.category.lombok</categoryKey>
     </intentionAction>
     <intentionAction>
       <className>de.plushnikov.intellij.plugin.intention.valvar.from.ReplaceVarWithExplicitTypeIntentionAction</className>
-      <category>Lombok</category>
+      <bundleName>messages.LombokBundle</bundleName>
+      <categoryKey>intention.category.lombok</categoryKey>
     </intentionAction>
     <intentionAction>
       <className>de.plushnikov.intellij.plugin.intention.ReplaceWithLombokAnnotationAction</className>
-      <category>Lombok</category>
+      <bundleName>messages.LombokBundle</bundleName>
+      <categoryKey>intention.category.lombok</categoryKey>
     </intentionAction>
 
     <codeInsight.template.postfixTemplateProvider language="JAVA"
@@ -278,10 +276,16 @@
 
     <buildProcess.parametersProvider implementation="de.plushnikov.intellij.plugin.jps.LombokBuildProcessParametersProvider"/>
     <notificationGroup id="Lombok plugin" displayType="BALLOON"/>
+
+    <dependencySupport coordinate="org.projectlombok:lombok" kind="java" displayName="Lombok"/>
   </extensions>
+  <applicationListeners>
+    <listener class="de.plushnikov.intellij.plugin.lombokconfig.LombokConfigChangeListener"
+              topic="com.intellij.openapi.vfs.newvfs.BulkFileListener"/>
+  </applicationListeners>
 
   <actions>
-    <group id="LombokActionGroup" icon="LombokIcons.Lombok" popup="true">
+    <group id="LombokActionGroup" class="de.plushnikov.intellij.plugin.action.LombokMenuGroup" icon="LombokIcons.Lombok" popup="true">
 
       <action id="defaultLombokData" class="de.plushnikov.intellij.plugin.action.lombok.LombokDataAction"/>
       <separator/>
@@ -294,7 +298,7 @@
 
       <add-to-group group-id="RefactoringMenu" anchor="last"/>
     </group>
-    <group id="DelombokActionGroup" icon="LombokIcons.Lombok" popup="true">
+    <group id="DelombokActionGroup" class="de.plushnikov.intellij.plugin.action.LombokMenuGroup" icon="LombokIcons.Lombok" popup="true">
       <action id="delombokAny" class="de.plushnikov.intellij.plugin.action.delombok.DelombokEverythingAction"/>
       <separator/>
       <action id="delombokData" class="de.plushnikov.intellij.plugin.action.delombok.DelombokDataAction"/>

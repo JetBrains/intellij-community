@@ -5,10 +5,7 @@ import com.intellij.diff.tools.util.breadcrumbs.BreadcrumbsPlacement
 import com.intellij.diff.util.DiffPlaces
 import com.intellij.diff.util.DiffUtil
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.components.PersistentStateComponent
-import com.intellij.openapi.components.State
-import com.intellij.openapi.components.Storage
-import com.intellij.openapi.components.service
+import com.intellij.openapi.components.*
 import com.intellij.openapi.diff.DiffBundle
 import com.intellij.openapi.util.Key
 import com.intellij.util.EventDispatcher
@@ -18,7 +15,7 @@ import com.intellij.util.xmlb.annotations.XMap
 import org.jetbrains.annotations.NonNls
 import java.util.*
 
-@State(name = "TextDiffSettings", storages = [(Storage(value = DiffUtil.DIFF_CONFIG))])
+@State(name = "TextDiffSettings", storages = [(Storage(value = DiffUtil.DIFF_CONFIG))], category = ComponentCategory.CODE)
 class TextDiffSettingsHolder : PersistentStateComponent<TextDiffSettingsHolder.State> {
   companion object {
     @JvmField val CONTEXT_RANGE_MODES: IntArray = intArrayOf(1, 2, 4, 8, -1)
@@ -37,9 +34,6 @@ class TextDiffSettingsHolder : PersistentStateComponent<TextDiffSettingsHolder.S
     // Diff settings
     var HIGHLIGHT_POLICY: HighlightPolicy = HighlightPolicy.BY_WORD,
     var IGNORE_POLICY: IgnorePolicy = IgnorePolicy.DEFAULT,
-
-    // Presentation settings
-    var ENABLE_SYNC_SCROLL: Boolean = true,
 
     // Editor settings
     var SHOW_WHITESPACES: Boolean = false,
@@ -68,16 +62,18 @@ class TextDiffSettingsHolder : PersistentStateComponent<TextDiffSettingsHolder.S
 
     // Presentation settings
 
-    var isEnableSyncScroll: Boolean
-      get()      = PLACE_SETTINGS.ENABLE_SYNC_SCROLL
-      set(value) { PLACE_SETTINGS.ENABLE_SYNC_SCROLL = value }
+    var isEnableSyncScroll: Boolean = true
 
     // Diff settings
 
-    var highlightPolicy: HighlightPolicy
-      get()      = PLACE_SETTINGS.HIGHLIGHT_POLICY
-      set(value) { PLACE_SETTINGS.HIGHLIGHT_POLICY = value
-                   PLACE_SETTINGS.eventDispatcher.multicaster.highlightPolicyChanged() }
+    var highlightPolicy: HighlightPolicy = PLACE_SETTINGS.HIGHLIGHT_POLICY
+      set(value) {
+        field = value
+        if (value != HighlightPolicy.DO_NOT_HIGHLIGHT) { // do not persist confusing value as new default
+          PLACE_SETTINGS.HIGHLIGHT_POLICY = value
+        }
+        PLACE_SETTINGS.eventDispatcher.multicaster.highlightPolicyChanged()
+      }
 
     var ignorePolicy: IgnorePolicy
       get()      = PLACE_SETTINGS.IGNORE_POLICY

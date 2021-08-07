@@ -5,7 +5,7 @@ from __future__ import absolute_import
 from io import BytesIO
 
 from _shaded_thriftpy._compat import CYTHON
-from .. import TTransportBase
+from ..base import TTransportBase
 
 
 class TBufferedTransport(TTransportBase):
@@ -33,11 +33,17 @@ class TBufferedTransport(TTransportBase):
 
     def _read(self, sz):
         ret = self._rbuf.read(sz)
-        if len(ret) != 0:
+
+        rest_len = sz - len(ret)
+        if rest_len == 0:
             return ret
 
-        self._rbuf = BytesIO(self._trans.read(max(sz, self._buf_size)))
-        return self._rbuf.read(sz)
+        buf = self._trans.read(max(rest_len, self._buf_size))
+        ret = ret + buf[:rest_len]
+        buf = buf[rest_len:]
+
+        self._rbuf = BytesIO(buf)
+        return ret
 
     def write(self, buf):
         self._wbuf.write(buf)

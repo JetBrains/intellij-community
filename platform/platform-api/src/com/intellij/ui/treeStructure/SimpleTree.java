@@ -8,6 +8,7 @@ import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.ui.JBPopupMenu;
+import com.intellij.ui.DoubleClickListener;
 import com.intellij.ui.TreeUIHelper;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NotNull;
@@ -45,6 +46,13 @@ public class SimpleTree extends Tree implements CellEditorListener {
 
     configureUiHelper(TreeUIHelper.getInstance());
 
+    new DoubleClickListener() {
+      @Override
+      protected boolean onDoubleClick(@NotNull MouseEvent e) {
+        handleDoubleClickOrEnter(getClosestPathForLocation(e.getX(), e.getY()), e);
+        return false;
+      }
+    }.installOn(this);
     addMouseListener(new MyMouseListener());
     setCellRenderer(new NodeRenderer());
 
@@ -383,11 +391,6 @@ public class SimpleTree extends Tree implements CellEditorListener {
     ApplicationManager.getApplication().invokeLater(runnable, ModalityState.stateForComponent(this));
   }
 
-  // TODO: move to some util?
-  public static boolean isDoubleClick(MouseEvent e) {
-    return e != null && e.getClickCount() > 0 && e.getClickCount() % 2 == 0;
-  }
-
   protected ActionGroup getPopupGroup() {
     return myPopupGroup;
   }
@@ -399,18 +402,7 @@ public class SimpleTree extends Tree implements CellEditorListener {
   private class MyMouseListener extends MouseAdapter {
     @Override
     public void mousePressed(MouseEvent e) {
-      if (e.isPopupTrigger()) {
-        invokePopup(e);
-      }
-      else if (isDoubleClick(e)) {
-        handleDoubleClickOrEnter(getClosestPathForLocation(e.getX(), e.getY()), e);
-        /*
-        if (!TreeWizardPopupImpl.isLocationInExpandControl(SimpleTree.this, getSelectionPath(), e.getX(), e.getY())) {
-          TreePath treePath = getClosestPathForLocation(e.getX(), e.getY());
-          handleDoubleClickOrEnter(treePath, e);
-        }
-        */
-      }
+      invokePopup(e);
     }
 
     @Override

@@ -22,7 +22,7 @@ public interface ChangeListModification {
   void moveChangesTo(@NotNull LocalChangeList list, Change @NotNull ... changes);
 
   /**
-   * Prohibit changelist deletion or rename until Project is closed
+   * Prohibit changelist deletion or rename until the project is closed
    */
   boolean setReadOnly(@NotNull @NlsSafe String name, final boolean value);
 

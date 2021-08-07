@@ -3,6 +3,7 @@ package com.intellij.codeInspection.reference;
 
 import com.intellij.codeInsight.daemon.ImplicitUsageProvider;
 import com.intellij.codeInspection.ex.EntryPointsManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
@@ -24,7 +25,12 @@ public final class RefUtil {
       return false;
     }
     for (ImplicitUsageProvider provider : ImplicitUsageProvider.EP_NAME.getExtensionList()) {
-      if (provider.isImplicitUsage(element)) return true;
+      boolean isImplicitUsage = ReadAction.nonBlocking(() -> {
+        return provider.isImplicitUsage(element);
+      }).executeSynchronously();
+      if (isImplicitUsage) {
+        return true;
+      }
     }
     return false;
   }

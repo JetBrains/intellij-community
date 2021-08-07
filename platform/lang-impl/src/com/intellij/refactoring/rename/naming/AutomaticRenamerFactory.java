@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.rename.naming;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
@@ -14,8 +14,6 @@ import java.util.Collection;
  * When an element is renamed, allows to prompt the user to rename other elements with names derived from the name of the
  * element being renamed (for example, when a class is renamed, allows to prompt the user to rename variables of this class
  * that have names similar to the name of the class).
- *
- * @author yole
  */
 public interface AutomaticRenamerFactory {
   ExtensionPointName<AutomaticRenamerFactory> EP_NAME = ExtensionPointName.create("com.intellij.automaticRenamerFactory");

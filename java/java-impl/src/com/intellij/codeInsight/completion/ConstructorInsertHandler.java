@@ -18,7 +18,7 @@ import com.intellij.codeInsight.template.impl.TemplateManagerImpl;
 import com.intellij.codeInsight.template.impl.TemplateState;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.java.JavaBundle;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.UndoConfirmationPolicy;
 import com.intellij.openapi.command.WriteCommandAction;
@@ -331,18 +331,19 @@ public final class ConstructorInsertHandler implements InsertHandler<LookupEleme
           OverrideImplementUtil.chooseAndOverrideOrImplementMethods(project, editor, aClass, false);
         }
         else {
-          ApplicationManager.getApplication().runWriteAction(() -> {
-            try {
-              List<PsiMethod> methods = OverrideImplementUtil.overrideOrImplementMethodCandidates(aClass, candidatesToImplement, false);
-              List<PsiGenerationInfo<PsiMethod>> prototypes = OverrideImplementUtil.convert2GenerationInfos(methods);
-              List<PsiGenerationInfo<PsiMethod>> resultMembers =
-                GenerateMembersUtil.insertMembersBeforeAnchor(aClass, null, prototypes);
-              resultMembers.get(0).positionCaret(editor, true);
-            }
-            catch (IncorrectOperationException ioe) {
-              LOG.error(ioe);
-            }
-          });
+          ApplicationManagerEx.getApplicationEx()
+            .runWriteActionWithCancellableProgressInDispatchThread(getCommandName(), project, editor.getComponent(), indicator -> {
+              try {
+                List<PsiMethod> methods = OverrideImplementUtil.overrideOrImplementMethodCandidates(aClass, candidatesToImplement, false);
+                List<PsiGenerationInfo<PsiMethod>> prototypes = OverrideImplementUtil.convert2GenerationInfos(methods);
+                List<PsiGenerationInfo<PsiMethod>> resultMembers =
+                  GenerateMembersUtil.insertMembersBeforeAnchor(aClass, null, prototypes);
+                resultMembers.get(0).positionCaret(editor, true);
+              }
+              catch (IncorrectOperationException ioe) {
+                LOG.error(ioe);
+              }
+            });
         }
       }), getCommandName(), getCommandName(), UndoConfirmationPolicy.DEFAULT, editor.getDocument());
     };

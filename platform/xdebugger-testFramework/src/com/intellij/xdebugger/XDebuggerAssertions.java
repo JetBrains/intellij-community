@@ -297,26 +297,45 @@ public class XDebuggerAssertions extends XDebuggerTestUtil {
       assertNull("full value evaluator should be null", node.myFullValueEvaluator);
     }
     else {
-      final FutureResult<String> result = new FutureResult<>();
-      node.myFullValueEvaluator.startEvaluation(new XFullValueEvaluator.XFullValueEvaluationCallback() {
-        @Override
-        public void evaluated(@NotNull String fullValue) {
-          result.set(fullValue);
-        }
-
-        @Override
-        public void evaluated(@NotNull String fullValue, @Nullable Font font) {
-          result.set(fullValue);
-        }
-
-        @Override
-        public void errorOccurred(@NotNull String errorMessage) {
-          result.set(errorMessage);
-        }
-      });
-
-      assertEquals(value, result.get(TIMEOUT_MS, TimeUnit.MILLISECONDS));
+      final String actualValue = computeFullValue(node);
+      assertEquals(value, actualValue);
     }
+  }
+
+  public static void assertVariableFullValueMatches(@NotNull XValue var,
+                                                    @RegExp @Nullable String valueRegexp) throws Exception {
+    XTestValueNode node = computePresentation(var);
+
+    if (valueRegexp == null) {
+      assertNull("full value evaluator should be null", node.myFullValueEvaluator);
+    }
+    else {
+      final String value = computeFullValue(node);
+      assertTrue(value + " is not matched by " + valueRegexp, value.matches(valueRegexp));
+    }
+  }
+
+  private static String computeFullValue(@NotNull XTestValueNode node) throws Exception {
+    assertNotNull("full value evaluator should be not null", node.myFullValueEvaluator);
+    final FutureResult<String> result = new FutureResult<>();
+    node.myFullValueEvaluator.startEvaluation(new XFullValueEvaluator.XFullValueEvaluationCallback() {
+      @Override
+      public void evaluated(@NotNull String fullValue) {
+        result.set(fullValue);
+      }
+
+      @Override
+      public void evaluated(@NotNull String fullValue, @Nullable Font font) {
+        result.set(fullValue);
+      }
+
+      @Override
+      public void errorOccurred(@NotNull String errorMessage) {
+        result.set(errorMessage);
+      }
+    });
+
+    return result.get(TIMEOUT_MS, TimeUnit.MILLISECONDS);
   }
 
   public static void assertVariableFullValue(@NotNull Collection<? extends XValue> vars, @Nullable String name, @Nullable String value)

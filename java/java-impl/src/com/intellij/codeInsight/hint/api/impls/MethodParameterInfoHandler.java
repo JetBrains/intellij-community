@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.hint.api.impls;
 
 import com.intellij.codeInsight.AnnotationTargetUtil;
@@ -364,9 +364,12 @@ public class MethodParameterInfoHandler implements ParameterInfoHandlerWithTabAc
           chosenInfo = candidate;
         }
 
-        if (parms.length == args.length && realResolve == method &&
-            isAssignableParametersBeforeGivenIndex(parms, args, args.length, substitutor)) {
-          completeMatch = candidate;
+        if (realResolve == method) {
+          if (parms.length == args.length && isAssignableParametersBeforeGivenIndex(parms, args, args.length, substitutor) ||
+              method.isVarArgs() && parms.length - 1 <= args.length &&
+              isAssignableParametersBeforeGivenIndex(parms, args, Math.min(parms.length, args.length), substitutor)) {
+            completeMatch = candidate;
+          }
         }
       }
     }
@@ -794,11 +797,12 @@ public class MethodParameterInfoHandler implements ParameterInfoHandlerWithTabAc
     if (p instanceof CandidateInfo) {
       CandidateInfo info = (CandidateInfo)p;
       PsiMethod method = (PsiMethod)info.getElement();
-      if (!method.isValid() || info instanceof MethodCandidateInfo && !((MethodCandidateInfo)info).getSiteSubstitutor().isValid()) {
+      PsiElement parameterOwner = context.getParameterOwner();
+      if (!method.isValid() || !parameterOwner.isValid() || 
+          info instanceof MethodCandidateInfo && !((MethodCandidateInfo)info).getSiteSubstitutor().isValid()) {
         context.setUIComponentEnabled(false);
         return;
       }
-      PsiElement parameterOwner = context.getParameterOwner();
       PsiCall call = parameterOwner instanceof PsiExpressionList ? getCall((PsiExpressionList)parameterOwner) : null;
 
       updateMethodPresentation(method, getCandidateInfoSubstitutor(info, call != null && call.resolveMethod() == method), context);

@@ -39,4 +39,9 @@ public class CurrentRevision extends Revision {
   public Entry findEntry() {
     return myRoot.findEntry(myPath);
   }
+
+  @Override
+  public RootEntry getRoot() {
+    return myRoot;
+  }
 }

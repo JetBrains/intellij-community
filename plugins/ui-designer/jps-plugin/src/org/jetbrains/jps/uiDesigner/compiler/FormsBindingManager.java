@@ -7,6 +7,7 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileFilters;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.uiDesigner.compiler.AlienFormFileException;
 import com.intellij.util.containers.FileCollectionFactory;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -19,6 +20,8 @@ import org.jetbrains.jps.incremental.*;
 import org.jetbrains.jps.incremental.fs.CompilationRound;
 import org.jetbrains.jps.incremental.java.CopyResourcesUtil;
 import org.jetbrains.jps.incremental.java.FormsParsing;
+import org.jetbrains.jps.incremental.messages.BuildMessage;
+import org.jetbrains.jps.incremental.messages.CompilerMessage;
 import org.jetbrains.jps.incremental.storage.OneToManyPathsMapping;
 import org.jetbrains.jps.model.JpsProject;
 import org.jetbrains.jps.model.java.JpsJavaExtensionService;
@@ -124,20 +127,35 @@ public final class FormsBindingManager extends FormsBuilder {
       final FSOperations.DirtyFilesHolderBuilder<JavaSourceRootDescriptor, ModuleBuildTarget> holderBuilder = FSOperations.createDirtyFilesHolderBuilder(context, CompilationRound.CURRENT);
 
       // force compilation of bound source file if the form is dirty
+      final Set<File> alienForms = FileCollectionFactory.createCanonicalFileSet();
       for (final Map.Entry<File, ModuleBuildTarget> entry : formsToCompile.entrySet()) {
         final File form = entry.getKey();
         final ModuleBuildTarget target = entry.getValue();
-        final Collection<File> sources = findBoundSourceCandidates(context, target, form);
-        for (File boundSource : sources) {
-          if (!excludes.isExcluded(boundSource)) {
-            addBinding(boundSource, form, srcToForms);
-            holderBuilder.markDirtyFile(target, boundSource);
-            context.getScope().markIndirectlyAffected(target, boundSource);
-            filesToCompile.put(boundSource, target);
-            exitCode = ExitCode.OK;
+        try {
+          final Collection<File> sources = findBoundSourceCandidates(context, target, form);
+          boolean isFormBound = false;
+          for (File boundSource : sources) {
+            if (!excludes.isExcluded(boundSource)) {
+              isFormBound = true;
+              addBinding(boundSource, form, srcToForms);
+              holderBuilder.markDirtyFile(target, boundSource);
+              context.getScope().markIndirectlyAffected(target, boundSource);
+              filesToCompile.put(boundSource, target);
+              exitCode = ExitCode.OK;
+            }
+          }
+          if (!isFormBound) {
+            context.processMessage(new CompilerMessage(
+              getPresentableName(), BuildMessage.Kind.ERROR, FormBundle.message("class.to.bind.not.found"), form.getAbsolutePath()
+            ));
           }
         }
+        catch (AlienFormFileException e) {
+          alienForms.add(form);
+        }
       }
+
+      formsToCompile.keySet().removeAll(alienForms);
 
       // form should be considered dirty if the class it is bound to is dirty
       final OneToManyPathsMapping sourceToFormMap = context.getProjectDescriptor().dataManager.getSourceToFormMap();
@@ -196,12 +214,14 @@ public final class FormsBindingManager extends FormsBuilder {
       }
       catch (IOException ignore) {
       }
+      catch (AlienFormFileException ignore) {
+      }
     }
     return false;
   }
 
   @NotNull
-  private static Collection<File> findBoundSourceCandidates(CompileContext context, final ModuleBuildTarget target, File form) throws IOException {
+  private static Collection<File> findBoundSourceCandidates(CompileContext context, final ModuleBuildTarget target, File form) throws IOException, AlienFormFileException {
     final List<JavaSourceRootDescriptor> targetRoots = context.getProjectDescriptor().getBuildRootIndex().getTargetRoots(target, context);
     if (targetRoots.isEmpty()) {
       return Collections.emptyList();

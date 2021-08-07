@@ -1,11 +1,9 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.jps.cmdline;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.FileSystemUtil;
-import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.ConcurrencyUtil;
+import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.util.TimeoutUtil;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.*;
@@ -33,6 +31,7 @@ import org.jetbrains.jps.service.SharedThreadPool;
 import java.io.*;
 import java.net.InetSocketAddress;
 import java.util.UUID;
+import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -63,20 +62,20 @@ public final class BuildMain {
       final long processStart = System.nanoTime();
       final String startMessage = "Build process started. Classpath: " + System.getProperty("java.class.path");
       System.out.println(startMessage);
-      LOG.info(StringUtil.repeatSymbol('=', 50));
+      LOG.info("==================================================");
       LOG.info(startMessage);
 
       final String host = args[HOST_ARG];
       final int port = Integer.parseInt(args[PORT_ARG]);
       final UUID sessionId = UUID.fromString(args[SESSION_ID_ARG]);
-      final File systemDir = new File(FileUtil.toCanonicalPath(args[SYSTEM_DIR_ARG]));
+      final File systemDir = new File(FileUtilRt.toCanonicalPath(args[SYSTEM_DIR_ARG], File.separatorChar, true));
       Utils.setSystemRoot(systemDir);
 
       final long connectStart = System.nanoTime();
       // IDEA-123132, let's try again
       for (int attempt = 0; attempt < 3; attempt++) {
         try {
-          ourEventLoopGroup = new NioEventLoopGroup(1, ConcurrencyUtil.newNamedThreadFactory("JPS event loop"));
+          ourEventLoopGroup = new NioEventLoopGroup(1, (ThreadFactory)r -> new Thread(r, "JPS event loop"));
           break;
         }
         catch (IllegalStateException e) {

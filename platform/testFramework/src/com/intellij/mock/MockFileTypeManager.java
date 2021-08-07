@@ -110,6 +110,11 @@ public class MockFileTypeManager extends FileTypeManagerEx {
   }
 
   @Override
+  public void makeFileTypesChange(@NotNull String message, @NotNull Runnable command) {
+    command.run();
+  }
+
+  @Override
   public void addFileTypeListener(@NotNull FileTypeListener listener) {
   }
 

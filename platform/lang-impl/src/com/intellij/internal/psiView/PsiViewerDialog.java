@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.psiView;
 
 import com.intellij.codeInsight.documentation.render.DocRenderManager;
@@ -11,6 +11,7 @@ import com.intellij.lang.LanguageUtil;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataProvider;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
@@ -126,6 +127,8 @@ public class PsiViewerDialog extends DialogWrapper implements DataProvider {
 
   private final boolean myExternalDocument;
 
+  private final PsiFile myOriginalPsiFile;
+
   @NotNull
   private final JBTabs myTabs;
 
@@ -153,6 +156,7 @@ public class PsiViewerDialog extends DialogWrapper implements DataProvider {
     super(project, true, IdeModalityType.MODELESS);
     myProject = project;
     myExternalDocument = selectedEditor != null;
+    myOriginalPsiFile = getOriginalPsiFile(project, selectedEditor);
     myTabs = createTabPanel(project);
     myRefs = new JBList<>(new DefaultListModel<>());
     ViewerPsiBasedTree.PsiTreeUpdater psiTreeUpdater = new ViewerPsiBasedTree.PsiTreeUpdater() {
@@ -218,6 +222,10 @@ public class PsiViewerDialog extends DialogWrapper implements DataProvider {
         //                                          selectedEditor.getSelectionModel().getSelectionEnd());
       }, ModalityState.stateForComponent(myPanel));
     }
+  }
+
+  private static @Nullable PsiFile getOriginalPsiFile(@NotNull Project project, @Nullable Editor selectedEditor) {
+    return selectedEditor != null ? PsiDocumentManager.getInstance(project).getPsiFile(selectedEditor.getDocument()) : null;
   }
 
   @NotNull
@@ -635,7 +643,7 @@ public class PsiViewerDialog extends DialogWrapper implements DataProvider {
         }
         StringBuilder data = new StringBuilder();
         for (PsiElement psiElement : allToParse) {
-          data.append(DebugUtil.psiToString(psiElement, !myShowWhiteSpacesBox.isSelected(), true));
+          data.append(DebugUtil.psiToString(psiElement, myShowWhiteSpacesBox.isSelected(), true));
         }
         CopyPasteManager.getInstance().setContents(new StringSelection(data.toString()));
       }
@@ -653,6 +661,7 @@ public class PsiViewerDialog extends DialogWrapper implements DataProvider {
     myLastParsedTextHashCode = text.hashCode();
     myNewDocumentHashCode = myLastParsedTextHashCode;
     PsiElement rootElement = parseText(text);
+    ObjectUtils.consumeIfNotNull(rootElement, e->e.getContainingFile().putUserData(PsiFileFactory.ORIGINAL_FILE, myOriginalPsiFile));
     focusTree();
     ViewerTreeStructure structure = getTreeStructure();
     structure.setRootPsiElement(rootElement);
@@ -703,7 +712,15 @@ public class PsiViewerDialog extends DialogWrapper implements DataProvider {
 
   @Override
   public Object getData(@NotNull @NonNls String dataId) {
-    if (CommonDataKeys.NAVIGATABLE.is(dataId)) {
+    if (PlatformDataKeys.SLOW_DATA_PROVIDERS.is(dataId)) {
+      return Collections.<DataProvider>singletonList(realDataId -> getSlowData(realDataId));
+    }
+    return null;
+  }
+
+  @Nullable
+  private PsiFile getSlowData(@NonNls String d) {
+    if (CommonDataKeys.NAVIGATABLE.is(d)) {
       String fqn = null;
       if (myPsiTree.hasFocus()) {
         final TreePath path = myPsiTree.getSelectionPath();

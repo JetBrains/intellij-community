@@ -18,7 +18,6 @@ package org.intellij.lang.xpath.xslt.impl;
 
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiElement;
 import com.intellij.refactoring.util.MoveRenameUsageInfo;
@@ -59,7 +58,7 @@ public class XsltStuffProvider implements UsageGroupingRuleProvider {
     }
 
   @Override
-  public UsageGroupingRule @NotNull [] getActiveRules(@NotNull Project project) {
+  public @NotNull UsageGroupingRule @NotNull [] getActiveRules(@NotNull Project project) {
         return myUsageGroupingRules;
     }
 
@@ -71,13 +70,13 @@ public class XsltStuffProvider implements UsageGroupingRuleProvider {
         }
 
         @Override
-        public Icon getIcon(boolean isOpen) {
+        public Icon getIcon() {
             return myTemplate.getIcon(0);
         }
 
         @Override
         @NotNull
-        public String getText(UsageView view) {
+        public String getPresentableGroupText() {
             final StringBuilder sb = new StringBuilder();
 
             final XPathExpression expr = myTemplate.getMatchExpression();
@@ -92,18 +91,8 @@ public class XsltStuffProvider implements UsageGroupingRuleProvider {
         }
 
         @Override
-        @Nullable
-        public FileStatus getFileStatus() {
-            return null;
-        }
-
-        @Override
         public boolean isValid() {
             return myTemplate.isValid();
-        }
-
-        @Override
-        public void update() {
         }
 
         @Override

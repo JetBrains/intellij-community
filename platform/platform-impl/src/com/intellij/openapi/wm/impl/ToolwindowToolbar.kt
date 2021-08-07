@@ -25,14 +25,22 @@ abstract class ToolwindowToolbar : JPanel() {
 
   abstract fun removeStripeButton(project: Project, toolWindow: ToolWindow, anchor: ToolWindowAnchor)
 
-  abstract fun addStripeButton(project: Project, anchor: ToolWindowAnchor, comparator: Comparator<ToolWindow>, toolWindow: ToolWindow)
+  abstract fun addStripeButton(project: Project, anchor: ToolWindowAnchor, toolWindow: ToolWindow)
 
-  fun rebuildStripe(project: Project, panel: JPanel, toolWindow: ToolWindow, comparator: Comparator<ToolWindow>) {
+  abstract fun reset()
+
+  fun rebuildStripe(project: Project, panel: JPanel, toolWindow: ToolWindow) {
     if (toolWindow !is ToolWindowImpl) return
+
+    if (toolWindow.orderOnLargeStripe == -1) {
+      toolWindow.orderOnLargeStripe = panel.components.filterIsInstance(SquareStripeButton::class.java).count()
+    }
+
     //temporary add new button
     panel.add(SquareStripeButton(project, StripeButton(toolwindowPane, toolWindow).also { it.updatePresentation() }))
     val sortedSquareButtons = panel.components.filterIsInstance(SquareStripeButton::class.java)
-      .map { it.button.toolWindow }.sortedWith(comparator)
+      .map { it.button.toolWindow }
+      .sortedWith(Comparator.comparingInt<ToolWindow> { (it as? ToolWindowImpl)?.windowInfo?.orderOnLargeStripe ?: -1 })
     panel.removeAll()
     sortedSquareButtons.forEach {
       panel.add(SquareStripeButton(project, StripeButton(toolwindowPane, it).also { button -> button.updatePresentation() }))
@@ -45,11 +53,20 @@ abstract class ToolwindowToolbar : JPanel() {
       panel.revalidate()
       panel.repaint()
     }
+
+    fun remove(panel: JPanel, toolWindow: ToolWindow) {
+      val components = panel.components
+      val index = components.filterIsInstance(SquareStripeButton::class.java).indexOfFirst { it.button.id == toolWindow.id }
+      // shift all button indexes beneath
+      components.drop(index + 1)
+        .filterIsInstance(SquareStripeButton::class.java)
+        .map { it.button.toolWindow }
+        .forEach { it.orderOnLargeStripe-- }
+      components[index]?.let { panel.remove(it); panel.revalidate(); panel.repaint() }
+    }
   }
 
   open class ToolwindowActionToolbar(val panel: JComponent) : ActionToolbarImpl(TOOLWINDOW_TOOLBAR_BAR, DefaultActionGroup(), false) {
-    override fun actionsUpdated(forced: Boolean, newVisibleActions: List<AnAction>) {
-      if (forced || canUpdateActions(newVisibleActions)) updateButtons(panel)
-    }
+    override fun actionsUpdated(forced: Boolean, newVisibleActions: List<AnAction>) = updateButtons(panel)
   }
 }

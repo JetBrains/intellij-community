@@ -7,8 +7,10 @@ import com.intellij.diff.comparison.DiffTooBigException;
 import com.intellij.diff.comparison.iterables.FairDiffIterable;
 import com.intellij.diff.util.Range;
 import com.intellij.openapi.progress.DumbProgressIndicator;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.LineTokenizer;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.VcsException;
@@ -17,6 +19,7 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.SystemIndependent;
 
 import java.io.File;
 import java.nio.file.Path;
@@ -38,6 +41,7 @@ public final class TextPatchBuilder {
 
   @NotNull private final Path myBasePath;
   private final boolean myIsReversePath;
+  private final int myContextLineCount = Registry.get("patch.context.line.count").asInteger();
   @Nullable private final Runnable myCancelChecker;
 
   private TextPatchBuilder(@NotNull Path basePath,
@@ -102,19 +106,25 @@ public final class TextPatchBuilder {
 
     TextFilePatch patch = buildPatchHeading(beforeRevision, afterRevision);
 
-    List<PatchHunk> hunks = buildPatchHunks(beforeContent, afterContent);
+    List<PatchHunk> hunks = buildPatchHunks(beforeContent, afterContent, myContextLineCount);
     for (PatchHunk hunk : hunks) {
       patch.addHunk(hunk);
     }
 
     // skip empty patch
-    if (hunks.isEmpty() && beforeRevision.getPath().getPath().equals(afterRevision.getPath().getPath())) return null;
+    if (hunks.isEmpty() && beforeRevision.getPath().equals(afterRevision.getPath())) return null;
 
     return patch;
   }
 
+  @SuppressWarnings("unused")
   @NotNull
   public static List<PatchHunk> buildPatchHunks(@NotNull String beforeContent, @NotNull String afterContent) {
+    return buildPatchHunks(beforeContent, afterContent, CONTEXT_LINES);
+  }
+
+  @NotNull
+  public static List<PatchHunk> buildPatchHunks(@NotNull String beforeContent, @NotNull String afterContent, int contextLineCount) {
     if (beforeContent.equals(afterContent)) return Collections.emptyList();
     if (beforeContent.isEmpty()) {
       return singletonList(createWholeFileHunk(afterContent, true, true));
@@ -134,9 +144,9 @@ public final class TextPatchBuilder {
 
     int hunkStart = 0;
     while (hunkStart < fragments.size()) {
-      List<Range> hunkFragments = getAdjacentFragments(fragments, hunkStart);
+      List<Range> hunkFragments = getAdjacentFragments(fragments, hunkStart, contextLineCount);
 
-      hunks.add(createHunk(hunkFragments, beforeLines, afterLines, beforeNoNewlineAtEOF, afterNoNewlineAtEOF));
+      hunks.add(createHunk(hunkFragments, beforeLines, afterLines, beforeNoNewlineAtEOF, afterNoNewlineAtEOF, contextLineCount));
 
       hunkStart += hunkFragments.size();
     }
@@ -145,14 +155,14 @@ public final class TextPatchBuilder {
   }
 
   @NotNull
-  private static List<Range> getAdjacentFragments(@NotNull List<Range> fragments, int hunkStart) {
+  private static List<Range> getAdjacentFragments(@NotNull List<Range> fragments, int hunkStart, int contextLineCount) {
     int hunkEnd = hunkStart + 1;
     while (hunkEnd < fragments.size()) {
       Range lastFragment = fragments.get(hunkEnd - 1);
       Range nextFragment = fragments.get(hunkEnd);
 
-      if (lastFragment.end1 + CONTEXT_LINES < nextFragment.start1 - CONTEXT_LINES &&
-          lastFragment.end2 + CONTEXT_LINES < nextFragment.start2 - CONTEXT_LINES) {
+      if (lastFragment.end1 + contextLineCount < nextFragment.start1 - contextLineCount &&
+          lastFragment.end2 + contextLineCount < nextFragment.start2 - contextLineCount) {
         break;
       }
       hunkEnd++;
@@ -165,14 +175,15 @@ public final class TextPatchBuilder {
                                       @NotNull List<String> beforeLines,
                                       @NotNull List<String> afterLines,
                                       boolean beforeNoNewlineAtEOF,
-                                      boolean afterNoNewlineAtEOF) {
+                                      boolean afterNoNewlineAtEOF,
+                                      int contextLineCount) {
     Range first = hunkFragments.get(0);
     Range last = hunkFragments.get(hunkFragments.size() - 1);
 
-    int contextStart1 = Math.max(first.start1 - CONTEXT_LINES, 0);
-    int contextStart2 = Math.max(first.start2 - CONTEXT_LINES, 0);
-    int contextEnd1 = Math.min(last.end1 + CONTEXT_LINES, beforeLines.size());
-    int contextEnd2 = Math.min(last.end2 + CONTEXT_LINES, afterLines.size());
+    int contextStart1 = Math.max(first.start1 - contextLineCount, 0);
+    int contextStart2 = Math.max(first.start2 - contextLineCount, 0);
+    int contextEnd1 = Math.min(last.end1 + contextLineCount, beforeLines.size());
+    int contextEnd2 = Math.min(last.end2 + contextLineCount, afterLines.size());
 
     PatchHunk hunk = new PatchHunk(contextStart1, contextEnd1, contextStart2, contextEnd2);
 
@@ -280,7 +291,7 @@ public final class TextPatchBuilder {
     TextFilePatch result = buildPatchHeading(afterRevision, afterRevision);
     result.setFileStatus(FileStatus.ADDED);
     String content = getContent(afterRevision);
-    if(!content.isEmpty()) {
+    if (!content.isEmpty()) {
       result.addHunk(createWholeFileHunk(content, true, false));
     }
     return result;
@@ -342,20 +353,38 @@ public final class TextPatchBuilder {
   private void setPatchHeading(@NotNull FilePatch result,
                                @NotNull AirContentRevision beforeRevision,
                                @NotNull AirContentRevision afterRevision) {
-    result.setBeforeName(myBasePath.relativize(beforeRevision.getPath().getPath()).toString().replace(File.separatorChar, '/'));
+    result.setBeforeName(getRelativePath(myBasePath, beforeRevision.getPath()));
     result.setBeforeVersionId(getRevisionName(beforeRevision));
 
-    result.setAfterName(myBasePath.relativize(afterRevision.getPath().getPath()).toString().replace(File.separatorChar, '/'));
+    result.setAfterName(getRelativePath(myBasePath, afterRevision.getPath()));
     result.setAfterVersionId(getRevisionName(afterRevision));
   }
 
-  @NotNull
+  @SystemIndependent
+  public static @NotNull String getRelativePath(@NotNull Path basePath, @NotNull FilePath filePath) {
+    try {
+      Path path = filePath.getIOFile().toPath();
+      if (!path.isAbsolute()) return filePath.getPath();
+      return basePath.relativize(path).toString().replace(File.separatorChar, '/');
+    }
+    catch (IllegalArgumentException e) {
+      return filePath.getPath();
+    }
+  }
+
+  @Nullable
   private static String getRevisionName(@NotNull AirContentRevision revision) {
     String revisionName = revision.getRevisionNumber();
     if (!StringUtil.isEmptyOrSpaces(revisionName)) {
       return MessageFormat.format(REVISION_NAME_TEMPLATE, revisionName);
     }
-    return MessageFormat.format(DATE_NAME_TEMPLATE, Long.toString(revision.getPath().lastModified()));
+
+    Long lastModified = revision.getLastModifiedTimestamp();
+    if (lastModified != null) {
+      return MessageFormat.format(DATE_NAME_TEMPLATE, Long.toString(lastModified));
+    }
+
+    return null;
   }
 
   @NotNull
@@ -363,7 +392,8 @@ public final class TextPatchBuilder {
     String beforeContent = revision.getContentAsString();
     if (beforeContent == null) {
       throw new VcsException(
-        VcsBundle.message("patch.failed.to.fetch.old.content.for.file.name.in.revision", revision.getPath().getPath(),revision.getRevisionNumber()));
+        VcsBundle.message("patch.failed.to.fetch.old.content.for.file.name.in.revision", revision.getPath().getPath(),
+                          revision.getRevisionNumber()));
     }
     return beforeContent;
   }

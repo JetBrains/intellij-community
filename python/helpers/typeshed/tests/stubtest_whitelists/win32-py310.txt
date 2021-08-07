@@ -1,0 +1,7 @@
+_msi.CreateRecord
+_msi.FCICreate
+_msi.OpenDatabase
+sqlite3.Connection.enable_load_extension
+sqlite3.Connection.load_extension
+sqlite3.dbapi2.Connection.enable_load_extension
+sqlite3.dbapi2.Connection.load_extension

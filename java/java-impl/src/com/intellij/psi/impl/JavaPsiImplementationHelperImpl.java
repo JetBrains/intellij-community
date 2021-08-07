@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl;
 
 import com.intellij.application.options.CodeStyle;
@@ -11,7 +11,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.fileTypes.StdFileTypes;
-import com.intellij.openapi.module.EffectiveLanguageLevelUtil;
+import com.intellij.openapi.module.LanguageLevelUtil;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.DumbService;
@@ -45,9 +45,7 @@ import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
 
-/**
- * @author yole
- */
+
 public class JavaPsiImplementationHelperImpl extends JavaPsiImplementationHelper {
   private static final Logger LOG = Logger.getInstance(JavaPsiImplementationHelperImpl.class);
 
@@ -60,7 +58,7 @@ public class JavaPsiImplementationHelperImpl extends JavaPsiImplementationHelper
   @NotNull
   @Override
   public PsiClass getOriginalClass(@NotNull PsiClass psiClass) {
-    return findCompiledElement(psiClass, scope -> {
+    return findCompiledElement(myProject, psiClass, scope -> {
       String fqn = psiClass.getQualifiedName();
       return fqn != null ? Arrays.asList(JavaPsiFacade.getInstance(myProject).findClasses(fqn, scope)) : Collections.emptyList();
     });
@@ -69,21 +67,21 @@ public class JavaPsiImplementationHelperImpl extends JavaPsiImplementationHelper
   @NotNull
   @Override
   public PsiJavaModule getOriginalModule(@NotNull PsiJavaModule module) {
-    return findCompiledElement(module, scope -> JavaPsiFacade.getInstance(myProject).findModules(module.getName(), scope));
+    return findCompiledElement(myProject, module, scope -> JavaPsiFacade.getInstance(myProject).findModules(module.getName(), scope));
   }
 
-  private <T extends PsiElement> T findCompiledElement(T original, Function<? super GlobalSearchScope, ? extends Collection<T>> candidateFinder) {
+  public static <T extends PsiElement> T findCompiledElement(Project project, T original, Function<? super GlobalSearchScope, ? extends Collection<T>> candidateFinder) {
     PsiCompiledElement cls = original.getUserData(ClsElementImpl.COMPILED_ELEMENT);
     if (cls != null && cls.isValid()) {
       @SuppressWarnings("unchecked") T t = (T)cls;
       return t;
     }
 
-    if (!DumbService.isDumb(myProject)) {
+    if (!DumbService.isDumb(project)) {
       VirtualFile vFile = original.getContainingFile().getVirtualFile();
-      ProjectFileIndex idx = ProjectRootManager.getInstance(myProject).getFileIndex();
+      ProjectFileIndex idx = ProjectRootManager.getInstance(project).getFileIndex();
       if (vFile != null && idx.isInLibrarySource(vFile)) {
-        GlobalSearchScope librariesScope = LibraryScopeCache.getInstance(myProject).getLibrariesOnlyScope();
+        GlobalSearchScope librariesScope = LibraryScopeCache.getInstance(project).getLibrariesOnlyScope();
         Set<OrderEntry> originalEntries = new HashSet<>(idx.getOrderEntriesForFile(vFile));
         for (T candidate : candidateFinder.apply(librariesScope)) {
           PsiFile candidateFile = candidate.getContainingFile();
@@ -168,7 +166,7 @@ public class JavaPsiImplementationHelperImpl extends JavaPsiImplementationHelper
     ProjectFileIndex index = ProjectRootManager.getInstance(myProject).getFileIndex();
     Module module = index.getModuleForFile(virtualFile);
     if (module != null && index.isInSourceContent(virtualFile)) {
-      return EffectiveLanguageLevelUtil.getEffectiveLanguageLevel(module);
+      return LanguageLevelUtil.getEffectiveLanguageLevel(module);
     }
 
     if (virtualFile instanceof LightVirtualFile) {

@@ -362,6 +362,17 @@ public class FileReference implements PsiFileReference, FileReferenceOwner, PsiP
 
   @Override
   public boolean isReferenceTo(@NotNull PsiElement element) {
+    if (element instanceof PsiDirectoryContainer) {
+      PsiDirectory[] directories = ((PsiDirectoryContainer)element).getDirectories();
+      for (ResolveResult result : multiResolve(false)) {
+        PsiElement resultElement = result.getElement();
+        if (resultElement instanceof PsiFileSystemItem &&
+            ContainerUtil.exists(directories, dir -> FileReferenceHelperRegistrar.areElementsEquivalent((PsiFileSystemItem)resultElement, dir))) {
+          return true;
+        }
+      }
+      return false;
+    }
     if (!(element instanceof PsiFileSystemItem)) return false;
 
     final PsiFileSystemItem item = resolve();

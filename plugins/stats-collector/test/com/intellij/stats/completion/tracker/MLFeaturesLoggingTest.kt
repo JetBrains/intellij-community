@@ -40,7 +40,6 @@ class MLFeaturesLoggingTest : CompletionLoggingTestBase() {
     ContextFeatureProvider.EP_NAME.addExplicitExtension(JavaLanguage.INSTANCE, TestContextFeatureProvider(), testRootDisposable)
     ElementFeatureProvider.EP_NAME.addExplicitExtension(JavaLanguage.INSTANCE, TestElementFeatureProvider(), testRootDisposable)
     myFixture.completeBasic()
-    myFixture.type("r")
     myFixture.finishLookup(Lookup.NORMAL_SELECT_CHAR)
     val startedEvent = trackedEvents.first() as CompletionStartedEvent
     checkResults(startedEvent)

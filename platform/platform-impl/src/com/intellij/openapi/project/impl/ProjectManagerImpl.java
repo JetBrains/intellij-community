@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.project.impl;
 
 import com.intellij.configurationStore.StoreReloadManager;
@@ -20,6 +20,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.application.impl.LaterInvocator;
+import com.intellij.openapi.components.ComponentManagerEx;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionPointName;
@@ -41,6 +42,7 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.MessageBusConnection;
+import kotlin.Unit;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -53,6 +55,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 public abstract class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
   protected static final Logger LOG = Logger.getInstance(ProjectManagerImpl.class);
@@ -165,7 +168,7 @@ public abstract class ProjectManagerImpl extends ProjectManagerEx implements Dis
         indicator.setText(ProjectBundle.message("project.loading.components"));
       }
 
-      Activity activity = StartUpMeasurer.startMainActivity("project before loaded callbacks");
+      Activity activity = StartUpMeasurer.startActivity("project before loaded callbacks");
       //noinspection deprecation
       ApplicationManager.getApplication().getMessageBus().syncPublisher(ProjectLifecycleListener.TOPIC).beforeProjectLoaded(file, project);
       activity.end();
@@ -341,9 +344,8 @@ public abstract class ProjectManagerImpl extends ProjectManagerEx implements Dis
       return false;
     }
 
-    final ShutDownTracker shutDownTracker = ShutDownTracker.getInstance();
-    shutDownTracker.registerStopperThread(Thread.currentThread());
-    try {
+    AtomicBoolean result = new AtomicBoolean();
+    ShutDownTracker.getInstance().executeWithStopperThread(Thread.currentThread(), ()->{
       if (project instanceof ComponentManagerImpl) {
         ((ComponentManagerImpl)project).stopServicePreloading();
       }
@@ -356,13 +358,15 @@ public abstract class ProjectManagerImpl extends ProjectManagerEx implements Dis
       }
 
       if (checkCanClose && !ensureCouldCloseIfUnableToSave(project)) {
-        return false;
+        return;
       }
 
       // somebody can start progress here, do not wrap in write action
       fireProjectClosing(project);
 
       app.runWriteAction(() -> {
+        removeFromOpened(project);
+
         if (project instanceof ProjectExImpl) {
           // ignore dispose flag (dispose is passed only via deprecated API that used only by some 3d-party plugins)
           ((ProjectExImpl)project).disposeEarlyDisposable();
@@ -370,8 +374,6 @@ public abstract class ProjectManagerImpl extends ProjectManagerEx implements Dis
             ((ProjectExImpl)project).startDispose();
           }
         }
-
-        removeFromOpened(project);
 
         fireProjectClosed(project);
 
@@ -382,12 +384,10 @@ public abstract class ProjectManagerImpl extends ProjectManagerEx implements Dis
           Disposer.dispose(project);
         }
       });
-    }
-    finally {
-      shutDownTracker.unregisterStopperThread(Thread.currentThread());
-    }
+      result.set(true);
+    });
 
-    return true;
+    return result.get();
   }
 
   @TestOnly
@@ -458,11 +458,16 @@ public abstract class ProjectManagerImpl extends ProjectManagerEx implements Dis
     LifecycleUsageTriggerCollector.onProjectClosed(project);
 
     getPublisher().projectClosed(project);
-    // see "why is called after message bus" in the fireProjectOpened
     //noinspection deprecation
-    List<ProjectComponent> components = project.getComponentInstancesOfType(ProjectComponent.class, false);
-    for (int i = components.size() - 1; i >= 0; i--) {
-      @SuppressWarnings("deprecation") ProjectComponent component = components.get(i);
+    List<ProjectComponent> projectComponents = new ArrayList<>();
+    //noinspection deprecation
+    ((ComponentManagerEx)project).processInitializedComponents(ProjectComponent.class, (component, __) -> {
+      projectComponents.add(component);
+      return Unit.INSTANCE;
+    });
+    // see "why is called after message bus" in the fireProjectOpened
+    for (int i = projectComponents.size() - 1; i >= 0; i--) {
+      @SuppressWarnings("deprecation") ProjectComponent component = projectComponents.get(i);
       try {
         component.projectClosed();
       }
@@ -572,15 +577,15 @@ public abstract class ProjectManagerImpl extends ProjectManagerEx implements Dis
     public UnableToSaveProjectNotification(@NotNull Project project, @NotNull List<VirtualFile> readOnlyFiles) {
       super(NotificationGroup.createIdWithTitle("Project Settings", IdeBundle.message("notification.group.project.settings")),
             IdeUICustomization.getInstance().projectMessage("notification.title.cannot.save.project"),
-            IdeBundle.message("notification.content.unable.to.save.project.files"), NotificationType.ERROR,
-            (notification, event) -> {
-              UnableToSaveProjectNotification unableToSaveProjectNotification = (UnableToSaveProjectNotification)notification;
-              Project _project = unableToSaveProjectNotification.myProject;
-              notification.expire();
-              if (_project != null && !_project.isDisposed()) {
-                _project.save();
-              }
-            });
+            IdeBundle.message("notification.content.unable.to.save.project.files"), NotificationType.ERROR);
+      setListener((notification, event) -> {
+        UnableToSaveProjectNotification unableToSaveProjectNotification = (UnableToSaveProjectNotification)notification;
+        Project _project = unableToSaveProjectNotification.myProject;
+        notification.expire();
+        if (_project != null && !_project.isDisposed()) {
+          _project.save();
+        }
+      });
 
       myProject = project;
       myFiles = readOnlyFiles;

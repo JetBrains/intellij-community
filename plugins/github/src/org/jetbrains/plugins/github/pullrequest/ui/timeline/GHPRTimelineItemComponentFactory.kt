@@ -1,11 +1,14 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.pullrequest.ui.timeline
 
+import com.intellij.collaboration.async.CompletableFutureUtil.successOnEdt
+import com.intellij.collaboration.ui.codereview.timeline.TimelineItemComponentFactory
 import com.intellij.icons.AllIcons
 import com.intellij.ide.BrowserUtil
 import com.intellij.ide.plugins.newui.HorizontalLayout
 import com.intellij.ide.plugins.newui.VerticalLayout
 import com.intellij.openapi.progress.EmptyProgressIndicator
+import com.intellij.openapi.project.Project
 import com.intellij.ui.components.ActionLink
 import com.intellij.ui.components.labels.LinkLabel
 import com.intellij.ui.components.labels.LinkListener
@@ -15,7 +18,6 @@ import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.ui.JBDimension
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
-import com.intellij.util.ui.codereview.timeline.TimelineItemComponentFactory
 import net.miginfocom.layout.CC
 import net.miginfocom.layout.LC
 import net.miginfocom.swing.MigLayout
@@ -42,14 +44,14 @@ import org.jetbrains.plugins.github.pullrequest.ui.GHTextActions
 import org.jetbrains.plugins.github.ui.avatars.GHAvatarIconsProvider
 import org.jetbrains.plugins.github.ui.util.GHUIUtil
 import org.jetbrains.plugins.github.ui.util.HtmlEditorPane
-import org.jetbrains.plugins.github.util.successOnEdt
 import java.awt.Dimension
 import java.util.*
 import javax.swing.*
 import kotlin.math.ceil
 import kotlin.math.floor
 
-class GHPRTimelineItemComponentFactory(private val detailsDataProvider: GHPRDetailsDataProvider,
+class GHPRTimelineItemComponentFactory(private val project: Project,
+                                       private val detailsDataProvider: GHPRDetailsDataProvider,
                                        private val commentsDataProvider: GHPRCommentsDataProvider,
                                        private val reviewDataProvider: GHPRReviewDataProvider,
                                        private val avatarIconsProvider: GHAvatarIconsProvider,
@@ -95,7 +97,8 @@ class GHPRTimelineItemComponentFactory(private val detailsDataProvider: GHPRDeta
     val actionsPanel: JPanel?
     if (details is GHPullRequest) {
       val textPane = HtmlEditorPane(details.bodyHTML)
-      val panelHandle = GHEditableHtmlPaneHandle(textPane,
+      val panelHandle = GHEditableHtmlPaneHandle(project,
+                                                 textPane,
                                                  { detailsDataProvider.getDescriptionMarkdownBody(EmptyProgressIndicator()) },
                                                  { newText ->
                                                    detailsDataProvider.updateDetails(EmptyProgressIndicator(),
@@ -123,7 +126,8 @@ class GHPRTimelineItemComponentFactory(private val detailsDataProvider: GHPRDeta
 
   private fun createComponent(comment: GHIssueComment): Item {
     val textPane = HtmlEditorPane(comment.bodyHTML)
-    val panelHandle = GHEditableHtmlPaneHandle(textPane,
+    val panelHandle = GHEditableHtmlPaneHandle(project,
+                                               textPane,
                                                { commentsDataProvider.getCommentMarkdownBody(EmptyProgressIndicator(), comment.id) },
                                                { newText ->
                                                  commentsDataProvider.updateComment(EmptyProgressIndicator(), comment.id,
@@ -149,7 +153,8 @@ class GHPRTimelineItemComponentFactory(private val detailsDataProvider: GHPRDeta
     if (review.bodyHTML.isNotEmpty()) {
       val editorPane = HtmlEditorPane(review.bodyHTML)
       panelHandle =
-        GHEditableHtmlPaneHandle(editorPane,
+        GHEditableHtmlPaneHandle(project,
+                                 editorPane,
                                  { reviewDataProvider.getReviewMarkdownBody(EmptyProgressIndicator(), review.id) },
                                  { newText ->
                                    reviewDataProvider.updateReviewBody(EmptyProgressIndicator(), review.id, newText).successOnEdt {
@@ -169,7 +174,7 @@ class GHPRTimelineItemComponentFactory(private val detailsDataProvider: GHPRDeta
       border = JBUI.Borders.emptyTop(4)
       if (panelHandle != null) add(panelHandle.panel, VerticalLayout.FILL_HORIZONTAL)
       add(GHPRReviewThreadsPanel.create(reviewThreadsModel) {
-        GHPRReviewThreadComponent.createWithDiff(it, reviewDataProvider, selectInToolWindowHelper, reviewDiffComponentFactory,
+        GHPRReviewThreadComponent.createWithDiff(project, it, reviewDataProvider, selectInToolWindowHelper, reviewDiffComponentFactory,
                                                  avatarIconsProvider, currentUser)
       }, VerticalLayout.FILL_HORIZONTAL)
     }

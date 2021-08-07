@@ -67,16 +67,16 @@ class RecentPlacesFeatures : ElementFeatureProvider {
       @Suppress("IncorrectParentDisposable")
       ReadAction
         .nonBlocking(Runnable {
-            val element = provider.findElementAt(offset)
-            if (element != null && namesValidator.isIdentifier(element.text, project)) synchronized(recentPlaces) {
-              recentPlaces.addToTop(element.text)
-              val declaration = findDeclaration(element)
-              if (declaration != null) {
-                for (childName in declaration.getChildrenNames().take(MAX_CHILDREN_PER_PLACE)) {
-                  childrenRecentPlaces.addToTop(childName)
-                }
+          val element = provider.tryFindElementAt(offset)
+          if (element != null && namesValidator.isIdentifier(element.text, project)) synchronized(recentPlaces) {
+            recentPlaces.addToTop(element.text)
+            val declaration = findDeclaration(element)
+            if (declaration != null) {
+              for (childName in declaration.getChildrenNames().take(MAX_CHILDREN_PER_PLACE)) {
+                childrenRecentPlaces.addToTop(childName)
               }
             }
+          }
         })
         .coalesceBy(changePlace)
         .expireWith(project)
@@ -88,6 +88,15 @@ class RecentPlacesFeatures : ElementFeatureProvider {
     private fun PsiElement.getChildrenNames(): List<String> =
       this.children.filterIsInstance<PsiNamedElement>().mapNotNull { it.name }
 
+    private fun FileViewProvider.tryFindElementAt(offset: Int): PsiElement? =
+      try {
+        if (getPsi(baseLanguage)?.isValid == true)
+          findElementAt(offset)
+        else null
+      } catch (t: Throwable) {
+        null
+      }
+
     private fun findDeclaration(element: PsiElement): PsiElement? {
       var curElement = element
       while (curElement !is PsiFile) {
@@ -97,7 +106,7 @@ class RecentPlacesFeatures : ElementFeatureProvider {
       return null
     }
 
-    private fun<T> MutableSet<T>.addToTop(value: T) {
+    private fun <T> MutableSet<T>.addToTop(value: T) {
       this.remove(value)
       this.add(value)
     }

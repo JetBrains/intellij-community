@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.plugins;
 
 import com.intellij.ide.IdeBundle;
@@ -9,80 +9,84 @@ import org.jetbrains.annotations.PropertyKey;
 
 public enum PluginEnableDisableAction {
 
-  ENABLE_GLOBALLY(
-    "plugins.configurable.enable.for.all.projects",
-    PluginEnabledState.ENABLED,
-    true
-  ) {
+  ENABLE_GLOBALLY(PluginEnabledState.ENABLED, true) {
+    @Override
+    protected @NotNull @PropertyKey(resourceBundle = IdeBundle.BUNDLE) String getPropertyKey() {
+      return PluginEnabler.isPerProjectEnabled() ? "plugins.configurable.enable.for.all.projects" : "plugins.configurable.enable";
+    }
+
     @Override
     public boolean isApplicable(@NotNull PluginEnabledState state) {
       return state != PluginEnabledState.ENABLED;
     }
   },
-  ENABLE_FOR_PROJECT(
-    "plugins.configurable.enable.for.current.project",
-    PluginEnabledState.ENABLED_FOR_PROJECT,
-    true
-  ) {
+  ENABLE_FOR_PROJECT(PluginEnabledState.ENABLED_FOR_PROJECT, true) {
+    @Override
+    protected @NotNull @PropertyKey(resourceBundle = IdeBundle.BUNDLE) String getPropertyKey() {
+      return "plugins.configurable.enable.for.current.project";
+    }
+
     @Override
     public boolean isApplicable(@NotNull PluginEnabledState state) {
-      return !state.isEnabled();
+      return PluginEnabler.isPerProjectEnabled() && !state.isEnabled();
     }
   },
-  ENABLE_FOR_PROJECT_DISABLE_GLOBALLY(
-    "plugins.configurable.enable.for.current.project.only",
-    PluginEnabledState.ENABLED_FOR_PROJECT,
-    false
-  ) {
+  ENABLE_FOR_PROJECT_DISABLE_GLOBALLY(PluginEnabledState.ENABLED_FOR_PROJECT, false) {
+    @Override
+    protected @NotNull @PropertyKey(resourceBundle = IdeBundle.BUNDLE) String getPropertyKey() {
+      return "plugins.configurable.enable.for.current.project.only";
+    }
+
     @Override
     public boolean isApplicable(@NotNull PluginEnabledState state) {
-      return state == PluginEnabledState.ENABLED;
+      return PluginEnabler.isPerProjectEnabled() && state == PluginEnabledState.ENABLED;
     }
   },
-  DISABLE_GLOBALLY(
-    "plugins.configurable.disable.for.all.projects",
-    PluginEnabledState.DISABLED,
-    false
-  ) {
+  DISABLE_GLOBALLY(PluginEnabledState.DISABLED, false) {
+    @Override
+    protected @NotNull @PropertyKey(resourceBundle = IdeBundle.BUNDLE) String getPropertyKey() {
+      return PluginEnabler.isPerProjectEnabled() ? "plugins.configurable.disable.for.all.projects" : "plugins.configurable.disable";
+    }
+
     @Override
     public boolean isApplicable(@NotNull PluginEnabledState state) {
       return state != PluginEnabledState.DISABLED;
     }
   },
-  DISABLE_FOR_PROJECT(
-    "plugins.configurable.disable.for.current.project",
-    PluginEnabledState.DISABLED_FOR_PROJECT,
-    false
-  ) {
+  DISABLE_FOR_PROJECT(PluginEnabledState.DISABLED_FOR_PROJECT, false) {
+    @Override
+    protected @NotNull @PropertyKey(resourceBundle = IdeBundle.BUNDLE) String getPropertyKey() {
+      return "plugins.configurable.disable.for.current.project";
+    }
+
     @Override
     public boolean isApplicable(@NotNull PluginEnabledState state) {
-      return state.isEnabled();
+      return PluginEnabler.isPerProjectEnabled() && state.isEnabled();
     }
   },
-  DISABLE_FOR_PROJECT_ENABLE_GLOBALLY(
-    "plugins.configurable.disable.for.current.project.only",
-    PluginEnabledState.DISABLED_FOR_PROJECT,
-    true
-  ) {
+  DISABLE_FOR_PROJECT_ENABLE_GLOBALLY(PluginEnabledState.DISABLED_FOR_PROJECT, true) {
+    @Override
+    protected @NotNull @PropertyKey(resourceBundle = IdeBundle.BUNDLE) String getPropertyKey() {
+      return "plugins.configurable.disable.for.current.project.only";
+    }
+
     @Override
     public boolean isApplicable(@NotNull PluginEnabledState state) {
       return false;
     }
   };
 
-  private final @NotNull @PropertyKey(resourceBundle = IdeBundle.BUNDLE) String myPropertyKey;
   private final @NotNull PluginEnabledState myState;
   private final boolean myIsEnable;
 
-  PluginEnableDisableAction(@NotNull @PropertyKey(resourceBundle = IdeBundle.BUNDLE) String propertyKey,
-                            @NotNull PluginEnabledState state,
-                            boolean isEnable) {
-    myPropertyKey = propertyKey;
+  PluginEnableDisableAction(@NotNull PluginEnabledState state, boolean isEnable) {
     myState = state;
     myIsEnable = isEnable;
   }
 
   public abstract boolean isApplicable(@NotNull PluginEnabledState state);
+
+  protected abstract @NotNull @PropertyKey(resourceBundle = IdeBundle.BUNDLE) String getPropertyKey();
 
   public @Nullable PluginEnabledState apply(@NotNull PluginEnabledState state) {
     return isApplicable(state) ? myState : null;
@@ -100,9 +104,8 @@ public enum PluginEnableDisableAction {
     return !isEnable();
   }
 
-  @Override
-  public @NotNull @Nls String toString() {
-    return IdeBundle.message(myPropertyKey);
+  public @NotNull @Nls String getPresentableText() {
+    return IdeBundle.message(getPropertyKey());
   }
 
   public static @NotNull PluginEnableDisableAction globally(boolean enable) {

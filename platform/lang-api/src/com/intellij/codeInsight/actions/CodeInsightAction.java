@@ -8,7 +8,6 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.EditorActivityManager;
 import com.intellij.openapi.editor.EditorModificationUtil;
 import com.intellij.openapi.editor.actionSystem.DocCommandGroupId;
 import com.intellij.openapi.project.Project;
@@ -16,6 +15,7 @@ import com.intellij.openapi.util.NlsContexts;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiUtilBase;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -24,7 +24,7 @@ import org.jetbrains.annotations.Nullable;
  *
  * @author Dmitry Avdeev
  */
-public abstract class CodeInsightAction extends AnAction implements UpdateInBackground {
+public abstract class CodeInsightAction extends AnAction implements UpdateInBackground, PerformWithDocumentsCommitted {
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
     Project project = e.getProject();
@@ -54,7 +54,7 @@ public abstract class CodeInsightAction extends AnAction implements UpdateInBack
 
     CommandProcessor.getInstance().executeCommand(project, () -> {
       final Runnable action = () -> {
-        if (!EditorActivityManager.getInstance().isVisible(editor)) return;
+        if (!UIUtil.isShowing(editor.getContentComponent())) return;
         handler.invoke(project, editor, psiFile);
       };
       if (handler.startInWriteAction()) {
@@ -64,12 +64,6 @@ public abstract class CodeInsightAction extends AnAction implements UpdateInBack
         action.run();
       }
     }, getCommandName(), DocCommandGroupId.noneGroupId(editor.getDocument()), editor.getDocument());
-  }
-
-  @Override
-  public void beforeActionPerformedUpdate(@NotNull AnActionEvent e) {
-    CodeInsightEditorAction.beforeActionPerformedUpdate(e);
-    super.beforeActionPerformedUpdate(e);
   }
 
   @Override

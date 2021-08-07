@@ -62,7 +62,8 @@ public abstract class MemberNodeBase<M extends PsiElement> extends CheckedTreeNo
   private void buildChildren() {
     if (children == null) {
       final List<M> callers = findCallers();
-      children = new Vector(callers.size());
+      //noinspection UseOfObsoleteCollectionType
+      children = new Vector<>(callers.size());
       for (M caller : callers) {
         final HashSet<M> called = new HashSet<>(myCalled);
         called.add(getMember());

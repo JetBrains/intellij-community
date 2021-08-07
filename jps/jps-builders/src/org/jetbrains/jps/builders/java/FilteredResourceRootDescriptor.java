@@ -31,8 +31,8 @@ import java.util.Set;
 */
 public final class FilteredResourceRootDescriptor extends ResourceRootDescriptor {
   public FilteredResourceRootDescriptor(@NotNull File root, @NotNull ResourcesTarget target, @NotNull String packagePrefix,
-                                        @NotNull Set<File> excludes) {
-    super(root, target, packagePrefix, excludes);
+                                        @NotNull Set<File> excludes, @NotNull FileFilter filterForExcludedPatterns) {
+    super(root, target, packagePrefix, excludes, filterForExcludedPatterns);
   }
 
   @NotNull
@@ -41,6 +41,6 @@ public final class FilteredResourceRootDescriptor extends ResourceRootDescriptor
     final JpsProject project = getTarget().getModule().getProject();
     final JpsJavaCompilerConfiguration configuration = JpsJavaExtensionService.getInstance().getCompilerConfiguration(project);
     final JpsCompilerExcludes excludes = configuration.getCompilerExcludes();
-    return file -> !excludes.isExcluded(file) && configuration.isResourceFile(file, getRootFile());
+    return file -> !excludes.isExcluded(file) && configuration.isResourceFile(file, getRootFile()) && myFilterForExcludedPatterns.accept(file);
   }
 }

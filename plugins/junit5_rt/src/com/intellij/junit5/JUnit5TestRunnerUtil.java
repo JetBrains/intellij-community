@@ -31,9 +31,11 @@ import java.lang.annotation.Annotation;
 import java.lang.reflect.AnnotatedElement;
 import java.lang.reflect.Method;
 import java.nio.file.Paths;
+import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.ResourceBundle;
 
 public class JUnit5TestRunnerUtil {
   private static final String[] DISABLED_ANNO = {"org.junit.jupiter.api.Disabled"};
@@ -93,7 +95,18 @@ public class JUnit5TestRunnerUtil {
             builder = builder.selectors(selectors);
           }
           if (filters != null && !filters.isEmpty()) {
-            builder = builder.filters(ClassNameFilter.includeClassNamePatterns(filters.split("\\|\\|")));
+            String[] classNames = filters.split("\\|\\|");
+            for (String className : classNames) {
+              if (!className.contains("*")) {
+                try {
+                  Class.forName(className, false, JUnit5TestRunnerUtil.class.getClassLoader());
+                }
+                catch (ClassNotFoundException e) {
+                  System.err.println(MessageFormat.format(ResourceBundle.getBundle("messages.RuntimeBundle").getString("junit.class.not.found"), className));
+                }
+              }
+            }
+            builder = builder.filters(ClassNameFilter.includeClassNamePatterns(classNames));
           }
           if (tags != null && !tags.isEmpty()) {
             builder = builder

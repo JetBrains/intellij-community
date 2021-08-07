@@ -10,9 +10,8 @@ import com.intellij.uiDesigner.componentTree.ComponentPtr;
 import com.intellij.uiDesigner.componentTree.ComponentTreeBuilder;
 import com.intellij.uiDesigner.designSurface.GuiEditor;
 import com.intellij.uiDesigner.propertyInspector.DesignerToolWindowManager;
+import com.intellij.util.containers.Stack;
 import org.jetbrains.annotations.NotNull;
-
-import java.util.Stack;
 
 /**
  * @author Anton Katilin

@@ -77,7 +77,7 @@ abstract class DebuggerTreeWithHistoryContainer<D> {
     }
   }
 
-  protected final JComponent createToolbar(JPanel parent, Tree tree) {
+  protected JComponent createToolbar(JPanel parent, Tree tree) {
     DefaultActionGroup group = new DefaultActionGroup();
     group.add(new SetAsRootAction(tree));
 
@@ -89,7 +89,9 @@ abstract class DebuggerTreeWithHistoryContainer<D> {
     forward.registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_RIGHT, InputEvent.ALT_MASK)), parent);
     group.add(forward);
 
-    return ActionManager.getInstance().createActionToolbar("DebuggerTreeWithHistory", group, true).getComponent();
+    ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar("DebuggerTreeWithHistory", group, true);
+    toolbar.setTargetComponent(tree);
+    return toolbar.getComponent();
   }
 
   private class GoForwardAction extends AnAction {

@@ -14,6 +14,7 @@ import com.intellij.util.containers.MultiMap;
 import it.unimi.dsi.fastutil.objects.Object2IntMap;
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.*;
@@ -118,15 +119,13 @@ public final class ResourceBundleFileStructureViewElement implements StructureVi
     return propertyNames;
   }
 
-  @NotNull
   @Override
-  public IProperty[] getProperties() {
+  public IProperty @NotNull [] getProperties() {
     return IProperty.EMPTY_ARRAY;
   }
 
-  @NotNull
   @Override
-  public PsiFile[] getFiles() {
+  public PsiFile @Nullable [] getFiles() {
     ResourceBundle rb = getValue();
     if (rb == null) return null;
     final List<PropertiesFile> files = rb.getPropertiesFiles();

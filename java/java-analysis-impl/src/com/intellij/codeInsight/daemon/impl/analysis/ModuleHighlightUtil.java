@@ -76,7 +76,7 @@ final class ModuleHighlightUtil {
     Module module = ModuleUtilCore.findModuleForFile(file);
     if (module != null) {
       Project project = file.getProject();
-      Collection<VirtualFile> others = FilenameIndex.getVirtualFilesByName(project, PsiJavaModule.MODULE_INFO_FILE, module.getModuleScope());
+      Collection<VirtualFile> others = FilenameIndex.getVirtualFilesByName(PsiJavaModule.MODULE_INFO_FILE, module.getModuleScope());
       if (others.size() > 1) {
         String message = JavaErrorBundle.message("module.file.duplicate");
         HighlightInfo info = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(range(element)).descriptionAndTooltip(message).create();

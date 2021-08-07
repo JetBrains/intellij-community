@@ -61,6 +61,10 @@ public abstract class RunLineMarkerContributor {
   @Nullable
   public abstract Info getInfo(@NotNull PsiElement element);
 
+  public Info getSlowInfo(@NotNull PsiElement element) {
+    return null;
+  }
+
   /**
    * @param file any file with a language this contributor is registered for
    * @return whether there's no possibility that a {@link com.intellij.execution.actions.RunConfigurationProducer}'would

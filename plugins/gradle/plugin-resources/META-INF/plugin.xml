@@ -92,8 +92,8 @@
     <externalProjectDataService implementation="org.jetbrains.plugins.gradle.service.project.data.PerformanceTraceDataService"/>
     <externalProjectStructureCustomizer implementation="org.jetbrains.plugins.gradle.service.project.GradleProjectStructureCustomizer"/>
     <externalIconProvider key="GRADLE" implementationClass="org.jetbrains.plugins.gradle.ui.GradleIconProvider"/>
-    <externalExecutionAware id="gradleOnWsl" order="before gradle" key="GRADLE" implementationClass="org.jetbrains.plugins.gradle.service.execution.GradleOnWslExecutionAware"/>
-    <externalExecutionAware id="gradle" key="GRADLE" implementationClass="org.jetbrains.plugins.gradle.service.execution.GradleExecutionAware"/>
+    <externalExecutionAware id="gradleOnWsl" order="before gradle" key="GRADLE" implementationClass="org.jetbrains.plugins.gradle.service.execution.wsl.GradleOnWslExecutionAware"/>
+    <externalExecutionAware id="gradle" key="GRADLE" implementationClass="org.jetbrains.plugins.gradle.service.execution.LocalGradleExecutionAware"/>
     <externalSystemNotificationExtension implementation="org.jetbrains.plugins.gradle.service.notification.GradleNotificationExtension" order="last"/>
 
     <applicationService serviceImplementation="org.jetbrains.plugins.gradle.service.GradleInstallationManager"/>
@@ -103,7 +103,6 @@
     <projectService serviceImplementation="org.jetbrains.plugins.gradle.settings.GradleSettings"/>
     <projectService serviceImplementation="org.jetbrains.plugins.gradle.settings.GradleSettingsMigration"/>
     <projectService serviceImplementation="org.jetbrains.plugins.gradle.settings.GradleLocalSettings"/>
-    <projectService serviceImplementation="org.jetbrains.plugins.gradle.service.project.GradleNotification"/>
     <projectService serviceImplementation="org.jetbrains.plugins.gradle.service.task.ExecuteGradleTaskHistoryService"/>
     <projectService serviceImplementation="org.jetbrains.plugins.gradle.service.project.data.ExternalProjectDataCache"/>
     <projectService serviceImplementation="org.jetbrains.plugins.gradle.settings.GradleExtensionsSettings"/>
@@ -114,8 +113,12 @@
     <stepsBeforeRunProvider implementation="org.jetbrains.plugins.gradle.execution.GradleBeforeRunTaskProvider" />
     <runConfigurationProducer implementation="org.jetbrains.plugins.gradle.service.execution.GradleRuntimeConfigurationProducer"/>
 
+    <!--Gradle tool window -->
     <toolWindow id="Gradle" anchor="right" icon="GradleIcons.ToolWindowGradle"
                 factoryClass="org.jetbrains.plugins.gradle.ui.GradleToolWindowFactory"/>
+    <toolWindowExtractorMode id="Gradle" mode="mirror"/>
+    <externalSystemViewContributor id="gradle"
+                                   implementation="org.jetbrains.plugins.gradle.ui.GradleViewContributor"/>
 
     <copyPastePreProcessor implementation="org.jetbrains.plugins.gradle.action.PasteMvnDependencyPreProcessor"/>
 
@@ -123,6 +126,8 @@
 
     <statistics.projectUsagesCollector implementation="org.jetbrains.plugins.gradle.statistics.GradleSettingsCollector"/>
     <statistics.counterUsagesCollector groupId="build.gradle.actions" version="1"/>
+
+    <externalSystem.runConfigurationEx implementation="org.jetbrains.plugins.gradle.service.execution.GradleRunConfigurationExtension"/>
     <externalSystem.runConfigurationImporter
         implementation="org.jetbrains.plugins.gradle.service.execution.GradleRunConfigurationImporter"/>
 
@@ -138,6 +143,10 @@
                  description="Enable parallel fetching of the Gradle TAPI models"/>
     <registryKey key="gradle.testLauncherAPI.enabled" defaultValue="false"
                  description="Allow to use Test Launcher API to run tests when applicable"/>
+    <registryKey key="gradle.tooling.adjust.user.dir" defaultValue="true"
+                 description="Change IDE user.dir system property during the Gradle tooling API call to have expected Gradle daemon CWD."/>
+    <registryKey key="gradle.improved.hotswap.detection" defaultValue="false"
+                 description="Enable improved hotswap detection when build is delegated to Gradle"/>
 
     <commandLineInspectionProjectConfigurator implementation="org.jetbrains.plugins.gradle.GradleCommandLineProjectConfigurator"/>
     <notificationGroup id="Gradle Notification Group" displayType="STICKY_BALLOON"/>

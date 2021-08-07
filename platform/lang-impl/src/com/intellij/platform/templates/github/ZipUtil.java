@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.platform.templates.github;
 
 import com.intellij.lang.LangBundle;
@@ -31,9 +31,6 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 import java.util.zip.ZipInputStream;
 
-/**
- * @author Sergey Simonchik
- */
 public final class ZipUtil {
   private static final Logger LOG = Logger.getInstance(ZipUtil.class);
 
@@ -196,7 +193,7 @@ public final class ZipUtil {
       return;
     }
     if (progress != null) {
-      progress.setText(LangBundle.message("progress.text.extracting.path", relativeExtractPath));
+      progress.setText2(LangBundle.message("progress.text.extracting.path", relativeExtractPath));
     }
     if (contentProcessor == null) {
       Files.copy(entryContentStream, child, StandardCopyOption.REPLACE_EXISTING);

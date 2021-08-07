@@ -1,7 +1,7 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.notification.impl;
 
-import com.intellij.ide.plugins.PluginManager;
+import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.notification.NotificationDisplayType;
 import com.intellij.notification.NotificationGroup;
 import com.intellij.notification.NotificationGroupManager;
@@ -20,9 +20,8 @@ public final class NotificationGroupManagerImpl implements NotificationGroupMana
 
   private final SynchronizedClearableLazy<Set<String>> registeredNotificationIds = new SynchronizedClearableLazy<>(() -> {
     Set<String> result = new HashSet<>();
-    PluginManager pluginManager = PluginManager.getInstance();
     NotificationGroupEP.EP_NAME.processWithPluginDescriptor((extension, pluginDescriptor) -> {
-      if (extension.notificationIds != null && pluginManager.isDevelopedByJetBrains(pluginDescriptor)) {
+      if (extension.notificationIds != null && PluginManagerCore.isDevelopedByJetBrains(pluginDescriptor)) {
         result.addAll(extension.notificationIds);
       }
     });
@@ -70,8 +69,9 @@ public final class NotificationGroupManagerImpl implements NotificationGroupMana
       }
 
       NotificationGroup notificationGroup = NotificationGroup.create(groupId, type, extension.isLogByDefault,
-                                                                     extension.toolWindowId, extension.getIcon(),
-                                                                     extension.getDisplayName(), pluginDescriptor.getPluginId());
+                                                                     extension.toolWindowId, extension.getIcon(pluginDescriptor),
+                                                                     extension.getDisplayName(pluginDescriptor),
+                                                                     pluginDescriptor.getPluginId());
       NotificationGroup old = registeredGroups.put(groupId, notificationGroup);
       if (old != null) {
         LOG.warn("Notification group " + groupId + " is already registered (group=" + old + "). Plugin descriptor: " + pluginDescriptor);

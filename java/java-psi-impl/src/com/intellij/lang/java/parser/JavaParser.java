@@ -26,6 +26,7 @@ public class JavaParser {
   private final StatementParser myStatementParser;
   private final ExpressionParser myExpressionParser;
   private final ReferenceParser myReferenceParser;
+  private final PatternParser myPatternParser;
 
   public JavaParser() {
     myFileParser = new FileParser(this);
@@ -34,6 +35,7 @@ public class JavaParser {
     myStatementParser = new StatementParser(this);
     myExpressionParser = new ExpressionParser(this);
     myReferenceParser = new ReferenceParser(this);
+    myPatternParser = new PatternParser(this);
   }
 
   @NotNull
@@ -64,5 +66,10 @@ public class JavaParser {
   @NotNull
   public ReferenceParser getReferenceParser() {
     return myReferenceParser;
+  }
+
+  @NotNull
+  public PatternParser getPatternParser() {
+    return myPatternParser;
   }
 }

@@ -1,9 +1,8 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.checkout;
 
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
@@ -121,8 +120,7 @@ public class SvnCheckoutProvider implements CheckoutProvider {
                               WorkingCopyFormat selectedFormat) {
     final Ref<Boolean> checkoutSuccessful = new Ref<>();
     final Exception[] exception = new Exception[1];
-    final Task.Backgroundable checkoutBackgroundTask = new Task.Backgroundable(project, message("progress.title.check.out"), true,
-                                                                               VcsConfiguration.getInstance(project).getCheckoutOption()) {
+    final Task.Backgroundable checkoutBackgroundTask = new Task.Backgroundable(project, message("progress.title.check.out"), true) {
       @Override
       public void run(@NotNull final ProgressIndicator indicator) {
         WorkingCopyFormat format = selectedFormat == null ? UNKNOWN : selectedFormat;
@@ -228,7 +226,7 @@ public class SvnCheckoutProvider implements CheckoutProvider {
     final String targetPath = target.getAbsolutePath();
 
     ExclusiveBackgroundVcsAction.run(project, () -> ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> {
-      final FileIndexFacade facade = ServiceManager.getService(project, FileIndexFacade.class);
+      final FileIndexFacade facade = project.getService(FileIndexFacade.class);
       ProgressIndicator progressIndicator = ProgressManager.getInstance().getProgressIndicator();
       try {
         progressIndicator.setText(message("progress.text.import", targetPath));

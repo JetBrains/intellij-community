@@ -23,7 +23,6 @@ import com.intellij.vcs.log.ui.AbstractVcsLogUi;
 import com.intellij.vcs.log.ui.highlighters.CurrentBranchHighlighter;
 import com.intellij.vcs.log.ui.highlighters.MyCommitsHighlighter;
 import com.intellij.vcs.log.ui.table.VcsLogGraphTable;
-import com.intellij.vcs.log.ui.table.column.Date;
 import com.intellij.vcs.log.ui.table.column.TableColumnWidthProperty;
 import com.intellij.vcs.log.util.VcsLogUiUtil;
 import com.intellij.vcs.log.visible.VisiblePack;
@@ -78,16 +77,13 @@ public class FileHistoryUi extends AbstractVcsLogUi {
     };
 
     myFilterUi = new FileHistoryFilterUi(path, revision, root, uiProperties);
-    myFileHistoryPanel = new FileHistoryPanel(this, myFileHistoryModel, logData, path, !VcsLogUiUtil.isDiffPreviewInEditor(), this);
-
-    if (VcsLogUiUtil.isDiffPreviewInEditor()) {
-      new FileHistoryEditorDiffPreview(logData.getProject(), myUiProperties, myFileHistoryPanel);
-    }
+    myFileHistoryPanel = new FileHistoryPanel(this, myFileHistoryModel, logData, path, this);
 
     getTable().addHighlighter(LOG_HIGHLIGHTER_FACTORY_EP.findExtensionOrFail(MyCommitsHighlighter.Factory.class).createHighlighter(getLogData(), this));
     if (myRevision != null) {
       getTable().addHighlighter(new RevisionHistoryHighlighter(myLogData.getStorage(), myRevision, myRoot));
-    } else {
+    }
+    else {
       getTable().addHighlighter(LOG_HIGHLIGHTER_FACTORY_EP.findExtensionOrFail(CurrentBranchHighlighter.Factory.class).createHighlighter(getLogData(), this));
     }
 
@@ -224,12 +220,6 @@ public class FileHistoryUi extends AbstractVcsLogUi {
       }
       else if (property instanceof TableColumnWidthProperty) {
         getTable().forceReLayout(((TableColumnWidthProperty)property).getColumn());
-      }
-      else if (CommonUiProperties.SHOW_ROOT_NAMES.equals(property)) {
-        getTable().rootColumnUpdated();
-      }
-      else if (property.equals(CommonUiProperties.PREFER_COMMIT_DATE) && getTable().getTableColumn(Date.INSTANCE) != null) {
-        getTable().repaint();
       }
     }
   }

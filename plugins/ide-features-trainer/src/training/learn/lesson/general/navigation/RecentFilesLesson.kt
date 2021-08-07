@@ -1,18 +1,24 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package training.learn.lesson.general.navigation
 
 import com.intellij.CommonBundle
+import com.intellij.ide.IdeBundle
 import com.intellij.ide.actions.Switcher
-import com.intellij.openapi.application.invokeLater
+import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.invokeAndWaitIfNeeded
 import com.intellij.openapi.fileEditor.FileEditorManager
+import com.intellij.openapi.progress.ProgressIndicator
+import com.intellij.openapi.progress.ProgressManager
+import com.intellij.openapi.progress.Task
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.wm.IdeFrame
 import com.intellij.ui.SearchTextField
+import com.intellij.ui.SimpleColoredComponent
 import com.intellij.ui.components.JBList
 import com.intellij.ui.components.fields.ExtendableTextField
 import com.intellij.ui.speedSearch.SpeedSearchSupply
 import com.intellij.util.ui.UIUtil
-import icons.FeaturesTrainerIcons
+import training.FeaturesTrainerIcons
 import training.dsl.*
 import training.dsl.LessonUtil.restoreIfModifiedOrMoved
 import training.learn.LearnBundle
@@ -21,7 +27,8 @@ import training.learn.course.KLesson
 import training.learn.lesson.LessonManager
 import java.awt.event.KeyEvent
 import javax.swing.JComponent
-import kotlin.random.Random
+import javax.swing.JLabel
+import kotlin.math.min
 
 abstract class RecentFilesLesson : KLesson("Recent Files and Locations", LessonsBundle.message("recent.files.lesson.name")) {
   abstract override val existedFile: String
@@ -38,7 +45,7 @@ abstract class RecentFilesLesson : KLesson("Recent Files and Locations", Lessons
 
     task("GotoDeclaration") {
       text(LessonsBundle.message("recent.files.first.transition", code(transitionMethodName), action(it)))
-      trigger(it) { virtualFile.name.startsWith(transitionFileName) }
+      stateCheck { virtualFile.name.contains(transitionFileName) }
       restoreIfModifiedOrMoved()
       test { actions(it) }
     }
@@ -54,7 +61,7 @@ abstract class RecentFilesLesson : KLesson("Recent Files and Locations", Lessons
           LearnBundle.message("learn.stop.lesson"),
           FeaturesTrainerIcons.Img.PluginIcon
         )
-        if(userDecision != Messages.OK) {
+        if (userDecision != Messages.OK) {
           LessonManager.instance.stopLesson()
         }
       }
@@ -62,8 +69,10 @@ abstract class RecentFilesLesson : KLesson("Recent Files and Locations", Lessons
 
     openManyFiles()
 
-    actionTask("RecentFiles") {
-      LessonsBundle.message("recent.files.show.recent.files", action(it))
+    task("RecentFiles") {
+      text(LessonsBundle.message("recent.files.show.recent.files", action(it)))
+      triggerOnRecentFilesShown()
+      test { actions(it) }
     }
 
     task("rfd") {
@@ -72,7 +81,7 @@ abstract class RecentFilesLesson : KLesson("Recent Files and Locations", Lessons
         ui.javaClass.name.contains("SpeedSearchBase\$SearchField")
       }
       stateCheck { checkRecentFilesSearch(it) }
-      restoreIfRecentFilesPopupClosed()
+      restoreByUi()
       test {
         ideFrame {
           waitComponent(Switcher.SwitcherPanel::class.java)
@@ -92,8 +101,10 @@ abstract class RecentFilesLesson : KLesson("Recent Files and Locations", Lessons
       }
     }
 
-    actionTask("RecentFiles") {
-      LessonsBundle.message("recent.files.use.recent.files.again", action(it))
+    task("RecentFiles") {
+      text(LessonsBundle.message("recent.files.use.recent.files.again", action(it)))
+      triggerOnRecentFilesShown()
+      test { actions(it) }
     }
 
     var initialRecentFilesCount = -1
@@ -109,7 +120,7 @@ abstract class RecentFilesLesson : KLesson("Recent Files and Locations", Lessons
         curRecentFilesCount = focusOwner.itemsCount
         initialRecentFilesCount - curRecentFilesCount >= countOfFilesToDelete
       }
-      restoreIfRecentFilesPopupClosed()
+      restoreByUi()
       test {
         repeat(countOfFilesToDelete) {
           invokeActionViaShortcut("DELETE")
@@ -123,15 +134,20 @@ abstract class RecentFilesLesson : KLesson("Recent Files and Locations", Lessons
       test { invokeActionViaShortcut("ESCAPE") }
     }
 
-    actionTask("RecentLocations") {
-      LessonsBundle.message("recent.files.show.recent.locations", action(it))
+    task("RecentLocations") {
+      text(LessonsBundle.message("recent.files.show.recent.locations", action(it)))
+      val recentLocationsText = IdeBundle.message("recent.locations.popup.title")
+      triggerByUiComponentAndHighlight(false, false) { ui: SimpleColoredComponent ->
+        ui.getCharSequence(true).contains(recentLocationsText)
+      }
+      test { actions(it) }
     }
 
     task(stringForRecentFilesSearch) {
       text(LessonsBundle.message("recent.files.locations.search.typing", code(it)))
       stateCheck { checkRecentLocationsSearch(it) }
       triggerByUiComponentAndHighlight(false, false) { _: SearchTextField -> true } // needed in next task to restore if search field closed
-      restoreIfRecentFilesPopupClosed()
+      restoreByUi()
       test {
         ideFrame {
           waitComponent(JBList::class.java)
@@ -142,7 +158,10 @@ abstract class RecentFilesLesson : KLesson("Recent Files and Locations", Lessons
 
     task {
       text(LessonsBundle.message("recent.files.locations.search.jump", LessonUtil.rawEnter()))
-      stateCheck { virtualFile.name != existedFile.substringAfterLast('/') }
+      triggerByListItemAndHighlight { item ->
+        item.toString().contains(transitionFileName)
+      }
+      stateCheck { virtualFile.name.contains(transitionFileName) }
       restoreState {
         !checkRecentLocationsSearch(stringForRecentFilesSearch) || previous.ui?.isShowing != true
       }
@@ -152,25 +171,27 @@ abstract class RecentFilesLesson : KLesson("Recent Files and Locations", Lessons
 
   // Should open (countOfFilesToOpen - 1) files
   open fun LessonContext.openManyFiles() {
-    val openedFiles = mutableSetOf<String>()
-    val random = Random(System.currentTimeMillis())
-    for (i in 0 until (countOfFilesToOpen - 1)) {
-      waitBeforeContinue(200)
-      prepareRuntimeTask {
+    task {
+      addFutureStep {
         val curFile = virtualFile
-        val files = curFile.parent?.children
-                    ?: throw IllegalStateException("Not found neighbour files for ${curFile.name}")
-
-        var index = random.nextInt(0, files.size)
-        while (openedFiles.contains(files[index].name)) {
-          index = random.nextInt(0, files.size)
+        val task = object : Task.Backgroundable(project, LessonsBundle.message("recent.files.progress.title"), true) {
+          override fun run(indicator: ProgressIndicator) {
+            indicator.isIndeterminate = false
+            val files = curFile.parent?.children?.filter { it.name != curFile.name }
+                        ?: throw IllegalStateException("Not found neighbour files for ${curFile.name}")
+            for (i in 0 until min(countOfFilesToOpen - 1, files.size)) {
+              invokeAndWaitIfNeeded(ModalityState.NON_MODAL) {
+                if (!indicator.isCanceled) {
+                  FileEditorManager.getInstance(project).openFile(files[i], true)
+                  indicator.fraction = (i + 1).toDouble() / (countOfFilesToOpen - 1)
+                }
+              }
+            }
+            taskInvokeLater { completeStep() }
+          }
         }
 
-        val nextFile = files[index]
-        openedFiles.add(nextFile.name)
-        invokeLater {
-          FileEditorManager.getInstance(project).openFile(nextFile, true)
-        }
+        ProgressManager.getInstance().run(task)
       }
     }
   }
@@ -191,8 +212,11 @@ abstract class RecentFilesLesson : KLesson("Recent Files and Locations", Lessons
     return enteredPrefix.equals(expected, ignoreCase = true)
   }
 
-  private fun TaskContext.restoreIfRecentFilesPopupClosed() {
-    restoreState(delayMillis = defaultRestoreDelay) { focusOwner !is JBList<*> }
+  private fun TaskContext.triggerOnRecentFilesShown() {
+    val recentFilesText = IdeBundle.message("title.popup.recent.files")
+    triggerByUiComponentAndHighlight(false, false) { ui: JLabel ->
+      ui.text?.contains(recentFilesText) == true
+    }
   }
 
   override val testScriptProperties: TaskTestContext.TestScriptProperties

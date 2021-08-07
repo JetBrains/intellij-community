@@ -1,11 +1,37 @@
 <html>
 <body>
-Reports constructors which do not begin with calls to "super" constructor, or
-other constructors of the same class. Such constructors can be thought of as implicitly beginning with a
-call to <b>super()</b>. Some coding standards prefer that such calls to
-<b>super()</b> be made explicitly.
+Reports constructors that do not begin with a call to "super" constructor or
+another constructor of the same class.
+<p>Such constructors can be thought of as implicitly beginning with a
+  call to <code>super()</code>. Some coding standards prefer that such calls to
+  <code>super()</code> be made explicitly.</p>
+<p><b>Example:</b></p>
+<pre>
+  class Foo {
+    Foo() {}
+  }
+</pre>
+<p>After the quick-fix is applied:</p>
+<pre>
+  class Foo {
+    Foo() {
+      super();
+    }
+  }
+</pre>
 <!-- tooltip end -->
 <p>
+  Use the inspection settings to ignore classes extending directly from <code>Object</code>.
+  For instance:
+</p>
+<pre>
+  class Foo {
+    Foo() {} // Not reported
+  }
 
+  class Bar extends Foo {
+    Bar() {} // Implicit call to 'super()'
+  }
+</pre>
 </body>
 </html>

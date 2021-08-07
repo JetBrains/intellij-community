@@ -9,8 +9,9 @@ import com.intellij.openapi.options.BoundConfigurable
 import com.intellij.openapi.options.SearchableConfigurable
 import com.intellij.openapi.ui.DialogBuilder
 import com.intellij.openapi.ui.DialogPanel
-import com.intellij.openapi.ui.Messages.showInputDialog
+import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.ui.TextFieldWithBrowseButton
+import com.intellij.openapi.util.io.FileUtil
 import com.intellij.ui.CollectionListModel
 import com.intellij.ui.ToolbarDecorator
 import com.intellij.ui.components.JBList
@@ -21,26 +22,13 @@ import javax.swing.JComponent
 import javax.swing.JPanel
 import kotlin.math.max
 
-class TrustedHostsConfigurable : BoundConfigurable(IdeBundle.message("configurable.trusted.hosts.display.name")),
+class TrustedHostsConfigurable : BoundConfigurable(IdeBundle.message("configurable.trusted.hosts.display.name"), TRUSTED_PROJECTS_HELP_TOPIC),
                                  SearchableConfigurable {
 
   private val EP_NAME = ExtensionPointName.create<TrustedHostsConfigurablePanelProvider>("com.intellij.trustedHostsConfigurablePanelProvider")
 
   override fun createPanel(): DialogPanel {
     return panel {
-      row {
-        label(IdeBundle.message("trusted.hosts.settings.label"))
-      }
-      row {
-        val trustedHostsSettings = service<TrustedHostsSettings>()
-        trustedLocationConfigurable(this,
-                                    getValuesFromSettings = { trustedHostsSettings.getTrustedHosts() },
-                                    setValuesToSettings = { trustedHostsSettings.setTrustedHosts(it) },
-                                    getNewValueFromUser = {
-                                      showInputDialog(it, null, IdeBundle.message("trusted.hosts.settings.add.new.host.dialog.title"), null)
-                                    })
-      }
-
       row {
         label(IdeBundle.message("trusted.folders.settings.label"))
       }
@@ -54,7 +42,7 @@ class TrustedHostsConfigurable : BoundConfigurable(IdeBundle.message("configurab
 
       for (additionalPanel in EP_NAME.extensionList) {
         row {
-          component(additionalPanel.getPanel(this))
+          additionalPanel.getCellBuilder(this)
         }
       }
     }
@@ -93,13 +81,14 @@ class TrustedHostsConfigurable : BoundConfigurable(IdeBundle.message("configurab
 
   private fun getPathFromUser(parent: Component): String? {
     val pathField = TextFieldWithBrowseButton(null, disposable)
+    pathField.textField.columns = Messages.InputDialog.INPUT_DIALOG_COLUMNS
     pathField.addBrowseFolderListener(IdeBundle.message("trusted.hosts.settings.new.trusted.folder.file.chooser.title"), null, null,
                                       FileChooserDescriptorFactory.createSingleFolderDescriptor())
     val ok = DialogBuilder(parent)
       .title(IdeBundle.message("trusted.hosts.settings.new.trusted.folder.dialog.title"))
-      .centerPanel(pathField)
+      .setNorthPanel(pathField)
       .showAndGet()
-    return if (ok) pathField.text else null
+    return if (ok) FileUtil.expandUserHome(pathField.text) else null
   }
 
   override fun getId(): String {
@@ -112,5 +101,5 @@ class TrustedHostsConfigurable : BoundConfigurable(IdeBundle.message("configurab
  */
 @ApiStatus.Internal
 interface TrustedHostsConfigurablePanelProvider {
-  fun getPanel(row: Row) : JComponent
+  fun getCellBuilder(row: Row) : CellBuilder<JComponent>
 }

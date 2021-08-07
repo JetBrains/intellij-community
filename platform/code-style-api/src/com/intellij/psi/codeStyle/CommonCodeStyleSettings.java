@@ -17,14 +17,13 @@ import com.intellij.psi.codeStyle.arrangement.ArrangementSettings;
 import com.intellij.psi.codeStyle.arrangement.ArrangementUtil;
 import com.intellij.psi.codeStyle.arrangement.Rearranger;
 import com.intellij.psi.codeStyle.arrangement.std.ArrangementStandardSettingsAware;
-import com.intellij.psi.util.PsiEditorUtil;
-import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.xmlb.SerializationFilter;
 import com.intellij.util.xmlb.SkipDefaultValuesSerializationFilters;
 import org.intellij.lang.annotations.MagicConstant;
 import org.jdom.Element;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -139,7 +138,7 @@ public class CommonCodeStyleSettings {
     return commonSettings;
   }
 
-  static void copyPublicFields(Object from, Object to) {
+  protected static void copyPublicFields(Object from, Object to) {
     assert from != to;
     ReflectionUtil.copyFields(to.getClass().getFields(), from, to);
   }
@@ -180,7 +179,7 @@ public class CommonCodeStyleSettings {
     }
   }
 
-  void writeExternal(@NotNull Element element, @NotNull LanguageCodeStyleProvider provider) {
+  public void writeExternal(@NotNull Element element, @NotNull LanguageCodeStyleProvider provider) {
     CommonCodeStyleSettings defaultSettings = provider.getDefaultCommonSettings();
     Set<String> supportedFields = provider.getSupportedFields();
     if (supportedFields != null) {
@@ -210,10 +209,10 @@ public class CommonCodeStyleSettings {
     }
   }
 
-  private static final class SupportedFieldsDiffFilter extends DifferenceFilter<CommonCodeStyleSettings> {
+  public static final class SupportedFieldsDiffFilter extends DifferenceFilter<CommonCodeStyleSettings> {
     private final Set<String> mySupportedFieldNames;
 
-    SupportedFieldsDiffFilter(final CommonCodeStyleSettings object,
+    public SupportedFieldsDiffFilter(final CommonCodeStyleSettings object,
                                      Set<String> supportedFiledNames,
                                      final CommonCodeStyleSettings parentObject) {
       super(object, parentObject);
@@ -1191,9 +1190,12 @@ public class CommonCodeStyleSettings {
     mySoftMargins.setValues(values);
   }
 
+  /**
+   * @deprecated Use {@link CodeStyle#getLocalLanguageSettings(Editor, int)}
+   */
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public static CommonCodeStyleSettings getLocalCodeStyleSettings(Editor editor, int tailOffset) {
-    PsiFile psiFile = PsiEditorUtil.getPsiFile(editor);
-    Language language = PsiUtilCore.getLanguageAtOffset(psiFile, tailOffset);
-    return CodeStyle.getLanguageSettings(psiFile, language);
+    return CodeStyle.getLocalLanguageSettings(editor, tailOffset);
   }
 }

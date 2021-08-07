@@ -1,7 +1,6 @@
 package org.jetbrains.plugins.textmate.language.syntax;
 
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.util.containers.CollectionFactory;
+import com.intellij.openapi.diagnostic.LoggerRt;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import org.jetbrains.annotations.NotNull;
@@ -12,7 +11,7 @@ import org.jetbrains.plugins.textmate.language.PreferencesReadUtil;
 import java.util.*;
 
 class SyntaxNodeDescriptorImpl implements MutableSyntaxNodeDescriptor {
-  private static final Logger LOG = Logger.getInstance(SyntaxNodeDescriptor.class);
+  private static final LoggerRt LOG = LoggerRt.getInstance(SyntaxNodeDescriptor.class);
 
   private Int2ObjectMap<SyntaxNodeDescriptor> myRepository = new Int2ObjectOpenHashMap<>();
   private Map<Constants.StringKey, CharSequence> myStringAttributes = new EnumMap<>(Constants.StringKey.class);
@@ -44,10 +43,20 @@ class SyntaxNodeDescriptorImpl implements MutableSyntaxNodeDescriptor {
     myCaptures.put(key, captures);
   }
 
+  @Override
+  public boolean hasBackReference(Constants.@NotNull StringKey key) {
+    return true;
+  }
+
   @Nullable
   @Override
   public Int2ObjectMap<CharSequence> getCaptures(@NotNull Constants.CaptureKey key) {
     return myCaptures.get(key);
+  }
+
+  @Override
+  public boolean hasBackReference(Constants.@NotNull CaptureKey key, int group) {
+    return true;
   }
 
   @Override
@@ -84,7 +93,9 @@ class SyntaxNodeDescriptorImpl implements MutableSyntaxNodeDescriptor {
     if (map.isEmpty()) {
       return null;
     }
-    CollectionFactory.trimMap(map);
+    if (map instanceof Int2ObjectOpenHashMap) {
+      ((Int2ObjectOpenHashMap<SyntaxNodeDescriptor>)map).trim();
+    }
     return map;
   }
 

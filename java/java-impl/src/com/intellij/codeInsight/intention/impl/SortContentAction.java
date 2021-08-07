@@ -17,6 +17,7 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
+import com.siyeh.ig.callMatcher.CallMatcher;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntList;
@@ -44,6 +45,10 @@ public final class SortContentAction extends PsiElementBaseIntentionAction {
       new EnumConstantDeclarationSortable(),
       new AnnotationArraySortable()
     };
+    static final CallMatcher COLLECTION_LITERALS = CallMatcher.anyOf(
+      CallMatcher.staticCall(CommonClassNames.JAVA_UTIL_LIST, "of"),
+      CallMatcher.staticCall(CommonClassNames.JAVA_UTIL_SET, "of")
+    );
   }
 
   @Nls
@@ -291,7 +296,7 @@ public final class SortContentAction extends PsiElementBaseIntentionAction {
     abstract C getContext(@NotNull PsiElement origin);
 
     /**
-     * @return list of elements, that should be used in comparisons
+     * @return list of elements that should be used in comparisons
      */
     @NotNull
     abstract List<PsiElement> getElements(@NotNull C context);
@@ -350,10 +355,7 @@ public final class SortContentAction extends PsiElementBaseIntentionAction {
 
     @Nullable
     private SortingStrategy findSortingStrategy(List<? extends PsiElement> elements) {
-      return Arrays.stream(sortStrategies())
-                   .filter(strategy -> elements.stream().allMatch(strategy::isSuitableEntryElement))
-                   .findFirst()
-                   .orElse(null);
+      return ContainerUtil.find(sortStrategies(), strategy -> ContainerUtil.and(elements, strategy::isSuitableEntryElement));
     }
 
     boolean isSeparator(@NotNull PsiElement element) {
@@ -498,8 +500,8 @@ public final class SortContentAction extends PsiElementBaseIntentionAction {
   }
 
   /**
-   * Class to manage \n placement
-   * It tries to preserve entry count on line as it was before sort
+   * Class to manage \n placement.
+   * It tries to preserve entry count on line as it was before the sort.
    */
   private static final class LineLayout {
     private final IntList myEntryCountOnLines = new IntArrayList();
@@ -734,6 +736,9 @@ public final class SortContentAction extends PsiElementBaseIntentionAction {
       if (method == null) return null;
       PsiParameterList parameterList = method.getParameterList();
       PsiParameter[] parameters = parameterList.getParameters();
+      if (isSuitableVarargLikeCall(call)) {
+        return new VarargContext(expressionList, Arrays.asList(call.getArgumentList().getExpressions()));
+      }
       if (arguments.length - parameters.length + 1 < MIN_ELEMENTS_COUNT) return null;
       PsiExpression[] varargArguments = getVarargArguments(arguments, origin, parameters);
       if (varargArguments == null) return null;
@@ -764,6 +769,13 @@ public final class SortContentAction extends PsiElementBaseIntentionAction {
       if (indexOfCurrent < parameters.length - 1) return null;
       if (arguments.length < parameters.length + MIN_ELEMENTS_COUNT - 1) return null;
       return Arrays.copyOfRange(arguments, parameters.length - 1, arguments.length);
+    }
+
+    private static boolean isSuitableVarargLikeCall(@NotNull PsiCallExpression call) {
+      if (!Holder.COLLECTION_LITERALS.matches(call)) return false;
+      PsiExpressionList argumentList = call.getArgumentList();
+      if (argumentList == null) return false;
+      return argumentList.getExpressionCount() >= MIN_ELEMENTS_COUNT;
     }
 
     @Nullable

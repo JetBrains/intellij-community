@@ -1,14 +1,14 @@
 from _pydevd_bundle.pydevd_constants import dict_keys, dict_iter_items
 
 try:
-    from code import InteractiveConsole
+    from code import InteractiveConsole, InteractiveInterpreter
 except ImportError:
-    from _pydevd_bundle.pydevconsole_code_for_ironpython import InteractiveConsole
+    from _pydevd_bundle.pydevconsole_code_for_ironpython import IronPythonInteractiveConsole as InteractiveConsole, \
+        IronPythonInteractiveInterpreter as InteractiveInterpreter
 
 import os
 import sys
 import traceback
-from code import InteractiveInterpreter, InteractiveConsole
 from code import compile_command
 
 from _pydev_bundle.pydev_code_executor import BaseCodeExecutor
@@ -53,7 +53,7 @@ try:
         exitfunc = None
 
     if IPYTHON:
-        from _pydev_bundle.pydev_ipython_code_executor import CodeExecutor
+        from _pydev_bundle.pydev_ipython_code_executor import IPythonCodeExecutor as CodeExecutor
         if exitfunc is not None:
             sys.exitfunc = exitfunc
         else:
@@ -94,7 +94,7 @@ def get_code_executor():
 # Debugger integration
 # ===============================================================================
 
-def exec_code(code, globals, locals, debugger):
+def ipython_exec_code(code, globals, locals, debugger):
     code_executor = get_code_executor()
     code_executor.interpreter.update(globals, locals)
 
@@ -192,7 +192,7 @@ def console_exec(thread_id, frame_id, expression, dbg):
         enable_pytest_output()
 
     if IPYTHON:
-        need_more = exec_code(CodeFragment(expression), updated_globals, updated_globals, dbg)
+        need_more = ipython_exec_code(CodeFragment(expression), updated_globals, updated_globals, dbg)
         if not need_more:
             update_frame_local_variables_and_save(frame, updated_globals)
         return need_more
@@ -213,7 +213,8 @@ def console_exec(thread_id, frame_id, expression, dbg):
         code = expression
 
     # Case 3
-
+    code_executor = get_code_executor()
+    code_executor.interruptable = True
     try:
         # It is important that globals and locals we pass to the exec function are the same object.
         # Otherwise generator expressions can confuse their scope. Passing updated_globals dictionary seems to be a safe option here
@@ -226,7 +227,14 @@ def console_exec(thread_id, frame_id, expression, dbg):
         interpreter.showtraceback()
     else:
         update_frame_local_variables_and_save(frame, updated_globals)
+    finally:
+        code_executor.interruptable = False
     return False
+
+
+def interrupt_debug_console():
+    code_executor = get_code_executor()
+    code_executor.interrupt()
 
 
 def update_frame_local_variables_and_save(frame, values):

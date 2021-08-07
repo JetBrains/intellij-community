@@ -17,5 +17,7 @@
     <orderEntry type="module" module-name="intellij.platform.testFramework" scope="TEST" />
     <orderEntry type="module" module-name="intellij.python.community.impl" />
     <orderEntry type="module" module-name="intellij.platform.core.ui" />
+    <orderEntry type="library" name="jsoup" level="project" />
+    <orderEntry type="library" name="jetbrains-annotations-java5" level="project" />
   </component>
 </module>

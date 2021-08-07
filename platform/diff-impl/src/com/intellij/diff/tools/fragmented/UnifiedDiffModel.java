@@ -40,12 +40,14 @@ public class UnifiedDiffModel {
 
   @Nullable
   public List<UnifiedDiffChange> getDiffChanges() {
-    return myData != null ? myData.getDiffChanges() : null;
+    ChangedBlockData data = myData;
+    return data != null ? data.getDiffChanges() : null;
   }
 
   @Nullable
   public LineNumberConvertor getLineNumberConvertor(@NotNull Side side) {
-    return myData != null ? myData.getLineNumberConvertor(side) : null;
+    ChangedBlockData data = myData;
+    return data != null ? data.getLineNumberConvertor(side) : null;
   }
 
   public void setChanges(@NotNull List<UnifiedDiffChange> changes,

@@ -1,13 +1,15 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package training.learn.course
 
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
+import com.intellij.openapi.wm.ToolWindowAnchor
 import org.jetbrains.annotations.Nls
 import training.lang.LangSupport
 
 abstract class IftModule(@Nls val name: String,
                          @Nls val description: String,
-                         val primaryLanguage: LangSupport,
+                         val primaryLanguage: LangSupport?,
                          /** It is lessons default type */
                          val moduleType: LessonType,
                          initLessons: () -> List<KLesson>) {
@@ -16,11 +18,14 @@ abstract class IftModule(@Nls val name: String,
 
   init {
     for (lesson in lessons) {
+      @Suppress("LeakingThis")
       lesson.module = this
     }
   }
 
   abstract val sanitizedName: @NlsSafe String
+
+  abstract fun preferredLearnWindowAnchor(project: Project): ToolWindowAnchor
 
   override fun toString(): String {
     return "($name for $primaryLanguage)"

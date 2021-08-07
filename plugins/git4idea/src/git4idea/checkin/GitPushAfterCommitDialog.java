@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.checkin;
 
 import com.intellij.dvcs.push.ui.PushUtils;
@@ -7,7 +7,7 @@ import com.intellij.dvcs.repo.Repository;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.TransactionGuard;
 import com.intellij.openapi.project.Project;
-import com.intellij.ui.GuiUtils;
+import com.intellij.util.ModalityUiUtil;
 import git4idea.branch.GitBranchUtil;
 import git4idea.config.GitVcsSettings;
 import git4idea.i18n.GitBundle;
@@ -20,9 +20,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
-/**
- * @author yole
- */
+
 public class GitPushAfterCommitDialog extends VcsPushDialog {
   private JCheckBox myDontShowAgainCheckbox;
 
@@ -76,10 +74,8 @@ public class GitPushAfterCommitDialog extends VcsPushDialog {
     TransactionGuard.getInstance().assertWriteSafeContext(modality);
 
     List<GitRepository> repositories = new ArrayList<>(selectedRepositories);
-    GuiUtils.invokeLaterIfNeeded(
-      () -> new GitPushAfterCommitDialog(project, repositories, GitBranchUtil.getCurrentRepository(project)).showOrPush(),
-      modality,
-      project.getDisposed()
+    ModalityUiUtil.invokeLaterIfNeeded(
+      modality, project.getDisposed(), () -> new GitPushAfterCommitDialog(project, repositories, GitBranchUtil.getCurrentRepository(project)).showOrPush()
     );
   }
 }

@@ -10,6 +10,7 @@ import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.compiler.JavaCompilerBundle;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
@@ -17,6 +18,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.api.GlobalOptions;
 
+import java.io.File;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.nio.charset.Charset;
@@ -25,6 +27,7 @@ import java.nio.file.Paths;
 import java.util.List;
 
 final class WslBuildCommandLineBuilder implements BuildCommandLineBuilder {
+  private static final Logger LOG = Logger.getInstance(WslBuildCommandLineBuilder.class);
   private final Project myProject;
   private final @NotNull WSLDistribution myDistribution;
   private final @Nullable ProgressIndicator myProgressIndicator;
@@ -44,14 +47,17 @@ final class WslBuildCommandLineBuilder implements BuildCommandLineBuilder {
     myProgressIndicator = progressIndicator;
     myCommandLine.setExePath(sdkPath);
 
-    String home = distribution.getUserHome();
-    if (home != null) {
-      String pathsSelector = PathManager.getPathsSelector();
-      if (pathsSelector == null) pathsSelector = "." + ApplicationNamesInfo.getInstance().getScriptName();
-      String workingDirectory = PathManager.getDefaultUnixSystemPath(home, pathsSelector) + "/" + BuildManager.SYSTEM_ROOT;
-      myHostWorkingDirectory = myDistribution.getWindowsPath(workingDirectory);
-      myWorkingDirectory = myHostWorkingDirectory != null ? workingDirectory : null;
-
+    Path buildDirectory = getWslBuildSystemDirectory(distribution);
+    if (buildDirectory == null) {
+      LOG.warn("Cannot determine build directory for " + distribution + ", rolling back to LocalBuildSystemDirectory");
+      myHostWorkingDirectory = LocalBuildCommandLineBuilder.getLocalBuildSystemDirectory().toString();
+      myWorkingDirectory = myDistribution.getWslPath(myHostWorkingDirectory);
+      LOG.warn("ClasspathDirectory and myHostClasspathDirectory set to null!");
+      myClasspathDirectory = null;
+      myHostClasspathDirectory = null;
+    } else {
+      myHostWorkingDirectory = buildDirectory.toString();
+      myWorkingDirectory = myDistribution.getWslPath(myHostWorkingDirectory);
       myClasspathDirectory = myWorkingDirectory + "/jps-" + ApplicationInfo.getInstance().getBuild().asString();
       myHostClasspathDirectory = Paths.get(myDistribution.getWindowsPath(myClasspathDirectory));
       if (ApplicationInfo.getInstance().getBuild().isSnapshot() && !CURRENT_SNAPSHOT_COPIED) {
@@ -68,12 +74,6 @@ final class WslBuildCommandLineBuilder implements BuildCommandLineBuilder {
           // ignore
         }
       }
-    }
-    else {
-      myHostWorkingDirectory = BuildManager.getInstance().getBuildSystemDirectory().toString();
-      myWorkingDirectory = myDistribution.getWslPath(myHostWorkingDirectory);
-      myClasspathDirectory = null;
-      myHostClasspathDirectory = null;
     }
   }
 
@@ -126,6 +126,22 @@ final class WslBuildCommandLineBuilder implements BuildCommandLineBuilder {
   }
 
   @Override
+  public void copyPathToTarget(Iterable<File> pathFiles) {
+    if (myClasspathDirectory != null && myHostClasspathDirectory != null) {
+      for (File file : pathFiles) {
+        File targetFile = myHostClasspathDirectory.resolve(file.getName()).toFile();
+        if (!targetFile.exists()) {
+          try {
+            FileUtil.copyFileOrDir(file, targetFile);
+          }
+          catch (IOException ignored) {
+          }
+        }
+      }
+    }
+  }
+
+  @Override
   public @NotNull Path getHostWorkingDirectory() {
     return Paths.get(myHostWorkingDirectory);
   }
@@ -171,5 +187,17 @@ final class WslBuildCommandLineBuilder implements BuildCommandLineBuilder {
     myDistribution.patchCommandLine(myCommandLine, myProject, options);
 
     return myCommandLine;
+  }
+
+  @Nullable
+  public static Path getWslBuildSystemDirectory(WSLDistribution distribution) {
+    String pathsSelector = PathManager.getPathsSelector();
+    String wslUserHome = distribution.getUserHome();
+    if (wslUserHome == null) return null;
+    String windowsUserHomePath = distribution.getWindowsPath(wslUserHome);
+    if (pathsSelector == null) pathsSelector = "." + ApplicationNamesInfo.getInstance().getScriptName();
+    if (windowsUserHomePath == null) return null;
+    String workingDirectory = PathManager.getDefaultUnixSystemPath(windowsUserHomePath, pathsSelector) + "/" + BuildManager.SYSTEM_ROOT;
+    return Paths.get(workingDirectory);
   }
 }

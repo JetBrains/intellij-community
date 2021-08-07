@@ -7,13 +7,16 @@ import com.intellij.openapi.project.ProjectManager
 import com.intellij.project.stateStore
 import com.intellij.testFramework.*
 import com.intellij.testFramework.assertions.Assertions.assertThat
+import com.intellij.ui.DeferredIconImpl
 import com.intellij.util.PathUtil
 import com.intellij.util.messages.SimpleMessageBusConnection
+import com.intellij.util.ui.EmptyIcon
 import org.junit.ClassRule
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.ExternalResource
 import java.nio.file.Path
+import java.nio.file.Paths
 
 class RecentProjectsTest {
   companion object {
@@ -90,6 +93,19 @@ class RecentProjectsTest {
     finally {
       PlatformTestUtil.forceCloseProjectWithoutSaving(project)
     }
+  }
+
+  @Test
+  fun testSlnLikeProjectIcon() {
+    // For Rider
+    val rpm = (RecentProjectsManager.getInstance() as RecentProjectsManagerBase)
+
+    val projectDir = Paths.get("${PlatformTestUtil.getPlatformTestDataPath()}/recentProjects/dotNetSampleRecent/Povysh")
+    val slnFile = projectDir.resolve("Povysh.sln")
+
+    val icon = (rpm.getProjectIcon(slnFile.toString(), false) as DeferredIconImpl<*>).evaluate()
+
+    assertThat(icon).isNotInstanceOf(EmptyIcon::class.java)
   }
 
   private fun getProjectOpenTimestamp(@Suppress("SameParameterValue") projectName: String): Long {

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.uiDesigner.propertyInspector.editors;
 
 import com.intellij.openapi.project.Project;
@@ -27,9 +27,7 @@ import java.util.Comparator;
 import java.util.Enumeration;
 import java.util.List;
 
-/**
- * @author yole
- */
+
 public class FontEditorDialog extends DialogWrapper {
   private final Model myModel = new Model();
   private JList myFontNameList;
@@ -170,7 +168,7 @@ public class FontEditorDialog extends DialogWrapper {
       if (value.getFontSize() >= 0) {
         myFontSizeList.setSelectedValue(Integer.toString(value.getFontSize()), true);
         if (myFontSizeList.getSelectedIndex() < 0) {
-          myFontSizeEdit.setValue(new Integer(value.getFontSize()));
+          myFontSizeEdit.setValue(Integer.valueOf(value.getFontSize()));
         }
       }
       else {

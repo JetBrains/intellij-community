@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.diff.tools.fragmented;
 
 import com.intellij.codeInsight.breadcrumbs.FileBreadcrumbsCollector;
@@ -427,9 +427,7 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase {
 
       if (isContentsEqual &&
           !DiffUtil.isUserDataFlagSet(DiffUserDataKeysEx.DISABLE_CONTENTS_EQUALS_NOTIFICATION, myContext, myRequest)) {
-        boolean equalCharsets = TextDiffViewerUtil.areEqualCharsets(getContents());
-        boolean equalSeparators = TextDiffViewerUtil.areEqualLineSeparators(getContents());
-        myPanel.addNotification(DiffNotifications.createEqualContents(equalCharsets, equalSeparators));
+        myPanel.addNotification(TextDiffViewerUtil.createEqualContentsNotification(getContents()));
       }
 
       IntUnaryOperator foldingLineConvertor = myFoldingModel.getLineNumberConvertor();
@@ -501,7 +499,6 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase {
   /*
    * This convertor returns -1 if exact matching is impossible
    */
-  @RequiresEdt
   public int transferLineToOnesideStrict(@NotNull Side side, int line) {
     LineNumberConvertor convertor = myModel.getLineNumberConvertor(side);
     return convertor != null ? convertor.convertInv(line) : -1;
@@ -510,7 +507,6 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase {
   /*
    * This convertor returns -1 if exact matching is impossible
    */
-  @RequiresEdt
   public int transferLineFromOnesideStrict(@NotNull Side side, int line) {
     LineNumberConvertor convertor = myModel.getLineNumberConvertor(side);
     return convertor != null ? convertor.convert(line) : -1;
@@ -519,7 +515,6 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase {
   /*
    * This convertor returns 'good enough' position, even if exact matching is impossible
    */
-  @RequiresEdt
   public int transferLineToOneside(@NotNull Side side, int line) {
     LineNumberConvertor convertor = myModel.getLineNumberConvertor(side);
     return convertor != null ? convertor.convertApproximateInv(line) : line;
@@ -532,7 +527,6 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase {
   /*
    * This convertor returns 'good enough' position, even if exact matching is impossible
    */
-  @RequiresEdt
   @NotNull
   public Pair<int[], Side> transferLineFromOneside(int line) {
     int[] lines = new int[2];
@@ -832,6 +826,11 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase {
   @NotNull
   public FoldingModelSupport.Settings getFoldingModelSettings() {
     return TextDiffViewerUtil.getFoldingModelSettings(myContext);
+  }
+
+  @NotNull
+  public FoldingModelSupport getFoldingModel() {
+    return myFoldingModel;
   }
 
   //

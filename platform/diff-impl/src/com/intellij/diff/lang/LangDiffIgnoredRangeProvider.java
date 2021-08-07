@@ -49,6 +49,6 @@ public abstract class LangDiffIgnoredRangeProvider implements DiffIgnoredRangePr
     if (file != null) {
       return LanguageUtil.getLanguageForPsi(project, file, fileType);
     }
-    return LanguageUtil.getFileTypeLanguage(fileType);
+    return fileType == null ? null : LanguageUtil.getFileTypeLanguage(fileType);
   }
 }

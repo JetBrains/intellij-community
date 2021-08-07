@@ -7,9 +7,7 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.SmartList;
 import com.intellij.vcs.log.VcsRef;
-import com.intellij.vcs.log.util.TroveUtil;
-import gnu.trove.TIntArrayList;
-import gnu.trove.TIntObjectHashMap;
+import it.unimi.dsi.fastutil.ints.*;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
@@ -20,9 +18,9 @@ public class CompressedRefs {
   @NotNull private final VcsLogStorage myStorage;
 
   // maps each commit id to the list of tag ids on this commit
-  @NotNull private final TIntObjectHashMap<TIntArrayList> myTags = new TIntObjectHashMap<>();
+  @NotNull private final Int2ObjectMap<IntArrayList> myTags = new Int2ObjectOpenHashMap<>();
   // maps each commit id to the list of branches on this commit
-  @NotNull private final TIntObjectHashMap<List<VcsRef>> myBranches = new TIntObjectHashMap<>();
+  @NotNull private final Int2ObjectMap<List<VcsRef>> myBranches = new Int2ObjectOpenHashMap<>();
 
   public CompressedRefs(@NotNull Set<VcsRef> refs, @NotNull VcsLogStorage storage) {
     myStorage = storage;
@@ -40,26 +38,25 @@ public class CompressedRefs {
         putRefIndex(myTags, ref, myStorage);
       }
     });
-    myTags.forEachValue(list -> {
-      list.trimToSize();
-      return true;
+    //noinspection SSBasedInspection
+    myTags.values().forEach(list -> {
+      list.trim();
     });
     myStorage.flush();
   }
 
   boolean contains(int index) {
-    return myBranches.contains(index) || myTags.contains(index);
+    return myBranches.containsKey(index) || myTags.containsKey(index);
   }
 
   @NotNull
   SmartList<VcsRef> refsToCommit(int index) {
     SmartList<VcsRef> result = new SmartList<>();
     if (myBranches.containsKey(index)) result.addAll(myBranches.get(index));
-    TIntArrayList tags = myTags.get(index);
+    IntList tags = myTags.get(index);
     if (tags != null) {
       tags.forEach(value -> {
         result.add(myStorage.getVcsRef(value));
-        return true;
       });
     }
     return result;
@@ -67,12 +64,12 @@ public class CompressedRefs {
 
   @NotNull
   public Stream<VcsRef> streamBranches() {
-    return TroveUtil.streamValues(myBranches).flatMap(Collection::stream);
+    return myBranches.values().stream().flatMap(Collection::stream);
   }
 
   @NotNull
   private Stream<VcsRef> streamTags() {
-    return TroveUtil.streamValues(myTags).flatMapToInt(TroveUtil::stream).mapToObj(myStorage::getVcsRef);
+    return myTags.values().stream().flatMapToInt(IntCollection::intStream).mapToObj(myStorage::getVcsRef);
   }
 
   @NotNull
@@ -102,22 +99,23 @@ public class CompressedRefs {
   @NotNull
   public Collection<Integer> getCommits() {
     Set<Integer> result = new HashSet<>();
-    TroveUtil.streamKeys(myBranches).forEach(result::add);
-    TroveUtil.streamKeys(myTags).forEach(result::add);
+    myBranches.keySet().intStream().forEach(result::add);
+    myTags.keySet().intStream().forEach(result::add);
     return result;
   }
 
-  private static void putRef(@NotNull TIntObjectHashMap<List<VcsRef>> map, @NotNull VcsRef ref, @NotNull VcsLogStorage storage) {
+  private static void putRef(@NotNull Int2ObjectMap<List<VcsRef>> map, @NotNull VcsRef ref, @NotNull VcsLogStorage storage) {
     int index = storage.getCommitIndex(ref.getCommitHash(), ref.getRoot());
     List<VcsRef> list = map.get(index);
     if (list == null) map.put(index, list = new SmartList<>());
     list.add(ref);
   }
 
-  private static void putRefIndex(@NotNull TIntObjectHashMap<TIntArrayList> map, @NotNull VcsRef ref, @NotNull VcsLogStorage storage) {
+  private static void putRefIndex(@NotNull Int2ObjectMap<IntArrayList> map, @NotNull VcsRef ref, @NotNull VcsLogStorage storage) {
     int index = storage.getCommitIndex(ref.getCommitHash(), ref.getRoot());
-    TIntArrayList list = map.get(index);
-    if (list == null) map.put(index, list = new TIntArrayList());
+    //noinspection SSBasedInspection
+    IntArrayList list = map.get(index);
+    if (list == null) map.put(index, list = new IntArrayList());
     list.add(storage.getRefIndex(ref));
   }
 }

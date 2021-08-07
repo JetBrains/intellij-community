@@ -198,7 +198,7 @@ public final class TestRunnerUtil {
   }
 
   public static String testsFoundInPackageMessage(int testCount, String name) {
-    return MessageFormat.format(ourBundle.getString("tests.found.in.package"), new Integer(testCount), name);
+    return MessageFormat.format(ourBundle.getString("tests.found.in.package"), Integer.valueOf(testCount), name);
   }
 
   /** @noinspection JUnitTestClassNamingConvention, JUnitTestCaseWithNonTrivialConstructors, JUnitTestCaseWithNoTests */

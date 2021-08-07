@@ -13,6 +13,7 @@ import java.nio.channels.FileChannel;
 import java.nio.charset.StandardCharsets;
 
 final class MurmurHashingService {
+  private static final ThreadLocal<ByteBuffer> THREAD_LOCAL_BUFFER = ThreadLocal.withInitial(() -> ByteBuffer.allocate(1024 * 1024));
   static final int HASH_SIZE = 16;
 
   static byte[] getStringHash(@NotNull String hashableString) {
@@ -24,7 +25,7 @@ final class MurmurHashingService {
   static byte[] getFileHash(@NotNull File file) throws IOException {
     Hasher hasher = Hashing.murmur3_128().newHasher();
     try (FileInputStream fis = new FileInputStream(file); FileChannel fileChannel = fis.getChannel()) {
-      ByteBuffer buffer = ByteBuffer.allocate(1024 * 1024);
+      ByteBuffer buffer = THREAD_LOCAL_BUFFER.get();
       while(fileChannel.read(buffer) > 0) {
         buffer.flip();
         hasher.putBytes(buffer);

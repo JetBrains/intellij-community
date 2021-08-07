@@ -21,9 +21,11 @@
 package com.intellij.debugger.actions;
 
 import com.intellij.xdebugger.impl.actions.XDebuggerActions;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 
 @Deprecated
+@ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
 public interface DebuggerActions extends XDebuggerActions {
   @NonNls String POP_FRAME = "Debugger.PopFrame";
   @NonNls String EVALUATION_DIALOG_POPUP = "Debugger.EvaluationDialogPopup";

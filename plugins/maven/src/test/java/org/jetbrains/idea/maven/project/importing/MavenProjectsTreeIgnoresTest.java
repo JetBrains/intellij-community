@@ -20,6 +20,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.project.MavenProject;
 import org.jetbrains.idea.maven.project.MavenProjectsTree;
+import org.junit.Test;
 
 import java.util.Collections;
 import java.util.List;
@@ -45,6 +46,7 @@ public class MavenProjectsTreeIgnoresTest extends MavenProjectsTreeTestCase {
     myRoots = myTree.getRootProjects();
   }
 
+  @Test
   public void testSendingNotifications() {
     myTree.setIgnoredState(Collections.singletonList(myRoots.get(0)), true);
 
@@ -67,6 +69,7 @@ public class MavenProjectsTreeIgnoresTest extends MavenProjectsTreeTestCase {
     myLog = "";
   }
 
+  @Test 
   public void testDoNotSendNotificationsIfNothingChanged() {
     myTree.setIgnoredState(Collections.singletonList(myRoots.get(0)), true);
 

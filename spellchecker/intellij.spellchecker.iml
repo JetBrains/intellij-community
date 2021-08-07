@@ -22,7 +22,7 @@
     <orderEntry type="library" name="Guava" level="project" />
     <orderEntry type="module" module-name="intellij.platform.statistics" />
     <orderEntry type="module-library">
-      <library name="com.intellij.grazie:grazie-spellchecker:0.1.9" type="repository">
+      <library name="grazie-spellchecker" type="repository">
         <properties include-transitive-deps="false" maven-id="com.intellij.grazie:grazie-spellchecker:0.1.9" />
         <CLASSES>
           <root url="jar://$MAVEN_REPOSITORY$/com/intellij/grazie/grazie-spellchecker/0.1.9/grazie-spellchecker-0.1.9.jar!/" />
@@ -34,18 +34,14 @@
       </library>
     </orderEntry>
     <orderEntry type="module-library">
-      <library name="info.debatty:java-string-similarity:1.2.1" type="repository">
-        <properties maven-id="info.debatty:java-string-similarity:1.2.1">
-          <exclude>
-            <dependency maven-id="net.jcip:jcip-annotations" />
-          </exclude>
-        </properties>
+      <library name="java-string-similarity" type="repository">
+        <properties include-transitive-deps="false" maven-id="info.debatty:java-string-similarity:2.0.0" />
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/info/debatty/java-string-similarity/1.2.1/java-string-similarity-1.2.1.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/info/debatty/java-string-similarity/2.0.0/java-string-similarity-2.0.0.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES>
-          <root url="jar://$MAVEN_REPOSITORY$/info/debatty/java-string-similarity/1.2.1/java-string-similarity-1.2.1-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/info/debatty/java-string-similarity/2.0.0/java-string-similarity-2.0.0-sources.jar!/" />
         </SOURCES>
       </library>
     </orderEntry>

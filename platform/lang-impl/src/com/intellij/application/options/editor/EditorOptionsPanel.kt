@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.application.options.editor
 
 import com.intellij.application.options.editor.EditorCaretStopPolicyItem.*
@@ -19,6 +19,7 @@ import com.intellij.openapi.editor.actions.CaretStopOptionsTransposed.Companion.
 import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.editor.colors.EditorColorsScheme
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable
+import com.intellij.openapi.editor.ex.EditorSettingsExternalizable.TOOLTIPS_DELAY_RANGE
 import com.intellij.openapi.editor.richcopy.settings.RichCopySettings
 import com.intellij.openapi.extensions.BaseExtensionPointName
 import com.intellij.openapi.extensions.ExtensionPointName
@@ -41,6 +42,7 @@ import com.intellij.ui.SimpleListCellRenderer
 import com.intellij.ui.layout.*
 import org.jetbrains.annotations.Contract
 import javax.swing.DefaultComboBoxModel
+import javax.swing.JCheckBox
 
 // @formatter:off
 private val codeInsightSettings get() = CodeInsightSettings.getInstance()
@@ -135,9 +137,20 @@ class EditorOptionsPanel : BoundCompositeConfigurable<UnnamedConfigurable>(messa
   override fun getDependencies(): Collection<BaseExtensionPointName<*>> = setOf(EP_NAME)
 
   override fun createPanel(): DialogPanel {
+    lateinit var chkEnableWheelFontSizeChange: JCheckBox
     return panel {
       titledRow(message("group.advanced.mouse.usages")) {
-        row { checkBox(enableWheelFontChange) }
+        row {
+          checkBox(enableWheelFontChange).also { chkEnableWheelFontSizeChange = it.component }
+          row {
+            cell {
+              buttonGroup({ editorSettings.isWheelFontChangePersistent }, { editorSettings.isWheelFontChangePersistent = it }) {
+                radioButton(message("radio.enable.ctrl.mousewheel.changes.font.size.current"), false).enableIf(chkEnableWheelFontSizeChange.selected)
+                radioButton(message("radio.enable.ctrl.mousewheel.changes.font.size.all"), true).enableIf(chkEnableWheelFontSizeChange.selected)
+              }
+            }
+          }
+        }
         row {
           cell(isFullWidth = true) {
             checkBox(enableDnD)
@@ -198,14 +211,6 @@ class EditorOptionsPanel : BoundCompositeConfigurable<UnnamedConfigurable>(messa
           }
         }
       }
-      titledRow(message("group.limits")) {
-        row(message("editbox.recent.files.limit")) {
-          intTextField(uiSettings::recentFilesLimit, range = 1..500, columns = 4)
-        }
-        row(message("editbox.recent.locations.limit")) {
-          intTextField(uiSettings::recentLocationsLimit, range = 1..100, columns = 4)
-        }
-      }
       titledRow(message("group.richcopy")) {
         row {
           val copyShortcut = ActionManager.getInstance().getKeyboardShortcut(IdeActions.ACTION_COPY)
@@ -237,8 +242,9 @@ class EditorOptionsPanel : BoundCompositeConfigurable<UnnamedConfigurable>(messa
       }
       titledRow(message("editor.options.save.files.group")) {
         row {
-          val stripEnabledBox = checkBox(cdStripTrailingSpacesEnabled)
+          lateinit var stripEnabledBox: CellBuilder<JCheckBox>
           cell(isFullWidth = true) {
+            stripEnabledBox = checkBox(cdStripTrailingSpacesEnabled)
             val model = DefaultComboBoxModel(
               arrayOf(
                 EditorSettingsExternalizable.STRIP_TRAILING_SPACES_CHANGED,
@@ -254,7 +260,7 @@ class EditorOptionsPanel : BoundCompositeConfigurable<UnnamedConfigurable>(messa
                   else -> it
                 }
               }
-            ).enableIf(stripEnabledBox.selected).component
+            ).enableIf(stripEnabledBox.selected)
           }
           row {
             checkBox(cdKeepTrailingSpacesOnCaretLine)
@@ -301,18 +307,23 @@ class EditorCodeEditingConfigurable : BoundCompositeConfigurable<ErrorOptionsPro
         row { checkBox(highlightScope) }
         row { checkBox(highlightIdentifierUnderCaret) }
       }
-      titledRow(message("group.refactorings")) {
-        row {
-          buttonGroup(editorSettings::isVariableInplaceRenameEnabled,
-                      editorSettings::setVariableInplaceRenameEnabled) {
-            checkBoxGroup(message("radiogroup.rename.local.variables")) {
-              row { radioButton(message("radiobutton.rename.local.variables.inplace"), value = true) }
-              row { radioButton(message("radiobutton.rename.local.variables.in.dialog"), value = false) }.largeGapAfter()
+      titledRow(message("group.quick.documentation")) {
+        row { checkBox(cdShowQuickDocOnMouseMove) }
+      }
+      if (!EditorOptionsPageCustomizer.EP_NAME.extensions().anyMatch { it.shouldHideRefactoringsSection() }) {
+        titledRow(message("group.refactorings")) {
+          row {
+            buttonGroup(editorSettings::isVariableInplaceRenameEnabled,
+                        editorSettings::setVariableInplaceRenameEnabled) {
+              checkBoxGroup(message("radiogroup.rename.local.variables")) {
+                row { radioButton(message("radiobutton.rename.local.variables.inplace"), value = true) }
+                row { radioButton(message("radiobutton.rename.local.variables.in.dialog"), value = false) }.largeGapAfter()
+              }
             }
           }
+          row { checkBox(preselectCheckBox) }
+          row { checkBox(showInlineDialogForCheckBox) }
         }
-        row { checkBox(preselectCheckBox) }
-        row { checkBox(showInlineDialogForCheckBox) }
       }
       titledRow(message("group.error.highlighting")) {
         row {
@@ -351,14 +362,12 @@ class EditorCodeEditingConfigurable : BoundCompositeConfigurable<ErrorOptionsPro
           appendDslConfigurableRow(configurable)
         }
       }
-      titledRow(message("group.quick.documentation")) {
-        row { checkBox(cdShowQuickDocOnMouseMove) }
-      }
       titledRow(message("group.editor.tooltips")) {
         row {
           cell(isFullWidth = true) {
             label(message("editor.options.tooltip.delay"))
-            intTextField(editorSettings::getTooltipsDelay, editorSettings::setTooltipsDelay, range = 1..5000, columns = 4)
+            intTextField(editorSettings::getTooltipsDelay, editorSettings::setTooltipsDelay, range = TOOLTIPS_DELAY_RANGE.asRange(),
+                         columns = 4)
             label(message("editor.options.ms"))
           }
         }

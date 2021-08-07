@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.server
 
 import com.intellij.execution.wsl.WSLDistribution
@@ -17,15 +17,14 @@ interface MavenDistribution {
 
   companion object {
     @JvmStatic
-    fun fromSettings(project: Project?): MavenDistribution? {
+    fun fromSettings(project: Project): MavenDistribution? {
       val mavenHome = MavenWorkspaceSettingsComponent.getInstance(project).settings.generalSettings.mavenHome
       return MavenDistributionConverter().fromString(mavenHome)
     }
   }
-
 }
 
-class LocalMavenDistribution(override val mavenHome: File, override val name: String) : MavenDistribution {
+internal class LocalMavenDistribution(override val mavenHome: File, override val name: String) : MavenDistribution {
   override val version: String? by lazy {
     MavenUtil.getMavenVersion(mavenHome)
   }
@@ -36,11 +35,11 @@ class LocalMavenDistribution(override val mavenHome: File, override val name: St
 
   override fun isValid() = version != null
   override fun toString(): String {
-    return name + "(" + mavenHome + ") v " + version
+    return "$name($mavenHome) v $version"
   }
 }
 
-class WslMavenDistribution(private val wslDistribution: WSLDistribution,
+internal class WslMavenDistribution(private val wslDistribution: WSLDistribution,
                            val pathToMaven: String,
                            override val name: String) : MavenDistribution {
   override val version: String? by lazy {
@@ -57,6 +56,6 @@ class WslMavenDistribution(private val wslDistribution: WSLDistribution,
 
   override fun isValid() = version != null
   override fun toString(): String {
-    return name + "(" + mavenHome + ") v " + version
+    return "$name($mavenHome) v $version"
   }
 }

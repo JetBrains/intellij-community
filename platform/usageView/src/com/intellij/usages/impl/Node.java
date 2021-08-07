@@ -1,13 +1,13 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.usages.impl;
 
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.usages.UsageView;
+import com.intellij.usages.UsageNodePresentation;
 import com.intellij.util.BitUtil;
 import com.intellij.util.Consumer;
 import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.tree.DefaultMutableTreeNode;
 import java.util.Vector;
@@ -25,15 +25,15 @@ abstract class Node extends DefaultMutableTreeNode {
   static final byte EXCLUDED_MASK = 1 << 3;
   private static final byte UPDATED_MASK = 1 << 4;
   private static final byte FORCE_UPDATE_REQUESTED_MASK = 1 << 5;
-  /**
-   * It is set if there was a structural change in one of the parent nodes (so the node has to be deleted),
-   * Otherwise unset
-   */
-  private static final byte STRUCTURAL_CHANGE_DETECTED_IN_PATH_MASK = 1 << 6;
 
   @MagicConstant(intValues = {
-    CACHED_INVALID_MASK, CACHED_READ_ONLY_MASK, READ_ONLY_COMPUTED_MASK,
-    EXCLUDED_MASK, UPDATED_MASK, FORCE_UPDATE_REQUESTED_MASK, STRUCTURAL_CHANGE_DETECTED_IN_PATH_MASK})
+    CACHED_INVALID_MASK,
+    CACHED_READ_ONLY_MASK,
+    READ_ONLY_COMPUTED_MASK,
+    EXCLUDED_MASK,
+    UPDATED_MASK,
+    FORCE_UPDATE_REQUESTED_MASK,
+  })
   private @interface FlagConstant {
   }
 
@@ -49,14 +49,8 @@ abstract class Node extends DefaultMutableTreeNode {
   }
 
   /**
-   * debug method for producing string tree presentation
-   */
-  @TestOnly
-  abstract String tree2string(int indent, @NotNull String lineSeparator);
-
-  /**
    * isDataXXX methods perform actual (expensive) data computation.
-   * Called from {@link #update(UsageView, Consumer)})
+   * Called from {@link #update(Consumer})
    * to be compared later with cached data stored in {@link #myCachedFlags} and {@link #myCachedTextHash}
    */
   protected abstract boolean isDataValid();
@@ -65,10 +59,13 @@ abstract class Node extends DefaultMutableTreeNode {
 
   protected abstract boolean isDataExcluded();
 
-  protected void updateCachedPresentation() {}
+  public @Nullable UsageNodePresentation getCachedPresentation() {
+    return null;
+  }
 
-  @NotNull
-  protected abstract String getText(@NotNull UsageView view);
+  protected void updateCachedPresentation() { }
+
+  protected abstract @NotNull String getNodeText();
 
   final boolean isValid() {
     return !isFlagSet(CACHED_INVALID_MASK);
@@ -92,12 +89,12 @@ abstract class Node extends DefaultMutableTreeNode {
     return isFlagSet(EXCLUDED_MASK);
   }
 
-  final void update(@NotNull UsageView view, @NotNull Consumer<? super Node> edtFireTreeNodesChangedQueue) {
+  final void update(@NotNull Consumer<? super Node> edtFireTreeNodesChangedQueue) {
     // performance: always update in background because smart pointer' isValid() can cause PSI chameleons expansion which is ridiculously expensive in cpp
     assert !ApplicationManager.getApplication().isDispatchThread();
     boolean isDataValid = isDataValid();
     boolean isReadOnly = isDataReadOnly();
-    String text = getText(view);
+    String text = getNodeText();
     updateCachedPresentation();
     doUpdate(isDataValid, isReadOnly, text, edtFireTreeNodesChangedQueue);
   }
@@ -146,26 +143,15 @@ abstract class Node extends DefaultMutableTreeNode {
   void insertNewNode(@NotNull Node newChild, int childIndex) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     if (children == null) {
+      //obsolete type is required by platform superclass
+      //noinspection UseOfObsoleteCollectionType
       children = new Vector<>();
     }
-    //noinspection unchecked
     children.insertElementAt(newChild, childIndex);
   }
 
   void setExcluded(boolean excluded, @NotNull Consumer<? super Node> edtFireTreeNodesChangedQueue) {
     setFlag(EXCLUDED_MASK, excluded);
     edtFireTreeNodesChangedQueue.consume(this);
-  }
-
-  /**
-   * @return true if there was a structural change in the tree from the root element to the current one,
-   * otherwise false
-   */
-  public boolean isStructuralChangeDetected() {
-    return isFlagSet(STRUCTURAL_CHANGE_DETECTED_IN_PATH_MASK);
-  }
-
-  public void setStructuralChangeDetected(boolean valid) {
-    setFlag(STRUCTURAL_CHANGE_DETECTED_IN_PATH_MASK, valid);
   }
 }

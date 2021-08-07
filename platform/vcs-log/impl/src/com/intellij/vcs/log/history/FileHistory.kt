@@ -6,6 +6,8 @@ import com.intellij.openapi.util.Ref
 import com.intellij.openapi.util.UnorderedPair
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vcs.FilePath
+import com.intellij.util.containers.CollectionFactory
+import com.intellij.util.containers.HashingStrategy
 import com.intellij.util.containers.MultiMap
 import com.intellij.vcs.log.data.index.VcsLogPathsIndex.ChangeKind
 import com.intellij.vcs.log.graph.api.LinearGraph
@@ -16,9 +18,8 @@ import com.intellij.vcs.log.graph.impl.facade.*
 import com.intellij.vcs.log.graph.utils.LinearGraphUtils
 import com.intellij.vcs.log.graph.utils.isAncestor
 import com.intellij.vcsUtil.VcsFileUtil
-import gnu.trove.TIntHashSet
-import gnu.trove.TIntObjectHashMap
 import it.unimi.dsi.fastutil.Hash
+import it.unimi.dsi.fastutil.ints.Int2ObjectMap
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet
 import it.unimi.dsi.fastutil.ints.IntSet
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenCustomHashMap
@@ -136,10 +137,10 @@ fun removeTrivialMerges(controller: LinearGraphController,
                         permanentGraphInfo: PermanentGraphInfo<Int>,
                         fileHistoryData: FileHistoryData,
                         report: (Set<Int>) -> Unit): Boolean {
-  val trivialCandidates = TIntHashSet()
-  val nonTrivialMerges = TIntHashSet()
+  val trivialCandidates = IntOpenHashSet()
+  val nonTrivialMerges = IntOpenHashSet()
   fileHistoryData.forEach { _, commit, changes ->
-    if (changes.size() > 1) {
+    if (changes.size > 1) {
       if (changes.containsValue(ChangeKind.NOT_CHANGED)) {
         trivialCandidates.add(commit)
       }
@@ -153,7 +154,7 @@ fun removeTrivialMerges(controller: LinearGraphController,
   // in this case we may need to repeat the process after refine
   val needToRepeat = trivialCandidates.removeAll(nonTrivialMerges)
 
-  if (!trivialCandidates.isEmpty) {
+  if (!trivialCandidates.isEmpty()) {
     modifyGraph(controller) { collapsedGraph ->
       val trivialMerges = hideTrivialMerges(collapsedGraph) { nodeId: Int ->
         trivialCandidates.contains(permanentGraphInfo.permanentCommitsInfo.getCommitId(nodeId))
@@ -207,7 +208,7 @@ private fun hideTrivialMerge(collapsedGraph: CollapsedGraph, graph: LiteLinearGr
 
 abstract class FileHistoryData(internal val startPaths: Collection<FilePath>) {
   // file -> (commitId -> (parent commitId -> change kind))
-  private val affectedCommits = Object2ObjectOpenCustomHashMap<FilePath, TIntObjectHashMap<TIntObjectHashMap<ChangeKind>>>(FILE_PATH_HASHING_STRATEGY)
+  private val affectedCommits = CollectionFactory.createCustomHashingStrategyMap<FilePath, Int2ObjectMap<Int2ObjectMap<ChangeKind>>>(FILE_PATH_HASHING_STRATEGY)
   internal val commitToRename = MultiMap<UnorderedPair<Int>, Rename>()
 
   val isEmpty: Boolean
@@ -220,11 +221,11 @@ abstract class FileHistoryData(internal val startPaths: Collection<FilePath>) {
   constructor(startPath: FilePath) : this(listOf(startPath))
 
   internal fun build(oldRenames: MultiMap<UnorderedPair<Int>, Rename>): FileHistoryData {
-    val newPaths = ObjectOpenCustomHashSet(FILE_PATH_HASHING_STRATEGY)
+    val newPaths = CollectionFactory.createCustomHashingStrategySet(FILE_PATH_HASHING_STRATEGY)
     newPaths.addAll(startPaths)
 
     while (newPaths.isNotEmpty()) {
-      val commits = Object2ObjectOpenCustomHashMap<FilePath, TIntObjectHashMap<TIntObjectHashMap<ChangeKind>>>(FILE_PATH_HASHING_STRATEGY)
+      val commits = CollectionFactory.createCustomHashingStrategyMap<FilePath, Int2ObjectMap<Int2ObjectMap<ChangeKind>>>(FILE_PATH_HASHING_STRATEGY)
       newPaths.associateWithTo(commits) { getAffectedCommits(it) }
       affectedCommits.putAll(commits)
       newPaths.clear()
@@ -251,17 +252,18 @@ abstract class FileHistoryData(internal val startPaths: Collection<FilePath>) {
 
   fun build(): FileHistoryData = build(MultiMap.empty())
 
-  private fun iterateUnmatchedAdditionsDeletions(commits: Map<FilePath, TIntObjectHashMap<TIntObjectHashMap<ChangeKind>>>,
+  private fun iterateUnmatchedAdditionsDeletions(commits: Map<FilePath, Int2ObjectMap<Int2ObjectMap<ChangeKind>>>,
                                                  action: (AdditionDeletion) -> Unit) {
     forEach(commits) { path, commit, changes ->
-      changes.forEachEntry { parent, change ->
+      changes.int2ObjectEntrySet().forEach { entry ->
+        val parent = entry.intKey
+        val change = entry.value
         if (parent != commit && (change == ChangeKind.ADDED || change == ChangeKind.REMOVED)) {
           val ad = AdditionDeletion(path, commit, parent, change == ChangeKind.ADDED)
           if (!commitToRename[ad.commits].any { rename -> ad.matches(rename) }) {
             action(ad)
           }
         }
-        true
       }
     }
   }
@@ -315,7 +317,8 @@ abstract class FileHistoryData(internal val startPaths: Collection<FilePath>) {
     if (path.deleted) {
       if (!changes.containsValue(ChangeKind.REMOVED)) return false
       if (!verify) return true
-      for (parent in changes.keys()) {
+      for (entry in changes.int2ObjectEntrySet()) {
+        val parent = entry.intKey
         if (commitToRename.get(UnorderedPair(commit, parent)).firstNotNull { rename ->
             rename.getOtherPath(parent, path.filePath)
           } != null) {
@@ -348,14 +351,14 @@ abstract class FileHistoryData(internal val startPaths: Collection<FilePath>) {
     return result
   }
 
-  fun forEach(action: (FilePath, Int, TIntObjectHashMap<ChangeKind>) -> Unit) = forEach(affectedCommits, action)
+  fun forEach(action: (FilePath, Int, Int2ObjectMap<ChangeKind>) -> Unit) = forEach(affectedCommits, action)
 
   fun removeAll(commits: List<Int>) {
     affectedCommits.forEach { (_, commitsMap) -> commitsMap.removeAll(commits) }
   }
 
   abstract fun findRename(parent: Int, child: Int, path: FilePath, isChildPath: Boolean): EdgeData<FilePath>?
-  abstract fun getAffectedCommits(path: FilePath): TIntObjectHashMap<TIntObjectHashMap<ChangeKind>>
+  abstract fun getAffectedCommits(path: FilePath): Int2ObjectMap<Int2ObjectMap<ChangeKind>>
 }
 
 internal class AdditionDeletion(val filePath: FilePath, val child: Int, val parent: Int, val isAddition: Boolean) {
@@ -460,26 +463,19 @@ class MaybeDeletedFilePath(val filePath: FilePath, val deleted: Boolean) {
   }
 }
 
-internal fun forEach(map: Map<FilePath, TIntObjectHashMap<TIntObjectHashMap<ChangeKind>>>,
-                     action: (FilePath, Int, TIntObjectHashMap<ChangeKind>) -> Unit) {
+internal fun forEach(map: Map<FilePath, Int2ObjectMap<Int2ObjectMap<ChangeKind>>>,
+                     action: (FilePath, Int, Int2ObjectMap<ChangeKind>) -> Unit) {
   for ((filePath, affectedCommits) in map) {
-    affectedCommits.forEachEntry { commit, changesMap ->
+    affectedCommits.int2ObjectEntrySet().forEach { entry ->
+      val commit = entry.intKey
+      val changesMap = entry.value
       action(filePath, commit, changesMap)
-      true
     }
   }
 }
 
-internal fun TIntObjectHashMap<*>.removeAll(keys: List<Int>) {
+internal fun Int2ObjectMap<*>.removeAll(keys: List<Int>) {
   keys.forEach { this.remove(it) }
-}
-
-internal fun TIntHashSet.removeAll(elements: TIntHashSet): Boolean {
-  var result = false
-  for (i in elements) {
-    result = this.remove(i) or result
-  }
-  return result
 }
 
 private fun <E, R> Collection<E>.firstNotNull(mapping: (E) -> R): R? {
@@ -491,6 +487,6 @@ private fun <E, R> Collection<E>.firstNotNull(mapping: (E) -> R): R? {
 }
 
 @JvmField
-val FILE_PATH_HASHING_STRATEGY: Hash.Strategy<FilePath> = VcsFileUtil.CASE_SENSITIVE_FILE_PATH_HASHING_STRATEGY
+val FILE_PATH_HASHING_STRATEGY: HashingStrategy<FilePath> = VcsFileUtil.CASE_SENSITIVE_FILE_PATH_HASHING_STRATEGY
 
 data class EdgeData<T>(val parent: T, val child: T)

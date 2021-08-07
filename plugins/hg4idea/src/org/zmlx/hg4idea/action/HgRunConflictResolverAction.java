@@ -12,6 +12,7 @@
 // limitations under the License.
 package org.zmlx.hg4idea.action;
 
+import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
@@ -29,7 +30,10 @@ import java.util.Collection;
 public class HgRunConflictResolverAction extends HgAbstractGlobalSingleRepoAction {
 
   @Override
-  public void execute(@NotNull final Project project, @NotNull Collection<HgRepository> repositories, @Nullable HgRepository selectedRepo) {
+  public void execute(@NotNull final Project project,
+                      @NotNull Collection<HgRepository> repositories,
+                      @Nullable HgRepository selectedRepo,
+                      @NotNull DataContext dataContext) {
     final HgRepository repository = repositories.size() > 1 ? letUserSelectRepository(project, repositories, selectedRepo) :
                                     ContainerUtil.getFirstItem(repositories);
     if (repository != null) {

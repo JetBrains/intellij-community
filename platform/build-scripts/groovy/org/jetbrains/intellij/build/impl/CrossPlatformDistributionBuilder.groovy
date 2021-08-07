@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build.impl
 
 import com.intellij.openapi.util.Pair
@@ -78,6 +78,11 @@ final class CrossPlatformDistributionBuilder {
       buildContext.ant.zip(zipfile: targetPath, duplicate: "fail") {
         fileset(dir: buildContext.paths.distAll) {
           exclude(name: "bin/idea.properties")
+
+          if (linuxFiles.containsKey("lib/classpath.txt")) { //linux has extra dbus-java
+            exclude(name: "lib/classpath.txt")
+          }
+
           extraExecutables.each {
             exclude(name: it)
           }
@@ -140,9 +145,8 @@ final class CrossPlatformDistributionBuilder {
         fileset(dir: macDistPath) {
           exclude(name: "bin/fsnotifier*")
           exclude(name: "bin/restarter*")
+          exclude(name: "bin/printenv*")
           exclude(name: "bin/*.sh")
-          exclude(name: "bin/*.py")
-          exclude(name: "bin/*.jnilib")
           exclude(name: "bin/idea.properties")
           exclude(name: "bin/*.vmoptions")
 
@@ -167,6 +171,7 @@ final class CrossPlatformDistributionBuilder {
         }
         zipfileset(dir: "$macDistPath/bin", prefix: "bin", filemode: "775") {
           include(name: "restarter*")
+          include(name: "printenv*")
         }
         zipfileset(dir: "$macDistPath/bin", prefix: "bin/mac", filemode: "775") {
           include(name: "fsnotifier*")
@@ -184,7 +189,6 @@ final class CrossPlatformDistributionBuilder {
 
     List<String> knownExceptions = List.of(
       "bin/idea\\.properties",
-      "bin/printenv\\.py",
       "bin/\\w+\\.vmoptions",
       "bin/format\\.sh",
       "bin/inspect\\.sh",
@@ -208,9 +212,9 @@ final class CrossPlatformDistributionBuilder {
 
     if (!violations.isEmpty()) {
       buildContext.messages.error(
-              "Files are at the same path in linux and mac distribution, " +
-                      "but have a different content in each. Please place them at different paths. " +
-                      "Files:\n" + violations.join("\n")
+        "Files are at the same path in linux and mac distribution, " +
+        "but have a different content in each. Please place them at different paths. " +
+        "Files:\n" + violations.join("\n")
       )
     }
 

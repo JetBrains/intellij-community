@@ -359,6 +359,9 @@ public class PlaybackRunner {
       cmd = new PrintCommand(string.substring(PrintCommand.PREFIX.length() + 1), line);
     }
     else {
+      if(string.startsWith(AbstractCommand.CMD_PREFIX)){
+        LOG.error("Command " + string + " is not found");
+      }
       cmd = new AlphaNumericTypeCommand(string, line);
     }
 

@@ -19,6 +19,7 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectUtil;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NlsContexts.DialogMessage;
@@ -79,6 +80,7 @@ public class PyCythonExtensionWarning {
   }
 
   private static boolean shouldSuppressNotification(@NotNull Project project) {
+    if (ProjectUtil.isNotificationSilentMode(project)) return true;
     final RunManager runManager = RunManager.getInstance(project);
     final RunnerAndConfigurationSettings selectedConfiguration = runManager.getSelectedConfiguration();
     if (selectedConfiguration == null) {

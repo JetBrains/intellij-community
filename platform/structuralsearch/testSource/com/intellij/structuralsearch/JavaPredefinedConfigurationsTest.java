@@ -295,14 +295,68 @@ public class JavaPredefinedConfigurationsTest extends PredefinedConfigurationsTe
            "  public static final String S = \"\";\n" +
            "}\n" +
            "enum E { A, B }\n" +
-           // can properly test when LanguageLevel.HIGHEST == LanguageLevel.JDK_16
-           //"record R(int i) {" +
-           //"  private static final int X = 1;" +
-           //"}" +
+           "record R(int i) {" +
+           "  private static final int X = 1;" +
+           "}" +
            "class C extends ThreadLocal {\n" +
            "  private int i = 0;\n" +
            "}\n",
            "private int i = 0;");
+    doTest(configurationMap.remove(SSRBundle.message("predefined.configuration.records")),
+           "class X {}" +
+           "interface I {}" +
+           "record R1(int i, int j) {}" +
+           "record R2(double a, double b) {}",
+           "record R1(int i, int j) {}",
+           "record R2(double a, double b) {}");
+    doTest(configurationMap.remove(SSRBundle.message("predefined.configuration.double.checked.locking")),
+           "class X {" +
+           "  private static Object o =  null;" +
+           "  static Object get() {" +
+           "    if (o == null) {" +
+           "      synchronized (X.class) {" +
+           "        if (o == null) {" +
+           "          return o;" +
+           "        }" +
+           "      }" +
+           "    }" +
+           "  }" +
+           "}",
+           "if (o == null) {" +
+           "      synchronized (X.class) {" +
+           "        if (o == null) {" +
+           "          return o;" +
+           "        }" +
+           "      }" +
+           "    }");
+    doTest(configurationMap.remove(SSRBundle.message("predefined.configuration.pattern.matching.instanceof")),
+           "class X {" +
+           "  void x(Object o) {" +
+           "    if (o instanceof String) {" +
+           "      String s = (String)s;" +
+           "      System.out.println(s);" +
+           "    }" +
+           "    if (o instanceof String s) {" +
+           "      System.out.println(s);" +
+           "    }" +
+           "  }" +
+           "}",
+           "o instanceof String s");
+    doTest(configurationMap.remove(SSRBundle.message("predefined.configuration.local.classes")),
+           "class X {" +
+           "  void x() {" +
+           "    System.out.println();" +
+           "    System.out.println();" +
+           "    class Y {" +
+           "      int i;" +
+           "    }" +
+           "    System.out.println();" +
+           "    System.out.println();" +
+           "  }" +
+           "}",
+           "class Y {" +
+           "      int i;" +
+           "    }");
     //assertTrue((templates.length - configurationMap.size()) + " of " + templates.length +
     //           " existing templates tested. Untested templates: " + configurationMap.keySet(), configurationMap.isEmpty());
   }

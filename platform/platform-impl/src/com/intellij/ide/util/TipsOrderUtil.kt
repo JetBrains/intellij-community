@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.util
 
 import com.fasterxml.jackson.databind.ObjectMapper
@@ -27,6 +27,19 @@ private const val TIPS_SERVER_URL = "https://feature-recommendation.analytics.aw
 
 internal data class RecommendationDescription(val algorithm: String, val tips: List<TipAndTrickBean>, val version: String?)
 
+private fun getUtilityExperiment(): TipsUtilityExperiment? {
+  if (!ApplicationManager.getApplication().isEAP) return null
+  return when (EventLogConfiguration.getInstance().bucket) {
+    in 50..74 -> TipsUtilityExperiment.BY_TIP_UTILITY
+    in 75..99 -> TipsUtilityExperiment.BY_TIP_UTILITY_IGNORE_USED
+    else -> null
+  }
+}
+
+private fun randomShuffle(tips: List<TipAndTrickBean>): RecommendationDescription {
+  return RecommendationDescription(RANDOM_SHUFFLE_ALGORITHM, tips.shuffled(), null)
+}
+
 @Service
 internal class TipsOrderUtil {
   private class RecommendationsStartupActivity : StartupActivity.Background {
@@ -52,7 +65,6 @@ internal class TipsOrderUtil {
   }
 
   companion object {
-    @JvmStatic
     private fun sync() {
       LOG.assertTrue(!ApplicationManager.getApplication().isDispatchThread)
       LOG.debug { "Fetching tips order from the server: ${TIPS_SERVER_URL}" }
@@ -61,7 +73,7 @@ internal class TipsOrderUtil {
       val startTimestamp = System.currentTimeMillis()
       HttpRequests.post(TIPS_SERVER_URL, HttpRequests.JSON_CONTENT_TYPE)
         .connect(HttpRequests.RequestProcessor { request ->
-          val bucket = EventLogConfiguration.bucket
+          val bucket = EventLogConfiguration.getInstance().bucket
           val tipsRequest = TipsRequest(allTips, actionsSummary, PlatformUtils.getPlatformPrefix(), bucket)
           val objectMapper = ObjectMapper()
           request.write(objectMapper.writeValueAsBytes(tipsRequest))
@@ -87,9 +99,22 @@ internal class TipsOrderUtil {
    * @return object that contains sorted tips and describes approach of how the tips are sorted
    */
   fun sort(tips: List<TipAndTrickBean>): RecommendationDescription {
-    // temporarily suggest random order if we cannot estimate quality
-    return serverRecommendation?.reorder(tips)
-           ?: RecommendationDescription(RANDOM_SHUFFLE_ALGORITHM, tips.shuffled(), null)
+    getUtilityExperiment()?.let {
+      return service<TipsUsageManager>().sortByUtility(tips, it)
+    }
+
+    serverRecommendation?.let { return it.reorder(tips) }
+
+    return randomShuffle(tips)
+  }
+}
+
+enum class TipsUtilityExperiment {
+  BY_TIP_UTILITY {
+    override fun toString(): String = "tip_utility"
+  },
+  BY_TIP_UTILITY_IGNORE_USED {
+    override fun toString(): String = "tip_utility_and_ignore_used"
   }
 }
 
@@ -110,13 +135,13 @@ private class ServerRecommendation {
   @JvmField
   var version: String? = null
 
-  fun reorder(tips: List<TipAndTrickBean>): RecommendationDescription? {
+  fun reorder(tips: List<TipAndTrickBean>): RecommendationDescription {
     val tipToIndex = Object2IntOpenHashMap<String>(showingOrder.size)
     showingOrder.forEachIndexed { index, tipFile -> tipToIndex.put(tipFile, index) }
     for (tip in tips) {
       if (!tipToIndex.containsKey(tip.fileName)) {
         LOG.error("Unknown tips file: ${tip.fileName}")
-        return null
+        return randomShuffle(tips)
       }
     }
     return RecommendationDescription(usedAlgorithm, tips.sortedBy { tipToIndex.getInt(it.fileName) }, version)

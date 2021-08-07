@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.siyeh.ig.resources;
 
 import com.intellij.codeInspection.ProblemDescriptor;
@@ -6,6 +6,7 @@ import com.intellij.codeInspection.dataFlow.JavaMethodContractUtil;
 import com.intellij.codeInspection.resources.ImplicitResourceCloser;
 import com.intellij.codeInspection.ui.ListTable;
 import com.intellij.codeInspection.ui.ListWrappingTableModel;
+import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
 import com.intellij.java.JavaBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.InvalidDataException;
@@ -14,10 +15,10 @@ import com.intellij.psi.*;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.ui.IdeBorderFactory;
-import com.intellij.ui.components.panels.VerticalLayout;
+import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.CheckBox;
+import com.intellij.util.ui.UI;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
@@ -33,7 +34,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.awt.*;
 import java.awt.event.ItemEvent;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -87,32 +87,35 @@ public class AutoCloseableResourceInspection extends ResourceInspection {
   @NotNull
   @Override
   public JComponent createOptionsPanel() {
-    final JComponent panel = new JPanel(new VerticalLayout(2));
+    final MultipleCheckboxOptionsPanel panel = new MultipleCheckboxOptionsPanel(this);
     final ListTable table =
       new ListTable(new ListWrappingTableModel(ignoredTypes, InspectionGadgetsBundle.message("ignored.autocloseable.types.column.label")));
     final JPanel tablePanel =
-      UiUtils.createAddRemoveTreeClassChooserPanel(table, InspectionGadgetsBundle.message("choose.autocloseable.type.to.ignore.title"),
-                                                   "java.lang.AutoCloseable");
+      UiUtils.createAddRemoveTreeClassChooserPanel(
+        InspectionGadgetsBundle.message("choose.autocloseable.type.to.ignore.title"),
+        InspectionGadgetsBundle.message("ignored.autocloseable.types.label"),
+        table,
+        true,
+        "java.lang.AutoCloseable");
     final ListTable table2 = new ListTable(
       new ListWrappingTableModel(Arrays.asList(myMethodMatcher.getClassNames(), myMethodMatcher.getMethodNamePatterns()),
                                  InspectionGadgetsBundle.message("result.of.method.call.ignored.class.column.title"),
                                  InspectionGadgetsBundle.message("method.name.regex")));
     table2.setEnabled(!ignoreFromMethodCall);
-    final JPanel tablePanel2 = UiUtils.createAddRemoveTreeClassChooserPanel(table2, JavaBundle.message("dialog.title.choose.class"));
-    final JPanel wrapperPanel = new JPanel(new BorderLayout());
-    wrapperPanel.setBorder(IdeBorderFactory.createTitledBorder(
-      InspectionGadgetsBundle.message("inspection.autocloseable.resource.ignored.methods.title"), false));
-    wrapperPanel.add(tablePanel2);
-    panel.add(tablePanel);
-    panel.add(wrapperPanel);
+    final JPanel tablePanel2 =
+      UI.PanelFactory.panel(UiUtils.createAddRemoveTreeClassChooserPanel(table2, JavaBundle.message("dialog.title.choose.class")))
+        .withLabel(InspectionGadgetsBundle.message("inspection.autocloseable.resource.ignored.methods.title")).moveLabelOnTop()
+        .resizeY(true).createPanel();
+    panel.add(tablePanel, "growx, wrap");
+    panel.add(tablePanel2, "growx, wrap");
     final CheckBox checkBox =
       new CheckBox(InspectionGadgetsBundle.message("auto.closeable.resource.returned.option"), this, "ignoreFromMethodCall");
     checkBox.addItemListener(e -> table2.setEnabled(e.getStateChange() == ItemEvent.DESELECTED));
-    panel.add(checkBox);
-    panel.add(new CheckBox(InspectionGadgetsBundle.message("any.method.may.close.resource.argument"), this, "anyMethodMayClose"));
-    panel.add(new CheckBox(InspectionGadgetsBundle.message("ignore.constructor.method.references"), this, "ignoreConstructorMethodReferences"));
-    panel.add(new CheckBox(InspectionGadgetsBundle.message("ignore.getters.returning.resource"), this, "ignoreGettersReturningResource"));
-    return panel;
+    panel.add(checkBox, "growx, wrap");
+    panel.addCheckbox(InspectionGadgetsBundle.message("any.method.may.close.resource.argument"), "anyMethodMayClose");
+    panel.addCheckbox(InspectionGadgetsBundle.message("ignore.constructor.method.references"), "ignoreConstructorMethodReferences");
+    panel.addCheckbox(InspectionGadgetsBundle.message("ignore.getters.returning.resource"), "ignoreGettersReturningResource");
+    return ScrollPaneFactory.createScrollPane(panel);
   }
 
   @NotNull
@@ -194,7 +197,7 @@ public class AutoCloseableResourceInspection extends ResourceInspection {
   }
 
   @Override
-  public boolean shouldInspect(PsiFile file) {
+  public boolean shouldInspect(@NotNull PsiFile file) {
     return PsiUtil.isLanguageLevel7OrHigher(file);
   }
 

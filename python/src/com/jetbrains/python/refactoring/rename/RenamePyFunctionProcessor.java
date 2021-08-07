@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.refactoring.rename;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -19,9 +19,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Map;
 
-/**
- * @author yole
- */
+
 public class RenamePyFunctionProcessor extends RenamePyElementProcessor {
   @Override
   public boolean canProcessElement(@NotNull PsiElement element) {
@@ -124,6 +122,16 @@ public class RenamePyFunctionProcessor extends RenamePyElementProcessor {
     PyiUtil
       .getOverloads(function, TypeEvalContext.codeInsightFallback(element.getProject()))
       .forEach(overload -> allRenames.put(overload, newName));
+
+    final PsiElement originalElement = PyiUtil.getOriginalElement(function);
+    if (originalElement != null) {
+      allRenames.put(originalElement, newName);
+    }
+
+    final PsiElement stubElement = PyiUtil.getPythonStub(function);
+    if (stubElement != null) {
+      allRenames.put(stubElement, newName);
+    }
 
     final PyClass containingClass = function.getContainingClass();
     if (containingClass != null) {

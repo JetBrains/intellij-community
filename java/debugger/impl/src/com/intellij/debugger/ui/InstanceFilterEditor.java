@@ -35,11 +35,6 @@ public class InstanceFilterEditor extends PatternFilterEditor {
                                                  }
 
                                                  @Override
-                                                 public boolean checkInput(String inputString) {
-                                                   return getErrorText(inputString) == null;
-                                                 }
-
-                                                 @Override
                                                  public boolean canClose(String inputString) {
                                                    return getErrorText(inputString) == null;
                                                  }

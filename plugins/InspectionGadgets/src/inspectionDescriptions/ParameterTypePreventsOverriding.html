@@ -1,18 +1,31 @@
 <html>
 <body>
-Reports method parameter types in methods that look like they are overriding a super method,
-but do not because of the parameter type coming from a different package than the super method type,
-although the class name matches.
-This prevents the parameter's method from overriding the super method and can be very confusing.
-<p>Example:
+Reports the cases when a parameter type of a subclass method has the same name as
+the parameter type of the corresponding super method but belongs to a different package.
+In these cases, the subclass method cannot override the super method.
+<p>Suggests setting the same parameter type as in the super method.
+
+</p>
+<p><b>Example:</b></p>
 <pre><code>
 <b>public class</b> A {
-  <b>public void</b> method(Object o) {}
+ <b>public void</b> method(Object o) {}
 }
 
 <b>public class</b> B <b>extends</b> A {
-  <b>public void</b> method(Object o) {} // warning on parameter type here
-  <b>class</b> Object {}
+ <b>public void</b> method(Object o) {} // warning on parameter type
+ <b>class</b> Object {}
+}
+</code></pre>
+<p>After the quick-fix is applied:</p>
+<pre><code>
+<b>public class</b> A {
+ <b>public void</b> method(Object o) {}
+}
+
+<b>public class</b> B <b>extends</b> A {
+ <b>public void</b> method(java.lang.Object o) {} // new parameter type
+ <b>class</b> Object {}
 }
 </code></pre>
 <!-- tooltip end -->

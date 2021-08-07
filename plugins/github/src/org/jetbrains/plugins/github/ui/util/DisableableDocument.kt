@@ -2,7 +2,7 @@
 package org.jetbrains.plugins.github.ui.util
 
 import com.intellij.util.EventDispatcher
-import org.jetbrains.plugins.github.pullrequest.ui.SimpleEventListener
+import com.intellij.collaboration.ui.SimpleEventListener
 import org.jetbrains.plugins.github.util.GithubUtil.Delegates.observableField
 import javax.swing.text.PlainDocument
 

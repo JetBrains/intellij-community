@@ -40,12 +40,22 @@ public class JavaSliceUsage extends SliceUsage {
                  @NotNull PsiSubstitutor substitutor,
                  int indexNesting,
                  @NotNull String syntheticField) {
+    this(element, parent, params, substitutor, indexNesting, syntheticField,
+         params.valueFilter instanceof JavaValueFilter && ((JavaValueFilter)params.valueFilter).requiresAssertionViolation(element));
+  }
+
+  private JavaSliceUsage(@NotNull PsiElement element,
+                 @NotNull SliceUsage parent,
+                 @NotNull SliceAnalysisParams params,
+                 @NotNull PsiSubstitutor substitutor,
+                 int indexNesting,
+                 @NotNull String syntheticField,
+                 boolean requiresAssertionViolation) {
     super(simplify(element), parent, params);
     mySubstitutor = substitutor;
     this.syntheticField = syntheticField;
     this.indexNesting = indexNesting;
-    requiresAssertionViolation =
-      params.valueFilter instanceof JavaValueFilter && ((JavaValueFilter)params.valueFilter).requiresAssertionViolation(getJavaElement());
+    this.requiresAssertionViolation = requiresAssertionViolation;
   }
 
   static @NotNull PsiElement simplify(PsiElement element) {
@@ -87,7 +97,7 @@ public class JavaSliceUsage extends SliceUsage {
   protected SliceUsage copy() {
     PsiElement element = getJavaElement();
     return getParent() == null ? createRootUsage(element, params) :
-           new JavaSliceUsage(element, getParent(), params, mySubstitutor, indexNesting, syntheticField);
+           new JavaSliceUsage(element, getParent(), params, mySubstitutor, indexNesting, syntheticField, requiresAssertionViolation);
   }
 
   @NotNull PsiElement getJavaElement() {

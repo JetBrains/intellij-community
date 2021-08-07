@@ -1,19 +1,17 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build.impl
 
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.util.io.FileUtilRt
+import com.intellij.openapi.util.io.NioFiles
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.PathUtilRt
 import com.intellij.util.SystemProperties
 import groovy.transform.CompileDynamic
 import groovy.transform.CompileStatic
-import org.jetbrains.intellij.build.BuildMessages
-import org.jetbrains.intellij.build.BuildOptions
-import org.jetbrains.intellij.build.BuildPaths
-import org.jetbrains.intellij.build.CompilationContext
-import org.jetbrains.intellij.build.GradleRunner
-import org.jetbrains.intellij.build.impl.compilation.CompilationPartsUtil
+import org.jetbrains.intellij.build.*
 import org.jetbrains.intellij.build.impl.logging.BuildMessagesImpl
+import org.jetbrains.intellij.build.kotlin.KotlinBinaries
 import org.jetbrains.jps.model.JpsElementFactory
 import org.jetbrains.jps.model.JpsGlobal
 import org.jetbrains.jps.model.JpsModel
@@ -31,12 +29,11 @@ import org.jetbrains.jps.util.JpsPathUtil
 
 import java.nio.file.Files
 import java.nio.file.Path
-import java.nio.file.Paths
 import java.util.concurrent.atomic.AtomicLong
 import java.util.function.BiFunction
 
 @CompileStatic
-class CompilationContextImpl implements CompilationContext {
+final class CompilationContextImpl implements CompilationContext {
   final AntBuilder ant
   final GradleRunner gradle
   final BuildOptions options
@@ -48,6 +45,7 @@ class CompilationContextImpl implements CompilationContext {
   final Map<String, String> oldToNewModuleName
   final Map<String, String> newToOldModuleName
   JpsCompilationData compilationData
+  KotlinBinaries kotlinBinaries
 
   @SuppressWarnings("GrUnresolvedAccess")
   @CompileDynamic
@@ -70,24 +68,16 @@ class CompilationContextImpl implements CompilationContext {
     logFreeDiskSpace(messages, projectHome, "before downloading dependencies")
     def gradleJdk = toCanonicalPath(JdkUtils.computeJdkHome(messages, '1.8', null, "JDK_18_x64"))
     GradleRunner gradle = new GradleRunner(dependenciesProjectDir, projectHome, messages, gradleJdk)
-    if (!options.skipDependencySetup) {
-      if (!options.isInDevelopmentMode) {
-        setupCompilationDependencies(gradle, options)
-      }
-      else {
-        gradle.run('Setting up Kotlin plugin', 'setupKotlinPlugin')
-      }
-    }
-
     projectHome = toCanonicalPath(projectHome)
-    def kotlinHome = toCanonicalPath("$communityHome/build/dependencies/build/kotlin/Kotlin")
-    def model = loadProject(projectHome, kotlinHome, messages, options, ant)
+    def kotlinBinaries = new KotlinBinaries(projectHome, communityHome, options, messages)
+    kotlinBinaries.setUpCompilerIfRequired(gradle, ant)
+    def model = loadProject(projectHome, kotlinBinaries, messages)
     def jdkHome = defineJavaSdk(model, projectHome, options, messages)
     def oldToNewModuleName = loadModuleRenamingHistory(projectHome, messages) + loadModuleRenamingHistory(communityHome, messages)
-    def context = new CompilationContextImpl(ant, gradle, model, communityHome, projectHome, jdkHome, kotlinHome, messages, oldToNewModuleName,
+    def context = new CompilationContextImpl(ant, gradle, model, communityHome, projectHome, jdkHome, kotlinBinaries, messages, oldToNewModuleName,
                                              buildOutputRootEvaluator, options)
     context.prepareForBuild()
-    messages.debugLogPath = "$context.paths.buildOutputRoot/log/debug.log"
+    messages.debugLogPath = context.paths.logDir.resolve("debug.log")
     return context
   }
 
@@ -156,7 +146,7 @@ class CompilationContextImpl implements CompilationContext {
   }
 
   private CompilationContextImpl(AntBuilder ant, GradleRunner gradle, JpsModel model, String communityHome,
-                                 String projectHome, String jdkHome, String kotlinHome, BuildMessages messages,
+                                 String projectHome, String jdkHome, KotlinBinaries kotlinBinaries, BuildMessages messages,
                                  Map<String, String> oldToNewModuleName,
                                  BiFunction<JpsProject, BuildMessages, String> buildOutputRootEvaluator, BuildOptions options) {
     this.ant = ant
@@ -169,25 +159,26 @@ class CompilationContextImpl implements CompilationContext {
     this.oldToNewModuleName = oldToNewModuleName
     this.newToOldModuleName = oldToNewModuleName.collectEntries { oldName, newName -> [newName, oldName] } as Map<String, String>
     String buildOutputRoot = options.outputRootPath ?: buildOutputRootEvaluator.apply(project, messages)
-    this.paths = new BuildPathsImpl(communityHome, projectHome, buildOutputRoot, jdkHome, kotlinHome)
+    Path logDir = options.logPath != null ? Path.of(options.logPath) : Path.of(buildOutputRoot, "log")
+    this.paths = new BuildPathsImpl(communityHome, projectHome, buildOutputRoot, jdkHome, logDir)
+    this.kotlinBinaries = kotlinBinaries
   }
 
   CompilationContextImpl createCopy(AntBuilder ant, BuildMessages messages, BuildOptions options,
                                     BiFunction<JpsProject, BuildMessages, String> buildOutputRootEvaluator) {
-    return new CompilationContextImpl(ant, gradle, projectModel, paths.communityHome, paths.projectHome, paths.jdkHome,
-                                      paths.kotlinHome, messages, oldToNewModuleName, buildOutputRootEvaluator, options)
+    def copy = new CompilationContextImpl(ant, gradle, projectModel, paths.communityHome, paths.projectHome, paths.jdkHome,
+                                      kotlinBinaries, messages, oldToNewModuleName, buildOutputRootEvaluator, options)
+    copy.compilationData = compilationData
+    return copy
   }
 
-  private static JpsModel loadProject(String projectHome, String kotlinHome, BuildMessages messages, BuildOptions options, AntBuilder ant) {
-    if (!options.useCompiledClassesFromProjectOutput && options.pathToCompiledClassesArchive == null && options.pathToCompiledClassesArchivesMetadata == null) {
-      //we need to add Kotlin JPS plugin to classpath before loading the project to ensure that Kotlin settings will be properly loaded
-      ensureKotlinJpsPluginIsAddedToClassPath(kotlinHome, ant, messages)
-    }
-
+  private static JpsModel loadProject(String projectHome, KotlinBinaries kotlinBinaries, BuildMessages messages) {
     def model = JpsElementFactory.instance.createModel()
     def pathVariablesConfiguration = JpsModelSerializationDataService.getOrCreatePathVariablesConfiguration(model.global)
-    pathVariablesConfiguration.addPathVariable("KOTLIN_BUNDLED", "$kotlinHome/kotlinc")
-    pathVariablesConfiguration.addPathVariable("MAVEN_REPOSITORY", FileUtil.toSystemIndependentName(new File(SystemProperties.getUserHome(), ".m2/repository").absolutePath))
+    if (kotlinBinaries.isCompilerRequired()) {
+      pathVariablesConfiguration.addPathVariable("KOTLIN_BUNDLED", "$kotlinBinaries.compilerHome/kotlinc")
+    }
+    pathVariablesConfiguration.addPathVariable("MAVEN_REPOSITORY", FileUtilRt.toSystemIndependentName(new File(SystemProperties.getUserHome(), ".m2/repository").absolutePath))
 
     def pathVariables = JpsModelSerializationDataService.computeAllPathVariables(model.global)
     JpsProjectLoader.loadProject(model.project, pathVariables, projectHome)
@@ -196,59 +187,25 @@ class CompilationContextImpl implements CompilationContext {
   }
 
   private static boolean dependenciesInstalled
-  static void setupCompilationDependencies(GradleRunner gradle, BuildOptions options) {
+  static void setupCompilationDependencies(GradleRunner gradle, BuildOptions options, boolean isKotlinCompilerRequired = true) {
     if (!dependenciesInstalled) {
       dependenciesInstalled = true
-      String[] args = ['setupJdks', 'setupKotlinPlugin']
+      String[] args = ['setupJdks']
+      if (isKotlinCompilerRequired) args += KotlinBinaries.SET_UP_COMPILER_GRADLE_TASK
       if (options.jdksTargetDir != null) args += "-D$BuildOptions.JDKS_TARGET_DIR_OPTION=$options.jdksTargetDir".toString()
       gradle.run('Setting up compilation dependencies', args)
     }
   }
 
-  private static void ensureKotlinJpsPluginIsAddedToClassPath(String kotlinHomePath, AntBuilder ant, BuildMessages messages) {
-    if (CompilationContextImpl.class.getResource("/org/jetbrains/kotlin/jps/build/KotlinBuilder.class") != null) {
-      return
-    }
-
-    def kotlinPluginLibPath = "$kotlinHomePath/lib"
-    def kotlincLibPath = "$kotlinHomePath/kotlinc/lib"
-    if (new File(kotlinPluginLibPath).exists() && new File(kotlincLibPath).exists()) {
-      ["jps/kotlin-jps-plugin.jar", "kotlin-plugin.jar", "kotlin-reflect.jar", "kotlin-common.jar"].each {
-        def completePath = "$kotlinPluginLibPath/$it"
-        if (new File(completePath).exists()) {
-          BuildUtils.addToJpsClassPath(completePath, ant)
-        }
-      }
-      ["kotlin-stdlib.jar"].each {
-        BuildUtils.addToJpsClassPath("$kotlincLibPath/$it", ant)
-      }
-    }
-    else {
-      messages.error(
-        "Could not find Kotlin JARs at $kotlinPluginLibPath and $kotlincLibPath: run `./gradlew setupKotlinPlugin` in dependencies module to download Kotlin JARs")
-    }
-  }
-
   void prepareForBuild() {
     checkCompilationOptions()
-    def dataDirName = ".jps-build-data"
-    def logDir = new File(paths.buildOutputRoot, "log")
-    FileUtil.delete(logDir)
-    compilationData = new JpsCompilationData(new File(paths.buildOutputRoot, dataDirName), new File("$logDir/compilation.log"),
-                                             System.getProperty("intellij.build.debug.logging.categories", ""), messages)
+    NioFiles.deleteRecursively(paths.logDir)
+    Files.createDirectories(paths.logDir)
+    compilationData = new JpsCompilationData(new File(paths.buildOutputRoot, ".jps-build-data"), paths.logDir.resolve("compilation.log").toFile(),
+                                             System.getProperty("intellij.build.debug.logging.categories", ""))
 
-    def classesDirName = CLASSES_DIR_NAME
     def projectArtifactsDirName = "project-artifacts"
-    def classesOutput = classesOutputDirectory()
-    List<String> outputDirectoriesToKeep = ["log"]
-    if (options.pathToCompiledClassesArchivesMetadata != null) {
-      fetchAndUnpackCompiledClasses(messages, classesOutput, options)
-      outputDirectoriesToKeep.add(classesDirName)
-    }
-    else if (options.pathToCompiledClassesArchive != null) {
-      unpackCompiledClasses(messages, ant, classesOutput, options)
-      outputDirectoriesToKeep.add(classesDirName)
-    }
+    overrideProjectOutputDirectory()
 
     String baseArtifactsOutput = "$paths.buildOutputRoot/$projectArtifactsDirName"
     JpsArtifactService.instance.getArtifacts(project).each {
@@ -258,56 +215,41 @@ class CompilationContextImpl implements CompilationContext {
     if (!options.useCompiledClassesFromProjectOutput) {
       messages.info("Incremental compilation: " + options.incrementalCompilation)
     }
+
     if (options.incrementalCompilation) {
       System.setProperty("kotlin.incremental.compilation", "true")
-      outputDirectoriesToKeep.add(dataDirName)
-      outputDirectoriesToKeep.add(classesDirName)
-      outputDirectoriesToKeep.add(projectArtifactsDirName)
     }
 
     suppressWarnings(project)
     exportModuleOutputProperties()
-
-    if (options.cleanOutputFolder) {
-      cleanOutput(outputDirectoriesToKeep)
-    }
-    else {
-      messages.info("cleanOutput step was skipped")
-    }
+    /**
+     * FIXME should be called lazily yet it breaks {@link org.jetbrains.intellij.build.TestingTasks#runTests}, needs investigation
+     */
+    CompilationTasks.create(this).reuseCompiledClassesIfProvided()
   }
 
-  static final String CLASSES_DIR_NAME = "classes"
-
-  private String classesOutputDirectory() {
-    String classesOutput
+  private overrideProjectOutputDirectory() {
     if (options.projectClassesOutputDirectory != null && !options.projectClassesOutputDirectory.isEmpty()) {
-      classesOutput = options.projectClassesOutputDirectory
-      projectOutputDirectory = classesOutput
+      projectOutputDirectory = options.projectClassesOutputDirectory
     }
-    else {
-      classesOutput = "$paths.buildOutputRoot/$CLASSES_DIR_NAME"
-      if (!options.useCompiledClassesFromProjectOutput) {
-        projectOutputDirectory = classesOutput
-      }
-    }
-    if (options.useCompiledClassesFromProjectOutput) {
+    else if (options.useCompiledClassesFromProjectOutput) {
       def outputDir = getProjectOutputDirectory()
       if (!outputDir.exists()) {
-        messages.error("$BuildOptions.USE_COMPILED_CLASSES_PROPERTY is enabled, but the project output directory $outputDir.absolutePath doesn't exist")
+        messages.error("$BuildOptions.USE_COMPILED_CLASSES_PROPERTY is enabled, but the project output directory $outputDir doesn't exist")
       }
     }
-    return classesOutput
+    else {
+      projectOutputDirectory = "$paths.buildOutputRoot/classes"
+    }
   }
 
-  /**
-   * @return directory with compiled project classes, url attribute value of output tag from .idea/misc.xml by default
-   */
+  @Override
   File getProjectOutputDirectory() {
     JpsPathUtil.urlToFile(JpsJavaExtensionService.instance.getOrCreateProjectExtension(project).outputUrl)
   }
 
   void setProjectOutputDirectory(String outputDirectory) {
-    String url = "file://${FileUtil.toSystemIndependentName(outputDirectory)}"
+    String url = "file://${FileUtilRt.toSystemIndependentName(outputDirectory)}"
     JpsJavaExtensionService.instance.getOrCreateProjectExtension(project).outputUrl = url
   }
 
@@ -320,35 +262,6 @@ class CompilationContextImpl implements CompilationContext {
         }
       }
     }
-  }
-
-  void cleanOutput(List<String> outputDirectoriesToKeep) {
-    messages.block("Clean output") {
-      def outputPath = paths.buildOutputRoot
-      messages.progress("Cleaning output directory $outputPath")
-      new File(outputPath).listFiles()?.each { File file ->
-        if (outputDirectoriesToKeep.contains(file.name)) {
-          messages.info("Skipped cleaning for $file.absolutePath")
-        }
-        else {
-          messages.info("Deleting $file.absolutePath")
-          FileUtil.delete(file)
-        }
-      }
-    }
-  }
-
-  @CompileDynamic
-  private static void unpackCompiledClasses(BuildMessages messages, AntBuilder ant, String classesOutput, BuildOptions options) {
-    messages.block("Unpack compiled classes archive") {
-      FileUtil.delete(new File(classesOutput))
-      ant.unzip(src: options.pathToCompiledClassesArchive, dest: classesOutput)
-    }
-  }
-
-  @CompileStatic
-  private static void fetchAndUnpackCompiledClasses(BuildMessages messages, String classesOutput, BuildOptions options) {
-    CompilationPartsUtil.fetchAndUnpackCompiledClasses(messages, classesOutput, options)
   }
 
   private void checkCompilationOptions() {
@@ -443,7 +356,7 @@ class CompilationContextImpl implements CompilationContext {
 
   @Override
   void notifyArtifactBuilt(String artifactPath) {
-    notifyArtifactWasBuilt(Paths.get(artifactPath).toAbsolutePath().normalize())
+    notifyArtifactWasBuilt(Path.of(artifactPath).toAbsolutePath().normalize())
   }
 
   @Override
@@ -452,7 +365,7 @@ class CompilationContextImpl implements CompilationContext {
       return
     }
 
-    Path artifactsDir = Paths.get(paths.artifacts)
+    Path artifactsDir = Path.of(paths.artifacts)
     if (Files.isRegularFile(file)) {
       //temporary workaround until TW-54541 is fixed: if build is going to produce big artifacts and we have lack of free disk space it's better not to send 'artifactBuilt' message to avoid "No space left on device" errors
       def fileSize = file.size()
@@ -480,7 +393,7 @@ class CompilationContextImpl implements CompilationContext {
 
     String targetDirectoryPath = ""
     if (file.parent.startsWith(artifactsDir)) {
-      targetDirectoryPath = FileUtil.toSystemIndependentName(artifactsDir.relativize(file.parent).toString())
+      targetDirectoryPath = FileUtilRt.toSystemIndependentName(artifactsDir.relativize(file.parent).toString())
     }
 
     if (Files.isDirectory(file)) {
@@ -495,23 +408,22 @@ class CompilationContextImpl implements CompilationContext {
   }
 
   private static String toCanonicalPath(String path) {
-    FileUtil.toSystemIndependentName(new File(path).canonicalPath)
+    FileUtilRt.toSystemIndependentName(new File(path).canonicalPath)
   }
 
   static void logFreeDiskSpace(BuildMessages buildMessages, String directoryPath, String phase) {
-    def dir = new File(directoryPath)
-    buildMessages.debug("Free disk space $phase: ${StringUtil.formatFileSize(dir.freeSpace)} (on disk containing $dir)")
+    Path dir = Path.of(directoryPath)
+    buildMessages.debug("Free disk space $phase: ${StringUtil.formatFileSize(Files.getFileStore(dir).getUsableSpace())} (on disk containing $dir)")
   }
 }
 
 @CompileStatic
-class BuildPathsImpl extends BuildPaths {
-  BuildPathsImpl(String communityHome, String projectHome, String buildOutputRoot, String jdkHome, String kotlinHome) {
-    super(Paths.get(communityHome).toAbsolutePath().normalize(), Paths.get(buildOutputRoot).toAbsolutePath().normalize())
-
+final class BuildPathsImpl extends BuildPaths {
+  BuildPathsImpl(String communityHome, String projectHome, String buildOutputRoot, String jdkHome, Path logDir) {
+    super(Path.of(communityHome).toAbsolutePath().normalize(), Path.of(buildOutputRoot).toAbsolutePath().normalize(), logDir.toAbsolutePath().normalize())
     this.projectHome = projectHome
+    this.projectHomeDir = Path.of(projectHome).toAbsolutePath().normalize()
     this.jdkHome = jdkHome
-    this.kotlinHome = kotlinHome
     artifacts = "${this.buildOutputRoot}/artifacts"
   }
 }

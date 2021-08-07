@@ -12,10 +12,6 @@ import org.jetbrains.annotations.Nullable;
 import org.jvnet.winp.WinProcess;
 import org.jvnet.winp.WinpException;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-
 public final class OSProcessUtil {
   private static final Logger LOG = Logger.getInstance(OSProcessUtil.class);
   private static String ourPid;
@@ -133,6 +129,7 @@ public final class OSProcessUtil {
   /**
    * @deprecated use {@link #getProcessID(Process)}
    */
+  @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
   @Deprecated
   public static int getProcessID(@NotNull Process process, Boolean disableWinp) {
     return (int)process.pid();
@@ -161,16 +158,5 @@ public final class OSProcessUtil {
       ourPid = String.valueOf(getCurrentProcessId());
     }
     return ourPid;
-  }
-
-  /** @deprecated trivial, use {@link #getProcessList()} directly */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
-  public static List<String> getCommandLinesOfRunningProcesses() {
-    List<String> result = new ArrayList<>();
-    for (ProcessInfo each : getProcessList()) {
-      result.add(each.getCommandLine());
-    }
-    return Collections.unmodifiableList(result);
   }
 }

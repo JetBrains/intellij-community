@@ -1,14 +1,11 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.editor.ex;
 
 import com.intellij.ide.ui.UINumericRange;
 import com.intellij.lang.Language;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.PersistentStateComponent;
-import com.intellij.openapi.components.RoamingType;
-import com.intellij.openapi.components.State;
-import com.intellij.openapi.components.Storage;
+import com.intellij.openapi.components.*;
 import com.intellij.openapi.editor.actions.CaretStopOptions;
 import com.intellij.openapi.editor.impl.softwrap.SoftWrapAppliancePlaces;
 import com.intellij.openapi.util.Disposer;
@@ -29,7 +26,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
-@State(name = "EditorSettings", storages = @Storage("editor.xml"))
+@State(name = "EditorSettings", storages = @Storage("editor.xml"), category = ComponentCategory.CODE)
 public class EditorSettingsExternalizable implements PersistentStateComponent<EditorSettingsExternalizable.OptionSet> {
   @NonNls
   public static final String PROP_VIRTUAL_SPACE = "VirtualSpace";
@@ -89,6 +86,7 @@ public class EditorSettingsExternalizable implements PersistentStateComponent<Ed
     public boolean IS_DND_ENABLED = true;
     @SuppressWarnings("SpellCheckingInspection")
     public boolean IS_WHEEL_FONTCHANGE_ENABLED = false;
+    public boolean IS_WHEEL_FONTCHANGE_PERSISTENT = false;
     public boolean IS_MOUSE_CLICK_SELECTION_HONORS_CAMEL_WORDS = true;
 
     public boolean RENAME_VARIABLES_INPLACE = true;
@@ -627,6 +625,14 @@ public class EditorSettingsExternalizable implements PersistentStateComponent<Ed
 
   public void setWheelFontChangeEnabled(boolean val) {
     myOptions.IS_WHEEL_FONTCHANGE_ENABLED = val;
+  }
+
+  public boolean isWheelFontChangePersistent() {
+    return myOptions.IS_WHEEL_FONTCHANGE_PERSISTENT;
+  }
+
+  public void setWheelFontChangePersistent(boolean val) {
+    myOptions.IS_WHEEL_FONTCHANGE_PERSISTENT = val;
   }
 
   public boolean isMouseClickSelectionHonorsCamelWords() {

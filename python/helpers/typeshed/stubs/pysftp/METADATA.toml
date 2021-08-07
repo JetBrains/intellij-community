@@ -1,0 +1,3 @@
+version = "0.2"
+python2 = true
+requires = ["types-paramiko"]

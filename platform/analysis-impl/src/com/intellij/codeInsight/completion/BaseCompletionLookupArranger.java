@@ -46,7 +46,7 @@ public class BaseCompletionLookupArranger extends LookupArranger implements Comp
   private final int myLimit = Registry.intValue("ide.completion.variant.limit");
   private boolean myOverflow;
 
-  @Nullable private CompletionLocation myLocation;
+  private volatile CompletionLocation myLocation;
   protected final CompletionProcessEx myProcess;
   private final Map<CompletionSorterImpl, Classifier<LookupElement>> myClassifiers = new LinkedHashMap<>();
   private final Key<CompletionSorterImpl> mySorterKey = Key.create("SORTER_KEY");
@@ -157,27 +157,30 @@ public class BaseCompletionLookupArranger extends LookupArranger implements Comp
   }
 
   @Override
-  public synchronized void addElement(LookupElement element, LookupElementPresentation presentation) {
-    presentation.freeze();
-    element.putUserData(DEFAULT_PRESENTATION, presentation);
+  public void addElement(LookupElement element, LookupElementPresentation presentation) {
+    boolean shouldSkip = shouldSkip(element);
+    synchronized (this) {
+      presentation.freeze();
+      element.putUserData(DEFAULT_PRESENTATION, presentation);
 
-    CompletionSorterImpl sorter = obtainSorter(element);
-    Classifier<LookupElement> classifier = myClassifiers.get(sorter);
-    if (classifier == null) {
-      myClassifiers.put(sorter, classifier = sorter.buildClassifier(new EmptyClassifier()));
-    }
-    ProcessingContext context = createContext();
-    classifier.addElement(element, context);
+      CompletionSorterImpl sorter = obtainSorter(element);
+      Classifier<LookupElement> classifier = myClassifiers.get(sorter);
+      if (classifier == null) {
+        myClassifiers.put(sorter, classifier = sorter.buildClassifier(new EmptyClassifier()));
+      }
+      ProcessingContext context = createContext();
+      classifier.addElement(element, context);
 
-    if (shouldSkip(element)) {
-      mySkippedItems.add(element);
-    }
+      if (shouldSkip) {
+        mySkippedItems.add(element);
+      }
 
-    if (Boolean.TRUE.equals(isInBatchUpdate.get())) {
-      batchItems.add(new Pair<>(element, presentation));
-    } else {
-      super.addElement(element, presentation);
-      trimToLimit(context);
+      if (Boolean.TRUE.equals(isInBatchUpdate.get())) {
+        batchItems.add(new Pair<>(element, presentation));
+      } else {
+        super.addElement(element, presentation);
+        trimToLimit(context);
+      }
     }
   }
 
@@ -551,10 +554,7 @@ public class BaseCompletionLookupArranger extends LookupArranger implements Comp
   }
 
   private boolean shouldSkip(LookupElement element) {
-    CompletionLocation location = myLocation;
-    if (location == null) {
-      myLocation = location = new CompletionLocation(Objects.requireNonNull(myProcess.getParameters()));
-    }
+    CompletionLocation location = getLocation();
     for (CompletionPreselectSkipper skipper : mySkippers) {
       if (skipper.skipElement(element, location)) {
         if (LOG.isDebugEnabled()) {
@@ -564,6 +564,18 @@ public class BaseCompletionLookupArranger extends LookupArranger implements Comp
       }
     }
     return false;
+  }
+
+  @NotNull
+  private CompletionLocation getLocation() {
+    if (myLocation == null) {
+      synchronized (this) {
+        if (myLocation == null) {
+          myLocation = new CompletionLocation(Objects.requireNonNull(myProcess.getParameters()));
+        }
+      }
+    }
+    return myLocation;
   }
 
   @Override

@@ -7,7 +7,7 @@
   <module value="com.intellij.modules.xdebugger"/>
   <module value="com.intellij.modules.externalSystem"/>
 
-  <xi:include href="/componentSets/PlatformLangComponents.xml"/>
+  <xi:include href="PlatformLangComponents.xml"/>
   <xi:include href="/idea/PlatformLangActionManager.xml"/>
   <xi:include href="/META-INF/coverage-common-plugin.xml">
     <xi:fallback/>
@@ -89,6 +89,8 @@
     <treeStructureProvider implementation="com.intellij.platform.ProjectConfigurationDirectoryConcealer"/>
 
     <programRunner implementation="com.intellij.execution.runners.DefaultRunProgramRunner" order="last"/>
+    <applicationService serviceInterface="com.intellij.execution.ui.ExecutionUiService"
+                        serviceImplementation="com.intellij.execution.ui.ExecutionUiServiceImpl"/>
 
     <projectConfigurable groupId="editor" groupWeight="160" bundle="messages.CodeInsightBundle" key="configurable.InspectionToolsConfigurable.display.name"
                          id="Errors" provider="com.intellij.profile.codeInspection.ui.ErrorsConfigurableProviderImpl" order="before preferences.intentionPowerPack"/>
@@ -99,7 +101,7 @@
     <postStartupActivity implementation="com.intellij.refactoring.suggested.SuggestedRefactoringProviderImpl$Startup"/>
     <notificationGroup id="Show control flow group" displayType="BALLOON"/>
     <notificationGroup id="Power Save Mode" displayType="BALLOON"/>
-    <notificationGroup id="Indexing" displayType="BALLOON"/>
+    <notificationGroup id="IDE Caches" displayType="BALLOON"/>
     <notificationGroup id="Framework Detection" displayType="BALLOON"/>
     <notificationGroup id="Code style settings migration" displayType="STICKY_BALLOON"/>
     <notificationGroup id="Find Problems" displayType="STICKY_BALLOON" isLogByDefault="false"/>
@@ -132,6 +134,9 @@
     <xi:fallback/>
   </xi:include>
   <xi:include href="/META-INF/smRunner.xml">
+    <xi:fallback/>
+  </xi:include>
+  <xi:include href="/META-INF/smRunnerVcs.xml">
     <xi:fallback/>
   </xi:include>
   <xi:include href="/META-INF/duplicates-analysis.xml">

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.actions;
 
 import com.intellij.ide.IdeBundle;
@@ -104,8 +104,24 @@ public final class ToggleToolbarAction extends ToggleAction implements DumbAware
     }
   }
 
+  public static boolean isToolbarVisible(@NotNull String property) {
+    return isToolbarVisible(property, PropertiesComponent.getInstance());
+  }
+
+  public static boolean isToolbarVisible(@NotNull String property, @NotNull Project project) {
+    return isToolbarVisible(property, PropertiesComponent.getInstance(project));
+  }
+
   public static boolean isToolbarVisible(@NotNull String property, @NotNull PropertiesComponent properties) {
     return isSelectedImpl(properties, getShowToolbarProperty(property));
+  }
+
+  public static boolean isToolbarVisible(@NotNull ToolWindow toolWindow) {
+    return isToolbarVisible(toolWindow, PropertiesComponent.getInstance());
+  }
+
+  public static boolean isToolbarVisible(@NotNull ToolWindow toolWindow, @NotNull Project project) {
+    return isToolbarVisible(toolWindow, PropertiesComponent.getInstance(project));
   }
 
   public static boolean isToolbarVisible(@NotNull ToolWindow toolWindow, @NotNull PropertiesComponent properties) {
@@ -185,9 +201,9 @@ public final class ToggleToolbarAction extends ToggleAction implements DumbAware
 
     @Override
     public AnAction @NotNull [] getChildren(@Nullable AnActionEvent e) {
-      ContentManager contentManager = myToolWindow.getContentManager();
-      Content selectedContent = contentManager.getSelectedContent();
-      JComponent contentComponent = selectedContent != null ? selectedContent.getComponent() : null;
+      ContentManager contentManager = myToolWindow.getContentManagerIfCreated();
+      Content selectedContent = contentManager == null ? null : contentManager.getSelectedContent();
+      JComponent contentComponent = selectedContent == null ? null : selectedContent.getComponent();
       if (contentComponent == null || e == null) return EMPTY_ARRAY;
       UpdateSession session = Utils.getOrCreateUpdateSession(e);
       List<AnAction> result = new SmartList<>();

@@ -1,8 +1,8 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.search;
 
 import com.intellij.concurrency.AsyncFuture;
-import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -11,6 +11,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReference;
 import com.intellij.util.Processor;
 import org.intellij.lang.annotations.MagicConstant;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -36,8 +37,11 @@ public interface PsiSearchHelper {
 
   @NotNull
   static PsiSearchHelper getInstance(@NotNull Project project) {
-    return ServiceManager.getService(project, PsiSearchHelper.class);
+    return project.getService(PsiSearchHelper.class);
   }
+
+  @ApiStatus.Internal
+  ExtensionPointName<ScopeOptimizer> CODE_USAGE_SCOPE_OPTIMIZER_EP_NAME = ExtensionPointName.create("com.intellij.codeUsageScopeOptimizer");
 
   /**
    * Searches the specified scope for comments containing the specified identifier.
@@ -113,6 +117,19 @@ public interface PsiSearchHelper {
    */
   @NotNull
   SearchScope getUseScope(@NotNull PsiElement element);
+
+  /**
+   * Returns the scope in which references to the specified element might be contained. This scope includes the result of
+   * {@link PsiSearchHelper#getUseScope(PsiElement)}, which is restricted by {@link ScopeOptimizer#getRestrictedUseScope(PsiElement)}
+   * from {@link PsiSearchHelper#CODE_USAGE_SCOPE_OPTIMIZER_EP_NAME} to exclude a scope without references in code from an usages search.
+   *
+   * @param element the element to return the restricted use scope form.
+   * @return the search scope instance.
+   */
+
+  default @NotNull SearchScope getCodeUsageScope(@NotNull PsiElement element) {
+    return getUseScope(element);
+  }
 
   /**
    * Passes all files containing the specified word in {@link UsageSearchContext#IN_CODE code}

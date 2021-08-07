@@ -24,6 +24,7 @@ import com.intellij.openapi.ui.NamedConfigurable;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.treeStructure.filtered.FilteringTreeBuilder;
 import com.intellij.util.ui.tree.TreeUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -52,6 +53,7 @@ public class FacetStructureConfigurable extends BaseStructureConfigurable {
   /**
    * @deprecated use {@link ProjectStructureConfigurable#getFacetStructureConfigurable()} instead
    */
+  @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
   @Deprecated
   public static FacetStructureConfigurable getInstance(final @NotNull Project project) {
     return ProjectStructureConfigurable.getInstance(project).getFacetStructureConfigurable();

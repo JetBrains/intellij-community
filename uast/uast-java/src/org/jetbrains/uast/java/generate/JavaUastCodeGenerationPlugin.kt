@@ -82,6 +82,9 @@ internal class JavaUastCodeGenerationPlugin : UastCodeGenerationPlugin {
     return when (val replaced = updOldPsi.replace(updNewPsi)) {
       is PsiExpressionStatement -> replaced.expression.toUElementOfExpectedTypes(elementType)
       is PsiMethodCallExpression -> cleanupMethodCall(replaced).toUElementOfExpectedTypes(elementType)
+      is PsiMethodReferenceExpression -> {
+        JavaCodeStyleManager.getInstance(replaced.project).shortenClassReferences(replaced).toUElementOfExpectedTypes(elementType)
+      }
       else -> replaced.toUElementOfExpectedTypes(elementType)
     }
   }
@@ -96,8 +99,8 @@ private fun PsiElementFactory.createExpresionStatement(expression: PsiExpression
 class JavaUastElementFactory(private val project: Project) : UastElementFactory {
   private val psiFactory: PsiElementFactory = JavaPsiFacade.getElementFactory(project)
 
-  override fun createQualifiedReference(qualifiedName: String, context: UElement?): UQualifiedReferenceExpression? {
-    return psiFactory.createExpressionFromText(qualifiedName, context?.sourcePsi)
+  override fun createQualifiedReference(qualifiedName: String, context: PsiElement?): UQualifiedReferenceExpression? {
+    return psiFactory.createExpressionFromText(qualifiedName, context)
       .castSafelyTo<PsiReferenceExpression>()
       ?.let { JavaUQualifiedReferenceExpression(it, null) }
   }
@@ -146,6 +149,18 @@ class JavaUastElementFactory(private val project: Project) : UastElementFactory 
     else
       MethodCallUpgradeHelper(project, methodCall, expectedReturnType).tryUpgradeToExpectedType()
         ?.let { JavaUCallExpression(it, null) }
+  }
+
+  override fun createCallableReferenceExpression(
+    receiver: UExpression?,
+    methodName: String,
+    context: PsiElement?
+  ): UCallableReferenceExpression? {
+    val receiverSource = receiver?.sourcePsi
+    requireNotNull(receiverSource) { "Receiver should not be null for Java callable references." }
+    val callableExpression = psiFactory.createExpressionFromText("${receiverSource.text}::$methodName", context)
+    if (callableExpression !is PsiMethodReferenceExpression) return null
+    return JavaUCallableReferenceExpression(callableExpression, null)
   }
 
   override fun createStringLiteralExpression(text: String, context: PsiElement?): ULiteralExpression? {

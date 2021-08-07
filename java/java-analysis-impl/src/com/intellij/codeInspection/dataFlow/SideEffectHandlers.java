@@ -1,6 +1,8 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.dataFlow;
 
+import com.intellij.codeInspection.dataFlow.jvm.JvmPsiRangeSetUtil;
+import com.intellij.codeInspection.dataFlow.memory.DfaMemoryState;
 import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeBinOp;
 import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet;
 import com.intellij.codeInspection.dataFlow.types.DfIntType;
@@ -17,6 +19,7 @@ import com.siyeh.ig.callMatcher.CallMapper;
 import java.util.Objects;
 import java.util.Set;
 
+import static com.intellij.codeInspection.dataFlow.jvm.SpecialField.COLLECTION_SIZE;
 import static com.intellij.psi.CommonClassNames.*;
 import static com.intellij.util.ObjectUtils.tryCast;
 import static com.siyeh.ig.callMatcher.CallMatcher.anyOf;
@@ -26,12 +29,12 @@ import static com.siyeh.ig.callMatcher.CallMatcher.instanceCall;
  * Possible side effects for the methods usually are handled via purity or mutability annotations
  * (see {@link DfaCallArguments#flush(DfaMemoryState, DfaValueFactory, PsiMethod)}): for pure method,
  * nothing is done. For impure methods, some or all qualified mutable variables are flushed.
- * This class allows custom handling (for example, updating the size of the collection on the 
+ * This class allows custom handling (for example, updating the size of the collection on the
  * {@link java.util.List#add(Object)} call).
  */
 class SideEffectHandlers {
   private static final CallMapper<SideEffectHandler> HANDLERS = new CallMapper<SideEffectHandler>()
-    // While list.set() produces a side effect (changes element), we don't track anything except size, 
+    // While list.set() produces a side effect (changes element), we don't track anything except size,
     // so we don't need to flush anything
     .register(anyOf(instanceCall(JAVA_UTIL_LIST, "set").parameterTypes("int", "E")),
               (factory, state, arguments) -> { })
@@ -62,18 +65,18 @@ class SideEffectHandlers {
               (factory, state, arguments) -> collectionRemove(factory, state, arguments, true));
 
   private static void collectionAdd(DfaValueFactory factory, DfaMemoryState state, DfaCallArguments arguments, boolean list) {
-    DfaVariableValue size = tryCast(SpecialField.COLLECTION_SIZE.createValue(factory, arguments.myQualifier), DfaVariableValue.class);
+    DfaVariableValue size = tryCast(COLLECTION_SIZE.createValue(factory, arguments.myQualifier), DfaVariableValue.class);
     if (size != null) {
       DfIntType sizeType = tryCast(state.getDfType(size), DfIntType.class);
-      DfType resultSize = SpecialField.COLLECTION_SIZE.getDefaultValue(false);
+      DfType resultSize = COLLECTION_SIZE.getDefaultValue();
       if (sizeType != null) {
-        resultSize = sizeType.eval(DfTypes.intValue(1), LongRangeBinOp.PLUS).meet(DfTypes.intRange(LongRangeSet.indexRange()));
+        resultSize = sizeType.eval(DfTypes.intValue(1), LongRangeBinOp.PLUS).meet(DfTypes.intRange(JvmPsiRangeSetUtil.indexRange()));
         if (!list) {
           resultSize = resultSize.join(sizeType.meet(DfTypes.intRange(LongRangeSet.range(1, Integer.MAX_VALUE))));
         }
-        if (resultSize == DfTypes.BOTTOM) {
+        if (resultSize == DfType.BOTTOM) {
           // Possible int overflow
-          resultSize = SpecialField.COLLECTION_SIZE.getDefaultValue(false);
+          resultSize = COLLECTION_SIZE.getDefaultValue();
         }
       }
       updateSize(state, size, resultSize);
@@ -81,40 +84,40 @@ class SideEffectHandlers {
   }
 
   private static void collectionRemove(DfaValueFactory factory, DfaMemoryState state, DfaCallArguments arguments, boolean strict) {
-    DfaVariableValue size = tryCast(SpecialField.COLLECTION_SIZE.createValue(factory, arguments.myQualifier), DfaVariableValue.class);
+    DfaVariableValue size = tryCast(COLLECTION_SIZE.createValue(factory, arguments.myQualifier), DfaVariableValue.class);
     if (size != null) {
       DfIntType sizeType = tryCast(state.getDfType(size), DfIntType.class);
-      DfType resultSize = SpecialField.COLLECTION_SIZE.getDefaultValue(false);
+      DfType resultSize = COLLECTION_SIZE.getDefaultValue();
       if (sizeType != null) {
         resultSize = sizeType.eval(DfTypes.intRange(LongRangeSet.range(strict ? 1 : 0, 1)), LongRangeBinOp.MINUS)
-          .meet(DfTypes.intRange(LongRangeSet.indexRange()));
+          .meet(DfTypes.intRange(JvmPsiRangeSetUtil.indexRange()));
       }
       updateSize(state, size, resultSize);
     }
   }
 
   private static void collectionAddAll(DfaValueFactory factory, DfaMemoryState state, DfaCallArguments arguments, boolean list) {
-    DfaVariableValue size = tryCast(SpecialField.COLLECTION_SIZE.createValue(factory, arguments.myQualifier), DfaVariableValue.class);
-    DfaValue argSize = SpecialField.COLLECTION_SIZE.createValue(factory, ArrayUtil.getLastElement(arguments.myArguments));
+    DfaVariableValue size = tryCast(COLLECTION_SIZE.createValue(factory, arguments.myQualifier), DfaVariableValue.class);
+    DfaValue argSize = COLLECTION_SIZE.createValue(factory, ArrayUtil.getLastElement(arguments.myArguments));
     if (size != null) {
       DfIntType sizeType = tryCast(state.getDfType(size), DfIntType.class);
       DfType argSizeType = tryCast(state.getDfType(argSize), DfIntType.class);
-      DfType resultSize = SpecialField.COLLECTION_SIZE.getDefaultValue(false);
+      DfType resultSize = COLLECTION_SIZE.getDefaultValue();
       if (sizeType != null && argSizeType != null) {
-        LongRangeSet totalRange = LongRangeSet.indexRange();
+        LongRangeSet totalRange = JvmPsiRangeSetUtil.indexRange();
         if (!list) {
           LongRangeSet argSizeRange = DfIntType.extractRange(argSizeType);
           if (!argSizeRange.contains(0)) {
             // Adding non-empty collection to the set will produce non-empty set
             totalRange = totalRange.without(0);
           }
-          LongRangeSet addedForSet = argSizeRange.fromRelation(RelationType.LE).intersect(LongRangeSet.indexRange());
+          LongRangeSet addedForSet = argSizeRange.fromRelation(RelationType.LE).meet(JvmPsiRangeSetUtil.indexRange());
           argSizeType = argSizeType.join(DfTypes.intRange(addedForSet));
         }
         resultSize = sizeType.eval(argSizeType, LongRangeBinOp.PLUS).meet(DfTypes.intRange(totalRange));
-        if (resultSize == DfTypes.BOTTOM) {
+        if (resultSize == DfType.BOTTOM) {
           // Possible int overflow
-          resultSize = SpecialField.COLLECTION_SIZE.getDefaultValue(false);
+          resultSize = COLLECTION_SIZE.getDefaultValue();
         }
       }
       updateSize(state, size, resultSize);
@@ -122,12 +125,12 @@ class SideEffectHandlers {
   }
 
   private static void collectionReduce(DfaValueFactory factory, DfaMemoryState state, DfaCallArguments arguments) {
-    DfaVariableValue size = tryCast(SpecialField.COLLECTION_SIZE.createValue(factory, arguments.myQualifier), DfaVariableValue.class);
+    DfaVariableValue size = tryCast(COLLECTION_SIZE.createValue(factory, arguments.myQualifier), DfaVariableValue.class);
     if (size != null) {
       DfIntType sizeType = tryCast(state.getDfType(size), DfIntType.class);
-      DfType resultSize = SpecialField.COLLECTION_SIZE.getDefaultValue(false);
+      DfType resultSize = COLLECTION_SIZE.getDefaultValue();
       if (sizeType != null) {
-        LongRangeSet newSize = sizeType.getRange().fromRelation(RelationType.LE).intersect(LongRangeSet.indexRange());
+        LongRangeSet newSize = sizeType.getRange().fromRelation(RelationType.LE).meet(JvmPsiRangeSetUtil.indexRange());
         resultSize = sizeType.join(DfTypes.intRange(newSize));
       }
       updateSize(state, size, resultSize);
@@ -135,7 +138,7 @@ class SideEffectHandlers {
   }
 
   private static void collectionClear(DfaValueFactory factory, DfaMemoryState state, DfaCallArguments arguments) {
-    DfaVariableValue size = tryCast(SpecialField.COLLECTION_SIZE.createValue(factory, arguments.myQualifier), DfaVariableValue.class);
+    DfaVariableValue size = tryCast(COLLECTION_SIZE.createValue(factory, arguments.myQualifier), DfaVariableValue.class);
     if (size != null) {
       updateSize(state, size, DfTypes.intValue(0));
     }
@@ -153,14 +156,14 @@ class SideEffectHandlers {
     /**
      * Apply side effects of the call to the supplied memory state. If handler is executed, default
      * processing (based on purity or mutation signature) is not executed.
-     * 
+     *
      * @param factory value factory to use if necessary
      * @param state memory state to update
      * @param arguments call arguments
      */
     void handleSideEffect(DfaValueFactory factory, DfaMemoryState state, DfaCallArguments arguments);
   }
-  
+
   private static void updateSize(DfaMemoryState state, DfaVariableValue var, DfType type) {
     // Dependent states may appear which we are not tracking (e.g. one visible list is sublist of another list)
     // so let's conservatively flush everything that could be affected

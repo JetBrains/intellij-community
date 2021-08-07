@@ -2,6 +2,7 @@
 package com.intellij.testFramework.exceptionCases;
 
 import com.intellij.util.ThrowableRunnable;
+import org.jetbrains.annotations.ApiStatus;
 
 /**
  * Base class of block, annotated with exception. Inheritors of this
@@ -10,6 +11,7 @@ import com.intellij.util.ThrowableRunnable;
  * or {@link com.intellij.testFramework.UsefulTestCase#assertNoException(Class, ThrowableRunnable)} instead
  */
 @Deprecated
+@ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
 public abstract class AbstractExceptionCase<T extends Throwable> {
   public abstract Class<T> getExpectedExceptionClass();
 

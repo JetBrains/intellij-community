@@ -27,7 +27,7 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.ui.DoNotAskOption;
 import com.intellij.openapi.ui.MessageDialogBuilder;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.NlsContexts;
@@ -121,7 +121,7 @@ public class PopFrameAction extends DebuggerAction implements DumbAware {
             .yesText(JavaDebuggerBundle.message("button.execute.finally"))
             .noText(JavaDebuggerBundle.message("button.drop.anyway"))
             .cancelText(CommonBundle.getCancelButtonText())
-            .doNotAsk(new DialogWrapper.DoNotAskOption() {
+            .doNotAsk(new DoNotAskOption() {
               @Override
               public boolean isToBeShown() {
                 return !DebuggerSettings.EVALUATE_FINALLY_ALWAYS.equals(DebuggerSettings.getInstance().EVALUATE_FINALLY_ON_POP_FRAME) &&

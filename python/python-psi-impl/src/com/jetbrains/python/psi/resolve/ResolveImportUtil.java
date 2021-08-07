@@ -24,6 +24,8 @@ import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.*;
 import com.jetbrains.python.psi.types.PyModuleType;
 import com.jetbrains.python.psi.types.PyType;
+import com.jetbrains.python.psi.types.TypeEvalContext;
+import com.jetbrains.python.pyi.PyiStubSuppressor;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -131,7 +133,10 @@ public final class ResolveImportUtil {
                                                               candidate.getClass());
       }
       if (candidate instanceof PsiDirectory) {
-        candidate = PyUtil.getPackageElement((PsiDirectory)candidate, importStatement);
+        final var packageElement = PyUtil.getPackageElement((PsiDirectory)candidate, importStatement);
+        if (packageElement != importStatement.getContainingFile()) {
+          candidate = packageElement;
+        }
       }
       results.addAll(resolveChildren(candidate, name, file, false, true, false, false));
     }
@@ -312,7 +317,7 @@ public final class ResolveImportUtil {
   @NotNull
   private static List<RatedResolveResult> resolveModuleMember(@NotNull PyFile file, @NotNull String referencedName) {
     final PyModuleType moduleType = new PyModuleType(file);
-    final PyResolveContext resolveContext = PyResolveContext.defaultContext();
+    final PyResolveContext resolveContext = PyResolveContext.defaultContext(TypeEvalContext.codeInsightFallback(file.getProject()));
     final List<? extends RatedResolveResult> results = moduleType.resolveMember(referencedName, null, AccessDirection.READ,
                                                                                 resolveContext);
     if (results == null) {
@@ -360,9 +365,10 @@ public final class ResolveImportUtil {
   @NotNull
   private static List<RatedResolveResult> resolveMemberFromReferenceTypeProviders(@NotNull PsiElement parent,
                                                                                   @NotNull String referencedName) {
-    final PyResolveContext resolveContext = PyResolveContext.defaultContext();
-    final Ref<PyType> refType = PyReferenceExpressionImpl.getReferenceTypeFromProviders(parent, resolveContext.getTypeEvalContext(), null);
+    final var context = TypeEvalContext.codeInsightFallback(parent.getProject());
+    final Ref<PyType> refType = PyReferenceExpressionImpl.getReferenceTypeFromProviders(parent, context, null);
     if (refType != null && !refType.isNull()) {
+      final PyResolveContext resolveContext = PyResolveContext.defaultContext(context);
       final List<? extends RatedResolveResult> result = refType.get().resolveMember(referencedName, null, AccessDirection.READ, resolveContext);
       if (result != null) {
         return Lists.newArrayList(result);
@@ -414,7 +420,10 @@ public final class ResolveImportUtil {
   private static PsiFile findPyFileInDir(PsiDirectory dir, String referencedName, boolean withoutStubs) {
     PsiFile file = null;
     if (!withoutStubs) {
-      file = dir.findFile(referencedName + PyNames.DOT_PYI);
+      final var stub = dir.findFile(referencedName + PyNames.DOT_PYI);
+      if (!PyiStubSuppressor.isIgnoredStub(stub)) {
+        file =  stub;
+      }
     }
     if (file == null) {
       file = dir.findFile(referencedName + PyNames.DOT_PY);

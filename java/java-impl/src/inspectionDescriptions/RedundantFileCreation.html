@@ -1,11 +1,14 @@
 <html>
 <body>
-Reports redundant file creation when the stream constructor that takes a path could be used.
-<p>The quick-fix replaces the constructor call with a <code>String</code> literal that represents the path, for example:</p>
+Reports redundant <code>File</code> creation in one of the following constructors when only <code>String</code> path can be used: <code>FileInputStream</code>, <code>FileOutputStream</code>,
+<code>FileReader</code>, <code>FileWriter</code>, <code>PrintStream</code>, <code>PrintWriter</code>, <code>Formatter</code>.
+<p>Example:</p>
 <pre>
-<code>InputStream is = new FileInputStream(new File("in.txt")); // before
-InputStream is = new FileInputStream("in.txt"); // after
-</code>
+InputStream is = new FileInputStream(new File("in.txt"));
+</pre>
+<p>After quick-fix is applied:</p>
+<pre>
+InputStream is = new FileInputStream("in.txt");
 </pre>
 <!-- tooltip end -->
 <p><small>New in 2020.3</small></p>

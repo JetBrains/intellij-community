@@ -1,28 +1,20 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.impl;
 
 import com.intellij.openapi.application.ReadAction;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.FileIndexFacade;
-import com.intellij.openapi.vcs.AbstractVcs;
-import com.intellij.openapi.vcs.FilePath;
-import com.intellij.openapi.vcs.ProjectLevelVcsManager;
-import com.intellij.openapi.vcs.VcsRoot;
-import com.intellij.openapi.vcs.VirtualFileFilter;
+import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileVisitor;
 import com.intellij.util.Processor;
 import com.intellij.util.StringLenComparator;
 import com.intellij.vcsUtil.VcsUtil;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.*;
 
 public class VcsRootIterator {
   // folder path to files to be excluded
@@ -35,7 +27,7 @@ public class VcsRootIterator {
     myProject = project;
     myVcsManager = ProjectLevelVcsManager.getInstance(project);
     myOtherVcsFolders = new HashMap<>();
-    myExcludedFileIndex = ServiceManager.getService(project, FileIndexFacade.class);
+    myExcludedFileIndex = project.getService(FileIndexFacade.class);
 
     final VcsRoot[] allRoots = myVcsManager.getAllVcsRoots();
     final VirtualFile[] roots = myVcsManager.getRootsUnderVcs(vcs);

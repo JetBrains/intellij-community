@@ -1,0 +1,21 @@
+<html>
+<body>
+<p>Reports <code>if</code> statements which can be simplified to a single statement.</p>
+<p><b>Example:</b></p>
+<pre><code>
+  fun test() {
+      if (foo()) {
+         return true
+      } else {
+         return false
+      }
+  }
+</code></pre>
+<p>After the quick-fix is applied:</p>
+<pre><code>
+  fun test() {
+      return foo()
+  }
+</code></pre>
+</body>
+</html>

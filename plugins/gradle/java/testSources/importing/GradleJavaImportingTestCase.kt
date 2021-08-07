@@ -2,15 +2,11 @@
 package org.jetbrains.plugins.gradle.importing
 
 import com.intellij.compiler.CompilerConfiguration
-import com.intellij.openapi.application.invokeAndWaitIfNeeded
-import com.intellij.openapi.application.runWriteAction
-import com.intellij.openapi.externalSystem.test.ExternalSystemImportingTestCase
+import com.intellij.openapi.module.LanguageLevelUtil
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.JavaSdkVersionUtil
-import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.projectRoots.Sdk
-import com.intellij.openapi.roots.LanguageLevelModuleExtensionImpl
 import com.intellij.openapi.roots.LanguageLevelProjectExtension
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.ProjectRootManager
@@ -36,8 +32,7 @@ abstract class GradleJavaImportingTestCase : GradleImportingTestCase() {
   }
 
   private fun getLanguageLevelForModule(module: Module): LanguageLevel? {
-    val moduleExtension = LanguageLevelModuleExtensionImpl.getInstance(module)
-    val moduleLanguageLevel = moduleExtension.languageLevel
+    val moduleLanguageLevel = LanguageLevelUtil.getCustomLanguageLevel(module)
     return moduleLanguageLevel ?: getLanguageLevelForProject(module.project)
   }
 

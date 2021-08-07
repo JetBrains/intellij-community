@@ -15,17 +15,18 @@
  */
 package com.intellij.execution.testframework.sm;
 
-import com.intellij.openapi.project.Project;
+import com.intellij.execution.Location;
 import com.intellij.pom.Navigatable;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Roman.Chernyatchik
- * @deprecated use {@link SMStacktraceParserEx} instead
  */
-@Deprecated
 public interface SMStacktraceParser {
+  /**
+   * Used for navigation from tests view to the editor if "open failed line" option is selected
+   */
   @Nullable
-  Navigatable getErrorNavigatable(@NotNull Project project, @NotNull String stacktrace);
+  Navigatable getErrorNavigatable(@NotNull Location<?> location, @NotNull String stacktrace);
 }

@@ -1,10 +1,14 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.gradle.settings;
 
-import com.intellij.openapi.components.*;
+import com.intellij.openapi.components.PersistentStateComponent;
+import com.intellij.openapi.components.State;
+import com.intellij.openapi.components.Storage;
+import com.intellij.openapi.components.StoragePathMacros;
 import com.intellij.openapi.externalSystem.settings.AbstractExternalSystemLocalSettings;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.service.GradleInstallationManager;
@@ -24,7 +28,7 @@ public final class GradleLocalSettings extends AbstractExternalSystemLocalSettin
 
   @NotNull
   public static GradleLocalSettings getInstance(@NotNull Project project) {
-    return ServiceManager.getService(project, GradleLocalSettings.class);
+    return project.getService(GradleLocalSettings.class);
   }
 
   @Nullable
@@ -48,6 +52,21 @@ public final class GradleLocalSettings extends AbstractExternalSystemLocalSettin
     state.myGradleVersions.put(linkedProjectPath, GradleInstallationManager.getGradleVersion(gradleHome));
   }
 
+  @ApiStatus.Internal
+  @Nullable
+  public String getGradleUserHome() {
+    return state.myGradleUserHome;
+  }
+
+  @ApiStatus.Internal
+  public void setGradleUserHome(@Nullable String gradleUserHome) {
+    state.myGradleUserHome = gradleUserHome;
+    // --- to be removed with the removal of GradleSystemSettings#getServiceDirectoryPath method ---
+    //noinspection deprecation
+    GradleSystemSettings.getInstance().setServiceDirectoryPath(gradleUserHome);
+    // ----
+  }
+
   @Override
   public void forgetExternalProjects(@NotNull Set<String> linkedProjectPathsToForget) {
     super.forgetExternalProjects(linkedProjectPathsToForget);
@@ -64,9 +83,17 @@ public final class GradleLocalSettings extends AbstractExternalSystemLocalSettin
   @Override
   public void loadState(@NotNull MyState state) {
     super.loadState(state);
+    // --- to be removed with the removal of GradleSystemSettings#getServiceDirectoryPath method ---
+    //noinspection deprecation
+    String serviceDirectoryPath = GradleSystemSettings.getInstance().getServiceDirectoryPath();
+    if (state.myGradleUserHome == null && serviceDirectoryPath != null) {
+      state.myGradleUserHome = serviceDirectoryPath;
+    }
+    // ----
   }
 
   public static class MyState extends AbstractExternalSystemLocalSettings.State {
+    public String myGradleUserHome;
     public Map<String/* project path */, String> myGradleHomes;
     public Map<String/* project path */, String> myGradleVersions;
   }

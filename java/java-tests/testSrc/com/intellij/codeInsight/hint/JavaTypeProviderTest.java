@@ -23,6 +23,39 @@ public class JavaTypeProviderTest extends LightJavaCodeInsightTestCase {
            "<tr><td align=\"left\" style=\"color:#909090\" valign=\"top\">Range:</td><td>Integer.MIN_VALUE or &gt;= 0</td></tr>" +
            "</table>");
   }
+  
+  public void testFloatRangeHint() {
+    doTest("void test(double x) {" +
+           "if (x > 0.5 && x < 1.8) {" +
+           "<selection>x</selection>" +
+           "}}", "double",
+           "<table>" +
+           "<tr><td align=\"left\" style=\"color:#909090\" valign=\"top\">Type:</td><td>double</td></tr>" +
+           "<tr><td align=\"left\" style=\"color:#909090\" valign=\"top\">Range:</td><td>&gt; 0.5 &amp;&amp; &lt; 1.8 not NaN</td></tr>" +
+           "</table>");
+  }
+  
+  public void testFloatRangeHint2() {
+    doTest("void test(double x) {" +
+           "if (!(x > 0.5 && x < 1.8)) {" +
+           "<selection>x</selection>" +
+           "}}", "double",
+           "<table>" +
+           "<tr><td align=\"left\" style=\"color:#909090\" valign=\"top\">Type:</td><td>double</td></tr>" +
+           "<tr><td align=\"left\" style=\"color:#909090\" valign=\"top\">Range:</td><td>&lt;= 0.5 || &gt;= 1.8 (or NaN)</td></tr>" +
+           "</table>");
+  }
+  
+  public void testFloatConstantHint() {
+    doTest("void test(double x) {" +
+           "if (x == 1.0) {" +
+           "<selection>x</selection>" +
+           "}", "double",
+           "<table>" +
+           "<tr><td align=\"left\" style=\"color:#909090\" valign=\"top\">Type:</td><td>double</td></tr>" +
+           "<tr><td align=\"left\" style=\"color:#909090\" valign=\"top\">Value:</td><td>1.0</td></tr>" +
+           "</table>");
+  }
 
   public void testOptionalHint() {
     doTest("  void test(java.util.Optional<String> t) {\n" +

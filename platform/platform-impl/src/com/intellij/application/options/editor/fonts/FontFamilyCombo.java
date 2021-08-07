@@ -104,6 +104,12 @@ class FontFamilyCombo extends AbstractFontCombo<FontFamilyCombo.MyFontItem> {
     }
   }
 
+  private static class MyWarningItem extends MyFontItem {
+    private MyWarningItem(@NotNull String missingName) {
+      super(ApplicationBundle.message("settings.editor.font.missing.custom.font", missingName), false);
+    }
+  }
+
   private static class MySeparatorItem extends MyFontItem {
     private boolean isUpdating = true;
 
@@ -172,6 +178,9 @@ class FontFamilyCombo extends AbstractFontCombo<FontFamilyCombo.MyFontItem> {
       }
       else if (anItem instanceof String) {
         mySelectedItem = ContainerUtil.find(myItems, item -> item.isSelectable() && item.myFamilyName.equals(anItem));
+        if (mySelectedItem == null) {
+          mySelectedItem = new MyWarningItem((String)anItem);
+        }
       }
       else if (anItem instanceof MySeparatorItem) {
         return;
@@ -215,6 +224,9 @@ class FontFamilyCombo extends AbstractFontCombo<FontFamilyCombo.MyFontItem> {
         () -> {
           for (MyFontItem item : myItems) {
             item.myIsMonospaced = myMonospacedFamilies.contains(item.myFamilyName);
+          }
+          if (myNoFontItem == null) { // Primary font
+            myItems.removeIf(item -> !item.myFontCanDisplayName);
           }
           myMonospacedSeparatorItem.isUpdating = false;
           myProportionalSeparatorItem.isUpdating = false;
@@ -263,6 +275,10 @@ class FontFamilyCombo extends AbstractFontCombo<FontFamilyCombo.MyFontItem> {
     protected void customizeCellRenderer(@NotNull JList<? extends MyFontItem> list,
                                          MyFontItem value, int index, boolean selected, boolean hasFocus) {
       if (value != null) {
+        if (value instanceof MyWarningItem) {
+          append(value.getFamilyName(), SimpleTextAttributes.ERROR_ATTRIBUTES);
+          return;
+        }
         SimpleTextAttributes attributes = SimpleTextAttributes.REGULAR_ATTRIBUTES;
         if (value.myFont != null) {
           if (value.myFontCanDisplayName) {

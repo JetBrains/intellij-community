@@ -20,7 +20,6 @@ import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.editorActions.TypedHandlerDelegate;
 import com.intellij.codeInsight.editorActions.TypedHandlerUtil;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.highlighter.HighlighterIterator;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
@@ -99,7 +98,7 @@ public class GroovyTypedHandler extends TypedHandlerDelegate {
   }
 
   public static boolean isAfterClassLikeIdentifier(final int offset, final Editor editor) {
-    HighlighterIterator iterator = ((EditorEx) editor).getHighlighter().createIterator(offset);
+    HighlighterIterator iterator = editor.getHighlighter().createIterator(offset);
     if (iterator.atEnd()) return false;
     if (iterator.getStart() > 0) iterator.retreat();
     return TypedHandlerUtil.isClassLikeIdentifier(offset, editor, iterator, GroovyTokenTypes.mIDENT);

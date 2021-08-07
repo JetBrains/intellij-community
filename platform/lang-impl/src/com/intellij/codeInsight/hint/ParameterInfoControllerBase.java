@@ -127,9 +127,6 @@ public abstract class ParameterInfoControllerBase extends UserDataHolderBase imp
 
     mySingleParameterInfo = !showHint;
 
-    List<ParameterInfoControllerBase> allControllers = getAllControllers(myEditor);
-    allControllers.add(this);
-
     myEditorCaretListener = new CaretListener() {
       @Override
       public void caretPositionChanged(@NotNull CaretEvent e) {
@@ -139,6 +136,14 @@ public abstract class ParameterInfoControllerBase extends UserDataHolderBase imp
         }
       }
     };
+  }
+
+  // TODO [V.Petrenko] need to make a proper logic of creation an instance of this class
+  //  without such inconvenient methods like registerSelf() and setupListeners()
+  //  considering possible exceptions in constructors of inheritors
+  protected final void registerSelf() {
+    List<ParameterInfoControllerBase> allControllers = getAllControllers(myEditor);
+    allControllers.add(this);
   }
 
   protected void setupListeners() {

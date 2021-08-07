@@ -1,15 +1,15 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package training.actions
 
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
-import icons.FeaturesTrainerIcons
+import training.FeaturesTrainerIcons
 import training.learn.CourseManager
 import training.learn.lesson.LessonManager
 import training.statistic.StatisticBase
 import training.ui.LearningUiManager
 
-class RestartLessonAction : AnAction(FeaturesTrainerIcons.Img.ResetLesson) {
+private class RestartLessonAction : AnAction(FeaturesTrainerIcons.Img.ResetLesson) {
   override fun actionPerformed(e: AnActionEvent) {
     val activeToolWindow = LearningUiManager.activeToolWindow ?: return
     val lesson = LessonManager.instance.currentLesson ?: return

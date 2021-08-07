@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.server;
 
 import com.intellij.ide.AppLifecycleListener;
@@ -13,8 +13,10 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
-import com.intellij.openapi.projectRoots.JdkUtil;
+import com.intellij.openapi.projectRoots.JavaSdk;
+import com.intellij.openapi.projectRoots.JavaSdkVersion;
 import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.projectRoots.SdkTypeId;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.io.FileUtil;
@@ -37,13 +39,13 @@ import org.jetbrains.idea.maven.model.MavenId;
 import org.jetbrains.idea.maven.project.*;
 import org.jetbrains.idea.maven.utils.MavenLog;
 import org.jetbrains.idea.maven.utils.MavenUtil;
+import org.jetbrains.idea.maven.utils.MavenWslUtil;
 
 import java.io.File;
 import java.io.IOException;
 import java.rmi.RemoteException;
 import java.util.*;
 import java.util.function.Predicate;
-import java.util.jar.Attributes;
 
 public final class MavenServerManager implements Disposable {
   public static final String BUNDLED_MAVEN_2 = "Bundled (Maven 2)";
@@ -53,22 +55,18 @@ public final class MavenServerManager implements Disposable {
   private final Map<String, MavenServerConnector> myMultimoduleDirToConnectorMap = new HashMap<>();
   private File eventListenerJar;
 
-  @ApiStatus.Internal
-  public void unregisterConnector(MavenServerConnector serverConnector) {
-    synchronized (myMultimoduleDirToConnectorMap) {
-      myMultimoduleDirToConnectorMap.values().remove(serverConnector);
-    }
-  }
 
   public Collection<MavenServerConnector> getAllConnectors() {
+    Set<MavenServerConnector> set = Collections.newSetFromMap(new IdentityHashMap<>());
     synchronized (myMultimoduleDirToConnectorMap) {
-      return new ArrayList<>(myMultimoduleDirToConnectorMap.values());
+      set.addAll(myMultimoduleDirToConnectorMap.values());
     }
+    return set;
   }
 
   public void cleanUp(MavenServerConnector connector) {
     synchronized (myMultimoduleDirToConnectorMap){
-      myMultimoduleDirToConnectorMap.entrySet().removeIf(e ->e.getValue() == connector);
+      myMultimoduleDirToConnectorMap.entrySet().removeIf(e -> e.getValue() == connector);
     }
   }
 
@@ -125,28 +123,60 @@ public final class MavenServerManager implements Disposable {
     MavenWorkspaceSettings settings = MavenWorkspaceSettingsComponent.getInstance(project).getSettings();
     Sdk jdk = getJdk(project, settings);
 
-    MavenServerConnector connector = null;
-    synchronized (myMultimoduleDirToConnectorMap) {
-      connector = myMultimoduleDirToConnectorMap.computeIfAbsent(multimoduleDirectory, dir -> registerNewConnector(project, jdk, multimoduleDirectory));
-    }
+    MavenServerConnector connector = doGetOrCreateConnector(project, multimoduleDirectory, jdk);
     if(connector.isNew()) {
       connector.connect();
     } else {
-      if(!compatibleParameters(project, connector, jdk, multimoduleDirectory)) {
+      if (!compatibleParameters(project, connector, jdk, multimoduleDirectory)) {
         MavenLog.LOG.info("Maven connector in " + multimoduleDirectory + " is incompatible, restarting");
         connector.shutdown(false);
-        synchronized (myMultimoduleDirToConnectorMap) {
-          connector = myMultimoduleDirToConnectorMap.computeIfAbsent(multimoduleDirectory, dir -> registerNewConnector(project, jdk, multimoduleDirectory));
-        }
+        connector = this.doGetOrCreateConnector(project, multimoduleDirectory, jdk);
         connector.connect();
       }
     }
     return connector;
   }
 
-  private MavenServerConnector registerNewConnector(Project project,
-                                                    Sdk jdk,
-                                                    String multimoduleDirectory) {
+  private MavenServerConnector doGetOrCreateConnector(@NotNull Project project,
+                                                      @NotNull String multimoduleDirectory,
+                                                      @NotNull Sdk jdk) {
+    MavenServerConnector connector;
+    synchronized (myMultimoduleDirToConnectorMap) {
+      connector = myMultimoduleDirToConnectorMap.get(multimoduleDirectory);
+      if (connector != null) return connector;
+      connector = findCompatibleConnector(project, jdk, multimoduleDirectory);
+      if (connector != null) {
+        MavenLog.LOG.info("use existing connector for " + multimoduleDirectory + ":::" + connector.getMultimoduleDirectories());
+        connector.addMultimoduleDir(multimoduleDirectory);
+      }
+      else {
+        connector = registerNewConnector(project, jdk, multimoduleDirectory);
+      }
+      myMultimoduleDirToConnectorMap.put(multimoduleDirectory, connector);
+    }
+
+    return connector;
+  }
+
+  private @Nullable MavenServerConnector findCompatibleConnector(@NotNull Project project,
+                                                                 @NotNull Sdk jdk,
+                                                                 @NotNull String multimoduleDirectory) {
+    MavenDistribution distribution = MavenDistributionsCache.getInstance(project).getMavenDistribution(multimoduleDirectory);
+    String vmOptions = MavenDistributionsCache.getInstance(project).getVmOptions(multimoduleDirectory);
+    for (Map.Entry<String, MavenServerConnector> entry : myMultimoduleDirToConnectorMap.entrySet()) {
+      if (!entry.getValue().getProject().equals(project)) continue;
+      if (Registry.is("maven.server.per.idea.project")) return entry.getValue();
+      if (entry.getValue().isCompatibleWith(jdk, vmOptions, distribution)) {
+        return entry.getValue();
+      }
+    }
+
+    return null;
+  }
+
+  private @NotNull MavenServerConnector registerNewConnector(Project project,
+                                                             Sdk jdk,
+                                                             String multimoduleDirectory) {
     MavenDistribution distribution = MavenDistributionsCache.getInstance(project).getMavenDistribution(multimoduleDirectory);
     String vmOptions = MavenDistributionsCache.getInstance(project).getVmOptions(multimoduleDirectory);
     Integer debugPort = getDebugPort(project);
@@ -191,7 +221,7 @@ public final class MavenServerManager implements Disposable {
 
   @NotNull
   private static Sdk getJdk(Project project, MavenWorkspaceSettings settings) {
-    String jdkForImporterName = settings.importingSettings.getJdkForImporter();
+    String jdkForImporterName = settings.getImportingSettings().getJdkForImporter();
     try {
       return MavenUtil.getJdk(project, jdkForImporterName);
     }
@@ -209,7 +239,7 @@ public final class MavenServerManager implements Disposable {
                                               MavenServerConnector connector,
                                               Sdk jdk,
                                               String multimoduleDirectory) {
-
+    if (Registry.is("maven.server.per.idea.project")) return true;
     MavenDistributionsCache cache = MavenDistributionsCache.getInstance(project);
     MavenDistribution distribution = cache.getMavenDistribution(multimoduleDirectory);
     String vmOptions = cache.getVmOptions(multimoduleDirectory);
@@ -231,12 +261,17 @@ public final class MavenServerManager implements Disposable {
   }
 
   public static boolean verifyMavenSdkRequirements(@NotNull Sdk jdk, String mavenVersion) {
-    String version = JdkUtil.getJdkMainAttribute(jdk, Attributes.Name.IMPLEMENTATION_VERSION);
-    if (StringUtil.compareVersionNumbers(mavenVersion, "3.3.1") >= 0
-        && StringUtil.compareVersionNumbers(version, "1.7") < 0) {
-      return false;
+    if (StringUtil.compareVersionNumbers(mavenVersion, "3.3.1") < 0) {
+      return true;
     }
-    return true;
+    SdkTypeId sdkType = jdk.getSdkType();
+    if (sdkType instanceof JavaSdk) {
+      JavaSdkVersion version = ((JavaSdk)sdkType).getVersion(jdk);
+      if (version == null || version.isAtLeast(JavaSdkVersion.JDK_1_7)) {
+        return true;
+      }
+    }
+    return false;
   }
 
   public static File getMavenEventListener() {
@@ -274,8 +309,7 @@ public final class MavenServerManager implements Disposable {
     return new File(root.getParent(), "intellij.maven.server.eventListener");
   }
 
-  @Nullable
-  public String getMavenVersion(@Nullable String mavenHome) {
+  public static @Nullable String getMavenVersion(@Nullable String mavenHome) {
     return MavenUtil.getMavenVersion(getMavenHomeFile(mavenHome));
   }
 
@@ -329,7 +363,7 @@ public final class MavenServerManager implements Disposable {
     classpath.add(new File(root, "maven-server-api.jar"));
 
     if (StringUtil.compareVersionNumbers(mavenVersion, "3") < 0) {
-      classpath.add(new File(root, "maven2-server-impl.jar"));
+      classpath.add(new File(root, "maven2-server.jar"));
       addDir(classpath, new File(root, "maven2-server-lib"), f -> true);
     }
     else {
@@ -337,12 +371,12 @@ public final class MavenServerManager implements Disposable {
       addDir(classpath, new File(root, "maven3-server-lib"), f -> true);
 
       if (StringUtil.compareVersionNumbers(mavenVersion, "3.1") < 0) {
-        classpath.add(new File(root, "maven30-server-impl.jar"));
+        classpath.add(new File(root, "maven30-server.jar"));
       }
       else {
-        classpath.add(new File(root, "maven3-server-impl.jar"));
+        classpath.add(new File(root, "maven3-server.jar"));
         if (StringUtil.compareVersionNumbers(mavenVersion, "3.6") >= 0) {
-          classpath.add(new File(root, "maven36-server-impl.jar"));
+          classpath.add(new File(root, "maven36-server.jar"));
         }
       }
     }
@@ -371,7 +405,6 @@ public final class MavenServerManager implements Disposable {
       }
     }
   }
-
 
   private static void addMavenLibs(List<File> classpath, File mavenHome) {
     addDir(classpath, new File(mavenHome, "lib"), f -> !f.getName().contains("maven-slf4j-provider"));
@@ -421,14 +454,25 @@ public final class MavenServerManager implements Disposable {
       path = new File(".").getPath();
     }
     String finalPath = path;
+    if (MavenWslUtil.tryGetWslDistributionForPath(path) != null) {
+      return new MavenIndexerWrapper(null, project) {
+        @Override
+        protected @NotNull MavenServerIndexer create() throws RemoteException {
+          return new DummyIndexer();
+        }
+      };
+    }
     return new MavenIndexerWrapper(null, project) {
       @NotNull
       @Override
       protected MavenServerIndexer create() throws RemoteException {
-        MavenServerConnector connector = null;
+        MavenServerConnector connector;
         synchronized (myMultimoduleDirToConnectorMap) {
-          connector = ContainerUtil.find(myMultimoduleDirToConnectorMap.values(), c -> FileUtil
-            .isAncestor(finalPath, c.getMultimoduleDirectory(), false));
+          connector = ContainerUtil.find(myMultimoduleDirToConnectorMap.values(), c -> ContainerUtil.find(
+            c.myMultimoduleDirectories,
+            mDir -> FileUtil
+              .isAncestor(finalPath, mDir, false)) != null
+          );
         }
         if (connector != null) {
           return connector.createIndexer();
@@ -445,6 +489,7 @@ public final class MavenServerManager implements Disposable {
   /**
    * @deprecated use {@link MavenServerManager#createIndexer(Project)}
    */
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   @Deprecated
   public MavenIndexerWrapper createIndexer() {
     return createIndexer(ProjectManager.getInstance().getDefaultProject());

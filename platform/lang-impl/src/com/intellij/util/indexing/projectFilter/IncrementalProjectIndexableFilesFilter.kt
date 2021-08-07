@@ -1,67 +1,48 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.indexing.projectFilter
 
-import com.intellij.openapi.project.Project
-import com.intellij.openapi.roots.ContentIterator
-import com.intellij.openapi.vfs.VirtualFileWithId
 import com.intellij.util.containers.ConcurrentBitSet
-import com.intellij.util.indexing.FileBasedIndex
-import com.intellij.util.indexing.FileBasedIndexImpl
 import com.intellij.util.indexing.IdFilter
-import com.intellij.util.indexing.UnindexedFilesUpdater
 
-internal class IncrementalProjectIndexableFilesFilter(private val project: Project): IdFilter() {
-  private val fileBasedIndex = FileBasedIndex.getInstance() as FileBasedIndexImpl
+internal class IncrementalProjectIndexableFilesFilter : IdFilter() {
   @Volatile
-  private var memorySnapshot: ConcurrentBitSet? = null
+  private var fileIds: ConcurrentBitSet = ConcurrentBitSet.create()
+  private var previousFileIds: ConcurrentBitSet? = null
 
-  override fun containsFileId(fileId: Int): Boolean {
-    var snapshot = memorySnapshot
-    if (snapshot == null) {
-      if (skipFilterRestoration()) {
-        return true
-      }
-      snapshot = calculateIdsByProject()
-      memorySnapshot = snapshot
-    }
-    return snapshot.get(fileId)
-  }
+  override fun getFilteringScopeType(): FilterScopeType = FilterScopeType.PROJECT_AND_LIBRARIES
 
-  private fun skipFilterRestoration(): Boolean {
-    return UnindexedFilesUpdater.isIndexUpdateInProgress(project)
-  }
+  override fun containsFileId(fileId: Int): Boolean = fileIds.get(fileId)
 
-  private fun calculateIdsByProject(): ConcurrentBitSet {
-    val result = ConcurrentBitSet.create()
-    fileBasedIndex.iterateIndexableFiles(ContentIterator {
-      if (it is VirtualFileWithId) {
-        result.set(it.id)
-      }
-      return@ContentIterator true
-    }, project, null)
-    return result
-  }
-
-  fun ensureFileIdPresent(fileId: Int, add: () -> Boolean) {
+  @Suppress("LocalVariableName")
+  fun ensureFileIdPresent(fileId: Int, add: () -> Boolean): Boolean {
     assert(fileId > 0)
 
-    val snapshot = memorySnapshot
-    if (snapshot != null && snapshot.get(fileId)) {
-      return
+    val _fileIds = fileIds
+    if (_fileIds.get(fileId)) {
+      return false
     }
 
     if (add()) {
-      snapshot?.set(fileId)
+      _fileIds.set(fileId)
+      val _previousFileIds = previousFileIds
+      return _previousFileIds == null || !_previousFileIds.get(fileId)
     }
+    return false
   }
 
   fun removeFileId(fileId: Int) {
     assert(fileId > 0)
-
-    memorySnapshot?.clear(fileId)
+    fileIds.clear(fileId)
   }
 
-  fun drop() {
-    memorySnapshot = null
+  fun memoizeAndResetFileIds() {
+    // called in sequential UnindexedFileUpdater tasks
+    previousFileIds = fileIds
+    fileIds = ConcurrentBitSet.create()
+  }
+
+  fun resetPreviousFileIds() {
+    // called in sequential UnindexedFileUpdater tasks
+    previousFileIds = null
   }
 }

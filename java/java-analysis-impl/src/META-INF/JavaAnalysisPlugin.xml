@@ -33,6 +33,7 @@
     <extensionPoint qualifiedName="com.intellij.codeInsight.implicitSubclassProvider" interface="com.intellij.codeInspection.inheritance.ImplicitSubclassProvider" dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.codeInsight.changeVariableTypeQuickFixProvider" interface="com.intellij.codeInsight.quickfix.ChangeVariableTypeQuickFixProvider" dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.lang.jvm.annotationPackageSupport" interface="com.intellij.codeInsight.annoPackages.AnnotationPackageSupport" dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.lang.jvm.ignoreAnnotationParamSupport" interface="com.intellij.codeInspection.DefaultAnnotationParamInspection$IgnoreAnnotationParamSupport" dynamic="true"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
@@ -166,9 +167,6 @@
                       key="unnecessary.module.dependency.display.name" groupBundle="messages.InspectionsBundle" groupKey="group.names.declaration.redundancy" enabledByDefault="true"
                       level="WARNING"
                       implementationClass="com.intellij.codeInspection.unnecessaryModuleDependency.UnnecessaryModuleDependencyInspection"/>
-    <localInspection groupPath="Java" language="JAVA" shortName="TestOnlyProblems" bundle="messages.JavaAnalysisBundle" key="inspection.test.only.problems.display.name"
-                     groupBundle="messages.InspectionsBundle" groupKey="inspection.general.tools.group.name" enabledByDefault="false" level="WARNING"
-                     implementationClass="com.intellij.codeInspection.testOnly.TestOnlyInspection" />
     <localInspection language="XML" shortName="DeprecatedClassUsageInspection" groupKey="group.names.xml" groupBundle="messages.InspectionsBundle"
                      enabledByDefault="true" level="WARNING" implementationClass="com.intellij.codeInspection.xml.DeprecatedClassUsageInspection"
                      key="inspection.deprecated.class.usage.inspection.display.name" bundle="messages.JavaAnalysisBundle"/>
@@ -270,6 +268,7 @@
     <syntaxHighlighter id="java.class" key="CLASS" factoryClass="com.intellij.lang.java.JavaSyntaxHighlighterFactory"/>
     <lang.syntaxHighlighterFactory language="JAVA" implementationClass="com.intellij.lang.java.JavaSyntaxHighlighterFactory"/>
     <moduleExtension implementation="com.intellij.openapi.roots.impl.JavaModuleExternalPathsImpl"/>
+    <workspaceModel.moduleExtensionBridgeFactory implementation="com.intellij.workspaceModel.ide.legacyBridge.impl.java.LanguageLevelModuleExtensionBridge$Companion"/>
     <localInspection groupPath="Java" language="JAVA" shortName="ClassGetClass"
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.probable.bugs"
                      enabledByDefault="true" level="WARNING"

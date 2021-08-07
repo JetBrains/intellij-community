@@ -20,6 +20,7 @@ import com.intellij.ide.actions.ApplyIntentionAction;
 import com.intellij.java.JavaBundle;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
@@ -150,8 +151,10 @@ public abstract class NonCodeAnnotationsLineMarkerProvider extends LineMarkerPro
 
       if (!actions.isEmpty()) {
         final DefaultActionGroup group = new DefaultActionGroup(actions);
+        DataContext context = EditorUtil.getEditorDataContext(editor);
+
         return JBPopupFactory.getInstance()
-          .createActionGroupPopup(null, group, DataContext.EMPTY_CONTEXT, JBPopupFactory.ActionSelectionAid.SPEEDSEARCH, true);
+          .createActionGroupPopup(null, group, context, JBPopupFactory.ActionSelectionAid.SPEEDSEARCH, true);
       }
 
       return null;

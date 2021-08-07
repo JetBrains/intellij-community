@@ -23,6 +23,7 @@ import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.project.IntelliJProjectConfiguration;
 import com.intellij.util.PathUtil;
+import com.intellij.util.Producer;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
@@ -47,8 +48,8 @@ public class OutputChecker {
 
   private static final String[] IGNORED_PATTERNS_IN_STDERR = {"Picked up _JAVA_OPTIONS:", "Picked up JAVA_TOOL_OPTIONS:"};
 
-  private final String myAppPath;
-  private final String myOutputPath;
+  private final Producer<String> myAppPath;
+  private final Producer<String> myOutputPath;
   private Map<Key, StringBuffer> myBuffers;
   private String myTestName;
 
@@ -65,7 +66,7 @@ public class OutputChecker {
     }
   }
 
-  public OutputChecker(String appPath, String outputPath) {
+  public OutputChecker(Producer<String> appPath, Producer<String> outputPath) {
     myAppPath = appPath;
     myOutputPath = outputPath;
   }
@@ -126,7 +127,7 @@ public class OutputChecker {
 
     String actual = preprocessBuffer(buildOutputString(), sortClassPath);
 
-    File outs = new File(myAppPath + File.separator + "outs");
+    File outs = new File(myAppPath.produce() + File.separator + "outs");
     assert outs.exists() || outs.mkdirs() : outs;
 
     File outFile = getOutFile(outs, jdk, null, "");
@@ -194,8 +195,8 @@ public class OutputChecker {
       result = StringUtil.replace(result, "\r\n", "\n");
       result = StringUtil.replace(result, "\r", "\n");
       result = replaceAdditionalInOutput(result);
-      result = replacePath(result, myAppPath, "!APP_PATH!");
-      result = replacePath(result, myOutputPath, "!OUTPUT_PATH!");
+      result = replacePath(result, myAppPath.produce(), "!APP_PATH!");
+      result = replacePath(result, myOutputPath.produce(), "!OUTPUT_PATH!");
       result = replacePath(result, JavaSdkUtil.getIdeaRtJarPath(), "!RT_JAR!");
       if (PluginManagerCore.isRunningFromSources()) {
         result = replacePath(result, DebuggerUtilsImpl.getIdeaRtPath(), "!RT_JAR!");

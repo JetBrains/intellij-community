@@ -1,0 +1,3 @@
+match x:
+    ca
+<caret>

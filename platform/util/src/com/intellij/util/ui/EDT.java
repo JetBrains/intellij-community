@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.ui;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -15,7 +15,7 @@ import java.awt.*;
  * See {@link #updateEdt()} usage for the details
  */
 public final class EDT {
-  private static Thread myEventDispatchThread = null;
+  private static Thread myEventDispatchThread;
 
   private EDT() {
   }
@@ -25,12 +25,19 @@ public final class EDT {
    */
   @ApiStatus.Internal
   public static void updateEdt() {
-    myEventDispatchThread = Thread.currentThread();
+    if (myEventDispatchThread != Thread.currentThread()) {
+      myEventDispatchThread = Thread.currentThread();
+    }
   }
 
   @ApiStatus.Internal
   public static boolean isEdt(@NotNull Thread thread) {
     return thread == myEventDispatchThread;
+  }
+
+  @ApiStatus.Internal
+  public static @NotNull Thread getEventDispatchThread() {
+    return myEventDispatchThread;
   }
 
   /**

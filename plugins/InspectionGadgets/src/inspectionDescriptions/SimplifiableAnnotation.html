@@ -1,9 +1,23 @@
 <html>
 <body>
-Reports annotations which can be simplified to their 'single element'
-or 'marker' shorthand form. Annotations that contain whitespace between the @-sign and the name
-of the annotation are also reported.
+Reports annotations that can be simplified to their 'single element'
+or 'marker' shorthand form.
+<p>Annotations that contain whitespace between the @-sign and the name
+  of the annotation are also reported.</p>
+<p><b>Example:</b></p>
+<pre>
+  @interface Foo { String[] value(); }
+
+  @ Foo({"foo"})
+  public String name;
+</pre>
+<p>After the quick-fix is applied:</p>
+<pre>
+  @interface Foo { String[] value(); }
+
+  @Foo("foo")
+  public String name;
+</pre>
 <!-- tooltip end -->
-<p>
 </body>
 </html>

@@ -7,17 +7,17 @@ SHELL_SCRIPT
       ASSIGNMENT_LIST
         PsiElement(()('(')
         ARRAY_ASSIGNMENT
-          ASSIGNMENT_EXPRESSION
-            INDEX_EXPRESSION
-              LITERAL_EXPRESSION
+          ASSIGNMENT_OPERATION
+            INDEX_OPERATION
+              LITERAL_OPERATION
                 PsiElement(word)('a')
               PsiWhiteSpace(' ')
               PsiElement([)('[')
-              LITERAL_EXPRESSION
+              LITERAL_OPERATION
                 PsiElement(word)('b')
               PsiElement(])(']')
             PsiElement(=)('=')
-            LITERAL_EXPRESSION
+            LITERAL_OPERATION
               PsiElement(word)('x')
               PsiWhiteSpace(' ')
               PsiElement(word)('z')
@@ -39,17 +39,17 @@ SHELL_SCRIPT
       ASSIGNMENT_LIST
         PsiElement(()('(')
         ARRAY_ASSIGNMENT
-          ASSIGNMENT_EXPRESSION
-            INDEX_EXPRESSION
-              LITERAL_EXPRESSION
+          ASSIGNMENT_OPERATION
+            INDEX_OPERATION
+              LITERAL_OPERATION
                 PsiElement(word)('a')
               PsiWhiteSpace(' ')
               PsiElement([)('[')
-              LITERAL_EXPRESSION
+              LITERAL_OPERATION
                 PsiElement(word)('b')
               PsiElement(])(']')
             PsiElement(=)('=')
-            LITERAL_EXPRESSION
+            LITERAL_OPERATION
               PsiElement(word)('x')
               PsiWhiteSpace(' ')
               PsiElement(word)('z')

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 #include "winshellintegration/jump_task.h"
 #include "winshellintegration/COM_errors.h" // errors::throwCOMException
@@ -65,21 +65,23 @@ namespace intellij::ui::win
     //JumpTask::BuildSession& JumpTask::BuildSession::operator=(BuildSession&&) noexcept = default;
 
 
-    JumpTask::BuildSession& JumpTask::BuildSession::setApplicationArguments(WideString allArgs) noexcept
+    JumpTask::BuildSession& JumpTask::BuildSession::setApplicationArguments(std::optional<WideString> allArgs) noexcept
     {
         appArguments_ = std::move(allArgs);
         return *this;
     }
 
-    JumpTask::BuildSession& JumpTask::BuildSession::setApplicationWorkingDirectory(std::filesystem::path wdPath) noexcept
+    JumpTask::BuildSession& JumpTask::BuildSession::setApplicationWorkingDirectory(
+        std::optional<std::filesystem::path> wdPath) noexcept
     {
         appWorkDir_ = std::move(wdPath);
         return *this;
     }
 
-    JumpTask::BuildSession& JumpTask::BuildSession::setDescription(WideString description) noexcept
+    JumpTask::BuildSession& JumpTask::BuildSession::setDescription(
+        std::optional<WideString> description) noexcept
     {
-        description = std::move(description);
+        description_ = std::move(description);
         return *this;
     }
 

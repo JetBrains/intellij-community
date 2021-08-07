@@ -50,15 +50,18 @@
     <fileBasedIndex implementation="org.jetbrains.plugins.javaFX.indexing.JavaFxCustomComponentsIndex"/>
     <intentionAction>
       <className>org.jetbrains.plugins.javaFX.fxml.codeInsight.intentions.JavaFxCollapseSubTagToAttributeIntention</className>
-      <category>JavaFX</category>
+      <bundleName>messages.JavaFXBundle</bundleName>
+      <categoryKey>group.name.javafx</categoryKey>
     </intentionAction>
     <intentionAction>
       <className>org.jetbrains.plugins.javaFX.fxml.codeInsight.intentions.JavaFxExpandAttributeIntention</className>
-      <category>JavaFX</category>
+      <bundleName>messages.JavaFXBundle</bundleName>
+      <categoryKey>group.name.javafx</categoryKey>
     </intentionAction>
     <intentionAction>
       <className>org.jetbrains.plugins.javaFX.codeInsight.JavaFxFieldToPropertyIntention</className>
-      <category>JavaFX</category>
+      <bundleName>messages.JavaFXBundle</bundleName>
+      <categoryKey>group.name.javafx</categoryKey>
     </intentionAction>
 
     <lang.importOptimizer language="XML" implementationClass="org.jetbrains.plugins.javaFX.fxml.codeInsight.JavaFxImportsOptimizer" order="before XML"/>
@@ -78,14 +81,22 @@
     <renameHandler implementation="org.jetbrains.plugins.javaFX.refactoring.JavaFxPropertyRenameHandler"/>
     <completion.contributor implementationClass="org.jetbrains.plugins.javaFX.fxml.refs.JavaFxCompletionContributor" language="XML" order="before xmlNonFirst"/>
     <manifest.parser.provider implementation="org.jetbrains.plugins.javaFX.manifest.JavaFxManifestHeaderParsers"/>
-    <projectTemplate projectType="Java FX" templatePath="resources/projectTemplates/Java/JavaFX Application.zip" category="true"/>
+
     <javaMainMethodProvider implementation="org.jetbrains.plugins.javaFX.JavaFxMainMethodRunConfigurationProvider"/>
     <deadCode implementation="org.jetbrains.plugins.javaFX.JavaFxEntryPoint"/>
+    <cantBeStatic implementation="org.jetbrains.plugins.javaFX.JavaFxCanBeStaticExtension" />
     <projectSdkSetupValidator implementation="org.jetbrains.plugins.javaFX.JavaFxProjectSdkSetupValidator" order="after javaSdk"/>
     <predefinedMigrationMapProvider implementation="org.jetbrains.plugins.javaFX.refactoring.migration.JavaFx9Migration"/>
     <postStartupActivity implementation="org.jetbrains.plugins.javaFX.fxml.JavaFxModuleUtil$JavaFxDetectionStartupActivity"/>
     <createFromTemplateHandler implementation="org.jetbrains.plugins.javaFX.actions.JavaFxCreateFromTemplateHandler" order="before java"/>
     <projectTemplateParameterFactory implementation="org.jetbrains.plugins.javaFX.JavaFXVersionFactory"/>
+
+    <moduleBuilder builderClass="org.jetbrains.plugins.javaFX.wizard.JavaFxModuleBuilder"/>
+    <fileTemplateGroup implementation="org.jetbrains.plugins.javaFX.wizard.JavaFxModuleTemplateGroup"/>
+
+    <spellchecker.bundledDictionaryProvider implementation="org.jetbrains.plugins.javaFX.JavaeeBundledDictionaryProvider"/>
+
+    <dependencySupport coordinate="org.openjfx:javafx-base" kind="java" displayName="JavaFX"/>
   </extensions>
 
   <projectListeners>
@@ -98,9 +109,13 @@
       <add-to-group group-id="EditorTabPopupMenu" anchor="last"/>
       <add-to-group group-id="ProjectViewPopupMenu" anchor="last"/>
     </action>
-    <action class="org.jetbrains.plugins.javaFX.actions.CreateFxmlFileAction" id="NewFxmlFile">
+
+    <group id="JavaFxCreateActions">
+      <action class="org.jetbrains.plugins.javaFX.actions.CreateFxmlFileAction" id="NewFxmlFile"/>
+      <action class="org.jetbrains.plugins.javaFX.actions.CreateJavaFxApplicationAction" id="NewJavaFXApplication"/>
+
       <add-to-group group-id="NewGroup" anchor="after" relative-to-action="NewDir"/>
-    </action>
+    </group>
   </actions>
   <resource-bundle>messages.JavaFXBundle</resource-bundle>
 </idea-plugin>

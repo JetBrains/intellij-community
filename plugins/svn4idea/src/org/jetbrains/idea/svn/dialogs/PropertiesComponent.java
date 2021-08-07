@@ -78,8 +78,8 @@ public class PropertiesComponent extends JPanel {
       myTextArea.setText(property != null ? property.getValue().toString() : "");
     });
     ActionGroup popupActionGroup = createPopup();
-    PopupHandler.installPopupHandler(myTable, popupActionGroup, ActionPlaces.UNKNOWN, ActionManager.getInstance());
-    PopupHandler.installPopupHandler(scrollPane, popupActionGroup, ActionPlaces.UNKNOWN, ActionManager.getInstance());
+    PopupHandler.installPopupMenu(myTable, popupActionGroup, "SvnPropertiesPopup");
+    PopupHandler.installPopupMenu(scrollPane, popupActionGroup, "SvnPropertiesPopup");
     myCloseAction.registerCustomShortcutSet(getActiveKeymapShortcuts(IdeActions.ACTION_CLOSE_ACTIVE_TAB), this);
     myRefreshAction.registerCustomShortcutSet(CommonShortcuts.getRerun(), this);
   }

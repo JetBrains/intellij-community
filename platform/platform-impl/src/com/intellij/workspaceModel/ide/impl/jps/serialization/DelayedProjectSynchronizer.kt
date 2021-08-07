@@ -17,15 +17,14 @@ import kotlin.system.measureTimeMillis
  */
 class DelayedProjectSynchronizer : StartupActivity.DumbAware {
   override fun runActivity(project: Project) {
-    if (WorkspaceModel.isEnabled) {
-      val projectModelSynchronizer = JpsProjectModelSynchronizer.getInstance(project)
-      if (projectModelSynchronizer != null && (WorkspaceModel.getInstance(project) as WorkspaceModelImpl).loadedFromCache) {
-        val loadingTime = measureTimeMillis {
-          projectModelSynchronizer.loadRealProject(project)
-          project.messageBus.syncPublisher(JpsProjectLoadedListener.LOADED).loaded()
-        }
-        log.info("Workspace model loaded from cache. Syncing real project state into workspace model in $loadingTime ms. ${Thread.currentThread()}")
+    val projectModelSynchronizer = JpsProjectModelSynchronizer.getInstance(project)
+    if (projectModelSynchronizer != null && (WorkspaceModel.getInstance(project) as WorkspaceModelImpl).loadedFromCache) {
+      val loadingTime = measureTimeMillis {
+        projectModelSynchronizer.loadProject(project)
+        project.messageBus.syncPublisher(JpsProjectLoadedListener.LOADED).loaded()
       }
+      log.info(
+        "Workspace model loaded from cache. Syncing real project state into workspace model in $loadingTime ms. ${Thread.currentThread()}")
     }
   }
 

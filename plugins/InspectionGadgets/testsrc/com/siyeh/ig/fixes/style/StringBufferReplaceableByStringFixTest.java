@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.siyeh.ig.fixes.style;
 
 import com.intellij.application.options.CodeStyle;
@@ -67,12 +67,17 @@ public class StringBufferReplaceableByStringFixTest extends IGQuickFixesTestCase
   public void testComment3() { doTestFor("StringBuffer"); }
   public void testComment4() { doTestFor("StringBuilder"); }
   public void testComment5() { doTestFor("StringBuilder"); }
+  public void testMultipleComments() { doTestFor("StringBuilder"); }
+  public void testMultipleCommentsMissingSemicolon() { doTestFor("StringBuilder"); }
+  public void testMultipleCommentsNoWhitespace() { doTestFor("StringBuilder"); }
   public void testImplicitToString() { doTestFor("StringBuilder"); }
   public void testImplicitToString2() { doTestFor("StringBuilder"); }
   public void testImplicitToString3() { doTestFor("StringBuilder"); }
   public void testJoiner() { doTestFor("StringJoiner"); }
   public void testJoiner2() { doTestFor("StringJoiner"); }
   public void testCharacterPlusAppend() { doTestFor("StringBuilder"); }
+  public void testSideEffect() { doTestFor("StringBuilder"); }
+  public void testSideEffect2() { doTestFor("StringBuilder"); }
 
   public void testComplexSignOnNextLine() {
     final CommonCodeStyleSettings settings = CodeStyle.getSettings(getProject()).getCommonSettings(JavaLanguage.INSTANCE);

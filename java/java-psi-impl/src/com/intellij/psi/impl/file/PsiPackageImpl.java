@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl.file;
 
 import com.intellij.codeInsight.completion.scope.JavaCompletionHints;
@@ -272,13 +272,13 @@ public class PsiPackageImpl extends PsiPackageBase implements PsiPackage, Querya
       return PsiSearchScopeUtil.isInScope(scope, allClasses[0]) ? allClasses.clone() : PsiClass.EMPTY_ARRAY;
     }
     return StreamEx.of(allClasses)
-      .filter(aClass -> PsiSearchScopeUtil.isInScope(scope, aClass))
+      .filter(aClass -> PsiSearchScopeUtil.isInScope(scope, aClass) && aClass.getContainingClass() == null)
       .sorted(PsiClassUtil
                 .createScopeComparator(scope)
                 .thenComparing(c -> c.getQualifiedName(), Comparator.nullsLast(Comparator.naturalOrder()))
                 .thenComparing(c -> {
                   PsiFile file = c.getContainingFile();
-                  return file instanceof PsiJavaFile ? ((PsiJavaFile)file).getPackageName() : "";
+                  return file instanceof PsiClassOwner ? ((PsiClassOwner)file).getPackageName() : "";
                 }))
       .toArray(PsiClass.EMPTY_ARRAY);
   }

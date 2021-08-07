@@ -9,6 +9,7 @@ import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -32,7 +33,11 @@ public class JBColor extends Color {
     private static volatile boolean DARK = StartupUiUtil.isUnderDarcula();
   }
 
+  private static final Color NAMED_COLOR_FALLBACK_MARKER = ColorUtil.marker("NAMED_COLOR_FALLBACK_MARKER");
+
+  private final String name;
   private final Color darkColor;
+  private final Color defaultColor;
   private final NotNullProducer<? extends Color> func;
 
   public JBColor(int rgb, int darkRGB) {
@@ -41,14 +46,26 @@ public class JBColor extends Color {
 
   public JBColor(@NotNull Color regular, @NotNull Color dark) {
     super(regular.getRGB(), regular.getAlpha() != 255);
+    name = null;
+    defaultColor = null;
     darkColor = dark;
     func = null;
   }
 
   public JBColor(@NotNull NotNullProducer<? extends Color> function) {
     super(0);
+    name = null;
+    defaultColor = null;
     darkColor = null;
     func = function;
+  }
+
+  public JBColor(@NotNull String name, @Nullable Color defaultColor) {
+    super(0);
+    this.name = name;
+    this.defaultColor = defaultColor;
+    darkColor = null;
+    func = null;
   }
 
   @NotNull
@@ -62,16 +79,37 @@ public class JBColor extends Color {
   }
 
   @NotNull
+  public static JBColor namedColor(@NonNls @NotNull final String propertyName) {
+    return namedColor(propertyName, NAMED_COLOR_FALLBACK_MARKER);
+  }
+
+  @NotNull
   public static JBColor namedColor(@NonNls @NotNull final String propertyName, @NotNull final Color defaultColor) {
-    return new JBColor(() -> {
-      Color color = notNull(UIManager.getColor(propertyName), () -> notNull(findPatternMatch(propertyName), defaultColor));
-      if (UIManager.get(propertyName) == null) {
-        if (Registry.is("ide.save.missing.jb.colors", false)) {
-          return _saveAndReturnColor(propertyName, color);
-        }
+    return new JBColor(propertyName, defaultColor);
+  }
+
+  private static @NotNull Color calculateColor(@NonNls @NotNull String name, @Nullable Color defaultColor) {
+    Color color = UIManager.getColor(name);
+    if (color != null) return color;
+    // *.background and others are handled by defaultColor. findPatternMatch is relevant for themes only.
+    if (!UIManager.getDefaults().containsKey("Theme.name")) {
+      return defaultColor == NAMED_COLOR_FALLBACK_MARKER || defaultColor == null ? calculateFallback(name) : defaultColor;
+    }
+    Color patternMatch = findPatternMatch(name);
+    if (patternMatch != null) return patternMatch;
+
+    return defaultColor == NAMED_COLOR_FALLBACK_MARKER || defaultColor == null ? calculateFallback(name) : defaultColor;
+  }
+
+  private static @NotNull Color calculateFallback(@NonNls @NotNull final String propertyName) {
+    Color color = notNull(UIManager.getColor(propertyName),
+                          () -> notNull(findPatternMatch(propertyName), Gray.TRANSPARENT));
+    if (UIManager.get(propertyName) == null) {
+      if (Registry.is("ide.save.missing.jb.colors", false)) {
+        return _saveAndReturnColor(propertyName, color);
       }
-      return color;
-    });
+    }
+    return color;
   }
 
   // Let's find if namedColor can be overridden by *.propertyName rule in ui theme and apply it
@@ -134,7 +172,24 @@ public class JBColor extends Color {
 
   @NotNull
   Color getColor() {
-    return func != null ? func.produce() : Lazy.DARK ? getDarkVariant() : this;
+    if (func != null) {
+      return func.produce();
+    }
+    if (name != null) {
+      return calculateColor(name, defaultColor);
+    }
+
+    return Lazy.DARK ? getDarkVariant() : this;
+  }
+
+  @ApiStatus.Internal
+  public @Nullable String getName() {
+    return name;
+  }
+
+  @ApiStatus.Internal
+  public @Nullable Color getDefaultColor() {
+    return defaultColor == NAMED_COLOR_FALLBACK_MARKER ? null : defaultColor;
   }
 
   @Override
@@ -173,6 +228,10 @@ public class JBColor extends Color {
     if (func != null) {
       return new JBColor(() -> func.produce().brighter());
     }
+    if (name != null) {
+      return calculateColor(name, defaultColor).brighter();
+    }
+
     return new JBColor(super.brighter(), getDarkVariant().brighter());
   }
 
@@ -182,6 +241,10 @@ public class JBColor extends Color {
     if (func != null) {
       return new JBColor(() -> func.produce().darker());
     }
+    if (name != null) {
+      return calculateColor(name, defaultColor).darker();
+    }
+
     return new JBColor(super.darker(), getDarkVariant().darker());
   }
 

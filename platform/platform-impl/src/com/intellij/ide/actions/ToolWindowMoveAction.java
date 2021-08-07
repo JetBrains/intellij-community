@@ -93,7 +93,7 @@ public final class ToolWindowMoveAction extends DumbAwareAction implements FusAw
     }
 
     @NotNull
-    private Icon getIcon() {
+    public Icon getIcon() {
       switch (this) {
         case LeftTop:
           return AllIcons.Actions.MoveToLeftTop;
@@ -118,7 +118,7 @@ public final class ToolWindowMoveAction extends DumbAwareAction implements FusAw
       return getAnchor() == window.getAnchor() && window.isSplitMode() == isSplit();
     }
 
-    void applyTo(@NotNull ToolWindow window) {
+    public void applyTo(@NotNull ToolWindow window) {
       window.setAnchor(getAnchor(), null);
       window.setSplitMode(isSplit(), null);
     }

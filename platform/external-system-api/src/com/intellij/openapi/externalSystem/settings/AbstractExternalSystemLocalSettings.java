@@ -27,7 +27,7 @@ import static com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil.*;
  * For example, we don't want to store recent tasks list at common external system settings, hence, that data
  * is kept at user-local settings.
  * <p/>
- * <b>Note:</b> non-abstract sub-classes of this class are expected to be marked by {@link State} annotation configured
+ * <b>Note:</b> non-abstract subclasses of this class are expected to be marked by {@link State} annotation configured
  * to be stored under a distinct name at a {@link StoragePathMacros#CACHE_FILE}.
  *
  * @author Denis Zhdanov

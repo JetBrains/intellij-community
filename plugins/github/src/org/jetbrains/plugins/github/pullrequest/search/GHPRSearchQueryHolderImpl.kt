@@ -4,7 +4,7 @@ package org.jetbrains.plugins.github.pullrequest.search
 import com.intellij.openapi.Disposable
 import com.intellij.util.EventDispatcher
 import org.jetbrains.plugins.github.pullrequest.data.GHPRSearchQuery
-import org.jetbrains.plugins.github.pullrequest.ui.SimpleEventListener
+import com.intellij.collaboration.ui.SimpleEventListener
 import org.jetbrains.plugins.github.util.GithubUtil.Delegates.observableField
 
 internal class GHPRSearchQueryHolderImpl : GHPRSearchQueryHolder {

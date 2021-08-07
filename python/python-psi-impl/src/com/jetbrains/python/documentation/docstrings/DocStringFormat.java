@@ -24,9 +24,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Collections;
 import java.util.List;
 
-/**
- * @author yole
- */
+
 public enum DocStringFormat {
   /**
    * @see DocStringUtil#ensureNotPlainDocstringFormat(PsiElement)

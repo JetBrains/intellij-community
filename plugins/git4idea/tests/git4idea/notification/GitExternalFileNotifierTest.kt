@@ -85,7 +85,11 @@ class GitExternalFileNotifierTest : GitSingleRepoTest() {
   private fun assertAdded(file: File) =
     assertTrue(changeListManager.getStatus(getVirtualFile(file)) == FileStatus.ADDED)
 
-  private fun waitForAllEvents() = GitVcs.getInstance(project).vfsListener.waitForAllEventsProcessedInTestMode()
+  private fun waitForAllEvents() {
+    updateUntrackedFiles()
+    changeListManager.waitEverythingDoneInTestMode()
+    GitVcs.getInstance(project).vfsListener.waitForExternalFilesEventsProcessedInTestMode()
+  }
 
   private fun assertNotificationByMessage(notificationContent: String) =
     vcsNotifier.notifications.find { it.content == notificationContent }

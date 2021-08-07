@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.javadoc;
 
 import com.intellij.analysis.AnalysisScope;
@@ -244,7 +244,7 @@ public final class JavadocGeneratorRunProfile implements ModuleRunProfile {
         // e.g index.html, index-all.html and so on. Moreover, the final javadoc seems obscured in the case when one module contains
         // module-info file but another one is not.
         throw new CantRunException(JavaBundle.message("javadoc.gen.error.modules.without.module.info", modulesWithoutDescriptor.stream()
-          .map(m -> StringUtil.SINGLE_QUOTER.fun(m.getName())).collect(Collectors.joining(","))));
+          .map(m -> "'" + m.getName() + "'").collect(Collectors.joining(","))));
       }
 
       File argsFile = createTempArgsFile();

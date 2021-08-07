@@ -8,6 +8,7 @@ import com.intellij.codeInsight.documentation.render.DocRenderManager
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.colors.impl.AppEditorFontOptions
 import com.intellij.openapi.editor.colors.impl.FontPreferencesImpl
+import com.intellij.openapi.editor.ex.EditorSettingsExternalizable
 import com.intellij.openapi.editor.ex.util.EditorScrollingPositionKeeper
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
@@ -44,7 +45,11 @@ class LigaturesReaderModeProvider : ReaderModeProvider {
     scheme.fontPreferences =
       FontPreferencesImpl().also {
         preferences.copyTo(it)
-        it.setUseLigatures(readerMode && ReaderModeSettings.instance(project).showLigatures)
+        it.setUseLigatures(if (readerMode) {
+          ReaderModeSettings.instance(project).showLigatures
+        } else {
+          (AppEditorFontOptions.getInstance().fontPreferences as FontPreferencesImpl).useLigatures()
+        })
       }
   }
 }
@@ -64,6 +69,10 @@ class FontReaderModeProvider : ReaderModeProvider {
 
 class DocsRenderingReaderModeProvider : ReaderModeProvider {
   override fun applyModeChanged(project: Project, editor: Editor, readerMode: Boolean, fileIsOpenAlready: Boolean) {
-    DocRenderManager.setDocRenderingEnabled(editor, readerMode && ReaderModeSettings.instance(project).showRenderedDocs)
+    DocRenderManager.setDocRenderingEnabled(editor, if (readerMode) {
+      ReaderModeSettings.instance(project).showRenderedDocs
+    } else {
+      EditorSettingsExternalizable.getInstance().isDocCommentRenderingEnabled
+    })
   }
 }

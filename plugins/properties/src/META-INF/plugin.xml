@@ -2,11 +2,14 @@
   <id>com.intellij.properties</id>
   <name>Properties</name>
   <category>Languages</category>
-  <depends>com.intellij.modules.xml</depends>
   <description>
     Enables smart editing of .properties files.
   </description>
   <vendor>JetBrains</vendor>
+
+  <dependencies>
+    <plugin id="com.intellij.modules.xml"/>
+  </dependencies>
 
   <extensionPoints>
     <extensionPoint name="implicitPropertyUsageProvider"
@@ -85,6 +88,10 @@
                      key="trail.spaces.property.inspection.display.name" groupKey="properties.files.inspection.group.display.name"
                      enabledByDefault="true" level="WARNING"
                      implementationClass="com.intellij.lang.properties.codeInspection.TrailingSpacesInPropertyInspection"/>
+    <localInspection language="Properties" shortName="UseEllipsisInPropertyInspection" bundle="messages.PropertiesBundle"
+                     key="use.ellipsis.property.inspection.display.name" groupKey="properties.files.inspection.group.display.name"
+                     enabledByDefault="false" level="WARNING"
+                     implementationClass="com.intellij.lang.properties.codeInspection.UseEllipsisInPropertyInspection"/>
     <localInspection language="Properties" shortName="AlphaUnsortedPropertiesFile" bundle="messages.PropertiesBundle"
                      key="alpha.unsorted.properties.file.inspection.display.name" groupKey="properties.files.inspection.group.display.name"
                      enabledByDefault="false" level="WEAK WARNING"
@@ -124,6 +131,19 @@
 
     <lang.inspectionSuppressor language="Properties" implementationClass="com.intellij.lang.properties.codeInspection.PropertiesInspectionSuppressor"/>
     <qualifiedNameProvider implementation="com.intellij.lang.properties.ide.actions.PropertiesQualifiedNameProvider"/>
+
+    <intentionAction>
+      <className>com.intellij.lang.properties.actions.CopyPropertyValueToClipboardIntention</className>
+      <bundleName>messages.PropertiesBundle</bundleName>
+      <categoryKey>intention.category.properties</categoryKey>
+    </intentionAction>
+
+    <intentionAction>
+      <className>com.intellij.lang.properties.actions.CopyPropertyKeyToClipboardIntention</className>
+      <bundleName>messages.PropertiesBundle</bundleName>
+      <categoryKey>intention.category.properties</categoryKey>
+    </intentionAction>
+
   </extensions>
   <projectListeners>
     <listener class="com.intellij.lang.properties.Native2AsciiListener" topic="com.intellij.openapi.vfs.encoding.EncodingManagerListener"/>

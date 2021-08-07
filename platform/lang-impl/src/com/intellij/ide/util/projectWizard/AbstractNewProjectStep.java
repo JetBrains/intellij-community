@@ -1,9 +1,9 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.util.projectWizard;
 
 import com.intellij.ide.RecentProjectsManager;
 import com.intellij.ide.impl.OpenProjectTask;
-import com.intellij.ide.impl.TrustedProjects;
+import com.intellij.ide.impl.TrustedProjectSettings;
 import com.intellij.ide.util.projectWizard.actions.ProjectSpecificAction;
 import com.intellij.idea.ActionsBundle;
 import com.intellij.internal.statistic.eventLog.FeatureUsageData;
@@ -21,19 +21,21 @@ import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.wm.impl.welcomeScreen.ActionsWithPanelProvider;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.IdeFrame;
+import com.intellij.openapi.wm.impl.welcomeScreen.ActionsWithPanelProvider;
 import com.intellij.openapi.wm.impl.welcomeScreen.NewWelcomeScreen;
 import com.intellij.platform.*;
 import com.intellij.platform.templates.ArchivedTemplatesFactory;
 import com.intellij.platform.templates.LocalArchivedTemplate;
 import com.intellij.platform.templates.TemplateProjectDirectoryGenerator;
 import com.intellij.util.PairConsumer;
+import com.intellij.util.ThreeState;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -52,6 +54,8 @@ public abstract class AbstractNewProjectStep<T> extends DefaultActionGroup imple
   static final ExtensionPointName<DirectoryProjectGenerator<?>> EP_NAME = new ExtensionPointName<>("com.intellij.directoryProjectGenerator");
 
   private static final Logger LOG = Logger.getInstance(AbstractNewProjectStep.class);
+  private static final Key<Boolean> CREATED_KEY = new Key<>("abstract.new.project.step.created");
+
   private final Customization<T> myCustomization;
 
   protected AbstractNewProjectStep(@NotNull Customization<T> customization) {
@@ -175,13 +179,6 @@ public abstract class AbstractNewProjectStep<T> extends DefaultActionGroup imple
       DirectoryProjectGenerator<T> generator = settings.getProjectGenerator();
       T actualSettings = projectGeneratorPeer.getSettings();
       Project project = doGenerateProject(projectToClose, settings.getProjectLocation(), generator, actualSettings);
-      if (project != null && shouldTrustCreatedProject()) {
-        TrustedProjects.setTrusted(project, true);
-      }
-    }
-
-    public boolean shouldTrustCreatedProject() {
-      return false;
     }
   }
 
@@ -224,9 +221,19 @@ public abstract class AbstractNewProjectStep<T> extends DefaultActionGroup imple
       ((TemplateProjectDirectoryGenerator<?>)generator).generateProject(baseDir.getName(), locationString);
     }
 
-    OpenProjectTask options = OpenProjectTask.newProjectFromWizardAndRunConfigurators(projectToClose, /* isRefreshVfsNeeded = */ false);
+    OpenProjectTask options = OpenProjectTask.newProjectFromWizardAndRunConfigurators(projectToClose, /* isRefreshVfsNeeded = */ false)
+      .withBeforeOpenCallback((project) -> {
+        // set project trusted state directly to avoid notification
+        var service = project.getService(TrustedProjectSettings.class);
+        if (service != null) {
+          service.setTrustedState(ThreeState.YES);
+        }
+
+        project.putUserData(CREATED_KEY, true);
+        return true;
+      });
     Project project = ProjectManagerEx.getInstanceEx().openProject(location, options);
-    if (project != null && generator != null) {
+    if (project != null && generator != null && !(generator instanceof TemplateProjectDirectoryGenerator)) {
       generator.generateProject(project, baseDir, settings, ModuleManager.getInstance(project).getModules()[0]);
     }
     logProjectGeneratedEvent(generator, project);
@@ -242,5 +249,9 @@ public abstract class AbstractNewProjectStep<T> extends DefaultActionGroup imple
     }
 
     FUCounterUsageLogger.getInstance().logEvent(project, "new.project.wizard", "project.generated", data);
+  }
+
+  public static boolean created(@NotNull Project project) {
+    return Boolean.TRUE.equals(project.getUserData(CREATED_KEY));
   }
 }

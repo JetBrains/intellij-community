@@ -1,7 +1,6 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.usages.impl.rules;
 
-import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.psi.PsiComment;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -13,8 +12,6 @@ import com.intellij.usages.rules.SingleParentUsageGroupingRule;
 import com.intellij.usages.rules.UsageGroupingRuleEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import javax.swing.*;
 
 public class UsageTypeGroupingRule extends SingleParentUsageGroupingRule implements UsageGroupingRuleEx {
   @Nullable
@@ -71,6 +68,11 @@ public class UsageTypeGroupingRule extends SingleParentUsageGroupingRule impleme
   }
 
   @Override
+  public int getRank() {
+    return UsageGroupingRulesDefaultRanks.USAGE_TYPE.getAbsoluteRank();
+  }
+
+  @Override
   public @Nullable String getGroupingActionId() {
     return "UsageGrouping.UsageType";
   }
@@ -83,27 +85,11 @@ public class UsageTypeGroupingRule extends SingleParentUsageGroupingRule impleme
     }
 
     @Override
-    public void update() {
-    }
-
-    @Override
-    public Icon getIcon(boolean isOpen) {
-      return null;
-    }
-
-    @Override
     @NotNull
-    public String getText(@Nullable UsageView view) {
+    public String getPresentableGroupText() {
       return myUsageType.toString();
     }
 
-    @Override
-    public FileStatus getFileStatus() {
-      return null;
-    }
-
-    @Override
-    public boolean isValid() { return true; }
     @Override
     public void navigate(boolean focus) { }
     @Override
@@ -116,7 +102,7 @@ public class UsageTypeGroupingRule extends SingleParentUsageGroupingRule impleme
 
     @Override
     public int compareTo(@NotNull UsageGroup usageGroup) {
-      return getText(null).compareTo(usageGroup.getText(null));
+      return getPresentableGroupText().compareTo(usageGroup.getPresentableGroupText());
     }
 
     public boolean equals(Object o) {

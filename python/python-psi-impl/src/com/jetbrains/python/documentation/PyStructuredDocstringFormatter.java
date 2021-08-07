@@ -23,9 +23,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-/**
- * @author yole
- */
+
 public final class PyStructuredDocstringFormatter {
 
   private static final Logger LOG = Logger.getInstance(PyStructuredDocstringFormatter.class);

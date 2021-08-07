@@ -173,6 +173,7 @@ public abstract class ProgressManager extends ProgressIndicatorProvider {
                                                             @NotNull Runnable process,
                                                             @Nullable Runnable successRunnable,
                                                             @Nullable Runnable canceledRunnable);
+
   /**
    * Runs a specified {@code process} in a background thread and shows a progress dialog, which can be made non-modal by pressing
    * background button. Upon successful termination of the process a {@code successRunnable} will be called in Swing UI thread and
@@ -274,5 +275,6 @@ public abstract class ProgressManager extends ProgressIndicatorProvider {
    * This is intended for relatively short (expected to be under 10 seconds) background activities that the user is waiting for
    * (e.g. code navigation), and which shouldn't be slowed down by CPU-intensive background tasks like highlighting or indexing.
    */
+  @ApiStatus.Internal
   public abstract <T, E extends Throwable> T computePrioritized(@NotNull ThrowableComputable<T, E> computable) throws E;
 }

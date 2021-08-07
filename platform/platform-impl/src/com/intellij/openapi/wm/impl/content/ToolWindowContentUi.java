@@ -15,10 +15,10 @@ import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.*;
-import com.intellij.openapi.wm.impl.ToolWindowEventSource;
-import com.intellij.openapi.wm.impl.ToolWindowImpl;
-import com.intellij.openapi.wm.impl.ToolWindowManagerImpl;
+import com.intellij.openapi.wm.impl.*;
+import com.intellij.ui.ComponentUtil;
 import com.intellij.ui.PopupHandler;
 import com.intellij.ui.content.*;
 import com.intellij.ui.content.tabs.PinToolwindowTabAction;
@@ -86,7 +86,7 @@ public final class ToolWindowContentUi implements ContentUI, DataProvider {
                              @NotNull JPanel contentComponent) {
     this.contentManager = contentManager;
     type = window.getWindowInfo().getContentUiType();
-    tabsLayout = new TabContentLayout(this);
+    tabsLayout = new SingleContentLayout(this);
     this.window = window;
     this.contentComponent = contentComponent;
 
@@ -94,6 +94,9 @@ public final class ToolWindowContentUi implements ContentUI, DataProvider {
 
     contentManager.addContentManagerListener(new ContentManagerListener() {
       private final PropertyChangeListener propertyChangeListener = new PropertyChangeListener() {
+        /**
+         * @see Content#PROP_TAB_LAYOUT
+         */
         @Override
         public void propertyChange(PropertyChangeEvent event) {
           update();
@@ -140,6 +143,11 @@ public final class ToolWindowContentUi implements ContentUI, DataProvider {
   @NotNull
   public String getToolWindowId() {
     return window.getId();
+  }
+
+  @NotNull
+  public ToolWindow getWindow() {
+    return window;
   }
 
   private boolean isResizeable() {
@@ -299,6 +307,9 @@ public final class ToolWindowContentUi implements ContentUI, DataProvider {
   }
 
   public static void initMouseListeners(@NotNull JComponent c, @NotNull ToolWindowContentUi ui, boolean allowResize) {
+    initMouseListeners(c, ui, allowResize, false);
+  }
+  public static void initMouseListeners(@NotNull JComponent c, @NotNull ToolWindowContentUi ui, boolean allowResize, boolean allowDrag) {
     if (c.getClientProperty(TOOLWINDOW_UI_INSTALLED) != null) {
       return;
     }
@@ -329,6 +340,9 @@ public final class ToolWindowContentUi implements ContentUI, DataProvider {
               && ((Splitter)parent).getFirstComponent() != null) {
             return parent;
           }
+          if (parent instanceof ToolWindowsPane) {
+            return parent;
+          }
           component = parent;
           parent = parent.getParent();
         }
@@ -349,6 +363,11 @@ public final class ToolWindowContentUi implements ContentUI, DataProvider {
           myInitialHeight.set(splitter.getSecondComponent().getHeight());
           return;
         }
+        if (component instanceof ToolWindowsPane) {
+          myIsLastComponent.set(ui.window.getAnchor() == ToolWindowAnchor.BOTTOM || ui.window.getAnchor() == ToolWindowAnchor.RIGHT);
+          myInitialHeight.set(ui.window.getAnchor().isHorizontal() ? ui.window.getDecorator().getHeight() : ui.window.getDecorator().getWidth());
+          return;
+        }
         myIsLastComponent.set(null);
         myInitialHeight.set(null);
         myPressPoint.set(null);
@@ -358,7 +377,7 @@ public final class ToolWindowContentUi implements ContentUI, DataProvider {
       @Override
       public void mousePressed(@NotNull MouseEvent e) {
         PointerInfo info = MouseInfo.getPointerInfo();
-        if (!e.isPopupTrigger()) {
+        if (!e.isPopupTrigger() && !isToolWindowDrag(e)) {
           if (!UIUtil.isCloseClick(e)) {
             myLastPoint.set(info != null ? info.getLocation() : e.getLocationOnScreen());
             myPressPoint.set(myLastPoint.get());
@@ -383,6 +402,10 @@ public final class ToolWindowContentUi implements ContentUI, DataProvider {
 
       @Override
       public void mouseMoved(MouseEvent e) {
+        if (isToolWindowDrag(e)) {
+          c.setCursor(Cursor.getDefaultCursor());
+          return;
+        }
         c.setCursor(allowResize && ui.isResizeable() && getActualSplitter() != null && c.getComponentAt(e.getPoint()) == c && ui.isResizeable(e.getPoint())
                     ? Cursor.getPredefinedCursor(Cursor.N_RESIZE_CURSOR)
                     : Cursor.getDefaultCursor());
@@ -393,10 +416,21 @@ public final class ToolWindowContentUi implements ContentUI, DataProvider {
         c.setCursor(null);
       }
 
+      private boolean isToolWindowDrag(MouseEvent e) {
+        if (!Registry.is("ide.new.tool.window.dnd")) return false;
+        Component realMouseTarget = SwingUtilities.getDeepestComponentAt(e.getComponent(), e.getX(), e.getY());
+        Component decorator = ComponentUtil.findParentByCondition(realMouseTarget, c -> c instanceof InternalDecoratorImpl);
+        if (decorator == null || ui.window.getType() == ToolWindowType.FLOATING || ui.window.getType() == ToolWindowType.WINDOWED) return false;
+        if (ui.window.getAnchor() != ToolWindowAnchor.BOTTOM) return true;
+        if (SwingUtilities.convertMouseEvent(e.getComponent(), e, decorator).getY() > ToolWindowsPane.getHeaderResizeArea()) return true;//it's drag, not resize!
+        return false;
+      }
+
       @Override
       public void mouseDragged(MouseEvent e) {
         if (myLastPoint.isNull() || myPressPoint.isNull() || myDragTracker.isNull()) return;
-
+        //"Dock" modes,
+        // for "Undock" mode processing see com.intellij.openapi.wm.impl.InternalDecoratorImpl.ResizeOrMoveDocketToolWindowMouseListener
         PointerInfo info = MouseInfo.getPointerInfo();
         if (info == null) return;
         Point newMouseLocation = info.getLocation();
@@ -407,6 +441,7 @@ public final class ToolWindowContentUi implements ContentUI, DataProvider {
         }
         myLastPoint.set(newMouseLocation);
         Component component = getActualSplitter();
+        if (isToolWindowDrag(e)) return;//it's drag, not resize!
         if (component instanceof ThreeComponentsSplitter) {
           ThreeComponentsSplitter splitter = (ThreeComponentsSplitter)component;
           if (myIsLastComponent.get() == Boolean.TRUE) {
@@ -419,6 +454,17 @@ public final class ToolWindowContentUi implements ContentUI, DataProvider {
         if (component instanceof Splitter) {
           Splitter splitter = (Splitter)component;
           splitter.setProportion(Math.max(0, Math.min(1, 1f - (float)(myInitialHeight.get() + myPressPoint.get().y - myLastPoint.get().y )/ splitter.getHeight())));
+        }
+        if (component instanceof ToolWindowsPane) {
+          if (ui.window.getType() == ToolWindowType.SLIDING) {
+            ui.window.getDecorator().updateBounds(e);
+          } else {
+            Dimension size = ui.window.getDecorator().getSize();
+            if (ui.window.getAnchor().isHorizontal()) {
+              size.height = myInitialHeight.get() - myLastPoint.get().y + myPressPoint.get().y;
+            }
+            ui.window.getDecorator().setSize(size);
+          }
         }
       }
     };

@@ -17,12 +17,13 @@
 package com.intellij.openapi.fileEditor.impl.text;
 
 import com.intellij.codeInsight.TargetElementUtil;
+import com.intellij.codeInsight.navigation.NavigationUtil;
 import com.intellij.ide.IdeView;
-import com.intellij.ide.util.EditorHelper;
 import com.intellij.injected.editor.EditorWindow;
 import com.intellij.lang.Language;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.actionSystem.DataProvider;
+import com.intellij.openapi.actionSystem.InjectedDataKeys;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Caret;
@@ -32,7 +33,6 @@ import com.intellij.openapi.fileEditor.EditorDataProvider;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.injected.InjectedCaret;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
@@ -43,7 +43,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Collections;
 import java.util.LinkedHashSet;
 
-import static com.intellij.openapi.actionSystem.AnActionEvent.injectedId;
 import static com.intellij.openapi.actionSystem.LangDataKeys.*;
 import static com.intellij.util.containers.ContainerUtil.addIfNotNull;
 
@@ -75,10 +74,7 @@ public class TextEditorPsiDataProvider implements EditorDataProvider {
 
           @Override
           public void selectElement(final PsiElement element) {
-            Editor editor = EditorHelper.openInEditor(element);
-            if (editor != null) {
-              ToolWindowManager.getInstance(element.getProject()).activateEditorComponent();
-            }
+            NavigationUtil.activateFileWithPsiElement(element);
           }
 
           @Override
@@ -108,44 +104,45 @@ public class TextEditorPsiDataProvider implements EditorDataProvider {
     if (file == null || !file.isValid()) return null;
 
     Project project = e.getProject();
-    if (dataId.equals(injectedId(EDITOR.getName()))) {
+    if (PSI_FILE.is(dataId)) {
+      return getPsiFile(e, file);
+    }
+    if (InjectedDataKeys.EDITOR.is(dataId)) {
       if (project != null &&
           PsiDocumentManager.getInstance(project).isCommitted(e.getDocument()) &&
           InjectedLanguageManager.getInstance(project).mightHaveInjectedFragmentAtOffset(e.getDocument(), caret.getOffset())) {
         //noinspection deprecation
         return InjectedLanguageUtil.getEditorForInjectedLanguageNoCommit(e, caret, getPsiFile(e, file));
       }
-      return e;
+      return null;
     }
-    if (dataId.equals(injectedId(CARET.getName()))) {
-      Editor editor = (Editor)getSlowData(injectedId(EDITOR.getName()), e, caret);
-      return editor == null ? null : getInjectedCaret(editor, caret);
+    if (InjectedDataKeys.CARET.is(dataId)) {
+      return querySlowInjectedCaret(e, caret);
     }
-    if (dataId.equals(injectedId(VIRTUAL_FILE.getName()))) {
-      PsiFile psiFile = (PsiFile)getSlowData(injectedId(PSI_FILE.getName()), e, caret);
+    if (InjectedDataKeys.VIRTUAL_FILE.is(dataId)) {
+      PsiFile psiFile = querySlowInjectedPsiFile(e, caret);
       if (psiFile == null) return null;
       return psiFile.getVirtualFile();
     }
-    if (dataId.equals(injectedId(PSI_FILE.getName()))) {
-      Editor editor = (Editor)getSlowData(injectedId(EDITOR.getName()), e, caret);
+    if (InjectedDataKeys.PSI_FILE.is(dataId)) {
+      Editor editor = querySlowInjectedEditor(e, caret);
       if (editor == null || project == null) return null;
       return PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
     }
-    if (dataId.equals(injectedId(PSI_ELEMENT.getName()))) {
-      Editor editor = (Editor)getSlowData(injectedId(EDITOR.getName()), e, caret);
+    if (InjectedDataKeys.PSI_ELEMENT.is(dataId)) {
+      EditorWindow editor = querySlowInjectedEditor(e, caret);
       if (editor == null) return null;
-      Caret injectedCaret = getInjectedCaret(editor, caret);
-      return getPsiElementIn(editor, injectedCaret, file);
+      InjectedCaret injectedCaret = getInjectedCaret(editor, caret);
+      return injectedCaret == null ? null : getPsiElementIn(editor, injectedCaret, file);
     }
     if (PSI_ELEMENT.is(dataId)) {
       return getPsiElementIn(e, caret, file);
     }
-    if (dataId.equals(injectedId(LANGUAGE.getName()))) {
-      PsiFile psiFile = (PsiFile)getSlowData(injectedId(PSI_FILE.getName()), e, caret);
-      Editor editor = (Editor)getSlowData(injectedId(EDITOR.getName()), e, caret);
-      if (psiFile == null || editor == null) return null;
-      Caret injectedCaret = getInjectedCaret(editor, caret);
-      return getLanguageAtCurrentPositionInEditor(injectedCaret, psiFile);
+    if (InjectedDataKeys.LANGUAGE.is(dataId)) {
+      PsiFile psiFile = querySlowInjectedPsiFile(e, caret);
+      if (psiFile == null) return null;
+      InjectedCaret injectedCaret = querySlowInjectedCaret(e, caret);
+      return injectedCaret == null ? null : getLanguageAtCurrentPositionInEditor(injectedCaret, psiFile);
     }
     if (LANGUAGE.is(dataId)) {
       PsiFile psiFile = getPsiFile(e, file);
@@ -154,7 +151,7 @@ public class TextEditorPsiDataProvider implements EditorDataProvider {
     }
     if (CONTEXT_LANGUAGES.is(dataId)) {
       LinkedHashSet<Language> set = new LinkedHashSet<>(4);
-      Language injectedLanguage = (Language)getSlowData(injectedId(LANGUAGE.getName()), e, caret);
+      Language injectedLanguage = (Language)getSlowData(InjectedDataKeys.LANGUAGE.getName(), e, caret);
       addIfNotNull(set, injectedLanguage);
       Language language = (Language)getSlowData(LANGUAGE.getName(), e, caret);
       addIfNotNull(set, language);
@@ -167,14 +164,28 @@ public class TextEditorPsiDataProvider implements EditorDataProvider {
     return null;
   }
 
-  @NotNull
-  private static Caret getInjectedCaret(@NotNull Editor editor, @NotNull Caret hostCaret) {
-    if (!(editor instanceof EditorWindow) || hostCaret instanceof InjectedCaret) {
-      return hostCaret;
+  // here there's a convention that query* methods below can call getSlowData() whereas get* methods can't
+  private EditorWindow querySlowInjectedEditor(@NotNull Editor e, @NotNull Caret caret) {
+    Object editor = getSlowData(InjectedDataKeys.EDITOR.getName(), e, caret);
+    return editor instanceof EditorWindow ? (EditorWindow)editor : null;
+  }
+
+  private InjectedCaret querySlowInjectedCaret(@NotNull Editor e, @NotNull Caret caret) {
+    EditorWindow editor = querySlowInjectedEditor(e, caret);
+    return editor == null ? null : getInjectedCaret(editor, caret);
+  }
+
+  private PsiFile querySlowInjectedPsiFile(@NotNull Editor e, @NotNull Caret caret) {
+    return (PsiFile)getSlowData(InjectedDataKeys.PSI_FILE.getName(), e, caret);
+  }
+
+  private static InjectedCaret getInjectedCaret(@NotNull EditorWindow editor, @NotNull Caret hostCaret) {
+    if (hostCaret instanceof InjectedCaret) {
+      return (InjectedCaret)hostCaret;
     }
     for (Caret caret : editor.getCaretModel().getAllCarets()) {
       if (((InjectedCaret)caret).getDelegate() == hostCaret) {
-        return caret;
+        return (InjectedCaret)caret;
       }
     }
     throw new IllegalArgumentException("Cannot find injected caret corresponding to " + hostCaret);

@@ -1,10 +1,10 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util;
 
 import com.intellij.diagnostic.PluginException;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.impl.ApplicationInfoImpl;
+import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
 import com.intellij.psi.util.CachedValueProvider;
@@ -16,8 +16,10 @@ import org.jetbrains.annotations.Nullable;
 
 import java.lang.ref.Reference;
 import java.lang.reflect.Field;
-import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Objects;
+import java.util.Set;
 import java.util.concurrent.ConcurrentMap;
 import java.util.function.Supplier;
 
@@ -69,7 +71,7 @@ final class CachedValueStabilityChecker {
   }
 
   static void checkProvidersEquivalent(CachedValueProvider<?> p1, CachedValueProvider<?> p2, Key<?> key) {
-    if (p1 == p2 || !DO_CHECKS || ApplicationInfoImpl.isInStressTest()) return;
+    if (p1 == p2 || !DO_CHECKS || ApplicationManagerEx.isInStressTest()) return;
 
     if (p1.getClass() != p2.getClass()) {
       if (!seemConcurrentlyCreatedLambdas(p1.getClass(), p2.getClass())) {

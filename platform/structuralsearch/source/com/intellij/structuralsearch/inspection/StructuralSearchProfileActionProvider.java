@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.structuralsearch.inspection;
 
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
@@ -16,6 +16,7 @@ import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.ValidationInfo;
+import com.intellij.openapi.util.NlsActions;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
@@ -48,11 +49,23 @@ public class StructuralSearchProfileActionProvider extends InspectionProfileActi
   @NotNull
   @Override
   public List<AnAction> getActions(@NotNull SingleInspectionProfilePanel panel) {
-    final InspectionProfileModifiableModel profile = panel.getProfile();
+    enableSSIfDisabled(panel.getProfile(), panel.getProject());
+    final DefaultActionGroup actionGroup = new DefaultActionGroup(
+      new AddInspectionAction(panel, SSRBundle.message("SSRInspection.add.search.template.button"), false),
+      new AddInspectionAction(panel, SSRBundle.message("SSRInspection.add.replace.template.button"), true)
+    );
+    actionGroup.setPopup(true);
+    actionGroup.registerCustomShortcutSet(CommonShortcuts.getNew(), panel);
+    final Presentation presentation = actionGroup.getTemplatePresentation();
+    presentation.setIcon(AllIcons.General.Add);
+    presentation.setText(SSRBundle.messagePointer("add.inspection.button"));
+    return Arrays.asList(actionGroup, new RemoveInspectionAction(panel));
+  }
+
+  private static void enableSSIfDisabled(@NotNull InspectionProfileModifiableModel profile, @NotNull Project project) {
     if (profile.getToolsOrNull(SSBasedInspection.SHORT_NAME, null) != null &&
         !profile.isToolEnabled(HighlightDisplayKey.find(SSBasedInspection.SHORT_NAME))) {
-      // enable SSBasedInspection if it was manually disabled
-      profile.setToolEnabled(SSBasedInspection.SHORT_NAME, true, panel.getProject(), false);
+      profile.setToolEnabled(SSBasedInspection.SHORT_NAME, true, project, false);
 
       for (ScopeToolState tool : profile.getAllTools()) {
         final InspectionToolWrapper<?, ?> wrapper = tool.getTool();
@@ -61,17 +74,6 @@ public class StructuralSearchProfileActionProvider extends InspectionProfileActi
         }
       }
     }
-
-    final DefaultActionGroup actionGroup = new DefaultActionGroup(
-      new AddInspectionAction(panel, false),
-      new AddInspectionAction(panel, true)
-    );
-    actionGroup.setPopup(true);
-    actionGroup.registerCustomShortcutSet(CommonShortcuts.INSERT, panel);
-    final Presentation presentation = actionGroup.getTemplatePresentation();
-    presentation.setIcon(AllIcons.General.Add);
-    presentation.setText(SSRBundle.messagePointer("add.inspection.button"));
-    return Arrays.asList(actionGroup, new RemoveInspectionAction(panel));
   }
 
   private static final class RemoveInspectionAction extends DumbAwareAction {
@@ -102,14 +104,12 @@ public class StructuralSearchProfileActionProvider extends InspectionProfileActi
     }
   }
 
-  private static final class AddInspectionAction extends DumbAwareAction {
+  static final class AddInspectionAction extends DumbAwareAction {
     private final SingleInspectionProfilePanel myPanel;
     private final boolean myReplace;
 
-    private AddInspectionAction(@NotNull SingleInspectionProfilePanel panel, boolean replace) {
-      super(replace
-            ? SSRBundle.message("SSRInspection.add.replace.template.button")
-            : SSRBundle.message("SSRInspection.add.search.template.button"));
+    AddInspectionAction(@NotNull SingleInspectionProfilePanel panel, @NlsActions.ActionText String text, boolean replace) {
+      super(text);
       myPanel = panel;
       myReplace = replace;
     }
@@ -117,17 +117,14 @@ public class StructuralSearchProfileActionProvider extends InspectionProfileActi
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
       final SearchContext context = new SearchContext(e.getDataContext());
+
       final StructuralSearchDialog dialog = new StructuralSearchDialog(context, myReplace, true);
-      if (!dialog.showAndGet()) {
-        return;
-      }
+      if (!dialog.showAndGet()) return;
+
       final InspectionProfileModifiableModel profile = myPanel.getProfile();
-      final Project project = e.getData(CommonDataKeys.PROJECT);
-      assert project != null;
       final Configuration configuration = dialog.getConfiguration();
-      if (!createNewInspection(configuration, project, profile)) {
-        return;
-      }
+      if (!createNewInspection(configuration, context.getProject(), profile)) return;
+
       myPanel.selectInspectionTool(configuration.getUuid().toString());
     }
   }
@@ -136,7 +133,7 @@ public class StructuralSearchProfileActionProvider extends InspectionProfileActi
     createNewInspection(configuration, project, InspectionProfileManager.getInstance(project).getCurrentProfile());
   }
 
-  private static boolean createNewInspection(@NotNull Configuration configuration,
+  public static boolean createNewInspection(@NotNull Configuration configuration,
                                              @NotNull Project project,
                                              @NotNull InspectionProfileImpl profile) {
     final SSBasedInspection inspection = InspectionProfileUtil.getStructuralSearchInspection(profile);

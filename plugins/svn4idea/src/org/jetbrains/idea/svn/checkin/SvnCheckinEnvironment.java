@@ -17,9 +17,9 @@ import com.intellij.openapi.vcs.checkin.CheckinEnvironment;
 import com.intellij.openapi.vcs.ui.RefreshableOnComponent;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.Convertor;
 import com.intellij.util.containers.MultiMap;
-import it.unimi.dsi.fastutil.objects.ObjectOpenCustomHashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.*;
@@ -102,7 +102,7 @@ public final class SvnCheckinEnvironment implements CheckinEnvironment {
 
   @NotNull
   private Collection<FilePath> getCommitables(@NotNull List<? extends Change> changes) {
-    Set<FilePath> result = new ObjectOpenCustomHashSet<>(ChangesUtil.CASE_SENSITIVE_FILE_PATH_HASHING_STRATEGY);
+    Set<FilePath> result = CollectionFactory.createCustomHashingStrategySet(ChangesUtil.CASE_SENSITIVE_FILE_PATH_HASHING_STRATEGY);
     ChangesUtil.getPaths(changes.stream()).forEach(path -> {
       if (result.add(path)) {
         addParents(result, path);

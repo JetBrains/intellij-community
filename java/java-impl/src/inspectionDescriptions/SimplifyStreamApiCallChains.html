@@ -1,9 +1,9 @@
 <html>
 <body>
-Reports stream API call chains which can be simplified.
-It allows to avoid creating redundant temporary objects when traversing a collection.
+<p>Reports stream API call chains that can be simplified.
+  It enables you to avoid creating redundant temporary objects when traversing a collection.</p>
 <p>
-  The following call chains are replaced by this inspection:
+  The inspection replaces the following call chains:
 </p>
 <ul>
   <li><code>collection.stream().forEach()</code> &rarr; <code>collection.forEach()</code></li>
@@ -31,12 +31,11 @@ It allows to avoid creating redundant temporary objects when traversing a collec
   <li><code>optional.orElseGet(() -> { throw new ...; })</code> &rarr; <code>optional.orElseThrow()</code></li>
 </ul>
 <p>
-  Note that the replacements semantic may have minor difference in some cases.
-  For example, <code>Collections.synchronizedList(...).stream().forEach()</code> is not
-  synchronized while <code>Collections.synchronizedList(...).forEach()</code> is synchronized.
-  Or <code>collect(Collectors.maxBy())</code> would return an empty <code>Optional</code> if the resulting
-  element is <code>null</code> while <code>Stream.max()</code> will throw <code>NullPointerException</code>
-  in this case.
+  Note that the replacements semantic may have minor difference in some cases. For example,
+  <code>Collections.synchronizedList(...).stream().forEach()</code> is not synchronized while
+  <code>Collections.synchronizedList(...).forEach()</code> is synchronized.
+  Also, <code>collect(Collectors.maxBy())</code> returns an empty <code>Optional</code> if the resulting element is
+  <code>null</code> while <code>Stream.max()</code> throws <code>NullPointerException</code> in this case.
 </p>
 </body>
 </html>

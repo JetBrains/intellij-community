@@ -1,6 +1,7 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.refactoring.convertToJava;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.PsiMethod;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
@@ -14,6 +15,7 @@ import java.util.Map;
  * @date: 03.05.2007
  */
 public final class GroovyToJavaGenerator {
+  private static final Logger LOG = Logger.getInstance(GroovyToJavaGenerator.class);
   private static final Map<String, String> typesToInitialValues = new HashMap<>();
 
   static {
@@ -32,6 +34,23 @@ public final class GroovyToJavaGenerator {
     final String result = typesToInitialValues.get(typeCanonicalText);
     if (result == null) return "null";
     return result;
+  }
+
+  @NotNull
+  static String convertToJavaIdentifier(@NotNull String groovyIdentifier) {
+    LOG.assertTrue(!groovyIdentifier.isEmpty());
+    StringBuilder javaIdentifier = new StringBuilder(groovyIdentifier.length());
+    if (!Character.isJavaIdentifierStart(groovyIdentifier.charAt(0))) {
+      javaIdentifier.append("_");
+    }
+    for (char letter : groovyIdentifier.toCharArray()) {
+      if (Character.isJavaIdentifierPart(letter)) {
+        javaIdentifier.append(letter);
+      } else {
+        javaIdentifier.append("_");
+      }
+    }
+    return javaIdentifier.toString();
   }
 
   public static String generateMethodStub(@NotNull PsiMethod method) {

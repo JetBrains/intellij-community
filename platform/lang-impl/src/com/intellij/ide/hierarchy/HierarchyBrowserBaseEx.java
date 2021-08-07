@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.hierarchy;
 
 import com.intellij.icons.AllIcons;
@@ -49,7 +49,6 @@ import com.intellij.util.EditSourceOnEnterKeyHandler;
 import com.intellij.util.SingleAlarm;
 import com.intellij.util.SlowOperations;
 import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -57,17 +56,19 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
-import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreeNode;
 import java.awt.*;
 import java.io.File;
 import java.text.MessageFormat;
 import java.util.List;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Supplier;
 
 public abstract class HierarchyBrowserBaseEx extends HierarchyBrowserBase implements OccurenceNavigator {
   private static final Logger LOG = Logger.getInstance(HierarchyBrowserBaseEx.class);
+
+  public static final DataKey<HierarchyBrowserBaseEx> HIERARCHY_BROWSER = DataKey.create("HIERARCHY_BROWSER");
 
   public static final String SCOPE_PROJECT = "Production";
   public static final String SCOPE_ALL = "All";
@@ -77,19 +78,19 @@ public abstract class HierarchyBrowserBaseEx extends HierarchyBrowserBase implem
 
   public static final String HELP_ID = "reference.toolWindows.hierarchy";
 
-  private String myCurrentViewType;
+  private final AtomicReference<Sheet> myCurrentSheet = new AtomicReference<>();
 
   private final Map<String, Supplier<@Nls String>> myI18nMap;
 
   private static class Sheet implements Disposable {
     private AsyncTreeModel myAsyncTreeModel;
-    private StructureTreeModel myStructureTreeModel;
-    private final @NotNull String myType;
+    private StructureTreeModel<HierarchyTreeStructure> myStructureTreeModel;
+    private final @Nls @NotNull String myType;
     private final JTree myTree;
     private String myScope;
     private final OccurenceNavigator myOccurenceNavigator;
 
-    Sheet(@NotNull String type, @NotNull JTree tree, @NotNull String scope, @NotNull OccurenceNavigator occurenceNavigator) {
+    Sheet(@Nls @NotNull String type, @NotNull JTree tree, @NotNull String scope, @NotNull OccurenceNavigator occurenceNavigator) {
       myType = type;
       myTree = tree;
       myScope = scope;
@@ -106,7 +107,7 @@ public abstract class HierarchyBrowserBaseEx extends HierarchyBrowserBase implem
   private final Map<String, Sheet> myType2Sheet = new HashMap<>();
   private final RefreshAction myRefreshAction = new RefreshAction();
   private final SingleAlarm myCursorAlarm = new SingleAlarm(() -> setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR)), 100, this);
-  private SmartPsiElementPointer mySmartPsiElementPointer;
+  private SmartPsiElementPointer<?> mySmartPsiElementPointer;
   private final CardLayout myCardLayout;
   private final JPanel myTreePanel;
   private boolean myCachedIsValidBase;
@@ -119,17 +120,17 @@ public abstract class HierarchyBrowserBaseEx extends HierarchyBrowserBase implem
     myCardLayout = new CardLayout();
     myTreePanel = new JPanel(myCardLayout);
 
-    Map<String, JTree> type2treeMap = new HashMap<>();
+    Map<@Nls String, JTree> type2treeMap = new HashMap<>();
     createTrees(type2treeMap);
 
     myI18nMap = getPresentableNameMap();
 
     HierarchyBrowserManager.State state = HierarchyBrowserManager.getSettings(project);
+    String scope = state.SCOPE == null ? SCOPE_ALL : state.SCOPE;
 
-    for (Map.Entry<String, JTree> entry : type2treeMap.entrySet()) {
+    for (Map.Entry<@Nls String, JTree> entry : type2treeMap.entrySet()) {
+      @Nls String type = entry.getKey();
       JTree tree = entry.getValue();
-      String type = entry.getKey();
-      String scope = state.SCOPE != null ? state.SCOPE : SCOPE_ALL;
 
       OccurenceNavigatorSupport occurenceNavigatorSupport = new OccurenceNavigatorSupport(tree) {
         @Override
@@ -158,20 +159,19 @@ public abstract class HierarchyBrowserBaseEx extends HierarchyBrowserBase implem
         }
       };
 
-
       myType2Sheet.put(type, new Sheet(type, tree, scope, occurenceNavigatorSupport));
       myTreePanel.add(ScrollPaneFactory.createScrollPane(tree), type);
     }
 
-    final JPanel legendPanel = createLegendPanel();
-    final JPanel contentPanel;
-    if (legendPanel != null) {
+    JPanel legendPanel = createLegendPanel();
+    JPanel contentPanel;
+    if (legendPanel == null) {
+      contentPanel = myTreePanel;
+    }
+    else {
       contentPanel = new JPanel(new BorderLayout());
       contentPanel.add(myTreePanel, BorderLayout.CENTER);
       contentPanel.add(legendPanel, BorderLayout.SOUTH);
-    }
-    else {
-      contentPanel = myTreePanel;
     }
 
     buildUi(createToolbar(getActionPlace(), HELP_ID).getComponent(), contentPanel);
@@ -194,14 +194,15 @@ public abstract class HierarchyBrowserBaseEx extends HierarchyBrowserBase implem
   @NotNull
   protected abstract String getNextOccurenceActionNameImpl();
 
-  protected abstract void createTrees(@NotNull Map<String, JTree> trees);
+  protected abstract void createTrees(@NotNull Map<? super @Nls String, ? super JTree> trees);
 
   /**
    * Put (scope type -> presentable name) pairs into a map.
    * This map is used in {@link #changeView(String, boolean)} method to get a proper localization in UI.
    */
+  @NotNull
   protected Map<String, Supplier<@Nls String>> getPresentableNameMap() {
-    HashMap<String, Supplier<String>> map = new HashMap<>();
+    Map<String, Supplier<String>> map = new HashMap<>();
     map.put(SCOPE_PROJECT, () -> ProjectProductionScope.INSTANCE.getPresentableName());
     map.put(SCOPE_CLASS, () -> LangBundle.message("this.class.scope.name"));
     map.put(SCOPE_MODULE, () -> LangBundle.message("this.module.scope.name"));
@@ -240,11 +241,10 @@ public abstract class HierarchyBrowserBaseEx extends HierarchyBrowserBase implem
 
   @NotNull
   protected final JTree createTree(boolean dndAware) {
-    final Tree tree;
+    Tree tree;
 
-    DefaultTreeModel treeModel = new DefaultTreeModel(new DefaultMutableTreeNode(""));
     if (dndAware) {
-      tree = new DnDAwareTree(treeModel) {
+      tree = new DnDAwareTree() {
         @Override
         public void addNotify() {
           super.addNotify();
@@ -271,12 +271,12 @@ public abstract class HierarchyBrowserBaseEx extends HierarchyBrowserBase implem
       if (!ApplicationManager.getApplication().isHeadlessEnvironment()) {
         DnDManager.getInstance().registerSource(new DnDSource() {
           @Override
-          public boolean canStartDragging(final DnDAction action, final Point dragOrigin) {
+          public boolean canStartDragging(DnDAction action, @NotNull Point dragOrigin) {
             return getSelectedElements().length > 0;
           }
 
           @Override
-          public DnDDragStartBean startDragging(final DnDAction action, final Point dragOrigin) {
+          public DnDDragStartBean startDragging(DnDAction action, @NotNull Point dragOrigin) {
             return new DnDDragStartBean(new TransferableWrapper() {
               @Override
               public TreeNode[] getTreeNodes() {
@@ -298,7 +298,7 @@ public abstract class HierarchyBrowserBaseEx extends HierarchyBrowserBase implem
       }
     }
     else {
-      tree = new Tree(treeModel)  {
+      tree = new Tree()  {
         @Override
         public void addNotify() {
           super.addNotify();
@@ -346,22 +346,23 @@ public abstract class HierarchyBrowserBaseEx extends HierarchyBrowserBase implem
     myCursorAlarm.request();
   }
 
-  public void changeView(@NotNull final String typeName) {
+  public void changeView(@Nls @NotNull String typeName) {
     changeView(typeName, true);
   }
 
-  public void changeView(@NotNull final String typeName, boolean requestFocus) {
+  public void changeView(@Nls @NotNull String typeName, boolean requestFocus) {
     ApplicationManager.getApplication().assertIsDispatchThread();
-    myCurrentViewType = typeName;
+    Sheet sheet = myType2Sheet.get(typeName);
+    myCurrentSheet.set(sheet);
 
-    final PsiElement element = mySmartPsiElementPointer.getElement();
+    PsiElement element = mySmartPsiElementPointer.getElement();
     if (element == null || !isApplicableElement(element)) {
       return;
     }
 
     if (myContent != null) {
-      //noinspection HardCodedStringLiteral
-      final String displayName = getContentDisplayName(myI18nMap.computeIfAbsent(typeName, key -> () -> key).get(), element);
+      Supplier<@Nls String> supplier = myI18nMap.computeIfAbsent(typeName, __ -> () -> typeName);
+      String displayName = getContentDisplayName(supplier.get(), element);
       if (displayName != null) {
         myContent.setDisplayName(displayName);
       }
@@ -369,17 +370,16 @@ public abstract class HierarchyBrowserBaseEx extends HierarchyBrowserBase implem
 
     myCardLayout.show(myTreePanel, typeName);
 
-    Sheet sheet = myType2Sheet.get(typeName);
     if (sheet.myStructureTreeModel == null) {
       try {
         setWaitCursor();
-        final JTree tree = sheet.myTree;
+        JTree tree = sheet.myTree;
 
-        final HierarchyTreeStructure structure = createHierarchyTreeStructure(typeName, element);
+        HierarchyTreeStructure structure = createHierarchyTreeStructure(typeName, element);
         if (structure == null) {
           return;
         }
-        StructureTreeModel myModel = new StructureTreeModel<>(structure, getComparator(), sheet);
+        StructureTreeModel<HierarchyTreeStructure> myModel = new StructureTreeModel<>(structure, getComparator(), sheet);
         AsyncTreeModel atm = new AsyncTreeModel(myModel, sheet);
         tree.setModel(atm);
 
@@ -461,15 +461,9 @@ public abstract class HierarchyBrowserBaseEx extends HierarchyBrowserBase implem
 
   @NotNull
   private OccurenceNavigator getOccurrenceNavigator() {
-    ApplicationManager.getApplication().assertIsDispatchThread();
-    String currentViewType = getCurrentViewType();
-    if (currentViewType != null) {
-      OccurenceNavigator navigator = myType2Sheet.get(currentViewType).myOccurenceNavigator;
-      if (navigator != null) {
-        return navigator;
-      }
-    }
-    return EMPTY;
+    Sheet sheet = myCurrentSheet.get();
+    OccurenceNavigator navigator = sheet == null ? null : sheet.myOccurenceNavigator;
+    return navigator == null ? EMPTY : navigator;
   }
 
   @Override
@@ -506,12 +500,10 @@ public abstract class HierarchyBrowserBaseEx extends HierarchyBrowserBase implem
   }
 
   @Override
-  public void setContent(Content content) {
+  public void setContent(@NotNull Content content) {
     super.setContent(content);
-    if (content != null) {
-      // stop all background tasks when toolwindow closed
-      Disposer.register(content, this::disposeAllSheets);
-    }
+    // stop all background tasks when toolwindow closed
+    Disposer.register(content, this::disposeAllSheets);
   }
 
   @Override
@@ -530,23 +522,27 @@ public abstract class HierarchyBrowserBaseEx extends HierarchyBrowserBase implem
       return myCachedIsValidBase;
     }
 
-    final PsiElement element = mySmartPsiElementPointer.getElement();
+    PsiElement element = mySmartPsiElementPointer.getElement();
     myCachedIsValidBase = element != null && isApplicableElement(element) && element.isValid();
     return myCachedIsValidBase;
   }
 
   @Override
   protected JTree getCurrentTree() {
-    String currentViewType = getCurrentViewType();
+    @Nls String currentViewType = getCurrentViewType();
     return currentViewType == null ? null : myType2Sheet.get(currentViewType).myTree;
   }
 
-  protected final String getCurrentViewType() {
-    return myCurrentViewType;
+  protected final @Nls String getCurrentViewType() {
+    Sheet sheet = myCurrentSheet.get();
+    return sheet == null ? null : sheet.myType;
   }
 
   @Override
-  public Object getData(@NotNull final String dataId) {
+  public Object getData(@NotNull String dataId) {
+    if (HIERARCHY_BROWSER.is(dataId)) {
+      return this;
+    }
     if (PlatformDataKeys.HELP_ID.is(dataId)) {
       return HELP_ID;
     }
@@ -560,7 +556,7 @@ public abstract class HierarchyBrowserBaseEx extends HierarchyBrowserBase implem
   }
 
   private void disposeAllSheets() {
-    for (final Sheet sheet : myType2Sheet.values()) {
+    for (Sheet sheet : myType2Sheet.values()) {
       disposeSheet(sheet);
     }
   }
@@ -575,11 +571,11 @@ public abstract class HierarchyBrowserBaseEx extends HierarchyBrowserBase implem
 
     if (currentBuilderOnly) LOG.assertTrue(getCurrentViewType() != null);
 
-    if (!isValidBase()) return;
+    if (!isValidBase() || isDisposed()) return;
 
     if (getCurrentBuilder() == null) return; // seems like we are in the middle of refresh already
 
-    final String currentViewType = getCurrentViewType();
+    @Nls String currentViewType = getCurrentViewType();
     List<Object> pathsToExpand = new ArrayList<>();
     List<Object> selectionPaths = new ArrayList<>();
     if (currentViewType != null) {
@@ -588,7 +584,7 @@ public abstract class HierarchyBrowserBaseEx extends HierarchyBrowserBase implem
       TreeBuilderUtil.storePaths(sheet.myTree, root, pathsToExpand, selectionPaths, true);
     }
 
-    final PsiElement element = mySmartPsiElementPointer.getElement();
+    PsiElement element = mySmartPsiElementPointer.getElement();
     if (element == null || !isApplicableElement(element)) {
       return;
     }
@@ -604,8 +600,7 @@ public abstract class HierarchyBrowserBaseEx extends HierarchyBrowserBase implem
     ApplicationManager.getApplication().invokeLater(() -> {
       changeView(currentViewType);
       for (Object p : pathsToExpand) {
-        HierarchyNodeDescriptor descriptor = (HierarchyNodeDescriptor)p;
-        expandLater(getCurrentTree(), descriptor);
+        expandLater(getCurrentTree(), (HierarchyNodeDescriptor)p);
       }
 
       selectLater(getCurrentTree(), (List)selectionPaths);
@@ -624,59 +619,45 @@ public abstract class HierarchyBrowserBaseEx extends HierarchyBrowserBase implem
     }
 
     @Override
-    public final boolean isSelected(@NotNull final AnActionEvent event) {
+    public final boolean isSelected(@NotNull AnActionEvent event) {
       return HierarchyBrowserManager.getSettings(myProject).SORT_ALPHABETICALLY;
     }
 
     @Override
-    public final void setSelected(@NotNull final AnActionEvent event, final boolean flag) {
+    public final void setSelected(@NotNull AnActionEvent event, boolean flag) {
       HierarchyBrowserManager.getSettings(myProject).SORT_ALPHABETICALLY = flag;
-      final Comparator<NodeDescriptor<?>> comparator = getComparator();
+      Comparator<NodeDescriptor<?>> comparator = getComparator();
       myType2Sheet.values().stream().map(s->s.myStructureTreeModel).filter(m-> m != null).forEach(m->m.setComparator(comparator));
     }
 
     @Override
-    public final void update(@NotNull final AnActionEvent event) {
+    public final void update(@NotNull AnActionEvent event) {
       super.update(event);
-      final Presentation presentation = event.getPresentation();
+      Presentation presentation = event.getPresentation();
       presentation.setEnabled(isValidBase());
     }
   }
 
   protected static class BaseOnThisElementAction extends AnAction {
-    private final Class<? extends HierarchyBrowserBaseEx> myBrowserClass;
     private final LanguageExtension<HierarchyProvider> myProviderLanguageExtension;
 
-    protected BaseOnThisElementAction(@NotNull String text,
-                                      @NotNull Class<? extends HierarchyBrowserBaseEx> browserClass,
-                                      @NotNull LanguageExtension<HierarchyProvider> providerLanguageExtension) {
-      this(() -> text, browserClass, providerLanguageExtension);
-    }
-
     protected BaseOnThisElementAction(@NotNull Supplier<String> text,
-                                      @NotNull Class<? extends HierarchyBrowserBaseEx> browserClass,
                                       @NotNull LanguageExtension<HierarchyProvider> providerLanguageExtension) {
       super(text);
-      myBrowserClass = browserClass;
       myProviderLanguageExtension = providerLanguageExtension;
     }
 
-    @Nullable
-    private HierarchyBrowserBaseEx getHierarchyBrowser(@NotNull AnActionEvent event) {
-      return UIUtil.getParentOfType(myBrowserClass, event.getData(PlatformDataKeys.CONTEXT_COMPONENT));
-    }
-
     @Override
-    public final void actionPerformed(@NotNull final AnActionEvent event) {
-      HierarchyBrowserBaseEx browser = getHierarchyBrowser(event);
+    public final void actionPerformed(@NotNull AnActionEvent event) {
+      HierarchyBrowserBaseEx browser = event.getData(HIERARCHY_BROWSER);
       if (browser == null) return;
 
-      final PsiElement selectedElement = browser.getSelectedElement();
+      PsiElement selectedElement = browser.getSelectedElement();
       if (selectedElement == null || !browser.isApplicableElementForBaseOn(selectedElement)) return;
 
-      final String currentViewType = browser.getCurrentViewType();
+      @Nls String currentViewType = browser.getCurrentViewType();
       Disposer.dispose(browser);
-      final HierarchyProvider provider = BrowseHierarchyActionBase.findProvider(
+      HierarchyProvider provider = BrowseHierarchyActionBase.findProvider(
         myProviderLanguageExtension, selectedElement, selectedElement.getContainingFile(), event.getDataContext());
       if (provider != null) {
         HierarchyBrowserBaseEx newBrowser = (HierarchyBrowserBaseEx)BrowseHierarchyActionBase.createAndAddToPanel(
@@ -685,15 +666,16 @@ public abstract class HierarchyBrowserBaseEx extends HierarchyBrowserBase implem
       }
     }
 
-    protected String correctViewType(@NotNull HierarchyBrowserBaseEx browser, String viewType) {
+    @Nls
+    protected String correctViewType(@NotNull HierarchyBrowserBaseEx browser, @Nls String viewType) {
       return viewType;
     }
 
     @Override
-    public final void update(@NotNull final AnActionEvent event) {
-      final Presentation presentation = event.getPresentation();
+    public final void update(@NotNull AnActionEvent event) {
+      Presentation presentation = event.getPresentation();
 
-      HierarchyBrowserBaseEx browser = getHierarchyBrowser(event);
+      HierarchyBrowserBaseEx browser = event.getData(HIERARCHY_BROWSER);
       if (browser == null) {
         presentation.setEnabledAndVisible(false);
         return;
@@ -701,7 +683,7 @@ public abstract class HierarchyBrowserBaseEx extends HierarchyBrowserBase implem
 
       presentation.setVisible(true);
 
-      final PsiElement selectedElement = browser.getSelectedElement();
+      PsiElement selectedElement = browser.getSelectedElement();
       if (selectedElement == null || !browser.isApplicableElementForBaseOn(selectedElement)) {
         presentation.setEnabledAndVisible(false);
       }
@@ -725,13 +707,13 @@ public abstract class HierarchyBrowserBaseEx extends HierarchyBrowserBase implem
     }
 
     @Override
-    public final void actionPerformed(@NotNull final AnActionEvent e) {
+    public final void actionPerformed(@NotNull AnActionEvent e) {
       doRefresh(false);
     }
 
     @Override
-    public final void update(@NotNull final AnActionEvent event) {
-      final Presentation presentation = event.getPresentation();
+    public final void update(@NotNull AnActionEvent event) {
+      Presentation presentation = event.getPresentation();
       presentation.setEnabled(isValidBase());
     }
   }
@@ -744,7 +726,7 @@ public abstract class HierarchyBrowserBaseEx extends HierarchyBrowserBase implem
     result.add(new NamedScope(SCOPE_CLASS, () -> LangBundle.message("this.class.scope.name"), AllIcons.Ide.LocalScope, null));
     result.add(new NamedScope(SCOPE_MODULE, () -> LangBundle.message("this.module.scope.name"), AllIcons.Ide.LocalScope, null));
 
-    final NamedScopesHolder[] holders = NamedScopesHolder.getAllNamedScopeHolders(myProject);
+    NamedScopesHolder[] holders = NamedScopesHolder.getAllNamedScopeHolders(myProject);
     for (NamedScopesHolder holder : holders) {
       NamedScope[] scopes = holder.getEditableScopes(); //predefined scopes already included
       Collections.addAll(result, scopes);
@@ -754,9 +736,9 @@ public abstract class HierarchyBrowserBaseEx extends HierarchyBrowserBase implem
 
   public class ChangeScopeAction extends ComboBoxAction {
     @Override
-    public final void update(@NotNull final AnActionEvent e) {
-      final Presentation presentation = e.getPresentation();
-      final Project project = e.getProject();
+    public final void update(@NotNull AnActionEvent e) {
+      Presentation presentation = e.getPresentation();
+      Project project = e.getProject();
       if (project == null) return;
       presentation.setEnabled(isEnabled());
       //noinspection HardCodedStringLiteral
@@ -770,8 +752,8 @@ public abstract class HierarchyBrowserBaseEx extends HierarchyBrowserBase implem
 
     @Override
     @NotNull
-    protected final DefaultActionGroup createPopupActionGroup(final JComponent button) {
-      final DefaultActionGroup group = new DefaultActionGroup();
+    protected final DefaultActionGroup createPopupActionGroup(JComponent button) {
+      DefaultActionGroup group = new DefaultActionGroup();
 
       for(NamedScope namedScope: getValidScopes()) {
         group.add(new MenuAction(namedScope));
@@ -793,8 +775,8 @@ public abstract class HierarchyBrowserBaseEx extends HierarchyBrowserBase implem
 
     @NotNull
     @Override
-    public final JComponent createCustomComponent(@NotNull final Presentation presentation, @NotNull String place) {
-      final JPanel panel = new JPanel(new GridBagLayout());
+    public final JComponent createCustomComponent(@NotNull Presentation presentation, @NotNull String place) {
+      JPanel panel = new JPanel(new GridBagLayout());
       panel.add(new JLabel(IdeBundle.message("label.scope")),
                 new GridBagConstraints(0, 0, 1, 1, 0, 0, GridBagConstraints.WEST, GridBagConstraints.BOTH, JBUI.insetsLeft(5), 0, 0));
       panel.add(super.createCustomComponent(presentation, place),
@@ -811,7 +793,7 @@ public abstract class HierarchyBrowserBaseEx extends HierarchyBrowserBase implem
       }
 
       @Override
-      public final void actionPerformed(@NotNull final AnActionEvent e) {
+      public void actionPerformed(@NotNull AnActionEvent e) {
         selectScope(myScopeType);
       }
     }

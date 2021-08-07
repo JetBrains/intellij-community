@@ -39,7 +39,7 @@ public final class PyTypeHintGenerationUtil {
 
   public static final String TYPE_COMMENT_PREFIX = "# type: ";
 
-  private PyTypeHintGenerationUtil() {}
+  private PyTypeHintGenerationUtil() { }
 
   public static void insertStandaloneAttributeTypeComment(@NotNull PyTargetExpression target,
                                                           @NotNull TypeEvalContext context,
@@ -274,11 +274,11 @@ public final class PyTypeHintGenerationUtil {
     }
   }
 
-  private static void addImportsForTypeAnnotations(@NotNull List<PyType> types,
-                                                   @NotNull TypeEvalContext context,
-                                                   @NotNull PsiFile file) {
-    final Set<PsiNamedElement> symbols = new HashSet<>();
-    final Set<String> namesFromTyping = new HashSet<>();
+  public static void addImportsForTypeAnnotations(@NotNull List<PyType> types,
+                                                  @NotNull TypeEvalContext context,
+                                                  @NotNull PsiFile file) {
+    final Set<PsiNamedElement> symbols = new LinkedHashSet<>();
+    final Set<String> namesFromTyping = new LinkedHashSet<>();
 
     for (PyType type : types) {
       collectImportTargetsFromType(type, context, symbols, namesFromTyping);
@@ -305,7 +305,9 @@ public final class PyTypeHintGenerationUtil {
     else if (type instanceof PyUnionType) {
       final Collection<PyType> members = ((PyUnionType)type).getMembers();
       final boolean isOptional = members.size() == 2 && members.contains(PyNoneType.INSTANCE);
-      typingTypes.add(isOptional ? "Optional" : "Union");
+      if (!PyTypingTypeProvider.isBitwiseOrUnionAvailable(context)) {
+        typingTypes.add(isOptional ? "Optional" : "Union");
+      }
       for (PyType pyType : members) {
         collectImportTargetsFromType(pyType, context, symbols, typingTypes);
       }
@@ -329,6 +331,9 @@ public final class PyTypeHintGenerationUtil {
       }
       else if (type instanceof PyTupleType) {
         typingTypes.add("Tuple");
+      }
+      else if (type instanceof PyTypedDictType) {
+        typingTypes.add("Dict");
       }
       for (PyType pyType : ((PyCollectionType)type).getElementTypes()) {
         collectImportTargetsFromType(pyType, context, symbols, typingTypes);

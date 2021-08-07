@@ -17,6 +17,9 @@ import com.intellij.openapi.ui.panel.ComponentPanelBuilder;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NlsActions;
 import com.intellij.openapi.util.Ref;
+import com.intellij.ui.RawCommandLineEditor;
+import com.intellij.util.ThrowableConsumer;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -24,6 +27,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
@@ -39,8 +43,9 @@ public class SettingsEditorFragment<Settings, C extends JComponent> extends Sett
   protected C myComponent;
   private final BiConsumer<? super Settings, ? super C> myReset;
   private final BiConsumer<? super Settings, ? super C> myApply;
-  private @Nullable Function<Settings, List<ValidationInfo>> myValidation;
-  private final int myCommandLinePosition;
+  private List<Function<Settings, List<ValidationInfo>>> myValidation = new ArrayList<>();
+  private final @NotNull SettingsEditorFragmentType myType;
+  private final int myPriority;
   private final Predicate<? super Settings> myInitialSelection;
   private @Nullable @Nls String myHint;
   private @Nullable JComponent myHintComponent;
@@ -49,13 +54,14 @@ public class SettingsEditorFragment<Settings, C extends JComponent> extends Sett
   private @Nullable String myConfigId; // for FUS
   private @Nullable Function<? super C, ? extends JComponent> myEditorGetter;
   private boolean myRemovable = true;
-  private boolean myCanBeHidden;
+  private boolean myCanBeHidden = false;
 
   public SettingsEditorFragment(String id,
                                 @Nls(capitalization = Nls.Capitalization.Sentence) String name,
                                 @Nls(capitalization = Nls.Capitalization.Title) String group,
                                 C component,
-                                int commandLinePosition,
+                                int priority,
+                                @NotNull SettingsEditorFragmentType type,
                                 BiConsumer<? super Settings, ? super C> reset,
                                 BiConsumer<? super Settings, ? super C> apply,
                                 Predicate<? super Settings> initialSelection) {
@@ -65,8 +71,39 @@ public class SettingsEditorFragment<Settings, C extends JComponent> extends Sett
     myComponent = component;
     myReset = reset;
     myApply = apply;
-    myCommandLinePosition = commandLinePosition;
+    myPriority = priority;
+    myType = type;
     myInitialSelection = initialSelection;
+  }
+
+  public SettingsEditorFragment(String id,
+                                @Nls(capitalization = Nls.Capitalization.Sentence) String name,
+                                @Nls(capitalization = Nls.Capitalization.Title) String group,
+                                C component,
+                                @NotNull SettingsEditorFragmentType type,
+                                BiConsumer<? super Settings, ? super C> reset,
+                                BiConsumer<? super Settings, ? super C> apply,
+                                Predicate<? super Settings> initialSelection) {
+    this(id, name, group, component, 0, type, reset, apply, initialSelection);
+  }
+
+  public SettingsEditorFragment(String id,
+                                @Nls(capitalization = Nls.Capitalization.Sentence) String name,
+                                @Nls(capitalization = Nls.Capitalization.Title) String group,
+                                C component,
+                                int commandLinePosition,
+                                BiConsumer<? super Settings, ? super C> reset,
+                                BiConsumer<? super Settings, ? super C> apply,
+                                Predicate<? super Settings> initialSelection) {
+    this(id, name, group, component, commandLinePosition, getType(component, commandLinePosition), reset, apply, initialSelection);
+  }
+
+  private static @NotNull SettingsEditorFragmentType getType(JComponent component, int commandLinePosition) {
+    return component instanceof TagButton ? SettingsEditorFragmentType.TAG :
+           commandLinePosition == -2 ? SettingsEditorFragmentType.BEFORE_RUN :
+           commandLinePosition == -1 ? SettingsEditorFragmentType.HEADER :
+           commandLinePosition == 0 ? SettingsEditorFragmentType.EDITOR :
+           SettingsEditorFragmentType.COMMAND_LINE;
   }
 
   public SettingsEditorFragment(String id,
@@ -76,7 +113,7 @@ public class SettingsEditorFragment<Settings, C extends JComponent> extends Sett
                                 BiConsumer<? super Settings, ? super C> reset,
                                 BiConsumer<? super Settings, ? super C> apply,
                                 Predicate<? super Settings> initialSelection) {
-    this(id, name, group, component, 0, reset, apply, initialSelection);
+    this(id, name, group, component, 0, SettingsEditorFragmentType.EDITOR, reset, apply, initialSelection);
   }
 
   public static <S> SettingsEditorFragment<S, ?> createWrapper(String id,
@@ -108,16 +145,12 @@ public class SettingsEditorFragment<Settings, C extends JComponent> extends Sett
       ref.get().setSelected(false);
       ref.get().logChange(false, e);
     });
-    SettingsEditorFragment<Settings, TagButton> fragment = new SettingsEditorFragment<>(id, name, group, tagButton,
-                                                                                                    (settings, button) -> button.setVisible(getter.test(settings)),
-                                                                                                    (settings, button) -> setter.accept(settings, button.isVisible()),
-                                                                                                    getter) {
-
-      @Override
-      public boolean isTag() {
-        return true;
-      }
-    };
+    SettingsEditorFragment<Settings, TagButton> fragment = new SettingsEditorFragment<>(
+      id, name, group, tagButton, SettingsEditorFragmentType.TAG,
+      (settings, button) -> button.setVisible(getter.test(settings)),
+      (settings, button) -> setter.accept(settings, button.isVisible()),
+      getter
+    );
     Disposer.register(fragment, tagButton);
     ref.set(fragment);
     return fragment;
@@ -142,10 +175,32 @@ public class SettingsEditorFragment<Settings, C extends JComponent> extends Sett
   }
 
   public JComponent[] getAllComponents() {
-    return new JComponent[] { component() };
+    return new JComponent[]{component()};
   }
 
-  public boolean isTag() { return false; }
+  public boolean isTag() {
+    return SettingsEditorFragmentType.TAG == myType;
+  }
+
+  public boolean isCommandLine() {
+    return SettingsEditorFragmentType.COMMAND_LINE == myType;
+  }
+
+  public boolean isHeader() {
+    return SettingsEditorFragmentType.HEADER == myType;
+  }
+
+  public boolean isBeforeRun() {
+    return SettingsEditorFragmentType.BEFORE_RUN == myType;
+  }
+
+  public boolean isEditor() {
+    return SettingsEditorFragmentType.EDITOR == myType;
+  }
+
+  public int getPriority() {
+    return myPriority;
+  }
 
   @Nullable
   public ActionGroup getCustomActionGroup() {
@@ -169,13 +224,35 @@ public class SettingsEditorFragment<Settings, C extends JComponent> extends Sett
   }
 
   public void setValidation(@Nullable Function<Settings, List<ValidationInfo>> validation) {
-    myValidation = validation;
+    myValidation.clear();
+    if (validation != null) {
+      myValidation.add(validation);
+    }
+  }
+
+  private @NotNull SettingsEditorFragment<Settings, C> addValidation(@NotNull Function<Settings, ValidationInfo> validation) {
+    myValidation.add(it -> Collections.singletonList(validation.apply(it)));
+    return this;
+  }
+
+  public @NotNull SettingsEditorFragment<Settings, C> addValidation(
+    @NotNull ThrowableConsumer<? super Settings, ? extends ConfigurationException> validation
+  ) {
+    return addValidation(settings -> {
+      try {
+        validation.consume(settings);
+        return new ValidationInfo("", getEditorComponent());
+      }
+      catch (ConfigurationException exception) {
+        return new ValidationInfo(exception.getMessage(), getEditorComponent());
+      }
+    });
   }
 
   protected void validate(Settings s) {
-    if (myValidation == null) return;
+    if (myValidation.isEmpty()) return;
     ApplicationManager.getApplication().executeOnPooledThread(() -> {
-      List<ValidationInfo> infos = myValidation.apply(s);
+      List<ValidationInfo> infos = ContainerUtil.flatMap(myValidation, it -> it.apply(s));
       if (infos.isEmpty()) return;
       UIUtil.invokeLaterIfNeeded(() -> {
         if (Disposer.isDisposed(this)) return;
@@ -217,11 +294,18 @@ public class SettingsEditorFragment<Settings, C extends JComponent> extends Sett
   }
 
   public void toggle(boolean selected, @Nullable AnActionEvent e) {
+    boolean changed = isSelected() != selected;
     setSelected(selected);
     if (selected) {
+      JScrollPane scrollpane = UIUtil.getParentOfType(JScrollPane.class, myComponent);
+      if (scrollpane != null) {
+        scrollpane.validate();  // should be validated beforehand to make scrollRectToVisible() work correctly
+      }
       myComponent.scrollRectToVisible(new Rectangle(new Point(0, 50), myComponent.getPreferredSize()));
     }
-    logChange(selected, e);
+    if (changed) {
+      logChange(selected, e);
+    }
   }
 
   protected void logChange(boolean selected, @Nullable AnActionEvent e) {
@@ -242,19 +326,36 @@ public class SettingsEditorFragment<Settings, C extends JComponent> extends Sett
   }
 
   public JComponent getEditorComponent() {
-    JComponent component = component();
-    if (myEditorGetter != null) return myEditorGetter.apply(component());
+    C component = component();
+    if (myEditorGetter != null) {
+      return myEditorGetter.apply(component);
+    }
+    return getEditorComponent(component);
+  }
+
+  private static JComponent getEditorComponent(JComponent component) {
     if (component instanceof LabeledComponent) {
       component = ((LabeledComponent<?>)component).getComponent();
     }
-    else if (component instanceof  TagButton) {
+
+    if (component instanceof TagButton) {
       return ((TagButton)component).myButton;
     }
-    return component instanceof ComponentWithBrowseButton ? ((ComponentWithBrowseButton<?>)component).getChildComponent() : component;
+    if (component instanceof ComponentWithBrowseButton) {
+      return ((ComponentWithBrowseButton<?>)component).getChildComponent();
+    }
+    if (component instanceof RawCommandLineEditor) {
+      return ((RawCommandLineEditor)component).getEditorField();
+    }
+    return component;
   }
 
+  /**
+   * @deprecated use <code>getPriority</code> instead
+   */
+  @Deprecated
   public int getCommandLinePosition() {
-    return myCommandLinePosition;
+    return myPriority;
   }
 
   public int getMenuPosition() { return 0; }

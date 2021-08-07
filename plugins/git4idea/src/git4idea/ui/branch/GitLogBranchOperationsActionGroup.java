@@ -4,6 +4,7 @@ package git4idea.ui.branch;
 import com.intellij.dvcs.branch.DvcsSyncSettings;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.Project;
+import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.*;
 import git4idea.GitLocalBranch;
@@ -18,7 +19,6 @@ import git4idea.repo.GitRepository;
 import git4idea.repo.GitRepositoryManager;
 import git4idea.ui.branch.GitBranchPopupActions.LocalBranchActions;
 import git4idea.ui.branch.GitBranchPopupActions.RemoteBranchActions;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
@@ -70,7 +70,7 @@ public final class GitLogBranchOperationsActionGroup extends GitSingleCommitActi
       GitRepositoryManager repositoryManager = GitRepositoryManager.getInstance(project);
       List<GitRepository> allRepositories = repositoryManager.getRepositories();
 
-      Set<String> commonBranches = new THashSet<>(GitReference.BRANCH_NAME_HASHING_STRATEGY);
+      Set<String> commonBranches = CollectionFactory.createCustomHashingStrategySet(GitReference.BRANCH_NAME_HASHING_STRATEGY);
       for (GitLocalBranch branch : GitBranchUtil.getCommonLocalBranches(allRepositories)) {
         commonBranches.add(branch.getName());
       }

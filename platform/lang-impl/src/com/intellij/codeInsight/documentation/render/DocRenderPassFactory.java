@@ -1,12 +1,10 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.documentation.render;
 
 import com.intellij.codeHighlighting.*;
 import com.intellij.codeInsight.CodeInsightBundle;
-import com.intellij.codeInsight.documentation.DocumentationComponent;
 import com.intellij.codeInsight.documentation.DocumentationManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.DumbAware;
@@ -77,11 +75,10 @@ public class DocRenderPassFactory implements TextEditorHighlightingPassFactoryRe
   @NotNull
   public static Items calculateItemsToRender(@NotNull Editor editor, @NotNull PsiFile psiFile) {
     boolean enabled = DocRenderManager.isDocRenderingEnabled(editor);
-    Document document = editor.getDocument();
     Items items = new Items();
     DocumentationManager.getProviderFromElement(psiFile).collectDocComments(psiFile, comment -> {
       TextRange range = comment.getTextRange();
-      if (range != null && DocRenderItem.isValidRange(document, range)) {
+      if (range != null && DocRenderItem.isValidRange(editor, range)) {
         String textToRender = enabled ? calcText(comment) : null;
         items.addItem(new Item(range, textToRender));
       }
@@ -101,7 +98,7 @@ public class DocRenderPassFactory implements TextEditorHighlightingPassFactoryRe
   }
 
   private static String preProcess(String text) {
-    return DocumentationComponent.addExternalLinksIcon(text);
+    return DocumentationManager.addExternalLinksIcon(text);
   }
 
   public static void applyItemsToRender(@NotNull Editor editor,

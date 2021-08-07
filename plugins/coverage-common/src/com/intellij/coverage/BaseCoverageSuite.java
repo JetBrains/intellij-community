@@ -18,6 +18,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.lang.ref.SoftReference;
+import java.util.concurrent.TimeUnit;
 
 /**
  * @author ven
@@ -256,7 +257,13 @@ public abstract class BaseCoverageSuite  implements CoverageSuite, JDOMExternali
       }
       return null;
     }
-    return myRunner.loadCoverageData(sessionDataFile, this);
+    final long startNs = System.nanoTime();
+    final ProjectData projectData = myRunner.loadCoverageData(sessionDataFile, this);
+    final long timeMs = TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - startNs);
+    if (projectData != null) {
+      CoverageLogger.logReportLoading(myProject, myRunner, timeMs, projectData.getClassesNumber());
+    }
+    return projectData;
   }
 
   @Override

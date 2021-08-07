@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.testFramework.fixtures.impl;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -18,9 +18,7 @@ import org.junit.Assert;
 import java.io.IOException;
 import java.util.List;
 
-/**
- * @author yole
- */
+
 public final class LightTempDirTestFixtureImpl extends BaseFixture implements TempDirTestFixture {
   private final Lazy<VirtualFile> mySourceRoot;
 

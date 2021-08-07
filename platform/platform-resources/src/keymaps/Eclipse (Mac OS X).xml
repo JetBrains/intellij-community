@@ -134,9 +134,7 @@
   <action id="GotoClass">
     <keyboard-shortcut first-keystroke="shift meta T"/>
   </action>
-  <action id="GotoChangedFile">
-    <keyboard-shortcut first-keystroke="shift meta T"/>
-  </action>
+  <action id="GotoChangedFile"/>
   <action id="GotoDeclaration">
     <keyboard-shortcut first-keystroke="F3"/>
     <mouse-shortcut keystroke="ctrl button1"/>
@@ -198,14 +196,8 @@
   <action id="NextDiff">
     <keyboard-shortcut first-keystroke="control F7"/>
   </action>
-  <action id="Diff.PrevChange">
-    <keyboard-shortcut first-keystroke="shift meta F6"/>
-    <keyboard-shortcut first-keystroke="meta alt LEFT"/>
-  </action>
-  <action id="Diff.NextChange">
-    <keyboard-shortcut first-keystroke="meta F6"/>
-    <keyboard-shortcut first-keystroke="meta alt RIGHT"/>
-  </action>
+  <action id="Diff.PrevChange"/>
+  <action id="Diff.NextChange"/>
   <action id="NextOccurence"/>
   <action id="NextTab">
     <keyboard-shortcut first-keystroke="meta F6"/>
@@ -359,4 +351,9 @@
   <action id="ShowIntentionActions">
     <keyboard-shortcut first-keystroke="meta 1"/>
   </action>
+
+  <action id="ResizeToolWindowLeft"/>
+  <action id="ResizeToolWindowRight"/>
+  <action id="ResizeToolWindowUp"/>
+  <action id="ResizeToolWindowDown"/>
 </keymap>

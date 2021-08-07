@@ -26,7 +26,7 @@ import java.util.Set;
 public class NewExprent extends Exprent {
   private InvocationExprent constructor;
   private final VarType newType;
-  private List<Exprent> lstDims = new ArrayList<>();
+  private final List<Exprent> lstDims;
   private List<Exprent> lstArrayElements = new ArrayList<>();
   private boolean directArrayInit;
   private boolean isVarArgParam;

@@ -1,10 +1,14 @@
 <html>
 <body>
-Reports any attempts to access column 0 of a <b>java.sql.ResultSet</b> or <b>java.sql.PreparedStatement</b>. For historical
-reasons columns of <b>java.sql.ResultSet</b>s and <b>java.sql.PreparedStatement</b>s are numbered beginning with 1, rather than
-0, and accessing column 0 is a common error in JDBC programming.
+Reports attempts to access column 0 of <code>java.sql.ResultSet</code> or <code>java.sql.PreparedStatement</code>.
+For historical reasons, columns of <code>java.sql.ResultSet</code> and <code>java.sql.PreparedStatement</code>
+are numbered starting with <b>1</b>, rather than with <b>0</b>, and accessing column 0 is a common error in JDBC programming.
+<p><b>Example:</b></p>
+<pre><code>
+  String getName(ResultSet rs) {
+    <b>return</b> rs.getString(0);
+  }
+</code></pre>
 <!-- tooltip end -->
-<p>
-
 </body>
 </html>

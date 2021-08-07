@@ -10,6 +10,7 @@ import com.intellij.ui.popup.list.PopupListElementRenderer;
 import com.intellij.util.IconUtil;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.border.Border;
@@ -37,9 +38,18 @@ public class PopupListElementRendererWithIcon extends PopupListElementRenderer<O
   @Override
   protected void customizeComponent(JList<?> list, Object value, boolean isSelected) {
     super.customizeComponent(list, value, isSelected);
-    myTextLabel.setIcon(null);
-    myTextLabel.setDisabledIcon(null);
     myIconLabel.setIcon(isSelected ? IconUtil.wrapToSelectionAwareIcon(myDescriptor.getSelectedIconFor(value)) : myDescriptor.getIconFor(value));
+  }
+
+  @Override
+  protected void setComponentIcon(Icon icon, Icon disabledIcon) {
+    myIconLabel.setIcon(icon);
+    myIconLabel.setDisabledIcon(disabledIcon);
+  }
+
+  @Override
+  protected @Nullable JComponent createIconBar() {
+    return myIconLabel;
   }
 
   @Override

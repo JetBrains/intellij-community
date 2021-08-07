@@ -1,11 +1,21 @@
 <html>
 <body>
-Reports JUnit <b>setUp()</b> or <b>tearDown()</b> methods which are not declared
-<b>public</b>, do not return <b>void</b>, or take arguments.
-Such <b>setUp()</b> or <b>tearDown()</b> methods are easy to create inadvertently,
+Reports JUnit 3 <code>setUp()</code> or <code>tearDown()</code> methods that either are not declared
+<code>public</code>, do not return <code>void</code>, or take arguments.
+Such <code>setUp()</code> or <code>tearDown()</code> methods are most likely created unintentionally,
 and will not be executed by JUnit test runners.
-<!-- tooltip end -->
-<p>
+<p>For example:</p>
+<pre><code>
+  <b>public class</b> WeightyTest <b>extends</b> TestCase {
+    <b>private</b> File file;
+    <b>private int</b> setUp(String prefix) <b>throws</b> IOException {
+      file = File.createTempFile(prefix, ".tmp");
+      <b>return</b> 0;
+    }
 
+    // ... tests go here
+  }
+</code></pre>
+<!-- tooltip end -->
 </body>
 </html>

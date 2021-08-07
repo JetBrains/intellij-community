@@ -24,6 +24,7 @@ import com.intellij.openapi.editor.ex.RangeHighlighterEx;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.editor.markup.TextAttributes;
+import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
@@ -41,10 +42,8 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
+import java.util.*;
 
 import static com.intellij.openapi.util.NlsContexts.DetailedDescription;
 import static com.intellij.openapi.util.NlsContexts.Tooltip;
@@ -93,7 +92,9 @@ public class HighlightInfo implements Segment {
   private volatile byte myFlags;
 
   final int navigationShift;
-  JComponent fileLevelComponent;
+
+  private @Nullable Map<FileEditor, JComponent> fileLevelComponents;
+
   @Nullable("null means it the same as highlighter")
   RangeMarker fixMarker;
   @Nullable
@@ -157,6 +158,23 @@ public class HighlightInfo implements Segment {
 
   void setFromInjection(boolean fromInjection) {
     setFlag(FROM_INJECTION_MASK, fromInjection);
+  }
+
+  void addFileLeverComponent(@NotNull FileEditor fileEditor, @NotNull JComponent component) {
+    if (fileLevelComponents == null) {
+      fileLevelComponents = new HashMap<>();
+    }
+    fileLevelComponents.put(fileEditor, component);
+  }
+
+  void removeFileLeverComponent(@NotNull FileEditor fileEditor) {
+    if (fileLevelComponents != null) {
+      fileLevelComponents.remove(fileEditor);
+    }
+  }
+
+  @Nullable JComponent getFileLevelComponent(@NotNull FileEditor fileEditor) {
+    return fileLevelComponents != null ? fileLevelComponents.get(fileEditor) : null;
   }
 
   @Nullable
@@ -713,6 +731,7 @@ public class HighlightInfo implements Segment {
     if (problemHighlightType == ProblemHighlightType.LIKE_UNKNOWN_SYMBOL) return HighlightInfoType.WRONG_REF;
     if (problemHighlightType == ProblemHighlightType.LIKE_DEPRECATED) return HighlightInfoType.DEPRECATED;
     if (problemHighlightType == ProblemHighlightType.LIKE_MARKED_FOR_REMOVAL) return HighlightInfoType.MARKED_FOR_REMOVAL;
+    if (problemHighlightType == ProblemHighlightType.POSSIBLE_PROBLEM) return HighlightInfoType.POSSIBLE_PROBLEM;
     return convertSeverity(severity);
   }
 

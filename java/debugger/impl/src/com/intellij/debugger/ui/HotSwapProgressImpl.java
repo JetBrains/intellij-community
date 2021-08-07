@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.ui;
 
 import com.intellij.debugger.DebuggerInvocationUtil;
@@ -107,11 +107,11 @@ public final class HotSwapProgressImpl extends HotSwapProgress {
   }
 
   private void notifyUser(@NlsContexts.NotificationTitle String title, @NlsContexts.NotificationContent String message, NotificationType type) {
-    NotificationListener notificationListener = null;
+    Notification notification = NOTIFICATION_GROUP.createNotification(title, message, type);
     if (SoftReference.dereference(mySessionRef) != null) {
-      notificationListener = new HotSwapNotificationListener(mySessionRef);
+      notification.setListener(new HotSwapNotificationListener(mySessionRef));
     }
-    NOTIFICATION_GROUP.createNotification(title, message, type, notificationListener).setImportant(false).notify(getProject());
+    notification.setImportant(false).notify(getProject());
   }
 
   private static class HotSwapNotificationListener extends NotificationListener.Adapter {

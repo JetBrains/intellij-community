@@ -1,33 +1,33 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.completion.ml.experiment
 
-import com.google.gson.Gson
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.internal.statistic.eventLog.EventLogConfiguration
 import com.intellij.lang.Language
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.registry.Registry
+import kotlinx.serialization.decodeFromString
+import kotlinx.serialization.json.Json
 
 class ClientExperimentStatus : ExperimentStatus {
   companion object {
     private const val EXPERIMENT_DISABLED_PROPERTY_KEY = "ml.completion.experiment.disabled"
-    private const val PATH_TO_EXPERIMENT_CONFIG = "/experiment.json"
-    private val GSON by lazy { Gson() }
-    private val LOG = logger<ClientExperimentStatus>()
 
     fun loadExperimentInfo(): ExperimentConfig {
-      try{
+      try {
         if (!ApplicationManager.getApplication().isEAP) {
           return ExperimentConfig.disabledExperiment()
         }
-        val json = ClientExperimentStatus::class.java.getResource(PATH_TO_EXPERIMENT_CONFIG).readText()
-        val experimentInfo = GSON.fromJson(json, ExperimentConfig::class.java)
+
+        val experimentInfo = ClientExperimentStatus::class.java.classLoader.getResourceAsStream("experiment.json")!!.use {
+          Json.Default.decodeFromString<ExperimentConfig>(it.readAllBytes().toString(Charsets.UTF_8))
+        }
         checkExperimentGroups(experimentInfo)
         return experimentInfo
       }
       catch (e: Throwable) {
-        LOG.error("Error on loading ML Completion experiment info", e)
+        logger<ClientExperimentStatus>().error("Error on loading ML Completion experiment info", e)
         return ExperimentConfig.disabledExperiment()
       }
     }
@@ -48,23 +48,27 @@ class ClientExperimentStatus : ExperimentStatus {
   }
 
   private val experimentConfig: ExperimentConfig = loadExperimentInfo()
-  private val language2group: MutableMap<String, ExperimentInfo> = mutableMapOf()
+  private val languageToGroup: MutableMap<String, ExperimentInfo> = HashMap()
 
   init {
+    val eventLogConfiguration = EventLogConfiguration.getInstance()
     for (languageSettings in experimentConfig.languages) {
-      val bucket = EventLogConfiguration.bucket % languageSettings.experimentBucketsCount
+      val bucket = eventLogConfiguration.bucket % languageSettings.experimentBucketsCount
       val groupNumber = if (languageSettings.includeGroups.size > bucket) languageSettings.includeGroups[bucket] else experimentConfig.version
       val group = experimentConfig.groups.find { it.number == groupNumber }
-      val groupInfo = if (group == null) ExperimentInfo(false, experimentConfig.version)
-      else ExperimentInfo(true, group.number, group.useMLRanking, group.showArrows, group.calculateFeatures)
-      language2group[languageSettings.id] = groupInfo
+      val groupInfo = if (group == null) {
+        ExperimentInfo(false, experimentConfig.version)
+      }
+      else {
+        ExperimentInfo(true, group.number, group.useMLRanking, group.showArrows, group.calculateFeatures)
+      }
+      languageToGroup.put(languageSettings.id, groupInfo)
     }
   }
 
   override fun forLanguage(language: Language): ExperimentInfo {
     if (ApplicationManager.getApplication().isUnitTestMode) return ExperimentInfo(false, 0)
-    val matchingLanguage = findMatchingLanguage(language) ?: return ExperimentInfo(
-      false, experimentConfig.version)
+    val matchingLanguage = findMatchingLanguage(language) ?: return ExperimentInfo(false, experimentConfig.version)
     val experimentGroupRegistry = Registry.get("completion.ml.override.experiment.group.number")
     if (experimentGroupRegistry.isChangedFromDefault) {
       val group = experimentConfig.groups.find { it.number == experimentGroupRegistry.asInteger() }
@@ -73,7 +77,7 @@ class ClientExperimentStatus : ExperimentStatus {
         return ExperimentInfo(true, group.number, group.useMLRanking, group.showArrows, group.calculateFeatures)
       }
     }
-    return language2group[matchingLanguage] ?: ExperimentInfo(false, experimentConfig.version)
+    return languageToGroup[matchingLanguage] ?: ExperimentInfo(false, experimentConfig.version)
   }
 
   override fun disable() {
@@ -88,7 +92,7 @@ class ClientExperimentStatus : ExperimentStatus {
 
   private fun findMatchingLanguage(language: Language): String? {
     val baseLanguages = Language.getRegisteredLanguages().filter { language.isKindOf(it) }
-    return language2group.keys.find { languageId ->
+    return languageToGroup.keys.find { languageId ->
       baseLanguages.any { languageId.equals(it.id, ignoreCase = true) }
     }
   }

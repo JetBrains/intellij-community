@@ -2,26 +2,39 @@
 package com.intellij.execution.target
 
 import com.intellij.execution.ExecutionBundle
+import com.intellij.execution.configurations.ConfigurationType
 import com.intellij.execution.configurations.RuntimeConfigurationException
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.actionSystem.PlatformDataKeys.CONTEXT_COMPONENT
+import com.intellij.openapi.help.HelpManager
 import com.intellij.openapi.keymap.KeymapUtil
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.ProjectManager
+import com.intellij.openapi.ui.ComboBox
+import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.ui.MasterDetailsComponent
-import com.intellij.ui.ColoredTreeCellRenderer
-import com.intellij.ui.CommonActionsPanel
-import com.intellij.ui.LayeredIcon
-import com.intellij.ui.SimpleTextAttributes
+import com.intellij.openapi.ui.OnePixelDivider
+import com.intellij.openapi.ui.popup.JBPopupFactory
+import com.intellij.openapi.util.NlsContexts.Tooltip
+import com.intellij.ui.*
+import com.intellij.ui.border.CustomLineBorder
+import com.intellij.ui.layout.*
 import com.intellij.util.PlatformIcons
 import com.intellij.util.containers.toArray
 import com.intellij.util.text.UniqueNameGenerator
 import com.intellij.util.text.nullize
+import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.StatusText
 import com.intellij.util.ui.UIUtil
-import javax.swing.Icon
-import javax.swing.JTree
+import java.awt.BorderLayout
+import java.awt.Point
+import javax.swing.*
+import javax.swing.border.Border
+import javax.swing.border.CompoundBorder
+import javax.swing.tree.TreePath
 
 class TargetEnvironmentsMasterDetails @JvmOverloads constructor(
   private val project: Project,
@@ -35,6 +48,44 @@ class TargetEnvironmentsMasterDetails @JvmOverloads constructor(
 
   private val targetManager: TargetEnvironmentsManager get() = TargetEnvironmentsManager.getInstance(project)
 
+  private lateinit var projectDefaultTargetComboBox: ComboBox<TargetEnvironmentConfiguration?>
+
+  /**
+   * The panel to set up "Project default target".
+   */
+  private val bottomPanel: DialogPanel = panel {
+    row(ExecutionBundle.message("targets.details.project.default.target")) {
+      cell {
+        projectDefaultTargetComboBox = comboBox(
+          model = DefaultComboBoxModel(),
+          getter = { TargetEnvironmentsManager.getInstance(project).defaultTarget },
+          setter = { value -> TargetEnvironmentsManager.getInstance(project).defaultTarget = value },
+          renderer = SimpleListCellRenderer.create { label, value, _ ->
+            if (value == null) {
+              label.text = ExecutionBundle.message("local.machine")
+              label.icon = AllIcons.Nodes.HomeFolder
+            }
+            else {
+              label.text = value.displayName
+              label.icon = value.getTargetType().icon
+            }
+          }
+        ).component
+        val helpButton = ContextHelpLabel.createWithLink(
+          null,
+          generateProjectDefaultHelpHtml(),
+          ExecutionBundle.message("targets.details.project.default.target.help.documentation.link"),
+          true
+        ) {
+          HelpManager.getInstance().invokeHelp("reference.run.targets")
+        }.apply {
+          horizontalTextPosition = SwingConstants.LEFT
+        }
+        helpButton()
+      }
+    }
+  }.withTopLineBorder()
+
   init {
     // note that `MasterDetailsComponent` does not work without `initTree()`
     initTree()
@@ -42,10 +93,22 @@ class TargetEnvironmentsMasterDetails @JvmOverloads constructor(
     myTree.emptyText.text = ExecutionBundle.message("targets.details.status.empty.text")
     myTree.emptyText.appendSecondaryText(ExecutionBundle.message("targets.details.status.text.add.new.target"),
                                          SimpleTextAttributes.LINK_PLAIN_ATTRIBUTES) {
-      val popup = ActionManager.getInstance().createActionPopupMenu("TargetEnvironmentsConfigurable.EmptyListText", CreateNewTargetGroup())
       val size = myTree.emptyText.preferredSize
       val textY = myTree.height / if (myTree.emptyText.isShowAboveCenter) 3 else 2
-      popup.component.show(myTree, (myTree.width - size.width) / 2, textY + size.height)
+
+      val visibleBounds = myTree.visibleRect
+      val containerScreenPoint: Point = visibleBounds.location
+      SwingUtilities.convertPointToScreen(containerScreenPoint, myTree)
+      val targetPoint = Point(containerScreenPoint.x + (myTree.width - size.width) / 2, containerScreenPoint.y + textY + size.height)
+
+      JBPopupFactory.getInstance().createActionGroupPopup(null, CreateNewTargetGroup(), object : DataContext {
+        override fun getData(dataId: String): Any? {
+          if (CONTEXT_COMPONENT.`is`(dataId)) {
+            return myTree
+          }
+          return null
+        }
+      }, JBPopupFactory.ActionSelectionAid.SPEEDSEARCH, false).showInScreenCoordinates(myTree, targetPoint)
     }
     val shortcutText = KeymapUtil.getFirstKeyboardShortcutText(CommonActionsPanel.getCommonShortcut(CommonActionsPanel.Buttons.ADD))
     myTree.emptyText.appendSecondaryText(" $shortcutText", StatusText.DEFAULT_ATTRIBUTES, null)
@@ -57,12 +120,32 @@ class TargetEnvironmentsMasterDetails @JvmOverloads constructor(
     return ExecutionBundle.message("targets.details.status.text.select.target.to.configure")
   }
 
+  override fun createComponent(): JComponent {
+    val panel = super.createComponent()
+
+    myWholePanel.add(bottomPanel, BorderLayout.SOUTH)
+
+    return panel
+  }
+
+  /**
+   * Returns the model with the currently displayed list of targets and the list of targets itself.
+   */
+  private fun getProjectDefaultComboBoxModel() =
+    (listOf(null) + getConfiguredTargets()).let { DefaultComboBoxModel(it.toTypedArray()) to it }
+
   override fun reset() {
     myRoot.removeAllChildren()
+
+    bottomPanel.reset()
 
     allTargets().forEach { nextTarget -> addTargetNode(nextTarget) }
 
     super.reset()
+
+    val (model, _) = getProjectDefaultComboBoxModel()
+    projectDefaultTargetComboBox.model = model
+    projectDefaultTargetComboBox.item = TargetEnvironmentsManager.getInstance(project).defaultTarget
 
     initialSelectedName?.let { selectNodeInTree(initialSelectedName) }
   }
@@ -70,6 +153,7 @@ class TargetEnvironmentsMasterDetails @JvmOverloads constructor(
   override fun isModified(): Boolean =
     allTargets().size != getConfiguredTargets().size ||
     deletedTargets().isNotEmpty() ||
+    bottomPanel.isModified() ||
     super.isModified()
 
   override fun createActions(fromPopup: Boolean): List<AnAction> = mutableListOf(
@@ -96,12 +180,20 @@ class TargetEnvironmentsMasterDetails @JvmOverloads constructor(
     val addedConfigs = getConfiguredTargets() - targetManager.targets.resolvedConfigs()
     addedConfigs.forEach { targetManager.addTarget(it) }
 
+    bottomPanel.apply()
+
     TREE_UPDATER.run()
   }
 
   override fun disposeUIResources() {
     _lastSelectedConfig = selectedObject as? TargetEnvironmentConfiguration
     super.disposeUIResources()
+  }
+
+  override fun removePaths(vararg paths: TreePath) {
+    super.removePaths(*paths)
+
+    updateProjectDefaultTargetComboBox()
   }
 
   private fun allTargets() = targetManager.targets.resolvedConfigs().filter { it.getTargetType().isSystemCompatible() }
@@ -147,6 +239,22 @@ class TargetEnvironmentsMasterDetails @JvmOverloads constructor(
       targetManager.ensureUniqueName(newConfig)
       val newNode = addTargetNode(newConfig)
       selectNodeInTree(newNode, true, true)
+      updateProjectDefaultTargetComboBox()
+    }
+  }
+
+  /**
+   * Updates the list of items in "Project default target" combobox. Tries to preserve the selected item.
+   */
+  private fun updateProjectDefaultTargetComboBox() {
+    val item = projectDefaultTargetComboBox.item
+    val (model, items) = getProjectDefaultComboBoxModel()
+    projectDefaultTargetComboBox.model = model
+    if (item in items) {
+      projectDefaultTargetComboBox.item = item
+    }
+    else {
+      projectDefaultTargetComboBox.item = null
     }
   }
 
@@ -185,6 +293,7 @@ class TargetEnvironmentsMasterDetails @JvmOverloads constructor(
         targetManager.addTarget(copy)
         val newNode = addTargetNode(copy)
         selectNodeInTree(newNode, true, true)
+        updateProjectDefaultTargetComboBox()
       }
     }
 
@@ -238,6 +347,41 @@ class TargetEnvironmentsMasterDetails @JvmOverloads constructor(
         append("  ", SimpleTextAttributes.REGULAR_ATTRIBUTES)
         append(languages, SimpleTextAttributes.GRAYED_ATTRIBUTES)
       }
+    }
+  }
+
+  companion object {
+    /**
+     * @see com.intellij.openapi.ui.DialogWrapper.createSouthPanel
+     */
+    private fun <T : JComponent> T.withTopLineBorder(): T {
+      val color = UIManager.getColor("DialogWrapper.southPanelDivider")
+      val line: Border = CustomLineBorder(color ?: OnePixelDivider.BACKGROUND, 1, 0, 0, 0)
+      border = CompoundBorder(line, JBUI.Borders.empty(16, 12))
+      return this
+    }
+
+    @Tooltip
+    private fun generateProjectDefaultHelpHtml(): String {
+      val listOfAffectedRunConfigurations = StringBuilder().apply {
+        append("<ul>")
+        collectListOfTargetAwareRunConfigurations().forEach { configurationType ->
+          append("<li>")
+          append(configurationType)
+          append("</li>")
+        }
+        append("</ul>")
+      }.toString()
+      return ExecutionBundle.message("targets.details.project.default.target.help.html", listOfAffectedRunConfigurations)
+    }
+
+    private fun collectListOfTargetAwareRunConfigurations(): List<String> {
+      val defaultProject = ProjectManager.getInstance().defaultProject
+      return ConfigurationType.CONFIGURATION_TYPE_EP.extensionList
+        .mapNotNull { type -> type to type.configurationFactories.firstOrNull()?.createTemplateConfiguration(defaultProject) }
+        .filter { (_, template) -> template is TargetEnvironmentAwareRunProfile && template.defaultLanguageRuntimeType != null }
+        .map { (type, _) -> type.displayName }
+        .sorted()
     }
   }
 }

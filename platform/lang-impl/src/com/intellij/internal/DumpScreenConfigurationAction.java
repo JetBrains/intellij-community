@@ -4,15 +4,16 @@ package com.intellij.internal;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.ScreenUtil;
-import com.intellij.ui.scale.JBUIScale;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.datatransfer.StringSelection;
 import java.util.ArrayList;
 
 public class DumpScreenConfigurationAction extends DumbAwareAction {
@@ -112,6 +113,7 @@ public class DumpScreenConfigurationAction extends DumbAwareAction {
         append(sb.append("\n"), device);
       }
       LOG.warn(sb.toString());
+      CopyPasteManager.getInstance().setContents(new StringSelection(sb.toString()));
       super.doOKAction();
     }
   }
@@ -123,16 +125,11 @@ public class DumpScreenConfigurationAction extends DumbAwareAction {
     private boolean update(GraphicsConfiguration configuration) {
       boolean updated = false;
       Rectangle outer = minimize(configuration.getBounds());
-      float sysScale = JBUIScale.sysScale(configuration);
-      outer.width *= sysScale;
-      outer.height *= sysScale;
       if (!myOuterBounds.equals(outer)) {
         myOuterBounds.setBounds(outer);
         updated = true;
       }
       Rectangle inner = minimize(ScreenUtil.getScreenRectangle(configuration));
-      inner.width *= sysScale;
-      inner.height *= sysScale;
       if (!myInnerBounds.equals(inner)) {
         myInnerBounds.setBounds(inner);
         updated = true;

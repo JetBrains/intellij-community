@@ -112,7 +112,7 @@ public final class MVMap<K, V> extends AbstractMap<K, V> implements ConcurrentMa
      *
      * @return the first key, or null
      */
-    public final K firstKey() {
+    public K firstKey() {
         return getFirstLast(true);
     }
 
@@ -121,7 +121,7 @@ public final class MVMap<K, V> extends AbstractMap<K, V> implements ConcurrentMa
      *
      * @return the last key, or null
      */
-    public final K lastKey() {
+    public K lastKey() {
         return getFirstLast(false);
     }
 
@@ -133,7 +133,7 @@ public final class MVMap<K, V> extends AbstractMap<K, V> implements ConcurrentMa
      * @param index the index
      * @return the key
      */
-    public final K getKey(long index) {
+    public K getKey(long index) {
         if (index < 0 || index >= sizeAsLong()) {
             return null;
         }
@@ -169,7 +169,7 @@ public final class MVMap<K, V> extends AbstractMap<K, V> implements ConcurrentMa
      *
      * @return the key list
      */
-    public final List<K> keyList() {
+    public List<K> keyList() {
         return new AbstractList<>() {
             @Override
             public K get(int index) {
@@ -201,7 +201,7 @@ public final class MVMap<K, V> extends AbstractMap<K, V> implements ConcurrentMa
      * @param key the key
      * @return the index
      */
-    public final long getKeyIndex(K key) {
+    public long getKeyIndex(K key) {
         Page<K,V> p = getRootPage();
         if (p.getTotalCount() == 0) {
             return -1;
@@ -255,7 +255,7 @@ public final class MVMap<K, V> extends AbstractMap<K, V> implements ConcurrentMa
      * @param key the key
      * @return the result
      */
-    public final K higherKey(K key) {
+    public K higherKey(K key) {
         return getMinMax(key, false, true);
     }
 
@@ -267,7 +267,7 @@ public final class MVMap<K, V> extends AbstractMap<K, V> implements ConcurrentMa
      * @param key to start from
      * @return the result
      */
-    public final K higherKey(RootReference<K,V> rootRef, K key) {
+    public K higherKey(RootReference<K,V> rootRef, K key) {
         return getMinMax(rootRef, key, false, true);
     }
 
@@ -277,7 +277,7 @@ public final class MVMap<K, V> extends AbstractMap<K, V> implements ConcurrentMa
      * @param key the key
      * @return the result
      */
-    public final K ceilingKey(K key) {
+    public K ceilingKey(K key) {
         return getMinMax(key, false, false);
     }
 
@@ -287,7 +287,7 @@ public final class MVMap<K, V> extends AbstractMap<K, V> implements ConcurrentMa
      * @param key the key
      * @return the result
      */
-    public final K floorKey(K key) {
+    public K floorKey(K key) {
         return getMinMax(key, true, false);
     }
 
@@ -298,7 +298,7 @@ public final class MVMap<K, V> extends AbstractMap<K, V> implements ConcurrentMa
      * @param key the key
      * @return the result
      */
-    public final K lowerKey(K key) {
+    public K lowerKey(K key) {
         return getMinMax(key, true, true);
     }
 
@@ -310,7 +310,7 @@ public final class MVMap<K, V> extends AbstractMap<K, V> implements ConcurrentMa
      * @param key the key
      * @return the result
      */
-    public final K lowerKey(RootReference<K, V> rootRef, K key) {
+    public K lowerKey(RootReference<K, V> rootRef, K key) {
         return getMinMax(rootRef, key, true, true);
     }
 
@@ -368,12 +368,12 @@ public final class MVMap<K, V> extends AbstractMap<K, V> implements ConcurrentMa
      */
     @SuppressWarnings("unchecked")
     @Override
-    public final V get(Object key) {
+    public V get(Object key) {
         return Page.get(getRootPage(), (K) key);
     }
 
     @Override
-    public final boolean containsKey(Object key) {
+    public boolean containsKey(Object key) {
         //noinspection unchecked
         return Page.get(getRootPage(), (K)key) != null;
     }
@@ -432,11 +432,11 @@ public final class MVMap<K, V> extends AbstractMap<K, V> implements ConcurrentMa
      * Close the map. Accessing the data is still possible (to allow concurrent
      * reads), but it is marked as closed.
      */
-    final void close() {
+    void close() {
         closed = true;
     }
 
-    public final boolean isClosed() {
+    public boolean isClosed() {
         return closed;
     }
 
@@ -461,7 +461,7 @@ public final class MVMap<K, V> extends AbstractMap<K, V> implements ConcurrentMa
      * @return the old value if the key existed, or null otherwise
      */
     @Override
-    public final V putIfAbsent(K key, V value) {
+    public V putIfAbsent(K key, V value) {
         return operate(key, value, DecisionMaker.IF_ABSENT);
     }
 
@@ -489,7 +489,7 @@ public final class MVMap<K, V> extends AbstractMap<K, V> implements ConcurrentMa
      * @return true if the value was replaced
      */
     @Override
-    public final boolean replace(K key, V oldValue, V newValue) {
+    public boolean replace(K key, V oldValue, V newValue) {
         EqualsDecisionMaker<V> decisionMaker = new EqualsDecisionMaker<>(getValueType(), oldValue);
         operate(key, newValue, decisionMaker);
         return decisionMaker.getDecision() != Decision.ABORT;
@@ -503,7 +503,7 @@ public final class MVMap<K, V> extends AbstractMap<K, V> implements ConcurrentMa
      * @return the old value, if the value was replaced, or null
      */
     @Override
-    public final V replace(K key, V value) {
+    public V replace(K key, V value) {
         return operate(key, value, DecisionMaker.IF_PRESENT);
     }
 
@@ -512,7 +512,7 @@ public final class MVMap<K, V> extends AbstractMap<K, V> implements ConcurrentMa
      *
      * @return the key type
      */
-    public final KeyableDataType<K> getKeyType() {
+    public KeyableDataType<K> getKeyType() {
         return keyType;
     }
 
@@ -521,7 +521,7 @@ public final class MVMap<K, V> extends AbstractMap<K, V> implements ConcurrentMa
      *
      * @return the value type
      */
-    public final DataType<V> getValueType() {
+    public DataType<V> getValueType() {
         return valueType;
     }
 
@@ -535,7 +535,7 @@ public final class MVMap<K, V> extends AbstractMap<K, V> implements ConcurrentMa
      * @param version to set for this map
      *
      */
-    final void setRootPageInfo(long pageInfo, long version) {
+    void setRootPageInfo(long pageInfo, long version) {
         Page<K,V> root = readOrCreateRootPage(pageInfo);
         setInitialRoot(root, version);
         setWriteVersion(store.getCurrentVersion());
@@ -551,7 +551,7 @@ public final class MVMap<K, V> extends AbstractMap<K, V> implements ConcurrentMa
      * @param from the first key to return
      * @return the iterator
      */
-    public final Iterator<K> keyIterator(K from) {
+    public Iterator<K> keyIterator(K from) {
         return cursor(from, null, false);
     }
 
@@ -561,11 +561,11 @@ public final class MVMap<K, V> extends AbstractMap<K, V> implements ConcurrentMa
      * @param from the first key to return
      * @return the iterator
      */
-    public final Iterator<K> keyIteratorReverse(K from) {
+    public Iterator<K> keyIteratorReverse(K from) {
         return cursor(from, null, true);
     }
 
-    final boolean rewritePage(long pageInfo) {
+    boolean rewritePage(long pageInfo) {
         Page<K, V> p = store.readPage(this, pageInfo);
         if (p.getKeyCount() == 0) {
             return true;
@@ -588,7 +588,7 @@ public final class MVMap<K, V> extends AbstractMap<K, V> implements ConcurrentMa
      * @param from the first key to return
      * @return the cursor
      */
-    public final Cursor<K, V> cursor(K from) {
+    public Cursor<K, V> cursor(K from) {
         return cursor(from, null, false);
     }
 
@@ -600,7 +600,7 @@ public final class MVMap<K, V> extends AbstractMap<K, V> implements ConcurrentMa
      * @param reverse if true, iterate in reverse (descending) order
      * @return the cursor
      */
-    public final Cursor<K, V> cursor(K from, K to, boolean reverse) {
+    public Cursor<K, V> cursor(K from, K to, boolean reverse) {
         return cursor(flushAndGetRoot(), from, to, reverse);
     }
 
@@ -618,7 +618,7 @@ public final class MVMap<K, V> extends AbstractMap<K, V> implements ConcurrentMa
     }
 
     @Override
-    public final Set<Map.Entry<K, V>> entrySet() {
+    public Set<Map.Entry<K, V>> entrySet() {
         final RootReference<K,V> rootReference = flushAndGetRoot();
         return new AbstractSet<>() {
             @Override
@@ -633,7 +633,7 @@ public final class MVMap<K, V> extends AbstractMap<K, V> implements ConcurrentMa
                     @Override
                     public Entry<K, V> next() {
                         K k = cursor.next();
-                        return new SimpleImmutableEntry<>(k, cursor.getValue());
+                        return Map.entry(k, cursor.getValue());
                     }
                 };
             }
@@ -677,11 +677,11 @@ public final class MVMap<K, V> extends AbstractMap<K, V> implements ConcurrentMa
      *
      * @return the name
      */
-    public final @NotNull CharSequence getName() {
+    public @NotNull CharSequence getName() {
         return Objects.requireNonNull(store.getMapName(id));
     }
 
-    public final MVStore getStore() {
+    public MVStore getStore() {
         return store;
     }
 
@@ -695,7 +695,7 @@ public final class MVMap<K, V> extends AbstractMap<K, V> implements ConcurrentMa
      *
      * @return the map id
      */
-    public final int getId() {
+    public int getId() {
         return id;
     }
 
@@ -704,7 +704,7 @@ public final class MVMap<K, V> extends AbstractMap<K, V> implements ConcurrentMa
      *
      * @return the root page
      */
-    public final Page<K,V> getRootPage() {
+    public Page<K,V> getRootPage() {
         return flushAndGetRoot().root;
     }
 
@@ -731,7 +731,7 @@ public final class MVMap<K, V> extends AbstractMap<K, V> implements ConcurrentMa
      * @param rootPage root page
      * @param version initial version
      */
-    final void setInitialRoot(Page<K,V> rootPage, long version) {
+    void setInitialRoot(Page<K,V> rootPage, long version) {
         root.set(new RootReference<>(rootPage, version));
     }
 
@@ -742,7 +742,7 @@ public final class MVMap<K, V> extends AbstractMap<K, V> implements ConcurrentMa
      * @param updatedRootReference the new
      * @return whether updating worked
      */
-    final boolean compareAndSetRoot(RootReference<K,V> expectedRootReference,
+    boolean compareAndSetRoot(RootReference<K,V> expectedRootReference,
                                     RootReference<K,V> updatedRootReference) {
         return root.compareAndSet(expectedRootReference, updatedRootReference);
     }
@@ -752,7 +752,7 @@ public final class MVMap<K, V> extends AbstractMap<K, V> implements ConcurrentMa
      *
      * @param version the version
      */
-    final void rollbackTo(long version) {
+    void rollbackTo(long version) {
         // check if the map was removed and re-created later ?
         if (version > createVersion) {
             rollbackRoot(version);
@@ -800,7 +800,7 @@ public final class MVMap<K, V> extends AbstractMap<K, V> implements ConcurrentMa
         rootReference.removeUnusedOldVersions(store.getOldestVersionToKeep());
     }
 
-    public final boolean isReadOnly() {
+    public boolean isReadOnly() {
         return readOnly;
     }
 
@@ -809,7 +809,7 @@ public final class MVMap<K, V> extends AbstractMap<K, V> implements ConcurrentMa
      *
      * @param isVolatile the volatile flag
      */
-    public final void setVolatile(boolean isVolatile) {
+    public void setVolatile(boolean isVolatile) {
         this.isVolatile = isVolatile;
     }
 
@@ -820,7 +820,7 @@ public final class MVMap<K, V> extends AbstractMap<K, V> implements ConcurrentMa
      *
      * @return whether this map is volatile
      */
-    public final boolean isVolatile() {
+    public boolean isVolatile() {
         return isVolatile;
     }
 
@@ -845,12 +845,12 @@ public final class MVMap<K, V> extends AbstractMap<K, V> implements ConcurrentMa
     }
 
     @Override
-    public final int hashCode() {
+    public int hashCode() {
         return id;
     }
 
     @Override
-    public final boolean equals(Object o) {
+    public boolean equals(Object o) {
         return this == o;
     }
 
@@ -862,7 +862,7 @@ public final class MVMap<K, V> extends AbstractMap<K, V> implements ConcurrentMa
      * @see #sizeAsLong()
      */
     @Override
-    public final int size() {
+    public int size() {
         long size = sizeAsLong();
         return size > Integer.MAX_VALUE ? Integer.MAX_VALUE : (int) size;
     }
@@ -872,7 +872,7 @@ public final class MVMap<K, V> extends AbstractMap<K, V> implements ConcurrentMa
      *
      * @return the number of entries
      */
-    public final long sizeAsLong() {
+    public long sizeAsLong() {
         return getRoot().getTotalCount();
     }
 
@@ -881,7 +881,7 @@ public final class MVMap<K, V> extends AbstractMap<K, V> implements ConcurrentMa
         return sizeAsLong() == 0;
     }
 
-    final long getCreateVersion() {
+    long getCreateVersion() {
         return createVersion;
     }
 
@@ -894,7 +894,7 @@ public final class MVMap<K, V> extends AbstractMap<K, V> implements ConcurrentMa
      * @param version the version
      * @return the map
      */
-    public final MVMap<K, V> openVersion(long version) {
+    public MVMap<K, V> openVersion(long version) {
         if (readOnly) {
             throw new UnsupportedOperationException("This map is read-only; need to call " +
                                                     "the method on the writable map");
@@ -923,7 +923,7 @@ public final class MVMap<K, V> extends AbstractMap<K, V> implements ConcurrentMa
      * @param version to open
      * @return the opened map
      */
-    final MVMap<K, V> openReadOnly(long rootPageInfo, long version) {
+    MVMap<K, V> openReadOnly(long rootPageInfo, long version) {
         Page<K,V> root = readOrCreateRootPage(rootPageInfo);
         return openReadOnly(root, version);
     }
@@ -941,7 +941,7 @@ public final class MVMap<K, V> extends AbstractMap<K, V> implements ConcurrentMa
      *
      * @return version
      */
-    public final long getVersion() {
+    public long getVersion() {
         return getRoot().getVersion();
     }
 
@@ -951,7 +951,7 @@ public final class MVMap<K, V> extends AbstractMap<K, V> implements ConcurrentMa
      * @param version root version
      * @return true if has changes
      */
-    final boolean hasChangesSince(long version) {
+    boolean hasChangesSince(long version) {
         return getRoot().hasChangesSince(version, isPersistent());
     }
 
@@ -976,7 +976,7 @@ public final class MVMap<K, V> extends AbstractMap<K, V> implements ConcurrentMa
         return null;
     }
 
-    final RootReference<K,V> setWriteVersion(long writeVersion) {
+    RootReference<K,V> setWriteVersion(long writeVersion) {
         int attempt = 0;
         while(true) {
             RootReference<K,V> rootReference = flushAndGetRoot();
@@ -1027,7 +1027,7 @@ public final class MVMap<K, V> extends AbstractMap<K, V> implements ConcurrentMa
      * @param sourceMap the source map
      */
     @SuppressWarnings("unused")
-    final void copyFrom(MVMap<K, V> sourceMap) {
+    void copyFrom(MVMap<K, V> sourceMap) {
         MVStore.TxCounter txCounter = store.registerVersionUsage();
         try {
             beforeWrite();

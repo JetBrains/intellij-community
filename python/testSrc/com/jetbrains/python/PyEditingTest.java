@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2013 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python;
 
 import com.intellij.codeInsight.CodeInsightSettings;
@@ -28,9 +14,7 @@ import com.jetbrains.python.formatter.PyCodeStyleSettings;
 import com.jetbrains.python.psi.LanguageLevel;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author yole
- */
+
 public class PyEditingTest extends PyTestCase {
   public void testNoPairedParenthesesBeforeIdentifier() {       // PY-290
     assertEquals("(abc", doTestTyping("abc", 0, '('));
@@ -81,7 +65,7 @@ public class PyEditingTest extends PyTestCase {
   public void testAutoRemoveTriple() {
     doTestBackspace("closedTripleQuoteBackspace", new LogicalPosition(1, 3));
   }
-  
+
   // PY-19084
   public void testNoAoutoclosingAtTheEnd() {
     assertEquals("'''docstring'''", doTestTyping("'''docstring''", 14,  '\''));
@@ -325,7 +309,7 @@ public class PyEditingTest extends PyTestCase {
   public void testEnterDocStringStubInFunctionWithSelf() {
     doDocStringTypingTest("\n", DocStringFormat.REST);
   }
-  
+
   // PY-16656
   public void testEnterDocStringStubInStaticMethodWithSelf() {
     doDocStringTypingTest("\n", DocStringFormat.REST);
@@ -366,7 +350,7 @@ public class PyEditingTest extends PyTestCase {
   public void testEnterDocstringStubWhenFunctionDocstringBelow() {
     doDocStringTypingTest("\n", DocStringFormat.GOOGLE);
   }
-  
+
   // PY-17183
   public void testEnterDocstringStubWhenClassDocstringBelow() {
     doDocStringTypingTest("\n", DocStringFormat.GOOGLE);
@@ -837,19 +821,80 @@ public class PyEditingTest extends PyTestCase {
   }
 
   public void testOverTypingColonInFStringFragment() {
-    runWithLanguageLevel(LanguageLevel.getLatest(), () -> {
-      doTestTyping("s = f'{(lambda<caret>: 42)}'",
-                   ":",
-                   "s = f'{(lambda:<caret> 42)}'");
-    });
+    doTestTyping("s = f'{(lambda<caret>: 42)}'",
+                 ":",
+                 "s = f'{(lambda:<caret> 42)}'");
   }
 
   public void testOverTypingFormatStartInFStringFragment() {
-    runWithLanguageLevel(LanguageLevel.getLatest(), () -> {
-      doTestTyping("s = f'{42<caret>:3d}'",
-                   ":",
-                   "s = f'{42:<caret>:3d}'");
-    });
+    doTestTyping("s = f'{42<caret>:3d}'",
+                 ":",
+                 "s = f'{42:<caret>:3d}'");
+  }
+
+  // PY-48009
+  public void testEnterAfterColonOfMatchStatementWithoutClauses() {
+    doTypingTest('\n');
+  }
+
+  // PY-48009
+  public void testEnterAfterColonOfMatchStatementWithClauses() {
+    doTypingTest('\n');
+  }
+
+  // PY-48009
+  public void testEnterAfterColonOfCaseClauseWithoutBody() {
+    doTypingTest('\n');
+  }
+
+  // PY-48009
+  public void testEnterAfterColonOfCaseClauseWithBody() {
+    doTypingTest('\n');
+  }
+
+  // PY-49080
+  public void testNoBackslashOnEnterInGroupPattern() {
+    doTypingTest('\n');
+  }
+
+  // PY-49080
+  public void testNoBackslashOnEnterInClassPattern() {
+    doTypingTest('\n');
+  }
+
+  // PY-49080
+  public void testNoBackslashOnEnterInSequencePattern() {
+    doTypingTest('\n');
+  }
+
+  // PY-49080
+  public void testNoBackslashOnEnterInMappingPattern() {
+    doTypingTest('\n');
+  }
+
+  // PY-49080
+  public void testNoBackslashOnEnterInStringLiteralInsideGroupPattern() {
+    doTypingTest('\n');
+  }
+
+  // PY-49080
+  public void testNoBackslashOnEnterInStringLiteralInsideClassPattern() {
+    doTypingTest('\n');
+  }
+
+  // PY-49080
+  public void testNoBackslashOnEnterInStringLiteralInsideSequencePattern() {
+    doTypingTest('\n');
+  }
+
+  // PY-49080
+  public void testNoBackslashOnEnterInStringLiteralInsideMappingPattern() {
+    doTypingTest('\n');
+  }
+
+  // PY-49080
+  public void testBackslashOnEnterInTopLevelStringLiteralPattern() {
+    doTypingTest('\n');
   }
 
   @NotNull

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight;
 
 import com.intellij.codeInsight.completion.CompletionMemory;
@@ -8,7 +8,6 @@ import com.intellij.codeInsight.completion.JavaMethodCallElement;
 import com.intellij.codeInsight.daemon.impl.analysis.LambdaHighlightingUtil;
 import com.intellij.codeInsight.hints.ParameterHintsPass;
 import com.intellij.codeInsight.lookup.CommaTailType;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -48,7 +47,7 @@ public final class ExpectedTypesProvider {
   private static final Logger LOG = Logger.getInstance(ExpectedTypesProvider.class);
 
   public static ExpectedTypesProvider getInstance(@NotNull Project project) {
-    return ServiceManager.getService(project, ExpectedTypesProvider.class);
+    return project.getService(ExpectedTypesProvider.class);
   }
 
   private static final int MAX_COUNT = 50;
@@ -636,15 +635,28 @@ public final class ExpectedTypesProvider {
       }
       else if (parent instanceof PsiSwitchLabelStatementBase) {
         PsiSwitchBlock switchBlock = ((PsiSwitchLabelStatementBase)parent).getEnclosingSwitchBlock();
-        if (switchBlock != null) {
-          PsiExpression expression = switchBlock.getExpression();
-          if (expression != null) {
-            PsiType type = expression.getType();
-            if (type != null) {
-              myResult.add(createInfoImpl(type, ExpectedTypeInfo.TYPE_OR_SUBTYPE, type, TailTypes.forSwitchLabel(switchBlock)));
-            }
+        handleCaseElementList(switchBlock);
+      }
+    }
+
+    private void handleCaseElementList(PsiSwitchBlock switchBlock) {
+      if (switchBlock != null) {
+        PsiExpression expression = switchBlock.getExpression();
+        if (expression != null) {
+          PsiType type = expression.getType();
+          if (type != null) {
+            myResult.add(createInfoImpl(type, ExpectedTypeInfo.TYPE_OR_SUBTYPE, type, TailTypes.forSwitchLabel(switchBlock)));
           }
         }
+      }
+    }
+
+    @Override
+    public void visitCaseLabelElementList(PsiCaseLabelElementList list) {
+      PsiElement parent = list.getParent();
+      if (parent instanceof PsiSwitchLabelStatementBase) {
+        PsiSwitchBlock switchBlock = ((PsiSwitchLabelStatementBase)parent).getEnclosingSwitchBlock();
+        handleCaseElementList(switchBlock);
       }
     }
 
@@ -1216,7 +1228,7 @@ public final class ExpectedTypesProvider {
 
       final PsiElementFactory factory = JavaPsiFacade.getElementFactory(containingClass.getProject());
       PsiMethodCallExpression call = ObjectUtils.tryCast(argument.getParent().getParent(), PsiMethodCallExpression.class);
-      AssertHint assertHint = AssertHint.createAssertEqualsLikeHintForCompletion(call, args, method, index);
+      AssertHint<PsiExpression> assertHint = AssertHint.createAssertEqualsLikeHintForCompletion(call, args, method, index);
       if (assertHint != null) {
         PsiExpression other = assertHint.getOtherExpression(argument);
         if (other != null) {

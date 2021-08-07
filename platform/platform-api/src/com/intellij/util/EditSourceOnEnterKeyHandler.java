@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util;
 
 import com.intellij.ide.DataManager;
@@ -7,6 +7,7 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.actionSystem.KeyboardShortcut;
 import com.intellij.openapi.keymap.KeymapManager;
+import com.intellij.openapi.options.advanced.AdvancedSettings;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.pom.Navigatable;
 import com.intellij.util.containers.ContainerUtil;
@@ -40,7 +41,7 @@ public final class EditSourceOnEnterKeyHandler {
       DataContext context = DataManager.getInstance().getDataContext(component);
       List<Navigatable> navigatables = getNavigatables(context);
       if (navigatables.isEmpty()) return false; // nowhere to navigate
-      boolean requestFocus = Registry.is("edit.source.on.enter.key.request.focus.in.editor");
+      boolean requestFocus = AdvancedSettings.getBoolean("edit.source.on.enter.key.request.focus.in.editor");
       navigatables.forEach(navigatable -> navigatable.navigate(requestFocus));
       if (whenPerformed != null) whenPerformed.run();
       return true;

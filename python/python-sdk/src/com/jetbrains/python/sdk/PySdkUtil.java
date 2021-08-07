@@ -38,7 +38,7 @@ import java.util.Map;
  */
 //TODO: rename to PySdkExecuteUtil or PySdkRuntimeUtil
 public final class PySdkUtil {
-  protected static final Logger LOG = Logger.getInstance(PySdkUtil.class);
+  private static final Logger LOG = Logger.getInstance(PySdkUtil.class);
 
   // Windows EOF marker, Ctrl+Z
   public static final int SUBSTITUTE = 26;

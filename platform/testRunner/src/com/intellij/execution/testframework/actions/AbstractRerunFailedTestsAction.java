@@ -1,9 +1,8 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.testframework.actions;
 
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.Executor;
-import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.configurations.*;
 import com.intellij.execution.executors.DefaultDebugExecutor;
 import com.intellij.execution.executors.DefaultRunExecutor;
@@ -14,7 +13,8 @@ import com.intellij.execution.testframework.*;
 import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.LangDataKeys;
+import com.intellij.openapi.actionSystem.ExecutionDataKeys;
+import com.intellij.openapi.actionSystem.UpdateInBackground;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.SettingsEditor;
@@ -27,7 +27,6 @@ import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.search.GlobalSearchScope;
 import org.jdom.Element;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -40,15 +39,13 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.function.Supplier;
 
-/**
- * @author anna
- */
-public abstract class AbstractRerunFailedTestsAction extends AnAction {
+public abstract class AbstractRerunFailedTestsAction extends AnAction implements UpdateInBackground {
   private static final Logger LOG = Logger.getInstance(AbstractRerunFailedTestsAction.class);
 
   private TestFrameworkRunningModel myModel;
-  private Getter<? extends TestFrameworkRunningModel> myModelProvider;
+  private Supplier<? extends TestFrameworkRunningModel> myModelProvider;
   protected TestConsoleProperties myConsoleProperties;
 
   protected AbstractRerunFailedTestsAction(@NotNull ComponentContainer componentContainer) {
@@ -73,7 +70,7 @@ public abstract class AbstractRerunFailedTestsAction extends AnAction {
     e.getPresentation().setEnabled(isActive(e));
   }
 
-  private boolean isActive(@NotNull AnActionEvent e) {
+  public boolean isActive(@NotNull AnActionEvent e) {
     Project project = e.getProject();
     if (project == null) {
       return false;
@@ -84,12 +81,8 @@ public abstract class AbstractRerunFailedTestsAction extends AnAction {
       return false;
     }
 
-    ExecutionEnvironment environment = e.getData(LangDataKeys.EXECUTION_ENVIRONMENT);
-    if (environment == null) {
-      return false;
-    }
-    RunnerAndConfigurationSettings settings = environment.getRunnerAndConfigurationSettings();
-    if (settings != null && !settings.getType().isDumbAware() && DumbService.isDumb(project)) {
+    RunProfile profile = model.getProperties().getConfiguration();
+    if (profile instanceof RunConfiguration && !((RunConfiguration)profile).getType().isDumbAware() && DumbService.isDumb(project)) {
       return false;
     }
 
@@ -130,7 +123,7 @@ public abstract class AbstractRerunFailedTestsAction extends AnAction {
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
-    ExecutionEnvironment environment = e.getData(LangDataKeys.EXECUTION_ENVIRONMENT);
+    ExecutionEnvironment environment = e.getData(ExecutionDataKeys.EXECUTION_ENVIRONMENT);
     if (environment == null) {
       return;
     }
@@ -228,11 +221,6 @@ public abstract class AbstractRerunFailedTestsAction extends AnAction {
   protected static abstract class MyRunProfile extends RunConfigurationBase<Element> implements ModuleRunProfile,
                                                                                                 WrappingRunConfiguration<RunConfigurationBase<?>>,
                                                                                                 ConsolePropertiesProvider {
-    @Deprecated
-    @ApiStatus.ScheduledForRemoval(inVersion = "2021.2")
-    public RunConfigurationBase<?> getConfiguration() {
-      return getPeer();
-    }
 
     @Override
     public @NotNull RunConfigurationBase<?> getPeer() {
@@ -251,7 +239,7 @@ public abstract class AbstractRerunFailedTestsAction extends AnAction {
 
     @Override
     public @Nullable TestConsoleProperties createTestConsoleProperties(@NotNull Executor executor) {
-      return myConfiguration instanceof ConsolePropertiesProvider ? 
+      return myConfiguration instanceof ConsolePropertiesProvider ?
              ((ConsolePropertiesProvider)myConfiguration).createTestConsoleProperties(executor) : null;
     }
 

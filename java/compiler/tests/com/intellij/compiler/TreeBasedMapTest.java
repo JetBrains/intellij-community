@@ -54,7 +54,7 @@ public class TreeBasedMapTest extends TestCase {
 
     map.put("/a/b/c/", "ABC");
     assertEquals("ABC", map.get("/a/b/c/"));
-    assertEquals(null, map.get("/a/b/c"));
+    assertNull(map.get("/a/b/c"));
   }
 
   public void testMapRemove() {
@@ -72,7 +72,7 @@ public class TreeBasedMapTest extends TestCase {
 
     map.remove("");
     assertEquals(6, map.size());
-    assertEquals(null, map.get(""));
+    assertNull(map.get(""));
     assertEquals("ValueAAABBBCCC", map.get("aaa/bbb/ccc"));
     assertEquals("ValueAAABBBDDD", map.get("aaa/bbb/ddd"));
     assertEquals("ValueAAABBB", map.get("aaa/bbb"));
@@ -82,10 +82,10 @@ public class TreeBasedMapTest extends TestCase {
 
     map.remove("aaa/bbb");
     assertEquals(5, map.size());
-    assertEquals(null, map.get(""));
+    assertNull(map.get(""));
     assertEquals("ValueAAABBBCCC", map.get("aaa/bbb/ccc"));
     assertEquals("ValueAAABBBDDD", map.get("aaa/bbb/ddd"));
-    assertEquals(null, map.get("aaa/bbb"));
+    assertNull(map.get("aaa/bbb"));
     assertEquals("ValueAAABBCC", map.get("aaa/bb/cc"));
     assertEquals("ValueAAABBDD", map.get("aaa/bb/dd"));
     assertEquals("ValueAAABC", map.get("aaa/b/c"));
@@ -174,6 +174,6 @@ public class TreeBasedMapTest extends TestCase {
     assertTrue(checkMapKeys.contains("/a/b/c"));
     assertFalse(checkMapKeys.contains("/a/b/c/"));
     assertEquals("ABC", checkMap.get("/a/b/c"));
-    assertEquals(null, checkMap.get("/a/b/c/"));
+    assertNull(checkMap.get("/a/b/c/"));
   }
 }

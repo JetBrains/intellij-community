@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.util;
 
 import com.intellij.psi.*;
@@ -240,7 +240,7 @@ public final class PsiPrecedenceUtil {
     else if (parentExpression instanceof PsiConditionalExpression && expression instanceof PsiConditionalExpression) {
       final PsiConditionalExpression conditionalExpression = (PsiConditionalExpression)parentExpression;
       final PsiExpression condition = conditionalExpression.getCondition();
-      return PsiTreeUtil.isAncestor(condition, expression, true);
+      return PsiTreeUtil.isAncestor(condition, expression, true) || ignoreClarifyingParentheses;
     }
     else if (expression instanceof PsiLambdaExpression) { // jls-15.16
       if (parentExpression instanceof PsiTypeCastExpression) {

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.serialization;
 
 import org.jetbrains.annotations.NotNull;
@@ -17,14 +17,13 @@ public final class ClassUtil {
   private ClassUtil() {
   }
 
-  @NotNull
-  public static Class<?> typeToClass(@NotNull Type type) {
+  public static @NotNull Class<?> typeToClass(@NotNull Type type) {
     if (type instanceof Class) {
       return (Class<?>)type;
     }
     else if (type instanceof TypeVariable) {
-      Type bound = ((TypeVariable)type).getBounds()[0];
-      return bound instanceof Class ? (Class)bound : (Class<?>)((ParameterizedType)bound).getRawType();
+      Type bound = ((TypeVariable<?>)type).getBounds()[0];
+      return bound instanceof Class ? (Class<?>)bound : (Class<?>)((ParameterizedType)bound).getRawType();
     }
     else if (type instanceof WildcardType) {
       return (Class<?>)((WildcardType)type).getUpperBounds()[0];
@@ -57,6 +56,11 @@ public final class ClassUtil {
         return false;
       }
 
+      String fullName = aClass.getName();
+      if (fullName.equals("java.util.Arrays$ArrayList") || fullName.equals("java.util.Collections$SingletonList")) {
+        return false;
+      }
+
       Class<?> declaringClass = aClass.getDeclaringClass();
       return declaringClass == null || !"ImmutableCollections".equals(declaringClass.getSimpleName());
     }
@@ -65,7 +69,7 @@ public final class ClassUtil {
     }
   }
 
-  public static boolean isMutableMap(@NotNull Map object) {
+  public static boolean isMutableMap(@NotNull Map<?, ?> object) {
     if (object == Collections.emptyMap()) {
       return false;
     }
@@ -75,8 +79,7 @@ public final class ClassUtil {
     }
   }
 
-  @Nullable
-  public static Object stringToEnum(@NotNull String value, @NotNull Class<? extends Enum<?>> valueClass, boolean isAlwaysIgnoreCase) {
+  public static @Nullable Object stringToEnum(@NotNull String value, @NotNull Class<? extends Enum<?>> valueClass, boolean isAlwaysIgnoreCase) {
     Enum<?>[] enumConstants = valueClass.getEnumConstants();
     if (!isAlwaysIgnoreCase) {
       for (Object enumConstant : enumConstants) {

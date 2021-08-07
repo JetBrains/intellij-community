@@ -12,9 +12,9 @@ if sys.version_info[0] < 3:
     IS_PY3K = False
 
 if IS_PY3K:
-    from urllib.request import urlopen
+    import urllib.request as urllib_request
 else:
-    from urllib2 import urlopen
+    import urllib2 as urllib_request
 
 __all__ = ['display']
 
@@ -51,14 +51,30 @@ def display(data):
     print(repr(data))
 
 
+def try_empty_proxy(buffer):
+    empty_proxy = urllib_request.ProxyHandler({})
+    opener = urllib_request.build_opener(empty_proxy)
+    urllib_request.install_opener(opener)
+    try:
+        url = HOST + ":" + str(PORT) + "/api/python.scientific"
+        urllib_request.urlopen(url, buffer)
+    except:
+        sys.stderr.write("Error: failed to send plot to %s:%s\n" % (HOST, PORT))
+        traceback.print_exc()
+        sys.stderr.flush()
+    finally:
+        default_opener = urllib_request.build_opener()
+        urllib_request.install_opener(default_opener)
+
+
 def _send_display_message(message_spec):
     serialized = json.dumps(message_spec)
     buffer = serialized.encode()
     try:
         debug("Sending display message to %s:%s\n" % (HOST, PORT))
         url = HOST + ":" + str(PORT) + "/api/python.scientific"
-        urlopen(url, buffer)
-    except OSError as _:
-        sys.stderr.write("Error: failed to send plot to %s:%s\n" % (HOST, PORT))
-        traceback.print_exc()
-        sys.stderr.flush()
+        urllib_request.urlopen(url, buffer)
+    except:
+        # urllib will auto-detect proxy settings and use those, so it might break connection to localhost
+        debug("Retry with empty proxy")
+        try_empty_proxy(buffer)

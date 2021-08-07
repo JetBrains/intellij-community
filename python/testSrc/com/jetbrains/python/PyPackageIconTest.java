@@ -1,29 +1,22 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python;
 
 import com.intellij.application.options.RegistryManager;
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiManager;
-import com.intellij.testFramework.LightProjectDescriptor;
-import com.intellij.util.PlatformIcons;
+import com.intellij.ui.IconTestUtil;
 import com.intellij.util.PsiIconUtil;
 import com.jetbrains.python.fixtures.PyTestCase;
 import com.jetbrains.python.namespacePackages.PyNamespacePackagesService;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.Collections;
 import java.util.List;
 
 public class PyPackageIconTest extends PyTestCase {
-  @Nullable
-  @Override
-  protected LightProjectDescriptor getProjectDescriptor() {
-    return ourPyLatestDescriptor;
-  }
-
   @Override
   public void setUp() throws Exception {
     super.setUp();
@@ -121,12 +114,12 @@ public class PyPackageIconTest extends PyTestCase {
   }
 
   private void checkPackageIcon(@NotNull String path, boolean has) {
-    final VirtualFile found = myFixture.findFileInTempDir(path);
+    VirtualFile found = myFixture.findFileInTempDir(path);
     assertNotNull(found);
-    final PsiDirectory dir = PsiManager.getInstance(myFixture.getProject()).findDirectory(found);
+    PsiDirectory dir = PsiManager.getInstance(myFixture.getProject()).findDirectory(found);
     assertNotNull(dir);
-    final Icon icon = PsiIconUtil.getProvidersIcon(dir, 0);
-    assertEquals(PlatformIcons.PACKAGE_ICON.equals(icon), has);
+    Icon icon = PsiIconUtil.getProvidersIcon(dir, 0);
+    assertEquals(AllIcons.Nodes.Package.equals(IconTestUtil.unwrapIcon(icon)), has);
   }
 
   private void toggleNamespacePackageDirectory(@NotNull String directory) {

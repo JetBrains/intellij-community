@@ -3,6 +3,13 @@
  * <p>
  * This class has no useful logic; it's just a documentation example.
  *
+ * This is thought to be a great news, e.g. a new invention.
+ *
+ * A code example:
+ * <code>
+ *   Item item = env.generateData(Generator.sampledFrom(sys.currentItems), "working on %s item");
+ * </code>
+ *
  * @param T the type of member in this group.
  */
 class ExampleClassWithNoTypos<T> {
@@ -21,18 +28,30 @@ class ExampleClassWithNoTypos<T> {
     /**
      * Adds a [member] to this group.
      *
+     * @param cancellable Whether the progress can be cancelled.
      * @param member member to add
      * @return the new size of the group.
      */
-    Integer goodFunction(T member) {
+    Integer goodFunction(boolean cancellable, T member) {
         return 1; // no error comment
     }
+
+    /**
+     * Accepts files for which vcs operations are temporarily blocked.
+     * @return the project instance.
+     */
+    Object some1() { return 42; }
+
+    /** Currently active change list. */
+    class ActiveChangeList {}
 }
 
 /**
  * It is friend there
  *
- * This guy <warning descr="MASS_AGREEMENT">have</warning> no useful logic; it's just a documentation example.
+ * <warning descr="PLURAL_VERB_AFTER_THIS">This guy have</warning> no useful logic; it's just a documentation example.
+ *
+ * </unopenedTag>
  *
  * @param T the <warning descr="KIND_OF_A">type of a</warning> <TYPO descr="Typo: In word 'membr'">membr</TYPO> in this group.
  */
@@ -51,7 +70,8 @@ class ExampleClassWithTypos<T> {
 
     /**
      * It <warning descr="IT_VBZ">add</warning> a [member] to this <TYPO descr="Typo: In word 'grooup'">grooup</TYPO>.
-     *
+     * <warning descr="UPPERCASE_SENTENCE_START">second</warning> sentence.
+     * 
      * @param member member to add
      * @return the new size of <warning descr="DT_DT">a the</warning> group.
      */

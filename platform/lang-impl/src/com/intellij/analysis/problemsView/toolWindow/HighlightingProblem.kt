@@ -1,9 +1,10 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.analysis.problemsView.toolWindow
 
 import com.intellij.analysis.problemsView.FileProblem
 import com.intellij.analysis.problemsView.ProblemsProvider
 import com.intellij.codeHighlighting.HighlightDisplayLevel
+import com.intellij.codeInsight.daemon.HighlightDisplayKey
 import com.intellij.codeInsight.daemon.impl.HighlightInfo
 import com.intellij.openapi.editor.ex.RangeHighlighterEx
 import com.intellij.openapi.util.text.StringUtil
@@ -11,7 +12,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.xml.util.XmlStringUtil.escapeString
 import javax.swing.Icon
 
-internal class HighlightingProblem(
+open class HighlightingProblem(
   override val provider: ProblemsProvider,
   override val file: VirtualFile,
   private val highlighter: RangeHighlighterEx
@@ -19,8 +20,10 @@ internal class HighlightingProblem(
 
   private fun getIcon(level: HighlightDisplayLevel) = if (severity >= level.severity.myVal) level.icon else null
 
-  internal val info: HighlightInfo?
-    get() = HighlightInfo.fromRangeHighlighter(highlighter)
+  open val info: HighlightInfo?
+    get() {
+      return HighlightInfo.fromRangeHighlighter(highlighter)
+    }
 
   override val icon: Icon
     get() = HighlightDisplayLevel.find(info?.severity)?.icon
@@ -34,6 +37,12 @@ internal class HighlightingProblem(
       val pos = text.indexOfFirst { StringUtil.isLineBreak(it) }
       return if (pos < 0 || text.startsWith("<html>", ignoreCase = true)) text
       else text.substring(0, pos) + StringUtil.ELLIPSIS
+    }
+
+  override val group: String?
+    get() {
+      val id = info?.inspectionToolId ?: return null
+      return HighlightDisplayKey.getDisplayNameByKey(HighlightDisplayKey.findById(id))
     }
 
   override val description: String?

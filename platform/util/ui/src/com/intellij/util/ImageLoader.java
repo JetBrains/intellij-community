@@ -284,7 +284,7 @@ public final class ImageLoader {
   }
 
   static @Nullable InputStream getResourceData(@NotNull String path, @Nullable Class<?> resourceClass, @Nullable ClassLoader classLoader) {
-    assert resourceClass != null || classLoader != null;
+    assert resourceClass != null || classLoader != null || path.startsWith("file://");
 
     if (classLoader != null) {
       InputStream stream = classLoader.getResourceAsStream(path.startsWith("/") ? path.substring(1) : path);
@@ -391,9 +391,15 @@ public final class ImageLoader {
     }
 
     if (isHiDpiNeeded) {
-      double userScale = scaleContext.getScale(DerivedScaleType.EFF_USR_SCALE);
-      image = new JBHiDPIScaledImage(image, originalUserSize.getWidth() * userScale, originalUserSize.getHeight() * userScale,
-                                     BufferedImage.TYPE_INT_ARGB);
+      // The {originalUserSize} can contain calculation inaccuracy. If we use it to derive the HiDPI image scale
+      // in JBHiDPIScaledImage, the derived scale will also be inaccurate and this will cause distortions
+      // when the image is painted on a scaled (hidpi) screen graphics, see
+      // StartupUiUtil.drawImage(Graphics, Image, Rectangle, Rectangle, BufferedImageOp, ImageObserver).
+      //
+      // To avoid that, we instead directly use the provided ScaleContext which contains correct ScaleContext.SYS_SCALE,
+      // the image user space size will then be derived by JBHiDPIScaledImage (it is assumed the derived size is equal to
+      // {originalUserSize} * DerivedScaleType.EFF_USR_SCALE, taking into account calculation accuracy).
+      image = new JBHiDPIScaledImage(image, scaleContext, BufferedImage.TYPE_INT_ARGB);
     }
     return image;
   }

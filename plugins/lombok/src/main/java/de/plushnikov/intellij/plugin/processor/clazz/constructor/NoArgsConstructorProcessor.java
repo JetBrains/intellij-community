@@ -16,8 +16,7 @@ import java.util.List;
 /**
  * @author Plushnikov Michail
  */
-public class NoArgsConstructorProcessor extends AbstractConstructorClassProcessor {
-
+public final class NoArgsConstructorProcessor extends AbstractConstructorClassProcessor {
   public NoArgsConstructorProcessor() {
     super(LombokClassNames.NO_ARGS_CONSTRUCTOR, PsiMethod.class);
   }

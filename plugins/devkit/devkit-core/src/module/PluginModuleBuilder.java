@@ -19,9 +19,8 @@ import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.ui.HyperlinkLabel;
 import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.components.BorderLayoutPanel;
+import com.intellij.util.ui.SwingHelper;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.devkit.DevKitBundle;
@@ -30,8 +29,10 @@ import org.jetbrains.idea.devkit.projectRoots.IdeaJdk;
 import org.jetbrains.idea.devkit.run.PluginConfigurationType;
 import org.jetbrains.jps.model.java.JavaResourceRootType;
 
-import javax.swing.*;
 import java.awt.*;
+
+import static java.awt.GridBagConstraints.CENTER;
+import static java.awt.GridBagConstraints.HORIZONTAL;
 
 public class PluginModuleBuilder extends JavaModuleBuilder {
 
@@ -87,6 +88,11 @@ public class PluginModuleBuilder extends JavaModuleBuilder {
   }
 
   @Override
+  public boolean isAvailable() {
+    return true;
+  }
+
+  @Override
   public boolean isSuitableSdkType(SdkTypeId sdk) {
     return sdk == IdeaJdk.getInstance();
   }
@@ -106,15 +112,8 @@ public class PluginModuleBuilder extends JavaModuleBuilder {
     final ModuleWizardStep step = StdModuleTypes.JAVA.modifyProjectTypeStep(settingsStep, this);
     if (step == null) return null;
 
-    final BorderLayoutPanel panel = JBUI.Panels.simplePanel(0, 4);
-    final HyperlinkLabel linkLabel = new HyperlinkLabel();
-    linkLabel.setHtmlText(DevKitBundle.message("module.wizard.devkit.simple.plugin.label"));
-    linkLabel.setHyperlinkTarget("https://plugins.jetbrains.com/docs/intellij/getting-started.html?from=DevkitPluginModuleWizard");
-    panel.addToCenter(linkLabel);
-
-    final JComponent component = step.getComponent();
-    component.add(panel, new GridBagConstraints(0, 1, 1, 1, 1.0, 1.0,
-                                                GridBagConstraints.CENTER, GridBagConstraints.HORIZONTAL, JBUI.insetsTop(8), 0, 0));
+    step.getComponent().add(SwingHelper.createHtmlLabel(DevKitBundle.message("module.wizard.devkit.simple.plugin.label"), null, null),
+                            new GridBagConstraints(0, 1, 1, 1, 1.0, 1.0, CENTER, HORIZONTAL, JBUI.insetsTop(8), 0, 0));
     return step;
   }
 }

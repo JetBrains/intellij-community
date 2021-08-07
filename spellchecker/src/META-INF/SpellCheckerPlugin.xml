@@ -13,9 +13,7 @@
                         serviceImplementation="com.intellij.spellchecker.ui.SpellCheckingEditorCustomizationProviderImpl"
                         overrides="true"/>
     <fileType name="Dictionary" implementationClass="com.intellij.spellchecker.DictionaryFileType" extensions="dic"/>
-    <projectService serviceImplementation="com.intellij.spellchecker.settings.SpellCheckerSettings"/>
     <postStartupActivity implementation="com.intellij.spellchecker.settings.SettingsTransferActivity"/>
-    <projectService serviceImplementation="com.intellij.spellchecker.SpellCheckerManager"/>
     <projectConfigurable parentId="proofread" instance="com.intellij.spellchecker.settings.SpellCheckerSettingsManager" id="reference.settings.ide.settings.spelling" key="spelling" bundle="messages.SpellCheckerBundle" />
 
     <localInspection shortName="SpellCheckingInspection" bundle="messages.SpellCheckerBundle"
@@ -24,14 +22,13 @@
 
     <nameSuggestionProvider id="DictionarySuggestionProvider" implementation="com.intellij.spellchecker.quickfixes.DictionarySuggestionProvider" order="first"/>
     <severitiesProvider implementation="com.intellij.spellchecker.SpellCheckerSeveritiesProvider"/>
-    
+
     <spellchecker.support language="TEXT" implementationClass="com.intellij.spellchecker.tokenizer.SpellcheckingStrategy"/>
     <spellchecker.bundledDictionaryProvider implementation="com.intellij.spellchecker.DefaultBundledDictionariesProvider"/>
 
     <registryKey key="spellchecker.corrections.limit" defaultValue="3" description="Spellchecker corrections limit" restartRequired="false"/>
-    
+
     <projectService serviceImplementation="com.intellij.spellchecker.state.ProjectDictionaryState"/>
-    <applicationService serviceImplementation="com.intellij.spellchecker.state.CachedDictionaryState"/>
     <statistics.projectUsagesCollector implementation="com.intellij.spellchecker.statistics.SpellcheckerConfigCollector"/>
     <lookup.usageDetails implementation="com.intellij.spellchecker.statistics.SpellcheckerLookupUsageDescriptor"/>
     <statistics.counterUsagesCollector groupId="spellchecker.events" version="1"/>

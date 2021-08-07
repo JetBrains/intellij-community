@@ -56,7 +56,6 @@ public class LombokConfigIndex extends FileBasedIndexExtension<ConfigKey, Config
                                                               new ConfigValue(configValues.get(key.getConfigKey()), stopBubblingValue)));
           }
         }
-
         return result;
       }
 

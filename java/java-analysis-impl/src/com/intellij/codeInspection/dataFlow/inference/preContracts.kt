@@ -9,7 +9,7 @@ import com.intellij.codeInspection.dataFlow.NullabilityUtil
 import com.intellij.codeInspection.dataFlow.StandardMethodContract
 import com.intellij.codeInspection.dataFlow.StandardMethodContract.ValueConstraint.*
 import com.intellij.codeInspection.dataFlow.inference.ContractInferenceInterpreter.withConstraint
-import com.intellij.codeInspection.dataFlow.instructions.MethodCallInstruction
+import com.intellij.codeInspection.dataFlow.java.inst.MethodCallInstruction
 import com.intellij.psi.*
 import com.intellij.psi.util.PsiUtil
 import com.siyeh.ig.psiutils.SideEffectChecker

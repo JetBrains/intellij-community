@@ -40,6 +40,8 @@ public class FavoritesAbbreviatePackageNamesAction extends FavoritesToolbarButto
   @Override
   public void updateButton(@NotNull AnActionEvent e) {
     super.updateButton(e);
-    setVisible(getViewSettings().isFlattenPackages());
+    boolean visible = getViewSettings().isFlattenPackages();
+    e.getPresentation().setVisible(visible);
+    setVisible(visible);
   }
 }

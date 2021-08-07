@@ -17,7 +17,6 @@ public abstract class PushedFilePropertiesUpdater {
     return project.getComponent(PushedFilePropertiesUpdater.class);
   }
 
-  public abstract void initializeProperties();
   public abstract void pushAll(final FilePropertyPusher<?>... pushers);
 
   /**
@@ -25,7 +24,6 @@ public abstract class PushedFilePropertiesUpdater {
    */
   @Deprecated
   public abstract void filePropertiesChanged(@NotNull VirtualFile file);
-  public abstract void pushAllPropertiesNow();
   public abstract <T> void findAndUpdateValue(@NotNull VirtualFile fileOrDir, @NotNull FilePropertyPusher<T> pusher, @Nullable T moduleValue);
 
   /**

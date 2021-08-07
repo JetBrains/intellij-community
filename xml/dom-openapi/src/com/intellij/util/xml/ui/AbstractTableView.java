@@ -107,7 +107,7 @@ public abstract class AbstractTableView<T> extends JPanel implements DataProvide
   }
 
   protected final void installPopup(final String place, final DefaultActionGroup group) {
-    PopupHandler.installPopupHandler(myTable, group, place, ActionManager.getInstance());
+    PopupHandler.installPopupMenu(myTable, group, place);
   }
 
   public final void setToolbarActions(final AnAction... actions) {

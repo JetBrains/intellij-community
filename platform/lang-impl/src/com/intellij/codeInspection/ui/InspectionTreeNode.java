@@ -1,15 +1,11 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.codeInspection.ui;
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInspection.reference.RefEntity;
 import com.intellij.lang.annotation.HighlightSeverity;
-import com.intellij.util.containers.BidirectionalMap;
-import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.Interner;
-import com.intellij.util.containers.WeakInterner;
-import gnu.trove.TObjectHashingStrategy;
+import com.intellij.util.containers.*;
 import it.unimi.dsi.fastutil.objects.Object2IntMap;
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
 import org.jetbrains.annotations.Nls;
@@ -21,9 +17,9 @@ import javax.swing.tree.TreeNode;
 import java.util.*;
 
 public abstract class InspectionTreeNode implements TreeNode {
-  private static final Interner<LevelAndCount[]> LEVEL_AND_COUNT_INTERNER = new WeakInterner<>(new TObjectHashingStrategy<>() {
+  private static final Interner<LevelAndCount[]> LEVEL_AND_COUNT_INTERNER = new WeakInterner<>(new HashingStrategy<>() {
     @Override
-    public int computeHashCode(LevelAndCount[] object) {
+    public int hashCode(LevelAndCount[] object) {
       return Arrays.hashCode(object);
     }
 

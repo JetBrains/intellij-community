@@ -3,6 +3,7 @@ package com.intellij.openapi;
 
 import com.intellij.util.NullableFunction;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -32,7 +33,7 @@ public final class ListSelection<T> {
   }
 
   @NotNull
-  public static <V> ListSelection<V> create(@NotNull List<V> list, V selected) {
+  public static <V> ListSelection<V> create(@NotNull List<V> list, @Nullable V selected) {
     return createAt(list, list.indexOf(selected));
   }
 
@@ -60,6 +61,10 @@ public final class ListSelection<T> {
     return myList.isEmpty();
   }
 
+  /**
+   * Map all elements in the list and remove elements for which converter returned null.
+   * If selected element was removed, select remaining element before it.
+   */
   @NotNull
   public <V> ListSelection<V> map(@NotNull NullableFunction<? super T, ? extends V> convertor) {
     int newSelectionIndex = -1;

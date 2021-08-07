@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.devkit.references;
 
 import com.intellij.lang.properties.codeInspection.unused.UnusedPropertyInspection;
@@ -47,6 +47,10 @@ public class MessageBundleReferenceTest extends JavaCodeInsightFixtureTestCase {
     doHighlightImplicitUsagesTest("ExportableIdImplicitUsage.java");
   }
 
+  public void testAdvancedSettingImplicitUsage() {
+    doHighlightImplicitUsagesTest("AdvancedSettingImplicitUsage.xml");
+  }
+
   public void testNoImplicitUsageWrongFilename() {
     myFixture.enableInspections(new UnusedPropertyInspection());
     myFixture.testHighlighting("NoImplicitUsageWrongFilename.properties");
@@ -81,5 +85,13 @@ public class MessageBundleReferenceTest extends JavaCodeInsightFixtureTestCase {
 
     myFixture.completeBasic();
     assertContainsElements(myFixture.getLookupElementStrings(), "my.plugin.id");
+  }
+
+  public void testAdvancedSettingIdCompletionVariants() {
+    myFixture.copyFileToProject("AdvancedSettingImplicitUsage.xml");
+    myFixture.configureByText("MyBundle.properties", "advanced.setting.<caret>");
+
+    myFixture.completeBasic();
+    assertContainsElements(myFixture.getLookupElementStrings(), "my.advanced.setting.id", "my.another.advanced.setting.id");
   }
 }

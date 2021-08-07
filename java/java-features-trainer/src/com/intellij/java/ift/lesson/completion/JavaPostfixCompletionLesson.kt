@@ -2,26 +2,38 @@
 package com.intellij.java.ift.lesson.completion
 
 import com.intellij.java.ift.JavaLessonsBundle
-import training.dsl.LessonContext
+import training.dsl.LearningDslBase
+import training.dsl.LessonSample
 import training.dsl.parseLessonSample
-import training.learn.LessonsBundle
-import training.learn.course.KLesson
+import training.learn.lesson.general.completion.PostfixCompletionLesson
 
-class JavaPostfixCompletionLesson
-  : KLesson("Postfix completion", LessonsBundle.message("postfix.completion.lesson.name")) {
-
-  val sample = parseLessonSample("""
-    class PostfixCompletionDemo{
-        public void demonstrate(int show_times){
+class JavaPostfixCompletionLesson : PostfixCompletionLesson() {
+  override val sample: LessonSample = parseLessonSample("""
+    class PostfixCompletionDemo {
+        public void demonstrate(int show_times) {
             (show_times == 10)<caret>
         }
     }
   """.trimIndent())
 
-  override val lessonContent: LessonContext.() -> Unit = {
-    prepareSample(sample)
-    actionTask("EditorChooseLookupItem") {
-      JavaLessonsBundle.message("java.postfix.completion.apply", code("."), code("if"), action("EditorChooseLookupItem"))
+  override val result: String = parseLessonSample("""
+    class PostfixCompletionDemo {
+        public void demonstrate(int show_times) {
+            if ((show_times == 10)) {
+                
+            }
+        }
     }
+  """.trimIndent()).text
+
+  override val completionSuffix: String = "."
+  override val completionItem: String = "if"
+
+  override fun LearningDslBase.getTypeTaskText(): String {
+    return JavaLessonsBundle.message("java.postfix.completion.type", code(completionSuffix))
+  }
+
+  override fun LearningDslBase.getCompleteTaskText(): String {
+    return JavaLessonsBundle.message("java.postfix.completion.complete", code(completionItem), action("EditorChooseLookupItem"))
   }
 }

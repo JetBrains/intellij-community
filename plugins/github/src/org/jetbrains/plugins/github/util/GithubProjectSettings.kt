@@ -12,29 +12,8 @@ class GithubProjectSettings : PersistentStateComponentWithModificationTracker<Gi
   private var state = State()
 
   class State : BaseState() {
-    var CREATE_PULL_REQUEST_DEFAULT_BRANCH by string(null)
-    var CREATE_PULL_REQUEST_DEFAULT_REPO_USER by string(null)
-    var CREATE_PULL_REQUEST_DEFAULT_REPO_NAME by string(null)
-
     var branchProtectionPatterns by list<String>()
   }
-
-  var createPullRequestDefaultBranch: String?
-    get() = state.CREATE_PULL_REQUEST_DEFAULT_BRANCH
-    set(value) {
-      state.CREATE_PULL_REQUEST_DEFAULT_BRANCH = value
-    }
-
-  var createPullRequestDefaultRepo: GHRepositoryPath?
-    get() = if (state.CREATE_PULL_REQUEST_DEFAULT_REPO_USER == null || state.CREATE_PULL_REQUEST_DEFAULT_REPO_NAME == null) {
-      null
-    }
-    else GHRepositoryPath(state.CREATE_PULL_REQUEST_DEFAULT_REPO_USER!!,
-                          state.CREATE_PULL_REQUEST_DEFAULT_REPO_NAME!!)
-    set(value) {
-      state.CREATE_PULL_REQUEST_DEFAULT_REPO_USER = value?.owner
-      state.CREATE_PULL_REQUEST_DEFAULT_REPO_NAME = value?.repository
-    }
 
   var branchProtectionPatterns: MutableList<String>
     get() = Collections.unmodifiableList(state.branchProtectionPatterns)

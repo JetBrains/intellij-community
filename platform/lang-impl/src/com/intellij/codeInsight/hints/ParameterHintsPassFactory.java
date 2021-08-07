@@ -1,10 +1,8 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.hints;
 
-import com.intellij.codeHighlighting.TextEditorHighlightingPass;
-import com.intellij.codeHighlighting.TextEditorHighlightingPassFactory;
-import com.intellij.codeHighlighting.TextEditorHighlightingPassFactoryRegistrar;
-import com.intellij.codeHighlighting.TextEditorHighlightingPassRegistrar;
+import com.intellij.codeHighlighting.*;
+import com.intellij.codeInsight.daemon.impl.TextEditorHighlightingPassRegistrarImpl;
 import com.intellij.lang.Language;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
@@ -19,7 +17,9 @@ public class ParameterHintsPassFactory implements TextEditorHighlightingPassFact
 
   @Override
   public void registerHighlightingPassFactory(@NotNull TextEditorHighlightingPassRegistrar registrar, @NotNull Project project) {
-    registrar.registerTextEditorHighlightingPass(this, null, null, false, -1);
+    boolean serialized = ((TextEditorHighlightingPassRegistrarImpl)registrar).isSerializeCodeInsightPasses();
+    int[] ghl = serialized ? new int[]{Pass.UPDATE_ALL} : null;
+    registrar.registerTextEditorHighlightingPass(this, ghl, null, false, -1);
   }
 
   @Nullable
@@ -32,7 +32,7 @@ public class ParameterHintsPassFactory implements TextEditorHighlightingPassFact
     Language language = file.getLanguage();
     InlayParameterHintsProvider provider = InlayParameterHintsExtension.INSTANCE.forLanguage(language);
     if (provider == null) return null;
-    return new ParameterHintsPass(file, editor, MethodInfoBlacklistFilter.forLanguage(language), false);
+    return new ParameterHintsPass(file, editor, MethodInfoExcludeListFilter.forLanguage(language), false);
   }
 
   public static long getCurrentModificationStamp(@NotNull PsiFile file) {

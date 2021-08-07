@@ -36,6 +36,7 @@ abstract class WebSocketProtocolHandler : ChannelInboundHandlerAdapter() {
 
   protected open fun closeFrameReceived(channel: Channel, message: CloseWebSocketFrame) {
     channel.close()
+    message.release()
   }
 
   @Suppress("OverridingDeprecatedMember")

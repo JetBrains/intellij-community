@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.wm.impl.status;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
@@ -12,7 +12,6 @@ import com.intellij.icons.AllIcons;
 import com.intellij.ide.PowerSaveMode;
 import com.intellij.lang.LangBundle;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.FileEditorManagerEvent;
 import com.intellij.openapi.project.Project;
@@ -79,7 +78,7 @@ public final class TogglePopupHintsPanel extends EditorBasedWidget implements St
       final PsiFile file = getCurrentFile();
       if (file != null) {
         if (!DaemonCodeAnalyzer.getInstance(file.getProject()).isHighlightingAvailable(file)) return;
-        final HectorComponent component = ServiceManager.getService(myProject, HectorComponentFactory.class).create(file);
+        final HectorComponent component = myProject.getService(HectorComponentFactory.class).create(file);
         component.showComponent(e.getComponent(), d -> new Point(-d.width, -d.height));
       }
     };
@@ -102,7 +101,7 @@ public final class TogglePopupHintsPanel extends EditorBasedWidget implements St
       }
 
       @Override
-      public void profileChanged(InspectionProfile profile) {
+      public void profileChanged(@NotNull InspectionProfile profile) {
         updateStatus();
       }
     });

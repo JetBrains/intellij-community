@@ -49,6 +49,7 @@ public abstract class SingleRowLayout extends TabsLayoutBase implements MorePopu
   @Override
   public void init(@NotNull TabsLayoutCallback callback) {
     super.init(callback);
+    myMoreToolbar.setTargetComponent(myCallback.getComponent());
     myCallback.getComponent().add(myMoreToolbar.getComponent());
   }
 

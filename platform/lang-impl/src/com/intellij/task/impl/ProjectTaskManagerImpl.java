@@ -1,8 +1,8 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.task.impl;
 
 import com.intellij.execution.ExecutionException;
-import com.intellij.internal.statistic.IdeActivity;
+import com.intellij.internal.statistic.StructuredIdeActivity;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
@@ -18,8 +18,8 @@ import com.intellij.openapi.roots.ProjectModelBuildableElement;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.task.*;
-import com.intellij.ui.GuiUtils;
 import com.intellij.util.ExceptionUtil;
+import com.intellij.util.ModalityUiUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
@@ -41,6 +41,8 @@ import java.util.function.BiPredicate;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 
+import static com.intellij.task.impl.ProjectTaskManagerStatisticsCollector.BUILD_ACTIVITY;
+import static com.intellij.task.impl.ProjectTaskManagerStatisticsCollector.TASK_RUNNER;
 import static com.intellij.util.containers.ContainerUtil.emptyList;
 import static com.intellij.util.containers.ContainerUtil.map;
 import static java.util.Arrays.stream;
@@ -179,9 +181,9 @@ public final class ProjectTaskManagerImpl extends ProjectTaskManager {
     });
 
 
-    IdeActivity activity = new IdeActivity(myProject, "build").startedWithData(data -> {
-      data.addData("task_runner_class", map(toRun, it -> it.first.getClass().getName()));
-    });
+    StructuredIdeActivity activity = BUILD_ACTIVITY.started(myProject, () ->
+      Collections.singletonList(TASK_RUNNER.with(map(toRun, it -> it.first.getClass().getName())))
+    );
 
     myEventPublisher.started(context);
 
@@ -258,7 +260,7 @@ public final class ProjectTaskManagerImpl extends ProjectTaskManager {
     });
   }
 
-  public final void addListener(@NotNull ProjectTaskManagerListener listener) {
+  public void addListener(@NotNull ProjectTaskManagerListener listener) {
     myListeners.add(listener);
   }
 
@@ -344,12 +346,12 @@ public final class ProjectTaskManagerImpl extends ProjectTaskManager {
     }
 
     private void notify(@NotNull Result result) {
-      GuiUtils.invokeLaterIfNeeded(() -> {
+      ModalityUiUtil.invokeLaterIfNeeded(ModalityState.defaultModalityState(), () -> {
         if (!myProject.isDisposed()) {
           myEventPublisher.finished(result);
         }
         myPromise.setResult(result);
-      }, ModalityState.defaultModalityState());
+      });
     }
   }
 
@@ -357,7 +359,7 @@ public final class ProjectTaskManagerImpl extends ProjectTaskManager {
     private final ProjectTaskContext myContext;
     private final ResultConsumer myResultConsumer;
     private final AtomicInteger myProgressCounter;
-    private final IdeActivity myActivity;
+    private final StructuredIdeActivity myActivity;
     private final AtomicBoolean myErrorsFlag;
     private final AtomicBoolean myAbortedFlag;
     private final Map<ProjectTask, ProjectTaskState> myTasksState = new ConcurrentHashMap<>();
@@ -365,7 +367,7 @@ public final class ProjectTaskManagerImpl extends ProjectTaskManager {
     private ProjectTaskResultsAggregator(@NotNull ProjectTaskContext context,
                                          @NotNull ResultConsumer resultConsumer,
                                          int expectedResults,
-                                         @NotNull IdeActivity activity) {
+                                         @NotNull StructuredIdeActivity activity) {
       myContext = context;
       myResultConsumer = resultConsumer;
       myProgressCounter = new AtomicInteger(expectedResults);
@@ -470,135 +472,4 @@ public final class ProjectTaskManagerImpl extends ProjectTaskManager {
       return myResult.anyTaskMatches(predicate);
     }
   }
-  //<editor-fold desc="Deprecated methods. To be removed in 2020.1">
-
-  /**
-   * @deprecated use {@link #run(ProjectTask)}
-   */
-  @Override
-  @ApiStatus.ScheduledForRemoval(inVersion = "2020.1")
-  @Deprecated
-  public void run(@NotNull ProjectTask projectTask, @Nullable ProjectTaskNotification callback) {
-    assertUnsupportedOperation(callback);
-    notifyIfNeeded(run(projectTask), callback);
-  }
-
-  /**
-   * @deprecated use {@link #run(ProjectTaskContext, ProjectTask)}
-   */
-  @Override
-  @ApiStatus.ScheduledForRemoval(inVersion = "2020.1")
-  @Deprecated
-  public void run(@NotNull ProjectTaskContext context,
-                  @NotNull ProjectTask projectTask,
-                  @Nullable ProjectTaskNotification callback) {
-    assertUnsupportedOperation(callback);
-    notifyIfNeeded(run(context, projectTask), callback);
-  }
-
-  /**
-   * @deprecated use {@link #buildAllModules()}
-   */
-  @Override
-  @ApiStatus.ScheduledForRemoval(inVersion = "2020.1")
-  @Deprecated
-  public void buildAllModules(@Nullable ProjectTaskNotification callback) {
-    assertUnsupportedOperation(callback);
-    notifyIfNeeded(buildAllModules(), callback);
-  }
-
-  /**
-   * @deprecated use {@link #build(Module[])}
-   */
-  @Override
-  @ApiStatus.ScheduledForRemoval(inVersion = "2020.1")
-  @Deprecated
-  public void build(Module @NotNull [] modules, @Nullable ProjectTaskNotification callback) {
-    assertUnsupportedOperation(callback);
-    notifyIfNeeded(build(modules), callback);
-  }
-
-  /**
-   * @deprecated use {@link #rebuild(Module[])}
-   */
-  @Override
-  @ApiStatus.ScheduledForRemoval(inVersion = "2020.1")
-  @Deprecated
-  public void rebuild(Module @NotNull [] modules, @Nullable ProjectTaskNotification callback) {
-    assertUnsupportedOperation(callback);
-    notifyIfNeeded(rebuild(modules), callback);
-  }
-
-  /**
-   * @deprecated use {@link #compile(VirtualFile[])}
-   */
-  @Override
-  @ApiStatus.ScheduledForRemoval(inVersion = "2020.1")
-  @Deprecated
-  public void compile(VirtualFile @NotNull [] files, @Nullable ProjectTaskNotification callback) {
-    assertUnsupportedOperation(callback);
-    notifyIfNeeded(compile(files), callback);
-  }
-
-  /**
-   * @deprecated use {@link #build(ProjectModelBuildableElement[])}
-   */
-  @Override
-  @ApiStatus.ScheduledForRemoval(inVersion = "2020.1")
-  @Deprecated
-  public void build(ProjectModelBuildableElement @NotNull [] buildableElements, @Nullable ProjectTaskNotification callback) {
-    assertUnsupportedOperation(callback);
-    notifyIfNeeded(build(buildableElements), callback);
-  }
-
-  private static void notifyIfNeeded(@NotNull Promise<Result> promise, @Nullable ProjectTaskNotification callback) {
-    if (callback != null) {
-      promise
-        .onSuccess(
-          result -> callback.finished(result.getContext(), new ProjectTaskResult(result.isAborted(), result.hasErrors() ? 1 : 0, 0)))
-        .onError(throwable -> callback.finished(new ProjectTaskContext(), new ProjectTaskResult(true, 0, 0)));
-    }
-  }
-
-  private static void assertUnsupportedOperation(@Nullable ProjectTaskNotification callback) {
-    if (callback instanceof ProjectTaskNotificationAdapter) {
-      throw new UnsupportedOperationException("Please, provide implementation for non-deprecated methods");
-    }
-  }
-
-  private static final class ProjectTaskNotificationAdapter implements ProjectTaskNotification {
-    private final AsyncPromise<Result> myPromise;
-    private final ProjectTaskContext myContext;
-
-    private ProjectTaskNotificationAdapter(@NotNull AsyncPromise<Result> promise, @NotNull ProjectTaskContext context) {
-      myPromise = promise;
-      myContext = context;
-    }
-
-    @Override
-    public void finished(@NotNull ProjectTaskResult executionResult) {
-      myPromise.setResult(new Result() {
-        @Override
-        public @NotNull ProjectTaskContext getContext() {
-          return myContext;
-        }
-
-        @Override
-        public boolean isAborted() {
-          return executionResult.isAborted();
-        }
-
-        @Override
-        public boolean hasErrors() {
-          return executionResult.getErrors() > 0;
-        }
-
-        @Override
-        public boolean anyTaskMatches(@NotNull BiPredicate<? super ProjectTask, ? super ProjectTaskState> predicate) {
-          return executionResult.anyMatch(predicate);
-        }
-      });
-    }
-  }
-  //</editor-fold>
 }

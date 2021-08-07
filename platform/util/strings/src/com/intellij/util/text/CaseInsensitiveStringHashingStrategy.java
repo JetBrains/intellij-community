@@ -4,6 +4,11 @@ package com.intellij.util.text;
 import com.intellij.openapi.util.text.Strings;
 import gnu.trove.TObjectHashingStrategy;
 
+/**
+ * @deprecated use {@link com.intellij.util.containers.CollectionFactory#createCaseInsensitiveStringMap()}
+ * or {@link com.intellij.util.containers.CollectionFactory#createCaseInsensitiveStringSet()} instead
+ */
+@Deprecated
 public final class CaseInsensitiveStringHashingStrategy implements TObjectHashingStrategy<String> {
   public static final CaseInsensitiveStringHashingStrategy INSTANCE = new CaseInsensitiveStringHashingStrategy();
 

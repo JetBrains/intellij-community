@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.util;
 
 import org.jetbrains.annotations.NotNull;
@@ -6,10 +6,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
 
-/**
- * @author Kir
- */
-public final class TimeoutCachedValue<T> implements Getter<T> {
+public final class TimeoutCachedValue<T> implements Supplier<T> {
   private final long myTimeoutMs;
   @NotNull private final Supplier<? extends T> myValueSupplier;
   private long myLastCalcTime;

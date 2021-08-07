@@ -1,7 +1,7 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.jps.model.serialization.java.compiler;
 
-import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
@@ -29,11 +29,11 @@ public final class AnnotationProcessorProfileSerializer {
 
     final Element srcOutput = element.getChild("sourceOutputDir");
     final String out = srcOutput != null ? srcOutput.getAttributeValue(NAME) : null;
-    profile.setGeneratedSourcesDirectoryName(out != null? FileUtil.toSystemDependentName(out) : null, false);
+    profile.setGeneratedSourcesDirectoryName(out != null ? FileUtilRt.toSystemDependentName(out) : null, false);
 
     final Element srcTestOutput = element.getChild("sourceTestOutputDir");
     final String testOut = srcTestOutput != null ? srcTestOutput.getAttributeValue(NAME) : null;
-    profile.setGeneratedSourcesDirectoryName(testOut != null? FileUtil.toSystemDependentName(testOut) : null, true);
+    profile.setGeneratedSourcesDirectoryName(testOut != null? FileUtilRt.toSystemDependentName(testOut) : null, true);
 
     final Element isRelativeToContentRoot = element.getChild("outputRelativeToContentRoot");
     if (isRelativeToContentRoot != null) {
@@ -68,7 +68,7 @@ public final class AnnotationProcessorProfileSerializer {
           if (pathBuilder.length() > 0) {
             pathBuilder.append(File.pathSeparator);
           }
-          pathBuilder.append(FileUtil.toSystemDependentName(path));
+          pathBuilder.append(FileUtilRt.toSystemDependentName(path));
         }
       }
       profile.setProcessorPath(pathBuilder.toString());
@@ -93,11 +93,11 @@ public final class AnnotationProcessorProfileSerializer {
     }
     final String srcDirName = profile.getGeneratedSourcesDirectoryName(false);
     if (!StringUtil.equals(ProcessorConfigProfile.DEFAULT_PRODUCTION_DIR_NAME, srcDirName)) {
-      addChild(element, "sourceOutputDir").setAttribute(NAME, FileUtil.toSystemIndependentName(srcDirName));
+      addChild(element, "sourceOutputDir").setAttribute(NAME, FileUtilRt.toSystemIndependentName(srcDirName));
     }
     final String testSrcDirName = profile.getGeneratedSourcesDirectoryName(true);
     if (!StringUtil.equals(ProcessorConfigProfile.DEFAULT_TESTS_DIR_NAME, testSrcDirName)) {
-      addChild(element, "sourceTestOutputDir").setAttribute(NAME, FileUtil.toSystemIndependentName(testSrcDirName));
+      addChild(element, "sourceTestOutputDir").setAttribute(NAME, FileUtilRt.toSystemIndependentName(testSrcDirName));
     }
 
     if (profile.isOutputRelativeToContentRoot()) {
@@ -142,7 +142,7 @@ public final class AnnotationProcessorProfileSerializer {
       final StringTokenizer tokenizer = new StringTokenizer(path, File.pathSeparator, false);
       while (tokenizer.hasMoreTokens()) {
         final String token = tokenizer.nextToken();
-        addChild(pathElement, ENTRY).setAttribute(NAME, FileUtil.toSystemIndependentName(token));
+        addChild(pathElement, ENTRY).setAttribute(NAME, FileUtilRt.toSystemIndependentName(token));
       }
     }
 

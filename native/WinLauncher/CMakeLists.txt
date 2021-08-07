@@ -1,16 +1,10 @@
-cmake_minimum_required(VERSION 3.1)
+cmake_minimum_required(VERSION 3.15)
 project(WinLauncher)
 include(CheckSymbolExists)
 
 if (NOT WIN32)
   message(FATAL_ERROR "Windows only.")
 endif ()
-
-set(CMAKE_CXX_STANDARD 14)
-
-# generating .pdb files
-set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} /Zi")
-set(CMAKE_EXE_LINKER_FLAGS_RELEASE "${CMAKE_EXE_LINKER_FLAGS_RELEASE} /DEBUG /OPT:REF /OPT:ICF")
 
 set(CMAKE_RC_FLAGS "${CMAKE_RC_FLAGS} /i${CMAKE_CURRENT_SOURCE_DIR}")
 
@@ -34,10 +28,16 @@ if (NOT JAVA_HOME)
   message(FATAL_ERROR "JDK_11/JDK_11_x64 variables not defined (x64=${TARGET_X64}).")
 endif ()
 
-include_directories(${JAVA_HOME}/include ${JAVA_HOME}/include/win32)
-
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/WinLauncher.rc ${CMAKE_CURRENT_BINARY_DIR}/WinLauncher.rc @ONLY)
 
 add_executable(WinLauncher WIN32 WinLauncher.cpp ${CMAKE_CURRENT_BINARY_DIR}/WinLauncher.rc)
 
-set_target_properties(WinLauncher PROPERTIES OUTPUT_NAME ${FILE_NAME})
+set_target_properties(WinLauncher PROPERTIES
+    OUTPUT_NAME ${FILE_NAME}
+    CXX_STANDARD 14
+    MSVC_RUNTIME_LIBRARY "MultiThreaded")
+
+target_compile_definitions(WinLauncher PRIVATE UNICODE _UNICODE)
+target_include_directories(WinLauncher PRIVATE ${JAVA_HOME}/include ${JAVA_HOME}/include/win32)
+target_compile_options(WinLauncher PRIVATE /W3 /Zi /O2 /Oi /Gy /GL)
+target_link_options(WinLauncher PRIVATE /INCREMENTAL:NO /DEBUG /LTCG /OPT:REF /OPT:ICF)

@@ -76,7 +76,7 @@ public final class CompactDataInput implements DataInput {
     int ch2 = in.read();
     if ((ch1 | ch2) < 0)
         throw new EOFException();
-    return (short)((ch1 << 8) + (ch2 << 0));
+    return (short)((ch1 << 8) + ch2);
   }
 
   @Override
@@ -85,7 +85,7 @@ public final class CompactDataInput implements DataInput {
     int ch2 = in.read();
     if ((ch1 | ch2) < 0)
         throw new EOFException();
-    return (ch1 << 8) + (ch2 << 0);
+    return (ch1 << 8) + ch2;
   }
 
   @Override
@@ -94,7 +94,7 @@ public final class CompactDataInput implements DataInput {
     int ch2 = in.read();
     if ((ch1 | ch2) < 0)
         throw new EOFException();
-    return (char)((ch1 << 8) + (ch2 << 0));
+    return (char)((ch1 << 8) + ch2);
   }
 
   @Override
@@ -112,7 +112,7 @@ public final class CompactDataInput implements DataInput {
             ((long)(readBuffer[4] & 255) << 24) +
             ((readBuffer[5] & 255) << 16) +
             ((readBuffer[6] & 255) <<  8) +
-            ((readBuffer[7] & 255) <<  0));
+            ((readBuffer[7] & 255)));
   }
 
   @Override

@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2021 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,12 +16,9 @@
 package com.siyeh.ig.threading;
 
 import com.intellij.psi.PsiMethodCallExpression;
-import com.intellij.psi.PsiType;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.psiutils.ControlFlowUtils;
-import com.siyeh.ig.psiutils.MethodCallUtils;
 import org.jetbrains.annotations.NotNull;
 
 public class AwaitNotInLoopInspection extends BaseInspection {
@@ -29,8 +26,7 @@ public class AwaitNotInLoopInspection extends BaseInspection {
   @Override
   @NotNull
   protected String buildErrorString(Object... infos) {
-    return InspectionGadgetsBundle.message(
-      "await.not.in.loop.problem.descriptor");
+    return InspectionGadgetsBundle.message("await.not.in.loop.problem.descriptor");
   }
 
   @Override
@@ -41,15 +37,9 @@ public class AwaitNotInLoopInspection extends BaseInspection {
   private static class AwaitNotInLoopVisitor extends BaseInspectionVisitor {
 
     @Override
-    public void visitMethodCallExpression(
-      @NotNull PsiMethodCallExpression expression) {
+    public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression) {
       super.visitMethodCallExpression(expression);
-      if (!MethodCallUtils.isCallToMethod(expression,
-                                          "java.util.concurrent.locks.Condition", PsiType.VOID,
-                                          "await")) {
-        return;
-      }
-      if (ControlFlowUtils.isInLoop(expression)) {
+      if (!ThreadingUtils.isAwaitCall(expression) || WaitNotInLoopInspection.isCheckedInLoop(expression)) {
         return;
       }
       registerMethodCallError(expression);

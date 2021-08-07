@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.ui;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -15,6 +15,8 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.MouseEvent;
+
+import static java.lang.Math.abs;
 
 /**
  * @author Vladimir Kondratyev
@@ -48,6 +50,7 @@ public class Splitter extends JPanel implements Splittable {
 
 
   protected float myProportion;// first size divided by (first + second)
+  private Float myLagProportion;
 
   protected final Divider myDivider;
   private JComponent mySecondComponent;
@@ -69,7 +72,8 @@ public class Splitter extends JPanel implements Splittable {
   public enum DividerPositionStrategy {
     KEEP_PROPORTION, //default
     KEEP_FIRST_SIZE,
-    KEEP_SECOND_SIZE
+    KEEP_SECOND_SIZE,
+    DISTRIBUTE
   }
   @NotNull
   private DividerPositionStrategy myDividerPositionStrategy = DividerPositionStrategy.KEEP_PROPORTION;
@@ -217,6 +221,8 @@ public class Splitter extends JPanel implements Splittable {
 
   @Override
   public Dimension getMinimumSize() {
+    if (isMinimumSizeSet()) return super.getMinimumSize(); // do not violate Swing's contract
+
     final int dividerWidth = getDividerWidth();
     if (myFirstComponent != null && myFirstComponent.isVisible() && mySecondComponent != null && mySecondComponent.isVisible()) {
       final Dimension firstMinSize = myFirstComponent.getMinimumSize();
@@ -239,6 +245,8 @@ public class Splitter extends JPanel implements Splittable {
 
   @Override
   public Dimension getPreferredSize() {
+    if (isPreferredSizeSet()) return super.getPreferredSize(); // do not violate Swing's contract
+
     final int dividerWidth = getDividerWidth();
     if (myFirstComponent != null && myFirstComponent.isVisible() && mySecondComponent != null && mySecondComponent.isVisible()) {
       final Dimension firstPrefSize = myFirstComponent.getPreferredSize();
@@ -266,20 +274,94 @@ public class Splitter extends JPanel implements Splittable {
 
   @Override
   public void reshape(int x, int y, int w, int h) {
+    int total = myVerticalSplit ? h : w;
     if (w > 0 && h > 0 && myDividerPositionStrategy != DividerPositionStrategy.KEEP_PROPORTION
-        && !isNull(myFirstComponent) && myFirstComponent.isVisible() && !myFirstComponent.getBounds().isEmpty()
-        && !isNull(mySecondComponent) && mySecondComponent.isVisible() && !mySecondComponent.getBounds().isEmpty()
-        && ((myVerticalSplit && h > 2 * getDividerWidth()) || (!myVerticalSplit && w > 2 * getDividerWidth()))
-      && ((myVerticalSplit && h != getHeight()) || (!myVerticalSplit && w != getWidth()))) {
-      int total = myVerticalSplit ? h : w;
+        && isComponentVisible(myFirstComponent) && isComponentVisible(mySecondComponent)
+        && total > 2 * getDividerWidth() && total != getDimension(getSize())) {
       if (myDividerPositionStrategy == DividerPositionStrategy.KEEP_FIRST_SIZE) {
-        myProportion = getProportionForFirstSize(myVerticalSplit ? myFirstComponent.getHeight() : myFirstComponent.getWidth(), total);
+        myProportion = getProportionForFirstSize((int)getDimension(myFirstComponent.getSize()), total);
       }
       else if (myDividerPositionStrategy == DividerPositionStrategy.KEEP_SECOND_SIZE) {
-        myProportion = getProportionForSecondSize(myVerticalSplit ? mySecondComponent.getHeight() : mySecondComponent.getWidth(), total);
+        myProportion = getProportionForSecondSize((int)getDimension(mySecondComponent.getSize()), total);
+      }
+      else if (myDividerPositionStrategy == DividerPositionStrategy.DISTRIBUTE) {
+        if (myLagProportion == null) myLagProportion = myProportion;
+        myProportion = getDistributeSizeChange(
+          (int)getDimension(myFirstComponent.getSize()),
+          (int)getDimension(myFirstComponent.getMinimumSize()),
+          (int)getDimension(myFirstComponent.getPreferredSize()),
+          (int)getDimension(mySecondComponent.getSize()),
+          (int)getDimension(mySecondComponent.getMinimumSize()),
+          (int)getDimension(mySecondComponent.getPreferredSize()),
+          total - getDividerWidth(),
+          myLagProportion,
+          myLackOfSpaceStrategy == LackOfSpaceStrategy.SIMPLE_RATIO ? null :
+          myLackOfSpaceStrategy == LackOfSpaceStrategy.HONOR_THE_SECOND_MIN_SIZE);
       }
     }
     super.reshape(x, y, w, h);
+  }
+
+  private static boolean isComponentVisible(JComponent component) {
+    return !isNull(component) && component.isVisible() && !component.getBounds().isEmpty();
+  }
+
+  private static float getDistributeSizeChange(int size1, int mSize1, int pSize1,
+                                               int size2, int mSize2, int pSize2,
+                                               int totalSize, float oldProportion,
+                                               @Nullable Boolean stretchFirst) {
+    //clamp
+    if (pSize1 < mSize1) pSize1 = mSize1;
+    if (pSize2 < mSize2) pSize2 = mSize2;
+    int delta = totalSize - (size1 + size2);
+
+    int[] size = {size1, size2};
+    delta = stretchTo(size, mSize1, mSize2, delta, oldProportion);
+    delta = stretchTo(size, pSize1, pSize2, delta, oldProportion);
+    if (delta != 0) {
+      if (stretchFirst == null) {
+        int p0 = computePortion(size, delta, oldProportion);
+        size[0] += p0;
+        size[1] += delta - p0;
+      }
+      else {
+        size[stretchFirst ? 0 : 1] += delta;
+      }
+    }
+    return (float)size[0] / totalSize;
+  }
+
+  private static int stretchTo(int[] size, int tgt0, int tgt1, int delta, double oldProportion) {
+    int d0 = tgt0 - size[0];
+    if ((d0 >= 0) != (delta >= 0)) d0 = 0;
+    int d1 = tgt1 - size[1];
+    if ((d1 >= 0) != (delta >= 0)) d1 = 0;
+    if (abs(d0 + d1) > abs(delta)) {
+      int p0 = computePortion(size, delta, oldProportion);
+      int p1 = delta - p0;
+      if (abs(p0) > abs(d0)) {
+        p0 = d0;
+        p1 = delta - d0;
+      }
+      else if (abs(p1) > abs(d1)) {
+        p0 = delta - d1;
+        p1 = d1;
+      }
+      size[0] += p0;
+      size[1] += p1;
+      return 0;
+    }
+    else {
+      size[0] += d0;
+      size[1] += d1;
+      return delta - (d0 + d1);
+    }
+  }
+
+  private static int computePortion(int[] size, int delta, double oldProportion) {
+    int offset = (int)Math.round((size[0] + size[1] + delta) * oldProportion - size[0]);
+    if ((offset < 0) != (delta < 0)) return 0;
+    return abs(offset) > abs(delta) ? delta : offset;
   }
 
   @ApiStatus.Internal
@@ -331,44 +413,7 @@ public class Splitter extends JPanel implements Splittable {
         d = total;
       }
       else {
-        size1 = myProportion * (total - d);
-        double size2 = total - size1 - d;
-
-        if (isHonorMinimumSize()) {
-
-          double mSize1 = isVertical() ? myFirstComponent.getMinimumSize().getHeight() : myFirstComponent.getMinimumSize().getWidth();
-          double mSize2 = isVertical() ? mySecondComponent.getMinimumSize().getHeight() : mySecondComponent.getMinimumSize().getWidth();
-          double pSize1 = isVertical() ? myFirstComponent.getPreferredSize().getHeight() : myFirstComponent.getPreferredSize().getWidth();
-          double pSize2 = isVertical() ? mySecondComponent.getPreferredSize().getHeight() : mySecondComponent.getPreferredSize().getWidth();
-          if (myHonorPreferredSize && size1 + size2 > mSize1 + mSize2) {
-            mSize1 = pSize1;
-            mSize2 = pSize2;
-          }
-
-          if (size1 + size2 < mSize1 + mSize2) {
-            switch (myLackOfSpaceStrategy) {
-              case SIMPLE_RATIO:
-                double proportion = mSize1 / (mSize1 + mSize2);
-                size1 = proportion * (size1 + size2);
-                break;
-              case HONOR_THE_FIRST_MIN_SIZE:
-                size1 = mSize1;
-                break;
-              case HONOR_THE_SECOND_MIN_SIZE:
-                size1 = total - mSize2 - d;
-                break;
-            }
-          }
-          else {
-            if (size1 < mSize1) {
-              size1 = mSize1;
-            }
-            else if (size2 < mSize2) {
-              size2 = mSize2;
-              size1 = total - size2 - d;
-            }
-          }
-        }
+        size1 = computeFirstComponentSize(total - d);
       }
 
       int iSize1 = Math.max(0, (int)Math.round(size1));
@@ -423,6 +468,52 @@ public class Splitter extends JPanel implements Splittable {
     //myDivider.revalidate();
   }
 
+  private double computeFirstComponentSize(int total) {
+    double size1 = myProportion * total;
+    double size2 = total - size1;
+
+    if (!isHonorMinimumSize()) {
+      return size1;
+    }
+    double mSize1 = getDimension(myFirstComponent.getMinimumSize());
+    double mSize2 = getDimension(mySecondComponent.getMinimumSize());
+    double pSize1 = getDimension(myFirstComponent.getPreferredSize());
+    double pSize2 = getDimension(mySecondComponent.getPreferredSize());
+    if (myHonorPreferredSize && size1 > mSize1 && size2 > mSize2) {
+      mSize1 = pSize1;
+      mSize2 = pSize2;
+    }
+
+    if (total < mSize1 + mSize2) {
+      switch (myLackOfSpaceStrategy) {
+        case SIMPLE_RATIO:
+          double proportion = mSize1 / (mSize1 + mSize2);
+          size1 = proportion * total;
+          break;
+        case HONOR_THE_FIRST_MIN_SIZE:
+          size1 = mSize1;
+          break;
+        case HONOR_THE_SECOND_MIN_SIZE:
+          size1 = total - mSize2;
+          break;
+      }
+    }
+    else {
+      if (size1 < mSize1) {
+        size1 = mSize1;
+      }
+      else if (size2 < mSize2) {
+        size2 = mSize2;
+        size1 = total - size2;
+      }
+    }
+    return size1;
+  }
+
+  private double getDimension(Dimension size) {
+    return isVertical() ? size.getHeight() : size.getWidth();
+  }
+
   static boolean isNull(Component component) {
     return NullableComponent.Check.isNull(component);
   }
@@ -465,6 +556,7 @@ public class Splitter extends JPanel implements Splittable {
 
   @Override
   public void setProportion(float proportion) {
+    myLagProportion = null;
     if (myProportion == proportion) {
       return;
     }

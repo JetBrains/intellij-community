@@ -7,21 +7,21 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.MultiLineLabelUI;
 import com.intellij.openapi.util.NlsContexts;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.ui.mac.foundation.MacUtil;
 import com.intellij.util.Alarm;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
-
-import static com.intellij.openapi.ui.Messages.wrapToScrollPaneIfNeeded;
 
 public class MessageDialog extends DialogWrapper {
   protected @NlsContexts.DialogMessage @Nullable String myMessage;
@@ -30,6 +30,7 @@ public class MessageDialog extends DialogWrapper {
   protected int myFocusedOptionIndex;
   protected Icon myIcon;
   private MessagesBorderLayout myLayout;
+  private @NonNls @Nullable String myHelpId;
 
   public MessageDialog(@Nullable Project project,
                        @NlsContexts.DialogMessage @Nullable String message,
@@ -50,10 +51,24 @@ public class MessageDialog extends DialogWrapper {
                        int defaultOptionIndex,
                        int focusedOptionIndex,
                        @Nullable Icon icon,
-                       @Nullable DoNotAskOption doNotAskOption,
+                       @Nullable com.intellij.openapi.ui.DoNotAskOption doNotAskOption,
                        boolean canBeParent) {
+    this(project, parentComponent, message, title, options, defaultOptionIndex, focusedOptionIndex, icon, doNotAskOption, canBeParent, null);
+  }
+
+  public MessageDialog(@Nullable Project project,
+                       @Nullable Component parentComponent,
+                       @NlsContexts.DialogMessage @Nullable String message,
+                       @NlsContexts.DialogTitle String title,
+                       String @NotNull [] options,
+                       int defaultOptionIndex,
+                       int focusedOptionIndex,
+                       @Nullable Icon icon,
+                       @Nullable com.intellij.openapi.ui.DoNotAskOption doNotAskOption,
+                       boolean canBeParent,
+                       @Nullable String helpId) {
     super(project, parentComponent, canBeParent, IdeModalityType.IDE);
-    _init(title, message, options, defaultOptionIndex, focusedOptionIndex, icon, doNotAskOption);
+    _init(title, message, options, defaultOptionIndex, focusedOptionIndex, icon, doNotAskOption, helpId);
   }
 
   public MessageDialog(@NlsContexts.DialogMessage @Nullable String message,
@@ -82,7 +97,8 @@ public class MessageDialog extends DialogWrapper {
                        int defaultOptionIndex,
                        int focusedOptionIndex,
                        @Nullable Icon icon,
-                       @Nullable DoNotAskOption doNotAskOption) {
+                       @Nullable com.intellij.openapi.ui.DoNotAskOption doNotAskOption,
+                       @Nullable String helpId) {
     setTitle(title);
     if (Messages.isMacSheetEmulation()) {
       setUndecorated(true);
@@ -92,6 +108,7 @@ public class MessageDialog extends DialogWrapper {
     myDefaultOptionIndex = defaultOptionIndex;
     myFocusedOptionIndex = focusedOptionIndex;
     myIcon = icon;
+    myHelpId = helpId;
     setDoNotAskOption(doNotAskOption);
     init();
     if (Messages.isMacSheetEmulation()) {
@@ -101,11 +118,11 @@ public class MessageDialog extends DialogWrapper {
 
   @Override
   protected Action @NotNull [] createActions() {
-    Action[] actions = new Action[myOptions.length];
+    List<Action> actions = new ArrayList<>();
     for (int i = 0; i < myOptions.length; i++) {
       String option = myOptions[i];
       final int exitCode = i;
-      actions[i] = new AbstractAction(UIUtil.replaceMnemonicAmpersand(option)) {
+      Action action = new AbstractAction(UIUtil.replaceMnemonicAmpersand(option)) {
         @Override
         public void actionPerformed(ActionEvent e) {
           close(exitCode, true);
@@ -113,17 +130,21 @@ public class MessageDialog extends DialogWrapper {
       };
 
       if (i == myDefaultOptionIndex) {
-        actions[i].putValue(DEFAULT_ACTION, Boolean.TRUE);
+        action.putValue(DEFAULT_ACTION, Boolean.TRUE);
       }
 
       if (i == myFocusedOptionIndex) {
-        actions[i].putValue(FOCUSED_ACTION, Boolean.TRUE);
+        action.putValue(FOCUSED_ACTION, Boolean.TRUE);
       }
 
-      UIUtil.assignMnemonic(option, actions[i]);
-
+      UIUtil.assignMnemonic(option, action);
+      actions.add(action);
     }
-    return actions;
+
+    if (getHelpId() != null) {
+      actions.add(getHelpAction());
+    }
+    return actions.toArray(new Action[0]);
   }
 
   @Override
@@ -216,7 +237,7 @@ public class MessageDialog extends DialogWrapper {
     JPanel panel = createIconPanel();
     if (myMessage != null) {
       JTextPane messageComponent = createMessageComponent(myMessage);
-      panel.add(wrapToScrollPaneIfNeeded(messageComponent, 100, 15), BorderLayout.CENTER);
+      panel.add(Messages.wrapToScrollPaneIfNeeded(messageComponent, 100, 15), BorderLayout.CENTER);
     }
     return panel;
   }
@@ -252,7 +273,7 @@ public class MessageDialog extends DialogWrapper {
   }
 
   @Override
-  protected void doHelpAction() {
-    // do nothing
+  protected @Nullable String getHelpId() {
+    return myHelpId;
   }
 }

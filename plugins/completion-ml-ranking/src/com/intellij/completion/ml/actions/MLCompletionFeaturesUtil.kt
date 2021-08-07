@@ -1,18 +1,17 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.completion.ml.actions
 
-import com.google.gson.Gson
-import com.google.gson.GsonBuilder
+import com.fasterxml.jackson.jr.ob.JSON
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupManager
 import com.intellij.codeInsight.lookup.impl.LookupImpl
+import com.intellij.completion.ml.storage.LookupStorage
 import com.intellij.completion.ml.util.idString
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
-import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.ide.CopyPasteManager
-import com.intellij.completion.ml.storage.LookupStorage
 import java.awt.datatransfer.StringSelection
 
 object MLCompletionFeaturesUtil {
@@ -38,8 +37,7 @@ object MLCompletionFeaturesUtil {
 
   class CopyFeaturesToClipboard : AnAction() {
     companion object {
-      private val LOG: Logger = Logger.getInstance(CopyFeaturesToClipboard::class.java)
-      private val gson: Gson = GsonBuilder().setPrettyPrinting().create()
+      private val LOG = logger<CopyFeaturesToClipboard>()
     }
 
     override fun update(e: AnActionEvent) {
@@ -50,14 +48,13 @@ object MLCompletionFeaturesUtil {
     override fun actionPerformed(e: AnActionEvent) {
       val editor = e.getData(CommonDataKeys.EDITOR)
       val lookup = LookupManager.getActiveLookup(editor) as? LookupImpl ?: return
-      val result = mapOf(
+      val json = JSON.std.with(JSON.Feature.PRETTY_PRINT_OUTPUT).asString(mapOf(
         "common" to getCommonFeatures(lookup),
         "elements" to lookup.items.associate {
           val elementFeatures = getElementFeatures(lookup, it)
           elementFeatures.id to elementFeatures.features
         }
-      )
-      val json = gson.toJson(result)
+      ))
 
       try {
         CopyPasteManager.getInstance().setContents(StringSelection(json))

@@ -5,6 +5,7 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -19,6 +20,7 @@ import java.util.Set;
 
 public final class JavaSdkUtil {
   /** @deprecated use {@link #getJdkClassesRoots(Path, boolean)} instead */
+  @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
   @Deprecated
   public static @NotNull List<File> getJdkClassesRoots(@NotNull File home, boolean isJre) {
     return ContainerUtil.map(getJdkClassesRoots(home.toPath(), isJre), Path::toFile);

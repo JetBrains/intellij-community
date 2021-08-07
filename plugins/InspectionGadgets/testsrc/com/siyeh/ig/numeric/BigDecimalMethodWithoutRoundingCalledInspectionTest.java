@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.siyeh.ig.numeric;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
@@ -6,7 +6,7 @@ import com.intellij.testFramework.LightProjectDescriptor;
 import com.siyeh.ig.LightJavaInspectionTestCase;
 import org.jetbrains.annotations.NotNull;
 
-@SuppressWarnings("BigDecimalMethodWithoutRoundingCalled")
+@SuppressWarnings({"BigDecimalMethodWithoutRoundingCalled", "BigDecimalLegacyMethod"})
 public class BigDecimalMethodWithoutRoundingCalledInspectionTest extends LightJavaInspectionTestCase {
 
   @Override
@@ -28,6 +28,7 @@ public class BigDecimalMethodWithoutRoundingCalledInspectionTest extends LightJa
   }
 
   public void testSetScale() {
+    // noinspection BigDecimalLegacyMethod
     doTest("import java.math.BigDecimal;" +
            "class X {" +
            "  static void foo(BigDecimal value) {" +
@@ -38,6 +39,7 @@ public class BigDecimalMethodWithoutRoundingCalledInspectionTest extends LightJa
   }
 
   public void testDivide() {
+    // noinspection BigDecimalLegacyMethod
     doTest("import java.math.BigDecimal;" +
            "class X {" +
            "  static void foo(BigDecimal value) {" +

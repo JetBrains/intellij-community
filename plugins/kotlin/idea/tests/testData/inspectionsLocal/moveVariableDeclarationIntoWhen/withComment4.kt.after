@@ -1,0 +1,6 @@
+fun foo(style: Int?) {
+    when (<caret>style ?: 0) { // comment
+        0 -> {}
+        else -> {}
+    }
+}

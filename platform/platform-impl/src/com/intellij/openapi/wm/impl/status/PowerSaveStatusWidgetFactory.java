@@ -21,10 +21,12 @@ import java.awt.event.MouseEvent;
 /**
  * "Power save mode: enabled/disabled" icon in the status bar
  */
-public class PowerSaveStatusWidgetFactory implements StatusBarWidgetFactory, StatusBarWidget, StatusBarWidget.IconPresentation {
+public class PowerSaveStatusWidgetFactory implements StatusBarWidgetFactory {
+  private static final String ID = "PowerSaveMode";
+
   @Override
   public @NotNull String getId() {
-    return "PowerSaveMode";
+    return ID;
   }
 
   @Nls
@@ -40,14 +42,15 @@ public class PowerSaveStatusWidgetFactory implements StatusBarWidgetFactory, Sta
 
   @Override
   public @NotNull StatusBarWidget createWidget(@NotNull Project project) {
-    ApplicationManager.getApplication().getMessageBus().connect(this).subscribe(PowerSaveMode.TOPIC,
-      () -> WindowManager.getInstance().getStatusBar(project).updateWidget(getId()));
-    return this;
+    StatusBar statusBar = WindowManager.getInstance().getStatusBar(project);
+    if (statusBar != null) {
+      ApplicationManager.getApplication().getMessageBus().connect().subscribe(PowerSaveMode.TOPIC, () -> statusBar.updateWidget(getId()));
+    }
+    return new PowerWidget();
   }
 
   @Override
   public void disposeWidget(@NotNull StatusBarWidget widget) {
-
   }
 
   @Override
@@ -56,44 +59,44 @@ public class PowerSaveStatusWidgetFactory implements StatusBarWidgetFactory, Sta
   }
 
   @Override
-  public @NotNull String ID() {
-    return getId();
-  }
-
-  @Override
   public boolean isEnabledByDefault() {
     return false;
   }
 
-  @Override
-  public void install(@NotNull StatusBar statusBar) {
+  private static class PowerWidget implements StatusBarWidget, StatusBarWidget.IconPresentation {
+    @Override
+    public @NotNull String ID() {
+      return ID;
+    }
 
-  }
+    @Override
+    public void install(@NotNull StatusBar statusBar) {
+    }
 
-  @Override
-  public @Nullable WidgetPresentation getPresentation() {
-    return this;
-  }
+    @Override
+    public @Nullable WidgetPresentation getPresentation() {
+      return this;
+    }
 
-  @Override
-  public @Nullable String getTooltipText() {
-    return PowerSaveMode.isEnabled() ?
-    InspectionsBundle.message("power.save.mode.widget.tooltip.enabled") :
-    InspectionsBundle.message("power.save.mode.widget.tooltip.disabled");
-  }
+    @Override
+    public @Nullable String getTooltipText() {
+      return PowerSaveMode.isEnabled() ?
+             InspectionsBundle.message("power.save.mode.widget.tooltip.enabled") :
+             InspectionsBundle.message("power.save.mode.widget.tooltip.disabled");
+    }
 
-  @Override
-  public @Nullable Consumer<MouseEvent> getClickConsumer() {
-    return __ -> PowerSaveMode.setEnabled(!PowerSaveMode.isEnabled());
-  }
+    @Override
+    public @Nullable Consumer<MouseEvent> getClickConsumer() {
+      return __ -> PowerSaveMode.setEnabled(!PowerSaveMode.isEnabled());
+    }
 
-  @Override
-  public @Nullable Icon getIcon() {
-    return PowerSaveMode.isEnabled() ? AllIcons.General.InspectionsPowerSaveMode : AllIcons.General.InspectionsEye;
-  }
+    @Override
+    public @Nullable Icon getIcon() {
+      return PowerSaveMode.isEnabled() ? AllIcons.General.InspectionsPowerSaveMode : AllIcons.General.InspectionsEye;
+    }
 
-  @Override
-  public void dispose() {
-
+    @Override
+    public void dispose() {
+    }
   }
 }

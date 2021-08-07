@@ -52,7 +52,10 @@ public abstract class LightFixtureCompletionTestCase extends LightJavaCodeInsigh
   protected void tearDown() throws Exception {
     try {
       myItems = null;
-      CodeInsightSettings.getInstance().COMPLETION_CASE_SENSITIVE = CodeInsightSettings.FIRST_LETTER;
+      CodeInsightSettings codeInsightSettings = CodeInsightSettings.getInstance();
+      if (codeInsightSettings != null) {
+        codeInsightSettings.setCompletionCaseSensitive(CodeInsightSettings.FIRST_LETTER);
+      }
     }
     catch (Throwable e) {
       addSuppressedException(e);

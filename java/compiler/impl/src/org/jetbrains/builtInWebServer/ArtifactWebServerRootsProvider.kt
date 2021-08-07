@@ -15,6 +15,7 @@
  */
 package org.jetbrains.builtInWebServer
 
+import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
@@ -25,12 +26,15 @@ internal class ArtifactWebServerRootsProvider : PrefixlessWebServerRootsProvider
     if (!pathQuery.searchInArtifacts) {
       return null
     }
-    
-    for (artifact in ArtifactManager.getInstance(project).artifacts) {
-      val root = artifact.outputFile ?: continue
-      return resolver.resolve(path, root, pathQuery = pathQuery) ?: continue
+
+    return runReadAction {
+      val artifacts = ArtifactManager.getInstance(project).artifacts
+      for (artifact in artifacts) {
+        val root = artifact.outputFile ?: continue
+        return@runReadAction resolver.resolve(path, root, pathQuery = pathQuery) ?: continue
+      }
+      return@runReadAction null
     }
-    return null
   }
 
   override fun getPathInfo(file: VirtualFile, project: Project): PathInfo? {

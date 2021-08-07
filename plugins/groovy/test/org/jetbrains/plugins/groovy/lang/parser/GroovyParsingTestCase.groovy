@@ -41,7 +41,7 @@ abstract class GroovyParsingTestCase extends LightJavaCodeInsightFixtureTestCase
 
   protected void checkParsing(String input, String path) {
     final PsiFile psiFile = TestUtils.createPseudoPhysicalGroovyFile(project, input)
-    final String psiTree = DebugUtil.psiToString(psiFile, false)
+    final String psiTree = DebugUtil.psiToString(psiFile, true)
     final String prefix = input + '\n-----\n'
     myFixture.configureByText('test.txt', prefix + psiTree.trim())
     myFixture.checkResultByFile(path, false)
@@ -49,7 +49,7 @@ abstract class GroovyParsingTestCase extends LightJavaCodeInsightFixtureTestCase
 
   protected checkParsingByText(String input, String output) {
     final PsiFile psiFile = TestUtils.createPseudoPhysicalGroovyFile(project, input)
-    final String psiTree = DebugUtil.psiToString(psiFile, false)
+    final String psiTree = DebugUtil.psiToString(psiFile, true)
     final String prefix = input.trim() + '\n-----\n'
     assertEquals(prefix + output.trim(), prefix + psiTree.trim())
   }

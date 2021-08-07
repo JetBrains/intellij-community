@@ -125,8 +125,14 @@ public abstract class YamlComposedTypeBase extends YamlMetaType {
     }
     else {
       markup.append(":");
-      markup.increaseTabs(1);
-      markup.newLineAndTabs(relation == Field.Relation.SEQUENCE_ITEM);
+
+      if (relation == Field.Relation.SEQUENCE_ITEM) {
+        markup.doTabbedBlockForSequenceItem();
+      }
+      else {
+        markup.increaseTabs(1);
+        markup.newLineAndTabs();
+      }
     }
     markup.appendCaret();
   }
@@ -139,8 +145,8 @@ public abstract class YamlComposedTypeBase extends YamlMetaType {
     return ContainerUtil.filter(myTypes, next -> !(next instanceof YamlScalarType));
   }
 
-  protected final Iterable<YamlMetaType> getSubTypes() {
-    return myTypes;
+  public final Iterable<YamlMetaType> getSubTypes() {
+    return copyList(myTypes);
   }
 
   protected final Stream<YamlMetaType> streamSubTypes() {

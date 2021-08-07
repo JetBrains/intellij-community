@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.unusedReturnValue;
 
 import com.intellij.codeInsight.daemon.impl.UnusedSymbolUtil;
@@ -47,7 +47,7 @@ public class UnusedReturnValueLocalInspection extends AbstractBaseJavaLocalInspe
         method.hasModifierProperty(PsiModifier.NATIVE) ||
         MethodUtils.hasSuper(method) ||
         RefUtil.isImplicitRead(method) ||
-        UnusedReturnValue.canIgnoreReturnValue(method) ||
+        MethodUtils.hasCanIgnoreReturnValueAnnotation(method, method.getContainingFile()) ||
         UnusedDeclarationInspectionBase.isDeclaredAsEntryPoint(method)) return null;
 
     final boolean[] atLeastOneUsageExists = new boolean[]{false};

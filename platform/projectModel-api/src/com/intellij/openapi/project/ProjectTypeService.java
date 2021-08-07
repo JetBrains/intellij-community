@@ -1,8 +1,7 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.project;
 
 import com.intellij.openapi.components.PersistentStateComponent;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.components.State;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -29,7 +28,7 @@ public class ProjectTypeService implements PersistentStateComponent<ProjectType>
   }
 
   private static ProjectTypeService getInstance(@NotNull Project project) {
-    return ServiceManager.getService(project, ProjectTypeService.class);
+    return project.getService(ProjectTypeService.class);
   }
 
   @Nullable

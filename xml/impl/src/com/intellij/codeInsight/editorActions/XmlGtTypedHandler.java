@@ -8,7 +8,6 @@ import com.intellij.lang.xml.XMLLanguage;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorModificationUtil;
 import com.intellij.openapi.editor.ScrollType;
-import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.highlighter.HighlighterIterator;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
@@ -158,7 +157,7 @@ public class XmlGtTypedHandler extends TypedHandlerDelegate {
       final XmlToken nameToken = XmlUtil.getTokenOfType(tag, XmlTokenType.XML_NAME);
       if (nameToken != null && nameToken.getTextRange().getStartOffset() > offset) return Result.CONTINUE;
 
-      HighlighterIterator iterator = ((EditorEx) editor).getHighlighter().createIterator(tagOffset);
+      HighlighterIterator iterator = editor.getHighlighter().createIterator(tagOffset);
       if (BraceMatchingUtil.matchBrace(editor.getDocument().getCharsSequence(), fileType, iterator, true,true)) {
         PsiElement parent = tag.getParent();
         boolean hasBalance = true;

@@ -6,6 +6,7 @@ import com.intellij.ide.IdeEventQueue;
 import com.intellij.internal.statistic.collectors.fus.actions.persistence.ActionsCollectorImpl;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
+import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.actionSystem.ex.AnActionListener;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -62,7 +63,7 @@ public final class ModifierKeyDoubleClickHandler {
 
     ApplicationManager.getApplication().getMessageBus().connect().subscribe(AnActionListener.TOPIC, new AnActionListener() {
       @Override
-      public void beforeActionPerformed(@NotNull AnAction action, @NotNull DataContext dataContext, @NotNull AnActionEvent event) {
+      public void beforeActionPerformed(@NotNull AnAction action, @NotNull AnActionEvent event) {
         if (myIsRunningAction) {
           return;
         }
@@ -257,15 +258,11 @@ public final class ModifierKeyDoubleClickHandler {
         }
 
         DataContext context = calculateContext();
-        AnActionEvent anActionEvent = AnActionEvent.createFromAnAction(action, event, ActionPlaces.KEYBOARD_SHORTCUT, context);
-        action.update(anActionEvent);
-        if (!anActionEvent.getPresentation().isEnabled()) return false;
-
-        ex.fireBeforeActionPerformed(action, anActionEvent.getDataContext(), anActionEvent);
-        action.actionPerformed(anActionEvent);
-        ex.fireAfterActionPerformed(action, anActionEvent.getDataContext(), anActionEvent);
-        ActionsCollectorImpl
-          .recordCustomActionInvoked(anActionEvent.getProject(), "DoubleShortcut", anActionEvent.getInputEvent(), action.getClass());
+        AnActionEvent actionEvent = AnActionEvent.createFromAnAction(action, event, ActionPlaces.KEYBOARD_SHORTCUT, context);
+        if (!ActionUtil.lastUpdateAndCheckDumb(action, actionEvent, false)) {
+          return false;
+        }
+        ActionUtil.performActionDumbAwareWithCallbacks(action, actionEvent);
         return true;
       }
       finally {

@@ -21,6 +21,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.xml.XmlTag;
 import org.jetbrains.idea.maven.indices.MavenIndicesTestFixture;
+import org.junit.Test;
 
 import java.util.List;
 
@@ -39,6 +40,7 @@ public class MavenPluginCompletionAndResolutionTest extends MavenDomWithIndicesT
                   "<version>1</version>");
   }
 
+  @Test
   public void testGroupIdCompletion() {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
@@ -56,6 +58,7 @@ public class MavenPluginCompletionAndResolutionTest extends MavenDomWithIndicesT
                              "org.codehaus.plexus");
   }
 
+  @Test 
   public void testArtifactIdCompletion() {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
@@ -75,6 +78,7 @@ public class MavenPluginCompletionAndResolutionTest extends MavenDomWithIndicesT
                              "maven-install-plugin", "maven-compiler-plugin", "maven-deploy-plugin");
   }
 
+  @Test 
   public void testVersionCompletion() {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
@@ -93,6 +97,7 @@ public class MavenPluginCompletionAndResolutionTest extends MavenDomWithIndicesT
     assertCompletionVariants(myProjectPom, "2.0.2", "3.1");
   }
 
+  @Test 
   public void testArtifactWithoutGroupCompletion() {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
@@ -121,6 +126,7 @@ public class MavenPluginCompletionAndResolutionTest extends MavenDomWithIndicesT
                              "build-helper-maven-plugin");
   }
 
+  @Test 
   public void testCompletionInsideTag() {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
@@ -142,11 +148,12 @@ public class MavenPluginCompletionAndResolutionTest extends MavenDomWithIndicesT
                                     "org.apache.maven.plugins:maven-install-plugin:2.4",
                                     "org.apache.maven.plugins:maven-compiler-plugin:3.1",
                                     "org.apache.maven.plugins:maven-site-plugin:3.3",
-                                    "org.apache.maven.plugins:maven-surefire-plugin:2.4.3",
+                                    "org.apache.maven.plugins:maven-surefire-plugin:2.12.4",
                                     "org.codehaus.mojo:build-helper-maven-plugin:1.0",
                                     "test:project:1");
   }
 
+  @Test 
   public void testVersionWithoutGroupCompletion() {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
@@ -164,6 +171,7 @@ public class MavenPluginCompletionAndResolutionTest extends MavenDomWithIndicesT
     assertCompletionVariants(myProjectPom, RENDERING_TEXT, "2.0.2", "3.1");
   }
 
+  @Test 
   public void testResolvingPlugins() throws Exception {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
@@ -183,6 +191,7 @@ public class MavenPluginCompletionAndResolutionTest extends MavenDomWithIndicesT
     assertResolved(myProjectPom, findPsiFile(f));
   }
 
+  @Test 
   public void testResolvingAbsentPlugins() {
     removeFromLocalRepository("org/apache/maven/plugins/maven-compiler-plugin");
 
@@ -203,6 +212,7 @@ public class MavenPluginCompletionAndResolutionTest extends MavenDomWithIndicesT
     ref.resolve(); // shouldn't throw;
   }
 
+  @Test 
   public void testDoNotHighlightAbsentGroupIdAndVersion() {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
@@ -218,6 +228,7 @@ public class MavenPluginCompletionAndResolutionTest extends MavenDomWithIndicesT
     checkHighlighting();
   }
 
+  @Test 
   public void testHighlightingAbsentArtifactId() {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
@@ -233,11 +244,13 @@ public class MavenPluginCompletionAndResolutionTest extends MavenDomWithIndicesT
     checkHighlighting();
   }
 
+  @Test 
   public void testBasicConfigurationCompletion() {
     putCaretInConfigurationSection();
     assertCompletionVariantsInclude(myProjectPom, "source", "target");
   }
 
+  @Test 
   public void testIncludingConfigurationParametersFromAllTheMojos() {
     putCaretInConfigurationSection();
     assertCompletionVariantsInclude(myProjectPom, "excludes", "testExcludes");
@@ -260,6 +273,7 @@ public class MavenPluginCompletionAndResolutionTest extends MavenDomWithIndicesT
                      "</build>");
   }
 
+  @Test 
   public void testNoParametersForUnknownPlugin() {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
@@ -279,6 +293,7 @@ public class MavenPluginCompletionAndResolutionTest extends MavenDomWithIndicesT
     assertCompletionVariants(myProjectPom);
   }
 
+  @Test 
   public void testNoParametersIfNothingIsSpecified() {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
@@ -297,6 +312,7 @@ public class MavenPluginCompletionAndResolutionTest extends MavenDomWithIndicesT
     assertCompletionVariants(myProjectPom);
   }
 
+  @Test 
   public void testResolvingParamaters() {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
@@ -322,6 +338,7 @@ public class MavenPluginCompletionAndResolutionTest extends MavenDomWithIndicesT
     assertEquals("includes", ((XmlTag)resolved).findFirstSubTag("name").getValue().getText());
   }
 
+  @Test 
   public void testResolvingInnerParamatersIntoOuter() {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
@@ -349,6 +366,7 @@ public class MavenPluginCompletionAndResolutionTest extends MavenDomWithIndicesT
     assertEquals("includes", ((XmlTag)resolved).findFirstSubTag("name").getValue().getText());
   }
 
+  @Test 
   public void testGoalsCompletionAndHighlighting() {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
@@ -393,6 +411,7 @@ public class MavenPluginCompletionAndResolutionTest extends MavenDomWithIndicesT
     checkHighlighting();
   }
 
+  @Test 
   public void testDontHighlightGoalsForUnresolvedPlugin() {
     createProjectPom("<groupId>test</groupId>\n" +
                      "<artifactId>project</artifactId>\n" +
@@ -428,6 +447,7 @@ public class MavenPluginCompletionAndResolutionTest extends MavenDomWithIndicesT
     checkHighlighting();
   }
 
+  @Test 
   public void testGoalsCompletionAndHighlightingInPluginManagement() {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
@@ -476,6 +496,7 @@ public class MavenPluginCompletionAndResolutionTest extends MavenDomWithIndicesT
     checkHighlighting();
   }
 
+  @Test 
   public void testGoalsResolution() {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
@@ -507,6 +528,7 @@ public class MavenPluginCompletionAndResolutionTest extends MavenDomWithIndicesT
   }
 
 
+  @Test 
   public void testMavenDependencyReferenceProvider() {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
@@ -539,6 +561,7 @@ public class MavenPluginCompletionAndResolutionTest extends MavenDomWithIndicesT
   }
 
 
+  @Test 
   public void testGoalsCompletionAndResolutionForUnknownPlugin() throws Throwable {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
@@ -583,6 +606,7 @@ public class MavenPluginCompletionAndResolutionTest extends MavenDomWithIndicesT
     assertUnresolved(myProjectPom);
   }
 
+  @Test 
   public void testPhaseCompletionAndHighlighting() {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
@@ -623,6 +647,7 @@ public class MavenPluginCompletionAndResolutionTest extends MavenDomWithIndicesT
     checkHighlighting();
   }
 
+  @Test 
   public void testNoExecutionParametersIfNoGoalNorIdAreSpecified() {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
@@ -646,6 +671,7 @@ public class MavenPluginCompletionAndResolutionTest extends MavenDomWithIndicesT
     assertCompletionVariants(myProjectPom);
   }
 
+  @Test 
   public void testExecutionParametersForSpecificGoal() {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
@@ -674,6 +700,7 @@ public class MavenPluginCompletionAndResolutionTest extends MavenDomWithIndicesT
     assertFalse(variants.toString(), variants.contains("testExcludes"));
   }
 
+  @Test 
   public void testExecutionParametersForDefaultGoalExecution() {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
@@ -700,6 +727,7 @@ public class MavenPluginCompletionAndResolutionTest extends MavenDomWithIndicesT
     assertFalse(variants.toString(), variants.contains("testExcludes"));
   }
 
+  @Test 
   public void testExecutionParametersForSeveralSpecificGoals() {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
@@ -727,6 +755,7 @@ public class MavenPluginCompletionAndResolutionTest extends MavenDomWithIndicesT
     assertCompletionVariantsInclude(myProjectPom, "excludes", "testExcludes");
   }
 
+  @Test 
   public void testAliasCompletion() {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
@@ -746,6 +775,7 @@ public class MavenPluginCompletionAndResolutionTest extends MavenDomWithIndicesT
     assertCompletionVariantsInclude(myProjectPom, "warSourceExcludes", "excludes");
   }
 
+  @Test 
   public void testListElementsCompletion() {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
@@ -768,6 +798,7 @@ public class MavenPluginCompletionAndResolutionTest extends MavenDomWithIndicesT
     assertCompletionVariants(myProjectPom, "exclude");
   }
 
+  @Test 
   public void testListElementWhatHasUnpluralizedNameCompletion() {
     // NPE test - StringUtil.unpluralize returns null.
 
@@ -791,6 +822,7 @@ public class MavenPluginCompletionAndResolutionTest extends MavenDomWithIndicesT
     assertCompletionVariants(myProjectPom, "additionalConfig", "config");
   }
 
+  @Test 
   public void testDoNotHighlightUnknownElementsUnderLists() {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
@@ -812,6 +844,7 @@ public class MavenPluginCompletionAndResolutionTest extends MavenDomWithIndicesT
     checkHighlighting();
   }
 
+  @Test 
   public void testArrayElementsCompletion() {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
@@ -834,6 +867,7 @@ public class MavenPluginCompletionAndResolutionTest extends MavenDomWithIndicesT
     assertCompletionVariants(myProjectPom, "resource", "webResource");
   }
 
+  @Test 
   public void testCompletionInCustomObjects() {
     if (ignore()) return;
 
@@ -859,6 +893,7 @@ public class MavenPluginCompletionAndResolutionTest extends MavenDomWithIndicesT
     assertCompletionVariants(myProjectPom);
   }
 
+  @Test 
   public void testDocumentationForParameter() throws Exception {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
@@ -878,6 +913,7 @@ public class MavenPluginCompletionAndResolutionTest extends MavenDomWithIndicesT
     assertDocumentation("Type: <b>java.lang.String</b><br>Default Value: <b>1.5</b><br>Expression: <b>${maven.compiler.source}</b><br><br><i>The -source argument for the Java compiler.</i>");
   }
 
+  @Test 
   public void testDoNotCompleteNorHighlightNonPluginConfiguration() {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
@@ -898,6 +934,7 @@ public class MavenPluginCompletionAndResolutionTest extends MavenDomWithIndicesT
     checkHighlighting();
   }
 
+  @Test 
   public void testDoNotHighlightInnerParameters() {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
@@ -919,6 +956,7 @@ public class MavenPluginCompletionAndResolutionTest extends MavenDomWithIndicesT
     checkHighlighting();
   }
 
+  @Test 
   public void testDoNotHighlightRequiredParametersWithDefaultValues() {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
@@ -939,6 +977,7 @@ public class MavenPluginCompletionAndResolutionTest extends MavenDomWithIndicesT
     checkHighlighting(); // surefire plugin has several required parameters with default values.
   }
 
+  @Test 
   public void testDoNotHighlightInnerParameterAttributes() {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
@@ -963,6 +1002,7 @@ public class MavenPluginCompletionAndResolutionTest extends MavenDomWithIndicesT
     checkHighlighting();
   }
 
+  @Test 
   public void testDoNotCompleteParameterAttributes() {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
@@ -982,6 +1022,7 @@ public class MavenPluginCompletionAndResolutionTest extends MavenDomWithIndicesT
     assertCompletionVariants(myProjectPom, "combine.children", "combine.self");
   }
 
+  @Test 
   public void testWorksWithPropertiesInPluginId() {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
@@ -1020,6 +1061,7 @@ public class MavenPluginCompletionAndResolutionTest extends MavenDomWithIndicesT
     checkHighlighting();
   }
 
+  @Test 
   public void testDoNotHighlightPropertiesForUnknownPlugins() {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
@@ -1041,6 +1083,7 @@ public class MavenPluginCompletionAndResolutionTest extends MavenDomWithIndicesT
     checkHighlighting();
   }
 
+  @Test 
   public void testTellNobodyThatIdeaIsRulezzz() {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +

@@ -1,14 +1,14 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.devkit.util;
 
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.GlobalSearchScopesCore;
@@ -35,6 +35,8 @@ public final class PsiUtil {
   private static final @NonNls String[] IDEA_PROJECT_MARKER_FILES = {
     "idea.iml", "community-main.iml", "intellij.idea.community.main.iml", "intellij.idea.ultimate.main.iml"
   };
+  private static final List<String> IDEA_PROJECT_MARKER_MODULE_NAMES =
+    ContainerUtil.immutableList("intellij.idea.community.main", "intellij.platform.commercial");
 
   private PsiUtil() { }
 
@@ -165,34 +167,20 @@ public final class PsiUtil {
     });
   }
 
-  private static boolean isIntelliJBasedDir(VirtualFile baseDir) {
-    if (baseDir == null) {
-      return false;
-    }
-
-    for (VirtualFile dir : new VirtualFile[]{baseDir, baseDir.findChild("community"), baseDir.findChild("ultimate")}) {
-      if (dir == null || !dir.isDirectory()) {
-        continue;
-      }
-      for (String fileName : IDEA_PROJECT_MARKER_FILES) {
-        if (dir.findChild(fileName) != null) {
-          return true;
-        }
-      }
-    }
-
-    return false;
-  }
-
   @TestOnly
   public static void markAsIdeaProject(@NotNull Project project, boolean value) {
     project.putUserData(IDEA_PROJECT, value);
   }
 
   private static boolean checkIdeaProject(@NotNull Project project) {
-    if (!isIntelliJBasedDir(project.getBaseDir())) {
-      return false;
+    boolean foundMarkerModule = false;
+    for (String moduleName : IDEA_PROJECT_MARKER_MODULE_NAMES) {
+      if (ModuleManager.getInstance(project).findModuleByName(moduleName) != null) {
+        foundMarkerModule = true;
+        break;
+      }
     }
+    if (!foundMarkerModule) return false;
 
     return DumbService.getInstance(project).computeWithAlternativeResolveEnabled(() -> {
       GlobalSearchScope scope = GlobalSearchScopesCore.projectProductionScope(project);

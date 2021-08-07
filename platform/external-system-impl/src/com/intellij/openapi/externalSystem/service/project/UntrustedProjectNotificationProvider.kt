@@ -2,6 +2,7 @@
 package com.intellij.openapi.externalSystem.service.project
 
 import com.intellij.ide.impl.TrustChangeNotifier
+import com.intellij.ide.impl.UntrustedProjectEditorNotificationPanel
 import com.intellij.ide.impl.isTrusted
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.extensions.ExtensionPointName
@@ -9,11 +10,9 @@ import com.intellij.openapi.externalSystem.ExternalSystemManager
 import com.intellij.openapi.externalSystem.importing.ImportSpecBuilder
 import com.intellij.openapi.externalSystem.model.ProjectSystemId
 import com.intellij.openapi.externalSystem.service.project.ExternalResolverIsSafe.executesTrustedCodeOnly
-import com.intellij.openapi.externalSystem.util.ExternalSystemBundle
 import com.intellij.openapi.externalSystem.util.ExternalSystemUtil
 import com.intellij.openapi.externalSystem.util.ExternalSystemUtil.confirmLoadingUntrustedProject
 import com.intellij.openapi.fileEditor.FileEditor
-import com.intellij.openapi.help.HelpManager
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
@@ -33,23 +32,17 @@ class UntrustedProjectNotificationProvider : EditorNotifications.Provider<Editor
     if (providers.isEmpty()) {
       return null
     }
-    return EditorNotificationPanel(fileEditor).apply {
-      text = ExternalSystemBundle.message("untrusted.project.notification.description")
-      createActionLabel(ExternalSystemBundle.message("untrusted.project.notification.trust.link"), {
-        if (confirmLoadingUntrustedProject(project, providers.map { it.systemId })) {
-          for (provider in providers) {
-            provider.loadAllLinkedProjects(project)
-          }
+    return UntrustedProjectEditorNotificationPanel(project, fileEditor) {
+      if (confirmLoadingUntrustedProject(project, providers.map { it.systemId })) {
+        for (provider in providers) {
+          provider.loadAllLinkedProjects(project)
         }
-      }, false)
-      createActionLabel(ExternalSystemBundle.message("untrusted.project.notification.read.more.link"), {
-        HelpManager.getInstance().invokeHelp("Project_security")
-      }, false)
+      }
     }
   }
 
   private fun collectUntrustedProjectModeProviders(): Collection<UntrustedProjectModeProvider> {
-    val providers = HashMap<ProjectSystemId, UntrustedProjectModeProvider>()
+    val providers = LinkedHashMap<ProjectSystemId, UntrustedProjectModeProvider>()
     ExternalSystemManager.EP_NAME.forEachExtensionSafe {
       providers[it.systemId] = ExternalSystemUntrustedProjectModeProvider(it)
     }

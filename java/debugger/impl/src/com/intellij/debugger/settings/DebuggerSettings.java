@@ -1,10 +1,11 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.settings;
 
 import com.intellij.configurationStore.XmlSerializer;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.components.ComponentCategory;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
@@ -24,7 +25,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-@State(name = "DebuggerSettings", storages = @Storage("debugger.xml"))
+@State(name = "DebuggerSettings", storages = @Storage("debugger.xml"), category = ComponentCategory.TOOLS)
 public class DebuggerSettings implements Cloneable, PersistentStateComponent<Element> {
   private static final Logger LOG = Logger.getInstance(DebuggerSettings.class);
   public static final int SOCKET_TRANSPORT = 0;
@@ -66,7 +67,6 @@ public class DebuggerSettings implements Cloneable, PersistentStateComponent<Ele
   @OptionTag("DEBUGGER_TRANSPORT")
   private int DEBUGGER_TRANSPORT;
 
-  public boolean FORCE_CLASSIC_VM = true;
   public boolean DISABLE_JIT;
   public boolean SHOW_ALTERNATIVE_SOURCE = true;
   public boolean HOTSWAP_IN_BACKGROUND = true;
@@ -77,6 +77,7 @@ public class DebuggerSettings implements Cloneable, PersistentStateComponent<Ele
   public boolean SKIP_CONSTRUCTORS;
   public boolean SKIP_GETTERS;
   public boolean SKIP_CLASSLOADERS = true;
+  public boolean SHOW_TYPES = true;
 
   public String RUN_HOTSWAP_AFTER_COMPILE = RUN_HOTSWAP_ASK;
   public boolean COMPILE_BEFORE_HOTSWAP = true;
@@ -167,7 +168,6 @@ public class DebuggerSettings implements Cloneable, PersistentStateComponent<Ele
       TRACING_FILTERS_ENABLED == secondSettings.TRACING_FILTERS_ENABLED &&
       DEBUGGER_TRANSPORT == secondSettings.DEBUGGER_TRANSPORT &&
       StringUtil.equals(EVALUATE_FINALLY_ON_POP_FRAME, secondSettings.EVALUATE_FINALLY_ON_POP_FRAME) &&
-      FORCE_CLASSIC_VM == secondSettings.FORCE_CLASSIC_VM &&
       DISABLE_JIT == secondSettings.DISABLE_JIT &&
       SHOW_ALTERNATIVE_SOURCE == secondSettings.SHOW_ALTERNATIVE_SOURCE &&
       KILL_PROCESS_IMMEDIATELY == secondSettings.KILL_PROCESS_IMMEDIATELY &&
@@ -179,6 +179,7 @@ public class DebuggerSettings implements Cloneable, PersistentStateComponent<Ele
       SKIP_CLASSLOADERS == secondSettings.SKIP_CLASSLOADERS &&
       SKIP_CONSTRUCTORS == secondSettings.SKIP_CONSTRUCTORS &&
       SKIP_GETTERS == secondSettings.SKIP_GETTERS &&
+      SHOW_TYPES == secondSettings.SHOW_TYPES &&
       RESUME_ONLY_CURRENT_THREAD == secondSettings.RESUME_ONLY_CURRENT_THREAD &&
       COMPILE_BEFORE_HOTSWAP == secondSettings.COMPILE_BEFORE_HOTSWAP &&
       HOTSWAP_HANG_WARNING_ENABLED == secondSettings.HOTSWAP_HANG_WARNING_ENABLED &&

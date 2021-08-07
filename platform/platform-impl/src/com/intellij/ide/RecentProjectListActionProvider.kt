@@ -8,7 +8,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.containers.ContainerUtil
-import java.util.*
 
 open class RecentProjectListActionProvider {
   companion object {
@@ -29,8 +28,8 @@ open class RecentProjectListActionProvider {
 
     val actions = mutableListOf<AnAction>()
     val duplicates = getDuplicateProjectNames(openedPaths, paths)
+    val groups = recentProjectManager.groups.toMutableList()
     if (useGroups) {
-      val groups = recentProjectManager.groups.toMutableList()
       val projectPaths = paths.toMutableList()
       groups.sortWith(object : Comparator<ProjectGroup> {
         override fun compare(o1: ProjectGroup, o2: ProjectGroup): Int {
@@ -55,26 +54,41 @@ open class RecentProjectListActionProvider {
         paths.removeAll(group.projects)
       }
 
-      for (group in groups) {
-        val children = mutableListOf<AnAction>()
-        for (path in group.projects) {
-          children.add(createOpenAction(path!!, duplicates))
-          if (addClearListItem && children.size >= RecentProjectsManagerBase.MAX_PROJECTS_IN_MAIN_MENU) {
-            break
-          }
-        }
-        actions.add(ProjectGroupActionGroup(group, children))
-        if (group.isExpanded) {
-          actions.addAll(children)
-        }
-      }
+      addGroups(groups, duplicates, addClearListItem, actions, false)
     }
 
     for (path in paths) {
       actions.add(createOpenAction(path, duplicates))
     }
 
+    if (useGroups) {
+      addGroups(groups, duplicates, addClearListItem, actions, true)
+    }
     return actions
+  }
+
+  private fun addGroups(groups: MutableList<ProjectGroup>,
+                        duplicates: Set<String>,
+                        addClearListItem: Boolean,
+                        actions: MutableList<AnAction>,
+                        bottom: Boolean) {
+    for (group in groups.filter { projectGroup -> projectGroup.isBottomGroup == bottom }) {
+      val children = mutableListOf<AnAction>()
+      for (path in group.projects) {
+        val action = createOpenAction(path!!, duplicates)
+        if (action is ReopenProjectAction) {
+          action.setProjectGroup(group)
+        }
+        children.add(action)
+        if (addClearListItem && children.size >= RecentProjectsManagerBase.MAX_PROJECTS_IN_MAIN_MENU) {
+          break
+        }
+      }
+      actions.add(ProjectGroupActionGroup(group, children))
+      if (group.isExpanded) {
+        actions.addAll(children)
+      }
+    }
   }
 
   // for Rider

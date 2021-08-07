@@ -1,36 +1,54 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.mac.touchbar;
 
 import com.intellij.icons.AllIcons;
+import com.intellij.ide.ActivityTracker;
+import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressIndicatorProvider;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Pair;
+import com.intellij.ui.mac.TouchbarDataKeys;
 import com.intellij.ui.mac.foundation.ID;
+import com.intellij.util.TimeoutUtil;
+import com.intellij.util.concurrency.AppExecutorUtil;
 import com.sun.jna.Pointer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.concurrency.AsyncPromise;
 
 import javax.swing.*;
 import java.awt.*;
 import java.util.Objects;
+import java.util.concurrent.Executor;
 
 class TBItemButton extends TBItem {
+  private static final int TEST_DELAY_MS = Integer.getInteger("touchbar.test.delay", 0);
+  private static final Executor ourExecutor = AppExecutorUtil.createBoundedApplicationPoolExecutor("Touchbar buttons updater", 2);
+
   protected final @Nullable TouchBarStats.AnActionStats myActionStats;
 
-  protected @Nullable Icon myOriginIcon;
-  protected @Nullable String myText;
-  protected int myLayoutBits = 0;
-  protected int myFlags = 0;
-  protected boolean myHasArrowIcon = false;
-  protected int myUpdateOptions;
-  protected boolean myIsDisabled = false;
-
+  private @Nullable String myText;
+  private @Nullable String myHint;
+  private boolean myIsHintDisabled = false;
+  private int myLayoutBits = 0;
+  private boolean myHasArrowIcon = false;
   private boolean myNeedGetDisabledIcon = false;
+  private AsyncPromise<Pair<Pointer, Dimension>> myRasterPromise;
+
+  // action parameters
   private @Nullable Runnable myAction;
   private @Nullable NSTLibrary.Action myNativeCallback;
+  private boolean myExecuteOnEDT = true;
+  private ModalityState myModality = null;
+
+  protected @Nullable Icon myOriginIcon;
+  protected  int myFlags = 0;
+  protected int myUpdateOptions;
 
   TBItemButton(@Nullable ItemListener listener, @Nullable TouchBarStats.AnActionStats actionStats) {
     super("button", listener);
@@ -69,12 +87,51 @@ class TBItemButton extends TBItem {
     return this;
   }
 
+  // convenience method
+  TBItemButton setIconFromPresentation(@NotNull Presentation presentation) {
+    Icon icon;
+    boolean needGetDisabledIcon = false;
+    if (presentation.isEnabled())
+      icon = presentation.getIcon();
+    else {
+      icon = presentation.getDisabledIcon();
+      if (icon == null && presentation.getIcon() != null) {
+        needGetDisabledIcon = true;
+        icon = presentation.getIcon();
+      }
+    }
+
+    return setIcon(icon, needGetDisabledIcon);
+  }
+
+  // convenience method
+  TBItemButton setIconAndTextFromPresentation(@NotNull Presentation presentation, @Nullable TouchbarDataKeys.ActionDesc pd) {
+    if (pd != null) {
+      if (pd.isShowImage() && pd.isShowText()) {
+        setIconFromPresentation(presentation);
+        setText(presentation.getText());
+      } else if (pd.isShowText()) {
+        setText(presentation.getText());
+        setIcon(null);
+      } else {
+        setIconFromPresentation(presentation);
+        setText(myOriginIcon != null ? null : presentation.getText());
+      }
+    } else {
+      setIconFromPresentation(presentation);
+      setText(myOriginIcon != null ? null : presentation.getText());
+    }
+    return this;
+  }
+
   TBItemButton setHasArrowIcon(boolean hasArrowIcon) {
     if (hasArrowIcon != myHasArrowIcon) {
       myHasArrowIcon = hasArrowIcon;
-      if (myNativePeer != ID.NIL) {
-        final Icon ic = myHasArrowIcon ? AllIcons.Mac.Touchbar.PopoverArrow : null;
-        NST.setArrowImage(myNativePeer, ic);
+      synchronized (this) {
+        if (myNativePeer != ID.NIL) {
+          final Icon ic = myHasArrowIcon ? AllIcons.Mac.Touchbar.PopoverArrow : null;
+          NST.setArrowImage(myNativePeer, ic);
+        }
       }
     }
     return this;
@@ -89,23 +146,39 @@ class TBItemButton extends TBItem {
     return this;
   }
 
-  TBItemButton setAction(Runnable action, boolean executeOnEDT, ModalityState modality) {
-    if (action != myAction) {
+  TBItemButton setText(String text, String hint, boolean isHintDisabled) {
+    if (!Objects.equals(text, myText) || !Objects.equals(hint, myHint) || (hint != null && myIsHintDisabled != isHintDisabled)) {
+      myText = text;
+      myHint = hint;
+      myIsHintDisabled = isHintDisabled;
+      myUpdateOptions |= NSTLibrary.BUTTON_UPDATE_TEXT;
+    }
+
+    return this;
+  }
+
+  TBItemButton setModality(ModalityState modality) { myModality = modality; return this; }
+
+  TBItemButton setAction(Runnable action, boolean executeOnEDT) {
+    if (action != myAction || myExecuteOnEDT != executeOnEDT) {
       myAction = action;
+      myExecuteOnEDT = executeOnEDT;
       if (myAction == null)
         myNativeCallback = null;
       else
         myNativeCallback = ()->{
           // NOTE: executed from AppKit thread
-          if (executeOnEDT) {
+          if (myExecuteOnEDT) {
             final @NotNull Application app = ApplicationManager.getApplication();
-            if (modality != null)
-              app.invokeLater(myAction, modality);
+            if (myModality != null)
+              app.invokeLater(myAction, myModality);
             else
               app.invokeLater(myAction);
           } else {
             myAction.run();
           }
+
+          ActivityTracker.getInstance().inc();
 
           if (myListener != null)
             myListener.onItemEvent(this, 0);
@@ -149,100 +222,111 @@ class TBItemButton extends TBItem {
     return this;
   }
 
-  TBItemButton setToggle(boolean toggle) {
-    int flags = _applyFlag(myFlags, toggle, NSTLibrary.BUTTON_FLAG_TOGGLE);
-    if (flags != myFlags) {
-      myFlags = flags;
-      myUpdateOptions |= NSTLibrary.BUTTON_UPDATE_FLAGS;
-    }
+  TBItemButton setToggle() { return _setFlag(NSTLibrary.BUTTON_FLAG_TOGGLE, true); }
 
-    return this;
-  }
-
-  TBItemButton setColored(boolean isColored) {
-    final int flags = _applyFlag(myFlags, isColored, NSTLibrary.BUTTON_FLAG_COLORED);
-    if (flags != myFlags) {
-      myFlags = flags;
-      myUpdateOptions |= NSTLibrary.BUTTON_UPDATE_FLAGS;
-    }
-
-    return this;
-  }
+  TBItemButton setColored() { return _setFlag(NSTLibrary.BUTTON_FLAG_COLORED, true); }
 
   TBItemButton setSelected(boolean isSelected) {
-    final int flags = _applyFlag(myFlags, isSelected, NSTLibrary.BUTTON_FLAG_SELECTED);
-    if (flags != myFlags) {
-      myFlags = flags;
-      myUpdateOptions |= NSTLibrary.BUTTON_UPDATE_FLAGS;
-    }
-
-    return this;
+    return _setFlag(NSTLibrary.BUTTON_FLAG_SELECTED, isSelected);
   }
 
   TBItemButton setDisabled(boolean isDisabled) {
-    myIsDisabled = isDisabled;
-    final int flags = _applyFlag(myFlags, isDisabled, NSTLibrary.BUTTON_FLAG_DISABLED);
+    return _setFlag(NSTLibrary.BUTTON_FLAG_DISABLED, isDisabled);
+  }
+
+  TBItemButton setTransparentBg() { return _setFlag(NSTLibrary.BUTTON_FLAG_TRANSPARENT_BG, true); }
+
+  private TBItemButton _setFlag(int nstLibFlag, boolean val) {
+    final int flags = _applyFlag(myFlags, val, nstLibFlag);
     if (flags != myFlags) {
       myFlags = flags;
       myUpdateOptions |= NSTLibrary.BUTTON_UPDATE_FLAGS;
     }
-
     return this;
   }
 
-  TBItemButton setTransparentBg(boolean isTransparentBg) {
-    final int flags = _applyFlag(myFlags, isTransparentBg, NSTLibrary.BUTTON_FLAG_TRANSPARENT_BG);
-    if (flags != myFlags) {
-      myFlags = flags;
-      myUpdateOptions |= NSTLibrary.BUTTON_UPDATE_FLAGS;
-    }
+  // Icons calculations can be slow, so we use async update
+  boolean updateLater(boolean force) {
+    if (!force && (!myIsVisible || myUpdateOptions == 0 || myNativePeer == ID.NIL))
+      return false;
 
-    return this;
-  }
+    if (myRasterPromise != null && !myRasterPromise.isDone())
+      myRasterPromise.cancel();
 
-  class Updater {
-    private Pair<Pointer, Dimension> myRaster = null;
+    myRasterPromise = new AsyncPromise<>();
+    myRasterPromise.onSuccess(raster -> {
+      //
+      // update native peer
+      //
+      final int updateOptions = myUpdateOptions;
+      final String text = (updateOptions & NSTLibrary.BUTTON_UPDATE_TEXT) != 0 ? myText : null;
+      final String hint = (updateOptions & NSTLibrary.BUTTON_UPDATE_TEXT) != 0 ? myHint : null;
+      final NSTLibrary.Action callback = (updateOptions & NSTLibrary.BUTTON_UPDATE_ACTION) != 0 ? myNativeCallback : null;
+      final int validFlags = _validateFlags();
+      final int isHintDisabled = myIsHintDisabled ? 1 : 0;
+      final int layoutBits = myLayoutBits;
 
-    void prepareUpdateData() {
+      myUpdateOptions = 0;
+
+      synchronized (this) {
+        if (myNativePeer.equals(ID.NIL))
+          return;
+        NST.updateButton(myNativePeer, updateOptions, layoutBits, validFlags, text, hint, isHintDisabled, raster, callback);
+      }
+    });
+
+    ourExecutor.execute(() -> {
+      if (myOriginIcon == null || !force && (myUpdateOptions & NSTLibrary.BUTTON_UPDATE_IMG) == 0) {
+        if (TEST_DELAY_MS > 0) waitTheTestDelay();
+        myRasterPromise.setResult(null);
+        return;
+      }
+
+      // load icon (can be quite slow)
       final long startNs = myActionStats != null ? System.nanoTime() : 0;
-      final Icon icon = myOriginIcon == null || (myUpdateOptions & NSTLibrary.BUTTON_UPDATE_IMG) == 0 ?
-                        null :
-                        myNeedGetDisabledIcon ? IconLoader.getDisabledIcon(getDarkIcon(myOriginIcon)) : getDarkIcon(myOriginIcon);
+      final Icon icon = ReadAction.nonBlocking(() -> {
+        if (TEST_DELAY_MS > 0) waitTheTestDelay();
+        final Icon darkIcon = getDarkIcon(myOriginIcon);
+        if (darkIcon == null)
+          return null;
 
-      myRaster = NST.get4ByteRGBARaster(icon);
-      if (myActionStats != null && myRaster != null) {
+        return myNeedGetDisabledIcon ? IconLoader.getDisabledIcon(darkIcon) : darkIcon;
+      }).executeSynchronously();
+
+      // prepare raster (not very fast)
+      Pair<Pointer, Dimension> raster = NST.get4ByteRGBARaster(icon);
+      if (myActionStats != null && raster != null) {
         myActionStats.iconUpdateIconRasterCount++;
         myActionStats.iconRenderingDurationNs += System.nanoTime() - startNs;
       }
-    }
-    void updateNativePeer() {
-      synchronized (myReleaseLock) {
-        if (myNativePeer.equals(ID.NIL))
-          return;
-        final String text = (myUpdateOptions & NSTLibrary.BUTTON_UPDATE_TEXT) != 0 ? myText : null;
-        final NSTLibrary.Action callback = (myUpdateOptions & NSTLibrary.BUTTON_UPDATE_ACTION) != 0 ? myNativeCallback : null;
-        final int validFlags = _validateFlags();
 
-        NST.updateButton(myNativePeer, myUpdateOptions, myLayoutBits, validFlags, text, myRaster, callback);
-        myUpdateOptions = 0;
-      }
-    }
+      myRasterPromise.setResult(raster);
+    });
+    return true;
   }
 
-  @Nullable Updater getNativePeerUpdater() {
-    if (!myIsVisible || myUpdateOptions == 0 || myNativePeer == ID.NIL)
-      return null;
-
-    return new Updater();
+  private static void waitTheTestDelay() {
+    if (TEST_DELAY_MS <= 0) return;
+    ProgressIndicator progress = Objects.requireNonNull(ProgressIndicatorProvider.getGlobalProgressIndicator());
+    long start = System.currentTimeMillis();
+    while (true) {
+      progress.checkCanceled();
+      if (System.currentTimeMillis() - start > TEST_DELAY_MS) break;
+      TimeoutUtil.sleep(1);
+    }
   }
 
   @Override
   protected ID _createNativePeer() {
-    Icon icon = null;
-    if (myOriginIcon != null) {
-      icon = ApplicationManager.getApplication().runReadAction((Computable<Icon>)() -> getDarkIcon(myOriginIcon));
+    if (myOriginIcon != null && myRasterPromise == null) {
+      updateLater(true);
     }
-    final ID result = NST.createButton(getUid(), myLayoutBits, _validateFlags(), myText, icon, myNativeCallback);
+    final ID result = NST.createButton(
+      getUid(),
+      myLayoutBits, _validateFlags(),
+      myText, myHint, myIsHintDisabled ? 1 : 0,
+      myRasterPromise == null || !myRasterPromise.isSucceeded() ? null : myRasterPromise.get(),
+      myNativeCallback);
     if (myHasArrowIcon) {
       final Icon ic = AllIcons.Mac.Touchbar.PopoverArrow;
       NST.setArrowImage(result, ic);

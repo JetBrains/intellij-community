@@ -52,14 +52,6 @@ abstract class VcsRepositoryIgnoredFilesHolderBase<REPOSITORY : Repository>(
     listeners.addListener(listener, this)
   }
 
-  override fun addFiles(files: Collection<FilePath>) {
-    SET_LOCK.write { ignoredSet.addAll(files) }
-  }
-
-  override fun addFile(file: FilePath) {
-    SET_LOCK.write { ignoredSet.add(file) }
-  }
-
   override fun isInUpdateMode() = inUpdateMode.get()
 
   override fun getIgnoredFilePaths(): Set<FilePath> = SET_LOCK.read { ignoredSet.toHashSet() }
@@ -67,8 +59,6 @@ abstract class VcsRepositoryIgnoredFilesHolderBase<REPOSITORY : Repository>(
   override fun containsFile(file: FilePath): Boolean {
     return SET_LOCK.read { isUnder(repositoryRootPath, ignoredSet, file) }
   }
-
-  override fun getSize() = SET_LOCK.read { ignoredSet.size }
 
   override fun dispose() {
     SET_LOCK.write {
@@ -184,7 +174,7 @@ abstract class VcsRepositoryIgnoredFilesHolderBase<REPOSITORY : Repository>(
   private class MyUpdate(val repository: Repository,
                          val isFullRescan: Boolean,
                          val action: () -> Unit)
-    : DisposableUpdate(repository, ComparableObject.Impl(repository, isFullRescan)) {
+    : DisposableUpdate(repository, ComparableObject.Impl(MyUpdate::class.java, repository, isFullRescan)) {
 
     override fun canEat(update: Update): Boolean {
       return update is MyUpdate &&

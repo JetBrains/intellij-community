@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build
 
 import com.intellij.openapi.util.SystemInfo
@@ -72,14 +72,12 @@ class BuildOptions {
   static final String LINUX_ARTIFACTS_STEP = "linux_artifacts"
   /** Build Linux tar.gz artifact without bundled JRE. */
   static final String LINUX_TAR_GZ_WITHOUT_BUNDLED_JRE_STEP = "linux_tar_gz_without_jre"
-  /** Build Linux 32-bit JRE tar.gz. */
-  static final String LINUX_JRE_FOR_X86_STEP = "linux_jre_x86"
   /** Build *.exe installer for Windows distribution. If skipped, only .zip archive will be produced. */
   static final String WINDOWS_EXE_INSTALLER_STEP = "windows_exe_installer"
-  /** Build Windows 32-bit JRE tar.gz. */
-  static final String WINDOWS_JRE_FOR_X86_STEP = "windows_jre_x86"
   /** Sign *.exe files in Windows distribution. */
   static final String WIN_SIGN_STEP = "windows_sign"
+  static final Map<String,String> WIN_SIGN_OPTIONS =
+    System.getProperty("intellij.build.win.sign.options", "").tokenize(';')*.tokenize('=').collectEntries()
   /** Build Frankenstein artifacts. */
   static final String CROSS_PLATFORM_DISTRIBUTION_STEP = "cross_platform_dist"
   /** Toolbox links generator step */
@@ -156,6 +154,8 @@ class BuildOptions {
    */
   String outputRootPath = System.getProperty("intellij.build.output.root")
 
+  String logPath = System.getProperty("intellij.build.log.root")
+
   static final String CLEAN_OUTPUT_FOLDER_PROPERTY = "intellij.build.clean.output.root"
   boolean cleanOutputFolder = SystemProperties.getBooleanProperty(CLEAN_OUTPUT_FOLDER_PROPERTY, true)
 
@@ -166,6 +166,10 @@ class BuildOptions {
    */
   boolean isInDevelopmentMode = SystemProperties.getBooleanProperty("intellij.build.dev.mode",
                                                                     System.getenv("TEAMCITY_VERSION") == null)
+  /**
+   * If {@code true} the build is running as a unit test
+   */
+  boolean isTestBuild = SystemProperties.getBooleanProperty("intellij.build.test.mode", false)
 
   boolean skipDependencySetup = false
 
@@ -224,6 +228,14 @@ class BuildOptions {
    */
   static final String VALIDATE_MODULES_STRUCTURE = "intellij.build.module.structure"
   boolean validateModuleStructure = System.getProperty(VALIDATE_MODULES_STRUCTURE, "false").toBoolean()
+
+  /**
+   * Path to prebuilt Kotlin plugin (not zipped).
+   * Currently fully-fledged Kotlin plugin distribution is being on TeamCity only via kombo.gant script.
+   * If this path is not specified then distribution without LLDB debugger is going to be built locally (for tests only).
+   */
+  static final String PREBUILT_KOTLIN_PLUGIN_PATH = "intellij.build.kotlin.plugin.path"
+  String prebuiltKotlinPluginPath = System.getProperty(PREBUILT_KOTLIN_PLUGIN_PATH)
 
   BuildOptions() {
     targetOS = System.getProperty("intellij.build.target.os")

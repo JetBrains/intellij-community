@@ -6,7 +6,7 @@ import com.intellij.util.ArrayUtilRt;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * Represents an array of suggested variable names and allows to keep statistics on
+ * Represents an array of suggested variable names and allows keeping statistics on
  * which of the suggestions has been accepted.
  *
  * (see JavaCodeStyleManager.suggestVariableName() methods).

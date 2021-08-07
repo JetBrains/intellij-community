@@ -10,9 +10,7 @@ import com.jetbrains.python.psi.PyNonlocalStatement;
 import com.jetbrains.python.psi.PyTargetExpression;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author yole
- */
+
 public class PyNonlocalStatementImpl extends PyElementImpl implements PyNonlocalStatement {
   private static final TokenSet TARGET_EXPRESSION_SET = TokenSet.create(PyElementTypes.TARGET_EXPRESSION);
 

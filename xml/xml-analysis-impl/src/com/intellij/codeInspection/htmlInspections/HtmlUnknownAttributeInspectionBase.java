@@ -31,13 +31,15 @@ import com.intellij.util.text.EditDistance;
 import com.intellij.xml.XmlAttributeDescriptor;
 import com.intellij.xml.XmlElementDescriptor;
 import com.intellij.xml.analysis.XmlAnalysisBundle;
+import com.intellij.xml.impl.XmlAttributeDescriptorEx;
 import com.intellij.xml.impl.schema.AnyXmlElementDescriptor;
 import com.intellij.xml.util.HtmlUtil;
 import com.intellij.xml.util.XmlUtil;
-import java.util.ArrayList;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.ArrayList;
 
 public class HtmlUnknownAttributeInspectionBase extends HtmlUnknownElementInspection {
   private static final Key<HtmlUnknownElementInspection> ATTRIBUTE_KEY = Key.create(ATTRIBUTE_SHORT_NAME);
@@ -103,6 +105,8 @@ public class HtmlUnknownAttributeInspectionBase extends HtmlUnknownElementInspec
           registerProblemOnAttributeName(attribute, XmlAnalysisBundle.message("xml.inspections.attribute.is.not.allowed.here", attribute.getName()), holder,
                                          quickfixes.toArray(LocalQuickFix.EMPTY_ARRAY));
         }
+      } else if (attributeDescriptor instanceof XmlAttributeDescriptorEx) {
+        ((XmlAttributeDescriptorEx)attributeDescriptor).validateAttributeName(attribute, holder, isOnTheFly);
       }
     }
   }

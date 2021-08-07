@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.palette.impl;
 
 import com.intellij.ide.dnd.DnDEvent;
@@ -20,9 +20,7 @@ import javax.swing.border.CompoundBorder;
 import java.awt.*;
 import java.awt.event.*;
 
-/**
- * @author yole
- */
+
 public class PaletteGroupHeader extends JCheckBox implements DataProvider {
   private final PaletteWindow myPaletteWindow;
   private PaletteComponentList myComponentList;

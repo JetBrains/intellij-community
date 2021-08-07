@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build
 
 import com.intellij.openapi.util.io.FileUtilRt
@@ -11,7 +11,7 @@ import java.nio.file.Path
  */
 @CompileStatic
 abstract class BuildPaths {
-  BuildPaths(@NotNull Path communityHomeDir, @NotNull Path buildOutputDir) {
+  BuildPaths(@NotNull Path communityHomeDir, @NotNull Path buildOutputDir, @NotNull Path logDir) {
     this.communityHomeDir = communityHomeDir
 
     this.buildOutputRoot = FileUtilRt.toSystemIndependentName(buildOutputDir.toString())
@@ -22,6 +22,8 @@ abstract class BuildPaths {
 
     distAllDir = buildOutputDir.resolve("dist.all")
     distAll = FileUtilRt.toSystemIndependentName(distAllDir.toString())
+
+    this.logDir = logDir
   }
 
   /**
@@ -34,11 +36,17 @@ abstract class BuildPaths {
    * Path to a base directory of the project which will be compiled
    */
   String projectHome
+  Path projectHomeDir
 
   /**
    * Path to a directory where build script will store temporary and resulting files
    */
   String buildOutputRoot
+
+  /**
+   * All log and debug files should be written to this directory. It will be automatically published to TeamCity artifacts
+   */
+  final Path logDir
 
   /**
    * Path to a directory where resulting artifacts will be placed
@@ -61,9 +69,4 @@ abstract class BuildPaths {
    * Path to a directory containing JDK (currently Java 8) which is used to compile the project
    */
   String jdkHome
-
-  /**
-   * Path to a directory containing Kotlin plugin with compiler which is used to compile the project
-   */
-  String kotlinHome
 }

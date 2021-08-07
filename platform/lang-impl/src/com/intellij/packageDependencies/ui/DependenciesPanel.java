@@ -330,7 +330,7 @@ public final class DependenciesPanel extends JPanel implements Disposable, DataP
     EditSourceOnDoubleClickHandler.install(tree);
     new TreeSpeedSearch(tree);
 
-    PopupHandler.installUnknownPopupHandler(tree, createTreePopupActions(isRightTree));
+    PopupHandler.installPopupMenu(tree, createTreePopupActions(isRightTree), "DependenciesPopup");
   }
 
   private void updateRightTreeModel() {

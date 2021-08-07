@@ -1,8 +1,6 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes;
 
-import com.intellij.openapi.components.ServiceManager;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.util.BackgroundTaskUtil;
 import com.intellij.openapi.project.Project;
@@ -18,8 +16,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 
 public final class RemoteRevisionsCache implements VcsListener {
-  private static final Logger LOG = Logger.getInstance(RemoteRevisionsCache.class);
-
   public static final Topic<Runnable> REMOTE_VERSION_CHANGED  = new Topic<>("REMOTE_VERSION_CHANGED", Runnable.class);
   public static final int DEFAULT_REFRESH_INTERVAL = 3 * 60 * 1000;
 
@@ -33,7 +29,7 @@ public final class RemoteRevisionsCache implements VcsListener {
   private final ControlledCycle myControlledCycle;
 
   public static RemoteRevisionsCache getInstance(final Project project) {
-    return ServiceManager.getService(project, RemoteRevisionsCache.class);
+    return project.getService(RemoteRevisionsCache.class);
   }
 
   private RemoteRevisionsCache(final Project project) {

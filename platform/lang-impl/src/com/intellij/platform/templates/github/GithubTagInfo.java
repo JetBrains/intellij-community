@@ -9,9 +9,6 @@ import it.unimi.dsi.fastutil.ints.IntList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author Sergey Simonchik
- */
 public final class GithubTagInfo {
   private final String myName;
   private final String myZipballUrl;

@@ -6,7 +6,6 @@ import com.intellij.psi.*
 import com.intellij.psi.impl.light.LightMethodBuilder
 import com.intellij.psi.impl.light.LightPsiClassBuilder
 import com.intellij.psi.util.MethodSignature
-import com.intellij.psi.util.MethodSignatureUtil.METHOD_PARAMETERS_ERASURE_EQUALITY
 import com.intellij.psi.util.PsiTypesUtil
 import com.intellij.util.containers.FactoryMap
 import com.intellij.util.containers.toArray
@@ -243,7 +242,7 @@ internal class TransformationContextImpl(private val myCodeClass: GrTypeDefiniti
     for (expanded in expandReflectedMethods(method)) {
       val signature = expanded.getSignature(PsiSubstitutor.EMPTY)
       if (signatures.remove(signature)) {
-        myMethods.removeIf { m -> METHOD_PARAMETERS_ERASURE_EQUALITY.equals(signature, m.getSignature(PsiSubstitutor.EMPTY)) }
+        myMethods.removeIf { m -> com.intellij.psi.util.MethodSignatureUtil.areSignaturesErasureEqual(signature, m.getSignature(PsiSubstitutor.EMPTY)) }
       }
     }
   }

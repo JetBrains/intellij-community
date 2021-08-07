@@ -19,6 +19,7 @@ import com.intellij.ui.SearchTextField.FindAction;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.util.ui.JBDimension;
 import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -191,6 +192,10 @@ public class SettingsDialog extends DialogWrapper implements DataProvider {
   }
 
   public void applyAndClose(boolean scheduleSave) {
+    Window window = getWindow();
+    if (window != null) {
+      UIUtil.stopFocusedEditing(window);
+    }
     if (myEditor.apply()) {
       if (scheduleSave) {
         SaveAndSyncHandler.getInstance().scheduleSave(new SaveAndSyncHandler.SaveTask(null, /* forceSavingAllSettings = */ true));

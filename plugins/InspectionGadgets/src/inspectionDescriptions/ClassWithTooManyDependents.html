@@ -1,15 +1,11 @@
 <html>
 <body>
-Reports any classes on which too many other classes
-are directly dependent. Such classes may be expensive to modify, as changes to the class may
-require changing many other classes. Only top-level classes are reported by this inspection.
-Because this inspection requires global code analysis it is only available for <em>Analyze|Inspect Code</em> or
-<em>Analyze|Run Inspection by Name</em> and it will not report in the editor.
+Reports a class on which too many other classes are directly dependent.
+<p>Any modification to such a class may require changing many other classes, which may be expensive.</p>
+<p>Only top-level classes are reported.</p>
 <!-- tooltip end -->
-<p>
-Use the field below to specify the maximum number of dependents a class may have before
-triggering this inspection
-<p>
-
+<p>Use the field below to specify the maximum allowed number of dependents for a class.</p>
+<p>Available only from <b>Code | Inspect Code</b> or
+  <b>Code | Analyze Code | Run Inspection by Name</b> and isn't reported in the editor.</p>
 </body>
 </html>

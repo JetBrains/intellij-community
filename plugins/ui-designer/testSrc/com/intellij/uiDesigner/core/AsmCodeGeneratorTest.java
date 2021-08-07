@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.uiDesigner.core;
 
 import com.intellij.DynamicBundle;
@@ -13,6 +13,8 @@ import com.intellij.openapi.components.BaseState;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.Strings;
+import com.intellij.rt.execution.application.AppMainV2;
+import com.intellij.testFramework.UsefulTestCaseKt;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.TitledSeparator;
 import com.intellij.ui.components.JBTabbedPane;
@@ -23,6 +25,8 @@ import com.intellij.uiDesigner.compiler.Utils;
 import com.intellij.uiDesigner.lw.CompiledClassPropertiesProvider;
 import com.intellij.uiDesigner.lw.LwRootContainer;
 import com.intellij.util.*;
+import com.intellij.util.containers.FList;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.UIUtilities;
 import com.sun.tools.javac.Main;
@@ -53,9 +57,6 @@ import java.util.*;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-/**
- * @author yole
- */
 public class AsmCodeGeneratorTest extends JpsBuildTestCase {
   private MyNestedFormLoader myNestedFormLoader;
   private MyClassFinder myClassFinder;
@@ -85,8 +86,7 @@ public class AsmCodeGeneratorTest extends JpsBuildTestCase {
     appendPath(cp, SystemInfo.class);
     appendPath(cp, ApplicationManager.class);
     appendPath(cp, DynamicBundle.class);
-    appendPath(cp, PathManager.getResourceRoot(this.getClass(), "/messages/UIBundle.properties"));
-    appendPath(cp, PathManager.getResourceRoot(this.getClass(), "/messages/RuntimeBundle.properties"));
+    appendPath(cp, AppMainV2.class); // intellij.java.rt
     appendPath(cp, PathManager.getResourceRoot(this.getClass(), "/com/intellij/uiDesigner/core/TestProperties.properties"));
     appendPath(cp, GridLayoutManager.class); // intellij.java.guiForms.rt
     appendPath(cp, DataProvider.class);
@@ -94,6 +94,8 @@ public class AsmCodeGeneratorTest extends JpsBuildTestCase {
     appendPath(cp, KDeclarationContainer.class);
     appendPath(cp, NotNullProducer.class);  // intellij.platform.util
     appendPath(cp, Strings.class);  // intellij.platform.util.strings
+    appendPath(cp, FList.class);  // intellij.platform.util.collections
+    appendPath(cp, XmlDomReader.class);  // intellij.platform.util.xmlDom
     appendPath(cp, StartUpMeasurer.class);  // intellij.platform.util.diagnostic
     appendPath(cp, NotNullFunction.class);  // intellij.platform.util.rt
     appendPath(cp, SimpleTextAttributes.class);
@@ -101,8 +103,8 @@ public class AsmCodeGeneratorTest extends JpsBuildTestCase {
     myClassFinder = new MyClassFinder(new URL[]{url}, cp.toArray(new URL[0]));
   }
 
-  private static void appendPath(Collection<URL> container, Class cls) throws MalformedURLException {
-    final String path = PathUtil.getJarPathForClass(cls);
+  private static void appendPath(Collection<URL> container, Class<?> cls) throws MalformedURLException {
+    String path = PathUtil.getJarPathForClass(cls);
     appendPath(container, path);
   }
 
@@ -114,45 +116,49 @@ public class AsmCodeGeneratorTest extends JpsBuildTestCase {
   protected void tearDown() throws Exception {
     try {
       myNestedFormLoader = null;
-      final MyClassFinder classFinder = myClassFinder;
+      MyClassFinder classFinder = myClassFinder;
       if (classFinder != null) {
         classFinder.releaseResources();
         myClassFinder = null;
       }
+    }
+    catch (Throwable e) {
+      addSuppressedException(e);
     }
     finally {
       super.tearDown();
     }
   }
 
-  private AsmCodeGenerator initCodeGenerator(final String formFileName, final String className) throws Exception {
-    final String testDataPath = PluginPathManager.getPluginHomePath("ui-designer") + "/testData/";
+  private AsmCodeGenerator initCodeGenerator(String formFileName, String className) throws Exception {
+    String testDataPath = PluginPathManager.getPluginHomePath("ui-designer") + "/testData/";
     return initCodeGenerator(formFileName, className, testDataPath);
   }
 
-  private AsmCodeGenerator initCodeGenerator(final String formFileName, final String className, final String testDataPath) throws Exception {
+  private AsmCodeGenerator initCodeGenerator(String formFileName, String className, String testDataPath) throws Exception {
     String tmpPath = FileUtil.getTempDirectory();
     String formPath = testDataPath + formFileName;
     String javaPath = testDataPath + className + ".java";
-    final int rc = Main.compile(new String[]{"-d", tmpPath, javaPath});
+    int rc = Main.compile(new String[]{"-d", tmpPath, javaPath});
 
     assertEquals(0, rc);
 
-    final String classPath = tmpPath + "/" + className + ".class";
-    final File classFile = new File(classPath);
+    String classPath = tmpPath + "/" + className + ".class";
+    File classFile = new File(classPath);
 
     assertTrue(classFile.exists());
 
-    final LwRootContainer rootContainer = loadFormData(formPath);
-    final AsmCodeGenerator codeGenerator = new AsmCodeGenerator(rootContainer, myClassFinder, myNestedFormLoader, false, true, new ClassWriter(ClassWriter.COMPUTE_FRAMES));
-    final FileInputStream classStream = new FileInputStream(classFile);
+    LwRootContainer rootContainer = loadFormData(formPath);
+    AsmCodeGenerator codeGenerator =
+      new AsmCodeGenerator(rootContainer, myClassFinder, myNestedFormLoader, false, true, new ClassWriter(ClassWriter.COMPUTE_FRAMES));
+    FileInputStream classStream = new FileInputStream(classFile);
     try {
       codeGenerator.patchClass(classStream);
     }
     finally {
       classStream.close();
       FileUtil.delete(classFile);
-      final File[] inners = new File(tmpPath).listFiles((dir, name) -> name.startsWith(className + "$") && name.endsWith(".class"));
+      File[] inners = new File(tmpPath).listFiles((dir, name) -> name.startsWith(className + "$") && name.endsWith(".class"));
       if (inners != null) {
         for (File file : inners) FileUtil.delete(file);
       }
@@ -160,28 +166,20 @@ public class AsmCodeGeneratorTest extends JpsBuildTestCase {
     return codeGenerator;
   }
 
-  private LwRootContainer loadFormData(final String formPath) throws Exception {
+  private LwRootContainer loadFormData(String formPath) throws Exception {
     String formData = FileUtil.loadFile(new File(formPath));
-    final CompiledClassPropertiesProvider provider = new CompiledClassPropertiesProvider(getClass().getClassLoader());
+    CompiledClassPropertiesProvider provider = new CompiledClassPropertiesProvider(getClass().getClassLoader());
     return Utils.getRootContainer(formData, provider);
   }
 
-  private Class loadAndPatchClass(final String formFileName, final String className) throws Exception {
-    final AsmCodeGenerator codeGenerator = initCodeGenerator(formFileName, className);
-
+  private Class<?> loadAndPatchClass(String formFileName, String className) throws Exception {
+    AsmCodeGenerator codeGenerator = initCodeGenerator(formFileName, className);
     byte[] patchedData = getVerifiedPatchedData(codeGenerator);
-
-    /*
-    FileOutputStream fos = new FileOutputStream("C:\\yole\\FormPreview27447\\MainPatched.class");
-    fos.write(patchedData);
-    fos.close();
-    */
-
     myClassFinder.addClassDefinition(className, patchedData);
     return myClassFinder.getLoader().loadClass(className);
   }
 
-  private static byte[] getVerifiedPatchedData(final AsmCodeGenerator codeGenerator) {
+  private static byte[] getVerifiedPatchedData(AsmCodeGenerator codeGenerator) {
     byte[] patchedData = codeGenerator.getPatchedData();
     FormErrorInfo[] errors = codeGenerator.getErrors();
     FormErrorInfo[] warnings = codeGenerator.getWarnings();
@@ -197,11 +195,11 @@ public class AsmCodeGeneratorTest extends JpsBuildTestCase {
     return patchedData;
   }
 
-  private JComponent getInstrumentedRootComponent(final String formFileName, final String className) throws Exception {
-    Class cls = loadAndPatchClass(formFileName, className);
+  private JComponent getInstrumentedRootComponent(String formFileName, String className) throws Exception {
+    Class<?> cls = loadAndPatchClass(formFileName, className);
     Field rootComponentField = cls.getField("myRootComponent");
     rootComponentField.setAccessible(true);
-    Object instance = cls.newInstance();
+    Object instance = cls.getConstructor().newInstance();
     return (JComponent)rootComponentField.get(instance);
   }
 
@@ -212,77 +210,68 @@ public class AsmCodeGeneratorTest extends JpsBuildTestCase {
 
   public void testNoSuchField() throws Exception {
     AsmCodeGenerator generator = initCodeGenerator("TestNoSuchField.form", "BindingTest");
-    assertEquals("Cannot bind: field does not exist: BindingTest.myNoSuchField", generator.getErrors() [0].getErrorMessage());
+    assertEquals("Cannot bind: field does not exist: BindingTest.myNoSuchField", generator.getErrors()[0].getErrorMessage());
   }
 
   public void testStaticField() throws Exception {
     AsmCodeGenerator generator = initCodeGenerator("TestStaticField.form", "BindingTest");
-    assertEquals("Cannot bind: field is static: BindingTest.myStaticField", generator.getErrors() [0].getErrorMessage());
+    assertEquals("Cannot bind: field is static: BindingTest.myStaticField", generator.getErrors()[0].getErrorMessage());
   }
 
   public void testFinalField() throws Exception {
     AsmCodeGenerator generator = initCodeGenerator("TestFinalField.form", "BindingTest");
-    assertEquals("Cannot bind: field is final: BindingTest.myFinalField", generator.getErrors() [0].getErrorMessage());
+    assertEquals("Cannot bind: field is final: BindingTest.myFinalField", generator.getErrors()[0].getErrorMessage());
   }
 
   public void testPrimitiveField() throws Exception {
     AsmCodeGenerator generator = initCodeGenerator("TestPrimitiveField.form", "BindingTest");
-    assertEquals("Cannot bind: field is of primitive type: BindingTest.myIntField", generator.getErrors() [0].getErrorMessage());
+    assertEquals("Cannot bind: field is of primitive type: BindingTest.myIntField", generator.getErrors()[0].getErrorMessage());
   }
 
   public void testIncompatibleTypeField() throws Exception {
     AsmCodeGenerator generator = initCodeGenerator("TestIncompatibleTypeField.form", "BindingTest");
-    assertEquals("Cannot bind: Incompatible types. Cannot assign javax.swing.JPanel to field BindingTest.myStringField", generator.getErrors() [0].getErrorMessage());
+    assertEquals("Cannot bind: Incompatible types. Cannot assign javax.swing.JPanel to field BindingTest.myStringField",
+                 generator.getErrors()[0].getErrorMessage());
   }
 
   public void testGridLayout() throws Exception {
     JComponent rootComponent = getInstrumentedRootComponent("TestGridConstraints.form", "BindingTest");
-    final LayoutManager layout = rootComponent.getLayout();
+    LayoutManager layout = rootComponent.getLayout();
     assertTrue(isInstanceOf(layout, GridLayoutManager.class.getName()));
-
-
     assertEquals(1, invokeMethod(layout, "getRowCount"));
     assertEquals(1, invokeMethod(layout, "getColumnCount"));
   }
 
-  private static boolean isInstanceOf(Object object, final String className) throws ClassNotFoundException {
-    final Class<?> ethalon = object.getClass().getClassLoader().loadClass(className);
-    return ethalon.isAssignableFrom(object.getClass());
+  private static boolean isInstanceOf(Object object, String className) throws ClassNotFoundException {
+    Class<?> klass = object.getClass().getClassLoader().loadClass(className);
+    return klass.isAssignableFrom(object.getClass());
   }
 
   private static Object invokeMethod(Object obj, String methodName) throws InvocationTargetException, IllegalAccessException {
     return invokeMethod(obj, methodName, ArrayUtil.EMPTY_CLASS_ARRAY, ArrayUtilRt.EMPTY_OBJECT_ARRAY);
   }
 
-  private static Object invokeMethod(Object obj, String methodName, Class[] params, Object[] args) throws
-                                                                                                   InvocationTargetException, IllegalAccessException {
-    final Method method = findMethod(obj.getClass(), methodName, params);
+  private static Object invokeMethod(Object obj, String methodName, Class<?>[] params, Object[] args)
+    throws InvocationTargetException, IllegalAccessException {
+    Method method = findMethod(obj.getClass(), methodName, params);
     return method.invoke(obj, args);
   }
 
-  private static Method findMethod(Class<?> aClass, String methodName, Class[] params) {
+  private static Method findMethod(Class<?> aClass, String methodName, Class<?>[] params) {
     try {
-      final Method method = aClass.getDeclaredMethod(methodName, params);
+      Method method = aClass.getDeclaredMethod(methodName, params);
       method.setAccessible(true);
       return method;
     }
-    catch (NoSuchMethodException ignored) {
-    }
-    final Class<?> parent = aClass.getSuperclass();
-    if (parent == null) {
-      return null;
-    }
-    return findMethod(parent, methodName, params);
-  }
-
-  private static void setInternal(boolean value) {
-    System.getProperties().setProperty("idea.is.internal", Boolean.toString(value));
+    catch (NoSuchMethodException ignored) { }
+    Class<?> parent = aClass.getSuperclass();
+    return parent == null ? null : findMethod(parent, methodName, params);
   }
 
   public void testCardLayout() throws Exception {
     JComponent rootComponent = getInstrumentedRootComponent("TestCardLayout.form", "BindingTest");
     assertTrue(rootComponent.getLayout() instanceof CardLayout);
-    CardLayout cardLayout = (CardLayout) rootComponent.getLayout();
+    CardLayout cardLayout = (CardLayout)rootComponent.getLayout();
     assertEquals(10, cardLayout.getHgap());
     assertEquals(20, cardLayout.getVgap());
   }
@@ -298,10 +287,10 @@ public class AsmCodeGeneratorTest extends JpsBuildTestCase {
   public void testGridConstraints() throws Exception {
     JComponent rootComponent = getInstrumentedRootComponent("TestGridConstraints.form", "BindingTest");
     assertEquals(1, rootComponent.getComponentCount());
-    final LayoutManager layout = rootComponent.getLayout();
+    LayoutManager layout = rootComponent.getLayout();
     assertTrue(isInstanceOf(layout, GridLayoutManager.class.getName()));
 
-    final Object constraints = invokeMethod(layout, "getConstraints", new Class[] {int.class}, new Object[] {0});
+    Object constraints = invokeMethod(layout, "getConstraints", new Class[]{int.class}, new Object[]{0});
     assertTrue(isInstanceOf(constraints, GridConstraints.class.getName()));
 
     assertEquals(1, invokeMethod(constraints, "getColSpan"));
@@ -311,9 +300,9 @@ public class AsmCodeGeneratorTest extends JpsBuildTestCase {
   public void testIntProperty() throws Exception {
     JComponent rootComponent = getInstrumentedRootComponent("TestIntProperty.form", "BindingTest");
     assertEquals(1, rootComponent.getComponentCount());
-    JTextField textField = (JTextField) rootComponent.getComponent(0);
+    JTextField textField = (JTextField)rootComponent.getComponent(0);
     assertEquals(37, textField.getColumns());
-    assertEquals(false, textField.isEnabled());
+    assertFalse(textField.isEnabled());
   }
 
   public void testDoubleProperty() throws Exception {
@@ -323,7 +312,7 @@ public class AsmCodeGeneratorTest extends JpsBuildTestCase {
 
   public void testStringProperty() throws Exception {
     JComponent rootComponent = getInstrumentedRootComponent("TestGridConstraints.form", "BindingTest");
-    JButton btn = (JButton) rootComponent.getComponent(0);
+    JButton btn = (JButton)rootComponent.getComponent(0);
     assertEquals("MyTestButton", btn.getText());
   }
 
@@ -334,7 +323,7 @@ public class AsmCodeGeneratorTest extends JpsBuildTestCase {
   }
 
   public void testTabbedPane() throws Exception {
-    JTabbedPane tabbedPane = (JTabbedPane) getInstrumentedRootComponent("TestTabbedPane.form", "BindingTest");
+    JTabbedPane tabbedPane = (JTabbedPane)getInstrumentedRootComponent("TestTabbedPane.form", "BindingTest");
     assertEquals(2, tabbedPane.getTabCount());
     assertEquals("First", tabbedPane.getTitleAt(0));
     assertEquals("Test Value", tabbedPane.getTitleAt(1));
@@ -348,17 +337,17 @@ public class AsmCodeGeneratorTest extends JpsBuildTestCase {
   }
 
   public void testBorder() throws Exception {
-    JPanel panel = (JPanel) getInstrumentedRootComponent("TestBorder.form", "BindingTest");
+    JPanel panel = (JPanel)getInstrumentedRootComponent("TestBorder.form", "BindingTest");
     assertTrue(panel.getBorder() instanceof TitledBorder);
-    TitledBorder border = (TitledBorder) panel.getBorder();
+    TitledBorder border = (TitledBorder)panel.getBorder();
     assertEquals("BorderTitle", border.getTitle());
     assertTrue(border.getBorder().toString(), border.getBorder() instanceof EtchedBorder);
   }
 
   public void testTitledBorder() throws Exception {
-    JPanel panel = (JPanel) getInstrumentedRootComponent("TestTitledBorder.form", "BindingTest");
+    JPanel panel = (JPanel)getInstrumentedRootComponent("TestTitledBorder.form", "BindingTest");
     assertTrue(panel.getBorder() instanceof TitledBorder);
-    TitledBorder border = (TitledBorder) panel.getBorder();
+    TitledBorder border = (TitledBorder)panel.getBorder();
     assertEquals("Test Value", border.getTitle());
     assertEquals("Test Value", ((JLabel)panel.getComponent(0)).getText());
     assertTrue(border.getBorder().toString(), border.getBorder() instanceof EtchedBorder);
@@ -366,65 +355,64 @@ public class AsmCodeGeneratorTest extends JpsBuildTestCase {
   }
 
   public void testTitledBorderInternal() throws Exception {
-    setInternal(true);
-    JPanel panel = (JPanel) getInstrumentedRootComponent("TestTitledBorder.form", "BindingTest");
-    setInternal(false);
+    UsefulTestCaseKt.setInternalForTest(this);
+    JPanel panel = (JPanel)getInstrumentedRootComponent("TestTitledBorder.form", "BindingTest");
 
     assertTrue(panel.getBorder() instanceof TitledBorder);
-    TitledBorder border = (TitledBorder) panel.getBorder();
+    TitledBorder border = (TitledBorder)panel.getBorder();
     assertEquals("Test Value", border.getTitle());
     assertEquals("Test Value", ((JLabel)panel.getComponent(0)).getText());
     assertEquals(border.getClass().getName(), "com.intellij.ui.border.IdeaTitledBorder");
   }
 
   public void testTitledSeparator() throws Exception {
-    JPanel panel = (JPanel) getInstrumentedRootComponent("TestTitledSeparator.form", "BindingTest");
+    JPanel panel = (JPanel)getInstrumentedRootComponent("TestTitledSeparator.form", "BindingTest");
     assertEquals("Test Value", ((JLabel)((JPanel)panel.getComponent(2)).getComponent(0)).getText());
   }
 
   public void testGotItPanel() throws Exception {
-    JPanel panel = (JPanel) getInstrumentedRootComponent("GotItPanel.form", "GotItPanel");
+    JPanel panel = (JPanel)getInstrumentedRootComponent("GotItPanel.form", "GotItPanel");
     assertInstanceOf(panel.getComponent(2), JEditorPane.class);
   }
 
   public void testMnemonic() throws Exception {
-    JPanel panel = (JPanel) getInstrumentedRootComponent("TestMnemonics.form", "BindingTest");
-    JLabel label = (JLabel) panel.getComponent(0);
+    JPanel panel = (JPanel)getInstrumentedRootComponent("TestMnemonics.form", "BindingTest");
+    JLabel label = (JLabel)panel.getComponent(0);
     assertEquals("Mnemonic", label.getText());
     assertEquals('M', label.getDisplayedMnemonic());
     assertEquals(3, label.getDisplayedMnemonicIndex());
   }
 
   public void testMnemonicFromProperty() throws Exception {
-    JPanel panel = (JPanel) getInstrumentedRootComponent("TestMnemonicsProperty.form", "BindingTest");
-    JLabel label = (JLabel) panel.getComponent(0);
+    JPanel panel = (JPanel)getInstrumentedRootComponent("TestMnemonicsProperty.form", "BindingTest");
+    JLabel label = (JLabel)panel.getComponent(0);
     assertEquals("Mnemonic", label.getText());
     assertEquals('M', label.getDisplayedMnemonic());
     assertEquals(3, label.getDisplayedMnemonicIndex());
   }
 
   public void testGridBagLayout() throws Exception {
-    JPanel panel = (JPanel) getInstrumentedRootComponent("TestGridBag.form", "BindingTest");
+    JPanel panel = (JPanel)getInstrumentedRootComponent("TestGridBag.form", "BindingTest");
     assertTrue(panel.getLayout() instanceof GridBagLayout);
-    GridBagLayout gridBag = (GridBagLayout) panel.getLayout();
-    JButton btn = (JButton) panel.getComponent(0);
+    GridBagLayout gridBag = (GridBagLayout)panel.getLayout();
+    JButton btn = (JButton)panel.getComponent(0);
     GridBagConstraints gbc = gridBag.getConstraints(btn);
     assertNotNull(gbc);
     assertEquals(2, gbc.gridheight);
     assertEquals(2, gbc.gridwidth);
     assertEquals(1.0, gbc.weightx, 0.01);
-    assertEquals(new Insets(1, 2, 3, 4), gbc.insets);
+    assertEquals(JBUI.insets(1, 2, 3, 4), gbc.insets);
     assertEquals(GridBagConstraints.HORIZONTAL, gbc.fill);
     assertEquals(GridBagConstraints.NORTHWEST, gbc.anchor);
   }
 
   public void testGridBagSpacer() throws Exception {
-    JPanel panel = (JPanel) getInstrumentedRootComponent("TestGridBagSpacer.form", "BindingTest");
+    JPanel panel = (JPanel)getInstrumentedRootComponent("TestGridBagSpacer.form", "BindingTest");
     assertTrue(panel.getLayout() instanceof GridBagLayout);
     assertTrue(panel.getComponent(0) instanceof JLabel);
     assertTrue(panel.getComponent(1) instanceof JPanel);
 
-    GridBagLayout gridBag = (GridBagLayout) panel.getLayout();
+    GridBagLayout gridBag = (GridBagLayout)panel.getLayout();
     GridBagConstraints gbc = gridBag.getConstraints(panel.getComponent(0));
     assertEquals(0.0, gbc.weightx, 0.01);
     assertEquals(0.0, gbc.weighty, 0.01);
@@ -434,36 +422,36 @@ public class AsmCodeGeneratorTest extends JpsBuildTestCase {
   }
 
   public void testLabelFor() throws Exception {
-    JPanel panel = (JPanel) getInstrumentedRootComponent("TestLabelFor.form", "BindingTest");
-    JTextField textField = (JTextField) panel.getComponent(0);
-    JLabel label = (JLabel) panel.getComponent(1);
+    JPanel panel = (JPanel)getInstrumentedRootComponent("TestLabelFor.form", "BindingTest");
+    JTextField textField = (JTextField)panel.getComponent(0);
+    JLabel label = (JLabel)panel.getComponent(1);
     assertEquals(textField, label.getLabelFor());
   }
 
   public void testFieldReference() throws Exception {
-    Class cls = loadAndPatchClass("TestFieldReference.form", "FieldReferenceTest");
-    JPanel instance = (JPanel) cls.newInstance();
+    Class<?> cls = loadAndPatchClass("TestFieldReference.form", "FieldReferenceTest");
+    JPanel instance = (JPanel)cls.getConstructor().newInstance();
     assertEquals(1, instance.getComponentCount());
   }
 
   public void testChainedConstructor() throws Exception {
-    Class cls = loadAndPatchClass("TestChainedConstructor.form", "ChainedConstructorTest");
+    Class<?> cls = loadAndPatchClass("TestChainedConstructor.form", "ChainedConstructorTest");
     Field scrollPaneField = cls.getField("myScrollPane");
-    Object instance = cls.newInstance();
-    JScrollPane scrollPane = (JScrollPane) scrollPaneField.get(instance);
+    Object instance = cls.getConstructor().newInstance();
+    JScrollPane scrollPane = (JScrollPane)scrollPaneField.get(instance);
     assertNotNull(scrollPane.getViewport().getView());
   }
 
   public void testConditionalMethodCall() throws Exception {
-    JPanel panel = (JPanel) getInstrumentedRootComponent("TestConditionalMethodCall.form", "ConditionalMethodCallTest");
+    JPanel panel = (JPanel)getInstrumentedRootComponent("TestConditionalMethodCall.form", "ConditionalMethodCallTest");
     assertNotNull(panel);
   }
 
   public void testMethodCallInSuper() throws Exception {
     // todo[yole] make this test work in headless
     if (!GraphicsEnvironment.isHeadless()) {
-      Class cls = loadAndPatchClass("TestMethodCallInSuper.form", "MethodCallInSuperTest");
-      JDialog instance = (JDialog) cls.newInstance();
+      Class<?> cls = loadAndPatchClass("TestMethodCallInSuper.form", "MethodCallInSuperTest");
+      JDialog instance = (JDialog)cls.getConstructor().newInstance();
       assertEquals(1, instance.getContentPane().getComponentCount());
     }
   }
@@ -471,15 +459,14 @@ public class AsmCodeGeneratorTest extends JpsBuildTestCase {
   public void testClientProp() throws Exception {  // IDEA-46372
     JComponent rootComponent = getInstrumentedRootComponent("TestClientProp.form", "BindingTest");
     assertEquals(1, rootComponent.getComponentCount());
-    JTable table = (JTable) rootComponent.getComponent(0);
+    JTable table = (JTable)rootComponent.getComponent(0);
     assertSame(Boolean.TRUE, table.getClientProperty("terminateEditOnFocusLost"));
   }
 
   public void testIdeadev14081() throws Exception {
     // NOTE: That doesn't really reproduce the bug as it's dependent on a particular instrumentation sequence used during form preview
     // (the nested form is instrumented with a new AsmCodeGenerator instance directly in the middle of instrumentation of the current form)
-    final String testDataPath = PluginPathManager.getPluginHomePath("ui-designer") + File.separatorChar + "testData" + File.separatorChar +
-      File.separatorChar + "formEmbedding" + File.separatorChar + "Ideadev14081" + File.separatorChar;
+    String testDataPath = PluginPathManager.getPluginHomePath("ui-designer") + "/testData/formEmbedding/Ideadev14081/";
     AsmCodeGenerator embeddedClassGenerator = initCodeGenerator("Embedded.form", "Embedded", testDataPath);
     byte[] embeddedPatchedData = getVerifiedPatchedData(embeddedClassGenerator);
     myClassFinder.addClassDefinition("Embedded", embeddedPatchedData);
@@ -487,16 +474,10 @@ public class AsmCodeGeneratorTest extends JpsBuildTestCase {
     AsmCodeGenerator mainClassGenerator = initCodeGenerator("Main.form", "Main", testDataPath);
     byte[] mainPatchedData = getVerifiedPatchedData(mainClassGenerator);
 
-    /*
-    FileOutputStream fos = new FileOutputStream("C:\\yole\\FormPreview27447\\MainPatched.class");
-    fos.write(mainPatchedData);
-    fos.close();
-    */
-
     myClassFinder.addClassDefinition("Main", mainPatchedData);
-    final Class mainClass = myClassFinder.getLoader().loadClass("Main");
-    Object instance = mainClass.newInstance();
-    assert instance != null : mainClass;
+    Class<?> mainClass = myClassFinder.getLoader().loadClass("Main");
+    Object instance = mainClass.getConstructor().newInstance();
+    assertNotNull(instance);
   }
 
   private static final class MyClassFinder extends InstrumentationClassFinder {
@@ -512,11 +493,8 @@ public class AsmCodeGeneratorTest extends JpsBuildTestCase {
 
     @Override
     protected InputStream lookupClassBeforeClasspath(String internalClassName) {
-      final byte[] bytes = myClassData.get(internalClassName);
-      if (bytes != null) {
-        return new ByteArrayInputStream(bytes);
-      }
-      return null;
+      byte[] bytes = myClassData.get(internalClassName);
+      return bytes != null ? new ByteArrayInputStream(bytes) : null;
     }
   }
 
@@ -529,7 +507,7 @@ public class AsmCodeGeneratorTest extends JpsBuildTestCase {
 
     @Override
     public LwRootContainer loadForm(String formFileName) throws Exception {
-      final String fileName = myFormMap.get(formFileName);
+      String fileName = myFormMap.get(formFileName);
       if (fileName != null) {
         return loadFormData(fileName);
       }

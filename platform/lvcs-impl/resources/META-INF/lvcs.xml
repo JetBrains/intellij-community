@@ -39,6 +39,7 @@
                         serviceImplementation="com.intellij.history.integration.LocalHistoryImpl" preload="true"/>
 
     <virtualFileManagerListener implementation="com.intellij.history.integration.LocalHistoryEventDispatcher$LocalHistoryFileManagerListener"/>
+    <advancedSetting id="localHistory.daysToKeep" default="5" groupKey="group.advanced.settings.ide"/>
   </extensions>
 
   <applicationListeners>

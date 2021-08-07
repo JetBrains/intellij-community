@@ -1,10 +1,23 @@
 <html>
 <body>
-Reports calls to <b>equals()</b> or <b>compareTo()</b> were an object is compared for equality with itself.
-This means the argument and the qualifier to the call are identical, and it will always return <b>true</b> for <b>equals()</b>
-or always <b>0</b> for <b>compareTo()</b>.
-Also reports call to static methods <b>Objects.equals()</b>, <b>Objects.deepEquals()</b>, <b>Arrays.equals()</b>, <b>Comparator.compare</b>
-and similar methods with two identical arguments.
+Reports calls to <code>equals()</code> or <code>compareTo()</code> where an object is compared for equality
+with itself.
+<p>According to the method contracts, these operations will always return
+  <code>true</code> for <code>equals()</code> or <code>0</code> for <code>compareTo()</code>. The inspection also checks
+  the calls to <code>Objects.equals()</code>, <code>Objects.deepEquals()</code>,
+  <code>Arrays.equals()</code>, <code>Comparator.compare</code>, and the like.</p>
+<p><b>Example:</b></p>
+<pre>
+  class Foo {
+    boolean foo(Object o) {
+        return o.equals(o); // warning
+    }
+
+    boolean bar(String[] ss) {
+        return Arrays.equals(ss, ss); // warning
+    }
+}
+</pre>
 <!-- tooltip end -->
 <p>
 </body>

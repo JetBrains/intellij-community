@@ -28,8 +28,14 @@ public final class JpsSerializationManagerImpl extends JpsSerializationManager {
   @NotNull
   @Override
   public JpsProject loadProject(@NotNull String projectPath, @NotNull Map<String, String> pathVariables) throws IOException {
+    return loadProject(projectPath, pathVariables, false);
+  }
+
+  @NotNull
+  @Override
+  public JpsProject loadProject(@NotNull String projectPath, @NotNull Map<String, String> pathVariables, boolean loadUnloadedModules) throws IOException {
     JpsModel model = JpsElementFactory.getInstance().createModel();
-    JpsProjectLoader.loadProject(model.getProject(), pathVariables, projectPath);
+    JpsProjectLoader.loadProject(model.getProject(), pathVariables, JpsPathMapper.IDENTITY, projectPath, loadUnloadedModules);
     return model.getProject();
   }
 }

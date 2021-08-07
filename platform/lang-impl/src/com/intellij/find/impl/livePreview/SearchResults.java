@@ -92,6 +92,7 @@ public class SearchResults implements DocumentListener, CaretListener {
   private int myLastUpdatedStamp = -1;
   private long myDocumentTimestamp;
   private boolean myUpdating;
+  private SearchResults.Direction myPendingSearch;
 
   private final Stack<Pair<FindModel, FindResult>> myCursorPositions = new Stack<>();
 
@@ -359,6 +360,16 @@ public class SearchResults implements DocumentListener, CaretListener {
       notifyCursorMoved();
     }
     notifyUpdateFinished();
+    Direction dir = myPendingSearch;
+    if (dir != null && next == null) {
+      if (dir == Direction.DOWN) {
+        nextOccurrence(false);
+      }
+      else {
+        prevOccurrence(false);
+      }
+    }
+    myPendingSearch = null;
   }
 
   private void updateSelection(boolean removePreviousSelection, boolean removeAllPreviousSelections, boolean adjustScrollPosition) {
@@ -580,7 +591,10 @@ public class SearchResults implements DocumentListener, CaretListener {
       notifyCursorMoved();
     }
     else {
-      if (myFindModel == null) return;
+      if (myFindModel == null) {
+        myPendingSearch = Direction.UP;
+        return;
+      }
       boolean processFromTheBeginning = false;
       if (myNotFoundState) {
         myNotFoundState = false;
@@ -616,7 +630,10 @@ public class SearchResults implements DocumentListener, CaretListener {
   }
 
   public void nextOccurrence(boolean retainOldSelection) {
-    if (myFindModel == null) return;
+    if (myFindModel == null) {
+      myPendingSearch = Direction.DOWN;
+      return;
+    }
     nextOccurrence(false, myCursor, true, false, retainOldSelection);
     push();
   }

@@ -3,46 +3,33 @@ package com.intellij.xdebugger.impl.ui
 
 import com.intellij.debugger.ui.DebuggerContentInfo
 import com.intellij.execution.runners.ExecutionEnvironment
-import com.intellij.execution.runners.ExecutionUtil
+import com.intellij.execution.runners.RunTab
 import com.intellij.execution.ui.layout.LayoutAttractionPolicy
 import com.intellij.execution.ui.layout.PlaceInGrid
 import com.intellij.execution.ui.layout.impl.RunnerLayoutUiImpl
 import com.intellij.icons.AllIcons
-import com.intellij.ide.actions.TabListAction
 import com.intellij.ide.util.PropertiesComponent
-import com.intellij.openapi.Disposable
+import com.intellij.idea.ActionsBundle
 import com.intellij.openapi.actionSystem.*
-import com.intellij.openapi.actionSystem.impl.ActionButton
-import com.intellij.openapi.project.DumbAware
-import com.intellij.openapi.ui.PersistentThreeComponentSplitter
 import com.intellij.openapi.util.Disposer
-import com.intellij.openapi.util.Pair.create
-import com.intellij.openapi.util.text.StringUtil
-import com.intellij.openapi.wm.ToolWindowId
-import com.intellij.openapi.wm.ToolWindowManager
-import com.intellij.openapi.wm.ToolWindowType
-import com.intellij.openapi.wm.ex.ToolWindowEx
-import com.intellij.openapi.wm.ex.ToolWindowManagerListener
-import com.intellij.ui.JBColor
-import com.intellij.ui.content.ContentManagerEvent
-import com.intellij.ui.content.ContentManagerListener
-import com.intellij.util.Producer
-import com.intellij.util.ui.JBUI
+import com.intellij.openapi.wm.ToolWindowAnchor
+import com.intellij.openapi.wm.impl.InternalDecoratorImpl
+import com.intellij.openapi.wm.impl.content.SingleContentSupplier
+import com.intellij.ui.OnePixelSplitter
+import com.intellij.ui.content.tabs.PinToolwindowTabAction
 import com.intellij.util.ui.UIUtil
-import com.intellij.xdebugger.*
+import com.intellij.xdebugger.XDebuggerBundle
 import com.intellij.xdebugger.impl.XDebugSessionImpl
 import com.intellij.xdebugger.impl.actions.XDebuggerActions
-import com.intellij.xdebugger.impl.frame.*
-import com.intellij.xdebugger.impl.ui.tree.XDebuggerTree
-import com.intellij.xdebugger.impl.ui.tree.nodes.XDebuggerTreeNode
-import java.awt.Component
-import java.awt.Container
+import com.intellij.xdebugger.impl.frame.XFramesView
+import com.intellij.xdebugger.impl.frame.XVariablesView
+import com.intellij.xdebugger.impl.frame.XWatchesViewImpl
+import java.awt.Dimension
+import java.awt.event.ComponentAdapter
+import java.awt.event.ComponentEvent
 import javax.swing.Icon
-import javax.swing.LayoutFocusTraversalPolicy
-import javax.swing.event.AncestorEvent
-import javax.swing.event.AncestorListener
+import javax.swing.JComponent
 
-//TODO: unify with XDebugSessionTab2
 class XDebugSessionTab3(
   session: XDebugSessionImpl,
   icon: Icon?,
@@ -51,6 +38,7 @@ class XDebugSessionTab3(
 
   companion object {
     private const val threadsIsVisibleKey = "threadsIsVisibleKey"
+    private const val viewProportionKey = "debugger.layout.watches.defaultThreadsProportion"
     private const val debuggerContentId = "DebuggerView"
   }
 
@@ -61,95 +49,18 @@ class XDebugSessionTab3(
 
   private val lifetime = Disposer.newDisposable()
 
-  private val splitter = PersistentThreeComponentSplitter(false, true, "DebuggerViewTab", lifetime, project, 0.35f, 0.3f)
+  private val splitter = OnePixelSplitter(viewProportionKey, 0.35f).apply {
+    addPropertyChangeListener {
+      if ("ancestor" == it.propertyName && it.newValue != null) {
+        updateSplitterOrientation()
+      }
+    }
+  }
   private val xThreadsFramesView = XFramesView(myProject)
 
   private var variables: XVariablesView? = null
 
-  private val toolWindow get() = ToolWindowManager.getInstance(project).getToolWindow(ToolWindowId.DEBUG)
-
-  private val focusTraversalPolicy = MyFocusTraversalPolicy()
-
-  init {
-    // value from com.intellij.execution.ui.layout.impl.GridImpl
-    splitter.setMinSize(48)
-
-    splitter.isFocusCycleRoot = true
-    splitter.isFocusTraversalPolicyProvider = true
-    splitter.focusTraversalPolicy = focusTraversalPolicy
-
-    session.addSessionListener(object : XDebugSessionListener {
-      override fun sessionStopped() {
-        UIUtil.invokeLaterIfNeeded {
-          splitter.saveProportions()
-          Disposer.dispose(lifetime)
-        }
-      }
-    })
-
-    project.messageBus.connect(lifetime).subscribe(XDebuggerManager.TOPIC, object : XDebuggerManagerListener {
-      override fun processStarted(debugProcess: XDebugProcess) {
-        UIUtil.invokeLaterIfNeeded {
-          if (debugProcess.session != null && debugProcess.session != session) {
-            splitter.saveProportions()
-          }
-        }
-      }
-
-      override fun currentSessionChanged(previousSession: XDebugSession?, currentSession: XDebugSession?) {
-        UIUtil.invokeLaterIfNeeded {
-          if (previousSession == session) {
-            splitter.saveProportions()
-            //xThreadsFramesView.saveUiState()
-          }
-          else if (currentSession == session)
-            splitter.restoreProportions()
-        }
-      }
-
-      override fun processStopped(debugProcess: XDebugProcess) {
-        UIUtil.invokeLaterIfNeeded {
-          splitter.saveProportions()
-          //xThreadsFramesView.saveUiState()
-          if (debugProcess.session == session)
-            Disposer.dispose(lifetime)
-        }
-      }
-    })
-
-    val ancestorListener = object : AncestorListener {
-      override fun ancestorAdded(event: AncestorEvent?) {
-        if (XDebuggerManager.getInstance(project).currentSession == session) {
-          splitter.restoreProportions()
-        }
-      }
-
-      override fun ancestorRemoved(event: AncestorEvent?) {
-        if (XDebuggerManager.getInstance(project).currentSession == session) {
-          splitter.saveProportions()
-          //xThreadsFramesView.saveUiState()
-        }
-      }
-
-      override fun ancestorMoved(event: AncestorEvent?) {
-      }
-    }
-
-    toolWindow?.component?.addAncestorListener(ancestorListener)
-    Disposer.register(lifetime, Disposable {
-      toolWindow?.component?.removeAncestorListener(ancestorListener)
-    })
-
-    var oldToolWindowType: ToolWindowType? = null
-    project.messageBus.connect(lifetime).subscribe(ToolWindowManagerListener.TOPIC, object : ToolWindowManagerListener {
-      override fun stateChanged(toolWindowManager: ToolWindowManager) {
-        if (oldToolWindowType == toolWindow?.type) return
-
-        setHeaderState()
-        oldToolWindowType = toolWindow?.type
-      }
-    })
-  }
+  private var mySingleContentSupplier: SingleContentSupplier? = null
 
   override fun getWatchesContentId() = debuggerContentId
   override fun getFramesContentId() = debuggerContentId
@@ -162,7 +73,6 @@ class XDebugSessionTab3(
       registerView(DebuggerContentInfo.VARIABLES_CONTENT, variablesView)
       variables = variablesView
 
-      watchesView = null
       myWatchesView = variablesView
     } else {
       variablesView = XVariablesView(session)
@@ -172,31 +82,22 @@ class XDebugSessionTab3(
       watchesView = XWatchesViewImpl(session, false, true, false)
       registerView(DebuggerContentInfo.WATCHES_CONTENT, watchesView)
       myWatchesView = watchesView
+
+      myUi.addContent(createWatchesContent(session), 0, PlaceInGrid.right, false)
     }
 
-    splitter.apply {
-      innerComponent = variablesView.panel
-      lastComponent = watchesView?.panel
-    }
+    splitter.secondComponent = variablesView.panel
 
     UIUtil.removeScrollBorder(splitter)
-
-    splitter.revalidate()
-    splitter.repaint()
-
-    updateTraversalPolicy()
-  }
-
-  private fun updateTraversalPolicy() {
-    focusTraversalPolicy.components = getComponents().asSequence().toList()
   }
 
   override fun initDebuggerTab(session: XDebugSessionImpl) {
     val framesView = xThreadsFramesView
     registerView(DebuggerContentInfo.FRAME_CONTENT, framesView)
 
-    //framesView.setThreadsVisible(threadsIsVisible)
-    splitter.firstComponent = xThreadsFramesView.mainPanel
+    splitter.firstComponent = xThreadsFramesView.mainPanel.apply {
+      minimumSize = Dimension(20, 0)
+    }
     addVariablesAndWatches(session)
 
     val name = debuggerContentId
@@ -204,91 +105,48 @@ class XDebugSessionTab3(
       isCloseable = false
     }
 
-    myUi.addContent(content, 0, PlaceInGrid.left, false)
+    myUi.addContent(content, 0, PlaceInGrid.center, false)
 
     ui.defaults.initContentAttraction(debuggerContentId, XDebuggerUIConstants.LAYOUT_VIEW_BREAKPOINT_CONDITION, LayoutAttractionPolicy.FocusOnce())
-
-    toolWindow?.let {
-      val contentManager = it.contentManager
-      val listener = object : ContentManagerListener {
-        override fun contentAdded(event: ContentManagerEvent) {
-          setHeaderState()
-        }
-
-        override fun contentRemoved(event: ContentManagerEvent) {
-          setHeaderState()
-        }
-      }
-      contentManager.addContentManagerListener(listener)
-      Disposer.register(lifetime, Disposable {
-        contentManager.removeContentManagerListener(listener)
-      })
-    }
-
-    setHeaderState()
-  }
-  private fun getComponents(): Iterator<Component> {
-    return iterator {
-      //if (threadsIsVisible)
-      //  yield(xThreadsFramesView.threads)
-
-      yield(xThreadsFramesView.mainPanel)
-      val vars = variables ?: return@iterator
-
-      yield(vars.defaultFocusedComponent)
-      if (!isWatchesInVariables)
-        yield(myWatchesView.defaultFocusedComponent)
-    }
   }
 
   override fun initToolbars(session: XDebugSessionImpl) {
     (myUi as? RunnerLayoutUiImpl)?.setLeftToolbarVisible(false)
     val toolbar = DefaultActionGroup()
     toolbar.addAll(getCustomizedActionGroup(XDebuggerActions.TOOL_WINDOW_TOP_TOOLBAR_3_GROUP))
+
+    fun addWithConstraints(actions: List<AnAction>, constraints: Constraints) {
+      // reversed because it was like this in the original tab
+      actions.asReversed().asSequence()
+        .filterNot {
+          it.templatePresentation.getClientProperty(RunTab.HIDE_FROM_TOOLBAR) == true
+        }
+        .forEach {
+          toolbar.add(it, constraints)
+        }
+    }
+
+    addWithConstraints(session.restartActions, Constraints(Anchor.AFTER, IdeActions.ACTION_RERUN))
+    addWithConstraints(session.extraActions, Constraints(Anchor.AFTER, IdeActions.ACTION_STOP_PROGRAM))
+    addWithConstraints(session.extraStopActions, Constraints(Anchor.AFTER, IdeActions.ACTION_STOP_PROGRAM))
+
     myUi.options.setTopLeftToolbar(toolbar, ActionPlaces.DEBUGGER_TOOLBAR)
 
-    myUi.options.setTitleProducer(Producer {
-      val icon = if (session.isStopped) session.runProfile?.icon else ExecutionUtil.getLiveIndicator(session.runProfile?.icon)
-      return@Producer create(icon, StringUtil.shortenTextWithEllipsis(session.sessionName, 15, 0) + ":")
-    })
-  }
-
-  private fun setHeaderState() {
-    toolWindow?.let { toolWindow ->
-      if (toolWindow !is ToolWindowEx) return@let
-
-      val singleContent = toolWindow.contentManager.contents.singleOrNull()
-      val headerVisible = toolWindow.isHeaderVisible
-      val topRightToolbar = DefaultActionGroup().apply {
-        if (headerVisible) return@apply
-        addAll(toolWindow.decorator.headerToolbar.actions.filter { it != null && it !is TabListAction })
-      }
-      myUi.options.setTopRightToolbar(topRightToolbar, ActionPlaces.DEBUGGER_TOOLBAR)
-
-      val topMiddleToolbar = DefaultActionGroup().apply {
-        if (singleContent == null || headerVisible) return@apply
-
-        add(object : AnAction(XDebuggerBundle.message("session.tab.close.debug.session"), null, AllIcons.Actions.Cancel) {
-          override fun actionPerformed(e: AnActionEvent) {
-            toolWindow.contentManager.removeContent(singleContent, true)
-          }
-        })
-      }
-      myUi.options.setTopMiddleToolbar(topMiddleToolbar, ActionPlaces.DEBUGGER_TOOLBAR)
-
-      toolWindow.decorator.isHeaderVisible = headerVisible
-
-      if (toolWindow.decorator.isHeaderVisible) {
-        toolWindow.component.border = null
-        toolWindow.component.invalidate()
-        toolWindow.component.repaint()
-      } else if (toolWindow.component.border == null) {
-        UIUtil.addBorder(toolWindow.component, JBUI.Borders.customLine(JBColor.border(), 1, 0, 0, 0))
+    mySingleContentSupplier = object : RunTabSupplier(toolbar) {
+      override fun getContentActions(): List<AnAction> {
+        if (mySession == null) return super.getContentActions() + PinToolwindowTabAction.getPinAction()
+        val settings = mutableListOf(PinToolwindowTabAction.getPinAction(), Separator.create())
+        settings.addAll(myUi.options.settingsActionsList)
+        return super.getContentActions() + DefaultActionGroup(ActionsBundle.messagePointer("group.XDebugger.settings.text"), settings).apply {
+          registerAdditionalActions(DefaultActionGroup(), DefaultActionGroup(), this)
+          isPopup = true
+          templatePresentation.icon = AllIcons.General.Settings
+        }
       }
     }
   }
 
-  private val ToolWindowEx.isHeaderVisible get() = (type != ToolWindowType.DOCKED) || contentManager.contents.singleOrNull() == null
+  override fun getSupplier(): SingleContentSupplier? = mySingleContentSupplier
 
   override fun registerAdditionalActions(leftToolbar: DefaultActionGroup, topLeftToolbar: DefaultActionGroup, settings: DefaultActionGroup) {
     leftToolbar.apply {
@@ -298,7 +156,6 @@ class XDebugSessionTab3(
         override fun setSelected(e: AnActionEvent, state: Boolean) {
           if (threadsIsVisible != state) {
             threadsIsVisible = state
-            updateTraversalPolicy()
           }
           //xThreadsFramesView.setThreadsVisible(state)
           Toggleable.setSelected(e.presentation, state)
@@ -323,91 +180,19 @@ class XDebugSessionTab3(
       add(Separator.getInstance(), constraints)
     }
 
-    super.registerAdditionalActions(leftToolbar, settings, topLeftToolbar)
+    super.registerAdditionalActions(leftToolbar, topLeftToolbar, settings)
+  }
+
+  private fun updateSplitterOrientation() {
+    splitter.orientation = UIUtil.getParentOfType(InternalDecoratorImpl::class.java, splitter)
+                             ?.let(PlatformDataKeys.TOOL_WINDOW::getData)
+                             ?.let {
+                               it.anchor == ToolWindowAnchor.LEFT || it.anchor == ToolWindowAnchor.RIGHT
+                             } ?: false
   }
 
   override fun dispose() {
     Disposer.dispose(lifetime)
     super.dispose()
-  }
-
-  class MyFocusTraversalPolicy : LayoutFocusTraversalPolicy() {
-    var components: List<Component> = listOf()
-
-    override fun getLastComponent(aContainer: Container?): Component {
-      if (components.isNotEmpty())
-        return components.last().prepare()
-
-      return super.getLastComponent(aContainer)
-    }
-
-    override fun getFirstComponent(aContainer: Container?): Component {
-      if (components.isNotEmpty())
-        return components.first().prepare()
-
-      return super.getFirstComponent(aContainer)
-    }
-
-    override fun getComponentAfter(aContainer: Container?, aComponent: Component?): Component {
-      if (aComponent == null)
-        return super.getComponentAfter(aContainer, aComponent)
-
-      val index = components.indexOf(aComponent)
-      if (index < 0 || index > components.lastIndex)
-        return super.getComponentAfter(aContainer, aComponent)
-
-      for (i in components.indices) {
-        val component = components[(index + i + 1) % components.size]
-        if (isEmpty(component)) continue
-
-        return component.prepare()
-      }
-
-      return components[index + 1].prepare()
-    }
-
-    override fun getComponentBefore(aContainer: Container?, aComponent: Component?): Component {
-      if (aComponent == null)
-        return super.getComponentBefore(aContainer, aComponent)
-
-      val index = components.indexOf(aComponent)
-      if (index < 0 || index > components.lastIndex)
-        return super.getComponentBefore(aContainer, aComponent)
-
-      for (i in components.indices) {
-        val component = components[(components.size + index - i - 1) % components.size]
-        if (isEmpty(component)) continue
-
-        return component.prepare()
-      }
-
-      return components[index - 1].prepare()
-    }
-
-    private fun Component.prepare(): Component {
-      if (this is XDebuggerTree && this.selectionCount == 0){
-        val child = root.children.firstOrNull() as? XDebuggerTreeNode ?: return this
-
-        selectionPath = child.path
-      }
-      return this
-    }
-
-    private fun isEmpty(component: Component): Boolean {
-      return when (component) {
-        is XDebuggerThreadsList -> component.isEmpty
-        is XDebuggerFramesList -> component.isEmpty
-        is XDebuggerTree -> component.isEmpty
-        else -> false
-      }
-    }
-  }
-}
-
-internal class MorePopupGroup : DefaultActionGroup(), DumbAware {
-  init {
-    isPopup = true
-    templatePresentation.icon = AllIcons.Actions.More
-    templatePresentation.putClientProperty(ActionButton.HIDE_DROPDOWN_ICON, true)
   }
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.fileTemplates;
 
 import com.intellij.application.options.CodeStyle;
@@ -16,6 +16,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.ClassLoaderUtil;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
@@ -308,7 +309,9 @@ public final class FileTemplateUtil {
         throw new Exception("File name must be specified");
       }
     }
-    propsMap.put(FileTemplate.ATTRIBUTE_FILE_NAME, fileName + (StringUtil.isEmpty(template.getExtension()) ? "" : "." + template.getExtension()));
+    String fileNameWithExt = fileName + (StringUtil.isEmpty(template.getExtension()) ? "" : "." + template.getExtension());
+    propsMap.put(FileTemplate.ATTRIBUTE_FILE_NAME, fileNameWithExt);
+    propsMap.put(FileTemplate.ATTRIBUTE_FILE_PATH, FileUtil.join(directory.getVirtualFile().getPath(), fileNameWithExt));
     String dirPath = getDirPathRelativeToProjectBaseDir(directory);
     if (dirPath != null) {
       propsMap.put(FileTemplate.ATTRIBUTE_DIR_PATH, dirPath);
@@ -376,7 +379,7 @@ public final class FileTemplateUtil {
   }
 
   @NotNull
-  protected static FileType getFileType(@NotNull FileTemplate template) {
+  private static FileType getFileType(@NotNull FileTemplate template) {
     FileType fileType = FileTypeManagerEx.getInstanceEx().getFileTypeByExtension(template.getExtension());
     if (fileType.equals(FileTypes.UNKNOWN)) {
       return FileTypeManagerEx.getInstanceEx().getFileTypeByExtension(FileUtilRt.getExtension(template.getExtension()));

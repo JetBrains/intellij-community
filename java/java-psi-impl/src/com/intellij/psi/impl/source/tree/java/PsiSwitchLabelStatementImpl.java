@@ -1,18 +1,21 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl.source.tree.java;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.psi.JavaElementVisitor;
-import com.intellij.psi.JavaTokenType;
-import com.intellij.psi.PsiElementVisitor;
-import com.intellij.psi.PsiSwitchLabelStatement;
+import com.intellij.psi.*;
+import com.intellij.psi.controlFlow.*;
 import com.intellij.psi.impl.source.tree.ChildRole;
 import com.intellij.psi.impl.source.tree.ElementType;
 import com.intellij.psi.impl.source.tree.JavaElementType;
+import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.tree.ChildRoleBase;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import java.util.concurrent.atomic.AtomicBoolean;
 
 public class PsiSwitchLabelStatementImpl extends PsiSwitchLabelStatementBaseImpl implements PsiSwitchLabelStatement {
   private static final Logger LOG = Logger.getInstance(PsiSwitchLabelStatementImpl.class);
@@ -57,5 +60,94 @@ public class PsiSwitchLabelStatementImpl extends PsiSwitchLabelStatementBaseImpl
   @Override
   public String toString() {
     return "PsiSwitchLabelStatement";
+  }
+
+  @Override
+  public boolean processDeclarations(@NotNull PsiScopeProcessor processor,
+                                     @NotNull ResolveState state,
+                                     @Nullable PsiElement lastParent,
+                                     @NotNull PsiElement place) {
+    if (!super.processDeclarations(processor, state, lastParent, place)) return false;
+
+    if (!shouldAnalyzePatternVariablesInCaseLabel(place)) return true;
+
+    final PsiCaseLabelElementList patternsInCaseLabel = getCaseLabelElementList();
+    if (patternsInCaseLabel == null) return true;
+
+    return patternsInCaseLabel.processDeclarations(processor, state, null, place);
+  }
+
+  /**
+   * Checks if the pattern variables in the case label list can be analyzed. The processing is allowed in the two following cases:
+   * <ol>
+   *   <li>The place that is being resolved is a code block. It just wants to build the map of the local and pattern variables in {@code PsiCodeBlockImpl#buildMaps}.</li>
+   *   <li>The current {@link PsiSwitchLabelStatement} is the switch label where it's legal to resolve the passed element.
+   *      <p>
+   *        Read more about scopes of variables in pattern matching for switch statements in
+   *        <a href="https://openjdk.java.net/jeps/406#3--Scope-of-pattern-variable-declarations">the JEP</a>.
+   *      </p>
+   *   </li>
+   * </ol>
+   * @param place element that is being resolved
+   * @return true when the pattern variables in the case label list can be analyzed.
+   */
+  private boolean shouldAnalyzePatternVariablesInCaseLabel(@NotNull PsiElement place) {
+    if (place instanceof PsiCodeBlock) return true;
+
+    final AtomicBoolean thisSwitchLabelIsImmediate = new AtomicBoolean();
+
+    PsiTreeUtil.treeWalkUp(place, getParent(), (currentScope, __) -> {
+
+      PsiSwitchLabelStatementBase immediateSwitchLabel;
+
+      if (currentScope instanceof PsiSwitchLabelStatementBase) {
+        immediateSwitchLabel = (PsiSwitchLabelStatementBase)currentScope;
+      }
+      else {
+        immediateSwitchLabel = PsiTreeUtil.getPrevSiblingOfType(currentScope, PsiSwitchLabelStatementBase.class);
+      }
+
+      while (immediateSwitchLabel != null && isFallthrough(immediateSwitchLabel) && isSpecialCaseLabel(immediateSwitchLabel)) {
+        immediateSwitchLabel = PsiTreeUtil.getPrevSiblingOfType(immediateSwitchLabel, PsiSwitchLabelStatementBase.class);
+      }
+
+      if (immediateSwitchLabel == this) {
+        thisSwitchLabelIsImmediate.set(true);
+        return false;
+      }
+      return true;
+    });
+
+    return thisSwitchLabelIsImmediate.get();
+  }
+
+  private static boolean isFallthrough(@NotNull PsiSwitchLabelStatementBase immediateSwitchLabel) {
+    final PsiStatement prevStmt = PsiTreeUtil.getPrevSiblingOfType(immediateSwitchLabel, PsiStatement.class);
+
+    if (prevStmt == null) return false;
+    if (prevStmt instanceof PsiSwitchLabelStatementBase) return true;
+
+    try {
+      final ControlFlow flow = ControlFlowFactory.getControlFlow(prevStmt, new LocalsControlFlowPolicy(prevStmt), ControlFlowOptions.NO_CONST_EVALUATE);
+      return ControlFlowUtil.canCompleteNormally(flow, 0, flow.getSize());
+    }
+    catch (AnalysisCanceledException e) {
+      return false;
+    }
+  }
+
+  private static boolean isSpecialCaseLabel(@NotNull PsiSwitchLabelStatementBase switchCaseLabel) {
+    return isCase(switchCaseLabel, JavaTokenType.NULL_KEYWORD) ||
+           isCase(switchCaseLabel, JavaTokenType.DEFAULT_KEYWORD) ||
+           switchCaseLabel.isDefaultCase();
+  }
+
+  private static boolean isCase(@NotNull PsiSwitchLabelStatementBase item, @NotNull IElementType keyword) {
+    if (item.getCaseLabelElementList() == null) return false;
+
+    final PsiCaseLabelElement[] elements = item.getCaseLabelElementList().getElements();
+    if (elements.length != 1) return false;
+
+    return elements[0].getNode().getFirstChildNode().getElementType() == keyword;
   }
 }

@@ -5,23 +5,20 @@ import org.apache.log4j.ConsoleAppender
 import org.apache.log4j.Level
 import org.apache.log4j.Logger
 import org.apache.log4j.PatternLayout
-import org.gradle.internal.concurrent.DefaultExecutorFactory
-import org.gradle.internal.remote.internal.inet.InetAddressFactory
 import org.gradle.internal.remote.internal.inet.InetEndpoint
-import org.gradle.launcher.cli.action.BuildActionSerializer
 import org.gradle.launcher.daemon.protocol.BuildEvent
 import org.gradle.launcher.daemon.protocol.DaemonMessageSerializer
 import org.gradle.launcher.daemon.protocol.Failure
 import org.gradle.launcher.daemon.protocol.Success
 import org.gradle.tooling.*
 import org.gradle.tooling.internal.consumer.BlockingResultHandler
+import org.gradle.tooling.internal.provider.action.BuildActionSerializer
 import org.gradle.tooling.model.build.BuildEnvironment
 import org.jetbrains.plugins.gradle.tooling.serialization.internal.adapter.InternalBuildIdentifier
 import org.jetbrains.plugins.gradle.tooling.serialization.internal.adapter.InternalJavaEnvironment
 import org.jetbrains.plugins.gradle.tooling.serialization.internal.adapter.build.InternalBuildEnvironment
 import org.slf4j.LoggerFactory
 import java.io.File
-import java.net.InetAddress
 
 object Main {
   const val LOCAL_BUILD_PROPERTY = "idea.gradle.target.local"
@@ -46,7 +43,7 @@ object Main {
     serverConnector = TargetTcpServerConnector(DaemonMessageSerializer.create(BuildActionSerializer.create()))
     incomingConnectionHandler = TargetIncomingConnectionHandler()
     val address = serverConnector.start(incomingConnectionHandler) { LOG.error("connection error") } as InetEndpoint
-    println("Gradle target server hostName: ${address.candidates.first().hostName} port: ${address.port}")
+    println("Gradle target server hostAddress: ${address.candidates.first().hostAddress} port: ${address.port}")
     waitForIncomingConnection()
     waitForBuildParameters()
 
@@ -57,10 +54,17 @@ object Main {
     val workingDirectory = File(".").canonicalFile
     LOG.debug("Working directory: ${workingDirectory.absolutePath}")
     connector.forProjectDirectory(workingDirectory.absoluteFile)
-    val resultHandler = BlockingResultHandler(Any::class.java)
+    val gradleHome = targetBuildParameters.gradleHome
+    if (gradleHome != null) {
+      connector.useInstallation(File(gradleHome))
+    }
+    val gradleUserHome = targetBuildParameters.gradleUserHome
+    if (gradleUserHome != null) {
+      connector.useGradleUserHomeDir(File(gradleUserHome))
+    }
 
     try {
-      val result = connector.connect().use { runBuildAndGetResult(targetBuildParameters, it, resultHandler) }
+      val result = connector.connect().use { runBuildAndGetResult(targetBuildParameters, it, workingDirectory) }
       LOG.debug("operation result: $result")
       val adapted = maybeConvert(result)
       incomingConnectionHandler.dispatch(Success(adapted))
@@ -76,7 +80,8 @@ object Main {
 
   private fun runBuildAndGetResult(targetBuildParameters: TargetBuildParameters,
                                    connection: ProjectConnection,
-                                   resultHandler: BlockingResultHandler<Any>): Any? {
+                                   workingDirectory: File): Any? {
+    val resultHandler = BlockingResultHandler(Any::class.java)
     val operation = when (targetBuildParameters) {
       is BuildLauncherParameters -> connection.newBuild().apply {
         targetBuildParameters.tasks.nullize()?.run { forTasks(*toTypedArray()) }
@@ -113,8 +118,18 @@ object Main {
           incomingConnectionHandler.dispatch(BuildEvent(description))
         }
       })
-      withArguments(targetBuildParameters.arguments)
+      val arguments = mutableListOf<String>()
+      val initScriptsFiles = createOrFindInitScriptFiles(workingDirectory, targetBuildParameters.initScripts)
+      for (initScript in initScriptsFiles) {
+        arguments.add("--init-script")
+        arguments.add(initScript.absolutePath)
+      }
+      arguments.addAll(targetBuildParameters.arguments)
+      withArguments(arguments)
       setJvmArguments(targetBuildParameters.jvmArguments)
+      if (targetBuildParameters.environmentVariables.isNotEmpty()) {
+        setEnvironmentVariables(targetBuildParameters.environmentVariables)
+      }
 
       when (this) {
         is BuildLauncher -> run(resultHandler)
@@ -124,6 +139,29 @@ object Main {
       }
     }
     return resultHandler.result
+  }
+
+  private fun createOrFindInitScriptFiles(workingDirectory: File,
+                                          initScripts: Map<String, String>): List<File> {
+    if (initScripts.isEmpty()) return emptyList()
+    val projectDotGradleDir = File(workingDirectory, ".gradle")
+    val ideaInitScriptsDir = File(projectDotGradleDir, "ideaInitScripts")
+    ideaInitScriptsDir.mkdirs()
+    val arguments = mutableListOf<File>()
+    for ((filePrefix, scriptContent) in initScripts) {
+      val content = scriptContent.toByteArray()
+      val contentSize = content.size
+      val initScriptFile = ideaInitScriptsDir.findSequentChild(filePrefix, "gradle") {
+        if (!it.exists()) {
+          it.writeText(scriptContent)
+          return@findSequentChild true
+        }
+        if (contentSize.toLong() != it.length()) false
+        else it.isFile && content.contentEquals(it.readBytes())
+      }
+      arguments.add(initScriptFile)
+    }
+    return arguments
   }
 
   private fun maybeConvert(result: Any?): Any? {
@@ -175,5 +213,3 @@ object Main {
     LOG = LoggerFactory.getLogger(Main::class.java)
   }
 }
-
-private fun <T> List<T>?.nullize() = if (isNullOrEmpty()) null else this

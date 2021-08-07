@@ -6,7 +6,7 @@ class T {
     }
 
     private static class <caret>MyRunnable implements Runnable {
-        private Object myObject;
+        private final Object myObject;
 
         public MyRunnable(Object object) {
             this.myObject = object;

@@ -20,6 +20,7 @@ import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.TextWithMnemonic;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.ColorUtil;
 import com.intellij.ui.IdeBorderFactory;
@@ -155,8 +156,9 @@ public class GroovyCompilerConfigurable implements SearchableConfigurable, Confi
     myPathPanel.add(UI.PanelFactory.panel(myConfigScriptPath).withLabel(GroovyBundle.message("settings.compiler.path.to.configscript")).createPanel(), gb.nextLine().insetTop(13));
 
     String cbText = GroovyBundle.message("settings.compiler.invoke.dynamic.support");
-    myInvokeDynamicSupportCB = new JBCheckBox(UIUtil.removeMnemonic(cbText));
-    myInvokeDynamicSupportCB.setDisplayedMnemonicIndex(UIUtil.getDisplayMnemonicIndex(cbText));
+    TextWithMnemonic parsedText = TextWithMnemonic.parse(cbText);
+    myInvokeDynamicSupportCB = new JBCheckBox(parsedText.getText(true));
+    myInvokeDynamicSupportCB.setDisplayedMnemonicIndex(parsedText.getMnemonicIndex());
     myPathPanel.add(myInvokeDynamicSupportCB, gb.nextLine().insetTop(8));
   }
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.junit;
 
 import com.intellij.execution.*;
@@ -74,24 +74,23 @@ public class TestPackage extends TestObject {
   public @Nullable SearchForTestsTask createSearchingForTestsTask(@NotNull TargetEnvironment remoteEnvironment) throws ExecutionException {
     final JUnitConfiguration.Data data = getConfiguration().getPersistentData();
     final Module module = getConfiguration().getConfigurationModule().getModule();
-    final TestClassFilter classFilter = computeFilter(data);
-    return new SearchForTestsTask(getConfiguration().getProject(), myServerSocket) {
+    return new SearchForTestsTask(getConfiguration().getProject(), getServerSocket()) {
       private boolean myShouldExecuteFinishMethod = true;
       private final Set<Location<?>> myClasses = new LinkedHashSet<>();
       @Override
-      protected void search() {
+      protected void search() throws ExecutionException {
         myClasses.clear();
         final SourceScope sourceScope = getSourceScope();
         if (sourceScope != null) {
-          try {
-            if (JUnitStarter.JUNIT5_PARAMETER.equals(getRunner())) {
-              searchTests5(module, classFilter, myClasses);
-            }
-            else {
+          if (JUnitStarter.JUNIT5_PARAMETER.equals(getRunner())) {
+            searchTests5(module, myClasses);
+          }
+          else {
+            final TestClassFilter classFilter = computeFilter(data);
+            if (classFilter != null) {
               searchTests(module, classFilter, myClasses);
             }
           }
-          catch (CantRunException ignored) {}
         }
       }
 
@@ -135,7 +134,7 @@ public class TestPackage extends TestObject {
   }
 
   @Nullable
-  private TestClassFilter computeFilter(JUnitConfiguration.Data data) throws ExecutionException {
+  private TestClassFilter computeFilter(JUnitConfiguration.Data data) throws CantRunException {
     final TestClassFilter classFilter;
     try {
       classFilter =
@@ -147,7 +146,7 @@ public class TestPackage extends TestObject {
       return null;
     }
     catch (IndexNotReadyException e) {
-      throw new ExecutionException(JUnitBundle.message("running.tests.disabled.during.index.update.error.message"));
+      throw new CantRunException(JUnitBundle.message("running.tests.disabled.during.index.update.error.message"));
     }
   }
 
@@ -163,7 +162,7 @@ public class TestPackage extends TestObject {
     return foundClasses.isEmpty() ? packageName.isEmpty() ? ".*" : packageName + "\\..*" : "";
   }
 
-  protected void searchTests5(Module module, TestClassFilter classFilter, Set<Location<?>> classes) throws CantRunException { }
+  protected void searchTests5(Module module, Set<Location<?>> classes) throws CantRunException { }
 
   protected void searchTests(Module module, TestClassFilter classFilter, Set<Location<?>> classes) throws CantRunException {
     if (Registry.is("junit4.search.4.tests.all.in.scope", true)) {

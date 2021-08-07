@@ -25,8 +25,6 @@ import java.util.Objects;
 
 /**
  * The "import foo" or "import foo as bar" parts.
- *
- * @author yole
  */
 public class PyImportElementImpl extends PyBaseElementImpl<PyImportElementStub> implements PyImportElement {
   public PyImportElementImpl(ASTNode astNode) {

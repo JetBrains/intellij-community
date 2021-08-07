@@ -26,9 +26,6 @@
     <applicationService serviceInterface="com.intellij.xdebugger.XDebuggerUtil"
                         serviceImplementation="com.intellij.xdebugger.impl.XDebuggerUtilImpl"/>
 
-    <projectService serviceInterface="com.intellij.ui.XDebugSessionService"
-                    serviceImplementation="com.intellij.xdebugger.impl.ui.XDebugSessionServiceImpl"/>
-
     <projectService serviceInterface="com.intellij.xdebugger.XDebuggerManager"
                     serviceImplementation="com.intellij.xdebugger.impl.XDebuggerManagerImpl"
                     preload="notLightEdit"/>
@@ -50,7 +47,7 @@
 
     <executor implementation="com.intellij.execution.executors.DefaultDebugExecutor" order="first,after run" id="debug"/>
 
-    <stateWidgetProcess implementation="com.intellij.xdebugger.impl.stateWidget.StateWidgetDebugProcess"/>
+    <runToolbarProcess implementation="com.intellij.xdebugger.impl.runToolbar.RunToolbarDebugProcess"/>
 
     <copyPastePreProcessor implementation="com.intellij.xdebugger.impl.ui.DebuggerCopyPastePreprocessor"/>
 
@@ -58,8 +55,8 @@
 
     <statistics.validation.customValidationRule implementation="com.intellij.xdebugger.impl.breakpoints.BreakpointsUtilValidator"/>
     <statistics.projectUsagesCollector implementation="com.intellij.xdebugger.impl.breakpoints.BreakpointsStatisticsCollector"/>
-    <statistics.counterUsagesCollector groupId="debugger.breakpoints.usage" version="2"/>
-    <statistics.counterUsagesCollector groupId="debugger.evaluate.usage" version="2"/>
+    <statistics.counterUsagesCollector implementationClass="com.intellij.xdebugger.impl.breakpoints.BreakpointsUsageCollector"/>
+    <statistics.counterUsagesCollector implementationClass="com.intellij.xdebugger.impl.evaluate.DebuggerEvaluationStatisticsCollector"/>
 
     <editorActionHandler action="EditorUp" implementationClass="com.intellij.xdebugger.impl.actions.handlers.XDebuggerSmartStepIntoHandler$UpHandler"
                          id="smart-step-into-up"/>
@@ -93,17 +90,17 @@
       <add-to-group group-id="RunMenu" anchor="before" relative-to-action="editRunConfigurations"/>
     </group>
 
-    <group id="StateWidgetDebugMoreActionGroupName">
+    <group id="RunToolbarDebugMoreActionGroupName">
       <separator text="Debug"/>
-      <group id="StateWidgetDebugMoreActionSubGroupName"/>
+      <group id="RunToolbarDebugMoreActionSubGroupName"/>
       <reference ref="XDebugger.AttachGroup"/>
-      <add-to-group group-id="StateWidgetMoreActionGroup"/>
+      <add-to-group group-id="RunToolbarMainMoreActionGroup"/>
     </group>
 
-    <group id="StateWidgetDebuggerAdditionalActions">
-      <action id="StateWidgetResumeAction" class="com.intellij.xdebugger.impl.stateWidget.StateWidgetResumeAction" icon="AllIcons.Actions.Resume"/>
-      <action id="StateWidgetPauseAction" class="com.intellij.xdebugger.impl.stateWidget.StateWidgetPauseAction" icon="AllIcons.Actions.Pause"/>
-      <add-to-group group-id="StateWidgetAdditionalActions"/>
+    <group id="RunToolbarDebuggerAdditionalActions">
+      <action id="RunToolbarResumeAction" class="com.intellij.xdebugger.impl.runToolbar.RunToolbarResumeAction" icon="AllIcons.Actions.Resume"/>
+      <action id="RunToolbarPauseAction" class="com.intellij.xdebugger.impl.runToolbar.RunToolbarPauseAction" icon="AllIcons.Actions.Pause"/>
+      <add-to-group group-id="RunToolbarAdditionalProcessActions"/>
     </group>
 
     <group id="MemoryView.SettingsPopupActionGroup">

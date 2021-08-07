@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.fileTypes.impl.associate;
 
 import com.intellij.ide.AppLifecycleListener;
@@ -18,7 +18,7 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class OSFileAssociationStartupConfigurator implements ApplicationInitializedListener {
+final class OSFileAssociationStartupConfigurator implements ApplicationInitializedListener {
   private final static Logger LOG = Logger.getInstance(OSFileAssociationStartupConfigurator.class);
 
   @Override

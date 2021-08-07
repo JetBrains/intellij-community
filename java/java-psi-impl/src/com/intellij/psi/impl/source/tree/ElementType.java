@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl.source.tree;
 
 import com.intellij.psi.JavaDocTokenType;
@@ -54,6 +54,11 @@ public interface ElementType extends JavaTokenType, JavaDocTokenType, JavaElemen
     WHILE_STATEMENT, FOR_STATEMENT, FOREACH_STATEMENT, DO_WHILE_STATEMENT, SWITCH_STATEMENT, SWITCH_LABEL_STATEMENT, BREAK_STATEMENT,
     CONTINUE_STATEMENT, RETURN_STATEMENT, THROW_STATEMENT, SYNCHRONIZED_STATEMENT, TRY_STATEMENT, LABELED_STATEMENT, ASSERT_STATEMENT,
     YIELD_STATEMENT);
+
+  TokenSet JAVA_PATTERN_BIT_SET = TokenSet.create(TYPE_TEST_PATTERN, GUARDED_PATTERN, PARENTHESIZED_PATTERN);
+
+  TokenSet JAVA_CASE_LABEL_ELEMENT_BIT_SET = TokenSet.orSet(JAVA_PATTERN_BIT_SET, EXPRESSION_BIT_SET, TokenSet.create(
+    DEFAULT_CASE_LABEL_ELEMENT));
 
   TokenSet JAVA_MODULE_STATEMENT_BIT_SET = TokenSet.create(
     REQUIRES_STATEMENT, EXPORTS_STATEMENT, OPENS_STATEMENT, USES_STATEMENT, PROVIDES_STATEMENT);

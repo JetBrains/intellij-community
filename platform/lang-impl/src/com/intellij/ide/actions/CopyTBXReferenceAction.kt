@@ -1,15 +1,15 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.actions
 
 import com.intellij.ide.actions.CopyReferenceUtil.*
-import com.intellij.navigation.JBProtocolNavigateCommand.Companion.FQN_KEY
 import com.intellij.navigation.JBProtocolNavigateCommand.Companion.NAVIGATE_COMMAND
-import com.intellij.navigation.JBProtocolNavigateCommand.Companion.PATH_KEY
-import com.intellij.navigation.JBProtocolNavigateCommand.Companion.PROJECT_NAME_KEY
-import com.intellij.navigation.JBProtocolNavigateCommand.Companion.REFERENCE_TARGET
-import com.intellij.navigation.JBProtocolNavigateCommand.Companion.SELECTION
+import com.intellij.navigation.JBProtocolNavigateCommandBase.Companion.FQN_KEY
+import com.intellij.navigation.JBProtocolNavigateCommandBase.Companion.PATH_KEY
+import com.intellij.navigation.JBProtocolNavigateCommandBase.Companion.PROJECT_NAME_KEY
+import com.intellij.navigation.JBProtocolNavigateCommandBase.Companion.REFERENCE_TARGET
+import com.intellij.navigation.JBProtocolNavigateCommandBase.Companion.SELECTION
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.JetBrainsProtocolHandler
+import com.intellij.openapi.application.JBProtocolCommand.PROTOCOL
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.editor.Caret
 import com.intellij.openapi.editor.Editor
@@ -27,7 +27,7 @@ import java.util.stream.IntStream
 
 object CopyTBXReferenceAction {
   private val LOG = Logger.getInstance(CopyTBXReferenceAction::class.java)
-  private const val JETBRAINS_NAVIGATE = JetBrainsProtocolHandler.PROTOCOL
+
   @NlsSafe
   private val IDE_TAGS = mapOf(IDEA_PREFIX to "idea",
                                IDEA_CE_PREFIX to "idea",
@@ -88,7 +88,7 @@ object CopyTBXReferenceAction {
     val selectionParameters = getSelectionParameters(editor) ?: ""
     val projectParameter = "$PROJECT_NAME_KEY=${project.name}" // NON-NLS
 
-    return "$JETBRAINS_NAVIGATE$tool/$NAVIGATE_COMMAND/$REFERENCE_TARGET?$projectParameter$refsParameters$selectionParameters" // NON-NLS
+    return "${PROTOCOL}$tool/$NAVIGATE_COMMAND/$REFERENCE_TARGET?$projectParameter$refsParameters$selectionParameters" // NON-NLS
   }
 
   private fun getSelectionParameters(editor: Editor?): String? {

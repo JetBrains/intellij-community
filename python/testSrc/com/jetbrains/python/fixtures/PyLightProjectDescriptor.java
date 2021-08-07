@@ -24,6 +24,7 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.LightProjectDescriptor;
 import com.jetbrains.python.PythonMockSdk;
+import com.jetbrains.python.PythonTestUtil;
 import com.jetbrains.python.psi.LanguageLevel;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -55,7 +56,9 @@ public class PyLightProjectDescriptor extends LightProjectDescriptor {
 
   @Override
   public Sdk getSdk() {
-    return myName == null ? PythonMockSdk.create(myLevel, getAdditionalRoots()) : PythonMockSdk.create(myName);
+    return myName == null
+           ? PythonMockSdk.create(myLevel, getAdditionalRoots())
+           : PythonMockSdk.create(PythonTestUtil.getTestDataPath() + "/" + myName);
   }
 
   /**

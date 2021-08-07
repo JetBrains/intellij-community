@@ -20,7 +20,7 @@ import com.intellij.openapi.vcs.VcsBundle
 import com.intellij.openapi.vcs.changes.ByteBackedContentRevision
 import com.intellij.openapi.vcs.changes.Change
 import com.intellij.openapi.vcs.changes.ui.ChangesComparator
-import com.intellij.ui.GuiUtils
+import com.intellij.util.ModalityUiUtil
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.ui.update.DisposableUpdate
@@ -173,11 +173,11 @@ class ChangesFilterer(val project: Project?, val listener: Listener) : Disposabl
   }
 
   private fun updatePresentation() {
-    GuiUtils.invokeLaterIfNeeded(
-      {
-        updateQueue.cancelAllUpdates()
-        listener.updateChanges()
-      }, ModalityState.any())
+    ModalityUiUtil.invokeLaterIfNeeded(
+      ModalityState.any()) {
+      updateQueue.cancelAllUpdates()
+      listener.updateChanges()
+    }
   }
 
   private fun resetFilter(): ProgressIndicator {
@@ -247,8 +247,8 @@ class ChangesFilterer(val project: Project?, val listener: Listener) : Disposabl
       val content1 = bRev.content ?: return true
       val content2 = aRev.content ?: return true
 
-      val diffContent1 = DiffContentFactory.getInstance().create(project, content1, bRev.file.fileType)
-      val diffContent2 = DiffContentFactory.getInstance().create(project, content2, aRev.file.fileType)
+      val diffContent1 = DiffContentFactory.getInstance().create(project, content1, bRev.file)
+      val diffContent2 = DiffContentFactory.getInstance().create(project, content2, aRev.file)
 
       val provider = DiffIgnoredRangeProvider.EP_NAME.extensions.find {
         it.accepts(project, diffContent1) &&

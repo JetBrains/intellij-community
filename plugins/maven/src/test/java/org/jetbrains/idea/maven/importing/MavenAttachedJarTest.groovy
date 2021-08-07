@@ -17,12 +17,13 @@ package org.jetbrains.idea.maven.importing
 
 import com.intellij.testFramework.PlatformTestUtil
 import org.jetbrains.idea.maven.dom.MavenDomTestCase
+import org.junit.Test
 
 /**
  * @author Sergey Evdokimov
  */
 class MavenAttachedJarTest extends MavenDomTestCase {
-
+  @Test
   void testImporting() {
     createModulePom("m1", """
 <groupId>test</groupId>

@@ -1,10 +1,33 @@
 <html>
 <body>
-Reports any references to inner classes which are not qualified with the name
+Reports references to inner classes that are not qualified with the name
 of the enclosing class.
+<p><b>Example:</b></p>
+<pre>
+  import foo.Foo.Bar;
+
+  class Foo {
+    class Bar {}
+  }
+
+  class Baz {
+    void f(Bar bar) {}
+  }
+</pre>
+<p>After the quick-fix is applied:</p>
+<pre>
+  class Foo {
+    class Bar {}
+  }
+
+  class Baz {
+    void f(Foo.Bar bar) {}
+  }
+</pre>
 <!-- tooltip end -->
 <p>
-Use the checkbox below to ignore references to inner classes contained within the same class, which therefore do not require an import.
+  Use the inspection settings to ignore references to inner classes within the same class,
+  which therefore do not require an import.
 <p>
 </body>
 </html>

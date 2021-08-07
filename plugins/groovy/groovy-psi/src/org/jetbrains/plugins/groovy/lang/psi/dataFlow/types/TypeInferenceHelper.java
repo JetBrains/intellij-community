@@ -33,8 +33,10 @@ import org.jetbrains.plugins.groovy.lang.psi.dataFlow.reachingDefs.ReachingDefin
 import org.jetbrains.plugins.groovy.lang.psi.impl.InferenceContext;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PartialContext;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Function;
 
 import static com.intellij.psi.util.PsiModificationTracker.MODIFICATION_COUNT;
 import static org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl.VariableDescriptorFactory.createDescriptor;
@@ -172,7 +174,23 @@ public final class TypeInferenceHelper {
     final ReachingDefinitionsDfaInstance dfaInstance = new TypesReachingDefinitionsInstance(flow, varIndexes);
     final ReachingDefinitionsSemilattice lattice = new ReachingDefinitionsSemilattice();
     final DFAEngine<DefinitionMap> engine = new DFAEngine<>(flow, dfaInstance, lattice);
-    return engine.performDFAWithTimeout();
+    List<DefinitionMap> defUseMaps = engine.performDFAWithTimeout();
+    if (defUseMaps != null) {
+      internalize(defUseMaps);
+    }
+    return defUseMaps;
+  }
+
+  /**
+   * Optimizes maps for caching by limiting number of different referenced instances.
+   */
+  private static void internalize(@NotNull List<DefinitionMap> maps) {
+    Map<DefinitionMap, DefinitionMap> internedMaps = new HashMap<>();
+    for (int i = 0; i < maps.size(); i++) {
+      DefinitionMap map = maps.get(i);
+      DefinitionMap internedMap = internedMaps.computeIfAbsent(map, Function.identity());
+      maps.set(i, internedMap);
+    }
   }
 
   @Nullable

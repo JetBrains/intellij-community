@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.configurations;
 
 import com.intellij.diagnostic.LoadingState;
@@ -8,10 +8,7 @@ import com.intellij.execution.IllegalEnvVarException;
 import com.intellij.execution.Platform;
 import com.intellij.execution.process.ProcessNotCreatedException;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.NlsSafe;
-import com.intellij.openapi.util.SystemInfoRt;
-import com.intellij.openapi.util.UserDataHolder;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.encoding.EncodingManager;
@@ -22,7 +19,6 @@ import com.intellij.util.execution.ParametersListUtil;
 import com.intellij.util.io.IdeUtilIoBundle;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenCustomHashMap;
 import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -42,17 +38,17 @@ import java.util.*;
  *
  * <h3>Working directory</h3>
  * By default, a current directory of the IDE process is used (usually a "bin/" directory of IDE installation).
- * If a child process may create files in it, this choice is unwelcome. On the other hand, informational commands (e.g. "git --version")
+ * If child processes may create files in it, this choice is unwelcome. On the other hand, informational commands (e.g. "git --version")
  * are safe. When unsure, set it to something neutral - like user's home or a temp directory.
  *
  * <h3>Parent Environment</h3>
  * {@link ParentEnvironmentType Three options here}.
  * For commands designed from the ground up for typing into a terminal, use {@link ParentEnvironmentType#CONSOLE CONSOLE}
- * (typical cases: version controls, Node.js and all the surrounding stuff, Python and Ruby interpreters and utilities, etc).
+ * (typical cases: version controls, Node.js and all the surrounding stuff, Python and Ruby interpreters and utilities, etc.).
  * For GUI apps and CLI tools that aren't primarily intended to be launched by humans, use {@link ParentEnvironmentType#SYSTEM SYSTEM}
  * (examples: UI builders, browsers, XCode components). And for the empty environment, there is {@link ParentEnvironmentType#NONE NONE}.
- * According to an extensive research conducted by British scientists (tm) on a diverse population of both wild and domesticated tools
- * (no one was harmed), most of them are either insensitive to an environment or fall into the first category,
+ * According to extensive research conducted by British scientists (tm) on a diverse population of both wild and domesticated tools
+ * (no one was harmed), most of them are either insensitive to the environment or fall into the first category,
  * thus backing up the choice of CONSOLE as the default value.
  *
  * <h3>Encoding/Charset</h3>
@@ -97,11 +93,11 @@ public class GeneralCommandLine implements UserDataHolder {
     this(Collections.emptyList());
   }
 
-  public GeneralCommandLine(@NonNls String @NotNull ... command) {
+  public GeneralCommandLine(String @NotNull ... command) {
     this(Arrays.asList(command));
   }
 
-  public GeneralCommandLine(@NonNls @NotNull List<String> command) {
+  public GeneralCommandLine(@NotNull List<String> command) {
     int size = command.size();
     if (size > 0) {
       setExePath(command.get(0));
@@ -131,12 +127,12 @@ public class GeneralCommandLine implements UserDataHolder {
     return myExePath;
   }
 
-  public @NotNull GeneralCommandLine withExePath(@NotNull @NlsSafe String exePath) {
+  public @NotNull GeneralCommandLine withExePath(@NotNull String exePath) {
     myExePath = exePath.trim();
     return this;
   }
 
-  public void setExePath(@NotNull @NlsSafe String exePath) {
+  public void setExePath(@NotNull String exePath) {
     withExePath(exePath);
   }
 
@@ -144,13 +140,11 @@ public class GeneralCommandLine implements UserDataHolder {
     return myWorkDirectory;
   }
 
-  @NotNull
-  public GeneralCommandLine withWorkDirectory(@Nullable String path) {
+  public @NotNull GeneralCommandLine withWorkDirectory(@Nullable String path) {
     return withWorkDirectory(path != null ? new File(path) : null);
   }
 
-  @NotNull
-  public GeneralCommandLine withWorkDirectory(@Nullable File workDirectory) {
+  public @NotNull GeneralCommandLine withWorkDirectory(@Nullable File workDirectory) {
     myWorkDirectory = workDirectory;
     return this;
   }
@@ -166,21 +160,18 @@ public class GeneralCommandLine implements UserDataHolder {
   /**
    * Note: the map returned is forgiving to passing null values into putAll().
    */
-  @NotNull
-  public Map<String, String> getEnvironment() {
+  public @NotNull Map<String, String> getEnvironment() {
     return myEnvParams;
   }
 
-  @NotNull
-  public GeneralCommandLine withEnvironment(@Nullable Map<String, String> environment) {
+  public @NotNull GeneralCommandLine withEnvironment(@Nullable Map<String, String> environment) {
     if (environment != null) {
       getEnvironment().putAll(environment);
     }
     return this;
   }
 
-  @NotNull
-  public GeneralCommandLine withEnvironment(@NonNls @NotNull String key, @NonNls @NotNull String value) {
+  public @NotNull GeneralCommandLine withEnvironment(@NotNull String key, @NotNull String value) {
     getEnvironment().put(key, value);
     return this;
   }
@@ -196,13 +187,11 @@ public class GeneralCommandLine implements UserDataHolder {
     withParentEnvironmentType(passParentEnvironment ? ParentEnvironmentType.CONSOLE : ParentEnvironmentType.NONE);
   }
 
-  @NotNull
-  public ParentEnvironmentType getParentEnvironmentType() {
+  public @NotNull ParentEnvironmentType getParentEnvironmentType() {
     return myParentEnvironmentType;
   }
 
-  @NotNull
-  public GeneralCommandLine withParentEnvironmentType(@NotNull ParentEnvironmentType type) {
+  public @NotNull GeneralCommandLine withParentEnvironmentType(@NotNull ParentEnvironmentType type) {
     myParentEnvironmentType = type;
     return this;
   }
@@ -211,8 +200,7 @@ public class GeneralCommandLine implements UserDataHolder {
    * Returns an environment that will be inherited by a child process.
    * @see #getEffectiveEnvironment()
    */
-  @NotNull
-  public Map<String, String> getParentEnvironment() {
+  public @NotNull Map<String, String> getParentEnvironment() {
     switch (myParentEnvironmentType) {
       case SYSTEM:
         return System.getenv();
@@ -227,49 +215,43 @@ public class GeneralCommandLine implements UserDataHolder {
    * Returns an environment as seen by a child process,
    * that is the {@link #getEnvironment() environment} merged with the {@link #getParentEnvironment() parent} one.
    */
-  @NotNull
-  public Map<String, String> getEffectiveEnvironment() {
+  public @NotNull Map<String, String> getEffectiveEnvironment() {
     Map<String, String> env = new MyMap();
     setupEnvironment(env);
     return env;
   }
 
-  public void addParameters(@NonNls String @NotNull ... parameters) {
+  public void addParameters(String @NotNull ... parameters) {
     withParameters(parameters);
   }
 
-  public void addParameters(@NotNull List<@NonNls String> parameters) {
+  public void addParameters(@NotNull List<String> parameters) {
     withParameters(parameters);
   }
 
-  @NotNull
-  public GeneralCommandLine withParameters(@NotNull @NonNls String @NotNull ... parameters) {
+  public @NotNull GeneralCommandLine withParameters(@NotNull String @NotNull ... parameters) {
     for (String parameter : parameters) addParameter(parameter);
     return this;
   }
 
-  @NotNull
-  public GeneralCommandLine withParameters(@NotNull List<@NonNls String> parameters) {
+  public @NotNull GeneralCommandLine withParameters(@NotNull List<String> parameters) {
     for (String parameter : parameters) addParameter(parameter);
     return this;
   }
 
-  public void addParameter(@NonNls @NotNull String parameter) {
+  public void addParameter(@NotNull String parameter) {
     myProgramParams.add(parameter);
   }
 
-  @NotNull
-  public ParametersList getParametersList() {
+  public @NotNull ParametersList getParametersList() {
     return myProgramParams;
   }
 
-  @NotNull
-  public Charset getCharset() {
+  public @NotNull Charset getCharset() {
     return myCharset;
   }
 
-  @NotNull
-  public GeneralCommandLine withCharset(@NotNull Charset charset) {
+  public @NotNull GeneralCommandLine withCharset(@NotNull Charset charset) {
     myCharset = charset;
     return this;
   }
@@ -282,8 +264,7 @@ public class GeneralCommandLine implements UserDataHolder {
     return myRedirectErrorStream;
   }
 
-  @NotNull
-  public GeneralCommandLine withRedirectErrorStream(boolean redirectErrorStream) {
+  public @NotNull GeneralCommandLine withRedirectErrorStream(boolean redirectErrorStream) {
     myRedirectErrorStream = redirectErrorStream;
     return this;
   }
@@ -296,8 +277,7 @@ public class GeneralCommandLine implements UserDataHolder {
     return myInputFile;
   }
 
-  @NotNull
-  public GeneralCommandLine withInput(@Nullable File file) {
+  public @NotNull GeneralCommandLine withInput(@Nullable File file) {
     myInputFile = file;
     return this;
   }
@@ -308,9 +288,7 @@ public class GeneralCommandLine implements UserDataHolder {
    *
    * @return single-string representation of this command line.
    */
-  @NlsSafe
-  @NotNull
-  public String getCommandLineString() {
+  public @NlsSafe @NotNull String getCommandLineString() {
     return getCommandLineString(null);
   }
 
@@ -321,13 +299,11 @@ public class GeneralCommandLine implements UserDataHolder {
    * @param exeName use this executable name instead of given by {@link #setExePath(String)}
    * @return single-string representation of this command line.
    */
-  @NotNull
-  public String getCommandLineString(@Nullable String exeName) {
+  public @NotNull String getCommandLineString(@Nullable String exeName) {
     return ParametersListUtil.join(getCommandLineList(exeName));
   }
 
-  @NotNull
-  public List<String> getCommandLineList(@Nullable String exeName) {
+  public @NotNull List<String> getCommandLineList(@Nullable String exeName) {
     List<@NlsSafe String> commands = new ArrayList<>();
     String exe = StringUtil.notNullize(exeName, StringUtil.notNullize(myExePath, "<null>"));
     commands.add(exe);
@@ -342,8 +318,7 @@ public class GeneralCommandLine implements UserDataHolder {
    * @return command as a newline-separated list.
    * @see #getPreparedCommandLine(Platform)
    */
-  @NotNull
-  public String getPreparedCommandLine() {
+  public @NotNull String getPreparedCommandLine() {
     return getPreparedCommandLine(Platform.current());
   }
 
@@ -354,19 +329,16 @@ public class GeneralCommandLine implements UserDataHolder {
    * @param platform a target platform
    * @return command as a newline-separated list.
    */
-  @NotNull
-  public String getPreparedCommandLine(@NotNull Platform platform) {
+  public @NotNull String getPreparedCommandLine(@NotNull Platform platform) {
     String exePath = myExePath != null ? myExePath : "";
     return StringUtil.join(prepareCommandLine(exePath, myProgramParams.getList(), platform), "\n");
   }
 
-  @NotNull
-  protected List<String> prepareCommandLine(@NotNull String command, @NotNull List<String> parameters, @NotNull Platform platform) {
+  protected @NotNull List<String> prepareCommandLine(@NotNull String command, @NotNull List<String> parameters, @NotNull Platform platform) {
     return CommandLineUtil.toCommandLine(command, parameters, platform);
   }
 
-  @NotNull
-  public Process createProcess() throws ExecutionException {
+  public @NotNull Process createProcess() throws ExecutionException {
     if (LOG.isDebugEnabled()) {
       LOG.debug("Executing [" + getCommandLineString() + "]");
       if (myWorkDirectory != null) {
@@ -381,7 +353,13 @@ public class GeneralCommandLine implements UserDataHolder {
       return startProcess(commands);
     }
     catch (IOException e) {
-      LOG.debug(e);
+      if (SystemInfo.isWindows) {
+        String mode = System.getProperty("jdk.lang.Process.allowAmbiguousCommands");
+        SecurityManager sm = System.getSecurityManager();
+        if ("false".equalsIgnoreCase(mode) || sm != null) {
+          e.addSuppressed(new IllegalStateException("Suspicious state: allowAmbiguousCommands=" + mode + " SM=" + (sm != null ? sm.getClass() : null)));
+        }
+      }
       throw new ProcessNotCreatedException(e.getMessage(), e, this);
     }
   }
@@ -391,7 +369,6 @@ public class GeneralCommandLine implements UserDataHolder {
     return toProcessBuilderInternal(escapedCommands);
   }
 
-  @NotNull
   private List<String> validateAndPrepareCommandLine() throws ExecutionException {
     try {
       if (myWorkDirectory != null) {
@@ -420,11 +397,16 @@ public class GeneralCommandLine implements UserDataHolder {
     }
 
     String exePath = myExePath;
-    if (SystemInfoRt.isMac && myParentEnvironmentType == ParentEnvironmentType.CONSOLE && exePath.indexOf(File.separatorChar) == -1) {
-      String systemPath = System.getenv("PATH");
-      String shellPath = EnvironmentUtil.getValue("PATH");
-      if (!Objects.equals(systemPath, shellPath)) {
-        File exeFile = PathEnvironmentVariableUtil.findInPath(myExePath, shellPath, null);
+    if (exePath.indexOf(File.separatorChar) == -1) {
+      String lookupPath = myEnvParams.get("PATH");
+      if (lookupPath == null && myParentEnvironmentType == ParentEnvironmentType.CONSOLE && SystemInfo.isMac) {
+        String shellPath = EnvironmentUtil.getValue("PATH");
+        if (!Objects.equals(shellPath, System.getenv("PATH"))) {
+          lookupPath = shellPath;
+        }
+      }
+      if (lookupPath != null) {
+        File exeFile = PathEnvironmentVariableUtil.findInPath(myExePath, lookupPath, null);
         if (exeFile != null) {
           LOG.debug(exePath + " => " + exeFile);
           exePath = exeFile.getPath();
@@ -450,8 +432,7 @@ public class GeneralCommandLine implements UserDataHolder {
    * Notice how the last parameter escaping changes after prepending another argument.</p>
    * <p>If you need to alter the command line passed in, override the {@link #prepareCommandLine(String, List, Platform)} method instead.</p>
    */
-  @NotNull
-  protected Process startProcess(@NotNull List<String> escapedCommands) throws IOException {
+  protected @NotNull Process startProcess(@NotNull List<String> escapedCommands) throws IOException {
     if (LOG.isDebugEnabled()) {
       LOG.debug("Building process with commands: " + escapedCommands);
     }
@@ -460,8 +441,7 @@ public class GeneralCommandLine implements UserDataHolder {
 
   // This is caused by the fact there are external usages overriding startProcess(List<String>).
   // Ideally, it should have been startProcess(ProcessBuilder), and the design would be more straightforward.
-  @NotNull
-  private ProcessBuilder toProcessBuilderInternal(@NotNull List<String> escapedCommands) {
+  private ProcessBuilder toProcessBuilderInternal(List<String> escapedCommands) {
     ProcessBuilder builder = new ProcessBuilder(escapedCommands);
     setupEnvironment(builder.environment());
     builder.directory(myWorkDirectory);
@@ -478,8 +458,7 @@ public class GeneralCommandLine implements UserDataHolder {
    * parameters before a process is started
    * @param builder filed ProcessBuilder
    */
-  @NotNull
-  protected ProcessBuilder buildProcess(@NotNull ProcessBuilder builder) {
+  protected @NotNull ProcessBuilder buildProcess(@NotNull ProcessBuilder builder) {
     return builder;
   }
 
@@ -490,7 +469,7 @@ public class GeneralCommandLine implements UserDataHolder {
       environment.putAll(getParentEnvironment());
     }
 
-    if (SystemInfoRt.isUnix) {
+    if (SystemInfo.isUnix) {
       File workDirectory = getWorkDirectory();
       if (workDirectory != null) {
         environment.put("PWD", FileUtil.toSystemDependentName(workDirectory.getAbsolutePath()));
@@ -498,7 +477,7 @@ public class GeneralCommandLine implements UserDataHolder {
     }
 
     if (!myEnvParams.isEmpty()) {
-      if (SystemInfoRt.isWindows) {
+      if (SystemInfo.isWindows) {
         Map<String, String> envVars = CollectionFactory.createCaseInsensitiveStringMap();
         envVars.putAll(environment);
         envVars.putAll(myEnvParams);
@@ -513,13 +492,12 @@ public class GeneralCommandLine implements UserDataHolder {
 
   /**
    * Normally, double quotes in parameters are escaped, so they arrive to a called program as-is.
-   * But some commands (e.g. {@code 'cmd /c start "title" ...'}) should get their quotes non-escaped.
-   * Wrapping a parameter by this method (instead of using quotes) will do exactly this.
+   * But some commands (e.g. {@code 'cmd /c start "title" ...'}) should get their quotes non-escaped -
+   * use this method to wrap such parameters (instead of using quotes).
    *
    * @see com.intellij.execution.util.ExecUtil#getTerminalCommand(String, String)
    */
-  @NotNull
-  public static String inescapableQuote(@NotNull String parameter) {
+  public static @NotNull String inescapableQuote(@NotNull String parameter) {
     return CommandLineUtil.specialQuote(parameter);
   }
 
@@ -528,9 +506,8 @@ public class GeneralCommandLine implements UserDataHolder {
     return myExePath + " " + myProgramParams;
   }
 
-  @Nullable
   @Override
-  public <T> T getUserData(@NotNull Key<T> key) {
+  public @Nullable <T> T getUserData(@NotNull Key<T> key) {
     if (myUserData == null) return null;
     @SuppressWarnings("unchecked") T t = (T)myUserData.get(key);
     return t;
@@ -547,7 +524,7 @@ public class GeneralCommandLine implements UserDataHolder {
 
   private static final class MyMap extends Object2ObjectOpenCustomHashMap<String, String> {
     private MyMap() {
-      super(FastUtilHashingStrategies.getStringStrategy(!SystemInfoRt.isWindows));
+      super(FastUtilHashingStrategies.getStringStrategy(!SystemInfo.isWindows));
     }
 
     @Override

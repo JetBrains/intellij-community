@@ -6,16 +6,12 @@ import com.intellij.openapi.actionSystem.PlatformDataKeys.CONTEXT_COMPONENT
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
 import com.intellij.util.ui.JBUI.Panels.simplePanel
-import git4idea.i18n.GitBundle
 import org.jetbrains.plugins.github.api.GithubApiRequestExecutor
 import org.jetbrains.plugins.github.api.GithubServerPath
-import org.jetbrains.plugins.github.authentication.isOAuthEnabled
-import org.jetbrains.plugins.github.authentication.ui.GHPasswordTokenLoginDialog.Companion.createSignUpLink
 import org.jetbrains.plugins.github.i18n.GithubBundle.message
 import java.awt.Component
 import javax.swing.Action
 import javax.swing.JComponent
-import javax.swing.JPanel
 
 class AddGHAccountAction : DumbAwareAction() {
   override fun update(e: AnActionEvent) {
@@ -24,31 +20,13 @@ class AddGHAccountAction : DumbAwareAction() {
 
   override fun actionPerformed(e: AnActionEvent) {
     val accountsHost = e.getData(GHAccountsHost.KEY)!!
-    val dialog = createDialog(e.project, e.getData(CONTEXT_COMPONENT), accountsHost::isAccountUnique)
+    val dialog = GHOAuthLoginDialog(e.project, e.getData(CONTEXT_COMPONENT), accountsHost::isAccountUnique)
     dialog.setServer(GithubServerPath.DEFAULT_HOST, false)
 
     if (dialog.showAndGet()) {
       accountsHost.addAccount(dialog.server, dialog.login, dialog.token)
     }
   }
-
-  private fun createDialog(project: Project?, parent: Component?, isAccountUnique: UniqueLoginPredicate): BaseLoginDialog =
-    if (isOAuthEnabled()) GHOAuthLoginDialog(project, parent, isAccountUnique)
-    else PasswordLoginDialog(project, parent, isAccountUnique)
-}
-
-private class PasswordLoginDialog(project: Project?, parent: Component?, isAccountUnique: UniqueLoginPredicate) :
-  BaseLoginDialog(project, parent, GithubApiRequestExecutor.Factory.getInstance(), isAccountUnique) {
-
-  init {
-    title = message("login.to.github")
-    setOKButtonText(GitBundle.message("login.dialog.button.login"))
-    init()
-  }
-
-  override fun createCenterPanel(): JComponent = loginPanel.setPaddingCompensated()
-
-  override fun createSouthAdditionalPanel(): JPanel = createSignUpLink()
 }
 
 internal class GHOAuthLoginDialog(project: Project?, parent: Component?, isAccountUnique: UniqueLoginPredicate) :

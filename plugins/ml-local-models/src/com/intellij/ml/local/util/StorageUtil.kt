@@ -6,6 +6,7 @@ import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.util.io.*
+import java.io.IOException
 import java.nio.file.Path
 import kotlin.io.path.writeText
 
@@ -34,28 +35,43 @@ object StorageUtil {
     infoFile.writeText(GSON.toJson(StorageInfo(version, isValid, System.currentTimeMillis())))
   }
 
+  fun <K, V> PersistentHashMap<K, V>.getOrLogError(key: K): V? = try {
+    this.get(key)
+  } catch (e: IOException) {
+    LOG.warn(e)
+    null
+  }
+
   fun <K> PersistentHashMap<K, *>.isEmpty(): Boolean = this.processKeysWithExistingMapping { false }
 
-  fun<K> PersistentHashMap<K, *>.clear() {
-    val existing = HashSet<K>()
-    this.processKeysWithExistingMapping {
-      existing.add(it)
-      true
-    }
-    existing.forEach { fileId ->
-      this.remove(fileId)
+  fun <T> getStorage(storageDirectory: Path, version: Int, factory: (Path, Boolean) -> T): T? {
+    try {
+      val isValid = prepareStorage(storageDirectory, version)
+      return factory(storageDirectory, isValid)
+    } catch (t: Throwable) {
+      try {
+        prepareStorage(storageDirectory, version, forceDelete = true)
+        return factory(storageDirectory, false)
+      } catch (t: Throwable) {
+        LOG.error(t)
+        return null
+      }
     }
   }
 
-  fun prepareStorage(storageDirectory: Path, version: Int) {
+  private fun prepareStorage(storageDirectory: Path, version: Int, forceDelete: Boolean = false): Boolean {
+    var isValid = false
     if (storageDirectory.exists()) {
       val info = readInfo(storageDirectory)
-      if (info == null || !info.isValid || info.version != version) {
+      if (forceDelete || info == null || !info.isValid || info.version != version) {
         storageDirectory.delete()
+      } else {
+        isValid = true
       }
     }
     storageDirectory.createDirectories()
-    saveInfo(version, true, storageDirectory)
+    saveInfo(version, isValid, storageDirectory)
+    return isValid
   }
 
   private data class StorageInfo(val version: Int, val isValid: Boolean, val timestamp: Long)

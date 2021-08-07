@@ -28,6 +28,7 @@ import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.resolve.QualifiedNameFinder;
+import com.jetbrains.python.psi.types.TypeEvalContext;
 import com.jetbrains.python.refactoring.PyPsiRefactoringUtil;
 import com.jetbrains.python.refactoring.classes.PyClassRefactoringUtil;
 import com.jetbrains.python.refactoring.move.PyMoveRefactoringUtil;
@@ -204,7 +205,8 @@ public class PyMoveSymbolProcessor {
     // Don't use PyUtil#multiResolveTopPriority here since it filters out low priority ImportedResolveResults
     final List<PsiElement> resolvedElements = new ArrayList<>();
     if (usage instanceof PyReferenceOwner) {
-      final PsiPolyVariantReference reference = ((PyReferenceOwner)usage).getReference(PyResolveContext.implicitContext());
+      final var context = TypeEvalContext.codeInsightFallback(usage.getProject());
+      final PsiPolyVariantReference reference = ((PyReferenceOwner)usage).getReference(PyResolveContext.implicitContext(context));
       for (ResolveResult result : reference.multiResolve(false)) {
         resolvedElements.add(result.getElement());
       }

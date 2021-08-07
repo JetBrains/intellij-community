@@ -10,9 +10,11 @@ import com.intellij.lang.Language;
 import com.intellij.lang.findUsages.DescriptiveNameUtil;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.lang.refactoring.InlineHandler;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.RangeMarker;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NlsContexts;
@@ -270,7 +272,12 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
       }
     }, conflicts, JavaLanguage.INSTANCE);
 
-    addInaccessibleMemberConflicts(myMethod, usagesIn, new ReferencedElementsCollector(), conflicts);
+    if (!ProgressManager.getInstance().runProcessWithProgressSynchronously(
+      () -> ApplicationManager.getApplication().runReadAction(() ->
+                                                                addInaccessibleMemberConflicts(myMethod, usagesIn, new ReferencedElementsCollector(), conflicts)),
+      JavaRefactoringBundle.message("processing.usages"), true, myProject)) {
+      return false;
+    }
 
     addInaccessibleSuperCallsConflicts(usagesIn, conflicts);
 

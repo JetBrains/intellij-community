@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.svg;
 
 import com.intellij.diagnostic.StartUpMeasurer;
@@ -43,10 +43,10 @@ public final class SvgCacheManager {
     public void accept(Throwable e, MVStore store) {
       Logger logger = getLogger();
       if (isStoreOpened) {
-        logger.error("Icon Cache Error, (db=" + store.getFileStore() + ')');
+        logger.error("Icon cache error (db=" + store.getFileStore() + ')');
       }
       else {
-        logger.warn("Icon Cache will be recreated or previous version of data reused, (db=" + store.getFileStore() + ')');
+        logger.warn("Icon cache will be recreated or previous version of data reused, (db=" + store.getFileStore() + ')');
       }
       logger.debug(e);
     }
@@ -114,11 +114,11 @@ public final class SvgCacheManager {
     return buffer.array();
   }
 
-  public final @Nullable Image loadFromCache(byte @NotNull [] theme,
-                                             byte @NotNull [] imageBytes,
-                                             float scale,
-                                             boolean isDark,
-                                             @NotNull ImageLoader.Dimension2DDouble docSize) {
+  public @Nullable Image loadFromCache(byte @NotNull [] theme,
+                                       byte @NotNull [] imageBytes,
+                                       float scale,
+                                       boolean isDark,
+                                       @NotNull ImageLoader.Dimension2DDouble docSize) {
     byte[] key = getCacheKey(theme, imageBytes);
     MVMap<byte[], ImageValue> map = getMap(scale, isDark, scaleToMap, store, mapBuilder);
     try {

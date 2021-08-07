@@ -11,11 +11,13 @@ import java.io.IOException;
 public interface AppendableObjectStorage<Data> extends Forceable, Closeable {
   Data read(int addr) throws IOException;
 
-  boolean processAll(@NotNull Processor<? super Data> processor) throws IOException;
+  boolean processAll(@NotNull StorageObjectProcessor<? super Data> processor) throws IOException;
 
   int append(Data value) throws IOException;
 
   boolean checkBytesAreTheSame(int addr, Data value) throws IOException;
+
+  void clear() throws IOException;
 
   void lockRead();
 
@@ -26,4 +28,9 @@ public interface AppendableObjectStorage<Data> extends Forceable, Closeable {
   void unlockWrite();
 
   int getCurrentLength();
+
+  @FunctionalInterface
+  interface StorageObjectProcessor<Data> {
+    boolean process(int offset, Data data);
+  }
 }

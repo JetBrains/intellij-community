@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.daemon.impl.analysis;
 
 import com.intellij.codeInsight.AnnotationUtil;
@@ -62,7 +62,19 @@ public enum HighlightingFeature {
   },
   TEXT_BLOCK_ESCAPES(LanguageLevel.JDK_15, "feature.text.block.escape.sequences"),
   TEXT_BLOCKS(LanguageLevel.JDK_15, "feature.text.blocks") ,
-  SEALED_CLASSES(LanguageLevel.JDK_15_PREVIEW, "feature.sealed.classes"),
+  SEALED_CLASSES(LanguageLevel.JDK_15_PREVIEW, "feature.sealed.classes") {
+    @Override
+    boolean isSufficient(@NotNull LanguageLevel useSiteLevel) {
+      return useSiteLevel == LanguageLevel.JDK_15_PREVIEW || 
+             useSiteLevel == LanguageLevel.JDK_16_PREVIEW ||
+             useSiteLevel.isAtLeast(LanguageLevel.JDK_17);
+    }
+
+    @Override
+    LanguageLevel getStandardLevel() {
+      return LanguageLevel.JDK_17;
+    }
+  },
   LOCAL_INTERFACES(LanguageLevel.JDK_15_PREVIEW, "feature.local.interfaces"){
     @Override
     boolean isSufficient(@NotNull LanguageLevel useSiteLevel) {
@@ -85,7 +97,9 @@ public enum HighlightingFeature {
       return LanguageLevel.JDK_16;
     }
   },
-  INNER_STATICS(LanguageLevel.JDK_16, "feature.inner.statics");
+  INNER_STATICS(LanguageLevel.JDK_16, "feature.inner.statics"),
+  PATTERNS_IN_SWITCH(LanguageLevel.JDK_17_PREVIEW, "feature.patterns.in.switch"),
+  GUARDED_AND_PARENTHESIZED_PATTERNS(LanguageLevel.JDK_17_PREVIEW, "feature.guarded.and.parenthesised.patterns");
 
   public static final @NonNls String JDK_INTERNAL_PREVIEW_FEATURE = "jdk.internal.PreviewFeature";
   public static final @NonNls String JDK_INTERNAL_JAVAC_PREVIEW_FEATURE = "jdk.internal.javac.PreviewFeature";

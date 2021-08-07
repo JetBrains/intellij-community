@@ -1,18 +1,18 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.terminal.vfs;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorPolicy;
 import com.intellij.openapi.fileEditor.FileEditorProvider;
 import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.terminal.JBTerminalWidget;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.terminal.LocalTerminalDirectRunner;
-import org.jetbrains.plugins.terminal.TerminalTabState;
-import org.jetbrains.plugins.terminal.TerminalUtil;
 import org.jetbrains.plugins.terminal.arrangement.TerminalWorkingDirectoryManager;
 
 public class TerminalSessionEditorProvider implements FileEditorProvider, DumbAware {
@@ -31,12 +31,14 @@ public class TerminalSessionEditorProvider implements FileEditorProvider, DumbAw
       TerminalSessionVirtualFileImpl terminalFile = (TerminalSessionVirtualFileImpl)file;
       JBTerminalWidget widget = terminalFile.getTerminalWidget();
 
-      TerminalTabState tts = new TerminalTabState();
-      tts.myWorkingDirectory = TerminalWorkingDirectoryManager.getWorkingDirectory(widget, file.getName());
-      LocalTerminalDirectRunner runner = LocalTerminalDirectRunner.createTerminalRunner(project);
-      JBTerminalWidget newWidget = TerminalUtil.createTerminal(runner, tts, null);
-      TerminalSessionVirtualFileImpl newSessionVirtualFile = new TerminalSessionVirtualFileImpl(terminalFile.getName(), newWidget, terminalFile.getSettingsProvider());
-      return new TerminalSessionEditor(project, newSessionVirtualFile);
+      String workingDirectory = TerminalWorkingDirectoryManager.getWorkingDirectory(widget, file.getName());
+      Disposable tempDisposable = Disposer.newDisposable();
+      JBTerminalWidget newWidget = new LocalTerminalDirectRunner(project).createTerminalWidget(tempDisposable, workingDirectory, true);
+      TerminalSessionVirtualFileImpl newSessionVirtualFile = new TerminalSessionVirtualFileImpl(
+        terminalFile.getName(), newWidget, terminalFile.getSettingsProvider());
+      TerminalSessionEditor editor = new TerminalSessionEditor(project, newSessionVirtualFile);
+      Disposer.dispose(tempDisposable); // newWidget's parent disposable should be changed now
+      return editor;
     }
   }
 

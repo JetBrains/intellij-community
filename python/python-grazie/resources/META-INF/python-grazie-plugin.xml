@@ -1,5 +1,6 @@
 <idea-plugin>
   <extensions defaultExtensionNs="com.intellij.grazie">
-    <grammar.strategy language="Python" implementationClass="com.intellij.grazie.ide.language.python.PythonGrammarCheckingStrategy"/>
+    <textExtractor language="Python" implementationClass="com.intellij.grazie.ide.language.python.PythonTextExtractor"/>
+    <problemFilter language="Python" implementationClass="com.intellij.grazie.text.LiteralProblemFilter"/>
   </extensions>
 </idea-plugin>

@@ -1,23 +1,24 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.lang.properties;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.lang.properties.charset.Native2AsciiCharset;
-import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
 import com.intellij.openapi.fileTypes.LanguageFileType;
+import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.encoding.EncodingManager;
 import com.intellij.openapi.vfs.encoding.EncodingRegistry;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 
 public final class PropertiesFileType extends LanguageFileType {
   public static final LanguageFileType INSTANCE = new PropertiesFileType();
   @NonNls public static final String DEFAULT_EXTENSION = "properties";
   @NonNls public static final String DOT_DEFAULT_EXTENSION = "."+DEFAULT_EXTENSION;
+  public static final Charset PROPERTIES_DEFAULT_CHARSET = StandardCharsets.ISO_8859_1;
 
   private PropertiesFileType() {
     super(PropertiesLanguage.INSTANCE);
@@ -32,7 +33,7 @@ public final class PropertiesFileType extends LanguageFileType {
   @Override
   @NotNull
   public String getDescription() {
-    return PropertiesBundle.message("properties.files.file.type.description");
+    return PropertiesBundle.message("filetype.properties.description");
   }
 
   @Override
@@ -48,10 +49,10 @@ public final class PropertiesFileType extends LanguageFileType {
 
   @Override
   public String getCharset(@NotNull VirtualFile file, final byte @NotNull [] content) {
-    LoadTextUtil.DetectResult guessed = LoadTextUtil.guessFromContent(file, content);
-    Charset charset = guessed.hardCodedCharset == null ? EncodingRegistry.getInstance().getDefaultCharsetForPropertiesFiles(file) : guessed.hardCodedCharset;
+    Charset guessed = content.length == 0 ? null : new CharsetToolkit(content, PROPERTIES_DEFAULT_CHARSET, true).guessEncoding(content.length);
+    Charset charset = guessed == null ? EncodingRegistry.getInstance().getDefaultCharsetForPropertiesFiles(file) : guessed;
     if (charset == null) {
-      charset = EncodingManager.getInstance().getDefaultCharset();
+      charset = PROPERTIES_DEFAULT_CHARSET;
     }
     if (EncodingRegistry.getInstance().isNative2Ascii(file)) {
       charset = Native2AsciiCharset.wrap(charset);

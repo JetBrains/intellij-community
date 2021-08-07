@@ -6,7 +6,6 @@ import com.intellij.analysis.AnalysisScope;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.reference.*;
 import com.intellij.codeInspection.ui.InspectionOptionsPanel;
-import com.intellij.codeInspection.util.IntentionFamilyName;
 import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -208,7 +207,7 @@ public class CanBeFinalInspection extends GlobalJavaBatchInspectionTool {
     @Override
     @NotNull
     public String getFamilyName() {
-      return getQuickFixName();
+      return JavaAnalysisBundle.message("inspection.can.be.final.accept.quickfix");
     }
 
     @Override
@@ -235,9 +234,5 @@ public class CanBeFinalInspection extends GlobalJavaBatchInspectionTool {
         }
       }
     }
-  }
-
-  private static @IntentionFamilyName String getQuickFixName() {
-    return JavaAnalysisBundle.message("inspection.can.be.final.accept.quickfix");
   }
 }

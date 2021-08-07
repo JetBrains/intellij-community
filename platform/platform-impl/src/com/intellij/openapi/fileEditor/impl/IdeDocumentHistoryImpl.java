@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.fileEditor.impl;
 
 import com.intellij.ide.ui.UISettings;
@@ -106,7 +106,7 @@ public class IdeDocumentHistoryImpl extends IdeDocumentHistory implements Dispos
     });
     busConnection.subscribe(VirtualFileManager.VFS_CHANGES, new BulkFileListener() {
       @Override
-      public void after(@NotNull List<? extends VFileEvent> events) {
+      public void after(@NotNull List<? extends @NotNull VFileEvent> events) {
         for (VFileEvent event : events) {
           if (event instanceof VFileDeleteEvent) {
             removeInvalidFilesFromStacks();
@@ -299,7 +299,7 @@ public class IdeDocumentHistoryImpl extends IdeDocumentHistory implements Dispos
         return new PlaceInfo(file,
                              fileEditor.getState(FileEditorStateLevel.NAVIGATION),
                              TextEditorProvider.getInstance().getEditorTypeId(),
-                             null,
+                             null, false,
                              getCaretPosition(fileEditor), System.currentTimeMillis());
       }
     }
@@ -555,7 +555,10 @@ public class IdeDocumentHistoryImpl extends IdeDocumentHistory implements Dispos
   }
 
   private static boolean removeInvalidFilesFrom(@NotNull List<PlaceInfo> backPlaces) {
-    return backPlaces.removeIf(info -> !info.myFile.isValid());
+    return backPlaces.removeIf(info -> (info.myFile instanceof SkipFromDocumentHistory) || !info.myFile.isValid());
+  }
+
+  public interface SkipFromDocumentHistory {
   }
 
   @Override
@@ -567,9 +570,11 @@ public class IdeDocumentHistoryImpl extends IdeDocumentHistory implements Dispos
   public void gotoPlaceInfo(@NotNull PlaceInfo info, boolean wasActive) {
     EditorWindow wnd = info.getWindow();
     FileEditorManagerEx editorManager = getFileEditorManager();
-    final Pair<FileEditor[], FileEditorProvider[]> editorsWithProviders = wnd != null && wnd.isValid()
-                                                                          ? editorManager.openFileWithProviders(info.getFile(), wasActive, wnd)
-                                                                          : editorManager.openFileWithProviders(info.getFile(), wasActive, false);
+    FileEditorOpenOptions openOptions = new FileEditorOpenOptions()
+      .withUsePreviewTab(info.isPreviewTab())
+      .withRequestFocus(wasActive);
+    final Pair<FileEditor[], FileEditorProvider[]> editorsWithProviders =
+      editorManager.openFileWithProviders(info.getFile(), wnd, openOptions);
 
     editorManager.setSelectedEditor(info.getFile(), info.getEditorTypeId());
 
@@ -601,11 +606,13 @@ public class IdeDocumentHistoryImpl extends IdeDocumentHistory implements Dispos
 
     FileEditorManagerEx editorManager = getFileEditorManager();
     VirtualFile file = fileEditor.getFile();
-    LOG.assertTrue(file != null);
+    LOG.assertTrue(file != null, fileEditor.getClass().getName() + " getFile() returned null");
     FileEditorState state = fileEditor.getState(FileEditorStateLevel.NAVIGATION);
 
-    return new PlaceInfo(file, state, fileProvider.getEditorTypeId(), editorManager.getCurrentWindow(), getCaretPosition(fileEditor),
-                         System.currentTimeMillis());
+    EditorWindow window = editorManager.getCurrentWindow();
+    EditorComposite composite = window != null ? window.findFileComposite(file) : null;
+    return new PlaceInfo(file, state, fileProvider.getEditorTypeId(), window, composite != null && composite.isPreview(),
+                         getCaretPosition(fileEditor), System.currentTimeMillis());
   }
 
   private static @Nullable RangeMarker getCaretPosition(@NotNull FileEditor fileEditor) {
@@ -651,6 +658,7 @@ public class IdeDocumentHistoryImpl extends IdeDocumentHistory implements Dispos
     private final FileEditorState myNavigationState;
     private final String myEditorTypeId;
     private final Reference<EditorWindow> myWindow;
+    private final boolean myIsPreviewTab;
     private final @Nullable RangeMarker myCaretPosition;
     private final long myTimeStamp;
 
@@ -659,24 +667,21 @@ public class IdeDocumentHistoryImpl extends IdeDocumentHistory implements Dispos
                      @NotNull String editorTypeId,
                      @Nullable EditorWindow window,
                      @Nullable RangeMarker caretPosition) {
-      myNavigationState = navigationState;
-      myFile = file;
-      myEditorTypeId = editorTypeId;
-      myWindow = new WeakReference<>(window);
-      myCaretPosition = caretPosition;
-      myTimeStamp = -1;
+      this(file, navigationState, editorTypeId, window, false, caretPosition, -1);
     }
 
     public PlaceInfo(@NotNull VirtualFile file,
                      @NotNull FileEditorState navigationState,
                      @NotNull String editorTypeId,
                      @Nullable EditorWindow window,
+                     boolean isPreviewTab,
                      @Nullable RangeMarker caretPosition,
                      long stamp) {
       myNavigationState = navigationState;
       myFile = file;
       myEditorTypeId = editorTypeId;
       myWindow = new WeakReference<>(window);
+      myIsPreviewTab = isPreviewTab;
       myCaretPosition = caretPosition;
       myTimeStamp = stamp;
     }
@@ -708,6 +713,10 @@ public class IdeDocumentHistoryImpl extends IdeDocumentHistory implements Dispos
 
     public long getTimeStamp() {
       return myTimeStamp;
+    }
+
+    public boolean isPreviewTab() {
+      return myIsPreviewTab;
     }
   }
 

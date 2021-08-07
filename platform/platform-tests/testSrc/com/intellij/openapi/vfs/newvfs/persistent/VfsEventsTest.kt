@@ -7,6 +7,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Ref
 import com.intellij.openapi.vfs.*
 import com.intellij.openapi.vfs.impl.ZipHandlerBase
+import com.intellij.openapi.vfs.impl.jar.TimedZipHandler
 import com.intellij.openapi.vfs.newvfs.BulkFileListener
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent
 import com.intellij.testFramework.EdtRule
@@ -61,15 +62,15 @@ class VfsEventsTest : BareTestFixtureTestCase() {
     val dir = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(tempDir.newDirectory("vDir"))
     Assert.assertNotNull(dir)
     dir!!.children
-    val eventFired = Ref.create(false)
+    var eventFired = false
     VirtualFileManager.getInstance().addVirtualFileListener(object : VirtualFileListener {
       override fun fileCreated(event: VirtualFileEvent) {
-        eventFired.set(true)
+        eventFired= true
       }
     }, testRootDisposable)
 
     addChild(dir, "x.txt")
-    Assert.assertTrue(eventFired.get())
+    Assert.assertTrue(eventFired)
   }
 
   @Test
@@ -244,6 +245,7 @@ class VfsEventsTest : BareTestFixtureTestCase() {
     vDir.forceAsyncRefresh()
 
     val allVfsListeners = AllVfsListeners(project)
+    TimedZipHandler.closeOpenZipReferences()
     assertTrue { Files.deleteIfExists(jar) }
     vDir.forceAsyncRefresh()
     allVfsListeners.assertEvents(2)
@@ -257,6 +259,7 @@ class VfsEventsTest : BareTestFixtureTestCase() {
     vDir.forceAsyncRefresh()
 
     val allVfsListeners = AllVfsListeners(project)
+    TimedZipHandler.closeOpenZipReferences()
     jar.moveTo(childDir2.resolve(jar.fileName), true)
     vDir.forceAsyncRefresh()
     allVfsListeners.assertEvents(3)

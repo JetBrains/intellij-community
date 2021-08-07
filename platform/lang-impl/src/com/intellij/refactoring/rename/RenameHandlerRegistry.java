@@ -7,6 +7,7 @@ import com.intellij.ide.TitledHandler;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
@@ -87,7 +88,9 @@ public class RenameHandlerRegistry {
    * Must not show dialogs.
    */
   public @NotNull List<? extends @NotNull RenameHandler> getRenameHandlers(@NotNull DataContext dataContext) {
-    return ProhibitAWTEvents.prohibitEventsInside("getRenameHandlers", () -> doGetRenameHandlers(dataContext));
+    try (AccessToken ignore = ProhibitAWTEvents.start("getRenameHandlers")) {
+      return doGetRenameHandlers(dataContext);
+    }
   }
 
   private @NotNull List<? extends @NotNull RenameHandler> doGetRenameHandlers(@NotNull DataContext dataContext) {

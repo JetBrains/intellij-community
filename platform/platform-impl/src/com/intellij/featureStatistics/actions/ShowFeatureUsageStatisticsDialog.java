@@ -127,7 +127,10 @@ public final class ShowFeatureUsageStatisticsDialog extends DialogWrapper {
     ProductivityFeaturesRegistry registry = ProductivityFeaturesRegistry.getInstance();
     ArrayList<FeatureDescriptor> features = new ArrayList<>();
     for (String id : registry.getFeatureIds()) {
-      features.add(registry.getFeatureDescriptor(id));
+      FeatureDescriptor feature = registry.getFeatureDescriptor(id);
+      if (feature.isNeedToBeShownInGuide()) {
+        features.add(feature);
+      }
     }
     TableView<FeatureDescriptor> table = new TableView<>(new ListTableModel<>(COLUMNS, features, 0));
     new TableViewSpeedSearch<>(table) {
@@ -206,7 +209,11 @@ public final class ShowFeatureUsageStatisticsDialog extends DialogWrapper {
 
   private static String getGroupName(@NotNull FeatureDescriptor featureDescriptor) {
     final ProductivityFeaturesRegistry registry = ProductivityFeaturesRegistry.getInstance();
-    final GroupDescriptor groupDescriptor = registry.getGroupDescriptor(featureDescriptor.getGroupId());
-    return groupDescriptor != null ? groupDescriptor.getDisplayName() : "";
+    final String groupId = featureDescriptor.getGroupId();
+    if (registry != null && groupId != null) {
+      final GroupDescriptor groupDescriptor = registry.getGroupDescriptor(groupId);
+      return groupDescriptor != null ? groupDescriptor.getDisplayName() : "";
+    }
+    return "";
   }
 }

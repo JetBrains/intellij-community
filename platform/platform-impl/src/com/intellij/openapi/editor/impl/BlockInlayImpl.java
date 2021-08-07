@@ -4,6 +4,7 @@ package com.intellij.openapi.editor.impl;
 import com.intellij.diagnostic.PluginException;
 import com.intellij.openapi.editor.EditorCustomElementRenderer;
 import com.intellij.openapi.editor.Inlay;
+import com.intellij.openapi.editor.InlayProperties;
 import com.intellij.openapi.editor.VisualPosition;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import org.jetbrains.annotations.NotNull;
@@ -58,9 +59,11 @@ final class BlockInlayImpl<R extends EditorCustomElementRenderer> extends InlayI
   @Override
   Point getPosition() {
     int visualLine = myEditor.offsetToVisualLine(getOffset());
-    int y = myEditor.visualLineToY(visualLine);
+    int[] yRange = myEditor.visualLineToYRange(visualLine);
     List<Inlay<?>> allInlays = myEditor.getInlayModel().getBlockElementsForVisualLine(visualLine, myShowAbove);
+    int y;
     if (myShowAbove) {
+      y = yRange[0];
       boolean found = false;
       for (Inlay<?> inlay : allInlays) {
         if (inlay == this) found = true;
@@ -68,7 +71,7 @@ final class BlockInlayImpl<R extends EditorCustomElementRenderer> extends InlayI
       }
     }
     else {
-      y += myEditor.getLineHeight();
+      y = yRange[1];
       for (Inlay<?> inlay : allInlays) {
         if (inlay == this) break;
         y += inlay.getHeightInPixels();
@@ -103,6 +106,15 @@ final class BlockInlayImpl<R extends EditorCustomElementRenderer> extends InlayI
   @Override
   public int getAsInt() {
     return myHeightInPixels;
+  }
+
+  @Override
+  public @NotNull InlayProperties getProperties() {
+    return new InlayProperties()
+      .relatesToPrecedingText(isRelatedToPrecedingText())
+      .showAbove(myShowAbove)
+      .showWhenFolded(myShowWhenFolded)
+      .priority(myPriority);
   }
 
   @Override

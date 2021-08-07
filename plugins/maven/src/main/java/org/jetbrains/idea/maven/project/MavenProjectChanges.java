@@ -46,11 +46,11 @@ public class MavenProjectChanges {
     if (other == null) return this;
 
     MavenProjectChanges result = new MavenProjectChanges();
-    result.packaging = packaging | other.packaging;
-    result.output = output | other.output;
-    result.sources = sources | other.sources;
-    result.dependencies = dependencies | other.dependencies;
-    result.plugins = plugins | other.plugins;
+    result.packaging = packaging || other.packaging;
+    result.output = output || other.output;
+    result.sources = sources || other.sources;
+    result.dependencies = dependencies || other.dependencies;
+    result.plugins = plugins || other.plugins;
     return result;
   }
 

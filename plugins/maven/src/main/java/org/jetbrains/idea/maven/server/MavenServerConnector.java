@@ -12,7 +12,7 @@ import org.jetbrains.idea.maven.model.MavenModel;
 
 import java.io.File;
 import java.rmi.RemoteException;
-import java.util.Collection;
+import java.util.*;
 
 public abstract class MavenServerConnector implements @NotNull Disposable {
   public static final Logger LOG = Logger.getInstance(MavenServerConnector.class);
@@ -21,7 +21,7 @@ public abstract class MavenServerConnector implements @NotNull Disposable {
   protected final MavenServerManager myManager;
   protected @NotNull final MavenDistribution myDistribution;
   protected final Sdk myJdk;
-  protected final String myMultimoduleDirectory;
+  protected final Set<String> myMultimoduleDirectories;
 
   protected final String myVmOptions;
 
@@ -36,7 +36,12 @@ public abstract class MavenServerConnector implements @NotNull Disposable {
     myDistribution = mavenDistribution;
     myVmOptions = vmOptions;
     myJdk = jdk;
-    myMultimoduleDirectory = multimoduleDirectory;
+    myMultimoduleDirectories = new LinkedHashSet<>();
+    myMultimoduleDirectories.add(multimoduleDirectory);
+  }
+
+  boolean addMultimoduleDir(String multimoduleDirectory) {
+    return myMultimoduleDirectories.add(multimoduleDirectory);
   }
 
   abstract boolean isNew();
@@ -87,7 +92,7 @@ public abstract class MavenServerConnector implements @NotNull Disposable {
 
   @ApiStatus.Internal
   public void shutdown(boolean wait) {
-    myManager.unregisterConnector(this);
+    myManager.cleanUp(this);
   }
 
   protected <R, E extends Exception> R perform(RemoteObjectWrapper.Retriable<R, E> r) throws E {
@@ -102,6 +107,8 @@ public abstract class MavenServerConnector implements @NotNull Disposable {
   public abstract String getSupportType();
 
   public abstract State getState();
+
+  public abstract boolean checkConnected();
 
   public enum State {
     STARTING,
@@ -132,7 +139,7 @@ public abstract class MavenServerConnector implements @NotNull Disposable {
     return myProject;
   }
 
-  public String getMultimoduleDirectory() {
-    return myMultimoduleDirectory;
+  public List<String> getMultimoduleDirectories() {
+    return new ArrayList<>(myMultimoduleDirectories);
   }
 }

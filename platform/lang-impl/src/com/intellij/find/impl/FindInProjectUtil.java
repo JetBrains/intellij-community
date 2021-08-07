@@ -35,7 +35,6 @@ import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Conditions;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.impl.VirtualFileManagerImpl;
@@ -73,6 +72,10 @@ public final class FindInProjectUtil {
     Project project = CommonDataKeys.PROJECT.getData(dataContext);
 
     Editor editor = CommonDataKeys.EDITOR.getData(dataContext);
+    if (editor == null) {
+      EditorSearchSession session = EditorSearchSession.SESSION_KEY.getData(dataContext);
+      if (session != null) editor = session.getEditor();
+    }
     if (project != null && editor == null && !DumbServiceImpl.getInstance(project).isDumb()) {
       try {
         psiElement = CommonDataKeys.PSI_ELEMENT.getData(dataContext);
@@ -448,8 +451,6 @@ public final class FindInProjectUtil {
 
   @NotNull
   public static String buildStringToFindForIndicesFromRegExp(@NotNull String stringToFind, @NotNull Project project) {
-    if (!Registry.is("idea.regexp.search.uses.indices")) return "";
-
     return StringUtil.trim(StringUtil.join(extractStringToFind(stringToFind, project), " "));
   }
 
@@ -480,11 +481,6 @@ public final class FindInProjectUtil {
     @Override
     public @Nls @NotNull String getLongDescriptiveName() {
       return getPresentableText();
-    }
-
-    @Override
-    public String getLocationString() {
-      return myFindModel + "!!";
     }
 
     @Override

@@ -1,8 +1,7 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.unusedReturnValue;
 
 import com.intellij.analysis.AnalysisScope;
-import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.deadCode.UnreferencedFilter;
 import com.intellij.codeInspection.reference.*;
@@ -16,13 +15,13 @@ import com.intellij.psi.PsiModifier;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.util.PropertyUtilBase;
 import com.intellij.util.VisibilityUtil;
+import com.siyeh.ig.psiutils.MethodUtils;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.Collections;
 
 public class UnusedReturnValue extends GlobalJavaBatchInspectionTool{
   public boolean IGNORE_BUILDER_PATTERN;
@@ -57,16 +56,10 @@ public class UnusedReturnValue extends GlobalJavaBatchInspectionTool{
       final boolean isNative = psiMethod.hasModifierProperty(PsiModifier.NATIVE);
       if (refMethod.isExternalOverride() && !isNative) return null;
       if (RefUtil.isImplicitRead(psiMethod)) return null;
-      if (canIgnoreReturnValue(psiMethod)) return null;
+      if (MethodUtils.hasCanIgnoreReturnValueAnnotation(psiMethod, psiMethod.getContainingFile())) return null;
       return new ProblemDescriptor[]{createProblemDescriptor(psiMethod, manager, processor, isNative, false)};
     }
     return null;
-  }
-
-  static boolean canIgnoreReturnValue(PsiMethod psiMethod) {
-    return AnnotationUtil.isAnnotated(psiMethod,
-                                      Collections.singleton("com.google.errorprone.annotations.CanIgnoreReturnValue"),
-                                      AnnotationUtil.CHECK_HIERARCHY);
   }
 
   @Override

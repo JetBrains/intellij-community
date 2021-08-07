@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.navigation;
 
 import com.intellij.openapi.editor.markup.TextAttributes;
@@ -15,33 +15,53 @@ public interface TargetPresentationBuilder {
   @NotNull TargetPresentation presentation();
 
   /**
+   * @see TargetPresentation#getBackgroundColor
    * @see com.intellij.openapi.vfs.newvfs.VfsPresentationUtil#getFileBackgroundColor
    */
   @Contract(value = "_ -> new", pure = true)
   @NotNull TargetPresentationBuilder backgroundColor(@Nullable Color color);
 
+  /**
+   * @see TargetPresentation#getIcon
+   */
   @Contract(value = "_ -> new", pure = true)
   @NotNull TargetPresentationBuilder icon(@Nullable Icon icon);
 
+  /**
+   * @see TargetPresentation#getPresentableTextAttributes
+   */
   @Contract(value = "_ -> new", pure = true)
   @NotNull TargetPresentationBuilder presentableTextAttributes(@Nullable TextAttributes attributes);
 
+  /**
+   * @see TargetPresentation#getContainerText
+   */
   @Contract(value = "_ -> new", pure = true)
   @NotNull TargetPresentationBuilder containerText(@Nls @Nullable String text);
 
+  /**
+   * @see TargetPresentation#getContainerText
+   * @see TargetPresentation#getContainerTextAttributes
+   */
   @Contract(value = "_, _ -> new", pure = true)
   @NotNull TargetPresentationBuilder containerText(@Nls @Nullable String text, @Nullable TextAttributes attributes);
 
   /**
+   * @see TargetPresentation#getContainerTextAttributes
    * @see com.intellij.codeInsight.navigation.UtilKt#fileStatusAttributes
    */
   @Contract(value = "_ -> new", pure = true)
   @NotNull TargetPresentationBuilder containerTextAttributes(@Nullable TextAttributes attributes);
 
+  /**
+   * @see TargetPresentation#getLocationText
+   */
   @Contract(value = "_ -> new", pure = true)
   @NotNull TargetPresentationBuilder locationText(@Nls @Nullable String text);
 
   /**
+   * @see TargetPresentation#getLocationText
+   * @see TargetPresentation#getLocationIcon
    * @see com.intellij.codeInsight.navigation.UtilKt#fileLocation
    */
   @Contract(value = "_, _ -> new", pure = true)

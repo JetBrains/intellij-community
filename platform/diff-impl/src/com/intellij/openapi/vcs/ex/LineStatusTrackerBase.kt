@@ -20,7 +20,6 @@ import com.intellij.diff.util.DiffUtil.executeWriteCommand
 import com.intellij.diff.util.Side
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.WriteThread
 import com.intellij.openapi.command.CommandProcessor
 import com.intellij.openapi.command.UndoConfirmationPolicy
 import com.intellij.openapi.command.undo.UndoUtil
@@ -107,7 +106,7 @@ abstract class LineStatusTrackerBase<R : Range>(
   @RequiresEdt
   fun dropBaseRevision() {
     ApplicationManager.getApplication().assertIsDispatchThread()
-    if (isReleased) return
+    if (isReleased || !isInitialized) return
 
     isInitialized = false
     updateHighlighters()
@@ -129,7 +128,7 @@ abstract class LineStatusTrackerBase<R : Range>(
     }
 
     if (!ApplicationManager.getApplication().isDispatchThread || LOCK.isHeldByCurrentThread) {
-      WriteThread.submit(runnable)
+      ApplicationManager.getApplication().invokeLater(runnable)
     }
     else {
       runnable.run()
@@ -323,6 +322,20 @@ abstract class LineStatusTrackerBase<R : Range>(
 
 
   override fun toString(): String {
-    return "${javaClass.name}(file=${virtualFile?.path}, isReleased=$isReleased)@${Integer.toHexString(hashCode())}"
+    return javaClass.name + "(" +
+           "file=" +
+           virtualFile?.let { file ->
+             file.path +
+             (if (!file.isInLocalFileSystem) "@$file" else "") +
+             "@" + Integer.toHexString(file.hashCode())
+           } +
+           ", document=" +
+           document.let { doc ->
+             doc.toString() +
+             "@" + Integer.toHexString(doc.hashCode())
+           } +
+           ", isReleased=$isReleased" +
+           ")" +
+           "@" + Integer.toHexString(hashCode())
   }
 }

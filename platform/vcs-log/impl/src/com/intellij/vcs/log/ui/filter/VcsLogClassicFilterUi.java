@@ -98,7 +98,7 @@ public class VcsLogClassicFilterUi implements VcsLogFilterUiEx {
     myStructureFilterModel = new FileFilterModel(myLogData.getLogProviders().keySet(), myUiProperties, filters);
     myTextFilterModel = new TextFilterModel(myUiProperties, filters, parentDisposable);
 
-    myFilterField = new TextFilterField(myTextFilterModel);
+    myFilterField = new TextFilterField(myTextFilterModel, parentDisposable);
 
     FilterModel[] models = {myBranchFilterModel, myUserFilterModel, myDateFilterModel, myStructureFilterModel, myTextFilterModel};
     for (FilterModel<?> model : models) {
@@ -206,7 +206,8 @@ public class VcsLogClassicFilterUi implements VcsLogFilterUiEx {
 
     @NotNull private final Computable<? extends JComponent> myComponentCreator;
 
-    public FilterActionComponent(@NotNull Supplier<@Nls @NlsActions.ActionText String> dynamicText, @NotNull Computable<? extends JComponent> componentCreator) {
+    public FilterActionComponent(@NotNull Supplier<@Nls @NlsActions.ActionText String> dynamicText,
+                                 @NotNull Computable<? extends JComponent> componentCreator) {
       super(dynamicText);
       myComponentCreator = componentCreator;
     }
@@ -359,7 +360,7 @@ public class VcsLogClassicFilterUi implements VcsLogFilterUiEx {
       return VcsLogFilterObject.fromCommits(ContainerUtil.mapNotNull(values, s -> {
         Matcher matcher = pattern.matcher(s);
         if (!matcher.matches()) {
-          if (s.length() == VcsLogUtil.FULL_HASH_LENGTH && VcsLogUtil.HASH_REGEX.matcher(s).matches()) {
+          if (VcsLogUtil.isFullHash(s)) {
             CommitId commitId = findCommitId(HashImpl.build(s));
             if (commitId != null) return commitId;
           }
@@ -382,8 +383,7 @@ public class VcsLogClassicFilterUi implements VcsLogFilterUiEx {
 
     @Nullable
     private static VcsLogRangeFilter createRangeFilter(@NotNull List<String> values) {
-      if (values.isEmpty()) return null;
-      return VcsLogFilterObject.fromRange(ContainerUtil.map(values, value -> {
+      List<VcsLogRangeFilter.RefRange> ranges = ContainerUtil.mapNotNull(values, value -> {
         String TWO_DOTS = "..";
         int twoDots = value.indexOf(TWO_DOTS);
         if (twoDots <= 0) {
@@ -391,7 +391,9 @@ public class VcsLogClassicFilterUi implements VcsLogFilterUiEx {
           return null;
         }
         return new VcsLogRangeFilter.RefRange(value.substring(0, twoDots), value.substring(twoDots + TWO_DOTS.length()));
-      }));
+      });
+      if (ranges.isEmpty()) return null;
+      return VcsLogFilterObject.fromRange(ranges);
     }
 
     @Nullable
@@ -452,7 +454,7 @@ public class VcsLogClassicFilterUi implements VcsLogFilterUiEx {
         if (twoDots > 0 && twoDots == s.lastIndexOf("..")) {
           ranges.add(s);
         }
-        else if (s.length() == VcsLogUtil.FULL_HASH_LENGTH && VcsLogUtil.HASH_REGEX.matcher(s).matches()) {
+        else if (VcsLogUtil.isFullHash(s)) {
           hashes.add(s);
         }
         else {
@@ -770,7 +772,7 @@ public class VcsLogClassicFilterUi implements VcsLogFilterUiEx {
   private static class TextFilterField extends SearchTextField {
     @NotNull private final TextFilterModel myTextFilterModel;
 
-    TextFilterField(@NotNull TextFilterModel model) {
+    TextFilterField(@NotNull TextFilterModel model, @NotNull Disposable parentDisposable) {
       super(VCS_LOG_TEXT_FILTER_HISTORY);
       myTextFilterModel = model;
       setText(myTextFilterModel.getText());
@@ -786,10 +788,15 @@ public class VcsLogClassicFilterUi implements VcsLogFilterUiEx {
           }
         }
       });
+      myTextFilterModel.addSetFilterListener(() -> {
+        String modelText = myTextFilterModel.getText();
+        if (getText() != modelText) setText(modelText);
+      });
       new HelpTooltip().setTitle(VcsLogBundle.message("vcs.log.filter.text.hash.tooltip"))
         .setShortcut(KeymapUtil.getFirstKeyboardShortcutText(VcsLogActionPlaces.VCS_LOG_FOCUS_TEXT_FILTER))
         .setLocation(HelpTooltip.Alignment.BOTTOM)
         .installOn(getTextEditor());
+      Disposer.register(parentDisposable, this::hidePopup);
     }
 
     protected void applyFilter() {

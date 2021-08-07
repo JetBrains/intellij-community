@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.tabs.impl;
 
 import com.intellij.ide.DataManager;
@@ -9,7 +9,6 @@ import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ui.JBPopupMenu;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.*;
 import com.intellij.ui.awt.RelativePoint;
@@ -270,7 +269,7 @@ public class TabLabel extends JPanel implements Accessible {
   public void paint(final Graphics g) {
     if (myTabs.isDropTarget(myInfo)) {
       if (myTabs.getDropSide() == -1) {
-        g.setColor(JBColor.namedColor("DragAndDrop.areaBackground", 0x3d7dcc, 0x404a57));
+        g.setColor(JBUI.CurrentTheme.DragAndDrop.Area.BACKGROUND);
         g.fillRect(0, 0, getWidth(), getHeight());
       }
       return;
@@ -607,7 +606,7 @@ public class TabLabel extends JPanel implements Accessible {
   @Override
   public String getToolTipText(MouseEvent event) {
     Point pointInLabel = new RelativePoint(event).getPoint(myLabel);
-    if (myLabel.findFragmentAt(pointInLabel.x) == SimpleColoredComponent.FRAGMENT_ICON && Registry.is("ide.icon.tooltips")) {
+    if (myLabel.findFragmentAt(pointInLabel.x) == SimpleColoredComponent.FRAGMENT_ICON) {
       String toolTip = myIcon.getToolTip(false);
       if (toolTip != null) {
         return StringUtil.capitalize(toolTip);

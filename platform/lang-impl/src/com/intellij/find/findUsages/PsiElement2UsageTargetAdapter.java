@@ -34,6 +34,7 @@ import com.intellij.usages.ConfigurableUsageTarget;
 import com.intellij.usages.PsiElementUsageTarget;
 import com.intellij.usages.UsageView;
 import com.intellij.usages.impl.UsageViewImpl;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -47,6 +48,7 @@ public class PsiElement2UsageTargetAdapter
   private final SmartPsiElementPointer<?> myPointer;
   @NotNull protected final FindUsagesOptions myOptions;
   private String myPresentableText;
+  private String myLocationText;
   private Icon myIcon;
 
   public PsiElement2UsageTargetAdapter(@NotNull PsiElement element, @NotNull FindUsagesOptions options, boolean update) {
@@ -71,6 +73,7 @@ public class PsiElement2UsageTargetAdapter
    * calling {@link #update()} that could lead to freeze. {@link #update()} should be called on bg thread.
    * @param element
    */
+  @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
   @Deprecated
   public PsiElement2UsageTargetAdapter(@NotNull PsiElement element, @NotNull FindUsagesOptions options) {
     this(element, options, true);
@@ -81,6 +84,7 @@ public class PsiElement2UsageTargetAdapter
    * calling {@link #update()} that could lead to freeze. {@link #update()} should be called on bg thread.
    * @param element
    */
+  @ApiStatus.ScheduledForRemoval(inVersion = "2022.2")
   @Deprecated
   public PsiElement2UsageTargetAdapter(@NotNull PsiElement element) {
     this(element, true);
@@ -191,6 +195,10 @@ public class PsiElement2UsageTargetAdapter
     return virtualFile == null ? null : new VirtualFile[]{virtualFile};
   }
 
+  /**
+   * @deprecated use {@link #convert(PsiElement[], boolean)} instead
+   */
+  @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
   @Deprecated
   public static PsiElement2UsageTargetAdapter @NotNull [] convert(PsiElement @NotNull [] psiElements) {
     return convert(psiElements, true);
@@ -269,6 +277,7 @@ public class PsiElement2UsageTargetAdapter
       final ItemPresentation presentation = ((NavigationItem)element).getPresentation();
       myIcon = presentation == null ? null : presentation.getIcon(true);
       myPresentableText = presentation == null ? UsageViewUtil.createNodeText(element) : presentation.getPresentableText();
+      myLocationText = presentation == null ? null : StringUtil.nullize(presentation.getLocationString());
       if (myIcon == null) {
         if (element instanceof PsiMetaOwner) {
           final PsiMetaOwner psiMetaOwner = (PsiMetaOwner)element;
@@ -292,6 +301,11 @@ public class PsiElement2UsageTargetAdapter
   @Override
   public String getPresentableText() {
     return myPresentableText;
+  }
+
+  @Override
+  public @Nullable String getLocationString() {
+    return myLocationText;
   }
 
   @Override

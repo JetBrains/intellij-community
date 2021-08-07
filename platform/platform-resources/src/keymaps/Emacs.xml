@@ -101,9 +101,7 @@
   <action id="GotoClass">
     <keyboard-shortcut first-keystroke="shift alt G"/>
   </action>
-  <action id="GotoChangedFile">
-    <keyboard-shortcut first-keystroke="shift alt G"/>
-  </action>
+  <action id="GotoChangedFile"/>
   <action id="Switcher">
     <keyboard-shortcut first-keystroke="control X" second-keystroke="B"/>
   </action>
@@ -159,12 +157,10 @@
     <keyboard-shortcut first-keystroke="alt shift RIGHT"/>
   </action>
   <action id="Diff.PrevChange">
-    <keyboard-shortcut first-keystroke="alt LEFT"/>
-    <keyboard-shortcut first-keystroke="control X" second-keystroke="P"/>
+    <keyboard-shortcut first-keystroke="alt shift LEFT"/>
   </action>
   <action id="Diff.NextChange">
-    <keyboard-shortcut first-keystroke="alt RIGHT"/>
-    <keyboard-shortcut first-keystroke="control X" second-keystroke="N"/>
+    <keyboard-shortcut first-keystroke="alt shift RIGHT"/>
   </action>
   <action id="GotoLine">
     <keyboard-shortcut first-keystroke="alt G"/>
@@ -336,4 +332,7 @@
   <action id="MoveStatementDown"/>
   <action id="ToggleRenderedDocPresentation"/>
   <action id="EditorAddCaretPerSelectedLine"/>
+  <action id="GoGenerateFileAction"/>
+  <action id="Diff.ApplyLeftSide"/>
+  <action id="Diff.ApplyRightSide"/>
 </keymap>

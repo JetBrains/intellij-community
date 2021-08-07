@@ -4,9 +4,15 @@
   <version>1.0</version>
 
   <content>
-    <module name="anotherModule" package="mypackage.subpackage"/>
+    <module name="anotherModule"/>
 
-    <module name="<error descr="Cannot resolve module descriptor 'invalidModuleName.xml' in source roots of module 'invalidModuleName'">invalidModuleName</error>" package="<error descr="Invalid value: 'mypackage'">mypackage</error>"/>
+    <module name="anotherModule/secondary-descriptor"/>
+    <module name="<error descr="Cannot resolve module descriptor 'anotherModule.INVALID_VALUE.xml' in source roots of module 'anotherModule'">anotherModule/INVALID_VALUE</error>"/>
+
+    <module name="mainModule/sub-descriptor"/>
+    <module name="<error descr="Cannot resolve module descriptor 'mainModule.INVALID_VALUE.xml' in source roots of module 'mainModule'">mainModule/INVALID_VALUE</error>"/>
+
+    <module name="<error descr="Cannot resolve module descriptor 'invalidModuleName.xml' in source roots of module 'invalidModuleName'">invalidModuleName</error>"/>
   </content>
 
 </idea-plugin>

@@ -1,14 +1,13 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.pullrequest.ui.toolwindow
 
+import com.intellij.collaboration.auth.AccountsListener
+import com.intellij.collaboration.ui.CollaborationToolsUIUtil.defaultButton
 import com.intellij.ide.plugins.newui.HorizontalLayout
-import com.intellij.ide.ui.laf.darcula.ui.DarculaButtonUI
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.invokeAndWaitIfNeeded
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
-import com.intellij.ui.ComponentUtil
 import com.intellij.ui.components.ActionLink
 import com.intellij.util.castSafelyTo
 import com.intellij.util.ui.JBUI
@@ -20,9 +19,7 @@ import net.miginfocom.layout.PlatformDefaults
 import net.miginfocom.swing.MigLayout
 import org.jetbrains.plugins.github.api.GithubServerPath
 import org.jetbrains.plugins.github.authentication.GithubAuthenticationManager
-import org.jetbrains.plugins.github.authentication.accounts.AccountTokenChangedListener
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccount
-import org.jetbrains.plugins.github.authentication.accounts.GithubAccountManager
 import org.jetbrains.plugins.github.i18n.GithubBundle
 import org.jetbrains.plugins.github.ui.component.ComboBoxWithActionsModel
 import org.jetbrains.plugins.github.ui.component.GHAccountSelectorComponentFactory
@@ -70,7 +67,7 @@ class GHPRRepositorySelectorComponentFactory(private val project: Project,
     }
     val gheLoginAction = object : AbstractAction(GithubBundle.message("action.Github.Accounts.AddGHEAccount.text")) {
       override fun actionPerformed(e: ActionEvent?) {
-        val server = repositoriesModel.selectedItem?.wrappee?.repository?.serverPath ?: return
+        val server = repositoriesModel.selectedItem?.wrappee?.ghRepositoryCoordinates?.serverPath ?: return
         authManager.requestNewAccountForServer(server, project)?.run {
           applyAction.actionPerformed(e)
         }
@@ -89,21 +86,18 @@ class GHPRRepositorySelectorComponentFactory(private val project: Project,
       putClientProperty(PlatformDefaults.VISUAL_PADDING_PROPERTY, insets)
     }
 
-    val applyButton = JButton(applyAction).apply {
+    val applyButton = JButton(applyAction).defaultButton().apply {
       isOpaque = false
-      ComponentUtil.putClientProperty(this, DarculaButtonUI.DEFAULT_STYLE_KEY, true)
       controlVisibilityFromAction(this, applyAction)
     }
 
-    val githubLoginButton = JButton(githubLoginAction).apply {
+    val githubLoginButton = JButton(githubLoginAction).defaultButton().apply {
       isOpaque = false
-      ComponentUtil.putClientProperty(this, DarculaButtonUI.DEFAULT_STYLE_KEY, true)
       controlVisibilityFromAction(this, githubLoginAction)
     }
     val tokenLoginLink = createLinkLabel(tokenLoginAction)
-    val gheLoginButton = JButton(gheLoginAction).apply {
+    val gheLoginButton = JButton(gheLoginAction).defaultButton().apply {
       isOpaque = false
-      ComponentUtil.putClientProperty(this, DarculaButtonUI.DEFAULT_STYLE_KEY, true)
       controlVisibilityFromAction(this, gheLoginAction)
     }
     val actionsPanel = JPanel(HorizontalLayout(UI.scale(16))).apply {
@@ -143,12 +137,11 @@ class GHPRRepositorySelectorComponentFactory(private val project: Project,
 
     init {
       repositoryManager.addRepositoryListChangedListener(this, ::updateRepositories)
-      ApplicationManager.getApplication().messageBus.connect(this)
-        .subscribe(GithubAccountManager.ACCOUNT_TOKEN_CHANGED_TOPIC, object : AccountTokenChangedListener {
-          override fun tokenChanged(account: GithubAccount) {
-            invokeAndWaitIfNeeded { updateAccounts() }
-          }
-        })
+      authManager.addListener(this, object : AccountsListener<GithubAccount> {
+        override fun onAccountListChanged(old: Collection<GithubAccount>, new: Collection<GithubAccount>) {
+          invokeAndWaitIfNeeded { updateAccounts() }
+        }
+      })
 
       repositoriesModel.addSelectionChangeListener(::updateAccounts)
       repositoriesModel.addSelectionChangeListener(::updateActions)
@@ -160,12 +153,12 @@ class GHPRRepositorySelectorComponentFactory(private val project: Project,
     }
 
     private fun updateRepositories() {
-      repositoriesModel.items = repositoryManager.knownRepositories.sortedBy { it.gitRemote.remote.name }
+      repositoriesModel.items = repositoryManager.knownRepositories.sortedBy { it.gitRemoteUrlCoordinates.remote.name }
       repositoriesModel.preSelect()
     }
 
     private fun updateAccounts() {
-      val serverPath = repositoriesModel.selectedItem?.wrappee?.repository?.serverPath
+      val serverPath = repositoriesModel.selectedItem?.wrappee?.ghRepositoryCoordinates?.serverPath
       if (serverPath == null) {
         accountsModel.items = emptyList()
         accountsModel.actions = emptyList()
@@ -232,7 +225,7 @@ class GHPRRepositorySelectorComponentFactory(private val project: Project,
 
     private fun updateActions() {
       val hasAccounts = accountsModel.items.isNotEmpty()
-      val serverPath = repositoriesModel.selectedItem?.wrappee?.repository?.serverPath
+      val serverPath = repositoriesModel.selectedItem?.wrappee?.ghRepositoryCoordinates?.serverPath
       val isGithubServer = serverPath?.isGithubDotCom ?: false
 
       applyAction.isEnabled = accountsModel.selectedItem != null

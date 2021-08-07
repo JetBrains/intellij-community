@@ -4,6 +4,7 @@ package org.jetbrains.idea.maven.indices;
 import com.intellij.jarRepository.services.bintray.BintrayEndpoint;
 import com.intellij.jarRepository.services.bintray.BintrayModel;
 import com.intellij.openapi.progress.ProcessCanceledException;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.server.IndexedMavenId;
 import org.jetbrains.idea.maven.server.MavenIndicesProcessor;
@@ -23,6 +24,7 @@ import static com.intellij.openapi.util.text.StringUtil.split;
  * @deprecated since Bintray service is scheduled for sunsetting in May 2021
  */
 @Deprecated
+@ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
 class BintrayIndexer implements NotNexusIndexer {
 
   private final String myUrlTemplate;

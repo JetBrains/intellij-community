@@ -7,8 +7,8 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.CachedSingletonsRegistry;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
-import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -29,29 +29,24 @@ public abstract class ScratchFileService {
     return result;
   }
 
-  @NotNull
-  public abstract String getRootPath(@NotNull RootType rootType);
+  public abstract @NotNull String getRootPath(@NotNull RootType rootType);
 
-  @Nullable
-  public abstract RootType getRootType(@Nullable VirtualFile file);
+  public abstract @Nullable RootType getRootType(@Nullable VirtualFile file);
 
   public abstract VirtualFile findFile(@NotNull RootType rootType, @NotNull String pathName, @NotNull Option option) throws IOException;
 
-  @NotNull
-  public abstract PerFileMappings<Language> getScratchesMapping();
+  public abstract @NotNull PerFileMappings<Language> getScratchesMapping();
 
-  @Nullable
-  public static RootType findRootType(@Nullable VirtualFile file) {
+  public static @Nullable RootType findRootType(@Nullable VirtualFile file) {
     if (file == null || !file.isInLocalFileSystem()) return null;
     VirtualFile parent = file.isDirectory() ? file : file.getParent();
     return getInstance().getRootType(parent);
   }
 
-  @NotNull
-  public static Set<VirtualFile> getAllRootPaths() {
+  public static @NotNull Set<VirtualFile> getAllRootPaths() {
     ScratchFileService instance = getInstance();
     LocalFileSystem fileSystem = LocalFileSystem.getInstance();
-    Set<VirtualFile> result = new ObjectOpenHashSet<>();
+    Set<VirtualFile> result = CollectionFactory.createSmallMemoryFootprintSet();
     for (RootType rootType : RootType.getAllRootTypes()) {
       if (rootType.isHidden()) continue;
       ContainerUtil.addIfNotNull(result, fileSystem.findFileByPath(instance.getRootPath(rootType)));

@@ -15,12 +15,12 @@
  */
 package com.siyeh.ig.style;
 
+import com.intellij.codeInsight.daemon.impl.UnusedSymbolUtil;
 import com.intellij.codeInspection.CleanupLocalInspectionTool;
 import com.intellij.codeInspection.canBeFinal.CanBeFinalHandler;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiModifier;
-import com.intellij.psi.impl.source.resolve.reference.impl.AtomicReferenceImplicitUsageProvider;
 import com.intellij.psi.util.PsiUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
@@ -70,7 +70,7 @@ public class FieldMayBeFinalInspection extends BaseInspection implements Cleanup
       if (!FinalUtils.canBeFinal(field)) {
         return;
       }
-      if (new AtomicReferenceImplicitUsageProvider().isImplicitWrite(field)) return;
+      if (UnusedSymbolUtil.isImplicitWrite(field)) return;
       registerVariableError(field, field);
     }
   }

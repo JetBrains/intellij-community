@@ -2,6 +2,7 @@
 package com.intellij.workspaceModel.storage.impl
 
 import com.intellij.openapi.diagnostic.thisLogger
+import com.intellij.workspaceModel.storage.ClassConversion
 import com.intellij.workspaceModel.storage.PersistentEntityId
 import com.intellij.workspaceModel.storage.WorkspaceEntity
 import com.intellij.workspaceModel.storage.WorkspaceEntityWithPersistentId
@@ -9,6 +10,7 @@ import com.intellij.workspaceModel.storage.WorkspaceEntityWithPersistentId
 internal open class ImmutableEntitiesBarrel internal constructor(
   override val entityFamilies: List<ImmutableEntityFamily<out WorkspaceEntity>?>
 ) : EntitiesBarrel() {
+  constructor(): this(emptyList())
   companion object {
     val EMPTY = ImmutableEntitiesBarrel(emptyList())
   }

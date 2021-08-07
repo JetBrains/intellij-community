@@ -50,7 +50,7 @@ public class MockPrinter implements Printer {
   }
 
   @Override
-  public void print(String s, ConsoleViewContentType contentType) {
+  public void print(@NotNull String s, @NotNull ConsoleViewContentType contentType) {
     myHasPrinted = true;
     myAllOut.append(s);
     if (contentType == ConsoleViewContentType.NORMAL_OUTPUT) {
@@ -107,7 +107,7 @@ public class MockPrinter implements Printer {
   }
 
   @Override
-  public void printHyperlink(String text, HyperlinkInfo info) {
+  public void printHyperlink(@NotNull String text, HyperlinkInfo info) {
   }
 
   @Override

@@ -5,7 +5,7 @@ import com.intellij.codeInsight.daemon.LightIntentionActionTestCase;
 import com.intellij.testFramework.LightProjectDescriptor;
 import org.jetbrains.annotations.NotNull;
 
-import static com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase.JAVA_10_ANNOTATED;
+import static com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase.JAVA_11_ANNOTATED;
 
 /**
  * @author Pavel.Dolgov
@@ -14,7 +14,7 @@ public class WrapWithUnmodifiableTest extends LightIntentionActionTestCase {
   @NotNull
   @Override
   protected LightProjectDescriptor getProjectDescriptor() {
-    return JAVA_10_ANNOTATED;
+    return JAVA_11_ANNOTATED;
   }
 
   @Override

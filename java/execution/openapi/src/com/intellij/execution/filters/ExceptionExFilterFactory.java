@@ -8,6 +8,7 @@ import com.intellij.openapi.editor.markup.EffectType;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.DumbService;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -20,6 +21,7 @@ import org.jetbrains.annotations.Nullable;
 import java.awt.*;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 
 /**
  * @author gregsh
@@ -28,14 +30,21 @@ public final class ExceptionExFilterFactory implements ExceptionFilterFactory {
   @NotNull
   @Override
   public Filter create(@NotNull GlobalSearchScope searchScope) {
-    return new MyFilter(searchScope);
+    return new MyFilter(Objects.requireNonNull(searchScope.getProject()), searchScope);
+  }
+
+  @Override
+  public Filter create(@NotNull Project project,
+                       @NotNull GlobalSearchScope searchScope) {
+    return new MyFilter(project, searchScope);
   }
 
   private static class MyFilter implements Filter, FilterMixin {
     private final ExceptionInfoCache myCache;
+    private final ExceptionLineParserFactory myFactory = ExceptionLineParserFactory.getInstance();
 
-    MyFilter(@NotNull final GlobalSearchScope scope) {
-      myCache = new ExceptionInfoCache(scope);
+    MyFilter(@NotNull Project project, @NotNull final GlobalSearchScope scope) {
+      myCache = new ExceptionInfoCache(project, scope);
     }
 
     @Override
@@ -56,7 +65,7 @@ public final class ExceptionExFilterFactory implements ExceptionFilterFactory {
       Map<String, ExceptionWorker.ParsedLine> visited = new HashMap<>();
       ExceptionWorker.ParsedLine emptyInfo = new ExceptionWorker.ParsedLine(TextRange.EMPTY_RANGE, TextRange.EMPTY_RANGE, TextRange.EMPTY_RANGE, null, -1);
 
-      final ExceptionWorker worker = new ExceptionWorker(myCache);
+      final ExceptionLineParser worker = myFactory.create(myCache);
       for (int i = 0; i < copiedFragment.getLineCount(); i++) {
         final int lineStartOffset = copiedFragment.getLineStartOffset(i);
         final int lineEndOffset = copiedFragment.getLineEndOffset(i);
@@ -85,7 +94,7 @@ public final class ExceptionExFilterFactory implements ExceptionFilterFactory {
       }
     }
 
-    private static ExceptionWorker.ParsedLine doParse(@NotNull ExceptionWorker worker, int lineEndOffset, @NotNull String lineText) {
+    private static ExceptionWorker.ParsedLine doParse(@NotNull ExceptionLineParser worker, int lineEndOffset, @NotNull String lineText) {
       Result result = worker.execute(lineText, lineEndOffset);
       if (result == null) return null;
       HyperlinkInfo hyperlinkInfo = result.getHyperlinkInfo();

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.actions;
 
 import com.intellij.openapi.Disposable;
@@ -84,15 +84,6 @@ public abstract class BigPopupUI extends BorderLayoutPanel implements Disposable
 
   protected static class SearchField extends ExtendableTextField {
     public SearchField() {
-      ExtendableTextField.Extension leftExtension = getLeftExtension();
-      ExtendableTextField.Extension rightExtension = getRightExtension();
-      if (leftExtension != null) {
-        addExtension(leftExtension);
-      }
-      if (rightExtension != null) {
-        addExtension(rightExtension);
-      }
-
       Insets insets = JBUI.CurrentTheme.BigPopup.searchFieldInsets();
       Border empty = JBUI.Borders.empty(insets.top, insets.left, insets.bottom, insets.right);
       Border topLine = JBUI.Borders.customLine(JBUI.CurrentTheme.BigPopup.searchFieldBorderColor(), 1, 0, 0, 0);
@@ -118,16 +109,6 @@ public abstract class BigPopupUI extends BorderLayoutPanel implements Disposable
       Dimension size = super.getPreferredSize();
       size.height = Integer.max(JBUIScale.scale(29), size.height);
       return size;
-    }
-
-    @Nullable
-    protected ExtendableTextField.Extension getRightExtension() {
-      return null;
-    }
-
-    @Nullable
-    protected ExtendableTextField.Extension getLeftExtension() {
-      return null;
     }
   }
 
@@ -237,12 +218,6 @@ public abstract class BigPopupUI extends BorderLayoutPanel implements Disposable
       advertiser.addAdvertisement(s, null);  
     }
     advertiser.showRandomText();
-
-    JComponent hintLabel = advertiser.getAdComponent();
-    Dimension size = hintLabel.getPreferredSize();
-    size.height = JBUIScale.scale(17);
-    hintLabel.setPreferredSize(size);
-    
     return advertiser;
   }
 

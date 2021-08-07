@@ -16,7 +16,7 @@
 package com.intellij.openapi.util;
 
 /**
- * Please use {@link java.util.function.Supplier} instead
+ * Deprecated. Please use {@link java.util.function.Supplier} instead
  * @author dsl
  */
 @FunctionalInterface

@@ -23,7 +23,7 @@ private val CLEANER = Cleaner.create()
 class MediatedProcess private constructor(
   private val handle: MediatedProcessHandle,
   command: List<String>, workingDir: File, environVars: Map<String, String>,
-  inFile: File?, outFile: File?, errFile: File?,
+  inFile: File?, outFile: File?, errFile: File?, redirectErrorStream: Boolean
 ) : Process(), SelfKiller {
 
   companion object {
@@ -41,7 +41,7 @@ class MediatedProcess private constructor(
       return try {
         MediatedProcess(handle,
                         processBuilder.command(), workingDir, processBuilder.environment(),
-                        inFile, outFile, errFile).apply {
+                        inFile, outFile, errFile, processBuilder.redirectErrorStream()).apply {
           val cleanable = CLEANER.register(this, handle::releaseAsync)
           onExit().thenRun { cleanable.clean() }
         }
@@ -55,13 +55,13 @@ class MediatedProcess private constructor(
 
   private val pid = runBlocking {
     handle.rpc { handleId ->
-      createProcess(handleId, command, workingDir, environVars, inFile, outFile, errFile)
+      createProcess(handleId, command, workingDir, environVars, inFile, outFile, errFile, redirectErrorStream)
     }
   }
 
   private val stdin: OutputStream = if (inFile == null) createOutputStream(0) else NullOutputStream
   private val stdout: InputStream = if (outFile == null) createInputStream(1) else NullInputStream
-  private val stderr: InputStream = if (errFile == null) createInputStream(2) else NullInputStream
+  private val stderr: InputStream = if (errFile == null && !redirectErrorStream) createInputStream(2) else NullInputStream
 
   private val termination: Deferred<Int> = handle.rpcScope.async {
     handle.rpc { handleId ->

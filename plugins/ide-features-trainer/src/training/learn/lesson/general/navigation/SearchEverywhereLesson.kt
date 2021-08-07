@@ -2,18 +2,25 @@
 package training.learn.lesson.general.navigation
 
 import com.intellij.codeInsight.documentation.DocumentationComponent
+import com.intellij.ide.actions.searcheverywhere.SearchEverywhereManagerImpl
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereUI
 import com.intellij.openapi.actionSystem.impl.ActionButtonWithText
 import com.intellij.openapi.editor.impl.EditorComponentImpl
 import com.intellij.openapi.fileEditor.FileEditorManager
+import com.intellij.openapi.project.Project
+import com.intellij.psi.PsiNameIdentifierOwner
 import com.intellij.psi.search.EverythingGlobalScope
 import com.intellij.psi.search.ProjectScope
 import com.intellij.ui.components.fields.ExtendableTextField
 import com.intellij.util.ui.UIUtil
 import training.dsl.*
+import training.dsl.LessonUtil.adjustPopupPosition
+import training.dsl.LessonUtil.restorePopupPosition
 import training.learn.LessonsBundle
 import training.learn.course.KLesson
 import training.learn.course.LessonType
+import training.util.toNullableString
+import java.awt.Point
 import java.awt.event.KeyEvent
 import javax.swing.JList
 
@@ -24,15 +31,29 @@ abstract class SearchEverywhereLesson : KLesson("Search everywhere", LessonsBund
 
   override val lessonType: LessonType = LessonType.PROJECT
 
+  private val requiredClassName = "QuadraticEquationsSolver"
+
+  private var backupPopupLocation: Point? = null
+
   override val lessonContent: LessonContext.() -> Unit = {
-    actionTask("SearchEverywhere") {
-      LessonsBundle.message("search.everywhere.invoke.search.everywhere", LessonUtil.actionName(it), LessonUtil.rawKeyStroke(KeyEvent.VK_SHIFT))
+    task("SearchEverywhere") {
+      triggerByUiComponentAndHighlight(highlightInside = false) { ui: ExtendableTextField ->
+        UIUtil.getParentOfType(SearchEverywhereUI::class.java, ui) != null
+      }
+      text(LessonsBundle.message("search.everywhere.invoke.search.everywhere", LessonUtil.actionName(it),
+                                 LessonUtil.rawKeyStroke(KeyEvent.VK_SHIFT)))
+      test { actions(it) }
     }
 
     task("que") {
+      before {
+        if (backupPopupLocation == null) {
+          backupPopupLocation = adjustPopupPosition(SearchEverywhereManagerImpl.LOCATION_SETTINGS_KEY)
+        }
+      }
       text(LessonsBundle.message("search.everywhere.type.prefixes", strong("quadratic"), strong("equation"), code(it)))
       stateCheck { checkWordInSearch(it) }
-      restoreAfterStateBecomeFalse { !checkInsideSearchEverywhere() }
+      restoreByUi()
       test {
         Thread.sleep(500)
         type(it)
@@ -40,13 +61,20 @@ abstract class SearchEverywhereLesson : KLesson("Search everywhere", LessonsBund
     }
 
     task {
-      text(LessonsBundle.message("search.everywhere.navigate.to.class", code("QuadraticEquationsSolver"), LessonUtil.rawEnter()))
+      triggerByListItemAndHighlight { item ->
+        if (item is PsiNameIdentifierOwner)
+          item.name == requiredClassName
+        else item.toNullableString()?.contains(requiredClassName) ?: false
+      }
+      restoreByUi()
+    }
+
+    task {
+      text(LessonsBundle.message("search.everywhere.navigate.to.class", code(requiredClassName), LessonUtil.rawEnter()))
       stateCheck {
         FileEditorManager.getInstance(project).selectedEditor?.file?.name.equals(resultFileName)
       }
-      showWarning(LessonsBundle.message("search.everywhere.popup.closed.warning.message", LessonUtil.rawKeyStroke(KeyEvent.VK_SHIFT))) {
-        !checkInsideSearchEverywhere()
-      }
+      restoreByUi()
       test {
         invokeActionViaShortcut("ENTER")
       }
@@ -107,10 +135,15 @@ abstract class SearchEverywhereLesson : KLesson("Search everywhere", LessonsBund
     epilogue()
   }
 
+  override fun onLessonEnd(project: Project, lessonPassed: Boolean) {
+    restorePopupPosition(project, SearchEverywhereManagerImpl.LOCATION_SETTINGS_KEY, backupPopupLocation)
+    backupPopupLocation = null
+  }
+
   open fun LessonContext.epilogue() = Unit
 
   private fun TaskRuntimeContext.checkWordInSearch(expected: String): Boolean =
-    (focusOwner as? ExtendableTextField)?.text.equals(expected, ignoreCase = true)
+    (focusOwner as? ExtendableTextField)?.text?.equals(expected, ignoreCase = true) == true
 
   private fun TaskRuntimeContext.checkInsideSearchEverywhere(): Boolean {
     return UIUtil.getParentOfType(SearchEverywhereUI::class.java, focusOwner) != null

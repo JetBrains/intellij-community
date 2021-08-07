@@ -8,14 +8,15 @@ import com.intellij.openapi.roots.ContentIterator
 import com.intellij.openapi.vfs.VirtualFileFilter
 import com.intellij.util.indexing.IndexableSetContributor
 import com.intellij.util.indexing.IndexingBundle
-import com.intellij.util.indexing.roots.kind.IndexableSetOrigin
 import com.intellij.util.indexing.roots.kind.IndexableSetContributorOriginImpl
+import com.intellij.util.indexing.roots.kind.IndexableSetOrigin
 
 internal class IndexableSetContributorFilesIterator(private val indexableSetContributor: IndexableSetContributor,
                                                     private val projectAware: Boolean) : IndexableFilesIterator {
-  override fun getDebugName() = getName().takeUnless { it.isNullOrEmpty() }
-                                  ?.let { "IndexableSetContributor ${if (projectAware) "(project)" else "(non-project)"} '$it'" }
-                                ?: indexableSetContributor.toString()
+  override fun getDebugName(): String {
+    val debugName = getName()?.takeUnless { it.isEmpty() } ?: indexableSetContributor.debugName
+    return "Indexable set contributor '$debugName' ${if (projectAware) "(project)" else "(non-project)"}"
+  }
 
   override fun getIndexingProgressText(): String {
     val name = getName()

@@ -9,14 +9,16 @@ import com.intellij.psi.search.scope.packageSet.AbstractPackageSet;
 import com.intellij.psi.search.scope.packageSet.NamedScope;
 import com.intellij.psi.search.scope.packageSet.NamedScopesHolder;
 import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class ScratchesNamedScope extends NamedScope {
   public static @NotNull @Nls String scratchesAndConsoles() { return IdeBundle.message("scratches.and.consoles"); }
+  public static final @NonNls String ID = "Scratches and Consoles";
 
   public ScratchesNamedScope() {
-    super("Scratches and Consoles", () -> scratchesAndConsoles(), AllIcons.Scope.Scratches, new AbstractPackageSet(scratchesAndConsoles()) {
+    super(ID, () -> scratchesAndConsoles(), AllIcons.Scope.Scratches, new AbstractPackageSet(scratchesAndConsoles()) {
       @Override
       public boolean contains(@NotNull VirtualFile file, @NotNull Project project, @Nullable NamedScopesHolder holder) {
         return ScratchesNamedScope.contains(project, file);

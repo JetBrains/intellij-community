@@ -4,7 +4,6 @@ package com.intellij.codeInsight.editorActions.wordSelection;
 
 import com.intellij.codeInsight.completion.SkipAutopopupInStrings;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.highlighter.HighlighterIterator;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.ElementManipulators;
@@ -193,8 +192,7 @@ public class InjectedFileReferenceSelectioner extends AbstractWordSelectioner {
                                                 @NotNull CharSequence text,
                                                 @NotNull TextRange range,
                                                 int indexesOffset) {
-    HighlighterIterator iterator =
-      ((EditorEx)editor).getHighlighter().createIterator(range.getStartOffset());
+    HighlighterIterator iterator = editor.getHighlighter().createIterator(range.getStartOffset());
     int rangeEnd = range.getEndOffset();
 
     BitSet locations = new BitSet(range.getLength());

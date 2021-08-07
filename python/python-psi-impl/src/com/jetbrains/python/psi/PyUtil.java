@@ -9,6 +9,7 @@ import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.lang.ASTFactory;
 import com.intellij.lang.ASTNode;
 import com.intellij.model.ModelBranch;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
@@ -16,18 +17,19 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ModuleRootManager;
-import com.intellij.openapi.roots.ProjectFileIndex;
+import com.intellij.openapi.roots.*;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.stubs.StubElement;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.*;
 import com.intellij.util.*;
+import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.PyNames;
@@ -47,9 +49,11 @@ import com.jetbrains.python.psi.resolve.QualifiedNameFinder;
 import com.jetbrains.python.psi.resolve.RatedResolveResult;
 import com.jetbrains.python.psi.stubs.PySetuptoolsNamespaceIndex;
 import com.jetbrains.python.psi.types.*;
+import com.jetbrains.python.pyi.PyiStubSuppressor;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.*;
 
+import javax.swing.*;
 import java.io.File;
 import java.util.*;
 
@@ -74,8 +78,8 @@ public final class PyUtil {
   /**
    * @see PyUtil#flattenedParensAndTuples
    */
-  protected static List<PyExpression> unfoldParentheses(PyExpression[] targets, List<PyExpression> receiver,
-                                                        boolean unfoldListLiterals, boolean unfoldStarExpressions) {
+  private static List<PyExpression> unfoldParentheses(PyExpression[] targets, List<PyExpression> receiver,
+                                                      boolean unfoldListLiterals, boolean unfoldStarExpressions) {
     // NOTE: this proliferation of instanceofs is not very beautiful. Maybe rewrite using a visitor.
     for (PyExpression exp : targets) {
       if (exp instanceof PyParenthesizedExpression) {
@@ -680,7 +684,7 @@ public final class PyUtil {
    * from the write action, because in this case {@code function} will be executed right in the current thread (presumably EDT)
    * without any progress whatsoever to avoid possible deadlock.
    *
-   * @see ApplicationImpl#runProcessWithProgressSynchronously(Runnable, String, boolean, Project, JComponent, String)
+   * @see com.intellij.openapi.application.impl.ApplicationImpl#runProcessWithProgressSynchronously(Runnable, String, boolean, boolean, Project, JComponent, String)
    */
   public static void runWithProgress(@Nullable Project project, @Nls(capitalization = Nls.Capitalization.Title) @NotNull String title,
                                      boolean modal, boolean canBeCancelled, @NotNull final Consumer<? super ProgressIndicator> function) {
@@ -900,7 +904,7 @@ public final class PyUtil {
     if (target instanceof PsiDirectory) {
       final PsiDirectory dir = (PsiDirectory)target;
       final PsiFile initStub = dir.findFile(PyNames.INIT_DOT_PYI);
-      if (initStub != null) {
+      if (initStub != null && !PyiStubSuppressor.isIgnoredStub(initStub)) {
         return initStub;
       }
       final PsiFile initFile = dir.findFile(PyNames.INIT_DOT_PY);
@@ -1098,6 +1102,59 @@ public final class PyUtil {
       }
     }
     return selfName;
+  }
+
+  @RequiresEdt
+  public static void addSourceRoots(@NotNull Module module, @NotNull Collection<VirtualFile> roots) {
+    if (roots.isEmpty()) {
+      return;
+    }
+
+    ApplicationManager.getApplication().runWriteAction(
+      () -> {
+        final ModifiableRootModel model = ModuleRootManager.getInstance(module).getModifiableModel();
+        for (VirtualFile root : roots) {
+          boolean added = false;
+          for (ContentEntry entry : model.getContentEntries()) {
+            final VirtualFile file = entry.getFile();
+            if (file != null && VfsUtilCore.isAncestor(file, root, true)) {
+              entry.addSourceFolder(root, false);
+              added = true;
+            }
+          }
+
+          if (!added) {
+            model.addContentEntry(root).addSourceFolder(root, false);
+          }
+        }
+        model.commit();
+      }
+    );
+  }
+
+  @RequiresEdt
+  public static void removeSourceRoots(@NotNull Module module, @NotNull Collection<VirtualFile> roots) {
+    if (roots.isEmpty()) {
+      return;
+    }
+
+    ApplicationManager.getApplication().runWriteAction(
+      () -> {
+        final ModifiableRootModel model = ModuleRootManager.getInstance(module).getModifiableModel();
+        for (ContentEntry entry : model.getContentEntries()) {
+          for (SourceFolder folder : entry.getSourceFolders()) {
+            if (roots.contains(folder.getFile())) {
+              entry.removeSourceFolder(folder);
+            }
+          }
+
+          if (roots.contains(entry.getFile()) && entry.getSourceFolders().length == 0) {
+            model.removeContentEntry(entry);
+          }
+        }
+        model.commit();
+      }
+    );
   }
 
   /**
@@ -1306,7 +1363,7 @@ public final class PyUtil {
   }
 
   @Nullable
-  public static PsiElement findPrevAtOffset(PsiFile psiFile, int caretOffset, Class... toSkip) {
+  public static PsiElement findPrevAtOffset(PsiFile psiFile, int caretOffset, @NotNull Class<? extends PsiElement> @NotNull ... toSkip) {
     PsiElement element;
     if (caretOffset < 0) {
       return null;
@@ -1344,7 +1401,7 @@ public final class PyUtil {
   }
 
   @Nullable
-  public static PsiElement findNextAtOffset(@NotNull final PsiFile psiFile, int caretOffset, Class... toSkip) {
+  public static PsiElement findNextAtOffset(@NotNull final PsiFile psiFile, int caretOffset, @NotNull Class<? extends PsiElement> @NotNull ... toSkip) {
     PsiElement element = psiFile.findElementAt(caretOffset);
     if (element == null) {
       return null;
@@ -1511,7 +1568,7 @@ public final class PyUtil {
                                              @NotNull String memberName,
                                              @Nullable PyExpression location,
                                              @NotNull TypeEvalContext context) {
-    final PyResolveContext resolveContext = PyResolveContext.defaultContext().withTypeEvalContext(context);
+    final PyResolveContext resolveContext = PyResolveContext.defaultContext(context);
     final List<? extends RatedResolveResult> resolveResults = type.resolveMember(memberName, location, AccessDirection.READ,
                                                                                  resolveContext);
 

@@ -12,7 +12,7 @@ public class SerializableRecordCanBeClassInspectionTest extends LightJavaInspect
 
   public void testSerializableVersionUIDWithoutSerial() {
     doTest("import java.io.Serializable;\n" +
-           "record <warning descr=\"Record can be converted to a class\"><caret>R</warning>() implements Serializable {\n" +
+           "record <warning descr=\"Record can be converted to class\"><caret>R</warning>() implements Serializable {\n" +
            "  @MyAnn\n" +
            "  private static final long serialVersionUID = 1;\n" +
            "  static long number = 10;\n" +
@@ -50,7 +50,7 @@ public class SerializableRecordCanBeClassInspectionTest extends LightJavaInspect
   public void testSerializableVersionUIDWithSerial() {
     doTest("import java.io.Serial;\n" +
            "import java.io.Serializable;\n" +
-           "record <warning descr=\"Record can be converted to a class\"><caret>R</warning>() implements Serializable {\n" +
+           "record <warning descr=\"Record can be converted to class\"><caret>R</warning>() implements Serializable {\n" +
            "  @Serial" +
            "  @MyAnn\n" +
            "  private static final long serialVersionUID = 1;\n" +
@@ -88,7 +88,7 @@ public class SerializableRecordCanBeClassInspectionTest extends LightJavaInspect
 
   public void testWithoutSerialVersionUID() {
     doTest("import java.io.Serializable;\n" +
-           "record <warning descr=\"Record can be converted to a class\"><caret>R</warning>() implements Serializable {\n" +
+           "record <warning descr=\"Record can be converted to class\"><caret>R</warning>() implements Serializable {\n" +
            "  static long number = 10;\n" +
            "}");
     checkQuickFix("Convert record to class", "import java.io.Serial;\n" +
@@ -122,7 +122,7 @@ public class SerializableRecordCanBeClassInspectionTest extends LightJavaInspect
 
   public void testSerialVersionUIDWithWrongModifier() {
     doTest("import java.io.Serializable;\n" +
-           "record <warning descr=\"Record can be converted to a class\"><caret>R</warning>() implements Serializable {\n" +
+           "record <warning descr=\"Record can be converted to class\"><caret>R</warning>() implements Serializable {\n" +
            "  static long number = 10;\n" +
            "  @MyAnn\n" +
            "  private static long serialVersionUID = 10;\n" + // not final

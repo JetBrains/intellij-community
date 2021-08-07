@@ -21,10 +21,12 @@ public final class AnnotatedPackagesSearch extends ExtensibleQueryFactory<PsiPac
       myScope = scope;
     }
 
+    @NotNull
     public PsiClass getAnnotationClass() {
       return myAnnotationClass;
     }
 
+    @NotNull
     public SearchScope getScope() {
       return myScope;
     }
@@ -32,10 +34,12 @@ public final class AnnotatedPackagesSearch extends ExtensibleQueryFactory<PsiPac
 
   private AnnotatedPackagesSearch() {}
 
+  @NotNull
   public static Query<PsiPackage> search(@NotNull PsiClass annotationClass, @NotNull SearchScope scope) {
     return INSTANCE.createQuery(new Parameters(annotationClass, scope));
   }
 
+  @NotNull
   public static Query<PsiPackage> search(@NotNull PsiClass annotationClass) {
     return search(annotationClass, GlobalSearchScope.allScope(PsiUtilCore.getProjectInReadAction(annotationClass)));
   }

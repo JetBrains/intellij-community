@@ -1,7 +1,6 @@
 package de.plushnikov.intellij.plugin.processor.clazz;
 
 import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTypesUtil;
@@ -13,6 +12,7 @@ import de.plushnikov.intellij.plugin.processor.LombokPsiElementUsage;
 import de.plushnikov.intellij.plugin.processor.handler.EqualsAndHashCodeToStringHandler;
 import de.plushnikov.intellij.plugin.processor.handler.EqualsAndHashCodeToStringHandler.MemberInfo;
 import de.plushnikov.intellij.plugin.psi.LombokLightMethodBuilder;
+import de.plushnikov.intellij.plugin.psi.LombokLightParameter;
 import de.plushnikov.intellij.plugin.quickfix.PsiQuickFixFactory;
 import de.plushnikov.intellij.plugin.util.PsiAnnotationSearchUtil;
 import de.plushnikov.intellij.plugin.util.PsiAnnotationUtil;
@@ -32,8 +32,7 @@ import java.util.List;
  *
  * @author Plushnikov Michail
  */
-public class EqualsAndHashCodeProcessor extends AbstractClassProcessor {
-
+public final class EqualsAndHashCodeProcessor extends AbstractClassProcessor {
   private static final String EQUALS_METHOD_NAME = "equals";
   private static final String HASH_CODE_METHOD_NAME = "hashCode";
   private static final String CAN_EQUAL_METHOD_NAME = "canEqual";
@@ -42,12 +41,12 @@ public class EqualsAndHashCodeProcessor extends AbstractClassProcessor {
   private static final String EQUALSANDHASHCODE_INCLUDE = LombokClassNames.EQUALS_AND_HASHCODE_INCLUDE;
   private static final String EQUALSANDHASHCODE_EXCLUDE = LombokClassNames.EQUALS_AND_HASHCODE_EXCLUDE;
 
-  public EqualsAndHashCodeProcessor() {
+  EqualsAndHashCodeProcessor() {
     super(PsiMethod.class, LombokClassNames.EQUALS_AND_HASHCODE);
   }
 
   private EqualsAndHashCodeToStringHandler getEqualsAndHashCodeToStringHandler() {
-    return ApplicationManager.getApplication().getService(EqualsAndHashCodeToStringHandler.class);
+    return new EqualsAndHashCodeToStringHandler();
   }
 
   @Override
@@ -150,7 +149,7 @@ public class EqualsAndHashCodeProcessor extends AbstractClassProcessor {
     target.addAll(createEqualAndHashCode(psiClass, psiAnnotation));
   }
 
-  protected Collection<PsiMethod> createEqualAndHashCode(@NotNull PsiClass psiClass, @NotNull PsiAnnotation psiAnnotation) {
+  Collection<PsiMethod> createEqualAndHashCode(@NotNull PsiClass psiClass, @NotNull PsiAnnotation psiAnnotation) {
     if (hasOneOfMethodsDefined(psiClass)) {
       return Collections.emptyList();
     }
@@ -201,7 +200,7 @@ public class EqualsAndHashCodeProcessor extends AbstractClassProcessor {
 
     copyOnXAnnotationsForFirstParam(psiAnnotation, methodBuilder);
 
-    methodBuilder.withBody(PsiMethodUtil.createCodeBlockFromText(blockText, methodBuilder));
+    methodBuilder.withBodyText(blockText);
     return methodBuilder;
   }
 
@@ -212,13 +211,12 @@ public class EqualsAndHashCodeProcessor extends AbstractClassProcessor {
     final PsiManager psiManager = psiClass.getManager();
 
     final String blockText = createHashcodeBlockString(psiClass, psiAnnotation, memberInfos);
-    final LombokLightMethodBuilder methodBuilder = new LombokLightMethodBuilder(psiManager, HASH_CODE_METHOD_NAME)
+    return new LombokLightMethodBuilder(psiManager, HASH_CODE_METHOD_NAME)
       .withModifier(PsiModifier.PUBLIC)
       .withMethodReturnType(PsiType.INT)
       .withContainingClass(psiClass)
-      .withNavigationElement(psiAnnotation);
-    methodBuilder.withBody(PsiMethodUtil.createCodeBlockFromText(blockText, methodBuilder));
-    return methodBuilder;
+      .withNavigationElement(psiAnnotation)
+      .withBodyText(blockText);
   }
 
   @NotNull
@@ -235,14 +233,14 @@ public class EqualsAndHashCodeProcessor extends AbstractClassProcessor {
 
     copyOnXAnnotationsForFirstParam(psiAnnotation, methodBuilder);
 
-    methodBuilder.withBody(PsiMethodUtil.createCodeBlockFromText(blockText, methodBuilder));
+    methodBuilder.withBodyText(blockText);
     return methodBuilder;
   }
 
   private void copyOnXAnnotationsForFirstParam(@NotNull PsiAnnotation psiAnnotation, LombokLightMethodBuilder methodBuilder) {
-    PsiParameter parameter = methodBuilder.getParameterList().getParameter(0);
-    PsiModifierList methodParameterModifierList = parameter.getModifierList();
-    if (null != methodParameterModifierList) {
+    LombokLightParameter parameter = methodBuilder.getParameterList().getParameter(0);
+    if (null != parameter) {
+      PsiModifierList methodParameterModifierList = parameter.getModifierList();
       copyOnXAnnotations(psiAnnotation, methodParameterModifierList, "onParam");
     }
   }

@@ -1,0 +1,21 @@
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+
+package org.jetbrains.kotlin.idea.formatter.lineIndent
+
+interface KotlinIndentationAdjuster {
+    // ALIGN_MULTILINE_METHOD_BRACKETS
+    val alignWhenMultilineFunctionParentheses: Boolean
+        get() = false
+
+    // ALIGN_MULTILINE_BINARY_OPERATION
+    val alignWhenMultilineBinaryExpression: Boolean
+        get() = false
+
+    // CONTINUATION_INDENT_IN_ELVIS
+    val continuationIndentInElvis: Boolean
+        get() = false
+
+    // CONTINUATION_INDENT_FOR_EXPRESSION_BODIES
+    val continuationIndentForExpressionBodies: Boolean
+        get() = false
+}

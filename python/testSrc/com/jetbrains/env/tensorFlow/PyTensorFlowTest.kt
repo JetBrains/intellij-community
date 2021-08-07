@@ -119,7 +119,7 @@ class PyTensorFlowTest : PyEnvTestCase() {
       return ApplicationManager.getApplication().runReadAction(
         Computable {
           val reference = myFixture.file.findElementAt(myFixture.caretOffset - 1)!!.parent as PyReferenceExpression
-          val resolveContext = PyResolveContext.defaultContext().withTypeEvalContext(TypeEvalContext.codeAnalysis(project, file))
+          val resolveContext = PyResolveContext.defaultContext(TypeEvalContext.codeAnalysis(project, file))
           PyUtil.turnDirIntoInit(reference.followAssignmentsChain(resolveContext).element)!!
         }
       )

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.java15api;
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
@@ -10,7 +10,7 @@ import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.java.JavaBundle;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.module.EffectiveLanguageLevelUtil;
+import com.intellij.openapi.module.LanguageLevelUtil;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
@@ -48,10 +48,23 @@ import java.util.List;
 import java.util.*;
 
 /**
+ * In order to add the support for new API in the most recent JDK execute:
+ * <ol>
+ *   <li>Generate apiXXX.txt by uncommenting the body of {@link com.intellij.java.codeInspection.JavaAPIUsagesInspectionTest#testCollectSinceApiUsages} and run it;</li>
+ *   <li>Add two new entries to the {@link Java15APIUsageInspection#ourHighestKnownLanguage}:
+ *    <ul>
+ *      <li>The First entry: The key is the most recent language level, the value is the second to the most recent language level.</li>
+ *      <li>The Second entry: The key is the most recent preview language level, the value is the second to the most recent language level.</li>
+ *   </ul>
+ *   </li>
+ *   <li>Reassign the value of {@link Java15APIUsageInspection#ourHighestKnownLanguage} to the most recent language level</li>
+ * </ol>
+ * To
  * @author max
- * To generate apiXXX.txt uncomment and run {@link com.intellij.java.codeInspection.JavaAPIUsagesInspectionTest#testCollectSinceApiUsages}
  */
 public class Java15APIUsageInspection extends AbstractBaseJavaLocalInspectionTool {
+  private static final Logger LOGGER = Logger.getInstance(Java15APIUsageInspection.class.getName());
+
   public static final String SHORT_NAME = "Since15";
 
   private static final String EFFECTIVE_LL = "effectiveLL";
@@ -60,7 +73,7 @@ public class Java15APIUsageInspection extends AbstractBaseJavaLocalInspectionToo
   private static final Set<String> ourIgnored16ClassesAPI = loadForbiddenApi("ignore16List.txt");
   private static final Map<LanguageLevel, String> ourPresentableShortMessage = new EnumMap<>(LanguageLevel.class);
 
-  private static final LanguageLevel ourHighestKnownLanguage = LanguageLevel.JDK_16;
+  private static final LanguageLevel ourHighestKnownLanguage = LanguageLevel.JDK_17;
 
   static {
     ourPresentableShortMessage.put(LanguageLevel.JDK_1_3, "1.4");
@@ -77,6 +90,8 @@ public class Java15APIUsageInspection extends AbstractBaseJavaLocalInspectionToo
     ourPresentableShortMessage.put(LanguageLevel.JDK_14, "15");
     ourPresentableShortMessage.put(LanguageLevel.JDK_15, "16");
     ourPresentableShortMessage.put(LanguageLevel.JDK_15_PREVIEW, "16");
+    ourPresentableShortMessage.put(LanguageLevel.JDK_16, "17");
+    ourPresentableShortMessage.put(LanguageLevel.JDK_16_PREVIEW, "17");
   }
 
   private static final Set<String> ourGenerifiedClasses = new HashSet<>();
@@ -395,16 +410,44 @@ public class Java15APIUsageInspection extends AbstractBaseJavaLocalInspectionToo
 
     private LanguageLevel getEffectiveLanguageLevel(Module module) {
       if (myEffectiveLanguageLevel != null) return myEffectiveLanguageLevel;
-      return EffectiveLanguageLevelUtil.getEffectiveLanguageLevel(module);
+      return LanguageLevelUtil.getEffectiveLanguageLevel(module);
     }
 
     private void registerError(PsiElement reference, LanguageLevel api) {
-      if (reference != null && isInProject(reference)) {
-        myHolder.registerProblem(reference,
-                                 JavaBundle.message("inspection.1.5.problem.descriptor", getShortName(api)),
-                                 myOnTheFly ? new LocalQuickFix[] {(LocalQuickFix)QuickFixFactory.getInstance().createIncreaseLanguageLevelFix(LanguageLevel.values()[api.ordinal() + 1])} : null);
+      if (reference == null || !isInProject(reference)) return;
+
+      final LanguageLevel targetLanguageLevel = getNextLanguageLevel(api);
+
+      if (targetLanguageLevel == null) {
+        LOGGER.error("Unable to get the next language level for " + api);
+        return;
+      }
+
+      final String message = JavaBundle.message("inspection.1.5.problem.descriptor", getShortName(api));
+
+      final LocalQuickFix fix;
+      if (myOnTheFly) {
+        fix = (LocalQuickFix)QuickFixFactory.getInstance().createIncreaseLanguageLevelFix(targetLanguageLevel);
+      }
+      else {
+        fix = null;
+      }
+
+      myHolder.registerProblem(reference, message, fix);
+    }
+
+  }
+
+  private static @Nullable LanguageLevel getNextLanguageLevel(@NotNull LanguageLevel api) {
+    final LanguageLevel[] levels = LanguageLevel.values();
+    final int currentLevelId = api.ordinal();
+    for (int i = currentLevelId + 1; i < levels.length; i++) {
+      final LanguageLevel level = levels[i];
+      if (!level.isPreview()) {
+        return level;
       }
     }
+    return null;
   }
 
   private static String getJdkName(LanguageLevel languageLevel) {

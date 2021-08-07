@@ -12,7 +12,7 @@ import com.intellij.ui.components.JBLabel
 import com.intellij.ui.icons.RowIcon
 import com.intellij.ui.layout.*
 import com.intellij.util.IconUtil
-import icons.CompletionMlRankingIcons
+import com.intellij.completion.ml.CompletionMlRankingIcons
 import java.awt.Rectangle
 import javax.swing.Icon
 

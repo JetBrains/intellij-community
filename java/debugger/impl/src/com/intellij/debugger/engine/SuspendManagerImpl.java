@@ -1,12 +1,11 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.engine;
 
+import com.intellij.debugger.impl.DebuggerUtilsAsync;
 import com.intellij.debugger.impl.PrioritizedTask;
-import com.intellij.debugger.jdi.JvmtiError;
 import com.intellij.debugger.jdi.ThreadReferenceProxyImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.registry.Registry;
-import com.sun.jdi.InternalException;
 import com.sun.jdi.ObjectCollectedException;
 import com.sun.jdi.event.EventSet;
 import com.sun.jdi.request.EventRequest;
@@ -56,25 +55,7 @@ public class SuspendManagerImpl implements SuspendManager {
         myDebugProcess.logThreads();
         switch (getSuspendPolicy()) {
           case EventRequest.SUSPEND_ALL:
-            int resumeAttempts = 5;
-            while (--resumeAttempts > 0) {
-              try {
-                myDebugProcess.getVirtualMachineProxy().resume();
-                break;
-              }
-              catch (InternalException e) {
-                //InternalException 13 means that there are running threads that we are trying to resume
-                //On MacOS it happened that native thread didn't stop while some java thread reached breakpoint
-                if (/*Patches.MAC_RESUME_VM_HACK && */e.errorCode() == JvmtiError.THREAD_NOT_SUSPENDED) {
-                  //Its funny, but second resume solves the problem
-                }
-                else {
-                  LOG.error(e);
-                  break;
-                }
-              }
-            }
-
+            myDebugProcess.getVirtualMachineProxy().resume();
             LOG.debug("VM resumed ");
             break;
           case EventRequest.SUSPEND_EVENT_THREAD:
@@ -108,43 +89,7 @@ public class SuspendManagerImpl implements SuspendManager {
           LOG.debug("Start resuming eventSet " + set.toString() + " suspendPolicy = " + set.suspendPolicy() + ",size = " + set.size());
         }
         myDebugProcess.logThreads();
-        //final ThreadReferenceProxyImpl thread = getThread();
-        //
-        //if (thread != null) { // check that thread is suspended at the moment
-        //  try {
-        //    if (!thread.isSuspended()) {
-        //      final int status = thread.status();
-        //      if ((status != ThreadReference.THREAD_STATUS_ZOMBIE) && (status != ThreadReference.THREAD_STATUS_NOT_STARTED) && (status != ThreadReference.THREAD_STATUS_UNKNOWN)) {
-        //        LOG.error("Context thread must be suspended");
-        //      }
-        //    }
-        //  }
-        //  catch (ObjectCollectedException ignored) {}
-        //}
-
-        int attempts = 5;
-        while (--attempts > 0) {
-          try {
-            set.resume();
-            break;
-          }
-          catch (ObjectCollectedException e) {
-            // according to error reports set.resume() may throw this if one of the threads has been collected
-            LOG.info(e);
-          }
-          catch (InternalException e) {
-            //InternalException 13 means that there are running threads that we are trying to resume
-            //On MacOS it happened that native thread didn't stop while some java thread reached breakpoint
-            if (/*Patches.MAC_RESUME_VM_HACK && */e.errorCode() == JvmtiError.THREAD_NOT_SUSPENDED &&
-                                                  set.suspendPolicy() == EventRequest.SUSPEND_ALL) {
-              //Its funny, but second resume solves the problem
-            }
-            else {
-              LOG.error(e);
-              break;
-            }
-          }
-        }
+        DebuggerUtilsAsync.resume(set);
         LOG.debug("Set resumed ");
         myDebugProcess.logThreads();
       }

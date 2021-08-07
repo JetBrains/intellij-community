@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.plugins.groovy.lang.groovydoc.psi.impl;
 
@@ -9,7 +9,6 @@ import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.groovy.lang.groovydoc.lexer.GroovyDocTokenTypes;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocParameterReference;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocTagValueToken;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
@@ -48,7 +47,7 @@ public class GrDocParameterReferenceImpl extends GroovyDocPsiElementImpl impleme
     ArrayList<GroovyResolveResult> candidates = new ArrayList<>();
 
     final PsiElement owner = GrDocCommentUtil.findDocOwner(this);
-    if (owner instanceof GrMethod) {
+    if (owner instanceof GrMethod && !name.startsWith("<")) {
       final GrMethod method = (GrMethod)owner;
       final GrParameter[] parameters = method.getParameters();
 
@@ -59,21 +58,20 @@ public class GrDocParameterReferenceImpl extends GroovyDocPsiElementImpl impleme
       }
       return candidates.toArray(ResolveResult.EMPTY_ARRAY);
     }
-    else {
-      final PsiElement firstChild = getFirstChild();
-      if (owner instanceof GrTypeParameterListOwner && firstChild != null) {
-        final ASTNode node = firstChild.getNode();
-        if (node != null && GroovyDocTokenTypes.mGDOC_TAG_VALUE_LT.equals(node.getElementType())) {
-          final PsiTypeParameter[] typeParameters = ((PsiTypeParameterListOwner)owner).getTypeParameters();
-          for (PsiTypeParameter typeParameter : typeParameters) {
-            if (name.equals(typeParameter.getName())) {
-              candidates.add(new ElementResolveResult<>(typeParameter));
-            }
+    String typeParameterName = name.length() >= 3 && name.startsWith("<") && name.endsWith(">") ? name.substring(1, name.length() - 1) : name;
+    final PsiElement firstChild = getFirstChild();
+    if (owner instanceof GrTypeParameterListOwner && firstChild != null) {
+      final ASTNode node = firstChild.getNode();
+      if (node != null) {
+        final PsiTypeParameter[] typeParameters = ((PsiTypeParameterListOwner)owner).getTypeParameters();
+        for (PsiTypeParameter typeParameter : typeParameters) {
+          if (typeParameterName.equals(typeParameter.getName())) {
+            candidates.add(new ElementResolveResult<>(typeParameter));
           }
         }
       }
     }
-    return ResolveResult.EMPTY_ARRAY;
+    return candidates.toArray(ResolveResult.EMPTY_ARRAY);
   }
 
   @NotNull
@@ -134,7 +132,7 @@ public class GrDocParameterReferenceImpl extends GroovyDocPsiElementImpl impleme
     final PsiElement firstChild = getFirstChild();
     if (owner instanceof GrTypeParameterListOwner && firstChild != null) {
       final ASTNode node = firstChild.getNode();
-      if (node != null && GroovyDocTokenTypes.mGDOC_TAG_VALUE_LT.equals(node.getElementType())) {
+      if (node != null && node.getText().startsWith("<")) {
         return ((PsiTypeParameterListOwner)owner).getTypeParameters();
       }
     }

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.console;
 
 import com.intellij.execution.ExecutionException;
@@ -15,7 +15,6 @@ import com.intellij.execution.executors.DefaultRunExecutor;
 import com.intellij.execution.process.*;
 import com.intellij.execution.runners.ConsoleTitleGen;
 import com.intellij.execution.target.*;
-import com.intellij.execution.target.TargetEnvironmentAwareRunProfileState.TargetProgressIndicator;
 import com.intellij.execution.target.value.TargetEnvironmentFunctions;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.execution.ui.RunContentManager;
@@ -47,21 +46,20 @@ import com.intellij.openapi.project.ProjectUtil;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkAdditionalData;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.StreamUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.psi.PsiFile;
 import com.intellij.testFramework.LightVirtualFile;
-import com.intellij.ui.GuiUtils;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.SideBorder;
 import com.intellij.ui.content.Content;
-import com.intellij.util.ArrayUtilRt;
-import com.intellij.util.Consumer;
-import com.intellij.util.PathMappingSettings;
-import com.intellij.util.TimeoutUtil;
+import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.execution.ParametersListUtil;
 import com.intellij.util.net.NetUtils;
@@ -498,16 +496,15 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
       throw new ExecutionException(e);
     }
 
-    TargetEnvironmentFactory targetEnvironmentFactory = createTargetEnvironmentFactory(sdk);
-    TargetEnvironmentRequest targetEnvironmentRequest = targetEnvironmentFactory.createRequest();
+    TargetEnvironmentRequest targetEnvironmentRequest = createTargetEnvironmentRequest(sdk);
     TargetEnvironment.LocalPortBinding ideServerPortBinding = new TargetEnvironment.LocalPortBinding(ideServerPort, null);
     targetEnvironmentRequest.getLocalPortBindings().add(ideServerPortBinding);
     Function<TargetEnvironment, HostPort> ideServerHostPortOnTarget = targetEnvironment -> {
-      HostPort targetHostPort = targetEnvironment.getLocalPortBindings().get(ideServerPortBinding);
-      if (targetHostPort == null) {
+      ResolvedPortBinding resolvedPortBinding = targetEnvironment.getLocalPortBindings().get(ideServerPortBinding);
+      if (resolvedPortBinding == null) {
         throw new IllegalStateException(MessageFormat.format("Local port binding \"{0}\" must be registered", ideServerPortBinding));
       }
-      return targetHostPort;
+      return resolvedPortBinding.getTargetEndpoint();
     };
 
     VirtualFile projectDir = ProjectUtil.guessProjectDir(myProject);
@@ -538,8 +535,7 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
     }
 
     // TODO [Targets API] We should pass the proper progress indicator here
-    TargetEnvironment targetEnvironment =
-      targetEnvironmentFactory.prepareRemoteEnvironment(targetEnvironmentRequest, TargetProgressIndicator.EMPTY);
+    TargetEnvironment targetEnvironment = targetEnvironmentRequest.prepareEnvironment(TargetProgressIndicator.EMPTY);
 
     // TODO [Targets API] [regression] We should create PTY process when `PtyCommandLine.isEnabled()`
     //  (see the legacy method `doCreateConsoleCmdLine()`)
@@ -596,12 +592,12 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
    * @see PythonInterpreterTargetEnvironmentFactory
    */
   @NotNull
-  private static TargetEnvironmentFactory createTargetEnvironmentFactory(@NotNull Sdk sdk) {
-    TargetEnvironmentFactory environmentFactory = PythonInterpreterTargetEnvironmentFactory.findTargetEnvironmentFactory(sdk);
-    if (environmentFactory == null) {
+  private static TargetEnvironmentRequest createTargetEnvironmentRequest(@NotNull Sdk sdk) {
+    TargetEnvironmentRequest environmentRequest = PythonInterpreterTargetEnvironmentFactory.findTargetEnvironmentRequest(sdk);
+    if (environmentRequest == null) {
       throw new IllegalStateException("Cannot find execution environment for SDK " + sdk);
     }
-    return environmentFactory;
+    return environmentRequest;
   }
 
   @Contract("null -> null")
@@ -809,12 +805,6 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
         consoleView.setConsoleCommunication(myPydevConsoleCommunication);
         consoleView.setSdk(mySdk);
         consoleView.setExecutionHandler(myConsoleExecuteActionHandler);
-        myProcessHandler.addProcessListener(new ProcessAdapter() {
-          @Override
-          public void onTextAvailable(@NotNull ProcessEvent event, @NotNull Key outputType) {
-            consoleView.print(event.getText(), outputType);
-          }
-        });
 
         enableConsoleExecuteAction();
 
@@ -1027,7 +1017,7 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
         }
 
         if (rerun) {
-          GuiUtils.invokeLaterIfNeeded(() -> myRerunAction.consume(displayName), ModalityState.defaultModalityState());
+          ModalityUiUtil.invokeLaterIfNeeded(ModalityState.defaultModalityState(), () -> myRerunAction.consume(displayName));
         }
       }
     }.queue();

@@ -1,6 +1,7 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide;
 
+import com.intellij.core.CoreBundle;
 import com.intellij.ide.util.PsiNavigationSupport;
 import com.intellij.java.JavaBundle;
 import com.intellij.lang.java.JavaLanguage;
@@ -12,6 +13,7 @@ import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.MessageDialogBuilder;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.java.LanguageLevel;
@@ -24,29 +26,37 @@ import org.jetbrains.annotations.Nullable;
 
 import java.awt.datatransfer.DataFlavor;
 
-/**
- * @author yole
- */
+
 public class JavaFilePasteProvider implements PasteProvider {
   @Override
   public void performPaste(@NotNull final DataContext dataContext) {
     final Project project = CommonDataKeys.PROJECT.getData(dataContext);
     final IdeView ideView = LangDataKeys.IDE_VIEW.getData(dataContext);
     if (project == null || ideView == null) return;
-    String fileText = CopyPasteManager.getInstance().getContents(DataFlavor.stringFlavor);
+    String copied = CopyPasteManager.getInstance().getContents(DataFlavor.stringFlavor);
+    if (copied == null) return;
+    String fileText = StringUtil.convertLineSeparators(copied);
     String className = detectClassName(project, fileText);
     if (className == null) return;
-    assert fileText != null;
     final PsiDirectory targetDir = ideView.getOrChooseDirectory();
     if (targetDir == null) return;
+    String fileName = className + ".java";
+    PsiFile existingFile = targetDir.findFile(fileName);
+    if (existingFile != null && 
+        !MessageDialogBuilder.yesNo(IdeBundle.message("title.file.already.exists"),
+                                    CoreBundle.message("prompt.overwrite.project.file", fileName, "")).ask(project)) {
+      return;
+    }
     WriteCommandAction.writeCommandAction(project).withName(
       JavaBundle.message("paste.class.command.name", className)).run(() -> {
-      PsiFile file;
-      try {
-        file = targetDir.createFile(className + ".java");
-      }
-      catch (IncorrectOperationException e) {
-        return;
+      PsiFile file = existingFile;
+      if (file == null) {
+        try {
+          file = targetDir.createFile(fileName);
+        }
+        catch (IncorrectOperationException e) {
+          return;
+        }
       }
       final Document document = PsiDocumentManager.getInstance(project).getDocument(file);
       if (document != null) {
@@ -100,11 +110,12 @@ public class JavaFilePasteProvider implements PasteProvider {
     if (project == null || ideView == null || ideView.getDirectories().length == 0) {
       return false;
     }
-    return getPastedClasses(project, CopyPasteManager.getInstance().getContents(DataFlavor.stringFlavor)).length >= 1;
+    String pasteText = CopyPasteManager.getInstance().getContents(DataFlavor.stringFlavor);
+    return pasteText != null && getPastedClasses(project, pasteText).length >= 1;
   }
 
   @Nullable
-  static String detectClassName(Project project, String fileText) {
+  static String detectClassName(@NotNull Project project, @NotNull String fileText) {
     final PsiClass[] classes = getPastedClasses(project, fileText);
     if (classes.length < 1) return null;
     for (PsiClass aClass : classes) {
@@ -115,8 +126,7 @@ public class JavaFilePasteProvider implements PasteProvider {
     return classes[0].getName();
   }
 
-  private static PsiClass @NotNull [] getPastedClasses(@NotNull Project project, @Nullable String pasteText) {
-    if (pasteText == null) return PsiClass.EMPTY_ARRAY;
+  private static PsiClass @NotNull [] getPastedClasses(@NotNull Project project, @NotNull String pasteText) {
     PsiFile psiFile = PsiFileFactory.getInstance(project).createFileFromText(
       "A.java", JavaLanguage.INSTANCE, StringUtil.convertLineSeparators(pasteText), false, false);
     PsiUtil.FILE_LANGUAGE_LEVEL_KEY.set(psiFile, LanguageLevel.JDK_15_PREVIEW); // to parse records

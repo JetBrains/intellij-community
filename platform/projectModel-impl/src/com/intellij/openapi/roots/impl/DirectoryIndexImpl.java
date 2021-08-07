@@ -9,10 +9,7 @@ import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ModuleRootEvent;
-import com.intellij.openapi.roots.ModuleRootListener;
-import com.intellij.openapi.roots.OrderEntry;
-import com.intellij.openapi.roots.SourceFolder;
+import com.intellij.openapi.roots.*;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.LowMemoryWatcher;
 import com.intellij.openapi.util.Pair;
@@ -82,7 +79,7 @@ public final class DirectoryIndexImpl extends DirectoryIndex implements Disposab
 
     myConnection.subscribe(VirtualFileManager.VFS_CHANGES, new BulkFileListener() {
       @Override
-      public void after(@NotNull List<? extends VFileEvent> events) {
+      public void after(@NotNull List<? extends @NotNull VFileEvent> events) {
         RootIndex rootIndex = myRootIndex;
         if (rootIndex != null && shouldResetOnEvents(events)) {
           rootIndex.myPackageDirectoryCache.clear();
@@ -94,6 +91,10 @@ public final class DirectoryIndexImpl extends DirectoryIndex implements Disposab
           }
         }
       }
+    });
+
+    myConnection.subscribe(AdditionalLibraryRootsListener.TOPIC, (presentableLibraryName, oldRoots, newRoots, libraryNameForDebug) -> {
+      myRootIndex = null;
     });
   }
 

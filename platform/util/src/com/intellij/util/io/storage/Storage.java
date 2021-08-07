@@ -13,7 +13,7 @@ public class Storage extends AbstractStorage {
   }
 
   public Storage(@NotNull Path path, CapacityAllocationPolicy capacityAllocationPolicy) throws IOException {
-    super(path, capacityAllocationPolicy, true);
+    super(path, capacityAllocationPolicy);
   }
 
   @Override

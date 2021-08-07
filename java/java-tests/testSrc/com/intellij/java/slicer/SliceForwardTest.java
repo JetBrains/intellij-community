@@ -47,4 +47,9 @@ public class SliceForwardTest extends SliceTestCase {
   public void testParameters() throws Exception { dotest();}
   public void testRequireNonNull() throws Exception { dotest();}
   public void testAppend() throws Exception { dotest();}
+  public void testOverloadedMember() throws Exception { dotest();}
+  public void testOverloadedMember2() throws Exception { dotest();}
+  public void testOverloadedMember3() throws Exception { dotest();}
+  public void testOneInterfaceTwoImplementations() throws Exception { dotest();}
+  public void testOneInterfaceTwoImplementations2() throws Exception { dotest();}
 }

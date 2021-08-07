@@ -1,5 +1,5 @@
 x<caret> = 'spam!' * 42
 
-print (x)
+print(x)
 (x)
 hex(x)

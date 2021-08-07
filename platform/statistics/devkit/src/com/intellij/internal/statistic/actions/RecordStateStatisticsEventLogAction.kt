@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.statistic.actions
 
 import com.intellij.icons.AllIcons
@@ -12,8 +12,8 @@ import com.intellij.internal.statistic.eventLog.StatisticsEventLogProviderUtil
 import com.intellij.internal.statistic.eventLog.fus.FeatureUsageLogger.getConfig
 import com.intellij.internal.statistic.eventLog.fus.FeatureUsageLogger.rollOver
 import com.intellij.internal.statistic.utils.StatisticsRecorderUtil
+import com.intellij.notification.Notification
 import com.intellij.notification.NotificationAction
-import com.intellij.notification.NotificationBuilder
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.application.ApplicationManager
@@ -62,15 +62,13 @@ internal class RecordStateStatisticsEventLogAction(private val recorderId: Strin
     val logFile = getConfig().getActiveLogFile()
     val virtualFile = if (logFile != null) LocalFileSystem.getInstance().findFileByIoFile(logFile.file) else null
     ApplicationManager.getApplication().invokeLater {
-      val notificationBuilder = NotificationBuilder(STATISTICS_NOTIFICATION_GROUP_ID, "Finished collecting and recording events",
-                                                    NotificationType.INFORMATION)
+      val notification = Notification(STATISTICS_NOTIFICATION_GROUP_ID, "Finished collecting and recording events", NotificationType.INFORMATION)
       if (virtualFile != null) {
-        notificationBuilder.addAction(NotificationAction.createSimple(
-          StatisticsBundle.messagePointer(
-            "action.NotificationAction.RecordStateStatisticsEventLogAction.text.show.log.file"),
+        notification.addAction(NotificationAction.createSimple(
+          StatisticsBundle.message("stats.open.log.notification.action"),
           Runnable { FileEditorManager.getInstance(project).openFile(virtualFile, true) }))
       }
-      notificationBuilder.buildAndNotify(project)
+      notification.notify(project)
     }
   }
 
@@ -81,18 +79,15 @@ internal class RecordStateStatisticsEventLogAction(private val recorderId: Strin
   }
 
   companion object {
-
     fun checkLogRecordingEnabled(project: Project?, recorderId: String?): Boolean {
       if (StatisticsEventLogProviderUtil.getEventLogProvider(recorderId!!).isRecordEnabled()) {
         return true
       }
-      NotificationBuilder(STATISTICS_NOTIFICATION_GROUP_ID, StatisticsBundle.message("stats.logging.is.disabled"),
-                          NotificationType.WARNING)
-        .addAction(NotificationAction.createSimple(StatisticsBundle.messagePointer("stats.enable.data.sharing"),
+      Notification(STATISTICS_NOTIFICATION_GROUP_ID, StatisticsBundle.message("stats.logging.is.disabled"), NotificationType.WARNING)
+        .addAction(NotificationAction.createSimple(StatisticsBundle.message("stats.enable.data.sharing"),
                                                    Runnable { SingleConfigurableEditor(project, ConsentConfigurable()).show() }))
-        .build().notify(project)
+        .notify(project)
       return false
     }
   }
-
 }

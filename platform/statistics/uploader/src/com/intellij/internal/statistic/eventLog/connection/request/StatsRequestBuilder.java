@@ -1,36 +1,47 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.statistic.eventLog.connection.request;
 
 import com.intellij.internal.statistic.StatisticsStringUtil;
 import com.intellij.internal.statistic.eventLog.connection.EventLogConnectionSettings;
-import org.apache.http.HttpHost;
-import org.apache.http.HttpStatus;
-import org.apache.http.StatusLine;
-import org.apache.http.auth.AuthScope;
-import org.apache.http.auth.UsernamePasswordCredentials;
-import org.apache.http.client.entity.GzipCompressingEntity;
-import org.apache.http.client.methods.*;
-import org.apache.http.entity.ContentType;
-import org.apache.http.entity.StringEntity;
-import org.apache.http.impl.client.BasicCredentialsProvider;
-import org.apache.http.impl.client.CloseableHttpClient;
-import org.apache.http.impl.client.HttpClientBuilder;
 import org.jetbrains.annotations.NotNull;
 
 import javax.net.ssl.SSLContext;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.net.InetSocketAddress;
-import java.net.Proxy;
-import java.net.SocketAddress;
+import java.net.*;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
+import java.nio.charset.Charset;
+import java.time.Duration;
+import java.util.*;
+import java.util.zip.GZIPOutputStream;
 
 public class StatsRequestBuilder {
+  private static final int SUCCESS_CODE = 200;
+  private static final List<Integer> CAN_RETRY_CODES = Arrays.asList(
+    // Standard status codes
+    408, // Request Timeout
+    429, // Too Many Requests (RFC 6585)
+    500, // Internal Server Error
+    502, // Bad Gateway
+    503, // Service Unavailable
+    504, // Gateway Timeout
+    // Unofficial codes
+    598 // Some HTTP Proxies timeout
+  );
+  private static final int MAX_RETRIES = 1;
+  private static final int RETRY_INTERVAL = 500;
+
   private final String myUserAgent;
   private final StatsProxyInfo myProxyInfo;
   private final SSLContext mySSLContext;
 
   private final String myUrl;
   private final String myMethod;
-  private StringEntity myBody;
+  private String myContent;
+  private String myContentType;
+  private Charset myCharset;
 
   private StatsResponseHandler onSucceed;
   private StatsResponseHandler onFail;
@@ -44,11 +55,13 @@ public class StatsRequestBuilder {
   }
 
   @NotNull
-  public StatsRequestBuilder withBody(@NotNull String body, @NotNull ContentType contentType) {
+  public StatsRequestBuilder withBody(@NotNull String body, @NotNull String contentType, @NotNull Charset charset) {
     if (StatisticsStringUtil.isEmptyOrSpaces(body)) {
       throw new EmptyHttpRequestBody();
     }
-    myBody = new StringEntity(body.trim(), contentType);
+    myContent = body;
+    myContentType = contentType;
+    myCharset = charset;
     return this;
   }
 
@@ -67,60 +80,82 @@ public class StatsRequestBuilder {
   public void send() throws IOException, StatsResponseException {
     send(response -> {
       if (onSucceed != null) {
-        onSucceed.handle(response, HttpStatus.SC_OK);
+        onSucceed.handle(response, SUCCESS_CODE);
       }
       return true;
     });
   }
 
   public <T> StatsRequestResult<T> send(StatsResponseProcessor<? extends T> processor) throws IOException, StatsResponseException {
-    HttpRequestBase request = newRequest();
-    try (CloseableHttpClient client = newClient(myUserAgent);
-         CloseableHttpResponse response = client.execute(request)) {
-      StatusLine statusLine = response.getStatusLine();
-      int code = statusLine != null ? statusLine.getStatusCode() : -1;
-      if (code == HttpStatus.SC_OK) {
-        T result = processor.onSucceed(new StatsHttpResponse(response, code));
-        return StatsRequestResult.succeed(result);
+    HttpClient client = newClient();
+    HttpRequest request = newRequest();
+
+    HttpResponse<String> response = trySend(client, request);
+    int code = response.statusCode();
+    if (code == SUCCESS_CODE) {
+      T result = processor.onSucceed(new StatsHttpResponse(response, code));
+      return StatsRequestResult.succeed(result);
+    }
+    else {
+      if (onFail != null) {
+        onFail.handle(new StatsHttpResponse(response, code), code);
       }
-      else {
-        if (onFail != null) {
-          onFail.handle(new StatsHttpResponse(response, code), code);
-        }
-        return StatsRequestResult.error(code);
-      }
+      return StatsRequestResult.error(code);
     }
   }
 
-  private CloseableHttpClient newClient(@NotNull String userAgent) {
-    HttpClientBuilder builder = HttpClientBuilder.create().setUserAgent(userAgent);
+  private HttpResponse<String> trySend(HttpClient client, HttpRequest request) throws IOException, StatsResponseException {
+    return trySend(client, request, 0);
+  }
+
+  private HttpResponse<String> trySend(HttpClient client, HttpRequest request, int retryCounter) throws IOException, StatsResponseException {
+    try {
+      HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
+      if (CAN_RETRY_CODES.contains(response.statusCode()) && retryCounter < MAX_RETRIES) {
+        Thread.sleep(RETRY_INTERVAL);
+        response = trySend(client, request, ++retryCounter);
+      }
+      return response;
+    }
+    catch (InterruptedException e) {
+      throw new StatsResponseException(e);
+    }
+  }
+
+  private HttpClient newClient() {
+    HttpClient.Builder builder = HttpClient.newBuilder();
+    builder.followRedirects(HttpClient.Redirect.NORMAL);
     if (myProxyInfo != null && !myProxyInfo.isNoProxy()) {
       configureProxy(builder, myProxyInfo);
     }
     if (mySSLContext != null) {
-      builder.setSSLContext(mySSLContext);
+      builder.sslContext(mySSLContext);
     }
     return builder.build();
   }
 
-  private static void configureProxy(@NotNull HttpClientBuilder builder, @NotNull StatsProxyInfo info) {
+  private static void configureProxy(HttpClient.Builder builder, @NotNull StatsProxyInfo info) {
     Proxy proxy = info.getProxy();
-    if (proxy.type() == Proxy.Type.HTTP) {
+    if (proxy.type() == Proxy.Type.HTTP || proxy.type() == Proxy.Type.SOCKS) {
       SocketAddress proxyAddress = proxy.address();
       if (proxyAddress instanceof InetSocketAddress) {
         InetSocketAddress address = (InetSocketAddress)proxyAddress;
-        String hostName = address.getHostName();
+        String hostName = address.getHostString();
         int port = address.getPort();
-        builder.setProxy(new HttpHost(hostName, port));
+        builder.proxy(ProxySelector.of(new InetSocketAddress(hostName, port)));
 
         StatsProxyInfo.StatsProxyAuthProvider auth = info.getProxyAuth();
         if (auth != null) {
           String login = auth.getProxyLogin();
           if (login != null) {
-            BasicCredentialsProvider provider = new BasicCredentialsProvider();
-            provider.setCredentials(new AuthScope(hostName, port),
-                                    new UsernamePasswordCredentials(login, auth.getProxyPassword()));
-            builder.setDefaultCredentialsProvider(provider);
+            // This Implementation require -Djdk.http.auth.tunneling.disabledSchemes="" in vm options
+            // In other cases PasswordAuthentication will be ignored and authentication will fail
+            builder.authenticator(new Authenticator() {
+              @Override
+              protected PasswordAuthentication getPasswordAuthentication() {
+                return new PasswordAuthentication(login, Objects.requireNonNullElse(auth.getProxyPassword(), "").toCharArray());
+              }
+            });
           }
         }
       }
@@ -128,22 +163,43 @@ public class StatsRequestBuilder {
   }
 
   @NotNull
-  private HttpRequestBase newRequest() {
+  private HttpRequest newRequest() {
+    HttpRequest.Builder builder = HttpRequest.newBuilder().
+      setHeader("User-Agent", myUserAgent).
+      timeout(Duration.ofSeconds(10)).
+      uri(URI.create(myUrl));
+
     if ("HEAD".equals(myMethod)) {
-      return new HttpHead(myUrl);
+      builder.method(myMethod, HttpRequest.BodyPublishers.noBody());
     }
     else if ("POST".equals(myMethod)) {
-      HttpPost post = new HttpPost(myUrl);
-      if (myBody == null || myBody.getContentLength() == 0) {
+      if (myContent == null || myContent.isBlank()) {
         throw new EmptyHttpRequestBody();
       }
-      post.setEntity(new GzipCompressingEntity(myBody));
-      return post;
+      builder.setHeader("Chunked", Boolean.toString(false));
+      builder.setHeader("Content-Type", String.format(Locale.ENGLISH, "%s; charset=%s", myContentType, myCharset));
+      builder.setHeader("Content-Encoding", "gzip");
+      builder.POST(HttpRequest.BodyPublishers.ofByteArray(getCompressedContent()));
     }
     else if ("GET".equals(myMethod)) {
-      return new HttpGet(myUrl);
+      builder.GET();
+    } else {
+      throw new IllegalHttpRequestTypeException();
     }
-    throw new IllegalHttpRequestTypeException();
+
+    return builder.build();
+  }
+
+  private byte[] getCompressedContent() {
+    try (ByteArrayOutputStream gZippedBody = new ByteArrayOutputStream()) {
+      GZIPOutputStream gZipper = new GZIPOutputStream(gZippedBody);
+      gZipper.write(myContent.getBytes(myCharset));
+      gZippedBody.flush();
+      gZipper.close();
+      return gZippedBody.toByteArray();
+    } catch (IOException e) {
+      throw new HttpRequestBodyGzipException(e);
+    }
   }
 
   public static class EmptyHttpRequestBody extends InvalidHttpRequest {
@@ -158,10 +214,21 @@ public class StatsRequestBuilder {
     }
   }
 
+  public static class HttpRequestBodyGzipException extends InvalidHttpRequest {
+    public HttpRequestBodyGzipException(IOException ioException) {
+      super(53, ioException);
+    }
+  }
+
   public static class InvalidHttpRequest extends RuntimeException {
     private final int myCode;
 
     public InvalidHttpRequest(int code) {
+      this(code, null);
+    }
+
+    public InvalidHttpRequest(int code, Throwable throwable) {
+      super(throwable);
       myCode = code;
     }
 

@@ -72,7 +72,7 @@ public abstract class ResolvingConverter<T> extends Converter<T> implements Reso
   }
 
   /**
-   * Delegate from {@link com.intellij.psi.PsiReference#bindToElement(com.intellij.psi.PsiElement)}
+   * Delegate from {@link com.intellij.psi.PsiReference#bindToElement(PsiElement)}
    * @param genericValue generic value
    * @param context context
    * @param newTarget new target
@@ -102,7 +102,7 @@ public abstract class ResolvingConverter<T> extends Converter<T> implements Reso
   }
 
   /**
-   * Delegate from {@link com.intellij.psi.PsiReference#isReferenceTo(com.intellij.psi.PsiElement)}
+   * Delegate from {@link com.intellij.psi.PsiReference#isReferenceTo(PsiElement)}
    * @param element element
    * @param stringValue string value
    * @param resolveResult resolve result
@@ -143,7 +143,7 @@ public abstract class ResolvingConverter<T> extends Converter<T> implements Reso
    * Override to provide custom lookup elements in completion.
    * <p/>
    * Default is {@code null} which will create lookup via
-   * {@link ElementPresentationManager#createVariant(java.lang.Object, java.lang.String, com.intellij.psi.PsiElement)}.
+   * {@link ElementPresentationManager#createVariant(Object, String, PsiElement)}.
    *
    * @param t DOM to create lookup element for.
    * @return Lookup element.

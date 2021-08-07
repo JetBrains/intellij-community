@@ -4,7 +4,7 @@ from pathlib import Path, PurePath
 
 # os.PathLike
 class A:
-    def __fspath__(self):
+    def __fspath__(self) -> str:
         pass
 
 a = A()
@@ -27,16 +27,16 @@ class B:
 
 b = B()
 
-open(<warning descr="Expected type 'Union[str, bytes, PathLike[str], PathLike[bytes], int]', got 'B' instead">b</warning>)
+open(<warning descr="Expected type 'str | bytes | PathLike[str] | PathLike[bytes] | int', got 'B' instead">b</warning>)
 
-os.fspath(<warning descr="Unexpected type(s):(B)Possible type(s):(PathLike[Union[Union[str, bytes], Any]])(bytes)(str)">b</warning>)
-os.fsencode(<warning descr="Expected type 'Union[str, bytes, PathLike]', got 'B' instead">b</warning>)
-os.fsdecode(<warning descr="Expected type 'Union[str, bytes, PathLike]', got 'B' instead">b</warning>)
+os.fspath(<warning descr="Unexpected type(s):(B)Possible type(s):(PathLike[str | bytes | Any])(bytes)(str)">b</warning>)
+os.fsencode(<warning descr="Expected type 'str | bytes | PathLike[str] | PathLike[bytes]', got 'B' instead">b</warning>)
+os.fsdecode(<warning descr="Expected type 'str | bytes | PathLike[str] | PathLike[bytes]', got 'B' instead">b</warning>)
 
-Path(<warning descr="Expected type 'Union[str, PathLike[str]]', got 'B' instead">b</warning>)
-PurePath(<warning descr="Expected type 'Union[str, PathLike[str]]', got 'B' instead">b</warning>)
+Path(<warning descr="Expected type 'str | PathLike[str]', got 'B' instead">b</warning>)
+PurePath(<warning descr="Expected type 'str | PathLike[str]', got 'B' instead">b</warning>)
 
-os.path.abspath(<warning descr="Unexpected type(s):(B)Possible type(s):(AnyStr)(PathLike[Union[Union[str, bytes], Any]])">b</warning>)
+os.path.abspath(<warning descr="Unexpected type(s):(B)Possible type(s):(AnyStr)(PathLike[str | bytes | Any])">b</warning>)
 
 
 # pathlib.PurePath

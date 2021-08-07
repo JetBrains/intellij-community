@@ -1,18 +1,15 @@
 <html>
 <body>
-Reports any uses of <b>java.util.Vector</b>
-, <b>java.util.Hashtable</b> and <b>java.util.Stack</b>.
-Usages of these classes can most often be replaced by uses of
-<b>java.util.ArrayList</b>, <b>java.util.HashMap</b> and <b>java.util.ArrayDeque</b> respectively.
+Reports usages of <code>java.util.Vector</code>, <code>java.util.Hashtable</code> and <code>java.util.Stack</code>.
+<p>Usages of these classes can often be replaced with usages of
+<code>java.util.ArrayList</code>, <code>java.util.HashMap</code> and <code>java.util.ArrayDeque</code> respectively.
 While still supported,
 the former classes were made obsolete by the JDK1.2 collection classes, and should probably
 not be used in new development.
 <!-- tooltip end -->
 <p>
-Use the checkbox below to ignore any cases where the obsolete collections are used
-as an argument to a method or assigned to a variable that requires the obsolete type.
-Enabling this option is potentially quite processor intensive.
-<p>
-
+Use the <b>Ignore obsolete collection types where they are required</b> option to ignore any cases where the obsolete collections are used
+as method arguments or assigned to a variable that requires the obsolete type.
+Enabling this option may consume significant processor resources.</p>
 </body>
 </html>

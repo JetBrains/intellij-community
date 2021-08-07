@@ -18,9 +18,6 @@ import org.jetbrains.annotations.Nullable;
 import java.io.File;
 import java.io.IOException;
 
-/**
- * @author Sergey Simonchik
- */
 public final class GithubDownloadUtil {
   private static final String PROJECT_GENERATORS = "projectGenerators";
 

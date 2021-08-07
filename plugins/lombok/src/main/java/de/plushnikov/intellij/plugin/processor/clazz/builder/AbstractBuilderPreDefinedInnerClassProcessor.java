@@ -41,7 +41,7 @@ public abstract class AbstractBuilderPreDefinedInnerClassProcessor extends Abstr
       for (PsiMethod psiMethod : psiMethods) {
         final PsiAnnotation psiBuilderAnnotation = PsiAnnotationSearchUtil.findAnnotation(psiMethod, getSupportedAnnotationClasses());
         if (null != psiBuilderAnnotation) {
-          final String builderClassNameOfThisMethod = getBuilderHandler().getBuilderClassName(psiParentClass, psiBuilderAnnotation, psiMethod);
+          final String builderClassNameOfThisMethod = BuilderHandler.getBuilderClassName(psiParentClass, psiBuilderAnnotation, psiMethod);
           // check we found right method for this existing builder class
           if (Objects.equals(builderClassNameOfThisMethod, psiClass.getName())) {
             return processAnnotation(psiParentClass, psiMethod, psiBuilderAnnotation, psiClass, nameHint);
@@ -56,7 +56,7 @@ public abstract class AbstractBuilderPreDefinedInnerClassProcessor extends Abstr
                                                      @NotNull PsiAnnotation psiAnnotation, @NotNull PsiClass psiClass,
                                                      @Nullable String nameHint) {
     // use parent class as source!
-    final String builderClassName = getBuilderHandler().getBuilderClassName(psiParentClass, psiAnnotation, psiParentMethod);
+    final String builderClassName = BuilderHandler.getBuilderClassName(psiParentClass, psiAnnotation, psiParentMethod);
 
     List<? super PsiElement> result = new ArrayList<>();
     // apply only to inner BuilderClass
@@ -67,7 +67,9 @@ public abstract class AbstractBuilderPreDefinedInnerClassProcessor extends Abstr
     return result;
   }
 
-  protected abstract BuilderHandler getBuilderHandler();
+  protected BuilderHandler getBuilderHandler() {
+    return new BuilderHandler();
+  }
 
   protected abstract Collection<? extends PsiElement> generatePsiElements(@NotNull PsiClass psiParentClass, @Nullable PsiMethod psiParentMethod, @NotNull PsiAnnotation psiAnnotation, @NotNull PsiClass psiBuilderClass);
 

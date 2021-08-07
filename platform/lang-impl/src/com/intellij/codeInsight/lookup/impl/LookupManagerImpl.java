@@ -27,6 +27,7 @@ import com.intellij.util.Alarm;
 import com.intellij.util.BitUtil;
 import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import java.beans.PropertyChangeListener;
@@ -96,6 +97,7 @@ public class LookupManagerImpl extends LookupManager {
   }
 
   @Override
+  @Nullable
   public LookupEx showLookup(@NotNull final Editor editor,
                            LookupElement @NotNull [] items,
                            @NotNull final String prefix,

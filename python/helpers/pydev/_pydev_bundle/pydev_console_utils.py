@@ -13,7 +13,9 @@ from _pydevd_bundle import pydevd_thrift
 from _pydevd_bundle import pydevd_vars
 from _pydevd_bundle.pydevd_comm import InternalDataViewerAction
 from _pydevd_bundle.pydevd_constants import IS_JYTHON, dict_iter_items
-from pydev_console.pydev_protocol import CompletionOption, CompletionOptionType, PythonUnhandledException
+from _pydevd_bundle.pydevd_tables import exec_table_command
+from pydev_console.pydev_protocol import CompletionOption, CompletionOptionType, \
+    PythonUnhandledException, PythonTableException
 
 try:
     import cStringIO as StringIO  # may not always be available @UnusedImport
@@ -146,53 +148,6 @@ class BaseInterpreterInterface(BaseCodeExecutor):
         except:
             traceback.print_exc()
             raise PythonUnhandledException(traceback.format_exc())
-
-    def interrupt(self):
-        self.buffer = None  # Also clear the buffer when it's interrupted.
-        try:
-            if self.interruptable:
-                called = False
-                try:
-                    # Fix for #PyDev-500: Console interrupt can't interrupt on sleep
-                    if os.name == 'posix':
-                        # On Linux we can't interrupt 0 as in Windows because it's
-                        # actually owned by a process -- on the good side, signals
-                        # work much better on Linux!
-                        os.kill(os.getpid(), signal.SIGINT)
-                        called = True
-
-                    elif os.name == 'nt':
-                        # Stupid windows: sending a Ctrl+C to a process given its pid
-                        # is absurdly difficult.
-                        # There are utilities to make it work such as
-                        # http://www.latenighthacking.com/projects/2003/sendSignal/
-                        # but fortunately for us, it seems Python does allow a CTRL_C_EVENT
-                        # for the current process in Windows if pid 0 is passed... if we needed
-                        # to send a signal to another process the approach would be
-                        # much more difficult.
-                        # Still, note that CTRL_C_EVENT is only Python 2.7 onwards...
-                        # Also, this doesn't seem to be documented anywhere!? (stumbled
-                        # upon it by chance after digging quite a lot).
-                        os.kill(0, signal.CTRL_C_EVENT)
-                        called = True
-                except:
-                    # Many things to go wrong (from CTRL_C_EVENT not being there
-                    # to failing import signal)... if that's the case, ask for
-                    # forgiveness and go on to the approach which will interrupt
-                    # the main thread (but it'll only work when it's executing some Python
-                    # code -- not on sleep() for instance).
-                    pass
-
-                if not called:
-                    if hasattr(thread, 'interrupt_main'):  # Jython doesn't have it
-                        thread.interrupt_main()
-                    else:
-                        self.mainThread._thread.interrupt()  # Jython
-            self.finish_exec(False)
-            return True
-        except:
-            traceback.print_exc()
-            return False
 
     def close(self):
         sys.exit(0)
@@ -425,7 +380,8 @@ class BaseInterpreterInterface(BaseCodeExecutor):
                     pydevconsole.set_debug_hook(self.debugger.process_internal_commands)
                 except:
                     traceback.print_exc()
-                    sys.stderr.write('Version of Python does not support debuggable Interactive Console.\n')
+                    sys.stderr.write(
+                        'Version of Python does not support debuggable Interactive Console.\n')
 
             # Important: it has to be really enabled in the main thread, so, schedule
             # it to run in the main thread.
@@ -434,6 +390,19 @@ class BaseInterpreterInterface(BaseCodeExecutor):
         except:
             traceback.print_exc()
             raise PythonUnhandledException(traceback.format_exc())
+
+    def execTableCommand(self, command, command_type):
+        try:
+            success, res = exec_table_command(command, command_type,
+                                              self.get_namespace(),
+                                              self.get_namespace())
+            if success:
+                return res
+        except:
+            traceback.print_exc()
+            raise PythonUnhandledException(traceback.format_exc())
+        if not success:
+            raise PythonTableException(str(res))
 
     def handshake(self):
         if self.connect_status_queue is not None:

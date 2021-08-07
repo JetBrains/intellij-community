@@ -2,13 +2,12 @@
 package org.jetbrains.idea.maven.externalSystemIntegration.output.parsers;
 
 import com.intellij.build.events.BuildEvent;
-import com.intellij.build.events.FinishEvent;
 import com.intellij.build.events.impl.*;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.externalSystemIntegration.output.MavenParsingContext;
+import org.jetbrains.idea.maven.externalSystemIntegration.output.MavenSpyLoggedEventParser;
 import org.jetbrains.idea.maven.utils.MavenLog;
 
 import java.util.*;
@@ -27,7 +26,9 @@ public class MavenSpyOutputParser {
     return s != null && s.startsWith(PREFIX);
   }
 
-  public MavenSpyOutputParser(MavenParsingContext context) {myContext = context;}
+  public MavenSpyOutputParser(@NotNull MavenParsingContext context) {
+    myContext = context;
+  }
 
 
   public void processLine(@NotNull String spyLine,
@@ -58,7 +59,14 @@ public class MavenSpyOutputParser {
       Map<String, String> parameters =
         data.stream().map(d -> d.split("=")).filter(d -> d.length == 2).peek(d -> d[1] = d[1].replace(NEWLINE, "\n"))
           .collect(Collectors.toMap(d -> d[0], d -> d[1]));
-      parse(threadId, type, parameters, messageConsumer);
+
+      MavenEventType eventType = MavenEventType.valueByName(type);
+      if (eventType == null) {
+        MavenLog.LOG.info("maven event type not found by name " + type);
+        return;
+      }
+      processErrorLogLine(parameters.get("error"), eventType, messageConsumer);
+      parse(threadId, eventType, parameters, messageConsumer);
     }
     catch (Exception e) {
       MavenLog.LOG.error(e);
@@ -66,38 +74,39 @@ public class MavenSpyOutputParser {
   }
 
   protected void parse(int threadId,
-                       String type,
+                       MavenEventType type,
                        Map<String, String> parameters,
                        Consumer<? super BuildEvent> messageConsumer) {
     switch (type) {
-      case "SessionStarted": {
+      case SESSION_STARTED: {
         List<String> projectsInReactor = getProjectsInReactor(parameters);
         myContext.setProjectsInReactor(projectsInReactor);
         return;
       }
-      case "ProjectStarted": {
+      case PROJECT_STARTED: {
         MavenParsingContext.ProjectExecutionEntry execution = myContext.getProject(threadId, parameters, true);
-        if(execution == null){
+        if (execution == null) {
           MavenLog.LOG.debug("Not found for " + parameters);
-        } else {
+        }
+        else {
           messageConsumer
             .accept(new StartEventImpl(execution.getId(), execution.getParentId(), System.currentTimeMillis(), execution.getName()));
         }
 
         return;
       }
-      case "MojoStarted": {
+      case MOJO_STARTED: {
         MavenParsingContext.MojoExecutionEntry mojoExecution = myContext.getMojo(threadId, parameters, true);
         doStart(messageConsumer, mojoExecution);
         return;
       }
-      case "MojoSucceeded": {
+      case MOJO_SUCCEEDED: {
         stopFakeDownloadNode(threadId, parameters, messageConsumer);
         MavenParsingContext.MojoExecutionEntry mojoExecution = myContext.getMojo(threadId, parameters, false);
         doComplete(messageConsumer, mojoExecution);
         return;
       }
-      case "MojoFailed": {
+      case MOJO_FAILED: {
         stopFakeDownloadNode(threadId, parameters, messageConsumer);
         MavenParsingContext.MojoExecutionEntry mojoExecution = myContext.getMojo(threadId, parameters, false);
         if (mojoExecution == null) {
@@ -111,39 +120,51 @@ public class MavenSpyOutputParser {
         }
         return;
       }
-      case "MojoSkipped": {
+      case MOJO_SKIPPED: {
         stopFakeDownloadNode(threadId, parameters, messageConsumer);
         MavenParsingContext.MojoExecutionEntry mojoExecution = myContext.getMojo(threadId, parameters, false);
         doSkip(messageConsumer, mojoExecution);
         return;
       }
-      case "ProjectSucceeded": {
+      case PROJECT_SUCCEEDED: {
         stopFakeDownloadNode(threadId, parameters, messageConsumer);
         MavenParsingContext.ProjectExecutionEntry execution = myContext.getProject(threadId, parameters, false);
         doComplete(messageConsumer, execution);
         return;
       }
 
-      case "ProjectSkipped": {
+      case PROJECT_SKIPPED: {
         MavenParsingContext.ProjectExecutionEntry execution = myContext.getProject(threadId, parameters, false);
         doSkip(messageConsumer, execution);
         return;
       }
 
-      case "ProjectFailed": {
+      case PROJECT_FAILED: {
         stopFakeDownloadNode(threadId, parameters, messageConsumer);
         MavenParsingContext.ProjectExecutionEntry execution = myContext.getProject(threadId, parameters, false);
         doError(messageConsumer, execution, parameters.get("error"));
         return;
       }
 
-      case "ARTIFACT_RESOLVED": {
+      case ARTIFACT_RESOLVED: {
         artifactResolved(threadId, parameters, messageConsumer);
         return;
       }
 
-      case "ARTIFACT_DOWNLOADING": {
+      case ARTIFACT_DOWNLOADING: {
         artifactDownloading(threadId, parameters, messageConsumer);
+      }
+    }
+  }
+
+  private void processErrorLogLine(String errorLine,
+                                   MavenEventType eventType,
+                                   Consumer<? super BuildEvent> messageConsumer) {
+    if (errorLine == null) return;
+    for (MavenSpyLoggedEventParser eventParser : MavenSpyLoggedEventParser.EP_NAME.getExtensionList()) {
+      if (eventParser.supportsType(eventType)
+          && eventParser.processLogLine(myContext.getLastId(), myContext, errorLine, messageConsumer)) {
+        return;
       }
     }
   }

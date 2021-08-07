@@ -10,7 +10,6 @@ import org.jetbrains.annotations.NonNls
 import javax.swing.JComponent
 
 /**
- * @author yole
  * @see DialogPanelConfigurableBase
  */
 abstract class BoundConfigurable(

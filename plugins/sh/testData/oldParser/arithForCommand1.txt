@@ -4,10 +4,12 @@ SHELL_SCRIPT
       PsiElement(for)('for')
       PsiWhiteSpace(' ')
       FOR_CLAUSE
-        PsiElement((()('((')
+        PsiElement(()('(')
+        PsiElement(()('(')
         PsiElement(;)(';')
         PsiElement(;)(';')
-        PsiElement()))('))')
+        PsiElement())(')')
+        PsiElement())(')')
         LIST_TERMINATOR
           PsiElement(;)(';')
       PsiWhiteSpace(' ')
@@ -27,7 +29,8 @@ SHELL_SCRIPT
       PsiElement(for)('for')
       PsiWhiteSpace(' ')
       FOR_CLAUSE
-        PsiElement((()('((')
+        PsiElement(()('(')
+        PsiElement(()('(')
         ASSIGNMENT_EXPRESSION
           LITERAL_EXPRESSION
             PsiElement(word)('i')
@@ -37,7 +40,8 @@ SHELL_SCRIPT
               PsiElement(int)('1')
         PsiElement(;)(';')
         PsiElement(;)(';')
-        PsiElement()))('))')
+        PsiElement())(')')
+        PsiElement())(')')
         LIST_TERMINATOR
           PsiElement(;)(';')
       PsiWhiteSpace(' ')
@@ -57,7 +61,8 @@ SHELL_SCRIPT
       PsiElement(for)('for')
       PsiWhiteSpace(' ')
       FOR_CLAUSE
-        PsiElement((()('((')
+        PsiElement(()('(')
+        PsiElement(()('(')
         ASSIGNMENT_EXPRESSION
           LITERAL_EXPRESSION
             PsiElement(word)('i')
@@ -74,7 +79,8 @@ SHELL_SCRIPT
             NUMBER
               PsiElement(int)('10')
         PsiElement(;)(';')
-        PsiElement()))('))')
+        PsiElement())(')')
+        PsiElement())(')')
         LIST_TERMINATOR
           PsiElement(;)(';')
       PsiWhiteSpace(' ')

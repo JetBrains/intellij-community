@@ -10,6 +10,8 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.function.Predicate;
 
 public final class ComponentUtil {
@@ -139,5 +141,26 @@ public final class ComponentUtil {
   public static @Nullable JViewport getViewport(@Nullable Component component) {
     Container parent = component == null ? null : SwingUtilities.getUnwrappedParent(component);
     return parent instanceof JViewport ? (JViewport)parent : null;
+  }
+
+  public static @NotNull <T extends JComponent> java.util.List<T> findComponentsOfType(JComponent parent, @NotNull Class<? extends T> cls) {
+    java.util.List<T> result = new ArrayList<>();
+    findComponentsOfType(parent, cls, result);
+    return result;
+  }
+
+  private static <T extends JComponent> void findComponentsOfType(JComponent parent,
+                                                                  @NotNull Class<T> cls,
+                                                                  @NotNull List<? super T> result) {
+    if (parent == null) return;
+    if (cls.isAssignableFrom(parent.getClass())) {
+      @SuppressWarnings("unchecked") final T t = (T)parent;
+      result.add(t);
+    }
+    for (Component c : parent.getComponents()) {
+      if (c instanceof JComponent) {
+        findComponentsOfType((JComponent)c, cls, result);
+      }
+    }
   }
 }

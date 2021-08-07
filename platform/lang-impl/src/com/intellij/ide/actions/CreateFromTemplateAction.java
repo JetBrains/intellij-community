@@ -32,7 +32,7 @@ import java.util.function.Supplier;
 /**
  * @author Eugene.Kudelevsky
  */
-public abstract class CreateFromTemplateAction<T extends PsiElement> extends AnAction implements WriteActionAware {
+public abstract class CreateFromTemplateAction<T extends PsiElement> extends AnAction implements UpdateInBackground, WriteActionAware {
   protected static final Logger LOG = Logger.getInstance(CreateFromTemplateAction.class);
 
   public CreateFromTemplateAction(@NlsActions.ActionText String text,
@@ -54,7 +54,6 @@ public abstract class CreateFromTemplateAction<T extends PsiElement> extends AnA
     }
 
     final Project project = CommonDataKeys.PROJECT.getData(dataContext);
-
     final PsiDirectory dir = view.getOrChooseDirectory();
     if (dir == null || project == null) return;
 
@@ -68,7 +67,7 @@ public abstract class CreateFromTemplateAction<T extends PsiElement> extends AnA
                    @Override
                    public T createFile(@NotNull String name, @NotNull String templateName) {
                      selectedTemplateName.set(templateName);
-                     return CreateFromTemplateAction.this.createFile(name, templateName, dir);
+                     return CreateFromTemplateAction.this.createFile(name, templateName, adjustDirectory(dir));
                    }
 
                    @Override
@@ -95,6 +94,15 @@ public abstract class CreateFromTemplateAction<T extends PsiElement> extends AnA
                      );
                    }
                  });
+  }
+
+  protected PsiDirectory adjustDirectory(@NotNull PsiDirectory original) {
+    return original;
+  }
+
+  @Nullable
+  protected PsiDirectory getDirectory(IdeView view) {
+    return view.getOrChooseDirectory();
   }
 
   @SuppressWarnings("TestOnlyProblems")

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.fileChooser.actions;
 
 import com.intellij.ide.lightEdit.LightEditCompatible;
@@ -8,9 +8,7 @@ import com.intellij.openapi.fileChooser.FileSystemTree;
 import com.intellij.openapi.vfs.newvfs.ManagingFS;
 import com.intellij.openapi.vfs.newvfs.RefreshQueue;
 
-/**
- * @author yole
- */
+
 public class RefreshFileChooserAction extends FileChooserAction implements LightEditCompatible {
   @Override
   protected void update(FileSystemTree fileChooser, AnActionEvent e) {

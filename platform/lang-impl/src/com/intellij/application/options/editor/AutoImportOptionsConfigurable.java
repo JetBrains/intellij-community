@@ -22,8 +22,10 @@ import com.intellij.openapi.options.CompositeConfigurable;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.Configurable.VariableProjectAppLevel;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.DialogPanel;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
+import net.miginfocom.swing.MigLayout;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
@@ -41,8 +43,7 @@ public class AutoImportOptionsConfigurable
   implements EditorOptionsProvider, VariableProjectAppLevel, Configurable.WithEpDependencies {
 
   private final Project myProject;
-  private JPanel myPanel;
-  private JPanel myProvidersPanel;
+  private final JPanel myProvidersPanel = new JPanel(new GridBagLayout());
 
   public AutoImportOptionsConfigurable(Project project) {
     myProject = project;
@@ -67,23 +68,23 @@ public class AutoImportOptionsConfigurable
 
   @Override
   public JComponent createComponent() {
+    GridBagConstraints gbc = new GridBagConstraints();
+    gbc.weightx = 1;
+    gbc.fill = GridBagConstraints.HORIZONTAL;
+    gbc.gridwidth = GridBagConstraints.REMAINDER;
+
+
     myProvidersPanel.removeAll();
     List<AutoImportOptionsProvider> providers = getConfigurables();
-    for (int i = 0; i < providers.size(); i++) {
-      AutoImportOptionsProvider provider = providers.get(i);
+    for (AutoImportOptionsProvider provider : providers) {
       JComponent component = provider.createComponent();
-      assert component != null: "AutoImportOptionsProvider " + provider.getClass() + " has a null component.";
-      myProvidersPanel.add(component, new GridBagConstraints(0, i, 1, 1, 0, 0,
-                                                             GridBagConstraints.NORTH,
-                                                             GridBagConstraints.HORIZONTAL, JBUI.emptyInsets(), 0, 0));
+      assert component != null : "AutoImportOptionsProvider " + provider.getClass() + " has a null component.";
+      gbc.insets = component instanceof DialogPanel ? JBUI.emptyInsets() : JBUI.insetsBottom(10);
+      myProvidersPanel.add(component, gbc);
     }
-    myProvidersPanel.add(Box.createVerticalGlue(), new GridBagConstraints(0, providers.size(), 1, 1, 0, 1,
-                                                                          GridBagConstraints.NORTH,
-                                                                          GridBagConstraints.BOTH, JBUI.emptyInsets(), 0, 0));
-    myProvidersPanel.add(Box.createVerticalGlue(), new GridBagConstraints(1, 0, providers.size() + 1, 1, 1, 0,
-                                                                          GridBagConstraints.NORTH,
-                                                                          GridBagConstraints.BOTH, JBUI.emptyInsets(), 0, 0));
-    return myPanel;
+    myProvidersPanel.add(Box.createVerticalGlue(), gbc);
+    myProvidersPanel.add(Box.createVerticalGlue(), gbc);
+    return myProvidersPanel;
   }
 
   @Override

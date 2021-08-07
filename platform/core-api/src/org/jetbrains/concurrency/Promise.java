@@ -65,7 +65,7 @@ public interface Promise<T> {
   <SUB_RESULT> Promise<SUB_RESULT> then(@NotNull Function<? super T, ? extends SUB_RESULT> done);
 
   /**
-   * The same as {@link #then(Function)}, but handler can be asynchronous.
+   * The same as {@link #then(Function)}, but the handler can be asynchronous.
    *
    * <pre>
    * {@code
@@ -112,7 +112,7 @@ public interface Promise<T> {
   }
 
   /**
-   * Resolve or reject passed promise as soon as this promise resolved or rejected.
+   * Resolve or reject passed promise as soon as this promise is resolved or rejected.
    */
   @NotNull
   Promise<T> processed(@NotNull Promise<? super T> child);

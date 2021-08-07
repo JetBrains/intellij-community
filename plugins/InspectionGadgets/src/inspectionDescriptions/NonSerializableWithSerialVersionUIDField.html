@@ -1,9 +1,14 @@
 <html>
 <body>
-Reports non-<b>Serializable</b> classes which define a <b>serialVersionUID</b>
-field. This is usually an indication of a programmer error.
+Reports non-<code>Serializable</code> classes that define a <code>serialVersionUID</code>
+field. A <code>serialVersionUID</code> field in that context normally indicates an error
+because the field will be ignored and the class will not be serialized.
+<p><b>Example:</b></p>
+<pre><code>
+  public class IWantToSerializeThis {
+    private static final long serialVersionUID = 2669293150219020249L;
+  }
+</code></pre>
 <!-- tooltip end -->
-<p>
-
 </body>
 </html>

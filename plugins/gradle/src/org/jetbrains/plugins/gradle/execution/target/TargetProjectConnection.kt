@@ -16,7 +16,8 @@ import java.nio.file.Path
 internal class TargetProjectConnection(val environmentConfigurationProvider: TargetEnvironmentConfigurationProvider,
                                        val taskId: ExternalSystemTaskId?,
                                        val taskListener: ExternalSystemTaskNotificationListener?,
-                                       val parameters: ConnectionParameters,
+                                       val distribution: TargetGradleDistribution,
+                                       val parameters: TargetConnectionParameters,
                                        private val connectionCloseListener: ProjectConnectionCloseListener?) : ProjectConnection, UserDataHolderBase() {
   override fun close() {
     connectionCloseListener?.connectionClosed(this)

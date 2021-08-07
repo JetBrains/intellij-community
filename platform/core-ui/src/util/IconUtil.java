@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util;
 
 import com.intellij.icons.AllIcons;
@@ -69,7 +69,7 @@ public class IconUtil {
       return icon;
     }
 
-    double scale = 1f;
+    double scale = 1.0f;
     if (image instanceof JBHiDPIScaledImage) {
       scale = ((JBHiDPIScaledImage)image).getScale();
       image = ((JBHiDPIScaledImage)image).getDelegate();
@@ -137,9 +137,7 @@ public class IconUtil {
     };
   }
 
-  private static final Function<FileIconKey, Icon> ICON_NULLABLE_FUNCTION = key -> {
-    return computeFileIcon(key.getFile(), key.getFlags(), key.getProject());
-  };
+  private static final Function<FileIconKey, Icon> ICON_NULLABLE_FUNCTION = key -> computeFileIcon(key.getFile(), key.getFlags(), key.getProject());
 
   /**
    * @return a deferred icon for the file, taking into account {@link FileIconProvider} and {@link FileIconPatcher} extensions.
@@ -522,7 +520,7 @@ public class IconUtil {
   }
 
   private static double clampScale(double _scale) {
-    return MathUtil.clamp(_scale, .1, 32);
+    return MathUtil.clamp(_scale, 0.1, 32);
   }
 
   private static void paintScaled(@Nullable Component c, @NotNull Graphics g, int x, int y, double scale, @NotNull Icon source) {
@@ -567,8 +565,8 @@ public class IconUtil {
    *
    * @see CopyableIcon
    */
-  @Contract("null, _->null; !null, _->!null")
-  public static Icon copy(@Nullable Icon icon, @Nullable Component ancestor) {
+  @NotNull
+  public static Icon copy(@NotNull Icon icon, @Nullable Component ancestor) {
     return IconLoader.copy(icon, ancestor, false);
   }
 
@@ -577,8 +575,8 @@ public class IconUtil {
    *
    * @see CopyableIcon
    */
-  @Contract("null, _->null; !null, _->!null")
-  public static Icon deepCopy(@Nullable Icon icon, @Nullable Component ancestor) {
+  @NotNull
+  public static Icon deepCopy(@NotNull Icon icon, @Nullable Component ancestor) {
     return IconLoader.copy(icon, ancestor, true);
   }
 
@@ -628,7 +626,6 @@ public class IconUtil {
    * @see #scale(Icon, Component, float)
    * @param icon the icon to scale
    * @param ctx the scale context to apply
-   * @param scale the scale factor
    * @return the scaled icon
    */
   @NotNull
@@ -767,7 +764,7 @@ public class IconUtil {
       int b = rgba & 0xff;
       float[] hsb = new float[3];
       Color.RGBtoHSB(r, g, b, hsb);
-      int rgb = Color.HSBtoRGB(myBase[0], myBase[1] * (myKeepGray ? hsb[1] : 1f), myBase[2] * hsb[2]);
+      int rgb = Color.HSBtoRGB(myBase[0], myBase[1] * (myKeepGray ? hsb[1] : 1.0f), myBase[2] * hsb[2]);
       return (rgba & 0xff000000) | (rgb & 0xffffff);
     }
   }
@@ -909,7 +906,7 @@ public class IconUtil {
   public static Icon addText(@NotNull Icon base, @NotNull String text) {
     LayeredIcon icon = new LayeredIcon(2);
     icon.setIcon(base, 0);
-    icon.setIcon(textToIcon(text, new JLabel(), JBUIScale.scale(6f)), 1, SwingConstants.SOUTH_EAST);
+    icon.setIcon(textToIcon(text, new JLabel(), JBUIScale.scale(6.0f)), 1, SwingConstants.SOUTH_EAST);
     return icon;
   }
 
@@ -953,4 +950,15 @@ public class IconUtil {
     return icon;
   }
 
+  public static @Nullable Icon rowIcon(@Nullable Icon left, @Nullable Icon right) {
+    if (left != null && right != null) {
+      return new RowIcon(left, right);
+    }
+    else if (left != null) {
+      return left;
+    }
+    else {
+      return right;
+    }
+  }
 }

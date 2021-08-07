@@ -3,7 +3,6 @@ package com.intellij.grazie.jlanguage.filters
 import org.languagetool.markup.AnnotatedText
 import org.languagetool.rules.RuleMatch
 import org.languagetool.rules.RuleMatchFilter
-import java.util.*
 import java.util.function.Consumer
 
 class UppercaseMatchFilter : RuleMatchFilter {

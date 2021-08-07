@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.configurationStore.statistic.eventLog
 
 import com.intellij.configurationStore.jdomSerializer
@@ -88,7 +88,7 @@ open class FeatureUsageSettingsEventPrinter(private val recordDefault: Boolean) 
     }
   }
 
-  fun logConfigurationStateChanged(componentName: String, state: Any?, project: Project?) {
+  fun logConfigurationStateChanged(componentName: String, state: Any, project: Project?) {
     val (optionsValues, pluginInfo) = valuesExtractor.extract(project, componentName, state) ?: return
     val id = counter.incrementAndGet()
     for (data in optionsValues) {
@@ -100,7 +100,7 @@ open class FeatureUsageSettingsEventPrinter(private val recordDefault: Boolean) 
     }
   }
 
-  fun logConfigurationState(componentName: String, state: Any?, project: Project?) {
+  fun logConfigurationState(componentName: String, state: Any, project: Project?) {
     val (optionsValues, pluginInfo) = valuesExtractor.extract(project, componentName, state) ?: return
     @Suppress("HardCodedStringLiteral")
     val eventId = if (recordDefault) "option" else "not.default"
@@ -146,8 +146,8 @@ open class FeatureUsageSettingsEventPrinter(private val recordDefault: Boolean) 
 internal data class ConfigurationState(val optionsValues: List<FeatureUsageData>, val pluginInfo: PluginInfo)
 
 internal data class ConfigurationStateExtractor(val recordDefault: Boolean) {
-  internal fun extract(project: Project?, componentName: String, state: Any?): ConfigurationState? {
-    if (state == null || state is Element || state is JDOMExternalizable) {
+  internal fun extract(project: Project?, componentName: String, state: Any): ConfigurationState? {
+    if (state is Element || state is JDOMExternalizable) {
       return null
     }
 

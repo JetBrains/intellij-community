@@ -7,7 +7,7 @@ object PythonRunLessonsUtils {
   const val demoConfigurationName = "sandbox"
 
   val demoSample = parseLessonSample("""
-    def find_average(value: list):
+    def find_average(value):
         check_input(value)
         result = 0
         for s in value:
@@ -23,12 +23,12 @@ object PythonRunLessonsUtils {
         return int(<select id=2>s.split()[0]</select>)
     
     
-    def check_input(value: list):
+    def check_input(value):
         if (value is None) or (len(value) == 0):
             raise ValueError(value)
     
     
-    def remove_quotes(s: str):
+    def remove_quotes(s):
         if len(s) > 1 and s[0] == "'" and s[-1] == "'":
             return s[1:-1]
         return s

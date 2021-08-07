@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.siyeh.ipp.collections;
 
 import com.intellij.codeInsight.BlockUtils;
@@ -14,6 +14,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.rename.inplace.VariableInplaceRenamer;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.PsiReplacementUtil;
 import com.siyeh.ig.callMatcher.CallMapper;
 import com.siyeh.ig.callMatcher.CallMatcher;
@@ -40,7 +41,6 @@ final class ImmutableCollectionModelUtils {
     if (type == null) return null;
     if (!CodeBlockSurrounder.canSurround(call)) return null;
     String assignedVariable = getAssignedVariable(call);
-    PsiExpression[] args = call.getArgumentList().getExpressions();
     PsiMethod method = call.resolveMethod();
     if (method == null) return null;
     PsiClassType classType = ObjectUtils.tryCast(call.getType(), PsiClassType.class);
@@ -50,7 +50,8 @@ final class ImmutableCollectionModelUtils {
       .map(PsiUtil::resolveClassInClassTypeOnly)
       .anyMatch(aClass -> isNonResolvedTypeParameter(aClass, call, resolveHelper));
     if (hasNonResolvedTypeParams) return null;
-    if ("ofEntries".equals(method.getName()) && Arrays.stream(args).anyMatch(arg -> extractPutArgs(arg) == null)) return null;
+    PsiExpression[] args = call.getArgumentList().getExpressions();
+    if ("ofEntries".equals(method.getName()) && ContainerUtil.exists(args, arg -> extractPutArgs(arg) == null)) return null;
     return new ImmutableCollectionModel(call, type, method, assignedVariable);
   }
 
@@ -179,8 +180,8 @@ final class ImmutableCollectionModelUtils {
       String assignedVariable = model.myAssignedVariable;
       if (assignedVariable != null) {
         String initializerText = model.myType.getInitializerText(model.myIsVarArgCall ? null : call.getText());
-        PsiReplacementUtil.replaceExpressionAndShorten(call, initializerText, new CommentTracker());
         PsiElement anchor = addUpdates(assignedVariable, model, statement);
+        PsiReplacementUtil.replaceExpressionAndShorten(call, initializerText, new CommentTracker());
         if (myEditor != null) myEditor.getCaretModel().moveToOffset(anchor.getTextRange().getEndOffset());
       }
       else {
@@ -250,7 +251,7 @@ final class ImmutableCollectionModelUtils {
     private static List<String> createUpdates(@NotNull String name, @NotNull ImmutableCollectionModel model) {
       boolean isMapOfEntriesCall = "ofEntries".equals(model.myCall.getMethodExpression().getReferenceName());
       List<String> updates = new ArrayList<>();
-      PsiExpression[] args = model.myArgs;
+      PsiExpression[] args = model.myCall.getArgumentList().getExpressions();
       for (int i = 0; i < args.length; i++) {
         PsiExpression arg = args[i];
         if (model.myType != CollectionType.MAP) {
@@ -297,7 +298,6 @@ final class ImmutableCollectionModelUtils {
     private PsiMethodCallExpression myCall;
     private final CollectionType myType;
     private final boolean myIsVarArgCall;
-    private final PsiExpression[] myArgs;
     private final String myAssignedVariable;
 
     @Contract(pure = true)
@@ -308,7 +308,6 @@ final class ImmutableCollectionModelUtils {
       myCall = call;
       myType = type;
       myIsVarArgCall = !method.isVarArgs() || MethodCallUtils.isVarArgCall(call);
-      myArgs = call.getArgumentList().getExpressions();
       myAssignedVariable = assignedVariable;
     }
   }

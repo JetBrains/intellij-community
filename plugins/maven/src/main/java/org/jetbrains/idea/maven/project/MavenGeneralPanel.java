@@ -2,11 +2,13 @@
 package org.jetbrains.idea.maven.project;
 
 import com.intellij.CommonBundle;
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.PanelWithAnchor;
 import com.intellij.ui.components.JBLabel;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -39,12 +41,15 @@ public class MavenGeneralPanel implements PanelWithAnchor, MavenSettingsObservab
   private JComponent anchor;
 
   private JCheckBox showDialogWithAdvancedSettingsCheckBox;
+  private JCheckBox useMavenConfigCheckBox;
+  private JBLabel mavenConfigWarningLabel;
   private boolean isShowAdvancedSettingsCheckBox = false;
 
   public MavenGeneralPanel() {
     fillOutputLevelCombobox();
     fillChecksumPolicyCombobox();
     fillFailureBehaviorCombobox();
+    fillUseMavenConfigGroup();
     setAnchor(myMultiProjectBuildFailPolicyLabel);
   }
 
@@ -66,6 +71,12 @@ public class MavenGeneralPanel implements PanelWithAnchor, MavenSettingsObservab
                           each -> Pair.create(each.getDisplayString(), each));
   }
 
+  private void fillUseMavenConfigGroup() {
+    useMavenConfigCheckBox.addChangeListener(e -> mavenConfigWarningLabel.setVisible(useMavenConfigCheckBox.isSelected()));
+    mavenConfigWarningLabel.setIcon(AllIcons.General.BalloonWarning12);
+    mavenConfigWarningLabel.setComponentStyle(UIUtil.ComponentStyle.SMALL);
+    mavenConfigWarningLabel.setVerticalTextPosition(SwingConstants.TOP);
+  }
 
   public void showCheckBoxWithAdvancedSettings() {
     isShowAdvancedSettingsCheckBox = true;
@@ -80,7 +91,6 @@ public class MavenGeneralPanel implements PanelWithAnchor, MavenSettingsObservab
 
   protected void setData(MavenGeneralSettings data) {
     data.beginUpdate();
-
     data.setWorkOffline(checkboxWorkOffline.isSelected());
     mavenPathsForm.setData(data);
 
@@ -96,6 +106,7 @@ public class MavenGeneralPanel implements PanelWithAnchor, MavenSettingsObservab
     data.setThreads(threadsEditor.getText());
 
     data.setShowDialogWithAdvancedSettings(showDialogWithAdvancedSettingsCheckBox.isSelected());
+    data.setUseMavenConfig(useMavenConfigCheckBox.isSelected());
 
     data.endUpdate();
   }
@@ -117,6 +128,9 @@ public class MavenGeneralPanel implements PanelWithAnchor, MavenSettingsObservab
     ComboBoxUtil.select(pluginUpdatePolicyComboModel, data.getPluginUpdatePolicy());
 
     showDialogWithAdvancedSettingsCheckBox.setSelected(data.isShowDialogWithAdvancedSettings());
+
+    useMavenConfigCheckBox.setSelected(data.isUseMavenConfig());
+    mavenConfigWarningLabel.setVisible(useMavenConfigCheckBox.isSelected());
   }
 
   @Nls
@@ -154,5 +168,6 @@ public class MavenGeneralPanel implements PanelWithAnchor, MavenSettingsObservab
     watcher.registerComponent("checksumPolicy", checksumPolicyCombo);
     watcher.registerComponent("failPolicy", failPolicyCombo);
     watcher.registerComponent("showDialogWithAdvancedSettings", showDialogWithAdvancedSettingsCheckBox);
+    watcher.registerComponent("useMavenConfigCheckBox", useMavenConfigCheckBox);
   }
 }

@@ -8,6 +8,7 @@ import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.configurations.UnknownRunConfiguration;
 import com.intellij.execution.impl.RunConfigurationBeforeRunProvider.RunConfigurableBeforeRunTask;
+import com.intellij.execution.impl.statistics.RunConfigurationOptionUsagesCollector;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext;
 import com.intellij.openapi.project.Project;
@@ -92,7 +93,8 @@ public final class BeforeRunStepsPanel extends JPanel {
           clonedTasks.add(task);
           myModel.setElementAt(task, selection.getIndex());
         }
-
+        RunConfigurationOptionUsagesCollector.logEditBeforeRunTask(
+          myRunConfiguration.getProject(), myRunConfiguration.getType().getId(), task.getProviderId().getClass());
         selection.getProvider().configureTask(button.getDataContext(), myRunConfiguration, task)
           .onSuccess(changed -> {
             if (changed) {
@@ -120,6 +122,18 @@ public final class BeforeRunStepsPanel extends JPanel {
       @Override
       public boolean isEnabled(@NotNull AnActionEvent e) {
         return checkBeforeRunTasksAbility(true);
+      }
+    });
+
+    myDecorator.setRemoveAction(new AnActionButtonRunnable() {
+      @Override
+      public void run(AnActionButton button) {
+        BeforeRunTaskAndProvider selection = getSelection();
+        if (selection != null) {
+          RunConfigurationOptionUsagesCollector.logRemoveBeforeRunTask(
+            myRunConfiguration.getProject(), myRunConfiguration.getType().getId(), selection.getProvider().getClass());
+          ListUtil.removeSelectedItems(myList);
+        }
       }
     });
 
@@ -185,9 +199,7 @@ public final class BeforeRunStepsPanel extends JPanel {
   }
 
   private void updateText() {
-    int count = (myShowSettingsBeforeRunCheckBox.isSelected() ? 1 : 0)
-      + (myActivateToolWindowBeforeRunCheckBox.isSelected() ? 1 : 0)
-      + myModel.getSize();
+    int count = myModel.getSize();
     String title = ExecutionBundle.message("before.launch.panel.title");
     String suffix = count == 0 || isVisible() ? "" : ExecutionBundle.message("before.launch.panel.title.suffix", count);
     myListener.titleChanged(title + suffix);
@@ -266,6 +278,8 @@ public final class BeforeRunStepsPanel extends JPanel {
                                               ExecutionBundle.message("warning.common.title"), JOptionPane.WARNING_MESSAGE);
                 return;
               }
+              RunConfigurationOptionUsagesCollector.logAddBeforeRunTask(
+                myRunConfiguration.getProject(), myRunConfiguration.getType().getId(), provider.getClass());
               addTask(task);
               myListener.fireStepsBeforeRunChanged();
             });
@@ -324,12 +338,16 @@ public final class BeforeRunStepsPanel extends JPanel {
       super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
       if (value instanceof BeforeRunTask) {
         BeforeRunTask<?> task = (BeforeRunTask<?>)value;
-        BeforeRunTaskProvider<BeforeRunTask<?>> provider = getProvider(myRunConfiguration.getProject(), task.getProviderId());
-        if (provider != null) {
-          Icon icon = provider.getTaskIcon(task);
-          setIcon(icon != null ? icon : provider.getIcon());
-          setText(provider.getDescription(task));
+        //noinspection rawtypes
+        BeforeRunTaskProvider provider = getProvider(myRunConfiguration.getProject(), task.getProviderId());
+        if (provider == null) {
+          provider = new UnknownBeforeRunTaskProvider(task.getProviderId().toString());
         }
+        //noinspection unchecked
+        Icon icon = provider.getTaskIcon(task);
+        setIcon(icon != null ? icon : provider.getIcon());
+        //noinspection unchecked
+        setText(provider.getDescription(task));
       }
       return this;
     }

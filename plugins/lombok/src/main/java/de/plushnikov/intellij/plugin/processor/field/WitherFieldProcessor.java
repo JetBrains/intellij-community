@@ -8,8 +8,10 @@ import de.plushnikov.intellij.plugin.problem.ProblemBuilder;
 import de.plushnikov.intellij.plugin.processor.LombokPsiElementUsage;
 import de.plushnikov.intellij.plugin.processor.clazz.constructor.RequiredArgsConstructorProcessor;
 import de.plushnikov.intellij.plugin.psi.LombokLightMethodBuilder;
+import de.plushnikov.intellij.plugin.psi.LombokLightModifierList;
 import de.plushnikov.intellij.plugin.psi.LombokLightParameter;
 import de.plushnikov.intellij.plugin.quickfix.PsiQuickFixFactory;
+import de.plushnikov.intellij.plugin.thirdparty.LombokCopyableAnnotations;
 import de.plushnikov.intellij.plugin.thirdparty.LombokUtils;
 import de.plushnikov.intellij.plugin.util.LombokProcessorUtil;
 import de.plushnikov.intellij.plugin.util.PsiAnnotationSearchUtil;
@@ -22,8 +24,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
-public class WitherFieldProcessor extends AbstractFieldProcessor {
-
+public final class WitherFieldProcessor extends AbstractFieldProcessor {
   public WitherFieldProcessor() {
     super(PsiMethod.class, LombokClassNames.WITHER, LombokClassNames.WITH);
   }
@@ -185,8 +186,8 @@ public class WitherFieldProcessor extends AbstractFieldProcessor {
       final LombokLightParameter methodParameter = new LombokLightParameter(psiFieldName, psiFieldType, methodBuilder);
       methodBuilder.withParameter(methodParameter);
 
-      PsiModifierList methodParameterModifierList = methodParameter.getModifierList();
-      copyCopyableAnnotations(psiField, methodParameterModifierList, LombokUtils.BASE_COPYABLE_ANNOTATIONS);
+      LombokLightModifierList methodParameterModifierList = methodParameter.getModifierList();
+      copyCopyableAnnotations(psiField, methodParameterModifierList, LombokCopyableAnnotations.BASE_COPYABLE);
       copyOnXAnnotations(witherAnnotation, methodParameterModifierList, "onParam");
 
       if (psiFieldContainingClass.hasModifierProperty(PsiModifier.ABSTRACT)) {
@@ -194,7 +195,7 @@ public class WitherFieldProcessor extends AbstractFieldProcessor {
       } else {
         final String paramString = getConstructorCall(psiField, psiFieldContainingClass);
         final String blockText = String.format("return this.%s == %s ? this : new %s(%s);", psiFieldName, psiFieldName, returnType.getCanonicalText(), paramString);
-        methodBuilder.withBody(PsiMethodUtil.createCodeBlockFromText(blockText, methodBuilder));
+        methodBuilder.withBodyText(blockText);
       }
     }
     return methodBuilder;

@@ -1,0 +1,9 @@
+package test
+
+class A {
+    companion object {
+        val b = B()
+    }
+}
+
+class B

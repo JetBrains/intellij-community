@@ -28,9 +28,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-/**
- * @author yole
- */
+
 public class PyBlockEvaluator {
   @NotNull
   private final PyEvaluationResult myEvaluationResult = new PyEvaluationResult();

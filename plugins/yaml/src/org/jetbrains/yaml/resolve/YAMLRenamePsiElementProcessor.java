@@ -7,6 +7,7 @@ import com.intellij.psi.PsiReference;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.rename.RenamePsiElementProcessor;
 import com.intellij.util.containers.MultiMap;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.yaml.YAMLBundle;
 import org.jetbrains.yaml.psi.YAMLAnchor;
@@ -40,7 +41,7 @@ public class YAMLRenamePsiElementProcessor extends RenamePsiElementProcessor {
     // use2: *cur
 
     Predicate<YAMLAnchor> hasNewName = a -> a.getName().equals(newName);
-    Optional<YAMLAnchor> prevOpt = allAnchors.subList(0, idx).stream().filter(hasNewName).reduce((x1, x2) -> x2);
+    Optional<YAMLAnchor> prevOpt = StreamEx.ofReversed(allAnchors.subList(0, idx)).filter(hasNewName).findFirst();
     if (prevOpt.isPresent()) {
       YAMLAnchor prev = prevOpt.get();
       findReferences(prev, prev.getUseScope(), false).stream()

@@ -39,13 +39,6 @@ final class StatisticsJobsScheduler implements ApplicationInitializedListener {
   private static final int CHECK_STATISTICS_PROVIDERS_DELAY_IN_MIN = 1;
   private static final int CHECK_EXTERNAL_UPLOADER_DELAY_IN_MIN = 3;
 
-  public static final int LOG_APPLICATION_STATES_INITIAL_DELAY_IN_MIN = 10;
-  public static final int LOG_APPLICATION_STATES_DELAY_IN_MIN = 24 * 60;
-  public static final int LOG_PROJECTS_STATES_INITIAL_DELAY_IN_MIN = 15;
-  public static final int LOG_PROJECTS_STATES_DELAY_IN_MIN = 12 * 60;
-
-  private static final Map<Project, Future<?>> myPersistStatisticsSessionsMap = Collections.synchronizedMap(new HashMap<>());
-
   StatisticsJobsScheduler() {
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       throw ExtensionNotApplicableException.INSTANCE;
@@ -61,7 +54,6 @@ final class StatisticsJobsScheduler implements ApplicationInitializedListener {
 
     checkPreviousExternalUploadResult();
     runEventLogStatisticsService();
-    runStatesLogging();
     runValidationRulesUpdate();
 
     StatisticsEventLogMigration.performMigration();
@@ -88,7 +80,6 @@ final class StatisticsJobsScheduler implements ApplicationInitializedListener {
     }, CHECK_EXTERNAL_UPLOADER_DELAY_IN_MIN, TimeUnit.MINUTES);
   }
 
-
   private static void runEventLogStatisticsService() {
     JobScheduler.getScheduler().schedule(() -> {
       final List<StatisticsEventLoggerProvider> providers = StatisticsEventLogProviderUtil.getEventLogProviders();
@@ -99,38 +90,6 @@ final class StatisticsJobsScheduler implements ApplicationInitializedListener {
         }
       }
     }, CHECK_STATISTICS_PROVIDERS_DELAY_IN_MIN, TimeUnit.MINUTES);
-  }
-
-  private static void runStatesLogging() {
-    if (!StatisticsUploadAssistant.isSendAllowed()) return;
-    JobScheduler.getScheduler().scheduleWithFixedDelay(() -> FUStateUsagesLogger.create().logApplicationStates(),
-                                                       LOG_APPLICATION_STATES_INITIAL_DELAY_IN_MIN,
-                                                       LOG_APPLICATION_STATES_DELAY_IN_MIN, TimeUnit.MINUTES);
-
-    MessageBusConnection connection = ApplicationManager.getApplication().getMessageBus().connect();
-    connection.subscribe(ProjectManager.TOPIC, new ProjectManagerListener() {
-      @Override
-      public void projectOpened(@NotNull Project project) {
-        ScheduledFuture<?> scheduledFuture = JobScheduler.getScheduler().schedule(() -> {
-          //wait until initial indexation will be finished
-          DumbService.getInstance(project).runWhenSmart(() -> {
-            ScheduledFuture<?> future = JobScheduler.getScheduler()
-              .scheduleWithFixedDelay(() -> FUStateUsagesLogger.create().logProjectStates(project, new EmptyProgressIndicator()),
-                                      0, LOG_PROJECTS_STATES_DELAY_IN_MIN, TimeUnit.MINUTES);
-            myPersistStatisticsSessionsMap.put(project, future);
-          });
-        }, LOG_PROJECTS_STATES_INITIAL_DELAY_IN_MIN, TimeUnit.MINUTES);
-        myPersistStatisticsSessionsMap.put(project, scheduledFuture);
-      }
-
-      @Override
-      public void projectClosed(@NotNull Project project) {
-        Future<?> future = myPersistStatisticsSessionsMap.remove(project);
-        if (future != null) {
-          future.cancel(true);
-        }
-      }
-    });
   }
 
   private static void runStatisticsServiceWithDelay(@NotNull final StatisticsService statisticsService, long delayInMs) {

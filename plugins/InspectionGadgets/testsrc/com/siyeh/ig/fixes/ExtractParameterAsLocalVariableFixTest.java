@@ -132,7 +132,22 @@ public class ExtractParameterAsLocalVariableFixTest extends IGQuickFixesTestCase
     );
   }
 
-  public void testJavaDoccedParameter() {
+  public void testMultiCatchBlock() {
+    assertQuickfixNotAvailable(
+      InspectionGadgetsBundle.message("extract.parameter.as.local.variable.quickfix"),
+      "import java.io.*;\n" +
+      "class X {\n" +
+      "    void m() {\n" +
+      "        try (InputStream in = null) {\n" +
+      "        } catch (IOException | RuntimeException e) {\n" +
+      "            e/**/ = null;\n" +
+      "            System.out.println(e);\n" +
+      "        }\n" +
+      "    }\n" +
+      "}");
+  }
+
+    public void testJavaDoccedParameter() {
     doTest(InspectionGadgetsBundle.message("extract.parameter.as.local.variable.quickfix"),
            "class Foo {\n" +
            "    /**\n" +

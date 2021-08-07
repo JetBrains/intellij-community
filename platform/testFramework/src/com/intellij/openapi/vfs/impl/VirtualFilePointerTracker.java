@@ -1,20 +1,17 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vfs.impl;
 
-import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.SystemInfoRt;
+import com.intellij.openapi.util.text.Strings;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointer;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
-import it.unimi.dsi.fastutil.Hash;
-import it.unimi.dsi.fastutil.objects.ObjectOpenCustomHashSet;
-import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet;
+import com.intellij.util.containers.CollectionFactory;
+import com.intellij.util.containers.HashingStrategy;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 /**
  * Tracks leaks of file pointers from {@link VirtualFilePointerManagerImpl}
@@ -34,9 +31,9 @@ import java.util.Set;
  */
 @TestOnly
 public final class VirtualFilePointerTracker {
-  private static final Set<VirtualFilePointer> storedPointers = new ReferenceOpenHashSet<>();
-  private static Throwable trace;
-  private static boolean isTracking; // true when storePointers() was called but before assertPointersDisposed(). false otherwise
+  private final Set<VirtualFilePointer> storedPointers = Collections.newSetFromMap(new IdentityHashMap<>());
+  private Throwable trace;
+  private boolean isTracking; // true when storePointers() was called but before assertPointersDisposed(). false otherwise
 
   public VirtualFilePointerTracker() {
     storePointers();
@@ -50,7 +47,6 @@ public final class VirtualFilePointerTracker {
     trace = new Throwable();
     storedPointers.clear();
     storedPointers.addAll(dumpAllPointers());
-    //System.out.println("VFPT.storePointers(" + storedPointers + ")");
     isTracking = true;
   }
 
@@ -68,17 +64,25 @@ public final class VirtualFilePointerTracker {
     }
 
     try {
-      Set<VirtualFilePointer> leaked = new ObjectOpenCustomHashSet<>(pointers, new Hash.Strategy<>() {
+      Set<VirtualFilePointer> leaked = CollectionFactory.createCustomHashingStrategySet(new HashingStrategy<>() {
         @Override
         public int hashCode(@Nullable VirtualFilePointer pointer) {
-          return pointer == null ? 0 : FileUtil.PATH_HASHING_STRATEGY.computeHashCode(pointer.getUrl());
+          if (pointer == null) {
+            return 0;
+          }
+          String url = pointer.getUrl();
+          return SystemInfoRt.isFileSystemCaseSensitive ? url.hashCode() : Strings.stringHashCodeInsensitive(url);
         }
 
         @Override
         public boolean equals(VirtualFilePointer o1, VirtualFilePointer o2) {
-          return o1 == o2 || (o1 != null && o2 != null && FileUtil.PATH_HASHING_STRATEGY.equals(o1.getUrl(), o2.getUrl()));
+          return o1 == o2 || (o1 != null && o2 != null &&
+                              (SystemInfoRt.isFileSystemCaseSensitive
+                               ? o1.getUrl().equals(o2.getUrl())
+                               : o1.getUrl().equalsIgnoreCase(o2.getUrl())));
         }
       });
+      leaked.addAll(pointers);
       leaked.removeAll(storedPointers);
 
       for (VirtualFilePointer pointer : leaked) {

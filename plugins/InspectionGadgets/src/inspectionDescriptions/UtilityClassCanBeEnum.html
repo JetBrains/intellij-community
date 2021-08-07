@@ -1,8 +1,21 @@
 <html>
 <body>
-Reports utility classes that can be converted to an <b>enum</b>.
-To avoid code coverage problems in <b>private</b> constructors, some coding styles mandate that utility classes are implemented as enums.
+Reports utility classes that can be converted to enums.
+<p>Some coding style guidelines declare to implement utility classes as enums
+  to avoid code coverage issues in <code>private</code> constructors.</p>
+<p><b>Example:</b></p>
+<pre><code>
+  class StringUtils {
+    public static final String EMPTY = "";
+  }
+</code></pre>
+<p>After the quick-fix is applied:</p>
+<pre><code>
+  enum StringUtils {
+    ;
+    public static final String EMPTY = "";
+  }
+</code></pre>
 <!-- tooltip end -->
-<p>
 </body>
 </html>

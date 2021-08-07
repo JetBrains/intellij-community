@@ -7,6 +7,7 @@ import com.intellij.ide.ui.laf.darcula.DarculaLaf;
 import com.intellij.ide.ui.laf.darcula.DarculaUIUtil;
 import com.intellij.openapi.actionSystem.ActionToolbar;
 import com.intellij.openapi.actionSystem.ex.ComboBoxAction;
+import com.intellij.openapi.actionSystem.impl.segmentedActionBar.SegmentedActionToolbarComponent;
 import com.intellij.openapi.actionSystem.impl.segmentedActionBar.SegmentedBarActionComponent;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NlsSafe;
@@ -92,6 +93,15 @@ public class DarculaButtonUI extends BasicButtonUI {
   }
 
   /**
+   * @deprecated Use isGotItButton instead
+   */
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  public static boolean isBorderless(Component c) {
+    return isGotItButton(c);
+  }
+
+  /**
    * @deprecated Use isComboAction instead
    */
   @Deprecated
@@ -125,8 +135,8 @@ public class DarculaButtonUI extends BasicButtonUI {
     }
     Rectangle r = new Rectangle(c.getSize());
 
-    if(SegmentedBarActionComponent.Companion.isCustomBar(c)) {
-      return SegmentedBarActionComponent.Companion.paintButtonDecorations(g, c, getBackground(c, r));
+    if(SegmentedActionToolbarComponent.Companion.isCustomBar(c)) {
+      return SegmentedActionToolbarComponent.Companion.paintButtonDecorations(g, c, getBackground(c, r));
     }
 
     JBInsets.removeFrom(r, isSmallVariant(c) || isGotItButton(c) ? c.getInsets() : JBUI.insets(1));

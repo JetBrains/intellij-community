@@ -1,7 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.actions;
 
-import com.intellij.openapi.module.EffectiveLanguageLevelUtil;
+import com.intellij.openapi.module.LanguageLevelUtil;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.libraries.Library;
@@ -14,6 +14,7 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.concurrency.Promise;
 import org.jetbrains.idea.maven.dom.MavenDomWithIndicesTestCase;
 import org.jetbrains.idea.maven.importing.MavenProjectModelModifier;
+import org.junit.Test;
 
 import java.util.Collections;
 import java.util.regex.Matcher;
@@ -23,6 +24,7 @@ public class MavenProjectModelModifierTest extends MavenDomWithIndicesTestCase {
   private static final ExternalLibraryDescriptor COMMONS_IO_LIBRARY_DESCRIPTOR_2_4 =
     new ExternalLibraryDescriptor("commons-io", "commons-io", "2.4", "2.4");
 
+  @Test
   public void testAddExternalLibraryDependency() {
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
@@ -38,6 +40,7 @@ public class MavenProjectModelModifierTest extends MavenDomWithIndicesTestCase {
     assertModuleLibDep("project", "Maven: junit:junit:" + version);
   }
 
+  @Test 
   public void testAddExternalLibraryDependencyWithEqualMinAndMaxVersions() {
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
@@ -52,6 +55,7 @@ public class MavenProjectModelModifierTest extends MavenDomWithIndicesTestCase {
     assertModuleLibDep("project", "Maven: commons-io:commons-io:2.4");
   }
 
+  @Test 
   public void testAddManagedLibraryDependency() {
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
@@ -75,6 +79,7 @@ public class MavenProjectModelModifierTest extends MavenDomWithIndicesTestCase {
     assertModuleLibDep("project", "Maven: commons-io:commons-io:2.4");
   }
 
+  @Test 
   public void testAddManagedLibraryDependencyWithDifferentScope() {
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
@@ -98,6 +103,7 @@ public class MavenProjectModelModifierTest extends MavenDomWithIndicesTestCase {
     assertModuleLibDepScope("project", "Maven: commons-io:commons-io:2.4", DependencyScope.COMPILE);
   }
 
+  @Test 
   public void testAddLibraryDependencyReleaseVersion() {
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
@@ -120,6 +126,7 @@ public class MavenProjectModelModifierTest extends MavenDomWithIndicesTestCase {
     assertNotNull(dep);
   }
 
+  @Test 
   public void testAddModuleDependency() {
     createTwoModulesPom("m1", "m2");
     VirtualFile m1 = createModulePom("m1", "<groupId>test</groupId>" +
@@ -137,6 +144,7 @@ public class MavenProjectModelModifierTest extends MavenDomWithIndicesTestCase {
     assertModuleModuleDeps("m1", "m2");
   }
 
+  @Test 
   public void testAddLibraryDependency() {
     createTwoModulesPom("m1", "m2");
     VirtualFile m1 = createModulePom("m1", "<groupId>test</groupId>" +
@@ -166,13 +174,14 @@ public class MavenProjectModelModifierTest extends MavenDomWithIndicesTestCase {
     assertModuleLibDep("m1", libName);
   }
 
+  @Test 
   public void testChangeLanguageLevel() {
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
                   "<version>1</version>");
 
     Module module = getModule("project");
-    assertEquals(LanguageLevel.JDK_1_5, EffectiveLanguageLevelUtil.getEffectiveLanguageLevel(module));
+    assertEquals(LanguageLevel.JDK_1_5, LanguageLevelUtil.getEffectiveLanguageLevel(module));
     Promise<Void> result = getExtension().changeLanguageLevel(module, LanguageLevel.JDK_1_8);
     assertNotNull(result);
     XmlTag tag = findTag("project.build.plugins.plugin");
@@ -184,10 +193,18 @@ public class MavenProjectModelModifierTest extends MavenDomWithIndicesTestCase {
     assertEquals("8", configuration.getSubTagText("target"));
 
     waitUntilImported(result);
-    assertEquals(LanguageLevel.JDK_1_8, EffectiveLanguageLevelUtil.getEffectiveLanguageLevel(module));
+    assertEquals(LanguageLevel.JDK_1_8, LanguageLevelUtil.getEffectiveLanguageLevel(module));
+  }
 
-    
-    getExtension().changeLanguageLevel(module, LanguageLevel.values()[LanguageLevel.HIGHEST.ordinal() + 1]);
+  @Test
+  public void testChangeLanguageLevelPreview() {
+    importProject("<groupId>test</groupId>" +
+                  "<artifactId>project</artifactId>" +
+                  "<version>1</version>");
+    Module module = getModule("project");
+    assertEquals(LanguageLevel.JDK_1_5, LanguageLevelUtil.getEffectiveLanguageLevel(module));
+    Promise<Void> result = getExtension().changeLanguageLevel(module, LanguageLevel.values()[LanguageLevel.HIGHEST.ordinal() + 1]);
+    waitUntilImported(result);
     assertEquals("--enable-preview",
                  findTag("project.build.plugins.plugin")
                    .findFirstSubTag("configuration")

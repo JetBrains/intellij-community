@@ -13,15 +13,15 @@ public interface DfPrimitiveType extends DfType {
   PsiPrimitiveType getPsiType();
 
   /**
-   * Cast this type to the specified primitive type 
+   * Cast this type to the specified primitive type
    * @param type target type
    * @return result of the cast
    */
   default @NotNull DfType castTo(@NotNull PsiPrimitiveType type) {
     Object value = TypeConversionUtil.computeCastTo(getConstantOfType(Object.class), type);
     if (value != null) {
-      return DfTypes.constant(value, type);
+      return DfTypes.primitiveConstant(value);
     }
-    return DfTypes.TOP;
+    return DfType.TOP;
   }
 }

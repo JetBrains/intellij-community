@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.codeInsight.daemon;
 
 import com.intellij.codeInsight.daemon.LightDaemonAnalyzerTestCase;
@@ -48,11 +48,13 @@ public class LightAdvLVTIHighlightingTest extends LightDaemonAnalyzerTestCase {
   }
 
   public void testVarClassNameConflicts() { doTest(); }
+  public void testVarUnknownClass() { doTest(); }
   public void testStandaloneInVarContext() { doTest(); }
 
   public void testUpwardProjection() { doTest(); }
 
   public void testFailedInferenceWithLeftTypeVar() { doTest(); }
+  public void testDisjunctionType() { doTest(); }
 
   public void testVarInLambdaParameters() {
     setLanguageLevel(LanguageLevel.JDK_11);

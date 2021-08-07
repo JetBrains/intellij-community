@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.jps.incremental.groovy;
 
+import com.intellij.openapi.util.io.FileFilters;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.groovy.compiler.rt.OutputItem;
@@ -53,7 +54,8 @@ class CompilingGroovycRunner extends JpsGroovycRunner<JavaSourceRootDescriptor, 
     final BuildRootIndex rootsIndex = context.getProjectDescriptor().getBuildRootIndex();
     for (ModuleBuildTarget target : generationOutputs.keySet()) {
       File root = new File(generationOutputs.get(target));
-      rootsIndex.associateTempRoot(context, target, new JavaSourceRootDescriptor(root, target, true, true, "", Collections.emptySet()));
+      rootsIndex.associateTempRoot(context, target, new JavaSourceRootDescriptor(root, target, true, true, "", Collections.emptySet(),
+                                                                                 FileFilters.EVERYTHING));
     }
   }
 

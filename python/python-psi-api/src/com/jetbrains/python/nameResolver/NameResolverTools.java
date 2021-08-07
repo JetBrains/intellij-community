@@ -237,7 +237,8 @@ public final class NameResolverTools {
       // Trying to use no implicit context if possible...
       final PsiReference reference;
       if (param instanceof PyReferenceOwner) {
-        reference = ((PyReferenceOwner)param).getReference(PyResolveContext.defaultContext());
+        final var context = TypeEvalContext.codeInsightFallback(param.getProject());
+        reference = ((PyReferenceOwner)param).getReference(PyResolveContext.defaultContext(context));
       }
       else {
         reference = param.getReference();

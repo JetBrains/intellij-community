@@ -1,8 +1,6 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.platform;
 
-import com.intellij.openapi.extensions.AbstractExtensionPointBean;
-import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.RequiredElement;
 import com.intellij.util.xmlb.annotations.Attribute;
 
@@ -11,10 +9,7 @@ import com.intellij.util.xmlb.annotations.Attribute;
  *
  * @author Dmitry Avdeev
  */
-public class ProjectTemplateEP extends AbstractExtensionPointBean {
-
-  public static final ExtensionPointName<ProjectTemplateEP> EP_NAME = ExtensionPointName.create("com.intellij.projectTemplate");
-
+public final class ProjectTemplateEP {
   /**
    * If the category attribute is set to {@code true}, specifies the title under which the template appears in the first page
    * of the new project dialog. If the category attribute is set to {@code false}, specifies the module type ID for which

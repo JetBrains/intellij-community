@@ -104,6 +104,9 @@ common.attrs.aria.implicit.listitem |=
 	&	aria.state.expanded?
 	)
 
+common.attrs.aria.implicit.math |=
+	(	aria.state.expanded? )
+
 common.attrs.aria.implicit.option |=
 	(	aria.prop.posinset?
 	&	aria.prop.setsize?
@@ -144,6 +147,14 @@ common.attrs.aria.implicit.searchbox |=
 	&	aria.prop.placeholder?
 	&	aria.prop.readonly?
 	&	aria.prop.required?
+	)
+
+common.attrs.aria.implicit.separator |=
+	(	aria.prop.valuemax?
+	&	aria.prop.valuemin?
+	&	aria.prop.valuenow?
+	&	aria.prop.valuetext?
+	&	aria.prop.orientation?
 	)
 
 common.attrs.aria.implicit.slider |=
@@ -276,34 +287,9 @@ common.attrs.aria.implicit.navigation |= common.attrs.aria.implicit.landmark
 ## dropeffect
 	aria.state.dropeffect =
 		attribute aria-dropeffect
-			{	token "none" #default
-			| token "popup"
-			| token "execute"
-			|	list 
-				{	( string "copy" )
-				,	( string "execute" )?
-				}
-			|	list 
-				{	( string "move" )
-				,	( string "execute" )?
-				}
-			|	list 
-				{	( string "link" )
-				,	( string "execute" )?
-				}
-			|	list 
-				{	( string "execute" )
-				,	( string "copy" )
-				}
-			|	list 
-				{	( string "execute" )
-				,	( string "move" )
-				}
-			|	list 
-				{	( string "execute" )
-				,	( string "link" )
-				}
-			}
+			{	
+				list { ("copy" | "execute" | "link" | "move" | "none" | "popup") + } 
+		}
 
 ## expanded
 	aria.state.expanded =
@@ -1047,6 +1033,7 @@ common.attrs.aria.implicit.navigation |= common.attrs.aria.implicit.landmark
 			attribute role { string "math" }
 	
 	common.attrs.aria |= aria.math
+	common.attrs.aria.role.math |= aria.math
 
 ## menu
 	aria.menu =
@@ -1292,6 +1279,7 @@ common.attrs.aria.implicit.navigation |= common.attrs.aria.implicit.landmark
 			attribute role { string "scrollbar" }
 
 	common.attrs.aria |= aria.scrollbar
+	common.attrs.aria.role.scrollbar |= aria.scrollbar
 
 ## search
 	aria.search =

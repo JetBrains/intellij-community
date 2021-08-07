@@ -18,6 +18,7 @@ import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationType;
 import com.intellij.notification.Notifications;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.components.ComponentCategory;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
@@ -62,7 +63,8 @@ import java.util.function.Function;
 @State(
   name = "EditorColorsManagerImpl",
   storages = @Storage("colors.scheme.xml"),
-  additionalExportDirectory = EditorColorsManagerImpl.FILE_SPEC
+  additionalExportDirectory = EditorColorsManagerImpl.FILE_SPEC,
+  category = ComponentCategory.UI
 )
 @ApiStatus.Internal
 public final class EditorColorsManagerImpl extends EditorColorsManager implements PersistentStateComponent<EditorColorsManagerImpl.State> {
@@ -196,6 +198,7 @@ public final class EditorColorsManagerImpl extends EditorColorsManager implement
       loadSchemesFromThemes();
       initEditableDefaultSchemesCopies();
       initEditableBundledSchemesCopies();
+      ApplicationManager.getApplication().getMessageBus().syncPublisher(EditorColorsManagerListener.TOPIC).schemesReloaded();
     }
   }
 
@@ -234,15 +237,20 @@ public final class EditorColorsManagerImpl extends EditorColorsManager implement
       LOG.assertTrue(scheme != null, "Wizard scheme " + wizardEditorScheme + " not found");
     }
 
-    if (!themeIsCustomized && scheme == null && currentLaf instanceof UIThemeBasedLookAndFeelInfo) {
-      String schemeName = ((UIThemeBasedLookAndFeelInfo)currentLaf).getTheme().getEditorSchemeName();
-      if (schemeName != null) {
-        scheme = getScheme(schemeName);
+    if (!themeIsCustomized && scheme == null) {
+      if (currentLaf instanceof UIThemeBasedLookAndFeelInfo) {
+        String schemeName = ((UIThemeBasedLookAndFeelInfo)currentLaf).getTheme().getEditorSchemeName();
+        if (schemeName != null) {
+          scheme = getScheme(schemeName);
+        }
+      }
+      else if (currentLaf.getName().contains("Darcula")) {
+        scheme = getScheme("Darcula");
       }
     }
 
     if (scheme != null) {
-      setGlobalSchemeInner(scheme);
+      mySchemeManager.setCurrent(scheme, false);
     }
   }
 

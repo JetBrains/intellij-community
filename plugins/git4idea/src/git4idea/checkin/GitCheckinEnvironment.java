@@ -2,7 +2,6 @@
 package git4idea.checkin;
 
 import com.google.common.collect.HashMultiset;
-import com.intellij.CommonBundle;
 import com.intellij.diff.util.Side;
 import com.intellij.dvcs.DvcsUtil;
 import com.intellij.openapi.Disposable;
@@ -17,14 +16,12 @@ import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.CheckinProjectPanel;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.VcsRoot;
 import com.intellij.openapi.vcs.changes.*;
-import com.intellij.openapi.vcs.changes.ui.SelectFilePathsDialog;
 import com.intellij.openapi.vcs.checkin.CheckinChangeListSpecificComponent;
 import com.intellij.openapi.vcs.checkin.CheckinEnvironment;
 import com.intellij.openapi.vcs.ex.PartialCommitHelper;
@@ -38,13 +35,13 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.PairConsumer;
 import com.intellij.util.ThrowableConsumer;
 import com.intellij.util.concurrency.FutureResult;
+import com.intellij.util.containers.CollectionFactory;
 import com.intellij.vcs.commit.AmendCommitAware;
 import com.intellij.vcs.commit.EditedCommitDetails;
 import com.intellij.vcs.log.Hash;
 import com.intellij.vcs.log.VcsUser;
 import com.intellij.vcs.log.impl.HashImpl;
 import com.intellij.vcsUtil.VcsFileUtil;
-import com.intellij.vcsUtil.VcsUtil;
 import git4idea.GitUtil;
 import git4idea.GitVcs;
 import git4idea.changes.GitChangeUtils;
@@ -60,7 +57,6 @@ import git4idea.repo.GitCommitTemplateTracker;
 import git4idea.repo.GitRepository;
 import git4idea.repo.GitRepositoryManager;
 import git4idea.util.GitFileUtils;
-import it.unimi.dsi.fastutil.objects.ObjectOpenCustomHashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -251,8 +247,8 @@ public final class GitCheckinEnvironment implements CheckinEnvironment, AmendCom
 
     try {
       // Stage partial changes
-      Pair<Runnable, List<CommitChange>> partialAddResult = addPartialChangesToIndex(repository, changes);
-      Runnable callback = partialAddResult.first;
+      Pair<List<PartialCommitHelper>, List<CommitChange>> partialAddResult = addPartialChangesToIndex(repository, changes);
+      List<PartialCommitHelper> partialCommitHelpers = partialAddResult.first;
       Set<CommitChange> changedWithIndex = new HashSet<>(partialAddResult.second);
 
       // Stage case-only renames
@@ -260,31 +256,11 @@ public final class GitCheckinEnvironment implements CheckinEnvironment, AmendCom
       if (!exceptions.isEmpty()) return exceptions;
       changedWithIndex.addAll(caseOnlyRenameChanges);
 
-      if (!changedWithIndex.isEmpty() || Registry.is("git.force.commit.using.staging.area")) {
-        runWithMessageFile(myProject, root, message, messageFile -> exceptions.addAll(commitUsingIndex(repository, changes, changedWithIndex, messageFile)));
-        if (!exceptions.isEmpty()) return exceptions;
+      runWithMessageFile(myProject, root, message,
+                         messageFile -> exceptions.addAll(commitUsingIndex(repository, changes, changedWithIndex, messageFile)));
+      if (!exceptions.isEmpty()) return exceptions;
 
-        callback.run();
-      }
-      else {
-        try {
-          runWithMessageFile(myProject, root, message, messageFile -> {
-            List<FilePath> files = getPaths(changes);
-            commit(myProject, root, files, messageFile, GitCommitTemplateTracker.getInstance(myProject).exists(repository));
-          });
-        }
-        catch (VcsException ex) {
-          PartialOperation partialOperation = isMergeCommit(ex);
-          if (partialOperation == PartialOperation.NONE) {
-            throw ex;
-          }
-          runWithMessageFile(myProject, root, message, messageFile -> {
-            if (!mergeCommit(repository, changes, messageFile, exceptions, partialOperation)) {
-              throw ex;
-            }
-          });
-        }
-      }
+      applyPartialChanges(partialCommitHelpers);
 
       getRepositoryManager(myProject).updateRepository(root);
       if (isSubmodule(repository)) {
@@ -379,10 +355,10 @@ public final class GitCheckinEnvironment implements CheckinEnvironment, AmendCom
   }
 
   @NotNull
-  private Pair<Runnable, List<CommitChange>> addPartialChangesToIndex(@NotNull GitRepository repository,
-                                                                      @NotNull Collection<? extends CommitChange> changes) throws VcsException {
+  private Pair<List<PartialCommitHelper>, List<CommitChange>>
+  addPartialChangesToIndex(@NotNull GitRepository repository, @NotNull Collection<? extends CommitChange> changes) throws VcsException {
     Set<String> changelistIds = map2SetNotNull(changes, change -> change.changelistId);
-    if (changelistIds.isEmpty()) return Pair.create(EmptyRunnable.INSTANCE, emptyList());
+    if (changelistIds.isEmpty()) return Pair.create(emptyList(), emptyList());
     if (changelistIds.size() != 1) throw new VcsException(GitBundle.message("error.commit.cant.commit.multiple.changelists"));
     String changelistId = changelistIds.iterator().next();
 
@@ -446,9 +422,12 @@ public final class GitCheckinEnvironment implements CheckinEnvironment, AmendCom
       GitIndexUtil.write(repository, path, fileContent, isExecutable);
     }
 
+    return Pair.create(helpers, partialChanges);
+  }
 
-    Runnable callback = () -> ApplicationManager.getApplication().invokeLater(() -> {
-      for (PartialCommitHelper helper : helpers) {
+  private static void applyPartialChanges(@NotNull List<PartialCommitHelper> partialCommitHelpers) {
+    ApplicationManager.getApplication().invokeLater(() -> {
+      for (PartialCommitHelper helper : partialCommitHelpers) {
         try {
           helper.applyChanges();
         }
@@ -457,8 +436,6 @@ public final class GitCheckinEnvironment implements CheckinEnvironment, AmendCom
         }
       }
     });
-
-    return Pair.create(callback, partialChanges);
   }
 
   private static byte @NotNull [] convertDocumentContentToBytes(@NotNull GitRepository repository,
@@ -735,7 +712,7 @@ public final class GitCheckinEnvironment implements CheckinEnvironment, AmendCom
   private static void resetExcluded(@NotNull Project project,
                                     @NotNull VirtualFile root,
                                     @NotNull Collection<? extends ChangedPath> changes) throws VcsException {
-    Set<FilePath> allPaths = new ObjectOpenCustomHashSet<>(CASE_SENSITIVE_FILE_PATH_HASHING_STRATEGY);
+    Set<FilePath> allPaths = CollectionFactory.createCustomHashingStrategySet(CASE_SENSITIVE_FILE_PATH_HASHING_STRATEGY);
     for (ChangedPath change : changes) {
       addIfNotNull(allPaths, change.afterPath);
       addIfNotNull(allPaths, change.beforePath);
@@ -800,118 +777,6 @@ public final class GitCheckinEnvironment implements CheckinEnvironment, AmendCom
     }
   }
 
-  private boolean mergeCommit(@NotNull GitRepository repository,
-                              @NotNull Collection<? extends CommitChange> rootChanges,
-                              @NotNull File messageFile,
-                              @NotNull List<? super VcsException> exceptions,
-                              @NotNull PartialOperation partialOperation) {
-    Set<FilePath> added = map2SetNotNull(rootChanges, it -> it.afterPath);
-    Set<FilePath> removed = map2SetNotNull(rootChanges, it -> it.beforePath);
-    removed.removeAll(added);
-
-    HashSet<FilePath> realAdded = new HashSet<>();
-    HashSet<FilePath> realRemoved = new HashSet<>();
-    // perform diff
-    GitLineHandler diff = new GitLineHandler(repository.getProject(), repository.getRoot(), GitCommand.DIFF);
-    diff.setSilent(true);
-    diff.setStdoutSuppressed(true);
-    diff.addParameters("--diff-filter=ADMRUX", "--name-status", "--no-renames", "HEAD");
-    diff.endOptions();
-    String output;
-    try {
-      output = Git.getInstance().runCommand(diff).getOutputOrThrow();
-    }
-    catch (VcsException ex) {
-      exceptions.add(ex);
-      return false;
-    }
-    String rootPath = repository.getRoot().getPath();
-    for (StringTokenizer lines = new StringTokenizer(output, "\n", false); lines.hasMoreTokens(); ) {
-      String line = lines.nextToken().trim();
-      if (line.length() == 0) {
-        continue;
-      }
-      String[] tk = line.split("\t");
-      switch (tk[0].charAt(0)) {
-        case 'M':
-        case 'A':
-          realAdded.add(VcsUtil.getFilePath(rootPath + "/" + tk[1]));
-          break;
-        case 'D':
-          realRemoved.add(VcsUtil.getFilePath(rootPath + "/" + tk[1], false));
-          break;
-        default:
-          throw new IllegalStateException("Unexpected status: " + line);
-      }
-    }
-    realAdded.removeAll(added);
-    realRemoved.removeAll(removed);
-    if (realAdded.size() != 0 || realRemoved.size() != 0) {
-
-      final List<FilePath> files = new ArrayList<>();
-      files.addAll(realAdded);
-      files.addAll(realRemoved);
-      Ref<Boolean> mergeAll = new Ref<>();
-      try {
-        ApplicationManager.getApplication().invokeAndWait(() -> {
-          String message = GitBundle.message("commit.partial.merge.message", partialOperation.getIndex());
-          SelectFilePathsDialog dialog = new SelectFilePathsDialog(repository.getProject(), files, message, null,
-                                                                   GitBundle.message("button.commit.all.files"),
-                                                                   CommonBundle.getCancelButtonText(), false);
-          dialog.setTitle(GitBundle.message("commit.partial.merge.title"));
-          dialog.show();
-          mergeAll.set(dialog.isOK());
-        });
-      }
-      catch (RuntimeException ex) {
-        throw ex;
-      }
-      catch (Exception ex) {
-        throw new RuntimeException("Unable to invoke a message box on AWT thread", ex);
-      }
-      if (!mergeAll.get()) {
-        return false;
-      }
-      // update non-indexed files
-      if (!updateIndex(repository.getProject(), repository.getRoot(), realAdded, realRemoved, exceptions)) {
-        return false;
-      }
-      for (FilePath f : realAdded) {
-        VcsDirtyScopeManager.getInstance(repository.getProject()).fileDirty(f);
-      }
-      for (FilePath f : realRemoved) {
-        VcsDirtyScopeManager.getInstance(repository.getProject()).fileDirty(f);
-      }
-    }
-    // perform merge commit
-    try {
-      GitRepositoryCommitter committer = new GitRepositoryCommitter(repository, createCommitOptions());
-      committer.commitStaged(messageFile);
-    }
-    catch (VcsException ex) {
-      exceptions.add(ex);
-      return false;
-    }
-    return true;
-  }
-
-  /**
-   * Check if commit has failed due to unfinished merge or cherry-pick.
-   *
-   * @param ex an exception to examine
-   * @return true if exception means that there is a partial commit during merge
-   */
-  private static PartialOperation isMergeCommit(final VcsException ex) {
-    String message = ex.getMessage();
-    if (message.contains("cannot do a partial commit during a merge")) { //NON-NLS
-      return PartialOperation.MERGE;
-    }
-    if (message.contains("cannot do a partial commit during a cherry-pick")) { //NON-NLS
-      return PartialOperation.CHERRY_PICK;
-    }
-    return PartialOperation.NONE;
-  }
-
   /**
    * Update index (delete and remove files)
    *
@@ -922,19 +787,17 @@ public final class GitCheckinEnvironment implements CheckinEnvironment, AmendCom
    * @param exceptions a list of exceptions to update
    * @return true if index was updated successfully
    */
-  private static boolean updateIndex(final Project project,
-                                     final VirtualFile root,
-                                     final Collection<? extends FilePath> added,
-                                     final Collection<? extends FilePath> removed,
-                                     final List<? super VcsException> exceptions) {
-    boolean rc = true;
+  private static void updateIndex(final Project project,
+                                  final VirtualFile root,
+                                  final Collection<? extends FilePath> added,
+                                  final Collection<? extends FilePath> removed,
+                                  final List<? super VcsException> exceptions) {
     if (!removed.isEmpty()) {
       try {
         GitFileUtils.deletePaths(project, root, removed, "--ignore-unmatch", "--cached", "-r");
       }
       catch (VcsException ex) {
         exceptions.add(ex);
-        rc = false;
       }
     }
     if (!added.isEmpty()) {
@@ -943,10 +806,8 @@ public final class GitCheckinEnvironment implements CheckinEnvironment, AmendCom
       }
       catch (VcsException ex) {
         exceptions.add(ex);
-        rc = false;
       }
     }
-    return rc;
   }
 
   /**
@@ -1015,46 +876,6 @@ public final class GitCheckinEnvironment implements CheckinEnvironment, AmendCom
     return rc;
   }
 
-  private void commit(@NotNull Project project,
-                      @NotNull VirtualFile root,
-                      @NotNull Collection<? extends FilePath> files,
-                      @NotNull File messageFile,
-                      boolean cleanupMessage)
-    throws VcsException {
-    boolean amend = myNextCommitAmend;
-    for (List<String> paths : VcsFileUtil.chunkPaths(root, files)) {
-      GitLineHandler handler = new GitLineHandler(project, root, GitCommand.COMMIT);
-      handler.setStdoutSuppressed(false);
-      if (cleanupMessage) {
-        handler.addParameters("--cleanup=strip");
-      }
-      if (myNextCommitSignOff) {
-        handler.addParameters("--signoff");
-      }
-      if (amend) {
-        handler.addParameters("--amend");
-      }
-      else {
-        amend = true;
-      }
-      if (myNextCommitSkipHook) {
-        handler.addParameters("--no-verify");
-      }
-      handler.addParameters("--only");
-      handler.addParameters("-F");
-      handler.addAbsoluteFile(messageFile);
-      if (myNextCommitAuthor != null) {
-        handler.addParameters("--author=" + myNextCommitAuthor);
-      }
-      if (myNextCommitAuthorDate != null) {
-        handler.addParameters("--date", COMMIT_DATE_FORMAT.format(myNextCommitAuthorDate));
-      }
-      handler.endOptions();
-      handler.addParameters(paths);
-      Git.getInstance().runCommand(handler).throwOnError();
-    }
-  }
-
   @Override
   public List<VcsException> scheduleUnversionedFilesForAddition(@NotNull List<? extends VirtualFile> files) {
     ArrayList<VcsException> rc = new ArrayList<>();
@@ -1077,22 +898,6 @@ public final class GitCheckinEnvironment implements CheckinEnvironment, AmendCom
       }
     }
     return rc;
-  }
-
-  private enum PartialOperation {
-    NONE(0),
-    MERGE(1),
-    CHERRY_PICK(2);
-
-    private final int myIndex; // See 'commit.partial.merge.message' bundle string
-
-    PartialOperation(int messageIndex) {
-      myIndex = messageIndex;
-    }
-
-    int getIndex() {
-      return myIndex;
-    }
   }
 
   @NotNull

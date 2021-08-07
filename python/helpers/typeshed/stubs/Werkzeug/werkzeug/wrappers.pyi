@@ -1,5 +1,5 @@
 from _typeshed.wsgi import InputStream, WSGIEnvironment
-from datetime import datetime
+from datetime import datetime, timedelta
 from typing import (
     Any,
     Callable,
@@ -148,8 +148,8 @@ class BaseResponse:
         self,
         key: str,
         value: Union[str, bytes] = ...,
-        max_age: Optional[int] = ...,
-        expires: Optional[int] = ...,
+        max_age: Union[float, timedelta, None] = ...,
+        expires: Optional[Union[int, datetime]] = ...,
         path: str = ...,
         domain: Optional[str] = ...,
         secure: bool = ...,

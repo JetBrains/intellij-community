@@ -1,9 +1,12 @@
 <html>
 <body>
-Reports all constructors in non-<b>public</b>
-classes that are declared <b>public</b>.
+Reports all <code>public</code> constructors in non-<code>public</code> classes.
+<p>Usually, there is no reason for creating a <code>public</code> constructor in a class with a lower access level.
+  Please note, however, that this inspection changes the behavior of some reflection calls. In particular,
+  <code>Class.getConstructor()</code> won't be able to find the updated constructor
+  (<code>Class.getDeclaredConstructor()</code> should be used instead). Do not use the inspection if your code
+  or code of some used frameworks relies on constructor accessibility via <code>getConstructor()</code>.
+</p>
 <!-- tooltip end -->
-<p>
-
 </body>
 </html>

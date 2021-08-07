@@ -113,7 +113,7 @@ public class PyAddImportQuickFixTest extends PyQuickFixTestCase {
 
   // PY-21563
   public void testCombineFromImportsForReferencesInTypeComment() {
-    doMultiFileAutoImportTest("Import 'typing.Literal'");
+    doMultiFileAutoImportTest("Import 'typing.FrozenSet'");
   }
 
   // PY-25234

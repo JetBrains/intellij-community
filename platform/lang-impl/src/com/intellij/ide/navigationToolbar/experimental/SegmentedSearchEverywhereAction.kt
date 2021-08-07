@@ -9,7 +9,7 @@ import javax.swing.JComponent
 import javax.swing.JPanel
 import javax.swing.SwingUtilities
 
-class SegmentedSearchEverywhereAction: SegmentedBarActionComponent(ActionPlaces.NEW_TOOLBAR) {
+class SegmentedSearchEverywhereAction: SegmentedBarActionComponent(ActionPlaces.RUN_TOOLBAR) {
   init {
     ActionManager.getInstance().getAction("SegmentedSearchEverywhereGroup")?.let {
       if(it is ActionGroup) {

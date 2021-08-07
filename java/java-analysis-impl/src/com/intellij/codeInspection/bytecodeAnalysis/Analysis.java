@@ -130,6 +130,7 @@ final class AbstractValues {
   }
 
   static boolean equiv(BasicValue curr, BasicValue prev) {
+    if (curr == prev) return true;
     if (curr.getClass() == prev.getClass()) {
       if (curr instanceof CallResultValue && prev instanceof CallResultValue) {
         Set<EKey> keys1 = ((CallResultValue)prev).inters;
@@ -162,6 +163,7 @@ final class Conf {
   }
 
   boolean equiv(Conf other) {
+    if (this == other) return true;
     if (this.fastHashCode != other.fastHashCode) return false;
     Frame<BasicValue> currFr = this.frame;
     Frame<BasicValue> prevFr = other.frame;

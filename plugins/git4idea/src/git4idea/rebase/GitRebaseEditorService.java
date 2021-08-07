@@ -8,11 +8,11 @@ import com.intellij.openapi.components.Service;
 import com.intellij.openapi.util.Pair;
 import git4idea.commands.GitHandler;
 import git4idea.config.GitExecutable;
+import git4idea.editor.GitRebaseEditorApp;
+import git4idea.editor.GitRebaseEditorXmlRpcHandler;
+import git4idea.util.ScriptGenerator;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.git4idea.editor.GitRebaseEditorApp;
-import org.jetbrains.git4idea.editor.GitRebaseEditorXmlRpcHandler;
-import org.jetbrains.git4idea.util.ScriptGenerator;
 import org.jetbrains.ide.BuiltInServerManager;
 
 import java.io.File;

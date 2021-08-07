@@ -1,14 +1,9 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.net;
 
-import com.google.common.net.HostAndPort;
-import com.google.common.net.InetAddresses;
-import com.google.common.net.InternetDomainName;
 import com.intellij.ide.IdeBundle;
-import com.intellij.notification.Notification;
+import com.intellij.notification.NotificationAction;
 import com.intellij.notification.NotificationType;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.options.ConfigurableUi;
 import com.intellij.openapi.options.ConfigurationException;
@@ -234,27 +229,14 @@ class HttpProxySettingsUi implements ConfigurableUi<HttpConfigurable> {
         return IdeBundle.message("dialog.message.host.name.empty");
       }
 
-      try {
-        HostAndPort parsedHost = HostAndPort.fromString(host);
-        if (parsedHost.hasPort()) {
+      switch (NetUtils.isValidHost(host)) {
+        case INVALID:
           return IdeBundle.message("dialog.message.invalid.host.value");
-        }
-        host = parsedHost.getHost();
-
-        try {
-          InetAddresses.forString(host);
+        case VALID:
           return null;
-        }
-        catch (IllegalArgumentException e) {
-          // it is not an IPv4 or IPv6 literal
-        }
-
-        InternetDomainName.from(host);
+        case VALID_PROXY:
+          break;
       }
-      catch (IllegalArgumentException e) {
-        return IdeBundle.message("dialog.message.invalid.host.value");
-      }
-
       if (myProxyAuthCheckBox.isSelected()) {
         if (StringUtil.isEmptyOrSpaces(myProxyLoginTextField.getText())) {
           return IdeBundle.message("dialog.message.login.empty");
@@ -295,16 +277,10 @@ class HttpProxySettingsUi implements ConfigurableUi<HttpConfigurable> {
     settings.PROXY_HOST = getText(myProxyHostTextField);
 
     if (modified && JBCefApp.isStarted()) {
-      Notification notification = JBCefApp.NOTIFICATION_GROUP.getValue().createNotification(IdeBundle.message("notification.title.jcef.proxyChanged"),
-                                                           IdeBundle.message("notification.content.jcef.applySettings"),
-                                                           NotificationType.WARNING, null);
-      notification.addAction(new AnAction(IdeBundle.message("action.jcef.restart")) {
-        @Override
-        public void actionPerformed(@NotNull AnActionEvent e) {
-          ApplicationManager.getApplication().restart();
-        }
-      });
-      notification.notify(null);
+      JBCefApp.NOTIFICATION_GROUP.getValue()
+        .createNotification(IdeBundle.message("notification.title.jcef.proxyChanged"), IdeBundle.message("notification.content.jcef.applySettings"), NotificationType.WARNING)
+        .addAction(NotificationAction.createSimple(IdeBundle.message("action.jcef.restart"), () -> ApplicationManager.getApplication().restart()))
+        .notify(null);
     }
   }
 

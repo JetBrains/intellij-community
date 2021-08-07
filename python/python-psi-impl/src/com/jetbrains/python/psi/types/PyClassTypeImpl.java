@@ -8,12 +8,15 @@ import com.intellij.psi.*;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ArrayUtilRt;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.ProcessingContext;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.codeInsight.PyCustomMember;
 import com.jetbrains.python.codeInsight.PyCustomMemberUtils;
+import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
+import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.psi.impl.PyCallExpressionHelper;
@@ -22,6 +25,7 @@ import com.jetbrains.python.psi.impl.ResolveResultList;
 import com.jetbrains.python.psi.impl.references.PyReferenceImpl;
 import com.jetbrains.python.psi.resolve.*;
 import com.jetbrains.python.pyi.PyiUtil;
+import com.jetbrains.python.refactoring.PyDefUseUtil;
 import com.jetbrains.python.toolbox.Maybe;
 import one.util.streamex.EntryStream;
 import one.util.streamex.StreamEx;
@@ -32,9 +36,7 @@ import java.util.*;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
-/**
- * @author yole
- */
+
 public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
 
   @NotNull protected final PyClass myClass;
@@ -348,7 +350,7 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
   @Nullable
   @Override
   public List<PyCallableParameter> getParameters(@NotNull TypeEvalContext context) {
-    final var resolveContext = PyResolveContext.defaultContext().withTypeEvalContext(context);
+    final var resolveContext = PyResolveContext.defaultContext(context);
 
     return StreamEx
       .of(PyUtil.filterTopPriorityElements(PyCallExpressionHelper.resolveImplicitlyInvokedMethods(this, null, resolveContext)))
@@ -445,16 +447,13 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
                                                                  @NotNull String name,
                                                                  @Nullable PyExpression location,
                                                                  @NotNull TypeEvalContext context) {
-    final PyResolveProcessor processor = new PyResolveProcessor(name);
+    final PyAttributesProcessor processor = new PyAttributesProcessor(name, location);
     final Map<PsiElement, PyImportedNameDefiner> results;
 
-    if (!isDefinition && !cls.processInstanceLevelDeclarations(processor, location)) {
-      results = processor.getResults();
-    }
-    else {
+    if (isDefinition || cls.processInstanceLevelDeclarations(processor, location)) {
       cls.processClassLevelDeclarations(processor);
-      results = processor.getResults();
     }
+    results = processor.getResults();
 
     return EntryStream
       .of(results)
@@ -756,5 +755,73 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
       return null;
     }
     return new PyClassTypeImpl(pyClass, isDefinition);
+  }
+
+  /**
+   * <p>Control flow aware Python attributes resolver.</p>
+   *
+   * <p>It respects control flow if a resolve candidate is defined in the same scope as the location we resolve the attribute from.</p>
+   *
+   * <p>Since an attribute doesn't have to be defined in the same method we use it, we have to assume that an attribute we cannot
+   * resolve via the control flow graph is defined in some other method. If the attribute is not resolved via the graph, but is defined
+   * in a sibling if-elif-else branch, we assume it will become available in our branch eventually in subsequent method calls.</p>
+   */
+  private static final class PyAttributesProcessor extends PyResolveProcessor {
+    @Nullable private final PyExpression myLocation;
+
+    PyAttributesProcessor(@NotNull String name, @Nullable PyExpression location) {
+      super(name);
+      myLocation = location;
+    }
+
+    @Override
+    protected boolean tryAddResult(@Nullable PsiElement element, @Nullable PyImportedNameDefiner definer) {
+      PsiElement psiElement = definer != null ? definer : element;
+      if (inSameScope(psiElement, myLocation)) {
+        if (PsiTreeUtil.isAncestor(psiElement, myLocation, false) ||
+            PyDefUseUtil.isDefinedBefore(psiElement, myLocation) ||
+            inDifferentBranchesOfSameIfStatement(psiElement, myLocation)) {
+          if (myOwner == null) {
+            myOwner = ScopeUtil.getScopeOwner(psiElement);
+          }
+          addResult(element, definer);
+        }
+        return true;
+      }
+      return super.tryAddResult(element, definer);
+    }
+
+    private static boolean inSameScope(@Nullable PsiElement e1, @Nullable PsiElement e2) {
+      if (e1 == null || e2 == null) return false;
+      ScopeOwner o1 = ScopeUtil.getScopeOwner(e1);
+      ScopeOwner o2 = ScopeUtil.getScopeOwner(e2);
+      return o1 != null && o1 == o2;
+    }
+
+    private static boolean inDifferentBranchesOfSameIfStatement(@NotNull PsiElement e1, @NotNull PsiElement e2) {
+      PyIfStatement ifStatement = ObjectUtils.tryCast(PsiTreeUtil.findCommonParent(e1, e2), PyIfStatement.class);
+      if (ifStatement == null) return false;
+      List<PyStatementPart> parts = getIfStatementParts(ifStatement);
+      PyStatementPart p1 = findIfStatementPartByElement(e1, parts);
+      PyStatementPart p2 = findIfStatementPartByElement(e2, parts);
+      return p1 != p2;
+    }
+
+    @Nullable
+    private static PyStatementPart findIfStatementPartByElement(@NotNull PsiElement element, @NotNull List<PyStatementPart> parts) {
+      return ContainerUtil.find(parts, part -> PsiTreeUtil.isAncestor(part, element, true));
+    }
+
+    @NotNull
+    private static List<PyStatementPart> getIfStatementParts(@NotNull PyIfStatement statement) {
+      List<PyStatementPart> parts = new ArrayList<>();
+      parts.add(statement.getIfPart());
+      parts.addAll(Arrays.asList(statement.getElifParts()));
+      PyElsePart elsePart = statement.getElsePart();
+      if (elsePart != null) {
+        parts.add(elsePart);
+      }
+      return parts;
+    }
   }
 }

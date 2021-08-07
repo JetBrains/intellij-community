@@ -2,10 +2,7 @@
 package com.intellij.ide.actions;
 
 import com.intellij.internal.statistic.eventLog.events.EventPair;
-import com.intellij.openapi.actionSystem.ActionManager;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.impl.FusAwareAction;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.DumbAware;
@@ -17,6 +14,8 @@ import com.intellij.openapi.util.NlsActions;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.*;
 import com.intellij.openapi.wm.ex.ToolWindowEx;
+import com.intellij.openapi.wm.impl.InternalDecoratorImpl;
+import com.intellij.ui.ComponentUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -55,7 +54,10 @@ public abstract class ResizeToolWindowAction extends AnAction implements DumbAwa
   @Override
   public final void update(@NotNull AnActionEvent e) {
     Project project = e.getProject();
-    if (project == null || e.getData(CommonDataKeys.HOST_EDITOR) != null) {
+    if (project == null
+        || e.getData(CommonDataKeys.HOST_EDITOR) != null
+        || e.getData(CommonDataKeys.EDITOR) != null
+        || ComponentUtil.getParentOfType(InternalDecoratorImpl.class, e.getData(PlatformDataKeys.CONTEXT_COMPONENT)) == null) {
       setDisabled(e);
       return;
     }

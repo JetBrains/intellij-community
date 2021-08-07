@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.index
 
 import com.intellij.diff.DiffContentFactory
@@ -133,9 +133,10 @@ private fun headContentBytes(project: Project, root: VirtualFile, status: GitFil
 }
 
 @Throws(VcsException::class)
-private fun stagedContentFile(project: Project, root: VirtualFile, statusNode: GitFileStatus): VirtualFile {
-  val filePath = statusNode.path(ContentVersion.STAGED)
+private fun stagedContentFile(project: Project, root: VirtualFile, status: GitFileStatus): VirtualFile {
+  val filePath = status.path(ContentVersion.STAGED)
   return GitIndexFileSystemRefresher.getInstance(project).getFile(root, filePath)
+         ?: throw VcsException(GitBundle.message("stage.diff.staged.content.exception.message", status.path))
 }
 
 fun compareHeadWithStaged(project: Project, root: VirtualFile, status: GitFileStatus): DiffRequest {
@@ -208,7 +209,7 @@ class MergedProducer(private val project: Project,
                         ChangeDiffRequestProducer.getBaseVersion(),
                         ChangeDiffRequestProducer.getServerVersion())
     val contents = listOf(mergeData.CURRENT, mergeData.ORIGINAL, mergeData.LAST).map {
-      DiffContentFactory.getInstance().createFromBytes(project, it, statusNode.filePath.fileType, statusNode.filePath.name)
+      DiffContentFactory.getInstance().createFromBytes(project, it, statusNode.filePath)
     }
     val request = SimpleDiffRequest(title, contents, titles)
     putRevisionInfos(request, mergeData)
@@ -273,7 +274,7 @@ abstract class GitFileStatusNodeProducerBase(val statusNode: GitFileStatusNode) 
     return statusNode.filePath.presentableUrl
   }
 
-  override fun getPopupTag(): ChangesBrowserNode.Tag? {
+  override fun getTag(): ChangesBrowserNode.Tag? {
     return getTag(kind)
   }
 
@@ -310,7 +311,7 @@ private class StagedContentRevision(val project: Project, val root: VirtualFile,
   override fun getContentAsBytes(): ByteArray = stagedContentFile(project, root, status).contentsToByteArray()
 }
 
-private class KindTag(private val kind: NodeKind) : ChangesBrowserNode.Tag {
+internal class KindTag(private val kind: NodeKind) : ChangesBrowserNode.Tag {
   override fun toString(): String = GitBundle.message(kind.key)
 
   override fun equals(other: Any?): Boolean {

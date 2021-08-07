@@ -1,15 +1,15 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.util.registry;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NlsSafe;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.Strings;
 import com.intellij.ui.ColorHexUtil;
-import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -17,12 +17,15 @@ import org.jetbrains.annotations.Nullable;
 import java.awt.*;
 import java.util.List;
 import java.util.MissingResourceException;
+import java.util.Objects;
 
 /**
  * @author Kirill Kalishev
  * @author Konstantin Bulenkov
  */
 public class RegistryValue {
+  private static final Logger LOG = Logger.getInstance(RegistryValue.class);
+
   private final Registry myRegistry;
   private final String myKey;
   @Nullable private final RegistryKeyDescriptor myKeyDescriptor;
@@ -35,7 +38,6 @@ public class RegistryValue {
   private Integer myIntCachedValue;
   private double myDoubleCachedValue = Double.NaN;
   private Boolean myBooleanCachedValue;
-  private static final Logger LOG = Logger.getInstance(RegistryValue.class);
 
   RegistryValue(@NotNull Registry registry, @NonNls @NotNull String key, @Nullable RegistryKeyDescriptor keyDescriptor) {
     myRegistry = registry;
@@ -48,7 +50,6 @@ public class RegistryValue {
     return myKey;
   }
 
-
   @NotNull
   public @NlsSafe String asString() {
     final String value = get(myKey, null, true);
@@ -59,14 +60,10 @@ public class RegistryValue {
   public boolean asBoolean() {
     Boolean result = myBooleanCachedValue;
     if (result == null) {
-      myBooleanCachedValue = result = calcBoolean();
+      result = Boolean.valueOf(get(myKey, "false", true));
+      myBooleanCachedValue = result;
     }
     return result.booleanValue();
-  }
-
-  @NotNull
-  private Boolean calcBoolean() {
-    return Boolean.valueOf(get(myKey, "false", true));
   }
 
   public int asInteger() {
@@ -78,15 +75,12 @@ public class RegistryValue {
     return result.intValue();
   }
 
-  @NotNull
-  private Integer calcInt() {
+  private @NotNull Integer calcInt() {
     try {
       return Integer.valueOf(get(myKey, "0", true));
     }
     catch (NumberFormatException e) {
-      String bundleValue = Registry.getInstance().getBundleValue(myKey, true);
-      assert bundleValue != null;
-      return Integer.valueOf(bundleValue);
+      return Integer.valueOf(myRegistry.getBundleValue(myKey));
     }
   }
 
@@ -95,28 +89,27 @@ public class RegistryValue {
   }
 
   public String[] getOptions() {
-    return getOptions(Registry.getInstance().getBundleValue(myKey, true));
+    return getOptions(myRegistry.getBundleValue(myKey));
   }
 
   private static String[] getOptions(String value) {
     if (value != null && value.startsWith("[") && value.endsWith("]")) {
       return value.substring(1, value.length() - 1).split("\\|");
     }
-    return ArrayUtil.EMPTY_STRING_ARRAY;
+    return ArrayUtilRt.EMPTY_STRING_ARRAY;
   }
 
-  @Nullable
-  public @NlsSafe String getSelectedOption() {
+  public @Nullable @NlsSafe String getSelectedOption() {
     for (String option : getOptions(asString())) {
       if (option.endsWith("*")) {
-        return StringUtil.trimEnd(option, "*");
+        return Strings.trimEnd(option, "*");
       }
     }
     return null;
   }
 
   public boolean isOptionEnabled(@NotNull String option) {
-    return StringUtil.equals(getSelectedOption(), option);
+    return Objects.equals(getSelectedOption(), option);
   }
 
   public void setSelectedOption(String selected) {
@@ -127,7 +120,7 @@ public class RegistryValue {
         options[i] += "*";
       }
     }
-    setValue("[" + StringUtil.join(options,"|") + "]");
+    setValue("[" + String.join("|", options) + "]");
   }
 
   public double asDouble() {
@@ -144,9 +137,7 @@ public class RegistryValue {
       return Double.parseDouble(get(myKey, "0.0", true));
     }
     catch (NumberFormatException e) {
-      String bundleValue = Registry.getInstance().getBundleValue(myKey, true);
-      assert bundleValue != null;
-      return Double.parseDouble(bundleValue);
+      return Double.parseDouble(myRegistry.getBundleValue(myKey));
     }
   }
 
@@ -185,7 +176,7 @@ public class RegistryValue {
   }
 
   public boolean isChangedFromDefault() {
-    return isChangedFromDefault(asString(), Registry.getInstance());
+    return isChangedFromDefault(asString(), myRegistry);
   }
 
   @Nullable
@@ -194,7 +185,7 @@ public class RegistryValue {
   }
 
   final boolean isChangedFromDefault(@NotNull String newValue, @NotNull Registry registry) {
-    return !newValue.equals(registry.getBundleValue(myKey, false));
+    return !newValue.equals(registry.getBundleValueOrNull(myKey));
   }
 
   protected String get(@NonNls @NotNull String key, String defaultValue, boolean isValue) throws MissingResourceException {
@@ -207,8 +198,7 @@ public class RegistryValue {
     return _get(key, defaultValue, false);
   }
 
-  @Nullable
-  private String _get(@NonNls @NotNull String key, @Nullable String defaultValue, boolean mustExistInBundle) throws MissingResourceException {
+  private @Nullable String _get(@NonNls @NotNull String key, @Nullable String defaultValue, boolean mustExistInBundle) throws MissingResourceException {
     String userValue = myRegistry.getUserProperties().get(key);
     if (userValue != null) {
       return userValue;
@@ -223,16 +213,20 @@ public class RegistryValue {
       String message = "Attempt to load key '" + key + "' for not yet loaded registry";
       // use Disposer.isDebugMode as "we are in internal mode or inside test" flag
       if (Disposer.isDebugMode()) {
-        LOG.warn(message + ". Use system properties instead of registry values to configure behaviour at early startup stages.",
-                 new Throwable());
+        LOG.error(message + ". Use system properties instead of registry values to configure behaviour at early startup stages.");
       }
       else {
         LOG.warn(message);
       }
     }
 
-    String bundleValue = Registry.getInstance().getBundleValue(key, mustExistInBundle);
-    return bundleValue == null ? defaultValue : bundleValue;
+    if (mustExistInBundle) {
+      return myRegistry.getBundleValue(key);
+    }
+    else {
+      String bundleValue = myRegistry.getBundleValueOrNull(key);
+      return bundleValue == null ? defaultValue : bundleValue;
+    }
   }
 
   public void setValue(boolean value) {
@@ -287,10 +281,10 @@ public class RegistryValue {
   }
 
   public void resetToDefault() {
-    setValue(Registry.getInstance().getBundleValue(myKey, true));
+    setValue(myRegistry.getBundleValue(myKey));
   }
 
-  public void addListener(@NotNull final RegistryValueListener listener, @NotNull Disposable parent) {
+  public void addListener(@NotNull RegistryValueListener listener, @NotNull Disposable parent) {
     myListeners.add(listener);
     Disposer.register(parent, () -> myListeners.remove(listener));
   }
@@ -300,7 +294,8 @@ public class RegistryValue {
     return myKey + "=" + asString();
   }
 
-  void resetCache() {
+  @ApiStatus.Internal
+  public void resetCache() {
     myStringCachedValue = null;
     myIntCachedValue = null;
     myDoubleCachedValue = Double.NaN;
@@ -310,6 +305,7 @@ public class RegistryValue {
   public boolean isBoolean() {
     return isBoolean(asString());
   }
+
   private static boolean isBoolean(String s) {
     return "true".equalsIgnoreCase(s) || "false".equalsIgnoreCase(s);
   }

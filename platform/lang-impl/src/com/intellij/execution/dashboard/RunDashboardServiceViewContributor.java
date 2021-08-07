@@ -13,6 +13,7 @@ import com.intellij.execution.dashboard.tree.RunConfigurationNode;
 import com.intellij.execution.dashboard.tree.RunDashboardGroupImpl;
 import com.intellij.execution.dashboard.tree.RunDashboardStatusFilter;
 import com.intellij.execution.impl.RunManagerImpl;
+import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.runners.FakeRerunAction;
 import com.intellij.execution.services.*;
 import com.intellij.execution.ui.RunContentDescriptor;
@@ -26,6 +27,7 @@ import com.intellij.ide.util.treeView.PresentableNodeDescriptor;
 import com.intellij.ide.util.treeView.WeighedItem;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.impl.MoreActionGroup;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -148,8 +150,16 @@ public class RunDashboardServiceViewContributor
     }
 
     if (leftToolbarActions != null) {
+      if (leftToolbarActions.size() == 1 && leftToolbarActions.get(0) instanceof ActionGroup) {
+        leftToolbarActions = Arrays.asList(((ActionGroup)leftToolbarActions.get(0)).getChildren(null));
+      }
       for (AnAction action : leftToolbarActions) {
-        if (!(action instanceof StopAction) && !(action instanceof FakeRerunAction)) {
+        if (action instanceof MoreActionGroup) {
+          DefaultActionGroup moreGroup = new MoreActionGroup(false);
+          moreGroup.addAll(((MoreActionGroup)action).getChildren(null));
+          actionGroup.add(moreGroup);
+        }
+        else if (!(action instanceof StopAction) && !(action instanceof FakeRerunAction)) {
           actionGroup.add(action);
         }
       }
@@ -202,10 +212,15 @@ public class RunDashboardServiceViewContributor
     @Override
     public JComponent getContentComponent() {
       Content content = myNode.getContent();
-      if (content == null) return createEmptyContent();
+      if (content == null) return new RunDashboardComponentWrapper(createEmptyContent(), null);
 
       ContentManager contentManager = content.getManager();
-      return contentManager == null ? null : contentManager.getComponent();
+      if (contentManager == null) return null;
+
+      RunContentDescriptor descriptor = myNode.getDescriptor();
+      ProcessHandler handler = descriptor == null ? null : descriptor.getProcessHandler();
+      Integer contentId = handler == null ? null : handler.hashCode();
+      return new RunDashboardComponentWrapper(contentManager.getComponent(), contentId);
     }
 
     @NotNull

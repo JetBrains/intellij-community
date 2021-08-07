@@ -756,6 +756,7 @@ public final class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx i
         return vf != null && myExcludedIndex.isExcludedFile(vf);
       }
       else {
+        // WARN: might differ from 'myExcludedIndex.isUnderIgnored' if whole content root is under folder with 'ignored' name.
         FileTypeManager fileTypeManager = FileTypeManager.getInstance();
         for (String name : StringUtil.tokenize(filePath.getPath(), "/")) {
           if (fileTypeManager.isFileIgnored(name)) {
@@ -901,6 +902,7 @@ public final class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx i
 
       DefaultActionGroup actionGroup = new DefaultActionGroup(myConsole.createConsoleActions());
       ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar("VcsManager", actionGroup, false);
+      toolbar.setTargetComponent(myConsole.getComponent());
       panel.setToolbar(toolbar.getComponent());
 
       setComponent(panel);

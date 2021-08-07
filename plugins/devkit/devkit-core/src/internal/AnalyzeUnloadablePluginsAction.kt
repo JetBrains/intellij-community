@@ -1,13 +1,11 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.devkit.internal
 
-import com.intellij.ide.plugins.ClassLoaderConfigurationData
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.LangDataKeys
 import com.intellij.openapi.application.runReadAction
-import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.OpenFileDescriptor
 import com.intellij.openapi.progress.ProgressManager
@@ -25,9 +23,6 @@ import org.jetbrains.idea.devkit.dom.IdeaPlugin
 import org.jetbrains.idea.devkit.util.DescriptorUtil
 import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes
 
-/**
- * @author yole
- */
 @Suppress("HardCodedStringLiteral")
 class AnalyzeUnloadablePluginsAction : AnAction() {
   override fun actionPerformed(e: AnActionEvent) {
@@ -212,7 +207,7 @@ class AnalyzeUnloadablePluginsAction : AnAction() {
             continue
           }
           descriptor.pluginId?.let { pluginId ->
-            if (!ClassLoaderConfigurationData.isClassloaderPerDescriptorEnabled(PluginId.getId(pluginId), depIdeaPlugin.`package`.rawText)) {
+            if (depIdeaPlugin.`package`.rawText == null) {
               dependenciesWithoutSeparateClassloaders.add(pluginId)
             }
           }

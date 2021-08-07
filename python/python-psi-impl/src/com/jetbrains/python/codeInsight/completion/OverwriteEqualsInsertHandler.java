@@ -8,9 +8,7 @@ import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.openapi.editor.Document;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author yole
- */
+
 public class OverwriteEqualsInsertHandler implements InsertHandler<LookupElement> {
   public static OverwriteEqualsInsertHandler INSTANCE = new OverwriteEqualsInsertHandler();
 

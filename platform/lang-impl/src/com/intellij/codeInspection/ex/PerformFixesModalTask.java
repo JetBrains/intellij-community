@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.ex;
 
 import com.intellij.codeInspection.CommonProblemDescriptor;
@@ -8,6 +8,7 @@ import com.intellij.codeInspection.QuickFix;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
@@ -15,9 +16,12 @@ import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.psi.presentation.java.SymbolPresentationUtil;
 import com.intellij.util.SequentialTask;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
 import java.util.List;
+
+import static com.intellij.openapi.util.text.StringUtil.notNullize;
 
 public abstract class PerformFixesModalTask implements SequentialTask {
   @NotNull
@@ -71,14 +75,10 @@ public abstract class PerformFixesModalTask implements SequentialTask {
     CommonProblemDescriptor descriptor = pair.getFirst();
     boolean shouldDoPostponedOperations = pair.getSecond();
 
+    beforeProcessing(descriptor);
+
     indicator.setFraction((double)myProcessed++ / myLength);
-    String presentableText = "usages";
-    if (descriptor instanceof ProblemDescriptor) {
-      final PsiElement psiElement = ((ProblemDescriptor)descriptor).getPsiElement();
-      if (psiElement != null) {
-        presentableText = SymbolPresentationUtil.getSymbolPresentableText(psiElement);
-      }
-    }
+    String presentableText = notNullize(getPresentableText(descriptor), "usages");
     indicator.setText(InspectionsBundle.message("processing.progress.text", presentableText));
 
     final boolean[] runInReadAction = {false};
@@ -110,6 +110,16 @@ public abstract class PerformFixesModalTask implements SequentialTask {
   }
 
   protected abstract void applyFix(Project project, CommonProblemDescriptor descriptor);
+
+  protected void beforeProcessing(@NotNull CommonProblemDescriptor descriptor) {
+  }
+
+  protected @Nullable @NlsSafe String getPresentableText(@NotNull CommonProblemDescriptor descriptor) {
+    if (!(descriptor instanceof ProblemDescriptor)) return null;
+
+    PsiElement psiElement = ((ProblemDescriptor)descriptor).getPsiElement();
+    return psiElement != null ? notNullize(SymbolPresentationUtil.getSymbolPresentableText(psiElement)) : null;
+  }
 
   private Pair<CommonProblemDescriptor, Boolean> nextDescriptor() {
     CommonProblemDescriptor[] descriptors = myDescriptorPacks.get(myPackIdx);

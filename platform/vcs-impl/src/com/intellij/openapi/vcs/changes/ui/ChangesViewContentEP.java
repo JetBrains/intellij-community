@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes.ui;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -7,17 +7,15 @@ import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.extensions.ProjectExtensionPointName;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.NotNullFunction;
-import com.intellij.util.pico.CachingConstructorInjectionComponentAdapter;
 import com.intellij.util.xmlb.annotations.Attribute;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.function.Predicate;
 import java.util.function.Supplier;
 
-/**
- * @author yole
- */
-public class ChangesViewContentEP implements PluginAware {
+
+public final class ChangesViewContentEP implements PluginAware {
   private static final Logger LOG = Logger.getInstance(ChangesViewContentEP.class);
 
   public static final ProjectExtensionPointName<ChangesViewContentEP> EP_NAME = new ProjectExtensionPointName<>("com.intellij.changesViewContent");
@@ -69,14 +67,6 @@ public class ChangesViewContentEP implements PluginAware {
     this.className = className;
   }
 
-  public String getPredicateClassName() {
-    return predicateClassName;
-  }
-
-  public void setPredicateClassName(final String predicateClassName) {
-    this.predicateClassName = predicateClassName;
-  }
-
   public String getPreloaderClassName() {
     return preloaderClassName;
   }
@@ -113,13 +103,24 @@ public class ChangesViewContentEP implements PluginAware {
     return myInstance;
   }
 
-  @Nullable
-  public NotNullFunction<Project, Boolean> newPredicateInstance(@NotNull Project project) {
+  public @Nullable Predicate<Project> newPredicateInstance(@NotNull Project project) {
     if (predicateClassName == null) {
       return null;
     }
-    //noinspection unchecked
-    return (NotNullFunction<Project, Boolean>)newClassInstance(project, predicateClassName);
+
+    Object predicate = newClassInstance(project, predicateClassName);
+    if (predicate == null) {
+      return null;
+    }
+    else if (predicate instanceof Predicate) {
+      //noinspection unchecked
+      return (Predicate<Project>)predicate;
+    }
+    else {
+      //noinspection unchecked
+      NotNullFunction<Project, Boolean> oldPredicate = (NotNullFunction<Project, Boolean>)predicate;
+      return it -> oldPredicate.fun(it) == Boolean.TRUE;
+    }
   }
 
   @Nullable
@@ -130,8 +131,7 @@ public class ChangesViewContentEP implements PluginAware {
     return (ChangesViewContentProvider.Preloader)newClassInstance(project, preloaderClassName);
   }
 
-  @Nullable
-  public Supplier<String> newDisplayNameSupplierInstance(@NotNull Project project) {
+  public @Nullable Supplier<String> newDisplayNameSupplierInstance(@NotNull Project project) {
     if (displayNameSupplierClassName == null) {
       return null;
     }
@@ -139,12 +139,9 @@ public class ChangesViewContentEP implements PluginAware {
     return (Supplier<String>)newClassInstance(project, displayNameSupplierClassName);
   }
 
-  @Nullable
-  private Object newClassInstance(@NotNull Project project, @NotNull String className) {
+  private @Nullable Object newClassInstance(@NotNull Project project, @NotNull String className) {
     try {
-      Class<?> aClass = Class.forName(className, true,
-                                      myPluginDescriptor == null ? getClass().getClassLoader() : myPluginDescriptor.getPluginClassLoader());
-      return new CachingConstructorInjectionComponentAdapter(className, aClass).getComponentInstance(project.getPicoContainer());
+      return project.instantiateClass(className, myPluginDescriptor);
     }
     catch (Exception e) {
       LOG.error(e);

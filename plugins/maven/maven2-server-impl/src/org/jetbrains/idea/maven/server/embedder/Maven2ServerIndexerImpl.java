@@ -268,7 +268,7 @@ public final class Maven2ServerIndexerImpl extends MavenRemoteObject implements 
   }
 
   @Override
-  public Set<MavenArtifactInfo> search(int indexId, Query query, int maxResult, MavenToken token) throws MavenServerIndexerException {
+  public Set<MavenArtifactInfo> search(int indexId, Object query, int maxResult, MavenToken token) throws MavenServerIndexerException {
     MavenServerUtil.checkToken(token);
     try {
       IndexingContext index = getIndex(indexId);
@@ -276,7 +276,7 @@ public final class Maven2ServerIndexerImpl extends MavenRemoteObject implements 
       TopDocs docs = null;
       try {
         BooleanQuery.setMaxClauseCount(Integer.MAX_VALUE);
-        docs = index.getIndexSearcher().search(query, null, maxResult);
+        docs = index.getIndexSearcher().search((Query)query, null, maxResult);
       }
       catch (BooleanQuery.TooManyClauses ignore) {
         // this exception occurs when too wide wildcard is used on too big data.

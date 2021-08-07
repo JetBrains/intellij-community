@@ -52,12 +52,10 @@
     <keyboard-shortcut first-keystroke="control shift W"/>
   </action>
   <action id="PreviousTab"/>
-  <action id="Diff.PrevChange"/>
   <action id="Back">
     <keyboard-shortcut first-keystroke="alt LEFT"/>
   </action>
   <action id="NextTab"/>
-  <action id="Diff.NextChange"/>
   <action id="Forward">
     <keyboard-shortcut first-keystroke="alt RIGHT"/>
   </action>

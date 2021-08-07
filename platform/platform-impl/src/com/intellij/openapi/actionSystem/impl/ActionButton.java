@@ -26,7 +26,6 @@ import com.intellij.util.ui.accessibility.ScreenReader;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
 
 import javax.accessibility.*;
 import javax.swing.*;
@@ -47,14 +46,14 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
   private JBDimension myMinimumButtonSize;
   private PropertyChangeListener myPresentationListener;
   private Icon myDisabledIcon;
-  private Icon myIcon;
+  protected Icon myIcon;
   protected final Presentation myPresentation;
   protected final AnAction myAction;
   protected final String myPlace;
   protected final PopupState<JPopupMenu> myPopupState = PopupState.forPopupMenu();
   private ActionButtonLook myLook = ActionButtonLook.SYSTEM_LOOK;
   private boolean myMouseDown;
-  private boolean myRollover;
+  protected boolean myRollover;
   private static boolean ourGlobalMouseDown;
 
   private boolean myNoIconsInPopup;
@@ -125,11 +124,11 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
 
   @Override
   public boolean isEnabled() {
-    return super.isEnabled() && myPresentation.isEnabled();
+    return isEnabled(super.isEnabled());
   }
 
-  boolean isButtonEnabled() {
-    return isEnabled();
+  protected boolean isEnabled(boolean componentEnabled) {
+    return componentEnabled && myPresentation.isEnabled();
   }
 
   private void onMousePresenceChanged(boolean setInfo) {
@@ -140,41 +139,17 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
     performAction(makeClickMouseEvent());
   }
 
-  /**
-   * @param checkIsShowing If true, prevent action to be performed if the button is not showed.
-   */
-  @TestOnly
-  public void click(boolean checkIsShowing) {
-    performAction(makeClickMouseEvent(), checkIsShowing);
-  }
-
   @NotNull
   private MouseEvent makeClickMouseEvent() {
     return new MouseEvent(this, MouseEvent.MOUSE_CLICKED, System.currentTimeMillis(), 0, 0, 0, 1, false);
   }
 
   private void performAction(MouseEvent e) {
-    performAction(e, true);
-  }
-
-  private void performAction(MouseEvent e, boolean checkIsShowing) {
     AnActionEvent event = AnActionEvent.createFromInputEvent(e, myPlace, myPresentation, getDataContext(), false, true);
-    if (!ActionUtil.lastUpdateAndCheckDumb(myAction, event, false)) {
-      return;
-    }
-
-    if (isButtonEnabled()) {
-      final ActionManagerEx manager = ActionManagerEx.getInstanceEx();
-      final DataContext dataContext = event.getDataContext();
-      manager.fireBeforeActionPerformed(myAction, dataContext, event);
-      Component component = PlatformDataKeys.CONTEXT_COMPONENT.getData(dataContext);
-      if (component != null && checkIsShowing && !component.isShowing()) {
-        return;
-      }
-      actionPerformed(event);
-      manager.queueActionPerformedEvent(myAction, dataContext, event);
+    if (ActionUtil.lastUpdateAndCheckDumb(myAction, event, false) && isEnabled()) {
+      ActionUtil.performDumbAwareWithCallbacks(myAction, event, () -> actionPerformed(event));
       if (event.getInputEvent() instanceof MouseEvent) {
-        ToolbarClicksCollector.record(myAction, myPlace, e, dataContext);
+        ToolbarClicksCollector.record(myAction, myPlace, e, event.getDataContext());
       }
       ActionToolbar toolbar = ActionToolbar.findToolbarBy(this);
       if (toolbar != null) {
@@ -187,48 +162,25 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
     return ActionToolbar.getDataContextFor(this);
   }
 
-  protected void actionPerformed(final AnActionEvent event) {
+  protected void actionPerformed(@NotNull AnActionEvent event) {
     HelpTooltip.hide(this);
     if (isPopupMenuAction(event, myAction)) {
-      if (Registry.is("actionSystem.toolbar.show.group.in.popup")) {
-        showGroupInPopup(event, (ActionGroup)myAction);
-      }
-      else {
-        showGroupInPopupMenu(event, (ActionGroup) myAction);
-      }
+      showActionGroupPopup((ActionGroup)myAction, event);
     }
     else {
-      ActionUtil.performActionDumbAware(myAction, event);
-      ActionManagerEx.getInstanceEx().fireAfterActionPerformed(myAction, event.getDataContext(), event);
+      myAction.actionPerformed(event);
     }
   }
 
-  protected void showGroupInPopup(AnActionEvent e, ActionGroup actionGroup) {
-    PopupFactoryImpl.ActionGroupPopup popup = new PopupFactoryImpl.ActionGroupPopup(null, actionGroup, e.getDataContext(), false,
-                                                            false, true, false,
-                                                            null, -1, null,
-                                                            ActionPlaces.getActionGroupPopupPlace(e.getPlace()),
-                                                            createPresentationFactory(), false);
-
+  protected void showActionGroupPopup(@NotNull ActionGroup actionGroup, @NotNull AnActionEvent event) {
+    PopupFactoryImpl.ActionGroupPopup popup = new PopupFactoryImpl.ActionGroupPopup(
+      null, actionGroup, event.getDataContext(), false,
+      false, true, false,
+      null, -1, null,
+      ActionPlaces.getActionGroupPopupPlace(event.getPlace()),
+      createPresentationFactory(), false);
     popup.setShowSubmenuOnHover(true);
-    popup.showUnderneathOf(e.getInputEvent().getComponent());
-  }
-
-  // used in Rider, please don't change visibility
-  protected void showGroupInPopupMenu(AnActionEvent event, ActionGroup actionGroup) {
-    if (myPopupState.isRecentlyHidden()) return; // do not show new popup
-    final ActionManagerImpl am = (ActionManagerImpl) ActionManager.getInstance();
-    String place = ActionPlaces.getActionGroupPopupPlace(event.getPlace());
-    ActionPopupMenuImpl popupMenu = (ActionPopupMenuImpl)am.createActionPopupMenu(place, actionGroup, createPresentationFactory());
-    popupMenu.setDataContextProvider(() -> getDataContext());
-    myPopupState.prepareToShow(popupMenu.getComponent());
-
-    if (event.isFromActionToolbar()) {
-      popupMenu.getComponent().show(this, 0, getHeight());
-    }
-    else {
-      popupMenu.getComponent().show(this, getWidth(), 0);
-    }
+    popup.showUnderneathOf(event.getInputEvent().getComponent());
   }
 
   @NotNull
@@ -273,7 +225,13 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
     if (myPresentationListener == null) {
       myPresentation.addPropertyChangeListener(myPresentationListener = this::presentationPropertyChanged);
     }
-    update();
+    if (!(getParent() instanceof ActionToolbar)) {
+      update();
+    }
+    else {
+      updateToolTipText();
+      updateIcon();
+    }
   }
 
   public void update() {
@@ -336,7 +294,7 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
    *         an empty icon.
    */
   public Icon getIcon() {
-    boolean enabled = isButtonEnabled();
+    boolean enabled = isEnabled();
     int popState = getPopState();
     Icon hoveredIcon = (popState == POPPED || popState == PUSHED) ? myPresentation.getHoveredIcon() : null;
     Icon icon = enabled ? hoveredIcon != null ? hoveredIcon : myIcon : myDisabledIcon;
@@ -370,9 +328,8 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
     String text = myPresentation.getText();
     String description = myPresentation.getDescription();
     if (Registry.is("ide.helptooltip.enabled")) {
-      HelpTooltip ht = HelpTooltip.getOrCreate(this).clear();
       if (StringUtil.isNotEmpty(text) || StringUtil.isNotEmpty(description)) {
-        ht.setTitle(text).setShortcut(getShortcutText());
+        HelpTooltip ht = new HelpTooltip().setTitle(text).setShortcut(getShortcutText());
         if (myAction instanceof TooltipLinkProvider) {
           TooltipLinkProvider.TooltipLink link = ((TooltipLinkProvider)myAction).getTooltipLink(this);
           if (link != null) {
@@ -423,7 +380,7 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
                          ((ActionToolbarImpl)parent).getOrientation() == SwingConstants.HORIZONTAL;
     int x = horizontal ? JBUIScale.scale(6) : JBUIScale.scale(5);
     int y = horizontal ? JBUIScale.scale(5) : JBUIScale.scale(6);
-    Icon arrowIcon = isButtonEnabled() ? AllIcons.General.Dropdown :
+    Icon arrowIcon = isEnabled() ? AllIcons.General.Dropdown :
                      IconLoader.getDisabledIcon(AllIcons.General.Dropdown);
     arrowIcon.paintIcon(this, g, x, y);
   }
@@ -454,7 +411,7 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
     boolean skipPress = checkSkipPressForEvent(e);
     switch (e.getID()) {
       case MouseEvent.MOUSE_PRESSED:
-        if (skipPress || !isButtonEnabled()) return;
+        if (skipPress || !isEnabled()) return;
         myMouseDown = true;
         onMousePressed(e);
         ourGlobalMouseDown = true;
@@ -462,7 +419,7 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
         break;
 
       case MouseEvent.MOUSE_RELEASED:
-        if (skipPress || !isButtonEnabled()) return;
+        if (skipPress || !isEnabled()) return;
         myMouseDown = false;
         ourGlobalMouseDown = false;
         onMouseReleased(e);
@@ -504,10 +461,10 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
   }
 
   private int getPopState(boolean isPushed) {
-    if (isPushed || myRollover && myMouseDown && isButtonEnabled()) {
+    if (isPushed || myRollover && myMouseDown && isEnabled()) {
       return PUSHED;
     }
-    else if (myRollover && isButtonEnabled()) {
+    else if (myRollover && isEnabled()) {
       return POPPED;
     }
     else if (isFocusOwner()) {

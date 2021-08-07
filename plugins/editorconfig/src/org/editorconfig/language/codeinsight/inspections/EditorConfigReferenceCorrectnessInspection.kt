@@ -29,6 +29,7 @@ class EditorConfigReferenceCorrectnessInspection : LocalInspectionTool() {
           .map { it.getDescriptor(false) as EditorConfigDeclarationDescriptor }
 
       if (sameTextDescriptors.isEmpty()) {
+        @Suppress("DialogTitleCapitalization")
         val message = EditorConfigBundle["inspection.reference.unresolved.message"]
         val possibleDescriptors = getDeclarationDescriptors(descriptor.id)
         holder.registerProblem(

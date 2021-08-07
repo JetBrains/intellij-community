@@ -1,19 +1,20 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.win;
 
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.components.Service;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.io.NioFiles;
 import com.intellij.util.ConcurrencyUtil;
-import com.intellij.util.loader.NativeLibraryLoader;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.nio.file.Path;
 import java.util.concurrent.Future;
 import java.util.concurrent.ThreadPoolExecutor;
-
 
 /**
  * <p>WinShellIntegration class provides features allow to integrate you application into Windows Shell.
@@ -31,18 +32,16 @@ import java.util.concurrent.ThreadPoolExecutor;
  *
  * @author Nikita Provotorov
  */
-@Service
+@Service(Service.Level.APP)
 final class WinShellIntegration implements Disposable {
-
   public static final class ShellContext {
     public void clearRecentTasksList() {
       parent.clearRecentTasksList();
     }
 
-    public void setRecentTasksList(@NotNull Task @NotNull [] recentTasks) {
+    public void setRecentTasksList(@NotNull JumpTask @NotNull [] recentTasks) {
       parent.setRecentTasksList(recentTasks);
     }
-
 
     private ShellContext(@NotNull WinShellIntegration parent) {
       this.parent = parent;
@@ -59,7 +58,6 @@ final class WinShellIntegration implements Disposable {
     void run(@NotNull ShellContext ctx);
   }
 
-
   /**
    * Indicates the features provided by this class are available to use.
    * If false then {@link #getInstance} will return null always.
@@ -71,9 +69,8 @@ final class WinShellIntegration implements Disposable {
    */
   @Nullable
   public static WinShellIntegration getInstance() {
-    return isAvailable ? ServiceManager.getService(WinShellIntegration.class) : null;
+    return isAvailable ? ApplicationManager.getApplication().getService(WinShellIntegration.class) : null;
   }
-
 
   public <R> @NotNull Future<R> postShellTask(@NotNull final ShellTask<? extends R> shellTask) {
     final ShellContext ctx = new ShellContext(this);
@@ -103,7 +100,6 @@ final class WinShellIntegration implements Disposable {
     });
   }
 
-
   /**
    * Please use {@link #getInstance}
    */
@@ -121,17 +117,15 @@ final class WinShellIntegration implements Disposable {
     bridge.comExecutor.shutdown();
   }
 
-
   private void clearRecentTasksList() {
     bridge.ensureNativeIsInitialized();
     bridge.clearRecentTasksListNative();
   }
 
-  private void setRecentTasksList(@NotNull Task @NotNull [] recentTasks) {
+  private void setRecentTasksList(@NotNull JumpTask @NotNull [] recentTasks) {
     bridge.ensureNativeIsInitialized();
     bridge.setRecentTasksListNative(recentTasks);
   }
-
 
   private static final class Bridge {
     private void ensureNativeIsInitialized() {
@@ -152,13 +146,14 @@ final class WinShellIntegration implements Disposable {
 
     native private void initializeNative();
     native private void clearRecentTasksListNative();
-    native private void setRecentTasksListNative(@NotNull Task @NotNull [] recentTasks);
+    native private void setRecentTasksListNative(@NotNull JumpTask @NotNull [] recentTasks);
 
     static {
-      NativeLibraryLoader.loadPlatformLibrary("WinShellIntegrationBridge");
+      Path lib = PathManager.findBinFile("WinShellIntegrationBridge.dll");
+      assert lib != null : "Shell Integration lib missing; bin=" + NioFiles.list(Path.of(PathManager.getBinPath()));
+      System.load(lib.toString());
     }
   }
-
 
   private final @NotNull Bridge bridge;
 

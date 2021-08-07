@@ -3,7 +3,7 @@ package org.jetbrains.plugins.gradle.importing
 
 import com.intellij.util.lang.JavaVersion
 import org.gradle.util.GradleVersion
-import org.jetbrains.plugins.gradle.tooling.builder.AbstractModelBuilderTest
+import org.jetbrains.plugins.gradle.tooling.VersionMatcherRule
 import org.junit.Test
 import org.junit.runners.Parameterized
 
@@ -45,7 +45,7 @@ class UnsupportedGradleImportingTest : BuildViewMessagesImportingTestCase() {
     @Parameterized.Parameters(name = "with Gradle-{0}")
     @JvmStatic
     fun tests(): Array<out Array<Any>>? {
-      return OLD_GRADLE_VERSIONS + AbstractModelBuilderTest.SUPPORTED_GRADLE_VERSIONS
+      return OLD_GRADLE_VERSIONS + VersionMatcherRule.SUPPORTED_GRADLE_VERSIONS
     }
   }
 }

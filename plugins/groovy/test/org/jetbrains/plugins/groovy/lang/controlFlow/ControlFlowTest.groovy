@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.controlFlow
 
 import com.intellij.openapi.editor.SelectionModel
@@ -160,7 +160,6 @@ class ControlFlowTest extends LightJavaCodeInsightFixtureTestCase {
     final GrControlFlowOwner owner = PsiTreeUtil.getParentOfType(PsiTreeUtil.findCommonParent(start, end), GrControlFlowOwner, false)
     final Instruction[] instructions = new ControlFlowBuilder().buildControlFlow(owner)
     final String cf = ControlFlowUtils.dumpControlFlow(instructions)
-    myFixture.configureByText(GroovyFileType.GROOVY_FILE_TYPE, code + "\n-----\n" + cf.trim())
-    myFixture.checkResultByFile(path)
+    assertEquals input.get(1).trim(), cf.trim()
   }
 }

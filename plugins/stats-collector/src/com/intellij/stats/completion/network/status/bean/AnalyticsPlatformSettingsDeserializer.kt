@@ -34,7 +34,7 @@ object AnalyticsPlatformSettingsDeserializer {
       return GSON.fromJson(json, AnalyticsPlatformSettings::class.java)
     }
     catch (e: JsonSyntaxException) {
-      LOG.error("Could not parse Analytics Platform settings", e)
+      LOG.error("Could not parse Analytics Platform settings: $json", e)
       return null
     }
   }

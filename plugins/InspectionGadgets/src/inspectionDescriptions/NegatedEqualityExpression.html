@@ -1,7 +1,11 @@
 <html>
 <body>
-Reports equality expressions which are negated by a prefix expression. For example:
-<pre><code>!(i == 1)</code></pre>
+Reports equality expressions which are negated by a prefix expression.
+<p>Such expressions can be simplified using the <code>!=</code> operator.</p>
+<p>Example:</p>
+<pre>!(i == 1)</pre>
+<p>After the quick-fix is applied:</p>
+<pre>i != 1</pre>
 <!-- tooltip end -->
 <p>
 </body>

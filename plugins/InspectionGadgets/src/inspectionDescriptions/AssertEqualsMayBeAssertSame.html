@@ -1,12 +1,26 @@
 <html>
 <body>
-Reports any calls to <b>org.junit.Assert.assertEquals()</b>
-or <b>junit.framework.Assert.assertEquals()</b> which
-can be replaced with an equivalent call to <b>assertSame()</b>.
-This is possible when the arguments are instances of a final class which does not override
-the <b>equals()</b> method.
+Reports the calls of the JUnit's <code>assertEquals()</code> method that
+can be replaced with the equivalent <code>assertSame()</code> method.
+This is possible when the arguments are instances of a final class that does not override
+the <code>Object.equals()</code> method and makes it explicit that the object identity is compared.
+<p>Suggests replacing <code>assertEquals()</code> with </p> <code>assertSame()</code>.</p>
+<p><b>Example:</b></p>
+<pre><code>
+  @Test
+  <b>public void</b> testObjectType() {
+    Object o = getObject();
+    Assert.assertEquals(String.<b>class</b>, o.getClass());
+  }
+</code></pre>
+<p>After the quick fix is applied:</p>
+<pre><code>
+  @Test
+  <b>public void</b> testSort() {
+    Object o = getObject();
+    Assert.assertSame(String.<b>class</b>, o.getClass());
+  }
+</code></pre>
 <!-- tooltip end -->
-<p>
-
 </body>
 </html>

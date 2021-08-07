@@ -1,8 +1,15 @@
 <html>
 <body>
-Reports any constant new array expression, like <code>int[] a = new int[]{42}</code> which can be replaced
-with an array initializer, e.g. <code>int[] a = {42}</code>. Array initializers omit the type declaration because
-that is already specified by the declaration of the variable the expression is
-assigned to.
+Reports constant new array expressions that can be replaced with an array initializer. Array initializers can omit the type because
+it is already specified in the left side of the assignment.
+<p><b>Example:</b></p>
+<pre>
+  int[] foo = new int[] {42};
+</pre>
+<p>After the quick-fix is applied:</p>
+<pre>
+  int[] foo = {42};
+</pre>
+<!-- tooltip end -->
 </body>
 </html>

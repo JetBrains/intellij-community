@@ -9,10 +9,10 @@ import com.intellij.openapi.editor.markup.TextAttributes;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-class ImaginarySelectionModel implements SelectionModel {
+public class ImaginarySelectionModel implements SelectionModel {
   private final ImaginaryEditor myEditor;
 
-  ImaginarySelectionModel(ImaginaryEditor editor) {
+  public ImaginarySelectionModel(ImaginaryEditor editor) {
     myEditor = editor;
   }
 
@@ -47,16 +47,14 @@ class ImaginarySelectionModel implements SelectionModel {
     throw myEditor.notImplemented();
   }
 
-  @NotNull
   @Override
-  public int[] getBlockSelectionStarts() {
-    throw myEditor.notImplemented();
+  public int @NotNull [] getBlockSelectionStarts() {
+    return new int[]{myEditor.getSelectionModel().getSelectionStart()};
   }
 
-  @NotNull
   @Override
-  public int[] getBlockSelectionEnds() {
-    throw myEditor.notImplemented();
+  public int @NotNull [] getBlockSelectionEnds() {
+    return new int[]{myEditor.getSelectionModel().getSelectionEnd()};
   }
 
   @Override

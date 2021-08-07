@@ -6,7 +6,7 @@ import com.intellij.notification.NotificationListener;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.ui.DoNotAskOption;
 import com.intellij.openapi.ui.MessageDialogBuilder;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.NlsContexts;
@@ -51,12 +51,18 @@ public class GitBranchUiHandlerImpl implements GitBranchUiHandler {
   @NonNls private static final String RESOLVE_HREF_ATTRIBUTE = "resolve";
 
   @NotNull private final Project myProject;
-  @NotNull private final Git myGit;
   @NotNull private final ProgressIndicator myProgressIndicator;
 
+  /**
+   * @deprecated Git no longer required
+   */
+  @Deprecated
   public GitBranchUiHandlerImpl(@NotNull Project project, @NotNull Git git, @NotNull ProgressIndicator indicator) {
+    this(project, indicator);
+  }
+
+  public GitBranchUiHandlerImpl(@NotNull Project project, @NotNull ProgressIndicator indicator) {
     myProject = project;
-    myGit = git;
     myProgressIndicator = indicator;
   }
 
@@ -177,7 +183,7 @@ public class GitBranchUiHandlerImpl implements GitBranchUiHandler {
     Ref<Boolean> deleteChoice = Ref.create(false);
     boolean delete =
       MessageDialogBuilder.yesNo(title, message).yesText(deleteButtonText).noText(getCancelButtonText())
-        .doNotAsk(new DialogWrapper.DoNotAskOption.Adapter() {
+        .doNotAsk(new DoNotAskOption.Adapter() {
           @Override
           public void rememberChoice(boolean isSelected, int exitCode) {
             deleteChoice.set(isSelected);

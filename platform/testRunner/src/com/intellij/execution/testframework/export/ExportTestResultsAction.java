@@ -2,6 +2,7 @@
 package com.intellij.execution.testframework.export;
 
 import com.intellij.CommonBundle;
+import com.intellij.diagnostic.AttachmentFactory;
 import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.testframework.TestFrameworkRunningModel;
@@ -13,7 +14,6 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.WriteAction;
-import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.progress.*;
@@ -41,10 +41,7 @@ import javax.xml.transform.sax.SAXTransformerFactory;
 import javax.xml.transform.sax.TransformerHandler;
 import javax.xml.transform.stream.StreamResult;
 import javax.xml.transform.stream.StreamSource;
-import java.io.File;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.io.InputStream;
+import java.io.*;
 import java.nio.charset.StandardCharsets;
 
 public final class ExportTestResultsAction extends DumbAwareAction {
@@ -112,20 +109,18 @@ public final class ExportTestResultsAction extends DumbAwareAction {
     }
 
     final File outputFile = getOutputFile(config, project, filename);
-    final VirtualFile parent = outputFile.getParentFile().mkdirs() ? LocalFileSystem.getInstance().refreshAndFindFileByIoFile(outputFile.getParentFile()) 
-                                                                   : null;
+    File parentFile = outputFile.getParentFile();
+    final VirtualFile parent = parentFile.exists() || parentFile.mkdirs() 
+                               ? LocalFileSystem.getInstance().refreshAndFindFileByIoFile(parentFile)
+                               : null;
     if (parent == null || !parent.isValid()) {
       showBalloon(project, MessageType.ERROR, ExecutionBundle.message("export.test.results.failed", 
                                                                       ExecutionBundle.message("failed.to.create.output.file", outputFile.getPath())), null);
       return;
     }
     ProgressManager.getInstance().run(
-      new Task.Backgroundable(project, ExecutionBundle.message("export.test.results.task.name"), false, new PerformInBackgroundOption() {
-        @Override
-        public boolean shouldStartInBackground() {
-          return true;
-        }
-      }) {
+      new Task.Backgroundable(project, ExecutionBundle.message("export.test.results.task.name"), false,
+                              PerformInBackgroundOption.ALWAYS_BACKGROUND) {
         @Override
         public void run(@NotNull ProgressIndicator indicator) {
           indicator.setIndeterminate(true);
@@ -157,13 +152,7 @@ public final class ExportTestResultsAction extends DumbAwareAction {
             }
             catch (Throwable ignored) { }
 
-            try {
-              String content = FileUtil.loadFile(tempFile);
-              LOG.error("Failed to export test results", ex, new Attachment("dump.xml", content));
-            }
-            catch (IOException exception) {
-              LOG.error("Failed to export test results", ex);
-            }
+            LOG.error("Failed to export test results", ex, AttachmentFactory.createAttachment(tempFile, false));
             FileUtil.delete(tempFile);
             return;
           }
@@ -277,7 +266,7 @@ public final class ExportTestResultsAction extends DumbAwareAction {
   }
 
   private boolean transform(File outputFile, TransformerHandler handler) throws IOException, SAXException {
-    try (FileWriter w = new FileWriter(outputFile, StandardCharsets.UTF_8)) {
+    try (BufferedWriter w = new BufferedWriter(new FileWriter(outputFile, StandardCharsets.UTF_8))) {
       handler.setResult(new StreamResult(w));
       TestResultsXmlFormatter.execute(myModel.getRoot(), myRunConfiguration, myModel.getProperties(), handler);
       return true;

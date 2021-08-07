@@ -10,9 +10,7 @@ import com.intellij.jps.cache.model.AffectedModule;
 import com.intellij.jps.cache.model.OutputLoadResult;
 import com.intellij.jps.cache.ui.JpsLoaderNotifications;
 import com.intellij.jps.cache.ui.SegmentedProgressIndicatorManager;
-import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationType;
-import com.intellij.notification.Notifications;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
@@ -181,10 +179,9 @@ public final class JpsServerClientImpl implements JpsServerClient {
     }
     catch (IOException e) {
       LOG.warn("Failed request to cache server", e);
-      Notification notification = JpsLoaderNotifications.ATTENTION
-        .createNotification(JpsCacheBundle.message("notification.title.compiler.caches.loader"),
-                            JpsCacheBundle.message("notification.content.failed.request.to.cache.server", e.getMessage()), NotificationType.ERROR, null);
-      Notifications.Bus.notify(notification, project);
+      JpsLoaderNotifications.ATTENTION
+        .createNotification(JpsCacheBundle.message("notification.title.compiler.caches.loader"), JpsCacheBundle.message("notification.content.failed.request.to.cache.server", e.getMessage()), NotificationType.ERROR)
+        .notify(project);
     }
     return null;
   }

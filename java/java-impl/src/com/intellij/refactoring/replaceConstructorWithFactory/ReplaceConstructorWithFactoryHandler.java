@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2013 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.replaceConstructorWithFactory;
 
 import com.intellij.java.refactoring.JavaRefactoringBundle;
@@ -31,19 +17,12 @@ import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.actions.BaseRefactoringAction;
 import com.intellij.refactoring.actions.RefactoringActionContextUtil;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * @author dsl
  */
 public class ReplaceConstructorWithFactoryHandler implements RefactoringActionHandler, ContextAwareActionHandler {
-  /**
-   * @deprecated Use {@link #getRefactoringName()} instead
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.2")
-  public static final String REFACTORING_NAME = "Replace Constructor With Factory Method";
   private Project myProject;
 
   @Override
@@ -102,13 +81,13 @@ public class ReplaceConstructorWithFactoryHandler implements RefactoringActionHa
   public void invoke(@NotNull Project project, PsiElement @NotNull [] elements, DataContext dataContext) {
     if (elements.length != 1) return;
 
-    myProject = project;
     Editor editor = CommonDataKeys.EDITOR.getData(dataContext);
     if (elements[0] instanceof PsiMethod) {
       final PsiMethod method = (PsiMethod)elements[0];
-      invoke(method, editor);
+      invoke(method, editor, project);
     }
     else if (elements[0] instanceof PsiClass) {
+      myProject = project;
       invoke((PsiClass)elements[0], editor);
     }
 
@@ -150,10 +129,10 @@ public class ReplaceConstructorWithFactoryHandler implements RefactoringActionHa
     return false;
   }
 
-  private void invoke(final PsiMethod method, Editor editor) {
+  void invoke(final PsiMethod method, Editor editor, Project project) {
     if (!method.isConstructor()) {
       String message = RefactoringBundle.getCannotRefactorMessage(JavaRefactoringBundle.message("method.is.not.a.constructor"));
-      CommonRefactoringUtil.showErrorHint(myProject, editor, message, getRefactoringName(), HelpID.REPLACE_CONSTRUCTOR_WITH_FACTORY);
+      CommonRefactoringUtil.showErrorHint(project, editor, message, getRefactoringName(), HelpID.REPLACE_CONSTRUCTOR_WITH_FACTORY);
       return;
     }
 
@@ -165,8 +144,8 @@ public class ReplaceConstructorWithFactoryHandler implements RefactoringActionHa
 
     if (!checkAbstractClassOrInterfaceMessage(aClass, editor)) return;
 
-    if (!CommonRefactoringUtil.checkReadOnlyStatus(myProject, method)) return;
-    new ReplaceConstructorWithFactoryDialog(myProject, method, method.getContainingClass()).show();
+    if (!CommonRefactoringUtil.checkReadOnlyStatus(project, method)) return;
+    new ReplaceConstructorWithFactoryDialog(project, method, method.getContainingClass()).show();
   }
 
   @Override

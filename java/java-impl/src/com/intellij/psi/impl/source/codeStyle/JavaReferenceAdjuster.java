@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl.source.codeStyle;
 
 import com.intellij.application.options.CodeStyle;
@@ -20,6 +20,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.ImportUtils;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -265,13 +266,35 @@ public class JavaReferenceAdjuster implements ReferenceAdjuster {
         if (parent instanceof PsiTypeElement) {
           final PsiClass containingClass = refClass.getContainingClass();
           if (containingClass != null && containingClass.hasTypeParameters()) {
-            if (parent.getParent() instanceof PsiTypeTestPattern) {
+            if (parent.getParent() instanceof PsiInstanceOfExpression) {
               return false;
             }
             if (!refClass.hasModifierProperty(PsiModifier.STATIC)) {
               PsiModifierListOwner enclosingStaticElement = PsiUtil.getEnclosingStaticElement(psiReference, null);
               if (enclosingStaticElement != null && !PsiTreeUtil.isAncestor(enclosingStaticElement, refClass, false)) {
                 return false;
+              }
+            }
+          }
+        }
+
+        PsiElement qualifier = ((PsiJavaCodeReferenceElement)psiReference).getQualifier();
+        if (qualifier instanceof PsiJavaCodeReferenceElement) {
+          PsiReferenceParameterList parameterList = ((PsiJavaCodeReferenceElement)qualifier).getParameterList();
+          if (parameterList != null) {
+            PsiType[] typeArguments = parameterList.getTypeArguments();
+            if (typeArguments.length > 0) {
+              final PsiClass containingClass = refClass.getContainingClass();
+              if (containingClass != null) {
+                PsiTypeParameter[] classTypeParameters = containingClass.getTypeParameters();
+                if (typeArguments.length != classTypeParameters.length) {
+                  return false;
+                }
+                if (StreamEx.zip(typeArguments, classTypeParameters, 
+                                 (type, typeParam) -> manager.areElementsEquivalent(typeParam, PsiUtil.resolveClassInClassTypeOnly(type)))
+                  .has(false)) {
+                  return false;
+                }
               }
             }
           }

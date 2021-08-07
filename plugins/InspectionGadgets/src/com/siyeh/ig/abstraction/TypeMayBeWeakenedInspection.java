@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.siyeh.ig.abstraction;
 
 import com.intellij.codeInsight.daemon.impl.UnusedSymbolUtil;
@@ -238,9 +238,12 @@ public class TypeMayBeWeakenedInspection extends AbstractBaseJavaLocalInspection
                              "doNotWeakenInferredVariableType");
 
     final ListTable stopClassesTable = new ListTable(myStopClassesModel);
-    final JPanel stopClassesPanel =
-      UiUtils.createAddRemoveTreeClassChooserPanel(stopClassesTable, InspectionGadgetsBundle
-        .message("inspection.type.may.be.weakened.add.stop.class.selection.table"), CommonClassNames.JAVA_LANG_OBJECT);
+    final JPanel stopClassesPanel = UiUtils.createAddRemoveTreeClassChooserPanel(
+      InspectionGadgetsBundle.message("inspection.type.may.be.weakened.add.stop.class.selection.table"),
+      InspectionGadgetsBundle.message("inspection.type.may.be.weakened.add.stop.class.selection.table.label"),
+      stopClassesTable,
+      true,
+      CommonClassNames.JAVA_LANG_OBJECT);
     optionsPanel.add(stopClassesPanel, "growx");
 
     return ScrollPaneFactory.createScrollPane(optionsPanel, true);

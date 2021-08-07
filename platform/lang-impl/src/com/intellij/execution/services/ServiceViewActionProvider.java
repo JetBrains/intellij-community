@@ -6,11 +6,10 @@ import com.intellij.ide.CommonActionsManager;
 import com.intellij.ide.DefaultTreeExpander;
 import com.intellij.ide.TreeExpander;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.project.DumbAwareAction;
+import com.intellij.openapi.actionSystem.impl.ActionToolbarSpacer;
 import com.intellij.openapi.project.Project;
 import com.intellij.ui.PopupHandler;
 import com.intellij.util.ObjectUtils;
-import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.tree.TreeModelAdapter;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -70,16 +69,12 @@ class ServiceViewActionProvider {
         wrapper.setVisible(false);
       }
     });
-    ActionToolbar prototypeToolbar = createPrototypeToolbar();
-    JLabel spacer = new JLabel();
-    spacer.setPreferredSize(new Dimension(prototypeToolbar.getComponent().getPreferredSize().width, 0));
-    wrapper.add(spacer, BorderLayout.SOUTH);
+    wrapper.add(new ActionToolbarSpacer(false), BorderLayout.SOUTH);
     return wrapper;
   }
 
   void installPopupHandler(@NotNull JComponent component) {
-    ActionGroup actions = (ActionGroup)ActionManager.getInstance().getAction(SERVICE_VIEW_ITEM_POPUP);
-    PopupHandler.installPopupHandler(component, actions, ActionPlaces.SERVICES_POPUP, ActionManager.getInstance());
+    PopupHandler.installPopupMenu(component, SERVICE_VIEW_ITEM_POPUP, ActionPlaces.SERVICES_POPUP);
   }
 
   ActionToolbar createMasterComponentToolbar(@NotNull JComponent component) {
@@ -126,25 +121,6 @@ class ServiceViewActionProvider {
       contextComponent = contextComponent.getParent();
     }
     return (ServiceView)contextComponent;
-  }
-
-  private static final AnAction EMPTY_ACTION = new DumbAwareAction(EmptyIcon.ICON_16) {
-    @Override
-    public void update(@NotNull AnActionEvent e) {
-      e.getPresentation().setEnabled(false);
-    }
-
-    @Override
-    public void actionPerformed(@NotNull AnActionEvent e) {
-    }
-  };
-
-  private static ActionToolbar createPrototypeToolbar() {
-    DefaultActionGroup actionGroup = new DefaultActionGroup();
-    actionGroup.add(EMPTY_ACTION);
-    ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.TOOLBAR, actionGroup, false);
-    toolbar.updateActionsImmediately();
-    return toolbar;
   }
 
   private static class ServiceViewTreeExpander extends DefaultTreeExpander {

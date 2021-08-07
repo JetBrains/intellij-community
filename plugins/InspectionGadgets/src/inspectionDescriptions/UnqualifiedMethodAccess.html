@@ -1,7 +1,26 @@
 <html>
 <body>
-Reports calls to non-static methods of the same object which are not qualified with <b>this</b>.
+Reports calls to non-<code>static</code> methods on the same instance that are not qualified with <code>this</code>.
+<p><b>Example:</b></p>
+<pre>
+  class Foo {
+    void bar() {}
+
+    void foo() {
+      bar();
+    }
+  }
+</pre>
+<p>After the quick-fix is applied:</p>
+<pre>
+  class Foo {
+    void bar() {}
+
+    void foo() {
+      this.bar();
+    }
+  }
+</pre>
 <!-- tooltip end -->
-<p>
 </body>
 </html>

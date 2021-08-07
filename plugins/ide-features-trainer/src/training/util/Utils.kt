@@ -1,22 +1,28 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package training.util
 
 import com.google.common.util.concurrent.ThreadFactoryBuilder
+import com.intellij.DynamicBundle
 import com.intellij.icons.AllIcons
 import com.intellij.ide.DataManager
 import com.intellij.ide.plugins.PluginManagerCore
+import com.intellij.ide.util.PropertiesComponent
 import com.intellij.lang.Language
 import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.ex.ActionUtil.performActionDumbAwareWithCallbacks
+import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.Balloon
 import com.intellij.openapi.ui.popup.JBPopupFactory
+import com.intellij.openapi.util.BuildNumber
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.openapi.wm.ToolWindow
+import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.ui.components.labels.LinkLabel
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
@@ -35,6 +41,7 @@ import java.awt.Component
 import java.awt.Desktop
 import java.awt.Dimension
 import java.net.URI
+import java.util.*
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 import javax.swing.*
@@ -70,14 +77,17 @@ fun createBalloon(@Nls text: String, delay: Long): Balloon =
     .setFadeoutTime(delay)
     .createBalloon()
 
-const val trainerPluginConfigName: String = "ide-features-trainer.xml"
+internal const val trainerPluginConfigName: String = "ide-features-trainer.xml"
 
-val featureTrainerVersion: String by lazy {
+internal val featureTrainerVersion: String by lazy {
   val featureTrainerPluginId = PluginManagerCore.getPluginByClassName(CourseManager::class.java.name)
   PluginManagerCore.getPlugin(featureTrainerPluginId)?.version ?: "UNKNOWN"
 }
 
-fun clearTrainingProgress() {
+val adaptToNotNativeLocalization: Boolean
+  get() = Registry.`is`("ift.adapt.to.not.native.localization") || DynamicBundle.getLocale() != Locale.ENGLISH
+
+internal fun clearTrainingProgress() {
   LessonManager.instance.stopLesson()
   LessonStateManager.resetPassedStatus()
   for (toolWindow in LearnToolWindowFactory.learnWindowPerProject.values) {
@@ -87,7 +97,7 @@ fun clearTrainingProgress() {
   LearningUiManager.activeToolWindow = null
 }
 
-fun resetPrimaryLanguage(activeLangSupport: LangSupport): Boolean {
+internal fun resetPrimaryLanguage(activeLangSupport: LangSupport): Boolean {
   val old = LangManager.getInstance().getLangSupport()
   if (activeLangSupport != old) {
     LessonManager.instance.stopLesson()
@@ -190,3 +200,28 @@ fun learningProgressString(lessons: List<Lesson>): String {
   else
     LearnBundle.message("learn.module.progress", done, total)
 }
+
+fun learningToolWindow(project: Project): ToolWindow? {
+  return ToolWindowManager.getInstance(project).getToolWindow(LearnToolWindowFactory.LEARN_TOOL_WINDOW)
+}
+
+fun Any.toNullableString(): String? {
+  return excludeNullCheck(toString())
+}
+
+private fun excludeNullCheck(value: String?): String? {
+  return value
+}
+
+fun String.replaceSpacesWithNonBreakSpace(): String = this.replace(" ", "\u00A0")
+
+internal val iftPluginIsUsing: Boolean get() = LessonStateManager.getPassedLessonsNumber() >= 5
+
+internal const val SHOW_NEW_LESSONS_NOTIFICATION = "ift.show.new.lessons.notification"
+internal const val LEARNING_PANEL_OPENED_IN = "ift.learning.panel.opened.in"
+internal val learningPanelWasOpenedInCurrentVersion: Boolean
+  get() {
+    val savedValue = PropertiesComponent.getInstance().getValue(LEARNING_PANEL_OPENED_IN) ?: return false
+    val savedBuild = BuildNumber.fromString(savedValue) ?: return false
+    return savedBuild >= ApplicationInfo.getInstance().build
+  }

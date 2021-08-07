@@ -1,11 +1,11 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.usages.impl;
 
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.Navigatable;
 import com.intellij.usages.Usage;
-import com.intellij.usages.UsageView;
+import com.intellij.usages.UsageNodePresentation;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class UsageNode extends Node implements Comparable<UsageNode>, Navigatable {
   public UsageNode(Node parent, @NotNull Usage usage) {
@@ -16,14 +16,6 @@ public class UsageNode extends Node implements Comparable<UsageNode>, Navigatabl
   @Override
   public String toString() {
     return getUsage().toString();
-  }
-
-  @Override
-  public String tree2string(int indent, @NotNull String lineSeparator) {
-    StringBuffer result = new StringBuffer();
-    StringUtil.repeatSymbol(result, ' ', indent);
-    result.append(getUsage());
-    return result.toString();
   }
 
   @Override
@@ -68,12 +60,17 @@ public class UsageNode extends Node implements Comparable<UsageNode>, Navigatabl
 
   @NotNull
   @Override
-  protected String getText(@NotNull final UsageView view) {
+  protected String getNodeText() {
     return getUsage().getPresentation().getPlainText();
   }
 
   @Override
+  public @Nullable UsageNodePresentation getCachedPresentation() {
+    return getUsage().getPresentation().getCachedPresentation();
+  }
+
+  @Override
   protected void updateCachedPresentation() {
-    getUsage().getPresentation().updateCachedText();
+    getUsage().getPresentation().updateCachedPresentation();
   }
 }

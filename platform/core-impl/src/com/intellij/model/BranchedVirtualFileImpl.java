@@ -45,6 +45,7 @@ final class BranchedVirtualFileImpl extends BranchedVirtualFile {
   @Override
   @NotNull
   protected ModelBranchImpl getBranch() {
+    myBranch.checkBranchIsAlive();
     return myBranch;
   }
 
@@ -55,12 +56,14 @@ final class BranchedVirtualFileImpl extends BranchedVirtualFile {
 
   @Override
   public boolean isDirectory() {
+    myBranch.checkBranchIsAlive();
     return myDirectory;
   }
 
 
   @Override
   public @NotNull OutputStream getOutputStream(Object requestor, long newModificationStamp, long newTimeStamp) throws IOException {
+    myBranch.checkBranchIsAlive();
     if (isDirectory()) throw new IOException("Cannot write a directory: " + this);
     return VfsUtilCore.outputStreamAddingBOM(new ByteArrayOutputStream() {
       @Override
@@ -75,6 +78,7 @@ final class BranchedVirtualFileImpl extends BranchedVirtualFile {
 
   @Override
   public @NotNull CharSequence getContent() {
+    myBranch.checkBranchIsAlive();
     if (isDirectory()) throw new IllegalStateException("Cannot get content of directory: " + this);
     if (!getFileType().isBinary()) {
       if (myOriginal != null) {
@@ -99,6 +103,7 @@ final class BranchedVirtualFileImpl extends BranchedVirtualFile {
 
   @Override
   public byte @NotNull [] contentsToByteArray() throws IOException {
+    myBranch.checkBranchIsAlive();
     if (isDirectory()) throw new IOException("Cannot get content of directory: " + this);
     if (myByteContent != null) return myByteContent.clone();
     if (myOriginal == null) return ArrayUtil.EMPTY_BYTE_ARRAY;
@@ -107,6 +112,7 @@ final class BranchedVirtualFileImpl extends BranchedVirtualFile {
 
   @Override
   public void rename(Object requestor, @NotNull String newName) throws IOException {
+    myBranch.checkBranchIsAlive();
     super.rename(requestor, newName);
     BranchedVirtualFileImpl parent = getParent();
     if (parent != null && parent.myChangedChildren == null) {
@@ -118,6 +124,7 @@ final class BranchedVirtualFileImpl extends BranchedVirtualFile {
 
   @Override
   public void move(Object requestor, @NotNull VirtualFile _newParent) {
+    myBranch.checkBranchIsAlive();
     assert ModelBranch.getFileBranch(_newParent) == myBranch;
     BranchedVirtualFileImpl newParent = (BranchedVirtualFileImpl)_newParent;
     BranchedVirtualFileImpl oldParent = getParent();
@@ -139,6 +146,7 @@ final class BranchedVirtualFileImpl extends BranchedVirtualFile {
 
   @Override
   public @Nullable VirtualFile findChild(@NotNull String name) {
+    myBranch.checkBranchIsAlive();
     if (myChangedChildren != null) {
       BranchedVirtualFileImpl[] array = myChangedChildren.get();
       return array == null ? null : ContainerUtil.find(array, f -> name.equals(f.getName()));
@@ -151,6 +159,7 @@ final class BranchedVirtualFileImpl extends BranchedVirtualFile {
 
   @Override
   public BranchedVirtualFileImpl getParent() {
+    myBranch.checkBranchIsAlive();
     if (myChangedParent != null) return myChangedParent;
     assert myOriginal != null;
     VirtualFile parent = myOriginal.getParent();
@@ -159,6 +168,7 @@ final class BranchedVirtualFileImpl extends BranchedVirtualFile {
 
   @Override
   public BranchedVirtualFileImpl[] getChildren() {
+    myBranch.checkBranchIsAlive();
     if (myChangedChildren != null) {
       BranchedVirtualFileImpl[] array = myChangedChildren.get();
       return array == null || array.length == 0 ? array : array.clone();
@@ -174,15 +184,18 @@ final class BranchedVirtualFileImpl extends BranchedVirtualFile {
 
   @Override
   public @NotNull VirtualFile createChildDirectory(Object requestor, @NotNull String name) {
+    myBranch.checkBranchIsAlive();
     return createChild(name, true);
   }
 
   @Override
   public @NotNull VirtualFile createChildData(Object requestor, @NotNull String name) {
+    myBranch.checkBranchIsAlive();
     return createChild(name, false);
   }
 
   private VirtualFile createChild(String name, boolean isDirectory) {
+    myBranch.checkBranchIsAlive();
     BranchedVirtualFileImpl created = new BranchedVirtualFileImpl(myBranch, null, name, isDirectory, this);
     myChangedChildren = Ref.create(ArrayUtil.insert(getChildren(), 0, created));
     created.myChangedChildren = Ref.create(isDirectory ? new BranchedVirtualFileImpl[0] : null);
@@ -192,11 +205,13 @@ final class BranchedVirtualFileImpl extends BranchedVirtualFile {
 
   @Nullable
   VirtualFile getOriginal() {
+    myBranch.checkBranchIsAlive();
     return myOriginal;
   }
 
   @NotNull
   VirtualFile getOrCreateOriginal() throws IOException {
+    myBranch.checkBranchIsAlive();
     VirtualFile result = this.myOriginal;
     if (result == null) {
       myOriginal = result = createFile();
@@ -206,6 +221,7 @@ final class BranchedVirtualFileImpl extends BranchedVirtualFile {
 
   @NotNull
   private VirtualFile createFile() throws IOException {
+    myBranch.checkBranchIsAlive();
     String name = getName();
     VirtualFile originalParent = getParent().getOrCreateOriginal();
     VirtualFile original = isDirectory()
@@ -227,6 +243,6 @@ final class BranchedVirtualFileImpl extends BranchedVirtualFile {
 
   @Override
   public String toString() {
-    return "BranchedVFile[" + myBranch.hashCode() + "]: " + getPresentableUrl();
+    return "BranchedVirtualFile[" + myBranch.hashCode() + "]: " + getPresentableUrl();
   }
 }

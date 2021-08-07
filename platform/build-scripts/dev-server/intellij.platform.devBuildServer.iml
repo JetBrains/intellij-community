@@ -7,7 +7,6 @@
           <option name="additionalArguments" value="-version -Xstrict-java-nullability-assertions -Xjvm-default=enable" />
         </compilerSettings>
         <compilerArguments>
-          <option name="jvmTarget" value="1.8" />
           <option name="languageVersion" value="1.4" />
           <option name="apiVersion" value="1.4" />
           <option name="pluginOptions">
@@ -37,7 +36,6 @@
     <orderEntry type="library" name="jps-build-script-dependencies-bootstrap" level="project" />
     <orderEntry type="module" module-name="intellij.platform.buildScripts" />
     <orderEntry type="module" module-name="intellij.idea.community.build" scope="RUNTIME" />
-    <orderEntry type="library" name="directory-watcher" level="project" />
     <orderEntry type="library" name="kotlinx-serialization-core" level="project" />
     <orderEntry type="library" name="kotlinx-serialization-json" level="project" />
     <orderEntry type="module" module-name="intellij.idea.community.build.tasks" />

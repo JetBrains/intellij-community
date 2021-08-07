@@ -5,8 +5,6 @@ import com.intellij.execution.Executor;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.KeyWithDefaultValue;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -15,8 +13,6 @@ import org.jetbrains.concurrency.Promise;
 
 import java.util.Arrays;
 import java.util.Collection;
-
-import static com.intellij.task.ProjectTaskManager.EMPTY_TASKS_ARRAY;
 
 /**
  * {@link ProjectTaskRunner} provides an extension point to run any IDE tasks using {@link ProjectTaskManager} api.
@@ -53,7 +49,7 @@ public abstract class ProjectTaskRunner {
                              @NotNull ProjectTaskContext context,
                              ProjectTask @NotNull ... tasks) {
     AsyncPromise<Result> promise = new AsyncPromise<>();
-    run(project, context, new ProjectTaskNotificationAdapter(promise), tasks);
+    run(project, context, new ProjectTaskNotificationAdapter(promise), Arrays.asList(tasks));
     return promise;
   }
 
@@ -93,8 +89,6 @@ public abstract class ProjectTaskRunner {
   }
 
   //<editor-fold desc="Deprecated methods. To be removed in 2020.1">
-  private static final Key<Boolean> RECURSION_GUARD_KEY = KeyWithDefaultValue.create("recursion guard key", false);
-
   /**
    * @deprecated use {@link #run(Project, ProjectTaskContext, ProjectTask...)}
    */
@@ -104,35 +98,8 @@ public abstract class ProjectTaskRunner {
                   @NotNull ProjectTaskContext context,
                   @Nullable ProjectTaskNotification callback,
                   @NotNull Collection<? extends ProjectTask> tasks) {
-    if (!RECURSION_GUARD_KEY.get(context)) {
-      RECURSION_GUARD_KEY.set(context, true);
-      run(project, context, callback, tasks.toArray(EMPTY_TASKS_ARRAY));
-      RECURSION_GUARD_KEY.set(context, false);
-    }
-    else {
-      assertUnsupportedOperation(callback);
-      notifyIfNeeded(run(project, context, tasks.toArray(new ProjectTask[]{})), callback);
-    }
-  }
-
-  /**
-   * @deprecated use {@link #run(Project, ProjectTaskContext, ProjectTask...)}
-   */
-  @ApiStatus.ScheduledForRemoval(inVersion = "2020.1")
-  @Deprecated
-  public void run(@NotNull Project project,
-                  @NotNull ProjectTaskContext context,
-                  @Nullable ProjectTaskNotification callback,
-                  ProjectTask @NotNull ... tasks) {
-    if (!RECURSION_GUARD_KEY.get(context)) {
-      RECURSION_GUARD_KEY.set(context, true);
-      run(project, context, callback, Arrays.asList(tasks));
-      RECURSION_GUARD_KEY.set(context, false);
-    }
-    else {
-      assertUnsupportedOperation(callback);
-      notifyIfNeeded(run(project, context, tasks), callback);
-    }
+    assertUnsupportedOperation(callback);
+    notifyIfNeeded(run(project, context, tasks.toArray(new ProjectTask[]{})), callback);
   }
 
   @SuppressWarnings("deprecation")
@@ -169,9 +136,9 @@ public abstract class ProjectTaskRunner {
   }
 
   @SuppressWarnings("deprecation")
-  private static void assertUnsupportedOperation(@Nullable ProjectTaskNotification callback) {
+  private void assertUnsupportedOperation(@Nullable ProjectTaskNotification callback) {
     if (callback instanceof ProjectTaskNotificationAdapter) {
-      throw new UnsupportedOperationException("Please, provide implementation non-deprecated ProjectTaskRunner.run(Project, ProjectTaskContext, ProjectTask...) method");
+      throw new UnsupportedOperationException("Please, provide implementation non-deprecated ProjectTaskRunner.run(Project, ProjectTaskContext, ProjectTask...) method in " + getClass());
     }
   }
   //</editor-fold>

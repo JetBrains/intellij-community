@@ -3,7 +3,9 @@ package com.intellij.ml.local.models.api
 import com.intellij.lang.Language
 import com.intellij.lang.LanguageExtension
 import com.intellij.openapi.project.Project
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 interface LocalModelFactory {
   companion object {
     private val EP_NAME = LanguageExtension<LocalModelFactory>("com.intellij.ml.local.models.factory")

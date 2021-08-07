@@ -15,21 +15,12 @@
  */
 package com.intellij.codeInsight.editorActions.moveLeftRight;
 
-import com.intellij.codeInsight.actions.CodeInsightEditorAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.PerformWithDocumentsCommitted;
 import com.intellij.openapi.editor.actionSystem.EditorAction;
-import org.jetbrains.annotations.NotNull;
 
-public class MoveElementRightAction extends EditorAction {
+public class MoveElementRightAction extends EditorAction implements PerformWithDocumentsCommitted {
   public MoveElementRightAction() {
     super(new MoveElementLeftRightActionHandler(false));
     setInjectedContext(true);
   }
-
-  @Override
-  public void beforeActionPerformedUpdate(@NotNull AnActionEvent e) {
-    CodeInsightEditorAction.beforeActionPerformedUpdate(e);
-    super.beforeActionPerformedUpdate(e);
-  }
-
 }

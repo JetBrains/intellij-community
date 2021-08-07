@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.testframework;
 
 import com.intellij.execution.Location;
@@ -102,11 +102,13 @@ public abstract class TestTreeView extends Tree implements DataProvider, CopyPro
     AbstractTestProxy testProxy = getSelectedTest(selectionPath);
     if (testProxy == null) return null;
 
-    if (AbstractTestProxy.DATA_KEY.is(dataId)) {
+    if (AbstractTestProxy.DATA_KEY.is(dataId) || CommonDataKeys.NAVIGATABLE.is(dataId)) {
       return testProxy;
     }
+
     if (PlatformDataKeys.SLOW_DATA_PROVIDERS.is(dataId)) {
-      return Collections.<DataProvider>singletonList(dataId1 -> getSlowData(dataId1, testProxy, myModel));
+      TestFrameworkRunningModel model = myModel;
+      return Collections.<DataProvider>singletonList(dataId1 -> getSlowData(dataId1, testProxy, model));
     }
     if (RunConfiguration.DATA_KEY.is(dataId)) {
       RunProfile configuration = myModel.getProperties().getConfiguration();
@@ -124,10 +126,7 @@ public abstract class TestTreeView extends Tree implements DataProvider, CopyPro
                              @NotNull TestFrameworkRunningModel model) {
     Project project = model.getProperties().getProject();
 
-    if (CommonDataKeys.NAVIGATABLE.is(dataId)) {
-      return TestsUIUtil.getOpenFileDescriptor(testProxy, model);
-    }
-    else if (CommonDataKeys.PSI_ELEMENT.is(dataId)) {
+    if (CommonDataKeys.PSI_ELEMENT.is(dataId)) {
       Location<?> location = testProxy.getLocation(project, model.getProperties().getScope());
       PsiElement psiElement = location != null ? location.getPsiElement() : null;
       return psiElement == null || !psiElement.isValid() ? null : psiElement;
@@ -188,7 +187,7 @@ public abstract class TestTreeView extends Tree implements DataProvider, CopyPro
       return getPresentableName(testProxy);
     }, Registry.is("tests.view.node.expanding.search"));
     TreeUtil.installActions(this);
-    PopupHandler.installPopupHandler(this, IdeActions.GROUP_TESTTREE_POPUP, ActionPlaces.TESTTREE_VIEW_POPUP);
+    PopupHandler.installPopupMenu(this, IdeActions.GROUP_TESTTREE_POPUP, ActionPlaces.TESTTREE_VIEW_POPUP);
     HintUpdateSupply.installHintUpdateSupply(this, obj -> {
       Object userObject = TreeUtil.getUserObject(obj);
       Object element = userObject instanceof NodeDescriptor? ((NodeDescriptor<?>)userObject).getElement() : null;

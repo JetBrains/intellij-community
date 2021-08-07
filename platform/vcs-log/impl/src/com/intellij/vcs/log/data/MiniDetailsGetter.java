@@ -1,8 +1,7 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.log.data;
 
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.VcsException;
@@ -15,7 +14,8 @@ import com.intellij.vcs.log.VcsLogProvider;
 import com.intellij.vcs.log.data.index.IndexDataGetter;
 import com.intellij.vcs.log.data.index.IndexedDetails;
 import com.intellij.vcs.log.data.index.VcsLogIndex;
-import gnu.trove.TIntHashSet;
+import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
+import it.unimi.dsi.fastutil.ints.IntSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -35,14 +35,14 @@ public class MiniDetailsGetter extends AbstractDataGetter<VcsCommitMetadata> {
                     @NotNull Disposable parentDisposable) {
     super(storage, logProviders, index, parentDisposable);
     myTopCommitsDetailsCache = topCommitsDetailsCache;
-    myFactory = ServiceManager.getService(project, VcsLogObjectsFactory.class);
+    myFactory = project.getService(VcsLogObjectsFactory.class);
   }
 
   @RequiresBackgroundThread
   public void loadCommitsData(@NotNull Iterable<Integer> hashes,
                               @NotNull Consumer<? super VcsCommitMetadata> consumer,
                               @NotNull ProgressIndicator indicator) throws VcsException {
-    final TIntHashSet toLoad = new TIntHashSet();
+    final IntSet toLoad = new IntOpenHashSet();
 
     for (int id : hashes) {
       VcsCommitMetadata details = getFromCache(id);
@@ -76,7 +76,7 @@ public class MiniDetailsGetter extends AbstractDataGetter<VcsCommitMetadata> {
   }
 
   @Override
-  protected void preLoadCommitData(@NotNull TIntHashSet commits, @NotNull Consumer<? super VcsCommitMetadata> consumer)
+  protected void preLoadCommitData(@NotNull IntSet commits, @NotNull Consumer<? super VcsCommitMetadata> consumer)
     throws VcsException {
 
     IndexDataGetter dataGetter = myIndex.getDataGetter();
@@ -85,7 +85,7 @@ public class MiniDetailsGetter extends AbstractDataGetter<VcsCommitMetadata> {
       return;
     }
 
-    TIntHashSet notIndexed = new TIntHashSet();
+    IntSet notIndexed = new IntOpenHashSet();
 
     commits.forEach(commit -> {
       VcsCommitMetadata metadata = IndexedDetails.createMetadata(commit, dataGetter, myStorage, myFactory);
@@ -96,7 +96,6 @@ public class MiniDetailsGetter extends AbstractDataGetter<VcsCommitMetadata> {
         saveInCache(commit, metadata);
         consumer.consume(metadata);
       }
-      return true;
     });
 
     if (!notIndexed.isEmpty()) {

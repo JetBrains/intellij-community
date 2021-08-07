@@ -33,7 +33,6 @@ class EclipseIml2ModulesTest {
   }
 
   private fun doTest(workspacePath: String, projectName: String) {
-    assumeTrue(ProjectModelRule.isWorkspaceModelEnabled)
     val testDataRoot = eclipseTestDataRoot
     val testRoot = testDataRoot / "iml" / testName.methodName.removePrefix("test").decapitalize()
     val commonRoot = testDataRoot / "common" / "twoModulesWithClasspathStorage"

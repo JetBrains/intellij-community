@@ -1,5 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.junit.codeInsight.references;
 
 import com.intellij.patterns.InitialPatternCondition;
@@ -18,7 +17,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.uast.*;
 
-public class JUnitReferenceContributor extends PsiReferenceContributor {
+final class JUnitReferenceContributor extends PsiReferenceContributor {
   private static PsiElementPattern.Capture<PsiLanguageInjectionHost> getElementPattern(String annotation, String paramName) {
     return PlatformPatterns.psiElement(PsiLanguageInjectionHost.class).and(new FilterPattern(new TestAnnotationFilter(annotation, paramName)));
   }

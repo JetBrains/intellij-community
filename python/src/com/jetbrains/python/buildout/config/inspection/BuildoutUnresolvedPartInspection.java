@@ -34,11 +34,6 @@ public class BuildoutUnresolvedPartInspection extends LocalInspectionTool {
   }
 
   @Override
-  public boolean isEnabledByDefault() {
-    return true;
-  }
-
-  @Override
   public ProblemDescriptor[] checkFile(@NotNull PsiFile file, @NotNull InspectionManager manager, boolean isOnTheFly) {
     List<ProblemDescriptor> problems = new ArrayList<>();
     if (file.getFileType().equals(BuildoutCfgFileType.INSTANCE)) {

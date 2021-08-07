@@ -14,7 +14,6 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.ResolveResult;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.SkipSlowTestLocally;
 import com.intellij.util.ThrowableRunnable;
@@ -29,7 +28,6 @@ import com.jetbrains.python.psi.types.TypeEvalContext;
 import com.jetbrains.python.pyi.PyiUtil;
 import com.jetbrains.python.sdk.PythonSdkUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 @SkipSlowTestLocally
 public class PyOverloadsProcessingPerformanceTest extends PyTestCase {
@@ -164,10 +162,5 @@ public class PyOverloadsProcessingPerformanceTest extends PyTestCase {
   @Override
   protected String getTestDataPath() {
     return super.getTestDataPath() + "/performance/overloads/";
-  }
-
-  @Override
-  protected @Nullable LightProjectDescriptor getProjectDescriptor() {
-    return ourPyLatestDescriptor;
   }
 }

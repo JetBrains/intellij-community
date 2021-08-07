@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.projectRoots.impl;
 
 import com.intellij.ide.highlighter.ArchiveFileType;
@@ -15,7 +15,7 @@ import com.intellij.openapi.projectRoots.*;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.text.Strings;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
@@ -23,13 +23,11 @@ import com.intellij.openapi.vfs.newvfs.BulkFileListener;
 import com.intellij.openapi.vfs.newvfs.events.VFileCreateEvent;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
 import com.intellij.util.ThreeState;
-import com.intellij.util.containers.SmartHashSet;
 import com.intellij.util.messages.MessageBusConnection;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
 
 import java.io.File;
 import java.util.*;
@@ -54,59 +52,67 @@ public class ProjectJdkTableImpl extends ProjectJdkTable implements ExportableCo
       private final FileTypeManager myFileTypeManager = FileTypeManager.getInstance();
 
       @Override
-      public void after(@NotNull List<? extends VFileEvent> events) {
-        if (!events.isEmpty()) {
-          final Set<Sdk> affected = new SmartHashSet<>();
-          for (VFileEvent event : events) {
-            addAffectedJavaSdk(event, affected);
-          }
-          if (!affected.isEmpty()) {
-            for (Sdk sdk : affected) {
-              ((SdkType)sdk.getSdkType()).setupSdkPaths(sdk);
-            }
+      public void after(@NotNull List<? extends @NotNull VFileEvent> events) {
+        if (events.isEmpty()) {
+          return;
+        }
+
+        Set<Sdk> affected = null;
+        for (VFileEvent event : events) {
+          affected = addAffectedJavaSdk(event, affected);
+        }
+        if (affected != null) {
+          for (Sdk sdk : affected) {
+            ((SdkType)sdk.getSdkType()).setupSdkPaths(sdk);
           }
         }
       }
 
-      private void addAffectedJavaSdk(VFileEvent event, Set<? super Sdk> affected) {
+      private @Nullable Set<Sdk> addAffectedJavaSdk(@NotNull VFileEvent event, @Nullable Set<Sdk> affected) {
         CharSequence fileName = null;
         if (event instanceof VFileCreateEvent) {
-          if (((VFileCreateEvent)event).isDirectory()) return;
+          if (((VFileCreateEvent)event).isDirectory()) {
+            return affected;
+          }
           fileName = ((VFileCreateEvent)event).getChildName();
         }
         else {
-          final VirtualFile file = event.getFile();
-
+          VirtualFile file = event.getFile();
           if (file != null && file.isValid()) {
             if (file.isDirectory()) {
-              return;
+              return affected;
             }
             fileName = file.getNameSequence();
           }
         }
+
         if (fileName == null) {
-          final String eventPath = event.getPath();
-          fileName = VfsUtil.extractFileName(eventPath);
+          fileName = VfsUtil.extractFileName(event.getPath());
         }
         if (fileName != null) {
           // avoid calling getFileType() because it will try to detect file type from content for unknown/text file types
           // consider only archive files that may contain libraries
           if (!ArchiveFileType.INSTANCE.equals(myFileTypeManager.getFileTypeByFileName(fileName))) {
-            return;
+            return affected;
           }
         }
 
         for (Sdk sdk : mySdks) {
-          if (sdk.getSdkType() instanceof JavaSdkType && !affected.contains(sdk)) {
-            final String homePath = sdk.getHomePath();
-            final String eventPath = event.getPath();
-            if (!StringUtil.isEmpty(homePath) && FileUtil.isAncestor(homePath, eventPath, true)) {
+          if (sdk.getSdkType() instanceof JavaSdkType && (affected == null || !affected.contains(sdk))) {
+            String homePath = sdk.getHomePath();
+            String eventPath = event.getPath();
+            if (!Strings.isEmpty(homePath) && FileUtil.isAncestor(homePath, eventPath, true)) {
+              if (affected == null) {
+                affected = new HashSet<>();
+              }
               affected.add(sdk);
             }
           }
         }
+        return affected;
       }
     });
+
     SdkType.EP_NAME.addExtensionPointListener(new ExtensionPointListener<>() {
       @Override
       public void extensionAdded(@NotNull SdkType extension, @NotNull PluginDescriptor pluginDescriptor) {
@@ -232,17 +238,6 @@ public class ProjectJdkTableImpl extends ProjectJdkTable implements ExportableCo
       }
     }
     return result;
-  }
-
-  @TestOnly
-  public void addTestJdk(@NotNull Sdk jdk, @NotNull Disposable parentDisposable) {
-    WriteAction.runAndWait(()-> mySdks.add(jdk));
-    Disposer.register(parentDisposable, () -> removeTestJdk(jdk));
-  }
-
-  @TestOnly
-  public void removeTestJdk(@NotNull Sdk jdk) {
-    WriteAction.runAndWait(()-> mySdks.remove(jdk));
   }
 
   @Override

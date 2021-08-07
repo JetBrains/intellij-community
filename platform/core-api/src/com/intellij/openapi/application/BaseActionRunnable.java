@@ -3,12 +3,14 @@ package com.intellij.openapi.application;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.util.ThrowableRunnable;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * @deprecated Use {@link WriteAction#run(ThrowableRunnable)} or {@link ReadAction#run(ThrowableRunnable)} or similar method instead
  */
 @Deprecated
+@ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
 public abstract class BaseActionRunnable<T> {
   protected abstract void run(@NotNull Result<? super T> result) throws Throwable;
 

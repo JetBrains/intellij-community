@@ -52,12 +52,13 @@ internal abstract class GitAbortOperationAction(repositoryState: Repository.Stat
     override val notificationErrorDisplayId = REVERT_ABORT_FAILED
   }
 
-  override fun performInBackground(repository: GitRepository) {
-    if (!confirmAbort(repository)) return
+  override fun performInBackground(repository: GitRepository): Boolean {
+    if (!confirmAbort(repository)) return false
 
     runBackgroundableTask(GitBundle.message("abort.operation.progress.title", operationNameCapitalised), repository.project) { indicator ->
       doAbort(repository, indicator)
     }
+    return true
   }
 
   private fun confirmAbort(repository: GitRepository): Boolean {

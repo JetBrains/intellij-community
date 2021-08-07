@@ -11,6 +11,7 @@ import javax.swing.Action
 import javax.swing.Icon
 import javax.swing.JButton
 import javax.swing.SwingConstants
+import javax.swing.UIManager
 
 open class ActionLink() : JButton() {
   override fun getUIClassID() = "LinkButtonUI"
@@ -18,6 +19,12 @@ open class ActionLink() : JButton() {
   init {
     @Suppress("LeakingThis")
     addPropertyChangeListener("enabled") { if (autoHideOnDisable) isVisible = isEnabled }
+  }
+
+  override fun updateUI() {
+    // register predefined link implementation if L&F manager is not loaded yet
+    UIManager.get(uiClassID) ?: UIManager.put(uiClassID, "com.intellij.ui.components.DefaultLinkButtonUI")
+    super.updateUI()
   }
 
   constructor(action: Action) : this() {

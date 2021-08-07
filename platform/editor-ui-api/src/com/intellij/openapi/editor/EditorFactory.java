@@ -8,6 +8,7 @@ import com.intellij.openapi.editor.event.EditorFactoryListener;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -132,6 +133,21 @@ public abstract class EditorFactory {
   public abstract @NotNull Stream<Editor> editors(@NotNull Document document, @Nullable Project project);
 
   /**
+   * If а collaborative development session is off,
+   * then returns the result of {@link EditorFactory#editors(Document, Project)}.
+   * <p>
+   * If а collaborative development session is on,
+   * then returns such editors from {@link EditorFactory#editors(Document, Project)},
+   * which belong only to the guest or host, who's action/activity is currently processing.
+   * </p>
+   */
+  @ApiStatus.Internal
+  @ApiStatus.Experimental
+  public @NotNull Stream<Editor> editorsForCurrentClient(@NotNull Document document, @Nullable Project project) {
+    return editors(document, project);
+  }
+
+  /**
    * Returns the stream of all editors for the specified document.
    */
   public final @NotNull Stream<Editor> editors(@NotNull Document document) {
@@ -163,6 +179,7 @@ public abstract class EditorFactory {
    * @deprecated use the {@link #addEditorFactoryListener(EditorFactoryListener, Disposable)} instead
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
   public abstract void addEditorFactoryListener(@NotNull EditorFactoryListener listener);
 
   /**
@@ -177,6 +194,7 @@ public abstract class EditorFactory {
    * @deprecated you should have used the {@link #addEditorFactoryListener(EditorFactoryListener, Disposable)} instead
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
   public abstract void removeEditorFactoryListener(@NotNull EditorFactoryListener listener);
 
   /**

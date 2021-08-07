@@ -1,10 +1,11 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.fileEditor.impl
 
 import com.intellij.CommonBundle
 import com.intellij.ide.BrowserUtil
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.plugins.MultiPanel
+import com.intellij.openapi.application.IdeUrlTrackingParametersProvider
 import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.editor.EditorBundle
 import com.intellij.openapi.fileEditor.FileEditor
@@ -35,7 +36,7 @@ import javax.swing.JComponent
 
 internal class HTMLFileEditor(private val project: Project, private val file: LightVirtualFile, url: String) : UserDataHolderBase(), FileEditor {
   private val loadingPanel = JBLoadingPanel(BorderLayout(), this)
-  private val contentPanel = JCEFHtmlPanel(null)
+  private val contentPanel = JCEFHtmlPanel(true, null, null)
   private val alarm = AlarmFactory.getInstance().create(Alarm.ThreadToUse.SWING_THREAD, this)
   private val initial = AtomicBoolean(true)
   private val navigating = AtomicBoolean(false)
@@ -82,19 +83,19 @@ internal class HTMLFileEditor(private val project: Project, private val file: Li
 
     contentPanel.jbCefClient.addRequestHandler(object : CefRequestHandlerAdapter() {
       override fun onBeforeBrowse(browser: CefBrowser, frame: CefFrame, request: CefRequest, userGesture: Boolean, isRedirect: Boolean): Boolean =
-        if (userGesture) { navigating.set(true); BrowserUtil.browse(request.url); true }
+        if (userGesture) { navigating.set(true); browse(request.url); true }
         else false
     }, contentPanel.cefBrowser)
 
     contentPanel.jbCefClient.addLifeSpanHandler(object : CefLifeSpanHandlerAdapter() {
       override fun onBeforePopup(browser: CefBrowser, frame: CefFrame, targetUrl: String, targetFrameName: String?): Boolean {
-        BrowserUtil.browse(targetUrl)
+        browse(targetUrl)
         return true
       }
     }, contentPanel.cefBrowser)
 
     contentPanel.jbCefClient.addDisplayHandler(object : CefDisplayHandlerAdapter() {
-      override fun onStatusMessage(browser: CefBrowser, @NlsSafe text: String) =
+      override fun onStatusMessage(browser: CefBrowser, text: @NlsSafe String) =
         StatusBar.Info.set(text, project)
     }, contentPanel.cefBrowser)
 
@@ -116,6 +117,9 @@ internal class HTMLFileEditor(private val project: Project, private val file: Li
       contentPanel.loadHTML(file.content.toString())
     }
   }
+
+  private fun browse(url: String) =
+    BrowserUtil.browse(IdeUrlTrackingParametersProvider.getInstance().augmentUrl(url))
 
   override fun getComponent(): JComponent = multiPanel
   override fun getPreferredFocusedComponent(): JComponent = multiPanel

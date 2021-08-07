@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.javadoc;
 
 import com.intellij.codeInsight.AnnotationTargetUtil;
@@ -182,7 +182,9 @@ public final class AnnotationDocGenerator {
     Set<String> shownAnnotations = new HashSet<>();
     return StreamEx.of(AnnotationUtil.getAllAnnotations(owner, false, null))
       .filter(owner instanceof PsiClass || owner instanceof PsiJavaModule ? anno -> true
-                                                                          : anno -> !AnnotationTargetUtil.isTypeAnnotation(anno))
+                                                                          : anno -> !AnnotationTargetUtil.isTypeAnnotation(anno) || 
+                                                                                    AnnotationUtil.isInferredAnnotation(anno) || 
+                                                                                    AnnotationUtil.isExternalAnnotation(anno))
       .map(annotation -> forAnnotation(owner, shownAnnotations, annotation))
       .nonNull()
       .toList();
@@ -197,7 +199,7 @@ public final class AnnotationDocGenerator {
     AnnotationDocGenerator anno = new AnnotationDocGenerator(annotation, nameReferenceElement, context);
     if (anno.isNonDocumentedAnnotation()) return null;
 
-    if (!(shownAnnotations.add(annotation.getQualifiedName()) || JavaDocInfoGenerator.isRepeatableAnnotationType(annotation))) return null;
+    if (!(shownAnnotations.add(annotation.getQualifiedName()) || JavaDocInfoGenerator.isRepeatableAnnotationType(nameReferenceElement.resolve()))) return null;
     return anno;
   }
 }

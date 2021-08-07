@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.navigation;
 
+import com.intellij.codeInsight.daemon.GutterIconNavigationHandler;
 import com.intellij.codeInsight.daemon.RelatedItemLineMarkerInfo;
 import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.ide.util.DefaultPsiElementCellRenderer;
@@ -52,7 +53,7 @@ public class NavigationGutterIconBuilder<T> {
   private final NotNullFunction<? super T, ? extends Collection<? extends PsiElement>> myConverter;
 
   protected NotNullLazyValue<Collection<? extends T>> myTargets;
-  private boolean myLazy;
+  protected boolean myLazy;
   protected @Tooltip String myTooltipText;
   protected @PopupTitle String myPopupTitle;
   protected @PopupContent String myEmptyText;
@@ -204,11 +205,22 @@ public class NavigationGutterIconBuilder<T> {
   @NotNull
   public RelatedItemLineMarkerInfo<PsiElement> createLineMarkerInfo(@NotNull PsiElement element) {
     NavigationGutterIconRenderer renderer = createGutterIconRenderer(element.getProject());
+    return createLineMarkerInfo(element, renderer.isNavigateAction() ? renderer : null);
+  }
+
+  @NotNull
+  public RelatedItemLineMarkerInfo<PsiElement> createLineMarkerInfo(@NotNull PsiElement element,
+                                                                    @Nullable GutterIconNavigationHandler<PsiElement> navigationHandler) {
+    NavigationGutterIconRenderer renderer = createGutterIconRenderer(element.getProject());
     String tooltip = renderer.getTooltipText();
-    return new RelatedItemLineMarkerInfo<>(element, element.getTextRange(), renderer.getIcon(),
-                                           tooltip == null ? null : new ConstantFunction<>(tooltip),
-                                           renderer.isNavigateAction() ? renderer : null, renderer.getAlignment(),
-                                           ()->computeGotoTargets());
+    return new RelatedItemLineMarkerInfo<>(
+      element,
+      element.getTextRange(),
+      renderer.getIcon(),
+      tooltip == null ? null : new ConstantFunction<>(tooltip),
+      navigationHandler,
+      renderer.getAlignment(),
+      () -> computeGotoTargets());
   }
 
   @NotNull
@@ -276,9 +288,19 @@ public class NavigationGutterIconBuilder<T> {
 
   @NotNull
   protected NavigationGutterIconRenderer createGutterIconRenderer(@NotNull NotNullLazyValue<List<SmartPsiElementPointer<?>>> pointers,
-                                                                @NotNull Computable<PsiElementListCellRenderer<?>> renderer,
-                                                                boolean empty) {
+                                                                  @NotNull Computable<PsiElementListCellRenderer<?>> renderer,
+                                                                  boolean empty) {
+    if (myLazy) {
+      return createLazyGutterIconRenderer(pointers, renderer, empty);
+    }
     return new MyNavigationGutterIconRenderer(this, myAlignment, myIcon, myTooltipText, pointers, renderer, empty);
+  }
+
+  @NotNull
+  protected NavigationGutterIconRenderer createLazyGutterIconRenderer(@NotNull NotNullLazyValue<List<SmartPsiElementPointer<?>>> pointers,
+                                                                      @NotNull Computable<PsiElementListCellRenderer<?>> renderer,
+                                                                      boolean empty) {
+    return new MyNavigationGutterIconRenderer(this, myAlignment, myIcon, myTooltipText, pointers, renderer, empty, true);
   }
 
   @NotNull
@@ -345,6 +367,21 @@ public class NavigationGutterIconBuilder<T> {
                                    @NotNull Computable<PsiElementListCellRenderer<?>> cellRenderer,
                                    boolean empty) {
       super(builder.myPopupTitle, builder.myEmptyText, cellRenderer, pointers);
+      myAlignment = alignment;
+      myIcon = icon;
+      myTooltipText = tooltipText;
+      myEmpty = empty;
+    }
+
+    MyNavigationGutterIconRenderer(@NotNull NavigationGutterIconBuilder<?> builder,
+                                   @NotNull Alignment alignment,
+                                   Icon icon,
+                                   @Nullable @Tooltip String tooltipText,
+                                   @NotNull NotNullLazyValue<List<SmartPsiElementPointer<?>>> pointers,
+                                   @NotNull Computable<PsiElementListCellRenderer<?>> cellRenderer,
+                                   boolean empty,
+                                   boolean computeTargetsInBackground) {
+      super(builder.myPopupTitle, builder.myEmptyText, cellRenderer, pointers, computeTargetsInBackground);
       myAlignment = alignment;
       myIcon = icon;
       myTooltipText = tooltipText;

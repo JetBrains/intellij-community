@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.navigator;
 
 import com.intellij.openapi.project.Project;
@@ -59,8 +59,9 @@ public final class MavenNavigationUtil {
     };
   }
 
-  @Nullable
-  public static Navigatable createNavigatableForDependency(final Project project, final VirtualFile file, final MavenArtifact artifact) {
+  public static @NotNull Navigatable createNavigatableForDependency(@NotNull Project project,
+                                                                    @NotNull VirtualFile file,
+                                                                    @NotNull MavenArtifact artifact) {
     return new NavigatableAdapter() {
       @Override
       public void navigate(boolean requestFocus) {

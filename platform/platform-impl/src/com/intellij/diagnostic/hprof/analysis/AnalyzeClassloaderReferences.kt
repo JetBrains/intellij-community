@@ -15,7 +15,7 @@ class AnalyzeClassloaderReferencesGraph(analysisContext: AnalysisContext, val pl
       if (classDefinition.name == PluginClassLoader::class.java.name) {
         navigator.goTo(l)
         navigator.goToInstanceField(PluginClassLoader::class.java.name, "pluginId")
-        navigator.goToInstanceField(PluginId::class.java.name, "myIdString")
+        navigator.goToInstanceField(PluginId::class.java.name, "idString")
         if (navigator.getStringInstanceFieldValue() == pluginId) {
           val objectId = analysisContext.parentList[l.toInt()]
           if (objectId == 0) {

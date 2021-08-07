@@ -2,6 +2,7 @@
 package com.intellij.vcs.commit
 
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.project.DumbService.isDumb
 import com.intellij.openapi.project.DumbService.isDumbAware
 import com.intellij.openapi.project.Project
@@ -56,15 +57,15 @@ abstract class NonModalCommitWorkflow(project: Project) : AbstractCommitWorkflow
     return result
   }
 
-  suspend fun runMetaHandlers() =
+  suspend fun runMetaHandlers(indicator: ProgressIndicator) =
     commitHandlers
       .filterIsInstance<CheckinMetaHandler>()
       .reversed() // to have the same order as when wrapping meta handlers into each other
-      .forEach { runMetaHandler(it) }
+      .forEach { runMetaHandler(it, indicator) }
 
-  private suspend fun runMetaHandler(metaHandler: CheckinMetaHandler) {
+  private suspend fun runMetaHandler(metaHandler: CheckinMetaHandler, indicator: ProgressIndicator) {
     if (metaHandler is CommitCheck<*>) {
-      runCommitCheck(metaHandler)
+      runCommitCheck(metaHandler, indicator)
     }
     else {
       suspendCancellableCoroutine<Unit> { continuation ->
@@ -79,11 +80,14 @@ abstract class NonModalCommitWorkflow(project: Project) : AbstractCommitWorkflow
     return runBeforeCommitHandlersChecks(executor, handlers)
   }
 
-  suspend fun <P : CommitProblem> runCommitCheck(commitCheck: CommitCheck<P>): P? {
+  suspend fun <P : CommitProblem> runCommitCheck(commitCheck: CommitCheck<P>, indicator: ProgressIndicator): P? {
     if (!commitCheck.isEnabled()) return null.also { LOG.debug("Commit check disabled $commitCheck") }
     if (isDumb(project) && !isDumbAware(commitCheck)) return null.also { LOG.debug("Skipped commit check in dumb mode $commitCheck") }
 
     LOG.debug("Running commit check $commitCheck")
-    return commitCheck.runCheck()
+    indicator.checkCanceled()
+    indicator.text = ""
+    indicator.text2 = ""
+    return commitCheck.runCheck(indicator)
   }
 }

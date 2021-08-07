@@ -17,20 +17,23 @@ package com.intellij.openapi.vcs.history;
 
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsKey;
+import org.jetbrains.annotations.NotNull;
 
 public class HistoryCacheBaseKey {
   private final FilePath myFilePath;
   private final VcsKey myVcsKey;
 
-  public HistoryCacheBaseKey(FilePath filePath, VcsKey vcsKey) {
+  public HistoryCacheBaseKey(@NotNull FilePath filePath, @NotNull VcsKey vcsKey) {
     myFilePath = filePath;
     myVcsKey = vcsKey;
   }
 
+  @NotNull
   public FilePath getFilePath() {
     return myFilePath;
   }
 
+  @NotNull
   public VcsKey getVcsKey() {
     return myVcsKey;
   }

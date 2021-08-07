@@ -13,11 +13,13 @@ import java.awt.*;
 public class SplitEditorToolbar extends EditorHeaderComponent {
 
   private final ActionToolbar myRightToolbar;
+  private final boolean myLeftToolbarEmpty;
 
   public SplitEditorToolbar(@Nullable ActionToolbar leftToolbar, @NotNull ActionToolbar rightToolbar) {
     super();
     setLayout(new GridBagLayout());
     myRightToolbar = rightToolbar;
+    myLeftToolbarEmpty = leftToolbar == null || leftToolbar.getActions().isEmpty();
 
     if (leftToolbar != null) {
       add(leftToolbar.getComponent());
@@ -28,9 +30,14 @@ public class SplitEditorToolbar extends EditorHeaderComponent {
                                             GridBagConstraints.CENTER, GridBagConstraints.BOTH, JBUI.emptyInsets(), 0, 0));
 
     add(myRightToolbar.getComponent());
+  }
 
-    if (leftToolbar != null) leftToolbar.updateActionsImmediately();
-    rightToolbar.updateActionsImmediately();
+  public ActionToolbar getRightToolbar() {
+    return myRightToolbar;
+  }
+
+  public boolean isLeftToolbarEmpty() {
+    return myLeftToolbarEmpty;
   }
 
   public void refresh() {

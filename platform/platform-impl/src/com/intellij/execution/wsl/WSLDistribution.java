@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.wsl;
 
 import com.google.common.net.InetAddresses;
@@ -10,17 +10,21 @@ import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.configurations.PathEnvironmentVariableUtil;
 import com.intellij.execution.process.*;
 import com.intellij.ide.IdeBundle;
+import com.intellij.openapi.application.Application;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.Experiments;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.NullableLazyValue;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.Strings;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.impl.local.LocalFileSystemBase;
+import com.intellij.openapi.vfs.impl.wsl.WslConstants;
 import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.ApiStatus;
@@ -31,6 +35,7 @@ import org.jetbrains.annotations.Nullable;
 import java.io.File;
 import java.io.OutputStream;
 import java.io.PrintWriter;
+import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -47,14 +52,13 @@ public class WSLDistribution {
   public static final String DEFAULT_WSL_MNT_ROOT = "/mnt/";
   private static final int RESOLVE_SYMLINK_TIMEOUT = 10000;
   private static final String RUN_PARAMETER = "run";
-  public static final String UNC_PREFIX = "\\\\wsl$\\";
-  private static final String WSLENV = "WSLENV";
-  private static final int DEFAULT_TIMEOUT = SystemProperties.getIntProperty("ide.wsl.probe.timeout", 20_000);
+  static final int DEFAULT_TIMEOUT = SystemProperties.getIntProperty("ide.wsl.probe.timeout", 20_000);
 
   private static final Key<ProcessListener> SUDO_LISTENER_KEY = Key.create("WSL sudo listener");
 
   private final @NotNull WslDistributionDescriptor myDescriptor;
   private final @Nullable Path myExecutablePath;
+  private @Nullable Integer myVersion;
   private final NullableLazyValue<String> myHostIp = NullableLazyValue.createValue(this::readHostIp);
   private final NullableLazyValue<String> myWslIp = NullableLazyValue.createValue(this::readWslIp);
   private final NullableLazyValue<String> myShellPath = NullableLazyValue.createValue(this::readShellPath);
@@ -62,6 +66,7 @@ public class WSLDistribution {
 
   protected WSLDistribution(@NotNull WSLDistribution dist) {
     this(dist.myDescriptor, dist.myExecutablePath);
+    myVersion = dist.myVersion;
   }
 
   WSLDistribution(@NotNull WslDistributionDescriptor descriptor, @Nullable Path executablePath) {
@@ -106,6 +111,20 @@ public class WSLDistribution {
     return null;
   }
 
+  void setVersion(@Nullable Integer version) {
+    myVersion = version;
+  }
+
+  /**
+   * @return version if it can be determined or -1 instead
+   */
+  public int getVersion() {
+    if (myVersion == null) {
+      myVersion = WSLUtil.getWslVersion(this);
+    }
+    return myVersion;
+  }
+
   /**
    * @return creates and patches command line, e.g:
    * {@code ruby -v} => {@code bash -c "ruby -v"}
@@ -131,6 +150,14 @@ public class WSLDistribution {
     if (processHandlerConsumer != null) {
       processHandlerConsumer.consume(processHandler);
     }
+    return processHandler.runProcess(timeout);
+  }
+
+  private @NotNull ProcessOutput executeOnWsl(@NotNull GeneralCommandLine commandLine,
+                                              @NotNull WSLCommandLineOptions options,
+                                              int timeout) throws ExecutionException {
+    patchCommandLine(commandLine, null, options);
+    CapturingProcessHandler processHandler = new CapturingProcessHandler(commandLine);
     return processHandler.runProcess(timeout);
   }
 
@@ -219,7 +246,9 @@ public class WSLDistribution {
     boolean executeCommandInShell = wslExe == null || options.isExecuteCommandInShell();
     List<String> linuxCommand = buildLinuxCommand(commandLine, executeCommandInShell);
 
-    if (options.isSudo()) { // fixme shouldn't we sudo for every chunk? also, preserve-env, login?
+    final boolean isElevated = options.isSudo();
+    // use old approach in case of wsl.exe is not available
+    if (isElevated && wslExe == null) { // fixme shouldn't we sudo for every chunk? also, preserve-env, login?
       prependCommand(linuxCommand, "sudo", "-S", "-p", "''");
       //TODO[traff]: ask password only if it is needed. When user is logged as root, password isn't asked.
 
@@ -272,8 +301,16 @@ public class WSLDistribution {
     String linuxCommandStr = StringUtil.join(linuxCommand, " ");
     if (wslExe != null) {
       commandLine.setExePath(wslExe.toString());
+      if (isElevated) {
+        commandLine.addParameters("-u", "root");
+      }
       commandLine.addParameters("--distribution", getMsId());
       if (options.isExecuteCommandInShell()) {
+        // workaround WSL1 problem: https://github.com/microsoft/WSL/issues/4082
+        if (options.getSleepTimeoutSec() > 0 && getVersion() == 1) {
+          linuxCommandStr += "; exitcode=$?; sleep " + options.getSleepTimeoutSec() + "; (exit $exitcode)";
+        }
+
         if (options.isExecuteCommandInDefaultShell()) {
           commandLine.addParameters("$SHELL", "-c", linuxCommandStr);
         }
@@ -304,8 +341,8 @@ public class WSLDistribution {
   }
 
   private void logCommandLineBefore(@NotNull GeneralCommandLine commandLine, @NotNull WSLCommandLineOptions options) {
-    if (LOG.isDebugEnabled()) {
-      LOG.debug("[" + getId() + "] " +
+    if (LOG.isTraceEnabled()) {
+      LOG.trace("[" + getId() + "] " +
                 "Patching: " +
                 commandLine.getCommandLineString() +
                 "; options: " +
@@ -343,13 +380,13 @@ public class WSLDistribution {
       }
     }
     if (builder.length() > 0) {
-      String prevValue = commandLine.getEnvironment().get(WSLENV);
+      String prevValue = commandLine.getEnvironment().get(WslConstants.WSLENV);
       if (prevValue == null) {
-        prevValue = commandLine.getParentEnvironment().get(WSLENV);
+        prevValue = commandLine.getParentEnvironment().get(WslConstants.WSLENV);
       }
       String value = prevValue != null ? StringUtil.trimEnd(prevValue, ':') + ':' + builder
                                        : builder.toString();
-      commandLine.getEnvironment().put(WSLENV, value);
+      commandLine.getEnvironment().put(WslConstants.WSLENV, value);
     }
   }
 
@@ -437,25 +474,29 @@ public class WSLDistribution {
    * @return Windows-dependent path for a file, pointed by {@code wslPath} in WSL, or {@code null} if path is unmappable
    */
 
-  public @Nullable @NlsSafe String getWindowsPath(@NotNull String wslPath) {
+  public @NotNull @NlsSafe String getWindowsPath(@NotNull String wslPath) {
     if (wslPath.startsWith(getMntRoot())) {
-      return WSLUtil.getWindowsPath(wslPath, getMntRoot());
+      String windowsPath = WSLUtil.getWindowsPath(wslPath, getMntRoot());
+      if (windowsPath != null) {
+        return windowsPath;
+      }
     }
-    return getUNCRoot() + FileUtil.toSystemDependentName(wslPath);
+    return getUNCRoot() + FileUtil.toSystemDependentName(FileUtil.normalize(wslPath));
   }
 
   /**
    * @return Linux path for a file pointed by {@code windowsPath} or null if unavailable, like \\MACHINE\path
    */
   public @Nullable @NlsSafe String getWslPath(@NotNull String windowsPath) {
-    if (FileUtil.toSystemDependentName(windowsPath).startsWith(UNC_PREFIX)) {
-      windowsPath = StringUtil.trimStart(FileUtil.toSystemDependentName(windowsPath), UNC_PREFIX);
+    if (FileUtil.toSystemDependentName(windowsPath).startsWith(WslConstants.UNC_PREFIX)) {
+      windowsPath = StringUtil.trimStart(FileUtil.toSystemDependentName(windowsPath), WslConstants.UNC_PREFIX);
       int index = windowsPath.indexOf('\\');
       if (index == -1) return null;
 
       String distName = windowsPath.substring(0, index);
       if (!distName.equalsIgnoreCase(myDescriptor.getMsId())) {
-        throw new IllegalArgumentException("Trying to get WSL path from a different WSL distribution");
+        throw new IllegalArgumentException(
+          "Trying to get WSL path from a different WSL distribution: in path: " + distName + "; mine is: " + myDescriptor.getMsId());
       }
       return FileUtil.toSystemIndependentName(windowsPath.substring(index));
     }
@@ -522,9 +563,10 @@ public class WSLDistribution {
   }
 
   /** @deprecated use {@link WSLDistribution#getUNCRootPath()} instead */
+  @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
   @Deprecated
   public @NotNull File getUNCRoot() {
-    return new File(UNC_PREFIX + myDescriptor.getMsId());
+    return new File(WslConstants.UNC_PREFIX + myDescriptor.getMsId());
   }
 
   /**
@@ -532,7 +574,7 @@ public class WSLDistribution {
    */
   @ApiStatus.Experimental
   public @NotNull Path getUNCRootPath() {
-    return Paths.get(UNC_PREFIX + myDescriptor.getMsId());
+    return Paths.get(WslConstants.UNC_PREFIX + myDescriptor.getMsId());
   }
 
   /**
@@ -569,11 +611,24 @@ public class WSLDistribution {
   }
 
   private @Nullable String readHostIp() {
+    String wsl1LoopbackAddress = getWsl1LoopbackAddress();
+    if (wsl1LoopbackAddress != null) {
+      return wsl1LoopbackAddress;
+    }
+    if (Registry.is("wsl.obtain.windows.host.ip.alternatively", true)) {
+      InetAddress wslAddr = getWslIpAddress();
+      try (DatagramSocket datagramSocket = new DatagramSocket()) {
+        datagramSocket.connect(wslAddr, 0);
+        return datagramSocket.getLocalAddress().getHostAddress();
+      }
+      catch (Exception e) {
+        LOG.error("Cannot obtain Windows host IP alternatively: failed to connect to WSL IP " + wslAddr + ". Fallback to default way.", e);
+      }
+    }
     final String releaseInfo = "/etc/resolv.conf"; // available for all distributions
     final ProcessOutput output;
     try {
-      output = executeOnWsl(List.of("cat", releaseInfo),
-                            new WSLCommandLineOptions().setExecuteCommandInShell(false), 10_000, null);
+      output = executeOnWsl(List.of("cat", releaseInfo), new WSLCommandLineOptions(), 10_000, null);
     }
     catch (ExecutionException e) {
       LOG.info("Cannot read host ip", e);
@@ -590,10 +645,13 @@ public class WSLDistribution {
   }
 
   private @Nullable String readWslIp() {
+    String wsl1LoopbackAddress = getWsl1LoopbackAddress();
+    if (wsl1LoopbackAddress != null) {
+      return wsl1LoopbackAddress;
+    }
     final ProcessOutput output;
     try {
-      output = executeOnWsl(List.of("ip", "addr", "show", "eth0"),
-                            new WSLCommandLineOptions().setExecuteCommandInShell(false), 10_000, null);
+      output = executeOnWsl(List.of("ip", "addr", "show", "eth0"), new WSLCommandLineOptions(), 10_000, null);
     }
     catch (ExecutionException e) {
       LOG.info("Cannot read wsl ip", e);
@@ -613,12 +671,16 @@ public class WSLDistribution {
     return null;
   }
 
+  private @Nullable String getWsl1LoopbackAddress() {
+    return WSLUtil.isWsl1(this) == ThreeState.YES ? InetAddress.getLoopbackAddress().getHostAddress() : null;
+  }
+
   public @NonNls @Nullable String getEnvironmentVariable(String name) {
     WSLCommandLineOptions options = new WSLCommandLineOptions()
       .setExecuteCommandInInteractiveShell(true)
       .setExecuteCommandInLoginShell(true)
       .setShellPath(getShellPath());
-    return executeInShellAndGetCommandOnlyStdout(List.of("printenv", name), options, DEFAULT_TIMEOUT, true);
+    return executeInShellAndGetCommandOnlyStdout(new GeneralCommandLine("printenv", name), options, DEFAULT_TIMEOUT, true);
   }
 
   public @NlsSafe @NotNull String getShellPath() {
@@ -627,46 +689,72 @@ public class WSLDistribution {
 
   private @NlsSafe @Nullable String readShellPath() {
     WSLCommandLineOptions options = new WSLCommandLineOptions().setExecuteCommandInDefaultShell(true);
-    return executeInShellAndGetCommandOnlyStdout(List.of("printenv", "SHELL"), options, DEFAULT_TIMEOUT, true);
+    return executeInShellAndGetCommandOnlyStdout(new GeneralCommandLine("printenv", "SHELL"), options, DEFAULT_TIMEOUT, true);
   }
 
-  @SuppressWarnings("SameParameterValue")
-  @Nullable String executeInShellAndGetCommandOnlyStdout(@NotNull List<String> command,
-                                                         @NotNull WSLCommandLineOptions options,
-                                                         int timeout,
-                                                         boolean oneLineStdoutExpected) {
-    options.setExecuteCommandInShell(true);
+  @NotNull ProcessOutput executeInShellAndGetCommandOnlyStdout(@NotNull GeneralCommandLine commandLine,
+                                                               @NotNull WSLCommandLineOptions options,
+                                                               int timeout) throws ExecutionException {
+    if (!options.isExecuteCommandInShell()) {
+      throw new AssertionError("Execution in shell is expected");
+    }
     // When command is executed in interactive/login shell, the result stdout may contain additional output
     // produced by shell configuration files, for example, "Message Of The Day".
     // Let's print some unique message before executing the command to know where command output begins in the result output.
     String prefixText = "intellij: executing command...";
     options.addInitCommand("echo " + CommandLineUtil.posixQuote(prefixText));
+    if (options.isExecuteCommandInInteractiveShell()) {
+      // Disable oh-my-zsh auto update on shell initialization
+      commandLine.getEnvironment().put(EnvironmentUtil.DISABLE_OMZ_AUTO_UPDATE, "true");
+      options.setPassEnvVarsUsingInterop(true);
+    }
+    ProcessOutput output = executeOnWsl(commandLine, options, timeout);
+    String stdout = output.getStdout();
+    String markerText = prefixText + LineSeparator.LF.getSeparatorString();
+    int index = stdout.indexOf(markerText);
+    if (index < 0) {
+      Application application = ApplicationManager.getApplication();
+      if (application == null || application.isInternal() || application.isUnitTestMode()) {
+        LOG.error("Cannot find '" + prefixText + "' in stdout: " + output);
+      }
+      else {
+        LOG.info("Cannot find '" + prefixText + "' in stdout");
+      }
+      return output;
+    }
+    return new ProcessOutput(stdout.substring(index + markerText.length()),
+                             output.getStderr(),
+                             output.getExitCode(),
+                             output.isTimeout(),
+                             output.isCancelled());
+  }
+
+  @SuppressWarnings("SameParameterValue")
+  @Nullable String executeInShellAndGetCommandOnlyStdout(@NotNull GeneralCommandLine commandLine,
+                                                         @NotNull WSLCommandLineOptions options,
+                                                         int timeout,
+                                                         boolean expectOneLineStdout) {
     try {
-      ProcessOutput output = executeOnWsl(command, options, timeout, null);
+      ProcessOutput output = executeInShellAndGetCommandOnlyStdout(commandLine, options, timeout);
       String stdout = output.getStdout();
       if (!output.isTimeout() && output.getExitCode() == 0) {
-        String markerText = prefixText + LineSeparator.LF.getSeparatorString();
-        int index = stdout.indexOf(markerText);
-        if (index >= 0) {
-          String commandOwnStdout = stdout.substring(index + markerText.length());
-          return oneLineStdoutExpected ? expectOneLineOutput(command, commandOwnStdout) : commandOwnStdout;
-        }
+        return expectOneLineStdout ? expectOneLineOutput(commandLine, stdout) : stdout;
       }
-      LOG.info("Failed to execute " + command + " for " + getMsId() + ": " +
+      LOG.info("Failed to execute " + commandLine + " for " + getMsId() + ": " +
                "exitCode=" + output.getExitCode() + ", timeout=" + output.isTimeout() +
                ", stdout=" + stdout + ", stderr=" + output.getStderr());
     }
     catch (ExecutionException e) {
-      LOG.info("Failed to execute " + command + " for " + getMsId(), e);
+      LOG.info("Failed to execute " + commandLine + " for " + getMsId(), e);
     }
     return null;
   }
 
-  private @NotNull String expectOneLineOutput(@NotNull List<String> command, @NotNull String stdout) {
+  private @NotNull String expectOneLineOutput(@NotNull GeneralCommandLine commandLine, @NotNull String stdout) {
     String converted = StringUtil.convertLineSeparators(stdout, LineSeparator.LF.getSeparatorString());
     List<String> lines = StringUtil.split(converted, LineSeparator.LF.getSeparatorString(), true, true);
     if (lines.size() != 1) {
-      LOG.info("One line stdout expected: " + getMsId() + ", command=" + command + ", stdout=" + stdout + ", lines=" + lines.size());
+      LOG.info("One line stdout expected: " + getMsId() + ", command=" + commandLine + ", stdout=" + stdout + ", lines=" + lines.size());
     }
     return StringUtil.notNullize(ContainerUtil.getFirstItem(lines), stdout);
   }

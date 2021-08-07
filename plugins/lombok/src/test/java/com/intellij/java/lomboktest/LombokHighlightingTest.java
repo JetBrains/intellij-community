@@ -3,6 +3,7 @@ package com.intellij.java.lomboktest;
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInsight.daemon.LightDaemonAnalyzerTestCase;
+import com.intellij.codeInspection.DefaultAnnotationParamInspection;
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.dataFlow.DataFlowInspection;
 import com.intellij.codeInspection.deadCode.UnusedDeclarationInspection;
@@ -20,7 +21,6 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 public class LombokHighlightingTest extends LightDaemonAnalyzerTestCase {
-
 
   @Override
   protected void setUp() throws Exception {
@@ -43,11 +43,36 @@ public class LombokHighlightingTest extends LightDaemonAnalyzerTestCase {
       new DataFlowInspection(),
       new DefUseInspection(),
       new FieldMayBeFinalInspection(),
-      new FieldCanBeLocalInspection()
+      new FieldCanBeLocalInspection(),
+      new DefaultAnnotationParamInspection()
     };
   }
 
   public void testLombokBasics() { doTest(); }
+
+  public void testLombokStaticVars() {
+    doTest();
+  }
+
+  public void testLombokEqualsAndHashCode() {
+    doTest();
+  }
+
+  public void testGetterLazyVariableNotInitialized() {
+    doTest();
+  }
+
+  public void testGetterLazyInvocationProduceNPE() {
+    doTest();
+  }
+
+  public void testFieldNameConstantsExample() {
+    doTest();
+  }
+
+  public void testBuilderWithDefaultRedundantInitializer() {
+    doTest();
+  }
 
   @NotNull
   @Override

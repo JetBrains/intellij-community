@@ -1,15 +1,11 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.log.impl;
 
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.PersistentStateComponent;
-import com.intellij.openapi.components.State;
-import com.intellij.openapi.components.Storage;
-import com.intellij.openapi.components.StoragePathMacros;
+import com.intellij.openapi.components.*;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.util.xmlb.annotations.Tag;
 import com.intellij.util.xmlb.annotations.XCollection;
-import com.intellij.vcs.log.util.FilterConfigMigrationUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -19,6 +15,7 @@ import static com.intellij.util.containers.ContainerUtil.emptyList;
 import static com.intellij.util.containers.ContainerUtil.map2List;
 
 @State(name = "Vcs.Log.Tabs.Properties", storages = @Storage(StoragePathMacros.WORKSPACE_FILE))
+@Service(Service.Level.PROJECT)
 public final class VcsLogProjectTabsProperties implements PersistentStateComponent<VcsLogProjectTabsProperties.State>,
                                                           VcsLogTabsProperties {
   @NonNls public static final String MAIN_LOG_ID = "MAIN";
@@ -39,17 +36,6 @@ public final class VcsLogProjectTabsProperties implements PersistentStateCompone
   @Override
   public void loadState(@NotNull State state) {
     myState = state;
-
-    if (!myState.oldMeFiltersMigrated) {
-      // migrate "me" to "*" for recent user filters
-      FilterConfigMigrationUtil.migrateRecentUserFilters(myState.RECENT_FILTERS);
-
-      // migrate "me" to "*" for user filters in tabs
-      myState.TAB_STATES.values().forEach(tabState -> {
-        FilterConfigMigrationUtil.migrateTabUserFilters(tabState.FILTERS);
-      });
-      myState.oldMeFiltersMigrated = true;
-    }
   }
 
   @Override
@@ -105,8 +91,6 @@ public final class VcsLogProjectTabsProperties implements PersistentStateCompone
     public Map<String, MyState> TAB_STATES = new TreeMap<>();
     public LinkedHashMap<String, VcsLogManager.LogWindowKind> OPEN_GENERIC_TABS = new LinkedHashMap<>();
     public Map<String, List<RecentGroup>> RECENT_FILTERS = new HashMap<>();
-
-    public boolean oldMeFiltersMigrated = false;
   }
 
   public static class RecentGroup {

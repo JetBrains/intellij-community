@@ -121,6 +121,7 @@ public abstract class AbstractViewManager implements ViewManager, BuildProgressL
   }
 
   private @Nullable MultipleBuildsView getMultipleBuildsView(@NotNull Object buildId) {
+    if (myProject.isDisposed()) return null;
     MultipleBuildsView buildsView = myBuildsViewValue.getValue();
     if (!buildsView.shouldConsume(buildId)) {
       buildsView = ContainerUtil.find(myPinnedViews, pinnedView -> pinnedView.shouldConsume(buildId));
@@ -279,15 +280,7 @@ public abstract class AbstractViewManager implements ViewManager, BuildProgressL
 
       e.getPresentation().setIcon(AllIcons.General.Pin_tab);
       Toggleable.setSelected(e.getPresentation(), selected);
-
-      String text;
-      if (!isActiveTab) {
-        text = selected ? IdeBundle.message("action.unpin.active.tab") : IdeBundle.message("action.pin.active.tab");
-      }
-      else {
-        text = selected ? IdeBundle.message("action.unpin.tab") : IdeBundle.message("action.pin.tab");
-      }
-      e.getPresentation().setText(text);
+      e.getPresentation().setText(selected ? IdeBundle.message("action.unpin.tab") : IdeBundle.message("action.pin.tab"));
       e.getPresentation().setEnabledAndVisible(true);
     }
   }

@@ -2,7 +2,11 @@
 package com.intellij.codeInspection.dataFlow;
 
 import com.intellij.codeInsight.Nullability;
+import com.intellij.codeInspection.dataFlow.jvm.SpecialField;
+import com.intellij.codeInspection.dataFlow.memory.DfaMemoryState;
+import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeBinOp;
 import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet;
+import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeType;
 import com.intellij.codeInspection.dataFlow.types.DfIntType;
 import com.intellij.codeInspection.dataFlow.types.DfLongType;
 import com.intellij.codeInspection.dataFlow.types.DfType;
@@ -29,7 +33,7 @@ import java.util.Calendar;
 import java.util.List;
 import java.util.Locale;
 
-import static com.intellij.codeInspection.dataFlow.SpecialField.*;
+import static com.intellij.codeInspection.dataFlow.jvm.SpecialField.*;
 import static com.intellij.codeInspection.dataFlow.types.DfTypes.*;
 import static com.intellij.psi.CommonClassNames.*;
 import static com.siyeh.ig.callMatcher.CallMatcher.*;
@@ -63,9 +67,9 @@ public final class CustomMethodHandlers {
     exactInstanceCall(JAVA_LANG_CHARACTER, "toString").parameterCount(0),
     exactInstanceCall(JAVA_LANG_BOOLEAN, "toString").parameterCount(0)
   );
-  static final int MAX_STRING_CONSTANT_LENGTH_TO_TRACK = 256;
+  public static final int MAX_STRING_CONSTANT_LENGTH_TO_TRACK = 256;
 
-  interface CustomMethodHandler {
+  public interface CustomMethodHandler {
 
     @Nullable
     DfaValue getMethodResultValue(DfaCallArguments callArguments,
@@ -96,10 +100,10 @@ public final class CustomMethodHandlers {
                                   DfaValueFactory factory,
                                   PsiMethod method) {
       DfType dfType = getMethodResult(callArguments, memState, factory, method);
-      return dfType == TOP ? null : factory.fromDfType(dfType);
+      return dfType == DfType.TOP ? null : factory.fromDfType(dfType);
     }
   }
-  
+
   private static CustomMethodHandler toValue(DfTypeCustomMethodHandler handler) {
     return handler;
   }
@@ -118,7 +122,7 @@ public final class CustomMethodHandlers {
     .register(OptionalUtil.OPTIONAL_OF_NULLABLE,
               toValue((args, memState, factory, method) -> OPTIONAL_VALUE.asDfType(memState.getDfType(args.myArguments[0]))))
     .register(instanceCall(JAVA_UTIL_CALENDAR, "get").parameterTypes("int"),
-              toValue((args, memState, factory, method) -> calendarGet(args.myArguments, memState)))
+              toValue((args, memState, factory, method) -> calendarGet(args, memState, factory)))
     .register(anyOf(instanceCall("java.io.InputStream", "skip").parameterTypes("long"),
                     instanceCall("java.io.Reader", "skip").parameterTypes("long")),
               toValue((args, memState, factory, method) -> skip(args.myArguments, memState)))
@@ -156,10 +160,40 @@ public final class CustomMethodHandlers {
       instanceCall("java.util.Random", "nextInt").parameterTypes("int"),
       instanceCall("java.util.SplittableRandom", "nextInt").parameterTypes("int"),
       instanceCall("java.util.SplittableRandom", "nextInt").parameterTypes("int", "int")), toValue(CustomMethodHandlers::randomNextInt))
-    .register(staticCall(JAVA_UTIL_ARRAYS, "copyOf"), CustomMethodHandlers::copyOfArray)
+    .register(staticCall(JAVA_UTIL_ARRAYS, "copyOf"), (arguments, state, factory, method) -> copyOfArray(arguments, factory, method))
+    .register(staticCall(JAVA_UTIL_COLLECTIONS, "unmodifiableCollection", "unmodifiableList", "unmodifiableSet", "unmodifiableMap",
+                         "unmodifiableSortedSet", "unmodifiableSortedMap", "unmodifiableNavigableSet", "unmodifiableNavigableMap")
+                .parameterCount(1), (arguments, state, factory, method) -> unmodifiableView(arguments, factory, method))
+    .register(staticCall(JAVA_UTIL_COLLECTIONS, "checkedCollection", "checkedList", "checkedSet", "checkedMap",
+                         "checkedSortedSet", "checkedSortedMap", "checkedNavigableSet", "checkedNavigableMap", "checkedQueue",
+                         "synchronizedCollection", "synchronizedList", "synchronizedSet", "synchronizedMap",
+                         "synchronizedSortedSet", "synchronizedSortedMap", "synchronizedNavigableSet", "synchronizedNavigableMap"),
+              (arguments, state, factory, method) -> collectionView(ArrayUtil.getFirstElement(arguments.myArguments), factory, method))
+    .register(anyOf(instanceCall(JAVA_UTIL_MAP, "keySet", "values", "entrySet").parameterCount(0),
+                    instanceCall("java.util.NavigableSet", "descendingSet").parameterCount(0),
+                    instanceCall("java.util.NavigableMap", "descendingMap").parameterCount(0)),
+              (arguments, state, factory, method) -> collectionView(arguments.myQualifier, factory, method))
     .register(instanceCall(JAVA_UTIL_COLLECTION, "toArray").parameterTypes("T[]"), CustomMethodHandlers::collectionToArray)
     .register(instanceCall(JAVA_UTIL_COLLECTION, "toArray").parameterCount(0), CustomMethodHandlers::collectionToArray)
-    .register(instanceCall(JAVA_LANG_STRING, "toCharArray").parameterCount(0), CustomMethodHandlers::stringToCharArray);
+    .register(instanceCall(JAVA_LANG_STRING, "toCharArray").parameterCount(0), CustomMethodHandlers::stringToCharArray)
+    .register(exactInstanceCall(JAVA_LANG_OBJECT, "getClass").parameterCount(0), toValue(CustomMethodHandlers::objectGetClass))
+    .register(anyOf(staticCall(JAVA_LANG_MATH, "random").parameterCount(0),
+                    instanceCall("java.util.Random", "nextDouble").parameterCount(0),
+                    instanceCall("java.util.SplittableRandom", "nextDouble").parameterCount(0)), 
+              toValue((arguments, state, factory, method) -> doubleRange(0.0, Math.nextDown(1.0))))
+    .register(instanceCall("java.util.Random", "nextFloat").parameterCount(0), 
+              toValue((arguments, state, factory, method) -> floatRange(0.0f, Math.nextDown(1.0f))))
+    .register(staticCall(JAVA_LANG_DOUBLE, "isNaN").parameterTypes("double"),
+              toValue((arguments, state, factory, method) -> isNaN(arguments, state, DOUBLE_NAN)))
+    .register(staticCall(JAVA_LANG_FLOAT, "isNaN").parameterTypes("float"),
+              toValue((arguments, state, factory, method) -> isNaN(arguments, state, FLOAT_NAN)))
+    .register(anyOf(
+                staticCall("com.google.common.collect.Lists", "newArrayList", "newLinkedList", "newCopyOnWriteArrayList").parameterCount(0),
+                staticCall("com.google.common.collect.Sets", "newHashSet", "newLinkedHashSet", "newIdentityHashSet",
+                           "newCopyOnWriteArraySet", "newConcurrentHashSet", "newTreeSet").parameterCount(0),
+                staticCall("com.google.common.collect.Maps", "newHashMap", "newLinkedHashMap", "newIdentityHashMap",
+                           "newConcurrentHashMap", "newTreeMap").parameterCount(0)),
+              toValue((arguments, state, factory, method) -> COLLECTION_SIZE.asDfType(intValue(0)).meet(LOCAL_OBJECT)));
 
   public static CustomMethodHandler find(PsiMethod method) {
     CustomMethodHandler handler = null;
@@ -177,16 +211,16 @@ public final class CustomMethodHandlers {
 
   private static @NotNull DfType handleConstantCall(DfaCallArguments arguments, DfaMemoryState state, PsiMethod method) {
     PsiType returnType = method.getReturnType();
-    if (returnType == null) return TOP;
+    if (returnType == null) return DfType.TOP;
     List<Object> args = new ArrayList<>();
     Object qualifierValue = null;
     if (!method.hasModifierProperty(PsiModifier.STATIC)) {
       qualifierValue = getConstantValue(state, arguments.myQualifier);
-      if (qualifierValue == null) return TOP;
+      if (qualifierValue == null) return DfType.TOP;
     }
     for (DfaValue argument : arguments.myArguments) {
       Object argumentValue = getConstantValue(state, argument);
-      if (argumentValue == null) return TOP;
+      if (argumentValue == null) return DfType.TOP;
       if (argumentValue instanceof Long) {
         long longValue = ((Long)argumentValue).longValue();
         if (longValue >= Integer.MIN_VALUE && longValue <= Integer.MAX_VALUE) {
@@ -196,13 +230,13 @@ public final class CustomMethodHandlers {
       args.add(argumentValue);
     }
     Method jvmMethod = toJvmMethod(method);
-    if (jvmMethod == null) return TOP;
+    if (jvmMethod == null) return DfType.TOP;
     Object result;
     try {
       result = jvmMethod.invoke(qualifierValue, args.toArray());
     }
     catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
-      return TOP;
+      return DfType.TOP;
     }
     return constant(result, returnType);
   }
@@ -279,15 +313,35 @@ public final class CustomMethodHandlers {
     return intRange(LongRangeSet.range(-1, range.max() - 1));
   }
 
-  private static @Nullable DfaValue copyOfArray(DfaCallArguments arguments, DfaMemoryState state, DfaValueFactory factory, PsiMethod method) {
+  private static @Nullable DfaValue copyOfArray(DfaCallArguments arguments,
+                                                DfaValueFactory factory,
+                                                PsiMethod method) {
     if (arguments.myArguments.length < 2) return null;
     return factory.getWrapperFactory().createWrapper(typedObject(method.getReturnType(), Nullability.NOT_NULL).meet(LOCAL_OBJECT),
                                                      ARRAY_LENGTH, arguments.myArguments[1]);
   }
 
+  @Contract("null, _, _ -> null; !null, _, _ -> !null")
+  private static DfaValue collectionView(@Nullable DfaValue orig,
+                                         @NotNull DfaValueFactory factory,
+                                         @NotNull PsiMethod method) {
+    if (orig == null) return null;
+    return factory.getWrapperFactory().createWrapper(typedObject(method.getReturnType(), Nullability.NOT_NULL),
+                                                     COLLECTION_SIZE, COLLECTION_SIZE.createValue(factory, orig));
+  }
+
+  private static @Nullable DfaValue unmodifiableView(@NotNull DfaCallArguments arguments,
+                                                     @NotNull DfaValueFactory factory,
+                                                     @NotNull PsiMethod method) {
+    if (arguments.myArguments.length != 1) return null;
+    return factory.getWrapperFactory().createWrapper(
+      typedObject(method.getReturnType(), Nullability.NOT_NULL).meet(Mutability.UNMODIFIABLE_VIEW.asDfType()),
+      COLLECTION_SIZE, COLLECTION_SIZE.createValue(factory, arguments.myArguments[0]));
+  }
+
   private static @Nullable DfaValue collectionFactory(DfaCallArguments args,
-                                                   DfaMemoryState memState, DfaValueFactory factory,
-                                                   PsiMethod method) {
+                                                      DfaMemoryState memState, DfaValueFactory factory,
+                                                      PsiMethod method) {
     PsiType type = method.getReturnType();
     if (!(type instanceof PsiClassType)) return null;
     int factor = PsiTypesUtil.classNameEquals(type, JAVA_UTIL_MAP) ? 2 : 1;
@@ -310,10 +364,10 @@ public final class CustomMethodHandlers {
   private static DfType getEmptyCollectionConstant(PsiMethod method) {
     String fieldName = "EMPTY_" + method.getName().substring("empty".length()).toUpperCase(Locale.ROOT);
     PsiClass collectionsClass = method.getContainingClass();
-    if (collectionsClass == null) return TOP;
+    if (collectionsClass == null) return DfType.TOP;
     PsiField field = collectionsClass.findFieldByName(fieldName, false);
-    if (field == null) return TOP;
-    return constant(field, field.getType());
+    if (field == null) return DfType.TOP;
+    return referenceConstant(field, field.getType());
   }
 
   private static @Nullable DfaValue substring(DfaCallArguments args, DfaMemoryState state, DfaValueFactory factory, PsiType stringType) {
@@ -324,7 +378,7 @@ public final class CustomMethodHandlers {
     DfaValue from = arguments[0];
     DfaValue lenVal = STRING_LENGTH.createValue(factory, qualifier);
     DfaValue to = arguments.length == 1 ? lenVal : arguments[1];
-    DfaValue resultLen = factory.getBinOpFactory().create(to, from, state, false, JavaTokenType.MINUS);
+    DfaValue resultLen = factory.getBinOpFactory().create(to, from, state, INT, LongRangeBinOp.MINUS);
     if (resultLen instanceof DfaBinOpValue) {
       resultLen = factory.fromDfType(state.getDfType(resultLen));
     }
@@ -333,20 +387,29 @@ public final class CustomMethodHandlers {
 
   private static @NotNull DfType mathAbs(DfaValue[] args, DfaMemoryState memState, boolean isLong) {
     DfaValue arg = ArrayUtil.getFirstElement(args);
-    if (arg == null) return TOP;
+    if (arg == null) return DfType.TOP;
     DfType type = memState.getDfType(arg);
     LongRangeSet range = isLong ? DfLongType.extractRange(type) : DfIntType.extractRange(type);
-    return isLong ? longRange(range.abs(true)) : intRange(range.abs(false));
+    return isLong ? longRange(range.abs(LongRangeType.INT64)) : intRange(range.abs(LongRangeType.INT32));
   }
 
-  private static @NotNull DfType calendarGet(DfaValue[] arguments, DfaMemoryState state) {
-    if (arguments.length != 1) return TOP;
-    Integer val = state.getDfType(arguments[0]).getConstantOfType(Integer.class);
-    if (val == null) return TOP;
+  private static @NotNull DfType calendarGet(DfaCallArguments arguments, DfaMemoryState state, DfaValueFactory factory) {
+    if (arguments.myArguments.length != 1) return DfType.TOP;
+    Integer val = state.getDfType(arguments.myArguments[0]).getConstantOfType(Integer.class);
+    if (val == null) return DfType.TOP;
     LongRangeSet range = null;
     switch (val) {
       case Calendar.DATE: range = LongRangeSet.range(1, 31); break;
-      case Calendar.MONTH: range = LongRangeSet.range(0, 12); break;
+      case Calendar.MONTH: {
+        PsiType type = TypeConstraint.fromDfType(state.getDfType(arguments.myQualifier)).getPsiType(factory.getProject());
+        if (TypeUtils.typeEquals("java.util.GregorianCalendar", type)) {
+          range = LongRangeSet.range(0, 11);
+        } else {
+          // Could be lunar calendar
+          range = LongRangeSet.range(0, 12);
+        }
+        break;
+      }
       case Calendar.AM_PM: range = LongRangeSet.range(0, 1); break;
       case Calendar.DAY_OF_YEAR: range = LongRangeSet.range(1, 366); break;
       case Calendar.HOUR: range = LongRangeSet.range(0, 11); break;
@@ -355,18 +418,18 @@ public final class CustomMethodHandlers {
       case Calendar.SECOND: range = LongRangeSet.range(0, 59); break;
       case Calendar.MILLISECOND: range = LongRangeSet.range(0, 999); break;
     }
-    return range == null ? TOP : intRange(range);
+    return range == null ? DfType.TOP : intRange(range);
   }
 
   private static @NotNull DfType skip(DfaValue[] arguments, DfaMemoryState state) {
-    if (arguments.length != 1) return TOP;
+    if (arguments.length != 1) return DfType.TOP;
     LongRangeSet range = DfLongType.extractRange(state.getDfType(arguments[0]));
     return longRange(LongRangeSet.range(0, Math.max(0, range.max())));
   }
 
   private static @NotNull DfType numberAsString(DfaCallArguments args, DfaMemoryState state, int bitsPerChar, int maxBits) {
     DfaValue arg = args.myArguments[0];
-    if (arg == null) return TOP;
+    if (arg == null) return DfType.TOP;
     LongRangeSet range = DfLongType.extractRange(state.getDfType(arg));
     int usedBits = range.min() >= 0 ? Long.SIZE - Long.numberOfLeadingZeros(range.max()) : maxBits;
     int max = Math.max(1, (usedBits - 1) / bitsPerChar + 1);
@@ -377,13 +440,26 @@ public final class CustomMethodHandlers {
     DfType dfType = state.getDfType(qualifier);
     PsiEnumConstant value = dfType.getConstantOfType(PsiEnumConstant.class);
     if (value != null) {
-      return constant(value.getName(), type);
+      return referenceConstant(value.getName(), type);
     }
-    return TOP;
+    return DfType.TOP;
+  }
+
+  private static @NotNull DfType objectGetClass(DfaCallArguments arguments, DfaMemoryState state, DfaValueFactory factory, PsiMethod method) {
+    DfaValue qualifier = arguments.myQualifier;
+    TypeConstraint fact = TypeConstraint.fromDfType(state.getDfType(qualifier));
+    if (fact instanceof TypeConstraint.Exact) {
+      PsiType qualifierType = fact.getPsiType(factory.getProject());
+      PsiType classType = method.getReturnType();
+      if (classType != null && qualifierType != null) {
+        return referenceConstant(qualifierType, classType);
+      }
+    }
+    return DfType.TOP;
   }
 
   private static Object getConstantValue(DfaMemoryState memoryState, DfaValue value) {
-    DfType type = memoryState.getUnboxedDfType(value);
+    DfType type = DfaUtil.getUnboxedDfType(memoryState, value);
     Object constant = type.getConstantOfType(Object.class);
     if (constant instanceof String && ((String)constant).length() > MAX_STRING_CONSTANT_LENGTH_TO_TRACK) return null;
     return constant;
@@ -391,7 +467,7 @@ public final class CustomMethodHandlers {
 
   private static @NotNull DfType randomNextInt(DfaCallArguments arguments, DfaMemoryState state, DfaValueFactory factory, PsiMethod method) {
     DfaValue[] values = arguments.myArguments;
-    if (values == null) return TOP;
+    if (values == null) return DfType.TOP;
     LongRangeSet fromLowerBound;
     LongRangeSet fromUpperBound;
     if (values.length == 1) {
@@ -400,8 +476,8 @@ public final class CustomMethodHandlers {
     } else if (values.length == 2){
       fromLowerBound = DfIntType.extractRange(state.getDfType(values[0])).fromRelation(RelationType.GE);
       fromUpperBound = DfIntType.extractRange(state.getDfType(values[1])).fromRelation(RelationType.LT);
-    } else return TOP;
-    LongRangeSet intersection = fromLowerBound.intersect(fromUpperBound);
+    } else return DfType.TOP;
+    LongRangeSet intersection = fromLowerBound.meet(fromUpperBound);
     return intRangeClamped(intersection);
   }
 
@@ -420,7 +496,7 @@ public final class CustomMethodHandlers {
             break;
           case "getName":
             if (PsiUtil.isLocalOrAnonymousClass(psiClass)) {
-              return TOP;
+              return DfType.TOP;
             }
             result = ClassUtil.getJVMClassName(psiClass);
             break;
@@ -431,17 +507,17 @@ public final class CustomMethodHandlers {
         return constant(result, stringType);
       }
     }
-    return TOP;
+    return DfType.TOP;
   }
 
   private static DfType compareInteger(DfaCallArguments args, DfaMemoryState state) {
     DfaValue[] arguments = args.myArguments;
-    if (arguments.length != 2) return TOP;
+    if (arguments.length != 2) return DfType.TOP;
     RelationType relation = state.getRelation(arguments[0], arguments[1]);
     if (relation == null) {
       LongRangeSet left = DfLongType.extractRange(state.getDfType(arguments[0]));
       LongRangeSet right = DfLongType.extractRange(state.getDfType(arguments[1]));
-      if (left.isEmpty() || right.isEmpty()) return BOTTOM;
+      if (left.isEmpty() || right.isEmpty()) return DfType.BOTTOM;
       if (left.max() < right.min()) {
         relation = RelationType.LT;
       }
@@ -464,11 +540,11 @@ public final class CustomMethodHandlers {
     if (relation != null) {
       return intRangeClamped(LongRangeSet.point(0).fromRelation(relation));
     }
-    return TOP;
+    return DfType.TOP;
   }
 
   private static @NotNull DfaValue collectionToArray(DfaCallArguments arguments, DfaMemoryState state, DfaValueFactory factory, PsiMethod method) {
-    DfType result = NOT_NULL_OBJECT;
+    DfType result = DfType.TOP;
     DfaValue collection = arguments.myQualifier;
     DfaValue collectionSize = COLLECTION_SIZE.createValue(factory, collection);
     LongRangeSet collectionSizeRange = DfIntType.extractRange(state.getDfType(collectionSize));
@@ -478,27 +554,41 @@ public final class CustomMethodHandlers {
       DfType arrType = state.getDfType(array);
       TypeConstraint constraint = TypeConstraint.fromDfType(arrType);
       if (constraint.isExact()) {
-        result = constraint.asDfType().meet(NOT_NULL_OBJECT);
+        result = constraint.asDfType();
       }
       // Array size is max of collection size and argument array size
       DfaValue arrayLength = ARRAY_LENGTH.createValue(factory, array);
       if (!state.areEqual(arrayLength, collectionSize)) {
         LongRangeSet arraySizeRange = DfIntType.extractRange(state.getDfType(arrayLength));
-        LongRangeSet biggerArrays = collectionSizeRange.fromRelation(RelationType.GT).intersect(arraySizeRange);
-        LongRangeSet biggerCollections = arraySizeRange.fromRelation(RelationType.GE).intersect(collectionSizeRange);
+        LongRangeSet biggerArrays = collectionSizeRange.fromRelation(RelationType.GT).meet(arraySizeRange);
+        LongRangeSet biggerCollections = arraySizeRange.fromRelation(RelationType.GE).meet(collectionSizeRange);
         if (!biggerArrays.isEmpty()) {
-          finalSize = factory.fromDfType(intRange(biggerArrays.unite(biggerCollections)));
+          finalSize = factory.fromDfType(intRange(biggerArrays.join(biggerCollections)));
         }
       }
     }
-    return factory.getWrapperFactory().createWrapper(result, ARRAY_LENGTH, finalSize);
+    else if (arguments.myArguments.length == 0) {
+      PsiType type = method.getReturnType();
+      if (type instanceof PsiArrayType) {
+        // Assume that collection.toArray() always returns Object[] exactly.
+        // it may be different (e.g. Arrays.asList().toArray() returned more precise type in older JDK)
+        // but it violates the spec.
+        result = TypeConstraints.exact(type).asDfType();
+      }
+    }
+    return factory.getWrapperFactory().createWrapper(result.meet(NOT_NULL_OBJECT), ARRAY_LENGTH, finalSize);
   }
 
-  private static @NotNull DfaValue stringToCharArray(DfaCallArguments arguments, DfaMemoryState state, DfaValueFactory factory, 
+  private static @NotNull DfaValue stringToCharArray(DfaCallArguments arguments, DfaMemoryState state, DfaValueFactory factory,
                                                    PsiMethod method) {
     DfaValue string = arguments.myQualifier;
     DfaValue stringLength = STRING_LENGTH.createValue(factory, string);
     return factory.getWrapperFactory().createWrapper(typedObject(PsiType.CHAR.createArrayType(), Nullability.NOT_NULL)
       .meet(LOCAL_OBJECT), ARRAY_LENGTH, stringLength);
+  }
+
+  private static @NotNull DfType isNaN(DfaCallArguments arguments, DfaMemoryState state, DfType nan) {
+    DfType type = state.getDfType(arguments.myArguments[0]);
+    return type.isSuperType(nan) ? type.equals(FLOAT_NAN) || type.equals(DOUBLE_NAN) ? TRUE : BOOLEAN : FALSE;
   }
 }

@@ -9,10 +9,9 @@ import com.jetbrains.env.PyEnvTestCase;
 import com.jetbrains.env.PyProcessWithConsoleTestTask;
 import com.jetbrains.env.python.testing.CreateConfigurationTestTask.PyConfigurationValidationTask;
 import com.jetbrains.env.ut.PyNoseTestProcessRunner;
-import com.jetbrains.python.PyNames;
 import com.jetbrains.python.testing.PyNoseTestConfiguration;
 import com.jetbrains.python.testing.PyNoseTestFactory;
-import com.jetbrains.python.testing.PyTestFrameworkService;
+import com.jetbrains.python.testing.PythonTestConfigurationType;
 import com.jetbrains.python.tools.sdkTools.SdkCreationType;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Test;
@@ -26,7 +25,6 @@ import static org.junit.Assert.assertEquals;
  */
 @EnvTestTagsRequired(tags = "nose")
 public final class PythonNoseTestingTest extends PyEnvTestCase {
-  private final String myFrameworkName = PyTestFrameworkService.getSdkReadableNameByFramework(PyNames.NOSE_TEST);
 
   @Test
   public void testNoseGenerators() {
@@ -111,7 +109,7 @@ public final class PythonNoseTestingTest extends PyEnvTestCase {
   @Test
   public void testMultipleCases() {
     runPythonTest(
-      new CreateConfigurationMultipleCasesTask<>(PyTestFrameworkService.getSdkReadableNameByFramework(PyNames.NOSE_TEST),
+      new CreateConfigurationMultipleCasesTask<>(new PyNoseTestFactory(PythonTestConfigurationType.getInstance()).getId(),
                                                  PyNoseTestConfiguration.class));
   }
 
@@ -166,7 +164,7 @@ public final class PythonNoseTestingTest extends PyEnvTestCase {
         @NotNull
         @Override
         protected PyNoseTestFactory createFactory() {
-          return new PyNoseTestFactory();
+          return new PyNoseTestFactory(PythonTestConfigurationType.getInstance());
         }
       });
   }
@@ -174,13 +172,13 @@ public final class PythonNoseTestingTest extends PyEnvTestCase {
   @Test
   public void testConfigurationProducer() {
     runPythonTest(
-      new CreateConfigurationByFileTask<>(myFrameworkName, PyNoseTestConfiguration.class));
+      new CreateConfigurationByFileTask<>(getFrameworkId(), PyNoseTestConfiguration.class));
   }
 
   @Test
   public void testConfigurationProducerOnDirectory() {
     runPythonTest(
-      new CreateConfigurationByFileTask.CreateConfigurationTestAndRenameFolderTask<>(myFrameworkName,
+      new CreateConfigurationByFileTask.CreateConfigurationTestAndRenameFolderTask<>(getFrameworkId(),
                                                                                      PyNoseTestConfiguration.class));
   }
 
@@ -188,7 +186,7 @@ public final class PythonNoseTestingTest extends PyEnvTestCase {
   public void testRenameClass() {
     runPythonTest(
       new CreateConfigurationByFileTask.CreateConfigurationTestAndRenameClassTask<>(
-        myFrameworkName,
+        getFrameworkId(),
         PyNoseTestConfiguration.class));
   }
 
@@ -290,5 +288,10 @@ public final class PythonNoseTestingTest extends PyEnvTestCase {
                                                                       "..test_fast(+)\n",
                    runner.getFormattedTestTree());
     }
+  }
+
+  @NotNull
+  private static String getFrameworkId() {
+    return PyNoseTestFactory.id;
   }
 }

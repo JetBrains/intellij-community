@@ -82,7 +82,7 @@ public final class JsonSchemaConfigurable extends NamedConfigurable<UserDefinedJ
   public JComponent createOptionsPanel() {
     if (myView == null) {
       myView = new JsonSchemaMappingsView(myProject, myTreeUpdater, (s, force) -> {
-        if (myDisplayName.startsWith(JsonSchemaMappingsConfigurable.STUB_SCHEMA_NAME) || force) {
+        if (force || isGeneratedName()) {
           int lastSlash = Math.max(s.lastIndexOf('/'), s.lastIndexOf('\\'));
           if (lastSlash > 0 || force) {
             String substring = lastSlash > 0 ? s.substring(lastSlash + 1) : s;
@@ -100,15 +100,18 @@ public final class JsonSchemaConfigurable extends NamedConfigurable<UserDefinedJ
     return myView.getComponent();
   }
 
+  private boolean isGeneratedName() {
+    return myDisplayName.equals(mySchema.getName()) && myDisplayName.equals(mySchema.getGeneratedName());
+  }
+
   @Nls
   @Override
   public String getDisplayName() {
     return myDisplayName;
   }
 
-  @Nullable
   @Override
-  public String getHelpTopic() {
+  public @NotNull String getHelpTopic() {
     return JsonSchemaMappingsConfigurable.SETTINGS_JSON_SCHEMA;
   }
 

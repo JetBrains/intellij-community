@@ -2,7 +2,7 @@
 package com.jetbrains.python.documentation.docstrings;
 
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.xml.util.XmlTagUtilBase;
+import com.intellij.xml.util.XmlStringUtil;
 import com.jetbrains.python.toolbox.Substring;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -11,9 +11,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-/**
- * @author yole
- */
+
 public class EpydocString extends TagBasedDocString {
 
   public static String[] RTYPE_TAGS = new String[] { "rtype", "returntype" };
@@ -180,7 +178,7 @@ public class EpydocString extends TagBasedDocString {
   private static class HTMLConverter extends MarkupConverter {
     @Override
     protected void appendText(String text) {
-      myResult.append(joinLines(XmlTagUtilBase.escapeString(text, false), true));
+      myResult.append(joinLines(XmlStringUtil.escapeString(text, false), true));
     }
 
     @Override

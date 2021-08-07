@@ -19,6 +19,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.rt.coverage.data.*;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jacoco.agent.AgentJar;
 import org.jacoco.core.analysis.*;
@@ -139,6 +140,7 @@ public final class JaCoCoCoverageRunner extends JavaCoverageRunner {
               @Override
               public FileVisitResult visitFile(Path path, BasicFileAttributes attrs) throws IOException {
                 String vmClassName = rootPath.relativize(path).toString().replaceAll(StringUtil.escapeToRegexp(File.separator), ".");
+                vmClassName = StringUtil.trimEnd(vmClassName, ".class");
                 if (suite.isClassFiltered(vmClassName, suite.getExcludedClassNames()) ||
                     !suite.isPackageFiltered(StringUtil.getPackageName(vmClassName))) {
                   return FileVisitResult.CONTINUE;
@@ -182,7 +184,7 @@ public final class JaCoCoCoverageRunner extends JavaCoverageRunner {
                                      SimpleJavaParameters parameters,
                                      boolean collectLineInfo,
                                      boolean isSampling) {
-    appendCoverageArgument(sessionDataFilePath, patterns, null, parameters, collectLineInfo, isSampling, null);
+    appendCoverageArgument(sessionDataFilePath, patterns, null, parameters, collectLineInfo, isSampling, null, null);
   }
 
   @Override
@@ -192,7 +194,8 @@ public final class JaCoCoCoverageRunner extends JavaCoverageRunner {
                                      SimpleJavaParameters javaParameters,
                                      boolean collectLineInfo,
                                      boolean isSampling,
-                                     String sourceMapPath) {
+                                     String sourceMapPath,
+                                     @Nullable Project project) {
     String path;
     try {
       path = AgentJar.extractToTempLocation().getAbsolutePath();
@@ -211,7 +214,7 @@ public final class JaCoCoCoverageRunner extends JavaCoverageRunner {
                                                        String sessionDataFilePath,
                                                        String @Nullable [] patterns,
                                                        String[] excludePatterns) {
-    HashSet<String> uploadPaths = ContainerUtil.newHashSet(sessionDataFilePath, agentPath);
+    HashSet<String> uploadPaths = ContainerUtil.newHashSet(agentPath);
     HashSet<String> downloadPaths = ContainerUtil.newHashSet(sessionDataFilePath);
     var builder = new JavaTargetParameter.Builder(uploadPaths, downloadPaths);
     return doCreateCoverageArgument(builder, patterns, excludePatterns, sessionDataFilePath, agentPath);
@@ -229,10 +232,10 @@ public final class JaCoCoCoverageRunner extends JavaCoverageRunner {
       .fixed("=destfile=")
       .resolved(sessionDataFilePath)
       .fixed(",append=false");
-    if (patterns != null) {
+    if (!ArrayUtil.isEmpty(patterns)) {
       builder.fixed(",includes=").fixed(StringUtil.join(patterns, ":"));
     }
-    if (excludePatterns != null) {
+    if (!ArrayUtil.isEmpty(excludePatterns)) {
       builder.fixed(",excludes=").fixed(StringUtil.join(excludePatterns, ":"));
     }
     return builder.build();

@@ -13,7 +13,9 @@ internal fun assumeLocalMac() =
   assumeTrue("The test needs macOS on a local PC", SystemInfo.isMac && !UsefulTestCase.IS_UNDER_TEAMCITY)
 
 internal fun assumeLocalLinux() =
-  assumeTrue("The test needs Linux on a local PC", SystemInfo.isLinux && !UsefulTestCase.IS_UNDER_TEAMCITY)
+  assumeTrue("The test needs Linux on a local PC", SystemInfo.isLinux && (
+    !UsefulTestCase.IS_UNDER_TEAMCITY || System.getenv("FORCE_CREDENTIALS_TEST") != null)
+  )
 
 internal fun randomString() = UUID.randomUUID().toString()
 

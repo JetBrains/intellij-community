@@ -6,7 +6,8 @@ SHELL_SCRIPT
       PsiElement(=)('=')
       PsiElement($)('$')
       ARITHMETIC_EXPANSION
-        PsiElement((()('((')
+        PsiElement(()('(')
+        PsiElement(()('(')
         BITWISE_SHIFT_EXPRESSION
           LITERAL_EXPRESSION
             NUMBER
@@ -17,4 +18,5 @@ SHELL_SCRIPT
           LITERAL_EXPRESSION
             NUMBER
               PsiElement(int)('10')
-        PsiElement()))('))')
+        PsiElement())(')')
+        PsiElement())(')')

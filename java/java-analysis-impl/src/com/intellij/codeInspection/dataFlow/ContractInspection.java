@@ -8,6 +8,7 @@ import com.intellij.codeInsight.NullableNotNullManager;
 import com.intellij.codeInspection.AbstractBaseJavaLocalInspectionTool;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.codeInspection.dataFlow.StandardMethodContract.ValueConstraint;
+import com.intellij.codeInspection.dataFlow.interpreter.StandardDataFlowInterpreter;
 import com.intellij.codeInspection.util.InspectionMessage;
 import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.openapi.application.ApplicationManager;
@@ -137,8 +138,8 @@ public class ContractInspection extends AbstractBaseJavaLocalInspectionTool {
             JavaAnalysisBundle.message("inspection.contract.checker.contract.clause.never.satisfied", contract), text, clauseIndex);
         }
         possibleContracts = StreamEx.of(possibleContracts).flatMap(c -> c.excludeContract(contract))
-                                     .limit(DataFlowRunner.DEFAULT_MAX_STATES_PER_BRANCH).toList();
-        if (possibleContracts.size() >= DataFlowRunner.DEFAULT_MAX_STATES_PER_BRANCH) {
+                                     .limit(StandardDataFlowInterpreter.DEFAULT_MAX_STATES_PER_BRANCH).toList();
+        if (possibleContracts.size() >= StandardDataFlowInterpreter.DEFAULT_MAX_STATES_PER_BRANCH) {
           possibleContracts = null;
         }
       }

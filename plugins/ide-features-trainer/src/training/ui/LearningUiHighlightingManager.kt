@@ -14,6 +14,7 @@ import javax.swing.JTree
 import javax.swing.SwingUtilities
 import javax.swing.tree.TreePath
 import kotlin.math.absoluteValue
+import kotlin.math.min
 
 private const val pulsationSize = 20
 
@@ -47,13 +48,21 @@ object LearningUiHighlightingManager {
                          options: HighlightingOptions = HighlightingOptions(),
                          path: () -> TreePath?) {
     highlightPartOfComponent(tree, options) {
-      path()?.let { tree.getPathBounds(it) }
+      path()?.let {
+        val treeRect = tree.visibleRect
+        val pathRect = tree.getPathBounds(it) ?: return@let null
+        val offset = pathRect.x - treeRect.x
+        val width = min(treeRect.width - offset, pathRect.width)
+        Rectangle(pathRect.x, pathRect.y, width, pathRect.height)
+      }
     }
   }
 
-  fun <T: Component> highlightPartOfComponent(component: T, options: HighlightingOptions = HighlightingOptions(), rectangle: (T) -> Rectangle?) {
+  fun <T : Component> highlightPartOfComponent(component: T,
+                                               options: HighlightingOptions = HighlightingOptions(),
+                                               rectangle: (T) -> Rectangle?) {
     highlightComponent(component, options.clearPreviousHighlights) { glassPane ->
-      RepaintHighlighting(component, glassPane, options, { rectangle(component) })
+      RepaintHighlighting(component, glassPane, options) { rectangle(component) }
     }
   }
 
@@ -66,9 +75,12 @@ object LearningUiHighlightingManager {
     }
   }
 
-  private fun highlightComponent(original: Component, clearPreviousHighlights: Boolean, init: (glassPane: JComponent) -> RepaintHighlighting<*>) {
+  private fun highlightComponent(original: Component,
+                                 clearPreviousHighlights: Boolean,
+                                 init: (glassPane: JComponent) -> RepaintHighlighting<*>) {
     runInEdt {
       if (clearPreviousHighlights) clearHighlights()
+      if (!original.isShowing) return@runInEdt  // this check is required in rare cases when highlighting called after restore
       val glassPane = getGlassPane(original) ?: return@runInEdt
       val repaintByTimer = init(glassPane)
       repaintByTimer.reinitHighlightComponent()
@@ -97,7 +109,7 @@ internal class RepaintHighlighting<T : Component>(val original: T,
   private var listLocationOnScreen: Point? = null
   private var cellBoundsInList: Rectangle? = null
   private var highlightComponent: GlassHighlightComponent? = null
-  private val pulsationOffset = if(options.usePulsation) pulsationSize else 0
+  private val pulsationOffset = if (options.usePulsation) pulsationSize else 0
 
   fun initTimer() {
     val timer = TimerUtil.createNamedTimer("IFT item", 50)
@@ -137,7 +149,8 @@ internal class RepaintHighlighting<T : Component>(val original: T,
     val newHighlightComponent = GlassHighlightComponent(startDate, options)
 
     val pt = SwingUtilities.convertPoint(original, cellBounds.location, glassPane)
-    val bounds = Rectangle(pt.x - pulsationOffset, pt.y - pulsationOffset, cellBounds.width + 2 * pulsationOffset, cellBounds.height + 2 * pulsationOffset)
+    val bounds = Rectangle(pt.x - pulsationOffset, pt.y - pulsationOffset, cellBounds.width + 2 * pulsationOffset,
+                           cellBounds.height + 2 * pulsationOffset)
 
     newHighlightComponent.bounds = bounds
     glassPane.add(newHighlightComponent)
@@ -150,7 +163,7 @@ internal class RepaintHighlighting<T : Component>(val original: T,
 internal class GlassHighlightComponent(private val startDate: Date,
                                        private val options: LearningUiHighlightingManager.HighlightingOptions) : JComponent() {
 
-  private val pulsationOffset = if(options.usePulsation) pulsationSize else 0
+  private val pulsationOffset = if (options.usePulsation) pulsationSize else 0
   private var previous: Long = 0
 
   override fun paintComponent(g: Graphics) {
@@ -160,15 +173,17 @@ internal class GlassHighlightComponent(private val startDate: Date,
     val time = Date().time
     val delta = time - startDate.time
     previous = time
-    val shift = if (pulsationOffset != 0 && (delta/1000)%4 == 2.toLong()) {
-      (((delta/25 + 20)%40 - 20).absoluteValue).toInt()
+    val shift = if (pulsationOffset != 0 && (delta / 1000) % 4 == 2.toLong()) {
+      (((delta / 25 + 20) % 40 - 20).absoluteValue).toInt()
     }
     else 0
+
     fun cyclicNumber(amplitude: Int, change: Long) = (change % (2 * amplitude) - amplitude).absoluteValue.toInt()
     val alphaCycle = cyclicNumber(1000, delta).toDouble() / 1000
     val magenta = ColorUtil.withAlpha(Color.magenta, 0.8)
     val orange = ColorUtil.withAlpha(Color.orange, 0.8)
-    val background = ColorUtil.withAlpha(JBColor(Color(0, 0, shift*10), Color(255-shift*10, 255-shift*10, 255)), (0.3 + 0.7*shift/20.0) * alphaCycle)
+    val background = ColorUtil.withAlpha(JBColor(Color(0, 0, shift * 10), Color(255 - shift * 10, 255 - shift * 10, 255)),
+                                         (0.3 + 0.7 * shift / 20.0) * alphaCycle)
     val gradientShift = (delta / 20).toFloat()
     val gp = GradientPaint(gradientShift + 0F, gradientShift + 0F, magenta,
                            gradientShift + r.height.toFloat(), gradientShift + r.height.toFloat(), orange, true)

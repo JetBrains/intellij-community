@@ -15,6 +15,7 @@ import com.jetbrains.python.PyPsiBundle;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 import java.util.Objects;
@@ -30,6 +31,7 @@ public class ImportFromExistingAction implements QuestionAction {
   private final PsiElement myTarget;
   private final List<ImportCandidateHolder> mySources;
   private final String myName;
+  private final @Nullable PsiElement myInsertBefore;
   private final boolean myUseQualifiedImport;
   private Runnable myOnDoneCallback;
   private final boolean myImportLocally;
@@ -38,13 +40,18 @@ public class ImportFromExistingAction implements QuestionAction {
    * @param target element to become qualified as imported.
    * @param sources clauses of import to be used.
    * @param name relevant name ot the target element (e.g. of identifier in an expression).
+   * @param insertBefore import statement should be inserted right before this element. However, if it aims at an insertion statement in
+   *                     a group of inserts, a better insertion point belonging the group may be chosen, and it can be after the specified
+   *                     node. If null, the position will be chosen automatically.
    * @param useQualified if True, use qualified "import modulename" instead of "from modulename import ...".
    */
   public ImportFromExistingAction(@NotNull PsiElement target, @NotNull List<ImportCandidateHolder> sources, @NotNull String name,
+                                  @Nullable PsiElement insertBefore,
                                   boolean useQualified, boolean importLocally) {
     myTarget = target;
     mySources = sources;
     myName = name;
+    myInsertBefore = insertBefore;
     myUseQualifiedImport = useQualified;
     myImportLocally = importLocally;
   }
@@ -80,7 +87,7 @@ public class ImportFromExistingAction implements QuestionAction {
       return false;
     }
     // act
-    if (mySources.size() == 1 || ApplicationManager.getApplication().isUnitTestMode()) {
+    if (mySources.size() == 1) {
       doWriteAction(mySources.get(0));
     }
     else {
@@ -127,7 +134,7 @@ public class ImportFromExistingAction implements QuestionAction {
         AddImportHelper.addLocalImportStatement(myTarget, item.getImportableName(), item.getAsName());
       }
       else {
-        AddImportHelper.addImportStatement(file, item.getImportableName(), item.getAsName(), priority, myTarget);
+        AddImportHelper.addImportStatement(file, item.getImportableName(), item.getAsName(), priority, myTarget, myInsertBefore);
       }
     }
     else {
@@ -141,7 +148,7 @@ public class ImportFromExistingAction implements QuestionAction {
           AddImportHelper.addLocalImportStatement(myTarget, nameToImport, item.getAsName());
         }
         else {
-          AddImportHelper.addImportStatement(file, nameToImport, item.getAsName(), priority, myTarget);
+          AddImportHelper.addImportStatement(file, nameToImport, item.getAsName(), priority, myTarget, myInsertBefore);
         }
         if (item.getAsName() == null) {
           myTarget.replace(gen.createExpressionFromText(LanguageLevel.forElement(myTarget), qualifiedName + "." + myName));
@@ -153,7 +160,8 @@ public class ImportFromExistingAction implements QuestionAction {
         }
         else {
           // "Update" scenario takes place inside injected fragments, for normal AST addToExistingImport() will be used instead
-          AddImportHelper.addOrUpdateFromImportStatement(file, qualifiedName, item.getImportableName(), item.getAsName(), priority, myTarget);
+          AddImportHelper.addOrUpdateFromImportStatement(
+            file, qualifiedName, item.getImportableName(), item.getAsName(), priority, myTarget, myInsertBefore);
         }
       }
     }

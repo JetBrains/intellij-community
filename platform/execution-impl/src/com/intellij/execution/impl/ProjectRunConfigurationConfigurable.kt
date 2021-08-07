@@ -2,16 +2,16 @@
 package com.intellij.execution.impl
 
 import com.intellij.execution.ExecutionBundle
+import com.intellij.execution.configurations.ConfigurationType
 import com.intellij.openapi.actionSystem.ActionToolbarPosition
 import com.intellij.openapi.project.Project
-import com.intellij.ui.AnActionButton
-import com.intellij.ui.JBColor
-import com.intellij.ui.ScrollPaneFactory
-import com.intellij.ui.ToolbarDecorator
+import com.intellij.ui.*
 import com.intellij.ui.components.ActionLink
+import com.intellij.ui.components.JBPanelWithEmptyText
 import com.intellij.util.ui.JBDimension
 import com.intellij.util.ui.JBUI
 import java.awt.BorderLayout
+import java.awt.event.MouseEvent
 import javax.swing.JComponent
 import javax.swing.JPanel
 import javax.swing.tree.DefaultMutableTreeNode
@@ -57,6 +57,10 @@ open class ProjectRunConfigurationConfigurable(project: Project, runDialog: RunD
     return panel
   }
 
+  override fun typeOrFactorySelected(userObject: Any) {
+    drawPressAddButtonMessage(userObject as ConfigurationType);
+  }
+
   override fun addRunConfigurationsToModel(model: DefaultMutableTreeNode) {
     for ((type, folderMap) in runManager.getConfigurationsGroupedByTypeAndFolder(true)) {
       val typeNode = DefaultMutableTreeNode(type)
@@ -76,5 +80,16 @@ open class ProjectRunConfigurationConfigurable(project: Project, runDialog: RunD
         }
       }
     }
+  }
+
+  override fun createTipPanelAboutAddingNewRunConfiguration(configurationType: ConfigurationType?): JComponent {
+    val messagePanel = JBPanelWithEmptyText()
+    messagePanel.emptyText.appendLine(ExecutionBundle.message("status.text.add.new.run.configuration"), SimpleTextAttributes.LINK_PLAIN_ATTRIBUTES) {
+      if (configurationType == null) {
+        toolbarAddAction.showAddPopup(true, it.source as MouseEvent)
+      }
+      else createNewConfiguration(configurationType.configurationFactories[0])
+    }.appendLine(ExecutionBundle.message("status.text.or.select.run.configuration.to.edit"), SimpleTextAttributes.GRAYED_ATTRIBUTES, null)
+    return messagePanel
   }
 }

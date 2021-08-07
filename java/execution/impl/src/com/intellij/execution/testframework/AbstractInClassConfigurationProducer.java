@@ -11,6 +11,8 @@ import com.intellij.execution.configurations.ConfigurationType;
 import com.intellij.execution.junit.InheritorChooser;
 import com.intellij.execution.junit2.PsiMemberParameterizedLocation;
 import com.intellij.execution.junit2.info.MethodLocation;
+import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
@@ -18,6 +20,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.concurrency.AppExecutorUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
@@ -60,8 +63,9 @@ public abstract class AbstractInClassConfigurationProducer<T extends JavaTestCon
       final InheritorChooser inheritorChooser = new InheritorChooser() {
         @Override
         protected void runForClasses(List<PsiClass> classes, PsiMethod method, ConfigurationContext context, Runnable performRunnable) {
-          ((T)configuration.getConfiguration()).bePatternConfiguration(classes, method);
-          super.runForClasses(classes, method, context, performRunnable);
+          ReadAction.nonBlocking(() -> ((T)configuration.getConfiguration()).bePatternConfiguration(classes, method))
+            .finishOnUiThread(ModalityState.NON_MODAL, v -> super.runForClasses(classes, method, context, performRunnable))
+            .submit(AppExecutorUtil.getAppExecutorService());
         }
 
         @Override
@@ -125,6 +129,8 @@ public abstract class AbstractInClassConfigurationProducer<T extends JavaTestCon
       element = element.getParent();
     }
     if (!isTestClass(psiClass)) return false;
+    String classQualifiedName = psiClass.getQualifiedName();
+    if (classQualifiedName == null) return false;
 
     PsiElement psiElement = psiClass;
     RunnerAndConfigurationSettings settings = cloneTemplateConfiguration(context);
@@ -150,7 +156,7 @@ public abstract class AbstractInClassConfigurationProducer<T extends JavaTestCon
                  "generated name:" + configuration.getName() +
                  "; valid: " + psiClass.isValid() +
                  "; physical: " + psiClass.isPhysical() +
-                 "; className: " + psiClass.getQualifiedName() +
+                 "; className: " + classQualifiedName +
                  "; file: " + containingFile +
                  "; module: " + ModuleUtilCore.findModuleForPsiElement(psiClass.getContainingFile()) +
                  "; original module: " + originalModule);

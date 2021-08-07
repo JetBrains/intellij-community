@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.intention.impl.lists;
 
 import com.google.common.collect.Lists;
@@ -6,8 +6,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.psi.PsiDocumentManager;
-import com.intellij.psi.PsiElement;
+import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
@@ -27,6 +26,7 @@ public abstract class AbstractJoinListAction<L extends PsiElement, E extends Psi
     Context<L> context = from(element);
     if (context == null) return;
     WhitespacesInfo info = context.myWhitespacesInfo;
+    PsiFile containingFile = context.myList.getContainingFile();
     List<PsiElement> reversedBreaks = Lists.reverse(info.myBreaks);
     Document document = editor.getDocument();
     deleteBreakIfPresent(document, info.myAfterLastBreak);
@@ -38,7 +38,7 @@ public abstract class AbstractJoinListAction<L extends PsiElement, E extends Psi
 
     PsiDocumentManager documentManager = PsiDocumentManager.getInstance(project);
     documentManager.commitDocument(document);
-    CodeStyleManager.getInstance(project).adjustLineIndent(context.myList.getContainingFile(), context.myList.getParent().getTextRange());
+    CodeStyleManager.getInstance(project).adjustLineIndent(containingFile, context.myList.getParent().getTextRange());
   }
 
   private static void deleteBreakIfPresent(Document document, PsiElement aBreak) {

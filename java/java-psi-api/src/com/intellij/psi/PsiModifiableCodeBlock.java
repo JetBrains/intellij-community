@@ -17,7 +17,6 @@ package com.intellij.psi;
 
 /**
  * Represents psi element, which can be modified without caches reset.
- * @see com.intellij.psi.util.PsiModificationTracker#getOutOfCodeBlockModificationCount()
  */
 public interface PsiModifiableCodeBlock {
   /**

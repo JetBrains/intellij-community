@@ -1,0 +1,8 @@
+<idea-plugin package="git4idea.terminal">
+  <dependencies>
+    <plugin id="org.jetbrains.plugins.terminal"/>
+  </dependencies>
+  <extensions defaultExtensionNs="com.intellij">
+    <terminal.shellCommandHandler implementation="git4idea.terminal.GitLogTerminalCustomCommandHandler"/>
+  </extensions>
+</idea-plugin>

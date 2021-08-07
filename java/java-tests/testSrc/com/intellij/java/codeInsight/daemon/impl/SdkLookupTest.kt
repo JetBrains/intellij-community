@@ -6,7 +6,6 @@ import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.components.service
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
-import com.intellij.openapi.progress.Task
 import com.intellij.openapi.progress.util.ProgressIndicatorBase
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.ProjectJdkTable
@@ -349,6 +348,12 @@ class SdkLookupTest : LightPlatformTestCase() {
       "sdk-name: xqwr",
       "sdk: xqwr",
     )
+    removeSdk("xqwr")
+  }
+
+  private fun removeSdk(name: String) {
+    val sdk = ProjectJdkTable.getInstance().findJdk(name) ?: error("SDK '$name' doesn't exist")
+    SdkTestCase.removeSdk(sdk)
   }
 
   fun `test local fix with SDK prototype`() {
@@ -409,6 +414,7 @@ class SdkLookupTest : LightPlatformTestCase() {
       "sdk-name: suggested-name",
       "sdk: suggested-name",
     )
+    removeSdk("suggested-name")
   }
 
 
@@ -510,6 +516,7 @@ class SdkLookupTest : LightPlatformTestCase() {
       "configure: xqwr",
       "sdk: xqwr",
     )
+    removeSdk("xqwr")
   }
 
   fun `test download fix stop`() {
@@ -584,6 +591,7 @@ class SdkLookupTest : LightPlatformTestCase() {
       "configure: prototype (2)",
       "sdk: prototype (2)",
     )
+    removeSdk("prototype (2)")
   }
 
   private fun newSdk(sdkName: String, version: String = "1.2.3"): Sdk {

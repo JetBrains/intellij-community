@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.testFramework;
 
 import com.intellij.openapi.Disposable;
@@ -7,8 +7,8 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.LineTokenizer;
 import com.intellij.openapi.util.text.StringUtil;
-import org.apache.log4j.*;
-import org.apache.log4j.spi.LoggingEvent;
+import org.apache.log4j.Level;
+import org.apache.log4j.LogManager;
 import org.apache.log4j.xml.DOMConfigurator;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -17,14 +17,12 @@ import org.junit.rules.TestRule;
 import org.junit.rules.TestWatcher;
 import org.junit.runner.Description;
 
-import java.io.IOException;
-import java.io.RandomAccessFile;
-import java.io.StringReader;
-import java.io.StringWriter;
+import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -44,12 +42,12 @@ public final class TestLoggerFactory implements Logger.Factory {
   private TestLoggerFactory() { }
 
   @Override
-  public synchronized @NotNull Logger getLoggerInstance(@NotNull String name) {
+  public synchronized @NotNull Logger getLoggerInstance(@NotNull String category) {
     if (!myInitialized && reconfigure()) {
       myInitialized = true;
     }
 
-    return new TestLogger(org.apache.log4j.Logger.getLogger(name));
+    return new TestLogger(category);
   }
 
   public static boolean reconfigure() {
@@ -123,59 +121,69 @@ public final class TestLoggerFactory implements Logger.Factory {
   public static void enableDebugLogging(@NotNull Disposable parentDisposable, String @NotNull ... categories) {
     for (String category : categories) {
       Logger logger = Logger.getInstance(category);
-      logger.setLevel(Level.DEBUG);
-      Disposer.register(parentDisposable, () -> logger.setLevel(Level.INFO));
+      if (!logger.isDebugEnabled()) {
+        logger.setLevel(Level.DEBUG);
+        Disposer.register(parentDisposable, () -> logger.setLevel(Level.INFO));
+      }
     }
   }
 
-  static final char FAILED_TEST_DEBUG_OUTPUT_MARKER = '\u2003';
-
-  private static final StringWriter STRING_WRITER = new StringWriter();
-  private static final StringBuffer BUFFER = STRING_WRITER.getBuffer();
-  /** <b>NOTE:</b> inserted Unicode whitespace to be able to tell these failed tests log lines from the others and fold them */
-  private static final WriterAppender APPENDER = new WriterAppender(new PatternLayout("%d{HH:mm:ss,SSS} %p %.30c - %m%n"), STRING_WRITER);
+  private static final char FAILED_TEST_DEBUG_OUTPUT_MARKER = '\u2003';  // used in `FailedTestDebugLogConsoleFolding#shouldFoldLine`
+  private static final StringBuilder BUFFER = new StringBuilder();
   private static final int MAX_BUFFER_LENGTH = 10_000_000;
 
-  static void log(@NotNull org.apache.log4j.Logger logger, @NotNull Level level, @Nullable String message, @Nullable Throwable t) {
-    APPENDER.doAppend(new LoggingEvent(Category.class.getName(), logger, level, message, t));
+  static void log(@NotNull String level, @NotNull String category, @Nullable String message, @Nullable Throwable t) {
+    StringWriter writer = new StringWriter(t == null ? 256 : 4096);
 
-    //noinspection DoubleCheckedLocking
-    if (BUFFER.length() > MAX_BUFFER_LENGTH) {
-      synchronized (BUFFER) {
-        if (BUFFER.length() > MAX_BUFFER_LENGTH) {
-          BUFFER.delete(0, BUFFER.length() - MAX_BUFFER_LENGTH + MAX_BUFFER_LENGTH / 4);
-        }
+    String source = category.substring(Math.max(category.length() - 30, 0));
+    writer.write(String.format("%1$tH:%1$tM:%1$tS,%1$tL %2$-5s %3$30s - ", System.currentTimeMillis(), level, source));
+    writer.write(message != null ? message : "");
+    writer.write(System.lineSeparator());
+    if (t != null) {
+      t.printStackTrace(new PrintWriter(writer));
+      writer.write(System.lineSeparator());
+    }
+
+    synchronized (BUFFER) {
+      BUFFER.append(writer.getBuffer());
+      if (BUFFER.length() > MAX_BUFFER_LENGTH) {
+        BUFFER.delete(0, BUFFER.length() - MAX_BUFFER_LENGTH + MAX_BUFFER_LENGTH / 4);
       }
     }
   }
 
   public static void onTestStarted() {
     // clear buffer from tests which failed to report their termination properly
-    BUFFER.setLength(0);
+    synchronized (BUFFER) {
+      BUFFER.setLength(0);
+    }
   }
 
   public static void onTestFinished(boolean success) {
-    if (!success && BUFFER.length() != 0) {
+    String buffer;
+    synchronized (BUFFER) {
+      buffer = BUFFER.length() != 0 && !success ? BUFFER.toString() : null;
+      BUFFER.setLength(0);
+    }
+    if (buffer != null) {
       if (System.getenv("TEAMCITY_VERSION") != null) {
         // print in several small statements to avoid service messages tearing causing this fold to expand
         // using .out instead of .err by the advice from Nikita Skvortsov
         System.out.flush();
-        System.out.println("##teamcity[blockOpened name='DEBUG log']\n");
+        System.out.println("##teamcity[blockOpened name='DEBUG log']");
         System.out.flush();
-        System.out.println(BUFFER);
+        System.out.println(buffer);
         System.out.flush();
-        System.out.println("\n##teamcity[blockClosed name='DEBUG log']\n");
+        System.out.println("##teamcity[blockClosed name='DEBUG log']");
         System.out.flush();
       }
       else {
         // mark each line in IDEA console with this hidden mark to be able to fold it automatically
-        String[] lines = LineTokenizer.tokenize(BUFFER, false, false);
-        String text = StringUtil.join(lines, FAILED_TEST_DEBUG_OUTPUT_MARKER + "\n");
-        if (!text.startsWith("\n")) text = "\n" + text;
-        System.err.println(text);
+        List<String> lines = LineTokenizer.tokenizeIntoList(buffer, false, false);
+        if (!lines.get(0).startsWith("\n")) lines.set(0, "\n" + lines.get(0));
+        System.err.println(String.join(FAILED_TEST_DEBUG_OUTPUT_MARKER + "\n", lines));
       }
     }
-    BUFFER.setLength(0);
   }
 
   public static @NotNull TestRule createTestWatcher() {

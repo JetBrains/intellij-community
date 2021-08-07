@@ -10,14 +10,13 @@ import com.intellij.openapi.roots.libraries.Library
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.pom.java.LanguageLevel
-import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder
-import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
 import com.intellij.workspaceModel.ide.getInstance
-import com.intellij.workspaceModel.ide.impl.legacyBridge.module.CompilerModuleExtensionBridge
-import com.intellij.workspaceModel.ide.legacyBridge.ModuleBridge
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleManagerComponentBridge
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.roots.ModuleRootComponentBridge
+import com.intellij.workspaceModel.ide.legacyBridge.ModuleBridge
+import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder
 import com.intellij.workspaceModel.storage.bridgeEntities.*
+import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
 import org.jetbrains.idea.maven.importing.MavenModelUtil
 import org.jetbrains.idea.maven.importing.MavenRootModelAdapterInterface
 import org.jetbrains.idea.maven.model.MavenArtifact
@@ -44,7 +43,7 @@ class MavenRootModelAdapterBridge(private val myMavenProject: MavenProject,
 
   private var moduleEntity: ModuleEntity = initialModuleEntity
   private val legacyBridge = ModuleRootComponentBridge.getInstance(module)
-  private val modifiableModel = legacyBridge.getModifiableModel(builder, builder.toStorage(), RootConfigurationAccessor())
+  private val modifiableModel = legacyBridge.getModifiableModel(builder, RootConfigurationAccessor())
   private val virtualFileManager: VirtualFileUrlManager = VirtualFileUrlManager.getInstance(project)
   private val entitySource = MavenExternalSource.INSTANCE
 
@@ -91,7 +90,6 @@ class MavenRootModelAdapterBridge(private val myMavenProject: MavenProject,
     val contentRootEntity = getContentRootFor(toUrl(path)) ?: error("Can't find content root for the source root $path")
     val sourceRootEntity = builder.addSourceRootEntity(contentRootEntity,
                                                        virtualFileManager.fromUrl(VfsUtilCore.pathToUrl(path)),
-                                                       rootType.isForTests,
                                                        typeId,
                                                        entitySource)
 
@@ -156,11 +154,7 @@ class MavenRootModelAdapterBridge(private val myMavenProject: MavenProject,
   }
 
   override fun useModuleOutput(production: String, test: String) {
-    CompilerModuleExtensionBridge(module, module.entityStorage, builder).apply {
-      inheritCompilerOutputPath(false);
-      setCompilerOutputPath(toUrl(production).getUrl());
-      setCompilerOutputPathForTests(toUrl(test).getUrl());
-    }
+    TODO("not implemented")
   }
 
   override fun addModuleDependency(moduleName: String,

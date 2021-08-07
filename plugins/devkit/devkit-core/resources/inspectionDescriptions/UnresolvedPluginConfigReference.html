@@ -1,5 +1,17 @@
 <html>
 <body>
-Highlights unresolved references to plugin configuration elements.
+Reports unresolved references to plugin configuration elements.
+<p>
+  Referencing extension with an unknown <code>id</code> might result in errors at runtime.
+</p>
+<p>
+  The following extension points are supported:
+<ul>
+  <li><code>com.intellij.advancedSetting</code> in resource bundle <code>advanced.setting.*</code> key</li>
+  <li><code>com.intellij.experimentalFeature</code> in <code>Experiments.isFeatureEnabled()/setFeatureEnabled()</code></li>
+  <li><code>com.intellij.notificationGroup</code> in <code>Notification</code> constructor and <code>NotificationGroupManager.getNotificationGroup()</code></li>
+  <li><code>com.intellij.registryKey</code> in <code>Registry</code> methods <code>key</code> parameter</li>
+  <li><code>com.intellij.toolWindow</code> in resource bundle <code>toolwindow.stripe.*</code> key</li>
+</ul>
 </body>
 </html>

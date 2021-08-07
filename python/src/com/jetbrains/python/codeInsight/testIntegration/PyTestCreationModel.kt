@@ -77,7 +77,7 @@ class PyTestCreationModel(var fileName: String,
 
     private fun getTestFolder(element: PsiElement): VirtualFile =
       ModuleUtil.findModuleForPsiElement(element)?.let { module ->
-        FilenameIndex.getVirtualFilesByName(element.project, "tests", module.moduleContentScope).firstOrNull()
+        FilenameIndex.getVirtualFilesByName( "tests", module.moduleContentScope).firstOrNull()
       } ?: element.containingFile.containingDirectory.virtualFile
 
   }

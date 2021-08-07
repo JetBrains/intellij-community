@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.usages;
 
 import com.intellij.navigation.NavigationItem;
@@ -35,7 +35,7 @@ public class PsiElementUsageGroupBase<T extends PsiElement & NavigationItem> imp
   }
 
   @Override
-  public Icon getIcon(boolean isOpen) {
+  public Icon getIcon() {
     return myIcon;
   }
 
@@ -45,7 +45,7 @@ public class PsiElementUsageGroupBase<T extends PsiElement & NavigationItem> imp
 
   @Override
   @NotNull
-  public String getText(UsageView view) {
+  public String getPresentableGroupText() {
     return myName;
   }
 
@@ -78,16 +78,12 @@ public class PsiElementUsageGroupBase<T extends PsiElement & NavigationItem> imp
   }
 
   @Override
-  public void update() {
-  }
-
-  @Override
   public int compareTo(@NotNull final UsageGroup o) {
     String name;
     if (o instanceof NamedPresentably) {
       name = ((NamedPresentably)o).getPresentableName();
     } else {
-      name = o.getText(null);
+      name = o.getPresentableGroupText();
     }
     return myName.compareToIgnoreCase(name);
   }

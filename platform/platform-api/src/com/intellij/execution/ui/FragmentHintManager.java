@@ -1,13 +1,16 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.ui;
 
 import com.intellij.codeInsight.hint.HintManager;
+import com.intellij.ide.DataManager;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.EmptyAction;
 import com.intellij.openapi.actionSystem.Shortcut;
 import com.intellij.openapi.actionSystem.ShortcutSet;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.keymap.KeymapUtil;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComponentWithBrowseButton;
 import com.intellij.openapi.ui.LabeledComponent;
 import com.intellij.openapi.util.Disposer;
@@ -21,6 +24,7 @@ import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -35,12 +39,16 @@ public class FragmentHintManager {
   private final List<SettingsEditorFragment<?, ?>> myFragments = new ArrayList<>();
   private final @NotNull Consumer<? super String> myHintConsumer;
   private final String myDefaultHint;
+  private final String myConfigId;
+  private int myHintNumber;
+  private long myHintsShownTime;
 
   public FragmentHintManager(@NotNull Consumer<? super @NlsContexts.DialogMessage String> hintConsumer,
                              @NlsContexts.DialogMessage @Nullable String defaultHint,
-                             @NotNull Disposable disposable) {
+                             @Nullable String configId, @NotNull Disposable disposable) {
     myHintConsumer = hintConsumer;
     myDefaultHint = defaultHint;
+    myConfigId = configId;
     hintConsumer.consume(defaultHint);
 
     AWTEventListener listener = event -> processKeyEvent((KeyEvent)event);
@@ -111,7 +119,9 @@ public class FragmentHintManager {
     }
     if (fragment != null) {
       String text = getShortcutText(fragment);
-      hint = hint == null ? text : hint + ". " + text;
+      if (text != null) {
+        hint = hint == null ? text : StringUtil.trimEnd(hint, ".") + ". " + text;
+      }
     }
     myHintConsumer.consume(hint == null ? myDefaultHint : hint);
   }
@@ -127,18 +137,33 @@ public class FragmentHintManager {
   private void processKeyEvent(KeyEvent keyEvent) {
     if (keyEvent.getKeyCode() != KeyEvent.VK_ALT) return;
     if (keyEvent.getID() == KeyEvent.KEY_PRESSED) {
+      myHintNumber = 0;
+      myHintsShownTime = System.currentTimeMillis();
       for (SettingsEditorFragment<?, ?> fragment : myFragments) {
         JComponent component = fragment.getComponent();
+        Window window = UIUtil.getWindow(component);
+        if (window == null || !window.isFocused()) {
+          return;
+        }
         if (fragment.isSelected() && fragment.getName() != null && component.getRootPane() != null) {
           JComponent hintComponent = createHintComponent(fragment);
-          Point northEastOf = RelativePoint.getNorthEastOf(component).getScreenPoint();
-          northEastOf.translate(-hintComponent.getPreferredSize().width, -hintComponent.getPreferredSize().height + 5);
-          HintManager.getInstance().showHint(hintComponent, RelativePoint.fromScreen(northEastOf), HintManager.HIDE_BY_ANY_KEY, -1);
+          Rectangle rect = component.getVisibleRect();
+          if (rect.height < component.getHeight()) {
+            continue; // scrolled out
+          }
+          RelativePoint point = new RelativePoint(component, new Point(rect.x + rect.width - hintComponent.getPreferredSize().width,
+                                                                       rect.y - hintComponent.getPreferredSize().height + 5));
+          HintManager.getInstance().showHint(hintComponent, point, HintManager.HIDE_BY_ANY_KEY, -1);
+          myHintNumber++;
         }
       }
     }
-    else if (keyEvent.getID() == KeyEvent.KEY_RELEASED) {
+    else if (keyEvent.getID() == KeyEvent.KEY_RELEASED && myHintNumber > 0) {
       HintManager.getInstance().hideAllHints();
+      Project project = DataManager.getInstance().getDataContext(keyEvent.getComponent()).getData(CommonDataKeys.PROJECT);
+      FragmentStatisticsService.getInstance().logHintsShown(project, myConfigId, myHintNumber, System.currentTimeMillis() - myHintsShownTime);
+      myHintsShownTime = 0;
+      myHintNumber = 0;
     }
   }
 

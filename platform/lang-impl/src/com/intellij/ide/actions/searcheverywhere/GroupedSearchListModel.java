@@ -1,17 +1,13 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.actions.searcheverywhere;
 
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.util.ArrayUtil;
-import com.intellij.util.diff.Diff;
-import com.intellij.util.diff.FilesTooBigForDiffException;
+import com.intellij.util.Range;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
 class GroupedSearchListModel extends SearchListModel {
-
-  private static final Logger LOG = Logger.getInstance(GroupedSearchListModel.class);
 
   @Override
   public boolean hasMoreElements(SearchEverywhereContributor contributor) {
@@ -36,17 +32,14 @@ class GroupedSearchListModel extends SearchListModel {
       clearMoreItems();
 
       itemsMap.forEach((contributor, list) -> {
-        Object[] oldItems = ArrayUtil.toObjectArray(getFoundItems(contributor));
-        Object[] newItems = list.stream()
-          .map(SearchEverywhereFoundElementInfo::getElement)
-          .toArray();
-        try {
-          Diff.Change change = Diff.buildChanges(oldItems, newItems);
-          applyChange(change, contributor, list);
+        Range<Integer> range = getRangeForContributor(contributor);
+        if (range != null) {
+          listElements.subList(range.getFrom(), range.getTo() + 1).clear();
+          fireIntervalRemoved(this, range.getFrom(), range.getTo());
         }
-        catch (FilesTooBigForDiffException e) {
-          LOG.error("Cannot calculate diff for updated search results");
-        }
+        int insertionPoint = range != null ? range.getFrom() : getInsertionPoint(contributor);
+        listElements.addAll(insertionPoint, list);
+        fireIntervalAdded(this, insertionPoint, insertionPoint + list.size() - 1);
       });
       resultsExpired = false;
     }
@@ -106,40 +99,6 @@ class GroupedSearchListModel extends SearchListModel {
     }
   }
 
-  private void applyChange(Diff.Change change,
-                           SearchEverywhereContributor<?> contributor,
-                           List<SearchEverywhereFoundElementInfo> newItems) {
-    int firstItemIndex = contributors().indexOf(contributor);
-    if (firstItemIndex < 0) {
-      firstItemIndex = getInsertionPoint(contributor);
-    }
-
-    for (Diff.Change ch : toRevertedList(change)) {
-      if (ch.deleted > 0) {
-        for (int i = ch.deleted - 1; i >= 0; i--) {
-          int index = firstItemIndex + ch.line0 + i;
-          listElements.remove(index);
-        }
-        fireIntervalRemoved(this, firstItemIndex + ch.line0, firstItemIndex + ch.line0 + ch.deleted - 1);
-      }
-
-      if (ch.inserted > 0) {
-        List<SearchEverywhereFoundElementInfo> addedItems = newItems.subList(ch.line1, ch.line1 + ch.inserted);
-        listElements.addAll(firstItemIndex + ch.line0, addedItems);
-        fireIntervalAdded(this, firstItemIndex + ch.line0, firstItemIndex + ch.line0 + ch.inserted - 1);
-      }
-    }
-  }
-
-  private static List<Diff.Change> toRevertedList(Diff.Change change) {
-    List<Diff.Change> res = new ArrayList<>();
-    while (change != null) {
-      res.add(0, change);
-      change = change.link;
-    }
-    return res;
-  }
-
   @Override
   public void removeElement(@NotNull Object item, SearchEverywhereContributor<?> contributor) {
     int index = contributors().indexOf(contributor);
@@ -193,13 +152,21 @@ class GroupedSearchListModel extends SearchListModel {
   }
 
   public int getItemsForContributor(SearchEverywhereContributor<?> contributor) {
+    Range<Integer> range = getRangeForContributor(contributor);
+    return range == null ? 0 : range.getTo() - range.getFrom() + 1;
+  }
+
+  @Nullable
+  private Range<Integer> getRangeForContributor(SearchEverywhereContributor<?> contributor) {
     List<SearchEverywhereContributor> contributorsList = contributors();
     int first = contributorsList.indexOf(contributor);
+    if (first < 0) return null;
     int last = contributorsList.lastIndexOf(contributor);
     if (isMoreElement(last)) {
       last -= 1;
     }
-    return last - first + 1;
+
+    return new Range<>(first, last);
   }
 
   private int getInsertionPoint(SearchEverywhereContributor contributor) {

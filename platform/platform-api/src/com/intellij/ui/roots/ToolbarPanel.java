@@ -19,6 +19,9 @@ import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.ActionToolbar;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -26,19 +29,42 @@ import java.awt.*;
 /**
  * @author Eugene Zhuravlev
  */
-public class ToolbarPanel extends JPanel{
+public class ToolbarPanel extends JPanel {
+  /**
+   * @deprecated use {@link #ToolbarPanel(JComponent, ActionGroup, String, JComponent)} instead and specify action place and target component for toolbar explicitly
+   */
+  @Deprecated
   public ToolbarPanel(JComponent contentComponent, ActionGroup actions) {
     this(contentComponent, actions, ActionPlaces.UNKNOWN);
   }
 
-  public ToolbarPanel(JComponent contentComponent, ActionGroup actions, final String toolbarPlace) {
+  /**
+   * @deprecated use {@link #ToolbarPanel(JComponent, ActionGroup, String, JComponent)} instead and specify action place and target component for toolbar explicitly
+   */
+  @Deprecated
+  public ToolbarPanel(@NotNull JComponent contentComponent, @NotNull ActionGroup actions, @NotNull @NonNls String toolbarPlace) {
+    this(contentComponent, actions, toolbarPlace, null);
+  }
+
+  public ToolbarPanel(@NotNull JComponent contentComponent,
+                      @NotNull ActionGroup actions,
+                      @NotNull @NonNls String toolbarPlace,
+                      @Nullable JComponent targetComponent) {
     super(new GridBagLayout());
     setBorder(BorderFactory.createEtchedBorder());
     if (contentComponent.getBorder() != null) {
       contentComponent.setBorder(BorderFactory.createEmptyBorder());
     }
     final ActionToolbar actionToolbar = ActionManager.getInstance().createActionToolbar(toolbarPlace, actions, true);
-    add(actionToolbar.getComponent(), new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.HORIZONTAL, new Insets(0, 0, 0, 0), 0, 0));
-    add(contentComponent, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1.0, 1.0, GridBagConstraints.WEST, GridBagConstraints.BOTH, new Insets(0, 0, 0, 0), 0, 0));
+    if (targetComponent != null) {
+      actionToolbar.setTargetComponent(targetComponent);
+    }
+
+    add(actionToolbar.getComponent(),
+        new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.HORIZONTAL,
+                               new Insets(0, 0, 0, 0), 0, 0));
+    add(contentComponent,
+        new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1.0, 1.0, GridBagConstraints.WEST, GridBagConstraints.BOTH,
+                               new Insets(0, 0, 0, 0), 0, 0));
   }
 }

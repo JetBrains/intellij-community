@@ -31,7 +31,7 @@ public final class FxmlPresenceListener implements BulkFileListener {
   }
 
   @Override
-  public void after(@NotNull List<? extends VFileEvent> events) {
+  public void after(@NotNull List<? extends @NotNull VFileEvent> events) {
     for (VFileEvent event : events) {
       checkEvent(event);
     }

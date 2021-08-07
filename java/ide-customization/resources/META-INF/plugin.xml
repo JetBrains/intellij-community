@@ -8,6 +8,7 @@
 
   <extensions defaultExtensionNs="com.intellij">
     <applicationInitializedListener implementation="com.intellij.internal.statistic.updater.StatisticsJobsScheduler"/>
+    <applicationInitializedListener implementation="com.intellij.internal.statistic.updater.StatisticsStateCollectorsScheduler"/>
 
     <projectViewPane implementation="com.intellij.ide.projectView.impl.ProjectViewPane"/>
 
@@ -34,9 +35,6 @@
     <applicationService serviceImplementation="com.intellij.platform.templates.ProjectTemplateExportable"/>
     <exportable serviceInterface="com.intellij.platform.templates.ProjectTemplateExportable"/>
     <projectTemplateFileProcessor implementation="com.intellij.platform.templates.SystemFileProcessor"/>
-
-    <usageFilteringRuleProvider implementation="com.intellij.usages.impl.ImportUsageFilteringRuleProvider"/>
-    <applicationService serviceImplementation="com.intellij.usages.impl.ImportFilteringUsageViewSetting"/>
 
     <!-- this depends on TemplateLanguageConfigurable which isn't registered in LangExtensions, so it should go here as well -->
     <errorQuickFixProvider implementation="com.intellij.psi.templateLanguages.TemplateLanguageErrorQuickFixProvider"/>
@@ -87,9 +85,10 @@
             icon="AllIcons.RunConfigurations.RerunFailedTests"/>
 
     <group>
+      <separator/>
       <action id="SaveProjectAsTemplate" class="com.intellij.platform.templates.SaveProjectAsTemplateAction"/>
       <action id="ManageProjectTemplates" class="com.intellij.platform.templates.ManageProjectTemplatesAction"/>
-      <add-to-group group-id="ToolsBasicGroup" anchor="after" relative-to-action="SaveFileAsTemplate"/>
+      <add-to-group group-id="FileOtherSettingsGroup" anchor="last"/>
     </group>
 
     <action id="ConsoleView.FoldLinesLikeThis" class="com.intellij.execution.console.FoldLinesLikeThis">

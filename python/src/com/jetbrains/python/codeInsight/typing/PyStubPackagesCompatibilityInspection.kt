@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.codeInsight.typing
 
 import com.intellij.codeInspection.LocalInspectionToolSession
@@ -6,14 +6,12 @@ import com.intellij.codeInspection.LocalQuickFix
 import com.intellij.codeInspection.ProblemDescriptor
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.codeInspection.ui.ListEditForm
-import com.intellij.openapi.components.ServiceManager
 import com.intellij.openapi.module.ModuleUtilCore
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.profile.codeInspection.ProjectInspectionProfileManager
 import com.intellij.psi.PsiElementVisitor
-import com.jetbrains.python.PyBundle
 import com.jetbrains.python.PyPsiBundle
 import com.jetbrains.python.inspections.PyInspection
 import com.jetbrains.python.inspections.PyInspectionVisitor
@@ -54,6 +52,7 @@ class PyStubPackagesCompatibilityInspection : PyInspection() {
   var ignoredStubPackages: MutableList<String> = mutableListOf()
 
   override fun createOptionsPanel(): JComponent = ListEditForm(PyPsiBundle.message("INSP.stub.packages.compatibility.ignored.packages"),
+                                                               PyPsiBundle.message("INSP.stub.packages.compatibility.ignored.packages.label"),
                                                                ignoredStubPackages).contentPanel
 
   override fun buildVisitor(holder: ProblemsHolder,
@@ -76,7 +75,7 @@ class PyStubPackagesCompatibilityInspection : PyInspection() {
       val nameToPkg = mutableMapOf<String, PyPackage>()
       installedPackages.forEach { nameToPkg[it.name] = it }
 
-      val status = ServiceManager.getService(node.project, PyStubPackagesInstallingStatus::class.java)
+      val status = node.project.getService(PyStubPackagesInstallingStatus::class.java)
 
       findIncompatibleRuntimeToStubPackages(
         sdk) { stubPkg ->

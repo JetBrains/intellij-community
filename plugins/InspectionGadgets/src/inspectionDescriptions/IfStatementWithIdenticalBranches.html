@@ -1,10 +1,10 @@
 <html>
 <body>
-Inspection that can extract common parts from branches of if statement.
-<!-- tooltip end -->
-<p>Before:</p>
+Reports <code>if</code> statements in which common parts can be extracted from the branches.
+<p>These common parts are independent from the condition and make <code>if</code> statements harder to understand.</p>
+<p>Example:</p>
 <pre><code>
-  if (x > 12) {
+  if (x &gt; 12) {
     doSomethingBefore();
     doSomethingDifferent1();
     doSomethingAfter();
@@ -14,16 +14,17 @@ Inspection that can extract common parts from branches of if statement.
     doSomethingAfter();
   }
 </code></pre>
-<p>After:</p>
+<p>After the quick-fix is applied:</p>
 <pre><code>
   doSomethingBefore();
-  if (x > 12) {
+  if (x &gt; 12) {
     doSomethingDifferent1();
   } else {
     doSomethingDifferent2();
   }
   doSomethingAfter();
 </code></pre>
+<!-- tooltip end -->
 <p><small>Updated in 2018.1</small></p>
 </body>
 </html>

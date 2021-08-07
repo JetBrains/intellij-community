@@ -1,7 +1,20 @@
-<!-- Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file. -->
 <html>
 <body>
-Reports arrays of enum constants which may be replaced with <code>EnumType.values()</code>.
+Reports the arrays of enum constants that can be replaced with <code>EnumType.values()</code>.
+<p>Usually, when updating such an enum, you have to update the array as well. However, if you use <code>EnumType.values()</code>
+ instead, no modifications are required.</p>
+<p>Example:</p>
+<pre><code>
+  enum States {
+     NOT_RUN, IN_PROGRESS, FINISHED;
+  }
+  
+  handleStates(new States[] {NOT_RUN, IN_PROGRESS, FINISHED});
+</code></pre>
+<p>After the quick-fix is applied:</p>
+<pre><code>
+  handleStates(States.values());
+</code></pre>
 <p><small>New in 2019.1</small></p>
 </body>
 </html>

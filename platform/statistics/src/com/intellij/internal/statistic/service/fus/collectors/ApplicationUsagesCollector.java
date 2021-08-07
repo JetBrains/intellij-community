@@ -2,12 +2,10 @@
 package com.intellij.internal.statistic.service.fus.collectors;
 
 import com.intellij.internal.statistic.beans.MetricEvent;
-import com.intellij.internal.statistic.eventLog.FeatureUsageData;
 import com.intellij.internal.statistic.eventLog.validator.IntellijSensitiveDataValidator;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
 import java.util.Set;
@@ -65,15 +63,5 @@ public abstract class ApplicationUsagesCollector extends FeatureUsagesCollector 
   @NotNull
   public Set<MetricEvent> getMetrics() {
     return Collections.emptySet();
-  }
-
-  /**
-   * @deprecated Add {@link FeatureUsageData} directly to {@link MetricEvent} in {@link #getMetrics()}
-   */
-  @ApiStatus.ScheduledForRemoval(inVersion = "2020.3")
-  @Deprecated
-  @Nullable
-  public FeatureUsageData getData() {
-    return null;
   }
 }

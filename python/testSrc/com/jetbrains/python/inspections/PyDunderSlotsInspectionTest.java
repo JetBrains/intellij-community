@@ -15,13 +15,13 @@ public class PyDunderSlotsInspectionTest extends PyInspectionTestCase {
   // PY-12773
   public void testClassAttrAssignmentAndSlots() {
     doTestPy2();
-    doTestPy3();
+    doTest();
   }
 
   // PY-12773
   public void testClassAttrAssignmentAndSlotsWithDict() {
     doTestPy2();
-    doTestPy3();
+    doTest();
   }
 
   // PY-12773
@@ -31,55 +31,55 @@ public class PyDunderSlotsInspectionTest extends PyInspectionTestCase {
 
   // PY-12773
   public void testClassAttrAssignmentAndSlotsWithAttrPy3() {
-    doTestPy3();
+    doTest();
   }
 
   // PY-12773
   public void testInheritedClassAttrAssignmentAndInheritedSlots() {
     doTestPy2();
-    doTestPy3();
+    doTest();
   }
 
   // PY-12773
   public void testClassAttrAssignmentAndInheritedSlots() {
     doTestPy2();
-    doTestPy3();
+    doTest();
   }
 
   // PY-12773
   public void testInheritedClassAttrAssignmentAndOwnSlots() {
     doTestPy2();
-    doTestPy3();
+    doTest();
   }
 
   // PY-12773
   public void testClassAttrAssignmentAndOwnSlotsAndEmptyParent() {
     doTestPy2();
-    doTestPy3();
+    doTest();
   }
 
   // PY-12773
   public void testClassAttrAssignmentAndOwnAndInheritedSlots() {
     doTestPy2();
-    doTestPy3();
+    doTest();
   }
 
   // PY-12773
   public void testClassAttrAssignmentAndOwnWithDictAndInheritedSlots() {
     doTestPy2();
-    doTestPy3();
+    doTest();
   }
 
   // PY-12773
   public void testClassAttrAssignmentAndOwnWithDictAndInheritedWithAttrSlots() {
     doTestPy2();
-    doTestPy3();
+    doTest();
   }
 
   // PY-12773
   public void testClassAttrAssignmentAndOwnAndInheritedWithDictSlots() {
     doTestPy2();
-    doTestPy3();
+    doTest();
   }
 
   // PY-12773
@@ -89,43 +89,43 @@ public class PyDunderSlotsInspectionTest extends PyInspectionTestCase {
 
   // PY-12773
   public void testClassAttrAssignmentAndOwnWithAttrAndInheritedSlotsPy3() {
-    doTestPy3();
+    doTest();
   }
 
   // PY-12773
   public void testClassAttrAssignmentAndOwnAndInheritedWithAttrSlots() {
     doTestPy2();
-    doTestPy3();
+    doTest();
   }
 
   // PY-12773
   public void testClassAttrAssignmentAndOwnAndInheritedWithAttrAndDictSlots() {
     doTestPy2();
-    doTestPy3();
+    doTest();
   }
 
   // PY-12773
   public void testInheritedClassAttrAssignmentAndOwnAndInheritedSlots() {
     doTestPy2();
-    doTestPy3();
+    doTest();
   }
 
   // PY-12773
   public void testInheritedClassAttrAssignmentAndOwnWithAttrAndInheritedSlots() {
     doTestPy2();
-    doTestPy3();
+    doTest();
   }
 
   // PY-12773
   public void testInheritedClassAttrAssignmentAndOwnWithDictAndInheritedSlots() {
     doTestPy2();
-    doTestPy3();
+    doTest();
   }
 
   // PY-12773
   public void testInheritedClassAttrAssignmentAndOwnWithAttrAndDictAndInheritedSlots() {
     doTestPy2();
-    doTestPy3();
+    doTest();
   }
 
   // PY-12773
@@ -135,13 +135,13 @@ public class PyDunderSlotsInspectionTest extends PyInspectionTestCase {
 
   // PY-12773
   public void testInheritedClassAttrAssignmentAndOwnAndInheritedWithAttrSlotsPy3() {
-    doTestPy3();
+    doTest();
   }
 
   // PY-12773
   public void testInheritedClassAttrAssignmentAndOwnAndInheritedWithDictSlots() {
     doTestPy2();
-    doTestPy3();
+    doTest();
   }
 
   // PY-12773
@@ -151,13 +151,13 @@ public class PyDunderSlotsInspectionTest extends PyInspectionTestCase {
 
   // PY-12773
   public void testInheritedClassAttrAssignmentAndOwnAndInheritedWithAttrAndDictSlotsPy3() {
-    doTestPy3();
+    doTest();
   }
 
   // PY-12773
   public void testInheritedClassAttrAssignmentAndOwnWithAttrAndInheritedWithDictSlots() {
     doTestPy2();
-    doTestPy3();
+    doTest();
   }
 
   // PY-12773
@@ -167,82 +167,82 @@ public class PyDunderSlotsInspectionTest extends PyInspectionTestCase {
 
   // PY-12773
   public void testInheritedClassAttrAssignmentAndOwnWithDictAndInheritedWithAttrSlotsPy3() {
-    doTestPy3();
+    doTest();
   }
 
   // PY-19956
   public void testWriteToAttrInSlots() {
     doTestPy2();
-    doTestPy3();
+    doTest();
   }
 
   // PY-20280
   public void testSlotInListAndClassVar() {
-    doTestPy3();
+    doTest();
   }
 
   // PY-20280
   public void testSlotInTupleAndClassVar() {
-    doTestPy3();
+    doTest();
   }
 
   // PY-20280
   public void testSlotAndClassVar() {
-    doTestPy3();
+    doTest();
   }
 
   // PY-20280
   public void testTwoSlotsInListAndClassVar() {
-    doTestPy3();
+    doTest();
   }
 
   // PY-20280
   public void testTwoSlotsInTupleAndClassVar() {
-    doTestPy3();
+    doTest();
   }
 
   // PY-20280
   public void testSlotsInBaseAndClassVarInDerived() {
-    doTestPy3();
+    doTest();
   }
 
   // PY-20280
   public void testClassVarInBaseAndSlotsInDerived() {
-    doTestPy3();
+    doTest();
   }
 
   // PY-20280
   public void testSlotsInBaseAndDerivedClassVarInDerived() {
-    doTestPy3();
+    doTest();
   }
 
   // PY-20280
   public void testSlotsInBaseAndDerivedClassVarInBase() {
-    doTestPy3();
+    doTest();
   }
 
   // PY-22716
   public void testWriteToInheritedSlot() {
     doTestPy2();
-    doTestPy3();
+    doTest();
   }
 
   // PY-26319
   public void testWriteToProperty() {
     doTestPy2();
-    doTestPy3();
+    doTest();
   }
 
   // PY-26319
   public void testWriteToInheritedProperty() {
     doTestPy2();
-    doTestPy3();
+    doTest();
   }
 
   // PY-29230
   public void testWriteToOldStyleClass() {
     runWithLanguageLevel(
-      LanguageLevel.PYTHON26,
+      LanguageLevel.PYTHON27,
       () -> doTestByText("class A:\n" +
                          "    __slots__ = ['bar']\n" +
                          "    \n" +
@@ -261,23 +261,22 @@ public class PyDunderSlotsInspectionTest extends PyInspectionTestCase {
 
   // PY-29234
   public void testSlotAndAnnotatedClassVar() {
-    runWithLanguageLevel(
-      LanguageLevel.PYTHON36,
-      () -> doTestByText("class MyClass:\n" +
-                         "    __slots__ = ['a']\n" +
-                         "    a: int")
-    );
+    doTestByText("class MyClass:\n" +
+                 "    __slots__ = ['a']\n" +
+                 "    a: int");
   }
 
   // PY-29268
   public void testWriteToNewStyleInheritedFromOldStyle() {
-    doTestByText("class A:\n" +
-                 "    __slots__ = ['a']\n" +
-                 "\n" +
-                 "class B(A, object):\n" +
-                 "    __slots__ = ['b']\n" +
-                 "\n" +
-                 "B().c = 1");
+    runWithLanguageLevel(LanguageLevel.PYTHON27, () -> {
+      doTestByText("class A:\n" +
+                   "    __slots__ = ['a']\n" +
+                   "\n" +
+                   "class B(A, object):\n" +
+                   "    __slots__ = ['b']\n" +
+                   "\n" +
+                   "B().c = 1");
+    });
   }
 
   // PY-29268
@@ -290,23 +289,16 @@ public class PyDunderSlotsInspectionTest extends PyInspectionTestCase {
 
   // PY-31066
   public void testWriteToSlotAndAnnotatedClassVar() {
-    runWithLanguageLevel(
-      LanguageLevel.PYTHON36,
-      () -> doTestByText("class A:\n" +
-                         "    __slots__ = ['a']\n" +
-                         "    a: int\n" +
-                         "\n" +
-                         "    def __init__(self, a: int) -> None:\n" +
-                         "        self.a = a")
-    );
+    doTestByText("class A:\n" +
+                 "    __slots__ = ['a']\n" +
+                 "    a: int\n" +
+                 "\n" +
+                 "    def __init__(self, a: int) -> None:\n" +
+                 "        self.a = a");
   }
 
   private void doTestPy2() {
-    runWithLanguageLevel(LanguageLevel.PYTHON26, this::doTest);
-  }
-
-  private void doTestPy3() {
-    runWithLanguageLevel(LanguageLevel.PYTHON34, this::doTest);
+    runWithLanguageLevel(LanguageLevel.PYTHON27, this::doTest);
   }
 
   @NotNull

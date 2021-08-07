@@ -7,8 +7,6 @@ import com.intellij.ide.JavaUiBundle;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.application.AccessToken;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.options.Configurable;
@@ -96,7 +94,7 @@ public class ProjectStructureConfigurable implements SearchableConfigurable, Pla
   private final List<Configurable> myName2Config = new ArrayList<>();
   private final StructureConfigurableContext myContext;
   private final ModulesConfigurator myModuleConfigurator;
-  private JdkListConfigurable myJdkListConfig;
+  private final JdkListConfigurable myJdkListConfig;
 
   private final JLabel myEmptySelection = new JLabel(
     JavaUiBundle.message("project.structure.empty.text"),
@@ -326,42 +324,37 @@ public class ProjectStructureConfigurable implements SearchableConfigurable, Pla
   public void reset() {
     // need this to ensure VFS operations will not block because of storage flushing
     // and other maintenance IO tasks run in background
-    AccessToken token = HeavyProcessLatch.INSTANCE.processStarted(JavaUiBundle.message("project.structure.configurable.reset.text"));
+    HeavyProcessLatch.INSTANCE.performOperation(
+      HeavyProcessLatch.Type.Processing, JavaUiBundle.message("project.structure.configurable.reset.text"), ()->{
+        myContext.reset();
 
-    try {
+        myProjectJdksModel.reset(myProject);
 
-      myContext.reset();
-
-      myProjectJdksModel.reset(myProject);
-
-      Configurable toSelect = null;
-      for (Configurable each : myName2Config) {
-        if (myUiState.lastEditedConfigurable != null && myUiState.lastEditedConfigurable.equals(each.getDisplayName())) {
-          toSelect = each;
+        Configurable toSelect = null;
+        for (Configurable each : myName2Config) {
+          if (myUiState.lastEditedConfigurable != null && myUiState.lastEditedConfigurable.equals(each.getDisplayName())) {
+            toSelect = each;
+          }
+          if (each instanceof MasterDetailsComponent) {
+            ((MasterDetailsComponent)each).setHistory(myHistory);
+          }
+          each.reset();
         }
-        if (each instanceof MasterDetailsComponent) {
-          ((MasterDetailsComponent)each).setHistory(myHistory);
+
+        myHistory.clear();
+
+        if (toSelect == null && myName2Config.size() > 0) {
+          toSelect = myName2Config.iterator().next();
         }
-        each.reset();
-      }
 
-      myHistory.clear();
+        removeSelected();
 
-      if (toSelect == null && myName2Config.size() > 0) {
-        toSelect = myName2Config.iterator().next();
-      }
+        navigateTo(toSelect != null ? createPlaceFor(toSelect) : null, false);
 
-      removeSelected();
-
-      navigateTo(toSelect != null ? createPlaceFor(toSelect) : null, false);
-
-      if (myUiState.proportion > 0) {
-        mySplitter.setProportion(myUiState.proportion);
-      }
-    }
-    finally {
-      token.finish();
-    }
+        if (myUiState.proportion > 0) {
+          mySplitter.setProportion(myUiState.proportion);
+        }
+    });
   }
 
   @Override
@@ -580,7 +573,7 @@ public class ProjectStructureConfigurable implements SearchableConfigurable, Pla
   }
 
   public static ProjectStructureConfigurable getInstance(@NotNull final Project project) {
-    return ServiceManager.getService(project, ProjectStructureConfigurable.class);
+    return project.getService(ProjectStructureConfigurable.class);
   }
 
   @NotNull

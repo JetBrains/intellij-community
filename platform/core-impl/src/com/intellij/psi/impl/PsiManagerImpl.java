@@ -54,7 +54,7 @@ public final class PsiManagerImpl extends PsiManagerEx implements Disposable {
   public static final Topic<AnyPsiChangeListener> ANY_PSI_CHANGE_TOPIC = new Topic<>(AnyPsiChangeListener.class, Topic.BroadcastDirection.TO_PARENT);
 
   public PsiManagerImpl(@NotNull Project project) {
-    // we need to initialize PsiBuilderFactory service so it won't initialize under PsiLock from ChameleonTransform
+    // we need to initialize PsiBuilderFactory service, so it won't initialize under PsiLock from ChameleonTransform
     PsiBuilderFactory.getInstance();
 
     myProject = project;
@@ -114,7 +114,7 @@ public final class PsiManagerImpl extends PsiManagerEx implements Disposable {
   @Override
   @TestOnly
   public void setAssertOnFileLoadingFilter(@NotNull VirtualFileFilter filter, @NotNull Disposable parentDisposable) {
-    // Find something to ensure there's no changed files waiting to be processed in repository indices.
+    // Find something to ensure there are no changed files waiting to be processed in repository indices.
     myAssertOnFileLoadingFilter = filter;
     Disposer.register(parentDisposable, () -> myAssertOnFileLoadingFilter = VirtualFileFilter.NONE);
   }

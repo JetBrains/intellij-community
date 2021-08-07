@@ -14,6 +14,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtilCore;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -22,8 +23,8 @@ import java.util.stream.Stream;
 public class ProblemDescriptorBase extends CommonProblemDescriptorImpl implements ProblemDescriptor {
   private static final Logger LOG = Logger.getInstance(ProblemDescriptorBase.class);
 
-  @NotNull private final SmartPsiElementPointer myStartSmartPointer;
-  @Nullable private final SmartPsiElementPointer myEndSmartPointer;
+  @NotNull private final SmartPsiElementPointer<?> myStartSmartPointer;
+  @Nullable private final SmartPsiElementPointer<?> myEndSmartPointer; // null means it's the same as myStartSmartPointer
 
   private final ProblemHighlightType myHighlightType;
   private Navigatable myNavigatable;
@@ -42,7 +43,7 @@ public class ProblemDescriptorBase extends CommonProblemDescriptorImpl implement
                                @NotNull ProblemHighlightType highlightType,
                                boolean isAfterEndOfLine,
                                @Nullable TextRange rangeInElement,
-                               final boolean showTooltip,
+                               boolean showTooltip,
                                boolean onTheFly) {
     super(filterFixes(fixes, onTheFly), descriptionTemplate);
     myShowTooltip = showTooltip;
@@ -53,9 +54,9 @@ public class ProblemDescriptorBase extends CommonProblemDescriptorImpl implement
     assertPhysical(startElement);
     if (startElement != endElement) assertPhysical(endElement);
 
-    final TextRange startElementRange = getAnnotationRange(startElement);
+    TextRange startElementRange = getAnnotationRange(startElement);
     LOG.assertTrue(startElement instanceof ExternallyAnnotated || startElementRange != null, startElement);
-    final TextRange endElementRange = getAnnotationRange(endElement);
+    TextRange endElementRange = getAnnotationRange(endElement);
     LOG.assertTrue(endElement instanceof ExternallyAnnotated || endElementRange != null, endElement);
     if (startElementRange != null
         && endElementRange != null
@@ -68,9 +69,7 @@ public class ProblemDescriptorBase extends CommonProblemDescriptorImpl implement
       TextRange.assertProperRange(rangeInElement);
       if (rangeInElement.getEndOffset() > endElementRange.getEndOffset() - startElementRange.getStartOffset()) {
         LOG.error("Argument rangeInElement " + rangeInElement + " endOffset"+
-                  " must not exceed descriptor text range " +
-                  "(" + startElementRange.getStartOffset() +
-                  ", " + endElementRange.getEndOffset() + ")" +
+                  " must not exceed descriptor text range (" + startElementRange.getStartOffset() + ", " + endElementRange.getEndOffset() + ")" +
                   " length ("+(endElementRange.getEndOffset()-startElementRange.getStartOffset())+").");
       }
     }
@@ -79,12 +78,15 @@ public class ProblemDescriptorBase extends CommonProblemDescriptorImpl implement
     }
 
     myHighlightType = highlightType;
-    final Project project = startContainingFile == null ? startElement.getProject() : startContainingFile.getProject();
-    final SmartPointerManager manager = SmartPointerManager.getInstance(project);
+    Project project = startContainingFile == null ? startElement.getProject() : startContainingFile.getProject();
+    SmartPointerManager manager = SmartPointerManager.getInstance(project);
     myStartSmartPointer = manager.createSmartPsiElementPointer(startElement, startContainingFile);
     myEndSmartPointer = startElement == endElement ? null : manager.createSmartPsiElementPointer(endElement, endContainingFile);
-    if (myEndSmartPointer != null) {
-      LOG.assertTrue(endContainingFile == startContainingFile, "start/end elements should be from the same file");
+    if (myEndSmartPointer != null && endContainingFile != startContainingFile) {
+      LOG.error("start/end elements should be from the same file but was " +
+                "startContainingFile="+startContainingFile + " ("+(startContainingFile == null ? null : PsiUtilCore.getVirtualFile(startContainingFile))+"), "+
+                "endContainingFile="+endContainingFile + " ("+(endContainingFile == null ? null : PsiUtilCore.getVirtualFile(endContainingFile))+")"
+      );
     }
 
     myAfterEndOfLine = isAfterEndOfLine;
@@ -108,10 +110,10 @@ public class ProblemDescriptorBase extends CommonProblemDescriptorImpl implement
            : startElement.getTextRange();
   }
 
-  protected void assertPhysical(final PsiElement element) {
+  protected void assertPhysical(PsiElement element) {
     if (!element.isPhysical()) {
       LOG.error("Non-physical PsiElement. Physical element is required to be able to anchor the problem in the source tree: " +
-                element + "; file: " + element.getContainingFile());
+                element + "; parent: " + element.getParent() +"; file: " + element.getContainingFile());
     }
   }
 
@@ -169,8 +171,8 @@ public class ProblemDescriptorBase extends CommonProblemDescriptorImpl implement
       TextRange textRange = getTextRange();
       if (textRange == null) return -1;
       textRange = manager.injectedToHost(psiElement, textRange);
-      final int startOffset = textRange.getStartOffset();
-      final int textLength = document.getTextLength();
+      int startOffset = textRange.getStartOffset();
+      int textLength = document.getTextLength();
       LOG.assertTrue(startOffset <= textLength, getDescriptionTemplate() + " at " + startOffset + ", " + textLength);
       myLineNumber =  document.getLineNumber(startOffset);
     }
@@ -256,7 +258,7 @@ public class ProblemDescriptorBase extends CommonProblemDescriptorImpl implement
     return myStartSmartPointer.getVirtualFile();
   }
 
-  public void setNavigatable(final Navigatable navigatable) {
+  public void setNavigatable(Navigatable navigatable) {
     myNavigatable = navigatable;
   }
 

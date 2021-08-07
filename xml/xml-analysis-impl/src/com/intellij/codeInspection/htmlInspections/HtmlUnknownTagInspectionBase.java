@@ -31,6 +31,7 @@ import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xml.XmlElementDescriptor;
 import com.intellij.xml.analysis.XmlAnalysisBundle;
+import com.intellij.xml.impl.XmlElementDescriptorEx;
 import com.intellij.xml.impl.schema.AnyXmlElementDescriptor;
 import com.intellij.xml.util.HtmlUtil;
 import com.intellij.xml.util.XmlTagUtil;
@@ -96,6 +97,15 @@ public class HtmlUnknownTagInspectionBase extends HtmlUnknownElementInspection {
     XmlElementDescriptor ownDescriptor = isAbstractDescriptor(descriptorFromContext)
                                          ? tag.getDescriptor()
                                          : descriptorFromContext;
+
+    if (ownDescriptor instanceof XmlElementDescriptorEx) {
+      ((XmlElementDescriptorEx)ownDescriptor).validateTagName(tag, holder, isOnTheFly);
+      return;
+    }
+    if (descriptorFromContext instanceof XmlElementDescriptorEx) {
+      ((XmlElementDescriptorEx)descriptorFromContext).validateTagName(tag, holder, isOnTheFly);
+      return;
+    }
 
     if (isAbstractDescriptor(ownDescriptor) ||
         (parentDescriptor instanceof HtmlElementDescriptorImpl &&

@@ -2,6 +2,7 @@
 package org.jetbrains.jps.javac;
 
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Ref;
 import com.intellij.util.Function;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -9,6 +10,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.annotation.processing.Filer;
 import javax.annotation.processing.ProcessingEnvironment;
 import javax.annotation.processing.Processor;
+import javax.annotation.processing.RoundEnvironment;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.Name;
 import javax.lang.model.element.PackageElement;
@@ -122,6 +124,7 @@ public class APIWrappers {
   static class ProcessorWrapper extends DynamicWrapper<Processor> {
     private final JpsJavacFileManager myFileManager;
     private boolean myCodeShown = false;
+    private ProcessingEnvironment myProcessingEnv;
 
     ProcessorWrapper(Processor delegate, JpsJavacFileManager fileManager) {
       super(delegate);
@@ -129,26 +132,76 @@ public class APIWrappers {
     }
 
     public void init(ProcessingEnvironment processingEnv) {
+      myProcessingEnv = processingEnv;
+      final Ref<ClassLoader> oldCtxLoader = setupContextClassLoader();
       try {
         getWrapperDelegate().init(wrap(ProcessingEnvironment.class, new ProcessingEnvironmentWrapper(processingEnv, myFileManager)));
       }
       catch (IllegalArgumentException e) {
-        if (!myCodeShown) {
-          processingEnv.getMessager().printMessage(
-            Diagnostic.Kind.MANDATORY_WARNING,
-            "The " + e.getClass() + " may be caused by the wrapped ProcessingEnvironment object.\n" +
-            "Please pass the wrapped ProcessingEnvironment further to super.init().\n"+
-            "If you need to access the original ProcessingEnvironment object (e.g. for creating com.sun.source.util.Trees.instance(ProcessingEnvironment)), you may use following code in the processor implementation:\n\n" +
-            getUnwrapCodeSuggestion(ProcessingEnvironment.class, "processingEnv")
-          );
-          processingEnv.getMessager().printMessage(
-            Diagnostic.Kind.MANDATORY_WARNING,
-            "Workaround: to make project compile with the current annotation processor implementation, start JPS with VM option: -D"+JavacMain.TRACK_AP_GENERATED_DEPENDENCIES_PROPERTY + "=false\n" +
-            "When run from IDE, the option can be set in \"Compiler Settings | build process VM options\""
-          );
-          myCodeShown = true;
-        }
+        sendDiagnosticWarning(processingEnv, e);
         throw e;
+      }
+      finally {
+        restoreContextClassLoader(oldCtxLoader);
+      }
+    }
+
+    public boolean process(Set<? extends TypeElement> annotations, RoundEnvironment roundEnv) {
+      final Ref<ClassLoader> oldCtxLoader = setupContextClassLoader();
+      try {
+        return getWrapperDelegate().process(annotations, roundEnv);
+      }
+      catch (IllegalArgumentException e) {
+        sendDiagnosticWarning(myProcessingEnv, e);
+        throw e;
+      }
+      finally {
+        restoreContextClassLoader(oldCtxLoader);
+      }
+    }
+
+    /*
+      Some processors may use libraries/frameworks requiring sophisticated setup via thread context class loader.
+      This ensures that the context loader is the same as the one used to load processor itself:
+      it might help to avoid possible conflicts with JPS core classes
+     */
+    @Nullable
+    private Ref<ClassLoader> setupContextClassLoader() {
+      final Processor delegate = getWrapperDelegate();
+      if (delegate != null) {
+        final Thread currentThread = Thread.currentThread();
+        final ClassLoader processorLoader = delegate.getClass().getClassLoader();
+        final ClassLoader currentCtxLoader = currentThread.getContextClassLoader();
+        if (processorLoader != currentCtxLoader) {
+          currentThread.setContextClassLoader(processorLoader);
+          return Ref.create(currentCtxLoader);
+        }
+      }
+      return null;
+    }
+
+    @SuppressWarnings("MethodMayBeStatic")
+    private void restoreContextClassLoader(@Nullable Ref<ClassLoader> loaderRef) {
+      if (loaderRef != null) {
+        Thread.currentThread().setContextClassLoader(loaderRef.get());
+      }
+    }
+
+    private void sendDiagnosticWarning(ProcessingEnvironment processingEnv, Throwable e) {
+      if (processingEnv != null && !myCodeShown) {
+        processingEnv.getMessager().printMessage(
+          Diagnostic.Kind.MANDATORY_WARNING,
+          "The " + e.getClass() + " may be caused by the wrapped ProcessingEnvironment object.\n" +
+          "Please pass the wrapped ProcessingEnvironment further to super.init().\n"+
+          "If you need to access the original ProcessingEnvironment object (e.g. for creating com.sun.source.util.Trees.instance(ProcessingEnvironment)), you may use following code in the processor implementation:\n\n" +
+          getUnwrapCodeSuggestion(ProcessingEnvironment.class, "processingEnv")
+        );
+        processingEnv.getMessager().printMessage(
+          Diagnostic.Kind.MANDATORY_WARNING,
+          "Workaround: to make project compile with the current annotation processor implementation, start JPS with VM option: -D"+JavacMain.TRACK_AP_GENERATED_DEPENDENCIES_PROPERTY + "=false\n" +
+          "When run from IDE, the option can be set in \"Compiler Settings | build process VM options\""
+        );
+        myCodeShown = true;
       }
     }
   }
@@ -184,19 +237,19 @@ public class APIWrappers {
 
     @Override
     public JavaFileObject createSourceFile(CharSequence name, Element... originatingElements) throws IOException {
-      addMapping(name, Arrays.asList(originatingElements));
+      addMapping(name, originatingElements != null? Arrays.asList(originatingElements) : Collections.<Element>emptyList());
       return getWrapperDelegate().createSourceFile(name, originatingElements);
     }
 
     @Override
     public JavaFileObject createClassFile(CharSequence name, Element... originatingElements) throws IOException {
-      addMapping(name, Arrays.asList(originatingElements));
+      addMapping(name, originatingElements != null? Arrays.asList(originatingElements) : Collections.<Element>emptyList());
       return getWrapperDelegate().createClassFile(name, originatingElements);
     }
 
     @Override
     public FileObject createResource(JavaFileManager.Location location, CharSequence moduleAndPkg, CharSequence relativeName, Element... originatingElements) throws IOException {
-      if (originatingElements.length > 0) {
+      if (originatingElements != null && originatingElements.length > 0) {
         final String resourceName;
         if (moduleAndPkg == null) {
           resourceName = relativeName.toString();
@@ -224,7 +277,7 @@ public class APIWrappers {
         // package-path is a package-name where '.' replaced with '/'
         addMapping(resourceName, Arrays.asList(originatingElements));
       }
-      return getWrapperDelegate().createResource(location, moduleAndPkg, relativeName, originatingElements);
+      return getWrapperDelegate().createResource(location, moduleAndPkg, relativeName, originatingElements != null ? originatingElements : new Element[0]);
     }
 
     @Override

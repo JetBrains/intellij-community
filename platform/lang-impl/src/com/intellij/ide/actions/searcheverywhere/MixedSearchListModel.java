@@ -1,25 +1,22 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.actions.searcheverywhere;
 
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.util.ArrayUtil;
-import com.intellij.util.diff.Diff;
-import com.intellij.util.diff.FilesTooBigForDiffException;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 class MixedSearchListModel extends SearchListModel {
-
-  private static final Logger LOG = Logger.getInstance(MixedSearchListModel.class);
 
   private final Map<SearchEverywhereContributor<?>, Boolean> hasMoreContributors = new HashMap<>();
 
   private Comparator<? super SearchEverywhereFoundElementInfo> myElementsComparator = SearchEverywhereFoundElementInfo.COMPARATOR.reversed();
 
   // new elements cannot be added before this index when "more..." elements are loaded
-  private int myMaxFrozenIndex;
+  private int myMaxFrozenIndex = -1;
 
   public void setElementsComparator(Comparator<? super SearchEverywhereFoundElementInfo> elementsComparator) {
     myElementsComparator = elementsComparator;
@@ -46,19 +43,11 @@ class MixedSearchListModel extends SearchListModel {
       .collect(Collectors.toList());
 
     if (resultsExpired) {
-      clearMoreItems();
-
-      Object[] oldItems = ArrayUtil.toObjectArray(getItems());
-      Object[] newItems = items.stream()
-        .map(SearchEverywhereFoundElementInfo::getElement)
-        .toArray();
-      try {
-        Diff.Change change = Diff.buildChanges(oldItems, newItems);
-        applyChange(change, items);
-      }
-      catch (FilesTooBigForDiffException e) {
-        LOG.error("Cannot calculate diff for updated search results");
-      }
+      int lastIndex = listElements.size() - 1;
+      listElements.clear();
+      if (lastIndex >= 0) fireIntervalRemoved(this, 0, lastIndex);
+      listElements.addAll(items);
+      if (!listElements.isEmpty()) fireIntervalAdded(this, 0, listElements.size() - 1);
 
       resultsExpired = false;
     }
@@ -91,30 +80,6 @@ class MixedSearchListModel extends SearchListModel {
     }
   }
 
-  private void applyChange(Diff.Change change, List<? extends SearchEverywhereFoundElementInfo> newItems) {
-    for (Diff.Change ch : toRevertedList(change)) {
-      if (ch.deleted > 0) {
-        listElements.subList(ch.line0, ch.line0 + ch.deleted).clear();
-        fireIntervalRemoved(this, ch.line0, ch.line0 + ch.deleted - 1);
-      }
-
-      if (ch.inserted > 0) {
-        List<? extends SearchEverywhereFoundElementInfo> addedItems = newItems.subList(ch.line1, ch.line1 + ch.inserted);
-        listElements.addAll(ch.line0, addedItems);
-        fireIntervalAdded(this, ch.line0, ch.line0 + ch.inserted - 1);
-      }
-    }
-  }
-
-  private static List<Diff.Change> toRevertedList(Diff.Change change) {
-    List<Diff.Change> res = new ArrayList<>();
-    while (change != null) {
-      res.add(0, change);
-      change = change.link;
-    }
-    return res;
-  }
-
   @Override
   public void removeElement(@NotNull Object item, SearchEverywhereContributor<?> contributor) {
     if (listElements.isEmpty()) return;
@@ -123,12 +88,12 @@ class MixedSearchListModel extends SearchListModel {
       SearchEverywhereFoundElementInfo info = listElements.get(i);
       if (info.getContributor() == contributor && info.getElement().equals(item)) {
         listElements.remove(i);
+        int newSize = getSize();
+        if (myMaxFrozenIndex >= newSize) myMaxFrozenIndex = newSize - 1;
         fireIntervalRemoved(this, i, i);
         return;
       }
     }
-
-    if (myMaxFrozenIndex >= getSize()) myMaxFrozenIndex = getSize() - 1;
   }
 
   @Override

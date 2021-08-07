@@ -17,6 +17,7 @@ class EditorConfigSpaceInHeaderInspection : LocalInspectionTool() {
       if (PsiTreeUtil.hasErrorElements(header)) return
       val spaces = findSuspiciousSpaces(header)
       if (spaces.isEmpty()) return
+      @Suppress("DialogTitleCapitalization")
       val message = EditorConfigBundle["inspection.space.in.header.message"]
       holder.registerProblem(
         header,

@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.devkit.references;
 
+import com.intellij.application.options.RegistryManager;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.icons.AllIcons;
@@ -12,6 +13,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.patterns.PsiJavaPatterns;
 import com.intellij.psi.*;
 import com.intellij.util.ProcessingContext;
 import com.intellij.util.SmartList;
@@ -38,7 +40,10 @@ final class RegistryKeyIdReferenceContributor extends PsiReferenceContributor {
       .registerUastReferenceProvider(registrar,
                                      injectionHostUExpression().methodCallParameter(0, psiMethod()
                                        .withName(string().oneOf("get", "is", "intValue", "doubleValue", "stringValue", "getColor"))
-                                       .definedInClass(Registry.class.getName())),
+                                       .definedInClass(PsiJavaPatterns.psiClass().withQualifiedName(string().oneOf(
+                                         Registry.class.getName(),
+                                         RegistryManager.class.getName()
+                                       )))),
                                      new UastInjectionHostReferenceProvider() {
                                        @Override
                                        public boolean acceptsTarget(@NotNull PsiElement target) {

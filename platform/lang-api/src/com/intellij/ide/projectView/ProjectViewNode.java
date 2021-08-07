@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.projectView;
 
 import com.intellij.ide.util.treeView.AbstractTreeNode;
@@ -10,6 +10,7 @@ import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.presentation.FilePresentationService;
 import com.intellij.problems.WolfTheProblemSolver;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -18,6 +19,7 @@ import com.intellij.psi.util.PsiUtilCore;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.awt.*;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
@@ -285,5 +287,14 @@ public abstract class ProjectViewNode <Value> extends AbstractTreeNode<Value> im
 
   public boolean isValidating() {
     return myValidating;
+  }
+
+  @Override
+  protected @Nullable Color computeBackgroundColor() {
+    Color elementBackgroundColor = super.computeBackgroundColor();
+    if (elementBackgroundColor != null) {
+      return elementBackgroundColor;
+    }
+    return FilePresentationService.getFileBackgroundColor(getProject(), getVirtualFile());
   }
 }

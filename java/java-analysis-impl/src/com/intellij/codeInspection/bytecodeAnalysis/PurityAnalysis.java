@@ -612,7 +612,7 @@ final class PuritySolver {
   private final HashMap<EKey, Effects> solved = new HashMap<>();
   private final HashMap<EKey, Set<EKey>> dependencies = new HashMap<>();
   private final ArrayDeque<EKey> moving = new ArrayDeque<>();
-  HashMap<EKey, Effects> pending = new HashMap<>();
+  final HashMap<EKey, Effects> pending = new HashMap<>();
 
   void addEquation(EKey key, Effects effects) {
     Set<EKey> depKeys = effects.dependencies().collect(Collectors.toSet());

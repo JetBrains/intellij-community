@@ -8,7 +8,6 @@ import com.intellij.lang.LanguageImportStatements;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.EditorActivityManager;
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
@@ -19,6 +18,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -135,7 +135,7 @@ public class OptimizeImportsAction extends AnAction {
           LayoutCodeInfoCollector collector = optimizer.getInfoCollector();
           if (collector != null) {
             String info = collector.getOptimizeImportsNotification();
-            if (!editor.isDisposed() && EditorActivityManager.getInstance().isVisible(editor)) {
+            if (!editor.isDisposed() && UIUtil.isShowing(editor.getContentComponent())) {
               String message = info != null ? info : CodeInsightBundle.message("hint.text.no.unused.imports.found");
               FileInEditorProcessor.showHint(editor, message, null);
             }

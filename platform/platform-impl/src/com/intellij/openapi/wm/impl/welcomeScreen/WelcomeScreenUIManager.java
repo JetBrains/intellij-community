@@ -86,8 +86,8 @@ public class WelcomeScreenUIManager {
   }
 
   public static JBColor getActionsButtonBackground(boolean isSelected) {
-    return isSelected ? JBColor.namedColor("WelcomeScreen.Projects.actions.selectionBackground", new JBColor(0x4F96E8, 0X326FC1))
-                      : JBColor
-             .namedColor("WelcomeScreen.Projects.actions.background", new JBColor(0xDCEDFE, 0x3C5C86));
+    return isSelected
+           ? JBColor.namedColor("WelcomeScreen.Projects.actions.selectionBackground", new JBColor(0x3587E5, 0X326FC1))
+           : JBColor.namedColor("WelcomeScreen.Projects.actions.background", new JBColor(0xDCEDFE, 0x3C5C86));
   }
 }

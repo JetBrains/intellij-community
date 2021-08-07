@@ -14,21 +14,20 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.reporting.FreezeLogger;
 import com.intellij.util.SlowOperations;
-import com.intellij.util.pico.DefaultPicoContainer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.lang.reflect.Constructor;
 
 /**
  * Provides services for registering actions which are activated by typing in the editor.
  */
 public abstract class TypedAction {
-  private static final Logger LOG = Logger.getInstance(EditorActionHandlerBean.class);
-
   private static final ExtensionPointName<EditorTypedHandlerBean> EP_NAME = new ExtensionPointName<>("com.intellij.editorTypedHandler");
   private static final ExtensionPointName<EditorTypedHandlerBean> RAW_EP_NAME = new ExtensionPointName<>("com.intellij.rawEditorTypedHandler");
 
   private TypedActionHandler myRawHandler;
-  private TypedActionHandler myHandler;
+  private @NotNull TypedActionHandler myHandler;
   private boolean myHandlersLoaded;
 
   public static TypedAction getInstance() {
@@ -45,44 +44,59 @@ public abstract class TypedAction {
     }
 
     myHandlersLoaded = true;
-    DefaultPicoContainer container = new DefaultPicoContainer((DefaultPicoContainer)ApplicationManager.getApplication().getPicoContainer());
     EP_NAME.processWithPluginDescriptor((bean, pluginDescriptor) -> {
-      TypedActionHandler handler = getOrCreateHandler(bean, myHandler, container, pluginDescriptor);
+      TypedActionHandler handler = getOrCreateHandler(bean, myHandler, pluginDescriptor);
       if (handler != null) {
         myHandler = handler;
       }
     });
   }
 
-  @Nullable
-  private static TypedActionHandler getOrCreateHandler(@NotNull EditorTypedHandlerBean bean,
-                                                       @NotNull TypedActionHandler originalHandler,
-                                                       @NotNull DefaultPicoContainer container,
-                                                       @NotNull PluginDescriptor pluginDescriptor) {
-    TypedActionHandler handler;
+  private static @Nullable TypedActionHandler getOrCreateHandler(@SuppressWarnings("deprecation") @NotNull EditorTypedHandlerBean bean,
+                                                                 @NotNull TypedActionHandler originalHandler,
+                                                                 @NotNull PluginDescriptor pluginDescriptor) {
+    TypedActionHandler handler = bean.handler;
+    if (handler != null) {
+       return handler;
+     }
+
     try {
-      container.unregisterComponent(TypedActionHandler.class);
-      container.registerComponentInstance(TypedActionHandler.class, originalHandler);
-      handler = bean.getHandler(container, pluginDescriptor);
+      Class<TypedActionHandler> aClass = ApplicationManager.getApplication().loadClass(bean.implementationClass, pluginDescriptor);
+      Constructor<TypedActionHandler> constructor;
+      try {
+        constructor = aClass.getDeclaredConstructor(TypedActionHandler.class);
+      }
+      catch (NoSuchMethodException ignore) {
+        constructor = null;
+      }
+
+      if (constructor == null) {
+        constructor = aClass.getDeclaredConstructor();
+        constructor.setAccessible(true);
+        bean.handler = constructor.newInstance();
+      }
+      else {
+        constructor.setAccessible(true);
+        bean.handler = constructor.newInstance(originalHandler);
+      }
+      return bean.handler;
     }
     catch (ProcessCanceledException e) {
       throw e;
     }
     catch (PluginException e) {
-      LOG.error(e);
+      Logger.getInstance(TypedAction.class).error(e);
       return null;
     }
     catch (Exception e) {
-      LOG.error(new PluginException(e, pluginDescriptor.getPluginId()));
+      Logger.getInstance(TypedAction.class).error(new PluginException(e, pluginDescriptor.getPluginId()));
       return null;
     }
-    return handler;
   }
 
   private void loadRawHandlers() {
-    DefaultPicoContainer container = new DefaultPicoContainer((DefaultPicoContainer)ApplicationManager.getApplication().getPicoContainer());
     RAW_EP_NAME.processWithPluginDescriptor((bean, pluginDescriptor) -> {
-      TypedActionHandler handler = getOrCreateHandler(bean, myRawHandler, container, pluginDescriptor);
+      TypedActionHandler handler = getOrCreateHandler(bean, myRawHandler, pluginDescriptor);
       if (handler != null) {
         myRawHandler = handler;
       }
@@ -117,6 +131,7 @@ public abstract class TypedAction {
    *
    * @return the current typing handler.
    */
+  @NotNull
   public TypedActionHandler getHandler() {
     ensureHandlersLoaded();
     return myHandler;
@@ -131,7 +146,8 @@ public abstract class TypedAction {
    * @deprecated Use &lt;typedHandler&gt; extension point for registering typing handlers
    */
   @Deprecated
-  public TypedActionHandler setupHandler(TypedActionHandler handler) {
+  @NotNull
+  public TypedActionHandler setupHandler(@NotNull TypedActionHandler handler) {
     ensureHandlersLoaded();
     TypedActionHandler tmp = myHandler;
     myHandler = handler;
@@ -178,8 +194,7 @@ public abstract class TypedAction {
     }
   }
 
-  public final void actionPerformed(@Nullable final Editor editor, final char charTyped, @NotNull DataContext dataContext) {
-    if (editor == null) return;
+  public final void actionPerformed(@NotNull final Editor editor, final char charTyped, @NotNull DataContext dataContext) {
     Project project = CommonDataKeys.PROJECT.getData(dataContext);
     SlowOperations.allowSlowOperations(() -> FreezeLogger.getInstance().runUnderPerformanceMonitor(
       project, () -> myRawHandler.execute(editor, charTyped, dataContext)

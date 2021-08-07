@@ -37,6 +37,7 @@ public abstract class TableSpeedSearchBase<Comp extends JTable> extends SpeedSea
 
   @Override
   protected void onSearchFieldUpdated(String pattern) {
+    super.onSearchFieldUpdated(pattern);
     if (!myFilteringMode) return;
     RowSorter<? extends TableModel> sorter0 = myComponent.getRowSorter();
     if (!(sorter0 instanceof TableRowSorter)) return;
@@ -68,13 +69,12 @@ public abstract class TableSpeedSearchBase<Comp extends JTable> extends SpeedSea
   public void hidePopup() {
     super.hidePopup();
     if (!myFilteringMode) return;
-    onSearchFieldUpdated("");
     Cell prev = UIUtil.getClientProperty(myComponent, SELECTION_BEFORE_KEY);
     int viewRow = myComponent.getSelectedRow(); // will be -1 if there is no matching elements (not filtered by rowFilter)
     if (viewRow > -1) {
       // keep selection as is
     }
-    else if (prev != null && prev.row > -1) {
+    else if (prev != null && prev.row > -1 && prev.row < myComponent.getRowCount()) {
       myComponent.setRowSelectionInterval(prev.row, prev.row);
       myComponent.setColumnSelectionInterval(prev.column, prev.column);
     }
@@ -93,7 +93,7 @@ public abstract class TableSpeedSearchBase<Comp extends JTable> extends SpeedSea
       @Override
       public void processKeyEvent(KeyEvent e) {
         if (ignoreSpaceTyped && e.getModifiersEx() == 0 &&
-            e.getID() == KeyEvent.KEY_TYPED && e.getKeyCode() == KeyEvent.VK_SPACE) {
+            e.getID() == KeyEvent.KEY_TYPED && e.getKeyChar() == ' ') {
           return;
         }
         super.processKeyEvent(e);

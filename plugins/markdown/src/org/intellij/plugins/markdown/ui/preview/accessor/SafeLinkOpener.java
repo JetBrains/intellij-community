@@ -28,7 +28,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.NettyKt;
 import org.intellij.plugins.markdown.MarkdownBundle;
 import org.intellij.plugins.markdown.lang.references.MarkdownAnchorReference;
-import org.intellij.plugins.markdown.ui.preview.MarkdownSplitEditor;
+import org.intellij.plugins.markdown.ui.preview.MarkdownEditorWithPreview;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -148,7 +148,7 @@ final class SafeLinkOpener {
     if (editor == null) {
       return;
     }
-    MarkdownSplitEditor splitEditor = (MarkdownSplitEditor)editor;
+    MarkdownEditorWithPreview splitEditor = (MarkdownEditorWithPreview)editor;
 
     boolean oldAutoScrollPreview = splitEditor.isAutoScrollPreview();
 

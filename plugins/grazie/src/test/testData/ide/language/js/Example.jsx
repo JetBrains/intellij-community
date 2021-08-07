@@ -10,7 +10,7 @@ const user = {
 const element = (
     <h1>
         { (a, b) -> a + "it <warning descr="IT_VBZ">are</warning> <TYPO descr="Typo: In word 'eror'">eror</TYPO>" + user  }
-        it <warning descr="IT_VBZ">are</warning> bad,
+        First sentence. it <warning descr="IT_VBZ">are</warning> bad,
         <p>
             it is <TYPO descr="Typo: In word 'frend'">frend</TYPO> of human
         </p>

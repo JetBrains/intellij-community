@@ -36,7 +36,7 @@ class ReaderModeFileEditorListener : FileEditorManagerListener {
     ApplicationManager.getApplication().messageBus.connect(fileEditor)
       .subscribe(EditorColorsManager.TOPIC,
                  EditorColorsListener {
-                   applyReaderMode(project, fileEditor.editor, file, fileIsOpenAlready = true, preferGlobalSettings = true)
+                   applyReaderMode(project, fileEditor.editor, file, fileIsOpenAlready = true)
                  })
   }
 }

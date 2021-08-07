@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.application.options
 
 import com.intellij.openapi.application.PathMacroContributor
@@ -13,10 +13,13 @@ import org.jetbrains.jps.model.serialization.JpsGlobalLoader.PathVariablesSerial
 import org.jetbrains.jps.model.serialization.PathMacroUtil
 import java.util.*
 import java.util.concurrent.atomic.AtomicLong
-import kotlin.collections.HashMap
-import kotlin.collections.LinkedHashMap
 
-@State(name = "PathMacrosImpl", storages = [Storage(value = PathVariablesSerializer.STORAGE_FILE_NAME, roamingType = RoamingType.PER_OS)], useLoadedStateAsExisting = false)
+@State(
+  name = "PathMacrosImpl",
+  storages = [Storage(value = PathVariablesSerializer.STORAGE_FILE_NAME, roamingType = RoamingType.DISABLED)],
+  useLoadedStateAsExisting = false,
+  reportStatistic = false,
+)
 open class PathMacrosImpl @JvmOverloads constructor(private val loadContributors: Boolean = true) : PathMacros(), PersistentStateComponent<Element?>, ModificationTracker {
   @Volatile
   private var legacyMacros: Map<String, String> = emptyMap()
@@ -29,24 +32,27 @@ open class PathMacrosImpl @JvmOverloads constructor(private val loadContributors
   private var userMacroMapCache: Map<String, String>? = null
 
   companion object {
+    @JvmStatic
     private val EP_NAME = ExtensionPointName<PathMacroContributor>("com.intellij.pathMacroContributor")
+    @JvmStatic
     private val LOG = logger<PathMacrosImpl>()
 
     const val IGNORED_MACRO_ELEMENT = "ignoredMacro"
     const val MAVEN_REPOSITORY = "MAVEN_REPOSITORY"
-    private val SYSTEM_MACROS: MutableSet<String> = HashSet()
+
+    @Suppress("ReplaceJavaStaticMethodWithKotlinAnalog")
+    @JvmStatic
+    private val SYSTEM_MACROS: Set<String> = java.util.Set.of(
+      PathMacroUtil.APPLICATION_HOME_DIR,
+      PathMacroUtil.APPLICATION_PLUGINS_DIR,
+      PathMacroUtil.PROJECT_DIR_MACRO_NAME,
+      PathMacroUtil.MODULE_WORKING_DIR_NAME,
+      PathMacroUtil.MODULE_DIR_MACRO_NAME,
+      PathMacroUtil.USER_HOME_NAME,
+    )
 
     @JvmStatic
     fun getInstanceEx() = getInstance() as PathMacrosImpl
-
-    init {
-      SYSTEM_MACROS.add(PathMacroUtil.APPLICATION_HOME_DIR)
-      SYSTEM_MACROS.add(PathMacroUtil.APPLICATION_PLUGINS_DIR)
-      SYSTEM_MACROS.add(PathMacroUtil.PROJECT_DIR_MACRO_NAME)
-      SYSTEM_MACROS.add(PathMacroUtil.MODULE_WORKING_DIR_NAME)
-      SYSTEM_MACROS.add(PathMacroUtil.MODULE_DIR_MACRO_NAME)
-      SYSTEM_MACROS.add(PathMacroUtil.USER_HOME_NAME)
-    }
   }
 
   override fun getUserMacroNames() = macros.keys
@@ -66,9 +72,11 @@ open class PathMacrosImpl @JvmOverloads constructor(private val loadContributors
     modificationStamp.incrementAndGet()
   }
 
-  override fun addIgnoredMacro(name: String) {
-    if (!ignoredMacros.contains(name)) {
-      ignoredMacros.add(name)
+  override fun addIgnoredMacro(names: List<String>) {
+    for (name in names) {
+      if (!ignoredMacros.contains(name)) {
+        ignoredMacros.add(name)
+      }
     }
   }
 
@@ -77,7 +85,10 @@ open class PathMacrosImpl @JvmOverloads constructor(private val loadContributors
   override fun isIgnoredMacroName(macro: String) = ignoredMacros.contains(macro)
 
   override fun getAllMacroNames(): Set<String> {
-    return ContainerUtil.union(userMacroNames, systemMacroNames)
+    val result = HashSet<String>(userMacroNames.size + systemMacroNames.size)
+    result.addAll(userMacroNames)
+    result.addAll(systemMacroNames)
+    return result
   }
 
   override fun getValue(name: String) = macros[name]
@@ -139,7 +150,8 @@ open class PathMacrosImpl @JvmOverloads constructor(private val loadContributors
       macroElement.setAttribute(PathVariablesSerializer.NAME_ATTRIBUTE, macro)
       element.addContent(macroElement)
     }
-    LOG.info("Saved path macros: $macros") //temporary added to debug IDEA-256482; LOG.debug cannot be used due to IDEA-256647
+    // temporary added to debug IDEA-256482; LOG.debug cannot be used due to IDEA-256647
+    LOG.info("Saved path macros: $macros")
     return element
   }
 

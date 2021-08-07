@@ -37,8 +37,6 @@ import static com.jetbrains.python.psi.impl.PyCallExpressionHelper.getCalleeType
 
 /**
  * Implements reference expression PSI.
- *
- * @author yole
  */
 public class PyReferenceExpressionImpl extends PyElementImpl implements PyReferenceExpression {
 
@@ -56,7 +54,7 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
     //noinspection InstanceofIncompatibleInterface
     assert !(this instanceof StubBasedPsiElement);
     final TypeEvalContext context = TypeEvalContext.codeAnalysis(getProject(), getContainingFile());
-    return getReference(PyResolveContext.defaultContext().withTypeEvalContext(context));
+    return getReference(PyResolveContext.defaultContext(context));
   }
 
   @NotNull
@@ -249,7 +247,7 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
   private PyType getCallableType(@NotNull TypeEvalContext context, @NotNull TypeEvalContext.Key key) {
     PyCallExpression callExpression = PyCallExpressionNavigator.getPyCallExpressionByCallee(this);
     if (callExpression != null) {
-      return getCalleeType(callExpression, PyResolveContext.defaultContext().withTypeEvalContext(context));
+      return getCalleeType(callExpression, PyResolveContext.defaultContext(context));
     }
     return null;
   }
@@ -259,7 +257,7 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
     if (!isQualified()) return null;
     final PyClassLikeType targetType = as(typeFromTargets, PyClassLikeType.class);
     if (targetType == null || targetType.isDefinition()) return null;
-    final PyResolveContext resolveContext = PyResolveContext.noProperties().withTypeEvalContext(context);
+    final PyResolveContext resolveContext = PyResolveContext.noProperties(context);
     final List<? extends RatedResolveResult> members = targetType.resolveMember(PyNames.GET, this, AccessDirection.READ,
                                                                                 resolveContext);
     if (members == null || members.isEmpty()) return null;
@@ -295,7 +293,7 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
 
   @Nullable
   private PyType getTypeFromTargets(@NotNull TypeEvalContext context) {
-    final PyResolveContext resolveContext = PyResolveContext.defaultContext().withTypeEvalContext(context);
+    final PyResolveContext resolveContext = PyResolveContext.defaultContext(context);
     final List<PyType> members = new ArrayList<>();
 
     final PsiFile realFile = FileContextUtil.getContextFile(this);

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.wm
 
 import com.intellij.openapi.util.NlsContexts
@@ -24,6 +24,11 @@ data class RegisterToolWindowTask(
     @JvmOverloads
     fun notClosable(id: String, anchor: ToolWindowAnchor = ToolWindowAnchor.BOTTOM): RegisterToolWindowTask =
       RegisterToolWindowTask(id, canCloseContent = false, anchor = anchor)
+
+    @JvmStatic
+    @JvmOverloads
+    fun notClosable(id: String, icon: Icon, anchor: ToolWindowAnchor = ToolWindowAnchor.BOTTOM): RegisterToolWindowTask =
+      RegisterToolWindowTask(id, canCloseContent = false, icon = icon, anchor = anchor)
 
     @JvmStatic
     @JvmOverloads
@@ -53,5 +58,14 @@ data class RegisterToolWindowTask(
                         icon: Icon,
                         anchor: ToolWindowAnchor = ToolWindowAnchor.BOTTOM): RegisterToolWindowTask =
       RegisterToolWindowTask(id, anchor = anchor, contentFactory = contentFactory, icon = icon)
+
+
+    @JvmStatic
+    @JvmOverloads
+    fun lazyAndNotClosable(id: String,
+                           contentFactory: ToolWindowFactory,
+                           icon: Icon,
+                           anchor: ToolWindowAnchor = ToolWindowAnchor.BOTTOM): RegisterToolWindowTask =
+      RegisterToolWindowTask(id, canCloseContent = false, anchor = anchor, contentFactory = contentFactory, icon = icon)
   }
 }

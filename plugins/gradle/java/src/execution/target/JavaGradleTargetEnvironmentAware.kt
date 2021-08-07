@@ -8,7 +8,7 @@ import com.intellij.execution.configurations.ParametersList
 import com.intellij.execution.configurations.RemoteConnection
 import com.intellij.execution.target.TargetEnvironment
 import com.intellij.execution.target.TargetEnvironment.TargetPortBinding
-import com.intellij.execution.target.TargetEnvironmentAwareRunProfileState.TargetProgressIndicator
+import com.intellij.execution.target.TargetProgressIndicator
 import com.intellij.execution.target.TargetEnvironmentRequest
 import com.intellij.execution.target.java.JavaLanguageRuntimeConfiguration
 import com.intellij.openapi.projectRoots.JavaSdkVersion

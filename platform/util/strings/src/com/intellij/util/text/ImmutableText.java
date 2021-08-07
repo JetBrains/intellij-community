@@ -52,7 +52,6 @@ import org.jetbrains.annotations.NotNull;
  * @author Wilfried Middleton
  * @version 5.3, January 10, 2007
  */
-@SuppressWarnings("UnnecessaryThis")
 final class ImmutableText extends ImmutableCharSequence implements CharArrayExternalizable, CharSequenceWithStringHash {
   /**
    * Holds the default size for primitive blocks of characters.
@@ -265,8 +264,8 @@ final class ImmutableText extends ImmutableCharSequence implements CharArrayExte
     }
   }
 
-  private static IndexOutOfBoundsException outOfRange(int index) {
-    return new IndexOutOfBoundsException("Index out of range: " + index);
+  private IndexOutOfBoundsException outOfRange(int index) {
+    return new IndexOutOfBoundsException("Index out of range: " + index+"; length: "+length());
   }
 
   private static final class InnerLeaf {
@@ -353,6 +352,7 @@ final class ImmutableText extends ImmutableCharSequence implements CharArrayExte
     if (length <= BLOCK_SIZE) { // Merges to primitive.
       // module is still targeted to Java 8, so plus-concatenation is compiled via StringBuilder
       // here concat() looks preferred
+      //noinspection CallToStringConcatCanBeReplacedByOperator
       return node1.toString().concat(node2.toString());
     }
 

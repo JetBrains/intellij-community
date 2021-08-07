@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.intellij.plugins.markdown.ui.preview
 
 import com.intellij.openapi.editor.colors.EditorColors
@@ -6,6 +6,8 @@ import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.editor.ex.util.EditorUtil
 import com.intellij.ui.JBColor
 import com.intellij.ui.JBColor.namedColor
+import com.intellij.ui.components.ScrollBarPainter
+import com.intellij.ui.jcef.JBCefApp
 import com.intellij.util.ui.UIUtil
 import java.awt.Color
 
@@ -33,13 +35,13 @@ internal object PreviewLAFThemeStyles {
 
       val markdownFenceBackground = JBColor(Color(212, 222, 231, 255 / 4), Color(212, 222, 231, 25))
 
-      val fontSize = EditorUtil.getEditorFont().size + 1
+      val fontSize = JBCefApp.normalizeScaledSize(EditorUtil.getEditorFont().size + 1)
 
       // For some reason background-color for ::-webkit-scrollbar-thumb
       // doesn't work with [0..255] alpha values. Fortunately it works fine with [0..1] values.
       // Default color from base stylesheets will be used, if the final value is null.
       // (Generated rule will be invalid)
-      val scrollbarColor = getColor(EditorColors.SCROLLBAR_THUMB_COLOR)?.run {
+      val scrollbarColor = getColor(ScrollBarPainter.THUMB_OPAQUE_BACKGROUND)?.run {
         "rgba($red, $blue, $green, ${alpha / 255.0})"
       }
       // language=CSS

@@ -14,6 +14,7 @@ import com.intellij.java.ift.lesson.run.JavaDebugLesson
 import com.intellij.java.ift.lesson.run.JavaRunConfigurationLesson
 import com.intellij.lang.java.JavaLanguage
 import training.dsl.LessonUtil
+import training.learn.CourseManager
 import training.learn.LessonsBundle
 import training.learn.course.LearningCourseBase
 import training.learn.course.LearningModule
@@ -26,7 +27,9 @@ import training.learn.lesson.general.navigation.FindInFilesLesson
 import training.learn.lesson.general.refactorings.ExtractVariableFromBubbleLesson
 
 class JavaLearningCourse : LearningCourseBase(JavaLanguage.INSTANCE.id) {
-  override fun modules() = listOf(
+  override fun modules() = stableModules() + CourseManager.instance.findCommonModules("Git")
+
+  private fun stableModules() = listOf(
     LearningModule(name = LessonsBundle.message("essential.module.name"),
                    description = LessonsBundle.message("essential.module.description", LessonUtil.productName),
                    primaryLanguage = langSupport,

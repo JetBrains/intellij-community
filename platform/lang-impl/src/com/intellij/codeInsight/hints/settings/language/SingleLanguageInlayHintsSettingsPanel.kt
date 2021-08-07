@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.hints.settings.language
 
 import com.intellij.codeInsight.CodeInsightBundle
@@ -18,10 +18,12 @@ import com.intellij.openapi.editor.event.DocumentEvent
 import com.intellij.openapi.editor.event.DocumentListener
 import com.intellij.openapi.fileTypes.FileType
 import com.intellij.openapi.fileTypes.FileTypes
+import com.intellij.openapi.fileTypes.PlainTextFileType
 import com.intellij.openapi.ide.CopyPasteManager
 import com.intellij.openapi.options.ex.Settings
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiDocumentManager
+import com.intellij.psi.PsiFileFactory
 import com.intellij.ui.ColoredListCellRenderer
 import com.intellij.ui.EditorTextField
 import com.intellij.ui.JBColor
@@ -270,11 +272,12 @@ class SingleLanguageInlayHintsSettingsPanel(
   private fun updateHints() {
     if (myBottomPanel.isVisible) {
       val document = myEditorTextField.document
+      val factory = PsiFileFactory.getInstance(myProject)
+      val fileType = myLanguage.associatedFileType ?: PlainTextFileType.INSTANCE
+      val psiFile = factory.createFileFromText("dummy", fileType, document.text)
       ApplicationManager.getApplication().runWriteAction {
-        PsiDocumentManager.getInstance(myProject).commitDocument(document)
-        val psiFile = PsiDocumentManager.getInstance(myProject).getPsiFile(document)
         val editor = myEditorTextField.editor
-        if (editor != null && psiFile != null) {
+        if (editor != null) {
           myCurrentProvider.collectAndApply(editor, psiFile)
         }
       }

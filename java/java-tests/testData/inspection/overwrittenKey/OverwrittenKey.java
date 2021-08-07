@@ -49,7 +49,21 @@ class OverwrittenKey {
     Map<String, String> map2 = Map.ofEntries(Map.entry("a", "a"), Map.entry(<warning descr="Duplicate Map key">"b"</warning>, "b"),
                                              Map.entry("c", "b"), Map.entry(<warning descr="Duplicate Map key">"b"</warning>, "d"));
   }
-  
+
+  enum X {
+    A, B, C
+  }
+
+  void enumSetOf() {
+    EnumSet<X> xx = EnumSet.of(<warning descr="Duplicate Set element">X.A</warning>, X.B, <warning descr="Duplicate Set element">X.A</warning>, X.C);
+    System.out.println(xx);
+  }
+
+  void testParameter(Map<Object, Object> map, String key) {
+    map.put(<warning descr="Duplicate Map key">key</warning>, "k1");
+    map.put(<warning descr="Duplicate Map key">key</warning>, "k2");
+  }
+
   void localClass() {
     class X extends HashMap<String, String> {
       class Y {
@@ -59,5 +73,44 @@ class OverwrittenKey {
         }
       }
     }
+  }
+
+  void testFallthrough(Map<String, String> map, int id) {
+    switch(id) {
+      case 1:
+        map.put(<warning descr="Duplicate Map key">"foo"</warning>, "bar");
+      case 2:
+        map.put(<warning descr="Duplicate Map key">"foo"</warning>, "baz");
+      default:
+        map.put(<warning descr="Duplicate Map key">"foo"</warning>, "qux");
+    }
+  }
+
+  void testNoFallthrough(Map<String, String> map, int id) {
+    switch(id) {
+      case 1:
+        map.put("foo", "bar");
+        break;
+      case 2:
+        map.put("foo", "baz");
+        break;
+      default:
+        map.put("foo", "qux");
+        break;
+    }
+  }
+
+  void differentQualifiers(Set<Integer> set) {
+    set.add(h1.KEY);
+    set.add(h2.KEY);
+  }
+
+  KeyHolder h1 = new KeyHolder(1);
+  KeyHolder h2 = new KeyHolder(2);
+
+  static class KeyHolder {
+    final int KEY;
+
+    KeyHolder(int k) {KEY = k;}
   }
 }

@@ -10,6 +10,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
+ * Extension point for delegate artifact builds to maven goals.
  * @author ibessonov
  */
 public interface MavenArtifactBuilder {

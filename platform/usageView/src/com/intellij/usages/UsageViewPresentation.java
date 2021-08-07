@@ -21,17 +21,17 @@ public class UsageViewPresentation {
   private static final Logger LOG = Logger.getInstance(UsageViewPresentation.class);
 
   private @NlsContexts.TabTitle String myTabText;
-  private String myScopeText = ""; // Default value. to be overwritten in most cases.
+  private @NlsSafe String myScopeText = ""; // Default value. to be overwritten in most cases.
   private @NlsSafe String myUsagesString;
   private @NlsSafe String mySearchString;
   private @NlsContexts.ListItem String myTargetsNodeText = UsageViewBundle.message("node.targets");
     // Default value. to be overwritten in most cases.
   private @NlsContexts.ListItem String myNonCodeUsagesString = UsageViewBundle.message("node.non.code.usages");
   private @NlsContexts.ListItem String myCodeUsagesString = UsageViewBundle.message("node.found.usages");
-  private boolean myShowReadOnlyStatusAsRed = false;
-  private boolean myShowCancelButton = false;
+  private boolean myShowReadOnlyStatusAsRed;
+  private boolean myShowCancelButton;
   private boolean myOpenInNewTab = true;
-  private int myRerunHash = 0;//this value shouldn't be copied and doesn't affect equals/hashcode methods
+  private int myRerunHash;//this value shouldn't be copied and doesn't affect equals/hashcode methods
   private boolean myCodeUsages = true;
   private boolean myUsageTypeFilteringAvailable;
 
@@ -55,11 +55,12 @@ public class UsageViewPresentation {
   }
 
   @NotNull
+  @NlsSafe
   public String getScopeText() {
     return myScopeText;
   }
 
-  public void setScopeText(@NotNull String scopeText) {
+  public void setScopeText(@NotNull @NlsSafe String scopeText) {
     myScopeText = scopeText;
   }
 
@@ -69,15 +70,6 @@ public class UsageViewPresentation {
 
   public void setShowReadOnlyStatusAsRed(boolean showReadOnlyStatusAsRed) {
     myShowReadOnlyStatusAsRed = showReadOnlyStatusAsRed;
-  }
-
-  /**
-   * @deprecated use {@link #getSearchString}
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.2")
-  public String getUsagesString() {
-    return myUsagesString;
   }
 
   /**
@@ -169,6 +161,7 @@ public class UsageViewPresentation {
    * @deprecated please avoid using this method, because it leads to string concatenations that are shown in UI
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   @NotNull
   public @Nls String getUsagesWord() {
     return UsageViewBundle.message("usage.name", 1);
@@ -179,7 +172,6 @@ public class UsageViewPresentation {
    */
   @Deprecated
   @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  @SuppressWarnings("unused")
   public void setUsagesWord(@NotNull @Nls String usagesWord) {}
 
   public @NlsContexts.TabTitle String getTabName() {

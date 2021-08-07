@@ -7,18 +7,18 @@ import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.execution.ui.RunContentManager;
 import com.intellij.execution.ui.actions.CloseAction;
+import com.intellij.icons.AllIcons;
+import com.intellij.ide.IdeBundle;
 import com.intellij.ide.actions.ShowLogAction;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.ActionManager;
-import com.intellij.openapi.actionSystem.ActionToolbar;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
+import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -26,7 +26,9 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowManager;
+import com.intellij.openapi.wm.ex.ToolWindowEx;
 import com.intellij.terminal.JBTerminalWidget;
+import com.intellij.ui.content.Content;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.update.UiNotifyConnector;
@@ -37,11 +39,13 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.terminal.action.RenameTerminalSessionAction;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.Collections;
 import java.util.concurrent.ExecutionException;
-import java.util.function.Consumer;
+import java.util.function.Supplier;
 
 public abstract class AbstractTerminalRunner<T extends Process> {
   private static final Logger LOG = Logger.getInstance(AbstractTerminalRunner.class);
@@ -96,7 +100,7 @@ public abstract class AbstractTerminalRunner<T extends Process> {
    */
   @Deprecated
   @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  public T createProcess(@Nullable String directory) throws ExecutionException {
+  protected T createProcess(@Nullable String directory) throws ExecutionException {
     throw new AssertionError("Call createProcess(TerminalProcessOptions, JBTerminalWidget)");
   }
 
@@ -111,40 +115,53 @@ public abstract class AbstractTerminalRunner<T extends Process> {
 
   protected abstract ProcessHandler createProcessHandler(T process);
 
+  /**
+   * @deprecated use {@link #createTerminalWidget(Disposable, VirtualFile, boolean)} instead
+   */
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   @NotNull
   public JBTerminalWidget createTerminalWidget(@NotNull Disposable parent, @Nullable VirtualFile currentWorkingDirectory) {
     return createTerminalWidget(parent, currentWorkingDirectory, true);
   }
 
+  /**
+   * @deprecated use {@link AbstractTerminalRunner#createTerminalWidget(com.intellij.openapi.Disposable, java.lang.String, boolean)} instead
+   */
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated
   @NotNull
   protected JBTerminalWidget createTerminalWidget(@NotNull Disposable parent,
                                                   @Nullable VirtualFile currentWorkingDirectory,
-                                                  boolean deferSessionUntilFirstShown) {
-
-    return createTerminalWidget(parent,
-                                (terminalWidget) -> openSessionForFile(terminalWidget, currentWorkingDirectory),
-                                true);
+                                                  boolean deferSessionStartUntilUiShown) {
+    return createTerminalWidget(parent, getParentDirectoryPath(currentWorkingDirectory), deferSessionStartUntilUiShown);
   }
 
-  @NotNull
-  protected JBTerminalWidget createTerminalWidget(@NotNull Disposable parent,
-                                                  @Nullable String currentWorkingDirectory,
-                                                  boolean deferSessionUntilFirstShown) {
+  public void initToolWindow(@NotNull ToolWindowEx toolWindow, Supplier<Content> newTabRunnable) {
 
-    return createTerminalWidget(parent,
-                                (terminalWidget) -> openSessionInDirectory(terminalWidget, currentWorkingDirectory),
-                                true);
+    toolWindow.setTabActions(
+      new DumbAwareAction(IdeBundle.messagePointer("action.DumbAware.TerminalView.text.new.session"),
+                          IdeBundle.messagePointer("action.DumbAware.TerminalView.description.create.new.session"), AllIcons.General.Add) {
+        @Override
+        public void actionPerformed(@NotNull AnActionEvent e) {
+          newTabRunnable.get();
+        }
+      },
+      new TerminalNewPredefinedSessionAction()
+    );
+    toolWindow.setTabDoubleClickActions(Collections.singletonList(new RenameTerminalSessionAction()));
+    toolWindow.setToHideOnEmptyContent(true);
   }
 
-  private JBTerminalWidget createTerminalWidget(@NotNull Disposable parent,
-                                                @NotNull Consumer<JBTerminalWidget> openSession,
-                                                boolean deferSessionUntilFirstShown) {
+  public @NotNull JBTerminalWidget createTerminalWidget(@NotNull Disposable parent,
+                                                        @Nullable String currentWorkingDirectory,
+                                                        boolean deferSessionStartUntilUiShown) {
     JBTerminalWidget terminalWidget = new ShellTerminalWidget(myProject, mySettingsProvider, parent);
-    if (deferSessionUntilFirstShown) {
-      UiNotifyConnector.doWhenFirstShown(terminalWidget, () -> openSession.accept(terminalWidget));
+    if (deferSessionStartUntilUiShown) {
+      UiNotifyConnector.doWhenFirstShown(terminalWidget, () -> openSessionInDirectory(terminalWidget, currentWorkingDirectory));
     }
     else {
-      openSession.accept(terminalWidget);
+      openSessionInDirectory(terminalWidget, currentWorkingDirectory);
     }
     return terminalWidget;
   }
@@ -180,10 +197,6 @@ public abstract class AbstractTerminalRunner<T extends Process> {
     showConsole(defaultExecutor, contentDescriptor, widget.getComponent());
 
     processHandler.startNotify();
-  }
-
-  public void openSession(@NotNull JBTerminalWidget terminal) {
-    openSessionInDirectory(terminal, null);
   }
 
   public @Nullable String getCurrentWorkingDir(@Nullable TerminalTabState state) {
@@ -223,16 +236,19 @@ public abstract class AbstractTerminalRunner<T extends Process> {
 
   public abstract String runningTargetName();
 
-  public void openSessionForFile(@NotNull JBTerminalWidget terminalWidget, @Nullable VirtualFile file) {
-    openSessionInDirectory(terminalWidget, getParentDirectoryPath(file));
-  }
-
   @Nullable
   private static String getParentDirectoryPath(@Nullable VirtualFile file) {
     VirtualFile dir = file != null && !file.isDirectory() ? file.getParent() : file;
     return dir != null ? dir.getPath() : null;
   }
 
+  /**
+   * @deprecated use {@link #createTerminalWidget(Disposable, String, boolean)} instead
+   * It will be private in future releases.
+   */
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @ApiStatus.Internal
   public void openSessionInDirectory(@NotNull JBTerminalWidget terminalWidget,
                                      @Nullable String directory) {
     ModalityState modalityState = ModalityState.stateForComponent(terminalWidget.getComponent());

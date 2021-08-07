@@ -43,7 +43,7 @@ public interface DomElement extends AnnotatedElement, UserDataHolder {
   /**
    * Returns the underlying XML element/file.
    *
-   * @return {@link com.intellij.psi.xml.XmlFile}, {@link com.intellij.psi.xml.XmlTag} or {@link com.intellij.psi.xml.XmlAttribute}
+   * @return {@link com.intellij.psi.xml.XmlFile}, {@link XmlTag} or {@link com.intellij.psi.xml.XmlAttribute}
    */
   @Nullable
   XmlElement getXmlElement();

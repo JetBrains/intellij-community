@@ -28,9 +28,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 
-/**
- * @author yole
- */
+
 public class PyExceptPartElementType extends PyStubElementType<PyExceptPartStub, PyExceptPart> {
   public PyExceptPartElementType() {
     super("EXCEPT_PART");

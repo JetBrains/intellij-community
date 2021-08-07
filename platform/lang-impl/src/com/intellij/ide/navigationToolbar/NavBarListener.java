@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.navigationToolbar;
 
 import com.intellij.ProjectTopics;
@@ -12,23 +12,22 @@ import com.intellij.ide.ui.VirtualFileAppearanceListener;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.AnActionResult;
 import com.intellij.openapi.actionSystem.PopupAction;
 import com.intellij.openapi.actionSystem.ex.AnActionListener;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.FileEditorManagerListener;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.AdditionalLibraryRootsListener;
 import com.intellij.openapi.roots.ModuleRootEvent;
 import com.intellij.openapi.roots.ModuleRootListener;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
-import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vcs.FileStatusListener;
 import com.intellij.openapi.vcs.FileStatusManager;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.problems.ProblemListener;
 import com.intellij.psi.PsiFile;
@@ -39,13 +38,16 @@ import com.intellij.ui.ListActions;
 import com.intellij.ui.ScrollingUtil;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
+import java.util.Collection;
 import java.util.List;
 
 /**
@@ -54,7 +56,7 @@ import java.util.List;
 public final class NavBarListener
   implements ProblemListener, FocusListener, FileStatusListener, AnActionListener, FileEditorManagerListener,
              PsiTreeChangeListener, ModuleRootListener, NavBarModelListener, PropertyChangeListener, KeyListener, WindowFocusListener,
-             LafManagerListener, DynamicPluginListener, VirtualFileAppearanceListener {
+             LafManagerListener, DynamicPluginListener, VirtualFileAppearanceListener, AdditionalLibraryRootsListener {
   private static final String LISTENER = "NavBarListener";
   private static final String BUS = "NavBarMessageBus";
   private final NavBarPanel myPanel;
@@ -67,6 +69,9 @@ public final class NavBarListener
 
     final NavBarListener listener = new NavBarListener(panel);
     final Project project = panel.getProject();
+    if (project.isDisposed()) {
+      return;
+    }
     panel.putClientProperty(LISTENER, listener);
     KeyboardFocusManager.getCurrentKeyboardFocusManager().addPropertyChangeListener(listener);
     FileStatusManager.getInstance(project).addFileStatusListener(listener);
@@ -75,6 +80,7 @@ public final class NavBarListener
     MessageBusConnection connection = project.getMessageBus().connect();
     connection.subscribe(AnActionListener.TOPIC, listener);
     connection.subscribe(ProjectTopics.PROJECT_ROOTS, listener);
+    connection.subscribe(AdditionalLibraryRootsListener.TOPIC, listener);
     connection.subscribe(NavBarModelListener.NAV_BAR, listener);
     connection.subscribe(ProblemListener.TOPIC, listener);
     connection.subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, listener);
@@ -254,6 +260,14 @@ public final class NavBarListener
   }
 
   @Override
+  public void libraryRootsChanged(@Nullable @Nls String presentableLibraryName,
+                                  @NotNull Collection<? extends VirtualFile> oldRoots,
+                                  @NotNull Collection<? extends VirtualFile> newRoots,
+                                  @NotNull String libraryNameForDebug) {
+    updateModel();
+  }
+
+  @Override
   public void problemsAppeared(@NotNull VirtualFile file) {
     updateModel();
   }
@@ -284,7 +298,7 @@ public final class NavBarListener
     }
   }
   @Override
-  public void afterActionPerformed(@NotNull AnAction action, @NotNull DataContext dataContext, @NotNull AnActionEvent event) {
+  public void afterActionPerformed(@NotNull AnAction action, @NotNull AnActionEvent event, @NotNull AnActionResult result) {
     if (shouldSkipAction(action)) return;
 
     if (myPanel.isInFloatingMode()) {
@@ -310,9 +324,6 @@ public final class NavBarListener
         return;
       }
 
-      final IdeFocusManager focusManager = IdeFocusManager.getInstance(myPanel.getProject());
-      final ActionCallback firstCharTyped = new ActionCallback();
-      focusManager.typeAheadUntil(firstCharTyped);
       myPanel.moveDown();
       //noinspection SSBasedInspection
       SwingUtilities.invokeLater(() -> {
@@ -325,9 +336,6 @@ public final class NavBarListener
           }
           robot.keyPress(code);
           robot.keyRelease(code);
-
-          //don't release Shift
-          firstCharTyped.setDone();
         }
         catch (AWTException ignored) {
         }

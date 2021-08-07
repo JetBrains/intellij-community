@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.BlockUtils;
@@ -44,9 +44,9 @@ public class UnwrapSwitchLabelFix implements LocalQuickFix {
       if (otherLabel == labelStatement || (shouldKeepDefault && otherLabel.isDefaultCase())) continue;
       DeleteSwitchLabelFix.deleteLabel(otherLabel);
     }
-    for (PsiExpression expression : Objects.requireNonNull(labelStatement.getCaseValues()).getExpressions()) {
-      if (expression != label) {
-        new CommentTracker().deleteAndRestoreComments(expression);
+    for (PsiCaseLabelElement labelElement : Objects.requireNonNull(labelStatement.getCaseLabelElementList()).getElements()) {
+      if (labelElement != label) {
+        new CommentTracker().deleteAndRestoreComments(labelElement);
       }
     }
     tryUnwrap(labelStatement, block);

@@ -59,6 +59,8 @@ public interface FileTemplate extends Cloneable {
   String ATTRIBUTE_DIR_PATH = "DIR_PATH";
   /** File name with extension */
   String ATTRIBUTE_FILE_NAME = "FILE_NAME";
+  /** Full file path */
+  String ATTRIBUTE_FILE_PATH = "FILE_PATH";
 
   /** Name without extension */
   @NotNull @NlsSafe

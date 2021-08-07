@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.indexing.impl;
 
 import com.intellij.util.Processor;
@@ -11,7 +11,7 @@ import java.io.DataOutput;
 import java.io.IOException;
 import java.nio.file.Path;
 
-class ValueContainerMap<Key, Value> {
+final class ValueContainerMap<Key, Value> {
   private final @NotNull PersistentMapBase<Key, UpdatableValueContainer<Value>> myPersistentMap;
   private final @NotNull KeyDescriptor<Key> myKeyDescriptor;
   private final @NotNull DataExternalizer<Value> myValueExternalizer;
@@ -112,7 +112,7 @@ class ValueContainerMap<Key, Value> {
   }
 
   boolean isDirty() {
-    return myPersistentMap.isClosed();
+    return myPersistentMap.isDirty();
   }
 
   @TestOnly

@@ -2,12 +2,16 @@
 package com.intellij.grazie.ide.language
 
 import com.intellij.grazie.GrazieTestBase
+import com.intellij.testFramework.LightProjectDescriptor
+import com.intellij.testFramework.PlatformTestUtil
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 
 
 class JavaSupportTest : GrazieTestBase() {
-  override fun runHighlightTestForFile(file: String) {
-    myFixture.configureByFile(file)
-    myFixture.checkHighlighting(true, false, false, true)
+  override val additionalEnabledRules: Set<String> = setOf("LanguageTool.EN.UPPERCASE_SENTENCE_START")
+
+  override fun getProjectDescriptor(): LightProjectDescriptor {
+    return LightJavaCodeInsightFixtureTestCase.JAVA_LATEST
   }
 
   fun `test spellcheck in constructs`() {
@@ -24,5 +28,17 @@ class JavaSupportTest : GrazieTestBase() {
 
   fun `test grammar check in comments`() {
     runHighlightTestForFile("ide/language/java/Comments.java")
+  }
+
+  fun `test split line quick fix`() {
+    runHighlightTestForFile("ide/language/java/SplitLine.java")
+    myFixture.launchAction(myFixture.findSingleIntention(", so"))
+    myFixture.checkResultByFile("ide/language/java/SplitLine_after.java")
+  }
+
+  fun `test long comment performance`() {
+    PlatformTestUtil.startPerformanceTest("highlighting", 1000) {
+      runHighlightTestForFile("ide/language/java/LongCommentPerformance.java")
+    }.setup { psiManager.dropPsiCaches() }.usesAllCPUCores().assertTiming()
   }
 }

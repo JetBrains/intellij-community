@@ -4,13 +4,11 @@ package org.jetbrains.idea.devkit.threadingModelHelper;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.WriteAction;
+import com.intellij.openapi.diagnostic.DefaultLogger;
 import com.intellij.openapi.diagnostic.RuntimeExceptionWithAttachments;
 import com.intellij.testFramework.LightPlatformTestCase;
 import com.intellij.util.ObjectUtils;
-import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
-import com.intellij.util.concurrency.annotations.RequiresEdt;
-import com.intellij.util.concurrency.annotations.RequiresReadLock;
-import com.intellij.util.concurrency.annotations.RequiresWriteLock;
+import com.intellij.util.concurrency.annotations.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -28,19 +26,26 @@ import java.util.concurrent.*;
  * </ul>
  * Note that if this happens, you need to update the instrumenter and install the updated version of the devkit to IDEA.
  * <p/>
+ *
  * @see <a href="http://www.jetbrains.org/intellij/sdk/docs/basics/architectural_overview/general_threading_rules.html">General Threading Rules</a>
  */
 public class TMHIntegrationTest extends LightPlatformTestCase {
-  private static final String EDT_ASSERTION_MESSAGE = "Access is allowed from event dispatch thread with IW lock only.";
-  private static final String READ_ACCESS_ASSERTION_MESSAGE =
-    "Read access is allowed from event dispatch thread or inside read-action only";
+  private static final String EDT_ASSERTION_MESSAGE = "Access is allowed from event dispatch thread only";
+  private static final String READ_ACCESS_ASSERTION_MESSAGE = "Read access is allowed from inside read-action (or EDT) only";
   private static final String WRITE_ACCESS_ASSERTION_MESSAGE = "Write access is allowed inside write-action only";
+  private static final String NON_READ_ACCESS_ASSERTION_MESSAGE = "Read access is not allowed";
+
+  @Override
+  protected void setUp() throws Exception {
+    super.setUp();
+    DefaultLogger.disableStderrDumping(getTestRootDisposable());
+  }
 
   public void testEdtActionOnEdt() {
     runEdtAction();
   }
 
-  public void _testEdtActionInBackground() {
+  public void testEdtActionInBackground() {
     Throwable exception = getExecutionException(startInBackground(() -> runEdtAction()));
     assertNotNull(exception);
     assertUserMessageContains(exception, EDT_ASSERTION_MESSAGE);
@@ -50,51 +55,69 @@ public class TMHIntegrationTest extends LightPlatformTestCase {
    * This test doesn't fail because {@link Application#assertIsNonDispatchThread()} does nothing in the unit test mode.
    * Still the test assures that the method exists.
    */
-  public void _testBackgroundActionOnEdt() {
+  public void testBackgroundActionOnEdt() {
     runBackgroundAction();
   }
 
-  public void _testBackgroundActionInBackground() {
+  public void testBackgroundActionInBackground() {
     assertNull(getExecutionException(startInBackground(() -> runBackgroundAction())));
   }
 
-  public void _testReadActionOnEdt() {
+  public void testReadActionOnEdt() {
     runReadAction();
   }
 
-  public void _testReadActionInBackgroundWithReadLock() {
+  public void testReadActionInBackgroundWithReadLock() {
     assertNull(getExecutionException(startInBackground(() -> ReadAction.run(() -> runReadAction()))));
   }
 
-  public void _testReadActionInBackground() {
+  public void testReadActionInBackground() {
     assertThrows(Throwable.class, READ_ACCESS_ASSERTION_MESSAGE, () -> waitResult(startInBackground(() -> runReadAction())));
   }
 
-  public void _testWriteActionOnEdtWithWriteLock() {
+  public void testWriteActionOnEdtWithWriteLock() {
     WriteAction.run(() -> runWriteAction());
   }
 
-  public void _testWriteActionOnEdt() {
+  public void testWriteActionOnEdt() {
     assertThrows(Throwable.class, WRITE_ACCESS_ASSERTION_MESSAGE, () -> runWriteAction());
   }
 
-  public void _testWriteActionInBackground() {
+  public void testWriteActionInBackground() {
     assertThrows(Throwable.class, WRITE_ACCESS_ASSERTION_MESSAGE, () -> waitResult(startInBackground(() -> runWriteAction())));
   }
 
-  public void _testEdtActionInBackgroundNoAssertion() throws ExecutionException {
+  public void _testNonReadActionOnEdt() {
+    assertThrows(Throwable.class, NON_READ_ACCESS_ASSERTION_MESSAGE, () -> runNonReadAction());
+  }
+
+  public void _testNonReadActionInBackground() {
+    assertNull(getExecutionException(startInBackground(() -> runNonReadAction())));
+  }
+
+  public void _testNonReadActionInBackgroundWithReadLock() {
+    assertThrows(Throwable.class, NON_READ_ACCESS_ASSERTION_MESSAGE,
+                 () -> waitResult(startInBackground(() -> ReadAction.run(() -> runNonReadAction()))));
+  }
+
+  public void _testNonReadActionInBackgroundWithWriteLock() {
+    assertThrows(Throwable.class, NON_READ_ACCESS_ASSERTION_MESSAGE,
+                 () -> waitResult(startInBackground(() -> WriteAction.run(() -> runNonReadAction()))));
+  }
+
+  public void testEdtActionInBackgroundNoAssertion() throws ExecutionException {
     waitResult(startInBackground(() -> runEdtActionNoAssertion()));
   }
 
-  public void _testBackgroundActionOnEdtNoAssertion() {
+  public void testBackgroundActionOnEdtNoAssertion() {
     runBackgroundActionNoAssertion();
   }
 
-  public void _testReadActionInBackgroundNoAssertion() throws ExecutionException {
+  public void testReadActionInBackgroundNoAssertion() throws ExecutionException {
     waitResult(startInBackground(() -> runReadActionNoAssertion()));
   }
 
-  public void _testWriteActionInBackgroundNoAssertion() throws ExecutionException {
+  public void testWriteActionInBackgroundNoAssertion() throws ExecutionException {
     waitResult(startInBackground(() -> runWriteActionNoAssertion()));
   }
 
@@ -109,6 +132,9 @@ public class TMHIntegrationTest extends LightPlatformTestCase {
 
   @RequiresWriteLock
   private static void runWriteAction() {}
+
+  @RequiresNoReadLock
+  private static void runNonReadAction() {}
 
   @RequiresEdt(generateAssertion = false)
   private static void runEdtActionNoAssertion() {}

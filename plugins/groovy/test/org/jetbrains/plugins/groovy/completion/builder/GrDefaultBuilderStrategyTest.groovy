@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.completion.builder
 
 import groovy.transform.CompileStatic
@@ -22,7 +8,7 @@ import org.jetbrains.plugins.groovy.completion.CompletionResult
 class GrDefaultBuilderStrategyTest extends GrBuilderTransformationCompletionTestBase {
 
   void "test no builder method"() {
-    doVariantableTest('''\
+    doCompletionTest('''\
 import groovy.transform.builder.Builder
 
 @Builder
@@ -39,7 +25,7 @@ Pojo.<caret>
   }
 
   void 'test custom builder method'() {
-    doVariantableTest('''\
+    doCompletionTest('''\
 import groovy.transform.builder.Builder
 
 @Builder(builderMethodName = 'customBuilderMethod')
@@ -60,7 +46,7 @@ Pojo.<caret>
    * Separate inspection highlights such code and offers to remove the parameter.
    */
   void 'test null builder method'() {
-    doVariantableTest('''\
+    doCompletionTest('''\
 import groovy.transform.builder.Builder
 
 @Builder(builderMethodName = null)
@@ -80,7 +66,7 @@ Pojo.b<caret>
    * Class will be compiled but there will be runtime error.
    */
   void 'test empty builder method'() {
-    doVariantableTest('''\
+    doCompletionTest('''\
 import groovy.transform.builder.Builder
 
 @Builder(builderMethodName = '')
@@ -100,7 +86,7 @@ Pojo.<caret>
    * I do not know what to say here!
    */
   void 'test spaces builder method'() {
-    doVariantableTest('''\
+    doCompletionTest('''\
 import groovy.transform.builder.Builder
 
 @Builder(builderMethodName = '   ')
@@ -117,7 +103,7 @@ Pojo.<caret>
   }
 
   void 'test no prefix'() {
-    doVariantableTest('''\
+    doCompletionTest('''\
 import groovy.transform.builder.Builder
 
 @Builder
@@ -135,7 +121,7 @@ Pojo.builder().<caret>
 
 
   void 'test empty prefix'() {
-    doVariantableTest('''\
+    doCompletionTest('''\
 import groovy.transform.builder.Builder
 
 @Builder(prefix = '')
@@ -152,7 +138,7 @@ Pojo.builder().<caret>
   }
 
   void 'test custom prefix'() {
-    doVariantableTest('''\
+    doCompletionTest('''\
 import groovy.transform.builder.Builder
 
 @Builder(prefix = 'customPrefix')
@@ -169,7 +155,7 @@ Pojo.builder().<caret>
   }
 
   void 'test spaces prefix'() {
-    doVariantableTest('''\
+    doCompletionTest('''\
 import groovy.transform.builder.Builder
 
 @Builder(prefix = '   ')
@@ -186,7 +172,7 @@ Pojo.builder().<caret>
   }
 
   void 'test null prefix'() {
-    doVariantableTest('''\
+    doCompletionTest('''\
 import groovy.transform.builder.Builder
 
 @Builder(prefix = null)
@@ -203,7 +189,7 @@ Pojo.builder().<caret>
   }
 
   void 'test custom build method'() {
-    doVariantableTest('''\
+    doCompletionTest('''\
 import groovy.transform.builder.Builder
 
 @Builder(buildMethodName = 'customBuild')
@@ -220,7 +206,7 @@ Pojo.builder().<caret>
   }
 
   void 'test null build method'() {
-    doVariantableTest('''\
+    doCompletionTest('''\
 import groovy.transform.builder.Builder
 
 @Builder(buildMethodName = null)
@@ -237,7 +223,7 @@ Pojo.builder().<caret>
   }
 
   void 'test empty build method'() {
-    doVariantableTest('''\
+    doCompletionTest('''\
 import groovy.transform.builder.Builder
 
 @Builder(buildMethodName = '')
@@ -254,7 +240,7 @@ Pojo.builder().<caret>
   }
 
   void 'test spaces build method'() {
-    doVariantableTest('''\
+    doCompletionTest('''\
 import groovy.transform.builder.Builder
 
 @Builder(buildMethodName = '    ')
@@ -271,7 +257,7 @@ Pojo.builder().<caret>
   }
 
   void 'test next setter'() {
-    doVariantableTest('''\
+    doCompletionTest('''\
 import groovy.transform.builder.Builder
 
 @Builder
@@ -288,7 +274,7 @@ Pojo.builder().counter(1).<caret>
   }
 
   void 'test one more setter further'() {
-    doVariantableTest('''\
+    doCompletionTest('''\
 import groovy.transform.builder.Builder
 
 @Builder
@@ -305,7 +291,7 @@ Pojo.builder().counter(1).name("Janet").<caret>
   }
 
   void 'test include super properties'() {
-    doVariantableTest '''
+    doCompletionTest '''
 import groovy.transform.builder.Builder
 class Animal {
     String color
@@ -322,7 +308,7 @@ new Pet().builder().color("Grey").<caret>
   }
 
   void 'test include super properties 2'() {
-    doVariantableTest '''
+    doCompletionTest '''
 import groovy.transform.builder.Builder
 class Animal {
     String color
@@ -353,8 +339,7 @@ class Pet extends Animal{
 
 new Pet().builder().<caret>
 '''
-    doVariantableTest code, CompletionResult.contain, 'name'
-    doVariantableTest code, CompletionResult.notContain, 'color', 'legs'
-
+    doCompletionTest code, CompletionResult.contain, 'name'
+    doCompletionTest code, CompletionResult.notContain, 'color', 'legs'
   }
 }

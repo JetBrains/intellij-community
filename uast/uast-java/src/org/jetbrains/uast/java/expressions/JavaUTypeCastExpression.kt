@@ -31,5 +31,5 @@ class JavaUTypeCastExpression(
   override val typeReference: JavaUTypeReferenceExpression? by lz { sourcePsi.castType?.let { JavaUTypeReferenceExpression(it, this) } }
 
   override val operationKind: UastBinaryExpressionWithTypeKind.TypeCast
-    get() = UastBinaryExpressionWithTypeKind.TYPE_CAST
+    get() = UastBinaryExpressionWithTypeKind.TypeCast.INSTANCE
 }

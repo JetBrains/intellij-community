@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.projectRoots.impl.jdkDownloader
 
 import com.intellij.ReviseWhenPortedToJDK
@@ -16,14 +16,16 @@ import com.intellij.util.io.isDirectory
 import com.intellij.util.io.isFile
 import com.intellij.util.lang.JavaVersion
 import org.jetbrains.jps.model.java.JdkVersionDetector
+import java.nio.file.Files
 import java.nio.file.Path
+import java.util.*
 import kotlin.io.path.div
 import kotlin.io.path.isExecutable
 
 private val LOG = logger<RuntimeChooserJreValidator>()
 
 interface RuntimeChooserJreValidatorCallback<R> {
-  fun onSdkResolved(versionString: String, sdkHome: Path): R
+  fun onSdkResolved(displayName: String?, versionString: String, sdkHome: Path): R
   fun onError(@NlsContexts.DialogMessage message: String): R
 }
 
@@ -58,16 +60,20 @@ object RuntimeChooserJreValidator {
   }.getOrDefault(false)
 
   fun <R> testNewJdkUnderProgress(
+    allowRunProcesses: Boolean,
     computeHomePath: () -> String?,
     callback: RuntimeChooserJreValidatorCallback<R>,
   ): R {
     val homeDir = runCatching { Path.of(computeHomePath()).toAbsolutePath() }.getOrNull()
                   ?: return callback.onError(
-                    LangBundle.message("dialog.message.choose.ide.runtime.set.unknown.error",
-                                       LangBundle.message(LangBundle.message("dialog.message.choose.ide.runtime.no.file.part"))))
+                    LangBundle.message("dialog.message.choose.ide.runtime.set.unknown.error", LangBundle.message("dialog.message.choose.ide.runtime.no.file.part")))
 
-    if (SystemInfo.isMac && homeDir.endsWith("Contents/Home")) {
-      return testNewJdkUnderProgress({ homeDir.parent?.parent?.toString() }, callback)
+    if (SystemInfo.isMac && homeDir.toString().endsWith("/Contents/Home")) {
+      return testNewJdkUnderProgress(allowRunProcesses, { homeDir.parent?.parent?.toString() }, callback)
+    }
+
+    if (SystemInfo.isMac && homeDir.fileName.toString() == "Contents" && (homeDir / "Home").isDirectory()) {
+      return testNewJdkUnderProgress(allowRunProcesses, { homeDir.parent?.toString() }, callback)
     }
 
     if (SystemInfo.isMac && !(homeDir / "Contents" / "Home").isDirectory()) {
@@ -97,30 +103,83 @@ object RuntimeChooserJreValidator {
       JdkVersionDetector.getInstance().detectJdkVersionInfo(inferredHome)
     }.getOrNull() ?: return callback.onError(LangBundle.message("dialog.message.choose.ide.runtime.set.unknown.error", homeDir))
 
-    if (info.version.feature < minJdkFeatureVersion) {
+    if (info.version == null || info.version.feature < minJdkFeatureVersion) {
       LOG.warn("Failed to scan JDK for boot runtime: ${homeDir}. The version $info is less than $minJdkFeatureVersion")
       return callback.onError(LangBundle.message("dialog.message.choose.ide.runtime.set.version.error", homeDir, "11",
                                                  info.version.toString()))
     }
 
-    val jdkVersion = info.version?.toString()
+    val jdkVersion = tryComputeAdvancedFullVersion(binJava)
+                     ?: info.version?.toString()
                      ?: return callback.onError(LangBundle.message("dialog.message.choose.ide.runtime.set.unknown.error", homeDir))
 
-    try {
-      val cmd = GeneralCommandLine(binJava.toString(), "-version")
-      val exitCode = CapturingProcessHandler(cmd).runProcess(30_000).exitCode
-      if (exitCode != 0) {
-        LOG.warn("Failed to run JDK for boot runtime: ${homeDir}. Exit code is ${exitCode} for $binJava.")
+    if (allowRunProcesses) {
+      try {
+        val cmd = GeneralCommandLine(binJava.toString(), "-version")
+        val exitCode = CapturingProcessHandler(cmd).runProcess(30_000).exitCode
+        if (exitCode != 0) {
+          LOG.warn("Failed to run JDK for boot runtime: ${homeDir}. Exit code is ${exitCode} for $binJava.")
+          return callback.onError(LangBundle.message("dialog.message.choose.ide.runtime.set.cannot.start.error", homeDir))
+        }
+      }
+      catch (t: Throwable) {
+        if (t is ControlFlowException) throw t
+        LOG.warn("Failed to run JDK for boot runtime: $homeDir. ${t.message}", t)
         return callback.onError(LangBundle.message("dialog.message.choose.ide.runtime.set.cannot.start.error", homeDir))
       }
     }
-    catch (t: Throwable) {
-      if (t is ControlFlowException) throw t
-      LOG.warn("Failed to run JDK for boot runtime: $homeDir. ${t.message}", t)
-      return callback.onError(LangBundle.message("dialog.message.choose.ide.runtime.set.cannot.start.error", homeDir))
-    }
 
-    val versionString = listOfNotNull(info.displayName, jdkVersion).joinToString(" ")
-    return callback.onSdkResolved(versionString, homeDir)
+    return callback.onSdkResolved(info.variant.displayName, jdkVersion, homeDir)
   }
 }
+
+private class ReleaseProperties(releaseFile: Path) {
+  private val p = Properties()
+
+  init {
+    runCatching {
+      if (Files.isRegularFile(releaseFile)) {
+        Files.newInputStream(releaseFile).use { p.load(it) }
+      }
+    }
+  }
+
+  fun getJdkProperty(name: String) = p
+    .getProperty(name)
+    ?.trim()
+    ?.removeSurrounding("\"")
+    ?.trim()
+}
+
+private fun tryComputeAdvancedFullVersion(binJava: Path): String? = runCatching {
+  //we compute the path to handle macOS bundle layout once again here
+  val theReleaseFile = binJava.parent?.parent?.resolve("release") ?: return@runCatching null
+  val p = ReleaseProperties(theReleaseFile)
+
+  val implementor = p.getJdkProperty("IMPLEMENTOR")
+  when {
+    implementor.isNullOrBlank() -> null
+
+    implementor.startsWith("JetBrains") -> {
+      p.getJdkProperty("IMPLEMENTOR_VERSION")
+        ?.removePrefix("JBR-")
+        ?.replace("JBRSDK-", "JBRSDK ")
+        ?.trim()
+    }
+
+    implementor.startsWith("Azul") -> {
+      listOfNotNull(
+        p.getJdkProperty("JAVA_VERSION"),
+        p.getJdkProperty("IMPLEMENTOR_VERSION")
+      ).joinToString(" ").takeIf { it.isNotBlank() }
+    }
+
+    implementor.startsWith("Amazon.com") -> {
+      val implVersion = p.getJdkProperty("IMPLEMENTOR_VERSION")
+      if (implVersion != null && implVersion.startsWith("Corretto-")) {
+        implVersion.removePrefix("Corretto-")
+      } else null
+    }
+    else -> null
+  }
+}.getOrNull()

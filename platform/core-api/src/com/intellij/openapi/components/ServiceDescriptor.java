@@ -1,10 +1,12 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.components;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.extensions.ExtensionDescriptor;
 import com.intellij.openapi.extensions.RequiredElement;
 import com.intellij.util.xmlb.annotations.Attribute;
 import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -13,32 +15,73 @@ import org.jetbrains.annotations.Nullable;
  * <a href="http://www.jetbrains.org/intellij/sdk/docs/basics/plugin_structure/plugin_services.html">Plugin Services</a>
  */
 public final class ServiceDescriptor {
+  public ServiceDescriptor(String serviceInterface,
+                           String serviceImplementation,
+                           String testServiceImplementation,
+                           String headlessImplementation,
+                           boolean overrides,
+                           @Nullable String configurationSchemaKey,
+                           @NotNull PreloadMode preload,
+                           @Nullable ClientKind client,
+                           @Nullable ExtensionDescriptor.Os os) {
+    this.serviceInterface = serviceInterface;
+    this.serviceImplementation = serviceImplementation;
+    this.testServiceImplementation = testServiceImplementation;
+    this.headlessImplementation = headlessImplementation;
+    this.overrides = overrides;
+    this.configurationSchemaKey = configurationSchemaKey;
+    this.preload = preload;
+    this.client = client;
+    this.os = os;
+  }
+
+  @ApiStatus.Internal
   public enum PreloadMode {
     TRUE, FALSE, AWAIT, NOT_HEADLESS, NOT_LIGHT_EDIT
   }
 
+  public enum ClientKind {
+    /**
+     * States that a dedicated service should be created for each participant
+     */
+    ALL,
+    /**
+     * States that dedicated services should be created only for the guests (local owner excluded)
+     */
+    GUEST,
+    /**
+     * USE WITH CARE.
+     * States that a service should be created only for the local owner of the IDE.
+     * Implies that guest implementations are also defined somewhere!
+     * Should be used either
+     * 1) by platform code if corresponding guest implementations are registered by CWM
+     * 2) for defining different implementations of the local owner's and guests' services side-by-side in one plugin
+     */
+    LOCAL,
+  }
+
   @Attribute
-  public String serviceInterface;
+  public final String serviceInterface;
 
   @Attribute
   @RequiredElement
-  public String serviceImplementation;
+  public final String serviceImplementation;
 
   @Attribute
-  public String testServiceImplementation;
+  public final String testServiceImplementation;
 
   @Attribute
-  public String headlessImplementation;
+  public final String headlessImplementation;
 
   @Attribute
-  public boolean overrides;
+  public final boolean overrides;
 
   /**
    * Cannot be specified as part of {@link State} because to get annotation, class must be loaded, but it cannot be done for performance reasons.
    */
   @Attribute
   @Nullable
-  public String configurationSchemaKey;
+  public final String configurationSchemaKey;
 
   /**
    * Preload service (before component creation). Not applicable for module level.
@@ -47,14 +90,26 @@ public final class ServiceDescriptor {
    */
   @Attribute
   @ApiStatus.Internal
-  public PreloadMode preload = ServiceDescriptor.PreloadMode.FALSE;
+  public final PreloadMode preload;
+
+  @Attribute
+  public final ExtensionDescriptor.Os os;
+
+  /**
+   * States whether the service should be created once per client.
+   * Applicable only for application/project level services.
+   * Null means the the service is an ordinary one that is created once per application/project.
+   */
+  @Attribute
+  @ApiStatus.Internal
+  @Nullable
+  public final ClientKind client;
 
   public String getInterface() {
-    return serviceInterface != null ? serviceInterface : getImplementation();
+    return serviceInterface == null ? getImplementation() : serviceInterface;
   }
 
-  @Nullable
-  public String getImplementation() {
+  public @Nullable String getImplementation() {
     if (testServiceImplementation != null && ApplicationManager.getApplication().isUnitTestMode()) {
       return testServiceImplementation;
     }
@@ -68,6 +123,15 @@ public final class ServiceDescriptor {
 
   @Override
   public String toString() {
-    return "ServiceDescriptor(interface=" + getInterface() + ", implementation=" + getImplementation() + ")";
+    return "ServiceDescriptor(" +
+           "interface='" + serviceInterface + '\'' +
+           ", serviceImplementation='" + serviceImplementation + '\'' +
+           ", testServiceImplementation='" + testServiceImplementation + '\'' +
+           ", headlessImplementation='" + headlessImplementation + '\'' +
+           ", overrides=" + overrides +
+           ", configurationSchemaKey='" + configurationSchemaKey + '\'' +
+           ", preload=" + preload +
+           ", client=" + client +
+           ')';
   }
 }

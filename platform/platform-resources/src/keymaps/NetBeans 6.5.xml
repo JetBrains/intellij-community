@@ -184,9 +184,7 @@
   <action id="GotoClass">
     <keyboard-shortcut first-keystroke="control O"/>
   </action>
-  <action id="GotoChangedFile">
-    <keyboard-shortcut first-keystroke="control O"/>
-  </action>
+  <action id="GotoChangedFile"/>
   <action id="GotoFile">
     <keyboard-shortcut first-keystroke="shift alt O"/>
   </action>
@@ -264,10 +262,10 @@
     <keyboard-shortcut first-keystroke="control PAGE_DOWN"/>
   </action>
   <action id="Diff.PrevChange">
-    <keyboard-shortcut first-keystroke="control PAGE_UP"/>
+    <keyboard-shortcut first-keystroke="control alt PAGE_UP"/>
   </action>
   <action id="Diff.NextChange">
-    <keyboard-shortcut first-keystroke="control PAGE_DOWN"/>
+    <keyboard-shortcut first-keystroke="control alt PAGE_DOWN"/>
   </action>
   <action id="Diff.ApplyLeftSide"/>
   <action id="Diff.ApplyRightSide"/>
@@ -404,4 +402,5 @@
   </action>
   <action id="Vcs.MoveChangedLinesToChangelist"/>
   <action id="ChangesView.Move"/>
+  <action id="GoFmtProjectAction"/>
 </keymap>

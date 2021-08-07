@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.pullrequest.ui
 
 import com.intellij.openapi.Disposable
@@ -14,7 +14,7 @@ import org.jetbrains.plugins.github.i18n.GithubBundle
 import org.jetbrains.plugins.github.ui.component.GHHtmlErrorPanel
 import org.jetbrains.plugins.github.ui.util.GHUIUtil
 import org.jetbrains.plugins.github.ui.util.HtmlEditorPane
-import org.jetbrains.plugins.github.ui.util.SingleValueModel
+import com.intellij.collaboration.ui.SingleValueModel
 import java.awt.BorderLayout
 import javax.swing.JComponent
 import javax.swing.JLabel
@@ -128,6 +128,7 @@ class GHLoadingPanelFactory<T>(private val model: GHSimpleLoadingModel<T>,
           content = createContent(panel, currentValueModel)
         }
         else {
+          valueModel = null
           content = when {
             model.loading -> createLoadingLabelPanel()
             model.error != null -> createErrorPanel(model.error!!)

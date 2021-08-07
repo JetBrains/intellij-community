@@ -2,6 +2,7 @@
 package com.intellij.execution;
 
 import com.intellij.ide.util.PropertiesComponent;
+import com.intellij.openapi.options.advanced.AdvancedSettings;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -17,16 +18,26 @@ public final class RunManagerConfig {
   @NonNls private static final String DELETION_FROM_POPUP_REQUIRES_CONFIRMATION = "deletionFromPopupRequiresConfirmation";
   @NonNls private static final String STOP_INCOMPATIBLE_REQUIRES_CONFIRMATION = "stopIncompatibleRequiresConfirmation";
 
+  @NonNls private static final String RECENTS_LIMIT_KEY = "temporary.configurations.limit";
+
   public RunManagerConfig(@NotNull PropertiesComponent propertiesComponent) {
     myPropertiesComponent = propertiesComponent;
   }
 
   public int getRecentsLimit() {
-    return Math.max(MIN_RECENT_LIMIT, StringUtil.parseInt(myPropertiesComponent.getValue(RECENTS_LIMIT), DEFAULT_RECENT_LIMIT));
+    return AdvancedSettings.getInt(RECENTS_LIMIT_KEY);
   }
 
   public void setRecentsLimit(int recentsLimit) {
-    myPropertiesComponent.setValue(RECENTS_LIMIT, recentsLimit, DEFAULT_RECENT_LIMIT);
+    AdvancedSettings.setInt(RECENTS_LIMIT_KEY, Math.max(MIN_RECENT_LIMIT, recentsLimit));
+  }
+
+  public void migrateToRegistry() {
+    String value = myPropertiesComponent.getValue(RECENTS_LIMIT);
+    if (value != null) {
+      setRecentsLimit(Math.max(MIN_RECENT_LIMIT, StringUtil.parseInt(value, DEFAULT_RECENT_LIMIT)));
+      myPropertiesComponent.setValue(RECENTS_LIMIT, null);
+    }
   }
 
   public boolean isRestartRequiresConfirmation() {

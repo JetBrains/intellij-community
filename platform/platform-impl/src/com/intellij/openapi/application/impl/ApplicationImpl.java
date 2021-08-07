@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.application.impl;
 
 import com.intellij.BundleBase;
@@ -12,13 +12,14 @@ import com.intellij.ide.plugins.ContainerDescriptor;
 import com.intellij.ide.plugins.IdeaPluginDescriptorImpl;
 import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.idea.ApplicationLoader;
+import com.intellij.idea.IdeaLogger;
 import com.intellij.idea.Main;
-import com.intellij.idea.MutedLogger;
 import com.intellij.idea.StartupUtil;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.*;
 import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.application.ex.ApplicationUtil;
+import com.intellij.openapi.client.ClientAwareComponentManager;
 import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diagnostic.RuntimeExceptionWithAttachments;
@@ -31,7 +32,7 @@ import com.intellij.openapi.progress.util.ProgressWindow;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
-import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.ui.DoNotAskOption;
 import com.intellij.openapi.ui.MessageDialogBuilder;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.*;
@@ -44,7 +45,6 @@ import com.intellij.util.*;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.concurrency.AppScheduledExecutorService;
 import com.intellij.util.containers.Stack;
-import com.intellij.util.io.storage.HeavyProcessLatch;
 import com.intellij.util.messages.Topic;
 import com.intellij.util.ui.EDT;
 import com.intellij.util.ui.EdtInvocationManager;
@@ -60,7 +60,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 
-public class ApplicationImpl extends ComponentManagerImpl implements ApplicationEx {
+@ApiStatus.Internal
+public class ApplicationImpl extends ClientAwareComponentManager implements ApplicationEx {
   // do not use PluginManager.processException() because it can force app to exit, but we want just log error and continue
   private static final Logger LOG = Logger.getInstance(ApplicationImpl.class);
 
@@ -94,34 +95,27 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
 
   private final Disposable myLastDisposable = Disposer.newDisposable(); // will be disposed last
 
-  private static final int ourDumpThreadsOnLongWriteActionWaiting = Integer.getInteger("dump.threads.on.long.write.action.waiting", 0);
+  // defer reading isUnitTest flag until it's initialized
+  private static class Holder {
+    private static final int ourDumpThreadsOnLongWriteActionWaiting = ApplicationManager.getApplication().isUnitTestMode() ? 0 : Integer.getInteger("dump.threads.on.long.write.action.waiting", 0);
+  }
 
   private final ExecutorService ourThreadExecutorsService = AppExecutorUtil.getAppExecutorService();
   private static final String WAS_EVER_SHOWN = "was.ever.shown";
 
-  private static void lockAcquired(@NotNull Class<?> invokedClass, @NotNull LockKind lockKind) {
-    lockAcquired(invokedClass.getName(), lockKind);
-  }
-
-  private static void lockAcquired(@NotNull String invokedClassFqn, @NotNull LockKind lockKind) {
-    EventWatcher watcher = EventWatcher.getInstance();
-    if (watcher != null) {
-      watcher.lockAcquired(invokedClassFqn, lockKind);
-    }
-  }
-
-  public ApplicationImpl(boolean isInternal, boolean isUnitTestMode, boolean isHeadless, boolean isCommandLine) {
+  public ApplicationImpl(boolean isInternal,
+                         boolean isUnitTestMode,
+                         boolean isHeadless,
+                         boolean isCommandLine) {
     super(null);
 
-    // reset back to null only when all components already disposed
-    ApplicationManager.setApplication(this, myLastDisposable);
+    registerServiceInstance(TransactionGuard.class, myTransactionGuard, ComponentManagerImpl.fakeCorePluginDescriptor);
+    registerServiceInstance(ApplicationInfo.class, ApplicationInfoImpl.getShadowInstance(), ComponentManagerImpl.fakeCorePluginDescriptor);
+    registerServiceInstance(Application.class, this, ComponentManagerImpl.fakeCorePluginDescriptor);
 
-    registerServiceInstance(TransactionGuard.class, myTransactionGuard, ComponentManagerImpl.getFakeCorePluginDescriptor());
-    registerServiceInstance(ApplicationInfo.class, ApplicationInfoImpl.getShadowInstance(), ComponentManagerImpl.getFakeCorePluginDescriptor());
-    registerServiceInstance(Application.class, this, ComponentManagerImpl.getFakeCorePluginDescriptor());
-
-    boolean strictMode = isUnitTestMode || isInternal;
-    BundleBase.assertOnMissedKeys(strictMode);
+    if (isUnitTestMode || isInternal) {
+      BundleBase.assertOnMissedKeys(true);
+    }
 
     // do not crash AWT on exceptions
     AWTExceptionHandler.register();
@@ -132,36 +126,46 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
     myTestModeFlag = isUnitTestMode;
     myHeadlessMode = isHeadless;
     myCommandLineMode = isCommandLine;
+    if (isUnitTestMode) {
+      //noinspection TestOnlyProblems
+      Logger.setUnitTestMode();
+    }
 
-    mySaveAllowed = !(isUnitTestMode || isHeadless);
+    mySaveAllowed = !isUnitTestMode && !isHeadless;
+
+    // reset back to null only when all components already disposed
+    ApplicationManager.setApplication(this, myLastDisposable);
 
     if (!isUnitTestMode && !isHeadless) {
       Disposable uiRootDisposable = Disposer.newDisposable();
+      //noinspection deprecation
       Disposer.register(this, uiRootDisposable, "ui");
     }
 
-    Activity activity = StartUpMeasurer.startActivity("AppDelayQueue instantiation");
+    Activity activity = StartUpMeasurer.startActivity("AppDelayQueue instantiation", ActivityCategory.DEFAULT);
     AtomicReference<Thread> edtThread = new AtomicReference<>();
-    Runnable runnable = () -> {
-      // instantiate AppDelayQueue which starts "Periodic task thread" which we'll mark busy to prevent this EDT to die
-      // that thread was chosen because we know for sure it's running
-      AppScheduledExecutorService service = (AppScheduledExecutorService)AppExecutorUtil.getAppScheduledExecutorService();
-      Thread thread = service.getPeriodicTasksThread();
-      AWTAutoShutdown.getInstance().notifyThreadBusy(thread); // needed for EDT not to exit suddenly
-      Disposer.register(this, () -> {
-        AWTAutoShutdown.getInstance().notifyThreadFree(thread); // allow for EDT to exit - needed for Upsource
-      });
+    EdtInvocationManager.invokeAndWaitIfNeeded(() -> {
+      preventAwtAutoShutdown(this);
       edtThread.set(Thread.currentThread());
-    };
-    EdtInvocationManager.invokeAndWaitIfNeeded(runnable);
+    });
     myLock = new ReadMostlyRWLock(edtThread.get());
     // Acquire IW lock on EDT indefinitely in legacy mode
     if (!USE_SEPARATE_WRITE_THREAD || isUnitTestMode) {
-      EdtInvocationManager.invokeAndWaitIfNeeded(() -> acquireWriteIntentLock(getClass()));
+      EdtInvocationManager.invokeAndWaitIfNeeded(() -> acquireWriteIntentLock(getClass().getName()));
     }
     activity.end();
 
     NoSwingUnderWriteAction.watchForEvents(this);
+  }
+
+  public static void preventAwtAutoShutdown(@NotNull Disposable parentDisposable) {
+    // instantiate AppDelayQueue which starts "Periodic task thread" which we'll mark busy to prevent this EDT to die
+    // that thread was chosen because we know for sure it's running
+    Thread thread = AppScheduledExecutorService.getPeriodicTasksThread();
+    AWTAutoShutdown.getInstance().notifyThreadBusy(thread); // needed for EDT not to exit suddenly
+    Disposer.register(parentDisposable, () -> {
+      AWTAutoShutdown.getInstance().notifyThreadFree(thread); // allow for EDT to exit - needed for Upsource
+    });
   }
 
   /**
@@ -249,7 +253,33 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
 
   @Override
   public @NotNull Future<?> executeOnPooledThread(@NotNull Runnable action) {
-    return executeOnPooledThread(new RunnableCallable(action));
+    Runnable actionDecorated = ClientId.decorateRunnable(action);
+    return ourThreadExecutorsService.submit(new Runnable() {
+      @Override
+      public void run() {
+        if (isDisposed()) {
+          return;
+        }
+
+        try {
+          actionDecorated.run();
+        }
+        catch (ProcessCanceledException e) {
+          // ignore
+        }
+        catch (Throwable e) {
+          LOG.error(e);
+        }
+        finally {
+          Thread.interrupted(); // reset interrupted status
+        }
+      }
+
+      @Override
+      public String toString() {
+        return action.toString();
+      }
+    });
   }
 
   @Override
@@ -323,30 +353,22 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
   @Override
   public final void load() {
     List<IdeaPluginDescriptorImpl> plugins = PluginManagerCore.getLoadedPlugins(null);
-    registerComponents(plugins, null);
+    registerComponents(plugins, this, null, null);
     ApplicationLoader.initConfigurationStore(this);
-    Executor executor = ApplicationLoader.createExecutorToPreloadServices();
-    preloadServices(plugins, executor, false).getSyncPreloadedServices().join();
+    preloadServices(plugins, "", false).getSecond().join();
     loadComponents(null);
-    ApplicationLoader.callAppInitialized(this, executor).join();
+    ForkJoinTask.invokeAll(ApplicationLoader.callAppInitialized(this));
   }
 
-  @ApiStatus.Internal
   public final void loadComponents(@Nullable ProgressIndicator indicator) {
-    AccessToken token = HeavyProcessLatch.INSTANCE.processStarted("Loading application components");  // NON-NLS (not observable)
-    try {
-      if (indicator == null) {
-        // no splash, no need to to use progress manager
-        createComponents(null);
-      }
-      else {
-        ProgressManager.getInstance().runProcess(() -> createComponents(indicator), indicator);
-      }
-      StartUpMeasurer.setCurrentState(LoadingState.COMPONENTS_LOADED);
+    if (indicator == null) {
+      // no splash, no need to use progress manager
+      createComponents(null);
     }
-    finally {
-      token.finish();
+    else {
+      ProgressManager.getInstance().runProcess(() -> createComponents(indicator), indicator);
     }
+    StartUpMeasurer.setCurrentState(LoadingState.COMPONENTS_LOADED);
   }
 
   @Override
@@ -598,7 +620,7 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
           exitCode = Main.RESTART_FAILED;
         }
       }
-      MutedLogger.dropCaches();
+      IdeaLogger.dropFrequentExceptionsCaches();
       System.exit(exitCode);
     }
     finally {
@@ -614,7 +636,6 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
     return !ProgressManager.getInstance().hasProgressIndicator();
   }
 
-  @ApiStatus.Internal
   public final @NotNull CompletableFuture<@NotNull ProgressWindow> createProgressWindowAsyncIfNeeded(@NotNull @NlsContexts.ProgressTitle String progressTitle,
                                                                                             boolean canBeCanceled,
                                                                                             boolean shouldShowModalWindow,
@@ -656,7 +677,7 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
       return true;
     }
 
-    DialogWrapper.DoNotAskOption option = new DialogWrapper.DoNotAskOption() {
+    DoNotAskOption option = new DoNotAskOption() {
       @Override
       public boolean isToBeShown() {
         return GeneralSettings.getInstance().isConfirmExit() && ProjectManager.getInstance().getOpenProjects().length > 0;
@@ -746,18 +767,8 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
     return true;
   }
 
-  @NotNull
-  public ThreeState isCurrentWriteOnEdt() {
-    Thread writeThread = myLock.writeThread;
-    if (writeThread == null) {
-      return ThreeState.UNSURE;
-    }
-    else if (EDT.isEdt(writeThread)) {
-      return ThreeState.YES;
-    }
-    else {
-      return ThreeState.NO;
-    }
+  public boolean isCurrentWriteOnEdt() {
+    return EDT.isEdt(myLock.writeThread);
   }
 
   @Override
@@ -783,7 +794,7 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
       action.run();
     }
     else {
-      acquireWriteIntentLock(action.getClass());
+      acquireWriteIntentLock(action.getClass().getName());
       try {
         action.run();
       }
@@ -802,7 +813,7 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
         return action.compute();
       }
       finally {
-        acquireWriteIntentLock(action.getClass());
+        acquireWriteIntentLock(action.getClass().getName());
       }
     }
     else {
@@ -812,82 +823,46 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
 
   @Override
   public void runReadAction(@NotNull Runnable action) {
-    if (checkReadAccessAllowedAndNoPendingWrites()) {
+    ReadMostlyRWLock.Reader status = myLock.startRead();
+    try {
       action.run();
     }
-    else {
-      acquireReadLock(action.getClass());
-      try {
-        action.run();
-      }
-      finally {
-        releaseReadLock();
+    finally {
+      if (status != null) {
+        myLock.endRead(status);
       }
     }
   }
 
   @Override
   public <T> T runReadAction(@NotNull Computable<T> computation) {
-    if (checkReadAccessAllowedAndNoPendingWrites()) {
-      return computation.compute();
-    }
-    acquireReadLock(computation.getClass());
+    ReadMostlyRWLock.Reader status = myLock.startRead();
     try {
       return computation.compute();
     }
     finally {
-      releaseReadLock();
+      if (status != null) {
+        myLock.endRead(status);
+      }
     }
   }
 
   @Override
   public <T, E extends Throwable> T runReadAction(@NotNull ThrowableComputable<T, E> computation) throws E {
-    if (checkReadAccessAllowedAndNoPendingWrites()) {
-      return computation.compute();
-    }
-    acquireReadLock(computation.getClass());
+    ReadMostlyRWLock.Reader status = myLock.startRead();
     try {
       return computation.compute();
     }
     finally {
-      releaseReadLock();
+      if (status != null) {
+        myLock.endRead(status);
+      }
     }
-  }
-
-  private void acquireReadLock(@NotNull Class<?> invokedClass) {
-    myLock.readLock();
-    lockAcquired(invokedClass, LockKind.READ);
-  }
-
-  private boolean tryAcquireReadLock(@NotNull Class<? extends Runnable> invokedClass) {
-    boolean result = myLock.tryReadLock();
-    if (result) {
-      lockAcquired(invokedClass, LockKind.READ);
-    }
-    return result;
-  }
-
-  private void releaseReadLock() {
-    myLock.readUnlock();
-  }
-
-  private void acquireWriteLock(@NotNull Class<?> invokedClass) {
-    myLock.writeLock();
-    lockAcquired(invokedClass, LockKind.WRITE);
-  }
-
-  private void releaseWriteLock() {
-    myLock.writeUnlock();
-  }
-
-  private void acquireWriteIntentLock(@NotNull Class<?> invokedClass) {
-    acquireWriteIntentLock(invokedClass.getName());
   }
 
   @Override
   public void acquireWriteIntentLock(@NotNull String invokedClassFqn) {
     myLock.writeIntentLock();
-    lockAcquired(invokedClassFqn, LockKind.WRITE_INTENT);
   }
 
   @Override
@@ -999,6 +974,16 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
     }
   }
 
+  @Override
+  public void assertReadAccessNotAllowed() {
+    if (isReadAccessAllowed()) {
+      LOG.error(
+        "Read access is not allowed",
+        "Current thread: " + describe(Thread.currentThread()), "; dispatch thread: " + EventQueue.isDispatchThread() +"; isDispatchThread(): "+isDispatchThread(),
+        "SystemEventQueueThread: " + describe(getEventQueueThread()));
+    }
+  }
+
   private static String describe(Thread o) {
     return o == null ? "null" : o + " " + System.identityHashCode(o);
   }
@@ -1013,15 +998,11 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
     return isWriteThread() || myLock.isReadLockedByThisThread();
   }
 
-  private boolean checkReadAccessAllowedAndNoPendingWrites() throws ApplicationUtil.CannotRunReadActionException {
-    return isWriteThread() || myLock.checkReadLockedByThisThreadAndNoPendingWrites();
-  }
-
   @Override
   public void assertIsDispatchThread() {
     if (isDispatchThread()) return;
     if (ShutDownTracker.isShutdownHookRunning()) return;
-    throwThreadAccessException("Access is allowed from event dispatch thread with IW lock only.");
+    throwThreadAccessException("Access is allowed from event dispatch thread only");
   }
 
   @Override
@@ -1032,31 +1013,23 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
     throwThreadAccessException("Access from event dispatch thread is not allowed.");
   }
 
-  @Override
-  public void assertIsWriteThread() {
-    if (isWriteThread()) return;
-    if (ShutDownTracker.isShutdownHookRunning()) return;
-    assertIsWriteThread("Access is allowed from write thread only.");
-  }
-
   private static void throwThreadAccessException(@NotNull String message) {
     throw new RuntimeExceptionWithAttachments(
       message,
       "EventQueue.isDispatchThread()=" + EventQueue.isDispatchThread() +
-      " Toolkit.getEventQueue()=" + Toolkit.getDefaultToolkit().getSystemEventQueue() +
       "\nCurrent thread: " + describe(Thread.currentThread()) +
       "\nSystemEventQueueThread: " + describe(getEventQueueThread()),
       new Attachment("threadDump.txt", ThreadDumper.dumpThreadsToString()));
   }
 
-  private void assertIsWriteThread(@NotNull String message) {
+  public void assertIsWriteThread() {
     if (isWriteThread()) return;
+    if (ShutDownTracker.isShutdownHookRunning()) return;
     throw new RuntimeExceptionWithAttachments(
-      message,
+      "Access is allowed from write thread only.",
       "EventQueue.isDispatchThread()=" + EventQueue.isDispatchThread() +
-      " Toolkit.getEventQueue()=" + Toolkit.getDefaultToolkit().getSystemEventQueue() +
       "\nCurrent thread: " + describe(Thread.currentThread()) +
-      "\nWrite thread (volatile): " + describe(myLock.writeThread) +
+      "\nWrite thread: " + describe(myLock.writeThread),
       new Attachment("threadDump.txt", ThreadDumper.dumpThreadsToString()));
   }
 
@@ -1089,16 +1062,16 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
   @Override
   public boolean tryRunReadAction(@NotNull Runnable action) {
     //if we are inside read action, do not try to acquire read lock again since it will deadlock if there is a pending writeAction
-    if (checkReadAccessAllowedAndNoPendingWrites()) {
+    ReadMostlyRWLock.Reader status = myLock.startTryRead();
+    if (status != null && !status.readRequested) {
+      return false;
+    }
+    try {
       action.run();
     }
-    else {
-      if (!tryAcquireReadLock(action.getClass())) return false;
-      try {
-        action.run();
-      }
-      finally {
-        releaseReadLock();
+    finally {
+      if (status != null) {
+        myLock.endRead(status);
       }
     }
     return true;
@@ -1127,7 +1100,7 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
     DeprecatedMethodException.report("Use runReadAction() instead");
 
     // if we are inside read action, do not try to acquire read lock again since it will deadlock if there is a pending writeAction
-    return checkReadAccessAllowedAndNoPendingWrites() ? AccessToken.EMPTY_ACCESS_TOKEN : new ReadAccessToken();
+    return isWriteThread() || myLock.isReadLockedByThisThread() ? AccessToken.EMPTY_ACCESS_TOKEN : new ReadAccessToken();
   }
 
   private volatile boolean myWriteActionPending;
@@ -1138,9 +1111,7 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
   }
 
   private void startWrite(@NotNull Class<?> clazz) {
-    if (!isWriteAccessAllowed()) {
-      assertIsWriteThread("Write access is allowed from write thread only");
-    }
+    assertIsWriteThread();
     boolean writeActionPending = myWriteActionPending;
     myWriteActionPending = true;
     try {
@@ -1148,13 +1119,13 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
       fireBeforeWriteActionStart(clazz);
 
       if (!myLock.isWriteLocked()) {
-        Future<?> reportSlowWrite = ourDumpThreadsOnLongWriteActionWaiting <= 0 ? null :
+        int delay = Holder.ourDumpThreadsOnLongWriteActionWaiting;
+        Future<?> reportSlowWrite = delay <= 0 ? null :
                                     AppExecutorUtil.getAppScheduledExecutorService()
                                       .scheduleWithFixedDelay(() -> PerformanceWatcher.getInstance().dumpThreads("waiting", true),
-                                                              ourDumpThreadsOnLongWriteActionWaiting,
-                                                              ourDumpThreadsOnLongWriteActionWaiting, TimeUnit.MILLISECONDS);
+                                                              delay, delay, TimeUnit.MILLISECONDS);
         long t = LOG.isDebugEnabled() ? System.currentTimeMillis() : 0;
-        acquireWriteLock(clazz);
+        myLock.writeLock();
         if (LOG.isDebugEnabled()) {
           long elapsed = System.currentTimeMillis() - t;
           if (elapsed != 0) {
@@ -1183,7 +1154,7 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
     finally {
       myWriteActionsStack.pop();
       if (myWriteActionsStack.size() == myWriteStackBase) {
-        releaseWriteLock();
+        myLock.writeUnlock();
       }
       if (myWriteActionsStack.isEmpty()) {
         fireAfterWriteActionFinished(clazz);
@@ -1249,14 +1220,20 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
     }
   }
 
+  /**
+   * @deprecated use {@link #runReadAction(Runnable)} instead
+   */
+  @Deprecated
   private final class ReadAccessToken extends AccessToken {
+    private final ReadMostlyRWLock.Reader myReader;
+
     private ReadAccessToken() {
-      acquireReadLock(Runnable.class);
+      myReader = myLock.startRead();
     }
 
     @Override
     public void finish() {
-      releaseReadLock();
+      myLock.endRead(myReader);
     }
   }
 
@@ -1282,7 +1259,6 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
    * so that background threads with read actions don't see half-baked PSI/VFS/etc. The runnable may perform write actions itself,
    * callers should be ready for those.
    */
-  @ApiStatus.Internal
   public void executeSuspendingWriteAction(@Nullable Project project, @NotNull @NlsContexts.DialogTitle String title, @NotNull Runnable runnable) {
     assertIsWriteThread();
     if (!myLock.isWriteLocked()) {
@@ -1294,7 +1270,8 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
     myWriteStackBase = myWriteActionsStack.size();
     try (AccessToken ignored = myLock.writeSuspend()) {
       runModalProgress(project, title, runnable);
-    } finally {
+    }
+    finally {
       myWriteStackBase = prevBase;
     }
   }
@@ -1375,7 +1352,6 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
            (isCommandLine() ? " (Command line)" : "");
   }
 
-  @ApiStatus.Internal
   @Override
   public @NotNull String activityNamePrefix() {
     return "app ";
@@ -1383,7 +1359,7 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
 
   @Override
   protected @NotNull ContainerDescriptor getContainerDescriptor(@NotNull IdeaPluginDescriptorImpl pluginDescriptor) {
-    return pluginDescriptor.getApp();
+    return pluginDescriptor.appContainerDescriptor;
   }
 
   @Override
@@ -1407,8 +1383,8 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
     myDispatcher.neuterMultiCasterWhilePerformanceTestIsRunningUntil(disposable);
   }
 
-  @ApiStatus.Internal
-  public boolean getComponentCreated() {
+  @Override
+  public boolean isComponentCreated() {
     return getContainerState().get().compareTo(ContainerState.COMPONENT_CREATED) >= 0;
   }
 }

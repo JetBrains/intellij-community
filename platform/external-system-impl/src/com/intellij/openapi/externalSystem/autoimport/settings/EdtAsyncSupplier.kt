@@ -5,26 +5,26 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.util.Disposer
 
-abstract class EdtAsyncSupplier<R> : AsyncSupplier<R> {
+class EdtAsyncSupplier<R>(
+  private val supplier: () -> R,
+  private val shouldKeepTasksAsynchronous: () -> Boolean
+) : AsyncSupplier<R> {
   override fun supply(consumer: (R) -> Unit, parentDisposable: Disposable) {
     val application = ApplicationManager.getApplication()
-    if (isBlocking()) {
-      application.invokeAndWait { consumer(get()) }
-    }
-    else {
-      application.invokeLater({ consumer(get()) }) {
+    if (shouldKeepTasksAsynchronous()) {
+      application.invokeLater({ consumer(supplier()) }) {
         Disposer.isDisposed(parentDisposable)
       }
+    }
+    else {
+      application.invokeAndWait { consumer(supplier()) }
     }
   }
 
   companion object {
-    fun invokeOnEdt(isBlocking: () -> Boolean, action: () -> Unit, parentDisposable: Disposable) {
-      val operation = object : EdtAsyncSupplier<Any>() {
-        override fun isBlocking() = isBlocking.invoke()
-        override fun get() = action()
-      }
-      operation.supply({}, parentDisposable)
+    fun invokeOnEdt(shouldKeepTasksAsynchronous: () -> Boolean, action: () -> Unit, parentDisposable: Disposable) {
+      EdtAsyncSupplier(action, shouldKeepTasksAsynchronous)
+        .supply({}, parentDisposable)
     }
   }
 }

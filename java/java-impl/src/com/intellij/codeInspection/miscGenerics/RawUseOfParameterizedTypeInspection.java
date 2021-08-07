@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.miscGenerics;
 
 import com.intellij.codeInspection.ProblemDescriptor;
@@ -77,7 +77,7 @@ public class RawUseOfParameterizedTypeInspection extends BaseInspection {
   }
 
   @Override
-  public boolean shouldInspect(PsiFile file) {
+  public boolean shouldInspect(@NotNull PsiFile file) {
     return PsiUtil.isLanguageLevel5OrHigher(file);
   }
 
@@ -115,8 +115,12 @@ public class RawUseOfParameterizedTypeInspection extends BaseInspection {
 
     @Override
     public void visitTypeElement(@NotNull PsiTypeElement typeElement) {
-      if (typeElement.getParent() instanceof PsiVariable) {
-        PsiVariable variable = (PsiVariable)typeElement.getParent();
+      PsiElement directParent = typeElement.getParent();
+      if (directParent instanceof PsiVariable) {
+        if (directParent instanceof PsiPatternVariable) {
+          return;
+        }
+        PsiVariable variable = (PsiVariable)directParent;
         final PsiType type = getSuggestedType(variable);
         if (type != null) {
           final String typeText = GenericsUtil.getVariableTypeByExpressionType(type).getPresentableText();
@@ -135,7 +139,6 @@ public class RawUseOfParameterizedTypeInspection extends BaseInspection {
         return;
       }
       super.visitTypeElement(typeElement);
-      PsiElement directParent = typeElement.getParent();
       if (ignoreUncompilable && directParent instanceof PsiTypeElement) {
         PsiType parentType = ((PsiTypeElement)directParent).getType();
         if (parentType instanceof PsiArrayType) {
@@ -146,7 +149,7 @@ public class RawUseOfParameterizedTypeInspection extends BaseInspection {
       }
       final PsiElement parent = PsiTreeUtil.skipParentsOfType(
         typeElement, PsiTypeElement.class, PsiReferenceParameterList.class, PsiJavaCodeReferenceElement.class);
-      if (parent instanceof PsiTypeTestPattern || parent instanceof PsiClassObjectAccessExpression) {
+      if (parent instanceof PsiInstanceOfExpression || parent instanceof PsiClassObjectAccessExpression) {
         return;
       }
       if (ignoreTypeCasts && parent instanceof PsiTypeCastExpression) {

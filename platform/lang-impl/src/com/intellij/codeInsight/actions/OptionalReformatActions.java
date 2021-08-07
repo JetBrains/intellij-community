@@ -28,4 +28,7 @@ public interface OptionalReformatActions {
     return false;
   }
 
+  default boolean doNotKeepLineBreaks() {
+    return false;
+  }
 }

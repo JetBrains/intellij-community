@@ -1,9 +1,12 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.dataFlow;
 
+import com.intellij.codeInspection.dataFlow.jvm.SpecialField;
 import com.intellij.codeInspection.util.InspectionMessage;
 import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.source.PsiFieldImpl;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ObjectUtils;
 import com.siyeh.ig.psiutils.ClassUtils;
 import com.siyeh.ig.psiutils.ExpressionUtils;
@@ -242,6 +245,11 @@ public final class MutationSignature {
       while (true) {
         for (PsiField field : clazz.getFields()) {
           if (!field.hasModifierProperty(PsiModifier.STATIC) && field.hasInitializer()) {
+            PsiExpression initializer = PsiUtil.skipParenthesizedExprDown(PsiFieldImpl.getDetachedInitializer(field));
+            // TODO: support less trivial initializers
+            if (initializer instanceof PsiLiteralExpression) {
+              continue;
+            }
             return UNKNOWN;
           }
         }

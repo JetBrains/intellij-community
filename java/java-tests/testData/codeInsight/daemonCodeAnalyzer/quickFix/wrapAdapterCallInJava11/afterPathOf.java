@@ -1,4 +1,4 @@
-// "Wrap parameter using 'Path.of()'" "true"
+// "Wrap argument using 'Path.of()'" "true"
 import java.nio.file.*;
 
 class Test {

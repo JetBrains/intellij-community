@@ -1,8 +1,21 @@
 <html>
 <body>
-Reports unnecessarily escaped characters in <b>String</b> and optionally <b>char</b> literals.
-For example <b>\'</b> in a <b>String</b> literal or <b>\n</b> in a Java 13 Preview text block.
-The escaped tab character <b>\t</b> is not reported.
+Reports unnecessarily escaped characters in <code>String</code> and optionally <code>char</code> literals.
+<p>The escaped tab character <code>\t</code> is not reported, because otherwise it will be invisible.</p>
+<p>Examples:</p>
+<pre><code>
+  String s = "\'Scare\' quotes";
+  String t = """
+    All you need is\n\tLove\n""";
+</code></pre>
+<p>After the quick-fix is applied:</p>
+<pre><code>
+  String s = "'Scare' quotes";
+  String t = """
+    All you need is
+    \tLove
+  """;
+</code></pre>
 <!-- tooltip end -->
 <p><small>New in 2019.3</small>
 </body>

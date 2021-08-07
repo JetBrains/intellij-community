@@ -17,6 +17,8 @@ import os
 import re
 import sys
 import toml
+import tempfile
+from typing import Dict, NamedTuple
 
 PY2_NAMESPACE = "@python2"
 THIRD_PARTY_NAMESPACE = "stubs"
@@ -69,19 +71,33 @@ def match(fn, args, exclude_list):
     return True
 
 
+_VERSION_LINE_RE = re.compile(r"^([a-zA-Z_][a-zA-Z0-9_.]*): ([23]\.\d{1,2})-([23]\.\d{1,2})?$")
+
+
 def parse_versions(fname):
-    with open(fname) as f:
-        data = f.read().splitlines()
     result = {}
-    for line in data:
-        # Allow having some comments or empty lines.
-        if not line.strip() or line.startswith("#"):
-            continue
-        mod, ver_str = line.split(": ")
-        assert ver_str.count(".") == 1
-        major, minor = ver_str.split(".")
-        result[mod] = (int(major), int(minor))
+    with open(fname) as f:
+        for line in f:
+            # Allow having some comments or empty lines.
+            line = line.split("#")[0].strip()
+            if line == "":
+                continue
+            m = _VERSION_LINE_RE.match(line)
+            assert m, "invalid VERSIONS line: " + line
+            mod = m.group(1)
+            min_version = parse_version(m.group(2))
+            max_version = parse_version(m.group(3)) if m.group(3) else (99, 99)
+            result[mod] = min_version, max_version
     return result
+
+
+_VERSION_RE = re.compile(r"^([23])\.(\d+)$")
+
+
+def parse_version(v_str):
+    m = _VERSION_RE.match(v_str)
+    assert m, "invalid version: " + v_str
+    return int(m.group(1)), int(m.group(2))
 
 
 def is_supported(distribution, major):
@@ -118,6 +134,46 @@ def add_files(files, seen, root, name, args, exclude_list):
                         files.append(fn)
 
 
+class MypyDistConf(NamedTuple):
+    module_name: str
+    values: Dict
+
+# The configuration section in the metadata file looks like the following, with multiple module sections possible
+# [mypy-tests]
+# [mypy-tests.yaml]
+# module_name = "yaml"
+# [mypy-tests.yaml.values]
+# disallow_incomplete_defs = true
+# disallow_untyped_defs = true
+
+
+def add_configuration(configurations, seen_dist_configs, distribution):
+    if distribution in seen_dist_configs:
+        return
+
+    with open(os.path.join(THIRD_PARTY_NAMESPACE, distribution, "METADATA.toml")) as f:
+        data = dict(toml.loads(f.read()))
+
+    mypy_tests_conf = data.get("mypy-tests")
+    if not mypy_tests_conf:
+        return
+
+    assert isinstance(mypy_tests_conf, dict), "mypy-tests should be a section"
+    for section_name, mypy_section in mypy_tests_conf.items():
+        assert isinstance(mypy_section, dict), "{} should be a section".format(section_name)
+        module_name = mypy_section.get("module_name")
+
+        assert module_name is not None, "{} should have a module_name key".format(section_name)
+        assert isinstance(module_name, str), "{} should be a key-value pair".format(section_name)
+
+        values = mypy_section.get("values")
+        assert values is not None, "{} should have a values section".format(section_name)
+        assert isinstance(values, dict), "values should be a section"
+
+        configurations.append(MypyDistConf(module_name, values.copy()))
+    seen_dist_configs.add(distribution)
+
+
 def main():
     args = parser.parse_args()
 
@@ -130,7 +186,7 @@ def main():
         print("Cannot import mypy. Did you install it?")
         sys.exit(1)
 
-    versions = [(3, 9), (3, 8), (3, 7), (3, 6), (2, 7)]
+    versions = [(3, 10), (3, 9), (3, 8), (3, 7), (3, 6), (2, 7)]
     if args.python_version:
         versions = [v for v in versions if any(("%d.%d" % v).startswith(av) for av in args.python_version)]
         if not versions:
@@ -142,6 +198,8 @@ def main():
     for major, minor in versions:
         files = []
         seen = {"__builtin__", "builtins", "typing"}  # Always ignore these.
+        configurations = []
+        seen_dist_configs = set()
 
         # First add standard library files.
         if major == 2:
@@ -158,9 +216,8 @@ def main():
                 if name == PY2_NAMESPACE or name == "VERSIONS":
                     continue
                 mod, _ = os.path.splitext(name)
-                if supported_versions[mod] > (major, minor):
-                    continue
-                add_files(files, seen, root, name, args, exclude_list)
+                if supported_versions[mod][0] <= (major, minor) <= supported_versions[mod][1]:
+                    add_files(files, seen, root, name, args, exclude_list)
 
         # Next add files for all third party distributions.
         for distribution in os.listdir(THIRD_PARTY_NAMESPACE):
@@ -177,17 +234,29 @@ def main():
                 if mod in seen or mod.startswith("."):
                     continue
                 add_files(files, seen, root, name, args, exclude_list)
+                add_configuration(configurations, seen_dist_configs, distribution)
 
         if files:
+            with tempfile.NamedTemporaryFile("w+", delete=False) as temp:
+                temp.write("[mypy]\n")
+
+                for dist_conf in configurations:
+                    temp.write("[mypy-%s]\n" % dist_conf.module_name)
+                    for k, v in dist_conf.values.items():
+                        temp.write("{} = {}\n".format(k, v))
+
+                config_file_name = temp.name
             runs += 1
             flags = [
                 "--python-version", "%d.%d" % (major, minor),
+                "--config-file", config_file_name,
                 "--strict-optional",
                 "--no-site-packages",
                 "--show-traceback",
                 "--no-implicit-optional",
                 "--disallow-any-generics",
                 "--disallow-subclassing-any",
+                "--warn-incomplete-stub",
                 # Setting custom typeshed dir prevents mypy from falling back to its bundled
                 # typeshed in case of stub deletions
                 "--custom-typeshed-dir", os.path.dirname(os.path.dirname(__file__)),
@@ -206,6 +275,8 @@ def main():
                     mypy_main("", sys.stdout, sys.stderr)
             except SystemExit as err:
                 code = max(code, err.code)
+            finally:
+                os.remove(config_file_name)
     if code:
         print("--- exit status", code, "---")
         sys.exit(code)

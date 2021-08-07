@@ -58,13 +58,6 @@ public class CustomizeIDEWizardDialog extends DialogWrapper implements CommonCus
     if (beforeSplash) stepsProvider.initSteps(this, mySteps);
     if (afterSplash) stepsProvider.initStepsAfterSplash(this, mySteps);
 
-    if (appStarter != null) {
-      int newIndex = appStarter.customizeIdeWizardDialog(mySteps);
-      if (newIndex != -1) {
-        myIndex = newIndex;
-      }
-    }
-
     myHideSkipButton = (mySteps.size() <= 1) || stepsProvider.hideSkipButton();
 
     if (mySteps.isEmpty()) {

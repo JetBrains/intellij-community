@@ -41,7 +41,7 @@ import java.util.concurrent.Future;
  * "read actions" and "write actions" via {@link #runReadAction} and {@link #runWriteAction}, respectively.
  * <p>
  * The recommended way to obtain Write Intent lock is to schedule execution on so-called "write thread" (i.e. thread with Write Intent lock)
- * via {@link #invokeLaterOnWriteThread}, {@link WriteThread} or {@link AppUIExecutor#onWriteThread} asynchronous API.
+ * via {@link #invokeLaterOnWriteThread} or {@link AppUIExecutor#onWriteThread} asynchronous API.
  * <p>
  * Multiple read actions can run at the same time without locking each other.
  * <p>
@@ -171,6 +171,12 @@ public interface Application extends ComponentManager {
   void assertWriteAccessAllowed();
 
   /**
+   * Asserts whether the read access is not allowed.
+   */
+  @ApiStatus.Experimental
+  void assertReadAccessNotAllowed();
+
+  /**
    * Asserts whether the method is being called from the event dispatch thread.
    */
   void assertIsDispatchThread();
@@ -214,12 +220,14 @@ public interface Application extends ComponentManager {
   void removeApplicationListener(@NotNull ApplicationListener listener);
 
   /**
-   * Saves all open documents and projects.
+   * Saves all open documents, settings of all opened projects and application settings.
+   * @see #saveSettings()
    */
   void saveAll();
 
   /**
-   * Saves application settings.
+   * Saves application settings. Note that settings for non-roamable components aren't saved by default if they were saved less than
+   * 5 minutes ago, see {@link com.intellij.openapi.components.Storage#useSaveThreshold() useSaveThreshold} for details.
    */
   void saveSettings();
 

@@ -201,7 +201,7 @@ public final class ClassPath {
     return result;
   }
 
-  @ReviseWhenPortedToJDK("7")  // use URL -> URI -> Path conversion
+  @ReviseWhenPortedToJDK(value = "7", description = "use URL -> URI -> Path conversion")
   private void initLoaders(@NotNull URL url, int index) throws IOException {
     String path;
 

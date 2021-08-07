@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 @file:Suppress("PropertyName")
 package git4idea.config
 
@@ -44,9 +44,6 @@ class GitVcsOptions : BaseState() {
   val recentBranchByRepository by map<String, String>()
   @get:OptionTag("RECENT_COMMON_BRANCH")
   var recentCommonBranch by string()
-
-  @get:OptionTag("AUTO_COMMIT_ON_REVERT")
-  var isAutoCommitOnRevert by property(false)
 
   @get:OptionTag("WARN_ABOUT_CRLF")
   var warnAboutCrlf by property(true)

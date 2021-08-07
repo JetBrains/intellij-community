@@ -11,8 +11,6 @@ import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.io.FileFilters;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
-import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.util.text.UniqueNameGenerator;
 import org.jdom.Document;
 import org.jdom.Element;
@@ -29,9 +27,6 @@ import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Set;
-import java.util.TreeSet;
 
 public class MigrationMapSet {
   private static final Logger LOG = Logger.getInstance(MigrationMapSet.class);
@@ -43,17 +38,12 @@ public class MigrationMapSet {
   @NonNls private static final String OLD_NAME = "oldName";
   @NonNls private static final String NEW_NAME = "newName";
   @NonNls private static final String DESCRIPTION = "description";
+  @NonNls private static final String ORDER = "order";
   @NonNls private static final String VALUE = "value";
   @NonNls private static final String TYPE = "type";
   @NonNls private static final String PACKAGE_TYPE = "package";
   @NonNls private static final String CLASS_TYPE = "class";
   @NonNls private static final String RECURSIVE = "recursive";
-
-  @NonNls private static final String SWING_MAP_FILE_NAME = "Swing__1_0_3____1_1_.xml";
-  @NonNls private static final String[] DEFAULT_MAPS = new  String[] {
-    "/com/intellij/refactoring/migration/res/" + SWING_MAP_FILE_NAME,
-  };
-  private final Set<String> myDeletedMaps = new TreeSet<>();
 
   public MigrationMapSet() {
   }
@@ -92,24 +82,15 @@ public class MigrationMapSet {
       loadMaps();
     }
     myMaps.remove(map);
-    String name = map.getFileName();
-    if (isPredefined(name)) {
-      myDeletedMaps.add(name);
-    }
   }
 
-  private static boolean isPredefined(String name) {
+  public static boolean isPredefined(String name) {
     for (PredefinedMigrationProvider provider : PredefinedMigrationProvider.EP_NAME.getExtensionList()) {
       URL migrationMap = provider.getMigrationMap();
       String fileName = FileUtilRt.getNameWithoutExtension(new File(migrationMap.getFile()).getName());
       if (fileName.equals(name)) return true;
     }
 
-    for (String defaultTemplate : DEFAULT_MAPS) {
-      String fileName = FileUtilRt.getNameWithoutExtension(StringUtil.getShortName(defaultTemplate, '/'));
-
-      if (fileName.equals(name)) return true;
-    }
     return false;
   }
 
@@ -137,30 +118,11 @@ public class MigrationMapSet {
     return dir.toFile();
   }
 
-  private void copyPredefinedMaps(File dir) {
-    File deletedFiles = new File(dir, "deleted.txt");
-    if (deletedFiles.isFile()) {
-      try {
-        myDeletedMaps.addAll(Arrays.asList(FileUtil.loadFile(deletedFiles, true).split("\n")));
-      }
-      catch (IOException e) {
-        LOG.error(e);
-      }
-    }
-
+  private static void copyPredefinedMaps(File dir) {
     for (PredefinedMigrationProvider provider : PredefinedMigrationProvider.EP_NAME.getExtensionList()) {
       URL migrationMap = provider.getMigrationMap();
       String fileName = new File(migrationMap.getFile()).getName();
-      if (myDeletedMaps.contains(FileUtilRt.getNameWithoutExtension(fileName))) continue;
       copyMap(dir, migrationMap, fileName);
-    }
-
-    for (String defaultTemplate : DEFAULT_MAPS) {
-      URL url = MigrationMapSet.class.getResource(defaultTemplate);
-      LOG.assertTrue(url != null);
-      String fileName = defaultTemplate.substring(defaultTemplate.lastIndexOf("/") + 1);
-      if (myDeletedMaps.contains(FileUtilRt.getNameWithoutExtension(fileName))) continue;
-      copyMap(dir, url, fileName);
     }
   }
 
@@ -191,7 +153,6 @@ public class MigrationMapSet {
   private void loadMaps() {
     myMaps = new ArrayList<>();
 
-
     File dir = getMapDirectory();
     copyPredefinedMaps(dir);
 
@@ -211,6 +172,8 @@ public class MigrationMapSet {
         LOG.error(e);
       }
     }
+
+    myMaps.sort((o1, o2) -> Integer.compare(o2.getOrder(), o1.getOrder()));
   }
 
   private static MigrationMap readMap(File file) throws JDOMException, InvalidDataException, IOException {
@@ -230,15 +193,10 @@ public class MigrationMapSet {
       if (NAME.equals(node.getName())) {
         @NlsSafe String name = node.getAttributeValue(VALUE);
         map.setName(name);
-        if (SWING_MAP_FILE_NAME.equals(fileName)) {
-          map.setDescription(RefactoringBundle.message("migration.swing.description"));
-        }
-        else {
-          for (PredefinedMigrationProvider provider : PredefinedMigrationProvider.EP_NAME.getExtensionList()) {
-            if (new File(provider.getMigrationMap().getFile()).getName().equals(fileName)) {
-              map.setDescription(provider.getDescription());
-              break;
-            }
+        for (PredefinedMigrationProvider provider : PredefinedMigrationProvider.EP_NAME.getExtensionList()) {
+          if (new File(provider.getMigrationMap().getFile()).getName().equals(fileName)) {
+            map.setDescription(provider.getDescription());
+            break;
           }
         }
       }
@@ -246,6 +204,13 @@ public class MigrationMapSet {
       if (map.getDescription() == null && DESCRIPTION.equals(node.getName())) {
         @NlsSafe String description = node.getAttributeValue(VALUE);
         map.setDescription(description);
+      }
+
+      if (ORDER.equals(node.getName())) {
+        String orderValue = node.getAttributeValue(VALUE);
+        if (orderValue != null && !orderValue.isBlank()) {
+          map.setOrder(Integer.valueOf(orderValue));
+        }
       }
 
       if (ENTRY.equals(node.getName())) {
@@ -302,10 +267,6 @@ public class MigrationMapSet {
     }
 
     JDOMUtil.updateFileSet(files, filePaths, documents, CodeStyle.getDefaultSettings().getLineSeparator());
-
-    if (!myDeletedMaps.isEmpty()) {
-      FileUtil.writeToFile(new File(dir, "deleted.txt"), StringUtil.join(myDeletedMaps, "\n"));
-    }
   }
 
   private static Document saveMap(MigrationMap map) {
@@ -314,6 +275,10 @@ public class MigrationMapSet {
     Element nameElement = new Element(NAME);
     nameElement.setAttribute(VALUE, map.getName());
     root.addContent(nameElement);
+
+    Element orderElement = new Element(ORDER);
+    nameElement.setAttribute(VALUE, String.valueOf(map.getOrder()));
+    root.addContent(orderElement);
 
     Element descriptionElement = new Element(DESCRIPTION);
     descriptionElement.setAttribute(VALUE, map.getDescription());

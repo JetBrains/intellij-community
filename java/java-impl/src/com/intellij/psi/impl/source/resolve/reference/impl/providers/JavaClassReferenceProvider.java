@@ -134,11 +134,6 @@ public class JavaClassReferenceProvider extends GenericReferenceProvider impleme
   }
 
   @Override
-  public void setOptions(@Nullable Map<CustomizationKey, Object> options) {
-    myOptions = options;
-  }
-
-  @Override
   @Nullable
   public Map<CustomizationKey, Object> getOptions() {
     return myOptions;

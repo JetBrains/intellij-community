@@ -6,10 +6,10 @@ import com.intellij.uiDesigner.componentTree.ComponentPtr;
 import com.intellij.uiDesigner.componentTree.ComponentSelectionListener;
 import com.intellij.uiDesigner.designSurface.GuiEditor;
 import com.intellij.uiDesigner.radComponents.RadComponent;
+import com.intellij.util.containers.Stack;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
-import java.util.Stack;
 
 /**
  * This class implements Ctrl+W / Ctrl+Shift+W functionality in the GuiEditor

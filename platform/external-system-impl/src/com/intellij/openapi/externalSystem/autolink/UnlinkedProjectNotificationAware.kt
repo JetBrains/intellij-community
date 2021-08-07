@@ -3,8 +3,7 @@ package com.intellij.openapi.externalSystem.autolink
 
 import com.intellij.CommonBundle
 import com.intellij.notification.NotificationAction
-import com.intellij.notification.NotificationDisplayType.STICKY_BALLOON
-import com.intellij.notification.NotificationGroup
+import com.intellij.notification.NotificationGroupManager
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.application.ApplicationManager
@@ -20,6 +19,7 @@ import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.util.containers.DisposableWrapperList
+import org.jetbrains.annotations.TestOnly
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 
@@ -41,7 +41,9 @@ class UnlinkedProjectNotificationAware(private val project: Project) : Persisten
       return
     }
 
-    val notification = NOTIFICATION_GROUP.createNotification(
+    val notificationManager = NotificationGroupManager.getInstance()
+    val notificationGroup = notificationManager.getNotificationGroup(NOTIFICATION_GROUP_ID)
+    val notification = notificationGroup.createNotification(
       message("unlinked.project.notification.title", systemName),
       NotificationType.INFORMATION
     )
@@ -74,6 +76,11 @@ class UnlinkedProjectNotificationAware(private val project: Project) : Persisten
     LOG.debug("Notified unlinked ${projectId.readableName} project notification")
   }
 
+  @TestOnly
+  fun getProjectsWithNotification(): Set<ExternalSystemProjectId> {
+    return notifiedNotifications.toSet()
+  }
+
   override fun getState(): State {
     return State(disabledNotifications)
   }
@@ -86,7 +93,7 @@ class UnlinkedProjectNotificationAware(private val project: Project) : Persisten
   data class State(var disabledNotifications: Set<String> = emptySet())
 
   companion object {
-    private val NOTIFICATION_GROUP = NotificationGroup("External System Auto-Link Notification Group", STICKY_BALLOON, true)
+    private const val NOTIFICATION_GROUP_ID = "External System Auto-Link Notification Group"
 
     @JvmStatic
     fun getInstance(project: Project): UnlinkedProjectNotificationAware {

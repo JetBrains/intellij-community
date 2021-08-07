@@ -240,6 +240,10 @@ public final class VcsLogUtil {
     return hashString.substring(0, Math.min(shortHashLength, hashString.length()));
   }
 
+  public static boolean isFullHash(@NotNull String s) {
+    return s.length() == FULL_HASH_LENGTH && HASH_REGEX.matcher(s).matches();
+  }
+
   @Nullable
   public static VcsRef findBranch(@NotNull RefsModel refs, @NotNull VirtualFile root, @NotNull String branchName) {
     CompressedRefs compressedRefs = refs.getAllRefsByRoot().get(root);

@@ -2,31 +2,30 @@ package com.intellij.ml.local.models.frequency.methods
 
 import com.intellij.ml.local.models.api.LocalModelStorage
 import com.intellij.ml.local.util.StorageUtil
-import com.intellij.ml.local.util.StorageUtil.clear
+import com.intellij.ml.local.util.StorageUtil.getOrLogError
 import com.intellij.ml.local.util.StorageUtil.isEmpty
 import com.intellij.util.Processor
 import com.intellij.util.io.DataExternalizer
 import com.intellij.util.io.EnumeratorStringDescriptor
-import com.intellij.util.io.PersistentHashMap
+import com.intellij.util.io.PersistentMapBuilder
 import java.io.DataInput
 import java.io.DataOutput
 import java.nio.file.Path
 
-class MethodsFrequencyStorage internal constructor(private val storageDirectory: Path) : LocalModelStorage {
+class MethodsFrequencyStorage internal constructor(private val storageDirectory: Path,
+                                                   private var isValid: Boolean) : LocalModelStorage {
   companion object {
     private const val STORAGE_NAME = "methods_frequency"
     private const val VERSION = 1
 
-    fun getStorage(baseDirectory: Path): MethodsFrequencyStorage {
+    fun getStorage(baseDirectory: Path): MethodsFrequencyStorage? {
       val storageDirectory = baseDirectory.resolve(STORAGE_NAME)
-      StorageUtil.prepareStorage(storageDirectory, VERSION)
-      return MethodsFrequencyStorage(storageDirectory)
+      return StorageUtil.getStorage(storageDirectory, VERSION) { path, isValid -> MethodsFrequencyStorage(path, isValid) }
     }
   }
-  private var isValid: Boolean = true
-  private val storage = PersistentHashMap(storageDirectory.resolve(STORAGE_NAME),
-                                          EnumeratorStringDescriptor(),
-                                          MyDataExternalizer())
+  private val storage = PersistentMapBuilder.newBuilder(storageDirectory.resolve(STORAGE_NAME),
+                                                        EnumeratorStringDescriptor(),
+                                                        MyDataExternalizer()).compactOnClose().build()
 
   @Volatile var totalMethods = 0
     private set
@@ -35,7 +34,9 @@ class MethodsFrequencyStorage internal constructor(private val storageDirectory:
     private set
 
   init {
-    getTotalCounts()
+    if (isValid) {
+      getTotalCounts()
+    }
   }
 
   override fun name(): String = STORAGE_NAME
@@ -50,7 +51,7 @@ class MethodsFrequencyStorage internal constructor(private val storageDirectory:
     if (isValid) {
       getTotalCounts()
     } else {
-      storage.clear()
+      storage.closeAndClean()
     }
     this.isValid = isValid
     StorageUtil.saveInfo(VERSION, isValid, storageDirectory)
@@ -67,13 +68,13 @@ class MethodsFrequencyStorage internal constructor(private val storageDirectory:
     }
   }
 
-  fun get(className: String): MethodsFrequencies? = storage.get(className)
+  fun get(className: String): MethodsFrequencies? = storage.getOrLogError(className)
 
   private fun getTotalCounts() {
     totalMethods = 0
     totalMethodsUsages = 0
     storage.processKeys(Processor {
-      val frequencies = storage.get(it) ?: return@Processor true
+      val frequencies = storage.getOrLogError(it) ?: return@Processor true
       totalMethods++
       totalMethodsUsages += frequencies.getTotalFrequency()
       return@Processor true

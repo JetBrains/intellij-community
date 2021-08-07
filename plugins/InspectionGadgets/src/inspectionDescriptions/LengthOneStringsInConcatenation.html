@@ -1,7 +1,15 @@
 <html>
 <body>
-Reports String literals of length one being used in concatenation.
-These literals may be replaced by equivalent character literals, gaining some performance enhancement.
+Reports concatenation with string literals that consist of one character.
+<p>These literals may be replaced with equivalent character literals, gaining some performance enhancement.</p>
+<p><b>Example:</b></p>
+<pre>
+  String hello = hell + "o";
+</pre>
+<p>After the quick-fix is applied:</p>
+<pre>
+  String hello = hell + 'o';
+</pre>
 <!-- tooltip end -->
 <p>
 

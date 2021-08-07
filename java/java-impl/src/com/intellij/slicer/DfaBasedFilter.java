@@ -4,8 +4,9 @@ package com.intellij.slicer;
 import com.intellij.codeInsight.Nullability;
 import com.intellij.codeInspection.dataFlow.CommonDataflow;
 import com.intellij.codeInspection.dataFlow.DfaNullability;
-import com.intellij.codeInspection.dataFlow.SpecialField;
 import com.intellij.codeInspection.dataFlow.TypeConstraint;
+import com.intellij.codeInspection.dataFlow.jvm.JvmPsiRangeSetUtil;
+import com.intellij.codeInspection.dataFlow.jvm.SpecialField;
 import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet;
 import com.intellij.codeInspection.dataFlow.types.*;
 import com.intellij.java.JavaBundle;
@@ -37,11 +38,11 @@ final class DfaBasedFilter {
   @NotNull DfType getDfType() {
     return myDfType;
   }
-  
+
   DfaBasedFilter wrap() {
-    return new DfaBasedFilter(this, DfTypes.TOP);
+    return new DfaBasedFilter(this, DfType.TOP);
   }
-  
+
   DfaBasedFilter unwrap() {
     return myNextFilter;
   }
@@ -59,13 +60,14 @@ final class DfaBasedFilter {
       DfConstantType<?> dfConstantType = (DfConstantType<?>)myDfType;
       Object constValue = dfConstantType.getValue();
       if (!(constValue instanceof PsiElement)) {
+        PsiPrimitiveType targetType = dfConstantType instanceof DfPrimitiveType ? ((DfPrimitiveType)dfConstantType).getPsiType() : null;
         Object literalValue = ((PsiLiteralValue)element).getValue();
-        Object value = constValue == null ? literalValue : TypeConversionUtil.computeCastTo(literalValue, dfConstantType.getPsiType());
+        Object value = targetType == null ? literalValue : TypeConversionUtil.computeCastTo(literalValue, targetType);
         return Objects.equals(value, constValue);
       }
     }
     DfType dfType = getElementDfType(element, assertionsDisabled);
-    return dfType.meet(myDfType) != DfTypes.BOTTOM;
+    return dfType.meet(myDfType) != DfType.BOTTOM;
   }
 
   @Nullable DfaBasedFilter mergeFilter(@NotNull PsiElement element) {
@@ -74,13 +76,13 @@ final class DfaBasedFilter {
       type = ((DfReferenceType)type).dropLocality().dropMutability();
     }
     DfType meet = type.meet(myDfType);
-    if (meet == DfTypes.TOP && myNextFilter == null) return null;
-    if (meet == DfTypes.BOTTOM || meet.equals(myDfType)) return this;
+    if (meet == DfType.TOP && myNextFilter == null) return null;
+    if (meet == DfType.BOTTOM || meet.equals(myDfType)) return this;
     return new DfaBasedFilter(myNextFilter, meet);
   }
 
   private @NotNull DfType getElementDfType(@NotNull PsiElement element, boolean assertionsDisabled) {
-    if (!(element instanceof PsiExpression)) return DfTypes.TOP;
+    if (!(element instanceof PsiExpression)) return DfType.TOP;
     PsiExpression expression = (PsiExpression)element;
     PsiType expressionType = expression.getType();
     if (TypeConversionUtil.isPrimitiveAndNotNull(expressionType) && myDfType instanceof DfReferenceType) {
@@ -90,7 +92,7 @@ final class DfaBasedFilter {
       return DfTypes.typedObject(PsiPrimitiveType.getUnboxedType(expressionType), Nullability.NOT_NULL);
     }
     CommonDataflow.DataflowResult result = CommonDataflow.getDataflowResult(expression);
-    if (result == null) return DfTypes.TOP;
+    if (result == null) return DfType.TOP;
     expression = PsiUtil.skipParenthesizedExprDown(expression);
     DfType type = assertionsDisabled ? result.getDfTypeNoAssertions(expression) : result.getDfType(expression);
     if (myDfType instanceof DfLongType && type instanceof DfIntType) {
@@ -134,15 +136,15 @@ final class DfaBasedFilter {
   }
 
   static @Nls String getPresentationText(@NotNull DfType type, @Nullable PsiType psiType) {
-    if (type == DfTypes.TOP) {
+    if (type == DfType.TOP) {
       return "";
     }
     if (type instanceof DfIntegralType) {
-      LongRangeSet psiRange = LongRangeSet.fromType(psiType);
+      LongRangeSet psiRange = JvmPsiRangeSetUtil.typeRange(psiType);
       LongRangeSet dfRange = ((DfIntegralType)type).getRange();
       if (psiRange != null && dfRange.contains(psiRange)) return "";
       // chop 'int' or 'long' prefix
-      return dfRange.getPresentationText(psiType);
+      return JvmPsiRangeSetUtil.getPresentationText(dfRange, psiType);
     }
     if (type instanceof DfConstantType) {
       return type.toString();

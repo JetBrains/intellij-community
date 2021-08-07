@@ -1,8 +1,11 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.tasks.actions;
 
-import com.intellij.notification.*;
+import com.intellij.notification.Notification;
+import com.intellij.notification.NotificationDisplayType;
+import com.intellij.notification.NotificationType;
+import com.intellij.notification.Notifications;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
@@ -18,7 +21,6 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.event.HyperlinkEvent;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -82,20 +84,14 @@ public final class TaskSearchSupport {
     if (!StringUtil.isEmpty(details)) {
       content = "<p>" + details + "</p>" + content; //NON-NLS
     }
-    Notifications.Bus.notify(new Notification(TASKS_NOTIFICATION_GROUP,
-                                              TaskBundle.message("notification.title.cannot.connect.to", repository.getUrl()),
-                                              content, NotificationType.WARNING,
-                                              new NotificationListener() {
-                                                @Override
-                                                public void hyperlinkUpdate(@NotNull Notification notification,
-                                                                            @NotNull HyperlinkEvent event) {
-                                                  TaskRepositoriesConfigurable configurable =
-                                                    new TaskRepositoriesConfigurable(project);
-                                                  ShowSettingsUtil.getInstance().editConfigurable(project, configurable);
-                                                  if (!ArrayUtil.contains(repository, TaskManager.getManager(project).getAllRepositories())) {
-                                                    notification.expire();
-                                                  }
-                                                }
-                                              }), project);
+    new Notification(TASKS_NOTIFICATION_GROUP, TaskBundle.message("notification.title.cannot.connect.to", repository.getUrl()), content, NotificationType.WARNING)
+      .setListener((notification, event) -> {
+        TaskRepositoriesConfigurable configurable = new TaskRepositoriesConfigurable(project);
+        ShowSettingsUtil.getInstance().editConfigurable(project, configurable);
+        if (!ArrayUtil.contains(repository, TaskManager.getManager(project).getAllRepositories())) {
+          notification.expire();
+        }
+      })
+      .notify(project);
   }
 }

@@ -2,15 +2,14 @@
 package com.intellij.java.ift.lesson.refactorings
 
 import com.intellij.CommonBundle
+import com.intellij.idea.ActionsBundle
 import com.intellij.java.ift.JavaLessonsBundle
 import com.intellij.refactoring.RefactoringBundle
 import com.intellij.util.ui.UIUtil
-import training.dsl.LessonContext
-import training.dsl.LessonUtil
+import training.dsl.*
 import training.dsl.LessonUtil.restoreIfModifiedOrMoved
-import training.dsl.TaskRuntimeContext
-import training.dsl.parseLessonSample
 import training.learn.lesson.general.refactorings.RefactoringMenuLessonBase
+import training.util.adaptToNotNativeLocalization
 import javax.swing.JDialog
 
 class JavaRefactoringMenuLesson : RefactoringMenuLessonBase("java.refactoring.menu") {
@@ -41,11 +40,12 @@ class JavaRefactoringMenuLesson : RefactoringMenuLessonBase("java.refactoring.me
                 return lines;
             }
         }
-    }      
+    }
   """.trimIndent())
 
   override val lessonContent: LessonContext.() -> Unit = {
     prepareSample(sample)
+    showWarningIfInplaceRefactoringsDisabled()
     extractParameterTasks()
     moreRefactoringsTasks()
   }
@@ -59,8 +59,13 @@ class JavaRefactoringMenuLesson : RefactoringMenuLessonBase("java.refactoring.me
 
     actionTask("Inline") {
       restoreIfModifiedOrMoved()
-      JavaLessonsBundle.message("java.refactoring.menu.inline.variable",
-                                code(inlineVariableName), action("Refactorings.QuickListPopupAction"), action(it))
+      if (adaptToNotNativeLocalization) {
+        JavaLessonsBundle.message("java.refactoring.menu.inline.variable", code(inlineVariableName),
+                                  action("Refactorings.QuickListPopupAction"), strong(RefactoringBundle.message("inline.variable.title")),
+                                  action(it))
+      }
+      else JavaLessonsBundle.message("java.refactoring.menu.inline.variable.eng",
+                                     code(inlineVariableName), action("Refactorings.QuickListPopupAction"), action(it))
     }
     task {
       stateCheck {
@@ -72,8 +77,12 @@ class JavaRefactoringMenuLesson : RefactoringMenuLessonBase("java.refactoring.me
 
     actionTask("IntroduceConstant") {
       restoreIfModifiedOrMoved()
-      JavaLessonsBundle.message("java.refactoring.menu.introduce.constant",
-                                action("Refactorings.QuickListPopupAction"), action(it))
+      if (adaptToNotNativeLocalization) {
+        JavaLessonsBundle.message("java.refactoring.menu.introduce.constant", action("Refactorings.QuickListPopupAction"),
+                                  strong(ActionsBundle.message("action.IntroduceConstant.text").dropMnemonic()), action(it))
+      }
+      else JavaLessonsBundle.message("java.refactoring.menu.introduce.constant.eng",
+                                     action("Refactorings.QuickListPopupAction"), action(it))
     }
     task {
       stateCheck {

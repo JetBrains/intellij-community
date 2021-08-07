@@ -1,5 +1,5 @@
 #!/bin/sh
-# Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+# Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 # ---------------------------------------------------------------------
 # __product_full__ startup script.
@@ -42,12 +42,10 @@ OS_ARCH=$(uname -m)
 IDE_BIN_HOME=$(dirname "$(realpath "$0")")
 IDE_HOME=$(dirname "${IDE_BIN_HOME}")
 CONFIG_HOME="${XDG_CONFIG_HOME:-${HOME}/.config}"
-PRODUCT_VENDOR="__product_vendor__"
-PATHS_SELECTOR="__system_selector__"
 
 # ---------------------------------------------------------------------
 # Locate a JRE installation directory command -v will be used to run the IDE.
-# Try (in order): $__product_uc___JDK, .../__vm_options__.jdk, .../jbr[-x86], $JDK_HOME, $JAVA_HOME, "java" in $PATH.
+# Try (in order): $__product_uc___JDK, .../__vm_options__.jdk, .../jbr, $JDK_HOME, $JAVA_HOME, "java" in $PATH.
 # ---------------------------------------------------------------------
 # shellcheck disable=SC2154
 if [ -n "$__product_uc___JDK" ] && [ -x "$__product_uc___JDK/bin/java" ]; then
@@ -55,19 +53,15 @@ if [ -n "$__product_uc___JDK" ] && [ -x "$__product_uc___JDK/bin/java" ]; then
 fi
 
 BITS=""
-if [ -z "$JRE" ] && [ -s "${CONFIG_HOME}/${PRODUCT_VENDOR}/${PATHS_SELECTOR}/__vm_options__.jdk" ]; then
-  USER_JRE=$(cat "${CONFIG_HOME}/${PRODUCT_VENDOR}/${PATHS_SELECTOR}/__vm_options__.jdk")
+if [ -z "$JRE" ] && [ -s "${CONFIG_HOME}/__product_vendor__/__system_selector__/__vm_options__.jdk" ]; then
+  USER_JRE=$(cat "${CONFIG_HOME}/__product_vendor__/__system_selector__/__vm_options__.jdk")
   if [ -x "$USER_JRE/bin/java" ]; then
     JRE="$USER_JRE"
   fi
 fi
 
-if [ -z "$JRE" ] && [ "$OS_TYPE" = "Linux" ]; then
-  if [ "$OS_ARCH" = "x86_64" ] && [ -d "$IDE_HOME/jbr" ]; then
-    JRE="$IDE_HOME/jbr"
-  elif [ -d "$IDE_HOME/jbr-x86" ] && "$IDE_HOME/jbr-x86/bin/java" -version > /dev/null 2>&1 ; then
-    JRE="$IDE_HOME/jbr-x86"
-  fi
+if [ -z "$JRE" ] && [ "$OS_TYPE" = "Linux" ] && [ "$OS_ARCH" = "x86_64" ] && [ -d "$IDE_HOME/jbr" ]; then
+  JRE="$IDE_HOME/jbr"
 fi
 
 # shellcheck disable=SC2153
@@ -86,20 +80,8 @@ else
 fi
 
 if [ -z "$JAVA_BIN" ] || [ ! -x "$JAVA_BIN" ]; then
-  X86_JRE_URL="__x86_jre_url__"
-  # shellcheck disable=SC2166
-  if [ -n "$X86_JRE_URL" ] && [ ! -d "$IDE_HOME/jbr-x86" ] && [ "$OS_ARCH" = "i386" -o "$OS_ARCH" = "i686" ]; then
-    message "To run __product_full__ on a 32-bit system, please download 32-bit Java runtime from \"$X86_JRE_URL\" and unpack it into \"jbr-x86\" directory."
-  else
-    message "No JRE found. Please make sure \$__product_uc___JDK, \$JDK_HOME, or \$JAVA_HOME point to valid JRE installation."
-  fi
+  message "No JRE found. Please make sure \$__product_uc___JDK, \$JDK_HOME, or \$JAVA_HOME point to valid JRE installation."
   exit 1
-fi
-
-if [ -n "$JRE" ] && [ -r "$JRE/release" ]; then
-  egrep -q -E -e "OS_ARCH=\"(x86_64|amd64)\"" "$JRE/release" && BITS="64" || BITS=""
-else
-  test "${OS_ARCH}" = "x86_64" && BITS="64" || BITS=""
 fi
 
 # ---------------------------------------------------------------------
@@ -110,6 +92,7 @@ if [ -n "$__product_uc___PROPERTIES" ]; then
   IDE_PROPERTIES_PROPERTY="-Didea.properties.file=$__product_uc___PROPERTIES"
 fi
 
+BITS="64"
 VM_OPTIONS_FILE=""
 USER_VM_OPTIONS_FILE=""
 # shellcheck disable=SC2154
@@ -123,9 +106,9 @@ elif [ -r "${IDE_HOME}.vmoptions" ]; then
     VM_OPTIONS_FILE="${IDE_BIN_HOME}/__vm_options__${BITS}.vmoptions"
     USER_VM_OPTIONS_FILE="${IDE_HOME}.vmoptions"
   fi
-elif [ -r "${CONFIG_HOME}/${PRODUCT_VENDOR}/${PATHS_SELECTOR}/__vm_options__${BITS}.vmoptions" ]; then
+elif [ -r "${CONFIG_HOME}/__product_vendor__/__system_selector__/__vm_options__${BITS}.vmoptions" ]; then
   # 3. <config_directory>/<bin_name>.vmoptions
-  VM_OPTIONS_FILE="${CONFIG_HOME}/${PRODUCT_VENDOR}/${PATHS_SELECTOR}/__vm_options__${BITS}.vmoptions"
+  VM_OPTIONS_FILE="${CONFIG_HOME}/__product_vendor__/__system_selector__/__vm_options__${BITS}.vmoptions"
 else
   # 4. <IDE_HOME>/bin/[<os>/]<bin_name>.vmoptions [+ <config_directory>/user.vmoptions]
   if [ -r "${IDE_BIN_HOME}/__vm_options__${BITS}.vmoptions" ]; then
@@ -136,11 +119,11 @@ else
       VM_OPTIONS_FILE="${IDE_BIN_HOME}/${OS_SPECIFIC}/__vm_options__${BITS}.vmoptions"
     fi
   fi
-  if [ -r "${CONFIG_HOME}/${PRODUCT_VENDOR}/${PATHS_SELECTOR}/user.vmoptions" ]; then
+  if [ -r "${CONFIG_HOME}/__product_vendor__/__system_selector__/user.vmoptions" ]; then
     if [ -n "$VM_OPTIONS_FILE" ]; then
-      VM_OPTIONS="${CONFIG_HOME}/${PRODUCT_VENDOR}/${PATHS_SELECTOR}/user.vmoptions"
+      VM_OPTIONS="${CONFIG_HOME}/__product_vendor__/__system_selector__/user.vmoptions"
     else
-      USER_VM_OPTIONS_FILE="${CONFIG_HOME}/${PRODUCT_VENDOR}/${PATHS_SELECTOR}/user.vmoptions"
+      USER_VM_OPTIONS_FILE="${CONFIG_HOME}/__product_vendor__/__system_selector__/user.vmoptions"
     fi
   fi
 fi
@@ -168,8 +151,6 @@ IFS="$(printf '\n\t')"
   ${VM_OPTIONS} \
   "-XX:ErrorFile=$HOME/java_error_in___vm_options___%p.log" \
   "-XX:HeapDumpPath=$HOME/java_error_in___vm_options___.hprof" \
-  "-Didea.vendor.name=${PRODUCT_VENDOR}" \
-  "-Didea.paths.selector=${PATHS_SELECTOR}" \
   "-Djb.vmOptionsFile=${USER_VM_OPTIONS_FILE:-${VM_OPTIONS_FILE}}" \
   ${IDE_PROPERTIES_PROPERTY} \
   __ide_jvm_args__ \

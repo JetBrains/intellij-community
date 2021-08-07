@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.xdebugger.impl.evaluate.quick.common;
 
 import com.intellij.codeInsight.hint.HintManager;
@@ -79,29 +79,6 @@ public abstract class AbstractValueHint {
   protected abstract boolean canShowHint();
 
   protected abstract void evaluateAndShowHint();
-
-  public boolean isKeepHint(Editor editor, Point point) {
-    return myType != ValueHintType.MOUSE_ALT_OVER_HINT;
-
-    //if (myCurrentHint != null && myCurrentHint.canControlAutoHide()) {
-    //  return true;
-    //}
-    //
-    //if (myType == ValueHintType.MOUSE_ALT_OVER_HINT) {
-    //  return false;
-    //}
-    //else if (myType == ValueHintType.MOUSE_CLICK_HINT) {
-    //  if (myCurrentHint != null && myCurrentHint.isVisible()) {
-    //    return true;
-    //  }
-    //}
-    //else {
-    //  if (isInsideCurrentRange(editor, point)) {
-    //    return true;
-    //  }
-    //}
-    //return false;
-  }
 
   boolean isInsideCurrentRange(Editor editor, Point point) {
     return myCurrentRange != null && myCurrentRange.contains(calculateOffset(editor, point));

@@ -1,6 +1,11 @@
 <html>
 <body>
-This inspection detects usages of <code>File.equals/hashCode/compareTo</code> methods - which do not honor case-insensitivity on macOS.
-Please use <code>FileUtil.filesEquals/fileHashCode/compareFiles</code> methods instead.
+Reports usages of <code>java.io.File.equals()/hashCode()/compareTo()</code> methods.
+<p>
+  These do not honor case-insensitivity on macOS.
+</p>
+<p>
+  Use <code>com.intellij.openapi.util.io.FileUtil.filesEquals()/fileHashCode()/compareFiles()</code> methods instead.
+</p>
 </body>
 </html>

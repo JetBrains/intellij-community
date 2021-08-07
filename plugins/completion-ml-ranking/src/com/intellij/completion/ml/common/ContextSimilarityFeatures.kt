@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.completion.ml.common
 
 import com.intellij.codeInsight.completion.CompletionLocation
@@ -26,10 +26,13 @@ class ContextSimilarityFeatures : ElementFeatureProvider {
                                                                        contextFeatures: ContextFeatures) {
     val similarityScorer = contextFeatures.getUserData(key)
     if (similarityScorer != null) {
-      val similarity = similarityScorer.score(lookupString)
-      addFeature("${baseName}_mean", similarity.meanSimilarity())
-      addFeature("${baseName}_max", similarity.maxSimilarity())
-      addFeature("${baseName}_full", similarity.fullSimilarity())
+      val prefixSimilarity = similarityScorer.scorePrefixSimilarity(lookupString)
+      val stemmedSimilarity = similarityScorer.scoreStemmedSimilarity(lookupString)
+      addFeature("${baseName}_mean", prefixSimilarity.meanSimilarity())
+      addFeature("${baseName}_max", prefixSimilarity.maxSimilarity())
+      addFeature("${baseName}_full", prefixSimilarity.fullSimilarity())
+      addFeature("${baseName}_stemmed_mean", stemmedSimilarity.meanSimilarity())
+      addFeature("${baseName}_stemmed_max", stemmedSimilarity.maxSimilarity())
     }
   }
 

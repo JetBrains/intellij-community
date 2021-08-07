@@ -17,7 +17,7 @@ import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import org.jetbrains.plugins.github.i18n.GithubBundle
 import org.jetbrains.plugins.github.pullrequest.config.GithubPullRequestsProjectUISettings
-import org.jetbrains.plugins.github.ui.util.SingleValueModel
+import com.intellij.collaboration.ui.SingleValueModel
 import java.awt.event.KeyEvent
 import javax.swing.JComponent
 import javax.swing.KeyStroke
@@ -78,7 +78,7 @@ object GHPRSearchPanel {
         .registerCustomShortcutSet(KeymapUtil.getActiveKeymapShortcuts(SHOW_SEARCH_HISTORY_ACTION), this)
     }
 
-    model.addAndInvokeValueChangedListener {
+    model.addAndInvokeListener {
       searchField.text = model.value
     }
 

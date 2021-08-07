@@ -5,7 +5,6 @@ import com.intellij.openapi.application.ApplicationManager.getApplication
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.Messages.getQuestionIcon
-import com.intellij.openapi.vcs.AbstractVcs
 import com.intellij.openapi.vcs.VcsBundle.message
 import com.intellij.openapi.vcs.VcsConfiguration
 import com.intellij.openapi.vcs.VcsShowConfirmationOption
@@ -14,7 +13,6 @@ import com.intellij.openapi.vcs.changes.actions.MoveChangesToAnotherListAction
 import com.intellij.openapi.vcs.changes.ui.ChangelistMoveOfferDialog
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.ui.ConfirmationDialog.requestForConfirmation
-import org.jetbrains.annotations.ApiStatus
 
 class ChangeListCommitState(val changeList: LocalChangeList, val changes: List<Change>, val commitMessage: String) {
   internal fun copy(commitMessage: String): ChangeListCommitState =
@@ -28,17 +26,6 @@ open class SingleChangeListCommitter(
   localHistoryActionName: String,
   private val isDefaultChangeListFullyIncluded: Boolean
 ) : LocalChangesCommitter(project, commitState.changes, commitState.commitMessage, commitContext, localHistoryActionName) {
-
-  @Deprecated("Use constructor without `vcsToCommit: AbstractVcs?` parameter")
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.2")
-  constructor(
-    project: Project,
-    commitState: ChangeListCommitState,
-    commitContext: CommitContext,
-    @Suppress("UNUSED_PARAMETER") vcsToCommit: AbstractVcs?, // external usages pass `null` here
-    localHistoryActionName: String,
-    isDefaultChangeListFullyIncluded: Boolean
-  ) : this(project, commitState, commitContext, localHistoryActionName, isDefaultChangeListFullyIncluded)
 
   private val changeList get() = commitState.changeList
 

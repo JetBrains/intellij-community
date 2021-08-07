@@ -1,5 +1,4 @@
 <idea-plugin>
-
   <extensionPoints>
     <extensionPoint name="logProvider" interface="com.intellij.vcs.log.VcsLogProvider" area="IDEA_PROJECT" dynamic="true"/>
     <extensionPoint name="logHighlighterFactory" interface="com.intellij.vcs.log.ui.highlighters.VcsLogHighlighterFactory" dynamic="true"/>
@@ -18,17 +17,12 @@
                         displayNameSupplierClassName="com.intellij.vcs.log.impl.VcsLogContentProvider$DisplayNameSupplier"/>
 
     <applicationService serviceImplementation="com.intellij.vcs.log.impl.VcsLogApplicationSettings"/>
-    <applicationService serviceImplementation="com.intellij.vcs.log.data.index.VcsLogBigRepositoriesList"/>
     <projectService serviceImplementation="com.intellij.vcs.log.impl.VcsLogSharedSettings"/>
-
-    <projectService serviceImplementation="com.intellij.vcs.log.impl.VcsProjectLog"/>
 
     <projectService serviceInterface="com.intellij.vcs.log.VcsLogObjectsFactory"
                     serviceImplementation="com.intellij.vcs.log.impl.VcsLogObjectsFactoryImpl"/>
-    <projectService serviceImplementation="com.intellij.vcs.log.impl.VcsLogProjectTabsProperties"/>
     <projectService serviceInterface="com.intellij.vcs.log.VcsUserRegistry"
                     serviceImplementation="com.intellij.vcs.log.data.VcsUserRegistryImpl"/>
-    <projectService serviceImplementation="com.intellij.vcs.log.history.FileHistoryUiProperties"/>
     <projectService serviceImplementation="com.intellij.vcs.log.history.VcsDirectoryRenamesProvider"/>
 
     <projectService serviceImplementation="com.intellij.vcs.log.statistics.VcsLogIndexCollector"/>
@@ -61,7 +55,11 @@
     <getDataRule key="Vcs.Log.UiEx" implementationClass="com.intellij.vcs.log.ui.VcsLogUiExDataRule"/>
 
     <diff.actions.ShowDiffAction.ExtensionProvider
-        implementation="com.intellij.vcs.log.ui.actions.history.CompareRevisionsFromFileHistoryActionProvider"/>
+        implementation="com.intellij.vcs.log.ui.actions.history.CompareRevisionsFromFileHistoryActionProvider$ShowDiff"/>
+    <diff.actions.ShowStandaloneDiffAction.ExtensionProvider
+        implementation="com.intellij.vcs.log.ui.actions.history.CompareRevisionsFromFileHistoryActionProvider$ShowStandaloneDiff"/>
+    <diff.actions.ShowStandaloneDiffAction.ExtensionProvider
+        implementation="com.intellij.vcs.log.ui.actions.ShowStandaloneDiffFromLogActionProvider"/>
     <openapi.vcs.history.actions.ShowDiffAfterWithLocalAction.ExtensionProvider
         implementation="com.intellij.vcs.log.ui.actions.history.ShowDiffAfterWithLocalFromFileHistoryActionProvider"/>
     <openapi.vcs.history.actions.ShowDiffAfterWithLocalAction.ExtensionProvider
@@ -212,6 +210,7 @@
       <reference id="Vcs.Log.OpenRepositoryVersion"/>
       <reference id="Vcs.ShowDiffWithLocal"/>
       <reference id="Diff.ShowDiff"/>
+      <reference ref="Diff.ShowStandaloneDiff"/>
       <reference id="Vcs.Log.ShowAllAffected"/>
       <reference id="Vcs.Log.AnnotateRevisionAction"/>
       <reference id="VcsHistoryActionsGroup"/>

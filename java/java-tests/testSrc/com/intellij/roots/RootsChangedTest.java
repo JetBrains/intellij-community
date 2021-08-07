@@ -31,10 +31,7 @@ import com.intellij.openapi.vfs.newvfs.BulkFileListener;
 import com.intellij.openapi.vfs.newvfs.events.VFileCreateEvent;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
-import com.intellij.testFramework.IdeaTestUtil;
-import com.intellij.testFramework.JavaModuleTestCase;
-import com.intellij.testFramework.PlatformTestUtil;
-import com.intellij.testFramework.VfsTestUtil;
+import com.intellij.testFramework.*;
 import com.intellij.util.TimeoutUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBusConnection;
@@ -49,6 +46,10 @@ import java.nio.file.Paths;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
+/**
+ * Checks that proper {@link ModuleRootListener#rootsChanged} events are sent. Consider adding new tests to {@link LibraryRootsChangedTest}
+ * which uses more convenient API.
+ */
 public class RootsChangedTest extends JavaModuleTestCase {
   private MyModuleRootListener myModuleRootListener;
 
@@ -332,33 +333,14 @@ public class RootsChangedTest extends JavaModuleTestCase {
   }
 
   private void assertNoEvents(boolean modificationCountMayBeIncremented) {
-    assertEventsCountAndIncrementModificationCount(0, false, modificationCountMayBeIncremented);
+    myModuleRootListener.assertEventsCountAndIncrementModificationCount(0, false, modificationCountMayBeIncremented);
   }
 
   private void assertEventsCount(int count) {
-    assertEventsCountAndIncrementModificationCount(count, count != 0, false);
+    myModuleRootListener.assertEventsCountAndIncrementModificationCount(count, count != 0, false);
   }
 
-  private void assertEventsCountAndIncrementModificationCount(int eventsCount, boolean modificationCountMustBeIncremented,
-                                                              boolean modificationCountMayBeIncremented) {
-    final int beforeCount = myModuleRootListener.beforeCount;
-    final int afterCount = myModuleRootListener.afterCount;
-    assertEquals("beforeCount = " + beforeCount + ", afterCount = " + afterCount, beforeCount, afterCount);
-    assertEquals(eventsCount, beforeCount);
-    long currentModificationCount = ProjectRootManager.getInstance(myProject).getModificationCount();
-    if (modificationCountMayBeIncremented) {
-      assertTrue(currentModificationCount >= myModuleRootListener.modificationCount);
-    }
-    else if (modificationCountMustBeIncremented) {
-      assertTrue(currentModificationCount > myModuleRootListener.modificationCount);
-    }
-    else {
-      assertEquals(myModuleRootListener.modificationCount, currentModificationCount);
-    }
-    myModuleRootListener.reset();
-  }
-
-  private static class MyModuleRootListener implements ModuleRootListener {
+  static class MyModuleRootListener implements ModuleRootListener {
     private final Project myProject;
     private int beforeCount;
     private int afterCount;
@@ -378,10 +360,30 @@ public class RootsChangedTest extends JavaModuleTestCase {
       afterCount++;
     }
 
-    private void reset() {
+    void reset() {
       beforeCount = 0;
       afterCount = 0;
       modificationCount = ProjectRootManager.getInstance(myProject).getModificationCount();
+    }
+
+    void assertEventsCountAndIncrementModificationCount(int eventsCount,
+                                                        boolean modificationCountMustBeIncremented,
+                                                        boolean modificationCountMayBeIncremented) {
+      final int beforeCount = this.beforeCount;
+      final int afterCount = this.afterCount;
+      assertEquals("beforeCount = " + beforeCount + ", afterCount = " + afterCount, beforeCount, afterCount);
+      assertEquals(eventsCount, beforeCount);
+      long currentModificationCount = ProjectRootManager.getInstance(myProject).getModificationCount();
+      if (modificationCountMayBeIncremented) {
+        assertTrue(currentModificationCount >= modificationCount);
+      }
+      else if (modificationCountMustBeIncremented) {
+        assertTrue(currentModificationCount > modificationCount);
+      }
+      else {
+        assertEquals(modificationCount, currentModificationCount);
+      }
+      reset();
     }
   }
 
@@ -499,7 +501,7 @@ public class RootsChangedTest extends JavaModuleTestCase {
     MessageBusConnection connect = ApplicationManager.getApplication().getMessageBus().connect(getTestRootDisposable());
     BulkFileListener rogueListenerWhichStupidlyGetChildrenRightAway = new BulkFileListener() {
       @Override
-      public void after(@NotNull List<? extends VFileEvent> events) {
+      public void after(@NotNull List<? extends @NotNull VFileEvent> events) {
         for (VFileEvent event : events) {
           VirtualFile file = event.getFile();
           if (event instanceof VFileCreateEvent && file != null) {

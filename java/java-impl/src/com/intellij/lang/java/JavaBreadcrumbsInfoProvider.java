@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.lang.java;
 
 import com.intellij.ide.ui.UISettings;
@@ -53,9 +53,7 @@ public class JavaBreadcrumbsInfoProvider implements BreadcrumbsProvider {
   @Nullable
   @Override
   public Icon getElementIcon(@NotNull PsiElement element) {
-    return Registry.is("editor.breadcrumbs.java.icon")
-           ? element.getIcon(0)
-           : null;
+    return null;
   }
 
   @Nullable

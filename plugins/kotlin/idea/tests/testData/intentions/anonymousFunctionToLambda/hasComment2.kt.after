@@ -1,0 +1,1 @@
+val test = block@{ i: Int, s: String /* comment */ -> "$i:$s" }

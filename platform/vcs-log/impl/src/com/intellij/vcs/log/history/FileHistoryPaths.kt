@@ -2,9 +2,9 @@
 package com.intellij.vcs.log.history
 
 import com.intellij.openapi.vcs.FilePath
+import com.intellij.util.containers.CollectionFactory
 import com.intellij.vcs.log.VcsLogDataPack
 import com.intellij.vcs.log.visible.VisiblePack
-import it.unimi.dsi.fastutil.objects.ObjectOpenCustomHashSet
 
 object FileHistoryPaths {
   val VcsLogDataPack.fileHistory: FileHistory
@@ -35,7 +35,7 @@ object FileHistoryPaths {
 
   @JvmStatic
   fun VcsLogDataPack.filePaths(): Set<FilePath> {
-    return commitsToPathsMap.values.mapTo(ObjectOpenCustomHashSet(FILE_PATH_HASHING_STRATEGY)) { it.filePath }
+    return commitsToPathsMap.values.mapTo(CollectionFactory.createCustomHashingStrategySet(FILE_PATH_HASHING_STRATEGY)) { it.filePath }
   }
 }
 

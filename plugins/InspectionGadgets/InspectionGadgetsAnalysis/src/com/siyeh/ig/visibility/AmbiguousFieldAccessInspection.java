@@ -1,24 +1,9 @@
-/*
- * Copyright 2011-2018 Bas Leijdekkers
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.siyeh.ig.visibility;
 
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
-import com.intellij.psi.util.PsiTreeUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -47,33 +32,7 @@ public class AmbiguousFieldAccessInspection extends BaseInspection {
   }
 
   @Override
-  @Nullable
-  protected InspectionGadgetsFix buildFix(Object... infos) {
-    return new AmbiguousFieldAccessFix();
-  }
-
-  private static class AmbiguousFieldAccessFix extends InspectionGadgetsFix {
-
-    @Override
-    @NotNull
-    public String getFamilyName() {
-      return InspectionGadgetsBundle.message("ambiguous.field.access.quickfix");
-    }
-
-    @Override
-    protected void doFix(Project project, ProblemDescriptor descriptor) {
-      final PsiElement element = descriptor.getPsiElement();
-      if (!(element instanceof PsiReferenceExpression)) {
-        return;
-      }
-      final PsiReferenceExpression referenceExpression = (PsiReferenceExpression)element;
-      final String newExpressionText = "super." + referenceExpression.getText();
-      PsiReplacementUtil.replaceExpression(referenceExpression, newExpressionText);
-    }
-  }
-
-  @Override
-  public BaseInspectionVisitor buildVisitor() {
+  public @NotNull BaseInspectionVisitor buildVisitor() {
     return new AmbiguousFieldAccessVisitor();
   }
 
@@ -105,17 +64,89 @@ public class AmbiguousFieldAccessInspection extends BaseInspection {
         return;
       }
       final PsiElement parent = containingClass.getParent();
+      if (parent instanceof PsiFile) {
+        return;
+      }
       final PsiResolveHelper resolveHelper = JavaPsiFacade.getInstance(expression.getProject()).getResolveHelper();
       final String referenceText = expression.getText();
       final PsiVariable variable = resolveHelper.resolveAccessibleReferencedVariable(referenceText, parent);
       if (variable == null || field == variable) {
         return;
       }
-      final PsiElement commonParent = PsiTreeUtil.findCommonParent(variable, containingClass);
-      if (commonParent == null) {
+      if (expression.advancedResolve(false).getCurrentFileResolveScope() instanceof PsiImportStaticStatement) {
+        // is statically imported
         return;
       }
-      registerError(expression, fieldClass, variable);
+      registerError(expression, fieldClass, variable, isOnTheFly());
+    }
+  }
+
+  @Override
+  protected @Nullable InspectionGadgetsFix buildFix(Object... infos) {
+    return new AmbiguousFieldAccessFix();
+  }
+
+  @Override
+  protected InspectionGadgetsFix @NotNull [] buildFixes(Object... infos) {
+    boolean isOnTheFly = (boolean)infos[2];
+    final PsiVariable variable = (PsiVariable)infos[1];
+    if (isOnTheFly) {
+      return new InspectionGadgetsFix[] { new NavigateToApparentlyAccessedElementFix(variable), new AmbiguousFieldAccessFix() };
+    }
+    else {
+      return new InspectionGadgetsFix[] { new AmbiguousFieldAccessFix() };
+    }
+  }
+
+  private static class AmbiguousFieldAccessFix extends InspectionGadgetsFix {
+
+    @Override
+    @NotNull
+    public String getFamilyName() {
+      return InspectionGadgetsBundle.message("ambiguous.field.access.quickfix");
+    }
+
+    @Override
+    protected void doFix(Project project, ProblemDescriptor descriptor) {
+      final PsiElement element = descriptor.getPsiElement();
+      if (!(element instanceof PsiReferenceExpression)) {
+        return;
+      }
+      final PsiReferenceExpression referenceExpression = (PsiReferenceExpression)element;
+      final String newExpressionText = "super." + referenceExpression.getText();
+      PsiReplacementUtil.replaceExpression(referenceExpression, newExpressionText);
+    }
+  }
+
+  private static class NavigateToApparentlyAccessedElementFix extends InspectionGadgetsFix {
+
+    private final int type;
+
+    NavigateToApparentlyAccessedElementFix(PsiVariable variable) {
+      if (variable instanceof PsiLocalVariable) type = 1;
+      else if (variable instanceof PsiParameter) type = 2;
+      else type = 3;
+    }
+
+    @Override
+    public @NotNull String getFamilyName() {
+      return InspectionGadgetsBundle.message("ambiguous.field.access.navigate.quickfix", type);
+    }
+
+    @Override
+    protected void doFix(Project project, ProblemDescriptor descriptor) {
+      final PsiElement element = descriptor.getPsiElement();
+      PsiClass containingClass = ClassUtils.getContainingClass(element);
+      if (containingClass == null) {
+        return;
+      }
+      final PsiElement parent = containingClass.getParent();
+      final PsiResolveHelper resolveHelper = JavaPsiFacade.getInstance(element.getProject()).getResolveHelper();
+      final String referenceText = element.getText();
+      final PsiVariable variable = resolveHelper.resolveAccessibleReferencedVariable(referenceText, parent);
+      if (variable != null) {
+        variable.navigate(true);
+      }
     }
   }
 }

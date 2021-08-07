@@ -52,9 +52,7 @@ import java.util.Objects;
 
 import static com.jetbrains.python.psi.PyUtil.as;
 
-/**
- * @author yole
- */
+
 public class PyTargetExpressionImpl extends PyBaseElementImpl<PyTargetExpressionStub> implements PyTargetExpression {
   @Nullable private volatile QualifiedName myQualifiedName;
 
@@ -135,7 +133,7 @@ public class PyTargetExpressionImpl extends PyBaseElementImpl<PyTargetExpression
       return type;
     }
     if (!context.maySwitchToAST(this)) {
-      final PyResolveContext resolveContext = PyResolveContext.defaultContext().withTypeEvalContext(context);
+      final PyResolveContext resolveContext = PyResolveContext.defaultContext(context);
 
       final List<PyType> types = StreamEx
         .of(multiResolveAssignedValue(resolveContext))
@@ -193,7 +191,7 @@ public class PyTargetExpressionImpl extends PyBaseElementImpl<PyTargetExpression
       return assignedValue == null ? null : context.getType(assignedValue);
     }
     if (parent instanceof PyGlobalStatement || parent instanceof PyNonlocalStatement) {
-      PyResolveContext resolveContext = PyResolveContext.defaultContext().withTypeEvalContext(context);
+      PyResolveContext resolveContext = PyResolveContext.defaultContext(context);
       List<PyType> collect = StreamEx.of(getReference(resolveContext).multiResolve(false))
         .map(ResolveResult::getElement)
         .select(PyTypedElement.class)
@@ -433,7 +431,7 @@ public class PyTargetExpressionImpl extends PyBaseElementImpl<PyTargetExpression
 
   @Nullable
   private static PyFunction findMethodByName(@NotNull PyType type, @NotNull String name, @NotNull TypeEvalContext context) {
-    final PyResolveContext resolveContext = PyResolveContext.defaultContext().withTypeEvalContext(context);
+    final PyResolveContext resolveContext = PyResolveContext.defaultContext(context);
     final List<? extends RatedResolveResult> results = type.resolveMember(name, null, AccessDirection.READ, resolveContext);
     if (results != null && !results.isEmpty()) {
       final RatedResolveResult result = results.get(0);
@@ -575,7 +573,7 @@ public class PyTargetExpressionImpl extends PyBaseElementImpl<PyTargetExpression
   @NotNull
   @Override
   public PsiReference getReference() {
-    return getReference(PyResolveContext.defaultContext());
+    return getReference(PyResolveContext.defaultContext(TypeEvalContext.codeInsightFallback(getProject())));
   }
 
   @NotNull

@@ -131,8 +131,7 @@ public class SdkSettingsStep extends ModuleWizardStep {
 
   @Override
   public boolean validate() throws ConfigurationException {
-    JdkComboBox.JdkComboBoxItem item = myJdkComboBox.getSelectedItem();
-    if (myJdkComboBox.getSelectedJdk() == null && !(item instanceof JdkComboBox.ProjectJdkComboBoxItem)) {
+    if (myJdkComboBox.getSelectedJdk() == null && !myJdkComboBox.isProjectJdkSelected()) {
       if (Messages.showDialog(getNoSdkMessage(),
                                        JavaUiBundle.message("title.no.jdk.specified"),
                                        new String[]{CommonBundle.getYesButtonText(), CommonBundle.getNoButtonText()}, 1, Messages.getWarningIcon()) != Messages.YES) {

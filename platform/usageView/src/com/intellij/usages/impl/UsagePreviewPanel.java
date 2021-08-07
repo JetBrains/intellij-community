@@ -43,11 +43,15 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
+import java.beans.PropertyChangeListener;
+import java.beans.PropertyChangeSupport;
 import java.util.List;
 import java.util.Objects;
 import java.util.regex.Pattern;
 
 public class UsagePreviewPanel extends UsageContextPanelBase implements DataProvider {
+  public static final String LINE_HEIGHT_PROPERTY = "UsageViewPanel.lineHeightProperty";
+
   private static final Logger LOG = Logger.getInstance(UsagePreviewPanel.class);
   private Editor myEditor;
   private final boolean myIsEditor;
@@ -55,6 +59,7 @@ public class UsagePreviewPanel extends UsageContextPanelBase implements DataProv
   private List<? extends UsageInfo> myCachedSelectedUsageInfos;
   private Pattern myCachedSearchPattern;
   private Pattern myCachedReplacePattern;
+  private final PropertyChangeSupport myPropertyChangeSupport = new PropertyChangeSupport(this);
 
   public UsagePreviewPanel(@NotNull Project project, @NotNull UsageViewPresentation presentation) {
     this(project, presentation, false);
@@ -120,9 +125,9 @@ public class UsagePreviewPanel extends UsageContextPanelBase implements DataProv
     if (myEditor == null || document != myEditor.getDocument()) {
       releaseEditor();
       removeAll();
+      if (isDisposed) return;
       myEditor = createEditor(psiFile, document);
-      if (myEditor == null) return;
-      myLineHeight = myEditor.getLineHeight();
+      setLineHeight(myEditor.getLineHeight());
       myEditor.setBorder(null);
       add(myEditor.getComponent(), BorderLayout.CENTER);
 
@@ -140,10 +145,26 @@ public class UsagePreviewPanel extends UsageContextPanelBase implements DataProv
     }
   }
 
+  private void setLineHeight(int lineHeight) {
+    if (lineHeight != myLineHeight) {
+      int oldHeight = myLineHeight;
+      myLineHeight = lineHeight;
+      myPropertyChangeSupport.firePropertyChange(LINE_HEIGHT_PROPERTY, oldHeight, myLineHeight);
+    }
+  }
+
   public int getLineHeight() {
+    ApplicationManager.getApplication().assertIsDispatchThread();
     return myLineHeight;
   }
 
+  public void addPropertyChangeListener(String propertyName, PropertyChangeListener listener) {
+    myPropertyChangeSupport.addPropertyChangeListener(propertyName, listener);
+  }
+
+  public void removePropertyChangeListener(PropertyChangeListener listener) {
+    myPropertyChangeSupport.removePropertyChangeListener(listener);
+  }
 
   private static final Key<Boolean> IN_PREVIEW_USAGE_FLAG = Key.create("IN_PREVIEW_USAGE_FLAG");
 
@@ -152,6 +173,7 @@ public class UsagePreviewPanel extends UsageContextPanelBase implements DataProv
                                @NotNull final Project project,
                                boolean highlightOnlyNameElements,
                                int highlightLayer) {
+    ApplicationManager.getApplication().assertIsDispatchThread();
     LOG.assertTrue(PsiDocumentManager.getInstance(project).isCommitted(editor.getDocument()));
 
     MarkupModel markupModel = editor.getMarkupModel();
@@ -221,6 +243,7 @@ public class UsagePreviewPanel extends UsageContextPanelBase implements DataProv
   private static final Key<Balloon> REPLACEMENT_BALLOON_KEY = Key.create("REPLACEMENT_BALLOON_KEY");
 
   private static void showBalloon(@NotNull Project project, @NotNull Editor editor, @NotNull TextRange range, @NotNull FindModel findModel) {
+    ApplicationManager.getApplication().assertIsDispatchThread();
     try {
       String replacementPreviewText = FindManager.getInstance(project)
         .getStringToReplace(editor.getDocument().getText(range), findModel, range.getStartOffset(),
@@ -274,8 +297,8 @@ public class UsagePreviewPanel extends UsageContextPanelBase implements DataProv
 
   private static final Key<UsagePreviewPanel> PREVIEW_EDITOR_FLAG = Key.create("PREVIEW_EDITOR_FLAG");
 
+  @NotNull
   private Editor createEditor(@NotNull PsiFile psiFile, @NotNull Document document) {
-    if (isDisposed) return null;
     if (LOG.isDebugEnabled()) {
       LOG.debug("Creating preview for " + psiFile.getVirtualFile());
     }
@@ -311,6 +334,7 @@ public class UsagePreviewPanel extends UsageContextPanelBase implements DataProv
   }
 
   private void releaseEditor() {
+    ApplicationManager.getApplication().assertIsDispatchThread();
     if (myEditor != null) {
       EditorFactory.getInstance().releaseEditor(myEditor);
       myEditor = null;
@@ -321,12 +345,13 @@ public class UsagePreviewPanel extends UsageContextPanelBase implements DataProv
   }
 
   @Nullable
-  public final String getCannotPreviewMessage(@Nullable final List<? extends UsageInfo> infos) {
+  public String getCannotPreviewMessage(@Nullable final List<? extends UsageInfo> infos) {
     return cannotPreviewMessage(infos);
   }
 
   @Nullable
-  private @NlsContexts.StatusText String cannotPreviewMessage(@Nullable List<? extends UsageInfo> infos) {
+  private @NlsContexts.StatusText
+  static String cannotPreviewMessage(@Nullable List<? extends UsageInfo> infos) {
     if (infos == null || infos.isEmpty()) {
       return UsageViewBundle.message("select.the.usage.to.preview");
     }
@@ -347,8 +372,12 @@ public class UsagePreviewPanel extends UsageContextPanelBase implements DataProv
 
   @Override
   public void updateLayoutLater(@Nullable final List<? extends UsageInfo> infos) {
+    ApplicationManager.getApplication().assertIsDispatchThread();
     String cannotPreviewMessage = cannotPreviewMessage(infos);
-    if (cannotPreviewMessage != null) {
+    if (cannotPreviewMessage == null) {
+      resetEditor(infos);
+    }
+    else {
       releaseEditor();
       removeAll();
       int newLineIndex = cannotPreviewMessage.indexOf('\n');
@@ -362,13 +391,9 @@ public class UsagePreviewPanel extends UsageContextPanelBase implements DataProv
       }
       revalidate();
     }
-    else {
-      resetEditor(infos);
-    }
   }
 
   private static class ReplacementView extends JPanel {
-
     @Override
     protected void paintComponent(@NotNull Graphics graphics) {
     }
@@ -430,6 +455,7 @@ public class UsagePreviewPanel extends UsageContextPanelBase implements DataProv
   }
 
   private static boolean insideVisibleArea(@NotNull Editor e, @NotNull TextRange r) {
+    ApplicationManager.getApplication().assertIsDispatchThread();
     int textLength = e.getDocument().getTextLength();
     if (r.getStartOffset() > textLength) return false;
     if (r.getEndOffset() > textLength) return false;

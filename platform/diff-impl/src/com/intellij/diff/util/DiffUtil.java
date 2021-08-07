@@ -87,12 +87,13 @@ import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.ui.*;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.JBLabel;
-import com.intellij.ui.scale.JBUIScale;
+import com.intellij.ui.components.panels.VerticalLayout;
 import com.intellij.util.*;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Convertor;
 import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.JBValue;
 import com.intellij.util.ui.SingleComponentCenteringLayout;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.components.BorderLayoutPanel;
@@ -118,7 +119,7 @@ public final class DiffUtil {
 
   public static final Key<Boolean> TEMP_FILE_KEY = Key.create("Diff.TempFile");
   @NotNull @NonNls public static final String DIFF_CONFIG = "diff.xml";
-  public static final int TITLE_GAP = JBUIScale.scale(2);
+  public static final JBValue TITLE_GAP = new JBValue.Float(2);
 
   public static final NotNullLazyValue<List<Image>> DIFF_FRAME_ICONS = NotNullLazyValue.createValue(() -> {
     return Arrays.asList(
@@ -565,21 +566,20 @@ public final class DiffUtil {
   private static JComponent createTitleWithNotifications(@Nullable DiffViewer viewer,
                                                          @Nullable JComponent title,
                                                          @NotNull DiffContent content) {
-    List<JComponent> notifications = new ArrayList<>(createCustomNotifications(viewer, content));
+    List<JComponent> components = new ArrayList<>();
+    if (title != null) components.add(title);
+
+    components.addAll(createCustomNotifications(viewer, content));
 
     if (content instanceof DocumentContent) {
       Document document = ((DocumentContent)content).getDocument();
       if (FileDocumentManager.getInstance().isPartialPreviewOfALargeFile(document)) {
-        notifications.add(DiffNotifications.createNotification(DiffBundle.message("error.file.is.too.large.only.preview.is.loaded")));
+        components.add(DiffNotifications.createNotification(DiffBundle.message("error.file.is.too.large.only.preview.is.loaded")));
       }
     }
 
-    if (notifications.isEmpty()) return title;
-
-    JPanel panel = new JPanel(new BorderLayout(0, TITLE_GAP));
-    if (title != null) panel.add(title, BorderLayout.NORTH);
-    panel.add(createStackedComponents(notifications, TITLE_GAP), BorderLayout.SOUTH);
-    return panel;
+    if (components.isEmpty()) return null;
+    return createStackedComponents(components, TITLE_GAP);
   }
 
   @Nullable
@@ -689,21 +689,18 @@ public final class DiffUtil {
     if (!ContainerUtil.exists(components, Conditions.notNull())) return components;
     List<JComponent> result = new ArrayList<>();
     for (int i = 0; i < components.size(); i++) {
-      result.add(new SyncHeightComponent(components, i));
+      JComponent component = components.get(i);
+      result.add(new SyncHeightComponent(components, component));
     }
     return result;
   }
 
   @NotNull
-  public static JComponent createStackedComponents(@NotNull List<? extends JComponent> components, int gap) {
-    JPanel panel = new JPanel();
-    panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
-
-    for (int i = 0; i < components.size(); i++) {
-      if (i != 0) panel.add(Box.createVerticalStrut(JBUIScale.scale(gap)));
-      panel.add(components.get(i));
+  public static JComponent createStackedComponents(@NotNull List<? extends JComponent> components, @NotNull JBValue vGap) {
+    JPanel panel = new JPanel(new VerticalLayout(vGap, VerticalLayout.FILL));
+    for (JComponent component : components) {
+      panel.add(component);
     }
-
     return panel;
   }
 
@@ -1533,7 +1530,7 @@ public final class DiffUtil {
 
     ApplicationManager.getApplication().runWriteAction(() -> CommandProcessor.getInstance().executeCommand(project, () -> {
       if (underBulkUpdate) {
-        DocumentUtil.executeInBulk(document, true, task);
+        DocumentUtil.executeInBulk(document, task);
       }
       else {
         task.run();
@@ -1706,6 +1703,7 @@ public final class DiffUtil {
   /**
    * @deprecated Use {@link #addNotification(DiffNotificationProvider, UserDataHolder)}
    */
+  @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
   @Deprecated
   public static void addNotification(@Nullable JComponent component, @NotNull UserDataHolder holder) {
     if (component == null) return;

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.ui;
 
 import com.intellij.CommonBundle;
@@ -15,7 +15,6 @@ import com.intellij.ui.BrowserHyperlinkListener;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.MessageException;
 import com.intellij.ui.ScrollPaneFactory;
-import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.mac.MacMessages;
 import com.intellij.util.Function;
 import com.intellij.util.PairFunction;
@@ -42,10 +41,66 @@ import static com.intellij.openapi.util.NlsContexts.*;
 @ApiStatus.NonExtendable
 @SuppressWarnings("DeprecatedIsStillUsed")
 public class Messages {
-  public static final int OK = 0;
-  public static final int YES = 0;
-  public static final int NO = 1;
-  public static final int CANCEL = 2;
+  public static final int OK = MessageConstants.OK;
+  public static final int YES = MessageConstants.YES;
+  public static final int NO = MessageConstants.NO;
+  public static final int CANCEL = MessageConstants.CANCEL;
+
+  public static @NotNull JComponent wrapToScrollPaneIfNeeded(@NotNull JComponent comp, int columns, int lines) {
+    return wrapToScrollPaneIfNeeded(comp, columns, lines, 4);
+  }
+
+  public static @NotNull JComponent wrapToScrollPaneIfNeeded(@NotNull JComponent comp, int columns, int maxLines, int lines) {
+    float fontSize = comp.getFont().getSize2D();
+    Dimension maxDim = new Dimension((int)(fontSize * columns), (int)(fontSize * maxLines));
+    Dimension prefDim = comp.getPreferredSize();
+    if (prefDim.width <= maxDim.width && prefDim.height <= maxDim.height) return comp;
+
+    JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(comp);
+    scrollPane.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 0));
+    scrollPane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED);
+    scrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
+    int barWidth = UIUtil.getScrollBarWidth();
+    Dimension preferredSize =
+      new Dimension(Math.min(prefDim.width, maxDim.width) + barWidth,
+                    Math.min(prefDim.height, maxDim.height) + barWidth);
+    if (prefDim.width > maxDim.width) { //Too wide single-line message should be wrapped
+      preferredSize.height = Math.max(preferredSize.height, (int)(lines * fontSize) + barWidth);
+    }
+    scrollPane.setPreferredSize(preferredSize);
+    return scrollPane;
+  }
+
+  public static @NotNull JTextPane configureMessagePaneUi(JTextPane messageComponent, @DialogMessage String message) {
+    JTextPane pane = configureMessagePaneUi(messageComponent, message, null);
+    if (UIUtil.HTML_MIME.equals(pane.getContentType())) {
+      pane.addHyperlinkListener(BrowserHyperlinkListener.INSTANCE);
+    }
+    return pane;
+  }
+
+  public static @NotNull JTextPane configureMessagePaneUi(@NotNull JTextPane messageComponent,
+                                                          @Nullable @DialogMessage String message,
+                                                          @Nullable UIUtil.FontSize fontSize) {
+    UIUtil.FontSize fixedFontSize = fontSize == null ? UIUtil.FontSize.NORMAL : fontSize;
+    messageComponent.setFont(UIUtil.getLabelFont(fixedFontSize));
+    if (BasicHTML.isHTMLString(message)) {
+      messageComponent.setEditorKit(UIUtil.getHTMLEditorKit());
+    }
+    messageComponent.setText(message);
+    messageComponent.setEditable(false);
+    if (messageComponent.getCaret() != null) {
+      messageComponent.setCaretPosition(0);
+    }
+
+    messageComponent.setBackground(UIUtil.getOptionPaneBackground());
+    messageComponent.setForeground(UIUtil.getLabelForeground());
+    return messageComponent;
+  }
+
+  public static void installHyperlinkSupport(JTextPane messageComponent) {
+    configureMessagePaneUi(messageComponent, "<html></html>");
+  }
 
   @MagicConstant(intValues = {YES, NO})
   public @interface YesNoResult { }
@@ -95,58 +150,6 @@ public class Messages {
 
   public static @NotNull Icon getQuestionIcon() {
     return UIUtil.getQuestionIcon();
-  }
-
-  public static void installHyperlinkSupport(JTextPane messageComponent) {
-    configureMessagePaneUi(messageComponent, "<html></html>");
-  }
-
-  public static @NotNull JComponent wrapToScrollPaneIfNeeded(@NotNull JComponent comp, int columns, int lines) {
-    float fontSize = comp.getFont().getSize2D();
-    Dimension maxDim = new Dimension((int)(fontSize * columns), (int)(fontSize * lines));
-    Dimension prefDim = comp.getPreferredSize();
-    if (prefDim.width <= maxDim.width && prefDim.height <= maxDim.height) return comp;
-
-    JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(comp);
-    scrollPane.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 0));
-    scrollPane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED);
-    scrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
-    int barWidth = UIUtil.getScrollBarWidth();
-    Dimension preferredSize =
-      new Dimension(Math.min(prefDim.width, maxDim.width) + barWidth,
-                    Math.min(prefDim.height, maxDim.height) + barWidth);
-    if (prefDim.width > maxDim.width) { //Too wide single-line message should be wrapped
-      preferredSize.height = Math.max(preferredSize.height, (int)(4 * fontSize) + barWidth);
-    }
-    scrollPane.setPreferredSize(preferredSize);
-    return scrollPane;
-  }
-
-  public static @NotNull JTextPane configureMessagePaneUi(JTextPane messageComponent, @DialogMessage String message) {
-    JTextPane pane = configureMessagePaneUi(messageComponent, message, null);
-    if (UIUtil.HTML_MIME.equals(pane.getContentType())) {
-      pane.addHyperlinkListener(BrowserHyperlinkListener.INSTANCE);
-    }
-    return pane;
-  }
-
-  public static @NotNull JTextPane configureMessagePaneUi(@NotNull JTextPane messageComponent,
-                                                          @Nullable @DialogMessage String message,
-                                                          @Nullable UIUtil.FontSize fontSize) {
-    UIUtil.FontSize fixedFontSize = fontSize == null ? UIUtil.FontSize.NORMAL : fontSize;
-    messageComponent.setFont(UIUtil.getLabelFont(fixedFontSize));
-    if (BasicHTML.isHTMLString(message)) {
-      messageComponent.setEditorKit(UIUtil.getHTMLEditorKit());
-    }
-    messageComponent.setText(message);
-    messageComponent.setEditable(false);
-    if (messageComponent.getCaret() != null) {
-      messageComponent.setCaretPosition(0);
-    }
-
-    messageComponent.setBackground(UIUtil.getOptionPaneBackground());
-    messageComponent.setForeground(UIUtil.getLabelForeground());
-    return messageComponent;
   }
 
   /**
@@ -204,7 +207,7 @@ public class Messages {
                                @Nullable Icon icon,
                                @Nullable DialogWrapper.DoNotAskOption doNotAskOption) {
     return MessagesService.getInstance()
-      .showMessageDialog(project, null, message, title, options, defaultOptionIndex, -1, icon, doNotAskOption, false);
+      .showMessageDialog(project, null, message, title, options, defaultOptionIndex, -1, icon, doNotAskOption, false, null);
   }
 
   /**
@@ -218,11 +221,11 @@ public class Messages {
                                           @Nullable Icon icon,
                                           @Nullable DialogWrapper.DoNotAskOption doNotAskOption) {
     return MessagesService.getInstance()
-      .showMessageDialog(project, null, message, title, options, defaultOptionIndex, -1, icon, doNotAskOption, true);
+      .showMessageDialog(project, null, message, title, options, defaultOptionIndex, -1, icon, doNotAskOption, true, null);
   }
 
   public static boolean canShowMacSheetPanel() {
-    return SystemInfoRt.isMac && ApplicationManager.getApplication() != null && !isApplicationInUnitTestOrHeadless() && Registry.is("ide.mac.message.dialogs.as.sheets");
+    return MessageDialogBuilderKt.canShowMacSheetPanel();
   }
 
   public static boolean isMacSheetEmulation() {
@@ -253,7 +256,8 @@ public class Messages {
                                String @NotNull @NlsContexts.Button [] options,
                                int defaultOptionIndex,
                                @Nullable Icon icon) {
-    return MessagesService.getInstance().showMessageDialog(null, parent, message, title, options, defaultOptionIndex, -1, icon, null, false);
+    return MessagesService.getInstance().showMessageDialog(null, parent, message, title, options, defaultOptionIndex, -1, icon, null, false,
+                                                           null);
   }
 
   /**
@@ -271,7 +275,7 @@ public class Messages {
                                @Nullable Icon icon,
                                @Nullable DialogWrapper.DoNotAskOption doNotAskOption) {
     return MessagesService.getInstance()
-      .showMessageDialog(null, null, message, title, options, defaultOptionIndex, focusedOptionIndex, icon, doNotAskOption, false);
+      .showMessageDialog(null, null, message, title, options, defaultOptionIndex, focusedOptionIndex, icon, doNotAskOption, false, null);
   }
 
   /**
@@ -647,7 +651,8 @@ public class Messages {
   public static void showErrorDialog(@Nullable Component component,
                                      @DialogMessage String message,
                                      @NotNull @DialogTitle String title) {
-    MessagesService.getInstance().showMessageDialog(null, component, message, title, new String[]{getOkButton()}, 0, 0, getErrorIcon(), null, false);
+    MessagesService.getInstance().showMessageDialog(null, component, message, title, new String[]{getOkButton()}, 0, 0, getErrorIcon(), null, false,
+                                                    null);
   }
 
   public static void showErrorDialog(@NotNull Component component, @DialogMessage String message) {
@@ -1096,10 +1101,11 @@ public class Messages {
   }
 
   public static class InputDialog extends MessageDialog {
+    public static final int INPUT_DIALOG_COLUMNS = 30;
     protected JTextComponent myField;
     private final InputValidator myValidator;
     private final @DetailedDescription String myComment;
-
+  
     public InputDialog(@Nullable Project project,
                        @DialogMessage String message,
                        @DialogTitle String title,
@@ -1112,11 +1118,11 @@ public class Messages {
       super(project, true);
       myComment = comment;
       myValidator = validator;
-      _init(title, message, options, defaultOption, -1, icon, null);
+      _init(title, message, options, defaultOption, -1, icon, null, null);
       myField.setText(initialValue);
       enableOkAction();
     }
-
+  
     public InputDialog(@Nullable Project project,
                        @DialogMessage String message,
                        @DialogTitle String title,
@@ -1127,7 +1133,7 @@ public class Messages {
                        int defaultOption) {
       this(project, message, title, icon, initialValue, validator, options, defaultOption, null);
     }
-
+  
     public InputDialog(@Nullable Project project,
                        @DialogMessage String message,
                        @DialogTitle String title,
@@ -1136,7 +1142,7 @@ public class Messages {
                        @Nullable InputValidator validator) {
       this(project, message, title, icon, initialValue, validator, new String[]{getOkButton(), getCancelButton()}, 0);
     }
-
+  
     public InputDialog(@NotNull Component parent,
                        @DialogMessage String message,
                        @DialogTitle String title,
@@ -1149,7 +1155,7 @@ public class Messages {
       myField.setText(initialValue);
       enableOkAction();
     }
-
+  
     public InputDialog(@DialogMessage String message,
                        @DialogTitle String title,
                        @Nullable Icon icon,
@@ -1161,11 +1167,11 @@ public class Messages {
       myField.setText(initialValue);
       enableOkAction();
     }
-
+  
     private void enableOkAction() {
       getOKAction().setEnabled(myValidator == null || myValidator.checkInput(myField.getText().trim()));
     }
-
+  
     @Override
     protected Action @NotNull [] createActions() {
       final Action[] actions = new Action[myOptions.length];
@@ -1174,14 +1180,14 @@ public class Messages {
         final int exitCode = i;
         if (i == 0) { // "OK" is default button. It has index 0.
           actions[0] = getOKAction();
-          actions[0].putValue(DEFAULT_ACTION, Boolean.TRUE);
+          actions[0].putValue(DialogWrapper.DEFAULT_ACTION, Boolean.TRUE);
           myField.getDocument().addDocumentListener(new DocumentAdapter() {
             @Override
             public void textChanged(@NotNull DocumentEvent event) {
               final String text = myField.getText().trim();
               actions[exitCode].setEnabled(myValidator == null || myValidator.checkInput(text));
               if (myValidator instanceof InputValidatorEx) {
-                setErrorText(((InputValidatorEx) myValidator).getErrorText(text), myField);
+                setErrorText(((InputValidatorEx)myValidator).getErrorText(text), myField);
               }
             }
           });
@@ -1197,7 +1203,7 @@ public class Messages {
       }
       return actions;
     }
-
+  
     @Override
     protected void doOKAction() {
       String inputString = myField.getText().trim();
@@ -1207,19 +1213,19 @@ public class Messages {
         close(0);
       }
     }
-
+  
     @Override
     protected JComponent createCenterPanel() {
       return null;
     }
-
+  
     @Override
     protected JComponent createNorthPanel() {
       JPanel panel = createIconPanel();
-
+  
       JPanel messagePanel = createMessagePanel();
       panel.add(messagePanel, BorderLayout.CENTER);
-
+  
       if (myComment != null) {
         return UI.PanelFactory.panel(panel).withComment(myComment).createPanel();
       }
@@ -1227,7 +1233,7 @@ public class Messages {
         return panel;
       }
     }
-
+  
     @Override
     protected @NotNull JPanel createMessagePanel() {
       JPanel messagePanel = new JPanel(new BorderLayout());
@@ -1235,17 +1241,17 @@ public class Messages {
         JComponent textComponent = createTextComponent();
         messagePanel.add(textComponent, BorderLayout.NORTH);
       }
-
+  
       myField = createTextFieldComponent();
       messagePanel.add(createScrollableTextComponent(), BorderLayout.SOUTH);
-
+  
       return messagePanel;
     }
-
+  
     protected JComponent createScrollableTextComponent() {
       return myField;
     }
-
+  
     protected JComponent createTextComponent() {
       JComponent textComponent;
       if (BasicHTML.isHTMLString(myMessage)) {
@@ -1259,65 +1265,24 @@ public class Messages {
       textComponent.setBorder(BorderFactory.createEmptyBorder(0, 0, 5, 20));
       return textComponent;
     }
-
+  
     public JTextComponent getTextField() {
       return myField;
     }
-
+  
     protected JTextComponent createTextFieldComponent() {
-      JTextField field = new JTextField(30);
+      JTextField field = new JTextField(INPUT_DIALOG_COLUMNS);
       field.setMargin(JBInsets.create(0, 5));
       return field;
     }
-
+  
     @Override
     public JComponent getPreferredFocusedComponent() {
       return myField;
     }
-
+  
     public @Nullable @NlsSafe String getInputString() {
       return getExitCode() == 0 ? myField.getText().trim() : null;
-    }
-  }
-
-  public static class MultilineInputDialog extends InputDialog {
-    public MultilineInputDialog(Project project,
-                                @DialogMessage String message,
-                                @DialogTitle String title,
-                                @Nullable Icon icon,
-                                @Nullable @NonNls String initialValue,
-                                @Nullable InputValidator validator,
-                                String @NotNull @NlsContexts.Button [] options,
-                                int defaultOption) {
-      super(project, message, title, icon, initialValue, validator, options, defaultOption);
-    }
-
-    @Override
-    protected JTextComponent createTextFieldComponent() {
-      return new JTextArea(7, 50);
-    }
-
-    @Override
-    protected JComponent createScrollableTextComponent() {
-      return new JBScrollPane(myField);
-    }
-
-    @Override
-    protected JComponent createNorthPanel() {
-      return null;
-    }
-
-    @Override
-    protected JComponent createCenterPanel() {
-      JPanel messagePanel = new JPanel(new BorderLayout());
-      if (myMessage != null) {
-        JComponent textComponent = createTextComponent();
-        messagePanel.add(textComponent, BorderLayout.NORTH);
-      }
-
-      myField = createTextFieldComponent();
-      messagePanel.add(createScrollableTextComponent(), BorderLayout.CENTER);
-      return messagePanel;
     }
   }
 }

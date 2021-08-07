@@ -29,8 +29,12 @@ public class ProgressBarLoadingDecorator extends LoadingDecorator {
     myProgressBar.putClientProperty("ProgressBar.stripeWidth", 2);
     myProgressBar.putClientProperty("ProgressBar.flatEnds", Boolean.TRUE);
     result.add(myProgressBar);
-    parent.add(result, BorderLayout.NORTH);
+    parent.add(result, isOnTop() ? BorderLayout.NORTH : BorderLayout.SOUTH);
     return result;
+  }
+
+  protected boolean isOnTop() {
+    return true;
   }
 
   @NotNull
@@ -38,10 +42,15 @@ public class ProgressBarLoadingDecorator extends LoadingDecorator {
     return myProgressBar;
   }
 
-  public void startLoading() {
+  @Override
+  public void startLoading(boolean takeSnapshot) {
     if (loadingStarted.compareAndSet(false, true)) {
-      super.startLoading(false);
+      super.startLoading(takeSnapshot);
     }
+  }
+
+  public void startLoading() {
+    startLoading(false);
   }
 
   @Override

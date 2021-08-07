@@ -13,7 +13,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.*;
-import java.nio.ByteBuffer;
 import java.nio.file.Path;
 import java.util.List;
 
@@ -31,13 +30,19 @@ public class AppendableStorageBackedByResizableMappedFile<Data> extends Resizeab
                                                       @Nullable StorageLockContext lockContext,
                                                       int pageSize,
                                                       boolean valuesAreBufferAligned,
-                                                      @NotNull DataExternalizer<Data> dataDescriptor) {
+                                                      @NotNull DataExternalizer<Data> dataDescriptor) throws IOException {
     super(file, initialSize, lockContext, pageSize, valuesAreBufferAligned);
     myDataDescriptor = dataDescriptor;
     myFileLength = (int)length();
   }
 
-  private void flushKeyStoreBuffer() {
+  @Override
+  public void clear() throws IOException {
+    super.clear();
+    myFileLength = 0;
+  }
+
+  private void flushKeyStoreBuffer() throws IOException {
     if (myBufferPosition > 0) {
       put(myFileLength, myAppendBuffer, 0, myBufferPosition);
       myFileLength += myBufferPosition;
@@ -90,23 +95,24 @@ public class AppendableStorageBackedByResizableMappedFile<Data> extends Resizeab
   }
 
   @Override
-  public boolean processAll(@NotNull Processor<? super Data> processor) throws IOException {
+  public boolean processAll(@NotNull StorageObjectProcessor<? super Data> processor) throws IOException {
     assert !isDirty();
     if (myFileLength == 0) return true;
 
-    return getPagedFileStorage().readInputStream(is -> {
-      DataInputStream keyStream = new DataInputStream(
-        new BufferedInputStream(new LimitedInputStream(is, myFileLength) {
-          @Override
-          public int available() {
-            return remainingLimit();
-          }
-        }, 32768));
-
+    return readInputStream(is -> {
+      // calculation may restart few times, so it's expected that processor processes duplicated
+      LimitedInputStream lis = new LimitedInputStream(new BufferedInputStream(is), myFileLength) {
+        @Override
+        public int available() {
+          return remainingLimit();
+        }
+      };
+      DataInputStream keyStream = new DataInputStream(lis);
       try {
         while (true) {
+          int offset = lis.getBytesRead();
           Data key = myDataDescriptor.read(keyStream);
-          if (!processor.process(key)) return false;
+          if (!processor.process(offset, key)) return false;
         }
       }
       catch (EOFException e) {
@@ -161,28 +167,8 @@ public class AppendableStorageBackedByResizableMappedFile<Data> extends Resizeab
     return sameValue[0];
   }
 
-  @Override
-  public void lockRead() {
-    getPagedFileStorage().lockRead();
-  }
-
-  @Override
-  public void unlockRead() {
-    getPagedFileStorage().unlockRead();
-  }
-
-  @Override
-  public void lockWrite() {
-    getPagedFileStorage().lockWrite();
-  }
-
-  @Override
-  public void unlockWrite() {
-    getPagedFileStorage().unlockWrite();
-  }
-
   @NotNull
-  private OutputStream buildOldComparerStream(final int addr, final boolean[] sameValue) {
+  private OutputStream buildOldComparerStream(final int addr, final boolean[] sameValue) throws IOException {
     OutputStream comparer;
     final PagedFileStorage storage = getPagedFileStorage();
 
@@ -207,15 +193,15 @@ public class AppendableStorageBackedByResizableMappedFile<Data> extends Resizeab
         int base = addr;
         int address = storage.getOffsetInPage(addr);
         boolean same = true;
-        ByteBuffer buffer = storage.getByteBuffer(addr, false).getCachedBuffer();
+        DirectBufferWrapper buffer = storage.getByteBuffer(addr, false);
         final int myPageSize = storage.getPageSize();
 
         @Override
-        public void write(int b) {
+        public void write(int b) throws IOException {
           if (same) {
             if (myPageSize == address && address < myFileLength) {    // reached end of current byte buffer
               base += address;
-              buffer = storage.getByteBuffer(base, false).getCachedBuffer();
+              buffer = storage.getByteBuffer(base, false);
               address = 0;
             }
             same = address < myFileLength && buffer.get(address++) == (byte)b;

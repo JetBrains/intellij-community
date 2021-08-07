@@ -12,9 +12,6 @@ import training.learn.LessonsBundle
 import training.learn.course.KLesson
 
 class JavaBasicCompletionLesson : KLesson("Basic completion", LessonsBundle.message("basic.completion.lesson.name")) {
-
-  override val testScriptProperties = TaskTestContext.TestScriptProperties(skipTesting = true)
-
   val sample = parseLessonSample("""
     import java.lang.*;
     import java.util.*;
@@ -41,14 +38,18 @@ class JavaBasicCompletionLesson : KLesson("Basic completion", LessonsBundle.mess
 
   override val lessonContent: LessonContext.() -> Unit = {
     prepareSample(sample)
-    task("EditorChooseLookupItem") {
+    task {
       text(LessonsBundle.message("basic.completion.start.typing", code("Ran")) +
-           " " + JavaLessonsBundle.message("java.basic.completion.choose.first", action(it)))
-      trigger(it) {
+           " " + JavaLessonsBundle.message("java.basic.completion.choose.first", action("EditorChooseLookupItem")))
+      stateCheck {
         editor.document.charsSequence.contains("Random()")
       }
       proposeRestore {
         checkExpectedStateOfEditor(previous.sample) { typedString -> "Random".startsWith(typedString) }
+      }
+      test {
+        type("Ran")
+        doubleClickListItem("Random")
       }
     }
     caret(19, 36)
@@ -56,13 +57,20 @@ class JavaBasicCompletionLesson : KLesson("Basic completion", LessonsBundle.mess
       text(JavaLessonsBundle.message("java.basic.completion.activate", action(it)))
       triggerByListItemAndHighlight(false, false) { item -> item.toString() == "i" }
       restoreIfModifiedOrMoved()
+      test {
+        invokeCompletion()
+      }
     }
-    task("EditorChooseLookupItem") {
-      text(JavaLessonsBundle.message("java.basic.completion.choose.item", code("i"), action(it)))
-      trigger(it) {
+    task {
+      text(JavaLessonsBundle.message("java.basic.completion.choose.item",
+                                     code("i"), action("EditorChooseLookupItem")))
+      stateCheck {
         editor.document.charsSequence.contains("Random(i)")
       }
       restoreByUi()
+      test {
+        doubleClickListItem("i")
+      }
     }
     actionTask("EditorCompleteStatement") {
       restoreIfModifiedOrMoved()
@@ -74,7 +82,19 @@ class JavaBasicCompletionLesson : KLesson("Basic completion", LessonsBundle.mess
       text(JavaLessonsBundle.message("java.basic.completion.deeper.level", action(it)))
       triggers(it, it)
       restoreIfModifiedOrMovedIncorrectly(" MAX_VALUE")
+      test {
+        invokeCompletion()
+        invokeCompletion()
+      }
     }
     text(JavaLessonsBundle.message("java.basic.completion.module.promotion", strong(LessonsBundle.message("refactorings.module.name"))))
   }
+
+  private fun TaskTestContext.doubleClickListItem(itemText: String) {
+    ideFrame {
+      jList(itemText).item(itemText).doubleClick()
+    }
+  }
+
+  private fun TaskTestContext.invokeCompletion() = invokeActionViaShortcut("CTRL SPACE")
 }

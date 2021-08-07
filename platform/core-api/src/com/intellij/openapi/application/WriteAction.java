@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.application;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -25,6 +25,7 @@ public abstract class WriteAction<T> extends BaseActionRunnable<T> {
   /**
    * @deprecated Use {@link #run(ThrowableRunnable)} or {@link #compute(ThrowableComputable)} or similar method instead
    */
+  @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
   @Deprecated
   public WriteAction() {
   }
@@ -42,12 +43,8 @@ public abstract class WriteAction<T> extends BaseActionRunnable<T> {
 
     Application application = ApplicationManager.getApplication();
     if (application.isWriteThread()) {
-      AccessToken token = start(getClass());
-      try {
+      try(AccessToken ignored = ApplicationManager.getApplication().acquireWriteActionLock(getClass())) {
         result.run();
-      }
-      finally {
-        token.finish();
       }
       return result;
     }
@@ -57,12 +54,8 @@ public abstract class WriteAction<T> extends BaseActionRunnable<T> {
     }
 
     WriteThread.invokeAndWait(() -> {
-      AccessToken token = start(getClass());
-      try {
+      try(AccessToken ignored = ApplicationManager.getApplication().acquireWriteActionLock(getClass())){
         result.run();
-      }
-      finally {
-        token.finish();
       }
     });
 
@@ -81,19 +74,7 @@ public abstract class WriteAction<T> extends BaseActionRunnable<T> {
   public static AccessToken start() {
     // get useful information about the write action
     Class<?> callerClass = ObjectUtils.notNull(ReflectionUtil.getCallerClass(3), WriteAction.class);
-    return start(callerClass);
-  }
-
-  /**
-   * @deprecated Use {@link #run(ThrowableRunnable)} or {@link #compute(ThrowableComputable)} instead
-   * @see #run(ThrowableRunnable)
-   * @see #compute(ThrowableComputable)
-   */
-  @Deprecated
-  @NotNull
-  @ApiStatus.ScheduledForRemoval(inVersion = "2020.3")
-  private static AccessToken start(@NotNull Class<?> clazz) {
-    return ApplicationManager.getApplication().acquireWriteActionLock(clazz);
+    return ApplicationManager.getApplication().acquireWriteActionLock(callerClass);
   }
 
   /**
@@ -144,6 +125,10 @@ public abstract class WriteAction<T> extends BaseActionRunnable<T> {
    * <br/>Instead, please use {@link #compute(ThrowableComputable)}.
    */
   public static <T, E extends Throwable> T computeAndWait(@NotNull ThrowableComputable<T, E> action) throws E {
+    return computeAndWait(action, ModalityState.defaultModalityState());
+  }
+
+  public static <T, E extends Throwable> T computeAndWait(@NotNull ThrowableComputable<T, E> action, ModalityState modalityState) throws E {
     Application application = ApplicationManager.getApplication();
     if (application.isWriteThread()) {
       return ApplicationManager.getApplication().runWriteAction(action);
@@ -166,7 +151,7 @@ public abstract class WriteAction<T> extends BaseActionRunnable<T> {
       catch (Throwable e) {
         exception.set(e);
       }
-    });
+    }, modalityState);
 
     Throwable t = exception.get();
     if (t != null) {

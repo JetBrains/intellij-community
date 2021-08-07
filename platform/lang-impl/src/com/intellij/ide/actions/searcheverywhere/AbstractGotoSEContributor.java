@@ -1,9 +1,8 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.actions.searcheverywhere;
 
 import com.intellij.codeInsight.navigation.NavigationUtil;
 import com.intellij.ide.DataManager;
-import com.intellij.ide.IdeBundle;
 import com.intellij.ide.actions.GotoActionBase;
 import com.intellij.ide.actions.QualifiedNameProviderUtil;
 import com.intellij.ide.actions.SearchEverywhereClassifier;
@@ -17,9 +16,10 @@ import com.intellij.ide.util.scopeChooser.ScopeChooserCombo;
 import com.intellij.ide.util.scopeChooser.ScopeDescriptor;
 import com.intellij.lang.LangBundle;
 import com.intellij.navigation.NavigationItem;
+import com.intellij.navigation.PsiElementNavigationItem;
 import com.intellij.openapi.MnemonicHelper;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
+import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction;
 import com.intellij.openapi.actionSystem.impl.ActionButtonWithText;
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext;
@@ -59,6 +59,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
 import com.intellij.util.indexing.FindSymbolParameters;
 import com.intellij.util.ui.JBUI;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -150,12 +151,6 @@ public abstract class AbstractGotoSEContributor implements WeightedSearchEverywh
       .build();
   }
 
-  @Nullable
-  @Override
-  public String getAdvertisement() {
-    return DumbService.isDumb(myProject) ? IdeBundle.message("dumb.mode.results.might.be.incomplete") : null;
-  }
-
   @NotNull
   @Override
   public String getSearchProviderId() {
@@ -168,6 +163,7 @@ public abstract class AbstractGotoSEContributor implements WeightedSearchEverywh
   }
 
   /** @deprecated override {@link #doGetActions(PersistentSearchEverywhereContributorFilter, ElementsChooser.StatisticsCollector, Runnable)} instead**/
+  @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
   @Deprecated
   @NotNull
   protected List<AnAction> doGetActions(@NotNull @NlsContexts.Checkbox String ignored,
@@ -407,10 +403,10 @@ public abstract class AbstractGotoSEContributor implements WeightedSearchEverywh
         return true;
       }
 
-      NavigationUtil.activateFileWithPsiElement(psiElement, openInCurrentWindow(modifiers));
+      NavigationUtil.activateFileWithPsiElement(psiElement, true);
     }
     else {
-      EditSourceUtil.navigate(((NavigationItem)selected), true, openInCurrentWindow(modifiers));
+      EditSourceUtil.navigate(((NavigationItem)selected), true, false);
     }
 
     return true;
@@ -424,6 +420,9 @@ public abstract class AbstractGotoSEContributor implements WeightedSearchEverywh
       }
       if (element instanceof DataProvider) {
         return ((DataProvider)element).getData(dataId);
+      }
+      if (element instanceof PsiElementNavigationItem) {
+        return ((PsiElementNavigationItem)element).getTargetElement();
       }
     }
 
@@ -461,8 +460,7 @@ public abstract class AbstractGotoSEContributor implements WeightedSearchEverywh
     Pair<Integer, Integer> position = getLineAndColumn(searchText);
     boolean positionSpecified = position.first >= 0 || position.second >= 0;
     if (file != null && positionSpecified) {
-      OpenFileDescriptor descriptor = new OpenFileDescriptor(psi.getProject(), file, position.first, position.second);
-      return descriptor.setUseCurrentWindow(openInCurrentWindow(modifiers));
+      return new OpenFileDescriptor(psi.getProject(), file, position.first, position.second);
     }
 
     return null;
@@ -497,10 +495,6 @@ public abstract class AbstractGotoSEContributor implements WeightedSearchEverywh
     }
 
     return -1;
-  }
-
-  protected static boolean openInCurrentWindow(int modifiers) {
-    return (modifiers & InputEvent.SHIFT_MASK) == 0;
   }
 
   abstract static class ScopeChooserAction extends ActionGroup
@@ -544,10 +538,7 @@ public abstract class AbstractGotoSEContributor implements WeightedSearchEverywh
             KeyEvent.getExtendedKeyCodeForChar(TOGGLE), TOGGLE);
           AnActionEvent event = AnActionEvent.createFromAnAction(
             ScopeChooserAction.this, inputEvent, ActionPlaces.TOOLBAR, dataContext);
-          ActionManagerEx actionManager = ActionManagerEx.getInstanceEx();
-          actionManager.fireBeforeActionPerformed(ScopeChooserAction.this, dataContext, event);
-          onProjectScopeToggled();
-          actionManager.fireAfterActionPerformed(ScopeChooserAction.this, dataContext, event);
+          ActionUtil.performDumbAwareWithCallbacks(ScopeChooserAction.this, event, ScopeChooserAction.this::onProjectScopeToggled);
         }
       });
       return component;

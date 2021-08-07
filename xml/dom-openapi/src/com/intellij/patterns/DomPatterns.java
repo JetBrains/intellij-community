@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.patterns;
 
 import com.intellij.psi.xml.XmlAttribute;
@@ -13,7 +13,12 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * @author peter
+ * Provides patterns for the DOM-API and builds upon {@link XmlPatterns}.
+ * <p>
+ * Please see the <a href="https://plugins.jetbrains.com/docs/intellij/element-patterns.html">IntelliJ Platform Docs</a>
+ * for a high-level overview.
+ *
+ * @see XmlPatterns
  */
 public class DomPatterns {
   public static <T extends DomElement> DomElementPattern.Capture<T> domElement(Class<T> aClass) {

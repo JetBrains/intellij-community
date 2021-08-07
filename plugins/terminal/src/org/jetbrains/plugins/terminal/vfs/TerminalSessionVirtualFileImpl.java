@@ -3,18 +3,18 @@ package org.jetbrains.plugins.terminal.vfs;
 
 import com.intellij.terminal.JBTerminalWidget;
 import com.intellij.testFramework.LightVirtualFile;
-import com.jediterm.terminal.ui.settings.TabbedSettingsProvider;
+import com.jediterm.terminal.ui.settings.SettingsProvider;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 
 public class TerminalSessionVirtualFileImpl extends LightVirtualFile {
   private final JBTerminalWidget myTerminal;
-  private final TabbedSettingsProvider mySettingsProvider;
+  private final SettingsProvider mySettingsProvider;
 
   public TerminalSessionVirtualFileImpl(@NotNull String name,
                                         @NotNull JBTerminalWidget terminalWidget,
-                                        @NotNull TabbedSettingsProvider settingsProvider) {
+                                        @NotNull SettingsProvider settingsProvider) {
     myTerminal = terminalWidget;
     mySettingsProvider = settingsProvider;
     setFileType(TerminalSessionFileType.INSTANCE);
@@ -31,7 +31,7 @@ public class TerminalSessionVirtualFileImpl extends LightVirtualFile {
     return myTerminal;
   }
 
-  public @NotNull TabbedSettingsProvider getSettingsProvider() {
+  public @NotNull SettingsProvider getSettingsProvider() {
     return mySettingsProvider;
   }
 }

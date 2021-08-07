@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.packaging.ui;
 
 import com.intellij.execution.ExecutionException;
@@ -28,17 +28,12 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.List;
+import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-/**
- * @author yole
- */
+
 public class PyPackageManagementService extends PackageManagementServiceEx {
   @NotNull private static final Pattern PATTERN_ERROR_LINE = Pattern.compile(".*error:.*", Pattern.CASE_INSENSITIVE);
   @NonNls private static final String TEXT_PREFIX = buildHtmlStylePrefix();
@@ -126,6 +121,16 @@ public class PyPackageManagementService extends PackageManagementServiceEx {
       result.addAll(getCachedPyPIPackages());
     }
     result.addAll(PyPIPackageUtil.INSTANCE.getAdditionalPackages(getAdditionalRepositories()));
+    return result;
+  }
+
+  public Map<String, List<RepoPackage>> getAllPackagesByRepository() {
+    Map<String, List<RepoPackage>> result = new HashMap<>();
+    result.put(PyPIPackageUtil.PYPI_LIST_URL, getCachedPyPIPackages());
+    List<String> repositories = getAdditionalRepositories();
+    for (String repo : repositories) {
+      result.put(repo, PyPIPackageUtil.INSTANCE.getAdditionalPackages(List.of(repo)));
+    }
     return result;
   }
 

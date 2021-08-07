@@ -1,8 +1,16 @@
 <html>
 <body>
-Reports single char alternation (e.g. <b><code>a|b|c|d</code></b>) in a RegExp.
-It is simpler to use a character class (<b><code>[abcd]</code></b>) instead.
-This usually also provides slightly better matching performance.
+Reports single char alternation in a RegExp.
+It is simpler to use a character class instead.
+This may also provide better matching performance.
+<p><b>Example:</b></p>
+<pre><code>
+  a|b|c|d
+</code></pre>
+<p>After the quick-fix is applied:</p>
+<pre><code>
+  [abcd]
+</code></pre>
 <!-- tooltip end -->
 <p>
 <small>New in 2017.1</small>

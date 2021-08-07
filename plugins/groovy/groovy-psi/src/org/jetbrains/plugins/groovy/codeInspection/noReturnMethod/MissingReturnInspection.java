@@ -141,7 +141,6 @@ public class MissingReturnInspection extends GroovyLocalInspectionTool {
 
     final Ref<Boolean> alwaysHaveReturn = new Ref<>(true);
     final Ref<Boolean> sometimesHaveReturn = new Ref<>(false);
-    final Ref<Boolean> hasExplicitReturn = new Ref<>(false);
     ControlFlowUtils.visitAllExitPoints(block, new ControlFlowUtils.ExitPointVisitor() {
       @Override
       public boolean visitExitPoint(Instruction instruction, @Nullable GrExpression returnValue) {
@@ -163,7 +162,6 @@ public class MissingReturnInspection extends GroovyLocalInspectionTool {
 
         if (instruction.getElement() instanceof GrReturnStatement && returnValue != null) {
           sometimesHaveReturn.set(true);
-          hasExplicitReturn.set(true);
           return true;
         }
 

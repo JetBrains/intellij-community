@@ -55,7 +55,7 @@ public class PyJoinLinesHandler implements JoinRawLinesHandlerDelegate {
     final CharSequence text = document.getCharsSequence();
     if (start >= 0 && text.charAt(start) == '\n') start -= 1;
     if (start >= 0 && text.charAt(start) == '\\') start -= 1;
-    while (start >= 0 && text.charAt(start) == ' ' || text.charAt(start) == '\t') {
+    while (start >= 0 && (text.charAt(start) == ' ' || text.charAt(start) == '\t')) {
       start -= 1;
     }
     if (start < 0) {

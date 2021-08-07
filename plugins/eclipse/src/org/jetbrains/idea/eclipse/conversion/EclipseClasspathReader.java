@@ -36,10 +36,6 @@ public class EclipseClasspathReader extends AbstractEclipseClasspathReader<Modif
   private final Project myProject;
   private ContentEntry myContentEntry;
 
-  public EclipseClasspathReader(@NotNull String rootPath, @NotNull Project project, @Nullable List<String> currentRoots) {
-    this(rootPath, project, currentRoots, null);
-  }
-
   public EclipseClasspathReader(@NotNull String rootPath, @NotNull Project project, @Nullable List<String> currentRoots, @Nullable Set<String> moduleNames) {
     super(rootPath, currentRoots, moduleNames);
 

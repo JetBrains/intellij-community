@@ -50,41 +50,26 @@ public class PublicConstructorInNonPublicClassInspection extends BaseInspection 
     final PsiMethod constructor = (PsiMethod)infos[0];
     final PsiClass aClass = constructor.getContainingClass();
     if (aClass != null && aClass.hasModifierProperty(PsiModifier.PRIVATE)) {
-      fixes.add(new SetConstructorModifierFix(PsiModifier.PRIVATE));
+      fixes.add(new MakeConstructorPrivateFix());
     }
     fixes.add(new RemoveModifierFix(PsiModifier.PUBLIC));
     return fixes.toArray(InspectionGadgetsFix.EMPTY_ARRAY);
   }
 
-  private static class SetConstructorModifierFix extends InspectionGadgetsFix {
-
-    @PsiModifier.ModifierConstant private final String modifier;
-
-    SetConstructorModifierFix(@PsiModifier.ModifierConstant String modifier) {
-      this.modifier = modifier;
-    }
+  private static class MakeConstructorPrivateFix extends InspectionGadgetsFix {
 
     @NotNull
     @Override
     public String getFamilyName() {
-      return InspectionGadgetsBundle.message("set.constructor.modifier.fix.family.name");
-    }
-
-    @Override
-    @NotNull
-    public String getName() {
-      return InspectionGadgetsBundle.message(
-        "public.constructor.in.non.public.class.quickfix",
-        modifier
-      );
+      return InspectionGadgetsBundle.message("public.constructor.in.non.public.class.quickfix");
     }
 
     @Override
     protected void doFix(Project project, ProblemDescriptor descriptor) {
       final PsiElement element = descriptor.getPsiElement();
-      final PsiModifierList modifierList = (PsiModifierList)element.getParent();
-      modifierList.setModifierProperty(PsiModifier.PUBLIC, false);
-      modifierList.setModifierProperty(modifier, true);
+      if (element != null) {
+        ((PsiModifierList)element.getParent()).setModifierProperty(PsiModifier.PRIVATE, true);
+      }
     }
   }
 

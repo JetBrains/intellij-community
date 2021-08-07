@@ -6,7 +6,7 @@ layoutConstraints:
   gridGapY:
     min: &id002 {horizontal: false, value: 12.0}
     preferred: *id002
-  hideMode: 2
+  hideMode: 3
   insets:
   - &id003 {horizontal: false, unit: 0, value: 0.0}
   - &id004 {horizontal: true, unit: 0, value: 0.0}
@@ -152,6 +152,7 @@ componentConstrains:
         min: &id022 {horizontal: true, value: 20.0}
         preferred: *id022
   'JTextField #16':
+    hideMode: 2
     horizontal: {grow: 100.0}
     spanX: INF
     wrap: true
@@ -160,7 +161,7 @@ componentConstrains:
       gapBefore:
         min: &id023 {horizontal: true, value: 20.0}
         preferred: *id023
-  Some long description: {spanX: INF, wrap: true}
+  Some long description: {hideMode: 2, spanX: INF, wrap: true}
   Comment for the checkbox with longer header. [label]:
     horizontal:
       gapBefore: {}
@@ -168,10 +169,11 @@ componentConstrains:
     spanX: INF
     wrap: true
   'JPasswordField #21':
+    hideMode: 2
     horizontal: {grow: 100.0}
     spanX: INF
     wrap: true
-  'ComboBox #23': {spanX: INF, wrap: true}
+  'ComboBox #23': {hideMode: 2, spanX: INF, wrap: true}
   'JPanel #24':
     horizontal:
       gapBefore:

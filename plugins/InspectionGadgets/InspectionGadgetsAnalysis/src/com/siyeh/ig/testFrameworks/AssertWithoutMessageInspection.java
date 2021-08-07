@@ -52,7 +52,7 @@ public class AssertWithoutMessageInspection extends BaseInspection {
     @Override
     public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression) {
       super.visitMethodCallExpression(expression);
-      AssertHint assertHint = AssertHint.create(expression, methodName -> AssertHint.JUnitCommonAssertNames.ASSERT_METHOD_2_PARAMETER_COUNT.get(methodName));
+      AssertHint<PsiExpression> assertHint = AssertHint.create(expression, methodName -> AssertHint.ASSERT_METHOD_2_PARAMETER_COUNT.get(methodName));
       if (assertHint == null) {
         return;
       }

@@ -344,6 +344,7 @@ public class WrapperTest extends JavaFormatterTestCase {
 
   public void testSimpleMethods() throws Exception {
     CommonCodeStyleSettings settings = getSettings(JavaLanguage.INSTANCE);
+    settings.SPACE_WITHIN_BRACES = true;
 
     defaultCodeStyle();
     settings.KEEP_SIMPLE_METHODS_IN_ONE_LINE = true;

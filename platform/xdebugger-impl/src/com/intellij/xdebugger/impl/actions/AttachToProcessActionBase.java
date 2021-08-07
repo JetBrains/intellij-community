@@ -15,6 +15,7 @@ import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.progress.PerformInBackgroundOption;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.*;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
@@ -41,7 +42,7 @@ import java.awt.event.InputEvent;
 import java.util.*;
 import java.util.function.Supplier;
 
-public abstract class AttachToProcessActionBase extends AnAction {
+public abstract class AttachToProcessActionBase extends AnAction implements DumbAware {
   private static final Key<Map<XAttachHost, LinkedHashSet<RecentItem>>> RECENT_ITEMS_KEY =
     Key.create("AttachToProcessAction.RECENT_ITEMS_KEY");
   private static final Logger LOG = Logger.getInstance(AttachToProcessActionBase.class);

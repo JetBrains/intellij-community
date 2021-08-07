@@ -23,11 +23,12 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.vcs.log.VcsCommitMetadata;
 import com.intellij.vcs.log.data.DataGetter;
-import java.util.List;
-import javax.swing.event.ListSelectionEvent;
-import javax.swing.event.ListSelectionListener;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import javax.swing.event.ListSelectionEvent;
+import javax.swing.event.ListSelectionListener;
+import java.util.List;
 
 public abstract class CommitSelectionListener<T extends VcsCommitMetadata> implements ListSelectionListener {
   private final static Logger LOG = Logger.getInstance(CommitSelectionListener.class);

@@ -37,6 +37,7 @@ public class PyStackFrame extends XStackFrame {
   private static final Object STACK_FRAME_EQUALITY_OBJECT = new Object();
   public static final String DOUBLE_UNDERSCORE = "__";
   @NotNull @NonNls public static final Set<String> HIDE_TYPES = Set.of("function", "type", "classobj", "module");
+  @NotNull @NonNls public static final Set<String> HIDE_MODULES = Set.of("typing");
   public static final int DUNDER_VALUES_IND = 0;
   public static final int SPECIAL_TYPES_IND = DUNDER_VALUES_IND + 1;
   public static final int IPYTHON_VALUES_IND = SPECIAL_TYPES_IND + 1;
@@ -166,7 +167,7 @@ public class PyStackFrame extends XStackFrame {
           else if (pyValue.isIPythonHidden()) {
             groupIndex = IPYTHON_VALUES_IND;
           }
-          else if (HIDE_TYPES.contains(pyValue.getType())) {
+          else if (HIDE_TYPES.contains(pyValue.getType()) || HIDE_MODULES.contains(pyValue.getTypeQualifier())) {
             groupIndex = SPECIAL_TYPES_IND;
           }
           if (groupIndex > -1) {
@@ -192,9 +193,7 @@ public class PyStackFrame extends XStackFrame {
   private static Map<String, XValue> mergeSpecialGroupElementsOrdered(List<Map<String, XValue>> specialValuesGroups) {
     final LinkedHashMap<String, XValue> result = new LinkedHashMap<>();
     for (Map<String, XValue> group : specialValuesGroups) {
-      for (Map.Entry<String, XValue> entry : group.entrySet()) {
-        result.put(entry.getKey(), entry.getValue());
-      }
+      result.putAll(group);
     }
     return result;
   }

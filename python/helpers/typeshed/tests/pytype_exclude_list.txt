@@ -40,8 +40,7 @@ stubs/protobuf/google/protobuf/service.pyi
 stubs/protobuf/google/protobuf/source_context_pb2.pyi
 stubs/protobuf/google/protobuf/struct_pb2.pyi
 stubs/protobuf/google/protobuf/symbol_database.pyi
+stubs/protobuf/google/protobuf/text_format.pyi
 stubs/protobuf/google/protobuf/timestamp_pb2.pyi
 stubs/protobuf/google/protobuf/type_pb2.pyi
-stubs/protobuf/google/protobuf/util/json_format_pb2.pyi
-stubs/protobuf/google/protobuf/util/json_format_proto3_pb2.pyi
 stubs/protobuf/google/protobuf/wrappers_pb2.pyi

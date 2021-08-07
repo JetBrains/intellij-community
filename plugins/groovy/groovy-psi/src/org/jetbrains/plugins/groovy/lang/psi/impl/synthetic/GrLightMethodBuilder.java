@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.psi.impl.synthetic;
 
 import com.intellij.navigation.ItemPresentation;
@@ -38,9 +38,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 
 import javax.swing.*;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import static org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifier.GrModifierConstant;
 
@@ -261,12 +259,12 @@ public class GrLightMethodBuilder extends LightElement implements GrMethod, Orig
   }
 
   @NotNull
-  public GrLightMethodBuilder addParameter(@NlsSafe @NotNull String name, @NlsSafe @NotNull PsiType type) {
+  public GrLightMethodBuilder addParameter(@NlsSafe @NotNull String name, @NlsSafe @Nullable PsiType type) {
     return addParameter(name, type, false);
   }
 
   @NotNull
-  public GrLightMethodBuilder addParameter(@NlsSafe @NotNull String name, @NlsSafe @NotNull PsiType type, boolean isOptional) {
+  public GrLightMethodBuilder addParameter(@NlsSafe @NotNull String name, @NlsSafe @Nullable PsiType type, boolean isOptional) {
     GrLightParameter param = new GrLightParameter(name, type, this).setOptional(isOptional);
     return addParameter(param);
   }
@@ -551,8 +549,56 @@ public class GrLightMethodBuilder extends LightElement implements GrMethod, Orig
       public PsiFile getContainingFile() {
         return GrLightMethodBuilder.this.getContainingFile();
       }
+
+      @Override
+      public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        LightTypeParameterBuilder builder = (LightTypeParameterBuilder)o;
+        return getName().equals(builder.getName());
+      }
+
+      @Override
+      public int hashCode() {
+        return getName().hashCode();
+      }
     };
-    getTypeParameterList().addParameter(typeParameter);
+    myTypeParameterList.addParameter(typeParameter);
     return typeParameter;
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+    GrLightMethodBuilder builder = (GrLightMethodBuilder)o;
+    return myConstructor == builder.myConstructor &&
+           Objects.equals(myName, builder.myName) &&
+           Objects.equals(myMethodKind, builder.myMethodKind) &&
+           Objects.equals(myReturnType, builder.myReturnType) &&
+           Objects.equals(myModifierList, builder.myModifierList) &&
+           Objects.equals(myParameterList, builder.myParameterList) &&
+           Arrays.equals(myTypeParameterList.getTypeParameters(), builder.myTypeParameterList.getTypeParameters()) &&
+           Arrays.equals(myThrowsList.getReferencedTypes(), builder.myThrowsList.getReferencedTypes()) &&
+           Objects.equals(myContainingClass, builder.myContainingClass) &&
+           Objects.equals(myNamedParameters, builder.myNamedParameters) &&
+           Objects.equals(myData, builder.myData);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(
+      myConstructor,
+      myName,
+      myMethodKind,
+      myReturnType,
+      myModifierList,
+      myParameterList,
+      Arrays.hashCode(myTypeParameterList.getTypeParameters()),
+      Arrays.hashCode(myThrowsList.getReferencedTypes()),
+      myContainingClass,
+      myNamedParameters,
+      myData
+    );
   }
 }

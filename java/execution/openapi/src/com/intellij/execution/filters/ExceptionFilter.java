@@ -16,23 +16,30 @@
 package com.intellij.execution.filters;
 
 import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.search.GlobalSearchScope;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 
 public class ExceptionFilter implements Filter, DumbAware {
   final ExceptionInfoCache myCache;
+  private final ExceptionLineParserFactory myFactory = ExceptionLineParserFactory.getInstance();
   private ExceptionLineRefiner myNextLineRefiner;
 
   public ExceptionFilter(@NotNull final GlobalSearchScope scope) {
-    myCache = new ExceptionInfoCache(scope);
+    myCache = new ExceptionInfoCache(Objects.requireNonNull(scope.getProject()), scope);
+  }
+
+  public ExceptionFilter(@NotNull Project project, @NotNull final GlobalSearchScope scope) {
+    myCache = new ExceptionInfoCache(project, scope);
   }
 
   @Override
   public Result applyFilter(@NotNull final String line, final int textEndOffset) {
-    ExceptionWorker worker = new ExceptionWorker(myCache);
+    ExceptionLineParser worker = myFactory.create(myCache);
     Result result = worker.execute(line, textEndOffset, myNextLineRefiner);
     if (result == null) {
       if (myNextLineRefiner != null) {

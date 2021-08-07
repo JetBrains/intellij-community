@@ -157,12 +157,16 @@
     </group>
     <action id="ChangesView.SaveToShelve" class="com.intellij.openapi.vcs.changes.actions.SaveToShelveAction"/>
 
+    <action id="Vcs.Diff.ShowCombinedDiff" class="com.intellij.openapi.vcs.changes.actions.diff.ShowCombinedDiffAction"
+            icon="AllIcons.Actions.Diff"/>
+
     <group id="ChangesViewPopupMenu">
       <reference ref="CheckinFiles"/>
       <reference ref="ChangesView.Revert"/>
       <reference ref="ChangesView.RevertFiles"/>
       <reference ref="ChangesView.Move"/>
       <reference ref="Diff.ShowDiff"/>
+      <reference ref="Diff.ShowStandaloneDiff"/>
       <reference ref="EditSource"/>
       <separator/>
       <reference ref="$Delete"/>
@@ -202,6 +206,7 @@
               icon="AllIcons.Vcs.Unshelve"/>
       <action id="ShelvedChanges.Restore" class="com.intellij.openapi.vcs.changes.shelf.RestoreShelvedChange"/>
       <reference id="Diff.ShowDiff"/>
+      <reference ref="Diff.ShowStandaloneDiff"/>
       <reference id="Vcs.ShowDiffWithLocal"/>
       <action id="ChangesView.CreatePatchFromChanges" class="com.intellij.openapi.vcs.changes.actions.CreatePatchFromChangesAction$Dialog"
               icon="AllIcons.Vcs.Patch"/>
@@ -342,6 +347,8 @@
       <reference id="Vcs.MessageActionGroup"/>
     </group>
 
+    <action id="Vcs.RunCommitChecks" class="com.intellij.vcs.commit.RunCommitChecksAction"/>
+
     <action class="com.intellij.openapi.vcs.actions.VcsToolbarLabelAction" id="VcsToolbarLabelAction"/>
 
     <group id="VcsToolbarActions">
@@ -382,11 +389,13 @@
     </action>
     <action id="Vcs.Diff.ShowDiffInEditorTab" class="com.intellij.openapi.vcs.changes.actions.diff.MoveDiffPreviewToEditorAction">
       <add-to-group group-id="Diff.EditorGutterPopupMenu.EditorSettings" anchor="last"/>
+      <add-to-group group-id="Diff.Binary.Settings" anchor="last"/>
     </action>
     <group>
       <action id="Vcs.Diff.ShowDiffInNewWindow"
               icon="AllIcons.Actions.MoveToWindow"
               class="com.intellij.openapi.vcs.changes.actions.diff.MoveDiffPreviewToNewWindowAction">
+        <add-to-group group-id="Diff.Binary.Settings"/>
       </action>
       <separator/>
       <add-to-group group-id="EditorTabPopupMenu" anchor="before" relative-to-action="SplitVertically"/>
@@ -439,6 +448,7 @@
       <reference ref="Vcs.ToggleAmendCommitMode"/>
       <reference ref="CheckinProject"/>
       <reference ref="CheckinFiles"/>
+      <reference ref="Vcs.RunCommitChecks"/>
       <reference ref="ChangesView.ShowCommitOptions"/>
       <reference ref="UpdateFiles"/>
       <reference ref="CheckStatusForFiles"/>
@@ -521,11 +531,28 @@
       <action id="CommitView.SwitchToCommitDialog" class="com.intellij.vcs.commit.SwitchToCommitDialogAction"/>
       <group id="CommitView.ShowOnDoubleClick" popup="true" searchable="false">
         <action id="CommitView.ShowOnDoubleClick.EditorPreview"
-                class="com.intellij.openapi.vcs.changes.actions.ShowOnDoubleClickToggleAction$EditorPreview">
+                class="com.intellij.openapi.vcs.changes.actions.ShowOnDoubleClickToggleAction$CommitView$EditorPreview">
           <override-text place="ToolwindowPopup"/>
         </action>
         <action id="CommitView.ShowOnDoubleClick.Source"
-                class="com.intellij.openapi.vcs.changes.actions.ShowOnDoubleClickToggleAction$Source">
+                class="com.intellij.openapi.vcs.changes.actions.ShowOnDoubleClickToggleAction$CommitView$Source">
+          <override-text place="ToolwindowPopup"/>
+        </action>
+      </group>
+
+      <add-to-group group-id="VcsGeneral.KeymapGroup"/>
+    </group>
+
+    <group id="LocalChangesView.GearActions">
+      <group id="LocalChangesView.ShowOnDoubleClick" popup="true" searchable="false" class="com.intellij.ide.actions.NonEmptyActionGroup">
+        <action id="LocalChangesView.ShowOnDoubleClick.EditorPreview"
+                class="com.intellij.openapi.vcs.changes.actions.ShowOnDoubleClickToggleAction$LocalChangesView$EditorPreview"
+                use-shortcut-of="CommitView.ShowOnDoubleClick.EditorPreview">
+          <override-text place="ToolwindowPopup"/>
+        </action>
+        <action id="LocalChangesView.ShowOnDoubleClick.Source"
+                class="com.intellij.openapi.vcs.changes.actions.ShowOnDoubleClickToggleAction$LocalChangesView$Source"
+                use-shortcut-of="CommitView.ShowOnDoubleClick.Source">
           <override-text place="ToolwindowPopup"/>
         </action>
       </group>

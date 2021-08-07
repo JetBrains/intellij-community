@@ -9,7 +9,6 @@ import com.intellij.execution.configurations.RunnerSettings;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.psi.PsiElement;
 import com.intellij.refactoring.listeners.RefactoringElementListener;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -17,7 +16,6 @@ public abstract class RunConfigurationExtension extends RunConfigurationExtensio
   public static final ExtensionPointName<RunConfigurationExtension> EP_NAME =
     new ExtensionPointName<>("com.intellij.runConfigurationExtension");
 
-  @ApiStatus.Experimental
   public <T extends RunConfigurationBase<?>> void updateJavaParameters(@NotNull T configuration,
                                                                        @NotNull JavaParameters params,
                                                                        RunnerSettings runnerSettings,

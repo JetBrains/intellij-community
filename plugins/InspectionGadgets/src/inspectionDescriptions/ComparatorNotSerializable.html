@@ -1,13 +1,36 @@
 <html>
 <body>
-Reports on subclasses of <b>java.lang.Comparator</b> which are not
-also <b>Serializable</b>. Objects of <b>java.util.TreeMap</b>
-or <b>java.util.TreeSet</b> will become non-<b>Serializable</b>
-if instantiated with such <b>Comparator</b>s. This can result in unexpected and difficult-to-diagnose
-bugs. Since subclasses of <b>java.lang.Comparator</b> are often stateless, simply marking
-them <b>Serializable</b> is a small cost to avoid such issues.
-<!-- tooltip end -->
+Reports classes that implement <code>java.lang.Comparator</code>,
+but do not implement <code>java.io.Serializable</code>.
 <p>
+  If a non-serializable comparator is used to construct an ordered collection such
+  as a <code>java.util.TreeMap</code> or <code>java.util.TreeSet</code>, then the
+  collection will also be non-serializable. This can result in unexpected and
+  difficult-to-diagnose bugs.
+</p>
+<p>
+  Since subclasses of <code>java.lang.Comparator</code> are often stateless,
+  simply marking them serializable is a small cost to avoid such issues.
+</p>
+<p><b>Example:</b></p>
+<pre><code>
+  class Foo implements Comparator { // warning
+      @Override
+      public int compare(Object o1, Object o2) {
+          /* ... */
+      }
+  }
+</code></pre>
+<p>After the quick-fix is applied:</p>
+<pre><code>
+  class Foo implements Comparator, Serializable { // no warning here
+      @Override
+      public int compare(Object o1, Object o2) {
+          /* ... */
+      }
+  }
+</code></pre>
+<!-- tooltip end -->
 
 </body>
 </html>

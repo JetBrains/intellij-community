@@ -1,9 +1,10 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy
 
 import com.intellij.codeInsight.navigation.CtrlMouseHandler
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 import groovy.transform.CompileStatic
+import org.intellij.lang.annotations.Language
 import org.jetbrains.plugins.groovy.lang.documentation.GroovyDocumentationProvider
 
 /**
@@ -136,7 +137,55 @@ new Foo().<caret>foo()
 '''
   }
 
-  private void doTest(String text, String doc) {
+  void 'test IDEA-261068'() {
+    doTest """
+/**
+ * @return <code> lorem ipsum </code>
+ */
+def foo() {}
+
+f<caret>oo()""",
+           """\
+<div class='definition'>\
+<pre>\
+<a href=\"psi_element://_\"><code>_</code></a>\
+<br>\
+<a href=\"psi_element://java.lang.Object\"><code>Object</code></a>&nbsp;<b>foo</b>()</pre>\
+</div>\
+<table class='sections'><p>\
+<tr><td valign='top' class='section'><p>Returns:</td>\
+<td valign='top'><p><code> lorem ipsum </code></td></table>\
+"""
+  }
+
+  void 'test web reference'() {
+    doTest """
+/**
+ * @see <a href="https://google.com">ref</a>
+ */
+class GroovyDocTest<T> { }
+
+new Gr<caret>oovyDocTest<Integer>()""", """\
+<div class='definition'><pre>class <b>GroovyDocTest</b>&lt;T&gt;
+extends <a href="psi_element://java.lang.Object"><code>Object</code></a></pre></div><table class='sections'><p><tr><td valign='top' class='section'><p>See Also:</td><td valign='top'><p><a href="https://google.com">ref</a></td></table>\
+"""
+  }
+
+
+  void 'test type parameter in param'() {
+    doTest """
+/**
+ * @param <T> kej
+ */
+class GroovyDocTest<T> { }
+
+new Gr<caret>oovyDocTest<Integer>()""", """\
+<div class='definition'><pre>class <b>GroovyDocTest</b>&lt;T&gt;
+extends <a href="psi_element://java.lang.Object"><code>Object</code></a></pre></div><table class='sections'><p><tr><td valign='top' class='section'><p>Type parameters:</td><td valign='top'>&lt;T&gt; &ndash;  kej</td></table>\
+"""
+  }
+
+  private void doTest(String text, @Language("HTML") String doc) {
     myFixture.configureByText '_.groovy', text
     def ref = myFixture.file.findReferenceAt(myFixture.editor.caretModel.offset)
     def provider = new GroovyDocumentationProvider()

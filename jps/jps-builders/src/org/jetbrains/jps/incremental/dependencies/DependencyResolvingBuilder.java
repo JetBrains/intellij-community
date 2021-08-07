@@ -27,6 +27,7 @@ import org.jetbrains.jps.incremental.*;
 import org.jetbrains.jps.incremental.messages.BuildMessage;
 import org.jetbrains.jps.incremental.messages.CompilerMessage;
 import org.jetbrains.jps.incremental.messages.ProgressMessage;
+import org.jetbrains.jps.model.JpsGlobal;
 import org.jetbrains.jps.model.JpsSimpleElement;
 import org.jetbrains.jps.model.jarRepository.JpsRemoteRepositoryDescription;
 import org.jetbrains.jps.model.jarRepository.JpsRemoteRepositoryService;
@@ -36,6 +37,7 @@ import org.jetbrains.jps.model.module.JpsLibraryDependency;
 import org.jetbrains.jps.model.module.JpsModule;
 import org.jetbrains.jps.model.serialization.JpsModelSerializationDataService;
 import org.jetbrains.jps.model.serialization.JpsPathVariablesConfiguration;
+import org.jetbrains.jps.service.JpsServiceManager;
 
 import java.io.File;
 import java.io.IOException;
@@ -286,9 +288,11 @@ public class DependencyResolvingBuilder extends ModuleLevelBuilder{
       final List<RemoteRepository> repositories = new SmartList<>();
       for (JpsRemoteRepositoryDescription repo : JpsRemoteRepositoryService.getInstance().getOrCreateRemoteRepositoriesConfiguration(context.getProjectDescriptor().getProject())
           .getRepositories()) {
-        repositories.add(ArtifactRepositoryManager.createRemoteRepository(repo.getId(), repo.getUrl()));
+        repositories.add(
+          ArtifactRepositoryManager.createRemoteRepository(repo.getId(), repo.getUrl(), obtainAuthenticationData(repo.getUrl()))
+        );
       }
-      manager = new ArtifactRepositoryManager(getLocalRepoDir(context), repositories, new ProgressConsumer() {
+      manager = new ArtifactRepositoryManager(getLocalArtifactRepositoryRoot(context.getProjectDescriptor().getModel().getGlobal()), repositories, new ProgressConsumer() {
         @Override
         public void consume(@NlsSafe String message) {
           context.processMessage(new ProgressMessage(message));
@@ -305,9 +309,20 @@ public class DependencyResolvingBuilder extends ModuleLevelBuilder{
     return manager;
   }
 
-  private static @NotNull File getLocalRepoDir(CompileContext context) {
-    final JpsPathVariablesConfiguration pvConfig = JpsModelSerializationDataService.getPathVariablesConfiguration(context.getProjectDescriptor().getModel().getGlobal());
-    final String localRepoPath = pvConfig != null? pvConfig.getUserVariableValue(MAVEN_REPOSITORY_PATH_VAR) : null;
+  private static ArtifactRepositoryManager.ArtifactAuthenticationData obtainAuthenticationData(String url) {
+    for (DependencyAuthenticationDataProvider provider : JpsServiceManager.getInstance()
+      .getExtensions(DependencyAuthenticationDataProvider.class)) {
+      DependencyAuthenticationDataProvider.AuthenticationData authData = provider.provideAuthenticationData(url);
+      if (authData != null) {
+        return new ArtifactRepositoryManager.ArtifactAuthenticationData(authData.getUserName(), authData.getPassword());
+      }
+    }
+    return null;
+  }
+
+  public static @NotNull File getLocalArtifactRepositoryRoot(@NotNull JpsGlobal global) {
+    final JpsPathVariablesConfiguration pvConfig = JpsModelSerializationDataService.getPathVariablesConfiguration(global);
+    final String localRepoPath = pvConfig != null ? pvConfig.getUserVariableValue(MAVEN_REPOSITORY_PATH_VAR) : null;
     if (localRepoPath != null) {
       return new File(localRepoPath);
     }

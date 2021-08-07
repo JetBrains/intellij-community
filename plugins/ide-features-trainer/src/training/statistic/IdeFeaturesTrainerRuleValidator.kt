@@ -7,7 +7,7 @@ import com.intellij.internal.statistic.eventLog.validator.rules.impl.CustomValid
 import training.learn.CourseManager
 import training.statistic.FeatureUsageStatisticConsts.LESSON_ID
 
-class IdeFeaturesTrainerRuleValidator : CustomValidationRule() {
+private class IdeFeaturesTrainerRuleValidator : CustomValidationRule() {
 
   override fun acceptRuleId(ruleId: String?): Boolean = (ruleId == LESSON_ID)
 

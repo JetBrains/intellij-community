@@ -18,12 +18,14 @@ package org.jetbrains.idea.maven.dom
 import com.intellij.codeInsight.documentation.DocumentationManager
 import com.intellij.lang.documentation.DocumentationProvider
 import com.intellij.psi.PsiElement
+import org.junit.Test
 
 /**
  * @author Sergey Evdokimov
  */
 class MavenPomXmlDocumentationTest extends MavenDomTestCase {
 
+  @Test
   void testDocumentation() {
     createProjectPom("""
 <groupId>test</groupId>

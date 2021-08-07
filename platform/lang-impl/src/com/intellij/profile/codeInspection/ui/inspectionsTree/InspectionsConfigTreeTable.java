@@ -26,10 +26,7 @@ import com.intellij.ui.treeStructure.treetable.TreeTableModel;
 import com.intellij.ui.treeStructure.treetable.TreeTableTree;
 import com.intellij.util.Alarm;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.ui.EmptyIcon;
-import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.TextTransferable;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.*;
 import com.intellij.util.ui.table.IconTableCellRenderer;
 import one.util.streamex.MoreCollectors;
 import org.jetbrains.annotations.NotNull;
@@ -463,12 +460,9 @@ public final class InspectionsConfigTreeTable extends TreeTable {
           continue;
         }
         final HighlightSeverity currentSeverity = currentSeverityAndOccurrences.getPrimarySeverity();
-        if (currentSeverity == ScopesAndSeveritiesTable.MIXED_FAKE_SEVERITY ||
-            currentSeverityAndOccurrences.getOccurrencesSize() == allInspectionsCount ||
-            myDefaultScopeName.equals(currentScope)) {
-          result.put(currentScope, currentSeverity);
-        }
-        else {
+        if (currentSeverity != ScopesAndSeveritiesTable.MIXED_FAKE_SEVERITY &&
+            currentSeverityAndOccurrences.getOccurrencesSize() != allInspectionsCount &&
+            !myDefaultScopeName.equals(currentScope)) {
           Set<String> toolsToCheck = new HashSet<>(allScopes.keySet());
           toolsToCheck.removeAll(currentSeverityAndOccurrences.getOccurrences().keySet());
           boolean doContinue = false;
@@ -486,8 +480,8 @@ public final class InspectionsConfigTreeTable extends TreeTable {
           if (doContinue) {
             continue;
           }
-          result.put(currentScope, currentSeverity);
         }
+        result.put(currentScope, currentSeverity);
       }
 
       return result;

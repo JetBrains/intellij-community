@@ -11,6 +11,7 @@ class EditorConfigNumerousWildcardsInspection : LocalInspectionTool() {
   override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean) = object : EditorConfigVisitor() {
     override fun visitHeader(header: EditorConfigHeader) {
       if (!containsIssue(header)) return
+      @Suppress("DialogTitleCapitalization")
       val message = EditorConfigBundle["inspection.header.many.wildcards.message"]
       holder.registerProblem(header, message)
     }

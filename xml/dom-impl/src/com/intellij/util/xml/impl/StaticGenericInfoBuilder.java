@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.xml.impl;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -250,6 +250,7 @@ public final class StaticGenericInfoBuilder {
     return false;
   }
 
+
   private static final Set<JavaMethodSignature> ourDomElementMethods =
     ContainerUtil.map2Set(DomElement.class.getMethods(), method -> new JavaMethodSignature(method));
 
@@ -303,15 +304,15 @@ public final class StaticGenericInfoBuilder {
     return strategy != null ? strategy : DomNameStrategy.HYPHEN_STRATEGY;
   }
 
-  final JavaMethod getCustomChildrenGetter() {
+  JavaMethod getCustomChildrenGetter() {
     return myCustomChildrenGetter;
   }
 
-  final Map<JavaMethodSignature, AttributeChildDescriptionImpl> getAttributes() {
+  Map<JavaMethodSignature, AttributeChildDescriptionImpl> getAttributes() {
     return myAttributes;
   }
 
-  final Map<JavaMethodSignature, Pair<FixedChildDescriptionImpl, Integer>> getFixedGetters() {
+  Map<JavaMethodSignature, Pair<FixedChildDescriptionImpl, Integer>> getFixedGetters() {
     final Map<JavaMethodSignature, Pair<FixedChildDescriptionImpl, Integer>> map = new HashMap<>();
     final Set<XmlName> names = myFixedChildrenGetters.keySet();
     for (final XmlName name : names) {
@@ -337,7 +338,7 @@ public final class StaticGenericInfoBuilder {
     return map;
   }
 
-  final Map<JavaMethodSignature, CollectionChildDescriptionImpl> getCollectionGetters() {
+  Map<JavaMethodSignature, CollectionChildDescriptionImpl> getCollectionGetters() {
     final Map<JavaMethodSignature, CollectionChildDescriptionImpl> getters = new HashMap<>();
     for (final XmlName xmlName : myCollectionGetters.keySet()) {
       final Collection<JavaMethod> collGetters = myCollectionGetters.get(xmlName);
@@ -355,11 +356,11 @@ public final class StaticGenericInfoBuilder {
     return getters;
   }
 
-  final Map<JavaMethodSignature, Pair<String, String[]>> getCompositeCollectionAdders() {
+  Map<JavaMethodSignature, Pair<String, String[]>> getCompositeCollectionAdders() {
     return myCompositeCollectionAdders;
   }
 
-  final Map<JavaMethodSignature, String[]> getCompositeCollectionGetters() {
+  Map<JavaMethodSignature, String[]> getCompositeCollectionGetters() {
     return myCompositeCollectionGetters;
   }
 

@@ -1,11 +1,11 @@
 <html>
 <body>
-Reports any method with a signature identical to its super method and either has an identical body to the super method or only
-calls the super method.
-Such a method is redundant and can be removed.
+Reports the methods identical to their super methods. Such methods have the same signatures
+as their super methods and either have duplicated bodies or only include the super method's call in their bodies.
+<p>These methods are redundant and can be removed.</p>
 <!-- tooltip end -->
 <p>
-Use the checkbox below to check methods overriding methods from libraries as well.
-Checking library methods may adversely affect the performance of this inspection.
+  Use the checkbox below to run the inspection for the methods that override library methods.
+  Checking library methods may slow down the inspection.
 </body>
 </html>

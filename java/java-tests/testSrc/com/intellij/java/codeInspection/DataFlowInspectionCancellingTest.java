@@ -1,9 +1,9 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.codeInspection;
 
-import com.intellij.codeInspection.dataFlow.ControlFlowAnalyzer;
-import com.intellij.codeInspection.dataFlow.DataFlowRunner;
-import com.intellij.codeInspection.dataFlow.StandardInstructionVisitor;
+import com.intellij.codeInspection.dataFlow.StandardDataFlowRunner;
+import com.intellij.codeInspection.dataFlow.java.ControlFlowAnalyzer;
+import com.intellij.codeInspection.dataFlow.lang.DfaListener;
 import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.psi.PsiCodeBlock;
 import com.intellij.psi.PsiFileFactory;
@@ -44,12 +44,12 @@ public class DataFlowInspectionCancellingTest extends DataFlowInspectionTestCase
     PsiMethod method = file.getClasses()[0].getMethods()[0];
     PsiCodeBlock body = method.getBody();
     assertNotNull(body);
-    DataFlowRunner runner = new DataFlowRunner(getProject(), body) {};
+    var runner = new StandardDataFlowRunner(getProject());
 
     Predicate<StackTraceElement> stackTraceElementCondition =
       ste -> ste.getClassName().equals(ControlFlowAnalyzer.class.getName()) && ste.getMethodName().equals("processTryWithResources");
     BombedProgressIndicator.explodeOnStackElement(stackTraceElementCondition).runBombed(() -> {
-      runner.analyzeMethod(body, new StandardInstructionVisitor());
+      runner.analyzeMethod(body, DfaListener.EMPTY);
       fail("Should not be reachable");
     });
   }

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.plugins.newui;
 
 import com.intellij.icons.AllIcons;
@@ -22,6 +22,7 @@ import com.intellij.util.Urls;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.HttpRequests;
 import com.intellij.util.io.URLUtil;
+import com.intellij.util.lang.UrlClassLoader;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -31,6 +32,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.MalformedURLException;
 import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.NoSuchFileException;
@@ -127,11 +129,11 @@ public final class PluginLogo {
 
     try {
       if (!JBColor.isBright() && url.getPath().endsWith(".svg") && !url.getPath().endsWith("_dark.svg")) {
-        Path file = URLUtil.urlToFile(url).toPath();
+        Path file = Path.of(UrlClassLoader.urlToFilePath(url.getPath()));
         String fileName = file.getFileName().toString();
         Path darkFile = file.getParent().resolve(fileName.substring(0, fileName.length() - 4) + "_dark.svg");
         try (InputStream stream = Files.newInputStream(darkFile)) {
-          return HiDPIPluginLogoIcon.loadSVG(stream, width, height);
+          return HiDPIPluginLogoIcon.loadSVG(darkFile.toUri().toURL(), stream, width, height);
         }
         catch (NoSuchFileException ignore) {
         }
@@ -149,7 +151,7 @@ public final class PluginLogo {
     }
 
     try {
-      return HiDPIPluginLogoIcon.loadSVG(url.openStream(), width, height);
+      return HiDPIPluginLogoIcon.loadSVG(url, url.openStream(), width, height);
     }
     catch (Exception e) {
       if (logger != null) {
@@ -353,14 +355,23 @@ public final class PluginLogo {
 
   @Nullable
   private static PluginLogoIconProvider tryLoadIcon(@NotNull File iconFile) {
-    //noinspection IOResourceOpenedButNotSafelyClosed
-    return iconFile.exists() && iconFile.length() > 0 ? loadFileIcon(() -> new FileInputStream(iconFile)) : null;
+    return iconFile.exists() && iconFile.length() > 0 ? loadFileIcon(toURL(iconFile), () -> new FileInputStream(iconFile)) : null;
   }
 
   @Nullable
   private static PluginLogoIconProvider tryLoadIcon(@NotNull ZipFile zipFile, boolean light) {
     ZipEntry iconEntry = zipFile.getEntry(getIconFileName(light));
-    return iconEntry == null ? null : loadFileIcon(() -> zipFile.getInputStream(iconEntry));
+    return iconEntry == null ? null : loadFileIcon(toURL(new File(zipFile.getName())), () -> zipFile.getInputStream(iconEntry));
+  }
+
+  static @Nullable URL toURL(@NotNull File file) {
+    try {
+      return file.toURI().toURL();
+    }
+    catch (MalformedURLException e) {
+      LOG.warn(e);
+    }
+    return null;
   }
 
   @NotNull
@@ -377,10 +388,10 @@ public final class PluginLogo {
   }
 
   @Nullable
-  private static PluginLogoIconProvider loadFileIcon(@NotNull ThrowableComputable<? extends InputStream, ? extends IOException> provider) {
+  private static PluginLogoIconProvider loadFileIcon(@Nullable URL url, @NotNull ThrowableComputable<? extends InputStream, ? extends IOException> provider) {
     try {
-      Icon logo40 = HiDPIPluginLogoIcon.loadSVG(provider.compute(), PLUGIN_ICON_SIZE, PLUGIN_ICON_SIZE);
-      Icon logo80 = HiDPIPluginLogoIcon.loadSVG(provider.compute(), PLUGIN_ICON_SIZE_SCALED, PLUGIN_ICON_SIZE_SCALED);
+      Icon logo40 = HiDPIPluginLogoIcon.loadSVG(url, provider.compute(), PLUGIN_ICON_SIZE, PLUGIN_ICON_SIZE);
+      Icon logo80 = HiDPIPluginLogoIcon.loadSVG(url, provider.compute(), PLUGIN_ICON_SIZE_SCALED, PLUGIN_ICON_SIZE_SCALED);
 
       return new HiDPIPluginLogoIcon(logo40, logo80);
     }

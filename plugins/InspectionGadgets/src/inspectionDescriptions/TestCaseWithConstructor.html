@@ -1,9 +1,20 @@
 <html>
 <body>
-Reports on JUnit test cases with initialization logic in their constructors. Initialization
-of JUnit test cases should be done in <b>setUp()</b> methods instead.
-<!-- tooltip end -->
-<p>
+Reports JUnit test cases with initialization logic in their constructors.
+If a constructor fails, the <code>@After</code> annotated or <code>tearDown()</code> method won't be called.
+This can leave the test environment partially initialized, which can adversely affect other tests.
+Instead, initialization of JUnit test cases should be done in a <code>setUp()</code> or <code>@Before</code> annotated method.
+<p>Bad example:</p>
+<pre><code>
+  <b>public class</b> ImportantTest {
+    <b>private</b> File file;
+    <b>public</b> ImportantTest() <b>throws</b> IOException {
+      file = File.createTempFile("xyz", ".tmp");
+    }
 
+    // ... tests go here
+  }
+</code></pre>
+<!-- tooltip end -->
 </body>
 </html>

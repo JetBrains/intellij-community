@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.project;
 
 import com.intellij.openapi.Disposable;
@@ -20,8 +20,8 @@ import com.intellij.util.containers.DisposableWrapperList;
 import com.intellij.util.containers.FileCollectionFactory;
 import com.intellij.util.containers.Stack;
 import com.intellij.util.io.PathKt;
-import gnu.trove.THashSet;
-import gnu.trove.TObjectHashingStrategy;
+import it.unimi.dsi.fastutil.Hash;
+import it.unimi.dsi.fastutil.objects.ObjectOpenCustomHashSet;
 import org.jdom.Element;
 import org.jdom.output.Format;
 import org.jdom.output.XMLOutputter;
@@ -107,8 +107,8 @@ public final class MavenProjectsTree {
         result.myManagedFilesPaths = readCollection(in, new LinkedHashSet<>());
         result.myIgnoredFilesPaths = readCollection(in, new ArrayList<>());
         result.myIgnoredFilesPatterns = readCollection(in, new ArrayList<>());
-        result.myExplicitProfiles = new MavenExplicitProfiles(readCollection(in, new THashSet<>()),
-                                                              readCollection(in, new THashSet<>()));
+        result.myExplicitProfiles = new MavenExplicitProfiles(readCollection(in, new HashSet<>()),
+                                                              readCollection(in, new HashSet<>()));
         result.myRootProjects.addAll(readProjectsRecursively(in, result));
       }
       catch (IOException e) {
@@ -365,11 +365,11 @@ public final class MavenProjectsTree {
 
   private static void updateExplicitProfiles(Collection<String> explicitProfiles, Collection<String> temporarilyRemovedExplicitProfiles,
                                              Collection<String> available) {
-    Collection<String> removedProfiles = new THashSet<>(explicitProfiles);
+    Collection<String> removedProfiles = new HashSet<>(explicitProfiles);
     removedProfiles.removeAll(available);
     temporarilyRemovedExplicitProfiles.addAll(removedProfiles);
 
-    Collection<String> restoredProfiles = new THashSet<>(temporarilyRemovedExplicitProfiles);
+    Collection<String> restoredProfiles = new HashSet<>(temporarilyRemovedExplicitProfiles);
     restoredProfiles.retainAll(available);
     temporarilyRemovedExplicitProfiles.removeAll(restoredProfiles);
 
@@ -378,7 +378,7 @@ public final class MavenProjectsTree {
   }
 
   public Collection<String> getAvailableProfiles() {
-    Collection<String> res = new THashSet<>();
+    Collection<String> res = new HashSet<>();
 
     for (MavenProject each : getProjects()) {
       res.addAll(each.getProfilesIds());
@@ -390,8 +390,8 @@ public final class MavenProjectsTree {
   public Collection<Pair<String, MavenProfileKind>> getProfilesWithStates() {
     Collection<Pair<String, MavenProfileKind>> result = new ArrayListSet<>();
 
-    Collection<String> available = new THashSet<>();
-    Collection<String> active = new THashSet<>();
+    Collection<String> available = new HashSet<>();
+    Collection<String> active = new HashSet<>();
     for (MavenProject each : getProjects()) {
       available.addAll(each.getProfilesIds());
       active.addAll(each.getActivatedProfilesIds().getEnabledProfiles());
@@ -736,7 +736,7 @@ public final class MavenProjectsTree {
     UpdateContext updateContext = new UpdateContext();
     Stack<MavenProject> updateStack = new Stack<>();
 
-    Set<MavenProject> inheritorsToUpdate = new THashSet<>();
+    Set<MavenProject> inheritorsToUpdate = new HashSet<>();
     for (VirtualFile each : files) {
       MavenProject mavenProject = findProject(each);
       if (mavenProject == null) return;
@@ -1195,8 +1195,7 @@ public final class MavenProjectsTree {
     try {
       List<MavenProject> result = null;
 
-      Set<MavenCoordinate> projectIds = new THashSet<>(new MavenCoordinateHashCodeStrategy());
-
+      Set<MavenCoordinate> projectIds = new ObjectOpenCustomHashSet<>(projects.size(), new MavenCoordinateHashCodeStrategy());
       for (MavenProject project : projects) {
         projectIds.add(project.getMavenId());
       }
@@ -1277,6 +1276,7 @@ public final class MavenProjectsTree {
   /**
    * @deprecated use #addListener(Listener, Disposable)
    */
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   @Deprecated
   public void addListener(Listener l) {
     myListeners.add(l);
@@ -1513,15 +1513,22 @@ public final class MavenProjectsTree {
   }
 
   @ApiStatus.Internal
-  public static class MavenCoordinateHashCodeStrategy implements TObjectHashingStrategy<MavenCoordinate> {
+  public static final class MavenCoordinateHashCodeStrategy implements Hash.Strategy<MavenCoordinate> {
     @Override
-    public int computeHashCode(MavenCoordinate object) {
-      String artifactId = object.getArtifactId();
+    public int hashCode(MavenCoordinate object) {
+      String artifactId = object == null ? null : object.getArtifactId();
       return artifactId == null ? 0 : artifactId.hashCode();
     }
 
     @Override
     public boolean equals(MavenCoordinate o1, MavenCoordinate o2) {
+      if (o1 == o2) {
+        return true;
+      }
+      if (o1 == null || o2 == null) {
+        return false;
+      }
+
       return Objects.equals(o1.getArtifactId(), o2.getArtifactId())
              && Objects.equals(o1.getVersion(), o2.getVersion())
              && Objects.equals(o1.getGroupId(), o2.getGroupId());

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.roots.impl;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -89,6 +89,7 @@ class RootIndex {
       myPackagePrefixByRoot.put(root, packagePrefix);
     }
     storeContentsBeneathExcluded(allRoots, hierarchies);
+    storeOutsideProjectRootsButHasContentInside();
 
     myPackageDirectoryCache = new PackageDirectoryCache(rootsByPackagePrefix) {
       @Override
@@ -96,6 +97,27 @@ class RootIndex {
         return getInfoForFile(dir).isInProject(dir) && packageName.equals(getPackageName(dir));
       }
     };
+  }
+
+  private void storeOutsideProjectRootsButHasContentInside() {
+    nextRoot:
+    for (VirtualFile root : new ArrayList<>(myRootInfos.keySet())) {
+      for (VirtualFile v = root.getParent(); v != null; v = v.getParent()) {
+        DirectoryInfo info = myRootInfos.get(v);
+        if (info == NonProjectDirectoryInfo.OUTSIDE_PROJECT_ROOTS_BUT_HAS_CONTENT_BENEATH) {
+          break;
+        }
+        if (info != null) continue nextRoot;
+      }
+      // mark all [root.parent .. disk root] as OUTSIDE_PROJECT_ROOTS_BUT_HAS_CONTENT_BENEATH
+      for (VirtualFile v = root.getParent(); v != null; v = v.getParent()) {
+        DirectoryInfo info = myRootInfos.get(v);
+        if (info == NonProjectDirectoryInfo.OUTSIDE_PROJECT_ROOTS_BUT_HAS_CONTENT_BENEATH) {
+          break;
+        }
+        myRootInfos.put(v, NonProjectDirectoryInfo.OUTSIDE_PROJECT_ROOTS_BUT_HAS_CONTENT_BENEATH);
+      }
+    }
   }
 
   private void storeContentsBeneathExcluded(@NotNull Set<? extends VirtualFile> allRoots, @NotNull List<? extends List<VirtualFile>> hierarchies) {
@@ -155,6 +177,7 @@ class RootIndex {
   private RootInfo buildRootInfo(@NotNull Project project) {
     final RootInfo info = new RootInfo();
     ModuleManager moduleManager = ModuleManager.getInstance(project);
+    boolean includeProjectJdk = true;
     for (final Module module : moduleManager.getModules()) {
       final ModuleRootManager moduleRootManager = ModuleRootManager.getInstance(module);
 
@@ -197,23 +220,7 @@ class RootIndex {
           VirtualFile[] sourceRoots = myRootSupplier.getLibraryRoots(entry, OrderRootType.SOURCES);
           VirtualFile[] classRoots = myRootSupplier.getLibraryRoots(entry, OrderRootType.CLASSES);
 
-          // Init library sources
-          for (final VirtualFile sourceRoot : sourceRoots) {
-            if (!ensureValid(sourceRoot, entry)) continue;
-
-            info.classAndSourceRoots.add(sourceRoot);
-            info.libraryOrSdkSources.add(sourceRoot);
-            info.packagePrefix.put(sourceRoot, "");
-          }
-
-          // init library classes
-          for (final VirtualFile classRoot : classRoots) {
-            if (!ensureValid(classRoot, entry)) continue;
-
-            info.classAndSourceRoots.add(classRoot);
-            info.libraryOrSdkClasses.add(classRoot);
-            info.packagePrefix.put(classRoot, "");
-          }
+          fillIndexWithLibraryRoots(info, entry, sourceRoots, classRoots);
 
           if (orderEntry instanceof LibraryOrderEntry) {
             Library library = ((LibraryOrderEntry)orderEntry).getLibrary();
@@ -235,10 +242,20 @@ class RootIndex {
               }
             }
           }
+          else {
+            includeProjectJdk = false;
+          }
         }
       }
     }
 
+    if (includeProjectJdk) {
+      Sdk sdk = ProjectRootManager.getInstance(project).getProjectSdk();
+      if (sdk != null) {
+        fillIndexWithLibraryRoots(info, sdk, myRootSupplier.getSdkRoots(sdk, OrderRootType.SOURCES), myRootSupplier.getSdkRoots(sdk, OrderRootType.CLASSES));
+      }
+    }
+    
     for (AdditionalLibraryRootsProvider provider : AdditionalLibraryRootsProvider.EP_NAME.getExtensionList()) {
       Collection<SyntheticLibrary> libraries = provider.getAdditionalProjectLibraries(project);
       for (SyntheticLibrary library : libraries) {
@@ -311,6 +328,26 @@ class RootIndex {
       }
     }
     return info;
+  }
+
+  private static void fillIndexWithLibraryRoots(RootInfo info, Object container, VirtualFile[] sourceRoots, VirtualFile[] classRoots) {
+    // Init library sources
+    for (final VirtualFile sourceRoot : sourceRoots) {
+      if (!ensureValid(sourceRoot, container)) continue;
+
+      info.classAndSourceRoots.add(sourceRoot);
+      info.libraryOrSdkSources.add(sourceRoot);
+      info.packagePrefix.put(sourceRoot, "");
+    }
+
+    // init library classes
+    for (final VirtualFile classRoot : classRoots) {
+      if (!ensureValid(classRoot, container)) continue;
+
+      info.classAndSourceRoots.add(classRoot);
+      info.libraryOrSdkClasses.add(classRoot);
+      info.packagePrefix.put(classRoot, "");
+    }
   }
 
   private static boolean ensureValid(@NotNull VirtualFile file, @NotNull Object container) {
@@ -613,7 +650,8 @@ class RootIndex {
           if (info != null) return info;
         }
       }
-    } else {
+    }
+    else {
       for (VirtualFile each = file; each != null; each = each.getParent()) {
         DirectoryInfo info = getOwnInfo(each);
         if (info != null) return info;

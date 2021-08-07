@@ -1,0 +1,10 @@
+<node text="C.C  ()" base="true">
+  <node text="bar(C)  ()">
+    <node text="main0.kt  ()"/>
+  </node>
+  <node text="foo(C)  ()">
+    <node text="bar(C)  ()">
+      <node text="main0.kt  ()"/>
+    </node>
+  </node>
+</node>

@@ -30,6 +30,7 @@ import com.intellij.ide.util.projectWizard.importSources.ProjectStructureDetecto
 import com.intellij.ide.util.projectWizard.importSources.impl.ProjectFromSourcesBuilderImpl;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -93,7 +94,7 @@ public abstract class CreateFromSourcesMode extends WizardMode {
         }
       };
       projectBuilder.addConfigurationUpdater(frameworkDetectionStep);
-      sequence.addCommonFinishingStep(frameworkDetectionStep, detectorTypes);
+      sequence.addCommonFinishingStep(frameworkDetectionStep, types -> ContainerUtil.intersects(types, detectorTypes));
     }
   }
 

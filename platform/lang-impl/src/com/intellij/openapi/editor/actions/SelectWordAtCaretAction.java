@@ -110,7 +110,7 @@ public class SelectWordAtCaretAction extends TextComponentEditorAction implement
 
         final CharSequence chars = doc.getCharsSequence();
         int nonWhitespaceOffset = CharArrayUtil.shiftForward(chars, endOffset, " \t\n");
-        HighlighterIterator iterator = ((EditorEx)editor).getHighlighter().createIterator(nonWhitespaceOffset);
+        HighlighterIterator iterator = editor.getHighlighter().createIterator(nonWhitespaceOffset);
         if (BraceMatchingUtil.isRBraceToken(iterator, chars, file.getFileType())) {
           if (editor.offsetToLogicalPosition(iterator.getStart()).column == guide.indentLevel) {
             endOffset = iterator.getEnd();

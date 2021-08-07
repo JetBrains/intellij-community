@@ -11,9 +11,13 @@ import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.ShutDownTracker;
+import com.intellij.psi.stubs.StubIndex;
+import com.intellij.psi.stubs.StubIndexImpl;
 import com.intellij.util.FlushingDaemon;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.indexing.FileBasedIndex;
+import com.intellij.util.indexing.FileBasedIndexEx;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
@@ -140,6 +144,8 @@ public final class ThreadTracker {
   @TestOnly
   public void checkLeak() throws AssertionError {
     ApplicationManager.getApplication().assertIsDispatchThread();
+    ((FileBasedIndexEx)FileBasedIndex.getInstance()).waitUntilIndicesAreInitialized();
+    ((StubIndexImpl)StubIndex.getInstance()).waitUntilStubIndexedInitialized();
     NettyUtil.awaitQuiescenceOfGlobalEventExecutor(100, TimeUnit.SECONDS);
     ShutDownTracker.getInstance().waitFor(100, TimeUnit.SECONDS);
     try {

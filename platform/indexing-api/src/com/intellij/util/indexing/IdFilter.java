@@ -24,16 +24,16 @@ import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.VirtualFileWithId;
-import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.CachedValue;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.BitSet;
 
+@ApiStatus.Internal
 public abstract class IdFilter {
   private static final Logger LOG = Logger.getInstance(IdFilter.class);
   private static final Key<CachedValue<IdFilter>> INSIDE_PROJECT = Key.create("INSIDE_PROJECT");
@@ -69,12 +69,11 @@ public abstract class IdFilter {
     Key<CachedValue<IdFilter>> key = includeNonProjectItems ? OUTSIDE_PROJECT : INSIDE_PROJECT;
     CachedValueProvider<IdFilter> provider = () -> CachedValueProvider.Result.create(buildProjectIdFilter(project, includeNonProjectItems),
               ProjectRootManager.getInstance(project), VirtualFileManager.VFS_STRUCTURE_MODIFICATIONS);
-    return CachedValuesManager.getManager(project).getCachedValue(project, key,
-                                                                  provider, false);
+    return CachedValuesManager.getManager(project).getCachedValue(project, key, provider, false);
   }
 
   @NotNull
-  private static IdFilter buildProjectIdFilter(Project project, boolean includeNonProjectItems) {
+  private static IdFilter buildProjectIdFilter(@NotNull Project project, boolean includeNonProjectItems) {
     long started = System.currentTimeMillis();
     final BitSet idSet = new BitSet();
 
@@ -84,11 +83,11 @@ public abstract class IdFilter {
       return true;
     };
 
-    if (!includeNonProjectItems) {
-      ProjectRootManager.getInstance(project).getFileIndex().iterateContent(iterator);
+    if (includeNonProjectItems) {
+      FileBasedIndex.getInstance().iterateIndexableFiles(iterator, project, ProgressIndicatorProvider.getGlobalProgressIndicator());
     }
     else {
-      FileBasedIndex.getInstance().iterateIndexableFiles(iterator, project, ProgressIndicatorProvider.getGlobalProgressIndicator());
+      ProjectRootManager.getInstance(project).getFileIndex().iterateContent(iterator);
     }
 
     if (LOG.isDebugEnabled()) {

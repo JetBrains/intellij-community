@@ -431,6 +431,12 @@ public final class InjectedLanguageManagerImpl extends InjectedLanguageManager i
     if (infos == null || infos.length == 0) {
       return null;
     }
+
+    if (element instanceof PsiLanguageInjectionHost
+        && !((PsiLanguageInjectionHost)element).isValidHost()) {
+      return null;
+    }
+
     final boolean dumb = myDumbService.isDumb();
     InjectionRegistrarImpl hostRegistrar = new InjectionRegistrarImpl(myProject, hostPsiFile, element, myDocManager);
     for (MultiHostInjector injector : infos) {

@@ -1,13 +1,17 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.stash.ui
 
+import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx
 import com.intellij.openapi.vcs.changes.EditorTabPreview
 import com.intellij.openapi.vcs.changes.ui.ChangesTree
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager
 import com.intellij.ui.ExpandableItemsHandler
 import com.intellij.util.ui.UIUtil
 import git4idea.i18n.GitBundle
+import java.beans.PropertyChangeListener
 import javax.swing.JComponent
+import javax.swing.JTree
 
 class GitStashEditorDiffPreview(diffProcessor: GitStashDiffPreview, tree: ChangesTree, targetComponent: JComponent) : EditorTabPreview(diffProcessor) {
 
@@ -18,13 +22,24 @@ class GitStashEditorDiffPreview(diffProcessor: GitStashDiffPreview, tree: Change
       closePreview()
       ChangesViewContentManager.getToolWindowFor(project, GitStashContentProvider.TAB_NAME)?.activate(null)
     }
-    openWithDoubleClick(tree)
+    installListeners(tree, false)
+    tree.addPropertyChangeListener(JTree.TREE_MODEL_PROPERTY, PropertyChangeListener {
+      if (isPreviewOpen()) {
+        FileEditorManagerEx.getInstanceEx(project).updateFilePresentation(previewFile)
+      }
+    })
     installNextDiffActionOn(targetComponent)
     UIUtil.putClientProperty(tree, ExpandableItemsHandler.IGNORE_ITEM_SELECTION, true)
   }
 
+  override fun updateAvailability(event: AnActionEvent) {
+    event.presentation.isVisible = event.isFromActionToolbar || event.presentation.isEnabled
+  }
+
   override fun getCurrentName(): String {
-    return GitBundle.message("stash.editor.diff.preview.title", stashDiffPreview.currentChangeName)
+    return stashDiffPreview
+             .currentChangeName?.let { changeName -> GitBundle.message("stash.editor.diff.preview.title", changeName) }
+           ?: GitBundle.message("stash.editor.diff.preview.empty.title")
   }
 
   override fun hasContent(): Boolean {

@@ -1,8 +1,12 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.emojipicker.service;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
-import com.intellij.openapi.components.*;
+import com.intellij.openapi.components.PersistentStateComponent;
+import com.intellij.openapi.components.Service;
+import com.intellij.openapi.components.State;
+import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.progress.PerformInBackgroundOption;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
@@ -180,7 +184,7 @@ public final class EmojiService implements PersistentStateComponent<EmojiService
   }
 
   public static EmojiService getInstance() {
-    return ServiceManager.getService(EmojiService.class);
+    return ApplicationManager.getApplication().getService(EmojiService.class);
   }
 
 
@@ -288,7 +292,7 @@ public final class EmojiService implements PersistentStateComponent<EmojiService
 
     private CldrData(EmojiData emojiData) throws ParserConfigurationException {
       myEmojiData = emojiData;
-      DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+      DocumentBuilderFactory factory = DocumentBuilderFactory.newDefaultInstance();
       factory.setValidating(false);
       factory.setNamespaceAware(true);
       factory.setFeature("http://xml.org/sax/features/namespaces", false);

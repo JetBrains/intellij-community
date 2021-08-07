@@ -2,6 +2,7 @@
 package training.learn.lesson.general.navigation
 
 import com.intellij.ide.dnd.aware.DnDAwareTree
+import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.editor.LogicalPosition
 import com.intellij.openapi.editor.impl.EditorComponentImpl
 import com.intellij.ui.speedSearch.SpeedSearchSupply
@@ -19,8 +20,8 @@ abstract class FileStructureLesson
   abstract val methodToFindPosition: LogicalPosition
 
   private val searchSubstring: String = "hosa"
-  private val firstWord: String = "homo"
-  private val secondWord: String = "sapience"
+  private val firstWord: String = "Homo"
+  private val secondWord: String = "Sapiens"
 
   override val lessonType = LessonType.SINGLE_EDITOR
 
@@ -48,10 +49,13 @@ abstract class FileStructureLesson
         restoreState { !checkWordInSearch(searchSubstring) }
         test { invokeActionViaShortcut("ENTER") }
       }
-      task("ActivateStructureToolWindow") {
-        text(LessonsBundle.message("file.structure.toolwindow", action(it)))
-        stateCheck { focusOwner?.javaClass?.name?.contains("StructureViewComponent") ?: false }
-        test { actions(it) }
+      // There is no Structure tool window in the PyCharm Edu. So added this check.
+      if (ActionManager.getInstance().getAction("ActivateStructureToolWindow") != null) {
+        task("ActivateStructureToolWindow") {
+          text(LessonsBundle.message("file.structure.toolwindow", action(it)))
+          stateCheck { focusOwner?.javaClass?.name?.contains("StructureViewComponent") ?: false }
+          test { actions(it) }
+        }
       }
     }
 

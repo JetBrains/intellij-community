@@ -1,15 +1,14 @@
 <html>
 <body>
-Reports <code>Optional</code> call chains which could be replaced with a sequence of 'if' statements.
-<!-- tooltip end -->
-<p>Example:
+Reports <code>Optional</code> call chains that can be replaced with a sequence of <code>if</code> statements.
+<p>Example:</p>
 <pre><code>
   return Optional.ofNullable(name)
     .map(this::extractInitials)
     .map(initials -> initials.toUpperCase(Locale.ENGLISH))
     .orElseGet(this::getDefault);
 </code></pre>
-<p>can be replaced with</p>
+<p>After the quick-fix is applied:</p>
 <pre><code>
   if (name != null) {
     String initials = extractInitials(name);
@@ -17,7 +16,8 @@ Reports <code>Optional</code> call chains which could be replaced with a sequenc
   }
   return getDefault();
 </code></pre>
-<p>This inspection only reports if the configured language level is 8 or higher.</p>
+<!-- tooltip end -->
+<p>This inspection only reports if the language level of the project or module is 8 or higher.</p>
 <p><small>New in 2020.2</small></p>
 </body>
 </html>

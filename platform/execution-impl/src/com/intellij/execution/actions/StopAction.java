@@ -11,7 +11,6 @@ import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.execution.ui.RunContentManager;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
@@ -19,7 +18,6 @@ import com.intellij.openapi.ui.popup.*;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.reference.SoftReference;
-import com.intellij.ui.mac.touchbar.TouchBarsManager;
 import com.intellij.ui.popup.list.GroupedItemsListRenderer;
 import com.intellij.util.IconUtil;
 import com.intellij.util.SmartList;
@@ -40,8 +38,7 @@ public class StopAction extends DumbAwareAction {
 
   private static boolean isPlaceGlobal(@NotNull AnActionEvent e) {
     return ActionPlaces.isMainMenuOrActionSearch(e.getPlace())
-           || ActionPlaces.NEW_TOOLBAR.equals(e.getPlace())
-           || ActionPlaces.STATE_WIDGET_ACTION_BAR.equals(e.getPlace())
+           || ActionPlaces.RUN_TOOLBAR.equals(e.getPlace())
            || ActionPlaces.MAIN_TOOLBAR.equals(e.getPlace())
            || ActionPlaces.NAVIGATION_BAR_TOOLBAR.equals(e.getPlace())
            || ActionPlaces.TOUCHBAR_GENERAL.equals(e.getPlace());
@@ -110,11 +107,6 @@ public class StopAction extends DumbAwareAction {
     if (isPlaceGlobal(e)) {
       if (stopCount == 1) {
         ExecutionManagerImpl.stopProcess(stoppableDescriptors.get(0));
-        return;
-      }
-
-      if (e.getPlace().equals(ActionPlaces.TOUCHBAR_GENERAL) && !stoppableDescriptors.isEmpty()) {
-        _showStopRunningBar(stoppableDescriptors);
         return;
       }
 
@@ -191,8 +183,7 @@ public class StopAction extends DumbAwareAction {
       InputEvent inputEvent = e.getInputEvent();
       Component component = inputEvent != null ? inputEvent.getComponent() : null;
       if (component != null && (ActionPlaces.MAIN_TOOLBAR.equals(e.getPlace())
-                                || ActionPlaces.NEW_TOOLBAR.equals(e.getPlace())
-                                || ActionPlaces.STATE_WIDGET_ACTION_BAR.equals(e.getPlace())
+                                || ActionPlaces.RUN_TOOLBAR.equals(e.getPlace())
                                 || ActionPlaces.NAVIGATION_BAR_TOOLBAR.equals(e.getPlace()))) {
         popup.showUnderneathOf(component);
       }
@@ -276,16 +267,6 @@ public class StopAction extends DumbAwareAction {
     return processHandler != null && !processHandler.isProcessTerminated()
            && (!processHandler.isProcessTerminating()
                || processHandler instanceof KillableProcess && ((KillableProcess)processHandler).canKillProcess());
-  }
-
-  private static void _showStopRunningBar(@NotNull List<? extends RunContentDescriptor> stoppableDescriptors) {
-    if (!TouchBarsManager.isTouchBarEnabled())
-      return;
-
-    List<Pair<RunContentDescriptor, Runnable>> descriptors = new ArrayList<>(stoppableDescriptors.size());
-    for (RunContentDescriptor sd : stoppableDescriptors)
-      descriptors.add(Pair.create(sd, ()->ApplicationManager.getApplication().invokeLater(()->ExecutionManagerImpl.stopProcess(sd))));
-    TouchBarsManager.showStopRunningBar(descriptors);
   }
 
   abstract static class HandlerItem {

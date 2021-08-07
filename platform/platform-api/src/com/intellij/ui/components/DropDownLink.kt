@@ -7,7 +7,6 @@ import com.intellij.ui.awt.RelativePoint
 import com.intellij.ui.popup.PopupState
 import com.intellij.ui.scale.JBUIScale.scale
 import com.intellij.util.ui.JBUI
-import com.intellij.util.ui.UIUtil
 import org.jetbrains.annotations.Nls
 import java.awt.Component
 import java.awt.Dimension
@@ -97,7 +96,6 @@ private class LinkCellRenderer(private val link: Component) : DefaultListCellRen
   override fun getPreferredSize() = coerce(super.getPreferredSize())
   override fun getListCellRendererComponent(list: JList<*>?, value: Any?, index: Int, selected: Boolean, focused: Boolean): Component {
     super.getListCellRendererComponent(list, value, index, selected, false)
-    if (!selected) background = UIUtil.getLabelBackground()
     border = JBUI.Borders.empty(0, 5, 0, 10)
     return this
   }

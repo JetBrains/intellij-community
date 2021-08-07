@@ -18,6 +18,7 @@ package com.intellij.codeInsight.daemon.impl.analysis;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
+import com.intellij.openapi.editor.colors.EditorFontType;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
@@ -35,7 +36,7 @@ public class XmlNSRenderer extends ColoredListCellRenderer<String> {
 
   public XmlNSRenderer() {
     EditorColorsScheme scheme = EditorColorsManager.getInstance().getGlobalScheme();
-    setFont(new Font(scheme.getEditorFontName(), Font.PLAIN, scheme.getEditorFontSize()));
+    setFont(scheme.getFont(EditorFontType.PLAIN));
   }
 
   @Override

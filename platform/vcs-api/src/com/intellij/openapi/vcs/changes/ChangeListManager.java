@@ -52,7 +52,7 @@ public abstract class ChangeListManager implements ChangeListModification {
   /**
    * Invoke callback when current refresh is completed with modal progress.
    *
-   * @param cancellable Whether the progress can be cancelled. If progress is cancelled, callback will be called without waiting for current CLM refresh to finish.
+   * @param cancellable Whether the progress can be cancelled. If progress is cancelled, callback will be called without waiting for the current CLM refresh to finish.
    * @param title       Operation name to use as prefix for progress dialog title
    * @param afterUpdate Callback that will be called in {@link com.intellij.openapi.progress.Task#onFinished()}
    */
@@ -78,6 +78,7 @@ public abstract class ChangeListManager implements ChangeListModification {
    * @deprecated use {@link #invokeAfterUpdate(Runnable, InvokeAfterUpdateMode, String, ModalityState)}
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public abstract void invokeAfterUpdate(@NotNull Runnable afterUpdate,
                                          @NotNull InvokeAfterUpdateMode mode,
                                          @Nullable @Nls String title,

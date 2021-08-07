@@ -49,6 +49,8 @@ public interface PsiAnnotationOwner {
    *
    * @param qualifiedName qualifiedName
    * @return newly added annotation
+   * @throws UnsupportedOperationException if annotation cannot be added 
+   * E.g. if element represents a compiled code or annotations are not supported in this place.
    */
   @NotNull
   PsiAnnotation addAnnotation(@NotNull @NonNls String qualifiedName);

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.fileTypes.impl;
 
 import com.intellij.openapi.extensions.PluginAware;
@@ -8,20 +8,19 @@ import com.intellij.openapi.extensions.RequiredElement;
 import com.intellij.openapi.fileTypes.FileNameMatcher;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.LanguageFileType;
-import com.intellij.util.containers.SmartHashSet;
 import com.intellij.util.xmlb.annotations.Attribute;
 import com.intellij.util.xmlb.annotations.Transient;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
 
 public final class FileTypeBean implements PluginAware {
-  private final Collection<FileNameMatcher> myMatchers = new SmartHashSet<>();
+  private final Collection<FileNameMatcher> myMatchers = new HashSet<>();
 
   private PluginDescriptor myPluginDescriptor;
 
@@ -111,7 +110,7 @@ public final class FileTypeBean implements PluginAware {
     myPluginDescriptor = pluginDescriptor;
   }
 
-  @Nullable
+  @NotNull
   public PluginId getPluginId() {
     return myPluginDescriptor.getPluginId();
   }

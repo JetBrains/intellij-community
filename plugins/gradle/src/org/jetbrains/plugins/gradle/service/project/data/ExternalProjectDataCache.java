@@ -1,7 +1,6 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.gradle.service.project.data;
 
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.externalSystem.model.*;
 import com.intellij.openapi.externalSystem.model.project.ProjectData;
 import com.intellij.openapi.externalSystem.service.project.ProjectDataManager;
@@ -30,7 +29,7 @@ public class ExternalProjectDataCache {
   private final Project myProject;
 
   public static ExternalProjectDataCache getInstance(@NotNull Project project) {
-    return ServiceManager.getService(project, ExternalProjectDataCache.class);
+    return project.getService(ExternalProjectDataCache.class);
   }
 
   public ExternalProjectDataCache(@NotNull Project project) {

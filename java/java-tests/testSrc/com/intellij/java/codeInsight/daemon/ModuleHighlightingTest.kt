@@ -1,14 +1,18 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.codeInsight.daemon
 
 import com.intellij.codeInsight.daemon.impl.JavaHighlightInfoTypes
+import com.intellij.codeInsight.daemon.impl.analysis.JavaModuleGraphUtil
 import com.intellij.codeInsight.intention.IntentionActionDelegate
 import com.intellij.codeInspection.deprecation.DeprecationInspection
 import com.intellij.codeInspection.deprecation.MarkedForRemovalInspection
 import com.intellij.java.testFramework.fixtures.LightJava9ModulesCodeInsightFixtureTestCase
 import com.intellij.java.testFramework.fixtures.MultiModuleJava9ProjectDescriptor.ModuleDescriptor
 import com.intellij.java.testFramework.fixtures.MultiModuleJava9ProjectDescriptor.ModuleDescriptor.*
+import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.util.TextRange
+import com.intellij.psi.PsiManager
+import com.intellij.psi.search.ProjectScope
 import org.assertj.core.api.Assertions.assertThat
 import java.util.jar.JarFile
 
@@ -371,7 +375,7 @@ class ModuleHighlightingTest : LightJava9ModulesCodeInsightFixtureTestCase() {
 
   fun testCorrectedType() {
     addFile("module-info.java", "module M { requires M6; requires lib.named; }")
-    
+
     addFile("module-info.java", "module M6 {  requires lib.named; exports pkg;}", M6)
     addFile("pkg/A.java", "package pkg; public class A {public static void foo(java.util.function.Supplier<pkg.lib1.LC1> f){}}", M6)
     highlight("pkg/Usage.java","import pkg.lib1.LC1; class Usage { {pkg.A.foo(LC1::new);} }")
@@ -480,6 +484,17 @@ class ModuleHighlightingTest : LightJava9ModulesCodeInsightFixtureTestCase() {
         }""".trimIndent())
   }
 
+  fun testLightModuleDescriptorCaching() {
+    val libClass = myFixture.javaFacade.findClass("pkg.lib2.LC2", ProjectScope.getLibrariesScope(project))!!
+    val libModule = JavaModuleGraphUtil.findDescriptorByElement(libClass)!!
+
+    PsiManager.getInstance(project).dropPsiCaches()
+    assertSame(libModule, JavaModuleGraphUtil.findDescriptorByElement(libClass)!!)
+
+    ProjectRootManager.getInstance(project).incModificationCount()
+    assertNotSame(libModule, JavaModuleGraphUtil.findDescriptorByElement(libClass)!!)
+  }
+
   //<editor-fold desc="Helpers.">
   private fun highlight(text: String) = highlight("module-info.java", text)
 
@@ -493,8 +508,9 @@ class ModuleHighlightingTest : LightJava9ModulesCodeInsightFixtureTestCase() {
   private fun fixes(path: String, text: String, fixes: Array<String>) {
     myFixture.configureFromExistingVirtualFile(addFile(path, text))
     val available = myFixture.availableIntentions
-      .map { IntentionActionDelegate.unwrap(it)::class.java.simpleName }
-      .filter { it != "GutterIntentionAction" && it != "PackageSearchQuickFix" }
+      .map { IntentionActionDelegate.unwrap(it)::class.java }
+      .filter { it.name.startsWith("com.intellij.codeInsight.") }
+      .map { it.simpleName }
     assertThat(available).containsExactlyInAnyOrder(*fixes)
   }
   //</editor-fold>

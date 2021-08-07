@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.application.impl;
 
 import com.intellij.codeWithMe.ClientId;
@@ -123,7 +123,7 @@ final class FlushQueue {
     myLastInfo = lastInfo;
 
     if (lastInfo != null) {
-      EventWatcher watcher = EventWatcher.getInstance();
+      EventWatcher watcher = EventWatcher.getInstanceOrNull();
       Runnable runnable = lastInfo.runnable;
       if (watcher != null) {
         watcher.runnableStarted(runnable, startedAt);
@@ -145,7 +145,7 @@ final class FlushQueue {
       finally {
         if (!DEBUG) myLastInfo = null;
         if (watcher != null) {
-          watcher.runnableFinished(runnable, startedAt);
+          watcher.runnableFinished(runnable, System.currentTimeMillis());
         }
       }
     }

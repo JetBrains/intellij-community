@@ -15,12 +15,13 @@ class PropertyKeyFoldingTest : JavaCodeInsightFixtureTestCase() {
     moduleBuilder.addLibrary("util-rt", PathUtil.getJarPathForClass(com.intellij.BundleBase::class.java))
   }
 
+  @Suppress("UnresolvedPropertyKey")
   fun testSingleProperty() {
     myFixture.addFileToProject("i18n.properties", "com.example.localization.welcomeMessage=Welcome to our App!")
     myFixture.addClass("""
         import org.jetbrains.annotations.PropertyKey;
         import java.util.ResourceBundle;
-
+        
         public class MyClass {
           private final static String BUNDLE_NAME = "i18n";
           private final static ResourceBundle BUNDLE = ResourceBundle.getBundle(BUNDLE_NAME);
@@ -47,6 +48,7 @@ class PropertyKeyFoldingTest : JavaCodeInsightFixtureTestCase() {
 
   }
 
+  @Suppress("UnresolvedPropertyKey")
   fun testPropertyWithParameters() {
     myFixture.addFileToProject("i18n.properties", "com.example.localization.welcomeMessage=Welcome {0} to our App!")
     myFixture.addClass("""

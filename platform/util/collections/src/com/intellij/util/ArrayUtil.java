@@ -2,7 +2,6 @@
 package com.intellij.util;
 
 import com.intellij.openapi.util.Comparing;
-import gnu.trove.Equality;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -531,31 +530,8 @@ public final class ArrayUtil {
   /**
    * @deprecated Use {@link Arrays#equals(Object[], Object[], Comparator)}
    */
+  @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
   @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.2")
-  @Contract(pure=true)
-  public static <T> boolean equals(T @NotNull [] a1, T @NotNull [] a2, @NotNull Equality<? super T> comparator) {
-    //noinspection ArrayEquality
-    if (a1 == a2) {
-      return true;
-    }
-
-    int length = a2.length;
-    if (a1.length != length) {
-      return false;
-    }
-
-    for (int i = 0; i < length; i++) {
-      if (!comparator.equals(a1[i], a2[i])) {
-        return false;
-      }
-    }
-    return true;
-  }
-
-  /**
-   * @deprecated Use {@link Arrays#equals(Object[], Object[], Comparator)}
-   */
   public static <T> boolean equals(T @NotNull [] a1, T @NotNull [] a2, @NotNull Comparator<? super T> comparator) {
     //noinspection ArrayEquality
     if (a1 == a2) {
@@ -792,6 +768,10 @@ public final class ArrayUtil {
   @Contract(pure=true)
   public static int @NotNull [] newIntArray(int count) {
     return count == 0 ? ArrayUtilRt.EMPTY_INT_ARRAY : new int[count];
+  }
+  @Contract(pure=true)
+  public static byte @NotNull [] newByteArray(int count) {
+    return count == 0 ? ArrayUtilRt.EMPTY_BYTE_ARRAY : new byte[count];
   }
 
   @Contract(pure=true)

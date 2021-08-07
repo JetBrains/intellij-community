@@ -1,6 +1,8 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build.impl
 
+import com.intellij.openapi.util.JDOMUtil
+import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtilRt
 import groovy.transform.CompileDynamic
 import groovy.transform.CompileStatic
@@ -9,8 +11,11 @@ import org.apache.tools.ant.BuildException
 import org.apache.tools.ant.Main
 import org.apache.tools.ant.Project
 import org.apache.tools.ant.util.SplitClassLoader
+import org.jdom.JDOMException
 import org.jetbrains.annotations.NotNull
+import org.jetbrains.annotations.Nullable
 import org.jetbrains.intellij.build.BuildContext
+import org.jetbrains.intellij.build.BuildOptions
 import org.jetbrains.jps.model.library.JpsOrderRootType
 
 import java.nio.file.Files
@@ -40,6 +45,19 @@ final class BuildUtils {
   static void addToJpsClassPath(String path, AntBuilder ant) {
     //we need to add path to classloader of BuilderService to ensure that classes from that path will be returned by JpsServiceManager.getExtensions
     addToClassLoaderClassPath(path, ant, Class.forName("org.jetbrains.jps.incremental.BuilderService").classLoader)
+  }
+
+  static void addBuildStepsToSkip(Collection<String> newSteps) {
+    def stepsToSkip = new HashSet<String>(newSteps)
+
+    def existingStepsToSkipString = System.getProperty(BuildOptions.BUILD_STEPS_TO_SKIP_PROPERTY)
+    if (existingStepsToSkipString != null && existingStepsToSkipString.length() > 0) {
+      stepsToSkip.addAll(existingStepsToSkipString.split(","))
+    }
+
+    def stepsToSkipString = stepsToSkip.toSorted().join(",")
+    println("Setting system property '${BuildOptions.BUILD_STEPS_TO_SKIP_PROPERTY}' to '$stepsToSkipString'")
+    System.setProperty(BuildOptions.BUILD_STEPS_TO_SKIP_PROPERTY, stepsToSkipString)
   }
 
   @CompileDynamic
@@ -162,6 +180,26 @@ final class BuildUtils {
     String convertedData = StringUtilRt.convertLineSeparators(data, newLineSeparator)
     if (data != convertedData) {
       Files.writeString(file, convertedData)
+    }
+  }
+
+  static List<File> getPluginJars(String pluginPath) {
+    File libFile = new File(pluginPath, "lib")
+    return libFile.list { _, name -> FileUtil.extensionEquals(name, "jar") }.collect { jarName ->
+      new File(libFile, jarName)
+    }
+  }
+
+  @Nullable
+  static String readPluginId(File pluginJar) {
+    if (!pluginJar.isFile() || !FileUtil.extensionEquals(pluginJar.name, "jar")) return null
+    String pluginXmlText = ArchiveUtils.loadEntry(pluginJar.toPath(), "META-INF/plugin.xml")
+    if (pluginXmlText == null) return null
+    try {
+      return JDOMUtil.load(pluginXmlText).getChildTextTrim("id")
+    }
+    catch (JDOMException ignored) {
+      return null
     }
   }
 }

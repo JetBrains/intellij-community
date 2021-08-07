@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.structuralsearch;
 
 import com.intellij.codeInsight.AnnotationUtil;
@@ -107,7 +107,7 @@ public final class JavaStructuralSearchProfile extends StructuralSearchProfile {
     }
     else if (element instanceof PsiAnnotation) {
       final PsiJavaCodeReferenceElement referenceElement = ((PsiAnnotation)element).getNameReferenceElement();
-      text = referenceElement == null ? null : referenceElement.getQualifiedName();
+      text = referenceElement == null ? null : referenceElement.getText();
     }
     else if (element instanceof PsiNameValuePair) {
       text = ((PsiNameValuePair)element).getName();
@@ -189,19 +189,12 @@ public final class JavaStructuralSearchProfile extends StructuralSearchProfile {
   public @NotNull PsiElement extendMatchedByDownUp(@NotNull PsiElement targetNode) {
     if (targetNode instanceof PsiIdentifier) {
       targetNode = targetNode.getParent();
-      final PsiElement parent = targetNode.getParent();
-      if (parent instanceof PsiTypeElement || parent instanceof PsiStatement) targetNode = parent;
+    }
+    final PsiElement parent = targetNode.getParent();
+    if (parent instanceof PsiTypeElement || parent instanceof PsiStatement || parent instanceof PsiLocalVariable) {
+      targetNode = parent;
     }
     return targetNode;
-  }
-
-  @Override
-  public @NotNull PsiElement extendMatchOnePsiFile(@NotNull PsiElement file) {
-    if (file instanceof PsiIdentifier) {
-      // Searching in previous results
-      file = file.getParent();
-    }
-    return file;
   }
 
   @NotNull
@@ -975,7 +968,7 @@ public final class JavaStructuralSearchProfile extends StructuralSearchProfile {
         if (target || variableNode == null) return false;
         return isApplicableMinCount(variableNode) || isApplicableMinMaxCount(variableNode);
       case UIUtil.MAXIMUM_UNLIMITED:
-        if (variableNode == null) return false;
+        if (target || variableNode == null) return false;
         return isApplicableMaxCount(variableNode) || isApplicableMinMaxCount(variableNode);
       case UIUtil.REFERENCE:
         if (completePattern || variableNode == null) return false;
@@ -992,6 +985,9 @@ public final class JavaStructuralSearchProfile extends StructuralSearchProfile {
     if (parent instanceof PsiBreakStatement) return true;
 
     final PsiElement grandParent = parent.getParent();
+    if (parent instanceof PsiPatternVariable && grandParent instanceof PsiTypeTestPattern) {
+      return !(grandParent.getParent() instanceof PsiParenthesizedPattern);
+    }
     if (grandParent instanceof PsiReferenceList) return true;
     if (grandParent instanceof PsiPolyadicExpression) {
       return ((PsiPolyadicExpression)grandParent).getOperands().length > 2;
@@ -1071,7 +1067,7 @@ public final class JavaStructuralSearchProfile extends StructuralSearchProfile {
     if (grandParent instanceof PsiCatchSection && parent instanceof PsiParameter) return true;
     if (grandParent instanceof PsiAnnotation && !(grandParent.getParent().getNextSibling() instanceof PsiErrorElement)) return true;
     if (grandParent instanceof PsiParameterList || grandParent instanceof PsiArrayInitializerMemberValue ||
-        grandParent instanceof PsiExpressionList ||
+        grandParent instanceof PsiExpressionList || grandParent instanceof PsiCaseLabelElementList ||
         grandParent instanceof PsiTypeParameterList || grandParent instanceof PsiResourceList ||
         grandParent instanceof PsiResourceExpression || grandParent instanceof PsiArrayInitializerExpression) {
       return true;

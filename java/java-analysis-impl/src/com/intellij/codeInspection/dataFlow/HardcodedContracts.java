@@ -1,7 +1,10 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.dataFlow;
 
+import com.intellij.codeInsight.Nullability;
 import com.intellij.codeInspection.dataFlow.StandardMethodContract.ValueConstraint;
+import com.intellij.codeInspection.dataFlow.jvm.SpecialField;
+import com.intellij.codeInspection.dataFlow.types.DfTypes;
 import com.intellij.codeInspection.dataFlow.value.RelationType;
 import com.intellij.codeInspection.util.OptionalUtil;
 import com.intellij.lang.injection.InjectedLanguageManager;
@@ -54,7 +57,7 @@ public final class HardcodedContracts {
    * @param method method to test
    * @return true if given method doesn't spoil the arguments' locality
    */
-  static boolean isKnownNoParameterLeak(@Nullable PsiMethod method) {
+  public static boolean isKnownNoParameterLeak(@Nullable PsiMethod method) {
     if (method == null) return false;
     if (ConstructionUtils.isCollectionConstructor(method)) {
       PsiClass aClass = method.getContainingClass();
@@ -483,7 +486,7 @@ public final class HardcodedContracts {
   }
 
   private static @Nullable MethodContract emptyCheck(PsiType type, boolean isEmpty) {
-    SpecialField field = SpecialField.fromQualifierType(type);
+    SpecialField field = SpecialField.fromQualifierType(DfTypes.typedObject(type, Nullability.UNKNOWN));
     if (field == null) return null;
     return singleConditionContract(ContractValue.argument(0).specialField(field), isEmpty ? RelationType.NE : RelationType.EQ,
                                    field == SpecialField.OPTIONAL_VALUE ? ContractValue.nullValue() : ContractValue.zero(), fail());

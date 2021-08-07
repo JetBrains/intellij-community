@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python;
 
 import com.intellij.openapi.editor.colors.EditorColorsManager;
@@ -6,20 +6,25 @@ import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.markup.EffectType;
 import com.intellij.openapi.editor.markup.TextAttributes;
+import com.intellij.testFramework.LightProjectDescriptor;
 import com.jetbrains.python.documentation.PyDocumentationSettings;
 import com.jetbrains.python.documentation.docstrings.DocStringFormat;
 import com.jetbrains.python.fixtures.PyTestCase;
 import com.jetbrains.python.psi.LanguageLevel;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 
 /**
  * Test highlighting added by annotators.
- *
- * @author yole
  */
 public class PythonHighlightingTest extends PyTestCase {
+
+  @Override
+  protected @Nullable LightProjectDescriptor getProjectDescriptor() {
+    return ourPy2Descriptor;
+  }
 
   public void testBuiltins() {
     EditorColorsScheme scheme = createTemporaryColorScheme();
@@ -496,6 +501,31 @@ public class PythonHighlightingTest extends PyTestCase {
   // PY-43619
   public void testAssignmentExpressionInAnIterable() {
     doTest(LanguageLevel.getLatest(), false, false);
+  }
+
+  // PY-48008
+  public void testMatchAndCaseKeywords() {
+    doTest(LanguageLevel.PYTHON310, false, true);
+  }
+
+  // PY-44974
+  public void testBitwiseOrUnionInOlderVersionsError() {
+    doTest(LanguageLevel.PYTHON39, false, false);
+  }
+
+  // PY-44974
+  public void testBitwiseOrUnionInOlderVersionsErrorIsInstance() {
+    doTest(LanguageLevel.PYTHON39, false, false);
+  }
+
+  // PY-49697
+  public void testNoErrorMetaClassOverloadBitwiseOrOperator() {
+    doTest(LanguageLevel.PYTHON39, false, false);
+  }
+
+  // PY-49697
+  public void testNoErrorMetaClassOverloadBitwiseOrOperatorReturnTypesUnion() {
+    doTest(LanguageLevel.PYTHON39, false, false);
   }
 
   @NotNull

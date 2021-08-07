@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.run;
 
 import com.intellij.execution.DefaultExecutionResult;
@@ -38,6 +38,7 @@ import com.intellij.util.PathMapper;
 import com.intellij.util.io.BaseDataReader;
 import com.intellij.util.io.BaseOutputReader;
 import com.jetbrains.python.actions.PyExecuteInConsole;
+import com.jetbrains.python.actions.PyRunFileInConsoleAction;
 import com.jetbrains.python.console.PyConsoleOptions;
 import com.jetbrains.python.console.PydevConsoleRunner;
 import com.jetbrains.python.sdk.PythonEnvUtil;
@@ -50,9 +51,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
 
-/**
- * @author yole
- */
+
 public class PythonScriptCommandLineState extends PythonCommandLineState {
   private static final String INPUT_FILE_MESSAGE = "Input is being redirected from ";
   private final PythonRunConfiguration myConfig;
@@ -74,6 +73,8 @@ public class PythonScriptCommandLineState extends PythonCommandLineState {
         // disable "Show command line" for all executors except of Run and Debug, because it's useless
         return super.execute(executor, processStarter, patchers);
       }
+
+      PyRunFileInConsoleAction.configExecuted(myConfig);
 
       if (executor.getId() == DefaultDebugExecutor.EXECUTOR_ID) {
         return super.execute(executor, processStarter, ArrayUtil.append(patchers, new CommandLinePatcher() {

@@ -29,7 +29,10 @@ import com.intellij.vcs.log.graph.impl.print.elements.PrintElementWithGraphEleme
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.Objects;
+import java.util.Set;
 
 class PrintElementManagerImpl implements PrintElementManager {
   @NotNull private final Comparator<GraphElement> myGraphElementComparator;

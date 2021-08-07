@@ -1,9 +1,8 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.jps.builders.java.dependencyView;
 
 import com.intellij.util.io.DataExternalizer;
 import com.intellij.util.io.DataInputOutputUtil;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.builders.storage.BuildDataCorruptedException;
 
@@ -33,8 +32,8 @@ public class ModuleRepr extends ClassFileRepr{
     super(context, in);
     try {
       myVersion = DataInputOutputUtil.readINT(in);
-      myRequires = RW.read(ModuleRequiresRepr.externalizer(context), new THashSet<>(), in);
-      myExports = RW.read(ModulePackageRepr.externalizer(context), new THashSet<>(), in);
+      myRequires = RW.read(ModuleRequiresRepr.externalizer(context), new HashSet<>(), in);
+      myExports = RW.read(ModulePackageRepr.externalizer(context), new HashSet<>(), in);
     }
     catch (IOException e) {
       throw new BuildDataCorruptedException(e);

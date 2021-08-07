@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.xdebugger.impl;
 
 import com.intellij.CommonBundle;
@@ -21,6 +21,7 @@ import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
+import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
@@ -35,14 +36,10 @@ import com.intellij.pom.Navigatable;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.ui.GuiUtils;
 import com.intellij.ui.SimpleColoredText;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.popup.list.ListPopupImpl;
-import com.intellij.util.DocumentUtil;
-import com.intellij.util.IJSwingUtilities;
-import com.intellij.util.Processor;
-import com.intellij.util.SmartList;
+import com.intellij.util.*;
 import com.intellij.xdebugger.*;
 import com.intellij.xdebugger.breakpoints.*;
 import com.intellij.xdebugger.breakpoints.ui.XBreakpointGroupingRule;
@@ -195,7 +192,7 @@ public class XDebuggerUtilImpl extends XDebuggerUtil {
 
     return getLineBreakpointVariants(project, types, position).thenAsync(variants -> {
       final AsyncPromise<XLineBreakpoint> res = new AsyncPromise<>();
-      GuiUtils.invokeLaterIfNeeded(() -> {
+      ModalityUiUtil.invokeLaterIfNeeded(ModalityState.defaultModalityState(), () -> {
         for (XLineBreakpointType<?> type : types) {
           if (breakpointManager.findBreakpointAtLine(type, file, line) != null) {
             return;
@@ -309,7 +306,7 @@ public class XDebuggerUtilImpl extends XDebuggerUtil {
         }
         XLineBreakpointType type = types.get(0);
         insertBreakpoint(type.createBreakpointProperties(file, line), res, breakpointManager, file, line, type, temporary);
-      }, ModalityState.defaultModalityState());
+      });
       return res;
     });
   }
@@ -572,9 +569,9 @@ public class XDebuggerUtilImpl extends XDebuggerUtil {
   @Nullable
   public static Editor createEditor(@NotNull OpenFileDescriptor descriptor) {
     if (descriptor.canNavigate()) {
-      FileEditorManager fileEditorManager = FileEditorManager.getInstance(descriptor.getProject());
-      Editor editor = fileEditorManager.getSelectedTextEditor();
-      return fileEditorManager.openTextEditor(descriptor, editor != null && IJSwingUtilities.hasFocus(editor.getContentComponent()));
+      FileEditorManagerEx fileEditorManager = FileEditorManagerEx.getInstanceEx(descriptor.getProject());
+      boolean isEditorAreaFocused = IJSwingUtilities.hasFocus(fileEditorManager.getComponent());
+      return fileEditorManager.openTextEditor(descriptor, isEditorAreaFocused);
     }
     return null;
   }
@@ -661,5 +658,41 @@ public class XDebuggerUtilImpl extends XDebuggerUtil {
     return breakpoint.getSuspendPolicy() == SuspendPolicy.NONE
            ? AllIcons.Debugger.Db_verified_no_suspend_breakpoint
            : AllIcons.Debugger.Db_verified_breakpoint;
+  }
+
+  public static Navigatable createNavigatable(Project project, XSourcePosition position) {
+    return new XSourcePositionNavigatable(project, position);
+  }
+
+  private static class XSourcePositionNavigatable implements Navigatable {
+    private final Project myProject;
+    private final XSourcePosition myPosition;
+
+    private XSourcePositionNavigatable(Project project, XSourcePosition position) {
+      myProject = project;
+      myPosition = position;
+    }
+
+    @Override
+    public void navigate(boolean requestFocus) {
+      createOpenFileDescriptor(myProject, myPosition).navigate(requestFocus);
+    }
+
+    @Override
+    public boolean canNavigate() {
+      return myPosition.getFile().isValid();
+    }
+
+    @Override
+    public boolean canNavigateToSource() {
+      return canNavigate();
+    }
+  }
+
+  @NotNull
+  public static OpenFileDescriptor createOpenFileDescriptor(@NotNull Project project, @NotNull XSourcePosition position) {
+    return position.getOffset() != -1
+           ? new OpenFileDescriptor(project, position.getFile(), position.getOffset())
+           : new OpenFileDescriptor(project, position.getFile(), position.getLine(), 0);
   }
 }

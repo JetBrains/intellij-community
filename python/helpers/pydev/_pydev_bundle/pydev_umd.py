@@ -34,8 +34,8 @@ import os
 import sys
 
 from _pydev_bundle import pydev_imports
-from pydevd_file_utils import get_fullname, rPath
 from _pydevd_bundle.pydevd_utils import save_main_module
+from pydevd_file_utils import get_fullname, rPath
 
 
 # The following classes and functions are mainly intended to be used from
@@ -156,7 +156,8 @@ def runfile(filename, args=None, wdir=None, is_module=False, global_vars=None):
 
     if global_vars is None:
         m = save_main_module(filename, 'pydev_umd')
-        global_vars = m.__dict__
+        global_vars = _get_interpreter_globals()
+        global_vars.update(m.__dict__)
         try:
             global_vars['__builtins__'] = __builtins__
         except NameError:

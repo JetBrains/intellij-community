@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.palette.impl;
 
 import com.intellij.ide.dnd.*;
@@ -24,9 +24,7 @@ import javax.swing.plaf.basic.BasicListUI;
 import java.awt.*;
 import java.awt.event.*;
 
-/**
- * @author yole
- */
+
 public final class PaletteComponentList extends JBList {
   private final Project myProject;
   private final PaletteWindow myPalette;
@@ -374,13 +372,13 @@ public final class PaletteComponentList extends JBList {
 
   private class MyDnDSource implements DnDSource {
     @Override
-    public boolean canStartDragging(DnDAction action, Point dragOrigin) {
+    public boolean canStartDragging(DnDAction action, @NotNull Point dragOrigin) {
       int index = locationToIndex(dragOrigin);
       return index >= 0 && myGroup.getItems() [index].startDragging() != null;
     }
 
     @Override
-    public DnDDragStartBean startDragging(DnDAction action, Point dragOrigin) {
+    public DnDDragStartBean startDragging(DnDAction action, @NotNull Point dragOrigin) {
       int index = locationToIndex(dragOrigin);
       if (index < 0) return null;
       return myGroup.getItems() [index].startDragging();

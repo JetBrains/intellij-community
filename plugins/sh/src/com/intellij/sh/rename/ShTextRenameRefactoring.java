@@ -21,7 +21,6 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.sh.ShBundle;
-import com.intellij.sh.statistics.ShFeatureUsagesCollector;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -29,7 +28,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 
 final class ShTextRenameRefactoring {
-  @NonNls private static final String FEATURE_ACTION_ID = "RenamingActionUsed";
   @NonNls private static final String PRIMARY_VARIABLE_NAME = "PrimaryVariable";
   @NonNls private static final String OTHER_VARIABLE_NAME = "OtherVariable";
 
@@ -81,7 +79,6 @@ final class ShTextRenameRefactoring {
     }
     createCaretRangeMarker();
     WriteCommandAction.writeCommandAction(myProject).withName(ShBundle.message("sh.rename.occurence", myOccurrenceText)).run(() -> startTemplate(builder));
-    ShFeatureUsagesCollector.logFeatureUsage(FEATURE_ACTION_ID);
   }
 
   private void createCaretRangeMarker() {
@@ -194,8 +191,7 @@ final class ShTextRenameRefactoring {
     public Result calculateResult(ExpressionContext context) {
       Editor editor = context.getEditor();
       if (editor != null) {
-        TemplateState templateState = TemplateManagerImpl.getTemplateState(editor);
-        TextResult insertedValue = templateState != null ? templateState.getVariableValue(PRIMARY_VARIABLE_NAME) : null;
+        TextResult insertedValue = context.getVariableValue(PRIMARY_VARIABLE_NAME);
         if (insertedValue != null && !insertedValue.getText().isEmpty()) {
           return insertedValue;
         }

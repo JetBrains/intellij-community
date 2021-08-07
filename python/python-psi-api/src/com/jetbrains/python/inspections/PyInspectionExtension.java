@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.inspections;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
@@ -12,9 +12,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
-/**
- * @author yole
- */
+
 public abstract class PyInspectionExtension {
   public static final ExtensionPointName<PyInspectionExtension> EP_NAME = ExtensionPointName.create("Pythonid.inspectionExtension");
 

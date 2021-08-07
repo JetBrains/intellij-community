@@ -1,8 +1,7 @@
 <!-- Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file. -->
 <html>
 <body>
-Reports header with glob that has suspicious intersection with one of related globs. Example:
-[{foo, bar}] and [{foo, bas}] have non-empty intersection and none of them is subcase of the other.
-This is likely to be a typo.
+Reports subsets of files specified in the current section that overlap with other subsets in other sections. For example:
+<code>[{foo,bar}]</code> and <code>[{foo,bas}]</code> both contain “foo”.
 </body>
 </html>

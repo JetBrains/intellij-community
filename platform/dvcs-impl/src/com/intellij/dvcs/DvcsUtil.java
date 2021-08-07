@@ -85,6 +85,7 @@ public final class DvcsUtil {
   @NlsSafe
   @NotNull
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public static String getShortRepositoryName(@NotNull Project project, @NotNull VirtualFile root) {
     return VcsImplUtil.getShortVcsRootName(project, root);
   }
@@ -436,26 +437,6 @@ public final class DvcsUtil {
   @Nls
   @NotNull
   public static String joinWithAnd(@NotNull List<@Nls String> strings, int limit) {
-    int size = strings.size();
-    if (size == 0) return "";
-    if (size == 1) return strings.get(0);
-    if (size == 2) return DvcsBundle.message("sequence.concatenation.a.and.b", strings.get(0), strings.get(1));
-
-    boolean isLimited = limit >= 2 && limit < size;
-    int listCount = (isLimited ? limit : size) - 1;
-
-    @Nls StringBuilder sb = new StringBuilder();
-    for (int i = 0; i < listCount; i++) {
-      if (i != 0) sb.append(DvcsBundle.message("sequence.concatenation.separator"));
-      sb.append(strings.get(i));
-    }
-
-    if (isLimited) {
-      sb.append(DvcsBundle.message("sequence.concatenation.tail.n.others", size - limit + 1));
-    }
-    else {
-      sb.append(DvcsBundle.message("sequence.concatenation.tail", strings.get(size - 1)));
-    }
-    return sb.toString();
+    return VcsUtil.joinWithAnd(strings, limit);
   }
 }

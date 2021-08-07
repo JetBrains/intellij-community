@@ -8,7 +8,6 @@ import de.plushnikov.intellij.plugin.psi.LombokLightFieldBuilder;
 import de.plushnikov.intellij.plugin.psi.LombokLightMethodBuilder;
 import de.plushnikov.intellij.plugin.thirdparty.LombokUtils;
 import de.plushnikov.intellij.plugin.util.PsiAnnotationUtil;
-import de.plushnikov.intellij.plugin.util.PsiMethodUtil;
 import de.plushnikov.intellij.plugin.util.PsiTypeUtil;
 import lombok.core.handlers.Singulars;
 import org.jetbrains.annotations.NotNull;
@@ -62,7 +61,7 @@ public abstract class AbstractSingularHandler implements BuilderElementHandler {
     addOneMethodParameter(oneAddMethodBuilder, info.getFieldType(), singularName);
 
     final String oneMethodBody = getOneMethodBody(singularName, info);
-    oneAddMethodBuilder.withBody(PsiMethodUtil.createCodeBlockFromText(oneMethodBody, oneAddMethodBuilder));
+    oneAddMethodBuilder.withBodyText(oneMethodBody);
 
     methods.add(oneAddMethodBuilder);
 
@@ -77,7 +76,7 @@ public abstract class AbstractSingularHandler implements BuilderElementHandler {
     addAllMethodParameter(allAddMethodBuilder, info.getFieldType(), fieldName);
 
     final String allMethodBody = getAllMethodBody(fieldName, info);
-    allAddMethodBuilder.withBody(PsiMethodUtil.createCodeBlockFromText(allMethodBody, allAddMethodBuilder));
+    allAddMethodBuilder.withBodyText(allMethodBody);
 
     methods.add(allAddMethodBuilder);
 
@@ -88,7 +87,7 @@ public abstract class AbstractSingularHandler implements BuilderElementHandler {
       .withModifier(info.getVisibilityModifier())
       .withAnnotations(info.getAnnotations());
     final String clearMethodBlockText = getClearMethodBody(info);
-    clearMethodBuilder.withBody(PsiMethodUtil.createCodeBlockFromText(clearMethodBlockText, clearMethodBuilder));
+    clearMethodBuilder.withBodyText(clearMethodBlockText);
 
     methods.add(clearMethodBuilder);
 

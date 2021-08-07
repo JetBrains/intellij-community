@@ -5,6 +5,7 @@ package com.intellij.execution.testframework;
 import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.configurations.RunProfile;
+import com.intellij.execution.runners.RunTab;
 import com.intellij.execution.testframework.actions.ScrollToTestSourceAction;
 import com.intellij.execution.testframework.actions.TestFrameworkActions;
 import com.intellij.execution.testframework.actions.TestTreeExpander;
@@ -15,12 +16,11 @@ import com.intellij.icons.AllIcons;
 import com.intellij.ide.CommonActionsManager;
 import com.intellij.ide.OccurenceNavigator;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.ActionManager;
-import com.intellij.openapi.actionSystem.ActionPlaces;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.impl.MoreActionGroup;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.config.DumbAwareToggleBooleanProperty;
 import com.intellij.util.config.DumbAwareToggleInvertedBooleanProperty;
 import com.intellij.util.config.ToggleBooleanProperty;
@@ -43,7 +43,7 @@ public class ToolbarPanel extends JPanel implements OccurenceNavigator, Disposab
   public ToolbarPanel(final TestConsoleProperties properties,
                       final JComponent parent) {
     super(new BorderLayout());
-    final DefaultActionGroup actionGroup = new DefaultActionGroup();
+    DefaultActionGroup actionGroup = new DefaultActionGroup();
     actionGroup.addAction(new DumbAwareToggleInvertedBooleanProperty(ExecutionBundle.message("junit.run.hide.passed.action.name"), ExecutionBundle.message("junit.run.hide.passed.action.description"),
                                                                      AllIcons.RunConfigurations.ShowPassed,
                                                                      properties, TestConsoleProperties.HIDE_PASSED_TESTS));
@@ -52,30 +52,39 @@ public class ToolbarPanel extends JPanel implements OccurenceNavigator, Disposab
                                                                properties, TestConsoleProperties.HIDE_IGNORED_TEST));
     actionGroup.addSeparator();
 
+    boolean isNewLayout = Registry.is("debugger.new.tool.window.layout");
 
-
-    actionGroup.addAction(new DumbAwareToggleBooleanProperty(ExecutionBundle.message("junit.runing.info.sort.alphabetically.action.name"),
+    DefaultActionGroup sortGroup = !isNewLayout ? actionGroup : new DefaultActionGroup();
+    sortGroup.addAction(new DumbAwareToggleBooleanProperty(ExecutionBundle.message("junit.runing.info.sort.alphabetically.action.name"),
                                                              ExecutionBundle.message("junit.runing.info.sort.alphabetically.action.description"),
                                                              AllIcons.ObjectBrowser.Sorted,
                                                              properties, TestConsoleProperties.SORT_ALPHABETICALLY));
     final ToggleModelAction sortByStatistics = new SortByDurationAction(properties);
     myActions.add(sortByStatistics);
-    actionGroup.addAction(sortByStatistics);
-    actionGroup.addSeparator();
+    sortGroup.addAction(sortByStatistics);
 
+    if (isNewLayout) {
+      sortGroup.setPopup(true);
+      sortGroup.getTemplatePresentation().setIcon(sortByStatistics.getTemplatePresentation().getIcon());
+      actionGroup.add(sortGroup);
+    } else {
+      actionGroup.addSeparator();
+    }
+
+    DefaultActionGroup moreGroup = isNewLayout ? new MoreActionGroup() : actionGroup;
     AnAction action = CommonActionsManager.getInstance().createExpandAllAction(myTreeExpander, parent);
     action.getTemplatePresentation().setDescription(ExecutionBundle.messagePointer("junit.runing.info.expand.test.action.name"));
-    actionGroup.add(action);
+    moreGroup.add(action);
 
     action = CommonActionsManager.getInstance().createCollapseAllAction(myTreeExpander, parent);
     action.getTemplatePresentation().setDescription(ExecutionBundle.messagePointer("junit.runing.info.collapse.test.action.name"));
-    actionGroup.add(action);
+    moreGroup.add(action);
 
-    actionGroup.addSeparator();
+    moreGroup.addSeparator();
     final CommonActionsManager actionsManager = CommonActionsManager.getInstance();
     myOccurenceNavigator = new FailedTestsNavigator();
-    actionGroup.add(actionsManager.createPrevOccurenceAction(myOccurenceNavigator));
-    actionGroup.add(actionsManager.createNextOccurenceAction(myOccurenceNavigator));
+    moreGroup.add(actionsManager.createPrevOccurenceAction(myOccurenceNavigator));
+    moreGroup.add(actionsManager.createNextOccurenceAction(myOccurenceNavigator));
 
     for (ToggleModelActionProvider actionProvider : ToggleModelActionProvider.EP_NAME.getExtensionList()) {
       final ToggleModelAction toggleModelAction = actionProvider.createToggleModelAction(properties);
@@ -85,17 +94,25 @@ public class ToolbarPanel extends JPanel implements OccurenceNavigator, Disposab
 
     final AnAction[] importActions = properties.createImportActions();
     if (importActions != null) {
-      actionGroup.addAll(importActions);
+      for (AnAction importAction : importActions) {
+        Boolean takeOutOf = importAction.getTemplatePresentation().getClientProperty(RunTab.TAKE_OUT_OF_MORE_GROUP);
+        if (Boolean.TRUE.equals(takeOutOf)) {
+          actionGroup.add(importAction);
+        } else {
+          moreGroup.add(importAction);
+        }
+      }
     }
 
     final RunProfile configuration = properties.getConfiguration();
     if (configuration instanceof RunConfiguration) {
       myExportAction = ExportTestResultsAction.create(properties.getExecutor().getToolWindowId(), (RunConfiguration)configuration, parent);
-      actionGroup.addAction(myExportAction);
+      moreGroup.addAction(myExportAction);
     }
 
     final DefaultActionGroup secondaryGroup = new DefaultActionGroup();
     secondaryGroup.setPopup(true);
+    secondaryGroup.getTemplatePresentation().setText(ExecutionBundle.message("junit.runing.info.test.runner.options.group.name"));
     secondaryGroup.getTemplatePresentation().setIcon(AllIcons.General.GearPlain);
     secondaryGroup.add(new DumbAwareToggleBooleanProperty(ExecutionBundle.message("junit.runing.info.track.test.action.name"),
                                                  ExecutionBundle.message("junit.runing.info.track.test.action.description"),
@@ -119,11 +136,17 @@ public class ToolbarPanel extends JPanel implements OccurenceNavigator, Disposab
     secondaryGroup.add(new DumbAwareToggleBooleanProperty(ExecutionBundle.message("junit.runing.info.select.first.failed.action.name"),
                                                  null, null, properties, TestConsoleProperties.SELECT_FIRST_DEFECT));
     properties.appendAdditionalActions(secondaryGroup, parent, properties);
-    actionGroup.add(secondaryGroup);
+    moreGroup.addSeparator();
+    moreGroup.add(secondaryGroup);
 
-    add(ActionManager.getInstance().
-      createActionToolbar(ActionPlaces.TESTTREE_VIEW_TOOLBAR, actionGroup, true).
-      getComponent(), BorderLayout.CENTER);
+    if (isNewLayout) {
+      actionGroup.add(moreGroup);
+      actionGroup = new RunTab.ToolbarActionGroup(actionGroup);
+    }
+
+    ActionToolbar actionToolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.TESTTREE_VIEW_TOOLBAR, actionGroup, true);
+    actionToolbar.setTargetComponent(parent);
+    add(actionToolbar.getComponent(), BorderLayout.CENTER);
   }
 
   public void setModel(final TestFrameworkRunningModel model) {

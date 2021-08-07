@@ -16,9 +16,9 @@
 
 <body>
 <p>
-  This inspection checks for comparisons of the <tt>name()</tt>-function against strings that contain a ":" - which
-  usually indicates a hardwired namespace-prefix in the comparison. Such code will break when run against XML that
-  uses a different prefix for the same namespace.
+  Reports comparison of the <code>name()</code> function with a string that contains a colon (<code>:</code>).  Such usages 
+  usually indicate a hardcoded namespace prefix in the comparison. As a result,  the code will break when run against XML that
+  uses another prefix for the same namespace.
 </p>
 
 <p>Example:</p>

@@ -1,8 +1,9 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.notification.impl.actions;
 
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.notification.*;
+import com.intellij.notification.Notification.CollapseActionsDirection;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationManager;
@@ -204,14 +205,13 @@ public final class NotificationTestAction extends AnAction implements DumbAware 
           displayId = Holder.TEST_TOOLWINDOW_GROUP.getDisplayId();
         }
 
-        String content = myContent == null ? "" : StringUtil.join(myContent, "\n");
+        String content = myContent == null ? "" : String.join("\n", myContent);
 
-        if (icon == null) {
-          myNotification =
-            new Notification(displayId, StringUtil.notNullize(myTitle), content, myType, getListener());
-        }
-        else {
-          myNotification = new Notification(displayId, icon, myTitle, mySubtitle, content, myType, getListener());
+        myNotification = new Notification(displayId, content, myType).setIcon(icon).setTitle(myTitle, mySubtitle);
+
+        NotificationListener listener = getListener();
+        if (listener != null) {
+          myNotification.setListener(listener);
         }
 
         if (myActions != null && !myToolwindow) {
@@ -220,9 +220,7 @@ public final class NotificationTestAction extends AnAction implements DumbAware 
           }
         }
       }
-      myNotification.setCollapseActionsDirection(myRightActionsDirection
-                                                 ? Notification.CollapseActionsDirection.KEEP_RIGHTMOST
-                                                 : Notification.CollapseActionsDirection.KEEP_LEFTMOST);
+      myNotification.setCollapseDirection(myRightActionsDirection ? CollapseActionsDirection.KEEP_RIGHTMOST : CollapseActionsDirection.KEEP_LEFTMOST);
       return myNotification;
     }
 

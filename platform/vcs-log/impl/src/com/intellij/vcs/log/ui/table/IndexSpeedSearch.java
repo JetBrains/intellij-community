@@ -1,7 +1,6 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.log.ui.table;
 
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
@@ -32,7 +31,7 @@ public class IndexSpeedSearch extends VcsLogSpeedSearch {
   public IndexSpeedSearch(@NotNull Project project, @NotNull VcsLogIndex index, @NotNull VcsLogGraphTable component) {
     super(component);
     myIndex = index;
-    myUserRegistry = ServiceManager.getService(project, VcsUserRegistry.class);
+    myUserRegistry = project.getService(VcsUserRegistry.class);
 
     addChangeListener(evt -> {
       if (evt.getPropertyName().equals(ENTERED_PREFIX_PROPERTY_NAME)) {

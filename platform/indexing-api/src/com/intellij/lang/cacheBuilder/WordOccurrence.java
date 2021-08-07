@@ -1,8 +1,10 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.lang.cacheBuilder;
 
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 /**
  * A single word instance extracted by {@link WordsScanner}.
@@ -90,8 +92,14 @@ public class WordOccurrence {
       myName = name;
     }
 
-    @NonNls public String toString() {
+    @NonNls
+    public String toString() {
       return "WordOccurrence.Kind(" + myName + ")";
+    }
+
+    @TestOnly
+    public @NotNull String getName() {
+      return myName;
     }
   }
 }

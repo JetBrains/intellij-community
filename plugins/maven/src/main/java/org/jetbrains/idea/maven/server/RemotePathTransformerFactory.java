@@ -10,6 +10,9 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
+/**
+ * Extension point to transform local maven project path to remote one and vice versa.
+ */
 public interface RemotePathTransformerFactory {
   ExtensionPointName<RemotePathTransformerFactory> MAVEN_REMOTE_PATH_TRANSFORMER_EP_NAME
     = new ExtensionPointName<>("org.jetbrains.idea.maven.remotePathTransformerFactory");
@@ -26,6 +29,9 @@ public interface RemotePathTransformerFactory {
 
   boolean isApplicable(@NotNull Project project);
 
+  /**
+   * Create bidirectional path transformer for project.
+   */
   Transformer createTransformer(@NotNull Project project);
 
   interface Transformer {

@@ -24,7 +24,7 @@ import org.jetbrains.annotations.Nullable;
  */
 public interface ExternallyDefinedPsiElement extends PsiElement {
   /**
-   * If inspection started for files with injections founds any problem in them (or their child)
+   * If an inspection started for files with injections finds any problem in them (or their children),
    * it should be able to display them locally. This method allows to define such substitution element.
    * E.g. it may be a class name identifier element for fields/methods injected in that class.<br/>
    * See {@code ProblemsHolder.redirectProblem()} for details.

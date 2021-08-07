@@ -31,9 +31,8 @@ class XWatchesViewImpl2(
         {
             // it's hacky, we change default watches component to splitter, this way allows not to change base components
             DataManager.removeDataProvider(myComponent)
-          val splitter = OnePixelSplitter(true, PropertiesComponent.getInstance().getFloat(proportionKey, 0.5f), 0.01f, 0.99f)
+          val splitter = OnePixelSplitter(true, proportionKey, 0.01f, 0.99f)
                 .apply {
-                    splitterProportionKey = proportionKey
                     dividerWidth = 1
                     divider.background = UIUtil.CONTRAST_BORDER_COLOR
                 }

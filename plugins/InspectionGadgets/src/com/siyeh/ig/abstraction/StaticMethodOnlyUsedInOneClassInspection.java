@@ -391,7 +391,10 @@ public class StaticMethodOnlyUsedInOneClassInspection extends BaseGlobalInspecti
         super.visitField(field);
         if (!field.hasModifierProperty(PsiModifier.STATIC) || field.hasModifierProperty(PsiModifier.PRIVATE)) return;
         if (field instanceof PsiEnumConstant || isSingletonField(field)) return;
-        if (DeclarationSearchUtils.isTooExpensiveToSearch(field, true)) return;
+        if (DeclarationSearchUtils.isTooExpensiveToSearch(field, false)) {
+          registerPossibleProblem(field.getNameIdentifier());
+          return;
+        }
         final PsiClass usageClass = getUsageClass(field);
         if (usageClass == null) return;
         registerFieldError(field, field, usageClass);
@@ -408,7 +411,10 @@ public class StaticMethodOnlyUsedInOneClassInspection extends BaseGlobalInspecti
         if (MethodUtils.isFactoryMethod(method) || MethodUtils.isConvenienceOverload(method)) {
           return;
         }
-        if (DeclarationSearchUtils.isTooExpensiveToSearch(method, true)) return;
+        if (DeclarationSearchUtils.isTooExpensiveToSearch(method, false)) {
+          registerPossibleProblem(method.getNameIdentifier());
+          return;
+        }
         final PsiClass usageClass = getUsageClass(method);
         if (usageClass == null) return;
         registerMethodError(method, method, usageClass);

@@ -36,26 +36,26 @@ public class GrCallReferenceProcessor implements CallReferenceProcessor {
   public boolean process(@NotNull PsiReference reference, @NotNull JavaCallHierarchyData data) {
     PsiClass originalClass = data.getOriginalClass();
     PsiMethod method = data.getMethod();
-    Set<PsiMethod> methodsToFind = data.getMethodsToFind();
+    Set<? extends PsiMethod> methodsToFind = data.getMethodsToFind();
     PsiMethod methodToFind = data.getMethodToFind();
     PsiClassType originalType = data.getOriginalType();
-    Map<PsiMember, NodeDescriptor> methodToDescriptorMap = data.getResultMap();
+    Map<PsiMember, NodeDescriptor<?>> methodToDescriptorMap = data.getResultMap();
     Project project = data.getProject();
 
     if (reference instanceof GrReferenceExpression) {
-      final GrExpression qualifier = ((GrReferenceExpression)reference).getQualifierExpression();
+      GrExpression qualifier = ((GrReferenceExpression)reference).getQualifierExpression();
       if (org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil.isSuperReference(qualifier)) { // filter super.foo() call inside foo() and similar cases (bug 8411)
-        final PsiClass superClass = PsiUtil.resolveClassInType(qualifier.getType());
-        if (originalClass == null || superClass == null || originalClass.isInheritor(superClass, true)) {
+        PsiClass superClass = PsiUtil.resolveClassInType(qualifier.getType());
+        if (superClass == null || originalClass.isInheritor(superClass, true)) {
           return false;
         }
       }
       if (qualifier != null && !methodToFind.hasModifierProperty(PsiModifier.STATIC)) {
-        final PsiType qualifierType = qualifier.getType();
+        PsiType qualifierType = qualifier.getType();
         if (qualifierType instanceof PsiClassType && !TypeConversionUtil.isAssignable(qualifierType, originalType) && methodToFind != method) {
-          final PsiClass psiClass = ((PsiClassType)qualifierType).resolve();
+          PsiClass psiClass = ((PsiClassType)qualifierType).resolve();
           if (psiClass != null) {
-            final PsiMethod callee = psiClass.findMethodBySignature(methodToFind, true);
+            PsiMethod callee = psiClass.findMethodBySignature(methodToFind, true);
             if (callee != null && !methodsToFind.contains(callee)) {
               // skip sibling methods
               return false;
@@ -69,7 +69,7 @@ public class GrCallReferenceProcessor implements CallReferenceProcessor {
         return true;
       }
 
-      final PsiElement parent = ((PsiElement)reference).getParent();
+      PsiElement parent = ((PsiElement)reference).getParent();
       if (parent instanceof PsiNewExpression) {
         if (((PsiNewExpression)parent).getClassReference() != reference) {
           return true;
@@ -85,8 +85,8 @@ public class GrCallReferenceProcessor implements CallReferenceProcessor {
       }
     }
 
-    final PsiElement element = reference.getElement();
-    final PsiMember key = CallHierarchyNodeDescriptor.getEnclosingElement(element);
+    PsiElement element = reference.getElement();
+    PsiMember key = CallHierarchyNodeDescriptor.getEnclosingElement(element);
 
     synchronized (methodToDescriptorMap) {
       CallHierarchyNodeDescriptor d = (CallHierarchyNodeDescriptor)methodToDescriptorMap.get(key);

@@ -1,6 +1,6 @@
 /*
 Value is always false (Objects.isNull(s.trim()); line#11)
-  According to inferred contract, method 'isNull' returns 'false' value when parameter != null (isNull; line#11)
+  According to inferred contract, method 'isNull' returns 'false' when s.trim() != null (isNull; line#11)
     Method 'trim' is externally annotated as 'non-null' (trim; line#11)
  */
 

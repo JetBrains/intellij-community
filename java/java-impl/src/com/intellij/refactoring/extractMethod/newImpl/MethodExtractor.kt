@@ -5,12 +5,16 @@ import com.intellij.codeInsight.Nullability
 import com.intellij.codeInsight.highlighting.HighlightManager
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.java.refactoring.JavaRefactoringBundle
+import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.command.CommandProcessor
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.colors.EditorColors
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable
+import com.intellij.openapi.progress.ProgressIndicator
+import com.intellij.openapi.progress.ProgressManager
+import com.intellij.openapi.progress.Task
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.util.registry.Registry
@@ -37,6 +41,7 @@ import com.intellij.refactoring.util.CommonRefactoringUtil
 import com.intellij.refactoring.util.ConflictsUtil
 import com.intellij.util.IncorrectOperationException
 import com.intellij.util.containers.MultiMap
+import org.jetbrains.annotations.NonNls
 
 class MethodExtractor {
 
@@ -56,7 +61,12 @@ class MethodExtractor {
       if (statements.isEmpty()) {
         throw ExtractException(RefactoringBundle.message("selected.block.should.represent.a.set.of.statements.or.an.expression"), file)
       }
-      val extractOptions = findExtractOptions(statements)
+      val prepareOptionsTask = object : Task.WithResult<ExtractOptions, ExtractException>(project, JavaRefactoringBundle.message("dialog.title.prepare.extract.options"), false) {
+        override fun compute(indicator: ProgressIndicator): ExtractOptions {
+          return ReadAction.compute<ExtractOptions, ExtractException> { findExtractOptions(statements) }
+        }
+      }
+      val extractOptions = ProgressManager.getInstance().run(prepareOptionsTask)
       selectTargetClass(extractOptions) { options ->
         val targetClass = options.anchor.containingClass ?: throw IllegalStateException("Failed to find target class")
         val annotate = PropertiesComponent.getInstance(options.project).getBoolean(ExtractMethodDialog.EXTRACT_METHOD_GENERATE_ANNOTATIONS, false)
@@ -70,7 +80,8 @@ class MethodExtractor {
           doInplaceExtract(editor, extractor, parameters.copy(methodName = methodName), popupSettings, suggestedNames)
         }
         else {
-          extractor.extractInDialog(parameters)
+          val elements = ExtractSelector().suggestElementsToExtract(parameters.targetClass.containingFile, parameters.range)
+          extractor.extractInDialog(parameters.targetClass, elements, parameters.methodName, parameters.static)
         }
       }
     }
@@ -82,6 +93,7 @@ class MethodExtractor {
   }
 
   fun getDefaultInplaceExtractor(options: ExtractOptions): InplaceExtractMethodProvider {
+    if (Registry.`is`("java.refactoring.extractMethod.newDuplicatesExtractor")) return DuplicatesMethodExtractor()
     val enabled = Registry.`is`("java.refactoring.extractMethod.newImplementation")
     val possible = ExtractMethodHandler.canUseNewImpl(options.project, options.anchor.containingFile, options.elements.toTypedArray())
     return if (enabled && possible) DefaultMethodExtractor() else LegacyMethodExtractor()
@@ -139,15 +151,9 @@ class MethodExtractor {
 
   private fun doRefactoring(options: ExtractOptions) {
     try {
-      val beforeData = RefactoringEventData()
-      beforeData.addElements(options.elements.toTypedArray())
-      options.project.messageBus.syncPublisher(RefactoringEventListener.REFACTORING_EVENT_TOPIC)
-        .refactoringStarted("refactoring.extract.method", beforeData)
+      sendRefactoringStartedEvent(options.elements.toTypedArray())
       val extractedElements = extractMethod(options)
-      val data = RefactoringEventData()
-      data.addElement(extractedElements.method)
-      options.project.messageBus.syncPublisher(RefactoringEventListener.REFACTORING_EVENT_TOPIC)
-        .refactoringDone("refactoring.extract.method", data)
+      sendRefactoringDoneEvent(extractedElements.method)
     }
     catch (e: IncorrectOperationException) {
       LOG.error(e)
@@ -263,10 +269,10 @@ class MethodExtractor {
       )
     method.body?.replace(codeBlock)
 
-    val parameters = dependencies.inputParameters.map { it.references.first() }.joinToString { it.text }
-    val methodCall = findExtractQualifier(dependencies) + "(" + parameters + ")"
+    val parameters = dependencies.inputParameters.map { it.references.first() }
 
-    val callBuilder = CallBuilder(dependencies.project, dependencies.elements.first().context)
+    val callBuilder = CallBuilder(dependencies.project, dependencies.elements.first())
+    val methodCall = callBuilder.createMethodCall(method, parameters).text
     val expressionElement = (dependencies.elements.singleOrNull() as? PsiExpression)
     val callElements = if (expressionElement != null) {
       callBuilder.buildExpressionCall(methodCall, dependencies.dataOutput)
@@ -283,7 +289,7 @@ class MethodExtractor {
     return ExtractedElements(formattedCallElements, method)
   }
 
-  private fun replace(source: List<PsiElement>, target: List<PsiElement>): List<PsiElement> {
+  fun replace(source: List<PsiElement>, target: List<PsiElement>): List<PsiElement> {
     val sourceAsExpression = source.singleOrNull() as? PsiExpression
     val targetAsExpression = target.singleOrNull() as? PsiExpression
     if (sourceAsExpression != null && targetAsExpression != null) {
@@ -308,20 +314,22 @@ class MethodExtractor {
 
   companion object {
     private val LOG = Logger.getInstance(MethodExtractor::class.java)
-  }
-}
 
-private fun findExtractQualifier(options: ExtractOptions): String {
-  val callText = options.methodName + "(" + options.inputParameters.map { it.references.first() }.joinToString { it.text } + ")"
-  val factory = PsiElementFactory.getInstance(options.project)
-  val callElement = factory.createExpressionFromText(callText, options.elements.first().context) as PsiMethodCallExpression
-  val targetClassName = options.anchor.containingClass?.name
-  val member = findClassMember(options.elements.first())
-  if (member == options.anchor) return options.methodName
-  return if (callElement.resolveMethod() != null && !options.isConstructor) {
-    if (options.isStatic) "$targetClassName.${options.methodName}" else "$targetClassName.this.${options.methodName}"
-  }
-  else {
-    options.methodName
+    @NonNls const val refactoringId: String = "refactoring.extract.method"
+
+    internal fun sendRefactoringDoneEvent(extractedMethod: PsiMethod) {
+      val data = RefactoringEventData()
+      data.addElement(extractedMethod)
+      extractedMethod.project.messageBus.syncPublisher(RefactoringEventListener.REFACTORING_EVENT_TOPIC)
+        .refactoringDone(refactoringId, data)
+    }
+
+    internal fun sendRefactoringStartedEvent(elements: Array<PsiElement>) {
+      val project = elements.firstOrNull()?.project ?: return
+      val data = RefactoringEventData()
+      data.addElements(elements)
+      val publisher = project.messageBus.syncPublisher(RefactoringEventListener.REFACTORING_EVENT_TOPIC)
+      publisher.refactoringStarted(refactoringId, data)
+    }
   }
 }

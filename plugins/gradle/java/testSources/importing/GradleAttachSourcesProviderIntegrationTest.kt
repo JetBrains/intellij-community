@@ -16,10 +16,10 @@ import org.junit.Test
 class GradleAttachSourcesProviderIntegrationTest : GradleImportingTestCase() {
   @Test
   fun `test download sources dynamic task`() {
-    importProject(GradleBuildScriptBuilderEx()
+    importProject(createBuildScriptBuilder()
                     .withJavaPlugin()
                     .withIdeaPlugin()
-                    .withJUnit("4.12")
+                    .withJUnit4()
                     .addPrefix("idea.module.downloadSources = false")
                     .generate())
 

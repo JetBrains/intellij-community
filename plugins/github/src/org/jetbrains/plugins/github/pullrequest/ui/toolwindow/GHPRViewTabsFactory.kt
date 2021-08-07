@@ -9,10 +9,10 @@ import com.intellij.ui.tabs.JBTabs
 import com.intellij.ui.tabs.TabInfo
 import com.intellij.ui.tabs.TabsListener
 import com.intellij.ui.tabs.impl.SingleHeightTabs
-import com.intellij.util.ui.codereview.ReturnToListComponent
+import com.intellij.collaboration.ui.codereview.ReturnToListComponent
 import org.jetbrains.annotations.Nls
 import org.jetbrains.plugins.github.i18n.GithubBundle
-import org.jetbrains.plugins.github.ui.util.SingleValueModel
+import com.intellij.collaboration.ui.SingleValueModel
 import javax.swing.JComponent
 
 internal class GHPRViewTabsFactory(private val project: Project,
@@ -81,7 +81,7 @@ internal class GHPRViewTabsFactory(private val project: Project,
   }
 
   private fun installTabTitleUpdater(tabInfo: TabInfo, @Nls title: String, countModel: SingleValueModel<Int?>) {
-    countModel.addAndInvokeValueChangedListener {
+    countModel.addAndInvokeListener {
       val count = countModel.value
       tabInfo.clearText(false).append(title, SimpleTextAttributes.REGULAR_ATTRIBUTES)
       if (count != null) tabInfo.append("  $count", SimpleTextAttributes.GRAYED_ATTRIBUTES)

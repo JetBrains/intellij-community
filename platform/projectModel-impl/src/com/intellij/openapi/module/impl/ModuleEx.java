@@ -7,9 +7,6 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author yole
- */
 public interface ModuleEx extends Module {
   default void init(@Nullable Runnable beforeComponentCreation) {
     if (beforeComponentCreation != null) {

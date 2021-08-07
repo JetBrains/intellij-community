@@ -31,7 +31,7 @@ import com.intellij.vcs.log.util.findBranch
 import com.intellij.vcs.log.visible.*
 import com.intellij.vcs.log.visible.filters.VcsLogFilterObject
 
-internal class FileHistoryFilterer(logData: VcsLogData) : VcsLogFilterer {
+class FileHistoryFilterer(logData: VcsLogData) : VcsLogFilterer {
   private val project = logData.project
   private val logProviders = logData.logProviders
   private val storage = logData.storage

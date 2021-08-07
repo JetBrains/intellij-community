@@ -23,8 +23,6 @@ import com.intellij.packaging.impl.run.BuildArtifactsBeforeRunTaskProvider
 import com.intellij.util.ObjectUtils.consumeIfCast
 
 class ArtifactsImporter: ConfigurationHandler {
-  private val LOG = Logger.getInstance(ArtifactsImporter::class.java)
-
   override fun apply(project: Project, modelsProvider: IdeModifiableModelsProvider, configuration: ConfigurationData) {
     val artifacts = configuration.find("ideArtifacts") as? List<*> ?: return
 
@@ -62,7 +60,7 @@ class ArtifactsImporter: ConfigurationHandler {
       return if (module != null) {
         ModulePointerManager.getInstance(project).create(module)
       } else {
-        LOG.warn("Artifact `${element.name}`: unable to find module `$moduleName`");
+        LOG.warn("Artifact `${element.name}`: unable to find module `$moduleName`")
         ModulePointerManager.getInstance(project).create(moduleName)
       }
     }
@@ -166,6 +164,10 @@ class ArtifactsImporter: ConfigurationHandler {
   private fun Project.findLibraryByNameSuffix(nameSuffix: String): Library? {
     val libraryTable = LibraryTablesRegistrar.getInstance().getLibraryTable(this@findLibraryByNameSuffix)
     return libraryTable.libraries.find { it.name?.endsWith(nameSuffix) ?: false }
+  }
+
+  companion object {
+    private val LOG = Logger.getInstance(ArtifactsImporter::class.java)
   }
 }
 

@@ -9,5 +9,6 @@
     <orderEntry type="module" module-name="intellij.python.terminal" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.python.reStructuredText" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.python.grazie" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.python.markdown" scope="RUNTIME" />
   </component>
 </module>

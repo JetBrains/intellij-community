@@ -101,6 +101,8 @@ public final class XBreakpointManagerImpl implements XBreakpointManager {
     XBreakpointType.EXTENSION_POINT_NAME.addExtensionPointListener(new ExtensionPointListener<>() {
       @Override
       public void extensionAdded(@NotNull XBreakpointType type, @NotNull PluginDescriptor pluginDescriptor) {
+        //the project may be 'temporarily disposed' in tests if this class was created from a light test
+        if (project.isDisposed()) return;
         //noinspection unchecked
         WriteAction.run(() -> addDefaultBreakpoint(type));
       }
@@ -317,6 +319,16 @@ public final class XBreakpointManagerImpl implements XBreakpointManager {
                                                                                 final int line,
                                                                                 @Nullable final T properties,
                                                                                 boolean temporary) {
+    return addLineBreakpoint(type, fileUrl, line, properties, temporary, true);
+  }
+
+  @NotNull
+  public <T extends XBreakpointProperties> XLineBreakpoint<T> addLineBreakpoint(final XLineBreakpointType<T> type,
+                                                                                @NotNull final String fileUrl,
+                                                                                final int line,
+                                                                                @Nullable final T properties,
+                                                                                boolean temporary,
+                                                                                boolean initUI) {
     ApplicationManager.getApplication().assertWriteAccessAllowed();
     LineBreakpointState<T> state = new LineBreakpointState<>(true, type.getId(), fileUrl, line, temporary,
                                                              ++myTime, type.getDefaultSuspendPolicy());
@@ -324,7 +336,7 @@ public final class XBreakpointManagerImpl implements XBreakpointManager {
     state.setGroup(myDefaultGroup);
     XLineBreakpointImpl<T> breakpoint = new XLineBreakpointImpl<>(type, this, properties,
                                                                   state);
-    addBreakpoint(breakpoint, false, true);
+    addBreakpoint(breakpoint, false, initUI);
     return breakpoint;
   }
 
@@ -456,7 +468,7 @@ public final class XBreakpointManagerImpl implements XBreakpointManager {
 
     List<BreakpointState<?, ?, ?>> defaultBreakpoints = new SmartList<>();
     for (Set<XBreakpointBase<?, ?, ?>> typeDefaultBreakpoints : myDefaultBreakpoints.values()) {
-      if (typeDefaultBreakpoints.stream().noneMatch(breakpoint -> differsFromDefault(breakpoint.getType(), breakpoint.getState()))) {
+      if (!ContainerUtil.exists(typeDefaultBreakpoints, breakpoint -> differsFromDefault(breakpoint.getType(), breakpoint.getState()))) {
         continue;
       }
       for (XBreakpointBase<?, ?, ?> breakpoint : typeDefaultBreakpoints) {

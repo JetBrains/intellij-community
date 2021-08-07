@@ -8,6 +8,11 @@ common.elem.phrasing |= svg
 
 common.elem.phrasing |= math
 
+math.attributes &=
+	(	common.attrs.aria.role.math
+	|	common.attrs.aria.implicit.math
+	)?
+
 SVG.foreignObject.content |=
 	(	math
 	|	common.inner.flow

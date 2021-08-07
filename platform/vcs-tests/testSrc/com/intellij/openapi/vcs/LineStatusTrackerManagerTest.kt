@@ -5,9 +5,9 @@ import com.intellij.idea.Bombed
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.vcs.LineStatusTrackerTestUtil.assertBaseTextContentIs
 import com.intellij.openapi.vcs.LineStatusTrackerTestUtil.assertTextContentIs
+import com.intellij.openapi.vcs.LineStatusTrackerTestUtil.parseInput
 import com.intellij.openapi.vcs.changes.Change
 import com.intellij.openapi.vcs.ex.PartialLocalLineStatusTracker
-import com.intellij.openapi.vcs.ex.SimpleLocalLineStatusTracker
 import java.util.*
 
 class LineStatusTrackerManagerTest : BaseLineStatusTrackerManagerTest() {
@@ -1071,6 +1071,37 @@ class LineStatusTrackerManagerTest : BaseLineStatusTrackerManagerTest() {
       shelveManager.unshelveChangeList(shelvedList, null, null, list, false)
       tracker.assertTextContentIs("a1_b_c_d2_e_f1")
       FILE_1.toFilePath.assertAffectedChangeLists("Test", DEFAULT)
+    }
+  }
+
+  fun `test shelve-unshelve 3`() {
+    createChangelist("Test")
+
+    val file = addLocalFile(FILE_1, "a1_b_c_d_e_f1")
+    setBaseVersion(FILE_1, "a_b_c_d_e_f")
+    refreshCLM()
+    file.moveAllChangesTo("Test")
+
+    file.withOpenedEditor {
+      val tracker = file.tracker as PartialLocalLineStatusTracker
+
+      lstm.waitUntilBaseContentsLoaded()
+      FILE_1.toFilePath.assertAffectedChangeLists("Test")
+
+      val list = clm.findChangeList("Test")!!
+      val shelvedList = shelveManager.shelveChanges(list.changes, "X", false)
+
+      runCommand { file.document.setText(parseInput("a_b_c_d_e_f")) }
+      removeBaseVersion(FILE_1)
+      refreshCLM()
+      lstm.waitUntilBaseContentsLoaded()
+
+      shelveManager.unshelveChangeList(shelvedList, null, null, list, false)
+      setBaseVersion(FILE_1, "a_b_c_d_e_f")
+      refreshCLM()
+      lstm.waitUntilBaseContentsLoaded()
+      tracker.assertTextContentIs("a1_b_c_d_e_f1")
+      FILE_1.toFilePath.assertAffectedChangeLists("Test")
     }
   }
 }

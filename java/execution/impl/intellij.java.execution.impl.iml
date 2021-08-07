@@ -20,7 +20,15 @@
     <orderEntry type="module" module-name="intellij.java.jshell.protocol" />
     <orderEntry type="library" name="intellij-coverage" level="project" />
     <orderEntry type="library" name="intellij-test-discovery" level="project" />
-    <orderEntry type="library" scope="RUNTIME" name="precompiled_jshell-frontend" level="project" />
+    <orderEntry type="module-library" scope="RUNTIME">
+      <library name="jshell-frontend">
+        <CLASSES>
+          <root url="jar://$MODULE_DIR$/jshell-frontend.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES />
+      </library>
+    </orderEntry>
     <orderEntry type="module" module-name="intellij.platform.externalSystem" />
     <orderEntry type="module" module-name="intellij.platform.externalSystem.impl" />
     <orderEntry type="library" name="gson" level="project" />

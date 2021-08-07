@@ -215,7 +215,7 @@ public interface AnnotationHolder {
   }
 
   /**
-   * Begin constructing a new annotation with no message.
+   * Begin constructing a new annotation with no message and no tooltip.
    * To finish construction and show the annotation on screen {@link AnnotationBuilder#create()} must be called.
    * For example: <p>{@code holder.newSilentAnnotation(HighlightSeverity.WARNING).textAttributes(MY_ATTRIBUTES_KEY).create();}</p>
    *

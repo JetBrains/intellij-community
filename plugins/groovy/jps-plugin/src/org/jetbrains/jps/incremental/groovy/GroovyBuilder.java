@@ -4,10 +4,10 @@ package org.jetbrains.jps.incremental.groovy;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.groovy.compiler.rt.GroovyRtJarPaths;
 import org.jetbrains.jps.ModuleChunk;
 import org.jetbrains.jps.builders.DirtyFilesHolder;
 import org.jetbrains.jps.builders.java.JavaBuilderUtil;
@@ -125,42 +125,7 @@ public class GroovyBuilder extends ModuleLevelBuilder {
   }
 
   static List<String> getGroovyRtRoots() {
-    return getGroovyRtRoots(ClasspathBootstrap.getResourceFile(GroovyBuilder.class));
-  }
-
-  static List<String> getGroovyRtRoots(File jpsPluginRoot) {
-    List<String> result = new ArrayList<>();
-    addGroovyRtJarPath(jpsPluginRoot, "groovy-rt.jar",
-                       Collections.singletonList("intellij.groovy.rt"), "groovy-rt", result);
-   addGroovyRtJarPath(jpsPluginRoot, "groovy-constants-rt.jar",
-                      Collections.singletonList("intellij.groovy.constants.rt"), "groovy-constants-rt", result);
-    return result;
-  }
-
-  private static void addGroovyRtJarPath(File jpsPluginClassesRoot, String jarNameInDistribution,
-                                         List<String> moduleNames,
-                                         String mavenArtifactNamePrefix,
-                                         @NotNull List<String> to) {
-    File parentDir = jpsPluginClassesRoot.getParentFile();
-    if (jpsPluginClassesRoot.isFile()) {
-      String fileName;
-      if (jpsPluginClassesRoot.getName().equals("groovy-jps.jar")) {
-        fileName = jarNameInDistribution;
-      }
-      else {
-        String version = StringUtil.substringAfterLast(FileUtil.getNameWithoutExtension(jpsPluginClassesRoot), "-");
-        fileName = mavenArtifactNamePrefix + "-" + version + ".jar";
-        if (parentDir.getName().equals(version)) {
-          parentDir = new File(parentDir.getParentFile().getParentFile(), mavenArtifactNamePrefix + "/" + version);
-        }
-      }
-      to.add(new File(parentDir, fileName).getPath());
-    }
-    else {
-      for (String moduleName : moduleNames) {
-        to.add(new File(parentDir, moduleName).getPath());
-      }
-    }
+    return GroovyRtJarPaths.getGroovyRtRoots(ClasspathBootstrap.getResourceFile(GroovyBuilder.class));
   }
 
   public static boolean isGroovyFile(String path) {

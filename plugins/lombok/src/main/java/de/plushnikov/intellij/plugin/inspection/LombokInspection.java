@@ -2,13 +2,12 @@ package de.plushnikov.intellij.plugin.inspection;
 
 import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.ProblemsHolder;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.psi.*;
 import de.plushnikov.intellij.plugin.LombokBundle;
 import de.plushnikov.intellij.plugin.problem.LombokProblem;
+import de.plushnikov.intellij.plugin.processor.LombokProcessorManager;
 import de.plushnikov.intellij.plugin.processor.Processor;
 import de.plushnikov.intellij.plugin.processor.ValProcessor;
-import de.plushnikov.intellij.plugin.provider.LombokProcessorProvider;
 import de.plushnikov.intellij.plugin.psi.LombokLightMethodBuilder;
 import org.jetbrains.annotations.NotNull;
 
@@ -23,7 +22,7 @@ public class LombokInspection extends LombokJavaInspectionBase {
   private final ValProcessor valProcessor;
 
   public LombokInspection() {
-    valProcessor = ApplicationManager.getApplication().getService(ValProcessor.class);
+    valProcessor = new ValProcessor();
   }
 
   @NotNull
@@ -60,8 +59,7 @@ public class LombokInspection extends LombokJavaInspectionBase {
 
       final Collection<LombokProblem> problems = new HashSet<>();
 
-      final LombokProcessorProvider processorProvider = LombokProcessorProvider.getInstance(annotation.getProject());
-      for (Processor inspector : processorProvider.getProcessors(annotation)) {
+      for (Processor inspector : LombokProcessorManager.getProcessors(annotation)) {
         problems.addAll(inspector.verifyAnnotation(annotation));
       }
 

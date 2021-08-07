@@ -402,16 +402,6 @@
       "deprecated": true
     },
     {
-      "key": "DragAndDrop.areaBackground",
-      "description": "Drag and drop area background"
-    },
-    {
-      "key": "DragAndDrop.areaBorderColor"
-    },
-    {
-      "key": "DragAndDrop.areaForeground"
-    },
-    {
       "key": "EditorPane.background"
     },
     {
@@ -784,10 +774,12 @@
       "key": "ProgressBar.progressColor"
     },
     {
-      "key": "ProgressBar.selectionBackground"
+      "key": "ProgressBar.selectionBackground",
+      "description": "The 'selectionBackground' is the color of the text when it is painted over an unfilled area of the progress bar."
     },
     {
-      "key": "ProgressBar.selectionForeground"
+      "key": "ProgressBar.selectionForeground",
+      "description": "The 'selectionForeground' is the color of the text when it is painted over a filled area of the progress bar."
     },
     {
       "key": "ProgressBar.trackColor"

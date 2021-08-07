@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection;
 
 import com.intellij.codeInspection.util.InspectionMessage;
@@ -22,6 +22,7 @@ import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.ControlFlowUtils;
+import com.siyeh.ig.psiutils.ExpressionUtils;
 import com.siyeh.ig.psiutils.SwitchUtils;
 import gnu.trove.TIntObjectHashMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
@@ -124,8 +125,18 @@ public class DuplicateBranchesInSwitchInspection extends LocalInspectionTool {
       }
     }
 
+    private static boolean isMergeCasesFixAvailable(@NotNull BranchBase duplicate, @NotNull BranchBase original) {
+      if (duplicate.myIsGuardedOrParenthesizedPattern || original.myIsGuardedOrParenthesizedPattern) return false;
+      if (duplicate.myIsTypeTestPattern != original.myIsTypeTestPattern) {
+        return duplicate.myIsNull || original.myIsNull;
+      }
+      return !duplicate.myIsTypeTestPattern;
+    }
+
+
     private void highlightDuplicate(@NotNull BranchBase duplicate, @NotNull BranchBase original) {
-      registerProblem(duplicate, duplicate.getCaseBranchMessage(), original.newMergeCasesFix());
+      LocalQuickFix fix = isMergeCasesFixAvailable(duplicate, original) ? original.newMergeCasesFix() : null;
+      registerProblem(duplicate, duplicate.getCaseBranchMessage(), fix);
     }
 
     private void highlightDefaultDuplicate(@NotNull BranchBase branch) {
@@ -467,6 +478,9 @@ public class DuplicateBranchesInSwitchInspection extends LocalInspectionTool {
     protected final PsiStatement @NotNull [] myStatements;
     protected final String @NotNull [] myCommentTexts;
     private final boolean myIsDefault;
+    private final boolean myIsTypeTestPattern;
+    private final boolean myIsGuardedOrParenthesizedPattern;
+    private final boolean myIsNull;
     private DuplicatesFinder myFinder;
 
     BranchBase(T @NotNull [] labels, PsiStatement @NotNull [] statements, String @NotNull [] commentTexts) {
@@ -477,6 +491,32 @@ public class DuplicateBranchesInSwitchInspection extends LocalInspectionTool {
       myStatements = statements;
       myCommentTexts = commentTexts;
       myIsDefault = ContainerUtil.find(labels, PsiSwitchLabelStatementBase::isDefaultCase) != null;
+      myIsTypeTestPattern = isPatternBy(labels, PsiTypeTestPattern.class);
+      myIsGuardedOrParenthesizedPattern = isPatternBy(labels, PsiGuardedPattern.class, PsiParenthesizedPattern.class);
+      myIsNull = isNull(labels);
+    }
+
+    private boolean isPatternBy(T @NotNull [] labels, Class<? extends PsiPattern>... classes) {
+      return ContainerUtil.find(labels, label -> {
+        PsiCaseLabelElement[] labelElements = getCaseLabelElements(label);
+        if (labelElements == null) return false;
+        return ContainerUtil.exists(labelElements, labelElement -> PsiTreeUtil.instanceOf(labelElement, classes));
+        }) != null;
+    }
+
+    private boolean isNull(T @NotNull [] labels) {
+      if (labels.length != 1) return false;
+      PsiCaseLabelElement[] labelElements = getCaseLabelElements(labels[0]);
+      if (labelElements == null) return false;
+      return labelElements.length == 1 && ExpressionUtils.isNullLiteral(ObjectUtils.tryCast(labelElements[0], PsiExpression.class));
+    }
+
+    private PsiCaseLabelElement[] getCaseLabelElements(T label) {
+      PsiSwitchLabelStatementBase labelStatementBase = ObjectUtils.tryCast(label, PsiSwitchLabelStatementBase.class);
+      if (labelStatementBase == null) return null;
+      PsiCaseLabelElementList labelElementList = labelStatementBase.getCaseLabelElementList();
+      if (labelElementList == null) return null;
+      return labelElementList.getElements();
     }
 
     boolean isDefault() {
@@ -549,9 +589,9 @@ public class DuplicateBranchesInSwitchInspection extends LocalInspectionTool {
         if (switchLabel.isDefaultCase()) {
           return PsiKeyword.DEFAULT;
         }
-        PsiExpressionList caseValues = switchLabel.getCaseValues();
-        if (caseValues != null) {
-          PsiExpression[] expressions = caseValues.getExpressions();
+        PsiCaseLabelElementList labelElementList = switchLabel.getCaseLabelElementList();
+        if (labelElementList != null) {
+          PsiCaseLabelElement[] expressions = labelElementList.getElements();
           if (expressions.length != 0) {
             return PsiKeyword.CASE + ' ' + expressions[0].getText();
           }
@@ -906,10 +946,10 @@ public class DuplicateBranchesInSwitchInspection extends LocalInspectionTool {
     }
 
     void copyCaseValues() {
-      PsiExpressionList caseValuesToMergeWith = myRuleToMergeWith.myLabel.getCaseValues();
-      PsiExpressionList caseValuesToDelete = myRuleToDelete.myLabel.getCaseValues();
+      @Nullable PsiCaseLabelElementList caseValuesToMergeWith = myRuleToMergeWith.myLabel.getCaseLabelElementList();
+      @Nullable PsiCaseLabelElementList caseValuesToDelete = myRuleToDelete.myLabel.getCaseLabelElementList();
       if (caseValuesToDelete != null && caseValuesToMergeWith != null) {
-        for (PsiExpression caseValue : caseValuesToDelete.getExpressions()) {
+        for (PsiCaseLabelElement caseValue : caseValuesToDelete.getElements()) {
           caseValuesToMergeWith.addAfter(caseValue, caseValuesToMergeWith.getLastChild());
         }
       }

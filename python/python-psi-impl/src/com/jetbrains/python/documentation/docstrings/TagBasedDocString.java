@@ -29,9 +29,7 @@ import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-/**
- * @author yole
- */
+
 public abstract class TagBasedDocString extends DocStringLineParser implements StructuredDocString {
   protected final String myDescription;
 

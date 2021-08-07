@@ -41,7 +41,7 @@ def remove_entries_from_whitelist(filename: str, entries: Set[str]) -> None:
     new_lines: List[str] = []
     with open(filename) as f:
         for line in f:
-            entry = line.strip().split(" #")[0]
+            entry = line.split("#")[0].strip()
             if entry in entries:
                 entries.remove(entry)
             else:

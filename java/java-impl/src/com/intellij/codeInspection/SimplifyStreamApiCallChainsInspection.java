@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection;
 
 import com.intellij.codeInsight.ExpressionUtil;
@@ -29,6 +29,7 @@ import com.intellij.psi.util.*;
 import com.intellij.refactoring.util.LambdaRefactoringUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
+import com.siyeh.ig.bugs.MismatchedCollectionQueryUpdateInspection;
 import com.siyeh.ig.callMatcher.CallHandler;
 import com.siyeh.ig.callMatcher.CallMapper;
 import com.siyeh.ig.callMatcher.CallMatcher;
@@ -326,6 +327,8 @@ public class SimplifyStreamApiCallChainsInspection extends AbstractBaseJavaLocal
       staticCall(JAVA_UTIL_COLLECTIONS, "singleton").parameterCount(1);
     private static final CallMatcher AS_LIST = staticCall(JAVA_UTIL_ARRAYS, "asList").parameterCount(1);
     private static final CallMatcher ENUMSET_OF = staticCall("java.util.EnumSet", "of");
+    private static final CallMatcher LIST_OF = staticCall(JAVA_UTIL_LIST, "of");
+    private static final CallMatcher SET_OF = staticCall(JAVA_UTIL_SET, "of");
 
     private static final CallMapper<ReplaceCollectionStreamFix> COLLECTION_TO_STREAM_MAPPER = new CallMapper<ReplaceCollectionStreamFix>()
       .register(EMPTY_LIST,
@@ -341,7 +344,9 @@ public class SimplifyStreamApiCallChainsInspection extends AbstractBaseJavaLocal
                                  : new ReplaceCollectionStreamFix("Arrays.asList()", JAVA_UTIL_STREAM_STREAM, OF_METHOD))
       .register(ENUMSET_OF, call ->
         isEnumSetReplaceableWithStream(call) ? new ReplaceCollectionStreamFix("EnumSet.of()", JAVA_UTIL_STREAM_STREAM,
-                                                                              OF_METHOD) : null);
+                                                                              OF_METHOD) : null)
+      .register(LIST_OF, call -> new ReplaceCollectionStreamFix("List.of()", JAVA_UTIL_STREAM_STREAM, OF_METHOD))
+      .register(SET_OF, call -> new ReplaceCollectionStreamFix("Set.of()", JAVA_UTIL_STREAM_STREAM, OF_METHOD));
 
     private static final String STREAM_SUFFIX = ".stream()";
 
@@ -544,7 +549,13 @@ public class SimplifyStreamApiCallChainsInspection extends AbstractBaseJavaLocal
       handler("summingLong", 1, "mapToLong({0}).sum()", false),
       handler("summingDouble", 1, "mapToDouble({0}).sum()", false),
       CallHandler.of(collectorMatcher("toUnmodifiableList", 0).withLanguageLevelAtLeast(LanguageLevel.JDK_16),
-                     call -> new ReplaceCollectorFix("toUnmodifiableList", "toList()", false)));
+                     call -> new ReplaceCollectorFix("toUnmodifiableList", "toList()", false)),
+      CallHandler.of(collectorMatcher("toList", 0).withLanguageLevelAtLeast(LanguageLevel.JDK_16), call -> {
+        PsiMethodCallExpression collectCall = PsiTreeUtil.getParentOfType(call, PsiMethodCallExpression.class);
+        return MismatchedCollectionQueryUpdateInspection.isUnmodified(collectCall)
+               ? new ReplaceCollectorFix("toList", "toList()", false)
+               : null;
+      }));
 
     private final String myCollector;
     private final String myStreamSequence;

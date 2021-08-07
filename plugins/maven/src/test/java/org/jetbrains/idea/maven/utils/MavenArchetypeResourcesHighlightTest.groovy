@@ -17,12 +17,14 @@ package org.jetbrains.idea.maven.utils
 
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 import com.intellij.psi.PsiFile
+import org.junit.Test
 
 /**
  * @author Sergey Evdokimov
  */
 class MavenArchetypeResourcesHighlightTest extends LightJavaCodeInsightFixtureTestCase {
 
+  @Test
   void testHighlight() throws Exception {
     PsiFile file = myFixture.addFileToProject("src/main/resources/archetype-resources/src/main/java/A.java", """
 import \${package};

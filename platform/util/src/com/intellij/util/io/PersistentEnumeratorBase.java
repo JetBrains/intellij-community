@@ -17,19 +17,19 @@ package com.intellij.util.io;
 
 import com.intellij.openapi.Forceable;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.CommonProcessors;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.Processor;
-import com.intellij.util.containers.SLRUMap;
-import com.intellij.util.containers.ShareableKey;
+import com.intellij.util.SystemProperties;
 import com.intellij.util.io.keyStorage.AppendableObjectStorage;
 import com.intellij.util.io.keyStorage.AppendableStorageBackedByResizableMappedFile;
 import com.intellij.util.io.keyStorage.InlinedKeyStorage;
 import com.intellij.util.io.keyStorage.NoDataException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.annotations.VisibleForTesting;
 
 import java.io.Closeable;
 import java.io.Flushable;
@@ -39,26 +39,29 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 /**
  * @author max
  * @author jeka
  */
-public abstract class PersistentEnumeratorBase<Data> implements DataEnumeratorEx<Data>, Forceable, Closeable {
+public abstract class PersistentEnumeratorBase<Data> implements DataEnumeratorEx<Data>, Forceable, Closeable, SelfDiagnosing {
   protected static final Logger LOG = Logger.getInstance(PersistentEnumeratorBase.class);
   protected static final int NULL_ID = DataEnumeratorEx.NULL_ID;
 
+  protected static final boolean USE_RW_LOCK = SystemProperties.getBooleanProperty("idea.persistent.data.use.read.write.lock", false);
   private static final int META_DATA_OFFSET = 4;
   static final int DATA_START = META_DATA_OFFSET + 16;
-  private static final CacheKey ourFlyweight = new FlyweightKey();
 
   protected final ResizeableMappedFile myStorage;
   @NotNull
-  private final AppendableObjectStorage<Data> myKeyStorage;
+  protected final AppendableObjectStorage<Data> myKeyStorage;
   final KeyDescriptor<Data> myDataDescriptor;
   protected final Path myFile;
   private final Version myVersion;
   private final boolean myDoCaching;
+  private final ReentrantReadWriteLock myLock = new ReentrantReadWriteLock(true);
 
   private volatile boolean myDirtyStatusUpdateInProgress;
 
@@ -66,7 +69,7 @@ public abstract class PersistentEnumeratorBase<Data> implements DataEnumeratorEx
   private boolean myDirty;
   private boolean myCorrupted;
   private RecordBufferHandler<PersistentEnumeratorBase<?>> myRecordHandler;
-  private Flushable myMarkCleanCallback;
+  private @Nullable Flushable myMarkCleanCallback;
 
   public static class Version {
     private static final int DIRTY_MAGIC = 0xbabe1977;
@@ -87,77 +90,9 @@ public abstract class PersistentEnumeratorBase<Data> implements DataEnumeratorEx
   }
 
   abstract static class RecordBufferHandler<T extends PersistentEnumeratorBase<?>> {
-    abstract int recordWriteOffset(T enumerator, byte[] buf);
+    abstract int recordWriteOffset(T enumerator, byte[] buf) throws IOException;
     abstract byte @NotNull [] getRecordBuffer(T enumerator);
     abstract void setupRecord(T enumerator, int hashCode, final int dataOffset, final byte[] buf);
-  }
-
-  private static class CacheKey implements ShareableKey {
-    public PersistentEnumeratorBase<?> owner;
-    public Object key;
-
-    private CacheKey(Object key, PersistentEnumeratorBase<?> owner) {
-      this.key = key;
-      this.owner = owner;
-    }
-
-    @Override
-    public ShareableKey getStableCopy() {
-      return this;
-    }
-
-    @Override
-    public boolean equals(final Object o) {
-      if (this == o) return true;
-      if (!(o instanceof CacheKey)) return false;
-
-      final CacheKey cacheKey = (CacheKey)o;
-
-      if (!key.equals(cacheKey.key)) return false;
-      if (!owner.equals(cacheKey.owner)) return false;
-
-      return true;
-    }
-
-    @Override
-    public int hashCode() {
-      return key.hashCode();
-    }
-  }
-
-  private static CacheKey sharedKey(Object key, PersistentEnumeratorBase owner) {
-    ourFlyweight.key = key;
-    ourFlyweight.owner = owner;
-    return ourFlyweight;
-  }
-
-  private static final int ENUMERATION_CACHE_SIZE;
-  static {
-    String property = System.getProperty("idea.enumerationCacheSize");
-    ENUMERATION_CACHE_SIZE = property == null ? 8192 : Integer.valueOf(property);
-  }
-
-  private static final SLRUMap<Object, Integer> ourEnumerationCache = new SLRUMap<>(ENUMERATION_CACHE_SIZE, ENUMERATION_CACHE_SIZE);
-
-  @TestOnly
-  public static void clearCacheForTests() {
-    ourEnumerationCache.clear();
-  }
-
-  public static class CorruptedException extends IOException {
-    public CorruptedException(Path file) {
-      this("PersistentEnumerator storage corrupted " + file);
-    }
-
-    protected CorruptedException(String message) {
-      super(message);
-    }
-  }
-
-  public static class VersionUpdatedException extends CorruptedException {
-    VersionUpdatedException(@NotNull Path file) {
-      super("PersistentEnumerator storage corrupted " + file);
-    }
   }
 
   public PersistentEnumeratorBase(@NotNull Path file,
@@ -193,6 +128,7 @@ public abstract class PersistentEnumeratorBase<Data> implements DataEnumeratorEx
           putMetaData(0);
           putMetaData2(0);
           setupEmptyFile();
+          doFlush();
         }
         catch (RuntimeException e) {
           LOG.info(e);
@@ -240,7 +176,7 @@ public abstract class PersistentEnumeratorBase<Data> implements DataEnumeratorEx
       try {
         myKeyStorage = new AppendableStorageBackedByResizableMappedFile<>(keyStreamFile(),
                                                                           initialSize,
-                                                                          myStorage.getPagedFileStorage().getStorageLockContext(),
+                                                                          myStorage.getStorageLockContext(),
                                                                           PagedFileStorage.MB,
                                                                           false,
                                                                           dataDescriptor);
@@ -253,25 +189,34 @@ public abstract class PersistentEnumeratorBase<Data> implements DataEnumeratorEx
     }
   }
 
+  protected void assertWriteAccess() {
+    assert myLock.isWriteLockedByCurrentThread();
+  }
+
   @NotNull
-  protected Object getDataAccessLock() {
-    return this;
+  protected Lock getWriteLock() {
+    return myLock.writeLock();
+  }
+
+  @NotNull
+  protected Lock getReadLock() {
+    return USE_RW_LOCK ? myLock.readLock() : myLock.writeLock();
   }
 
   void lockStorageRead() {
-    myStorage.getPagedFileStorage().lockRead();
+    myStorage.lockRead();
   }
 
   void unlockStorageRead() {
-    myStorage.getPagedFileStorage().unlockRead();
+    myStorage.unlockRead();
   }
 
   void lockStorageWrite() {
-    myStorage.getPagedFileStorage().lockWrite();
+    myStorage.lockWrite();
   }
 
   void unlockStorageWrite() {
-    myStorage.getPagedFileStorage().unlockWrite();
+    myStorage.unlockWrite();
   }
 
   protected abstract void setupEmptyFile() throws IOException;
@@ -285,7 +230,7 @@ public abstract class PersistentEnumeratorBase<Data> implements DataEnumeratorEx
     myRecordHandler = recordHandler;
   }
 
-  void setMarkCleanCallback(Flushable markCleanCallback) {
+  void setMarkCleanCallback(@NotNull Flushable markCleanCallback) {
     myMarkCleanCallback = markCleanCallback;
   }
 
@@ -300,31 +245,16 @@ public abstract class PersistentEnumeratorBase<Data> implements DataEnumeratorEx
 
   private int doEnumerate(Data value, boolean onlyCheckForExisting, boolean saveNewValue) throws IOException {
     if (myDoCaching && !saveNewValue) {
-      synchronized (ourEnumerationCache) {
-        final Integer cachedId = ourEnumerationCache.get(sharedKey(value, this));
-        if (cachedId != null) return cachedId.intValue();
-      }
+      int cachedId = PersistentEnumeratorCache.getCachedId(value, this);
+      if (cachedId != NULL_ID) return cachedId;
     }
 
-    final int id;
-    try {
-      id = enumerateImpl(value, onlyCheckForExisting, saveNewValue);
-    }
-    catch (Throwable e) {
-      if (!isCorrupted()) {
-        markCorrupted();
-        LOG.info("Marking corrupted:" + myFile, e);
-      }
-
-      //noinspection InstanceofCatchParameter
-      if (e instanceof IOException) throw (IOException)e;
-      throw new IOException(e);
-    }
+    int id = catchCorruption(() -> {
+      return enumerateImpl(value, onlyCheckForExisting, saveNewValue);
+    });
 
     if (myDoCaching && id != NULL_ID) {
-      synchronized (ourEnumerationCache) {
-        ourEnumerationCache.put(new CacheKey(value, this), id);
-      }
+      PersistentEnumeratorCache.cacheId(value, id, this);
     }
 
     return id;
@@ -336,10 +266,10 @@ public abstract class PersistentEnumeratorBase<Data> implements DataEnumeratorEx
   }
 
   public interface DataFilter {
-    boolean accept(int id);
+    boolean accept(int id) throws IOException;
   }
 
-  protected void putMetaData(long data) {
+  protected void putMetaData(long data) throws IOException {
     lockStorageWrite();
     try {
       if (myStorage.length() < META_DATA_OFFSET + 8 || getMetaData() != data) myStorage.putLong(META_DATA_OFFSET, data);
@@ -349,7 +279,7 @@ public abstract class PersistentEnumeratorBase<Data> implements DataEnumeratorEx
     }
   }
 
-  protected long getMetaData() {
+  protected long getMetaData() throws IOException {
     lockStorageRead();
     try {
       return myStorage.getLong(META_DATA_OFFSET);
@@ -359,7 +289,7 @@ public abstract class PersistentEnumeratorBase<Data> implements DataEnumeratorEx
     }
   }
 
-  void putMetaData2(long data) {
+  void putMetaData2(long data) throws IOException {
     lockStorageWrite();
     try {
       if (myStorage.length() < META_DATA_OFFSET + 16 || getMetaData2() != data) myStorage.putLong(META_DATA_OFFSET + 8, data);
@@ -369,7 +299,7 @@ public abstract class PersistentEnumeratorBase<Data> implements DataEnumeratorEx
     }
   }
 
-  long getMetaData2() {
+  long getMetaData2() throws IOException {
     lockStorageRead();
     try {
       return myStorage.getLong(META_DATA_OFFSET + 8);
@@ -450,7 +380,7 @@ public abstract class PersistentEnumeratorBase<Data> implements DataEnumeratorEx
     return myKeyStorage.append(value);
   }
 
-  protected int setupValueId(int hashCode, int dataOff) {
+  protected int setupValueId(int hashCode, int dataOff) throws IOException {
     final byte[] buf = myRecordHandler.getRecordBuffer(this);
     myRecordHandler.setupRecord(this, hashCode, dataOff, buf);
     final int pos = myRecordHandler.recordWriteOffset(this, buf);
@@ -460,6 +390,10 @@ public abstract class PersistentEnumeratorBase<Data> implements DataEnumeratorEx
   }
 
   public boolean iterateData(@NotNull Processor<? super Data> processor) throws IOException {
+    return doIterateData((offset, data) -> processor.process(data));
+  }
+
+  protected boolean doIterateData(@NotNull AppendableObjectStorage.StorageObjectProcessor<? super Data> processor) throws IOException {
     lockStorageWrite(); // todo locking in key storage
     try {
       myKeyStorage.force();
@@ -478,32 +412,19 @@ public abstract class PersistentEnumeratorBase<Data> implements DataEnumeratorEx
   @Override
   public Data valueOf(int idx) throws IOException {
     if (idx <= NULL_ID) return null;
+    return catchCorruption(() -> {
+      return findValueFor(idx);
+    });
+  }
+
+  private Data findValueFor(int idx) throws IOException {
+    lockStorageRead();
     try {
-
-      lockStorageRead();
-      try {
-        int addr = indexToAddr(idx);
-
-        return myKeyStorage.read(addr);
-      }
-      finally {
-        unlockStorageRead();
-      }
+      int addr = indexToAddr(idx);
+      return myKeyStorage.read(addr);
     }
-    catch (NoDataException e) {
-      if (myFile.getFileSystem().isReadOnly()) {
-        throw e;
-      }
-      markCorrupted();
-      return null;
-    }
-    catch (IOException io) {
-      markCorrupted();
-      throw io;
-    }
-    catch (Throwable e) {
-      markCorrupted();
-      throw new RuntimeException(e);
+    finally {
+      unlockStorageRead();
     }
   }
 
@@ -516,11 +437,12 @@ public abstract class PersistentEnumeratorBase<Data> implements DataEnumeratorEx
     return false;
   }
 
-  protected abstract int indexToAddr(int idx);
+  protected abstract int indexToAddr(int idx) throws IOException;
 
   @Override
   public void close() throws IOException {
-    synchronized (getDataAccessLock()) {
+    getWriteLock().lock();
+    try {
       lockStorageWrite();
       try {
         if (!myClosed) {
@@ -532,12 +454,15 @@ public abstract class PersistentEnumeratorBase<Data> implements DataEnumeratorEx
         unlockStorageWrite();
       }
     }
+    finally {
+      getWriteLock().unlock();
+    }
   }
 
   protected void doClose() throws IOException {
     try {
+      force();
       myKeyStorage.close();
-      flush();
     }
     finally {
       myStorage.close();
@@ -545,35 +470,33 @@ public abstract class PersistentEnumeratorBase<Data> implements DataEnumeratorEx
   }
 
   public boolean isClosed() {
-    synchronized (getDataAccessLock()) {
+    getReadLock().lock();
+    try {
       return myClosed;
+    }
+    finally {
+      getReadLock().unlock();
     }
   }
 
   @Override
   public boolean isDirty() {
-    synchronized (getDataAccessLock()) {
+    lockStorageRead();
+    try {
       return myDirty;
+    }
+    finally {
+      unlockStorageRead();
     }
   }
 
   public boolean isCorrupted() {
-    synchronized (getDataAccessLock()) {
+    lockStorageRead();
+    try {
       return myCorrupted;
     }
-  }
-
-  private void flush() throws IOException {
-    synchronized (getDataAccessLock()) {
-      lockStorageWrite();
-      try {
-        if (myStorage.isDirty() || isDirty()) {
-          doFlush();
-        }
-      }
-      finally {
-        unlockStorageWrite();
-      }
+    finally {
+      unlockStorageRead();
     }
   }
 
@@ -584,12 +507,14 @@ public abstract class PersistentEnumeratorBase<Data> implements DataEnumeratorEx
 
   @Override
   public void force() {
-    synchronized (getDataAccessLock()) {
+    getWriteLock().lock();
+    try {
       lockStorageWrite();
-
       try {
         myKeyStorage.force();
-        flush();
+        if (myStorage.isDirty() || isDirty()) {
+          doFlush();
+        }
       }
       catch (IOException e) {
         throw new RuntimeException(e);
@@ -598,41 +523,43 @@ public abstract class PersistentEnumeratorBase<Data> implements DataEnumeratorEx
         unlockStorageWrite();
       }
     }
+    finally {
+      getWriteLock().unlock();
+    }
   }
 
   protected final void markDirty(boolean dirty) throws IOException {
-    synchronized (getDataAccessLock()) {
-      if (dirty && myDirty && !myDirtyStatusUpdateInProgress) return;
-      lockStorageWrite();
-      try {
-        if (myDirty) {
-          if (!dirty) {
-            myDirtyStatusUpdateInProgress = true;
-            if (myMarkCleanCallback != null) myMarkCleanCallback.flush();
-            if (!myCorrupted) {
-              myStorage.putInt(0, myVersion.correctlyClosedMagic);
-              myDirty = false;
-            }
-            myDirtyStatusUpdateInProgress = false;
+    if (dirty && myDirty && !myDirtyStatusUpdateInProgress) return;
+    lockStorageWrite();
+    try {
+      if (myDirty) {
+        if (!dirty) {
+          myDirtyStatusUpdateInProgress = true;
+          if (myMarkCleanCallback != null) myMarkCleanCallback.flush();
+          if (!myCorrupted) {
+            myStorage.putInt(0, myVersion.correctlyClosedMagic);
+            myDirty = false;
           }
-        }
-        else {
-          if (dirty) {
-            myDirtyStatusUpdateInProgress = true;
-            myStorage.putInt(0, myVersion.dirtyMagic);
-            myDirtyStatusUpdateInProgress = false;
-            myDirty = true;
-          }
+          myDirtyStatusUpdateInProgress = false;
         }
       }
-      finally {
-        unlockStorageWrite();
+      else {
+        if (dirty) {
+          myDirtyStatusUpdateInProgress = true;
+          myStorage.putInt(0, myVersion.dirtyMagic);
+          myDirtyStatusUpdateInProgress = false;
+          myDirty = true;
+        }
       }
+    }
+    finally {
+      unlockStorageWrite();
     }
   }
 
   protected void markCorrupted() {
-    synchronized (getDataAccessLock()) {
+    lockStorageWrite();
+    try {
       if (!myCorrupted) {
         myCorrupted = true;
         if (LOG.isDebugEnabled()) LOG.debug("Marking corrupted:" + myFile, new Throwable());
@@ -645,16 +572,45 @@ public abstract class PersistentEnumeratorBase<Data> implements DataEnumeratorEx
         }
       }
     }
+    finally {
+      unlockStorageWrite();
+    }
   }
 
-  private static class FlyweightKey extends CacheKey {
-    FlyweightKey() {
-      super(null, null);
+  protected boolean trySelfHeal() {
+    return false;
+  }
+
+  @VisibleForTesting
+  protected <V> V catchCorruption(ThrowableComputable<V, IOException> operation) throws IOException {
+    if (isCorrupted()) {
+      throw new CorruptedException(myFile);
     }
 
-    @Override
-    public ShareableKey getStableCopy() {
-      return new CacheKey(key, owner);
+    try {
+      // try to repair a storage
+      try {
+        return operation.compute();
+      }
+      catch (Throwable th) {
+        if (th instanceof NoDataException || !trySelfHeal()) {
+          throw th;
+        }
+      }
+
+      // and try one more time to execute an operation
+      return operation.compute();
+    }
+    catch (NoDataException e) {
+      return null;
+    }
+    catch (IOException io) {
+      markCorrupted();
+      throw io;
+    }
+    catch (Throwable e) {
+      markCorrupted();
+      throw new RuntimeException(e);
     }
   }
 }

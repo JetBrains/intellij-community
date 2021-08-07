@@ -1,9 +1,25 @@
 <html>
 <body>
-Reports <b>try finally</b> statements which can use Java 7
-Automatic Resource Management. A quickfix is available to convert the <b>try finally</b>
-statement into a <b>try</b> with resources statement.
+Reports <code>try</code>-<code>finally</code> statements that can use Java 7 Automatic Resource Management,
+which is less error-prone.
+<p>A quick-fix is available to convert a <code>try</code>-<code>finally</code>
+  statement into a <code>try</code>-with-resources statement.</p>
+<p><b>Example:</b></p>
+<pre><code>
+  PrintStream printStream = new PrintStream(fileName);
+  try {
+    printStream.print(true);
+  } finally {
+    printStream.close();
+  }
+</code></pre>
+<p>A quick-fix is provided to pass the cause to a constructor:</p>
+<pre>
+  try (PrintStream printStream = new PrintStream(fileName)) {
+    printStream.print(true);
+  }
+</pre>
 <!-- tooltip end -->
-<p>This inspection only reports if the language level of the project or module is 7 or higher</p>
+<p>This inspection only reports if the language level of the project or module is 7 or higher.</p>
 </body>
 </html>

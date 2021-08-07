@@ -1,12 +1,14 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.ui;
 
 import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.target.TargetEnvironmentConfiguration;
-import com.intellij.execution.target.TargetEnvironmentsManager;
+import com.intellij.execution.target.TargetEnvironmentConfigurations;
 import com.intellij.execution.target.java.JavaLanguageRuntimeConfiguration;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.util.BrowseFilesListener;
+import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.projectRoots.Sdk;
@@ -24,6 +26,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBTextField;
 import com.intellij.ui.components.fields.ExtendableTextField;
+import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.JBInsets;
@@ -113,10 +116,13 @@ public class JrePathEditor extends LabeledComponent<ComboBox<JrePathEditor.JreCo
         JBTextField field = new ExtendableTextField().addBrowseExtension(getBrowseRunnable(), null);
         field.setBorder(null);
         field.addFocusListener(new FocusListener() {
-          @Override public void focusGained(FocusEvent e) {
+          @Override
+          public void focusGained(FocusEvent e) {
             update(e);
           }
-          @Override public void focusLost(FocusEvent e) {
+
+          @Override
+          public void focusLost(FocusEvent e) {
             update(e);
           }
 
@@ -132,7 +138,6 @@ public class JrePathEditor extends LabeledComponent<ComboBox<JrePathEditor.JreCo
 
         return field;
       }
-
     };
     comboBox.setEditor(myComboboxEditor);
     InsertPathAction.addTo(myComboboxEditor.getEditorComponent());
@@ -149,20 +154,18 @@ public class JrePathEditor extends LabeledComponent<ComboBox<JrePathEditor.JreCo
   public boolean updateModel(@NotNull Project project, @Nullable String targetName) {
     myComboBoxModel.clear();
     myRemoteTarget = false;
-    if (targetName != null) {
-      TargetEnvironmentConfiguration config = TargetEnvironmentsManager.getInstance(project).getTargets().findByName(targetName);
-      if (config != null) {
-        myRemoteTarget = true;
-        List<CustomJreItem> items = ContainerUtil.mapNotNull(config.getRuntimes().resolvedConfigs(),
-                                                             configuration -> configuration instanceof JavaLanguageRuntimeConfiguration ?
-                                                                              new CustomJreItem(
-                                                                                (JavaLanguageRuntimeConfiguration)configuration) : null);
-        myComboBoxModel.addAll(items);
-        if (!items.isEmpty()) {
-          myComboBoxModel.setSelectedItem(items.get(0));
-        }
-        return false;
+    TargetEnvironmentConfiguration config = TargetEnvironmentConfigurations.getEffectiveConfiguration(targetName, project);
+    if (config != null) {
+      myRemoteTarget = true;
+      List<CustomJreItem> items = ContainerUtil.mapNotNull(config.getRuntimes().resolvedConfigs(),
+                                                           configuration -> configuration instanceof JavaLanguageRuntimeConfiguration ?
+                                                                            new CustomJreItem(
+                                                                              (JavaLanguageRuntimeConfiguration)configuration) : null);
+      myComboBoxModel.addAll(items);
+      if (!items.isEmpty()) {
+        myComboBoxModel.setSelectedItem(items.get(0));
       }
+      return false;
     }
     buildModel(getComponent().isEditable());
     return true;
@@ -251,10 +254,15 @@ public class JrePathEditor extends LabeledComponent<ComboBox<JrePathEditor.JreCo
   }
 
   private void updateDefaultJrePresentation() {
-    StatusText text = myComboboxEditor.getEmptyText();
-    text.clear();
-    text.appendText(ExecutionBundle.message("default.jre.name"), SimpleTextAttributes.REGULAR_ATTRIBUTES);
-    text.appendText(myDefaultJreSelector.getDescriptionString(), SimpleTextAttributes.GRAYED_ATTRIBUTES);
+    ReadAction
+      .nonBlocking(() -> myDefaultJreSelector.getDescriptionString())
+      .finishOnUiThread(ModalityState.any(), result -> {
+        StatusText text = myComboboxEditor.getEmptyText();
+        text.clear();
+        text.appendText(ExecutionBundle.message("default.jre.name"), SimpleTextAttributes.REGULAR_ATTRIBUTES);
+        text.appendText(result, SimpleTextAttributes.GRAYED_ATTRIBUTES);
+      })
+      .submit(AppExecutorUtil.getAppExecutorService());
   }
 
   private JreComboBoxItem findOrAddCustomJre(@NotNull String pathOrName) {
@@ -275,14 +283,19 @@ public class JrePathEditor extends LabeledComponent<ComboBox<JrePathEditor.JreCo
 
   interface JreComboBoxItem {
     void render(SimpleColoredComponent component, boolean selected);
+
     String getPresentableText();
+
     default @NonNls @Nullable String getID() { return null; }
+
     @Nullable @NlsSafe
     String getPathOrName();
+
     @Nullable
     default String getVersion() { return null; }
 
     default @NlsSafe @Nullable String getDescription() { return getPresentableText(); }
+
     int getOrder();
   }
 
@@ -325,7 +338,7 @@ public class JrePathEditor extends LabeledComponent<ComboBox<JrePathEditor.JreCo
   }
 
   static class CustomJreItem implements JreComboBoxItem {
-    private final String myPath;
+    private final @NlsSafe String myPath;
     private final @NlsContexts.Label String myName;
     private final String myVersion;
     private final String myID;

@@ -30,7 +30,7 @@ public abstract class QuickSwitchSchemeAction extends AnAction implements DumbAw
     return EmptyIcon.create(AllIcons.Actions.Forward.getIconWidth(), AllIcons.Actions.Forward.getIconHeight());
   });
 
-  protected String myActionPlace = ActionPlaces.UNKNOWN;
+  protected String myActionPlace;
 
   private final boolean myShowPopupWithNoActions;
 

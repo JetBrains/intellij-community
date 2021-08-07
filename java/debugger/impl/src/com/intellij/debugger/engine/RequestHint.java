@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 /*
  * @author: Eugene Zhuravlev
@@ -114,15 +114,11 @@ public class RequestHint {
 
   protected boolean isTheSameFrame(SuspendContextImpl context) {
     if (mySteppedOut) return false;
-    final ThreadReferenceProxyImpl contextThread = context.getThread();
+    ThreadReferenceProxyImpl contextThread = context.getThread();
     if (contextThread != null) {
-      try {
-        int currentDepth = contextThread.frameCount();
-        if (currentDepth < myFrameCount) mySteppedOut = true;
-        return currentDepth == myFrameCount;
-      }
-      catch (EvaluateException ignored) {
-      }
+      int currentDepth = context.frameCount();
+      if (currentDepth < myFrameCount) mySteppedOut = true;
+      return currentDepth == myFrameCount;
     }
     return false;
   }
@@ -160,6 +156,55 @@ public class RequestHint {
     return method.isBridge() || DebuggerUtilsEx.isProxyClass(method.declaringType());
   }
 
+  @Nullable
+  protected final Integer processSteppingFilters(@NotNull SuspendContextImpl context, @Nullable Location location) {
+    final DebuggerSettings settings = DebuggerSettings.getInstance();
+
+    if ((myMethodFilter != null || (settings.SKIP_SYNTHETIC_METHODS && !myIgnoreFilters)) &&
+        location != null && DebuggerUtils.isSynthetic(location.method())) {
+      return myDepth;
+    }
+
+    if (!myIgnoreFilters) {
+      if(settings.SKIP_GETTERS) {
+        boolean isGetter = ReadAction.compute(() -> {
+          PsiElement contextElement = ContextUtil.getContextElement(context);
+          return contextElement != null && DebuggerUtils.isInsideSimpleGetter(contextElement);
+        }).booleanValue();
+
+        if(isGetter) {
+          return StepRequest.STEP_OUT;
+        }
+      }
+
+      if (location != null) {
+        if (settings.SKIP_CONSTRUCTORS) {
+          final Method method = location.method();
+          if (method != null && method.isConstructor()) {
+            return StepRequest.STEP_OUT;
+          }
+        }
+
+        if (settings.SKIP_CLASSLOADERS && DebuggerUtilsEx.isAssignableFrom("java.lang.ClassLoader", location.declaringType())) {
+          return StepRequest.STEP_OUT;
+        }
+      }
+
+      for (ExtraSteppingFilter filter : ExtraSteppingFilter.EP_NAME.getExtensionList()) {
+        try {
+          if (filter.isApplicable(context)) {
+            return filter.getStepRequestDepth(context);
+          }
+        }
+        catch (Exception | AssertionError e) {
+          DebuggerUtilsImpl.logError(e);
+        }
+      }
+    }
+
+    return null;
+  }
+
   public int getNextStepDepth(final SuspendContextImpl context) {
     try {
       Location location = context.getLocation();
@@ -187,50 +232,11 @@ public class RequestHint {
         return resultDepth.intValue();
       }
 
-      // Now check filters
-
-      final DebuggerSettings settings = DebuggerSettings.getInstance();
-
-      if ((myMethodFilter != null || (settings.SKIP_SYNTHETIC_METHODS && !myIgnoreFilters)) &&
-          location != null &&
-          DebuggerUtils.isSynthetic(location.method())) {
-        return myDepth;
+      resultDepth = processSteppingFilters(context, location);
+      if (resultDepth != null) {
+        return resultDepth.intValue();
       }
 
-      if (!myIgnoreFilters) {
-        if(settings.SKIP_GETTERS) {
-          boolean isGetter = ReadAction.compute(() -> {
-            PsiElement contextElement = ContextUtil.getContextElement(context);
-            return contextElement != null && DebuggerUtils.isInsideSimpleGetter(contextElement);
-          }).booleanValue();
-
-          if(isGetter) {
-            return StepRequest.STEP_OUT;
-          }
-        }
-
-        if (location != null) {
-          if (settings.SKIP_CONSTRUCTORS) {
-            final Method method = location.method();
-            if (method != null && method.isConstructor()) {
-              return StepRequest.STEP_OUT;
-            }
-          }
-
-          if (settings.SKIP_CLASSLOADERS && DebuggerUtilsEx.isAssignableFrom("java.lang.ClassLoader", location.declaringType())) {
-            return StepRequest.STEP_OUT;
-          }
-        }
-
-        for (ExtraSteppingFilter filter : ExtraSteppingFilter.EP_NAME.getExtensionList()) {
-          try {
-            if (filter.isApplicable(context)) return filter.getStepRequestDepth(context);
-          }
-          catch (Exception | AssertionError e) {
-            DebuggerUtilsImpl.logError(e);
-          }
-        }
-      }
       // smart step feature
       if (myMethodFilter != null) {
         isTheSameFrame(context); // to set mySteppedOut if needed

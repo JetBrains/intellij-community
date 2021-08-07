@@ -3,19 +3,22 @@
 package com.intellij.testFramework
 
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.ex.ApplicationManagerEx.IS_INTERNAL_PROPERTY
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.registry.Registry
 
-
-private fun setSystemProperty(key: String, value: String?) : String? {
+private fun setSystemProperty(key: String, value: String?): String? {
   return if (value != null) {
     System.setProperty(key, value)
-  } else {
+  }
+  else {
     System.clearProperty(key)
   }
 }
 
-fun UsefulTestCase.setSystemPropertyForTest(key: String, value: Boolean) = setSystemPropertyForTest(key, "$value")
+fun UsefulTestCase.setInternalForTest() = setSystemPropertyForTest(IS_INTERNAL_PROPERTY, true)
+
+fun UsefulTestCase.setSystemPropertyForTest(key: String, value: Boolean) = setSystemPropertyForTest(key, value.toString())
 
 fun UsefulTestCase.setSystemPropertyForTest(key: String, value: String?) {
   val prev = setSystemProperty(key, value)

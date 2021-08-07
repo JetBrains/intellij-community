@@ -75,7 +75,7 @@ class PyFinalInspection : PyInspection() {
           .filterIsInstance<PyFunction>()
           .firstOrNull { isFinal(it) }
           ?.let {
-            @NlsSafe val qualifiedName = it.qualifiedName ?: it.containingClass?.name + "." + it.name
+            @NlsSafe val qualifiedName = it.qualifiedName ?: (it.containingClass?.name + "." + it.name)
             registerProblem(node.nameIdentifier,
                             PyPsiBundle.message("INSP.final.method.marked.as.final.should.not.be.overridden", qualifiedName))
           }
@@ -208,7 +208,8 @@ class PyFinalInspection : PyInspection() {
 
       cls.findMethodByName(PyNames.INIT, false, myTypeEvalContext)?.let { init ->
         val attributesInInit = mutableMapOf<String, PyTargetExpression>()
-        PyClassImpl.collectInstanceAttributes(init, attributesInInit, instanceFinals.keys)
+        PyClassImpl.collectInstanceAttributes(init, attributesInInit)
+        attributesInInit.keys.removeAll(instanceFinals.keys)
         instanceFinals += attributesInInit.filterValues { isFinal(it) }
       }
 
@@ -402,7 +403,8 @@ class PyFinalInspection : PyInspection() {
     }
 
     private fun resolvesToFinal(expression: PyExpression?): Boolean {
-      return expression is PyReferenceExpression && eventuallyResolvesToFinal(expression, myTypeEvalContext)
+      return expression is PyReferenceExpression &&
+             resolveToQualifiedNames(expression, myTypeEvalContext).any { it == FINAL || it == FINAL_EXT }
     }
 
     private fun isTopLevelInAnnotationOrTypeComment(node: PyExpression): Boolean {

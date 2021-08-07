@@ -1,12 +1,13 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.diagnostic;
 
 import org.jetbrains.annotations.NotNull;
 
 // non-sequential and repeated items
 public enum ActivityCategory {
+  DEFAULT("item"),
   MAIN("item"),
-  APP_INIT("prepareAppInitActivity"), PRELOAD_ACTIVITY("preloadActivity"),
+  PRELOAD_ACTIVITY("preloadActivity"),
   APP_OPTIONS_TOP_HIT_PROVIDER("appOptionsTopHitProvider"), PROJECT_OPTIONS_TOP_HIT_PROVIDER("projectOptionsTopHitProvider"),
 
   APP_COMPONENT("appComponents"),
@@ -28,6 +29,7 @@ public enum ActivityCategory {
   REOPENING_EDITOR("reopeningEditor"),
 
   SERVICE_WAITING("serviceWaiting"),
+  GRADLE_IMPORT("importingProject")
   ;
 
   private final String jsonName;

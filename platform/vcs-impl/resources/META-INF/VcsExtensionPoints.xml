@@ -45,7 +45,7 @@
                     area="IDEA_PROJECT"
                     dynamic="true">
       <with attribute="className" implements="com.intellij.openapi.vcs.changes.ui.ChangesViewContentProvider"/>
-      <with attribute="predicateClassName" implements="com.intellij.util.NotNullFunction"/>
+      <with attribute="predicateClassName" implements="java.util.function.Predicate"/>
       <with attribute="preloaderClassName" implements="com.intellij.openapi.vcs.changes.ui.ChangesViewContentProvider$Preloader"/>
     </extensionPoint>
 
@@ -64,6 +64,10 @@
     <extensionPoint name="vcs.commitMessageProvider" interface="com.intellij.openapi.vcs.changes.ui.CommitMessageProvider" dynamic="true"/>
     <extensionPoint name="vcs.changes.changesViewModifier"
                     interface="com.intellij.openapi.vcs.changes.ChangesViewModifier"
+                    area="IDEA_PROJECT"
+                    dynamic="true"/>
+    <extensionPoint name="vcs.changes.changesViewNodeAction"
+                    interface="com.intellij.openapi.vcs.changes.ChangesViewNodeAction"
                     area="IDEA_PROJECT"
                     dynamic="true"/>
     <extensionPoint name="editChangelistSupport"
@@ -95,7 +99,12 @@
                     dynamic="true"/>
 
     <extensionPoint name="vcs.ignoredFilesHolder"
-                    interface="com.intellij.openapi.vcs.changes.VcsIgnoredFilesHolder$Provider"
+                    interface="com.intellij.openapi.vcs.changes.VcsManagedFilesHolder$Provider"
+                    area="IDEA_PROJECT"
+                    dynamic="true"/>
+
+    <extensionPoint name="vcs.unversionedFilesHolder"
+                    interface="com.intellij.openapi.vcs.changes.VcsManagedFilesHolder$Provider"
                     area="IDEA_PROJECT"
                     dynamic="true"/>
 
@@ -190,6 +199,10 @@
 
     <extensionPoint name="vcs.delayedCommitMessageProvider"
                     interface="com.intellij.vcs.commit.DelayedCommitMessageProvider"
+                    dynamic="true"/>
+
+    <extensionPoint name="vcs.envCustomizer"
+                    interface="com.intellij.openapi.vcs.VcsEnvCustomizer"
                     dynamic="true"/>
   </extensionPoints>
 </idea-plugin>

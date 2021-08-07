@@ -6,8 +6,8 @@ import de.plushnikov.intellij.plugin.LombokClassNames;
 import de.plushnikov.intellij.plugin.problem.ProblemBuilder;
 import de.plushnikov.intellij.plugin.psi.LombokLightMethodBuilder;
 import de.plushnikov.intellij.plugin.util.PsiClassUtil;
-import de.plushnikov.intellij.plugin.util.PsiMethodUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 import java.util.List;
@@ -19,6 +19,12 @@ public class UtilityClassProcessor extends AbstractClassProcessor {
 
   public UtilityClassProcessor() {
     super(PsiMethod.class, LombokClassNames.UTILITY_CLASS);
+  }
+
+  @Override
+  protected boolean possibleToGenerateElementNamed(@Nullable String nameHint, @NotNull PsiClass psiClass,
+                                                   @NotNull PsiAnnotation psiAnnotation) {
+    return null == nameHint || nameHint.equals(psiClass.getName());
   }
 
   @Override
@@ -83,11 +89,9 @@ public class UtilityClassProcessor extends AbstractClassProcessor {
       .withConstructor(true)
       .withContainingClass(psiClass)
       .withNavigationElement(psiAnnotation)
-      .withModifier(PsiModifier.PRIVATE);
-
-    String methodBody = String.format("throw new %s(%s);", "java.lang.UnsupportedOperationException", "\"This is a utility class and cannot be instantiated\"");
-
-    constructorBuilder.withBody(PsiMethodUtil.createCodeBlockFromText(methodBody, constructorBuilder));
+      .withModifier(PsiModifier.PRIVATE)
+      .withBodyText(String.format("throw new %s(%s);",
+                                  "java.lang.UnsupportedOperationException", "\"This is a utility class and cannot be instantiated\""));
     target.add(constructorBuilder);
   }
 }

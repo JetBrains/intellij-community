@@ -23,10 +23,13 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
+import java.awt.font.TextAttribute;
 import java.util.EnumMap;
 import java.util.Map;
 
 public class EditorFontCacheImpl extends EditorFontCache {
+  private static final Map<TextAttribute, Integer> LIGATURES_ATTRIBUTES = Map.of(TextAttribute.LIGATURES, TextAttribute.LIGATURES_ON);
+
   @NotNull private final Map<EditorFontType, Font> myFonts = new EnumMap<>(EditorFontType.class);
 
   @Override
@@ -41,7 +44,7 @@ public class EditorFontCacheImpl extends EditorFontCache {
       assert font != null : "Font " + fontType + " not found.";
       UISettings uiSettings = UISettings.getInstance();
       if (uiSettings.getPresentationMode()) {
-        return new Font(font.getName(), font.getStyle(), uiSettings.getPresentationModeFontSize());
+        return font.deriveFont((float)uiSettings.getPresentationModeFontSize());
       }
       return font;
     }
@@ -88,9 +91,9 @@ public class EditorFontCacheImpl extends EditorFontCache {
                        int style,
                        int fontSize,
                        FontPreferences fontPreferences) {
-    myFonts.put(fontType,
-                FontFamilyService.getFont(familyName, fontPreferences.getRegularSubFamily(), fontPreferences.getBoldSubFamily(),
-                                          style, fontSize));
+    Font baseFont = FontFamilyService.getFont(familyName, fontPreferences.getRegularSubFamily(), fontPreferences.getBoldSubFamily(),
+                                              style, fontSize);
+    myFonts.put(fontType, deriveFontWithLigatures(baseFont, fontPreferences.useLigatures()));
   }
 
   @Nullable
@@ -101,5 +104,9 @@ public class EditorFontCacheImpl extends EditorFontCache {
       return appPrefs.getFontFamily();
     }
     return null;
+  }
+
+  public static @NotNull Font deriveFontWithLigatures(@NotNull Font font, boolean enableLigatures) {
+    return enableLigatures ? font.deriveFont(LIGATURES_ATTRIBUTES) : font;
   }
 }

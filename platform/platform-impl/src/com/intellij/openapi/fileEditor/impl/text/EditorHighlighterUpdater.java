@@ -1,10 +1,10 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.fileEditor.impl.text;
 
 import com.intellij.ide.plugins.DynamicPluginListener;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.plugins.PluginManagerCore;
-import com.intellij.ide.plugins.cl.PluginClassLoader;
+import com.intellij.ide.plugins.cl.PluginAwareClassLoader;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
@@ -81,7 +81,7 @@ public class EditorHighlighterUpdater {
         IdeaPluginDescriptor loadedPluginDescriptor = PluginManagerCore.getPlugin(pluginDescriptor.getPluginId());
         if (loadedPluginDescriptor == null) return;
         ClassLoader pluginClassLoader = loadedPluginDescriptor.getPluginClassLoader();
-        if (myFile != null && pluginClassLoader instanceof PluginClassLoader) {
+        if (myFile != null && pluginClassLoader instanceof PluginAwareClassLoader) {
           FileType fileType = myFile.getFileType();
           if (fileType.getClass().getClassLoader() == pluginClassLoader ||
               (fileType instanceof LanguageFileType && ((LanguageFileType) fileType).getClass().getClassLoader() == pluginClassLoader)) {

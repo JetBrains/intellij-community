@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.introduceVariable;
 
 import com.intellij.codeInsight.ChangeContextUtil;
@@ -39,6 +39,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 import java.util.*;
+import java.util.function.Consumer;
 
 public class IntroduceFunctionalVariableHandler extends IntroduceVariableHandler {
 
@@ -173,14 +174,14 @@ public class IntroduceFunctionalVariableHandler extends IntroduceVariableHandler
     PsiMethodCallExpression psiExpression = (PsiMethodCallExpression)factory
       .createExpressionFromText("new " + selectedType.getCanonicalText() + "() {" + "}." + methodCall.getText(),
                                 methodCall);
-    
+
     PsiExpression qualifierExpression = psiExpression.getMethodExpression().getQualifierExpression();
     assert qualifierExpression != null;
     PsiAnonymousClass anonymousClass = ((PsiNewExpression)qualifierExpression).getAnonymousClass();
     assert anonymousClass != null;
     ChangeContextUtil.encodeContextInfo(extractedMethod, true);
     PsiClass aClass = extractedMethod.getContainingClass();
-    ChangeContextUtil.decodeContextInfo(anonymousClass.add(extractedMethod), aClass, 
+    ChangeContextUtil.decodeContextInfo(anonymousClass.add(extractedMethod), aClass,
                                         RefactoringChangeUtil.createThisExpression(anonymousClass.getManager(), aClass));
     if (AnonymousCanBeLambdaInspection.canBeConvertedToLambda(anonymousClass, false, Collections.emptySet())) {
       PsiExpression castExpression = JavaPsiFacade.getElementFactory(project)
@@ -190,7 +191,7 @@ public class IntroduceFunctionalVariableHandler extends IntroduceVariableHandler
                                   ")", qualifierExpression);
       qualifierExpression.replace(castExpression);
     }
-      
+
     extractedMethod.delete();
     return (PsiMethodCallExpression)JavaCodeStyleManager.getInstance(project).shortenClassReferences(methodCall.replace(psiExpression));
   }
@@ -213,7 +214,7 @@ public class IntroduceFunctionalVariableHandler extends IntroduceVariableHandler
     processor.setDataFromInputVariables();
     processor.setMethodVisibility(PsiModifier.PUBLIC);
   }
-  
+
   private class MyExtractMethodProcessor extends ExtractMethodProcessor {
 
     MyExtractMethodProcessor(Project project,
@@ -228,7 +229,7 @@ public class IntroduceFunctionalVariableHandler extends IntroduceVariableHandler
     public boolean isStatic() {
       return false;
     }
-    
+
     @Override
     protected boolean isFoldingApplicable() {
       return false;
@@ -268,19 +269,19 @@ public class IntroduceFunctionalVariableHandler extends IntroduceVariableHandler
               .map(data -> data.type.getPresentableText())
               .reduce((result, item) -> result + ", " + item)
               .orElse("");
-          String returnTypeString = myReturnType == null || PsiType.VOID.equals(myReturnType) 
+          String returnTypeString = myReturnType == null || PsiType.VOID.equals(myReturnType)
                                     ? "{}" : myReturnType.getPresentableText();
           return "(" + parametersList + ") -> " + returnTypeString;
         }
 
         @Override
-        protected void checkMethodConflicts(MultiMap<PsiElement, String> conflicts) {
+        protected void checkMethodConflicts(MultiMap<PsiElement, @NlsContexts.DialogMessage String> conflicts) {
           checkParametersConflicts(conflicts);
           for (VariableData data : getChosenParameters()) {
             if (!data.passAsParameter) {
               PsiElement scope = PsiUtil.getVariableCodeBlock(data.variable, null);
-              if (PsiUtil.isLanguageLevel8OrHigher(data.variable) 
-                  ? scope != null && !HighlightControlFlowUtil.isEffectivelyFinal(data.variable, scope, null) 
+              if (PsiUtil.isLanguageLevel8OrHigher(data.variable)
+                  ? scope != null && !HighlightControlFlowUtil.isEffectivelyFinal(data.variable, scope, null)
                   : data.variable.hasModifierProperty(PsiModifier.FINAL)) {
                 conflicts.putValue(null, JavaBundle.message("introduce.functional.variable.accessibility.conflict", data.name));
               }
@@ -297,7 +298,7 @@ public class IntroduceFunctionalVariableHandler extends IntroduceVariableHandler
     }
 
     @Override
-    public boolean prepare(@Nullable Pass<ExtractMethodProcessor> pass) throws PrepareFailedException {
+    public boolean prepare(@Nullable Consumer<ExtractMethodProcessor> pass) throws PrepareFailedException {
       final boolean prepare = super.prepare(pass);
       if (prepare) {
         if (myNotNullConditionalCheck || myNullConditionalCheck) {
@@ -306,7 +307,7 @@ public class IntroduceFunctionalVariableHandler extends IntroduceVariableHandler
       }
       return prepare;
     }
-    
+
     @Override
     public boolean showDialog() {
       if (!myInputVariables.hasInstanceFields() && myInputVariables.getInputVariables().isEmpty() ||

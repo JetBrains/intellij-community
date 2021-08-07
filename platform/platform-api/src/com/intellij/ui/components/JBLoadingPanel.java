@@ -3,7 +3,6 @@ package com.intellij.ui.components;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.ui.LoadingDecorator;
-import com.intellij.util.NotNullFunction;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -12,6 +11,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 import java.util.Collection;
+import java.util.function.Function;
 
 /**
  * @author Konstantin Bulenkov
@@ -29,12 +29,13 @@ public class JBLoadingPanel extends JPanel {
     this(manager, panel -> new LoadingDecorator(panel, parent, startDelayMs));
   }
 
-  public JBLoadingPanel(@Nullable LayoutManager manager, @NotNull NotNullFunction<? super JPanel, ? extends LoadingDecorator> createLoadingDecorator) {
+  public JBLoadingPanel(@Nullable LayoutManager manager,
+                        @NotNull Function<@NotNull ? super JPanel, @NotNull ? extends LoadingDecorator> createLoadingDecorator) {
     super(new BorderLayout());
     myPanel = manager == null ? new JPanel() : new JPanel(manager);
     myPanel.setOpaque(false);
     myPanel.setFocusable(false);
-    myDecorator = createLoadingDecorator.fun(myPanel);
+    myDecorator = createLoadingDecorator.apply(myPanel);
     super.add(myDecorator.getComponent(), BorderLayout.CENTER);
   }
 

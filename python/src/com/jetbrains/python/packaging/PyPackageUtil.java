@@ -220,7 +220,7 @@ public final class PyPackageUtil {
 
     if (elementToAnalyze instanceof PyReferenceExpression) {
       final TypeEvalContext context = TypeEvalContext.deepCodeInsight(elementToAnalyze.getProject());
-      final PyResolveContext resolveContext = PyResolveContext.defaultContext().withTypeEvalContext(context);
+      final PyResolveContext resolveContext = PyResolveContext.defaultContext(context);
 
       return StreamEx
         .of(((PyReferenceExpression)elementToAnalyze).multiFollowAssignmentsChain(resolveContext))
@@ -520,7 +520,7 @@ public final class PyPackageUtil {
     VirtualFileManager.getInstance().addAsyncFileListener(new AsyncFileListener() {
       @Nullable
       @Override
-      public ChangeApplier prepareChange(@NotNull List<? extends VFileEvent> events) {
+      public ChangeApplier prepareChange(@NotNull List<? extends @NotNull VFileEvent> events) {
         final Set<VirtualFile> roots = getPackagingAwareSdkRoots(sdk);
         if (roots.isEmpty()) return null;
         allEvents:

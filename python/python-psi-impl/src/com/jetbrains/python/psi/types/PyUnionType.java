@@ -18,9 +18,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 import java.util.function.Function;
 
-/**
- * @author yole
- */
+
 public class PyUnionType implements PyType {
 
   @NotNull

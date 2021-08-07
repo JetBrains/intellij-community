@@ -29,10 +29,20 @@ abstract class SyntaxProxyDescriptor implements SyntaxNodeDescriptor {
     return getTargetNode().getStringAttribute(key);
   }
 
+  @Override
+  public boolean hasBackReference(Constants.@NotNull StringKey key) {
+    return getTargetNode().hasBackReference(key);
+  }
+
   @Nullable
   @Override
   public Int2ObjectMap<CharSequence> getCaptures(@NotNull Constants.CaptureKey key) {
     return getTargetNode().getCaptures(key);
+  }
+
+  @Override
+  public boolean hasBackReference(Constants.@NotNull CaptureKey key, int group) {
+    return getTargetNode().hasBackReference(key, group);
   }
 
   @NotNull

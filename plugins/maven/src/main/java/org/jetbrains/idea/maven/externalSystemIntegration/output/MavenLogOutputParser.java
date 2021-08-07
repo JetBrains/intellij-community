@@ -9,12 +9,12 @@ import com.intellij.build.events.impl.SuccessResultImpl;
 import com.intellij.build.output.BuildOutputInstantReader;
 import com.intellij.build.output.BuildOutputParser;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.idea.maven.execution.MavenRunConfiguration;
 import org.jetbrains.idea.maven.externalSystemIntegration.output.parsers.MavenSpyOutputParser;
 import org.jetbrains.idea.maven.externalSystemIntegration.output.parsers.MavenTaskFailedResultImpl;
 
@@ -33,19 +33,19 @@ public class MavenLogOutputParser implements BuildOutputParser {
   private final MavenSpyOutputParser mavenSpyOutputParser;
   private final MavenParsingContext myParsingContext;
 
-  public MavenLogOutputParser(@NotNull Project project,
+  public MavenLogOutputParser(@NotNull MavenRunConfiguration runConfiguration,
                               @NotNull ExternalSystemTaskId taskId,
                               @NotNull List<MavenLoggedEventParser> registeredEvents) {
-    this(project, taskId, Function.identity(), registeredEvents);
+    this(runConfiguration, taskId, Function.identity(), registeredEvents);
   }
 
-  public MavenLogOutputParser(@NotNull Project project,
+  public MavenLogOutputParser(@NotNull MavenRunConfiguration runConfiguration,
                               @NotNull ExternalSystemTaskId taskId,
                               @NotNull Function<String, String> targetFileMapper,
                               @NotNull List<MavenLoggedEventParser> registeredEvents) {
     myRegisteredEvents = registeredEvents;
     myTaskId = taskId;
-    myParsingContext = new MavenParsingContext(project, taskId, targetFileMapper);
+    myParsingContext = new MavenParsingContext(runConfiguration, taskId, targetFileMapper);
     mavenSpyOutputParser = new MavenSpyOutputParser(myParsingContext);
   }
 
@@ -53,9 +53,7 @@ public class MavenLogOutputParser implements BuildOutputParser {
     completeParsers(messageConsumer);
 
     if (!myCompleted) {
-      messageConsumer
-        .accept(new FinishBuildEventImpl(myTaskId, null, System.currentTimeMillis(), "",
-                                         new MavenTaskFailedResultImpl("Process terminated")));
+      messageConsumer.accept(new FinishBuildEventImpl(myTaskId, null, System.currentTimeMillis(), "", new MavenTaskFailedResultImpl(null)));
     }
   }
 
@@ -94,7 +92,7 @@ public class MavenLogOutputParser implements BuildOutputParser {
           return true;
         }
       }
-      if (checkComplete(messageConsumer, logLine, mavenLogReader)) return true;
+      if (checkComplete(messageConsumer, logLine)) return true;
     }
     return false;
   }
@@ -132,8 +130,7 @@ public class MavenLogOutputParser implements BuildOutputParser {
   }
 
   private synchronized boolean checkComplete(Consumer<? super BuildEvent> messageConsumer,
-                                MavenLogEntryReader.MavenLogEntry logLine,
-                                MavenLogEntryReader mavenLogReader) {
+                                             MavenLogEntryReader.MavenLogEntry logLine) {
     if (logLine.myLine.equals("BUILD FAILURE")) {
       completeParsers(messageConsumer);
       messageConsumer

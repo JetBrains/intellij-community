@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.messages;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -14,9 +14,5 @@ public abstract class MessageBusFactory {
 
   public static @NotNull MessageBus newMessageBus(@NotNull MessageBusOwner owner) {
     return getInstance().createMessageBus(owner, null);
-  }
-
-  public static @NotNull MessageBus newMessageBus(@NotNull MessageBusOwner owner, @Nullable MessageBus parentBus) {
-    return getInstance().createMessageBus(owner, parentBus);
   }
 }

@@ -3,12 +3,16 @@ package com.intellij.workspaceModel.storage
 
 import com.intellij.workspaceModel.storage.bridgeEntities.LibraryTableId
 import com.intellij.workspaceModel.storage.bridgeEntities.addLibraryEntity
+import com.intellij.workspaceModel.storage.entities.*
+import com.intellij.workspaceModel.storage.entities.ModifiableWithArrayEntity
 import com.intellij.workspaceModel.storage.entities.MySource
+import com.intellij.workspaceModel.storage.entities.WithArrayEntity
 import com.intellij.workspaceModel.storage.entities.addSampleEntity
 import com.intellij.workspaceModel.storage.impl.EntityStorageSerializerImpl
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityStorageBuilderImpl
 import com.intellij.workspaceModel.storage.impl.url.VirtualFileUrlManagerImpl
 import junit.framework.Assert.*
+import org.junit.Assert.assertArrayEquals
 import org.junit.Test
 import java.io.ByteArrayInputStream
 import java.io.ByteArrayOutputStream
@@ -18,6 +22,16 @@ class EntityStorageSerializationTest {
   fun `simple model serialization`() {
     val builder = createEmptyBuilder()
     builder.addSampleEntity("MyEntity")
+
+    SerializationRoundTripChecker.verifyPSerializationRoundTrip(builder.toStorage(), VirtualFileUrlManagerImpl())
+  }
+
+  @Test
+  fun `entity properties serialization`() {
+    val builder = createEmptyBuilder()
+    builder.addSampleEntity(stringProperty = "MyEntity",
+                            stringListProperty = mutableListOf("a", "b"),
+                            stringSetProperty = mutableSetOf("c", "d"))
 
     SerializationRoundTripChecker.verifyPSerializationRoundTrip(builder.toStorage(), VirtualFileUrlManagerImpl())
   }
@@ -99,6 +113,27 @@ class EntityStorageSerializationTest {
 
     assertNull(result)
   }
+
+  @Test
+  fun `serialize array`() {
+    val virtualFileManager = VirtualFileUrlManagerImpl()
+    val serializer = EntityStorageSerializerImpl(TestEntityTypesResolver(), virtualFileManager)
+
+    val builder = createEmptyBuilder()
+    val infoArray = arrayOf(Info("hello"))
+    builder.addEntity(ModifiableWithArrayEntity::class.java, MySource) {
+      stringArrayProperty = arrayOf("1", "2", "3")
+      info = infoArray
+    }
+
+    val stream = ByteArrayOutputStream()
+    serializer.serializeCache(stream, builder.toStorage())
+
+    val result = serializer.deserializeCache(stream.toByteArray().inputStream())!!
+
+    assertArrayEquals(arrayOf("1", "2", "3"), result.entities(WithArrayEntity::class.java).single().stringArrayProperty)
+    assertArrayEquals(infoArray, result.entities(WithArrayEntity::class.java).single().info)
+  }
 }
 
 // Kotlin tip: Use the ugly ${'$'} to insert the $ into the multiline string
@@ -129,30 +164,34 @@ private val expectedKryoRegistration = """
   [33, com.intellij.workspaceModel.storage.impl.containers.ImmutableIntIntUniqueBiMap]
   [34, com.intellij.workspaceModel.storage.impl.indices.VirtualFileIndex]
   [35, com.intellij.workspaceModel.storage.impl.indices.EntityStorageInternalIndex]
-  [36, com.intellij.workspaceModel.storage.impl.containers.ImmutableNonNegativeIntIntMultiMap${'$'}ByList]
-  [37, int[]]
-  [38, kotlin.Pair]
-  [39, com.intellij.workspaceModel.storage.impl.indices.MultimapStorageIndex]
-  [40, com.intellij.workspaceModel.storage.impl.ChangeEntry${'$'}AddEntity]
-  [41, com.intellij.workspaceModel.storage.impl.ChangeEntry${'$'}RemoveEntity]
-  [42, com.intellij.workspaceModel.storage.impl.ChangeEntry${'$'}ReplaceEntity]
-  [43, com.intellij.workspaceModel.storage.impl.ChangeEntry${'$'}ChangeEntitySource]
-  [44, com.intellij.workspaceModel.storage.impl.ChangeEntry${'$'}ReplaceAndChangeSource]
-  [45, java.util.LinkedHashSet]
-  [46, java.util.Collections${'$'}UnmodifiableCollection]
-  [47, java.util.Collections${'$'}UnmodifiableSet]
-  [48, java.util.Collections${'$'}UnmodifiableRandomAccessList]
-  [49, java.util.Collections${'$'}UnmodifiableMap]
-  [50, java.util.Collections${'$'}EmptyList]
-  [51, java.util.Collections${'$'}EmptyMap]
-  [52, java.util.Collections${'$'}EmptySet]
-  [53, java.util.Collections${'$'}SingletonList]
-  [54, java.util.Collections${'$'}SingletonMap]
-  [55, java.util.Collections${'$'}SingletonSet]
-  [56, com.intellij.util.containers.ContainerUtilRt${'$'}EmptyList]
-  [57, com.intellij.util.containers.MostlySingularMultiMap${'$'}EmptyMap]
-  [58, com.intellij.util.containers.MultiMap${'$'}EmptyMap]
-  [59, kotlin.collections.EmptyMap]
-  [60, kotlin.collections.EmptyList]
-  [61, kotlin.collections.EmptySet]
+  [36, com.intellij.workspaceModel.storage.impl.indices.PersistentIdInternalIndex]
+  [37, com.intellij.workspaceModel.storage.impl.containers.ImmutableNonNegativeIntIntMultiMap${'$'}ByList]
+  [38, int[]]
+  [39, kotlin.Pair]
+  [40, com.intellij.workspaceModel.storage.impl.indices.MultimapStorageIndex]
+  [41, com.intellij.workspaceModel.storage.impl.ParentEntityId]
+  [42, com.intellij.workspaceModel.storage.impl.ChildEntityId]
+  [43, com.intellij.workspaceModel.storage.impl.ChangeEntry${'$'}AddEntity]
+  [44, com.intellij.workspaceModel.storage.impl.ChangeEntry${'$'}RemoveEntity]
+  [45, com.intellij.workspaceModel.storage.impl.ChangeEntry${'$'}ReplaceEntity]
+  [46, com.intellij.workspaceModel.storage.impl.ChangeEntry${'$'}ChangeEntitySource]
+  [47, com.intellij.workspaceModel.storage.impl.ChangeEntry${'$'}ReplaceAndChangeSource]
+  [48, java.util.LinkedHashSet]
+  [49, java.util.Collections${'$'}UnmodifiableCollection]
+  [50, java.util.Collections${'$'}UnmodifiableSet]
+  [51, java.util.Collections${'$'}UnmodifiableRandomAccessList]
+  [52, java.util.Collections${'$'}UnmodifiableMap]
+  [53, java.util.Collections${'$'}EmptyList]
+  [54, java.util.Collections${'$'}EmptyMap]
+  [55, java.util.Collections${'$'}EmptySet]
+  [56, java.util.Collections${'$'}SingletonList]
+  [57, java.util.Collections${'$'}SingletonMap]
+  [58, java.util.Collections${'$'}SingletonSet]
+  [59, com.intellij.util.containers.ContainerUtilRt${'$'}EmptyList]
+  [60, com.intellij.util.containers.MostlySingularMultiMap${'$'}EmptyMap]
+  [61, com.intellij.util.containers.MultiMap${'$'}EmptyMap]
+  [62, kotlin.collections.EmptyMap]
+  [63, kotlin.collections.EmptyList]
+  [64, kotlin.collections.EmptySet]
+  [65, Object[]]
 """.trimIndent()

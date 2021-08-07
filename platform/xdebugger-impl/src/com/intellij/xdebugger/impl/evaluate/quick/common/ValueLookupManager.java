@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 /*
  * Class ValueLookupManager
@@ -7,7 +7,6 @@
 package com.intellij.xdebugger.impl.evaluate.quick.common;
 
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.event.EditorMouseEvent;
@@ -77,26 +76,25 @@ public class ValueLookupManager implements EditorMouseMotionListener, EditorMous
     }
 
     if (type == ValueHintType.MOUSE_OVER_HINT && !ApplicationManager.getApplication().isActive()) {
+      hideHint();
       return;
     }
 
     Point point = e.getMouseEvent().getPoint();
-    if (myRequest != null) {
-      if (myRequest.getType() == ValueHintType.MOUSE_CLICK_HINT) {
-        return;
-      }
-      else if (!myRequest.isKeepHint(editor, point)) {
-        hideHint();
-      }
+    if (myRequest != null && myRequest.getType() == ValueHintType.MOUSE_CLICK_HINT) {
+      return;
     }
 
     for (DebuggerSupport support : DebuggerSupport.getDebuggerSupports()) {
       QuickEvaluateHandler handler = support.getQuickEvaluateHandler();
       if (handler.isEnabled(myProject)) {
         requestHint(handler, editor, point, type);
-        break;
+        return;
       }
     }
+
+    // if no providers were triggered - hide
+    hideHint();
   }
 
   private void requestHint(final QuickEvaluateHandler handler, final Editor editor, final Point point, @NotNull final ValueHintType type) {
@@ -154,8 +152,10 @@ public class ValueLookupManager implements EditorMouseMotionListener, EditorMous
       return;
     }
     hintPromise.onSuccess(hint -> {
-      if (hint == null)
+      if (hint == null) {
+        UIUtil.invokeLaterIfNeeded(this::hideHint);
         return;
+      }
       if (myRequest != null && myRequest.equals(hint)) {
         return;
       }
@@ -177,6 +177,6 @@ public class ValueLookupManager implements EditorMouseMotionListener, EditorMous
   }
 
   public static ValueLookupManager getInstance(Project project) {
-    return ServiceManager.getService(project, ValueLookupManager.class);
+    return project.getService(ValueLookupManager.class);
   }
 }

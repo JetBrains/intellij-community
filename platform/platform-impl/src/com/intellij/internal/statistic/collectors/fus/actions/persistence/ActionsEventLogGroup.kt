@@ -2,19 +2,17 @@
 package com.intellij.internal.statistic.collectors.fus.actions.persistence
 
 import com.intellij.internal.statistic.eventLog.EventLogGroup
-import com.intellij.internal.statistic.eventLog.events.EventField
-import com.intellij.internal.statistic.eventLog.events.EventFields
-import com.intellij.internal.statistic.eventLog.events.VarargEventId
+import com.intellij.internal.statistic.eventLog.events.*
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
 
 class ActionsEventLogGroup : CounterUsagesCollector() {
   override fun getGroup(): EventLogGroup = GROUP
 
   companion object {
-    const val ACTION_INVOKED_EVENT_ID = "action.invoked"
+    const val ACTION_FINISHED_EVENT_ID = "action.finished"
 
     @JvmField
-    val GROUP = EventLogGroup("actions", 60)
+    val GROUP = EventLogGroup("actions", 66)
 
     @JvmField
     val ACTION_ID = EventFields.StringValidatedByCustomRule("action_id", "action")
@@ -32,16 +30,30 @@ class ActionsEventLogGroup : CounterUsagesCollector() {
     val CONTEXT_MENU = EventFields.Boolean("context_menu")
 
     @JvmField
+    val DUMB_START = EventFields.Boolean("dumb_start")
+
+    @JvmField
     val DUMB = EventFields.Boolean("dumb")
 
     @JvmField
-    val ADDITIONAL = EventFields.createAdditionalDataField(GROUP.id, ACTION_INVOKED_EVENT_ID)
+    val RESULT_TYPE = EventFields.String("type", arrayListOf("ignored", "performed", "failed", "unknown"))
 
     @JvmField
-    val ACTION_INVOKED = registerActionInvokedEvent(GROUP, ACTION_INVOKED_EVENT_ID, ADDITIONAL, EventFields.Language)
+    val ERROR = EventFields.Class("error")
+
+    @JvmField
+    val RESULT = ObjectEventField("result", RESULT_TYPE, ERROR)
+
+    @JvmField
+    val ADDITIONAL = EventFields.createAdditionalDataField(GROUP.id, ACTION_FINISHED_EVENT_ID)
+
+    @JvmField
+    val ACTION_FINISHED = registerActionEvent(
+      GROUP, ACTION_FINISHED_EVENT_ID, EventFields.StartTime, ADDITIONAL, EventFields.Language, EventFields.DurationMs, DUMB_START, RESULT
+    )
 
     @JvmStatic
-    fun registerActionInvokedEvent(group: EventLogGroup, eventId: String, vararg extraFields: EventField<*>): VarargEventId {
+    fun registerActionEvent(group: EventLogGroup, eventId: String, vararg extraFields: EventField<*>): VarargEventId {
       return group.registerVarargEvent(
         eventId,
         EventFields.PluginInfoFromInstance,

@@ -16,6 +16,7 @@
 
 package com.intellij.psi.util.proximity;
 
+import com.intellij.navigation.PsiElementNavigationItem;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.util.Computable;
@@ -52,8 +53,8 @@ public class PsiProximityComparator implements Comparator<Object> {
 
   @Override
   public int compare(final Object o1, final Object o2) {
-    PsiElement element1 = o1 instanceof PsiElement ? (PsiElement)o1 : null;
-    PsiElement element2 = o2 instanceof PsiElement ? (PsiElement)o2 : null;
+    PsiElement element1 = getPsiElement(o1);
+    PsiElement element2 = getPsiElement(o2);
     if (element1 == null) return element2 == null ? 0 : 1;
     if (element2 == null) return -1;
 
@@ -77,6 +78,11 @@ public class PsiProximityComparator implements Comparator<Object> {
       return 0;
     }
     return -proximity1.compareTo(proximity2);
+  }
+
+  private static PsiElement getPsiElement(Object o) {
+    return o instanceof PsiElement ? (PsiElement)o :
+           o instanceof PsiElementNavigationItem ? ((PsiElementNavigationItem)o).getTargetElement() : null;
   }
 
 

@@ -9,9 +9,7 @@ import com.jetbrains.python.psi.PyWhilePart;
 import com.jetbrains.python.psi.PyWhileStatement;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author yole
- */
+
 public class PyWhileStatementImpl extends PyPartitionedElementImpl implements PyWhileStatement {
   public PyWhileStatementImpl(ASTNode astNode) {
     super(astNode);

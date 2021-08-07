@@ -16,7 +16,7 @@ import java.nio.file.Paths
 import java.util.*
 
 @NlsSafe
-internal fun getProjectOriginUrl(projectDir: Path?): String? {
+fun getProjectOriginUrl(projectDir: Path?): String? {
   if (projectDir == null) return null
   val epName = ExtensionPointName.create<ProjectOriginInfoProvider>("com.intellij.projectOriginInfoProvider")
   for (extension in epName.extensions) {
@@ -86,16 +86,7 @@ class TrustedHostsSettings : SimplePersistentStateComponent<TrustedHostsSettings
   }
 
   fun isUrlTrusted(url: String): Boolean {
-    val origin = getOriginFromUrl(url) ?: return false
-    return state.trustedHosts.map { it.toLowerCase() }.any { host ->
-      if (host.contains(SCHEME_SEPARATOR)) { // host is defined manually, with a protocol => we compare protocol as well
-        val hostWithTrailingSlash = if (host.endsWith("/")) host else "$host/"
-        url.startsWith(hostWithTrailingSlash, ignoreCase = true) || url.equals(host, ignoreCase = true)
-      }
-      else {
-        host.equals(origin.host, ignoreCase = true)
-      }
-    }
+    return false
   }
 
   fun setHostTrusted(host: String, value: Boolean) {
@@ -116,7 +107,7 @@ class TrustedHostsSettings : SimplePersistentStateComponent<TrustedHostsSettings
 
 @State(name = "Trusted.Paths.Settings", storages = [Storage("trusted-paths.xml")])
 @Service(Service.Level.APP)
-class TrustedPathsSettings : SimplePersistentStateComponent<TrustedPathsSettings.State>(State()) {
+internal class TrustedPathsSettings : SimplePersistentStateComponent<TrustedPathsSettings.State>(State()) {
 
   class State : BaseState() {
     @get:OptionTag("TRUSTED_PATHS")
@@ -131,6 +122,10 @@ class TrustedPathsSettings : SimplePersistentStateComponent<TrustedPathsSettings
 
   fun setTrustedPaths(paths: List<String>) {
     state.trustedPaths = ArrayList<String>(paths)
+  }
+
+  fun addTrustedPath(path: String) {
+    state.trustedPaths.add(path)
   }
 }
 

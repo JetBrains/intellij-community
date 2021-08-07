@@ -9,13 +9,13 @@ class AssertCheckBefore {
     if (parent instanceof Number) {
       if (child instanceof String) {
         assertTrue("", false, parent instanceof Integer);
-        Integer attribute = <warning descr="Cast '(Integer) parent' conflicts with surrounding 'instanceof' check">(Integer) parent</warning>;
+        Integer attribute = <warning descr="Cast to 'Integer' type conflicts with preceding 'instanceof Number' check">(Integer) parent</warning>;
       }
     }
     if (parent instanceof Number) {
       if (child instanceof String) {
         assertFalse(parent instanceof Integer);
-        Integer attribute = <warning descr="Cast '(Integer) parent' conflicts with surrounding 'instanceof' check">(Integer) parent</warning>;
+        Integer attribute = <warning descr="Cast to 'Integer' type conflicts with preceding 'instanceof Number' check">(Integer) parent</warning>;
       }
     }
     if (parent instanceof Number) {

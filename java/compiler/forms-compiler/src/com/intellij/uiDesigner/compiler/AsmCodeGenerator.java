@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.uiDesigner.compiler;
 
 import com.intellij.compiler.instrumentation.FailSafeClassReader;
@@ -20,9 +20,6 @@ import java.lang.reflect.Modifier;
 import java.util.List;
 import java.util.*;
 
-/**
- * @author yole
- */
 public class AsmCodeGenerator {
   private static final int ASM_API_VERSION = Opcodes.API_VERSION;
   private final LwRootContainer myRootContainer;
@@ -293,7 +290,7 @@ public class AsmCodeGenerator {
     @Override
     public FieldVisitor visitField(final int access, final String name, final String desc, final String signature, final Object value) {
       myFieldDescMap.put(name, desc);
-      myFieldAccessMap.put(name, new Integer(access));
+      myFieldAccessMap.put(name, Integer.valueOf(access));
       return super.visitField(access, name, desc, signature, value);
     }
 
@@ -398,7 +395,7 @@ public class AsmCodeGenerator {
       Type componentType = typeFromClassName(className);
       int componentLocal = generator.newLocal(componentType);
 
-      myIdToLocalMap.put(lwComponent.getId(), new Integer(componentLocal));
+      myIdToLocalMap.put(lwComponent.getId(), Integer.valueOf(componentLocal));
 
       InstrumentationClassFinder.PseudoClass componentClass = getComponentClass(className, myFinder);
       validateFieldBinding(lwComponent, componentClass);

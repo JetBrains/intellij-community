@@ -160,7 +160,7 @@ public class PsiPolyExpressionUtilTest extends LightJavaCodeInsightFixtureTestCa
     final PsiClass aClass = myFixture.findClass("Foo");
     assertNotNull(aClass);
     final PsiMethod[] meths = aClass.findMethodsByName("foo", false);
-    assertTrue(meths.length == 1);
+    assertEquals(1, meths.length);
     assertFalse(InferenceSession.isPertinentToApplicability(psiExpression, meths[0]));
   }
 
@@ -202,7 +202,7 @@ public class PsiPolyExpressionUtilTest extends LightJavaCodeInsightFixtureTestCa
     final PsiClass aClass = myFixture.findClass("Foo");
     assertNotNull(aClass);
     final PsiMethod[] meths = aClass.findMethodsByName("foo", false);
-    assertTrue(meths.length == 1);
+    assertEquals(1, meths.length);
     return InferenceSession.isPertinentToApplicability(psiExpression, meths[0]);
   }
 }

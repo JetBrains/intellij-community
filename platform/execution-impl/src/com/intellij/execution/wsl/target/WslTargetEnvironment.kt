@@ -4,29 +4,25 @@ package com.intellij.execution.wsl.target
 import com.intellij.execution.ExecutionException
 import com.intellij.execution.Platform
 import com.intellij.execution.configurations.GeneralCommandLine
-import com.intellij.execution.target.HostPort
-import com.intellij.execution.target.TargetEnvironment
-import com.intellij.execution.target.TargetEnvironmentAwareRunProfileState.TargetProgressIndicator
-import com.intellij.execution.target.TargetPlatform
-import com.intellij.execution.target.TargetedCommandLine
-import com.intellij.execution.wsl.WSLCommandLineOptions
+import com.intellij.execution.configurations.PtyCommandLine
+import com.intellij.execution.target.*
 import com.intellij.execution.wsl.WSLDistribution
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.vfs.impl.wsl.WslConstants
+import com.intellij.util.io.sizeOrNull
 import java.io.IOException
 import java.nio.file.Path
 import java.util.*
-import java.util.concurrent.TimeUnit
 
-class WslTargetEnvironment(wslRequest: WslTargetEnvironmentRequest,
-                           private val distribution: WSLDistribution) : TargetEnvironment(wslRequest) {
+class WslTargetEnvironment constructor(override val request: WslTargetEnvironmentRequest,
+                                       private val distribution: WSLDistribution) : TargetEnvironment(request) {
 
   private val myUploadVolumes: MutableMap<UploadRoot, UploadableVolume> = HashMap()
   private val myDownloadVolumes: MutableMap<DownloadRoot, DownloadableVolume> = HashMap()
   private val myTargetPortBindings: MutableMap<TargetPortBinding, Int> = HashMap()
-  private val myLocalPortBindings: MutableMap<LocalPortBinding, HostPort> = HashMap()
-  private val localPortBindingsSession : WslTargetLocalPortBindingsSession
+  private val myLocalPortBindings: MutableMap<LocalPortBinding, ResolvedPortBinding> = HashMap()
 
   override val uploadVolumes: Map<UploadRoot, UploadableVolume>
     get() = Collections.unmodifiableMap(myUploadVolumes)
@@ -34,27 +30,27 @@ class WslTargetEnvironment(wslRequest: WslTargetEnvironmentRequest,
     get() = Collections.unmodifiableMap(myDownloadVolumes)
   override val targetPortBindings: Map<TargetPortBinding, Int>
     get() = Collections.unmodifiableMap(myTargetPortBindings)
-  override val localPortBindings: Map<LocalPortBinding, HostPort>
+  override val localPortBindings: Map<LocalPortBinding, ResolvedPortBinding>
     get() = Collections.unmodifiableMap(myLocalPortBindings)
 
   override val targetPlatform: TargetPlatform
     get() = TargetPlatform(Platform.UNIX)
 
   init {
-    for (uploadRoot in wslRequest.uploadVolumes) {
+    for (uploadRoot in request.uploadVolumes) {
       val targetRoot: String? = toLinuxPath(uploadRoot.localRootPath.toAbsolutePath().toString())
       if (targetRoot != null) {
         myUploadVolumes[uploadRoot] = Volume(uploadRoot.localRootPath, targetRoot)
       }
     }
-    for (downloadRoot in wslRequest.downloadVolumes) {
+    for (downloadRoot in request.downloadVolumes) {
       val localRootPath = downloadRoot.localRootPath ?: FileUtil.createTempDirectory("intellij-target.", "").toPath()
       val targetRoot: String? = toLinuxPath(localRootPath.toAbsolutePath().toString())
       if (targetRoot != null) {
         myDownloadVolumes[downloadRoot] = Volume(localRootPath, targetRoot)
       }
     }
-    for (targetPortBinding in wslRequest.targetPortBindings) {
+    for (targetPortBinding in request.targetPortBindings) {
       val theOnlyPort = targetPortBinding.target
       if (targetPortBinding.local != null && targetPortBinding.local != theOnlyPort) {
         throw UnsupportedOperationException("Local target's TCP port forwarder is not implemented")
@@ -62,19 +58,17 @@ class WslTargetEnvironment(wslRequest: WslTargetEnvironmentRequest,
       myTargetPortBindings[targetPortBinding] = theOnlyPort
     }
 
-    localPortBindingsSession = WslTargetLocalPortBindingsSession(distribution, wslRequest.localPortBindings)
-    localPortBindingsSession.start()
-
-    for (localPortBinding in wslRequest.localPortBindings) {
-      val targetHostPortFuture = localPortBindingsSession.getTargetHostPortFuture(localPortBinding)
-      var targetHostPort = HostPort("localhost", localPortBinding.local)
-      try {
-        targetHostPort = targetHostPortFuture.get(10, TimeUnit.SECONDS)
+    for (localPortBinding in request.localPortBindings) {
+      val host = if (distribution.version == 1) {
+        // Ports bound on localhost in Windows can be accessed by linux apps running in WSL1, but not in WSL2:
+        //   https://docs.microsoft.com/en-US/windows/wsl/compare-versions#accessing-network-applications
+        "127.0.0.1"
       }
-      catch (e: Exception) {
-        LOG.info("Cannot get target host and port for $localPortBinding")
+      else {
+        distribution.hostIp
       }
-      myLocalPortBindings[localPortBinding] = targetHostPort
+      val hostPort = HostPort(host, localPortBinding.local)
+      myLocalPortBindings[localPortBinding] = ResolvedPortBinding(hostPort, hostPort)
     }
   }
 
@@ -87,7 +81,7 @@ class WslTargetEnvironment(wslRequest: WslTargetEnvironmentRequest,
   }
 
   private fun convertUncPathToLinux(localPath: String): String? {
-    val root: String = WSLDistribution.UNC_PREFIX + distribution.msId
+    val root: String = WslConstants.UNC_PREFIX + distribution.msId
     val winLocalPath = FileUtil.toSystemDependentName(localPath)
     if (winLocalPath.startsWith(root)) {
       val linuxPath = winLocalPath.substring(root.length)
@@ -103,13 +97,19 @@ class WslTargetEnvironment(wslRequest: WslTargetEnvironmentRequest,
 
   @Throws(ExecutionException::class)
   override fun createProcess(commandLine: TargetedCommandLine, indicator: ProgressIndicator): Process {
-    var line = GeneralCommandLine(commandLine.collectCommandsSynchronously())
-    line.environment.putAll(commandLine.environmentVariables)
-    val options = WSLCommandLineOptions().setRemoteWorkingDirectory(commandLine.workingDirectory)
-    line = distribution.patchCommandLine(line, null, options)
-    val process = line.createProcess()
-    localPortBindingsSession.stopWhenProcessTerminated(process)
-    return process
+    val ptyOptions = request.ptyOptions
+    val generalCommandLine = if (ptyOptions != null) {
+      PtyCommandLine(commandLine.collectCommandsSynchronously()).also {
+        it.withOptions(ptyOptions)
+      }
+    }
+    else {
+      GeneralCommandLine(commandLine.collectCommandsSynchronously())
+    }
+    generalCommandLine.environment.putAll(commandLine.environmentVariables)
+    request.wslOptions.remoteWorkingDirectory = commandLine.workingDirectory
+    distribution.patchCommandLine(generalCommandLine, null, request.wslOptions)
+    return generalCommandLine.createProcess()
   }
 
   override fun shutdown() {}
@@ -128,6 +128,20 @@ class WslTargetEnvironment(wslRequest: WslTargetEnvironmentRequest,
 
     @Throws(IOException::class)
     override fun download(relativePath: String, progressIndicator: ProgressIndicator) {
+      // Synchronization may be slow -- let us wait until file size does not change
+      // in a reasonable amount of time
+      // (see https://github.com/microsoft/WSL/issues/4197)
+      val path = localRoot.resolve(relativePath)
+      var previousSize = -2L  // sizeOrNull returns -1 if file does not exist
+      var newSize = path.sizeOrNull()
+      while (previousSize < newSize) {
+        Thread.sleep(100)
+        previousSize = newSize
+        newSize = path.sizeOrNull()
+      }
+      if (newSize == -1L) {
+        LOG.warn("Path $path was not found on local filesystem")
+      }
     }
   }
 

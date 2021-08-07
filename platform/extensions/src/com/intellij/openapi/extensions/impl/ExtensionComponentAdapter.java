@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.extensions.impl;
 
 import com.intellij.openapi.components.ComponentManager;
@@ -35,7 +35,7 @@ public abstract class ExtensionComponentAdapter implements LoadingOrder.Orderabl
 
   abstract boolean isInstanceCreated();
 
-  public abstract @NotNull <T> T createInstance(@NotNull ComponentManager componentManager);
+  public abstract @Nullable("if not applicable") <T> T createInstance(@NotNull ComponentManager componentManager);
 
   @Override
   public final LoadingOrder getOrder() {

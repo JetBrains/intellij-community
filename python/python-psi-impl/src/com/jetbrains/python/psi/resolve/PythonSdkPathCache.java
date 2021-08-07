@@ -34,9 +34,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicReference;
 
-/**
- * @author yole
- */
+
 public class PythonSdkPathCache extends PythonPathCache implements Disposable {
   private static final Key<Map<Project, PythonSdkPathCache>> KEY = Key.create("PythonPathCache");
 

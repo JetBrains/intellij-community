@@ -14,7 +14,6 @@ import com.intellij.execution.process.ProcessEvent;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.ide.projectView.ProjectView;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.components.PersistentStateComponent;
@@ -40,11 +39,7 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.openapi.vfs.VfsUtilCore;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileContentsChangedAdapter;
-import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.openapi.vfs.*;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
@@ -60,17 +55,13 @@ import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.UIUtil;
-import java.io.File;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Set;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.io.File;
+import java.util.*;
 
 /**
  * @author ven
@@ -162,8 +153,6 @@ public class CoverageDataManagerImpl extends CoverageDataManager implements Disp
             }
           }
         }
-
-        ActionToolbarImpl.updateAllToolbarsImmediately();
       }
     }, this);
 
@@ -347,6 +336,7 @@ public class CoverageDataManagerImpl extends CoverageDataManager implements Disp
 
   @Override
   public void coverageGathered(@NotNull final CoverageSuite suite) {
+    fireCoverageGathered(suite);
     ApplicationManager.getApplication().invokeLater(() -> {
       if (myProject.isDisposed()) return;
       if (myCurrentSuitesBundle != null) {
@@ -382,19 +372,19 @@ public class CoverageDataManagerImpl extends CoverageDataManager implements Disp
         };
         final String[] options = myCurrentSuitesBundle.getCoverageEngine() == suite.getCoverageEngine() ?
                                  new String[] {
-                                   CoverageBundle.message("coverage.replace.active.suites"),
                                    CoverageBundle.message("coverage.add.to.active.suites"),
+                                   CoverageBundle.message("coverage.replace.active.suites"),
                                    CoverageBundle.message("coverage.do.not.apply.collected.coverage")} :
                                  new String[] {
                                    CoverageBundle.message("coverage.replace.active.suites"),
                                    CoverageBundle.message("coverage.do.not.apply.collected.coverage")};
         final int answer = doNotAskOption.isToBeShown() ? Messages.showDialog(message, CoverageBundle.message("code.coverage"),
-                                                                              options, 1, Messages.getQuestionIcon(),
+                                                                              options, 0, Messages.getQuestionIcon(),
                                                                               doNotAskOption) : coverageOptionsProvider.getOptionToReplace();
-        if (answer == DialogWrapper.OK_EXIT_CODE) {
+        if ((answer == 0 && options.length == 2) || (answer == 1 && options.length == 3)) {
           chooseSuitesBundle(new CoverageSuitesBundle(suite));
         }
-        else if (answer == 1) {
+        else if (answer == 0/* && options.length == 3*/) {
           chooseSuitesBundle(new CoverageSuitesBundle(ArrayUtil.append(myCurrentSuitesBundle.getSuites(), suite)));
         }
       }
@@ -582,7 +572,7 @@ public class CoverageDataManagerImpl extends CoverageDataManager implements Disp
   }
 
   @Override
-  public void addSuiteListener(final CoverageSuiteListener listener, Disposable parentDisposable) {
+  public void addSuiteListener(@NotNull final CoverageSuiteListener listener, @NotNull Disposable parentDisposable) {
     myListeners.add(listener);
     Disposer.register(parentDisposable, new Disposable() {
       @Override
@@ -590,6 +580,12 @@ public class CoverageDataManagerImpl extends CoverageDataManager implements Disp
         myListeners.remove(listener);
       }
     });
+  }
+
+  public void fireCoverageGathered(@NotNull CoverageSuite suite) {
+    for (CoverageSuiteListener listener : myListeners) {
+      listener.coverageGathered(suite);
+    }
   }
 
   public void fireBeforeSuiteChosen() {

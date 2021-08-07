@@ -39,7 +39,7 @@ public class GitBranchesAction extends DumbAwareAction {
                                GitBranchUtil.getCurrentRepository(project) :
                                GitBranchUtil.getRepositoryOrGuess(project, file);
     if (repository != null) {
-      GitBranchPopup.getInstance(project, repository).asListPopup().showCenteredInCurrentWindow(project);
+      GitBranchPopup.getInstance(project, repository, e.getDataContext()).asListPopup().showCenteredInCurrentWindow(project);
     }
   }
 

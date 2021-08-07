@@ -66,8 +66,7 @@ class GitCheckoutNewBranchOperation extends GitBranchOperation {
         fatalErrorHappened = true;
       }
       else {
-        fatalError(GitBundle.message("checkout.new.branch.operation.could.not.create.new.branch", myNewBranchName),
-                   result.getErrorOutputAsJoinedString());
+        fatalError(GitBundle.message("checkout.new.branch.operation.could.not.create.new.branch", myNewBranchName), result);
         fatalErrorHappened = true;
       }
     }

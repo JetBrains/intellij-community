@@ -4,53 +4,66 @@ from __future__ import absolute_import
 
 import json
 import struct
+import base64
+from warnings import warn
 
+from _shaded_thriftpy._compat import u
 from _shaded_thriftpy.thrift import TType
 
 from .exc import TProtocolException
-
-INTEGER = (TType.BYTE, TType.I16, TType.I32, TType.I64)
-FLOAT = (TType.DOUBLE,)
+from .base import TProtocolBase
 
 VERSION = 1
 
 
+def encode_binary(data):
+    return base64.b64encode(data).decode('ascii')
+
+
 def json_value(ttype, val, spec=None):
-    if ttype in INTEGER or ttype in FLOAT or ttype == TType.STRING:
-        return val
-
-    if ttype == TType.BOOL:
-        return True if val else False
-
-    if ttype == TType.STRUCT:
-        return struct_to_json(val)
-
-    if ttype in (TType.SET, TType.LIST):
-        return list_to_json(val, spec)
-
-    if ttype == TType.MAP:
-        return map_to_json(val, spec)
+    TTYPE_TO_JSONFUNC_MAP = {
+        TType.BYTE: (int, (val, )),
+        TType.I16: (int, (val, )),
+        TType.I32: (int, (val, )),
+        TType.I64: (int, (val, )),
+        TType.DOUBLE: (float, (val, )),
+        TType.STRING: (u, (val, )),
+        TType.BOOL: (bool, (val, )),
+        TType.STRUCT: (struct_to_json, (val, )),
+        TType.SET: (list_to_json, (val, spec)),
+        TType.LIST: (list_to_json, (val, spec)),
+        TType.MAP: (map_to_json, (val, spec)),
+        TType.BINARY: (encode_binary, (val, )),
+    }
+    func, args = TTYPE_TO_JSONFUNC_MAP.get(ttype)
+    if func:
+        return func(*args)
 
 
 def obj_value(ttype, val, spec=None):
-    if ttype in INTEGER:
-        return int(val)
-
-    if ttype in FLOAT:
-        return float(val)
-
-    if ttype in (TType.STRING, TType.BOOL):
-        return val
-
+    # Special case: since `spec` needs to get called if TType is STRUCT,
+    # if we initialize inside `TTYPE_TO_OBJFUNC_MAP` it will get called
+    # everytime the function gets called and incur in exception as
+    # `TypeError: 'NoneType' object is not callable`.
     if ttype == TType.STRUCT:
         return struct_to_obj(val, spec())
-
-    if ttype in (TType.SET, TType.LIST):
-        return list_to_obj(val, spec)
-
-    if ttype == TType.MAP:
-        return map_to_obj(val, spec)
-
+    else:
+        TTYPE_TO_OBJFUNC_MAP = {
+            TType.BYTE: (int, (val, )),
+            TType.I16: (int, (val, )),
+            TType.I32: (int, (val, )),
+            TType.I64: (int, (val, )),
+            TType.DOUBLE: (float, (val, )),
+            TType.STRING: (u, (val, )),
+            TType.BOOL: (bool, (val, )),
+            TType.SET: (list_to_obj, (val, spec)),
+            TType.LIST: (list_to_obj, (val, spec)),
+            TType.MAP: (map_to_obj, (val, spec)),
+            TType.BINARY: (base64.b64decode, (val, )),
+        }
+        func, args = TTYPE_TO_OBJFUNC_MAP.get(ttype)
+        if func:
+            return func(*args)
 
 def map_to_obj(val, spec):
     res = {}
@@ -145,7 +158,7 @@ def struct_to_obj(val, obj):
     return obj
 
 
-class TJSONProtocol(object):
+class TJSONProtocol(TProtocolBase):
     """A JSON protocol.
 
     The message in the transport are encoded as this: 4 bytes represents
@@ -157,7 +170,7 @@ class TJSONProtocol(object):
     big-endian.
     """
     def __init__(self, trans):
-        self.trans = trans
+        TProtocolBase.__init__(self, trans)
         self._meta = {"version": VERSION}
         self._data = None
 
@@ -207,6 +220,9 @@ class TJSONProtocol(object):
 
         self._write_len(len(data))
         self.trans.write(data.encode("utf-8"))
+
+    def skip(self, ttype):
+        warn("TJsonProtocol doesn't support skipping. Ignoring.")
 
 
 class TJSONProtocolFactory(object):

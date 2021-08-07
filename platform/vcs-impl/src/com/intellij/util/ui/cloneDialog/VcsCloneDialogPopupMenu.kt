@@ -2,11 +2,14 @@
 package com.intellij.util.ui.cloneDialog
 
 import com.intellij.icons.AllIcons
+import com.intellij.ide.BrowserUtil
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.PopupStep
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep
 import com.intellij.ui.ColorUtil
 import com.intellij.ui.SimpleTextAttributes
+import com.intellij.ui.awt.RelativePoint
+import com.intellij.ui.components.JBLabel
 import com.intellij.ui.popup.WizardPopup
 import com.intellij.ui.popup.list.ListPopupImpl
 import com.intellij.util.ui.EmptyIcon
@@ -14,36 +17,48 @@ import com.intellij.util.ui.GridBag
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import org.jetbrains.annotations.Nls
+import org.jetbrains.annotations.NonNls
 import java.awt.Component
 import java.awt.GridBagLayout
+import java.awt.Point
 import javax.swing.*
 
-
 sealed class AccountMenuItem(val showSeparatorAbove: Boolean) {
-
-  class Account(val title: @Nls String,
-                val info: @Nls String,
-                val icon: Icon,
-                val actions: List<AccountMenuItem> = emptyList(),
-                showSeparatorAbove: Boolean = false
+  class Account(
+    @Nls val title: String,
+    @Nls val info: String,
+    val icon: Icon,
+    val actions: List<AccountMenuItem> = emptyList(),
+    showSeparatorAbove: Boolean = false
   ) : AccountMenuItem(showSeparatorAbove)
 
-  class Action(val text: @Nls String,
-               val runnable: () -> Unit,
-               val rightIcon: Icon = EmptyIcon.create(AllIcons.Ide.External_link_arrow),
-               showSeparatorAbove: Boolean = false
+  class Action(
+    @Nls val text: String,
+    val runnable: () -> Unit,
+    val rightIcon: Icon = EmptyIcon.create(AllIcons.Ide.External_link_arrow),
+    showSeparatorAbove: Boolean = false
   ) : AccountMenuItem(showSeparatorAbove)
 
+  class Group(
+    @Nls val text: String,
+    val actions: List<AccountMenuItem> = emptyList(),
+    showSeparatorAbove: Boolean = false
+  ) : AccountMenuItem(showSeparatorAbove)
 }
 
 class AccountMenuPopupStep(items: List<AccountMenuItem>) : BaseListPopupStep<AccountMenuItem>(null, items) {
   override fun hasSubstep(selectedValue: AccountMenuItem?): Boolean {
-    return selectedValue is AccountMenuItem.Account && selectedValue.actions.isNotEmpty()
+    return selectedValue is AccountMenuItem.Account && selectedValue.actions.size > 1
   }
 
   override fun onChosen(selectedValue: AccountMenuItem, finalChoice: Boolean): PopupStep<*>? = when (selectedValue) {
     is AccountMenuItem.Action -> doFinalStep(selectedValue.runnable)
-    is AccountMenuItem.Account -> if (selectedValue.actions.isEmpty()) null else AccountMenuPopupStep(selectedValue.actions)
+    is AccountMenuItem.Account -> when {
+      selectedValue.actions.isEmpty() -> null
+      selectedValue.actions.size == 1 -> doFinalStep((selectedValue.actions.first() as AccountMenuItem.Action).runnable)
+      else -> AccountMenuPopupStep(selectedValue.actions)
+    }
+    is AccountMenuItem.Group -> AccountMenuPopupStep(selectedValue.actions)
   }
 
   override fun getBackgroundFor(value: AccountMenuItem?) = UIUtil.getPanelBackground()
@@ -66,6 +81,10 @@ class AccountsMenuListPopup(
     step as AccountMenuPopupStep,
     parent,
     parentValue)
+
+  override fun showUnderneathOf(aComponent: Component) {
+    show(RelativePoint(aComponent, Point(-this.component.preferredSize.width + aComponent.width, aComponent.height)))
+  }
 }
 
 class AccountMenuItemRenderer : ListCellRenderer<AccountMenuItem> {
@@ -78,6 +97,7 @@ class AccountMenuItemRenderer : ListCellRenderer<AccountMenuItem> {
 
   private val accountRenderer = AccountItemRenderer()
   private val actionRenderer = ActionItemRenderer()
+  private val groupRenderer = GroupItemRenderer()
 
   override fun getListCellRendererComponent(list: JList<out AccountMenuItem>?,
                                             value: AccountMenuItem,
@@ -87,6 +107,7 @@ class AccountMenuItemRenderer : ListCellRenderer<AccountMenuItem> {
     val renderer = when (value) {
       is AccountMenuItem.Account -> accountRenderer.getListCellRendererComponent(null, value, index, selected, focused)
       is AccountMenuItem.Action -> actionRenderer.getListCellRendererComponent(null, value, index, selected, focused)
+      is AccountMenuItem.Group -> groupRenderer.getListCellRendererComponent(null, value, index, selected, focused)
     }
     UIUtil.setBackgroundRecursively(renderer, if (selected) listSelectionBackground else UIUtil.getPanelBackground())
     renderer.border = if (value.showSeparatorAbove) separatorBorder else null
@@ -100,9 +121,8 @@ class AccountMenuItemRenderer : ListCellRenderer<AccountMenuItem> {
     val titleComponent = JLabel().apply {
       font = JBUI.Fonts.label().asBold()
     }
-    val infoComponent = JLabel().apply {
-      font = JBUI.Fonts.smallFont()
-    }
+    val link = JBLabel()
+
     val nextStepIconLabel = JLabel()
 
     init {
@@ -123,7 +143,7 @@ class AccountMenuItemRenderer : ListCellRenderer<AccountMenuItem> {
 
       gbc = gbc.nextLine().next().next() // 2, 2
         .weightx(1.0).weighty(0.5).fillCellHorizontally().anchor(GridBag.FIRST_LINE_START)
-      add(infoComponent, gbc)
+      add(link, gbc)
     }
 
     override fun getListCellRendererComponent(list: JList<out AccountMenuItem.Account>?,
@@ -138,14 +158,14 @@ class AccountMenuItemRenderer : ListCellRenderer<AccountMenuItem> {
         foreground = if (selected) listSelectionForeground else SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES.fgColor
       }
 
-      infoComponent.apply {
+      link.apply {
         text = value.info
-        foreground = if (selected) listSelectionForeground else SimpleTextAttributes.GRAYED_SMALL_ATTRIBUTES.fgColor
+        foreground = if (selected) listSelectionForeground else UIUtil.getContextHelpForeground()
       }
 
       nextStepIconLabel.apply {
         icon = when {
-          value.actions.isEmpty() -> emptyMenuRightArrowIcon
+          value.actions.size < 2 -> emptyMenuRightArrowIcon
           selected && ColorUtil.isDark(listSelectionBackground) -> AllIcons.Icons.Ide.NextStepInverted
           else -> AllIcons.Icons.Ide.NextStep
         }
@@ -155,7 +175,6 @@ class AccountMenuItemRenderer : ListCellRenderer<AccountMenuItem> {
   }
 
   private inner class ActionItemRenderer : JPanel(GridBagLayout()), ListCellRenderer<AccountMenuItem.Action> {
-
     val actionTextLabel = JLabel()
     val rightIconLabel = JLabel()
 
@@ -184,4 +203,37 @@ class AccountMenuItemRenderer : ListCellRenderer<AccountMenuItem> {
       return this
     }
   }
+
+  private inner class GroupItemRenderer : JPanel(GridBagLayout()), ListCellRenderer<AccountMenuItem.Group> {
+    val actionTextLabel = JLabel()
+    val rightIconLabel = JLabel()
+
+    init {
+      val topBottom = 3
+      val insets = JBUI.insets(topBottom, leftInset, topBottom, 0)
+
+      var gbc = GridBag().setDefaultAnchor(GridBag.WEST)
+      gbc = gbc.nextLine().next().insets(insets)
+      add(actionTextLabel, gbc)
+      gbc = gbc.next().weightx(1.0)
+      add(rightIconLabel, gbc)
+      gbc = gbc.next().fillCellHorizontally().weightx(0.0).anchor(GridBag.EAST)
+        .insets(JBUI.insets(topBottom, leftInset, topBottom, innerInset))
+      add(JLabel(AllIcons.General.ArrowRight), gbc)
+    }
+
+    override fun getListCellRendererComponent(list: JList<out AccountMenuItem.Group>?,
+                                              value: AccountMenuItem.Group,
+                                              index: Int,
+                                              selected: Boolean,
+                                              focused: Boolean): JComponent {
+      actionTextLabel.text = value.text
+      actionTextLabel.foreground = UIUtil.getListForeground(selected, true)
+      return this
+    }
+  }
+}
+
+fun browseAction(@Nls text: String, @NonNls link: String, showSeparatorAbove: Boolean = false): AccountMenuItem.Action {
+  return AccountMenuItem.Action(text, { BrowserUtil.browse(link) }, AllIcons.Ide.External_link_arrow, showSeparatorAbove)
 }

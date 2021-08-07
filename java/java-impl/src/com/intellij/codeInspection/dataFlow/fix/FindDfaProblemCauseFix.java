@@ -41,16 +41,13 @@ import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
 
 public final class FindDfaProblemCauseFix implements OnTheFlyLocalFix, LowPriorityAction {
-  private final boolean myUnknownMembersAsNullable;
   private final boolean myIgnoreAssertStatements;
   private final SmartPsiElementPointer<PsiExpression> myAnchor;
   private final TrackingRunner.DfaProblemType myProblemType;
 
-  public FindDfaProblemCauseFix(boolean unknownMembersAsNullable,
-                                boolean ignoreAssertStatements,
+  public FindDfaProblemCauseFix(boolean ignoreAssertStatements,
                                 PsiExpression anchor,
                                 TrackingRunner.DfaProblemType problemType) {
-    myUnknownMembersAsNullable = unknownMembersAsNullable;
     myIgnoreAssertStatements = ignoreAssertStatements;
     myAnchor = SmartPointerManager.createPointer(anchor);
     myProblemType = problemType;

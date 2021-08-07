@@ -27,6 +27,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.EditorEx;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
@@ -97,7 +98,7 @@ class MultipleFilesHyperlinkInfo extends HyperlinkInfoBase implements FileHyperl
     if (currentFiles.isEmpty()) return;
 
     if (currentFiles.size() == 1) {
-      open(currentFiles.get(0), originalEditor);
+      open(currentFiles.get(0).getVirtualFile(), originalEditor);
     }
     else {
       JFrame frame = WindowManager.getInstance().getFrame(project);
@@ -106,7 +107,7 @@ class MultipleFilesHyperlinkInfo extends HyperlinkInfoBase implements FileHyperl
         .createPopupChooserBuilder(currentFiles)
         .setRenderer(new GotoFileCellRenderer(width))
         .setTitle(ExecutionBundle.message("popup.title.choose.target.file"))
-        .setItemChosenCallback(file -> open(file, originalEditor))
+        .setItemChosenCallback(file -> open(file.getVirtualFile(), originalEditor))
         .createPopup();
       if (hyperlinkLocationPoint != null) {
         popup.show(hyperlinkLocationPoint);
@@ -117,26 +118,26 @@ class MultipleFilesHyperlinkInfo extends HyperlinkInfoBase implements FileHyperl
     }
   }
 
-  private void open(@NotNull PsiFile file, Editor originalEditor) {
-    Document document = file.getViewProvider().getDocument();
+  private void open(@NotNull VirtualFile file, Editor originalEditor) {
+    Document document = FileDocumentManager.getInstance().getDocument(file);
     int offset = 0;
     if (document != null && myLineNumber >= 0 && myLineNumber < document.getLineCount()) {
       offset = document.getLineStartOffset(myLineNumber);
     } 
-    OpenFileDescriptor descriptor = new OpenFileDescriptor(myProject, file.getVirtualFile(), offset);
+    OpenFileDescriptor descriptor = new OpenFileDescriptor(myProject, file, offset);
     Editor editor = FileEditorManager.getInstance(myProject).openTextEditor(descriptor, true);
     if (myAction != null && editor != null) {
       if (editor instanceof EditorEx) {
         ((EditorEx)editor).setCaretEnabled(false);
         try {
-          myAction.onLinkFollowed(file, editor, originalEditor);
+          myAction.onLinkFollowed(myProject, file, editor, originalEditor);
         }
         finally {
           ((EditorEx)editor).setCaretEnabled(true);
         }
       }
       else {
-        myAction.onLinkFollowed(file, editor, originalEditor);
+        myAction.onLinkFollowed(myProject, file, editor, originalEditor);
       }
     }
   }

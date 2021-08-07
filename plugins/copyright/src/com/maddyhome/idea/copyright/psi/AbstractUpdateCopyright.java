@@ -46,6 +46,10 @@ public abstract class AbstractUpdateCopyright implements UpdateCopyright {
   }
 
   protected String getCommentText(String prefix, String suffix) {
+    return getCommentText(prefix, suffix, null);
+  }
+
+  protected String getCommentText(String prefix, String suffix, String oldComment) {
     if (commentText == null) {
       FileType ftype = root.getFileType();
       LanguageOptions opts = CopyrightManager.getInstance(project).getOptions().getMergedOptions(ftype.getName());
@@ -54,7 +58,7 @@ public abstract class AbstractUpdateCopyright implements UpdateCopyright {
         commentText = "";
       }
       else {
-        String expanded = VelocityHelper.evaluate(manager.findFile(root), project, module, base);
+        String expanded = VelocityHelper.evaluate(manager.findFile(root), project, module, base, oldComment);
         String cmt = FileTypeUtil.buildComment(root.getFileType(), expanded, opts);
         commentText = StringUtil.convertLineSeparators(prefix + cmt + suffix);
       }

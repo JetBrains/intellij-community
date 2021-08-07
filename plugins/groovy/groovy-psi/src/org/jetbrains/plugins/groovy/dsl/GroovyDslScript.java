@@ -1,17 +1,12 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.dsl;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiType;
-import com.intellij.util.PairProcessor;
 import com.intellij.util.ProcessingContext;
 import com.intellij.util.containers.MultiMap;
 import groovy.lang.Closure;
@@ -43,31 +38,25 @@ public class GroovyDslScript {
     myFactorTree = new FactorTree(project, executor);
   }
 
-  public boolean processExecutor(final PsiType psiType,
-                                 final PsiElement place,
-                                 final PsiFile placeFile,
-                                 NotNullLazyValue<String> typeText,
-                                 PairProcessor<? super CustomMembersHolder, ? super GroovyClassDescriptor> processor) {
-    CustomMembersHolder holder = myFactorTree.retrieve(place, placeFile, typeText);
-    GroovyClassDescriptor descriptor = new GroovyClassDescriptor(psiType, place, placeFile);
+  public @NotNull CustomMembersHolder processExecutor(@NotNull GroovyClassDescriptor descriptor) {
+    CustomMembersHolder holder = myFactorTree.retrieve(descriptor);
     try {
       if (holder == null) {
-        holder = addGdslMembers(descriptor, psiType);
+        holder = addGdslMembers(descriptor);
         myFactorTree.cache(descriptor, holder);
       }
-
-      return processor.process(holder, descriptor);
+      return holder;
     }
     catch (ProcessCanceledException e) {
       throw e;
     }
     catch (Throwable e) {
       handleDslError(e);
-      return true;
+      return CustomMembersHolder.EMPTY;
     }
   }
 
-  private CustomMembersHolder addGdslMembers(GroovyClassDescriptor descriptor, final PsiType psiType) {
+  private CustomMembersHolder addGdslMembers(@NotNull GroovyClassDescriptor descriptor) {
     final ProcessingContext ctx = new ProcessingContext();
     ctx.put(GdslUtil.INITIAL_CONTEXT, descriptor);
     try {
@@ -75,7 +64,7 @@ public class GroovyDslScript {
         return CustomMembersHolder.EMPTY;
       }
 
-      return executor.processVariants(descriptor, ctx, psiType);
+      return executor.processVariants(descriptor, ctx);
     }
     catch (InvokerInvocationException e) {
       Throwable cause = e.getCause();

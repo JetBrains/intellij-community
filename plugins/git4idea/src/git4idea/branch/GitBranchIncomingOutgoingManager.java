@@ -1,12 +1,12 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.branch;
 
 import com.intellij.concurrency.JobScheduler;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.Service;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.options.advanced.AdvancedSettings;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
@@ -111,15 +111,15 @@ public final class GitBranchIncomingOutgoingManager implements GitRepositoryChan
   }
 
   public boolean shouldCheckIncoming() {
-    return Registry.is("git.update.incoming.outgoing.info") && GitVcsSettings.getInstance(myProject).getIncomingCheckStrategy() != Never;
+    return AdvancedSettings.getBoolean("git.update.incoming.outgoing.info") && GitVcsSettings.getInstance(myProject).getIncomingCheckStrategy() != Never;
   }
 
   private static boolean shouldCheckIncomingOutgoing() {
-    return Registry.is("git.update.incoming.outgoing.info");
+    return AdvancedSettings.getBoolean("git.update.incoming.outgoing.info");
   }
 
   public static @NotNull GitBranchIncomingOutgoingManager getInstance(@NotNull Project project) {
-    return ServiceManager.getService(project, GitBranchIncomingOutgoingManager.class);
+    return project.getService(GitBranchIncomingOutgoingManager.class);
   }
 
   public boolean supportsIncomingOutgoing() {

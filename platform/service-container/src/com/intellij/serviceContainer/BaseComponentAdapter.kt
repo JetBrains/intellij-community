@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.serviceContainer
 
 import com.intellij.diagnostic.ActivityCategory
@@ -38,7 +38,7 @@ internal abstract class BaseComponentAdapter(internal val componentManager: Comp
         result = componentManager.loadClass<Any>(implementationClassName, pluginDescriptor)
       }
       catch (e: ClassNotFoundException) {
-        throw PluginException("Failed to load class: ${toString()}", e, pluginDescriptor.pluginId)
+        throw PluginException("Failed to load class: $implementationClassName", e, pluginDescriptor.pluginId)
       }
       implementationClass = result
     }
@@ -54,7 +54,10 @@ internal abstract class BaseComponentAdapter(internal val componentManager: Comp
     return getInstance(componentManager, null)
   }
 
-  fun <T : Any> getInstance(componentManager: ComponentManagerImpl, keyClass: Class<T>?, createIfNeeded: Boolean = true, indicator: ProgressIndicator? = null): T? {
+  fun <T : Any> getInstance(componentManager: ComponentManagerImpl,
+                            keyClass: Class<T>?,
+                            createIfNeeded: Boolean = true,
+                            indicator: ProgressIndicator? = null): T? {
     // could be called during some component.dispose() call, in this case we don't attempt to instantiate
     @Suppress("UNCHECKED_CAST")
     val instance = initializedInstance as T?
@@ -133,29 +136,18 @@ internal abstract class BaseComponentAdapter(internal val componentManager: Comp
     }
 
     if (componentManager.isDisposed) {
-      throwAlreadyDisposedError(componentManager, indicator)
+      throwAlreadyDisposedError(toString(), componentManager, indicator)
     }
     if (!isGettingServiceAllowedDuringPluginUnloading(pluginDescriptor)) {
       componentManager.componentContainerIsReadonly?.let {
         val error = AlreadyDisposedException("Cannot create ${toString()} because container in read-only mode (reason=$it, container=${componentManager})")
-        if (indicator == null) {
-          throw error
-        }
-        else {
-          throw ProcessCanceledException(error)
-        }
+        throw if (indicator == null) error else ProcessCanceledException(error)
       }
     }
   }
 
   internal fun throwAlreadyDisposedError(componentManager: ComponentManagerImpl, indicator: ProgressIndicator?) {
-    val error = AlreadyDisposedException("Cannot create ${toString()} because container is already disposed (container=${componentManager})")
-    if (indicator == null) {
-      throw error
-    }
-    else {
-      throw ProcessCanceledException(error)
-    }
+    throwAlreadyDisposedError(toString(), componentManager, indicator)
   }
 
   protected abstract fun getActivityCategory(componentManager: ComponentManagerImpl): ActivityCategory?
@@ -163,9 +155,13 @@ internal abstract class BaseComponentAdapter(internal val componentManager: Comp
   protected abstract fun <T : Any> doCreateInstance(componentManager: ComponentManagerImpl, implementationClass: Class<T>, indicator: ProgressIndicator?): T
 
   @Synchronized
-  fun <T : Any> replaceInstance(instance: T, parentDisposable: Disposable?): T? {
+  fun <T : Any> replaceInstance(keyAsClass: Class<*>,
+                                instance: T,
+                                parentDisposable: Disposable?,
+                                hotCache: MutableMap<Class<*>, Any?>?): T? {
     val old = initializedInstance
     initializedInstance = instance
+    hotCache?.put(keyAsClass, instance)
 
     if (parentDisposable != null) {
       Disposer.register(parentDisposable, Disposable {
@@ -174,6 +170,14 @@ internal abstract class BaseComponentAdapter(internal val componentManager: Comp
             Disposer.dispose(instance)
           }
           initializedInstance = old
+          if (hotCache != null) {
+            if (old == null) {
+              hotCache.remove(keyAsClass)
+            }
+            else {
+              hotCache.put(keyAsClass, old)
+            }
+          }
         }
       })
     }

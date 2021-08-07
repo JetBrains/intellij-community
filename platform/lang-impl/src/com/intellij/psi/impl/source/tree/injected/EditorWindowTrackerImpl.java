@@ -100,7 +100,6 @@ public final class EditorWindowTrackerImpl extends EditorWindowTracker {
         if (InjectionRegistrarImpl.intersect(editor.getDocument(), (DocumentWindowImpl)documentWindow)) {
           editor.dispose();
           iterator.remove();
-          break;
         }
       }
     }

@@ -1,0 +1,28 @@
+<idea-plugin>
+  <projectListeners>
+    <listener class="com.intellij.workspaceModel.ide.impl.JpsProjectLoadedListenerImpl"
+              topic="com.intellij.workspaceModel.ide.JpsProjectLoadedListener"/>
+  </projectListeners>
+  <extensionPoints>
+    <extensionPoint name="workspaceModel.customModuleRootsSerializer"
+                    interface="com.intellij.workspaceModel.ide.impl.jps.serialization.CustomModuleRootsSerializer"
+                    dynamic="true"/>
+    <extensionPoint name="workspaceModel.customModuleComponentSerializer"
+                    interface="com.intellij.workspaceModel.ide.impl.jps.serialization.CustomModuleComponentSerializer"
+                    dynamic="true"/>
+    <extensionPoint name="workspaceModel.preUpdateHandler"
+                    interface="com.intellij.workspaceModel.ide.WorkspaceModelPreUpdateHandler"
+                    dynamic="true"/>
+    <extensionPoint name="workspaceModel.cache.version"
+                    interface="com.intellij.workspaceModel.ide.WorkspaceModelCacheVersion"
+                    dynamic="true"/>
+  </extensionPoints>
+  <extensions defaultExtensionNs="com.intellij">
+    <registryKey key="ide.new.project.model.cache" defaultValue="true" restartRequired="false"
+                 description="Enable cache for the workspace model"/>
+    <registryKey key="ide.new.project.model.strict.mode.rbs" defaultValue="true" restartRequired="true"
+                 description="Enable additional checks after replaceBySource and addDiff"/>
+    <registryKey key="ide.new.project.model.artifacts" defaultValue="true" restartRequired="true"
+                 description="Use workspace model to store project artifacts"/>
+  </extensions>
+</idea-plugin>

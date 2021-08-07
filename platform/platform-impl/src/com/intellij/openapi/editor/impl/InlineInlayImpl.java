@@ -4,6 +4,7 @@ package com.intellij.openapi.editor.impl;
 import com.intellij.diagnostic.PluginException;
 import com.intellij.openapi.editor.EditorCustomElementRenderer;
 import com.intellij.openapi.editor.Inlay;
+import com.intellij.openapi.editor.InlayProperties;
 import com.intellij.openapi.editor.VisualPosition;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.util.Key;
@@ -104,6 +105,13 @@ final class InlineInlayImpl<R extends EditorCustomElementRenderer> extends Inlay
   int getOrder() {
     Integer value = getUserData(ORDER_BEFORE_DISPOSAL);
     return value == null ? -1 : value;
+  }
+
+  @Override
+  public @NotNull InlayProperties getProperties() {
+    return new InlayProperties()
+      .relatesToPrecedingText(isRelatedToPrecedingText())
+      .priority(myPriority);
   }
 
   @Override

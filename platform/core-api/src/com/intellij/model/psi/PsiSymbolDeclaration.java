@@ -1,7 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.model.psi;
 
-import com.intellij.model.SymbolDeclaration;
+import com.intellij.model.Symbol;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
@@ -10,6 +10,12 @@ import org.jetbrains.annotations.NotNull;
  * Symbol declaration in PSI tree,
  * which is a way to convey host element and range in host element to the platform, e.g., for highlighting and navigation.
  * <p/>
+ * A symbol might be declared in several places, i.e. several declarations may declare the same symbol:
+ * <pre>
+ * SymbolDeclaration           d1   d2  dN
+ *                               ↘  ↓  ↙
+ * Symbol                           s
+ * </pre>
  * <h4>Lifecycle</h4>
  * The PsiSymbolDeclaration instance is expected to stay valid within a single read action.
  * <p/>
@@ -18,7 +24,7 @@ import org.jetbrains.annotations.NotNull;
  *
  * @see PsiSymbolDeclarationProvider
  */
-public interface PsiSymbolDeclaration extends SymbolDeclaration {
+public interface PsiSymbolDeclaration {
 
   /**
    * @return underlying (declaring) element
@@ -40,4 +46,7 @@ public interface PsiSymbolDeclaration extends SymbolDeclaration {
   default TextRange getAbsoluteRange() {
     return getRangeInDeclaringElement().shiftRight(getDeclaringElement().getTextRange().getStartOffset());
   }
+
+  @NotNull
+  Symbol getSymbol();
 }

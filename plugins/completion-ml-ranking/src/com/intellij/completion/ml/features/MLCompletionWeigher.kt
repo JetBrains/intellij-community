@@ -7,7 +7,6 @@ import com.intellij.codeInsight.completion.ml.ElementFeatureProvider
 import com.intellij.codeInsight.completion.ml.MLFeatureValue
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.completion.ml.storage.LookupStorage
-import com.intellij.completion.ml.storage.MutableLookupStorage
 
 class MLCompletionWeigher : CompletionWeigher() {
   override fun weigh(element: LookupElement, location: CompletionLocation): Comparable<*> {
@@ -30,19 +29,17 @@ class MLCompletionWeigher : CompletionWeigher() {
     return if (result.isEmpty()) DummyComparable.EMPTY else DummyComparable(result)
   }
 
-  private class DummyComparable(values: Map<String, MLFeatureValue>) : Comparable<Any> {
-    val representation = calculateRepresentation(values)
+  internal class DummyComparable(values: Map<String, MLFeatureValue>) : Comparable<Any> {
+    val mlFeatures = values.mapValues { MLFeaturesUtil.getRawValue(it.value) }
 
     override fun compareTo(other: Any): Int = 0
 
-    override fun toString(): String = representation
+    override fun toString(): String {
+      return mlFeatures.entries.joinToString(",", "[", "]", transform = { "${it.key}=${it.value}" })
+    }
 
     companion object {
       val EMPTY = DummyComparable(emptyMap())
-
-      private fun calculateRepresentation(values: Map<String, MLFeatureValue>): String {
-        return values.entries.joinToString(",", "[", "]", transform = { "${it.key}=${MLFeaturesUtil.valueAsString(it.value)}" })
-      }
     }
   }
 }

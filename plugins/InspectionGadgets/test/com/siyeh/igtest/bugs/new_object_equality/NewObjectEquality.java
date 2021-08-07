@@ -11,9 +11,9 @@ public class NewObjectEquality
     if(<warning descr="New object is compared using '=='">s1</warning> == s) {}
   }
 
-  void testInferredContract(Foo foo, List<?> c) {
+  void testInferredContract(Foo foo, Optional<?> c) {
     if(foo == <warning descr="New object is compared using '=='">Foo.create()</warning>) {}
-    if(c == <warning descr="New object is compared using '=='">Collections.unmodifiableList(c)</warning>) {}
+    if(c == <warning descr="New object is compared using '=='">Optional.of("foo")</warning>) {}
   }
 }
 class Foo {

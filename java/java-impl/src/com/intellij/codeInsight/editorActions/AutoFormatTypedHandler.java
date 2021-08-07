@@ -21,7 +21,6 @@ import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorModificationUtil;
-import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.highlighter.HighlighterIterator;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
@@ -152,9 +151,7 @@ public class AutoFormatTypedHandler extends TypedHandlerDelegate {
 
   private static HighlighterIterator createLexerIterator(Editor editor, int offset) {
     if (editor.getDocument().getTextLength() == 0) return null;
-    return editor instanceof EditorEx 
-           ? ((EditorEx)editor).getHighlighter().createIterator(offset) 
-           : null;
+    return editor.getHighlighter().createIterator(offset);
   }
 
   private static boolean isInsertSpaceBeforeEq(int caretOffset, CharSequence text) {

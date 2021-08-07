@@ -7,19 +7,21 @@ import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.*;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.statistics.StatisticsInfo;
 import com.intellij.psi.statistics.StatisticsManager;
 import com.intellij.ui.ListActions;
+import com.intellij.ui.MouseMovementTracker;
 import com.intellij.ui.ScrollingUtil;
 import com.intellij.ui.SeparatorWithText;
 import com.intellij.ui.awt.RelativePoint;
@@ -29,6 +31,7 @@ import com.intellij.ui.popup.HintUpdateSupply;
 import com.intellij.ui.popup.NextStepHandler;
 import com.intellij.ui.popup.WizardPopup;
 import com.intellij.ui.popup.tree.TreePopupImpl;
+import com.intellij.ui.popup.util.PopupImplUtil;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.ApiStatus;
@@ -42,7 +45,9 @@ import java.awt.*;
 import java.awt.datatransfer.DataFlavor;
 import java.awt.event.*;
 import java.util.Arrays;
-import java.util.concurrent.atomic.AtomicBoolean;
+
+import static java.awt.event.InputEvent.CTRL_MASK;
+import static java.awt.event.InputEvent.META_MASK;
 
 public class ListPopupImpl extends WizardPopup implements ListPopup, NextStepHandler {
   public static final int NEXT_STEP_AREA_WIDTH = 20;
@@ -53,6 +58,7 @@ public class ListPopupImpl extends WizardPopup implements ListPopup, NextStepHan
 
   private MyMouseMotionListener myMouseMotionListener;
   private MyMouseListener myMouseListener;
+  private final MouseMovementTracker myMouseMovementTracker = new MouseMovementTracker();
 
   private ListPopupModel myListModel;
 
@@ -99,7 +105,7 @@ public class ListPopupImpl extends WizardPopup implements ListPopup, NextStepHan
   }
 
   public void showUnderneathOfLabel(@NotNull JLabel label) {
-    int offset = -UIUtil.getListCellHPadding() - UIUtil.getListViewportPadding().left;
+    int offset = -UIUtil.getListCellHPadding() - UIUtil.getListViewportPadding(isAdVisible()).left;
     if (label.getIcon() != null) {
       offset += label.getIcon().getIconWidth() + label.getIconTextGap();
     }
@@ -263,8 +269,7 @@ public class ListPopupImpl extends WizardPopup implements ListPopup, NextStepHan
     myList.setSelectionModel(new MyListSelectionModel());
 
     selectFirstSelectableItem();
-    Insets padding = UIUtil.getListViewportPadding();
-    myList.setBorder(new EmptyBorder(padding));
+    myList.setBorder(new EmptyBorder(UIUtil.getListViewportPadding(isAdVisible())));
 
     ScrollingUtil.installActions(myList);
 
@@ -295,7 +300,6 @@ public class ListPopupImpl extends WizardPopup implements ListPopup, NextStepHan
 
 
     myList.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-
     return myList;
   }
 
@@ -397,15 +401,8 @@ public class ListPopupImpl extends WizardPopup implements ListPopup, NextStepHan
 
     valuesSelected(selectedValues);
 
-    AtomicBoolean insideOnChosen = new AtomicBoolean(true);
-    ApplicationManager.getApplication().invokeLater(() -> {
-      if (insideOnChosen.get()) {
-        LOG.error("Showing dialogs from popup onChosen can result in focus issues. Please put the handler into BaseStep.doFinalStep or PopupStep.getFinalRunnable.");
-      }
-    }, ModalityState.any());
-
-    final PopupStep nextStep;
-    try {
+    PopupStep<?> nextStep;
+    try (AccessToken ignore = PopupImplUtil.prohibitFocusEventsInHandleSelect()) {
       if (listStep instanceof MultiSelectionListPopupStep<?>) {
         nextStep = ((MultiSelectionListPopupStep<Object>)listStep).onChosen(Arrays.asList(selectedValues), handleFinalChoices);
       }
@@ -415,9 +412,6 @@ public class ListPopupImpl extends WizardPopup implements ListPopup, NextStepHan
       else {
         nextStep = listStep.onChosen(selectedValues[0], handleFinalChoices);
       }
-    }
-    finally {
-      insideOnChosen.set(false);
     }
     return handleNextStep(nextStep, selectedValues.length == 1 ? selectedValues[0] : null, e);
   }
@@ -482,6 +476,7 @@ public class ListPopupImpl extends WizardPopup implements ListPopup, NextStepHan
 
     myChild.show(container, container.getLocationOnScreen().x + container.getWidth() - STEP_X_PADDING, y, true);
     setIndexForShowingChild(myList.getSelectedIndex());
+    myMouseMovementTracker.reset();
 
     if (Registry.is("ide.list.popup.separate.next.step.button")) {
       myList.setNextStepButtonSelected(true);
@@ -531,15 +526,15 @@ public class ListPopupImpl extends WizardPopup implements ListPopup, NextStepHan
       int index = myList.locationToIndex(point);
 
       if (isSelectableAt(index)) {
-        if (index != myLastSelectedIndex && !isMovingToSubmenu(lastPoint, e.getLocationOnScreen())) {
+        if (index != myLastSelectedIndex && !isMovingToSubmenu(e)) {
           myExtendMode = calcExtendMode(index);
           if (!isMultiSelectionEnabled() || !UIUtil.isSelectionButtonDown(e) && myList.getSelectedIndices().length <= 1) {
             myList.setSelectedIndex(index);
+            if (myShowSubmenuOnHover) {
+              disposeChildren();
+            }
             if (myExtendMode == ExtendMode.EXTEND_ON_HOVER) {
               showSubMenu(index, true);
-            }
-            else if (getIndexForShowingChild() != -1) {
-              disposeChildren();
             }
           }
           restartTimer();
@@ -580,21 +575,13 @@ public class ListPopupImpl extends WizardPopup implements ListPopup, NextStepHan
       return myShowSubmenuOnHover ? ExtendMode.EXTEND_ON_HOVER : ExtendMode.NO_EXTEND;
     }
 
-    private boolean isMovingToSubmenu(Point prevPoint, Point newPoint) {
+    private boolean isMovingToSubmenu(MouseEvent e) {
       if (myChild == null || myChild.isDisposed()) return false;
 
       Rectangle childBounds = myChild.getBounds();
       childBounds.setLocation(myChild.getLocationOnScreen());
 
-      Polygon triangle = childBounds.x > prevPoint.x
-          ? new Polygon(
-                new int[]{prevPoint.x, childBounds.x, childBounds.x},
-                new int[]{prevPoint.y, childBounds.y, childBounds.y + childBounds.height}, 3)
-          : new Polygon(
-                new int[]{prevPoint.x, childBounds.x + childBounds.width, childBounds.x + childBounds.width},
-                new int[]{prevPoint.y, childBounds.y, childBounds.y + childBounds.height}, 3);
-
-      return triangle.contains(newPoint);
+      return myMouseMovementTracker.isMovingTowards(e, childBounds);
     }
 
     private void showSubMenu(int forIndex, boolean withTimer) {
@@ -714,26 +701,24 @@ public class ListPopupImpl extends WizardPopup implements ListPopup, NextStepHan
       }
 
       boolean isClick = UIUtil.isActionClick(e, MouseEvent.MOUSE_PRESSED) || UIUtil.isActionClick(e, MouseEvent.MOUSE_RELEASED);
-      if (!isClick || myList.locationToIndex(e.getPoint()) == myList.getSelectedIndex()) {
+      if (!isClick || myList.locationToIndex(e.getPoint()) == myList.getSelectedIndex() ||
+          isMultiSelectionEnabled() && hasMultiSelectionModifier(e)) {
         super.processMouseEvent(e);
       }
     }
 
+    private boolean hasMultiSelectionModifier(@NotNull MouseEvent e) {
+      return (e.getModifiers() & (SystemInfo.isMac ? META_MASK : CTRL_MASK)) != 0;
+    }
+
     @Override
     public Object getData(@NotNull String dataId) {
-       if (PlatformDataKeys.SELECTED_ITEM.is(dataId)){
-        return myList.getSelectedValue();
-      }
-      if (PlatformDataKeys.SELECTED_ITEMS.is(dataId)){
-         return myList.getSelectedValues();
-      }
       if (PlatformDataKeys.SPEED_SEARCH_COMPONENT.is(dataId)) {
         if (mySpeedSearchPatternField != null && mySpeedSearchPatternField.isVisible()) {
           return mySpeedSearchPatternField;
         }
       }
-
-      return null;
+      return PopupImplUtil.getDataImplForList(myList, dataId);
     }
   }
 

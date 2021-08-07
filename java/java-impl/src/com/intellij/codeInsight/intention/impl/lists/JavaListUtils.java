@@ -44,7 +44,8 @@ final class JavaListUtils {
 
   private static boolean isValidIntermediateElement(@NotNull PsiElement element) {
     return element instanceof PsiWhiteSpace ||
-           (element instanceof PsiJavaToken && ((PsiJavaToken)element).getTokenType() == JavaTokenType.COMMA);
+           (element instanceof PsiJavaToken && ((PsiJavaToken)element).getTokenType() == JavaTokenType.COMMA) ||
+           (element instanceof PsiComment && ((PsiComment)element).getTokenType() == JavaTokenType.C_STYLE_COMMENT);
   }
 
   @Nullable

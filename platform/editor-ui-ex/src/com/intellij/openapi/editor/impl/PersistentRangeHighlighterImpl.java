@@ -13,27 +13,25 @@ import org.jetbrains.annotations.Nullable;
  * @author max
  */
 final class PersistentRangeHighlighterImpl extends RangeHighlighterImpl {
-  private int myLine; // for PersistentRangeHighlighterImpl only
   static @NotNull PersistentRangeHighlighterImpl create(@NotNull MarkupModelImpl model,
                                                         int offset,
                                                         int layer,
                                                         @NotNull HighlighterTargetArea target,
                                                         @Nullable TextAttributesKey textAttributesKey,
-                                               boolean normalizeStartOffset) {
+                                                        boolean normalizeStartOffset) {
     int line = model.getDocument().getLineNumber(offset);
     int startOffset = normalizeStartOffset ? model.getDocument().getLineStartOffset(line) : offset;
-    return new PersistentRangeHighlighterImpl(model, startOffset, line, layer, target, textAttributesKey);
+    int endOffset = model.getDocument().getLineEndOffset(line);
+    return new PersistentRangeHighlighterImpl(model, startOffset, endOffset, layer, target, textAttributesKey);
   }
 
   private PersistentRangeHighlighterImpl(@NotNull MarkupModelImpl model,
                                          int startOffset,
-                                         int line,
+                                         int endOffset,
                                          int layer,
                                          @NotNull HighlighterTargetArea target,
                                          @Nullable TextAttributesKey textAttributesKey) {
-    super(model, startOffset, model.getDocument().getLineEndOffset(line), layer, target, textAttributesKey, false, false);
-
-    myLine = line;
+    super(model, startOffset, endOffset, layer, target, textAttributesKey, false, false);
   }
 
   @Override
@@ -43,7 +41,7 @@ final class PersistentRangeHighlighterImpl extends RangeHighlighterImpl {
 
   @Override
   protected void changedUpdateImpl(@NotNull DocumentEvent e) {
-    myLine = persistentHighlighterUpdate(e, myLine, getTargetArea() == HighlighterTargetArea.LINES_IN_RANGE);
+    persistentHighlighterUpdate(e, getTargetArea() == HighlighterTargetArea.LINES_IN_RANGE);
   }
 
   @Override
@@ -51,7 +49,9 @@ final class PersistentRangeHighlighterImpl extends RangeHighlighterImpl {
   public String toString() {
     return "PersistentRangeHighlighter" +
            (isGreedyToLeft() ? "[" : "(") +
-           (isValid() ? "valid" : "invalid") + "," + getStartOffset() + "," + getEndOffset() + " - " + myLine +
+           (isValid() ? "valid" : "invalid") + "," +
+           (getTargetArea() == HighlighterTargetArea.LINES_IN_RANGE ? "whole-line" : "exact") + "," +
+           getStartOffset() + "," + getEndOffset() +
            (isGreedyToRight() ? "]" : ")");
   }
 }

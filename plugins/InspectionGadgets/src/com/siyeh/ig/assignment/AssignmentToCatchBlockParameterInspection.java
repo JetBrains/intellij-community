@@ -16,6 +16,7 @@
 package com.siyeh.ig.assignment;
 
 import com.intellij.psi.PsiCatchSection;
+import com.intellij.psi.PsiDisjunctionType;
 import com.intellij.psi.PsiParameter;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.InspectionGadgetsFix;
@@ -40,6 +41,7 @@ public class AssignmentToCatchBlockParameterInspection extends BaseAssignmentToP
 
   @Override
   protected boolean isApplicable(PsiParameter parameter) {
-    return parameter.getDeclarationScope() instanceof PsiCatchSection;
+    return parameter.getDeclarationScope() instanceof PsiCatchSection &&
+           !(parameter.getType() instanceof PsiDisjunctionType);
   }
 }

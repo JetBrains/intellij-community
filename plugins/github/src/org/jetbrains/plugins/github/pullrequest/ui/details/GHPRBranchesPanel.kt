@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.pullrequest.ui.details
 
+import com.intellij.collaboration.ui.CollaborationToolsUIUtil
 import com.intellij.ide.IdeTooltip
 import com.intellij.ide.IdeTooltipManager
 import com.intellij.openapi.actionSystem.ActionManager
@@ -18,13 +19,13 @@ import com.intellij.ui.components.panels.Wrapper
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
+import icons.CollaborationToolsIcons
 import icons.DvcsImplIcons
 import net.miginfocom.layout.CC
 import net.miginfocom.layout.LC
 import net.miginfocom.swing.MigLayout
 import org.jetbrains.plugins.github.GithubIcons
 import org.jetbrains.plugins.github.i18n.GithubBundle
-import org.jetbrains.plugins.github.ui.util.GHUIUtil
 import java.awt.event.MouseAdapter
 import java.awt.event.MouseEvent
 import java.util.function.Consumer
@@ -56,8 +57,8 @@ internal object GHPRBranchesPanel {
     }
   }
 
-  private fun createLabel() = JBLabel(GithubIcons.Branch).also {
-    GHUIUtil.overrideUIDependentProperty(it) {
+  private fun createLabel() = JBLabel(CollaborationToolsIcons.Branch).also {
+    CollaborationToolsUIUtil.overrideUIDependentProperty(it) {
       foreground = CurrentBranchComponent.TEXT_COLOR
       background = CurrentBranchComponent.getBranchPresentationBackground(UIUtil.getListBackground())
     }
@@ -90,7 +91,7 @@ internal object GHPRBranchesPanel {
       from.icon = when {
         currentBranchCheckedOut -> DvcsImplIcons.CurrentBranchFavoriteLabel
         localBranch != null -> GithubIcons.LocalBranch
-        else -> GithubIcons.Branch
+        else -> CollaborationToolsIcons.Branch
       }
 
       branchesTooltipFactory.apply {

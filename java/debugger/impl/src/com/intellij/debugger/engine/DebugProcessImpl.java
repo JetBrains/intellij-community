@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.engine;
 
 import com.intellij.Patches;
@@ -451,12 +451,11 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
         //noinspection HardCodedStringLiteral
         stepRequest.putProperty("hint", hint);
       }
-      try {
-        stepRequest.enable();
-      }
-      catch (IllegalThreadStateException e) { // thread is already dead
-        requestManager.deleteEventRequest(stepRequest);
-      }
+      DebuggerUtilsAsync.setEnabled(stepRequest, true).whenComplete((__, e) -> {
+        if (DebuggerUtilsAsync.unwrap(e) instanceof IllegalThreadStateException) {
+          DebuggerUtilsAsync.deleteEventRequest(requestManager, stepRequest);
+        }
+      });
     }
     catch (ObjectCollectedException ignored) {
 
@@ -491,7 +490,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
     for (StepRequest request : new ArrayList<>(requestManager.stepRequests())) { // need a copy here to avoid CME
       if (stepThread == null || stepThread.equals(request.thread())) {
         try {
-          requestManager.deleteEventRequest(request);
+          DebuggerUtilsAsync.deleteEventRequest(requestManager, request);
         }
         catch (ObjectCollectedException ignored) {
         }
@@ -1726,12 +1725,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
       final RequestHint hint = new RequestHint(stepThread, suspendContext, StepRequest.STEP_LINE, StepRequest.STEP_INTO, myMethodFilter);
       hint.setResetIgnoreFilters(myMethodFilter != null && !mySession.shouldIgnoreSteppingFilters());
       if (myForcedIgnoreFilters) {
-        try {
-          mySession.setIgnoreStepFiltersFlag(stepThread.frameCount());
-        }
-        catch (EvaluateException e) {
-          LOG.info(e);
-        }
+        mySession.setIgnoreStepFiltersFlag(getFrameCount(stepThread, suspendContext));
       }
       hint.setIgnoreFilters(myForcedIgnoreFilters || mySession.shouldIgnoreSteppingFilters());
       applyThreadFilter(stepThread);

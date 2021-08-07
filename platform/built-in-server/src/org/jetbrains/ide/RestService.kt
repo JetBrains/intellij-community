@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.ide
 
 import com.github.benmanes.caffeine.cache.CacheLoader
@@ -283,13 +283,9 @@ abstract class RestService : HttpRequestHandler() {
       ApplicationManager.getApplication().invokeAndWait(
         {
           AppIcon.getInstance().requestAttention(null, true)
-          val message = if (host != null) {
-            IdeBundle.message("warning.use.rest.api.0.and.trust.host.1", getServiceName(),
-                              host)
-          }
-          else {
-            IdeBundle.message("warning.use.rest.api.0.and.trust.host.unknown",
-                              getServiceName())
+          val message = when (host) {
+            null -> IdeBundle.message("warning.use.rest.api.0.and.trust.host.unknown", getServiceName())
+            else -> IdeBundle.message("warning.use.rest.api.0.and.trust.host.1", getServiceName(), host)
           }
           isTrusted = showYesNoDialog(message, "title.use.rest.api")
           if (host != null) {

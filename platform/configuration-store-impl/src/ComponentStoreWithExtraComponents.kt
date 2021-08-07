@@ -16,7 +16,6 @@ import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.lang.CompoundRuntimeException
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
-import java.util.function.Consumer
 
 // A way to remove obsolete component data.
 internal val OBSOLETE_STORAGE_EP = ExtensionPointName<ObsoleteStorageBean>("com.intellij.obsoleteStorage")
@@ -29,11 +28,11 @@ abstract class ComponentStoreWithExtraComponents : ComponentStoreImpl() {
 
   private val asyncSettingsSavingComponents = SynchronizedClearableLazy {
     val result = mutableListOf<SettingsSavingComponent>()
-    serviceContainer.processServices(Consumer {
+    serviceContainer.processInitializedComponentsAndServices {
       if (it is SettingsSavingComponent) {
         result.add(it)
       }
-    })
+    }
     result
   }
 

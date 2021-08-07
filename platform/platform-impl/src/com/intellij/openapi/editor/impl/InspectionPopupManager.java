@@ -3,6 +3,7 @@ package com.intellij.openapi.editor.impl;
 
 import com.intellij.codeInsight.hint.HintManagerImpl;
 import com.intellij.icons.AllIcons;
+import com.intellij.ide.HelpTooltip;
 import com.intellij.ide.PowerSaveMode;
 import com.intellij.ide.actions.ActionsCollector;
 import com.intellij.internal.statistic.eventLog.FeatureUsageData;
@@ -11,7 +12,9 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.impl.ActionButton;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorBundle;
+import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.markup.*;
+import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.ui.popup.*;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.registry.Registry;
@@ -45,6 +48,8 @@ import java.util.*;
 import java.util.function.Supplier;
 
 final class InspectionPopupManager {
+
+  private final ExtensionPointName<InspectionPopupLevelChangePolicy> EP_NAME = ExtensionPointName.create("com.intellij.inspectionPopupLevelChangePolicy");
   private static final int DELTA_X = 6;
   private static final int DELTA_Y = 6;
 
@@ -208,7 +213,12 @@ final class InspectionPopupManager {
       ActionButton menuButton = new ActionButton(new MenuAction(actions, compactViewAction),
                                                  presentation,
                                                  ActionPlaces.EDITOR_POPUP,
-                                                 ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE);
+                                                 ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE) {
+        @Override
+        protected DataContext getDataContext() {
+          return ((EditorEx)myEditor).getDataContext();
+        }
+      };
 
       myContent.add(menuButton, gc.next().anchor(GridBagConstraints.LINE_END).weightx(0).insets(10, 6, 10, 6));
     }
@@ -290,16 +300,43 @@ final class InspectionPopupManager {
     else {
       java.util.List<LanguageHighlightLevel> levels = controller.getHighlightLevels();
 
+      String msg = null;
+
+      for (InspectionPopupLevelChangePolicy extension: EP_NAME.getExtensionList()) {
+        msg = extension.getUnavailabilityReason(myEditor);
+        if (msg != null) {
+          break;
+        }
+      }
+
       if (levels.size() == 1) {
-        DropDownLink<?> link = createDropDownLink(levels.get(0), controller, EditorBundle.message("iw.highlight.label") + " ");
-        levelLinks.add(link);
-        panel.add(link, gc.next());
+        String prefix = EditorBundle.message("iw.highlight.label") + " ";
+        GridBag constrains = gc.next();
+        // do not create lower panel for code with me guests with no write access
+        if (msg == null) {
+          DropDownLink<?> link = createDropDownLink(levels.get(0), controller, prefix);
+          levelLinks.add(link);
+          panel.add(link, constrains);
+        }
+        else {
+          JLabel noAccessLabel = createNoChangeLabel(levels.get(0), prefix, msg);
+          panel.add(noAccessLabel, constrains);
+        }
       }
       else if (levels.size() > 1) {
         for(LanguageHighlightLevel level: levels) {
-          DropDownLink<?> link = createDropDownLink(level, controller, level.getLangID() + ": ");
-          levelLinks.add(link);
-          panel.add(link, gc.next().anchor(GridBagConstraints.LINE_START).gridx > 0 ? gc.insetLeft(8) : gc);
+          String prefix = level.getLangID() + ": ";
+          GridBag constrains = gc.next().anchor(GridBagConstraints.LINE_START).gridx > 0 ? gc.insetLeft(8) : gc;
+          // do not create lower panel for code with me guests with no write access
+          if (msg == null) {
+            DropDownLink<?> link = createDropDownLink(level, controller, prefix);
+            levelLinks.add(link);
+            panel.add(link, constrains);
+          }
+          else {
+            JLabel noAccessLabel = createNoChangeLabel(level, prefix, msg);
+            panel.add(noAccessLabel, constrains);
+          }
         }
       }
     }
@@ -341,6 +378,13 @@ final class InspectionPopupManager {
         return prefix + item.toString();
       }
     };
+  }
+
+  @NotNull
+  private static JLabel createNoChangeLabel(@NotNull LanguageHighlightLevel level, @NotNull @Nls String prefix, @NotNull @Nls String msg) {
+    JLabel label = new JLabel(prefix + level.getLevel());
+    new HelpTooltip().setDescription(msg).installOn(label);
+    return label;
   }
 
 

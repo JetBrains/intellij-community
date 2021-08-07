@@ -106,8 +106,8 @@ public class PyUnreachableCodeInspectionTest extends PyInspectionTestCase {
       "\n" +
       "if True:\n" +
       "    pass\n" +
-      "<warning descr=\"This code is unreachable\">elif c:\n" +
-      "    d = 1</warning>\n" +
+      "elif c:\n" +
+      "    <warning descr=\"This code is unreachable\">d = 1</warning>\n" +
       "else:\n" +
       "    <warning descr=\"This code is unreachable\">e = 1</warning>\n"
     );
@@ -168,6 +168,31 @@ public class PyUnreachableCodeInspectionTest extends PyInspectionTestCase {
       "    sys.exit(0)\n" +
       "raise Exception(\"the end\")"
     );
+  }
+
+  // PY-48760
+  public void testContinueInCaseClause() {
+    doTest();
+  }
+
+  // PY-48760
+  public void testBreakInCaseClause() {
+    doTest();
+  }
+
+  // PY-48760
+  public void testReturnInCaseClause() {
+    doTest();
+  }
+
+  // PY-48760
+  public void testUnreachablePatternAfterIrrefutableCaseClause() {
+    doTest();
+  }
+
+  // PY-48760
+  public void testUnreachablePatternAfterIrrefutableOrPatternAlternative() {
+    doTest();
   }
 
   @NotNull

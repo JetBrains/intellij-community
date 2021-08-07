@@ -26,8 +26,6 @@ import java.util.List;
 @RunWith(com.intellij.testFramework.Parameterized.class)
 @TestDataPath("/testData/../../../platform/lang-impl/testData/editor/braceHighlighter/")
 public class BraceHighlightingHandlerTest extends LightPlatformCodeInsightTestCase implements FileBasedTestCaseHelper {
-  private static final String PAIR_MARKER = "<pair>";
-
   @Test
   public void testAction() {
     configureByFile(myFileSuffix);
@@ -54,7 +52,7 @@ public class BraceHighlightingHandlerTest extends LightPlatformCodeInsightTestCa
     List<Pair<Integer, String>> markers = new ArrayList<>();
     Alarm alarm = new Alarm();
     try {
-      new BraceHighlightingHandler(psiFile.getProject(), (EditorEx)editor, alarm, psiFile).updateBraces();
+      new BraceHighlightingHandler(psiFile.getProject(), editor, alarm, psiFile).updateBraces();
       RangeHighlighter[] highlighters = editor.getMarkupModel().getAllHighlighters();
       for (RangeHighlighter highlighter : highlighters) {
         if (highlighter.getLayer() == BraceHighlightingHandler.LAYER) {

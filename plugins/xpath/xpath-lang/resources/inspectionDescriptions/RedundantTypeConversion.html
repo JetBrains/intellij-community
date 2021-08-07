@@ -16,10 +16,9 @@
 
 <body>
 <p>
-  This inspection checks whether any type-conversion with the functions <code>string()</code>, <code>number()</code> or
-  <code>boolean()</code> is redundant, i.e. whether the type of argument is the same as the functions return type or if
-  the expected type of the expression is of type "any". While such an explicit conversion may sometimes be intentional
-  to emphasize the type, this can usually be safely removed.
+  Reports a type conversion with a <code>string()</code>, <code>number()</code>, or
+  <code>boolean()</code> function where the type of the argument is the same as the function's return type or if
+  the expected expression type is <code>any</code>. Suggests removing the unnecessary conversion.
 </p>
 
 <p id="footer">Powered by XPathView + XSLT-Support</p>

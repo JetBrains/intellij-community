@@ -1,6 +1,6 @@
 def foo(a):
     if a == 5:
         # a is 5
-        print 'no'
+        print('no')
 
 foo(5)

@@ -270,7 +270,7 @@ public final class RegExpAnnotator extends RegExpElementVisitor implements Annot
     final AnnotationSession session = myHolder.getCurrentAnnotationSession();
     final Map<String, RegExpGroup> namedGroups = NAMED_GROUP_MAP.get(session, new HashMap<>());
     if (namedGroups.isEmpty()) session.putUserData(NAMED_GROUP_MAP, namedGroups);
-    if (namedGroups.put(name, group) != null) {
+    if (namedGroups.put(name, group) != null && !myLanguageHosts.isDuplicateGroupNamesAllowed(group)) {
       final ASTNode node = group.getNode().findChildByType(RegExpTT.NAME);
       if (node != null) myHolder.newAnnotation(HighlightSeverity.ERROR,
                                                RegExpBundle.message("error.group.with.name.0.already.defined", name)).range(node).create();
@@ -543,11 +543,10 @@ public final class RegExpAnnotator extends RegExpElementVisitor implements Annot
       else {
         final ASTNode token = quantifier.getToken();
         assert token != null;
-        final String tokenText = token.getText();
-        if ("?".equals(tokenText) && mySupport == RegExpLanguageHost.Lookbehind.FINITE_REPETITION) {
+        if (token.getElementType().equals(RegExpTT.QUEST) && mySupport == RegExpLanguageHost.Lookbehind.FINITE_REPETITION) {
           return;
         }
-        stopAndReportError(quantifier, RegExpBundle.message("error.0.repetition.not.allowed.inside.lookbehind", tokenText));
+        stopAndReportError(quantifier, RegExpBundle.message("error.0.repetition.not.allowed.inside.lookbehind", quantifier.getText()));
       }
     }
 

@@ -7,7 +7,8 @@ import com.intellij.vcs.log.CommitId;
 import com.intellij.vcs.log.VcsLogProvider;
 import com.intellij.vcs.log.VcsLogRefs;
 import com.intellij.vcs.log.VcsRef;
-import gnu.trove.TIntObjectHashMap;
+import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
+import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -20,8 +21,8 @@ public class RefsModel implements VcsLogRefs {
 
   @NotNull private final VcsLogStorage myStorage;
   @NotNull private final Map<VirtualFile, CompressedRefs> myRefs;
-  @NotNull private final TIntObjectHashMap<VcsRef> myBestRefForHead;
-  @NotNull private final TIntObjectHashMap<VirtualFile> myRootForHead;
+  @NotNull private final Int2ObjectMap<VcsRef> myBestRefForHead;
+  @NotNull private final Int2ObjectMap<VirtualFile> myRootForHead;
 
   public RefsModel(@NotNull Map<VirtualFile, CompressedRefs> refs,
                    @NotNull Set<Integer> heads,
@@ -30,8 +31,8 @@ public class RefsModel implements VcsLogRefs {
     myRefs = refs;
     myStorage = storage;
 
-    myBestRefForHead = new TIntObjectHashMap<>();
-    myRootForHead = new TIntObjectHashMap<>();
+    myBestRefForHead = new Int2ObjectOpenHashMap<>();
+    myRootForHead = new Int2ObjectOpenHashMap<>();
     for (int head : heads) {
       CommitId commitId = myStorage.getCommitId(head);
       if (commitId != null) {

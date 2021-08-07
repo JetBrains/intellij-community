@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.siyeh.ig.redundancy;
 
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
@@ -6,12 +6,11 @@ import com.intellij.codeInsight.daemon.impl.analysis.HighlightUtil;
 import com.intellij.codeInspection.CleanupLocalInspectionTool;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.CommonClassNames;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiLiteralExpression;
-import com.intellij.psi.PsiType;
+import com.intellij.psi.*;
 import com.intellij.psi.util.PsiLiteralUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.siyeh.InspectionGadgetsBundle;
@@ -87,7 +86,7 @@ public class UnnecessaryStringEscapeInspection extends BaseInspection implements
         final StringBuilder newExpression = new StringBuilder();
         if (literalExpression.isTextBlock()) {
           int offset = 0;
-          int start = findUnnecessarilyEscapedChars(text, 4);
+          int start = findUnnecessaryTextBlockEscapes(text, 4);
           while (start >= 0) {
             newExpression.append(text, offset, start);
             offset = start + 2;
@@ -100,9 +99,14 @@ public class UnnecessaryStringEscapeInspection extends BaseInspection implements
             else {
               newExpression.append(escape.charAt(1));
             }
-            start = findUnnecessarilyEscapedChars(text, offset);
+            start = findUnnecessaryTextBlockEscapes(text, offset);
           }
           newExpression.append(text.substring(offset));
+          final Document document = element.getContainingFile().getViewProvider().getDocument();
+          assert document != null;
+          final TextRange replaceRange = element.getTextRange();
+          document.replaceString(replaceRange.getStartOffset(), replaceRange.getEndOffset(), newExpression.toString());
+          return;
         }
         else {
           boolean escaped = false;
@@ -126,16 +130,21 @@ public class UnnecessaryStringEscapeInspection extends BaseInspection implements
     }
   }
 
-  static int findUnnecessarilyEscapedChars(String text, int start) {
+  static int findUnnecessaryTextBlockEscapes(String text, int start) {
     boolean slash = false;
+    boolean ws = false;
     int doubleQuotes = 0;
     final int max = text.length() - 3; // skip closing """
     for (int i = start; i < max; i++) {
       final char ch = text.charAt(i);
       if (ch == '\\') slash = !slash;
+      else if (ch == ' ' || ch == '\t') ws = true;
       else {
         if (slash) {
-          if (ch == 'n' || ch == '\'') {
+          if (ch == 'n') {
+            if (!ws) return i - 1;
+          }
+          else if (ch == '\'') {
             return i - 1;
           }
           else if (ch == '"' && doubleQuotes < 2) {
@@ -153,6 +162,7 @@ public class UnnecessaryStringEscapeInspection extends BaseInspection implements
         else if (ch == '"') doubleQuotes++;
         else doubleQuotes = 0;
         slash = false;
+        ws = false;
       }
     }
     return -1;
@@ -180,10 +190,10 @@ public class UnnecessaryStringEscapeInspection extends BaseInspection implements
       if (type.equalsToText(CommonClassNames.JAVA_LANG_STRING)) {
         if (expression.isTextBlock()) {
           final String text = expression.getText();
-          int start = findUnnecessarilyEscapedChars(text, 4);
+          int start = findUnnecessaryTextBlockEscapes(text, 4);
           while (start >= 0) {
             registerErrorAtOffset(expression, start, 2, text);
-            start = findUnnecessarilyEscapedChars(text, start + 2);
+            start = findUnnecessaryTextBlockEscapes(text, start + 2);
           }
         }
         else {

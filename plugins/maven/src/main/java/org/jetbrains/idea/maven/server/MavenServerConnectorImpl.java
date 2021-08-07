@@ -38,7 +38,12 @@ public class MavenServerConnectorImpl extends MavenServerConnector {
   private final AtomicBoolean myConnectStarted = new AtomicBoolean(false);
 
   private MavenRemoteProcessSupportFactory.MavenRemoteProcessSupport mySupport;
-  private final AsyncPromise<@NotNull MavenServer> myServerPromise = new AsyncPromise<>();
+  private final AsyncPromise<@NotNull MavenServer> myServerPromise = new AsyncPromise<>() {
+    @Override
+    protected boolean shouldLogErrors() {
+      return false;
+    }
+  };
 
 
   public MavenServerConnectorImpl(@NotNull Project project,
@@ -97,7 +102,9 @@ public class MavenServerConnectorImpl extends MavenServerConnector {
       }
       cleanUp();
       myManager.cleanUp(this);
-      throw new CannotStartServerException(e);
+      throw e instanceof CannotStartServerException
+            ? (CannotStartServerException) e
+            : new CannotStartServerException(e);
     }
   }
 
@@ -196,6 +203,10 @@ public class MavenServerConnectorImpl extends MavenServerConnector {
     }
   }
 
+  @Override
+  public boolean checkConnected() {
+    return !mySupport.getActiveConfigurations().isEmpty();
+  }
 
   private static class RemoteMavenServerLogger extends MavenRemoteObject implements MavenServerLogger {
     @Override
@@ -235,7 +246,8 @@ public class MavenServerConnectorImpl extends MavenServerConnector {
     @Override
     public void run() {
       ProgressIndicator indicator = new EmptyProgressIndicator();
-      MavenLog.LOG.info("Connecting maven connector in " + myMultimoduleDirectory);
+      String dirForLogs = myMultimoduleDirectories.iterator().next();
+      MavenLog.LOG.info("Connecting maven connector in " + dirForLogs);
       try {
         if (myDebugPort != null) {
           //noinspection UseOfSystemOutOrSystemErr
@@ -243,6 +255,9 @@ public class MavenServerConnectorImpl extends MavenServerConnector {
         }
         MavenRemoteProcessSupportFactory factory = MavenRemoteProcessSupportFactory.forProject(myProject);
         mySupport = factory.create(myJdk, myVmOptions, myDistribution, myProject, myDebugPort);
+        mySupport.onTerminate(e -> {
+          myManager.cleanUp(MavenServerConnectorImpl.this);
+        });
         MavenServer server = mySupport.acquire(this, "", indicator);
         myLoggerExported = MavenRemoteObjectWrapper.doWrapAndExport(myLogger) != null;
 
@@ -253,10 +268,10 @@ public class MavenServerConnectorImpl extends MavenServerConnector {
 
         server.set(myLogger, myDownloadListener, MavenRemoteObjectWrapper.ourToken);
         myServerPromise.setResult(server);
-        MavenLog.LOG.info("Connector in " + myMultimoduleDirectory + " has been connected");
+        MavenLog.LOG.info("Connector in " + dirForLogs + " has been connected");
       }
       catch (Throwable e) {
-        MavenLog.LOG.warn("Cannot connect connector in " + myMultimoduleDirectory, e);
+        MavenLog.LOG.warn("Cannot connect connector in " + dirForLogs, e);
         myServerPromise.setError(e);
       }
     }

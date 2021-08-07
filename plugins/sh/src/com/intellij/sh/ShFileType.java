@@ -22,7 +22,7 @@ public final class ShFileType extends LanguageFileType {
   @Override
   @NotNull
   public String getDescription() {
-    return ShBundle.message("sh.shell.script");
+    return ShBundle.message("filetype.sh.shell.script.description");
   }
 
   @Override

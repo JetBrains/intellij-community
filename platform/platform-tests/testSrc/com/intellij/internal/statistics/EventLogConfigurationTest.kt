@@ -1,23 +1,24 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.statistics
 
+import com.intellij.internal.statistic.config.EventLogOptions.MACHINE_ID_SALT
+import com.intellij.internal.statistic.config.EventLogOptions.MACHINE_ID_SALT_REVISION
 import com.intellij.internal.statistic.eventLog.EventLogConfigOptionsService
 import com.intellij.internal.statistic.eventLog.EventLogConfiguration
 import com.intellij.internal.statistic.eventLog.EventLogRecorderConfiguration
 import com.intellij.internal.statistic.eventLog.validator.storage.EventLogMetadataLoader
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
-import java.util.*
 import kotlin.test.assertNotEquals
 
 class EventLogConfigurationTest : BasePlatformTestCase() {
   fun testMachineIdRegeneration() {
-    doTestRegenerate({ it.machineIdConfiguration }, hashMapOf(EventLogConfigOptionsService.MACHINE_ID_SALT to "newSalt",
-                                                              EventLogConfigOptionsService.MACHINE_ID_SALT_REVISION to "2"))
+    doTestRegenerate({ it.machineId }, hashMapOf(MACHINE_ID_SALT to "newSalt",
+                                                 MACHINE_ID_SALT_REVISION to "2"))
   }
 
   fun testNotRegenerateMachineIdForInitialValue() {
-    doTestNotRegenerate({ it.machineIdConfiguration }, hashMapOf(EventLogConfigOptionsService.MACHINE_ID_SALT to "",
-                                                              EventLogConfigOptionsService.MACHINE_ID_SALT_REVISION to "0"))
+    doTestNotRegenerate({ it.machineId }, hashMapOf(MACHINE_ID_SALT to "",
+                                                    MACHINE_ID_SALT_REVISION to "0"))
   }
 
   private fun doTestRegenerate(function: (configuration: EventLogRecorderConfiguration) -> Any, values: Map<String, String>) {
@@ -33,7 +34,7 @@ class EventLogConfigurationTest : BasePlatformTestCase() {
   private fun doTest(function: (configuration: EventLogRecorderConfiguration) -> Any,
                      values: Map<String, String>): Pair<Any, Any> {
     val recorderId = "ABC"
-    val configuration = EventLogConfiguration.getOrCreate(recorderId)
+    val configuration = EventLogConfiguration.getInstance().getOrCreate(recorderId)
     val initialValue = function(configuration)
 
     EventLogConfigOptionsService.getInstance().updateOptions(recorderId, TestEventLogMetadataLoader(values))
@@ -46,7 +47,6 @@ class EventLogConfigurationTest : BasePlatformTestCase() {
 
     override fun loadMetadataFromServer(): String = ""
 
-    override fun getOptionValue(name: String): String? = values[name]
+    override fun getOptionValues(): Map<String, String> = values
   }
-
 }

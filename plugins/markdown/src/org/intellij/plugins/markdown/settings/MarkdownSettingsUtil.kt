@@ -4,6 +4,7 @@ package org.intellij.plugins.markdown.settings
 import com.intellij.notification.Notification
 import com.intellij.notification.NotificationType
 import com.intellij.notification.Notifications
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.util.download.DownloadableFileService
 import org.intellij.plugins.markdown.MarkdownBundle
 import org.intellij.plugins.markdown.extensions.MarkdownExtensionWithExternalFiles
@@ -30,8 +31,15 @@ internal object MarkdownSettingsUtil {
     return result != null
   }
 
-  fun downloadExtension(extension: MarkdownExtensionWithExternalFiles) {
+  fun downloadExtension(extension: MarkdownExtensionWithExternalFiles, enableAfterDownload: Boolean = false): Boolean {
     if (downloadExtensionFiles(extension)) {
+      if (enableAfterDownload) {
+        MarkdownApplicationSettings.getInstance().enableExtension(extension.id)
+        // FIXME: Should be triggered inside settings on change
+        ApplicationManager.getApplication().messageBus
+          .syncPublisher(MarkdownApplicationSettings.SettingsChangedListener.TOPIC)
+          .settingsChanged(MarkdownApplicationSettings.getInstance())
+      }
       Notifications.Bus.notify(
         Notification(
           "Markdown",
@@ -40,8 +48,8 @@ internal object MarkdownSettingsUtil {
           NotificationType.INFORMATION
         )
       )
-    }
-    else {
+      return true
+    } else {
       Notifications.Bus.notify(
         Notification(
           "Markdown",
@@ -50,6 +58,7 @@ internal object MarkdownSettingsUtil {
           NotificationType.ERROR
         )
       )
+      return false
     }
   }
 }

@@ -2,7 +2,9 @@
 package org.jetbrains.plugins.github.pullrequest.ui
 
 import com.intellij.CommonBundle
+import com.intellij.collaboration.async.CompletableFutureUtil.successOnEdt
 import com.intellij.ide.plugins.newui.VerticalLayout
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.ui.components.panels.NonOpaquePanel
 import com.intellij.ui.scale.JBUIScale
@@ -10,13 +12,13 @@ import org.jetbrains.plugins.github.pullrequest.comment.ui.GHPreLoadingSubmittab
 import org.jetbrains.plugins.github.pullrequest.comment.ui.GHSubmittableTextFieldFactory
 import org.jetbrains.plugins.github.ui.util.GHUIUtil
 import org.jetbrains.plugins.github.ui.util.HtmlEditorPane
-import org.jetbrains.plugins.github.util.successOnEdt
 import java.util.concurrent.CompletableFuture
 import javax.swing.JComponent
 import javax.swing.text.BadLocationException
 import javax.swing.text.Utilities
 
-internal open class GHEditableHtmlPaneHandle(private val editorPane: HtmlEditorPane,
+internal open class GHEditableHtmlPaneHandle(private val project: Project,
+                                             private val editorPane: HtmlEditorPane,
                                              private val loadSource: () -> CompletableFuture<String>,
                                              private val updateText: (String) -> CompletableFuture<out Any?>) {
 
@@ -32,7 +34,7 @@ internal open class GHEditableHtmlPaneHandle(private val editorPane: HtmlEditorP
     if (editor == null) {
       val placeHolderText = StringUtil.repeatSymbol('\n', Integer.max(0, getLineCount() - 1))
 
-      val model = GHPreLoadingSubmittableTextFieldModel(placeHolderText, loadSource()) { newText ->
+      val model = GHPreLoadingSubmittableTextFieldModel(project, placeHolderText, loadSource()) { newText ->
         updateText(newText).successOnEdt {
           hideEditor()
         }

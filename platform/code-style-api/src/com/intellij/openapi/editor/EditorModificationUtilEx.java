@@ -4,6 +4,7 @@ package com.intellij.openapi.editor;
 import com.intellij.codeStyle.CodeStyleFacade;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiDocumentManager;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -181,16 +182,35 @@ public class EditorModificationUtilEx {
    *                  on a current visual line
    */
   public static int calcAfterLineEnd(Editor editor) {
-    Document document = editor.getDocument();
     CaretModel caretModel = editor.getCaretModel();
+    int caretOffset = caretModel.getOffset();
     LogicalPosition logicalPosition = caretModel.getLogicalPosition();
+    VisualPosition visualPosition = caretModel.getVisualPosition();
+    return calcAfterLineEnd(editor, caretOffset, logicalPosition, visualPosition);
+  }
+
+  /**
+   * Experimental API! Please, use {@link EditorModificationUtilEx#calcAfterLineEnd(Editor)} if possible.
+   *
+   * Calculates difference in columns between current editor caret position and end of the logical line fragment displayed
+   * on a current visual line.
+   *
+   * @param editor          target editor
+   * @param caretOffset     offset of the caret
+   * @param logicalPosition logical position of the caret
+   * @param visualPosition  visual position of the caret
+   * @return                difference in columns between current editor caret position and end of the logical line fragment displayed
+   *                        on a current visual line
+   */
+  @ApiStatus.Experimental
+  public static int calcAfterLineEnd(Editor editor, int caretOffset, LogicalPosition logicalPosition, VisualPosition visualPosition) {
+    Document document = editor.getDocument();
     int lineNumber = logicalPosition.line;
     int columnNumber = logicalPosition.column;
     if (lineNumber >= document.getLineCount()) {
       return columnNumber;
     }
 
-    int caretOffset = caretModel.getOffset();
     int anchorLineEndOffset = document.getLineEndOffset(lineNumber);
     List<? extends SoftWrap> softWraps = editor.getSoftWrapModel().getSoftWrapsForLine(logicalPosition.line);
     for (SoftWrap softWrap : softWraps) {
@@ -204,9 +224,8 @@ public class EditorModificationUtilEx {
         //     *) caret is located on a visual line before soft wrap-introduced line feed;
         //     *) caret is located on a visual line after soft wrap-introduced line feed;
         VisualPosition position = editor.offsetToVisualPosition(caretOffset - 1);
-        VisualPosition visualCaret = caretModel.getVisualPosition();
-        if (position.line == visualCaret.line) {
-          return visualCaret.column - position.column - 1;
+        if (position.line == visualPosition.line) {
+          return visualPosition.column - position.column - 1;
         }
       }
       if (softWrapOffset > caretOffset) {
@@ -217,7 +236,7 @@ public class EditorModificationUtilEx {
       // Same offset corresponds to all soft wrap-introduced symbols, however, current method should behave differently in
       // situations when the caret is located just before the soft wrap and at the next visual line.
       if (softWrapOffset == caretOffset) {
-        boolean visuallyBeforeSoftWrap = caretModel.getVisualPosition().line < editor.offsetToVisualPosition(caretOffset).line;
+        boolean visuallyBeforeSoftWrap = visualPosition.line < editor.offsetToVisualPosition(caretOffset).line;
         if (visuallyBeforeSoftWrap) {
           anchorLineEndOffset = softWrapOffset;
           break;

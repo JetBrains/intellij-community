@@ -7,6 +7,7 @@
         <extensionPoint name="ext" interface="java.lang.Runnable"/>
         <extensionPoint name="deprecatedEP" interface="foo.MyDeprecatedEP"/>
         <extensionPoint name="deprecatedBeanClassEP" beanClass="foo.MyDeprecatedEP"/>
+        <extensionPoint name="classLevelPropertyEP" beanClass="foo.ClassLevelProperty"/>
 
         <!-- hardcoded deprecated EP names -->
         <extensionPoint qualifiedName="com.intellij.definitionsSearch" interface="java.lang.Runnable"/>
@@ -61,6 +62,8 @@
 
         <warning descr="Usage of API marked with @org.jetbrains.annotations.ApiStatus.Internal. Such API should not be used outside of IntelliJ IDEA project."><myPlugin.internalApiEP implementation="foo.MyInternalEP" <warning descr="Usage of API marked with @org.jetbrains.annotations.ApiStatus.Internal. Such API should not be used outside of IntelliJ IDEA project.">internalAttribute="DoNotUse"</warning>/></warning>
 
+        <myPlugin.classLevelPropertyEP classLevel="value" customAttributeName="42"/>
+
         <myService serviceImplementation="foo.<error descr="Cannot resolve class 'MyInvalid'">MyInvalid</error>"/>
 
         <myService serviceImplementation="foo.MyRunnable" os="mac"/>
@@ -70,6 +73,8 @@
                    integerNullable="<error descr="Cannot convert string 'INVALID_VALUE' to target class 'java.lang.Integer'">INVALID_VALUE</error>"
                    intPropertyForClass="<error descr="Cannot convert string 'INVALID_VALUE' to target class 'java.lang.Integer'">INVALID_VALUE</error>"
                    forClass="<error descr="Cannot resolve symbol 'INVALID_VALUE'">INVALID_VALUE</error>"
+                   class="<error descr="Cannot resolve symbol 'INVALID_VALUE'">INVALID_VALUE</error>"
+                   myClassName="<error descr="Cannot resolve symbol 'INVALID_VALUE'">INVALID_VALUE</error>"
         />
 
         <myService serviceImplementation="foo.MyRunnable"

@@ -76,6 +76,7 @@ class ZipSpec : DirectorySpecBase() {
     val contentDir = FileUtil.createTempDirectory("zip-content", null, false)
     try {
       generateInDirectory(contentDir)
+      FileUtil.createParentDirs(target)
       Compressor.Zip(target).use { it.addDirectory(contentDir) }
     }
     finally {

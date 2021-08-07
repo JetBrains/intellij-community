@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.fileEditor.ex;
 
 import com.intellij.openapi.Disposable;
@@ -8,10 +8,7 @@ import com.intellij.openapi.fileEditor.EditorDataProvider;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.FileEditorProvider;
-import com.intellij.openapi.fileEditor.impl.EditorComposite;
-import com.intellij.openapi.fileEditor.impl.EditorWindow;
-import com.intellij.openapi.fileEditor.impl.EditorsSplitters;
-import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl;
+import com.intellij.openapi.fileEditor.impl.*;
 import com.intellij.openapi.fileEditor.impl.text.AsyncEditorLoader;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.ActionCallback;
@@ -19,6 +16,7 @@ import com.intellij.openapi.util.BusyObject;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.concurrency.Promise;
@@ -53,15 +51,9 @@ public abstract class FileEditorManagerEx extends FileEditorManager implements B
   public abstract @NotNull Pair<FileEditor[], FileEditorProvider[]> getEditorsWithProviders(@NotNull VirtualFile file);
 
   /** @deprecated use {@link FileEditor#getFile()} instead */
+  @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
   @Deprecated
   public abstract @Nullable VirtualFile getFile(@NotNull FileEditor editor);
-
-  /**
-   * Refreshes the text, colors and icon of the editor tabs representing the specified file.
-   *
-   * @param file the file to refresh.
-   */
-  public abstract void updateFilePresentation(@NotNull VirtualFile file);
 
   /**
    * Synchronous version of {@link #getActiveWindow()}. Will return {@code null} if invoked not from EDT.
@@ -133,13 +125,20 @@ public abstract class FileEditorManagerEx extends FileEditorManager implements B
     return openFileWithProviders(file, focusEditor, searchForOpen).getFirst();
   }
 
-  public abstract @NotNull Pair<FileEditor[],FileEditorProvider[]> openFileWithProviders(@NotNull VirtualFile file,
-                                                                                         boolean focusEditor,
-                                                                                         boolean searchForSplitter);
+  public abstract @NotNull Pair<FileEditor[], FileEditorProvider[]> openFileWithProviders(@NotNull VirtualFile file,
+                                                                                          boolean focusEditor,
+                                                                                          boolean searchForSplitter);
 
-  public abstract @NotNull Pair<FileEditor[],FileEditorProvider[]> openFileWithProviders(@NotNull VirtualFile file,
-                                                                                         boolean focusEditor,
-                                                                                         @NotNull EditorWindow window);
+  public abstract @NotNull Pair<FileEditor[], FileEditorProvider[]> openFileWithProviders(@NotNull VirtualFile file,
+                                                                                          boolean focusEditor,
+                                                                                          @NotNull EditorWindow window);
+
+  public @NotNull Pair<FileEditor[], FileEditorProvider[]> openFileWithProviders(@NotNull VirtualFile file,
+                                                                                 @Nullable EditorWindow window,
+                                                                                 @NotNull FileEditorOpenOptions options) {
+    return window != null && !window.isDisposed() ? openFileWithProviders(file, options.getRequestFocus(), window)
+                                                  : openFileWithProviders(file, options.getRequestFocus(), options.getReuseOpen());
+  }
 
   public abstract boolean isChanged(@NotNull EditorComposite editor);
 

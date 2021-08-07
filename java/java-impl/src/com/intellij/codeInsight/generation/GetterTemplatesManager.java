@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.generation;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -10,12 +10,13 @@ import org.jetbrains.java.generate.template.TemplateResource;
 import org.jetbrains.java.generate.template.TemplatesManager;
 
 import java.io.IOException;
-import java.util.Collections;
+import java.util.Arrays;
 import java.util.List;
 
 @State(name = "GetterTemplates", storages = @Storage("getterTemplates.xml"))
 public final class GetterTemplatesManager extends TemplatesManager {
   private static final String DEFAULT = "defaultGetter.vm";
+  private static final String RECORDS = "records.vm";
 
   public static GetterTemplatesManager getInstance() {
     return ApplicationManager.getApplication().getService(GetterTemplatesManager.class);
@@ -24,14 +25,15 @@ public final class GetterTemplatesManager extends TemplatesManager {
   @Override
   public @NotNull List<TemplateResource> getDefaultTemplates() {
     try {
-      return Collections.singletonList(new TemplateResource("IntelliJ Default", readFile(DEFAULT), true));
+      return Arrays.asList(new TemplateResource("IntelliJ Default", readFile(DEFAULT), true),
+                           new TemplateResource("Records style", readFile(RECORDS), true));
     }
     catch (IOException e) {
       throw new TemplateResourceException("Error loading default templates", e);
     }
   }
 
-  protected static String readFile(String resource) throws IOException {
+  private static String readFile(String resource) throws IOException {
     return readFile(resource, GetterTemplatesManager.class);
   }
 }

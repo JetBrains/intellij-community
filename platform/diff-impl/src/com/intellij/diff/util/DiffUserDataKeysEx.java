@@ -1,9 +1,10 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.diff.util;
 
 import com.intellij.diff.DiffEditorTitleCustomizer;
 import com.intellij.diff.DiffTool;
 import com.intellij.diff.comparison.ComparisonPolicy;
+import com.intellij.diff.editor.DiffEditorTabFilesManager;
 import com.intellij.diff.fragments.LineFragment;
 import com.intellij.diff.merge.MergeResult;
 import com.intellij.diff.merge.MergeTool;
@@ -16,6 +17,7 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NlsActions;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -96,7 +98,11 @@ public interface DiffUserDataKeysEx extends DiffUserDataKeys {
   /**
    * Marker flag for viewers embedded into FileEditor tab.
    * Ex: such viewers might encounter conflicting shortcuts.
+   *
+   * @deprecated use {@link DiffEditorTabFilesManager#isEditorDiffAvailable} instead
    */
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   Key<Boolean> DIFF_IN_EDITOR = Key.create("Diff.DiffInEditor");
 
   /**

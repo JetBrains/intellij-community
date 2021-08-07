@@ -127,10 +127,10 @@ public abstract class BaseCompilerTestCase extends JavaModuleTestCase {
   }
 
   protected Module addModule(@NotNull String moduleName, @Nullable VirtualFile sourceRoot) {
-    return addModule(moduleName, sourceRoot, null);
+    return addModule(moduleName, sourceRoot, null, null);
   }
 
-  protected Module addModule(String moduleName, @Nullable VirtualFile sourceRoot, @Nullable VirtualFile testRoot) {
+  protected Module addModule(String moduleName, @Nullable VirtualFile sourceRoot, @Nullable VirtualFile testRoot, @Nullable VirtualFile resourceRoot) {
     return WriteAction.computeAndWait(() -> {
       Module module = createModule(moduleName);
       if (sourceRoot != null) {
@@ -138,6 +138,9 @@ public abstract class BaseCompilerTestCase extends JavaModuleTestCase {
       }
       if (testRoot != null) {
         PsiTestUtil.addSourceContentToRoots(module, testRoot, true);
+      }
+      if (resourceRoot != null) {
+        PsiTestUtil.addResourceContentToRoots(module, resourceRoot, false);
       }
       ModuleRootModificationUtil.setModuleSdk(module, getTestProjectJdk());
       return module;

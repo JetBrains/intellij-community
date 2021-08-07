@@ -43,7 +43,8 @@ abstract class SurroundAndUnwrapLesson
         }
         restoreByUi()
         test {
-          type("${surroundItems.joinToString(separator = " ")}\n") }
+          type("${surroundItems.joinToString(separator = " ")}\n")
+        }
       }
 
       prepareRuntimeTask {
@@ -80,13 +81,13 @@ abstract class SurroundAndUnwrapLesson
 
   private fun wordIsPresent(text: String, word: String): Boolean {
     var index = 0
-    while(index != -1 && index < text.length) {
+    while (index != -1 && index < text.length) {
       index = text.indexOf(word, startIndex = index)
       if (index != -1) {
         if ((index == 0 || !text[index - 1].isLetterOrDigit()) &&
-            (index + word.length == text.length || !text[index + word.length + 1].isLetterOrDigit()))
+            (index + word.length == text.length || !text[index + word.length].isLetterOrDigit()))
           return true
-        index = index + word.length
+        index += word.length
       }
     }
     return false
@@ -95,7 +96,8 @@ abstract class SurroundAndUnwrapLesson
   private fun TaskContext.proposeIfModified(checkCaret: TaskRuntimeContext.() -> Boolean) {
     proposeRestore {
       checkExpectedStateOfEditor(previous.sample, false)
-      ?: if (checkCaret()) TaskContext.RestoreNotification(TaskContext.CaretRestoreProposal, callback = restorePreviousTaskCallback) else null
+      ?: if (checkCaret()) TaskContext.RestoreNotification(TaskContext.CaretRestoreProposal, callback = restorePreviousTaskCallback)
+      else null
     }
   }
 }

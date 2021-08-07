@@ -32,7 +32,7 @@ public class UnwrapIfStatementFixTest extends LightQuickFixParameterizedTestCase
   @NotNull
   @Override
   protected LightProjectDescriptor getProjectDescriptor() {
-    return LightJavaCodeInsightFixtureTestCase.JAVA_10_ANNOTATED;
+    return LightJavaCodeInsightFixtureTestCase.JAVA_11_ANNOTATED;
   }
 
   @Override

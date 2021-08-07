@@ -5,6 +5,7 @@ import com.intellij.testFramework.UsefulTestCase.assertEmpty
 import com.intellij.testFramework.UsefulTestCase.assertOneElement
 import com.intellij.workspaceModel.storage.entities.*
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityStorageBuilderImpl
+import com.intellij.workspaceModel.storage.impl.assertConsistency
 import com.intellij.workspaceModel.storage.impl.exceptions.ReplaceBySourceException
 import org.hamcrest.CoreMatchers.isA
 import org.junit.Assert.assertEquals
@@ -540,6 +541,23 @@ class ReplaceBySourceTest {
     val child = builder.entities(NamedChildEntity::class.java).single()
     assertEquals("barChild", child.childProperty)
     assertEquals("foo", child.parent.additionalProperty)
+  }
+
+  @Test
+  fun `replace parents with completely different children`() {
+    val parentEntity = builder.addNamedEntity("PrimaryParent", source = AnotherSource)
+    builder.addNamedChildEntity(parentEntity, "PrimaryChild", source = MySource)
+    builder.addNamedEntity("SecondaryParent", source = AnotherSource)
+
+    val replacement = createEmptyBuilder()
+    replacement.addNamedEntity("PrimaryParent", source = AnotherSource)
+    val anotherParentEntity = replacement.addNamedEntity("SecondaryParent2", source = AnotherSource)
+    replacement.addNamedChildEntity(anotherParentEntity, source = MySource)
+
+    builder.replaceBySource({ it is AnotherSource }, replacement)
+
+    val primaryChild = builder.entities(NamedChildEntity::class.java).find { it.childProperty == "PrimaryChild" }!!
+    assertEquals("PrimaryParent", primaryChild.parent.name)
   }
 
   private fun resetChanges() {

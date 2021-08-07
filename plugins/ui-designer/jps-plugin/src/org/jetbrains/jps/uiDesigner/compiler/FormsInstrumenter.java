@@ -170,7 +170,7 @@ public final class FormsInstrumenter extends FormsBuilder {
       final CompiledClass compiled = findClassFile(outConsumer, classToBind);
       if (compiled == null) {
         context.processMessage(new CompilerMessage(
-          getPresentableName(), BuildMessage.Kind.WARNING, FormBundle.message("class.to.bind.does.not.exist", classToBind), formFile.getAbsolutePath())
+          getPresentableName(), BuildMessage.Kind.ERROR, FormBundle.message("class.to.bind.does.not.exist", classToBind), formFile.getAbsolutePath())
         );
         continue;
       }

@@ -20,4 +20,5 @@ interface ToolbarSettings {
 
   fun getShowToolbarInNavigationBar(): Boolean
 
+  fun showSettingsEntryPointInStatusBar(): Boolean = false
 }

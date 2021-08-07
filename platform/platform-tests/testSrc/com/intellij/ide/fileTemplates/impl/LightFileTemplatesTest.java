@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.fileTemplates.impl;
 
 import com.intellij.diagnostic.PluginException;
@@ -8,7 +8,6 @@ import com.intellij.ide.fileTemplates.FileTemplatesScheme;
 import com.intellij.ide.fileTemplates.InternalTemplateBean;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.DefaultLogger;
 import com.intellij.openapi.extensions.DefaultPluginDescriptor;
 import com.intellij.openapi.extensions.ExtensionPoint;
@@ -142,7 +141,7 @@ public class LightFileTemplatesTest extends LightPlatformTestCase {
       manager.setCurrentScheme(manager.getProjectScheme());
       manager.saveAllTemplates();
 
-      FileTemplateSettings settings = ServiceManager.getService(project, FileTemplateSettings.class);
+      FileTemplateSettings settings = project.getService(FileTemplateSettings.class);
       FTManager ftManager = settings.getDefaultTemplatesManager();
       Path root = ftManager.getConfigRoot();
       Files.createDirectories(root);
@@ -241,7 +240,7 @@ public class LightFileTemplatesTest extends LightPlatformTestCase {
       (CustomFileTemplate)myTemplateManager.addTemplate("foo.txt" + FileTemplateBase.TEMPLATE_CHILDREN_SUFFIX + "1", "txt");
     template.setChildren(new FileTemplate[]{child});
     myTemplateManager.saveAllTemplates();
-    FTManager ftManager = ServiceManager.getService(ProjectManager.getInstance().getDefaultProject(), FileTemplateSettings.class).getDefaultTemplatesManager();
+    FTManager ftManager = ProjectManager.getInstance().getDefaultProject().getService(FileTemplateSettings.class).getDefaultTemplatesManager();
     ftManager.getTemplates().clear();
     ftManager.loadCustomizedContent();
     FileTemplateBase loaded = ftManager.getTemplate("foo.txt");

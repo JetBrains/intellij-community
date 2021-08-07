@@ -1,14 +1,17 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.gradle.importing;
 
+import com.intellij.ide.IdeBundle;
 import com.intellij.ide.projectWizard.NewProjectWizardTestCase;
 import com.intellij.ide.projectWizard.ProjectTypeStep;
 import com.intellij.ide.util.projectWizard.ModuleWizardStep;
 import com.intellij.ide.util.projectWizard.ProjectBuilder;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.WriteAction;
+import com.intellij.openapi.externalSystem.model.DataNode;
+import com.intellij.openapi.externalSystem.model.project.ProjectData;
 import com.intellij.openapi.externalSystem.model.project.ProjectId;
-import com.intellij.openapi.externalSystem.settings.ExternalProjectSettings;
+import com.intellij.openapi.externalSystem.settings.AbstractExternalSystemSettings;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.externalSystem.util.environment.Environment;
 import com.intellij.openapi.module.Module;
@@ -22,7 +25,6 @@ import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.ui.TestDialog;
 import com.intellij.openapi.ui.TestDialogManager;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtilCore;
@@ -40,7 +42,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.service.project.wizard.AbstractGradleModuleBuilder;
 import org.jetbrains.plugins.gradle.service.project.wizard.GradleStructureWizardStep;
-import org.jetbrains.plugins.gradle.util.GradleConstants;
 import org.jetbrains.plugins.gradle.util.GradleImportingTestUtil;
 
 import java.io.File;
@@ -49,6 +50,7 @@ import java.util.*;
 import java.util.function.Consumer;
 
 import static com.intellij.openapi.externalSystem.test.ExternalSystemTestCase.collectRootsInside;
+import static org.jetbrains.plugins.gradle.util.GradleConstants.SYSTEM_ID;
 
 /**
  * @author Dmitry Avdeev
@@ -57,6 +59,69 @@ public class GradleProjectWizardTest extends NewProjectWizardTestCase {
   private static final String GRADLE_JDK_NAME = "Gradle JDK";
   private final List<Sdk> removedSdks = new SmartList<>();
   private String myJdkHome;
+
+  public void testGradleNPWPropertiesSuggestion() throws Exception {
+    Project project = createProjectFromTemplate(IdeBundle.message("empty.project.generator.name"), null, null);
+    assertModules(project);
+
+    String externalProjectPath1 = project.getBasePath() + "/untitled";
+    String externalProjectPath2 = project.getBasePath() + "/untitled1";
+    GradleImportingTestUtil.waitForProjectReload(() -> {
+      return createModuleFromTemplate("Gradle", null, project, step -> {
+        if (step instanceof GradleStructureWizardStep) {
+          GradleStructureWizardStep gradleStep = (GradleStructureWizardStep)step;
+          assertNull(gradleStep.getParentData());
+          assertEquals("untitled", gradleStep.getEntityName());
+          assertEquals(externalProjectPath1, gradleStep.getLocation());
+        }
+      });
+    });
+    GradleImportingTestUtil.waitForProjectReload(() -> {
+      return createModuleFromTemplate("Gradle", null, project, step -> {
+        if (step instanceof GradleStructureWizardStep) {
+          GradleStructureWizardStep gradleStep = (GradleStructureWizardStep)step;
+          assertNull(gradleStep.getParentData());
+          assertEquals("untitled1", gradleStep.getEntityName());
+          assertEquals(externalProjectPath2, gradleStep.getLocation());
+        }
+      });
+    });
+    assertModules(
+      project,
+      "untitled", "untitled.main", "untitled.test",
+      "untitled1", "untitled1.main", "untitled1.test"
+    );
+
+    DataNode<ProjectData> projectNode1 = ExternalSystemApiUtil.findProjectData(project, SYSTEM_ID, externalProjectPath1);
+    DataNode<ProjectData> projectNode2 = ExternalSystemApiUtil.findProjectData(project, SYSTEM_ID, externalProjectPath2);
+    GradleImportingTestUtil.waitForProjectReload(() -> {
+      return createModuleFromTemplate("Gradle", null, project, step -> {
+        if (step instanceof GradleStructureWizardStep) {
+          GradleStructureWizardStep gradleStep = (GradleStructureWizardStep)step;
+          gradleStep.setParentData(projectNode1.getData());
+          assertEquals("untitled2", gradleStep.getEntityName());
+          assertEquals(externalProjectPath1 + "/untitled2", gradleStep.getLocation());
+        }
+      });
+    });
+    GradleImportingTestUtil.waitForProjectReload(() -> {
+      return createModuleFromTemplate("Gradle", null, project, step -> {
+        if (step instanceof GradleStructureWizardStep) {
+          GradleStructureWizardStep gradleStep = (GradleStructureWizardStep)step;
+          gradleStep.setParentData(projectNode2.getData());
+          assertEquals("untitled2", gradleStep.getEntityName());
+          assertEquals(externalProjectPath2 + "/untitled2", gradleStep.getLocation());
+        }
+      });
+    });
+    assertModules(
+      project,
+      "untitled", "untitled.main", "untitled.test",
+      "untitled1", "untitled1.main", "untitled1.test",
+      "untitled.untitled2", "untitled.untitled2.main", "untitled.untitled2.test",
+      "untitled1.untitled2", "untitled1.untitled2.main", "untitled1.untitled2.test"
+    );
+  }
 
   public void testGradleProject() throws Exception {
     final String projectName = "testProject";
@@ -101,13 +166,17 @@ public class GradleProjectWizardTest extends NewProjectWizardTestCase {
                  "\n" +
                  "dependencies {\n" +
                  "    testImplementation 'org.junit.jupiter:junit-jupiter-api:5.7.0'\n" +
-                 "    testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:1.7.0'\n" +
+                 "    testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.7.0'\n" +
                  "}\n" +
                  "\n" +
                  "test {\n" +
                  "    useJUnitPlatform()\n" +
                  "}",
                  StringUtil.convertLineSeparators(VfsUtilCore.loadText(buildScript)));
+
+
+    AbstractExternalSystemSettings<?, ?, ?> settings = ExternalSystemApiUtil.getSettings(project, SYSTEM_ID);
+    assertEquals(1, settings.getLinkedProjectsSettings().size());
 
     Module childModule = GradleImportingTestUtil.waitForProjectReload(() -> {
       return createModuleFromTemplate("Gradle", null, project, step -> {
@@ -150,20 +219,11 @@ public class GradleProjectWizardTest extends NewProjectWizardTestCase {
 
   @Override
   protected void createWizard(@Nullable Project project) throws IOException {
-    Collection<?> linkedProjectsSettings = project == null
-                                        ? Collections.emptyList()
-                                        : ExternalSystemApiUtil.getSettings(project, GradleConstants.SYSTEM_ID).getLinkedProjectsSettings();
-    assertTrue(linkedProjectsSettings.size() <= 1);
-    File directory;
-    Object settings = ContainerUtil.getFirstItem(linkedProjectsSettings);
-    if (settings instanceof ExternalProjectSettings) {
-      directory = new File(((ExternalProjectSettings)settings).getExternalProjectPath());
-      FileUtil.createDirectory(directory);
-      Disposer.register(getTestRootDisposable(), () -> FileUtil.delete(directory));
+    if (project != null) {
+      LocalFileSystem localFileSystem = LocalFileSystem.getInstance();
+      localFileSystem.refreshAndFindFileByPath(project.getBasePath());
     }
-    else {
-      directory = createTempDirectoryWithSuffix("new").toFile();
-    }
+    File directory = project == null ? createTempDirectoryWithSuffix("New").toFile() : null;
     if (myWizard != null) {
       Disposer.dispose(myWizard.getDisposable());
       myWizard = null;

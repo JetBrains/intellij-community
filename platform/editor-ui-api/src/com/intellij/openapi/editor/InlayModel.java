@@ -31,7 +31,7 @@ public interface InlayModel {
    * Introduces an inline visual element at a given offset, its width and appearance is defined by the provided renderer.
    *
    * @param relatesToPrecedingText whether element is associated with preceding or following text
-   *                               (see {@link Inlay#isRelatedToPrecedingText()})
+   *                               (see {@link InlayProperties#relatesToPrecedingText(boolean)})
    * @return {@code null} if requested element cannot be created, e.g. if corresponding functionality
    *         is not supported by current editor instance.
    */
@@ -42,21 +42,32 @@ public interface InlayModel {
    * Introduces an inline visual element at a given offset, its width and appearance is defined by the provided renderer.
    *
    * @param relatesToPrecedingText whether element is associated with preceding or following text
-   *                               (see {@link Inlay#isRelatedToPrecedingText()})
+   *                               (see {@link InlayProperties#relatesToPrecedingText(boolean)})
    * @param priority if multiple elements are requested to be displayed for the same position, this parameter defines the relative
    *    *                 positioning of such elements (larger priority value means the element will be rendered closer to the left)
    * @return {@code null} if requested element cannot be created, e.g. if corresponding functionality
    *         is not supported by current editor instance.
    */
+  @Nullable <T extends EditorCustomElementRenderer> Inlay<T> addInlineElement(int offset,
+                                                                              boolean relatesToPrecedingText,
+                                                                              int priority,
+                                                                              @NotNull T renderer);
+
+  /**
+   * Introduces an inline visual element at a given offset, its width and appearance is defined by the provided renderer.
+   *
+   * @return {@code null} if requested element cannot be created, e.g. if corresponding functionality
+   *         is not supported by current editor instance.
+   */
   @Nullable
-  <T extends EditorCustomElementRenderer> Inlay<T> addInlineElement(int offset, boolean relatesToPrecedingText, int priority, @NotNull T renderer);
+  <T extends EditorCustomElementRenderer> Inlay<T> addInlineElement(int offset, @NotNull InlayProperties properties, @NotNull T renderer);
 
   /**
    * Introduces a 'block' visual element at a given offset, its size and appearance is defined by the provided renderer. This element
    * will be displayed between lines of text.
    *
    * @param relatesToPrecedingText whether element is associated with preceding or following text
-   *                               (see {@link Inlay#isRelatedToPrecedingText()})
+   *                               (see {@link InlayProperties#relatesToPrecedingText(boolean)})
    * @param showAbove whether element will be displayed above or below corresponding visual line
    * @param priority if multiple elements are requested to be displayed for the same visual line, this parameter defines the relative
    *                 positioning of such elements (larger priority value means the element will be rendered closer to the text)
@@ -72,17 +83,37 @@ public interface InlayModel {
                                                                 int priority,
                                                                 @NotNull T renderer);
 
+  /**
+   * Introduces a 'block' visual element at a given offset, its size and appearance is defined by the provided renderer. This element
+   * will be displayed between lines of text.
+   *
+   * @return {@code null} if requested element cannot be created, e.g. if corresponding functionality
+   *         is not supported by current editor instance.
+   */
+  @Nullable
+  <T extends EditorCustomElementRenderer> Inlay<T> addBlockElement(int offset, @NotNull InlayProperties properties, @NotNull T renderer);
+
 
   /**
    * Introduces a visual element, which will be displayed after the end of corresponding logical line.
    *
    * @param relatesToPrecedingText whether element is associated with preceding or following text
-   *                               (see {@link Inlay#isRelatedToPrecedingText()})
+   *                               (see {@link InlayProperties#relatesToPrecedingText(boolean)})
    * @return {@code null} if requested element cannot be created, e.g. if corresponding functionality
    *         is not supported by current editor instance.
    */
   @Nullable
   <T extends EditorCustomElementRenderer> Inlay<T> addAfterLineEndElement(int offset, boolean relatesToPrecedingText, @NotNull T renderer);
+
+  /**
+   * Introduces a visual element, which will be displayed after the end of corresponding logical line.
+   *
+   * @return {@code null} if requested element cannot be created, e.g. if corresponding functionality
+   *         is not supported by current editor instance.
+   */
+  @Nullable <T extends EditorCustomElementRenderer> Inlay<T> addAfterLineEndElement(int offset,
+                                                                                    @NotNull InlayProperties properties,
+                                                                                    @NotNull T renderer);
 
   /**
    * Returns a list of inline elements for a given offset range (both limits are inclusive). Returned list is sorted by offset.
@@ -209,9 +240,10 @@ public interface InlayModel {
 
   /**
    * When text is inserted at inline element's offset, resulting element's position is determined by its
-   * {@link Inlay#isRelatedToPrecedingText()} property. But to enable natural editing experience around inline elements (so that typed text
-   * appears at caret visual position), caret position is also taken into account at document insertion. This method allows to disable
-   * accounting for caret position, and can be useful for document modifications which don't originate directly from user actions.
+   * {@link InlayProperties#relatesToPrecedingText(boolean)} property. But to enable natural editing experience around inline elements
+   * (so that typed text appears at caret visual position), caret position is also taken into account at document insertion.
+   * This method allows to disable accounting for caret position, and can be useful for document modifications which don't originate
+   * directly from user actions.
    */
   void setConsiderCaretPositionOnDocumentUpdates(boolean enabled);
 

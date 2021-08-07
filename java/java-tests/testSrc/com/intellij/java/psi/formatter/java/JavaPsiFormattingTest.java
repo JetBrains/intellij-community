@@ -52,7 +52,7 @@ public class JavaPsiFormattingTest extends AbstractJavaFormatterTest {
                  "    PsiReferenceParameterList\n" +
                  "      <empty list>\n" +
                  "    PsiIdentifier:y('y')\n",
-                 DebugUtil.psiToString(expr, false));
+                 DebugUtil.psiToString(expr, true));
   }
 
   public void testPostponedFormattingNotAffectedByGc() {

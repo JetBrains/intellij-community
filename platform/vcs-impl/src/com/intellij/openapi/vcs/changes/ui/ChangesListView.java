@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes.ui;
 
 import com.intellij.ide.dnd.DnDAware;
@@ -14,11 +14,13 @@ import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.PopupHandler;
+import com.intellij.util.ArrayUtil;
+import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
 import com.intellij.util.ui.tree.TreeUtil;
+import com.intellij.vcs.commit.EditedCommitNode;
 import com.intellij.vcsUtil.VcsUtil;
-import it.unimi.dsi.fastutil.objects.ObjectOpenCustomHashSet;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -37,10 +39,12 @@ import java.util.stream.Stream;
 import static com.intellij.openapi.vcs.changes.ChangesUtil.getNavigatableArray;
 import static com.intellij.openapi.vcs.changes.ChangesUtil.getPathsCaseSensitive;
 import static com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode.*;
+import static com.intellij.openapi.vcs.changes.ui.VcsTreeModelData.findTagNode;
+import static com.intellij.util.ObjectUtils.notNull;
 import static com.intellij.vcs.commit.ChangesViewCommitPanelKt.subtreeRootObject;
 
 // TODO: Check if we could extend DnDAwareTree here instead of directly implementing DnDAware
-public class ChangesListView extends ChangesTree implements DataProvider, DnDAware {
+public class ChangesListView extends HoverChangesTree implements DataProvider, DnDAware {
   @NonNls public static final String HELP_ID = "ideaInterface.changes";
   @NonNls public static final DataKey<ChangesListView> DATA_KEY = DataKey.create("ChangeListView");
   @NonNls public static final DataKey<Iterable<FilePath>> UNVERSIONED_FILE_PATHS_DATA_KEY = DataKey.create("ChangeListView.UnversionedFiles");
@@ -73,6 +77,12 @@ public class ChangesListView extends ChangesTree implements DataProvider, DnDAwa
     if (subtreeRootObject instanceof LocalChangeList) return !((LocalChangeList)subtreeRootObject).getChanges().isEmpty();
     if (subtreeRootObject == UNVERSIONED_FILES_TAG) return true;
     return false;
+  }
+
+  @Nullable
+  @Override
+  public HoverIcon getHoverIcon(@NotNull ChangesBrowserNode<?> node) {
+    return null;
   }
 
   @Override
@@ -314,8 +324,17 @@ public class ChangesListView extends ChangesTree implements DataProvider, DnDAwa
       .filter(new DistinctChangePredicate());
   }
 
+  @NotNull
+  static JBIterable<ChangesBrowserNode<?>> getChangesNodes(TreePath @Nullable [] paths) {
+    return JBIterable.of(paths)
+      .map(TreePath::getLastPathComponent)
+      .map(node -> ((ChangesBrowserNode<?>)node))
+      .flatMap(node -> node.traverse())
+      .unique();
+  }
+
   @Nullable
-  private static Change toHijackedChange(@NotNull Project project, @NotNull VirtualFile file) {
+  public static Change toHijackedChange(@NotNull Project project, @NotNull VirtualFile file) {
     VcsCurrentRevisionProxy before = VcsCurrentRevisionProxy.create(file, project);
     if (before != null) {
       ContentRevision afterRevision = new CurrentContentRevision(VcsUtil.getFilePath(file));
@@ -378,15 +397,35 @@ public class ChangesListView extends ChangesTree implements DataProvider, DnDAwa
     return getRoot().traverseObjectsUnder().filter(Change.class);
   }
 
+  @NotNull
+  public JBIterable<ChangesBrowserChangeNode> getChangesNodes() {
+    return TreeUtil.treeNodeTraverser(getRoot()).traverse().filter(ChangesBrowserChangeNode.class);
+  }
+
   @Nullable
   public List<Change> getAllChangesFromSameChangelist(@NotNull Change change) {
+    return getAllChangesUnder(change, ChangesBrowserChangeListNode.class);
+  }
+
+  @Nullable
+  public List<Change> getAllChangesFromSameAmendNode(@NotNull Change change) {
+    return getAllChangesUnder(change, EditedCommitNode.class);
+  }
+
+  @Nullable
+  public List<Change> getAllChangesUnder(@NotNull Change change, Class<? extends ChangesBrowserNode<?>> @NotNull ... nodeClasses) {
     DefaultMutableTreeNode node = findNodeInTree(change);
+    boolean changeListNodeRequested = ArrayUtil.contains(ChangesBrowserChangeListNode.class, nodeClasses);
+
     while (node != null) {
-      if (node instanceof ChangesBrowserChangeListNode) {
-        return ((ChangesBrowserChangeListNode)node).getAllChangesUnder();
+      if (ArrayUtil.contains(node.getClass(), nodeClasses)) {
+        return ((ChangesBrowserNode<?>)node).getAllChangesUnder();
       }
-      if (node == getRoot() && Registry.is("vcs.skip.single.default.changelist")) {
-        return getRoot().getAllChangesUnder();
+      if (node == getRoot()) {
+        if (changeListNodeRequested && (Registry.is("vcs.skip.single.default.changelist") ||
+                                        !ChangeListManager.getInstance(myProject).areChangeListsEnabled())) {
+          return getRoot().getAllChangesUnder();
+        }
       }
       node = (DefaultMutableTreeNode)node.getParent();
     }
@@ -399,6 +438,11 @@ public class ChangesListView extends ChangesTree implements DataProvider, DnDAwa
   }
 
   @NotNull
+  public JBIterable<ChangesBrowserNode<?>> getSelectedChangesNodes() {
+    return getChangesNodes(getSelectionPaths());
+  }
+
+  @NotNull
   private JBIterable<ChangeList> getSelectedChangeLists() {
     return getSelectionObjects()
       .filter(userObject -> userObject instanceof ChangeList)
@@ -408,7 +452,7 @@ public class ChangesListView extends ChangesTree implements DataProvider, DnDAwa
 
   @Override
   public void installPopupHandler(@NotNull ActionGroup group) {
-    PopupHandler.installPopupHandler(this, group, ActionPlaces.CHANGES_VIEW_POPUP, ActionManager.getInstance());
+    PopupHandler.installPopupMenu(this, group, ActionPlaces.CHANGES_VIEW_POPUP);
   }
 
   @Override
@@ -445,19 +489,31 @@ public class ChangesListView extends ChangesTree implements DataProvider, DnDAwa
   }
 
   @Nullable
-  public DefaultMutableTreeNode findNodeInTree(Object userObject) {
-    if (userObject instanceof LocalChangeList) {
-      return TreeUtil.nodeChildren(getRoot()).filter(DefaultMutableTreeNode.class).find(node -> userObject.equals(node.getUserObject()));
-    }
-    if (userObject instanceof ChangeListChange) {
-      return TreeUtil.findNode(getRoot(), node -> ChangeListChange.HASHING_STRATEGY.equals(node.getUserObject(), userObject));
-    }
-    return TreeUtil.findNodeWithObject(getRoot(), userObject);
+  public DefaultMutableTreeNode findNodeInTree(@Nullable Object userObject) {
+    return findNodeInTree(userObject, null);
   }
 
   @Nullable
-  public TreePath findNodePathInTree(Object userObject) {
-    DefaultMutableTreeNode node = findNodeInTree(userObject);
+  public DefaultMutableTreeNode findNodeInTree(@Nullable Object userObject, @Nullable Object tag) {
+    DefaultMutableTreeNode fromNode = tag != null ? notNull(findTagNode(this, tag), getRoot()) : getRoot();
+
+    if (userObject instanceof LocalChangeList) {
+      return TreeUtil.nodeChildren(fromNode).filter(DefaultMutableTreeNode.class).find(node -> userObject.equals(node.getUserObject()));
+    }
+    if (userObject instanceof ChangeListChange) {
+      return TreeUtil.findNode(fromNode, node -> ChangeListChange.HASHING_STRATEGY.equals(node.getUserObject(), userObject));
+    }
+    return TreeUtil.findNodeWithObject(fromNode, userObject);
+  }
+
+  @Nullable
+  public TreePath findNodePathInTree(@Nullable Object userObject) {
+    return findNodePathInTree(userObject, null);
+  }
+
+  @Nullable
+  public TreePath findNodePathInTree(@Nullable Object userObject, @Nullable Object tag) {
+    DefaultMutableTreeNode node = findNodeInTree(userObject, tag);
     return node != null ? TreeUtil.getPathFromRoot(node) : null;
   }
 
@@ -476,7 +532,7 @@ public class ChangesListView extends ChangesTree implements DataProvider, DnDAwa
 
     @Override
     public boolean value(Change change) {
-      if (seen == null) seen = new ObjectOpenCustomHashSet<>(ChangeListChange.HASHING_STRATEGY);
+      if (seen == null) seen = CollectionFactory.createCustomHashingStrategySet(ChangeListChange.HASHING_STRATEGY);
       return seen.add(change);
     }
   }

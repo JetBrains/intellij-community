@@ -1,15 +1,25 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.usages.impl;
 
+import com.intellij.ide.tags.TagManager;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.pom.Navigatable;
+import com.intellij.psi.PsiElement;
+import com.intellij.reference.SoftReference;
+import com.intellij.ui.ColoredText;
+import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.usages.TextChunk;
 import com.intellij.usages.Usage;
 import com.intellij.usages.UsageGroup;
-import com.intellij.usages.UsageView;
+import com.intellij.usages.UsageNodePresentation;
 import com.intellij.usages.rules.MergeableUsage;
 import com.intellij.util.Consumer;
+import com.intellij.util.IconUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
@@ -18,12 +28,15 @@ import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
 
+import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.MutableTreeNode;
 import javax.swing.tree.TreeNode;
+import java.awt.*;
+import java.lang.ref.Reference;
+import java.util.List;
 import java.util.*;
 
 public class GroupNode extends Node implements Navigatable, Comparable<GroupNode> {
@@ -51,7 +64,7 @@ public class GroupNode extends Node implements Navigatable, Comparable<GroupNode
   }
 
   public String toString() {
-    String result = getGroup() == null ? "" : getGroup().getText(null);
+    String result = getGroup() == null ? "" : getGroup().getPresentableGroupText();
     synchronized (this) {
       return result + ContainerUtil.getFirstItems(myChildren, 10);
     }
@@ -76,19 +89,6 @@ public class GroupNode extends Node implements Navigatable, Comparable<GroupNode
     synchronized (this) {
       return insertGroupNode(group, ruleIndex, edtModelToSwingNodeChangesQueue);
     }
-  }
-
-  private boolean isNodeTreePathValid() {
-    boolean isValid = true;
-    if (this.isStructuralChangeDetected()) {
-      isValid = false;
-    }
-    else {
-      if (getParent() != null) {
-        isValid = !((Node)getParent()).isStructuralChangeDetected();
-      }
-    }
-    return isValid;
   }
 
 
@@ -232,12 +232,7 @@ public class GroupNode extends Node implements Navigatable, Comparable<GroupNode
   @NotNull
   UsageNode addOrGetUsage(@NotNull Usage usage,
                           boolean filterDuplicateLines,
-                          @NotNull Consumer<? super UsageViewImpl.NodeChange> edtModelToSwingNodeChangesQueue,
-                          @NotNull Consumer<? super Usage> invalidatedUsagesConsumer) {
-    if (!isNodeTreePathValid()) {
-      invalidatedUsagesConsumer.consume(usage);
-      return new UsageNode(this, usage);
-    }
+                          @NotNull Consumer<? super UsageViewImpl.NodeChange> edtModelToSwingNodeChangesQueue) {
     UsageNode newNode;
     synchronized (this) {
       if (filterDuplicateLines) {
@@ -270,28 +265,6 @@ public class GroupNode extends Node implements Navigatable, Comparable<GroupNode
       if (!(parent instanceof GroupNode)) return;
       groupNode = (GroupNode)parent;
     }
-  }
-
-  @Override
-  @TestOnly
-  public String tree2string(int indent, @NotNull String lineSeparator) {
-    StringBuffer result = new StringBuffer();
-    StringUtil.repeatSymbol(result, ' ', indent);
-
-    if (getGroup() != null) result.append(getGroup());
-    result.append("[");
-    result.append(lineSeparator);
-
-    for (Node node : myChildren) {
-      result.append(node.tree2string(indent + 4, lineSeparator));
-      result.append(lineSeparator);
-    }
-
-    StringUtil.repeatSymbol(result, ' ', indent);
-    result.append("]");
-    result.append(lineSeparator);
-
-    return result.toString();
   }
 
   @Override
@@ -389,8 +362,8 @@ public class GroupNode extends Node implements Navigatable, Comparable<GroupNode
 
   @NotNull
   @Override
-  protected String getText(@NotNull UsageView view) {
-    return getGroup().getText(view);
+  protected String getNodeText() {
+    return getGroup().getPresentableGroupText();
   }
 
   @NotNull
@@ -415,6 +388,37 @@ public class GroupNode extends Node implements Navigatable, Comparable<GroupNode
     return list;
   }
 
+  private volatile Reference<UsageNodePresentation> myCachedPresentation;
+
+  @Override
+  public @Nullable UsageNodePresentation getCachedPresentation() {
+    return SoftReference.dereference(myCachedPresentation);
+  }
+
+  @Override
+  protected void updateCachedPresentation() {
+    UsageGroup group = getGroup();
+    if (group == null || !group.isValid()) {
+      return;
+    }
+    PsiElement element = group instanceof DataProvider
+                         ? CommonDataKeys.PSI_ELEMENT.getData((DataProvider)group)
+                         : null;
+    FileStatus fileStatus = group.getFileStatus();
+    Color foregroundColor = fileStatus != null ? fileStatus.getColor() : null;
+    var tagIconAndText = TagManager.getTagIconAndText(element);
+    Icon icon = IconUtil.rowIcon(tagIconAndText.first, group.getIcon());
+    List<TextChunk> chunks = new ArrayList<>();
+    for (ColoredText.Fragment fragment : tagIconAndText.second.fragments()) {
+      chunks.add(new TextChunk(fragment.fragmentAttributes().toTextAttributes(), fragment.fragmentText()));
+    }
+    TextAttributes attributes = SimpleTextAttributes.REGULAR_ATTRIBUTES.toTextAttributes();
+    attributes.setForegroundColor(foregroundColor);
+    chunks.add(new TextChunk(attributes, group.getPresentableGroupText()));
+    UsageNodePresentation presentation = new UsageNodePresentation(icon, chunks.toArray(TextChunk.EMPTY_ARRAY));
+    myCachedPresentation = new SoftReference<>(presentation);
+  }
+
   @NotNull
   static Root createRoot() {
     return new Root();
@@ -428,7 +432,7 @@ public class GroupNode extends Node implements Navigatable, Comparable<GroupNode
 
     @NotNull
     @Override
-    protected String getText(@NotNull UsageView view) {
+    protected String getNodeText() {
       return "";
     }
   }

@@ -3,6 +3,7 @@ package com.intellij.ide.actions.searcheverywhere;
 
 import com.google.common.collect.Lists;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -13,6 +14,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+@ApiStatus.Internal
 abstract class SearchListModel extends AbstractListModel<Object> {
 
   static final Object MORE_ELEMENT = new Object();
@@ -95,11 +97,6 @@ abstract class SearchListModel extends AbstractListModel<Object> {
   public <Item> SearchEverywhereContributor<Item> getContributorForIndex(int index) {
     //noinspection unchecked
     return (SearchEverywhereContributor<Item>)listElements.get(index).getContributor();
-  }
-
-  @SuppressWarnings("unchecked")
-  public @Nullable ListCellRenderer<? super Object> getRendererForIndex(int index) {
-    return (ListCellRenderer<? super Object>)listElements.get(index).getRenderer();
   }
 
   @NotNull

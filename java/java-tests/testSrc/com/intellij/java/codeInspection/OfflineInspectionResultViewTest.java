@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.codeInspection;
 
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
@@ -102,7 +102,7 @@ public class OfflineInspectionResultViewTest extends TestSourceBasedTestCase {
     assert files != null;
     final Map<String, Map<String, Set<OfflineProblemDescriptor>>> map = new HashMap<>();
     for (File file : files) {
-      final Map<String, Set<OfflineProblemDescriptor>> descriptors = OfflineViewParseUtil.parse(file);
+      Map<String, Set<OfflineProblemDescriptor>> descriptors = OfflineViewParseUtil.parse(file.toPath());
       for (Set<OfflineProblemDescriptor> problemDescriptors : descriptors.values()) {
         for (OfflineProblemDescriptor descriptor : problemDescriptors) {
           descriptor.setModule(moduleName);
@@ -121,7 +121,7 @@ public class OfflineInspectionResultViewTest extends TestSourceBasedTestCase {
     PlatformTestUtil.dispatchAllEventsInIdeEventQueue();
     TreeUtil.expandAll(tree);
     PlatformTestUtil.dispatchAllEventsInIdeEventQueue();
-    PlatformTestUtil.assertTreeEqual(tree, "-InspectionViewTree\n" +
+    PlatformTestUtil.assertTreeEqual(tree, "-Inspections Results\n" +
                                            " -Java\n" +
                                            "  -Declaration redundancy\n" +
                                            "   -Unused declaration\n" +
@@ -153,7 +153,7 @@ public class OfflineInspectionResultViewTest extends TestSourceBasedTestCase {
                                            "      -element no longer exists\n" +
                                            "       '()' called on itself\n"
                                           );
-    tree.setSelectionRow(29);
+    tree.setSelectionRow(30);
     final ProblemDescriptionNode node = (ProblemDescriptionNode)tree.getSelectionModel().getSelectionPath().getLastPathComponent();
     assertFalse(node.isValid());
   }
@@ -164,7 +164,7 @@ public class OfflineInspectionResultViewTest extends TestSourceBasedTestCase {
     PlatformTestUtil.dispatchAllEventsInIdeEventQueue();
     TreeUtil.expandAll(tree);
     PlatformTestUtil.dispatchAllEventsInIdeEventQueue();
-    PlatformTestUtil.assertTreeEqual(tree, "-InspectionViewTree\n" +
+    PlatformTestUtil.assertTreeEqual(tree, "-Inspections Results\n" +
                                            " -Java\n" +
                                            "  -Declaration redundancy\n" +
                                            "   -Unused declaration\n" +
@@ -202,7 +202,7 @@ public class OfflineInspectionResultViewTest extends TestSourceBasedTestCase {
     PlatformTestUtil.dispatchAllEventsInIdeEventQueue();
     TreeUtil.expandAll(tree);
     PlatformTestUtil.dispatchAllEventsInIdeEventQueue();
-    PlatformTestUtil.assertTreeEqual(tree, "-InspectionViewTree\n" +
+    PlatformTestUtil.assertTreeEqual(tree, "-Inspections Results\n" +
                                            " -Java\n" +
                                            "  -Declaration redundancy\n" +
                                            "   -Unused declaration\n" +
@@ -234,7 +234,7 @@ public class OfflineInspectionResultViewTest extends TestSourceBasedTestCase {
     tree.getInspectionTreeModel().traverse(root).forEach(node -> assertTrue("node = " + node, node.isExcluded()));
     myView.getGlobalInspectionContext().getUIOptions().FILTER_RESOLVED_ITEMS = false;
     tree = updateTree();
-    PlatformTestUtil.assertTreeEqual(tree, "-InspectionViewTree\n"
+    PlatformTestUtil.assertTreeEqual(tree, "-Inspections Results\n"
                                            + " -Java\n" +
                                            "  -Declaration redundancy\n" +
                                            "   -Unused declaration\n" +

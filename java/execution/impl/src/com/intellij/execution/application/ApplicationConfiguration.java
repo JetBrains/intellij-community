@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.application;
 
 import com.intellij.diagnostic.logging.LogConfigurationPanel;
@@ -11,6 +11,7 @@ import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.target.LanguageRuntimeType;
 import com.intellij.execution.target.TargetEnvironmentAwareRunProfile;
 import com.intellij.execution.target.TargetEnvironmentConfiguration;
+import com.intellij.execution.target.TargetEnvironmentConfigurations;
 import com.intellij.execution.target.java.JavaLanguageRuntimeConfiguration;
 import com.intellij.execution.target.java.JavaLanguageRuntimeType;
 import com.intellij.execution.util.JavaParametersUtil;
@@ -36,6 +37,7 @@ import com.intellij.util.PathUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import java.util.*;
 
@@ -156,7 +158,7 @@ public class ApplicationConfiguration extends JavaRunConfigurationBase
 
   @Override
   public void checkConfiguration() throws RuntimeConfigurationException {
-    if (getDefaultTargetName() == null) {
+    if (TargetEnvironmentConfigurations.getEffectiveTargetName(this, getProject()) == null) {
       JavaParametersUtil.checkAlternativeJRE(this);
     }
     final JavaRunConfigurationModule configurationModule = checkClass();
@@ -294,7 +296,7 @@ public class ApplicationConfiguration extends JavaRunConfigurationBase
 
   @Override
   public boolean needPrepareTarget() {
-    return getDefaultTargetName() != null || runsUnderWslJdk();
+    return TargetEnvironmentAwareRunProfile.super.needPrepareTarget() || runsUnderWslJdk();
   }
 
   @Override
@@ -396,10 +398,20 @@ public class ApplicationConfiguration extends JavaRunConfigurationBase
     public JavaApplicationCommandLineState(@NotNull final T configuration, final ExecutionEnvironment environment) {
       super(configuration, environment);
     }
+    
+    @TestOnly
+    public JavaParameters createJavaParameters4Test() throws ExecutionException {
+      return createJavaParameters();
+    }
 
     @Override
     protected boolean isProvidedScopeIncluded() {
       return myConfiguration.isProvidedScopeIncluded();
+    }
+
+    @Override
+    protected boolean isReadActionRequired() {
+      return false;
     }
   }
 }

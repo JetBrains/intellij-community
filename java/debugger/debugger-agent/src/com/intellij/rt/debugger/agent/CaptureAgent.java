@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.rt.debugger.agent;
 
 import org.jetbrains.capture.org.objectweb.asm.*;
@@ -16,6 +16,7 @@ import java.util.jar.JarFile;
 public final class CaptureAgent {
   public static final String AGENT_STORAGE_JAR = "debugger-agent-storage.jar";
   private static Instrumentation ourInstrumentation;
+  private static final Set<Class> mySkipped = new HashSet<Class>();
 
   private static final Map<String, List<InstrumentPoint>> myInstrumentPoints = new HashMap<String, List<InstrumentPoint>>();
 
@@ -32,6 +33,18 @@ public final class CaptureAgent {
       appendStorageJar(instrumentation);
 
       readSettings(args);
+
+      // remember already loaded and not instrumented classes to skip them during retransform
+      for (Class aClass : instrumentation.getAllLoadedClasses()) {
+        List<InstrumentPoint> points = myInstrumentPoints.get(Type.getInternalName(aClass));
+        if (points != null) {
+          for (InstrumentPoint point : points) {
+            if (!point.myCapture) {
+              mySkipped.add(aClass);
+            }
+          }
+        }
+      }
 
       instrumentation.addTransformer(new CaptureTransformer(), true);
 
@@ -165,7 +178,7 @@ public final class CaptureAgent {
                             Class<?> classBeingRedefined,
                             ProtectionDomain protectionDomain,
                             byte[] classfileBuffer) {
-      if (className != null && classBeingRedefined == null) { // we do not support redefinition or retransform
+      if (className != null && (classBeingRedefined == null || !mySkipped.contains(classBeingRedefined))) {
         List<InstrumentPoint> classPoints = myInstrumentPoints.get(className);
         if (classPoints != null) {
           try {
@@ -206,6 +219,7 @@ public final class CaptureAgent {
     private final List<? extends InstrumentPoint> myInstrumentPoints;
     private final Map<String, String> myFields = new HashMap<String, String>();
     private String mySuperName;
+    private boolean myIsInterface;
 
     CaptureInstrumentor(int api, ClassVisitor cv, List<? extends InstrumentPoint> instrumentPoints) {
       super(api, cv);
@@ -223,6 +237,7 @@ public final class CaptureAgent {
     @Override
     public void visit(int version, int access, String name, String signature, String superName, String[] interfaces) {
       mySuperName = superName;
+      myIsInterface = (access & Opcodes.ACC_INTERFACE) != 0;
       super.visit(version, access, name, signature, superName, interfaces);
     }
 
@@ -313,7 +328,7 @@ public final class CaptureAgent {
       }
       // original call
       mv.visitMethodInsn(isStatic ? Opcodes.INVOKESTATIC : Opcodes.INVOKESPECIAL,
-                         insertPoint.myClassName, getNewName(insertPoint.myMethodName), desc, false);
+                         insertPoint.myClassName, getNewName(insertPoint.myMethodName), desc, myIsInterface);
 
       Label end = new Label();
       mv.visitLabel(end);
@@ -610,11 +625,16 @@ public final class CaptureAgent {
     addCapture("scala/concurrent/impl/CallbackRunnable", CONSTRUCTOR, THIS_KEY_PROVIDER);
     addInsert("scala/concurrent/impl/CallbackRunnable", "run", THIS_KEY_PROVIDER);
 
+    addCapture("scala/concurrent/impl/Promise$Transformation", CONSTRUCTOR, THIS_KEY_PROVIDER);
+    addInsert("scala/concurrent/impl/Promise$Transformation", "run", THIS_KEY_PROVIDER);
+
     // akka-scala
     addCapture("akka/actor/ScalaActorRef", "$bang", FIRST_PARAM);
     addCapture("akka/actor/RepointableActorRef", "$bang", FIRST_PARAM);
     addCapture("akka/actor/LocalActorRef", "$bang", FIRST_PARAM);
+    addCapture("akka/actor/ActorRef", "$bang", FIRST_PARAM);
     addInsert("akka/actor/Actor$class", "aroundReceive", param(2));
+    addInsert("akka/actor/ActorCell", "receiveMessage", FIRST_PARAM);
 
     // JavaFX
     addCapture("com/sun/glass/ui/InvokeLaterDispatcher", "invokeLater", FIRST_PARAM);

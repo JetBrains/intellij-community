@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.util;
 
 import com.intellij.reference.SoftReference;
@@ -7,6 +7,7 @@ import it.unimi.dsi.fastutil.ints.Int2ObjectMaps;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
 import java.lang.ref.Reference;
@@ -16,10 +17,7 @@ public final class LastComputedIconCache {
 
   public static @Nullable Icon get(@NotNull UserDataHolder holder, int flags) {
     Int2ObjectMap<Icon> map = SoftReference.dereference(holder.getUserData(LAST_COMPUTED_ICON));
-    if (map == null) {
-      return null;
-    }
-    return map.get(flags);
+    return map == null ? null : map.get(flags);
   }
 
   public static void put(@NotNull UserDataHolder holder, Icon icon, int flags) {
@@ -47,5 +45,10 @@ public final class LastComputedIconCache {
     else {
       map.put(flags, icon);
     }
+  }
+
+  @TestOnly
+  public static void clear(@NotNull UserDataHolder holder) {
+    holder.putUserData(LAST_COMPUTED_ICON, null);
   }
 }

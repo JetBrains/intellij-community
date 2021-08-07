@@ -2,8 +2,10 @@ package com.intellij.jps.cache.loader;
 
 import com.intellij.compiler.CompilerWorkspaceConfiguration;
 import com.intellij.compiler.server.BuildManager;
+import com.intellij.compiler.server.PortableCachesLoadListener;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.jps.cache.JpsCacheBundle;
+import com.intellij.jps.cache.JpsCacheStartupActivity;
 import com.intellij.jps.cache.client.JpsServerClient;
 import com.intellij.jps.cache.git.GitCommitsIterator;
 import com.intellij.jps.cache.git.GitRepositoryUtil;
@@ -11,13 +13,10 @@ import com.intellij.jps.cache.loader.JpsOutputLoader.LoaderStatus;
 import com.intellij.jps.cache.model.BuildTargetState;
 import com.intellij.jps.cache.model.JpsLoaderContext;
 import com.intellij.jps.cache.ui.SegmentedProgressIndicatorManager;
-import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationAction;
 import com.intellij.notification.NotificationType;
-import com.intellij.notification.Notifications;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -46,12 +45,13 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import static com.intellij.execution.process.ProcessIOExecutorService.INSTANCE;
+import static com.intellij.jps.cache.statistics.JpsCacheUsagesCollector.*;
 import static com.intellij.jps.cache.ui.JpsLoaderNotifications.*;
 import static org.jetbrains.jps.model.serialization.java.JpsJavaModelSerializerExtension.OUTPUT_TAG;
 import static org.jetbrains.jps.model.serialization.java.JpsJavaModelSerializerExtension.URL_ATTRIBUTE;
 
 public class JpsOutputLoaderManager implements Disposable {
-  private static final Logger LOG = Logger.getInstance("com.intellij.jps.cache.loader.JpsOutputLoaderManager");
+  private static final Logger LOG = Logger.getInstance(JpsOutputLoaderManager.class);
   private static final String LATEST_COMMIT_ID = "JpsOutputLoaderManager.latestCommitId";
   private static final double SEGMENT_SIZE = 0.33;
   private final AtomicBoolean hasRunningTask;
@@ -67,7 +67,7 @@ public class JpsOutputLoaderManager implements Disposable {
 
   @NotNull
   public static JpsOutputLoaderManager getInstance(@NotNull Project project) {
-    return ServiceManager.getService(project, JpsOutputLoaderManager.class);
+    return project.getService(JpsOutputLoaderManager.class);
   }
 
   public JpsOutputLoaderManager(@NotNull Project project) {
@@ -88,6 +88,8 @@ public class JpsOutputLoaderManager implements Disposable {
       public void run(@NotNull ProgressIndicator indicator) {
         Pair<String, Integer> commitInfo = getNearestCommit(isForceUpdate, verbose);
         if (commitInfo != null) {
+          assert myProject != null;
+          myProject.getMessageBus().syncPublisher(PortableCachesLoadListener.TOPIC).loadingStarted();
           // Drop JPS metadata to force plugin for downloading all compilation outputs
           if (isForceUpdate) {
             myMetadataLoader.dropCurrentProjectMetadata();
@@ -120,16 +122,16 @@ public class JpsOutputLoaderManager implements Disposable {
                                    .message("notification.content.caches.are.for.commit.commits.prior.to.yours", commitInfo.second - 1);
 
     ApplicationManager.getApplication().invokeLater(() -> {
-      Notification notification = STANDARD.createNotification(
-        JpsCacheBundle.message("notification.title.compiler.caches.available"), notificationContent,
-        NotificationType.INFORMATION, null);
-      notification
-        .addAction(NotificationAction.createSimple(JpsCacheBundle.messagePointer(
-          "action.NotificationAction.JpsOutputLoaderManager.text.update.caches"), () -> {
-          notification.expire();
-          load(false, false);
-        }));
-      Notifications.Bus.notify(notification, myProject);
+      STANDARD
+        .createNotification(JpsCacheBundle.message("notification.title.compiler.caches.available"), notificationContent,
+                            NotificationType.INFORMATION)
+        .addAction(NotificationAction.createSimpleExpiring(
+          JpsCacheBundle.message("action.NotificationAction.JpsOutputLoaderManager.text.update.caches"),
+          () -> {
+            DOWNLOAD_THROUGH_NOTIFICATION_EVENT_ID.log();
+            load(false, false);
+          }))
+        .notify(myProject);
     });
   }
 
@@ -156,10 +158,8 @@ public class JpsOutputLoaderManager implements Disposable {
       String warning = JpsCacheBundle.message("notification.content.not.found.any.caches.for.latest.commits.in.branch");
       LOG.warn(warning);
       ApplicationManager.getApplication().invokeLater(() -> {
-        Notification notification = group.createNotification(
-          JpsCacheBundle.message("notification.title.jps.caches.downloader"), warning,
-          NotificationType.WARNING, null);
-        Notifications.Bus.notify(notification, myProject);
+        group.createNotification(JpsCacheBundle.message("notification.title.jps.caches.downloader"), warning, NotificationType.WARNING)
+          .notify(myProject);
       });
       return null;
     }
@@ -167,10 +167,8 @@ public class JpsOutputLoaderManager implements Disposable {
       String info = JpsCacheBundle.message("notification.content.system.contains.up.to.date.caches");
       LOG.info(info);
       ApplicationManager.getApplication().invokeLater(() -> {
-        Notification notification = group.createNotification(
-          JpsCacheBundle.message("notification.title.jps.caches.downloader"), info,
-          NotificationType.INFORMATION, null);
-        Notifications.Bus.notify(notification, myProject);
+        group.createNotification(JpsCacheBundle.message("notification.title.jps.caches.downloader"), info, NotificationType.INFORMATION)
+          .notify(myProject);
       });
       return null;
     }
@@ -178,7 +176,7 @@ public class JpsOutputLoaderManager implements Disposable {
   }
 
   private void startLoadingForCommit(@NotNull String commitId) {
-    long startTime = System.currentTimeMillis();
+    long startTime = System.nanoTime();
     ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
     indicator.setText(JpsCacheBundle.message("progress.text.fetching.cache.for.commit", commitId));
 
@@ -186,12 +184,14 @@ public class JpsOutputLoaderManager implements Disposable {
     Map<String, Map<String, BuildTargetState>> commitSourcesState = myMetadataLoader.loadMetadataForCommit(commitId);
     if (commitSourcesState == null) {
       LOG.warn("Couldn't load metadata for commit: " + commitId);
+      myProject.getMessageBus().syncPublisher(PortableCachesLoadListener.TOPIC).loadingFinished(false);
       return;
     }
 
     // Calculate downloads
     Map<String, Map<String, BuildTargetState>> currentSourcesState = myMetadataLoader.loadCurrentProjectMetadata();
-    int totalDownloads = getLoaders(myProject).stream().mapToInt(loader -> loader.calculateDownloads(commitSourcesState, currentSourcesState)).sum();
+    int totalDownloads =
+      getLoaders(myProject).stream().mapToInt(loader -> loader.calculateDownloads(commitSourcesState, currentSourcesState)).sum();
     indicator.setFraction(0.01);
 
     try {
@@ -199,7 +199,8 @@ public class JpsOutputLoaderManager implements Disposable {
       initLoaders(commitId, indicator, totalDownloads, commitSourcesState, currentSourcesState).thenAccept(loaderStatus -> {
         LOG.info("Loading finished with " + loaderStatus + " status");
         try {
-          SegmentedProgressIndicatorManager indicatorManager = new SegmentedProgressIndicatorManager(indicator, totalDownloads, SEGMENT_SIZE);
+          SegmentedProgressIndicatorManager indicatorManager =
+            new SegmentedProgressIndicatorManager(indicator, totalDownloads, SEGMENT_SIZE);
           CompletableFuture.allOf(getLoaders(myProject).stream()
                                     .map(loader -> applyChanges(loaderStatus, loader, indicator, indicatorManager))
                                     .toArray(CompletableFuture[]::new))
@@ -210,6 +211,7 @@ public class JpsOutputLoaderManager implements Disposable {
           LOG.warn("Unexpected exception rollback all progress", e);
           onFail();
           getLoaders(myProject).forEach(loader -> loader.rollback());
+          myProject.getMessageBus().syncPublisher(PortableCachesLoadListener.TOPIC).loadingFinished(false);
           indicator.setText(JpsCacheBundle.message("progress.text.rolling.back.downloaded.caches"));
         }
       }).handle((result, ex) -> handleExceptions(result, ex, indicator)).get();
@@ -217,6 +219,7 @@ public class JpsOutputLoaderManager implements Disposable {
     catch (InterruptedException | ExecutionException e) {
       LOG.warn("Couldn't fetch jps compilation caches", e);
       onFail();
+      myProject.getMessageBus().syncPublisher(PortableCachesLoadListener.TOPIC).loadingFinished(false);
     }
   }
 
@@ -266,19 +269,26 @@ public class JpsOutputLoaderManager implements Disposable {
       LOG.warn("Project automatic build should be disabled, it can affect portable caches");
       return false;
     }
+    if (!JpsCacheStartupActivity.isLineEndingsConfiguredCorrectly()) {
+      LOG.warn("Git line-endings not configured correctly for the project");
+      return false;
+    }
     hasRunningTask.set(true);
     return true;
   }
 
   private <T> CompletableFuture<LoaderStatus> initLoaders(String commitId, ProgressIndicator indicator, int totalDownloads,
-                                                      Map<String, Map<String, BuildTargetState>> commitSourcesState,
-                                                      Map<String, Map<String, BuildTargetState>> currentSourcesState) {
+                                                          Map<String, Map<String, BuildTargetState>> commitSourcesState,
+                                                          Map<String, Map<String, BuildTargetState>> currentSourcesState) {
     List<JpsOutputLoader<?>> loaders = getLoaders(myProject);
 
     // Create indicator with predefined segment size
-    SegmentedProgressIndicatorManager downloadIndicatorManager = new SegmentedProgressIndicatorManager(indicator, totalDownloads, SEGMENT_SIZE);
-    SegmentedProgressIndicatorManager extractIndicatorManager = new SegmentedProgressIndicatorManager(indicator, totalDownloads, SEGMENT_SIZE);
-    JpsLoaderContext loaderContext = JpsLoaderContext.createNewContext(commitId, downloadIndicatorManager, commitSourcesState, currentSourcesState);
+    SegmentedProgressIndicatorManager downloadIndicatorManager =
+      new SegmentedProgressIndicatorManager(indicator, totalDownloads, SEGMENT_SIZE);
+    SegmentedProgressIndicatorManager extractIndicatorManager =
+      new SegmentedProgressIndicatorManager(indicator, totalDownloads, SEGMENT_SIZE);
+    JpsLoaderContext loaderContext =
+      JpsLoaderContext.createNewContext(commitId, downloadIndicatorManager, commitSourcesState, currentSourcesState);
 
     // Start loaders with own context
     List<CompletableFuture<LoaderStatus>> completableFutures = ContainerUtil.map(loaders, loader ->
@@ -306,19 +316,23 @@ public class JpsOutputLoaderManager implements Disposable {
   private void saveStateAndNotify(LoaderStatus loaderStatus, String commitId, long startTime) {
     if (loaderStatus == LoaderStatus.FAILED) {
       onFail();
+      myProject.getMessageBus().syncPublisher(PortableCachesLoadListener.TOPIC).loadingFinished(false);
       return;
     }
 
     PropertiesComponent.getInstance().setValue(LATEST_COMMIT_ID, commitId);
     BuildManager.getInstance().clearState(myProject);
-    long endTime = (System.currentTimeMillis() - startTime) / 1000;
+    long endTime = System.nanoTime() - startTime;
     ApplicationManager.getApplication().invokeLater(() -> {
-      String message = JpsCacheBundle.message("notification.content.update.compiler.caches.completed.successfully.in.s", endTime);
-      Notification notification = STANDARD.createNotification(
-        JpsCacheBundle.message("notification.title.compiler.caches.loader"), message,
-        NotificationType.INFORMATION, null);
-      Notifications.Bus.notify(notification, myProject);
+      STANDARD
+        .createNotification(JpsCacheBundle.message("notification.title.compiler.caches.loader"),
+                            JpsCacheBundle.message("notification.content.update.compiler.caches.completed.successfully.in.s",
+                                                   endTime / 1_000_000_000),
+                            NotificationType.INFORMATION)
+        .notify(myProject);
     });
+    DOWNLOAD_DURATION_EVENT_ID.log(endTime);
+    myProject.getMessageBus().syncPublisher(PortableCachesLoadListener.TOPIC).loadingFinished(true);
     LOG.info("Loading finished");
   }
 
@@ -333,6 +347,7 @@ public class JpsOutputLoaderManager implements Disposable {
         onFail();
       }
       getLoaders(myProject).forEach(loader -> loader.rollback());
+      myProject.getMessageBus().syncPublisher(PortableCachesLoadListener.TOPIC).loadingFinished(false);
       indicator.setText(JpsCacheBundle.message("progress.text.rolling.back.downloaded.caches"));
     }
     return result;
@@ -352,11 +367,9 @@ public class JpsOutputLoaderManager implements Disposable {
 
   private void onFail() {
     ApplicationManager.getApplication().invokeLater(() -> {
-      Notification notification = ATTENTION.createNotification(
-        JpsCacheBundle.message("notification.title.compiler.caches.loader"),
-        JpsCacheBundle.message("notification.content.update.compiler.caches.failed"),
-        NotificationType.WARNING, null);
-      Notifications.Bus.notify(notification, myProject);
+      ATTENTION.createNotification(JpsCacheBundle.message("notification.title.compiler.caches.loader"),
+                                   JpsCacheBundle.message("notification.content.update.compiler.caches.failed"), NotificationType.WARNING)
+        .notify(myProject);
     });
   }
 }

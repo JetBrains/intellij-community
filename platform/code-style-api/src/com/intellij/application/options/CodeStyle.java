@@ -18,6 +18,8 @@ import com.intellij.psi.codeStyle.lineIndent.LineIndentProvider;
 import com.intellij.psi.codeStyle.lineIndent.LineIndentProviderEP;
 import com.intellij.psi.codeStyle.modifier.CodeStyleSettingsModifier;
 import com.intellij.psi.codeStyle.modifier.TransientCodeStyleSettings;
+import com.intellij.psi.util.PsiEditorUtil;
+import com.intellij.psi.util.PsiUtilCore;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -82,14 +84,10 @@ public final class CodeStyle {
   @NotNull
   public static CodeStyleSettings getSettings(@NotNull PsiFile file) {
     final Project project = file.getProject();
+    @SuppressWarnings("TestOnlyProblems")
     CodeStyleSettings tempSettings = CodeStyleSettingsManager.getInstance(project).getTemporarySettings();
     if (tempSettings != null) {
       return tempSettings;
-    }
-
-    CodeStyleSettings result = FileCodeStyleProvider.EP_NAME.computeSafeIfAny(provider -> provider.getSettings(file));
-    if (result != null) {
-      return result;
     }
 
     PsiFile settingsFile = getSettingsPsi(file);
@@ -299,7 +297,7 @@ public final class CodeStyle {
    * @param tempSettings  The temporary code style settings.
    * @param runnable      The runnable to execute with the temporary settings.
    */
-  @TestOnly
+  @SuppressWarnings("TestOnlyProblems")
   public static void doWithTemporarySettings(@NotNull Project project,
                                              @NotNull CodeStyleSettings tempSettings,
                                              @NotNull Runnable runnable) {
@@ -328,7 +326,7 @@ public final class CodeStyle {
    * @param baseSettings         The base settings to be cloned and used in consumer.
    * @param tempSettingsConsumer The consumer to execute with the base settings copy.
    */
-  @TestOnly
+  @SuppressWarnings("TestOnlyProblems")
   public static void doWithTemporarySettings(@NotNull Project project,
                                              @NotNull CodeStyleSettings baseSettings,
                                              @NotNull Consumer<? super CodeStyleSettings> tempSettingsConsumer) {
@@ -513,4 +511,16 @@ public final class CodeStyle {
     return new DefaultCodeStyleSettingsFacade(getSettings(project), fileType);
   }
 
+  /**
+   * Finds a language at the specified offset and common language settings for it.
+   *
+   * @param editor The current editor.
+   * @param offset The offset to find the language at.
+   * @return
+   */
+  public static CommonCodeStyleSettings getLocalLanguageSettings(Editor editor, int offset) {
+    PsiFile psiFile = PsiEditorUtil.getPsiFile(editor);
+    Language language = PsiUtilCore.getLanguageAtOffset(psiFile, offset);
+    return getLanguageSettings(psiFile, language);
+  }
 }

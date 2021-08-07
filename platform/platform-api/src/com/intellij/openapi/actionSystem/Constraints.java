@@ -33,18 +33,18 @@ public class Constraints implements Cloneable {
   public Anchor myAnchor;
 
   /**
-   * Id of the action to be positioned relative to. Used when anchor type
+   * ID of the action to be positioned relative to. Used when anchor type
    * is either {@link Anchor#AFTER} or {@link Anchor#BEFORE}.
    *
    */
   public String myRelativeToActionId;
 
   /**
-   * Creates a new constraints instance with the specified anchor type and
+   * Creates a new Constraints instance with the specified anchor type and
    * id of the relative action.
    *
    * @param anchor anchor
-   * @param relativeToActionId Id of the relative action
+   * @param relativeToActionId ID of the relative action
    */
   public Constraints(Anchor anchor, @NonNls String relativeToActionId){
     myAnchor = anchor;

@@ -2,6 +2,8 @@
 package org.jetbrains.plugins.github.ui.util
 
 import com.intellij.UtilBundle
+import com.intellij.collaboration.async.CompletableFutureUtil.successOnEdt
+import com.intellij.collaboration.ui.CollaborationToolsUIUtil
 import com.intellij.openapi.application.ApplicationBundle
 import com.intellij.openapi.editor.impl.view.FontLayoutService
 import com.intellij.openapi.ui.popup.JBPopupFactory
@@ -16,12 +18,10 @@ import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.ui.*
 import com.intellij.ui.components.JBLabel
 import com.intellij.ui.components.JBList
-import com.intellij.ui.speedSearch.NameFilteringListModel
-import com.intellij.ui.speedSearch.SpeedSearch
 import com.intellij.util.text.DateFormatUtil
 import com.intellij.util.ui.*
 import com.intellij.util.ui.components.BorderLayoutPanel
-import icons.VcsCodeReviewIcons
+import icons.CollaborationToolsIcons
 import org.jetbrains.plugins.github.GithubIcons
 import org.jetbrains.plugins.github.api.GHRepositoryCoordinates
 import org.jetbrains.plugins.github.api.data.GHLabel
@@ -32,16 +32,16 @@ import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestState
 import org.jetbrains.plugins.github.i18n.GithubBundle
 import org.jetbrains.plugins.github.ui.avatars.GHAvatarIconsProvider
 import org.jetbrains.plugins.github.util.CollectionDelta
-import org.jetbrains.plugins.github.util.successOnEdt
 import java.awt.Color
 import java.awt.Component
 import java.awt.Cursor
-import java.awt.event.*
-import java.beans.PropertyChangeListener
+import java.awt.event.ActionListener
+import java.awt.event.KeyEvent
+import java.awt.event.MouseAdapter
+import java.awt.event.MouseEvent
 import java.util.*
 import java.util.concurrent.CompletableFuture
 import javax.swing.*
-import javax.swing.event.DocumentEvent
 
 object GHUIUtil {
   const val AVATAR_SIZE = 20
@@ -49,9 +49,9 @@ object GHUIUtil {
   fun getPullRequestStateIcon(state: GHPullRequestState, isDraft: Boolean): Icon =
     if (isDraft) GithubIcons.PullRequestDraft
     else when (state) {
-      GHPullRequestState.CLOSED -> VcsCodeReviewIcons.PullRequestClosed
+      GHPullRequestState.CLOSED -> CollaborationToolsIcons.PullRequestClosed
       GHPullRequestState.MERGED -> GithubIcons.PullRequestMerged
-      GHPullRequestState.OPEN -> VcsCodeReviewIcons.PullRequestOpen
+      GHPullRequestState.OPEN -> CollaborationToolsIcons.PullRequestOpen
     }
 
   @NlsSafe
@@ -75,13 +75,6 @@ object GHUIUtil {
       GithubIssueState.open -> GithubBundle.message("issue.state.open")
       GithubIssueState.closed -> GithubBundle.message("issue.state.closed")
     }
-
-  fun <T : JComponent> overrideUIDependentProperty(component: T, listener: T.() -> Unit) {
-    component.addPropertyChangeListener("UI", PropertyChangeListener {
-      listener.invoke(component)
-    })
-    listener.invoke(component)
-  }
 
   fun focusPanel(panel: JComponent) {
     val focusManager = IdeFocusManager.findInstanceByComponent(panel)
@@ -134,33 +127,12 @@ object GHUIUtil {
     : CompletableFuture<CollectionDelta<T>> {
 
     val listModel = CollectionListModel<SelectableWrapper<T>>()
-    val list = JBList<SelectableWrapper<T>>().apply {
+    val list = JBList(listModel).apply {
       visibleRowCount = 7
       isFocusable = false
       selectionMode = ListSelectionModel.SINGLE_SELECTION
     }
     list.cellRenderer = cellRenderer
-
-    val speedSearch = SpeedSearch()
-    val filteringListModel = NameFilteringListModel<SelectableWrapper<T>>(listModel, { cellRenderer.getText(it.value) },
-                                                                          speedSearch::shouldBeShowing, { speedSearch.filter ?: "" })
-    list.model = filteringListModel
-
-    speedSearch.addChangeListener {
-      val prevSelection = list.selectedValue // save to restore the selection on filter drop
-      filteringListModel.refilter()
-      if (filteringListModel.size > 0) {
-        val fullMatchIndex = if (speedSearch.isHoldingFilter) filteringListModel.closestMatchIndex
-        else filteringListModel.getElementIndex(prevSelection)
-        if (fullMatchIndex != -1) {
-          list.selectedIndex = fullMatchIndex
-        }
-
-        if (filteringListModel.size <= list.selectedIndex || !filteringListModel.contains(list.selectedValue)) {
-          list.selectedIndex = 0
-        }
-      }
-    }
 
     val scrollPane = ScrollPaneFactory.createScrollPane(list, true).apply {
       viewport.cursor = Cursor.getPredefinedCursor(Cursor.HAND_CURSOR)
@@ -171,17 +143,12 @@ object GHUIUtil {
       border = IdeBorderFactory.createBorder(SideBorder.BOTTOM)
       UIUtil.setBackgroundRecursively(this, UIUtil.getListBackground())
       textEditor.border = JBUI.Borders.empty()
-      //focus dark magic, otherwise focus shifts to searchfield panel
-      isFocusable = false
-      addDocumentListener(object : DocumentAdapter() {
-        override fun textChanged(e: DocumentEvent) {
-          speedSearch.updatePattern(text)
-        }
-      })
+    }
+    CollaborationToolsUIUtil.attachSearch(list, searchField) {
+      cellRenderer.getText(it.value)
     }
 
-    val panel = JBUI.Panels.simplePanel(scrollPane).addToTop(searchField)
-    ScrollingUtil.installActions(list, panel)
+    val panel = JBUI.Panels.simplePanel(scrollPane).addToTop(searchField.textEditor)
     ListUtil.installAutoSelectOnMouseMove(list)
 
     fun toggleSelection() {
@@ -330,15 +297,6 @@ object GHUIUtil {
     if (repos.size <= 1) return false
     val firstServer = repos.first().serverPath
     return repos.any { it.serverPath != firstServer }
-  }
-
-  fun registerFocusActions(component: JComponent) {
-    component.registerKeyboardAction({
-                                       component.transferFocus()
-                                     }, KeyStroke.getKeyStroke(KeyEvent.VK_TAB, 0), JComponent.WHEN_FOCUSED)
-    component.registerKeyboardAction({
-                                       component.transferFocusBackward()
-                                     }, KeyStroke.getKeyStroke(KeyEvent.VK_TAB, InputEvent.SHIFT_DOWN_MASK), JComponent.WHEN_FOCUSED)
   }
 }
 

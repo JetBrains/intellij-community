@@ -1,24 +1,23 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.coverage;
 
 import com.intellij.java.coverage.JavaCoverageBundle;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.TestSourcesFilter;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.rt.coverage.data.ProjectData;
 import com.intellij.util.containers.CollectionFactory;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.TimeUnit;
 
 /**
  * @author Roman.Chernyatchik
@@ -30,7 +29,7 @@ public final class JavaCoverageAnnotator extends BaseCoverageAnnotator {
     new HashMap<>();
   private final Map<VirtualFile, PackageAnnotator.PackageCoverageInfo> myTestDirCoverageInfos =
     new HashMap<>();
-  private final Map<String, PackageAnnotator.ClassCoverageInfo> myClassCoverageInfos = new HashMap<>();
+  private final Map<String, PackageAnnotator.ClassCoverageInfo> myClassCoverageInfos = new ConcurrentHashMap<>();
   private final Map<PsiElement, PackageAnnotator.SummaryCoverageInfo> myExtensionCoverageInfos = CollectionFactory.createWeakMap();
 
   public JavaCoverageAnnotator(final Project project) {
@@ -38,7 +37,7 @@ public final class JavaCoverageAnnotator extends BaseCoverageAnnotator {
   }
 
   public static JavaCoverageAnnotator getInstance(final Project project) {
-    return ServiceManager.getService(project, JavaCoverageAnnotator.class);
+    return project.getService(JavaCoverageAnnotator.class);
   }
 
   @Override
@@ -80,21 +79,7 @@ public final class JavaCoverageAnnotator extends BaseCoverageAnnotator {
 
   @Override
   protected Runnable createRenewRequest(@NotNull final CoverageSuitesBundle suite, @NotNull final CoverageDataManager dataManager) {
-
-
     final Project project = getProject();
-    final List<PsiPackage> packages = new ArrayList<>();
-    final List<PsiClass> classes = new ArrayList<>();
-
-    for (CoverageSuite coverageSuite : suite.getSuites()) {
-      final JavaCoverageSuite javaSuite = (JavaCoverageSuite)coverageSuite;
-      classes.addAll(javaSuite.getCurrentSuiteClasses(project));
-      packages.addAll(javaSuite.getCurrentSuitePackages(project));
-    }
-
-    if (packages.isEmpty() && classes.isEmpty()) {
-      return null;
-    }
 
     return () -> {
       final PackageAnnotator.Annotator annotator = new PackageAnnotator.Annotator() {
@@ -134,19 +119,16 @@ public final class JavaCoverageAnnotator extends BaseCoverageAnnotator {
           myClassCoverageInfos.put(classQualifiedName, classCoverageInfo);
         }
       };
-      for (PsiPackage aPackage : packages) {
-        new PackageAnnotator(aPackage).annotate(suite, annotator);
-      }
-      for (final PsiClass aClass : classes) {
-        Runnable runnable = () -> {
-          final String packageName = ((PsiClassOwner)aClass.getContainingFile()).getPackageName();
-          final PsiPackage psiPackage = JavaPsiFacade.getInstance(project).findPackage(packageName);
-          if (psiPackage == null) return;
-          new PackageAnnotator(psiPackage).annotateFilteredClass(aClass, suite, annotator);
-        };
-        ApplicationManager.getApplication().runReadAction(runnable);
-      }
+      final long startNs = System.nanoTime();
+
+      new JavaCoverageClassesAnnotator(suite, project, annotator).visitSuite();
       dataManager.triggerPresentationUpdate();
+
+      final long endNs = System.nanoTime();
+      final int annotatedClasses = myClassCoverageInfos.size();
+      final ProjectData data = suite.getCoverageData();
+      final int loadedClasses = data == null ? 0 : data.getClassesNumber();
+      CoverageLogger.logReportBuilding(project, TimeUnit.NANOSECONDS.toMillis(endNs - startNs), annotatedClasses, loadedClasses);
     };
   }
 

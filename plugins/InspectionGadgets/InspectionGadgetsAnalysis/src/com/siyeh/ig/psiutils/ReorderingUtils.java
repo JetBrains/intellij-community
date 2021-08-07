@@ -4,6 +4,7 @@ package com.siyeh.ig.psiutils;
 import com.intellij.codeInsight.Nullability;
 import com.intellij.codeInspection.dataFlow.*;
 import com.intellij.codeInspection.dataFlow.ContractReturnValue.BooleanReturnValue;
+import com.intellij.codeInspection.dataFlow.java.JavaDfaValueFactory;
 import com.intellij.codeInspection.dataFlow.value.*;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
@@ -306,12 +307,12 @@ public final class ReorderingUtils {
       }
       if (condition instanceof PsiBinaryExpression) {
         PsiBinaryExpression binOp = (PsiBinaryExpression)condition;
-        RelationType relationType = RelationType.fromElementType(binOp.getOperationTokenType());
+        RelationType relationType = DfaPsiUtil.getRelationByToken(binOp.getOperationTokenType());
         if (relationType != null) {
           PsiExpression left = binOp.getLOperand();
           PsiExpression right = binOp.getROperand();
-          DfaValue leftVal = myFactory.createValue(left);
-          DfaValue rightVal = myFactory.createValue(right);
+          DfaValue leftVal = JavaDfaValueFactory.getExpressionDfaValue(myFactory, left);
+          DfaValue rightVal = JavaDfaValueFactory.getExpressionDfaValue(myFactory, right);
           if (leftVal == null || rightVal == null) return false;
           DfaCondition value1 = leftVal.cond(relationType, rightVal);
           DfaCondition value2 = rightVal.cond(Objects.requireNonNull(relationType.getFlipped()), leftVal);
@@ -337,7 +338,7 @@ public final class ReorderingUtils {
         List<? extends MethodContract> contracts = DfaUtil.addRangeContracts(method, JavaMethodContractUtil.getMethodCallContracts(call));
         contracts = ContainerUtil.filter(contracts, c -> c.getReturnValue().isFail() && c.getConditions().size() == 1);
         if (contracts.isEmpty()) return null;
-        DfaValueFactory factory = new DfaValueFactory(expression.getProject(), null);
+        DfaValueFactory factory = new DfaValueFactory(expression.getProject());
         List<DfaRelation> conditions = new ArrayList<>();
         for (MethodContract contract : contracts) {
           ContractValue condition = contract.getConditions().get(0);
@@ -422,6 +423,12 @@ public final class ReorderingUtils {
   public static boolean isSideEffectFree(PsiExpression expression, boolean allowNpe) {
     // Disallow anything which may throw or produce side effect
     return PsiTreeUtil.processElements(expression, element -> {
+      if (element instanceof PsiMethodCallExpression) {
+        PsiMethod method = ((PsiMethodCallExpression)element).resolveMethod();
+        if (method == null || !JavaMethodContractUtil.isPure(method)) return false;
+        PsiClass aClass = method.getContainingClass();
+        return aClass != null && CommonClassNames.JAVA_LANG_STRING.equals(aClass.getQualifiedName());
+      }
       if (element instanceof PsiCallExpression || element instanceof PsiArrayAccessExpression ||
           element instanceof PsiTypeCastExpression || isErroneous(element)) {
         return false;
@@ -430,8 +437,8 @@ public final class ReorderingUtils {
         return false;
       }
       if (element instanceof PsiSwitchExpression) {
-        // We cannot correctly process possible NPE in switch selector expression inside 
-        // ConditionCoveredByFurtherConditionInspection.computeOperandValues, 
+        // We cannot correctly process possible NPE in switch selector expression inside
+        // ConditionCoveredByFurtherConditionInspection.computeOperandValues,
         // so let's conservatively assume that the exception is possible
         return false;
       }

@@ -75,7 +75,8 @@ public class VcsLogTabsManager {
       }
       else if (kind == VcsLogManager.LogWindowKind.TOOL_WINDOW) {
         openToolWindowLogTab(manager, id, false, null);
-      } else {
+      }
+      else {
         LOG.warn("Unsupported log tab kind " + kind);
       }
     });

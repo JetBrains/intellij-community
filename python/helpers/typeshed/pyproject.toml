@@ -2,6 +2,7 @@
 line_length = 130
 target_version = ["py37"]
 exclude = ".*_pb2.pyi"
+skip_magic_trailing_comma = true
 
 [tool.isort]
 profile = "black"

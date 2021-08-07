@@ -47,8 +47,8 @@ public class JsonPathSegmentExpressionImpl extends ASTWrapperPsiElement implemen
 
   @Override
   @Nullable
-  public JsonPathSpliceExpression getSpliceExpression() {
-    return findChildByClass(JsonPathSpliceExpression.class);
+  public JsonPathSliceExpression getSliceExpression() {
+    return findChildByClass(JsonPathSliceExpression.class);
   }
 
   @Override

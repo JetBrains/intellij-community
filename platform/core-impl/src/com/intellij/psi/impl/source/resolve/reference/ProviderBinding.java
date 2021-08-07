@@ -26,7 +26,9 @@ import java.util.List;
 
 public interface ProviderBinding {
   class ProviderInfo<Context> {
+    @NotNull
     public final PsiReferenceProvider provider;
+    @NotNull
     public final Context processingContext;
     public final double priority;
 

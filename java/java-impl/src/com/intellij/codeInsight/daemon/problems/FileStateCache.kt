@@ -1,9 +1,8 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.daemon.problems
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.components.Service
-import com.intellij.openapi.components.ServiceManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.LowMemoryWatcher
 import com.intellij.psi.PsiFile
@@ -18,7 +17,7 @@ class FileStateCache : Disposable {
   private val cache: SLRUMap<SmartPsiElementPointer<PsiFile>, PrivateFileState> = SLRUMap(100, 50)
 
   object SERVICE {
-    fun getInstance(project: Project): FileStateCache = ServiceManager.getService(project, FileStateCache::class.java)
+    fun getInstance(project: Project): FileStateCache = project.getService(FileStateCache::class.java)
   }
 
   init {

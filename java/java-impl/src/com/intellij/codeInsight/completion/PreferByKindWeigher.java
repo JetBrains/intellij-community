@@ -36,19 +36,19 @@ import static com.intellij.patterns.StandardPatterns.or;
 public class PreferByKindWeigher extends LookupElementWeigher {
   public static final Key<Boolean> INTRODUCED_VARIABLE = Key.create("INTRODUCED_VARIABLE");
 
-  private static final ElementPattern<PsiElement> IN_CATCH_TYPE =
+  static final ElementPattern<PsiElement> IN_CATCH_TYPE =
     psiElement().withParent(psiElement(PsiJavaCodeReferenceElement.class).
       withParent(psiElement(PsiTypeElement.class).
         withParent(or(psiElement(PsiCatchSection.class),
                       psiElement(PsiVariable.class).withParent(PsiCatchSection.class)))));
 
-  private static final ElementPattern<PsiElement> IN_MULTI_CATCH_TYPE =
+  static final ElementPattern<PsiElement> IN_MULTI_CATCH_TYPE =
     or(psiElement().afterLeaf(psiElement().withText("|").
          withParent(PsiTypeElement.class).withSuperParent(2, PsiCatchSection.class)),
        psiElement().afterLeaf(psiElement().withText("|").
          withParent(PsiTypeElement.class).withSuperParent(2, PsiParameter.class).withSuperParent(3, PsiCatchSection.class)));
 
-  private static final ElementPattern<PsiElement> INSIDE_METHOD_THROWS_CLAUSE =
+  static final ElementPattern<PsiElement> INSIDE_METHOD_THROWS_CLAUSE =
     psiElement().afterLeaf(PsiKeyword.THROWS, ",").inside(psiElement(JavaElementType.THROWS_LIST));
 
   static final ElementPattern<PsiElement> IN_RESOURCE =
@@ -56,7 +56,7 @@ public class PreferByKindWeigher extends LookupElementWeigher {
       psiElement(PsiJavaCodeReferenceElement.class).withParent(PsiTypeElement.class).
         withSuperParent(2, or(psiElement(PsiResourceVariable.class), psiElement(PsiResourceList.class))),
       psiElement(PsiReferenceExpression.class).withParent(PsiResourceExpression.class)));
-  private static final Function<PsiClass, MyResult>
+  static final Function<PsiClass, MyResult>
     PREFER_THROWABLE = psiClass -> preferClassIf(InheritanceUtil.isInheritor(psiClass, CommonClassNames.JAVA_LANG_THROWABLE));
 
   private final CompletionType myCompletionType;
@@ -118,7 +118,7 @@ public class PreferByKindWeigher extends LookupElementWeigher {
     return aClass -> MyResult.classNameOrGlobalStatic;
   }
 
-  private static List<PsiClass> getTypeBounds(PsiTypeElement typeElement) {
+  static List<PsiClass> getTypeBounds(PsiTypeElement typeElement) {
     PsiElement typeParent = typeElement.getParent();
     if (typeParent instanceof PsiReferenceParameterList) {
       int index = Arrays.asList(((PsiReferenceParameterList)typeParent).getTypeParameterElements()).indexOf(typeElement);
@@ -289,6 +289,14 @@ public class PreferByKindWeigher extends LookupElementWeigher {
 
       if (object instanceof PsiField && myNonInitializedFields.contains(object)) {
         return MyResult.nonInitialized;
+      }
+
+      if (object instanceof PsiPackage) {
+        String name = ((PsiPackage)object).getName();
+        if (name != null && !name.isEmpty() && Character.isUpperCase(name.charAt(0))) {
+          // Disprefer package names starting with uppercase letter, as they could pop up before classes
+          return MyResult.unlikelyItem;
+        }
       }
     }
 

@@ -18,7 +18,6 @@ package org.jetbrains.plugins.groovy.editor.actions;
 
 import com.intellij.codeInsight.editorActions.BackspaceHandlerDelegate;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.editor.highlighter.HighlighterIterator;
 import com.intellij.psi.PsiFile;
@@ -38,7 +37,7 @@ public class GStringBackspaceHandlerDelegate extends BackspaceHandlerDelegate {
 
     final int offset = editor.getCaretModel().getOffset();
 
-    final EditorHighlighter highlighter = ((EditorEx)editor).getHighlighter();
+    final EditorHighlighter highlighter = editor.getHighlighter();
     if (offset < 1) return;
 
     HighlighterIterator iterator = highlighter.createIterator(offset);

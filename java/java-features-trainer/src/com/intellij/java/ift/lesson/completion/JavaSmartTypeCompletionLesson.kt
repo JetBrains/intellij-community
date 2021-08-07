@@ -4,14 +4,12 @@ package com.intellij.java.ift.lesson.completion
 import com.intellij.java.ift.JavaLessonsBundle
 import training.dsl.LessonContext
 import training.dsl.LessonUtil.restoreIfModifiedOrMoved
-import training.dsl.TaskTestContext
+import training.dsl.TaskContext
 import training.dsl.parseLessonSample
+import training.learn.LessonsBundle
 import training.learn.course.KLesson
 
-class JavaSmartTypeCompletionLesson : KLesson("Smart type completion", JavaLessonsBundle.message("java.smart.type.completion.lesson.name")) {
-
-  override val testScriptProperties = TaskTestContext.TestScriptProperties(skipTesting = true)
-
+class JavaSmartTypeCompletionLesson : KLesson("Smart type completion", LessonsBundle.message("smart.completion.lesson.name")) {
   val sample = parseLessonSample("""
     import java.lang.String;
     import java.util.HashSet;
@@ -25,14 +23,14 @@ class JavaSmartTypeCompletionLesson : KLesson("Smart type completion", JavaLesso
         private ArrayBlockingQueue<String> arrayBlockingQueue;
     
         public SmartCompletionDemo(LinkedList<String> linkedList, HashSet<String> hashSet) {
-            strings =
+            strings = <caret>
             arrayBlockingQueue = new ArrayBlockingQueue<String>(hashSet.size());
             for (String s : hashSet)
                 arrayBlockingQueue.add(s);
         }
     
         private String[] toArray() {
-            return <caret>
+            return 
         }
     
     }
@@ -40,19 +38,36 @@ class JavaSmartTypeCompletionLesson : KLesson("Smart type completion", JavaLesso
 
   override val lessonContent: LessonContext.() -> Unit = {
     prepareSample(sample)
-    caret(13, 19)
     task {
       text(JavaLessonsBundle.message("java.smart.type.completion.apply", action("SmartTypeCompletion"), action("EditorChooseLookupItem")))
       trigger("SmartTypeCompletion")
-      trigger("EditorChooseLookupItem")
+      stateCheck {
+        val text = editor.document.text
+        text.contains("strings = arrayBlockingQueue;") || text.contains("strings = linkedList;")
+      }
       restoreIfModifiedOrMoved()
+      testSmartCompletion()
     }
     caret(20, 16)
     task {
       text(JavaLessonsBundle.message("java.smart.type.completion.return", action("SmartTypeCompletion"), action("EditorChooseLookupItem")))
-      triggers("SmartTypeCompletion")
-      trigger("EditorChooseLookupItem")
+      trigger("SmartTypeCompletion")
+      stateCheck {
+        val text = editor.document.text
+        text.contains("return arrayBlockingQueue.toArray(new String[0]);")
+        || text.contains("return strings.toArray(new String[0]);")
+      }
       restoreIfModifiedOrMoved()
+      testSmartCompletion()
+    }
+  }
+
+  private fun TaskContext.testSmartCompletion() {
+    test {
+      invokeActionViaShortcut("CTRL SHIFT SPACE")
+      ideFrame {
+        jListContains("arrayBlockingQueue").item(0).doubleClick()
+      }
     }
   }
 }

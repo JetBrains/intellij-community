@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.ui.panel;
 
 import com.intellij.icons.AllIcons;
@@ -35,11 +35,14 @@ import java.util.function.Supplier;
 
 public class ComponentPanelBuilder implements GridBagPanelBuilder {
 
+  public static final int MAX_COMMENT_WIDTH = 70;
+
   private final JComponent myComponent;
 
   private @NlsContexts.Label String myLabelText;
   private boolean myLabelOnTop;
   private @NlsContexts.DetailedDescription String myCommentText;
+  private Icon myCommentIcon;
   private HyperlinkListener myHyperlinkListener = BrowserHyperlinkListener.INSTANCE;
   private boolean myCommentBelow = true;
   private boolean myCommentAllowAutoWrapping = true;
@@ -119,6 +122,11 @@ public class ComponentPanelBuilder implements GridBagPanelBuilder {
     myCommentText = comment;
     myCommentAllowAutoWrapping = allowAutoWrapping;
     valid = StringUtil.isEmpty(comment) || StringUtil.isEmpty(myHTDescription);
+    return this;
+  }
+
+  public ComponentPanelBuilder withCommentIcon(@NotNull Icon icon) {
+    myCommentIcon = icon;
     return this;
   }
 
@@ -230,13 +238,12 @@ public class ComponentPanelBuilder implements GridBagPanelBuilder {
       int top = 8, left = 2, bottom = 0;
 
       if (component instanceof JRadioButton || component instanceof JCheckBox) {
-        top = 0;
         bottom = isWin10 ? 10 : isMacDefault ? 8 : 9;
         if (component instanceof JCheckBox) {
           left = UIUtil.getCheckBoxTextHorizontalOffset((JCheckBox)component); // the value returned from this method is already scaled
 
           //noinspection UseDPIAwareInsets
-          return new Insets(top, left, JBUIScale.scale(bottom), 0);
+          return new Insets(0, left, JBUIScale.scale(bottom), 0);
         }
         else {
           left = isMacDefault ? 26 : isWin10 ? 17 : 23;
@@ -271,10 +278,10 @@ public class ComponentPanelBuilder implements GridBagPanelBuilder {
 
   public static @NotNull JLabel createCommentComponent(@Nullable @NlsContexts.DetailedDescription String commentText,
                                                        boolean isCommentBelow) {
-    return createCommentComponent(commentText, isCommentBelow, 70, true);
+    return createCommentComponent(commentText, isCommentBelow, MAX_COMMENT_WIDTH, true);
   }
 
-  public static @NotNull JLabel createCommentComponent(@Nullable @NlsContexts.DetailedDescription String commentText,
+  public static @NotNull JLabel  createCommentComponent(@Nullable @NlsContexts.DetailedDescription String commentText,
                                                        boolean isCommentBelow,
                                                        int maxLineLength) {
     return createCommentComponent(commentText, isCommentBelow, maxLineLength, true);
@@ -378,7 +385,12 @@ public class ComponentPanelBuilder implements GridBagPanelBuilder {
         protected HyperlinkListener createHyperlinkListener() {
           return myHyperlinkListener;
         }
-      }, myCommentText, myCommentBelow, 70, myCommentAllowAutoWrapping);
+      }, myCommentText, myCommentBelow, MAX_COMMENT_WIDTH, myCommentAllowAutoWrapping);
+
+      if (myCommentIcon != null) {
+        comment.setIcon(myCommentIcon);
+      }
+
       comment.setBorder(getCommentBorder());
     }
 
@@ -396,7 +408,7 @@ public class ComponentPanelBuilder implements GridBagPanelBuilder {
     }
 
     private void setCommentTextImpl(String commentText) {
-      ComponentPanelBuilder.setCommentText(comment, commentText, myCommentBelow, 70);
+      ComponentPanelBuilder.setCommentText(comment, commentText, myCommentBelow, MAX_COMMENT_WIDTH);
     }
 
     private void addToPanel(JPanel panel, GridBagConstraints gc) {

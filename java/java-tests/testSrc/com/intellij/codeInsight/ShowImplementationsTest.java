@@ -27,7 +27,7 @@ public class ShowImplementationsTest extends JavaCodeInsightFixtureTestCase {
     myFixture.configureByFiles("Bundles.java", "bundle.properties", "bundle_fr.properties");
     LookupElement[] elements = myFixture.completeBasic();
     assertNotNull(elements);
-    assertTrue(ContainerUtil.find(elements, element -> element.getObject() instanceof Property) != null);
+    assertNotNull(ContainerUtil.find(elements, element -> element.getObject() instanceof Property));
     PsiElement[] implementations = ShowImplementationsTestUtil.getImplementations();
     assertNotNull(implementations);
     assertEquals(Arrays.asList(implementations).toString(), 1, implementations.length);

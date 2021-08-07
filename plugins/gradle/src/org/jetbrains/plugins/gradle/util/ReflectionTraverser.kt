@@ -2,18 +2,28 @@
 package org.jetbrains.plugins.gradle.util
 
 import com.intellij.util.ReflectionUtil
+import java.io.Closeable
 import java.lang.reflect.Array
 import java.lang.reflect.Field
 import java.util.*
+import java.util.function.Consumer
 
-class ReflectionTraverser {
-  interface Visitor {
-    fun process(instance: Any)
-  }
+class ReflectionTraverser : Closeable {
 
   private val visited = IdentityHashMap<Any, Any?>()
   private val classCache = HashMap<Class<*>, ClassInfo>()
-  fun walk(root: Any, visitor: Visitor) {
+  fun walk(root: Any,
+           classesToSkip: Collection<Class<*>> = emptyList(),
+           classesToSkipChildren: Collection<Class<*>> = emptyList(),
+           consumer: Consumer<Any>) {
+    for (classToSkip in classesToSkip) {
+      classCache[classToSkip] = skipClass
+    }
+
+    classCache[Object::class.java] = skipChildrenClass
+    for (classToSkip in classesToSkipChildren) {
+      classCache[classToSkip] = skipChildrenClass
+    }
     val stack: Deque<Any> = LinkedList()
     stack.add(root)
     while (!stack.isEmpty()) {
@@ -25,7 +35,9 @@ class ReflectionTraverser {
       if (classInfo.skip) continue
 
       visited[current] = null
-      visitor.process(current)
+      consumer.accept(current)
+      if (classInfo.skipChildren) continue
+
       if (clazz.isArray) {
         val len = Array.getLength(current)
         if (!clazz.componentType.isPrimitive) {
@@ -43,6 +55,11 @@ class ReflectionTraverser {
     }
   }
 
+  override fun close() {
+    visited.clear()
+    classCache.clear()
+  }
+
   private fun walkFields(stack: Deque<Any>, current: Any) {
     val classInfo = getClassInfo(current.javaClass)
     for (field in classInfo.fields) {
@@ -56,43 +73,42 @@ class ReflectionTraverser {
     }
   }
 
-  private fun getClassInfo(current: Class<*>): ClassInfo = classCache.computeIfAbsent(current) { ClassInfo(current) }
+  private fun getClassInfo(clazz: Class<*>) = classCache.computeIfAbsent(clazz) {
+    val packageName = clazz.packageName
+    if (packageName.startsWith("jdk.") ||
+        packageName.startsWith("java.lang.module") ||
+        packageName.startsWith("com.sun.proxy")) {
+      return@computeIfAbsent skipClass
+    }
 
-  class ClassInfo(c: Class<*>) {
-    var skip = false
     val fields = mutableListOf<Field>()
-
-    init {
-      try {
-        val packageName = c.packageName
-        if (packageName.startsWith("jdk.") ||
-            packageName.startsWith("java.lang.module") ||
-            packageName.startsWith("com.sun.proxy")) {
-          skip = true
-        }
-        else {
-          val collectFields = ReflectionUtil.collectFields(c)
-          for (it in collectFields) {
-            if (!it.type.isPrimitive) {
-              it.isAccessible = true
-              fields += it
-            }
-          }
+    try {
+      val collectFields = ReflectionUtil.collectFields(clazz)
+      for (field in collectFields) {
+        if (!field.type.isPrimitive) {
+          field.isAccessible = true
+          fields += field
         }
       }
-      catch (t: Throwable) {
-        skip = true
-      }
+      return@computeIfAbsent ClassInfo(fields)
+    }
+    catch (t: Throwable) {
+      return@computeIfAbsent skipClass
     }
   }
 
+  private class ClassInfo(val fields: List<Field>) {
+    val skip get() = this === skipClass
+    val skipChildren get() = this === skipChildrenClass
+  }
+
   companion object {
+    private val skipClass = ClassInfo(emptyList())
+    private val skipChildrenClass = ClassInfo(emptyList())
+
     @JvmStatic
-    fun traverse(o: Any, visitor: Visitor) {
-      val traverse = ReflectionTraverser()
-      traverse.walk(o, visitor)
-      traverse.visited.clear()
-      traverse.classCache.clear()
+    fun traverse(o: Any, consumer: Consumer<Any>) {
+      ReflectionTraverser().use { it.walk(o, emptyList(), emptyList(), consumer) }
     }
 
     private fun walkCollection(stack: Deque<Any>, col: Collection<Any?>) {

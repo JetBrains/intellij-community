@@ -26,7 +26,7 @@ import javax.swing.event.TreeExpansionEvent
 import javax.swing.event.TreeExpansionListener
 
 internal class PredictionService(val project: Project) : Disposable {
-  private val changesViewManager = ChangesViewManager.getInstance(project)
+  private var isDisposed = false
 
   private data class PredictionRequirements(val filesHistoryProvider: FilesHistoryProvider)
 
@@ -51,7 +51,7 @@ internal class PredictionService(val project: Project) : Disposable {
     }
   }) {
     override fun inProgressChanged(value: Boolean) {
-      changesViewManager.scheduleRefresh()
+      refreshChangesBrowser()
     }
   }
 
@@ -211,12 +211,19 @@ internal class PredictionService(val project: Project) : Disposable {
 
   private fun setPrediction(newPrediction: PredictionData) {
     predictionData = newPrediction
-    changesViewManager.scheduleRefresh()
+    refreshChangesBrowser()
   }
 
   override fun dispose() {
+    isDisposed = true
     if (userSettings.isPluginEnabled) {
       shutdownService()
+    }
+  }
+
+  private fun refreshChangesBrowser() {
+    if (!isDisposed) {
+      project.messageBus.syncPublisher(ChangesViewModifier.TOPIC).updated()
     }
   }
 }

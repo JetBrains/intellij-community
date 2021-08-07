@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi;
 
 import com.intellij.psi.javadoc.*;
@@ -430,6 +430,22 @@ public abstract class JavaElementVisitor extends PsiElementVisitor {
 
   public void visitTypeTestPattern(PsiTypeTestPattern pattern) {
     visitPattern(pattern);
+  }
+
+  public void visitParenthesizedPattern(PsiParenthesizedPattern pattern) {
+    visitPattern(pattern);
+  }
+
+  public void visitGuardedPattern(PsiGuardedPattern pattern) {
+    visitPattern(pattern);
+  }
+
+  public void visitDefaultCaseLabelElement(PsiDefaultCaseLabelElement element) {
+    visitElement(element);
+  }
+
+  public void visitCaseLabelElementList(PsiCaseLabelElementList list) {
+    visitElement(list);
   }
 
   public void visitPatternVariable(PsiPatternVariable variable) {

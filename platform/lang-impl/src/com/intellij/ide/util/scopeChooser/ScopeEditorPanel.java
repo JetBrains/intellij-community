@@ -38,10 +38,7 @@ import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import com.intellij.util.ui.update.Activatable;
 import com.intellij.util.ui.update.UiNotifyConnector;
-import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.PropertyKey;
+import org.jetbrains.annotations.*;
 
 import javax.swing.*;
 import javax.swing.event.*;
@@ -55,6 +52,7 @@ import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 public final class ScopeEditorPanel implements Disposable {
   private JPanel myButtonsPanel;
@@ -82,6 +80,7 @@ public final class ScopeEditorPanel implements Disposable {
   private JLabel myPartiallyIncluded;
   private PanelProgressIndicator myCurrentProgress;
   private NamedScopesHolder myHolder;
+  private Boolean myRebuildRequired = null; //updated in EDT only
 
   private final MyAction myInclude = new MyAction("button.include", this::includeSelected);
   private final MyAction myIncludeRec = new MyAction("button.include.recursively", this::includeSelected);
@@ -157,13 +156,27 @@ public final class ScopeEditorPanel implements Disposable {
       public void hideNotify() {
         cancelCurrentProgress();
       }
+
+      @Override
+      public void showNotify() {
+        if (myRebuildRequired != null && myRebuildRequired) {
+          rebuild(false);
+        }
+      }
     }));
     myPartiallyIncluded.setIcon(JBUIScale.scaleIcon(new ColorIcon(10, MyTreeCellRenderer.PARTIAL_INCLUDED)));
     myRecursivelyIncluded.setIcon(JBUIScale.scaleIcon(new ColorIcon(10, MyTreeCellRenderer.WHOLE_INCLUDED)));
 
     SimpleMessageBusConnection connection = project.getMessageBus().connect(this);
     connection.subscribe(SettingsChangedListener.TOPIC, () -> {
-      rebuild(false);
+      if (!myPanel.isShowing()) {
+        if (myRebuildRequired != null) { //schedule rebuild if panel was already shown
+          myRebuildRequired = true;
+        }
+      }
+      else {
+        rebuild(false);
+      }
     });
   }
   
@@ -199,7 +212,6 @@ public final class ScopeEditorPanel implements Disposable {
 
   private void onTextChange() {
     if (!myIsInUpdate) {
-      myUpdateAlarm.cancel(false);
       cancelCurrentProgress();
       final String text = myPatternField.getText();
       myCurrentScope = new InvalidPackageSet(text);
@@ -375,7 +387,6 @@ public final class ScopeEditorPanel implements Disposable {
     final DefaultActionGroup group = new DefaultActionGroup();
     final Runnable update = () -> {
       myProject.getMessageBus().syncPublisher(SettingsChangedListener.TOPIC).settingsChanged();
-      rebuild(true);
     };
     if (ProjectViewDirectoryHelper.getInstance(myProject).supportsFlattenPackages()) {
       group.add(new FlattenPackagesAction(update));
@@ -402,6 +413,7 @@ public final class ScopeEditorPanel implements Disposable {
     }
 
     ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar("ScopeEditor", group, true);
+    toolbar.setTargetComponent(myPackageTree);
     return toolbar.getComponent();
   }
 
@@ -414,8 +426,29 @@ public final class ScopeEditorPanel implements Disposable {
     });
   }
 
-  private void rebuild(final boolean updateText, @Nullable final Runnable runnable, final boolean requestFocus, final int delayMillis){
-    myUpdateAlarm.cancel(false);
+  @TestOnly
+  public void waitForCompletion() {
+    int idx = 0;
+    while (!myUpdateAlarm.isDone() && idx++ < 10000) {
+      try {
+        myUpdateAlarm.get(1, TimeUnit.MILLISECONDS);
+        return;
+      }
+      catch (TimeoutException ignore) {
+      }
+      catch (Exception e) {
+        throw new RuntimeException(e);
+      }
+    }
+  }
+  
+  private void rebuild(final boolean updateText, @Nullable final Runnable runnable, final boolean requestFocus, final int delayMillis) {
+    ApplicationManager.getApplication().assertIsDispatchThread();
+    myRebuildRequired = false;
+    cancelCurrentProgress();
+    PanelProgressIndicator progress = createProgressIndicator(requestFocus);
+    progress.setBordersVisible(false);
+    myCurrentProgress = progress;
     final Runnable request = () -> {
       if (updateText) {
         final String text = myCurrentScope != null ? myCurrentScope.getText() : null;
@@ -430,10 +463,11 @@ public final class ScopeEditorPanel implements Disposable {
         });
       }
 
+      if (myProject.isDisposed()) {
+        return;
+      }
       try {
-        if (!myProject.isDisposed()) {
-          updateTreeModel(requestFocus);
-        }
+        updateTreeModel(requestFocus, progress);
       }
       catch (ProcessCanceledException e) {
         return;
@@ -445,7 +479,7 @@ public final class ScopeEditorPanel implements Disposable {
     myUpdateAlarm = AppExecutorUtil.getAppScheduledExecutorService().schedule(request, delayMillis, TimeUnit.MILLISECONDS);
   }
 
-  private void rebuild(final boolean updateText) {
+  public void rebuild(final boolean updateText) {
     rebuild(updateText, null, true, 300);
   }
 
@@ -472,7 +506,7 @@ public final class ScopeEditorPanel implements Disposable {
       }
     });
 
-    PopupHandler.installUnknownPopupHandler(tree, createTreePopupActions());
+    PopupHandler.installPopupMenu(tree, createTreePopupActions(), "ScopeEditorPopup");
   }
 
   private ActionGroup createTreePopupActions() {
@@ -484,10 +518,7 @@ public final class ScopeEditorPanel implements Disposable {
     return actionGroup;
   }
 
-  private void updateTreeModel(final boolean requestFocus) throws ProcessCanceledException {
-    PanelProgressIndicator progress = createProgressIndicator(requestFocus);
-    progress.setBordersVisible(false);
-    myCurrentProgress = progress;
+  private void updateTreeModel(final boolean requestFocus, PanelProgressIndicator progress) throws ProcessCanceledException {
     Runnable updateModel = () -> {
       final ProcessCanceledException [] ex = new ProcessCanceledException[1];
       ApplicationManager.getApplication().runReadAction(() -> {
@@ -513,9 +544,7 @@ public final class ScopeEditorPanel implements Disposable {
           ex[0] = e;
         }
         finally {
-          myCurrentProgress = null;
-          //update label
-          setToComponent(myMatchingCountLabel, requestFocus);
+          SwingUtilities.invokeLater(() -> setToComponent(myMatchingCountLabel, requestFocus));
         }
       });
       if (ex[0] != null) {
@@ -530,8 +559,11 @@ public final class ScopeEditorPanel implements Disposable {
   }
 
   public void cancelCurrentProgress(){
-    if (myCurrentProgress != null){
+    ApplicationManager.getApplication().assertIsDispatchThread();
+    myUpdateAlarm.cancel(false);
+    if (myCurrentProgress != null) {
       myCurrentProgress.cancel();
+      myCurrentProgress = null;
     }
   }
 
@@ -548,6 +580,7 @@ public final class ScopeEditorPanel implements Disposable {
 
   public void reset(PackageSet packageSet, @Nullable Runnable runnable) {
     myCurrentScope = packageSet;
+    myRebuildRequired = false;
     myPatternField.setText(myCurrentScope == null ? "" : myCurrentScope.getText());
     rebuild(false, runnable, false, 0);
   }
@@ -558,7 +591,7 @@ public final class ScopeEditorPanel implements Disposable {
     myMatchingCountPanel.revalidate();
     myMatchingCountPanel.repaint();
     if (requestFocus) {
-      SwingUtilities.invokeLater(() -> myPatternField.getTextField().requestFocusInWindow());
+      myPatternField.getTextField().requestFocusInWindow();
     }
   }
 
@@ -577,7 +610,7 @@ public final class ScopeEditorPanel implements Disposable {
     private static final Color PARTIAL_INCLUDED = new JBColor(new Color(0, 50, 160), DarculaColors.BLUE);
 
     @Override
-    public void customizeCellRenderer(JTree tree,
+    public void customizeCellRenderer(@NotNull JTree tree,
                                       Object value,
                                       boolean selected,
                                       boolean expanded,

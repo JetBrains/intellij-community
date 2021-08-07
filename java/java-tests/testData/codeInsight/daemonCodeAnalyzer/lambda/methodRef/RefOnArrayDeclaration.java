@@ -55,3 +55,16 @@ class IDEA106973 {
     Function<Short, String[]> a2  = String[] :: new;
   }
 }
+
+class IDEA268866 {
+  interface Function<A, B> {
+    B apply(A a);
+  }
+  private static <T, K, U> void m(Function<? super T, ? extends K> keyMapper,
+                                  Function<? super T, ? extends U> valueMapper) {
+  }
+
+  private static void main(Function<Integer, Integer> identity) {
+    m(identity, int[]::new);
+  }
+}

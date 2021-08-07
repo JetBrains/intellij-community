@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.usages.impl.rules;
 
 import com.intellij.openapi.actionSystem.CommonDataKeys;
@@ -12,7 +12,6 @@ import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiPackage;
 import com.intellij.usages.UsageGroup;
-import com.intellij.usages.UsageView;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -59,13 +58,13 @@ public class PackageGroupingRule extends DirectoryGroupingRule {
     }
 
     @Override
-    public Icon getIcon(boolean isOpen) {
+    public Icon getIcon() {
       return myIcon;
     }
 
     @Override
     @NotNull
-    public String getText(UsageView view) {
+    public String getPresentableGroupText() {
       return myPackage.getQualifiedName();
     }
 
@@ -98,7 +97,7 @@ public class PackageGroupingRule extends DirectoryGroupingRule {
 
     @Override
     public int compareTo(@NotNull UsageGroup usageGroup) {
-      return getText(null).compareToIgnoreCase(usageGroup.getText(null));
+      return getPresentableGroupText().compareToIgnoreCase(usageGroup.getPresentableGroupText());
     }
 
     public boolean equals(Object o) {

@@ -8,6 +8,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiNamedElement;
 import com.intellij.util.text.NameUtilCore;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -42,6 +43,16 @@ public final class TestFinderHelper {
     if (element == null) return false;
     for (TestFinder each : getFinders()) {
       if (each.isTest(element)) return true;
+    }
+    return false;
+  }
+
+  @ApiStatus.Experimental
+  public static boolean navigateToTestImmediately(@NotNull PsiElement element) {
+    for (TestFinder each : getFinders()) {
+      if (each.navigateToTestImmediately(element)) {
+        return true;
+      }
     }
     return false;
   }

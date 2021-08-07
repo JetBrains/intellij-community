@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.uiDesigner.designSurface;
 
@@ -36,9 +36,7 @@ import java.awt.*;
 import java.awt.event.*;
 import java.util.ArrayList;
 
-/**
- * @author yole
- */
+
 public class GridCaptionPanel extends JPanel implements ComponentSelectionListener, DataProvider {
   private static final Logger LOG = Logger.getInstance(GridCaptionPanel.class);
 
@@ -480,7 +478,7 @@ public class GridCaptionPanel extends JPanel implements ComponentSelectionListen
 
   private class MyDnDSource implements DnDSource {
     @Override
-    public boolean canStartDragging(DnDAction action, Point dragOrigin) {
+    public boolean canStartDragging(DnDAction action, @NotNull Point dragOrigin) {
       LOG.debug("canStartDragging(): dragOrigin=" + dragOrigin);
       if (myResizeLine != -1) {
         LOG.debug("canStartDragging(): have resize line");
@@ -514,7 +512,7 @@ public class GridCaptionPanel extends JPanel implements ComponentSelectionListen
     }
 
     @Override
-    public DnDDragStartBean startDragging(DnDAction action, Point dragOrigin) {
+    public DnDDragStartBean startDragging(DnDAction action, @NotNull Point dragOrigin) {
       return new DnDDragStartBean(new MyDragBean(myIsRow, getSelectedCells(dragOrigin)));
     }
   }

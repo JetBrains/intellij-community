@@ -1,9 +1,44 @@
 <html>
 <body>
-Points out cases where a variable value
-is never used after its assignment, i.e.: <br>
-&nbsp;- the variable never gets read after assignment OR <br>
-&nbsp;- the value is always overwritten with another assignment before the next variable read OR <br>
-&nbsp;- the variable initializer is redundant (for one of the above two reasons)
+Reports the cases in which a variable is redundant as its value is never used after its assignment.
+<p>If the variable is not used, it's better to remove it to shorten the code and avoid redundant allocations.</p>
+<p>The following cases are reported:</p>
+<ul>
+  <li>The variable never gets read after assignment.</li>
+  <li>The value is always overwritten with another assignment before the next variable is read.</li>
+  <li>The variable initializer is redundant (for one of the two reasons above).</li>
+</ul>
+<!-- tooltip end -->
+<p>Configure the inspection:</p>
+<p>
+Use the <b>Report redundant initializers</b> option to report redundant initializers:
+</p>
+<pre><code>
+  int getI() {
+    int i = 0; // redundant initialization
+    i = 2;
+    return i;
+  }
+</code></pre>
+<p>
+Use the <b>Report ++i when may be replaced with (i + 1)</b> option to report the cases when <code>++i</code> expression
+may be replaced with <code>i + 1</code>:
+</p>
+<pre><code>
+  int preInc(int i) {
+    int res = i;
+    return ++res;
+  }
+</code></pre>
+<p>
+Use the <b>Report i++ when changed value is not used afterwards</b> option to report the cases when the result of <code>i++</code> expression
+is not used later:
+</p>
+<pre><code>
+  int postInc(int i) {
+    int res = i;
+    return res++;
+  }
+</code></pre>
 </body>
 </html>

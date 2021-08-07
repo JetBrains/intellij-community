@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal;
 
 import com.intellij.ide.highlighter.XmlFileType;
@@ -98,7 +98,7 @@ final class UsedIconsListingAction extends AnAction {
 
     final ProjectFileIndex index = ProjectRootManager.getInstance(project).getFileIndex();
     if (true) {
-      PsiClass javaeeIcons = psiFacade.findClass("com.intellij.javaee.oss.JavaeeIcons", allScope);
+      PsiClass javaeeIcons = psiFacade.findClass("com.intellij.javaee.JavaeeIcons", allScope);
       MethodReferencesSearch.search(javaeeIcons.findMethodsByName("getIcon", false)[0], false).forEach(consumer);
 
       MethodReferencesSearch.search(findIconMethod, false).forEach(consumer);

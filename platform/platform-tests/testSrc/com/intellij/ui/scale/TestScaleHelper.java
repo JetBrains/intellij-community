@@ -61,12 +61,12 @@ public final class TestScaleHelper {
 
   public static void setRegistryProperty(@NotNull String key, @NotNull String value) {
     final RegistryValue prop = Registry.get(key);
-    originalRegProps.put(key, prop.asString());
+    if (originalRegProps.get(key) == null) originalRegProps.put(key, prop.asString());
     prop.setValue(value);
   }
 
   public static void setSystemProperty(@NotNull String name, @Nullable String value) {
-    originalSysProps.put(name, System.getProperty(name));
+    if (originalSysProps.get(name) == null) originalSysProps.put(name, System.getProperty(name));
     _setProperty(name, value);
   }
 

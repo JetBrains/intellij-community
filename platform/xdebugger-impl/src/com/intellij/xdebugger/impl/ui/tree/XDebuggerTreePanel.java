@@ -53,16 +53,16 @@ public final class XDebuggerTreePanel implements DnDSource {
   }
 
   @Override
-  public boolean canStartDragging(final DnDAction action, final Point dragOrigin) {
+  public boolean canStartDragging(final DnDAction action, final @NotNull Point dragOrigin) {
     return getNodesToDrag().length > 0;
   }
 
   private XValueNodeImpl[] getNodesToDrag() {
-    return myTree.getSelectedNodes(XValueNodeImpl.class, node -> DebuggerUIUtil.hasEvaluationExpression(node.getValueContainer()));
+    return myTree.getSelectedNodes(XValueNodeImpl.class, DebuggerUIUtil::hasEvaluationExpression);
   }
 
   @Override
-  public DnDDragStartBean startDragging(final DnDAction action, final Point dragOrigin) {
+  public DnDDragStartBean startDragging(final DnDAction action, final @NotNull Point dragOrigin) {
     return new DnDDragStartBean(getNodesToDrag());
   }
 

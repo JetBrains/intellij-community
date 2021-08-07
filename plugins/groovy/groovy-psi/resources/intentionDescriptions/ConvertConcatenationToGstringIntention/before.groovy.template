@@ -1,1 +1,1 @@
-println <spot>todo.name + " " + todo.note</spot>
+println <spot>todo.name + " " + todo.note()</spot>

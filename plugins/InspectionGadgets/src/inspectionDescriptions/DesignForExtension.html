@@ -1,17 +1,27 @@
 <html>
 <body>
-Reports any methods which are not <b>static</b>,
-<b>private</b>, <b>final</b> or <b>abstract</b>,
-and whose bodies are not empty. Coding in a style that avoids such methods protects
-the contracts of classes from being broken by their subclasses. The benefit of this style is that
-subclasses cannot corrupt the state of the superclass by forgetting to call the super method.
-The cost is that subclasses are limited in their flexibility, in particular they cannot prevent
-execution of code in the superclass.
+Reports methods which are not <code>static</code>, <code>private</code>, <code>final</code> or <code>abstract</code>, and whose bodies
+are not empty.
 <p>
-This inspection is intended for code to be used in secure environments, and is probably not
-appropriate for less restrictive environments.
+  Coding in a style that avoids such methods protects the contracts of classes from being broken by their subclasses. The
+  benefit of this style is that subclasses cannot corrupt the state of the superclass by forgetting to call the super method. The cost is
+  that
+  subclasses are limited in their flexibility, in particular they cannot prevent execution of code in the superclass. Use the quick-fix to
+  add
+  the missing modifiers.</p>
+<p><b>Example:</b></p>
+<pre>
+  class Foo {
+    public boolean equals(Object o) { return true; }
+  }
+</pre>
+<p>After the quick-fix is applied:</p>
+<pre>
+  class Foo {
+    public final boolean equals(Object o) { return true; }
+  }
+</pre>
+This inspection is intended for code that is going to be used in secure environments, and is probably not appropriate for less restrictive environments.
 <!-- tooltip end -->
-<p>
-
 </body>
 </html>

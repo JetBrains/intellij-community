@@ -1,14 +1,20 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.gradle.tooling.util;
 
-import gnu.trove.TIntObjectHashMap;
+import com.intellij.util.ArrayUtilRt;
+import com.intellij.util.containers.IntObjectHashMap;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Vladislav.Soroka
  */
 public class IntObjectMap<T> {
-  private final TIntObjectHashMap<T> myObjectsMap = new TIntObjectHashMap<T>();
+  private final IntObjectHashMap<T> myObjectsMap = new IntObjectHashMap<T>(new IntObjectHashMap.ArrayProducer<T[]>() {
+      @Override
+      public T[] produce(int s) {
+        return (T[])(s == 0 ? ArrayUtilRt.EMPTY_OBJECT_ARRAY : new Object[s]);
+      }
+    });
 
   public T computeIfAbsent(int objectID, @NotNull ObjectFactory<T> objectFactory) {
     T object = myObjectsMap.get(objectID);

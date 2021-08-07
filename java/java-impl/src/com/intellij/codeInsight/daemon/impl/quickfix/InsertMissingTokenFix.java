@@ -2,6 +2,7 @@
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.daemon.impl.actions.IntentionActionWithFixAllOption;
+import com.intellij.codeInsight.intention.LowPriorityAction;
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -9,7 +10,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 
-public class InsertMissingTokenFix implements IntentionActionWithFixAllOption {
+public class InsertMissingTokenFix implements IntentionActionWithFixAllOption, LowPriorityAction {
   private final String myToken;
 
   public InsertMissingTokenFix(String token) {

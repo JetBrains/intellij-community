@@ -7,7 +7,7 @@ import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.NlsContexts
 import git4idea.DialogManager
 import org.jetbrains.plugins.github.api.GithubServerPath
-import org.jetbrains.plugins.github.authentication.accounts.GithubAccountManager.Companion.createAccount
+import org.jetbrains.plugins.github.authentication.accounts.GHAccountManager.Companion.createAccount
 import org.jetbrains.plugins.github.authentication.ui.*
 import org.jetbrains.plugins.github.i18n.GithubBundle.message
 import java.awt.Component
@@ -24,17 +24,8 @@ internal class GHLoginRequest(
   val isLoginEditable: Boolean = true,
   val isCheckLoginUnique: Boolean = false,
 
-  val password: String? = null,
   val token: String? = null
 )
-
-internal fun GHLoginRequest.loginWithPasswordOrToken(project: Project?, parentComponent: Component?): GHAccountAuthData? {
-  val dialog = GHPasswordTokenLoginDialog(project, parentComponent, isLoginUniqueChecker, text)
-  configure(dialog)
-  password?.let { dialog.setPassword(it) }
-
-  return dialog.getAuthData()
-}
 
 internal fun GHLoginRequest.loginWithToken(project: Project?, parentComponent: Component?): GHAccountAuthData? {
   val dialog = GHTokenLoginDialog(project, parentComponent, isLoginUniqueChecker)

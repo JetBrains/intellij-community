@@ -16,6 +16,7 @@
     <option name="CONSOLE_BACKGROUND_KEY" value="0" />
     <option name="DELETED_LINES_COLOR" value="ffa14f" />
     <option name="DOCUMENTATION_COLOR" value="281a33" />
+    <option name="LOOKUP_COLOR" value="281a33" />
     <option name="ERROR_HINT" value="800002" />
     <option name="FILESTATUS_ADDED" value="62cc47" />
     <option name="FILESTATUS_COPIED" value="62cc47" />
@@ -821,6 +822,43 @@
         <option name="BACKGROUND"/>
         <option name="EFFECT_COLOR" value="999999"/>
         <option name="EFFECT_TYPE" value="0"/>
+      </value>
+    </option>
+    <option name="GO_EXPORTED_FUNCTION_CALL">
+      <value>
+        <option name="FOREGROUND" value="EDB98E" />
+      </value>
+    </option>
+    <option name="GO_LOCAL_FUNCTION_CALL">
+      <value>
+        <option name="FOREGROUND" value="EDB98E" />
+      </value>
+    </option>
+    <option name="GO_METHOD_RECEIVER">
+      <value>
+        <option name="FOREGROUND" value="3DB8FF" />
+        <option name="FONT_TYPE" value="1"/>
+      </value>
+    </option>
+    <option name="GO_PACKAGE">
+      <value>
+        <option name="FOREGROUND" value="A8CC5C" />
+      </value>
+    </option>
+    <option name="GO_TYPE_REFERENCE">
+      <value>
+        <option name="FOREGROUND" value="73D0E6" />
+      </value>
+    </option>
+    <option name="GO_COMMENT_REFERENCE">
+      <value>
+        <option name="FOREGROUND" value="7ec3e6"/>
+        <option name="FONT_TYPE" value="2"/>
+      </value>
+    </option>
+    <option name="GO_SHADOWING_VARIABLE">
+      <value>
+        <option name="FOREGROUND" value="38D996"/>
       </value>
     </option>
   </attributes>

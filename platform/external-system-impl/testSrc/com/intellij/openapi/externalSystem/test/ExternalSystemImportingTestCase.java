@@ -7,6 +7,7 @@ import com.intellij.find.findUsages.FindUsagesManager;
 import com.intellij.find.findUsages.FindUsagesOptions;
 import com.intellij.find.impl.FindManagerImpl;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.compiler.CompilerPaths;
 import com.intellij.openapi.externalSystem.importing.ImportSpec;
 import com.intellij.openapi.externalSystem.importing.ImportSpecBuilder;
@@ -410,7 +411,7 @@ public abstract class ExternalSystemImportingTestCase extends ExternalSystemTest
 
   protected void assertArtifacts(String... expectedNames) {
     final List<String> actualNames = ContainerUtil.map(
-      ArtifactManager.getInstance(myProject).getAllArtifactsIncludingInvalid(),
+      ReadAction.compute(() -> ArtifactManager.getInstance(myProject).getAllArtifactsIncludingInvalid()),
       artifact -> artifact.getName());
 
     assertUnorderedElementsAreEqual(actualNames, expectedNames);

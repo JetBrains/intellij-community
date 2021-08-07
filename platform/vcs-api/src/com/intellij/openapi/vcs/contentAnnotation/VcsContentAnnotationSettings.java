@@ -1,7 +1,10 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.contentAnnotation;
 
-import com.intellij.openapi.components.*;
+import com.intellij.openapi.components.PersistentStateComponent;
+import com.intellij.openapi.components.State;
+import com.intellij.openapi.components.Storage;
+import com.intellij.openapi.components.StoragePathMacros;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 
@@ -15,7 +18,7 @@ public class VcsContentAnnotationSettings implements PersistentStateComponent<Vc
   private State myState = new State();
 
   public static VcsContentAnnotationSettings getInstance(final Project project) {
-    return ServiceManager.getService(project, VcsContentAnnotationSettings.class);
+    return project.getService(VcsContentAnnotationSettings.class);
   }
 
   final static class State {
@@ -41,7 +44,7 @@ public class VcsContentAnnotationSettings implements PersistentStateComponent<Vc
     return (int)TimeUnit.MILLISECONDS.toDays(myState.myLimit);
   }
 
-  public void setLimit(int days) {
+  public void setLimitDays(int days) {
     myState.myLimit = TimeUnit.DAYS.toMillis(days);
   }
 

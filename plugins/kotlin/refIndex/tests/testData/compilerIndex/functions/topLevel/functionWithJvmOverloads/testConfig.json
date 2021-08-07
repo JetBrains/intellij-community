@@ -1,0 +1,13 @@
+{
+    "usages": [
+        "utilFile.kt",
+        "AllArguments.java",
+        "AllArguments.kt",
+        "WithoutAll.java",
+        "WithoutAll.kt",
+        "WithoutLast.java",
+        "WithoutLast.kt",
+        "WithoutSecond.java",
+        "WithoutSecond.kt"
+    ]
+}

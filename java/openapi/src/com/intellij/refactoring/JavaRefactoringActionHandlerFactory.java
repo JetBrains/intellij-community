@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -41,14 +41,6 @@ public abstract class JavaRefactoringActionHandlerFactory {
    * accepts 1 {@code PsiClass}.
    */
   public abstract RefactoringActionHandler createTurnRefsToSuperHandler();
-
-  /**
-   * Creates handler for Replace Temp With Query refactoring.<p>
-   *
-   * {@link RefactoringActionHandler#invoke(com.intellij.openapi.project.Project, com.intellij.psi.PsiElement[], com.intellij.openapi.actionSystem.DataContext)}
-   * is not implemented.
-   */
-  public abstract RefactoringActionHandler createTempWithQueryHandler();
 
   /**
    * Creates handler for Introduce Parameter refactoring.<p>

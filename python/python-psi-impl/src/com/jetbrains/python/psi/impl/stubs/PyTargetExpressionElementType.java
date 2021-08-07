@@ -26,9 +26,7 @@ import org.jetbrains.annotations.NotNull;
 import java.io.IOException;
 import java.util.List;
 
-/**
- * @author yole
- */
+
 public class PyTargetExpressionElementType extends PyStubElementType<PyTargetExpressionStub, PyTargetExpression>
   implements
   PyCustomizableStubElementType<PyTargetExpression, CustomTargetExpressionStub, CustomTargetExpressionStubType<? extends CustomTargetExpressionStub>> {

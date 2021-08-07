@@ -28,11 +28,9 @@ import com.intellij.testFramework.DisposableRule
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.RuleChain
 import com.intellij.util.io.systemIndependentPath
-import com.intellij.workspaceModel.ide.WorkspaceModel
 import com.intellij.workspaceModel.ide.impl.WorkspaceModelInitialTestContent
 import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType
-import org.junit.Assume
 import org.junit.rules.ExternalResource
 import org.junit.rules.TestRule
 import org.junit.runner.Description
@@ -40,17 +38,6 @@ import org.junit.runners.model.Statement
 import java.nio.file.Path
 
 class ProjectModelRule(private val forceEnableWorkspaceModel: Boolean = false) : TestRule {
-  companion object {
-    @JvmStatic
-    val isWorkspaceModelEnabled: Boolean
-      get() = WorkspaceModel.isEnabled
-
-    @JvmStatic
-    fun ignoreTestUnderWorkspaceModel() {
-      Assume.assumeFalse("Not applicable to workspace model", WorkspaceModel.isEnabled)
-    }
-  }
-
   val baseProjectDir = TempDirectory()
   private val disposableRule = DisposableRule()
 

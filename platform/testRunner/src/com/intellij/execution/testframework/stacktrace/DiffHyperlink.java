@@ -25,7 +25,6 @@ import com.intellij.execution.testframework.actions.ViewAssertEqualsDiffAction;
 import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NlsSafe;
@@ -37,10 +36,11 @@ import java.io.File;
 
 public class DiffHyperlink implements Printable {
   private static final String NEW_LINE = "\n";
-  private static final Logger LOG = Logger.getInstance(DiffHyperlink.class);
 
-  protected final String myExpected;
-  protected final String myActual;
+  @NotNull
+  private final String myExpected;
+  @NotNull
+  private final String myActual;
   protected final String myFilePath;
   protected final String myActualFilePath;
   private final boolean myPrintOneLine;
@@ -48,19 +48,12 @@ public class DiffHyperlink implements Printable {
   private @NlsSafe String myTestProxyName;
 
 
-  public DiffHyperlink(final String expected, final String actual, final String filePath) {
-    this(expected, actual, filePath, true);
+  public DiffHyperlink(@NotNull String expected, @NotNull String actual, String filePath) {
+    this(expected, actual, filePath, null, true);
   }
 
-  public DiffHyperlink(final String expected,
-                       final String actual,
-                       final String filePath,
-                       boolean printOneLine) {
-    this(expected, actual, filePath, null, printOneLine);
-  }
-
-  public DiffHyperlink(final String expected,
-                       final String actual,
+  public DiffHyperlink(@NotNull String expected,
+                       @NotNull String actual,
                        final String expectedFilePath,
                        final String actualFilePath,
                        boolean printOneLine) {
@@ -93,10 +86,17 @@ public class DiffHyperlink implements Printable {
     return getTitle();
   }
 
+  @Nullable
+  public @NlsSafe String getTestName() {
+    return myTestProxyName;
+  }
+
+  @NotNull
   public String getLeft() {
     return myExpected;
   }
 
+  @NotNull
   public String getRight() {
     return myActual;
   }
@@ -119,7 +119,7 @@ public class DiffHyperlink implements Printable {
     printer.print(NEW_LINE, ConsoleViewContentType.ERROR_OUTPUT);
   }
 
-  private static boolean hasMoreThanOneLine(final String string) {
+  private static boolean hasMoreThanOneLine(final @NotNull String string) {
     return string.indexOf('\n') != -1 || string.indexOf('\r') != -1;
   }
 
@@ -130,8 +130,8 @@ public class DiffHyperlink implements Printable {
 
     DiffHyperlink hyperlink = (DiffHyperlink)o;
 
-    if (myActual != null ? !myActual.equals(hyperlink.myActual) : hyperlink.myActual != null) return false;
-    if (myExpected != null ? !myExpected.equals(hyperlink.myExpected) : hyperlink.myExpected != null) return false;
+    if (!myActual.equals(hyperlink.myActual)) return false;
+    if (!myExpected.equals(hyperlink.myExpected)) return false;
     if (myFilePath != null ? !myFilePath.equals(hyperlink.myFilePath) : hyperlink.myFilePath != null) return false;
     if (myActualFilePath != null ? !myActualFilePath.equals(hyperlink.myActualFilePath) : hyperlink.myActualFilePath != null) return false;
 
@@ -140,8 +140,8 @@ public class DiffHyperlink implements Printable {
 
   @Override
   public int hashCode() {
-    int result = myExpected != null ? myExpected.hashCode() : 0;
-    result = 31 * result + (myActual != null ? myActual.hashCode() : 0);
+    int result = myExpected.hashCode();
+    result = 31 * result + myActual.hashCode();
     result = 31 * result + (myFilePath != null ? myFilePath.hashCode() : 0);
     result = 31 * result + (myActualFilePath != null ? myActualFilePath.hashCode() : 0);
     return result;

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.hint.actions;
 
 import com.intellij.codeInsight.documentation.DocumentationManager;
@@ -11,6 +11,7 @@ import com.intellij.codeInsight.navigation.BackgroundUpdaterTaskBase;
 import com.intellij.codeInsight.navigation.ImplementationSearcher;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.ide.DataManager;
+import com.intellij.ide.actions.searcheverywhere.PSIPresentationBgRendererWrapper;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
@@ -32,6 +33,7 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.reference.SoftReference;
+import com.intellij.ui.WindowMoveListener;
 import com.intellij.ui.popup.AbstractPopup;
 import com.intellij.ui.popup.PopupPositionManager;
 import com.intellij.ui.popup.PopupUpdateProcessor;
@@ -98,7 +100,10 @@ public abstract class ShowRelatedElementsActionBase extends DumbAwareAction impl
   @NotNull
   protected abstract @NlsContexts.PopupContent String getIndexNotReadyMessage();
 
-  private void updateElementImplementations(final Object lookupItemObject, ImplementationViewSession session) {
+  private void updateElementImplementations(Object lookupItemObject, ImplementationViewSession session) {
+    if (lookupItemObject instanceof PSIPresentationBgRendererWrapper.PsiItemWithPresentation) {
+      lookupItemObject = ((PSIPresentationBgRendererWrapper.PsiItemWithPresentation)lookupItemObject).getItem();
+    }
     ImplementationViewSessionFactory currentFactory = session.getFactory();
     ImplementationViewSession newSession = createNewSession(currentFactory, session, lookupItemObject);
     if (newSession == null) {
@@ -172,7 +177,6 @@ public abstract class ShowRelatedElementsActionBase extends DumbAwareAction impl
       ComponentPopupBuilder popupBuilder = JBPopupFactory.getInstance()
         .createComponentPopupBuilder(component, component.getPreferredFocusableComponent())
         .setProject(project)
-        .setCancelOnClickOutside(false)
         .addListener(updateProcessor)
         .addUserData(updateProcessor)
         .setDimensionServiceKey(project, DocumentationManager.JAVADOC_LOCATION_AND_SIZE, false)
@@ -187,7 +191,9 @@ public abstract class ShowRelatedElementsActionBase extends DumbAwareAction impl
           Disposer.dispose(session);
           return Boolean.TRUE;
         });
-      
+      WindowMoveListener listener = new WindowMoveListener();
+      listener.installTo(component);
+      Disposer.register(session, () -> listener.uninstallFrom(component));
       popup = popupBuilder.createPopup();
 
       updateInBackground(session, component, (AbstractPopup)popup, usageView);

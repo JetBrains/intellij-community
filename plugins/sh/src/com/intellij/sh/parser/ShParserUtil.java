@@ -3,6 +3,7 @@ package com.intellij.sh.parser;
 
 import com.intellij.lang.PsiBuilder;
 import com.intellij.lang.SyntaxTreeBuilder;
+import com.intellij.lang.WhitespaceSkippedCallback;
 import com.intellij.lang.parser.GeneratedParserUtilBase;
 import com.intellij.openapi.util.Key;
 import com.intellij.psi.tree.IElementType;
@@ -11,6 +12,8 @@ import com.intellij.sh.ShTypes;
 import com.intellij.sh.lexer.ShTokenTypes;
 import it.unimi.dsi.fastutil.objects.Object2LongMap;
 import it.unimi.dsi.fastutil.objects.Object2LongOpenHashMap;
+
+import java.lang.ref.Reference;
 
 public class ShParserUtil extends GeneratedParserUtilBase {
   private static final Key<Object2LongMap<String>> MODES_KEY = Key.create("MODES_KEY");
@@ -72,6 +75,33 @@ public class ShParserUtil extends GeneratedParserUtilBase {
       b.remapCurrentToken(ShTypes.WORD);
       b.advanceLexer();
       mark.done(ShTypes.LITERAL);
+      return true;
+    }
+    return false;
+  }
+
+  static boolean arithmeticOperationsRemapped(PsiBuilder psiBuilder, @SuppressWarnings("UnusedParameters") int level) {
+    IElementType type = psiBuilder.getTokenType();
+    PsiBuilder.Marker marker = null;
+    boolean[] isWhitespaceSkipped = new boolean[1];
+    while (!isWhitespaceSkipped[0] && (ShTokenTypes.arithmeticOperationsForRemapping.contains(type) ||
+                                       (marker != null && ShTokenTypes.numbers.contains(type)) ||
+                                       type == ShTypes.WORD)) {
+      if (marker == null) marker = psiBuilder.mark();
+      psiBuilder.setWhitespaceSkippedCallback(new WhitespaceSkippedCallback() {
+        @Override
+        public void onSkip(IElementType type, int start, int end) {
+          isWhitespaceSkipped[0] = true;
+        }
+      });
+      psiBuilder.remapCurrentToken(ShTypes.WORD);
+      psiBuilder.advanceLexer();
+      type = psiBuilder.getTokenType();
+    }
+
+    psiBuilder.setWhitespaceSkippedCallback(null);
+    if (marker != null) {
+      marker.collapse(ShTypes.WORD);
       return true;
     }
     return false;

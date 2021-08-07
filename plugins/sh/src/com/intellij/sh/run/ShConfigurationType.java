@@ -13,7 +13,7 @@ import com.intellij.util.EnvironmentUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-final class ShConfigurationType extends SimpleConfigurationType {
+public final class ShConfigurationType extends SimpleConfigurationType {
   ShConfigurationType() {
     super("ShConfigurationType", ShLanguage.INSTANCE.getID(),
           ShBundle.message("sh.run.configuration.description.0.configuration", ShLanguage.INSTANCE.getID()),

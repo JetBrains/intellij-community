@@ -695,4 +695,23 @@ public class JavaEnterActionTest extends AbstractEnterActionTestCase {
       "}"
     );
   }
+
+  public void testIdea160629() {
+    CodeStyle.doWithTemporarySettings(
+      getProject(),
+      getCurrentCodeStyleSettings(),
+      settings -> {
+        settings.getCommonSettings(JavaLanguage.INSTANCE).DO_NOT_INDENT_TOP_LEVEL_CLASS_MEMBERS = true;
+        doTextTest(
+          "java",
+
+          "public class Test extends A implements B,C {<caret>\n" +
+          "}",
+
+          "public class Test extends A implements B,C {\n" +
+          "<caret>\n" +
+          "}"
+        );
+      });
+  }
 }

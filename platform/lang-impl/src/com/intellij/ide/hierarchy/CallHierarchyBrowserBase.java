@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.hierarchy;
 
 import com.intellij.icons.AllIcons;
@@ -11,6 +11,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsActions;
 import com.intellij.psi.PsiElement;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -20,8 +21,8 @@ import java.util.Map;
 import java.util.function.Supplier;
 
 public abstract class CallHierarchyBrowserBase extends HierarchyBrowserBaseEx {
-  public static final String CALLEE_TYPE = "Callees of {0}";
-  public static final String CALLER_TYPE = "Callers of {0}";
+  @Nls public static final String CALLEE_TYPE = "Callees of {0}";
+  @Nls public static final String CALLER_TYPE = "Callers of {0}";
 
   public CallHierarchyBrowserBase(@NotNull Project project, @NotNull PsiElement method) {
     super(project, method);
@@ -64,7 +65,7 @@ public abstract class CallHierarchyBrowserBase extends HierarchyBrowserBaseEx {
   }
 
   @Override
-  protected Map<String, Supplier<String>> getPresentableNameMap() {
+  protected @NotNull Map<String, Supplier<String>> getPresentableNameMap() {
     HashMap<String, Supplier<String>> map = new HashMap<>();
     map.put(CALLER_TYPE, CallHierarchyBrowserBase::getCallerType);
     map.put(CALLEE_TYPE, CallHierarchyBrowserBase::getCalleeType);
@@ -72,20 +73,20 @@ public abstract class CallHierarchyBrowserBase extends HierarchyBrowserBaseEx {
   }
 
   private final class ChangeViewTypeActionBase extends ToggleAction {
-    private final String myTypeName;
+    private final @Nls String myTypeName;
 
-    private ChangeViewTypeActionBase(final @NlsActions.ActionText String shortDescription, final @NlsActions.ActionDescription String longDescription, final Icon icon, String typeName) {
+    private ChangeViewTypeActionBase(@NlsActions.ActionText String shortDescription, @NlsActions.ActionDescription String longDescription, Icon icon, @Nls String typeName) {
       super(shortDescription, longDescription, icon);
       myTypeName = typeName;
     }
 
     @Override
-    public final boolean isSelected(@NotNull final AnActionEvent event) {
+    public boolean isSelected(@NotNull AnActionEvent event) {
       return myTypeName.equals(getCurrentViewType());
     }
 
     @Override
-    public final void setSelected(@NotNull final AnActionEvent event, final boolean flag) {
+    public void setSelected(@NotNull AnActionEvent event, boolean flag) {
       if (flag) {
         // invokeLater is called to update state of button before long tree building operation
         ApplicationManager.getApplication().invokeLater(() -> changeView(myTypeName));
@@ -93,7 +94,7 @@ public abstract class CallHierarchyBrowserBase extends HierarchyBrowserBaseEx {
     }
 
     @Override
-    public final void update(@NotNull final AnActionEvent event) {
+    public void update(@NotNull AnActionEvent event) {
       super.update(event);
       setEnabled(isValidBase());
     }
@@ -101,17 +102,17 @@ public abstract class CallHierarchyBrowserBase extends HierarchyBrowserBaseEx {
 
   protected static class BaseOnThisMethodAction extends BaseOnThisElementAction {
     public BaseOnThisMethodAction() {
-      super(IdeBundle.messagePointer("action.base.on.this.method"), CallHierarchyBrowserBase.class, LanguageCallHierarchy.INSTANCE);
+      super(IdeBundle.messagePointer("action.base.on.this.method"), LanguageCallHierarchy.INSTANCE);
     }
   }
 
-  @SuppressWarnings("UnresolvedPropertyKey")
-  public static String getCalleeType() {
+  public static @NotNull @Nls String getCalleeType() {
+    //noinspection UnresolvedPropertyKey
     return IdeBundle.message("title.hierarchy.callees.of");
   }
 
-  @SuppressWarnings("UnresolvedPropertyKey")
-  public static String getCallerType() {
+  public static @NotNull @Nls String getCallerType() {
+    //noinspection UnresolvedPropertyKey
     return IdeBundle.message("title.hierarchy.callers.of");
   }
 }

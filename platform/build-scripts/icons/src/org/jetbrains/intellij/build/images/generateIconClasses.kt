@@ -1,9 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build.images
 
-import com.intellij.openapi.application.PathManager
 import com.intellij.util.concurrency.AppExecutorUtil
-import com.intellij.util.concurrency.AppScheduledExecutorService
 import org.jetbrains.intellij.build.images.sync.jpsProject
 import org.jetbrains.jps.model.module.JpsModule
 import java.nio.file.Path
@@ -36,7 +34,7 @@ data class IntellijIconClassGeneratorModuleConfig(
 
 abstract class IconsClasses {
   open val homePath: String
-    get() = PathManager.getHomePath()
+    get() = System.getProperty("user.dir")
 
   open val modules: List<JpsModule>
     get() = jpsProject(homePath).modules

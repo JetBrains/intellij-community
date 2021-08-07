@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.structuralsearch;
 
 import com.intellij.codeInsight.template.impl.TemplateImplUtil;
@@ -39,7 +39,8 @@ public class MatchOptions implements JDOMExternalizable {
   @NonNls private static final String TEXT_ATTRIBUTE_NAME = "text";
   @NonNls private static final String LOOSE_MATCHING_ATTRIBUTE_NAME = "loose";
   @NonNls private static final String RECURSIVE_ATTRIBUTE_NAME = "recursive";
-  @NonNls private static final String CASESENSITIVE_ATTRIBUTE_NAME = "caseInsensitive";
+  @NonNls public static final String OLD_CASE_SENSITIVE_ATTRIBUTE_NAME = "caseInsensitive";
+  @NonNls public static final String CASE_SENSITIVE_ATTRIBUTE_NAME = "case_sensitive";
   @NonNls private static final String CONSTRAINT_TAG_NAME = "constraint";
   @NonNls private static final String FILE_TYPE_ATTR_NAME = "type";
   @NonNls private static final String DIALECT_ATTR_NAME = "dialect";
@@ -103,7 +104,8 @@ public class MatchOptions implements JDOMExternalizable {
   }
 
   public void removeUnusedVariables() {
-    variableConstraints.keySet().removeIf(key -> !getUsedVariableNames().contains(key));
+    final Set<String> variables = getUsedVariableNames();
+    variableConstraints.keySet().removeIf(key -> !variables.contains(key));
   }
 
   public MatchVariableConstraint getVariableConstraint(String name) {
@@ -185,8 +187,8 @@ public class MatchOptions implements JDOMExternalizable {
     if (!looseMatching) {
       element.setAttribute(LOOSE_MATCHING_ATTRIBUTE_NAME, "false");
     }
-    element.setAttribute(RECURSIVE_ATTRIBUTE_NAME,String.valueOf(recursiveSearch));
-    element.setAttribute(CASESENSITIVE_ATTRIBUTE_NAME,String.valueOf(caseSensitiveMatch));
+    element.setAttribute(RECURSIVE_ATTRIBUTE_NAME, String.valueOf(recursiveSearch));
+    element.setAttribute(OLD_CASE_SENSITIVE_ATTRIBUTE_NAME, String.valueOf(caseSensitiveMatch));
 
     if (myFileType != null) {
       element.setAttribute(FILE_TYPE_ATTR_NAME, myFileType.getName());
@@ -226,7 +228,10 @@ public class MatchOptions implements JDOMExternalizable {
     looseMatching = MatchVariableConstraint.getBooleanValue(element, LOOSE_MATCHING_ATTRIBUTE_NAME, true);
 
     recursiveSearch = MatchVariableConstraint.getBooleanValue(element, RECURSIVE_ATTRIBUTE_NAME, false);
-    caseSensitiveMatch = MatchVariableConstraint.getBooleanValue(element, CASESENSITIVE_ATTRIBUTE_NAME, false);
+
+    // complicated for backwards compatibility
+    caseSensitiveMatch = MatchVariableConstraint.getBooleanValue(element, OLD_CASE_SENSITIVE_ATTRIBUTE_NAME, false) ||
+                         MatchVariableConstraint.getBooleanValue(element, CASE_SENSITIVE_ATTRIBUTE_NAME, false);
 
     myUnknownFileType = element.getAttributeValue(FILE_TYPE_ATTR_NAME);
     myFileType = (myUnknownFileType == null) ? null : StructuralSearchUtil.getSuitableFileTypeByName(myUnknownFileType);

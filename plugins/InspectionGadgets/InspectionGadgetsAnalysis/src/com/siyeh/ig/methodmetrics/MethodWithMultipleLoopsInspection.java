@@ -47,11 +47,11 @@ public class MethodWithMultipleLoopsInspection extends BaseInspection {
       }
       final LoopCountVisitor visitor = new LoopCountVisitor();
       method.accept(visitor);
-      final int negationCount = visitor.getCount();
-      if (negationCount <= 1) {
+      final int loopsCount = visitor.getCount();
+      if (loopsCount <= 1) {
         return;
       }
-      registerMethodError(method, Integer.valueOf(negationCount));
+      registerMethodError(method, Integer.valueOf(loopsCount));
     }
   }
 }

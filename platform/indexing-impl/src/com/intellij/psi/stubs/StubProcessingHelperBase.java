@@ -51,6 +51,7 @@ public abstract class StubProcessingHelperBase {
     if (psiFile == null) {
       LOG.error("Stub index points to a file without PSI: " +
                 getFileTypeInfo(file, project) + ", " +
+                "indexing stamp info = " + StubTreeLoader.getInstance().getIndexingStampInfo(file) + ", " +
                 "used scope = " + scope);
       onInternalError(file);
       return true;

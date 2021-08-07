@@ -18,6 +18,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.psiutils.*;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -125,9 +126,8 @@ public class ExplicitArrayFillingInspection extends AbstractBaseJavaLocalInspect
         for (int i = statementStart; i < statementEnd; i++) {
           exclude.add(i);
         }
-        return Arrays.stream(defs)
-          .map(def -> flow.getEndOffset(def))
-          .noneMatch(offset -> ControlFlowUtils.isVariableReferencedBeforeStatementEntry(flow, offset + 1, statement, arrayVar, exclude));
+        return !ContainerUtil.exists(defs, def ->
+          ControlFlowUtils.isVariableReferencedBeforeStatementEntry(flow, flow.getEndOffset(def) + 1, statement, arrayVar, exclude));
       }
 
       @Nullable
@@ -170,10 +170,16 @@ public class ExplicitArrayFillingInspection extends AbstractBaseJavaLocalInspect
       private boolean isNewArrayCreation(@Nullable PsiExpression expression, @Nullable Object defaultValue) {
         PsiExpression arrInitExpr = PsiUtil.skipParenthesizedExprDown(expression);
         PsiNewExpression newExpression = tryCast(arrInitExpr, PsiNewExpression.class);
-        PsiArrayInitializerExpression initializer =
-          newExpression == null ? tryCast(arrInitExpr, PsiArrayInitializerExpression.class) : newExpression.getArrayInitializer();
+        PsiArrayInitializerExpression initializer;
+        if (newExpression == null) {
+          initializer = tryCast(arrInitExpr, PsiArrayInitializerExpression.class);
+          if (initializer == null) return false;
+        }
+        else {
+          initializer = newExpression.getArrayInitializer();
+        }
         if (initializer == null) return true;
-        return Arrays.stream(initializer.getInitializers()).allMatch(init -> isDefaultValue(init, defaultValue, init.getType()));
+        return ContainerUtil.and(initializer.getInitializers(), init -> isDefaultValue(init, defaultValue, init.getType()));
       }
 
       @Nullable

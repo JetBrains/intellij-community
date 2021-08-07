@@ -1,5 +1,11 @@
 <html>
 <body>
-Reports code which use or override package-private members which are declared in the same package in a different module. If the declaring classes are loaded by different loaders a code which access a package-private member will fail with IllegalAccessError at runtime. If a method overrides a package-private method from a class loaded by a different loader, it won't be invoked when the super method is called on an instance of the implementing class. If a method implements an abstract package-private method from a class loaded by a different loader, calling the super method on an instance of the implementing class will fail with AbstractMethodError
+Reports a code fragment that uses or overrides a package-private member declared in the same package but in another module.
+<p>If the declaring classes are loaded by different loaders, the code that accesses a package-private member will fail with
+  <code>IllegalAccessError</code> at runtime.</p>
+<p>If a method overrides a package-private method from a class that is loaded by a different loader, it won't be invoked when the super
+  method is called on an instance of the implementing class.</p>
+<p>If a method implements an abstract package-private method from a class that is loaded by a different loader,
+  calling the super method on an instance of the implementing class will fail with <code>AbstractMethodError</code>.</p>
 </body>
 </html>

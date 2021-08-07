@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.bulkOperation;
 
 import com.intellij.codeInspection.AbstractBaseJavaLocalInspectionTool;
@@ -15,6 +15,8 @@ import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.util.RefactoringUtil;
+import com.intellij.util.ObjectUtils;
+import com.siyeh.ig.callMatcher.CallMatcher;
 import com.siyeh.ig.psiutils.*;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Contract;
@@ -27,6 +29,13 @@ import java.util.regex.Pattern;
 
 public class UseBulkOperationInspection extends AbstractBaseJavaLocalInspectionTool {
   private static final Pattern FOR_EACH_METHOD = Pattern.compile("forEach(Ordered)?");
+
+  private static final CallMatcher MAP_ENTRY_SET =
+    CallMatcher.instanceCall(CommonClassNames.JAVA_UTIL_MAP, "entrySet").parameterCount(0);
+  private static final CallMatcher ENTRY_GET_KEY =
+    CallMatcher.instanceCall(CommonClassNames.JAVA_UTIL_MAP_ENTRY, "getKey").parameterCount(0);
+  private static final CallMatcher ENTRY_GET_VALUE =
+    CallMatcher.instanceCall(CommonClassNames.JAVA_UTIL_MAP_ENTRY, "getValue").parameterCount(0);
 
   public boolean USE_ARRAYS_AS_LIST = true;
 
@@ -44,13 +53,12 @@ public class UseBulkOperationInspection extends AbstractBaseJavaLocalInspectionT
   }
 
   @Nullable
-  private static PsiExpression findIterable(PsiMethodCallExpression expression) {
+  private static PsiExpression findIterable(PsiMethodCallExpression expression, BulkMethodInfo info) {
     PsiExpression[] args = expression.getArgumentList().getExpressions();
-    if (args.length != 1) return null;
-    PsiExpression arg = args[0];
+    if (args.length != info.getSimpleParametersCount()) return null;
     PsiElement parent = expression.getParent();
     if (parent instanceof PsiLambdaExpression) {
-      return findIterableForLambda((PsiLambdaExpression)parent, arg);
+      return findIterableForLambda((PsiLambdaExpression)parent, args, info);
     }
     if (parent instanceof PsiExpressionStatement) {
       PsiExpressionStatement expressionStatement = (PsiExpressionStatement)parent;
@@ -60,19 +68,28 @@ public class UseBulkOperationInspection extends AbstractBaseJavaLocalInspectionT
         if (codeBlock.getParent() instanceof PsiBlockStatement) {
           PsiBlockStatement blockStatement = (PsiBlockStatement)codeBlock.getParent();
           if (statements.length == 1) {
-            return findIterableForSingleStatement(blockStatement, arg);
+            return findIterableForSingleStatement(blockStatement, args);
           }
           PsiElement blockParent = blockStatement.getParent();
           if (statements.length == 2 && statements[1] == parent && blockParent instanceof PsiLoopStatement) {
             IteratorDeclaration declaration = IteratorDeclaration.fromLoop((PsiLoopStatement)blockParent);
-            if (declaration != null && ExpressionUtils.isReferenceTo(arg, declaration.getNextElementVariable(statements[0]))) {
-              return declaration.getIterable();
+            if (declaration != null) {
+              if (args.length == 1 && ExpressionUtils.isReferenceTo(args[0], declaration.getNextElementVariable(statements[0]))) {
+                return declaration.getIterable();
+              } else if (args.length == 2) {
+                if (isGetKeyAndGetValue(args, declaration.getNextElementVariable(statements[0]))) {
+                  PsiMethodCallExpression entrySetCandidate = ObjectUtils.tryCast(declaration.getIterable(), PsiMethodCallExpression.class);
+                  if (MAP_ENTRY_SET.test(entrySetCandidate)) {
+                    return entrySetCandidate.getMethodExpression().getQualifierExpression();
+                  }
+                }
+              }
             }
-            if(blockParent instanceof PsiForStatement && statements[0] instanceof PsiDeclarationStatement) {
+            if (blockParent instanceof PsiForStatement && statements[0] instanceof PsiDeclarationStatement) {
               PsiElement[] elements = ((PsiDeclarationStatement)statements[0]).getDeclaredElements();
-              if(elements.length == 1 && elements[0] instanceof PsiLocalVariable) {
+              if (elements.length == 1 && elements[0] instanceof PsiLocalVariable) {
                 PsiLocalVariable var = (PsiLocalVariable)elements[0];
-                if (ExpressionUtils.isReferenceTo(arg, var)) {
+                if (ExpressionUtils.isReferenceTo(args[0], var)) {
                   return findIterableForIndexedLoop((PsiForStatement)blockParent, var.getInitializer());
                 }
               }
@@ -80,44 +97,67 @@ public class UseBulkOperationInspection extends AbstractBaseJavaLocalInspectionT
           }
         }
         else if (codeBlock.getParent() instanceof PsiLambdaExpression && statements.length == 1) {
-          return findIterableForLambda((PsiLambdaExpression)codeBlock.getParent(), arg);
+          return findIterableForLambda((PsiLambdaExpression)codeBlock.getParent(), args, info);
         }
       }
       else {
-        return findIterableForSingleStatement(expressionStatement, arg);
+        return findIterableForSingleStatement(expressionStatement, args);
       }
     }
     return null;
   }
 
   @Nullable
-  private static PsiExpression findIterableForLambda(PsiLambdaExpression lambda, PsiExpression arg) {
-    PsiParameterList parameters = lambda.getParameterList();
-    if (parameters.getParametersCount() != 1) return null;
-    PsiParameter parameter = parameters.getParameters()[0];
-    if (ExpressionUtils.isReferenceTo(arg, parameter)) {
-      return findIterableForFunction(lambda);
-    }
-    return null;
+  private static PsiExpression findIterableForLambda(PsiLambdaExpression lambda, PsiExpression[] args, BulkMethodInfo info) {
+    PsiParameterList parameterList = lambda.getParameterList();
+    PsiParameter[] parameters = parameterList.getParameters();
+    int lambdaParametersCount = parameterList.getParametersCount();
+    if (info.getClassName().equals(CommonClassNames.JAVA_UTIL_MAP)) {
+      if (lambdaParametersCount == 1) {
+        if (!isGetKeyAndGetValue(args, parameters[0])) return null;
+      } else if (lambdaParametersCount == 2) {
+        if (!ExpressionUtils.isReferenceTo(args[0], parameters[0]) ||
+            !ExpressionUtils.isReferenceTo(args[1], parameters[1])) return null;
+      } else return null;
+    } else if (lambdaParametersCount != 1 || !ExpressionUtils.isReferenceTo(args[0], parameters[0])) return null;
+    return findIterableForFunction(lambda);
+  }
+
+  private static boolean isGetKeyAndGetValue(PsiExpression[] args, PsiVariable variable) {
+    PsiMethodCallExpression getKeyCandidate = ObjectUtils.tryCast(args[0], PsiMethodCallExpression.class);
+    PsiMethodCallExpression getValueCandidate = ObjectUtils.tryCast(args[1], PsiMethodCallExpression.class);
+    if (!ENTRY_GET_KEY.test(getKeyCandidate) || !ENTRY_GET_VALUE.test(getValueCandidate)) return false;
+    PsiExpression getKeyQualifier = getKeyCandidate.getMethodExpression().getQualifierExpression();
+    PsiExpression getValueQualifier = getValueCandidate.getMethodExpression().getQualifierExpression();
+    return ExpressionUtils.isReferenceTo(getKeyQualifier, variable) && ExpressionUtils.isReferenceTo(getValueQualifier, variable);
   }
 
   @Nullable
-  private static PsiExpression findIterableForSingleStatement(PsiStatement statement, PsiExpression arg) {
+  private static PsiExpression findIterableForSingleStatement(PsiStatement statement, PsiExpression[] args) {
+    assert args.length == 1 || args.length == 2 : "The number of arguments must be either 1 or 2";
     PsiElement parent = statement.getParent();
     if (parent instanceof PsiForeachStatement) {
       PsiForeachStatement foreachStatement = (PsiForeachStatement)parent;
-      if (ExpressionUtils.isReferenceTo(arg, foreachStatement.getIterationParameter())) {
-        return foreachStatement.getIteratedValue();
+      PsiExpression iteratedValue = foreachStatement.getIteratedValue();
+      if (args.length == 2) {
+        if (isGetKeyAndGetValue(args, foreachStatement.getIterationParameter())) {
+          PsiMethodCallExpression entrySetCandidate = ObjectUtils.tryCast(iteratedValue, PsiMethodCallExpression.class);
+          if (MAP_ENTRY_SET.test(entrySetCandidate)) {
+            return entrySetCandidate.getMethodExpression().getQualifierExpression();
+          }
+        }
+      } else if (ExpressionUtils.isReferenceTo(args[0], foreachStatement.getIterationParameter())) {
+        return iteratedValue;
       }
     }
     if (parent instanceof PsiLoopStatement) {
       IteratorDeclaration declaration = IteratorDeclaration.fromLoop((PsiLoopStatement)parent);
-      if (declaration != null && declaration.isIteratorMethodCall(arg, "next")) {
+      if (declaration != null && declaration.isIteratorMethodCall(args[0], "next")) {
         return declaration.getIterable();
       }
     }
     if (parent instanceof PsiForStatement) {
-      return findIterableForIndexedLoop((PsiForStatement)parent, arg);
+      return findIterableForIndexedLoop((PsiForStatement)parent, args[0]);
     }
     return null;
   }
@@ -150,6 +190,12 @@ public class UseBulkOperationInspection extends AbstractBaseJavaLocalInspectionT
     PsiMethodCallExpression parentCall = (PsiMethodCallExpression)parent;
     PsiExpression parentQualifier = PsiUtil.skipParenthesizedExprDown(parentCall.getMethodExpression().getQualifierExpression());
     if (MethodCallUtils.isCallToMethod(parentCall, CommonClassNames.JAVA_LANG_ITERABLE, null, "forEach", new PsiType[]{null})) {
+      PsiMethodCallExpression entrySetCandidate = ObjectUtils.tryCast(parentQualifier, PsiMethodCallExpression.class);
+      return MAP_ENTRY_SET.test(entrySetCandidate)
+             ? ExpressionUtils.getEffectiveQualifier(entrySetCandidate.getMethodExpression())
+             : ExpressionUtils.getEffectiveQualifier(parentCall.getMethodExpression());
+    }
+    if (MethodCallUtils.isCallToMethod(parentCall, CommonClassNames.JAVA_UTIL_MAP, null, "forEach", new PsiType[]{null})) {
       return ExpressionUtils.getEffectiveQualifier(parentCall.getMethodExpression());
     }
     if (MethodCallUtils.isCallToMethod(parentCall, CommonClassNames.JAVA_UTIL_STREAM_STREAM, null, FOR_EACH_METHOD, new PsiType[]{null}) &&
@@ -184,7 +230,7 @@ public class UseBulkOperationInspection extends AbstractBaseJavaLocalInspectionT
         super.visitMethodCallExpression(call);
         BulkMethodInfo info = findInfo(call.getMethodExpression());
         if (info == null) return;
-        PsiExpression iterable = findIterable(call);
+        PsiExpression iterable = findIterable(call, info);
         if (iterable != null) {
           register(iterable, info, call.getMethodExpression());
         }
@@ -263,7 +309,7 @@ public class UseBulkOperationInspection extends AbstractBaseJavaLocalInspectionT
       else {
         PsiElement parent = element.getParent();
         if (!(parent instanceof PsiMethodCallExpression)) return;
-        iterable = findIterable((PsiMethodCallExpression)parent);
+        iterable = findIterable((PsiMethodCallExpression)parent, myInfo);
       }
       if (iterable == null) return;
       PsiElement parent = RefactoringUtil.getParentStatement(iterable, false);

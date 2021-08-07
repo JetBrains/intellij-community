@@ -1,11 +1,15 @@
-<!--
-  ~ Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-  -->
-
 <html>
 <body>
 Reports octal escapes, which are easily confused with back references.
 Use hexadecimal escapes to avoid confusion.
+<p><b>Example:</b></p>
+<pre><code>
+  \07
+</code></pre>
+<p>After the quick-fix is applied:</p>
+<pre><code>
+  \x07
+</code></pre>
 <!-- tooltip end -->
 <p><small>New in 2017.1</small>
 </body>

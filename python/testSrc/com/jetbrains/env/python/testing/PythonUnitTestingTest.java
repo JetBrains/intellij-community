@@ -30,7 +30,7 @@ import com.jetbrains.python.sdk.flavors.IronPythonSdkFlavor;
 import com.jetbrains.python.testing.ConfigurationTarget;
 import com.jetbrains.python.testing.PyUnitTestConfiguration;
 import com.jetbrains.python.testing.PyUnitTestFactory;
-import com.jetbrains.python.testing.PythonTestConfigurationsModel;
+import com.jetbrains.python.testing.PythonTestConfigurationType;
 import com.jetbrains.python.tools.sdkTools.SdkCreationType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -238,7 +238,7 @@ public final class PythonUnitTestingTest extends PythonUnitTestingLikeTest<PyUni
   public void testRenameClass() {
     runPythonTest(
       new CreateConfigurationByFileTask.CreateConfigurationTestAndRenameClassTask<>(
-        PythonTestConfigurationsModel.getPythonsUnittestName(),
+        PythonTestConfigurationType.getInstance().getUnitTestFactory().getName(),
         PyUnitTestConfiguration.class));
   }
 
@@ -250,7 +250,7 @@ public final class PythonUnitTestingTest extends PythonUnitTestingLikeTest<PyUni
         @NotNull
         @Override
         protected PyUnitTestFactory createFactory() {
-          return new PyUnitTestFactory();
+          return PythonTestConfigurationType.getInstance().getUnitTestFactory();
         }
 
         @Override
@@ -658,7 +658,7 @@ public final class PythonUnitTestingTest extends PythonUnitTestingLikeTest<PyUni
   // PY-24407
   @Test
   public void testWorkingDirectoryDependsOnRelativeImport() {
-    runPythonTest(new CreateConfigurationTestTask<>(PythonTestConfigurationsModel.getPythonsUnittestName(),
+    runPythonTest(new CreateConfigurationTestTask<>(PythonTestConfigurationType.getInstance().getUnitTestFactory().getName(),
                                                     PyUnitTestConfiguration.class) {
       @NotNull
       @Override
@@ -824,7 +824,7 @@ public final class PythonUnitTestingTest extends PythonUnitTestingLikeTest<PyUni
   public void testConfigurationProducerOnDirectory() {
     runPythonTest(
       new CreateConfigurationByFileTask.CreateConfigurationTestAndRenameFolderTask<>(
-        PythonTestConfigurationsModel.getPythonsUnittestName(),
+        PythonTestConfigurationType.getInstance().getUnitTestFactory().getName(),
         PyUnitTestConfiguration.class));
   }
 
@@ -832,7 +832,7 @@ public final class PythonUnitTestingTest extends PythonUnitTestingLikeTest<PyUni
   @Test
   public void testConfigurationProducer() {
     runPythonTest(
-      new CreateConfigurationByFileTask<>(PythonTestConfigurationsModel.getPythonsUnittestName(), PyUnitTestConfiguration.class));
+      new CreateConfigurationByFileTask<>(new PyUnitTestFactory(PythonTestConfigurationType.getInstance()).getName(), PyUnitTestConfiguration.class));
   }
 
   /**
@@ -841,14 +841,14 @@ public final class PythonUnitTestingTest extends PythonUnitTestingLikeTest<PyUni
   @Test
   public void testConfigurationProducerObeysDefaultDir() {
     runPythonTest(
-      new CreateConfigurationByFileTask<>(PythonTestConfigurationsModel.getPythonsUnittestName(),
+      new CreateConfigurationByFileTask<>(new PyUnitTestFactory(PythonTestConfigurationType.getInstance()).getName(),
                                           PyUnitTestConfiguration.class) {
         private static final String SOME_RANDOM_DIR = "//some/random/ddir";
 
         @Override
         public void runTestOn(@NotNull final String sdkHome, @Nullable Sdk existingSdk) throws InvalidSdkException {
           // Set default working directory to some random location before actual exection
-          final PyUnitTestConfiguration templateConfiguration = getTemplateConfiguration(new PyUnitTestFactory());
+          final PyUnitTestConfiguration templateConfiguration = getTemplateConfiguration(new PyUnitTestFactory(PythonTestConfigurationType.getInstance()));
           templateConfiguration.setWorkingDirectory(SOME_RANDOM_DIR);
           super.runTestOn(sdkHome, existingSdk);
           templateConfiguration.setWorkingDirectory("");

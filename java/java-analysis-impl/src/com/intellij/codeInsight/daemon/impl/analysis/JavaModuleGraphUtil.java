@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.daemon.impl.analysis;
 
 import com.intellij.lang.jvm.JvmLanguage;
@@ -79,8 +79,9 @@ public final class JavaModuleGraphUtil {
         PsiDirectory rootPsi = PsiManager.getInstance(project).findDirectory(root);
         assert rootPsi != null : root;
         return CachedValuesManager.getCachedValue(rootPsi, () -> {
-          LightJavaModule result = LightJavaModule.create(PsiManager.getInstance(project), root, LightJavaModule.moduleName(root));
-          return Result.create(result, rootPsi, ProjectRootModificationTracker.getInstance(project));
+          VirtualFile _root = rootPsi.getVirtualFile();
+          LightJavaModule result = LightJavaModule.create(rootPsi.getManager(), _root, LightJavaModule.moduleName(_root));
+          return Result.create(result, _root, ProjectRootModificationTracker.getInstance(rootPsi.getProject()));
         });
       }
     }

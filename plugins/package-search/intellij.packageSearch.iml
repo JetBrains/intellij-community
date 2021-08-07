@@ -2,14 +2,13 @@
 <module type="JAVA_MODULE" version="4">
   <component name="FacetManager">
     <facet type="kotlin-language" name="Kotlin">
-      <configuration version="3" platform="JVM 1.8" allPlatforms="JVM [1.8]">
+      <configuration version="3" platform="JVM 1.8" allPlatforms="JVM [1.8]" useProjectSettings="false">
         <compilerSettings>
-          <option name="additionalArguments" value="-version -Xstrict-java-nullability-assertions -Xjvm-default=enable" />
+          <option name="additionalArguments" value="-version -Xstrict-java-nullability-assertions -Xjvm-default=enable -Xopt-in=kotlinx.coroutines.ExperimentalCoroutinesApi -Xopt-in=kotlin.ExperimentalStdlibApi -Xopt-in=kotlinx.coroutines.FlowPreview -Xopt-in=kotlin.time.ExperimentalTime -Xopt-in=kotlin.RequiresOptIn" />
         </compilerSettings>
         <compilerArguments>
-          <option name="jvmTarget" value="1.8" />
-          <option name="languageVersion" value="1.4" />
-          <option name="apiVersion" value="1.4" />
+          <option name="languageVersion" value="1.5" />
+          <option name="apiVersion" value="1.5" />
         </compilerArguments>
       </configuration>
     </facet>
@@ -24,45 +23,17 @@
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="module-library">
-      <library name="arrow-annotations" type="repository">
-        <properties include-transitive-deps="false" maven-id="io.arrow-kt:arrow-annotations:0.11.0" />
-        <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/io/arrow-kt/arrow-annotations/0.11.0/arrow-annotations-0.11.0.jar!/" />
-        </CLASSES>
-        <JAVADOC>
-          <root url="jar://$MAVEN_REPOSITORY$/io/arrow-kt/arrow-annotations/0.11.0/arrow-annotations-0.11.0-javadoc.jar!/" />
-        </JAVADOC>
-        <SOURCES>
-          <root url="jar://$MAVEN_REPOSITORY$/io/arrow-kt/arrow-annotations/0.11.0/arrow-annotations-0.11.0-sources.jar!/" />
-        </SOURCES>
-      </library>
-    </orderEntry>
-    <orderEntry type="module-library">
-      <library name="arrow-core-data" type="repository">
-        <properties include-transitive-deps="false" maven-id="io.arrow-kt:arrow-core-data:0.11.0" />
-        <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/io/arrow-kt/arrow-core-data/0.11.0/arrow-core-data-0.11.0.jar!/" />
-        </CLASSES>
-        <JAVADOC>
-          <root url="jar://$MAVEN_REPOSITORY$/io/arrow-kt/arrow-core-data/0.11.0/arrow-core-data-0.11.0-javadoc.jar!/" />
-        </JAVADOC>
-        <SOURCES>
-          <root url="jar://$MAVEN_REPOSITORY$/io/arrow-kt/arrow-core-data/0.11.0/arrow-core-data-0.11.0-sources.jar!/" />
-        </SOURCES>
-      </library>
-    </orderEntry>
+    <orderEntry type="library" name="commons-collections" level="project" />
     <orderEntry type="library" name="commons-lang3" level="project" />
     <orderEntry type="library" name="gson" level="project" />
-    <orderEntry type="library" name="kotlin-stdlib-jdk8" level="project" />
+    <orderEntry type="library" name="Guava" level="project" />
+    <orderEntry type="library" name="http-client-3.1" level="project" />
     <orderEntry type="library" name="miglayout-swing" level="project" />
     <orderEntry type="library" name="netty-buffer" level="project" />
     <orderEntry type="library" name="netty-codec-http" level="project" />
     <orderEntry type="library" name="rd-core" level="project" />
-    <orderEntry type="library" name="http-client-3.1" level="project" />
-    <orderEntry type="module" module-name="intellij.gradle" />
-    <orderEntry type="module" module-name="intellij.maven" />
-    <orderEntry type="module" module-name="intellij.platform.analysis" />
+    <orderEntry type="library" name="kotlin-stdlib-jdk8" level="project" />
+    <orderEntry type="library" name="kotlinx-coroutines-jdk8" level="project" />
     <orderEntry type="module" module-name="intellij.platform.builtInServer.impl" />
     <orderEntry type="module" module-name="intellij.platform.core" />
     <orderEntry type="module" module-name="intellij.platform.core.impl" />
@@ -73,8 +44,36 @@
     <orderEntry type="module" module-name="intellij.platform.lang.impl" />
     <orderEntry type="module" module-name="intellij.platform.projectModel" />
     <orderEntry type="module" module-name="intellij.platform.rd.community" />
+    <orderEntry type="module" module-name="intellij.platform.statistics" />
     <orderEntry type="module" module-name="intellij.platform.util.ui" />
     <orderEntry type="module" module-name="intellij.externalSystem.dependencyUpdater" />
     <orderEntry type="module" module-name="intellij.platform.ide.util.io" />
+    <orderEntry type="module" module-name="intellij.gradle" />
+    <orderEntry type="module" module-name="intellij.maven" />
+    <orderEntry type="module" module-name="intellij.platform.analysis" />
+    <orderEntry type="library" name="kotlinx-serialization-json" level="project" />
+    <orderEntry type="library" name="kotlinx-serialization-core" level="project" />
+    <orderEntry type="module-library">
+      <library name="package-search-version-utils">
+        <CLASSES>
+          <root url="jar://$MODULE_DIR$/lib/package-version-utils-1.0.0.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES>
+          <root url="jar://$MODULE_DIR$/lib/src/package-version-utils-1.0.0-sources.jar!/" />
+        </SOURCES>
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library">
+      <library name="package-search-api-models">
+        <CLASSES>
+          <root url="jar://$MODULE_DIR$/lib/api-models-2.2.3.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES>
+          <root url="jar://$MODULE_DIR$/lib/src/api-models-2.2.3-sources.jar!/" />
+        </SOURCES>
+      </library>
+    </orderEntry>
   </component>
 </module>

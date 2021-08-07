@@ -20,9 +20,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-/**
- * @author yole
- */
+
 public class PyDunderAllReference extends PsiPolyVariantReferenceBase<PyStringLiteralExpression> {
   public PyDunderAllReference(@NotNull PyStringLiteralExpression element) {
     super(element);

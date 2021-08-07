@@ -1,18 +1,22 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.log.ui.frame
 
+import com.intellij.diff.chains.DiffRequestChain
+import com.intellij.diff.chains.SimpleDiffRequestChain
 import com.intellij.diff.impl.DiffRequestProcessor
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ActionToolbar
 import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.fileEditor.FileEditorManager
+import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.Splitter
 import com.intellij.openapi.util.Disposer
-import com.intellij.openapi.vcs.changes.DiffPreviewProvider
-import com.intellij.openapi.vcs.changes.EditorTabPreview
-import com.intellij.openapi.vcs.changes.PreviewDiffVirtualFile
+import com.intellij.openapi.util.registry.Registry
+import com.intellij.openapi.vcs.changes.*
+import com.intellij.openapi.vcs.changes.EditorTabPreview.Companion.registerEscapeHandler
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager
+import com.intellij.openapi.vcs.changes.ui.VcsTreeModelData
 import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.ui.OnePixelSplitter
@@ -23,6 +27,7 @@ import com.intellij.vcs.log.impl.MainVcsLogUiProperties
 import com.intellij.vcs.log.impl.VcsLogUiProperties
 import com.intellij.vcs.log.impl.VcsLogUiProperties.PropertiesChangeListener
 import com.intellij.vcs.log.impl.VcsLogUiProperties.VcsLogUiProperty
+import com.intellij.vcs.log.util.VcsLogUiUtil
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls
 import javax.swing.JComponent
@@ -92,25 +97,48 @@ abstract class FrameDiffPreview<D : DiffRequestProcessor>(protected val previewD
   }
 }
 
-abstract class EditorDiffPreview(private val uiProperties: VcsLogUiProperties,
-                                 private val owner: Disposable) : DiffPreviewProvider {
+abstract class EditorDiffPreview(protected val project: Project,
+                                 private val owner: Disposable) : DiffPreviewProvider, DiffPreview {
 
-  protected fun init(project: Project) {
-    toggleDiffPreviewOnPropertyChange(uiProperties, owner) { state ->
-      if (state) {
-        openPreviewInEditor(project, this, getOwnerComponent())
-      }
-      else {
-        //'equals' for such files is overridden and means the equality of its owner
-        FileEditorManager.getInstance(project).closeFile(PreviewDiffVirtualFile(this))
-      }
-    }
+  private val previewFileDelegate = lazy { PreviewDiffVirtualFile(this) }
+  private val previewFile by previewFileDelegate
 
+  protected fun init() {
     @Suppress("LeakingThis")
     addSelectionListener {
-      if (uiProperties.get(CommonUiProperties.SHOW_DIFF_PREVIEW)) {
-        openPreviewInEditor(project, this, getOwnerComponent())
+      if (VcsLogUiUtil.isDiffPreviewInEditor(project) && Registry.`is`("show.diff.preview.as.editor.tab.with.single.click")) {
+        openPreviewInEditor(false)
       }
+      else {
+        updatePreview(true)
+      }
+    }
+  }
+
+  override fun updatePreview(fromModelRefresh: Boolean) {
+    if (previewFileDelegate.isInitialized()) {
+      FileEditorManagerEx.getInstanceEx(project).updateFilePresentation(previewFile)
+    }
+  }
+
+  override fun setPreviewVisible(isPreviewVisible: Boolean, focus: Boolean) {
+    if (isPreviewVisible) openPreviewInEditor(focus) else closePreview()
+  }
+
+  fun openPreviewInEditor(focusEditor: Boolean) {
+    val escapeHandler = Runnable {
+      closePreview()
+      val toolWindow = ToolWindowManager.getInstance(project).getToolWindow(ChangesViewContentManager.TOOLWINDOW_ID)
+      toolWindow?.activate({ IdeFocusManager.getInstance(project).requestFocus(getOwnerComponent(), true) }, false)
+    }
+
+    registerEscapeHandler(previewFile, escapeHandler)
+    EditorTabPreview.openPreview(project, previewFile, focusEditor)
+  }
+
+  fun closePreview() {
+    if (previewFileDelegate.isInitialized()) {
+      FileEditorManager.getInstance(project).closeFile(previewFile)
     }
   }
 
@@ -121,42 +149,41 @@ abstract class EditorDiffPreview(private val uiProperties: VcsLogUiProperties,
   abstract fun addSelectionListener(listener: () -> Unit)
 }
 
-class VcsLogEditorDiffPreview(project: Project, uiProperties: VcsLogUiProperties, private val mainFrame: MainFrame) :
-  EditorDiffPreview(uiProperties, mainFrame.changesBrowser) {
+class VcsLogEditorDiffPreview(project: Project, private val changesBrowser: VcsLogChangesBrowser) :
+  EditorDiffPreview(project, changesBrowser), ChainBackedDiffPreviewProvider {
 
   init {
-    init(project)
+    init()
   }
 
   override fun createDiffRequestProcessor(): DiffRequestProcessor {
-    val preview = mainFrame.createDiffPreview(true, owner)
+    val preview = changesBrowser.createChangeProcessor(true)
     preview.updatePreview(true)
     return preview
   }
 
   override fun getEditorTabName(): @Nls String {
-    return VcsLogBundle.message("vcs.log.diff.preview.editor.tab.name")
+    val change = VcsLogChangeProcessor.getSelectedOrAll(changesBrowser).userObjectsStream(Change::class.java).findFirst().orElse(null)
+
+    return if (change == null) VcsLogBundle.message("vcs.log.diff.preview.editor.empty.tab.name")
+    else VcsLogBundle.message("vcs.log.diff.preview.editor.tab.name", ChangesUtil.getFilePath(change).name)
   }
 
-  override fun getOwnerComponent(): JComponent = mainFrame.changesBrowser.preferredFocusedComponent
+  override fun getOwnerComponent(): JComponent = changesBrowser.preferredFocusedComponent
 
   override fun addSelectionListener(listener: () -> Unit) {
-    mainFrame.changesBrowser.viewer.addSelectionListener(Runnable {
-      if (mainFrame.changesBrowser.selectedChanges.isNotEmpty()) {
+    changesBrowser.viewer.addSelectionListener(Runnable {
+      if (changesBrowser.selectedChanges.isNotEmpty()) {
         listener()
       }
     }, owner)
-  }
-}
-
-private fun openPreviewInEditor(project: Project, diffPreviewProvider: DiffPreviewProvider, componentToFocus: JComponent) {
-  val escapeHandler = Runnable {
-    val toolWindow = ToolWindowManager.getInstance(project).getToolWindow(ChangesViewContentManager.TOOLWINDOW_ID)
-    toolWindow?.activate({ IdeFocusManager.getInstance(project).requestFocus(componentToFocus, true) }, false)
+    changesBrowser.addListener(VcsLogChangesBrowser.Listener { updatePreview(true) }, owner)
   }
 
-  val editors = EditorTabPreview.openPreview(project, PreviewDiffVirtualFile(diffPreviewProvider), false)
-  for (editor in editors) {
-    EditorTabPreview.registerEscapeHandler(editor, escapeHandler)
+  override fun createDiffRequestChain(): DiffRequestChain? {
+    val producers = VcsTreeModelData.getListSelectionOrAll(changesBrowser.viewer).map {
+      changesBrowser.getDiffRequestProducer(it, false)
+    }
+    return SimpleDiffRequestChain.fromProducers(producers.list, producers.selectedIndex)
   }
 }

@@ -24,7 +24,7 @@ import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.process.ProcessListener;
 import com.intellij.execution.runners.RunTab;
 import com.intellij.icons.AllIcons;
-import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
@@ -278,7 +278,7 @@ public final class XsltDebuggerExtension extends XsltRunnerExtension {
 
   @NotNull
   private static Path getPluginEngineDirInSources() {
-    Path path = Paths.get(PathManager.getCommunityHomePath(), "plugins", "xslt-debugger", "engine");
+    Path path = PluginPathManager.getPluginHome("xslt-debugger").toPath().resolve("engine");
     assert Files.isDirectory(path) : path.toString();
     return path;
   }

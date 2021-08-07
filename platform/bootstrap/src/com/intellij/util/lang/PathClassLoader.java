@@ -1,20 +1,20 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.lang;
 
-import com.intellij.ide.BytecodeTransformer;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
+import java.nio.file.Path;
 import java.security.ProtectionDomain;
+import java.util.function.Function;
 
 @ApiStatus.Internal
 public final class PathClassLoader extends UrlClassLoader {
-  private static final ClassPath.ResourceFileFactory RESOURCE_FILE_FACTORY =
-    Boolean.parseBoolean(System.getProperty("idea.use.lock.free.zip.impl", "true")) ? file -> new ZipResourceFile(file) : null;
+  private static final Function<Path, ResourceFile> RESOURCE_FILE_FACTORY = file -> new ZipResourceFile(file);
 
-  private static final boolean isParallelCapable = USE_PARALLEL_LOADING && registerAsParallelCapable();
+  private static final boolean isParallelCapable = registerAsParallelCapable();
   private static final ClassLoader appClassLoader = PathClassLoader.class.getClassLoader();
 
   private final BytecodeTransformer transformer;
@@ -25,7 +25,16 @@ public final class PathClassLoader extends UrlClassLoader {
     transformer = null;
   }
 
-  public static ClassPath.ResourceFileFactory getResourceFileFactory() {
+  public interface BytecodeTransformer {
+    default boolean isApplicable(String className, ClassLoader loader, @Nullable ProtectionDomain protectionDomain) {
+      return true;
+    }
+
+    byte[] transform(ClassLoader loader, String className, @Nullable ProtectionDomain protectionDomain, byte[] classBytes);
+  }
+
+  @SuppressWarnings("unused")
+  public static Function<Path, ResourceFile> getResourceFileFactory() {
     return RESOURCE_FILE_FACTORY;
   }
 
@@ -36,7 +45,7 @@ public final class PathClassLoader extends UrlClassLoader {
   }
 
   // for java.system.class.loader
-  @ApiStatus.Internal
+  @SuppressWarnings("unused")
   public PathClassLoader(@NotNull ClassLoader parent) {
     super(createDefaultBuilderForJdk(parent), RESOURCE_FILE_FACTORY, isParallelCapable);
 
@@ -52,18 +61,9 @@ public final class PathClassLoader extends UrlClassLoader {
     if (name.startsWith("com.intellij.util.lang.")) {
       return appClassLoader.loadClass(name);
     }
-
-    Class<?> clazz;
-    try {
-      clazz = classPath.findClass(name);
+    else {
+      return super.findClass(name);
     }
-    catch (IOException e) {
-      throw new ClassNotFoundException(name, e);
-    }
-    if (clazz == null) {
-      throw new ClassNotFoundException(name);
-    }
-    return clazz;
   }
 
   @Override

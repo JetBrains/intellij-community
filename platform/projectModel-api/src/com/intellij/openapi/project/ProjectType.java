@@ -1,26 +1,17 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.project;
+
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import java.util.Objects;
 
 /**
  * @author Dmitry Avdeev
  */
-public class ProjectType {
+public final class ProjectType {
 
-  private String id;
+  private @Nullable String id;
 
   /**
    * For serialization.
@@ -28,15 +19,15 @@ public class ProjectType {
   public ProjectType() {
   }
 
-  public ProjectType(String id) {
+  public ProjectType(@NotNull String id) {
     this.id = id;
   }
 
-  public String getId() {
+  public @Nullable String getId() {
     return id;
   }
 
-  public void setId(String id) {
+  public void setId(@Nullable String id) {
     this.id = id;
   }
 
@@ -46,14 +37,15 @@ public class ProjectType {
     if (o == null || getClass() != o.getClass()) return false;
 
     ProjectType type = (ProjectType)o;
-
-    if (id != null ? !id.equals(type.id) : type.id != null) return false;
-
-    return true;
+    return Objects.equals(id, type.id);
   }
 
   @Override
   public int hashCode() {
     return id != null ? id.hashCode() : 0;
+  }
+
+  public static @Nullable ProjectType create(@Nullable String id) {
+    return id != null ? new ProjectType(id) : null;
   }
 }

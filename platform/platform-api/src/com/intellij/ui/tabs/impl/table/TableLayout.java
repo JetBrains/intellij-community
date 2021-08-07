@@ -2,22 +2,28 @@
 package com.intellij.ui.tabs.impl.table;
 
 import com.intellij.ide.ui.UISettings;
+import com.intellij.openapi.ui.JBMenuItem;
+import com.intellij.openapi.ui.JBPopupMenu;
 import com.intellij.ui.tabs.TabInfo;
 import com.intellij.ui.tabs.TabsUtil;
-import com.intellij.ui.tabs.impl.JBTabsImpl;
-import com.intellij.ui.tabs.impl.LayoutPassInfo;
-import com.intellij.ui.tabs.impl.TabLabel;
-import com.intellij.ui.tabs.impl.TabLayout;
+import com.intellij.ui.tabs.impl.*;
+import com.intellij.util.containers.ContainerUtil;
 import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Set;
 
-public class TableLayout extends TabLayout {
+public class TableLayout extends TabLayout implements MorePopupAware {
+  private int myScrollOffset = 0;
+  private boolean myScrollSelectionInViewPending = false;
 
-  private final JBTabsImpl myTabs;
+  final JBTabsImpl myTabs;
 
   public TablePassInfo myLastTableLayout;
 
@@ -26,142 +32,237 @@ public class TableLayout extends TabLayout {
   }
 
   private TablePassInfo computeLayoutTable(List<TabInfo> visibleInfos) {
-    final TablePassInfo data = new TablePassInfo(myTabs, visibleInfos);
+    final TablePassInfo data = new TablePassInfo(this, visibleInfos);
+    if (myTabs.isHideTabs()) {
+      return data;
+    }
+    boolean singleRow = myTabs.isSingleRow();
+    boolean showPinnedTabsSeparately = UISettings.getInstance().getState().getShowPinnedTabsInASeparateRow();
+    boolean scrollable = UISettings.getInstance().getHideTabsIfNeeded() && singleRow;
+    int titleWidth = myTabs.myTitleWrapper.getPreferredSize().width;
 
-    int eachXPinned = data.toFitRec.x;
-    int eachXUnpinned = data.toFitRec.x;
+    data.titleRect.setBounds(data.toFitRec.x, data.toFitRec.y, titleWidth, myTabs.myHeaderFitSize.height);
+    data.moreRect.setBounds(data.toFitRec.x + data.toFitRec.width, data.toFitRec.y, 0, myTabs.myHeaderFitSize.height);
+    calculateLengths(data);
+
+    int eachX = data.titleRect.x + data.titleRect.width;
+    Insets insets = myTabs.getLayoutInsets();
+    int eachY = insets.top;
     TableRow eachTableRow = new TableRow(data);
     data.table.add(eachTableRow);
     int requiredRowsPinned = 0;
     int requiredRowsUnpinned = 0;
 
-
-    final int maxX = data.toFitRec.x + data.toFitRec.width;
+    final int maxX = data.moreRect.x - 1;
 
     int hGap = myTabs.getTabHGap();
-    boolean showPinnedTabsSeparately = UISettings.getInstance().getState().getShowPinnedTabsInASeparateRow();
     for (TabInfo eachInfo : data.myVisibleInfos) {
-      final TabLabel eachLabel = myTabs.myInfo2Label.get(eachInfo);
+      TabLabel eachLabel = myTabs.getTabLabel(eachInfo);
       boolean pinned = eachLabel.isPinned();
-      final Dimension size = eachLabel.getNotStrictPreferredSize();
-      int width = size.width + hGap;
+      int width = data.lengths.get(eachInfo);
+      if (!pinned || !showPinnedTabsSeparately) {
+        data.requiredLength += width;
+      }
       if (pinned && showPinnedTabsSeparately) {
-        if (eachXPinned + width >= maxX) {
-          requiredRowsPinned++;
-          eachXPinned = data.toFitRec.x;
-        }
-        else if (requiredRowsPinned == 0) {
+        if (requiredRowsPinned == 0) {
           requiredRowsPinned = 1;
         }
-        myTabs.layout(eachLabel, eachXPinned, 0, size.width, 1);
-        eachXPinned += width;
+        myTabs.layout(eachLabel, eachX, eachY, width, myTabs.myHeaderFitSize.height);
+        data.bounds.put(eachInfo, eachLabel.getBounds());
       }
       else {
-        if (eachXUnpinned + size.width + hGap >= maxX) {
+        if ((!scrollable && eachX + width + hGap > maxX && !singleRow) || (showPinnedTabsSeparately && eachLabel.isNextToLastPinned())) {
           requiredRowsUnpinned++;
-          eachXUnpinned = data.toFitRec.x;
+          eachY += myTabs.myHeaderFitSize.height;
+          eachX = data.toFitRec.x;
         }
         else if (requiredRowsUnpinned == 0) {
           requiredRowsUnpinned = 1;
         }
-        myTabs.layout(eachLabel, eachXUnpinned, 0, size.width, 1);
-        eachXUnpinned += width;
+        if (scrollable) {
+          if (eachX - getScrollOffset() + width + hGap > maxX) {
+            width = Math.max(0, maxX - eachX + getScrollOffset());
+            data.invisible.add(eachInfo);
+          }
+        }
+
+        myTabs.layout(eachLabel, eachX - getScrollOffset(), eachY, width == 1 ? 0 : width, myTabs.myHeaderFitSize.height);
+        Rectangle rectangle = new Rectangle(myTabs.myHeaderFitSize);
+        data.bounds.put(eachInfo, eachLabel.getBounds());
+        int intersection = eachLabel.getBounds().intersection(rectangle).width;
+        if (scrollable && intersection < eachLabel.getBounds().width) {
+          data.invisible.add(eachInfo);
+        }
       }
+      eachX += width + hGap;
+    }
+    if (requiredRowsPinned > 0 && requiredRowsUnpinned > 0) data.moreRect.y += myTabs.myHeaderFitSize.height /*+ myTabs.getSeparatorWidth()*/;
+
+    if (data.invisible.isEmpty()) {
+      data.moreRect.setBounds(0, 0, 0, 0);
     }
 
-    eachXPinned = data.toFitRec.x;
-    eachXUnpinned = data.toFitRec.x;
+    eachX = data.toFitRec.x + titleWidth;
 
     for (TabInfo eachInfo : data.myVisibleInfos) {
-      final TabLabel eachLabel = myTabs.myInfo2Label.get(eachInfo);
-      final Dimension size = eachLabel.getNotStrictPreferredSize();
+      final TabLabel eachLabel = myTabs.getTabLabel(eachInfo);
       boolean pinned = eachLabel.isPinned();
-      int width = size.width + hGap;
+      int width = data.lengths.get(eachInfo);
       if (pinned && showPinnedTabsSeparately) {
-        if (eachXPinned + width <= maxX) {
-          eachTableRow.add(eachInfo, width);
-          eachXPinned += width;
-        } else {
-          eachTableRow = new TableRow(data);
-          data.table.add(eachTableRow);
-          eachXPinned = data.toFitRec.x + width;
-          eachTableRow.add(eachInfo, width);
+        eachTableRow.add(eachInfo, width);
+        eachX += width;
+      }
+      else {
+        boolean useSameRow = singleRow || eachX + /*size.*/width + hGap <= maxX;
+        if (showPinnedTabsSeparately && eachLabel.isNextToLastPinned()) {
+          useSameRow = false;
         }
-      } else {
-        if (eachXUnpinned + size.width + hGap <= maxX && (!showPinnedTabsSeparately || !eachLabel.isNextToLastPinned())) {
+        if (useSameRow) {
           eachTableRow.add(eachInfo, width);
-          eachXUnpinned += width;
-        } else {
+          eachX += width;
+        }
+        else {
           eachTableRow = new TableRow(data);
           data.table.add(eachTableRow);
-          eachXUnpinned = data.toFitRec.x + width;
+          eachX = data.toFitRec.x + titleWidth + width;
           eachTableRow.add(eachInfo, width);
         }
       }
     }
-
+    if (myScrollSelectionInViewPending) {
+      myScrollSelectionInViewPending = false;
+      doScrollSelectionInView(data);
+    }
+    clampScrollOffsetToBounds(data);
     return data;
   }
-                                           
-  public boolean isLastRow(TabInfo info) {
-    if (info == null) return false;
-    List<TableRow> rows = myLastTableLayout.table;
-    if (rows.size() > 0) {
-      for (TabInfo tabInfo : rows.get(rows.size() - 1).myColumns) {
-        if (tabInfo == info) return true;
-      }
-    }
-    
-    return false; 
-  }
 
-  public LayoutPassInfo layoutTable(List<TabInfo> visibleInfos) {
-    myTabs.resetLayout(true);
-    Insets insets = myTabs.getLayoutInsets();
-    int eachY = insets.top;
-    TablePassInfo data = new TablePassInfo(myTabs, visibleInfos);
+  private void calculateLengths(TablePassInfo data) {
+    boolean compressible = isCompressible();
     boolean showPinnedTabsSeparately = UISettings.getInstance().getState().getShowPinnedTabsInASeparateRow();
 
-    if (!myTabs.isHideTabs()) {
-      data = computeLayoutTable(visibleInfos);
-      insets = myTabs.getLayoutInsets();
-      eachY = insets.top;
-      int eachX;
-
-      for (TableRow eachRow : data.table) {
-        eachX = insets.left;
-
-        for (int i = 0; i < eachRow.myColumns.size(); i++) {
-          TabInfo tabInfo = eachRow.myColumns.get(i);
-          final TabLabel label = myTabs.myInfo2Label.get(tabInfo);
-
-          int width;
-          if (label.isPinned() && showPinnedTabsSeparately) {
-            width = label.getNotStrictPreferredSize().width;
-          }
-          else {
-            width = label.getPreferredSize().width;
-          }
-
-          myTabs.layout(label, eachX, eachY, width, myTabs.myHeaderFitSize.height);
-          label.setAlignmentToCenter(false);
-
-          boolean lastCell = i == eachRow.myColumns.size() - 1;
-          eachX += width + (lastCell ? 0 : myTabs.getTabHGap());
+    int standardLengthToFit = data.moreRect.x - (data.titleRect.x + data.titleRect.width);
+    if (compressible || showPinnedTabsSeparately) {
+      if (showPinnedTabsSeparately) {
+        List<TabInfo> pinned = ContainerUtil.filter(data.myVisibleInfos, info -> info.isPinned());
+        calculateCompressibleLengths(pinned, data, standardLengthToFit + data.moreRect.width);
+        List<TabInfo> unpinned = ContainerUtil.filter(data.myVisibleInfos, info -> !info.isPinned());
+        if (compressible) {
+          calculateCompressibleLengths(unpinned, data, pinned.isEmpty()
+                                                       ? standardLengthToFit + data.moreRect.width
+                                                       : standardLengthToFit + data.titleRect.width + data.moreRect.width);
         }
-        eachY += myTabs.myHeaderFitSize.height;
+        else {
+          calculateRawLengths(unpinned, data);
+          if (getTotalLength(unpinned, data) > standardLengthToFit) {
+            int moreWidth = myTabs.isSingleRow() ? myTabs.myMoreToolbar.getComponent().getPreferredSize().width : 0;
+            data.moreRect.setBounds(data.toFitRec.x + data.toFitRec.width - moreWidth, /*data.toFitRec.y*/myTabs.getLayoutInsets().top, moreWidth, myTabs.myHeaderFitSize.height /*- myTabs.getSeparatorWidth()*/);
+            calculateRawLengths(unpinned, data);
+          }
+        }
+      }
+      else {
+        calculateCompressibleLengths(data.myVisibleInfos, data, standardLengthToFit);
+      }
+    }
+    else {//both scrollable and multi-row
+      calculateRawLengths(data.myVisibleInfos, data);
+      if (getTotalLength(data.myVisibleInfos, data) > standardLengthToFit) {
+        int moreWidth = myTabs.isSingleRow() ? myTabs.myMoreToolbar.getComponent().getPreferredSize().width : 0;
+        data.moreRect.setBounds(data.toFitRec.x + data.toFitRec.width - moreWidth, data.toFitRec.y, moreWidth, myTabs.myHeaderFitSize.height);
+        calculateRawLengths(data.myVisibleInfos, data);
+      }
+    }
+  }
+
+  private static int getTotalLength(@NotNull List<TabInfo> list, @NotNull TablePassInfo data) {
+    int total = 0;
+    for (TabInfo info : list) {
+      total += data.lengths.get(info);
+    }
+    return total;
+  }
+
+  private boolean isCompressible() {
+    return myTabs.isSingleRow() && !UISettings.getInstance().getHideTabsIfNeeded() && myTabs.supportsCompression();
+  }
+
+  private void calculateCompressibleLengths(List<TabInfo> list, TablePassInfo data, int toFitLength) {
+    if (list.isEmpty()) return;
+    int spentLength = 0;
+    int lengthEstimation = 0;
+
+    for (TabInfo tabInfo : list) {
+      lengthEstimation += Math.max(getMinTabWidth(), myTabs.myInfo2Label.get(tabInfo).getPreferredSize().width);
+    }
+
+    final int extraWidth = toFitLength - lengthEstimation;
+
+    for (Iterator<TabInfo> iterator = list.iterator(); iterator.hasNext(); ) {
+      TabInfo tabInfo = iterator.next();
+      final TabLabel label = myTabs.myInfo2Label.get(tabInfo);
+
+      int length;
+      int lengthIncrement = label.getPreferredSize().width;
+      if (!iterator.hasNext()) {
+        length = Math.min(toFitLength - spentLength, lengthIncrement);
+      }
+      else if (extraWidth <= 0) {//need compress
+        length = (int)(lengthIncrement * (float)toFitLength / lengthEstimation);
+      }
+      else {
+        length = lengthIncrement;
+      }
+      if (tabInfo.isPinned()) {
+        length = Math.min(getMaxPinnedTabWidth(), length);
+      }
+      length = Math.max(getMinTabWidth(), length);
+      data.lengths.put(tabInfo, length);
+      spentLength += length + myTabs.getTabHGap();
+    }
+  }
+
+  private void calculateRawLengths(List<TabInfo> list, TablePassInfo data) {
+    boolean showPinnedTabsSeparately = UISettings.getInstance().getState().getShowPinnedTabsInASeparateRow();
+    for (TabInfo info : list) {
+      TabLabel eachLabel = myTabs.getTabLabel(info);
+      Dimension size =
+        eachLabel.isPinned() && showPinnedTabsSeparately ? eachLabel.getNotStrictPreferredSize() : eachLabel.getPreferredSize();
+      data.lengths.put(info, Math.max(getMinTabWidth(), size.width + myTabs.getTabHGap()));
+    }
+  }
+
+  public LayoutPassInfo layoutTable(List<TabInfo> visibleInfos, JComponent title, JComponent moreToolbar) {
+    myTabs.resetLayout(true);
+    Rectangle unitedTabArea = null;
+    TablePassInfo data = computeLayoutTable(visibleInfos);
+    Rectangle rect = new Rectangle(data.moreRect);
+    rect.y += myTabs.getBorderThickness();
+    moreToolbar.setBounds(rect);
+    title.setBounds(data.titleRect);
+    Insets insets = myTabs.getLayoutInsets();
+    int eachY = insets.top;
+    for (TabInfo info : visibleInfos) {
+      Rectangle bounds = data.bounds.get(info);
+      if (unitedTabArea == null) {
+        unitedTabArea = bounds;
+      }
+      else {
+        unitedTabArea = unitedTabArea.union(bounds);
       }
     }
 
     if (myTabs.getSelectedInfo() != null) {
       final JBTabsImpl.Toolbar selectedToolbar = myTabs.myInfo2Toolbar.get(myTabs.getSelectedInfo());
 
-      final int componentY = eachY + (myTabs.isEditorTabs() ? 0 : 2) - myTabs.getLayoutInsets().top;
+      final int componentY = (unitedTabArea != null ? unitedTabArea.y + unitedTabArea.height : eachY) + (myTabs.isEditorTabs() ? 0 : 2) -
+                             myTabs.getLayoutInsets().top;
       if (!myTabs.myHorizontalSide && selectedToolbar != null && !selectedToolbar.isEmpty()) {
         final int toolbarWidth = selectedToolbar.getPreferredSize().width;
         final int vSeparatorWidth = toolbarWidth > 0 ? myTabs.getSeparatorWidth() : 0;
         if (myTabs.isSideComponentBefore()) {
-          Rectangle compRect = myTabs.layoutComp(toolbarWidth + vSeparatorWidth, componentY, myTabs.getSelectedInfo().getComponent(), 0, 0);
+          Rectangle compRect =
+            myTabs.layoutComp(toolbarWidth + vSeparatorWidth, componentY, myTabs.getSelectedInfo().getComponent(), 0, 0);
           myTabs.layout(selectedToolbar, compRect.x - toolbarWidth - vSeparatorWidth, compRect.y, toolbarWidth, compRect.height);
         }
         else {
@@ -175,7 +276,9 @@ public class TableLayout extends TabLayout {
         myTabs.layoutComp(0, componentY, myTabs.getSelectedInfo().getComponent(), 0, 0);
       }
     }
-
+    if (unitedTabArea != null) {
+      data.tabRectangle.setBounds(unitedTabArea);
+    }
     myLastTableLayout = data;
     return data;
   }
@@ -199,22 +302,36 @@ public class TableLayout extends TabLayout {
     int result = -1;
 
     Component c = myTabs.getComponentAt(point);
+    Set<TabInfo> lastInRow = new HashSet<>();
+    for (int i = 0; i < myLastTableLayout.table.size(); i++) {
+      List<TabInfo> columns = myLastTableLayout.table.get(i).myColumns;
+      lastInRow.add(columns.get(columns.size() - 1));
+    }
 
     if (c instanceof JBTabsImpl) {
       for (int i = 0; i < myLastTableLayout.myVisibleInfos.size() - 1; i++) {
-        TabLabel first = myTabs.myInfo2Label.get(myLastTableLayout.myVisibleInfos.get(i));
-        TabLabel second = myTabs.myInfo2Label.get(myLastTableLayout.myVisibleInfos.get(i + 1));
+        TabInfo firstInfo = myLastTableLayout.myVisibleInfos.get(i);
+        TabInfo secondInfo = myLastTableLayout.myVisibleInfos.get(i + 1);
+        TabLabel first = myTabs.myInfo2Label.get(firstInfo);
+        TabLabel second = myTabs.myInfo2Label.get(secondInfo);
 
         Rectangle firstBounds = first.getBounds();
         Rectangle secondBounds = second.getBounds();
 
         final boolean between = firstBounds.getMaxX() < point.x
-                    && secondBounds.getX() > point.x
-                    && firstBounds.y < point.y
-                    && secondBounds.getMaxY() > point.y;
+                                && secondBounds.getX() > point.x
+                                && firstBounds.y < point.y
+                                && secondBounds.getMaxY() > point.y;
 
         if (between) {
           c = first;
+          break;
+        }
+        if (lastInRow.contains(firstInfo)
+            && firstBounds.y <= point.y
+            && firstBounds.getMaxY() >= point.y
+            && firstBounds.getMaxX() <= point.x) {
+          c = second;
           break;
         }
       }
@@ -232,7 +349,8 @@ public class TableLayout extends TabLayout {
           }
         }
         result = index;
-      } else if (index < myLastTableLayout.myVisibleInfos.size()) {
+      }
+      else if (index < myLastTableLayout.myVisibleInfos.size()) {
         result = index;
       }
     }
@@ -240,8 +358,111 @@ public class TableLayout extends TabLayout {
   }
 
   @Override
-  @MagicConstant(intValues = {SwingConstants.CENTER, SwingConstants.TOP, SwingConstants.LEFT, SwingConstants.BOTTOM, SwingConstants.RIGHT, -1})
+  @MagicConstant(intValues = {
+    SwingConstants.CENTER,
+    SwingConstants.TOP,
+    SwingConstants.LEFT,
+    SwingConstants.BOTTOM,
+    SwingConstants.RIGHT,
+    -1
+  })
   public int getDropSideFor(@NotNull Point point) {
     return TabsUtil.getDropSideFor(point, myTabs);
+  }
+
+  int getScrollOffset() {
+    return myScrollOffset;
+  }
+
+  public void scroll(int units) {
+    if (!myTabs.isSingleRow()) {
+      myScrollOffset = 0;
+      return;
+    }
+    myScrollOffset += units;
+
+    clampScrollOffsetToBounds(myLastTableLayout);
+  }
+
+  private void clampScrollOffsetToBounds(@Nullable TablePassInfo data) {
+    if (data == null) {
+      return;
+    }
+    if (data.requiredLength < data.toFitRec.width) {
+      myScrollOffset = 0;
+    }
+    else {
+      myScrollOffset = Math.max(0, Math.min(myScrollOffset,
+                                            data.requiredLength - data.toFitRec.width + data.moreRect.width /*+ (1 + myTabs.getIndexOf(myTabs.getSelectedInfo())) * myTabs.getBorderThickness()*/+ data.titleRect.width));
+    }
+  }
+
+  public int getScrollUnitIncrement() {
+    return 10;
+  }
+
+  public void scrollSelectionInView() {
+    myScrollSelectionInViewPending = true;
+    doScrollSelectionInView(myLastTableLayout);
+  }
+
+  @Override
+  public boolean canShowMorePopup() {
+    return myLastTableLayout != null && !myLastTableLayout.moreRect.isEmpty();
+  }
+
+  @Override
+  public void showMorePopup() {
+    Rectangle rect = myLastTableLayout != null ? myLastTableLayout.moreRect : null;
+    if (rect == null || rect.isEmpty()) return;
+
+    JBPopupMenu menu = new JBPopupMenu();
+    for (final TabInfo each : myLastTableLayout.invisible) {
+      menu.add(createMenuItem(each));
+    }
+    menu.show(myTabs, rect.x, rect.y + rect.height);
+  }
+
+  private JBMenuItem createMenuItem(@NotNull TabInfo tabInfo) {
+    final JBMenuItem item = new JBMenuItem(tabInfo.getText(), tabInfo.getIcon());
+    item.setForeground(tabInfo.getDefaultForeground());
+    item.setBackground(tabInfo.getTabColor());
+    item.addActionListener(__ -> myTabs.select(tabInfo, true));
+    return item;
+  }
+
+  private void doScrollSelectionInView(TablePassInfo data) {
+    if (myTabs.isMouseInsideTabsArea()
+        || data == null
+        || data.lengths.isEmpty()
+        || myTabs.isHideTabs()
+        || !UISettings.getInstance().getState().getShowPinnedTabsInASeparateRow()) {
+      return;
+    }
+
+    int offset = -myScrollOffset;
+    for (TabInfo info : data.myVisibleInfos) {
+      if (info.isPinned()) continue;
+      final int length = data.lengths.get(info);
+      if (info == myTabs.getSelectedInfo()) {
+        if (offset < 0) {
+          scroll(offset);
+        }
+        else {
+          final int maxLength = data.moreRect.x;
+          if (offset + length > maxLength) {
+            // left side should be always visible
+            if (length < maxLength) {
+              scroll(offset + length - maxLength);
+            }
+            else {
+              scroll(offset);
+            }
+          }
+        }
+        break;
+      }
+      offset += length;
+    }
   }
 }

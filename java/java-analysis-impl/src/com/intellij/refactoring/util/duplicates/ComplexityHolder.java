@@ -25,6 +25,7 @@ class ComplexityHolder {
   }
 
   private int getComplexity(PsiExpression expression) {
+    if (expression == null) return TOO_COMPLEX;
     int complexity = myCache.get(expression);
     if (complexity < 0) {
       complexity = computeComplexity(expression);

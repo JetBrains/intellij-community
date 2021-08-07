@@ -7,7 +7,7 @@ SHELL_SCRIPT
       ASSIGNMENT_LIST
         PsiElement(()('(')
         ARRAY_ASSIGNMENT
-          LITERAL_EXPRESSION
+          LITERAL_OPERATION
             STRING
               PsiElement(OPEN_QUOTE)('"')
               PsiElement(CLOSE_QUOTE)('"')

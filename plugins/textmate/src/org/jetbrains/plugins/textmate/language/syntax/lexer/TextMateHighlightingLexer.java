@@ -1,13 +1,10 @@
 package org.jetbrains.plugins.textmate.language.syntax.lexer;
 
 import com.intellij.lexer.LexerBase;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.tree.IElementType;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.textmate.language.TextMateLanguageDescriptor;
-import org.jetbrains.plugins.textmate.language.syntax.SyntaxNodeDescriptor;
 
 import java.util.LinkedList;
 import java.util.Queue;
@@ -24,16 +21,6 @@ public class TextMateHighlightingLexer extends LexerBase {
   private int myTokenStart;
   private int myTokenEnd;
   private boolean myRestartable;
-
-  /**
-   * @deprecated use {@link TextMateHighlightingLexer#TextMateHighlightingLexer(TextMateLanguageDescriptor, int)} instead
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2020.3")
-  public TextMateHighlightingLexer(CharSequence scopeName, SyntaxNodeDescriptor languageRootSyntaxNode) {
-    myLexer = new TextMateLexer(new TextMateLanguageDescriptor(scopeName, languageRootSyntaxNode),
-                                Registry.get("textmate.line.highlighting.limit").asInteger());
-  }
 
   public TextMateHighlightingLexer(@NotNull TextMateLanguageDescriptor languageDescriptor, int lineLimit) {
     myLexer = new TextMateLexer(languageDescriptor, lineLimit);
@@ -97,7 +84,7 @@ public class TextMateHighlightingLexer extends LexerBase {
 
   protected void updateState(@Nullable TextMateLexer.Token token, int fallbackOffset) {
     if (token != null) {
-      myTokenType = new TextMateElementType(token.selector);
+      myTokenType = new TextMateElementType(token.scope);
       myTokenStart = token.startOffset;
       myTokenEnd = Math.min(token.endOffset, myEndOffset);
       myCurrentOffset = token.endOffset;

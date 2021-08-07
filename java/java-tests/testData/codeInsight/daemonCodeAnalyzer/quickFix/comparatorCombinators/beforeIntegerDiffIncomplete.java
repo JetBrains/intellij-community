@@ -1,4 +1,4 @@
-// "Replace with Comparator.comparingInt" "false"
+// "Replace with 'Comparator.comparingInt'" "false"
 
 import java.util.*;
 

@@ -4,12 +4,14 @@ package com.intellij.openapi.actionSystem;
 
 import com.intellij.openapi.actionSystem.impl.Utils;
 import com.intellij.util.containers.JBIterable;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public final class ActionGroupUtil {
 
   /** @deprecated use {@link #isGroupEmpty(ActionGroup, AnActionEvent)} instead */
+  @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
   @Deprecated
   public static boolean isGroupEmpty(@NotNull ActionGroup actionGroup, @NotNull AnActionEvent e, boolean unused) {
     return getActiveActions(actionGroup, e).isEmpty();
@@ -28,7 +30,7 @@ public final class ActionGroupUtil {
   public static JBIterable<? extends AnAction> getActiveActions(@NotNull ActionGroup actionGroup,
                                                                 @NotNull AnActionEvent e) {
     UpdateSession updater = Utils.getOrCreateUpdateSession(e);
-    return JBIterable.from(updater.children(actionGroup))
+    return JBIterable.from(updater.expandedChildren(actionGroup))
       .filter(o -> !(o instanceof Separator) && updater.presentation(o).isEnabledAndVisible());
   }
 

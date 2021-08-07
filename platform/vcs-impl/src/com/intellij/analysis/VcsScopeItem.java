@@ -35,7 +35,7 @@ public class VcsScopeItem implements ModelScopeItem {
     myChangeListManager = ChangeListManager.getInstance(project);
     assert !myChangeListManager.getAffectedFiles().isEmpty();
 
-    if (myChangeListManager.areChangeListsEnabled()) {
+    if (ChangesUtil.hasMeaningfulChangelists(myProject)) {
       myModel = new DefaultComboBoxModel<>();
       myModel.addElement(null);
       List<LocalChangeList> changeLists = myChangeListManager.getChangeLists();

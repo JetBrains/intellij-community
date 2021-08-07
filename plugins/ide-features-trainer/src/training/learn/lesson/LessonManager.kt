@@ -3,7 +3,6 @@ package training.learn.lesson
 
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
@@ -13,6 +12,7 @@ import com.intellij.openapi.keymap.KeymapManagerListener
 import com.intellij.openapi.project.Project
 import org.intellij.lang.annotations.Language
 import training.dsl.TaskContext
+import training.dsl.TaskTextProperties
 import training.dsl.impl.LessonExecutor
 import training.dsl.impl.OpenPassedContext
 import training.learn.course.KLesson
@@ -34,7 +34,7 @@ class LessonManager {
   internal var currentLessonExecutor: LessonExecutor? = null
     private set
 
-  var shownRestoreNotification : TaskContext.RestoreNotification? = null
+  var shownRestoreNotification: TaskContext.RestoreNotification? = null
     private set
 
   val testActionsExecutor: Executor by lazy {
@@ -65,7 +65,7 @@ class LessonManager {
     OpenPassedContext(project).apply(lesson.lessonContent)
     learnPanel.scrollRectToVisible(Rectangle(0, 0, 1, 1))
     learnPanel.makeNextButtonSelected()
-    learnPanel.learnToolWindow?.showGotItAboutRestart()
+    learnPanel.learnToolWindow.showGotItAboutRestart()
   }
 
   internal fun initDslLesson(editor: Editor?, cLesson: Lesson, lessonExecutor: LessonExecutor) {
@@ -73,12 +73,14 @@ class LessonManager {
     currentLessonExecutor = lessonExecutor
   }
 
-  internal fun lessonIsRunning() : Boolean = currentLessonExecutor?.hasBeenStopped?.not() ?: false
+  internal fun lessonIsRunning(): Boolean = currentLessonExecutor?.hasBeenStopped?.not() ?: false
 
-  internal fun stopLesson() {
+  fun stopLesson() = stopLesson(false)
+
+  private fun stopLesson(lessonPassed: Boolean) {
     shownRestoreNotification = null
     currentLessonExecutor?.takeIf { !it.hasBeenStopped }?.let {
-      it.lesson.onStop()
+      it.lesson.onStop(it.project, lessonPassed)
       it.stopLesson()
       currentLessonExecutor = null
     }
@@ -101,13 +103,17 @@ class LessonManager {
     LearningUiManager.activeToolWindow?.scrollToTheStart()
   }
 
-  fun addMessage(@Language("HTML") text: String, isInformer: Boolean = false) {
+  fun addMessage(@Language("HTML") text: String,
+                 isInformer: Boolean = false,
+                 visualNumber: Int? = null,
+                 useInternalParagraphStyle: Boolean = false,
+                 textProperties: TaskTextProperties? = null) {
     val state = if (isInformer) LessonMessagePane.MessageState.INFORMER else LessonMessagePane.MessageState.NORMAL
-    learnPanel?.addMessage(text, state)
+    learnPanel?.addMessage(text, LessonMessagePane.MessageProperties(state, visualNumber, useInternalParagraphStyle, textProperties))
   }
 
-  fun addInactiveMessages(messages: List<String>) {
-    for (m in messages) learnPanel?.addMessage(m, state = LessonMessagePane.MessageState.INACTIVE)
+  fun addInactiveMessage(message: String, visualNumber: Int?) {
+    learnPanel?.addMessage(message, LessonMessagePane.MessageProperties(LessonMessagePane.MessageState.INACTIVE, visualNumber))
   }
 
   fun removeInactiveMessages(number: Int) {
@@ -117,6 +123,10 @@ class LessonManager {
   fun resetMessagesNumber(number: Int) {
     shownRestoreNotification = null
     learnPanel?.resetMessagesNumber(number)
+  }
+
+  fun removeMessage(index: Int) {
+    learnPanel?.removeMessage(index)
   }
 
   fun messagesNumber(): Int = learnPanel?.messagesNumber() ?: 0
@@ -130,7 +140,7 @@ class LessonManager {
     LearningUiHighlightingManager.clearHighlights()
     val learnPanel = learnPanel ?: return
     learnPanel.makeNextButtonSelected()
-    stopLesson()
+    stopLesson(true)
   }
 
 
@@ -160,7 +170,7 @@ class LessonManager {
   fun setRestoreNotification(notification: TaskContext.RestoreNotification) {
     val callback = Runnable {
       notification.callback()
-      invokeLater {
+      currentLessonExecutor?.taskInvokeLater {
         clearRestoreMessage()
       }
     }
@@ -181,10 +191,16 @@ class LessonManager {
     val warningIconIndex = LearningUiManager.getIconIndex(AllIcons.General.NotificationWarning)
     val warningIconMessage = MessagePart(warningIconIndex, MessagePart.MessageType.ICON_IDX)
     val allMessages = mutableListOf(warningIconMessage).also { it.addAll(messages) }
-    learnPanel?.addMessages(allMessages, LessonMessagePane.MessageState.RESTORE)
+    learnPanel?.addMessages(allMessages, LessonMessagePane.MessageProperties(LessonMessagePane.MessageState.RESTORE))
   }
 
   fun lessonShouldBeOpenedCompleted(lesson: Lesson): Boolean = lesson.passed && currentLesson != lesson
+
+  fun focusTask() {
+    if (lessonIsRunning()) {
+      learnPanel?.focusCurrentMessage()
+    }
+  }
 
   companion object {
     @Volatile

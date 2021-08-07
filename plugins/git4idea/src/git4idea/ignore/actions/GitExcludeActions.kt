@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.ignore.actions
 
 import com.intellij.openapi.actionSystem.AnActionEvent
@@ -7,6 +7,7 @@ import com.intellij.openapi.fileEditor.OpenFileDescriptor
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.ProjectLevelVcsManager
+import com.intellij.openapi.vcs.VcsBundle
 import com.intellij.openapi.vcs.changes.ChangeListManager
 import com.intellij.openapi.vcs.changes.IgnoredBeanFactory
 import com.intellij.openapi.vcs.changes.actions.ScheduleForAdditionAction
@@ -14,6 +15,7 @@ import com.intellij.openapi.vcs.changes.ignore.actions.getSelectedFiles
 import com.intellij.openapi.vcs.changes.ignore.actions.writeIgnoreFileEntries
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.vcsUtil.VcsUtil
 import git4idea.GitUtil
 import git4idea.GitVcs
 import git4idea.i18n.GitBundle.messagePointer
@@ -66,7 +68,11 @@ class AddToGitExcludeAction : DefaultGitExcludeAction(
     val selectedFiles = getSelectedFiles(e)
     if (selectedFiles.isEmpty()) return
 
-    for ((repository, filesToAdd) in GitUtil.sortFilesByRepositoryIgnoringMissing(project, selectedFiles)) {
+    val filesToIgnore =
+      VcsUtil.computeWithModalProgress(project, VcsBundle.message("ignoring.files.progress.title"), false) {
+        GitUtil.sortFilesByRepositoryIgnoringMissing(project, selectedFiles)
+      }
+    for ((repository, filesToAdd) in filesToIgnore) {
       val gitExclude = repository.repositoryFiles.excludeFile.let { VfsUtil.findFileByIoFile(it, true) } ?: continue
       val ignores = filesToAdd.map { file -> IgnoredBeanFactory.ignoreFile(file, project) }
       writeIgnoreFileEntries(project, gitExclude, ignores, gitVcs, repository.root)

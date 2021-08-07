@@ -1,22 +1,16 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.conflicts
 
-import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.DataProvider
 import com.intellij.openapi.application.runInEdt
-import com.intellij.openapi.progress.ProgressIndicator
-import com.intellij.openapi.progress.Task
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vcs.FileStatus
-import com.intellij.openapi.vcs.VcsNotifier
 import com.intellij.openapi.vcs.changes.ChangesUtil
 import com.intellij.openapi.vcs.changes.ui.*
 import com.intellij.openapi.vcs.changes.ui.ChangesGroupingSupport.Companion.DIRECTORY_GROUPING
-import com.intellij.openapi.vcs.impl.BackgroundableActionLock
-import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.ScrollPaneFactory
 import com.intellij.ui.SimpleTextAttributes
@@ -27,25 +21,22 @@ import com.intellij.util.FontUtil.spaceAndThinSpace
 import com.intellij.util.ui.tree.TreeUtil
 import com.intellij.util.ui.update.DisposableUpdate
 import com.intellij.util.ui.update.MergingUpdateQueue
-import git4idea.GitNotificationIdsHolder.Companion.CANNOT_RESOLVE_CONFLICT
 import git4idea.GitUtil
-import git4idea.i18n.GitBundle
+import git4idea.conflicts.GitConflictsUtil.acceptConflictSide
+import git4idea.conflicts.GitConflictsUtil.getConflictType
+import git4idea.conflicts.GitConflictsUtil.showMergeWindow
+import git4idea.conflicts.GitConflictsUtil.getConflictOperationLock
 import git4idea.merge.GitMergeUtil
 import git4idea.repo.GitConflict
-import git4idea.repo.GitConflict.ConflictSide
-import git4idea.repo.GitConflict.Status
 import git4idea.repo.GitRepository
 import git4idea.repo.GitRepositoryChangeListener
 import git4idea.status.GitStagingAreaHolder
 import org.jetbrains.annotations.Nls
 import java.awt.BorderLayout
-import java.beans.PropertyChangeListener
 import java.util.*
 import javax.swing.JComponent
 import javax.swing.JPanel
 import javax.swing.tree.DefaultTreeModel
-import kotlin.collections.ArrayList
-import kotlin.collections.HashSet
 
 class GitConflictsPanel(
   private val project: Project,
@@ -174,66 +165,6 @@ class GitConflictsPanel(
 
   interface Listener : EventListener {
     fun onDescriptionChange(description: @Nls String) {}
-  }
-}
-
-internal fun getConflictOperationLock(project: Project, conflict: GitConflict): BackgroundableActionLock {
-  return BackgroundableActionLock.getLock(project, conflict.filePath)
-}
-
-internal fun acceptConflictSide(project: Project, handler: GitMergeHandler, selectedConflicts: List<GitConflict>, takeTheirs: Boolean,
-                                isReversed: (VirtualFile) -> Boolean) {
-  val conflicts = selectedConflicts.filterNot { getConflictOperationLock(project, it).isLocked }.toList()
-  if (conflicts.isEmpty()) return
-
-  val locks = conflicts.map { getConflictOperationLock(project, it) }
-  locks.forEach { it.lock() }
-
-  object : Task.Backgroundable(project, GitBundle.message("conflicts.accept.progress", conflicts.size), true) {
-    override fun run(indicator: ProgressIndicator) {
-      val reversedRoots = conflicts.mapTo(mutableSetOf()) { it.root }.filter(isReversed)
-      handler.acceptOneVersion(conflicts, reversedRoots, takeTheirs)
-    }
-
-    override fun onFinished() {
-      locks.forEach { it.unlock() }
-    }
-  }.queue()
-}
-
-internal fun showMergeWindow(project: Project, handler: GitMergeHandler, selectedConflicts: List<GitConflict>, isReversed: (VirtualFile) -> Boolean) {
-  val conflicts = selectedConflicts.filter { handler.canResolveConflict(it) && !getConflictOperationLock(project, it).isLocked }.toList()
-  if (conflicts.isEmpty()) return
-
-  for (conflict in conflicts) {
-    val file = LocalFileSystem.getInstance().refreshAndFindFileByPath(conflict.filePath.path)
-    if (file == null) {
-      VcsNotifier.getInstance(project).notifyError(CANNOT_RESOLVE_CONFLICT,
-                                                   GitBundle.message("conflicts.merge.window.error.title"),
-                                                   GitBundle.message("conflicts.merge.window.error.message", conflict.filePath))
-      continue
-    }
-
-    val lock = getConflictOperationLock(project, conflict)
-    MergeConflictResolveUtil.showMergeWindow(project, file, lock) {
-      handler.resolveConflict(conflict, file, isReversed(conflict.root))
-    }
-  }
-}
-
-@Nls
-internal fun getConflictType(conflict: GitConflict): String {
-  val oursStatus = conflict.getStatus(ConflictSide.OURS, true)
-  val theirsStatus = conflict.getStatus(ConflictSide.THEIRS, true)
-  return when {
-    oursStatus == Status.DELETED && theirsStatus == Status.DELETED -> GitBundle.message("conflicts.type.both.deleted")
-    oursStatus == Status.ADDED && theirsStatus == Status.ADDED -> GitBundle.message("conflicts.type.both.added")
-    oursStatus == Status.MODIFIED && theirsStatus == Status.MODIFIED -> GitBundle.message("conflicts.type.both.modified")
-    oursStatus == Status.DELETED -> GitBundle.message("conflicts.type.deleted.by.you")
-    theirsStatus == Status.DELETED -> GitBundle.message("conflicts.type.deleted.by.them")
-    oursStatus == Status.ADDED -> GitBundle.message("conflicts.type.added.by.you")
-    theirsStatus == Status.ADDED -> GitBundle.message("conflicts.type.added.by.them")
-    else -> throw IllegalStateException("ours: $oursStatus; theirs: $theirsStatus")
   }
 }
 

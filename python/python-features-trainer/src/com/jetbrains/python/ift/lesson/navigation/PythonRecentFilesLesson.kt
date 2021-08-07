@@ -7,8 +7,8 @@ import training.learn.lesson.general.navigation.RecentFilesLesson
 class PythonRecentFilesLesson : RecentFilesLesson() {
   override val existedFile: String = "src/recent_files_demo.py"
 
-  override val transitionMethodName: String = "print"
-  override val transitionFileName: String = "builtins"
+  override val transitionMethodName: String = "sorted"
+  override val transitionFileName: String = "builtin"
   override val stringForRecentFilesSearch: String = transitionMethodName
 
   override fun LessonContext.setInitialPosition() = caret(transitionMethodName)

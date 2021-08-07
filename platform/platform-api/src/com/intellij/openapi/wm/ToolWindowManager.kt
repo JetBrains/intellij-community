@@ -10,7 +10,6 @@ import com.intellij.openapi.util.NlsContexts
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
 import java.util.function.Consumer
-import java.util.function.Predicate
 import javax.swing.Icon
 import javax.swing.JComponent
 import javax.swing.event.HyperlinkListener
@@ -162,7 +161,6 @@ abstract class ToolWindowManager {
    */
   open fun getLocationIcon(id: String, fallbackIcon: Icon): Icon = fallbackIcon
 
-  abstract fun getLastActiveToolWindow(condition: Predicate<in JComponent>?): ToolWindow?
 }
 
 data class ToolWindowBalloonShowOptions(val toolWindowId: String,

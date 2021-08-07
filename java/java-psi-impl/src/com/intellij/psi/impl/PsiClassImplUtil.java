@@ -1,8 +1,7 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl;
 
 import com.intellij.lang.java.JavaLanguage;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicatorProvider;
@@ -1086,7 +1085,7 @@ public final class PsiClassImplUtil {
         return false;
       }
     }
-    if (qName1.hashCode() != qName2.hashCode() || !qName1.equals(qName2)) {
+    if (!qName1.equals(qName2)) {
       return false;
     }
 
@@ -1105,8 +1104,8 @@ public final class PsiClassImplUtil {
       return true;
     }
 
-    FileIndexFacade fileIndex = ServiceManager.getService(file1.getProject(), FileIndexFacade.class);
-    FileIndexFacade fileIndex2 = ServiceManager.getService(file2.getProject(), FileIndexFacade.class);
+    FileIndexFacade fileIndex = file1.getProject().getService(FileIndexFacade.class);
+    FileIndexFacade fileIndex2 = file2.getProject().getService(FileIndexFacade.class);
     VirtualFile vfile1 = file1.getViewProvider().getVirtualFile();
     VirtualFile vfile2 = file2.getViewProvider().getVirtualFile();
     boolean lib1 = fileIndex.isInLibraryClasses(vfile1);

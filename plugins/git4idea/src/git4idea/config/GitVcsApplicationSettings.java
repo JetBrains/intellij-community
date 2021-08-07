@@ -2,9 +2,11 @@
 package git4idea.config;
 
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.*;
+import com.intellij.openapi.components.PersistentStateComponent;
+import com.intellij.openapi.components.RoamingType;
+import com.intellij.openapi.components.State;
+import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.registry.Registry;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -21,7 +23,6 @@ public final class GitVcsApplicationSettings implements PersistentStateComponent
 
     public boolean ANNOTATE_IGNORE_SPACES = true;
     public AnnotateDetectMovementsOption ANNOTATE_DETECT_INNER_MOVEMENTS = AnnotateDetectMovementsOption.NONE;
-    public boolean AUTO_COMMIT_ON_CHERRY_PICK = true;
     public boolean USE_CREDENTIAL_HELPER = false;
     public boolean STAGING_AREA_ENABLED = false;
   }
@@ -59,6 +60,7 @@ public final class GitVcsApplicationSettings implements PersistentStateComponent
 
   public void setPathToGit(@Nullable String pathToGit) {
     myState.myPathToGit = pathToGit;
+    ApplicationManager.getApplication().getMessageBus().syncPublisher(GitExecutableManager.TOPIC).executableChanged();
   }
 
   public boolean isIgnoreWhitespaces() {
@@ -78,14 +80,6 @@ public final class GitVcsApplicationSettings implements PersistentStateComponent
     myState.ANNOTATE_DETECT_INNER_MOVEMENTS = value;
   }
 
-  public void setAutoCommitOnCherryPick(boolean autoCommit) {
-    myState.AUTO_COMMIT_ON_CHERRY_PICK = autoCommit;
-  }
-
-  public boolean isAutoCommitOnCherryPick() {
-    return myState.AUTO_COMMIT_ON_CHERRY_PICK;
-  }
-
   public void setUseCredentialHelper(boolean useCredentialHelper) {
     myState.USE_CREDENTIAL_HELPER = useCredentialHelper;
   }
@@ -95,10 +89,6 @@ public final class GitVcsApplicationSettings implements PersistentStateComponent
   }
 
   public boolean isStagingAreaEnabled() {
-    if (Registry.is("git.enable.stage")) {
-      myState.STAGING_AREA_ENABLED = true;
-      Registry.get("git.enable.stage").setValue(false);
-    }
     return myState.STAGING_AREA_ENABLED;
   }
 

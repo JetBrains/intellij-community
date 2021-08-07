@@ -1,10 +1,9 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.integrate;
 
 import com.intellij.configurationStore.StoreUtil;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ReadAction;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.project.DumbAwareAction;
@@ -208,7 +207,7 @@ public class IntegratedSelectedOptionsDialog extends DialogWrapper {
   private boolean underProject(final File file) {
     return ReadAction.compute(() -> {
       final VirtualFile vf = SvnUtil.getVirtualFile(file.getAbsolutePath());
-      return (vf == null) || ServiceManager.getService(myProject, FileIndexFacade.class).isInContent(vf);
+      return (vf == null) || myProject.getService(FileIndexFacade.class).isInContent(vf);
     });
   }
 

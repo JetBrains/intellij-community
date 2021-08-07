@@ -1,8 +1,9 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.documentation;
 
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.editorActions.CodeDocumentationUtil;
+import com.intellij.codeInsight.javadoc.JavaDocExternalFilter;
 import com.intellij.codeInsight.javadoc.JavaDocInfoGenerator;
 import com.intellij.codeInsight.javadoc.JavaDocUtil;
 import com.intellij.java.JavaBundle;
@@ -13,6 +14,7 @@ import com.intellij.lang.documentation.CompositeDocumentationProvider;
 import com.intellij.lang.documentation.ExternalDocumentationProvider;
 import com.intellij.lang.java.JavaDocumentationProvider;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
@@ -23,7 +25,7 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.groovy.dsl.CustomMembersGenerator;
+import org.jetbrains.plugins.groovy.dsl.GdslNamedParameter;
 import org.jetbrains.plugins.groovy.dsl.holders.NonCodeMembersHolder;
 import org.jetbrains.plugins.groovy.extensions.NamedArgumentDescriptor;
 import org.jetbrains.plugins.groovy.lang.completion.GrPropertyForCompletion;
@@ -50,6 +52,7 @@ import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Consumer;
 
 /**
  * @author ven
@@ -275,8 +278,8 @@ public class GroovyDocumentationProvider implements CodeDocumentationProvider, E
   @Override
   @Nullable
   public String generateDoc(PsiElement element, PsiElement originalElement) {
-    if (element instanceof CustomMembersGenerator.GdslNamedParameter) {
-      CustomMembersGenerator.GdslNamedParameter parameter = (CustomMembersGenerator.GdslNamedParameter)element;
+    if (element instanceof GdslNamedParameter) {
+      GdslNamedParameter parameter = (GdslNamedParameter)element;
       String result = "<pre><b>" + parameter.getName() + "</b>";
       if (parameter.myParameterTypeText != null) {
         result += ": " + parameter.myParameterTypeText;
@@ -506,5 +509,40 @@ public class GroovyDocumentationProvider implements CodeDocumentationProvider, E
       }
     }
     return builder.length() > 0 ? builder.toString() : null;
+  }
+
+  @Override
+  public void collectDocComments(@NotNull PsiFile file,
+                                 @NotNull Consumer<? super @NotNull PsiDocCommentBase> sink) {
+    if (!(file instanceof GroovyFile)) {
+      return;
+    }
+    var groovyFile = (GroovyFile)file;
+    processDocComments(PsiTreeUtil.getChildrenOfTypeAsList(groovyFile, GrDocComment.class), sink);
+  }
+
+  private static void processDocComments(@NotNull List<GrDocComment> comments,
+                                         @NotNull Consumer<? super @NotNull PsiDocCommentBase> sink) {
+    for (var comment : comments) {
+      if (comment == null) {
+        continue;
+      }
+      GrDocCommentOwner owner = comment.getOwner();
+      if (owner == null) {
+        continue;
+      }
+      sink.accept(comment);
+      if (owner instanceof GrTypeDefinition) {
+        var nestedComments = PsiTreeUtil.getChildrenOfTypeAsList(((GrTypeDefinition)owner).getBody(), GrDocComment.class);
+        processDocComments(nestedComments, sink);
+      }
+    }
+  }
+
+  @Override
+  public @Nullable @NlsSafe String generateRenderedDoc(@NotNull PsiDocCommentBase comment) {
+    PsiElement owner = comment.getOwner();
+    String html = new GroovyDocInfoGenerator(owner == null ? comment : owner).generateRenderedDocInfo();
+    return JavaDocExternalFilter.filterInternalDocInfo(html);
   }
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.ex;
 
 import com.google.common.collect.Lists;
@@ -14,6 +14,8 @@ import com.intellij.codeInspection.ui.GlobalReportedProblemFilter;
 import com.intellij.codeInspection.ui.ReportedProblemFilter;
 import com.intellij.configurationStore.JbXmlOutputter;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -51,8 +53,8 @@ public class GlobalInspectionContextEx extends GlobalInspectionContextBase {
   protected volatile Path myOutputDir;
   protected GlobalReportedProblemFilter myGlobalReportedProblemFilter;
   private ReportedProblemFilter myReportedProblemFilter;
-  Map<Path, Long> myProfile;
-  protected InspectionProblemConsumer myProblemConsumer = null;
+  private Map<Path, Long> myProfile;
+  protected InspectionProblemConsumer myProblemConsumer;
 
   public GlobalInspectionContextEx(@NotNull Project project) {super(project);}
 
@@ -93,7 +95,7 @@ public class GlobalInspectionContextEx extends GlobalInspectionContextBase {
                                @NotNull Path outputDir,
                                @Nullable XMLOutputFactory xmlOutputFactory) {
     if (xmlOutputFactory == null) {
-      xmlOutputFactory = XMLOutputFactory.newInstance();
+      xmlOutputFactory = XMLOutputFactory.newDefaultFactory();
     }
 
     BufferedWriter[] writers = new BufferedWriter[inspections.size()];
@@ -187,23 +189,31 @@ public class GlobalInspectionContextEx extends GlobalInspectionContextBase {
         for (ScopeToolState toolDescr : sameTools.getTools()) {
           InspectionToolWrapper<?, ?> toolWrapper = toolDescr.getTool();
           InspectionToolResultExporter presentation = getPresentation(toolWrapper);
-          if (presentation instanceof AggregateResultsExporter) {
-            presentation.updateContent();
-            if (presentation.hasReportedProblems()) {
-              toolsWithResultsToAggregate.add(sameTools);
-              break;
+          try {
+            if (presentation instanceof AggregateResultsExporter) {
+              presentation.updateContent();
+              if (presentation.hasReportedProblems()) {
+                toolsWithResultsToAggregate.add(sameTools);
+                break;
+              }
+            }
+            if (toolWrapper instanceof LocalInspectionToolWrapper) {
+              hasProblems = Files.exists(InspectionsResultUtil.getInspectionResultPath(outputDir, toolWrapper.getShortName()));
+            }
+            else {
+              presentation.updateContent();
+              if (presentation.hasReportedProblems()) {
+                globalToolsWithProblems.add(sameTools);
+                LOG.assertTrue(!hasProblems, toolName);
+                break;
+              }
             }
           }
-          if (toolWrapper instanceof LocalInspectionToolWrapper) {
-            hasProblems = Files.exists(InspectionsResultUtil.getInspectionResultFile(outputDir, toolWrapper.getShortName()));
+          catch (ProcessCanceledException | IndexNotReadyException e) {
+            throw e;
           }
-          else {
-            presentation.updateContent();
-            if (presentation.hasReportedProblems()) {
-              globalToolsWithProblems.add(sameTools);
-              LOG.assertTrue(!hasProblems, toolName);
-              break;
-            }
+          catch (Throwable e) {
+            LOG.error(e);
           }
         }
       }
@@ -225,7 +235,7 @@ public class GlobalInspectionContextEx extends GlobalInspectionContextBase {
 
     // export global inspections
     if (!globalToolsWithProblems.isEmpty()) {
-      XMLOutputFactory xmlOutputFactory = XMLOutputFactory.newInstance();
+      XMLOutputFactory xmlOutputFactory = XMLOutputFactory.newDefaultFactory();
       Lists.partition(globalToolsWithProblems, MAX_OPEN_GLOBAL_INSPECTION_XML_RESULT_FILES).forEach(inspections ->
                                                                                                       exportResults(inspectionsResults,
                                                                                                                     inspections, outputDir,
@@ -238,8 +248,8 @@ public class GlobalInspectionContextEx extends GlobalInspectionContextBase {
                                             @NotNull Path outputPath) {
     for (Tools tools : toolsWithResultsToAggregate) {
       String inspectionName = tools.getShortName();
-      inspectionsResults.add(InspectionsResultUtil.getInspectionResultFile(outputPath, inspectionName));
-      inspectionsResults.add(InspectionsResultUtil.getInspectionResultFile(outputPath, inspectionName + InspectionsResultUtil.AGGREGATE));
+      inspectionsResults.add(InspectionsResultUtil.getInspectionResultPath(outputPath, inspectionName));
+      inspectionsResults.add(InspectionsResultUtil.getInspectionResultPath(outputPath, inspectionName + InspectionsResultUtil.AGGREGATE));
       try {
         List<? extends InspectionToolWrapper<?, ?>> wrappers = ContainerUtil.map(tools.getTools(), ScopeToolState::getTool);
         InspectionsResultUtil.writeInspectionResult(getProject(), inspectionName, wrappers, outputPath, this::getPresentation);

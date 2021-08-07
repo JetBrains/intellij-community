@@ -13,7 +13,7 @@ import org.jetbrains.annotations.NotNull;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 
 /**
  * Serves {@link JBCefBrowser#loadHTML(String, String) requests. See {@link JBCefFileSchemeHandlerFactory}.
@@ -26,7 +26,7 @@ final class JBCefLoadHtmlResourceHandler extends CefResourceHandlerAdapter {
   @NotNull private final InputStream myInputStream;
 
   JBCefLoadHtmlResourceHandler(@NotNull String html) {
-    myInputStream = new ByteArrayInputStream(html.getBytes(Charset.defaultCharset()));
+    myInputStream = new ByteArrayInputStream(html.getBytes(StandardCharsets.UTF_8));
   }
 
   @Override

@@ -2,7 +2,9 @@
 package com.siyeh.ig.controlflow;
 
 import com.intellij.codeInspection.*;
-import com.intellij.codeInspection.dataFlow.SpecialField;
+import com.intellij.codeInspection.dataFlow.DfaPsiUtil;
+import com.intellij.codeInspection.dataFlow.jvm.JvmPsiRangeSetUtil;
+import com.intellij.codeInspection.dataFlow.jvm.SpecialField;
 import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet;
 import com.intellij.codeInspection.dataFlow.types.DfLongType;
 import com.intellij.codeInspection.dataFlow.value.RelationType;
@@ -47,7 +49,7 @@ public class ExcessiveRangeCheckInspection extends AbstractBaseJavaLocalInspecti
         for (List<RangeConstraint> run : StreamEx.of(expression.getOperands()).map(ExcessiveRangeCheckInspection::extractConstraint)
           .groupRuns(RangeConstraint::sameExpression)) {
           if (run.size() <= 1) continue;
-          BinaryOperator<LongRangeSet> reductionOp = andChain ? LongRangeSet::intersect : LongRangeSet::unite;
+          BinaryOperator<LongRangeSet> reductionOp = andChain ? LongRangeSet::meet : LongRangeSet::join;
           LongRangeSet set = run.stream().map(c -> c.myConstraint).reduce(reductionOp).orElse(LongRangeSet.empty());
           if (set.isEmpty()) continue;
           RangeConstraint constraint = run.get(0);
@@ -90,7 +92,7 @@ public class ExcessiveRangeCheckInspection extends AbstractBaseJavaLocalInspecti
     }
     if (expression instanceof PsiBinaryExpression) {
       PsiBinaryExpression binOp = (PsiBinaryExpression)expression;
-      RelationType rel = RelationType.fromElementType(binOp.getOperationTokenType());
+      RelationType rel = DfaPsiUtil.getRelationByToken(binOp.getOperationTokenType());
       if (rel == null) return null;
       PsiExpression left = PsiUtil.skipParenthesizedExprDown(binOp.getLOperand());
       PsiExpression right = PsiUtil.skipParenthesizedExprDown(binOp.getROperand());
@@ -131,7 +133,7 @@ public class ExcessiveRangeCheckInspection extends AbstractBaseJavaLocalInspecti
       myRange = range;
       myExpression = expression;
       myField = field;
-      myConstraint = constraint.intersect(getFullRange());
+      myConstraint = constraint.meet(getFullRange());
     }
 
     RangeConstraint negate(TextRange newTextRange) {
@@ -147,10 +149,10 @@ public class ExcessiveRangeCheckInspection extends AbstractBaseJavaLocalInspecti
     LongRangeSet getFullRange() {
       LongRangeSet result;
       if (myField != null) {
-        result = DfLongType.extractRange(myField.getDefaultValue(false));
+        result = DfLongType.extractRange(myField.getDefaultValue());
       }
       else {
-        result = LongRangeSet.fromType(myExpression.getType());
+        result = JvmPsiRangeSetUtil.typeRange(myExpression.getType());
       }
       return result == null ? LongRangeSet.all() : result;
     }

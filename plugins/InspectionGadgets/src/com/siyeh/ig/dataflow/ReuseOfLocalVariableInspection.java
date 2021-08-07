@@ -211,7 +211,7 @@ public class ReuseOfLocalVariableInspection extends BaseInspection {
     }
 
     private static <T extends PsiElement> boolean hasParentOfTypeBeforeAncestor(@NotNull PsiElement descendant, @NotNull PsiElement ancestor,
-                                                                                final Class<? extends T> @NotNull ... classes) {
+                                                                                @NotNull Class<? extends T> @NotNull ... classes) {
       PsiElement elementToTest = descendant.getParent();
       while (elementToTest != null) {
         if (elementToTest.equals(ancestor)) return false;

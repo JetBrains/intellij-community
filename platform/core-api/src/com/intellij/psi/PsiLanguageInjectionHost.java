@@ -11,7 +11,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 
 /**
- * Marks PSI element as (potentially) containing text in other language.
+ * Marks PSI element as (potentially) containing text in another language.
  * Injected language PSI does not embed into the PSI tree of the hosting element,
  * but is used by the IDE for highlighting, completion and other code insight actions.
  * <p>

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.diff.impl;
 
 import com.intellij.codeInsight.hint.HintManager;
@@ -32,8 +32,6 @@ import com.intellij.openapi.diff.DiffBundle;
 import com.intellij.openapi.diff.impl.DiffUsageTriggerCollector;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.LogicalPosition;
-import com.intellij.openapi.keymap.Keymap;
-import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbAware;
@@ -51,7 +49,6 @@ import com.intellij.ui.*;
 import com.intellij.ui.components.JBPanelWithEmptyText;
 import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.ui.mac.TouchbarDataKeys;
-import com.intellij.ui.mac.UpdatableDefaultActionGroup;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.containers.ContainerUtil;
@@ -64,9 +61,9 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
-import java.util.Set;
+
+import static com.intellij.diff.tools.util.base.TextDiffViewerUtil.recursiveRegisterShortcutSet;
 
 public abstract class DiffRequestProcessor implements Disposable {
   private static final Logger LOG = Logger.getInstance(DiffRequestProcessor.class);
@@ -83,7 +80,7 @@ public abstract class DiffRequestProcessor implements Disposable {
 
   @NotNull private final DefaultActionGroup myToolbarGroup;
   @NotNull private final DefaultActionGroup myPopupActionGroup;
-  @NotNull private final UpdatableDefaultActionGroup myTouchbarActionGroup;
+  @NotNull private final DefaultActionGroup myTouchbarActionGroup;
 
   @NotNull private final JPanel myPanel;
   @NotNull private final MyPanel myMainPanel;
@@ -124,8 +121,7 @@ public abstract class DiffRequestProcessor implements Disposable {
 
     myToolbarGroup = new DefaultActionGroup();
     myPopupActionGroup = new DefaultActionGroup();
-    myTouchbarActionGroup = new UpdatableDefaultActionGroup();
-    TouchbarDataKeys.putActionDescriptor(myTouchbarActionGroup).setReplaceEsc(false);
+    myTouchbarActionGroup = new DefaultActionGroup();
 
     // UI
 
@@ -384,16 +380,21 @@ public abstract class DiffRequestProcessor implements Disposable {
 
   @NotNull
   protected List<AnAction> getNavigationActions() {
-    return Arrays.asList(new MyPrevDifferenceAction(), new MyNextDifferenceAction(), new MyOpenInEditorAction(), Separator.getInstance(),
-                         new MyPrevChangeAction(), new MyNextChangeAction());
+    List<AnAction> actions = ContainerUtil.newArrayList(
+      new MyPrevDifferenceAction(), new MyNextDifferenceAction(), new MyOpenInEditorAction(),
+      Separator.getInstance(),
+      new MyPrevChangeAction(), new MyNextChangeAction());
+
+    ContainerUtil.addIfNotNull(actions, createGoToChangeAction());
+
+    return actions;
   }
 
-  @NotNull
-  private List<AnAction> getTouchbarActions() {
-    final DefaultActionGroup left = new DefaultActionGroup(new MyPrevDifferenceAction(), new MyNextDifferenceAction());
-    final DefaultActionGroup main = new DefaultActionGroup(new MyPrevChangeAction(), new MyNextChangeAction());
-    TouchbarDataKeys.putActionDescriptor(main).setShowText(true).setShowImage(false).setMainGroup(true);
-    return Arrays.asList(left, main);
+  /**
+   * @see com.intellij.openapi.vcs.changes.actions.diff.ChangeGoToChangePopupAction
+   */
+  protected @Nullable AnAction createGoToChangeAction() {
+    return null;
   }
 
   //
@@ -416,8 +417,14 @@ public abstract class DiffRequestProcessor implements Disposable {
 
   @NotNull
   protected List<DiffTool> getToolOrderFromSettings(@NotNull List<? extends DiffTool> availableTools) {
+    return getToolOrderFromSettings(getSettings(), availableTools);
+  }
+
+  @NotNull
+  protected static List<DiffTool> getToolOrderFromSettings(@NotNull DiffSettings diffSettings,
+                                                           @NotNull List<? extends DiffTool> availableTools) {
     List<DiffTool> result = new ArrayList<>();
-    List<String> savedOrder = getSettings().getDiffToolsOrder();
+    List<String> savedOrder = diffSettings.getDiffToolsOrder();
 
     for (final String clazz : savedOrder) {
       DiffTool tool = ContainerUtil.find(availableTools, t -> t.getClass().getCanonicalName().equals(clazz));
@@ -463,6 +470,8 @@ public abstract class DiffRequestProcessor implements Disposable {
     });
   }
 
+  private static final boolean SHOW_VIEWER_ACTIONS_IN_TOUCHBAR = Boolean.getBoolean("touchbar.diff.show.viewer.actions");
+
   protected void collectToolbarActions(@Nullable List<? extends AnAction> viewerActions) {
     myToolbarGroup.removeAll();
 
@@ -483,7 +492,15 @@ public abstract class DiffRequestProcessor implements Disposable {
                             new ShowInExternalToolAction(),
                             ActionManager.getInstance().getAction(IdeActions.ACTION_CONTEXT_HELP));
 
-    myTouchbarActionGroup.replaceAll(getTouchbarActions());
+    if (SystemInfo.isMac) { // collect touchbar actions
+      myTouchbarActionGroup.removeAll();
+      myTouchbarActionGroup.addAll(
+        new MyPrevDifferenceAction(), new MyNextDifferenceAction(), new MyOpenInEditorAction(), Separator.getInstance(),
+        new MyPrevChangeAction(), new MyNextChangeAction()
+      );
+      if (SHOW_VIEWER_ACTIONS_IN_TOUCHBAR && viewerActions != null)
+        myTouchbarActionGroup.addAll(viewerActions);
+    }
   }
 
   protected void collectPopupActions(@Nullable List<? extends AnAction> viewerActions) {
@@ -506,7 +523,7 @@ public abstract class DiffRequestProcessor implements Disposable {
     ((ActionToolbarImpl)myToolbar).clearPresentationCache();
     myToolbar.updateActionsImmediately();
 
-    ActionUtil.recursiveRegisterShortcutSet(myToolbarGroup, myMainPanel, null);
+    recursiveRegisterShortcutSet(myToolbarGroup, myMainPanel, null);
   }
 
   @NotNull
@@ -872,11 +889,7 @@ public abstract class DiffRequestProcessor implements Disposable {
   // Iterate requests
 
   protected class MyNextChangeAction extends NextChangeAction {
-    public MyNextChangeAction() {
-      if (DiffUtil.isUserDataFlagSet(DiffUserDataKeysEx.DIFF_IN_EDITOR, getContext())) {
-        patchShortcutSet(this, IdeActions.ACTION_NEXT_TAB, IdeActions.ACTION_NEXT_EDITOR_TAB);
-      }
-    }
+    public MyNextChangeAction() {}
 
     @Override
     public void update(@NotNull AnActionEvent e) {
@@ -903,11 +916,7 @@ public abstract class DiffRequestProcessor implements Disposable {
   }
 
   protected class MyPrevChangeAction extends PrevChangeAction {
-    public MyPrevChangeAction() {
-      if (DiffUtil.isUserDataFlagSet(DiffUserDataKeysEx.DIFF_IN_EDITOR, getContext())) {
-        patchShortcutSet(this, IdeActions.ACTION_PREVIOUS_TAB, IdeActions.ACTION_PREVIOUS_EDITOR_TAB);
-      }
-    }
+    public MyPrevChangeAction() {}
 
     @Override
     public void update(@NotNull AnActionEvent e) {
@@ -931,26 +940,6 @@ public abstract class DiffRequestProcessor implements Disposable {
 
       goToPrevChange(false);
     }
-  }
-
-  protected static void patchShortcutSet(@NotNull AnAction action,
-                                         @NotNull @NonNls String originalActionId,
-                                         @Nullable @NonNls String replacementActionId) {
-    //noinspection ConstantConditions
-    Keymap keymap = KeymapManager.getInstance().getActiveKeymap();
-    Shortcut[] originalShortcuts = keymap.getShortcuts(originalActionId);
-
-    Shortcut[] shortcuts = action.getShortcutSet().getShortcuts();
-    Set<Shortcut> newShortcuts = ContainerUtil.set(shortcuts);
-    boolean hadOriginalShortcut = ContainerUtil.removeAll(newShortcuts, originalShortcuts);
-    if (!hadOriginalShortcut) return;
-
-    if (replacementActionId != null) {
-      Shortcut[] replacementShortcuts = keymap.getShortcuts(replacementActionId);
-      ContainerUtil.addAll(newShortcuts, replacementShortcuts);
-    }
-
-    action.registerCustomShortcutSet(new CustomShortcutSet(newShortcuts.toArray(Shortcut.EMPTY_ARRAY)), null);
   }
 
   //

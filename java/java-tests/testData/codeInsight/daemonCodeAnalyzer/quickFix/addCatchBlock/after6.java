@@ -12,8 +12,8 @@ class Test {
         try (MyResource r = new MyResource()) {
             r.doSomething();
         } catch (E1 ignore) {
-        } catch (E2 e2) {
-            <selection>e2.printStackTrace();</selection>
+        } catch (E2 e) {
+            <selection>e.printStackTrace();</selection>
         }
     }
 }

@@ -32,7 +32,8 @@ abstract class AbstractOpenProjectProvider : OpenProjectProvider {
      * Note: Implemented approach is super heuristics.
      * Please, override [systemId] to avoid discrepancy with real id.
      */
-    LOG.warn("Please, override AbstractOpenProjectProvider.systemId property for class: ${javaClass.name}.", Throwable())
+    LOG.warn("Class ${javaClass.name} have to override AbstractOpenProjectProvider.systemId. " +
+             "Resolving of systemId will be removed in future releases.")
     val readableName = StringUtils.splitByCharacterTypeCamelCase(javaClass.simpleName).first()
     val manager = ExternalSystemManager.EP_NAME.findFirstSafe {
       StringUtils.equalsIgnoreCase(StringUtils.splitByCharacterTypeCamelCase(it.javaClass.simpleName).first(), readableName)
@@ -42,7 +43,10 @@ abstract class AbstractOpenProjectProvider : OpenProjectProvider {
 
   protected abstract fun isProjectFile(file: VirtualFile): Boolean
 
-  protected abstract fun linkAndRefreshProject(projectDirectory: Path, project: Project)
+  @Deprecated("redundant method", replaceWith = ReplaceWith("linkToExistingProject(projectFile, project)"))
+  protected open fun linkAndRefreshProject(projectDirectory: Path, project: Project) {
+    throw UnsupportedOperationException("use linkToExistingProject(VirtualFile, Project) instead")
+  }
 
   override fun canOpenProject(file: VirtualFile): Boolean {
     return if (file.isDirectory) file.children.any(::isProjectFile) else isProjectFile(file)
@@ -72,9 +76,10 @@ abstract class AbstractOpenProjectProvider : OpenProjectProvider {
           UnlinkedProjectNotificationAware.enableNotifications(project, systemId)
         }
         else {
+          project.putUserData(ExternalSystemDataKeys.NEWLY_CREATED_PROJECT, true)
           project.putUserData(ExternalSystemDataKeys.NEWLY_IMPORTED_PROJECT, true)
           ApplicationManager.getApplication().invokeAndWait {
-            linkAndRefreshProject(nioPath, project)
+            linkToExistingProject(projectFile, project)
           }
           updateLastProjectLocation(nioPath)
         }

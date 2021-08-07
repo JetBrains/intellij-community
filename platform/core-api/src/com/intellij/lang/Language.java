@@ -56,11 +56,11 @@ public abstract class Language extends UserDataHolderBase {
     this(ID, ArrayUtilRt.EMPTY_STRING_ARRAY);
   }
 
-  protected Language(@NonNls @NotNull String ID, @NonNls String @NotNull ... mimeTypes) {
+  protected Language(@NonNls @NotNull String ID, @NonNls @NotNull String @NotNull ... mimeTypes) {
     this(null, ID, mimeTypes);
   }
 
-  protected Language(@Nullable Language baseLanguage, @NonNls @NotNull String ID, @NonNls String @NotNull ... mimeTypes) {
+  protected Language(@Nullable Language baseLanguage, @NonNls @NotNull String ID, @NonNls @NotNull String @NotNull ... mimeTypes) {
     if (baseLanguage instanceof MetaLanguage) {
       throw new ImplementationConflictException(
         "MetaLanguage cannot be a base language.\n" +
@@ -108,7 +108,8 @@ public abstract class Language extends UserDataHolderBase {
     return Collections.unmodifiableCollection(new ArrayList<>(languages));
   }
 
-  public static void unregisterLanguages(ClassLoader classLoader) {
+  @ApiStatus.Internal
+  public static void unregisterLanguages(@NotNull ClassLoader classLoader) {
     List<Class<? extends Language>> classes = new ArrayList<>(ourRegisteredLanguages.keySet());
     for (Class<? extends Language> clazz : classes) {
       if (clazz.getClassLoader() == classLoader) {
@@ -136,7 +137,7 @@ public abstract class Language extends UserDataHolderBase {
   }
 
   @ApiStatus.Internal
-  public void unregisterDialect(Language language) {
+  public void unregisterDialect(@NotNull Language language) {
     myDialects.remove(language);
   }
 
@@ -187,7 +188,7 @@ public abstract class Language extends UserDataHolderBase {
   }
 
   @ApiStatus.Internal
-  public @Nullable LanguageFileType findMyFileType(FileType[] types) {
+  public @Nullable LanguageFileType findMyFileType(FileType @NotNull [] types) {
     for (final FileType fileType : types) {
       if (fileType instanceof LanguageFileType) {
         final LanguageFileType languageFileType = (LanguageFileType)fileType;

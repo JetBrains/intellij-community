@@ -172,9 +172,9 @@ public abstract class ActionGroup extends AnAction {
    */
   @NotNull
   @ApiStatus.Experimental
-  public List<AnAction> afterExpandGroup(@NotNull List<AnAction> result,
-                                         @NotNull UpdateSession updater) {
-    return result;
+  public List<AnAction> postProcessVisibleChildren(@NotNull List<AnAction> visibleChildren,
+                                                   @NotNull UpdateSession updateSession) {
+    return visibleChildren;
   }
 
   public final boolean isPrimary(@NotNull AnAction action) {

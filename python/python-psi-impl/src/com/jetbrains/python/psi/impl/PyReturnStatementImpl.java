@@ -8,9 +8,7 @@ import com.jetbrains.python.psi.PyExpression;
 import com.jetbrains.python.psi.PyReturnStatement;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author yole
- */
+
 public class PyReturnStatementImpl extends PyElementImpl implements PyReturnStatement {
   public PyReturnStatementImpl(ASTNode astNode) {
     super(astNode);

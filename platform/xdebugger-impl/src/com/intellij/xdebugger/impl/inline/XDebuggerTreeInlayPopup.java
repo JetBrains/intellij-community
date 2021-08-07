@@ -17,6 +17,7 @@ import com.intellij.openapi.ui.popup.LightweightWindowEvent;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.*;
@@ -132,12 +133,14 @@ public class XDebuggerTreeInlayPopup<D> {
       wrappedActions.add(actionLink);
     }
 
-    myToolbar = new ActionToolbarImpl(ACTION_PLACE, wrappedActions, true);
+    var toolbarImpl = new ActionToolbarImpl(ACTION_PLACE, wrappedActions, true);
+    toolbarImpl.setTargetComponent(null);
     for (AnAction action : wrappedActions.getChildren(null)) {
       action.registerCustomShortcutSet(action.getShortcutSet(), mainPanel);
     }
 
-    myToolbar.setBorder(BorderFactory.createEmptyBorder());
+    toolbarImpl.setBorder(BorderFactory.createEmptyBorder());
+    myToolbar = toolbarImpl;
     return myToolbar;
   }
 
@@ -151,10 +154,10 @@ public class XDebuggerTreeInlayPopup<D> {
 
     @Override
     protected void perform(XValueNodeImpl node, @NotNull String nodeName, AnActionEvent e) {
-      node.getValueContainer().calculateEvaluationExpression()
+      node.calculateEvaluationExpression()
         .thenAsync(expr -> {
           if (expr == null && node != myValueNode) {
-            return myValueNode.getValueContainer().calculateEvaluationExpression();
+            return myValueNode.calculateEvaluationExpression();
           } else {
             return Promises.resolvedPromise(expr);
           }
@@ -284,20 +287,7 @@ public class XDebuggerTreeInlayPopup<D> {
     }
     myPopup.setSize(new Dimension(0, 0));
     myPopup.show(new RelativePoint(myEditor.getContentComponent(), myPoint));
-
-    ((XDebuggerTree)tree).addTreeListener(new XDebuggerTreeListener() {
-      @Override
-      public void childrenLoaded(@NotNull XDebuggerTreeNode node,
-                                 @NotNull List<? extends XValueContainerNode<?>> children,
-                                 boolean last) {
-        if (last) {
-          updateInitialBounds(tree);
-          ((XDebuggerTree)tree).removeTreeListener(this);
-        }
-      }
-    });
-
-    updateInitialBounds(tree);
+    setAutoResize(tree, myToolbar, myPopup);
   }
 
   private void resize(final TreePath path, JTree tree) {
@@ -320,21 +310,43 @@ public class XDebuggerTreeInlayPopup<D> {
     popupWindow.repaint();
   }
 
-  private void updateInitialBounds(final Tree tree) {
-    final Window popupWindow = SwingUtilities.windowForComponent(myPopup.getContent());
+  public static void setAutoResize(Tree tree, JComponent myToolbar, JBPopup myPopup) {
+    Ref<Boolean> canShrink = Ref.create(true);
+    ((XDebuggerTree)tree).addTreeListener(new XDebuggerTreeListener() {
+      @Override
+      public void childrenLoaded(@NotNull XDebuggerTreeNode node,
+                                 @NotNull List<? extends XValueContainerNode<?>> children,
+                                 boolean last) {
+        if (last) {
+          updateDebugPopupBounds(tree, myToolbar, myPopup, canShrink.get());
+          canShrink.set(false);
+        }
+      }
+    });
+    updateDebugPopupBounds(tree, myToolbar, myPopup, canShrink.get());
+  }
+
+  public static void updateDebugPopupBounds(final Tree tree, JComponent toolbar, JBPopup popup, boolean canShrink) {
+    final Window popupWindow = SwingUtilities.windowForComponent(popup.getContent());
     final Dimension size = tree.getPreferredSize();
     final Point location = popupWindow.getLocation();
-    int width = Math.max(size.width, myToolbar.getPreferredSize().width) + 150;
-    int maxWidth = 600;
-    int row = Math.min(12, tree.getRowCount() - 1);
-    Rectangle bounds = tree.getRowBounds(row);
-    int margin = 30;
-    int height = myToolbar.getHeight() + margin + (bounds == null ? 0 : bounds.y + bounds.height);
+    int hMargin = JBUI.scale(30);
+    int vMargin = JBUI.scale(30);
+    int width = Math.max(size.width, toolbar.getPreferredSize().width) + hMargin;
+    Rectangle bounds = tree.getRowBounds(tree.getRowCount() - 1);
+    int height = toolbar.getHeight() + vMargin + (bounds == null ? 0 : bounds.y + bounds.height);
+    Rectangle screenRectangle = ScreenUtil.getScreenRectangle(toolbar);
+    int maxWidth = screenRectangle.width / 2;
+    int maxHeight = screenRectangle.height / 2;
     final Rectangle targetBounds = new Rectangle(location.x,
                                                  location.y,
                                                  Math.min(width, maxWidth),
-                                                 height);
+                                                 Math.min(height, maxHeight));
 
+    if (!canShrink) {
+      targetBounds.width = Math.max(targetBounds.width, popupWindow.getWidth());
+      targetBounds.height = Math.max(targetBounds.height, popupWindow.getHeight());
+    }
     ScreenUtil.cropRectangleToFitTheScreen(targetBounds);
     popupWindow.setBounds(targetBounds);
     popupWindow.validate();

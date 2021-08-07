@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.statistic.eventLog.events
 
 import com.intellij.internal.statistic.eventLog.FeatureUsageData
@@ -55,8 +55,24 @@ object EventFields {
   @JvmStatic
   fun Int(@NonNls name: String): IntEventField = IntEventField(name)
 
+  /**
+   * Rounds integer value to the next power of two.
+   * Use it to anonymize sensitive information like the number of files in a project.
+   * @see com.intellij.internal.statistic.utils.StatisticsUtil.roundToPowerOfTwo
+   */
+  @JvmStatic
+  fun RoundedInt(@NonNls name: String): RoundedIntEventField = RoundedIntEventField(name)
+
   @JvmStatic
   fun Long(@NonNls name: String): LongEventField = LongEventField(name)
+
+  /**
+   * Rounds long value to the next power of two.
+   * Use it to anonymize sensitive information like the number of files in a project.
+   * @see com.intellij.internal.statistic.utils.StatisticsUtil.roundToPowerOfTwo
+   */
+  @JvmStatic
+  fun RoundedLong(@NonNls name: String): RoundedLongEventField = RoundedLongEventField(name)
 
   @JvmStatic
   fun Float(@NonNls name: String): FloatEventField = FloatEventField(name)
@@ -117,6 +133,20 @@ object EventFields {
 
   @JvmStatic
   fun LongList(@NonNls name: String): LongListEventField = LongListEventField(name)
+
+  /**
+   * Please choose regexp carefully to avoid reporting any sensitive data.
+   */
+  @JvmStatic
+  fun StringValidatedByInlineRegexp(@NonNls name: String, @NonNls regexp: String): StringEventField =
+    StringEventField.ValidatedByInlineRegexp(name, regexp)
+
+  /**
+   * Please choose regexp carefully to avoid reporting any sensitive data.
+   */
+  @JvmStatic
+  fun StringListValidatedByInlineRegexp(@NonNls name: String, @NonNls regexp: String): StringListEventField =
+    StringListEventField.ValidatedByInlineRegexp(name, regexp)
 
   @JvmField
   val InputEvent = object : PrimitiveEventField<FusInputEvent?>() {
@@ -183,12 +213,12 @@ object EventFields {
 
   //will be replaced with ObjectEventField in the future
   @JvmField
-  val PluginInfo = object : PrimitiveEventField<PluginInfo>() {
+  val PluginInfo = object : PrimitiveEventField<PluginInfo?>() {
     override val name = "plugin_type"
     override val validationRule: List<String>
       get() = listOf("plugin_info")
 
-    override fun addData(fuData: FeatureUsageData, value: PluginInfo) {
+    override fun addData(fuData: FeatureUsageData, value: PluginInfo?) {
       fuData.addPluginInfo(value)
     }
   }
@@ -325,6 +355,17 @@ object EventFields {
 
   @JvmField
   val TimeToShowMs = LongEventField("time_to_show")
+
+  @JvmField
+  val StartTime = LongEventField("start_time")
+
+  /**
+   * Logger merges successive events with identical group id, event id and event data fields except for fields listed here.
+   *
+   * @see com.intellij.internal.statistic.eventLog.StatisticsEventLoggerProvider.createEventsMergeStrategy
+   */
+  @JvmField
+  val FieldsIgnoredByMerge: List<EventField<*>> = arrayListOf(StartTime)
 
   @JvmStatic
   fun createAdditionalDataField(groupId: String, eventId: String): ObjectEventField {

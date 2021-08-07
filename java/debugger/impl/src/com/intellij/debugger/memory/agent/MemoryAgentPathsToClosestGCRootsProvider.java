@@ -17,10 +17,14 @@ public class MemoryAgentPathsToClosestGCRootsProvider implements ReferringObject
   private final Map<ObjectReference, ReferringObjectsInfo> myCachedRequests = new HashMap<>();
   private final int myPathsToRequestLimit;
   private final int myObjectsToRequestLimit;
+  private final ReferringObjectsProvider myDefaultProvider;
 
-  public MemoryAgentPathsToClosestGCRootsProvider(int pathsToRequestLimit, int objectsToRequestLimit) {
+  public MemoryAgentPathsToClosestGCRootsProvider(int pathsToRequestLimit,
+                                                  int objectsToRequestLimit,
+                                                  ReferringObjectsProvider defaultProvider) {
     myPathsToRequestLimit = pathsToRequestLimit;
     myObjectsToRequestLimit = objectsToRequestLimit;
+    myDefaultProvider = defaultProvider;
   }
 
   @NotNull
@@ -38,21 +42,25 @@ public class MemoryAgentPathsToClosestGCRootsProvider implements ReferringObject
       }
     }
 
-    ReferringObjectsInfo roots = getPathsToGcRoots(evaluationContext, value);
+    MemoryAgent memoryAgent = MemoryAgent.get(evaluationContext);
+    if (memoryAgent.isDisabled()) {
+      return myDefaultProvider.getReferringObjects(evaluationContext, value, myObjectsToRequestLimit);
+    }
+
+    ReferringObjectsInfo roots = getPathsToGcRoots(memoryAgent, evaluationContext, value);
     myCachedRequests.put(value, roots);
     return roots.getReferringObjects(value, limit);
   }
 
-  private ReferringObjectsInfo getPathsToGcRoots(@NotNull EvaluationContextImpl evaluationContext,
+  private ReferringObjectsInfo getPathsToGcRoots(@NotNull MemoryAgent memoryAgent,
+                                                 @NotNull EvaluationContextImpl evaluationContext,
                                                  @NotNull ObjectReference value) throws EvaluateException {
-    MemoryAgent memoryAgent = MemoryAgent.get(evaluationContext.getDebugProcess());
-    if (!memoryAgent.getCapabilities().canFindPathsToClosestGcRoots()) {
-      throw new UnsupportedOperationException();
-    }
-
-    MemoryAgentActionResult<ReferringObjectsInfo> result = memoryAgent.findPathsToClosestGCRoots(
-      evaluationContext, value, myPathsToRequestLimit, myObjectsToRequestLimit, Registry.get("debugger.memory.agent.action.timeout").asInteger()
-    );
-    return result.getResult();
+    return memoryAgent.findPathsToClosestGCRoots(
+      evaluationContext,
+      value,
+      myPathsToRequestLimit,
+      myObjectsToRequestLimit,
+      Registry.get("debugger.memory.agent.action.timeout").asInteger()
+    ).getResult();
   }
 }

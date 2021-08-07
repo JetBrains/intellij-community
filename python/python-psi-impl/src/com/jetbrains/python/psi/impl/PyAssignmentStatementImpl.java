@@ -23,9 +23,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-/**
- * @author yole
- */
+
 public class PyAssignmentStatementImpl extends PyElementImpl implements PyAssignmentStatement {
   private volatile PyExpression @Nullable [] myTargets;
 

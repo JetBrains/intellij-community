@@ -22,6 +22,7 @@ import com.intellij.openapi.roots.*;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiManager;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -67,8 +68,14 @@ public class ReadableExternalAnnotationsManager extends BaseExternalAnnotationsM
         Collections.addAll(result, AnnotationOrderRootType.getFiles(entry));
       }
     }
+    ContainerUtil.addIfNotNull(result, getAdditionalAnnotationRoot());
     return new ArrayList<>(result);
   }
+
+  protected @Nullable VirtualFile getAdditionalAnnotationRoot() {
+    return null;
+  }
+
 
   @Override
   protected synchronized void dropCache() {

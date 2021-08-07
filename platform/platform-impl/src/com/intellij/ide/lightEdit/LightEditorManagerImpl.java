@@ -58,9 +58,13 @@ public final class LightEditorManagerImpl implements LightEditorManager, Disposa
     if (pair == null) {
       return null;
     }
-    LightEditorInfo editorInfo = new LightEditorInfoImpl(pair.first, pair.second, file);
+    FileEditor fileEditor = pair.second;
+    LightEditorInfo editorInfo = new LightEditorInfoImpl(pair.first, fileEditor, file);
     ObjectUtils.consumeIfNotNull(EditorHistoryManager.getInstance(project).getState(file, pair.first),
-                                 state -> editorInfo.getFileEditor().setState(state));
+                                 state -> {
+                                   fileEditor.getComponent();
+                                   fileEditor.setState(state);
+                                 });
     ObjectUtils.consumeIfCast(LightEditorInfoImpl.getEditor(editorInfo), EditorImpl.class,
                               editorImpl -> editorImpl.setDropHandler(new LightEditDropHandler()));
     myEditors.add(editorInfo);
@@ -234,7 +238,7 @@ public final class LightEditorManagerImpl implements LightEditorManager, Disposa
   private String getUniqueName() {
     for (int i = 1; ; i++) {
       String candidate = DEFAULT_FILE_NAME + i;
-      if (myEditors.stream().noneMatch(editorInfo -> editorInfo.getFile().getName().equals(candidate))) {
+      if (!ContainerUtil.exists(myEditors, editorInfo -> editorInfo.getFile().getName().equals(candidate))) {
         return candidate;
       }
     }

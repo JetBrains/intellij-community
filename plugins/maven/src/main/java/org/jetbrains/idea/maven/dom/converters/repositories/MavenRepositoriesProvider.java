@@ -1,26 +1,25 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.dom.converters.repositories;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.components.Service;
 import com.intellij.util.xmlb.XmlSerializer;
-import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.dom.converters.repositories.beans.RepositoriesBean;
 import org.jetbrains.idea.maven.dom.converters.repositories.beans.RepositoryBeanInfo;
 
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
-/**
- * @author Serega.Vasiliev
- */
-public class MavenRepositoriesProvider {
+@Service(Service.Level.APP)
+public final class MavenRepositoriesProvider {
   public static MavenRepositoriesProvider getInstance() {
     return ApplicationManager.getApplication().getService(MavenRepositoriesProvider.class);
   }
 
-  final Map<String, RepositoryBeanInfo> myRepositoriesMap = new THashMap<>();
+  final Map<String, RepositoryBeanInfo> myRepositoriesMap = new HashMap<>();
 
   public MavenRepositoriesProvider() {
     final RepositoriesBean repositoriesBean =

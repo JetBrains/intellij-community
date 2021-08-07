@@ -60,6 +60,13 @@ public abstract class ClickListener {
           e.consume();
         }
       }
+
+      @Override
+      public void mouseClicked(MouseEvent e) {
+        if (e instanceof SyntheticClickEvent && !e.isConsumed() && onClick(e, e.getClickCount())) {
+          e.consume();
+        }
+      }
     };
 
     c.addMouseListener(myListener);
@@ -71,5 +78,13 @@ public abstract class ClickListener {
 
   public void uninstall(Component c) {
     c.removeMouseListener(myListener);
+  }
+
+  public static class SyntheticClickEvent extends MouseEvent {
+    public SyntheticClickEvent(Component source,
+                               long when, int modifiers,
+                               int x, int y, int clickCount, boolean popupTrigger, int button) {
+      super(source, MouseEvent.MOUSE_CLICKED, when, modifiers, x, y, clickCount, popupTrigger, button);
+    }
   }
 }

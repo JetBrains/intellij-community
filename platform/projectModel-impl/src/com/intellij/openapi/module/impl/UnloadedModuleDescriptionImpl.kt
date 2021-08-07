@@ -20,6 +20,7 @@ import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.module.UnloadedModuleDescription
 import com.intellij.openapi.vfs.pointers.VirtualFilePointer
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager
+import com.intellij.util.containers.Interner
 import org.jetbrains.jps.model.module.JpsModule
 import org.jetbrains.jps.model.module.JpsModuleDependency
 import org.jetbrains.jps.model.serialization.JpsGlobalLoader
@@ -48,16 +49,19 @@ class UnloadedModuleDescriptionImpl(val modulePath: ModulePath,
       val pathVariables = JpsGlobalLoader.computeAllPathVariables(PathManager.getOptionsPath())
       val modules = JpsProjectLoader.loadModules(paths.map { Paths.get(it.path) }, null, pathVariables, JpsPathMapper.IDENTITY)
       val pathsByName = paths.associateBy { it.moduleName }
-      return modules.map { create(pathsByName[it.name]!!, it, parentDisposable) }
+      val interner = Interner.createStringInterner()
+      return modules.map { create(pathsByName[it.name]!!, it, parentDisposable, interner) }
     }
 
-    private fun create(path: ModulePath, module: JpsModule, parentDisposable: Disposable): UnloadedModuleDescriptionImpl {
+    private fun create(path: ModulePath, module: JpsModule, parentDisposable: Disposable,
+                       interner: Interner<String>): UnloadedModuleDescriptionImpl {
       val dependencyModuleNames = module.dependenciesList.dependencies
         .filterIsInstance(JpsModuleDependency::class.java)
-        .map { it.moduleReference.moduleName }
+        .map { interner.intern(it.moduleReference.moduleName) }
 
       val pointerManager = VirtualFilePointerManager.getInstance()
-      return UnloadedModuleDescriptionImpl(path, dependencyModuleNames, module.contentRootsList.urls.map {pointerManager.create(it, parentDisposable, null)})
+      return UnloadedModuleDescriptionImpl(path, dependencyModuleNames,
+                                           module.contentRootsList.urls.map { pointerManager.create(it, parentDisposable, null) })
     }
   }
 }

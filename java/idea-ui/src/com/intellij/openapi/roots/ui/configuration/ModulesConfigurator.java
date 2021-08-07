@@ -42,8 +42,9 @@ import com.intellij.packaging.artifacts.ModifiableArtifactModel;
 import com.intellij.projectImport.ProjectImportBuilder;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.workspaceModel.ide.WorkspaceModel;
-import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleManagerComponentBridge;
+import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleManagerBridgeImpl;
 import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -82,6 +83,7 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
   /**
    * @deprecated use {@link ModuleManager} to access modules instead
    */
+  @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
   @Deprecated
   public ModulesConfigurator(Project project) {
     this(project, ProjectStructureConfigurable.getInstance(project));
@@ -95,9 +97,9 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
 
   private void initModuleModel() {
     ModuleManager moduleManager = ModuleManager.getInstance(myProject);
-    if (moduleManager instanceof ModuleManagerComponentBridge) {
+    if (moduleManager instanceof ModuleManagerBridgeImpl) {
       myWorkspaceEntityStorageBuilder = WorkspaceEntityStorageBuilder.from(WorkspaceModel.getInstance(myProject).getEntityStorage().getCurrent());
-      myModuleModel = ((ModuleManagerComponentBridge)moduleManager).getModifiableModel(myWorkspaceEntityStorageBuilder);
+      myModuleModel = ((ModuleManagerBridgeImpl)moduleManager).getModifiableModel(myWorkspaceEntityStorageBuilder);
     }
     else {
       myModuleModel = moduleManager.getModifiableModel();
@@ -378,22 +380,6 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
     return myModuleModelCommitted;
   }
 
-  public List<Module> deleteModules(final Collection<? extends Module> modules) {
-    List<Module> deleted = new ArrayList<>();
-    List<ModuleEditor> moduleEditors = new ArrayList<>();
-    for (Module module : modules) {
-      ModuleEditor moduleEditor = getModuleEditor(module);
-      if (moduleEditor != null) {
-        deleted.add(module);
-        moduleEditors.add(moduleEditor);
-      }
-    }
-    if (doRemoveModules(moduleEditors)) {
-      return deleted;
-    }
-    return Collections.emptyList();
-  }
-
 
   @Nullable
   public List<Module> addModule(Component parent, boolean anImport, String defaultModuleName) {
@@ -475,21 +461,7 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
     return builder;
   }
 
-  private boolean doRemoveModules(@NotNull List<? extends ModuleEditor> selectedEditors) {
-    if (selectedEditors.isEmpty()) return true;
-
-    String question;
-    if (myModuleEditors.size() == selectedEditors.size()) {
-      question = JavaUiBundle.message("module.remove.last.confirmation", selectedEditors.size());
-    }
-    else {
-      question = JavaUiBundle.message("module.remove.confirmation", selectedEditors.get(0).getModule().getName(), selectedEditors.size());
-    }
-    int result =
-      Messages.showYesNoDialog(myProject, question, JavaUiBundle.message("module.remove.confirmation.title", selectedEditors.size()), Messages.getQuestionIcon());
-    if (result != Messages.YES) {
-      return false;
-    }
+  public void deleteModules(@NotNull List<? extends ModuleEditor> selectedEditors) {
     WriteAction.run(() -> {
       for (ModuleEditor editor : selectedEditors) {
         myModuleEditors.remove(editor.getModule());
@@ -507,7 +479,21 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
       }
     });
     processModuleCountChanged();
+  }
 
+  public boolean canDeleteModules(@NotNull List<? extends ModuleEditor> selectedEditors) {
+    String question;
+    if (myModuleEditors.size() == selectedEditors.size()) {
+      question = JavaUiBundle.message("module.remove.last.confirmation", selectedEditors.size());
+    }
+    else {
+      question = JavaUiBundle.message("module.remove.confirmation", selectedEditors.get(0).getModule().getName(), selectedEditors.size());
+    }
+    int result =
+      Messages.showYesNoDialog(myProject, question, JavaUiBundle.message("module.remove.confirmation.title", selectedEditors.size()), Messages.getQuestionIcon());
+    if (result != Messages.YES) {
+      return false;
+    }
     return true;
   }
 

@@ -180,8 +180,16 @@ class ExternalSystemProgressNotificationManagerImpl : RemoteObject(), ExternalSy
     @JvmStatic
     @TestOnly
     @ApiStatus.Internal
-    fun assertListenersReleased(taskId: Any? = null) {
+    fun assertListenersReleased() {
+      assertListenersReleased(null, emptyMap())
+    }
+
+    @JvmStatic
+    @TestOnly
+    @ApiStatus.Internal
+    fun assertListenersReleased(taskId: Any? = null, expected: Map<Any, List<ExternalSystemTaskNotificationListener>> = emptyMap()) {
       val listeners = getListeners()
+      if (listeners == expected) return
       if (taskId == null && listeners.isNotEmpty()) {
         throw AssertionError("Leaked listeners: $listeners")
       }

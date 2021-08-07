@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.openapi.vcs.configurable;
 
@@ -48,9 +48,7 @@ import static com.intellij.util.ui.UIUtil.DEFAULT_HGAP;
 import static com.intellij.util.ui.UIUtil.DEFAULT_VGAP;
 import static java.util.Arrays.asList;
 
-/**
- * @author yole
- */
+
 public class VcsDirectoryConfigurationPanel extends JPanel implements Configurable {
   private static final int POSTPONE_MAPPINGS_LOADING_PANEL = DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS;
 
@@ -60,18 +58,14 @@ public class VcsDirectoryConfigurationPanel extends JPanel implements Configurab
   private final ProjectLevelVcsManager myVcsManager;
   private final TableView<MapInfo> myDirectoryMappingTable;
   private final ComboBox<AbstractVcs> myVcsComboBox;
-  private final List<ModuleVcsListener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
 
   private final MyDirectoryRenderer myDirectoryRenderer;
   private final ColumnInfo<MapInfo, MapInfo> DIRECTORY;
   private ListTableModel<MapInfo> myModel;
   private final List<AbstractVcs> myAllVcss;
-  private VcsContentAnnotationConfigurable myRecentlyChangedConfigurable;
   private final boolean myIsDisabled;
   private final VcsConfiguration myVcsConfiguration;
   private final @NotNull Map<String, VcsRootChecker> myCheckers;
-  private JCheckBox myShowChangedRecursively;
-  private final VcsLimitHistoryConfigurable myLimitHistory;
   private final VcsUpdateInfoScopeFilterConfigurable myScopeFilterConfig;
   private JBLoadingPanel myLoadingPanel;
 
@@ -198,7 +192,6 @@ public class VcsDirectoryConfigurationPanel extends JPanel implements Configurab
       public void setValue(final MapInfo o, final String aValue) {
         Collection<AbstractVcs> activeVcses = getActiveVcses();
         o.mapping = new VcsDirectoryMapping(o.mapping.getDirectory(), aValue, o.mapping.getRootSettings());
-        checkNotifyListeners(activeVcses);
       }
 
       @Override
@@ -294,7 +287,6 @@ public class VcsDirectoryConfigurationPanel extends JPanel implements Configurab
     myDirectoryMappingTable.setShowGrid(false);
     myDirectoryMappingTable.setIntercellSpacing(JBUI.emptySize());
 
-    myLimitHistory = new VcsLimitHistoryConfigurable(myProject);
     myScopeFilterConfig = new VcsUpdateInfoScopeFilterConfigurable(myProject, myVcsConfiguration);
 
     myCheckers = new HashMap<>();
@@ -343,10 +335,7 @@ public class VcsDirectoryConfigurationPanel extends JPanel implements Configurab
   }
 
   private void initializeModel() {
-    myRecentlyChangedConfigurable.reset();
-    myLimitHistory.reset();
     myScopeFilterConfig.reset();
-    myShowChangedRecursively.setSelected(myVcsConfiguration.SHOW_DIRTY_RECURSIVELY);
 
     List<MapInfo> mappings = new ArrayList<>();
     for (VcsDirectoryMapping mapping : ProjectLevelVcsManager.getInstance(myProject).getDirectoryMappings()) {
@@ -405,7 +394,6 @@ public class VcsDirectoryConfigurationPanel extends JPanel implements Configurab
                                  isMappingValid(mapping)));
     items.sort(MapInfo.COMPARATOR);
     myModel.setItems(items);
-    checkNotifyListeners(getActiveVcses());
   }
 
 
@@ -417,7 +405,6 @@ public class VcsDirectoryConfigurationPanel extends JPanel implements Configurab
     }
     sortAndAddSeparatorIfNeeded(items);
     myModel.setItems(items);
-    checkNotifyListeners(getActiveVcses());
   }
 
   @Contract(pure = false)
@@ -456,7 +443,6 @@ public class VcsDirectoryConfigurationPanel extends JPanel implements Configurab
     items.set(row, MapInfo.registered(mapping, isMappingValid(mapping)));
     items.sort(MapInfo.COMPARATOR);
     myModel.setItems(items);
-    checkNotifyListeners(getActiveVcses());
   }
 
   private void removeMapping() {
@@ -480,7 +466,6 @@ public class VcsDirectoryConfigurationPanel extends JPanel implements Configurab
       }
       myDirectoryMappingTable.getSelectionModel().setSelectionInterval(index, index);
     }
-    checkNotifyListeners(activeVcses);
   }
 
   protected JComponent createMainComponent() {
@@ -497,9 +482,6 @@ public class VcsDirectoryConfigurationPanel extends JPanel implements Configurab
     panel.add(myLoadingPanel, gb.nextLine().next().fillCell().weighty(1.0));
 
     panel.add(createProjectMappingDescription(), gb.nextLine().next());
-    panel.add(myLimitHistory.createComponent(), gb.nextLine().next());
-    panel.add(createShowRecursivelyDirtyOption(), gb.nextLine().next());
-    panel.add(createShowChangedOption(), gb.nextLine().next());
     if (!AbstractCommonUpdateAction.showsCustomNotification(asList(myVcsManager.getAllActiveVcss()))) {
       panel.add(myScopeFilterConfig.createComponent(), gb.nextLine().next());
     }
@@ -570,18 +552,6 @@ public class VcsDirectoryConfigurationPanel extends JPanel implements Configurab
     return label;
   }
 
-  private JComponent createShowChangedOption() {
-    myRecentlyChangedConfigurable = new VcsContentAnnotationConfigurable(myProject);
-    JComponent component = myRecentlyChangedConfigurable.createComponent();
-    assert component != null;
-    return component;
-  }
-
-  private JComponent createShowRecursivelyDirtyOption() {
-    myShowChangedRecursively = new JCheckBox(VcsBundle.message("checkbox.show.dirty.recursively"), myVcsConfiguration.SHOW_DIRTY_RECURSIVELY);
-    return myShowChangedRecursively;
-  }
-
   @Override
   public void reset() {
     initializeModel();
@@ -591,10 +561,7 @@ public class VcsDirectoryConfigurationPanel extends JPanel implements Configurab
   public void apply() throws ConfigurationException {
     adjustIgnoredRootsSettings();
     myVcsManager.setDirectoryMappings(getModelMappings());
-    myRecentlyChangedConfigurable.apply();
-    myLimitHistory.apply();
     myScopeFilterConfig.apply();
-    myVcsConfiguration.SHOW_DIRTY_RECURSIVELY = myShowChangedRecursively.isSelected();
     initializeModel();
   }
 
@@ -610,12 +577,7 @@ public class VcsDirectoryConfigurationPanel extends JPanel implements Configurab
 
   @Override
   public boolean isModified() {
-    if (myRecentlyChangedConfigurable.isModified()) return true;
-    if (myLimitHistory.isModified()) return true;
     if (myScopeFilterConfig.isModified()) return true;
-    if (myVcsConfiguration.SHOW_DIRTY_RECURSIVELY != myShowChangedRecursively.isSelected()) {
-      return true;
-    }
     return !getModelMappings().equals(myVcsManager.getDirectoryMappings());
   }
 
@@ -623,23 +585,6 @@ public class VcsDirectoryConfigurationPanel extends JPanel implements Configurab
   private List<VcsDirectoryMapping> getModelMappings() {
     return ContainerUtil.mapNotNull(myModel.getItems(),
                                     info -> info == MapInfo.SEPARATOR || info.type == MapInfo.Type.UNREGISTERED ? null : info.mapping);
-  }
-
-  public void addVcsListener(final ModuleVcsListener moduleVcsListener) {
-    myListeners.add(moduleVcsListener);
-  }
-
-  public void removeVcsListener(final ModuleVcsListener moduleVcsListener) {
-    myListeners.remove(moduleVcsListener);
-  }
-
-  private void checkNotifyListeners(Collection<AbstractVcs> oldVcses) {
-    Collection<AbstractVcs> vcses = getActiveVcses();
-    if (!vcses.equals(oldVcses)) {
-      for (ModuleVcsListener listener : myListeners) {
-        listener.activeVcsSetChanged(vcses);
-      }
-    }
   }
 
   public Collection<AbstractVcs> getActiveVcses() {
@@ -666,7 +611,6 @@ public class VcsDirectoryConfigurationPanel extends JPanel implements Configurab
   @Override
   public void disposeUIResources() {
     Disposer.dispose(myDisposable);
-    myLimitHistory.disposeUIResources();
     myScopeFilterConfig.disposeUIResources();
   }
 }

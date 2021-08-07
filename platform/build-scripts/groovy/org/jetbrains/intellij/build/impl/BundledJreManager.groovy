@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build.impl
 
 import com.intellij.openapi.util.SystemInfo
@@ -144,6 +144,7 @@ class BundledJreManager {
    * Update this method together with:
    *  `build/dependencies/setupJbre.gradle`
    *  `build/dependencies/setupJdk.gradle`
+   *  `com.jetbrains.gateway.downloader.CodeWithMeClientDownloader#downloadClientAndJdk(java.lang.String, java.lang.String, com.intellij.openapi.progress.ProgressIndicator)`
   */
   private String jbrArchiveName(String jreBuild, int version, JvmArchitecture arch, OsFamily os) {
     String update, build
@@ -163,11 +164,11 @@ class BundledJreManager {
     }
 
     String prefix
-    if (buildContext.options.bundledJrePrefix != null) {
-      prefix = buildContext.options.bundledJrePrefix
-    }
-    else if (arch == JvmArchitecture.x32 || buildContext.productProperties.jbrDistribution.classifier.isEmpty()) {
+    if (buildContext.productProperties.jbrDistribution.classifier.isEmpty()) {
       prefix = 'jbr-'
+    }
+    else if (buildContext.options.bundledJrePrefix != null) {
+      prefix = buildContext.options.bundledJrePrefix
     }
     else {
       prefix = "jbr_${buildContext.productProperties.jbrDistribution.classifier}-"
@@ -179,8 +180,6 @@ class BundledJreManager {
 
   private static String getJBRArchSuffix(JvmArchitecture arch) {
     switch (arch) {
-      case JvmArchitecture.x32:
-        return 'x86'
       case JvmArchitecture.x64:
         return 'x64'
       case JvmArchitecture.aarch64:
@@ -208,45 +207,4 @@ class BundledJreManager {
       }
     }
   }
-
-  String x86JreDownloadUrl(OsFamily os) {
-    String patchesUrl = buildContext.applicationInfo.patchesUrl
-    patchesUrl != null ? "${patchesUrl}${x86JbrArtifactName(os)}" : null
-  }
-
-  @CompileDynamic
-  void repackageX86Jre(OsFamily osFamily) {
-    if (x86JreDownloadUrl(osFamily) == null) {
-      buildContext.messages.warning("... skipped: download URL is unknown")
-      return
-    }
-
-    Path jreDirectoryPath = extractJre(osFamily, JvmArchitecture.x32)
-    if (jreDirectoryPath == null) {
-      buildContext.messages.warning("... skipped: JRE archive not found")
-      return
-    }
-
-    String rootDir = "${jreDirectoryPath}/jbr"
-    String artifactPath = "${buildContext.paths.artifacts}/${x86JbrArtifactName(osFamily)}"
-    if (SystemInfo.isWindows) {
-      buildContext.ant.tar(tarfile: artifactPath, longfile: "gnu", compression: "gzip") {
-        tarfileset(dir: rootDir) {
-          include(name: "**/**")
-        }
-      }
-    }
-    else {
-      buildContext.ant.exec(executable: "tar", dir: rootDir, failonerror: true) {
-        arg(value: "czf")
-        arg(value: artifactPath)
-        for (f in new File(rootDir).list()) {
-          arg(value: f)
-        }
-      }
-    }
-    buildContext.notifyArtifactBuilt(artifactPath)
-  }
-
-  private String x86JbrArtifactName(OsFamily os) { "jbr-for-${buildContext.buildNumber}-${os.jbrArchiveSuffix}-x86.tar.gz" }
 }

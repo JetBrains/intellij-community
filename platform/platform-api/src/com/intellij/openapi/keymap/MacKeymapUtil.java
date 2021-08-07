@@ -1,7 +1,7 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.keymap;
 
-import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.options.advanced.AdvancedSettings;
 import com.intellij.util.ui.UIUtil;
 import org.intellij.lang.annotations.JdkConstants;
 import org.jetbrains.annotations.NotNull;
@@ -10,6 +10,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
+import java.util.StringJoiner;
 
 /**
  * Utility class to display action shortcuts in Mac menus
@@ -47,21 +48,27 @@ public final class MacKeymapUtil {
   public static final String NUM_PAD     = "\u2328";
 
   @NotNull
-  static String getModifiersText(@JdkConstants.InputEventMask int modifiers) {
-    StringBuilder buf = new StringBuilder();
-    if ((modifiers & InputEvent.CTRL_MASK) != 0) buf.append(get(CONTROL, "Ctrl+"));
-    if ((modifiers & InputEvent.ALT_MASK) != 0) buf.append(get(OPTION, "Alt+"));
-    if ((modifiers & InputEvent.SHIFT_MASK) != 0) buf.append(get(SHIFT, "Shift+"));
-    if ((modifiers & InputEvent.ALT_GRAPH_MASK) != 0) buf.append(Toolkit.getProperty("AWT.altGraph", "Alt Graph"));
-    if ((modifiers & InputEvent.BUTTON1_MASK) != 0) buf.append(Toolkit.getProperty("AWT.button1", "Button1"));
-    if ((modifiers & InputEvent.META_MASK) != 0) buf.append(get(COMMAND, "Cmd+"));
+  static String getModifiersText(@JdkConstants.InputEventMask int modifiers, String delimiter) {
+    StringJoiner buf = new StringJoiner(delimiter != null ? delimiter : "");
+    if ((modifiers & InputEvent.CTRL_MASK) != 0) buf.add(get(CONTROL, "Ctrl+"));
+    if ((modifiers & InputEvent.ALT_MASK) != 0) buf.add(get(OPTION, "Alt+"));
+    if ((modifiers & InputEvent.SHIFT_MASK) != 0) buf.add(get(SHIFT, "Shift+"));
+    if ((modifiers & InputEvent.ALT_GRAPH_MASK) != 0) buf.add(Toolkit.getProperty("AWT.altGraph", "Alt Graph"));
+    if ((modifiers & InputEvent.BUTTON1_MASK) != 0) buf.add(Toolkit.getProperty("AWT.button1", "Button1"));
+    if ((modifiers & InputEvent.META_MASK) != 0) buf.add(get(COMMAND, "Cmd+"));
+
     return buf.toString();
 
   }
 
   @NotNull
+  static String getModifiersText(@JdkConstants.InputEventMask int modifiers) {
+    return getModifiersText(modifiers, null);
+  }
+
+  @NotNull
   public static String getKeyText(int code) {
-    if (!Registry.is("ide.macos.disable.native.shortcut.symbols", false)) {
+    if (!isNativeShortcutSymbolsDisabled()) {
       switch (code) {
         case KeyEvent.VK_BACK_SPACE:     return get(BACKSPACE, "Backspace");
         case KeyEvent.VK_ESCAPE:         return get(ESCAPE, "Escape");
@@ -103,18 +110,36 @@ public final class MacKeymapUtil {
   }
 
   @NotNull
-  public static String getKeyStrokeText(@NotNull KeyStroke keyStroke) {
-    final String modifiers = getModifiersText(keyStroke.getModifiers());
+  public static String getKeyStrokeText(@NotNull KeyStroke keyStroke, String delimiter, boolean onlyDelimIntoModifiersAndKey) {
+    String modifiers = getModifiersText(keyStroke.getModifiers());
     final String key = KeymapUtil.getKeyText(keyStroke.getKeyCode());
+
+    if (!onlyDelimIntoModifiersAndKey) {
+      modifiers = getModifiersText(keyStroke.getModifiers(), delimiter);
+    }
+
+    if (delimiter != null) {
+      if (modifiers.isEmpty()) return key;
+      return modifiers + delimiter + key;
+    }
     return modifiers + key;
   }
 
   @NotNull
+  public static String getKeyStrokeText(@NotNull KeyStroke keyStroke) {
+    return getKeyStrokeText(keyStroke, null, true);
+  }
+
+  @NotNull
   private static String get(@NotNull String value, @NotNull String replacement) {
-    if (Registry.is("ide.macos.disable.native.shortcut.symbols", false)) {
+    if (isNativeShortcutSymbolsDisabled()) {
       return replacement;
     }
     Font font = UIUtil.getLabelFont();
     return font == null || font.canDisplayUpTo(value) == -1 ? value : replacement;
+  }
+
+  private static boolean isNativeShortcutSymbolsDisabled() {
+    return AdvancedSettings.getInstanceIfCreated() != null && AdvancedSettings.getBoolean("ide.macos.disable.native.shortcut.symbols");
   }
 }

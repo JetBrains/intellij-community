@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.roots.ui.configuration.projectRoot
 
+import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.roots.*
 import com.intellij.openapi.roots.impl.libraries.LibraryEx
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar
@@ -115,6 +116,10 @@ class CloneOrderEntriesTest : JavaModuleTestCase() {
 
     TestCase.assertSame(globalLibrary, copiedOrderEntries.first().library)
     TestCase.assertNotSame(originalOrderEntries.first(), copiedOrderEntries.first())
+
+    runWriteAction {
+      globalLibraryTable.removeLibrary(globalLibrary)
+    }
   }
 
   fun `test copy module with module`() {

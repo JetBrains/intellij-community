@@ -118,5 +118,6 @@ class TSSLServerSocket(TServerSocket):
             sock.close()
             raise
         else:
-            ssl_sock.settimeout(self.client_timeout)
+            if self.client_timeout:
+                ssl_sock.settimeout(self.client_timeout)
             return TSocket(sock=ssl_sock)

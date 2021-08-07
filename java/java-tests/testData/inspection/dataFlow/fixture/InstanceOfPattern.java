@@ -7,19 +7,25 @@ public class InstanceOfPattern {
       System.out.println(s.length());
     }
   }
-  
+
   void test(Object obj) {
     if (obj instanceof Number n) {
       if (<warning descr="Condition 'n == obj' is always 'true'">n == obj</warning>) {}
     }
   }
-  
+
   void testNullCheck(String s) {
     if (s instanceof <error descr="Pattern type 'String' is the same as expression type">String</error> s1) {
       System.out.println(s1);
     }
   }
-  
+
+  void testNullCheckUnusedPatternVariable(String s) {
+    if (s instanceof <error descr="Pattern type 'String' is the same as expression type">String</error> s1) {
+      System.out.println("foo");
+    }
+  }
+
   interface Foo {
     @Nullable Object bar();
   }

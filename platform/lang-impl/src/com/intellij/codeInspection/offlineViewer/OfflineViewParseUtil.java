@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.offlineViewer;
 
 import com.intellij.codeInspection.InspectionsResultUtil;
@@ -7,13 +7,20 @@ import com.intellij.codeInspection.reference.SmartRefElementPointerImpl;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.util.containers.Interner;
 import com.thoughtworks.xstream.io.xml.XppReader;
-import gnu.trove.TObjectIntHashMap;
+import io.github.xstream.mxparser.MXParser;
+import it.unimi.dsi.fastutil.objects.Object2IntMap;
+import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.xmlpull.mxp1.MXParser;
 
-import java.io.*;
+import java.io.File;
+import java.io.IOException;
+import java.io.Reader;
+import java.io.StringReader;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.*;
 
 public final class OfflineViewParseUtil {
@@ -27,8 +34,8 @@ public final class OfflineViewParseUtil {
   private OfflineViewParseUtil() {
   }
 
-  public static Map<String, Set<OfflineProblemDescriptor>> parse(File problemFile) throws FileNotFoundException {
-    return parse(new FileReader(problemFile));
+  public static Map<String, Set<OfflineProblemDescriptor>> parse(Path problemFile) throws IOException {
+    return parse(Files.newBufferedReader(problemFile));
   }
 
   /**
@@ -41,7 +48,7 @@ public final class OfflineViewParseUtil {
   }
 
   public static Map<String, Set<OfflineProblemDescriptor>> parse(Reader problemReader) {
-    TObjectIntHashMap<String> fqName2IdxMap = new TObjectIntHashMap<>();
+    Object2IntMap<String> fqName2IdxMap = new Object2IntOpenHashMap<>();
     Interner<@NlsSafe String> stringInterner = Interner.createStringInterner();
     Map<String, Set<OfflineProblemDescriptor>> package2Result = new HashMap<>();
     XppReader reader = new XppReader(problemReader, new MXParser());
@@ -60,7 +67,7 @@ public final class OfflineViewParseUtil {
             if (!fqName2IdxMap.containsKey(fqName)) {
               fqName2IdxMap.put(fqName, 0);
             }
-            int idx = fqName2IdxMap.get(fqName);
+            int idx = fqName2IdxMap.getInt(fqName);
             descriptor.setProblemIndex(idx);
             fqName2IdxMap.put(fqName, idx + 1);
           }
@@ -112,10 +119,9 @@ public final class OfflineViewParseUtil {
     return package2Result;
   }
 
-
   @Nullable
-  public static String parseProfileName(File descriptorFile) throws FileNotFoundException {
-    return parseProfileName(new FileReader(descriptorFile));
+  public static String parseProfileName(@NotNull Path descriptorFile) throws IOException {
+    return parseProfileName(Files.newBufferedReader(descriptorFile));
   }
 
   /**

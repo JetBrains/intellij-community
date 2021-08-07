@@ -11,7 +11,6 @@ import com.intellij.openapi.actionSystem.PlatformDataKeys
 import com.intellij.openapi.fileChooser.actions.VirtualFileDeleteProvider
 import com.intellij.openapi.fileEditor.OpenFileDescriptor
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.IconLoader
 import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.FileStatus
 import com.intellij.openapi.vcs.VcsBundle
@@ -21,18 +20,11 @@ import com.intellij.openapi.vcs.changes.UnversionedViewDialog
 import com.intellij.openapi.vcs.changes.ui.*
 import com.intellij.openapi.vcs.impl.PlatformVcsPathPresenter
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.ui.ClickListener
-import com.intellij.ui.ComponentUtil
-import com.intellij.ui.LayeredIcon
 import com.intellij.ui.SimpleTextAttributes
-import com.intellij.util.EventDispatcher
 import com.intellij.util.FontUtil
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.containers.JBIterable
-import com.intellij.util.ui.ColorIcon
-import com.intellij.util.ui.UIUtil
-import com.intellij.util.ui.tree.TreeUtil
-import git4idea.conflicts.getConflictType
+import git4idea.conflicts.GitConflictsUtil.getConflictType
 import git4idea.i18n.GitBundle
 import git4idea.index.GitFileStatus
 import git4idea.index.GitStageTracker
@@ -45,26 +37,15 @@ import git4idea.status.GitStagingAreaHolder
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.annotations.PropertyKey
-import java.awt.*
-import java.awt.event.MouseAdapter
-import java.awt.event.MouseEvent
-import javax.swing.Icon
+import java.awt.Color
 import javax.swing.JComponent
-import javax.swing.JTree
-import javax.swing.SwingConstants
 import javax.swing.tree.DefaultTreeModel
-import javax.swing.tree.TreePath
 
-abstract class GitStageTree(project: Project, private val settings: GitStageUiSettings, parentDisposable: Disposable) :
-  ChangesTree(project, false, true) {
+abstract class GitStageTree(project: Project,
+                            private val settings: GitStageUiSettings,
+                            parentDisposable: Disposable) :
+  HoverChangesTree(project, false, true) {
 
-  private var hoverData: HoverData? = null
-    set(value) {
-      if (field != value) {
-        field = value
-        repaint()
-      }
-    }
   protected abstract val state: GitStageTracker.State
   protected abstract val ignoredFilePaths: Map<VirtualFile, List<FilePath>>
   protected abstract val operations: List<StagingAreaOperation>
@@ -72,13 +53,7 @@ abstract class GitStageTree(project: Project, private val settings: GitStageUiSe
   init {
     isKeepTreeState = true
     isScrollToSelection = false
-    isShowCheckboxes = true
-    setCellRenderer(GitStageTreeRenderer(myProject) { isShowFlatten })
-    MyMouseListener().also {
-      addMouseMotionListener(it)
-      addMouseListener(it)
-    }
-    MyClickListener().installOn(this)
+
     MyDnDSupport().install(parentDisposable)
     settings.addListener(object : GitStageUiSettingsListener {
       override fun settingsChanged() {
@@ -87,44 +62,27 @@ abstract class GitStageTree(project: Project, private val settings: GitStageUiSe
     }, parentDisposable)
   }
 
-  abstract fun performStageOperation(nodes: List<GitFileStatusNode>, operation: StagingAreaOperation)
+  override fun getToggleClickCount(): Int = 2
 
-  abstract fun getDndOperation(targetKind: NodeKind): StagingAreaOperation?
+  protected abstract fun performStageOperation(nodes: List<GitFileStatusNode>, operation: StagingAreaOperation)
 
-  abstract fun showMergeDialog(conflictedFiles: List<VirtualFile>);
+  protected abstract fun getDndOperation(targetKind: NodeKind): StagingAreaOperation?
 
-  private fun getHoverData(point: Point): HoverData? {
-    val path = getClosestPathForLocation(point.x, point.y) ?: return null
-    val node = path.lastPathComponent as? ChangesBrowserNode<*> ?: return null
-    val operation = getFirstMatchingOperation(node) ?: return null
-    val componentBounds = operation.icon?.let { getComponentBounds(path, it) } ?: return null
+  protected abstract fun showMergeDialog(conflictedFiles: List<VirtualFile>)
 
-    return HoverData(node, operation, componentBounds.contains(point))
-  }
+  protected abstract fun createHoverIcon(node: ChangesBrowserGitFileStatusNode): HoverIcon?
 
-  private fun getComponentBounds(path: TreePath, icon: Icon): Rectangle? {
-    val bounds = getPathBounds(path) ?: return null
-    val componentWidth = getComponentWidth(icon)
-    bounds.setLocation(getComponentXCoordinate(componentWidth), bounds.y)
-    bounds.setSize(componentWidth, bounds.height)
-    return bounds
-  }
-
-  private fun getComponentXCoordinate(componentWidth: Int): Int {
-    return visibleRect.width + visibleRect.x - componentWidth
-  }
-
-  private fun getComponentWidth(icon: Icon): Int {
-    val hasTransparentScrollbar = ComponentUtil.getScrollPane(this)?.verticalScrollBar?.let { it.isVisible && !it.isOpaque } == true
-    if (hasTransparentScrollbar) return icon.iconWidth + UIUtil.getScrollBarWidth()
-    return icon.iconWidth
-  }
-
-  internal fun getFirstMatchingOperation(node: ChangesBrowserNode<*>): StagingAreaOperation? {
+  override fun getHoverIcon(node: ChangesBrowserNode<*>): HoverIcon? {
     if (node == root) return null
+    if (node is ChangesBrowserGitFileStatusNode) {
+      val hoverIcon = createHoverIcon(node)
+      if (hoverIcon != null) return hoverIcon
+    }
     val statusNode = VcsTreeModelData.children(node).userObjectsStream(GitFileStatusNode::class.java).findFirst().orElse(null)
                      ?: return null
-    return operations.find { it.matches(statusNode) }
+    val operation = operations.find { it.matches(statusNode) } ?: return null
+    if (operation.icon == null) return null
+    return GitStageHoverIcon(operation)
   }
 
   override fun rebuildTree() {
@@ -198,6 +156,19 @@ abstract class GitStageTree(project: Project, private val settings: GitStageUiSe
     }
   }
 
+  private inner class GitStageHoverIcon(val operation: StagingAreaOperation)
+    : HoverIcon(operation.icon!!, operation.actionText.get()) {
+    override fun invokeAction(node: ChangesBrowserNode<*>) {
+      val nodes = VcsTreeModelData.children(node).userObjects(GitFileStatusNode::class.java)
+      performStageOperation(nodes, operation)
+    }
+
+    override fun equals(other: Any?): Boolean = other is GitStageHoverIcon &&
+                                                operation == other.operation
+
+    override fun hashCode(): Int = operation.hashCode()
+  }
+
   private inner class MyTreeModelBuilder(project: Project, grouping: ChangesGroupingPolicyFactory)
     : TreeModelBuilder(project, grouping) {
     private val parentNodes: MutableMap<NodeKind, MyKindNode> = mutableMapOf()
@@ -264,10 +235,10 @@ abstract class GitStageTree(project: Project, private val settings: GitStageUiSe
     }
   }
 
-  private class ChangesBrowserGitFileStatusNode(node: GitFileStatusNode) :
+  protected class ChangesBrowserGitFileStatusNode(node: GitFileStatusNode) :
     AbstractChangesBrowserFilePathNode<GitFileStatusNode>(node, node.fileStatus) {
     private val movedRelativePath by lazy { getMovedRelativePath(getUserObject()) }
-    private val conflict by lazy { getUserObject().createConflict() }
+    internal val conflict by lazy { getUserObject().createConflict() }
 
     override fun filePath(userObject: GitFileStatusNode): FilePath = userObject.filePath
 
@@ -355,100 +326,6 @@ abstract class GitStageTree(project: Project, private val settings: GitStageUiSe
     @Nls
     override fun getTextPresentation(): String = GitBundle.message(NodeKind.UNTRACKED.key)
     override fun getSortWeight(): Int = sortOrder.getValue(NodeKind.UNTRACKED)
-  }
-
-  private class GitStageTreeRenderer(project: Project, isShowFlatten: () -> Boolean) :
-    ChangesTreeCellRenderer(ChangesBrowserNodeRenderer(project, isShowFlatten, true)) {
-
-    private var floatingIcon: FloatingIcon? = null
-
-    override fun paint(g: Graphics) {
-      super.paint(g)
-      floatingIcon?.let {
-        val (icon, location) = it
-        icon.paintIcon(this@GitStageTreeRenderer, g, location, 0)
-      }
-    }
-
-    override fun getTreeCellRendererComponent(tree: JTree,
-                                              value: Any,
-                                              selected: Boolean,
-                                              expanded: Boolean,
-                                              leaf: Boolean,
-                                              row: Int,
-                                              hasFocus: Boolean): Component {
-      val rendererComponent = super.getTreeCellRendererComponent(tree, value, selected, expanded, leaf, row, hasFocus)
-      floatingIcon = prepareIcon(tree as GitStageTree, value as ChangesBrowserNode<*>, row, selected)
-      return rendererComponent
-    }
-
-    fun prepareIcon(tree: GitStageTree, node: ChangesBrowserNode<*>, row: Int, selected: Boolean): FloatingIcon? {
-      val hoverData = (tree as? GitStageTree)?.hoverData
-      if ((hoverData == null && !selected) || tree.expandableItemsHandler.expandedItems.contains(row)) {
-        return null
-      }
-
-      val hovered = hoverData?.node == node
-      val baseIcon = when {
-        hovered -> hoverData!!.operation.icon
-        selected -> tree.getFirstMatchingOperation(node)?.icon
-        else -> null
-      } ?: return null
-
-      val foreground = if (hovered && hoverData!!.isOverOperationIcon) baseIcon
-                       else IconLoader.getDisabledIcon(baseIcon, this)
-
-      val componentWidth = tree.getComponentWidth(foreground)
-      val componentHeight = if (tree.isFixedRowHeight) tree.getRowHeight() else preferredSize.height
-      val background = ColorIcon(componentWidth, componentHeight, componentWidth, componentHeight,
-                                 tree.getBackground(row, selected), false)
-
-      val icon = LayeredIcon(2).apply {
-        setIcon(background, 0)
-        setIcon(foreground, 1, SwingConstants.WEST)
-      }
-
-      val location = tree.getComponentXCoordinate(componentWidth) - (TreeUtil.getNodeRowX(tree, row) + tree.insets.left)
-
-      return FloatingIcon(icon, location)
-    }
-
-    private fun GitStageTree.getBackground(row: Int, selected: Boolean): Color {
-      val treeFocused = hasFocus()
-
-      if (selected) return UIUtil.getTreeBackground(selected, treeFocused)
-      return getPathForRow(row)?.let { path -> getPathBackground(path, row) } ?: UIUtil.getTreeBackground(selected, treeFocused)
-    }
-  }
-
-  private data class FloatingIcon(val icon: Icon, val location: Int)
-
-  private inner class MyMouseListener : MouseAdapter() {
-
-    override fun mouseMoved(e: MouseEvent?) {
-      hoverData = e?.let { getHoverData(it.point) }
-      toolTipText = hoverData?.takeIf { it.isOverOperationIcon }?.operation?.actionText?.get()
-      expandableItemsHandler.isEnabled = hoverData?.isOverOperationIcon != true
-    }
-
-    override fun mouseExited(e: MouseEvent?) {
-      hoverData = null
-      expandableItemsHandler.isEnabled = true
-    }
-  }
-
-  private data class HoverData(val node: ChangesBrowserNode<*>,
-                               val operation: StagingAreaOperation,
-                               val isOverOperationIcon: Boolean)
-
-  private inner class MyClickListener : ClickListener() {
-    override fun onClick(event: MouseEvent, clickCount: Int): Boolean {
-      val (node, operation, isOverOperation) = getHoverData(event.point) ?: return false
-      if (!isOverOperation) return false
-      val nodes = VcsTreeModelData.children(node).userObjects(GitFileStatusNode::class.java)
-      performStageOperation(nodes, operation)
-      return false
-    }
   }
 
   private inner class MyDnDSupport : ChangesTreeDnDSupport(this@GitStageTree) {

@@ -10,6 +10,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.io.FileUtilRt;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.util.ObjectUtils;
@@ -36,9 +37,10 @@ public class MoveMemberIntoClassFix extends LocalQuickFixAndIntentionActionOnPsi
     if (javaFile == null) return;
     PsiErrorElement errorElement = ObjectUtils.tryCast(startElement, PsiErrorElement.class);
     if (errorElement == null) return;
+    String className = FileUtilRt.getNameWithoutExtension(file.getName());
+    if (!StringUtil.isJavaIdentifier(className)) return;
     MemberModel model = MemberModel.create(errorElement);
     if (model == null) return;
-    String className = FileUtilRt.getNameWithoutExtension(file.getName());
     PsiClass psiClass = ContainerUtil.find(javaFile.getClasses(), c -> className.equals(c.getName()));
     TextRange memberRange = model.textRange();
     Document document = editor.getDocument();
@@ -56,7 +58,9 @@ public class MoveMemberIntoClassFix extends LocalQuickFixAndIntentionActionOnPsi
     documentManager.commitDocument(document);
     psiClass = classPtr.getElement();
     if (psiClass == null) return;
-    psiClass.add(member);
+    PsiElement rBrace = psiClass.getRBrace();
+    if (rBrace == null) return;
+    psiClass.addBefore(member, rBrace);
   }
 
   @Override

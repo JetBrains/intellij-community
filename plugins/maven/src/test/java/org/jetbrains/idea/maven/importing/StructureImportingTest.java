@@ -17,22 +17,25 @@ package org.jetbrains.idea.maven.importing;
 
 import com.intellij.compiler.CompilerConfiguration;
 import com.intellij.compiler.impl.javaCompiler.javac.JavacConfiguration;
-import com.intellij.idea.Bombed;
 import com.intellij.openapi.application.WriteAction;
+import com.intellij.openapi.module.LanguageLevelUtil;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.roots.LanguageLevelModuleExtensionImpl;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
-import org.jetbrains.idea.maven.MavenImportingTestCase;
+import org.jetbrains.idea.maven.MavenMultiVersionImportingTestCase;
+import org.jetbrains.idea.maven.project.MavenGeneralSettings;
 import org.jetbrains.idea.maven.project.MavenProject;
+import org.junit.Test;
 
 import java.io.File;
-import java.util.Calendar;
+import java.io.IOException;
+import java.util.Collections;
 import java.util.List;
 
-public class StructureImportingTest extends MavenImportingTestCase {
+public class StructureImportingTest extends MavenMultiVersionImportingTestCase {
+  @Test
   public void testInheritProjectJdkForModules() {
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
@@ -41,6 +44,7 @@ public class StructureImportingTest extends MavenImportingTestCase {
     assertTrue(ModuleRootManager.getInstance(getModule("project")).isSdkInherited());
   }
 
+  @Test
   public void testDoNotResetSomeSettingsAfterReimport() {
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
@@ -53,6 +57,7 @@ public class StructureImportingTest extends MavenImportingTestCase {
     assertEquals(sdk, ModuleRootManager.getInstance(getModule("project")).getSdk());
   }
 
+  @Test
   public void testModulesWithSlashesRegularAndBack() {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
@@ -85,6 +90,7 @@ public class StructureImportingTest extends MavenImportingTestCase {
     assertEquals("m2", modules.get(1).getMavenId().getArtifactId());
   }
 
+  @Test
   public void testModulesAreNamedAfterArtifactIds() {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
@@ -110,6 +116,7 @@ public class StructureImportingTest extends MavenImportingTestCase {
     assertModules("project", "m1", "m2");
   }
 
+  @Test
   public void testModulesWithSlashesAtTheEnds() {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
@@ -138,6 +145,7 @@ public class StructureImportingTest extends MavenImportingTestCase {
     assertModules("project", "m1", "m2", "m3");
   }
 
+  @Test
   public void testModulesWithSameArtifactId() {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
@@ -161,6 +169,7 @@ public class StructureImportingTest extends MavenImportingTestCase {
     assertModules("project", "m (1) (test.group1)", "m (2) (test.group2)");
   }
 
+  @Test
   public void testModulesWithSameArtifactIdAndGroup() {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
@@ -184,6 +193,7 @@ public class StructureImportingTest extends MavenImportingTestCase {
     assertModules("project", "m (1)", "m (2)");
   }
 
+  @Test
   public void testModuleWithRelativePath() {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
@@ -202,6 +212,7 @@ public class StructureImportingTest extends MavenImportingTestCase {
     assertModules("project", "m");
   }
 
+  @Test
   public void testModuleWithRelativeParent() {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
@@ -223,6 +234,7 @@ public class StructureImportingTest extends MavenImportingTestCase {
     assertModules("project");
   }
 
+  @Test
   public void testModulePathsAsProperties() {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
@@ -260,6 +272,7 @@ public class StructureImportingTest extends MavenImportingTestCase {
     assertEquals("m2", modules.get(1).getMavenId().getArtifactId());
   }
 
+  @Test
   public void testRecursiveParent() {
     createProjectPom("<parent>" +
                      "  <groupId>org.apache.maven.archetype.test</groupId>" +
@@ -273,6 +286,7 @@ public class StructureImportingTest extends MavenImportingTestCase {
     importProjectWithErrors();
   }
 
+  @Test
   public void testParentWithoutARelativePath() {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
@@ -309,6 +323,7 @@ public class StructureImportingTest extends MavenImportingTestCase {
     assertEquals("m1", modules.get(0).getMavenId().getArtifactId());
   }
 
+  @Test
   public void testModuleWithPropertiesWithParentWithoutARelativePath() {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
@@ -345,6 +360,7 @@ public class StructureImportingTest extends MavenImportingTestCase {
     assertEquals("m1", modules.get(0).getMavenId().getArtifactId());
   }
 
+  @Test
   public void testParentInLocalRepository() throws Exception {
     if (!hasMavenInstallation()) return;
 
@@ -381,6 +397,7 @@ public class StructureImportingTest extends MavenImportingTestCase {
     assertModuleLibDeps("m", "Maven: junit:junit:4.0");
   }
 
+  @Test
   public void testParentInRemoteRepository() {
     String pathToJUnit = "asm/asm-parent/3.0";
     File parentDir = new File(getRepositoryPath(), pathToJUnit);
@@ -407,6 +424,7 @@ public class StructureImportingTest extends MavenImportingTestCase {
     assertTrue(new File(parentDir, "asm-parent-3.0.pom").exists());
   }
 
+  @Test
   public void testCreatingModuleGroups() {
     VirtualFile p1 = createModulePom("project1",
                                      "<groupId>test</groupId>" +
@@ -459,6 +477,7 @@ public class StructureImportingTest extends MavenImportingTestCase {
     assertModuleGroupPath("m3", "project2 and modules", "m2 and modules");
   }
 
+  @Test
   public void testDoesNotCreateUnnecessaryTopLevelModuleGroup() {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
@@ -493,6 +512,7 @@ public class StructureImportingTest extends MavenImportingTestCase {
     assertModuleGroupPath("m2", "m1 and modules");
   }
 
+  @Test
   public void testModuleGroupsWhenNotCreatingModulesForAggregatorProjects() {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
@@ -526,6 +546,7 @@ public class StructureImportingTest extends MavenImportingTestCase {
     assertModuleGroupPath("module2", "module1 and modules");
   }
 
+  @Test
   public void testReimportingProjectWhenCreatingModuleGroupsSettingChanged() {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
@@ -560,6 +581,7 @@ public class StructureImportingTest extends MavenImportingTestCase {
     assertModuleGroupPath("module2", "module1 and modules");
   }
 
+  @Test
   public void testModuleGroupsWhenProjectWithDuplicateNameEmerges() {
     VirtualFile p1 = createModulePom("project1",
                                      "<groupId>test</groupId>" +
@@ -620,6 +642,7 @@ public class StructureImportingTest extends MavenImportingTestCase {
     assertModuleGroupPath("module (1)", "project2 and modules");
   }
 
+  @Test
   public void testLanguageLevel() {
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
@@ -641,6 +664,7 @@ public class StructureImportingTest extends MavenImportingTestCase {
     assertEquals(LanguageLevel.JDK_1_4, getLanguageLevelForModule());
   }
 
+  @Test
   public void testLanguageLevelFromDefaultCompileExecutionConfiguration() {
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
@@ -667,6 +691,7 @@ public class StructureImportingTest extends MavenImportingTestCase {
     assertEquals(LanguageLevel.JDK_1_8, getLanguageLevelForModule());
   }
 
+  @Test
   public void testLanguageLevel6() {
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
@@ -688,6 +713,7 @@ public class StructureImportingTest extends MavenImportingTestCase {
     assertEquals(LanguageLevel.JDK_1_6, getLanguageLevelForModule());
   }
 
+  @Test
   public void testLanguageLevelX() {
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
@@ -708,6 +734,7 @@ public class StructureImportingTest extends MavenImportingTestCase {
     assertEquals(LanguageLevel.HIGHEST, getLanguageLevelForModule());
   }
 
+  @Test
   public void testLanguageLevelWhenCompilerPluginIsNotSpecified() {
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
@@ -717,6 +744,7 @@ public class StructureImportingTest extends MavenImportingTestCase {
     assertEquals(LanguageLevel.JDK_1_5, getLanguageLevelForModule());
   }
 
+  @Test
   public void testLanguageLevelWhenConfigurationIsNotSpecified() {
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
@@ -735,6 +763,7 @@ public class StructureImportingTest extends MavenImportingTestCase {
     assertEquals(LanguageLevel.JDK_1_5, getLanguageLevelForModule());
   }
 
+  @Test
   public void testLanguageLevelWhenSourceLanguageLevelIsNotSpecified() {
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
@@ -755,6 +784,7 @@ public class StructureImportingTest extends MavenImportingTestCase {
     assertEquals(LanguageLevel.JDK_1_5, getLanguageLevelForModule());
   }
 
+  @Test
   public void testLanguageLevelFromPluginManagementSection() {
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
@@ -778,6 +808,7 @@ public class StructureImportingTest extends MavenImportingTestCase {
     assertEquals(LanguageLevel.JDK_1_4, getLanguageLevelForModule());
   }
 
+  @Test
   public void testLanguageLevelFromParentPluginManagementSection() {
     createModulePom("parent",
                     "<groupId>test</groupId>" +
@@ -814,6 +845,7 @@ public class StructureImportingTest extends MavenImportingTestCase {
     assertEquals(LanguageLevel.JDK_1_4, getLanguageLevelForModule());
   }
 
+  @Test
   public void testOverridingLanguageLevelFromPluginManagementSection() {
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
@@ -846,14 +878,17 @@ public class StructureImportingTest extends MavenImportingTestCase {
     assertEquals(LanguageLevel.JDK_1_3, getLanguageLevelForModule());
   }
 
+  @Test
   public void testPreviewLanguageLevelOneLine() {
     doTestPreview("<compilerArgs>--enable-preview</compilerArgs>\n");
   }
 
+  @Test
   public void testPreviewLanguageLevelArg() {
     doTestPreview("<compilerArgs><arg>--enable-preview</arg></compilerArgs>\n");
   }
 
+  @Test
   public void testPreviewLanguageLevelCompilerArg() {
     doTestPreview("<compilerArgs><compilerArg>--enable-preview</compilerArg></compilerArgs>\n");
   }
@@ -872,7 +907,7 @@ public class StructureImportingTest extends MavenImportingTestCase {
                   "      <version>3.8.0</version>\n" +
                   "      <configuration>\n" +
                   "          <release>" + feature + "</release>\n" +
-                             compilerArgs +
+                  compilerArgs +
                   "          <forceJavacCompilerUse>true</forceJavacCompilerUse>\n" +
                   "      </configuration>\n" +
                   "    </plugin>" +
@@ -883,6 +918,7 @@ public class StructureImportingTest extends MavenImportingTestCase {
     assertEquals(LanguageLevel.values()[LanguageLevel.HIGHEST.ordinal() + 1], getLanguageLevelForModule());
   }
 
+  @Test
   public void testInheritingLanguageLevelFromPluginManagementSection() {
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
@@ -916,9 +952,10 @@ public class StructureImportingTest extends MavenImportingTestCase {
   }
 
   private LanguageLevel getLanguageLevelForModule() {
-    return LanguageLevelModuleExtensionImpl.getInstance(getModule("project")).getLanguageLevel();
+    return LanguageLevelUtil.getCustomLanguageLevel(getModule("project"));
   }
 
+  @Test
   public void testSettingTargetLevel() {
     JavacConfiguration.getOptions(myProject, JavacConfiguration.class).ADDITIONAL_OPTIONS_STRING = "-Xmm500m -Xms128m -target 1.5";
 
@@ -946,6 +983,7 @@ public class StructureImportingTest extends MavenImportingTestCase {
     assertEquals("1.3", targetLevel);
   }
 
+  @Test
   public void testSettingTargetLevelFromDefaultCompileExecutionConfiguration() {
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
@@ -974,6 +1012,7 @@ public class StructureImportingTest extends MavenImportingTestCase {
     assertEquals("1.9", targetLevel);
   }
 
+  @Test
   public void testSettingTargetLevelFromParent() {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
@@ -994,9 +1033,9 @@ public class StructureImportingTest extends MavenImportingTestCase {
                           "<version>1</version>" +
 
                           "<parent>" +
-                            "<groupId>test</groupId>" +
-                            "<artifactId>project</artifactId>" +
-                            "<version>1</version>" +
+                          "<groupId>test</groupId>" +
+                          "<artifactId>project</artifactId>" +
+                          "<version>1</version>" +
                           "</parent>");
 
     createModulePom("m2", "<groupId>test</groupId>" +
@@ -1004,9 +1043,9 @@ public class StructureImportingTest extends MavenImportingTestCase {
                           "<version>1</version>" +
 
                           "<parent>" +
-                            "<groupId>test</groupId>" +
-                            "<artifactId>project</artifactId>" +
-                            "<version>1</version>" +
+                          "<groupId>test</groupId>" +
+                          "<artifactId>project</artifactId>" +
+                          "<version>1</version>" +
                           "</parent>" +
 
                           "<build>" +
@@ -1027,6 +1066,7 @@ public class StructureImportingTest extends MavenImportingTestCase {
     assertEquals("1.5", CompilerConfiguration.getInstance(myProject).getBytecodeTargetLevel(getModule("m2")));
   }
 
+  @Test
   public void testProjectWithBuiltExtension() {
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
@@ -1044,23 +1084,7 @@ public class StructureImportingTest extends MavenImportingTestCase {
     assertModules("project");
   }
 
-  public void testProjectWithInvalidBuildExtension() {
-    importProject("<groupId>test</groupId>" +
-                  "<artifactId>project</artifactId>" +
-                  "<version>1</version>" +
-
-                  "<build>" +
-                  " <extensions>" +
-                  "   <extension>" +
-                  "     <groupId>xxx</groupId>" +
-                  "     <artifactId>yyy</artifactId>" +
-                  "     <version>1</version>" +
-                  "    </extension>" +
-                  "  </extensions>" +
-                  "</build>");
-    assertModules("project"); // shouldn't throw any exception
-  }
-
+  @Test
   public void testUsingPropertyInBuildExtensionsOfChildModule() {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
@@ -1098,7 +1122,7 @@ public class StructureImportingTest extends MavenImportingTestCase {
     assertModules("project", "m");
   }
 
-  @Bombed(user = "Vladislav.Soroka", year=2020, month = Calendar.APRIL, day = 1, description = "temporary disabled")
+  @Test
   public void testFileProfileActivationInParentPom() throws Exception {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
@@ -1154,6 +1178,7 @@ public class StructureImportingTest extends MavenImportingTestCase {
     assertModuleLibDeps("m2", "Maven: junit:junit:4.0");
   }
 
+  @Test
   public void testProjectWithProfiles() {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
@@ -1199,10 +1224,12 @@ public class StructureImportingTest extends MavenImportingTestCase {
     assertModuleLibDeps("project", "Maven: junit:junit:3.8.1");
   }
 
+  @Test
   public void testProjectWithOldProfilesXmlFile() {
     ignore(); // not supported by 2.2
   }
 
+  @Test
   public void testProjectWithDefaultProfile() {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
@@ -1234,6 +1261,7 @@ public class StructureImportingTest extends MavenImportingTestCase {
     assertModuleLibDeps("project", "Maven: junit:junit:4.0");
   }
 
+  @Test
   public void testRefreshFSAfterImport() {
     myProjectRoot.getChildren(); // make sure fs is cached
     new File(myProjectRoot.getPath(), "foo").mkdirs();
@@ -1243,5 +1271,139 @@ public class StructureImportingTest extends MavenImportingTestCase {
                   "<version>1</version>");
 
     assertNotNull(myProjectRoot.findChild("foo"));
+  }
+
+  @Test
+  public void  testErrorImportArtifactVersionCannotBeEmpty() {
+    assumeVersionMoreThan("3.0.5");
+    createProjectPom("<groupId>test</groupId>\n" +
+                     "  <artifactId>parent</artifactId>\n" +
+                     "  <packaging>pom</packaging>\n" +
+                     "  <version>1</version>\n" +
+                     "  <modules>\n" +
+                     "   <module>m1</module>\n" +
+                     "  </modules>\n" +
+                     "  <properties>\n" +
+                     "   <junit.group.id>junit</junit.group.id>\n" +
+                     "   <junit.artifact.id>junit</junit.artifact.id>\n" +
+                     "  </properties>\n" +
+                     "  <profiles>\n" +
+                     "    <profile>\n" +
+                     "      <id>profile-test</id>\n" +
+                     "      <dependencies>\n" +
+                     "        <dependency>\n" +
+                     "          <groupId>${junit.group.id}</groupId>\n" +
+                     "          <artifactId>${junit.artifact.id}</artifactId>\n" +
+                     "        </dependency>\n" +
+                     "      </dependencies>\n" +
+                     "    </profile>\n" +
+                     "  </profiles>\n" +
+                     "  \n" +
+                     "  <dependencyManagement>\n" +
+                     "    <dependencies>\n" +
+                     "      <dependency>\n" +
+                     "        <groupId>junit</groupId>\n" +
+                     "        <artifactId>junit</artifactId>\n" +
+                     "        <version>4.0</version> \n" +
+                     "      </dependency>\n" +
+                     "    </dependencies>\n" +
+                     "  </dependencyManagement>");
+
+    createModulePom("m1", "<parent>\n" +
+                          "<groupId>test</groupId>\n" +
+                          "<artifactId>parent</artifactId>\n" +
+                          "<version>1</version>\t\n" +
+                          "</parent>\n" +
+                          "<artifactId>m1</artifactId>\t\n" +
+                          "<dependencies>\n" +
+                          "  <dependency>\n" +
+                          "    <groupId>junit</groupId>\n" +
+                          "    <artifactId>junit</artifactId>\n" +
+                          "  </dependency>\n" +
+                          "</dependencies>");
+
+    doImportProjects(Collections.singletonList(myProjectPom), false, "profile-test");
+  }
+
+  @Test
+  public void testProjectWithMavenConfigCustomUserSettingsXml() throws IOException {
+    createProjectSubFile(".mvn/maven.config", "-s .mvn/custom-settings.xml");
+    createProjectSubFile(".mvn/custom-settings.xml",
+                         "<settings>\n" +
+                         "    <profiles>\n" +
+                         "        <profile>\n" +
+                         "            <id>custom1</id>\n" +
+                         "            <properties>\n" +
+                         "                <projectName>customName</prop>\n" +
+                         "            </properties>\n" +
+                         "        </profile>\n" +
+                         "    </profiles>\n" +
+                         "    <activeProfiles>\n" +
+                         "        <activeProfile>custom1</activeProfile>\n" +
+                         "    </activeProfiles>" +
+                         "</settings>");
+    createProjectPom("<groupId>test</groupId>" +
+                     "<artifactId>${projectName}</artifactId>" +
+                     "<version>1</version>");
+
+    MavenGeneralSettings settings = getMavenGeneralSettings();
+    settings.setUserSettingsFile("");
+    settings.setUseMavenConfig(true);
+    importProject();
+    assertModules("customName");
+  }
+
+  @Test
+  public void testProjectWithActiveProfilesFromSettingsXml() throws IOException {
+    updateSettingsXml("<activeProfiles>\n" +
+                      "  <activeProfile>one</activeProfile>\n" +
+                      "</activeProfiles>");
+
+    createProjectPom("<groupId>test</groupId>" +
+                     "<artifactId>${projectName}</artifactId>" +
+                     "<version>1</version>" +
+
+                     "<profiles>" +
+                     "  <profile>" +
+                     "    <id>one</id>" +
+                     "    <properties>" +
+                     "      <projectName>project-one</projectName>" +
+                     "    </properties>" +
+                     "  </profile>" +
+                     "</profiles>");
+
+    importProject();
+    assertModules("project-one");
+  }
+
+  @Test
+  public void testProjectWithActiveProfilesAndInnactiveFromSettingsXml() throws IOException {
+    updateSettingsXml("<activeProfiles>\n" +
+                      "  <activeProfile>one</activeProfile>\n" +
+                      "  <activeProfile>two</activeProfile>\n" +
+                      "</activeProfiles>");
+
+    createProjectPom("<groupId>test</groupId>" +
+                     "<artifactId>${projectName}</artifactId>" +
+                     "<version>1</version>" +
+
+                     "<profiles>" +
+                     "  <profile>" +
+                     "    <id>one</id>" +
+                     "    <properties>" +
+                     "      <projectName>project-one</projectName>" +
+                     "    </properties>" +
+                     "  </profile>" +
+                     "  <profile>" +
+                     "    <id>two</id>" +
+                     "    <properties>" +
+                     "      <projectName>project-two</projectName>" +
+                     "    </properties>" +
+                     "  </profile>" +
+                     "</profiles>");
+
+    List<String> disabledProfiles = Collections.singletonList("one");
+    doImportProjects(Collections.singletonList(myProjectPom), true, disabledProfiles);
+    assertModules("project-two");
   }
 }

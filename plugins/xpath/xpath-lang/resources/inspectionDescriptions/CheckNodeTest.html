@@ -16,9 +16,8 @@
 
 <body>
 <p>
-  This inspection checks whether any element/attribute names that are used in XPath-expressions are actually part of an
-  associated XML file or are defined in a referenced schema. This helps to avoid problems caused by typos in
-  XPath-expressions that would otherwise occur when running the script and may even then not be recognized immediately.
+  Reports the name of an element or an attribute that is used in an XPath-expression but is missing in the associated XML file and is not defined in the referenced schema. This prevents problems caused by typos in
+  XPath-expressions that otherwise occur when running the script and may even happen not to be recognized immediately.
 </p>
 
 <p>Example:</p>
@@ -28,7 +27,7 @@
 </p>
 
 <p>
-  If the prefix "h" is bound to the XHTML namespace, the inspection will flag this part of the match-expression as an
+  If the <code>h</code> is bound to the XHTML namespace, the inspection will report this part of the <code>match</code> expression as an
   unknown element name because the correct name of the element is "textarea".
 </p>
 

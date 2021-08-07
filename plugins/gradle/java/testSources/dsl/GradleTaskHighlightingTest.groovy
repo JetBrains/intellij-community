@@ -3,7 +3,7 @@ package org.jetbrains.plugins.gradle.dsl
 
 import com.intellij.testFramework.RunAll
 import groovy.transform.CompileStatic
-import org.jetbrains.plugins.gradle.highlighting.GradleHighlightingBaseTest
+import org.jetbrains.plugins.gradle.importing.highlighting.GradleHighlightingBaseTest
 import org.jetbrains.plugins.groovy.codeInspection.assignment.GroovyAssignabilityCheckInspection
 import org.jetbrains.plugins.groovy.codeInspection.bugs.GroovyAccessibilityInspection
 import org.jetbrains.plugins.groovy.codeInspection.untypedUnresolvedAccess.GrUnresolvedAccessInspection
@@ -56,7 +56,8 @@ task id14 << {}
   }
 
   void 'task declaration invalid'() {
-    testHighlighting '''\
+    def voidGeneric = isGradleNewerOrSameAs("7.0") ? "" : "<java.lang.Void>"
+    testHighlighting """\
 task <warning descr="'task' in 'org.gradle.api.Project' cannot be applied to '(java.lang.String, java.lang.Integer)'">id1, 42</warning>
 task <warning descr="'task' in 'org.gradle.api.Project' cannot be applied to '(java.lang.Integer, ?)'">42, <warning descr="Cannot resolve symbol 'id2'">id2</warning></warning>
 task <warning descr="'task' in 'org.gradle.api.Project' cannot be applied to '(java.lang.String, java.lang.Integer, java.lang.Integer)'">id3, 42, 43</warning>
@@ -65,12 +66,12 @@ task <warning descr="'task' in 'org.gradle.api.Project' cannot be applied to '([
 task <warning descr="'task' in 'org.gradle.api.Project' cannot be applied to '(['description':java.lang.String], ?, java.lang.Integer, java.lang.Integer)'"><warning descr="Cannot resolve symbol 'id6'">id6</warning>, description: 'a', 43, 69</warning>
 
 task <weak_warning descr="Cannot infer argument types"><warning descr="Cannot resolve symbol 'id7'">id7</warning>(42)</weak_warning>
-task<warning descr="'task' in 'org.gradle.api.Project' cannot be applied to '(groovy.lang.Closure<java.lang.Void>, ?)'">({}, <warning descr="Cannot resolve symbol 'id8'">id8</warning>)</warning>
+task<warning descr="'task' in 'org.gradle.api.Project' cannot be applied to '(groovy.lang.Closure${voidGeneric}, ?)'">({}, <warning descr="Cannot resolve symbol 'id8'">id8</warning>)</warning>
 
 task id9 + {}
 
 task <weak_warning descr="Cannot infer argument types"><warning descr="Cannot resolve symbol 'mid11'">mid11</warning>([type: Copy])</weak_warning>
 task <weak_warning descr="Cannot infer argument types"><warning descr="Cannot resolve symbol 'emid11'">emid11</warning>([:])</weak_warning>                             
-'''
+"""
   }
 }

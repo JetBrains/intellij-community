@@ -45,6 +45,7 @@ public class MagicConstantInspectionTest extends LightJavaCodeInsightFixtureTest
   // test that the optimisation for not loading AST works
   public void testWithLibrary() { doTest(); }
   public void testSpecialCases() { doTest(); }
+  public void testVarargMethodCall() { doTest(); }
 
   private void doTest() {
     myFixture.configureByFile(getTestName(false) + ".java");

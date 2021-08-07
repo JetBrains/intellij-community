@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2021 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package org.jetbrains.jps.builders.java;
 
+import com.intellij.openapi.util.io.FileFilters;
 import com.intellij.openapi.util.io.FileUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.builders.BuildRootDescriptor;
@@ -32,12 +33,30 @@ public class ResourceRootDescriptor extends BuildRootDescriptor {
   @NotNull private final ResourcesTarget myTarget;
   @NotNull private final String myPackagePrefix;
   @NotNull private final Set<File> myExcludes;
+  protected final FileFilter myFilterForExcludedPatterns;
 
-  public ResourceRootDescriptor(@NotNull File root, @NotNull ResourcesTarget target, @NotNull String packagePrefix, @NotNull Set<File> excludes) {
+  /**
+   * @deprecated use {@link #ResourceRootDescriptor(File, ResourcesTarget, String, Set, FileFilter)} instead; this method doesn't honor
+   * excluded patterns which may be specified for the module.
+   */
+  @Deprecated
+  public ResourceRootDescriptor(@NotNull File root,
+                                @NotNull ResourcesTarget target,
+                                @NotNull String packagePrefix,
+                                @NotNull Set<File> excludes) {
+    this(root, target, packagePrefix, excludes, FileFilters.EVERYTHING);
+  }
+
+  public ResourceRootDescriptor(@NotNull File root,
+                                @NotNull ResourcesTarget target,
+                                @NotNull String packagePrefix,
+                                @NotNull Set<File> excludes,
+                                @NotNull FileFilter filterForExcludedPatterns) {
     myPackagePrefix = packagePrefix;
     myRoot = root;
     myTarget = target;
     myExcludes = excludes;
+    myFilterForExcludedPatterns = filterForExcludedPatterns;
   }
 
   @Override
@@ -67,7 +86,7 @@ public class ResourceRootDescriptor extends BuildRootDescriptor {
   public FileFilter createFileFilter() {
     final JpsProject project = getTarget().getModule().getProject();
     final JpsCompilerExcludes excludes = JpsJavaExtensionService.getInstance().getCompilerConfiguration(project).getCompilerExcludes();
-    return file -> !excludes.isExcluded(file);
+    return file -> !excludes.isExcluded(file) && myFilterForExcludedPatterns.accept(file);
   }
 
   @Override

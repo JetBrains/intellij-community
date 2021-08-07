@@ -29,7 +29,7 @@ import git4idea.index.vfs.GitIndexVirtualFile
 import git4idea.index.vfs.filePath
 import git4idea.repo.GitRepository
 import git4idea.repo.GitRepositoryManager
-import git4idea.status.GitChangeProvider
+import git4idea.status.GitRefreshListener
 import git4idea.util.toShortenedLogString
 import org.jetbrains.annotations.NonNls
 import java.util.*
@@ -87,8 +87,10 @@ class GitStageTracker(val project: Project) : Disposable {
         file.putUserData(PROCESSED, null)
       }
     })
-    connection.subscribe(GitChangeProvider.TOPIC, GitChangeProvider.ChangeProviderListener { repository ->
-      doUpdateState(repository)
+    connection.subscribe(GitRefreshListener.TOPIC, object : GitRefreshListener {
+      override fun repositoryUpdated(repository: GitRepository) {
+        doUpdateState(repository)
+      }
     })
 
     EditorFactory.getInstance().eventMulticaster.addDocumentListener(object : DocumentListener {
@@ -208,6 +210,10 @@ class GitStageTracker(val project: Project) : Disposable {
       return statuses.values.any { line -> line.isTracked() }
     }
 
+    fun hasConflictedFiles(): Boolean {
+      return statuses.values.any { line -> line.isConflicted() }
+    }
+
     fun isEmpty(): Boolean {
       return statuses.isEmpty()
     }
@@ -223,6 +229,8 @@ class GitStageTracker(val project: Project) : Disposable {
   }
 
   data class State(val rootStates: Map<VirtualFile, RootState>) {
+    val allRoots: Set<VirtualFile>
+      get() = rootStates.keys
     val stagedRoots: Set<VirtualFile>
       get() = rootStates.filterValues(RootState::hasStagedFiles).keys
     val changedRoots: Set<VirtualFile>

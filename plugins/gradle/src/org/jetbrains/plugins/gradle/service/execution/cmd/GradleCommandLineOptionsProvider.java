@@ -1,9 +1,13 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.gradle.service.execution.cmd;
 
+import com.intellij.util.containers.ContainerUtil;
+import org.apache.commons.cli.Option;
 import org.apache.commons.cli.OptionBuilder;
 import org.apache.commons.cli.Options;
 import org.jetbrains.plugins.gradle.util.GradleDocumentationBundle;
+
+import java.util.List;
 
 /**
  * @author Vladislav.Soroka

@@ -1,13 +1,17 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.find.actions
 
+import com.intellij.find.actions.SearchOptionsService.SearchVariant
 import com.intellij.find.usages.api.SearchTarget
 import com.intellij.find.usages.api.UsageHandler
 import com.intellij.find.usages.api.UsageOptions.createOptions
 import com.intellij.find.usages.impl.AllSearchOptions
 import com.intellij.find.usages.impl.buildUsageViewQuery
 import com.intellij.find.usages.impl.hasTextSearchStrings
+import com.intellij.ide.nls.NlsMessages
+import com.intellij.lang.LangBundle
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.search.SearchScope
 import com.intellij.usages.UsageSearchPresentation
@@ -23,11 +27,17 @@ internal data class ShowTargetUsagesActionHandler<O>(
 
   override fun isValid(): Boolean = true
 
-  override fun getPresentation(): UsageSearchPresentation {
-    return UsageSearchPresentation {
-      usageHandler.getSearchString(allOptions)
+  override fun getPresentation(): UsageSearchPresentation =
+    object: UsageSearchPresentation {
+      override fun getSearchTargetString(): String = usageHandler.getSearchString(allOptions)
+      override fun getOptionsString(): String {
+        val optionsList = ArrayList<String>()
+
+        if (allOptions.options.isUsages) optionsList.add(LangBundle.message("target.usages.option"))
+        if (allOptions.textSearch == true) optionsList.add(LangBundle.message("target.text.occurrences.option"))
+        return StringUtil.capitalize(NlsMessages.formatOrList(optionsList))
+      }
     }
-  }
 
   override fun createUsageSearcher(): UsageSearcher {
     val query = buildUsageViewQuery(project, target, usageHandler, allOptions)
@@ -42,9 +52,9 @@ internal data class ShowTargetUsagesActionHandler<O>(
       // cancelled
       return null
     }
-    else {
-      return copy(allOptions = dialog.result())
-    }
+    val dialogResult = dialog.result()
+    setSearchOptions(SearchVariant.SHOW_USAGES, target, dialogResult)
+    return copy(allOptions = dialogResult)
   }
 
   override fun withScope(searchScope: SearchScope): ShowUsagesActionHandler {
@@ -68,13 +78,14 @@ internal data class ShowTargetUsagesActionHandler<O>(
                                         searchScope: SearchScope,
                                         target: SearchTarget,
                                         usageHandler: UsageHandler<O>): ShowTargetUsagesActionHandler<O> {
+      val persistedOptions: PersistedSearchOptions = getSearchOptions(SearchVariant.SHOW_USAGES, target)
       return ShowTargetUsagesActionHandler(
         project,
         target = target,
         usageHandler = usageHandler,
         allOptions = AllSearchOptions(
-          options = createOptions(searchScope),
-          textSearch = if (target.hasTextSearchStrings()) false else null,
+          options = createOptions(persistedOptions.usages, searchScope),
+          textSearch = if (target.hasTextSearchStrings()) persistedOptions.textSearch else null,
           customOptions = usageHandler.getCustomOptions(UsageHandler.UsageAction.SHOW_USAGES)
         )
       )

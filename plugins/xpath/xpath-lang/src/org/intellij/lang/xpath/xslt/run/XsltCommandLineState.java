@@ -86,7 +86,7 @@ public final class XsltCommandLineState extends CommandLineState {
     return osProcessHandler;
   }
 
-  protected SimpleJavaParameters createJavaParameters() throws ExecutionException {
+  private SimpleJavaParameters createJavaParameters() throws ExecutionException {
     final Sdk jdk = myXsltRunConfiguration.getEffectiveJDK();
     if (jdk == null) {
       throw CantRunException.noJdkConfigured();
@@ -173,7 +173,7 @@ public final class XsltCommandLineState extends CommandLineState {
     return parameters;
   }
 
-  protected static String expandPath(String path, Module module, Project project) {
+  private static String expandPath(String path, Module module, Project project) {
     path = PathMacroManager.getInstance(project).expandPath(path);
     if (module != null) {
       path = PathMacroManager.getInstance(module).expandPath(path);

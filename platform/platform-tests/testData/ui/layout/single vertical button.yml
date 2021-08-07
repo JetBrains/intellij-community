@@ -6,7 +6,7 @@ layoutConstraints:
   gridGapY:
     min: &id002 {horizontal: false, value: 12.0}
     preferred: *id002
-  hideMode: 2
+  hideMode: 3
   insets:
   - &id003 {horizontal: false, unit: 0, value: 0.0}
   - &id004 {horizontal: true, unit: 0, value: 0.0}
@@ -16,13 +16,18 @@ rowConstraints:
   constraints:
   - align: &id005 {horizontal: false, unit: -1, value: 0.0}
   - align: *id005
-  count: 2
+    gapAfter:
+      max: &id006 {horizontal: true, unit: 0, value: 0.0}
+      min: *id006
+      preferred: *id006
+  - {}
+  count: 3
 columnConstraints:
   constraints:
   - gapAfter:
-      max: &id006 {horizontal: true, value: 6.0}
-      min: *id006
-      preferred: *id006
+      max: &id007 {horizontal: true, value: 6.0}
+      min: *id007
+      preferred: *id007
   - {}
   count: 2
 componentConstrains:
@@ -34,6 +39,7 @@ componentConstrains:
     vertical: {grow: 100.0}
   Merge ...:
     flowX: false
+    hideMode: 2
     horizontal: {grow: 1000.0}
     spanX: INF
     vertical:

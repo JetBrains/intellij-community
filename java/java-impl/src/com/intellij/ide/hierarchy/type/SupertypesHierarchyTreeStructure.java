@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.hierarchy.type;
 
 import com.intellij.codeInsight.AnnotationTargetUtil;
@@ -16,18 +16,18 @@ import java.util.Set;
 
 public final class SupertypesHierarchyTreeStructure extends HierarchyTreeStructure {
 
-  public SupertypesHierarchyTreeStructure(final Project project, final PsiClass aClass) {
+  public SupertypesHierarchyTreeStructure(Project project, PsiClass aClass) {
     super(project, new TypeHierarchyNodeDescriptor(project, null, aClass, true));
   }
 
   @Override
-  protected final Object @NotNull [] buildChildren(@NotNull final HierarchyNodeDescriptor descriptor) {
-    final Object element = ((TypeHierarchyNodeDescriptor)descriptor).getPsiClass();
+  protected Object @NotNull [] buildChildren(@NotNull HierarchyNodeDescriptor descriptor) {
+    Object element = ((TypeHierarchyNodeDescriptor)descriptor).getPsiClass();
     if (element instanceof PsiClass) {
-      final PsiClass psiClass = (PsiClass)element;
-      final PsiClass[] supers = getSupers(psiClass);
-      final List<HierarchyNodeDescriptor> descriptors = new ArrayList<>();
-      final PsiClass objectClass = JavaPsiFacade.getInstance(myProject).findClass(CommonClassNames.JAVA_LANG_OBJECT, psiClass.getResolveScope());
+      PsiClass psiClass = (PsiClass)element;
+      PsiClass[] supers = getSupers(psiClass);
+      List<HierarchyNodeDescriptor> descriptors = new ArrayList<>();
+      PsiClass objectClass = JavaPsiFacade.getInstance(myProject).findClass(CommonClassNames.JAVA_LANG_OBJECT, psiClass.getResolveScope());
       for (PsiClass aSuper : supers) {
         if (!psiClass.isInterface() || !aSuper.equals(objectClass)) {
           descriptors.add(new TypeHierarchyNodeDescriptor(myProject, descriptor, aSuper, false));
@@ -35,7 +35,7 @@ public final class SupertypesHierarchyTreeStructure extends HierarchyTreeStructu
       }
       return descriptors.toArray(new HierarchyNodeDescriptor[0]);
     } else if (element instanceof PsiFunctionalExpression) {
-      final PsiClass functionalInterfaceClass = LambdaUtil.resolveFunctionalInterfaceClass((PsiFunctionalExpression)element);
+      PsiClass functionalInterfaceClass = LambdaUtil.resolveFunctionalInterfaceClass((PsiFunctionalExpression)element);
       if (functionalInterfaceClass != null) {
         return new HierarchyNodeDescriptor[] {new TypeHierarchyNodeDescriptor(myProject, descriptor, functionalInterfaceClass, false)};
       }
@@ -52,7 +52,7 @@ public final class SupertypesHierarchyTreeStructure extends HierarchyTreeStructu
 
   private static PsiClass @NotNull [] getMetaAnnotations(@NotNull PsiClass psiClass) {
     Set<PsiClass> supers = new HashSet<>();
-    final PsiModifierList modifierList = psiClass.getModifierList();
+    PsiModifierList modifierList = psiClass.getModifierList();
     if (modifierList != null) {
       for (PsiAnnotation annotation : modifierList.getAnnotations()) {
         if (isJavaLangAnnotation(annotation)) continue;
@@ -70,7 +70,7 @@ public final class SupertypesHierarchyTreeStructure extends HierarchyTreeStructu
   }
 
   private static boolean isJavaLangAnnotation(@NotNull  PsiAnnotation annotation) {
-    final String qualifiedName = annotation.getQualifiedName();
+    String qualifiedName = annotation.getQualifiedName();
     return qualifiedName != null && qualifiedName.startsWith("java.lang.annotation");
   }
 }

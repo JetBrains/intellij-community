@@ -237,7 +237,7 @@ public class SMTestProxyTest extends BaseSMTRunnerTestCase {
 
     final MockPrinter printer = new MockPrinter(true) {
       @Override
-      public void printHyperlink(String text, HyperlinkInfo info) {
+      public void printHyperlink(@NotNull String text, HyperlinkInfo info) {
         print(text, ConsoleViewContentType.SYSTEM_OUTPUT);
       }
     };

@@ -16,18 +16,18 @@ def input(prompt: Any) -> str: ...
 def decodebytes(s: bytes) -> bytes: ...
 def encodebytes(s: bytes) -> bytes: ...
 
-if sys.version_info < (3, 0):
-    import __builtin__ as builtins
-    import cStringIO
-
-    StringIO = cStringIO.StringIO
-    BytesIO = StringIO
-else:
+if sys.version_info >= (3, 0):
     import builtins as builtins
     import io
 
     StringIO = io.StringIO
     BytesIO = io.BytesIO
+else:
+    import __builtin__ as builtins
+    import cStringIO
+
+    StringIO = cStringIO.StringIO
+    BytesIO = StringIO
 
 def byte_ord(c: Union[int, str]) -> int: ...
 def byte_chr(c: int) -> bytes: ...

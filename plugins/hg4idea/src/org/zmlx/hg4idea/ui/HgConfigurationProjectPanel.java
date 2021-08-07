@@ -15,7 +15,6 @@ package org.zmlx.hg4idea.ui;
 import com.intellij.dvcs.branch.DvcsSyncSettings;
 import com.intellij.dvcs.ui.DvcsBundle;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.options.ConfigurableUi;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
@@ -63,7 +62,7 @@ public class HgConfigurationProjectPanel implements ConfigurableUi<HgProjectConf
                                                          .withTooltip(DvcsBundle.message("sync.setting.description", HgVcs.DISPLAY_NAME.get()))
                                                          .createPanel());
     if (!project.isDefault()) {
-      final HgRepositoryManager repositoryManager = ServiceManager.getService(project, HgRepositoryManager.class);
+      final HgRepositoryManager repositoryManager = project.getService(HgRepositoryManager.class);
       mySyncControlPanel.setVisible(repositoryManager != null && repositoryManager.moreThanOneRoot());
     }
     else {

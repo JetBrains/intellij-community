@@ -17,12 +17,12 @@ package org.jetbrains.idea.maven.importing;
 
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import org.jetbrains.idea.maven.MavenImportingTestCase;
+import org.jetbrains.idea.maven.MavenMultiVersionImportingTestCase;
+import org.junit.Test;
 
 import java.io.File;
-import java.io.IOException;
 
-public class SnapshotDependenciesImportingTest extends MavenImportingTestCase {
+public class SnapshotDependenciesImportingTest extends MavenMultiVersionImportingTestCase {
   private File remoteRepoDir;
 
   @Override
@@ -40,10 +40,12 @@ public class SnapshotDependenciesImportingTest extends MavenImportingTestCase {
     remoteRepoDir.mkdirs();
   }
 
+  @Test
   public void testSnapshotVersionDependencyToModule() throws Exception {
     performTestWithDependencyVersion("1-SNAPSHOT");
   }
 
+  @Test
   public void testSnapshotRangeDependencyToModule() throws Exception {
     performTestWithDependencyVersion("SNAPSHOT");
   }
@@ -96,6 +98,7 @@ public class SnapshotDependenciesImportingTest extends MavenImportingTestCase {
     assertModuleModuleDeps("m1", "m2");
   }
 
+  @Test
   public void testNamingLibraryTheSameWayRegardlessAvailableSnapshotVersion() throws Exception {
     if (!hasMavenInstallation()) return;
 
@@ -122,6 +125,7 @@ public class SnapshotDependenciesImportingTest extends MavenImportingTestCase {
     assertModuleLibDeps("project", "Maven: test:foo:1-SNAPSHOT");
   }
 
+  @Test
   public void testAttachingCorrectJavaDocsAndSources() throws Exception {
     if (!hasMavenInstallation()) return;
 
@@ -182,6 +186,7 @@ public class SnapshotDependenciesImportingTest extends MavenImportingTestCase {
     assertTrue(new File(getRepositoryFile(), "/test/foo/1-SNAPSHOT/foo-1-SNAPSHOT-javadoc.jar").exists());
   }
 
+  @Test
   public void testCorrectlryUpdateRootEntriesWithActualPathForSnapshotDependencies() throws Exception {
     if (!hasMavenInstallation()) return;
 

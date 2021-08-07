@@ -225,39 +225,39 @@ public class FieldAccessNotGuardedInspection extends AbstractBaseJavaLocalInspec
       }
       return false;
     }
-  }
 
-  private static boolean isCallOnGuard(String guard, String lockMethodStart, PsiMethodCallExpression psiExpression) {
-    final PsiReferenceExpression methodExpression = psiExpression.getMethodExpression();
-    final PsiExpression qualifierExpression = methodExpression.getQualifierExpression();
-    if (qualifierExpression != null) {
-      if (isCallOnGuard(guard, lockMethodStart, methodExpression, qualifierExpression)) {
-        return true;
-      } else if (qualifierExpression instanceof PsiReferenceExpression) {
-        final PsiElement resolve = ((PsiReferenceExpression)qualifierExpression).resolve();
-        if (resolve instanceof PsiField && ((PsiField)resolve).hasModifierProperty(PsiModifier.FINAL)) {
-          final PsiExpression initializer = ((PsiField)resolve).getInitializer();
-          return initializer != null && isCallOnGuard(guard, lockMethodStart, methodExpression, initializer);
-        }
-      }
-    }
-    return false;
-  }
-
-  private static boolean isCallOnGuard(String guard,
-                                       String lockMethodStart,
-                                       PsiReferenceExpression methodExpression,
-                                       PsiExpression qualifier) {
-    final String qualifierText = qualifier.getText();
-    if (qualifierText.startsWith(guard + ".") || qualifierText.equals(guard)) {
-      final PsiElement resolve = methodExpression.resolve();
-      if (resolve instanceof PsiMethod) {
-        final String methodName = ((PsiMethod)resolve).getName();
-        if (methodName.startsWith(lockMethodStart)) {
+    private static boolean isCallOnGuard(String guard, String lockMethodStart, PsiMethodCallExpression psiExpression) {
+      final PsiReferenceExpression methodExpression = psiExpression.getMethodExpression();
+      final PsiExpression qualifierExpression = methodExpression.getQualifierExpression();
+      if (qualifierExpression != null) {
+        if (isCallOnGuard(guard, lockMethodStart, methodExpression, qualifierExpression)) {
           return true;
+        } else if (qualifierExpression instanceof PsiReferenceExpression) {
+          final PsiElement resolve = ((PsiReferenceExpression)qualifierExpression).resolve();
+          if (resolve instanceof PsiField && ((PsiField)resolve).hasModifierProperty(PsiModifier.FINAL)) {
+            final PsiExpression initializer = ((PsiField)resolve).getInitializer();
+            return initializer != null && isCallOnGuard(guard, lockMethodStart, methodExpression, initializer);
+          }
         }
       }
+      return false;
     }
-    return false;
+
+    private static boolean isCallOnGuard(String guard,
+                                         String lockMethodStart,
+                                         PsiReferenceExpression methodExpression,
+                                         PsiExpression qualifier) {
+      final String qualifierText = qualifier.getText();
+      if (qualifierText.startsWith(guard + ".") || qualifierText.equals(guard)) {
+        final PsiElement resolve = methodExpression.resolve();
+        if (resolve instanceof PsiMethod) {
+          final String methodName = ((PsiMethod)resolve).getName();
+          if (methodName.startsWith(lockMethodStart)) {
+            return true;
+          }
+        }
+      }
+      return false;
+    }
   }
 }

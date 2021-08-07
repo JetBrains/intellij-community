@@ -7,9 +7,7 @@ import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder
 import com.intellij.workspaceModel.storage.createBuilderFrom
 import com.intellij.workspaceModel.storage.entities.AnotherSource
 import com.intellij.workspaceModel.storage.entities.MySource
-import com.intellij.workspaceModel.storage.impl.RefsTable
-import com.intellij.workspaceModel.storage.impl.StorageIndexes
-import com.intellij.workspaceModel.storage.impl.WorkspaceEntityStorageBuilderImpl
+import com.intellij.workspaceModel.storage.impl.*
 import com.intellij.workspaceModel.storage.impl.exceptions.AddDiffException
 import com.intellij.workspaceModel.storage.impl.exceptions.ReplaceBySourceException
 import junit.framework.TestCase

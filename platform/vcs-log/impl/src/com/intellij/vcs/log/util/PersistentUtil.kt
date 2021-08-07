@@ -28,6 +28,7 @@ import com.intellij.vcs.log.impl.VcsLogIndexer
 import com.intellij.vcs.log.util.PersistentUtil.LOG_CACHE
 import org.jetbrains.annotations.NonNls
 import java.io.File
+import java.nio.file.Files
 import java.nio.file.Path
 
 object PersistentUtil {
@@ -58,38 +59,36 @@ object PersistentUtil {
   }
 }
 
-class StorageId(@NonNls private val projectName: String, @NonNls private val subdirName: String, private val logId: String, val version: Int) {
-  private val safeLogId = PathUtilRt.suggestFileName(logId, true, true)
+class StorageId(@NonNls private val projectName: String,
+                @NonNls private val subdirName: String,
+                private val logId: String,
+                val version: Int) {
   private val safeProjectName = PathUtilRt.suggestFileName("${projectName.take(7)}.$logId", false, false)
-  val subdir by lazy { File(File(LOG_CACHE, subdirName), safeProjectName) }
+  val projectStorageDir by lazy { File(File(LOG_CACHE, subdirName), safeProjectName) }
 
-  // do not forget to change cleanupStorageFiles method when editing this one
   @JvmOverloads
   fun getStorageFile(kind: String, forMapIndexStorage: Boolean = false): Path {
-    val storageFile = if (forMapIndexStorage) getFileForMapIndexStorage(kind) else getFile(kind)
-    if (!storageFile.exists()) {
+    val storageFile = doGetRealStorageFile(kind, forMapIndexStorage)
+    if (!Files.exists(storageFile)) {
       for (oldVersion in 0 until version) {
-        StorageId(projectName, subdirName, logId, oldVersion).cleanupStorageFiles(kind, forMapIndexStorage)
+        val oldStorageFile = StorageId(projectName, subdirName, logId, oldVersion).doGetRealStorageFile(kind, forMapIndexStorage)
+        IOUtil.deleteAllFilesStartingWith(oldStorageFile)
       }
-      IOUtil.deleteAllFilesStartingWith(File(File(LOG_CACHE, subdirName), "$safeLogId."))
     }
-    return getFile(kind).toPath()
+    return doGetStorageFile(kind) // MapIndexStorage itself adds ".storage" suffix to the given file, so we wont do it here
   }
 
-  private fun cleanupStorageFiles(kind: String, forMapIndexStorage: Boolean) {
-    val oldStorageFile = if (forMapIndexStorage) getFileForMapIndexStorage(kind) else getFile(kind)
-    IOUtil.deleteAllFilesStartingWith(oldStorageFile)
+  private fun doGetRealStorageFile(kind: String, forMapIndexStorage: Boolean): Path {
+    val storageFile = doGetStorageFile(kind)
+    if (!forMapIndexStorage) return storageFile
+    return MapIndexStorage.getIndexStorageFile(storageFile)
+  }
+
+  private fun doGetStorageFile(kind: String): Path {
+    return File(projectStorageDir, "$kind.$version").toPath()
   }
 
   fun cleanupAllStorageFiles(): Boolean {
-    return FileUtil.deleteWithRenaming(subdir)
-  }
-
-  private fun getFile(kind: String): File {
-    return File(subdir, "$kind.$version")
-  }
-
-  private fun getFileForMapIndexStorage(kind: String = ""): File {
-    return MapIndexStorage.getIndexStorageFile(getFile(kind).toPath()).toFile()
+    return FileUtil.deleteWithRenaming(projectStorageDir)
   }
 }

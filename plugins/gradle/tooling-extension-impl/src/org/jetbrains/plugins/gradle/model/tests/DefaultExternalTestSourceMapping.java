@@ -6,8 +6,10 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.util.Collections;
-import java.util.LinkedHashSet;
 import java.util.Set;
+
+import static org.jetbrains.plugins.gradle.tooling.util.GradleContainerUtil.unmodifiableFileSet;
+import static org.jetbrains.plugins.gradle.tooling.util.GradleContainerUtil.unmodifiablePathSet;
 
 public class DefaultExternalTestSourceMapping implements ExternalTestSourceMapping {
   @Nullable
@@ -20,19 +22,11 @@ public class DefaultExternalTestSourceMapping implements ExternalTestSourceMappi
   @Override
   @NotNull
   public Set<String> getSourceFolders() {
-    if (sourceFolders.isEmpty()) return Collections.emptySet();
-    LinkedHashSet<String> set = new LinkedHashSet<String>(sourceFolders.size());
-    for (File folder : sourceFolders) {
-      set.add(folder.getPath());
-    }
-    return Collections.unmodifiableSet(set);
+    return unmodifiablePathSet(sourceFolders);
   }
 
   public void setSourceFolders(@NotNull Set<String> sourceFolders) {
-    this.sourceFolders = new LinkedHashSet<File>(sourceFolders.size());
-    for (String folder : sourceFolders) {
-      this.sourceFolders.add(new File(folder));
-    }
+    this.sourceFolders = unmodifiableFileSet(sourceFolders);
   }
 
   @NotNull

@@ -2201,7 +2201,7 @@
         {
           "os": "linux",
           "arch": "x86_64",
-          "url": "https://jetbrains.bintray.com/intellij-jbr/jbrsdk-11_0_9_1-linux-x64-b1207.1.tar.gz",
+          "url": "https://cache-redirector.jetbrains.com/intellij-jbr/jbrsdk-11_0_9_1-linux-x64-b1207.1.tar.gz",
           "package_type": "targz",
           "unpack_prefix_filter": "jbrsdk",
           "package_root_prefix": "jbrsdk",
@@ -2232,7 +2232,7 @@
         {
           "os": "windows",
           "arch": "x86_64",
-          "url": "https://jetbrains.bintray.com/intellij-jbr/jbrsdk-11_0_9_1-windows-x64-b1207.1.tar.gz",
+          "url": "https://cache-redirector.jetbrains.com/intellij-jbr/jbrsdk-11_0_9_1-windows-x64-b1207.1.tar.gz",
           "package_type": "targz",
           "unpack_prefix_filter": "jbrsdk",
           "package_root_prefix": "jbrsdk",
@@ -2263,7 +2263,7 @@
         {
           "os": "macOS",
           "arch": "x86_64",
-          "url": "https://jetbrains.bintray.com/intellij-jbr/jbrsdk-11_0_9_1-osx-x64-b1207.1.tar.gz",
+          "url": "https://cache-redirector.jetbrains.com/intellij-jbr/jbrsdk-11_0_9_1-osx-x64-b1207.1.tar.gz",
           "package_type": "targz",
           "unpack_prefix_filter": "jbrsdk/Contents/Home",
           "package_root_prefix": "jbrsdk",

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.log.ui.actions.history;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -19,7 +19,7 @@ import org.jetbrains.annotations.NotNull;
 import java.awt.event.KeyEvent;
 import java.util.Arrays;
 
-public class CompareRevisionsFromFileHistoryActionProvider implements AnActionExtensionProvider {
+abstract public class CompareRevisionsFromFileHistoryActionProvider implements AnActionExtensionProvider {
   @Override
   public boolean isActive(@NotNull AnActionEvent e) {
     FilePath filePath = e.getData(VcsDataKeys.FILE_PATH);
@@ -36,14 +36,7 @@ public class CompareRevisionsFromFileHistoryActionProvider implements AnActionEx
       return;
     }
 
-    if (log.getSelectedCommits().size() >= 2) {
-      e.getPresentation().setText(VcsLogBundle.messagePointer("action.presentation.CompareRevisionsFromFileHistoryActionProvider.text.compare"));
-      e.getPresentation().setDescription(VcsLogBundle.messagePointer("action.presentation.CompareRevisionsFromFileHistoryActionProvider.description.compare"));
-    }
-    else {
-      e.getPresentation().setText(VcsLogBundle.messagePointer("action.presentation.CompareRevisionsFromFileHistoryActionProvider.text.show.diff"));
-      e.getPresentation().setDescription(VcsLogBundle.messagePointer("action.presentation.CompareRevisionsFromFileHistoryActionProvider.description.show.diff"));
-    }
+    updateActionText(e, log);
     e.getPresentation().setVisible(true);
 
     if (e.getInputEvent() instanceof KeyEvent) {
@@ -55,6 +48,8 @@ public class CompareRevisionsFromFileHistoryActionProvider implements AnActionEx
     }
   }
 
+  protected void updateActionText(@NotNull AnActionEvent e, @NotNull VcsLog log) {}
+
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
     VcsLogUsageTriggerCollector.triggerUsage(e, this);
@@ -65,4 +60,24 @@ public class CompareRevisionsFromFileHistoryActionProvider implements AnActionEx
 
     ShowDiffAction.showDiffForChange(project, Arrays.asList(changes));
   }
+
+  public static void setTextAndDescription(@NotNull AnActionEvent e, @NotNull VcsLog log) {
+    if (log.getSelectedCommits().size() >= 2) {
+      e.getPresentation().setText(VcsLogBundle.messagePointer("action.presentation.CompareRevisionsFromFileHistoryActionProvider.text.compare"));
+      e.getPresentation().setDescription(VcsLogBundle.messagePointer("action.presentation.CompareRevisionsFromFileHistoryActionProvider.description.compare"));
+    }
+    else {
+      e.getPresentation().setText(VcsLogBundle.messagePointer("action.presentation.CompareRevisionsFromFileHistoryActionProvider.text.show.diff"));
+      e.getPresentation().setDescription(VcsLogBundle.messagePointer("action.presentation.CompareRevisionsFromFileHistoryActionProvider.description.show.diff"));
+    }
+  }
+
+  static class ShowDiff extends CompareRevisionsFromFileHistoryActionProvider {
+    @Override
+    protected void updateActionText(@NotNull AnActionEvent e, @NotNull VcsLog log) {
+      setTextAndDescription(e, log);
+    }
+  }
+
+  static class ShowStandaloneDiff extends CompareRevisionsFromFileHistoryActionProvider {}
 }

@@ -27,9 +27,11 @@ import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.util.Consumer;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -51,10 +53,11 @@ public class CompositeFilter implements Filter, FilterMixin, DumbAware {
   public CompositeFilter(@NotNull Project project, @NotNull List<? extends Filter> filters) {
     myDumbService = DumbService.getInstance(project);
     myFilters = new ArrayList<>(filters);
-    myFilters.forEach(filter -> myIsAnyHeavy |= filter instanceof FilterMixin);
+    myIsAnyHeavy = ContainerUtil.exists(filters, filter -> filter instanceof FilterMixin);
   }
 
-  protected CompositeFilter(@NotNull DumbService dumbService) {
+  @TestOnly
+  CompositeFilter(@NotNull DumbService dumbService) {
     myDumbService = dumbService;
     myFilters = new ArrayList<>();
   }

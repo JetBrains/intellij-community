@@ -1,8 +1,10 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.structuralsearch.plugin.ui;
 
 import com.intellij.application.options.ModulesComboBox;
 import com.intellij.find.FindBundle;
+import com.intellij.find.FindModel;
+import com.intellij.find.impl.FindInProjectExtension;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.util.scopeChooser.ScopeChooserCombo;
@@ -10,19 +12,23 @@ import com.intellij.ide.util.scopeChooser.ScopeDescriptor;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl;
-import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
+import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.module.impl.scopes.ModuleWithDependenciesScope;
 import com.intellij.openapi.project.DumbAwareToggleAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NlsActions;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.search.*;
+import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.search.GlobalSearchScopesCore;
+import com.intellij.psi.search.PredefinedSearchScopeProviderImpl;
+import com.intellij.psi.search.SearchScope;
 import com.intellij.structuralsearch.Scopes;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.NullableConsumer;
@@ -50,7 +56,6 @@ public class ScopePanel extends JPanel {
   @NotNull private SearchScope myScope;
   private NullableConsumer<? super SearchScope> myConsumer;
   Scopes.Type myScopeType;
-  private boolean myUpdating = false;
 
   final ActionToolbarImpl myToolbar;
   final JPanel myScopeDetailsPanel = new JPanel(new CardLayout());
@@ -90,6 +95,7 @@ public class ScopePanel extends JPanel {
       : new DefaultActionGroup(new ScopeToggleAction(FindBundle.message("find.popup.scope.scope"), Scopes.Type.NAMED),
                                new ScopeToggleAction(FindBundle.message("find.popup.scope.directory"), Scopes.Type.DIRECTORY));
     myToolbar = (ActionToolbarImpl)ActionManager.getInstance().createActionToolbar("ScopePanel", scopeActionGroup, true);
+    myToolbar.setTargetComponent(null);
     myToolbar.setForceMinimumSize(true);
     myToolbar.setLayoutPolicy(ActionToolbar.NOWRAP_LAYOUT_POLICY);
     setScope(null);
@@ -121,75 +127,103 @@ public class ScopePanel extends JPanel {
   }
 
   public void setScope(@Nullable SearchScope selectedScope) {
-    if (selectedScope instanceof LocalSearchScope && selectedScope.getDisplayName().startsWith("Hierarchy of ")) {
-      // don't restore Class Hierarchy scope
-      selectedScope = null;
-    }
-    if (selectedScope != null) {
-      myScope = selectedScope;
-    }
-    myScopeType = Scopes.getType(myScope);
-
+    myScopeType = Scopes.getType(selectedScope);
     if (selectedScope instanceof ModuleWithDependenciesScope) {
       final ModuleWithDependenciesScope scope = (ModuleWithDependenciesScope)selectedScope;
-      myModulesComboBox.setSelectedModule(scope.getModule());
+      myModulesComboBox.setItem(scope.getModule());
     }
     else if (selectedScope instanceof GlobalSearchScopesCore.DirectoryScope) {
       final GlobalSearchScopesCore.DirectoryScope directoryScope = (GlobalSearchScopesCore.DirectoryScope)selectedScope;
-      final VirtualFile directory = directoryScope.getDirectory();
-      myDirectoryComboBox.setDirectory(directory);
+      myDirectoryComboBox.setDirectory(directoryScope.getDirectory());
       myDirectoryComboBox.setRecursive(directoryScope.isWithSubdirectories());
     }
-    else if (selectedScope != null && selectedScope != GlobalSearchScope.projectScope(myProject)) {
+    else if (selectedScope != null && myScopeType == Scopes.Type.NAMED) {
       myScopesComboBox.selectItem(selectedScope.getDisplayName());
-      // refresh scope, otherwise scope can be for example stale "Current File"
-      final SearchScope scope = myScopesComboBox.getSelectedScope();
-      myScope = scope == null ? GlobalSearchScope.projectScope(myProject) : scope;
     }
-    myToolbar.updateActionsImmediately();
-    ((CardLayout)myScopeDetailsPanel.getLayout()).show(myScopeDetailsPanel, myScopeType.toString());
+    showScope(myScopeType);
   }
 
-  public void setScopesFromContext() {
+  public void setScopesFromContext(SearchScope scope) {
     DataManager.getInstance().getDataContextFromFocusAsync().onSuccess(context -> {
-      myUpdating = true;
-      try {
-        final Module module = LangDataKeys.MODULE.getData(context);
-        if (module != null) {
-          myModulesComboBox.setSelectedModule(module);
+      Scopes.Type foundScope = null;
+      boolean moduleFound = false;
+      boolean directoryFound = false;
+      boolean namedScopeFound = false;
+      final Module module = LangDataKeys.MODULE.getData(context);
+      if (module != null) {
+        moduleFound = true;
+        myModulesComboBox.setSelectedModule(module);
+      }
+      final Editor editor = CommonDataKeys.HOST_EDITOR.getData(context);
+      if (editor != null) {
+        final VirtualFile file = FileDocumentManager.getInstance().getFile(editor.getDocument());
+        if (file != null) {
+          myDirectoryComboBox.setDirectory(file.getParent());
         }
-        final Editor editor = CommonDataKeys.HOST_EDITOR.getData(context);
-        if (editor != null) {
-          final Document document = editor.getDocument();
-          final VirtualFile file = FileDocumentManager.getInstance().getFile(document);
-          if (file != null) {
-            myDirectoryComboBox.setDirectory(file.getParent());
+        myScopesComboBox.selectItem(PredefinedSearchScopeProviderImpl.getCurrentFileScopeName());
+        setScope(scope);
+        return;
+      }
+
+      final FindModel findModel = new FindModel();
+      for (FindInProjectExtension extension : FindInProjectExtension.EP_NAME.getExtensionList()) {
+        namedScopeFound = extension.initModelFromContext(findModel, context);
+        if (namedScopeFound) {
+          myScopesComboBox.selectItem(findModel.getCustomScopeName());
+          foundScope = Scopes.Type.NAMED;
+          break;
+        }
+      }
+
+      final VirtualFile[] files = CommonDataKeys.VIRTUAL_FILE_ARRAY.getData(context);
+      if (files != null && files.length > 0) {
+        if (!moduleFound) {
+          final Module fileModule = ModuleUtilCore.findModuleForFile(files[0], myProject);
+          if (fileModule != null) {
+            myModulesComboBox.setSelectedModule(fileModule);
           }
-          myScopesComboBox.selectItem(PredefinedSearchScopeProviderImpl.getCurrentFileScopeName());
+        }
+        if (!namedScopeFound) {
+          final SearchScope selectedFilesScope = PredefinedSearchScopeProviderImpl.getSelectedFilesScope(myProject, context, null);
+          if (selectedFilesScope != null) {
+            myScopesComboBox.selectItem(selectedFilesScope.getDisplayName());
+          }
+        }
+        if (files.length == 1) {
+          directoryFound = true;
+          final VirtualFile file = files[0];
+          myDirectoryComboBox.setDirectory(file.isDirectory() ? file : file.getParent());
+          if (foundScope == null) {
+            foundScope = Scopes.Type.DIRECTORY;
+          }
         }
         else {
-          final VirtualFile[] files = CommonDataKeys.VIRTUAL_FILE_ARRAY.getData(context);
-          if (files != null && files.length > 0) {
-            boolean found = false;
-            for (VirtualFile file : files) {
-              if (file.isDirectory()) {
-                myDirectoryComboBox.setDirectory(file);
-                found = true;
-                break;
-              }
-            }
-            if (!found) {
-              myScopesComboBox.selectItem("Selected Files"); // this scope name is not available in a properties file
-              final VirtualFile directory = files[0].getParent();
-              if (directory != null) {
-                myDirectoryComboBox.setDirectory(directory);
-              }
+          for (VirtualFile file : files) {
+            if (file.isDirectory()) {
+              myDirectoryComboBox.setDirectory(file);
+              directoryFound = true;
+              break;
             }
           }
+          if (foundScope == null) {
+            foundScope = Scopes.Type.NAMED;
+          }
         }
-      } finally {
-        myUpdating = false;
+        if (!directoryFound) {
+          final VirtualFile ancestor = VfsUtil.getCommonAncestor(List.of(files));
+          if (ancestor != null) {
+            myDirectoryComboBox.setDirectory(ancestor);
+            directoryFound = true;
+          }
+        }
+        if (!directoryFound) {
+          final VirtualFile directory = files[0].getParent();
+          if (directory != null) {
+            myDirectoryComboBox.setDirectory(directory);
+          }
+        }
       }
+      showScope(foundScope == null ? Scopes.Type.PROJECT : foundScope);
     });
   }
 
@@ -203,7 +237,6 @@ public class ScopePanel extends JPanel {
   }
 
   void setScopeFromUI(@NotNull Scopes.Type type, boolean requestFocus) {
-    if (myUpdating) return;
     switch (type) {
       case PROJECT:
         myScope = GlobalSearchScope.projectScope(myProject);
@@ -229,6 +262,13 @@ public class ScopePanel extends JPanel {
     if (myConsumer != null) myConsumer.consume(myScope);
   }
 
+  private void showScope(@NotNull Scopes.Type scopeType) {
+    myScopeType = scopeType;
+    ((CardLayout)myScopeDetailsPanel.getLayout()).show(myScopeDetailsPanel, scopeType.toString());
+    setScopeFromUI(scopeType, true);
+    myToolbar.updateActionsImmediately();
+  }
+
   class ScopeToggleAction extends DumbAwareToggleAction {
 
     private final Scopes.Type myScopeType;
@@ -245,12 +285,7 @@ public class ScopePanel extends JPanel {
 
     @Override
     public void setSelected(@NotNull AnActionEvent e, boolean state) {
-      if (state) {
-        ((CardLayout)myScopeDetailsPanel.getLayout()).show(myScopeDetailsPanel, myScopeType.toString());
-        ScopePanel.this.myScopeType = myScopeType;
-        setScopeFromUI(myScopeType, true);
-        myToolbar.updateActionsImmediately();
-      }
+      showScope(myScopeType);
     }
 
     @Override

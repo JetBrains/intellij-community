@@ -26,7 +26,7 @@ public class JpsProjectSerializationTest extends JpsSerializationTestCase {
 
   public void testLoadProject() {
     loadProject(SAMPLE_PROJECT_PATH);
-    assertEquals("sampleProjectName", myProject.getName());
+    assertEquals("sampleProject", myProject.getName());
     checkSampleProjectConfiguration(getTestDataAbsoluteFile(SAMPLE_PROJECT_PATH).toFile());
   }
 

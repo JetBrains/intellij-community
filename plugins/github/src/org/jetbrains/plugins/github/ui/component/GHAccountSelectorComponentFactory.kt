@@ -1,6 +1,8 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.ui.component
 
+import com.intellij.collaboration.async.CompletableFutureUtil.submitIOTask
+import com.intellij.collaboration.ui.codereview.avatar.CachingAvatarIconsProvider
 import com.intellij.ide.ui.laf.darcula.DarculaUIUtil
 import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
@@ -14,7 +16,6 @@ import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.cloneDialog.AccountMenuItem
 import com.intellij.util.ui.cloneDialog.AccountMenuItemRenderer
 import com.intellij.util.ui.cloneDialog.VcsCloneDialogUiSpec
-import com.intellij.util.ui.codereview.avatar.CachingAvatarIconsProvider
 import org.jetbrains.plugins.github.GithubIcons
 import org.jetbrains.plugins.github.api.GithubApiRequestExecutorManager
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccount
@@ -23,7 +24,6 @@ import org.jetbrains.plugins.github.i18n.GithubBundle
 import org.jetbrains.plugins.github.ui.util.GHUIUtil
 import org.jetbrains.plugins.github.ui.util.getName
 import org.jetbrains.plugins.github.util.CachingGHUserAvatarLoader
-import org.jetbrains.plugins.github.util.submitIOTask
 import java.awt.*
 import java.awt.event.KeyEvent
 import java.awt.event.MouseAdapter

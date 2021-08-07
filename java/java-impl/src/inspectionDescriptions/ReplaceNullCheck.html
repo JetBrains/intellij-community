@@ -1,8 +1,7 @@
 <html>
 <body>
-This inspection suggests to replace null check with Objects/Stream static method.
-<!-- tooltip end -->
-Example:
+Reports null checks that can be replaced with an <code>Objects</code>/<code>Stream</code> static method.
+<p><b>Example:</b></p>
 <pre><code>
 if (message == null) {
   application.messageStorage().save(new EmptyMessage());
@@ -10,11 +9,16 @@ if (message == null) {
   application.messageStorage().save(message);
 }
 </code></pre>
-<p>can be replaced with</p>
+<p>After the quick-fix is applied:</p>
 <pre><code>
   application.messageStorage()
     .save(Objects.requireNonNullElseGet(message, () -> new EmptyMessage()));
 </code></pre>
+<!-- tooltip end -->
+<p>
+  Use the <b>Don't warn if length of replacement bigger than original</b> option to ignore the cases when the replacement is longer than the
+  original code.
+</p>
 <p><small>New in 2017.3</small></p>
 </body>
 </html>

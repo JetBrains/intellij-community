@@ -1,9 +1,8 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vfs.newvfs.persistent;
 
 import com.intellij.ide.plugins.DynamicPluginsTestUtil;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.command.WriteCommandAction;
@@ -30,10 +29,7 @@ import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.openapi.vfs.newvfs.events.*;
 import com.intellij.openapi.vfs.newvfs.impl.VirtualDirectoryImpl;
 import com.intellij.openapi.vfs.newvfs.impl.VirtualFileSystemEntry;
-import com.intellij.testFramework.LoggedErrorProcessor;
-import com.intellij.testFramework.PlatformTestUtil;
-import com.intellij.testFramework.UsefulTestCase;
-import com.intellij.testFramework.VfsTestUtil;
+import com.intellij.testFramework.*;
 import com.intellij.testFramework.fixtures.BareTestFixtureTestCase;
 import com.intellij.testFramework.rules.TempDirectory;
 import com.intellij.util.ArrayUtil;
@@ -44,7 +40,7 @@ import com.intellij.util.io.DataInputOutputUtil;
 import com.intellij.util.io.SuperUserStatus;
 import com.intellij.util.io.storage.HeavyProcessLatch;
 import com.intellij.util.messages.MessageBusConnection;
-import org.apache.log4j.Logger;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.junit.Rule;
@@ -67,6 +63,7 @@ import static com.intellij.openapi.util.io.IoTestUtil.assumeWindows;
 import static com.intellij.openapi.util.io.IoTestUtil.setCaseSensitivity;
 import static com.intellij.testFramework.EdtTestUtil.runInEdtAndGet;
 import static com.intellij.testFramework.EdtTestUtil.runInEdtAndWait;
+import static com.intellij.testFramework.UsefulTestCase.assertInstanceOf;
 import static com.intellij.testFramework.UsefulTestCase.assertOneElement;
 import static org.junit.Assert.*;
 import static org.junit.Assume.assumeFalse;
@@ -204,9 +201,9 @@ public class PersistentFsTest extends BareTestFixtureTestCase {
     int[] logCount = {0};
     LoggedErrorProcessor.setNewInstance(new LoggedErrorProcessor() {
       @Override
-      public void processWarn(String message, Throwable t, @NotNull Logger logger) {
-        super.processWarn(message, t, logger);
+      public boolean processWarn(@NotNull String category, String message, Throwable t) {
         if (message.contains(jarFile.getName())) logCount[0]++;
+        return super.processWarn(category, message, t);
       }
     });
     try {
@@ -247,7 +244,7 @@ public class PersistentFsTest extends BareTestFixtureTestCase {
       MessageBusConnection connection = ApplicationManager.getApplication().getMessageBus().connect(getTestRootDisposable());
       connection.subscribe(VirtualFileManager.VFS_CHANGES, new BulkFileListener() {
         @Override
-        public void before(@NotNull List<? extends VFileEvent> events) {
+        public void before(@NotNull List<? extends @NotNull VFileEvent> events) {
           for (VFileEvent event : events) {
             if (event instanceof VFileDeleteEvent) {
               process(((VFileDeleteEvent)event).getFile());
@@ -285,6 +282,7 @@ public class PersistentFsTest extends BareTestFixtureTestCase {
   @Test
   public void testModCountIncreases() throws IOException {
     VirtualFile vFile = tempDirectory.newVirtualFile("file.txt");
+    HeavyPlatformTestCase.setBinaryContent(vFile, "x".getBytes(StandardCharsets.UTF_8)); // make various listeners update their VFS views
     ManagingFS managingFS = ManagingFS.getInstance();
     int inSessionModCount = managingFS.getModificationCount();
     int globalModCount = managingFS.getFilesystemModificationCount();
@@ -303,12 +301,17 @@ public class PersistentFsTest extends BareTestFixtureTestCase {
 
     int finalGlobalModCount = globalModCount;
 
-    try (AccessToken ignore = HeavyProcessLatch.INSTANCE.processStarted("This test wants no indices flush")) {
+    HeavyProcessLatch.INSTANCE.performOperation(HeavyProcessLatch.Type.Processing, "This test wants no indices flush", ()-> {
       WriteAction.runAndWait(() -> {
         long timestamp = vFile.getTimeStamp();
         int finalInSessionModCount = managingFS.getModificationCount();
-        vFile.setWritable(true);  // 1 change
-        vFile.setBinaryContent("foo".getBytes(Charset.defaultCharset())); // content change + length change + maybe timestamp change
+        try {
+          vFile.setWritable(true);  // 1 change
+          vFile.setBinaryContent("foo".getBytes(Charset.defaultCharset())); // content change + length change + maybe timestamp change
+        }
+        catch (IOException e) {
+          throw new RuntimeException(e);
+        }
 
         // we check in write action to avoid observing background thread to index stuff
         int changesCount = timestamp == vFile.getTimeStamp() ? 3 : 4;
@@ -317,7 +320,7 @@ public class PersistentFsTest extends BareTestFixtureTestCase {
         assertEquals(finalInSessionModCount + changesCount, managingFS.getModificationCount());
         assertEquals(parentModCount, managingFS.getModificationCount(vFile.getParent()));
       });
-    }
+    });
   }
 
   @Test
@@ -365,12 +368,12 @@ public class PersistentFsTest extends BareTestFixtureTestCase {
     try {
       connection.subscribe(VirtualFileManager.VFS_CHANGES, new BulkFileListener() {
         @Override
-        public void before(@NotNull List<? extends VFileEvent> events) {
+        public void before(@NotNull List<? extends @NotNull VFileEvent> events) {
           log("Before:", events);
         }
 
         @Override
-        public void after(@NotNull List<? extends VFileEvent> events) {
+        public void after(@NotNull List<? extends @NotNull VFileEvent> events) {
           log("After:", events);
         }
 
@@ -636,7 +639,7 @@ public class PersistentFsTest extends BareTestFixtureTestCase {
       assertNull(fs.findFileById(f.getId()));
     }
 
-    for (VirtualFileSystemEntry f : fs.getIdToDirCache().values()) {
+    for (VirtualFileSystemEntry f : fs.getDirCache()) {
       assertTrue(f.isValid());
     }
   }
@@ -748,7 +751,7 @@ public class PersistentFsTest extends BareTestFixtureTestCase {
   @Test
   public void testReadOnlyFsCachesLength() throws IOException {
     String text = "<virtualFileSystem implementationClass=\"" + TracingJarFileSystemTestWrapper.class.getName() + "\" key=\"jar-wrapper\" physical=\"true\"/>";
-    Disposable disposable = runInEdtAndGet(() -> DynamicPluginsTestUtil.loadExtensionWithText(text, TracingJarFileSystemTestWrapper.class.getClassLoader()));
+    Disposable disposable = runInEdtAndGet(() -> DynamicPluginsTestUtil.loadExtensionWithText(text, "com.intellij"));
 
     try {
       File generationDir = tempDirectory.newDirectory("gen");
@@ -793,7 +796,7 @@ public class PersistentFsTest extends BareTestFixtureTestCase {
   @Test
   public void testDoNotRecalculateLengthIfEndOfInputStreamIsNotReached() throws IOException {
     String text = "<virtualFileSystem implementationClass=\"" + TracingJarFileSystemTestWrapper.class.getName() + "\" key=\"jar-wrapper\" physical=\"true\"/>";
-    Disposable disposable = runInEdtAndGet(() -> DynamicPluginsTestUtil.loadExtensionWithText(text, TracingJarFileSystemTestWrapper.class.getClassLoader()));
+    Disposable disposable = runInEdtAndGet(() -> DynamicPluginsTestUtil.loadExtensionWithText(text, "com.intellij"));
 
     try {
       File generationDir = tempDirectory.newDirectory("gen");
@@ -840,7 +843,7 @@ public class PersistentFsTest extends BareTestFixtureTestCase {
     List<VFileEvent> events = new ArrayList<>();
     ApplicationManager.getApplication().getMessageBus().connect(getTestRootDisposable()).subscribe(VirtualFileManager.VFS_CHANGES, new BulkFileListener() {
       @Override
-      public void after(@NotNull List<? extends VFileEvent> e) {
+      public void after(@NotNull List<? extends @NotNull VFileEvent> e) {
         events.addAll(e);
       }
     });
@@ -864,7 +867,7 @@ public class PersistentFsTest extends BareTestFixtureTestCase {
     List<VFileEvent> events = new ArrayList<>();
     ApplicationManager.getApplication().getMessageBus().connect(getTestRootDisposable()).subscribe(VirtualFileManager.VFS_CHANGES, new BulkFileListener() {
       @Override
-      public void after(@NotNull List<? extends VFileEvent> e) {
+      public void after(@NotNull List<? extends @NotNull VFileEvent> e) {
         events.addAll(e);
       }
     });
@@ -893,7 +896,7 @@ public class PersistentFsTest extends BareTestFixtureTestCase {
     List<VFileEvent> events = new ArrayList<>();
     ApplicationManager.getApplication().getMessageBus().connect(getTestRootDisposable()).subscribe(VirtualFileManager.VFS_CHANGES, new BulkFileListener() {
       @Override
-      public void after(@NotNull List<? extends VFileEvent> e) {
+      public void after(@NotNull List<? extends @NotNull VFileEvent> e) {
         for (VFileEvent event : e) {
           VirtualFile evFile = event.getFile();
           if (evFile.getParent().equals(vDir)) {
@@ -961,5 +964,33 @@ public class PersistentFsTest extends BareTestFixtureTestCase {
       exp = new VFileContentChangeEvent(this, exp.getFile(), 0, 0, -1, -1, -1, -1, true);
     }
     return exp;
+  }
+
+  @Test
+  public void testSetBinaryContentMustGenerateVFileContentChangedEventWithCorrectOldLength() throws IOException {
+    VirtualFile vDir = refreshAndFind(tempDirectory.newDirectory());
+    VirtualFile vFile = HeavyPlatformTestCase.createChildData(vDir, "file.txt");
+    UIUtil.pump();
+    List<VFileEvent> events = new ArrayList<>();
+    ApplicationManager.getApplication().getMessageBus().connect(getTestRootDisposable()).subscribe(VirtualFileManager.VFS_CHANGES, new BulkFileListener() {
+      @Override
+      public void after(@NotNull List<? extends @NotNull VFileEvent> e) {
+        for (VFileEvent event : e) {
+          VirtualFile evFile = event.getFile();
+          if (evFile.getParent().equals(vDir)) {
+            events.add(event);
+          }
+        }
+      }
+    });
+
+    WriteAction.runAndWait(()->vFile.setBinaryContent(new byte[]{1,2,3}));
+    VFileEvent event = assertOneElement(events);
+    assertInstanceOf(event, VFileContentChangeEvent.class);
+
+    assertEquals(0, ((VFileContentChangeEvent)event).getOldLength());
+    assertEquals(3, ((VFileContentChangeEvent)event).getNewLength());
+
+    events.clear();
   }
 }

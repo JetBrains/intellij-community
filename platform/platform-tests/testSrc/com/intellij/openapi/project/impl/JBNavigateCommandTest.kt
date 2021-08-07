@@ -1,6 +1,7 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.project.impl
 
+import com.intellij.navigation.areOriginsEqual
 import com.intellij.openapi.application.AppUIExecutor
 import com.intellij.openapi.application.JBProtocolCommand
 import com.intellij.openapi.application.impl.coroutineDispatchingContext
@@ -31,6 +32,8 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.TestName
 import java.nio.file.Paths
+import kotlin.test.assertFalse
+import kotlin.test.assertTrue
 
 class JBNavigateCommandTest {
   companion object {
@@ -98,6 +101,41 @@ class JBNavigateCommandTest {
   }
 
   @Test
+  fun compareOrigins() {
+    val equalOrigins = listOf(
+      "https://github.com/JetBrains/intellij.git" ,
+      "https://github.com/JetBrains/intellij" ,
+      "http://github.com/JetBrains/intellij" ,
+      "ssh://git@github.com:JetBrains/intellij.git",
+      "ssh://user@github.com:JetBrains/intellij.git",
+      "git@github.com:JetBrains/intellij.git",
+      "user@github.com:JetBrains/intellij.git",
+    )
+
+    equalOrigins.forEach { first ->
+      equalOrigins.forEach { second ->
+        assertTrue(areOriginsEqual(first, second), "Non equal: '$first' and '$second'")
+      }
+    }
+
+    val nonEqualOrigins = listOf(
+      "https://github.bom/JetBrains/intellij.git" ,
+      "https://github.com/JetBrains/intellij.git.git" ,
+      "http://github.com/JetBraind/intellij" ,
+      "http://github.com:8080/JetBrains/intellij" ,
+      "http://github.com",
+      "ssh://git@github.com:JetBrains",
+      "ssh://user@github.bom:JetBrains/intellij.git",
+      "git@github.com:JetBrains/go",
+    )
+    equalOrigins.forEach { first ->
+      nonEqualOrigins.forEach { second ->
+        assertFalse(areOriginsEqual(first, second), "Equal: '$first' and '$second'")
+      }
+    }
+  }
+
+  @Test
   fun pathOpenProject(): Unit = runBlocking {
     var projectName: String? = null
     createOrLoadProject(tempDir, useDefaultProjectSettings = false) { project ->
@@ -109,7 +147,6 @@ class JBNavigateCommandTest {
 
     withContext(AppUIExecutor.onUiThread().coroutineDispatchingContext()) {
       navigate(projectName!!, mapOf("path" to "A.java"))
-      UIUtil.dispatchAllInvocationEvents()
 
       ProjectManager.getInstance().openProjects.find { it.name == projectName }!!.use { recentProject ->
         assertThat(getCurrentElement(recentProject).name).isEqualTo("A.java")
@@ -137,9 +174,9 @@ class JBNavigateCommandTest {
   }
 
   private fun navigate(projectName: String, parameters: Map<String, String>) {
-    val map = hashMapOf("project" to projectName)
-    map.putAll(parameters)
-    JBProtocolCommand.findCommand("navigate")!!.perform("reference", map)
+    val query = parameters.asSequence().fold("project=${projectName}") { acc, e -> acc + "&${e.key}=${e.value}" }
+    JBProtocolCommand.execute("jetbrains://idea/navigate/reference?${query}")
+    UIUtil.dispatchAllInvocationEvents()
   }
 }
 

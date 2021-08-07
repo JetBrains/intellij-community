@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.devkit.testAssistant;
 
 import com.intellij.codeHighlighting.BackgroundEditorHighlighter;
@@ -28,9 +28,7 @@ import java.awt.*;
 import java.beans.PropertyChangeListener;
 import java.lang.ref.WeakReference;
 
-/**
- * @author yole
- */
+
 public class TestDataGroupFileEditor extends UserDataHolderBase implements TextEditor {
   private WeakReference<Splitter> myComponent;
   private final TestDataGroupVirtualFile myFile;

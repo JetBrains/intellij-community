@@ -3,7 +3,8 @@ SHELL_SCRIPT
     GENERIC_COMMAND_DIRECTIVE
       PsiElement($)('$')
       ARITHMETIC_EXPANSION
-        PsiElement((()('((')
+        PsiElement(()('(')
+        PsiElement(()('(')
         PsiWhiteSpace(' ')
         INDEX_EXPRESSION
           LITERAL_EXPRESSION
@@ -15,13 +16,15 @@ SHELL_SCRIPT
               PsiElement(int)('1')
           PsiElement(])(']')
         PsiWhiteSpace(' ')
-        PsiElement()))('))')
+        PsiElement())(')')
+        PsiElement())(')')
   PsiElement(\n)('\n')
   COMMANDS_LIST
     GENERIC_COMMAND_DIRECTIVE
       PsiElement($)('$')
       ARITHMETIC_EXPANSION
-        PsiElement((()('((')
+        PsiElement(()('(')
+        PsiElement(()('(')
         PsiWhiteSpace(' ')
         ARRAY_EXPRESSION
           PsiElement([)('[')
@@ -30,7 +33,8 @@ SHELL_SCRIPT
               PsiElement(int)('1')
           PsiElement(])(']')
         PsiWhiteSpace(' ')
-        PsiElement()))('))')
+        PsiElement())(')')
+        PsiElement())(')')
   PsiElement(\n)('\n')
   PsiElement(\n)('\n')
   COMMANDS_LIST
@@ -41,7 +45,7 @@ SHELL_SCRIPT
       ASSIGNMENT_LIST
         PsiElement(()('(')
         ARRAY_ASSIGNMENT
-          LITERAL_EXPRESSION
+          LITERAL_OPERATION
             NUMBER
               PsiElement(int)('1')
             PsiWhiteSpace(' ')
@@ -60,45 +64,45 @@ SHELL_SCRIPT
       ASSIGNMENT_LIST
         PsiElement(()('(')
         ARRAY_ASSIGNMENT
-          ASSIGNMENT_EXPRESSION
-            ASSIGNMENT_EXPRESSION
-              ASSIGNMENT_EXPRESSION
-                ARRAY_EXPRESSION
+          ASSIGNMENT_OPERATION
+            ASSIGNMENT_OPERATION
+              ASSIGNMENT_OPERATION
+                ARRAY_OPERATION
                   PsiElement([)('[')
-                  LITERAL_EXPRESSION
+                  LITERAL_OPERATION
                     STRING
                       PsiElement(OPEN_QUOTE)('"')
                       PsiElement(STRING_CONTENT)('a')
                       PsiElement(CLOSE_QUOTE)('"')
                   PsiElement(])(']')
                 PsiElement(=)('=')
-                INDEX_EXPRESSION
-                  LITERAL_EXPRESSION
+                INDEX_OPERATION
+                  LITERAL_OPERATION
                     NUMBER
                       PsiElement(int)('1')
                   PsiWhiteSpace(' ')
                   PsiElement([)('[')
-                  LITERAL_EXPRESSION
+                  LITERAL_OPERATION
                     STRING
                       PsiElement(OPEN_QUOTE)('"')
                       PsiElement(STRING_CONTENT)('aa')
                       PsiElement(CLOSE_QUOTE)('"')
                   PsiElement(])(']')
               PsiElement(=)('=')
-              INDEX_EXPRESSION
-                LITERAL_EXPRESSION
+              INDEX_OPERATION
+                LITERAL_OPERATION
                   NUMBER
                     PsiElement(int)('2')
                 PsiWhiteSpace(' ')
                 PsiElement([)('[')
-                LITERAL_EXPRESSION
+                LITERAL_OPERATION
                   STRING
                     PsiElement(OPEN_QUOTE)('"')
                     PsiElement(STRING_CONTENT)('2')
                     PsiElement(CLOSE_QUOTE)('"')
                 PsiElement(])(']')
             PsiElement(=)('=')
-            LITERAL_EXPRESSION
+            LITERAL_OPERATION
               NUMBER
                 PsiElement(int)('3')
         PsiElement())(')')
@@ -111,34 +115,40 @@ SHELL_SCRIPT
       ASSIGNMENT_LIST
         PsiElement(()('(')
         ARRAY_ASSIGNMENT
-          ASSIGNMENT_EXPRESSION
-            ASSIGNMENT_EXPRESSION
-              INDEX_EXPRESSION
-                LITERAL_EXPRESSION
-                  PsiElement(word)('1**1')
-                PsiWhiteSpace(' ')
-                PsiElement([)('[')
-                LITERAL_EXPRESSION
-                  STRING
-                    PsiElement(OPEN_QUOTE)('"')
-                    PsiElement(STRING_CONTENT)('aa')
-                    PsiElement(CLOSE_QUOTE)('"')
-                PsiElement(])(']')
+          ASSIGNMENT_OPERATION
+            ASSIGNMENT_OPERATION
+              EXP_OPERATION
+                LITERAL_OPERATION
+                  NUMBER
+                    PsiElement(int)('1')
+                PsiElement(**)('**')
+                INDEX_OPERATION
+                  LITERAL_OPERATION
+                    NUMBER
+                      PsiElement(int)('1')
+                  PsiWhiteSpace(' ')
+                  PsiElement([)('[')
+                  LITERAL_OPERATION
+                    STRING
+                      PsiElement(OPEN_QUOTE)('"')
+                      PsiElement(STRING_CONTENT)('aa')
+                      PsiElement(CLOSE_QUOTE)('"')
+                  PsiElement(])(']')
               PsiElement(=)('=')
-              INDEX_EXPRESSION
-                LITERAL_EXPRESSION
+              INDEX_OPERATION
+                LITERAL_OPERATION
                   NUMBER
                     PsiElement(int)('2')
                 PsiWhiteSpace(' ')
                 PsiElement([)('[')
-                LITERAL_EXPRESSION
+                LITERAL_OPERATION
                   STRING
                     PsiElement(OPEN_QUOTE)('"')
                     PsiElement(STRING_CONTENT)('2')
                     PsiElement(CLOSE_QUOTE)('"')
                 PsiElement(])(']')
             PsiElement(=)('=')
-            LITERAL_EXPRESSION
+            LITERAL_OPERATION
               NUMBER
                 PsiElement(int)('3')
         PsiElement())(')')
@@ -152,15 +162,15 @@ SHELL_SCRIPT
       ASSIGNMENT_LIST
         PsiElement(()('(')
         ARRAY_ASSIGNMENT
-          ASSIGNMENT_EXPRESSION
-            ARRAY_EXPRESSION
+          ASSIGNMENT_OPERATION
+            ARRAY_OPERATION
               PsiElement([)('[')
-              LITERAL_EXPRESSION
+              LITERAL_OPERATION
                 NUMBER
                   PsiElement(int)('1')
               PsiElement(])(']')
             PsiElement(=)('=')
-            LITERAL_EXPRESSION
+            LITERAL_OPERATION
               NUMBER
                 PsiElement(int)('2')
         PsiElement())(')')
@@ -175,17 +185,17 @@ SHELL_SCRIPT
       ASSIGNMENT_LIST
         PsiElement(()('(')
         ARRAY_ASSIGNMENT
-          ASSIGNMENT_EXPRESSION
-            ARRAY_EXPRESSION
+          ASSIGNMENT_OPERATION
+            ARRAY_OPERATION
               PsiElement([)('[')
-              LITERAL_EXPRESSION
+              LITERAL_OPERATION
                 STRING
                   PsiElement(OPEN_QUOTE)('"')
                   PsiElement(STRING_CONTENT)('a')
                   PsiElement(CLOSE_QUOTE)('"')
               PsiElement(])(']')
             PsiElement(=)('=')
-            LITERAL_EXPRESSION
+            LITERAL_OPERATION
               NUMBER
                 PsiElement(int)('1')
         PsiElement())(')')
@@ -199,45 +209,45 @@ SHELL_SCRIPT
       ASSIGNMENT_LIST
         PsiElement(()('(')
         ARRAY_ASSIGNMENT
-          ASSIGNMENT_EXPRESSION
-            ASSIGNMENT_EXPRESSION
-              ASSIGNMENT_EXPRESSION
-                ARRAY_EXPRESSION
+          ASSIGNMENT_OPERATION
+            ASSIGNMENT_OPERATION
+              ASSIGNMENT_OPERATION
+                ARRAY_OPERATION
                   PsiElement([)('[')
-                  LITERAL_EXPRESSION
+                  LITERAL_OPERATION
                     STRING
                       PsiElement(OPEN_QUOTE)('"')
                       PsiElement(STRING_CONTENT)('a')
                       PsiElement(CLOSE_QUOTE)('"')
                   PsiElement(])(']')
                 PsiElement(=)('=')
-                INDEX_EXPRESSION
-                  LITERAL_EXPRESSION
+                INDEX_OPERATION
+                  LITERAL_OPERATION
                     NUMBER
                       PsiElement(int)('1')
                   PsiWhiteSpace(' ')
                   PsiElement([)('[')
-                  LITERAL_EXPRESSION
+                  LITERAL_OPERATION
                     STRING
                       PsiElement(OPEN_QUOTE)('"')
                       PsiElement(STRING_CONTENT)('aa')
                       PsiElement(CLOSE_QUOTE)('"')
                   PsiElement(])(']')
               PsiElement(=)('=')
-              INDEX_EXPRESSION
-                LITERAL_EXPRESSION
+              INDEX_OPERATION
+                LITERAL_OPERATION
                   NUMBER
                     PsiElement(int)('2')
                 PsiWhiteSpace(' ')
                 PsiElement([)('[')
-                LITERAL_EXPRESSION
+                LITERAL_OPERATION
                   STRING
                     PsiElement(OPEN_QUOTE)('"')
                     PsiElement(STRING_CONTENT)('2')
                     PsiElement(CLOSE_QUOTE)('"')
                 PsiElement(])(']')
             PsiElement(=)('=')
-            LITERAL_EXPRESSION
+            LITERAL_OPERATION
               NUMBER
                 PsiElement(int)('3')
         PsiElement())(')')
@@ -253,7 +263,7 @@ SHELL_SCRIPT
         ARRAY_ASSIGNMENT
           PsiElement(\n)('\n')
           PsiWhiteSpace('    ')
-          LITERAL_EXPRESSION
+          LITERAL_OPERATION
             PsiElement(word)('jdk-6.45-linux_i586.bin')
             PsiWhiteSpace('     \\n    ')
             PsiElement(word)('jdk-6.45-linux_x64.bin')

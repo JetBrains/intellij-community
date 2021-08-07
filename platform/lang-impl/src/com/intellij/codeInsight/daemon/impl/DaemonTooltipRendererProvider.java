@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeInsight.daemon.impl.tooltips.TooltipActionProvider;
@@ -10,7 +10,6 @@ import com.intellij.openapi.editor.ex.TooltipAction;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsContexts;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -65,15 +64,10 @@ public class DaemonTooltipRendererProvider implements ErrorStripTooltipRendererP
       });
       final HighlightInfoComposite composite = HighlightInfoComposite.create(infos);
       String toolTip = composite.getToolTip();
-      DaemonTooltipRenderer myRenderer;
-      if (Registry.is("ide.tooltip.show.with.actions")) {
-        TooltipAction action = TooltipActionProvider.calcTooltipAction(composite, myEditor);
-        myRenderer = new DaemonTooltipWithActionRenderer(toolTip, action, 0,
-                                                         action == null ? new Object[]{toolTip} : new Object[]{toolTip, action});
-      }
-      else {
-        myRenderer = new DaemonTooltipRenderer(toolTip, new Object[]{highlighters});
-      }
+      TooltipAction action = TooltipActionProvider.calcTooltipAction(composite, myEditor);
+      DaemonTooltipRenderer myRenderer = new DaemonTooltipWithActionRenderer(
+        toolTip, action, 0,
+        action == null ? new Object[]{toolTip} : new Object[]{toolTip, action});
       if (bigRenderer != null) {
         myRenderer.addBelow(bigRenderer.getText());
       }
@@ -97,10 +91,6 @@ public class DaemonTooltipRendererProvider implements ErrorStripTooltipRendererP
   @NotNull
   @Override
   public TooltipRenderer calcTooltipRenderer(@NotNull String text, @Nullable TooltipAction action, int width) {
-    if (action != null || Registry.is("ide.tooltip.show.with.actions")) {
-      return new DaemonTooltipWithActionRenderer(text, action, width, action == null ? new Object[]{text} : new Object[]{text, action});
-    }
-
-    return ErrorStripTooltipRendererProvider.super.calcTooltipRenderer(text, null, width);
+    return new DaemonTooltipWithActionRenderer(text, action, width, action == null ? new Object[]{text} : new Object[]{text, action});
   }
 }

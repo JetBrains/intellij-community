@@ -12,7 +12,7 @@ import com.intellij.openapi.editor.impl.LineNumberConverterAdapter
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.changes.patch.AppliedTextPatch
 import com.intellij.openapi.vcs.changes.patch.tool.PatchChangeBuilder
-import com.intellij.util.ui.codereview.timeline.TimelineDiffComponentFactory
+import com.intellij.collaboration.ui.codereview.timeline.TimelineDiffComponentFactory
 import org.jetbrains.plugins.github.util.GHPatchHunkUtil
 import javax.swing.JComponent
 

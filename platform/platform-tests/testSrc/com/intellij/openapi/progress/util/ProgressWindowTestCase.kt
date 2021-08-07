@@ -81,7 +81,7 @@ abstract class ProgressWindowTestCase<Process> : FileEditorManagerTestCase() { /
       createProcess()
     }
 
-  private fun assertIsNotDispatchThread() {
+  protected fun assertIsNotDispatchThread() {
     Assert.assertFalse("should not be running on dispatch thread", EventQueue.isDispatchThread())
   }
 }

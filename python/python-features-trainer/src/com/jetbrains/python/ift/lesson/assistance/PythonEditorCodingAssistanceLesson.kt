@@ -1,10 +1,13 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.ift.lesson.assistance
 
+import com.intellij.codeInsight.daemon.impl.runActionCustomShortcutSet
+import com.intellij.openapi.actionSystem.KeyboardShortcut
 import com.jetbrains.python.PyPsiBundle
 import com.jetbrains.python.ift.PythonLessonsBundle
+import training.dsl.LearningDslBase
 import training.dsl.LessonSample
-import training.dsl.TaskContext
+import training.dsl.LessonUtil
 import training.learn.lesson.general.assistance.EditorCodingAssistanceLesson
 
 class PythonEditorCodingAssistanceLesson(sample: LessonSample) :
@@ -21,12 +24,14 @@ class PythonEditorCodingAssistanceLesson(sample: LessonSample) :
 
   override val variableNameToHighlight: String = "happiness"
 
-  override fun isHighlightedListItem(item: String): Boolean {
-    return super.isHighlightedListItem(item) || item == errorAlternateIntentionText
+  override fun LearningDslBase.getFixErrorTaskText(): String {
+    return PythonLessonsBundle.message("python.editor.coding.assistance.fix.error", action("ShowIntentionActions"),
+                                       strong(errorIntentionText),
+                                       strong(errorAlternateIntentionText))
   }
 
-  override fun TaskContext.addFixErrorTaskText() {
-    text(PythonLessonsBundle.message("python.editor.coding.assistance.fix.error", action("ShowIntentionActions"),
-                                     strong(errorIntentionText), strong(errorAlternateIntentionText)))
+  override fun getFixWarningText(): String {
+    val shortcut = runActionCustomShortcutSet.shortcuts.first() as KeyboardShortcut
+    return PythonLessonsBundle.message("python.editor.coding.assistance.press.to.fix", LessonUtil.rawKeyStroke(shortcut.firstKeyStroke))
   }
 }

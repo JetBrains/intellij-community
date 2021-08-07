@@ -1,10 +1,11 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.codeInsight.hint
 
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.utils.inlays.InlayHintsProviderTestCase
 import org.jetbrains.plugins.groovy.GroovyProjectDescriptors
+import org.jetbrains.plugins.groovy.codeInsight.hint.types.GroovyParameterTypeHintsInlayProvider
 import org.jetbrains.plugins.groovy.intentions.style.inference.MethodParameterAugmenter
 
 class GroovyParameterTypeHintsInlayProviderTest : InlayHintsProviderTestCase() {

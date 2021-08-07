@@ -6,7 +6,7 @@ import com.intellij.openapi.util.io.IoTestUtil;
 import com.intellij.util.io.DigestUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.MavenCustomRepositoryHelper;
-import org.jetbrains.idea.maven.MavenImportingTestCase;
+import org.jetbrains.idea.maven.MavenMultiVersionImportingTestCase;
 
 import java.io.File;
 import java.io.IOException;
@@ -14,7 +14,7 @@ import java.io.PrintWriter;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 
-public abstract class ArtifactsDownloadingTestCase extends MavenImportingTestCase {
+public abstract class ArtifactsDownloadingTestCase extends MavenMultiVersionImportingTestCase {
   @Override
   protected void setUp() throws Exception {
     super.setUp();

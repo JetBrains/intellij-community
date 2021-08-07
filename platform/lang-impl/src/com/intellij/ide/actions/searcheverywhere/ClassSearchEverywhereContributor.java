@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.actions.searcheverywhere;
 
 import com.intellij.codeInsight.navigation.NavigationUtil;
@@ -141,7 +141,7 @@ public class ClassSearchEverywhereContributor extends AbstractGotoSEContributor 
         return new Navigatable() {
           @Override
           public void navigate(boolean requestFocus) {
-            NavigationUtil.activateFileWithPsiElement(psi, openInCurrentWindow(modifiers));
+            NavigationUtil.activateFileWithPsiElement(psi, false);
             delegate.navigate(true);
 
           }
@@ -296,7 +296,7 @@ public class ClassSearchEverywhereContributor extends AbstractGotoSEContributor 
     @NotNull
     @Override
     public SearchEverywhereContributor<Object> createContributor(@NotNull AnActionEvent initEvent) {
-      return new ClassSearchEverywhereContributor(initEvent);
+      return PSIPresentationBgRendererWrapper.wrapIfNecessary(new ClassSearchEverywhereContributor(initEvent));
     }
   }
 

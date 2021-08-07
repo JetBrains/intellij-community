@@ -8,6 +8,8 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.Conditions;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
@@ -42,7 +44,7 @@ public final class RefactoringConflictsUtil {
                                                    @NotNull PsiClass targetClass,
                                                    @NotNull MultiMap<PsiElement, String> conflicts,
                                                    @Nullable String newVisibility) {
-    analyzeAccessibilityConflicts(membersToMove, targetClass, conflicts, newVisibility, targetClass, null);
+    analyzeAccessibilityConflicts(membersToMove, targetClass, conflicts, newVisibility, targetClass, null, Conditions.alwaysTrue());
   }
 
   public static void analyzeAccessibilityConflicts(@NotNull Set<? extends PsiMember> membersToMove,
@@ -50,14 +52,15 @@ public final class RefactoringConflictsUtil {
                                                    @NotNull MultiMap<PsiElement, String> conflicts,
                                                    @Nullable String newVisibility,
                                                    @NotNull PsiElement context,
-                                                   @Nullable Set<? extends PsiMethod> abstractMethods) {
+                                                   @Nullable Set<? extends PsiMethod> abstractMethods,
+                                                   @NotNull Condition<PsiReference> ignorePredicate) {
     if (VisibilityUtil.ESCALATE_VISIBILITY.equals(newVisibility)) { //Still need to check for access object
       newVisibility = PsiModifier.PUBLIC;
     }
 
     for (PsiMember member : membersToMove) {
       checkUsedElements(member, member, membersToMove, abstractMethods, targetClass, context, conflicts);
-      checkAccessibilityConflicts(member, newVisibility, targetClass, membersToMove, conflicts);
+      checkAccessibilityConflicts(member, newVisibility, targetClass, membersToMove, conflicts, ignorePredicate);
     }
   }
 
@@ -65,7 +68,8 @@ public final class RefactoringConflictsUtil {
                                                  @PsiModifier.ModifierConstant @Nullable String newVisibility,
                                                  @Nullable PsiClass targetClass,
                                                  @NotNull Set<? extends PsiMember> membersToMove,
-                                                 @NotNull MultiMap<PsiElement, String> conflicts) {
+                                                 @NotNull MultiMap<PsiElement, String> conflicts,
+                                                 @NotNull Condition<PsiReference> ignorePredicate) {
     PsiModifierList modifierListCopy = member.getModifierList();
     if (modifierListCopy != null) {
       modifierListCopy = (PsiModifierList)modifierListCopy.copy();
@@ -81,16 +85,19 @@ public final class RefactoringConflictsUtil {
       catch (IncorrectOperationException ignore) { } // do nothing and hope for the best
     }
 
-    checkAccessibilityConflicts(member, modifierListCopy, targetClass, membersToMove, conflicts);
+    checkAccessibilityConflicts(member, modifierListCopy, targetClass, membersToMove, conflicts, ignorePredicate);
   }
 
   public static void checkAccessibilityConflicts(@NotNull PsiMember member,
                                                  @Nullable PsiModifierList modifierListCopy,
                                                  @Nullable PsiClass targetClass,
                                                  @NotNull Set<? extends PsiMember> membersToMove,
-                                                 @NotNull MultiMap<PsiElement, String> conflicts) {
+                                                 @NotNull MultiMap<PsiElement, String> conflicts,
+                                                 @NotNull Condition<? super PsiReference> ignorePredicate) {
     for (PsiReference psiReference : ReferencesSearch.search(member)) {
-      checkAccessibilityConflicts(psiReference, member, modifierListCopy, targetClass, membersToMove, conflicts);
+      if (ignorePredicate.value(psiReference)) {
+        checkAccessibilityConflicts(psiReference, member, modifierListCopy, targetClass, membersToMove, conflicts);
+      }
     }
   }
 

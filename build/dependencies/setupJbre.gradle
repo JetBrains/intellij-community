@@ -20,6 +20,7 @@ jbrTasks(jreBuild, jreVersion, targetOs, targetArch, forcedPrefix)
  * Update this method together with:
  *  `setupJdk.gradle`
  *  `org/jetbrains/intellij/build/impl/BundledJreManager.groovy`
+ *  com.jetbrains.gateway.downloader.CodeWithMeClientDownloader#downloadClientAndJdk(java.lang.String, java.lang.String, com.intellij.openapi.progress.ProgressIndicator)
  */
 static def splitJbrBuild(String jreBuild, String version) {
   def split = jreBuild.split('b')
@@ -107,11 +108,11 @@ static def archToDownload(String platform, String targetArch) {
  *  `org/jetbrains/intellij/build/impl/BundledJreManager.groovy`
  */
 static def prefixes(Arch arch, String forcedPrefix) {
-  if (forcedPrefix != null) {
-    [forcedPrefix]
-  }
-  else if (arch == Arch.x86) {
+  if (arch == Arch.x86) {
     ['jbr-']
+  }
+  else if (forcedPrefix != null) {
+    [forcedPrefix]
   }
   else {
     ['jbr_dcevm-']

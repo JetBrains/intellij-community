@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.daemon.impl
 
 import com.intellij.diff.DiffContentFactory
@@ -6,10 +6,10 @@ import com.intellij.diff.DiffManager
 import com.intellij.diff.requests.SimpleDiffRequest
 import com.intellij.ide.JavaUiBundle
 import com.intellij.ide.util.PsiNavigationSupport
+import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.fileTypes.LanguageFileType
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.project.ProjectBundle
 import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.vfs.VirtualFile
@@ -19,9 +19,12 @@ import com.intellij.psi.util.PsiFormatUtil.*
 import com.intellij.ui.EditorNotificationPanel
 import com.intellij.ui.EditorNotifications
 import com.intellij.ui.LightColors
+import com.intellij.util.diff.Diff
 
 class LibrarySourceNotificationProvider : EditorNotifications.Provider<EditorNotificationPanel>() {
+
   private companion object {
+    private val LOG = Logger.getInstance(LibrarySourceNotificationProvider::class.java)
     private val KEY = Key.create<EditorNotificationPanel>("library.source.mismatch.panel")
     private val ANDROID_SDK_PATTERN = ".*/platforms/android-\\d+/android.jar!/.*".toRegex()
 
@@ -55,6 +58,7 @@ class LibrarySourceNotificationProvider : EditorNotifications.Provider<EditorNot
                 DiffManager.getInstance().showDiff(project, request)
               }
             }
+            logMembers(offender)
             return panel
           }
         }
@@ -76,11 +80,40 @@ class LibrarySourceNotificationProvider : EditorNotifications.Provider<EditorNot
     srcMembers.size != clsMembers.size || srcMembers.map(format).sorted() != clsMembers.map(format).sorted()
 
   private fun fields(c: PsiClass) = if (c is PsiExtensibleClass) c.ownFields else c.fields.asList()
-  private fun methods(c: PsiClass) = (if (c is PsiExtensibleClass) c.ownMethods else c.methods.asList()).filter { !defaultInit(it) }
-  private fun defaultInit(it: PsiMethod) = it.isConstructor && it.parameterList.parametersCount == 0
+
+  private fun methods(c: PsiClass) = (if (c is PsiExtensibleClass) c.ownMethods else c.methods.asList()).filterNot(::ignoreMethod)
+
+  private fun ignoreMethod(m: PsiMethod): Boolean {
+    if (m.isConstructor) {
+      return m.parameterList.parametersCount == 0 // default constructor
+    }
+    else {
+      return m.name.contains("$\$bridge") // org.jboss.bridger.Bridger adds ACC_BRIDGE | ACC_SYNTHETIC to such methods
+    }
+  }
+
   private fun inners(c: PsiClass) = if (c is PsiExtensibleClass) c.ownInnerClasses else c.innerClasses.asList()
 
   private fun format(f: PsiField) = formatVariable(f, FIELD, PsiSubstitutor.EMPTY)
+
   private fun format(m: PsiMethod) = formatMethod(m, PsiSubstitutor.EMPTY, METHOD, PARAMETER)
+
   private fun format(c: PsiClass) = formatClass(c, CLASS).removeSuffix(" extends java.lang.Object")
+
+  private fun logMembers(offender: PsiClass) {
+    if (!LOG.isTraceEnabled) {
+      return
+    }
+    val cls = offender.originalElement as? PsiClass ?: return
+    val sourceMembers = formatMembers(offender)
+    val clsMembers = formatMembers(cls)
+    val diff = Diff.linesDiff(sourceMembers.toTypedArray(), clsMembers.toTypedArray()) ?: return
+    LOG.trace("Class: ${cls.qualifiedName}\n$diff")
+  }
+
+  private fun formatMembers(c: PsiClass): List<String> {
+    return fields(c).map(::format).sorted() +
+           methods(c).map(::format).sorted() +
+           inners(c).map(::format).sorted()
+  }
 }

@@ -3,6 +3,7 @@ package com.intellij.openapi.projectRoots.impl.jdkDownloader
 
 import com.intellij.lang.LangBundle
 import com.intellij.openapi.actionSystem.DataProvider
+import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.Task
@@ -18,7 +19,8 @@ import java.nio.file.Path
 import javax.swing.JComponent
 
 data class RuntimeChooserCustomItem(
-  val version: String,
+  override val displayName: String?,
+  override val version: String?,
   override val homeDir: String,
 ) : RuntimeChooserItem(), RuntimeChooserItemWithFixedLocation
 
@@ -65,10 +67,11 @@ object RuntimeChooserCustom {
     object : Task.Modal(null, LangBundle.message("progress.title.choose.ide.runtime.scanning.jdk"), false) {
       override fun run(indicator: ProgressIndicator) {
         RuntimeChooserJreValidator.testNewJdkUnderProgress(
+          allowRunProcesses = false,
           computeHomePath = { sdk.homePath },
           callback = object : RuntimeChooserJreValidatorCallback<Unit> {
-            override fun onSdkResolved(versionString: String, sdkHome: Path) {
-              val newItem = RuntimeChooserCustomItem(versionString, sdkHome.toString())
+            override fun onSdkResolved(displayName: String?, versionString: String, sdkHome: Path) {
+              val newItem = RuntimeChooserCustomItem(displayName, versionString, sdkHome.toString())
               invokeLater {
                 model.addExistingSdkItem(newItem)
               }
@@ -79,6 +82,26 @@ object RuntimeChooserCustom {
                 Messages.showErrorDialog(parent, message, LangBundle.message("dialog.title.choose.ide.runtime"))
               }
             }
+          })
+      }
+    }.queue()
+  }
+
+  fun importDetectedItem(homePath: String, model: RuntimeChooserModel) {
+    object : Task.Backgroundable(null, LangBundle.message("progress.title.choose.ide.runtime.scanning.jdk"), true) {
+      override fun run(indicator: ProgressIndicator) {
+        RuntimeChooserJreValidator.testNewJdkUnderProgress(
+          allowRunProcesses = false,
+          computeHomePath = { homePath },
+          callback = object : RuntimeChooserJreValidatorCallback<Unit> {
+            override fun onSdkResolved(displayName: String?, versionString: String, sdkHome: Path) {
+              val newItem = RuntimeChooserCustomItem(displayName, versionString, sdkHome.toString())
+              invokeLater(ModalityState.any()) {
+                model.addExistingSdkItem(newItem)
+              }
+            }
+
+            override fun onError(message: String) { }
           })
       }
     }.queue()

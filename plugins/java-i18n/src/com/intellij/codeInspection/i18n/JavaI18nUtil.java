@@ -19,6 +19,8 @@ import com.intellij.psi.scope.util.PsiScopesUtil;
 import com.intellij.psi.util.PsiConcatenationUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.ObjectUtils;
+import com.intellij.codeInspection.restriction.AnnotationContext;
+import com.intellij.codeInspection.restriction.StringFlowUtil;
 import kotlin.sequences.SequencesKt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -70,25 +72,15 @@ public final class JavaI18nUtil {
   }
 
   public static boolean mustBePropertyKey(@NotNull UExpression expression, @Nullable Ref<? super UExpression> resourceBundleRef) {
-    expression = NlsInfo.goUp(expression, false);
+    expression = StringFlowUtil.goUp(expression, false, NlsInfo.factory());
     AnnotationContext context = AnnotationContext.fromExpression(expression);
     return context.allItems().anyMatch(owner -> {
       PsiAnnotation annotation = owner.findAnnotation(AnnotationUtil.PROPERTY_KEY);
-      if (annotation != null) {
-        UAnnotation uAnnotation = UastContextKt.toUElement(annotation, UAnnotation.class);
-        if (uAnnotation != null) {
-          if (resourceBundleRef != null) {
-            for (UNamedExpression attribute : uAnnotation.getAttributeValues()) {
-              final String name = attribute.getName();
-              if (AnnotationUtil.PROPERTY_KEY_RESOURCE_BUNDLE_PARAMETER.equals(name)) {
-                resourceBundleRef.set(attribute.getExpression());
-              }
-            }
-          }
-          return true;
-        }
+      if (annotation != null && resourceBundleRef != null) {
+        PsiAnnotationMemberValue attributeValue = annotation.findAttributeValue(AnnotationUtil.PROPERTY_KEY_RESOURCE_BUNDLE_PARAMETER);
+        resourceBundleRef.set(UastContextKt.toUElement(attributeValue, UExpression.class));
       }
-      return false;
+      return annotation != null;
     });
   }
 
@@ -188,10 +180,6 @@ public final class JavaI18nUtil {
       containedInPropertiesFile |= propertiesFile.findPropertyByKey(key) != null;
     }
     return containedInPropertiesFile;
-  }
-
-  public static @NotNull List<PropertiesFile> propertiesFilesByBundleName(@Nullable String resourceBundleName, @NotNull PsiElement context) {
-    return I18nUtil.propertiesFilesByBundleName(resourceBundleName, context);
   }
 
   public static @NotNull Set<String> suggestExpressionOfType(final PsiClassType type, final PsiElement context) {

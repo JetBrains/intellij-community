@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.slicer;
 
 import com.intellij.analysis.AnalysisScope;
@@ -131,6 +131,7 @@ public class SliceTreeTest extends SliceTestCase {
     assertTrue(element instanceof PsiLiteralExpression);
     assertEquals(1111111111, ((PsiLiteral)element).getValue());
   }
+
   public void testLeafExpressionsMoreComplex() throws Exception {
     SliceTreeStructure treeStructure = configureTree("Duplicate");
     SliceNode root = (SliceNode)treeStructure.getRootElement();
@@ -205,79 +206,78 @@ public class SliceTreeTest extends SliceTestCase {
 
     checkStructure(newRoot, "Null Values\n" +
                             "  Value: o\n" +
-                            "    6|String| |l|;\n" +
-                            "      52|l| |=| |d|;\n" +
-                            "        51|void| |set|(|String| |d|)| |{\n" +
-                            "          15|set|(|o|)|;\n" +
+                            "    6|String |l;\n" +
+                            "      52|l = |d|;\n" +
+                            "        51|void| set(String |d|) {\n" +
+                            "          15|set(|o|);\n" +
                             "  Value: other\n" +
-                            "    6|String| |l|;\n" +
-                            "      52|l| |=| |d|;\n" +
-                            "        51|void| |set|(|String| |d|)| |{\n" +
-                            "          24|set|(|other|)|;\n" +
+                            "    6|String |l;\n" +
+                            "      52|l = |d|;\n" +
+                            "        51|void| set(String |d|) {\n" +
+                            "          24|set(|other|);\n" +
                             "  Value: nu()\n" +
-                            "    6|String| |l|;\n" +
-                            "      52|l| |=| |d|;\n" +
-                            "        51|void| |set|(|String| |d|)| |{\n" +
-                            "          29|set|(|nu|(|)|)|;\n" +
+                            "    6|String |l;\n" +
+                            "      52|l = |d|;\n" +
+                            "        51|void| set(String |d|) {\n" +
+                            "          29|set(|nu()|);\n" +
                             "  Value: t\n" +
-                            "    6|String| |l|;\n" +
-                            "      52|l| |=| |d|;\n" +
-                            "        51|void| |set|(|String| |d|)| |{\n" +
-                            "          46|x|.|set|(|t|)|;\n" +
+                            "    6|String |l;\n" +
+                            "      52|l = |d|;\n" +
+                            "        51|void| set(String |d|) {\n" +
+                            "          46|x.set(|t|);\n" +
                             "NotNull Values\n" +
                             "  Value: \"xxx\"\n" +
-                            "    6|String| |l|;\n" +
-                            "      52|l| |=| |d|;\n" +
-                            "        51|void| |set|(|String| |d|)| |{\n" +
-                            "          10|set|(|\"xxx\"|)|;\n" +
+                            "    6|String |l;\n" +
+                            "      52|l = |d|;\n" +
+                            "        51|void| set(String |d|) {\n" +
+                            "          10|set(|\"xxx\"|);\n" +
                             "  Value: new String()\n" +
-                            "    6|String| |l|;\n" +
-                            "      52|l| |=| |d|;\n" +
-                            "        51|void| |set|(|String| |d|)| |{\n" +
-                            "          17|set|(|new| |String|(|)|)|;\n" +
+                            "    6|String |l;\n" +
+                            "      52|l = |d|;\n" +
+                            "        51|void| set(String |d|) {\n" +
+                            "          17|set(|new| String()|);\n" +
                             "  Value: nn()\n" +
-                            "    6|String| |l|;\n" +
-                            "      52|l| |=| |d|;\n" +
-                            "        51|void| |set|(|String| |d|)| |{\n" +
-                            "          18|set|(|nn|(|)|)|;\n" +
+                            "    6|String |l;\n" +
+                            "      52|l = |d|;\n" +
+                            "        51|void| set(String |d|) {\n" +
+                            "          18|set(|nn()|);\n" +
                             "  Value: CON\n" +
-                            "    6|String| |l|;\n" +
-                            "      52|l| |=| |d|;\n" +
-                            "        51|void| |set|(|String| |d|)| |{\n" +
-                            "          19|set|(|CON|)|;\n" +
+                            "    6|String |l;\n" +
+                            "      52|l = |d|;\n" +
+                            "        51|void| set(String |d|) {\n" +
+                            "          19|set(|CON|);\n" +
                             "  Value: nn\n" +
-                            "    6|String| |l|;\n" +
-                            "      52|l| |=| |d|;\n" +
-                            "        51|void| |set|(|String| |d|)| |{\n" +
-                            "          21|set|(|nn|)|;\n" +
+                            "    6|String |l;\n" +
+                            "      52|l = |d|;\n" +
+                            "        51|void| set(String |d|) {\n" +
+                            "          21|set(|nn|);\n" +
                             "  Value: g\n" +
-                            "    6|String| |l|;\n" +
-                            "      52|l| |=| |d|;\n" +
-                            "        51|void| |set|(|String| |d|)| |{\n" +
-                            "          27|set|(|g|)|;\n" +
+                            "    6|String |l;\n" +
+                            "      52|l = |d|;\n" +
+                            "        51|void| set(String |d|) {\n" +
+                            "          27|set(|g|);\n" +
                             "  Value: t == null ? \"null\" : t\n" +
-                            "    6|String| |l|;\n" +
-                            "      52|l| |=| |d|;\n" +
-                            "        51|void| |set|(|String| |d|)| |{\n" +
-                            "          48|x|.|set|(|t| |==| |null| |?| |\"null\"| |:| |t|)|;\n" +
+                            "    6|String |l;\n" +
+                            "      52|l = |d|;\n" +
+                            "        51|void| set(String |d|) {\n" +
+                            "          48|x.set(|t == |null| ? |\"null\"| : t|);\n" +
                             "  Value: d\n" +
-                            "    6|String| |l|;\n" +
-                            "      55|l| |=| |d|;\n" +
+                            "    6|String |l;\n" +
+                            "      55|l = |d|;\n" +
                             "Other Values\n" +
                             "  Value: private String d;\n" +
-                            "    6|String| |l|;\n" +
-                            "      52|l| |=| |d|;\n" +
-                            "        51|void| |set|(|String| |d|)| |{\n" +
-                            "          30|set|(|hz|(|)|)|;\n" +
+                            "    6|String |l;\n" +
+                            "      52|l = |d|;\n" +
+                            "        51|void| set(String |d|) {\n" +
+                            "          30|set(|hz()|);\n" +
                             "            42|return| |d|;\n" +
-                            "              7|private| |String| |d|;\n" +
+                            "              7|private| String |d;\n" +
                             "  Value: String g\n" +
-                            "    6|String| |l|;\n" +
-                            "      52|l| |=| |d|;\n" +
-                            "        51|void| |set|(|String| |d|)| |{\n" +
-                            "          11|set|(|g|)|;\n" +
-                            "            9|public| |X|(|String| |g|)| |{\n" +
-                            "");
+                            "    6|String |l;\n" +
+                            "      52|l = |d|;\n" +
+                            "        51|void| set(String |d|) {\n" +
+                            "          11|set(|g|);\n" +
+                            "            9|public| X(String |g|) {\n");
   }
 
   private static void checkStructure(final SliceNode root, @NonNls String dataExpected) {
@@ -298,14 +298,11 @@ public class SliceTreeTest extends SliceTestCase {
     JavaSliceNullnessAnalyzer.NullAnalysisResult leaves = analyzer.calcNullableLeaves(root, treeStructure, map);
 
     SliceRootNode newRoot = analyzer.createNewTree(leaves, root, map);
-    checkStructure(newRoot,
-        "Null Values\n" +
-        "  Value: null\n" +
-        "    2|String| |l|;\n" +
-        "      4|l| |=| |null|;\n" +
-        "      7|l| |=| |null|;\n" +
-        ""
-                   );
+    checkStructure(newRoot, "Null Values\n" +
+                            "  Value: null\n" +
+                            "    2|String |l;\n" +
+                            "      4|l = |null|;\n" +
+                            "      7|l = |null|;\n");
   }
 
   public void testGroupByLeavesWithLists() throws Exception {
@@ -338,10 +335,12 @@ public class SliceTreeTest extends SliceTestCase {
     Set<String> names = groupByLeaves();
     assertOrderedEquals(Collections.singletonList("\"x\""), assertOneElement(names));
   }
+
   public void testMapValuesTrack() throws Exception {
     Set<String> names = groupByLeaves();
     assertOrderedEquals(Collections.singletonList("\"y\""), assertOneElement(names));
   }
+
   public void testMapKeysTrack() throws Exception {
     Set<String> names = groupByLeaves();
     assertOrderedEquals(Collections.singletonList("\"x\""), assertOneElement(names));

@@ -30,7 +30,7 @@ public class InterfaceMayBeAnnotatedFunctionalInspection extends BaseInspection 
   }
 
   @Override
-  public boolean shouldInspect(PsiFile file) {
+  public boolean shouldInspect(@NotNull PsiFile file) {
     return PsiUtil.isLanguageLevel8OrHigher(file);
   }
 

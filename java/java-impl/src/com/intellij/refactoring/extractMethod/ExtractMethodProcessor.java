@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.extractMethod;
 
 import com.intellij.application.options.CodeStyle;
@@ -10,7 +10,12 @@ import com.intellij.codeInsight.generation.GenerateMembersUtil;
 import com.intellij.codeInsight.highlighting.HighlightManager;
 import com.intellij.codeInsight.intention.AddAnnotationPsiFix;
 import com.intellij.codeInsight.navigation.NavigationUtil;
-import com.intellij.codeInspection.dataFlow.*;
+import com.intellij.codeInspection.dataFlow.DfaNullability;
+import com.intellij.codeInspection.dataFlow.DfaUtil;
+import com.intellij.codeInspection.dataFlow.StandardDataFlowRunner;
+import com.intellij.codeInspection.dataFlow.interpreter.RunnerResult;
+import com.intellij.codeInspection.dataFlow.java.JavaDfaListener;
+import com.intellij.codeInspection.dataFlow.memory.DfaMemoryState;
 import com.intellij.codeInspection.dataFlow.value.DfaValue;
 import com.intellij.codeInspection.redundantCast.RemoveRedundantCastUtil;
 import com.intellij.ide.DataManager;
@@ -33,7 +38,6 @@ import com.intellij.openapi.wm.WindowManager;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.*;
-import com.intellij.psi.controlFlow.ControlFlow;
 import com.intellij.psi.controlFlow.*;
 import com.intellij.psi.impl.source.codeStyle.JavaCodeStyleManagerImpl;
 import com.intellij.psi.scope.processor.VariablesProcessor;
@@ -60,6 +64,7 @@ import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.*;
 
 import java.util.*;
+import java.util.function.Consumer;
 
 import static com.intellij.codeInsight.AnnotationUtil.CHECK_TYPE;
 import static com.intellij.refactoring.util.duplicates.DuplicatesFinder.MatchType;
@@ -217,7 +222,7 @@ public class ExtractMethodProcessor implements MatchProvider {
   /**
    * Invoked in atomic action
    */
-  public boolean prepare(@Nullable Pass<ExtractMethodProcessor> pass) throws PrepareFailedException {
+  public boolean prepare(@Nullable java.util.function.Consumer<ExtractMethodProcessor> pass) throws PrepareFailedException {
     if (myElements.length == 0) return false;
     myExpression = null;
     if (myElements.length == 1 && myElements[0] instanceof PsiExpression) {
@@ -440,16 +445,17 @@ public class ExtractMethodProcessor implements MatchProvider {
     }
     if (returnedExpressions.isEmpty()) return true;
 
-    final DataFlowRunner dfaRunner = new DataFlowRunner(myProject);
-    final StandardInstructionVisitor returnChecker = new StandardInstructionVisitor() {
+    final var dfaRunner = new StandardDataFlowRunner(myProject);
+    final var returnChecker = new JavaDfaListener() {
       @Override
-      protected void checkReturnValue(@NotNull DfaValue value,
-                                      @NotNull PsiExpression expression,
-                                      @NotNull PsiParameterListOwner context,
-                                      @NotNull DfaMemoryState state) {
-        if (context == myCodeFragmentMember &&
+      public void beforeValueReturn(@NotNull DfaValue value,
+                                    @Nullable PsiExpression expression,
+                                    @NotNull PsiElement context,
+                                    @NotNull DfaMemoryState state) {
+        if (context == myCodeFragmentMember && expression != null &&
             returnedExpressions.stream().anyMatch(ret -> PsiTreeUtil.isAncestor(ret, expression, false))) {
-          boolean result = nullsExpected ? state.isNull(value) : state.isNotNull(value);
+          DfaNullability nullability = DfaNullability.fromDfType(state.getDfType(value));
+          boolean result = nullability == (nullsExpected ? DfaNullability.NULL : DfaNullability.NOT_NULL);
           if (!result) {
             dfaRunner.cancel();
           }
@@ -475,26 +481,24 @@ public class ExtractMethodProcessor implements MatchProvider {
   }
 
   private static Nullability inferNullability(@NotNull PsiCodeBlock block, @NotNull PsiExpression expr) {
-    final DataFlowRunner dfaRunner = new DataFlowRunner(block.getProject());
-    
-    class Visitor extends StandardInstructionVisitor {
+    final var dfaRunner = new StandardDataFlowRunner(block.getProject());
+
+    var interceptor = new JavaDfaListener() {
       DfaNullability myNullability = DfaNullability.NOT_NULL;
       boolean myVisited = false;
-      
+
       @Override
-      protected void beforeExpressionPush(@NotNull DfaValue value,
-                                          @NotNull PsiExpression expression,
-                                          @Nullable TextRange range,
-                                          @NotNull DfaMemoryState state) {
-        if (expression == expr && range == null) {
+      public void beforeExpressionPush(@NotNull DfaValue value,
+                                       @NotNull PsiExpression expression,
+                                       @NotNull DfaMemoryState state) {
+        if (expression == expr) {
           myVisited = true;
           myNullability = myNullability.unite(DfaNullability.fromDfType(state.getDfType(value)));
         }
       }
-    }
-    Visitor visitor = new Visitor();
-    final RunnerResult rc = dfaRunner.analyzeMethod(block, visitor);
-    return rc == RunnerResult.OK && visitor.myVisited ? DfaNullability.toNullability(visitor.myNullability) : Nullability.UNKNOWN;
+    };
+    final RunnerResult rc = dfaRunner.analyzeMethod(block, interceptor);
+    return rc == RunnerResult.OK && interceptor.myVisited ? DfaNullability.toNullability(interceptor.myNullability) : Nullability.UNKNOWN;
   }
 
   protected boolean checkOutputVariablesCount() {
@@ -609,7 +613,7 @@ public class ExtractMethodProcessor implements MatchProvider {
   protected void apply(final AbstractExtractDialog dialog) {
     myMethodName = dialog.getChosenMethodName();
     myVariableDatum = dialog.getChosenParameters();
-    myStatic = isStatic() | dialog.isMakeStatic();
+    myStatic = isStatic() || dialog.isMakeStatic();
     myIsChainedConstructor = dialog.isChainedConstructor();
     myMethodVisibility = dialog.getVisibility();
 
@@ -655,7 +659,7 @@ public class ExtractMethodProcessor implements MatchProvider {
       }
 
       @Override
-      protected void checkMethodConflicts(MultiMap<PsiElement, String> conflicts) {
+      protected void checkMethodConflicts(MultiMap<PsiElement, @NlsContexts.DialogMessage String> conflicts) {
         super.checkMethodConflicts(conflicts);
         final VariableData[] parameters = getChosenParameters();
         final Map<String, PsiLocalVariable> vars = new HashMap<>();
@@ -1865,7 +1869,7 @@ public class ExtractMethodProcessor implements MatchProvider {
   }
 
   private boolean chooseTargetClass(PsiElement codeFragment,
-                                    final Pass<ExtractMethodProcessor> extractPass,
+                                    final java.util.function.Consumer<ExtractMethodProcessor> extractPass,
                                     @Nullable PsiClass defaultTargetClass) throws PrepareFailedException {
     final List<PsiVariable> inputVariables = myControlFlowWrapper.getInputVariables(codeFragment, myElements, myOutputVariables);
 
@@ -2036,11 +2040,11 @@ public class ExtractMethodProcessor implements MatchProvider {
     return variable.getName();
   }
 
-  private static boolean shouldAcceptCurrentTarget(Pass<ExtractMethodProcessor> extractPass, PsiElement target) {
+  private static boolean shouldAcceptCurrentTarget(java.util.function.Consumer<ExtractMethodProcessor> extractPass, PsiElement target) {
     return extractPass == null && !(target instanceof PsiAnonymousClass);
   }
 
-  private boolean applyChosenClassAndExtract(List<? extends PsiVariable> inputVariables, @Nullable Pass<? super ExtractMethodProcessor> extractPass)
+  private boolean applyChosenClassAndExtract(List<? extends PsiVariable> inputVariables, @Nullable Consumer<? super ExtractMethodProcessor> extractPass)
     throws PrepareFailedException {
     myStatic = shouldBeStatic();
     final Set<PsiField> fields = new LinkedHashSet<>();
@@ -2055,7 +2059,7 @@ public class ExtractMethodProcessor implements MatchProvider {
     checkCanBeChainedConstructor();
 
     if (extractPass != null) {
-      extractPass.pass(this);
+      extractPass.accept(this);
     }
     return true;
   }

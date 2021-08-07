@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.hints
 
 import com.intellij.codeInsight.CodeInsightBundle
@@ -13,5 +13,6 @@ class ToggleInlayHintsGloballyAction : ToggleAction(CodeInsightBundle.message("i
 
   override fun setSelected(e: AnActionEvent, state: Boolean) {
     InlayHintsSettings.instance().setEnabledGlobally(state)
+    InlayHintsPassFactory.forceHintsUpdateOnNextPass()
   }
 }

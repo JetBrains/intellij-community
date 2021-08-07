@@ -45,7 +45,7 @@ public interface IReparseableElementTypeBase extends ILazyParseableElementTypeBa
 
   /**
    * The same as {@link #isParsable(ASTNode, CharSequence, Language, Project)} but receives original node as a parameter, instead of
-   * parent. Original node may be used to look around for context dependent languages.
+   * parent. Original node may be used to look around for context-dependent languages.
    */
   default boolean isReparseable(@NotNull ASTNode currentNode,
                                 @NotNull CharSequence newText,

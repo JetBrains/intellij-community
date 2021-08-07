@@ -290,13 +290,7 @@ public abstract class AnAction implements PossiblyDumbAware {
    * @param e Carries information on the invocation place and data available
    */
   public void beforeActionPerformedUpdate(@NotNull AnActionEvent e) {
-    boolean worksInInjected = isInInjectedContext();
-    e.setInjectedContext(worksInInjected);
     update(e);
-    if (!e.getPresentation().isEnabled() && worksInInjected) {
-      e.setInjectedContext(false);
-      update(e);
-    }
   }
 
   /**
@@ -334,7 +328,7 @@ public abstract class AnAction implements PossiblyDumbAware {
       if (actionManager != null && actionManager.getId(this) != null) {
         LOG.warn("ShortcutSet of global AnActions should not be changed outside of KeymapManager.\n" +
                  "This is likely not what you wanted to do. Consider setting shortcut in keymap defaults, inheriting from other action " +
-                 "using `use-shortcut-of` or wrapping with EmptyAction.wrap().", new Throwable());
+                 "using `use-shortcut-of` or wrapping with EmptyAction.wrap().", new Throwable(this.toString()));
       }
     }
     myShortcutSet = shortcutSet;

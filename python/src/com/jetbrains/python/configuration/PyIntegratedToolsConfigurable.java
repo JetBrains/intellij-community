@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.configuration;
 
 import com.google.common.collect.Lists;
@@ -40,10 +40,10 @@ import com.jetbrains.python.packaging.PyPackageUtil;
 import com.jetbrains.python.packaging.PyRequirementsKt;
 import com.jetbrains.python.sdk.PythonSdkUtil;
 import com.jetbrains.python.sdk.pipenv.PipenvKt;
-import com.jetbrains.python.testing.PyTestFrameworkService;
-import com.jetbrains.python.testing.PythonTestConfigurationsModel;
-import com.jetbrains.python.testing.TestRunnerService;
-import com.jetbrains.python.testing.VFSTestFrameworkListener;
+import com.jetbrains.python.testing.PyAbstractTestFactory;
+import com.jetbrains.python.testing.settings.PyTestRunConfigurationRenderer;
+import com.jetbrains.python.testing.settings.PyTestRunConfigurationsModel;
+import com.jetbrains.python.testing.PyTestsSharedKt;
 import com.jetbrains.python.ui.PyUiUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -52,17 +52,15 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 import java.io.File;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
+import java.util.*;
 import java.util.List;
 
 public class PyIntegratedToolsConfigurable implements SearchableConfigurable {
   private JPanel myMainPanel;
-  private JComboBox myTestRunnerComboBox;
+  private JComboBox<PyAbstractTestFactory<?>> myTestRunnerComboBox;
   private JComboBox<DocStringFormat> myDocstringFormatComboBox;
-  private PythonTestConfigurationsModel myModel;
-  private PyPackageRequirementsSettings myPackagingSettings;
+  private PyTestRunConfigurationsModel myModel;
+  private final PyPackageRequirementsSettings myPackagingSettings;
   @Nullable private final Module myModule;
   @NotNull private final Project myProject;
   private final PyDocumentationSettings myDocumentationSettings;
@@ -104,7 +102,8 @@ public class PyIntegratedToolsConfigurable implements SearchableConfigurable {
     txtIsRst.setSelected(service.txtIsRst());
     analyzeDoctest.setSelected(myDocumentationSettings.isAnalyzeDoctest());
     renderExternal.setSelected(myDocumentationSettings.isRenderExternalDocumentation());
-    myRequirementsPathField.addBrowseFolderListener(PyBundle.message("configurable.choose.path.to.the.package.requirements.file"), null, myProject,
+    myRequirementsPathField.addBrowseFolderListener(PyBundle.message("configurable.choose.path.to.the.package.requirements.file"), null,
+                                                    myProject,
                                                     FileChooserDescriptorFactory.createSingleLocalFileDescriptor());
     myRequirementsPathField.setText(getRequirementsPath());
 
@@ -138,15 +137,10 @@ public class PyIntegratedToolsConfigurable implements SearchableConfigurable {
       public ValidationResult check() {
         final Sdk sdk = PythonSdkUtil.findPythonSdk(myModule);
         if (sdk != null) {
-          final Object selectedItem = myTestRunnerComboBox.getSelectedItem();
-
-          for (final String framework : PyTestFrameworkService.getFrameworkNamesArray()) {
-            if (PyTestFrameworkService.getSdkReadableNameByFramework(framework).equals(selectedItem)) {
-              if (!VFSTestFrameworkListener.getInstance().isTestFrameworkInstalled(sdk, framework)) {
-                return new ValidationResult(PyBundle.message("runcfg.testing.no.test.framework", framework),
-                                            createQuickFix(sdk, facetErrorPanel, framework));
-              }
-            }
+          var factory = myModel.getSelected();
+          if (factory != null && !factory.isFrameworkInstalled(sdk)) {
+            return new ValidationResult(PyBundle.message("runcfg.testing.no.test.framework", factory.getName()),
+                                        createQuickFix(sdk, facetErrorPanel, factory.getPackageRequired()));
           }
         }
         return ValidationResult.OK;
@@ -162,13 +156,11 @@ public class PyIntegratedToolsConfigurable implements SearchableConfigurable {
       public void run(JComponent place) {
         final PyPackageManagerUI ui = new PyPackageManagerUI(myProject, sdk, new PyPackageManagerUI.Listener() {
           @Override
-          public void started() {}
+          public void started() { }
 
           @Override
           public void finished(List<ExecutionException> exceptions) {
             if (exceptions.isEmpty()) {
-              VFSTestFrameworkListener.getInstance().setTestFrameworkInstalled(true, sdk.getHomePath(),
-                                                                               name);
               facetErrorPanel.getValidatorsManager().validate();
             }
           }
@@ -192,9 +184,8 @@ public class PyIntegratedToolsConfigurable implements SearchableConfigurable {
 
   @Override
   public JComponent createComponent() {
-    List<String> configurations = TestRunnerService.getInstance(myModule).getConfigurations();
-    myModel = new PythonTestConfigurationsModel(configurations,
-                                                TestRunnerService.getInstance(myModule).getProjectConfiguration(), myModule);
+    myModel = PyTestRunConfigurationsModel.Companion.create(myModule);
+    myTestRunnerComboBox.setRenderer(new PyTestRunConfigurationRenderer(PythonSdkUtil.findPythonSdk(myModule)));
 
     updateConfigurations();
     initErrorValidation();
@@ -208,7 +199,7 @@ public class PyIntegratedToolsConfigurable implements SearchableConfigurable {
 
   @Override
   public boolean isModified() {
-    if (myTestRunnerComboBox.getSelectedItem() != myModel.getTestRunner()) {
+    if (!Objects.equals(myTestRunnerComboBox.getSelectedItem(), myModel.getTestRunner())) {
       return true;
     }
     if (myDocstringFormatComboBox.getSelectedItem() != myDocumentationSettings.getFormat()) {

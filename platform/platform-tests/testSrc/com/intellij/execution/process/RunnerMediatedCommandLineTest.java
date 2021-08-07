@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.process;
 
+import com.intellij.execution.ExecutionException;
 import com.intellij.execution.GeneralCommandLineTest;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.openapi.util.io.IoTestUtil;
@@ -9,7 +10,7 @@ import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
 
-import static org.junit.Assume.assumeTrue;
+import static org.junit.Assert.assertTrue;
 
 public class RunnerMediatedCommandLineTest extends GeneralCommandLineTest {
   @Before
@@ -17,12 +18,11 @@ public class RunnerMediatedCommandLineTest extends GeneralCommandLineTest {
     IoTestUtil.assumeWindows();
   }
 
-  @NotNull
   @Override
-  protected GeneralCommandLine postProcessCommandLine(@NotNull GeneralCommandLine commandLine) {
-    boolean injected = RunnerMediator.injectRunnerCommand(super.postProcessCommandLine(commandLine), false);
-    assumeTrue("runner mediator not found", injected);
-    return commandLine;
+  protected @NotNull ProcessHandler createProcessHandler(@NotNull GeneralCommandLine commandLine) throws ExecutionException {
+    KillableProcessHandler processHandler = new KillableProcessHandler(commandLine, true);
+    assertTrue(RunnerMediator.isRunnerCommandInjected(commandLine));
+    return processHandler;
   }
 
   @Ignore @Test @Override

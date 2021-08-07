@@ -26,6 +26,7 @@ import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.progress.ProcessCanceledException;
@@ -330,7 +331,7 @@ public class RunAnythingPopupUI extends BigPopupUI {
     }
 
     VirtualFile firstContentRoot = getFirstContentRoot(module);
-    if (firstContentRoot == null) {
+    if (firstContentRoot == null || !firstContentRoot.isDirectory()) {
       return projectBaseDir;
     }
 
@@ -792,7 +793,6 @@ public class RunAnythingPopupUI extends BigPopupUI {
 
     ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar("run.anything.toolbar", actionGroup, true);
     toolbar.setLayoutPolicy(ActionToolbar.NOWRAP_LAYOUT_POLICY);
-    toolbar.updateActionsImmediately();
     JComponent toolbarComponent = toolbar.getComponent();
     toolbarComponent.setOpaque(false);
     res.add(toolbarComponent);

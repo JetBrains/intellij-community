@@ -49,6 +49,7 @@
     <listener class="com.intellij.debugger.impl.DebuggerManagerImpl$DebuggerRunContentWithExecutorListener" topic="com.intellij.execution.ui.RunContentWithExecutorListener"/>
     <listener class="com.intellij.debugger.impl.HotSwapManager$HotSwapDebuggerManagerListener" topic="com.intellij.debugger.impl.DebuggerManagerListener"/>
     <listener class="com.intellij.debugger.ui.HotSwapUIImpl$HotSwapDebuggerManagerListener" topic="com.intellij.debugger.impl.DebuggerManagerListener"/>
+    <listener class="com.intellij.packaging.impl.artifacts.ArtifactVirtualFileListener" topic="com.intellij.openapi.vfs.newvfs.BulkFileListener"/>
   </projectListeners>
 
   <extensionPoints>
@@ -215,8 +216,7 @@
                     interface="com.intellij.debugger.engine.JavaBreakpointHandlerFactory" dynamic="true"/>
 
     <extensionPoint qualifiedName="com.intellij.debugger.positionManagerFactory"
-                    interface="com.intellij.debugger.PositionManagerFactory"
-                    area="IDEA_PROJECT" dynamic="true"/>
+                    interface="com.intellij.debugger.PositionManagerFactory" dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.debugger.jvmSmartStepIntoHandler"
                     interface="com.intellij.debugger.actions.JvmSmartStepIntoHandler" dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.debugger.jvmSteppingCommandProvider"
@@ -266,23 +266,32 @@
     <!-- See com.intellij.codeInspection.javaDoc.JavaDocLocalInspection -->
     <extensionPoint qualifiedName="com.intellij.javaDocNotNecessary" interface="com.intellij.openapi.util.Condition" dynamic="true"/>
 
+    <extensionPoint qualifiedName="com.intellij.starter.moduleImporter" interface="com.intellij.ide.starters.StarterModuleImporter" dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.newProjectWizard.buildSystem.java" interface="com.intellij.ide.projectWizard.generators.JavaBuildSystemType" dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.jarRepositoryAuthenticationDataProvider"
+                    interface="com.intellij.jarRepository.JarRepositoryAuthenticationDataProvider" dynamic="true"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
-
     <notificationGroup id="jps configuration error"
                        toolWindowId="Build"
                        displayType="TOOL_WINDOW"
                        bundle="messages.JavaCompilerBundle"
                        key="notification.group.title.jps.cannot.start.compiler" />
+    <notificationGroup id="JDK resolve problems"
+                       toolWindowId="Build"
+                       displayType="BALLOON" />
 
     <registryKey key="ide.jps.use.build.tool.window" defaultValue="true" description="Enables 'Build' toolwindow for JPS compilation messages"/>
     <applicationService serviceImplementation="com.intellij.compiler.server.BuildManager" preload="true"/>
+    <applicationService serviceInterface="com.intellij.execution.filters.ExceptionLineParserFactory"
+            serviceImplementation="com.intellij.execution.filters.ExceptionLineParserFactoryImpl"/>
     <compilableFileTypesProvider implementation="com.intellij.compiler.impl.javaCompiler.JavaCompilableFileTypesProvider" />
     <postStartupActivity implementation="com.intellij.compiler.server.BuildManager$BuildManagerStartupActivity"/>
     <postStartupActivity implementation="com.intellij.ide.SetupJavaProjectFromSourcesActivity" />
 
     <projectService serviceInterface="com.intellij.packaging.artifacts.ArtifactManager" serviceImplementation="com.intellij.packaging.impl.artifacts.ArtifactManagerImpl" preload="await"/>
+    <projectServiceContainerCustomizer implementation="com.intellij.packaging.impl.artifacts.workspacemodel.LegacyBridgeArtifactManagerRedefiner"/>
     <backgroundPostStartupActivity implementation="com.intellij.packaging.impl.artifacts.ArtifactTypeFeatureCollector"/>
     <projectService serviceInterface="com.intellij.compiler.CompilerConfiguration" serviceImplementation="com.intellij.compiler.CompilerConfigurationImpl" preload="await"/>
     <projectService serviceInterface="com.intellij.compiler.ProblemsView" serviceImplementation="com.intellij.compiler.impl.ProblemsViewImpl"/>
@@ -342,7 +351,6 @@
     <projectService serviceImplementation="com.intellij.jarRepository.RemoteRepositoriesConfiguration"/>
     <projectService serviceImplementation="com.intellij.jarRepository.services.MavenRepositoryServicesManager"/>
     <projectService serviceImplementation="com.intellij.psi.util.ProjectIconsAccessor"/>
-    <projectService serviceImplementation="com.intellij.testIntegration.TestFailedLineManager"/>
     <projectService serviceImplementation="com.intellij.codeInsight.JavaProjectCodeInsightSettings"/>
     <projectService serviceImplementation="com.intellij.javadoc.JavadocGenerationManager"/>
     <projectService serviceInterface="com.intellij.codeInspection.ex.EntryPointsManager"
@@ -361,8 +369,6 @@
                     serviceImplementation="com.intellij.psi.codeStyle.JavaCodeStyleSettingsFacadeImpl"/>
     <projectService serviceInterface="com.intellij.psi.JavaCodeFragmentFactory"
                     serviceImplementation="com.intellij.psi.impl.JavaCodeFragmentFactoryImpl"/>
-    <projectService serviceInterface="com.intellij.codeInsight.javadoc.JavaDocCodeStyle"
-                    serviceImplementation="com.intellij.codeInsight.javadoc.JavaDocCodeStyleImpl"/>
     <projectService serviceInterface="com.intellij.openapi.roots.LanguageLevelProjectExtension"
                     serviceImplementation="com.intellij.openapi.roots.impl.LanguageLevelProjectExtensionImpl"/>
     <projectService serviceInterface="com.intellij.psi.codeStyle.JavaCodeStyleManager"
@@ -373,6 +379,7 @@
                     serviceImplementation="com.intellij.codeInsight.ExternalAnnotationsManagerImpl"/>
     <projectService serviceInterface="com.intellij.openapi.roots.CompilerProjectExtension"
                     serviceImplementation="com.intellij.openapi.roots.impl.CompilerProjectExtensionImpl"/>
+    <registryKey key="java.additional.external.annotations.root.url" defaultValue="" description="URL of a zip file or a directory containing additional external annotations which will be applied to all modules and libraries"/>
 
     <renameHandler implementation="com.intellij.ide.projectView.impl.RenameModuleHandler"/>
     <renameHandler implementation="com.intellij.refactoring.rename.RenameModuleAndDirectoryHandler"/>
@@ -383,6 +390,8 @@
         implementation="com.intellij.openapi.roots.ui.configuration.artifacts.sourceItems.ArtifactsSourceItemsProvider"/>
     <packaging.artifactType implementation="com.intellij.packaging.impl.artifacts.JarArtifactType" order="first"/>
     <packaging.artifactType implementation="com.intellij.packaging.impl.artifacts.PlainArtifactType" order="last"/>
+    <packaging.artifactType implementation="com.intellij.packaging.jlink.JLinkArtifactType"/>
+    <packaging.artifactPropertiesProvider implementation="com.intellij.packaging.jlink.JLinkArtifactPropertiesProvider"/>
     <compiler.buildTargetScopeProvider implementation="com.intellij.packaging.impl.compiler.ArtifactBuildTargetScopeProvider"/>
 
     <projectTaskRunner implementation="com.intellij.task.impl.JpsProjectTaskRunner" id="jps" order="last"/>
@@ -429,8 +438,12 @@
     <statistics.counterUsagesCollector groupId="java.find.usages" version="2"/>
     <statistics.counterUsagesCollector groupId="java.extract.method" version="2"/>
     <statistics.counterUsagesCollector implementationClass="com.intellij.refactoring.extractMethod.newImpl.inplace.InplaceExtractMethodCollector"/>
+    <statistics.counterUsagesCollector implementationClass="com.intellij.debugger.actions.JavaDebuggerActionsCollector"/>
+    <statistics.counterUsagesCollector implementationClass="com.intellij.codeInsight.editorActions.smartEnter.JavaSmartEnterProcessor$FixerUsageCollector"/>
+    <statistics.counterUsagesCollector implementationClass="com.intellij.refactoring.introduceVariable.IntroduceVariableUsagesCollector" version="3"/>
     <statistics.applicationUsagesCollector implementation="com.intellij.debugger.settings.DebuggerSettingsStatisticsCollector"/>
     <statistics.applicationUsagesCollector implementation="com.intellij.refactoring.JavaRefactoringUsageCollector"/>
+    <statistics.projectUsagesCollector implementation="com.intellij.codeInspection.deadCode.EntryPointsUsageCollector"/>
 
     <applicationService serviceInterface="com.intellij.packaging.elements.PackagingElementFactory"
                         serviceImplementation="com.intellij.packaging.impl.elements.PackagingElementFactoryImpl"/>
@@ -483,8 +496,7 @@
     <!-- Compiler -->
     <projectConfigurable groupId="build" groupWeight="130" instance="com.intellij.compiler.options.CompilerConfigurable"
                          id="project.propCompiler" order="after project"
-                         key="compiler.configurable.display.name" bundle="messages.JavaCompilerBundle"
-                         childrenEPName="com.intellij.compilerSettingsFactory">
+                         key="compiler.configurable.display.name" bundle="messages.JavaCompilerBundle">
       <configurable instance="com.intellij.openapi.compiler.options.ExcludedEntriesConfigurable"
                     id="reference.projectsettings.compiler.excludes"
                     key="reference.projectsettings.compiler.excludes"
@@ -500,6 +512,13 @@
       <configurable instance="com.intellij.compiler.options.RmicConfigurable" id="reference.projectsettings.compiler.rmicompiler"
                     key="rmi.compiler.description" bundle="messages.JavaCompilerBundle"/>
     </projectConfigurable>
+
+    <actionOnSaveInfoProvider id="BuildOnSaveInfoProvider"
+                              implementation="com.intellij.compiler.options.BuildOnSaveInfo$BuildOnSaveInfoProvider"
+                              order="after FormatOnSaveInfoProvider, after EsLintOnSaveInfoProvider, after PrettierOnSaveInfoProvider, after FileWatcherOnSaveInfoProvider, after UploadOnSaveInfoProvider"/>
+
+    <advancedSetting id="compiler.automake.allow.when.app.running" groupKey="advanced.settings.group.compiler" default="false"
+                     bundle="messages.JavaBundle"/>
 
     <editorNotificationProvider implementation="com.intellij.codeInsight.daemon.impl.AttachSourcesNotificationProvider"/>
     <editorNotificationProvider implementation="com.intellij.codeInsight.daemon.impl.LibrarySourceNotificationProvider"/>
@@ -547,8 +566,6 @@
     <bundledKeymap file="NetBeans 6.5.xml"/>
     <keymapExtension implementation="com.intellij.debugger.actions.DebuggerKeymapExtension"/>
 
-    <moduleExtension implementation="com.intellij.openapi.roots.LanguageLevelModuleExtensionImpl"/>
-
     <orderRootType implementation="com.intellij.openapi.roots.NativeLibraryOrderRootType"/>
 
     <codeUsageScopeOptimizer implementation="com.intellij.compiler.JavaCompilerReferencesCodeUsageScopeOptimizer"/>
@@ -566,7 +583,7 @@
     <externalSystem.beforeRunTaskImporter implementation="com.intellij.openapi.externalSystem.service.project.settings.BuildArtifactsTaskImporter"/>
     <externalSystemConfigurationHandler implementation="com.intellij.openapi.externalSystem.service.project.settings.ArtifactsImporter"/>
     <externalSystem.moduleDataServiceExtension implementation="com.intellij.openapi.externalSystem.service.project.ModuleDataServiceJavaExtension"/>
-    <externalSystem.runConfigurationExtension implementation="com.intellij.execution.ExternalSystemRunConfigurationJavaExtension"/>
+    <externalSystem.runConfigurationEx implementation="com.intellij.execution.ExternalSystemRunConfigurationJavaExtension"/>
     <applicationService serviceInterface="com.intellij.openapi.externalSystem.service.execution.ExternalSystemJdkProvider"
                         serviceImplementation="com.intellij.openapi.externalSystem.service.execution.ExternalSystemJavaSdkProvider"
                         overrides="true"/>
@@ -752,6 +769,9 @@
     <registryKey key="java.refactoring.extractMethod.newImplementation"
                  defaultValue="true"
                  description="Enable experimental extract method implementation"/>
+    <registryKey key="java.refactoring.extractMethod.newDuplicatesExtractor"
+                 defaultValue="false"
+                 description="Enable experimental extract duplicates implementation"/>
     <registryKey key="java.refactoring.extractMethod.inplace"
                  defaultValue="true"
                  description="Enable experimental extract method inplace mode"/>
@@ -823,11 +843,13 @@
 
     <intentionAction>
       <className>com.intellij.testIntegration.createTest.GenerateMissedTestsAction</className>
-      <category>Java/Declaration</category>
+      <bundleName>messages.JavaBundle</bundleName>
+      <categoryKey>intention.category.declaration</categoryKey>
     </intentionAction>
     <intentionAction>
       <className>com.intellij.testIntegration.createTest.CreateTestAction</className>
-      <category>Java/Declaration</category>
+      <bundleName>messages.JavaBundle</bundleName>
+      <categoryKey>intention.category.declaration</categoryKey>
     </intentionAction>
     <applicationService serviceInterface="com.intellij.profile.codeInspection.InspectionProfileManager"
                         serviceImplementation="com.intellij.profile.codeInspection.JavaAwareInspectionProfileManager"
@@ -852,7 +874,6 @@
                     overrides="true"/>
 
     <programRunner id="defaultDebugRunner" implementation="com.intellij.debugger.impl.GenericDebuggerRunner" order="last"/>
-
 
     <javaModuleSystem implementation="com.intellij.psi.impl.JavaPlatformModuleSystem"/>
     <java.error.fix errorCode="lambda.variable.must.be.final" implementationClass="com.intellij.codeInspection.streamMigration.SimplifyForEachInspection$ForEachNonFinalFix"/>
@@ -986,13 +1007,13 @@
     <renamePsiElementProcessor implementation="com.intellij.refactoring.rename.RenameJavaMethodProcessor" id="javamethod"/>
     <renamePsiElementProcessor implementation="com.intellij.refactoring.rename.RenameJavaVariableProcessor" id="javaVariable"/>
     <renamePsiElementProcessor implementation="com.intellij.refactoring.rename.RenameJavaModuleProcessor"/>
-    <renamePsiElementProcessor implementation="com.intellij.refactoring.rename.RenameAliasingPomTargetProcessor"/>
+    <renamePsiElementProcessor implementation="com.intellij.refactoring.rename.RenameAliasingPomTargetProcessor" id="aliasingPom"/>
     <findUsagesHandlerFactory implementation="com.intellij.find.findUsages.JavaFindUsagesHandlerFactory" id="java" order="last, before default"/>
     <updateAddedFileProcessor implementation="com.intellij.psi.impl.file.JavaUpdateAddedFileProcessor"/>
     <rename.inplace.resolveSnapshotProvider language="JAVA" implementationClass="com.intellij.refactoring.rename.inplace.JavaResolveSnapshotProvider"/>
     <renameHandler implementation="com.intellij.refactoring.rename.DirectoryAsPackageRenameHandler"/>
     <renameHandler implementation="com.intellij.refactoring.rename.RenameWrongRefHandler"/>
-    <gotoTargetRendererProvider implementation="com.intellij.codeInsight.navigation.JavaGotoTargetRendererProvider"/>
+    <gotoTargetPresentationProvider implementation="com.intellij.codeInsight.navigation.JavaGotoTargetPresentationProvider"/>
     <typeDeclarationProvider implementation="com.intellij.codeInsight.navigation.actions.JavaTypeDeclarationProvider"/>
     <navbar implementation="com.intellij.ide.navigationToolbar.JavaNavBarExtension"/>
     <gotoDeclarationHandler implementation="com.intellij.codeInsight.navigation.actions.GotoBreakContinueHandler"/>
@@ -1061,7 +1082,8 @@
     <highlightUsagesHandlerFactory implementation="com.intellij.codeInsight.highlighting.HighlightSuppressedWarningsFactory"/>
     <highlightUsagesHandlerFactory implementation="com.intellij.codeInsight.highlighting.HighlightExceptionsHandlerFactory"/>
     <highlightUsagesHandlerFactory implementation="com.intellij.codeInsight.highlighting.HighlightRecordComponentsRecordFactory"/>
-    <moduleExtension implementation="com.intellij.openapi.roots.impl.CompilerModuleExtensionImpl"/>
+    <workspaceModel.moduleExtensionBridgeFactory
+      implementation="com.intellij.workspaceModel.ide.legacyBridge.impl.java.CompilerModuleExtensionBridge$Companion"/>
     <projectExtension implementation="com.intellij.openapi.roots.impl.LanguageLevelProjectExtensionImpl$MyProjectExtension"/>
     <liveTemplateContext implementation="com.intellij.codeInsight.template.JavaCodeContextType$Generic"/>
     <liveTemplateContext implementation="com.intellij.codeInsight.template.JavaCodeContextType$Statement"/>
@@ -1303,11 +1325,6 @@
     <java.error.fix errorCode="lambda.variable.must.be.final" implementationClass="com.intellij.codeInsight.daemon.impl.quickfix.VariableAccessFromInnerClassJava10Fix"/>
     <stripTrailingSpacesFilterFactory implementation="com.intellij.codeEditor.JavaStripTrailingSpacesFilterFactory"/>
 
-    <localInspection groupPath="Java" language="JAVA" shortName="TestFailedLine"
-                     enabledByDefault="true" level="WARNING"
-                     groupBundle="messages.InspectionsBundle" groupKey="group.names.junit.issues"
-                     implementationClass="com.intellij.execution.testframework.TestFailedLineInspection"
-                     key="inspection.test.failed.line.display.name" bundle="messages.JavaBundle"/>
     <localInspection language="JAVA" shortName="MoveFieldAssignmentToInitializer" enabledByDefault="true" level="INFORMATION"
                      groupPath="Java" groupBundle="messages.InspectionsBundle" groupKey="group.names.code.style.issues"
                      implementationClass="com.intellij.codeInspection.MoveFieldAssignmentToInitializerInspection"
@@ -1392,6 +1409,12 @@
                      bundle="messages.JavaBundle"
                      key="inspection.redundant.file.creation.display.name"
                      implementationClass="com.intellij.codeInspection.RedundantFileCreationInspection"/>
+    <localInspection groupPath="Java" language="JAVA" shortName="ScheduledThreadPoolExecutorWithZeroCoreThreads"
+                     groupBundle="messages.InspectionsBundle"
+                     groupKey="group.names.probable.bugs" enabledByDefault="true" level="WARNING"
+                     bundle="messages.JavaBundle"
+                     key="scheduled.thread.pool.executor.with.zero.core.threads.display.name"
+                     implementationClass="com.intellij.codeInspection.ScheduledThreadPoolExecutorWithZeroCoreThreadsInspection"/>
     <localInspection groupPath="Java" language="JAVA" shortName="SlowAbstractSetRemoveAll"
                      groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.performance.issues" enabledByDefault="true" level="WARNING"
@@ -1449,7 +1472,7 @@
                      key="inspection.inconsistent.text.block.indent.name"/>
     <localInspection groupPath="Java" language="JAVA" shortName="SimplifyCollector"
                      groupBundle="messages.InspectionsBundle"
-                     groupKey="group.names.declaration.redundancy" enabledByDefault="true" level="WARNING"
+                     groupKey="group.names.verbose.or.redundant.code.constructs" enabledByDefault="true" level="WARNING"
                      implementationClass="com.intellij.codeInspection.SimplifyCollectorInspection"
                      key="inspection.simplify.collector.display.name" bundle="messages.JavaBundle"/>
     <localInspection groupPathKey="group.path.names.java.language.level.specific.issues.and.migration.aids" language="JAVA" shortName="TrailingWhitespacesInTextBlock"
@@ -1460,22 +1483,22 @@
                      key="inspection.trailing.whitespaces.in.text.block.name"/>
     <localInspection groupPath="Java" language="JAVA" shortName="SimplifyOptionalCallChains"
                      groupBundle="messages.InspectionsBundle"
-                     groupKey="group.names.declaration.redundancy" enabledByDefault="true" level="WARNING"
+                     groupKey="group.names.verbose.or.redundant.code.constructs" enabledByDefault="true" level="WARNING"
                      implementationClass="com.intellij.codeInspection.SimplifyOptionalCallChainsInspection"
                      key="inspection.simplify.optional.call.chains.display.name" bundle="messages.JavaBundle"/>
     <localInspection groupPath="Java" language="JAVA" shortName="SimplifyStreamApiCallChains"
                      groupBundle="messages.InspectionsBundle"
-                     groupKey="group.names.declaration.redundancy" enabledByDefault="true" level="WARNING"
+                     groupKey="group.names.verbose.or.redundant.code.constructs" enabledByDefault="true" level="WARNING"
                      implementationClass="com.intellij.codeInspection.SimplifyStreamApiCallChainsInspection"
                      key="inspection.simplify.stream.api.call.chains.display.name" bundle="messages.JavaBundle"/>
     <localInspection groupPath="Java" language="JAVA" shortName="ObviousNullCheck"
                      groupBundle="messages.InspectionsBundle"
-                     groupKey="group.names.declaration.redundancy" enabledByDefault="true" level="WARNING"
+                     groupKey="group.names.verbose.or.redundant.code.constructs" enabledByDefault="true" level="WARNING"
                      implementationClass="com.intellij.codeInspection.ObviousNullCheckInspection"
                      key="inspection.obvious.null.check.display.name" bundle="messages.JavaBundle"/>
     <localInspection groupPath="Java" language="JAVA" shortName="RedundantStreamOptionalCall"
                      groupBundle="messages.InspectionsBundle"
-                     groupKey="group.names.declaration.redundancy" enabledByDefault="true" level="WARNING"
+                     groupKey="group.names.verbose.or.redundant.code.constructs" enabledByDefault="true" level="WARNING"
                      implementationClass="com.intellij.codeInspection.RedundantStreamOptionalCallInspection"
                      key="inspection.redundant.stream.optional.call.display.name" bundle="messages.JavaBundle"/>
     <localInspection groupPath="Java" language="JAVA" shortName="RedundantRecordConstructor" enabledByDefault="true" level="WARNING"
@@ -1490,7 +1513,7 @@
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.code.style.issues"
                      bundle="messages.JavaBundle" key="inspection.message.record.can.be.converted.to.class"
                      implementationClass="com.intellij.codeInspection.RecordCanBeClassInspection"/>
-    <localInspection groupPathKey="group.path.names.java.language.level.specific.issues.and.migration.aids" language="JAVA" 
+    <localInspection groupPathKey="group.path.names.java.language.level.specific.issues.and.migration.aids" language="JAVA"
                      shortName="ClassCanBeRecord" enabledByDefault="true" level="WEAK WARNING"
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.language.level.specific.issues.and.migration.aids15"
                      bundle="messages.JavaBundle" key="class.can.be.record.display.name"
@@ -1638,10 +1661,6 @@
                      groupKey="group.names.declaration.redundancy" groupBundle="messages.InspectionsBundle"
                      enabledByDefault="true" level="WARNING"
                      implementationClass="com.intellij.codeInspection.DefaultAnnotationParamInspection" />
-    <localInspection groupPath="Java" language="JAVA" shortName="ConvertToBasicLatin" bundle="messages.JavaBundle" key="inspection.convert.to.basic.latin"
-                     groupKey="group.names.i18n" groupBundle="messages.InspectionsBundle"
-                     enabledByDefault="true" level="INFORMATION"
-                     implementationClass="com.intellij.codeInspection.ConvertToBasicLatinInspection" />
     <localInspection groupPath="Java" language="JAVA" shortName="SillyAssignment" bundle="messages.JavaBundle" key="inspection.variable.assigned.to.itself.display.name"
                      groupKey="group.names.declaration.redundancy" groupBundle="messages.InspectionsBundle"
                      enabledByDefault="true" level="WARNING"
@@ -1653,6 +1672,9 @@
     <localInspection groupPathKey="group.path.names.probable.bugs" language="JAVA" shortName="NullableProblems" bundle="messages.JavaBundle" key="inspection.nullable.problems.display.name"
                      groupKey="group.names.nullability.problems" groupBundle="messages.InspectionsBundle" enabledByDefault="true" level="WARNING"
                      implementationClass="com.intellij.codeInspection.nullable.NullableStuffInspection" />
+    <localInspection groupPathKey="group.path.names.probable.bugs" language="JAVA" shortName="UnsatisfiedRange" bundle="messages.JavaAnalysisBundle" key="inspection.unsatisfied.range.display.name"
+                     groupKey="group.names.nullability.problems" groupBundle="messages.InspectionsBundle" enabledByDefault="true" level="WARNING"
+                     implementationClass="com.intellij.codeInspection.dataFlow.UnsatisfiedRangeInspection" />
     <localInspection groupPathKey="group.path.names.probable.bugs" language="JAVA" shortName="NotNullFieldNotInitialized" bundle="messages.JavaBundle" key="inspection.notnull.field.not.initialized.display.name"
                      groupKey="group.names.nullability.problems" groupBundle="messages.InspectionsBundle" enabledByDefault="true" level="WARNING"
                      implementationClass="com.intellij.codeInspection.nullable.NotNullFieldNotInitializedInspection" />
@@ -1821,279 +1843,357 @@
 
     <intentionAction>
       <className>com.intellij.codeInsight.intention.impl.SplitIfAction</className>
-      <category>Java/Control Flow</category>
+      <bundleName>messages.JavaBundle</bundleName>
+      <categoryKey>intention.category.control.flow</categoryKey>
     </intentionAction>
     <intentionAction>
       <className>com.intellij.codeInsight.intention.impl.ExtractSetFromComparisonChainAction</className>
-      <category>Java/Declaration</category>
+      <bundleName>messages.JavaBundle</bundleName>
+      <categoryKey>intention.category.declaration</categoryKey>
     </intentionAction>
     <intentionAction>
       <className>com.intellij.codeInsight.intention.impl.SurroundAutoCloseableAction</className>
-      <category>Java/Try Statements</category>
+      <bundleName>messages.JavaBundle</bundleName>
+      <categoryKey>intention.category.try.statements</categoryKey>
     </intentionAction>
     <intentionAction>
       <className>com.intellij.codeInsight.daemon.impl.quickfix.ConvertToStringLiteralAction</className>
-      <category>Java/Strings</category>
+      <bundleName>messages.JavaBundle</bundleName>
+      <categoryKey>intention.category.strings</categoryKey>
     </intentionAction>
     <intentionAction>
       <className>com.intellij.codeInsight.intention.impl.BreakStringOnLineBreaksIntentionAction</className>
-      <category>Java/Strings</category>
+      <bundleName>messages.JavaBundle</bundleName>
+      <categoryKey>intention.category.strings</categoryKey>
     </intentionAction>
     <intentionAction>
       <className>com.intellij.codeInsight.intention.impl.ReplaceCastWithVariableAction</className>
-      <category>Java/Imports</category>
-    </intentionAction>
-    <intentionAction>
-      <className>com.intellij.codeInsight.intention.impl.ConvertRelativePathToAbsoluteIntentionAction</className>
-      <category>Other</category>
+      <bundleName>messages.JavaBundle</bundleName>
+      <categoryKey>intention.category.declaration</categoryKey>
     </intentionAction>
     <intentionAction>
       <className>com.intellij.codeInsight.intention.impl.SortContentAction</className>
-      <category>Other</category>
-    </intentionAction>
-    <intentionAction>
-      <className>com.intellij.codeInsight.intention.impl.ConvertAbsolutePathToRelativeIntentionAction</className>
-      <category>Other</category>
+      <bundleName>messages.JavaBundle</bundleName>
+      <categoryKey>intention.category.other</categoryKey>
     </intentionAction>
     <intentionAction>
       <className>com.intellij.codeInsight.intention.impl.AddJavadocIntention</className>
-      <category>Java/Declaration</category>
+      <bundleName>messages.JavaBundle</bundleName>
+      <categoryKey>intention.category.declaration</categoryKey>
     </intentionAction>
     <intentionAction>
       <className>com.intellij.codeInsight.intention.impl.ConvertColorRepresentationIntentionAction</className>
-      <category>Java/Declaration</category>
+      <bundleName>messages.JavaBundle</bundleName>
+      <categoryKey>intention.category.declaration</categoryKey>
     </intentionAction>
     <intentionAction>
       <className>com.intellij.codeInspection.actions.ReplaceImplementsWithStaticImportAction</className>
-      <category>Java/Declaration</category>
+      <bundleName>messages.JavaBundle</bundleName>
+      <categoryKey>intention.category.declaration</categoryKey>
     </intentionAction>
     <intentionAction>
       <className>com.intellij.codeInspection.actions.UnimplementInterfaceAction</className>
-      <category>Java/Declaration</category>
+      <bundleName>messages.JavaBundle</bundleName>
+      <categoryKey>intention.category.declaration</categoryKey>
     </intentionAction>
     <intentionAction>
       <className>com.intellij.codeInsight.intention.impl.ExpandStaticImportAction</className>
-      <category>Java/Imports</category>
+      <bundleName>messages.JavaBundle</bundleName>
+      <categoryKey>intention.category.imports</categoryKey>
     </intentionAction>
     <intentionAction>
       <className>com.intellij.codeInsight.intention.impl.AddExplicitTypeArgumentsIntention</className>
-      <category>Java/Declaration</category>
+      <bundleName>messages.JavaBundle</bundleName>
+      <categoryKey>intention.category.declaration</categoryKey>
     </intentionAction>
     <intentionAction>
       <className>com.intellij.codeInsight.intention.impl.AddSingleMemberStaticImportAction</className>
-      <category>Java/Imports</category>
+      <bundleName>messages.JavaBundle</bundleName>
+      <categoryKey>intention.category.imports</categoryKey>
     </intentionAction>
     <intentionAction>
       <className>com.intellij.codeInsight.intention.impl.AddOnDemandStaticImportAction</className>
-      <category>Java/Imports</category>
+      <bundleName>messages.JavaBundle</bundleName>
+      <categoryKey>intention.category.imports</categoryKey>
     </intentionAction>
     <intentionAction>
       <className>com.intellij.codeInsight.intention.impl.ConcatenationToMessageFormatAction</className>
-      <category>Java/I18N</category>
+      <bundleName>messages.JavaBundle</bundleName>
+      <categoryKey>intention.category.i18n</categoryKey>
     </intentionAction>
     <intentionAction>
       <className>com.intellij.codeInsight.intention.impl.SimplifyBooleanExpressionAction</className>
-      <category>Java/Boolean</category>
+      <bundleName>messages.JavaBundle</bundleName>
+      <categoryKey>intention.category.conditional.operator</categoryKey>
     </intentionAction>
     <intentionAction>
       <className>com.intellij.codeInsight.intention.impl.EncapsulateFieldAction</className>
-      <category>Java/Refactorings</category>
+      <bundleName>messages.JavaBundle</bundleName>
+      <categoryKey>intention.category.refactorings</categoryKey>
+    </intentionAction>
+    <intentionAction>
+      <className>com.intellij.refactoring.replaceConstructorWithFactory.ReplaceConstructorWithFactoryAction</className>
+      <bundleName>messages.JavaBundle</bundleName>
+      <categoryKey>intention.category.refactorings</categoryKey>
+    </intentionAction>
+    <intentionAction>
+      <className>com.intellij.refactoring.replaceConstructorWithBuilder.ReplaceConstructorWithBuilderAction</className>
+      <bundleName>messages.JavaBundle</bundleName>
+      <categoryKey>intention.category.refactorings</categoryKey>
     </intentionAction>
     <intentionAction>
       <className>com.intellij.codeInsight.intention.impl.IntroduceVariableIntentionAction</className>
-      <category>Java/Refactorings</category>
+      <bundleName>messages.JavaBundle</bundleName>
+      <categoryKey>intention.category.refactorings</categoryKey>
     </intentionAction>
     <intentionAction>
       <className>com.intellij.codeInsight.intention.impl.ExtractMethodIntentionAction</className>
-      <category>Java/Refactorings</category>
+      <bundleName>messages.JavaBundle</bundleName>
+      <categoryKey>intention.category.refactorings</categoryKey>
     </intentionAction>
     <intentionAction>
       <className>com.intellij.codeInsight.daemon.impl.quickfix.DefineParamsDefaultValueAction</className>
-      <category>Java/Declaration</category>
+      <bundleName>messages.JavaBundle</bundleName>
+      <categoryKey>intention.category.declaration</categoryKey>
     </intentionAction>
     <intentionAction>
       <className>com.intellij.codeInsight.daemon.impl.quickfix.AddRuntimeExceptionToThrowsAction</className>
-      <category>Java/Declaration</category>
+      <bundleName>messages.JavaBundle</bundleName>
+      <categoryKey>intention.category.declaration</categoryKey>
     </intentionAction>
     <intentionAction>
       <className>com.intellij.testIntegration.intention.MoveInitializerToSetUpMethodAction</className>
-      <category>Java/Declaration</category>
+      <bundleName>messages.JavaBundle</bundleName>
+      <categoryKey>intention.category.junit</categoryKey>
     </intentionAction>
     <intentionAction>
       <className>com.intellij.codeInsight.intention.impl.MoveInitializerToConstructorAction</className>
-      <category>Java/Declaration</category>
+      <bundleName>messages.JavaBundle</bundleName>
+      <categoryKey>intention.category.declaration</categoryKey>
     </intentionAction>
     <intentionAction>
       <className>com.intellij.codeInsight.intention.impl.SplitDeclarationAction</className>
-      <category>Java/Declaration</category>
+      <bundleName>messages.JavaBundle</bundleName>
+      <categoryKey>intention.category.declaration</categoryKey>
     </intentionAction>
     <intentionAction>
       <className>com.intellij.codeInsight.intention.impl.CopyAbstractMethodImplementationAction</className>
-      <category>Java/Declaration</category>
+      <bundleName>messages.JavaBundle</bundleName>
+      <categoryKey>intention.category.declaration</categoryKey>
     </intentionAction>
     <intentionAction>
       <className>com.intellij.codeInsight.intention.impl.ImplementAbstractMethodAction</className>
-      <category>Java/Declaration</category>
+      <bundleName>messages.JavaBundle</bundleName>
+      <categoryKey>intention.category.declaration</categoryKey>
     </intentionAction>
     <intentionAction>
       <className>com.intellij.codeInsight.intention.impl.CreateSubclassAction</className>
-      <category>Java/Declaration</category>
+      <bundleName>messages.JavaBundle</bundleName>
+      <categoryKey>intention.category.declaration</categoryKey>
     </intentionAction>
     <intentionAction>
       <className>com.intellij.codeInsight.daemon.impl.quickfix.CreateCastExpressionFromInstanceofAction</className>
-      <category>Java/Declaration</category>
+      <bundleName>messages.JavaBundle</bundleName>
+      <categoryKey>intention.category.expressions</categoryKey>
     </intentionAction>
     <intentionAction>
       <className>com.intellij.codeInsight.daemon.impl.quickfix.CreateLocalVarFromInstanceofAction</className>
-      <category>Java/Declaration</category>
+      <bundleName>messages.JavaBundle</bundleName>
+      <categoryKey>intention.category.declaration</categoryKey>
     </intentionAction>
     <intentionAction>
       <className>com.intellij.codeInsight.intention.impl.BindFieldsFromParametersAction</className>
-      <category>Java/Declaration</category>
+      <bundleName>messages.JavaBundle</bundleName>
+      <categoryKey>intention.category.declaration</categoryKey>
     </intentionAction>
     <intentionAction>
       <className>com.intellij.codeInsight.intention.impl.AssignFieldFromParameterAction</className>
-      <category>Java/Declaration</category>
+      <bundleName>messages.JavaBundle</bundleName>
+      <categoryKey>intention.category.declaration</categoryKey>
     </intentionAction>
     <intentionAction>
       <className>com.intellij.codeInsight.intention.impl.CreateFieldFromParameterAction</className>
-      <category>Java/Declaration</category>
+      <bundleName>messages.JavaBundle</bundleName>
+      <categoryKey>intention.category.declaration</categoryKey>
     </intentionAction>
     <intentionAction>
       <className>com.intellij.codeInsight.intention.impl.SealClassAction</className>
-      <category>Java/Declaration</category>
+      <bundleName>messages.JavaBundle</bundleName>
+      <categoryKey>intention.category.declaration</categoryKey>
     </intentionAction>
     <intentionAction>
       <className>com.intellij.codeInsight.intention.impl.UnwrapElseBranchAction</className>
-      <category>Java/Control Flow</category>
+      <bundleName>messages.JavaBundle</bundleName>
+      <categoryKey>intention.category.control.flow</categoryKey>
     </intentionAction>
     <intentionAction>
       <className>com.intellij.codeInsight.intention.impl.ConvertCompareToToEqualsIntention</className>
-      <category>Java/Control Flow</category>
+      <bundleName>messages.JavaBundle</bundleName>
+      <categoryKey>intention.category.expressions</categoryKey>
     </intentionAction>
     <intentionAction>
       <className>com.intellij.codeInsight.intention.impl.SwapIfStatementsIntentionAction</className>
-      <category>Java/Control Flow</category>
+      <bundleName>messages.JavaBundle</bundleName>
+      <categoryKey>intention.category.control.flow</categoryKey>
     </intentionAction>
     <intentionAction>
       <className>com.intellij.codeInsight.intention.impl.CreateSwitchIntention</className>
-      <category>Java/Control Flow</category>
+      <bundleName>messages.JavaBundle</bundleName>
+      <categoryKey>intention.category.control.flow</categoryKey>
     </intentionAction>
     <intentionAction>
       <className>com.intellij.codeInsight.intention.impl.DeannotateIntentionAction</className>
-      <category>Java/Annotations</category>
+      <bundleName>messages.JavaBundle</bundleName>
+      <categoryKey>intention.category.annotations</categoryKey>
     </intentionAction>
     <intentionAction>
       <className>com.intellij.codeInsight.daemon.impl.quickfix.IterateOverIterableIntention</className>
-      <category>Java/Control Flow</category>
+      <bundleName>messages.JavaBundle</bundleName>
+      <categoryKey>intention.category.control.flow</categoryKey>
     </intentionAction>
     <intentionAction>
       <className>com.intellij.codeInsight.MakeAnnotationExternal</className>
-      <category>Java/Annotations</category>
+      <bundleName>messages.JavaBundle</bundleName>
+      <categoryKey>intention.category.annotations</categoryKey>
       <descriptionDirectoryName>MakeAnnotationExternal</descriptionDirectoryName>
     </intentionAction>
     <intentionAction>
       <className>com.intellij.codeInsight.MakeExternalAnnotationExplicit</className>
-      <category>Java/Annotations</category>
+      <bundleName>messages.JavaBundle</bundleName>
+      <categoryKey>intention.category.annotations</categoryKey>
       <descriptionDirectoryName>MakeExternalAnnotationExplicit</descriptionDirectoryName>
     </intentionAction>
     <intentionAction>
       <className>com.intellij.codeInsight.MakeInferredAnnotationExplicit</className>
-      <category>Java/Annotations</category>
+      <bundleName>messages.JavaBundle</bundleName>
+      <categoryKey>intention.category.annotations</categoryKey>
       <descriptionDirectoryName>MakeInferredAnnotationExplicit</descriptionDirectoryName>
     </intentionAction>
     <intentionAction>
       <className>com.intellij.codeInspection.dataFlow.EditContractIntention</className>
-      <category>Java/Annotations</category>
+      <bundleName>messages.JavaBundle</bundleName>
+      <categoryKey>intention.category.annotations</categoryKey>
       <descriptionDirectoryName>EditContractIntention</descriptionDirectoryName>
     </intentionAction>
     <intentionAction>
       <className>com.intellij.codeInspection.dataFlow.EditRangeIntention</className>
-      <category>Java/Annotations</category>
+      <bundleName>messages.JavaBundle</bundleName>
+      <categoryKey>intention.category.annotations</categoryKey>
       <descriptionDirectoryName>EditRangeIntention</descriptionDirectoryName>
     </intentionAction>
     <intentionAction>
       <className>com.intellij.codeInsight.intention.impl.AnnotateIntentionAction</className>
-      <category>Java/Annotations</category>
+      <bundleName>messages.JavaBundle</bundleName>
+      <categoryKey>intention.category.annotations</categoryKey>
     </intentionAction>
     <intentionAction>
       <className>com.intellij.codeInsight.intention.impl.ExtractIfConditionAction</className>
-      <category>Java/Control Flow</category>
+      <bundleName>messages.JavaBundle</bundleName>
+      <categoryKey>intention.category.control.flow</categoryKey>
     </intentionAction>
     <intentionAction>
       <className>com.intellij.codeInsight.intention.impl.UnrollLoopAction</className>
-      <category>Java/Control Flow</category>
+      <bundleName>messages.JavaBundle</bundleName>
+      <categoryKey>intention.category.control.flow</categoryKey>
     </intentionAction>
     <intentionAction>
       <className>com.intellij.codeInsight.intention.impl.CollapseIntoLoopAction</className>
-      <category>Java/Control Flow</category>
+      <bundleName>messages.JavaBundle</bundleName>
+      <categoryKey>intention.category.control.flow</categoryKey>
     </intentionAction>
     <intentionAction>
       <className>com.intellij.codeInsight.intention.impl.MoveIntoIfBranchesAction</className>
-      <category>Java/Control Flow</category>
+      <bundleName>messages.JavaBundle</bundleName>
+      <categoryKey>intention.category.control.flow</categoryKey>
     </intentionAction>
     <intentionAction>
       <className>com.intellij.codeInsight.intention.impl.InvertIfConditionAction</className>
-      <category>Java/Control Flow</category>
+      <bundleName>messages.JavaBundle</bundleName>
+      <categoryKey>intention.category.control.flow</categoryKey>
     </intentionAction>
     <intentionAction>
       <className>com.intellij.codeInsight.intention.impl.ComposeFunctionChainAction</className>
-      <category>Java/Refactorings</category>
+      <bundleName>messages.JavaBundle</bundleName>
+      <categoryKey>intention.category.refactorings</categoryKey>
     </intentionAction>
     <intentionAction>
       <className>com.intellij.codeInsight.intention.impl.ExtractChainedMapAction</className>
-      <category>Java/Streams</category>
+      <bundleName>messages.JavaBundle</bundleName>
+      <categoryKey>intention.category.streams</categoryKey>
     </intentionAction>
     <intentionAction>
       <className>com.intellij.codeInsight.intention.impl.InlineStreamMapAction</className>
-      <category>Java/Streams</category>
+      <bundleName>messages.JavaBundle</bundleName>
+      <categoryKey>intention.category.streams</categoryKey>
     </intentionAction>
     <intentionAction>
       <className>com.intellij.codeInsight.intention.impl.MergeFilterChainAction</className>
-      <category>Java/Streams</category>
+      <bundleName>messages.JavaBundle</bundleName>
+      <categoryKey>intention.category.streams</categoryKey>
     </intentionAction>
     <intentionAction>
       <className>com.intellij.codeInsight.intention.impl.SplitFilterAction</className>
-      <category>Java/Streams</category>
+      <bundleName>messages.JavaBundle</bundleName>
+      <categoryKey>intention.category.streams</categoryKey>
     </intentionAction>
     <intentionAction>
       <className>com.intellij.codeInsight.intention.impl.ChangeUIDAction</className>
-      <category>Serialization</category>
+      <bundleName>messages.JavaBundle</bundleName>
+      <categoryKey>intention.category.expressions</categoryKey>
     </intentionAction>
     <intentionAction>
       <className>com.intellij.codeInsight.intention.impl.SplitSwitchBranchWithSeveralCaseValuesAction</className>
-      <category>Java/Control Flow</category>
+      <bundleName>messages.JavaBundle</bundleName>
+      <categoryKey>intention.category.control.flow</categoryKey>
     </intentionAction>
     <intentionAction>
       <className>com.intellij.codeInsight.intention.impl.singlereturn.ConvertToSingleReturnAction</className>
-      <category>Java/Control Flow</category>
+      <bundleName>messages.JavaBundle</bundleName>
+      <categoryKey>intention.category.control.flow</categoryKey>
     </intentionAction>
     <intentionAction>
       <className>com.intellij.codeInsight.intention.impl.WrapWithUnmodifiableAction</className>
-      <category>Java/Other</category>
+      <bundleName>messages.JavaBundle</bundleName>
+      <categoryKey>intention.category.collections</categoryKey>
     </intentionAction>
     <intentionAction>
       <className>com.intellij.codeInsight.intention.impl.lists.JavaChopParametersAction</className>
-      <category>Java/Other</category>
+      <bundleName>messages.JavaBundle</bundleName>
+      <categoryKey>intention.category.code.style</categoryKey>
     </intentionAction>
     <intentionAction>
       <className>com.intellij.codeInsight.intention.impl.lists.JavaChopArgumentsAction</className>
-      <category>Java/Other</category>
+      <bundleName>messages.JavaBundle</bundleName>
+      <categoryKey>intention.category.code.style</categoryKey>
     </intentionAction>
     <intentionAction>
       <className>com.intellij.codeInsight.intention.impl.lists.JavaJoinParametersAction</className>
-      <category>Java/Other</category>
+      <bundleName>messages.JavaBundle</bundleName>
+      <categoryKey>intention.category.code.style</categoryKey>
     </intentionAction>
     <intentionAction>
       <className>com.intellij.codeInsight.intention.impl.lists.JavaJoinArgumentsAction</className>
-      <category>Java/Other</category>
+      <bundleName>messages.JavaBundle</bundleName>
+      <categoryKey>intention.category.code.style</categoryKey>
+    </intentionAction>
+    <intentionAction>
+      <className>com.intellij.codeInsight.intention.impl.lists.JavaChopRecordComponentsAction</className>
+      <bundleName>messages.JavaBundle</bundleName>
+      <categoryKey>intention.category.code.style</categoryKey>
+    </intentionAction>
+    <intentionAction>
+      <className>com.intellij.codeInsight.intention.impl.lists.JavaJoinRecordComponentsAction</className>
+      <bundleName>messages.JavaBundle</bundleName>
+      <categoryKey>intention.category.code.style</categoryKey>
     </intentionAction>
     <intentionAction>
       <className>com.intellij.codeInsight.intention.impl.ConvertCompactConstructorToCanonicalAction</className>
-      <category>Java/Declaration</category>
+      <bundleName>messages.JavaBundle</bundleName>
+      <categoryKey>intention.category.declaration</categoryKey>
     </intentionAction>
     <externalAnnotationsArtifactsResolver implementation="com.intellij.jarRepository.ExternalAnnotationsRepositoryResolver"/>
     <errorQuickFixProvider implementation="com.intellij.codeInsight.daemon.impl.analysis.JavaErrorQuickFixProvider"/>
+    <highlightErrorFilter implementation="com.intellij.codeInsight.daemon.impl.analysis.JavaHighlightErrorFilter"/>
 
     <searchEverywhereResultsEqualityProvider implementation="com.intellij.ide.JavaClassAndFileEqualityProvider"/>
 
@@ -2105,9 +2205,10 @@
         implementation="com.intellij.codeInsight.externalAnnotation.location.JBBundledAnnotationsProvider"/>
     <jreProvider implementation="com.intellij.execution.ui.BundledJreProvider"/>
     <registryKey key="ide.java.show.bundled.runtime" defaultValue="true" description="Enables using bundled JetBrains Runtime for execution"/>
+    <codeInsight.inlayProvider language="JAVA" implementationClass="com.intellij.codeInsight.hints.JavaCodeAuthorInlayHintsProvider"/>
     <codeInsight.inlayProvider language="JAVA" implementationClass="com.intellij.codeInsight.daemon.impl.JavaCodeVisionProvider"/>
     <codeInsight.inlayProvider language="JAVA" implementationClass="com.intellij.codeInsight.daemon.problems.pass.ProjectProblemHintProvider"/>
-    <statistics.counterUsagesCollector groupId="java.lens" version="2"/>
+    <statistics.counterUsagesCollector implementationClass="com.intellij.codeInsight.daemon.impl.JavaCodeVisionUsageCollector"/>
     <notificationGroup id="Clean artifact" displayType="BALLOON"/>
     <notificationGroup id="Compiler" displayType="NONE"/>
     <notificationGroup id="Build Profiler" displayType="STICKY_BALLOON"/>
@@ -2121,11 +2222,21 @@
     <notificationGroup id="Build Script Found" displayType="STICKY_BALLOON"/>
     <notificationGroup id="Java Preview Features" displayType="BALLOON"/>
     <notificationGroup id="Remove redundant exports/opens" displayType="BALLOON"/>
+    <notificationGroup id="Setup SDK" displayType="BALLOON"/>
 
     <compiler.task implementation="com.intellij.execution.scratch.JavaScratchCompilationSupport"/>
     <registryKey key="load.maven.dependencies.timeout" defaultValue="120" description="How long (in minutes) idea will wait for results of synchronized maven dependencies resolution"/>
     <readerModeProvider implementation="com.intellij.ide.impl.JavaInlaysReaderModeProvider"/>
     <referenceInjector implementation="com.intellij.java.JvmMethodNameReferenceInjector"/>
+
+    <newProjectWizard implementation="com.intellij.ide.projectWizard.generators.JavaNewProjectWizard" order="first"/>
+    <newProjectWizard.buildSystem.java implementation="com.intellij.ide.projectWizard.generators.IntelliJJavaBuildSystemType"/>
+
+    <registryKey key="starters.dependency.update.host"
+                 defaultValue="https://frameworks.jetbrains.com"
+                 description="The host is used to download dependency config updates for framework starters"/>
+
+    <dependencyCollector kind="java" implementation="com.intellij.ide.JavaDependencyCollector"/>
   </extensions>
 
   <extensions defaultExtensionNs="org.jetbrains">

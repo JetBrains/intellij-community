@@ -18,6 +18,7 @@ import com.intellij.openapi.fileEditor.TextEditor
 import com.intellij.openapi.options.ShowSettingsUtil
 import com.intellij.openapi.project.DumbAwareToggleAction
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.isNotificationSilentMode
 import com.intellij.openapi.ui.popup.JBPopupListener
 import com.intellij.openapi.ui.popup.LightweightWindowEvent
 import com.intellij.openapi.util.SystemInfo
@@ -97,7 +98,7 @@ private class ReaderModeActionProvider : InspectionWidgetActionProvider {
         }
 
         editor.project?.let { p ->
-          if (!ReaderModeSettings.instance(p).enabled) return@let
+          if (!ReaderModeSettings.instance(p).enabled || isNotificationSilentMode(p)) return@let
 
           val connection = p.messageBus.connect(p)
           val gotItTooltip = GotItTooltip("reader.mode.got.it", LangBundle.message("text.reader.mode.got.it.popup"), p)
@@ -122,8 +123,7 @@ private class ReaderModeActionProvider : InspectionWidgetActionProvider {
       }
 
     override fun isSelected(e: AnActionEvent): Boolean {
-      val project = e.project ?: return false
-      return ReaderModeSettings.instance(project).enabled
+      return true
     }
 
     override fun setSelected(e: AnActionEvent, state: Boolean) {

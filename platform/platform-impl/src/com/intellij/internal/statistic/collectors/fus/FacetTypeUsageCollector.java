@@ -5,7 +5,10 @@ import com.intellij.facet.Facet;
 import com.intellij.facet.FacetManager;
 import com.intellij.facet.FacetType;
 import com.intellij.internal.statistic.beans.MetricEvent;
-import com.intellij.internal.statistic.eventLog.FeatureUsageData;
+import com.intellij.internal.statistic.eventLog.EventLogGroup;
+import com.intellij.internal.statistic.eventLog.events.EventField;
+import com.intellij.internal.statistic.eventLog.events.EventFields;
+import com.intellij.internal.statistic.eventLog.events.VarargEventId;
 import com.intellij.internal.statistic.eventLog.validator.ValidationResultType;
 import com.intellij.internal.statistic.eventLog.validator.rules.EventContext;
 import com.intellij.internal.statistic.eventLog.validator.rules.impl.CustomValidationRule;
@@ -24,15 +27,16 @@ import java.util.HashSet;
 import java.util.Set;
 
 public class FacetTypeUsageCollector extends ProjectUsagesCollector {
-  @NotNull
-  @Override
-  public String getGroupId() {
-    return "module.facets";
-  }
+  private static final EventLogGroup GROUP = new EventLogGroup("module.facets", 5);
+
+  private static final EventField<String> FACET_TYPE = EventFields.StringValidatedByCustomRule("facet", "facets_type");
+  private static final VarargEventId MODULE = GROUP.registerVarargEvent(
+    "module.with.facet", FACET_TYPE, EventFields.PluginInfo
+  );
 
   @Override
-  public int getVersion() {
-    return 4;
+  public EventLogGroup getGroup() {
+    return GROUP;
   }
 
   @NotNull
@@ -45,7 +49,7 @@ public class FacetTypeUsageCollector extends ProjectUsagesCollector {
       }
     }
     return ContainerUtil.map2Set(
-      facets, facet -> new MetricEvent("module.with.facet", new FeatureUsageData().addData("facet", facet))
+      facets, facet -> MODULE.metric(FACET_TYPE.with(facet))
     );
   }
 

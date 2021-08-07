@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.sh.shellcheck;
 
 import com.intellij.execution.ExecutionException;
@@ -26,14 +26,12 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.sh.ShLanguage;
 import com.intellij.sh.settings.ShSettings;
-import com.intellij.sh.statistics.ShFeatureUsagesCollector;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.download.DownloadableFileDescription;
 import com.intellij.util.download.DownloadableFileService;
 import com.intellij.util.download.FileDownloader;
 import com.intellij.util.io.Decompressor;
 import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -47,40 +45,39 @@ import java.util.TreeMap;
 import static com.intellij.sh.ShBundle.message;
 import static com.intellij.sh.ShBundle.messagePointer;
 import static com.intellij.sh.ShLanguage.NOTIFICATION_GROUP_ID;
+import static com.intellij.sh.statistics.ShCounterUsagesCollector.EXTERNAL_ANNOTATOR_DOWNLOADED_EVENT_ID;
 
 public final class ShShellcheckUtil {
-  @NonNls private static final Logger LOG = Logger.getInstance(ShShellcheckUtil.class);
+  private static final Logger LOG = Logger.getInstance(ShShellcheckUtil.class);
+
   private static final Key<Boolean> UPDATE_NOTIFICATION_SHOWN = Key.create("SHELLCHECK_UPDATE");
-  private static final String FEATURE_ACTION_ID = "ExternalAnnotatorDownloaded";
-  private static final String WINDOWS_EXTENSION = ".exe";
-  static final @NlsSafe String SHELLCHECK = "shellcheck";
-  static final @NlsSafe String OLD_SHELLCHECK = "old_shellcheck";
-  static final String SHELLCHECK_VERSION = "0.7.1-1";
-  private static final String SHELLCHECK_VERSION_FOR_UPDATE = "0.7.1";
-  static final String SHELLCHECK_ARCHIVE_EXTENSION = ".tar.gz";
-  static final @NlsSafe String SHELLCHECK_URL = "https://cache-redirector.jetbrains.com/jetbrains.bintray.com/" +
-                                       "intellij-third-party-dependencies/" +
-                                       "org/jetbrains/intellij/deps/shellcheck/";
-  private static final String DOWNLOAD_PATH = PathManager.getPluginsPath() + File.separator + ShLanguage.INSTANCE.getID();
+          static final @NlsSafe String SHELLCHECK = "shellcheck";
+          static final @NlsSafe String SHELLCHECK_BIN = SystemInfo.isWindows ? SHELLCHECK + ".exe" : SHELLCHECK;
+  private static final String SHELLCHECK_VERSION = "0.7.1";
+  private static final String SHELLCHECK_ARTIFACT_VERSION = SHELLCHECK_VERSION + "-1";
+  private static final String SHELLCHECK_ARCHIVE_EXTENSION = ".tar.gz";
+  private static final String SHELLCHECK_URL =
+    "https://cache-redirector.jetbrains.com/intellij-dependencies/org/jetbrains/intellij/deps/shellcheck/shellcheck/";
 
   public static void download(@Nullable Project project, @NotNull Runnable onSuccess, @NotNull Runnable onFailure) {
     download(project, onSuccess, onFailure, false);
   }
 
   private static void download(@Nullable Project project, @NotNull Runnable onSuccess, @NotNull Runnable onFailure, boolean withReplace) {
-    File directory = new File(DOWNLOAD_PATH);
+    File directory = new File(PathManager.getPluginsPath(), ShLanguage.INSTANCE.getID());
     if (!directory.exists()) {
       //noinspection ResultOfMethodCallIgnored
       directory.mkdirs();
     }
 
-    File shellcheck = new File(DOWNLOAD_PATH + File.separator + SHELLCHECK + (SystemInfo.isWindows ? WINDOWS_EXTENSION : ""));
-    File oldShellcheck = new File(DOWNLOAD_PATH + File.separator + OLD_SHELLCHECK + (SystemInfo.isWindows ? WINDOWS_EXTENSION : ""));
+    File shellcheck = new File(directory, SHELLCHECK_BIN);
+    File oldShellcheck = new File(directory, "old_" + SHELLCHECK_BIN);
     if (shellcheck.exists()) {
       if (withReplace) {
         boolean successful = renameOldShellcheck(shellcheck, oldShellcheck, onFailure);
         if (!successful) return;
-      } else {
+      }
+      else {
         setupShellcheckPath(shellcheck, onSuccess, onFailure);
         return;
       }
@@ -101,11 +98,11 @@ public final class ShShellcheckUtil {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
         try {
-          List<Pair<File, DownloadableFileDescription>> pairs = downloader.download(new File(DOWNLOAD_PATH));
+          List<Pair<File, DownloadableFileDescription>> pairs = downloader.download(directory);
           Pair<File, DownloadableFileDescription> first = ContainerUtil.getFirstItem(pairs);
           File file = first != null ? first.first : null;
           if (file != null) {
-            String path = decompressShellcheck(file.getCanonicalPath(), directory);
+            String path = decompressShellcheck(file, directory);
             if (StringUtil.isNotEmpty(path)) {
               FileUtil.setExecutable(new File(path));
               ShSettings.setShellcheckPath(path);
@@ -114,7 +111,7 @@ public final class ShShellcheckUtil {
                 FileUtil.delete(oldShellcheck);
               }
               ApplicationManager.getApplication().invokeLater(onSuccess);
-              ShFeatureUsagesCollector.logFeatureUsage(FEATURE_ACTION_ID);
+              EXTERNAL_ANNOTATOR_DOWNLOADED_EVENT_ID.log();
             }
           }
         }
@@ -133,7 +130,7 @@ public final class ShShellcheckUtil {
   private static void setupShellcheckPath(@NotNull File shellcheck, @NotNull Runnable onSuccess, @NotNull Runnable onFailure) {
     try {
       String path = ShSettings.getShellcheckPath();
-      String shellcheckPath = shellcheck.getCanonicalPath();
+      String shellcheckPath = shellcheck.getPath();
       if (StringUtil.isNotEmpty(path) && path.equals(shellcheckPath)) {
         LOG.debug("Shellcheck already downloaded");
       }
@@ -217,7 +214,7 @@ public final class ShShellcheckUtil {
       }));
     notification.addAction(NotificationAction.createSimple(messagePointer("sh.skip.version"), () -> {
       notification.expire();
-      ShSettings.setSkippedShellcheckVersion(SHELLCHECK_VERSION_FOR_UPDATE);
+      ShSettings.setSkippedShellcheckVersion(SHELLCHECK_VERSION);
     }));
     Notifications.Bus.notify(notification, project);
   }
@@ -233,7 +230,7 @@ public final class ShShellcheckUtil {
       ProcessOutput processOutput = ExecUtil.execAndGetOutput(commandLine, 3000);
 
       String stdout = processOutput.getStdout();
-      return !stdout.contains(SHELLCHECK_VERSION_FOR_UPDATE) && !ShSettings.getSkippedShellcheckVersion().equals(SHELLCHECK_VERSION_FOR_UPDATE);
+      return !stdout.contains(SHELLCHECK_VERSION) && !ShSettings.getSkippedShellcheckVersion().equals(SHELLCHECK_VERSION);
     }
     catch (ExecutionException e) {
       LOG.debug("Exception in process execution", e);
@@ -241,45 +238,19 @@ public final class ShShellcheckUtil {
     return false;
   }
 
-  @NotNull
-  static String decompressShellcheck(@NotNull String tarPath, File directory) throws IOException {
-    File archive = new File(tarPath);
+  static @NotNull String decompressShellcheck(File tarPath, File directory) throws IOException {
+    new Decompressor.Tar(tarPath).extract(directory);
 
-    Decompressor.Tar tar = new Decompressor.Tar(archive);
-    File tmpDir = new File(directory, "tmp");
-    tar.postProcessor(outputFile -> {
-      try {
-        FileUtil.copyDir(outputFile.getParent().toFile(), directory);
-      }
-      catch (IOException e) {
-        LOG.warn("Can't decompressor shellcheck", e);
-      }
-    });
-    tar.extract(tmpDir);
+    FileUtil.delete(tarPath);  // cleaning up
 
-    // Cleaning tmp dir and archive
-    FileUtil.delete(tmpDir);
-    FileUtil.delete(archive);
-
-    File shellcheck = new File(directory, SHELLCHECK + (SystemInfo.isWindows ? WINDOWS_EXTENSION : ""));
-    return shellcheck.exists() ? shellcheck.getCanonicalPath() : "";
+    File shellcheck = new File(directory, SHELLCHECK_BIN);
+    return shellcheck.exists() ? shellcheck.getPath() : "";
   }
 
-  @NlsSafe
-  @Nullable
-  private static String getShellcheckDistributionLink() {
-    String platform = getPlatform();
+  static @NlsSafe @Nullable String getShellcheckDistributionLink() {
+    String platform = SystemInfo.isMac ? "mac" : SystemInfo.isWindows ? "windows" : SystemInfo.isLinux ? "linux" : null;
     if (platform == null) return null;
-    return SHELLCHECK_URL + SHELLCHECK_VERSION + "/" + platform + SHELLCHECK_ARCHIVE_EXTENSION;
-  }
-
-  @NlsSafe
-  @Nullable
-  private static String getPlatform() {
-    if (SystemInfo.isMac) return "mac";
-    if (SystemInfo.isLinux) return "linux";
-    if (SystemInfo.isWindows) return "windows";
-    return null;
+    return SHELLCHECK_URL + SHELLCHECK_ARTIFACT_VERSION + "/shellcheck-" + SHELLCHECK_ARTIFACT_VERSION + '-' + platform + SHELLCHECK_ARCHIVE_EXTENSION;
   }
 
   public static final Map<@NlsSafe String, @Nls String> SHELLCHECK_CODES = new TreeMap<>(){{
@@ -354,11 +325,9 @@ public final class ShShellcheckUtil {
     put("SC1099", message("check.1099.you.need.a.space.before.the"));
     put("SC1100", message("check.1100.this.is.a.unicode.dash.delete.and.retype.as.ascii.minus"));
     put("SC1101", message("check.1101.delete.trailing.spaces.after.to.break.line.or.use.quotes.for.literal.space"));
-    put("SC1102",
-        message("check.1102.shells.disambiguate.differently.or.not.at.all.if.the.first.should.start.command.substitution.add.a.space.after.it"));
+    put("SC1102", message("check.1102.shells.disambiguate.differently.or.not.at.all.if.the.first.should.start.command.substitution.add.a.space.after.it"));
     put("SC1104", message("check.1104.use.not.just.for.the.shebang"));
-    put("SC1105",
-        message("check.1105.shells.disambiguate.differently.or.not.at.all.if.the.first.should.start.a.subshell.add.a.space.after.it"));
+    put("SC1105", message("check.1105.shells.disambiguate.differently.or.not.at.all.if.the.first.should.start.a.subshell.add.a.space.after.it"));
     put("SC1107", message("check.1107.this.directive.is.unknown.it.will.be.ignored"));
     put("SC1108", message("check.1108.you.need.a.space.before.and.after.the"));
     put("SC1109", message("check.1109.this.is.an.unquoted.html.entity.replace.with.corresponding.character"));
@@ -375,10 +344,8 @@ public final class ShShellcheckUtil {
     put("SC1120", message("check.1120.no.comments.allowed.after.here.doc.token.comment.the.next.line.instead"));
     put("SC1121", message("check.1121.add.terminators.and.other.syntax.on.the.line.with.the.not.here"));
     put("SC1122", message("check.1122.nothing.allowed.after.end.token.to.continue.a.command.put.it.on.the.line.with.the"));
-    put("SC1123",
-        message("check.1123.shellcheck.directives.are.only.valid.in.front.of.complete.compound.commands.like.if.not.e.g.individual.elif.branches"));
-    put("SC1124",
-        message("check.1124.shellcheck.directives.are.only.valid.in.front.of.complete.commands.like.case.statements.not.individual.case.branches"));
+    put("SC1123", message("check.1123.shellcheck.directives.are.only.valid.in.front.of.complete.compound.commands.like.if.not.e.g.individual.elif.branches"));
+    put("SC1124", message("check.1124.shellcheck.directives.are.only.valid.in.front.of.complete.commands.like.case.statements.not.individual.case.branches"));
     put("SC1126", message("check.1126.place.shellcheck.directives.before.commands.not.after"));
     put("SC1127", message("check.1127.was.this.intended.as.a.comment.use.in.sh"));
     put("SC1128", message("check.1128.the.shebang.must.be.on.the.first.line.delete.blanks.and.move.comments"));

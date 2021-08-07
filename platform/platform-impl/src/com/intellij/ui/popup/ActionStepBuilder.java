@@ -5,14 +5,16 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.impl.MenuItemPresentationFactory;
 import com.intellij.openapi.actionSystem.impl.PresentationFactory;
 import com.intellij.openapi.actionSystem.impl.Utils;
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.text.TextWithMnemonic;
 import com.intellij.ui.SizedIcon;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.LafIconLookup;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -22,6 +24,8 @@ import java.util.List;
 import java.util.Objects;
 
 class ActionStepBuilder {
+  private static final Logger LOG = Logger.getInstance(ActionStepBuilder.class);
+
   private final List<PopupFactoryImpl.ActionItem> myListModel;
   private final DataContext myDataContext;
   private final boolean                         myShowNumbers;
@@ -68,11 +72,7 @@ class ActionStepBuilder {
   }
 
   public void buildGroup(@NotNull ActionGroup actionGroup) {
-    calcMaxIconSize(actionGroup);
-    myEmptyIcon = myMaxIconHeight != -1 && myMaxIconWidth != -1 ? EmptyIcon.create(myMaxIconWidth, myMaxIconHeight) : null;
-
     appendActionsFromGroup(actionGroup);
-
     if (myListModel.isEmpty()) {
       myListModel.add(new PopupFactoryImpl.ActionItem(
         Utils.EMPTY_MENU_FILLER, Objects.requireNonNull(Utils.EMPTY_MENU_FILLER.getTemplateText()), null, myShowNumbers, null,
@@ -80,46 +80,32 @@ class ActionStepBuilder {
     }
   }
 
-  private void calcMaxIconSize(final ActionGroup actionGroup) {
-    if (myPresentationFactory instanceof MenuItemPresentationFactory &&
-        ((MenuItemPresentationFactory)myPresentationFactory).shallHideIcons()) return;
-    AnAction[] actions = actionGroup.getChildren(createActionEvent(actionGroup));
+  private void calcMaxIconSize(@NotNull List<AnAction> actions) {
     for (AnAction action : actions) {
-      if (action == null) continue;
-      if (action instanceof ActionGroup) {
-        final ActionGroup group = (ActionGroup)action;
-        if (!group.isPopup()) {
-          calcMaxIconSize(group);
-          continue;
-        }
+      if (action instanceof Separator) continue;
+      Presentation presentation = myPresentationFactory.getPresentation(action);
+      Couple<Icon> icons = calcRawIcons(action, presentation);
+      Icon icon = ObjectUtils.chooseNotNull(icons.first, icons.second);
+      if (icon == null) continue;
+      int width = icon.getIconWidth();
+      int height = icon.getIconHeight();
+      if (myMaxIconWidth < width) {
+        myMaxIconWidth = width;
       }
-
-      Icon icon = action.getTemplatePresentation().getIcon();
-      if (icon == null && action instanceof Toggleable) icon = EmptyIcon.ICON_16;
-      if (icon != null) {
-        final int width = icon.getIconWidth();
-        final int height = icon.getIconHeight();
-        if (myMaxIconWidth < width) {
-          myMaxIconWidth = width;
-        }
-        if (myMaxIconHeight < height) {
-          myMaxIconHeight = height;
-        }
+      if (myMaxIconHeight < height) {
+        myMaxIconHeight = height;
       }
     }
   }
 
-  @NotNull
-  private AnActionEvent createActionEvent(@NotNull AnAction action) {
-    AnActionEvent actionEvent = AnActionEvent.createFromDataContext(myActionPlace, myPresentationFactory.getPresentation(action), myDataContext);
-    actionEvent.setInjectedContext(action.isInInjectedContext());
-    return actionEvent;
-  }
-
   private void appendActionsFromGroup(@NotNull ActionGroup actionGroup) {
     List<AnAction> newVisibleActions = Utils.expandActionGroup(
-      false, actionGroup, myPresentationFactory, myDataContext, myActionPlace, true, null);
-    for (AnAction action : newVisibleActions) {
+      false, actionGroup, myPresentationFactory, myDataContext, myActionPlace);
+    List<AnAction> filtered = myShowDisabled ? newVisibleActions : ContainerUtil.filter(
+      newVisibleActions, o -> o instanceof Separator || myPresentationFactory.getPresentation(o).isEnabled());
+    calcMaxIconSize(filtered);
+    myEmptyIcon = myMaxIconHeight != -1 && myMaxIconWidth != -1 ? EmptyIcon.create(myMaxIconWidth, myMaxIconHeight) : null;
+    for (AnAction action : filtered) {
       if (action instanceof Separator) {
         myPrependWithSeparator = true;
         mySeparatorText = ((Separator)action).getText();
@@ -132,63 +118,67 @@ class ActionStepBuilder {
 
   private void appendAction(@NotNull AnAction action) {
     Presentation presentation = myPresentationFactory.getPresentation(action);
-    boolean enabled = presentation.isEnabled();
-    if ((myShowDisabled || enabled) && presentation.isVisible()) {
-      String text = presentation.getText();
-      Character mnemonic = null;
-      if (myShowNumbers) {
-        if (myCurrentNumber < 9) {
-          mnemonic = Character.forDigit(myCurrentNumber + 1, 10);
-        }
-        else if (myCurrentNumber == 9) {
-          mnemonic = '0';
-        }
-        else if (myUseAlphaAsNumbers) {
-          mnemonic = (char)('A' + myCurrentNumber - 10);
-        }
-        myCurrentNumber++;
+    String text = presentation.getText();
+    Character mnemonic = null;
+    if (myShowNumbers) {
+      if (myCurrentNumber < 9) {
+        mnemonic = Character.forDigit(myCurrentNumber + 1, 10);
       }
-      else if (myHonorActionMnemonics) {
-        if (text != null) {
-          text = TextWithMnemonic.fromPlainText(text, (char)action.getTemplatePresentation().getMnemonic()).toString();
-        }
+      else if (myCurrentNumber == 9) {
+        mnemonic = '0';
       }
-
-      boolean hideIcon = Boolean.TRUE.equals(presentation.getClientProperty(MenuItemPresentationFactory.HIDE_ICON));
-      Icon icon = hideIcon ? null : presentation.getIcon();
-      Icon selectedIcon = hideIcon ? null : presentation.getSelectedIcon();
-      Icon disabledIcon = hideIcon ? null : presentation.getDisabledIcon();
-
-      if (icon == null && selectedIcon == null) {
-        @NonNls final String actionId = ActionManager.getInstance().getId(action);
-        if (actionId != null && actionId.startsWith("QuickList.")) {
-          //icon =  null; // AllIcons.Actions.QuickList;
-        }
-        else if (action instanceof Toggleable && Toggleable.isSelected(presentation)) {
-          icon = LafIconLookup.getIcon("checkmark");
-          selectedIcon = LafIconLookup.getSelectedIcon("checkmark");
-          disabledIcon = LafIconLookup.getDisabledIcon("checkmark");
-        }
+      else if (myUseAlphaAsNumbers) {
+        mnemonic = (char)('A' + myCurrentNumber - 10);
       }
-      if (!enabled) {
-        icon = disabledIcon != null || icon == null ? disabledIcon : IconLoader.getDisabledIcon(icon);
-        selectedIcon = disabledIcon != null || selectedIcon == null ? disabledIcon : IconLoader.getDisabledIcon(selectedIcon);
-      }
-
-      if (myMaxIconWidth != -1 && myMaxIconHeight != -1) {
-        if (icon != null) icon = new SizedIcon(icon, myMaxIconWidth, myMaxIconHeight);
-        if (selectedIcon != null) selectedIcon = new SizedIcon(selectedIcon, myMaxIconWidth, myMaxIconHeight);
-      }
-
-      if (icon == null) icon = selectedIcon != null ? selectedIcon : myEmptyIcon;
-      boolean prependSeparator = (!myListModel.isEmpty() || mySeparatorText != null) && myPrependWithSeparator;
-      assert text != null : action + " has no presentation";
-      myListModel.add(
-        new PopupFactoryImpl.ActionItem(action, text, mnemonic, myShowNumbers, (String)presentation.getClientProperty(JComponent.TOOL_TIP_TEXT_KEY),
-                                        enabled, icon, selectedIcon, prependSeparator, mySeparatorText,
-                                        presentation.getClientProperty(Presentation.PROP_VALUE)));
-      myPrependWithSeparator = false;
-      mySeparatorText = null;
+      myCurrentNumber++;
     }
+    else if (myHonorActionMnemonics) {
+      if (text != null) {
+        text = TextWithMnemonic.fromPlainText(text, (char)action.getTemplatePresentation().getMnemonic()).toString();
+      }
+    }
+
+    Couple<Icon> icons = calcRawIcons(action, presentation);
+    Icon icon = icons.first;
+    Icon selectedIcon = icons.second;
+
+    if (myMaxIconWidth != -1 && myMaxIconHeight != -1) {
+      if (icon != null) icon = new SizedIcon(icon, myMaxIconWidth, myMaxIconHeight);
+      if (selectedIcon != null) selectedIcon = new SizedIcon(selectedIcon, myMaxIconWidth, myMaxIconHeight);
+    }
+
+    if (icon == null) icon = selectedIcon != null ? selectedIcon : myEmptyIcon;
+    boolean prependSeparator = (!myListModel.isEmpty() || mySeparatorText != null) && myPrependWithSeparator;
+    LOG.assertTrue(text != null, "Action in `" + myActionPlace + "` has no presentation: " + action.getClass().getName());
+    myListModel.add(new PopupFactoryImpl.ActionItem(
+      action, text, mnemonic, myShowNumbers, (String)presentation.getClientProperty(JComponent.TOOL_TIP_TEXT_KEY),
+      presentation.isEnabled(), icon, selectedIcon, prependSeparator, mySeparatorText,
+      presentation.getClientProperty(Presentation.PROP_VALUE)));
+    myPrependWithSeparator = false;
+    mySeparatorText = null;
+  }
+
+  private static @NotNull Couple<Icon> calcRawIcons(@NotNull AnAction action, @NotNull Presentation presentation) {
+    boolean hideIcon = Boolean.TRUE.equals(presentation.getClientProperty(MenuItemPresentationFactory.HIDE_ICON));
+    Icon icon = hideIcon ? null : presentation.getIcon();
+    Icon selectedIcon = hideIcon ? null : presentation.getSelectedIcon();
+    Icon disabledIcon = hideIcon ? null : presentation.getDisabledIcon();
+
+    if (icon == null && selectedIcon == null) {
+      String actionId = ActionManager.getInstance().getId(action);
+      if (actionId != null && actionId.startsWith("QuickList.")) {
+        //icon =  null; // AllIcons.Actions.QuickList;
+      }
+      else if (action instanceof Toggleable && Toggleable.isSelected(presentation)) {
+        icon = LafIconLookup.getIcon("checkmark");
+        selectedIcon = LafIconLookup.getSelectedIcon("checkmark");
+        disabledIcon = LafIconLookup.getDisabledIcon("checkmark");
+      }
+    }
+    if (!presentation.isEnabled()) {
+      icon = disabledIcon != null || icon == null ? disabledIcon : IconLoader.getDisabledIcon(icon);
+      selectedIcon = disabledIcon != null || selectedIcon == null ? disabledIcon : IconLoader.getDisabledIcon(selectedIcon);
+    }
+    return Couple.of(icon, selectedIcon);
   }
 }

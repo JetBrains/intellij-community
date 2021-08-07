@@ -21,7 +21,7 @@ import java.util.*;
  * Common base class for external system settings. Defines a minimal api which is necessary for the common external system
  * support codebase.
  * <p/>
- * <b>Note:</b> non-abstract sub-classes of this class are expected to be marked by {@link State} annotation configured as necessary.
+ * <b>Note:</b> non-abstract subclasses of this class are expected to be marked by {@link State} annotation configured as necessary.
  *
  * @author Denis Zhdanov
  */

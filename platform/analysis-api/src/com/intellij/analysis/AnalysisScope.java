@@ -63,8 +63,8 @@ public class AnalysisScope {
   private GlobalSearchScope myFilter;
   @Type protected int myType;
 
-  private Set<VirtualFile> myVFiles;  // initial files and directories the scope is configured on
-  private Set<VirtualFile> myFilesSet; // set of files (not directories) this scope consists of. calculated in initFilesSet()
+  private Set<? extends VirtualFile> myVFiles;  // initial files and directories the scope is configured on
+  private Set<? extends VirtualFile> myFilesSet; // set of files (not directories) this scope consists of. calculated in initFilesSet()
 
   private boolean myIncludeTestSource = true;
   private boolean myAnalyzeInjectedCode = true;
@@ -136,17 +136,17 @@ public class AnalysisScope {
     myModule = null;
     myModules = null;
     myScope = null;
-    CompactVirtualFileSet files = new CompactVirtualFileSet(virtualFiles);
+    VirtualFileSet files = VfsUtilCore.createCompactVirtualFileSet(virtualFiles);
     files.freeze();
     myVFiles = files;
     myType = VIRTUAL_FILES;
   }
 
-  public void setSearchInLibraries(final boolean searchInLibraries) {
+  public void setSearchInLibraries(boolean searchInLibraries) {
     mySearchInLibraries = searchInLibraries;
   }
 
-  public void setIncludeTestSource(final boolean includeTestSource) {
+  public void setIncludeTestSource(boolean includeTestSource) {
     myIncludeTestSource = includeTestSource;
   }
 
@@ -156,7 +156,7 @@ public class AnalysisScope {
 
   @NotNull
   protected PsiElementVisitor createFileSearcher(@NotNull Collection<? super VirtualFile> addTo) {
-    final ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
+    ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
     if (indicator != null) {
       indicator.setText(AnalysisBundle.message("scanning.scope.progress.title"));
     }
@@ -164,7 +164,7 @@ public class AnalysisScope {
       @Override
       public void visitFile(@NotNull PsiFile file) {
         if (mySearchInLibraries || !(file instanceof PsiCompiledElement)) {
-          final VirtualFile virtualFile = file.getVirtualFile();
+          VirtualFile virtualFile = file.getVirtualFile();
           if (virtualFile != null && !isFilteredOut(virtualFile)) {
             addTo.add(virtualFile);
           }
@@ -201,14 +201,13 @@ public class AnalysisScope {
   }
 
   public boolean contains(@NotNull VirtualFile file) {
-    Set<VirtualFile> fileSet = myFilesSet;
-    if (fileSet == null) {
+    if (myFilesSet == null) {
       if (myType == CUSTOM) {
         // optimization
         if (myScope != null) return myScope.contains(file);
       }
       if (myType == PROJECT) {  //optimization
-        final ProjectFileIndex index = ProjectRootManager.getInstance(myProject).getFileIndex();
+        ProjectFileIndex index = ProjectRootManager.getInstance(myProject).getFileIndex();
         return index.isInContent(file) && !isFilteredOut(file);
       }
     }
@@ -218,7 +217,7 @@ public class AnalysisScope {
 
   @NotNull
   protected Set<VirtualFile> createFilesSet() {
-    CompactVirtualFileSet fileSet = new CompactVirtualFileSet();
+    VirtualFileSet fileSet = VfsUtilCore.createCompactVirtualFileSet();
     switch (myType) {
       case FILE:
         fileSet.add(((PsiFileSystemItem)myElement).getVirtualFile());
@@ -235,8 +234,8 @@ public class AnalysisScope {
         LOG.info("Scanning scope took " + (System.currentTimeMillis() - timeStamp) + " ms");
         break;
       case VIRTUAL_FILES:
-        final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(myProject).getFileIndex();
-        for (final VirtualFile vFile : myVFiles) {
+        ProjectFileIndex fileIndex = ProjectRootManager.getInstance(myProject).getFileIndex();
+        for (VirtualFile vFile : myVFiles) {
           VfsUtilCore.visitChildrenRecursively(vFile, new VirtualFileVisitor<Void>() {
             @NotNull
             @Override
@@ -257,7 +256,7 @@ public class AnalysisScope {
   }
 
 
-  public void accept(@NotNull final PsiElementVisitor visitor) {
+  public void accept(@NotNull PsiElementVisitor visitor) {
     acceptImpl(visitor, false);
   }
 
@@ -266,18 +265,19 @@ public class AnalysisScope {
    * so that the visitor can be interrupted and restarted several times on the same file.
    * The visitor must support this workflow, i.e. be idempotent.
    */
-  public void acceptIdempotentVisitor(@NotNull final PsiElementVisitor visitor) {
+  public void acceptIdempotentVisitor(@NotNull PsiElementVisitor visitor) {
     acceptImpl(visitor, true);
   }
 
   private void acceptImpl(@NotNull PsiElementVisitor visitor, boolean idempotent) {
-    final boolean needReadAction = !ApplicationManager.getApplication().isReadAccessAllowed();
-    final PsiManager psiManager = PsiManager.getInstance(myProject);
-    final FileIndex fileIndex = getFileIndex();
+    boolean needReadAction = !ApplicationManager.getApplication().isReadAccessAllowed();
+    PsiManager psiManager = PsiManager.getInstance(myProject);
+    FileIndex fileIndex = getFileIndex();
     accept(file -> {
       if (file.isDirectory()) return true;
       if (ProjectCoreUtil.isProjectOrWorkspaceFile(file)) return true;
-      if (fileIndex.isInContent(file) && !isFilteredOut(file)
+      boolean isInContent = ReadAction.compute(() -> fileIndex.isInContent(file));
+      if (isInContent && !isFilteredOut(file)
           && !GeneratedSourcesFilter.isGeneratedSourceByAnyFilter(file, myProject)) {
         return processFile(file, visitor, psiManager, needReadAction, idempotent);
       }
@@ -285,16 +285,16 @@ public class AnalysisScope {
     });
   }
 
-  public boolean accept(@NotNull final Processor<? super VirtualFile> processor) {
+  public boolean accept(@NotNull Processor<? super VirtualFile> processor) {
     if (myType == VIRTUAL_FILES) {
       return ((CompactVirtualFileSet)getFileSet()).process(file -> isFilteredOut(file) || processor.process(file));
     }
-    final FileIndex projectFileIndex = ProjectRootManager.getInstance(myProject).getFileIndex();
+    FileIndex projectFileIndex = ProjectRootManager.getInstance(myProject).getFileIndex();
     if (myScope instanceof GlobalSearchScope) {
-      final ContentIterator contentIterator = createScopeIterator(processor, myScope);
+      ContentIterator contentIterator = createScopeIterator(processor, myScope);
       if (!projectFileIndex.iterateContent(contentIterator)) return false;
       if (mySearchInLibraries) {
-        final VirtualFile[] libraryRoots = LibraryUtil.getLibraryRoots(myProject, false, false);
+        VirtualFile[] libraryRoots = LibraryUtil.getLibraryRoots(myProject, false, false);
         for (VirtualFile libraryRoot : libraryRoots) {
           if (!VfsUtilCore.iterateChildrenRecursively(libraryRoot, VirtualFileFilter.ALL, contentIterator)) return false;
         }
@@ -314,8 +314,8 @@ public class AnalysisScope {
     }
     List<Module> modules = myModule != null ? Collections.singletonList(myModule) : myModules;
     if (modules != null) {
-      for (final Module module : modules) {
-        final FileIndex moduleFileIndex = ModuleRootManager.getInstance(module).getFileIndex();
+      for (Module module : modules) {
+        FileIndex moduleFileIndex = ModuleRootManager.getInstance(module).getFileIndex();
         if (!moduleFileIndex.iterateContent(createScopeIterator(processor, null))) {
           return false;
         }
@@ -335,8 +335,8 @@ public class AnalysisScope {
   }
 
   @NotNull
-  private Collection<VirtualFile> getFileSet() {
-    Set<VirtualFile> fileSet = myFilesSet;
+  private Collection<? extends VirtualFile> getFileSet() {
+    Set<? extends VirtualFile> fileSet = myFilesSet;
     if (fileSet == null) {
       myFilesSet = fileSet = createFilesSet();
     }
@@ -344,23 +344,21 @@ public class AnalysisScope {
   }
 
   @NotNull
-  private ContentIterator createScopeIterator(@NotNull final Processor<? super VirtualFile> processor,
-                                              @Nullable final SearchScope searchScope) {
+  private ContentIterator createScopeIterator(@NotNull Processor<? super VirtualFile> processor, @Nullable SearchScope searchScope) {
     return fileOrDir -> {
-      final boolean isInScope = ReadAction.compute(() -> {
+      boolean isInScope = ReadAction.compute(() -> {
         if (isFilteredOut(fileOrDir)) return false;
         if (searchScope != null && !searchScope.contains(fileOrDir)) return false;
-        if (GeneratedSourcesFilter.isGeneratedSourceByAnyFilter(fileOrDir, myProject)) return false;
-        return true;
+        return !GeneratedSourcesFilter.isGeneratedSourceByAnyFilter(fileOrDir, myProject);
       });
       return !isInScope || processor.process(fileOrDir);
     };
   }
 
-  private static boolean processFile(@NotNull final VirtualFile vFile,
-                                     @NotNull final PsiElementVisitor visitor,
-                                     @NotNull final PsiManager psiManager,
-                                     final boolean needReadAction,
+  private static boolean processFile(@NotNull VirtualFile vFile,
+                                     @NotNull PsiElementVisitor visitor,
+                                     @NotNull PsiManager psiManager,
+                                     boolean needReadAction,
                                      boolean idempotent) {
     if (needReadAction && !ApplicationManager.getApplication().isDispatchThread()) {
       Project project = psiManager.getProject();
@@ -378,13 +376,13 @@ public class AnalysisScope {
     else {
       doProcessFile(visitor, psiManager, vFile);
     }
-    final ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
+    ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
     return indicator == null || !indicator.isCanceled();
   }
 
-  private static void commitAndRunInSmartMode(final Runnable runnable, final Project project) {
+  private static void commitAndRunInSmartMode(Runnable runnable, Project project) {
     while (true) {
-      final DumbService dumbService = DumbService.getInstance(project);
+      DumbService dumbService = DumbService.getInstance(project);
       dumbService.waitForSmartMode();
       boolean passed = PsiDocumentManager.getInstance(project).commitAndRunReadAction(() -> {
         if (dumbService.isDumb()) return false;
@@ -429,10 +427,10 @@ public class AnalysisScope {
     InjectedLanguageManager.getInstance(psiManager.getProject()).dropFileCaches(psiFile);
   }
 
-  protected boolean accept(@NotNull final PsiDirectory dir, @NotNull final Processor<? super VirtualFile> processor) {
-    final Project project = dir.getProject();
+  protected boolean accept(@NotNull PsiDirectory dir, @NotNull Processor<? super VirtualFile> processor) {
+    Project project = dir.getProject();
     //we should analyze generated source files only if the action is explicitly invoked for a directory located under generated roots
-    final boolean processGeneratedFiles = GeneratedSourcesFilter.isGeneratedSourceByAnyFilter(dir.getVirtualFile(), project);
+    boolean processGeneratedFiles = GeneratedSourcesFilter.isGeneratedSourceByAnyFilter(dir.getVirtualFile(), project);
     return VfsUtilCore.iterateChildrenRecursively(dir.getVirtualFile(), VirtualFileFilter.ALL, fileOrDir -> {
       if (isFilteredOut(fileOrDir)) return true;
       if (!processGeneratedFiles && GeneratedSourcesFilter.isGeneratedSourceByAnyFilter(fileOrDir, project)) return true;
@@ -505,11 +503,11 @@ public class AnalysisScope {
         return AnalysisBundle.message("scope.project", myProject.getName());
 
       case FILE:
-        final String relativePath = getRelativePath();
+        String relativePath = getRelativePath();
         return AnalysisBundle.message("scope.file", relativePath);
 
       case DIRECTORY:
-        final String relativeDirPath = getRelativePath();
+        String relativeDirPath = getRelativePath();
         return AnalysisBundle.message("scope.directory", relativeDirPath);
 
       case VIRTUAL_FILES:
@@ -541,12 +539,13 @@ public class AnalysisScope {
 
   @NotNull
   public Set<VirtualFile> getFiles() {
-    return myVFiles == null ? Collections.emptySet() : myVFiles;
+    //noinspection unchecked
+    return myVFiles == null ? Collections.emptySet() : (Set<VirtualFile>)myVFiles;
   }
 
   @NotNull
   private String getRelativePath() {
-    final String relativePath = displayProjectRelativePath((PsiFileSystemItem)myElement);
+    String relativePath = displayProjectRelativePath((PsiFileSystemItem)myElement);
     if (relativePath.length() > 100) {
       return ((PsiFileSystemItem)myElement).getName();
     }
@@ -560,7 +559,7 @@ public class AnalysisScope {
   }
 
   public int getFileCount() {
-    final ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
+    ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
     if (indicator != null) { //clear text after building analysis scope set
       indicator.setText("");
       indicator.setText2("");
@@ -568,9 +567,10 @@ public class AnalysisScope {
     return getFileSet().size();
   }
 
-  public void invalidate(){
+  public void invalidate() {
     if (myType == VIRTUAL_FILES) {
-      CompactVirtualFileSet files = new CompactVirtualFileSet(ContainerUtil.filter(myVFiles, virtualFile -> virtualFile != null && virtualFile.isValid()));
+      List<? extends VirtualFile> valid = ContainerUtil.filter(myVFiles, virtualFile -> virtualFile != null && virtualFile.isValid());
+      VirtualFileSet files = VfsUtilCore.createCompactVirtualFileSet(valid);
       files.freeze();
       myVFiles = files;
     }
@@ -581,16 +581,16 @@ public class AnalysisScope {
 
   public boolean containsSources(boolean isTest) {
     if (myElement != null) {
-      final Project project = myElement.getProject();
-      final ProjectFileIndex index = ProjectRootManager.getInstance(project).getFileIndex();
+      Project project = myElement.getProject();
+      ProjectFileIndex index = ProjectRootManager.getInstance(project).getFileIndex();
       if (myElement instanceof PsiDirectory) {
-        final VirtualFile directory = ((PsiFileSystemItem)myElement).getVirtualFile();
+        VirtualFile directory = ((PsiFileSystemItem)myElement).getVirtualFile();
         if (index.isInSourceContent(directory)) {
           return isTest == TestSourcesFilter.isTestSources(directory, myProject);
         }
       }
       else if (myElement instanceof PsiFile) {
-        final VirtualFile file = ((PsiFileSystemItem)myElement).getVirtualFile();
+        VirtualFile file = ((PsiFileSystemItem)myElement).getVirtualFile();
         if (file != null) {
           return isTest == TestSourcesFilter.isTestSources(file, myProject);
         }
@@ -601,10 +601,10 @@ public class AnalysisScope {
 
   @NotNull
   public AnalysisScope getNarrowedComplementaryScope(@NotNull Project defaultProject) {
-    final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(defaultProject).getFileIndex();
-    final HashSet<Module> modules = new HashSet<>();
+    ProjectFileIndex fileIndex = ProjectRootManager.getInstance(defaultProject).getFileIndex();
+    HashSet<Module> modules = new HashSet<>();
     if (myType == FILE || myType == DIRECTORY) {
-      final VirtualFile vFile = ((PsiFileSystemItem)myElement).getVirtualFile();
+      VirtualFile vFile = ((PsiFileSystemItem)myElement).getVirtualFile();
       modules.addAll(getAllInterestingModules(fileIndex, vFile));
     }
     else if (myType == MODULE) {
@@ -617,13 +617,13 @@ public class AnalysisScope {
   }
 
   @NotNull
-  protected static AnalysisScope collectScopes(@NotNull final Project defaultProject, @NotNull final Set<? extends Module> modules) {
+  protected static AnalysisScope collectScopes(@NotNull Project defaultProject, @NotNull Set<? extends Module> modules) {
     if (modules.isEmpty()) {
       return new AnalysisScope(defaultProject);
     }
-    final Module[] allModules = ModuleManager.getInstance(defaultProject).getModules();
+    Module[] allModules = ModuleManager.getInstance(defaultProject).getModules();
     Set<Module> modulesToAnalyze = new HashSet<>();
-    for (final Module module : modules) {
+    for (Module module : modules) {
       modulesToAnalyze.addAll(getDirectBackwardDependencies(module, allModules));
       modulesToAnalyze.addAll(getExportBackwardDependencies(module, allModules));
       modulesToAnalyze.add(module);
@@ -635,8 +635,8 @@ public class AnalysisScope {
   private static Set<Module> getExportBackwardDependencies(@NotNull Module fromModule, Module @NotNull [] allModules) {
     Set<Module> result = new HashSet<>();
     for (Module module : allModules) {
-      final ModuleRootManager moduleRootManager = ModuleRootManager.getInstance(module);
-      final OrderEntry[] orderEntries = moduleRootManager.getOrderEntries();
+      ModuleRootManager moduleRootManager = ModuleRootManager.getInstance(module);
+      OrderEntry[] orderEntries = moduleRootManager.getOrderEntries();
       for (OrderEntry orderEntry : orderEntries) {
         if (orderEntry instanceof ModuleOrderEntry && ((ExportableOrderEntry)orderEntry).isExported() &&
             fromModule == ((ModuleOrderEntry)orderEntry).getModule()) {
@@ -659,8 +659,8 @@ public class AnalysisScope {
   }
 
   @NotNull
-  protected static HashSet<Module> getAllInterestingModules(@NotNull final ProjectFileIndex fileIndex, @NotNull final VirtualFile vFile) {
-    final HashSet<Module> modules = new HashSet<>();
+  protected static HashSet<Module> getAllInterestingModules(@NotNull ProjectFileIndex fileIndex, @NotNull VirtualFile vFile) {
+    HashSet<Module> modules = new HashSet<>();
     if (fileIndex.isInLibrary(vFile)) {
       for (OrderEntry orderEntry : fileIndex.getOrderEntriesForFile(vFile)) {
         modules.add(orderEntry.getOwnerModule());

@@ -15,13 +15,26 @@
  */
 package org.jetbrains.idea.maven.indices;
 
+import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.idea.maven.onlinecompletion.IndexBasedCompletionProvider;
 import org.jetbrains.idea.maven.onlinecompletion.model.MavenDependencyCompletionItem;
+import org.jetbrains.idea.reposearch.DependencySearchProvider;
+import org.jetbrains.idea.reposearch.DependencySearchService;
+import org.junit.Test;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Stream;
+
+import static java.util.Collections.emptyList;
 
 
 public class MavenSearcherTest extends MavenIndicesTestCase {
+  private static final String[] JUNIT_VERSIONS = {"junit:junit:4.0", "junit:junit:3.8.2", "junit:junit:3.8.1"};
+  private static final String[] JMOCK_VERSIONS = {"jmock:jmock:1.2.0", "jmock:jmock:1.1.0", "jmock:jmock:1.0.0"};
+  private static final String[] COMMONS_IO_VERSIONS = {"commons-io:commons-io:2.4"};
+
   MavenIndicesTestFixture myIndicesFixture;
 
   @Override
@@ -29,6 +42,10 @@ public class MavenSearcherTest extends MavenIndicesTestCase {
     super.setUp();
     myIndicesFixture = new MavenIndicesTestFixture(myDir.toPath(), myProject);
     myIndicesFixture.setUp();
+
+    List<DependencySearchProvider> indexProviders =
+      new ArrayList<>(ContainerUtil.map(myIndicesFixture.getIndicesManager().getIndices(), IndexBasedCompletionProvider::new));
+    DependencySearchService.getInstance(myProject).setProviders(indexProviders, emptyList());
   }
 
   @Override
@@ -44,6 +61,7 @@ public class MavenSearcherTest extends MavenIndicesTestCase {
     }
   }
 
+  @Test
   public void testClassSearch() {
 
     assertClassSearchResults("TestCas",
@@ -94,28 +112,30 @@ public class MavenSearcherTest extends MavenIndicesTestCase {
     assertClassSearchResults("!@][#$%)(^&*()_"); // shouldn't throw
   }
 
+  @Test
   public void testArtifactSearch() {
-    if(ignore()) return;
-    assertArtifactSearchResults("",
-                                "asm:asm:3.3.1 asm:asm:3.3",
-                                "asm:asm-attrs:2.2.1",
-                                "commons-io:commons-io:2.4",
-                                "jmock:jmock:1.2.0 jmock:jmock:1.1.0 jmock:jmock:1.0.0",
-                                "junit:junit:4.0 junit:junit:3.8.2 junit:junit:3.8.1",
-                                "org.ow2.asm:asm:4.1");
-    assertArtifactSearchResults("j *1*",
-                                "jmock:jmock:1.2.0 jmock:jmock:1.1.0 jmock:jmock:1.0.0",
-                                "junit:junit:3.8.1");
-    assertArtifactSearchResults("junit", "junit:junit:4.0 junit:junit:3.8.2 junit:junit:3.8.1");
-    assertArtifactSearchResults("junit 3.", "junit:junit:3.8.2 junit:junit:3.8.1");
-    assertArtifactSearchResults("uni 3.", "junit:junit:3.8.2 junit:junit:3.8.1");
-    assertArtifactSearchResults("juni juni 3.", "junit:junit:3.8.2 junit:junit:3.8.1");
-    assertArtifactSearchResults("junit foo");
-    assertArtifactSearchResults("junit:", "junit:junit:4.0 junit:junit:3.8.2 junit:junit:3.8.1");
-    assertArtifactSearchResults("junit:junit", "junit:junit:4.0 junit:junit:3.8.2 junit:junit:3.8.1");
-    assertArtifactSearchResults("junit:junit:3.", "junit:junit:3.8.2 junit:junit:3.8.1");
+    if (ignore()) return;
+    assertArtifactSearchResults("");
+    assertArtifactSearchResults("j:j",
+                                Stream.concat(Arrays.stream(JMOCK_VERSIONS), Arrays.stream(JUNIT_VERSIONS)).toArray(String[]::new));
+    assertArtifactSearchResults("junit", JUNIT_VERSIONS);
+    assertArtifactSearchResults("junit 3.", JUNIT_VERSIONS);
+    assertArtifactSearchResults("uni 3.");
+    assertArtifactSearchResults("juni juni 3.");
+    assertArtifactSearchResults("junit foo", JUNIT_VERSIONS);
+    assertArtifactSearchResults("juni:juni:3.", JUNIT_VERSIONS);
+    assertArtifactSearchResults("junit:", JUNIT_VERSIONS);
+    assertArtifactSearchResults("junit:junit", JUNIT_VERSIONS);
+    assertArtifactSearchResults("junit:junit:3.", JUNIT_VERSIONS);
+    assertArtifactSearchResults("junit:junit:4.0", JUNIT_VERSIONS);
+  }
 
-    assertArtifactSearchResults("junit:junit:4.0", "junit:junit:4.0");
+  @Test
+  public void testArtifactSearchDash() {
+    if (ignore()) return;
+    assertArtifactSearchResults("commons", COMMONS_IO_VERSIONS);
+    assertArtifactSearchResults("commons-", COMMONS_IO_VERSIONS);
+    assertArtifactSearchResults("commons-io", COMMONS_IO_VERSIONS);
   }
 
   private void assertClassSearchResults(String pattern, String... expected) {
@@ -137,14 +157,14 @@ public class MavenSearcherTest extends MavenIndicesTestCase {
 
   private void assertArtifactSearchResults(String pattern, String... expected) {
     List<String> actual = new ArrayList<>();
+    StringBuilder s;
     for (MavenArtifactSearchResult eachResult : new MavenArtifactSearcher().search(myProject, pattern, 100)) {
-      StringBuilder s = new StringBuilder();
       for (MavenDependencyCompletionItem eachVersion : eachResult.getSearchResults().getItems()) {
-        if (s.length() > 0) s.append(" ");
+        s = new StringBuilder();
         s.append(eachVersion.getGroupId()).append(":").append(eachVersion.getArtifactId()).append(":").append(eachVersion.getVersion());
+        actual.add(s.toString());
       }
-      actual.add(s.toString());
     }
-    assertOrderedElementsAreEqual(actual, expected);
+    assertUnorderedElementsAreEqual(actual, expected);
   }
 }

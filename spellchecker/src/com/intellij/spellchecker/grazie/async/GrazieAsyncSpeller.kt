@@ -3,6 +3,7 @@ package com.intellij.spellchecker.grazie.async
 
 import com.intellij.grazie.speller.Speller
 import com.intellij.openapi.project.Project
+import com.intellij.spellchecker.engine.SpellCheckerEngineListener
 
 /**
  * Async version of Grazie speller
@@ -15,7 +16,10 @@ internal class GrazieAsyncSpeller(project: Project, private val create: () -> Sp
 
   init {
     AsyncUtils.run(project) {
-      speller = create()
+      if (!project.isDisposed) {
+        speller = create()
+        project.messageBus.syncPublisher(SpellCheckerEngineListener.TOPIC).onSpellerInitialized()
+      }
     }
   }
 

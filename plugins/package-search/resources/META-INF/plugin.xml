@@ -1,4 +1,4 @@
-<idea-plugin allow-bundled-update="true">
+<idea-plugin package="com.jetbrains.packagesearch">
     <id>com.jetbrains.packagesearch.intellij-plugin</id>
     <name>Package Search</name>
     <vendor>JetBrains</vendor>
@@ -16,28 +16,39 @@ Supports Maven and Gradle projects.
                         interface="com.jetbrains.packagesearch.intellij.plugin.extensibility.ProjectModuleOperationProvider"
                         dynamic="true"/>
 
-        <extensionPoint qualifiedName="com.intellij.packagesearch.projectModuleProvider"
-                        interface="com.jetbrains.packagesearch.intellij.plugin.extensibility.ProjectModuleProvider"
-                        area="IDEA_PROJECT"
-                        dynamic="true"/>
-
         <extensionPoint qualifiedName="com.intellij.packagesearch.configurableContributor"
                         interface="com.jetbrains.packagesearch.intellij.plugin.extensibility.ConfigurableContributor"
                         area="IDEA_PROJECT"
                         dynamic="true"/>
+
+        <extensionPoint qualifiedName="com.intellij.packagesearch.moduleChangesSignalProvider"
+                        interface="com.jetbrains.packagesearch.intellij.plugin.extensibility.ModuleChangesSignalProvider"
+                        area="IDEA_PROJECT"
+                        dynamic="true"/>
+
+        <extensionPoint qualifiedName="com.intellij.packagesearch.moduleTransformer"
+                        interface="com.jetbrains.packagesearch.intellij.plugin.extensibility.ModuleTransformer"
+                        area="IDEA_PROJECT"
+                        dynamic="true"/>
+
     </extensionPoints>
 
-    <depends>com.intellij.modules.java</depends>
-    <depends>com.intellij.externalSystem.dependencyUpdater</depends>
-    <depends optional="true" config-file="plugin-withKotlin.xml">org.jetbrains.kotlin</depends>
-    <depends optional="true" config-file="plugin-withGradle.xml">org.jetbrains.plugins.gradle</depends>
-    <depends optional="true" config-file="plugin-withMaven.xml">org.jetbrains.idea.maven</depends>
+    <content>
+        <module name="intellij.packageSearch/gradle"/>
+        <module name="intellij.packageSearch/kotlin"/>
+        <module name="intellij.packageSearch/maven"/>
+    </content>
+    <dependencies>
+        <plugin id="com.intellij.java"/>
+        <plugin id="com.intellij.externalSystem.dependencyUpdater"/>
+    </dependencies>
 
     <extensions defaultExtensionNs="com.intellij">
         <codeInsight.unresolvedReferenceQuickFixProvider
-                implementation="com.jetbrains.packagesearch.intellij.plugin.intentions.JavaPackageSearchQuickFixProvider"/>
+                implementation="com.jetbrains.packagesearch.intellij.plugin.intentions.JavaPackageSearchUnresolvedReferenceQuickFixProvider"/>
 
-        <httpRequestHandler implementation="com.jetbrains.packagesearch.intellij.plugin.ide.PackageSearchRestService"/>
+        <!-- TODO Re-enable when working on IDEA-267638 -->
+        <!--<httpRequestHandler implementation="com.jetbrains.packagesearch.intellij.plugin.rest.PackageSearchRestService"/>-->
 
         <search.optionContributor
                 implementation="com.jetbrains.packagesearch.intellij.plugin.configuration.PackageSearchSearchableOptionContributor"/>
@@ -45,22 +56,44 @@ Supports Maven and Gradle projects.
         <projectConfigurable groupId="build" key="packagesearch.configuration.title" bundle="messages.packageSearchBundle"
                              id="preferences.packagesearch.PackageSearchGeneralConfigurable"
                              instance="com.jetbrains.packagesearch.intellij.plugin.configuration.ui.PackageSearchGeneralConfigurable"/>
+
         <projectService
                 serviceImplementation="com.jetbrains.packagesearch.intellij.plugin.configuration.PackageSearchGeneralConfiguration"/>
 
         <projectService
-                serviceImplementation="com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.PackageSearchToolWindowAvailabilityService"/>
+                serviceImplementation="com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.PackageSearchDataService"/>
 
-        <toolWindow id="Packages" anchor="bottom" secondary="false"
+        <projectService
+                serviceImplementation="com.jetbrains.packagesearch.intellij.plugin.lifecycle.ProjectLifecycleHolderService"/>
+
+        <toolWindow id="Dependencies" anchor="bottom" secondary="false"
                     icon="/icons/artifactSmall.svg"
                     canCloseContents="true"
                     factoryClass="com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.PackageSearchToolWindowFactory"/>
 
-        <registryKey id="packagesearch.repository.mock.api"
-                     key="packagesearch.repository.mock.api"
+        <registryKey id="packagesearch.plugin.debug.logging"
+                     key="packagesearch.plugin.debug.logging"
                      defaultValue="false"
-                     description="Mock the package search remote API's /repositories call, and return multiple repositories."
+                     description="Emit in-depth debug logging (warning: very spammy, only useful for debugging data flow issues). Make sure you have this line in Help | Diagnostic Tools | Debug Log Settings: '#com.jetbrains.packagesearch.intellij-plugin:trace'."
                      restartRequired="true"/>
+
+        <registryKey id="packagesearch.plugin.repositories.tab"
+                     key="packagesearch.plugin.repositories.tab"
+                     defaultValue="false"
+                     description="Display the Repositories tab in the Package Search toolwindow. It may not work correctly, or at all."
+                     restartRequired="true"/>
+
+        <statistics.counterUsagesCollector
+                implementationClass="com.jetbrains.packagesearch.intellij.plugin.fus.PackageSearchEventsLogger"/>
+
+        <statistics.validation.customValidationRule implementation="com.jetbrains.packagesearch.intellij.plugin.fus.TopPackageIdValidationRule"/>
+
+        <!--suppress PluginXmlCapitalization -->
+        <notificationGroup displayType="BALLOON"
+                           id="packagesearch.notification"
+                           icon="/icons/artifactSmall.svg"
+                           bundle="messages.packageSearchBundle"
+                           key="packagesearch.title"/>
     </extensions>
 
     <actions>

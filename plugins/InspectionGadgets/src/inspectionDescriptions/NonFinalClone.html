@@ -1,13 +1,22 @@
 <html>
 <body>
-Reports <b>clone()</b> methods which
-are not declared <b>final</b>. Since <b>clone()</b> may
-be used to instantiate objects without using a constructor, allowing the <b>clone()</b>
-method to be overridden may result in corrupted objects, and possible security
-exploits. This may be prevented by making the <b>clone()</b>
-method <b>final</b>.
-<!-- tooltip end -->
+Reports <code>clone()</code> methods without the <code>final</code> modifier.
 <p>
-
+  Since <code>clone()</code> can be used to instantiate objects without using a constructor, allowing the <code>clone()</code>
+  method to be overridden may result in corrupted objects, and even in security exploits. This may be prevented by making the
+  <code>clone()</code> method or the enclosing class itself <code>final</code>.
+</p>
+<p><b>Example:</b></p>
+<pre>
+  <code>
+    class Main implements Cloneable {
+      @Override
+      protected Object clone() throws CloneNotSupportedException {
+        return super.clone();
+      }
+    }
+  </code>
+</pre>
+<!-- tooltip end -->
 </body>
 </html>

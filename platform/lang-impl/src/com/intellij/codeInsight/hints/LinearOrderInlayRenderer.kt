@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.hints
 
 import com.intellij.codeInsight.hints.InlayHintsUtils.produceUpdatedRootList
@@ -8,7 +8,10 @@ import com.intellij.codeInsight.hints.presentation.withTranslated
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.Inlay
 import com.intellij.openapi.editor.markup.TextAttributes
+import com.intellij.openapi.util.ThrowableComputable
+import com.intellij.util.SlowOperations
 import com.intellij.util.SmartList
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 import java.awt.*
 import java.awt.event.MouseEvent
@@ -79,11 +82,14 @@ abstract class LinearOrderInlayRenderer<Constraint : Any>(
   }
 
   override fun calcWidthInPixels(inlay: Inlay<*>): Int {
-    return cachedPresentation.width
+    // TODO remove it when it will be clear how to solve it
+    return SlowOperations.allowSlowOperations(
+      ThrowableComputable<Int, Exception> { cachedPresentation.width })
   }
 
   override fun calcHeightInPixels(inlay: Inlay<*>): Int {
-    return cachedPresentation.height
+    return SlowOperations.allowSlowOperations(
+      ThrowableComputable<Int, Exception> { cachedPresentation.height })
   }
 
   // this should not be shown anywhere
@@ -109,6 +115,9 @@ abstract class LinearOrderInlayRenderer<Constraint : Any>(
 
   @TestOnly
   fun getConstrainedPresentations(): List<ConstrainedPresentation<*, Constraint>> = presentations
+
+  @ApiStatus.Internal
+  fun getCachedPresentation(): InlayPresentation = cachedPresentation
 
   companion object {
     fun effectsIn(attributes: TextAttributes): TextAttributes {

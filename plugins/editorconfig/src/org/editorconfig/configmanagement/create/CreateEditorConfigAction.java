@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.editorconfig.configmanagement.create;
 
 import com.intellij.application.options.CodeStyle;
@@ -121,7 +121,7 @@ public final class CreateEditorConfigAction extends AnAction implements DumbAwar
   }
 
   @Nullable
-  protected IdeView getIdeView(@NotNull AnActionEvent e) {
+  private IdeView getIdeView(@NotNull AnActionEvent e) {
     return e.getData(LangDataKeys.IDE_VIEW);
   }
 

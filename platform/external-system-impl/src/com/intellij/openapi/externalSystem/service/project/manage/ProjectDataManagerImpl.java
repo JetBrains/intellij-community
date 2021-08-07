@@ -1,12 +1,16 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.externalSystem.service.project.manage;
 
+import com.intellij.diagnostic.Activity;
+import com.intellij.diagnostic.ActivityCategory;
+import com.intellij.diagnostic.StartUpMeasurer;
+import com.intellij.diagnostic.StartUpPerformanceService;
+import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.externalSystem.model.*;
 import com.intellij.openapi.externalSystem.model.project.ModuleData;
 import com.intellij.openapi.externalSystem.model.project.ProjectData;
-import com.intellij.openapi.externalSystem.service.project.ProjectDataManager;
 import com.intellij.openapi.externalSystem.service.project.*;
 import com.intellij.openapi.externalSystem.util.DisposeAwareProjectChange;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
@@ -29,23 +33,20 @@ import java.util.function.Function;
 
 /**
  * Aggregates all {@link ProjectDataService#EP_NAME registered data services} and provides entry points for project data management.
- *
- * @author Denis Zhdanov
  */
-public class ProjectDataManagerImpl implements ProjectDataManager {
+public final class ProjectDataManagerImpl implements ProjectDataManager {
   private static final Logger LOG = Logger.getInstance(ProjectDataManagerImpl.class);
   private static final Function<ProjectDataService<?, ?>, Key<?>> KEY_MAPPER = ProjectDataService::getTargetDataKey;
 
   public static ProjectDataManagerImpl getInstance() {
-    ProjectDataManager service = ApplicationManager.getApplication().getService(ProjectDataManager.class);
-    return (ProjectDataManagerImpl)service;
+    return (ProjectDataManagerImpl)ProjectDataManager.getInstance();
   }
 
   @Override
   @NotNull
   public List<ProjectDataService<?, ?>> findService(@NotNull Key<?> key) {
-    List<ProjectDataService<?, ?>> result =
-      new ArrayList<>(ProjectDataService.EP_NAME.getByGroupingKey(key, ProjectDataManagerImpl.class, KEY_MAPPER));
+    List<ProjectDataService<?, ?>> result = new ArrayList<>(ProjectDataService.EP_NAME
+                                                              .getByGroupingKey(key, ProjectDataManagerImpl.class, KEY_MAPPER));
     ExternalSystemApiUtil.orderAwareSort(result);
     return result;
   }
@@ -96,6 +97,7 @@ public class ProjectDataManagerImpl implements ProjectDataManager {
     }
 
     long allStartTime = System.currentTimeMillis();
+    Activity activity = StartUpMeasurer.startActivity("project data processing", ActivityCategory.GRADLE_IMPORT);
     try {
       // keep order of services execution
       final Set<Key<?>> allKeys = new TreeSet<>(grouped.keySet());
@@ -133,6 +135,7 @@ public class ProjectDataManagerImpl implements ProjectDataManager {
 
       project.getMessageBus().syncPublisher(ProjectDataImportListener.TOPIC)
         .onImportFinished(projectData != null ? projectData.getLinkedExternalProjectPath() : null);
+      activity.end();
       trace.logPerformance("Data import total", System.currentTimeMillis() - allStartTime);
     }
     catch (Throwable t) {
@@ -148,6 +151,10 @@ public class ProjectDataManagerImpl implements ProjectDataManager {
       }
     }
     runFinalTasks(project, synchronous, onSuccessImportTasks);
+    Application app = ApplicationManager.getApplication();
+    if (!app.isUnitTestMode() && !app.isHeadlessEnvironment()) {
+      StartUpPerformanceService.getInstance().reportStatistics(project);
+    }
   }
 
   private static void runFinalTasks(@NotNull Project project, boolean synchronous, List<? extends Runnable> tasks) {
@@ -195,7 +202,7 @@ public class ProjectDataManagerImpl implements ProjectDataManager {
   public <T> void importData(@NotNull Collection<? extends DataNode<T>> nodes, @NotNull Project project, boolean synchronous) {
     Collection<DataNode<?>> dummy = new SmartList<>();
     dummy.addAll(nodes);
-    importData(dummy, project, new IdeModifiableModelsProviderImpl(project), synchronous);
+    importData(dummy, project, createModifiableModelsProvider(project), synchronous);
   }
 
   @Override
@@ -212,7 +219,7 @@ public class ProjectDataManagerImpl implements ProjectDataManager {
   public <T> void importData(@NotNull DataNode<T> node,
                              @NotNull Project project,
                              boolean synchronous) {
-    importData(node, project, new IdeModifiableModelsProviderImpl(project), synchronous);
+    importData(node, project, createModifiableModelsProvider(project), synchronous);
   }
 
   @SuppressWarnings({"unchecked", "rawtypes"})
@@ -353,7 +360,7 @@ public class ProjectDataManagerImpl implements ProjectDataManager {
                                 @NotNull final ProjectData projectData,
                                 @NotNull Project project,
                                 boolean synchronous) {
-    removeData(key, toRemove, toIgnore, projectData, project, new IdeModifiableModelsProviderImpl(project), synchronous);
+    removeData(key, toRemove, toIgnore, projectData, project, createModifiableModelsProvider(project), synchronous);
   }
 
   public void updateExternalProjectData(@NotNull Project project, @NotNull ExternalProjectInfo externalProjectInfo) {
@@ -379,6 +386,11 @@ public class ProjectDataManagerImpl implements ProjectDataManager {
     else {
       return ContainerUtil.emptyList();
     }
+  }
+
+  @Override
+  public @NotNull IdeModifiableModelsProvider createModifiableModelsProvider(@NotNull Project project) {
+    return new IdeModifiableModelsProviderImpl(project);
   }
 
   private void ensureTheDataIsReadyToUse(@NotNull Collection<? extends DataNode<?>> nodes) {

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn;
 
 import com.intellij.openapi.project.Project;
@@ -9,14 +9,14 @@ import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManager;
-import com.intellij.util.NotNullFunction;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.svn.dialogs.CopiesPanel;
 
 import javax.swing.*;
+import java.util.function.Predicate;
 import java.util.function.Supplier;
 
-public class WorkingCopiesContent implements ChangesViewContentProvider {
+public final class WorkingCopiesContent implements ChangesViewContentProvider {
   @NotNull private final Project myProject;
 
   public WorkingCopiesContent(@NotNull Project project) {
@@ -47,17 +47,15 @@ public class WorkingCopiesContent implements ChangesViewContentProvider {
     }
   }
 
-  public static class VisibilityPredicate implements NotNullFunction<Project, Boolean> {
-
+  final static class VisibilityPredicate implements Predicate<Project> {
     @NotNull
     @Override
-    public Boolean fun(@NotNull Project project) {
+    public boolean test(@NotNull Project project) {
       return ProjectLevelVcsManager.getInstance(project).checkVcsIsActive(SvnVcs.VCS_NAME);
     }
   }
 
-  public static class DisplayNameSupplier implements Supplier<String> {
-
+  final static class DisplayNameSupplier implements Supplier<String> {
     @Override
     public String get() {
       return SvnBundle.message("toolwindow.working.copies.info.title");

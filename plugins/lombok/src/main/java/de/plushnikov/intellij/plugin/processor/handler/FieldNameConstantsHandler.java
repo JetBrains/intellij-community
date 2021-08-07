@@ -13,7 +13,6 @@ import de.plushnikov.intellij.plugin.thirdparty.LombokUtils;
 import de.plushnikov.intellij.plugin.util.LombokProcessorUtil;
 import de.plushnikov.intellij.plugin.util.PsiAnnotationUtil;
 import de.plushnikov.intellij.plugin.util.PsiClassUtil;
-import de.plushnikov.intellij.plugin.util.PsiMethodUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -78,18 +77,18 @@ public final class FieldNameConstantsHandler {
       .withImplicitModifier(PsiModifier.STATIC)
       .withImplicitModifier(PsiModifier.FINAL);
 
-    lazyClassBuilder.withMethodSupplier(()-> {
+    lazyClassBuilder.withMethodSupplier((thisPsiClass)-> {
       //add enum methods like here:  ClassInnerStuffCache.calcMethods
       final PsiManager psiManager = containingClass.getManager();
-      final PsiClassType enumClassType = PsiClassUtil.getTypeWithGenerics(lazyClassBuilder);
+      final PsiClassType enumClassType = PsiClassUtil.getTypeWithGenerics(thisPsiClass);
 //    "public static " + myClass.getName() + "[] values() { }"
       final LombokLightMethodBuilder valuesEnumMethod = new LombokLightMethodBuilder(psiManager, "values")
         .withModifier(PsiModifier.PUBLIC)
         .withModifier(PsiModifier.STATIC)
         .withContainingClass(containingClass)
         .withNavigationElement(navigationElement)
-        .withMethodReturnType(new PsiArrayType(enumClassType));
-      valuesEnumMethod.withBody(PsiMethodUtil.createCodeBlockFromText("", valuesEnumMethod));
+        .withMethodReturnType(new PsiArrayType(enumClassType))
+        .withBodyText("");
 
       //     "public static " + myClass.getName() + " valueOf(java.lang.String name) throws java.lang.IllegalArgumentException { }"
       final LombokLightMethodBuilder valueOfEnumMethod = new LombokLightMethodBuilder(psiManager, "valueOf")
@@ -99,8 +98,8 @@ public final class FieldNameConstantsHandler {
         .withNavigationElement(navigationElement)
         .withParameter("name", PsiType.getJavaLangString(psiManager, containingClass.getResolveScope()))
         .withException(PsiType.getTypeByName("java.lang.IllegalArgumentException", containingClass.getProject(), containingClass.getResolveScope()))
-        .withMethodReturnType(enumClassType);
-      valueOfEnumMethod.withBody(PsiMethodUtil.createCodeBlockFromText("", valueOfEnumMethod));
+        .withMethodReturnType(enumClassType)
+        .withBodyText("");
 
       return Arrays.asList(valuesEnumMethod, valueOfEnumMethod);
     });

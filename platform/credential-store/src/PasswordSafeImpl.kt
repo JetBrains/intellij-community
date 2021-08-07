@@ -1,6 +1,5 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 @file:Suppress("PackageDirectoryMismatch")
-
 package com.intellij.ide.passwordSafe.impl
 
 import com.intellij.configurationStore.SettingsSavingComponent
@@ -9,18 +8,15 @@ import com.intellij.credentialStore.kdbx.IncorrectMasterPasswordException
 import com.intellij.credentialStore.keePass.*
 import com.intellij.ide.passwordSafe.PasswordSafe
 import com.intellij.ide.passwordSafe.PasswordStorage
-import com.intellij.notification.Notification
 import com.intellij.notification.NotificationAction
-import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.service
-import com.intellij.openapi.options.ShowSettingsUtil
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.ShutDownTracker
 import com.intellij.serviceContainer.NonInjectable
+import com.intellij.util.SingleAlarm
 import com.intellij.util.concurrency.SynchronizedClearableLazy
-import com.intellij.util.pooledThreadSingleAlarm
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.concurrency.Promise
@@ -44,13 +40,13 @@ open class BasePasswordSafe @NonInjectable constructor(val settings: PasswordSaf
   protected val currentProviderIfComputed: CredentialStore?
     get() = if (_currentProvider.isInitialized()) _currentProvider.value else null
 
-  internal var currentProvider: CredentialStore
+  var currentProvider: CredentialStore
     get() = _currentProvider.value
     set(value) {
       _currentProvider.value = value
     }
 
-  internal fun closeCurrentStore(isSave: Boolean, isEvenMemoryOnly: Boolean) {
+  fun closeCurrentStore(isSave: Boolean, isEvenMemoryOnly: Boolean) {
     val store = currentProviderIfComputed ?: return
     if (!isEvenMemoryOnly && store is InMemoryCredentialStore) {
       return
@@ -73,13 +69,11 @@ open class BasePasswordSafe @NonInjectable constructor(val settings: PasswordSaf
     }
   }
 
-  internal fun createMasterKeyEncryptionSpec(): EncryptionSpec {
-    val pgpKey = settings.state.pgpKeyId
-    return when (pgpKey) {
+  internal fun createMasterKeyEncryptionSpec(): EncryptionSpec =
+    when (val pgpKey = settings.state.pgpKeyId) {
       null -> EncryptionSpec(type = getDefaultEncryptionType(), pgpKeyId = null)
       else -> EncryptionSpec(type = EncryptionType.PGP_KEY, pgpKeyId = pgpKey)
     }
-  }
 
   // it is helper storage to support set password as memory-only (see setPassword memoryOnly flag)
   protected val memoryHelperProvider: Lazy<CredentialStore> = lazy { InMemoryCredentialStore() }
@@ -151,14 +145,10 @@ open class BasePasswordSafe @NonInjectable constructor(val settings: PasswordSaf
 
 class PasswordSafeImpl : BasePasswordSafe(), SettingsSavingComponent {
   // SecureRandom (used to generate master password on first save) can be blocking on Linux
-  private val saveAlarm = pooledThreadSingleAlarm(delay = 0) {
+  private val saveAlarm = SingleAlarm.pooledThreadSingleAlarm(delay = 0, ApplicationManager.getApplication()) {
     val currentThread = Thread.currentThread()
-    ShutDownTracker.getInstance().registerStopperThread(currentThread)
-    try {
+    ShutDownTracker.getInstance().executeWithStopperThread(currentThread) {
       (currentProviderIfComputed as? KeePassCredentialStore)?.save(createMasterKeyEncryptionSpec())
-    }
-    finally {
-      ShutDownTracker.getInstance().unregisterStopperThread(currentThread)
     }
   }
 
@@ -177,7 +167,7 @@ class PasswordSafeImpl : BasePasswordSafe(), SettingsSavingComponent {
     get() = memoryHelperProvider.value as PasswordStorage
 }
 
-internal fun getDefaultKeePassDbFile() = getDefaultKeePassBaseDirectory().resolve(DB_FILE_NAME)
+fun getDefaultKeePassDbFile() = getDefaultKeePassBaseDirectory().resolve(DB_FILE_NAME)
 
 private fun computeProvider(settings: PasswordSafeSettings): CredentialStore {
   if (settings.providerType == ProviderType.MEMORY_ONLY || (ApplicationManager.getApplication()?.isUnitTestMode == true)) {
@@ -185,17 +175,10 @@ private fun computeProvider(settings: PasswordSafeSettings): CredentialStore {
   }
 
   fun showError(@NlsContexts.NotificationTitle title: String) {
-    NOTIFICATION_MANAGER.notify(title = title,
-                                content = CredentialStoreBundle.message("notification.content.in.memory.storage"),
-                                action = object: NotificationAction(
-                                  CredentialStoreBundle.message("notification.content.password.settings.action")
-                                ) {
-                                  override fun actionPerformed(e: AnActionEvent, notification: Notification) {
-                                    // to hide before Settings open, otherwise dialog and notification are shown at the same time
-                                    notification.expire()
-                                    ShowSettingsUtil.getInstance().showSettingsDialog(e.project, PasswordSafeConfigurable::class.java)
-                                  }
-                                })
+    CredentialStoreUiService.getInstance().notify(title,
+                                                  CredentialStoreBundle.message("notification.content.in.memory.storage"), null,
+                                                  NotificationAction.createExpiring(CredentialStoreBundle.message("notification.content.password.settings.action"))
+                                                  { e, _ -> CredentialStoreUiService.getInstance().openSettings(e.project) })
   }
 
   if (settings.providerType == ProviderType.KEEPASS) {
@@ -239,7 +222,7 @@ private fun computeProvider(settings: PasswordSafeSettings): CredentialStore {
   return InMemoryCredentialStore()
 }
 
-internal fun createPersistentCredentialStore(): CredentialStore? {
+fun createPersistentCredentialStore(): CredentialStore? {
   for (factory in CredentialStoreFactory.CREDENTIAL_STORE_FACTORY.extensionList) {
     return factory.create() ?: continue
   }

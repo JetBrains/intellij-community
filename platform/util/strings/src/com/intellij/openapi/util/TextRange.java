@@ -135,6 +135,9 @@ public class TextRange implements Segment, Serializable {
 
   @NotNull
   public TextRange grown(int lengthDelta) {
+    if (lengthDelta == 0) {
+      return this;
+    }
     return from(myStartOffset, getLength() + lengthDelta);
   }
 
@@ -186,6 +189,9 @@ public class TextRange implements Segment, Serializable {
   }
 
   public TextRange intersection(@NotNull TextRange range) {
+    if (equals(range)) {
+      return this;
+    }
     int newStart = Math.max(myStartOffset, range.getStartOffset());
     int newEnd = Math.min(myEndOffset, range.getEndOffset());
     return isProperRange(newStart, newEnd) ? new TextRange(newStart, newEnd) : null;
@@ -197,6 +203,9 @@ public class TextRange implements Segment, Serializable {
 
   @NotNull
   public TextRange union(@NotNull TextRange textRange) {
+    if (equals(textRange)) {
+      return this;
+    }
     return new TextRange(Math.min(myStartOffset, textRange.getStartOffset()), Math.max(myEndOffset, textRange.getEndOffset()));
   }
 

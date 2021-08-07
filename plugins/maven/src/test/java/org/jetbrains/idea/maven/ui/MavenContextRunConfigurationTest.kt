@@ -12,6 +12,7 @@ import org.jetbrains.idea.maven.execution.MavenGoalLocation
 import org.jetbrains.idea.maven.execution.MavenRunConfiguration
 import org.jetbrains.idea.maven.model.MavenExplicitProfiles
 import org.jetbrains.idea.maven.navigator.MavenProjectsNavigator
+import org.junit.Test
 
 class MavenContextRunConfigurationTest : MavenDomTestCase() {
   private lateinit var myNavigator: MavenProjectsNavigator
@@ -25,7 +26,7 @@ class MavenContextRunConfigurationTest : MavenDomTestCase() {
     myNavigator.setGroupModules(true)
   }
 
-  fun testCreateMavenRunConfigurationFromToolWindow() {
+  @Test fun testCreateMavenRunConfigurationFromToolWindow() {
     val projectPom = createProjectPom("""
   <groupId>test</groupId>
   <artifactId>project</artifactId>
@@ -40,6 +41,7 @@ class MavenContextRunConfigurationTest : MavenDomTestCase() {
     TestCase.assertEquals("project [validate]", runConfiguration!!.name)
   }
 
+  @Test
   fun testCheckMavenRunConfigurationFromToolWindow() {
     val projectPom = createProjectPom("""
   <groupId>test</groupId>
@@ -63,7 +65,7 @@ class MavenContextRunConfigurationTest : MavenDomTestCase() {
   }
 
 
-  fun testMavenRunConfigurationFromToolWindowShouldBeDifferent() {
+  @Test fun testMavenRunConfigurationFromToolWindowShouldBeDifferent() {
     createProjectPom("""
   <groupId>test</groupId>
   <artifactId>project</artifactId>
@@ -118,7 +120,7 @@ class MavenContextRunConfigurationTest : MavenDomTestCase() {
   }
 
 
-  fun testMavenRunConfigurationFromToolWindowForMultimodule() {
+  @Test fun testMavenRunConfigurationFromToolWindowForMultimodule() {
     createProjectPom("""
   <groupId>test</groupId>
   <artifactId>project</artifactId>

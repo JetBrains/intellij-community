@@ -177,7 +177,9 @@ sealed class MutableNonNegativeIntIntMultiMap(
     if (newValues.isEmpty()) return false
     startWrite()
 
-    startModifyingKey(key).addAll(newValues.asIterable())
+    // According to the docs, this constructor doesn't create a copy of the array
+    val myList = IntImmutableList(newValues)
+    startModifyingKey(key).addAll(myList)
     return true
   }
 

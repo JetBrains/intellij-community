@@ -19,7 +19,6 @@ import com.intellij.workspaceModel.storage.EntitySource
 import com.intellij.workspaceModel.storage.bridgeEntities.*
 import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
 import org.jetbrains.jps.model.serialization.JpsProjectLoader
-import org.junit.Assume.assumeTrue
 import org.junit.Before
 import org.junit.ClassRule
 import org.junit.Rule
@@ -42,7 +41,7 @@ class SaveFacetsTest {
 
   @Before
   fun setUp() {
-    ProjectLoadingErrorsHeadlessNotifier.setErrorHandler({}, disposable.disposable)
+    ProjectLoadingErrorsHeadlessNotifier.setErrorHandler(disposable.disposable, {})
   }
 
   @Test
@@ -66,7 +65,6 @@ class SaveFacetsTest {
 
   @Test
   fun `facet in module with custom storage`() {
-    assumeTrue(ProjectModelRule.isWorkspaceModelEnabled)
     class SampleCustomModuleSource(override val internalSource: JpsFileEntitySource) : EntitySource, CustomModuleEntitySource
     val moduleDir = projectModel.baseProjectDir.virtualFileRoot.toVirtualFileUrl(VirtualFileUrlManager.getInstance(projectModel.project))
     val source = SampleCustomModuleSource(JpsFileEntitySource.FileInDirectory(moduleDir, getJpsProjectConfigLocation(projectModel.project)!!))

@@ -62,7 +62,7 @@ public class ActionCommand extends TypeCommand {
             context.error(getMessage(), getLine());
           }
         };
-        context.message("Invoking action via shortcut: " + stroke.toString(), getLine());
+        context.message("Invoking action via shortcut: " + stroke, getLine());
 
         final KeyStroke finalStroke = stroke;
 
@@ -70,7 +70,7 @@ public class ActionCommand extends TypeCommand {
           Disposable disposable = Disposer.newDisposable();
           ApplicationManager.getApplication().getMessageBus().connect(disposable).subscribe(AnActionListener.TOPIC, new AnActionListener() {
             @Override
-            public void beforeActionPerformed(@NotNull final AnAction action, @NotNull DataContext dataContext, @NotNull AnActionEvent event) {
+            public void beforeActionPerformed(@NotNull AnAction action, @NotNull AnActionEvent event) {
               ApplicationManager.getApplication().invokeLater(() -> {
                 if (context.isDisposed()) {
                   Disposer.dispose(disposable);

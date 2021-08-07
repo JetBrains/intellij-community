@@ -2,13 +2,12 @@
 package training.dsl
 
 import com.intellij.openapi.application.ModalityState
-import com.intellij.openapi.application.invokeLater
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import org.intellij.lang.annotations.Language
 import org.jetbrains.annotations.Nls
 
 @LearningDsl
-abstract class LessonContext: LearningDslBase {
+abstract class LessonContext : LearningDslBase {
   /**
    * Start a new task in a lesson context
    */
@@ -17,7 +16,7 @@ abstract class LessonContext: LearningDslBase {
 
   /**
    * There will not be any freeze in GUI thread.
-   * The continue of the script will be scheduled with the [delayMillis]
+   * The continuation of the script will be scheduled with the [delayMillis]
    */
   open fun waitBeforeContinue(delayMillis: Int) = Unit
 
@@ -26,7 +25,7 @@ abstract class LessonContext: LearningDslBase {
   fun prepareRuntimeTask(modalityState: ModalityState? = ModalityState.any(), preparation: TaskRuntimeContext.() -> Unit) {
     task {
       addFutureStep {
-        invokeLater(modalityState) {
+        taskInvokeLater(modalityState) {
           preparation()
           completeStep()
         }

@@ -37,6 +37,7 @@ import com.intellij.util.ui.UIUtil;
 import git4idea.GitUtil;
 import git4idea.changes.GitChangeUtils;
 import git4idea.commands.Git;
+import git4idea.commands.GitCommandResult;
 import git4idea.commands.GitMessageWithFilesDetector;
 import git4idea.config.GitVcsSettings;
 import git4idea.i18n.GitBundle;
@@ -196,13 +197,18 @@ abstract class GitBranchOperation {
   /**
    * Show fatal error as a notification or as a dialog with rollback proposal.
    */
-  protected void fatalError(@NotNull @NlsContexts.NotificationTitle String title, @NotNull @NlsContexts.NotificationContent String message) {
-    if (wereSuccessful())  {
+  protected void fatalError(@NotNull @NlsContexts.NotificationTitle String title,
+                            @NotNull @NlsContexts.NotificationContent String message) {
+    if (wereSuccessful()) {
       showFatalErrorDialogWithRollback(title, message);
     }
     else {
       showFatalNotification(title, message);
     }
+  }
+
+  protected void fatalError(@NotNull @NlsContexts.NotificationTitle String title, @NotNull GitCommandResult result) {
+    fatalError(title, result.getErrorOutputAsHtmlString());
   }
 
   protected void showFatalErrorDialogWithRollback(@NotNull @NlsContexts.DialogTitle String title,

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.impl.statistics;
 
 import com.intellij.execution.RunManager;
@@ -7,6 +7,7 @@ import com.intellij.execution.configurations.*;
 import com.intellij.execution.target.TargetEnvironmentAwareRunProfile;
 import com.intellij.execution.target.TargetEnvironmentConfiguration;
 import com.intellij.execution.target.TargetEnvironmentsManager;
+import com.intellij.execution.target.local.LocalTargetType;
 import com.intellij.internal.statistic.beans.MetricEvent;
 import com.intellij.internal.statistic.eventLog.EventLogGroup;
 import com.intellij.internal.statistic.eventLog.events.*;
@@ -32,7 +33,7 @@ import java.util.*;
 
 public final class RunConfigurationTypeUsagesCollector extends ProjectUsagesCollector {
   public static final String CONFIGURED_IN_PROJECT = "configured.in.project";
-  public static final EventLogGroup GROUP = new EventLogGroup("run.configuration.type", 9);
+  public static final EventLogGroup GROUP = new EventLogGroup("run.configuration.type", 10);
   public static final StringEventField ID_FIELD = EventFields.StringValidatedByCustomRule("id", "run_config_id");
   public static final StringEventField FACTORY_FIELD = EventFields.StringValidatedByCustomRule("factory", "run_config_factory");
   private static final IntEventField COUNT_FIELD = EventFields.Int("count");
@@ -42,7 +43,14 @@ public final class RunConfigurationTypeUsagesCollector extends ProjectUsagesColl
   private static final BooleanEventField ACTIVATE_BEFORE_RUN_FIELD = EventFields.Boolean("activate_before_run");
   private static final BooleanEventField TEMPORARY_FIELD = EventFields.Boolean("temporary");
   private static final BooleanEventField PARALLEL_FIELD = EventFields.Boolean("parallel");
-  private static final StringEventField TARGET_FIELD = EventFields.StringValidatedByCustomRule("target", "run_target");
+  /**
+   * Stands for the target specified for the Run Configuration.
+   * <p>
+   * Note that if the value is {@code null} then the <i>project default target</i> will be used for executing the run configuration. The
+   * default value for the project default target is the local machine, it might be changed by the user.
+   */
+  private static final StringEventField TARGET_FIELD =
+    EventFields.StringValidatedByCustomRule("target", RunConfigurationUsageTriggerCollector.RunTargetValidator.RULE_ID);
   private static final ObjectEventField ADDITIONAL_FIELD = EventFields.createAdditionalDataField(GROUP.getId(), CONFIGURED_IN_PROJECT);
   private static final VarargEventId CONFIGURED_IN_PROJECT_EVENT =
     GROUP.registerVarargEvent(CONFIGURED_IN_PROJECT, COUNT_FIELD, ID_FIELD, FACTORY_FIELD, SHARED_FIELD, EDIT_BEFORE_RUN_FIELD,
@@ -58,7 +66,7 @@ public final class RunConfigurationTypeUsagesCollector extends ProjectUsagesColl
   @NotNull
   @Override
   public Set<MetricEvent> getMetrics(@NotNull Project project) {
-    Object2IntMap<Template> templates=new Object2IntOpenHashMap<>();
+    Object2IntMap<Template> templates = new Object2IntOpenHashMap<>();
     if (project.isDisposed()) {
       return Collections.emptySet();
     }
@@ -73,7 +81,7 @@ public final class RunConfigurationTypeUsagesCollector extends ProjectUsagesColl
       }
 
       final ConfigurationType configurationType = configurationFactory.getType();
-      List<EventPair> pairs = createFeatureUsageData(configurationType, configurationFactory);
+      List<EventPair<?>> pairs = createFeatureUsageData(configurationType, configurationFactory);
       pairs.addAll(getSettings(settings, runConfiguration));
       final Template template = new Template(CONFIGURED_IN_PROJECT_EVENT, pairs);
       addOrIncrement(templates, template);
@@ -83,12 +91,9 @@ public final class RunConfigurationTypeUsagesCollector extends ProjectUsagesColl
         pairs.add(ADDITIONAL_FIELD.with(new ObjectEventData(additionalData)));
       }
       if (runConfiguration instanceof TargetEnvironmentAwareRunProfile) {
-        String defaultTargetName = ((TargetEnvironmentAwareRunProfile)runConfiguration).getDefaultTargetName();
-        if (defaultTargetName != null) {
-          TargetEnvironmentConfiguration target = TargetEnvironmentsManager.getInstance(project).getTargets().findByName(defaultTargetName);
-          if (target != null) {
-            pairs.add(TARGET_FIELD.with(target.getTypeId()));
-          }
+        String assignedTargetType = getAssignedTargetType(project, (TargetEnvironmentAwareRunProfile)runConfiguration);
+        if (assignedTargetType != null) {
+          pairs.add(TARGET_FIELD.with(assignedTargetType));
         }
       }
     }
@@ -139,7 +144,7 @@ public final class RunConfigurationTypeUsagesCollector extends ProjectUsagesColl
             continue;
           }
           if (featureUsed) {
-            List<EventPair> pairs = new ArrayList<>();
+            List<EventPair<?>> pairs = new ArrayList<>();
             pairs.add(ID_FIELD.with(runConfiguration.getType().getId()));
             pairs.add(EventFields.PluginInfo.with(info));
             pairs.add(FEATURE_NAME_FIELD.with(name));
@@ -150,9 +155,10 @@ public final class RunConfigurationTypeUsagesCollector extends ProjectUsagesColl
     }
   }
 
-  public static @NotNull List<EventPair> createFeatureUsageData(@NotNull ConfigurationType configuration, @Nullable ConfigurationFactory factory) {
+  public static @NotNull List<EventPair<?>> createFeatureUsageData(@NotNull ConfigurationType configuration,
+                                                                   @Nullable ConfigurationFactory factory) {
     final String id = configuration instanceof UnknownConfigurationType ? "unknown" : configuration.getId();
-    List<EventPair> pairs = new ArrayList<>();
+    List<EventPair<?>> pairs = new ArrayList<>();
     pairs.add(ID_FIELD.with(id));
     if (factory != null && configuration.getConfigurationFactories().length > 1) {
       pairs.add(FACTORY_FIELD.with(factory.getId()));
@@ -171,10 +177,10 @@ public final class RunConfigurationTypeUsagesCollector extends ProjectUsagesColl
 
   private static final class Template {
     private final VarargEventId myEventId;
-    private final List<? super EventPair> myEventPairs;
+    private final List<EventPair<?>> myEventPairs;
 
     private Template(VarargEventId id,
-                     List<? super EventPair> pairs) {
+                     List<EventPair<?>> pairs) {
       myEventId = id;
       myEventPairs = pairs;
     }
@@ -182,7 +188,7 @@ public final class RunConfigurationTypeUsagesCollector extends ProjectUsagesColl
     @NotNull
     private MetricEvent createMetricEvent(int count) {
       myEventPairs.add(COUNT_FIELD.with(count));
-      return myEventId.metric(myEventPairs.toArray(new EventPair[0]));
+      return myEventId.metric(myEventPairs);
     }
 
     @Override
@@ -264,5 +270,34 @@ public final class RunConfigurationTypeUsagesCollector extends ProjectUsagesColl
       }
       return null;
     }
+  }
+
+  /**
+   * The logged string type for the local machine target. Stands for {@link LocalTargetType#LOCAL_TARGET_NAME} target identifier.
+   * <p>
+   * Just for the reason that {@code "local"} looks prettier than {@code "@@@LOCAL@@@"}.
+   */
+  static final String LOCAL_TYPE_ID = "local";
+
+  /**
+   * <ul>
+   * <li>{@code null} stands for the project default target;</li>
+   * <li>{@code "local"} stands for the explicitly selected local machine configuration;</li>
+   * <li>other values stands for the specific target types.</li>
+   * </ul>
+   */
+  private static @Nullable String getAssignedTargetType(@NotNull Project project,
+                                                        @NotNull TargetEnvironmentAwareRunProfile runConfiguration) {
+    String assignedTargetName = runConfiguration.getDefaultTargetName();
+    if (LocalTargetType.LOCAL_TARGET_NAME.equals(assignedTargetName)) {
+      return LOCAL_TYPE_ID;
+    }
+    else if (assignedTargetName != null) {
+      TargetEnvironmentConfiguration target = TargetEnvironmentsManager.getInstance(project).getTargets().findByName(assignedTargetName);
+      if (target != null) {
+        return target.getTypeId();
+      }
+    }
+    return null;
   }
 }

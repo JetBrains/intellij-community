@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.hierarchy.call;
 
 import com.intellij.ide.hierarchy.HierarchyNodeDescriptor;
@@ -9,7 +9,6 @@ import com.intellij.psi.search.searches.OverridingMethodsSearch;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -23,37 +22,28 @@ public final class CalleeMethodsTreeStructure extends HierarchyTreeStructure {
   /**
    * Should be called in read action
    */
-  public CalleeMethodsTreeStructure(@NotNull Project project, @NotNull PsiMember member, final String scopeType) {
+  public CalleeMethodsTreeStructure(@NotNull Project project, @NotNull PsiMember member, String scopeType) {
     super(project, new CallHierarchyNodeDescriptor(project, null, member, true, false));
     myScopeType = scopeType;
   }
-  
-  /**
-   * @deprecated use CalleeMethodsTreeStructure#CalleeMethodsTreeStructure(Project, PsiMember, String)
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2020.2")
-  public CalleeMethodsTreeStructure(@NotNull Project project, @NotNull PsiMethod method, final String scopeType) {
-    this(project, ((PsiMember)method), scopeType);
-  }
 
   @Override
-  protected final Object @NotNull [] buildChildren(@NotNull final HierarchyNodeDescriptor descriptor) {
-    final PsiMember enclosingElement = ((CallHierarchyNodeDescriptor)descriptor).getEnclosingElement();
+  protected Object @NotNull [] buildChildren(@NotNull HierarchyNodeDescriptor descriptor) {
+    PsiMember enclosingElement = ((CallHierarchyNodeDescriptor)descriptor).getEnclosingElement();
     if (!(enclosingElement instanceof PsiMethod)) {
       return ArrayUtilRt.EMPTY_OBJECT_ARRAY;
     }
-    final PsiMethod method = (PsiMethod)enclosingElement;
+    PsiMethod method = (PsiMethod)enclosingElement;
 
     List<PsiMethod> methods = new ArrayList<>();
 
-    final PsiCodeBlock body = method.getBody();
+    PsiCodeBlock body = method.getBody();
     if (body != null) {
-      visitor(body, methods);
+      collectCallees(body, methods);
     }
 
-    final PsiMethod baseMethod = (PsiMethod)((CallHierarchyNodeDescriptor)getBaseDescriptor()).getTargetElement();
-    final PsiClass baseClass = baseMethod.getContainingClass();
+    PsiMethod baseMethod = (PsiMethod)((CallHierarchyNodeDescriptor)getBaseDescriptor()).getTargetElement();
+    PsiClass baseClass = baseMethod.getContainingClass();
 
     Map<PsiMethod,CallHierarchyNodeDescriptor> methodToDescriptorMap = new HashMap<>();
 
@@ -61,13 +51,16 @@ public final class CalleeMethodsTreeStructure extends HierarchyTreeStructure {
 
     // also add overriding methods as children
     Iterable<PsiMethod> methodsToAdd = ContainerUtil.concat(methods, OverridingMethodsSearch.search(method));
-    for (final PsiMethod calledMethod : methodsToAdd) {
-      if (!isInScope(baseClass, calledMethod, myScopeType)) continue;
+    for (PsiMethod callee : methodsToAdd) {
+      if (!isInScope(baseClass, callee, myScopeType)
+        || JavaCallReferenceProcessor.isRecursiveNode(callee, descriptor)) {
+        continue;
+      }
 
-      CallHierarchyNodeDescriptor d = methodToDescriptorMap.get(calledMethod);
+      CallHierarchyNodeDescriptor d = methodToDescriptorMap.get(callee);
       if (d == null) {
-        d = new CallHierarchyNodeDescriptor(myProject, descriptor, calledMethod, false, false);
-        methodToDescriptorMap.put(calledMethod, d);
+        d = new CallHierarchyNodeDescriptor(myProject, descriptor, callee, false, false);
+        methodToDescriptorMap.put(callee, d);
         result.add(d);
       }
       else {
@@ -79,21 +72,21 @@ public final class CalleeMethodsTreeStructure extends HierarchyTreeStructure {
   }
 
 
-  private static void visitor(final PsiElement element, List<? super PsiMethod> methods) {
-    final PsiElement[] children = element.getChildren();
-    for (final PsiElement child : children) {
-      visitor(child, methods);
+  private static void collectCallees(@NotNull PsiElement element, @NotNull List<? super PsiMethod> methods) {
+    PsiElement[] children = element.getChildren();
+    for (PsiElement child : children) {
+      collectCallees(child, methods);
       if (child instanceof PsiMethodCallExpression) {
-        final PsiMethodCallExpression callExpression = (PsiMethodCallExpression)child;
-        final PsiReferenceExpression methodExpression = callExpression.getMethodExpression();
-        final PsiMethod method = (PsiMethod)methodExpression.resolve();
+        PsiMethodCallExpression callExpression = (PsiMethodCallExpression)child;
+        PsiReferenceExpression methodExpression = callExpression.getMethodExpression();
+        PsiMethod method = (PsiMethod)methodExpression.resolve();
         if (method != null) {
           methods.add(method);
         }
       }
       else if (child instanceof PsiNewExpression) {
-        final PsiNewExpression newExpression = (PsiNewExpression)child;
-        final PsiMethod method = newExpression.resolveConstructor();
+        PsiNewExpression newExpression = (PsiNewExpression)child;
+        PsiMethod method = newExpression.resolveConstructor();
         if (method != null) {
           methods.add(method);
         }

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.openapi.progress.impl;
 
@@ -9,7 +9,6 @@ import com.intellij.openapi.progress.TaskInfo;
 import com.intellij.openapi.progress.util.ProgressWindow;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsContexts;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.ex.StatusBarEx;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
@@ -21,31 +20,38 @@ import org.jetbrains.annotations.Nullable;
 public class BackgroundableProcessIndicator extends ProgressWindow {
   private StatusBarEx myStatusBar;
 
-  private PerformInBackgroundOption myOption;
   private TaskInfo myInfo;
 
   private boolean myDidInitializeOnEdt;
   private boolean myDisposed;
 
   public BackgroundableProcessIndicator(@NotNull Task.Backgroundable task) {
-    this(task.getProject(), task, task);
+    this(task.getProject(), task);
   }
 
-  public BackgroundableProcessIndicator(@Nullable Project project, @NotNull TaskInfo info, @NotNull PerformInBackgroundOption option) {
-    this(project, info, option, null);
+  /**
+   * @deprecated use {@link #BackgroundableProcessIndicator(Project, TaskInfo)}
+   */
+  @Deprecated
+  public BackgroundableProcessIndicator(@Nullable Project project,
+                                        @NotNull TaskInfo info,
+                                        @SuppressWarnings("unused") @NotNull PerformInBackgroundOption option) {
+    this(project, info);
+  }
+
+  public BackgroundableProcessIndicator(@Nullable Project project, @NotNull TaskInfo info) {
+    this(project, info, (StatusBarEx)null);
   }
 
   @VisibleForTesting
   BackgroundableProcessIndicator(@Nullable Project project,
                                  @NotNull TaskInfo info,
-                                 @NotNull PerformInBackgroundOption option,
                                  @Nullable StatusBarEx statusBarOverride) {
     super(info.isCancellable(), true, project, null, info.getCancelText());
     setOwnerTask(info);
-    myOption = option;
     myInfo = info;
     myStatusBar = statusBarOverride;
-    myBackgrounded = shouldStartInBackground();
+    myBackgrounded = true;
     UIUtil.invokeLaterIfNeeded(() -> initializeStatusBar());
   }
 
@@ -68,17 +74,24 @@ public class BackgroundableProcessIndicator extends ProgressWindow {
       IdeFrame frame = WindowManagerEx.getInstanceEx().findFrameHelper(nonDefaultProject);
       myStatusBar = frame != null ? (StatusBarEx)frame.getStatusBar() : null;
     }
-    myBackgrounded &= myStatusBar != null;
-    if (myBackgrounded) doBackground(myStatusBar);
+    doBackground(myStatusBar);
   }
 
-  private boolean shouldStartInBackground() {
-    return Registry.is("ide.background.tasks") || myOption.shouldStartInBackground();
+  /**
+   * @deprecated use {@link #BackgroundableProcessIndicator(Project, String, String, String, boolean)}
+   */
+  @Deprecated
+  public BackgroundableProcessIndicator(@Nullable Project project,
+                                        @NlsContexts.ProgressTitle final String progressTitle,
+                                        @SuppressWarnings("unused") @NotNull PerformInBackgroundOption option,
+                                        @Nullable @NlsContexts.Button final String cancelButtonText,
+                                        @NlsContexts.Tooltip final String backgroundStopTooltip,
+                                        final boolean cancellable) {
+    this(project, progressTitle, cancelButtonText, backgroundStopTooltip, cancellable);
   }
 
   public BackgroundableProcessIndicator(@Nullable Project project,
                                         @NlsContexts.ProgressTitle final String progressTitle,
-                                        @NotNull PerformInBackgroundOption option,
                                         @Nullable @NlsContexts.Button final String cancelButtonText,
                                         @NlsContexts.Tooltip final String backgroundStopTooltip,
                                         final boolean cancellable) {
@@ -104,7 +117,7 @@ public class BackgroundableProcessIndicator extends ProgressWindow {
       public boolean isCancellable() {
         return cancellable;
       }
-    }, option);
+    });
   }
 
   @Override
@@ -112,7 +125,7 @@ public class BackgroundableProcessIndicator extends ProgressWindow {
     if (myDisposed) return;
     initializeOnEdtIfNeeded(); // could happen before initialization succeeds - in that case we do it now
 
-    if (shouldStartInBackground() && myStatusBar != null) {
+    if (myStatusBar != null) {
       return;
     }
 
@@ -124,7 +137,6 @@ public class BackgroundableProcessIndicator extends ProgressWindow {
     if (myDisposed) return;
     assert myDidInitializeOnEdt : "Call to background action before showing dialog";
 
-    myOption.processSentToBackground();
     doBackground(myStatusBar);
     super.background();
   }
@@ -142,7 +154,6 @@ public class BackgroundableProcessIndicator extends ProgressWindow {
     myDisposed = true;
     myInfo = null;
     myStatusBar = null;
-    myOption = null;
   }
 
   @Override

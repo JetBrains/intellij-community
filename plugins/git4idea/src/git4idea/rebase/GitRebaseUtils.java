@@ -19,10 +19,7 @@ import git4idea.history.GitHistoryUtils;
 import git4idea.i18n.GitBundle;
 import git4idea.repo.GitRepository;
 import git4idea.stash.GitChangesSaver;
-import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import java.io.*;
 import java.nio.charset.StandardCharsets;
@@ -189,6 +186,7 @@ public final class GitRebaseUtils {
    * @deprecated Use {@link GitRepository#isRebaseInProgress()}.
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
   public static boolean isRebaseInTheProgress(@NotNull Project project, @NotNull VirtualFile root) {
     return getRebaseDir(project, root) != null;
   }

@@ -18,10 +18,8 @@ import org.jetbrains.annotations.Nullable;
 import java.nio.charset.Charset;
 
 /**
- * See MurmurHash3_x86_32 in <a
- * href="https://github.com/aappleby/smhasher/blob/master/src/MurmurHash3.cpp">the C++
- * implementation</a>.
- * Copied from guava because classloader module cannot depend on Guava.
+ * See MurmurHash3_x86_32 in <a href="https://github.com/aappleby/smhasher/blob/master/src/MurmurHash3.cpp">the C++ implementation</a>.
+ * Copied from Guava because classloader module cannot depend on Guava.
  *
  * @author Austin Appleby
  * @author Dimitris Andreou
@@ -79,6 +77,10 @@ public final class Murmur3_32Hash {
     }
 
     return fMix(h1, 2 * input.length());
+  }
+
+  public int hashString(CharSequence input) {
+    return hashString(input, 0, input.length());
   }
 
   public int hashString(CharSequence input, int start, int end) {

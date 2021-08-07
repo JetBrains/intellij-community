@@ -31,8 +31,6 @@ import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.ExternalStorageConfigurationManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ModuleRootManager;
-import com.intellij.openapi.roots.impl.ModuleRootManagerImpl;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
@@ -122,10 +120,6 @@ public class ExternalProjectsManagerImpl implements ExternalProjectsManager, Per
       for (Module module : ModuleManager.getInstance(myProject).getModules()) {
         if (!module.isDisposed()) {
           ExternalSystemModulePropertyManager.getInstance(module).swapStore();
-          ModuleRootManager moduleRootManager = ModuleRootManager.getInstance(module);
-          if (moduleRootManager instanceof ModuleRootManagerImpl) {
-            ((ModuleRootManagerImpl)moduleRootManager).stateChanged();
-          }
         }
       }
     }

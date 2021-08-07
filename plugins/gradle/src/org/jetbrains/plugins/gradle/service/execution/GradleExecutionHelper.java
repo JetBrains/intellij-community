@@ -2,6 +2,7 @@
 package org.jetbrains.plugins.gradle.service.execution;
 
 import com.intellij.execution.configurations.GeneralCommandLine;
+import com.intellij.execution.target.TargetEnvironmentConfiguration;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
@@ -16,20 +17,17 @@ import com.intellij.openapi.externalSystem.service.execution.ExternalSystemRunCo
 import com.intellij.openapi.externalSystem.service.execution.TargetEnvironmentConfigurationProvider;
 import com.intellij.openapi.externalSystem.util.OutputWrapper;
 import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.io.StreamUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.ArrayUtilRt;
-import com.intellij.util.ExceptionUtil;
-import com.intellij.util.Function;
-import com.intellij.util.SmartList;
+import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import org.apache.commons.cli.Option;
-import org.gradle.initialization.BuildLayoutParameters;
 import org.gradle.process.internal.JvmOptions;
 import org.gradle.tooling.*;
 import org.gradle.tooling.events.OperationType;
@@ -45,17 +43,21 @@ import org.jetbrains.plugins.gradle.service.project.ProjectResolverContext;
 import org.jetbrains.plugins.gradle.settings.DistributionType;
 import org.jetbrains.plugins.gradle.settings.GradleExecutionSettings;
 import org.jetbrains.plugins.gradle.tooling.internal.init.Init;
+import org.jetbrains.plugins.gradle.util.GradleBundle;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
-import org.jetbrains.plugins.gradle.util.GradleEnvironment;
 import org.jetbrains.plugins.gradle.util.GradleUtil;
 
 import java.io.*;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Path;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import static com.intellij.openapi.util.Pair.pair;
+import static com.intellij.util.containers.ContainerUtil.newHashMap;
 import static org.jetbrains.plugins.gradle.GradleConnectorService.withGradleConnection;
+import static org.jetbrains.plugins.gradle.service.execution.LocalGradleExecutionAware.LOCAL_TARGET_TYPE_ID;
 
 /**
  * @author Denis Zhdanov
@@ -119,40 +121,52 @@ public class GradleExecutionHelper {
     return withGradleConnection(
       projectDir, taskId, settings, listener, cancellationToken,
       connection -> {
-        String userDir = null;
-        if (!Registry.is("gradle.tooling.use.external.process", false) && !GradleEnvironment.ADJUST_USER_DIR) {
-          try {
-            userDir = System.getProperty("user.dir");
-            if (userDir != null) System.setProperty("user.dir", projectDir);
-          }
-          catch (Exception ignore) {
-          }
-        }
-
         try {
-          return f.fun(connection);
+          Map<String, String> propertiesFixes = newHashMap(
+            pair("user.dir", projectDir),
+            pair("java.system.class.loader", null)
+          );
+          return maybeFixSystemProperties(() -> f.fun(connection), propertiesFixes);
         }
-        catch (ExternalSystemException e) {
-          throw e;
-        }
-        catch (ProcessCanceledException e) {
+        catch (ExternalSystemException | ProcessCanceledException e) {
           throw e;
         }
         catch (Throwable e) {
           LOG.warn("Gradle execution error", e);
           Throwable rootCause = ExceptionUtil.getRootCause(e);
-          ExternalSystemException externalSystemException =
-            new ExternalSystemException(ExceptionUtil.getMessage(rootCause), e);
+          ExternalSystemException externalSystemException = new ExternalSystemException(ExceptionUtil.getMessage(rootCause), e);
           externalSystemException.initCause(e);
           throw externalSystemException;
         }
-        finally {
-          if (userDir != null) {
-            // restore original user.dir property
-            System.setProperty("user.dir", userDir);
+      });
+  }
+
+  public static <T> T maybeFixSystemProperties(@NotNull Computable<T> action, Map<String, String> keyToMask) {
+    Map<String, String> oldValues = new HashMap<>();
+    try {
+      if (!PlatformUtils.isFleetBackend() && Registry.is("gradle.tooling.adjust.user.dir", true)) {
+        keyToMask.forEach((key,newVal) -> {
+          final String oldVal = System.getProperty(key);
+          oldValues.put(key, oldVal);
+          if (oldVal != null) {
+            if (newVal != null) {
+              System.setProperty(key, newVal);
+            } else {
+              System.clearProperty(key);
+            }
           }
+        });
+      }
+      return action.compute();
+    }
+    finally {
+      // restore original properties
+      oldValues.forEach((k,v) -> {
+        if (v != null) {
+          System.setProperty(k, v);
         }
       });
+    }
   }
 
   public void ensureInstalledWrapper(@NotNull ExternalSystemTaskId id,
@@ -169,92 +183,95 @@ public class GradleExecutionHelper {
                                      @Nullable GradleVersion gradleVersion,
                                      @NotNull ExternalSystemTaskNotificationListener listener,
                                      @NotNull CancellationToken cancellationToken) {
-
-    if (!settings.getDistributionType().isWrapped()) return;
-
+    if (!settings.getDistributionType().isWrapped()) {
+      return;
+    }
     if (settings.getDistributionType() == DistributionType.DEFAULT_WRAPPED &&
         GradleUtil.findDefaultWrapperPropertiesFile(projectPath) != null) {
       return;
     }
+    withGradleConnection(projectPath, id, settings, listener, cancellationToken, connection -> {
+      ensureInstalledWrapper(id, projectPath, settings, gradleVersion, listener, connection, cancellationToken);
+      return null;
+    });
+  }
 
-    withGradleConnection(
-      projectPath, id, settings, listener, cancellationToken,
-      connection -> {
-        long ttlInMs = settings.getRemoteProcessIdleTtlInMs();
-        try {
-          settings.setRemoteProcessIdleTtlInMs(100);
-          TargetEnvironmentConfigurationProvider configurationProvider =
-            ExternalSystemExecutionAware.Companion.getEnvironmentConfigurationProvider(settings);
-          if (configurationProvider != null) {
-            // todo add the support for org.jetbrains.plugins.gradle.settings.DistributionType.WRAPPED
-            BuildLauncher launcher = getBuildLauncher(id, connection, settings, listener);
-            launcher.withCancellationToken(cancellationToken);
-            launcher.forTasks("wrapper");
-            launcher.run();
+  private void ensureInstalledWrapper(@NotNull ExternalSystemTaskId id,
+                                      @NotNull String projectPath,
+                                      @NotNull GradleExecutionSettings settings,
+                                      @Nullable GradleVersion gradleVersion,
+                                      @NotNull ExternalSystemTaskNotificationListener listener,
+                                      @NotNull ProjectConnection connection,
+                                      @NotNull CancellationToken cancellationToken) {
+    long ttlInMs = settings.getRemoteProcessIdleTtlInMs();
+    List<String> arguments = settings.getArguments();
+    try {
+      settings.setRemoteProcessIdleTtlInMs(100);
+      settings.setArguments(ContainerUtil.emptyList());
 
-            File wrapperPropertiesFile = GradleUtil.findDefaultWrapperPropertiesFile(projectPath);
-            if (wrapperPropertiesFile != null) {
-              settings.setWrapperPropertyFile(wrapperPropertiesFile.getPath());
-            }
-            return null;
-          }
-          try {
-            final File wrapperFilesLocation = FileUtil.createTempDirectory("wrap", "loc");
-            final String fileName = "gradle-wrapper";
-            final File jarFile = new File(wrapperFilesLocation, fileName + ".jar");
-            final File scriptFile = new File(wrapperFilesLocation, "gradlew");
-            final File pathToProperties = new File(wrapperFilesLocation, "path.tmp");
-
-            Runtime.getRuntime().addShutdownHook(new Thread(() -> FileUtil.delete(wrapperFilesLocation), "GradleExecutionHelper cleanup"));
-
-            StringJoiner lines = new StringJoiner(System.lineSeparator());
-            lines.add("");
-            lines.add("gradle.projectsEvaluated { gr ->");
-            lines.add("  def wrapper = gr.rootProject.tasks[\"wrapper\"]");
-            lines.add("  if (wrapper != null) {");
-            lines.add("    if (wrapper.jarFile.exists()) {");
-            lines.add("      wrapper.jarFile = new File('" + StringUtil.escapeBackSlashes(jarFile.getCanonicalPath()) + "')");
-            lines.add("      wrapper.scriptFile = new File('" + StringUtil.escapeBackSlashes(scriptFile.getCanonicalPath()) + "')");
-            lines.add("    }");
-            if (gradleVersion != null) {
-              lines.add("    wrapper.gradleVersion = '" + gradleVersion.getVersion() + "'");
-            }
-            lines.add("    wrapper.doLast {");
-            lines.add("      new File('" +
-                      StringUtil.escapeBackSlashes(pathToProperties.getCanonicalPath()) +
-                      "').write wrapper.propertiesFile.getCanonicalPath()");
-            lines.add("    }");
-            lines.add("  }");
-            lines.add("}");
-            lines.add("");
-            final File tempFile = writeToFileGradleInitScript(lines.toString(), "wrapper_init");
-            settings.withArguments(GradleConstants.INIT_SCRIPT_CMD_OPTION, tempFile.getAbsolutePath());
-            BuildLauncher launcher = getBuildLauncher(id, connection, settings, listener);
-            launcher.withCancellationToken(cancellationToken);
-            launcher.forTasks("wrapper");
-            launcher.run();
-            settings.setWrapperPropertyFile(FileUtil.loadFile(pathToProperties));
-          }
-          catch (IOException e) {
-            LOG.warn("Can't update wrapper", e);
-          }
-        }
-        catch (ProcessCanceledException e) {
-          throw e;
-        }
-        catch (Throwable e) {
-          LOG.warn("Can't update wrapper", e);
-          Throwable rootCause = ExceptionUtil.getRootCause(e);
-          ExternalSystemException externalSystemException = new ExternalSystemException(ExceptionUtil.getMessage(rootCause));
-          externalSystemException.initCause(e);
-          throw externalSystemException;
-        }
-        finally {
-          settings.setRemoteProcessIdleTtlInMs(ttlInMs);
-        }
-        return null;
+      if (ExternalSystemExecutionAware.Companion.getEnvironmentConfigurationProvider(settings) == null) {
+        String initScriptPath = setupWrapperTaskInInitScript(gradleVersion);
+        settings.withArguments(GradleConstants.INIT_SCRIPT_CMD_OPTION, initScriptPath);
       }
-    );
+
+      // todo add the support for org.jetbrains.plugins.gradle.settings.DistributionType.WRAPPED
+      BuildLauncher launcher = getBuildLauncher(id, connection, settings, listener);
+      launcher.withCancellationToken(cancellationToken);
+      launcher.forTasks("wrapper");
+      launcher.run();
+
+      Path wrapperPropertiesFile = GradleUtil.findDefaultWrapperPropertiesFile(projectPath);
+      if (wrapperPropertiesFile != null) {
+        settings.setWrapperPropertyFile(wrapperPropertiesFile.toString());
+      }
+    }
+    catch (ProcessCanceledException e) {
+      throw e;
+    }
+    catch (IOException e) {
+      LOG.warn("Can't update wrapper", e);
+    }
+    catch (Throwable e) {
+      LOG.warn("Can't update wrapper", e);
+      Throwable rootCause = ExceptionUtil.getRootCause(e);
+      ExternalSystemException externalSystemException = new ExternalSystemException(ExceptionUtil.getMessage(rootCause));
+      externalSystemException.initCause(e);
+      throw externalSystemException;
+    }
+    finally {
+      settings.setRemoteProcessIdleTtlInMs(ttlInMs);
+      settings.setArguments(arguments);
+    }
+  }
+
+  private static @NotNull String setupWrapperTaskInInitScript(@Nullable GradleVersion gradleVersion) throws IOException {
+    String wrapperFilesLocationPath = FileUtil.createTempDirectory("wrap", "loc").getCanonicalPath();
+    String jarFile = FileUtil.join(wrapperFilesLocationPath, "gradle-wrapper.jar");
+    String scriptFile = FileUtil.join(wrapperFilesLocationPath, "gradlew");
+    String propertiesFile = FileUtil.join(wrapperFilesLocationPath, "path.tmp");
+
+    StringJoiner lines = new StringJoiner(System.lineSeparator());
+    lines.add("");
+    lines.add("gradle.projectsEvaluated { gr ->");
+    lines.add("  def wrapper = gr.rootProject.tasks[\"wrapper\"]");
+    lines.add("  if (wrapper != null) {");
+    lines.add("    if (wrapper.jarFile.exists()) {");
+    lines.add("      wrapper.jarFile = new File('" + StringUtil.escapeBackSlashes(jarFile) + "')");
+    lines.add("      wrapper.scriptFile = new File('" + StringUtil.escapeBackSlashes(scriptFile) + "')");
+    lines.add("    }");
+    if (gradleVersion != null) {
+      lines.add("    wrapper.gradleVersion = '" + gradleVersion.getVersion() + "'");
+    }
+    lines.add("    wrapper.doLast {");
+    lines.add("      def propertiesFile = new File('" + StringUtil.escapeBackSlashes(propertiesFile) + "')");
+    lines.add("      propertiesFile.write wrapper.propertiesFile.getCanonicalPath()");
+    lines.add("    }");
+    lines.add("  }");
+    lines.add("}");
+    lines.add("");
+
+    File initScriptFile = writeToFileGradleInitScript(lines.toString(), "wrapper_init");
+    return initScriptFile.getCanonicalPath();
   }
 
   @NotNull
@@ -325,7 +342,7 @@ public class GradleExecutionHelper {
         List<String> buildJvmArguments = buildIdentifier == null || "buildSrc".equals(buildIdentifier.getRootDir().getName())
                                          ? ContainerUtil.emptyList()
                                          : buildEnvironment.getJava().getJvmArguments();
-        merged = mergeJvmArgs(settings.getServiceDirectory(), buildJvmArguments, jvmArgs);
+        merged = mergeBuildJvmArguments(buildJvmArguments, jvmArgs);
       }
       else {
         merged = jvmArgs;
@@ -441,6 +458,20 @@ public class GradleExecutionHelper {
       }
       return;
     }
+
+    TargetEnvironmentConfigurationProvider environmentConfigurationProvider =
+      ExternalSystemExecutionAware.Companion.getEnvironmentConfigurationProvider(settings);
+    TargetEnvironmentConfiguration environmentConfiguration =
+      environmentConfigurationProvider != null ? environmentConfigurationProvider.getEnvironmentConfiguration() : null;
+    if (environmentConfiguration != null && !LOCAL_TARGET_TYPE_ID.equals(environmentConfiguration.getTypeId())) {
+      if (settings.isPassParentEnvs()) {
+        LOG.warn("Host system environment variables will not be passed for the target run.");
+        listener.onTaskOutput(taskId, GradleBundle.message("gradle.target.execution.pass.parent.envs.warning") + "\n", false);
+      }
+      operation.setEnvironmentVariables(settings.getEnv());
+      return;
+    }
+
     GeneralCommandLine commandLine = new GeneralCommandLine();
     commandLine.withEnvironment(settings.getEnv());
     commandLine.withParentEnvironmentType(
@@ -449,18 +480,16 @@ public class GradleExecutionHelper {
     operation.setEnvironmentVariables(effectiveEnvironment);
   }
 
-  @ApiStatus.Experimental
-  static List<String> mergeJvmArgs(String serviceDirectory, List<String> jvmArgs, List<String> jvmArgsFromIdeSettings) {
-    File gradleUserHomeDir = serviceDirectory != null ? new File(serviceDirectory) : new BuildLayoutParameters().getGradleUserHomeDir();
-    LOG.debug("Gradle home: " + gradleUserHomeDir);
-    JvmOptions jvmOptions = new JvmOptions(null);
+  @ApiStatus.Internal
+  static List<String> mergeBuildJvmArguments(@NotNull List<String> jvmArgs, @NotNull List<String> jvmArgsFromIdeSettings) {
     List<String> mergedJvmArgs = mergeJvmArgs(jvmArgs, jvmArgsFromIdeSettings);
+    JvmOptions jvmOptions = new JvmOptions(null);
     jvmOptions.setAllJvmArgs(mergedJvmArgs);
     return jvmOptions.getAllJvmArgs();
   }
 
-  @ApiStatus.Experimental
-  static List<String> mergeJvmArgs(List<String> jvmArgs, List<String> jvmArgsFromIdeSettings) {
+  @ApiStatus.Internal
+  static List<String> mergeJvmArgs(@NotNull List<String> jvmArgs, @NotNull List<String> jvmArgsFromIdeSettings) {
     MultiMap<String, String> argumentsMap = MultiMap.createLinkedSet();
     String lastKey = null;
     for (String jvmArg : ContainerUtil.concat(jvmArgs, jvmArgsFromIdeSettings)) {
@@ -533,7 +562,7 @@ public class GradleExecutionHelper {
     }
     try (Reader reader = new InputStreamReader(stream, StandardCharsets.UTF_8)) {
       String toolingExtensionsJarPaths = getToolingExtensionsJarPaths(toolingExtensionClasses);
-      String script = StreamUtil.readText(reader).replaceFirst(Pattern.quote("${EXTENSIONS_JARS_PATH}"), toolingExtensionsJarPaths);
+      String script = StreamUtil.readText(reader).replaceFirst(Pattern.quote("${EXTENSIONS_JARS_PATH}"), Matcher.quoteReplacement(toolingExtensionsJarPaths));
       if (isBuildSrcProject) {
         String buildSrcDefaultInitScript = getBuildSrcDefaultInitScript();
         if (buildSrcDefaultInitScript == null) return null;
@@ -573,7 +602,7 @@ public class GradleExecutionHelper {
     try {
       File initScriptFile = writeToFileGradleInitScript(
         "if(!ext.has('mapPath')) ext.mapPath = { path -> path }\n", "ijmapper");
-      executionSettings.withArguments(GradleConstants.INIT_SCRIPT_CMD_OPTION, initScriptFile.getAbsolutePath());
+      executionSettings.prependArguments(GradleConstants.INIT_SCRIPT_CMD_OPTION, initScriptFile.getAbsolutePath());
     }
     catch (IOException e) {
       LOG.warn("Can't generate IJ gradle init script", e);

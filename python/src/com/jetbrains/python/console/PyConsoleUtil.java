@@ -156,12 +156,12 @@ public final class PyConsoleUtil {
         Editor editor = consoleView.getConsoleEditor();
         if (LookupManager.getActiveLookup(editor) != null) {
           AnAction replace = ActionManager.getInstance().getAction(IdeActions.ACTION_CHOOSE_LOOKUP_ITEM_REPLACE);
-          ActionUtil.performActionDumbAware(replace, e);
+          ActionUtil.performActionDumbAwareWithCallbacks(replace, e);
           return;
         }
         AnAction completionAction = ActionManager.getInstance().getAction(IdeActions.ACTION_CODE_COMPLETION);
         if (completionAction != null) {
-          ActionUtil.performActionDumbAware(completionAction, e);
+          ActionUtil.performActionDumbAwareWithCallbacks(completionAction, e);
         }
       }
 
@@ -208,14 +208,21 @@ public final class PyConsoleUtil {
 
       @Override
       public void update(@NotNull final AnActionEvent e) {
+        boolean enabled = false;
         EditorEx consoleEditor = consoleView.getConsoleEditor();
-        boolean enabled = IJSwingUtilities.hasFocus(consoleEditor.getComponent()) && !consoleEditor.getSelectionModel().hasSelection();
+        if (IJSwingUtilities.hasFocus(consoleEditor.getComponent())) {
+          enabled = !consoleEditor.getSelectionModel().hasSelection();
+        }
+        EditorEx historyViewer = consoleView.getHistoryViewer();
+        if (IJSwingUtilities.hasFocus(historyViewer.getComponent())) {
+          enabled = !historyViewer.getSelectionModel().hasSelection();
+        }
         e.getPresentation().setEnabled(enabled);
       }
     };
 
-    anAction
-      .registerCustomShortcutSet(KeyEvent.VK_C, InputEvent.CTRL_MASK, consoleView.getConsoleEditor().getComponent());
+    anAction.registerCustomShortcutSet(KeyEvent.VK_C, InputEvent.CTRL_DOWN_MASK, consoleView.getConsoleEditor().getComponent());
+    anAction.registerCustomShortcutSet(KeyEvent.VK_C, InputEvent.CTRL_DOWN_MASK, consoleView.getHistoryViewer().getComponent());
     anAction.getTemplatePresentation().setVisible(false);
     return anAction;
   }

@@ -3,6 +3,7 @@ package com.intellij.openapi.actionSystem;
 
 import com.intellij.openapi.progress.ProgressManager;
 import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * Implement this in actions or action groups to flag that their {@link AnAction#update}, {@link ActionGroup#getChildren(AnActionEvent)}
@@ -16,9 +17,18 @@ import org.jetbrains.annotations.ApiStatus;
  *
  * Update methods should call {@link ProgressManager#checkCanceled()} often enough to guard against UI freezes.
  */
-@ApiStatus.Experimental
 public interface UpdateInBackground {
   default boolean isUpdateInBackground() {
     return true;
+  }
+
+  static boolean isUpdateInBackground(@NotNull AnAction action) {
+    return action instanceof UpdateInBackground && ((UpdateInBackground)action).isUpdateInBackground() ||
+           action.getClass() == DefaultActionGroup.class;
+  }
+
+  @ApiStatus.Experimental
+  interface Recursive extends UpdateInBackground {
+
   }
 }

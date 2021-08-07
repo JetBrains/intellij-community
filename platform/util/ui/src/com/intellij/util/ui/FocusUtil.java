@@ -14,7 +14,7 @@ import java.util.Objects;
 public final class FocusUtil {
   private static final Logger LOG = Logger.getInstance(FocusUtil.class);
 
-  public static Component findFocusableComponentIn(Container searchIn, Component toSkip) {
+  public static Component findFocusableComponentIn(Component searchIn, Component toSkip) {
     List<Component> components = UIUtil.uiTraverser(searchIn).toList();
     for (Component component : components) {
       if (component.equals(toSkip)) {

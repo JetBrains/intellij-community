@@ -1,10 +1,18 @@
 <html>
 <body>
-Reports method and constructor calls which implicitly use the platform's default charset.
-These can produce different results on (e.g. foreign language) systems that use a different default charset,
-resulting in unexpected behaviour. A quick-fix could be suggested to specify explicit UTF-8 charset
-if the corresponding overloaded method is available.
+Reports method and constructor calls that implicitly use the platform default charset. These calls can produce different results on
+systems that use different default charsets. It might result in unexpected behaviour.
+<p><b>Example:</b></p>
+<pre><code>void foo(byte[] bytes) {
+  String s = new String(bytes);
+}</code>
+</pre>
+<p>You can use a quick-fix that specifies the explicit UTF-8 charset if the corresponding overloaded method is available.
+  After the quick-fix is applied:</p>
+<pre><code>void foo(byte[] bytes) {
+  String s = new String(bytes, StandardCharsets.UTF_8);
+}</code>
+</pre>
 <!-- tooltip end -->
-<p>
 </body>
 </html>

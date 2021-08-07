@@ -4,6 +4,7 @@ package com.intellij.openapi.editor.impl;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.RuntimeExceptionWithAttachments;
+import com.intellij.openapi.editor.CustomFoldRegion;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.FoldRegion;
 import com.intellij.openapi.editor.RangeMarker;
@@ -11,7 +12,6 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.CommonProcessors;
 import com.intellij.util.Consumer;
 import com.intellij.util.ObjectUtils;
-import it.unimi.dsi.fastutil.Hash;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -23,18 +23,6 @@ abstract class FoldRegionsTree {
 
   private static final Comparator<FoldRegion> BY_END_OFFSET = Comparator.comparingInt(RangeMarker::getEndOffset);
   private static final Comparator<? super FoldRegion> BY_END_OFFSET_REVERSE = Collections.reverseOrder(BY_END_OFFSET);
-
-  static final Hash.Strategy<FoldRegion> OFFSET_BASED_HASHING_STRATEGY = new Hash.Strategy<>() {
-    @Override
-    public int hashCode(@Nullable FoldRegion o) {
-      return o == null ? 0 : o.getStartOffset() * 31 + o.getEndOffset();
-    }
-
-    @Override
-    public boolean equals(@Nullable FoldRegion o1, @Nullable FoldRegion o2) {
-      return o1 == o2 || (o1 != null && o2 != null && o1.getStartOffset() == o2.getStartOffset() && o1.getEndOffset() == o2.getEndOffset());
-    }
-  };
 
   FoldRegionsTree(@NotNull RangeMarkerTree<FoldRegionImpl> markerTree) {
     myMarkerTree = markerTree;
@@ -59,6 +47,8 @@ abstract class FoldRegionsTree {
 
   protected abstract int getFoldedBlockInlaysHeight(int foldStartOffset, int foldEndOffset);
 
+  protected abstract int getLineHeight();
+
   CachedData rebuild() {
     List<FoldRegion> visible = new ArrayList<>(myMarkerTree.size());
 
@@ -72,7 +62,10 @@ abstract class FoldRegionsTree {
                              boolean atStart,
                              @NotNull Collection<? extends FoldRegionImpl> overlapping) {
         if (atStart) {
-          if (lastCollapsedRegion == null || region.getEndOffset() > lastCollapsedRegion.getEndOffset()) {
+          if (lastCollapsedRegion == null || region.getEndOffset() > lastCollapsedRegion.getEndOffset() ||
+              region instanceof CustomFoldRegion &&
+              region.getStartOffset() == lastCollapsedRegion.getStartOffset() &&
+              region.getEndOffset() == lastCollapsedRegion.getEndOffset()) {
             if (!region.isExpanded()) {
               hideContainedRegions(region);
               lastCollapsedRegion = region;
@@ -139,8 +132,11 @@ abstract class FoldRegionsTree {
     int[] startOffsets = ArrayUtil.newIntArray(topLevelRegions.length);
     int[] endOffsets = ArrayUtil.newIntArray(topLevelRegions.length);
     int[] foldedLines = ArrayUtil.newIntArray(topLevelRegions.length);
+    int[] customYAdjustment = ArrayUtil.newIntArray(topLevelRegions.length);
 
     int foldedLinesSum = 0;
+    int currentCustomYAdjustment = 0;
+    int lineHeight = getLineHeight();
     for (int i = 0; i < topLevelRegions.length; i++) {
       FoldRegion region = topLevelRegions[i];
       startOffsets[i] = region.getStartOffset();
@@ -148,37 +144,47 @@ abstract class FoldRegionsTree {
       Document document = region.getDocument();
       foldedLinesSum += document.getLineNumber(region.getEndOffset()) - document.getLineNumber(region.getStartOffset());
       foldedLines[i] = foldedLinesSum;
+      if (region instanceof CustomFoldRegion) {
+        currentCustomYAdjustment += ((CustomFoldRegion)region).getHeightInPixels() - lineHeight;
+      }
+      customYAdjustment[i] = currentCustomYAdjustment;
     }
 
-    CachedData data = new CachedData(visibleRegions, topLevelRegions, startOffsets, endOffsets, foldedLines);
+    CachedData data = new CachedData(visibleRegions, topLevelRegions, startOffsets, endOffsets, foldedLines, customYAdjustment);
     myCachedData = data;
     return data;
   }
 
-  boolean checkIfValidToCreate(int start, int end) {
-    // check that range doesn't strictly overlaps other regions and is distinct from everything else
-    return myMarkerTree.processOverlappingWith(start, end, region->{
+  boolean checkIfValidToCreate(int start, int end, boolean custom, FoldRegion toIgnore) {
+    // check that range doesn't strictly overlap other regions and is distinct from everything else
+    // notes specific to 'custom' fold regions:
+    // * we do allow two otherwise identical regions one of which is 'custom' and the other is not - the custom one always takes preference
+    //   over 'normal' one in terms of visibility
+    // * regions 'touching' on one of the boundaries are allowed only if both regions are 'normal', or 'custom' region fully contains
+    //   the 'normal' one - otherwise, fold region marker would need to be displayed in 'custom' region's area of the gutter, and that's not
+    //   currently supported
+    int length = end - start;
+    return myMarkerTree.processOverlappingWith(start, end, region -> {
+      if (region == toIgnore || !region.isValid()) return true;
+
       int rStart = region.getStartOffset();
       int rEnd = region.getEndOffset();
-      if (rStart < start) {
-        if (region.isValid() && start < rEnd && rEnd < end) {
-          return false;
-        }
+      int rLength = rEnd - rStart;
+      boolean rCustom = region instanceof CustomFoldRegion;
+
+      int overlapLength = Math.min(end, rEnd) - Math.max(start, rStart);
+      if (overlapLength == 0) {
+        return !(custom || rCustom);
       }
-      else if (rStart == start) {
-        if (rEnd == end) {
-          return false;
-        }
+      else if (overlapLength < length && overlapLength < rLength) {
+        return false;
+      }
+      else if (length == rLength){
+        return custom != rCustom;
       }
       else {
-        if (rStart > end) {
-          return true;
-        }
-        if (region.isValid() && rStart < end && end < rEnd) {
-          return false;
-        }
+        return start != rStart && end != rEnd || (length < rLength ? (!custom || rCustom) : (!rCustom || custom));
       }
-      return true;
     });
   }
 
@@ -280,10 +286,9 @@ abstract class FoldRegionsTree {
     return foldedLines[foldedLines.length - 1];
   }
 
-  int getHeightOfFoldedBlockInlaysBefore(int offset) {
+  int getHeightOfFoldedBlockInlaysBefore(int idx) {
     if (!isFoldingEnabled()) return 0;
     CachedData cachedData = ensureAvailableData();
-    int idx = getLastTopLevelIndexBefore(cachedData, offset);
     if (idx == -1) return 0;
     cachedData.ensureInlayDataAvailable();
     int[] topFoldedInlaysHeight = cachedData.topFoldedInlaysHeight;
@@ -296,6 +301,15 @@ abstract class FoldRegionsTree {
     cachedData.ensureInlayDataAvailable();
     int[] foldedInlaysHeight = cachedData.topFoldedInlaysHeight;
     return foldedInlaysHeight == null || foldedInlaysHeight.length == 0 ? 0 : foldedInlaysHeight[foldedInlaysHeight.length - 1];
+  }
+
+  int[] getCustomRegionsYAdjustment(int offset, int idx) {
+    if (!isFoldingEnabled()) return new int[2];
+    CachedData cachedData = ensureAvailableData();
+    int prevAdjustment = idx == -1 ? 0 : cachedData.topCustomYAdjustment[idx];
+    int curAdjustment = idx + 1 < cachedData.topStartOffsets.length && cachedData.topStartOffsets[idx + 1] == offset
+                        ? cachedData.topCustomYAdjustment[idx + 1] - prevAdjustment : 0;
+    return new int[] {prevAdjustment, curAdjustment};
   }
 
   int getLastTopLevelIndexBefore(int offset) {
@@ -337,6 +351,7 @@ abstract class FoldRegionsTree {
     private final int[] topStartOffsets;
     private final int[] topEndOffsets;
     private final int[] topFoldedLines;
+    private final int[] topCustomYAdjustment;
     private int[] topFoldedInlaysHeight;
     private boolean topFoldedInlaysHeightValid;
 
@@ -346,18 +361,21 @@ abstract class FoldRegionsTree {
       topStartOffsets = null;
       topEndOffsets = null;
       topFoldedLines = null;
+      topCustomYAdjustment = null;
     }
 
     private CachedData(FoldRegion @NotNull [] visibleRegions,
                        FoldRegion @NotNull [] topLevelRegions,
                        int @NotNull [] topStartOffsets,
                        int @NotNull [] topEndOffsets,
-                       int @NotNull [] topFoldedLines) {
+                       int @NotNull [] topFoldedLines,
+                       int @NotNull [] topCustomYAdjustment) {
       this.visibleRegions = visibleRegions;
       this.topLevelRegions = topLevelRegions;
       this.topStartOffsets = topStartOffsets;
       this.topEndOffsets = topEndOffsets;
       this.topFoldedLines = topFoldedLines;
+      this.topCustomYAdjustment = topCustomYAdjustment;
       ensureInlayDataAvailable();
     }
 

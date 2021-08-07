@@ -1,8 +1,7 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.projectRoots.impl;
 
 import com.intellij.codeInsight.BaseExternalAnnotationsManager;
-import com.intellij.execution.wsl.WSLDistribution;
 import com.intellij.execution.wsl.WslDistributionManager;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.highlighter.ArchiveFileType;
@@ -29,6 +28,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.*;
+import com.intellij.openapi.vfs.impl.wsl.WslConstants;
 import com.intellij.openapi.vfs.jrt.JrtFileSystem;
 import com.intellij.openapi.vfs.newvfs.BulkFileListener;
 import com.intellij.openapi.vfs.newvfs.events.VFileContentChangeEvent;
@@ -79,7 +79,7 @@ public final class JavaSdkImpl extends JavaSdk {
     Disposable parentDisposable = ExtensionPointUtil.createExtensionDisposable(this, EP_NAME);
     ApplicationManager.getApplication().getMessageBus().connect(parentDisposable).subscribe(VirtualFileManager.VFS_CHANGES, new BulkFileListener() {
       @Override
-      public void after(@NotNull List<? extends VFileEvent> events) {
+      public void after(@NotNull List<? extends @NotNull VFileEvent> events) {
         for (VFileEvent event : events) {
           if (event instanceof VFileContentChangeEvent || event instanceof VFileDeleteEvent) {
             updateCache(event, PathUtil.getFileName(event.getPath()));
@@ -117,11 +117,6 @@ public final class JavaSdkImpl extends JavaSdk {
   @Override
   public @NotNull String getHelpTopic() {
     return "reference.project.structure.sdk.java";
-  }
-
-  @Override
-  public @NotNull Icon getIconForAddAction() {
-    return AllIcons.General.AddJdk;
   }
 
   @Override
@@ -177,7 +172,7 @@ public final class JavaSdkImpl extends JavaSdk {
   @Override
   public String getVMExecutablePath(@NotNull Sdk sdk) {
     String binPath = getBinPath(sdk);
-    if (binPath.startsWith(WSLDistribution.UNC_PREFIX)) {
+    if (binPath.startsWith(WslConstants.UNC_PREFIX)) {
       return binPath + "/java";
     }
     return binPath + File.separator + VM_EXE_NAME;
@@ -239,17 +234,12 @@ public final class JavaSdkImpl extends JavaSdk {
 
   @Override
   public @NotNull String suggestSdkName(@Nullable String currentSdkName, @NotNull String sdkHome) {
-    var info = getInfo(sdkHome);
+    JdkVersionDetector.JdkVersionInfo info = getInfo(sdkHome);
     if (info == null) return currentSdkName != null ? currentSdkName : "";
 
-    String vendorPrefix = info.vendorPrefix;
-    if (!Registry.is("use.jdk.vendor.in.suggested.jdk.name", true)) {
-      vendorPrefix = null;
-    }
+    String vendorPrefix = Registry.is("use.jdk.vendor.in.suggested.jdk.name", true) ? info.variant.prefix : null;
     String name = JdkUtil.suggestJdkName(info.version, vendorPrefix);
-    if (WslDistributionManager.isWslPath(sdkHome)) {
-      return name + " (WSL)";
-    }
+    if (WslDistributionManager.isWslPath(sdkHome)) name += " (WSL)";
     return name;
   }
 
@@ -391,7 +381,7 @@ public final class JavaSdkImpl extends JavaSdk {
   }
 
   @Override
-  public final String getVersionString(String sdkHome) {
+  public String getVersionString(String sdkHome) {
     var info = getInfo(sdkHome);
     if (info == null) return null;
     return info.displayVersionString();
@@ -409,11 +399,6 @@ public final class JavaSdkImpl extends JavaSdk {
 
   private @Nullable JavaVersion getJavaVersion(@Nullable String versionString) {
     return versionString != null ? myCachedVersionStringToJdkVersion.computeIfAbsent(versionString, JavaVersion::tryParse) : null;
-  }
-
-  @Override
-  public @Nullable JavaSdkVersion getVersion(@NotNull String versionString) {
-    return JavaSdkVersion.fromVersionString(versionString);
   }
 
   @Override

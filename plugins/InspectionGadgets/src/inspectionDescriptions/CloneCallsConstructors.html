@@ -1,13 +1,11 @@
 <html>
 <body>
-Reports calls to object constructors inside <b>clone()</b> methods.
-Instantiation of objects inside of <b>clone()</b> should be done by calling <b>clone()</b>,
-instead of creating the object directly, to support later subclassing.
+Reports calls to object constructors inside <code>clone()</code> methods.
+<p>It is considered good practice to call <code>clone()</code> to instantiate objects inside of a <code>clone()</code> method
+  instead of creating them directly to support later subclassing.
 This inspection will not report
-<b>clone()</b> methods declared <b>final</b>,
-or <b>clone()</b> methods on <b>final</b> classes.
+<code>clone()</code> methods declared as <code>final</code>
+  or <code>clone()</code> methods on <code>final</code> classes.</p>
 <!-- tooltip end -->
-<p>
-
 </body>
 </html>

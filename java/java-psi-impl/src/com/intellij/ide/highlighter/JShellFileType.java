@@ -28,7 +28,7 @@ public final class JShellFileType extends LanguageFileType {
   @Override
   @NotNull
   public String getDescription() {
-    return JavaPsiBundle.message("filetype.description.jshell");
+    return JavaPsiBundle.message("filetype.jshell.description");
   }
 
   @Override

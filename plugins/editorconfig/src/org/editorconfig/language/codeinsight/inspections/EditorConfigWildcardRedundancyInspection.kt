@@ -17,6 +17,7 @@ class EditorConfigWildcardRedundancyInspection : LocalInspectionTool() {
     override fun visitAsteriskPattern(pattern: EditorConfigAsteriskPattern) = checkSiblings(pattern)
     fun checkSiblings(element: PsiElement) {
       if (element.prevSibling is EditorConfigDoubleAsteriskPattern || element.nextSibling is EditorConfigDoubleAsteriskPattern) {
+        @Suppress("DialogTitleCapitalization")
         val message = EditorConfigBundle["inspection.pattern.double-asterisk-sibling.message"]
         holder.registerProblem(
           element,

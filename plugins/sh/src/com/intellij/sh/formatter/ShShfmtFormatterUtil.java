@@ -25,7 +25,6 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.sh.ShLanguage;
 import com.intellij.sh.settings.ShSettings;
-import com.intellij.sh.statistics.ShFeatureUsagesCollector;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.download.DownloadableFileDescription;
 import com.intellij.util.download.DownloadableFileService;
@@ -42,11 +41,11 @@ import java.util.List;
 import static com.intellij.sh.ShBundle.message;
 import static com.intellij.sh.ShBundle.messagePointer;
 import static com.intellij.sh.ShLanguage.NOTIFICATION_GROUP_ID;
+import static com.intellij.sh.statistics.ShCounterUsagesCollector.EXTERNAL_FORMATTER_DOWNLOADED_EVENT_ID;
 
 public final class ShShfmtFormatterUtil {
   private static final Logger LOG = Logger.getInstance(ShShfmtFormatterUtil.class);
   private static final Key<Boolean> UPDATE_NOTIFICATION_SHOWN = Key.create("SHFMT_UPDATE");
-  private static final String FEATURE_ACTION_ID = "ExternalFormatterDownloaded";
 
   private static final @NlsSafe String SHFMT = "shfmt";
   private static final @NlsSafe String OLD_SHFMT = "old_shfmt";
@@ -105,7 +104,7 @@ public final class ShShfmtFormatterUtil {
               FileUtil.delete(oldFormatter);
             }
             ApplicationManager.getApplication().invokeLater(onSuccess);
-            ShFeatureUsagesCollector.logFeatureUsage(FEATURE_ACTION_ID);
+            EXTERNAL_FORMATTER_DOWNLOADED_EVENT_ID.log();
           }
         }
         catch (IOException e) {

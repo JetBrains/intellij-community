@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 /*
  * @author Eugene Zhuravlev
@@ -11,6 +11,7 @@ import com.intellij.debugger.engine.DebuggerManagerThreadImpl;
 import com.intellij.debugger.engine.DebuggerUtils;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.jdi.VirtualMachineProxy;
+import com.intellij.debugger.impl.DebuggerUtilsAsync;
 import com.intellij.debugger.impl.attach.SAJDWPRemoteConnection;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.ThrowableComputable;
@@ -27,6 +28,7 @@ import org.jetbrains.annotations.Nullable;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.*;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class VirtualMachineProxyImpl implements JdiTimer, VirtualMachineProxy {
@@ -63,21 +65,8 @@ public class VirtualMachineProxyImpl implements JdiTimer, VirtualMachineProxy {
     canPopFrames();
 
     if (canBeModified()) { // no need to spend time here for read only sessions
-      try {
         // this will cache classes inside JDI and enable faster search of classes later
-        virtualMachine.allClasses();
-      }
-      catch (VMDisconnectedException e) {
-        throw e;
-      }
-      catch (Throwable e) {
-        // catch all exceptions in order not to break vm attach process
-        // Example:
-        // java.lang.IllegalArgumentException: Invalid JNI signature character ';'
-        //  caused by some bytecode "optimizers" which break type signatures as a side effect.
-        //  solution if you are using JAX-WS: add -Dcom.sun.xml.bind.v2.bytecode.ClassTailor.noOptimize=true to JVM args
-        LOG.info(e);
-      }
+        DebuggerUtilsAsync.allCLasses(virtualMachine);
     }
 
     virtualMachine.topLevelThreadGroups().forEach(this::threadGroupCreated);
@@ -186,6 +175,20 @@ public class VirtualMachineProxyImpl implements JdiTimer, VirtualMachineProxy {
     return new ArrayList<>(myAllThreads.values());
   }
 
+  public CompletableFuture<Collection<ThreadReferenceProxyImpl>> allThreadsAsync() {
+    DebuggerManagerThreadImpl.assertIsManagerThread();
+    if (myAllThreadsDirty) {
+      return DebuggerUtilsAsync.allThreads(myVirtualMachine).thenApply(threads -> {
+        DebuggerManagerThreadImpl.assertIsManagerThread();
+        threads.forEach(this::getThreadReferenceProxy); // add proxies
+        myAllThreadsDirty = false;
+        return new ArrayList<>(myAllThreads.values());
+      });
+    }
+
+    return CompletableFuture.completedFuture(new ArrayList<>(myAllThreads.values()));
+  }
+
   public void threadStarted(ThreadReference thread) {
     DebuggerManagerThreadImpl.assertIsManagerThread();
     getThreadReferenceProxy(thread); // add a proxy
@@ -216,15 +219,12 @@ public class VirtualMachineProxyImpl implements JdiTimer, VirtualMachineProxy {
     }
     clearCaches();
     LOG.debug("before resume VM");
-    try {
-      myVirtualMachine.resume();
-    }
-    catch (InternalException e) {
-      // ok to ignore. Although documentation says it is safe to invoke resume() on running VM,
-      // sometimes this leads to com.sun.jdi.InternalException: Unexpected JDWP Error: 13 (THREAD_NOT_SUSPENDED)
-      LOG.info(e);
-    }
-    LOG.debug("VM resumed");
+    DebuggerUtilsAsync.resume(myVirtualMachine).whenComplete((unused, throwable) -> {
+      if (throwable != null) {
+        LOG.error(throwable);
+      }
+      LOG.debug("VM resumed");
+    });
     //logThreads();
   }
 

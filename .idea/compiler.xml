@@ -4,7 +4,7 @@
     <option name="BUILD_JARS_ON_MAKE" value="false" />
   </component>
   <component name="CompilerConfiguration">
-    <option name="BUILD_PROCESS_HEAP_SIZE" value="1100" />
+    <option name="BUILD_PROCESS_HEAP_SIZE" value="2000" />
     <option name="BUILD_PROCESS_ADDITIONAL_VM_OPTIONS" value="-Dgroovyc.in.process=true -Dgroovyc.asm.resolving.only=false" />
     <excludeFromCompile>
       <file url="file://$PROJECT_DIR$/java/execution/jshell-frontend/src/com/intellij/execution/jshell/frontend/Main.java" />
@@ -45,6 +45,7 @@
       <module name="intellij.platform.ide" options="-Xlint:unchecked --add-exports java.desktop/sun.swing=ALL-UNNAMED --add-exports java.desktop/sun.awt=ALL-UNNAMED" />
       <module name="intellij.platform.ide.impl" options="-Xlint:unchecked --add-exports java.desktop/sun.awt=ALL-UNNAMED --add-exports java.desktop/sun.font=ALL-UNNAMED --add-exports java.desktop/java.awt.peer=ALL-UNNAMED --add-exports jdk.attach/sun.tools.attach=ALL-UNNAMED --add-exports java.desktop/sun.awt.image=ALL-UNNAMED --add-exports java.desktop/sun.awt.datatransfer=ALL-UNNAMED --add-exports java.desktop/sun.swing=ALL-UNNAMED" />
       <module name="intellij.platform.lang.impl" options="-Xlint:unchecked --add-exports java.desktop/sun.awt.image=ALL-UNNAMED --add-exports java.desktop/sun.awt=ALL-UNNAMED" />
+      <module name="intellij.platform.util.ui" options="-Xlint:unchecked --add-exports java.desktop/sun.font=ALL-UNNAMED" />
     </option>
     <option name="MAXIMUM_HEAP_SIZE" value="400" />
   </component>

@@ -1,9 +1,26 @@
 <html>
 <body>
-Reports any calls to <b>Arrays.asList()</b> with zero arguments or only one argument. Such calls could be replaced
-with either a call to <b>Collections.singletonList()</b> or <b>Collections.emptyList()</b> which will save some memory.
-<p>Note: the list returned by <b>Collections.singletonList()</b> is immutable, while the list returned <b>Arrays.asList()</b> allows
-calling the <b>set()</b> method. This may break the code in rare cases.
+Reports calls to <code>Arrays.asList()</code> with at most one argument.
+<p>
+  Such calls could be replaced
+  with <code>Collections.singletonList()</code>, <code>Collections.emptyList()</code>,
+  or <code>List.of()</code> on JDK 9 and later, which will save some memory.</p>
+<p>In particular, <code>Collections.emptyList()</code> and <code>List.of()</code> with no arguments
+  always return a shared instance,
+  while <code>Arrays.asList()</code> with no arguments creates a new object every time it's called.</p>
+<p>Note: the lists returned by <code>Collections.singletonList()</code> and <code>List.of()</code> are immutable,
+while the list returned <code>Arrays.asList()</code> allows calling the <code>set()</code> method.
+This may break the code in rare cases.</p>
+<p><b>Example:</b></p>
+<pre>
+  List&lt;String&gt; empty = Arrays.asList();
+  List&lt;String&gt; one = Arrays.asList("one");
+</pre>
+<p>After the quick-fix is applied:</p>
+<pre>
+  List&lt;String&gt; empty = Collections.emptyList();
+  List&lt;String&gt; one = Collections.singletonList("one");
+</pre>
 <!-- tooltip end -->
 <p>
 </body>

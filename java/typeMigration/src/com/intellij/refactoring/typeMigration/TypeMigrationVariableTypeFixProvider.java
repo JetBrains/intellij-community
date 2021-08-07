@@ -10,6 +10,7 @@ import com.intellij.openapi.command.undo.UndoUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiType;
@@ -42,7 +43,7 @@ public class TypeMigrationVariableTypeFixProvider implements ChangeVariableTypeQ
       @NotNull
       @Override
       public String getText() {
-        return TypeMigrationBundle.message("migrate.fix.text", myName, getReturnType().getPresentableText());
+        return TypeMigrationBundle.message("migrate.fix.text", myName, StringUtil.escapeXmlEntities(getReturnType().getPresentableText()));
       }
 
       @Override

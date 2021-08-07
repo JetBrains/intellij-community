@@ -9,6 +9,7 @@ import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.AdditionalLibraryRootsListener;
 import com.intellij.openapi.roots.ModuleRootEvent;
 import com.intellij.openapi.roots.ModuleRootListener;
 import com.intellij.openapi.util.ActionCallback;
@@ -21,11 +22,11 @@ import com.intellij.openapi.vcs.impl.VcsInitObject;
 import com.intellij.openapi.vcs.impl.VcsStartupActivity;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ReflectionUtil;
+import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.HashingStrategy;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.vcsUtil.VcsUtil;
-import it.unimi.dsi.fastutil.Hash;
-import it.unimi.dsi.fastutil.objects.ObjectOpenCustomHashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -58,6 +59,9 @@ public final class VcsDirtyScopeManagerImpl extends VcsDirtyScopeManager impleme
         ApplicationManager.getApplication().invokeLater(() -> markEverythingDirty(), ModalityState.NON_MODAL, myProject.getDisposed());
       }
     });
+    busConnection.subscribe(AdditionalLibraryRootsListener.TOPIC, ((presentableLibraryName, oldRoots, newRoots, libraryNameForDebug) -> {
+      ApplicationManager.getApplication().invokeLater(() -> markEverythingDirty(), ModalityState.NON_MODAL, myProject.getDisposed());
+    }));
   }
 
   private static ProjectLevelVcsManager getVcsManager(@NotNull Project project) {
@@ -96,10 +100,10 @@ public final class VcsDirtyScopeManagerImpl extends VcsDirtyScopeManager impleme
       }
       ongoingRefresh = myRefreshInProgress;
     }
-    if (ongoingRefresh != null) ongoingRefresh.setRejected();
 
     if (wasReady) {
       ChangeListManager.getInstance(myProject).scheduleUpdate();
+      if (ongoingRefresh != null) ongoingRefresh.setRejected();
     }
   }
 
@@ -124,8 +128,8 @@ public final class VcsDirtyScopeManagerImpl extends VcsDirtyScopeManager impleme
       VcsRoot vcsRoot = vcsManager.getVcsRootObjectFor(path);
       if (vcsRoot != null && vcsRoot.getVcs() != null) {
         Set<FilePath> pathSet = map.computeIfAbsent(vcsRoot, key -> {
-          Hash.Strategy<FilePath> strategy = getDirtyScopeHashingStrategy(key.getVcs());
-          return strategy == null ? new HashSet<>() : new ObjectOpenCustomHashSet<>(strategy);
+          HashingStrategy<FilePath> strategy = getDirtyScopeHashingStrategy(key.getVcs());
+          return strategy == null ? new HashSet<>() : CollectionFactory.createCustomHashingStrategySet(strategy);
         });
         pathSet.add(path);
       }
@@ -273,7 +277,7 @@ public final class VcsDirtyScopeManagerImpl extends VcsDirtyScopeManager impleme
     return null;
   }
 
-  public static @Nullable Hash.Strategy<FilePath> getDirtyScopeHashingStrategy(@NotNull AbstractVcs vcs) {
+  public static @Nullable HashingStrategy<FilePath> getDirtyScopeHashingStrategy(@NotNull AbstractVcs vcs) {
     return vcs.needsCaseSensitiveDirtyScope() ? ChangesUtil.CASE_SENSITIVE_FILE_PATH_HASHING_STRATEGY
                                               : null;
   }

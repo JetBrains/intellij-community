@@ -7,5 +7,8 @@ import org.jetbrains.annotations.NotNull;
 public interface GitOngoingOperationAction {
   boolean isEnabled(@NotNull GitRepository repository);
 
-  void performInBackground(@NotNull GitRepository repository);
+  /**
+   * @return false if operation was not performed
+   */
+  boolean performInBackground(@NotNull GitRepository repository);
 }

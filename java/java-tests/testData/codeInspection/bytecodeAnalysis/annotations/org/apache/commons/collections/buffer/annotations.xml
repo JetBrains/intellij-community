@@ -30,7 +30,6 @@
     </item>
     <item name='org.apache.commons.collections.buffer.BlockingBuffer org.apache.commons.collections.Buffer decorate(org.apache.commons.collections.Buffer)'>
         <annotation name='org.jetbrains.annotations.Contract'>
-            <val name="value" val="&quot;_-&gt;new&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
@@ -40,7 +39,6 @@
     </item>
     <item name='org.apache.commons.collections.buffer.BlockingBuffer org.apache.commons.collections.Buffer decorate(org.apache.commons.collections.Buffer, long)'>
         <annotation name='org.jetbrains.annotations.Contract'>
-            <val name="value" val="&quot;_,_-&gt;new&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
@@ -73,7 +71,6 @@
     </item>
     <item name='org.apache.commons.collections.buffer.BoundedBuffer org.apache.commons.collections.buffer.BoundedBuffer decorate(org.apache.commons.collections.Buffer, int)'>
         <annotation name='org.jetbrains.annotations.Contract'>
-            <val name="value" val="&quot;_,_-&gt;new&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
@@ -83,7 +80,6 @@
     </item>
     <item name='org.apache.commons.collections.buffer.BoundedBuffer org.apache.commons.collections.buffer.BoundedBuffer decorate(org.apache.commons.collections.Buffer, int, long)'>
         <annotation name='org.jetbrains.annotations.Contract'>
-            <val name="value" val="&quot;_,_,_-&gt;new&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
@@ -289,7 +285,6 @@
     </item>
     <item name='org.apache.commons.collections.buffer.SynchronizedBuffer org.apache.commons.collections.Buffer decorate(org.apache.commons.collections.Buffer)'>
         <annotation name='org.jetbrains.annotations.Contract'>
-            <val name="value" val="&quot;_-&gt;new&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
@@ -315,7 +310,6 @@
     </item>
     <item name='org.apache.commons.collections.buffer.TransformedBuffer org.apache.commons.collections.Buffer decorate(org.apache.commons.collections.Buffer, org.apache.commons.collections.Transformer)'>
         <annotation name='org.jetbrains.annotations.Contract'>
-            <val name="value" val="&quot;_,_-&gt;new&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.analysis.problemsView.toolWindow
 
 import com.intellij.ide.projectView.PresentationData
@@ -9,11 +9,13 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.pom.Navigatable
 import com.intellij.ui.tree.LeafState
 import com.intellij.ui.tree.TreePathUtil.pathToCustomNode
-import java.util.Collections.emptyList
 
-internal abstract class Node : PresentableNodeDescriptor<Node?>, LeafState.Supplier {
+abstract class Node : PresentableNodeDescriptor<Node?>, LeafState.Supplier {
   protected constructor(project: Project) : super(project, null)
   protected constructor(parent: Node) : super(parent.project, parent)
+
+  open val descriptor: OpenFileDescriptor?
+    get() = null
 
   protected abstract fun update(project: Project, presentation: PresentationData)
 
@@ -25,9 +27,7 @@ internal abstract class Node : PresentableNodeDescriptor<Node?>, LeafState.Suppl
 
   open fun getVirtualFile(): VirtualFile? = null
 
-  open fun getDescriptor(): OpenFileDescriptor? = null
-
-  open fun getNavigatable(): Navigatable? = getDescriptor()
+  open fun getNavigatable(): Navigatable? = descriptor
 
   override fun getElement() = this
 
@@ -36,7 +36,7 @@ internal abstract class Node : PresentableNodeDescriptor<Node?>, LeafState.Suppl
     update(myProject, presentation)
   }
 
-  fun getPath() = pathToCustomNode(this, { node: Node? -> node?.getParent(Node::class.java) })!!
+  fun getPath() = pathToCustomNode(this) { node: Node? -> node?.getParent(Node::class.java) }!!
 
   fun <T> getParent(type: Class<T>): T? {
     val parent = parentDescriptor ?: return null

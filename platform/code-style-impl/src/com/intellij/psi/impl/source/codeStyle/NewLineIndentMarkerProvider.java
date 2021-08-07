@@ -8,7 +8,7 @@ import org.jetbrains.annotations.Nullable;
 
 /**
  * Allows providing a dummy identifier to be used for preserving spaces in live templates. For more details on its purpose,
- * please see {@link CodeStyleManagerImpl#insertNewLineIndentMarker(com.intellij.psi.PsiFile, com.intellij.openapi.editor.Document, int)}.
+ * please see {@link CodeStyleManagerImpl#insertNewLineIndentMarker(PsiFile, com.intellij.openapi.editor.Document, int)}.
  * The default logic is to create a line or block comment with the language's {@link com.intellij.lang.Commenter commenter} and use it as a marker, but
  * in some cases the commenting logic is too complicated and is unsuitable.
  */

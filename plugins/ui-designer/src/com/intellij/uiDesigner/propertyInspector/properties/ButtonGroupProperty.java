@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.uiDesigner.propertyInspector.properties;
 
 import com.intellij.ui.SimpleListCellRenderer;
@@ -19,9 +19,7 @@ import javax.swing.*;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 
-/**
- * @author yole
- */
+
 public class ButtonGroupProperty extends Property<RadComponent, RadButtonGroup> {
   private final LabelPropertyRenderer<RadButtonGroup> myRenderer = new LabelPropertyRenderer<>() {
     @Override

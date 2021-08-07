@@ -6,6 +6,7 @@ import com.google.common.collect.Maps;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider;
@@ -63,9 +64,11 @@ public class PyTypeModelBuilder {
 
   static final class OneOf extends TypeModel {
     private final Collection<TypeModel> oneOfTypes;
+    private final boolean bitwiseOrUnionAllowed;
 
-    private OneOf(Collection<TypeModel> oneOfTypes) {
+    private OneOf(Collection<TypeModel> oneOfTypes, boolean bitwiseOrUnionAllowed) {
       this.oneOfTypes = oneOfTypes;
+      this.bitwiseOrUnionAllowed = bitwiseOrUnionAllowed;
     }
 
     @Override
@@ -116,9 +119,11 @@ public class PyTypeModelBuilder {
 
   static final class UnknownType extends TypeModel {
     private final TypeModel type;
+    private final boolean bitwiseOrUnionAllowed;
 
-    private UnknownType(TypeModel type) {
+    private UnknownType(TypeModel type, boolean bitwiseOrUnionAllowed) {
       this.type = type;
+      this.bitwiseOrUnionAllowed = bitwiseOrUnionAllowed;
     }
 
     @Override
@@ -129,9 +134,11 @@ public class PyTypeModelBuilder {
 
   static final class OptionalType extends TypeModel {
     private final TypeModel type;
+    private final boolean bitwiseOrUnionAllowed;
 
-    private OptionalType(TypeModel type) {
+    private OptionalType(TypeModel type, boolean bitwiseOrUnionAllowed) {
       this.type = type;
+      this.bitwiseOrUnionAllowed = bitwiseOrUnionAllowed;
     }
 
     @Override
@@ -303,24 +310,26 @@ public class PyTypeModelBuilder {
 
         if (!literalsAndOthers.second.isEmpty()) {
           final List<TypeModel> otherTypeModels = ContainerUtil.map(literalsAndOthers.second, t -> build(t, false));
-          result = new OneOf(ContainerUtil.prepend(otherTypeModels, oneOfLiterals));
+          result = new OneOf(ContainerUtil.prepend(otherTypeModels, oneOfLiterals),
+                             PyTypingTypeProvider.isBitwiseOrUnionAvailable(myContext));
         }
         else {
           result = oneOfLiterals;
         }
       }
       else if (optionalType != null) {
-        result = new OptionalType(build(optionalType.get(), true));
+        result = new OptionalType(build(optionalType.get(), true), PyTypingTypeProvider.isBitwiseOrUnionAvailable(myContext));
       }
       else if (type instanceof PyDynamicallyEvaluatedType || PyTypeChecker.isUnknown(type, false, myContext)) {
-        result = new UnknownType(build(unionType.excludeNull(), true));
+        result = new UnknownType(build(unionType.excludeNull(), true), PyTypingTypeProvider.isBitwiseOrUnionAvailable(myContext));
       }
-      else if (unionMembers.stream().allMatch(t -> t instanceof PyClassType && ((PyClassType)t).isDefinition())) {
+      else if (ContainerUtil.all(unionMembers, t -> t instanceof PyClassType && ((PyClassType)t).isDefinition())) {
         final List<TypeModel> instanceTypes = ContainerUtil.map(unionMembers, t -> build(((PyClassType)t).toInstance(), allowUnions));
-        result = new ClassObjectType(new OneOf(instanceTypes));
+        result = new ClassObjectType(new OneOf(instanceTypes, PyTypingTypeProvider.isBitwiseOrUnionAvailable(myContext)));
       }
       else {
-        result = new OneOf(Collections2.transform(unionMembers, t -> build(t, false)));
+        result = new OneOf(Collections2.transform(unionMembers, t -> build(t, false)),
+                           PyTypingTypeProvider.isBitwiseOrUnionAvailable(myContext));
       }
     }
     else if (type instanceof PyCallableType && !(type instanceof PyClassLikeType)) {
@@ -328,9 +337,6 @@ public class PyTypeModelBuilder {
     }
     else if (type instanceof PyGenericType) {
       result = new GenericType(type.getName());
-    }
-    else if (type != null && type.isBuiltin() && PyNames.BUILTIN_PATH_LIKE.equals(type.getName())) {
-      result = new NamedType(PyNames.PATH_LIKE);
     }
     if (result == null) {
       result = NamedType.nameOrAny(type);
@@ -430,10 +436,17 @@ public class PyTypeModelBuilder {
     public void unknown(UnknownType type) {
       final TypeModel nested = type.type;
       if (nested != null) {
-        add("Union[");
-        nested.accept(this);
-        add(", " + PyNames.UNKNOWN_TYPE);
-        add("]");
+        if (type.bitwiseOrUnionAllowed) {
+          nested.accept(this);
+          add(" | ");
+          add(PyNames.UNKNOWN_TYPE);
+        }
+        else {
+          add("Union[");
+          nested.accept(this);
+          add(", " + PyNames.UNKNOWN_TYPE);
+          add("]");
+        }
       }
     }
   }
@@ -531,17 +544,26 @@ public class PyTypeModelBuilder {
         add("...");
         return;
       }
-      add("Union[");
-      processList(oneOf.oneOfTypes);
-      add("]");
+      if (oneOf.bitwiseOrUnionAllowed) {
+        processList(oneOf.oneOfTypes, " | ");
+      }
+      else {
+        add("Union[");
+        processList(oneOf.oneOfTypes);
+        add("]");
+      }
       myDepth--;
     }
 
     protected void processList(@NotNull Collection<TypeModel> list) {
+      processList(list, ", ");
+    }
+
+    protected void processList(@NotNull Collection<TypeModel> list, @NotNull String separator) {
       boolean first = true;
       for (TypeModel t : list) {
         if (!first) {
-          add(", ");
+          add(separator);
         }
         else {
           first = false;
@@ -640,9 +662,15 @@ public class PyTypeModelBuilder {
 
     @Override
     public void optional(OptionalType type) {
-      add("Optional[");
-      type.type.accept(this);
-      add("]");
+      if (type.bitwiseOrUnionAllowed) {
+        type.type.accept(this);
+        add(" | None");
+      }
+      else {
+        add("Optional[");
+        type.type.accept(this);
+        add("]");
+      }
     }
 
     @Override

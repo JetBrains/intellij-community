@@ -1,14 +1,28 @@
 <html>
 <body>
-Reports double-checked locking. For a
-discussion of double-checked locking and why it is unsafe, see
-<a href="http://www.cs.umd.edu/~pugh/java/memoryModel/DoubleCheckedLocking.html
-">http://www.cs.umd.edu/~pugh/java/memoryModel/DoubleCheckedLocking.html</a>
-<!-- tooltip end -->
+Reports double-checked locking.
 <p>
- Use the checkbox below to ignore double-checked locking on volatile fields. Using
- a volatile field for double-checked locking works correctly on Java 5 virtual machines,
- but probably does not have any performance advantages over plain full synchronization
- of the accessor method.
+  Double-checked locking tries to initialize a field on demand and in a thread-safe manner, while avoiding the cost of synchronization.
+  Unfortunately it is not thread safe when used on a field that is not declared <code>volatile</code>.
+  When using Java 1.4 or older, double-checked locking doesn't work even with a <code>volatile</code> field.
+  See <a href="https://www.cs.umd.edu/~pugh/java/memoryModel/DoubleCheckedLocking.html">the article</a> for an explanation of the problem.
+</p>
+<p><b>Example:</b></p>
+<pre><code>
+  class Foo {
+      private Helper helper = null
+
+      Helper getHelper() {
+          if (helper == null)
+              synchronized(this) {
+                  if (helper == null) {
+                      helper = new Helper()
+                  }
+              }
+          }
+          return helper;
+      }
+  }
+</code></pre>
 </body>
 </html>

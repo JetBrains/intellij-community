@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.externalSystem.service.notification;
 
 import com.intellij.notification.Notification;
@@ -171,7 +171,7 @@ public class NotificationData implements Disposable {
               if (listener != null) {
                 // Notification here used only to be able to call 'NotificationListener.hyperlinkUpdate'
                 //noinspection UnresolvedPluginConfigReference
-                listener.hyperlinkUpdate(new Notification("", null, NotificationType.INFORMATION),
+                listener.hyperlinkUpdate(new Notification("", "", NotificationType.INFORMATION),
                                          IJSwingUtilities.createHyperlinkEvent(id, listener));
               }
             }

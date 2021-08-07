@@ -41,9 +41,8 @@ public final class JavaAwareProjectJdkTableImpl extends ProjectJdkTableImpl {
       if (homePath != null && javaSdk.isValidSdkHome(homePath)) {
         String suggestedName = JdkUtil.suggestJdkName(javaSdk.getVersionString(homePath));
         if (suggestedName != null) {
-          ApplicationManager.getApplication().runWriteAction(
-            () -> addJdk(javaSdk.createJdk(suggestedName, homePath, false))
-          );
+          Sdk jdk = javaSdk.createJdk(suggestedName, homePath, false);
+          ApplicationManager.getApplication().runWriteAction(() -> addJdk(jdk));
         }
       }
     }

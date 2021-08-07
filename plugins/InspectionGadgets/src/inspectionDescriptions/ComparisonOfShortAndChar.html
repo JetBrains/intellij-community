@@ -1,11 +1,12 @@
 <html>
 <body>
-Reports equality comparisons between
-<b>short</b> and <b>char</b> values.
-Such comparisons may cause subtle bugs, as <b>short</b> values are
-signed and <b>char</b> values unsigned.
+Reports equality comparisons between <code>short</code> and <code>char</code> values.
+<p>Such comparisons may cause subtle bugs because while both values are 2-byte long, <code>short</code> values are
+  signed, and <code>char</code> values are unsigned.</p>
+<p><b>Example:</b></p>
+<pre><code>
+if (Character.MAX_VALUE == shortValue()) {} //never can be true
+</code></pre>
 <!-- tooltip end -->
-<p>
-
 </body>
 </html>

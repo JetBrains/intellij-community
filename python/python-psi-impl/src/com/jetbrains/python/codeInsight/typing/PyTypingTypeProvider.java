@@ -19,6 +19,7 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyCustomType;
 import com.jetbrains.python.PyNames;
+import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.codeInsight.controlflow.ControlFlowCache;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.codeInsight.dataflow.scope.Scope;
@@ -400,6 +401,14 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
       return Ref.create(getGenericTypeFromTypeVar(callSite, new Context(context)));
     }
 
+    if (initializedClass != null && callSite instanceof PyCallExpression && PyNames.DICT.equals(initializedClass.getQualifiedName())) {
+      final PyType inferredTypedDict =
+        PyTypedDictTypeProvider.Companion.inferTypedDictFromCallExpression((PyCallExpression)callSite, context);
+      if (inferredTypedDict != null) {
+        return Ref.create(inferredTypedDict);
+      }
+    }
+
     if (functionReturningCallSiteAsAType(function)) {
       return getAsClassObjectType(callSite, new Context(context));
     }
@@ -481,7 +490,7 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
 
       if (target.isQualified()) {
         if (pyClass != null && scopeOwner instanceof PyFunction) {
-          final PyResolveContext resolveContext = PyResolveContext.defaultContext().withTypeEvalContext(context);
+          final PyResolveContext resolveContext = PyResolveContext.defaultContext(context);
 
           boolean isInstanceAttribute;
           if (context.maySwitchToAST(target)) {
@@ -736,6 +745,45 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
   }
 
   @Nullable
+  private static Ref<PyType> getTypeFromBitwiseOrOperator(@NotNull PyBinaryExpression expression, @NotNull Context context) {
+    if (expression.getOperator() != PyTokenTypes.OR) return null;
+    PyExpression left = expression.getLeftExpression();
+    PyExpression right = expression.getRightExpression();
+    if (left != null && right != null) {
+      Ref<PyType> leftType = getType(left, context);
+      Ref<PyType> rightType = getType(right, context);
+      PyType union = null;
+      if (leftType != null && rightType != null) {
+        union = PyUnionType.union(leftType.get(), rightType.get());
+      }
+      else if (leftType != null) {
+        union = leftType.get();
+      }
+      else if (rightType != null) {
+        union = rightType.get();
+      }
+      return union != null ? Ref.create(union) : null;
+    }
+    return null;
+  }
+
+  public static boolean isBitwiseOrUnionAvailable(@NotNull TypeEvalContext context) {
+    final PsiFile originFile = context.getOrigin();
+    return originFile == null || isBitwiseOrUnionAvailable(originFile);
+  }
+
+  public static boolean isBitwiseOrUnionAvailable(@NotNull PsiElement element) {
+    if (LanguageLevel.forElement(element).isAtLeast(LanguageLevel.PYTHON310)) return true;
+
+    PsiFile file = element.getContainingFile();
+    if (file instanceof PyFile && ((PyFile)file).hasImportFromFuture(FutureFeature.ANNOTATIONS)) {
+      return file == element || PsiTreeUtil.getParentOfType(element, PyAnnotation.class, false, ScopeOwner.class) != null;
+    }
+
+    return false;
+  }
+
+  @Nullable
   private static Ref<PyType> getTypeForResolvedElement(@Nullable PyTargetExpression alias,
                                                        @NotNull PsiElement resolved,
                                                        @NotNull Context context) {
@@ -747,6 +795,10 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
       context.getExpressionCache().add(alias);
     }
     try {
+      final Ref<PyType> typeFromParenthesizedExpression = getTypeFromParenthesizedExpression(resolved, context);
+      if (typeFromParenthesizedExpression != null) {
+        return typeFromParenthesizedExpression;
+      }
       final PyType unionType = getUnionType(resolved, context);
       if (unionType != null) {
         return Ref.create(unionType);
@@ -816,6 +868,10 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
       if (classType != null) {
         return classType;
       }
+      final Ref<PyType> unionTypeFromBinaryOr = getTypeFromBinaryExpression(resolved, context);
+      if (unionTypeFromBinaryOr != null) {
+        return unionTypeFromBinaryOr;
+      }
       return null;
     }
     finally {
@@ -823,6 +879,23 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
         context.getExpressionCache().remove(alias);
       }
     }
+  }
+
+  @Nullable
+  private static Ref<PyType> getTypeFromBinaryExpression(@NotNull PsiElement resolved, @NotNull Context context) {
+    if (resolved instanceof PyBinaryExpression) {
+      return getTypeFromBitwiseOrOperator((PyBinaryExpression)resolved, context);
+    }
+    return null;
+  }
+
+  @Nullable
+  private static Ref<PyType> getTypeFromParenthesizedExpression(@NotNull PsiElement resolved, @NotNull Context context) {
+    if (resolved instanceof PyParenthesizedExpression) {
+      final PyExpression containedExpression = PyPsiUtils.flattenParens((PyExpression)resolved);
+      return containedExpression != null ? getType(containedExpression, context) : null;
+    }
+    return null;
   }
 
   @Nullable
@@ -983,7 +1056,7 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
     if (resolved instanceof PySubscriptionExpression) {
       final PySubscriptionExpression subscriptionExpr = (PySubscriptionExpression)resolved;
 
-      if (eventuallyResolvesToFinal(subscriptionExpr.getOperand(), context.getTypeContext())) {
+      if (resolvesToFinal(subscriptionExpr.getOperand(), context.getTypeContext())) {
         final PyExpression indexExpr = subscriptionExpr.getIndexExpression();
         if (indexExpr != null) {
           return getType(indexExpr, context);
@@ -1007,64 +1080,27 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
                                                                                         @NotNull TypeEvalContext context) {
     final PyExpression annotation = getAnnotationValue(owner, context);
     if (annotation instanceof PySubscriptionExpression) {
-      return eventuallyResolvesToFinal(((PySubscriptionExpression)annotation).getOperand(), context);
+      return resolvesToFinal(((PySubscriptionExpression)annotation).getOperand(), context);
     }
     else if (annotation instanceof PyReferenceExpression) {
-      return eventuallyResolvesToFinal(annotation, context);
+      return resolvesToFinal(annotation, context);
     }
 
     final String typeCommentValue = owner.getTypeCommentAnnotation();
     final PyExpression typeComment = typeCommentValue == null ? null : toExpression(typeCommentValue, owner);
     if (typeComment instanceof PySubscriptionExpression) {
-      return eventuallyResolvesToFinal(((PySubscriptionExpression)typeComment).getOperand(), context);
+      return resolvesToFinal(((PySubscriptionExpression)typeComment).getOperand(), context);
     }
     else if (typeComment instanceof PyReferenceExpression) {
-      return eventuallyResolvesToFinal(typeComment, context);
+      return resolvesToFinal(typeComment, context);
     }
 
     return false;
   }
 
-  public static boolean eventuallyResolvesToFinal(@NotNull PyExpression expression, @NotNull TypeEvalContext context) {
-    final Set<PyExpression> currentQueue = new HashSet<>();
-    final Set<PyExpression> nextQueue = new HashSet<>();
-    nextQueue.add(expression);
-    final Set<PyExpression> visited = new HashSet<>();
-
-    while (!nextQueue.isEmpty()) {
-      currentQueue.clear();
-      currentQueue.addAll(nextQueue);
-      nextQueue.clear();
-
-      for (PyExpression element : currentQueue) {
-        if (resolvesToFinal(element, context, nextQueue, visited)) return true;
-      }
-    }
-
-    return false;
-  }
-
-  private static boolean resolvesToFinal(@NotNull PyExpression expression,
-                                         @NotNull TypeEvalContext context,
-                                         @NotNull Set<PyExpression> queue,
-                                         @NotNull Set<PyExpression> visited) {
-    final List<Pair<PyTargetExpression, PsiElement>> pairs = tryResolvingWithAliases(expression, context);
-
-    for (Pair<PyTargetExpression, PsiElement> pair : pairs) {
-      if (pair.second instanceof PyExpression) {
-        final PyExpression resolved = (PyExpression)pair.second;
-
-        final String qualifiedName = getQualifiedName(resolved);
-        if (FINAL.equals(qualifiedName) || FINAL_EXT.equals(qualifiedName)) {
-          return true;
-        }
-        else if (pair.first != null && visited.add(resolved)) {
-          queue.add(resolved);
-        }
-      }
-    }
-
-    return false;
+  private static boolean resolvesToFinal(@NotNull PyExpression expression, @NotNull TypeEvalContext context) {
+    final var qualifiedNames = resolveToQualifiedNames(expression, context);
+    return qualifiedNames.contains(FINAL) || qualifiedNames.contains(FINAL_EXT);
   }
 
   @Nullable
@@ -1379,7 +1415,7 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
     if (expression instanceof PyReferenceExpression) {
       final List<PsiElement> results;
       if (context.maySwitchToAST(expression)) {
-        final PyResolveContext resolveContext = PyResolveContext.defaultContext().withTypeEvalContext(context);
+        final PyResolveContext resolveContext = PyResolveContext.defaultContext(context);
         results = PyUtil.multiResolveTopPriority(expression, resolveContext);
       }
       else {

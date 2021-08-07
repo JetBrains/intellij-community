@@ -1,0 +1,18 @@
+// IGNORE_BACKEND: JVM_WITH_IR_EVALUATOR, JVM_IR_WITH_IR_EVALUATOR
+LineBreakpoint created at optimisedVariableEvaluation.kt:13
+LineBreakpoint created at optimisedVariableEvaluation.kt:19
+LineBreakpoint created at optimisedVariableEvaluation.kt:27
+LineBreakpoint created at optimisedVariableEvaluation.kt:32
+Run Java
+Connected to the target VM
+optimisedVariableEvaluation.kt:27
+Compile bytecode for a
+optimisedVariableEvaluation.kt:32
+Compile bytecode for a
+optimisedVariableEvaluation.kt:13
+Compile bytecode for a
+optimisedVariableEvaluation.kt:19
+Compile bytecode for a
+Disconnected from the target VM
+
+Process finished with exit code 0

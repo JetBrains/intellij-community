@@ -29,6 +29,7 @@ public class RestoreViewAction extends DumbAwareToggleAction {
   public void setSelected(@NotNull AnActionEvent e, boolean state) {
     if (state) {
       myUi.restore(myContent);
+      myUi.select(myContent, true);
     } else {
       myUi.minimize(myContent, null);
     }

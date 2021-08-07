@@ -434,32 +434,18 @@ public class GitLogParser<R extends GitLogRecord> {
     @NotNull
     private static List<String> parsePathsLine(@NotNull CharSequence line) {
       int offset = 0;
+      List<String> result = new ArrayList<>();
 
-      PartialResult result = new PartialResult();
       while (offset < line.length()) {
-        if (atLineEnd(line, offset)) {
-          break;
-        }
+        int tokenEnd = StringUtil.indexOf(line, '\t', offset);
+        if (tokenEnd == -1) tokenEnd = line.length();
 
-        char charAt = line.charAt(offset);
-        if (charAt == '\t') {
-          result.finishItem();
-        }
-        else {
-          result.append(charAt);
-        }
+        result.add(line.subSequence(offset, tokenEnd).toString());
 
-        offset++;
+        offset = tokenEnd + 1;
       }
 
-      result.finishItem();
-      return result.getResult();
-    }
-
-    private static boolean atLineEnd(@NotNull CharSequence line, int offset) {
-      while (offset < line.length() && (line.charAt(offset) == '\t')) offset++;
-      if (offset == line.length() || (line.charAt(offset) == '\n' || line.charAt(offset) == '\r')) return true;
-      return false;
+      return result;
     }
 
     public boolean expectsPaths() {

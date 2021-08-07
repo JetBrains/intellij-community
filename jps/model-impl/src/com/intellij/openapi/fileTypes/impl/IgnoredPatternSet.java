@@ -30,7 +30,7 @@ import java.util.StringTokenizer;
  */
 public class IgnoredPatternSet {
   private final Set<String> myMasks = new LinkedHashSet<>();
-  private final FileTypeAssocTable<Boolean> myIgnorePatterns = new FileTypeAssocTable<Boolean>().copy();
+  private final FileTypeAssocTable<Boolean> myIgnorePatterns = new FileTypeAssocTable<>();
 
   @NotNull
   Set<String> getIgnoreMasks() {

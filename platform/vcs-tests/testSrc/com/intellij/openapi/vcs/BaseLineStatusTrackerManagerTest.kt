@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs
 
 import com.intellij.diff.comparison.iterables.DiffIterableUtil
@@ -12,8 +12,7 @@ import com.intellij.openapi.vcs.changes.shelf.ShelveChangesManager
 import com.intellij.openapi.vcs.ex.*
 import com.intellij.openapi.vcs.impl.LineStatusTrackerManager
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.testFramework.RunAll
-import com.intellij.util.ThrowableRunnable
+import com.intellij.testFramework.runAll
 import com.intellij.util.ui.UIUtil
 
 abstract class BaseLineStatusTrackerManagerTest : BaseChangeListsTest() {
@@ -25,20 +24,20 @@ abstract class BaseLineStatusTrackerManagerTest : BaseChangeListsTest() {
     super.setUp()
 
     DiffIterableUtil.setVerifyEnabled(true)
-    lstm = LineStatusTrackerManager.getInstanceImpl(getProject())
-    undoManager = UndoManager.getInstance(getProject()) as UndoManagerImpl
-    shelveManager = ShelveChangesManager.getInstance(getProject())
+    lstm = LineStatusTrackerManager.getInstanceImpl(project)
+    undoManager = UndoManager.getInstance(project) as UndoManagerImpl
+    shelveManager = ShelveChangesManager.getInstance(project)
   }
 
   override fun tearDown() {
-    RunAll(
-      ThrowableRunnable { clm.waitUntilRefreshed() },
-      ThrowableRunnable { UIUtil.dispatchAllInvocationEvents() },
-      ThrowableRunnable { lstm.resetExcludedFromCommitMarkers() },
-      ThrowableRunnable { lstm.releaseAllTrackers() },
-      ThrowableRunnable { DiffIterableUtil.setVerifyEnabled(false) },
-      ThrowableRunnable { super.tearDown() }
-    ).run()
+    runAll(
+      { clm.waitUntilRefreshed() },
+      { UIUtil.dispatchAllInvocationEvents() },
+      { lstm.resetExcludedFromCommitMarkers() },
+      { lstm.releaseAllTrackers() },
+      { DiffIterableUtil.setVerifyEnabled(false) },
+      { super.tearDown() }
+    )
   }
 
   override fun resetSettings() {
@@ -68,7 +67,7 @@ abstract class BaseLineStatusTrackerManagerTest : BaseChangeListsTest() {
 
 
   protected open fun runCommand(groupId: String? = null, task: () -> Unit) {
-    CommandProcessor.getInstance().executeCommand(getProject(), {
+    CommandProcessor.getInstance().executeCommand(project, {
       ApplicationManager.getApplication().runWriteAction(task)
     }, "", groupId)
   }

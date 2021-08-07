@@ -182,10 +182,10 @@ public class TreeModelBuilder implements ChangesViewModelBuilder {
   }
 
   @NotNull
-  public TreeModelBuilder setIgnored(@Nullable List<FilePath> ignoredFiles, boolean updatingMode) {
+  public TreeModelBuilder setIgnored(@Nullable List<FilePath> ignoredFiles) {
     assert myProject != null;
     if (ContainerUtil.isEmpty(ignoredFiles)) return this;
-    ChangesBrowserIgnoredFilesNode node = new ChangesBrowserIgnoredFilesNode(myProject, ignoredFiles, updatingMode);
+    ChangesBrowserIgnoredFilesNode node = new ChangesBrowserIgnoredFilesNode(myProject, ignoredFiles);
     return insertSpecificFilePathNodeToModel(ignoredFiles, node, FileStatus.IGNORED);
   }
 
@@ -275,6 +275,7 @@ public class TreeModelBuilder implements ChangesViewModelBuilder {
    * @deprecated Use {@link #createTagNode(ChangesBrowserNode.Tag)} instead.
    */
   @NotNull
+  @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
   @Deprecated
   public ChangesBrowserNode<?> createTagNode(@Nullable Object tag) {
     return createTagNode(ChangesBrowserNode.WrapperTag.wrap(tag));

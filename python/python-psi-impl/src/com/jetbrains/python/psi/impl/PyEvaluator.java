@@ -26,6 +26,7 @@ import com.jetbrains.python.PythonFQDNNames;
 import com.jetbrains.python.nameResolver.NameResolverTools;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
+import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -35,8 +36,6 @@ import java.util.*;
 
 /**
  * TODO: Merge PythonDataflowUtil and {@link PyEvaluator} and all its inheritors and improve Abstract Interpretation
- *
- * @author yole
  */
 public class PyEvaluator {
 
@@ -270,7 +269,8 @@ public class PyEvaluator {
       if (!myEnableResolve) {
         return null;
       }
-      final ResolveResult[] results = expression.getReference(PyResolveContext.defaultContext()).multiResolve(false);
+      final var context = TypeEvalContext.codeInsightFallback(expression.getProject());
+      final ResolveResult[] results = expression.getReference(PyResolveContext.defaultContext(context)).multiResolve(false);
       if (results.length != 1) {
         return null;
       }

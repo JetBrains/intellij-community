@@ -54,6 +54,11 @@ public abstract class NestedGroupFragment<S extends FragmentedSettings> extends 
   }
 
   @Override
+  public boolean isSelected() {
+    return ContainerUtil.exists(getChildren(), fragment -> fragment.isSelected());
+  }
+
+  @Override
   public boolean isInitiallyVisible(S s) {
     return super.isInitiallyVisible(s) || ContainerUtil.exists(getChildren(), fragment -> fragment.isInitiallyVisible(s));
   }

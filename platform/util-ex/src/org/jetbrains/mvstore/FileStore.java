@@ -116,12 +116,12 @@ final class FileStore {
     }
 
     @Override
-    public final String toString() {
+    public String toString() {
         return file.toString();
     }
 
     public void readFully(ByteBuf out, long position, int length) {
-        DataUtil.readFully(fileChannel, position, length, out);
+        DataUtil.readFully(fileChannel, position, length, out, file);
         readCount.incrementAndGet();
     }
 
@@ -171,7 +171,7 @@ final class FileStore {
     /**
      * Flush all changes.
      */
-    final void sync() {
+    void sync() {
         if (fileChannel != null) {
             try {
                 fileChannel.force(true);
@@ -186,7 +186,7 @@ final class FileStore {
      *
      * @return the file size
      */
-    final long size() {
+    long size() {
         return fileSize;
     }
 
@@ -219,18 +219,9 @@ final class FileStore {
      *
      * @return the number of write operations
      */
-    final long getWriteCount() {
+    long getWriteCount() {
         return writeCount.get();
     }
-
-    ///**
-    // * Get the number of written bytes since this store was opened.
-    // *
-    // * @return the number of write operations
-    // */
-    //final long getWriteBytes() {
-    //    return writeBytes.get();
-    //}
 
     /**
      * Get the number of read operations since this store was opened.
@@ -238,11 +229,11 @@ final class FileStore {
      *
      * @return the number of read operations
      */
-    final long getReadCount() {
+    long getReadCount() {
         return readCount.get();
     }
 
-    final boolean isReadOnly() {
+    boolean isReadOnly() {
         return readOnly;
     }
 
@@ -250,7 +241,7 @@ final class FileStore {
      * Get the default retention time for this store in milliseconds.
      */
     @SuppressWarnings("MethodMayBeStatic")
-    final int getDefaultRetentionTime() {
+    int getDefaultRetentionTime() {
         return 45_000;
     }
 
@@ -260,7 +251,7 @@ final class FileStore {
      * @param pos the position in bytes
      * @param length the number of bytes
      */
-    final void markUsed(long pos, int length) {
+    void markUsed(long pos, int length) {
         freeSpace.markUsed(pos, length);
     }
 
@@ -273,7 +264,7 @@ final class FileStore {
      *                     special value -1 means beginning of the infinite free area
      * @return the start position in bytes
      */
-    final long allocate(int length, long reservedLow, long reservedHigh) {
+    long allocate(int length, long reservedLow, long reservedHigh) {
         return freeSpace.allocate(length, reservedLow, reservedHigh);
     }
 
@@ -286,7 +277,7 @@ final class FileStore {
      *                     special value -1 means beginning of the infinite free area
      * @return the starting block index
      */
-    final long predictAllocation(int blocks, long reservedLow, long reservedHigh) {
+    long predictAllocation(int blocks, long reservedLow, long reservedHigh) {
         return freeSpace.predictAllocation(blocks, reservedLow, reservedHigh);
     }
 
@@ -296,11 +287,11 @@ final class FileStore {
      * @param pos the position in bytes
      * @param length the number of bytes
      */
-    final void free(long pos, int length) {
+    void free(long pos, int length) {
         freeSpace.free(pos, length);
     }
 
-    final int getFillRate() {
+    int getFillRate() {
         return freeSpace.getFillRate();
     }
 
@@ -313,15 +304,15 @@ final class FileStore {
      *            number of blocks vacated
      * @return prospective fill rate (0 - 100)
      */
-    final int getProjectedFillRate(int vacatedBlocks) {
+    int getProjectedFillRate(int vacatedBlocks) {
         return freeSpace.getProjectedFillRate(vacatedBlocks);
     }
 
-    final long getFirstFree() {
+    long getFirstFree() {
         return freeSpace.getFirstFree();
     }
 
-    final long getFileLengthInUse() {
+    long getFileLengthInUse() {
         return freeSpace.getLastFree();
     }
 
@@ -331,11 +322,11 @@ final class FileStore {
      * @param block where chunk starts
      * @return priority, bigger number indicate that chunk need to be moved sooner
      */
-    final int getMovePriority(int block) {
+    int getMovePriority(int block) {
         return freeSpace.getMovePriority(block);
     }
 
-    final long getAfterLastBlock() {
+    long getAfterLastBlock() {
         return freeSpace.getAfterLastBlock();
     }
 

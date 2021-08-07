@@ -312,12 +312,12 @@ public final class BeforeRunComponent extends JPanel implements DnDTarget, Dispo
     }
 
     @Override
-    public boolean canStartDragging(DnDAction action, Point dragOrigin) {
+    public boolean canStartDragging(DnDAction action, @NotNull Point dragOrigin) {
       return true;
     }
 
     @Override
-    public DnDDragStartBean startDragging(DnDAction action, Point dragOrigin) {
+    public DnDDragStartBean startDragging(DnDAction action, @NotNull Point dragOrigin) {
       return new DnDDragStartBean(this);
     }
 

@@ -91,7 +91,6 @@ public abstract class ChangeSignatureDialogBase<ParamInfo extends ParameterInfo,
   private DelegationPanel myDelegationPanel;
   protected AnActionButton myPropagateParamChangesButton;
   protected Set<Method> myMethodsToPropagateParameters = null;
-  private boolean myDisposed;
 
   private Tree myParameterPropagationTreeToReuse;
 
@@ -133,7 +132,6 @@ public abstract class ChangeSignatureDialogBase<ParamInfo extends ParameterInfo,
       @Override
       public void dispose() {
         myUpdateSignatureAlarm.cancelAllRequests();
-        myDisposed = true;
       }
     });
   }
@@ -588,12 +586,12 @@ public abstract class ChangeSignatureDialogBase<ParamInfo extends ParameterInfo,
     if (mySignatureArea == null || myPropagateParamChangesButton == null) return;
 
     final Runnable updateRunnable = () -> {
-      if (myDisposed) return;
       myUpdateSignatureAlarm.cancelAllRequests();
-      myUpdateSignatureAlarm.addRequest(() ->
-        PsiDocumentManager.getInstance(myProject).performLaterWhenAllCommitted(() -> updateSignatureAlarmFired()), 100, ModalityState.stateForComponent(mySignatureArea));
+      myUpdateSignatureAlarm.addRequest(() -> {
+        if (myProject.isDisposed()) return;
+        PsiDocumentManager.getInstance(myProject).performLaterWhenAllCommitted(() -> updateSignatureAlarmFired());
+      }, 100, ModalityState.stateForComponent(mySignatureArea));
     };
-    //noinspection SSBasedInspection
     SwingUtilities.invokeLater(updateRunnable);
   }
 
@@ -640,7 +638,6 @@ public abstract class ChangeSignatureDialogBase<ParamInfo extends ParameterInfo,
       myMethodsToPropagateParameters = null;
     }
 
-    myDisposed = true;
     invokeRefactoring(createRefactoringProcessor());
   }
 

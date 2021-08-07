@@ -13,7 +13,7 @@ import java.util.Collections;
 public class ReferenceCollectorExternalJavacOptionsProvider implements ExternalJavacOptionsProvider {
   @NotNull
   @Override
-  public Collection<String> getOptions(@NotNull JavaCompilingTool tool) {
+  public Collection<String> getOptions(@NotNull JavaCompilingTool tool, int compilerSdkVersion) {
     if (tool.getId().equals(JavaCompilers.JAVAC_ID)) {
       return Collections.singletonList("-D" + ExternalRefCollectorCompilerToolExtension.ENABLED_PARAM + "=" + isEnabled());
     }

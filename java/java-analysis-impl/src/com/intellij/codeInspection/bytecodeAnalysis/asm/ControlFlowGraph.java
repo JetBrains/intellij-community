@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.bytecodeAnalysis.asm;
 
 import com.intellij.codeInspection.bytecodeAnalysis.asm.ControlFlowGraph.Edge;
@@ -96,7 +96,7 @@ final class ControlFlowBuilder implements FramelessAnalyzer.EdgeCreator {
     npeTransitions = new TIntIntHashMap();
   }
 
-  final ControlFlowGraph buildCFG() throws AnalyzerException {
+  ControlFlowGraph buildCFG() throws AnalyzerException {
     if ((methodNode.access & (ACC_ABSTRACT | ACC_NATIVE)) == 0) {
       myAnalyzer.analyze(methodNode);
     }
@@ -108,7 +108,7 @@ final class ControlFlowBuilder implements FramelessAnalyzer.EdgeCreator {
   }
 
   @Override
-  public final void newControlFlowEdge(int insn, int successor) {
+  public void newControlFlowEdge(int insn, int successor) {
     if (!transitions[insn].contains(successor)) {
       transitions[insn].add(successor);
       edgeCount++;
@@ -116,7 +116,7 @@ final class ControlFlowBuilder implements FramelessAnalyzer.EdgeCreator {
   }
 
   @Override
-  public final void newControlFlowExceptionEdge(int insn, int successor, boolean npe) {
+  public void newControlFlowExceptionEdge(int insn, int successor, boolean npe) {
     if (!transitions[insn].contains(successor)) {
       transitions[insn].add(successor);
       edgeCount++;

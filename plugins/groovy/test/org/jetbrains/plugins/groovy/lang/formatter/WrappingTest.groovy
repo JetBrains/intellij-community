@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.formatter
 
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings
@@ -16,6 +16,19 @@ class WrappingTest extends GroovyFormatterTestCase {
 
   void testWrapChainedMethodCalls() {
     groovySettings.METHOD_CALL_CHAIN_WRAP = CommonCodeStyleSettings.WRAP_ALWAYS
+
+    checkFormatting('''\
+foo().barbar().abcd()
+''', '''\
+foo()
+    .barbar()
+    .abcd()
+''')
+  }
+
+  void testWrapChainedMethodCallsWithDotAfter() {
+    groovySettings.METHOD_CALL_CHAIN_WRAP = CommonCodeStyleSettings.WRAP_ALWAYS
+    groovyCustomSettings.WRAP_CHAIN_CALLS_AFTER_DOT = true
 
     checkFormatting('''\
 foo().barbar().abcd()

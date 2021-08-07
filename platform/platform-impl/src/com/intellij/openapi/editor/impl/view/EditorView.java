@@ -4,9 +4,11 @@
 package com.intellij.openapi.editor.impl.view;
 
 import com.intellij.diagnostic.Dumpable;
+import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.CustomFoldRegion;
 import com.intellij.openapi.editor.FoldRegion;
 import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.editor.VisualPosition;
@@ -148,11 +150,21 @@ public class EditorView implements TextDrawingCallback, Disposable, Dumpable, Hi
     checkFontRenderContext(null);
   }
   public int yToVisualLine(int y) {
+    assertIsDispatchThread();
+    assertNotInBulkMode();
     return myMapper.yToVisualLine(y);
   }
 
   public int visualLineToY(int line) {
+    assertIsDispatchThread();
+    assertNotInBulkMode();
     return myMapper.visualLineToY(line);
+  }
+
+  public int[] visualLineToYRange(int line) {
+    assertIsDispatchThread();
+    assertNotInBulkMode();
+    return myMapper.visualLineToYRange(line);
   }
 
   @NotNull
@@ -247,13 +259,19 @@ public class EditorView implements TextDrawingCallback, Disposable, Dumpable, Hi
   }
 
   public float getPrefixTextWidthInPixels() {
-    synchronized (myLock) {
-      return myPrefixLayout == null ? 0 : myPrefixLayout.getWidth();
-    }
+    LineLayout layout = getPrefixLayout();
+    return layout == null ? 0 : layout.getWidth();
   }
 
   LineLayout getPrefixLayout() {
     synchronized (myLock) {
+      FoldRegion[] topLevelRegions = myEditor.getFoldingModel().fetchTopLevel();
+      if (topLevelRegions != null && topLevelRegions.length > 0) {
+        FoldRegion firstRegion = topLevelRegions[0];
+        if (firstRegion instanceof CustomFoldRegion && firstRegion.getStartOffset() == 0) {
+          return null; // prefix is hidden
+        }
+      }
       return myPrefixLayout;
     }
   }
@@ -577,11 +595,12 @@ public class EditorView implements TextDrawingCallback, Disposable, Dumpable, Hi
                                            contextToSet.getAntiAliasingHint(), contextToSet.getFractionalMetricsHint());
     }
 
-    myFontRenderContext = contextToSet.getFractionalMetricsHint() == myEditor.myFractionalMetricsHintValue
+    Object fmHint = UISettings.getEditorFractionalMetricsHint();
+    myFontRenderContext = contextToSet.getFractionalMetricsHint() == fmHint
                           ? contextToSet
                           : new FontRenderContext(contextToSet.getTransform(), 
                                                   contextToSet.getAntiAliasingHint(), 
-                                                  myEditor.myFractionalMetricsHintValue);
+                                                  fmHint);
     return true;
   }
 
@@ -597,6 +616,7 @@ public class EditorView implements TextDrawingCallback, Disposable, Dumpable, Hi
       myTextLayoutCache.resetToDocumentSize(false);
       invalidateFoldRegionLayouts();
       myCharWidthCache.clear();
+      myEditor.getFoldingModel().updateCachedOffsets();
     }
   }
 

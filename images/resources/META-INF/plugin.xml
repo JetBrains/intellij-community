@@ -1,5 +1,6 @@
 <idea-plugin implementation-detail="true">
   <vendor>JetBrains</vendor>
+  <name>Images</name>
   <id>com.intellij.platform.images</id>
 
   <depends optional="true" config-file="images-copyright-plugin.xml">com.intellij.copyright</depends>
@@ -9,6 +10,8 @@
   </extensionPoints>
 
   <resource-bundle>messages.ImagesBundle</resource-bundle>
+  <depends>com.intellij.modules.lang</depends>
+  <depends>com.intellij.modules.xml</depends>
 
   <extensions defaultExtensionNs="com.intellij">
     <fileEditorProvider implementation="org.intellij.images.editor.impl.ImageFileEditorProvider"/>

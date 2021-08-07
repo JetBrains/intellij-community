@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.formatter.java;
 
 import com.intellij.formatting.Block;
@@ -674,6 +674,14 @@ public final class JavaSpacePropertyProcessor extends JavaElementVisitor {
   }
 
   @Override
+  public void visitGuardedPattern(PsiGuardedPattern pattern) {
+    super.visitGuardedPattern(pattern);
+    if (myChild1.getElementType() == JavaTokenType.ANDAND || myChild2.getElementType() == JavaTokenType.ANDAND) {
+      createSpaceInCode(true);
+    }
+  }
+
+  @Override
   public void visitImportList(PsiImportList list) {
     if (ElementType.IMPORT_STATEMENT_BASE_BIT_SET.contains(myChild1.getElementType()) &&
         ElementType.IMPORT_STATEMENT_BASE_BIT_SET.contains(myChild2.getElementType())) {
@@ -898,6 +906,7 @@ public final class JavaSpacePropertyProcessor extends JavaElementVisitor {
       }
     }
     else if (myRole1 == ChildRole.LBRACE) {
+      int spacesAfterLBrace = mySettings.SPACE_WITHIN_BRACES ? 1 : 0;
       if (!keepInOneLine) {
         int blankLines = 1;
         if (myParent != null) {
@@ -909,18 +918,23 @@ public final class JavaSpacePropertyProcessor extends JavaElementVisitor {
             }
           }
         }
-        myResult = Spacing.createSpacing(1, 1, blankLines, mySettings.KEEP_LINE_BREAKS, mySettings.KEEP_BLANK_LINES_IN_CODE);
+        myResult = Spacing.createSpacing(
+          spacesAfterLBrace, spacesAfterLBrace, blankLines, mySettings.KEEP_LINE_BREAKS, mySettings.KEEP_BLANK_LINES_IN_CODE);
       }
       else {
-        myResult = Spacing.createDependentLFSpacing(0, 1, textRange, mySettings.KEEP_LINE_BREAKS, mySettings.KEEP_BLANK_LINES_IN_CODE);
+        myResult = Spacing.createDependentLFSpacing(
+          spacesAfterLBrace, spacesAfterLBrace, textRange, mySettings.KEEP_LINE_BREAKS, mySettings.KEEP_BLANK_LINES_IN_CODE);
       }
     }
     else if (myRole2 == ChildRole.RBRACE) {
+      int spacesBeforeRBrace = mySettings.SPACE_WITHIN_BRACES ? 1 : 0;
       if (!keepInOneLine) {
-        myResult = Spacing.createSpacing(1, 1, 1, mySettings.KEEP_LINE_BREAKS, mySettings.KEEP_BLANK_LINES_BEFORE_RBRACE);
+        myResult = Spacing.createSpacing(
+          spacesBeforeRBrace, spacesBeforeRBrace, 1, mySettings.KEEP_LINE_BREAKS, mySettings.KEEP_BLANK_LINES_BEFORE_RBRACE);
       }
       else {
-        myResult = Spacing.createDependentLFSpacing(0, 1, textRange, mySettings.KEEP_LINE_BREAKS, mySettings.KEEP_BLANK_LINES_BEFORE_RBRACE);
+        myResult = Spacing.createDependentLFSpacing(
+          spacesBeforeRBrace, spacesBeforeRBrace, textRange, mySettings.KEEP_LINE_BREAKS, mySettings.KEEP_BLANK_LINES_BEFORE_RBRACE);
       }
     }
     else if (myChild1.getElementType() == JavaElementType.SWITCH_LABEL_STATEMENT ||
@@ -1319,6 +1333,16 @@ public final class JavaSpacePropertyProcessor extends JavaElementVisitor {
     }
   }
 
+  @Override
+  public void visitCaseLabelElementList(PsiCaseLabelElementList list) {
+    if (myChild1.getElementType() == JavaTokenType.COMMA) {
+      createSpaceInCode(mySettings.SPACE_AFTER_COMMA);
+    }
+    else if (myChild2.getElementType() == JavaTokenType.COMMA) {
+      createSpaceInCode(mySettings.SPACE_BEFORE_COMMA);
+    }
+  }
+
   private void createSpaceWithLinefeedIfListWrapped(@NotNull PsiExpressionList list, boolean space) {
     PsiExpression[] expressions = list.getExpressions();
     int length = expressions.length;
@@ -1481,7 +1505,7 @@ public final class JavaSpacePropertyProcessor extends JavaElementVisitor {
     }
   }
 
-  protected void processLoopBody() {
+  private void processLoopBody() {
     if (myChild2.getElementType() == JavaElementType.BLOCK_STATEMENT) {
       myResult = getSpaceBeforeLBrace(myChild2, mySettings.SPACE_BEFORE_FOR_LBRACE, null);
     }

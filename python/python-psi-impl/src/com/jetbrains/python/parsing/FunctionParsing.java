@@ -25,9 +25,7 @@ import org.jetbrains.annotations.NotNull;
 import static com.jetbrains.python.PyPsiBundle.message;
 import static com.jetbrains.python.parsing.StatementParsing.TOK_ASYNC;
 
-/**
- * @author yole
- */
+
 public class FunctionParsing extends Parsing {
   private static final IElementType FUNCTION_TYPE = PyElementTypes.FUNCTION_DECLARATION;
 

@@ -1,6 +1,16 @@
 <html>
 <body>
-Reports any declarations of classes, fields, or methods marked with <b>@org.jetbrains.annotations.ApiStatus.ScheduledForRemoval</b>
-annotation that are not accompanied by <b>@Deprecated</b> annotation.
+Reports declarations marked with <code>@ApiStatus.ScheduledForRemoval</code> without <code>@Deprecated</code>.
+<p>Example:</p>
+<pre>
+  @ApiStatus.ScheduledForRemoval(inVersion = "2017.3")
+  public void myLegacyMethod() { }
+</pre>
+<p>After the quick-fix is applied the result looks like:</p>
+<pre>
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2017.3")
+  public void myLegacyMethod() { }
+</pre>
 </body>
 </html>

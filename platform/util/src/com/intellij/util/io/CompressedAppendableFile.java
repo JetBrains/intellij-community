@@ -181,7 +181,7 @@ public class CompressedAppendableFile {
       assert false:"data corruption detected:"+chunkNumber + "," + myChunkTableLength;
       return ArrayUtilRt.EMPTY_BYTE_ARRAY;
     }
-    catch (RuntimeException | AssertionError e) { // CorruptedException, ArrayIndexOutofBounds, etc
+    catch (RuntimeException | AssertionError e) { // CorruptedException, ArrayIndexOutOfBoundsException, etc
       throw new IOException(e);
     }
   }
@@ -220,8 +220,13 @@ public class CompressedAppendableFile {
   @NotNull
   protected InputStream getChunkInputStream(long offset, int pageSize) throws IOException {
     InputStream in = Files.newInputStream(getChunksFile());
-    if (offset > 0) {
-      in.skip(offset);
+    long toSkip = offset;
+    while (toSkip > 0) {
+      long skipped = in.skip(toSkip);
+      if (skipped == 0) {
+        throw new EOFException("Unable to skip " + offset + " bytes: end-of-file reached");
+      }
+      toSkip -= skipped;
     }
     return new BufferedInputStream(new LimitedInputStream(in, pageSize) {
       @Override
@@ -281,7 +286,12 @@ public class CompressedAppendableFile {
       myNextChunkBuffer = new byte[calcBufferSize(myBufferPosition)];
 
       try (InputStream stream = Files.newInputStream(tempAppendFile)) {
-        stream.read(myNextChunkBuffer, 0, myBufferPosition);
+        int n = 0;
+        while (n < myBufferPosition) {
+          int count = stream.read(myNextChunkBuffer, n, myBufferPosition - n);
+          if (count < 0) break;
+          n += count;
+        }
       }
     }
     else {
@@ -434,61 +444,56 @@ public class CompressedAppendableFile {
     return myDirty;
   }
 
-  private static class FileChunkReadCache extends SLRUMap<FileChunkKey<CompressedAppendableFile>, byte[]> {
+  private static class FileChunkReadCache {
     private static final FileChunkReadCache ourDecompressedCache = new FileChunkReadCache();
+
+    private final SLRUMap<FileChunkKey<CompressedAppendableFile>, byte[]> myMap = new SLRUMap<>(64, 64);
 
     static {
       @SuppressWarnings("unused") // TODO disable watcher when it's not needed (on index close?)
-      LowMemoryWatcher registered = LowMemoryWatcher.register(() -> {
-        synchronized (ourDecompressedCache) {
-          ourDecompressedCache.clear();
-        }
-      });
-    }
-
-    private final FileChunkKey<CompressedAppendableFile> myKey = new FileChunkKey<>(null, 0);
-
-    FileChunkReadCache() {
-      super(64, 64);
+      LowMemoryWatcher registered = LowMemoryWatcher.register(() -> ourDecompressedCache.clear());
     }
 
     byte @NotNull [] get(CompressedAppendableFile file, int page) throws IOException {
       byte[] bytes;
       synchronized (this) {
-        myKey.setup(file, page);
-        bytes = get(myKey);
+        bytes = myMap.get(new FileChunkKey<>(file, page));
         if (bytes != null) return bytes;
       }
 
       bytes = file.loadChunk(page);   // out of lock
-      synchronized (this) {
-        put(file, page, bytes);
-      }
+      put(file, page, bytes);
       return bytes;
     }
 
     void put(CompressedAppendableFile file, long page, byte[] bytes) {
       synchronized (this) {
-        myKey.setup(file, page);
-        put(myKey, bytes);
+        myMap.put(new FileChunkKey<>(file, page), bytes);
       }
     }
 
-    void clear(CompressedAppendableFile file) {
+    void clear() {
+      synchronized (this) {
+        myMap.clear();
+      }
+    }
+
+    void clear(@NotNull CompressedAppendableFile file) {
       Set<FileChunkKey<CompressedAppendableFile>> toClean = new HashSet<>();
-      iterateKeys(key -> {
-        if (key.getOwner() == file) {
-          toClean.add(key);
+      synchronized (this) {
+        myMap.iterateKeys(key -> {
+          if (key.getOwner() == file) {
+            toClean.add(key);
+          }
+        });
+        for (FileChunkKey<CompressedAppendableFile> key : toClean) {
+          myMap.remove(key);
         }
-      });
-      for (FileChunkKey<CompressedAppendableFile> key : toClean) {
-        remove(key);
       }
     }
   }
 
   private class SegmentedChunkInputStream extends InputStream {
-    private final long myAddr;
     private final int myChunkLengthTableSnapshotLength;
     private final byte[] myNextChunkBufferSnapshot;
     private final int myBufferPositionSnapshot;
@@ -500,12 +505,11 @@ public class CompressedAppendableFile {
     private int myPageOffset;
 
     SegmentedChunkInputStream(long addr, int chunkLengthTableSnapshotLength, byte[] tableRef, int position) {
-      myAddr = addr;
       myChunkLengthTableSnapshotLength = chunkLengthTableSnapshotLength;
       myNextChunkBufferSnapshot = tableRef;
       myBufferPositionSnapshot = position;
-      myCurrentPageNumber = (int)(myAddr / myAppendBufferLength);
-      myPageOffset = (int)(myAddr % myAppendBufferLength);
+      myCurrentPageNumber = (int)(addr / myAppendBufferLength);
+      myPageOffset = (int)(addr % myAppendBufferLength);
     }
 
     @Override

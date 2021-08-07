@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.move.moveClassesOrPackages;
 
 import com.intellij.history.LocalHistory;
@@ -66,13 +66,13 @@ public final class MoveClassesOrPackagesImpl {
           return null;
         }
         if (!checkNesting(project, aPackage, targetElement, true)) return null;
-        if (!isAlreadyChecked(psiElements, idx, aPackage) && !checkMovePackage(project, aPackage)) return null;
+        if (!isAlreadyChecked(psiElements, idx, aPackage) && !checkMovePackage(project, aPackage, (PsiDirectory)element)) return null;
         element = aPackage;
       }
       else if (element instanceof PsiPackage) {
         final PsiPackage psiPackage = (PsiPackage)element;
         if (!checkNesting(project, psiPackage, targetElement, true)) return null;
-        if (!checkMovePackage(project, psiPackage)) return null;
+        if (!checkMovePackage(project, psiPackage, null)) return null;
       }
       else if (element instanceof PsiClass) {
         PsiClass aClass = (PsiClass)element;
@@ -122,14 +122,14 @@ public final class MoveClassesOrPackagesImpl {
     return false;
   }
 
-  private static boolean checkMovePackage(Project project, PsiPackage aPackage) {
+  private static boolean checkMovePackage(Project project, PsiPackage aPackage, @Nullable PsiDirectory currentDirectory) {
     final PsiDirectory[] directories = aPackage.getDirectories();
     final VirtualFile[] virtualFiles = aPackage.occursInPackagePrefixes();
     if (directories.length > 1 || virtualFiles.length > 0) {
       final @Nls StringBuffer message = new StringBuffer();
       RenameUtil.buildPackagePrefixChangedMessage(virtualFiles, message, aPackage.getQualifiedName());
       if (directories.length > 1) {
-        DirectoryAsPackageRenameHandlerBase.buildMultipleDirectoriesInPackageMessage(message, aPackage.getQualifiedName(), directories);
+        DirectoryAsPackageRenameHandlerBase.buildMultipleDirectoriesInPackageMessage(message, aPackage.getQualifiedName(), directories, currentDirectory);
         message.append("\n\n");
         String report = JavaRefactoringBundle
           .message("all.these.directories.will.be.moved.and.all.references.to.0.will.be.changed", aPackage.getQualifiedName());
@@ -137,7 +137,6 @@ public final class MoveClassesOrPackagesImpl {
       }
       message.append("\n");
       message.append(RefactoringBundle.message("do.you.wish.to.continue"));
-      //noinspection HardCodedStringLiteral
       String resultMessage = message.toString();
       int ret = Messages.showYesNoDialog(project, resultMessage, RefactoringBundle.message("warning.title"), Messages.getWarningIcon());
       if (ret != Messages.YES) {

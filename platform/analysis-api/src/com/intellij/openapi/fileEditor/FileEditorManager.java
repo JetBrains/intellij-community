@@ -16,7 +16,6 @@ import java.util.List;
 
 public abstract class FileEditorManager {
   public static final Key<Boolean> USE_CURRENT_WINDOW = Key.create("OpenFile.searchForOpen");
-  public static final Key<Boolean> USE_MAIN_WINDOW = Key.create("OpenFile.useMainWindow");
 
   public static FileEditorManager getInstance(@NotNull Project project) {
     return project.getComponent(FileEditorManager.class);
@@ -255,4 +254,11 @@ public abstract class FileEditorManager {
    * fully loaded.
    */
   public abstract void runWhenLoaded(@NotNull Editor editor, @NotNull Runnable runnable);
+
+  /**
+   * Refreshes the text, colors and icon of the editor tabs representing the specified file.
+   *
+   * @param file the file to refresh.
+   */
+  public void updateFilePresentation(@NotNull VirtualFile file) {}
 }

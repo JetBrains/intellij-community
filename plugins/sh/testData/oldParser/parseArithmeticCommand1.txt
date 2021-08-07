@@ -3,7 +3,8 @@ SHELL_SCRIPT
     GENERIC_COMMAND_DIRECTIVE
       PsiElement($)('$')
       ARITHMETIC_EXPANSION
-        PsiElement((()('((')
+        PsiElement(()('(')
+        PsiElement(()('(')
         ADD_EXPRESSION
           LITERAL_EXPRESSION
             NUMBER
@@ -14,23 +15,27 @@ SHELL_SCRIPT
           LITERAL_EXPRESSION
             NUMBER
               PsiElement(int)('2')
-        PsiElement()))('))')
+        PsiElement())(')')
+        PsiElement())(')')
   PsiElement(\n)('\n')
   COMMANDS_LIST
     GENERIC_COMMAND_DIRECTIVE
       PsiElement($)('$')
       ARITHMETIC_EXPANSION
-        PsiElement((()('((')
+        PsiElement(()('(')
+        PsiElement(()('(')
         LITERAL_EXPRESSION
           NUMBER
             PsiElement(int)('1')
-        PsiElement()))('))')
+        PsiElement())(')')
+        PsiElement())(')')
   PsiElement(\n)('\n')
   COMMANDS_LIST
     GENERIC_COMMAND_DIRECTIVE
       PsiElement($)('$')
       ARITHMETIC_EXPANSION
-        PsiElement((()('((')
+        PsiElement(()('(')
+        PsiElement(()('(')
         LOGICAL_AND_EXPRESSION
           LITERAL_EXPRESSION
             VARIABLE
@@ -41,26 +46,30 @@ SHELL_SCRIPT
           LITERAL_EXPRESSION
             VARIABLE
               PsiElement(var)('$a')
-        PsiElement()))('))')
+        PsiElement())(')')
+        PsiElement())(')')
   PsiElement(\n)('\n')
   COMMANDS_LIST
     GENERIC_COMMAND_DIRECTIVE
       PsiElement($)('$')
       ARITHMETIC_EXPANSION
-        PsiElement((()('((')
+        PsiElement(()('(')
+        PsiElement(()('(')
         PARENTHESES_EXPRESSION
           PsiElement(()('(')
           LITERAL_EXPRESSION
             NUMBER
               PsiElement(int)('1')
           PsiElement())(')')
-        PsiElement()))('))')
+        PsiElement())(')')
+        PsiElement())(')')
   PsiElement(\n)('\n')
   COMMANDS_LIST
     GENERIC_COMMAND_DIRECTIVE
       PsiElement($)('$')
       ARITHMETIC_EXPANSION
-        PsiElement((()('((')
+        PsiElement(()('(')
+        PsiElement(()('(')
         ADD_EXPRESSION
           LITERAL_EXPRESSION
             PsiElement($)('$')
@@ -77,12 +86,14 @@ SHELL_SCRIPT
           LITERAL_EXPRESSION
             NUMBER
               PsiElement(int)('1')
-        PsiElement()))('))')
+        PsiElement())(')')
+        PsiElement())(')')
   PsiElement(\n)('\n')
   COMMANDS_LIST
-    GENERIC_COMMAND_DIRECTIVE
+    SHELL_COMMAND
       ARITHMETIC_EXPANSION
-        PsiElement((()('((')
+        PsiElement(()('(')
+        PsiElement(()('(')
         ASSIGNMENT_EXPRESSION
           LITERAL_EXPRESSION
             PsiElement(word)('i')
@@ -100,12 +111,14 @@ SHELL_SCRIPT
                   NUMBER
                     PsiElement(int)('1')
               PsiElement())(')')
-        PsiElement()))('))')
+        PsiElement())(')')
+        PsiElement())(')')
   PsiElement(\n)('\n')
   COMMANDS_LIST
-    GENERIC_COMMAND_DIRECTIVE
+    SHELL_COMMAND
       ARITHMETIC_EXPANSION
-        PsiElement((()('((')
+        PsiElement(()('(')
+        PsiElement(()('(')
         ASSIGNMENT_EXPRESSION
           LITERAL_EXPRESSION
             PsiElement(word)('i')
@@ -113,7 +126,8 @@ SHELL_SCRIPT
           LITERAL_EXPRESSION
             PsiElement($)('$')
             ARITHMETIC_EXPANSION
-              PsiElement((()('((')
+              PsiElement(()('(')
+              PsiElement(()('(')
               ADD_EXPRESSION
                 LITERAL_EXPRESSION
                   NUMBER
@@ -124,5 +138,7 @@ SHELL_SCRIPT
                 LITERAL_EXPRESSION
                   NUMBER
                     PsiElement(int)('9')
-              PsiElement()))('))')
-        PsiElement()))('))')
+              PsiElement())(')')
+              PsiElement())(')')
+        PsiElement())(')')
+        PsiElement())(')')

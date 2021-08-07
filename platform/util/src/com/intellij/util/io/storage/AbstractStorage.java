@@ -14,9 +14,7 @@ import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.io.DataOutputStream;
 import com.intellij.util.io.PagePool;
-import com.intellij.util.io.RecordDataOutput;
 import com.intellij.util.io.UnsyncByteArrayInputStream;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
@@ -38,12 +36,7 @@ public abstract class AbstractStorage implements Disposable, Forceable {
 
   private static final int MAX_PAGES_TO_FLUSH_AT_A_TIME = 50;
 
-  @SuppressWarnings({"MissingDeprecatedAnnotation", "DeprecatedIsStillUsed"})
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
-  protected final Object myLock = new Object();
   private final ReadWriteLock myScalableLock = new ReentrantReadWriteLock();
-  private final boolean myUseScalableLock;
 
   protected AbstractRecordsTable myRecordsTable;
   protected DataTable myDataTable;
@@ -81,27 +74,24 @@ public abstract class AbstractStorage implements Disposable, Forceable {
   }
 
   protected AbstractStorage(@NotNull Path storageFilePath, boolean useScalableLock) throws IOException {
-    this(storageFilePath, PagePool.SHARED, useScalableLock);
+    this(storageFilePath, PagePool.SHARED);
   }
 
-  protected AbstractStorage(@NotNull Path storageFilePath, PagePool pool, boolean useScalableLock) throws IOException {
-    this(storageFilePath, pool, CapacityAllocationPolicy.DEFAULT, useScalableLock);
+  protected AbstractStorage(@NotNull Path storageFilePath, PagePool pool) throws IOException {
+    this(storageFilePath, pool, CapacityAllocationPolicy.DEFAULT);
   }
 
   protected AbstractStorage(@NotNull Path storageFilePath,
-                            CapacityAllocationPolicy capacityAllocationPolicy,
-                            boolean useScalableLock) throws IOException {
-    this(storageFilePath, PagePool.SHARED, capacityAllocationPolicy, useScalableLock);
+                            CapacityAllocationPolicy capacityAllocationPolicy) throws IOException {
+    this(storageFilePath, PagePool.SHARED, capacityAllocationPolicy);
   }
 
   protected AbstractStorage(@NotNull Path storageFilePath,
                             PagePool pool,
-                            CapacityAllocationPolicy capacityAllocationPolicy,
-                            boolean useScalableLock) throws IOException {
+                            CapacityAllocationPolicy capacityAllocationPolicy) throws IOException {
     myCapacityAllocationPolicy = capacityAllocationPolicy != null ? capacityAllocationPolicy
                                                                   : CapacityAllocationPolicy.DEFAULT;
     tryInit(storageFilePath, pool, 0);
-    myUseScalableLock = useScalableLock;
   }
 
   private void tryInit(@NotNull Path storageFilePath, PagePool pool, int retryCount) throws IOException {
@@ -172,7 +162,7 @@ public abstract class AbstractStorage implements Disposable, Forceable {
         Path parentDir = path.getParent();
         Path newDataFile = parentDir.resolve(path.getFileName() + ".storageData.backup");
         Files.createDirectories(parentDir);
-        createOrTruncateFile(path);
+        createOrTruncateFile(newDataFile);
 
         Path oldDataFile = parentDir.resolve(path.getFileName() + DATA_EXTENSION);
         DataTable newDataTable = new DataTable(newDataFile, myPool);
@@ -204,7 +194,7 @@ public abstract class AbstractStorage implements Disposable, Forceable {
         myDataTable = new DataTable(oldDataFile, myPool);
       }
       catch (IOException e) {
-        LOG.info("Compact failed: " + e.getMessage());
+        LOG.info("Compact failed", e);
       }
 
       long timedelta = System.currentTimeMillis() - start;
@@ -429,46 +419,18 @@ public abstract class AbstractStorage implements Disposable, Forceable {
   }
 
   protected <T, E extends Throwable> T withReadLock(@NotNull ThrowableComputable<T, E> runnable) throws E {
-    if (myUseScalableLock) {
-      return ConcurrencyUtil.withLock(myScalableLock.readLock(), runnable);
-    }
-    else {
-      synchronized (myLock) {
-        return runnable.compute();
-      }
-    }
+    return ConcurrencyUtil.withLock(myScalableLock.readLock(), runnable);
   }
 
   protected <E extends Throwable> void withReadLock(@NotNull ThrowableRunnable<E> runnable) throws E {
-    if (myUseScalableLock) {
-      ConcurrencyUtil.withLock(myScalableLock.readLock(), runnable);
-    }
-    else {
-      synchronized (myLock) {
-        runnable.run();
-      }
-    }
+    ConcurrencyUtil.withLock(myScalableLock.readLock(), runnable);
   }
 
   protected  <T, E extends Throwable> T withWriteLock(@NotNull ThrowableComputable<T, E> runnable) throws E {
-    if (myUseScalableLock) {
-      return ConcurrencyUtil.withLock(myScalableLock.writeLock(), runnable);
-    }
-    else {
-      synchronized (myLock) {
-        return runnable.compute();
-      }
-    }
+    return ConcurrencyUtil.withLock(myScalableLock.writeLock(), runnable);
   }
 
   protected <E extends Throwable> void withWriteLock(@NotNull ThrowableRunnable<E> runnable) throws E {
-    if (myUseScalableLock) {
-      ConcurrencyUtil.withLock(myScalableLock.writeLock(), runnable);
-    }
-    else {
-      synchronized (myLock) {
-        runnable.run();
-      }
-    }
+    ConcurrencyUtil.withLock(myScalableLock.writeLock(), runnable);
   }
 }

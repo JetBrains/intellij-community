@@ -10,9 +10,12 @@ import com.intellij.icons.AllIcons;
 import com.intellij.lang.LangBundle;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.actionSystem.Shortcut;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.keymap.KeymapUtil;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Ref;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -23,7 +26,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 
 public class GotoTestOrCodeHandler extends GotoTargetHandler {
@@ -41,13 +46,32 @@ public class GotoTestOrCodeHandler extends GotoTargetHandler {
 
     List<AdditionalAction> actions = new SmartList<>();
 
-    Collection<PsiElement> candidates;
+    final List<PsiElement> candidates = Collections.synchronizedList(new ArrayList<>());
     if (TestFinderHelper.isTest(selectedElement)) {
-      candidates = TestFinderHelper.findClassesForTest(selectedElement);
+      if (!ProgressManager.getInstance().runProcessWithProgressSynchronously(
+        () -> {
+          Collection<PsiElement> classes =
+            ReadAction.compute(() -> TestFinderHelper.findClassesForTest(selectedElement));
+          candidates.addAll(classes);
+        },
+        LangBundle.message("progress.title.searching.for.classes.for.test"), true, file.getProject())) {
+        return null;
+      }
     }
     else {
-      candidates = TestFinderHelper.findTestsForClass(selectedElement);
-      if (candidates.size() != 1) {
+      final Ref<Boolean> navigateToTestImmediatelyRef = new Ref<>(false);
+      if (!ProgressManager.getInstance().runProcessWithProgressSynchronously(
+        () -> {
+          Collection<PsiElement> tests =
+            ReadAction.compute(() -> TestFinderHelper.findTestsForClass(selectedElement));
+          candidates.addAll(tests);
+          navigateToTestImmediatelyRef.set(candidates.size() == 1 && TestFinderHelper.navigateToTestImmediately(candidates.get(0)));
+        },
+        LangBundle.message("progress.title.searching.for.tests.for.class"), true, file.getProject())) {
+        return null;
+      }
+
+      if (!navigateToTestImmediatelyRef.get()) {
         for (TestCreator creator : LanguageTestCreators.INSTANCE.allForLanguage(file.getLanguage())) {
           if (!creator.isAvailable(file.getProject(), editor, file)) continue;
           actions.add(new AdditionalAction() {

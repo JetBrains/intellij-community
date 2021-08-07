@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.codeInsight.completion
 
 import com.intellij.codeInsight.CodeInsightSettings
@@ -33,9 +33,10 @@ import com.intellij.openapi.extensions.LoadingOrder
 import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.impl.CurrentEditorProvider
+import com.intellij.openapi.options.advanced.AdvancedSettings
+import com.intellij.openapi.options.advanced.AdvancedSettingsImpl
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.util.Computable
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.psi.NavigatablePsiElement
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiJavaFile
@@ -510,7 +511,7 @@ class Foo {
     String toType = "ArrayIndexOutOfBoundsException ind"
     testArrows toType, LookupFocusDegree.UNFOCUSED, 0, 2
 
-    Registry.get("ide.cycle.scrolling").setValue(false, getTestRootDisposable())
+    ((AdvancedSettingsImpl) AdvancedSettings.getInstance()).setSetting("ide.cycle.scrolling", false, getTestRootDisposable())
     testArrows toType, LookupFocusDegree.UNFOCUSED, 0, -1
   }
 
@@ -521,7 +522,7 @@ class Foo {
     String toType = "fo"
     testArrows toType, LookupFocusDegree.SEMI_FOCUSED, 2, 0
 
-    Registry.get("ide.cycle.scrolling").setValue(false, getTestRootDisposable())
+    ((AdvancedSettingsImpl) AdvancedSettings.getInstance()).setSetting("ide.cycle.scrolling", false, getTestRootDisposable())
     testArrows toType, LookupFocusDegree.SEMI_FOCUSED, 2, 0
   }
 
@@ -1247,6 +1248,17 @@ public class Test {
     myFixture.configureByText 'a.java', '<caret>'
     type 'import jav'
     assert lookup
+    type '.'
+    assert lookup
+  }
+  
+  void testPopupInShebang() {
+    myFixture.configureByText 'app', '''#! /usr/bin/java --source 16
+record App() {
+    public  static void main(String[] args) {
+      args<caret>
+    }
+}'''
     type '.'
     assert lookup
   }

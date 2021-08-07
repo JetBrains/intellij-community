@@ -3,8 +3,8 @@ package git4idea
 
 import com.intellij.dvcs.DvcsUtil
 import com.intellij.dvcs.DvcsUtil.getShortRepositoryName
-import com.intellij.notification.Notification
-import com.intellij.notification.NotificationListener
+import com.intellij.notification.NotificationAction
+import com.intellij.notification.NotificationType
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.runInEdt
@@ -14,6 +14,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vcs.AbstractVcsHelper
+import com.intellij.openapi.vcs.VcsApplicationSettings
 import com.intellij.openapi.vcs.VcsException
 import com.intellij.openapi.vcs.VcsNotifier
 import com.intellij.openapi.vcs.changes.*
@@ -26,6 +27,7 @@ import com.intellij.vcs.log.util.VcsUserUtil
 import com.intellij.xml.util.XmlStringUtil.wrapInHtml
 import com.intellij.xml.util.XmlStringUtil.wrapInHtmlTag
 import git4idea.GitUtil.refreshChangedVfs
+import git4idea.actions.GitAbortOperationAction
 import git4idea.changes.GitChangeUtils.getStagedChanges
 import git4idea.commands.GitCommandResult
 import git4idea.commands.GitLineHandlerListener
@@ -34,6 +36,7 @@ import git4idea.commands.GitSimpleEventDetector.Event.CHERRY_PICK_CONFLICT
 import git4idea.commands.GitSimpleEventDetector.Event.LOCAL_CHANGES_OVERWRITTEN_BY_CHERRY_PICK
 import git4idea.commands.GitUntrackedFilesOverwrittenByOperationDetector
 import git4idea.i18n.GitBundle
+import git4idea.index.isStagingAreaAvailable
 import git4idea.index.showStagingArea
 import git4idea.merge.GitConflictResolver
 import git4idea.merge.GitDefaultMergeDialogCustomizer
@@ -46,27 +49,28 @@ import java.util.*
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.Semaphore
 import java.util.concurrent.atomic.AtomicBoolean
-import javax.swing.event.HyperlinkEvent
 
 /**
  * Applies the given Git operation (e.g. cherry-pick or revert) to the current working tree,
  * waits for the [ChangeListManager] update, shows the commit dialog and removes the changelist after commit,
  * if the commit was successful.
  */
-class GitApplyChangesProcess(private val project: Project,
-                             private val commits: List<VcsFullCommitDetails>,
-                             private val autoCommit: Boolean,
-                             @Nls private val operationName: String,
-                             @Nls private val appliedWord: String,
-                             private val command: (GitRepository, Hash, Boolean, List<GitLineHandlerListener>) -> GitCommandResult,
-                             private val emptyCommitDetector: (GitCommandResult) -> Boolean,
-                             private val defaultCommitMessageGenerator: (GitRepository, VcsFullCommitDetails) -> @NonNls String,
-                             private val preserveCommitMetadata: Boolean,
-                             private val cleanupBeforeCommit: (GitRepository) -> Unit = {}) {
+internal class GitApplyChangesProcess(private val project: Project,
+                                      private val commits: List<VcsFullCommitDetails>,
+                                      forceAutoCommit: Boolean,
+                                      @Nls private val operationName: String,
+                                      @Nls private val appliedWord: String,
+                                      private val command: (GitRepository, Hash, autoCommit: Boolean, List<GitLineHandlerListener>) -> GitCommandResult,
+                                      private val abortCommand: GitAbortOperationAction,
+                                      private val emptyCommitDetector: (GitCommandResult) -> Boolean,
+                                      private val defaultCommitMessageGenerator: (GitRepository, VcsFullCommitDetails) -> @NonNls String,
+                                      private val preserveCommitMetadata: Boolean,
+                                      private val cleanupBeforeCommit: (GitRepository, autoCommit: Boolean) -> Unit = { _, _ -> }) {
   private val repositoryManager = GitRepositoryManager.getInstance(project)
   private val vcsNotifier = VcsNotifier.getInstance(project)
   private val changeListManager = ChangeListManagerEx.getInstanceEx(project)
   private val vcsHelper = AbstractVcsHelper.getInstance(project)
+  private val autoCommit = forceAutoCommit || !changeListManager.areChangeListsEnabled()
 
   fun execute() {
     // ensure there are no stall changes (ex: from recent commit) that prevent changes from being moved into temp changelist
@@ -84,121 +88,184 @@ class GitApplyChangesProcess(private val project: Project,
     val successfulCommits = mutableListOf<VcsFullCommitDetails>()
     val skippedCommits = mutableListOf<VcsFullCommitDetails>()
 
-    for ((repository, value) in commitsInRoots) {
-      val result = executeForRepo(repository, value, successfulCommits, skippedCommits)
-      repository.update()
-      if (!result) {
-        return
+    repoLoop@ for ((repository, repoCommits) in commitsInRoots) {
+      try {
+        for (commit in repoCommits) {
+          val success = executeForCommit(repository, commit, successfulCommits, skippedCommits)
+          if (!success) return
+        }
+      }
+      finally {
+        repository.update()
       }
     }
     notifyResult(successfulCommits, skippedCommits)
   }
 
-  // return true to continue with other roots, false to break execution
-  private fun executeForRepo(repository: GitRepository,
-                             commits: List<VcsFullCommitDetails>,
-                             successfulCommits: MutableList<VcsFullCommitDetails>,
-                             alreadyPicked: MutableList<VcsFullCommitDetails>): Boolean {
-    val doAutoCommit = autoCommit || !changeListManager.areChangeListsEnabled()
-    for (commit in commits) {
-      val conflictDetector = GitSimpleEventDetector(CHERRY_PICK_CONFLICT)
-      val localChangesOverwrittenDetector = GitSimpleEventDetector(LOCAL_CHANGES_OVERWRITTEN_BY_CHERRY_PICK)
-      val untrackedFilesDetector = GitUntrackedFilesOverwrittenByOperationDetector(repository.root)
+  /**
+   * @return true to continue with other commits, false to break execution
+   */
+  private fun executeForCommit(repository: GitRepository,
+                               commit: VcsFullCommitDetails,
+                               successfulCommits: MutableList<VcsFullCommitDetails>,
+                               alreadyPicked: MutableList<VcsFullCommitDetails>): Boolean {
+    val conflictDetector = GitSimpleEventDetector(CHERRY_PICK_CONFLICT)
+    val localChangesOverwrittenDetector = GitSimpleEventDetector(LOCAL_CHANGES_OVERWRITTEN_BY_CHERRY_PICK)
+    val untrackedFilesDetector = GitUntrackedFilesOverwrittenByOperationDetector(repository.root)
 
-      val commitMessage = defaultCommitMessageGenerator(repository, commit)
-      val changeList = createChangeList(commitMessage, commit)
-      val previousDefaultChangelist = changeListManager.defaultChangeList
+    val commitMessage = defaultCommitMessageGenerator(repository, commit)
 
-      val startHash = GitUtil.getHead(repository)
-      try {
-        if (changeListManager.areChangeListsEnabled()) changeListManager.setDefaultChangeList(changeList, true)
-
-        val result = command(repository, commit.id, doAutoCommit,
-                             listOf(conflictDetector, localChangesOverwrittenDetector, untrackedFilesDetector))
-
-        if (result.success()) {
-          if (doAutoCommit) {
-            refreshChangedVfs(repository, startHash)
-            successfulCommits.add(commit)
-          }
-          else {
-            refreshStagedVfs(repository.root)
-            VcsDirtyScopeManager.getInstance(project).dirDirtyRecursively(repository.root)
-            changeListManager.waitForUpdate()
-            val committed = commit(repository, commit, commitMessage, changeList, successfulCommits,
-                                   alreadyPicked)
-            if (!committed) return false
-          }
-        }
-        else if (conflictDetector.hasHappened()) {
-          val mergeCompleted = ConflictResolver(project, repository.root, commit.id.toShortString(),
-                                                VcsUserUtil.getShortPresentation(commit.author), commit.subject,
-                                                operationName).merge()
-
-          refreshStagedVfs(repository.root) // `ConflictResolver` only refreshes conflicted files
-          VcsDirtyScopeManager.getInstance(project).dirDirtyRecursively(repository.root)
-          changeListManager.waitForUpdate()
-
-          if (mergeCompleted) {
-            LOG.debug("All conflicts resolved, will show commit dialog. Current default changelist is [$changeList]")
-            val committed = commit(repository, commit, commitMessage, changeList, successfulCommits,
-                                   alreadyPicked)
-            if (!committed) return false
-          }
-          else {
-            notifyConflictWarning(repository, commit, successfulCommits)
-            return false
-          }
-        }
-        else if (untrackedFilesDetector.wasMessageDetected()) {
-          val description = getSuccessfulCommitDetailsIfAny(successfulCommits)
-
-          GitUntrackedFilesHelper.notifyUntrackedFilesOverwrittenBy(project, repository.root,
-                                                                    untrackedFilesDetector.relativeFilePaths, operationName, description)
-          return false
-        }
-        else if (localChangesOverwrittenDetector.hasHappened()) {
-          notifyError(GitBundle.message("apply.changes.would.be.overwritten", operationName), commit, successfulCommits)
-          return false
-        }
-        else if (emptyCommitDetector(result)) {
-          alreadyPicked.add(commit)
-        }
-        else {
-          notifyError(result.errorOutputAsHtmlString, commit, successfulCommits)
-          return false
-        }
+    val strategy: CommitStrategy = when {
+      isStagingAreaAvailable(project) -> {
+        StagingAreaCommit(repository, commit, commitMessage)
       }
-      finally {
-        if (changeListManager.areChangeListsEnabled()) {
-          changeListManager.setDefaultChangeList(previousDefaultChangelist, true)
-          changeListManager.scheduleAutomaticEmptyChangeListDeletion(changeList, true)
-        }
+      changeListManager.areChangeListsEnabled() &&
+      VcsApplicationSettings.getInstance().CREATE_CHANGELISTS_AUTOMATICALLY -> {
+        ChangeListCommit(repository, commit, commitMessage)
+      }
+      else -> {
+        SimplifiedCommit(repository, commit, commitMessage)
       }
     }
-    return true
+
+    strategy.start()
+    try {
+      val startHash = GitUtil.getHead(repository)
+
+      val result = command(repository, commit.id, autoCommit,
+                           listOf(conflictDetector, localChangesOverwrittenDetector, untrackedFilesDetector))
+
+      if (result.success()) {
+        if (autoCommit) {
+          refreshChangedVfs(repository, startHash)
+          successfulCommits.add(commit)
+          return true
+        }
+        else {
+          refreshStagedVfs(repository.root)
+          VcsDirtyScopeManager.getInstance(project).dirDirtyRecursively(repository.root)
+          changeListManager.waitForUpdate()
+          strategy.afterChangesRefreshed()
+
+          return strategy.doUserCommit(successfulCommits, alreadyPicked)
+        }
+      }
+      else if (conflictDetector.hasHappened()) {
+        val mergeCompleted = ConflictResolver(project, repository.root, commit.id.toShortString(),
+                                              VcsUserUtil.getShortPresentation(commit.author), commit.subject,
+                                              operationName).merge()
+
+        refreshStagedVfs(repository.root) // `ConflictResolver` only refreshes conflicted files
+        VcsDirtyScopeManager.getInstance(project).dirDirtyRecursively(repository.root)
+        changeListManager.waitForUpdate()
+        strategy.afterChangesRefreshed()
+
+        if (mergeCompleted) {
+          LOG.debug("All conflicts resolved, will show commit dialog.")
+          return strategy.doUserCommit(successfulCommits, alreadyPicked)
+        }
+        else {
+          notifyConflictWarning(repository, commit, successfulCommits)
+          return false
+        }
+      }
+      else if (untrackedFilesDetector.wasMessageDetected()) {
+        val description = getSuccessfulCommitDetailsIfAny(successfulCommits)
+
+        GitUntrackedFilesHelper.notifyUntrackedFilesOverwrittenBy(project, repository.root,
+                                                                  untrackedFilesDetector.relativeFilePaths, operationName, description)
+        return false
+      }
+      else if (localChangesOverwrittenDetector.hasHappened()) {
+        notifyError(GitBundle.message("apply.changes.would.be.overwritten", operationName), commit, successfulCommits)
+        return false
+      }
+      else if (emptyCommitDetector(result)) {
+        alreadyPicked.add(commit)
+        return true
+      }
+      else {
+        notifyError(result.errorOutputAsHtmlString, commit, successfulCommits)
+        return false
+      }
+    }
+    finally {
+      strategy.finish()
+    }
   }
 
-  private fun createChangeList(commitMessage: String, commit: VcsFullCommitDetails): LocalChangeList {
-    if (!changeListManager.areChangeListsEnabled()) return changeListManager.defaultChangeList
-    val changeListName = createNameForChangeList(project, commitMessage)
-    val changeListData = if (preserveCommitMetadata) createChangeListData(commit) else null
-    return changeListManager.addChangeList(changeListName, commitMessage, changeListData)
+  private abstract class CommitStrategy {
+    open fun start() = Unit
+    open fun finish() = Unit
+    abstract fun doUserCommit(successfulCommits: MutableList<VcsFullCommitDetails>,
+                              alreadyPicked: MutableList<VcsFullCommitDetails>): Boolean
+
+    open fun afterChangesRefreshed() = Unit
   }
 
-  private fun commit(repository: GitRepository,
-                     commit: VcsFullCommitDetails,
-                     commitMessage: String,
-                     changeList: LocalChangeList,
-                     successfulCommits: MutableList<VcsFullCommitDetails>,
-                     alreadyPicked: MutableList<VcsFullCommitDetails>): Boolean {
-    if (!changeListManager.areChangeListsEnabled()) {
+  private inner class ChangeListCommit(val repository: GitRepository,
+                                       val commit: VcsFullCommitDetails,
+                                       val commitMessage: String) : CommitStrategy() {
+    lateinit var changeList: LocalChangeList
+    lateinit var previousDefaultChangelist: LocalChangeList
+
+    override fun start() {
+      previousDefaultChangelist = changeListManager.defaultChangeList
+
+      val changeListName = createNameForChangeList(project, commitMessage)
+      val changeListData = if (preserveCommitMetadata) createChangeListData(commit) else null
+      changeList = changeListManager.addChangeList(changeListName, commitMessage, changeListData)
+      changeListManager.setDefaultChangeList(changeList, true)
+    }
+
+    override fun finish() {
+      changeListManager.setDefaultChangeList(previousDefaultChangelist, true)
+      changeListManager.scheduleAutomaticEmptyChangeListDeletion(changeList, true)
+    }
+
+    override fun doUserCommit(successfulCommits: MutableList<VcsFullCommitDetails>,
+                              alreadyPicked: MutableList<VcsFullCommitDetails>): Boolean {
+      return commitChangelist(repository, commit, commitMessage, changeList, successfulCommits, alreadyPicked)
+    }
+  }
+
+  private inner class SimplifiedCommit(val repository: GitRepository,
+                                       val commit: VcsFullCommitDetails,
+                                       val commitMessage: String) : CommitStrategy() {
+    override fun doUserCommit(successfulCommits: MutableList<VcsFullCommitDetails>,
+                              alreadyPicked: MutableList<VcsFullCommitDetails>): Boolean {
+      val list = changeListManager.defaultChangeList
+      return commitChangelist(repository, commit, commitMessage, list, successfulCommits, alreadyPicked)
+    }
+
+    override fun afterChangesRefreshed() {
+      val list = changeListManager.defaultChangeList
+      if (preserveCommitMetadata &&
+          changeListManager.areChangeListsEnabled() &&
+          list.changes.isNotEmpty()) {
+        changeListManager.editChangeListData(list.name, createChangeListData(commit))
+      }
+    }
+  }
+
+  private class StagingAreaCommit(val repository: GitRepository,
+                                  val commit: VcsFullCommitDetails,
+                                  val commitMessage: String) : CommitStrategy() {
+    override fun doUserCommit(successfulCommits: MutableList<VcsFullCommitDetails>,
+                              alreadyPicked: MutableList<VcsFullCommitDetails>): Boolean {
       runInEdt {
-        showStagingArea(project, commitMessage)
+        showStagingArea(repository.project, commitMessage)
       }
       return false
     }
+  }
 
+  private fun commitChangelist(repository: GitRepository,
+                               commit: VcsFullCommitDetails,
+                               commitMessage: String,
+                               changeList: LocalChangeList,
+                               successfulCommits: MutableList<VcsFullCommitDetails>,
+                               alreadyPicked: MutableList<VcsFullCommitDetails>): Boolean {
     val actualList = changeListManager.getChangeList(changeList.id)
     if (actualList == null) {
       LOG.error("Couldn't find the changelist with id ${changeList.id} and name ${changeList.name} among " +
@@ -247,7 +314,7 @@ class GitApplyChangesProcess(private val project: Project,
     val sem = Semaphore(0)
     ApplicationManager.getApplication().invokeAndWait({
       try {
-        cleanupBeforeCommit(repository)
+        cleanupBeforeCommit(repository, autoCommit)
         val commitNotCancelled = vcsHelper.commitChanges(changes, changeList, commitMessage,
           object : CommitResultHandler {
             override fun onSuccess(commitMessage1: String) {
@@ -315,15 +382,27 @@ class GitApplyChangesProcess(private val project: Project,
   private fun notifyConflictWarning(repository: GitRepository,
                                     commit: VcsFullCommitDetails,
                                     successfulCommits: List<VcsFullCommitDetails>) {
-    val resolveLinkListener = ResolveLinkListener(repository.root,
-                                                  commit.id.toShortString(),
-                                                  VcsUserUtil.getShortPresentation(commit.author),
-                                                  commit.subject)
-    var description = commitDetails(commit) + UIUtil.BR + GitBundle.message("apply.changes.unresolved.conflicts", RESOLVE)
+    val title = GitBundle.message("apply.changes.operation.performed.with.conflicts", operationName.capitalize())
+
+    var description = commitDetails(commit)
+    description += UIUtil.BR + GitBundle.message("apply.changes.unresolved.conflicts.text")
     description += getSuccessfulCommitDetailsIfAny(successfulCommits)
-    vcsNotifier.notifyImportantWarning(null,
-                                       GitBundle.message("apply.changes.operation.performed.with.conflicts", operationName.capitalize()),
-                                       description, resolveLinkListener)
+
+    val notification = VcsNotifier.IMPORTANT_ERROR_NOTIFICATION
+      .createNotification(title, description, NotificationType.WARNING)
+      .addAction(NotificationAction.createSimple(GitBundle.message("apply.changes.unresolved.conflicts.notification.resolve.action.text")) {
+        val hash = commit.id.toShortString()
+        val commitAuthor = VcsUserUtil.getShortPresentation(commit.author)
+        val commitMessage = commit.subject
+        ConflictResolver(project, repository.root, hash, commitAuthor, commitMessage, operationName).mergeNoProceedInBackground()
+      })
+      .addAction(NotificationAction.create(GitBundle.message("apply.changes.unresolved.conflicts.notification.abort.action.text",
+                                                             operationName.capitalize())) { _, notification ->
+        if (abortCommand.performInBackground(repository)) {
+          notification.expire()
+        }
+      })
+    VcsNotifier.getInstance(project).notify(notification)
   }
 
   private fun notifyCommitCancelled(commit: VcsFullCommitDetails, successfulCommits: List<VcsFullCommitDetails>) {
@@ -369,9 +448,10 @@ class GitApplyChangesProcess(private val project: Project,
   private fun getCommitsDetails(successfulCommits: List<VcsFullCommitDetails>): String {
     var description = ""
     for (commit in successfulCommits) {
-      description += commitDetails(commit) + UIUtil.BR
+      if (description.isNotEmpty()) description += UIUtil.BR
+      description += commitDetails(commit)
     }
-    return description.substring(0, description.length - UIUtil.BR.length)
+    return description
   }
 
   @NlsSafe
@@ -383,20 +463,6 @@ class GitApplyChangesProcess(private val project: Project,
     return commitsInRoots.entries.joinToString("; ") { entry ->
       val commits = entry.value.joinToString { it.id.asString() }
       getShortRepositoryName(entry.key) + ": [" + commits + "]"
-    }
-  }
-
-  private inner class ResolveLinkListener(private val root: VirtualFile,
-                                          private val hash: String,
-                                          private val author: String,
-                                          private val message: String) : NotificationListener {
-
-    override fun hyperlinkUpdate(notification: Notification, event: HyperlinkEvent) {
-      if (event.eventType == HyperlinkEvent.EventType.ACTIVATED) {
-        if (event.description == RESOLVE) {
-          ConflictResolver(project, root, hash, author, message, operationName).mergeNoProceedInBackground()
-        }
-      }
     }
   }
 
@@ -414,7 +480,6 @@ class GitApplyChangesProcess(private val project: Project,
 
   companion object {
     private val LOG = logger<GitApplyChangesProcess>()
-    private const val RESOLVE = "resolve"
   }
 }
 

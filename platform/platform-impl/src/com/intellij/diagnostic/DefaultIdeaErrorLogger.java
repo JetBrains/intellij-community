@@ -16,7 +16,6 @@ import com.intellij.openapi.diagnostic.IdeaLoggingEvent;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.updateSettings.impl.UpdateChecker;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.util.io.MappingFailedException;
 import com.intellij.util.system.CpuArch;
 import org.jetbrains.annotations.Nullable;
 
@@ -55,15 +54,13 @@ public class DefaultIdeaErrorLogger implements ErrorLogger {
 
       final MemoryKind kind = getOOMErrorKind(event.getThrowable());
       boolean isOOM = kind != null;
-      boolean isMappingFailed = !isOOM && event.getThrowable() instanceof MappingFailedException;
 
       LifecycleUsageTriggerCollector.onError(pluginId, t, kind);
 
       return notificationEnabled ||
              showPluginError ||
              ApplicationManager.getApplication().isInternal() ||
-             isOOM ||
-             isMappingFailed;
+             isOOM;
     }
     catch (LinkageError e) {
       if (e.getMessage().contains("Could not initialize class com.intellij.diagnostic.IdeErrorsDialog")) {
@@ -83,9 +80,6 @@ public class DefaultIdeaErrorLogger implements ErrorLogger {
       if (kind != null) {
         ourOomOccurred = true;
         LowMemoryNotifier.showNotification(kind, true);
-      }
-      else if (throwable instanceof MappingFailedException) {
-        processMappingFailed(event);
       }
       else if (!ourOomOccurred) {
         MessagePool.getInstance().addIdeFatalMessage(event);

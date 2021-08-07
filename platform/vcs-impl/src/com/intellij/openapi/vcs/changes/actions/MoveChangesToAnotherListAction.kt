@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes.actions
 
 import com.intellij.idea.ActionsBundle
@@ -6,6 +6,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.MessageType
+import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vcs.*
 import com.intellij.openapi.vcs.changes.*
 import com.intellij.openapi.vcs.changes.ui.ChangeListChooser
@@ -86,7 +87,7 @@ class MoveChangesToAnotherListAction : AbstractChangeListAction() {
       val comparator = compareBy<LocalChangeList> { if (it.isDefault) -1 else 0 }
         .thenBy { if (it.changes.isEmpty()) -1 else 0 }
         .then(ChangesUtil.CHANGELIST_COMPARATOR)
-      return lists.minWith(comparator)
+      return lists.minWithOrNull(comparator)
     }
 
     private fun askTargetList(project: Project, changes: Collection<Change>): LocalChangeList? {
@@ -136,7 +137,9 @@ class MoveChangesToAnotherListAction : AbstractChangeListAction() {
         .ifEmpty { nonAffectedLists }
       val defaultSelection = guessPreferredList(preferredList)
 
-      val chooser = ChangeListChooser(project, suggestedLists, defaultSelection, title, null)
+      val chooser = ChangeListChooser(project, StringUtil.removeEllipsisSuffix(title))
+      chooser.setChangeLists(suggestedLists)
+      chooser.setDefaultSelection(defaultSelection)
       chooser.show()
       return chooser.selectedList
     }

@@ -34,6 +34,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.ui.update.DisposableUpdate;
 import com.intellij.util.ui.update.MergingUpdateQueue;
+import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -120,7 +121,9 @@ public final class NewMappings implements Disposable {
   }
 
   public void setMapping(@NotNull String path, @Nullable String activeVcsName) {
-    LOG.debug("setMapping path = '" + path + "' vcs = " + activeVcsName);
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("setMapping path = '" + path + "' vcs = " + activeVcsName, new Throwable());
+    }
     final VcsDirectoryMapping newMapping = new VcsDirectoryMapping(path, activeVcsName);
 
     List<VcsDirectoryMapping> newMappings = new ArrayList<>(myMappings);
@@ -294,7 +297,15 @@ public final class NewMappings implements Disposable {
         });
       }
 
-      return new Mappings(Collections.unmodifiableList(ContainerUtil.sorted(mappedRoots.values(), ROOT_COMPARATOR)), pointerDisposable);
+      List<MappedRoot> result = Collections.unmodifiableList(ContainerUtil.sorted(mappedRoots.values(), ROOT_COMPARATOR));
+
+      for (MappedRoot root : result) {
+        if (myVcsManager.isIgnored(VcsUtil.getFilePath(root.root))) {
+          LOG.warn("Root mapping is under ignored root: " + root.root);
+        }
+      }
+
+      return new Mappings(result, pointerDisposable);
     }
     catch (Throwable e) {
       Disposer.dispose(pointerDisposable);
@@ -416,7 +427,9 @@ public final class NewMappings implements Disposable {
   }
 
   public void setDirectoryMappings(@NotNull List<? extends VcsDirectoryMapping> items) {
-    LOG.debug("setDirectoryMappings, size: " + items.size());
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("setDirectoryMappings, size: " + items.size(), new Throwable());
+    }
 
     updateVcsMappings(items);
   }
@@ -480,7 +493,9 @@ public final class NewMappings implements Disposable {
   }
 
   public void removeDirectoryMapping(@NotNull VcsDirectoryMapping mapping) {
-    LOG.debug("remove mapping: " + mapping.getDirectory());
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("remove mapping: " + mapping.getDirectory(), new Throwable());
+    }
 
     List<VcsDirectoryMapping> newMappings = new ArrayList<>(myMappings);
     newMappings.remove(mapping);
@@ -585,6 +600,10 @@ public final class NewMappings implements Disposable {
   }
 
   public void beingUnregistered(final String name) {
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("beingUnregistered " + name, new Throwable());
+    }
+
     List<VcsDirectoryMapping> newMappings = new ArrayList<>(myMappings);
     newMappings.removeIf(mapping -> Objects.equals(mapping.getVcs(), name));
 
@@ -651,7 +670,7 @@ public final class NewMappings implements Disposable {
 
     @Nullable
     public MappedRoot getRootFor(@NotNull FilePath filePath) {
-      return myPathMapping.getMappingFor(filePath);
+      return myPathMapping.getMappingFor(filePath.getPath());
     }
   }
 }

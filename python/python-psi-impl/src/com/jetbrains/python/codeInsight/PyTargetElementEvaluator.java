@@ -15,29 +15,24 @@
  */
 package com.jetbrains.python.codeInsight;
 
-import com.intellij.codeInsight.TargetElementEvaluator;
+import com.intellij.codeInsight.TargetElementEvaluatorEx2;
 import com.intellij.codeInsight.TargetElementUtilBase;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
-import com.jetbrains.python.psi.PyParameter;
-import com.jetbrains.python.psi.PyReferenceExpression;
-import com.jetbrains.python.psi.PyReferenceOwner;
-import com.jetbrains.python.psi.PyTargetExpression;
+import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.resolve.PyResolveUtil;
 import com.jetbrains.python.psi.types.TypeEvalContext;
+import com.jetbrains.python.pyi.PyiUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.HashSet;
 import java.util.Set;
 
-/**
- * @author yole
- */
-public class PyTargetElementEvaluator implements TargetElementEvaluator {
+public class PyTargetElementEvaluator extends TargetElementEvaluatorEx2 {
   @Override
   public boolean includeSelfInGotoImplementation(@NotNull PsiElement element) {
     return false;
@@ -51,9 +46,8 @@ public class PyTargetElementEvaluator implements TargetElementEvaluator {
     }
 
     final PsiElement element = ref.getElement();
-    final var resolveContext = PyResolveContext
-      .defaultContext()
-      .withTypeEvalContext(TypeEvalContext.codeAnalysis(element.getProject(), element.getContainingFile()));
+    final var resolveContext =
+      PyResolveContext.defaultContext(TypeEvalContext.codeAnalysis(element.getProject(), element.getContainingFile()));
 
     PsiElement result = PyResolveUtil.resolveDeclaration(ref, resolveContext);
     Set<PsiElement> visited = new HashSet<>();
@@ -71,5 +65,15 @@ public class PyTargetElementEvaluator implements TargetElementEvaluator {
       }
     }
     return result;
+  }
+
+  @Nullable
+  @Override
+  public PsiElement getGotoDeclarationTarget(@NotNull final PsiElement element, @Nullable final PsiElement navElement) {
+    if (element instanceof PyElement) {
+      final PsiElement originalElement = PyiUtil.getOriginalElement((PyElement)element);
+      return originalElement != null ? originalElement : navElement;
+    }
+    return navElement;
   }
 }

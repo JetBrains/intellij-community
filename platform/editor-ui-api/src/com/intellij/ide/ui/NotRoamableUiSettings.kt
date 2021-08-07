@@ -1,8 +1,7 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.ui
 
 import com.intellij.openapi.components.*
-import com.intellij.openapi.util.Pair
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.FontUtil
 import com.intellij.util.ui.UIUtil
@@ -53,9 +52,13 @@ class NotRoamableUiSettings : PersistentStateComponent<NotRoamableUiOptions> {
 }
 
 class NotRoamableUiOptions : BaseState() {
-  var ideAAType by enum(AntialiasingType.SUBPIXEL)
+  var ideAAType by enum(
+    if (AntialiasingType.canUseSubpixelAAForIDE())
+      AntialiasingType.SUBPIXEL else AntialiasingType.GREYSCALE)
 
-  var editorAAType by enum(AntialiasingType.SUBPIXEL)
+  var editorAAType by enum(
+    if (AntialiasingType.canUseSubpixelAAForEditor())
+      AntialiasingType.SUBPIXEL else AntialiasingType.GREYSCALE)
 
   @get:Property(filter = FontFilter::class)
   var fontFace by string()
@@ -67,9 +70,9 @@ class NotRoamableUiOptions : BaseState() {
   var fontScale by property(0f)
 
   init {
-    val fontData = systemFontFaceAndSize
-    fontFace = fontData.first
-    fontSize = fontData.second
+    val fontData = JBUIScale.getSystemFontData(null)
+    fontFace = fontData.key
+    fontSize = fontData.value
     fontScale = UISettings.defFontScale
   }
 }
@@ -77,15 +80,12 @@ class NotRoamableUiOptions : BaseState() {
 private class FontFilter : SerializationFilter {
   override fun accepts(accessor: Accessor, bean: Any): Boolean {
     val settings = bean as NotRoamableUiOptions
-    val fontData = systemFontFaceAndSize
+    val fontData = JBUIScale.getSystemFontData(null)
     if ("fontFace" == accessor.name) {
-      return fontData.first != settings.fontFace
+      return fontData.key != settings.fontFace
     }
     // fontSize/fontScale should either be stored in pair or not stored at all
     // otherwise the fontSize restore logic gets broken (see loadState)
-    return !(fontData.second == settings.fontSize && 1f == settings.fontScale)
+    return !(fontData.value == settings.fontSize && 1f == settings.fontScale)
   }
 }
-
-private val systemFontFaceAndSize: Pair<String, Int>
-  get() = JBUIScale.getSystemFontData()

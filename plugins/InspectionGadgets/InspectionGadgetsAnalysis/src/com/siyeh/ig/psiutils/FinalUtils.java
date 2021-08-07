@@ -23,14 +23,13 @@ import com.intellij.psi.controlFlow.LocalsOrMyInstanceFieldsControlFlowPolicy;
 import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
-import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.Map;
 
 public final class FinalUtils {
-
   private FinalUtils() {}
 
   public static boolean canBeFinal(@NotNull PsiVariable variable) {
@@ -45,8 +44,8 @@ public final class FinalUtils {
                        ? PsiUtil.getTopLevelClass(variable)
                        : PsiUtil.getVariableCodeBlock(variable, null);
     if (scope == null) return false;
-    Map<PsiElement, Collection<ControlFlowUtil.VariableInfo>> finalVarProblems = new THashMap<>();
-    Map<PsiElement, Collection<PsiReferenceExpression>> uninitializedVarProblems = new THashMap<>();
+    Map<PsiElement, Collection<ControlFlowUtil.VariableInfo>> finalVarProblems = new HashMap<>();
+    Map<PsiElement, Collection<PsiReferenceExpression>> uninitializedVarProblems = new HashMap<>();
     PsiElementProcessor<PsiElement> elementDoesNotViolateFinality = e -> {
       if (!(e instanceof PsiReferenceExpression)) return true;
       PsiReferenceExpression ref = (PsiReferenceExpression)e;

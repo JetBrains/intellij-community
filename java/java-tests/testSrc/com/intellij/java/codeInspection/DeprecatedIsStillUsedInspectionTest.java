@@ -18,9 +18,12 @@ package com.intellij.java.codeInspection;
 
 import com.intellij.JavaTestUtil;
 import com.intellij.codeInspection.DeprecatedIsStillUsedInspection;
-import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
+import com.intellij.java.testFramework.fixtures.LightJava9ModulesCodeInsightFixtureTestCase;
+import com.intellij.java.testFramework.fixtures.MultiModuleJava9ProjectDescriptor.ModuleDescriptor;
+import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.NotNull;
 
-public class DeprecatedIsStillUsedInspectionTest extends LightJavaCodeInsightFixtureTestCase {
+public class DeprecatedIsStillUsedInspectionTest extends LightJava9ModulesCodeInsightFixtureTestCase {
   @Override
   protected String getTestDataPath() {
     return JavaTestUtil.getJavaTestDataPath() + "/inspection/deprecatedIsStillUsed";
@@ -34,5 +37,43 @@ public class DeprecatedIsStillUsedInspectionTest extends LightJavaCodeInsightFix
 
   public void testSimple() {
     myFixture.testHighlighting(getTestName(false) + ".java");
+  }
+
+  public void testOverloadedAndStaticImport() {
+    myFixture.addClass("package bar;\n" +
+                       "import static foo.OverloadedAndStaticImport.bar;\n" +
+                       "class Bar {\n" +
+                       "  {\n" +
+                       "    bar();\n" +
+                       "  }\n" +
+                       "}");
+    myFixture.testHighlighting(getTestName(false) + ".java");
+  }
+
+  public void testDeprecatedWithManyOccurrences() {
+    for (int i = 0; i < 20; i++) {
+      myFixture.addClass("class MyTest" + i + "{ DeprecatedWithManyOccurrences d;}");
+    }
+    myFixture.testFile(getTestName(false) + ".java").checkSymbolNames().test();
+  }
+
+  public void testJavaModuleIsDeprecated() {
+    VirtualFile firstModuleInfo = moduleInfo("module first {requires second;}", ModuleDescriptor.MAIN);
+    VirtualFile secondModuleInfo = moduleInfo("@Deprecated module second {}", ModuleDescriptor.M2);
+    testJavaModule("@Deprecated module <warning descr=\"Deprecated member 'second' is still used\">second</warning> {}",
+                   firstModuleInfo, secondModuleInfo);
+  }
+
+  public void testJavaModuleDependantIsDeprecatedToo() {
+    VirtualFile firstModuleInfo = moduleInfo("@Deprecated module first {requires second;}", ModuleDescriptor.MAIN);
+    VirtualFile secondModuleInfo = moduleInfo("@Deprecated module second {}", ModuleDescriptor.M2);
+    testJavaModule("@Deprecated module second {}", firstModuleInfo, secondModuleInfo);
+  }
+
+  private void testJavaModule(@NotNull String expectedResult, @NotNull VirtualFile firstModuleInfo, @NotNull VirtualFile secondModuleInfo) {
+    myFixture.allowTreeAccessForFile(firstModuleInfo);
+    myFixture.allowTreeAccessForFile(secondModuleInfo);
+    myFixture.configureFromExistingVirtualFile(addFile("module-info.java", expectedResult, ModuleDescriptor.M2));
+    myFixture.checkHighlighting();
   }
 }

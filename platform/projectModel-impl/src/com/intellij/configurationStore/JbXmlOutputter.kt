@@ -22,8 +22,6 @@ import java.io.StringWriter
 import java.io.Writer
 import java.util.*
 import javax.xml.transform.Result
-import kotlin.collections.ArrayList
-import kotlin.collections.HashSet
 
 private val DEFAULT_FORMAT = JDOMUtil.createFormat("\n")
 
@@ -518,6 +516,8 @@ open class JbXmlOutputter @JvmOverloads constructor(lineSeparator: String = "\n"
   private fun checkIsElementContainsSensitiveInformation(element: Element) {
     var name: String? = element.name
 
+    if (!shouldCheckElement(element)) return
+
     if (doesNameSuggestSensitiveInformation(name!!)) {
       logSensitiveInformationError(name, "Element", element.parentElement)
     }
@@ -527,6 +527,14 @@ open class JbXmlOutputter @JvmOverloads constructor(lineSeparator: String = "\n"
     if (name != null && doesNameSuggestSensitiveInformation(name) && element.getAttribute("value") != null) {
       logSensitiveInformationError("@name=$name", "Element", element /* here not parentElement because it is attribute */)
     }
+  }
+
+  private fun shouldCheckElement(element: Element): Boolean {
+    //any user-provided name-value
+    if ("property" == element.name && element.parentElement?.name.let { it == "driver-properties" || it == "driver"}) {
+      return false
+    }
+    return true
   }
 
   private fun logSensitiveInformationError(name: String, elementKind: String, parentElement: Element?) {

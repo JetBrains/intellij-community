@@ -15,6 +15,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.SimpleModificationTracker;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.UserDataHolderBase;
+import com.intellij.openapi.util.objectTree.ThrowableInterner;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
@@ -49,10 +50,12 @@ public abstract class ModelBranchImpl extends UserDataHolderBase implements Mode
   private final List<Runnable> myAfterMerge = new ArrayList<>();
   private final SimpleModificationTracker myVfsChanges = new SimpleModificationTracker();
   private final Project myProject;
+  private final @NotNull Throwable myCreationTrace;
   private boolean myMerged;
 
   ModelBranchImpl(@NotNull Project project) {
     myProject = project;
+    myCreationTrace = ThrowableInterner.intern(new Throwable());
     ApplicationManager.getApplication().assertReadAccessAllowed();
     if (PsiDocumentManager.getInstance(project).hasEventSystemEnabledUncommittedDocuments()) {
       throw new IllegalStateException("Model branches may only be created on committed PSI");
@@ -261,41 +264,45 @@ public abstract class ModelBranchImpl extends UserDataHolderBase implements Mode
   }
 
   private void mergeBack() {
-    assert !myMerged;
-    myMerged = true;
+    checkBranchIsAlive();
 
     try {
-      for (BranchedVirtualFileImpl file : myVfsStructureChanges) {
-        VirtualFile original = file.getOrCreateOriginal();
-        String copyName = file.getName();
-        if (!original.getName().equals(copyName)) {
-          PsiFileImplUtil.saveDocumentIfFileWillBecomeBinary(original, copyName);
-          original.rename(this, copyName);
-        }
-        VirtualFile newParent = findOriginalFile(file.getParent());
-        if (!original.getParent().equals(newParent)) {
-          assert newParent != null;
-          original.move(this, newParent);
+      try {
+        for (BranchedVirtualFileImpl file : myVfsStructureChanges) {
+          VirtualFile original = file.getOrCreateOriginal();
+          String copyName = file.getName();
+          if (!original.getName().equals(copyName)) {
+            PsiFileImplUtil.saveDocumentIfFileWillBecomeBinary(original, copyName);
+            original.rename(this, copyName);
+          }
+          VirtualFile newParent = findOriginalFile(file.getParent());
+          if (!original.getParent().equals(newParent)) {
+            assert newParent != null;
+            original.move(this, newParent);
+          }
         }
       }
-    }
-    catch (IOException e) {
-      throw new IncorrectOperationException(e);
-    }
-
-    for (Document document : myDocumentChanges.keySet()) {
-      VirtualFile file = Objects.requireNonNull(FileDocumentManager.getInstance().getFile(document));
-      DocumentImpl original = (DocumentImpl) FileDocumentManager.getInstance().getDocument(Objects.requireNonNull(findOriginalFile(file)));
-      assert original != null;
-
-      for (DocumentEvent event : myDocumentChanges.get(document)) {
-        original.replaceString(event.getOffset(), event.getOffset() + event.getOldLength(), event.getMoveOffset(),
-                               event.getNewFragment(), LocalTimeCounter.currentTime(), false);
+      catch (IOException e) {
+        throw new IncorrectOperationException(e);
+      }
+  
+      for (Document document : myDocumentChanges.keySet()) {
+        VirtualFile file = Objects.requireNonNull(FileDocumentManager.getInstance().getFile(document));
+        DocumentImpl original = (DocumentImpl) FileDocumentManager.getInstance().getDocument(Objects.requireNonNull(findOriginalFile(file)));
+        assert original != null;
+  
+        for (DocumentEvent event : myDocumentChanges.get(document)) {
+          original.replaceString(event.getOffset(), event.getOffset() + event.getOldLength(), event.getMoveOffset(),
+                                 event.getNewFragment(), LocalTimeCounter.currentTime(), false);
+        }
+      }
+  
+      for (Runnable runnable : myAfterMerge) {
+        runnable.run();
       }
     }
-
-    for (Runnable runnable : myAfterMerge) {
-      runnable.run();
+    finally {
+      myMerged = true;
     }
   }
 
@@ -309,6 +316,9 @@ public abstract class ModelBranchImpl extends UserDataHolderBase implements Mode
 
       @Override
       public @NotNull Collection<ModelBranch> getModelBranchesAffectingScope() {
+        if (myMerged) {
+          return Collections.emptyList();
+        }
         return Collections.singleton(ModelBranchImpl.this);
       }
     };
@@ -338,4 +348,11 @@ public abstract class ModelBranchImpl extends UserDataHolderBase implements Mode
   }
 
   protected abstract void assertAllChildrenLoaded(@NotNull VirtualFile file);
+  
+  void checkBranchIsAlive() {
+    if (myMerged) {
+      LOG.error("Attempting to access merged branch [" + hashCode() + "]", 
+        new Attachment("creation.trace", myCreationTrace));
+    }
+  }
 }

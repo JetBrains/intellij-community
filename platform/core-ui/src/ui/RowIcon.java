@@ -1,34 +1,23 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui;
 
 import com.intellij.openapi.util.IconLoader;
-import com.intellij.util.ArrayUtil;
+import com.intellij.ui.scale.ScaleType;
 import com.intellij.util.IconUtil;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBCachingScalableIcon;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-import static com.intellij.ui.scale.ScaleType.OBJ_SCALE;
-import static java.lang.Math.ceil;
-
 public class RowIcon extends JBCachingScalableIcon<RowIcon> implements com.intellij.ui.icons.RowIcon, IconWithToolTip {
-  private final com.intellij.ui.icons.RowIcon.Alignment myAlignment;
+  private final Alignment myAlignment;
 
   private int myWidth;
   private int myHeight;
-
-  /**
-   * @use {@link com.intellij.ui.icons.RowIcon.Alignment instead}
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.2")
-  public enum Alignment {TOP, CENTER, BOTTOM}
 
   private final Icon @NotNull [] myIcons;
   private Icon[] myScaledIcons;
@@ -39,30 +28,10 @@ public class RowIcon extends JBCachingScalableIcon<RowIcon> implements com.intel
   }
 
   public RowIcon(int iconCount/*, int orientation*/) {
-    this(iconCount, com.intellij.ui.icons.RowIcon.Alignment.TOP);
+    this(iconCount, Alignment.TOP);
   }
 
-  /**
-   * @deprecated use {@link #RowIcon(int, com.intellij.ui.icons.RowIcon.Alignment)} instead
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.2")
   public RowIcon(int iconCount, Alignment alignment) {
-    com.intellij.ui.icons.RowIcon.Alignment a = null;
-    if (alignment == Alignment.TOP) {
-      a = com.intellij.ui.icons.RowIcon.Alignment.TOP;
-    }
-    else if (alignment == Alignment.BOTTOM) {
-      a = com.intellij.ui.icons.RowIcon.Alignment.BOTTOM;
-    }
-    else if (alignment == Alignment.CENTER) {
-      a = com.intellij.ui.icons.RowIcon.Alignment.CENTER;
-    }
-    myAlignment = a;
-    myIcons = new Icon[iconCount];
-  }
-
-  public RowIcon(int iconCount, com.intellij.ui.icons.RowIcon.Alignment alignment) {
     myAlignment = alignment;
     myIcons = new Icon[iconCount];
   }
@@ -79,22 +48,20 @@ public class RowIcon extends JBCachingScalableIcon<RowIcon> implements com.intel
     myAlignment = icon.myAlignment;
     myWidth = icon.myWidth;
     myHeight = icon.myHeight;
-    myIcons = ArrayUtil.copyOf(icon.myIcons);
+    myIcons = icon.myIcons.clone();
     myScaledIcons = null;
   }
 
-  @NotNull
   @Override
-  public RowIcon copy() {
+  public @NotNull RowIcon copy() {
     return new RowIcon(this);
   }
 
-  @NotNull
   @Override
-  public com.intellij.ui.icons.RowIcon deepCopy() {
+  public @NotNull com.intellij.ui.icons.RowIcon deepCopy() {
     RowIcon icon = new RowIcon(this);
     for (int i = 0; i < icon.myIcons.length; i++) {
-      icon.myIcons[i] = IconUtil.copy(icon.myIcons[i], null);
+      icon.myIcons[i] = icon.myIcons[i] == null ? null : IconUtil.copy(icon.myIcons[i], null);
     }
     return icon;
   }
@@ -119,8 +86,13 @@ public class RowIcon extends JBCachingScalableIcon<RowIcon> implements com.intel
 
   @Override
   public Icon @NotNull [] getAllIcons() {
-    List<Icon> icons = ContainerUtil.packNullables(myIcons);
-    return icons.toArray(new Icon[0]);
+    List<Icon> list = new ArrayList<>(myIcons.length);
+    for (Icon element : myIcons) {
+      if (element != null) {
+        list.add(element);
+      }
+    }
+    return list.toArray(new Icon[0]);
   }
 
   public int hashCode() {
@@ -128,7 +100,7 @@ public class RowIcon extends JBCachingScalableIcon<RowIcon> implements com.intel
   }
 
   public boolean equals(Object obj) {
-    return obj instanceof RowIcon && Arrays.equals(((RowIcon)obj).myIcons, myIcons);
+    return obj == this || (obj instanceof RowIcon && Arrays.equals(((RowIcon)obj).myIcons, myIcons));
   }
 
   @Override
@@ -172,13 +144,13 @@ public class RowIcon extends JBCachingScalableIcon<RowIcon> implements com.intel
   @Override
   public int getIconWidth() {
     getScaleContext().update();
-    return (int)ceil(scaleVal(myWidth, OBJ_SCALE));
+    return (int)Math.ceil(scaleVal(myWidth, ScaleType.OBJ_SCALE));
   }
 
   @Override
   public int getIconHeight() {
     getScaleContext().update();
-    return (int)ceil(scaleVal(myHeight, OBJ_SCALE));
+    return (int)Math.ceil(scaleVal(myHeight, ScaleType.OBJ_SCALE));
   }
 
   private void updateSize() {
@@ -194,9 +166,8 @@ public class RowIcon extends JBCachingScalableIcon<RowIcon> implements com.intel
     myHeight = height;
   }
 
-  @NotNull
   @Override
-  public Icon getDarkIcon(boolean isDark) {
+  public @NotNull Icon getDarkIcon(boolean isDark) {
     RowIcon newIcon = copy();
     for (int i=0; i<newIcon.myIcons.length; i++) {
       newIcon.myIcons[i] = newIcon.myIcons[i] == null ? null : IconLoader.getDarkIcon(newIcon.myIcons[i], isDark);

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.compiler.progress;
 
 import com.intellij.build.*;
@@ -11,6 +11,7 @@ import com.intellij.compiler.impl.ExcludeFromCompileAction;
 import com.intellij.compiler.impl.ExitStatus;
 import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.filters.RegexpFilter;
+import com.intellij.execution.filters.UrlFilter;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.actionSystem.*;
@@ -85,6 +86,7 @@ public class BuildOutputService implements BuildViewService {
         .withAction(new CompilerPropertiesAction())
         .withExecutionFilter(new ModuleLinkFilter(myProject))
         .withExecutionFilter(new RegexpFilter(myProject, FILE_PATH_MACROS + ":" + LINE_MACROS + ":" + COLUMN_MACROS))
+        .withExecutionFilter(new UrlFilter(myProject))
         .withContextAction(node -> {
           return new ExcludeFromCompileAction(myProject) {
             @Override
@@ -233,7 +235,7 @@ public class BuildOutputService implements BuildViewService {
       private final Map<String, Set<String>> mySeenMessages = new HashMap<>();
       @NlsSafe
       private String lastMessage = null;
-      private Stack<String> myTextStack;
+      private Stack<@NlsContexts.ProgressText String> myTextStack;
 
       @Override
       public void setText(@Nls(capitalization = Nls.Capitalization.Sentence) String text) {
@@ -251,14 +253,14 @@ public class BuildOutputService implements BuildViewService {
       }
 
       @NotNull
-      private Stack<String> getTextStack() {
-        Stack<String> stack = myTextStack;
+      private Stack<@NlsContexts.ProgressText String> getTextStack() {
+        Stack<@NlsContexts.ProgressText String> stack = myTextStack;
         if (stack == null) myTextStack = stack = new Stack<>(2);
         return stack;
       }
 
       private void addIndicatorNewMessagesAsBuildOutput(@Nls String msg) {
-        Stack<String> textStack = getTextStack();
+        Stack<@NlsContexts.ProgressText String> textStack = getTextStack();
         if (!textStack.isEmpty() && msg.equals(textStack.peek())) {
           textStack.pop();
           return;

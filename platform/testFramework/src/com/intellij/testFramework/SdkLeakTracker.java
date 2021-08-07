@@ -1,9 +1,12 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.testFramework;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.Pair;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
@@ -37,7 +40,16 @@ public final class SdkLeakTracker {
 
     try {
       if (!leaked.isEmpty()) {
-        Assert.fail("Leaked SDKs: " + leaked+". Please remove leaking SDKs by e.g. ProjectJdkTable.getInstance().removeJdk() or by disposing the ProjectJdkImpl");
+        String message = "Leaked SDKs: " + leaked + ". " +
+                         "Please remove leaking SDKs by e.g. ProjectJdkTable.getInstance().removeJdk() or by disposing the ProjectJdkImpl";
+        Pair<Sdk, Throwable> withTrace = findSdkWithRegistrationTrace(leaked);
+        if (withTrace != null) {
+          throw new AssertionError(message + ". Registration trace for '" + withTrace.first.getName() + "' is shown as the cause",
+                                   withTrace.second);
+        }
+        else {
+          Assert.fail(message);
+        }
       }
     }
     finally {
@@ -45,5 +57,17 @@ public final class SdkLeakTracker {
         WriteAction.run(() -> table.removeJdk(jdk));
       }
     }
+  }
+
+  private Pair<Sdk, Throwable> findSdkWithRegistrationTrace(Set<Sdk> sdks) {
+    for (Sdk sdk : sdks) {
+      if (sdk instanceof Disposable) {
+        Throwable trace = Disposer.getRegistrationTrace((Disposable)sdk);
+        if (trace != null) {
+          return new Pair<>(sdk, trace);
+        }
+      }
+    }
+    return null;
   }
 }

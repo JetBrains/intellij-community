@@ -35,6 +35,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.GlobalSearchScopeUtil;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.SearchScope;
+import com.intellij.psi.search.impl.VirtualFileEnumeration;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usages.FindUsagesProcessPresentation;
@@ -263,7 +264,7 @@ final class FindInProjectTask {
     SearchScope customScope = myFindModel.isCustomScope() ? myFindModel.getCustomScope() : null;
     final GlobalSearchScope globalCustomScope = customScope == null ? null : GlobalSearchScopeUtil.toGlobalSearchScope(customScope, myProject);
 
-    final Set<VirtualFile> result = new CompactVirtualFileSet();
+    final Set<VirtualFile> result = VfsUtilCore.createCompactVirtualFileSet();
 
     class EnumContentIterator implements ContentIterator {
 
@@ -300,9 +301,8 @@ final class FindInProjectTask {
         iterator.processFile(file);
       }
     }
-    else if (customScope instanceof Iterable) {  // GlobalSearchScope can span files out of project roots e.g. FileScope / FilesScope
-      //noinspection unchecked
-      for (VirtualFile file : (Iterable<VirtualFile>)customScope) {
+    else if (customScope instanceof VirtualFileEnumeration) {  // GlobalSearchScope can span files out of project roots e.g. FileScope / FilesScope
+      for (VirtualFile file : ((VirtualFileEnumeration)customScope).asIterable()) {
         iterator.processFile(file);
       }
     }
@@ -363,7 +363,7 @@ final class FindInProjectTask {
 
   @NotNull
   private Set<VirtualFile> getFilesForFastWordSearch() {
-    final Set<VirtualFile> resultFiles = new CompactVirtualFileSet();
+    final Set<VirtualFile> resultFiles = VfsUtilCore.createCompactVirtualFileSet();
     for(VirtualFile file:myFilesToScanInitially) {
       if (myFileMask.value(file)) {
         resultFiles.add(file);

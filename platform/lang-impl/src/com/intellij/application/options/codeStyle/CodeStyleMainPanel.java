@@ -88,6 +88,8 @@ public class CodeStyleMainPanel extends JPanel implements TabbedLanguageCodeStyl
 
       @Override
       public void schemeListChanged() {
+        mySettingsPanels.keySet().removeIf(
+          name -> !myModel.containsScheme(name, false) && !myModel.containsScheme(name, true));
         mySchemesPanel.resetSchemesCombo();
       }
 
@@ -258,8 +260,8 @@ public class CodeStyleMainPanel extends JPanel implements TabbedLanguageCodeStyl
         if (currentTab != null) {
           tabbedPanel.changeTab(currentTab);
         }
-        mySchemesPanel.setSeparatorVisible(false);
       }
+      mySchemesPanel.setSeparatorVisible(false);
       mySettingsPanels.put(name, panel);
       mySettingsPanel.add(scheme.getName(), panel);
     }
@@ -308,5 +310,9 @@ public class CodeStyleMainPanel extends JPanel implements TabbedLanguageCodeStyl
 
   public void highlightOptions(@NotNull String searchString) {
     ensureCurrentPanel().highlightOptions(searchString);
+  }
+
+  public void setSchemesPanelVisible(boolean isVisible) {
+    mySchemesPanel.setVisible(isVisible);
   }
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.navigator;
 
 import com.intellij.execution.RunManagerListener;
@@ -12,14 +12,15 @@ import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.components.StoragePathMacros;
+import com.intellij.openapi.externalSystem.model.ExternalSystemDataKeys;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
+import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.WriteExternalException;
-import com.intellij.openapi.wm.RegisterToolWindowTask;
-import com.intellij.openapi.wm.ToolWindow;
-import com.intellij.openapi.wm.ToolWindowAnchor;
-import com.intellij.openapi.wm.ToolWindowManager;
+import com.intellij.openapi.wm.*;
 import com.intellij.openapi.wm.ex.ToolWindowEx;
 import com.intellij.openapi.wm.ex.ToolWindowManagerEx;
 import com.intellij.openapi.wm.ex.ToolWindowManagerListener;
@@ -42,6 +43,7 @@ import org.jetbrains.idea.maven.tasks.MavenTasksManager;
 import org.jetbrains.idea.maven.utils.MavenLog;
 import org.jetbrains.idea.maven.utils.MavenSimpleProjectComponent;
 import org.jetbrains.idea.maven.utils.MavenUtil;
+import org.jetbrains.idea.maven.utils.MavenWslUtil;
 
 import javax.swing.*;
 import javax.swing.text.SimpleAttributeSet;
@@ -244,6 +246,17 @@ public final class MavenProjectsNavigator extends MavenSimpleProjectComponent im
         scheduleStructureRequest(() -> myStructure.updateGoals());
       }
     });
+
+    ProjectRootManagerEx.getInstanceEx(myProject).addProjectJdkListener(() -> {
+      MavenWslUtil.checkWslJdkAndShowNotification(myProject);
+      MavenWslUtil.restartMavenConnectorsIfJdkIncorrect(myProject);
+    });
+
+    StartupManager.getInstance(myProject).runAfterOpened(() -> {
+      DumbService.getInstance(myProject).runWhenSmart(() -> {
+        MavenWslUtil.checkWslJdkAndShowNotification(myProject);
+      });
+    });
   }
 
   void initToolWindow() {
@@ -256,7 +269,14 @@ public final class MavenProjectsNavigator extends MavenSimpleProjectComponent im
     editSource.registerCustomShortcutSet(CommonShortcuts.getEditSource(), myTree, this);
 
     ToolWindowManager toolWindowManager = ToolWindowManager.getInstance(myProject);
-    ToolWindow toolWindow = toolWindowManager.registerToolWindow(RegisterToolWindowTask.notClosable(TOOL_WINDOW_ID, ToolWindowAnchor.RIGHT));
+    ToolWindow toolWindow = toolWindowManager.registerToolWindow(
+      RegisterToolWindowTask.lazyAndNotClosable(TOOL_WINDOW_ID, new ToolWindowFactory() {
+        @Override
+        public void createToolWindowContent(@NotNull Project project,
+                                            @NotNull ToolWindow toolWindow) {
+        }
+      }, MavenIcons.ToolWindowMaven, ToolWindowAnchor.RIGHT));
+
     ContentManager contentManager = toolWindow.getContentManager();
     Disposer.register(this, () -> {
       // fire content removed events, so subscribers could cleanup caches
@@ -266,7 +286,6 @@ public final class MavenProjectsNavigator extends MavenSimpleProjectComponent im
         toolWindow.remove();
       }
     });
-    toolWindow.setIcon(MavenIcons.ToolWindowMaven);
     final ContentFactory contentFactory = ApplicationManager.getApplication().getService(ContentFactory.class);
     final Content content = contentFactory.createContent(panel, "", false);
     contentManager.addContent(content);
@@ -380,7 +399,8 @@ public final class MavenProjectsNavigator extends MavenSimpleProjectComponent im
       boolean hasMavenProjects = !MavenProjectsManager.getInstance(myProject).getProjects().isEmpty();
       if (toolWindow.isAvailable() != hasMavenProjects) {
         toolWindow.setAvailable(hasMavenProjects);
-        if (hasMavenProjects) {
+        if (hasMavenProjects
+            && myProject.getUserData(ExternalSystemDataKeys.NEWLY_CREATED_PROJECT) == null) {
           toolWindow.activate(null);
         }
       }

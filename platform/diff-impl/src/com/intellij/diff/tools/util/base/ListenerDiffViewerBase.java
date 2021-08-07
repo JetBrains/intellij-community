@@ -73,7 +73,7 @@ public abstract class ListenerDiffViewerBase extends DiffViewerBase {
 
     return new BulkFileListener() {
       @Override
-      public void after(@NotNull List<? extends VFileEvent> events) {
+      public void after(@NotNull List<? extends @NotNull VFileEvent> events) {
         for (VFileEvent event : events) {
           if (event instanceof VFileContentChangeEvent ||
               event instanceof VFilePropertyChangeEvent) {

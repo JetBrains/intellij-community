@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
@@ -7,6 +7,7 @@ import com.intellij.codeInsight.hint.HintManagerImpl;
 import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
+import com.intellij.openapi.editor.colors.EditorFontType;
 import com.intellij.openapi.editor.ex.EditorGutterComponentEx;
 import com.intellij.openapi.editor.ex.RangeHighlighterEx;
 import com.intellij.openapi.editor.ex.util.EditorUIUtil;
@@ -19,7 +20,7 @@ import com.intellij.util.ui.GraphicsUtil;
 import com.intellij.util.ui.ImageUtil;
 import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.UIUtil;
-import gnu.trove.TIntIntHashMap;
+import it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -35,7 +36,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
 
-class EditorFragmentRenderer {
+final class EditorFragmentRenderer {
   static final int PREVIEW_LINES = Math.max(2, Math.min(25, Integer.getInteger("preview.lines", 5)));// Actually preview has myPreviewLines * 2 + 1 lines (above + below + current one)
   static final int EDITOR_FRAGMENT_POPUP_BORDER = 1;
   private static final int CACHE_PREVIEW_LINES = 100;// Actually cache image has myCachePreviewLines * 2 + 1 lines (above + below + current one)
@@ -236,11 +237,11 @@ class EditorFragmentRenderer {
         translateInstance.preConcatenate(transform);
         g2d.setTransform(translateInstance);
         UIUtil.drawImage(g2d, myCacheLevel2, -gutterWidth, 0, null);
-        TIntIntHashMap rightEdges = new TIntIntHashMap();
+        Int2IntOpenHashMap rightEdges = new Int2IntOpenHashMap();
         int h = lineHeight - 2;
 
         EditorColorsScheme colorsScheme = myEditor.getColorsScheme();
-        Font font = UIUtil.getFontWithFallback(colorsScheme.getEditorFontName(), Font.PLAIN, colorsScheme.getEditorFontSize());
+        Font font = UIUtil.getFontWithFallback(colorsScheme.getFont(EditorFontType.PLAIN));
         g2d.setFont(font.deriveFont(font.getSize() * .8F));
 
         for (RangeHighlighterEx ex : myHighlighters) {

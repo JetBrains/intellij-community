@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.log.util;
 
 import com.google.common.util.concurrent.FutureCallback;
@@ -7,13 +7,13 @@ import com.google.common.util.concurrent.ListenableFuture;
 import com.intellij.ide.IdeTooltip;
 import com.intellij.ide.IdeTooltipManager;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.progress.util.ProgressWindow;
+import com.intellij.openapi.progress.util.ProgressIndicatorWithDelayedPresentation;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.util.ActionCallback;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NlsContexts;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vcs.changes.EditorTabDiffPreviewManager;
 import com.intellij.ui.*;
 import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.ui.navigation.History;
@@ -29,7 +29,6 @@ import com.intellij.vcs.log.data.VcsLogProgress;
 import com.intellij.vcs.log.ui.AbstractVcsLogUi;
 import com.intellij.vcs.log.ui.filter.VcsLogFilterUiEx;
 import com.intellij.vcs.log.ui.frame.ProgressStripe;
-import com.intellij.vcs.log.ui.frame.VcsLogCommitDetailsListPanel;
 import com.intellij.vcs.log.ui.table.VcsLogGraphTable;
 import com.intellij.vcs.log.visible.VisiblePackRefresherImpl;
 import org.jetbrains.annotations.Nls;
@@ -49,7 +48,7 @@ public final class VcsLogUiUtil {
                                            @NotNull String logId,
                                            @NotNull Disposable disposableParent) {
     ProgressStripe progressStripe =
-      new ProgressStripe(component, disposableParent, ProgressWindow.DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS) {
+      new ProgressStripe(component, disposableParent, ProgressIndicatorWithDelayedPresentation.DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS) {
         @Override
         public void updateUI() {
           super.updateUI();
@@ -97,27 +96,6 @@ public final class VcsLogUiUtil {
     ComponentUtil.putClientProperty(scrollPane, UIUtil.KEEP_BORDER_SIDES, SideBorder.TOP);
     graphTable.viewportSet(scrollPane.getViewport());
     return scrollPane;
-  }
-
-  public static void installDetailsListeners(@NotNull VcsLogGraphTable graphTable,
-                                             @NotNull VcsLogCommitDetailsListPanel detailsPanel,
-                                             @NotNull VcsLogData logData,
-                                             @NotNull Disposable disposableParent) {
-    Runnable miniDetailsLoadedListener = () -> {
-      graphTable.reLayout();
-      graphTable.repaint();
-    };
-    Runnable containingBranchesListener = () -> {
-      detailsPanel.branchesChanged();
-      graphTable.repaint(); // we may need to repaint highlighters
-    };
-    logData.getMiniDetailsGetter().addDetailsLoadedListener(miniDetailsLoadedListener);
-    logData.getContainingBranchesGetter().addTaskCompletedListener(containingBranchesListener);
-
-    Disposer.register(disposableParent, () -> {
-      logData.getContainingBranchesGetter().removeTaskCompletedListener(containingBranchesListener);
-      logData.getMiniDetailsGetter().removeDetailsLoadedListener(miniDetailsLoadedListener);
-    });
   }
 
   public static void showTooltip(@NotNull JComponent component,
@@ -170,8 +148,8 @@ public final class VcsLogUiUtil {
     appendActionToEmptyText(emptyText, VcsLogBundle.message("vcs.log.reset.filters.status.action"), filterUi::clearFilters);
   }
 
-  public static boolean isDiffPreviewInEditor() {
-    return Registry.is("vcs.log.show.diff.preview.as.editor.tab");
+  public static boolean isDiffPreviewInEditor(@NotNull Project project) {
+    return EditorTabDiffPreviewManager.getInstance(project).isEditorDiffPreviewAvailable();
   }
 
   @NotNull
@@ -190,7 +168,7 @@ public final class VcsLogUiUtil {
     }
 
     @Override
-    public final void queryPlace(@NotNull Place place) {
+    public void queryPlace(@NotNull Place place) {
       List<CommitId> commits = myUi.getVcsLog().getSelectedCommits();
       if (commits.size() > 0) {
         place.putPath(PLACE_KEY, commits.get(0));
@@ -198,7 +176,7 @@ public final class VcsLogUiUtil {
     }
 
     @Override
-    public final ActionCallback navigateTo(@Nullable Place place, boolean requestFocus) {
+    public ActionCallback navigateTo(@Nullable Place place, boolean requestFocus) {
       if (place == null) return ActionCallback.DONE;
 
       Object value = place.getPath(PLACE_KEY);

@@ -1,8 +1,7 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeInsight.intention.impl.CachedIntentions;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
@@ -14,7 +13,7 @@ import java.util.concurrent.atomic.AtomicReference;
 public abstract class IntentionsUI {
   private final Project myProject;
   public static IntentionsUI getInstance(Project project) {
-    return ServiceManager.getService(project, IntentionsUI.class);
+    return project.getService(IntentionsUI.class);
   }
 
   public IntentionsUI(Project project) {

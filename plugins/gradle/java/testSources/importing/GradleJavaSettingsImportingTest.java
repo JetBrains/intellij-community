@@ -5,6 +5,7 @@ import com.intellij.compiler.CompilerConfiguration;
 import com.intellij.compiler.CompilerConfigurationImpl;
 import com.intellij.compiler.CompilerWorkspaceConfiguration;
 import com.intellij.compiler.impl.javaCompiler.javac.JavacConfiguration;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.packaging.artifacts.Artifact;
 import com.intellij.packaging.artifacts.ArtifactManager;
 import com.intellij.packaging.elements.PackagingElement;
@@ -81,9 +82,8 @@ public class GradleJavaSettingsImportingTest extends GradleSettingsImportingTest
       )
     );
     importProject();
-    final ArtifactManager artifactManager = ArtifactManager.getInstance(myProject);
-
-    final Artifact artifact = artifactManager.getArtifacts()[0];
+    ArtifactManager artifactManager = ArtifactManager.getInstance(myProject);
+    Artifact artifact = ReadAction.compute(() -> artifactManager.getArtifacts()[0]);
     assertEquals("myArt", artifact.getName());
   }
 
@@ -91,8 +91,8 @@ public class GradleJavaSettingsImportingTest extends GradleSettingsImportingTest
   @Test
   public void testArtifactsReferenceImport() throws Exception {
     importProject(
-      new GradleBuildScriptBuilderEx()
-        .withGradleIdeaExtPlugin(IDEA_EXT_PLUGIN_VERSION)
+      createBuildScriptBuilder()
+        .withGradleIdeaExtPlugin()
         .addPostfix(
           "idea.project.settings {",
           "  ideArtifacts {",
@@ -112,10 +112,10 @@ public class GradleJavaSettingsImportingTest extends GradleSettingsImportingTest
 
 
     ArtifactManager artifactsManager = ArtifactManager.getInstance(myProject);
-    Artifact artifact = artifactsManager.findArtifact("ArtifactRef");
+    Artifact artifact = ReadAction.compute(() -> artifactsManager.findArtifact("ArtifactRef"));
     assertNotNull(artifact);
     List<PackagingElement<?>> children = artifact.getRootElement().getChildren();
-    assertSize( 1, children);
+    assertSize(1, children);
     PackagingElement<?> element = children.get(0);
     assertInstanceOf(element, ArtifactPackagingElement.class);
     assertEquals("SomeArt", ((ArtifactPackagingElement)element).getArtifactName());
@@ -124,8 +124,8 @@ public class GradleJavaSettingsImportingTest extends GradleSettingsImportingTest
   @Test
   public void testModuleReferenceImport() throws Exception {
     importProject(
-      new GradleBuildScriptBuilderEx()
-        .withGradleIdeaExtPlugin(IDEA_EXT_PLUGIN_VERSION)
+      createBuildScriptBuilder()
+        .withGradleIdeaExtPlugin()
         .addPostfix(
           "idea.project.settings {",
           "  ideArtifacts {",
@@ -143,16 +143,15 @@ public class GradleJavaSettingsImportingTest extends GradleSettingsImportingTest
 
 
     ArtifactManager artifactsManager = ArtifactManager.getInstance(myProject);
-
-    Artifact artifact = artifactsManager.findArtifact("SomeArt");
+    Artifact artifact = ReadAction.compute(() -> artifactsManager.findArtifact("SomeArt"));
     assertNotNull(artifact);
     List<PackagingElement<?>> artifactChildren = artifact.getRootElement().getChildren();
-    assertSize( 1, artifactChildren);
+    assertSize(1, artifactChildren);
     PackagingElement<?> archive = artifactChildren.get(0);
     assertNotNull(archive);
     assertInstanceOf(archive, ArchivePackagingElement.class);
     List<PackagingElement<?>> archiveChildren = ((ArchivePackagingElement)archive).getChildren();
-    assertSize( 2, archiveChildren);
+    assertSize(2, archiveChildren);
 
     PackagingElement<?> moduleOutput1 = archiveChildren.get(0);
     assertInstanceOf(moduleOutput1, ModuleOutputPackagingElement.class);

@@ -2,12 +2,12 @@
 package org.jetbrains.plugins.github.api
 
 import com.fasterxml.jackson.databind.JsonNode
+import com.intellij.collaboration.api.dto.GraphQLRequestDTO
+import com.intellij.collaboration.api.dto.GraphQLResponseDTO
 import com.intellij.util.ThrowableConvertor
 import org.jetbrains.plugins.github.api.data.GithubResponsePage
 import org.jetbrains.plugins.github.api.data.GithubSearchResult
-import org.jetbrains.plugins.github.api.data.graphql.GHGQLQueryRequest
-import org.jetbrains.plugins.github.api.data.graphql.GHGQLResponse
-import org.jetbrains.plugins.github.api.data.graphql.GHGQLSyntaxError
+import org.jetbrains.plugins.github.api.data.graphql.GHGQLError
 import org.jetbrains.plugins.github.exceptions.GithubAuthenticationException
 import org.jetbrains.plugins.github.exceptions.GithubConfusingException
 import org.jetbrains.plugins.github.exceptions.GithubJsonException
@@ -19,8 +19,6 @@ import java.io.IOException
 sealed class GithubApiRequest<out T>(val url: String) {
   var operationName: String? = null
   abstract val acceptMimeType: String?
-
-  open val tokenHeaderType = GithubApiRequestExecutor.TokenHeaderType.TOKEN
 
   protected val headers = mutableMapOf<String, String>()
   val additionalHeaders: Map<String, String>
@@ -125,20 +123,18 @@ sealed class GithubApiRequest<out T>(val url: String) {
                                    private val variablesObject: Any)
       : Post<T>(GithubApiContentHelper.JSON_MIME_TYPE, url) {
 
-      override val tokenHeaderType = GithubApiRequestExecutor.TokenHeaderType.BEARER
-
       override val body: String
         get() {
           val query = GHGQLQueryLoader.loadQuery(queryName)
-          val request = GHGQLQueryRequest(query, variablesObject)
+          val request = GraphQLRequestDTO(query, variablesObject)
           return GithubApiContentHelper.toJson(request, true)
         }
 
-      protected fun throwException(errors: List<GHGQLSyntaxError>): Nothing {
+      protected fun throwException(errors: List<GHGQLError>): Nothing {
         if (errors.any { it.type.equals("INSUFFICIENT_SCOPES", true) })
           throw GithubAuthenticationException("Access token has not been granted the required scopes.")
 
-        if(errors.size == 1) throw GithubConfusingException(errors.single().toString())
+        if (errors.size == 1) throw GithubConfusingException(errors.single().toString())
         throw GithubConfusingException(errors.toString())
       }
 
@@ -148,7 +144,7 @@ sealed class GithubApiRequest<out T>(val url: String) {
                           private val clazz: Class<T>)
         : GQLQuery<T>(url, requestFilePath, variablesObject) {
         override fun extractResult(response: GithubApiResponse): T {
-          val result: GHGQLResponse<out T> = parseGQLResponse(response, clazz)
+          val result: GraphQLResponseDTO<out T, GHGQLError> = parseGQLResponse(response, clazz)
           val data = result.data
           if (data != null) return data
 
@@ -185,7 +181,7 @@ sealed class GithubApiRequest<out T>(val url: String) {
       internal fun <T> parseResponse(response: GithubApiResponse,
                                      clazz: Class<T>,
                                      pathFromData: Array<out String>): T? {
-        val result: GHGQLResponse<out JsonNode> = parseGQLResponse(response, JsonNode::class.java)
+        val result: GraphQLResponseDTO<out JsonNode, GHGQLError> = parseGQLResponse(response, JsonNode::class.java)
         val data = result.data
         if (data != null && !data.isNull) {
           var node: JsonNode = data
@@ -284,10 +280,11 @@ sealed class GithubApiRequest<out T>(val url: String) {
       })
     }
 
-    private fun <T> parseGQLResponse(response: GithubApiResponse, clazz: Class<out T>): GHGQLResponse<out T> {
+    private fun <T> parseGQLResponse(response: GithubApiResponse, dataClass: Class<out T>): GraphQLResponseDTO<out T, GHGQLError> {
       return response.readBody(ThrowableConvertor {
         @Suppress("UNCHECKED_CAST")
-        GithubApiContentHelper.readJsonObject(it, GHGQLResponse::class.java, clazz, gqlNaming = true) as GHGQLResponse<T>
+        GithubApiContentHelper.readJsonObject(it, GraphQLResponseDTO::class.java, dataClass, GHGQLError::class.java,
+                                              gqlNaming = true) as GraphQLResponseDTO<T, GHGQLError>
       })
     }
   }

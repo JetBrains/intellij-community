@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 """
->>> pingpong = thriftpy.load("pingpong.thrift")
+>>> pingpong = _shaded_thriftpy.load("pingpong.thrift")
 >>>
 >>> class Dispatcher(object):
 >>>     def ping(self):
@@ -18,7 +18,8 @@
 from __future__ import absolute_import
 
 from contextlib import contextmanager
-from tornado import tcpserver, ioloop, iostream, gen
+from tornado import tcpserver, iostream, gen
+from tornado import version as tornado_version
 from io import BytesIO
 from datetime import timedelta
 
@@ -28,11 +29,27 @@ from .thrift import TApplicationException, TProcessor, TClient
 
 # TODO need TCyTornadoStreamTransport to work with cython binary protocol
 from .protocol.binary import TBinaryProtocolFactory
+from ._compat import PY3
+if PY3:
+    import urllib
+else:
+    import urllib2 as urllib
+    import urlparse
+    urllib.parse = urlparse
+    urllib.parse.quote = urllib.quote
 
 import logging
 import socket
 import struct
-import toro
+
+try:
+    from tornado.locks import Lock
+except ImportError:
+    try:
+        from toro import Lock
+    except ImportError:
+        raise RuntimeError('With tornado {}, you need to install '
+                           '"toro"'.format(tornado_version))
 
 
 logger = logging.getLogger(__name__)
@@ -47,12 +64,12 @@ class TTornadoStreamTransport(TTransportBase):
                  read_timeout=DEFAULT_READ_TIMEOUT):
         self.host = host
         self.port = port
-        self.io_loop = io_loop or ioloop.IOLoop.current()
+        self.io_loop = io_loop
         self.read_timeout = read_timeout
         self.is_queuing_reads = False
         self.read_queue = []
         self.__wbuf = BytesIO()
-        self._read_lock = toro.Lock()
+        self._read_lock = Lock()
         self.ssl_options = ssl_options
 
         # servers provide a ready-to-go stream
@@ -60,8 +77,12 @@ class TTornadoStreamTransport(TTransportBase):
         if self.stream is not None:
             self._set_close_callback()
 
-    def with_timeout(self, timeout, future):
-        return gen.with_timeout(timeout, future, self.io_loop)
+    if tornado_version >= '5.0':
+        def with_timeout(self, timeout, future):
+            return gen.with_timeout(timeout, future)
+    else:
+        def with_timeout(self, timeout, future):
+            return gen.with_timeout(timeout, future, self.io_loop)
 
     @gen.coroutine
     def open(self, timeout=DEFAULT_CONNECT_TIMEOUT):
@@ -70,7 +91,8 @@ class TTornadoStreamTransport(TTransportBase):
         if self.ssl_options is None:
             self.stream = iostream.IOStream(sock)
         else:
-            self.stream = iostream.SSLIOStream(sock, ssl_options=self.ssl_options)
+            self.stream = iostream.SSLIOStream(
+                sock, ssl_options=self.ssl_options)
 
         try:
             yield self.with_timeout(timeout, self.stream.connect(
@@ -157,12 +179,15 @@ class TTornadoServer(tcpserver.TCPServer):
                                else iprot_factory)
         self.transport_read_timeout = transport_read_timeout
 
+        # `io_loop` has been deprecated since tornado 4.1 and removed in 5.0
+        self.__io_loop = getattr(self, 'io_loop', None)
+
     @gen.coroutine
     def handle_stream(self, stream, address):
         host, port = address
         trans = TTornadoStreamTransport(
             host=host, port=port, stream=stream,
-            io_loop=self.io_loop, read_timeout=self.transport_read_timeout)
+            io_loop=self.__io_loop, read_timeout=self.transport_read_timeout)
         try:
             oprot = self._oprot_factory.get_protocol(trans)
             iprot = self._iprot_factory.get_protocol(TMemoryBuffer())
@@ -186,7 +211,8 @@ class TTornadoServer(tcpserver.TCPServer):
                         result.success = yield gen.maybe_future(call())
                     except Exception as e:
                         # raise if api don't have throws
-                        self._processor.handle_exception(e, result)
+                        if not self._processor.handle_exception(e, result):
+                            raise
 
                     self._processor.send_result(oprot, api, result, seqid)
         except Exception:
@@ -213,20 +239,31 @@ def make_server(
         io_loop=None, ssl_options=None,
         transport_read_timeout=TTornadoStreamTransport.DEFAULT_READ_TIMEOUT):
     processor = TProcessor(service, handler)
-    server = TTornadoServer(processor, iprot_factory=proto_factory,
-                            transport_read_timeout=transport_read_timeout,
-                            io_loop=io_loop, ssl_options=ssl_options)
+    if tornado_version >= '5.0':
+        server = TTornadoServer(processor, iprot_factory=proto_factory,
+                                transport_read_timeout=transport_read_timeout,
+                                ssl_options=ssl_options)
+    else:
+        server = TTornadoServer(processor, iprot_factory=proto_factory,
+                                transport_read_timeout=transport_read_timeout,
+                                io_loop=io_loop, ssl_options=ssl_options)
     return server
 
 
 @gen.coroutine
 def make_client(
-        service, host, port, proto_factory=TBinaryProtocolFactory(),
+        service, host='localhost', port=9090, proto_factory=TBinaryProtocolFactory(),
         io_loop=None, ssl_options=None,
         connect_timeout=TTornadoStreamTransport.DEFAULT_CONNECT_TIMEOUT,
-        read_timeout=TTornadoStreamTransport.DEFAULT_READ_TIMEOUT):
-    transport = TTornadoStreamTransport(host, port, io_loop=io_loop, ssl_options=ssl_options,
-                                        read_timeout=read_timeout)
+        read_timeout=TTornadoStreamTransport.DEFAULT_READ_TIMEOUT,
+        url=''):
+    if url:
+        parsed_url = urllib.parse.urlparse(url)
+        host = parsed_url.hostname or host
+        port = parsed_url.port or port
+    transport = TTornadoStreamTransport(
+        host, port, io_loop=io_loop,
+        ssl_options=ssl_options, read_timeout=read_timeout)
     iprot = proto_factory.get_protocol(TMemoryBuffer())
     oprot = proto_factory.get_protocol(transport)
     yield transport.open(connect_timeout)

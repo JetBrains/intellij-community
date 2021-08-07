@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build.impl.compilation
 
 import com.google.gson.Gson
@@ -156,7 +156,7 @@ class CompilationPartsUtil {
           continue
         }
         String name = "${subroot.name}/${module.name}".toString()
-        def ctx = new PackAndUploadContext(module, name, "$zipsLocation/${name}.jar".toString())
+        PackAndUploadContext ctx = new PackAndUploadContext(module, name, "$zipsLocation/${name}.jar".toString())
         contexts.add(ctx)
       }
     }
@@ -281,7 +281,7 @@ class CompilationPartsUtil {
     messages.artifactBuilt(metadataFile.absolutePath)
   }
 
-  static void fetchAndUnpackCompiledClasses(BuildMessages messages, String classesOutput, BuildOptions options) {
+  static void fetchAndUnpackCompiledClasses(BuildMessages messages, File classesOutput, BuildOptions options) {
     def metadataFile = new File(options.pathToCompiledClassesArchivesMetadata)
     if (!metadataFile.isFile()) {
       messages.error("Cannot fetch compiled classes: metadata file not found at '$options.pathToCompiledClassesArchivesMetadata'")
@@ -298,14 +298,14 @@ class CompilationPartsUtil {
       return
     }
     String persistentCache = System.getProperty('agent.persistent.cache')
-    String cache = persistentCache ?: new File(classesOutput).parentFile.getAbsolutePath()
+    String cache = persistentCache ?: classesOutput.parentFile.getAbsolutePath()
     File tempDownloadsStorage = new File(cache, "idea-compile-parts-${metadata.branch}")
 
     Set<String> upToDate = ContainerUtil.newConcurrentSet()
 
     List<FetchAndUnpackContext> contexts = new ArrayList<FetchAndUnpackContext>(metadata.files.size())
     new TreeMap<String, String>(metadata.files).each { entry ->
-      contexts.add(new FetchAndUnpackContext(entry.key, entry.value, new File("$classesOutput/$entry.key"), !forInstallers))
+      contexts.add(new FetchAndUnpackContext(entry.key, entry.value, new File(classesOutput, entry.key), !forInstallers))
     }
 
     //region Prepare executor
@@ -353,7 +353,7 @@ class CompilationPartsUtil {
         // Remove stalled directories not present in metadata
         def expectedDirectories = new HashSet<String>(metadata.files.keySet())
         // We need to traverse with depth 2 since first level is [production,test]
-        def subroots = (new File(classesOutput).listFiles() ?: new File[0]).toList().findAll { it.directory }.collect { it.absoluteFile }
+        def subroots = (classesOutput.listFiles() ?: new File[0]).toList().findAll { it.directory }.collect { it.absoluteFile }
         for (File subroot : subroots) {
           def modules = subroot.listFiles()
           if (modules == null) continue

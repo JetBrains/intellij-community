@@ -31,7 +31,7 @@ import java.util.Locale;
  */
 public abstract class AbstractAccessibleContextDelegate extends AccessibleContext {
   /**
-   * Sub-classes provide the {@link AccessibleContext} to forward calls to.
+   * Subclasses provide the {@link AccessibleContext} to forward calls to.
    */
   @NotNull
   protected abstract AccessibleContext getDelegate();

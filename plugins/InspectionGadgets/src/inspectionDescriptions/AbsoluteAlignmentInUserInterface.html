@@ -1,8 +1,14 @@
 <html>
 <body>
-Reports usages of absolute alignment constants from AWT and Swing. Internationalized applications should make use of
-relative alignment, because it respects locale component orientation settings.
+Reports the usages of absolute alignment constants from AWT and Swing. Internationalized applications use relative alignment because it respects the locale component orientation settings.
+<p><b>Example:</b></p>
+<pre>
+  <code>
+  JPanel panel = new JPanel(new BorderLayout(2, 2));
+  JLabel label = new JLabel("Hello World", SwingConstants.CENTER);
+  panel.add(label, BorderLayout.NORTH);
+  </code>
+</pre>
 <!-- tooltip end -->
-<p>
 </body>
 </html>

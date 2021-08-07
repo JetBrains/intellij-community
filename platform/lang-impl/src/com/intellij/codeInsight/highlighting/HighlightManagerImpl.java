@@ -214,6 +214,7 @@ public final class HighlightManagerImpl extends HighlightManager {
         if (scrollMarkColor != null) {
           highlighter.setErrorStripeMarkColor(scrollMarkColor);
         }
+        highlighter.putUserData(HIGHLIGHT_FLAGS_KEY, flags);
       });
   }
 
@@ -379,8 +380,8 @@ public final class HighlightManagerImpl extends HighlightManager {
 
   private class MyAnActionListener implements AnActionListener {
     @Override
-    public void beforeActionPerformed(@NotNull AnAction action, @NotNull final DataContext dataContext, @NotNull AnActionEvent event) {
-      requestHideHighlights(dataContext);
+    public void beforeActionPerformed(@NotNull AnAction action, @NotNull AnActionEvent event) {
+      requestHideHighlights(event.getDataContext());
     }
 
     @Override
@@ -397,6 +398,7 @@ public final class HighlightManagerImpl extends HighlightManager {
 
 
   private final Key<Map<RangeHighlighter, HighlightFlags>> HIGHLIGHT_INFO_MAP_KEY = Key.create("HIGHLIGHT_INFO_MAP_KEY");
+  public static final Key<Integer> HIGHLIGHT_FLAGS_KEY = Key.create("HIGHLIGHT_FLAGS_KEY");
 
   private static class HighlightFlags {
     @NotNull

@@ -29,9 +29,7 @@ import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author yole
- */
+
 public class PyParameterListImpl extends PyBaseElementImpl<PyParameterListStub> implements PyParameterList {
   public PyParameterListImpl(ASTNode astNode) {
     super(astNode);

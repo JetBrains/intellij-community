@@ -1,7 +1,10 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.ui.utils
 
-import com.intellij.execution.ui.*
+import com.intellij.execution.ui.FragmentedSettings
+import com.intellij.execution.ui.NestedGroupFragment
+import com.intellij.execution.ui.SettingsEditorFragment
+import com.intellij.execution.ui.TagButton
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.ui.ComponentValidator
 import com.intellij.openapi.ui.ComponentWithBrowseButton
@@ -37,7 +40,7 @@ abstract class AbstractFragmentBuilder<Settings : FragmentedSettings> {
 @FragmentsDsl
 class Group<Settings : FragmentedSettings>(
   val id: String,
-  val name: @Nls String
+  @Nls val name: String
 ) : AbstractFragmentBuilder<Settings>() {
 
   var applyVisibility: ((Settings, Boolean) -> Unit)? = null
@@ -82,7 +85,7 @@ class Group<Settings : FragmentedSettings>(
 @FragmentsDsl
 class Tag<Settings : FragmentedSettings>(
   val id: String,
-  val name: @Nls String
+  @Nls val name: String
 ) : AbstractFragmentBuilder<Settings>() {
 
   var holder: SettingsEditorFragment<Settings, *>? = null
@@ -148,8 +151,14 @@ class Fragment<Settings : FragmentedSettings, Component : JComponent>(
 
   var commandLinePosition: Int = 0
 
+  var editorGetter: ((Component) -> JComponent)? = null
+
   override fun build(): SettingsEditorFragment<Settings, Component> {
     return object : SettingsEditorFragment<Settings, Component>(id, name, group, component, commandLinePosition, reset, apply, visible) {
+
+      init {
+        setEditorGetter(editorGetter)
+      }
 
       private val validator = if (validation != null) ComponentValidator(this) else null
 
@@ -158,7 +167,12 @@ class Fragment<Settings : FragmentedSettings, Component : JComponent>(
 
         thread {
           if (validator != null) {
-            val validationInfo = (validation!!)(s, this.component())
+            val validationInfo = (validation!!)(s, this.component())?.let {
+              if (it.component == null) {
+                it.forComponent(editorComponent)
+              }
+              else it
+            }
 
             validationInfo?.component?.let {
               if (ComponentValidator.getInstance(it).isEmpty) {

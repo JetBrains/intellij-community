@@ -5,6 +5,7 @@ import com.intellij.build.events.BuildEventsNls;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.ui.ExecutionConsole;
 import com.intellij.execution.ui.RunContentDescriptor;
+import com.intellij.util.ThreeState;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -15,6 +16,7 @@ import javax.swing.*;
  */
 public class BuildContentDescriptor extends RunContentDescriptor {
   private boolean activateToolWindowWhenFailed = true;
+  private @NotNull ThreeState myNavigateToError = ThreeState.UNSURE;
 
   public BuildContentDescriptor(@Nullable ExecutionConsole executionConsole,
                                 @Nullable ProcessHandler processHandler,
@@ -29,5 +31,16 @@ public class BuildContentDescriptor extends RunContentDescriptor {
 
   public void setActivateToolWindowWhenFailed(boolean activateToolWindowWhenFailed) {
     this.activateToolWindowWhenFailed = activateToolWindowWhenFailed;
+  }
+
+  /**
+   * @see DefaultBuildDescriptor#isNavigateToError()
+   */
+  public @NotNull ThreeState isNavigateToError() {
+    return myNavigateToError;
+  }
+
+  public void setNavigateToError(@NotNull ThreeState navigateToError) {
+    myNavigateToError = navigateToError;
   }
 }

@@ -16,15 +16,16 @@
 package com.intellij.util.xml;
 
 import com.intellij.codeInspection.util.InspectionMessage;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
 /**
  * Base DOM class to convert objects of a definite type into {@link String} and back. Most often used with
- * {@link com.intellij.util.xml.Convert} annotation with methods returning {@link com.intellij.util.xml.GenericDomValue}&lt;T&gt;.
+ * {@link Convert} annotation with methods returning {@link GenericDomValue}&lt;T&gt;.
  *
- * @see com.intellij.util.xml.ResolvingConverter
- * @see com.intellij.util.xml.CustomReferenceConverter
+ * @see ResolvingConverter
+ * @see CustomReferenceConverter
  *
  * @param <T> Type to convert from/to.
  *
@@ -52,6 +53,7 @@ public abstract class Converter<T> {
    * @deprecated not necessary for Integer, use {@link com.intellij.util.xml.converters.values.NumberValueConverter}
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public static final Converter<Integer> INTEGER_CONVERTER = new Converter<>() {
     @Override
     public Integer fromString(final String s, final ConvertContext context) {
@@ -79,6 +81,7 @@ public abstract class Converter<T> {
    * @deprecated unnecessary
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public static final Converter<String> EMPTY_CONVERTER = new Converter<>() {
     @Override
     public String fromString(final String s, final ConvertContext context) {

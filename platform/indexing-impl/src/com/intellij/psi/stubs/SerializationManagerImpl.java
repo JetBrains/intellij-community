@@ -47,17 +47,18 @@ public final class SerializationManagerImpl extends SerializationManagerEx imple
     try {
       // we need to cache last id -> String mappings due to StringRefs and stubs indexing that initially creates stubs (doing enumerate on String)
       // and then index them (valueOf), also similar string items are expected to be enumerated during stubs processing
-      mySerializerEnumerator = new StubSerializerEnumerator(openNameStorage(), unmodifiable);
-      myStubSerializationHelper = new StubSerializationHelper(mySerializerEnumerator);
+      StubSerializerEnumerator enumerator = new StubSerializerEnumerator(openNameStorage(), unmodifiable);
+      mySerializerEnumerator = enumerator;
+      myStubSerializationHelper = new StubSerializationHelper(enumerator);
     }
     catch (IOException e) {
       nameStorageCrashed();
       LOG.info(e);
-      repairNameStorage(e); // need this in order for myNameStorage not to be null
-      nameStorageCrashed();
     }
     finally {
-      ShutDownTracker.getInstance().registerShutdownTask(this::performShutdown, this);
+      if (!unmodifiable) {
+        ShutDownTracker.getInstance().registerShutdownTask(this::performShutdown, this);
+      }
     }
 
     StubElementTypeHolderEP.EP_NAME.addChangeListener(this::dropSerializerData, this);
@@ -96,19 +97,22 @@ public final class SerializationManagerImpl extends SerializationManagerEx imple
   public void repairNameStorage(@NotNull Exception corruptionCause) {
     if (myNameStorageCrashed.getAndSet(false)) {
       try {
-        LOG.info("Name storage is repaired");
-        mySerializerEnumerator.close();
-
-        StubSerializerEnumerator prevEnum = mySerializerEnumerator;
         if (myUnmodifiable) {
           LOG.error("Data provided by unmodifiable serialization manager can be invalid after repair");
         }
+        LOG.info("Name storage is repaired");
 
+        StubSerializerEnumerator enumerator = mySerializerEnumerator;
+        if (enumerator != null) {
+          try {
+            enumerator.close();
+          }
+          catch (Exception ignored) {}
+        }
         if (myFile != null) {
           IOUtil.deleteAllFilesStartingWith(myFile.toFile());
         }
         mySerializerEnumerator = new StubSerializerEnumerator(openNameStorage(), myUnmodifiable);
-        mySerializerEnumerator.copyFrom(prevEnum);
         myStubSerializationHelper = new StubSerializationHelper(mySerializerEnumerator);
       }
       catch (IOException e) {
@@ -147,10 +151,14 @@ public final class SerializationManagerImpl extends SerializationManagerEx imple
       return; // already shut down
     }
     String name = myFile != null ? myFile.toString() : "in-memory storage";
-    LOG.info("Start shutting down " + name);
+    if (!myUnmodifiable) {
+      LOG.info("Start shutting down " + name);
+    }
     try {
       mySerializerEnumerator.close();
-      LOG.info("Finished shutting down " + name);
+      if (!myUnmodifiable) {
+        LOG.info("Finished shutting down " + name);
+      }
     }
     catch (IOException e) {
       LOG.error(e);

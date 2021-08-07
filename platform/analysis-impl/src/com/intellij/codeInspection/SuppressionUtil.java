@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.codeInspection;
 
@@ -22,9 +22,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-/**
- * @author yole
- */
+
 public final class SuppressionUtil extends SuppressionUtilCore {
 
   public static final @NonNls String FILE_PREFIX = "file:";
@@ -129,7 +127,7 @@ public final class SuppressionUtil extends SuppressionUtilCore {
            && commentText.endsWith(prefixSuffixPair.second);
   }
 
-  private static boolean startsWithSuppressionTag(String commentText, String prefix) {
+  private static boolean startsWithSuppressionTag(@NotNull String commentText, @NotNull String prefix) {
     if (!commentText.startsWith(prefix)) {
       return false;
     }
@@ -141,6 +139,11 @@ public final class SuppressionUtil extends SuppressionUtilCore {
                                                boolean replaceOtherSuppressionIds, @NotNull Language commentLanguage) {
     final String oldSuppressionCommentText = comment.getText();
     final String lineCommentPrefix = getLineCommentPrefix(comment);
+    if (!replaceOtherSuppressionIds &&
+        oldSuppressionCommentText.contains(id) &&
+        StringUtil.getWordsIn(oldSuppressionCommentText).contains(id)) {
+      return;
+    }
     Couple<String> blockPrefixSuffix = null;
     if (lineCommentPrefix == null) {
       blockPrefixSuffix = getBlockPrefixSuffixPair(comment);

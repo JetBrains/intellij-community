@@ -2,8 +2,15 @@
 
 package com.intellij.codeInsight.editorActions.moveUpDown;
 
+import com.intellij.lang.ASTNode;
+import com.intellij.lang.DependentLanguage;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.project.Project;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.util.PsiUtilBase;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -30,5 +37,30 @@ class MoveStatementHandler extends BaseMoveHandler {
     return null;
   }
 
+  @Override
+  @Nullable
+  protected PsiFile getPsiFile(@NotNull Project project, @NotNull Editor editor) {
+    final Document document = editor.getDocument();
+    final PsiDocumentManager documentManager = PsiDocumentManager.getInstance(project);
+    documentManager.commitDocument(document);
+    return getRoot(documentManager.getPsiFile(document), editor);
+  }
+
+  @Nullable
+  private static PsiFile getRoot(final PsiFile file, final Editor editor) {
+    if (file == null) return null;
+    int offset = editor.getCaretModel().getOffset();
+    if (offset == editor.getDocument().getTextLength()) offset--;
+    if (offset < 0) return null;
+    PsiElement leafElement = file.findElementAt(offset);
+    if (leafElement == null) return null;
+    if (leafElement.getLanguage() instanceof DependentLanguage) {
+      leafElement = file.getViewProvider().findElementAt(offset, file.getViewProvider().getBaseLanguage());
+      if (leafElement == null) return null;
+    }
+    ASTNode node = leafElement.getNode();
+    if (node == null) return null;
+    return (PsiFile)PsiUtilBase.getRoot(node).getPsi();
+  }
 }
 

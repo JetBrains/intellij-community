@@ -5,8 +5,11 @@ import com.intellij.AbstractBundle
 import com.intellij.DynamicBundle
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.project.ProjectManager
+import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.ExceptionUtil
 import com.intellij.util.Function
+import com.intellij.util.containers.HashingStrategy
 import com.intellij.util.lang.UrlClassLoader
 import gnu.trove.TObjectHashingStrategy
 import groovy.transform.CompileStatic
@@ -19,7 +22,7 @@ import org.gradle.tooling.internal.consumer.loader.CachingToolingImplementationL
 import org.gradle.tooling.internal.consumer.loader.SynchronizedToolingImplementationLoader
 import org.gradle.tooling.internal.consumer.loader.ToolingImplementationLoader
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.plugins.gradle.settings.GradleSystemSettings
+import org.jetbrains.plugins.gradle.settings.GradleSettings
 
 import java.lang.reflect.Method
 
@@ -29,26 +32,23 @@ class GradleDaemonServices {
   private static final Logger LOG = Logger.getInstance(GradleDaemonServices.class)
 
   static void stopDaemons() {
-    Map<ClassPath, ConsumerConnection> connections = getConnections()
-    for (conn in connections.values()) {
-      runAction(conn, DaemonStopAction, null)
+    forEachConnection { ConsumerConnection connection, String gradleUserHome ->
+      runAction(gradleUserHome, connection, DaemonStopAction, null)
     }
   }
 
   static void stopDaemons(List<DaemonState> daemons) {
     List<byte[]> tokens = new ArrayList<>()
     daemons.each { if (it.token) tokens.add(it.token) }
-    Map<ClassPath, ConsumerConnection> connections = getConnections()
-    for (conn in connections.values()) {
-      runAction(conn, DaemonStopAction, tokens)
+    forEachConnection { ConsumerConnection connection, String gradleUserHome ->
+      runAction(gradleUserHome, connection, DaemonStopAction, tokens)
     }
   }
 
   static List<DaemonState> getDaemonsStatus() {
     List<DaemonState> result = new ArrayList<>()
-    Map<ClassPath, ConsumerConnection> connections = getConnections()
-    for (conn in connections.values()) {
-      List<DaemonState> daemonStates = runAction(conn, DaemonStatusAction, null) as List<DaemonState>
+    forEachConnection { ConsumerConnection connection, String gradleUserHome ->
+      List<DaemonState> daemonStates = runAction(gradleUserHome, connection, DaemonStatusAction, null) as List<DaemonState>
       if (daemonStates) {
         result.addAll(daemonStates)
       }
@@ -56,7 +56,11 @@ class GradleDaemonServices {
     return result
   }
 
-  private static Object runAction(Object daemonClientFactory, ConsumerConnection connection, Class actionClass, Object arg) {
+  private static Object runAction(String gradleUserHome,
+                                  Object daemonClientFactory,
+                                  ConsumerConnection connection,
+                                  Class actionClass,
+                                  Object arg) {
     def daemonClientClassLoader = UrlClassLoader.build()
       .files(List.of(
         PathManager.getJarForClass(actionClass),
@@ -65,6 +69,7 @@ class GradleDaemonServices {
         PathManager.getJarForClass(DynamicBundle),
         PathManager.getJarForClass(AbstractBundle),
         PathManager.getJarForClass(TObjectHashingStrategy),
+        PathManager.getJarForClass(HashingStrategy),
         PathManager.getJarForClass(Hash),
         PathManager.getJarForClass(Function)
       ))
@@ -72,7 +77,6 @@ class GradleDaemonServices {
       .allowLock(false)
       .get()
 
-    String serviceDirectoryPath = GradleSystemSettings.instance.getServiceDirectoryPath()
     def myRawArgData = getSerialized(arg)
     byte[] myRawResultData = null
     final ClassLoader oldClassLoader = Thread.currentThread().getContextClassLoader()
@@ -81,9 +85,9 @@ class GradleDaemonServices {
       Class<?> clazz = daemonClientClassLoader.loadClass(actionClass.name)
       def _arg = getObject(myRawArgData)
       Method method = findMethod(clazz, daemonClientFactory, _arg)
-      Object[] serviceDirParam = [serviceDirectoryPath]
-      def result = arg == null ? method.invoke(clazz.newInstance(serviceDirParam), daemonClientFactory) :
-                   method.invoke(clazz.newInstance(serviceDirParam), daemonClientFactory, _arg)
+      Object[] gradleUserHomeParam = [gradleUserHome]
+      def result = arg == null ? method.invoke(clazz.newInstance(gradleUserHomeParam), daemonClientFactory) :
+                   method.invoke(clazz.newInstance(gradleUserHomeParam), daemonClientFactory, _arg)
       if (result instanceof Serializable) {
         myRawResultData = getSerialized(result)
       }
@@ -158,10 +162,10 @@ class GradleDaemonServices {
   }
 
   @CompileStatic(TypeCheckingMode.SKIP)
-  private static Object runAction(ConsumerConnection connection, Class actionClass, Object arg) {
+  private static Object runAction(String gradleUserHome, ConsumerConnection connection, Class actionClass, Object arg) {
     try {
       def daemonClientFactory = connection.delegate.delegate.connection.daemonClientFactory
-      runAction(daemonClientFactory, connection, actionClass, arg)
+      runAction(gradleUserHome, daemonClientFactory, connection, actionClass, arg)
     }
     catch (Throwable t) {
       LOG.warn("Unable to send daemon message for " + connection.getDisplayName())
@@ -172,5 +176,26 @@ class GradleDaemonServices {
         LOG.warn(ExceptionUtil.getNonEmptyMessage(ExceptionUtil.getRootCause(t), "Unable to send daemon message"))
       }
     }
+  }
+
+  private static void forEachConnection(Closure closure) {
+    Set<String> gradleUserHomes = getGradleUserHomes()
+    Map<ClassPath, ConsumerConnection> connections = getConnections()
+    for (conn in connections.values()) {
+      for (String gradleUserHome in gradleUserHomes) {
+        closure.call(conn, StringUtil.nullize(gradleUserHome))
+      }
+    }
+  }
+
+  private static Set<String> getGradleUserHomes() {
+    def projectManager = ProjectManager.getInstanceIfCreated()
+    if (projectManager == null) return Set.of("")
+    Set<String> gradleUserHomes = new HashSet()
+    for (project in projectManager.openProjects) {
+      def gradleUserHome = GradleSettings.getInstance(project).getServiceDirectoryPath()
+      gradleUserHomes.add(StringUtil.notNullize(gradleUserHome))
+    }
+    gradleUserHomes
   }
 }

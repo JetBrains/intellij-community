@@ -1,11 +1,9 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util
 
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.util.SystemInfo
-import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.util.io.FileUtilRt
-import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.StandardFileSystems
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
@@ -25,17 +23,21 @@ object Urls {
   fun newUri(scheme: String?, path: String): Url = UrlImpl(scheme, null, path)
 
   @JvmStatic
-  fun newUrl(scheme: String?, authority: String?, path: String?, rawParameters: String?): Url =
-    UrlImpl(scheme, authority, path, rawParameters)
+  fun newUrl(scheme: String?, authority: String?, path: String?, rawParameters: String?): Url {
+    return UrlImpl(scheme, authority, path, rawParameters)
+  }
 
   @JvmStatic
-  fun newUrl(scheme: String, authority: String, path: String, parameters: Map<String, String?>): Url =
+  fun newUrl(scheme: String, authority: String, path: String, parameters: Map<String, String?>): Url {
     if (parameters.isNotEmpty()) {
       val result = StringBuilder().append('?')
       encodeParameters(parameters, result)
-      UrlImpl(scheme, authority, path, result.toString())
+      return UrlImpl(scheme, authority, path, result.toString())
     }
-    else UrlImpl(scheme, authority, path)
+    else {
+      return UrlImpl(scheme, authority, path)
+    }
+  }
 
   @JvmStatic
   fun encodeParameters(parameters: Map<String, String?>, result: StringBuilder) {
@@ -59,10 +61,10 @@ object Urls {
   fun newLocalFileUrl(file: VirtualFile): Url = LocalFileUrl(file.path)
 
   @JvmStatic
-  fun newFromEncoded(url: String): Url = parseEncoded(url) ?: throw MalformedURLException("Malformed URL: ${url}")
+  fun newFromEncoded(url: String): Url = parse(url, asLocalIfNoScheme = false) ?: throw MalformedURLException("Malformed URL: ${url}")
 
   @JvmStatic
-  fun parseEncoded(url: String): Url? = parse(url, false)
+  fun parseEncoded(url: String): Url? = parse(url, asLocalIfNoScheme = false)
 
   @JvmStatic
   fun newHttpUrl(authority: String, path: String?): Url = newUrl("http", authority, path)
@@ -92,10 +94,12 @@ object Urls {
   }
 
   @JvmStatic
-  fun parse(url: String, asLocalIfNoScheme: Boolean): Url? = when {
-    url.isEmpty() -> null
-    asLocalIfNoScheme && !URLUtil.containsScheme(url) -> newLocalFileUrl(url)
-    else -> parseUrl(VfsUtilCore.toIdeaUrl(url))
+  fun parse(url: String, asLocalIfNoScheme: Boolean): Url? {
+    return when {
+      url.isEmpty() -> null
+      asLocalIfNoScheme && !URLUtil.containsScheme(url) -> newLocalFileUrl(url)
+      else -> parseUrl(VfsUtilCore.toIdeaUrl(url, true))
+    }
   }
 
   @JvmStatic
@@ -111,7 +115,7 @@ object Urls {
   }
 
   private fun parseUrl(url: CharSequence): Url? {
-    val urlToParse = if (StringUtil.startsWith(url, "jar:file://")) url.subSequence("jar:".length, url.length) else url//NON-NLS
+    val urlToParse = if (url.startsWith("jar:file://")) url.subSequence("jar:".length, url.length) else url//NON-NLS
 
     val matcher = URI_PATTERN.matcher(urlToParse)
     if (!matcher.matches()) {
@@ -123,9 +127,9 @@ object Urls {
       scheme = "jar:$scheme"//NON-NLS
     }
 
-    var authority = StringUtil.nullize(matcher.group(3))
-    var path = StringUtil.nullize(matcher.group(4))
-    val hasUrlSeparator = !StringUtil.isEmpty(matcher.group(2))
+    var authority = matcher.group(3)?.takeIf { !it.isEmpty() }
+    var path = matcher.group(4)?.takeIf { !it.isEmpty() }
+    val hasUrlSeparator = !matcher.group(2).isNullOrEmpty()
     if (authority == null) {
       if (hasUrlSeparator) {
         authority = ""
@@ -137,30 +141,34 @@ object Urls {
     }
 
     // canonicalize only if authority is not empty or file url - we should not canonicalize URL with unknown scheme (webpack:///./modules/flux-orion-plugin/fluxPlugin.ts)
-    if (path != null && (!StringUtil.isEmpty(authority) || StandardFileSystems.FILE_PROTOCOL == scheme)) {
-      path = FileUtil.toCanonicalUriPath(path)
+    if (path != null && (!authority.isNullOrEmpty() || StandardFileSystems.FILE_PROTOCOL == scheme)) {
+      path = FileUtilRt.toCanonicalPath(path, '/', false)
     }
 
     return UrlImpl(scheme, authority, path, matcher.group(5))
   }
 
   @JvmStatic
-  fun newFromVirtualFile(file: VirtualFile): Url =
-    if (file.isInLocalFileSystem) newUri(file.fileSystem.protocol, file.path)
+  fun newFromVirtualFile(file: VirtualFile): Url {
+    return if (file.isInLocalFileSystem) newUri(file.fileSystem.protocol, file.path)
     else parseUrl(file.url) ?: newUnparsable(file.path)
+  }
 
   @JvmStatic
   fun newUnparsable(string: String): Url = UrlImpl(null, null, string, null)
 
   @JvmOverloads
   @JvmStatic
-  fun equalsIgnoreParameters(url: Url, urls: Collection<Url>, caseSensitive: Boolean = true): Boolean =
-    urls.any { equals(url, it, caseSensitive, true) }
+  fun equalsIgnoreParameters(url: Url, urls: Collection<Url>, caseSensitive: Boolean = true): Boolean {
+    return urls.any { equals(url, it, caseSensitive, true) }
+  }
 
-  fun equalsIgnoreParameters(url: Url, file: VirtualFile): Boolean = when {
-    file.isInLocalFileSystem -> url.isInLocalFileSystem && url.path.equals(file.path, ignoreCase = !file.isCaseSensitive)
-    url.isInLocalFileSystem -> false
-    else -> parseUrl(file.url)?.equalsIgnoreParameters(url) ?: false
+  fun equalsIgnoreParameters(url: Url, file: VirtualFile): Boolean {
+    return when {
+      file.isInLocalFileSystem -> url.isInLocalFileSystem && url.path.equals(file.path, ignoreCase = !file.isCaseSensitive)
+      url.isInLocalFileSystem -> false
+      else -> parseUrl(file.url)?.equalsIgnoreParameters(url) ?: false
+    }
   }
 
   fun equals(url1: Url?, url2: Url?, caseSensitive: Boolean, ignoreParameters: Boolean): Boolean {
@@ -174,14 +182,16 @@ object Urls {
   }
 
   @JvmStatic
-  fun toUriWithoutParameters(url: Url): URI = try {
-    val inLocalFileSystem = url.isInLocalFileSystem
-    val scheme = if (inLocalFileSystem) "file" else url.scheme
-    val authority = if (inLocalFileSystem) "" else url.authority
-    val externalPath = if (inLocalFileSystem && SystemInfo.isWindows && url.path[0] != '/') "/${url.path}" else url.path
-    URI(scheme, authority, externalPath, null, null)
-  }
-  catch (e: URISyntaxException) {
-    throw RuntimeException(e)
+  fun toUriWithoutParameters(url: Url): URI {
+    return try {
+      val inLocalFileSystem = url.isInLocalFileSystem
+      val scheme = if (inLocalFileSystem) "file" else url.scheme
+      val authority = if (inLocalFileSystem) "" else url.authority
+      val externalPath = if (inLocalFileSystem && SystemInfoRt.isWindows && url.path[0] != '/') "/${url.path}" else url.path
+      URI(scheme, authority, externalPath, null, null)
+    }
+    catch (e: URISyntaxException) {
+      throw RuntimeException(e)
+    }
   }
 }

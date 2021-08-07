@@ -64,8 +64,7 @@ public class StaticCollectionInspection extends BaseInspection {
       if (!CollectionUtils.isCollectionClassOrInterface(type)) {
         return;
       }
-      if (!m_ignoreWeakCollections ||
-          CollectionUtils.isWeakCollectionClass(type)) {
+      if (m_ignoreWeakCollections && CollectionUtils.isWeakCollectionClass(type)) {
         return;
       }
       registerFieldError(field);

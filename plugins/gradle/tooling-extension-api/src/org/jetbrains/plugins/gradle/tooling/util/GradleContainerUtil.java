@@ -6,8 +6,8 @@ import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collections;
-import java.util.Iterator;
+import java.io.File;
+import java.util.*;
 
 public final class GradleContainerUtil {
   public static final ImmutableDomainObjectSet<?> EMPTY_DOMAIN_OBJECT_SET = ImmutableDomainObjectSet.of(Collections.emptyList());
@@ -38,5 +38,31 @@ public final class GradleContainerUtil {
       currentResult = function.fun(currentResult, e);
     }
     return currentResult;
+  }
+
+  @Contract("!null -> !null; null -> null")
+  public static Set<File> unmodifiableFileSet(@Nullable Collection<String> paths) {
+    if (paths == null) return null;
+    if (paths.isEmpty()) return Collections.emptySet();
+    LinkedHashSet<File> files = new LinkedHashSet<File>(paths.size());
+    for (String path : paths) {
+      if (path != null) {
+        files.add(new File(path));
+      }
+    }
+    return Collections.unmodifiableSet(files);
+  }
+
+  @Contract("!null -> !null; null -> null")
+  public static Set<String> unmodifiablePathSet(@Nullable Collection<File> files) {
+    if (files == null) return null;
+    if (files.isEmpty()) return Collections.emptySet();
+    LinkedHashSet<String> paths = new LinkedHashSet<String>(files.size());
+    for (File file : files) {
+      if (file != null) {
+        paths.add(file.getPath());
+      }
+    }
+    return Collections.unmodifiableSet(paths);
   }
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.usages;
 
 import com.intellij.codeInsight.highlighting.ReadWriteAccessDetector;
@@ -103,9 +103,7 @@ public final class UsageInfoToUsageConverter {
     if (usageElement != null && primaryElements.length != 0) {
       ReadWriteAccessDetector.Access rwAccess = ReadWriteUtil.getReadWriteAccess(primaryElements, usageElement);
       if (rwAccess != null) {
-        return new ReadWriteAccessUsageInfo2UsageAdapter(usageInfo,
-                                                         rwAccess != ReadWriteAccessDetector.Access.Write,
-                                                         rwAccess != ReadWriteAccessDetector.Access.Read);
+        return new ReadWriteAccessUsageInfo2UsageAdapter(usageInfo, rwAccess);
       }
     }
     return new UsageInfo2UsageAdapter(usageInfo);

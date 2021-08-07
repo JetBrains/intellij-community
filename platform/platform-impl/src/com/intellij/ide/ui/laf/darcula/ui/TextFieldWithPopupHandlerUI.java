@@ -1,17 +1,16 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.ui.laf.darcula.ui;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.ui.laf.darcula.DarculaUIUtil;
+import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.keymap.KeymapUtil;
-import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.ui.ComponentUtil;
 import com.intellij.ui.components.fields.ExtendableTextComponent;
 import com.intellij.ui.components.fields.ExtendableTextComponent.Extension;
-import com.intellij.ui.popup.PopupState;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
@@ -24,7 +23,6 @@ import org.jetbrains.annotations.TestOnly;
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
-import javax.swing.plaf.FontUIResource;
 import javax.swing.plaf.UIResource;
 import javax.swing.plaf.basic.BasicTextFieldUI;
 import javax.swing.text.*;
@@ -48,6 +46,7 @@ public abstract class TextFieldWithPopupHandlerUI extends BasicTextFieldUI imple
   @NonNls private static final String VARIANT = "JTextField.variant";
   @NonNls private static final String INPLACE_HISTORY = "JTextField.Search.InplaceHistory";
   @NonNls private static final String ON_CLEAR = "JTextField.Search.CancelAction";
+  @NonNls private static final String HISTORY_POPUP_ENABLED = "History.Popup.Enabled";
 
   protected final LinkedHashMap<String, IconHolder> icons = new LinkedHashMap<>();
   private final Handler handler = new Handler();
@@ -68,7 +67,7 @@ public abstract class TextFieldWithPopupHandlerUI extends BasicTextFieldUI imple
    * @return a preferred space to paint the search icon
    */
   protected int getSearchIconPreferredSpace() {
-    Icon icon = getSearchIcon(true, true);
+    Icon icon = getSearchIcon(true, isSearchFieldWithHistoryPopup(this.getComponent()));
     return icon == null ? 0 : icon.getIconWidth() + getSearchIconGap();
   }
 
@@ -568,9 +567,11 @@ public abstract class TextFieldWithPopupHandlerUI extends BasicTextFieldUI imple
         Font font = component.getFont();
         if (font == null || font instanceof UIResource) {
           font = UIManager.getFont(getPropertyPrefix() + ".font");
+          if (font == null) font = UIManager.getFont("TextField.font");
+          if (font == null) font = UIManager.getFont("Label.font");
           component.setFont(!monospaced
                             ? !SystemInfo.isMacOSCatalina ? font : disableKerning(font)
-                            : new FontUIResource(Font.MONOSPACED, font.getStyle(), font.getSize()));
+                            : EditorUtil.getEditorFont(font.getSize()));
         }
       }
     }
@@ -609,7 +610,7 @@ public abstract class TextFieldWithPopupHandlerUI extends BasicTextFieldUI imple
 
     @Override
     public Icon getIcon(boolean hovered) {
-      return getSearchIcon(hovered, true);
+      return getSearchIcon(hovered, isSearchFieldWithHistoryPopup(TextFieldWithPopupHandlerUI.this.getComponent()));
     }
 
     @Override
@@ -710,7 +711,13 @@ public abstract class TextFieldWithPopupHandlerUI extends BasicTextFieldUI imple
              || (component instanceof JTextArea && ((JTextArea) component).getLineWrap());
     }
   }
+
   public static boolean isSearchFieldWithHistoryPopup(Component c) {
-    return isSearchField(c);
+    if(c instanceof JComponent) {
+      var historyPopupEnabled = ((JComponent)c).getClientProperty(HISTORY_POPUP_ENABLED);
+      var searchPopupDisabled = historyPopupEnabled != null && historyPopupEnabled.equals(false);
+      return isSearchField(c) && !searchPopupDisabled;
+    }
+    return false;
   }
 }

@@ -23,10 +23,10 @@ import com.intellij.psi.*;
 import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.psi.util.PsiFormatUtilBase;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.ui.JBColor;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.usages.TextChunk;
 import com.intellij.util.FontUtil;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
 class SliceUsageCellRenderer extends SliceUsageCellRendererBase {
@@ -41,7 +41,7 @@ class SliceUsageCellRenderer extends SliceUsageCellRendererBase {
       TextChunk textChunk = text[i];
       SimpleTextAttributes attributes = textChunk.getSimpleAttributesIgnoreBackground();
       if (isForcedLeaf) {
-        attributes = attributes.derive(attributes.getStyle(), JBColor.LIGHT_GRAY, attributes.getBgColor(), attributes.getWaveColor());
+        attributes = attributes.derive(attributes.getStyle(), UIUtil.getInactiveTextColor(), attributes.getBgColor(), attributes.getWaveColor());
       }
       append(textChunk.getText(), attributes);
       if (i == 0) {
@@ -117,6 +117,12 @@ class SliceUsageCellRenderer extends SliceUsageCellRendererBase {
       }
       else if (element instanceof PsiReference) {
         name = ((PsiReference)element).getCanonicalText();
+      }
+      else if (element instanceof PsiExpression) {
+        PsiType type = ((PsiExpression)element).getType();
+        if (type != null) {
+          name = type.getPresentableText();
+        }
       }
       prev = usage;
       usage = (JavaSliceUsage)usage.getParent();

@@ -8,13 +8,13 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.options.advanced.AdvancedSettings;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.ui.CheckedTreeNode;
@@ -140,7 +140,7 @@ public final class PushController implements Disposable {
   }
 
   private boolean isPreChecked(@NotNull MyRepoModel<?, ?, ?> model) {
-    return Registry.is("vcs.push.all.with.commits") ||
+    return AdvancedSettings.getBoolean("vcs.push.all.with.commits") ||
            model.getSupport().getRepositoryManager().isSyncEnabled() ||
            preselectByUser(model.getRepository());
   }
@@ -360,7 +360,7 @@ public final class PushController implements Disposable {
     return model.isSelected() &&
            (hasCommitsToPush(model) ||
             // set force check only for async with no registry option
-            !(model.getSupport().getRepositoryManager().isSyncEnabled() || Registry.is("vcs.push.all.with.commits")));
+            !(model.getSupport().getRepositoryManager().isSyncEnabled() || AdvancedSettings.getBoolean("vcs.push.all.with.commits")));
   }
 
   private boolean preselectByUser(@NotNull Repository repository) {

@@ -229,7 +229,7 @@ public class UsageViewTest extends BasePlatformTestCase {
     assertEmpty(excluded);
 
     String text = new ExporterToTextFile(usageView, UsageViewSettings.getInstance()).getReportText();
-    assertEquals("Found usages  (1 usage found)\n" +
+    assertEquals("Usages in  (1 usage found)\n" +
                  "    Unclassified  (1 usage found)\n" +
                  "        light_idea_test_case  (1 usage found)\n" +
                  "              (1 usage found)\n" +

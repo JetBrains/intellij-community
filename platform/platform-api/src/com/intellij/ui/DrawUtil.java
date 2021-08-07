@@ -1,6 +1,9 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui;
 
+import com.intellij.ide.PowerSaveMode;
+import com.intellij.ide.RemoteDesktopService;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.paint.LinePainter2D;
 
 import java.awt.*;
@@ -16,10 +19,10 @@ public final class DrawUtil {
     final Color oldColor = g.getColor();
     g.setColor(color);
 
-    int x1 = (int) Math.round(x1d);
-    int x2 = (int) Math.round(x2d);
-    int y1 = (int) Math.round(y1d);
-    int y2 = (int) Math.round(y2d);
+    int x1 = (int)Math.round(x1d);
+    int x2 = (int)Math.round(x2d);
+    int y1 = (int)Math.round(y1d);
+    int y2 = (int)Math.round(y2d);
 
     LinePainter2D.paint((Graphics2D)g, x1 + 1, y1, x2 - 1, y1);
     LinePainter2D.paint((Graphics2D)g, x1 + 1, y2, x2 - 1, y2);
@@ -37,4 +40,8 @@ public final class DrawUtil {
     LinePainter2D.paint((Graphics2D)g, x1, y1 + 1, x1, y2);
   }
 
+  public static boolean isSimplifiedUI() {
+    return Registry.is("ui.no.bangs.and.whistles", false) || Registry.is("ui.simplified", false) ||
+           RemoteDesktopService.isRemoteSession() || PowerSaveMode.isEnabled();
+  }
 }

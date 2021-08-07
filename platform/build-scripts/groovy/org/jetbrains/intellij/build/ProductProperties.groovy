@@ -1,11 +1,14 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build
 
 import groovy.transform.CompileStatic
 import org.jetbrains.annotations.NotNull
+import org.jetbrains.annotations.Nullable
 import org.jetbrains.intellij.build.impl.productInfo.CustomProperty
+import org.jetbrains.jps.model.module.JpsModule
 
 import java.nio.file.Path
+import java.util.function.BiPredicate
 
 /**
  * Describes distribution of an IntelliJ-based IDE. Override this class and call {@link BuildTasks#buildProduct} from a build script to build
@@ -61,15 +64,27 @@ abstract class ProductProperties {
   boolean isAntRequired = false
 
   /**
-   * Additional arguments which will be added to JVM command line in IDE launchers for all operating systems
+   * Whether to use splash for application start-up.
    */
-  String additionalIdeJvmArguments = ""
+  boolean useSplash = false
 
   /**
-   * If not null the specified options will be used instead the default memory options in JVM command line (for 64-bit JVM) in IDE launchers
-   * for all operating systems.
+   * Class-loader that product application should use by default.
+   * <p/>
+   * `com.intellij.util.lang.PathClassLoader` is used by default as
+   * it unifies class-loading logic of an application and allows to avoid double-loading of bootstrap classes.
    */
-  String customJvmMemoryOptionsX64 = null
+  @Nullable String classLoader = "com.intellij.util.lang.PathClassLoader"
+
+  /**
+   * Additional arguments which will be added to JVM command line in IDE launchers for all operating systems
+   */
+  List<String> additionalIdeJvmArguments = []
+
+  /**
+   * The specified options will be used instead of/in addition to the default JVM memory options for all operating systems.
+   */
+  Map<String, String> customJvmMemoryOptions = [:]
 
   /**
    * An identifier which will be used to form names for directories where configuration and caches will be stored, usually a product name
@@ -106,6 +121,11 @@ abstract class ProductProperties {
    * {@link #scrambleMainJar} is {@code false}.
    */
   boolean scramblePrivateFields = true
+
+  /**
+   * Path to an alternative scramble script which will should be used for a product
+   */
+  String alternativeScrambleStubPath = null
 
   /**
    * Describes which modules should be included into the product's platform and which plugins should be bundled with the product
@@ -162,9 +182,14 @@ abstract class ProductProperties {
   abstract MacDistributionCustomizer createMacCustomizer(String projectHome)
 
   /**
-   * If {@code true} a zip archive containing sources of all modules included into the product will be produced.
+   * If {@code true} a zip archive containing sources of modules included into the product will be produced.
    */
   boolean buildSourcesArchive = false
+
+  /**
+   * Determines sources of which modules should be included into the sources archive if {@link #buildSourcesArchive} is {@code true}
+   */
+  BiPredicate<JpsModule, BuildContext> includeIntoSourcesArchiveFilter = { true } as BiPredicate<JpsModule, BuildContext>
 
   /**
    * Specifies how Maven artifacts for IDE modules should be generated, by default no artifacts are generated.
@@ -225,4 +250,9 @@ abstract class ProductProperties {
    * @return custom properties for {@link org.jetbrains.intellij.build.impl.productInfo.ProductInfoData}
    */
   List<CustomProperty> generateCustomPropertiesForProductInfo() { [] }
+
+  /**
+   * If {@code true} a distribution contains libraries and launcher script for running IDE in Remote Development mode.
+   */
+  boolean addRemoteDevelopmentLibraries = true
 }

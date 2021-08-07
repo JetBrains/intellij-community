@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.xdebugger.impl.ui;
 
 import com.intellij.openapi.application.AppUIExecutor;
@@ -6,12 +6,16 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.EditorKind;
 import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.impl.DocumentMarkupModel;
 import com.intellij.openapi.editor.impl.EditorMouseHoverPopupControl;
-import com.intellij.openapi.editor.markup.*;
+import com.intellij.openapi.editor.markup.GutterIconRenderer;
+import com.intellij.openapi.editor.markup.HighlighterTargetArea;
+import com.intellij.openapi.editor.markup.MarkupModel;
+import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
@@ -20,11 +24,11 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.pom.Navigatable;
 import com.intellij.ui.AppUIUtil;
 import com.intellij.util.DocumentUtil;
 import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.impl.XDebuggerUtilImpl;
-import com.intellij.xdebugger.impl.XSourcePositionImpl;
 import com.intellij.xdebugger.impl.settings.XDebuggerSettingManagerImpl;
 import com.intellij.xdebugger.ui.DebuggerColors;
 import org.jetbrains.annotations.NotNull;
@@ -64,7 +68,8 @@ public class ExecutionPointHighlighter {
         mySourcePosition = position;
 
         clearDescriptor();
-        myOpenFileDescriptor = XSourcePositionImpl.createOpenFileDescriptor(myProject, position);
+        myOpenFileDescriptor = createOpenFileDescriptor(myProject, position);
+        myOpenFileDescriptor.setUsePreviewTab(true);
         if (!XDebuggerSettingManagerImpl.getInstanceImpl().getGeneralSettings().isScrollToCenter()) {
           myOpenFileDescriptor.setScrollType(notTopFrame ? ScrollType.CENTER : ScrollType.MAKE_VISIBLE);
         }
@@ -133,21 +138,16 @@ public class ExecutionPointHighlighter {
 
     removeHighlighter();
 
-
-    OpenFileDescriptor fileDescriptor = myOpenFileDescriptor;
-    if (!navigate && myOpenFileDescriptor != null) {
-      fileDescriptor = new OpenFileDescriptor(myProject, myOpenFileDescriptor.getFile());
-    }
     myEditor = null;
-    if (fileDescriptor != null) {
+    if (myOpenFileDescriptor != null) {
       if (!navigate) {
-        FileEditor editor = FileEditorManager.getInstance(fileDescriptor.getProject()).getSelectedEditor(fileDescriptor.getFile());
+        FileEditor editor = FileEditorManager.getInstance(myProject).getSelectedEditor(myOpenFileDescriptor.getFile());
         if (editor instanceof TextEditor) {
           myEditor = ((TextEditor)editor).getEditor();
         }
       }
       if (myEditor == null) {
-        myEditor = XDebuggerUtilImpl.createEditor(fileDescriptor);
+        myEditor = XDebuggerUtilImpl.createEditor(myOpenFileDescriptor);
       }
     }
     if (myEditor != null) {
@@ -200,7 +200,7 @@ public class ExecutionPointHighlighter {
       myRangeHighlighter = markupModel.addLineHighlighter(attributesKey, line, DebuggerColors.EXECUTION_LINE_HIGHLIGHTERLAYER);
     }
     myRangeHighlighter.putUserData(EXECUTION_POINT_HIGHLIGHTER_TOP_FRAME_KEY, !myNotTopFrame);
-    myRangeHighlighter.setEditorFilter(MarkupEditorFilterFactory.createIsNotDiffFilter());
+    myRangeHighlighter.setEditorFilter(editor -> editor.getEditorKind() == EditorKind.MAIN_EDITOR);
     myRangeHighlighter.setGutterIconRenderer(myGutterIconRenderer);
   }
 
@@ -222,6 +222,17 @@ public class ExecutionPointHighlighter {
         EditorMouseHoverPopupControl.enablePopups(project);
       }
     });
+  }
+
+  @NotNull
+  private static OpenFileDescriptor createOpenFileDescriptor(@NotNull Project project, @NotNull XSourcePosition position) {
+    Navigatable navigatable = position.createNavigatable(project);
+    if (navigatable instanceof OpenFileDescriptor) {
+      return (OpenFileDescriptor)navigatable;
+    }
+    else {
+      return XDebuggerUtilImpl.createOpenFileDescriptor(project, position);
+    }
   }
 
   public interface HighlighterProvider {

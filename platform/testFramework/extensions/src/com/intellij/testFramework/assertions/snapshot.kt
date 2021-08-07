@@ -74,7 +74,7 @@ fun compareFileContent(actual: Any, snapshotFile: Path, updateIfMismatch: Boolea
       throw e
     }
 
-    println("Write a new snapshot ${snapshotFile.fileName}")
+    println("Write a new snapshot: ${snapshotFile.fileName}")
     snapshotFile.write(actualContent)
     return
   }
@@ -84,8 +84,8 @@ fun compareFileContent(actual: Any, snapshotFile: Path, updateIfMismatch: Boolea
   }
 
   if (updateIfMismatch) {
-    System.out.println("UPDATED snapshot ${snapshotFile.fileName}")
-    snapshotFile.write(StringBuilder(actualContent))
+    println("UPDATED snapshot ${snapshotFile.fileName}")
+    snapshotFile.write(actualContent)
   }
   else {
     val firstMismatch = StringUtil.commonPrefixLength(actualContent, expected)

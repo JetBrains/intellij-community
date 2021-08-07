@@ -24,7 +24,7 @@ public final class XHtmlFileType extends HtmlFileType {
   @Override
   @NotNull
   public String getDescription() {
-    return XmlPsiBundle.message("filetype.description.xhtml");
+    return XmlPsiBundle.message("filetype.xhtml.description");
   }
 
   @Override

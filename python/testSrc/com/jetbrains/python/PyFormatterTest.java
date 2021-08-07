@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python;
 
 import com.intellij.formatting.WrapType;
@@ -14,9 +14,7 @@ import com.jetbrains.python.psi.PyElementGenerator;
 import com.jetbrains.python.psi.PyStatement;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author yole
- */
+
 public class PyFormatterTest extends PyTestCase {
   @NotNull
   private PyCodeStyleSettings getPythonCodeStyleSettings() {
@@ -78,11 +76,7 @@ public class PyFormatterTest extends PyTestCase {
   }
 
   public void testStarExpression() {  // PY-1523
-    doTestPy3();
-  }
-
-  private void doTestPy3() {
-    runWithLanguageLevel(LanguageLevel.PYTHON34, this::doTest);
+    doTest();
   }
 
   public void testWrapTuple() {  // PY-1792
@@ -308,7 +302,7 @@ public class PyFormatterTest extends PyTestCase {
       "   desired_impulse_response = {'dirac, 'gaussian', logistic_derivative'}\n" +
       "return desired,                o";
 
-    final PsiFile file = PyElementGenerator.getInstance(myFixture.getProject()).createDummyFile(LanguageLevel.PYTHON34, initial);
+    final PsiFile file = PyElementGenerator.getInstance(myFixture.getProject()).createDummyFile(LanguageLevel.getLatest(), initial);
     final PsiElement reformatted = CodeStyleManager.getInstance(myFixture.getProject()).reformat(file);
 
     String expected =
@@ -391,17 +385,17 @@ public class PyFormatterTest extends PyTestCase {
   }
 
   public void testLongWith() {  // PY-8743
-    runWithLanguageLevel(LanguageLevel.PYTHON27, this::doTest);
+    doTest();
   }
 
   // PY-8961, PY-16050
   public void testSpaceInAnnotations() {
-    doTestPy3();
+    doTest();
   }
 
   // PY-15791
   public void testForceSpacesAroundEqualSignInAnnotatedParameter() {
-    doTestPy3();
+    doTest();
   }
 
   public void testWrapInBinaryExpression() {  // PY-9032
@@ -903,7 +897,7 @@ public class PyFormatterTest extends PyTestCase {
 
   // PY-20970
   public void testSpacesAfterNonlocal() {
-    runWithLanguageLevel(LanguageLevel.PYTHON34, this::doTest);
+    doTest();
   }
 
   // PY-21515
@@ -912,7 +906,7 @@ public class PyFormatterTest extends PyTestCase {
   }
 
   public void testSpacesAfterFromInYieldFrom() {
-    runWithLanguageLevel(LanguageLevel.PYTHON34, this::doTest);
+    doTest();
   }
 
   // PY-24220
@@ -1019,7 +1013,7 @@ public class PyFormatterTest extends PyTestCase {
   }
 
   public void testVariableAnnotations() {
-    runWithLanguageLevel(LanguageLevel.PYTHON36, this::doTest);
+    doTest();
   }
 
   // PY-27266
@@ -1033,7 +1027,7 @@ public class PyFormatterTest extends PyTestCase {
   }
 
   public void testMultilineFStringExpressions() {
-    runWithLanguageLevel(LanguageLevel.PYTHON36, this::doTest);
+    doTest();
   }
 
   // PY-33656
@@ -1045,24 +1039,24 @@ public class PyFormatterTest extends PyTestCase {
   public void testFStringFragmentWrappingSplitInsideExpression() {
     getCodeStyleSettings().setRightMargin(PythonLanguage.getInstance(), 20);
     getCommonCodeStyleSettings().WRAP_LONG_LINES = true;
-    runWithLanguageLevel(LanguageLevel.PYTHON36, this::doTest);
+    doTest();
   }
 
   // PY-27615
   public void testFStringFragmentWrappingSplitInsideNestedExpression() {
     getCodeStyleSettings().setRightMargin(PythonLanguage.getInstance(), 20);
     getCommonCodeStyleSettings().WRAP_LONG_LINES = true;
-    runWithLanguageLevel(LanguageLevel.PYTHON36, this::doTest);
+    doTest();
   }
 
   // PY-40778
   public void testFStringSpacesBetweenFragmentAndExpressionBracesPreserved() {
-    runWithLanguageLevel(LanguageLevel.getLatest(), this::doTest);
+    doTest();
   }
 
   // PY-31991
   public void testSpacesAroundFStringFragmentExpressionStripped() {
-    runWithLanguageLevel(LanguageLevel.PYTHON36, this::doTest);
+    doTest();
   }
 
   // PY-36009
@@ -1072,11 +1066,149 @@ public class PyFormatterTest extends PyTestCase {
 
   // PY-35975
   public void testSpacesAroundColonEqInAssignmentExpression() {
-    runWithLanguageLevel(LanguageLevel.PYTHON38, this::doTest);
+    doTest();
   }
 
   // PY-23475
   public void testModuleLevelDunderWithImports() {
+    doTest();
+  }
+
+  // PY-48009
+  public void testIndentOfCaseClausesInsideMatchStatement() {
+    doTest();
+  }
+
+  // PY-48009
+  public void testIndentOfCommentsInsideMatchStatement() {
+    doTest();
+  }
+
+  // PY-49167
+  public void testNoSpacesInsideStarPatterns() {
+    doTest();
+  }
+
+  // PY-48009
+  public void testSpacesWithinBracketsInSequencePatterns() {
+    getCommonCodeStyleSettings().SPACE_WITHIN_BRACKETS = true;
+    doTest();
+  }
+
+  // PY-48009
+  public void testSpacesWithinBracesInMappingPatterns() {
+    getPythonCodeStyleSettings().SPACE_WITHIN_BRACES = true;
+    doTest();
+  }
+
+  // PY-48009
+  public void testSpacesWithinParenthesesInClassPatterns() {
+    getCommonCodeStyleSettings().SPACE_WITHIN_EMPTY_METHOD_CALL_PARENTHESES = true;
+    getCommonCodeStyleSettings().SPACE_WITHIN_METHOD_CALL_PARENTHESES = true;
+    doTest();
+  }
+
+  // PY-48009
+  public void testSpacesBeforeParenthesesInClassPatterns() {
+    getCommonCodeStyleSettings().SPACE_BEFORE_METHOD_CALL_PARENTHESES = true;
+    doTest();
+  }
+
+  // PY-48009
+  public void testSpacesBeforeAndAfterCommasInPatterns() {
+    getCommonCodeStyleSettings().SPACE_BEFORE_COMMA = true;
+    getCommonCodeStyleSettings().SPACE_AFTER_COMMA = false;
+    doTest();
+  }
+
+  // PY-48009
+  public void testSpacesBeforeAndAfterColonsInPatterns() {
+    getPythonCodeStyleSettings().SPACE_BEFORE_PY_COLON = true;
+    getPythonCodeStyleSettings().SPACE_AFTER_PY_COLON = false;
+    doTest();
+  }
+
+  // PY-48009
+  public void testItemAlignmentInSequencePatterns() {
+    doTest();
+  }
+
+  // PY-48009
+  public void testItemAlignmentInNestedSequencePatterns() {
+    doTest();
+  }
+
+  // PY-48009
+  public void testItemIndentInSequencePatterns() {
+    doTest();
+  }
+
+  // PY-48009
+  public void testHangingClosingBracketInSequencePatterns() {
+    getPythonCodeStyleSettings().HANG_CLOSING_BRACKETS = true;
+    doTest();
+  }
+  
+  // PY-48009
+  public void testItemAlignmentInMappingPatterns() {
+    doTest();
+  }
+  
+  // PY-48009
+  public void testItemIndentInMappingPatterns() {
+    doTest();
+  }
+  
+  // PY-48009
+  public void testHangingClosingBracketInMappingPatterns() {
+    getPythonCodeStyleSettings().HANG_CLOSING_BRACKETS = true;
+    doTest();
+  }
+
+  // PY-48009
+  public void testAttributeAlignmentInClassPatterns() {
+    doTest();
+  }
+
+  // PY-48009
+  public void testAttributeIndentInClassPatterns() {
+    doTest();
+  }
+
+  // PY-48009
+  public void testHangingClosingBracketInClassPatterns() {
+    getPythonCodeStyleSettings().HANG_CLOSING_BRACKETS = true;
+    doTest();
+  }
+
+  // PY-48009
+  public void testStringElementAlignmentInLiteralPatterns() {
+    doTest();
+  }
+
+  // PY-48009
+  public void testSpacesAroundAsKeywordInPatterns() {
+    doTest();
+  }
+
+  // PY-48009
+  public void testSpacesAfterMatchAndCaseKeywords() {
+    doTest();
+  }
+
+  // PY-48009
+  public void testAlternativesAlignmentInOrPatterns() {
+    doTest();
+  }
+
+  // PY-48009
+  public void testAlternativesAlignmentInOrPatternsInsideSequenceLikePattern() {
+    doTest();
+  }
+
+  // PY-48009
+  public void testSpacesAroundEqualSignsInKeywordPatterns() {
+    getPythonCodeStyleSettings().SPACE_AROUND_EQ_IN_KEYWORD_ARGUMENT = true;
     doTest();
   }
 }

@@ -33,16 +33,15 @@ import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.changes.patch.ApplyPatchDefaultExecutor;
 import com.intellij.openapi.vcs.changes.patch.PatchFileType;
 import com.intellij.openapi.vcs.changes.patch.PatchNameChecker;
-import com.intellij.openapi.vcs.changes.ui.*;
+import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager;
+import com.intellij.openapi.vcs.changes.ui.RollbackChangesDialog;
+import com.intellij.openapi.vcs.changes.ui.RollbackWorker;
+import com.intellij.openapi.vcs.changes.ui.ShelvedChangeListDragBean;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.project.ProjectKt;
-import com.intellij.ui.GuiUtils;
-import com.intellij.util.ArrayUtil;
-import com.intellij.util.ObjectUtils;
-import com.intellij.util.PathUtil;
-import com.intellij.util.SmartList;
+import com.intellij.util.*;
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.containers.ContainerUtil;
@@ -59,7 +58,10 @@ import com.intellij.vcsUtil.VcsImplUtil;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jdom.Element;
 import org.jdom.Parent;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.CalledInAny;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
@@ -777,9 +779,10 @@ public final class ShelveChangesManager implements PersistentStateComponent<Elem
     patchApplier.execute(showSuccessNotification, systemOperation);
     if (removeFilesFromShelf) {
       remainingPatches.addAll(patchApplier.getRemainingPatches());
-      GuiUtils.invokeLaterIfNeeded(() -> {
+      remainingPatches.addAll(patchApplier.getFailedPatches());
+      ModalityUiUtil.invokeLaterIfNeeded(ModalityState.NON_MODAL, myProject.getDisposed(), () -> {
         updateListAfterUnshelve(changeList, remainingPatches, remainingBinaries, commitContext);
-      }, ModalityState.NON_MODAL, myProject.getDisposed());
+      });
     }
   }
 
@@ -1054,6 +1057,7 @@ public final class ShelveChangesManager implements PersistentStateComponent<Elem
   private LocalChangeList getChangeListUnshelveTo(@NotNull ShelvedChangeList list) {
     ChangeListManager manager = ChangeListManager.getInstance(myProject);
     if (!manager.areChangeListsEnabled()) return null;
+    if (!VcsApplicationSettings.getInstance().CREATE_CHANGELISTS_AUTOMATICALLY) return null;
     LocalChangeList localChangeList = getPredefinedChangeList(list, manager);
     return localChangeList != null ? localChangeList : manager.addChangeList(getChangeListNameForUnshelve(list), "");
   }

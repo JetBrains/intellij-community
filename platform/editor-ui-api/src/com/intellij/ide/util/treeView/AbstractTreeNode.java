@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.util.treeView;
 
 import com.intellij.ide.projectView.PresentationData;
@@ -11,9 +11,13 @@ import com.intellij.openapi.ui.Queryable;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.FileStatusManager;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.presentation.FilePresentationService;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.SmartPsiElementPointer;
+import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.ui.tree.LeafState;
-import com.intellij.util.SlowOperations;
 import org.jetbrains.annotations.*;
 
 import java.awt.*;
@@ -143,7 +147,7 @@ public abstract class AbstractTreeNode<T> extends PresentableNodeDescriptor<Abst
 
   public final T getValue() {
     Object value = getEqualityObject();
-    return value == null ? null : (T)SlowOperations.allowSlowOperations(() -> TreeAnchorizer.getService().retrieveElement(value));
+    return value == null ? null : (T)TreeAnchorizer.getService().retrieveElement(value);
   }
 
   public final void setValue(T value) {
@@ -263,5 +267,46 @@ public abstract class AbstractTreeNode<T> extends PresentableNodeDescriptor<Abst
   @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   protected String getToolTip() {
     return getPresentation().getTooltip();
+  }
+
+  @Override
+  protected @Nullable Color computeBackgroundColor() {
+    Object value = getValue();
+    if (!(value instanceof PsiElement)) {
+      return null;
+    }
+    PsiElement element = (PsiElement)value;
+    return FilePresentationService.getInstance(element.getProject()).getFileBackgroundColor(element);
+  }
+
+  private @Nullable VirtualFile extractFileFromValue() {
+    Object value = getEqualityObject();
+    if (value instanceof SmartPsiElementPointer) {
+      // see #getValue && default implementation of TreeAnchorizer
+      SmartPsiElementPointer<?> pointer = (SmartPsiElementPointer<?>)value;
+      return pointer.getVirtualFile();
+    }
+    return null;
+  }
+
+  /**
+   * This method is intended to optimize a search through a PSI-based nodes.
+   * It can be used within a tree model with file hierarchy (i.e. Project View).
+   */
+  @ApiStatus.Internal
+  public final boolean mayContain(@Nullable Object object) {
+    if (object == null) return false;
+    VirtualFile ancestor = extractFileFromValue();
+    if (ancestor == null) return true; // always search in unknown nodes
+    if (!ancestor.isValid()) return false; // do not search in invalid files
+    if (object instanceof PsiElement) {
+      object = PsiUtilCore.getVirtualFile((PsiElement)object);
+    }
+    if (object instanceof VirtualFile) {
+      VirtualFile file = (VirtualFile)object;
+      if (!file.isValid()) return false; // do not search for invalid files
+      return VfsUtilCore.isAncestor(ancestor, file, false);
+    }
+    return true; // any custom object can be contained somewhere in a tree
   }
 }

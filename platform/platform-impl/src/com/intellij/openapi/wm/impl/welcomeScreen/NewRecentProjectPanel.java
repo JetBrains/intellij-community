@@ -18,7 +18,6 @@ import com.intellij.util.IconUtil;
 import com.intellij.util.PathUtil;
 import com.intellij.util.ui.JBDimension;
 import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.accessibility.AccessibleContextUtil;
 import org.jetbrains.annotations.NotNull;
@@ -91,7 +90,7 @@ public class NewRecentProjectPanel extends RecentProjectPanel {
             group.setExpanded(true);
             ListModel model = ((NameFilteringListModel)list.getModel()).getOriginalModel();
             int index = list.getSelectedIndex();
-            RecentProjectsWelcomeScreenActionBase.rebuildRecentProjectDataModel((DefaultListModel)model);
+            RecentProjectsWelcomeScreenActionBase.rebuildRecentProjectDataModel(model);
             list.setSelectedIndex(group.getProjects().isEmpty() ? index : index + 1);
           }
         } else {
@@ -121,7 +120,7 @@ public class NewRecentProjectPanel extends RecentProjectPanel {
           group.setExpanded(false);
           int index = list.getSelectedIndex();
           ListModel model = ((NameFilteringListModel)list.getModel()).getOriginalModel();
-          RecentProjectsWelcomeScreenActionBase.rebuildRecentProjectDataModel((DefaultListModel)model);
+          RecentProjectsWelcomeScreenActionBase.rebuildRecentProjectDataModel(model);
           list.setSelectedIndex(index);
         }
       }
@@ -236,7 +235,7 @@ public class NewRecentProjectPanel extends RecentProjectPanel {
               add(name);
             } else if (value instanceof ReopenProjectAction) {
               final NonOpaquePanel p = new NonOpaquePanel(new BorderLayout());
-              name.setText(((ReopenProjectAction)value).getProjectName());
+              name.setText(((ReopenProjectAction)value).getProjectNameToDisplay());
               final String realPath = PathUtil.toSystemDependentName(((ReopenProjectAction)value).getProjectPath());
               int i = isInsideGroup ? 80 : 60;
               path.setText(getTitle2Text((ReopenProjectAction)value, path, JBUIScale.scale(i)));
@@ -253,7 +252,7 @@ public class NewRecentProjectPanel extends RecentProjectPanel {
 
               String projectPath = ((ReopenProjectAction)value).getProjectPath();
               RecentProjectsManagerBase recentProjectsManage = RecentProjectsManagerBase.getInstanceEx();
-              Icon icon = recentProjectsManage.getProjectIcon(projectPath, StartupUiUtil.isUnderDarcula(), true);
+              Icon icon = recentProjectsManage.getProjectIcon(projectPath, true);
               final JLabel projectIcon = new JLabel("", icon, SwingConstants.LEFT) {
                 @Override
                 protected void paintComponent(Graphics g) {

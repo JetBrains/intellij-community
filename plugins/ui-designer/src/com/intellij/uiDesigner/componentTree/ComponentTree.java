@@ -18,6 +18,7 @@ import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsSafe;
+import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiField;
 import com.intellij.ui.ColoredTreeCellRenderer;
@@ -100,10 +101,10 @@ public final class ComponentTree extends Tree implements DataProvider {
     TreeUtil.installActions(this);
 
     // Popup menu
-    PopupHandler.installPopupHandler(
+    PopupHandler.installPopupMenu(
       this,
-      (ActionGroup)ActionManager.getInstance().getAction(IdeActions.GROUP_GUI_DESIGNER_COMPONENT_TREE_POPUP),
-      ActionPlaces.GUI_DESIGNER_COMPONENT_TREE_POPUP, ActionManager.getInstance());
+      IdeActions.GROUP_GUI_DESIGNER_COMPONENT_TREE_POPUP,
+      ActionPlaces.GUI_DESIGNER_COMPONENT_TREE_POPUP);
 
     // F2 should start inplace editing
     myStartInplaceEditingAction = new StartInplaceEditingAction(null);
@@ -250,15 +251,27 @@ public final class ComponentTree extends Tree implements DataProvider {
       return myFormEditor;
     }
 
-    if (!CommonDataKeys.NAVIGATABLE.is(dataId)) {
-      return null;
-    }
-
-    final RadComponent selectedComponent = getSelectedComponent();
+    RadComponent selectedComponent = getSelectedComponent();
     if (selectedComponent == null) {
       return null;
     }
 
+    if (PlatformDataKeys.SLOW_DATA_PROVIDERS.is(dataId)) {
+      return Collections.<DataProvider>singletonList(realDataId -> getSlowData(selectedComponent, realDataId));
+    }
+    return null;
+  }
+
+  @Nullable
+  private Object getSlowData(@NotNull RadComponent selectedComponent, @NonNls String dataId) {
+    if (CommonDataKeys.NAVIGATABLE.is(dataId)) {
+      return getPsiFile(selectedComponent);
+    }
+    return null;
+  }
+
+  @Nullable
+  private Navigatable getPsiFile(@NotNull RadComponent selectedComponent) {
     final String classToBind = myEditor.getRootContainer().getClassToBind();
     if (classToBind == null) {
       return null;
@@ -382,7 +395,7 @@ public final class ComponentTree extends Tree implements DataProvider {
 
     @Override
     public void customizeCellRenderer(
-      final JTree tree,
+      final @NotNull JTree tree,
       final Object value,
       final boolean selected,
       final boolean expanded,

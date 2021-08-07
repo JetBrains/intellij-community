@@ -21,7 +21,7 @@ public class RegexFacadeTest {
   public void matchingFromPosition() {
     RegexFacade regex = RegexFacade.regex("[0-9]+");
     StringWithId string = new StringWithId("12:00pm");
-    MatchData match = regex.match(string, 2, null);
+    MatchData match = regex.match(string, 2, -1, true, null);
     assertEquals(new TextMateRange(3, 5), match.codePointRange(string.bytes));
   }
 
@@ -54,7 +54,7 @@ public class RegexFacadeTest {
     RegexFacade regex = RegexFacade.regex("мир");
     String text = "привет, мир; привет, мир!";
     StringWithId string = new StringWithId(text);
-    MatchData match = regex.match(string, RegexUtil.byteOffsetByCharOffset(text, 9), null);
+    MatchData match = regex.match(string, RegexUtil.byteOffsetByCharOffset(text, 9), -1, true, null);
     assertEquals(new TextMateRange(21, 24), match.codePointRange(string.bytes));
   }
 

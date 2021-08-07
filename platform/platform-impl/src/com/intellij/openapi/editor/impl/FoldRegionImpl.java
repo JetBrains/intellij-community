@@ -17,7 +17,7 @@ public class FoldRegionImpl extends RangeMarkerImpl implements FoldRegion {
   private static final Key<Boolean> SHOW_GUTTER_MARK_FOR_SINGLE_LINE = Key.create("show.gutter.mark.for.single.line");
 
   private boolean myIsExpanded;
-  private final EditorImpl myEditor;
+  final EditorImpl myEditor;
   private String myPlaceholderText;
   private final FoldingGroup myGroup;
   private final boolean myShouldNeverExpand;
@@ -138,7 +138,7 @@ public class FoldRegionImpl extends RangeMarkerImpl implements FoldRegion {
     alignToValidBoundaries();
   }
 
-  private void alignToValidBoundaries() {
+  void alignToValidBoundaries() {
     Document document = getDocument();
     int start = intervalStart();
     int end = intervalEnd();
@@ -148,6 +148,21 @@ public class FoldRegionImpl extends RangeMarkerImpl implements FoldRegion {
     if (DocumentUtil.isInsideCharacterPair(document, end)) {
       setIntervalEnd(end - 1);
     }
+  }
+
+  @Override
+  public void setGreedyToLeft(boolean greedy) {
+    // not supported
+  }
+
+  @Override
+  public void setGreedyToRight(boolean greedy) {
+    // not supported
+  }
+
+  @Override
+  public void setStickingToRight(boolean value) {
+    // not supported
   }
 
   @Override

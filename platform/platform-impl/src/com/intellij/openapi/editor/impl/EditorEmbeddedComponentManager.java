@@ -273,18 +273,13 @@ public final class EditorEmbeddedComponentManager {
       if (myEditor.isDisposed()) return null;
 
       MyRenderer renderer = new MyRenderer(component, policy, rendererFactory, myEditor.getScrollPane(), myResizeListener);
-      final InlayModel inlayModel = myEditor.getInlayModel();
-      Inlay<MyRenderer> inlay;
-      if (inlayModel instanceof InlayModelImpl) {
-        inlay = ((InlayModelImpl)inlayModel).addBlockElement(offset, relatesToPrecedingText, showAbove, showWhenFolded, priority, renderer);
-      }
-      else {
-        inlay = inlayModel.addBlockElement(offset, relatesToPrecedingText, showAbove, priority, renderer);
-        if (showWhenFolded) {
-          LOG.error("Attempt to add inlay that is shown when collapsed using model that doesn't support that");
-        }
-      }
-
+      Inlay<MyRenderer> inlay = myEditor.getInlayModel().addBlockElement(offset,
+                                                                         new InlayProperties()
+                                                                           .relatesToPrecedingText(relatesToPrecedingText)
+                                                                           .showAbove(showAbove)
+                                                                           .priority(priority)
+                                                                           .showWhenFolded(showWhenFolded),
+                                                                         renderer);
       if (inlay == null) return null;
       Disposer.register(this, inlay);
 

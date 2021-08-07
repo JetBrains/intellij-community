@@ -16,24 +16,23 @@
         <xs:element type="namesType" name="names"/>
         <xs:element type="essentialPluginType" name="essential-plugin" minOccurs="0" maxOccurs="unbounded"/>
         <xs:element type="welcome-screenType" name="welcome-screen"/>
-        <xs:element type="customize-ide-wizardType" name="customize-ide-wizard" minOccurs="0"/>
+        <xs:element type="welcome-wizardType" name="welcome-wizard" minOccurs="0"/>
         <xs:element type="pluginsPageType" name="plugins-page" minOccurs="0" maxOccurs="unbounded">
           <xs:annotation>
             <xs:documentation>
-              Deprecated and no longer used since 2019.2. Use customize-ide-wizard instead.
+              Deprecated and no longer used since 2019.2.
             </xs:documentation>
           </xs:annotation>
         </xs:element>
         <xs:element type="editorType" name="editor" minOccurs="0"/>
         <xs:element type="pluginsType" name="plugins" minOccurs="0"/>
-        <xs:element type="evaluationType" name="evaluation" minOccurs="0"/>
         <xs:element type="update-urlsType" name="update-urls" minOccurs="0"/>
         <xs:element type="helpType" name="help" minOccurs="0"/>
         <xs:element type="urlType" name="documentation" minOccurs="0"/>
         <xs:element type="urlType" name="support" minOccurs="0"/>
         <xs:element type="urlType" name="youtrack" minOccurs="0"/>
-        <xs:element type="urlType" name="feedback" minOccurs="0"/>
-        <xs:element type="urlType" name="whatsnew" minOccurs="0"/>
+        <xs:element type="zendeskFormType" name="feedback" minOccurs="0"/>
+        <xs:element type="whatsNewUrlType" name="whatsnew" minOccurs="0"/>
         <xs:element type="keymapType" name="keymap" minOccurs="0"/>
         <xs:element type="urlType" name="jetbrains-tv" minOccurs="0"/>
         <xs:element type="subscriptionsType" name="subscriptions" minOccurs="0"/>
@@ -434,9 +433,8 @@
   <xs:complexType name="welcome-screenType">
     <xs:attribute type="xs:string" name="logo-url" use="required"/>
   </xs:complexType>
-  <xs:complexType name="customize-ide-wizardType">
-    <xs:attribute type="xs:string" name="provider" use="required"/>
-    <xs:attribute type="xs:string" name="dialog" />
+  <xs:complexType name="welcome-wizardType">
+    <xs:attribute type="xs:string" name="dialog" use="required" />
   </xs:complexType>
   <xs:complexType name="editorType">
     <xs:attribute type="xs:string" name="background-url" use="required"/>
@@ -469,6 +467,28 @@
   <xs:complexType name="urlType">
     <xs:attribute type="xs:string" name="url" use="required"/>
   </xs:complexType>
+  <xs:complexType name="whatsNewUrlType">
+    <xs:attribute type="xs:anyURI" name="url" use="required">
+      <xs:annotation>
+        <xs:documentation>An URL for the "Help | What's New" action. See also 'eligibility' attribute.</xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute type="whatsNewEligibilityType" name="eligibility">
+      <xs:annotation>
+        <xs:documentation>
+          Set to 'embed' to show the URL in the built-in (CEF) browser (the page must be optimized accordingly).
+          Set to 'auto' to automatically show the URL in an editor tab after a major upgrade (implies 'embed').
+          When missing, the URL will be opened in an external browser.
+        </xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+  </xs:complexType>
+  <xs:simpleType name="whatsNewEligibilityType">
+    <xs:restriction base="xs:string">
+      <xs:enumeration value="embed"/>
+      <xs:enumeration value="auto"/>
+    </xs:restriction>
+  </xs:simpleType>
   <xs:complexType name="pluginsType">
     <xs:attribute type="xs:anyURI" name="url"/>
     <xs:attribute type="xs:string" name="list-url"/>
@@ -479,9 +499,6 @@
   <xs:complexType name="keymapType">
     <xs:attribute type="xs:string" name="win" use="required"/>
     <xs:attribute type="xs:string" name="mac" use="required"/>
-  </xs:complexType>
-  <xs:complexType name="evaluationType">
-    <xs:attribute type="xs:string" name="license-url"/>
   </xs:complexType>
   <xs:complexType name="subscriptionsType">
     <xs:attribute type="xs:string" name="formid"/>
@@ -506,5 +523,18 @@
   <xs:complexType name="default-lafType">
     <xs:attribute type="xs:string" name="light"/>
     <xs:attribute type="xs:string" name="dark"/>
+  </xs:complexType>
+  <xs:complexType name="zendeskFormType">
+    <xs:sequence>
+      <xs:element name="field" type="zendeskFieldType" maxOccurs="unbounded"/>
+    </xs:sequence>
+    <xs:attribute type="xs:string" name="url" use="required"/>
+    <xs:attribute type="xs:string" name="zendesk-form-id"/>
+    <xs:attribute type="xs:string" name="zendesk-url"/>
+  </xs:complexType>
+  <xs:complexType name="zendeskFieldType">
+    <xs:attribute type="xs:long" name="id" use="required"/>
+    <xs:attribute type="xs:string" name="type"/>
+    <xs:attribute type="xs:string" name="value"/>
   </xs:complexType>
 </xs:schema>

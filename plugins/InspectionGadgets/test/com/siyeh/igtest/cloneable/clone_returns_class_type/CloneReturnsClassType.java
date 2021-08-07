@@ -41,3 +41,20 @@ class Anonymous {
 
   class B implements Cloneable {}
 }
+class ThrowsException implements Cloneable {
+  @NotNull
+  @Override
+  protected Object clone() throws CloneNotSupportedException {
+    if (true) {
+      System.out.println("clone");
+    }
+    throw new RuntimeException();
+  }
+}
+class ReturnsNull implements Cloneable {
+  @NotNull
+  @Override
+  protected Object clone() throws CloneNotSupportedException {
+    return (null);
+  }
+}

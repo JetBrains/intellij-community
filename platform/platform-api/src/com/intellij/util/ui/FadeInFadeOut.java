@@ -27,7 +27,7 @@ import java.awt.image.BufferedImage;
  */
 
 public class FadeInFadeOut extends JComponent {
-  public static final Integer LAYER = new Integer(JLayeredPane.POPUP_LAYER + 1);
+  public static final Integer LAYER = Integer.valueOf(JLayeredPane.POPUP_LAYER + 1);
   public static final int TOTAL_FRAMES = 10;
 
   @NotNull

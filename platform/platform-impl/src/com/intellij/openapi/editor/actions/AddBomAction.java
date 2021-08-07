@@ -11,7 +11,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -56,14 +55,13 @@ public class AddBomAction extends AnAction implements DumbAware {
     if (possibleBom == null) return;
 
     virtualFile.setBOM(possibleBom);
-    NewVirtualFile file = (NewVirtualFile)virtualFile;
     try {
-      byte[] bytes = file.contentsToByteArray();
+      byte[] bytes = virtualFile.contentsToByteArray();
       byte[] contentWithAddedBom = ArrayUtil.mergeArrays(possibleBom, bytes);
-      WriteAction.runAndWait(() -> file.setBinaryContent(contentWithAddedBom));
+      WriteAction.runAndWait(() -> virtualFile.setBinaryContent(contentWithAddedBom));
     }
     catch (IOException ex) {
-      LOG.warn("Unexpected exception occurred in file " + file, ex);
+      LOG.warn("Unexpected exception occurred in file " + virtualFile, ex);
     }
   }
 }

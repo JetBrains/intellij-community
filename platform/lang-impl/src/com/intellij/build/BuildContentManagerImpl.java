@@ -20,14 +20,13 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.RegisterToolWindowTask;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowManager;
-import com.intellij.ui.GuiUtils;
 import com.intellij.ui.UIBundle;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManager;
 import com.intellij.ui.content.TabbedContent;
 import com.intellij.util.ContentUtilEx;
+import com.intellij.util.ModalityUiUtil;
 import com.intellij.util.containers.MultiMap;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -45,13 +44,6 @@ import static com.intellij.util.ContentUtilEx.getFullName;
  * @author Vladislav.Soroka
  */
 public final class BuildContentManagerImpl implements BuildContentManager, Disposable {
-  /**
-   * @deprecated use Build_Tab_Title_Supplier instead
-   */
-  @SuppressWarnings("SSBasedInspection") @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
-  @Deprecated
-  public static final @NlsContexts.TabTitle String Build = LangBundle.message("tab.title.build");
-
   public static final Supplier<@NlsContexts.TabTitle String> Build_Tab_Title_Supplier = LangBundle.messagePointer("tab.title.build");
 
   private static final List<Supplier<@NlsContexts.TabTitle String>> ourPresetOrder = Arrays.asList(
@@ -93,7 +85,7 @@ public final class BuildContentManagerImpl implements BuildContentManager, Dispo
       return;
     }
     StartupManagerEx.getInstanceEx(myProject).runAfterOpened(() -> {
-      GuiUtils.invokeLaterIfNeeded(runnable, ModalityState.defaultModalityState(), myProject.getDisposed());
+      ModalityUiUtil.invokeLaterIfNeeded(ModalityState.defaultModalityState(), myProject.getDisposed(), runnable);
     });
   }
 

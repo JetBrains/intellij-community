@@ -18,6 +18,7 @@ package com.intellij.openapi.roots.ui.configuration;
 import com.intellij.ProjectTopics;
 import com.intellij.ide.JavaUiBundle;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.compiler.JavaCompilerBundle;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.projectRoots.Sdk;
@@ -36,7 +37,6 @@ import com.intellij.openapi.util.NlsSafe;
 import com.intellij.ui.SimpleListCellRenderer;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.ui.JBUI;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -46,15 +46,10 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 public class ClasspathEditor extends ModuleElementsEditor implements ModuleRootListener {
-  /**
-   * @deprecated Use {@link #getName()} instead
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.2")
-  public static final String NAME = "Dependencies";
 
   private ClasspathPanelImpl myPanel;
   private ClasspathFormatPanel myClasspathFormatPanel;
+  private boolean myDisposed;
 
   public ClasspathEditor(final ModuleConfigurationState state) {
     super(state);
@@ -144,8 +139,18 @@ public class ClasspathEditor extends ModuleElementsEditor implements ModuleRootL
   @Override
   public void rootsChanged(@NotNull ModuleRootEvent event) {
     if (myPanel != null) {
-      myPanel.rootsChanged();
+      ApplicationManager.getApplication().invokeLater(() -> {
+        if (!myDisposed) {
+          myPanel.rootsChanged();
+        }
+      });
     }
+  }
+
+  @Override
+  public void disposeUIResources() {
+    super.disposeUIResources();
+    myDisposed = true;
   }
 
   public void setSdk(@Nullable final Sdk newJDK) {

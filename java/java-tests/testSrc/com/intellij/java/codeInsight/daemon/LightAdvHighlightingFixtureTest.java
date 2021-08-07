@@ -211,6 +211,12 @@ public class LightAdvHighlightingFixtureTest extends LightJavaCodeInsightFixture
     doTest();
   }
 
+  public void testDefaultAnnotationsApplicability() {
+    myFixture.addClass("package foo; public @interface A {}");
+    myFixture.configureByFile("module-info.java");
+    myFixture.checkHighlighting();
+  }
+
   private void doTest() {
     myFixture.configureByFile(getTestName(false) + ".java");
     myFixture.checkHighlighting();

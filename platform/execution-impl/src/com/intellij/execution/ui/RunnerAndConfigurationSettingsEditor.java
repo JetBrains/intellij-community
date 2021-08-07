@@ -4,6 +4,7 @@ package com.intellij.execution.ui;
 import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.configurations.RunConfigurationBase;
 import com.intellij.execution.impl.RunConfigurationStorageUi;
+import com.intellij.execution.impl.RunOnTargetPanel;
 import com.intellij.execution.impl.RunnerAndConfigurationSettingsImpl;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SettingsEditor;
@@ -21,6 +22,7 @@ public class RunnerAndConfigurationSettingsEditor extends SettingsEditor<RunnerA
 
   private final RunConfigurationFragmentedEditor<RunConfigurationBase<?>> myConfigurationEditor;
   private final @Nullable RunConfigurationStorageUi myRCStorageUi;
+  private final RunOnTargetPanel myRunOnTargetPanel;
 
   public RunnerAndConfigurationSettingsEditor(RunnerAndConfigurationSettings settings,
                                               RunConfigurationFragmentedEditor<RunConfigurationBase<?>> configurationEditor) {
@@ -31,9 +33,14 @@ public class RunnerAndConfigurationSettingsEditor extends SettingsEditor<RunnerA
 
     Project project = settings.getConfiguration().getProject();
     // RunConfigurationStorageUi for non-template settings is managed by com.intellij.execution.impl.SingleConfigurationConfigurable
-    myRCStorageUi = !project.isDefault() && settings.isTemplate()
-                    ? new RunConfigurationStorageUi(project, () -> fireEditorStateChanged())
-                    : null;
+    if (!project.isDefault() && settings.isTemplate()) {
+      myRCStorageUi = new RunConfigurationStorageUi(project, () -> fireEditorStateChanged());
+      myRunOnTargetPanel = new RunOnTargetPanel(settings, this);
+    }
+    else {
+      myRCStorageUi = null;
+      myRunOnTargetPanel = null;
+    }
   }
 
   public boolean isInplaceValidationSupported() {
@@ -52,6 +59,7 @@ public class RunnerAndConfigurationSettingsEditor extends SettingsEditor<RunnerA
 
     if (myRCStorageUi != null) {
       myRCStorageUi.reset(s);
+      myRunOnTargetPanel.reset();
     }
   }
 
@@ -63,6 +71,7 @@ public class RunnerAndConfigurationSettingsEditor extends SettingsEditor<RunnerA
     if (myRCStorageUi != null) {
       // editing a template run configuration
       myRCStorageUi.apply(s);
+      myRunOnTargetPanel.apply();
     }
   }
 
@@ -83,6 +92,17 @@ public class RunnerAndConfigurationSettingsEditor extends SettingsEditor<RunnerA
 
     c.gridx = 0;
     c.gridy = 1;
+    c.anchor = GridBagConstraints.NORTH;
+    c.insets = JBUI.emptyInsets();
+    c.fill = GridBagConstraints.BOTH;
+    c.weightx = 1;
+    c.weighty = 1;
+    JPanel comp = new JPanel(new GridBagLayout());
+    myRunOnTargetPanel.buildUi(comp, null);
+    panel.add(comp, c);
+
+    c.gridx = 0;
+    c.gridy = 2;
     c.anchor = GridBagConstraints.NORTH;
     c.insets = JBUI.emptyInsets();
     c.fill = GridBagConstraints.BOTH;

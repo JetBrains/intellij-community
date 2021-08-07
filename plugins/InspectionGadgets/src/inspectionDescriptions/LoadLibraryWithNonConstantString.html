@@ -1,17 +1,24 @@
 <html>
 <body>
-Reports calls to <b>java.lang.System.loadLibrary()</b>, <b>java.lang.System.load()</b>, <b>java.lang.Runtime.loadLibrary()</b>
-and <b>java.lang.Runtime.load()</b>
+Reports calls to <code>java.lang.System.loadLibrary()</code>, <code>java.lang.System.load()</code>, <code>java.lang.Runtime.loadLibrary()</code>
+and <code>java.lang.Runtime.load()</code>
 which take a dynamically-constructed string as the name of the library.
-Constructed library name strings are a common source of security breaches.
-By default this inspection ignores compile-time constants.
+<p>
+  Constructed library name strings are a common source of security breaches.
+  By default, this inspection ignores compile-time constants.</p>
+<p><b>Example:</b></p>
+<pre>
+  void test(int i) {
+    System.loadLibrary("foo" + i);
+  }
+</pre>
 <!-- tooltip end -->
 <p>
-Use the checkbox below to consider any <b>static</b> <b>final</b> fields as constant.
+Use the inspection settings to consider any <code>static final</code> fields as constant.
 Be careful, because strings like the following will be ignored when the option is enabled:
+</p>
 <pre>
-<code><b>private static final</b> String LIBRARY = getUserInput();</code>
+  private static final String LIBRARY = getUserInput();
 </pre>
-<p>
 </body>
 </html>

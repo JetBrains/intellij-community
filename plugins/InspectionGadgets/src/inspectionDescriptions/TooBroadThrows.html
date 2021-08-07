@@ -1,15 +1,30 @@
 <html>
 <body>
-Reports <b>throws</b> clauses which contain exceptions which are more generic than the
-exceptions actually thrown by the method.
+Reports a <code>throws</code> clause with an exception that is more generic than the
+exception that the method actually throws.
+<p><b>Example:</b></p>
+<pre><code>
+  public void createFile() throws Exception { // warning: 'throws Exception' is too broad, masking exception 'IOException'
+    File file = new File("pathToFile");
+    file.createNewFile();
+  }
+</code></pre>
+<p>After the quick-fix is applied:</p>
+<pre><code>
+  public void createFile() throws IOException {
+    File file = new File("pathToFile");
+    file.createNewFile();
+</code></pre>
 <!-- tooltip end -->
-<p>
-Use the first checkbox below to have this inspection only warn on the most generic exceptions.
-<p>
-Use the second checkbox below to ignore overly broad <b>throws</b> clauses in methods which override a library method.
-<p>
-Use the third checkbox below to ignore any exceptions which hide other exceptions, but which may be thrown from the method body and thus
-are technically not overly broad.
-<p>
+<p>Configure the inspection:</p>
+<ul>
+  <li>Use the <b>Only warn on RuntimeException, Exception, Error or Throwable</b> option to have this inspection warn only on the most generic
+    exceptions.</li>
+  <li>Use the <b>Ignore exceptions declared on methods overriding a library method</b> option to ignore overly broad <code>throws</code> clauses
+    in methods that override a library method.</li>
+  <li>Use the <b>Ignore exceptions which hide others but are themselves thrown</b> option to ignore any exceptions that hide other exceptions
+    but still may be thrown from the method body and thus
+    are technically not overly broad.</li>
+</ul>
 </body>
 </html>

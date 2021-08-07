@@ -153,7 +153,7 @@ public class SubstitutionHandler extends MatchingHandler {
     if (result != null) {
       if (minOccurs == 1 && maxOccurs == 1) {
         // check if they are the same
-        return validateOneMatch(match, start, end, result,context);
+        return validateOneMatch(match, start, end, result, context);
       }
       if (maxOccurs > 1 && totalMatchedOccurs != -1) {
         if (result.isMultipleMatch()) {
@@ -194,7 +194,7 @@ public class SubstitutionHandler extends MatchingHandler {
 
       if (substitution == null) {
         matchResult.addChild(createMatch(match, start, end) );
-      } else if (maxOccurs > 1) {
+      } else if (maxOccurs > 1 || target && !myRepeatedVar) {
         final MatchResultImpl result = createMatch(match, start, end);
   
         if (!substitution.isMultipleMatch()) {
@@ -276,6 +276,7 @@ public class SubstitutionHandler extends MatchingHandler {
 
   @Override
   public boolean validate(@NotNull MatchContext context, int matchedOccurs) {
+    if (target) return matchedOccurs > 0;
     if (minOccurs > matchedOccurs) return false;
     if (maxOccurs < matchedOccurs) return false;
     return true;
@@ -339,7 +340,7 @@ public class SubstitutionHandler extends MatchingHandler {
       boolean flag = false;
       final List<PsiElement> matchedNodes = new SmartList<>();
 
-      while (fNodes.hasNext() && matchedOccurs < minOccurs) {
+      while (fNodes.hasNext() && (matchedOccurs < minOccurs || target && !myRepeatedVar && !(handler instanceof TopLevelMatchingHandler))) {
         final PsiElement current = matchNodes.current();
         if (handler.match(currentPatternNode, current, context)) {
           matchedNodes.add(current);
@@ -354,7 +355,7 @@ public class SubstitutionHandler extends MatchingHandler {
         flag = true;
       }
 
-      if (matchedOccurs != minOccurs) {
+      if (matchedOccurs != minOccurs && (!target || myRepeatedVar || matchedOccurs == 0)) {
         // failed even for min occurs
         removeLastResults(matchedOccurs, context);
         fNodes.rewind(matchedOccurs);
@@ -476,7 +477,7 @@ public class SubstitutionHandler extends MatchingHandler {
     if (result == null && context.getPreviousResult() != null) {
       result = context.getPreviousResult().getChild(name);
     }
-    return result == null || result.size() == matchedOccurs;
+    return result == null || result.size() == matchedOccurs || target;
   }
 
   public void setTarget(boolean target) {
@@ -503,8 +504,7 @@ public class SubstitutionHandler extends MatchingHandler {
 
   @Override
   public boolean shouldAdvanceThePatternFor(@NotNull PsiElement patternElement, @NotNull PsiElement matchedElement) {
-    if(maxOccurs > 1) return false;
-    return super.shouldAdvanceThePatternFor(patternElement,matchedElement);
+    return maxOccurs <= 1 && !target;
   }
 
   public void setNestedResult(MatchResultImpl nestedResult) {

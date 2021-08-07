@@ -6,6 +6,7 @@ import com.intellij.ide.actions.ActivateToolWindowAction;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.ToolWindowAnchor;
 import com.intellij.openapi.wm.WindowInfo;
@@ -79,11 +80,10 @@ public class StripeButton extends AnchoredButton implements DataProvider {
     setOpaque(false);
 
     enableEvents(AWTEvent.MOUSE_EVENT_MASK);
-
     addMouseMotionListener(new MouseMotionAdapter() {
       @Override
       public void mouseDragged(MouseEvent e) {
-        processDrag(e);
+        if (!Registry.is("ide.new.tool.window.dnd")) processDrag(e);
       }
     });
 
@@ -197,18 +197,11 @@ public class StripeButton extends AnchoredButton implements DataProvider {
         return;
       }
 
-      int width = getWidth() - 1; // -1 because StripeButtonUI.paint will not paint 1 pixel in case (anchor == ToolWindowAnchor.LEFT)
-      int height = getHeight() - 1; // -1 because StripeButtonUI.paint will not paint 1 pixel in case (anchor.isHorizontal())
-      BufferedImage image = UIUtil.createImage(e.getComponent(), width, height, BufferedImage.TYPE_INT_RGB);
-      Graphics graphics = image.getGraphics();
-      graphics.setColor(UIUtil.getBgFillColor(getParent()));
-      graphics.fillRect(0, 0, width, height);
-      paint(graphics);
-      graphics.dispose();
+      BufferedImage image = createDragImage();
       myDragButtonImage = new JLabel(IconUtil.createImageIcon((Image)image)) {
         @Override
         public String toString() {
-          return "Image for: " + StripeButton.this.toString();
+          return "Image for: " + StripeButton.this;
         }
       };
 
@@ -242,7 +235,7 @@ public class StripeButton extends AnchoredButton implements DataProvider {
 
     SwingUtilities.convertPointToScreen(xy, myDragPane);
 
-    Stripe stripe = pane.getStripeFor(new Rectangle(xy, myDragButtonImage.getSize()), (Stripe)getParent());
+    Stripe stripe = pane.getStripeFor(xy, (Stripe)getParent());
     if (stripe == null) {
       if (myLastStripe != null) {
         myLastStripe.resetDrop();
@@ -256,6 +249,28 @@ public class StripeButton extends AnchoredButton implements DataProvider {
     }
 
     myLastStripe = stripe;
+  }
+
+  @NotNull
+  BufferedImage createDragImage() {
+    Rectangle initialBounds = getBounds();
+    try {
+      if (initialBounds.isEmpty()) {
+        setSize(getPreferredSize());
+      }
+      int width = getWidth() - 1; // -1 because StripeButtonUI.paint will not paint 1 pixel in case (anchor == ToolWindowAnchor.LEFT)
+      int height = getHeight() - 1; // -1 because StripeButtonUI.paint will not paint 1 pixel in case (anchor.isHorizontal())
+      BufferedImage image = UIUtil.createImage(this, width, height, BufferedImage.TYPE_INT_RGB);
+      Graphics graphics = image.getGraphics();
+      graphics.setColor(UIUtil.getBgFillColor(getParent()));
+      graphics.fillRect(0, 0, width, height);
+      paint(graphics);
+      graphics.dispose();
+      return image;
+    }
+    finally {
+      setBounds(initialBounds);
+    }
   }
 
   public @NotNull ToolWindowImpl getToolWindow() {
@@ -275,8 +290,7 @@ public class StripeButton extends AnchoredButton implements DataProvider {
   }
 
   private boolean isWithinDeadZone(final MouseEvent e) {
-    return Math.abs(myPressedPoint.x - e.getPoint().x) < MouseDragHelper.DRAG_START_DEADZONE && Math.abs(myPressedPoint.y - e.getPoint().y) < MouseDragHelper
-      .DRAG_START_DEADZONE;
+    return myPressedPoint.distance(e.getPoint()) < JBUI.scale(MouseDragHelper.DRAG_START_DEADZONE);
   }
 
   private static @Nullable JLayeredPane findLayeredPane(MouseEvent e) {

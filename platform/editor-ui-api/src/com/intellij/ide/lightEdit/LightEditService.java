@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.lightEdit;
 
+import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.project.Project;
@@ -15,6 +16,10 @@ import java.util.Collection;
 @ApiStatus.Experimental
 public interface LightEditService {
   String WINDOW_NAME = "LightEdit";
+
+  boolean isLightEditEnabled();
+
+  boolean isForceOpenInLightEditMode();
 
   static LightEditService getInstance() {
     return ApplicationManager.getApplication().getService(LightEditService.class);
@@ -39,6 +44,8 @@ public interface LightEditService {
   @NotNull
   Project openFile(@NotNull VirtualFile file);
 
+  @Nullable Project openFile(@NotNull Path path, boolean suggestSwitchToProject);
+
   boolean isAutosaveMode();
 
   void setAutosaveMode(boolean autosaveMode);
@@ -61,4 +68,12 @@ public interface LightEditService {
    */
   void saveNewDocuments();
 
+  boolean isTabNavigationAvailable(@NotNull AnAction navigationAction);
+
+  void navigateToTab(@NotNull AnAction navigationAction);
+
+  /**
+   * @return True if Project mode is preferred without a confirmation.
+   */
+  boolean isPreferProjectMode();
 }

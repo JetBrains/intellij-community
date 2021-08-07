@@ -29,7 +29,6 @@ class EclipseEmlTest {
 
   @Test
   fun testSrcInZip() {
-    assumeTrue(ProjectModelRule.isWorkspaceModelEnabled)
     doTest()
   }
 

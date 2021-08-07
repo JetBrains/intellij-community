@@ -1,19 +1,19 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.sdk;
 
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.process.ProcessOutput;
+import com.intellij.execution.wsl.WSLUtil;
 import com.intellij.ide.DataManager;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationListener;
 import com.intellij.notification.NotificationType;
-import com.intellij.notification.Notifications;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
-import com.intellij.openapi.application.impl.ApplicationInfoImpl;
+import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.module.Module;
@@ -35,7 +35,10 @@ import com.intellij.remote.ext.LanguageCaseCollector;
 import com.intellij.util.Consumer;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.containers.ContainerUtil;
-import com.jetbrains.python.*;
+import com.jetbrains.python.PyBundle;
+import com.jetbrains.python.PyNames;
+import com.jetbrains.python.PySdkBundle;
+import com.jetbrains.python.PythonHelper;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.remote.PyCredentialsContribution;
@@ -48,10 +51,7 @@ import com.jetbrains.python.sdk.flavors.PythonSdkFlavor;
 import icons.PythonIcons;
 import one.util.streamex.StreamEx;
 import org.jdom.Element;
-import org.jetbrains.annotations.Contract;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import javax.swing.*;
 import java.awt.*;
@@ -64,10 +64,17 @@ import java.util.regex.Pattern;
 
 /**
  * Class should be final and singleton since some code checks its instance by ref.
- *
- * @author yole
  */
 public final class PythonSdkType extends SdkType {
+
+  @NotNull
+  @ApiStatus.Internal
+  public static final Key<List<String>> MOCK_SYS_PATH_KEY = Key.create("PY_MOCK_SYS_PATH_KEY");
+
+  @NotNull
+  @ApiStatus.Internal
+  public static final Key<String> MOCK_PY_VERSION_KEY = Key.create("PY_MOCK_PY_VERSION_KEY");
+
   private static final Logger LOG = Logger.getInstance(PythonSdkType.class);
 
   private static final int MINUTE = 60 * 1000; // 60 seconds, used with script timeouts
@@ -78,8 +85,9 @@ public final class PythonSdkType extends SdkType {
   /**
    * Note that <i>\w+.*</i> pattern is not sufficient because we need also the
    * hyphen sign (<i>-</i>) for <i>docker-compose:</i> scheme.
+   * For WSL we use <code>\\wsl.local\</code> or <code>\\wsl$\</code>
    */
-  private static final Pattern CUSTOM_PYTHON_SDK_HOME_PATH_PATTERN = Pattern.compile("[-a-zA-Z_0-9]{2,}:.*");
+  private static final Pattern CUSTOM_PYTHON_SDK_HOME_PATH_PATTERN = Pattern.compile("^([-a-zA-Z_0-9]{2,}:|\\\\\\\\wsl).+");
 
   public static PythonSdkType getInstance() {
     return SdkType.findInstance(PythonSdkType.class);
@@ -98,12 +106,6 @@ public final class PythonSdkType extends SdkType {
   @Override
   public String getHelpTopic() {
     return "reference.project.structure.sdk.python";
-  }
-
-  @Override
-  @NotNull
-  public Icon getIconForAddAction() {
-    return PythonFileType.INSTANCE.getIcon();
   }
 
   /**
@@ -295,6 +297,7 @@ public final class PythonSdkType extends SdkType {
 
   @Override
   public SdkAdditionalData loadAdditionalData(@NotNull final Sdk currentSdk, @NotNull final Element additional) {
+    WSLUtil.fixWslPrefix(currentSdk);
     String homePath = currentSdk.getHomePath();
     if (homePath != null && isCustomPythonSdkHomePath(homePath)) {
       PythonRemoteInterpreterManager manager = PythonRemoteInterpreterManager.getInstance();
@@ -409,14 +412,10 @@ public final class PythonSdkType extends SdkType {
       notificationMessage = e.getMessage();
     }
 
-    Notifications.Bus.notify(
-      new Notification(
-        SKELETONS_TOPIC, PyBundle.message("sdk.gen.failed.notification.title"),
-        notificationMessage,
-        NotificationType.WARNING,
-        notificationListener
-      )
-    );
+    Notification notification =
+      new Notification(SKELETONS_TOPIC, PyBundle.message("sdk.gen.failed.notification.title"), notificationMessage, NotificationType.WARNING);
+    if (notificationListener != null) notification.setListener(notificationListener);
+    notification.notify(null);
   }
 
   @NotNull
@@ -439,13 +438,12 @@ public final class PythonSdkType extends SdkType {
   public static List<String> getSysPath(@NotNull Sdk sdk) throws InvalidSdkException {
     String working_dir = new File(sdk.getHomePath()).getParent();
     Application application = ApplicationManager.getApplication();
-    if (application != null && (!application.isUnitTestMode() || ApplicationInfoImpl.isInStressTest())) {
+    if (application != null && (!application.isUnitTestMode() || ApplicationManagerEx.isInStressTest())) {
       return getSysPathsFromScript(sdk);
     }
     else { // mock sdk
-      List<String> ret = new ArrayList<>(1);
-      ret.add(working_dir);
-      return ret;
+      final List<String> data = sdk.getUserData(MOCK_SYS_PATH_KEY);
+      return data != null ? data : Collections.singletonList(working_dir);
     }
   }
 
@@ -485,6 +483,13 @@ public final class PythonSdkType extends SdkType {
       return versionString;
     }
     else {
+      if (ApplicationManager.getApplication().isUnitTestMode()) {
+        final var version = sdk.getUserData(MOCK_PY_VERSION_KEY);
+        if (version != null) {
+          return version;
+        }
+      }
+
       String homePath = sdk.getHomePath();
       return homePath == null ? null : getVersionString(homePath);
     }

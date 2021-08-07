@@ -2,14 +2,13 @@
 package com.intellij.grazie.ide.ui.grammar.tabs.rules.component.rules
 
 import com.intellij.grazie.ide.ui.grammar.tabs.rules.component.GrazieTreeComponent
-import com.intellij.grazie.jlanguage.LangTool
+import com.intellij.grazie.ide.ui.grammar.tabs.rules.component.allRules
 import com.intellij.packageDependencies.ui.TreeExpansionMonitor
 import com.intellij.ui.FilterComponent
 import com.intellij.util.ui.tree.TreeUtil
-import java.util.*
 import javax.swing.tree.DefaultTreeModel
 
-internal class GrazieRulesTreeFilter(private val tree: GrazieTreeComponent) : FilterComponent("GRAZIE_RULES_FILTER", 10) {
+internal class GrazieRulesTreeFilter(private val tree: GrazieTreeComponent) : FilterComponent("GRAZIE_RULE_FILTER", 10) {
   private val expansionMonitor = TreeExpansionMonitor.install(tree)
 
   override fun filter() {
@@ -32,24 +31,16 @@ internal class GrazieRulesTreeFilter(private val tree: GrazieTreeComponent) : Fi
 
   private fun filter(filterString: String?) {
     if (filterString.isNullOrBlank()) {
-      tree.resetTreeModel(LangTool.allRulesWithLangs())
+      tree.resetTreeModel(allRules())
       return
     }
 
     tree.resetTreeModel(
-      LangTool.allRulesWithLangs().asSequence().map { (lang, categories) ->
-        if (lang.nativeName.contains(filterString, true)) {
-          lang to categories
-        }
-        else {
-          lang to categories.map { (category, rules) ->
-            if (category.category.name.contains(filterString, true)) {
-              category to rules
-            }
-            else {
-              category to TreeSet(rules.filter { it.rule.description.contains(filterString, true) })
-            }
-          }.toMap().filterValues { it.isNotEmpty() }
+      allRules().map { (lang, rules) ->
+        lang to rules.filter {
+          lang.nativeName.contains(filterString, true) ||
+          it.category.contains(filterString, true) ||
+          it.presentableName.contains(filterString, true)
         }
       }.toMap().filterValues { it.isNotEmpty() }
     )

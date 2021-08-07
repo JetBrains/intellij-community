@@ -55,6 +55,13 @@ object ExtractMethodHelper {
     return InputParameter(externalReference.references, requireNotNull(externalReference.variable.name), externalReference.variable.type)
   }
 
+  fun inputParameterOf(expressionGroup: List<PsiExpression>): InputParameter {
+    require(expressionGroup.isNotEmpty())
+    val expression = expressionGroup.first()
+    val objectType = PsiType.getJavaLangObject(expression.manager, GlobalSearchScope.projectScope(expression.project))
+    return InputParameter(expressionGroup, guessName(expression), expressionGroup.first().type ?: objectType)
+  }
+
   fun PsiElement.addSiblingAfter(element: PsiElement): PsiElement {
     return this.parent.addAfter(element, this)
   }
@@ -118,7 +125,7 @@ object ExtractMethodHelper {
     }
   }
 
-  fun guessName(expression: PsiExpression): String? {
+  fun guessName(expression: PsiExpression): String {
     val codeStyleManager = JavaCodeStyleManager.getInstance(expression.project) as JavaCodeStyleManagerImpl
 
     return findVariableReferences(expression).mapNotNull { variable -> variable.name }.firstOrNull()
@@ -226,32 +233,5 @@ object ExtractMethodHelper {
 
     return initialMethodNames.filter { PsiNameHelper.getInstance(project).isIdentifier(it) }
       .map { propertyName -> suggestGetterName(propertyName) }
-  }
-}
-
-/**
- * Tracks [PsiElement] inside the copied or modified tree.
- */
-class PsiElementMark<T: PsiElement> {
-
-  companion object {
-    fun <T: PsiElement> createMarkers(elements: List<T>): List<PsiElementMark<T>> {
-      return elements.map(::createMarker)
-    }
-
-    fun <T: PsiElement> releaseMarkers(root: PsiElement, marks: List<PsiElementMark<T>>): List<T> {
-      return marks.map { mark -> releaseMarker(root, mark) }
-    }
-
-    fun <T: PsiElement> createMarker(element: T): PsiElementMark<T> {
-      val mark = PsiElementMark<T>()
-      PsiTreeUtil.mark(element, mark)
-      return mark
-    }
-
-    @Suppress("UNCHECKED_CAST")
-    fun <T: PsiElement> releaseMarker(root: PsiElement, mark: PsiElementMark<T>): T {
-      return PsiTreeUtil.releaseMark(root, mark) as T
-    }
   }
 }

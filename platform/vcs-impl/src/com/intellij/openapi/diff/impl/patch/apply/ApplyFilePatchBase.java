@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.diff.impl.patch.apply;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -6,7 +6,6 @@ import com.intellij.openapi.diff.impl.patch.ApplyPatchContext;
 import com.intellij.openapi.diff.impl.patch.FilePatch;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Getter;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.changes.CommitContext;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -14,6 +13,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
+import java.util.function.Supplier;
 
 public abstract class ApplyFilePatchBase<T extends FilePatch> implements ApplyFilePatch {
   protected final static Logger LOG = Logger.getInstance(ApplyFilePatchBase.class);
@@ -32,7 +32,7 @@ public abstract class ApplyFilePatchBase<T extends FilePatch> implements ApplyFi
                       ApplyPatchContext context,
                       @NotNull Project project,
                       FilePath pathBeforeRename,
-                      Getter<? extends CharSequence> baseContents,
+                      Supplier<? extends CharSequence> baseContents,
                       @Nullable CommitContext commitContext) throws IOException {
     if (LOG.isDebugEnabled()) {
       LOG.debug("apply patch called for : " + fileToPatch.getPath());
@@ -53,7 +53,7 @@ public abstract class ApplyFilePatchBase<T extends FilePatch> implements ApplyFi
 
   protected abstract void applyCreate(Project project, VirtualFile newFile, @Nullable CommitContext commitContext) throws IOException;
 
-  protected abstract Result applyChange(Project project, VirtualFile fileToPatch, FilePath pathBeforeRename, Getter<? extends CharSequence> baseContents) throws IOException;
+  protected abstract Result applyChange(Project project, VirtualFile fileToPatch, FilePath pathBeforeRename, Supplier<? extends CharSequence> baseContents) throws IOException;
 
   @Nullable
   public static VirtualFile findPatchTarget(final ApplyPatchContext context, final String beforeName, final String afterName)

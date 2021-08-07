@@ -4,11 +4,19 @@ package com.intellij.openapi.observable.properties
 import com.intellij.openapi.observable.operations.AnonymousParallelOperationTrace
 import com.intellij.openapi.observable.operations.AnonymousParallelOperationTrace.Companion.task
 import com.intellij.openapi.util.RecursionManager
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.CopyOnWriteArrayList
 
-class PropertyGraph(debugName: String? = null) {
+/**
+ * @param isBlockPropagation if true then property changes propagation will be blocked through modified properties
+ */
+class PropertyGraph(debugName: String? = null, private val isBlockPropagation: Boolean = true) {
+  @Deprecated("Please recompile code", level = DeprecationLevel.HIDDEN)
+  @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
+  constructor(debugName: String? = null) : this(debugName, true)
+
   private val propagation = AnonymousParallelOperationTrace((if (debugName == null) "" else " of $debugName") + ": Graph propagation")
   private val properties = ConcurrentHashMap<ObservableClearableProperty<*>, PropertyNode>()
   private val dependencies = ConcurrentHashMap<PropertyNode, CopyOnWriteArrayList<Dependency<*>>>()
@@ -40,7 +48,7 @@ class PropertyGraph(debugName: String? = null) {
     property.afterChange {
       recursionGuard.doPreventingRecursion(node, false) {
         propagation.task {
-          node.isPropagationBlocked = true
+          node.isPropagationBlocked = isBlockPropagation
           propagateChange(node)
         }
       }

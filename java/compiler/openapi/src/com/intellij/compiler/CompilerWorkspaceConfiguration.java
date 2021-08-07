@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 /*
  * @author Eugene Zhuravlev
@@ -6,10 +6,13 @@
 package com.intellij.compiler;
 
 import com.intellij.build.BuildWorkspaceConfiguration;
-import com.intellij.openapi.components.*;
+import com.intellij.openapi.components.PersistentStateComponent;
+import com.intellij.openapi.components.State;
+import com.intellij.openapi.components.Storage;
+import com.intellij.openapi.components.StoragePathMacros;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.options.advanced.AdvancedSettings;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.xmlb.XmlSerializerUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -42,7 +45,7 @@ public final class CompilerWorkspaceConfiguration implements PersistentStateComp
   public boolean COMPILE_AFFECTED_UNLOADED_MODULES_BEFORE_COMMIT = true;
 
   public static CompilerWorkspaceConfiguration getInstance(Project project) {
-    return ServiceManager.getService(project, CompilerWorkspaceConfiguration.class);
+    return project.getService(CompilerWorkspaceConfiguration.class);
   }
 
   @Override
@@ -56,7 +59,7 @@ public final class CompilerWorkspaceConfiguration implements PersistentStateComp
   }
 
   public boolean allowAutoMakeWhileRunningApplication() {
-    return Registry.is("compiler.automake.allow.when.app.running", false);/*ALLOW_AUTOMAKE_WHILE_RUNNING_APPLICATION*/
+    return AdvancedSettings.getBoolean("compiler.automake.allow.when.app.running");
   }
 
   @ApiStatus.Internal

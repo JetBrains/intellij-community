@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build.impl
 
 import com.intellij.openapi.util.Pair
@@ -7,6 +7,7 @@ import groovy.transform.CompileStatic
 import org.jetbrains.annotations.NotNull
 import org.jetbrains.annotations.Nullable
 import org.jetbrains.intellij.build.*
+import org.jetbrains.intellij.build.kotlin.KotlinBinaries
 import org.jetbrains.jps.model.JpsElement
 import org.jetbrains.jps.model.JpsGlobal
 import org.jetbrains.jps.model.JpsModel
@@ -33,6 +34,16 @@ final class BuildContextImpl extends BuildContext {
 
   // thread-safe - forkForParallelTask pass it to child context
   private final ConcurrentLinkedQueue<Pair<Path, String>> distFiles
+
+  @Override
+  String getFullBuildNumber() {
+    return "$applicationInfo.productCode-$buildNumber"
+  }
+
+  @Override
+  String getSystemSelector() {
+    return productProperties.getSystemSelector(applicationInfo, buildNumber)
+  }
 
   static BuildContextImpl create(String communityHome, String projectHome, ProductProperties productProperties,
                                  ProprietaryBuildTools proprietaryBuildTools, BuildOptions options) {
@@ -62,25 +73,22 @@ final class BuildContextImpl extends BuildContext {
     this.linuxDistributionCustomizer = linuxDistributionCustomizer
     this.macDistributionCustomizer = macDistributionCustomizer
 
-    applicationInfo = new ApplicationInfoProperties(findApplicationInfoInSources(project, productProperties, messages))
-    if (productProperties.customProductCode != null) {
-      applicationInfo.productCode = productProperties.customProductCode
-    }
-    else if (productProperties.productCode != null && applicationInfo.productCode == null) {
-      applicationInfo.productCode = productProperties.productCode
-    }
-    else if (productProperties.productCode == null && applicationInfo.productCode != null) {
+    bundledJreManager = new BundledJreManager(this)
+
+    buildNumber = options.buildNumber ?: readSnapshotBuildNumber(paths.communityHomeDir)
+
+    bootClassPathJarNames = List.of("bootstrap.jar", "util.jar", "jna.jar")
+    dependenciesProperties = new DependenciesProperties(this)
+    applicationInfo = new ApplicationInfoProperties(project, productProperties, messages)
+    applicationInfo = applicationInfo.patch(this)
+    if (productProperties.productCode == null && applicationInfo.productCode != null) {
       productProperties.productCode = applicationInfo.productCode
     }
 
-    bundledJreManager = new BundledJreManager(this)
+    if (systemSelector.contains(" ")) {
+      messages.error("System selector must not contain spaces: " + systemSelector)
+    }
 
-    buildNumber = options.buildNumber ?: readSnapshotBuildNumber()
-    fullBuildNumber = "$applicationInfo.productCode-$buildNumber"
-    systemSelector = productProperties.getSystemSelector(applicationInfo, buildNumber)
-
-    bootClassPathJarNames = List.of("bootstrap.jar", "util.jar", "jdom.jar", "log4j.jar", "jna.jar")
-    dependenciesProperties = new DependenciesProperties(this)
     messages.info("Build steps to be skipped: ${options.buildStepsToSkip.join(',')}")
   }
 
@@ -94,30 +102,16 @@ final class BuildContextImpl extends BuildContext {
     return List.copyOf(distFiles)
   }
 
-  private String readSnapshotBuildNumber() {
-    return Files.readString(paths.communityHomeDir.resolve("build.txt")).trim()
+  static String readSnapshotBuildNumber(Path communityHome) {
+    return Files.readString(communityHome.resolve("build.txt")).trim()
   }
 
   private static BiFunction<JpsProject, BuildMessages, String> createBuildOutputRootEvaluator(String projectHome,
                                                                                               ProductProperties productProperties) {
     return { JpsProject project, BuildMessages messages ->
-      ApplicationInfoProperties applicationInfo = new ApplicationInfoProperties(findApplicationInfoInSources(project, productProperties, messages))
+      ApplicationInfoProperties applicationInfo = new ApplicationInfoProperties(project, productProperties, messages)
       return "$projectHome/out/${productProperties.getOutputDirectoryName(applicationInfo)}"
     } as BiFunction<JpsProject, BuildMessages, String>
-  }
-
-  static @NotNull Path findApplicationInfoInSources(JpsProject project, ProductProperties productProperties, BuildMessages messages) {
-    JpsModule module = project.modules.find { it.name == productProperties.applicationInfoModule }
-    if (module == null) {
-      messages.error("Cannot find required '${productProperties.applicationInfoModule}' module")
-    }
-    def appInfoRelativePath = "idea/${productProperties.platformPrefix ?: ""}ApplicationInfo.xml"
-    def appInfoFile = module.sourceRoots.collect { new File(it.file, appInfoRelativePath) }.find { it.exists() }
-    if (appInfoFile == null) {
-      messages.error("Cannot find $appInfoRelativePath in '$module.name' module")
-      return null
-    }
-    return appInfoFile.toPath()
   }
 
   @Override
@@ -163,6 +157,16 @@ final class BuildContextImpl extends BuildContext {
   @Override
   JpsCompilationData getCompilationData() {
     compilationContext.compilationData
+  }
+
+  @Override
+  KotlinBinaries getKotlinBinaries() {
+    return compilationContext.kotlinBinaries
+  }
+
+  @Override
+  File getProjectOutputDirectory() {
+    return compilationContext.projectOutputDirectory
   }
 
   @Override
@@ -212,9 +216,11 @@ final class BuildContextImpl extends BuildContext {
   @Override
   @Nullable Path findFileInModuleSources(String moduleName, String relativePath) {
     for (Pair<Path, String> info : getSourceRootsWithPrefixes(findRequiredModule(moduleName)) ) {
-      Path result = info.first.resolve(StringUtil.trimStart(StringUtil.trimStart(relativePath, info.second), "/"))
-      if (Files.exists(result)) {
-        return result
+      if (relativePath.startsWith(info.second)) {
+        Path result = info.first.resolve(StringUtil.trimStart(StringUtil.trimStart(relativePath, info.second), "/"))
+        if (Files.exists(result)) {
+          return result
+        }
       }
     }
     return null
@@ -242,12 +248,10 @@ final class BuildContextImpl extends BuildContext {
   }
 
   @Override
-  void signExeFile(String path) {
+  void signFile(String path, Map<String, String> options) {
     if (proprietaryBuildTools.signTool != null) {
-      executeStep("Signing $path", BuildOptions.WIN_SIGN_STEP) {
-        proprietaryBuildTools.signTool.signExeFile(path, this)
-        messages.info("Signed $path")
-      }
+      proprietaryBuildTools.signTool.signFile(path, this, options)
+      messages.info("Signed $path")
     }
     else {
       messages.warning("Sign tool isn't defined, $path won't be signed")
@@ -299,7 +303,9 @@ final class BuildContextImpl extends BuildContext {
     WindowsDistributionCustomizer windowsDistributionCustomizer = productProperties.createWindowsCustomizer(projectHomeForCustomizers)
     LinuxDistributionCustomizer linuxDistributionCustomizer = productProperties.createLinuxCustomizer(projectHomeForCustomizers)
     MacDistributionCustomizer macDistributionCustomizer = productProperties.createMacCustomizer(projectHomeForCustomizers)
-
+    /**
+     * FIXME compiled classes are assumed to be already fetched in the FIXME from {@link org.jetbrains.intellij.build.impl.CompilationContextImpl#prepareForBuild}, please change them together
+     */
     def options = new BuildOptions()
     options.useCompiledClassesFromProjectOutput = true
     def compilationContextCopy =
@@ -328,23 +334,29 @@ final class BuildContextImpl extends BuildContext {
   }
 
   @Override
-  String getAdditionalJvmArguments() {
-    String jvmArgs
-    if (productProperties.platformPrefix != null) {
-      jvmArgs = "-Didea.platform.prefix=${productProperties.platformPrefix}"
-    }
-    else {
-      jvmArgs = ""
+  @SuppressWarnings('SpellCheckingInspection')
+  @NotNull List<String> getAdditionalJvmArguments() {
+    List<String> jvmArgs = new ArrayList<>()
+
+    def classLoader = productProperties.classLoader
+    if (classLoader != null) {
+      jvmArgs.add('-Djava.system.class.loader=' + classLoader)
     }
 
-    String additionalJvmArguments = productProperties.additionalIdeJvmArguments.trim()
-    if (!additionalJvmArguments.isEmpty()) {
-      jvmArgs += " $additionalJvmArguments"
+    jvmArgs.add('-Didea.vendor.name=' + applicationInfo.shortCompanyName)
+
+    jvmArgs.add('-Didea.paths.selector=' + systemSelector)
+
+    if (productProperties.platformPrefix != null) {
+      jvmArgs.add('-Didea.platform.prefix=' + productProperties.platformPrefix)
     }
+
+    jvmArgs.addAll(productProperties.additionalIdeJvmArguments)
 
     if (productProperties.toolsJarRequired) {
-      jvmArgs += " -Didea.jre.check=true"
+      jvmArgs.add('-Didea.jre.check=true')
     }
-    return jvmArgs.trim()
+
+    return jvmArgs
   }
 }

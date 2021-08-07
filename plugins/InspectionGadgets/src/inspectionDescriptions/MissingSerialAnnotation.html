@@ -1,29 +1,47 @@
 <html>
 <body>
-Reports methods and fields in <b>Serializable</b> and <b>Externalizable</b> classes that are suitable to be annotated with the <b>java.io.Serial</b> annotation.
-<p>
-Examples:<br>
-<code><pre>
-class Test implements Serializable {
-  // could be marked as @Serial
+<p>Reports methods and fields in the <code>Serializable</code> and <code>Externalizable</code>
+  classes that are suitable to be annotated with the <code>java.io.Serial</code> annotation. The quick-fix adds the annotation.</p>
+<p><b>Example:</b></p>
+<pre><code>
+class Main implements Serializable {
   private static final long serialVersionUID = 7874493593505141603L;
 
-  // could be marked as @Serial
   private void writeObject(ObjectOutputStream out) throws IOException {
   }
 }
-</pre></code>
-<code><pre>
-class Test implements Externalizable {
-  // could be marked as @Serial
-  protected Object readResolve() throws ObjectStreamException {
-    return "SomeObject";
-  }
+</code></pre>
+<p>After the quick-fix is applied:</p>
+<pre><code>
+  class Main implements Serializable {
+    @Serial
+    private static final long serialVersionUID = 7874493593505141603L;
+
+    @Serial
+    private void writeObject(ObjectOutputStream out) throws IOException {
+    }
 }
-</pre></code>
-<p>To get more information about all possible cases, refer the documentation for <b>java.io.Serial</b>.</p>
+</code></pre>
+<p><b>Example:</b></p>
+<pre><code>
+  class Main implements Externalizable {
+    protected Object readResolve() throws ObjectStreamException {
+      return "SomeObject";
+    }
+  }
+</code></pre>
+<p>After the quick-fix is applied:</p>
+<pre><code>
+  class Main implements Externalizable {
+    @Serial
+    protected Object readResolve() throws ObjectStreamException {
+        return "SomeObject";
+    }
+  }
+</code></pre>
 <!-- tooltip end -->
-<p>This inspection only reports if the language level of the project or module is 14 or higher.</p>
+<p>For more information about all possible cases, refer the documentation for <code>java.io.Serial</code>.</p>
+<p>This inspection applies to the language level of the project or module 14 or higher.</p>
 <p><small>New in 2020.3</small></p>
 </body>
 </html>

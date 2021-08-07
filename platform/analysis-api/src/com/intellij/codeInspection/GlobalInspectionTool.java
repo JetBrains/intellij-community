@@ -162,7 +162,12 @@ public abstract class GlobalInspectionTool extends InspectionProfileEntry {
    * can add new problems to {@code problemDescriptionsProcessor} or remove some of the problems
    * collected by {@link #runInspection(AnalysisScope, InspectionManager, GlobalInspectionContext, ProblemDescriptionsProcessor)}
    * by calling {@link ProblemDescriptionsProcessor#ignoreElement(RefEntity)}.
-   *
+   * 
+   * <p>
+   * NOTE: if you want to check references in files which are not included in the graph e.g., in xml, which may be located in the scope,
+   * you need to explicitly disable optimization and override {@link #getAdditionalJobs(GlobalInspectionContext)}
+   *</p>
+   * 
    * @param manager                      the inspection manager instance for the project on which the inspection was run.
    * @param globalContext                the context for the current global inspection run.
    * @param problemDescriptionsProcessor the collector for problems reported by the inspection.

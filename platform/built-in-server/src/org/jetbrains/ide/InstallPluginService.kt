@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.ide
 
 import com.google.gson.reflect.TypeToken
@@ -9,11 +9,13 @@ import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.application.ex.ApplicationInfoEx
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.project.ProjectManager
-import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.PluginsAdvertiser
+import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.installAndEnable
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.ui.AppIcon
 import com.intellij.util.PlatformUtils
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
+import com.intellij.util.concurrency.annotations.RequiresNoReadLock
 import com.intellij.util.io.getHostName
 import com.intellij.util.io.origin
 import com.intellij.util.net.NetUtils
@@ -58,28 +60,30 @@ internal class InstallPluginService : RestService() {
     }
   }
 
+  @RequiresBackgroundThread
+  @RequiresNoReadLock
   private fun checkCompatibility(
     request: FullHttpRequest,
     context: ChannelHandlerContext,
-    pluginIds: List<String>
+    pluginIds: List<String>,
   ): Nothing? {
+    val compatibleUpdatesInfo = pluginIds
+      .mapNotNull { PluginId.findId(it) }
+      .map { id -> id.idString to (MarketplaceRequests.Instance.getLastCompatiblePluginUpdate(id) != null) }
+      .let { info ->
+        if (info.size != 1) info
+        else listOf("compatible" to info[0].second)
+      }
+
     //check if there is an update for this IDE with this ID.
     val out = BufferExposingByteArrayOutputStream()
-
     val writer = createJsonWriter(out)
-    if (pluginIds.size == 1) {
-      val compatibleUpdateExists = pluginIds.all { MarketplaceRequests.Instance.getLastCompatiblePluginUpdate(it) != null }
-      writer.beginObject()
-      writer.name("compatible").value(compatibleUpdateExists)
-      writer.endObject()
-    } else {
-      val compatibleUpdatesInfo = pluginIds.map { it to (MarketplaceRequests.Instance.getLastCompatiblePluginUpdate(it) != null) }
-      writer.beginObject()
-      compatibleUpdatesInfo.forEach {
-        writer.name(it.first).value(it.second)
-      }
-      writer.endObject()
+    writer.beginObject()
+    compatibleUpdatesInfo.forEach {
+      val (pluginId, value) = it
+      writer.name(pluginId).value(value)
     }
+    writer.endObject()
     writer.close()
 
     send(out, request, context)
@@ -95,7 +99,7 @@ internal class InstallPluginService : RestService() {
       val effectiveProject = getLastFocusedOrOpenedProject() ?: ProjectManager.getInstance().defaultProject
       ApplicationManager.getApplication().invokeLater(Runnable {
         AppIcon.getInstance().requestAttention(effectiveProject, true)
-        PluginsAdvertiser.installAndEnable(plugins.toSet()) { }
+        installAndEnable(effectiveProject, plugins.toSet()) { }
         isAvailable = true
       }, effectiveProject.disposed)
     }

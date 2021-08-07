@@ -3,6 +3,7 @@ package git4idea.commands;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.options.advanced.AdvancedSettings;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.SystemInfo;
@@ -13,13 +14,13 @@ import git4idea.config.GitExecutable;
 import git4idea.config.GitVcsApplicationSettings;
 import git4idea.config.GitVersion;
 import git4idea.config.GitVersionSpecialty;
+import git4idea.http.GitAskPassXmlRpcHandler;
+import git4idea.nativessh.GitNativeSshAskPassXmlRpcHandler;
+import git4idea.ssh.GitXmlRpcHandlerService;
+import git4idea.ssh.GitXmlRpcNativeSshService;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.git4idea.http.GitAskPassXmlRpcHandler;
-import org.jetbrains.git4idea.nativessh.GitNativeSshAskPassXmlRpcHandler;
-import org.jetbrains.git4idea.ssh.GitXmlRpcHandlerService;
-import org.jetbrains.git4idea.ssh.GitXmlRpcNativeSshService;
 
 import java.io.File;
 import java.io.IOException;
@@ -135,7 +136,7 @@ public final class GitHandlerAuthenticationManager implements AutoCloseable {
 
     boolean useSchannel = SystemInfo.isWindows &&
                           GitVersionSpecialty.CAN_USE_SCHANNEL.existsIn(myVersion) &&
-                          Registry.is("git.use.schannel.on.windows");
+                          AdvancedSettings.getBoolean("git.use.schannel.on.windows");
     if (useSchannel) {
       myHandler.overwriteConfig("http.sslBackend=schannel");
     }

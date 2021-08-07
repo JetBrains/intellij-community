@@ -22,7 +22,6 @@ import com.intellij.vcs.log.impl.VcsProjectLog;
 import com.intellij.vcs.log.ui.filter.VcsLogClassicFilterUi;
 import com.intellij.vcs.log.ui.filter.VcsLogFilterUiEx;
 import com.intellij.vcs.log.ui.frame.MainFrame;
-import com.intellij.vcs.log.ui.frame.VcsLogEditorDiffPreview;
 import com.intellij.vcs.log.ui.highlighters.VcsLogHighlighterFactory;
 import com.intellij.vcs.log.ui.table.VcsLogGraphTable;
 import com.intellij.vcs.log.ui.table.column.Date;
@@ -56,11 +55,21 @@ public class VcsLogUiImpl extends AbstractVcsLogUi implements MainVcsLogUi {
                       @NotNull MainVcsLogUiProperties uiProperties,
                       @NotNull VisiblePackRefresher refresher,
                       @Nullable VcsLogFilterCollection initialFilters) {
+    this(id, logData, manager, uiProperties, refresher, initialFilters, true);
+  }
+
+  public VcsLogUiImpl(@NotNull String id,
+                      @NotNull VcsLogData logData,
+                      @NotNull VcsLogColorManager manager,
+                      @NotNull MainVcsLogUiProperties uiProperties,
+                      @NotNull VisiblePackRefresher refresher,
+                      @Nullable VcsLogFilterCollection initialFilters,
+                      boolean isEditorDiffPreview) {
     super(id, logData, manager, refresher);
     myUiProperties = uiProperties;
 
     VcsLogFilterUiEx filterUi = createFilterUi(filters -> applyFiltersAndUpdateUi(filters), initialFilters, this);
-    myMainFrame = createMainFrame(logData, uiProperties, filterUi);
+    myMainFrame = createMainFrame(logData, uiProperties, filterUi, isEditorDiffPreview);
 
     LOG_HIGHLIGHTER_FACTORY_EP.addChangeListener(this::updateHighlighters, this);
     updateHighlighters();
@@ -73,15 +82,11 @@ public class VcsLogUiImpl extends AbstractVcsLogUi implements MainVcsLogUi {
     applyFiltersAndUpdateUi(myMainFrame.getFilterUi().getFilters());
   }
 
-  @NotNull
-  protected MainFrame createMainFrame(@NotNull VcsLogData logData,
-                                      @NotNull MainVcsLogUiProperties uiProperties, @NotNull VcsLogFilterUiEx filterUi) {
-    boolean isDiffPreviewAsEditor = VcsLogUiUtil.isDiffPreviewInEditor();
-    MainFrame mainFrame = new MainFrame(logData, this, uiProperties, filterUi, !isDiffPreviewAsEditor, this);
-    if (isDiffPreviewAsEditor) {
-      new VcsLogEditorDiffPreview(myProject, myUiProperties, mainFrame);
-    }
-    return mainFrame;
+  protected @NotNull MainFrame createMainFrame(@NotNull VcsLogData logData,
+                                               @NotNull MainVcsLogUiProperties uiProperties,
+                                               @NotNull VcsLogFilterUiEx filterUi,
+                                               boolean isEditorDiffPreview) {
+    return new MainFrame(logData, this, uiProperties, filterUi, isEditorDiffPreview, this);
   }
 
   @NotNull
@@ -228,18 +233,6 @@ public class VcsLogUiImpl extends AbstractVcsLogUi implements MainVcsLogUi {
       else if (MainVcsLogUiProperties.SHOW_LONG_EDGES.equals(property)) {
         onShowLongEdgesChanged();
       }
-      else if (CommonUiProperties.SHOW_ROOT_NAMES.equals(property)) {
-        getTable().rootColumnUpdated();
-      }
-      else if (MainVcsLogUiProperties.COMPACT_REFERENCES_VIEW.equals(property)) {
-        getTable().setCompactReferencesView(myUiProperties.get(MainVcsLogUiProperties.COMPACT_REFERENCES_VIEW));
-      }
-      else if (MainVcsLogUiProperties.SHOW_TAG_NAMES.equals(property)) {
-        getTable().setShowTagNames(myUiProperties.get(MainVcsLogUiProperties.SHOW_TAG_NAMES));
-      }
-      else if (MainVcsLogUiProperties.LABELS_LEFT_ALIGNED.equals(property)) {
-        getTable().setLabelsLeftAligned(myUiProperties.get(MainVcsLogUiProperties.LABELS_LEFT_ALIGNED));
-      }
       else if (MainVcsLogUiProperties.BEK_SORT_TYPE.equals(property)) {
         myRefresher.onSortTypeChange(myUiProperties.get(MainVcsLogUiProperties.BEK_SORT_TYPE));
       }
@@ -250,16 +243,14 @@ public class VcsLogUiImpl extends AbstractVcsLogUi implements MainVcsLogUi {
         VcsLogHighlighter highlighter = myHighlighters.get(((VcsLogHighlighterProperty)property).getId());
         if ((boolean)myUiProperties.get(property)) {
           getTable().addHighlighter(highlighter);
-        } else {
+        }
+        else {
           getTable().removeHighlighter(highlighter);
         }
         getTable().repaint();
       }
       else if (property instanceof TableColumnWidthProperty) {
         getTable().forceReLayout(((TableColumnWidthProperty)property).getColumn());
-      }
-      else if (property.equals(CommonUiProperties.PREFER_COMMIT_DATE) && getTable().getTableColumn(Date.INSTANCE) != null) {
-        getTable().repaint();
       }
     }
 

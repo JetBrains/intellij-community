@@ -19,7 +19,7 @@ import java.util.function.Supplier;
  * to add children actions and separators between them. In most of the
  * cases you will be using this implementation but note that there are
  * cases (for example "Recent files" dialog) where children are determined
- * on rules different than just positional constraints, that's when you need
+ * on rules different from just positional constraints, that's when you need
  * to implement your own {@code ActionGroup}.
  *
  * @see Constraints
@@ -33,16 +33,12 @@ import java.util.function.Supplier;
  */
 public class DefaultActionGroup extends ActionGroup {
   private static final Logger LOG = Logger.getInstance(DefaultActionGroup.class);
+
   private static final String CANT_ADD_ITSELF = "Cannot add a group to itself: ";
   private static final String CANT_ADD_ACTION_TWICE = "Cannot add an action twice: ";
-  /**
-   * Contains instances of AnAction
-   */
-  private final List<AnAction> mySortedChildren = ContainerUtil.createLockFreeCopyOnWriteList();
-  /**
-   * Contains instances of Pair
-   */
-  private final List<Pair<AnAction, Constraints>> myPairs = ContainerUtil.createLockFreeCopyOnWriteList();
+
+  private final List<AnAction> mySortedChildren = new ArrayList<>();
+  private final List<Pair<AnAction, Constraints>> myPairs = new ArrayList<>();
   private int myModificationStamp;
 
   public DefaultActionGroup() {
@@ -104,7 +100,7 @@ public class DefaultActionGroup extends ActionGroup {
     return myModificationStamp;
   }
 
-  private void addActions(@NotNull List<? extends AnAction> actions) {
+  private synchronized void addActions(@NotNull List<? extends AnAction> actions) {
     Set<Object> actionSet = new HashSet<>();
     List<AnAction> uniqueActions = new ArrayList<>(actions.size());
     for (AnAction action : actions) {
@@ -133,8 +129,7 @@ public class DefaultActionGroup extends ActionGroup {
     addAction(action, Constraints.LAST);
   }
 
-  @NotNull
-  public final ActionInGroup addAction(@NotNull AnAction action) {
+  public final @NotNull ActionInGroup addAction(@NotNull AnAction action) {
     return addAction(action, Constraints.LAST);
   }
 
@@ -159,8 +154,7 @@ public class DefaultActionGroup extends ActionGroup {
     add(action, constraint, ActionManager.getInstance());
   }
 
-  @NotNull
-  public final ActionInGroup addAction(@NotNull AnAction action, @NotNull Constraints constraint) {
+  public final @NotNull ActionInGroup addAction(@NotNull AnAction action, @NotNull Constraints constraint) {
     return addAction(action, constraint, ActionManager.getInstance());
   }
 
@@ -168,8 +162,7 @@ public class DefaultActionGroup extends ActionGroup {
     addAction(action, constraint, actionManager);
   }
 
-  @NotNull
-  public final ActionInGroup addAction(@NotNull AnAction action, @NotNull Constraints constraint, @NotNull ActionManager actionManager) {
+  public final synchronized @NotNull ActionInGroup addAction(@NotNull AnAction action, @NotNull Constraints constraint, @NotNull ActionManager actionManager) {
     if (action == this) {
       throw new IllegalArgumentException(CANT_ADD_ITSELF + action);
     }
@@ -263,34 +256,30 @@ public class DefaultActionGroup extends ActionGroup {
     remove(action, actionManager.getId(action));
   }
 
-  public final void remove(@NotNull AnAction action, @Nullable String id) {
-    if (!mySortedChildren.remove(action) &&
-        !mySortedChildren.removeIf(oldAction ->
-                                     oldAction instanceof ActionStubBase && ((ActionStubBase)oldAction).getId().equals(id))) {
-      for (int i = 0; i < myPairs.size(); i++) {
-        Pair<AnAction, Constraints> pair = myPairs.get(i);
-        if (pair.first.equals(action) || (pair.first instanceof ActionStubBase && ((ActionStubBase)pair.first).getId().equals(id))) {
-          myPairs.remove(i);
-          incrementModificationStamp();
-          break;
-        }
-      }
+  public final synchronized void remove(@NotNull AnAction action, @Nullable String id) {
+    boolean removed = mySortedChildren.remove(action);
+    removed = removed || mySortedChildren.removeIf(
+      o -> o instanceof ActionStubBase && ((ActionStubBase)o).getId().equals(id));
+    removed = removed || myPairs.removeIf(
+      o -> o.first.equals(action) || (o.first instanceof ActionStubBase && ((ActionStubBase)o.first).getId().equals(id)));
+    if (removed) {
+      incrementModificationStamp();
     }
   }
 
   /**
    * Removes all children actions (separators as well) from the group.
    */
-  public final void removeAll() {
+  public final synchronized void removeAll() {
     mySortedChildren.clear();
     myPairs.clear();
     incrementModificationStamp();
   }
 
   /**
-   * Replaces specified action with the a one.
+   * Replaces the specified action with another.
    */
-  public boolean replaceAction(@NotNull AnAction oldAction, @NotNull AnAction newAction) {
+  public synchronized boolean replaceAction(@NotNull AnAction oldAction, @NotNull AnAction newAction) {
     int index = mySortedChildren.indexOf(oldAction);
     if (index >= 0) {
       mySortedChildren.set(index, newAction);
@@ -314,7 +303,7 @@ public class DefaultActionGroup extends ActionGroup {
    * Copies content from {@code group}.
    * @param other group to copy from
    */
-  public void copyFromGroup(@NotNull DefaultActionGroup other) {
+  public synchronized void copyFromGroup(@NotNull DefaultActionGroup other) {
     copyFrom(other);
     setPopup(other.isPopup());
 
@@ -338,7 +327,7 @@ public class DefaultActionGroup extends ActionGroup {
    * @return An array of children actions
    */
   @Override
-  public final AnAction @NotNull [] getChildren(@Nullable AnActionEvent e, @NotNull ActionManager actionManager) {
+  public final synchronized AnAction @NotNull [] getChildren(@Nullable AnActionEvent e, @NotNull ActionManager actionManager) {
     boolean hasNulls = false;
     // Mix sorted actions and pairs
     int sortedSize = mySortedChildren.size();
@@ -387,8 +376,7 @@ public class DefaultActionGroup extends ActionGroup {
     return children;
   }
 
-  @Nullable
-  private AnAction unStub(@NotNull ActionManager actionManager, @NotNull ActionStubBase stub) {
+  private @Nullable AnAction unStub(@NotNull ActionManager actionManager, @NotNull ActionStubBase stub) {
     try {
       AnAction action = actionManager.getAction(stub.getId());
       if (action == null) {
@@ -412,11 +400,11 @@ public class DefaultActionGroup extends ActionGroup {
    *
    * @return number of children in the group
    */
-  public final int getChildrenCount() {
+  public final synchronized int getChildrenCount() {
     return mySortedChildren.size() + myPairs.size();
   }
 
-  public final AnAction @NotNull [] getChildActionsOrStubs() {
+  public final synchronized AnAction @NotNull [] getChildActionsOrStubs() {
     // Mix sorted actions and pairs
     int sortedSize = mySortedChildren.size();
     AnAction[] children = new AnAction[sortedSize + myPairs.size()];
@@ -463,16 +451,16 @@ public class DefaultActionGroup extends ActionGroup {
   }
 
   /**
-   * Creates an action group with specified template text. It is necessary to redefine template text if group contains
-   * user specific data such as Project name, file name, etc
+   * Creates an action group with specified template text.
+   * It is necessary to redefine template text if the group contains
+   * user-specific data such as Project name, file name, etc.
    * @param templateText template text which will be used in statistics
    * @return action group
    */
   public static DefaultActionGroup createUserDataAwareGroup(@ActionText String templateText) {
     return new DefaultActionGroup() {
-      @Nullable
       @Override
-      public String getTemplateText() {
+      public @Nullable String getTemplateText() {
         return templateText;
       }
     };

@@ -15,11 +15,14 @@
  */
 package org.jetbrains.idea.maven.dom;
 
+import org.junit.Test;
+
 /**
  * @author Sergey Evdokimov
  */
 public class MavenDomSoftReferencesInParentTest extends MavenDomTestCase {
 
+  @Test
   public void testDoNotHighlightSourceDirectoryInParentPom() {
     importProject("<groupId>test</groupId>\n" +
                   "<artifactId>project</artifactId>\n" +
@@ -36,6 +39,7 @@ public class MavenDomSoftReferencesInParentTest extends MavenDomTestCase {
     checkHighlighting();
   }
 
+  @Test 
   public void testHighlightSourceDirectory() {
     importProject("<groupId>test</groupId>\n" +
                   "<artifactId>project</artifactId>\n" +

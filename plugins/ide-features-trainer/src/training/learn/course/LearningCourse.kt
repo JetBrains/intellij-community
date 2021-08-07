@@ -2,5 +2,5 @@
 package training.learn.course
 
 interface LearningCourse {
-  fun modules() : Collection<IftModule>
+  fun modules(): Collection<IftModule>
 }

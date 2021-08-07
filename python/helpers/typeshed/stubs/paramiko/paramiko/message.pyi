@@ -3,12 +3,12 @@ from typing import Any, Iterable, List, Optional, Text
 
 from .common import _LikeBytes
 
-if sys.version_info < (3, 0):
+if sys.version_info >= (3, 0):
+    from io import BytesIO
+else:
     from StringIO import StringIO
 
     BytesIO = StringIO[bytes]
-else:
-    from io import BytesIO
 
 class Message:
     big_int: int

@@ -1,10 +1,11 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.xml.util;
 
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.ColorUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 import java.util.List;
@@ -282,7 +283,7 @@ public final class ColorMap {
     return ourStandardColors.contains(s);
   }
 
-  public static synchronized String getHexCodeForColorName(String colorName) {
+  public static synchronized @Nullable String getHexCodeForColorName(@NotNull String colorName) {
     return ourColorNameToHexCodeMap.get(colorName);
   }
 

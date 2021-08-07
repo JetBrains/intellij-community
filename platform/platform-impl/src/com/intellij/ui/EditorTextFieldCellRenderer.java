@@ -35,6 +35,7 @@ import com.intellij.util.text.CharSequenceSubSequence;
 import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.accessibility.AccessibleContextDelegate;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -56,8 +57,9 @@ public abstract class EditorTextFieldCellRenderer implements TableCellRenderer, 
 
   /** @deprecated Use {@link EditorTextFieldCellRenderer#EditorTextFieldCellRenderer(Project, Language, Disposable)}*/
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
   protected EditorTextFieldCellRenderer(@Nullable Project project, @Nullable FileType fileType, @NotNull Disposable parent) {
-    this(project, LanguageUtil.getFileTypeLanguage(fileType), true, parent);
+    this(project, fileType == null ? null : LanguageUtil.getFileTypeLanguage(fileType), true, parent);
   }
 
   protected EditorTextFieldCellRenderer(@Nullable Project project, @Nullable Language language, @NotNull Disposable parent) {
@@ -137,9 +139,12 @@ public abstract class EditorTextFieldCellRenderer implements TableCellRenderer, 
     TextAttributes myTextAttributes;
     private boolean mySelected;
 
-    RendererComponent(Project project, @Nullable Language language, boolean inheritFontFromLaF) {
+    RendererComponent(@Nullable Project project, @Nullable Language language, boolean inheritFontFromLaF) {
       myEditor = createEditor(project, language, inheritFontFromLaF);
-      add(myEditor.getContentComponent());
+      addEditorToSelf(myEditor);
+      if (!UIUtil.isAncestor(this, myEditor.getContentComponent())) {
+        throw new AssertionError("Editor component is not added in `addEditorToSelf`");
+      }
     }
 
     public EditorEx getEditor() {
@@ -208,8 +213,12 @@ public abstract class EditorTextFieldCellRenderer implements TableCellRenderer, 
 
     @Override
     public void dispose() {
-      remove(myEditor.getContentComponent());
+      removeAll();
       EditorFactory.getInstance().releaseEditor(myEditor);
+    }
+
+    void addEditorToSelf(@NotNull EditorEx editor) {
+      add(editor.getContentComponent());
     }
 
     void setTextToEditor(String text) {
@@ -229,7 +238,7 @@ public abstract class EditorTextFieldCellRenderer implements TableCellRenderer, 
     }
   }
 
-  public static class SimpleRendererComponent extends RendererComponent implements Disposable {
+  public static class SimpleRendererComponent extends RendererComponent {
     public SimpleRendererComponent(Project project, @Nullable Language language, boolean inheritFontFromLaF) {
       super(project, language, inheritFontFromLaF);
     }
@@ -237,6 +246,17 @@ public abstract class EditorTextFieldCellRenderer implements TableCellRenderer, 
     @Override
     public void setText(String text) {
       setTextToEditor(text);
+    }
+  }
+
+  public static class SimpleWithGutterRendererComponent extends SimpleRendererComponent {
+    public SimpleWithGutterRendererComponent(Project project, @Nullable Language language, boolean inheritFontFromLaF) {
+      super(project, language, inheritFontFromLaF);
+    }
+
+    @Override
+    void addEditorToSelf(@NotNull EditorEx editor) {
+      add(editor.getComponent());
     }
   }
 

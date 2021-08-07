@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.project;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.progress.TaskInfo;
 import com.intellij.openapi.progress.util.ProgressIndicatorBase;
 import com.intellij.openapi.util.registry.Registry;
@@ -20,7 +21,9 @@ class DumbServiceAppIconProgress extends ProgressIndicatorBase {
 
   static void registerForProgress(@NotNull Project project,
                                   @NotNull ProgressIndicatorEx indicator) {
-    indicator.addStateDelegate(new DumbServiceAppIconProgress(project));
+    if (!ApplicationManager.getApplication().isHeadlessEnvironment()) {
+      indicator.addStateDelegate(new DumbServiceAppIconProgress(project));
+    }
   }
 
   @Override

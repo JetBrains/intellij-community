@@ -5,10 +5,7 @@ import com.intellij.icons.AllIcons;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.externalSystem.util.ExternalSystemUiUtil;
 import com.intellij.openapi.externalSystem.util.PaintAwarePanel;
-import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.ui.TextComponentAccessor;
-import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
@@ -21,9 +18,14 @@ import com.intellij.ui.components.JBTextField;
 import com.intellij.util.ui.GridBag;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.xml.util.XmlStringUtil;
-import org.gradle.initialization.BuildLayoutParameters;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.gradle.execution.target.GradleRuntimeTargetUI;
+import org.jetbrains.plugins.gradle.execution.target.GradleTargetUtil;
+import org.jetbrains.plugins.gradle.execution.target.TargetPathFieldWithBrowseButton;
+import org.jetbrains.plugins.gradle.service.GradleInstallationManager;
+import org.jetbrains.plugins.gradle.service.execution.BuildLayoutParameters;
 import org.jetbrains.plugins.gradle.settings.GradleSettings;
 import org.jetbrains.plugins.gradle.util.GradleBundle;
 
@@ -40,6 +42,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import static com.intellij.openapi.ui.Messages.getQuestionIcon;
+import static org.jetbrains.plugins.gradle.execution.target.GradleTargetUtil.maybeGetTargetValue;
 import static org.jetbrains.plugins.gradle.service.settings.IdeaGradleProjectSettingsControlBuilder.getIDEName;
 
 /**
@@ -56,7 +59,7 @@ public class IdeaGradleSystemSettingsControlBuilder implements GradleSystemSetti
   private JBLabel myServiceDirectoryLabel;
   private JBLabel myServiceDirectoryHint;
   @Nullable
-  private TextFieldWithBrowseButton myServiceDirectoryPathField;
+  private TargetPathFieldWithBrowseButton myServiceDirectoryPathField;
   private boolean dropServiceDirectory;
 
   @Nullable
@@ -83,7 +86,7 @@ public class IdeaGradleSystemSettingsControlBuilder implements GradleSystemSetti
       canvas.add(myGenerateImlFilesCheckBox, ExternalSystemUiUtil.getFillLineConstraints(indentLevel));
 
       myGenerateImlFilesHint = new JBLabel(
-        XmlStringUtil.wrapInHtml(GradleBundle.message("gradle.settings.text.generate.iml.files.hint" , getIDEName())),
+        XmlStringUtil.wrapInHtml(GradleBundle.message("gradle.settings.text.generate.iml.files.hint", getIDEName())),
         UIUtil.ComponentStyle.SMALL);
       myGenerateImlFilesHint.setForeground(UIUtil.getLabelFontColor(UIUtil.FontColor.BRIGHTER));
 
@@ -102,10 +105,10 @@ public class IdeaGradleSystemSettingsControlBuilder implements GradleSystemSetti
   @Override
   public void reset() {
     if (myServiceDirectoryPathField != null) {
-      File gradleUserHomeDir = new BuildLayoutParameters().getGradleUserHomeDir();
-      ((JBTextField)myServiceDirectoryPathField.getTextField()).getEmptyText().setText(gradleUserHomeDir.getPath());
-
-      myServiceDirectoryPathField.setText(myInitialSettings.getServiceDirectoryPath());
+      BuildLayoutParameters buildLayoutParameters = GradleInstallationManager.defaultBuildLayoutParameters(myInitialSettings.getProject());
+      String gradleUserHomeDir = maybeGetTargetValue(buildLayoutParameters.getGradleUserHome()); //NON-NLS
+      ((JBTextField)myServiceDirectoryPathField.getTextField()).getEmptyText().setText(gradleUserHomeDir);
+      myServiceDirectoryPathField.setLocalPath(myInitialSettings.getServiceDirectoryPath());
     }
 
     if (myGradleVmOptionsField != null) {
@@ -125,7 +128,7 @@ public class IdeaGradleSystemSettingsControlBuilder implements GradleSystemSetti
   @Override
   public boolean isModified() {
     if (myServiceDirectoryPathField != null &&
-        !Objects.equals(ExternalSystemApiUtil.normalizePath(myServiceDirectoryPathField.getText()),
+        !Objects.equals(ExternalSystemApiUtil.normalizePath(myServiceDirectoryPathField.getLocalPath()),
                         ExternalSystemApiUtil.normalizePath(myInitialSettings.getServiceDirectoryPath()))) {
       return true;
     }
@@ -145,7 +148,7 @@ public class IdeaGradleSystemSettingsControlBuilder implements GradleSystemSetti
   @Override
   public void apply(@NotNull GradleSettings settings) {
     if (myServiceDirectoryPathField != null) {
-      String serviceDirectoryPath = trimIfPossible(myServiceDirectoryPathField.getText());
+      String serviceDirectoryPath = trimIfPossible(myServiceDirectoryPathField.getLocalPath());
       settings.setServiceDirectoryPath(ExternalSystemApiUtil.normalizePath(serviceDirectoryPath));
     }
     if (myGradleVmOptionsField != null) {
@@ -172,6 +175,11 @@ public class IdeaGradleSystemSettingsControlBuilder implements GradleSystemSetti
     return myInitialSettings;
   }
 
+  /**
+   * @deprecated obsolete unused method
+   */
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated
   public IdeaGradleSystemSettingsControlBuilder dropServiceDirectory() {
     dropServiceDirectory = true;
     return this;
@@ -195,12 +203,8 @@ public class IdeaGradleSystemSettingsControlBuilder implements GradleSystemSetti
     myServiceDirectoryHint = new JBLabel(XmlStringUtil.wrapInHtml(GradleBundle.message("gradle.settings.text.user.home.hint")),
                                          UIUtil.ComponentStyle.SMALL);
     myServiceDirectoryHint.setForeground(UIUtil.getLabelFontColor(UIUtil.FontColor.BRIGHTER));
-
-    myServiceDirectoryPathField = new TextFieldWithBrowseButton(new JBTextField());
-    myServiceDirectoryPathField.addBrowseFolderListener("", GradleBundle.message("gradle.settings.text.user.home.dialog.title"), null,
-                                                        new FileChooserDescriptor(false, true, false, false, false, false),
-                                                        TextComponentAccessor.TEXT_FIELD_WHOLE_TEXT);
-
+    myServiceDirectoryPathField = GradleRuntimeTargetUI
+      .targetPathFieldWithBrowseButton(myInitialSettings.getProject(), GradleBundle.message("gradle.settings.text.user.home.dialog.title"));
     canvas.add(myServiceDirectoryLabel, ExternalSystemUiUtil.getLabelConstraints(indentLevel));
     canvas.add(myServiceDirectoryPathField, ExternalSystemUiUtil.getFillLineConstraints(indentLevel));
 
@@ -270,10 +274,24 @@ public class IdeaGradleSystemSettingsControlBuilder implements GradleSystemSetti
   }
 
   private boolean moveVMOptionsToGradleProperties(@NotNull String vmOptions, @NotNull GradleSettings settings) {
-    File gradleUserHomeDir = new BuildLayoutParameters().getGradleUserHomeDir();
+    File gradleUserHomeDir = null;
     if (myServiceDirectoryPathField != null) {
       String fieldText = trimIfPossible(myServiceDirectoryPathField.getText());
       if (fieldText != null) gradleUserHomeDir = new File(fieldText);
+    }
+    if (gradleUserHomeDir == null) {
+      BuildLayoutParameters buildLayoutParameters = GradleInstallationManager.defaultBuildLayoutParameters(settings.getProject());
+      String gradleUserHome = GradleTargetUtil.maybeGetLocalValue(buildLayoutParameters.getGradleUserHome());
+      if (gradleUserHome == null) {
+        Messages.showErrorDialog(settings.getProject(),
+                                 GradleBundle.message("gradle.settings.text.vm.options.migration.error.text",
+                                                      GradleBundle.message("gradle.settings.text.user.home.not.found.error.text")),
+                                 GradleBundle.message("gradle.settings.text.vm.options.migration.error.title"));
+        return false;
+      }
+      else {
+        gradleUserHomeDir = new File(gradleUserHome);
+      }
     }
 
     int result = Messages.showYesNoDialog(

@@ -14,9 +14,7 @@ import com.jetbrains.python.pyi.PyiFile;
 import com.jetbrains.python.pyi.PyiUtil;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author yole
- */
+
 public class PyDefinitionsSearch implements QueryExecutor<PsiElement, PsiElement> {
   @Override
   public boolean execute(@NotNull final PsiElement e, @NotNull final Processor<? super PsiElement> consumer) {

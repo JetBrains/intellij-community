@@ -43,8 +43,8 @@ public class IndentingBackspaceHandlerUncommittedDocumentTest extends LightPlatf
     backspace();
     backspace();
     checkResultByText("class Foo {\n" +
-                      "    void m1() { <caret>}\n" +
-                      "    void m2() { <caret>}\n" +
+                      "    void m1() {<caret>}\n" +
+                      "    void m2() {<caret>}\n" +
                       "}");
   }
 }

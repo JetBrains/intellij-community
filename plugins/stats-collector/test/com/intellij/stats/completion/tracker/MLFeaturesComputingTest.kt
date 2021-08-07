@@ -40,7 +40,6 @@ class MLFeaturesComputingTest : CompletionLoggingTestBase() {
     setExperimentWithoutFeaturesComputation(experimentWithoutComputing)
 
     myFixture.completeBasic()
-    myFixture.type("r")
     myFixture.finishLookup(Lookup.NORMAL_SELECT_CHAR)
 
     TestCase.assertEquals(shouldCompute, contextFeatureProvider.invocationCount != 0)

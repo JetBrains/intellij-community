@@ -6,23 +6,35 @@ import com.intellij.openapi.externalSystem.model.ProjectKeys
 import com.intellij.openapi.externalSystem.model.project.ModuleData
 import com.intellij.openapi.externalSystem.model.task.TaskData
 import com.intellij.openapi.externalSystem.service.project.ProjectDataManager
+import com.intellij.openapi.externalSystem.service.project.manage.ExternalProjectsDataStorage
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
 import com.intellij.openapi.externalSystem.util.PathPrefixTreeMap
 import com.intellij.openapi.project.Project
+import com.intellij.psi.util.CachedValueProvider
+import com.intellij.psi.util.CachedValuesManager
 import com.intellij.util.containers.MultiMap
+import com.intellij.util.text.nullize
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.gradle.service.project.GradleProjectResolverUtil
 import org.jetbrains.plugins.gradle.settings.GradleSettings
 
+@ApiStatus.Experimental
+fun getGradleTasks(project: Project): Map<String, MultiMap<String, GradleTaskData>> {
+  return CachedValuesManager.getManager(project).getCachedValue(project) {
+    CachedValueProvider.Result.create(getGradleTasksMap(project), ExternalProjectsDataStorage.getInstance(project))
+  }
+}
+
 /**
  * @return `external module path (path to the directory) -> {gradle module path -> {[tasks of this module]}}`
  */
-@ApiStatus.Experimental
-fun getGradleTasksMap(project: Project): Map<String, MultiMap<String, TaskData>> {
+private fun getGradleTasksMap(project: Project): Map<String, MultiMap<String, GradleTaskData>> {
   return getGradleTaskNodesMap(project).mapValues { (_, moduleTasks) ->
-    val transformed = MultiMap.create<String, TaskData>()
+    val transformed = MultiMap.create<String, GradleTaskData>()
     for ((gradleModulePath, moduleTaskNodes) in moduleTasks.entrySet()) {
-      transformed.putValues(gradleModulePath,  moduleTaskNodes.map { it.data })
+      transformed.putValues(gradleModulePath, moduleTaskNodes.map {
+        GradleTaskData(it, gradleModulePath)
+      })
     }
     transformed
   }
@@ -43,22 +55,14 @@ fun getGradleTaskNodesMap(project: Project): Map<String, MultiMap<String, DataNo
     }
 
     for ((gradlePath, externalModulePath) in modulePaths) {
-      val moduleTasks = MultiMap.createOrderedSet<String, DataNode<TaskData>>()
+      val moduleTasks = tasks.computeIfAbsent(externalModulePath) { MultiMap.createOrderedSet() }
       val childrenModulesPaths = modulePaths.getAllDescendantKeys(gradlePath)
       for (childModulePath in childrenModulesPaths) {
         moduleTasks.putValues(childModulePath, projectTasks.get(childModulePath))
       }
-      tasks[externalModulePath] = moduleTasks
     }
   }
   return tasks
-}
-
-@ApiStatus.Experimental
-fun getGradleFqnTaskName(gradleModulePath: String, taskData: TaskData): String {
-  val taskPath = gradleModulePath.removeSuffix(":")
-  val taskName = taskData.name.removePrefix(gradleModulePath).removePrefix(":")
-  return "$taskPath:$taskName"
 }
 
 private data class ProjectTaskData(val externalProjectPath: String, val modulesTaskData: List<ModuleTaskData>)
@@ -82,7 +86,8 @@ private fun findGradleTasks(project: Project): List<ProjectTaskData> {
   val projectTasksData = ArrayList<ProjectTaskData>()
   for ((externalProjectPath, modulesNodes) in projects.entrySet()) {
     val modulesTaskData = modulesNodes.map(::getModuleTasks)
-    projectTasksData.add(ProjectTaskData(externalProjectPath, modulesTaskData))
+    val taskProjectPath = modulesTaskData.firstOrNull()?.tasks?.firstOrNull()?.data?.linkedExternalProjectPath
+    projectTasksData.add(ProjectTaskData(taskProjectPath ?: externalProjectPath, modulesTaskData))
   }
   return projectTasksData
 }
@@ -94,5 +99,8 @@ private fun getModuleTasks(moduleNode: DataNode<ModuleData>): ModuleTaskData {
     .removeSuffix(":")
   val tasks = ExternalSystemApiUtil.getChildren(moduleNode, ProjectKeys.TASK)
     .filter { it.data.name.isNotEmpty() }
-  return ModuleTaskData(externalModulePath, gradlePath, tasks)
+
+  val taskPathPrefix = tasks.firstOrNull()?.data?.name?.substringBeforeLast(':', "").nullize()
+  val linkedExternalProjectPath = tasks.firstOrNull()?.data?.linkedExternalProjectPath
+  return ModuleTaskData(linkedExternalProjectPath ?: externalModulePath, taskPathPrefix ?: gradlePath, tasks)
 }

@@ -11,9 +11,9 @@ import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.text.DateFormatUtil
 import com.intellij.vcs.log.VcsCommitMetadata
 import com.intellij.vcs.log.VcsLogBundle
+import com.intellij.vcs.log.VcsLogDataKeys
 import com.intellij.vcs.log.data.LoadingDetails
 import com.intellij.vcs.log.statistics.VcsLogUsageTriggerCollector
-import com.intellij.vcs.log.ui.VcsLogInternalDataKeys
 import com.intellij.vcs.log.ui.VcsLogUiEx
 import com.intellij.vcs.log.ui.frame.CommitPresentationUtil
 import com.intellij.vcs.log.util.VcsLogUtil.jumpToRow
@@ -22,7 +22,7 @@ import java.awt.event.KeyEvent
 open class GoToParentOrChildAction(val parent: Boolean) : DumbAwareAction() {
 
   override fun update(e: AnActionEvent) {
-    val ui = e.getData(VcsLogInternalDataKeys.LOG_UI_EX)
+    val ui = e.getData(VcsLogDataKeys.VCS_LOG_UI) as? VcsLogUiEx
     if (ui == null) {
       e.presentation.isEnabledAndVisible = false
       return
@@ -40,7 +40,7 @@ open class GoToParentOrChildAction(val parent: Boolean) : DumbAwareAction() {
   override fun actionPerformed(e: AnActionEvent) {
     triggerUsage(e)
 
-    val ui = e.getRequiredData(VcsLogInternalDataKeys.LOG_UI_EX)
+    val ui = e.getRequiredData(VcsLogDataKeys.VCS_LOG_UI) as VcsLogUiEx
     val rows = getRowsToJump(ui)
 
     if (rows.isEmpty()) {

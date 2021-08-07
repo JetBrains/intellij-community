@@ -1,33 +1,18 @@
-/*
- * Copyright 2000-2010 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.devkit.testAssistant;
 
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiJavaFile;
 import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiModifier;
 import com.intellij.testFramework.TestDataPath;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.idea.devkit.DevkitJavaTestsUtil;
 
+import java.util.ArrayList;
 import java.util.List;
 
-/**
- * @author yole
- */
 @TestDataPath("$CONTENT_ROOT/testData/")
 public class TestDataReferenceCollectorTest extends LightJavaCodeInsightFixtureTestCase {
   public void testDoTestParameters() {
@@ -55,6 +40,13 @@ public class TestDataReferenceCollectorTest extends LightJavaCodeInsightFixtureT
     assertEquals("beforeTestNameAsParameter", references.get(0));
   }
 
+  public void testTestMetadataData() {
+    final List<String> references = doTest();
+    assertEquals(2, references.size());
+    assertEquals("/src/testData/refactoring/introduceVariable/SomeType.kt", references.get(0));
+    assertEquals("/src/testData/refactoring/introduceVariable/AnonymousType.kt", references.get(1));
+  }
+
   public void testAbstractMethod() {
     final List<String> references = doTest();
     assertEquals(1, references.size());
@@ -63,11 +55,22 @@ public class TestDataReferenceCollectorTest extends LightJavaCodeInsightFixtureT
 
   private List<String> doTest() {
     myFixture.configureByFile("referenceCollector/" + getTestName(false) + ".java");
-    final PsiClass[] classes = ((PsiJavaFile)myFixture.getFile()).getClasses();
-    for (PsiClass aClass : classes) {
+    for (PsiClass aClass : ((PsiJavaFile)myFixture.getFile()).getClasses()) {
       if (aClass.getName().equals("ATest")) {
-        final PsiMethod theMethod = aClass.getMethods()[0];
-        return ContainerUtil.map(new TestDataReferenceCollector("", theMethod.getName().substring(4)).collectTestDataReferences(theMethod), f -> f.getPath());
+        List<PsiClass> classes = new ArrayList<>();
+        classes.add(aClass);
+        classes.addAll(List.of(aClass.getAllInnerClasses()));
+        List<TestDataFile> testDataFiles = new ArrayList<>();
+        for (PsiClass psiClass : classes) {
+          String testDataPath = TestDataLineMarkerProvider.getTestDataBasePath(psiClass);
+          for(final PsiMethod theMethod : psiClass.getMethods()) {
+            if (theMethod.getModifierList().hasModifierProperty(PsiModifier.PUBLIC)) {
+              testDataFiles.addAll(
+                new TestDataReferenceCollector(testDataPath != null ? testDataPath : "", theMethod.getName().substring(4)).collectTestDataReferences(theMethod));
+            }
+          }
+        }
+        return ContainerUtil.map(testDataFiles, f -> f.getPath());
       }
     }
     throw new RuntimeException("Couldn't find class ATest in test data file");

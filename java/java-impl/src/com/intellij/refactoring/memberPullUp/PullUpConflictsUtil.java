@@ -6,6 +6,7 @@ import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.java.JavaBundle;
 import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Conditions;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.search.searches.ClassInheritorsSearch;
@@ -111,7 +112,8 @@ public final class PullUpConflictsUtil {
         }
       }
     }
-    RefactoringConflictsUtil.analyzeAccessibilityConflicts(movedMembers, superClass, conflicts, VisibilityUtil.ESCALATE_VISIBILITY, targetRepresentativeElement, abstrMethods);
+    RefactoringConflictsUtil.analyzeAccessibilityConflicts(movedMembers, superClass, conflicts, VisibilityUtil.ESCALATE_VISIBILITY, targetRepresentativeElement, abstrMethods,
+                                                           Conditions.alwaysTrue());
     if (superClass != null) {
       if (movedMembers2Super) {
         checkSuperclassMembers(superClass, infos, conflicts);

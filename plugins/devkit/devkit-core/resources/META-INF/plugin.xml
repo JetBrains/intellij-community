@@ -29,8 +29,7 @@
     <editorTabTitleProvider implementation="org.jetbrains.idea.devkit.testAssistant.TestDataGroupEditorTabTitleProvider"/>
     <highlightingPassFactory implementation="org.jetbrains.idea.devkit.testAssistant.TestDataHighlightingPassFactory"/>
 
-    <runLineMarkerContributor language="UAST" order="last"
-                              implementationClass="org.jetbrains.idea.devkit.testAssistant.TestDataLineMarkerProvider"/>
+    <codeInsight.lineMarkerProvider language="UAST" implementationClass="org.jetbrains.idea.devkit.testAssistant.TestDataLineMarkerProvider"/>
     <fileEditorProvider implementation="org.jetbrains.idea.devkit.testAssistant.TestDataGroupEditorProvider"/>
     <gotoRelatedProvider implementation="org.jetbrains.idea.devkit.testAssistant.TestDataAsRelatedFileProvider"/>
     <gotoRelatedProvider implementation="org.jetbrains.idea.devkit.testAssistant.TestCaseAsRelatedFileProvider"/>
@@ -193,17 +192,17 @@
                      enabledByDefault="false" level="WARNING"
                      implementationClass="org.jetbrains.idea.devkit.inspections.internal.UseCoupleInspection"
                      key="inspection.use.couple.display.name"/>
-    <localInspection language="JAVA" shortName="DontUsePairConstructor"
-                     groupPathKey="inspections.group.path" groupKey="inspections.group.code"
-                     enabledByDefault="true" level="WARNING"
-                     implementationClass="org.jetbrains.idea.devkit.inspections.internal.DontUseNewPairInspection"
-                     key="inspection.dont.use.pair.constructor.display.name"/>
     <!--suppress PluginXmlCapitalization -->
     <localInspection language="UAST" shortName="UseVirtualFileEquals"
                      groupPathKey="inspections.group.path" groupKey="inspections.group.code"
                      enabledByDefault="true" level="WARNING"
                      implementationClass="org.jetbrains.idea.devkit.inspections.internal.UseVirtualFileEqualsInspection"
                      key="inspection.use.virtual.file.equals.display.name"/>
+    <localInspection language="UAST" shortName="UsePluginIdEquals"
+                     groupPathKey="inspections.group.path" groupKey="inspections.group.code"
+                     enabledByDefault="true" level="WARNING"
+                     implementationClass="org.jetbrains.idea.devkit.inspections.internal.UsePluginIdEqualsInspection"
+                     key="inspection.use.plugin.id.equals.display.name"/>
     <localInspection language="JAVA" shortName="UnsafeReturnStatementVisitor"
                      groupPathKey="inspections.group.path" groupKey="inspections.group.code"
                      enabledByDefault="true" level="WARNING"
@@ -222,8 +221,8 @@
     <localInspection language="UAST" shortName="UsePrimitiveTypes"
                      groupPathKey="inspections.group.path" groupKey="inspections.group.code"
                      enabledByDefault="true" level="WARNING"
-                     implementationClass="org.jetbrains.idea.devkit.inspections.internal.UsePrimitiveTypesInspection"
-                     key="inspection.use.primitive.types.display.name"/>
+                     implementationClass="org.jetbrains.idea.devkit.inspections.internal.UsePrimitiveTypesEqualsInspection"
+                     key="inspection.use.primitive.types.equals.display.name"/>
     <!--suppress PluginXmlCapitalization -->
     <localInspection shortName="HighlightVisitorInternal"
                      groupPathKey="inspections.group.path" groupKey="inspections.group.code"
@@ -404,6 +403,9 @@
     <registryKey key="tmh.generate.assertions.for.annotations" defaultValue="true"
                  description="Generate assertions for @RequiresEdt and similar annotations.
                  The assertions are added by instrumenting class files during compilation."/>
+    <registryKey key="tmh.generate.line.numbers" defaultValue="true"
+                 description="Generate line numbers when instrumenting @RequiresEdt and similar annotations.
+                 This results in better stack traces when generated assertions throw exceptions, but might slow down the compilation."/>
   </extensions>
   <extensions defaultExtensionNs="JavaScript.JsonSchema">
     <ProviderFactory implementation="org.jetbrains.idea.devkit.themes.ThemeJsonSchemaProviderFactory"/>

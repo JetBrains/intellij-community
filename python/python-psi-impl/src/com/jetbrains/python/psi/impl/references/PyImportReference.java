@@ -36,8 +36,6 @@ import java.util.*;
 /**
  * Reference in an import statement:<br/>
  * <code>import <u>foo.name</u></code>
- *
- * @author yole
  */
 public class PyImportReference extends PyReferenceImpl {
   protected final PyReferenceExpressionImpl myElement;

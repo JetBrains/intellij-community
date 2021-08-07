@@ -17,9 +17,7 @@ package com.jetbrains.python.facet;
 
 import com.intellij.openapi.projectRoots.Sdk;
 
-/**
- * @author yole
- */
+
 public class PythonFacetSettings {
   protected Sdk mySdk;
 

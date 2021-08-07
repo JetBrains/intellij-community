@@ -2,21 +2,26 @@
 package com.intellij.openapi.actionSystem.impl;
 
 import com.intellij.ide.DataManager;
+import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.internal.inspector.UiInspectorUtil;
+import com.intellij.notification.Notification;
+import com.intellij.notification.NotificationType;
+import com.intellij.notification.Notifications;
 import com.intellij.openapi.actionSystem.ActionGroup;
+import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.ActionPopupMenu;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationActivationListener;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ui.JBPopupMenu;
-import com.intellij.openapi.util.Getter;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.impl.InternalDecoratorImpl;
 import com.intellij.ui.ComponentUtil;
+import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.TimeoutUtil;
 import com.intellij.util.messages.MessageBusConnection;
@@ -29,6 +34,7 @@ import javax.swing.event.PopupMenuListener;
 import java.awt.*;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
+import java.util.function.Supplier;
 
 /**
  * @author Anton Katilin
@@ -36,11 +42,10 @@ import java.beans.PropertyChangeListener;
  */
 final class ActionPopupMenuImpl implements ActionPopupMenu, ApplicationActivationListener {
   private static final Logger LOG = Logger.getInstance(ActionPopupMenuImpl.class);
-  private final Application myApp;
   private final MyMenu myMenu;
   private final ActionManagerImpl myManager;
 
-  private Getter<? extends DataContext> myDataContextProvider;
+  private Supplier<? extends DataContext> myDataContextProvider;
   private MessageBusConnection myConnection;
 
   private IdeFrame myFrame;
@@ -49,9 +54,12 @@ final class ActionPopupMenuImpl implements ActionPopupMenu, ApplicationActivatio
   ActionPopupMenuImpl(@NotNull String place, @NotNull ActionGroup group,
                       @NotNull ActionManagerImpl actionManager,
                       @Nullable PresentationFactory factory) {
+    if (ActionPlaces.UNKNOWN.equals(place) || place.isEmpty()) {
+      LOG.warn("Please do not use ActionPlaces.UNKNOWN or the empty place. " +
+               "Any string unique enough to deduce the popup menu location will do.", new Throwable("popup menu creation trace"));
+    }
     myManager = actionManager;
     myMenu = new MyMenu(place, group, factory);
-    myApp = ApplicationManager.getApplication();
   }
 
   @NotNull
@@ -72,7 +80,7 @@ final class ActionPopupMenuImpl implements ActionPopupMenu, ApplicationActivatio
     return myMenu.myGroup;
   }
 
-  void setDataContextProvider(@NotNull Getter<? extends DataContext> dataContextProvider) {
+  void setDataContextProvider(@NotNull Supplier<? extends DataContext> dataContextProvider) {
     myDataContextProvider = dataContextProvider;
   }
 
@@ -106,7 +114,7 @@ final class ActionPopupMenuImpl implements ActionPopupMenu, ApplicationActivatio
       addPropertyChangeListener("updateChildren", new PropertyChangeListener() {
         @Override
         public void propertyChange(PropertyChangeEvent evt) {
-          updateChildren();
+          updateChildren(null);
         }
       });
       UiInspectorUtil.registerProvider(this, () -> UiInspectorUtil.collectActionGroupInfo("Menu", myGroup, myPlace));
@@ -118,34 +126,40 @@ final class ActionPopupMenuImpl implements ActionPopupMenu, ApplicationActivatio
         throw new IllegalArgumentException("component must be shown on the screen (" + component + ")");
       }
 
-      removeAll();
-
-      // Fill menu. Only after filling menu has non zero size.
-
       int x2 = Math.max(0, Math.min(x, component.getWidth() - 1)); // fit x into [0, width-1]
       int y2 = Math.max(0, Math.min(y, component.getHeight() - 1)); // fit y into [0, height-1]
       myContext = Utils.wrapDataContext(myDataContextProvider != null ? myDataContextProvider.get() :
                                         DataManager.getInstance().getDataContext(component, x2, y2));
-      TimeoutUtil.run(
-        () -> Utils.fillMenu(myGroup, this, !UISettings.getInstance().getDisableMnemonics(),
-                             myPresentationFactory, myContext, myPlace, false, LaterInvocator.isInModalContext(), false),
-        1000, ms -> LOG.warn(ms + " ms to fill popup menu " + myPlace));
+      updateChildren(new RelativePoint(component, new Point(x, y)));
       if (getComponentCount() == 0) {
         LOG.warn("no components in popup menu " + myPlace);
         return;
       }
-      if (myApp != null) {
-        if (myApp.isActive()) {
-          Component frame = ComponentUtil.findUltimateParent(component);
-          if (frame instanceof IdeFrame) {
-            myFrame = (IdeFrame)frame;
-          }
-          myConnection = myApp.getMessageBus().connect();
-          myConnection.subscribe(ApplicationActivationListener.TOPIC, ActionPopupMenuImpl.this);
-       }
+      if (!component.isShowing()) {
+        return;
       }
-      assert component.isShowing() : "Component: " + component;
+
+      Application application = ApplicationManager.getApplication();
+      if (application != null && application.isActive()) {
+        Component parent = ComponentUtil.findUltimateParent(component);
+        myFrame = parent instanceof IdeFrame ? (IdeFrame)parent : null;
+        if (myConnection == null) {
+          myConnection = application.getMessageBus().connect();
+          myConnection.subscribe(ApplicationActivationListener.TOPIC, ActionPopupMenuImpl.this);
+        }
+      }
       super.show(component, x, y);
+    }
+
+    @Override
+    public void addNotify() {
+      super.addNotify();
+      //noinspection RedundantSuppression
+      if (Registry.is("ide.diagnostics.show.context.menu.invocation.time")) {
+        long time = System.currentTimeMillis() - IdeEventQueue.getInstance().getPopupTriggerTime();
+        //noinspection HardCodedStringLiteral
+        new Notification(Notifications.SYSTEM_MESSAGES_GROUP_ID, "Context menu invocation took " + time + "ms", NotificationType.INFORMATION).notify(null);
+      }
     }
 
     @Override
@@ -154,10 +168,25 @@ final class ActionPopupMenuImpl implements ActionPopupMenu, ApplicationActivatio
       if (!b) ReflectionUtil.resetField(this, "invoker");
     }
 
-    private void updateChildren() {
+    private void updateChildren(@Nullable RelativePoint point) {
       removeAll();
-      Utils.fillMenu(myGroup, this, !UISettings.getInstance().getDisableMnemonics(), myPresentationFactory, myContext, myPlace, false,
-                     LaterInvocator.isInModalContext(), false);
+      Utils.performWithRetries(() -> {
+        TimeoutUtil.run(
+          () -> Utils.fillMenu(myGroup, this, !UISettings.getInstance().getDisableMnemonics(),
+                               myPresentationFactory, myContext, myPlace, false, false, point),
+          1000, ms -> LOG.warn(ms + " ms to fill popup menu " + myPlace));
+      }, () -> false);
+    }
+
+    private void disposeMenu() {
+      MessageBusConnection connection = myConnection;
+      myFrame = null;
+      myConnection = null;
+      myManager.removeActionPopup(ActionPopupMenuImpl.this);
+      removeAll();
+      if (connection != null) {
+        connection.disconnect();
+      }
     }
 
     private class MyPopupMenuListener implements PopupMenuListener {
@@ -171,17 +200,11 @@ final class ActionPopupMenuImpl implements ActionPopupMenu, ApplicationActivatio
         disposeMenu();
       }
 
-      private void disposeMenu() {
-        myManager.removeActionPopup(ActionPopupMenuImpl.this);
-        removeAll();
-        if (myConnection != null) {
-          myConnection.disconnect();
-        }
-      }
-
       @Override
       public void popupMenuWillBecomeVisible(PopupMenuEvent e) {
-        updateChildren();
+        if (getComponentCount() == 0) {
+          updateChildren(null);
+        }
         myManager.addActionPopup(ActionPopupMenuImpl.this);
       }
     }

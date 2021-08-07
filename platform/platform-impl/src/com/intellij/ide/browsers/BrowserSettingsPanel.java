@@ -126,6 +126,8 @@ final class BrowserSettingsPanel {
   private JComponent browsersTable;
 
   private ComboBox<DefaultBrowserPolicy> defaultBrowserPolicyComboBox;
+  private ComboBox<ReloadMode> serverReloadModeComboBox;
+  private ComboBox<ReloadMode> previewReloadModeComboBox;
   private JBCheckBox showBrowserHover;
   private JBCheckBox showBrowserHoverXml;
   private JPanel browserPopupPanel;
@@ -170,6 +172,10 @@ final class BrowserSettingsPanel {
       if (text == null) throw new IllegalStateException(String.valueOf(value));
       return text;
     }));
+    serverReloadModeComboBox.setModel(new DefaultComboBoxModel<>(ReloadMode.values()));
+    previewReloadModeComboBox.setModel(new DefaultComboBoxModel<>(ReloadMode.values()));
+    serverReloadModeComboBox.setRenderer(SimpleListCellRenderer.create("", (it) -> it.getTitle() ));
+    previewReloadModeComboBox.setRenderer(SimpleListCellRenderer.create("", (it) -> it.getTitle() ));
 
     browserPopupPanel.setBorder(IdeBorderFactory.createTitledBorder(IdeBundle.message("settings.browsers.show.browser.popup.in.the.editor")));
   }
@@ -287,7 +293,9 @@ final class BrowserSettingsPanel {
     DefaultBrowserPolicy defaultBrowserPolicy = getDefaultBrowser();
     if (getDefaultBrowserPolicy(browserManager) != defaultBrowserPolicy ||
         browserManager.isShowBrowserHover() != showBrowserHover.isSelected() ||
-        browserManager.isShowBrowserHoverXml() != showBrowserHoverXml.isSelected()) {
+        browserManager.isShowBrowserHoverXml() != showBrowserHoverXml.isSelected() ||
+        browserManager.getWebPreviewReloadMode() != previewReloadModeComboBox.getItem() ||
+        browserManager.getWebServerReloadMode() != serverReloadModeComboBox.getItem()) {
       return true;
     }
 
@@ -312,6 +320,8 @@ final class BrowserSettingsPanel {
     browserManager.setShowBrowserHover(showBrowserHover.isSelected());
     browserManager.setShowBrowserHoverXml(showBrowserHoverXml.isSelected());
     browserManager.defaultBrowserPolicy = getDefaultBrowser();
+    browserManager.webPreviewReloadMode = previewReloadModeComboBox.getItem();
+    browserManager.webServerReloadMode = serverReloadModeComboBox.getItem();
     browserManager.setList(browsersEditor.apply());
   }
 
@@ -323,6 +333,8 @@ final class BrowserSettingsPanel {
     final WebBrowserManager browserManager = WebBrowserManager.getInstance();
     DefaultBrowserPolicy effectiveDefaultBrowserPolicy = getDefaultBrowserPolicy(browserManager);
     defaultBrowserPolicyComboBox.setSelectedItem(effectiveDefaultBrowserPolicy);
+    previewReloadModeComboBox.setItem(browserManager.getWebPreviewReloadMode());
+    serverReloadModeComboBox.setItem(browserManager.getWebServerReloadMode());
 
     GeneralSettings settings = GeneralSettings.getInstance();
     showBrowserHover.setSelected(browserManager.isShowBrowserHover());

@@ -187,6 +187,9 @@ public abstract class ArchiveHandler {
           }
 
           myEntries = new SoftReference<>(map);
+          // createEntriesMap recreates EntryInfo instances, so we need to ensure that we also recreate the children entries
+          // cache which uses EntryInfo instances as keys (otherwise the cache lookup in list() would return empty children arrays)
+          myChildrenEntries = new SoftReference<>(null);
         }
       }
     }
@@ -219,7 +222,7 @@ public abstract class ArchiveHandler {
                                     @SuppressWarnings("BoundedWildcard") @Nullable BiFunction<@NotNull EntryInfo, @NotNull String, @NotNull ? extends EntryInfo> entryFun) {
     String normalizedName = StringUtil.trimTrailing(StringUtil.trimLeading(FileUtil.normalize(entryName), '/'), '/');
     if (normalizedName.isEmpty() || normalizedName.contains("..") && ArrayUtil.contains("..", normalizedName.split("/"))) {
-      if (logger != null) logger.info("invalid entry: " + getFile() + "!/" + entryName);
+      if (logger != null) logger.trace("invalid entry: " + getFile() + "!/" + entryName);
       return;
     }
 
@@ -230,7 +233,7 @@ public abstract class ArchiveHandler {
 
     EntryInfo existing = map.get(normalizedName);
     if (existing != null) {
-      if (logger != null) logger.info("duplicate entry: " + getFile() + "!/" + normalizedName);
+      if (logger != null) logger.trace("duplicate entry: " + getFile() + "!/" + normalizedName);
       return;
     }
 
@@ -242,7 +245,7 @@ public abstract class ArchiveHandler {
   private EntryInfo directoryEntry(Map<String, EntryInfo> map, @Nullable Logger logger, String normalizedName) {
     EntryInfo entry = map.get(normalizedName);
     if (entry == null || !entry.isDirectory) {
-      if (logger != null && entry != null) logger.info("duplicate entry: " + getFile() + "!/" + normalizedName);
+      if (logger != null && entry != null) logger.trace("duplicate entry: " + getFile() + "!/" + normalizedName);
       if (normalizedName.isEmpty()) {
         entry = createRootEntry();
       }
@@ -265,6 +268,7 @@ public abstract class ArchiveHandler {
 
   /** @deprecated please use {@link #processEntry} instead to correctly handle invalid entry names */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
   protected @NotNull EntryInfo getOrCreate(@NotNull Map<String, EntryInfo> map, @NotNull String entryName) {
     EntryInfo entry = map.get(entryName);
     if (entry == null) {

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.psi.dataFlow.reachingDefs;
 
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
@@ -8,6 +8,7 @@ import it.unimi.dsi.fastutil.ints.IntSet;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.Instruction;
 
+import java.util.Objects;
 import java.util.function.Consumer;
 
 /**
@@ -16,58 +17,51 @@ import java.util.function.Consumer;
 public final class DefinitionMap {
   private final Int2ObjectMap<IntSet> myMap = new Int2ObjectOpenHashMap<>();
 
-  public void registerDef(Instruction varInsn, int varId) {
-    IntSet defs = myMap.get(varId);
+  public void registerDef(int varIndex, Instruction instruction) {
+    IntSet defs = myMap.get(varIndex);
     if (defs == null) {
-      myMap.put(varId, defs = new IntOpenHashSet());
+      myMap.put(varIndex, defs = new IntOpenHashSet());
     }
     else {
       defs.clear();
     }
-    defs.add(varInsn.num());
+    defs.add(instruction.num());
   }
 
-  public void merge(DefinitionMap map2) {
-    for (Int2ObjectMap.Entry<IntSet> entry : map2.myMap.int2ObjectEntrySet()) {
-      IntSet defs2 = myMap.get(entry.getIntKey());
-      if (defs2 == null) {
-        defs2 = new IntOpenHashSet(entry.getValue());
-        myMap.put(entry.getIntKey(), defs2);
+  public void mergeFrom(DefinitionMap other) {
+    for (Int2ObjectMap.Entry<IntSet> entry : other.myMap.int2ObjectEntrySet()) {
+      int varIndex = entry.getIntKey();
+      IntSet otherDefs = entry.getValue();
+      IntSet myDefs = myMap.get(varIndex);
+      if (myDefs == null) {
+        myDefs = new IntOpenHashSet(otherDefs);
+        myMap.put(varIndex, myDefs);
       }
       else {
-        defs2.addAll(entry.getValue());
+        myDefs.addAll(otherDefs);
       }
     }
   }
 
-  public boolean eq(DefinitionMap m2) {
-    if (myMap.size() != m2.myMap.size()) {
-      return false;
-    }
-
-    for (Int2ObjectMap.Entry<IntSet> entry : myMap.int2ObjectEntrySet()) {
-      IntSet defs2 = m2.myMap.get(entry.getIntKey());
-      if (defs2 == null || !defs2.equals(entry.getValue())) {
-        return false;
-      }
-    }
-    return true;
-  }
-
-  public void copyFrom(DefinitionMap map, int fromIndex, int toIndex) {
-    IntSet defs = map.myMap.get(fromIndex);
-    if (defs == null) {
-      defs = new IntOpenHashSet();
-    }
-    myMap.put(toIndex, defs);
-  }
-
-  public int @Nullable [] getDefinitions(int varId) {
-    IntSet set = myMap.get(varId);
-    return set == null ? null : set.toIntArray();
+  public int @Nullable [] getDefinitions(int varIndex) {
+    IntSet defs = myMap.get(varIndex);
+    return defs == null ? null : defs.toIntArray();
   }
 
   public void forEachValue(Consumer<IntSet> procedure) {
     myMap.values().forEach(procedure);
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+    DefinitionMap map = (DefinitionMap)o;
+    return myMap.equals(map.myMap);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(myMap);
   }
 }

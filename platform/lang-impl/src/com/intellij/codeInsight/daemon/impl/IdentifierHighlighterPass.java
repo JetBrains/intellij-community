@@ -46,9 +46,7 @@ import static com.intellij.codeInsight.daemon.impl.HighlightInfoType.ELEMENT_UND
 import static com.intellij.codeInsight.highlighting.HighlightUsagesKt.getUsageRanges;
 import static com.intellij.model.psi.impl.TargetsKt.targetSymbols;
 
-/**
- * @author yole
- */
+
 public class IdentifierHighlighterPass {
   private static final Logger LOG = Logger.getInstance(IdentifierHighlighterPass.class);
 

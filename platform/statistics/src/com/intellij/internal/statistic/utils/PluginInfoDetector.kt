@@ -1,20 +1,16 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.statistic.utils
 
 import com.intellij.ide.plugins.PluginInfoProvider
-import com.intellij.ide.plugins.PluginManager
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.ide.plugins.cl.PluginAwareClassLoader
-import com.intellij.internal.statistic.utils.PluginInfoDetector.isPluginFromOfficialJbPluginRepo
-import com.intellij.internal.statistic.utils.PluginInfoDetector.isSafeToReportFrom
-import com.intellij.openapi.application.ApplicationManager
+import com.intellij.internal.statistic.FeaturedPluginsInfoProvider
 import com.intellij.openapi.application.ex.ApplicationInfoEx
 import com.intellij.openapi.extensions.PluginDescriptor
 import com.intellij.openapi.extensions.PluginId
-import com.intellij.openapi.util.Getter
 import com.intellij.openapi.util.TimeoutCachedValue
-import java.io.IOException
 import java.util.concurrent.TimeUnit
+import java.util.function.Supplier
 
 /**
  * Returns if this code is coming from IntelliJ platform, a plugin created by JetBrains (bundled or not) or from official repository,
@@ -38,7 +34,7 @@ fun getPluginInfo(clazz: Class<*>): PluginInfo {
 fun getPluginInfo(className: String): PluginInfo {
   if (className.startsWith("java.") || className.startsWith("javax.") ||
       className.startsWith("kotlin.") || className.startsWith("groovy.")) {
-    return platformPlugin
+    return jvmCore
   }
 
   val plugin = PluginManagerCore.getPluginDescriptorOrPlatformByClassName(className) ?: return unknownPlugin
@@ -68,14 +64,25 @@ fun getPluginInfoById(pluginId: PluginId?): PluginInfo {
  * Returns if this code is coming from IntelliJ platform, a plugin created by JetBrains (bundled or not) or from official repository,
  * so API from it may be reported
  */
-fun getPluginInfoByDescriptor(plugin: PluginDescriptor): PluginInfo {
+fun getPluginInfoByDescriptor(plugin: PluginDescriptor): PluginInfo = getPluginInfoByDescriptorWithFeaturedPlugins(plugin, null)
+
+/**
+ * Use 'getPluginInfoByDescriptor' method to detect plugin info instead of this one unless you want to report installed featured plugins.
+ *
+ * Featured plugins are installed during the first IDE start when there's no cached list of Marketplace plugins,
+ * but we verify that all featured plugins exist on Marketplace and are compatible with IDE version, so they are safe to report.
+ *
+ * @see getPluginInfoByDescriptor
+ * @see com.intellij.ide.customize.PluginGroups
+ */
+fun getPluginInfoByDescriptorWithFeaturedPlugins(plugin: PluginDescriptor, featuredPlugins: FeaturedPluginsInfoProvider?): PluginInfo {
   if (PluginManagerCore.CORE_ID == plugin.pluginId) {
     return platformPlugin
   }
 
   val id = plugin.pluginId.idString
   val version = plugin.version
-  if (PluginManager.getInstance().isDevelopedByJetBrains(plugin)) {
+  if (PluginManagerCore.isDevelopedByJetBrains(plugin)) {
     val pluginType = when {
       plugin.isBundled -> PluginType.JB_BUNDLED
       PluginManagerCore.isUpdatedBundledPlugin(plugin) -> PluginType.JB_UPDATED_BUNDLED
@@ -86,21 +93,80 @@ fun getPluginInfoByDescriptor(plugin: PluginDescriptor): PluginInfo {
 
   // only plugins installed from some repository (not bundled and not provided via classpath in development IDE instance -
   // they are also considered bundled) would be reported
-  val listed = !plugin.isBundled && !PluginManagerCore.isUpdatedBundledPlugin(plugin) && isSafeToReportFrom(plugin)
+  val listed = !plugin.isBundled && !PluginManagerCore.isUpdatedBundledPlugin(plugin) && isSafeToReportFrom(plugin, featuredPlugins)
   return if (listed) PluginInfo(PluginType.LISTED, id, version) else notListedPlugin
 }
 
 enum class PluginType {
-  PLATFORM, JB_BUNDLED, JB_NOT_BUNDLED, LISTED, NOT_LISTED, UNKNOWN, FROM_SOURCES, JB_UPDATED_BUNDLED;
+  /**
+   * JVM core libraries
+   */
+  JVM_CORE,
 
-  fun isPlatformOrJetBrainsBundled(): Boolean {
-    return this == PLATFORM || this == JB_BUNDLED || this == FROM_SOURCES || this == JB_UPDATED_BUNDLED
+  /**
+   * IntelliJ platform
+   */
+  PLATFORM,
+
+  /**
+   * Plugin implemented by JetBrains, bundled with a product
+   */
+  JB_BUNDLED,
+
+  /**
+   * Plugin implemented by JetBrains but not bundled with a product
+   */
+  JB_NOT_BUNDLED,
+
+  /**
+   * Third-party plugin, available on Marketplace
+   */
+  LISTED,
+
+  /**
+   * Third-party plugin, installed from disk or custom repository
+   */
+  NOT_LISTED,
+
+  /**
+   * Cannot detect plugin type
+   */
+  UNKNOWN,
+
+  /**
+   * Cannot detect plugin type because IDE was built from sources
+   */
+  FROM_SOURCES,
+
+  /**
+   * Plugin implemented by JetBrains, bundled with a product but the version is different from the one which was bundled
+   */
+  JB_UPDATED_BUNDLED;
+
+  /**
+   * @return true if code is from IntelliJ platform or JVM
+   */
+  fun isPlatformOrJvm(): Boolean {
+    return this == JVM_CORE || this == PLATFORM
   }
 
+  /**
+   * @return true if code is from IntelliJ platform or JB bundled plugin.
+   */
+  fun isPlatformOrJetBrainsBundled(): Boolean {
+    return isPlatformOrJvm() || this == JB_BUNDLED || this == FROM_SOURCES || this == JB_UPDATED_BUNDLED
+  }
+
+  /**
+   * @return true if code is from IntelliJ platform or JB plugin.
+   */
   fun isDevelopedByJetBrains(): Boolean {
     return isPlatformOrJetBrainsBundled() || this == JB_NOT_BUNDLED
   }
 
+  /**
+   * @return true if code is from IntelliJ platform, JB plugin or plugin from JB plugin repository.
+   */
   fun isSafeToReport(): Boolean {
     return isDevelopedByJetBrains() || this == LISTED
   }
@@ -115,6 +181,8 @@ fun findPluginTypeByValue(value: String): PluginType? {
   return null
 }
 
+private const val tbePluginId = "org.jetbrains.toolbox-enterprise-client"
+
 data class PluginInfo(val type: PluginType, val id: String?, val version: String?) {
   /**
    * @return true if code is from IntelliJ platform or JB plugin.
@@ -125,8 +193,12 @@ data class PluginInfo(val type: PluginType, val id: String?, val version: String
    * @return true if code is from IntelliJ platform, JB plugin or plugin from JB plugin repository.
    */
   fun isSafeToReport() = type.isSafeToReport()
+
+  fun isAllowedToInjectIntoFUS(): Boolean = isDevelopedByJetBrains() && id == tbePluginId ||
+                                            (PluginManagerCore.isUnitTestMode && type == PluginType.PLATFORM)
 }
 
+val jvmCore: PluginInfo = PluginInfo(PluginType.JVM_CORE, null, null)
 val platformPlugin: PluginInfo = PluginInfo(PluginType.PLATFORM, null, null)
 val unknownPlugin: PluginInfo = PluginInfo(PluginType.UNKNOWN, null, null)
 private val notListedPlugin = PluginInfo(PluginType.NOT_LISTED, null, null)
@@ -134,64 +206,46 @@ private val notListedPlugin = PluginInfo(PluginType.NOT_LISTED, null, null)
 // Mock plugin info used when we can't detect plugin by class loader because IDE is built from sources
 val builtFromSources: PluginInfo = PluginInfo(PluginType.FROM_SOURCES, null, null)
 
-object PluginInfoDetector {
-  private val pluginIdsFromOfficialJbPluginRepo: Getter<Set<PluginId>> = TimeoutCachedValue(1, TimeUnit.HOURS) {
-    // before loading default repository plugins lets check it's not changed, and is really official JetBrains repository
-    try {
-      val cached = getPluginInfoProvider()?.loadCachedPlugins()
-      if (cached != null) {
-        return@TimeoutCachedValue cached.toSet()
-      }
-    }
-    catch (ignored: IOException) {
-    }
+private val pluginIdsFromOfficialJbPluginRepo: Supplier<Set<PluginId>> = TimeoutCachedValue(1, TimeUnit.HOURS) {
+  // before loading default repository plugins lets check it's not changed, and is really official JetBrains repository
+  val infoProvider = PluginInfoProvider.getInstance()
+  infoProvider.loadCachedPlugins()
+  ?: emptySet<PluginId?>().also { infoProvider.loadPlugins(null) } // schedule plugins loading, report nothing until repo plugins loaded
+}
 
-    // schedule plugins loading, will take them the next time
-    ApplicationManager.getApplication().executeOnPooledThread {
-      try {
-        getPluginInfoProvider()?.loadPlugins(null) ?: emptySet<PluginId>()
-      }
-      catch (ignored: IOException) {
-      }
-    }
-
-    //report nothing until repo plugins loaded
-    emptySet<PluginId>()
+/**
+ * Checks this plugin is created by JetBrains or from official repository, so API from it may be reported
+ */
+private fun isSafeToReportFrom(descriptor: PluginDescriptor, featuredPlugins: FeaturedPluginsInfoProvider?): Boolean {
+  return when {
+    PluginManagerCore.isDevelopedByJetBrains(descriptor) -> true
+    descriptor.isBundled -> false // bundled, but not from JetBrains, so, some custom unknown plugin
+    else -> descriptor.pluginId?.let { isPluginFromOfficialJbPluginRepo(it, featuredPlugins) } ?: false
+    // only plugins installed from some repository (not bundled and not provided via classpath in development IDE instance - they are also considered bundled) would be reported
   }
+}
 
-  private fun getPluginInfoProvider(): PluginInfoProvider? {
-    return ApplicationManager.getApplication()?.let { ApplicationManager.getApplication().getService(PluginInfoProvider::class.java) }
-  }
-
-  /**
-   * Checks this plugin is created by JetBrains or from official repository, so API from it may be reported
-   */
-  internal fun isSafeToReportFrom(descriptor: PluginDescriptor): Boolean {
-    if (PluginManager.getInstance().isDevelopedByJetBrains(descriptor)) {
+private fun isPluginFromOfficialJbPluginRepo(pluginId: PluginId?, featuredPlugins: FeaturedPluginsInfoProvider? = null): Boolean {
+  // not official JetBrains repository - is used, so, not safe to report
+  if (ApplicationInfoEx.getInstanceEx().usesJetBrainsPluginRepository()) {
+    if (featuredPlugins != null && isClassFromCoreOrJetBrainsPlugin(featuredPlugins.javaClass) &&
+        featuredPlugins.getFeaturedPluginsFromMarketplace().contains(pluginId)) {
       return true
     }
-    else if (descriptor.isBundled) {
-      // bundled, but not from JetBrains, so, some custom unknown plugin
-      return false
-    }
-
-    // only plugins installed from some repository (not bundled and not provided via classpath in development IDE instance -
-    // they are also considered bundled) would be reported
-    val pluginId = descriptor.pluginId ?: return false
-    return isPluginFromOfficialJbPluginRepo(pluginId)
+    return pluginIdsFromOfficialJbPluginRepo.get().contains(pluginId)
   }
+  return false
+}
 
-  internal fun isPluginFromOfficialJbPluginRepo(pluginId: PluginId?): Boolean {
-    return getPluginIdsFromJbPluginRepository().contains(pluginId)
+private fun isClassFromCoreOrJetBrainsPlugin(clazz: Class<*>): Boolean {
+  val loader = clazz.classLoader
+  if (loader is PluginAwareClassLoader) {
+    return isCoreOrJetBrainsPlugin((loader as PluginAwareClassLoader).pluginDescriptor)
   }
+  val descriptor = PluginManagerCore.getPluginDescriptorOrPlatformByClassName(clazz.name)
+  return descriptor != null && isCoreOrJetBrainsPlugin(descriptor)
+}
 
-  private fun getPluginIdsFromJbPluginRepository(): Set<PluginId> {
-    // not official JetBrains repository - is used, so, not safe to report
-    if (!ApplicationInfoEx.getInstanceEx().usesJetBrainsPluginRepository()) {
-      return emptySet()
-    }
-
-    // if in official JetBrains repository, then it is safe to report
-    return pluginIdsFromOfficialJbPluginRepo.get()
-  }
+private fun isCoreOrJetBrainsPlugin(descriptor: PluginDescriptor): Boolean {
+  return PluginManagerCore.CORE_ID == descriptor.pluginId || PluginManagerCore.isDevelopedByJetBrains(descriptor)
 }

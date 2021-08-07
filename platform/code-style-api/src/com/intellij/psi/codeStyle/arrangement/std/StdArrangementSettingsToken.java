@@ -2,8 +2,6 @@
 package com.intellij.psi.codeStyle.arrangement.std;
 
 import com.intellij.CodeStyleBundle;
-import com.intellij.openapi.util.text.StringUtil;
-import org.jetbrains.annotations.ApiStatus.ScheduledForRemoval;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.PropertyKey;
@@ -15,18 +13,6 @@ import org.jetbrains.annotations.PropertyKey;
 public class StdArrangementSettingsToken extends ArrangementSettingsToken {
 
   @NotNull private final StdArrangementTokenType myTokenType;
-
-  /**
-   * @deprecated please use {@link #token} or {@link #tokenByBundle}
-   */
-  @Deprecated
-  @ScheduledForRemoval(inVersion = "2021.1")
-  @NotNull
-  public static StdArrangementSettingsToken tokenById(@NotNull String id,
-                                                      @NotNull StdArrangementTokenType tokenType) {
-    //noinspection HardCodedStringLiteral
-    return new StdArrangementSettingsToken(id, StringUtil.toLowerCase(id).replace("_", " "), tokenType);
-  }
 
   @NotNull
   public static StdArrangementSettingsToken token(@NotNull String id,

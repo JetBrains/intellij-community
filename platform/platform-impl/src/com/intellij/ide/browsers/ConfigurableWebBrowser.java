@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.browsers;
 
 import com.intellij.icons.AllIcons;
@@ -68,15 +68,13 @@ final class ConfigurableWebBrowser extends WebBrowser {
       else if (checkNameAndPath("Canary")) {
         return AllIcons.Xml.Browsers.Canary;
       }
-      else if (checkNameAndPath("Opera")) {
+      else if (WebBrowserManager.isOpera(this)) {
         return AllIcons.Xml.Browsers.Opera;
       }
       else if (checkNameAndPath("node-webkit") || checkNameAndPath("nw") || checkNameAndPath("nwjs")) {
         return AllIcons.Xml.Browsers.Nwjs;
       }
-    }
-    else if (family == BrowserFamily.EXPLORER) {
-      if (WebBrowserManager.isEdge(this)) {
+      else if (WebBrowserManager.isEdge(this)) {
         return AllIcons.Xml.Browsers.Edge;
       }
     }
@@ -152,7 +150,7 @@ final class ConfigurableWebBrowser extends WebBrowser {
 
   @Override
   @NotNull
-  public final UUID getId() {
+  public UUID getId() {
     return id;
   }
 
@@ -168,15 +166,6 @@ final class ConfigurableWebBrowser extends WebBrowser {
     return IdeBundle.message("error.0.browser.path.not.specified", getName());
   }
 
-  @Override
-  public void addOpenUrlParameter(@NotNull List<? super String> command, @NotNull String url) {
-    if (WebBrowserManager.isEdge(this) && !command.isEmpty()) {
-      command.set(command.size() - 1, command.get(command.size() - 1) + ":" + url);
-    }
-    else {
-      super.addOpenUrlParameter(command, url);
-    }
-  }
 
   @Override
   public String toString() {

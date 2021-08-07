@@ -1,22 +1,7 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.ide.fileTemplates;
 
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.util.Key;
@@ -34,13 +19,13 @@ public abstract class FileTemplateManager{
   public static final Key<Properties> DEFAULT_TEMPLATE_PROPERTIES = Key.create("DEFAULT_TEMPLATE_PROPERTIES");
   public static final int RECENT_TEMPLATES_SIZE = 25;
 
-  @NonNls 
+  @NonNls
   public static final String INTERNAL_HTML_TEMPLATE_NAME = "HTML4 File";
-  @NonNls 
+  @NonNls
   public static final String INTERNAL_HTML5_TEMPLATE_NAME = "HTML File";
-  @NonNls 
+  @NonNls
   public static final String INTERNAL_XHTML_TEMPLATE_NAME = "XHTML File";
-  @NonNls 
+  @NonNls
   public static final String FILE_HEADER_TEMPLATE_NAME = "File Header";
 
   public static final String DEFAULT_TEMPLATES_CATEGORY = "Default";
@@ -52,7 +37,7 @@ public abstract class FileTemplateManager{
   public static final String PROJECT_NAME_VARIABLE = "PROJECT_NAME";
 
   public static FileTemplateManager getInstance(@NotNull Project project){
-    return ServiceManager.getService(project, FileTemplateManager.class).checkInitialized();
+    return project.getService(FileTemplateManager.class).checkInitialized();
   }
 
   @NotNull
@@ -92,7 +77,7 @@ public abstract class FileTemplateManager{
   /**
    * @return a new Properties object filled with predefined properties.
    */
-  @NotNull 
+  @NotNull
   public abstract Properties getDefaultProperties();
 
   /**
@@ -111,12 +96,12 @@ public abstract class FileTemplateManager{
    * Creates a new template with specified name, and adds it to the list of default templates.
    * @return created template
    */
-  @NotNull 
+  @NotNull
   public abstract FileTemplate addTemplate(@NotNull @NonNls String name, @NotNull @NonNls String extension);
 
   public abstract void removeTemplate(@NotNull FileTemplate template);
 
-  @NotNull 
+  @NotNull
   public abstract Collection<String> getRecentNames();
 
   public abstract void addRecentName(@NotNull @NonNls String name);
@@ -146,7 +131,7 @@ public abstract class FileTemplateManager{
   public abstract FileTemplate @NotNull [] getAllPatterns();
 
   public abstract FileTemplate @NotNull [] getAllCodeTemplates();
-  
+
   public abstract FileTemplate @NotNull [] getAllJ2eeTemplates();
 
   @NotNull

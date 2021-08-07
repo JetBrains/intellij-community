@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.debugger.containerview;
 
 import com.intellij.execution.process.ProcessHandler;
@@ -6,7 +6,6 @@ import com.intellij.execution.ui.layout.impl.JBRunnerTabs;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
@@ -155,7 +154,7 @@ public final class PyDataView implements DumbAware {
   }
 
   public static PyDataView getInstance(@NotNull final Project project) {
-    return ServiceManager.getService(project, PyDataView.class);
+    return project.getService(PyDataView.class);
   }
 
   public void init(@NotNull ToolWindow toolWindow) {
@@ -211,8 +210,8 @@ public final class PyDataView implements DumbAware {
     }
     info.setText(PyBundle.message("debugger.data.view.empty.tab"));
     info.setPreferredFocusableComponent(panel.getSliceTextField());
-    info.setActions(new DefaultActionGroup(new NewViewerAction(frameAccessor)), ActionPlaces.UNKNOWN);
-    info.setTabLabelActions(new DefaultActionGroup(new CloseViewerAction(info, frameAccessor)), ActionPlaces.UNKNOWN);
+    info.setActions(new DefaultActionGroup(new NewViewerAction(frameAccessor)), ActionPlaces.EDITOR_TAB);
+    info.setTabLabelActions(new DefaultActionGroup(new CloseViewerAction(info, frameAccessor)), ActionPlaces.EDITOR_TAB);
     panel.addListener(name -> info.setText(name));
     myTabs.addTab(info);
     myTabs.select(info, true);

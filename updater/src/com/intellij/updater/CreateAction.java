@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.updater;
 
 import java.io.*;
@@ -8,6 +8,8 @@ import java.nio.file.LinkOption;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 import java.util.zip.ZipOutputStream;
+
+import static com.intellij.updater.Runner.LOG;
 
 public class CreateAction extends PatchAction {
   public CreateAction(Patch patch, String path) {
@@ -45,7 +47,7 @@ public class CreateAction extends PatchAction {
   }
 
   @Override
-  public ValidationResult validate(File toDir) {
+  public ValidationResult validate(File toDir) throws IOException {
     File toFile = getFile(toDir);
     ValidationResult result = doValidateAccess(toFile, ValidationResult.Action.CREATE, true);
     if (result != null) return result;
@@ -54,8 +56,8 @@ public class CreateAction extends PatchAction {
       ValidationResult.Option[] options = myPatch.isStrict()
                                           ? new ValidationResult.Option[]{ValidationResult.Option.REPLACE}
                                           : new ValidationResult.Option[]{ValidationResult.Option.REPLACE, ValidationResult.Option.KEEP};
-      return new ValidationResult(
-        ValidationResult.Kind.CONFLICT, getPath(), ValidationResult.Action.CREATE, ValidationResult.ALREADY_EXISTS_MESSAGE, options);
+      String message = ValidationResult.ALREADY_EXISTS_MESSAGE, details = "checksum 0x" + Long.toHexString(myPatch.digestFile(toFile, myPatch.isNormalized()));
+      return new ValidationResult(ValidationResult.Kind.CONFLICT, getPath(), ValidationResult.Action.CREATE, message, details, options);
     }
     return null;
   }
@@ -67,7 +69,7 @@ public class CreateAction extends PatchAction {
 
   @Override
   protected void doApply(ZipFile patchFile, File backupDir, File toFile) throws IOException {
-    Runner.logger().info("Create action. File: " + toFile.getAbsolutePath());
+    LOG.info("Create action. File: " + toFile.getAbsolutePath());
     prepareToWriteFile(toFile);
 
     ZipEntry entry = Utils.getZipEntry(patchFile, getPath());

@@ -1,11 +1,10 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.compiler.backwardRefs;
 
 import com.intellij.ide.highlighter.JavaClassFileType;
 import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.roots.impl.LibraryScopeCache;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.PsiFileWithStubSupport;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -44,9 +43,7 @@ public class JavaCompilerRefAdapter implements LanguageCompilerRefAdapter {
         final String name = field.getName();
         if (jvmOwnerName == null) return null;
         final int ownerId = names.tryEnumerate(jvmOwnerName);
-        if (ownerId == 0) return null;
         final int nameId = names.tryEnumerate(name);
-        if (nameId == 0) return null;
         return new CompilerRef.JavaCompilerFieldRef(ownerId, nameId);
       }
       else if (element instanceof PsiMethod) {
@@ -58,18 +55,14 @@ public class JavaCompilerRefAdapter implements LanguageCompilerRefAdapter {
         final String name = method.isConstructor() ? "<init>" : method.getName();
         final int parametersCount = method.getParameterList().getParametersCount();
         final int ownerId = names.tryEnumerate(jvmOwnerName);
-        if (ownerId == 0) return null;
         final int nameId = names.tryEnumerate(name);
-        if (nameId == 0) return null;
         return new CompilerRef.JavaCompilerMethodRef(ownerId, nameId, parametersCount);
       }
       else if (element instanceof PsiClass) {
         final String jvmClassName = ClassUtil.getJVMClassName((PsiClass)element);
         if (jvmClassName != null) {
           final int nameId = names.tryEnumerate(jvmClassName);
-          if (nameId != 0) {
-            return new CompilerRef.JavaCompilerClassRef(nameId);
-          }
+          return new CompilerRef.JavaCompilerClassRef(nameId);
         }
       }
     }
@@ -94,9 +87,7 @@ public class JavaCompilerRefAdapter implements LanguageCompilerRefAdapter {
       if (qName == null) return true;
       try {
         final int nameId = names.tryEnumerate(qName);
-        if (nameId != 0) {
-          overridden.add(baseRef.override(nameId));
-        }
+        overridden.add(baseRef.override(nameId));
       }
       catch (IOException e) {
         exception[0] = e;
@@ -104,7 +95,7 @@ public class JavaCompilerRefAdapter implements LanguageCompilerRefAdapter {
       }
       return true;
     };
-    ClassInheritorsSearch.search(baseClass, LibraryScopeCache.getInstance(baseClass.getProject()).getLibrariesOnlyScope(), true).forEach(processor);
+    ClassInheritorsSearch.search(baseClass, libraryScope, true).forEach(processor);
     if (exception[0] != null) {
       throw exception[0];
     }

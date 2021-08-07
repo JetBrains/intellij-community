@@ -24,6 +24,10 @@ import static junit.framework.TestSuite.warning;
  * {@link com.jetbrains.php.slowTests.PhpDumbCompletionTestSuite}
  */
 public interface TestIndexingModeSupporter {
+  /**
+   * If you need to reproduce problem with a specific indexing mode,
+   * annotate test method with {@link NeedsIndex.Exact}.
+   */
   enum IndexingMode {
     SMART {
       @Override
@@ -88,6 +92,28 @@ public interface TestIndexingModeSupporter {
         dumbService.queueTask(new UnindexedFilesUpdater(project));
         dumbService.setDumb(true);
       });
+    }
+  }
+
+  /**
+   * Must be called from testcase setup
+   */
+  default void initIndexingMode() {
+    if (this instanceof TestCase) {
+      String testName = ((TestCase)this).getName();
+      if (testName != null) {
+        NeedsIndex.Exact exact = null;
+        try {
+          exact = getClass().getMethod(testName).getAnnotation(NeedsIndex.Exact.class);
+        }
+        catch (NoSuchMethodException ignored) {
+        }
+        if (exact != null) {
+          //noinspection UseOfSystemOutOrSystemErr
+          System.out.println(testName + ": force indexing mode to " + exact.value());
+          setIndexingMode(exact.value());
+        }
+      }
     }
   }
 
@@ -254,7 +280,7 @@ public interface TestIndexingModeSupporter {
 
   class FullIndexSuite extends TestIndexingModeSupporter.IndexingModeTestHandler {
     public FullIndexSuite() {
-      super("Full index", "Full index: ", IndexingMode.DUMB_FULL_INDEX);
+      super("Full index", "Full index ", IndexingMode.DUMB_FULL_INDEX);
     }
 
     @Override
@@ -266,7 +292,7 @@ public interface TestIndexingModeSupporter {
   class RuntimeOnlyIndexSuite extends TestIndexingModeSupporter.IndexingModeTestHandler {
 
     public RuntimeOnlyIndexSuite() {
-      super("RuntimeOnlyIndex", "Runtime only index: ", IndexingMode.DUMB_RUNTIME_ONLY_INDEX);
+      super("RuntimeOnlyIndex", "Runtime only index ", IndexingMode.DUMB_RUNTIME_ONLY_INDEX);
     }
 
     @Override
@@ -278,7 +304,7 @@ public interface TestIndexingModeSupporter {
   class EmptyIndexSuite extends TestIndexingModeSupporter.IndexingModeTestHandler {
 
     public EmptyIndexSuite() {
-      super("Empty index", "Empty index:", DUMB_EMPTY_INDEX);
+      super("Empty index", "Empty index ", DUMB_EMPTY_INDEX);
     }
 
     @Override

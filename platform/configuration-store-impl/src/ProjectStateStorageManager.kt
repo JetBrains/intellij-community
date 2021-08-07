@@ -1,14 +1,13 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.configurationStore
 
 import com.intellij.openapi.components.PathMacroSubstitutor
-import com.intellij.openapi.components.RoamingType
 import com.intellij.openapi.components.StateStorageOperation
 import com.intellij.openapi.components.StoragePathMacros
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.isExternalStorageEnabled
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.serviceContainer.isWorkspaceComponent
+import com.intellij.serviceContainer.ComponentManagerImpl
 import org.jdom.Element
 import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Path
@@ -60,12 +59,13 @@ open class ProjectStateStorageManager(macroSubstitutor: PathMacroSubstitutor,
     rootAttributes.put(VERSION_OPTION, "4")
   }
 
-  override fun getOldStorageSpec(component: Any, componentName: String, operation: StateStorageOperation): String? {
-    val workspace = isWorkspaceComponent(project.picoContainer, component.javaClass)
-    if (workspace && (operation != StateStorageOperation.READ || getOrCreateStorage(StoragePathMacros.WORKSPACE_FILE, RoamingType.DISABLED).hasState(componentName, false))) {
+  override fun getOldStorageSpec(component: Any, componentName: String, operation: StateStorageOperation): String {
+    if (ComponentManagerImpl.badWorkspaceComponents.contains(componentName)) {
       return StoragePathMacros.WORKSPACE_FILE
     }
-    return PROJECT_FILE
+    else {
+      return PROJECT_FILE
+    }
   }
 
   override val isExternalSystemStorageEnabled: Boolean

@@ -2,7 +2,7 @@ package com.intellij.filePrediction.features
 
 import com.intellij.filePrediction.FileReferencesComputationResult
 import com.intellij.filePrediction.candidates.FilePredictionCandidateSource.OPEN
-import com.intellij.filePrediction.features.history.ngram.FilePredictionNGramFeatures
+import com.intellij.filePrediction.features.history.FilePredictionNGramFeatures
 import com.intellij.filePrediction.predictor.FilePredictionCandidate
 import com.intellij.filePrediction.predictor.FilePredictionCompressedCandidatesHolder
 import com.intellij.filePrediction.references.FilePredictionReferencesHelper
@@ -32,7 +32,7 @@ class FilePredictionFeaturesTest : CodeInsightFixtureTestCase<ModuleFixtureBuild
 
     val features = actual.value.keys
     for (expected in expectedFeatures) {
-      assertTrue(features.contains(expected))
+      assertTrue("Cannot find $expected feature", features.contains(expected))
     }
   }
 
@@ -100,9 +100,7 @@ class FilePredictionFeaturesTest : CodeInsightFixtureTestCase<ModuleFixtureBuild
       "similarity_name_prefix",
       "similarity_path_prefix",
       "similarity_relative_path_prefix",
-      "history_size",
-      "history_uni_mle",
-      "history_bi_mle"
+      "history_size"
     )
   }
 

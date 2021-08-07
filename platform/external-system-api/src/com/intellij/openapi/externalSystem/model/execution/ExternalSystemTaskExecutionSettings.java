@@ -8,6 +8,7 @@ import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xmlb.annotations.Tag;
+import com.intellij.util.xmlb.annotations.Transient;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -104,6 +105,25 @@ public class ExternalSystemTaskExecutionSettings implements Cloneable {
     myScriptParameters = scriptParameters;
   }
 
+  @Transient
+  public void setCommandLine(@NotNull String commandLine) {
+    setTaskNames(new ArrayList<>());
+    setScriptParameters(commandLine);
+  }
+
+  @Transient
+  public @NotNull String getCommandLine() {
+    StringJoiner commandLine = new StringJoiner(" ");
+    for (String taskName : getTaskNames()) {
+      commandLine.add(taskName);
+    }
+    String scriptParameters = getScriptParameters();
+    if (StringUtil.isNotEmpty(scriptParameters)) {
+      commandLine.add(scriptParameters);
+    }
+    return commandLine.toString();
+  }
+
   @NotNull
   public List<@NlsSafe String> getTaskNames() {
     return myTaskNames;
@@ -187,8 +207,14 @@ public class ExternalSystemTaskExecutionSettings implements Cloneable {
 
   @Override
   public String toString() {
-    return StringUtil.join(myTaskNames, " ") +
-           (StringUtil.isEmpty(myScriptParameters) ? "" : " " + myScriptParameters) +
-           (StringUtil.isEmpty(myVmOptions) ? "" : " " + myVmOptions);
+    StringJoiner joiner = new StringJoiner(" ");
+    myTaskNames.forEach(it -> joiner.add(it));
+    if (StringUtil.isNotEmpty(myScriptParameters)) {
+      joiner.add(myScriptParameters);
+    }
+    if (StringUtil.isNotEmpty(myVmOptions)) {
+      joiner.add(myVmOptions);
+    }
+    return joiner.toString();
   }
 }

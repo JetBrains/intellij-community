@@ -2010,4 +2010,12 @@ class C {
 }
 ''', "[I,groovy.lang.GroovyObject]"
   }
+
+  void 'test mixin with unknown identifier'() {
+    doTest """
+protected void onLoadConfig (Map configSection) {
+    if (configSection.presetMode != null)
+      setPresetMode(p<caret>resetMode)
+}""", null
+  }
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.siyeh.ig.cloneable;
 
 import com.intellij.codeInspection.ProblemDescriptor;
@@ -12,9 +12,13 @@ import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.PsiReplacementUtil;
 import com.siyeh.ig.psiutils.CloneUtils;
 import com.siyeh.ig.psiutils.CommentTracker;
+import com.siyeh.ig.psiutils.ControlFlowUtils;
+import com.siyeh.ig.psiutils.ExpressionUtils;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.function.Predicate;
 
 /**
  * @author Bas Leijdekkers
@@ -65,7 +69,8 @@ public class CloneReturnsClassTypeInspection extends BaseInspection {
       if (!(element instanceof PsiTypeElement)) {
         return;
       }
-      final PsiElement parent = element.getParent();
+      final PsiTypeElement typeElement = (PsiTypeElement)element;
+      final PsiElement parent = typeElement.getParent();
       if (!(parent instanceof PsiMethod)) {
         return;
       }
@@ -84,14 +89,19 @@ public class CloneReturnsClassTypeInspection extends BaseInspection {
         public void visitReturnStatement(PsiReturnStatement statement) {
           super.visitReturnStatement(statement);
           final PsiExpression returnValue = PsiUtil.deparenthesizeExpression(statement.getReturnValue());
-          if (returnValue == null || newType.equals(returnValue.getType())) {
+          if (returnValue == null) {
             return;
           }
-          CommentTracker commentTracker = new CommentTracker();
-          PsiReplacementUtil.replaceStatement(statement, "return (" + myClassName + ')' + commentTracker.text(returnValue) + ';', commentTracker);
+          final PsiType type = returnValue.getType();
+          if (newType.equals(type) || PsiType.NULL.equals(type)) {
+            return;
+          }
+          final CommentTracker commentTracker = new CommentTracker();
+          PsiReplacementUtil.replaceStatement(statement, "return (" + myClassName + ')' + commentTracker.text(returnValue) + ';',
+                                              commentTracker);
         }
       });
-      element.replace(newTypeElement);
+      typeElement.getFirstChild().replace(newTypeElement.getFirstChild());
     }
   }
 
@@ -122,6 +132,9 @@ public class CloneReturnsClassTypeInspection extends BaseInspection {
       if (containingClass == null || containingClass.equals(aClass)) {
         return;
       }
+      if (methodAlwaysReturnsNullOrThrowsException(method)) {
+        return;
+      }
       if (!CloneUtils.isCloneable(containingClass)) {
         if (JavaPsiFacade.getElementFactory(method.getProject()).createType(containingClass).isConvertibleFrom(returnType)) {
           return;
@@ -131,6 +144,59 @@ public class CloneReturnsClassTypeInspection extends BaseInspection {
       else {
         registerError(typeElement, containingClass.getName(), Boolean.TRUE);
       }
+    }
+
+    private static boolean methodAlwaysReturnsNullOrThrowsException(@NotNull PsiMethod method) {
+      final PsiCodeBlock body = method.getBody();
+      if (body == null) {
+        return false;
+      }
+      final ReturnChecker checker = new ReturnChecker(r -> ExpressionUtils.isNullLiteral(r.getReturnValue()));
+      body.accept(checker);
+      return checker.isReturnFound() ? checker.allReturnsMatchPredicate() : !ControlFlowUtils.codeBlockMayCompleteNormally(body);
+    }
+  }
+
+  private static class ReturnChecker extends JavaRecursiveElementWalkingVisitor {
+
+    private final Predicate<PsiReturnStatement> myPredicate;
+
+    private boolean myReturnFound = false;
+    private boolean myallReturnsMatchPredicate = true;
+
+    ReturnChecker(Predicate<PsiReturnStatement> predicate) {
+      myPredicate = predicate;
+    }
+
+    @Override
+    public void visitClass(PsiClass aClass) {}
+
+    @Override
+    public void visitLambdaExpression(PsiLambdaExpression expression) {}
+
+    @Override
+    public void visitThrowStatement(PsiThrowStatement statement) {
+      super.visitThrowStatement(statement);
+      myallReturnsMatchPredicate = false;
+      stopWalking();
+    }
+
+    @Override
+    public void visitReturnStatement(PsiReturnStatement statement) {
+      super.visitReturnStatement(statement);
+      myReturnFound = true;
+      myallReturnsMatchPredicate &= myPredicate.test(statement);
+      if (!myallReturnsMatchPredicate) {
+        stopWalking();
+      }
+    }
+
+    public boolean allReturnsMatchPredicate() {
+      return myallReturnsMatchPredicate;
+    }
+
+    public boolean isReturnFound() {
+      return myReturnFound;
     }
   }
 }

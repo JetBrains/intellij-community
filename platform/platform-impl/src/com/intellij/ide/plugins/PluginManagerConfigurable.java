@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.plugins;
 
 import com.intellij.execution.process.ProcessIOExecutorService;
@@ -10,6 +10,7 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.ide.plugins.certificates.PluginCertificateManager;
 import com.intellij.ide.plugins.marketplace.MarketplaceRequests;
 import com.intellij.ide.plugins.newui.*;
+import com.intellij.ide.plugins.org.PluginManagerFilters;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationInfo;
@@ -38,9 +39,7 @@ import com.intellij.openapi.updateSettings.impl.UpdateSettings;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.ThrowableNotNullFunction;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.LicensingFacade;
 import com.intellij.ui.RelativeFont;
@@ -60,7 +59,6 @@ import org.jetbrains.annotations.*;
 import javax.swing.*;
 import java.awt.*;
 import java.io.IOException;
-import java.text.DecimalFormat;
 import java.text.SimpleDateFormat;
 import java.util.List;
 import java.util.*;
@@ -68,6 +66,7 @@ import java.util.Map.Entry;
 import java.util.concurrent.ExecutionException;
 import java.util.function.Consumer;
 import java.util.function.Function;
+import java.util.function.Predicate;
 import java.util.function.Supplier;
 
 /**
@@ -93,8 +92,6 @@ public final class PluginManagerConfigurable
   public static final int ITEMS_PER_GROUP = 9;
 
   public static final SimpleDateFormat DATE_FORMAT = new SimpleDateFormat("MMM dd, yyyy");
-  private static final DecimalFormat K_FORMAT = new DecimalFormat("###.#K");
-  private static final DecimalFormat M_FORMAT = new DecimalFormat("###.#M");
 
   private TabbedPaneHeaderComponent myTabHeaderComponent;
   private MultiPanel myCardPanel;
@@ -201,6 +198,8 @@ public final class PluginManagerConfigurable
       myTabHeaderComponent.update();
     });
     myPluginModel.setPluginUpdatesService(myPluginUpdatesService);
+
+    UpdateChecker.updateDescriptorsForInstalledPlugins(InstalledPluginsState.getInstance());
 
     createMarketplaceTab();
     createInstalledTab();
@@ -343,9 +342,12 @@ public final class PluginManagerConfigurable
       @Override
       protected JComponent createPluginsPanel(@NotNull Consumer<? super PluginsGroupComponent> selectionListener) {
         MultiSelectionEventHandler eventHandler = new MultiSelectionEventHandler();
-        myMarketplacePanel =
-          new PluginsGroupComponentWithProgress(new PluginListLayout(), eventHandler,
-                                                d -> new ListPluginComponent(myPluginModel, d, mySearchListener, true));
+        myMarketplacePanel = new PluginsGroupComponentWithProgress(eventHandler) {
+          @Override
+          protected @NotNull ListPluginComponent createListComponent(@NotNull IdeaPluginDescriptor descriptor) {
+            return new ListPluginComponent(myPluginModel, descriptor, mySearchListener, true);
+          }
+        };
 
         myMarketplacePanel.setSelectionListener(selectionListener);
         registerCopyProvider(myMarketplacePanel);
@@ -357,7 +359,8 @@ public final class PluginManagerConfigurable
           List<PluginsGroup> groups = new ArrayList<>();
 
           try {
-            Map<String, List<IdeaPluginDescriptor>> customRepositoriesMap = CustomPluginRepositoryService.getInstance().getCustomRepositoryPluginMap();
+            Map<String, List<PluginNode>> customRepositoriesMap = CustomPluginRepositoryService.getInstance()
+              .getCustomRepositoryPluginMap();
             try {
               addGroupViaLightDescriptor(groups, IdeBundle.message("plugins.configurable.featured"), "is_featured_search=true",
                                          "/sortBy:featured");
@@ -372,20 +375,18 @@ public final class PluginManagerConfigurable
             }
 
             for (String host : UpdateSettings.getInstance().getPluginHosts()) {
-              List<IdeaPluginDescriptor> allDescriptors = customRepositoriesMap.get(host);
+              List<PluginNode> allDescriptors = customRepositoriesMap.get(host);
               if (allDescriptors != null) {
-                addGroup(groups, IdeBundle.message("plugins.configurable.repository.0", host), "/repository:\"" + host + "\"",
-                         descriptors -> {
-                           int allSize = allDescriptors.size();
-                           descriptors.addAll(ContainerUtil.getFirstItems(allDescriptors, ITEMS_PER_GROUP));
-                           PluginsGroup.sortByName(descriptors);
-                           return allSize > ITEMS_PER_GROUP;
+                addGroup(groups,
+                         IdeBundle.message("plugins.configurable.repository.0", host),
+                         "/repository:\"" + host + "\"",
+                         allDescriptors,
+                         group -> {
+                           PluginsGroup.sortByName(group.descriptors);
+                           return allDescriptors.size() > ITEMS_PER_GROUP;
                          });
               }
             }
-          }
-          catch (IOException e) {
-            LOG.info(e);
           }
           finally {
             ApplicationManager.getApplication().invokeLater(() -> {
@@ -452,12 +453,10 @@ public final class PluginManagerConfigurable
               case TAG:
                 if (myTagsSorted == null || myTagsSorted.isEmpty()) {
                   Set<String> allTags = new HashSet<>();
-                  for (IdeaPluginDescriptor descriptor : CustomPluginRepositoryService.getInstance().getCustomRepositoryPlugins()) {
-                    if (descriptor instanceof PluginNode) {
-                      List<String> tags = ((PluginNode)descriptor).getTags();
-                      if (tags != null && !tags.isEmpty()) {
-                        allTags.addAll(tags);
-                      }
+                  for (PluginNode descriptor : CustomPluginRepositoryService.getInstance().getCustomRepositoryPlugins()) {
+                    List<String> tags = descriptor.getTags();
+                    if (tags != null && !tags.isEmpty()) {
+                      allTags.addAll(tags);
                     }
                   }
                   try {
@@ -630,9 +629,12 @@ public final class PluginManagerConfigurable
         MultiSelectionEventHandler eventHandler = new MultiSelectionEventHandler();
         marketplaceController.setSearchResultEventHandler(eventHandler);
 
-        PluginsGroupComponentWithProgress panel =
-          new PluginsGroupComponentWithProgress(new PluginListLayout(), eventHandler,
-                                                descriptor -> new ListPluginComponent(myPluginModel, descriptor, mySearchListener, true));
+        PluginsGroupComponentWithProgress panel = new PluginsGroupComponentWithProgress(eventHandler) {
+          @Override
+          protected @NotNull ListPluginComponent createListComponent(@NotNull IdeaPluginDescriptor descriptor) {
+            return new ListPluginComponent(myPluginModel, descriptor, mySearchListener, true);
+          }
+        };
 
         panel.setSelectionListener(selectionListener);
         registerCopyProvider(panel);
@@ -642,13 +644,14 @@ public final class PluginManagerConfigurable
             @Override
             protected void handleQuery(@NotNull String query, @NotNull PluginsGroup result) {
               try {
-                Map<String, List<IdeaPluginDescriptor>> customRepositoriesMap = CustomPluginRepositoryService.getInstance().getCustomRepositoryPluginMap();
+                Map<String, List<PluginNode>> customRepositoriesMap =
+                  CustomPluginRepositoryService.getInstance().getCustomRepositoryPluginMap();
 
                 SearchQueryParser.Marketplace parser = new SearchQueryParser.Marketplace(query);
 
                 if (!parser.repositories.isEmpty()) {
                   for (String repository : parser.repositories) {
-                    List<IdeaPluginDescriptor> descriptors = customRepositoriesMap.get(repository);
+                    List<PluginNode> descriptors = customRepositoriesMap.get(repository);
                     if (descriptors == null) {
                       continue;
                     }
@@ -656,7 +659,7 @@ public final class PluginManagerConfigurable
                       result.descriptors.addAll(descriptors);
                     }
                     else {
-                      for (IdeaPluginDescriptor descriptor : descriptors) {
+                      for (PluginNode descriptor : descriptors) {
                         if (StringUtil.containsIgnoreCase(descriptor.getName(), parser.searchQuery)) {
                           result.descriptors.add(descriptor);
                         }
@@ -669,23 +672,17 @@ public final class PluginManagerConfigurable
                 }
 
                 List<PluginNode> pluginsFromMarketplace = MarketplaceRequests.getInstance().searchPlugins(parser.getUrlQuery(), 10000);
-                List<IdeaPluginDescriptor> plugins = UpdateChecker.mergePluginsFromRepositories(
-                  pluginsFromMarketplace,
-                  ContainerUtil.flatten(customRepositoriesMap.values()), false
-                ); // compare plugin versions between marketplace & custom repositories
+                // compare plugin versions between marketplace & custom repositories
+                List<PluginNode> customPlugins = ContainerUtil.flatten(customRepositoriesMap.values());
+                Collection<PluginNode> plugins = RepositoryHelper.mergePluginsFromRepositories(pluginsFromMarketplace,
+                                                                                               customPlugins,
+                                                                                               false);
                 result.descriptors.addAll(0, plugins);
 
                 if (parser.searchQuery != null) {
-                  List<IdeaPluginDescriptor> descriptors = new ArrayList<>();
-
-                  for (Entry<String, List<IdeaPluginDescriptor>> entry : customRepositoriesMap.entrySet()) {
-                    for (IdeaPluginDescriptor descriptor : entry.getValue()) {
-                      if (StringUtil.containsIgnoreCase(descriptor.getName(), parser.searchQuery)) {
-                        descriptors.add(descriptor);
-                      }
-                    }
-                  }
-
+                  List<PluginNode> descriptors = ContainerUtil.filter(customPlugins,
+                                                                      descriptor -> StringUtil.containsIgnoreCase(descriptor.getName(),
+                                                                                                                  parser.searchQuery));
                   result.descriptors.addAll(0, descriptors);
                 }
 
@@ -758,9 +755,12 @@ public final class PluginManagerConfigurable
       @Override
       protected JComponent createPluginsPanel(@NotNull Consumer<? super PluginsGroupComponent> selectionListener) {
         MultiSelectionEventHandler eventHandler = new MultiSelectionEventHandler();
-        myInstalledPanel =
-          new PluginsGroupComponent(new PluginListLayout(), eventHandler,
-                                    descriptor -> new ListPluginComponent(myPluginModel, descriptor, mySearchListener, false));
+        myInstalledPanel = new PluginsGroupComponent(eventHandler) {
+          @Override
+          protected @NotNull ListPluginComponent createListComponent(@NotNull IdeaPluginDescriptor descriptor) {
+            return new ListPluginComponent(myPluginModel, descriptor, mySearchListener, false);
+          }
+        };
 
         myInstalledPanel.setSelectionListener(selectionListener);
         registerCopyProvider(myInstalledPanel);
@@ -850,10 +850,9 @@ public final class PluginManagerConfigurable
             group.rightAction = new LinkLabel<>(
               "",
               null,
-              (__, ___) -> myPluginModel.changeEnableDisable(
-                Set.copyOf(group.descriptors),
-                PluginEnableDisableAction.globally(group.rightAction.getText().startsWith("Enable"))
-              )
+              (__, ___) -> myPluginModel.setEnabledState(group.descriptors,
+                                                         PluginEnableDisableAction
+                                                           .globally(group.rightAction.getText().startsWith("Enable")))
             );
             group.titleWithEnabled(myPluginModel);
             groups.add(group);
@@ -927,16 +926,13 @@ public final class PluginManagerConfigurable
               );
           }
 
-          @Nullable
           @Override
-          protected List<String> getValues(@NotNull String attribute) {
-            if (SearchWords.ORGANIZATION.getValue().equals(attribute)) {
-              return myPluginModel.getVendors();
-            }
-            if (SearchWords.TAG.getValue().equals(attribute)) {
-              return myPluginModel.getTags();
-            }
-            return null;
+          protected @Nullable SortedSet<String> getValues(@NotNull String attribute) {
+            return SearchWords.ORGANIZATION.getValue().equals(attribute) ?
+                   myPluginModel.getVendors() :
+                   SearchWords.TAG.getValue().equals(attribute) ?
+                   myPluginModel.getTags() :
+                   null;
           }
 
           @Override
@@ -948,9 +944,12 @@ public final class PluginManagerConfigurable
         MultiSelectionEventHandler eventHandler = new MultiSelectionEventHandler();
         installedController.setSearchResultEventHandler(eventHandler);
 
-        PluginsGroupComponent panel =
-          new PluginsGroupComponent(new PluginListLayout(), eventHandler,
-                                    descriptor -> new ListPluginComponent(myPluginModel, descriptor, mySearchListener, false));
+        PluginsGroupComponent panel = new PluginsGroupComponent(eventHandler) {
+          @Override
+          protected @NotNull ListPluginComponent createListComponent(@NotNull IdeaPluginDescriptor descriptor) {
+            return new ListPluginComponent(myPluginModel, descriptor, mySearchListener, false);
+          }
+        };
 
         panel.setSelectionListener(selectionListener);
         registerCopyProvider(panel);
@@ -1179,12 +1178,12 @@ public final class PluginManagerConfigurable
     CopyProvider copyProvider = new CopyProvider() {
       @Override
       public void performCopy(@NotNull DataContext dataContext) {
-        StringBuilder result = new StringBuilder();
-        for (ListPluginComponent pluginComponent : component.getSelection()) {
-          IdeaPluginDescriptor descriptor = pluginComponent.getPluginDescriptor();
-          result.append(descriptor.getName()).append(" (").append(descriptor.getVersion()).append(")\n");
-        }
-        CopyPasteManager.getInstance().setContents(new TextTransferable(result.substring(0, result.length() - 1)));
+        String text = StringUtil.join(component.getSelection(),
+                                      pluginComponent -> {
+                                        IdeaPluginDescriptor descriptor = pluginComponent.getPluginDescriptor();
+                                        return String.format("%s (%s)", descriptor.getName(), descriptor.getVersion());
+                                      }, "\n");
+        CopyPasteManager.getInstance().setContents(new TextTransferable(text));
       }
 
       @Override
@@ -1201,8 +1200,7 @@ public final class PluginManagerConfigurable
     DataManager.registerDataProvider(component, dataId -> PlatformDataKeys.COPY_PROVIDER.is(dataId) ? copyProvider : null);
   }
 
-  @NotNull
-  public static List<String> getTags(@NotNull IdeaPluginDescriptor plugin) {
+  public static @NotNull List<String> getTags(@NotNull IdeaPluginDescriptor plugin) {
     List<String> tags = null;
     String productCode = plugin.getProductCode();
 
@@ -1217,7 +1215,7 @@ public final class PluginManagerConfigurable
           }
         }
         else if (tags == null) {
-          return Collections.singletonList(Tags.Paid.name());
+          return List.of(Tags.Paid.name());
         }
         else if (!tags.contains(Tags.Paid.name())) {
           tags = new ArrayList<>(tags);
@@ -1230,13 +1228,13 @@ public final class PluginManagerConfigurable
       if (instance != null) {
         String stamp = instance.getConfirmationStamp(productCode);
         if (stamp != null) {
-          return Collections.singletonList(stamp.startsWith("eval:") ? Tags.Trial.name() : Tags.Purchased.name());
+          return List.of(stamp.startsWith("eval:") ? Tags.Trial.name() : Tags.Purchased.name());
         }
       }
-      return Collections.singletonList(Tags.Paid.name());
+      return List.of(Tags.Paid.name());
     }
     if (ContainerUtil.isEmpty(tags)) {
-      return Collections.emptyList();
+      return List.of();
     }
 
     if (tags.size() > 1) {
@@ -1252,8 +1250,7 @@ public final class PluginManagerConfigurable
     return tags;
   }
 
-  @NotNull
-  public static <T extends Component> T setTinyFont(@NotNull T component) {
+  public static <T extends Component> @NotNull T setTinyFont(@NotNull T component) {
     return SystemInfo.isMac ? RelativeFont.TINY.install(component) : component;
   }
 
@@ -1261,119 +1258,56 @@ public final class PluginManagerConfigurable
     return JBUIScale.scale(5);
   }
 
-  @Nullable
-  public static synchronized @NlsSafe String getDownloads(@NotNull IdeaPluginDescriptor plugin) {
-    String downloads = null;
-    if (plugin instanceof PluginNode) {
-      downloads = ((PluginNode)plugin).getDownloads();
-    }
-    return getFormatLength(downloads);
-  }
-
-  @Nullable
-  static synchronized String getFormatLength(@Nullable String len) {
-    if (!StringUtil.isEmptyOrSpaces(len)) {
-      try {
-        long value = Long.parseLong(len);
-        if (value > 1000) {
-          return value < 1000000 ? K_FORMAT.format(value / 1000D) : M_FORMAT.format(value / 1000000D);
-        }
-        return Long.toString(value);
-      }
-      catch (NumberFormatException ignore) {
-      }
-    }
-
-    return null;
-  }
-
-  @Nullable
-  public static synchronized @NlsSafe String getLastUpdatedDate(@NotNull IdeaPluginDescriptor plugin) {
-    long date = 0;
-    if (plugin instanceof PluginNode) {
-      date = ((PluginNode)plugin).getDate();
-    }
-    return date > 0 && date != Long.MAX_VALUE ? DATE_FORMAT.format(new Date(date)) : null;
-  }
-
-  @Nullable
-  public static @NlsSafe String getRating(@NotNull IdeaPluginDescriptor plugin) {
-    String rating = null;
-    if (plugin instanceof PluginNode) {
-      rating = ((PluginNode)plugin).getRating();
-    }
-    if (rating != null) {
-      try {
-        if (Double.valueOf(rating) > 0) {
-          return StringUtil.trimEnd(rating, ".0");
-        }
-      }
-      catch (NumberFormatException ignore) {
-      }
-    }
-    return null;
-  }
-
-  @Nullable
-  public static synchronized @NlsSafe String getSize(@NotNull IdeaPluginDescriptor plugin) {
-    String size = null;
-    if (plugin instanceof PluginNode) {
-      size = ((PluginNode)plugin).getSize();
-    }
-    if (!StringUtil.isEmptyOrSpaces(size)) {
-      try {
-        return StringUtilRt.formatFileSize(Long.parseLong(size)).toUpperCase(Locale.ENGLISH);
-      }
-      catch (NumberFormatException ignore) {
-      }
-    }
-    return null;
-  }
-
-  @NotNull
-  public static @NlsSafe String getVersion(@NotNull IdeaPluginDescriptor oldPlugin, @NotNull IdeaPluginDescriptor newPlugin) {
-    return StringUtil.defaultIfEmpty(oldPlugin.getVersion(), "unknown") +
-           " " + UIUtil.rightArrow() + " " +
-           StringUtil.defaultIfEmpty(newPlugin.getVersion(), "unknown");
-  }
-
   @Messages.YesNoResult
   public static int showRestartDialog() {
-    return showRestartDialog(IdeBundle.message("updates.dialog.title", ApplicationNamesInfo.getInstance().getFullProductName()));
+    return showRestartDialog(getUpdatesDialogTitle());
   }
 
   @Messages.YesNoResult
   public static int showRestartDialog(@NotNull @NlsContexts.DialogTitle String title) {
-    return showRestartDialog(title, action -> IdeBundle
-      .message("ide.restart.required.message", action, ApplicationNamesInfo.getInstance().getFullProductName()));
+    return showRestartDialog(title, PluginManagerConfigurable::getUpdatesDialogMessage);
   }
 
   @Messages.YesNoResult
-  public static int showRestartDialog(@NotNull @NlsContexts.DialogTitle String title, @NotNull Function<? super String, @Nls String> message) {
+  public static int showRestartDialog(@NotNull @NlsContexts.DialogTitle String title,
+                                      @NotNull Function<? super String, @Nls String> message) {
     String action =
       IdeBundle.message(ApplicationManager.getApplication().isRestartCapable() ? "ide.restart.action" : "ide.shutdown.action");
-    return Messages
-      .showYesNoDialog(message.apply(action), title, action, IdeBundle.message("ide.notnow.action"), Messages.getQuestionIcon());
+    return Messages.showYesNoDialog(message.apply(action),
+                                    title,
+                                    action,
+                                    IdeBundle.message("ide.notnow.action"),
+                                    Messages.getQuestionIcon());
   }
 
   public static void shutdownOrRestartApp() {
-    shutdownOrRestartApp(IdeBundle.message("updates.dialog.title", ApplicationNamesInfo.getInstance().getFullProductName()));
+    shutdownOrRestartApp(getUpdatesDialogTitle());
   }
 
   public static void shutdownOrRestartApp(@NotNull @NlsContexts.DialogTitle String title) {
-    if (showRestartDialog(title) == Messages.YES) {
+    shutdownOrRestartAppAfterInstall(title, PluginManagerConfigurable::getUpdatesDialogMessage);
+  }
+
+  public static void shutdownOrRestartAppAfterInstall(@NotNull Function<? super String, @Nls String> message) {
+    shutdownOrRestartAppAfterInstall(getUpdatesDialogTitle(), message);
+  }
+
+  static void shutdownOrRestartAppAfterInstall(@NotNull @NlsContexts.DialogTitle String title,
+                                               @NotNull Function<? super String, @Nls String> message) {
+    if (showRestartDialog(title, message) == Messages.YES) {
       ApplicationManagerEx.getApplicationEx().restart(true);
     }
   }
 
-  public static void shutdownOrRestartAppAfterInstall(@NotNull String plugin) {
-    String title = IdeBundle.message("updates.dialog.title", ApplicationNamesInfo.getInstance().getFullProductName());
-    Function<String, String> message = action -> IdeBundle
-      .message("plugin.installed.ide.restart.required.message", plugin, action, ApplicationNamesInfo.getInstance().getFullProductName());
+  static @Nls @NotNull String getUpdatesDialogTitle() {
+    return IdeBundle.message("updates.dialog.title",
+                             ApplicationNamesInfo.getInstance().getFullProductName());
+  }
 
-    if (showRestartDialog(title, message) == Messages.YES) {
-      ApplicationManagerEx.getApplicationEx().restart(true);
-    }
+  static @Nls @NotNull String getUpdatesDialogMessage(@Nls @NotNull String action) {
+    return IdeBundle.message("ide.restart.required.message",
+                             action,
+                             ApplicationNamesInfo.getInstance().getFullProductName());
   }
 
   /**
@@ -1584,10 +1518,8 @@ public final class PluginManagerConfigurable
       }
 
       if (!descriptors.isEmpty()) {
-        myPluginModel.changeEnableDisable(
-          descriptors,
-          PluginEnableDisableAction.globally(myEnable)
-        );
+        myPluginModel.setEnabledState(descriptors,
+                                      PluginEnableDisableAction.globally(myEnable));
       }
     }
   }
@@ -1603,18 +1535,25 @@ public final class PluginManagerConfigurable
     return pane;
   }
 
-  private void addGroup(
-    @NotNull List<? super PluginsGroup> groups,
-    @NotNull @Nls String name,
-    @NotNull String showAllQuery,
-    @NotNull ThrowableNotNullFunction<? super List<IdeaPluginDescriptor>, Boolean, ? extends IOException> function
-  )
-    throws IOException {
+  private void addGroup(@NotNull List<? super PluginsGroup> groups,
+                        @NotNull @Nls String name,
+                        @NotNull String showAllQuery,
+                        @NotNull List<PluginNode> customPlugins,
+                        @NotNull Predicate<? super PluginsGroup> predicate) {
     PluginsGroup group = new PluginsGroup(name);
 
-    if (Boolean.TRUE.equals(function.fun(group.descriptors))) {
-      group.rightAction =
-        new LinkLabel<>(IdeBundle.message("plugins.configurable.show.all"), null, myMarketplaceTab.mySearchListener, showAllQuery);
+    int i = 0;
+    for (Iterator<? extends IdeaPluginDescriptor> iterator = customPlugins.iterator();
+         iterator.hasNext() && i < ITEMS_PER_GROUP;
+         i++) {
+      group.descriptors.add(iterator.next());
+    }
+
+    if (predicate.test(group)) {
+      group.rightAction = new LinkLabel<>(IdeBundle.message("plugins.configurable.show.all"),
+                                          null,
+                                          myMarketplaceTab.mySearchListener,
+                                          showAllQuery);
       group.rightAction.setBorder(JBUI.Borders.emptyRight(5));
     }
 
@@ -1623,17 +1562,16 @@ public final class PluginManagerConfigurable
     }
   }
 
-  private void addGroupViaLightDescriptor(
-    @NotNull List<? super PluginsGroup> groups,
-    @NotNull @Nls String name,
-    @NotNull @NonNls String query,
-    @NotNull @NonNls String showAllQuery
-  ) throws IOException {
-    addGroup(groups, name, showAllQuery, descriptors -> {
-      List<PluginNode> pluginNodes = MarketplaceRequests.getInstance().searchPlugins(query, ITEMS_PER_GROUP * 2);
-      descriptors.addAll(ContainerUtil.getFirstItems(pluginNodes, ITEMS_PER_GROUP));
-      return pluginNodes.size() >= ITEMS_PER_GROUP;
-    });
+  private void addGroupViaLightDescriptor(@NotNull List<? super PluginsGroup> groups,
+                                          @NotNull @Nls String name,
+                                          @NotNull @NonNls String query,
+                                          @NotNull @NonNls String showAllQuery) throws IOException {
+    List<PluginNode> pluginNodes = MarketplaceRequests.getInstance().searchPlugins(query, ITEMS_PER_GROUP * 2);
+    addGroup(groups,
+             name,
+             showAllQuery,
+             pluginNodes,
+             __ -> pluginNodes.size() >= ITEMS_PER_GROUP);
   }
 
   @Override
@@ -1644,9 +1582,9 @@ public final class PluginManagerConfigurable
 
   @Override
   public void disposeUIResources() {
+    InstalledPluginsState pluginsState = InstalledPluginsState.getInstance();
     if (myPluginModel.toBackground()) {
-      InstallPluginInfo.showRestart();
-      InstalledPluginsState.getInstance().clearShutdownCallback();
+      pluginsState.clearShutdownCallback();
     }
 
     myMarketplaceTab.dispose();
@@ -1662,9 +1600,8 @@ public final class PluginManagerConfigurable
     myPluginUpdatesService.dispose();
     PluginPriceService.cancel();
 
-    InstalledPluginsState.getInstance().runShutdownCallback();
-
-    InstalledPluginsState.getInstance().resetChangesAppliedWithoutRestart();
+    pluginsState.runShutdownCallback();
+    pluginsState.resetChangesAppliedWithoutRestart();
   }
 
   @Override
@@ -1726,7 +1663,7 @@ public final class PluginManagerConfigurable
   public Runnable enableSearch(String option) {
     if (myTabHeaderComponent == null) {
       myLaterSearchQuery = option;
-      return null;
+      return () -> {};
     }
     if (StringUtil.isEmpty(option) && (myTabHeaderComponent.getSelectionTab() == MARKETPLACE_TAB || myInstalledSearchPanel.isEmpty())) {
       return null;
@@ -1746,26 +1683,33 @@ public final class PluginManagerConfigurable
   }
 
   private final class InstallFromDiskAction extends DumbAwareAction {
-    private InstallFromDiskAction() {super(IdeBundle.messagePointer("action.InstallFromDiskAction.text"));}
+    private InstallFromDiskAction() {
+      super(IdeBundle.messagePointer("action.InstallFromDiskAction.text"));
+    }
 
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
-      PluginInstaller.chooseAndInstall(myPluginModel, myCardPanel, callbackData -> {
-        myPluginModel.pluginInstalledFromDisk(callbackData);
+      if (!PluginManagerFilters.getInstance().allowInstallFromDisk()) {
+        Messages.showErrorDialog(e.getProject(), IdeBundle.message("action.InstallFromDiskAction.not.allowed.description"), IdeBundle.message("action.InstallFromDiskAction.text"));
+        return;
+      }
 
-        boolean select = myInstalledPanel == null;
+      PluginInstaller.chooseAndInstall(e.getProject(), myCardPanel, (file, parent) ->
+        PluginInstaller.installFromDisk(myPluginModel, myPluginModel, file, parent, callbackData -> {
+          myPluginModel.pluginInstalledFromDisk(callbackData);
 
-        updateSelectionTab(INSTALLED_TAB);
+          boolean select = myInstalledPanel == null;
+          updateSelectionTab(INSTALLED_TAB);
 
-        myInstalledTab.clearSearchPanel("");
+          myInstalledTab.clearSearchPanel("");
 
-        if (select) {
-          ListPluginComponent component = findInstalledPluginById(callbackData.getPluginDescriptor().getPluginId());
+          ListPluginComponent component = select ?
+                                          findInstalledPluginById(callbackData.getPluginDescriptor().getPluginId()) :
+                                          null;
           if (component != null) {
             myInstalledPanel.setSelection(component);
           }
-        }
-      });
+        }));
     }
   }
 

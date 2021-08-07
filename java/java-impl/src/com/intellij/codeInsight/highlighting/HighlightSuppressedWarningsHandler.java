@@ -51,17 +51,17 @@ class HighlightSuppressedWarningsHandler extends HighlightUsagesHandlerBase<PsiL
 
   @Override
   public @NotNull List<PsiLiteralExpression> getTargets() {
-    final List<PsiLiteralExpression> result = new ArrayList<>();
+    List<PsiLiteralExpression> result = new ArrayList<>();
     if (mySuppressedExpression != null) {
       result.add(mySuppressedExpression);
       return result;
     }
-    final PsiAnnotationParameterList list = myTarget.getParameterList();
-    final PsiNameValuePair[] attributes = list.getAttributes();
+    PsiAnnotationParameterList list = myTarget.getParameterList();
+    PsiNameValuePair[] attributes = list.getAttributes();
     for (PsiNameValuePair attribute : attributes) {
-      final PsiAnnotationMemberValue value = attribute.getValue();
+      PsiAnnotationMemberValue value = attribute.getValue();
       if (value instanceof PsiArrayInitializerMemberValue) {
-        final PsiAnnotationMemberValue[] initializers = ((PsiArrayInitializerMemberValue)value).getInitializers();
+        PsiAnnotationMemberValue[] initializers = ((PsiArrayInitializerMemberValue)value).getInitializers();
         for (PsiAnnotationMemberValue initializer : initializers) {
           if (initializer instanceof PsiLiteralExpression) {
             result.add((PsiLiteralExpression)initializer);
@@ -73,21 +73,23 @@ class HighlightSuppressedWarningsHandler extends HighlightUsagesHandlerBase<PsiL
   }
 
   @Override
-  protected void selectTargets(@NotNull List<? extends PsiLiteralExpression> targets, final @NotNull Consumer<? super List<? extends PsiLiteralExpression>> selectionConsumer) {
+  protected void selectTargets(@NotNull List<? extends PsiLiteralExpression> targets,
+                               @NotNull Consumer<? super List<? extends PsiLiteralExpression>> selectionConsumer) {
     if (targets.size() == 1) {
       selectionConsumer.consume(targets);
-    } else {
+    }
+    else {
       JBPopupFactory.getInstance().createListPopup(new BaseListPopupStep<PsiLiteralExpression>(
-        JavaBundle.message("highlight.suppressed.warnings.choose.inspections"), targets){
+        JavaBundle.message("highlight.suppressed.warnings.choose.inspections"), targets) {
         @Override
-        public PopupStep onChosen(PsiLiteralExpression selectedValue, boolean finalChoice) {
+        public PopupStep<?> onChosen(PsiLiteralExpression selectedValue, boolean finalChoice) {
           selectionConsumer.consume(Collections.singletonList(selectedValue));
           return FINAL_CHOICE;
         }
 
         @Override
         public @NotNull String getTextFor(PsiLiteralExpression value) {
-          final Object o = value.getValue();
+          Object o = value.getValue();
           LOG.assertTrue(o instanceof String);
           return (String)o;
         }
@@ -97,15 +99,18 @@ class HighlightSuppressedWarningsHandler extends HighlightUsagesHandlerBase<PsiL
 
   @Override
   public void computeUsages(@NotNull List<? extends PsiLiteralExpression> targets) {
-    final Project project = myTarget.getProject();
-    final PsiElement parent = myTarget.getParent().getParent();
-    final LocalInspectionsPass pass = new LocalInspectionsPass(myFile, myFile.getViewProvider().getDocument(),
-                                                               parent.getTextRange().getStartOffset(), parent.getTextRange().getEndOffset(),
-                                                               myPriorityRange,
-                                                               false, HighlightInfoProcessor.getEmpty(), true);
+    Project project = myTarget.getProject();
+    PsiElement parent = myTarget.getParent().getParent();
+    LocalInspectionsPass pass = new LocalInspectionsPass(myFile,
+                                                         myFile.getViewProvider().getDocument(),
+                                                         parent.getTextRange().getStartOffset(), parent.getTextRange().getEndOffset(),
+                                                         myPriorityRange,
+                                                         false,
+                                                         HighlightInfoProcessor.getEmpty(),
+                                                         true);
     InspectionProfileImpl inspectionProfile = InspectionProjectProfileManager.getInstance(project).getCurrentProfile();
     for (PsiLiteralExpression target : targets) {
-      final Object value = target.getValue();
+      Object value = target.getValue();
       if (!(value instanceof String)) {
         continue;
       }
@@ -114,8 +119,8 @@ class HighlightSuppressedWarningsHandler extends HighlightUsagesHandlerBase<PsiL
         continue;
       }
 
-      final List<LocalInspectionToolWrapper> toolsCopy = new ArrayList<>(tools.size());
-      for (InspectionToolWrapper tool : tools) {
+      List<LocalInspectionToolWrapper> toolsCopy = new ArrayList<>(tools.size());
+      for (InspectionToolWrapper<?, ?> tool : tools) {
         if (tool instanceof LocalInspectionToolWrapper) {
           toolsCopy.add((LocalInspectionToolWrapper)tool.createCopy());
         }
@@ -123,23 +128,24 @@ class HighlightSuppressedWarningsHandler extends HighlightUsagesHandlerBase<PsiL
       if (toolsCopy.isEmpty()) {
         continue;
       }
-      final InspectionManagerEx managerEx = (InspectionManagerEx)InspectionManager.getInstance(project);
-      final GlobalInspectionContextImpl context = managerEx.createNewGlobalContext();
-      for (InspectionToolWrapper toolWrapper : toolsCopy) {
+      InspectionManagerEx managerEx = (InspectionManagerEx)InspectionManager.getInstance(project);
+      GlobalInspectionContextImpl context = managerEx.createNewGlobalContext();
+      for (InspectionToolWrapper<?, ?> toolWrapper : toolsCopy) {
         toolWrapper.initialize(context);
       }
       ((RefManagerImpl)context.getRefManager()).inspectionReadActionStarted();
       try {
         ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
         if (indicator == null) {
-          ProgressManager.getInstance().executeProcessUnderProgress(() -> pass.doInspectInBatch(context, managerEx, toolsCopy), new ProgressIndicatorBase());
+          ProgressManager.getInstance()
+            .executeProcessUnderProgress(() -> pass.doInspectInBatch(context, managerEx, toolsCopy), new ProgressIndicatorBase());
         }
         else {
           pass.doInspectInBatch(context, managerEx, toolsCopy);
         }
 
         for (HighlightInfo info : pass.getInfos()) {
-          final PsiElement element = CollectHighlightsUtil.findCommonParent(myFile, info.startOffset, info.endOffset);
+          PsiElement element = CollectHighlightsUtil.findCommonParent(myFile, info.startOffset, info.endOffset);
           if (element != null) {
             addOccurrence(element);
           }

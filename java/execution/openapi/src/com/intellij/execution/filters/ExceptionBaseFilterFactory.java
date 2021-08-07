@@ -15,13 +15,22 @@
  */
 package com.intellij.execution.filters;
 
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.search.GlobalSearchScope;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.Objects;
 
 public class ExceptionBaseFilterFactory implements ExceptionFilterFactory {
   @NotNull
   @Override
   public Filter create(@NotNull GlobalSearchScope searchScope) {
-    return new AdvancedExceptionFilter(searchScope);
+    return new AdvancedExceptionFilter(Objects.requireNonNull(searchScope.getProject()), searchScope);
+  }
+
+  @Override
+  public Filter create(@NotNull Project project,
+                       @NotNull GlobalSearchScope searchScope) {
+    return new AdvancedExceptionFilter(project, searchScope);
   }
 }

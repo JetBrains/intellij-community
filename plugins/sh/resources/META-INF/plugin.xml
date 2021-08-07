@@ -1,13 +1,17 @@
 <idea-plugin package="com.intellij.sh">
   <id>com.jetbrains.sh</id>
   <vendor>JetBrains</vendor>
-  <depends>com.intellij.modules.lang</depends>
   <name>Shell Script</name>
   <category>Languages</category>
   <resource-bundle>messages.ShBundle</resource-bundle>
 
-  <depends optional="true" config-file="sh-terminal.xml">org.jetbrains.plugins.terminal</depends>
-  <depends optional="true" config-file="sh-copyright.xml">com.intellij.copyright</depends>
+  <content>
+    <module name="intellij.sh/terminal"/>
+    <module name="intellij.sh/copyright"/>
+  </content>
+  <dependencies>
+    <plugin id="com.intellij.modules.lang"/>
+  </dependencies>
 
   <description><![CDATA[
 Adds support for working with shell script files
@@ -18,7 +22,7 @@ Adds support for working with shell script files
 </li></ul>]]></description>
 
   <extensions defaultExtensionNs="com.intellij">
-    <fileType language="Shell Script" extensions="sh;bash;zsh" hashBangs="sh;bash;zsh" fieldName="INSTANCE" name="Shell Script"
+    <fileType language="Shell Script" extensions="bash;sh;zsh" hashBangs="sh;bash;zsh" fieldName="INSTANCE" name="Shell Script"
               implementationClass="com.intellij.sh.ShFileType"/>
     <backgroundPostStartupActivity implementation="com.intellij.sh.fileType.ShShebangFileTypeDetectorActivity"/>
     <lang.syntaxHighlighter language="Shell Script" implementationClass="com.intellij.sh.highlighter.ShSyntaxHighlighter"/>
@@ -66,8 +70,7 @@ Adds support for working with shell script files
     <langCodeStyleSettingsProvider implementation="com.intellij.sh.codeStyle.ShLanguageCodeStyleSettingsProvider"/>
 
     <fileDocumentManagerListener implementation="com.intellij.sh.formatter.ShLineEndingsAdapter"/>
-    <externalFormatProcessor implementation="com.intellij.sh.formatter.ShExternalFormatter"/>
-    <lang.formatter language="Shell Script" implementationClass="com.intellij.sh.formatter.ShFormatterModelBuilder"/>
+    <formattingService implementation="com.intellij.sh.formatter.ShExternalFormatter"/>
 
     <editorNotificationProvider implementation="com.intellij.sh.shellcheck.ShellcheckSetupNotificationProvider"/>
 
@@ -81,17 +84,19 @@ Adds support for working with shell script files
     <highlightErrorFilter implementation="com.intellij.sh.ShErrorFilter"/>
     <daemon.highlightInfoFilter implementation="com.intellij.sh.ShErrorFilter"/>
 
-    <statistics.counterUsagesCollector groupId="sh.shell.script" version="1"/>
+    <statistics.counterUsagesCollector implementationClass="com.intellij.sh.statistics.ShCounterUsagesCollector"/>
 
     <highlightUsagesHandlerFactory implementation="com.intellij.sh.highlighting.ShOccurrencesHighlightingFactory"/>
     <renameHandler implementation="com.intellij.sh.rename.ShRenameHandler"/>
     <intentionAction>
       <className>com.intellij.sh.rename.ShRenameAllOccurrencesIntention</className>
-      <category>Shell script</category>
+      <bundleName>messages.ShBundle</bundleName>
+      <categoryKey>intention.shell.script</categoryKey>
     </intentionAction>
     <intentionAction>
       <className>com.intellij.sh.ShExplainShellIntention</className>
-      <category>Shell script</category>
+      <bundleName>messages.ShBundle</bundleName>
+      <categoryKey>intention.shell.script</categoryKey>
     </intentionAction>
     <notificationGroup id="Shell Script" displayType="BALLOON" bundle="messages.ShBundle" key="sh.shell.script"/>
   </extensions>

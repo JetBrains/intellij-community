@@ -18,7 +18,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.impl.patch.FilePatch;
 import com.intellij.openapi.diff.impl.patch.PatchFileHeaderInfo;
 import com.intellij.openapi.diff.impl.patch.PatchReader;
-import com.intellij.openapi.diff.impl.patch.PatchSyntaxException;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
@@ -37,6 +36,7 @@ import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.StreamUtil;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.VcsBundle;
@@ -55,10 +55,10 @@ import com.intellij.util.Alarm;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
-import com.intellij.util.text.CharArrayCharSequence;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.vcs.log.VcsUser;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -81,6 +81,9 @@ import static com.intellij.util.ObjectUtils.chooseNotNull;
 import static com.intellij.util.containers.ContainerUtil.map;
 
 public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
+  @ApiStatus.Internal
+  public static final String DIMENSION_SERVICE_KEY = "vcs.ApplyPatchDifferentiatedDialog";
+
   private static final Logger LOG = Logger.getInstance(ApplyPatchDifferentiatedDialog.class);
   private final ZipperUpdater myLoadQueue;
   private final TextFieldWithBrowseButton myPatchFile;
@@ -212,7 +215,6 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
         }
       });
 
-      myChangeListChooser.setChangeLists(changeListManager.getChangeListsCopy());
       if (defaultList != null) {
         myChangeListChooser.setDefaultSelection(defaultList);
       }
@@ -254,7 +256,7 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
     if (myCanChangePatchFile) {
       BulkFileListener listener = new BulkFileListener() {
         @Override
-        public void after(@NotNull List<? extends VFileEvent> events) {
+        public void after(@NotNull List<? extends @NotNull VFileEvent> events) {
           for (VFileEvent event : events) {
             if (event instanceof VFileContentChangeEvent) {
               syncUpdatePatchFileAndScheduleReloadIfNeeded(event.getFile());
@@ -358,7 +360,7 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
   @Override
   @NonNls
   protected String getDimensionServiceKey() {
-    return "vcs.ApplyPatchDifferentiatedDialog";
+    return DIMENSION_SERVICE_KEY;
   }
 
   @Override
@@ -414,9 +416,8 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
 
       ApplicationManager.getApplication().invokeLater(() -> {
         if (myShouldUpdateChangeListName && myChangeListChooser != null) {
-          myChangeListChooser.setSuggestedName(
-            chooseNotNull(getSubjectFromMessage(messageFromPatch), file.getNameWithoutExtension().replace('_', ' ').trim()),
-            messageFromPatch);
+          String subject = chooseNotNull(getSubjectFromMessage(messageFromPatch), file.getNameWithoutExtension().replace('_', ' ').trim());
+          myChangeListChooser.setSuggestedName(subject, messageFromPatch, false);
         }
         myPatches.clear();
         myPatches.addAll(matchedPatches);
@@ -434,36 +435,21 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
 
   @Nullable
   private PatchReader loadPatches(@NotNull VirtualFile patchFile) {
-    PatchReader reader;
     try {
-      reader = ReadAction.compute(() -> {
+      String text = ReadAction.compute(() -> {
         try (InputStreamReader inputStreamReader = new InputStreamReader(patchFile.getInputStream(), patchFile.getCharset())) {
-          char[] chars = new char[(int)patchFile.getLength()];
-          int count = 0;
-          while (count < chars.length) {
-            int n = inputStreamReader.read(chars, count, chars.length - count);
-            if (n <= 0) {
-              break;
-            }
-            count += n;
-          }
-          return new PatchReader(new CharArrayCharSequence(chars, 0, count));
+          return StreamUtil.readText(inputStreamReader);
         }
       });
+
+      PatchReader reader = new PatchReader(text);
+      reader.parseAllPatches();
+      return reader;
     }
     catch (Exception e) {
       addNotificationAndWarn(VcsBundle.message("patch.apply.cannot.read.patch", patchFile.getPresentableName(), e.getMessage()));
       return null;
     }
-    try {
-      reader.parseAllPatches();
-    }
-    catch (PatchSyntaxException e) {
-      addNotificationAndWarn(VcsBundle.message("patch.apply.cannot.read.patch", "", e.getMessage()));
-      return null;
-    }
-
-    return reader;
   }
 
   private void addNotificationAndWarn(@NotNull @NlsContexts.Label String errorMessage) {

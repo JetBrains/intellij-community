@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.debugger;
 
 import com.intellij.execution.Executor;
@@ -12,10 +12,11 @@ import com.intellij.execution.runners.JavaProgramPatcher;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.module.EffectiveLanguageLevelUtil;
+import com.intellij.openapi.module.LanguageLevelUtil;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.projectRoots.JdkUtil;
+import com.intellij.openapi.projectRoots.JavaSdk;
+import com.intellij.openapi.projectRoots.JavaSdkVersion;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.pom.java.LanguageLevel;
@@ -25,10 +26,10 @@ import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.util.PathUtil;
+import org.jetbrains.jps.model.java.JdkVersionDetector;
 import org.jetbrains.plugins.groovy.GroovyFileType;
 
 import java.io.File;
-import java.util.jar.Attributes;
 import java.util.regex.Pattern;
 
 /**
@@ -87,7 +88,7 @@ final class GroovyHotSwapper extends JavaProgramPatcher {
     if (configuration instanceof ModuleBasedConfiguration) {
       final Module module = ((ModuleBasedConfiguration)configuration).getConfigurationModule().getModule();
       if (module != null) {
-        final LanguageLevel level = EffectiveLanguageLevelUtil.getEffectiveLanguageLevel(module);
+        final LanguageLevel level = LanguageLevelUtil.getEffectiveLanguageLevel(module);
         if (!level.isAtLeast(LanguageLevel.JDK_1_5)) {
           return;
         }
@@ -96,10 +97,13 @@ final class GroovyHotSwapper extends JavaProgramPatcher {
 
     Sdk jdk = javaParameters.getJdk();
     if (jdk != null) {
-      String vendor = JdkUtil.getJdkMainAttribute(jdk, Attributes.Name.IMPLEMENTATION_VENDOR);
-      if (vendor != null && vendor.contains("IBM")) {
-        LOG.info("Due to IBM JDK peculiarities (IDEA-59070) we don't add Groovy agent when running applications under it");
-        return;
+      JavaSdkVersion version = JavaSdk.getInstance().getVersion(jdk);
+      if (version != null && !version.isAtLeast(JavaSdkVersion.JDK_1_8) && jdk.getHomePath() != null) {
+        JdkVersionDetector.JdkVersionInfo info = JdkVersionDetector.getInstance().detectJdkVersionInfo(jdk.getHomePath());
+        if (info != null && info.variant == JdkVersionDetector.Variant.IBM) {
+          LOG.info("Due to old IBM JDK peculiarities (IDEA-59070) we don't add Groovy agent when running applications under it");
+          return;
+        }
       }
     }
 

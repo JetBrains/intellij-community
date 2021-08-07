@@ -1,10 +1,14 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.actionSystem;
 
 import com.intellij.DynamicBundle;
 import com.intellij.ide.ui.UISettings;
+import com.intellij.openapi.actionSystem.ex.CustomComponentAction;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.NotNullLazyValue;
+import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.text.TextWithMnemonic;
 import com.intellij.util.SmartFMap;
 import org.jetbrains.annotations.Nls;
@@ -13,6 +17,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.awt.*;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
 import java.util.HashSet;
@@ -40,6 +45,12 @@ public final class Presentation implements Cloneable {
    * value: String
    */
   @NonNls public static final String PROP_TEXT = "text";
+  /**
+   * Defines tool tip for button at tool bar or text for element at menu
+   * that includes mnemonic suffix, like "Git(G)"
+   * value: String
+   */
+  @NonNls public static final String PROP_TEXT_WITH_SUFFIX = "textWithSuffix";
   /**
    * value: Integer
    */
@@ -183,11 +194,13 @@ public final class Presentation implements Cloneable {
    */
   public void setTextWithMnemonic(@NotNull Supplier<TextWithMnemonic> textWithMnemonicSupplier) {
     String oldText = getText();
+    String oldTextWithSuffix = getText(true);
     int oldMnemonic = getMnemonic();
     int oldIndex = getDisplayedMnemonicIndex();
     myTextWithMnemonicSupplier = textWithMnemonicSupplier;
 
     fireObjectPropertyChange(PROP_TEXT, oldText, getText());
+    fireObjectPropertyChange(PROP_TEXT_WITH_SUFFIX, oldTextWithSuffix, getText(true));
     fireObjectPropertyChange(PROP_MNEMONIC_KEY, oldMnemonic, getMnemonic());
     fireObjectPropertyChange(PROP_MNEMONIC_INDEX, oldIndex, getDisplayedMnemonicIndex());
   }
@@ -324,7 +337,7 @@ public final class Presentation implements Cloneable {
     fireBooleanPropertyChange(PROP_ENABLED, oldEnabled, myEnabled);
   }
 
-  public final void setEnabledAndVisible(boolean enabled) {
+  public void setEnabledAndVisible(boolean enabled) {
     setEnabled(enabled);
     setVisible(enabled);
   }
@@ -356,6 +369,10 @@ public final class Presentation implements Cloneable {
   }
 
   public void copyFrom(Presentation presentation) {
+    copyFrom(presentation, null);
+  }
+
+  public void copyFrom(Presentation presentation, @Nullable Component customComponent) {
     if (presentation == this) return;
 
     setTextWithMnemonic(presentation.getTextWithPossibleMnemonic());
@@ -373,7 +390,12 @@ public final class Presentation implements Cloneable {
       allKeys.addAll(myUserMap.keySet());
       if (!allKeys.isEmpty()) {
         for (String key : allKeys) {
-          putClientProperty(key, presentation.getClientProperty(key));
+          if (key.equals(CustomComponentAction.COMPONENT_KEY.toString()) && customComponent != null) {
+            putClientProperty(key, customComponent);
+          }
+          else {
+            putClientProperty(key, presentation.getClientProperty(key));
+          }
         }
       }
     }
@@ -389,17 +411,21 @@ public final class Presentation implements Cloneable {
     putClientProperty(key.toString(), value);
   }
 
+  /** @deprecated Use {@link #getClientProperty(Key)} instead */
+  @Deprecated
   @Nullable
   public Object getClientProperty(@NonNls @NotNull String key) {
     return myUserMap.get(key);
   }
 
+  /** @deprecated Use {@link #putClientProperty(Key, Object)} instead */
+  @Deprecated
   public void putClientProperty(@NonNls @NotNull String key, @Nullable Object value) {
     Object oldValue;
     synchronized (this) {
       oldValue = myUserMap.get(key);
       if (Comparing.equal(oldValue, value)) return;
-      if (key.equals("customComponent") && oldValue != null) {
+      if (key.equals(CustomComponentAction.COMPONENT_KEY.toString()) && oldValue != null) {
         LOG.error("Trying to reset custom component in a presentation", new Throwable());
       }
       myUserMap = value == null ? myUserMap.minus(key) : myUserMap.plus(key, value);

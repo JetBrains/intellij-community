@@ -2,6 +2,7 @@
 package com.intellij.java.propertyBased
 
 import com.intellij.codeInsight.daemon.impl.HighlightInfo
+import com.intellij.codeInsight.daemon.impl.IdentifierHighlighterPassFactory
 import com.intellij.codeInsight.daemon.problems.MemberCollector
 import com.intellij.codeInsight.daemon.problems.MemberUsageCollector
 import com.intellij.codeInsight.daemon.problems.Problem
@@ -28,6 +29,7 @@ import com.intellij.psi.search.searches.ReferencesSearch
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.PsiUtil
 import com.intellij.testFramework.SkipSlowTestLocally
+import com.intellij.testFramework.TestModeFlags
 import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl
 import com.intellij.testFramework.propertyBased.MadTestingUtil
 import com.intellij.util.ArrayUtilRt
@@ -41,6 +43,10 @@ import kotlin.math.absoluteValue
 
 @SkipSlowTestLocally
 class ProjectProblemsViewPropertyTest : BaseUnivocityTest() {
+  override fun setUp() {
+    TestModeFlags.set(ProjectProblemUtils.ourTestingProjectProblems, true, testRootDisposable)
+    super.setUp()
+  }
 
   fun testAllFilesWithMemberNameReported() {
     RecursionManager.disableMissedCacheAssertions(testRootDisposable)

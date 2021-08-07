@@ -34,6 +34,7 @@ final class UpdateFoldRegionsOperation implements Runnable {
   private static final Key<Boolean> CAN_BE_REMOVED_WHEN_COLLAPSED = Key.create("canBeRemovedWhenCollapsed");
   static final Key<Boolean> COLLAPSED_BY_DEFAULT = Key.create("collapsedByDefault");
   static final Key<String> SIGNATURE = Key.create("signature");
+  static final Key<Boolean> UPDATE_REGION = Key.create("update");
   static final String NO_SIGNATURE = "no signature";
 
   private static final Comparator<PsiElement> COMPARE_BY_OFFSET_REVERSED = (element, element1) -> {
@@ -256,6 +257,11 @@ final class UpdateFoldRegionsOperation implements Runnable {
   private boolean shouldRemoveRegion(@NotNull FoldRegion region, @NotNull EditorFoldingInfo info,
                                      @NotNull Map<TextRange, Boolean> rangeToExpandStatusMap, @NotNull Ref<? super FoldingUpdate.RegionInfo> matchingInfo) {
     matchingInfo.set(null);
+    if (UPDATE_REGION.get(region) == Boolean.TRUE) {
+      rangeToExpandStatusMap.put(TextRange.create(region.getStartOffset(), region.getEndOffset()),
+                                 region.isExpanded());
+      return true;
+    }
     PsiElement element = SlowOperations.allowSlowOperations(() -> info.getPsiElement(region));
     if (element != null) {
       PsiFile containingFile = element.getContainingFile();

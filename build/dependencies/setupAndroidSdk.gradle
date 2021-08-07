@@ -15,21 +15,15 @@
  */
 
 import org.apache.tools.ant.taskdefs.condition.Os
-import org.gradle.util.GFileUtils
 import javax.inject.Inject
 
 repositories {
   maven { url 'https://cache-redirector.jetbrains.com/repo.maven.apache.org/maven2/' }
-  maven { url 'https://cache-redirector.jetbrains.com/kotlin.bintray.com/kotlin-plugin/' }
-  maven { url 'https://cache-redirector.jetbrains.com/dl.bintray.com/kotlin/kotlin-eap' }
-  maven { url 'https://cache-redirector.jetbrains.com/dl.bintray.com/kotlin/kotlin-bootstrap' }
-  maven { url 'https://cache-redirector.jetbrains.com/jetbrains.bintray.com/intellij-third-party-dependencies/' }
 }
 
 configurations {
-  androidOfflineRepo
+  androidLayoutlib
   androidSdk
-  kotlinDeps
 }
 
 def osFamily = 'linux'
@@ -39,59 +33,28 @@ if (Os.isFamily(Os.FAMILY_WINDOWS)){
   osFamily = 'darwin'
 }
 
-// infer kotlin_version from kotlin-plugin (e.g. "1.4.10" in "203-1.4.10-release-IJ2965:Ideadev")
-def kotlinVersionLen = kotlinPluginBuild.indexOf("-release")
-if (kotlinVersionLen == -1) {
-  kotlinVersionLen = kotlinPluginBuild.indexOf("-IJ")
-}
-
-ext.kotlin_version = kotlinPluginBuild.substring(
-  4, // number of chars in "203-" string (or "202-" string or any other platform identifier with dash string)
-  kotlinVersionLen
-)
-ext.android_m2_version = "27.1.0.0" // 27.1.1.0 is not published because there are no changes comparing to current version
-ext.android_sdk_version = "${osFamily}.4.0.0.0"
+ext.android_sdk_version = "${osFamily}.4.2.0.0"
+ext.android_layoutlib_version = "27.2.0.1"
 
 dependencies {
-  androidOfflineRepo "org.jetbrains.intellij.deps.android.tools.base:android-sdk-offline-repo:${android_m2_version}@zip"
+  androidLayoutlib "org.jetbrains.intellij.deps.android.tools.base:layoutlib-resources:${android_layoutlib_version}"
   androidSdk "org.jetbrains.intellij.deps.android:android-sdk:${android_sdk_version}:@tar.gz"
-  kotlinDeps "org.jetbrains.kotlin:kotlin-android-extensions:${kotlin_version}"
-  kotlinDeps "org.jetbrains.kotlin:kotlin-android-extensions-runtime:${kotlin_version}"
-  kotlinDeps "org.jetbrains.kotlin:kotlin-annotation-processing-gradle:${kotlin_version}"
-  kotlinDeps "org.jetbrains.kotlin:kotlin-build-common:${kotlin_version}"
-  kotlinDeps "org.jetbrains.kotlin:kotlin-compiler-embeddable:${kotlin_version}"
-  kotlinDeps "org.jetbrains.kotlin:kotlin-compiler-runner:${kotlin_version}"
-  kotlinDeps "org.jetbrains.kotlin:kotlin-daemon-embeddable:${kotlin_version}"
-  kotlinDeps "org.jetbrains.kotlin:kotlin-gradle-plugin:${kotlin_version}"
-  kotlinDeps "org.jetbrains.kotlin:kotlin-gradle-plugin-api:${kotlin_version}"
-  kotlinDeps "org.jetbrains.kotlin:kotlin-gradle-plugin-model:${kotlin_version}"
-  kotlinDeps "org.jetbrains.kotlin:kotlin-reflect:${kotlin_version}"
-  kotlinDeps "org.jetbrains.kotlin:kotlin-script-runtime:${kotlin_version}"
-  kotlinDeps "org.jetbrains.kotlin:kotlin-scripting-common:${kotlin_version}"
-  kotlinDeps "org.jetbrains.kotlin:kotlin-scripting-compiler-embeddable:${kotlin_version}"
-  kotlinDeps "org.jetbrains.kotlin:kotlin-scripting-compiler-impl-embeddable:${kotlin_version}"
-  kotlinDeps "org.jetbrains.kotlin:kotlin-scripting-jvm:${kotlin_version}"
-  kotlinDeps "org.jetbrains.kotlin:kotlin-stdlib-common:${kotlin_version}"
-  kotlinDeps "org.jetbrains.kotlin:kotlin-stdlib-jdk7:${kotlin_version}"
-  kotlinDeps "org.jetbrains.kotlin:kotlin-stdlib-jdk8:${kotlin_version}"
-  kotlinDeps "org.jetbrains.kotlin:kotlin-test:${kotlin_version}"
-  kotlinDeps "org.jetbrains.kotlin:kotlin-test-common:${kotlin_version}"
 }
 
-task syncAndroidSdk(dependsOn: [configurations.androidSdk, configurations.androidOfflineRepo], type: SyncAndroidSdkTask) {
+task syncAndroidSdk(dependsOn: [configurations.androidSdk, configurations.androidLayoutlib], type: SyncAndroidSdkTask) {
   CopyUnitOfWork.project = project
   work = [
     new CopyData().with {
-      it.from = configurations.androidOfflineRepo.name
-      it.into = "${project.buildDir}/android-sdk"
-      it.versionFile = android_m2_version
+      it.from = configurations.androidLayoutlib.name
+      it.into = "${project.buildDir}/android-sdk/layoutlib"
+      it.versionFile = android_layoutlib_version
       it
     }, new CopyData().with {
-    it.from = configurations.androidSdk.name
-    it.into = "$buildDir/android-sdk/prebuilts/studio/sdk"
-    it.versionFile = android_sdk_version
-    it
-  },
+      it.from = configurations.androidSdk.name
+      it.into = "$buildDir/android-sdk/prebuilts/studio/sdk"
+      it.versionFile = android_sdk_version
+      it
+    },
   ]
   onlyIf {
     work.any {
@@ -105,28 +68,14 @@ task syncAndroidSdk(dependsOn: [configurations.androidSdk, configurations.androi
   }
 }
 
-task setupAndroidPluginRuntimeForIdea(dependsOn: [setupKotlinPlugin]){
-
-}
-
-task syncKotlinPluginForAndroid(dependsOn: [setupKotlinPlugin, syncAndroidSdk], type: Sync) {
-  from "$buildDir/kotlin"
-  into "$buildDir/android-sdk/prebuilts/tools/common/kotlin-plugin"
-}
-
-task updateKotlinLibs(dependsOn: [configurations.kotlinDeps, syncAndroidSdk], type: OfflineMavenRepository) {
-  def verFile = "${project.buildDir}/android-sdk/prebuilts/tools/common/m2/repository/org/jetbrains/kotlin/${kotlin_version}"
-  configurationName = "kotlinDeps"
-  repoDir = file("$buildDir/android-sdk/prebuilts/tools/common/m2/repository")
-  doLast {
-    file(verFile).write(kotlin_version)
-  }
+task setupAndroidPluginRuntimeForIdea {
+  // nothing to do
 }
 
 /**
  * This is entry point: invoke this task to setup android sdk and all the artifacts required to run android-plugin unit tests
  */
-task setupAndroidSdk(dependsOn: [syncAndroidSdk, syncKotlinPluginForAndroid, updateKotlinLibs])
+task setupAndroidSdk(dependsOn: [syncAndroidSdk])
 
 class CopyData implements Serializable {
   String from
@@ -210,41 +159,6 @@ class CopyUnitOfWork implements Runnable {
   }
 }
 
-/**
- * Default Copy task implementation is not as lazy as we need: dependencies from androidOfflineRepo and androidSdk configurations will be
- * downloaded even if no executable task will use them later.
- * See discussions here: https://discuss.gradle.org/t/lazy-configuration-resolution-with-artifact-repack/12747/5
- * and here: https://discuss.gradle.org/t/lazy-dependency-resolution-completely-conditional-configuration-dependency/5032
- */
-class VersionedLazyCopyTask extends DefaultTask {
-  Closure from
-  File into
-  File versionFile
-  void setInto(String into) {
-    this.into = new File(into)
-  }
-
-  void setVersionFile(String versionStr) {
-    this.versionFile = new File(into, "${versionStr}.version")
-    onlyIf {
-      !versionFile.exists()
-    }
-
-    doFirst {
-      into.deleteDir()
-    }
-
-    doLast {
-      println ">> copying files into ${into}. Please be patient."
-      getProject().copy {
-        from this.from
-        into this.into
-      }
-      versionFile.createNewFile()
-    }
-  }
-}
-
 class SyncAndroidSdkTask extends DefaultTask {
   Collection<CopyData> work
   WorkerExecutor workerExecutor
@@ -260,52 +174,6 @@ class SyncAndroidSdkTask extends DefaultTask {
       workerExecutor.submit(CopyUnitOfWork.class) { WorkerConfiguration config ->
         config.isolationMode = IsolationMode.NONE
         config.params data
-      }
-    }
-  }
-}
-
-class OfflineMavenRepository extends DefaultTask {
-  @Input
-  String configurationName = 'compile'
-
-  File repoDir
-
-  @TaskAction
-  void build() {
-    Configuration configuration = project.configurations.getByName(configurationName)
-    copyJars(configuration)
-    copyPoms(configuration)
-  }
-
-  private void copyJars(Configuration configuration) {
-    configuration.resolvedConfiguration.resolvedArtifacts.each { artifact ->
-      def moduleVersionId = artifact.moduleVersion.id
-      File moduleDir = new File(repoDir, "${moduleVersionId.group.replace('.', '/')}/${moduleVersionId.name}/${moduleVersionId.version}")
-      GFileUtils.mkdirs(moduleDir)
-
-      File target = new File(moduleDir, artifact.file.name)
-      println "Copy: $artifact.file -> $target"
-      GFileUtils.copyFile(artifact.file, target)
-    }
-  }
-
-  private void copyPoms(Configuration configuration) {
-    def componentIds = configuration.incoming.resolutionResult.allDependencies.collect { it.selected.id }
-
-    def result = project.dependencies.createArtifactResolutionQuery()
-      .forComponents(componentIds)
-      .withArtifacts(MavenModule, MavenPomArtifact)
-      .execute()
-
-    for (component in result.resolvedComponents) {
-      def componentId = component.id
-
-      if (componentId instanceof ModuleComponentIdentifier) {
-        File moduleDir = new File(repoDir, "${componentId.group.replace('.', '/')}/${componentId.module}/${componentId.version}")
-        GFileUtils.mkdirs(moduleDir)
-        File pomFile = component.getArtifacts(MavenPomArtifact)[0].file
-        GFileUtils.copyFile(pomFile, new File(moduleDir, pomFile.name))
       }
     }
   }

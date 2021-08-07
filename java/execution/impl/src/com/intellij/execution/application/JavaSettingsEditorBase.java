@@ -2,12 +2,13 @@
 package com.intellij.execution.application;
 
 import com.intellij.compiler.options.CompileStepBeforeRun;
-import com.intellij.diagnostic.logging.LogsFragment;
+import com.intellij.diagnostic.logging.LogsGroupFragment;
 import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.JavaRunConfigurationBase;
 import com.intellij.execution.JavaRunConfigurationExtensionManager;
 import com.intellij.execution.ui.*;
 import com.intellij.ide.macro.MacrosDialog;
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.ui.LabeledComponent;
 import com.intellij.openapi.util.Computable;
 import com.intellij.ui.RawCommandLineEditor;
@@ -33,7 +34,7 @@ public abstract class JavaSettingsEditorBase<T extends JavaRunConfigurationBase>
     fragments.add(BeforeRunFragment.createBeforeRun(beforeRunComponent, CompileStepBeforeRun.ID));
     fragments.addAll(BeforeRunFragment.createGroup());
 
-    SettingsEditorFragment<T, ModuleClasspathCombo> moduleClasspath = CommonJavaFragments.moduleClasspath(null, null, null);
+    SettingsEditorFragment<T, ModuleClasspathCombo> moduleClasspath = CommonJavaFragments.moduleClasspath();
     ModuleClasspathCombo classpathCombo = moduleClasspath.component();
     Computable<Boolean> hasModule = () -> classpathCombo.getSelectedModule() != null;
 
@@ -63,9 +64,10 @@ public abstract class JavaSettingsEditorBase<T extends JavaRunConfigurationBase>
     vmParameters.setEditorGetter(editor -> editor.getEditorField());
     fragments.add(vmParameters);
     fragments.add(moduleClasspath);
+    fragments.add(new ClasspathModifier<>(mySettings));
     customizeFragments(fragments, moduleClasspath, commonParameterFragments);
 
-    fragments.add(new LogsFragment<>());
+    fragments.add(new LogsGroupFragment<>());
     return fragments;
   }
 

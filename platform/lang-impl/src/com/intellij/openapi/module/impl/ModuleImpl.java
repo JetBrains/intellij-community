@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.module.impl;
 
 import com.intellij.configurationStore.RenameableStateStorageManager;
@@ -7,10 +7,7 @@ import com.intellij.ide.plugins.ContainerDescriptor;
 import com.intellij.ide.plugins.IdeaPluginDescriptorImpl;
 import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.ComponentConfig;
-import com.intellij.openapi.components.PersistentStateComponent;
-import com.intellij.openapi.components.State;
-import com.intellij.openapi.components.StoragePathMacros;
+import com.intellij.openapi.components.*;
 import com.intellij.openapi.components.impl.stores.IComponentStore;
 import com.intellij.openapi.components.impl.stores.ModuleStore;
 import com.intellij.openapi.diagnostic.Logger;
@@ -34,16 +31,14 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.serviceContainer.ComponentManagerImpl;
 import com.intellij.util.xmlb.annotations.MapAnnotation;
 import com.intellij.util.xmlb.annotations.Property;
+import kotlin.Unit;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 
 public class ModuleImpl extends ComponentManagerImpl implements ModuleEx {
   private static final Logger LOG = Logger.getInstance(ModuleImpl.class);
@@ -77,14 +72,15 @@ public class ModuleImpl extends ComponentManagerImpl implements ModuleEx {
   @ApiStatus.Internal
   public ModuleImpl(@NotNull String name, @NotNull Project project, @Nullable VirtualFilePointer virtualFilePointer) {
     this(name, project);
-    VirtualFilePointerManager.getInstance();
+
     myImlFilePointer = virtualFilePointer;
   }
 
   @ApiStatus.Internal
   public ModuleImpl(@NotNull String name, @NotNull Project project) {
     super((ComponentManagerImpl)project);
-    registerServiceInstance(Module.class, this, ComponentManagerImpl.getFakeCorePluginDescriptor());
+
+    registerServiceInstance(Module.class, this, ComponentManagerImpl.fakeCorePluginDescriptor);
     myProject = project;
     myModuleScopeProvider = new ModuleScopeProviderImpl(this);
     myName = name;
@@ -94,14 +90,12 @@ public class ModuleImpl extends ComponentManagerImpl implements ModuleEx {
   public void init(@Nullable Runnable beforeComponentCreation) {
     // do not measure (activityNamePrefix method not overridden by this class)
     // because there are a lot of modules and no need to measure each one
-    //noinspection unchecked
-    registerComponents((List<IdeaPluginDescriptorImpl>)PluginManagerCore.getLoadedPlugins());
+    registerComponents(PluginManagerCore.getLoadedPlugins(null), ApplicationManager.getApplication(), null, null);
     if (!isPersistent()) {
       registerService(IComponentStore.class,
                       NonPersistentModuleStore.class,
-                      Objects.requireNonNull(PluginManagerCore.getPlugin(PluginManagerCore.CORE_ID),
-                                             "Could not find plugin by id: " + PluginManagerCore.CORE_ID),
-                      true);
+                      ComponentManagerImpl.fakeCorePluginDescriptor,
+                      true, ServiceDescriptor.PreloadMode.FALSE);
     }
     if (beforeComponentCreation != null) {
       beforeComponentCreation.run();
@@ -194,12 +188,13 @@ public class ModuleImpl extends ComponentManagerImpl implements ModuleEx {
   @NotNull
   @Override
   protected ContainerDescriptor getContainerDescriptor(@NotNull IdeaPluginDescriptorImpl pluginDescriptor) {
-    return pluginDescriptor.getModule();
+    return pluginDescriptor.moduleContainerDescriptor;
   }
 
   @Override
   public void projectOpened() {
-    for (ModuleComponent component : getModuleComponents()) {
+    //noinspection deprecation
+    processInitializedComponents(ModuleComponent.class, (component, __) -> {
       try {
         //noinspection deprecation
         component.projectOpened();
@@ -207,12 +202,20 @@ public class ModuleImpl extends ComponentManagerImpl implements ModuleEx {
       catch (Exception e) {
         LOG.error(e);
       }
-    }
+      return Unit.INSTANCE;
+    });
   }
 
   @Override
   public void projectClosed() {
-    List<ModuleComponent> components = getModuleComponents();
+    //noinspection deprecation
+    List<ModuleComponent> components = new ArrayList<>();
+    //noinspection deprecation
+    processInitializedComponents(ModuleComponent.class, (component, __) -> {
+      components.add(component);
+      return Unit.INSTANCE;
+    });
+
     for (int i = components.size() - 1; i >= 0; i--) {
       try {
         //noinspection deprecation
@@ -241,18 +244,14 @@ public class ModuleImpl extends ComponentManagerImpl implements ModuleEx {
     return isModuleAdded;
   }
 
+  @SuppressWarnings("deprecation")
   @Override
   public void moduleAdded() {
     isModuleAdded = true;
-    for (ModuleComponent component : getModuleComponents()) {
+    processInitializedComponents(ModuleComponent.class, (component, __) -> {
       component.moduleAdded();
-    }
-  }
-
-  @NotNull
-  private List<ModuleComponent> getModuleComponents() {
-    //noinspection deprecation
-    return getComponentInstancesOfType(ModuleComponent.class);
+      return Unit.INSTANCE;
+    });
   }
 
   @Override

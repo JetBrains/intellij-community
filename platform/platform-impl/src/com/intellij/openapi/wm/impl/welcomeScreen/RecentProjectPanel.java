@@ -95,13 +95,10 @@ public class RecentProjectPanel extends JPanel {
     myList.setCellRenderer(createRenderer(myPathShortener));
 
     if (Registry.is("autocheck.availability.welcome.screen.projects")) {
-      myChecker = new FilePathChecker(new Runnable() {
-        @Override
-        public void run() {
-          if (myList.isShowing()) {
-            myList.revalidate();
-            myList.repaint();
-          }
+      myChecker = new FilePathChecker(() -> {
+        if (myList.isShowing()) {
+          myList.revalidate();
+          myList.repaint();
         }
       }, pathsToCheck);
       Disposer.register(parentDisposable, myChecker);
@@ -177,6 +174,7 @@ public class RecentProjectPanel extends JPanel {
     }
 
     setBorder(new LineBorder(WelcomeScreenColors.BORDER_COLOR));
+    ProjectDetector.runDetectors((projects) -> RecentProjectsWelcomeScreenActionBase.rebuildRecentProjectDataModel(myList.getModel()));
   }
 
   public static Function<? super AnAction, String> createProjectNameFunction() {
@@ -198,7 +196,7 @@ public class RecentProjectPanel extends JPanel {
     if (FileUtil.startsWith(path, home)) {
       path = path.substring(home.length());
     }
-    return projectItem.getProjectName() + " " + path;
+    return projectItem.getProjectNameToDisplay() + " " + path;
   }
 
   @NotNull

@@ -88,7 +88,7 @@
     {
       "id": "rust",
       "experimentBucketsCount": 4,
-      "includeGroups": [ 7, 12, 13]
+      "includeGroups": [ 7, 12, 13, 8]
     },
     {
       "id": "dart",
@@ -98,12 +98,22 @@
     {
       "id": "swift",
       "experimentBucketsCount": 4,
-      "includeGroups": [ 7, 12, 13]
+      "includeGroups": [ 7, 12, 13, 8]
+    },
+    {
+      "id": "mysql",
+      "experimentBucketsCount": 8,
+      "includeGroups": [ 7, 8, 12, 13 ]
     },
     {
       "id": "C#",
       "experimentBucketsCount": 8,
       "includeGroups": [ 7, 8, 12]
+    },
+    {
+      "id": "objectivec",
+      "experimentBucketsCount": 4,
+      "includeGroups": [ 7, 12, 13]
     }
   ]
 }

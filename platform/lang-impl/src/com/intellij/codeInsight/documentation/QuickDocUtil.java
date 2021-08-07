@@ -3,14 +3,11 @@ package com.intellij.codeInsight.documentation;
 
 import com.intellij.codeInsight.hint.HintUtil;
 import com.intellij.codeInsight.navigation.DocPreviewUtil;
-import com.intellij.concurrency.SensitiveProgressWrapper;
 import com.intellij.lang.documentation.DocumentationProvider;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.EditorMouseHoverPopupManager;
 import com.intellij.openapi.progress.ProcessCanceledException;
-import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.ProgressIndicatorProvider;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopup;
@@ -28,14 +25,14 @@ import com.intellij.util.Consumer;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.SingleAlarm;
 import com.intellij.util.ui.UIUtil;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.Contract;
+import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Objects;
 import java.util.concurrent.ConcurrentLinkedQueue;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
-
-import static com.intellij.openapi.progress.util.ProgressIndicatorUtils.runInReadActionWithWriteActionPriority;
 
 /**
  * @author gregsh
@@ -72,52 +69,6 @@ public final class QuickDocUtil {
     return component;
   }
 
-
-  /**
-   * Repeatedly tries to run given task in read action without blocking write actions (for this to work effectively the action should invoke
-   * {@link ProgressManager#checkCanceled()} or {@link ProgressIndicator#checkCanceled()} often enough).
-   *
-   * @param action task to run
-   * @param timeout timeout in milliseconds
-   * @param pauseBetweenRetries pause between retries in milliseconds
-   * @param progressIndicator optional progress indicator, which can be used to cancel the action externally
-   * @return {@code true} if the action succeeded to run without interruptions, {@code false} otherwise
-   * @deprecated use {@link com.intellij.openapi.application.ReadAction#nonBlocking}
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2020.2")
-  public static boolean runInReadActionWithWriteActionPriorityWithRetries(@NotNull final Runnable action,
-                                                                          long timeout, long pauseBetweenRetries,
-                                                                          @Nullable ProgressIndicator progressIndicator) {
-    boolean result;
-    long deadline = System.currentTimeMillis() + timeout;
-    while (!(result = runInReadActionWithWriteActionPriority(action, progressIndicator == null ? null :
-                                                                     new SensitiveProgressWrapper(progressIndicator))) &&
-           (progressIndicator == null || !progressIndicator.isCanceled()) &&
-            System.currentTimeMillis() < deadline) {
-      try {
-        TimeUnit.MILLISECONDS.sleep(pauseBetweenRetries);
-      }
-      catch (InterruptedException e) {
-        Thread.currentThread().interrupt();
-        return false;
-      }
-    }
-    return result;
-  }
-
-  /**
-   * Same as {@link #runInReadActionWithWriteActionPriorityWithRetries(Runnable, long, long, ProgressIndicator)} using current thread's
-   * progress indicator ({@link ProgressManager#getProgressIndicator()}).
-   * @deprecated use {@link com.intellij.openapi.application.ReadAction#nonBlocking}
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2020.2")
-  public static boolean runInReadActionWithWriteActionPriorityWithRetries(@NotNull final Runnable action,
-                                                                          long timeout, long pauseBetweenRetries) {
-    return runInReadActionWithWriteActionPriorityWithRetries(action, timeout, pauseBetweenRetries,
-                                                             ProgressIndicatorProvider.getGlobalProgressIndicator());
-  }
 
   @Contract("_, _, _, null -> null")
   public static String inferLinkFromFullDocumentation(@NotNull DocumentationProvider provider,

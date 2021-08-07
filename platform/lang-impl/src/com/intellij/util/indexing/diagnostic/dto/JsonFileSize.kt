@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.indexing.diagnostic.dto
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import com.fasterxml.jackson.core.JsonGenerator
 import com.fasterxml.jackson.core.JsonParser
 import com.fasterxml.jackson.databind.DeserializationContext
@@ -14,7 +15,8 @@ import com.intellij.util.indexing.diagnostic.BytesNumber
 
 @JsonSerialize(using = JsonFileSize.Serializer::class)
 @JsonDeserialize(using = JsonFileSize.Deserializer::class)
-data class JsonFileSize(val bytes: BytesNumber) {
+@JsonIgnoreProperties(ignoreUnknown = true)
+data class JsonFileSize(val bytes: BytesNumber = 0) {
   object Serializer : JsonSerializer<JsonFileSize>() {
     override fun serialize(value: JsonFileSize, gen: JsonGenerator, serializers: SerializerProvider?) {
       gen.writeNumber(value.bytes)

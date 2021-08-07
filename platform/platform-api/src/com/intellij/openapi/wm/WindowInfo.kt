@@ -23,6 +23,8 @@ interface WindowInfo {
 
   var largeStripeAnchor: ToolWindowAnchor
 
+  var orderOnLargeStripe: Int
+
   val floatingBounds: Rectangle?
 
   val isMaximized: Boolean

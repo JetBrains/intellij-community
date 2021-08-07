@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.actions;
 
 import com.intellij.CommonBundle;
@@ -16,6 +16,7 @@ import com.intellij.ide.DataManager;
 import com.intellij.ide.macro.MacroManager;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.idea.ActionsBundle;
+import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
@@ -23,7 +24,7 @@ import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.ui.DoNotAskOption;
 import com.intellij.openapi.ui.MessageDialogBuilder;
 import com.intellij.openapi.ui.popup.ListPopupStep;
 import com.intellij.openapi.ui.popup.ListSeparator;
@@ -36,9 +37,11 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.popup.NumericMnemonicItem;
 import com.intellij.ui.popup.WizardPopup;
 import com.intellij.ui.popup.list.ListPopupImpl;
+import com.intellij.ui.popup.list.PopupListElementRenderer;
 import com.intellij.ui.speedSearch.SpeedSearch;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -207,7 +210,7 @@ public final class ChooseRunConfigurationPopup implements ExecutorProvider {
       popup.myPopup.cancel();
       confirmed = MessageDialogBuilder.yesNo(CommonBundle.message("title.confirmation"),
                                              ExecutionBundle.message("are.you.sure.you.want.to.delete.0", configurationSettings.getName()))
-                    .doNotAsk(new DialogWrapper.DoNotAskOption.Adapter() {
+                    .doNotAsk(new DoNotAskOption.Adapter() {
                       @Override
                       public void rememberChoice(boolean isSelected, int exitCode) {
                         runManagerConfig.setDeletionFromPopupRequiresConfirmation(!isSelected);
@@ -759,6 +762,21 @@ public final class ChooseRunConfigurationPopup implements ExecutorProvider {
     }
 
     @Override
+    protected ListCellRenderer<?> getListElementRenderer() {
+      return new PopupListElementRenderer<>(this){
+        @Override
+        protected JComponent createIconBar() {
+          JPanel res = new JPanel(new BorderLayout());
+          res.setBorder(JBUI.Borders.emptyRight(JBUI.CurrentTheme.ActionsList.elementIconGap()));
+          res.add(myMnemonicLabel, BorderLayout.WEST);
+          res.add(myIconLabel, BorderLayout.CENTER);
+
+          return res;
+        }
+      };
+    }
+
+    @Override
     public void handleSelect(boolean handleFinalChoices, InputEvent e) {
       if (e instanceof MouseEvent && e.isShiftDown()) {
         handleShiftClick(handleFinalChoices, e, this);
@@ -1109,7 +1127,7 @@ public final class ChooseRunConfigurationPopup implements ExecutorProvider {
     }
 
     final DataContext dataContext = DataManager.getInstance().getDataContext();
-    final ConfigurationContext context = ConfigurationContext.getFromContext(dataContext);
+    final ConfigurationContext context = ConfigurationContext.getFromContext(dataContext, ActionPlaces.UNKNOWN);
 
     final List<ConfigurationFromContext> producers = PreferredProducerFind.getConfigurationsFromContext(context.getLocation(),
                                                                                                          context, false);

@@ -1,14 +1,13 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.wm.impl;
 
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.util.ExecUtil;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.util.ReflectionUtil;
-import com.intellij.util.SystemProperties;
 import com.sun.jna.Native;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -25,8 +24,6 @@ import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-
-import static com.intellij.util.ArrayUtil.newLongArray;
 
 public final class X11UiUtil {
   private static final Logger LOG = Logger.getInstance(X11UiUtil.class);
@@ -69,7 +66,7 @@ public final class X11UiUtil {
 
     private static @Nullable Xlib getInstance() {
       Class<? extends Toolkit> toolkitClass = Toolkit.getDefaultToolkit().getClass();
-      if (!SystemInfo.isXWindow || !"sun.awt.X11.XToolkit".equals(toolkitClass.getName())) {
+      if (!SystemInfoRt.isXWindow || !"sun.awt.X11.XToolkit".equals(toolkitClass.getName())) {
         return null;
       }
 
@@ -165,7 +162,7 @@ public final class X11UiUtil {
               return (T)bytes;
             }
             else if (format == FORMAT_LONG) {
-              long[] values = newLongArray(length);
+              long[] values = new long[length];
               for (int i = 0; i < length; i++) {
                 values[i] = Native.LONG_SIZE == 4 ? unsafe.getInt(pointer + 4L * i) : unsafe.getLong(pointer + 8L * i);
               }
@@ -260,7 +257,7 @@ public final class X11UiUtil {
 
   @SuppressWarnings("SpellCheckingInspection")
   public static void patchDetectedWm(String wmName) {
-    if (X11 == null || !SystemProperties.getBooleanProperty("ide.x11.override.wm", true)) {
+    if (X11 == null || !Boolean.parseBoolean(System.getProperty("ide.x11.override.wm", "true"))) {
       return;
     }
 

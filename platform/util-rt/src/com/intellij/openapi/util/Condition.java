@@ -18,7 +18,7 @@ package com.intellij.openapi.util;
 import org.jetbrains.annotations.ApiStatus;
 
 /**
- * Please use {@link java.util.function.Predicate} instead.
+ * Deprecated. Please use {@link java.util.function.Predicate} instead.
  *
  * Returns {@code true} or {@code false} for the given input object.
  * <p/>

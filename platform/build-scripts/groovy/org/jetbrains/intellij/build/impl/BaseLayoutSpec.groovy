@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build.impl
 
 class BaseLayoutSpec {
@@ -23,7 +9,7 @@ class BaseLayoutSpec {
   }
 
   /**
-   * Register an additional module to be included into the plugin distribution into a separate JAR file. Module-level libraries from
+   * Register an additional module to be included into the plugin distribution. Module-level libraries from
    * {@code moduleName} with scopes 'Compile' and 'Runtime' will be also copied to the 'lib' directory of the plugin.
    */
   void withModule(String moduleName) {
@@ -37,23 +23,27 @@ class BaseLayoutSpec {
    *
    * @param relativeJarPath target JAR path relative to 'lib' directory of the plugin; different modules may be packed into the same JAR,
    * but <strong>don't use this for new plugins</strong>; this parameter is temporary added to keep layout of old plugins.
-   * @param localizableResourcesJar specifies relative path to the JAR where translatable resources from the module (messages, inspection descriptions, etc) will be
-   * placed. If {@code null}, the resources will be placed into the JAR specified by {@code relativeJarPath}. <strong>Do not use this for new plugins, this parameter is temporary added to keep layout of old plugins</strong>.
    */
-  void withModule(String moduleName, String relativeJarPath, String localizableResourcesJar = "resources_en.jar") {
-    if (localizableResourcesJar != null) {
-      layout.localizableResourcesJars.put(moduleName, localizableResourcesJar)
-    }
+  void withModule(String moduleName, String relativeJarPath) {
     layout.moduleJars.putValue(relativeJarPath, moduleName)
     layout.explicitlySetJarPaths.add(relativeJarPath)
   }
 
   /**
+   * @deprecated localizable resources are now put to the module JAR, so {@code localizableResourcesJars} parameter is ignored now
+   */
+  @Deprecated
+  void withModule(String moduleName, String relativeJarPath, String localizableResourcesJar) {
+    withModule(moduleName, relativeJarPath)
+  }
+
+  /**
    * Include the project library to 'lib' directory or its subdirectory of the plugin distribution
    * @relativeOutputPath path relative to 'lib' plugin directory
+   * @standalone do not merge library JAR file into uber JAR.
    */
-  void withProjectLibrary(String libraryName, String relativeOutputPath = "") {
-    layout.includedProjectLibraries.add(new ProjectLibraryData(libraryName, relativeOutputPath))
+  void withProjectLibrary(String libraryName, String relativeOutputPath = "", boolean standalone = false) {
+    layout.includedProjectLibraries.add(new ProjectLibraryData(libraryName, relativeOutputPath, standalone))
   }
 
   /**

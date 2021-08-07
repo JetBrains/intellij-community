@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.devkit.formConversion
 
 import com.intellij.openapi.project.Project
@@ -8,9 +8,7 @@ import com.intellij.ui.layout.*
 import org.jetbrains.idea.devkit.DevKitBundle
 import javax.swing.JComponent
 
-/**
- * @author yole
- */
+
 class ConvertFormDialog(val project: Project, var className: String) : DialogWrapper(project) {
   enum class FormBaseClass { None, Configurable }
 

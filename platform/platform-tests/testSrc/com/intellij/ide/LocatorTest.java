@@ -1,25 +1,33 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide;
 
+import com.intellij.idea.ApplicationLoader;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.ex.ApplicationEx;
-import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.text.StringUtil;
-import junit.framework.TestCase;
+import org.junit.Test;
 
-import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
 
-public class LocatorTest extends TestCase {
+import static org.assertj.core.api.Assertions.assertThat;
+
+public class LocatorTest {
+  @Test
   public void test() throws IOException {
-    File locatorFile = new File(PathManager.getSystemPath() + "/" + ApplicationEx.LOCATOR_FILE_NAME);
-    assertTrue("doesn't exist: " + locatorFile.getPath(), locatorFile.exists());
-    assertTrue("can't read: " + locatorFile.getPath(), locatorFile.canRead());
+    //noinspection KotlinInternalInJava
+    ApplicationLoader.createAppLocatorFile();
 
-    String home = FileUtil.loadFile(locatorFile, StandardCharsets.UTF_8);
-    assertTrue(home, StringUtil.isNotEmpty(home));
-
-    assertEquals(home, PathManager.getHomePath());
+    Path locatorFile = Path.of(PathManager.getSystemPath(), ApplicationEx.LOCATOR_FILE_NAME);
+    try {
+      assertThat(locatorFile)
+        .isRegularFile()
+        .isReadable()
+        .usingCharset(StandardCharsets.UTF_8).hasContent(PathManager.getHomePath());
+    }
+    finally {
+      Files.deleteIfExists(locatorFile);
+    }
   }
 }

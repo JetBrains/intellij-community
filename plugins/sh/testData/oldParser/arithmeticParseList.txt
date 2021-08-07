@@ -1,8 +1,9 @@
 SHELL_SCRIPT
   COMMANDS_LIST
-    GENERIC_COMMAND_DIRECTIVE
+    SHELL_COMMAND
       ARITHMETIC_EXPANSION
-        PsiElement((()('((')
+        PsiElement(()('(')
+        PsiElement(()('(')
         COMMA_EXPRESSION
           LITERAL_EXPRESSION
             NUMBER
@@ -11,12 +12,14 @@ SHELL_SCRIPT
           LITERAL_EXPRESSION
             NUMBER
               PsiElement(int)('2')
-        PsiElement()))('))')
+        PsiElement())(')')
+        PsiElement())(')')
   PsiElement(\n)('\n')
   COMMANDS_LIST
-    GENERIC_COMMAND_DIRECTIVE
+    SHELL_COMMAND
       ARITHMETIC_EXPANSION
-        PsiElement((()('((')
+        PsiElement(()('(')
+        PsiElement(()('(')
         COMMA_EXPRESSION
           LITERAL_EXPRESSION
             VARIABLE
@@ -24,12 +27,14 @@ SHELL_SCRIPT
           PsiElement(,)(',')
           LITERAL_EXPRESSION
             PsiElement(word)('b')
-        PsiElement()))('))')
+        PsiElement())(')')
+        PsiElement())(')')
   PsiElement(\n)('\n')
   COMMANDS_LIST
-    GENERIC_COMMAND_DIRECTIVE
+    SHELL_COMMAND
       ARITHMETIC_EXPANSION
-        PsiElement((()('((')
+        PsiElement(()('(')
+        PsiElement(()('(')
         COMMA_EXPRESSION
           COMMA_EXPRESSION
             LITERAL_EXPRESSION
@@ -47,4 +52,5 @@ SHELL_SCRIPT
           PsiElement(,)(',')
           LITERAL_EXPRESSION
             PsiElement(word)('b')
-        PsiElement()))('))')
+        PsiElement())(')')
+        PsiElement())(')')

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs;
 
 import com.intellij.openapi.editor.Document;
@@ -20,7 +6,9 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.Strings;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.encoding.EncodingManager;
@@ -40,7 +28,7 @@ import java.nio.charset.Charset;
  * @deprecated Use {@link LocalFilePath} instead.
  */
 @Deprecated
-public class FilePathImpl implements FilePath {
+public final class FilePathImpl implements FilePath {
   @NotNull private final String myPath;
   private final boolean myIsDirectory;
 
@@ -66,14 +54,16 @@ public class FilePathImpl implements FilePath {
     FilePathImpl path = (FilePathImpl)o;
 
     if (myIsDirectory != path.myIsDirectory) return false;
-    if (!FileUtil.PATH_HASHING_STRATEGY.equals(myPath, path.myPath)) return false;
+    if (!(SystemInfoRt.isFileSystemCaseSensitive ? myPath.equals(path.myPath) : myPath.equalsIgnoreCase(path.myPath))) {
+      return false;
+    }
 
     return true;
   }
 
   @Override
   public int hashCode() {
-    int result = FileUtil.PATH_HASHING_STRATEGY.computeHashCode(myPath);
+    int result = SystemInfoRt.isFileSystemCaseSensitive ? myPath.hashCode() : Strings.stringHashCodeInsensitive(myPath);
     result = 31 * result + (myIsDirectory ? 1 : 0);
     return result;
   }

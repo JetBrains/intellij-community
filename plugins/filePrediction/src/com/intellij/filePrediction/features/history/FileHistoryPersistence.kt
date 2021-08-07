@@ -6,11 +6,10 @@ import com.intellij.internal.ml.ngram.NGramModelSerializer
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.util.PathUtil
+import com.intellij.util.io.delete
 import com.intellij.util.io.exists
-import java.io.IOException
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
@@ -20,34 +19,18 @@ object FileHistoryPersistence {
 
   private const val NGRAM_FILE_NAME_SUFFIX = "-ngram"
 
-  fun saveFileHistory(project: Project, state: FilePredictionHistoryState) {
-    val path: Path? = getPathToStorage(project, PathManager.DEFAULT_EXT)
+  fun deleteLegacyFile(project: Project) {
     try {
-      if (path != null) {
-        JDOMUtil.write(state.serialize(), path)
-      }
-    }
-    catch (e: IOException) {
-      LOG.warn("Cannot serialize opened files history", e)
-    }
-  }
-
-  fun loadFileHistory(project: Project): FilePredictionHistoryState {
-    val state = FilePredictionHistoryState()
-    if (project.isDisposed) {
-      return state
-    }
-
-    val path: Path? = getPathToStorage(project, PathManager.DEFAULT_EXT)
-    try {
-      if (path != null && path.exists()) {
-        state.deserialize(JDOMUtil.load(path))
+      if (!project.isDisposed) {
+        val path: Path? = getPathToStorage(project, PathManager.DEFAULT_EXT)
+        if (path != null && path.exists()) {
+          path.delete()
+        }
       }
     }
     catch (e: Exception) {
-      LOG.warn("Cannot deserialize opened files history", e)
+      LOG.warn("Cannot deserialize file sequence ngrams", e)
     }
-    return state
   }
 
   fun saveNGrams(project: Project, runner: NGramIncrementalModelRunner) {

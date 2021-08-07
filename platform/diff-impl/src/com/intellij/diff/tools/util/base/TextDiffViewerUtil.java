@@ -6,6 +6,7 @@ import com.intellij.diff.contents.DiffContent;
 import com.intellij.diff.contents.DocumentContent;
 import com.intellij.diff.contents.EmptyContent;
 import com.intellij.diff.requests.ContentDiffRequest;
+import com.intellij.diff.tools.util.DiffNotifications;
 import com.intellij.diff.tools.util.FoldingModelSupport;
 import com.intellij.diff.tools.util.base.TextDiffSettingsHolder.TextDiffSettings;
 import com.intellij.diff.util.DiffUserDataKeys;
@@ -13,7 +14,6 @@ import com.intellij.diff.util.DiffUserDataKeysEx;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.actionSystem.ex.ComboBoxAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.DiffBundle;
@@ -24,6 +24,7 @@ import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.EditorPopupHandler;
 import com.intellij.openapi.editor.impl.ContextMenuPopupHandler;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.ui.ToggleActionButton;
 import com.intellij.util.ArrayUtil;
@@ -31,6 +32,7 @@ import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.event.HyperlinkEvent;
@@ -135,6 +137,17 @@ public final class TextDiffViewerUtil {
     }
   }
 
+  @Nullable
+  public static JPanel createEqualContentsNotification(@NotNull List<? extends DocumentContent> contents) {
+    boolean isPartialPreview = ContainerUtil.exists(contents, content ->
+      FileDocumentManager.getInstance().isPartialPreviewOfALargeFile(content.getDocument()));
+    if (isPartialPreview) return null;
+
+    boolean equalCharsets = areEqualCharsets(contents);
+    boolean equalSeparators = areEqualLineSeparators(contents);
+    return DiffNotifications.createEqualContents(equalCharsets, equalSeparators);
+  }
+
   public static boolean areEqualLineSeparators(@NotNull List<? extends DiffContent> contents) {
     return areEqualDocumentContentProperties(contents, DocumentContent::getLineSeparator);
   }
@@ -154,6 +167,17 @@ public final class TextDiffViewerUtil {
 
     if (properties.size() < 2) return true;
     return new HashSet<>(properties).size() == 1;
+  }
+
+  public static void recursiveRegisterShortcutSet(@NotNull ActionGroup group,
+                                                  @NotNull JComponent component,
+                                                  @Nullable Disposable parentDisposable) {
+    for (AnAction action : group.getChildren(null)) {
+      if (action instanceof ActionGroup) {
+        recursiveRegisterShortcutSet((ActionGroup)action, component, parentDisposable);
+      }
+      action.registerCustomShortcutSet(component, parentDisposable);
+    }
   }
 
   //
@@ -536,7 +560,7 @@ public final class TextDiffViewerUtil {
     }
 
     public void install(@NotNull List<? extends EditorEx> editors, @NotNull JComponent component) {
-      ActionUtil.recursiveRegisterShortcutSet(new DefaultActionGroup(myEditorPopupActions), component, null);
+      recursiveRegisterShortcutSet(new DefaultActionGroup(myEditorPopupActions), component, null);
 
       EditorPopupHandler handler = new ContextMenuPopupHandler.Simple(
         myEditorPopupActions.isEmpty() ? null : new DefaultActionGroup(myEditorPopupActions)

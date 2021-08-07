@@ -11,6 +11,7 @@ import com.intellij.openapi.command.undo.UndoManager
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.RangeMarker
 import com.intellij.openapi.fileEditor.FileDocumentManager
+import com.intellij.openapi.progress.Progress
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogBuilder
 import com.intellij.openapi.util.registry.Registry
@@ -38,7 +39,6 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.TestOnly
 import java.nio.file.Path
-import kotlin.coroutines.CoroutineContext
 
 
 internal typealias UsagePointer = Pointer<out RenameUsage>
@@ -180,8 +180,8 @@ suspend fun prepareRename(allUsages: Collection<UsagePointer>, newName: String):
     val (
       byFileUpdater: Map<FileUpdater, List<Pointer<out ModifiableRenameUsage>>>,
       byModelUpdater: Map<ModelUpdater, List<Pointer<out ModifiableRenameUsage>>>
-    ) = readAction { ctx: CoroutineContext ->
-      classifyUsages(ctx, allUsages)
+    ) = readAction { progress: Progress ->
+      classifyUsages(progress, allUsages)
     }
     val fileUpdates: Deferred<FileUpdates?> = async {
       prepareFileUpdates(byFileUpdater, newName)
@@ -197,7 +197,7 @@ suspend fun prepareRename(allUsages: Collection<UsagePointer>, newName: String):
 }
 
 private fun classifyUsages(
-  ctx: CoroutineContext,
+  progress: Progress,
   allUsages: Collection<UsagePointer>
 ): Pair<
   Map<FileUpdater, List<Pointer<out ModifiableRenameUsage>>>,
@@ -208,7 +208,7 @@ private fun classifyUsages(
   val byFileUpdater = HashMap<FileUpdater, MutableList<Pointer<out ModifiableRenameUsage>>>()
   val byModelUpdater = HashMap<ModelUpdater, MutableList<Pointer<out ModifiableRenameUsage>>>()
   for (pointer: UsagePointer in allUsages) {
-    ctx.ensureActive()
+    progress.checkCancelled()
     val renameUsage: ModifiableRenameUsage = pointer.dereference() as? ModifiableRenameUsage ?: continue
     @Suppress("UNCHECKED_CAST") val modifiablePointer = pointer as Pointer<out ModifiableRenameUsage>
     renameUsage.fileUpdater?.let { fileUpdater: FileUpdater ->
@@ -240,14 +240,14 @@ private suspend fun prepareFileUpdates(
   usagePointers: List<Pointer<out ModifiableRenameUsage>>,
   newName: String
 ): FileUpdates? {
-  return readAction { ctx: CoroutineContext ->
+  return readAction { progress: Progress ->
     usagePointers.dereferenceOrNull()?.let { usages: List<ModifiableRenameUsage> ->
-      createFileUpdates(ctx, fileUpdater.prepareFileUpdateBatch(ctx, usages, newName))
+      createFileUpdates(progress, fileUpdater.prepareFileUpdateBatch(progress, usages, newName))
     }
   }
 }
 
-private fun createFileUpdates(ctx: CoroutineContext, fileOperations: Collection<FileOperation>): FileUpdates {
+private fun createFileUpdates(progress: Progress, fileOperations: Collection<FileOperation>): FileUpdates {
   ApplicationManager.getApplication().assertReadAccessAllowed()
 
   val filesToAdd = ArrayList<Pair<Path, CharSequence>>()
@@ -257,7 +257,7 @@ private fun createFileUpdates(ctx: CoroutineContext, fileOperations: Collection<
 
   loop@
   for (fileOperation: FileOperation in fileOperations) {
-    ctx.ensureActive()
+    progress.checkCancelled()
     when (fileOperation) {
       is FileOperation.Add -> filesToAdd += Pair(fileOperation.path, fileOperation.content)
       is FileOperation.Move -> filesToMove += Pair(fileOperation.file, fileOperation.path)
@@ -265,7 +265,7 @@ private fun createFileUpdates(ctx: CoroutineContext, fileOperations: Collection<
       is FileOperation.Modify -> {
         val document: Document = FileDocumentManager.getInstance().getDocument(fileOperation.file.virtualFile) ?: continue@loop
         for (stringOperation: StringOperation in fileOperation.modifications) {
-          ctx.ensureActive()
+          progress.checkCancelled()
           val rangeMarker: RangeMarker = document.createRangeMarker(stringOperation.range)
           fileModifications += Pair(rangeMarker, stringOperation.replacement)
         }
@@ -279,10 +279,10 @@ private fun createFileUpdates(ctx: CoroutineContext, fileOperations: Collection<
 private suspend fun prepareModelUpdate(byModelUpdater: Map<ModelUpdater, List<Pointer<out ModifiableRenameUsage>>>): ModelUpdate? {
   val updates: List<ModelUpdate> = byModelUpdater
     .flatMap { (modelUpdater: ModelUpdater, usagePointers: List<Pointer<out ModifiableRenameUsage>>) ->
-      readAction { ctx: CoroutineContext ->
+      readAction { progress: Progress ->
         usagePointers.dereferenceOrNull()
           ?.let { usages: List<ModifiableRenameUsage> ->
-            modelUpdater.prepareModelUpdateBatch(ctx, usages)
+            modelUpdater.prepareModelUpdateBatch(progress, usages)
           }
         ?: emptyList()
       }

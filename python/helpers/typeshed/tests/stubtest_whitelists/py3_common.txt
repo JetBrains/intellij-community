@@ -1,5 +1,5 @@
-__future__._Feature.__init__
-_collections_abc.Callable
+_collections_abc.Callable  # Some typecheckers need this as specialform
+# Coroutine and Generator properties are added programmatically
 _collections_abc.Coroutine.cr_await
 _collections_abc.Coroutine.cr_code
 _collections_abc.Coroutine.cr_frame
@@ -8,113 +8,49 @@ _collections_abc.Generator.gi_code
 _collections_abc.Generator.gi_frame
 _collections_abc.Generator.gi_running
 _collections_abc.Generator.gi_yieldfrom
-_collections_abc.Mapping.get
-_collections_abc.MutableMapping.pop
-_collections_abc.MutableMapping.setdefault
-_collections_abc.MutableSequence.append
-_collections_abc.MutableSequence.extend
-_collections_abc.MutableSequence.insert
-_collections_abc.MutableSequence.remove
-_collections_abc.MutableSet.add
-_collections_abc.MutableSet.discard
-_collections_abc.MutableSet.remove
-_collections_abc.Sequence.count
-_collections_abc.Sequence.index
-_collections_abc.Set.isdisjoint
-_csv.Dialect.__init__
+_collections_abc.Mapping.get  # Adding None to the Union messed up mypy
+_collections_abc.Sequence.index  # Supporting None in end is not mandatory
+_csv.Dialect.__init__  # C __init__ signature is inaccurate
 _dummy_threading
-_importlib_modulespec
-_operator.methodcaller
 _threading_local.local.__new__
 _typeshed.*  # Utility types for typeshed, doesn't exist at runtime
-_weakref.CallableProxyType.__getattr__
-_weakref.ProxyType.__getattr__
-_weakref.ReferenceType.__call__
-abc.ABCMeta.__new__
 abc.abstractclassmethod
-abc.abstractmethod
 abc.abstractstaticmethod
+abc.ABCMeta.__new__  # pytype wants the parameter named cls and not mcls
+_weakref.CallableProxyType.__getattr__  # Should have all attributes of proxy
+_weakref.ProxyType.__getattr__  # Should have all attributes of proxy
+_weakref.ReferenceType.__call__  # C function default annotation is wrong
 argparse.Namespace.__getattr__  # The whole point of this class is its attributes are dynamic
-asyncio.BaseEventLoop.subprocess_exec
+asyncio.BaseEventLoop.subprocess_exec # BaseEventLoop adds several parameters and stubtest fails on the difference if we add them
+# Condition functions are exported in __init__
 asyncio.Condition.acquire
 asyncio.Condition.locked
 asyncio.Condition.release
-asyncio.Task.get_stack
-asyncio.Task.print_stack
-asyncio.base_events.BaseEventLoop.subprocess_exec
-asyncio.base_events.Server.__init__
+asyncio.base_events.BaseEventLoop.subprocess_exec # BaseEventLoop adds several parameters and stubtest fails on the difference if we add them
+# Condition functions are exported in __init__
 asyncio.locks.Condition.acquire
 asyncio.locks.Condition.locked
 asyncio.locks.Condition.release
-asyncio.proactor_events.BaseProactorEventLoop.sock_recv
-asyncio.selector_events.BaseSelectorEventLoop.sock_recv
-asyncio.streams.FlowControlMixin.__init__
-asyncio.tasks.Task.get_stack
-asyncio.tasks.Task.print_stack
-builtins.bytearray.__float__
-builtins.bytearray.__int__
-builtins.bytearray.append
-builtins.bytearray.extend
-builtins.bytearray.maketrans
-builtins.bytes.__float__
-builtins.bytes.__int__
-builtins.bytes.maketrans
-builtins.classmethod.__get__
-builtins.ellipsis
+asyncio.proactor_events.BaseProactorEventLoop.sock_recv # nbytes parameter has different name 'n' in implementation
+asyncio.selector_events.BaseSelectorEventLoop.sock_recv # nbytes parameter has different name 'n' in implementation
+builtins.classmethod.__get__  # this function can accept no value for the type parameter.
+builtins.ellipsis  # type is not exposed anywhere
 builtins.function
-builtins.memoryview.__contains__
-builtins.memoryview.__iter__
-builtins.memoryview.cast
-builtins.object.__init__
-builtins.property.__get__
-builtins.property.fdel
-builtins.property.fget
-builtins.property.fset
-builtins.staticmethod.__get__
-bz2.BZ2Decompressor.__init__
-bz2.BZ2File.readinto
-bz2.BZ2File.readlines
-bz2.BZ2File.write
-bz2.BZ2File.writelines
-# The following methods were changed in point releases from Python 3.6 to 3.9
-# as part of a security fix. These excludes can be removed when the GitHub
-# action workflow uses Python versions that include the fix (adding a
-# separator argument).
-cgi.FieldStorage.__init__
-cgi.parse
-cgi.parse_multipart
-codecs.BufferedIncrementalDecoder.decode
+builtins.memoryview.__contains__  # C type that implements __getitem__
+builtins.object.__init__  # default C signature is incorrect
+builtins.property.__get__  # this function can accept no value for the type parameter.
+builtins.staticmethod.__get__  # this function can accept no value for the type parameter.
+bz2.BZ2Decompressor.__init__  # function does not accept parameters but C signature is set
+# The following CodecInfo properties are added in __new__
 codecs.CodecInfo.decode
 codecs.CodecInfo.encode
 codecs.CodecInfo.incrementaldecoder
 codecs.CodecInfo.incrementalencoder
 codecs.CodecInfo.streamreader
 codecs.CodecInfo.streamwriter
-codecs.IncrementalEncoder.encode
-codecs.StreamReader.__getattr__
-codecs.StreamReader.readline
-codecs.StreamReader.readlines
-codecs.StreamWriter.__getattr__
-codecs.StreamWriter.write
-codecs.utf_16_be_decode
-codecs.utf_16_be_encode
-collections.Callable
-collections.ChainMap.get
-collections.ChainMap.maps
-collections.ChainMap.new_child
-collections.Coroutine.cr_await
-collections.Coroutine.cr_code
-collections.Coroutine.cr_frame
-collections.Coroutine.cr_running
-collections.Counter.fromkeys
-collections.Generator.gi_code
-collections.Generator.gi_frame
-collections.Generator.gi_running
-collections.Generator.gi_yieldfrom
-collections.Mapping.get
-collections.Sequence.index
-collections.Set.isdisjoint
-collections.abc.Callable
+# Coroutine and Generator properties are added programmatically
+collections.ChainMap.get  # Adding None to the underlying Mapping Union messed up mypy
+# Coroutine and Generator properties are added programmatically
 collections.abc.Coroutine.cr_await
 collections.abc.Coroutine.cr_code
 collections.abc.Coroutine.cr_frame
@@ -123,106 +59,41 @@ collections.abc.Generator.gi_code
 collections.abc.Generator.gi_frame
 collections.abc.Generator.gi_running
 collections.abc.Generator.gi_yieldfrom
-collections.abc.Mapping.get
-collections.abc.Sequence.index
-collections.deque.__hash__
-configparser.LegacyInterpolation.before_get
-configparser.SectionProxy.__getattr__
+configparser.SectionProxy.__getattr__  # SectionProxy can have arbitrary attributes when custom converters are used
+# SectionProxy get functions are set in __init__
 configparser.SectionProxy.getboolean
 configparser.SectionProxy.getfloat
 configparser.SectionProxy.getint
+copy.PyStringMap  # defined only in Jython
+# The Dialect properties are initialized as None in Dialect but their values are enforced in _Dialect
 csv.Dialect.delimiter
 csv.Dialect.doublequote
 csv.Dialect.lineterminator
 csv.Dialect.quoting
 csv.Dialect.skipinitialspace
-ctypes.Array.__iter__
-ctypes.CDLL._FuncPtr
-ctypes.cast
-ctypes.memmove
-ctypes.memset
-ctypes.pointer
-ctypes.string_at
-ctypes.wstring_at
-dbm.error
-difflib.SequenceMatcher.__init__
-distutils.archive_util.make_archive
-distutils.archive_util.make_tarball
-distutils.command.bdist_packager
-distutils.core.Extension.__init__
-distutils.debug.DEBUG
-distutils.extension.Extension.__init__
-distutils.fancy_getopt.OptionDummy.__init__
-distutils.filelist.FileList.__init__
-distutils.sysconfig.set_python_build
-distutils.text_file.TextFile.warn
-distutils.version.Version._cmp
-distutils.version.Version.parse
-email.errors.MessageDefect.__init__
-email.generator.BytesGenerator.__init__
-email.generator.DecodedGenerator.__init__
-email.generator.Generator.__init__
-email.headerregistry.AddressHeader.parse
-email.headerregistry.BaseHeader.init
-email.headerregistry.BaseHeader.max_count
-email.headerregistry.ContentTransferEncodingHeader.parse
-email.headerregistry.DateHeader.parse
-email.headerregistry.HeaderRegistry.__init__
-email.headerregistry.MIMEVersionHeader.parse
-email.headerregistry.ParameterizedMIMEHeader.parse
-email.headerregistry.UnstructuredHeader.parse
-email.message.MIMEPart.__init__
-email.message.Message.get_payload
-email.message.Message.set_param
-email.parser.HeaderParser.__init__
-email.parser.Parser.__init__
-email.utils.localtime
-email.utils.mktime_tz
-email.utils.parseaddr
-email.utils.parsedate
-email.utils.parsedate_to_datetime
-email.utils.parsedate_tz
-encodings.utf_8.IncrementalDecoder._buffer_decode
-encodings.utf_8.StreamReader.decode
-encodings.utf_8.StreamWriter.encode
-encodings.utf_8.encode
+ctypes.Array.__iter__  # mypy doesn't support using __getitem__ instead of __iter__ so this is here https://github.com/python/mypy/issues/2220
+ctypes.CDLL._FuncPtr  # None at class level but initialized in __init__ to this value
+ctypes.memmove  # CFunctionType
+ctypes.memset  # CFunctionType
+ctypes.pointer  # imported C function
+ctypes.string_at  # docstring argument name is wrong
+ctypes.wstring_at  # docstring argument name is wrong
+difflib.SequenceMatcher.__init__  # mypy default value for generic parameter issues. See https://github.com/python/mypy/issues/3737
+distutils.command.bdist_packager  # It exists in docs as package name but not in code except as a mention in a comment.
+distutils.version.Version._cmp  # class should have declared this
+distutils.version.Version.parse  # class should have declared this
+email.headerregistry.BaseHeader.max_count  # docs say subclasses should have this property
 enum.EnumMeta.__call__
 enum.EnumMeta.__new__
-getopt.GetoptError.__init__
-html.parser.HTMLParser.feed
-http.HTTPStatus.description
-http.HTTPStatus.phrase
-http.client.BadStatusLine.__init__
-http.client.HTTPResponse.read1
-http.client.HTTPResponse.readinto
-http.client.HTTPResponse.readline
-http.client.IncompleteRead.__init__
-http.client.LineTooLong.__init__
-http.client.UnknownProtocol.__init__
-http.cookiejar.Cookie.is_expired
-http.cookiejar.CookieJar.clear
-http.cookiejar.FileCookieJar.__init__
-http.cookies.Morsel.__init__
-http.cookies.Morsel.setdefault
-http.cookies.Morsel.update
-http.server.HTTPServer.__init__
-imaplib.IMAP4_SSL.ssl
-importlib.abc.FileLoader.get_filename
-importlib.abc.Loader.exec_module
-importlib.abc.MetaPathFinder.find_spec
-importlib.abc.PathEntryFinder.find_spec
-importlib.machinery.BuiltinImporter.find_module
-importlib.machinery.BuiltinImporter.find_spec
-importlib.machinery.ExtensionFileLoader.__init__
-importlib.machinery.ExtensionFileLoader.get_filename
-importlib.machinery.FrozenImporter.find_module
-importlib.machinery.FrozenImporter.find_spec
-importlib.machinery.FrozenImporter.module_repr
-importlib.machinery.SourceFileLoader.set_data
-importlib.machinery.WindowsRegistryFinder.find_module
-importlib.machinery.WindowsRegistryFinder.find_spec
-importlib.util.spec_from_file_location
-importlib.util.spec_from_loader
+http.HTTPStatus.description  # set in __new__
+http.HTTPStatus.phrase  # set in __new__
+imaplib.IMAP4_SSL.ssl  # Dependent on SSL existence
+importlib.abc.FileLoader.get_filename  # Wrapped with _check_name decorator which changes runtime signature
+importlib.abc.FileLoader.load_module  # Wrapped with _check_name decorator which changes runtime signature
+importlib.abc.Loader.exec_module  # See Lib/importlib/_abc.py. Might be defined for backwards compatability
+importlib.abc.MetaPathFinder.find_spec  # Not defined on the actual class, but expected to exist.
+importlib.abc.PathEntryFinder.find_spec  # Not defined on the actual class, but expected to exist.
+importlib.machinery.ExtensionFileLoader.get_filename  # Wrapped with _check_name decorator which changes runtime signature
 inspect.Parameter.KEYWORD_ONLY
 inspect.Parameter.POSITIONAL_ONLY
 inspect.Parameter.POSITIONAL_OR_KEYWORD
@@ -251,16 +122,6 @@ ipaddress._BaseAddress.is_unspecified
 ipaddress._BaseAddress.max_prefixlen
 ipaddress._BaseAddress.packed
 ipaddress._BaseNetwork.max_prefixlen
-itertools.chain.from_iterable
-itertools.combinations_with_replacement
-itertools.compress
-itertools.count
-itertools.dropwhile
-itertools.filterfalse
-itertools.permutations
-itertools.starmap
-itertools.takewhile
-itertools.zip_longest
 lib2to3.pygram.pattern_symbols
 lib2to3.pygram.python_symbols
 lib2to3.pytree.Base.__new__
@@ -270,15 +131,7 @@ lib2to3.pytree.BasePattern.__new__
 lib2to3.pytree.BasePattern.type
 lib2to3.pytree.NegatedPattern.match
 lib2to3.pytree.NegatedPattern.match_seq
-mailbox.Babyl.__init__
-mailbox.MH.__init__
-mailbox.MMDF.__init__
-mailbox._mboxMMDF.get_bytes
-mailbox._mboxMMDF.get_file
-mailbox._mboxMMDF.get_string
-mailbox.mbox.__init__
-mimetypes.read_mime_types
-mmap.mmap.__iter__
+mmap.mmap.__iter__  # has __getitem__ but mypy doesn't derive __iter__ from it: https://github.com/python/mypy/issues/2220
 multiprocessing.JoinableQueue
 multiprocessing.Queue
 multiprocessing.SimpleQueue
@@ -302,24 +155,11 @@ multiprocessing.synchronize.Event.__init__
 multiprocessing.synchronize.SemLock.__init__
 multiprocessing.synchronize.SemLock.acquire
 multiprocessing.synchronize.SemLock.release
-netrc.NetrcParseError.__init__
-netrc.netrc.__init__
-ntpath.join
-numbers.Number.__hash__
-operator.methodcaller
-optparse.HelpFormatter._format__Text
-optparse.OptionParser.__init__
-optparse.Values.__getattr__
-optparse.Values.read_file
-optparse.Values.read_module
-os._Environ.__init__
-os._Environ.setdefault
-os._wrap_close.__init__
-pickle.Pickler.persistent_id
-pickle.Unpickler.persistent_load
-pipes.Template.copy
-pkgutil.ImpImporter.__init__
-poplib.POP3_SSL.stls
+numbers.Number.__hash__  # typeshed marks this as abstract but code just sets this as None
+optparse.Values.__getattr__  # Some attributes are set in __init__ using setattr
+pickle.Pickler.persistent_id  # C pickler persistent_id is an attribute
+pickle.Unpickler.persistent_load  # C unpickler persistent_load is an attribute
+poplib.POP3_SSL.stls  # bad declaration of inherited function. See poplib.pyi
 pydoc.HTMLDoc.docdata
 pydoc.HTMLDoc.docproperty
 pydoc.HTMLDoc.docroutine
@@ -328,130 +168,54 @@ pydoc.TextDoc.docmodule
 pydoc.TextDoc.docother
 pydoc.TextDoc.docproperty
 pydoc.TextDoc.docroutine
-random.SystemRandom.getstate
-re.error.__init__
-runpy.run_path
-sched.Event.__doc__
-select.poll
-selectors.DevpollSelector
-selectors.KqueueSelector
-shlex.shlex.__init__
-shlex.shlex.error_leader
-shlex.shlex.sourcehook
-shutil.register_unpack_format
-signal.SIGEMT
-signal.SIGINFO
-smtpd.MailmanProxy.process_message
-smtpd.PureProxy.process_message
-smtplib.SMTP.send_message
-socketserver.BaseServer.fileno
-socketserver.BaseServer.get_request
-socketserver.BaseServer.server_bind
-sqlite3.Row.__len__
-sqlite3.dbapi2.Row.__len__
-sqlite3.dbapi2.version_info
-sqlite3.version_info
-sre_constants.error.__init__
-ssl.PROTOCOL_SSLv2
-ssl.Purpose.__new__
-ssl.SSLContext.__new__
-ssl.SSLObject.__init__
-ssl.SSLSocket.connect
-ssl.SSLSocket.connect_ex
-ssl.SSLSocket.recv
-ssl.SSLSocket.recv_into
-ssl.SSLSocket.recvfrom
-ssl.SSLSocket.recvfrom_into
-ssl.SSLSocket.sendto
-ssl._ASN1Object.__new__
+select.poll  # Depends on configuration
+selectors.DevpollSelector  # Depends on configuration
+socketserver.BaseServer.fileno  # implemented in derived classes
+socketserver.BaseServer.get_request  # implemented in derived classes
+socketserver.BaseServer.server_bind  # implemented in derived classes
+ssl.PROTOCOL_SSLv2  # Defined only if compiled with ssl v2
+ssl.Purpose.__new__  # You cannot override __new__ in NamedTuple and runtime uses namedtuple.
+ssl._ASN1Object.__new__  # You cannot override __new__ in NamedTuple and runtime uses namedtuple.
 subprocess.Popen.__init__
-sunau.Au_write.getmark
-sunau.Au_write.getmarkers
-sunau.Au_write.setcomptype
-sunau.Au_write.setmark
-symtable.Symbol.__init__
-symtable.SymbolTable.__init__
-sys.gettotalrefcount
-sys.implementation
-sysconfig.is_python_build
-sysconfig.parse_config_h
-tarfile.TarFile.errors
+sys.gettotalrefcount  # Available on python debug builds
+sys.implementation  # Actually SimpleNamespace but then you wouldn't have convenient attributes
+tarfile.TarFile.errors  # errors is initialized for some reason as None even though it really only accepts str
+# SpooledTemporaryFile implements IO except these methods
+# See also https://github.com/python/typeshed/pull/2452#issuecomment-420657918
 tempfile.SpooledTemporaryFile.__next__
 tempfile.SpooledTemporaryFile.readable
 tempfile.SpooledTemporaryFile.seekable
 tempfile.SpooledTemporaryFile.writable
-threading.Condition.acquire
-threading.Condition.release
-threading.Lock
-threading.Semaphore.__enter__
-threading.Semaphore.acquire
-threading.Thread.__init__
-timeit.main
-tkinter.Misc.grid_propagate
-tkinter.Misc.pack_propagate
+threading.Condition.acquire  # Condition functions are exported in __init__
+threading.Condition.release  # Condition functions are exported in __init__
+threading.Lock  # A factory function that returns 'most efficient lock'. Marking it as a function will make it harder for users to mark the Lock type.
+tkinter.Misc.grid_propagate  # The noarg placeholder is a set value list
+tkinter.Misc.pack_propagate  # The noarg placeholder is a set value list
 tkinter.Tk.eval  # from __getattr__
 tkinter.Tk.report_callback_exception  # A bit of a lie, since it's actually a method, but typing it as an attribute allows it to be assigned to
 tkinter.Wm.wm_iconphoto  # Default value of argument can't be used without runtime error
 tkinter.font.Font.__getitem__  # Argument name differs (doesn't matter for __dunder__ methods)
-trace.CoverageResults.__init__
-traceback.FrameSummary.__init__
-traceback.TracebackException.__init__
-traceback.TracebackException.from_exception
-types.GetSetDescriptorType.__get__
-types.GetSetDescriptorType.__set__
-types.MemberDescriptorType.__get__
-types.MemberDescriptorType.__set__
-types.SimpleNamespace.__init__
-types.coroutine
-types.new_class
-types.prepare_class
-typing.AwaitableGenerator
-typing.IO.__iter__
-typing.IO.__next__
-typing.type_check_only
+traceback.TracebackException.from_exception  # explicitly expanding arguemnts going into TracebackException __init__
+types.GetSetDescriptorType.__get__  # this function can accept no value for the type parameter.
+types.MemberDescriptorType.__get__  # this function can accept no value for the type parameter.
+types.SimpleNamespace.__init__  # class doesn't accept positional arguments but has default C signature
+typing.IO.__iter__  # Added because IO streams are iterable. See https://github.com/python/typeshed/commit/97bc450acd60c1bcdafef3ce8fbe3b95a9c0cac3
+typing.IO.__next__  # Added because IO streams are iterable. See https://github.com/python/typeshed/commit/97bc450acd60c1bcdafef3ce8fbe3b95a9c0cac3
+typing.type_check_only  # typing decorator that is not available at runtime
 unittest.mock.patch  # It's a complicated overload and I haven't been able to figure out why stubtest doesn't like it
-urllib.error.ContentTooShortError.__init__
-urllib.error.URLError.__init__
-urllib.parse._DefragResultBase.__new__
-# The following methods were changed in point releases from Python 3.6 to 3.9
-# as part of a security fix. These excludes can be removed when the GitHub
-# action workflow uses Python versions that include the fix (adding a
-# separator argument).
-urllib.parse.parse_qs
-urllib.parse.parse_qsl
-urllib.request.BaseHandler.http_error_nnn
-urllib.request.HTTPPasswordMgrWithPriorAuth.__init__
-urllib.robotparser.RobotFileParser.can_fetch
-warnings.catch_warnings.__init__
-weakref.CallableProxyType.__getattr__
-weakref.ProxyType.__getattr__
-weakref.ReferenceType.__call__
+urllib.parse._DefragResultBase.__new__  # Generic NamedTuple is problematic in mypy, so regular tuple was used. See https://github.com/python/mypy/issues/685
+urllib.request.HTTPPasswordMgrWithPriorAuth.__init__  # Args are passed as is to super, so super args are specified
+warnings.catch_warnings.__init__  # Defining this ruins the __new__ overrides
+weakref.CallableProxyType.__getattr__  # Should have all attributes of proxy
+weakref.ProxyType.__getattr__  # Should have all attributes of proxy
+weakref.ReferenceType.__call__  # C function default annotation is wrong
 weakref.WeakKeyDictionary.get
 weakref.WeakKeyDictionary.update
 weakref.WeakValueDictionary.get
-webbrowser.Mozilla.raise_opts
-webbrowser.UnixBrowser.raise_opts
-webbrowser.UnixBrowser.remote_action
-webbrowser.UnixBrowser.remote_action_newtab
-webbrowser.UnixBrowser.remote_action_newwin
+webbrowser.UnixBrowser.remote_action  # always overridden in inheriting class
+webbrowser.UnixBrowser.remote_action_newtab  # always overridden in inheriting class
+webbrowser.UnixBrowser.remote_action_newwin  # always overridden in inheriting class
 wsgiref.types  # Doesn't exist, see comments in file
-xml.etree.ElementPath._SelectorContext.parent_map
-xml.sax.xmlreader.AttributesImpl.has_key
-zipfile.ZipExtFile.read
-zipfile.ZipExtFile.readline
-zlib.compressobj
-
-# These enums derive from (int, IntEnum) or (str, Enum). Strangely,
-# at runtime, they inherit Enum.__new__, not int.__new__ or
-# str.__new__ as the mro would dictate, which is why stubtest balks.
-enum.IntEnum.__new__
-http.HTTPStatus.__new__
-inspect._ParameterKind.__new__
-signal.Handlers.__new__
-signal.Sigmasks.__new__
-signal.Signals.__new__
-socket.AddressFamily.__new__
-socket.SocketKind.__new__
 
 # ==========
 # Whitelist entries that cannot or should not be fixed
@@ -473,6 +237,7 @@ collections.abc.*  # Types are re-exported from _collections_abc, so errors shou
 tempfile._TemporaryFileWrapper.[\w_]+
 # Various classes in typing aren't types at runtime. In addition, mypy thinks some special forms are tautologically defined.
 typing.[A-Z]\w+
+typing_extensions\..*
 # We can't distinguish not having a default value from having a default value of inspect.Parameter.empty
 inspect.Parameter.__init__
 inspect.Signature.__init__

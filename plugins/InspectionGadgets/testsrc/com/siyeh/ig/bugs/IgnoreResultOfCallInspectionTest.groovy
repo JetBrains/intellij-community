@@ -560,6 +560,22 @@ class X {
         sb./*Result of 'AbstractStringBuilder.codePoints()' is ignored*/codePoints/**/();
         sb./*Result of 'StringBuilder.compareTo()' is ignored*/compareTo/**/(null);
         sb./*Result of 'AbstractStringBuilder.offsetByCodePoints()' is ignored*/offsetByCodePoints/**/(0, 1);
+        System.out.println(sb);
+  }
+}
+""")
+  }
+  
+  void testParseShort() {
+    doTest("""class X {
+  boolean validate(String s) {
+    try {
+      Short.parseShort(s);
+      return true;
+    }
+    catch (NumberFormatException e) {
+      return false;
+    }
   }
 }
 """)

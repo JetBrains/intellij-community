@@ -2,10 +2,12 @@
 package com.intellij.vcs.log.data.index;
 
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Ref;
 import com.intellij.util.indexing.*;
 import com.intellij.util.indexing.impl.IndexStorage;
 import com.intellij.util.indexing.impl.MapIndexStorage;
@@ -13,9 +15,7 @@ import com.intellij.util.indexing.impl.MapReduceIndex;
 import com.intellij.util.indexing.impl.forward.ForwardIndex;
 import com.intellij.util.indexing.impl.forward.ForwardIndexAccessor;
 import com.intellij.util.indexing.impl.forward.KeyCollectionForwardIndexAccessor;
-import com.intellij.util.io.DataExternalizer;
-import com.intellij.util.io.EnumeratorIntegerDescriptor;
-import com.intellij.util.io.KeyDescriptor;
+import com.intellij.util.io.*;
 import com.intellij.vcs.log.impl.FatalErrorHandler;
 import com.intellij.vcs.log.util.StorageId;
 import it.unimi.dsi.fastutil.ints.IntIterator;
@@ -31,6 +31,7 @@ import java.util.function.IntConsumer;
 import java.util.function.ObjIntConsumer;
 
 public class VcsLogFullDetailsIndex<T, D> implements Disposable {
+  private static final Logger LOG = Logger.getInstance(VcsLogFullDetailsIndex.class);
   @NonNls protected static final String INDEX = "index";
   @NotNull private final MyMapReduceIndex myMapReduceIndex;
   @NotNull protected final StorageId myStorageId;
@@ -43,6 +44,7 @@ public class VcsLogFullDetailsIndex<T, D> implements Disposable {
                                 @NotNull String name,
                                 @NotNull DataIndexer<Integer, T, D> indexer,
                                 @NotNull DataExternalizer<T> externalizer,
+                                @Nullable StorageLockContext storageLockContext,
                                 @NotNull FatalErrorHandler fatalErrorHandler,
                                 @NotNull Disposable disposableParent)
     throws IOException {
@@ -51,24 +53,33 @@ public class VcsLogFullDetailsIndex<T, D> implements Disposable {
     myIndexer = indexer;
     myFatalErrorHandler = fatalErrorHandler;
 
-    myMapReduceIndex = createMapReduceIndex(externalizer);
+    myMapReduceIndex = createMapReduceIndex(externalizer, storageLockContext);
 
     Disposer.register(disposableParent, this);
   }
 
-  @NotNull
-  private MyMapReduceIndex createMapReduceIndex(@NotNull DataExternalizer<T> dataExternalizer) throws IOException {
+  private @NotNull MyMapReduceIndex createMapReduceIndex(@NotNull DataExternalizer<T> dataExternalizer,
+                                                         @Nullable StorageLockContext storageLockContext) throws IOException {
     MyIndexExtension<T, D> extension = new MyIndexExtension<>(myName, myIndexer, dataExternalizer, myStorageId.getVersion());
-    Pair<ForwardIndex, ForwardIndexAccessor<Integer, T>> pair = createdForwardIndex();
+    Pair<ForwardIndex, ForwardIndexAccessor<Integer, T>> pair = createdForwardIndex(storageLockContext);
     ForwardIndex forwardIndex = pair != null ? pair.getFirst() : null;
     ForwardIndexAccessor<Integer, T> forwardIndexAccessor = pair != null ? pair.getSecond() : null;
-    return new MyMapReduceIndex(extension, new MyMapIndexStorage<>(myName, myStorageId, dataExternalizer), forwardIndex,
-                                forwardIndexAccessor);
+    PagedFileStorage.THREAD_LOCAL_STORAGE_LOCK_CONTEXT.set(storageLockContext);
+    try {
+      return new MyMapReduceIndex(extension, new MyMapIndexStorage<>(myName, myStorageId, dataExternalizer), forwardIndex,
+                                  forwardIndexAccessor);
+    } finally {
+      PagedFileStorage.THREAD_LOCAL_STORAGE_LOCK_CONTEXT.remove();
+    }
   }
 
   @Nullable
-  protected Pair<ForwardIndex, ForwardIndexAccessor<Integer, T>> createdForwardIndex() throws IOException {
+  protected Pair<ForwardIndex, ForwardIndexAccessor<Integer, T>> createdForwardIndex(@Nullable StorageLockContext storageLockContext) throws IOException {
     return null;
+  }
+
+  public boolean isEmpty() throws IOException {
+    return ((MyMapIndexStorage<T>)myMapReduceIndex.getStorage()).isEmpty();
   }
 
   @NotNull
@@ -86,10 +97,10 @@ public class VcsLogFullDetailsIndex<T, D> implements Disposable {
   @NotNull
   public IntSet getCommitsWithAllKeys(@NotNull Collection<Integer> keys) throws StorageException {
     checkDisposed();
-    return InvertedIndexUtil.collectInputIdsContainingAllKeys(myMapReduceIndex, keys, (k) -> {
-      ProgressManager.checkCanceled();
-      return true;
-    }, null, null);
+    return InvertedIndexUtil.collectInputIdsContainingAllKeys(myMapReduceIndex,
+                                                              keys,
+                                                              null,
+                                                              null);
   }
 
   private void iterateCommitIds(int key, @NotNull IntConsumer consumer) throws StorageException {
@@ -138,7 +149,7 @@ public class VcsLogFullDetailsIndex<T, D> implements Disposable {
 
   private final class MyMapReduceIndex extends MapReduceIndex<Integer, T, D> {
     private MyMapReduceIndex(@NotNull MyIndexExtension<T, D> extension,
-                             @NotNull IndexStorage<Integer,T> storage,
+                             @NotNull IndexStorage<Integer, T> storage,
                              @Nullable ForwardIndex forwardIndex,
                              @Nullable ForwardIndexAccessor<Integer, T> forwardIndexAccessor) throws IOException {
       super(extension, storage, forwardIndex, forwardIndexAccessor);
@@ -156,14 +167,27 @@ public class VcsLogFullDetailsIndex<T, D> implements Disposable {
   }
 
   private static class MyMapIndexStorage<T> extends MapIndexStorage<Integer, T> {
+    private @NotNull final String myName;
+
     MyMapIndexStorage(@NotNull String name, @NotNull StorageId storageId, @NotNull DataExternalizer<T> externalizer)
       throws IOException {
       super(storageId.getStorageFile(name, true), EnumeratorIntegerDescriptor.INSTANCE, externalizer, 5000, false);
+      myName = name;
+    }
+
+    protected boolean isEmpty() throws IOException {
+      Ref<Boolean> isEmpty = new Ref<>(true);
+      doProcessKeys(key -> {
+        isEmpty.set(false);
+        return false;
+      });
+      return isEmpty.get();
     }
 
     @Override
-    protected void checkCanceled() {
-      ProgressManager.checkCanceled();
+    public void clear() throws StorageException {
+      LOG.warn("Clearing '" + myName + "' map index storage", new RuntimeException());
+      super.clear();
     }
   }
 

@@ -5,7 +5,6 @@ import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.actionSystem.impl.SimpleDataContext;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
@@ -19,7 +18,6 @@ import com.intellij.openapi.util.WindowStateService;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.ui.FlatSpeedSearchPopup;
 import com.intellij.openapi.vcs.ui.PopupListElementRendererWithIcon;
-import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.*;
 import com.intellij.ui.components.panels.OpaquePanel;
 import com.intellij.ui.popup.KeepingPopupOpenAction;
@@ -66,12 +64,9 @@ public final class BranchActionGroupPopup extends FlatSpeedSearchPopup {
                                 @NotNull Project project,
                                 @NotNull Condition<? super AnAction> preselectActionCondition,
                                 @NotNull ActionGroup actions,
-                                @Nullable String dimensionKey) {
-    super(title, createBranchSpeedSearchActionGroup(actions), SimpleDataContext.builder()
-            .add(CommonDataKeys.PROJECT, project)
-            .add(PlatformDataKeys.CONTEXT_COMPONENT, IdeFocusManager.getInstance(project).getFocusOwner())
-            .build(),
-          preselectActionCondition, true);
+                                @Nullable String dimensionKey,
+                                @NotNull DataContext dataContext) {
+    super(title, createBranchSpeedSearchActionGroup(actions), dataContext, preselectActionCondition, true);
     getTitle().setBackground(JBColor.PanelBackground);
     myProject = project;
     DataManager.registerDataProvider(getList(), dataId -> POPUP_MODEL.is(dataId) ? getListModel() : null);
@@ -127,6 +122,7 @@ public final class BranchActionGroupPopup extends FlatSpeedSearchPopup {
     myToolbarActions.add(settingsGroup);
 
     ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar(BRANCH_POPUP, actionGroup, true);
+    toolbar.setTargetComponent(getList());
     toolbar.setReservePlaceAutoPopupIcon(false);
     toolbar.getComponent().setOpaque(false);
     getTitle().setButtonComponent(new ActiveComponent.Adapter() {
@@ -389,10 +385,8 @@ public final class BranchActionGroupPopup extends FlatSpeedSearchPopup {
       }
 
       CustomIconProvider actionWithIconProvider = getSpecificAction(value, CustomIconProvider.class);
-      if (actionWithIconProvider != null) {
-        myTextLabel.setComponentOrientation(ComponentOrientation.RIGHT_TO_LEFT);
-        myTextLabel.setIcon(actionWithIconProvider.getRightIcon());
-      }
+      myTextLabel.setComponentOrientation(ComponentOrientation.RIGHT_TO_LEFT);
+      myTextLabel.setIcon(actionWithIconProvider != null ? actionWithIconProvider.getRightIcon() : null);
       PopupElementWithAdditionalInfo additionalInfoAction = getSpecificAction(value, PopupElementWithAdditionalInfo.class);
       updateInfoComponent(myInfoLabel, additionalInfoAction != null ? additionalInfoAction.getInfoText() : null, isSelected);
     }
@@ -503,7 +497,7 @@ public final class BranchActionGroupPopup extends FlatSpeedSearchPopup {
     boolean shouldBeShown();
   }
 
-  private static final class HideableActionGroup extends EmptyAction.MyDelegatingActionGroup implements MoreHideableActionGroup, DumbAware {
+  private static final class HideableActionGroup extends EmptyAction.MyDelegatingActionGroup implements MoreHideableActionGroup, DumbAware, AlwaysVisibleActionGroup {
     @NotNull private final MoreAction myMoreAction;
 
     private HideableActionGroup(@NotNull ActionGroup actionGroup, @NotNull MoreAction moreAction) {

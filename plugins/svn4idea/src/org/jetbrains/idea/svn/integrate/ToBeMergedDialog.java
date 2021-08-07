@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.integrate;
 
 import com.intellij.icons.AllIcons;
@@ -491,7 +491,7 @@ public class ToBeMergedDialog extends DialogWrapper {
       }));
     }
 
-    protected void customizeCellRenderer(JTable table, Object value, boolean selected) {
+    private void customizeCellRenderer(JTable table, Object value, boolean selected) {
       myPanel.removeAll();
       myPanel.setBackground(null);
       myRenderer.clear();
@@ -520,7 +520,7 @@ public class ToBeMergedDialog extends DialogWrapper {
     }
 
     @Override
-    public final Component getTableCellRendererComponent(
+    public Component getTableCellRendererComponent(
       JTable table,
       Object value,
       boolean isSelected,

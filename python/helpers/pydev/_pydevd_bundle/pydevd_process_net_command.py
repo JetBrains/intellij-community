@@ -23,7 +23,7 @@ from _pydevd_bundle.pydevd_comm import (CMD_RUN, CMD_VERSION, CMD_LIST_THREADS, 
     InternalGetNextStatementTargets, CMD_SET_PROJECT_ROOTS, CMD_GET_SMART_STEP_INTO_VARIANTS,
     CMD_GET_THREAD_STACK, CMD_THREAD_DUMP_TO_STDERR, CMD_STOP_ON_START, CMD_GET_EXCEPTION_DETAILS, NetCommand,
     CMD_SET_PROTOCOL, CMD_PYDEVD_JSON_CONFIG, InternalGetThreadStack, InternalSmartStepInto, InternalGetSmartStepIntoVariants,
-    CMD_DATAVIEWER_ACTION, InternalDataViewerAction)
+    CMD_DATAVIEWER_ACTION, InternalDataViewerAction, CMD_TABLE_EXEC, InternalTableCommand, CMD_INTERRUPT_DEBUG_CONSOLE)
 from _pydevd_bundle.pydevd_constants import (get_thread_id, IS_PY3K, DebugInfoHolder, dict_keys, STATE_RUN,
     NEXT_VALUE_SEPARATOR, IS_WINDOWS, get_current_thread_id)
 from _pydevd_bundle.pydevd_additional_thread_info import set_additional_thread_info
@@ -46,6 +46,12 @@ def process_net_command(py_db, cmd_id, seq, text):
     probably will give better performance).
     '''
     # print(ID_TO_MEANING[str(cmd_id)], repr(text))
+
+    if cmd_id == CMD_INTERRUPT_DEBUG_CONSOLE:
+        # Must be executed outside of lock and in the non-main thread
+        from _pydevd_bundle.pydevd_console_integration import interrupt_debug_console
+        interrupt_debug_console()
+        return
 
     py_db._main_lock.acquire()
     try:
@@ -653,10 +659,6 @@ def process_net_command(py_db, cmd_id, seq, text):
                     if supported_type:
                         py_db.has_plugin_exception_breaks = py_db.plugin.has_exception_breaks()
                         py_db.on_breakpoints_changed()
-                    else:
-                        raise NameError(breakpoint_type)
-
-
 
             elif cmd_id == CMD_REMOVE_EXCEPTION_BREAK:
                 exception = text
@@ -880,6 +882,14 @@ def process_net_command(py_db, cmd_id, seq, text):
                     int_cmd = InternalDataViewerAction(seq, thread_id, frame_id, var, action, args)
                     py_db.post_internal_command(int_cmd, thread_id)
 
+                except:
+                    traceback.print_exc()
+
+            elif cmd_id == CMD_TABLE_EXEC:
+                try:
+                    thread_id, frame_id, init_command, command_type = text.split('\t', 3)
+                    int_cmd = InternalTableCommand(seq, thread_id, frame_id, init_command, command_type)
+                    py_db.post_internal_command(int_cmd, thread_id)
                 except:
                     traceback.print_exc()
 

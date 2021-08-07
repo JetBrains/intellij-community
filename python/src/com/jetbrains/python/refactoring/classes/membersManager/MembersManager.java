@@ -7,6 +7,7 @@ import com.google.common.base.Predicate;
 import com.google.common.collect.Collections2;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.jetbrains.NotNullPredicate;
 import com.jetbrains.python.psi.PyClass;
@@ -92,24 +93,16 @@ public abstract class MembersManager<T extends PyElement> implements Function<T,
     final PyClass @NotNull ... to
   ) {
     List<PyMemberInfo<PyElement>> memberInfosSorted = new ArrayList<>(memberInfos);
-    memberInfosSorted.sort((o1, o2) -> PyDependenciesComparator.INSTANCE.compare(o1.getMember(), o2.getMember()));
+
+
+    memberInfosSorted.sort((o1, o2) -> PyDependenciesComparator.INSTANCE.compareAndStoreDependency(o1.getElementToStoreDependency(),
+                                                                                                   o2.getElementToStoreDependency()));
 
     for (PyMemberInfo<PyElement> info : memberInfosSorted) {
       TypeSafeMovingStrategy.moveCheckingTypesAtRunTime(from, info.getMembersManager(), Collections.singleton(info), to);
     }
 
-
-    /*//Move at once, sort
-    final Multimap<MembersManager<PyElement>, PyMemberInfo<PyElement>> managerToMember = ArrayListMultimap.create();
-    //Collect map (manager)->(list_of_memebers)
-    for (final PyMemberInfo<PyElement> memberInfo : memberInfos) {
-      managerToMember.put(memberInfo.getMembersManager(), memberInfo);
-    }
-    //Move members via manager
-    for (final MembersManager<PyElement> membersManager : managerToMember.keySet()) {
-      final Collection<PyMemberInfo<PyElement>> members = managerToMember.get(membersManager);
-      TypeSafeMovingStrategy.moveCheckingTypesAtRunTime(from, membersManager, members, to);
-    }*/
+    PyDependenciesComparator.clearDependencyInfo(ContainerUtil.map(memberInfos, o -> o.getElementToStoreDependency()));
   }
 
 

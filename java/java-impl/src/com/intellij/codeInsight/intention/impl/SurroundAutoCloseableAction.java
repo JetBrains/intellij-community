@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.intention.impl;
 
 import com.intellij.codeInsight.CodeInsightUtilCore;
@@ -10,6 +10,7 @@ import com.intellij.java.JavaBundle;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.lang.surroundWith.SurroundDescriptor;
 import com.intellij.lang.surroundWith.Surrounder;
+import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
@@ -47,7 +48,7 @@ public class SurroundAutoCloseableAction extends PsiElementBaseIntentionAction {
   public void invoke(@NotNull Project project, Editor editor, @NotNull PsiElement element) throws IncorrectOperationException {
     PsiLocalVariable variable = findVariable(element);
     if (variable != null) {
-      processVariable(project, editor, variable);
+      WriteCommandAction.runWriteCommandAction(project, getFamilyName(), null, () -> processVariable(project, editor, variable), element.getContainingFile());
     }
     else {
       PsiExpression expression = findExpression(element);
@@ -55,6 +56,11 @@ public class SurroundAutoCloseableAction extends PsiElementBaseIntentionAction {
         processExpression(project, editor, expression);
       }
     }
+  }
+
+  @Override
+  public boolean startInWriteAction() {
+    return false;
   }
 
   private static PsiLocalVariable findVariable(PsiElement element) {
@@ -218,36 +224,41 @@ public class SurroundAutoCloseableAction extends PsiElementBaseIntentionAction {
     return toFormat;
   }
 
-  private static void processExpression(Project project, Editor editor, PsiExpression expression) {
+  private void processExpression(final Project project, final Editor editor, PsiExpression expression) {
     PsiType type = Objects.requireNonNull(expression.getType());
+    final PsiType[] types = Stream.of(new TypeSelectorManagerImpl(project, type, expression, PsiExpression.EMPTY_ARRAY).getTypesForAll())
+      .filter(SurroundAutoCloseableAction::rightType)
+      .toArray(PsiType[]::new);
+    TypeExpression typeExpression = new TypeExpression(project, types);
+
     PsiStatement statement = (PsiStatement)expression.getParent();
 
     CommentTracker commentTracker = new CommentTracker();
-    List<String> names = new VariableNameGenerator(expression, VariableKind.LOCAL_VARIABLE).byType(type).byExpression(expression)
+    final List<String> names = new VariableNameGenerator(expression, VariableKind.LOCAL_VARIABLE).byType(type).byExpression(expression)
       .generateAll(true);
-    String text = "try (" + type.getCanonicalText(true) + " " + names.get(0) + " = " + commentTracker.text(expression) + ") {}";
-    PsiTryStatement tryStatement = (PsiTryStatement)commentTracker.replaceAndRestoreComments(statement, text);
+    WriteCommandAction.runWriteCommandAction(project, getFamilyName(), null, () -> {
+      String text = "try (" + type.getCanonicalText(true) + " " + names.get(0) + " = " + commentTracker.text(expression) + ") {}";
+      PsiTryStatement tryStatement = (PsiTryStatement)commentTracker.replaceAndRestoreComments(statement, text);
 
-    tryStatement = (PsiTryStatement)CodeStyleManager.getInstance(project).reformat(tryStatement);
+      tryStatement = (PsiTryStatement)CodeStyleManager.getInstance(project).reformat(tryStatement);
 
-    tryStatement = CodeInsightUtilCore.forcePsiPostprocessAndRestoreElement(tryStatement);
+      tryStatement = CodeInsightUtilCore.forcePsiPostprocessAndRestoreElement(tryStatement);
 
-    PsiResourceList resourceList = tryStatement.getResourceList();
-    if (resourceList != null && resourceList.isPhysical()) {
-      PsiResourceVariable var = (PsiResourceVariable)resourceList.iterator().next();
-      PsiIdentifier id = var.getNameIdentifier();
-      PsiExpression initializer = var.getInitializer();
-      if (id != null && initializer != null) {
-        type = initializer.getType();
-        PsiType[] types = Stream.of(new TypeSelectorManagerImpl(project, type, initializer, PsiExpression.EMPTY_ARRAY).getTypesForAll())
-            .filter(SurroundAutoCloseableAction::rightType)
-            .toArray(PsiType[]::new);
-        TemplateBuilder builder = TemplateBuilderFactory.getInstance().createTemplateBuilder(var);
-        builder.replaceElement(id, new ConstantNode(var.getName()).withLookupStrings(names));
-        builder.replaceElement(var.getTypeElement(), new TypeExpression(project, types));
-        builder.run(editor, true);
+      PsiResourceList resourceList = tryStatement.getResourceList();
+      if (resourceList != null && resourceList.isPhysical()) {
+        final PsiResourceVariable var = (PsiResourceVariable)resourceList.iterator().next();
+        final PsiIdentifier id = var.getNameIdentifier();
+        PsiExpression initializer = var.getInitializer();
+        if (id != null && initializer != null) {
+
+          TemplateBuilder builder = TemplateBuilderFactory.getInstance().createTemplateBuilder(var);
+          builder.replaceElement(id, new ConstantNode(var.getName()).withLookupStrings(names));
+
+          builder.replaceElement(var.getTypeElement(), typeExpression);
+          builder.run(editor, true);
+        }
       }
-    }
+    }, expression.getContainingFile());
   }
 
   @NotNull

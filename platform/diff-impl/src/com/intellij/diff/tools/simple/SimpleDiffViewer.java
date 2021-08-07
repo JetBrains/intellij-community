@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.diff.tools.simple;
 
 import com.intellij.diff.DiffContext;
@@ -165,6 +165,16 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
     return TextDiffViewerUtil.getFoldingModelSettings(myContext);
   }
 
+  @NotNull
+  public FoldingModelSupport getFoldingModel() {
+    return myFoldingModel;
+  }
+
+  @NotNull
+  public TwosideTextDiffProvider getTextDiffProvider() {
+    return myTextDiffProvider;
+  }
+
   @Override
   protected void onSlowRediff() {
     super.onSlowRediff();
@@ -230,9 +240,7 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
 
       if (isContentsEqual &&
           !DiffUtil.isUserDataFlagSet(DiffUserDataKeysEx.DISABLE_CONTENTS_EQUALS_NOTIFICATION, myContext, myRequest)) {
-        boolean equalCharsets = TextDiffViewerUtil.areEqualCharsets(getContents());
-        boolean equalSeparators = TextDiffViewerUtil.areEqualLineSeparators(getContents());
-        myPanel.addNotification(DiffNotifications.createEqualContents(equalCharsets, equalSeparators));
+        myPanel.addNotification(TextDiffViewerUtil.createEqualContentsNotification(getContents()));
       }
 
       myModel.setChanges(ContainerUtil.notNullize(changes), isContentsEqual);

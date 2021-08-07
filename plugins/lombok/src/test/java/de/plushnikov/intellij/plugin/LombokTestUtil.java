@@ -20,6 +20,7 @@ public class LombokTestUtil {
     public void configureModule(@NotNull Module module, @NotNull ModifiableRootModel model, @NotNull ContentEntry contentEntry) {
       MavenDependencyUtil.addFromMaven(model, LOMBOK_MAVEN_COORDINATES);
       MavenDependencyUtil.addFromMaven(model, "com.google.guava:guava:27.0.1-jre");
+      MavenDependencyUtil.addFromMaven(model, "org.slf4j:slf4j-api:1.7.30");
       model.getModuleExtension(LanguageLevelModuleExtension.class).setLanguageLevel(LanguageLevel.JDK_1_8);
     }
 

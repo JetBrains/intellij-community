@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python;
 
 import com.intellij.lang.Language;
@@ -25,14 +25,12 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
 
-/**
- * @author yole
- */
+
 public class PyGotoClassContributor implements GotoClassContributor, ChooseByNameContributorEx {
   @Override
   public void processNames(@NotNull Processor<? super String> processor, @NotNull GlobalSearchScope scope, @Nullable IdFilter filter) {
     if (!StubIndex.getInstance().processAllKeys(PyClassNameIndex.KEY, processor, scope, filter)) return;
-    if (!FileBasedIndex.getInstance().processAllKeys(PyModuleNameIndex.NAME, processor, scope, filter)) return;
+    FileBasedIndex.getInstance().processAllKeys(PyModuleNameIndex.NAME, processor, scope, filter);
   }
 
   @Override
@@ -44,11 +42,11 @@ public class PyGotoClassContributor implements GotoClassContributor, ChooseByNam
     IdFilter filter = parameters.getIdFilter();
     PsiManager psiManager = PsiManager.getInstance(project);
     if (!StubIndex.getInstance().processElements(PyClassNameIndex.KEY, name, project, scope, filter, PyClass.class, processor)) return;
-    if (!FileBasedIndex.getInstance().getFilesWithKey(PyModuleNameIndex.NAME, Collections.singleton(name), file -> {
+    FileBasedIndex.getInstance().getFilesWithKey(PyModuleNameIndex.NAME, Collections.singleton(name), file -> {
       if (PyUserSkeletonsUtil.isUnderUserSkeletonsDirectory(file)) return true;
       PsiFile psiFile = psiManager.findFile(file);
       return !(psiFile instanceof PyFile) || processor.process(psiFile);
-    }, scope)) return;
+    }, scope);
   }
 
   @Nullable

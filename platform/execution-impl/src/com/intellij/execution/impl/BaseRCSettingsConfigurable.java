@@ -1,10 +1,12 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.impl;
 
+import com.intellij.configurationStore.SerializableScheme;
 import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.options.SettingsEditorConfigurable;
+import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ui.JBUI;
@@ -32,21 +34,22 @@ abstract class BaseRCSettingsConfigurable extends SettingsEditorConfigurable<Run
       if (!original.isTemplate() && !runManager.hasSettings(original)) {
         return true;
       }
-      if (!super.isModified()) {
-        return false;
-      }
 
-      RunnerAndConfigurationSettings snapshot = getEditor().getSnapshot();
-      if (isSpecificallyModified() ||
-          !RunManagerImplKt.doGetBeforeRunTasks(original.getConfiguration())
-            .equals(RunManagerImplKt.doGetBeforeRunTasks(snapshot.getConfiguration()))) {
+      if (isSpecificallyModified()) {
         return true;
       }
+      RunnerAndConfigurationSettings snapshot = getSnapshot();
+      return !JDOMUtil.areElementsEqual(((SerializableScheme)original).writeScheme(), ((SerializableScheme)snapshot).writeScheme());
     }
     catch (ConfigurationException e) {
       //ignore
     }
     return super.isModified();
+  }
+
+  @NotNull
+  protected RunnerAndConfigurationSettings getSnapshot() throws ConfigurationException {
+    return getEditor().getSnapshot();
   }
 
   boolean isSpecificallyModified() {

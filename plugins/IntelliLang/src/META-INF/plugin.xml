@@ -29,15 +29,18 @@
   <extensions defaultExtensionNs="com.intellij">
     <intentionAction>
       <className>org.intellij.plugins.intelliLang.inject.InjectLanguageAction</className>
-      <category>Language injection</category>
+      <bundleName>messages.LangBundle</bundleName>
+      <categoryKey>intention.category.language.injection</categoryKey>
     </intentionAction>
     <intentionAction>
       <className>org.intellij.plugins.intelliLang.inject.UnInjectLanguageAction</className>
-      <category>Language injection</category>
+      <bundleName>messages.LangBundle</bundleName>
+      <categoryKey>intention.category.language.injection</categoryKey>
     </intentionAction>
     <intentionAction>
       <className>org.intellij.plugins.intelliLang.inject.EditInjectionSettingsAction</className>
-      <category>Language injection</category>
+      <bundleName>messages.LangBundle</bundleName>
+      <categoryKey>intention.category.language.injection</categoryKey>
     </intentionAction>
 
     <highlightErrorFilter implementation="org.intellij.plugins.intelliLang.inject.FrankensteinErrorFilter"/>

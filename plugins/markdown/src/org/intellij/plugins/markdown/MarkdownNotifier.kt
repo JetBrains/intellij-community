@@ -7,7 +7,14 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
 
 object MarkdownNotifier {
-  private val NOTIFICATION_GROUP = NotificationGroupManager.getInstance().getNotificationGroup("Markdown")
+  val NOTIFICATION_GROUP = NotificationGroupManager.getInstance().getNotificationGroup("Markdown")
+
+  fun notifyNetworkProblems(project: Project) {
+    NOTIFICATION_GROUP.createNotification(
+      MarkdownBundle.message("markdown.google.import.network.problems.msg"),
+      NotificationType.ERROR
+    ).notify(project)
+  }
 
   fun notifyPandocDetected(project: Project) {
     NOTIFICATION_GROUP.createNotification(
@@ -25,5 +32,17 @@ object MarkdownNotifier {
 
   fun notifyPandocDetectionFailed(project: Project, @NlsSafe msg: String) {
     NOTIFICATION_GROUP.createNotification(msg, NotificationType.ERROR).notify(project)
+  }
+
+  fun notifyIfConvertFailed(project: Project, @NlsSafe msg: String) {
+    NOTIFICATION_GROUP.createNotification(msg, NotificationType.ERROR).notify(project)
+  }
+
+  fun notifyOfSuccessfulExport(project: Project, @NlsSafe msg: String) {
+    NOTIFICATION_GROUP.createNotification(msg, NotificationType.INFORMATION).notify(project)
+  }
+
+  fun notifyAboutConversionWarning(project: Project, @NlsSafe msg: String) {
+    NOTIFICATION_GROUP.createNotification(msg, NotificationType.WARNING).notify(project)
   }
 }

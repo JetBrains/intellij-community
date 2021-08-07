@@ -1,0 +1,8 @@
+{
+    "usages": [
+        "Foo.kt",
+        "JavaClass2.java",
+        "Main.kt",
+        "Doo.kt"
+    ]
+}

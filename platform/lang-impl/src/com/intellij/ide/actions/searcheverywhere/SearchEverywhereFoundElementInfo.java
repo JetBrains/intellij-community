@@ -2,6 +2,7 @@
 package com.intellij.ide.actions.searcheverywhere;
 
 import com.intellij.util.concurrency.annotations.RequiresEdt;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -10,11 +11,11 @@ import java.util.Comparator;
 /**
  * Class containing info about found elements
  */
+@ApiStatus.Internal
 public class SearchEverywhereFoundElementInfo {
   public final int priority;
   public final Object element;
   public final SearchEverywhereContributor<?> contributor;
-  private ListCellRenderer<?> renderer;
 
   public SearchEverywhereFoundElementInfo(Object element, int priority, SearchEverywhereContributor<?> contributor) {
     this.priority = priority;
@@ -32,15 +33,6 @@ public class SearchEverywhereFoundElementInfo {
 
   public SearchEverywhereContributor<?> getContributor() {
     return contributor;
-  }
-
-  @RequiresEdt
-  public @NotNull ListCellRenderer<?> getRenderer() {
-    var result = renderer;
-    if (result == null) {
-      result = renderer = contributor.getElementsRenderer();
-    }
-    return result;
   }
 
   public static final Comparator<SearchEverywhereFoundElementInfo> COMPARATOR = (o1, o2) -> {

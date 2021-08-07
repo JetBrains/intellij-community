@@ -3,6 +3,7 @@ package org.jetbrains.uast
 
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiType
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.uast.internal.log
 import org.jetbrains.uast.visitor.UastTypedVisitor
 import org.jetbrains.uast.visitor.UastVisitor
@@ -34,22 +35,11 @@ interface UExpression : UElement, UAnnotated {
  */
 interface UAnnotated : UElement {
 
-  @Deprecated(
-    message = "Will be removed to avoid clash with com.intellij.psi.PsiModifierListOwner#getAnnotations",
-    replaceWith = ReplaceWith(expression = "uAnnotations"),
-    level = DeprecationLevel.WARNING
-  )
-  @JvmDefault
-  val annotations: List<UAnnotation>
-    get() = uAnnotations
-
   /**
    * Returns the list of annotations applied to the current element.
    */
-  @Suppress("DEPRECATION")
   @JvmDefault
   val uAnnotations: List<UAnnotation>
-    get() = annotations
 
   /**
    * Looks up for annotation element using the annotation qualified name.
@@ -88,6 +78,8 @@ open class UastEmptyExpression(override val uastParent: UElement?) : UExpression
   override val uAnnotations: List<UAnnotation>
     get() = emptyList()
 
+  @get:ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
+  @get:Deprecated("see the base property description")
   @Deprecated("see the base property description", ReplaceWith("sourcePsi"))
   override val psi: PsiElement?
     get() = null

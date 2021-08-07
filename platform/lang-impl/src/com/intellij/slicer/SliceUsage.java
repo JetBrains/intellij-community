@@ -1,8 +1,7 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.slicer;
 
 import com.intellij.analysis.AnalysisScope;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
@@ -11,6 +10,7 @@ import com.intellij.usageView.UsageInfo;
 import com.intellij.usages.UsageInfo2UsageAdapter;
 import com.intellij.util.CommonProcessors;
 import com.intellij.util.Processor;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashingStrategy;
 import org.jetbrains.annotations.NotNull;
 
@@ -53,38 +53,48 @@ public abstract class SliceUsage extends UsageInfo2UsageAdapter {
     ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
     indicator.checkCanceled();
 
-    Processor<SliceUsage> uniqueProcessor = new CommonProcessors.UniqueProcessor<>(processor, new HashingStrategy<SliceUsage>() {
-        @Override
-        public int hashCode(@NotNull SliceUsage object) {
-          return object.getUsageInfo().hashCode();
-        }
+    final HashingStrategy<SliceUsage> strategy = new HashingStrategy<>() {
+      @Override
+      public int hashCode(SliceUsage object) {
+        return object.getUsageInfo().hashCode();
+      }
 
-        @Override
-        public boolean equals(@NotNull SliceUsage o1, @NotNull SliceUsage o2) {
-          return o1.getUsageInfo().equals(o2.getUsageInfo());
-        }
-      }) {
-        @Override
-        public boolean process(SliceUsage usage) {
-          SliceValueFilter filter = usage.params.valueFilter;
-          if (filter != null) {
-            PsiElement psiElement = usage.getElement();
-            if (psiElement != null && !filter.allowed(psiElement)) {
-              return true;
-            }
+      @Override
+      public boolean equals(SliceUsage o1, SliceUsage o2) {
+        return o1.getUsageInfo().equals(o2.getUsageInfo());
+      }
+    };
+
+    final class SliceUsageUniqueProcessor extends CommonProcessors.UniqueProcessor<SliceUsage> {
+      private SliceUsageUniqueProcessor(@NotNull Processor<? super SliceUsage> processor, HashingStrategy<? super SliceUsage> strategy) {
+        super(processor, strategy);
+      }
+
+      @Override
+      public boolean process(SliceUsage usage) {
+        SliceValueFilter filter = usage.params.valueFilter;
+        if (filter != null) {
+          PsiElement psiElement = usage.getElement();
+          if (psiElement != null && !filter.allowed(psiElement)) {
+            return true;
           }
-          return transformToLanguageSpecificUsage(usage).stream().allMatch(super::process);
         }
-      };
+        return ContainerUtil.and(transformToLanguageSpecificUsage(usage), super::process);
+      }
+    }
 
-    ApplicationManager.getApplication().runReadAction(() -> {
+    final SliceUsageUniqueProcessor uniqueProcessor = new SliceUsageUniqueProcessor(processor, strategy);
+
+    final Runnable processUsagesFlow = () -> {
       if (params.dataFlowToThis) {
         processUsagesFlownDownTo(element, uniqueProcessor);
       }
       else {
         processUsagesFlownFromThe(element, uniqueProcessor);
       }
-    });
+    };
+
+    ReadAction.nonBlocking(processUsagesFlow).executeSynchronously();
   }
 
   protected abstract void processUsagesFlownFromThe(PsiElement element, Processor<? super SliceUsage> uniqueProcessor);
@@ -106,4 +116,5 @@ public abstract class SliceUsage extends UsageInfo2UsageAdapter {
   public boolean canBeLeaf() {
     return getElement() != null;
   }
+
 }

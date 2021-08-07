@@ -40,6 +40,28 @@ public class RunnerLayout  {
     return tab != null ? tab.myDisplayName : null;
   }
 
+  @Nullable
+  public Icon getDefaultIcon(int defaultIndex) {
+    TabImpl.Default tab = myDefaultTabs.get(defaultIndex);
+    return tab != null ? tab.myIcon : null;
+  }
+
+  public int getDefaultTabIndex(String contentId) {
+    ViewImpl.Default viewDefault = myDefaultViews.get(contentId);
+    return viewDefault != null ? viewDefault.getTabID() : -1;
+  }
+
+  @Nullable
+  public PlaceInGrid getDefaultPlaceInGrid(String contentId) {
+    ViewImpl.Default viewDefault = myDefaultViews.get(contentId);
+    return viewDefault != null ? viewDefault.getPlaceInGrid() : null;
+  }
+
+  public boolean getDefaultIsMinimized(String contentId) {
+    ViewImpl.Default viewDefault = myDefaultViews.get(contentId);
+    return viewDefault != null ? viewDefault.isMinimizedInGrid() : false;
+  }
+
   @NotNull
   public TabImpl getOrCreateTab(final int index) {
     if (index < 0) {

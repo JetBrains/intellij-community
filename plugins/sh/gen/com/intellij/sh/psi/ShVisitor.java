@@ -3,13 +3,17 @@ package com.intellij.sh.psi;
 
 import org.jetbrains.annotations.*;
 import com.intellij.psi.PsiElementVisitor;
-import com.intellij.psi.PsiNameIdentifierOwner;
 import com.intellij.model.psi.UrlReferenceHost;
+import com.intellij.psi.PsiNameIdentifierOwner;
 
 public class ShVisitor extends PsiElementVisitor {
 
   public void visitAddExpression(@NotNull ShAddExpression o) {
     visitBinaryExpression(o);
+  }
+
+  public void visitAddOperation(@NotNull ShAddOperation o) {
+    visitBinaryOperation(o);
   }
 
   public void visitArithmeticExpansion(@NotNull ShArithmeticExpansion o) {
@@ -22,6 +26,10 @@ public class ShVisitor extends PsiElementVisitor {
 
   public void visitArrayExpression(@NotNull ShArrayExpression o) {
     visitExpression(o);
+  }
+
+  public void visitArrayOperation(@NotNull ShArrayOperation o) {
+    visitOperation(o);
   }
 
   public void visitAssignmentCommand(@NotNull ShAssignmentCommand o) {
@@ -42,24 +50,48 @@ public class ShVisitor extends PsiElementVisitor {
     visitCompositeElement(o);
   }
 
+  public void visitAssignmentOperation(@NotNull ShAssignmentOperation o) {
+    visitBinaryOperation(o);
+  }
+
   public void visitBinaryExpression(@NotNull ShBinaryExpression o) {
     visitExpression(o);
+  }
+
+  public void visitBinaryOperation(@NotNull ShBinaryOperation o) {
+    visitOperation(o);
   }
 
   public void visitBitwiseAndExpression(@NotNull ShBitwiseAndExpression o) {
     visitBinaryExpression(o);
   }
 
+  public void visitBitwiseAndOperation(@NotNull ShBitwiseAndOperation o) {
+    visitBinaryOperation(o);
+  }
+
   public void visitBitwiseExclusiveOrExpression(@NotNull ShBitwiseExclusiveOrExpression o) {
     visitBinaryExpression(o);
+  }
+
+  public void visitBitwiseExclusiveOrOperation(@NotNull ShBitwiseExclusiveOrOperation o) {
+    visitBinaryOperation(o);
   }
 
   public void visitBitwiseOrExpression(@NotNull ShBitwiseOrExpression o) {
     visitBinaryExpression(o);
   }
 
+  public void visitBitwiseOrOperation(@NotNull ShBitwiseOrOperation o) {
+    visitBinaryOperation(o);
+  }
+
   public void visitBitwiseShiftExpression(@NotNull ShBitwiseShiftExpression o) {
     visitBinaryExpression(o);
+  }
+
+  public void visitBitwiseShiftOperation(@NotNull ShBitwiseShiftOperation o) {
+    visitBinaryOperation(o);
   }
 
   public void visitBlock(@NotNull ShBlock o) {
@@ -82,6 +114,10 @@ public class ShVisitor extends PsiElementVisitor {
     visitBinaryExpression(o);
   }
 
+  public void visitCommaOperation(@NotNull ShCommaOperation o) {
+    visitBinaryOperation(o);
+  }
+
   public void visitCommand(@NotNull ShCommand o) {
     visitCompositeElement(o);
   }
@@ -102,6 +138,10 @@ public class ShVisitor extends PsiElementVisitor {
     visitBinaryExpression(o);
   }
 
+  public void visitComparisonOperation(@NotNull ShComparisonOperation o) {
+    visitBinaryOperation(o);
+  }
+
   public void visitCompoundList(@NotNull ShCompoundList o) {
     visitCompositeElement(o);
   }
@@ -116,6 +156,10 @@ public class ShVisitor extends PsiElementVisitor {
 
   public void visitConditionalExpression(@NotNull ShConditionalExpression o) {
     visitBinaryExpression(o);
+  }
+
+  public void visitConditionalOperation(@NotNull ShConditionalOperation o) {
+    visitBinaryOperation(o);
   }
 
   public void visitDoBlock(@NotNull ShDoBlock o) {
@@ -138,12 +182,20 @@ public class ShVisitor extends PsiElementVisitor {
     visitBinaryExpression(o);
   }
 
+  public void visitEqualityOperation(@NotNull ShEqualityOperation o) {
+    visitBinaryOperation(o);
+  }
+
   public void visitEvalCommand(@NotNull ShEvalCommand o) {
     visitCommand(o);
   }
 
   public void visitExpExpression(@NotNull ShExpExpression o) {
     visitBinaryExpression(o);
+  }
+
+  public void visitExpOperation(@NotNull ShExpOperation o) {
+    visitBinaryOperation(o);
   }
 
   public void visitExpression(@NotNull ShExpression o) {
@@ -187,6 +239,10 @@ public class ShVisitor extends PsiElementVisitor {
     visitExpression(o);
   }
 
+  public void visitIndexOperation(@NotNull ShIndexOperation o) {
+    visitOperation(o);
+  }
+
   public void visitLetCommand(@NotNull ShLetCommand o) {
     visitCommand(o);
   }
@@ -209,12 +265,20 @@ public class ShVisitor extends PsiElementVisitor {
     visitExpression(o);
   }
 
+  public void visitLiteralOperation(@NotNull ShLiteralOperation o) {
+    visitOperation(o);
+  }
+
   public void visitLogicalAndCondition(@NotNull ShLogicalAndCondition o) {
     visitCondition(o);
   }
 
   public void visitLogicalAndExpression(@NotNull ShLogicalAndExpression o) {
     visitBinaryExpression(o);
+  }
+
+  public void visitLogicalAndOperation(@NotNull ShLogicalAndOperation o) {
+    visitBinaryOperation(o);
   }
 
   public void visitLogicalBitwiseCondition(@NotNull ShLogicalBitwiseCondition o) {
@@ -225,6 +289,10 @@ public class ShVisitor extends PsiElementVisitor {
     visitExpression(o);
   }
 
+  public void visitLogicalBitwiseNegationOperation(@NotNull ShLogicalBitwiseNegationOperation o) {
+    visitOperation(o);
+  }
+
   public void visitLogicalOrCondition(@NotNull ShLogicalOrCondition o) {
     visitCondition(o);
   }
@@ -233,8 +301,16 @@ public class ShVisitor extends PsiElementVisitor {
     visitBinaryExpression(o);
   }
 
+  public void visitLogicalOrOperation(@NotNull ShLogicalOrOperation o) {
+    visitBinaryOperation(o);
+  }
+
   public void visitMulExpression(@NotNull ShMulExpression o) {
     visitBinaryExpression(o);
+  }
+
+  public void visitMulOperation(@NotNull ShMulOperation o) {
+    visitBinaryOperation(o);
   }
 
   public void visitNumber(@NotNull ShNumber o) {
@@ -243,6 +319,10 @@ public class ShVisitor extends PsiElementVisitor {
 
   public void visitOldArithmeticExpansion(@NotNull ShOldArithmeticExpansion o) {
     visitArithmeticExpansion(o);
+  }
+
+  public void visitOperation(@NotNull ShOperation o) {
+    visitCompositeElement(o);
   }
 
   public void visitParenthesesBlock(@NotNull ShParenthesesBlock o) {
@@ -257,6 +337,10 @@ public class ShVisitor extends PsiElementVisitor {
     visitExpression(o);
   }
 
+  public void visitParenthesesOperation(@NotNull ShParenthesesOperation o) {
+    visitOperation(o);
+  }
+
   public void visitPattern(@NotNull ShPattern o) {
     visitCompositeElement(o);
   }
@@ -269,8 +353,16 @@ public class ShVisitor extends PsiElementVisitor {
     visitExpression(o);
   }
 
+  public void visitPostOperation(@NotNull ShPostOperation o) {
+    visitOperation(o);
+  }
+
   public void visitPreExpression(@NotNull ShPreExpression o) {
     visitExpression(o);
+  }
+
+  public void visitPreOperation(@NotNull ShPreOperation o) {
+    visitOperation(o);
   }
 
   public void visitProcessSubstitution(@NotNull ShProcessSubstitution o) {
@@ -327,6 +419,10 @@ public class ShVisitor extends PsiElementVisitor {
 
   public void visitUnaryExpression(@NotNull ShUnaryExpression o) {
     visitExpression(o);
+  }
+
+  public void visitUnaryOperation(@NotNull ShUnaryOperation o) {
+    visitOperation(o);
   }
 
   public void visitUntilCommand(@NotNull ShUntilCommand o) {

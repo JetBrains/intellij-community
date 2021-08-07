@@ -104,6 +104,6 @@ class FacetTypeUnloadingTest : HeavyPlatformTestCase() {
     super.setUp()
     //initialize facet types and register listeners
     FacetTypeRegistry.getInstance().facetTypes
-    ProjectLoadingErrorsHeadlessNotifier.setErrorHandler({}, testRootDisposable)
+    ProjectLoadingErrorsHeadlessNotifier.setErrorHandler(testRootDisposable, {})
   }
 }

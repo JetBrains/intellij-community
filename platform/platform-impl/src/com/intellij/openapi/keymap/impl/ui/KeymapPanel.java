@@ -35,8 +35,8 @@ import com.intellij.ui.*;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.mac.foundation.NSDefaults;
-import com.intellij.ui.mac.touchbar.TouchBarsManager;
-import com.intellij.ui.mac.touchbar.Utils;
+import com.intellij.ui.mac.touchbar.Helpers;
+import com.intellij.ui.mac.touchbar.TouchbarSupport;
 import com.intellij.util.Alarm;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.JBUI;
@@ -273,7 +273,7 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable, Confi
     systemShortcuts.updateKeymapConflicts(selectedKeymap);
     myShowOnlyConflictsButton.setVisible(!systemShortcuts.getUnmutedKeymapConflicts().isEmpty());
     myActionsTree.setBaseFilter(myShowOnlyConflicts ? systemShortcuts.createKeymapConflictsActionFilter() : null);
-    myActionsTree.reset(selectedKeymap, myQuickLists);
+    myActionsTree.reset(selectedKeymap, myQuickLists, myFilteringPanel.getShortcut());
     fillConflictsPanel(selectedKeymap);
   }
 
@@ -312,7 +312,7 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable, Confi
       }
     });
 
-    if (TouchBarsManager.isTouchBarAvailable()) {
+    if (TouchbarSupport.isAvailable()) {
       myShowFN = new ShowFNKeysSettingWrapper();
       if (myShowFN.getCheckbox() != null) {
         panel.add(myShowFN.getCheckbox(), BorderLayout.SOUTH);
@@ -324,7 +324,8 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable, Confi
 
   private JPanel createToolbarPanel() {
     DefaultActionGroup group = new DefaultActionGroup();
-    final JComponent toolbar = ActionManager.getInstance().createActionToolbar("KeymapEdit", group, true).getComponent();
+    ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar("KeymapEdit", group, true);
+    toolbar.setTargetComponent(myActionsTree.getTree());
     final CommonActionsManager commonActionsManager = CommonActionsManager.getInstance();
     final TreeExpander treeExpander = createTreeExpander(myActionsTree);
     group.add(commonActionsManager.createExpandAllAction(treeExpander, myActionsTree.getTree()));
@@ -356,6 +357,7 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable, Confi
 
     group = new DefaultActionGroup();
     ActionToolbar actionToolbar = ActionManager.getInstance().createActionToolbar("Keymap", group, true);
+    actionToolbar.setTargetComponent(myActionsTree.getTree());
     actionToolbar.setReservePlaceAutoPopupIcon(false);
     final JComponent searchToolbar = actionToolbar.getComponent();
     final Alarm alarm = new Alarm();
@@ -388,7 +390,7 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable, Confi
     group.add(new ClearFilteringAction());
 
     JPanel panel = new JPanel(new GridLayout(1, 2));
-    panel.add(toolbar);
+    panel.add(toolbar.getComponent());
     panel.add(new BorderLayoutPanel().addToCenter(myFilterComponent).addToRight(searchToolbar));
     return panel;
   }
@@ -459,7 +461,7 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable, Confi
             keyDesc += ", " + KeymapUtil.getKeystrokeText(ksc.getSecondKeyStroke());
           final int result = Messages.showYesNoCancelDialog(
             parent,
-            IdeBundle.message("message.action.shortcut.0.is.already.assigned.to.system.action.1.do.you.want.to.remove.this.shortcut", keyDesc, kscs.get(ksc)),
+            IdeBundle.message("message.action.remove.system.assigned.shortcut", keyDesc, kscs.get(ksc)),
             KeyMapBundle.message("conflict.shortcut.dialog.title"),
             KeyMapBundle.message("conflict.shortcut.dialog.remove.button"),
             KeyMapBundle.message("conflict.shortcut.dialog.leave.button"),
@@ -661,8 +663,8 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable, Confi
     private volatile boolean myDisposed;
 
     ShowFNKeysSettingWrapper() {
-      if (TouchBarsManager.isTouchBarAvailable()) {
-        final String appId = Utils.getAppId();
+      if (TouchbarSupport.isAvailable()) {
+        final String appId = Helpers.getAppId();
         if (appId != null && !appId.isEmpty()) {
           myShowFnInitial = NSDefaults.isShowFnKeysEnabled(appId);
           myCheckbox = new JCheckBox(KeyMapBundle.message("keymap.show.f.on.touch.bar"), myShowFnInitial);
@@ -676,10 +678,10 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable, Confi
     boolean isModified() { return myCheckbox != null && myShowFnInitial != myCheckbox.isSelected(); }
 
     void applyChanges() {
-      if (!TouchBarsManager.isTouchBarAvailable() || myCheckbox == null || !isModified())
+      if (!TouchbarSupport.isAvailable() || myCheckbox == null || !isModified())
         return;
 
-      final String appId = Utils.getAppId();
+      final String appId = Helpers.getAppId();
       if (appId == null || appId.isEmpty()) {
         Logger.getInstance(KeymapPanel.class).error("can't obtain application id from NSBundle");
         return;
@@ -688,6 +690,7 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable, Confi
       final boolean prevVal = myShowFnInitial;
       myShowFnInitial = myCheckbox.isSelected();
       NSDefaults.setShowFnKeysEnabled(appId, myShowFnInitial);
+      TouchbarSupport.enable(!myShowFnInitial);
 
       if (myShowFnInitial != NSDefaults.isShowFnKeysEnabled(appId)) {
         NSDefaults.setShowFnKeysEnabled(appId, myShowFnInitial, true); // try again with extra checks
@@ -696,11 +699,12 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable, Confi
       }
 
       ApplicationManager.getApplication().executeOnPooledThread(() -> {
-        final boolean result = Utils.restartTouchBarServer();
+        final boolean result = Helpers.restartTouchBarServer();
         if (!result) {
           // System.out.println("can't restart touchbar-server, roll back settings");
           myShowFnInitial = prevVal;
           NSDefaults.setShowFnKeysEnabled(appId, myShowFnInitial);
+          TouchbarSupport.enable(!myShowFnInitial);
 
           if (!myDisposed) {
             // System.out.println("ui wasn't disposed, invoke roll back of checkbox state");

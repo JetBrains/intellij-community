@@ -91,7 +91,8 @@ final public class AnalysisActionUtils {
       // analyze on selection
       ProjectFileIndex fileIndex = ProjectRootManager.getInstance(project).getFileIndex();
       if (virtualFiles.length == 1) {
-        PsiDirectory psiDirectory = PsiManager.getInstance(project).findDirectory(virtualFiles[0]);
+        VirtualFile file = virtualFiles[0];
+        PsiDirectory psiDirectory = file.isValid() ? PsiManager.getInstance(project).findDirectory(file) : null;
         if (psiDirectory != null && (acceptNonProjectDirectories || psiDirectory.getManager().isInProject(psiDirectory))) {
           return new AnalysisScope(psiDirectory);
         }

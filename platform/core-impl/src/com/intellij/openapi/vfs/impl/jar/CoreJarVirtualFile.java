@@ -13,9 +13,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 
-/**
- * @author yole
- */
+
 final class CoreJarVirtualFile extends VirtualFile {
   private final CoreJarHandler myHandler;
   private final CharSequence myName;

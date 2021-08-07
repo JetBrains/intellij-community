@@ -22,6 +22,7 @@ import com.intellij.openapi.roots.libraries.LibraryTablePresentation;
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
 import com.intellij.openapi.roots.ui.configuration.ProjectStructureConfigurable;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -66,6 +67,7 @@ public class ProjectLibrariesConfigurable extends BaseLibrariesConfigurable {
   /**
    * @deprecated use {@link ProjectStructureConfigurable#getProjectLibrariesConfigurable()}
    */
+  @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
   @Deprecated
   public static ProjectLibrariesConfigurable getInstance(final Project project) {
     return ProjectStructureConfigurable.getInstance(project).getProjectLibrariesConfigurable();

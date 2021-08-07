@@ -1,11 +1,9 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.configurationStore
 
 import com.intellij.ide.highlighter.ProjectFileType
 import com.intellij.ide.highlighter.WorkspaceFileType
 import com.intellij.ide.impl.TrustedProjectSettings
-import com.intellij.ide.impl.getTrustedState
-import com.intellij.ide.impl.setTrusted
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.application.appSystemDir
@@ -16,7 +14,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectCoreUtil
 import com.intellij.openapi.project.doGetProjectFileName
 import com.intellij.openapi.project.ex.ProjectEx
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.SmartList
@@ -89,11 +86,21 @@ abstract class ProjectStoreBase(final override val project: Project) : Component
   final override fun getProjectBasePath(): Path {
     val path = dirOrFile ?: throw IllegalStateException("setPath was not yet called")
     if (isDirectoryBased) {
-      val useParent = Registry.`is`("store.basedir.parent.detection", true) && (path.fileName?.toString()?.startsWith("${Project.DIRECTORY_STORE_FOLDER}.") ?: false)
+      val useParent = System.getProperty("store.basedir.parent.detection", "true").toBoolean() && 
+                      (path.fileName?.toString()?.startsWith("${Project.DIRECTORY_STORE_FOLDER}.") ?: false)
       return if (useParent) path.parent.parent else path
     }
     else {
       return path.parent
+    }
+  }
+
+  override fun getPresentableUrl(): String {
+    if (isDirectoryBased) {
+      return (dirOrFile ?: throw IllegalStateException("setPath was not yet called")).systemIndependentPath
+    }
+    else {
+      return projectFilePath.systemIndependentPath
     }
   }
 
@@ -266,9 +273,6 @@ abstract class ProjectStoreBase(final override val project: Project) : Component
   override fun getDirectoryStorePath(ignoreProjectStorageScheme: Boolean) = dotIdea?.systemIndependentPath.nullize()
 
   final override fun getDirectoryStorePath() = dotIdea
-
-  // dummy implementation for Upsource
-  override suspend fun doSave(result: SaveResult, forceSavingAllSettings: Boolean) { }
 
   final override fun reloadStates(componentNames: Set<String>, messageBus: MessageBus) {
     runBatchUpdate(project) {

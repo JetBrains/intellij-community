@@ -1,18 +1,27 @@
 <html>
 <body>
-Reports empty classes and Java files without any defined classes. A class is empty if it
-doesn't have any fields, methods, constructors or initializers. Empty classes are often left over
-after large changes or refactorings.
+Reports empty classes and Java files without any defined classes.
+<p>A class is empty if it
+doesn't contain any fields, methods, constructors, or initializers. Empty classes often remain
+  after significant changes or refactorings.</p>
 <!-- tooltip end -->
-<p>
-Use the list below to specify special annotations. Classes annotated with one of
-these annotations will be ignored by this inspection.
-<p>
-Use the first checkbox below to ignore classes which parameterize a super class, for example
-<pre><code><b>class</b> MyList <b>extends</b> ArrayList&lt;String&gt; {}</code></pre>
-<p>
-Use the second checkbox below to ignore classes which extend <b>java.lang.Throwable</b>.
-<p>
-
+<p>Configure the inspection:</p>
+<ul>
+  <li>
+    Use the <b>Ignore if annotated by</b> option to specify special annotations. The inspection will ignore the classes marked with these
+    annotations.
+  </li>
+  <li><p>
+    Use the <b>Ignore class if it is a parametrization of a super type</b> option to ignore classes that parameterize a superclass. For example:
+  </p>
+    <pre><code>class MyList extends ArrayList&lt;String&gt; {}</code></pre>
+  </li>
+  <li>
+    Use the <b>Ignore subclasses of java.lang.Throwable</b> to ignore classes that extend <code>java.lang.Throwable</code>.
+  </li>
+  <li>
+    Use the <b>Comments count as content</b> option to ignore classes that contain comments.
+  </li>
+</ul>
 </body>
 </html>

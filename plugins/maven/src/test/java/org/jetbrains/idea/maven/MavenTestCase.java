@@ -1,7 +1,8 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven;
 
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.execution.wsl.WSLDistribution;
+import com.intellij.execution.wsl.WslDistributionManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.command.WriteCommandAction;
@@ -12,21 +13,23 @@ import com.intellij.openapi.module.StdModuleTypes;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
+import com.intellij.openapi.projectRoots.JavaSdk;
+import com.intellij.openapi.projectRoots.ProjectJdkTable;
+import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.rt.execution.junit.FileComparisonFailure;
-import com.intellij.testFramework.EdtTestUtil;
-import com.intellij.testFramework.PsiTestUtil;
-import com.intellij.testFramework.RunAll;
-import com.intellij.testFramework.UsefulTestCase;
+import com.intellij.testFramework.*;
 import com.intellij.testFramework.fixtures.IdeaProjectTestFixture;
 import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.ThrowableRunnable;
-import gnu.trove.THashSet;
+import com.intellij.util.containers.CollectionFactory;
+import com.intellij.util.containers.ContainerUtil;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -39,6 +42,8 @@ import java.awt.*;
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.List;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
@@ -53,6 +58,7 @@ public abstract class MavenTestCase extends UsefulTestCase {
                                                             "</properties>\n";
   protected static final MavenConsole NULL_MAVEN_CONSOLE = new NullMavenConsole();
   private MavenProgressIndicator myProgressIndicator;
+  private WSLDistribution myWSLDistribution;
 
   private File ourTempDir;
 
@@ -71,14 +77,17 @@ public abstract class MavenTestCase extends UsefulTestCase {
   protected void setUp() throws Exception {
     super.setUp();
 
+
+    setupErrorLoggingFor_IDEA_274474();
+    setUpFixtures();
+    myProject = myTestFixture.getProject();
+    setupWsl();
     ensureTempDirCreated();
 
     myDir = new File(ourTempDir, getTestName(false));
     FileUtil.ensureExists(myDir);
 
-    setUpFixtures();
 
-    myProject = myTestFixture.getProject();
     myProgressIndicator = new MavenProgressIndicator(myProject, new EmptyProgressIndicator(ModalityState.NON_MODAL), null);
 
     MavenWorkspaceSettingsComponent.getInstance(myProject).loadState(new MavenWorkspaceSettings());
@@ -91,25 +100,64 @@ public abstract class MavenTestCase extends UsefulTestCase {
     EdtTestUtil.runInEdtAndWait(() -> {
       restoreSettingsFile();
 
-      ApplicationManager.getApplication().runWriteAction(() -> {
+      try {
+        WriteAction.run(this::setUpInWriteAction);
+      } catch (Throwable e) {
         try {
-          setUpInWriteAction();
+          tearDown();
         }
-        catch (Throwable e) {
-          try {
-            tearDown();
-          }
-          catch (Exception e1) {
-            e1.printStackTrace();
-          }
-          throw new RuntimeException(e);
+        catch (Exception e1) {
+          e1.printStackTrace();
         }
-      });
+        throw new RuntimeException(e);
+      }
     });
   }
 
+  private void setupWsl() {
+    String wslMsId = System.getProperty("wsl.distribution.name");
+    if (wslMsId == null) return;
+    List<WSLDistribution> distributions = WslDistributionManager.getInstance().getInstalledDistributions();
+    if (distributions.isEmpty()) throw new IllegalStateException("no WSL distributions configured!");
+    myWSLDistribution = distributions.stream().filter(it -> wslMsId.equals(it.getMsId())).findFirst()
+      .orElseThrow(() -> new IllegalStateException("Distribution " + wslMsId + " was not found"));
+    String jdkPath = System.getProperty("wsl.jdk.path");
+    if (jdkPath == null) {
+      jdkPath = "/usr/lib/jvm/java-11-openjdk-amd64";
+    }
+
+    Sdk wslSdk = getWslSdk(myWSLDistribution.getWindowsPath(jdkPath));
+    WriteAction.runAndWait(() -> ProjectRootManagerEx.getInstanceEx(myProject).setProjectSdk(wslSdk));
+    assertTrue(new File(myWSLDistribution.getWindowsPath(myWSLDistribution.getUserHome())).isDirectory());
+  }
+
+  private void setupErrorLoggingFor_IDEA_274474() {
+    LoggedErrorProcessor.setNewInstance(new LoggedErrorProcessor() {
+      @Override
+      public boolean processError(@NotNull String category, String message, Throwable t, String @NotNull [] details) {
+        if (t.getMessage().contains("The network name cannot be found") && message.contains("Couldn't read shelf information")) {
+          return false;
+        }
+        return super.processError(category, message, t, details);
+      }
+    });
+  }
+
+  private Sdk getWslSdk(String jdkPath) {
+    Sdk sdk = ContainerUtil.find(ProjectJdkTable.getInstance().getAllJdks(), it -> jdkPath.equals(it.getHomePath()));
+    ProjectJdkTable jdkTable = ProjectJdkTable.getInstance();
+    for (Sdk existingSdk : jdkTable.getAllJdks()) {
+      if (existingSdk == sdk) return sdk;
+    }
+    Sdk newSdk = JavaSdk.getInstance().createJdk("Wsl JDK For Tests", jdkPath);
+    WriteAction.runAndWait(() -> jdkTable.addJdk(newSdk, myProject));
+    return newSdk;
+  }
+
+
   @Override
   protected void tearDown() throws Exception {
+    String basePath = myProject.getBasePath();
     new RunAll(
       () -> MavenServerManager.getInstance().shutdown(true),
       () -> checkAllMavenConnectorsDisposed(),
@@ -123,10 +171,16 @@ public abstract class MavenTestCase extends UsefulTestCase {
           mavenIndicesManager.clear();
         }
       },
-      ()->deleteDirOnTearDown(myDir),
+      () -> deleteDirOnTearDown(myDir),
+      () -> {
+        if (myWSLDistribution != null) {
+          deleteDirOnTearDown(new File(basePath));
+        }
+      },
       () -> super.tearDown()
     ).run();
   }
+
 
   private void checkAllMavenConnectorsDisposed() {
     assertEmpty("all maven connectors should be disposed", MavenServerManager.getInstance().getAllConnectors());
@@ -135,13 +189,28 @@ public abstract class MavenTestCase extends UsefulTestCase {
   private void ensureTempDirCreated() throws IOException {
     if (ourTempDir != null) return;
 
-    ourTempDir = new File(FileUtil.getTempDirectory(), "mavenTests");
+    if (myWSLDistribution == null) {
+      ourTempDir = new File(FileUtil.getTempDirectory(), "mavenTests");
+    }
+    else {
+      ourTempDir = new File(myWSLDistribution.getWindowsPath("/tmp"), "mavenTests");
+    }
+
     FileUtil.delete(ourTempDir);
     FileUtil.ensureExists(ourTempDir);
   }
 
   protected void setUpFixtures() throws Exception {
-    myTestFixture = IdeaTestFixtureFactory.getFixtureFactory().createFixtureBuilder(getName()).getFixture();
+    String wslMsId = System.getProperty("wsl.distribution.name");
+    if (wslMsId != null) {
+      Path path = TemporaryDirectory
+        .generateTemporaryPath(FileUtil.sanitizeFileName(getName(), false), Paths.get("\\\\wsl$\\" + wslMsId + "\\tmp"));
+      myTestFixture = IdeaTestFixtureFactory.getFixtureFactory().createFixtureBuilder(getName(), path, false).getFixture();
+    }
+    else {
+      myTestFixture = IdeaTestFixtureFactory.getFixtureFactory().createFixtureBuilder(getName()).getFixture();
+    }
+
     myTestFixture.setUp();
   }
 
@@ -343,7 +412,7 @@ public abstract class MavenTestCase extends UsefulTestCase {
       }
       myAllPoms.add(f);
     }
-    setFileContent(f, createPomXml(xml), true);
+    setPomContent(f, xml);
     return f;
   }
 
@@ -459,6 +528,10 @@ public abstract class MavenTestCase extends UsefulTestCase {
     return file;
   }
 
+  protected static void setPomContent(VirtualFile file, @Language(value = "XML", prefix = "<project>", suffix = "</project>") String xml) {
+    setFileContent(file, createPomXml(xml), true);
+  }
+
   private static void setFileContent(final VirtualFile file, final String content, final boolean advanceStamps) {
     try {
       WriteAction.runAndWait(() -> {
@@ -484,8 +557,8 @@ public abstract class MavenTestCase extends UsefulTestCase {
   }
 
   protected static void assertUnorderedPathsAreEqual(Collection<String> actual, Collection<String> expected) {
-    assertEquals(new SetWithToString<>(new THashSet<>(expected, FileUtil.PATH_HASHING_STRATEGY)),
-                 new SetWithToString<>(new THashSet<>(actual, FileUtil.PATH_HASHING_STRATEGY)));
+    assertEquals(new SetWithToString<>(CollectionFactory.createFilePathSet(expected)),
+                 new SetWithToString<>(CollectionFactory.createFilePathSet(actual)));
   }
 
   protected static <T> void assertUnorderedElementsAreEqual(T[] actual, T... expected) {
@@ -531,8 +604,8 @@ public abstract class MavenTestCase extends UsefulTestCase {
   }
 
   protected boolean ignore() {
-    printIgnoredMessage(null);
-    return true;
+    //printIgnoredMessage(null);
+    return false;
   }
 
   protected boolean hasMavenInstallation() {

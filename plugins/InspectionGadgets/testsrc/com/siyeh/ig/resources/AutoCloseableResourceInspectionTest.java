@@ -20,11 +20,24 @@ import com.intellij.testFramework.LightProjectDescriptor;
 import com.siyeh.ig.LightJavaInspectionTestCase;
 import org.jetbrains.annotations.NotNull;
 
+import java.io.BufferedReader;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+
 /**
  * @author Bas Leijdekkers
  * @noinspection resource
  */
 public class AutoCloseableResourceInspectionTest extends LightJavaInspectionTestCase {
+
+
+
+  @Override
+  protected void setUp() throws Exception {
+    super.setUp();
+
+  }
 
   public void testCorrectClose() {
     // No highlighting because str was closed and we have ignoreResourcesWithClose option set
@@ -190,7 +203,7 @@ public class AutoCloseableResourceInspectionTest extends LightJavaInspectionTest
   @NotNull
   @Override
   protected LightProjectDescriptor getProjectDescriptor() {
-    return JAVA_8;
+    return JAVA_9;
   }
 
   public void testFilesMethod() {
@@ -203,7 +216,7 @@ public class AutoCloseableResourceInspectionTest extends LightJavaInspectionTest
            "import java.nio.file.Files;\n" +
            "import java.util.stream.Stream;\n" +
            "class X {\n" +
-           "  private static void example(int a)  {\n" +
+           "  private static void example(int a) throws IOException {\n" +
            "    Stream<String> s = Files.<warning descr=\"'Stream<String>' used without 'try'-with-resources statement\">lines</warning>(null);\n" +
            "  }\n" +
            "}");
@@ -531,6 +544,24 @@ public class AutoCloseableResourceInspectionTest extends LightJavaInspectionTest
       "  @Override" +
       " public void close(){" +
       "}\n" +
+      "}");
+  }
+  public void testReferenceReousrce() {
+    doTest(
+      "import java.io.BufferedReader;\n" +
+      "import java.io.IOException;\n" +
+      "\n" +
+      "class Scratch {\n" +
+      "\n" +
+      "  public static void main(String[] args) {\n" +
+      "    BufferedReader bufferedReader = new BufferedReader(null);\n" +
+      "    try (bufferedReader) {\n" +
+      "      System.out.println();\n" +
+      "    } catch (IOException e) {\n" +
+      "      e.printStackTrace();\n" +
+      "    }\n" +
+      "  }\n" +
+      "\n" +
       "}");
   }
 

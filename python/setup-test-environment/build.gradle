@@ -35,9 +35,9 @@ boolean isUnix = Os.isFamily(Os.FAMILY_UNIX)
 envs {
   String python27version = "2.7.18"
   String python36version = "3.6.8"
-  String python37version = "3.7.8"
-  String python38version = "3.8.5"
-  String python39version = isWindows ? "3.9.0b4" : "3.9-dev"
+  String python37version = "3.7.9"
+  String python38version = "3.8.10"
+  String python39version = "3.9.5"
 
   bootstrapDirectory = new File(System.getenv().getOrDefault("PYCHARM_PYTHONS", new File(buildDir, 'pythons').path))
   envsDirectory = new File(System.getenv().getOrDefault("PYCHARM_PYTHON_VIRTUAL_ENVS", new File(buildDir, 'envs').path))

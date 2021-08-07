@@ -2,7 +2,10 @@
 package com.intellij.openapi.util;
 
 import com.intellij.openapi.application.PathManager;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.Contract;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -95,6 +98,10 @@ public final class BuildNumber implements Comparable<BuildNumber> {
     return builder.toString();
   }
 
+  public static @Nullable BuildNumber fromPluginsCompatibleBuild() {
+    return fromString(getPluginsCompatibleBuild());
+  }
+
   /**
    * Attempts to parse build number from the specified string.
    * Returns {@code null} if the string is not a valid build number.
@@ -109,9 +116,11 @@ public final class BuildNumber implements Comparable<BuildNumber> {
   }
 
   public static @Nullable BuildNumber fromString(@Nullable String version) {
-    if (version == null) return null;
+    if (version == null) {
+      return null;
+    }
     version = version.trim();
-    return version.isEmpty() ? null : fromString(version, null, null);
+    return fromString(version, null, null);
   }
 
   public static @Nullable BuildNumber fromStringWithProductCode(@NotNull String version, @NotNull String productCode) {
@@ -119,6 +128,7 @@ public final class BuildNumber implements Comparable<BuildNumber> {
   }
 
   public static @Nullable BuildNumber fromString(@NotNull String version, @Nullable String pluginName, @Nullable String productCodeIfAbsentInVersion) {
+    if (version.isEmpty()) return null;
     String code = version;
     int productSeparator = code.indexOf('-');
     String productCode;
@@ -284,5 +294,9 @@ public final class BuildNumber implements Comparable<BuildNumber> {
   @ApiStatus.Internal
   public static @NotNull BuildNumber currentVersion() {
     return Holder.CURRENT_VERSION;
+  }
+
+  private static @Nullable String getPluginsCompatibleBuild() {
+    return System.getProperty("idea.plugins.compatible.build");
   }
 }

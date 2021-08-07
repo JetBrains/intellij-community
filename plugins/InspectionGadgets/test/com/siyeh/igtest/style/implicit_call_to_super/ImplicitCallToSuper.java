@@ -7,7 +7,7 @@ class A {
 }
 class B {
   B() {
-    <error descr="Cannot resolve symbol 'sup'">sup</error><EOLError descr="';' expected"></EOLError>
+    <error descr="Cannot resolve symbol 'sup'">sup</error>
   }
 
   <warning descr="Implicit call to 'super()'">B</warning>(int i) {

@@ -7,6 +7,10 @@ import com.intellij.refactoring.suggested.*
 
 internal class PySuggestedRefactoringAvailability(support: PySuggestedRefactoringSupport) : SuggestedRefactoringAvailability(support) {
 
+  override fun shouldSuppressRefactoringForDeclaration(state: SuggestedRefactoringState): Boolean {
+    return PySuggestedRefactoringSupport.shouldSuppressRefactoringForDeclaration(state)
+  }
+
   override fun detectAvailableRefactoring(state: SuggestedRefactoringState): SuggestedRefactoringData? {
     val declaration = state.declaration
     return when {

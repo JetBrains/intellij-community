@@ -1,10 +1,15 @@
 <html>
 <body>
-Reports conditional expressions of the form
-<b>true?<i>result1</i>:<i>result2</i></b> or <b>false?<i>result1</i>:<i>result2</i></b>.
-These expressions sometimes occur as the result of automatic refactorings, and may obviously be simplified.
+Reports conditional expressions in which the condition is either a <code>true</code> or <code>false</code> constant.
+These expressions sometimes occur as a result of automatic refactorings and may be simplified.
+<p>Example:</p>
+<pre>
+  return true ? "Yes" : "No";
+</pre>
+<p>After quick-fix is applied:</p>
+<pre>
+  return "Yes";
+</pre>
 <!-- tooltip end -->
-<p>
-
 </body>
 </html>

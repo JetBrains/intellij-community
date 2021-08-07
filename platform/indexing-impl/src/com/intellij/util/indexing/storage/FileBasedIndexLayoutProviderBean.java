@@ -4,6 +4,7 @@ package com.intellij.util.indexing.storage;
 import com.intellij.AbstractBundle;
 import com.intellij.DynamicBundle;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.PluginAware;
 import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.extensions.RequiredElement;
@@ -42,7 +43,6 @@ public final class FileBasedIndexLayoutProviderBean implements PluginAware {
   /**
    * A bundle name to find presentable name key
    */
-  @RequiredElement
   @NonNls
   @Attribute("bundleName")
   public String bundleName;
@@ -55,8 +55,15 @@ public final class FileBasedIndexLayoutProviderBean implements PluginAware {
   @Attribute("version")
   public int version;
 
+  @SuppressWarnings("HardCodedStringLiteral")
   public @NotNull @Nls String getLocalizedPresentableName() {
-    ResourceBundle resourceBundle = DynamicBundle.INSTANCE.getResourceBundle(bundleName, myPluginDescriptor.getPluginClassLoader());
+    String resourceBundleBaseName = bundleName != null ? bundleName : myPluginDescriptor.getResourceBundleBaseName();
+    if (resourceBundleBaseName == null) {
+      Logger.getInstance(FileBasedIndexLayoutProviderBean.class).error("Can't find resource bundle name for " + myPluginDescriptor.getName());
+      return "!" + presentableNameKey + "!";
+    }
+    ResourceBundle resourceBundle = DynamicBundle.INSTANCE.getResourceBundle(resourceBundleBaseName,
+                                                                             myPluginDescriptor.getPluginClassLoader());
     return AbstractBundle.message(resourceBundle, presentableNameKey);
   }
 

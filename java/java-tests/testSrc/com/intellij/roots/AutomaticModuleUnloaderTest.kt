@@ -13,22 +13,28 @@ import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.project.ProjectStoreOwner
 import com.intellij.testFramework.*
 import com.intellij.testFramework.UsefulTestCase.assertSameElements
+import com.intellij.testFramework.configurationStore.copyFilesAndReloadProject
+import com.intellij.testFramework.rules.TempDirectory
 import com.intellij.util.io.systemIndependentPath
+import kotlinx.coroutines.runBlocking
 import org.jdom.Element
 import org.jetbrains.jps.model.serialization.JDomSerializationUtil
 import org.jetbrains.jps.model.serialization.JpsProjectLoader
 import org.junit.ClassRule
 import org.junit.Rule
 import org.junit.Test
+import org.junit.runner.RunWith
+import org.junit.runners.Parameterized
 import java.io.File
 import java.nio.file.Path
 import java.nio.file.Paths
 
 @RunsInEdt
-class AutomaticModuleUnloaderTest {
+@RunWith(Parameterized::class)
+class AutomaticModuleUnloaderTest(private val reloadingMode: ReloadingMode) {
   @Rule
   @JvmField
-  val tempDir = TemporaryDirectory()
+  val tempDir = TempDirectory()
 
   @JvmField
   @Rule
@@ -112,6 +118,17 @@ class AutomaticModuleUnloaderTest {
   }
 
   @Test
+  fun `load unloaded module back before adding new module`() {
+    val project = createProject()
+    createModule(project, "root")
+    createModule(project, "a")
+    createModule(project, "b")
+    val moduleManager = ModuleManager.getInstance(project)
+    moduleManager.setUnloadedModules(listOf("a", "b"))
+    doTest(project, "b", listOf("c"), {}, "b", "c")
+  }
+
+  @Test
   fun `deleted iml file`() {
     val project = createProject()
     createModule(project, "a")
@@ -146,7 +163,9 @@ class AutomaticModuleUnloaderTest {
   }
 
   private fun createProject(): Project {
-    return ProjectManagerEx.getInstanceEx().newProject(tempDir.newPath("automaticReloaderTest"), createTestOpenProjectOptions())!!
+    val project = ProjectManagerEx.getInstanceEx().openProject(tempDir.newDirectory("automaticReloaderTest").toPath(),
+                                                               createTestOpenProjectOptions())
+    return project!!
   }
 
   private fun createModule(project: Project, moduleName: String): Module {
@@ -154,7 +173,7 @@ class AutomaticModuleUnloaderTest {
   }
 
   private fun createNewModuleFiles(moduleNames: List<String>, setup: (Map<String, Module>) -> Unit): List<Path> {
-    val newModulesProjectDir = tempDir.newPath("newModules")
+    val newModulesProjectDir = tempDir.newDirectory("newModules").toPath()
     val moduleFiles = moduleNames.map { newModulesProjectDir.resolve("$it.iml") }
     val project = ProjectManagerEx.getInstanceEx().newProject(newModulesProjectDir, createTestOpenProjectOptions())!!
     try {
@@ -178,7 +197,11 @@ class AutomaticModuleUnloaderTest {
   }
 
   private fun reloadProjectWithNewModules(project: Project, moduleFiles: List<Path>, beforeReload: () -> Unit = {}): Project {
-    saveAndCloseProject(project)
+    when (reloadingMode) {
+      ReloadingMode.ON_THE_FLY -> PlatformTestUtil.saveProject(project, true)
+      ReloadingMode.REOPEN -> saveAndCloseProject(project)
+    }
+
     val modulesXmlFile = (project as ProjectStoreOwner).componentStore.getDirectoryStorePath()!!.resolve("modules.xml")
     val rootElement = JDOMUtil.load(modulesXmlFile)
     val moduleRootComponent = JDomSerializationUtil.findComponent(rootElement, JpsProjectLoader.MODULE_MANAGER_COMPONENT)
@@ -188,9 +211,24 @@ class AutomaticModuleUnloaderTest {
       val fileUrl = VfsUtil.pathToUrl(filePath)
       modulesTag.addContent(Element("module").setAttribute("fileurl", fileUrl).setAttribute("filepath", filePath))
     }
-    JDOMUtil.write(rootElement, modulesXmlFile)
-    beforeReload()
-    return PlatformTestUtil.loadAndOpenProject(Paths.get(project.basePath!!), disposableRule.disposable)
+
+    when (reloadingMode) {
+      ReloadingMode.ON_THE_FLY -> {
+        val modulesXmlCopyDir = tempDir.newDirectory("modules-xml").toPath()
+        JDOMUtil.write(rootElement, modulesXmlCopyDir.resolve(".idea/modules.xml"))
+        beforeReload()
+        runBlocking {
+          copyFilesAndReloadProject(project, modulesXmlCopyDir)
+        }
+        disposableRule.register { PlatformTestUtil.forceCloseProjectWithoutSaving(project) }
+        return project
+      }
+      ReloadingMode.REOPEN -> {
+        JDOMUtil.write(rootElement, modulesXmlFile)
+        beforeReload()
+        return PlatformTestUtil.loadAndOpenProject(Paths.get(project.basePath!!), disposableRule.disposable)
+      }
+    }
   }
 
   companion object {
@@ -201,6 +239,11 @@ class AutomaticModuleUnloaderTest {
     @ClassRule
     @JvmField
     val edtRule = EdtRule()
+
+    @Parameterized.Parameters(name = "{0}")
+    @JvmStatic
+    fun modes(): Array<ReloadingMode> = ReloadingMode.values()
   }
 
+  enum class ReloadingMode { ON_THE_FLY, REOPEN }
 }

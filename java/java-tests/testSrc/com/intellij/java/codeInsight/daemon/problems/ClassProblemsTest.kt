@@ -13,9 +13,9 @@ import com.intellij.refactoring.BaseRefactoringProcessor
 import com.intellij.refactoring.RefactoringFactory
 import com.intellij.refactoring.move.moveInner.MoveInnerImpl
 import com.intellij.refactoring.openapi.impl.MoveInnerRefactoringImpl
+import com.intellij.testFramework.TestModeFlags
 
 internal class ClassProblemsTest : ProjectProblemsViewTest() {
-
   fun testRename() = doClassTest { psiClass, factory ->
     psiClass.nameIdentifier?.replace(factory.createIdentifier("Bar"))
   }

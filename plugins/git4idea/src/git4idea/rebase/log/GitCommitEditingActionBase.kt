@@ -194,7 +194,7 @@ internal abstract class GitCommitEditingActionBase<T : GitCommitEditingActionBas
         val headRef = VcsLogUtil.findBranch(dataPack.refsModel, root, GitUtil.HEAD)!!
         val headIndex = logData.getCommitIndex(headRef.commitHash, root)
         val headId = commitsInfo.getNodeId(headIndex)
-        val maxNodeId = commitNodeIds.max()!!
+        val maxNodeId = commitNodeIds.maxOrNull()!!
 
         val graph = LinearGraphUtils.asLiteLinearGraph(permanentGraph.linearGraph)
         val used = BitSetFlags(permanentGraph.linearGraph.nodesCount())

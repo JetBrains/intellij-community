@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.find.actions;
 
 import com.intellij.ide.util.gotoByName.ModelDiff;
@@ -20,7 +20,6 @@ import com.intellij.usageView.UsageViewUtil;
 import com.intellij.usages.Usage;
 import com.intellij.usages.UsageInfo2UsageAdapter;
 import com.intellij.usages.UsageToPsiElementProvider;
-import com.intellij.usages.UsageView;
 import com.intellij.usages.impl.GroupNode;
 import com.intellij.usages.impl.UsageAdapter;
 import com.intellij.usages.impl.UsageNode;
@@ -49,11 +48,9 @@ public class ShowUsagesTable extends JBTable implements DataProvider {
   private static final int MARGIN = 2;
 
   private final ShowUsagesTableCellRenderer myRenderer;
-  private final UsageView myUsageView;
 
-  ShowUsagesTable(@NotNull ShowUsagesTableCellRenderer renderer, @NotNull UsageView usageView) {
+  ShowUsagesTable(@NotNull ShowUsagesTableCellRenderer renderer) {
     myRenderer = renderer;
-    myUsageView = usageView;
     ScrollingUtil.installActions(this);
     HintUpdateSupply.installDataContextHintUpdateSupply(this);
   }
@@ -73,9 +70,6 @@ public class ShowUsagesTable extends JBTable implements DataProvider {
     }
     else if (LangDataKeys.POSITION_ADJUSTER_POPUP.is(dataId)) {
       return PopupUtil.getPopupContainerFor(this);
-    }
-    else if (UsageView.USAGE_VIEW_KEY.is(dataId)) {
-      return myUsageView;
     }
     return null;
   }
@@ -245,7 +239,7 @@ public class ShowUsagesTable extends JBTable implements DataProvider {
       Usage usage = node.getUsage();
       if (usage == getTable().MORE_USAGES_SEPARATOR || usage == getTable().USAGES_OUTSIDE_SCOPE_SEPARATOR || usage == getTable().USAGES_FILTERED_OUT_SEPARATOR) return "";
       GroupNode group = (GroupNode)node.getParent();
-      String groupText = group == null ? "" : group.getGroup().getText(null);
+      String groupText = group == null ? "" : group.getGroup().getPresentableGroupText();
       return groupText + usage.getPresentation().getPlainText();
     }
 

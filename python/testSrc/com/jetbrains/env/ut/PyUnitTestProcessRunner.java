@@ -22,6 +22,7 @@ import com.jetbrains.python.sdk.flavors.PythonSdkFlavor;
 import com.jetbrains.python.testing.PyUnitTestConfiguration;
 import com.jetbrains.python.testing.PyUnitTestFactory;
 import com.jetbrains.python.run.targetBasedConfiguration.PyRunTargetVariant;
+import com.jetbrains.python.testing.PythonTestConfigurationType;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
@@ -38,7 +39,7 @@ public class PyUnitTestProcessRunner extends PyScriptTestProcessRunner<PyUnitTes
   public static final String TEST_PATTERN_PREFIX = "pattern:";
 
   public PyUnitTestProcessRunner(@NotNull final String scriptName, final int timesToRerunFailedTests) {
-    super(new PyUnitTestFactory(),
+    super(new PyUnitTestFactory(PythonTestConfigurationType.getInstance()),
           PyUnitTestConfiguration.class, scriptName, timesToRerunFailedTests);
   }
 

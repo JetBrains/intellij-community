@@ -1,12 +1,12 @@
 <component name="libraryTable">
   <library name="jcef" type="repository">
-    <properties maven-id="org.jetbrains.intellij.deps.jcef:jcef:87.1.13-g481a82a-chromium-87.0.4280.141-api-1.2" />
+    <properties maven-id="org.jetbrains.intellij.deps.jcef:jcef:89.0.12-g2b76680-chromium-89.0.4389.90-api-1.5" />
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/jcef/jcef/87.1.13-g481a82a-chromium-87.0.4280.141-api-1.2/jcef-87.1.13-g481a82a-chromium-87.0.4280.141-api-1.2.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/jcef/jcef/89.0.12-g2b76680-chromium-89.0.4389.90-api-1.5/jcef-89.0.12-g2b76680-chromium-89.0.4389.90-api-1.5.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/jcef/jcef/87.1.13-g481a82a-chromium-87.0.4280.141-api-1.2/jcef-87.1.13-g481a82a-chromium-87.0.4280.141-api-1.2-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/jcef/jcef/89.0.12-g2b76680-chromium-89.0.4389.90-api-1.5/jcef-89.0.12-g2b76680-chromium-89.0.4389.90-api-1.5-sources.jar!/" />
     </SOURCES>
   </library>
 </component>

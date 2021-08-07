@@ -1,7 +1,8 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.siyeh.ig.performance;
 
 import com.intellij.codeInsight.daemon.QuickFixBundle;
+import com.intellij.codeInspection.ui.InspectionOptionsPanel;
 import com.intellij.codeInspection.ui.ListTable;
 import com.intellij.codeInspection.ui.ListWrappingTableModel;
 import com.intellij.openapi.util.InvalidDataException;
@@ -83,8 +84,15 @@ public abstract class CollectionsListSettings {
   }
 
   public JComponent createOptionsPanel() {
-    final String title = QuickFixBundle.message("collection.addall.can.be.replaced.with.constructor.fix.options.title");
-    final ListTable table = new ListTable(new ListWrappingTableModel(myCollectionClassesRequiringCapacity, title));
-    return UiUtils.createAddRemoveTreeClassChooserPanel(table, title, CommonClassNames.JAVA_LANG_OBJECT);
+    final ListTable table = new ListTable(new ListWrappingTableModel(myCollectionClassesRequiringCapacity,
+                                                                     QuickFixBundle.message("collection.addall.can.be.replaced.with.constructor.fix.options.column.title")));
+    final var panel = new InspectionOptionsPanel();
+    panel.addGrowing(UiUtils.createAddRemoveTreeClassChooserPanel(
+      QuickFixBundle.message("collection.addall.can.be.replaced.with.constructor.fix.options.dialog.title"),
+      QuickFixBundle.message("collection.addall.can.be.replaced.with.constructor.fix.options.label"),
+      table,
+      true,
+      CommonClassNames.JAVA_LANG_OBJECT));
+    return panel;
   }
 }

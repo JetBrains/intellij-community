@@ -5,6 +5,9 @@ package com.intellij.psi.impl.source.tree.injected;
 import com.intellij.injected.editor.DocumentWindow;
 import com.intellij.injected.editor.EditorWindow;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.CustomFoldRegion;
+import com.intellij.openapi.editor.CustomFoldRegionRenderer;
 import com.intellij.openapi.editor.FoldRegion;
 import com.intellij.openapi.editor.FoldingGroup;
 import com.intellij.openapi.editor.ex.FoldingListener;
@@ -100,6 +103,12 @@ class FoldingModelWindow implements FoldingModelEx, ModificationTracker {
   @Override
   public void runBatchFoldingOperation(@NotNull Runnable operation, boolean allowMovingCaret, boolean keepRelativeCaretPosition) {
     myDelegate.runBatchFoldingOperation(operation, allowMovingCaret, keepRelativeCaretPosition);
+  }
+
+  @Override
+  public @Nullable CustomFoldRegion addCustomLinesFolding(int startLine, int endLine, @NotNull CustomFoldRegionRenderer renderer) {
+    Logger.getInstance(FoldingModelWindow.class).error("Custom fold regions aren't supported for injected editors");
+    return null;
   }
 
   @Override

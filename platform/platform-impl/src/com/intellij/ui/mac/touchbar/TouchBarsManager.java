@@ -1,585 +1,581 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.mac.touchbar;
 
-import com.intellij.execution.ExecutionListener;
-import com.intellij.execution.ExecutionManager;
-import com.intellij.execution.Executor;
-import com.intellij.execution.process.ProcessHandler;
-import com.intellij.execution.runners.ExecutionEnvironment;
-import com.intellij.execution.ui.RunContentDescriptor;
-import com.intellij.ide.DataManager;
-import com.intellij.ide.impl.ProjectUtil;
-import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ActionGroup;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.Separator;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.EditorFactory;
-import com.intellij.openapi.editor.event.EditorFactoryEvent;
-import com.intellij.openapi.editor.event.EditorFactoryListener;
-import com.intellij.openapi.editor.ex.EditorEx;
-import com.intellij.openapi.editor.ex.FocusChangeListener;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectManager;
-import com.intellij.openapi.project.ProjectManagerListener;
-import com.intellij.openapi.startup.StartupManager;
-import com.intellij.openapi.ui.popup.JBPopup;
-import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.SystemInfoRt;
-import com.intellij.openapi.util.registry.Registry;
-import com.intellij.openapi.wm.ToolWindowId;
-import com.intellij.ui.mac.TouchbarDataKeys;
-import com.intellij.ui.mac.foundation.NSDefaults;
-import com.intellij.ui.popup.list.ListPopupImpl;
-import com.intellij.util.concurrency.NonUrgentExecutor;
-import com.intellij.util.containers.JBIterable;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.openapi.util.SimpleTimer;
+import com.intellij.openapi.util.SimpleTimerTask;
+import com.intellij.ui.mac.foundation.ID;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.FocusEvent;
-import java.awt.event.InputEvent;
-import java.awt.event.MouseWheelEvent;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.List;
+import java.awt.event.*;
+import java.lang.ref.WeakReference;
+import java.util.ArrayDeque;
 import java.util.Map;
-import java.util.function.Predicate;
+import java.util.WeakHashMap;
 
-public final class TouchBarsManager {
+final class TouchBarsManager {
   private static final Logger LOG = Logger.getInstance(TouchBarsManager.class);
-  private static final StackTouchBars ourStack = new StackTouchBars();
+  private static final boolean LOG_FOCUS_PROCESSING = Boolean.getBoolean("touchbar.TouchBarsManager.debug.focus.processing");
+  private static final boolean LOG_INPUT_PROCESSING = Boolean.getBoolean("touchbar.TouchBarsManager.debug.input.processing");
+  private static final boolean FORCE_UPDATE_ON_SHOW = Boolean.getBoolean("touchbar.TouchBarsManager.force.update.on.show"); // to debug/experiment
+  private static final long CHANGE_DELAY = Long.getLong("touchbar.TouchBarsManager.change.delay", 200);
 
-  private static final Object ourLoadNstSync = new Object();
-  private static final Map<Project, ProjectData> ourProjectData = new HashMap<>();
-    // NOTE: probably it is better to use api of UserDataHolder
-  private static final Map<Container, BarContainer> ourTemporaryBars = new HashMap<>();
+  private static final Map<Window, Stack> ourStacks = new WeakHashMap<>();
+  private static final Map<Component, ComponentActions> ourComp2Actions = new WeakHashMap<>();
 
-  private static volatile boolean isInitialized;
-  private static volatile boolean isEnabled = true;
+  private static int ourLastModifiersEx = 0;
 
-  public static void onApplicationInitialized() {
-    initialize();
-    if (!isInitialized || !isTouchBarEnabled()) {
+  synchronized static void processAWTEvent(AWTEvent e) {
+    if (e instanceof InputEvent) {
+      processInputEvent((InputEvent)e);
       return;
     }
 
-    for (Project project : ProjectUtil.getOpenProjects()) {
-      registerProject(project);
-    }
-
-    EditorFactory editorFactory = EditorFactory.getInstance();
-    for (Editor editor : editorFactory.getAllEditors()) {
-      registerEditor(editor);
-    }
-
-    // Do not use lazy listener - onApplicationInitialized is called _after_ files were opened.
-    // We should not load any touch bar related classes during IDE start for performance reasons.
-    editorFactory.addEditorFactoryListener(new EditorFactoryListener() {
-      @Override
-      public void editorCreated(@NotNull EditorFactoryEvent event) {
-        registerEditor(event.getEditor());
-      }
-
-      @Override
-      public void editorReleased(@NotNull EditorFactoryEvent event) {
-        releaseEditor(event.getEditor());
-      }
-    }, ApplicationManager.getApplication());
-
-    ApplicationManager.getApplication().getMessageBus().connect().subscribe(ProjectManager.TOPIC, new ProjectManagerListener() {
-      @Override
-      public void projectOpened(@NotNull Project project) {
-        registerProject(project);
-      }
-
-      @Override
-      public void projectClosed(@NotNull Project project) {
-        ApplicationManager.getApplication().assertIsDispatchThread();
-        // System.out.println("closed project: " + project);
-
-        ProjectData projectData;
-        synchronized (ourProjectData) {
-          projectData = ourProjectData.remove(project);
-          if (projectData == null) {
-            LOG.error("project data already was removed: " + project);
-            return;
-          }
-
-          ourStack.removeAll(projectData.getAllContainers());
-          projectData.releaseAll();
-        }
-      }
-    });
-
-    ActionManager actionManager = ApplicationManager.getApplication().getServiceIfCreated(ActionManager.class);
-    if (actionManager == null) {
-      NonUrgentExecutor.getInstance().execute(() -> initExecutorGroup(ActionManager.getInstance()));
-    }
-    else {
-      initExecutorGroup(actionManager);
+    final int eid = e.getID();
+    if (eid == FocusEvent.FOCUS_GAINED ||
+               eid == FocusEvent.FOCUS_LOST ||
+               eid == WindowEvent.WINDOW_ACTIVATED ||
+               eid == WindowEvent.WINDOW_DEACTIVATED ||
+               eid == WindowEvent.WINDOW_LOST_FOCUS ||
+               eid == WindowEvent.WINDOW_GAINED_FOCUS
+    ) {
+      processFocusEvent(e);
     }
   }
 
-  private static void registerProject(@NotNull Project project) {
-    if (project.isDisposed()) {
+  private static void processInputEvent(InputEvent e) {
+    final int usedKeyMask = InputEvent.ALT_DOWN_MASK |
+                            InputEvent.META_DOWN_MASK |
+                            InputEvent.CTRL_DOWN_MASK |
+                            InputEvent.SHIFT_DOWN_MASK |
+                            InputEvent.ALT_GRAPH_DOWN_MASK;
+    final int oldLastModifiersEx = ourLastModifiersEx;
+    ourLastModifiersEx = e.getModifiersEx() & usedKeyMask;
+    final boolean areModifiersChanged = ourLastModifiersEx != oldLastModifiersEx;
+
+    if (e instanceof MouseEvent && !areModifiersChanged) {
+      // NOTE: to increase stability of switching normal/alt layouts
+      // we process changes of modifiers mask even from mouse events
       return;
     }
 
-    // System.out.println("opened project " + project + ", set default touchbar");
-
-    ProjectData projectData = new ProjectData(project);
-    synchronized (ourProjectData) {
-      final ProjectData prev = ourProjectData.put(project, projectData);
-      if (prev != null) {
-        LOG.error("previous project data wasn't removed: " + project);
-        prev.releaseAll();
-      }
-    }
-
-    StartupManager.getInstance(project).runAfterOpened(() -> {
-      ApplicationManager.getApplication().invokeLater(() -> projectData.get(BarType.DEFAULT).show(), ModalityState.NON_MODAL);
-    });
-
-    project.getMessageBus().connect().subscribe(ExecutionManager.EXECUTION_TOPIC, new ExecutionListener() {
-      @Override
-      public void processStarted(@NotNull String executorId, @NotNull ExecutionEnvironment env, @NotNull ProcessHandler handler) {
-        ApplicationManager.getApplication().invokeLater(() -> {
-          _updateTouchbar(project);
-        });
-      }
-
-      @Override
-      public void processTerminated(@NotNull String executorId,
-                                    @NotNull ExecutionEnvironment env,
-                                    @NotNull ProcessHandler handler,
-                                    int exitCode) {
-        String toolWindowId = env.getExecutor().getToolWindowId();
-        ourStack.pop(topContainer -> {
-          if (topContainer.getType() != BarType.DEBUGGER) {
-            return false;
-          }
-
-          if (!ToolWindowId.DEBUG.equals(toolWindowId) && !ToolWindowId.RUN_DASHBOARD.equals(toolWindowId) && !ToolWindowId.SERVICES.equals(toolWindowId)) {
-            return false;
-          }
-
-          // System.out.println("processTerminated, dbgSessionsCount=" + pd.getDbgSessions());
-          return !_hasAnyActiveSession(project, handler);
-        });
-        ApplicationManager.getApplication().invokeLater(() -> {
-          _updateTouchbar(project);
-        });
-      }
-    });
-  }
-
-  public static void initialize() {
-    if (isInitialized) {
-      return;
-    }
-
-    synchronized (ourLoadNstSync) {
-      if (isInitialized) {
+    // check esc button
+    if (Helpers.isPhisycalEsc()
+        && e instanceof KeyEvent
+        && e.getID() == KeyEvent.KEY_RELEASED
+        && ((KeyEvent)e).getKeyCode() == KeyEvent.VK_ESCAPE
+        && ourLastModifiersEx == 0
+    ) {
+      // find current (showing) component corresponding to event window
+      final Window windowOfEvent = getWindow(e.getComponent());
+      if (windowOfEvent == null) {
+        if (LOG_INPUT_PROCESSING) LOG.debug("INPUT: can't find window of component %s (during isPhisycalEsc processing)", e.getComponent());
         return;
       }
 
-      NST.initialize();
-
-      // calculate isEnabled
-      String appId = Utils.getAppId();
-      if (appId == null || appId.isEmpty()) {
-        LOG.debug("can't obtain application id from NSBundle");
+      final Stack s = ourStacks.get(windowOfEvent);
+      if (s != null) {
+        final @Nullable ComponentActions ca = s.getTopActions();
+        if (ca != null && ca.getCurrent() != null && ca.getCurrent().isCrossEsc()) {
+          s.pop();
+        }
       }
-      else if (NSDefaults.isShowFnKeysEnabled(appId)) {
-        LOG.info("nst library was loaded, but user enabled fn-keys in touchbar");
-        isEnabled = false;
+    }
+
+    if (LOG_INPUT_PROCESSING) {
+      final Window windowOfEvent = getWindow(e.getComponent());
+      final @Nullable ComponentActions componentActions = getShownActions(windowOfEvent);
+      if (componentActions == null) {
+        LOG.debug("INPUT: no touchbar actions are shown for window '%s', component '%s'", windowOfEvent, e.getComponent());
+      } else {
+        LOG.debug("INPUT: show actions of component %s, keymask=%d", componentActions.component.get(), ourLastModifiersEx);
+      }
+    }
+
+    if (areModifiersChanged) {
+      // change to alt for all registered components
+      for (ComponentActions ca : ourComp2Actions.values()) {
+        if (ca != null)
+          ca.setCurrent(ourLastModifiersEx);
       }
 
-      isInitialized = true;
+      // NOTE: mask-change can be received from popup window, but we must update stack for popup and also at least for main-frame.
+      // So update for all windows.
+      for (Stack s : ourStacks.values())
+        s.updateIfNecessary();
     }
   }
 
-  public static boolean isTouchBarAvailable() {
-    return SystemInfoRt.isMac && NST.isAvailable();
-  }
-
-  public static boolean isTouchBarEnabled() {
-    return isTouchBarAvailable() && isEnabled && Registry.is("ide.mac.touchbar.enabled");
-  }
-
-  public static void reloadAll() {
-    if (!isInitialized || !isTouchBarEnabled()) {
+  private static void processFocusEvent(AWTEvent e) {
+    if (!(e.getSource() instanceof Component)) {
       return;
     }
 
-    synchronized (ourProjectData) {
-      ourProjectData.forEach((p, pd) -> pd.reloadAll());
-    }
-    ourStack.setTouchBarFromTopContainer();
-  }
-
-  public static void onInputEvent(InputEvent e) {
-    if (!isInitialized || !isTouchBarEnabled()) {
-      return;
-    }
-
-    // NOTE: skip wheel-events, because scrolling by touchpad produces mouse-wheel events with pressed modifier, example:
-    // MouseWheelEvent[MOUSE_WHEEL,(890,571),absolute(0,0),button=0,modifiers=SHIFT,extModifiers=SHIFT,clickCount=0,scrollType=WHEEL_UNIT_SCROLL,scrollAmount=1,wheelRotation=0,preciseWheelRotation=0.1] on frame0
-    if (e instanceof MouseWheelEvent) {
-      return;
-    }
-
-    ourStack.updateKeyMask(e.getModifiersEx() & ProjectData.getUsedKeyMask());
-  }
-
-  public static void onFocusEvent(AWTEvent e) {
-    if (!isTouchBarEnabled()) {
-      return;
-    }
-
-    if (!(e.getSource() instanceof Container)) {
-      return;
-    }
-
-    final Container src = (Container)e.getSource();
+    final Component src = (Component)e.getSource();
 
     // NOTE: WindowEvent.WINDOW_GAINED_FOCUS can be fired when frame focused
     if (e.getID() == FocusEvent.FOCUS_GAINED) {
-      if (_hasPopup()) {
-        // System.out.println("skip focus event processing because popup exists: " + e);
-        return;
-      }
+      // find current (showing) component/touchbar corresponding to event window
+      final Window windowOfEvent = getWindow(src);
+      final @Nullable ComponentActions shownActions = getShownActions(windowOfEvent);
+      final boolean isShownPersistent = shownActions != null && shownActions.isPersistent();
 
-      if (_hasNonModalDialog()) {
-        final BarContainer barForParent = _findByParentComponent(src, ourTemporaryBars.values(), null);
-        if (barForParent != null) {
-          // StackTouchBars.changeReason = "non-modal dialog gained focus";
-          barForParent.show();
+      for(Component p = src; p!=null; p=p.getParent()) {
+        final @Nullable ComponentActions candidateActions = ourComp2Actions.get(p);
+        if (candidateActions == null) {
+          continue;
+        }
+
+        if (shownActions == candidateActions) {
+          // actions of component p are already shown, nothing to do
           return;
         }
-      }
 
-      synchronized (ourProjectData) {
-        for (ProjectData pd : ourProjectData.values()) {
-          if (pd.isDisposed()) {
-            continue;
-          }
-
-          if (pd.checkToolWindowContents(src)) {
-            // System.out.println("tool window gained focus: " + e);
-            return;
-          }
-
-          final ProjectData.EditorData ed = pd.findEditorDataByComponent(src);
-          if (ed != null && ed.containerSearch != null) {
-            // System.out.println("editor-component gained focus: " + e);
-            // StackTouchBars.changeReason = "editor-search gained focus";
-            ourStack.showContainer(ed.containerSearch);
-            return;
-          }
-
-          BarContainer toolWindow = pd.findDebugToolWindowByComponent(src);
-          if (toolWindow != null) {
-            // System.out.println("debugger component gained focus: " + e);
-            // StackTouchBars.changeReason = "tool-window gained focus";
-            ourStack.showContainer(toolWindow);
-            return;
+        if (!p.isVisible()) {
+          if (LOG_FOCUS_PROCESSING) {
+            LOG.debug("FOCUS GAINED: skip actions of invisible component: %s, child (source): %s", p, src);
           }
         }
-      }
-    }
-    else if (e.getID() == FocusEvent.FOCUS_LOST) {
-      final BarContainer nonModalDialogParent = _findByParentComponent(src, ourTemporaryBars.values(), bc -> bc.isNonModalDialog());
-      if (nonModalDialogParent != null) {
-        // System.out.println("non-modal dialog window '" + nonModalDialogParent.getParentComponent() + "' lost focus: " + e);
-        // StackTouchBars.changeReason = "non-modal dialog lost focus";
-        nonModalDialogParent.hide();
+
+        if (isShownPersistent && !candidateActions.isPersistent()) {
+          // FIXME: except when focused subcomponent of current component (with persistent-touchbar)
+          if (LOG_FOCUS_PROCESSING) {
+            LOG.debug("FOCUS GAINED: skip not-persistent actions of parent: %s, child (source): %s", p, src);
+          }
+          continue;
+        }
+
+        if (LOG_FOCUS_PROCESSING) {
+          LOG.debug("FOCUS GAINED: show actions of parent: %s, child (source): %s", p, src);
+        }
+
+        final TouchBar toShow = candidateActions.getTouchbar(0/*ourLastModifiersEx*/, true);
+        if (toShow instanceof ActionGroupTouchBar && ((ActionGroupTouchBar)toShow).updateAutoCloseAndCheck()) {
+          // touchbar of component p is autoclosed, skip this candidate
+          continue;
+        }
+
+        showTouchbar(candidateActions);
         return;
       }
 
-      synchronized (ourProjectData) {
-        for (ProjectData pd : ourProjectData.values()) {
-          if (pd.isDisposed()) {
-            continue;
-          }
-
-          final ProjectData.EditorData ed = pd.findEditorDataByComponent(src);
-          if (ed != null && ed.containerSearch != null) {
-            // System.out.println("editor-component lost focus: " + e);
-            // StackTouchBars.changeReason = "editor-component lost focus";
-            ourStack.removeContainer(ed.containerSearch);
-            return;
-          }
-        }
+      if (LOG_FOCUS_PROCESSING) {
+        LOG.debug("FOCUS GAINED: components chain hasn't any actions, initial child (source): %s", src);
       }
     }
   }
 
-  private static void registerEditor(@NotNull Editor editor) {
-    Project project = editor.getProject();
-    if (project == null || project.isDisposed()) {
+  static int getLastModifiersEx() { return ourLastModifiersEx; }
+
+  synchronized static void register(@NotNull Component component, @NotNull ActionGroup actions, @Nullable Customizer customizations) {
+    LOG.debug("register actions '%s' for component %s", actions, component);
+    unregister(component); // cleanup for insurance
+    ourComp2Actions.put(component, new ComponentActions(component, actions, null, customizations));
+  }
+
+  synchronized static void register(@NotNull Component component, @NotNull ActionGroup actions) {
+    register(component, actions, null);
+  }
+
+  synchronized static void register(@NotNull Component component, @NotNull Map<Long, ActionGroup> actions, @Nullable Customizer customizations) {
+    final ActionGroup mainLayout = actions.get(0L);
+    if (mainLayout == null) {
+      LOG.debug("can't find main layout for component: %s (actions will not be added)", component);
+      return;
+    }
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("register actions '" + mainLayout + "' for component " + component);
+      for (Long key: actions.keySet()) {
+        if (key != 0)
+          LOG.debug("\talt action '" + actions.get(key));
+      }
+    }
+    unregister(component); // cleanup for insurance
+    ourComp2Actions.put(component, new ComponentActions(component, mainLayout, actions, customizations));
+  }
+
+  synchronized static void register(@NotNull Component component, @NotNull Map<Long, ActionGroup> actions) {
+    register(component, actions, null);
+  }
+
+  synchronized static void registerAndShow(@NotNull Component component, @NotNull ActionGroup actions) {
+    register(component, actions);
+    showActionsOfComponent(component);
+  }
+
+  synchronized static void registerAndShow(@NotNull Component component, @NotNull Map<Long, ActionGroup> actions) {
+    register(component, actions);
+    showActionsOfComponent(component);
+  }
+
+  synchronized static void registerAndShow(@NotNull Component component, @NotNull Map<Long, ActionGroup> actions, @Nullable Customizer customizations) {
+    register(component, actions, customizations);
+    showActionsOfComponent(component);
+  }
+
+  synchronized static void registerAndShow(@NotNull Component component, @NotNull ActionGroup actions, @Nullable Customizer customizations) {
+    register(component, actions, customizations);
+    showActionsOfComponent(component);
+  }
+
+  synchronized static void registerAndShow(@NotNull Component component, @NotNull TouchBar tb) {
+    LOG.debug("registerAndShow non-action touchbar '%s' for component %s", tb, component);
+    unregister(component); // cleanup for insurance
+    ourComp2Actions.put(component, new ComponentActions(component, tb));
+    showActionsOfComponent(component);
+  }
+
+  synchronized static void unregister(@NotNull Component component) {
+    LOG.debug("UNREGISTER: component %s", component);
+
+    final @Nullable ComponentActions componentActions = ourComp2Actions.remove(component);
+    if (componentActions == null) {
+      LOG.debug("UNREGISTER: component '%s' hasn't any actions", component);
       return;
     }
 
-    ProjectData projectData;
-    synchronized (ourProjectData) {
-      projectData = ourProjectData.get(project);
-      if (projectData == null) {
-        // System.out.println("can't find project data to register editor: " + editor + ", project: " + project);
-        return;
-      }
-
-      projectData.registerEditor(editor);
-    }
-
-    if (editor instanceof EditorEx) {
-      ((EditorEx)editor).addFocusListener(new FocusChangeListener() {
-        @Override
-        public void focusGained(@NotNull Editor editor) {
-          // System.out.println("reset optional-context of default because editor window gained focus: " + editor);
-          projectData.get(BarType.DEFAULT).setOptionalContextVisible(null);
-        }
-      });
-    }
+    componentActions.clearCachedTouchbars();
   }
 
-  private static void releaseEditor(@NotNull Editor editor) {
-    final Project project = editor.getProject();
-    if (project == null) {
+  synchronized static void showActionsOfComponent(@NotNull Component component) {
+    final @Nullable ComponentActions componentActions = ourComp2Actions.get(component);
+    if (componentActions == null) {
+      LOG.debug("SHOW: can't find actions info for component: %s (nothing to show)", component);
       return;
     }
 
-    synchronized (ourProjectData) {
-      final ProjectData pd = ourProjectData.get(project);
-      if (pd == null) {
-        return;
-      }
-
-      pd.removeEditor(editor);
-    }
+    showTouchbar(componentActions);
   }
 
-  public static void onUpdateEditorHeader(@NotNull Editor editor, JComponent header) {
-    if (!isInitialized || !isTouchBarEnabled()) {
-      return;
-    }
+  synchronized static void clearAll() {
+    LOG.debug("Clear all actions (disable touchbar suppoprt)");
 
-    Project project = editor.getProject();
-    if (project == null) {
-      return;
-    }
+    ourStacks.forEach((w, s) -> {
+      NST.setTouchBar(w, null);
+    });
+    ourStacks.clear();
 
-    synchronized (ourProjectData) {
-      ProjectData projectData = ourProjectData.get(project);
-      if (projectData == null) {
-        LOG.error("can't find project data to update header of editor: " + editor + ", project: " + project);
+    ourComp2Actions.forEach((c, ca) -> {
+      if (ca == null) {
+        LOG.debug("clearAll: component '%s' hasn't any actions", c);
         return;
       }
+      ca.clearCachedTouchbars();
+    });
+    ourComp2Actions.clear();
+  }
 
-      ProjectData.EditorData editorData = projectData.getEditorData(editor);
-      if (editorData == null) {
-        LOG.error("can't find editor-data to update header of editor: " + editor + ", project: " + project);
-        return;
-      }
+  private static @Nullable Window getWindow(@NotNull Component component) {
+    if (component instanceof Window) {
+      return (Window)component;
+    }
 
-      // System.out.printf("onUpdateEditorHeader: editor='%s', header='%s'\n", editor, header);
-      final ActionGroup actions = header instanceof DataProvider ? TouchbarDataKeys.ACTIONS_KEY.getData((DataProvider)header) : null;
-      if (header == null) {
-        // System.out.println("set null header");
-        editorData.editorHeader = null;
-        if (editorData.containerSearch != null) {
-          ourStack.removeContainer(editorData.containerSearch);
-        }
-      }
-      else {
-        // System.out.println("set header: " + header);
-        // System.out.println("\t\tparent: " + header.getParent());
-        editorData.editorHeader = header;
+    final Window window = SwingUtilities.windowForComponent(component);
+    if (window == null) {
+      // NOTE: it's possible for SheetMessage$JPanel
+      LOG.debug("can't find window for component: %s", component);
+    }
+    return window;
+  }
 
-        if (editorData.containerSearch == null || editorData.actionsSearch != actions) {
-          if (editorData.containerSearch != null) {
-            ourStack.removeContainer(editorData.containerSearch);
-            editorData.containerSearch.release();
+  private static void showTouchbar(@NotNull ComponentActions componentActions) {
+    componentActions.setCurrent(ourLastModifiersEx);
+    getWindowStack(getWindow(componentActions.component.get())).push(componentActions);
+  }
+
+  private static @NotNull Stack getWindowStack(@Nullable Window window) {
+    Stack stack = ourStacks.get(window);
+    if (stack == null) {
+      stack = new Stack(window);
+      ourStacks.put(window, stack);
+      if (window != null) {
+        window.addWindowListener(new WindowAdapter() {
+          @Override
+          public void windowClosed(WindowEvent e) {
+            ourStacks.remove(window);
           }
-
-          if (actions != null) {
-            editorData.containerSearch =
-              new BarContainer(BarType.EDITOR_SEARCH, BuildUtils.buildFromGroup("editor_search_" + header, actions, true, true), null,
-                               header);
-            ourStack.showContainer(editorData.containerSearch);
-          }
-        }
+        });
       }
     }
+    return stack;
   }
 
-  public static @Nullable
-  Disposable showPopupBar(@NotNull JBPopup popup, @NotNull JComponent popupComponent) {
-    if (!isTouchBarEnabled()) {
-      return null;
+  synchronized static void hideTouchbar(@NotNull TouchBar tb) {
+    for (Stack stack: ourStacks.values()) {
+      stack.removeTouchbar(tb);
     }
-
-    if (!(popup instanceof ListPopupImpl)) {
-      return null;
-    }
-
-    @NotNull ListPopupImpl listPopup = (ListPopupImpl)popup;
-    final TouchBar tb = BuildUtils.createScrubberBarFromPopup(listPopup);
-    BarContainer container = new BarContainer(BarType.POPUP, tb, null, popupComponent);
-    ourTemporaryBars.put(popupComponent, container);
-    ourStack.showContainer(container);
-
-    return () -> {
-      ourStack.removeContainer(container);
-      ourTemporaryBars.remove(popupComponent);
-      container.release();
-    };
   }
 
-  public static @Nullable Disposable showDialogWrapperButtons(@NotNull Container contentPane) {
-    if (!isTouchBarEnabled()) {
-      return null;
-    }
-
-    Map<TouchbarDataKeys.DlgButtonDesc, JButton> buttonMap = new HashMap<>();
-    Map<Component, ActionGroup> actions = new HashMap<>();
-    _findAllTouchbarProviders(actions, buttonMap, contentPane);
-
-    if (buttonMap.isEmpty() && actions.isEmpty()) {
-      return null;
-    }
-
-    boolean replaceEsc = false;
-    boolean emulateEsc = false;
-    if (!actions.isEmpty()) {
-      ActionGroup actionGroup = actions.values().iterator().next();
-      TouchbarDataKeys.ActionDesc groupDesc = actionGroup.getTemplatePresentation().getClientProperty(TouchbarDataKeys.ACTIONS_DESCRIPTOR_KEY);
-      replaceEsc = groupDesc == null || groupDesc.isReplaceEsc();
-      emulateEsc = true;
-    }
-    TouchBar touchBar = new TouchBar("dialog_buttons", replaceEsc, false, emulateEsc, null, null);
-    BuildUtils.addDialogButtons(touchBar, buttonMap, actions);
-
-    ModalityState modalityState = LaterInvocator.getCurrentModalityState();
-    BarType barType = ModalityState.NON_MODAL.equals(modalityState) ? BarType.DIALOG : BarType.MODAL_DIALOG;
-    final BarContainer barContainer = new BarContainer(barType, touchBar, null, contentPane);
-
-    ourTemporaryBars.put(contentPane, barContainer);
-    ourStack.showContainer(barContainer);
-
-    return () -> {
-      ourTemporaryBars.remove(contentPane);
-      ourStack.removeContainer(barContainer);
-      barContainer.release();
-    };
-  }
-
-  public static void showStopRunningBar(List<? extends Pair<RunContentDescriptor, Runnable>> stoppableDescriptors) {
-    final TouchBar tb = BuildUtils.createStopRunningBar(stoppableDescriptors);
-    BarContainer container = new BarContainer(BarType.DIALOG, tb, null, null);
-    container.setOnHideCallback(() -> container.release());
-    ourStack.showContainer(container);
-  }
-
-  static void showContainer(@NotNull BarContainer container) { ourStack.showContainer(container); }
-
-  static void hideContainer(@NotNull BarContainer container) { ourStack.removeContainer(container); }
-
-  private static boolean _hasAnyActiveSession(Project project, ProcessHandler handler/*already terminated*/) {
-    for (ProcessHandler h : ExecutionManager.getInstance(project).getRunningProcesses()) {
-      if (h != null && h != handler && (!h.isProcessTerminated() && !h.isProcessTerminating())) {
-        return true;
+  private static @Nullable ComponentActions getShownActions(@Nullable Window window) {
+    if (window != null) {
+      Stack stack = ourStacks.get(window);
+      if (stack == null && window.getType() == Window.Type.POPUP) {
+        // no touchbars stack presented for passed window
+        // if window is Popup then check parent window
+        stack = ourStacks.get(window.getParent());
       }
-    }
-    return false;
-  }
-
-  private static boolean _hasPopup() { return ourTemporaryBars.values().stream().anyMatch(bc -> bc.isPopup()); }
-
-  private static boolean _hasNonModalDialog() { return ourTemporaryBars.values().stream().anyMatch(bc -> bc.isNonModalDialog()); }
-
-  private static BarContainer _findByParentComponent(Container child,
-                                                     Collection<? extends BarContainer> candidates,
-                                                     Predicate<? super BarContainer> filter) {
-    for (BarContainer bc : candidates) {
-      if (filter != null && !filter.test(bc)) {
-        continue;
-      }
-      if (bc.getParentComponent() == null) {
-        continue;
-      }
-      if (SwingUtilities.isDescendingFrom(child, bc.getParentComponent())) {
-        return bc;
+      if (stack != null) {
+        return stack.getTopActions();
       }
     }
     return null;
   }
 
-  private static void _findAllTouchbarProviders(@NotNull Map<Component, ActionGroup> out,
-                                                @NotNull Map<TouchbarDataKeys.DlgButtonDesc, JButton> out2,
-                                                @NotNull Container root) {
-    final JBIterable<Component> iter = UIUtil.uiTraverser(root).expandAndFilter(c -> c.isVisible()).traverse();
-    for (Component component : iter) {
-      if (component instanceof JButton) {
-        final TouchbarDataKeys.DlgButtonDesc desc = UIUtil.getClientProperty(component, TouchbarDataKeys.DIALOG_BUTTON_DESCRIPTOR_KEY);
-        if (desc != null) {
-          out2.put(desc, (JButton)component);
+  //
+  // ComponentActions
+  //
+
+  private static class ComponentActions {
+    private static final Map<ActionGroup, TouchBar> ourActions2Touchbar = new WeakHashMap<>(); // Cached touchbars (per ActionGroup)
+
+    final @NotNull WeakReference<Component> component;
+    final @Nullable ActionGroup actions;
+    final @Nullable Map<Long, ActionGroup> altActions;
+    final @Nullable Customizer customizer;
+
+    final @Nullable TouchBar customTouchbar; // for non-action touchbars (like popup scrubbers)
+
+    private @Nullable TouchBar current;
+
+    ComponentActions(@NotNull Component component,
+                     @NotNull ActionGroup actions,
+                     @Nullable Map<Long, ActionGroup> altActions,
+                     @Nullable Customizer customizer) {
+      this.component = new WeakReference<>(component);
+      this.actions = actions;
+      this.altActions = altActions;
+      this.customizer = customizer;
+      this.customTouchbar = null;
+    }
+
+    ComponentActions(@NotNull Component component,
+                     @NotNull TouchBar customTouchbar) {
+      this.component = new WeakReference<>(component);
+      this.actions = null;
+      this.altActions = null;
+      this.customizer = null;
+      this.customTouchbar = customTouchbar;
+    }
+
+    boolean isPersistent() { return customizer != null && customizer.getCrossEscInfo() != null && customizer.getCrossEscInfo().persistent; }
+
+    boolean isHidden() { return customizer != null && customizer.getCrossEscInfo() != null && customizer.getCrossEscInfo().persistent; }
+
+    void setCurrent(long altKeyMask) {
+      @Nullable TouchBar alt = getTouchbar(altKeyMask, false);
+      if (alt != null && alt != TouchBar.EMPTY) // don't change touchbar when alt-layout wasn't defined (keep previous)
+        current = alt;
+    }
+
+    @Nullable TouchBar getCurrent() { return current; }
+
+    @Nullable TouchBar getTouchbar(long altKeyMask, boolean cachedOnly) {
+      if (customTouchbar != null) {
+        return customTouchbar;
+      }
+
+      final @Nullable ActionGroup actions = getAltActions(altKeyMask);
+      if (actions == null) {
+        return null;
+      }
+
+      // find cached (or create)
+      TouchBar tb = ourActions2Touchbar.get(actions);
+      if (tb == null && !cachedOnly) {
+        if (isEmptyGroup(actions)) {
+          tb = TouchBar.EMPTY;
+        } else {
+          final Component cmp = component.get();
+          tb = new ActionGroupTouchBar(actions
+                                       + " | "
+                                       + (cmp == null ? "disposed_component" : cmp.getClass().getSimpleName()),
+                                       actions, customizer);
+        }
+        ourActions2Touchbar.put(actions, tb);
+      }
+      return tb;
+    }
+
+    private static boolean isEmptyGroup(@NotNull ActionGroup actions) {
+      AnAction[] kids = actions.getChildren(null);
+      if (kids == null || kids.length < 1)
+        return true;
+      for (AnAction kid: kids)
+        if (!(kid instanceof Separator))
+          return false;
+      return true;
+    }
+
+    void clearCachedTouchbars() {
+      if (current != null) {
+        current.release();
+        current = null;
+      }
+      if (actions != null) {
+        final TouchBar tb = ourActions2Touchbar.remove(actions);
+        if (tb != null) tb.release();
+      }
+
+      if (altActions != null) {
+        for (ActionGroup ag: altActions.values()) {
+          final TouchBar tb = ourActions2Touchbar.remove(ag);
+          if (tb != null) tb.release();
         }
       }
 
-      DataProvider dp = null;
-      if (component instanceof DataProvider) {
-        dp = (DataProvider)component;
+      if (customTouchbar != null) {
+        customTouchbar.release();
       }
-      else if (component instanceof JComponent) {
-        dp = DataManager.getDataProvider((JComponent)component);
+    }
+
+    @Nullable ActionGroup getAltActions(long mask) {
+      if (mask == 0) {
+        return actions;
+      }
+      if (altActions == null || altActions.isEmpty()) {
+        return null;
+      }
+      return altActions.get(mask);
+    }
+  }
+
+  //
+  // NOTE: use stack (per-window) to simplify such events as touchbar closing (we must show previous touchbar, so must remember it in stack)
+  //
+  private static class Stack {
+    private final @Nullable WeakReference<Window> myWindow;
+    private final ArrayDeque<ComponentActions> myStack = new ArrayDeque<>();
+
+    private TouchBar myLastShownTouchbar = null;
+    private SimpleTimerTask myNativeUpdateTask = null;
+
+    private Stack(@Nullable Window window) {
+      myWindow = window != null ? new WeakReference<>(window) : null;
+
+      if (window != null) {
+        window.addWindowListener(new WindowAdapter() {
+          @Override
+          public void windowActivated(WindowEvent e) {
+            final @Nullable ComponentActions ca = getTopActions();
+            if (ca != null && ca.getCurrent() instanceof ActionGroupTouchBar) {
+              ((ActionGroupTouchBar)ca.getCurrent()).startUpdateTimer();
+            }
+          }
+          @Override
+          public void windowDeactivated(WindowEvent e) {
+            final @Nullable ComponentActions ca = getTopActions();
+            if (ca != null && ca.getCurrent() instanceof ActionGroupTouchBar) {
+              ((ActionGroupTouchBar)ca.getCurrent()).stopUpdateTimer();
+            }
+          }
+        });
+      }
+    }
+
+    synchronized void push(@NotNull ComponentActions ca) {
+      if (!myStack.isEmpty() && myStack.peek() == ca) {
+        return;
       }
 
-      if (dp != null) {
-        final ActionGroup actions = TouchbarDataKeys.ACTIONS_KEY.getData(dp);
-        if (actions != null) {
-          out.put(component, actions);
+      myStack.removeIf((other) -> ca == other); // don't store copies (just for insurance)
+      myStack.push(ca);
+
+      if (FORCE_UPDATE_ON_SHOW && ca.getCurrent() instanceof ActionGroupTouchBar) { // just experimental possibility
+        ((ActionGroupTouchBar)ca.getCurrent()).updateActionItems();
+      }
+
+      _scheduleUpdateNative();
+    }
+
+    synchronized void pop() {
+      if (myStack.isEmpty()) {
+        return;
+      }
+
+      myStack.poll();
+      _scheduleUpdateNative();
+    }
+
+    synchronized void removeTouchbar(@NotNull TouchBar tb) {
+      if (myStack.isEmpty()) {
+        return;
+      }
+
+      final @Nullable ComponentActions topCA = myStack.peek();
+      final @Nullable TouchBar top = topCA != null ? topCA.getCurrent() : null;
+      myStack.removeIf((ca) -> ca.getCurrent() == tb);
+
+      if (top == tb)
+        _scheduleUpdateNative();
+    }
+
+    synchronized void updateIfNecessary() {
+      if (myStack.isEmpty()) {
+        return;
+      }
+      _scheduleUpdateNative();
+    }
+
+    synchronized @Nullable ComponentActions getTopActions() {
+      return myStack.isEmpty() ? null : myStack.peek();
+    }
+
+    private void _scheduleUpdateNative() {
+      // cancel prev task
+      if (myNativeUpdateTask != null)
+        myNativeUpdateTask.cancel();
+
+      // ensure that top of stack has current touchbar
+      final @Nullable ComponentActions ca = myStack.peek();
+      if (ca == null) {
+        // stack is empty
+        myLastShownTouchbar = null;
+        NST.setTouchBar(myWindow != null ? myWindow.get() : null, null);
+        return;
+      }
+
+      if (ca.getCurrent() == null) { // current touchbar wasn't set yet, do it now
+        ca.setCurrent(ourLastModifiersEx);
+        if (ca.getCurrent() == null)
+          ca.setCurrent(0);
+      }
+
+      // schedule new task
+      myNativeUpdateTask = SimpleTimer.getInstance().setUp(() -> {
+        final @Nullable ComponentActions topCA = myStack.peek();
+        final @Nullable TouchBar tb = topCA != null ? topCA.getCurrent() : null;
+        if (tb == myLastShownTouchbar) {
+          return;
         }
-      }
-    }
-  }
 
-  private static void _updateTouchbar(@NotNull Project project) {
-    BarContainer tobForProject = ourStack.findTopProjectContainer(project);
-    if (tobForProject != null) {
-      showContainer(tobForProject);
-    }
+        if (myLastShownTouchbar instanceof ActionGroupTouchBar) {
+          ((ActionGroupTouchBar)myLastShownTouchbar).stopUpdateTimer();
+        }
 
-    final TouchBar top = ourStack.getTopTouchBar();
-    if (top != null) {
-      top.updateActionItems();
-    }
-  }
+        myLastShownTouchbar = tb;
 
-  private static final String RUNNERS_GROUP_TOUCHBAR = "RunnerActionsTouchbar";
+        if (myLastShownTouchbar instanceof ActionGroupTouchBar) {
+          final ActionGroupTouchBar atb = (ActionGroupTouchBar)myLastShownTouchbar;
+          atb.startUpdateTimer();
 
-  private static void initExecutorGroup(@NotNull ActionManager actionManager) {
-    AnAction runButtons = actionManager.getAction(RUNNERS_GROUP_TOUCHBAR);
-    if (runButtons == null) {
-      // System.out.println("ERROR: RunnersGroup for touchbar is unregistered");
-      return;
-    }
+          // timer can "sleep" sometimes (when user doesn't send input for expamle)
+          // so always do force update before showing
+          ApplicationManager.getApplication().invokeLater(atb::updateActionItems);
+        }
 
-    if (!(runButtons instanceof DefaultActionGroup)) {
-      // System.out.println("ERROR: RunnersGroup for touchbar isn't a group");
-      return;
-    }
-
-    DefaultActionGroup group = (DefaultActionGroup)runButtons;
-    for (Executor executor : Executor.EXECUTOR_EXTENSION_NAME.getExtensionList()) {
-      if (executor.getId().equals(ToolWindowId.RUN) || executor.getId().equals(ToolWindowId.DEBUG)) {
-        group.add(actionManager.getAction(executor.getId()), actionManager);
-      }
+        Window window = myWindow != null ? myWindow.get() : null;
+        if (myLastShownTouchbar != null)
+          myLastShownTouchbar.setTo(window);
+        else
+          NST.setTouchBar(window, ID.NIL);
+      }, CHANGE_DELAY);
     }
   }
 }

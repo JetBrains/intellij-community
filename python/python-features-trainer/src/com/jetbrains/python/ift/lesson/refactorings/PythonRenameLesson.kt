@@ -4,16 +4,15 @@ package com.jetbrains.python.ift.lesson.refactorings
 import com.intellij.ide.DataManager
 import com.intellij.ide.actions.exclusion.ExclusionHandler
 import com.intellij.refactoring.RefactoringBundle
+import com.intellij.refactoring.ui.NameSuggestionsField
 import com.intellij.ui.tree.TreeVisitor
 import com.intellij.usageView.UsageViewBundle
 import com.intellij.util.ui.tree.TreeUtil
 import com.jetbrains.python.ift.PythonLessonsBundle
 import org.fest.swing.fixture.JTreeFixture
-import org.jetbrains.annotations.Nullable
 import training.dsl.*
 import training.learn.LessonsBundle
 import training.learn.course.KLesson
-import java.util.regex.Pattern
 import javax.swing.JButton
 import javax.swing.JTree
 import javax.swing.tree.TreePath
@@ -53,8 +52,6 @@ class PythonRenameLesson : KLesson("Rename", LessonsBundle.message("rename.lesso
 
   private val sample = parseLessonSample(template.replace("<name>", "teams"))
 
-  private val replacePreviewPattern = Pattern.compile(".*Variable to be renamed to (\\w+).*")
-
   override val lessonContent: LessonContext.() -> Unit = {
     prepareSample(sample)
     val dynamicWord = UsageViewBundle.message("usage.view.results.node.dynamic")
@@ -62,11 +59,16 @@ class PythonRenameLesson : KLesson("Rename", LessonsBundle.message("rename.lesso
     var dynamicItem: String? = null
     task("RenameElement") {
       text(PythonLessonsBundle.message("python.rename.press.rename", action(it), code("teams"), code("teams_number")))
-      triggerByFoundPathAndHighlight { tree: JTree, path: TreePath ->
+      triggerByUiComponentAndHighlight(false, false) { ui: NameSuggestionsField ->
+        ui.addDataChangedListener {
+          replace = ui.enteredName
+        }
+        true
+      }
+      triggerByFoundPathAndHighlight { _: JTree, path: TreePath ->
         val pathStr = path.getPathComponent(1).toString()
         if (path.pathCount == 2 && pathStr.contains(dynamicWord)) {
           dynamicItem = pathStr
-          replace = replacePreviewPattern.matcher(tree.model.root.toString()).takeIf { m -> m.find() }?.group(1)
           true
         }
         else false
@@ -89,7 +91,7 @@ class PythonRenameLesson : KLesson("Rename", LessonsBundle.message("rename.lesso
       }
       val dynamicReferencesString = "[$dynamicWord]"
       text(PythonLessonsBundle.message("python.rename.expand.dynamic.references",
-                                 code("teams"), strong(dynamicReferencesString)))
+                                       code("teams"), strong(dynamicReferencesString)))
 
       triggerByFoundPathAndHighlight { _: JTree, path: TreePath ->
         path.pathCount == 6 && path.getPathComponent(5).toString().contains("company_members")
@@ -136,7 +138,7 @@ class PythonRenameLesson : KLesson("Rename", LessonsBundle.message("rename.lesso
     val confirmRefactoringButton = RefactoringBundle.message("usageView.doAction").dropMnemonic()
     task {
       triggerByUiComponentAndHighlight(highlightInside = false) { button: JButton ->
-        button.text == confirmRefactoringButton
+        button.text?.contains(confirmRefactoringButton) == true
       }
     }
 
@@ -153,7 +155,7 @@ class PythonRenameLesson : KLesson("Rename", LessonsBundle.message("rename.lesso
     }
   }
 
-  private fun pathToExclude(tree: JTree): @Nullable TreePath? {
+  private fun pathToExclude(tree: JTree): TreePath? {
     return TreeUtil.promiseVisit(tree, TreeVisitor { path ->
       if (path.pathCount == 7 && path.getPathComponent(6).toString().contains("lambda"))
         TreeVisitor.Action.INTERRUPT

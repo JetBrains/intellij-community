@@ -15,13 +15,8 @@
  */
 package com.intellij.util;
 
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-
-import java.util.Collection;
-
 /**
- * Please use {@link java.util.function.Function} instead
+ * Deprecated. Please use {@link java.util.function.Function} instead
  *
  * @author max
  * @see Functions for some common implementations
@@ -30,30 +25,4 @@ public interface Function<Param, Result> {
   Result fun(Param param);
 
   interface Mono<T> extends Function<T, T> {}
-
-  final class InstanceOf<P, R extends P> implements NullableFunction<P, R> {
-
-    private final Class<R> myResultClass;
-
-    public InstanceOf(@NotNull Class<R> resultClass) {
-      myResultClass = resultClass;
-    }
-
-    @Nullable
-    public R fun(P p) {
-      return myResultClass.isInstance(p) ? myResultClass.cast(p) : null;
-    }
-  }
-
-  final class First<P> implements Function<P[], P> {
-    public P fun(P[] ps) {
-      return ps[0];
-    }
-  }
-
-  final class FirstInCollection<P> implements Function<Collection<P>, P> {
-    public P fun(Collection<P> ps) {
-      return ps.iterator().next();
-    }
-  }
 }

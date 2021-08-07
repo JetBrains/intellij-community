@@ -22,7 +22,6 @@ import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.components.JBScrollPane;
-import com.intellij.ui.components.JBTextArea;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.popup.PopupState;
 import com.intellij.ui.scale.JBUIScale;
@@ -98,21 +97,9 @@ public class SearchTextArea extends JPanel implements PropertyChangeListener {
   private boolean myMultilineEnabled = true;
 
   @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.2")
-  public SearchTextArea(boolean searchMode) {
-    this(new JBTextArea(), searchMode);
-  }
-
-  @Deprecated
   @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public SearchTextArea(@NotNull JTextArea textArea, boolean searchMode, boolean infoMode) {
     this (textArea, searchMode);
-  }
-
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.2")
-  public SearchTextArea(@NotNull JTextArea textArea, boolean searchMode, boolean infoMode, boolean allowInsertTabInMultiline) {
-    this(textArea, searchMode);
   }
 
   public SearchTextArea(@NotNull JTextArea textArea, boolean searchMode) {
@@ -221,10 +208,10 @@ public class SearchTextArea extends JPanel implements PropertyChangeListener {
 
   protected void updateLayout() {
     JPanel historyButtonWrapper = new NonOpaquePanel(new BorderLayout());
-    historyButtonWrapper.setBorder(JBUI.Borders.emptyTop(1));
+    historyButtonWrapper.setBorder(JBUI.Borders.empty(2, 3, 0, 0));
     historyButtonWrapper.add(myHistoryPopupButton, BorderLayout.NORTH);
     JPanel iconsPanelWrapper = new NonOpaquePanel(new BorderLayout());
-    iconsPanelWrapper.setBorder(JBUI.Borders.emptyTop(1));
+    iconsPanelWrapper.setBorder(JBUI.Borders.emptyTop(2));
     JPanel p = new NonOpaquePanel(new BorderLayout());
     p.add(myIconsPanel, BorderLayout.NORTH);
     myIconsPanel.setBorder(JBUI.Borders.emptyRight(5));
@@ -283,9 +270,11 @@ public class SearchTextArea extends JPanel implements PropertyChangeListener {
         addedButtons.add(button);
         buttonsGrid.add(button);
       }
+      buttonsGrid.setBorder(JBUI.Borders.emptyRight(2));
       myExtraActionsPanel.setLayout(new BorderLayout());
       myExtraActionsPanel.add(buttonsGrid, BorderLayout.NORTH);
       myExtraActionsPanel.setBorder(new CompoundBorder(JBUI.Borders.customLine(JBUI.CurrentTheme.CustomFrameDecorations.separatorForeground(), 0, 1, 0, 0), JBUI.Borders.emptyLeft(5)));
+      myExtraActionsPanel.setBorder(new PseudoSeparatorBorder());
     }
     return addedButtons;
   }
@@ -343,7 +332,9 @@ public class SearchTextArea extends JPanel implements PropertyChangeListener {
     }
   }
 
-  @Deprecated
+  /**
+   * @deprecated use this wrapper component with JBTextArea and its getEmptyText() instead
+   */
   public void setInfoText(String info) {}
 
   private class ShowHistoryAction extends DumbAwareAction {
@@ -425,6 +416,24 @@ public class SearchTextArea extends JPanel implements PropertyChangeListener {
         if (selectedIcon != null) return selectedIcon;
       }
       return super.getIcon();
+    }
+  }
+
+  private static class PseudoSeparatorBorder implements Border {
+    @Override
+    public void paintBorder(Component c, Graphics g, int x, int y, int width, int height) {
+      g.setColor(JBUI.CurrentTheme.CustomFrameDecorations.separatorForeground());
+      g.fillRect(x + JBUI.scale(1), y + 1, 1, JBUI.scale(20));
+    }
+
+    @Override
+    public Insets getBorderInsets(Component c) {
+      return new JBInsets(0, 7, 0, 0);
+    }
+
+    @Override
+    public boolean isBorderOpaque() {
+      return false;
     }
   }
 }

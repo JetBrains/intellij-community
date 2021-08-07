@@ -507,7 +507,7 @@ public class MVStoreTest {
       m.put(1, 1);
       MVStore.StoreHeader header = s.getStoreHeader();
       int format = header.format;
-      assertThat(format).isEqualTo(2);
+      assertThat(format).isEqualTo(3);
 
       ByteBuf buf = PooledByteBufAllocator.DEFAULT.ioBuffer(2 * MVStore.BLOCK_SIZE);
       header.format = 12;
@@ -672,7 +672,7 @@ public class MVStoreTest {
       s.setRetentionTime(Integer.MAX_VALUE);
       long time = System.currentTimeMillis();
       MVStore.StoreHeader m = s.getStoreHeader();
-      assertThat((int)m.format).isEqualTo(2);
+      assertThat((int)m.format).isEqualTo(3);
       long creationTime = m.creationTime;
       assertThat(Math.abs(time - creationTime)).isLessThan(100);
     }

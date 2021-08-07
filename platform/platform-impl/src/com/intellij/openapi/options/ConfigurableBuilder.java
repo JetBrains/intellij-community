@@ -1,9 +1,12 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.options;
 
 import com.intellij.ide.ui.search.BooleanOptionDescription;
 import com.intellij.ide.ui.search.OptionDescription;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Getter;
+import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.Setter;
 import com.intellij.ui.layout.RowBuilder;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
@@ -15,6 +18,7 @@ import javax.swing.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Function;
+import java.util.function.Supplier;
 
 /**
  * See also {@link UiDslConfigurable.Simple} for more flexible alternative.
@@ -30,10 +34,10 @@ public abstract class ConfigurableBuilder extends UiDslConfigurable.Simple
   }
 
   private static final class CallbackAccessor<T> implements PropertyAccessor<T> {
-    private final Getter<? extends T> myGetter;
+    private final Supplier<? extends T> myGetter;
     private final Setter<? super T> mySetter;
 
-    private CallbackAccessor(Getter<? extends T> getter, Setter<? super T> setter) {
+    private CallbackAccessor(Supplier<? extends T> getter, Setter<? super T> setter) {
       myGetter = getter;
       mySetter = setter;
     }
@@ -182,9 +186,9 @@ public abstract class ConfigurableBuilder extends UiDslConfigurable.Simple
    * E.g. text from the edit box is queried and saved back to model bean.
    */
   protected <V> void component(@NotNull JComponent component,
-                               @NotNull Getter<? extends V> beanGetter,
+                               @NotNull Supplier<? extends V> beanGetter,
                                @NotNull Setter<? super V> beanSetter,
-                               @NotNull Getter<? extends V> componentGetter,
+                               @NotNull Supplier<? extends V> componentGetter,
                                @NotNull Setter<? super V> componentSetter) {
     BeanField<JComponent, V> field = new BeanField<>(new CallbackAccessor<>(beanGetter, beanSetter)) {
       @NotNull

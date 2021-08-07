@@ -21,7 +21,6 @@ import org.jetbrains.plugins.gradle.issue.quickfix.GradleWrapperSettingsOpenQuic
 import org.jetbrains.plugins.gradle.service.execution.GradleExecutionErrorHandler.getRootCauseAndLocation
 import org.jetbrains.plugins.gradle.util.*
 import java.io.File
-import java.util.*
 import java.util.function.Consumer
 
 /**
@@ -67,13 +66,20 @@ class IncompatibleGradleJdkIssueChecker : GradleIssueChecker {
     }
 
     var isJavaGroovyCompatibilityIssue = false
+    var isJavaByteCodeCompatibilityIssue = false
+    if (javaVersionUsed != null && gradleVersionUsed != null && !isSupported(gradleVersionUsed, javaVersionUsed)) {
+      isJavaGroovyCompatibilityIssue = isJavaGroovyCompatibilityIssue(rootCauseText)
+      isJavaByteCodeCompatibilityIssue = isJavaByteCodeCompatibilityIssue(rootCauseText)
+    }
+
     if (!isUnsupportedClassVersionErrorIssue &&
-        !isUnsupportedJavaRuntimeIssue && !isRemovedUnsafeDefineClassMethodInJDK11Issue &&
-        !unableToStartDaemonProcessForJDK11 && !unableToStartDaemonProcessForJDK9) {
-      if (javaVersionUsed != null && gradleVersionUsed != null && !isSupported(gradleVersionUsed, javaVersionUsed)) {
-        isJavaGroovyCompatibilityIssue = if (isJavaGroovyCompatibilityIssue(rootCauseText)) true else return null
-      }
-      else return null
+        !isUnsupportedJavaRuntimeIssue &&
+        !isRemovedUnsafeDefineClassMethodInJDK11Issue &&
+        !unableToStartDaemonProcessForJDK11 &&
+        !unableToStartDaemonProcessForJDK9 &&
+        !isJavaGroovyCompatibilityIssue &&
+        !isJavaByteCodeCompatibilityIssue) {
+      return null
     }
 
     val quickFixes = mutableListOf<BuildIssueQuickFix>()
@@ -95,7 +101,7 @@ class IncompatibleGradleJdkIssueChecker : GradleIssueChecker {
           .append("Unsupported Java. \n") // title
           .append("Your build is currently configured to use $incompatibleJavaVersion. You need to use at least Java 7.")
       }
-      isJavaGroovyCompatibilityIssue -> {
+      isJavaGroovyCompatibilityIssue || isJavaByteCodeCompatibilityIssue -> {
         issueDescription
           .append("Unsupported Java. \n") // title
           .append("Your build is currently configured to use Java $javaVersionUsed and Gradle ${gradleVersionUsed!!.version}.")
@@ -165,6 +171,10 @@ class IncompatibleGradleJdkIssueChecker : GradleIssueChecker {
 
   private fun isJavaGroovyCompatibilityIssue(rootCauseText: String): Boolean {
     return rootCauseText.startsWith("java.lang.NoClassDefFoundError: Could not initialize class org.codehaus.groovy.")
+  }
+
+  private fun isJavaByteCodeCompatibilityIssue(rootCauseText: String): Boolean {
+    return rootCauseText.contains("Unsupported class file major version")
   }
 
   override fun consumeBuildOutputFailureMessage(message: String,

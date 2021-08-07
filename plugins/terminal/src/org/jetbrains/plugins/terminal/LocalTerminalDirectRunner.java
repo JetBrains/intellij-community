@@ -58,7 +58,7 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
   private static final String ZSH_NAME = "zsh";
   private static final String FISH_NAME = "fish";
 
-  private final Charset myDefaultCharset;
+  protected final Charset myDefaultCharset;
 
   public LocalTerminalDirectRunner(Project project) {
     super(project);
@@ -146,6 +146,11 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
       envs.put(env.getKey(), macroManager.expandPath(env.getValue()));
     }
     return envs;
+  }
+
+  @Override
+  public PtyProcess createProcess(@Nullable String directory) throws ExecutionException {
+    return super.createProcess(directory, null);
   }
 
   @Override

@@ -1,3 +1,4 @@
+// Licensed under the terms of the Eclipse Public License (EPL).
 package com.jetbrains.python.debugger.pydev;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -65,6 +66,9 @@ public abstract class AbstractCommand<T> {
 
   // Powerful DataViewer commands
   public static final int CMD_DATAVIEWER_ACTION = 210;
+  public static final int CMD_TABLE_EXEC = 211;
+
+  public static final int INTERRUPT_DEBUG_CONSOLE = 212;
 
   /**
    * The code of the message that means that IDE received

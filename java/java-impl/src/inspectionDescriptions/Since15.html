@@ -1,7 +1,13 @@
 <html>
 <body>
-This inspection finds all usages of methods that have <b><font color="#000080">@since</font></b> tag in
-their documentation.<br><br>
-This may be useful when development is performed under newer SDK version as the target platform for production.<br><br>
+Reports usages of the API that is unavailable at the configured language level.
+<p>API availability is defined
+by the version specified in the <code>@since</code> tag in the documentation. This may be useful because
+  the language level can differ from your project SDK, and there may be no such API in the JDK that is used to run the code.</p>
+<!-- tooltip end -->
+<p>
+  Use the <b>Forbid API usages</b> option to forbid usages of the API in respect to the project or custom language level.
+</p>
+
 </body>
 </html>

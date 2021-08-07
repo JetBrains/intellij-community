@@ -8,9 +8,7 @@ import com.intellij.openapi.project.DumbAware;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author yole
- */
+
 public class DevelopPluginsAction extends AnAction implements DumbAware {
   @NonNls private static final String PLUGIN_WEBSITE = "https://plugins.jetbrains.com/docs/intellij/";
 

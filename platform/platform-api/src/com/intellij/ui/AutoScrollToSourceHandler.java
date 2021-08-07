@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.ui;
 
@@ -12,6 +12,7 @@ import com.intellij.openapi.fileTypes.INativeFileType;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.NlsActions;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.PersistentFSConstants;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindow;
@@ -141,7 +142,7 @@ public abstract class AutoScrollToSourceHandler {
             }
           }
         },
-        500
+        Registry.intValue("ide.autoscroll.to.source.delay", 100)
       );
     }
   }

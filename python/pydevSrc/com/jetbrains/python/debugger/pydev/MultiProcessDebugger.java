@@ -178,6 +178,14 @@ public class MultiProcessDebugger implements ProcessDebugger {
   }
 
   @Override
+  public @Nullable String execTableCommand(String threadId,
+                                           String frameId,
+                                           String command,
+                                           TableCommandType commandType) throws PyDebuggerException {
+    return debugger(threadId).execTableCommand(threadId, frameId, command, commandType);
+  }
+
+  @Override
   public  List<Pair<String, Boolean>> getSmartStepIntoVariants(String threadId, String frameId, int startContextLine, int endContextLine)
     throws PyDebuggerException {
     return debugger(threadId).getSmartStepIntoVariants(threadId, frameId, startContextLine, endContextLine);
@@ -586,5 +594,12 @@ public class MultiProcessDebugger implements ProcessDebugger {
 
   public interface DebuggerProcessListener {
     void threadsClosed(Set<String> threadIds);
+  }
+
+  @Override
+  public void interruptDebugConsole() {
+    for (RemoteDebugger d : allDebuggers()) {
+      d.interruptDebugConsole();
+    }
   }
 }

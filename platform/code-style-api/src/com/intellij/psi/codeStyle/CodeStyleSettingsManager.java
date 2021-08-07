@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.codeStyle;
 
 import com.intellij.application.options.CodeStyle;
@@ -6,7 +6,6 @@ import com.intellij.lang.Language;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.PersistentStateComponentWithModificationTracker;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
@@ -36,6 +35,7 @@ public class CodeStyleSettingsManager implements PersistentStateComponentWithMod
    * @deprecated Use {@link #setMainProjectCodeStyle(CodeStyleSettings)} or {@link #getMainProjectCodeStyle()} instead
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   @Nullable
   public volatile CodeStyleSettings PER_PROJECT_SETTINGS;
 
@@ -302,7 +302,7 @@ public class CodeStyleSettingsManager implements PersistentStateComponentWithMod
     }
     else {
       if (!project.isDisposed()) {
-        CodeStyleSettingsManager projectInstance = ServiceManager.getService(project, ProjectCodeStyleSettingsManager.class);
+        CodeStyleSettingsManager projectInstance = project.getService(ProjectCodeStyleSettingsManager.class);
         if (projectInstance != null) {
           projectInstance.removeListener(listener);
         }
@@ -333,5 +333,8 @@ public class CodeStyleSettingsManager implements PersistentStateComponentWithMod
   public void updateSettingsTracker() {
     CodeStyleSettings settings = getCurrentSettings();
     settings.getModificationTracker().incModificationCount();
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("Updated code style settings modification tracker to " + settings.getModificationTracker().getModificationCount());
+    }
   }
 }

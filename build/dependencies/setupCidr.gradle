@@ -25,25 +25,37 @@ task setupCidr
   clang: [
     version: "10.0.0.143e87",
     platforms: [
-      win: ["x64"],
-      linux: ["x64"],
-      mac: ["x64"]
+      win: [archs: ["x64"]],
+      linux: [archs: ["x64"]],
+      mac: [archs: ["x64"]]
     ],
     path: "CIDR/clion/bin/clang"
   ],
-  lldbkit: [
-    version: "087c881",
+  lldb: [
+    version: "e0cccbacab5cf5ee621edddca1ea452353192e6b",
     platforms: [
-      win: ["x64", "x86"],
-      linux: ["x64"],
-      mac: ["x64"]
+      win: [
+        version: "347b30bd03fec57924cd06456059e1d61150f023",
+        archs: ["x64", "x86"]
+      ],
+      linux: [archs: ["x64"]],
+      mac: [archs: ["x64"]]
+    ],
+    path: "CIDR/cidr-debugger/bin/lldb"
+  ],
+  lldbfrontend: [
+    version: "1e5c6ed011d85d7547e00afb083a96a5a46719aa",
+    platforms: [
+      win: [archs: ["x64", "x86"]],
+      linux: [archs: ["x64"]],
+      mac: [archs: ["x64"]]
     ],
     path: "CIDR/cidr-debugger/bin/lldb"
   ],
   bridge: [
     version: "51b0c22",
     platforms: [
-      mac: ["x64"]
+      mac: [archs: ["x64"]]
     ],
     path: "CIDR-appcode/appcode/bin",
     no_platform_subdir: true
@@ -51,7 +63,7 @@ task setupCidr
   jbdevice: [
     version: "810660",
     platforms: [
-      "mac": ["x64"],
+      "mac": [archs: ["x64"]]
     ],
     path: "CIDR-appcode/appcode/bin",
     no_platform_subdir: true
@@ -59,8 +71,8 @@ task setupCidr
   objchelper: [
     version: "e9b1fe3",
     platforms: [
-      "mac": ["x64"],
-      "linux": ["x64"]
+      "mac": [archs: ["x64"]],
+      "linux": [archs: ["x64"]]
     ],
     path: "CIDR-appcode/appcode/bin",
     no_platform_subdir: true
@@ -68,16 +80,21 @@ task setupCidr
 ].each { name, settings ->
   settings.platforms.findAll {
     SETUP_ALL_PLATFORMS || it.key == CURRENT_PLATFORM
-  }.each { platform, archs ->
-    archs.each { arch ->
+  }.each { platform, platformSettings ->
+    def version = platformSettings.containsKey("version") ?
+      platformSettings.version : settings.version
+
+    platformSettings.archs.each { arch ->
       def taskSuffix = "${name.capitalize()}${platform.capitalize()}${arch.capitalize()}"
       def packageExtension = PACKAGE_EXTENSIONS[platform]
-      def packageName = "${name}-${settings.version}-${platform}-${arch}.${packageExtension}"
-      def downloadUrl = "${REPOSITORY}/${name}/${settings.version}/${packageName}"
+
+
+      def packageName = "${name}-${version}-${platform}-${arch}.${packageExtension}"
+      def downloadUrl = "${REPOSITORY}/${name}/${version}/${packageName}"
 
       def unpackDir = "${IJ_DIR}/${settings.path}" +
                       "${settings.no_platform_subdir ? '' : "/${platform}"}" +
-                      "${archs.size > 1 ? "/${arch}" : ''}"
+                      "${platformSettings.archs.size > 1 ? "/${arch}" : ''}"
 
       def downloadTool = task("downloadCidr${taskSuffix}") {
         def packageArchive = "${buildDir}/cidr/${packageName}"

@@ -107,20 +107,20 @@ public class JsonSchemaInfoPopupStep extends BaseListPopupStep<JsonSchemaInfo> i
 
   protected void runSchemaEditorForCurrentFile() {
     assert myVirtualFile != null: "override this method to do without a virtual file!";
-    JsonSchemaMappingsConfigurable configurable = new JsonSchemaMappingsConfigurable(myProject);
-    JsonSchemaMappingsProjectConfiguration mappingsConf = JsonSchemaMappingsProjectConfiguration.getInstance(myProject);
-
-    ShowSettingsUtil.getInstance().editConfigurable(myProject, configurable, () -> {
-      UserDefinedJsonSchemaConfiguration mappingForFile = mappingsConf.findMappingForFile(myVirtualFile);
-      if (mappingForFile == null) {
-        UserDefinedJsonSchemaConfiguration configuration = configurable.addProjectSchema();
-        String relativePath = VfsUtilCore.getRelativePath(myVirtualFile, myProject.getBaseDir());
-        configuration.patterns.add(new UserDefinedJsonSchemaConfiguration.Item(
-          relativePath == null ? myVirtualFile.getUrl() : relativePath, false, false));
-        mappingForFile = configuration;
-      }
-
-      configurable.selectInTree(mappingForFile);
+    ShowSettingsUtil.getInstance().showSettingsDialog(myProject, JsonSchemaMappingsConfigurable.class, (configurable) -> {
+      // For some reason, JsonSchemaMappingsConfigurable.reset is called right after this callback, leading to resetting the customization.
+      // Workaround: move this logic inside JsonSchemaMappingsConfigurable.reset.
+      configurable.setInitializer(() -> {
+        JsonSchemaMappingsProjectConfiguration mappings = JsonSchemaMappingsProjectConfiguration.getInstance(myProject);
+        UserDefinedJsonSchemaConfiguration configuration = mappings.findMappingForFile(myVirtualFile);
+        if (configuration == null) {
+          configuration = configurable.addProjectSchema();
+          String relativePath = VfsUtilCore.getRelativePath(myVirtualFile, myProject.getBaseDir());
+          configuration.patterns.add(new UserDefinedJsonSchemaConfiguration.Item(
+            relativePath == null ? myVirtualFile.getUrl() : relativePath, false, false));
+        }
+        configurable.selectInTree(configuration);
+      });
     });
   }
 

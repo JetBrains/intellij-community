@@ -1,5 +1,27 @@
 <html>
 <body>
-This inspection detects instance attribute definition outside __init__ method
+Reports a problem when instance attribute
+definition is outside <code>__init__</code> method.
+<p><b>Example:</b></p>
+<pre style="font-family: monospace">
+    class Book:
+    def __init__(self):
+        self.author = 'Mark Twain'
+
+    def release(self):
+        self.year = '1889'
+</pre>
+<p>
+  When the quick-fix is applied, the code sample changes to:
+</p>
+<pre style="font-family: monospace">
+    class Book:
+    def __init__(self):
+        self.year = '1889'
+        self.author = 'Mark Twain'
+
+    def release(self):
+        pass
+</pre>
 </body>
 </html>

@@ -11,6 +11,7 @@ import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.junit.JUnitConfiguration;
 import com.intellij.execution.junit.JUnitUtil;
 import com.intellij.execution.testframework.AbstractJavaTestConfigurationProducer;
+import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.application.WriteAction;
@@ -183,7 +184,7 @@ public abstract class BaseConfigurationTestCase extends JavaProjectTestCase {
       dataContext.put(LangDataKeys.MODULE, ModuleUtilCore.findModuleForPsiElement(psiClass));
     }
     dataContext.put(Location.DATA_KEY, PsiLocation.fromPsiElement(psiClass));
-    return ConfigurationContext.getFromContext(dataContext);
+    return ConfigurationContext.getFromContext(dataContext, ActionPlaces.UNKNOWN);
   }
 
   protected void addDependency(Module module, Module dependency) {

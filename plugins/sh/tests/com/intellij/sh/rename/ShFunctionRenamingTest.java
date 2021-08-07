@@ -21,6 +21,10 @@ public class ShFunctionRenamingTest extends BasePlatformTestCase {
     doTest("foo");
   }
 
+  public void testFunctionIDEA263122() {
+    doTest("addVersion");
+  }
+
   public void testOverridingFunction() {
     doTest("bar");
   }

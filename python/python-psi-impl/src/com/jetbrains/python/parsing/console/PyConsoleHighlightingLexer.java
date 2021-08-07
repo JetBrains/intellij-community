@@ -18,11 +18,12 @@ package com.jetbrains.python.parsing.console;
 import com.intellij.psi.tree.IElementType;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.lexer.PythonHighlightingLexer;
+import com.jetbrains.python.lexer.PythonLexerKind;
 import com.jetbrains.python.psi.LanguageLevel;
 
 public class PyConsoleHighlightingLexer extends PythonHighlightingLexer {
   public PyConsoleHighlightingLexer(LanguageLevel languageLevel) {
-    super(languageLevel);
+    super(languageLevel, PythonLexerKind.CONSOLE);
   }
 
   /**

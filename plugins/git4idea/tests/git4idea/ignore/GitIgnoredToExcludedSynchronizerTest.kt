@@ -2,7 +2,6 @@
 package git4idea.ignore
 
 import com.intellij.dvcs.ignore.IgnoredToExcludeNotificationProvider
-import com.intellij.dvcs.ignore.VcsRepositoryIgnoredFilesHolderBase
 import com.intellij.openapi.application.invokeAndWaitIfNeeded
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.fileEditor.FileEditorManager
@@ -84,7 +83,7 @@ class GitIgnoredToExcludedSynchronizerTest : GitSingleRepoTest() {
   }
 
   private fun createGitignoreAndWait(gitignoreContent: String) {
-    val ignoredHolderWaiter = (repo.ignoredFilesHolder as VcsRepositoryIgnoredFilesHolderBase<*>).createWaiter()
+    val ignoredHolderWaiter = repo.ignoredFilesHolder.createWaiter()
 
     val gitIgnore = file(GITIGNORE).create(gitignoreContent)
     VfsUtil.findFileByIoFile(gitIgnore.file, true) //trigger VFS create event explicitly

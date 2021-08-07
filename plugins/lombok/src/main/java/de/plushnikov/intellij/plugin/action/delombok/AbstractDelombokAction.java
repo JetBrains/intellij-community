@@ -21,7 +21,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 
-public abstract class AbstractDelombokAction extends AnAction {
+public abstract class AbstractDelombokAction extends AnAction implements UpdateInBackground {
   private DelombokHandler myHandler;
 
   protected AbstractDelombokAction() {
@@ -45,9 +45,7 @@ public abstract class AbstractDelombokAction extends AnAction {
     }
 
     final PsiDocumentManager psiDocumentManager = PsiDocumentManager.getInstance(project);
-    if (psiDocumentManager.hasUncommitedDocuments()) {
-      psiDocumentManager.commitAllDocuments();
-    }
+    psiDocumentManager.commitAllDocuments();
 
     final DataContext dataContext = event.getDataContext();
     final Editor editor = CommonDataKeys.EDITOR.getData(dataContext);

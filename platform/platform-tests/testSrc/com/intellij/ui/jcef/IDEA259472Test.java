@@ -9,6 +9,7 @@ import org.cef.browser.CefFrame;
 import org.cef.handler.CefLoadHandler;
 import org.cef.network.CefRequest;
 import org.junit.After;
+import org.junit.Before;
 import org.junit.ClassRule;
 import org.junit.Test;
 
@@ -32,6 +33,11 @@ public class IDEA259472Test {
 
   @ClassRule public static final ApplicationRule appRule = new ApplicationRule();
 
+  @Before
+  public void before() {
+    TestScaleHelper.assumeStandalone();
+  }
+
   @After
   public void after() {
     TestScaleHelper.restoreSystemProperties();
@@ -39,8 +45,6 @@ public class IDEA259472Test {
 
   @Test
   public void test() {
-    TestScaleHelper.assumeStandalone();
-
     CountDownLatch latch1 = new CountDownLatch(1);
     CountDownLatch latch2 = new CountDownLatch(1);
 

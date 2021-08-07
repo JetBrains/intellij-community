@@ -8,9 +8,7 @@ import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author yole
- */
+
 public class PyStarArgumentImpl extends PyElementImpl implements PyStarArgument {
   public PyStarArgumentImpl(ASTNode astNode) {
     super(astNode);

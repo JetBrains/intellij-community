@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.fileChooser.ex;
 
 import com.intellij.ide.util.treeView.AbstractTreeBuilder;
@@ -7,7 +7,6 @@ import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.ide.util.treeView.NodeRenderer;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ActionGroup;
-import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.DataKey;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
@@ -181,7 +180,7 @@ public class FileSystemTreeImpl implements FileSystemTree {
 
   @NotNull
   protected AsyncTreeModel createAsyncTreeModel(@NotNull FileTreeModel fileTreeModel) {
-    return new AsyncTreeModel(fileTreeModel, false, this);
+    return new AsyncTreeModel(fileTreeModel, true, this);
   }
 
   protected AbstractTreeBuilder createTreeBuilder(JTree tree, DefaultTreeModel treeModel,
@@ -237,7 +236,7 @@ public class FileSystemTreeImpl implements FileSystemTree {
   }
 
   public void registerMouseListener(final ActionGroup group) {
-    PopupHandler.installPopupHandler(myTree, group, ActionPlaces.UNKNOWN);
+    PopupHandler.installPopupMenu(myTree, group, "FileSystemTreePopup");
   }
 
   @Override
@@ -463,7 +462,7 @@ public class FileSystemTreeImpl implements FileSystemTree {
     return myAsyncTreeModel != null && myAsyncTreeModel.isLeaf(component);
   }
 
-  static VirtualFile getVirtualFile(TreePath path) {
+  public static VirtualFile getVirtualFile(TreePath path) {
     Object component = path.getLastPathComponent();
     if (component instanceof DefaultMutableTreeNode) {
       DefaultMutableTreeNode node = (DefaultMutableTreeNode)component;

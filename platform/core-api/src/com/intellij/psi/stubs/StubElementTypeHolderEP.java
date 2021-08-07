@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.stubs;
 
 import com.intellij.diagnostic.PluginException;
@@ -23,8 +23,6 @@ import java.util.List;
  * and all other language's element types are kept in a separate interface that can be loaded later.
  * <p>
  * Also consider specifying {@link #externalIdPrefix} for further speedup.
- *
- * @author yole
  */
 public final class StubElementTypeHolderEP {
   private static final Logger LOG = Logger.getInstance(StubElementTypeHolderEP.class);
@@ -36,7 +34,7 @@ public final class StubElementTypeHolderEP {
   public String holderClass;
 
   /**
-   * Allows to avoid class initialization by declaring that the stub element type holder obeys the following contract:
+   * Allows avoiding class initialization by declaring that the stub element type holder obeys the following contract:
    * <ul>
    * <li>It's an interface</li>
    * <li>All stub element types to load are declared as fields in the interface itself, not in super-interfaces</li>

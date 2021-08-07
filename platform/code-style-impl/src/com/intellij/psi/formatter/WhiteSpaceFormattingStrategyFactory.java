@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.formatter;
 
 import com.intellij.lang.Language;
@@ -7,7 +7,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.reference.SoftReference;
-import com.intellij.util.PatchedWeakReference;
 import org.jetbrains.annotations.NotNull;
 
 import java.lang.ref.WeakReference;
@@ -20,12 +19,11 @@ import java.util.concurrent.atomic.AtomicReference;
  * @author Denis Zhdanov
  */
 public final class WhiteSpaceFormattingStrategyFactory {
-
   private static final List<WhiteSpaceFormattingStrategy> SHARED_STRATEGIES = Collections.singletonList(
     new StaticSymbolWhiteSpaceDefinitionStrategy(' ', '\t', '\n')
   );
 
-  private static final AtomicReference<PatchedWeakReference<Collection<WhiteSpaceFormattingStrategy>>> myCachedStrategies
+  private static final AtomicReference<WeakReference<Collection<WhiteSpaceFormattingStrategy>>> myCachedStrategies
     = new AtomicReference<>();
 
   private WhiteSpaceFormattingStrategyFactory() {
@@ -75,7 +73,7 @@ public final class WhiteSpaceFormattingStrategyFactory {
         result.add(strategy);
       }
     }
-    myCachedStrategies.set(new PatchedWeakReference<>(result));
+    myCachedStrategies.set(new WeakReference<>(result));
     return result;
   }
 

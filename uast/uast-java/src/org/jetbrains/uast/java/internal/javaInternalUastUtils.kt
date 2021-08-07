@@ -64,7 +64,7 @@ internal fun <T> singletonListOrEmpty(element: T?) = if (element != null) listOf
 
 @Suppress("NOTHING_TO_INLINE")
 internal inline fun String?.orAnonymous(kind: String = ""): String {
-  return this ?: "<anonymous" + (if (kind.isNotBlank()) " $kind" else "") + ">"
+  return this ?: ("<anonymous" + (if (kind.isNotBlank()) " $kind" else "") + ">")
 }
 
 internal fun <T> lz(initializer: () -> T) = lazy(LazyThreadSafetyMode.SYNCHRONIZED, initializer)

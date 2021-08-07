@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -177,7 +177,7 @@ public abstract class CachedValueBase<T> {
 
   public abstract Object getValueProvider();
 
-  protected static class Data<T> implements Getter<T> {
+  protected static final class Data<T> implements Getter<T> {
     private final T myValue;
     private final Object @NotNull [] myDependencies;
     private final long @NotNull [] myTimeStamps;
@@ -200,7 +200,7 @@ public abstract class CachedValueBase<T> {
     }
 
     @Override
-    public final T get() {
+    public T get() {
       return getValue();
     }
 

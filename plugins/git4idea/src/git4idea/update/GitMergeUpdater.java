@@ -29,7 +29,6 @@ import git4idea.merge.GitMerger;
 import git4idea.repo.GitRepository;
 import git4idea.util.GitUntrackedFilesHelper;
 import git4idea.util.LocalChangesWouldBeOverwrittenHelper;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
@@ -77,7 +76,7 @@ public class GitMergeUpdater extends GitUpdater {
       myProgressIndicator.setText(originalText);
       return result.success()
              ? GitUpdateResult.SUCCESS
-             : handleMergeFailure(mergeLineListener, untrackedFilesDetector, merger, result.getErrorOutputAsJoinedString());
+             : handleMergeFailure(mergeLineListener, untrackedFilesDetector, merger, result);
     }
     catch (ProcessCanceledException pce) {
       cancel();
@@ -89,7 +88,7 @@ public class GitMergeUpdater extends GitUpdater {
   private GitUpdateResult handleMergeFailure(MergeLineListener mergeLineListener,
                                              GitMessageWithFilesDetector untrackedFilesWouldBeOverwrittenByMergeDetector,
                                              final GitMerger merger,
-                                             @Nls String errorMessage) {
+                                             GitCommandResult commandResult) {
     final MergeError error = mergeLineListener.getMergeError();
     LOG.info("merge error: " + error);
     if (error == MergeError.CONFLICT) {
@@ -117,9 +116,9 @@ public class GitMergeUpdater extends GitUpdater {
       return GitUpdateResult.ERROR;
     }
     else {
-      LOG.info("Unknown error: " + errorMessage);
+      LOG.info("Unknown error: " + commandResult.getErrorOutputAsJoinedString());
       VcsNotifier.getInstance(myProject)
-        .notifyError(MERGE_ERROR, GitBundle.message("notification.title.error.merging"), errorMessage);
+        .notifyError(MERGE_ERROR, GitBundle.message("notification.title.error.merging"), commandResult.getErrorOutputAsHtmlString());
       return GitUpdateResult.ERROR;
     }
   }

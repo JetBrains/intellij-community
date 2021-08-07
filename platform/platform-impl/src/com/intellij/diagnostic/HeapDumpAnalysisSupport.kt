@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.diagnostic
 
 import com.google.gson.stream.JsonReader
@@ -23,9 +23,7 @@ import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
 
-/**
- * @author yole
- */
+
 open class HeapDumpAnalysisSupport {
   companion object {
     fun getInstance() = service<HeapDumpAnalysisSupport>()
@@ -74,7 +72,7 @@ open class HeapDumpAnalysisSupport {
 
 internal class AnalyzePendingSnapshotActivity: StartupActivity.DumbAware {
   override fun runActivity(project: Project) {
-    if (ApplicationManager.getApplication().isUnitTestMode) {
+    if (ApplicationManager.getApplication().isHeadlessEnvironment) {
       return
     }
 

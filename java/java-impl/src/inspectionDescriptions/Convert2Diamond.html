@@ -1,7 +1,14 @@
 <html>
 <body>
-  Reports all new expressions with type arguments which can be replaced with diamond type &lt;&gt;
-  <p>
-  Such <b>&lt;&gt;</b> syntax is not supported under Java 1.6 or earlier JVMs.
+Reports all <code>new</code> expressions with type arguments that can be replaced a with diamond type <code>&lt;&gt;</code>.
+<p>Example:</p>
+<pre><code>
+  List&lt;String&gt; list = new ArrayList&lt;String&gt;(); // reports array list type argument
+</code></pre>
+<p>After the quick-fix is applied:</p>
+<pre><code>
+  List&lt;String&gt; list = new ArrayList&lt;&gt;();
+</code></pre>
+<p>The <code>&lt;&gt;</code> syntax isn't supported in Java 1.6 and earlier JVMs.</p>
 </body>
 </html>

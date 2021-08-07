@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.history.integration;
 
 import com.intellij.history.*;
@@ -12,10 +12,11 @@ import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.options.advanced.AdvancedSettings;
+import com.intellij.openapi.options.advanced.AdvancedSettingsChangeListener;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.ShutDownTracker;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.BulkFileListener;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
@@ -32,6 +33,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import static com.intellij.history.integration.LocalHistoryUtil.findRevisionIndexToRevert;
 
 public final class LocalHistoryImpl extends LocalHistory implements Disposable {
+  private static final String DAYS_TO_KEEP = "localHistory.daysToKeep";
+  private int myDaysToKeep = AdvancedSettings.getInt(DAYS_TO_KEEP);
   private ChangeList myChangeList;
   private LocalHistoryFacade myVcs;
   private IdeaGateway myGateway;
@@ -62,6 +65,14 @@ public final class LocalHistoryImpl extends LocalHistory implements Disposable {
     ShutDownTracker.getInstance().registerShutdownTask(() -> doDispose());
 
     initHistory();
+    app.getMessageBus().simpleConnect().subscribe(AdvancedSettingsChangeListener.TOPIC, new AdvancedSettingsChangeListener() {
+      @Override
+      public void advancedSettingChanged(@NotNull String id, @NotNull Object oldValue, @NotNull Object newValue) {
+        if (id.equals(DAYS_TO_KEEP)) {
+          myDaysToKeep = (int) newValue;
+        }
+      }
+    });
     isInitialized.set(true);
   }
 
@@ -100,7 +111,7 @@ public final class LocalHistoryImpl extends LocalHistory implements Disposable {
   private void doDispose() {
     if (!isInitialized.getAndSet(false)) return;
 
-    long period = Registry.intValue("localHistory.daysToKeep") * 1000L * 60L * 60L * 24L;
+    long period = myDaysToKeep * 1000L * 60L * 60L * 24L;
     LocalHistoryLog.LOG.debug("Purging local history...");
     myChangeList.purgeObsolete(period);
     myChangeList.close();

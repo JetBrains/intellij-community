@@ -7,12 +7,12 @@ enum StatsCounters {
   forceCachedDelayedUpdateCount,
   asyncUpdateCount, 	        // total count of async updates
   asyncUpdateCancelCount,	// total count of cancels of async updates
-  asyncUpdateActionsCount,	// total count of async actions (UpdateInBackgroud)
+  asyncUpdateActionsCount,	// total count of async actions (UpdateInBackground)
 
   touchbarCreationDurationNs,
   itemsCreationDurationNs,
   touchbarReleaseDurationNs,
-  applyPresentaionChangesDurationNs,
+  applyPresentationChangesDurationNs,
   totalUpdateDurationNs,
 
   scrubberIconsProcessingDurationNs

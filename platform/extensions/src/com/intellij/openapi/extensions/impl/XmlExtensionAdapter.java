@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.extensions.impl;
 
 import com.intellij.openapi.components.ComponentManager;
@@ -7,14 +7,17 @@ import com.intellij.openapi.extensions.LoadingOrder;
 import com.intellij.openapi.extensions.PluginAware;
 import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.progress.ProcessCanceledException;
-import com.intellij.util.pico.DefaultPicoContainer;
+import com.intellij.util.XmlElement;
 import com.intellij.util.xmlb.XmlSerializer;
-import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Arrays;
+
 class XmlExtensionAdapter extends ExtensionComponentAdapter {
-  private @Nullable Element myExtensionElement;
+  private @Nullable XmlElement extensionElement;
+
+  private static final Object NOT_APPLICABLE = new Object();
 
   private volatile Object extensionInstance;
   private boolean initializing;
@@ -23,11 +26,11 @@ class XmlExtensionAdapter extends ExtensionComponentAdapter {
                       @NotNull PluginDescriptor pluginDescriptor,
                       @Nullable String orderId,
                       @NotNull LoadingOrder order,
-                      @Nullable Element extensionElement,
+                      @Nullable XmlElement extensionElement,
                       @NotNull ImplementationClassResolver implementationClassResolver) {
     super(implementationClassName, pluginDescriptor, orderId, order, implementationClassResolver);
 
-    myExtensionElement = extensionElement;
+    this.extensionElement = extensionElement;
   }
 
   @Override
@@ -36,11 +39,11 @@ class XmlExtensionAdapter extends ExtensionComponentAdapter {
   }
 
   @Override
-  public @NotNull <T> T createInstance(@NotNull ComponentManager componentManager) {
+  public @Nullable <T> T createInstance(@NotNull ComponentManager componentManager) {
     @SuppressWarnings("unchecked")
     T instance = (T)extensionInstance;
     if (instance != null) {
-      return instance;
+      return instance == NOT_APPLICABLE ? null : instance;
     }
 
     //noinspection SynchronizeOnThis
@@ -48,7 +51,7 @@ class XmlExtensionAdapter extends ExtensionComponentAdapter {
       //noinspection unchecked
       instance = (T)extensionInstance;
       if (instance != null) {
-        return instance;
+        return instance == NOT_APPLICABLE ? null : instance;
       }
 
       if (initializing) {
@@ -58,30 +61,32 @@ class XmlExtensionAdapter extends ExtensionComponentAdapter {
       try {
         initializing = true;
 
-        Class<T> aClass;
-        try {
-          //noinspection unchecked
-          aClass = (Class<T>)implementationClassResolver.resolveImplementationClass(componentManager, this);
-        }
-        catch (ProcessCanceledException e) {
-          throw e;
-        }
-        catch (Throwable e) {
-          throw componentManager.createError(e, pluginDescriptor.getPluginId());
-        }
-
+        //noinspection unchecked
+        Class<T> aClass = (Class<T>)implementationClassResolver.resolveImplementationClass(componentManager, this);
         instance = instantiateClass(aClass, componentManager);
         if (instance instanceof PluginAware) {
           ((PluginAware)instance).setPluginDescriptor(pluginDescriptor);
         }
 
-        Element element = myExtensionElement;
+        XmlElement element = extensionElement;
         if (element != null) {
-          XmlSerializer.deserializeInto(instance, element);
-          myExtensionElement = null;
+          XmlSerializer.getBeanBinding(instance.getClass()).deserializeInto(instance, element);
+          extensionElement = null;
         }
 
         extensionInstance = instance;
+      }
+      catch (ExtensionNotApplicableException e) {
+        extensionInstance = NOT_APPLICABLE;
+        extensionElement = null;
+        return null;
+      }
+      catch (ProcessCanceledException e) {
+        throw e;
+      }
+      catch (Throwable e) {
+        throw componentManager.createError("Cannot create extension (class=" + getAssignableToClassName() + ")", e,
+                                           pluginDescriptor.getPluginId(), null);
       }
       finally {
         initializing = false;
@@ -99,15 +104,14 @@ class XmlExtensionAdapter extends ExtensionComponentAdapter {
                                       @NotNull PluginDescriptor pluginDescriptor,
                                       @Nullable String orderId,
                                       @NotNull LoadingOrder order,
-                                      @Nullable Element extensionElement,
+                                      @Nullable XmlElement extensionElement,
                                       @NotNull ImplementationClassResolver implementationClassResolver) {
       super(implementationClassName, pluginDescriptor, orderId, order, extensionElement, implementationClassResolver);
     }
 
     @Override
     protected @NotNull <T> T instantiateClass(@NotNull Class<T> aClass, @NotNull ComponentManager componentManager) {
-      // enable simple instantiateClass for project/module containers in 2020.0 (once Kotlin will be fixed - it is one of the important plugin)
-      if (((DefaultPicoContainer)componentManager.getPicoContainer()).getParent() == null) {
+      if (!aClass.getName().equals("org.jetbrains.kotlin.asJava.finder.JavaElementFinder")) {
         try {
           return super.instantiateClass(aClass, componentManager);
         }
@@ -120,14 +124,9 @@ class XmlExtensionAdapter extends ExtensionComponentAdapter {
             throw e;
           }
 
-          String message = "Cannot create extension without pico container (class=" + aClass.getName() + ")," +
-                           " please remove extra constructor parameters";
-          if (pluginDescriptor.isBundled()) {
-            ExtensionPointImpl.LOG.error(message, e);
-          }
-          else {
-            ExtensionPointImpl.LOG.warn(message, e);
-          }
+          ExtensionPointImpl.LOG.error("Cannot create extension without pico container (class=" + aClass.getName() + ", constructors=" +
+                                       Arrays.toString(aClass.getDeclaredConstructors()) + ")," +
+                                       " please remove extra constructor parameters", e);
         }
       }
       return componentManager.instantiateClassWithConstructorInjection(aClass, aClass, pluginDescriptor.getPluginId());

@@ -50,11 +50,6 @@ public abstract class PyInspection extends LocalInspectionTool {
   }
 
   @Override
-  public boolean isEnabledByDefault() {
-    return true;
-  }
-
-  @Override
   public boolean isSuppressedFor(@NotNull PsiElement element) {
     final PsiFile file = element.getContainingFile();
     if (file instanceof PyFileImpl && !((PyFileImpl)file).isAcceptedFor(this.getClass())) {

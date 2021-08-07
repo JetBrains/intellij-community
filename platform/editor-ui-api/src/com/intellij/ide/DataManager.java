@@ -74,6 +74,8 @@ public abstract class DataManager {
   public abstract DataContext getDataContext(@NotNull Component component, int x, int y);
 
   /**
+   * Save doesn't work during fast action update to prevent caching of yet invalid data
+   * 
    * @param dataContext should be instance of {@link com.intellij.openapi.util.UserDataHolder}
    * @param dataKey     key to store value
    * @param data        value to store

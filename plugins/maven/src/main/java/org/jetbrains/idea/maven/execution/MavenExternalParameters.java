@@ -29,6 +29,8 @@ import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.encoding.EncodingManager;
 import com.intellij.openapi.vfs.encoding.EncodingProjectManager;
 import com.intellij.util.PathUtil;
@@ -45,7 +47,9 @@ import org.jetbrains.idea.maven.project.MavenGeneralSettings;
 import org.jetbrains.idea.maven.project.MavenProject;
 import org.jetbrains.idea.maven.project.MavenProjectBundle;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
+import org.jetbrains.idea.maven.server.MavenDistributionsCache;
 import org.jetbrains.idea.maven.server.MavenServerUtil;
+import org.jetbrains.idea.maven.utils.MavenLog;
 import org.jetbrains.idea.maven.utils.MavenUtil;
 
 import javax.swing.event.HyperlinkEvent;
@@ -114,7 +118,8 @@ public final class MavenExternalParameters {
                                                MavenServerUtil.findMavenBasedir(parameters.getWorkingDirFile()).getPath());
     }
 
-    addVMParameters(params.getVMParametersList(), mavenHome, runnerSettings);
+    String vmOptions = getRunVmOptions(runnerSettings, project, parameters.getWorkingDirPath());
+    addVMParameters(params.getVMParametersList(), mavenHome, vmOptions);
 
     File confFile = MavenUtil.getMavenConfFile(new File(mavenHome));
     if (!confFile.isFile()) {
@@ -155,6 +160,40 @@ public final class MavenExternalParameters {
     MavenUtil.addEventListener(mavenVersion, params);
 
     return params;
+  }
+
+  static @Nullable String getRunVmOptions(@Nullable MavenRunnerSettings runnerSettings,
+                                          @Nullable Project project,
+                                          @NotNull String workingDirPath) {
+    if (runnerSettings != null && !StringUtil.isEmptyOrSpaces(runnerSettings.getVmOptions())) return runnerSettings.getVmOptions();
+    if (project == null) return null;
+    String multimoduleDirectory = MavenDistributionsCache.getInstance(project).getMultimoduleDirectory(workingDirPath);
+    return readJvmConfigOptions(multimoduleDirectory);
+  }
+
+  @NotNull
+  public static String readJvmConfigOptions(@NotNull String multiModuleDir) {
+    return Optional.ofNullable(getJvmConfig(multiModuleDir))
+      .map(jdkOpts -> toVmString(jdkOpts))
+      .orElse("");
+  }
+
+  @Nullable
+  public static VirtualFile getJvmConfig(@NotNull String multiModuleDir) {
+    return Optional.ofNullable(LocalFileSystem.getInstance().findFileByPath(multiModuleDir))
+      .map(baseDir -> baseDir.findChild(".mvn"))
+      .map(mvn -> mvn.findChild("jvm.config"))
+      .orElse(null);
+  }
+
+  private static String toVmString(VirtualFile jdkOpts) {
+    try {
+      return new String(jdkOpts.contentsToByteArray(true), jdkOpts.getCharset());
+    }
+    catch (IOException e) {
+      MavenLog.LOG.warn(e);
+      return null;
+    }
   }
 
   private static File patchConfFile(File conf, String library) throws IOException {
@@ -353,10 +392,10 @@ public final class MavenExternalParameters {
     }
   }
 
-  public static void addVMParameters(ParametersList parametersList, String mavenHome, MavenRunnerSettings runnerSettings) {
+  public static void addVMParameters(ParametersList parametersList, String mavenHome, String vmOptionsSettings) {
     parametersList.addParametersString(System.getenv(MAVEN_OPTS));
 
-    parametersList.addParametersString(runnerSettings.getVmOptions());
+    parametersList.addParametersString(vmOptionsSettings);
 
     parametersList.addProperty("maven.home", mavenHome);
   }

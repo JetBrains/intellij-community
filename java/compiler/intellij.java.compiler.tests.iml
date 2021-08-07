@@ -22,6 +22,7 @@
     <orderEntry type="module" module-name="intellij.platform.jps.build.javac.rt" scope="TEST" />
     <orderEntry type="library" name="fastutil-min" level="project" />
     <orderEntry type="module" module-name="intellij.platform.core.ui" />
+    <orderEntry type="module" module-name="intellij.platform.workspaceModel.jps" />
   </component>
   <component name="copyright">
     <Base>

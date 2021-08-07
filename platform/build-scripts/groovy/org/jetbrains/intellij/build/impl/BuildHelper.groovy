@@ -1,8 +1,9 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build.impl
 
 import com.intellij.util.lang.UrlClassLoader
 import groovy.transform.CompileStatic
+import org.codehaus.groovy.tools.RootLoader
 import org.jetbrains.annotations.NotNull
 import org.jetbrains.annotations.Nullable
 import org.jetbrains.intellij.build.BuildContext
@@ -13,16 +14,16 @@ import java.lang.invoke.MethodHandles
 import java.lang.invoke.MethodType
 import java.nio.file.Files
 import java.nio.file.Path
-import java.nio.file.Paths
 import java.nio.file.StandardCopyOption
 import java.util.concurrent.TimeUnit
+import java.util.function.IntConsumer
 
 @CompileStatic
 final class BuildHelper {
   private static volatile BuildHelper instance
   private static final MethodHandles.Lookup lookup = MethodHandles.lookup()
 
-  private final UrlClassLoader helperClassLoader
+  private final ClassLoader helperClassLoader
   private final MethodHandle zipHandle
   private final MethodHandle bulkZipWithPrefixHandle
 
@@ -31,11 +32,16 @@ final class BuildHelper {
 
   final MethodHandle brokenPluginsTask
   final MethodHandle reorderJars
-  MethodHandle mergeJars
+  final MethodHandle buildJar
+  final MethodHandle createZipSource
+  final MethodHandle addModuleSources
+  final MethodHandle isLibraryMergeable
+
+  final MethodHandle setAppInfo
 
   private final MethodHandle copyDirHandle
 
-  private BuildHelper(UrlClassLoader helperClassLoader) {
+  private BuildHelper(ClassLoader helperClassLoader) {
     this.helperClassLoader = helperClassLoader
     Class<?> iterable = Iterable.class as Class<?>
     Class<?> voidClass = void.class as Class<?>
@@ -52,21 +58,21 @@ final class BuildHelper {
                                   "zip",
                                   MethodType.methodType(voidClass, path, Map.class as Class<?>, bool, bool, logger))
 
+    Class<?> list = List.class as Class<?>
     bulkZipWithPrefixHandle = lookup.findStatic(helperClassLoader.loadClass("org.jetbrains.intellij.build.io.ZipKt"),
                                                 "bulkZipWithPrefix",
-                                                MethodType.methodType(voidClass, path, List.class as Class<?>, bool, logger))
+                                                MethodType.methodType(voidClass, path, list, bool, logger))
 
     Class<?> string = String.class as Class<?>
     runJavaHandle = lookup.findStatic(helperClassLoader.loadClass("org.jetbrains.intellij.build.io.ProcessKt"),
                                       "runJava", MethodType.methodType(voidClass, string, iterable, iterable, iterable,
                                                                        logger, long_))
     runProcessHandle = lookup.findStatic(helperClassLoader.loadClass("org.jetbrains.intellij.build.io.ProcessKt"),
-                                         "runProcess", MethodType.methodType(voidClass, List.class as Class<?>, path, logger))
+                                         "runProcess", MethodType.methodType(voidClass, list, path, logger))
 
     brokenPluginsTask = lookup.findStatic(helperClassLoader.loadClass("org.jetbrains.intellij.build.tasks.BrokenPluginsKt"),
                                           "buildBrokenPlugins",
-                                          MethodType.methodType(voidClass,
-                                                                path, string, bool, logger))
+                                          MethodType.methodType(voidClass, path, string, bool, logger))
 
     reorderJars = lookup.findStatic(helperClassLoader.loadClass("org.jetbrains.intellij.build.tasks.ReorderJarsKt"),
                                                      "reorderJars",
@@ -74,9 +80,22 @@ final class BuildHelper {
                                                                            path, path, iterable, path,
                                                                            string, path,
                                                                            logger))
-    mergeJars = lookup.findStatic(helperClassLoader.loadClass("org.jetbrains.intellij.build.tasks.MergeJarsKt"),
-                                                     "mergeJars",
-                                                     MethodType.methodType(voidClass, path, List.class as Class<?>))
+
+    Class<?> jarBuilder = helperClassLoader.loadClass("org.jetbrains.intellij.build.tasks.JarBuilder")
+    buildJar = lookup.findStatic(jarBuilder, "buildJar", MethodType.methodType(voidClass, path, list, logger, bool))
+
+    createZipSource = lookup.findStatic(jarBuilder,
+                                        "createZipSource",
+                                        MethodType.methodType(Object.class as Class<?>, path, IntConsumer.class as Class<?>))
+    addModuleSources = lookup.findStatic(jarBuilder,
+                                         "addModuleSources",
+                                         MethodType.methodType(voidClass, string, Map.class as Class<?>, path,
+                                                              Collection.class as Class<?>, path, Collection.class as Class<?>, list,
+                                                               logger))
+    isLibraryMergeable = lookup.findStatic(jarBuilder, "isLibraryMergeable", MethodType.methodType(bool, string))
+
+    setAppInfo = lookup.findStatic(helperClassLoader.loadClass("org.jetbrains.intellij.build.tasks.AsmKt"), "injectAppInfo",
+                                   MethodType.methodType(voidClass, path, path, string))
   }
 
   static void copyDir(Path fromDir, Path targetDir, BuildContext buildContext) {
@@ -98,7 +117,11 @@ final class BuildHelper {
     Files.move(source, target)
   }
 
-  static void zip(@NotNull BuildContext buildContext, @NotNull Path targetFile, List<Path> dirs, @Nullable String prefix) {
+  static void zip(@NotNull BuildContext buildContext, @NotNull Path targetFile, @NotNull Path dir) {
+    zipWithPrefix(buildContext, targetFile, Collections.singletonList(dir), null)
+  }
+
+  static void zipWithPrefix(@NotNull BuildContext buildContext, @NotNull Path targetFile, List<Path> dirs, @Nullable String prefix) {
     Map<Path, String> map = new LinkedHashMap<>(dirs.size())
     for (Path dir : dirs) {
       map.put(dir, prefix ?: "")
@@ -134,6 +157,25 @@ final class BuildHelper {
     getInstance(buildContext).runProcessHandle.invokeWithArguments(args, workingDir, buildContext.messages)
   }
 
+  // LayoutBuilder sets AntClassLoader, so, we must restore previous context class loader
+  static void executeWithHelper(@NotNull BuildContext buildContext, @NotNull Runnable task) {
+    BuildHelper helper = getInstance(buildContext)
+    if (helper.helperClassLoader instanceof RootLoader) {
+      task.run()
+      return
+    }
+
+    Thread thread = Thread.currentThread()
+    ClassLoader old = thread.getContextClassLoader()
+    try {
+      thread.setContextClassLoader(helper.helperClassLoader)
+      task.run()
+    }
+    finally {
+      thread.setContextClassLoader(old)
+    }
+  }
+
   static BuildHelper getInstance(@NotNull BuildContext buildContext) {
     BuildHelper result = instance
     if (result != null) {
@@ -153,14 +195,15 @@ final class BuildHelper {
   private static synchronized BuildHelper loadHelper(BuildContext buildContext) {
     JpsModule helperModule = buildContext.findRequiredModule("intellij.idea.community.build.tasks")
     List<String> classPaths = buildContext.getModuleRuntimeClasspath(helperModule, false)
-    List<Path> classPathFiles = new ArrayList<>(classPaths.size())
+    List<Path> classPathFiles = new ArrayList<Path>(classPaths.size())
     for (String filePath : classPaths) {
-      Path file = Paths.get(filePath).normalize()
+      Path file = Path.of(filePath).normalize()
       if (!file.endsWith("jrt-fs.jar")) {
         classPathFiles.add(file)
       }
     }
-    UrlClassLoader classLoader = UrlClassLoader.build()
+
+    ClassLoader classLoader = UrlClassLoader.build()
       .parent(ClassLoader.getSystemClassLoader())
       .usePersistentClasspathIndexForLocalClassDirectories()
       .useCache()

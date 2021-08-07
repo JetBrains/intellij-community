@@ -1,3 +1,4 @@
+// Licensed under the terms of the Eclipse Public License (EPL).
 /*
  * Created on Nov 18, 2004
  *

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.extensions;
 
 import org.jetbrains.annotations.NotNull;
@@ -47,12 +47,12 @@ public final class DefaultPluginDescriptor implements PluginDescriptor {
   }
 
   @Override
-  public String getChangeNotes() {
+  public @Nullable String getChangeNotes() {
     return null;
   }
 
   @Override
-  public String getName() {
+  public @Nullable String getName() {
     return null;
   }
 
@@ -82,52 +82,52 @@ public final class DefaultPluginDescriptor implements PluginDescriptor {
   }
 
   @Override
-  public String getVendor() {
+  public @Nullable String getVendor() {
     return null;
   }
 
   @Override
-  public String getOrganization() {
+  public @Nullable String getOrganization() {
     return null;
   }
 
   @Override
-  public String getVersion() {
+  public @Nullable String getVersion() {
     return null;
   }
 
   @Override
-  public String getResourceBundleBaseName() {
+  public @Nullable String getResourceBundleBaseName() {
     return null;
   }
 
   @Override
-  public String getCategory() {
+  public @Nullable String getCategory() {
     return null;
   }
 
   @Override
-  public String getVendorEmail() {
+  public @Nullable String getVendorEmail() {
     return null;
   }
 
   @Override
-  public String getVendorUrl() {
+  public @Nullable String getVendorUrl() {
     return null;
   }
 
   @Override
-  public String getUrl() {
+  public @Nullable String getUrl() {
     return null;
   }
 
   @Override
-  public String getSinceBuild() {
+  public @Nullable String getSinceBuild() {
     return null;
   }
 
   @Override
-  public String getUntilBuild() {
+  public @Nullable String getUntilBuild() {
     return null;
   }
 
@@ -138,5 +138,10 @@ public final class DefaultPluginDescriptor implements PluginDescriptor {
 
   @Override
   public void setEnabled(boolean enabled) {
+  }
+
+  @Override
+  public String toString() {
+    return "Default plugin descriptor for "+myPluginId;
   }
 }

@@ -29,11 +29,12 @@ import javax.swing.*;
 import java.awt.*;
 
 /**
-* Created by IntelliJ IDEA.
-* @author amakeev
-* @author Irina.Chernushina
-*/
-class MyDiffContainer extends JBLayeredPane implements Disposable {
+ * Created by IntelliJ IDEA.
+ *
+ * @author amakeev
+ * @author Irina.Chernushina
+ */
+public class MyDiffContainer extends JBLayeredPane implements Disposable {
   private final AnimatedIcon myIcon = new AsyncProcessIcon(getClass().getName());
 
   private final JComponent myContent;
@@ -86,6 +87,10 @@ class MyDiffContainer extends JBLayeredPane implements Disposable {
     public Dimension preferredLayoutSize(Container parent) {
       return myContent.getPreferredSize();
     }
+  }
+
+  public JComponent getContent() {
+    return myContent;
   }
 
   private class MyPanelLayout extends AbstractLayoutManager {

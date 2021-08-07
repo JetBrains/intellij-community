@@ -20,6 +20,7 @@ import com.intellij.codeInsight.TargetElementUtil;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
+import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.refactoring.makeStatic.MakeClassStaticProcessor;
 import com.intellij.refactoring.makeStatic.MakeStaticUtil;
 import com.intellij.refactoring.makeStatic.Settings;
@@ -57,6 +58,15 @@ public class MakeClassStaticTest extends LightRefactoringTestCase {
   public void testNonDefaultConstructorAnonymousClass() {perform();}
   public void testDefaultConstructorAnonymousClass() {perform();}
   public void testFieldInitializerSplit() {perform();}
+  public void testWarnAboutClassInitializer() {
+    try {
+      perform();
+      fail("Conflict expected");
+    }
+    catch (BaseRefactoringProcessor.ConflictsInTestsException e) {
+      assertEquals("Field 'anObject' won't be initialized inside class initializer", e.getMessage());
+    }
+  }
 
   public void testRegReference() {
     perform();

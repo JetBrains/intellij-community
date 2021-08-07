@@ -28,11 +28,11 @@ abstract class SchemeManagerFactory {
    * directoryName - like "keymaps".
    */
   @JvmOverloads
-  fun <SCHEME : Any, MUTABLE_SCHEME : SCHEME> create(@NonNls directoryName: String, processor: SchemeProcessor<SCHEME, MUTABLE_SCHEME>, presentableName: String? = null, directoryPath: Path? = null): SchemeManager<SCHEME> {
+  fun <SCHEME : Scheme, MUTABLE_SCHEME : SCHEME> create(@NonNls directoryName: String, processor: SchemeProcessor<SCHEME, MUTABLE_SCHEME>, presentableName: String? = null, directoryPath: Path? = null): SchemeManager<SCHEME> {
     return create(directoryName, processor, presentableName, RoamingType.DEFAULT, directoryPath = directoryPath)
   }
 
-  abstract fun <SCHEME : Any, MUTABLE_SCHEME : SCHEME> create(directoryName: String,
+  abstract fun <SCHEME : Scheme, MUTABLE_SCHEME : SCHEME> create(directoryName: String,
                                                               processor: SchemeProcessor<SCHEME, MUTABLE_SCHEME>,
                                                               presentableName: String? = null,
                                                               roamingType: RoamingType = RoamingType.DEFAULT,
@@ -48,9 +48,9 @@ enum class SchemeState {
   UNCHANGED, NON_PERSISTENT, POSSIBLY_CHANGED
 }
 
-abstract class SchemeProcessor<SCHEME, in MUTABLE_SCHEME: SCHEME> {
+abstract class SchemeProcessor<SCHEME: Scheme, in MUTABLE_SCHEME: SCHEME> {
   open fun getSchemeKey(scheme: SCHEME): String {
-    return (scheme as Scheme).name
+    return scheme.name
   }
 
   open fun isExternalizable(scheme: SCHEME): Boolean = scheme is ExternalizableScheme

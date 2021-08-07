@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.fileEditor;
 
 import com.intellij.ide.ui.UISettings;
@@ -7,8 +7,11 @@ import com.intellij.mock.Mock;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.fileEditor.impl.EditorWindow;
 import com.intellij.openapi.fileEditor.impl.EditorsSplitters;
+import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl;
 import com.intellij.openapi.fileTypes.PlainTextFileType;
 import com.intellij.openapi.fileTypes.UnknownFileType;
+import com.intellij.openapi.options.advanced.AdvancedSettings;
+import com.intellij.openapi.options.advanced.AdvancedSettingsImpl;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbServiceImpl;
 import com.intellij.openapi.project.Project;
@@ -168,10 +171,8 @@ public class FileEditorManagerTest extends FileEditorManagerTestCase {
   public void testOpenFileInTablessSplitter() {
     VirtualFile file1 = getFile("/src/1.txt");
     assertNotNull(file1);
-    file1.putUserData(EditorWindow.INITIAL_INDEX_KEY, null);
     myManager.openFile(file1, false);
     VirtualFile file2 = getFile("/src/2.txt");
-    file2.putUserData(EditorWindow.INITIAL_INDEX_KEY, null);
     assertNotNull(file2);
     myManager.openFile(file2, true);
     EditorWindow primaryWindow = myManager.getCurrentWindow();//1.txt and selected 2.txt
@@ -248,6 +249,58 @@ public class FileEditorManagerTest extends FileEditorManagerTestCase {
     assertEquals("one", myManager.getSelectedEditor(file).getName());
     myManager.openTextEditor(new OpenFileDescriptor(project, file, 2), true);
     assertEquals("two", myManager.getSelectedEditor(file).getName());
+  }
+
+  public void testDontOpenInActiveSplitter() {
+    VirtualFile file = getFile("/src/1.txt");
+    VirtualFile file2 = getFile("/src/2.txt");
+    myManager.openFile(file, false);
+    EditorWindow primaryWindow = myManager.getCurrentWindow();
+    assertNotNull(primaryWindow);
+    myManager.createSplitter(SwingConstants.VERTICAL, primaryWindow);
+    EditorWindow secondaryWindow = myManager.getNextWindow(primaryWindow);
+    myManager.openFileImpl2(secondaryWindow, file2, true);
+    myManager.closeFile(file, secondaryWindow, true);
+
+    // default behavior is to reuse the existing splitter
+    new OpenFileDescriptor(getProject(), file).navigate(true);
+    assertEquals(1, secondaryWindow.getTabCount());
+  }
+
+  public void testOpenInActiveSplitter() {
+    ((AdvancedSettingsImpl) AdvancedSettings.getInstance()).setSetting(FileEditorManagerImpl.EDITOR_OPEN_INACTIVE_SPLITTER, false, getTestRootDisposable());
+
+    VirtualFile file = getFile("/src/1.txt");
+    VirtualFile file2 = getFile("/src/2.txt");
+    myManager.openFile(file, false);
+    EditorWindow primaryWindow = myManager.getCurrentWindow();
+    assertNotNull(primaryWindow);
+    myManager.createSplitter(SwingConstants.VERTICAL, primaryWindow);
+    EditorWindow secondaryWindow = myManager.getNextWindow(primaryWindow);
+    myManager.openFileImpl2(secondaryWindow, file2, true);
+    myManager.closeFile(file, secondaryWindow, true);
+
+    // with the changed setting, we want to open the file in the current splitter (
+    new OpenFileDescriptor(getProject(), file).navigate(true);
+    assertEquals(2, secondaryWindow.getTabCount());
+  }
+
+  public void testOpenInActiveSplitterOverridesReuseOpen() {
+    ((AdvancedSettingsImpl) AdvancedSettings.getInstance()).setSetting(FileEditorManagerImpl.EDITOR_OPEN_INACTIVE_SPLITTER, false, getTestRootDisposable());
+
+    VirtualFile file = getFile("/src/1.txt");
+    VirtualFile file2 = getFile("/src/2.txt");
+    myManager.openFile(file, false);
+    EditorWindow primaryWindow = myManager.getCurrentWindow();
+    assertNotNull(primaryWindow);
+    myManager.createSplitter(SwingConstants.VERTICAL, primaryWindow);
+    EditorWindow secondaryWindow = myManager.getNextWindow(primaryWindow);
+    myManager.openFileImpl2(secondaryWindow, file2, true);
+    myManager.closeFile(file, secondaryWindow, true);
+
+    // with the changed setting, we want to open the file in the current splitter (
+    new OpenFileDescriptor(getProject(), file).setUseCurrentWindow(true).navigate(true);
+    assertEquals(2, secondaryWindow.getTabCount());
   }
 
   private static final String STRING = "<component name=\"FileEditorManager\">\n" +

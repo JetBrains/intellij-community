@@ -16,6 +16,7 @@ class EditorConfigKeyCorrectnessInspection : LocalInspectionTool() {
     override fun visitFlatOptionKey(key: EditorConfigFlatOptionKey) = checkKey(key)
     fun checkKey(key: EditorConfigDescribableElement) {
       if (key.getDescriptor(false) != null) return
+      @Suppress("DialogTitleCapitalization")
       val message = EditorConfigBundle["inspection.key.correctness.message"]
       holder.registerProblem(key, message, EditorConfigRemoveOptionQuickFix())
     }

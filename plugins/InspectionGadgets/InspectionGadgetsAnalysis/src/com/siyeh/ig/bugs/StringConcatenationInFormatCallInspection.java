@@ -16,6 +16,8 @@
 package com.siyeh.ig.bugs;
 
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -28,7 +30,7 @@ public class StringConcatenationInFormatCallInspection extends BaseInspection {
   @NotNull
   @Override
   protected String buildErrorString(Object... infos) {
-    return InspectionGadgetsBundle.message("string.concatenation.in.format.call.problem.descriptor");
+    return InspectionGadgetsBundle.message("string.concatenation.in.format.call.problem.descriptor", infos[0]);
   }
 
   @Override
@@ -37,37 +39,30 @@ public class StringConcatenationInFormatCallInspection extends BaseInspection {
   }
 
   private static class StringConcatenationInFormatCallVisitor extends BaseInspectionVisitor {
-
     @Override
-    public void visitMethodCallExpression(PsiMethodCallExpression expression) {
-      super.visitMethodCallExpression(expression);
-      if (!FormatUtils.isFormatCall(expression)) {
-        return;
+    public void visitMethodCallExpression(PsiMethodCallExpression call) {
+      if (FormatUtils.isFormatCall(call)) {
+        PsiExpressionList argumentList = call.getArgumentList();
+        PsiExpression formatArgument = FormatUtils.getFormatArgument(argumentList);
+        checkFormatString(call, formatArgument);
       }
-      final PsiExpressionList argumentList = expression.getArgumentList();
-      final PsiExpression formatArgument = FormatUtils.getFormatArgument(argumentList);
-      if (!ExpressionUtils.hasStringType(formatArgument)) {
-        return;
+      if (FormatUtils.STRING_FORMATTED.test(call)) {
+        checkFormatString(call, call.getMethodExpression().getQualifierExpression());
       }
-      if (!(formatArgument instanceof PsiPolyadicExpression)) {
-        return;
-      }
-      final PsiPolyadicExpression polyadicExpression = (PsiPolyadicExpression)formatArgument;
+    }
+
+    private void checkFormatString(PsiMethodCallExpression call, PsiExpression formatString) {
+      formatString = PsiUtil.skipParenthesizedExprDown(formatString);
+      if (!(formatString instanceof PsiPolyadicExpression)) return;
+      if (!ExpressionUtils.hasStringType(formatString)) return;
+      if (PsiUtil.isConstantExpression(formatString)) return;
+      final PsiPolyadicExpression polyadicExpression = (PsiPolyadicExpression)formatString;
       final PsiExpression[] operands = polyadicExpression.getOperands();
-      int count = 0;
-      for (final PsiExpression operand : operands) {
-        if (!(operand instanceof PsiReferenceExpression)) {
-          continue;
-        }
-        count++;
-        if (count > 1) {
-          break;
-        }
-      }
-      if (count == 0) {
+      if (!ContainerUtil.exists(operands, o -> ExpressionUtils.nonStructuralChildren(o).anyMatch(
+        c -> c instanceof PsiReferenceExpression || c instanceof PsiMethodCallExpression || c instanceof PsiArrayAccessExpression))) {
         return;
       }
-      registerMethodCallError(expression);
+      registerError(formatString, call.getMethodExpression().getReferenceName());
     }
   }
 }

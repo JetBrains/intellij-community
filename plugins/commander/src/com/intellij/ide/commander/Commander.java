@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.commander;
 
 import com.intellij.diff.actions.CompareFilesAction;
@@ -13,7 +13,10 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.*;
+import com.intellij.openapi.components.PersistentStateComponent;
+import com.intellij.openapi.components.State;
+import com.intellij.openapi.components.Storage;
+import com.intellij.openapi.components.StoragePathMacros;
 import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Splitter;
@@ -31,7 +34,6 @@ import com.intellij.util.SmartList;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
 import javax.swing.event.ListDataEvent;
@@ -51,7 +53,7 @@ import static com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy.getPreferredFoc
  */
 @State(name = "Commander", storages = @Storage(StoragePathMacros.WORKSPACE_FILE))
 public class Commander extends JPanel implements PersistentStateComponent<Element>, DataProvider, TwoPaneIdeView, Disposable {
-  private final Project myProject;
+  private final Project project;
   private CommanderPanel myLeftPanel;
   private CommanderPanel myRightPanel;
   private final Splitter mySplitter;
@@ -62,7 +64,6 @@ public class Commander extends JPanel implements PersistentStateComponent<Elemen
   private final FocusWatcher myFocusWatcher;
   private final CommanderHistory myHistory;
   private boolean myAutoScrollMode;
-  private final ToolWindowManager myToolWindowManager;
   @NonNls private static final String ACTION_BACKCOMMAND = "backCommand";
   @NonNls private static final String ACTION_FORWARDCOMMAND = "forwardCommand";
   @NonNls private static final String ELEMENT_LEFTPANEL = "leftPanel";
@@ -74,19 +75,11 @@ public class Commander extends JPanel implements PersistentStateComponent<Elemen
   @NonNls private static final String ATTRIBUTE_URL = "url";
   @NonNls private static final String ATTRIBUTE_CLASS = "class";
 
-  /**
-   * @param project
-   */
-  @TestOnly
-  public Commander(final Project project) {
-    this(project, null);
-  }
 
-  public Commander(final Project project, final ToolWindowManager toolWindowManager) {
+  public Commander(Project project) {
     super(new BorderLayout());
 
-    myProject = project;
-    myToolWindowManager = toolWindowManager;
+    this.project = project;
 
     final AbstractAction backAction = new AbstractAction() {
       @Override
@@ -192,7 +185,7 @@ public class Commander extends JPanel implements PersistentStateComponent<Elemen
   }
 
   public static Commander getInstance(final Project project) {
-    return ServiceManager.getService(project, Commander.class);
+    return project.getService(Commander.class);
   }
 
   public CommanderHistory getCommandHistory() {
@@ -296,12 +289,12 @@ public class Commander extends JPanel implements PersistentStateComponent<Elemen
   }
 
   private CommanderPanel createPanel() {
-    final CommanderPanel panel = new CommanderPanel(myProject, true, false);
+    final CommanderPanel panel = new CommanderPanel(project, true, false);
 
     panel.getList().addKeyListener(new PsiCopyPasteManager.EscapeHandler());
 
     final ProjectAbstractTreeStructureBase treeStructure = createProjectTreeStructure();
-    panel.setBuilder(new ProjectListBuilder(myProject, panel, treeStructure, AlphaComparator.INSTANCE, true));
+    panel.setBuilder(new ProjectListBuilder(project, panel, treeStructure, AlphaComparator.INSTANCE, true));
     panel.setProjectTreeStructure(treeStructure);
 
     final FocusAdapter focusListener = new FocusAdapter() {
@@ -327,7 +320,7 @@ public class Commander extends JPanel implements PersistentStateComponent<Elemen
   }
 
   protected AbstractProjectTreeStructure createProjectTreeStructure() {
-    return new AbstractProjectTreeStructure(myProject) {
+    return new AbstractProjectTreeStructure(project) {
       @Override
       public boolean isShowMembers() {
         return true;
@@ -349,9 +342,9 @@ public class Commander extends JPanel implements PersistentStateComponent<Elemen
   }
 
   protected void updateToolWindowTitle(CommanderPanel activePanel) {
-    final ToolWindow toolWindow = myToolWindowManager.getToolWindow(ToolWindowId.COMMANDER);
+    ToolWindow toolWindow = ToolWindowManager.getInstance(project).getToolWindow(ToolWindowId.COMMANDER);
     if (toolWindow != null) {
-      final AbstractTreeNode node = activePanel.getSelectedNode();
+      AbstractTreeNode<?> node = activePanel.getSelectedNode();
       if (node instanceof ProjectViewNode) {
         toolWindow.setTitle(ObjectUtils.notNull(((ProjectViewNode)node).getTitle(), ""));
       }
@@ -429,7 +422,7 @@ public class Commander extends JPanel implements PersistentStateComponent<Elemen
       return "viewingStructure.commander";
     }
     else if (CommonDataKeys.PROJECT.is(dataId)) {
-      return myProject;
+      return project;
     }
     else if (LangDataKeys.TARGET_PSI_ELEMENT.is(dataId)) {
       final AbstractTreeNode parentElement = getInactivePanel().getBuilder().getParentNode();
@@ -459,7 +452,7 @@ public class Commander extends JPanel implements PersistentStateComponent<Elemen
     if (myLeftPanel == null || myRightPanel == null) {
       return element;
     }
-    PsiDocumentManager.getInstance(myProject).commitAllDocuments();
+    PsiDocumentManager.getInstance(project).commitAllDocuments();
     Element e = new Element(ELEMENT_LEFTPANEL);
     element.addContent(e);
     writePanel(myLeftPanel, e);
@@ -472,7 +465,6 @@ public class Commander extends JPanel implements PersistentStateComponent<Elemen
     if (!MOVE_FOCUS) {
       e = new Element(ELEMENT_OPTION);
       element.addContent(e);
-      //noinspection HardCodedStringLiteral
       e.setAttribute(ATTRIBUTE_MOVE_FOCUS, "false");
     }
     return element;
@@ -513,11 +505,11 @@ public class Commander extends JPanel implements PersistentStateComponent<Elemen
     if (element.getAttributeValue(ATTRIBUTE_URL) != null) {
       final String url = element.getAttributeValue(ATTRIBUTE_URL);
       final VirtualFile file = VirtualFileManager.getInstance().findFileByUrl(url);
-      return file != null ? PsiManager.getInstance(myProject).findDirectory(file) : null;
+      return file != null ? PsiManager.getInstance(project).findDirectory(file) : null;
     }
     if (element.getAttributeValue(ATTRIBUTE_CLASS) != null) {
       final String className = element.getAttributeValue(ATTRIBUTE_CLASS);
-      return className != null ? JavaPsiFacade.getInstance(myProject).findClass(className, GlobalSearchScope.allScope(myProject)) : null;
+      return className != null ? JavaPsiFacade.getInstance(project).findClass(className, GlobalSearchScope.allScope(project)) : null;
     }
     return null;
   }

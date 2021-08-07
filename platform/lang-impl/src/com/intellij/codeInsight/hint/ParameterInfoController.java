@@ -5,11 +5,12 @@ package com.intellij.codeInsight.hint;
 import com.intellij.codeInsight.AutoPopupController;
 import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.daemon.impl.ParameterHintsPresentationManager;
-import com.intellij.codeInsight.lookup.Lookup;
 import com.intellij.codeInsight.lookup.LookupEvent;
 import com.intellij.codeInsight.lookup.LookupListener;
 import com.intellij.codeInsight.lookup.LookupManager;
+import com.intellij.codeInsight.lookup.LookupManagerListener;
 import com.intellij.codeInsight.lookup.impl.LookupImpl;
+import com.intellij.codeWithMe.ClientId;
 import com.intellij.ide.IdeTooltip;
 import com.intellij.injected.editor.EditorWindow;
 import com.intellij.lang.parameterInfo.ParameterInfoHandler;
@@ -42,7 +43,6 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
-import java.beans.PropertyChangeListener;
 import java.util.List;
 
 import static com.intellij.codeInsight.hint.ParameterInfoTaskRunnerUtil.runTask;
@@ -85,6 +85,7 @@ public class ParameterInfoController extends ParameterInfoControllerBase {
     myParameterInfoControllerData.setParameterOwner(parameterOwner);
     myParameterInfoControllerData.setHighlighted(highlighted);
 
+    registerSelf();
     setupListeners();
 
     LookupListener lookupListener = new LookupListener() {
@@ -109,15 +110,14 @@ public class ParameterInfoController extends ParameterInfoControllerBase {
       }
     };
 
-    PropertyChangeListener lookupChangeListener = evt -> {
-      if (LookupManager.PROP_ACTIVE_LOOKUP.equals(evt.getPropertyName())) {
-        Lookup lookup = (Lookup)evt.getNewValue();
-        if (lookup != null) {
-          lookup.addLookupListener(lookupListener);
-        }
+
+    LookupManagerListener lookupManagerListener = (oldLookup, newLookup) -> {
+      if (newLookup != null && ClientId.isCurrentlyUnderLocalId()) {
+        newLookup.addLookupListener(lookupListener);
       }
     };
-    LookupManager.getInstance(project).addPropertyChangeListener(lookupChangeListener, this);
+
+    project.getMessageBus().connect(this).subscribe(LookupManagerListener.TOPIC, lookupManagerListener);
 
     if (showHint) {
       showHint(requestFocus, mySingleParameterInfo);
@@ -383,20 +383,16 @@ public class ParameterInfoController extends ParameterInfoControllerBase {
     if (!showLookupHint && activeLookup != null && activeLookup.isShown()) {
       Rectangle lookupBounds = activeLookup.getBounds();
 
-      p1Ok = p1.y + hintSize.height + 50 < layeredPane.getHeight() && !isHintIntersectWithLookup(p1, hintSize, lookupBounds, isRealPopup);
-      p2Ok = p2.y - hintSize.height - 50 >= 0 && !isHintIntersectWithLookup(p2, hintSize, lookupBounds, isRealPopup);
+      p1Ok = p1.y + hintSize.height + 50 < layeredPane.getHeight() && !isHintIntersectWithLookup(p1, hintSize, lookupBounds, isRealPopup, HintManager.UNDER);
+      p2Ok = p2.y - hintSize.height - 70 >= 0 && !isHintIntersectWithLookup(p2, hintSize, lookupBounds, isRealPopup, HintManager.ABOVE);
 
       if (activeLookup.isPositionedAboveCaret()) {
         if (!p1Ok) {
           var abovePoint = new Point(lookupBounds.x, lookupBounds.y - hintSize.height - 10);
           SwingUtilities.convertPointToScreen(abovePoint, layeredPane);
-          var screenRectangle = new Rectangle(abovePoint, hintSize);
-          if (isFitTheScreen(screenRectangle)) {
-            // calculate if hint can be shown above lookup
-            abovePoint.move(lookupBounds.x, lookupBounds.y - hintSize.height - 10);
-            hint.setForceShowAsPopup(true);
-            return new Pair<>(abovePoint, HintManager.DEFAULT);
-          }
+          abovePoint.move(lookupBounds.x, lookupBounds.y - hintSize.height - 10);
+          hint.setForceShowAsPopup(true);
+          return new Pair<>(abovePoint, HintManager.DEFAULT);
         }
       }
       else {
@@ -454,10 +450,16 @@ public class ParameterInfoController extends ParameterInfoControllerBase {
     return screen.contains(aRectangle);
   }
 
-  private static boolean isHintIntersectWithLookup(Point hintPoint, Dimension hintSize, Rectangle lookupBounds, boolean isRealPopup){
+  private static boolean isHintIntersectWithLookup(Point hintPoint,
+                                                   Dimension hintSize,
+                                                   Rectangle lookupBounds,
+                                                   boolean isRealPopup,
+                                                   short hintPosition){
     Point leftTopPoint = isRealPopup
       ? hintPoint
-      : new Point(hintPoint.x - hintSize.width / 2, hintPoint.y - hintSize.height);
+      : hintPosition == HintManager.ABOVE
+          ? new Point(hintPoint.x - hintSize.width / 2, hintPoint.y - hintSize.height)
+          : new Point(hintPoint.x - hintSize.width / 2, hintPoint.y);
 
     return lookupBounds.intersects(new Rectangle(leftTopPoint, hintSize));
   }

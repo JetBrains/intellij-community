@@ -31,7 +31,7 @@ public class ApplicationRunLineMarkerProvider extends RunLineMarkerContributor {
         return null;
       }
 
-      AnAction[] actions = ExecutorAction.getActions();
+      AnAction[] actions = ExecutorAction.getActions(Integer.MAX_VALUE);
       return new Info(AllIcons.RunConfigurations.TestState.Run, actions, element1 -> {
         return Arrays.stream(actions)
           .map(action -> getText(action, element1))

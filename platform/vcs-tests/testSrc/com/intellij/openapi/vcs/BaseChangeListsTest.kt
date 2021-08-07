@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs
 
 import com.intellij.openapi.application.AccessToken
@@ -20,8 +20,7 @@ import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.LightPlatformTestCase
-import com.intellij.testFramework.RunAll
-import com.intellij.util.ThrowableRunnable
+import com.intellij.testFramework.runAll
 import com.intellij.util.io.createDirectories
 import com.intellij.util.ui.UIUtil
 import com.intellij.vcsUtil.VcsUtil
@@ -83,14 +82,14 @@ abstract class BaseChangeListsTest : LightPlatformTestCase() {
   }
 
   override fun tearDown() {
-    RunAll.runAll(
-      ThrowableRunnable { resetSettings() },
-      ThrowableRunnable { resetChanges() },
-      ThrowableRunnable { resetChangelists() },
-      ThrowableRunnable { vcsManager.directoryMappings = emptyList() },
-      ThrowableRunnable { project.getServiceIfCreated(AllVcsesI::class.java)?.unregisterManually(vcs) },
-      ThrowableRunnable { runWriteAction { testRoot.delete(this) } },
-      ThrowableRunnable { super.tearDown() }
+    runAll(
+      { resetSettings() },
+      { resetChanges() },
+      { resetChangelists() },
+      { vcsManager.directoryMappings = emptyList() },
+      { project.getServiceIfCreated(AllVcsesI::class.java)?.unregisterManually(vcs) },
+      { runWriteAction { testRoot.delete(this) } },
+      { super.tearDown() }
     )
   }
 

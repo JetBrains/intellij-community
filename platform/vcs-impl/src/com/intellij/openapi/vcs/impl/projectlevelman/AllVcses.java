@@ -1,8 +1,8 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.impl.projectlevelman;
 
 import com.intellij.ide.BrowserUtil;
-import com.intellij.ide.plugins.DisabledPluginsState;
+import com.intellij.ide.plugins.PluginEnabler;
 import com.intellij.ide.plugins.PluginManagerMain;
 import com.intellij.ide.plugins.PluginNode;
 import com.intellij.ide.plugins.marketplace.MarketplaceRequests;
@@ -281,15 +281,12 @@ public final class AllVcses implements AllVcsesI, Disposable {
 
   private void proposeToInstallPlugin(@NotNull ObsoleteVcs vcs) {
     String message = VcsBundle.message("impl.notification.content.plugin.was.unbundled.needs.to.be.installed.manually", vcs);
-    Notification notification = IMPORTANT_ERROR_NOTIFICATION.createNotification("", message, NotificationType.WARNING, null, "vcs.obsolete.plugin.unbundled");
-    notification
-      .addAction(NotificationAction.createSimple(VcsBundle.messagePointer("action.NotificationAction.AllVcses.text.install"), () -> {
-      notification.expire();
-      installPlugin(vcs);
-    }));
-    notification.addAction(NotificationAction.createSimple(VcsBundle.messagePointer("action.NotificationAction.AllVcses.text.read.more"), () -> {
-      BrowserUtil.browse("https://blog.jetbrains.com/idea/2019/02/unbundling-tfs-and-cvs-integration-plugins/");
-    }));
+    Notification notification = IMPORTANT_ERROR_NOTIFICATION.createNotification(message, NotificationType.WARNING)
+      .setDisplayId("vcs.obsolete.plugin.unbundled")
+      .addAction(NotificationAction.createSimpleExpiring(VcsBundle.message("action.NotificationAction.AllVcses.text.install"), () -> installPlugin(vcs)))
+      .addAction(NotificationAction.createSimple(VcsBundle.message("action.NotificationAction.AllVcses.text.read.more"), () -> {
+        BrowserUtil.browse("https://blog.jetbrains.com/idea/2019/02/unbundling-tfs-and-cvs-integration-plugins/");
+      }));
     VcsNotifier.getInstance(myProject).notify(notification);
   }
 
@@ -298,12 +295,12 @@ public final class AllVcses implements AllVcsesI, Disposable {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
         try {
-          PluginNode descriptor = MarketplaceRequests.getInstance().getLastCompatiblePluginUpdate(vcs.pluginId.getIdString(), null, indicator);
+          PluginNode descriptor = MarketplaceRequests.getInstance().getLastCompatiblePluginUpdate(vcs.pluginId, null, indicator);
           if (descriptor != null) {
             PluginDownloader downloader = PluginDownloader.createDownloader(descriptor);
             if (downloader.prepareToInstall(indicator)) {
               downloader.install();
-              DisabledPluginsState.enablePlugins(Collections.singletonList(descriptor), true);
+              PluginEnabler.HEADLESS.enablePlugins(List.of(descriptor));
               PluginManagerMain.notifyPluginsUpdated(myProject);
             }
           }
@@ -319,11 +316,13 @@ public final class AllVcses implements AllVcsesI, Disposable {
 
       private void showErrorNotification(@NotNull ObsoleteVcs vcs, @NotNull @NlsContexts.NotificationContent String message) {
         String title = VcsBundle.message("impl.notification.title.failed.to.install.plugin");
-        Notification notification = IMPORTANT_ERROR_NOTIFICATION.createNotification(title, message, NotificationType.ERROR, null, "plugin.install.failed");
-        notification.addAction(
-          NotificationAction.createSimple(VcsBundle.messagePointer("action.NotificationAction.AllVcses.text.open.plugin.page"), () -> {
-          BrowserUtil.browse(vcs.pluginUrl);
-        }));
+        Notification notification = IMPORTANT_ERROR_NOTIFICATION
+          .createNotification(title, message, NotificationType.ERROR)
+          .setDisplayId("plugin.install.failed")
+          .addAction(
+            NotificationAction.createSimple(VcsBundle.messagePointer("action.NotificationAction.AllVcses.text.open.plugin.page"), () -> {
+              BrowserUtil.browse(vcs.pluginUrl);
+            }));
         VcsNotifier.getInstance(myProject).notify(notification);
       }
     }.queue();

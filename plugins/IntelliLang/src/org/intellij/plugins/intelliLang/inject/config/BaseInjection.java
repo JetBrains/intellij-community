@@ -35,14 +35,10 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import org.intellij.lang.annotations.RegExp;
-import org.intellij.plugins.intelliLang.inject.InjectedLanguage;
 import org.intellij.plugins.intelliLang.inject.InjectorUtils;
 import org.jdom.CDATA;
 import org.jdom.Element;
-import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import java.util.*;
 import java.util.regex.Matcher;
@@ -83,9 +79,9 @@ public class BaseInjection implements Injection, PersistentStateComponent<Elemen
     myPlaces = places;
   }
 
-  @Nullable
-  public Language getInjectedLanguage() {
-    return InjectedLanguage.findLanguageById(myInjectedLanguageId);
+  @Override
+  public @Nullable Language getInjectedLanguage() {
+    return InjectorUtils.getLanguage(this);
   }
 
   private InjectionPlace @NotNull [] myPlaces = InjectionPlace.EMPTY_ARRAY;
@@ -403,6 +399,7 @@ public class BaseInjection implements Injection, PersistentStateComponent<Elemen
    * @deprecated always true
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
   public boolean isSingleFile() {
     return true;
   }
@@ -412,6 +409,7 @@ public class BaseInjection implements Injection, PersistentStateComponent<Elemen
    * @deprecated does nothing
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
   public void setSingleFile(final boolean singleFile) {
 
   }

@@ -1,13 +1,22 @@
 <html>
 <body>
-Reports local variables that are "reused", overwriting their
-values with new values unrelated to their original use. Such local variable reuse may be confusing,
+Reports local variables that are "reused" overwriting their
+values with new values unrelated to their original use.
+<p>Such a local variable reuse may be confusing,
 as the intended semantics of the local variable may vary with each use. It may also be
-prone to bugs, if code changes result in values that were thought to be overwritten actually
-being live. It is good practices to keep variable lifetimes as short as possible, and not
-reuse local variables for the sake of brevity.
+prone to bugs if due to the code changes, the values that have been considered overwritten actually
+appear to be alive. It is a good practice to keep variable lifetimes as short as possible, and not
+  to reuse local variables for the sake of brevity.</p>
 <!-- tooltip end -->
-<p>
+<p>Example:</p>
+<pre><code>
+    void x() {
+        String s = "one";
+        System.out.println("s = " + s);
+        s = "two"; //reuse of local variable 's'
+        System.out.println("s = " + s);
+    }
+</code></pre>
 
 </body>
 </html>

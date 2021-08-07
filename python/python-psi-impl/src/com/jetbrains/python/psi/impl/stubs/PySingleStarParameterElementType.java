@@ -14,9 +14,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 
-/**
- * @author yole
- */
+
 public class PySingleStarParameterElementType extends PyStubElementType<PySingleStarParameterStub, PySingleStarParameter> {
   public PySingleStarParameterElementType() {
     super("SINGLE_STAR_PARAMETER");

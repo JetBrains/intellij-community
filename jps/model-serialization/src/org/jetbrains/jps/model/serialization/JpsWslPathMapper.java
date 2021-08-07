@@ -62,6 +62,9 @@ public class JpsWslPathMapper implements JpsPathMapper {
     ProcessBuilder processBuilder = new ProcessBuilder("/usr/bin/wslpath", path);
     Process process = processBuilder.start();
     process.waitFor();
-    return StreamUtil.readText(new InputStreamReader(process.getInputStream(), StandardCharsets.UTF_8)).trim();
+    if (process.exitValue() == 0) {
+      return StreamUtil.readText(new InputStreamReader(process.getInputStream(), StandardCharsets.UTF_8)).trim();
+    }
+    return path;
   }
 }

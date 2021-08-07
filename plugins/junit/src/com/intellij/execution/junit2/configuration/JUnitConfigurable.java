@@ -16,6 +16,8 @@ import com.intellij.execution.ui.*;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.util.ClassFilter;
 import com.intellij.ide.util.PackageChooserDialog;
+import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
@@ -42,6 +44,7 @@ import com.intellij.ui.*;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.fields.ExpandableTextField;
 import com.intellij.util.ArrayUtilRt;
+import com.intellij.util.concurrency.NonUrgentExecutor;
 import com.intellij.util.indexing.DumbModeAccessType;
 import com.intellij.util.ui.UIUtil;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
@@ -218,9 +221,6 @@ public class JUnitConfigurable<T extends JUnitConfiguration> extends SettingsEdi
 
     myUseModulePath.getComponent().setText(ExecutionBundle.message("use.module.path.checkbox.label"));
     myUseModulePath.getComponent().setSelected(true);
-    if (!project.isDefault()) {
-      myUseModulePath.setVisible(FilenameIndex.getFilesByName(project, PsiJavaModule.MODULE_INFO_FILE, GlobalSearchScope.projectScope(myProject)).length > 0);
-    }
   }
 
   static void setupChangeLists(Project project, JComboBox<String> comboBox) {
@@ -362,6 +362,13 @@ public class JUnitConfigurable<T extends JUnitConfiguration> extends SettingsEdi
     myForkCb.setSelectedItem(configuration.getForkMode());
     myShortenClasspathModeCombo.getComponent().setSelectedItem(configuration.getShortenCommandLine());
     myUseModulePath.getComponent().setSelected(configuration.isUseModulePath());
+    if (!myProject.isDefault()) {
+      SwingUtilities.invokeLater(() -> 
+         ReadAction.nonBlocking(() -> FilenameIndex.getFilesByName(myProject, PsiJavaModule.MODULE_INFO_FILE, GlobalSearchScope.projectScope(myProject)).length > 0)
+                   .expireWith(this)
+                   .finishOnUiThread(ModalityState.stateForComponent(myUseModulePath), visible -> myUseModulePath.setVisible(visible))
+                   .submit(NonUrgentExecutor.getInstance()));
+    }
   }
 
   private void changePanel () {
@@ -386,15 +393,16 @@ public class JUnitConfigurable<T extends JUnitConfiguration> extends SettingsEdi
     myChangeListLabeledComponent.setVisible(selectedType == JUnitConfigurationModel.BY_SOURCE_CHANGES);
 
     myForkCb.setModel(new DefaultComboBoxModel<>(getForkModel(selectedType, myRepeatCb.getSelectedItem())));
-    myForkCb.setSelectedItem(updateForkMethod(selectedType, (String)myForkCb.getSelectedItem()));
+    myForkCb.setSelectedItem(updateForkMethod(selectedType, (String)myForkCb.getSelectedItem(), myRepeatCb.getSelectedItem()));
   }
 
   @NotNull
-  public static String updateForkMethod(Integer selectedType, String forkMethod) {
+  public static String updateForkMethod(Integer selectedType, String forkMethod, Object repeat) {
     if (forkMethod == null) {
       forkMethod = JUnitConfiguration.FORK_NONE;
     }
-    else if (selectedType == JUnitConfigurationModel.CLASS && forkMethod == JUnitConfiguration.FORK_KLASS) {
+    else if (selectedType == JUnitConfigurationModel.CLASS && forkMethod == JUnitConfiguration.FORK_KLASS &&
+             RepeatCount.ONCE.equals(repeat)) {
       forkMethod = JUnitConfiguration.FORK_METHOD;
     }
     return forkMethod;

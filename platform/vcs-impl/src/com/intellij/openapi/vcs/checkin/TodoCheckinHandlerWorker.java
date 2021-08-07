@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.checkin;
 
 import com.intellij.diff.comparison.ComparisonManager;
@@ -21,6 +21,7 @@ import com.intellij.openapi.progress.DumbProgressIndicator;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectUtil;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
@@ -49,7 +50,11 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
+import static com.intellij.openapi.progress.ProgressIndicatorProvider.getGlobalProgressIndicator;
+import static com.intellij.openapi.progress.ProgressManager.progress;
 import static com.intellij.util.ObjectUtils.notNull;
+import static com.intellij.util.containers.ContainerUtil.filter;
+import static java.util.Objects.requireNonNull;
 
 /**
  * @author irengrig
@@ -77,14 +82,16 @@ public class TodoCheckinHandlerWorker {
   }
 
   public void execute() {
-    for (Change change : myChanges) {
-      ProgressManager.checkCanceled();
-      ContentRevision beforeRevision = change.getBeforeRevision();
-      ContentRevision afterRevision = change.getAfterRevision();
+    List<? extends Change> changes = filter(myChanges, it -> it.getAfterRevision() != null);
 
-      if (afterRevision == null) continue;
+    for (int i = 0; i < changes.size(); i++) {
+      Change change = changes.get(i);
+      ContentRevision beforeRevision = change.getBeforeRevision();
+      ContentRevision afterRevision = requireNonNull(change.getAfterRevision());
       FilePath afterFilePath = afterRevision.getFile();
       VirtualFile afterFile = LocalFileSystem.getInstance().refreshAndFindFileByPath(afterFilePath.getPath());
+
+      progress(afterFile != null ? ProjectUtil.calcRelativeToProjectPath(afterFile, myProject) : afterFilePath.getName());
 
       EditedFileProcessorBase fileProcessor = ReadAction.compute(() -> {
         if (afterFile == null || afterFile.isDirectory() || afterFile.getFileType().isBinary()) {
@@ -159,11 +166,19 @@ public class TodoCheckinHandlerWorker {
 
       try {
         if (fileProcessor != null) fileProcessor.process();
+        fraction((i + 1.0) / changes.size());
       }
       catch (DiffTooBigException e) {
         LOG.info("File " + afterFilePath.getPath() + " is too big and there are too many changes to build a diff");
         mySkipped.add(Pair.create(afterFilePath, VcsBundle.message("checkin.can.not.load.previous.revision")));
       }
+    }
+  }
+
+  private static void fraction(double value) {
+    ProgressIndicator indicator = getGlobalProgressIndicator();
+    if (indicator != null) {
+      indicator.setFraction(value);
     }
   }
 

@@ -7,7 +7,6 @@ import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.refactoring.RefactoringBundle
-import com.intellij.refactoring.suggested.SuggestedRefactoringAvailability
 import com.intellij.refactoring.suggested.SuggestedRefactoringExecution
 import com.intellij.refactoring.suggested._suggestedChangeSignatureNewParameterValuesForTests
 import com.jetbrains.python.PythonFileType
@@ -84,6 +83,20 @@ class PySuggestedRefactoringTest : PyTestCase() {
       "method1",
       "1",
       changeSignatureIntention()
+    )
+  }
+
+  // PY-49466
+  fun testMethodRenameToStartingWithKeywordName() {
+    doNoIntentionTest(
+      """
+        def test<caret>(): pass
+      """.trimIndent(),
+      {
+        repeat("test".length, this::performBackspace)
+        myFixture.type("def")
+      },
+      intention = changeSignatureIntention()
     )
   }
 
@@ -776,6 +789,22 @@ class PySuggestedRefactoringTest : PyTestCase() {
     )
   }
 
+  // EA-252027
+  fun testOverload() {
+    doNoIntentionTest(
+      """
+        from typing import overload
+        
+        @overload
+        def foo(p<caret>1: int, p2: int) -> int: ...
+        
+        def foo(p1, p2): ...
+      """.trimIndent(),
+      { myFixture.type("aram") },
+      intention = changeSignatureIntention()
+    )
+  }
+
   private fun doRenameTest(before: String, after: String, oldName: String, newName: String, type: String, intention: String? = null) {
     myFixture.configureByText(PythonFileType.INSTANCE, before)
     myFixture.checkHighlighting()
@@ -808,37 +837,32 @@ class PySuggestedRefactoringTest : PyTestCase() {
   private fun doChangeSignatureTest(
     before: String,
     after: String,
-    vararg editingActions: () -> Unit,
-    languageLevel: LanguageLevel = LanguageLevel.getLatest()
+    vararg editingActions: () -> Unit
   ) {
-    runWithLanguageLevel(languageLevel) {
-      myFixture.configureByText(PythonFileType.INSTANCE, before)
-      myFixture.checkHighlighting()
+    myFixture.configureByText(PythonFileType.INSTANCE, before)
+    myFixture.checkHighlighting()
 
-      editingActions.forEach {
-        WriteCommandAction.runWriteCommandAction(myFixture.project, it)
-        PsiDocumentManager.getInstance(myFixture.project).commitAllDocuments()
-      }
-
-      executeIntention(changeSignatureIntention())
-
-      myFixture.checkResult(after)
-      myFixture.checkHighlighting()
+    editingActions.forEach {
+      WriteCommandAction.runWriteCommandAction(myFixture.project, it)
+      PsiDocumentManager.getInstance(myFixture.project).commitAllDocuments()
     }
+
+    executeIntention(changeSignatureIntention())
+
+    myFixture.checkResult(after)
+    myFixture.checkHighlighting()
   }
 
   private fun doNoIntentionTest(text: String, vararg editingActions: () -> Unit, intention: String) {
-    runWithLanguageLevel(LanguageLevel.getLatest()) {
-      myFixture.configureByText(PythonFileType.INSTANCE, text)
-      myFixture.checkHighlighting()
+    myFixture.configureByText(PythonFileType.INSTANCE, text)
+    myFixture.checkHighlighting()
 
-      editingActions.forEach {
-        WriteCommandAction.runWriteCommandAction(myFixture.project, it)
-        PsiDocumentManager.getInstance(myFixture.project).commitAllDocuments()
-      }
-
-      assertNull(myFixture.getAvailableIntention(intention))
+    editingActions.forEach {
+      WriteCommandAction.runWriteCommandAction(myFixture.project, it)
+      PsiDocumentManager.getInstance(myFixture.project).commitAllDocuments()
     }
+
+    assertNull(myFixture.getAvailableIntention(intention))
   }
 
   private fun executeIntention(intention: String) {

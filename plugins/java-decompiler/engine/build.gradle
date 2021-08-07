@@ -13,12 +13,12 @@ sourceSets {
 
 repositories { mavenCentral() }
 dependencies {
-  testCompile 'junit:junit:4.12'
-  testCompile 'org.assertj:assertj-core:3.12.2'
+  testImplementation 'junit:junit:4.12'
+  testImplementation 'org.assertj:assertj-core:3.12.2'
 }
 
 jar {
-  archiveName 'fernflower.jar'
+  archiveFileName = 'fernflower.jar'
   manifest {
     attributes 'Main-Class': 'org.jetbrains.java.decompiler.main.decompiler.ConsoleDecompiler'
   }

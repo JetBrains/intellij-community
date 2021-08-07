@@ -1,8 +1,9 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.pullrequest.ui.details
 
+import com.intellij.collaboration.ui.SimpleEventListener
+import com.intellij.collaboration.ui.SingleValueModel
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.util.Disposer
 import com.intellij.util.EventDispatcher
 import com.intellij.util.concurrency.annotations.RequiresEdt
@@ -12,8 +13,6 @@ import git4idea.repo.GitRemote
 import git4idea.repo.GitRepository
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequest
 import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRDetailsDataProvider
-import org.jetbrains.plugins.github.pullrequest.ui.SimpleEventListener
-import org.jetbrains.plugins.github.ui.util.SingleValueModel
 import org.jetbrains.plugins.github.util.GithubGitHelper
 
 internal class GHPRBranchesModelImpl(private val valueModel: SingleValueModel<GHPullRequest>,
@@ -24,28 +23,18 @@ internal class GHPRBranchesModelImpl(private val valueModel: SingleValueModel<GH
   private val changeEventDispatcher = EventDispatcher.create(SimpleEventListener::class.java)
 
   init {
-    registerVCSLogDataPackListener()
-  }
+    VcsProjectLog.runWhenLogIsReady(localRepository.project) {
+      if (!Disposer.isDisposed(parentDisposable)) {
+        val dataPackListener = DataPackChangeListener {
+          notifyChanged()
+          detailsDataProvider.reloadDetails()
+        }
 
-  private val dataPackListener = DataPackChangeListener {
-    notifyChanged()
-    detailsDataProvider.reloadDetails()
-  }
-
-  private fun registerVCSLogDataPackListener() {
-    val project = localRepository.project
-    VcsProjectLog.runWhenLogIsReady(project) {
-      val log = VcsProjectLog.getInstance(project)
-      val dataManager = log.dataManager ?: return@runWhenLogIsReady
-      ApplicationManager.getApplication()
-        .invokeLater({
-                       with(dataManager) {
-                         addDataPackChangeListener(dataPackListener)
-                         Disposer.register(parentDisposable, Disposable {
-                           removeDataPackChangeListener(dataPackListener)
-                         })
-                       }
-                     }, { Disposer.isDisposed(parentDisposable) })
+        it.dataManager.addDataPackChangeListener(dataPackListener)
+        Disposer.register(parentDisposable, Disposable {
+          it.dataManager.removeDataPackChangeListener(dataPackListener)
+        })
+      }
     }
   }
 

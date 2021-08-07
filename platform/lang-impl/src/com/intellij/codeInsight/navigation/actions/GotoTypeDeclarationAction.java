@@ -1,5 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.navigation.actions;
 
 import com.google.common.annotations.VisibleForTesting;
@@ -21,21 +20,21 @@ import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtilCore;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.HashSet;
 import java.util.Set;
 
-public class GotoTypeDeclarationAction extends BaseCodeInsightAction implements CodeInsightActionHandler, DumbAware, CtrlMouseAction {
-
+public final class GotoTypeDeclarationAction extends BaseCodeInsightAction implements CodeInsightActionHandler, DumbAware, CtrlMouseAction {
   @NotNull
   @Override
-  protected CodeInsightActionHandler getHandler(){
-    return this;
+  protected CodeInsightActionHandler getHandler() {
+    return Registry.is("ide.symbol.gttd") ? GotoTypeDeclarationHandler2.INSTANCE : this;
   }
 
   @Override
@@ -121,7 +120,7 @@ public class GotoTypeDeclarationAction extends BaseCodeInsightAction implements 
     final PsiReference psiReference = TargetElementUtil.findReference(editor, offset);
     if (psiReference instanceof PsiPolyVariantReference) {
       final ResolveResult[] results = ((PsiPolyVariantReference)psiReference).multiResolve(false);
-      Set<PsiElement> types = new THashSet<>();
+      Set<PsiElement> types = new HashSet<>();
 
       for(ResolveResult r: results) {
         PsiElement element = r.getElement();
@@ -158,6 +157,9 @@ public class GotoTypeDeclarationAction extends BaseCodeInsightAction implements 
 
   @Override
   public @Nullable CtrlMouseInfo getCtrlMouseInfo(@NotNull Editor editor, @NotNull PsiFile file, int offset) {
+    if (Registry.is("ide.symbol.gttd")) {
+      return GotoTypeDeclarationHandler2.getCtrlMouseInfo(file, offset);
+    }
     PsiElement targetElement = findSymbolType(editor, offset);
     if (targetElement == null || !targetElement.isPhysical()) {
       return null;

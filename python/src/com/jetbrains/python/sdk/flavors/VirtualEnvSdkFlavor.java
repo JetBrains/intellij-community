@@ -20,6 +20,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.io.File;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -46,14 +47,16 @@ public final class VirtualEnvSdkFlavor extends CPythonSdkFlavor {
   public Collection<String> suggestHomePaths(@Nullable Module module, @Nullable UserDataHolder context) {
     return ReadAction.compute(() -> {
       final List<String> candidates = new ArrayList<>();
-      if (module != null) {
-        VirtualFile baseDir = BasePySdkExtKt.getBaseDir(module);
-        if (baseDir == null && context != null && context.getUserData(PySdkExtKt.getBASE_DIR()) != null) {
-          //noinspection ConstantConditions
-          baseDir = VfsUtil.findFile(context.getUserData(PySdkExtKt.getBASE_DIR()), false);
-        }
-        if (baseDir != null) {
-          candidates.addAll(findInBaseDirectory(baseDir));
+      final VirtualFile baseDirFromModule = module == null ? null : BasePySdkExtKt.getBaseDir(module);
+      final Path baseDirFromContext = context == null ? null : context.getUserData(PySdkExtKt.getBASE_DIR());
+
+      if (baseDirFromModule != null) {
+        candidates.addAll(findInBaseDirectory(baseDirFromModule));
+      }
+      else if (baseDirFromContext != null) {
+        final VirtualFile dir = VfsUtil.findFile(baseDirFromContext, false);
+        if (dir != null) {
+          candidates.addAll(findInBaseDirectory(dir));
         }
       }
 
@@ -93,12 +96,9 @@ public final class VirtualEnvSdkFlavor extends CPythonSdkFlavor {
       return LocalFileSystem.getInstance().findFileByPath(FileUtil.expandUserHome(path).replace('\\','/'));
     }
 
-    final VirtualFile userHome = LocalFileSystem.getInstance().findFileByPath(SystemProperties.getUserHome().replace('\\','/'));
+    final VirtualFile userHome = VfsUtil.getUserHomeDir();
     if (userHome != null) {
-      final VirtualFile predefinedFolder = userHome.findChild(".virtualenvs");
-      if (predefinedFolder == null)
-        return userHome;
-      return predefinedFolder;
+      return userHome.findChild(".virtualenvs");
     }
     return null;
   }

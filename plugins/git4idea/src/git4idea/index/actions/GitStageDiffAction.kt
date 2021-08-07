@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.index.actions
 
 import com.intellij.diff.DiffDialogHints
@@ -17,16 +17,23 @@ class GitStageDiffAction : AnActionExtensionProvider {
   override fun isActive(e: AnActionEvent): Boolean = e.getData(GitStageDataKeys.GIT_STAGE_TREE) != null
 
   override fun update(e: AnActionEvent) {
-    val nodes = e.getData(GitStageDataKeys.GIT_FILE_STATUS_NODES).asJBIterable()
-    e.presentation.isEnabled = e.project != null &&
-                               nodes.filter { it.kind != NodeKind.IGNORED  }.isNotEmpty
-    e.presentation.isVisible = e.presentation.isEnabled || e.isFromActionToolbar
+    updateAvailability(e)
   }
 
   override fun actionPerformed(e: AnActionEvent) {
     val producers = e.getRequiredData(GitStageDataKeys.GIT_STAGE_TREE).statusNodesListSelection(true)
       .map { createTwoSidesDiffRequestProducer(e.project!!, it) }
     DiffManager.getInstance().showDiff(e.project, ChangeDiffRequestChain(producers.list, producers.selectedIndex), DiffDialogHints.DEFAULT)
+  }
+
+  companion object {
+    @JvmStatic
+    fun updateAvailability(e: AnActionEvent) {
+      val nodes = e.getData(GitStageDataKeys.GIT_FILE_STATUS_NODES).asJBIterable()
+      e.presentation.isEnabled = e.project != null &&
+                                 nodes.filter { it.kind != NodeKind.IGNORED }.isNotEmpty
+      e.presentation.isVisible = e.presentation.isEnabled || e.isFromActionToolbar
+    }
   }
 }
 

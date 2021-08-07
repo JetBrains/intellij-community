@@ -2,7 +2,6 @@
 package com.intellij.refactoring.extractMethod.preview;
 
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
@@ -59,7 +58,7 @@ class PreviewTree implements Disposable {
     TreeUtil.expand(tree, 2);
     TreeUtil.promiseSelectFirst(tree);
 
-    PopupHandler.installPopupHandler(tree, IdeActions.EXTRACT_METHOD_TOOL_WINDOW_TREE_POPUP, ActionPlaces.UNKNOWN);
+    PopupHandler.installPopupMenu(tree, IdeActions.EXTRACT_METHOD_TOOL_WINDOW_TREE_POPUP, "ExtractMethodTreePopup");
     return tree;
   }
 

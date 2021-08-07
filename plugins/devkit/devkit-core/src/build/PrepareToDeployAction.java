@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.devkit.build;
 
 import com.intellij.compiler.server.CompileServerPlugin;
@@ -91,7 +91,7 @@ public class PrepareToDeployAction extends AnAction {
                            DevKitBundle.message("success.deployment.message", pluginModules.get(0).getName()) :
                            DevKitBundle.message("success.deployment.message.all");
             @NlsSafe String successMessage = StringUtil.join(successMessages, "\n");
-            Holder.NOTIFICATION_GROUP.createNotification(title, successMessage, NotificationType.INFORMATION, null).notify(project);
+            Holder.NOTIFICATION_GROUP.createNotification(title, successMessage, NotificationType.INFORMATION).notify(project);
           }
         }, project.getDisposed());
       }

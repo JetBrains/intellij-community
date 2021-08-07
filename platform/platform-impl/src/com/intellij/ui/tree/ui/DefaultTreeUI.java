@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.tree.ui;
 
 import com.intellij.ide.ui.UISettings;
@@ -16,6 +16,7 @@ import com.intellij.ui.render.RenderingUtil;
 import com.intellij.ui.tree.AsyncTreeModel;
 import com.intellij.ui.tree.TreePathBackgroundSupplier;
 import com.intellij.util.ReflectionUtil;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.MouseEventAdapter;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
@@ -49,6 +50,7 @@ import static com.intellij.openapi.util.SystemInfo.isMac;
 import static com.intellij.openapi.util.registry.Registry.intValue;
 import static com.intellij.openapi.util.registry.Registry.is;
 import static com.intellij.ui.paint.RectanglePainter.DRAW;
+import static com.intellij.ui.paint.RectanglePainter.FILL;
 import static com.intellij.util.EditSourceOnDoubleClickHandler.isExpandPreferable;
 import static com.intellij.util.ReflectionUtil.getMethod;
 import static com.intellij.util.containers.ContainerUtil.createWeakSet;
@@ -265,12 +267,19 @@ public final class DefaultTreeUI extends BasicTreeUI {
                 DRAW.paint((Graphics2D)g, helper.getX() + 1, bounds.y + 1, helper.getWidth() - 2, bounds.height - 2, 0);
               }
             }
+            JTree.DropLocation dropLocation = tree.getDropLocation();
+            if (dropLocation != null && g instanceof Graphics2D && path.equals(dropLocation.getPath())) {
+              // paint a dragged tree path in accordance to Highlighters.RectangleHighlighter
+              g.setColor(JBUI.CurrentTheme.DragAndDrop.ROW_BACKGROUND);
+              FILL.paint((Graphics2D)g, helper.getX(), bounds.y, helper.getWidth(), bounds.height, 0);
+              g.setColor(JBUI.CurrentTheme.DragAndDrop.BORDER_COLOR);
+              DRAW.paint((Graphics2D)g, helper.getX(), bounds.y, helper.getWidth(), bounds.height, 0);
+            }
           }
           if ((bounds.y + bounds.height) >= maxPaintY) break;
           path = cache.getPathForRow(++row);
         }
       }
-      paintDropLine(g);
     }
     finally {
       g.dispose();

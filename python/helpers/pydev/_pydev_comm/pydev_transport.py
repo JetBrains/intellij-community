@@ -136,7 +136,7 @@ class FramedWriter(object):
         pass
 
 
-class TBidirectionalClientTransport(TTransportBase, FramedWriter):
+class TBidirectionalClientTransport(FramedWriter, TTransportBase):
     def __init__(self, client_socket, reader, writer):
         super(TBidirectionalClientTransport, self).__init__()
 

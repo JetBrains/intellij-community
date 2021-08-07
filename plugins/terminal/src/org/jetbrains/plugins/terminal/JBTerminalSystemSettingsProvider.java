@@ -2,6 +2,7 @@
 package org.jetbrains.plugins.terminal;
 
 import com.intellij.openapi.util.NlsSafe;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.terminal.JBTerminalSystemSettingsProviderBase;
 import com.intellij.terminal.JBTerminalWidget;
 import com.jediterm.pty.PtyProcessTtyConnector;
@@ -69,5 +70,10 @@ public class JBTerminalSystemSettingsProvider extends JBTerminalSystemSettingsPr
     return TerminalOptionsProvider.getInstance().highlightHyperlinks()
            ? HyperlinkStyle.HighlightMode.ALWAYS
            : HyperlinkStyle.HighlightMode.HOVER;
+  }
+
+  @Override
+  public boolean altSendsEscape() {
+    return !SystemInfo.isMac || TerminalOptionsProvider.getInstance().getUseOptionAsMetaKey();
   }
 }

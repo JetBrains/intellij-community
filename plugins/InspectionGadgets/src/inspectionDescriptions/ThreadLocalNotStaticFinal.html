@@ -1,15 +1,18 @@
 <html>
 <body>
-Reports fields of type <b>java.lang.ThreadLocal</b> which are not declared <b>static final</b>.
-In the most common case a <b>java.lang.ThreadLocal</b> instance
-associates state with a thread. A non-static non-final
-<b>java.lang.ThreadLocal</b> field associates state with
-an instance-thread combination. This is seldom necessary and often a bug
-which can cause memory leaks and possibly incorrect behavior.
+Reports fields of type <code>java.lang.ThreadLocal</code> that are not declared <code>static final</code>.
+<p>
+  In the most common case, a <code>java.lang.ThreadLocal</code> instance associates state with a thread.
+  A non-static non-final <code>java.lang.ThreadLocal</code> field associates state with an instance-thread combination.
+  This is usually unnecessary and quite often is a bug that can cause memory leaks and incorrect behavior.
+</p>
+<p>
+  A quick-fix is suggested to make the field <code>static final</code>.
+<p>
+<p><b>Example:</b></p>
+<pre><code>
+  private ThreadLocal tl = ThreadLocal.withInitial(() -> Boolean.TRUE);
+</code></pre>
 <!-- tooltip end -->
-<p>
-This inspection has a quick fix to make the field <b>static final</b>
-<p>
-
 </body>
 </html>

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.scopes;
 
 import com.intellij.JavaTestUtil;
@@ -7,6 +7,7 @@ import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerImpl;
 import com.intellij.codeInsight.daemon.impl.MarkerType;
 import com.intellij.ide.plugins.DynamicPluginsTestUtil;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.extensions.InternalIgnoreDependencyViolation;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.impl.LibraryScopeCache;
 import com.intellij.openapi.util.Disposer;
@@ -39,13 +40,12 @@ import java.util.Map;
  * For this test, we will enlarge the use scope to include libraries.
  */
 public class LibraryUseSearchUsingScopeEnlargerTest extends JavaCodeInsightFixtureTestCase {
-
   @Override
   protected void setUp() throws Exception {
     super.setUp();
     Disposer.register(getTestRootDisposable(), DynamicPluginsTestUtil.loadExtensionWithText(
       "<useScopeEnlarger implementation=\"com.intellij.scopes.LibraryUseSearchUsingScopeEnlargerTest$LibraryUseScopeEnlarger\"/>",
-                                                   getClass().getClassLoader()));
+      "com.intellij"));
     //bug? Test seems to use stale data.
     LocalFileSystem.getInstance().refreshIoFiles(Collections.singleton(new File(getTestDataPath())), false, true, null);
   }
@@ -103,7 +103,8 @@ public class LibraryUseSearchUsingScopeEnlargerTest extends JavaCodeInsightFixtu
     return false;
   }
 
-  public static class LibraryUseScopeEnlarger extends UseScopeEnlarger {
+  @InternalIgnoreDependencyViolation
+  final static class LibraryUseScopeEnlarger extends UseScopeEnlarger {
     @Override
     public @Nullable SearchScope getAdditionalUseScope(@NotNull PsiElement element) {
       return LibraryScopeCache.getInstance(element.getProject()).getLibrariesOnlyScope();

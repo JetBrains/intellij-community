@@ -12,10 +12,7 @@ import com.intellij.psi.impl.source.resolve.reference.impl.providers.PsiPackageR
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
-import com.intellij.util.xml.ConvertContext;
-import com.intellij.util.xml.DomElement;
-import com.intellij.util.xml.GenericDomValue;
-import com.intellij.util.xml.PsiPackageConverter;
+import com.intellij.util.xml.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.devkit.dom.ContentDescriptor;
@@ -88,19 +85,23 @@ public class ModuleDescriptorPackageConverter extends PsiPackageConverter {
     final IdeaPlugin ideaPlugin = moduleDescriptor.getName().getValue();
     if (ideaPlugin == null) return null;
 
-    return getScope(ideaPlugin);
+    return getScope(ideaPlugin, false);
   }
 
   @Nullable
-  protected static GlobalSearchScope getScope(IdeaPlugin ideaPlugin) {
+  private static GlobalSearchScope getScope(IdeaPlugin ideaPlugin, boolean withDependencies) {
     final Module module = ideaPlugin.getModule();
     if (module == null) return null;
 
-    return module.getModuleScope(false);
+    return withDependencies ? module.getModuleWithDependenciesScope() : module.getModuleScope(false);
   }
 
   /**
-   * Resolve {@code idea-plugin@package} attribute using module scope.
+   * Resolve {@code idea-plugin@package} attribute using:
+   * <ol>
+   *   <li>no plugin ID: module scope</li>
+   *   <li>with plugin ID/name: module+dependencies scope, as main module may not contain any sources itself</li>
+   * </ol>.
    */
   public static class ForIdeaPlugin extends ModuleDescriptorPackageConverter {
 
@@ -109,7 +110,7 @@ public class ModuleDescriptorPackageConverter extends PsiPackageConverter {
       final IdeaPlugin ideaPlugin = genericDomValue.getParentOfType(IdeaPlugin.class, true);
       assert ideaPlugin != null;
 
-      return getScope(ideaPlugin);
+      return getScope(ideaPlugin, ideaPlugin.hasRealPluginId() || DomUtil.hasXml(ideaPlugin.getName()));
     }
   }
 }

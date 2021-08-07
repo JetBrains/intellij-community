@@ -82,7 +82,7 @@ private class IncomingChangesIndicator(private val project: Project) : StatusBar
     runInEdt {
       if (project.isDisposed || statusBar == null) return@runInEdt
 
-      isIncomingChangesAvailable = IncomingChangesViewProvider.VisibilityPredicate().`fun`(project)
+      isIncomingChangesAvailable = IncomingChangesViewProvider.VisibilityPredicate().test(project)
       incomingChangesCount = if (isIncomingChangesAvailable) getCachedIncomingChangesCount() else 0
     }
 

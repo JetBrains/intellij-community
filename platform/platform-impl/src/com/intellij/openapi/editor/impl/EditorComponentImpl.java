@@ -1,7 +1,10 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.editor.impl;
 
-import com.intellij.ide.*;
+import com.intellij.ide.CutProvider;
+import com.intellij.ide.DataManager;
+import com.intellij.ide.IdeEventQueue;
+import com.intellij.ide.PasteProvider;
 import com.intellij.ide.actions.UndoRedoAction;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.Disposable;
@@ -159,7 +162,7 @@ public class EditorComponentImpl extends JTextComponent implements Scrollable, D
       if (location == null) {
         location = myEditor.getCaretModel().getLogicalPosition();
       }
-      return EditorUtil.inVirtualSpace(myEditor, location);
+      return EditorCoreUtil.inVirtualSpace(myEditor, location);
     }
     return null;
   }
@@ -181,7 +184,7 @@ public class EditorComponentImpl extends JTextComponent implements Scrollable, D
     super.setCursor(cursor);
     myEditor.myCursorSetExternally = true;
     if (LOG.isDebugEnabled()) {
-      LOG.debug("Mouse cursor set to " + cursor, new Throwable());
+      LOG.debug("Mouse cursor set to " + cursor + " in " + myEditor, new Throwable());
     }
   }
 
@@ -247,7 +250,7 @@ public class EditorComponentImpl extends JTextComponent implements Scrollable, D
     else {
       UISettings.setupAntialiasing(gg);
     }
-    gg.setRenderingHint(RenderingHints.KEY_FRACTIONALMETRICS, myEditor.myFractionalMetricsHintValue);
+    gg.setRenderingHint(RenderingHints.KEY_FRACTIONALMETRICS, UISettings.getEditorFractionalMetricsHint());
     AffineTransform origTx = PaintUtil.alignTxToInt(gg, PaintUtil.insets2offset(getInsets()), true, false, RoundingMode.FLOOR);
     myEditor.paint(gg);
     if (origTx != null) gg.setTransform(origTx);
@@ -387,8 +390,7 @@ public class EditorComponentImpl extends JTextComponent implements Scrollable, D
     setUI(new EditorAccessibilityTextUI());
     UISettings.setupEditorAntialiasing(this);
     // myEditor is null when updateUI() is called from parent's constructor
-    putClientProperty(RenderingHints.KEY_FRACTIONALMETRICS, myEditor == null ? EditorImpl.calcFractionalMetricsHint()
-                                                                             : myEditor.myFractionalMetricsHintValue);
+    putClientProperty(RenderingHints.KEY_FRACTIONALMETRICS, UISettings.getEditorFractionalMetricsHint());
     invalidate();
   }
 
@@ -706,6 +708,11 @@ public class EditorComponentImpl extends JTextComponent implements Scrollable, D
     }
   }
 
+  @Override
+  public String getSelectedText() {
+    return myEditor.getSelectionModel().getSelectedText(true);
+  }
+
   @DirtyUI
   @Override
   public void setText(String text) {
@@ -940,7 +947,7 @@ public class EditorComponentImpl extends JTextComponent implements Scrollable, D
       if (myCaretPos != dot) {
         ApplicationManager.getApplication().assertIsDispatchThread();
         firePropertyChange(ACCESSIBLE_CARET_PROPERTY,
-                           new Integer(myCaretPos), new Integer(dot));
+                           Integer.valueOf(myCaretPos), Integer.valueOf(dot));
 
         if (SystemInfo.isMac) {
           // For MacOSX we also need to fire a caret event to anyone listening

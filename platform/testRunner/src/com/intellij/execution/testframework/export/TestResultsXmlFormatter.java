@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.testframework.export;
 
 import com.intellij.execution.DefaultExecutionTarget;
@@ -15,7 +15,6 @@ import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.WriteExternalException;
-import com.intellij.openapi.util.text.StringUtil;
 import org.jdom.Attribute;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -227,7 +226,7 @@ public final class TestResultsXmlFormatter {
     final int bufferSize = ConsoleBuffer.useCycleBuffer() ? ConsoleBuffer.getCycleBufferSize() : -1;
     final Printer printer = new Printer() {
       @Override
-      public void print(String text, ConsoleViewContentType contentType) {
+      public void print(@NotNull String text, @NotNull ConsoleViewContentType contentType) {
         ProgressManager.checkCanceled();
         if (contentType != lastType.get()) {
           if (buffer.length() > 0) {
@@ -250,13 +249,13 @@ public final class TestResultsXmlFormatter {
       }
 
       @Override
-      public void printHyperlink(String text, HyperlinkInfo info) {
+      public void printHyperlink(@NotNull String text, HyperlinkInfo info) {
         if (info instanceof DiffHyperlink.DiffHyperlinkInfo) {
           final DiffHyperlink diffHyperlink = ((DiffHyperlink.DiffHyperlinkInfo)info).getPrintable();
           try {
             HashMap<String, String> attributes = new HashMap<>();
-            attributes.put(EXPECTED, diffHyperlink.getLeft());
-            attributes.put(ACTUAL, diffHyperlink.getRight());
+            attributes.put(EXPECTED, replaceZeroTokens(diffHyperlink.getLeft()));
+            attributes.put(ACTUAL, replaceZeroTokens(diffHyperlink.getRight()));
             startElement(DIFF, attributes);
             endElement(DIFF);
           }
@@ -300,7 +299,7 @@ public final class TestResultsXmlFormatter {
     StringBuilder output = new StringBuilder();
     StringTokenizer t = new StringTokenizer(text.toString(), "\n");
     while (t.hasMoreTokens()) {
-      output.append(StringUtil.escapeXmlEntities(t.nextToken())).append("\n");
+      output.append(replaceZeroTokens(t.nextToken())).append("\n");
     }
 
     Map<String, String> a = new HashMap<>();
@@ -309,6 +308,11 @@ public final class TestResultsXmlFormatter {
     writeText(output.toString());
     text.delete(0, text.length());
     endElement(ELEM_OUTPUT);
+  }
+
+  @NotNull
+  private static String replaceZeroTokens(String str) {
+    return str.replaceAll("\u0000", "");
   }
 
   private static @NonNls String getTypeString(ConsoleViewContentType type) {

@@ -11,10 +11,10 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkModificator;
 import com.intellij.openapi.roots.*;
-import com.intellij.openapi.roots.impl.ContentEntryImpl;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
@@ -36,6 +36,7 @@ import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.JpsElement;
+import org.jetbrains.jps.model.java.JavaResourceRootType;
 import org.jetbrains.jps.model.java.JavaSourceRootType;
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
 import org.junit.Assert;
@@ -62,6 +63,9 @@ public final class PsiTestUtil {
   public static void removeAllRoots(@NotNull Module module, Sdk jdk) {
     ModuleRootModificationUtil.updateModel(module, model -> {
       model.clear();
+      if (jdk != null && ApplicationManager.getApplication().isUnitTestMode()) {
+        WriteAction.runAndWait(() -> ProjectJdkTable.getInstance().addJdk(jdk, module.getProject()));
+      }
       model.setSdk(jdk);
     });
   }
@@ -75,6 +79,13 @@ public final class PsiTestUtil {
   public static SourceFolder addSourceContentToRoots(@NotNull Module module, @NotNull VirtualFile vDir, boolean testSource) {
     Ref<SourceFolder> result = Ref.create();
     ModuleRootModificationUtil.updateModel(module, model -> result.set(model.addContentEntry(vDir).addSourceFolder(vDir, testSource)));
+    return result.get();
+  }
+
+  @NotNull
+  public static SourceFolder addResourceContentToRoots(@NotNull Module module, @NotNull VirtualFile vDir, boolean testResource) {
+    Ref<SourceFolder> result = Ref.create();
+    ModuleRootModificationUtil.updateModel(module, model -> result.set(model.addContentEntry(vDir).addSourceFolder(vDir, testResource? JavaResourceRootType.TEST_RESOURCE: JavaResourceRootType.RESOURCE)));
     return result.get();
   }
 
@@ -122,9 +133,6 @@ public final class PsiTestUtil {
 
     for (ContentEntry entry : ModuleRootManager.getInstance(module).getContentEntries()) {
       if (Comparing.equal(entry.getFile(), vDir)) {
-        if (entry instanceof ContentEntryImpl) {
-          Assert.assertFalse(((ContentEntryImpl)entry).isDisposed());
-        }
         return entry;
       }
     }
@@ -197,7 +205,7 @@ public final class PsiTestUtil {
   }
 
   public static void checkFileStructure(@NotNull PsiFile file) {
-    compareFromAllRoots(file, f -> DebugUtil.psiTreeToString(f, false));
+    compareFromAllRoots(file, f -> DebugUtil.psiTreeToString(f, true));
   }
 
   private static void compareFromAllRoots(@NotNull PsiFile file, @NotNull Function<? super PsiFile, String> fun) {

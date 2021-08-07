@@ -168,7 +168,7 @@ public final class ModuleCompilerUtil {
   }
 
   private static boolean isDummy(ModuleSourceSet set, ModulesProvider modulesProvider) {
-    JavaSourceRootType type = set.getType() == ModuleSourceSet.Type.PRODUCTION ? JavaSourceRootType.SOURCE : JavaSourceRootType.TEST_SOURCE;
+    JavaSourceRootType type = set.getType().isTest()? JavaSourceRootType.TEST_SOURCE : JavaSourceRootType.SOURCE;
     ModuleRootModel rootModel = modulesProvider.getRootModel(set.getModule());
     for (ContentEntry entry : rootModel.getContentEntries()) {
       if (!entry.getSourceFolders(type).isEmpty()) {

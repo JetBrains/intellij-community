@@ -45,7 +45,6 @@ import git4idea.rebase.GitRebaseUtils
 import git4idea.repo.GitRepository
 import git4idea.repo.GitRepositoryManager
 import org.jetbrains.annotations.Nls
-import java.util.*
 import javax.swing.JPanel
 
 internal open class GitDefaultMergeDialogCustomizer(

@@ -1,8 +1,7 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.popup;
 
 import com.intellij.openapi.actionSystem.DataProvider;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.ui.JBListUpdater;
 import com.intellij.openapi.ui.ListComponentUpdater;
 import com.intellij.openapi.ui.popup.PopupChooserBuilder;
@@ -11,6 +10,7 @@ import com.intellij.ui.ListUtil;
 import com.intellij.ui.ScrollingUtil;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.components.JBScrollPane;
+import com.intellij.ui.popup.util.PopupImplUtil;
 import com.intellij.ui.speedSearch.ListWithFilter;
 import com.intellij.util.BooleanFunction;
 import com.intellij.util.Consumer;
@@ -28,9 +28,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-/**
- * @author yole
- */
+
 class PopupListAdapter<T> implements PopupChooserBuilder.PopupComponentAdapter<T> {
   private final JList<T> myList;
   private final PopupChooserBuilder<T> myBuilder;
@@ -155,18 +153,12 @@ class PopupListAdapter<T> implements PopupChooserBuilder.PopupComponentAdapter<T
     @Override
     @Nullable
     public Object getData(@NotNull @NonNls String dataId) {
-      if (PlatformDataKeys.SELECTED_ITEM.is(dataId)){
-        return myList.getSelectedValue();
-      }
-      if (PlatformDataKeys.SELECTED_ITEMS.is(dataId)){
-        return myList.getSelectedValues();
-      }
-      return null;
+      return PopupImplUtil.getDataImplForList(myList, dataId);
     }
 
     @Override
     public void setBorder(Border border) {
-      if (myList != null){
+      if (myList != null) {
         myList.setBorder(border);
       }
     }

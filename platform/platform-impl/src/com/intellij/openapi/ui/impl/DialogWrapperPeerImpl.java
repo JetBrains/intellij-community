@@ -2,7 +2,6 @@
 package com.intellij.openapi.ui.impl;
 
 import com.intellij.ide.DataManager;
-import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.impl.TypeSafeDataProviderAdapter;
 import com.intellij.ide.ui.AntialiasingType;
 import com.intellij.ide.ui.UISettings;
@@ -39,7 +38,7 @@ import com.intellij.openapi.wm.impl.customFrameDecorations.header.CustomFrameDia
 import com.intellij.reference.SoftReference;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBLayeredPane;
-import com.intellij.ui.mac.touchbar.TouchBarsManager;
+import com.intellij.ui.mac.touchbar.TouchbarSupport;
 import com.intellij.util.IJSwingUtilities;
 import com.intellij.util.containers.JBIterable;
 import com.intellij.util.ui.*;
@@ -347,8 +346,8 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
   }
 
   @Override
-  public void isResizable() {
-    myDialog.isResizable();
+  public boolean isResizable() {
+    return myDialog.isResizable();
   }
 
   @Override
@@ -382,7 +381,7 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
     UIUtil.decorateWindowHeader(rootPane);
 
     Window window = getWindow();
-    if (window instanceof JDialog && !((JDialog)window).isUndecorated()) {
+    if (window instanceof JDialog && !((JDialog)window).isUndecorated() && rootPane != null) {
       UIUtil.setCustomTitleBar(window, rootPane, runnable -> Disposer.register(myWrapper.getDisposable(), () -> runnable.run()));
     }
 
@@ -426,7 +425,7 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
     myDialog.getWindow().setAutoRequestFocus((getOwner()!=null && getOwner().isActive()) || !ComponentUtil.isDisableAutoRequestFocus());
 
     if (SystemInfo.isMac) {
-      final Disposable tb = TouchBarsManager.showDialogWrapperButtons(myDialog.getContentPane());
+      final Disposable tb = TouchbarSupport.showDialogButtons(myDialog.getContentPane());
       if (tb != null) {
         myDisposeActions.add(() -> Disposer.dispose(tb));
       }
@@ -580,6 +579,12 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
       return null;
     }
 
+    private void fitToScreen(Rectangle rect) {
+      if (myDialogWrapper == null) return; // this can be invoked from super constructor before this field is assigned
+      final DialogWrapper wrapper = myDialogWrapper.get();
+      if (wrapper != null) wrapper.fitToScreen(rect);
+    }
+
     @Override
     public void setSize(int width, int height) {
       _setSizeForLocation(width, height, null);
@@ -588,7 +593,7 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
     private void _setSizeForLocation(int width, int height, @Nullable Point initial) {
       Point location = initial != null ? initial : getLocation();
       Rectangle rect = new Rectangle(location.x, location.y, width, height);
-      ScreenUtil.fitToScreen(rect);
+      fitToScreen(rect);
       if (initial != null || location.x != rect.x || location.y != rect.y) {
         setLocation(rect.x, rect.y);
       }
@@ -599,13 +604,13 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
     @Override
     public void setBounds(int x, int y, int width, int height) {
       Rectangle rect = new Rectangle(x, y, width, height);
-      ScreenUtil.fitToScreen(rect);
+      fitToScreen(rect);
       super.setBounds(rect.x, rect.y, rect.width, rect.height);
     }
 
     @Override
     public void setBounds(Rectangle r) {
-      ScreenUtil.fitToScreen(r);
+      fitToScreen(r);
       super.setBounds(r);
     }
 
@@ -652,7 +657,7 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
         myDimensionServiceKey = dialogWrapper.getDimensionKey();
 
         if (myDimensionServiceKey != null) {
-          final Project projectGuess = CommonDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(this));
+          final Project projectGuess = guessProjectDependingOnKey(myDimensionServiceKey);
           location = getWindowStateService(projectGuess).getLocation(myDimensionServiceKey);
           Dimension size = getWindowStateService(projectGuess).getSize(myDimensionServiceKey);
           if (size != null) {
@@ -680,7 +685,7 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
 
       if (isAutoAdjustable) {
         final Rectangle bounds = getBounds();
-        ScreenUtil.fitToScreen(bounds);
+        fitToScreen(bounds);
         setBounds(bounds);
       }
 
@@ -692,6 +697,11 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
 
       setBackground(UIUtil.getPanelBackground());
       super.show();
+    }
+
+    private @Nullable Project guessProjectDependingOnKey(String key) {
+      return !key.startsWith(WindowStateService.USE_APPLICATION_WIDE_STORE_KEY_PREFIX) ?
+             CommonDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(this)) : null;
     }
 
     private static void maximize(@NotNull Dimension size, @Nullable Dimension alternativeSize) {
@@ -810,8 +820,7 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
         if (myDimensionServiceKey != null &&
             myInitialSize != null &&
             myOpened) { // myInitialSize can be null only if dialog is disposed before first showing
-          final Project projectGuess = CommonDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(MyDialog.this));
-
+          final Project projectGuess = guessProjectDependingOnKey(myDimensionServiceKey);
           // Save location
           Point location = getLocation();
           getWindowStateService(projectGuess).putLocation(myDimensionServiceKey, location);

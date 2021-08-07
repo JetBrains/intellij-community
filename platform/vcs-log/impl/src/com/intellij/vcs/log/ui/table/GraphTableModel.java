@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.log.ui.table;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -8,8 +8,10 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
 import com.intellij.util.NotNullFunction;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.exception.FrequentErrorLogger;
-import com.intellij.vcs.log.*;
+import com.intellij.vcs.log.CommitId;
+import com.intellij.vcs.log.VcsCommitMetadata;
+import com.intellij.vcs.log.VcsFullCommitDetails;
+import com.intellij.vcs.log.VcsRef;
 import com.intellij.vcs.log.data.RefsModel;
 import com.intellij.vcs.log.data.VcsLogData;
 import com.intellij.vcs.log.impl.VcsLogUiProperties;
@@ -34,7 +36,6 @@ public final class GraphTableModel extends AbstractTableModel {
   public static final int COMMIT_DOES_NOT_MATCH = -2;
 
   private static final Logger LOG = Logger.getInstance(GraphTableModel.class);
-  private static final FrequentErrorLogger ERROR_LOG = FrequentErrorLogger.newInstance(LOG);
 
   @NotNull private final VcsLogData myLogData;
   @NotNull private final Consumer<? super Runnable> myRequestMore;
@@ -50,9 +51,6 @@ public final class GraphTableModel extends AbstractTableModel {
     myLogData = logData;
     myRequestMore = requestMore;
     myProperties = properties;
-    VcsLogColumnManager.getInstance().addColumnModelListener(logData, (column, index) -> {
-      fireTableStructureChanged();
-    });
   }
 
   @Override
@@ -61,7 +59,7 @@ public final class GraphTableModel extends AbstractTableModel {
   }
 
   @Override
-  public final int getColumnCount() {
+  public int getColumnCount() {
     return VcsLogColumnManager.getInstance().getModelColumnsCount();
   }
 
@@ -72,12 +70,12 @@ public final class GraphTableModel extends AbstractTableModel {
 
   @NotNull
   @Override
-  public final Object getValueAt(int rowIndex, int columnIndex) {
+  public Object getValueAt(int rowIndex, int columnIndex) {
     return getValueAt(rowIndex, getColumn(columnIndex));
   }
 
   @NotNull
-  public final <T> T getValueAt(int rowIndex, @NotNull VcsLogColumn<T> column) {
+  public <T> T getValueAt(int rowIndex, @NotNull VcsLogColumn<T> column) {
     if (rowIndex >= getRowCount() - 1 && canRequestMore()) {
       requestToLoadMore(EmptyRunnable.INSTANCE);
     }
@@ -89,7 +87,7 @@ public final class GraphTableModel extends AbstractTableModel {
       return column.getStubValue(this);
     }
     catch (Throwable t) {
-      ERROR_LOG.error("Failed to get information for the log table", t);
+      LOG.error("Failed to get information for the log table", t);
       return column.getStubValue(this);
     }
   }
@@ -160,7 +158,7 @@ public final class GraphTableModel extends AbstractTableModel {
   @NotNull
   public VcsFullCommitDetails getFullDetails(int row) {
     Integer id = getIdAtRow(row);
-    return myLogData.getCommitDetailsGetter().getCommitData(id, Collections.singleton(id));
+    return myLogData.getCommitDetailsGetter().getCommitData(id);
   }
 
   @NotNull

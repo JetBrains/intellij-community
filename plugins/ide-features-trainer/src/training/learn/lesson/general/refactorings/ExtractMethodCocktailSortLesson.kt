@@ -3,12 +3,12 @@ package training.learn.lesson.general.refactorings
 
 import com.intellij.CommonBundle
 import com.intellij.refactoring.RefactoringBundle
+import com.intellij.refactoring.extractMethod.ExtractMethodHelper
 import com.intellij.ui.UIBundle
 import training.dsl.*
 import training.dsl.LessonUtil.restoreIfModifiedOrMoved
 import training.learn.LessonsBundle
 import training.learn.course.KLesson
-import javax.swing.JButton
 import javax.swing.JDialog
 
 class ExtractMethodCocktailSortLesson(private val sample: LessonSample)
@@ -36,9 +36,10 @@ class ExtractMethodCocktailSortLesson(private val sample: LessonSample)
       task {
         text(LessonsBundle.message("extract.method.start.refactoring", strong(okButtonText)))
 
-        // Wait until the second dialog
-        triggerByUiComponentAndHighlight(false, false) { button: JButton ->
-          button.text == yesButtonText
+        // Wait until the first dialog will be gone but we st
+        stateCheck {
+          val ui = previous.ui ?: return@stateCheck false
+          !ui.isShowing && insideRefactoring()
         }
 
         restoreByUi(delayMillis = defaultRestoreDelay)
@@ -56,8 +57,9 @@ class ExtractMethodCocktailSortLesson(private val sample: LessonSample)
         triggerByUiComponentAndHighlight(highlightBorder = false, highlightInside = false) { dialog: JDialog ->
           dialog.title == replaceFragmentDialogTitle
         }
-
-        restoreByUi(restoreId = startTaskId, delayMillis = defaultRestoreDelay)
+        restoreState(restoreId = startTaskId, delayMillis = defaultRestoreDelay) {
+          !insideRefactoring()
+        }
         test(waitEditorToBeReady = false) {
           dialog(extractMethodDialogTitle) {
             button(yesButtonText).click()
@@ -78,4 +80,8 @@ class ExtractMethodCocktailSortLesson(private val sample: LessonSample)
         }
       }
     }
+
+  private fun insideRefactoring() = Thread.currentThread().stackTrace.any {
+    it.className.contains(ExtractMethodHelper::class.java.simpleName)
+  }
 }

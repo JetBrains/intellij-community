@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.keyFMap;
 
 import com.intellij.openapi.util.Key;
@@ -11,11 +11,11 @@ import java.util.Objects;
 /**
  * Debug implementation of KeyFMap. Could be slower than normal implementation but contains actual keys,
  * so it would be easier to investigate heap dumps containing this implementation.
- * 
+ *
  * @see #DEBUG_FMAP
  */
-class DebugFMap implements KeyFMap {
-  static final boolean DEBUG_FMAP = Boolean.getBoolean("idea.keyfmap.debug.implementation"); 
+final class DebugFMap implements KeyFMap {
+  static final boolean DEBUG_FMAP = Boolean.getBoolean("idea.keyfmap.debug.implementation");
   private final @NotNull UnmodifiableHashMap<Key<?>, Object> myMap;
 
   DebugFMap(@NotNull UnmodifiableHashMap<Key<?>, Object> map) {
@@ -42,7 +42,7 @@ class DebugFMap implements KeyFMap {
 
   @Override
   public boolean equals(Object obj) {
-    if (obj == this) return true; 
+    if (obj == this) return true;
     if (!(obj instanceof KeyFMap)) return false;
     KeyFMap other = (KeyFMap)obj;
     if (this.size() != other.size()) return false;

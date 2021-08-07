@@ -1,8 +1,6 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.debugger.remote.vfs;
 
-import com.intellij.ide.util.PsiNavigationSupport;
-import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileSystem;
@@ -11,6 +9,7 @@ import com.intellij.util.PathMapper;
 import com.intellij.util.PathMappingSettings;
 import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.XSourcePositionWrapper;
+import com.intellij.xdebugger.impl.XDebuggerUtilImpl;
 import com.jetbrains.python.debugger.PyDebugProcess;
 import com.jetbrains.python.debugger.PyLocalPositionConverter;
 import com.jetbrains.python.debugger.PySignature;
@@ -98,9 +97,7 @@ public class PyRemotePositionConverter extends PyLocalPositionConverter {
     @NotNull
     @Override
     public Navigatable createNavigatable(@NotNull Project project) {
-      return getOffset() != -1
-             ? PsiNavigationSupport.getInstance().createNavigatable(project, myFile, getOffset())
-             : new OpenFileDescriptor(project, myFile, getLine(), 0);
+      return XDebuggerUtilImpl.createNavigatable(project, this);
     }
   }
 }

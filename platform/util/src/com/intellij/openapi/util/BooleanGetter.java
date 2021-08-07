@@ -15,6 +15,9 @@
  */
 package com.intellij.openapi.util;
 
+/**
+ * Deprecated. Use {@link java.util.function.BooleanSupplier} instead
+ */
 @FunctionalInterface
 public interface BooleanGetter {
   BooleanGetter TRUE = () -> true;

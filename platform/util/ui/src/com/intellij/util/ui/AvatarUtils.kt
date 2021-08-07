@@ -1,9 +1,9 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.ui
 
+import com.intellij.openapi.util.Couple
 import com.intellij.ui.JBColor
 import com.intellij.ui.scale.ScaleContext
-import com.intellij.util.ui.Avatars.gradientInt
 import com.intellij.util.ui.ImageUtil.applyQualityRenderingHints
 import java.awt.Color
 import java.awt.Font
@@ -24,9 +24,8 @@ object AvatarUtils {
     return JBImageIcon(ImageUtil.scaleImage(hiDpi, targetSize, targetSize))
   }
 
-  fun generateColoredAvatar(gradientSeed: String, name: String): BufferedImage {
-    val (colorInt1, colorInt2) = gradientInt(gradientSeed)
-    val (color1, color2) = Color(colorInt1) to Color(colorInt2)
+  fun generateColoredAvatar(gradientSeed: String, name: String, palette: ColorPalette = AvatarPalette): BufferedImage {
+    val (color1, color2) = palette.gradient(gradientSeed)
 
     val shortName = Avatars.initials(name)
     val size = 64
@@ -43,32 +42,6 @@ object AvatarUtils {
 
     return image
   }
-}
-
-private object ColorPalette {
-  val gradients = arrayOf(
-    "#60A800" to "#D5CA00",
-    "#0A81F6" to "#0A81F6",
-    "#AB3AF2" to "#E40568",
-    "#21D370" to "#03E9E1",
-    "#765AF8" to "#5A91F8",
-    "#9F2AFF" to "#E9A80B",
-    "#3BA1FF" to "#36E97D",
-    "#9E54FF" to "#0ACFF6",
-    "#D50F6B" to "#E73AE8",
-    "#00C243" to "#00FFFF",
-    "#B345F1" to "#669DFF",
-    "#ED5502" to "#E73AE8",
-    "#4BE098" to "#627FFF",
-    "#765AF8" to "#C059EE",
-    "#ED358C" to "#DBED18",
-    "#168BFA" to "#26F7C7",
-    "#9039D0" to "#C239D0",
-    "#ED358C" to "#F9902E",
-    "#9D4CFF" to "#39D3C3",
-    "#9F2AFF" to "#FD56FD",
-    "#FF7500" to "#FFCA00"
-  )
 }
 
 internal object Avatars {
@@ -94,25 +67,45 @@ internal object Avatars {
   fun initials(firstName: String, lastName: String): String {
     return listOf(firstName, lastName).joinToString("") { it.first().toString() }
   }
+}
 
-  fun gradient(seed: String? = null): Pair<String, String> {
+abstract class ColorPalette {
+
+  abstract val gradients: Array<Pair<Color, Color>>
+
+  public fun gradient(seed: String? = null): Pair<Color, Color> {
     val keyCode = if (seed != null) {
-      abs(seed.hashCode()) % ColorPalette.gradients.size
+      abs(seed.hashCode()) % gradients.size
     }
-    else {
-      0
-    }
-    return ColorPalette.gradients[keyCode]
+    else 0
+    return gradients[keyCode]
   }
+}
 
-  fun gradientInt(seed: String): Pair<Int, Int> {
-    val gradientStrings = gradient(seed)
-    val start = colorToInt(gradientStrings.first)
-    val end = colorToInt(gradientStrings.second)
-    return start to end
-  }
+object AvatarPalette : ColorPalette() {
 
-  private fun colorToInt(color: String): Int {
-    return 0xFF000000.toInt() or color.substring(1).toInt(16)
-  }
+  override val gradients: Array<Pair<Color, Color>>
+    get() = arrayOf(
+      Color(0x60A800) to Color(0xD5CA00),
+      Color(0x0A81F6) to Color(0x0A81F6),
+      Color(0xAB3AF2) to Color(0xE40568),
+      Color(0x21D370) to Color(0x03E9E1),
+      Color(0x765AF8) to Color(0x5A91F8),
+      Color(0x9F2AFF) to Color(0xE9A80B),
+      Color(0x3BA1FF) to Color(0x36E97D),
+      Color(0x9E54FF) to Color(0x0ACFF6),
+      Color(0xD50F6B) to Color(0xE73AE8),
+      Color(0x00C243) to Color(0x00FFFF),
+      Color(0xB345F1) to Color(0x669DFF),
+      Color(0xED5502) to Color(0xE73AE8),
+      Color(0x4BE098) to Color(0x627FFF),
+      Color(0x765AF8) to Color(0xC059EE),
+      Color(0xED358C) to Color(0xDBED18),
+      Color(0x168BFA) to Color(0x26F7C7),
+      Color(0x9039D0) to Color(0xC239D0),
+      Color(0xED358C) to Color(0xF9902E),
+      Color(0x9D4CFF) to Color(0x39D3C3),
+      Color(0x9F2AFF) to Color(0xFD56FD),
+      Color(0xFF7500) to Color(0xFFCA00)
+    )
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.run;
 
 import com.intellij.execution.ExecutionException;
@@ -26,9 +26,7 @@ import java.io.File;
 import java.util.Objects;
 import java.util.regex.Pattern;
 
-/**
- * @author yole
- */
+
 public class PythonRunConfiguration extends AbstractPythonRunConfiguration
   implements AbstractPythonRunConfigurationParams, PythonRunConfigurationParams, RefactoringListenerProvider, InputRedirectAware {
   public static final String SCRIPT_NAME = "SCRIPT_NAME";

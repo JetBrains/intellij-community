@@ -76,8 +76,9 @@ public class GitRepositoryReaderTest extends GitPlatformTest {
     }
     FileUtil.rename(dotGit, myGitDir);
     TestCase.assertTrue(myGitDir.exists());
+    VirtualFile rootDir = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(myTempDir);
     VirtualFile gitDir = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(myGitDir);
-    myRepositoryReader = new GitRepositoryReader(GitRepositoryFiles.getInstance(gitDir));
+    myRepositoryReader = new GitRepositoryReader(GitRepositoryFiles.getInstance(rootDir, gitDir));
   }
 
   @NotNull

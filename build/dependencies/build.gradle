@@ -10,6 +10,9 @@ buildscript {
 }
 
 allprojects {
+  repositories {
+    maven { url 'https://cache-redirector.jetbrains.com/intellij-dependencies' }
+  }
   apply plugin: 'idea'
   idea {
     module {
@@ -24,39 +27,21 @@ apply plugin: 'base'
 group 'intellij.tools'
 version '1.0'
 
-try {
-  project.ext.inJetBrainsNetwork = InetAddress.getByName("repo.labs.intellij.net").isReachable(5000)
-  if (!project.ext.inJetBrainsNetwork && org.gradle.internal.os.OperatingSystem.current().isWindows()) {
-    project.ext.inJetBrainsNetwork = Runtime.getRuntime().exec("ping -n 1 repo.labs.intellij.net").waitFor() == 0
-  }
-  if (!project.ext.inJetBrainsNetwork) {
-    logger.info('repo.labs.intellij.net is not reachable')
-  }
-}
-catch (UnknownHostException e) {
-  logger.info('repo.labs.intellij.net is not reachable', e)
-  project.ext.inJetBrainsNetwork = false
-}
-
 apply from: 'setupJdk.gradle'
 apply from: 'setupJbre.gradle'
-apply from: 'setupKotlin.gradle'
-apply from: 'setupJetSign.gradle'
+apply from: 'setupKotlinCompiler.gradle'
 apply from: 'setupAndroidSdk.gradle'
 apply from: 'setupBuildScriptsDeps.gradle'
 apply from: 'setupToolboxLiteGen.gradle'
 apply from: 'setupBundledMaven.gradle'
 apply from: 'setupCidr.gradle'
-apply from: 'setupDelve.gradle'
 apply from: 'setupRpluginDeps.gradle'
-apply from: 'setupZkm.gradle'
 apply from: 'setupAndroidStudio.gradle'
 //Temporary unbundle VulnerabilitySearch
 //apply from: 'setupVulnerabilitySearchPlugin.gradle'
 
-task setupDependencies(dependsOn: ['setupJdks', 'setupJbre', 'setupKotlinPlugin',
-                                   'setupJetSign', 'setupBundledMaven'], group: 'dependencies')
-clean.dependsOn('cleanSetupJdks', 'cleanSetupJbre', 'cleanSetupKotlinPlugin', 'cleanSetupJetSign', 'cleanSetupBundledMaven')
+task setupDependencies(dependsOn: ['setupJdks', 'setupJbre', 'setupKotlinCompiler', 'setupBundledMaven'], group: 'dependencies')
+clean.dependsOn('cleanSetupJdks', 'cleanSetupJbre', 'cleanSetupKotlinCompiler', 'cleanSetupBundledMaven')
 
 task dependenciesFile() {
   description = 'Creates file with all dependencies version, even those that were overloaded by system or env properties'

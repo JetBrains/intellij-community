@@ -453,4 +453,31 @@ public final class InitializationUtils {
     }
     return false;
   }
+
+  public static boolean isInitializedInConstructors(PsiField field, PsiClass aClass) {
+    final PsiMethod[] constructors = aClass.getConstructors();
+    if (constructors.length == 0) {
+      return false;
+    }
+    for (final PsiMethod constructor : constructors) {
+      if (!methodAssignsVariableOrFails(constructor, field)) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  public static boolean isInitializedInInitializer(@NotNull PsiField field, @NotNull PsiClass aClass) {
+    final PsiClassInitializer[] initializers = aClass.getInitializers();
+    for (final PsiClassInitializer initializer : initializers) {
+      if (initializer.hasModifierProperty(PsiModifier.STATIC)) {
+        continue;
+      }
+      final PsiCodeBlock body = initializer.getBody();
+      if (blockAssignsVariableOrFails(body, field)) {
+        return true;
+      }
+    }
+    return false;
+  }
 }

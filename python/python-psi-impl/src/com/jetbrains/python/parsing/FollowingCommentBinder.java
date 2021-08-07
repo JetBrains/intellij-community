@@ -21,9 +21,6 @@ import com.jetbrains.python.PyTokenTypes;
 
 import java.util.List;
 
-/**
-* @author yole
-*/
 class FollowingCommentBinder implements WhitespacesAndCommentsBinder {
   static final FollowingCommentBinder INSTANCE = new FollowingCommentBinder();
 

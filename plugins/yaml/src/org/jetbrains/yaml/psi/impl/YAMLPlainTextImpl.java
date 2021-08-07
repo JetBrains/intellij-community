@@ -24,65 +24,77 @@ public class YAMLPlainTextImpl extends YAMLScalarImpl implements YAMLScalar {
     final int myStart = getTextRange().getStartOffset();
     final List<TextRange> result = new ArrayList<>();
 
-    boolean seenText = false;
+    TextRange textRange = null;
     for (ASTNode child = getFirstContentNode(); child != null; child = child.getTreeNext()) {
+      TextRange childRange = child.getTextRange().shiftRight(-myStart);
       if (child.getElementType() == YAMLTokenTypes.TEXT) {
-        seenText = true;
-        result.add(child.getTextRange().shiftRight(-myStart));
+        if (textRange != null) result.add(textRange);
+        textRange = childRange;
       }
       else if (child.getElementType() == YAMLTokenTypes.EOL) {
-        if (!seenText) {
-          result.add(child.getTextRange().shiftRight(-myStart));
+        if (textRange == null) {
+          result.add(childRange);
         }
-        seenText = false;
+        else {
+          result.add(textRange.union(childRange));
+          textRange = null;
+        }
       }
     }
+    if (textRange != null) result.add(textRange);
 
     return result;
   }
 
-  @NotNull
   @Override
-  protected String getRangesJoiner(@NotNull CharSequence text, @NotNull List<TextRange> contentRanges, int indexBefore) {
-    if (isNewline(text, contentRanges.get(indexBefore)) || isNewline(text, contentRanges.get(indexBefore + 1))) {
-      return "";
-    }
-    else {
-      return " ";
-    }
-  }
+  public @NotNull YamlScalarTextEvaluator getTextEvaluator() {
+    return new YamlScalarTextEvaluator<>(this) {
 
-  private static boolean isNewline(@NotNull CharSequence text, @NotNull TextRange range) {
-    return range.getLength() == 1 && text.charAt(range.getStartOffset()) == '\n';
+      @NotNull
+      @Override
+      public List<TextRange> getContentRanges() {
+        final int myStart = getTextRange().getStartOffset();
+        final List<TextRange> result = new ArrayList<>();
+
+        boolean seenText = false;
+        for (ASTNode child = getFirstContentNode(); child != null; child = child.getTreeNext()) {
+          if (child.getElementType() == YAMLTokenTypes.TEXT) {
+            seenText = true;
+            result.add(child.getTextRange().shiftRight(-myStart));
+          }
+          else if (child.getElementType() == YAMLTokenTypes.EOL) {
+            if (!seenText) {
+              result.add(child.getTextRange().shiftRight(-myStart));
+            }
+            seenText = false;
+          }
+        }
+
+        return result;
+      }
+
+      @NotNull
+      @Override
+      protected String getRangesJoiner(@NotNull CharSequence text, @NotNull List<TextRange> contentRanges, int indexBefore) {
+        if (isNewline(text, contentRanges.get(indexBefore)) || isNewline(text, contentRanges.get(indexBefore + 1))) {
+          return "";
+        }
+        else {
+          return " ";
+        }
+      }
+
+      private boolean isNewline(@NotNull CharSequence text, @NotNull TextRange range) {
+        return range.getLength() == 1 && text.charAt(range.getStartOffset()) == '\n';
+      }
+    };
   }
 
   @Override
   protected List<Pair<TextRange, String>> getEncodeReplacements(@NotNull CharSequence input) throws IllegalArgumentException {
+    // doesn't replace anything, just checks that input is supported
     checkForConsistency(input);
-
-    final int indent = YAMLUtil.getIndentToThisElement(this);
-    final String indentString = StringUtil.repeatSymbol(' ', indent);
-
-    final List<Pair<TextRange, String>> result = new ArrayList<>();
-    int currentLength = 0;
-    for (int i = 0; i < input.length(); ++i) {
-      if (input.charAt(i) == '\n') {
-        result.add(Pair.create(TextRange.from(i, 1), "\n\n" + indentString));
-        currentLength = 0;
-        continue;
-      }
-
-      if (currentLength > MAX_SCALAR_LENGTH_PREDEFINED &&
-          input.charAt(i) == ' ' && isSurroundedByNoSpace(input, i)) {
-        result.add(Pair.create(TextRange.from(i, 1), "\n" + indentString));
-        currentLength = 0;
-        continue;
-      }
-
-      currentLength++;
-    }
-
-    return result;
+    return super.getDecodeReplacements(input);
   }
 
   private static void checkForConsistency(@NotNull CharSequence input) throws IllegalArgumentException {

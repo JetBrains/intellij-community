@@ -26,6 +26,7 @@ import com.jetbrains.python.psi.impl.*;
 import com.jetbrains.python.psi.resolve.*;
 import com.jetbrains.python.psi.types.PyModuleType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
+import com.jetbrains.python.pyi.PyiFile;
 import com.jetbrains.python.pyi.PyiUtil;
 import com.jetbrains.python.refactoring.PyDefUseUtil;
 import one.util.streamex.StreamEx;
@@ -35,9 +36,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 import java.util.function.Supplier;
 
-/**
- * @author yole
- */
+
 public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference {
   protected final PyQualifiedExpression myElement;
   protected final PyResolveContext myContext;
@@ -456,8 +455,15 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
 
   @Override
   public PsiElement handleElementRename(@NotNull String newElementName) throws IncorrectOperationException {
-    ASTNode nameElement = myElement.getNameElement();
-    newElementName = StringUtil.trimEnd(newElementName, PyNames.DOT_PY);
+    final ASTNode nameElement = myElement.getNameElement();
+    for (PsiElement resolved : PyUtil.multiResolveTopPriority(myElement, myContext)) {
+      if (resolved instanceof PyFile && newElementName.endsWith(PyNames.DOT_PY)) {
+        newElementName = StringUtil.trimEnd(newElementName, PyNames.DOT_PY);
+      }
+      else if (resolved instanceof PyiFile && newElementName.endsWith(PyNames.DOT_PYI)) {
+        newElementName = StringUtil.trimEnd(newElementName, PyNames.DOT_PYI);
+      }
+    }
     if (nameElement != null && PyNames.isIdentifier(newElementName)) {
       final ASTNode newNameElement = PyUtil.createNewName(myElement, newElementName);
       myElement.getNode().replaceChild(nameElement, newNameElement);

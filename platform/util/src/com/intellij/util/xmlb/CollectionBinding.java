@@ -1,9 +1,9 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.xmlb;
 
 import com.intellij.serialization.ClassUtil;
 import com.intellij.serialization.MutableAccessor;
-import com.intellij.util.SmartList;
+import com.intellij.util.XmlElement;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -16,8 +16,9 @@ final class CollectionBinding extends AbstractCollectionBinding  {
     super(ClassUtil.typeToClass(type.getActualTypeArguments()[0]), accessor);
   }
 
+  @SuppressWarnings("DuplicatedCode")
   @Override
-  protected @NotNull Object doDeserializeList(@Nullable Object context, @NotNull List<? extends Element> elements) {
+  protected @NotNull Object doDeserializeList(@Nullable Object context, @NotNull List<Element> elements) {
     Collection<Object> result;
     boolean isContextMutable = context != null && ClassUtil.isMutableCollection(context);
     if (isContextMutable) {
@@ -26,10 +27,31 @@ final class CollectionBinding extends AbstractCollectionBinding  {
       result.clear();
     }
     else {
-      result = context instanceof Set ? new HashSet<>() : new SmartList<>();
+      result = context instanceof Set ? new HashSet<>() : new ArrayList<>();
     }
 
     for (Element node : elements) {
+      result.add(deserializeItem(node, context));
+    }
+
+    return result;
+  }
+
+  @SuppressWarnings("DuplicatedCode")
+  @Override
+  protected @NotNull Object doDeserializeList2(@Nullable Object context, @NotNull List<XmlElement> elements) {
+    Collection<Object> result;
+    boolean isContextMutable = context != null && ClassUtil.isMutableCollection(context);
+    if (isContextMutable) {
+      //noinspection unchecked
+      result = (Collection<Object>)context;
+      result.clear();
+    }
+    else {
+      result = context instanceof Set ? new HashSet<>() : new ArrayList<>();
+    }
+
+    for (XmlElement node : elements) {
       result.add(deserializeItem(node, context));
     }
 

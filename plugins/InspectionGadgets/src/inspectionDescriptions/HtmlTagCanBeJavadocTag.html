@@ -1,9 +1,24 @@
 <html>
 <body>
-Reports use of <b>&lt;code&gt;</b> tags in Javadoc comments. Since JDK1.5
-these constructs may be replaced with <b>{@code ...}</b> constructs. This allows the use of angle brackets (&lt;, &gt;)
-inside the comment, instead of HTML character entities.
+Reports the usages of <code>&lt;code&gt;</code> tags in Javadoc comments. Since JDK 1.5, these constructs can be replaced with <code>{@code ...}</code> constructs. This allows using angle brackets <code>&lt;</code> and <code>&gt;</code> inside the comment instead of HTML character entities.
+<p><b>Example:</b></p>
+<pre>
+  <code>
+  /**
+   * @return empty &lt;code&gt;ArrayList&amp;lt;Integer&amp;gt;&lt;/code&gt;
+   */
+  List&lt;Integer&gt; getList(){ ... }
+  </code>
+</pre>
+<p>After the quick-fix is applied:</p>
+<pre>
+  <code>
+  /**
+   * @return empty {@code ArrayList&lt;Integer&gt;}
+   */
+  List&lt;Integer&gt; getList(){ ... }
+  </code>
+</pre>
 <!-- tooltip end -->
-<p>
 </body>
 </html>

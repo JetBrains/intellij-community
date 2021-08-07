@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.validation;
 
 import com.intellij.lang.annotation.AnnotationHolder;
@@ -12,9 +12,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * @author yole
- */
+
 public class PyAnnotatingVisitor implements Annotator {
   private static final Logger LOGGER = Logger.getInstance(PyAnnotatingVisitor.class.getName());
   private static final Class[] ANNOTATOR_CLASSES = new Class[] {

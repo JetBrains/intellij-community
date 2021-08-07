@@ -1,6 +1,26 @@
 <html>
 <body>
-This inspection checks that properties are accessed correctly:
-read-only not set, write-only not read, non-deletable not deleted.
+Reports cases when properties are accessed inappropriately:
+<ul>
+  <li>Read-only properties are set</li>
+  <li>Write-only properties are read</li>
+  <li>Non-deletable properties are deleted</li>
+</ul>
+<p><b>Example:</b></p>
+<pre style="font-family: monospace">
+class MyClass:
+    @property
+    def read_only(self): return None
+
+    def __write_only_setter(self, value): pass
+
+    write_only = property(None, __write_only_setter)
+
+
+a = MyClass()
+a.read_only = 10 # property cannot be set
+del a.read_only # property cannot be deleted
+print(a.write_only) # property cannot be read
+</pre>
 </body>
 </html>

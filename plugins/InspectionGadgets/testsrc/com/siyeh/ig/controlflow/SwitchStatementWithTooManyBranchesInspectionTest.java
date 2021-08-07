@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.siyeh.ig.controlflow;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
@@ -43,7 +43,7 @@ public class SwitchStatementWithTooManyBranchesInspectionTest extends LightJavaI
 
   public void testJava12() {
     doMemberTest("    public void foo(int x) {\n" +
-                 "         /*'switch' has too many branches (11)*/switch/**/ (x) {\n" +
+                 "         /*'switch' has too many branches (13)*/switch/**/ (x) {\n" +
                  "            case 1 -> {}\n" +
                  "            case 2 -> {}\n" +
                  "            case 3 -> {}\n" +
@@ -62,7 +62,7 @@ public class SwitchStatementWithTooManyBranchesInspectionTest extends LightJavaI
 
   public void testJava13Expression() {
     doMemberTest("    public int foo(int x) {\n" +
-                 "         return /*'switch' has too many branches (11)*/switch/**/ (x) {\n" +
+                 "         return /*'switch' has too many branches (13)*/switch/**/ (x) {\n" +
                  "            case 1 -> 0;\n" +
                  "            case 2 -> 0;\n" +
                  "            case 3 -> 0;\n" +

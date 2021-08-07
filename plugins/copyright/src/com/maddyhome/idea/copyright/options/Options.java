@@ -34,19 +34,23 @@ import java.util.TreeMap;
 /**
  */
 public class Options implements Cloneable {
-  public LanguageOptions getOptions(String name) {
-    LanguageOptions res = options.get(name);
-    if (res == null) {
-      // NOTE: If any change is made here you need to update ConfigTabFactory and UpdateCopyrightFactory too.
-      final FileType fileType = FileTypeManager.getInstance().findFileTypeByName(name);
-      if (fileType != null) {
-        final UpdateCopyrightsProvider provider = CopyrightUpdaters.INSTANCE.forFileType(fileType);
-        if (provider != null) return provider.getDefaultOptions();
-      }
-      res = new LanguageOptions();
+  public LanguageOptions getOptions(String fileTypeName) {
+    LanguageOptions res = options.get(fileTypeName);
+    if (res != null) return res;
+
+    final FileType fileType = FileTypeManager.getInstance().findFileTypeByName(fileTypeName);
+    if (fileType == null) return new LanguageOptions();
+    
+    FileType acceptableFileType = CopyrightUpdaters.INSTANCE.getRegisteredFileTypeFromLanguageHierarchy(fileType);
+    if (acceptableFileType != null) {
+      res = this.options.get(acceptableFileType.getName());
+      if (res != null) return res;
     }
 
-    return res;
+    final UpdateCopyrightsProvider provider = CopyrightUpdaters.INSTANCE.forFileType(fileType);
+    if (provider != null) return provider.getDefaultOptions();
+    
+    return new LanguageOptions();
   }
 
   public LanguageOptions getTemplateOptions() {

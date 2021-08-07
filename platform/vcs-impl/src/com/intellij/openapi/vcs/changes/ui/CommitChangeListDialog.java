@@ -80,6 +80,9 @@ public abstract class CommitChangeListDialog extends DialogWrapper implements Si
   private static final String HELP_ID = "reference.dialogs.vcs.commit";
 
   private static final int LAYOUT_VERSION = 2;
+  @ApiStatus.Internal
+  public static final String DIMENSION_SERVICE_KEY = "CommitChangelistDialog" + LAYOUT_VERSION;
+
   private static final String SPLITTER_PROPORTION_OPTION = "CommitChangeListDialog.SPLITTER_PROPORTION_" + LAYOUT_VERSION;
   private static final String DETAILS_SPLITTER_PROPORTION_OPTION = "CommitChangeListDialog.DETAILS_SPLITTER_PROPORTION_" + LAYOUT_VERSION;
   private static final String DETAILS_SHOW_OPTION = "CommitChangeListDialog.DETAILS_SHOW_OPTION_";
@@ -304,7 +307,7 @@ public abstract class CommitChangeListDialog extends DialogWrapper implements Si
   private void afterInit() {
     updateButtons();
     updateLegend();
-    myCommitMessageArea.setChangeList(getChangeList());
+    myCommitMessageArea.setChangesSupplier(new ChangeListChangesSupplier(getChangeList()));
     myCommitMessageArea.requestFocusInMessage();
 
     for (EditChangelistSupport support : EditChangelistSupport.EP_NAME.getExtensions(myProject)) {
@@ -579,7 +582,7 @@ public abstract class CommitChangeListDialog extends DialogWrapper implements Si
   @Override
   @NonNls
   protected String getDimensionServiceKey() {
-    return "CommitChangelistDialog" + LAYOUT_VERSION;
+    return DIMENSION_SERVICE_KEY;
   }
 
   @Override

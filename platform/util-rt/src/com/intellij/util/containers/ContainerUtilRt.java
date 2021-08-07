@@ -18,6 +18,7 @@ import java.util.*;
  * Intended to use by external (out-of-IDE-process) runners and helpers so it should not contain any library dependencies.
  * @deprecated Use collection methods instead
  */
+@ApiStatus.ScheduledForRemoval(inVersion = "2022.2")
 @Deprecated
 public final class ContainerUtilRt {
   /**
@@ -37,6 +38,7 @@ public final class ContainerUtilRt {
    */
   @NotNull
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
   @Contract(value = "_ -> new", pure = true)
   public static <T> LinkedList<T> newLinkedList(@NotNull Iterable<? extends T> elements) {
     LinkedList<T> collection = new LinkedList<T>();

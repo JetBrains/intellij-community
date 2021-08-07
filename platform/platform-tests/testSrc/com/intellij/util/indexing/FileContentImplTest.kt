@@ -8,7 +8,6 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.testFramework.HeavyPlatformTestCase
 import com.intellij.util.ArrayUtil
-import com.intellij.util.ThrowableRunnable
 import com.intellij.util.io.write
 import org.junit.Assert.assertArrayEquals
 import java.nio.charset.StandardCharsets
@@ -53,7 +52,7 @@ class FileContentImplTest : HeavyPlatformTestCase() {
     val text = "a\r\nb"
     val textBytes = text.toByteArray()
     val virtualFile = createInputFile(textBytes)
-    val content = FileContentImpl.createByText(virtualFile, text)
+    val content = FileContentImpl.createByText(virtualFile, text, project)
     assertEquals(text, content.contentAsText)
     assertArrayEquals(textBytes, content.content)
   }

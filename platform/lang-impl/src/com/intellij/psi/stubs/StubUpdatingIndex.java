@@ -1,7 +1,6 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.stubs;
 
-import com.intellij.index.PrebuiltIndexProvider;
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageParserDefinitions;
 import com.intellij.lang.ParserDefinition;
@@ -11,12 +10,14 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diagnostic.RuntimeExceptionWithAttachments;
 import com.intellij.openapi.extensions.impl.ExtensionPointImpl;
 import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.fileTypes.FileTypeExtension;
 import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectUtil;
+import com.intellij.openapi.roots.impl.PushedFilePropertiesRetriever;
 import com.intellij.openapi.util.KeyedExtensionCollector;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.FileAttribute;
@@ -24,9 +25,7 @@ import com.intellij.openapi.vfs.newvfs.persistent.FSRecords;
 import com.intellij.psi.impl.DebugUtil;
 import com.intellij.psi.tree.IFileElementType;
 import com.intellij.psi.tree.IStubFileElementType;
-import com.intellij.util.BitUtil;
-import com.intellij.util.ExceptionUtil;
-import com.intellij.util.KeyedLazyInstance;
+import com.intellij.util.*;
 import com.intellij.util.indexing.*;
 import com.intellij.util.indexing.impl.IndexDebugProperties;
 import com.intellij.util.indexing.impl.IndexStorage;
@@ -49,6 +48,8 @@ import java.util.function.Consumer;
 public final class StubUpdatingIndex extends SingleEntryFileBasedIndexExtension<SerializedStubTree>
   implements CustomImplementationFileBasedIndexExtension<Integer, SerializedStubTree> {
   private static final Logger LOG = Logger.getInstance(StubUpdatingIndex.class);
+  private static final boolean DEBUG_PREBUILT_INDICES = SystemProperties.getBooleanProperty("debug.prebuilt.indices", false);
+
   public static final boolean USE_SNAPSHOT_MAPPINGS = false; //TODO
 
   private static final int VERSION = 45 + (PersistentHashMapValueStorage.COMPRESSION_ENABLED ? 1 : 0);
@@ -82,15 +83,28 @@ public final class StubUpdatingIndex extends SingleEntryFileBasedIndexExtension<
 
   private static boolean canHaveStub(@NotNull VirtualFile file, @NotNull FileType fileType) {
     if (fileType instanceof LanguageFileType) {
-      final Language l = ((LanguageFileType)fileType).getLanguage();
-      final ParserDefinition parserDefinition = LanguageParserDefinitions.INSTANCE.forLanguage(l);
+      Language l = ((LanguageFileType)fileType).getLanguage();
+      ParserDefinition parserDefinition = LanguageParserDefinitions.INSTANCE.forLanguage(l);
+      FileBasedIndexImpl fileBasedIndex = ObjectUtils.tryCast(FileBasedIndex.getInstance(), FileBasedIndexImpl.class);
+
       if (parserDefinition == null) {
+        if (fileBasedIndex != null && fileBasedIndex.doTraceStubUpdates()) {
+          FileBasedIndexImpl.LOG.info("No parser definition for " + file.getName());
+        }
         return false;
       }
 
       final IFileElementType elementType = parserDefinition.getFileNodeType();
       if (elementType instanceof IStubFileElementType && ((IStubFileElementType<?>)elementType).shouldBuildStubFor(file)) {
+        if (fileBasedIndex != null && fileBasedIndex.doTraceStubUpdates()) {
+          FileBasedIndexImpl.LOG.info("Should build stub for " + file.getName());
+        }
         return true;
+      }
+
+      if (fileBasedIndex != null && fileBasedIndex.doTraceStubUpdates()) {
+        FileBasedIndexImpl.LOG.info("Can't build stub using stub file element type " + file.getName() +
+                                    ", properties: " + PushedFilePropertiesRetriever.getInstance().dumpSortedPushedProperties(file));
       }
     }
     final BinaryFileStubBuilder builder = BinaryFileStubBuilders.INSTANCE.forFileType(fileType);
@@ -149,7 +163,7 @@ public final class StubUpdatingIndex extends SingleEntryFileBasedIndexExtension<
           SerializedStubTree prebuiltTree = findPrebuiltSerializedStubTree(inputData);
           if (prebuiltTree != null) {
             prebuiltTree = prebuiltTree.reSerialize(mySerializationManager, myStubIndexesExternalizer);
-            if (PrebuiltIndexProvider.DEBUG_PREBUILT_INDICES) {
+            if (DEBUG_PREBUILT_INDICES) {
               assertPrebuiltStubTreeMatchesActualTree(prebuiltTree, inputData, type);
             }
             return prebuiltTree;
@@ -194,12 +208,12 @@ public final class StubUpdatingIndex extends SingleEntryFileBasedIndexExtension<
     };
   }
 
+  private static final FileTypeExtension<PrebuiltStubsProvider> PREBUILT_STUBS_PROVIDER_EP =
+    new FileTypeExtension<>("com.intellij.filetype.prebuiltStubsProvider");
+
   @Nullable
-  static SerializedStubTree findPrebuiltSerializedStubTree(@NotNull FileContent fileContent) {
-    if (!PrebuiltIndexProvider.USE_PREBUILT_INDEX) {
-      return null;
-    }
-    PrebuiltStubsProvider prebuiltStubsProvider = PrebuiltStubsKt.getPrebuiltStubsProvider().forFileType(fileContent.getFileType());
+  private static SerializedStubTree findPrebuiltSerializedStubTree(@NotNull FileContent fileContent) {
+    PrebuiltStubsProvider prebuiltStubsProvider = PREBUILT_STUBS_PROVIDER_EP.forFileType(fileContent.getFileType());
     if (prebuiltStubsProvider == null) {
       return null;
     }
@@ -357,6 +371,11 @@ public final class StubUpdatingIndex extends SingleEntryFileBasedIndexExtension<
   }
 
   @Override
+  public boolean enableWal() {
+    return true;
+  }
+
+  @Override
   public void handleInitializationError(@NotNull Throwable e) {
     ((StubIndexImpl)StubIndex.getInstance()).initializationFailed(e);
   }
@@ -371,13 +390,18 @@ public final class StubUpdatingIndex extends SingleEntryFileBasedIndexExtension<
 
     StubUpdatingIndexStorage index = new StubUpdatingIndexStorage(extension, new VfsAwareIndexStorageLayout<>() {
       @Override
-      public @NotNull IndexStorage<Integer, SerializedStubTree> createOrClearIndexStorage() throws IOException {
-        return layout.createOrClearIndexStorage();
+      public void clearIndexData() {
+        layout.clearIndexData();
       }
 
       @Override
-      public @Nullable ForwardIndex createOrClearForwardIndex() throws IOException {
-        return layout.createOrClearForwardIndex();
+      public @NotNull IndexStorage<Integer, SerializedStubTree> openIndexStorage() throws IOException {
+        return layout.openIndexStorage();
+      }
+
+      @Override
+      public @Nullable ForwardIndex openForwardIndex() throws IOException {
+        return layout.openForwardIndex();
       }
 
       @Override

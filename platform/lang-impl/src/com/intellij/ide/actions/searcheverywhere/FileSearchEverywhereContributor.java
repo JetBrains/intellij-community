@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.actions.searcheverywhere;
 
 import com.intellij.ide.IdeBundle;
@@ -85,7 +85,7 @@ public class FileSearchEverywhereContributor extends AbstractGotoSEContributor {
     return new SearchEverywherePsiRenderer(this) {
       @NotNull
       @Override
-      protected ItemMatchers getItemMatchers(@NotNull JList list, @NotNull Object value) {
+      public ItemMatchers getItemMatchers(@NotNull JList list, @NotNull Object value) {
         ItemMatchers defaultMatchers = super.getItemMatchers(list, value);
         if (!(value instanceof PsiFileSystemItem) || myModelForRenderer == null) {
           return defaultMatchers;
@@ -103,7 +103,6 @@ public class FileSearchEverywhereContributor extends AbstractGotoSEContributor {
       if (file != null && myProject != null) {
         Pair<Integer, Integer> pos = getLineAndColumn(searchText);
         OpenFileDescriptor descriptor = new OpenFileDescriptor(myProject, file, pos.first, pos.second);
-        descriptor.setUseCurrentWindow(openInCurrentWindow(modifiers));
         if (descriptor.canNavigate()) {
           descriptor.navigate(true);
           return true;
@@ -140,7 +139,7 @@ public class FileSearchEverywhereContributor extends AbstractGotoSEContributor {
     @NotNull
     @Override
     public SearchEverywhereContributor<Object> createContributor(@NotNull AnActionEvent initEvent) {
-      return new FileSearchEverywhereContributor(initEvent);
+      return PSIPresentationBgRendererWrapper.wrapIfNecessary(new FileSearchEverywhereContributor(initEvent));
     }
   }
 

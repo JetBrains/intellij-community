@@ -26,6 +26,9 @@ import org.jetbrains.annotations.NotNull;
 public class JavaVariableFindUsagesOptions extends JavaFindUsagesOptions {
   public boolean isReadAccess = true;
   public boolean isWriteAccess = true;
+  public boolean isSearchForAccessors;
+  public boolean isSearchInOverridingMethods;
+  public boolean isSearchForBaseAccessors;
 
   public JavaVariableFindUsagesOptions(@NotNull Project project) {
     super(project);
@@ -44,6 +47,9 @@ public class JavaVariableFindUsagesOptions extends JavaFindUsagesOptions {
     isUsages = properties.getBoolean(prefix + "isUsages", true);
     isReadAccess = properties.getBoolean(prefix + "isReadAccess", true);
     isWriteAccess = properties.getBoolean(prefix + "isWriteAccess", true);
+    isSearchForAccessors = properties.getBoolean(prefix + "isSearchForAccessors", false);
+    isSearchInOverridingMethods = properties.getBoolean(prefix + "isSearchInOverridingMethods", false);
+    isSearchForBaseAccessors = properties.getBoolean(prefix + "isSearchForBaseAccessors", false);
   }
 
   @Override
@@ -53,6 +59,9 @@ public class JavaVariableFindUsagesOptions extends JavaFindUsagesOptions {
     properties.setValue(prefix + "isUsages", isUsages, true);
     properties.setValue(prefix + "isReadAccess", isReadAccess, true);
     properties.setValue(prefix + "isWriteAccess", isWriteAccess, true);
+    properties.setValue(prefix + "isSearchForAccessors", isSearchForAccessors, false);
+    properties.setValue(prefix + "isSearchInOverridingMethods", isSearchInOverridingMethods, false);
+    properties.setValue(prefix + "isSearchForBaseAccessors", isSearchForBaseAccessors, false);
   }
 
   public boolean equals(Object o) {
@@ -64,6 +73,9 @@ public class JavaVariableFindUsagesOptions extends JavaFindUsagesOptions {
 
     if (isReadAccess != that.isReadAccess) return false;
     if (isWriteAccess != that.isWriteAccess) return false;
+    if (isSearchForAccessors != that.isSearchForAccessors) return false;
+    if (isSearchInOverridingMethods != that.isSearchInOverridingMethods) return false;
+    if (isSearchForBaseAccessors != that.isSearchForBaseAccessors) return false;
 
     return true;
   }
@@ -72,7 +84,9 @@ public class JavaVariableFindUsagesOptions extends JavaFindUsagesOptions {
     int result = super.hashCode();
     result = 31 * result + (isReadAccess ? 1 : 0);
     result = 31 * result + (isWriteAccess ? 1 : 0);
+    result = 31 * result + (isSearchForAccessors ? 1 : 0);
+    result = 31 * result + (isSearchInOverridingMethods ? 1 : 0);
+    result = 31 * result + (isSearchForBaseAccessors ? 1 : 0);
     return result;
   }
-
 }

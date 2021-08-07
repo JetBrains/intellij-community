@@ -3,7 +3,13 @@ package com.intellij.openapi.actionSystem;
 
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.UISettingsState;
+import com.intellij.openapi.util.text.TextWithMnemonic;
 import com.intellij.testFramework.LightPlatformTestCase;
+
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
+import java.util.HashMap;
+import java.util.Map;
 
 public class PresentationTest extends LightPlatformTestCase {
   private final Data[] data = new Data[]{
@@ -125,6 +131,34 @@ public class PresentationTest extends LightPlatformTestCase {
       assertEquals(0, p.getMnemonic());
       assertEquals(-1, p.getDisplayedMnemonicIndex());
     }
+  }
+
+  public void testEvents() {
+    Presentation p = new Presentation();
+    Map<String, String> actualEvents = new HashMap<>();
+    p.addPropertyChangeListener(new PropertyChangeListener() {
+      @Override
+      public void propertyChange(PropertyChangeEvent evt) {
+        String oldValue = actualEvents.put(evt.getPropertyName(), evt.getOldValue() + "->" + evt.getNewValue());
+        assertNull("Repeating event: " + evt.getPropertyName(), oldValue);
+      }
+    });
+    Map<String, String> expectedEvents =
+      Map.of("mnemonicKey", "0->73",
+             "mnemonicIndex", "-1->1",
+             "text", "null->Git",
+             "textWithSuffix", "null->Git");
+    p.setTextWithMnemonic(() -> TextWithMnemonic.parse("G&it"));
+    assertEquals(expectedEvents, actualEvents);
+
+    actualEvents.clear();
+    p.setTextWithMnemonic(() -> TextWithMnemonic.parse("Git(&G)"));
+    Map<String, String> expectedEvents2 =
+      // "text" event is not sent, as text without suffix is not changed
+      Map.of("mnemonicKey", "73->71",
+             "mnemonicIndex", "1->4",
+             "textWithSuffix", "Git->Git(G)");
+    assertEquals(expectedEvents2, actualEvents);
   }
 
   @Override

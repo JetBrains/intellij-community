@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.lang.ant.config.impl;
 
 import com.intellij.openapi.progress.ProgressManager;
@@ -14,7 +14,7 @@ import java.util.Set;
  * @author Eugene Zhuravlev
 */
 public final class AntResourcesClassLoader extends UrlClassLoader {
-  private static final boolean isParallelCapable = USE_PARALLEL_LOADING && registerAsParallelCapable();
+  private static final boolean isParallelCapable = registerAsParallelCapable();
 
   private final Set<String> myMisses = new HashSet<>();
 

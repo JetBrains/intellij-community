@@ -20,7 +20,6 @@ import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
-import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.editor.highlighter.HighlighterIterator;
 import com.intellij.openapi.project.Project;
@@ -58,7 +57,7 @@ public class EnterBetweenXmlTagsHandler extends EnterHandlerDelegateAdapter {
     CharSequence chars = editor.getDocument().getCharsSequence();
     if (chars.charAt(offset - 1) != '>') return false;
 
-    EditorHighlighter highlighter = ((EditorEx)editor).getHighlighter();
+    EditorHighlighter highlighter = editor.getHighlighter();
     HighlighterIterator iterator = highlighter.createIterator(offset - 1);
     if (iterator.getTokenType() != XmlTokenType.XML_TAG_END) return false;
     

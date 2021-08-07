@@ -1,10 +1,9 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.packageDependencies;
 
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.impl.ContentManagerWatcher;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.wm.ToolWindow;
@@ -16,15 +15,13 @@ import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManager;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author yole
- */
+
 public class DependenciesToolWindow {
   private final Project myProject;
   private ContentManager myContentManager;
 
   public static DependenciesToolWindow getInstance(@NotNull Project project) {
-    return ServiceManager.getService(project, DependenciesToolWindow.class);
+    return project.getService(DependenciesToolWindow.class);
   }
 
   public DependenciesToolWindow(@NotNull Project project) {

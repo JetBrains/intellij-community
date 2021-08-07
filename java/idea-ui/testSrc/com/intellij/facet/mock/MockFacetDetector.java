@@ -3,6 +3,7 @@ package com.intellij.facet.mock;
 
 import com.intellij.framework.detection.FacetBasedFrameworkDetector;
 import com.intellij.framework.detection.FileContentPattern;
+import com.intellij.openapi.extensions.InternalIgnoreDependencyViolation;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.roots.ModifiableRootModel;
@@ -20,6 +21,7 @@ import java.util.List;
 
 import static com.intellij.patterns.StandardPatterns.string;
 
+@InternalIgnoreDependencyViolation
 public final class MockFacetDetector extends FacetBasedFrameworkDetector<MockFacet, MockFacetConfiguration> {
   public static final String ROOT_TAG_NAME = "root";
   public static final String ROOT_TAG = "<" + ROOT_TAG_NAME + "/>";

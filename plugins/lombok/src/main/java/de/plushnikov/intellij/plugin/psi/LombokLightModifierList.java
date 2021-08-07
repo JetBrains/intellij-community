@@ -81,6 +81,11 @@ public class LombokLightModifierList extends LightModifierList implements Synthe
     throw new IncorrectOperationException();
   }
 
+  public LombokLightModifierList withAnnotation(@NotNull PsiAnnotation psiAnnotation) {
+    myAnnotations.put(psiAnnotation.getQualifiedName(), psiAnnotation);
+    return this;
+  }
+
   @Override
   @NotNull
   public PsiAnnotation addAnnotation(@NotNull @NonNls String qualifiedName) {

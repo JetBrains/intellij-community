@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.completion
 
 import com.intellij.application.options.CodeStyle
@@ -1933,6 +1933,45 @@ class B extends A {
   <caret>
 }
 ''', '', CompletionType.BASIC, CompletionResult.contain, 1, 'public Object bar', 'public Object baz', 'public Object foo')
+  }
+
+  void "test implicit spread for lists"() {
+    doVariantableTest('''
+class A {
+    int foo
+    A(int x) { foo = x }
+}
+
+def ai = [new A(1), new A(2)]
+
+ai.<caret>
+''', '', CompletionType.BASIC, CompletionResult.contain, 'foo')
+  }
+
+  void "test implicit spread for arrays"() {
+    doVariantableTest('''
+class A {
+    int foo
+    A(int x) { foo = x }
+}
+
+A[] ai = [new A(1), new A(2)].toArray()
+
+ai.<caret>
+''', '', CompletionType.BASIC, CompletionResult.contain, 'foo')
+  }
+
+  void "test implicit spread for lists deep"() {
+    doVariantableTest('''
+class A {
+    int foo
+    A(int x) { foo = x }
+}
+
+def ai = [[new A(1)], [new A(2)]]
+
+ai.<caret>
+''', '', CompletionType.BASIC, CompletionResult.contain, 'foo')
   }
 
   void "test override trait method completion"() {

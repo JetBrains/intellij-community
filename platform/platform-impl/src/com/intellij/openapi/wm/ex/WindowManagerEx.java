@@ -38,22 +38,6 @@ public abstract class WindowManagerEx extends WindowManager {
       AppIcon.getInstance().requestAttention(project, critical);
   }
 
-  /**
-   * @return focus owner of the specified window.
-   * @exception IllegalArgumentException if {@code window} is {@code null}.
-   */
-  public abstract Component getFocusedComponent(@NotNull Window window);
-
-  /**
-   * @param project may be {@code null} when no project is opened.
-   * @return focused component for the project. If project isn't specified then
-   * the method returns focused component in window which has no project.
-   * If there is no focused component at all then the method returns {@code null}.
-   */
-  public abstract @Nullable Component getFocusedComponent(@Nullable Project project);
-
-  public abstract @Nullable Window getMostRecentFocusedWindow();
-
   public abstract @Nullable IdeFrame findFrameFor(@Nullable Project project);
 
   /**
@@ -91,8 +75,6 @@ public abstract class WindowManagerEx extends WindowManager {
   public abstract void setWindowShadow(Window window, WindowShadowMode mode);
 
   public abstract void resetWindow(final Window window);
-
-  public abstract void adjustContainerWindow(@NotNull Component component, Dimension oldSize, Dimension newSize);
 
   @ApiStatus.Internal
   public abstract @Nullable ProjectFrameHelper getFrameHelper(@Nullable Project project);

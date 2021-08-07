@@ -168,7 +168,7 @@ public final class XsltRunConfiguration extends LocatableConfigurationBase imple
     }
 
     @Override
-    public final RunConfiguration clone() {
+    public RunConfiguration clone() {
         final XsltRunConfiguration configuration = (XsltRunConfiguration)super.clone();
         configuration.myParameters = new ArrayList<>(myParameters);
         if (myXsltFile != null) configuration.myXsltFile = VirtualFilePointerManager.getInstance().duplicate(myXsltFile, getProject(), null);

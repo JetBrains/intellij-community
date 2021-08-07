@@ -6,6 +6,7 @@ import com.intellij.codeInsight.daemon.problems.FileStateUpdater;
 import com.intellij.codeInsight.hints.InlayHintsPassFactory;
 import com.intellij.codeInsight.hints.InlayHintsSettings;
 import com.intellij.injected.editor.VirtualFileWindow;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.ex.DocumentEx;
@@ -15,6 +16,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.startup.StartupActivity;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.newvfs.BulkFileListener;
@@ -25,6 +27,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.refactoring.listeners.RefactoringEventData;
 import com.intellij.refactoring.listeners.RefactoringEventListener;
+import com.intellij.testFramework.TestModeFlags;
 import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -66,7 +69,7 @@ final class ProjectProblemFileSelectionListener extends PsiTreeChangeAdapter imp
   }
 
   @Override
-  public void before(@NotNull List<? extends VFileEvent> events) {
+  public void before(@NotNull List<? extends @NotNull VFileEvent> events) {
     ProjectFileIndex fileIndex = ProjectRootManager.getInstance(myProject).getFileIndex();
     for (VFileEvent e : events) {
       VirtualFile changedFile = e.getFile();
@@ -210,6 +213,10 @@ final class ProjectProblemFileSelectionListener extends PsiTreeChangeAdapter imp
   public static class MyStartupActivity implements StartupActivity {
     @Override
     public void runActivity(@NotNull Project project) {
+      if (ApplicationManager.getApplication().isHeadlessEnvironment() && !TestModeFlags.is(ProjectProblemUtils.ourTestingProjectProblems)) {
+        return;
+      }
+
       ProjectProblemFileSelectionListener listener = new ProjectProblemFileSelectionListener(project);
       MessageBusConnection connection = project.getMessageBus().connect();
       connection.subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, listener);

@@ -160,7 +160,7 @@ public class CommonContentEntriesEditor extends ModuleElementsEditor {
     myEditorsPanel = new ScrollablePanel(new VerticalStackLayout());
     myEditorsPanel.setBackground(UIUtil.getListBackground());
     JScrollPane myScrollPane = ScrollPaneFactory.createScrollPane(myEditorsPanel, true);
-    final ToolbarPanel toolbarPanel = new ToolbarPanel(myScrollPane, group);
+    final ToolbarPanel toolbarPanel = new ToolbarPanel(myScrollPane, group, "ContentEntryEditorToolbar", myEditorsPanel);
     int border = myWithBorders ? 1 : 0;
     toolbarPanel.setBorder(new CustomLineBorder(1, 0, border, border));
 
@@ -176,6 +176,7 @@ public class CommonContentEntriesEditor extends ModuleElementsEditor {
     splitter.setSecondComponent(toolbarPanel);
     JPanel contentPanel = new JPanel(new GridBagLayout());
     final ActionToolbar actionToolbar = ActionManager.getInstance().createActionToolbar("ProjectStructureContentEntries", myRootTreeEditor.getEditingActionsGroup(), true);
+    actionToolbar.setTargetComponent(myRootTreeEditor.myTree);
     contentPanel.add(new JLabel(ProjectBundle.message("label.text.mark.as")),
                      new GridBagConstraints(0, 0, 1, 1, 0, 0, GridBagConstraints.WEST, 0, JBInsets.create(0, 10), 0, 0));
     contentPanel.add(actionToolbar.getComponent(),

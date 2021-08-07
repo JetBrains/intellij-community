@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide;
 
 import com.intellij.ide.impl.OpenProjectTask;
@@ -25,6 +25,7 @@ import com.intellij.platform.CommandLineProjectOpenProcessor;
 import com.intellij.platform.PlatformProjectOpenProcessor;
 import com.intellij.pom.Navigatable;
 import com.intellij.util.PlatformUtils;
+import com.intellij.util.concurrency.FutureResult;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -69,15 +70,15 @@ public final class CommandLineProcessor {
     Project[] projects = tempProject ? new Project[0] : ProjectUtil.getOpenProjects();
     if (!tempProject && projects.length == 0 && PlatformUtils.isDataGrip()) {
       RecentProjectsManager recentProjectManager = RecentProjectsManager.getInstance();
-      if (recentProjectManager.willReopenProjectOnStart() && recentProjectManager.reopenLastProjectsOnStart()) {
+      if (recentProjectManager.willReopenProjectOnStart() && recentProjectManager.reopenLastProjectsOnStart().join()) {
         projects = ProjectUtil.getOpenProjects();
       }
     }
 
     VirtualFile file = LocalFileSystem.getInstance().refreshAndFindFileByPath(FileUtilRt.toSystemIndependentName(ioFile.toString()));
     if (file == null) {
-      if (LightEditUtil.isForceOpenInLightEditMode()) {
-        Project lightEditProject = LightEditUtil.openFile(ioFile);
+      if (LightEditUtil.isLightEditEnabled()) {
+        Project lightEditProject = LightEditUtil.openFile(ioFile, true);
         if (lightEditProject != null) {
           Future<CliResult> future = shouldWait ? CommandLineWaitingManager.getInstance().addHookForPath(ioFile) : OK_FUTURE;
           return new CommandLineProcessorResult(lightEditProject, future);
@@ -152,7 +153,7 @@ public final class CommandLineProcessor {
     result = processApplicationStarters(args, currentDirectory);
     if (result != null) return result;
 
-    result = processJetBrainsProtocol(args);
+    result = processCustomHandlers(args);
     if (result != null) return result;
 
     return processOpenFile(args, currentDirectory);
@@ -189,14 +190,10 @@ public final class CommandLineProcessor {
   }
 
   @Nullable
-  private static CommandLineProcessorResult processJetBrainsProtocol(@NotNull List<String> args) {
-    String command = args.get(0);
-    if (command.startsWith(JetBrainsProtocolHandler.PROTOCOL)) {
-      JetBrainsProtocolHandler.processJetBrainsLauncherParameters(command);
-      ApplicationManager.getApplication().invokeLater(() -> JBProtocolCommand.handleCurrentCommand());
-      return new CommandLineProcessorResult(null, OK_FUTURE);
-    }
-    return null;
+  private static CommandLineProcessorResult processCustomHandlers(@NotNull List<String> args) {
+    Future<CliResult> result = CommandLineCustomHandler.Companion.process(args);
+    if (result == null) return null;
+    return new CommandLineProcessorResult(null, result);
   }
 
   @NotNull

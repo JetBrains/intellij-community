@@ -18,9 +18,7 @@ package com.intellij.codeInsight.editorActions;
 
 import com.intellij.codeInsight.folding.CodeFoldingManager;
 import com.intellij.codeInsight.folding.impl.CodeFoldingManagerImpl;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.FoldRegion;
-import com.intellij.openapi.editor.RangeMarker;
+import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
@@ -55,7 +53,8 @@ public class CopyPasteFoldingProcessor extends CopyPastePostProcessor<FoldingTra
             new FoldingData(
               region.getStartOffset() - refOffset, // offsets should be relative to clipboard contents start
               region.getEndOffset() - refOffset,
-              region.isExpanded()
+              region.isExpanded(),
+              region.getPlaceholderText()
             )
           );
           break;
@@ -96,18 +95,26 @@ public class CopyPasteFoldingProcessor extends CopyPastePostProcessor<FoldingTra
                                       final List<? extends FoldingTransferableData> values) {
     assert values.size() == 1;
     final FoldingTransferableData value = values.get(0);
-    if (value.getData().length == 0) return;
+    if (value.getData().length == 0 || indented.get() != null) {
+      // if `indented` is TRUE or FALSE, the pasted text was changes and folding offsets are not valid
+      return;
+    }
 
     final CodeFoldingManagerImpl foldingManager = (CodeFoldingManagerImpl)CodeFoldingManager.getInstance(project);
     if (foldingManager == null) return; // default project
-    foldingManager.updateFoldRegions(editor, true);
 
     Runnable operation = () -> {
+      final FoldingModel model = editor.getFoldingModel();
+      final int docLength = editor.getDocument().getTextLength();
       for (FoldingData data : value.getData()) {
-        FoldRegion region =
-          foldingManager.findFoldRegion(editor, data.startOffset + bounds.getStartOffset(), data.endOffset + bounds.getStartOffset());
-        if (region != null) {
-          region.setExpanded(data.isExpanded);
+        final int start = data.startOffset + bounds.getStartOffset();
+        final int end = data.endOffset + bounds.getStartOffset();
+        if (start >= 0 && end <= docLength && start <= end) {
+          final FoldRegion region = model.addFoldRegion(start, end, data.placeholderText);
+          if (region != null) {
+            foldingManager.markForUpdate(region);
+            region.setExpanded(data.isExpanded);
+          }
         }
       }
     };

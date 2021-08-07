@@ -7,14 +7,15 @@ import training.dsl.LessonUtil
 import training.dsl.LessonUtil.checkExpectedStateOfEditor
 import training.dsl.TaskContext
 import training.dsl.parseLessonSample
+import training.learn.LessonsBundle
 import training.learn.course.KLesson
 
 class PythonSmartCompletionLesson
-  : KLesson("Smart completion", PythonLessonsBundle.message("python.smart.completion.lesson.name")) {
+  : KLesson("Smart completion", LessonsBundle.message("smart.completion.lesson.name")) {
   private val sample = parseLessonSample("""
     def f(x, file):
-      x.append(file)
-      x.rem<caret>
+        x.append(file)
+        x.rem<caret>
   """.trimIndent())
 
   override val lessonContent: LessonContext.() -> Unit
@@ -29,7 +30,7 @@ class PythonSmartCompletionLesson
         }
         task("SmartTypeCompletion") {
           text(PythonLessonsBundle.message("python.smart.completion.use.smart.completion",
-                                     code("x"), action(it)))
+                                           code("x"), action(it)))
           triggerByListItemAndHighlight { ui ->
             ui.toString().contains(methodName)
           }

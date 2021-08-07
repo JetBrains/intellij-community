@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.hints
 
 import com.intellij.codeHighlighting.EditorBoundHighlightingPass
@@ -16,6 +16,7 @@ import com.intellij.openapi.util.Key
 import com.intellij.psi.PsiElement
 import com.intellij.psi.SyntaxTraverser
 import com.intellij.util.Processor
+import com.intellij.util.SlowOperations
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap
 import it.unimi.dsi.fastutil.ints.Int2ObjectMaps
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet
@@ -120,10 +121,11 @@ class InlayHintsPass(
         val renderer = InlineInlayRenderer(entry.value)
 
         val toBePlacedAtTheEndOfLine = entry.value.any { it.constraints?.placedAtTheEndOfLine ?: false }
+        val isRelatedToPrecedingText = entry.value.all { it.constraints?.relatesToPrecedingText ?: false }
         val inlay = if (toBePlacedAtTheEndOfLine) {
           inlayModel.addAfterLineEndElement(entry.intKey, true, renderer)
         } else {
-          inlayModel.addInlineElement(entry.intKey, renderer) ?: break
+          inlayModel.addInlineElement(entry.intKey, isRelatedToPrecedingText, renderer) ?: break
         }
 
         inlay?.let { postprocessInlay(it) }
@@ -216,8 +218,10 @@ class InlayHintsPass(
       if (!isAcceptablePlacement(placement)) {
         throw IllegalArgumentException()
       }
-      @Suppress("UNCHECKED_CAST")
-      return addOrUpdate(new as List<ConstrainedPresentation<*, Constraints>>, editor, factory)
+      SlowOperations.allowSlowOperations<Exception> {
+        @Suppress("UNCHECKED_CAST")
+        addOrUpdate(new as List<ConstrainedPresentation<*, Constraints>>, editor, factory)
+      }
     }
   }
 }

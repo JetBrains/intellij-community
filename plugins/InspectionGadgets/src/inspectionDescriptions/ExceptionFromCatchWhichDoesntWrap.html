@@ -1,19 +1,26 @@
 <html>
 <body>
-Reports exceptions constructed and thrown
-from inside <b>catch</b> blocks, which do not "wrap" the caught
-exception. It is considered good practice when throwing an exception in response to an exception
-to wrap the initial exception, so that valuable context information
-such as stack frames and line numbers are not lost.
+Reports an exception that is constructed and thrown
+from  a <code>catch</code> block that does not "wrap" the caught
+exception.
+<p>When an exception is thrown in response to an exception, wrapping the initial exception prevents losing valuable context information,
+  such as stack frames and line numbers.</p>
+<p><b>Example:</b></p>
+<pre><code>
+  ...
+  catch (IOException e) {
+    closeAllConnections();
+    throw new ConnectException("Connection problem."); // warning: 'throw' inside 'catch' block ignores the caught exception 'e'
+  }
+</code></pre>
 <!-- tooltip end -->
-<p>
-Use the first checkbox below to indicate if the inspection should ignore exceptions which
-receive the result of a method call on the original exception, such as <b>getMessage()</b>,
-as an argument.
-<p>
-Use the second checkbox below to have this inspection ignore throw statements which throw exceptions which do not have a
-constructor which accepts a <b>Throwable</b> cause.
-<p>
-
+<p>Configure the inspection:</p>
+<ul>
+  <li>Use the <b>Ignore if result of exception method call is used</b> option to indicate whether the inspection should ignore exceptions whose
+    argument is the result of a method
+    call on the original exception, such as <code>getMessage()</code>.</li>
+  <li>Use the <b>Ignore if thrown exception cannot wrap an exception</b> option to ignore <code>throw</code> statements that throw exceptions without a
+    constructor that accepts a <code>Throwable</code> cause.</li>
+</ul>
 </body>
 </html>

@@ -6,6 +6,8 @@
       <excludeFolder url="file://$MODULE_DIR$/android/android-uitests" />
       <excludeFolder url="file://$MODULE_DIR$/config" />
       <excludeFolder url="file://$MODULE_DIR$/system" />
+      <excludeFolder url="file://$MODULE_DIR$/docs/plugin-graph/dist" />
+      <excludeFolder url="file://$MODULE_DIR$/docs/dist-visualizer/dist" />
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
@@ -69,6 +71,7 @@
     <orderEntry type="module" module-name="intellij.devkit" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.eclipse" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.vcs.git" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.vcs.git.featuresTrainer" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.platform.images" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.groovy" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.junit" scope="RUNTIME" />
@@ -135,16 +138,14 @@
     <orderEntry type="module" module-name="intellij.editorconfig" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.vcs.changeReminder" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.platform.workspaceModel.storage.tests" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.platform.workspaceModel.ide.tests" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.workspaceModel.jps.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.sh" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.gradle.java.maven" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.markdown" scope="RUNTIME" />
-    <orderEntry type="module" module-name="intellij.filePrediction" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.textmate" scope="TEST" />
     <orderEntry type="module" module-name="intellij.webp" scope="RUNTIME" />
-    <orderEntry type="module" module-name="intellij.space" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.space.java.jps" scope="TEST" />
     <orderEntry type="module" module-name="intellij.packageSearch" scope="RUNTIME" />
-    <orderEntry type="module" module-name="intellij.packageSearch.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.emojipicker" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.externalSystem.dependencyUpdater" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.externalSystem.dependencyUpdater.tests" scope="TEST" />
@@ -153,6 +154,9 @@
     <orderEntry type="module" module-name="intellij.java.featuresTrainer" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.idea.community.build.tasks" scope="TEST" />
     <orderEntry type="module" module-name="intellij.junit.v5.rt.tests" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.java.ml.models.local" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.ml.models.local.java" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.kotlin.plugin.community.main" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.laf.macos" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.laf.win10" scope="RUNTIME" />
   </component>
 </module>

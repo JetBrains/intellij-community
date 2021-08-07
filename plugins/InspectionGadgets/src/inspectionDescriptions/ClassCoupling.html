@@ -1,12 +1,14 @@
 <html>
 <body>
-Reports classes which are highly coupled, i.e. that reference too many other classes.
-Classes with too high a coupling can be very fragile, and should probably be broken up. References to system classes
-(those in the <b>java.</b>or <b>javax.</b> packages), are not counted.
+Reports a class that references too many other classes.
+<p>Classes with too high coupling can be very fragile, and should probably be split into smaller classes.</p>
 <!-- tooltip end -->
-<p>
-Use the field below to specify the maximum coupling a class is allowed to have.
-<p>
-
+<p>Configure the inspection:</p>
+<ul>
+  <li>Use the <b>Class coupling limit</b> field to specify the maximum allowed coupling for a class.</li>
+  <li>Use the <b>Include couplings to java system classes</b> option to specify whether references to system classes
+    (those in the <code>java.</code>or <code>javax.</code> packages) should be counted.</li>
+  <li>Use the <b>Include couplings to library classes</b> option to specify whether references to any library classes should be counted.</li>
+</ul>
 </body>
 </html>

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.diff;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -23,7 +23,7 @@ public final class Diff {
     return buildChanges(splitLines(before), splitLines(after));
   }
 
-  private static String @NotNull [] splitLines(@NotNull CharSequence s) {
+  public static String @NotNull [] splitLines(@NotNull CharSequence s) {
     return s.length() == 0 ? new String[]{""} : LineTokenizer.tokenize(s, false, false);
   }
 
@@ -277,5 +277,29 @@ public final class Diff {
     public Change getFirstChange() {
       return myFirstChange;
     }
+  }
+
+  public static @Nullable CharSequence linesDiff(
+    @NotNull CharSequence @NotNull [] lines1,
+    @NotNull CharSequence @NotNull [] lines2
+  ) throws FilesTooBigForDiffException {
+    Change ch = buildChanges(lines1, lines2);
+    if (ch == null) {
+      return null;
+    }
+    StringBuilder sb = new StringBuilder();
+    while (ch != null) {
+      if (sb.length() != 0) {
+        sb.append("====================").append("\n");
+      }
+      for (int i = ch.line0; i < ch.line0 + ch.deleted; i++) {
+        sb.append('-').append(lines1[i]).append('\n');
+      }
+      for (int i = ch.line1; i < ch.line1 + ch.inserted; i++) {
+        sb.append('+').append(lines2[i]).append('\n');
+      }
+      ch = ch.link;
+    }
+    return sb.toString();
   }
 }

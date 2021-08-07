@@ -1,8 +1,14 @@
 <html>
 <body>
-Reports any usages of <b>StringBuffer</b>, <b>StringBuilder</b> or <b>StringJoiner</b>
-which can be replaced with a single <b>java.lang.String</b> concatenation. Using a <b>String</b> concatenation
-makes the code shorter and simpler. Example:
+Reports usages of <code>StringBuffer</code>, <code>StringBuilder</code>, or <code>StringJoiner</code>
+which can be replaced with a single <code>String</code> concatenation.
+<p>Using <code>String</code> concatenation
+  makes the code shorter and simpler.</p>
+<p>
+This inspection only reports when the suggested replacement does not result in significant
+performance drawback on modern JVMs. In many cases, <code>String</code> concatenation may perform better.
+</p>
+<p><b>Example:</b></p>
 <pre>
   StringBuilder result = new StringBuilder();
   result.append("i = ");
@@ -10,19 +16,11 @@ makes the code shorter and simpler. Example:
   result.append(";");
   return result.toString();
 </pre>
-<p>
-  This code could be replaced with
-</p>
+<p>After the quick-fix is applied:</p>
 <pre>
   String result = "i = " + i + ";";
   return result;
 </pre>
-<p>
-This inspection only reports when the suggested replacement does not result in significant 
-performance drawback on modern JVMs. In many cases the String concatenation may perform better. 
-</p>
 <!-- tooltip end -->
-<p>
-
 </body>
 </html>

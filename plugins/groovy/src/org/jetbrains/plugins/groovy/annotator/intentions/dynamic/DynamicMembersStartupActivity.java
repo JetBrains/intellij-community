@@ -24,7 +24,7 @@ public class DynamicMembersStartupActivity implements StartupActivity {
 
   @Override
   public void runActivity(@NotNull Project project) {
-    if (ApplicationManager.getApplication().isUnitTestMode()) return;
+    if (ApplicationManager.getApplication().isHeadlessEnvironment()) return;
     DynamicManager manager = DynamicManager.getInstance(project);
     if (!manager.getRootElement().getContainingClasses().isEmpty()) {
       DynamicToolWindowWrapper.getInstance(project).getToolWindow(); //initialize toolWindow

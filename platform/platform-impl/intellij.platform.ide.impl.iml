@@ -24,7 +24,7 @@
     <orderEntry type="library" name="miglayout-swing" level="project" />
     <orderEntry type="module" module-name="intellij.platform.indexing" />
     <orderEntry type="module" module-name="intellij.platform.projectModel.impl" />
-    <orderEntry type="module" module-name="intellij.platform.workspaceModel.ide" />
+    <orderEntry type="module" module-name="intellij.platform.workspaceModel.jps" />
     <orderEntry type="library" name="commons-imaging" level="project" />
     <orderEntry type="library" name="Guava" level="project" />
     <orderEntry type="module" module-name="intellij.platform.jps.model.impl" />
@@ -40,8 +40,7 @@
     <orderEntry type="library" scope="RUNTIME" name="Slf4j" level="project" />
     <orderEntry type="module" module-name="intellij.platform.configurationStore.impl" scope="RUNTIME" />
     <orderEntry type="library" scope="RUNTIME" name="imageio-tiff" level="project" />
-    <orderEntry type="library" name="pty4j" level="project" />
-    <orderEntry type="module" module-name="intellij.platform.credentialStore" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.platform.credentialStore.ui" scope="RUNTIME" />
     <orderEntry type="library" name="StreamEx" level="project" />
     <orderEntry type="library" name="jediterm-pty" level="project" />
     <orderEntry type="library" name="kotlinx-coroutines-jdk8" level="project" />
@@ -86,7 +85,6 @@
     <orderEntry type="library" scope="RUNTIME" name="org.codehaus.groovy:groovy-json" level="project" />
     <orderEntry type="library" scope="RUNTIME" name="org.codehaus.groovy:groovy-templates" level="project" />
     <orderEntry type="library" scope="RUNTIME" name="org.codehaus.groovy:groovy-xml" level="project" />
-    <orderEntry type="library" name="Trove4j" level="project" />
     <orderEntry type="library" name="org.jetbrains.intellij:blockmap:1.0.2" level="project" />
     <orderEntry type="module" module-name="intellij.platform.util.classLoader" />
     <orderEntry type="library" name="netty-buffer" level="project" />
@@ -97,5 +95,14 @@
     <orderEntry type="library" name="caffeine" level="project" />
     <orderEntry type="module" module-name="intellij.platform.statistics.uploader" />
     <orderEntry type="library" name="zip-signer" level="project" />
+    <orderEntry type="module" module-name="intellij.platform.util.zip" />
+    <orderEntry type="library" name="jackson-jr-objects" level="project" />
+    <orderEntry type="module" module-name="intellij.platform.remote.core" exported="" />
+    <orderEntry type="library" name="icu4j" level="project" />
+    <orderEntry type="module" module-name="intellij.platform.util.xmlDom" />
+    <orderEntry type="module" module-name="intellij.platform.vfs.impl" exported="" />
+    <orderEntry type="module" module-name="intellij.platform.ide.core.impl" exported="" />
+    <orderEntry type="library" scope="RUNTIME" name="netty-handler-proxy" level="project" />
+    <orderEntry type="library" scope="RUNTIME" name="rhino" level="project" />
   </component>
 </module>

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.ex
 
 import com.intellij.analysis.AnalysisBundle
@@ -17,7 +17,6 @@ import com.intellij.openapi.progress.ProgressManager
 import com.intellij.util.SmartList
 import com.intellij.util.containers.CollectionFactory
 import org.jetbrains.annotations.ApiStatus
-import java.util.*
 
 private val LOG = logger<InspectionToolRegistrar>()
 private val EP_NAME = ExtensionPointName<InspectionToolProvider>("com.intellij.inspectionToolProvider")
@@ -47,7 +46,7 @@ class InspectionToolRegistrar : InspectionToolsSupplier() {
     val app = ApplicationManager.getApplication()
     val result = CollectionFactory.createSmallMemoryFootprintMap<Any, MutableList<InspectionFactory>>()
     val shortNames = CollectionFactory.createSmallMemoryFootprintMap<String, InspectionEP>()
-    registerToolProviders(app, result)
+    registerToolProviders(result)
     registerInspections(result, app, shortNames, LocalInspectionEP.LOCAL_INSPECTION)
     registerInspections(result, app, shortNames, InspectionEP.GLOBAL_INSPECTION)
     toolFactories = result.values
@@ -80,12 +79,7 @@ class InspectionToolRegistrar : InspectionToolsSupplier() {
     }, null)
   }
 
-  private fun registerToolProviders(app: Application, factories: MutableMap<Any, MutableList<InspectionFactory>>) {
-    if (app.isUnitTestMode) {
-      @Suppress("DEPRECATION")
-      LOG.assertTrue(app.getComponentInstancesOfType(InspectionToolProvider::class.java).isEmpty())
-    }
-
+  private fun registerToolProviders(factories: MutableMap<Any, MutableList<InspectionFactory>>) {
     EP_NAME.processWithPluginDescriptor { provider, pluginDescriptor ->
       registerToolProvider(provider, pluginDescriptor, factories, null)
     }

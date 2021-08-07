@@ -3,6 +3,7 @@ package com.intellij.compiler.server;
 
 import com.intellij.compiler.YourKitProfilerService;
 import com.intellij.execution.configurations.GeneralCommandLine;
+import com.intellij.openapi.application.PathManagerEx;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.io.PathKt;
 import org.jetbrains.annotations.NotNull;
@@ -44,7 +45,7 @@ class LocalBuildCommandLineBuilder implements BuildCommandLineBuilder {
       if (builder.length() > 0) {
         builder.append(File.pathSeparator);
       }
-      builder.append(getHostWorkingDirectory().resolve(s).toString());
+      builder.append(getHostWorkingDirectory().resolve(s));
     }
     myCommandLine.addParameter(builder.toString());
   }
@@ -57,7 +58,7 @@ class LocalBuildCommandLineBuilder implements BuildCommandLineBuilder {
   @Override
   @NotNull
   public Path getHostWorkingDirectory() {
-    return BuildManager.getInstance().getBuildSystemDirectory();
+    return getLocalBuildSystemDirectory();
   }
 
   @Override
@@ -72,7 +73,7 @@ class LocalBuildCommandLineBuilder implements BuildCommandLineBuilder {
 
   @Override
   public String getYjpAgentPath(YourKitProfilerService yourKitProfilerService) {
-    return BuildManager.getInstance().getBuildSystemDirectory()
+    return getLocalBuildSystemDirectory()
       .resolve(yourKitProfilerService.getYKAgentFullName())
       .toAbsolutePath().toString();
   }
@@ -86,5 +87,10 @@ class LocalBuildCommandLineBuilder implements BuildCommandLineBuilder {
   public GeneralCommandLine buildCommandLine() {
     myCommandLine.setWorkDirectory(getHostWorkingDirectory().toFile());
     return myCommandLine;
+  }
+
+  @NotNull
+  public static Path getLocalBuildSystemDirectory() {
+    return PathManagerEx.getAppSystemDir().resolve(BuildManager.SYSTEM_ROOT);
   }
 }

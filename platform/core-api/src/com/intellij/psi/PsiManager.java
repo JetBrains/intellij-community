@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi;
 
 import com.intellij.openapi.Disposable;
@@ -27,7 +27,7 @@ public abstract class PsiManager extends UserDataHolderBase {
   /**
    * Returns the project with which the PSI manager is associated.
    *
-   * @return the project instance.
+   * @return the project instance
    */
   @NotNull
   public abstract Project getProject();
@@ -56,7 +56,7 @@ public abstract class PsiManager extends UserDataHolderBase {
 
   /**
    * Checks if the specified two PSI elements (possibly invalid) represent the same source element
-   * or can are considered equivalent for resolve purposes.
+   * or can be considered equivalent for resolve purposes.
    * <p>
    * Can be used to match two versions of the PSI tree with each other after a reparse.
    * <p>
@@ -66,8 +66,8 @@ public abstract class PsiManager extends UserDataHolderBase {
    *
    * @param element1 the first element to check for equivalence
    * @param element2 the second element to check for equivalence
-   * @return {@code true} if the elements are equivalent, {@code false} if the elements are different or
-   * it was not possible to determine the equivalence
+   * @return {@code true} if the elements are equivalent, {@code false} if the elements are different,
+   * or it was not possible to determine the equivalence
    */
   public abstract boolean areElementsEquivalent(@Nullable PsiElement element1, @Nullable PsiElement element2);
 
@@ -76,12 +76,12 @@ public abstract class PsiManager extends UserDataHolderBase {
    *
    * @param file the PSI file to reload.
    */
-  public abstract void reloadFromDisk(@NotNull PsiFile file);   //todo: move to FileDocumentManager
+  public abstract void reloadFromDisk(@NotNull PsiFile file);
 
   /**
    * Adds a listener for receiving notifications about all changes in the PSI tree of the project.
    *
-   * @param listener the listener instance.
+   * @param listener the listener instance
    * @deprecated Please use the overload with specified parent disposable
    */
   @Deprecated
@@ -90,7 +90,7 @@ public abstract class PsiManager extends UserDataHolderBase {
   /**
    * Adds a listener for receiving notifications about all changes in the PSI tree of the project.
    *
-   * @param listener         the listener instance.
+   * @param listener         the listener instance
    * @param parentDisposable object, after whose disposing the listener should be removed
    */
   public abstract void addPsiTreeChangeListener(@NotNull PsiTreeChangeListener listener, @NotNull Disposable parentDisposable);
@@ -98,7 +98,7 @@ public abstract class PsiManager extends UserDataHolderBase {
   /**
    * Removes a listener for receiving notifications about all changes in the PSI tree of the project.
    *
-   * @param listener the listener instance.
+   * @param listener the listener instance
    */
   public abstract void removePsiTreeChangeListener(@NotNull PsiTreeChangeListener listener);
 
@@ -126,8 +126,7 @@ public abstract class PsiManager extends UserDataHolderBase {
   public abstract void finishBatchFilesProcessingMode();
 
   /**
-   * Checks if the PSI manager has been disposed and the PSI for this project can no
-   * longer be used.
+   * Checks if the PSI manager has been disposed, and the PSI for this project can no longer be used.
    *
    * @return {@code true} if the PSI manager is disposed, {@code false} otherwise.
    */
@@ -141,7 +140,8 @@ public abstract class PsiManager extends UserDataHolderBase {
 
   /**
    * Clears all {@link com.intellij.psi.util.CachedValue} depending on {@link PsiModificationTracker#MODIFICATION_COUNT} and resolve caches.
-   * Can be used to reduce memory consumption in batch operations sequentially processing multiple files. Should be invoked on write thread.
+   * Can be used to reduce memory consumption in batch operations sequentially processing multiple files.
+   * Should be invoked on Write thread.
    */
   public abstract void dropPsiCaches();
 

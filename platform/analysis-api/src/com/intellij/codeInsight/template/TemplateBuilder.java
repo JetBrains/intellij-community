@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.template;
 
 import com.intellij.openapi.editor.Editor;
@@ -11,8 +11,6 @@ import org.jetbrains.annotations.NotNull;
 /**
  * Shows a live template-like chooser UI over a PSI element and offers the user to replace certain sub-elements of the
  * specified element with values of his/her choice.
- *
- * @author yole
  * @see TemplateBuilderFactory
  */
 public interface TemplateBuilder {

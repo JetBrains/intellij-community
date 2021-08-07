@@ -18,7 +18,7 @@ final class DirectByteBufferAllocator {
     : null;
 
 
-  static ByteBuffer allocate(ThrowableComputable<ByteBuffer, IOException> computable) throws IOException {
+  static ByteBuffer allocate(ThrowableComputable<? extends ByteBuffer, ? extends IOException> computable) throws IOException {
     if (ourAllocator != null) {
       // Fixes IDEA-222358 Linux native memory leak
       try {

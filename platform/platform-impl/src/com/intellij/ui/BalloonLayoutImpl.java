@@ -8,8 +8,11 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.SystemInfoRt;
+import com.intellij.openapi.util.registry.ExperimentalUI;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.impl.IdeRootPane;
+import com.intellij.openapi.wm.impl.ProjectFrameHelper;
 import com.intellij.openapi.wm.impl.ToolWindowsPane;
 import com.intellij.util.Alarm;
 import com.intellij.util.containers.ContainerUtil;
@@ -279,6 +282,10 @@ public class BalloonLayoutImpl implements BalloonLayout, Disposable {
     JComponent layeredPane = pane != null ? pane.getLayeredPane() : null;
     int eachColumnX = (layeredPane == null ? myLayeredPane.getWidth() : layeredPane.getX() + layeredPane.getWidth()) - 4;
 
+    if (pane != null && ExperimentalUI.isNewToolWindowsStripes()) {
+      eachColumnX += pane.getX();
+    }
+
     doLayout(columns.get(0), eachColumnX + 4, (int)myLayeredPane.getBounds().getMaxY());
   }
 
@@ -287,6 +294,12 @@ public class BalloonLayoutImpl implements BalloonLayout, Disposable {
     ToolWindowsPane pane = UIUtil.findComponentOfType(myParent, ToolWindowsPane.class);
     if (pane != null) {
       y -= pane.getBottomHeight();
+      if (SystemInfoRt.isMac && Registry.is("ide.mac.transparentTitleBarAppearance", false)) {
+        ProjectFrameHelper helper = ProjectFrameHelper.getFrameHelper((Window)myParent.getParent());
+        if (helper == null || !helper.isInFullScreen()) {
+          y -= UIUtil.getTransparentTitleBarHeight(myParent);
+        }
+      }
     }
     if (myParent instanceof IdeRootPane) {
       y -= ((IdeRootPane)myParent).getStatusBarHeight();

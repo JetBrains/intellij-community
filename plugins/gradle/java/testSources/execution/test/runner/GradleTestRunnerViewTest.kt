@@ -24,7 +24,7 @@ import com.intellij.util.ThrowableRunnable
 import com.intellij.util.ui.tree.TreeUtil
 import groovy.json.StringEscapeUtils.escapeJava
 import org.assertj.core.api.Assertions.assertThat
-import org.jetbrains.plugins.gradle.importing.GradleBuildScriptBuilderEx
+import org.jetbrains.plugins.gradle.importing.GradleBuildScriptBuilder.Companion.buildscript
 import org.jetbrains.plugins.gradle.importing.GradleImportingTestCase
 import org.jetbrains.plugins.gradle.tooling.annotation.TargetVersions
 import org.jetbrains.plugins.gradle.util.GradleConstants
@@ -67,16 +67,15 @@ class GradleTestRunnerViewTest : GradleImportingTestCase() {
                          "    }\n" +
                          "}\n")
 
-    val buildScript = GradleBuildScriptBuilderEx()
-      .withJavaPlugin()
-      .withJUnit("4.12")
-      .withTask("additionalTest", "Test") {
-        property("testClassesDirs", "sourceSets.test.output.classesDirs")
-        property("classpath", "sourceSets.test.runtimeClasspath")
-        line("jvmArgs += \"-Dprop='integ test error'\"")
+    importProject(buildscript {
+      withJavaPlugin()
+      withJUnit4()
+      withTask("additionalTest", "Test") {
+        assign("testClassesDirs", code("sourceSets.test.output.classesDirs"))
+        assign("classpath", code("sourceSets.test.runtimeClasspath"))
+        plusAssign("jvmArgs", "-Dprop='integ test error'")
       }
-
-    importProject(buildScript.generate())
+    })
 
     val treeStringPresentation = runTasksAndGetTestRunnerTree(listOf("clean", "test", "additionalTest"))
 
@@ -112,9 +111,9 @@ class GradleTestRunnerViewTest : GradleImportingTestCase() {
 
     val scriptOutputText = "script \noutput\n\ntext\n"
     val scriptOutputTextWOEol = "text w/o eol"
-    importProject(GradleBuildScriptBuilderEx()
+    importProject(createBuildScriptBuilder()
                     .withJavaPlugin()
-                    .withJUnit("4.12")
+                    .withJUnit4()
                     .addBuildScriptPrefix("print(\"${escapeJava(scriptOutputText)}\")")
                     .addPostfix("print(\"${escapeJava(scriptOutputTextWOEol)}\")")
                     .generate())
@@ -200,9 +199,9 @@ class GradleTestRunnerViewTest : GradleImportingTestCase() {
                          "    public void test() {}\n" +
                          "}\n")
 
-    importProject(GradleBuildScriptBuilderEx()
+    importProject(createBuildScriptBuilder()
                     .withJavaPlugin()
-                    .withJUnit("4.12")
+                    .withJUnit4()
                     .generate())
 
     val testRunnerTree = runTasksAndGetTestRunnerTree(listOf("clean", "test"))

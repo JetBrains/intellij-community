@@ -1,33 +1,53 @@
 <html>
 <body>
-Reports <b>AutoCloseable</b> instances which are not used in a try-with-resources statement, also known as
+Reports <code>AutoCloseable</code> instances which are not used in a try-with-resources statement, also known as
 <i>Automatic Resource Management</i>.
-This means that the open resource before/in <b>try</b>, close in <b>finally</b> style which was used before
-try-with-resources was available is also reported.
-This inspection is meant to replace all <i>opened but not safely closed</i> inspections when developing in Java 7 and higher.
 <p>
-Use the first table below to specify which AutoCloseable subclasses should be ignored by this inspection.
-Specify AutoCloseable subclasses here which do not need to be closed.
-<p>
-  <b>Note</b>: This inspection will still warn on streams returned from the java.nio.file.Files methods lines(), walk(), list() and find(),
-  even when java.util.stream.Stream is specified to be ignored in this table.
-  These streams contain an associated I/O resource that needs to be closed.
+  This means that the "open resource before/in <code>try</code>, close in <code>finally</code>" style that had been used before
+  try-with-resources became available, is also reported.
+  This inspection is meant to replace all <i>opened but not safely closed</i> inspections when developing in Java 7 and higher.
 </p>
+<p><b>Example:</b></p>
+<pre><code>
+  private static void foo() throws IOException {
+    InputStream profile = Thread.currentThread().getContextClassLoader().getResourceAsStream("/someFile");
+    System.out.println(profile.read());
+  }
+</code></pre>
+<!-- tooltip end -->
 <p>
-Use the second table below to specify which methods returning AutoCloseable will be ignored when called.
-<p>
-Use the first checkbox below to ignore an AutoCloseable if it the result of a method call.
-When enabled, the results of factory methods will also be ignored.
-<p>
-Use the second checkbox below to specify that the inspection should not warn if an AutoCloseable instance is passed
-as a method call argument.
-If enabled the inspection assumes the resource is closed in the called method.
-Method calls inside a <b>finally</b> block with <i>close</i> in the name and an AutoCloseable argument will not be ignored.
-<p>
-Use the third checkbox below to ignore method references to constructors of resource classes.
-<p>
-Use the fourth checkbox below to ignore methods that return resource and has a name that starts from 'get'.
-  This may be useful because most of the getters do not transmit the ownership of resource and use sites are not responsible for closing resource.
-<p>
+  Use the following options to configure the inspection:
+</p>
+<ul>
+  <li>
+    List subclasses of <code>AutoCloseable</code> that do not need to be closed and should be ignored by this inspection.
+    <br/>
+    <b>Note</b>: The inspection will still report streams returned from the <code>java.nio.file.Files</code> methods <code>lines()</code>,
+    <code>walk()</code>, <code>list()</code> and <code>find()</code>,
+    even when <code>java.util.stream.Stream</code> is listed to be ignored.
+    These streams contain an associated I/O resource that needs to be closed.
+  </li>
+  <li>
+    List methods returning <code>AutoCloseable</code> that should be ignored when called.
+  </li>
+  <li>
+    Whether to ignore an <code>AutoCloseable</code> if it is the result of a method call.
+    When this option is enabled, the results of factory methods will also be ignored.
+  </li>
+  <li>
+    Whether the inspection should report if an <code>AutoCloseable</code> instance is passed as a method call argument.
+    If this option is enabled, the inspection assumes the resource is closed in the called method.
+    Method calls inside a <code>finally</code> block with 'close' in the name and an
+    <code>AutoCloseable</code> argument will not be ignored.
+  </li>
+  <li>
+    Whether to ignore method references to constructors of resource classes.
+  </li>
+  <li>
+    Whether to ignore methods that return a resource and whose name starts with 'get'.
+    This can reduce false positives because most of the getters do not transfer the ownership of the resource,
+    and their call sites are not responsible for closing the resource.
+  </li>
+</ul>
 </body>
 </html>

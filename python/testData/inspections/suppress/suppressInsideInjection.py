@@ -1,3 +1,3 @@
 # language=Python
-print "# noinspection PyUnresolvedReferences\
-print xxx"
+print("# noinspection PyUnresolvedReferences\
+print(xxx)")

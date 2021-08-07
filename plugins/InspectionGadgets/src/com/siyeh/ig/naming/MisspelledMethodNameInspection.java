@@ -20,17 +20,17 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiIdentifier;
 import com.intellij.psi.PsiMethod;
-import com.intellij.util.text.CaseInsensitiveStringHashingStrategy;
+import com.intellij.util.containers.CollectionFactory;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.fixes.RenameFix;
 import com.siyeh.ig.psiutils.MethodUtils;
-import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
+import java.util.HashMap;
 import java.util.Map;
 
 public class MisspelledMethodNameInspection extends BaseInspection {
@@ -70,8 +70,8 @@ public class MisspelledMethodNameInspection extends BaseInspection {
     public void visitClass(PsiClass aClass) {
       super.visitClass(aClass);
       PsiMethod[] methods = aClass.getAllMethods();
-      Map<String, PsiMethod> methodNames = new THashMap<>(CaseInsensitiveStringHashingStrategy.INSTANCE);
-      Map<PsiIdentifier, String> errorNames = new THashMap<>();
+      Map<String, PsiMethod> methodNames = CollectionFactory.createCaseInsensitiveStringMap();
+      Map<PsiIdentifier, String> errorNames = new HashMap<>();
       for (PsiMethod method : methods) {
         ProgressManager.checkCanceled();
         if (method.isConstructor()) continue;

@@ -15,7 +15,7 @@ import java.util.function.Supplier;
 /**
  * The base abstract class for actions which create new file elements in IDE view
  */
-public abstract class CreateInDirectoryActionBase extends AnAction {
+public abstract class CreateInDirectoryActionBase extends AnAction implements UpdateInBackground {
   protected CreateInDirectoryActionBase() {
   }
 

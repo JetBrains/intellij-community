@@ -1,38 +1,15 @@
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.usages.impl.rules;
 
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.usages.UsageGroup;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-
-import javax.swing.*;
 
 public abstract class UsageGroupBase implements UsageGroup {
   private final int myOrder;
 
   protected UsageGroupBase(int order) {
     myOrder = order;
-  }
-
-  @Override
-  public void update() {
-  }
-
-  @Nullable
-  @Override
-  public FileStatus getFileStatus() {
-    return null;
-  }
-
-  @Override
-  public boolean isValid() {
-    return true;
-  }
-
-  @Override
-  public Icon getIcon(boolean isOpen) {
-    return null;
   }
 
   @Override
@@ -58,6 +35,6 @@ public abstract class UsageGroupBase implements UsageGroup {
     if (order != 0) {
       return order;
     }
-    return getText(null).compareToIgnoreCase(o.getText(null));
+    return getPresentableGroupText().compareToIgnoreCase(o.getPresentableGroupText());
   }
 }

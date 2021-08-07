@@ -64,14 +64,11 @@ class GitUnresolvedMergeCheckProvider : UnresolvedMergeCheckProvider() {
       return CheckinHandler.ReturnResult.CANCEL
     }
 
-    // Duplicates dialog from GitCheckinEnvironment.mergeCommit, so is disabled for `git commit --only` mode
-    if (Registry.`is`("git.force.commit.using.staging.area")) {
-      val changesExcludedFromMerge = repositories.filter { it.state == Repository.State.MERGING }
-        .flatMap { groupedChanges[it].subtract(selectedChanges) }
-      if (changesExcludedFromMerge.isNotEmpty()) {
-        val dialog = MyExcludedChangesDialog(project, changesExcludedFromMerge)
-        if (!dialog.showAndGet()) return CheckinHandler.ReturnResult.CANCEL
-      }
+    val changesExcludedFromMerge = repositories.filter { it.state == Repository.State.MERGING }
+      .flatMap { groupedChanges[it].subtract(selectedChanges) }
+    if (changesExcludedFromMerge.isNotEmpty()) {
+      val dialog = MyExcludedChangesDialog(project, changesExcludedFromMerge)
+      if (!dialog.showAndGet()) return CheckinHandler.ReturnResult.CANCEL
     }
 
     return CheckinHandler.ReturnResult.COMMIT

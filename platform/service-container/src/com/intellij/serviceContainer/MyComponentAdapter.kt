@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.serviceContainer
 
 import com.intellij.diagnostic.ActivityCategory
@@ -6,13 +6,13 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.extensions.PluginDescriptor
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.util.Disposer
+import org.picocontainer.ComponentAdapter
 
 internal class MyComponentAdapter(private val componentKey: Class<*>,
                                   override val implementationClassName: String,
                                   pluginDescriptor: PluginDescriptor,
                                   componentManager: ComponentManagerImpl,
-                                  implementationClass: Class<*>?,
-                                  val isWorkspaceComponent: Boolean = false) : BaseComponentAdapter(componentManager, pluginDescriptor, null, implementationClass) {
+                                  implementationClass: Class<*>?) : BaseComponentAdapter(componentManager, pluginDescriptor, null, implementationClass) {
   override fun getComponentKey() = componentKey
 
   override fun isImplementationEqualsToInterface() = componentKey.name == implementationClassName
@@ -22,7 +22,7 @@ internal class MyComponentAdapter(private val componentKey: Class<*>,
       return null
     }
 
-    val parent = componentManager.picoContainer.parent
+    val parent = componentManager.parent
     return when {
       parent == null -> ActivityCategory.APP_COMPONENT
       parent.parent == null -> ActivityCategory.PROJECT_COMPONENT
@@ -62,5 +62,15 @@ internal class MyComponentAdapter(private val componentKey: Class<*>,
     }
   }
 
-  override fun toString() = "ComponentAdapter(key=${getComponentKey()}, implementation=${componentImplementation}, plugin=$pluginId)"
+  override fun toString() = "ComponentAdapter(key=${getComponentKey()}, implementation=${implementationClassName}, plugin=$pluginId)"
+
+  // used in LinkedHashSetWrapper
+  override fun equals(other: Any?): Boolean {
+    if (this === other) {
+      return true
+    }
+    return other is ComponentAdapter && componentKey == other.componentKey
+  }
+
+  override fun hashCode() = componentKey.hashCode()
 }

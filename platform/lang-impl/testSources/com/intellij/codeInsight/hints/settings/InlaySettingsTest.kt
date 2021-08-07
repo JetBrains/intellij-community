@@ -4,8 +4,9 @@ package com.intellij.codeInsight.hints.settings
 import com.intellij.codeInsight.hints.InlayHintsSettings
 import com.intellij.codeInsight.hints.SettingsKey
 import com.intellij.lang.Language
+import com.intellij.openapi.util.text.StringUtil
 import com.intellij.testFramework.LightPlatformTestCase
-import junit.framework.TestCase
+import com.intellij.util.containers.MultiMap
 
 class InlaySettingsTest : LightPlatformTestCase() {
 
@@ -57,5 +58,28 @@ class InlaySettingsTest : LightPlatformTestCase() {
     settings.setHintsEnabledForLanguage(language, false)
     assertTrue(settings.hintsEnabled(key, language))
     assertFalse(settings.hintsShouldBeShown(key, language))
+  }
+
+  fun testAllProviders() {
+    val all = Language.getRegisteredLanguages().flatMap { lang: Language ->
+      InlaySettingsProvider.EP.getExtensions().flatMap {
+        it.createModels(project, lang).map { model -> Pair(model, lang) }
+      }
+    }
+
+    val names = all.map { it.first.name }.toSortedSet().sortedByDescending { all.count { pair -> pair.first.name == it } }
+    for (name in names) {
+      val models = all.filter { pair -> pair.first.name == name }
+      val s = "$name ${models.size} languages" + " (" + StringUtil.join(models.map { it.second.displayName }, ", ") + ")"
+      println(s)
+      val options = MultiMap<String, Language>()
+      for (model in models.filter { it.first.cases.isNotEmpty() }) {
+        options.putValue(StringUtil.join(model.first.cases.map { it.name }, ", "), model.second)
+      }
+      for (opt in options.keySet()) {
+        val languages = StringUtil.join(options[opt].map { language -> language.displayName }, ", ")
+        println("     Options for ${options[opt].size} languages ($languages): $opt")
+      }
+    }
   }
 }

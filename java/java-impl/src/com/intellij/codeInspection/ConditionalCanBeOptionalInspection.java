@@ -14,6 +14,7 @@ import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.psiutils.*;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.Nls;
@@ -45,7 +46,8 @@ public class ConditionalCanBeOptionalInspection extends AbstractBaseJavaLocalIns
         }
         List<PsiReferenceExpression> references = VariableAccessUtils.getVariableReferences(variable, notNullBranch);
         if (references.isEmpty() ||
-            variable instanceof PsiField && references.stream().noneMatch(ExpressionUtil::isEffectivelyUnqualified)) {
+            variable instanceof PsiField &&
+            !ContainerUtil.exists(references, ExpressionUtil::isEffectivelyUnqualified)) {
           return;
         }
         if (!LambdaGenerationUtil.canBeUncheckedLambda(notNullBranch, variable::equals)) {

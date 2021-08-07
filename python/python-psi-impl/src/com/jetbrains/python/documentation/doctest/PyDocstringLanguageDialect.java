@@ -17,6 +17,7 @@ package com.jetbrains.python.documentation.doctest;
 
 import com.intellij.codeInsight.intention.impl.QuickEditActionKeys;
 import com.intellij.lang.DependentLanguage;
+import com.intellij.lang.InjectableLanguage;
 import com.intellij.lang.Language;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PythonLanguage;
@@ -24,7 +25,7 @@ import com.jetbrains.python.PythonLanguage;
 /**
  * User : ktisha
  */
-public class PyDocstringLanguageDialect extends Language implements DependentLanguage {
+public class PyDocstringLanguageDialect extends Language implements DependentLanguage, InjectableLanguage {
 
   public static PyDocstringLanguageDialect getInstance() {
     return (PyDocstringLanguageDialect)PyDocstringFileType.INSTANCE.getLanguage();

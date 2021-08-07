@@ -18,12 +18,12 @@ package com.intellij.openapi.editor;
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import com.intellij.openapi.editor.markup.TextAttributes;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
+import java.awt.geom.Rectangle2D;
 
 /**
  * An interface, defining size and representation of custom visual element in editor.
@@ -54,13 +54,34 @@ public interface EditorCustomElementRenderer {
 
   /**
    * Renderer implementation should override this to define the appearance of custom element.
+   * <p>
+   * For precise positioning on HiDPI screens, override {@link #paint(Inlay, Graphics2D, Rectangle2D, TextAttributes)} instead.
    * 
    * @param targetRegion region where painting should be performed, location of this rectangle is calculated by editor implementation,
    *                     dimensions of the rectangle match element's width and height (provided by {@link #calcWidthInPixels(Inlay)}
    *                     and {@link #calcHeightInPixels(Inlay)})
    * @param textAttributes attributes of surrounding text
    */
-  void paint(@NotNull Inlay inlay, @NotNull Graphics g, @NotNull Rectangle targetRegion, @NotNull TextAttributes textAttributes);
+  default void paint(@NotNull Inlay inlay, @NotNull Graphics g, @NotNull Rectangle targetRegion, @NotNull TextAttributes textAttributes) {}
+
+  /**
+   * Renderer implementation should override this to define the appearance of custom element. Either this method or
+   * {@link #paint(Inlay, Graphics, Rectangle, TextAttributes)} needs to be overridden only.
+   *
+   * @param targetRegion region where painting should be performed, location of this rectangle is calculated by editor implementation,
+   *                     dimensions of the rectangle approximately match element's width and height (provided by
+   *                     {@link #calcWidthInPixels(Inlay)} and {@link #calcHeightInPixels(Inlay)}) - they can differ somewhat due to
+   *                     rounding to whole number of device pixels.
+   * @param textAttributes attributes of surrounding text
+   */
+  default void paint(@NotNull Inlay inlay,
+                     @NotNull Graphics2D g,
+                     @NotNull Rectangle2D targetRegion,
+                     @NotNull TextAttributes textAttributes) {
+    paint(inlay, (Graphics)g,
+          new Rectangle((int)targetRegion.getX(), (int)targetRegion.getY(), inlay.getWidthInPixels(), inlay.getHeightInPixels()),
+          textAttributes);
+  }
 
   /**
    * Returns a registered id of action group, which is to be used for displaying context menu for the given custom element.
@@ -81,7 +102,6 @@ public interface EditorCustomElementRenderer {
    * This method takes preference over {@link #getContextMenuGroupId(Inlay)}, i.e. if it returns a non-null value, the latter method won't
    * be called.
    */
-  @ApiStatus.Experimental
   @Nullable
   default ActionGroup getContextMenuGroup(@NotNull Inlay inlay) {
     return null;
@@ -94,7 +114,6 @@ public interface EditorCustomElementRenderer {
    * Returned provider should have a meaningful implementation of {@code equals} method - {@link Inlay#update()} will update the inlay's
    * provider (only) if newly returned instance is not equal to the previously defined one.
    */
-  @ApiStatus.Experimental
   @Nullable
   default GutterIconRenderer calcGutterIconRenderer(@NotNull Inlay inlay) {
     return null;

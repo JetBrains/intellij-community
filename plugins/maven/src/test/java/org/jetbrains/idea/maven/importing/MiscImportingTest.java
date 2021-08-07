@@ -16,7 +16,7 @@ import com.intellij.testFramework.ExtensionTestUtil;
 import com.intellij.testFramework.PlatformTestUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.MavenCustomRepositoryHelper;
-import org.jetbrains.idea.maven.MavenImportingTestCase;
+import org.jetbrains.idea.maven.MavenMultiVersionImportingTestCase;
 import org.jetbrains.idea.maven.model.MavenId;
 import org.jetbrains.idea.maven.model.MavenProjectProblem;
 import org.jetbrains.idea.maven.project.MavenProject;
@@ -24,6 +24,7 @@ import org.jetbrains.idea.maven.project.MavenProjectChanges;
 import org.jetbrains.idea.maven.project.MavenProjectsProcessorTask;
 import org.jetbrains.idea.maven.project.MavenProjectsTree;
 import org.jetbrains.idea.maven.server.MavenServerManager;
+import org.junit.Test;
 
 import java.io.File;
 import java.util.Collections;
@@ -31,7 +32,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 
-public class MiscImportingTest extends MavenImportingTestCase {
+public class MiscImportingTest extends MavenMultiVersionImportingTestCase {
   private int beforeRootsChangedCount;
   private int rootsChangedCount;
 
@@ -51,6 +52,7 @@ public class MiscImportingTest extends MavenImportingTestCase {
     });
   }
 
+  @Test
   public void testRestarting() {
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
@@ -71,6 +73,7 @@ public class MiscImportingTest extends MavenImportingTestCase {
     assertEquals("2", myProjectsTree.getRootProjects().get(0).getName());
   }
 
+  @Test
   public void testDoNotFailOnInvalidMirrors() throws Exception {
     updateSettingsXmlFully("<settings>" +
                            "<mirrors>" +
@@ -101,6 +104,7 @@ public class MiscImportingTest extends MavenImportingTestCase {
     assertModules("project");
   }
 
+  @Test
   public void testImportingAllAvailableFilesIfNotInitialized() {
     createModule("m1");
     createModule("m2");
@@ -129,6 +133,7 @@ public class MiscImportingTest extends MavenImportingTestCase {
     assertSources("m2", "src/main/java");
   }
 
+  @Test
   public void testImportingFiresRootChangesOnlyOnce() {
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
@@ -137,6 +142,7 @@ public class MiscImportingTest extends MavenImportingTestCase {
     assertRootsChanged(1);
   }
 
+  @Test
   public void testResolvingFiresRootChangesOnlyOnce() {
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
@@ -145,6 +151,7 @@ public class MiscImportingTest extends MavenImportingTestCase {
     assertRootsChanged(1);
   }
 
+  @Test
   public void testImportingWithLibrariesAndFacetsFiresRootChangesOnlyOnce() {
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
@@ -167,6 +174,7 @@ public class MiscImportingTest extends MavenImportingTestCase {
     assertRootsChanged(1);
   }
 
+  @Test
   public void testFacetsDoNotFireRootsChanges() {
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
@@ -176,6 +184,7 @@ public class MiscImportingTest extends MavenImportingTestCase {
     assertRootsChanged(1);
   }
 
+  @Test
   public void testDoNotRecreateModulesBeforeResolution() {
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
@@ -187,6 +196,7 @@ public class MiscImportingTest extends MavenImportingTestCase {
     assertSame(m, getModule("project"));
   }
 
+  @Test
   public void testTakingProxySettingsIntoAccount() throws Exception {
     MavenCustomRepositoryHelper helper = new MavenCustomRepositoryHelper(myDir, "local1");
     setRepositoryPath(helper.getTestDataPath("local1"));
@@ -247,6 +257,7 @@ public class MiscImportingTest extends MavenImportingTestCase {
     assertTrue(jarFile.exists());
   }
 
+  @Test
   public void testClearUnresolvedPluginsAfterPluginResolution() {
     try {
       File repo = new File(myDir, "repo");
@@ -282,6 +293,7 @@ public class MiscImportingTest extends MavenImportingTestCase {
     }
   }
 
+  @Test
   public void testMavenExtensionsAreLoadedAndAfterProjectsReadIsCalled() throws Exception {
     try {
       MavenCustomRepositoryHelper helper = new MavenCustomRepositoryHelper(myDir, "plugins");
@@ -315,6 +327,7 @@ public class MiscImportingTest extends MavenImportingTestCase {
     }
   }
 
+  @Test
   public void testExceptionsFromMavenExtensionsAreReportedAsProblems() throws Exception {
     MavenCustomRepositoryHelper helper = new MavenCustomRepositoryHelper(myDir, "plugins");
     setRepositoryPath(helper.getTestDataPath("plugins"));
@@ -343,12 +356,12 @@ public class MiscImportingTest extends MavenImportingTestCase {
     assertEquals("throw!", mavenProject.getProblems().get(0).getDescription());
   }
 
+  @Test
   public void testCheckingIfModuleIsNotDisposedBeforeCommitOnImport() {
-    if (ignore()) return;
-
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
                   "<version>1</version>" +
+                  "<packaging>pom</packaging>" +
 
                   "<modules>" +
                   "  <module>m1</module>" +
@@ -381,6 +394,7 @@ public class MiscImportingTest extends MavenImportingTestCase {
     });
   }
 
+  @Test
   public void testUserPropertiesCanBeCustomizedByMavenImporters() {
     Disposable disposable = Disposer.newDisposable();
     try {

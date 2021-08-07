@@ -25,7 +25,6 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Consumer;
-import com.intellij.util.Function;
 import com.intellij.util.execution.ParametersListUtil;
 import org.gradle.api.Task;
 import org.gradle.tooling.*;
@@ -55,6 +54,7 @@ import java.util.stream.Collectors;
 import static com.intellij.openapi.externalSystem.rt.execution.ForkedDebuggerHelper.DISPATCH_ADDR_SYS_PROP;
 import static com.intellij.openapi.externalSystem.rt.execution.ForkedDebuggerHelper.DISPATCH_PORT_SYS_PROP;
 import static com.intellij.openapi.externalSystem.service.execution.ExternalSystemRunnableState.*;
+import static com.intellij.openapi.util.text.StringUtil.notNullize;
 import static com.intellij.util.containers.ContainerUtil.addAllNotNull;
 import static com.intellij.util.containers.ContainerUtil.set;
 import static org.jetbrains.plugins.gradle.util.GradleUtil.determineRootProject;
@@ -66,6 +66,7 @@ public class GradleTaskManager implements ExternalSystemTaskManager<GradleExecut
 
   public static final Key<String> INIT_SCRIPT_KEY = Key.create("INIT_SCRIPT_KEY");
   public static final Key<String> INIT_SCRIPT_PREFIX_KEY = Key.create("INIT_SCRIPT_PREFIX_KEY");
+  public static final Key<Collection<VersionSpecificInitScript>> VERSION_SPECIFIC_SCRIPTS_KEY = Key.create("VERSION_SPECIFIC_SCRIPTS_KEY");
   private static final Logger LOG = Logger.getInstance(GradleTaskManager.class);
   private final GradleExecutionHelper myHelper = new GradleExecutionHelper();
 
@@ -98,44 +99,61 @@ public class GradleTaskManager implements ExternalSystemTaskManager<GradleExecut
 
     CancellationTokenSource cancellationTokenSource = GradleConnector.newCancellationTokenSource();
     myCancellationMap.put(id, cancellationTokenSource);
-    Function<ProjectConnection, Void> f = connection -> {
-      try {
-        setupGradleScriptDebugging(effectiveSettings);
-        setupDebuggerDispatchPort(effectiveSettings);
-        appendInitScriptArgument(tasks, jvmParametersSetup, effectiveSettings);
-        try {
-          for (GradleBuildParticipant buildParticipant : effectiveSettings.getExecutionWorkspace().getBuildParticipants()) {
-            effectiveSettings.withArguments(GradleConstants.INCLUDE_BUILD_CMD_OPTION, buildParticipant.getProjectPath());
-          }
-
-          if (testLauncherIsApplicable(tasks, effectiveSettings)) {
-            TestLauncher launcher = myHelper.getTestLauncher(id, connection, tasks, effectiveSettings, listener);
-            launcher.withCancellationToken(cancellationTokenSource.token());
-            launcher.run();
-          }
-          else {
-            BuildLauncher launcher = myHelper.getBuildLauncher(id, connection, effectiveSettings, listener);
-            launcher.forTasks(ArrayUtil.toStringArray(tasks));
-            launcher.withCancellationToken(cancellationTokenSource.token());
-            launcher.run();
-          }
-        }
-        finally {
-          myCancellationMap.remove(id);
-        }
+    try {
+      if (effectiveSettings.getDistributionType() == DistributionType.WRAPPED) {
+        String rootProjectPath = determineRootProject(projectPath);
+        CancellationToken cancellationToken = cancellationTokenSource.token();
+        myHelper.ensureInstalledWrapper(id, rootProjectPath, effectiveSettings, listener, cancellationToken);
+      }
+      myHelper.execute(projectPath, effectiveSettings, id, listener, cancellationTokenSource, connection -> {
+        executeTasks(id, tasks, projectPath, effectiveSettings, jvmParametersSetup, listener, connection, cancellationTokenSource);
         return null;
-      }
-      catch (RuntimeException e) {
-        LOG.debug("Gradle build launcher error", e);
-        BuildEnvironment buildEnvironment = GradleExecutionHelper.getBuildEnvironment(connection, id, listener, cancellationTokenSource, settings);
-        final GradleProjectResolverExtension projectResolverChain = GradleProjectResolver.createProjectResolverChain();
-        throw projectResolverChain.getUserFriendlyError(buildEnvironment, e, projectPath, null);
-      }
-    };
-    if (effectiveSettings.getDistributionType() == DistributionType.WRAPPED) {
-      myHelper.ensureInstalledWrapper(id, determineRootProject(projectPath), effectiveSettings, listener, cancellationTokenSource.token());
+      });
     }
-    myHelper.execute(projectPath, effectiveSettings, id, listener, cancellationTokenSource, f);
+    finally {
+      myCancellationMap.remove(id);
+    }
+  }
+
+  private void executeTasks(@NotNull ExternalSystemTaskId id,
+                            @NotNull List<String> tasks,
+                            @NotNull String projectPath,
+                            @NotNull GradleExecutionSettings settings,
+                            @Nullable String jvmParametersSetup,
+                            @NotNull ExternalSystemTaskNotificationListener listener,
+                            @NotNull ProjectConnection connection,
+                            @NotNull CancellationTokenSource cancellationTokenSource) {
+    BuildEnvironment buildEnvironment = null;
+    try {
+      buildEnvironment = GradleExecutionHelper.getBuildEnvironment(connection, id, listener, cancellationTokenSource, settings);
+      String gradleVersion = Optional.ofNullable(buildEnvironment)
+        .map(it -> it.getGradle())
+        .map(it -> it.getGradleVersion())
+        .orElse(null);
+      setupGradleScriptDebugging(settings);
+      setupDebuggerDispatchPort(settings);
+      appendInitScriptArgument(tasks, jvmParametersSetup, settings, gradleVersion);
+      for (GradleBuildParticipant buildParticipant : settings.getExecutionWorkspace().getBuildParticipants()) {
+        settings.withArguments(GradleConstants.INCLUDE_BUILD_CMD_OPTION, buildParticipant.getProjectPath());
+      }
+
+      if (testLauncherIsApplicable(tasks, settings)) {
+        TestLauncher launcher = myHelper.getTestLauncher(id, connection, tasks, settings, listener);
+        launcher.withCancellationToken(cancellationTokenSource.token());
+        launcher.run();
+      }
+      else {
+        BuildLauncher launcher = myHelper.getBuildLauncher(id, connection, settings, listener);
+        launcher.forTasks(ArrayUtil.toStringArray(tasks));
+        launcher.withCancellationToken(cancellationTokenSource.token());
+        launcher.run();
+      }
+    }
+    catch (RuntimeException e) {
+      LOG.debug("Gradle build launcher error", e);
+      final GradleProjectResolverExtension projectResolverChain = GradleProjectResolver.createProjectResolverChain();
+      throw projectResolverChain.getUserFriendlyError(buildEnvironment, e, projectPath, null);
+    }
   }
 
   private static boolean testLauncherIsApplicable(@NotNull List<String> taskNames,
@@ -189,6 +207,13 @@ public class GradleTaskManager implements ExternalSystemTaskManager<GradleExecut
   public static void appendInitScriptArgument(@NotNull List<String> taskNames,
                                               @Nullable String jvmParametersSetup,
                                               @NotNull GradleExecutionSettings effectiveSettings) {
+    appendInitScriptArgument(taskNames, jvmParametersSetup, effectiveSettings, null);
+  }
+
+  public static void appendInitScriptArgument(@NotNull List<String> taskNames,
+                                              @Nullable String jvmParametersSetup,
+                                              @NotNull GradleExecutionSettings effectiveSettings,
+                                              @Nullable String gradleVersion) {
     final List<String> initScripts = new ArrayList<>();
     List<GradleProjectResolverExtension> extensions = GradleProjectResolverUtil.createProjectResolvers(null).collect(Collectors.toList());
     for (GradleProjectResolverExtension resolverExtension : extensions) {
@@ -224,43 +249,58 @@ public class GradleTaskManager implements ExternalSystemTaskManager<GradleExecut
       enhancementParameters.put(GradleProjectResolverExtension.TEST_LAUNCHER_WILL_BE_USED_KEY,
                                 String.valueOf(testLauncherIsApplicable(taskNames, effectiveSettings)));
 
+      enhancementParameters.put(GradleProjectResolverExtension.GRADLE_VERSION, gradleVersion);
+
 
       resolverExtension.enhanceTaskProcessing(taskNames, initScriptConsumer, enhancementParameters);
     }
 
     if (!initScripts.isEmpty()) {
-      try {
-        GradleExecutionHelper.attachTargetPathMapperInitScript(effectiveSettings);
-        File tempFile = GradleExecutionHelper.writeToFileGradleInitScript(
-          StringUtil.join(initScripts, System.lineSeparator()), "ijresolvers");
-        effectiveSettings.withArguments(GradleConstants.INIT_SCRIPT_CMD_OPTION, tempFile.getAbsolutePath());
-      }
-      catch (IOException e) {
-        ExternalSystemException systemException = new ExternalSystemException(e);
-        systemException.initCause(e);
-        throw systemException;
-      }
+      writeAndAppendScript(effectiveSettings, StringUtil.join(initScripts, System.lineSeparator()), "ijresolvers");
     }
 
     final String initScript = effectiveSettings.getUserData(INIT_SCRIPT_KEY);
     if (StringUtil.isNotEmpty(initScript)) {
+      writeAndAppendScript(effectiveSettings, initScript, notNullize(effectiveSettings.getUserData(INIT_SCRIPT_PREFIX_KEY), "ijmiscinit"));
+    }
+
+    final Collection<VersionSpecificInitScript> scripts = effectiveSettings.getUserData(VERSION_SPECIFIC_SCRIPTS_KEY);
+    if (gradleVersion != null && scripts != null && !scripts.isEmpty()) {
       try {
-        String initScriptPrefix = effectiveSettings.getUserData(INIT_SCRIPT_PREFIX_KEY);
-        if (StringUtil.isEmpty(initScriptPrefix)) {
-          initScriptPrefix = "ijmiscinit";
-        }
-        else {
-          initScriptPrefix = FileUtil.sanitizeFileName(initScriptPrefix);
-        }
-        File tempFile = GradleExecutionHelper.writeToFileGradleInitScript(initScript, initScriptPrefix);
-        effectiveSettings.withArguments(GradleConstants.INIT_SCRIPT_CMD_OPTION, tempFile.getAbsolutePath());
+        GradleVersion version = GradleVersion.version(gradleVersion);
+        scripts.stream()
+          .filter(script -> script.isApplicableTo(version))
+          .filter(script -> StringUtil.isNotEmpty(script.getScript()))
+          .forEach(script -> writeAndAppendScript(effectiveSettings, script.getScript(), notNullize(script.getFilePrefix(), "ijverspecinit")));
       }
-      catch (IOException e) {
-        ExternalSystemException externalSystemException = new ExternalSystemException(e);
-        externalSystemException.initCause(e);
-        throw externalSystemException;
+      catch (IllegalArgumentException e) {
+        LOG.error("Failed to parse gradle version value [" + gradleVersion + "]", e);
       }
     }
+
+    if (effectiveSettings.getArguments().contains(GradleConstants.INIT_SCRIPT_CMD_OPTION)) {
+      GradleExecutionHelper.attachTargetPathMapperInitScript(effectiveSettings);
+    }
+  }
+
+  private static void writeAndAppendScript(@NotNull GradleExecutionSettings effectiveSettings,
+                                           @NotNull String initScript,
+                                           @NotNull String initScriptPrefix) {
+    try {
+      String initScriptPrefixName = FileUtil.sanitizeFileName(initScriptPrefix);
+      File tempFile = GradleExecutionHelper.writeToFileGradleInitScript(initScript, initScriptPrefixName);
+      effectiveSettings.withArguments(GradleConstants.INIT_SCRIPT_CMD_OPTION, tempFile.getAbsolutePath());
+    }
+    catch (IOException e) {
+      throw wrapWithESException(e);
+    }
+  }
+
+  @NotNull
+  private static ExternalSystemException wrapWithESException(IOException e) {
+    ExternalSystemException externalSystemException = new ExternalSystemException(e);
+    externalSystemException.initCause(e);
+    return externalSystemException;
   }
 
   public static void setupGradleScriptDebugging(@NotNull GradleExecutionSettings effectiveSettings) {
@@ -322,10 +362,10 @@ public class GradleTaskManager implements ExternalSystemTaskManager<GradleExecut
                         "}\n" +
                         "allprojects {\n" +
                         "  afterEvaluate { project ->\n" +
-                        "    if(project.path == '" + gradlePath + "') {\n" +
+                        "    if(project.path == '" + gradlePath + "' || ':' + rootProject.projectDir.name + project.path == '" + gradlePath + "' ) {\n" +
                         "        def overwrite = project.tasks.findByName('" + taskName + "') != null\n" +
                         "        project.tasks.create(name: '" + taskName + "', overwrite: overwrite, type: " + taskClass.getName() + ") {\n" +
-                        StringUtil.notNullize(taskConfiguration) + "\n" +
+                        notNullize(taskConfiguration) + "\n" +
                         "        }\n" +
                         "    }\n" +
                         "  }\n" +

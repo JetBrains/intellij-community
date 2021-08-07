@@ -1,0 +1,40 @@
+<html>
+<body>
+Reports <code>if</code> statements with three or more branches that can be replaced with the <code>when</code> expression.
+<p><b>Example:</b></p>
+<pre><code>
+  fun checkIdentifier(id: String) {
+      fun Char.isIdentifierStart() = this in 'A'..'z'
+      fun Char.isIdentifierPart() = isIdentifierStart() || this in '0'..'9'
+
+      if (id.isEmpty()) {
+          print("Identifier is empty")
+      } else if (!id.first().isIdentifierStart()) {
+          print("Identifier should start with a letter")
+      } else if (!id.subSequence(1, id.length).all(Char::isIdentifierPart)) {
+          print("Identifier should contain only letters and numbers")
+      }
+  }
+</code></pre>
+<p>A quick-fix converts the <code>if</code> expression to <code>when</code>:</p>
+<pre><code>
+  fun checkIdentifier(id: String) {
+      fun Char.isIdentifierStart() = this in 'A'..'z'
+      fun Char.isIdentifierPart() = isIdentifierStart() || this in '0'..'9'
+
+      when {
+          id.isEmpty() -> {
+              print("Identifier is empty")
+          }
+          !id.first().isIdentifierStart() -> {
+              print("Identifier should start with a letter")
+          }
+          !id.subSequence(1, id.length).all(Char::isIdentifierPart) -> {
+              print("Identifier should contain only letters and numbers")
+          }
+      }
+  }
+</code></pre>
+<!-- tooltip end -->
+</body>
+</html>

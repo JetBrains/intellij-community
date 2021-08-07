@@ -213,7 +213,7 @@ public class GradleProjectSettings extends ExternalProjectSettings {
 
   @NotNull
   public GradleVersion resolveGradleVersion() {
-    GradleVersion version = GradleInstallationManager.getGradleVersion(this);
+    GradleVersion version = GradleInstallationManager.guessGradleVersion(this);
     return Optional.ofNullable(version).orElseGet(GradleVersion::current);
   }
 

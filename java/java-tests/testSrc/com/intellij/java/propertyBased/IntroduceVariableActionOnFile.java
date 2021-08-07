@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.propertyBased;
 
+import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.codeInsight.template.impl.TemplateManagerImpl;
 import com.intellij.codeInsight.template.impl.TemplateState;
 import com.intellij.java.refactoring.InplaceIntroduceVariableTest;
@@ -22,6 +23,7 @@ import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.testFramework.propertyBased.ActionOnFile;
 import com.intellij.testFramework.propertyBased.RandomActivityInterceptor;
 import com.intellij.ui.UiInterceptors;
+import com.intellij.util.containers.ContainerUtil;
 import one.util.streamex.EntryStream;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jetCheck.Generator;
@@ -44,6 +46,10 @@ public class IntroduceVariableActionOnFile extends ActionOnFile {
     PsiElement element = getFile().findElementAt(offset);
     if (element == null) return;
     List<PsiExpression> expressions = PsiTreeUtil.collectParents(element, PsiExpression.class, true, e -> false);
+    expressions = ContainerUtil.filter(expressions, ex -> {
+      TextRange exRange = ex.getTextRange();
+      return CodeInsightUtil.findExpressionInRange(getFile(), exRange.getStartOffset(), exRange.getEndOffset()) == ex;
+    });
     if (expressions.isEmpty()) return;
     PsiExpression expression = env.generateValue(Generator.sampledFrom(expressions), null);
     TextRange range = expression.getTextRange();
@@ -59,7 +65,7 @@ public class IntroduceVariableActionOnFile extends ActionOnFile {
   private static void introduceVariableInline(Environment env, Project project, Editor editor, PsiExpression expression) {
     var handler = new InplaceIntroduceVariableTest.MyIntroduceVariableHandler();
     Disposable disposable = Disposer.newDisposable();
-    env.logMessage(String.format("Introduce variable using inline introducer; expression: %s at %d", 
+    env.logMessage(String.format("Introduce variable using inline introducer; expression: %s at %d",
                                  expression.getText(), expression.getTextRange().getStartOffset()));
     try {
       UiInterceptors.register(new RandomActivityInterceptor(env, disposable));
@@ -81,7 +87,11 @@ public class IntroduceVariableActionOnFile extends ActionOnFile {
 
 
   private static void introduceVariableNoInline(@NotNull Environment env, Project project, Editor editor, PsiExpression expression) {
-    String varName = env.generateValue(Generator.asciiIdentifiers(), null);
+    String varName;
+    do {
+      varName = env.generateValue(Generator.asciiIdentifiers(), null);
+    }
+    while (!PsiNameHelper.getInstance(project).isIdentifier(varName));
     boolean replaceAll = env.generateValue(Generator.booleans(), null);
     boolean declareFinal = env.generateValue(Generator.booleans(), null);
     boolean declareVar = env.generateValue(Generator.booleans(), null);
@@ -91,7 +101,7 @@ public class IntroduceVariableActionOnFile extends ActionOnFile {
                                   "declareVar", declareVar,
                                   "replaceLValues", replaceLValues)
       .filterValues(x -> x).keys().joining(" | ");
-    env.logMessage(String.format("Introduce variable; flags: %s; expression: %s at %d", 
+    env.logMessage(String.format("Introduce variable; flags: %s; expression: %s at %d",
                                  flags, expression.getText(), expression.getTextRange().getStartOffset()));
     IntroduceVariableBase handler = new MockIntroduceVariableHandler(varName, replaceAll, declareFinal, declareVar, replaceLValues);
     try {

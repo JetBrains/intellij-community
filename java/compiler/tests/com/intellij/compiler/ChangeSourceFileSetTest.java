@@ -1,9 +1,11 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.compiler;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.roots.ModuleRootModificationUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.util.io.TestFileSystemBuilder;
@@ -47,6 +49,30 @@ public class ChangeSourceFileSetTest extends BaseCompilerTestCase {
     assertOutput(m, fs().dir("a").file("A.class").end().dir("b").file("B.class"));
   }
 
+  public void testAddRemoveExcludedPattern() {
+    VirtualFile a = createFile("root/src/a/A.java", "package a; class A{}");
+    createFile("root/src/b/B.java", "package b; class B{}");
+    Module m = addModule("m", null);
+    VirtualFile srcRoot = a.getParent().getParent();
+    PsiTestUtil.addContentRoot(m, srcRoot.getParent());
+    PsiTestUtil.addSourceRoot(m, srcRoot);
+    make(m);
+    assertModulesUpToDate();
+    assertOutput(m, fs().dir("a").file("A.class").end().dir("b").file("B.class"));
+
+    ModuleRootModificationUtil.updateModel(m, model -> ApplicationManager.getApplication().runReadAction(() -> {
+      model.getContentEntries()[0].addExcludePattern("B.*");
+    }));
+    make(m);
+    assertOutput(m, fs().dir("a").file("A.class"));
+
+    ModuleRootModificationUtil.updateModel(m, model -> ApplicationManager.getApplication().runReadAction(() -> {
+      model.getContentEntries()[0].removeExcludePattern("B.*");
+    }));
+    make(m);
+    assertOutput(m, fs().dir("a").file("A.class").end().dir("b").file("B.class"));
+  }
+
   public void testAddRemoveIgnoredPattern() {
     String oldPatterns = FileTypeManager.getInstance().getIgnoredFilesList();
     try {
@@ -60,7 +86,7 @@ public class ChangeSourceFileSetTest extends BaseCompilerTestCase {
       TestFileSystemBuilder all = fs().file("A.class").file("Ignored.class").dir("IgnoredDir").file("B.class").dir("p").file("C.class");
       assertOutput(m, all);
 
-      setIgnoredFiles(oldPatterns + "Ignored*;");
+      setIgnoredFiles(oldPatterns + ";Ignored*");
       make(m);
       assertOutput(m, fs().file("A.class"));
 

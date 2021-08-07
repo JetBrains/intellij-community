@@ -1,7 +1,33 @@
 <html>
 <body>
-Reports non-<b>final</b> fields in enumeration types. A non-<b>final</b> field in an enum is rarely needed.
+Reports non-final fields in enumeration types as they are rarely needed and provide a global mutable state.
+<p><b>Example:</b></p>
+<pre><code>
+  enum Enum {
+    FIRST("first"),
+    SECOND("second");
+
+    public String str;
+
+    Enum(String str) {
+        this.str = str;
+    }
+  }
+</code></pre>
+<p>After the quick-fix is applied:</p>
+<pre><code>
+  enum Enum {
+    FIRST("first"),
+    SECOND("second");
+
+    public final String str;
+
+    Enum(String str) {
+        this.str = str;
+    }
+  }
+</code></pre>
 <!-- tooltip end -->
-<p>
+Configure the `Ignore field if quick-fix is not available` checkbox to only highlight fields that can be made final by the quick-fix.
 </body>
 </html>

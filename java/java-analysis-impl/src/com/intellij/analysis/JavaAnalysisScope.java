@@ -22,8 +22,9 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
-import com.intellij.openapi.vfs.CompactVirtualFileSet;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileSet;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PackageScope;
@@ -105,7 +106,7 @@ public class JavaAnalysisScope extends AnalysisScope {
   @Override
   protected Set<VirtualFile> createFilesSet() {
     if (myType == PACKAGE) {
-      CompactVirtualFileSet fileSet = new CompactVirtualFileSet();
+      VirtualFileSet fileSet = VfsUtilCore.createCompactVirtualFileSet();
       accept(createFileSearcher(fileSet));
       fileSet.freeze();
       return fileSet;

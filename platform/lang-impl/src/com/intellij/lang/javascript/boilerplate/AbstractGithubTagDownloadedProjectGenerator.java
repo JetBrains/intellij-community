@@ -28,9 +28,6 @@ import org.jetbrains.annotations.Nullable;
 import java.io.File;
 import java.net.URL;
 
-/**
- * @author Sergey Simonchik
- */
 public abstract class AbstractGithubTagDownloadedProjectGenerator extends WebProjectTemplate<GithubTagInfo> {
 
   private static final Logger LOG = Logger.getInstance(AbstractGithubTagDownloadedProjectGenerator.class);
@@ -63,6 +60,10 @@ public abstract class AbstractGithubTagDownloadedProjectGenerator extends WebPro
   @Override
   public String getHelpId() {
     return "create.from.template." + getGithubUserName() + "." + getGithubRepositoryName();
+  }
+
+  public @Nullable String getDefaultBranchName() {
+    return "master";
   }
 
   @Override

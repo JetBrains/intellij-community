@@ -69,7 +69,7 @@ class PyDataclassTypeProvider : PyTypeProviderBase() {
       val call = PyCallExpressionNavigator.getPyCallExpressionByCallee(referenceExpression) ?: return null
       val callee = call.callee as? PyReferenceExpression ?: return null
 
-      val resolveContext = PyResolveContext.defaultContext().withTypeEvalContext(context)
+      val resolveContext = PyResolveContext.defaultContext(context)
       val resolvedCallee = PyUtil.multiResolveTopPriority(callee.getReference(resolveContext)).singleOrNull()
 
       return if (resolvedCallee is PyCallable) getDataclassesReplaceType(resolvedCallee, call, context) else null
@@ -104,7 +104,7 @@ class PyDataclassTypeProvider : PyTypeProviderBase() {
     private fun getDataclassTypeForClass(cls: PyClass, context: TypeEvalContext): PyCallableType? {
       val clsType = (context.getType(cls) as? PyClassLikeType) ?: return null
 
-      val resolveContext = PyResolveContext.defaultContext().withTypeEvalContext(context)
+      val resolveContext = PyResolveContext.defaultContext(context)
       val elementGenerator = PyElementGenerator.getInstance(cls.project)
       val ellipsis = elementGenerator.createEllipsis()
 

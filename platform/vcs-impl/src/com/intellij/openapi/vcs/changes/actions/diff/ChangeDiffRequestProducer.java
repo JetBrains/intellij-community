@@ -37,7 +37,6 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ThreeState;
 import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -56,20 +55,6 @@ public final class ChangeDiffRequestProducer implements DiffRequestProducer, Cha
 
   public static final Key<Change> CHANGE_KEY = Key.create("DiffRequestPresentable.Change");
   public static final Key<Change> TAG_KEY = Key.create("DiffRequestPresentable.Tag");
-
-  /**
-   * Use {@link #getYourVersion()} instead
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.2")
-  public static final String YOUR_VERSION = DiffBundle.message("merge.version.title.our");
-
-  /**
-   * Use {@link #getBaseVersion()} instead
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.2")
-  public static final String BASE_VERSION = DiffBundle.message("merge.version.title.base");
 
   private final @Nullable Project myProject;
   private final @NotNull Change myChange;
@@ -105,7 +90,7 @@ public final class ChangeDiffRequestProducer implements DiffRequestProducer, Cha
   }
 
   @Override
-  public @Nullable ChangesBrowserNode.Tag getPopupTag() {
+  public @Nullable ChangesBrowserNode.Tag getTag() {
     return tryCast(myChangeContext.get(TAG_KEY), ChangesBrowserNode.Tag.class);
   }
 

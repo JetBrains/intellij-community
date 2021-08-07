@@ -179,7 +179,7 @@ public abstract class AbstractExpandableItemsHandler<KeyType, ComponentType exte
   @Override
   public void setEnabled(boolean enabled) {
     myEnabled = enabled;
-    if (!myEnabled) hideHint();
+    if (!isEnabled()) hideHint();
   }
 
   @Override
@@ -239,7 +239,7 @@ public abstract class AbstractExpandableItemsHandler<KeyType, ComponentType exte
   }
 
   private boolean isHandleSelectionEnabled(@NotNull KeyType selected, boolean processIfUnfocused) {
-    return myEnabled &&
+    return isEnabled() &&
            !ScreenReader.isActive() &&
            myComponent.isEnabled() &&
            myComponent.isShowing() &&

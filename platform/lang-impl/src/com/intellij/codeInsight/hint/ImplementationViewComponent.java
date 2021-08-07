@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.hint;
 
 import com.intellij.application.options.CodeStyle;
@@ -60,7 +60,6 @@ public class ImplementationViewComponent extends JPanel {
   @NonNls private static final String TEXT_PAGE_KEY = "Text";
   @NonNls private static final String BINARY_PAGE_KEY = "Binary";
   private static final String IMPLEMENTATION_VIEW_PLACE = "ImplementationView";
-  public static final int FILE_CHOOSER_WIDTH = 250;
   private final EditorFactory factory;
   private final Project project;
 
@@ -89,8 +88,7 @@ public class ImplementationViewComponent extends JPanel {
     return myElements != null && myElements.length > 0;
   }
 
-  @ApiStatus.Internal
-  public static class FileDescriptor {
+  private static class FileDescriptor {
     @NotNull public final VirtualFile myFile;
     public final ImplementationViewElement myElement;
 
@@ -145,7 +143,7 @@ public class ImplementationViewComponent extends JPanel {
       mySingleEntryPanel = new JPanel(new BorderLayout());
       toolbarPanel.add(mySingleEntryPanel, gc);
 
-      myFileChooser = new ComboBox<>(fileDescriptors.toArray(new FileDescriptor[0]), FILE_CHOOSER_WIDTH);
+      myFileChooser = new ComboBox<>(fileDescriptors.toArray(new FileDescriptor[0]), 250);
       myFileChooser.setOpaque(false);
       myFileChooser.addActionListener(e -> {
         int index1 = myFileChooser.getSelectedIndex();
@@ -255,43 +253,35 @@ public class ImplementationViewComponent extends JPanel {
   }
 
   private static ListCellRenderer<FileDescriptor> createRenderer(Project project) {
-    return new LeftRightRenderer<>() {
-      @NotNull
+    ListCellRenderer<FileDescriptor> mainRenderer = new ColoredListCellRenderer<>() {
       @Override
-      protected ListCellRenderer<FileDescriptor> getMainRenderer() {
-        return new ColoredListCellRenderer<>() {
-          @Override
-          protected void customizeCellRenderer(@NotNull JList<? extends FileDescriptor> list,
-                                               FileDescriptor value, int index, boolean selected, boolean hasFocus) {
-            if (value != null) {
-              ImplementationViewElement element = value.myElement;
-              setIcon(getIconForFile(value.myFile, project));
-              append(element.getPresentableText());
-              String presentation = element.getContainerPresentation();
-              if (presentation != null) {
-                append("  ");
-                append(StringUtil.trimStart(StringUtil.trimEnd(presentation, ")"), "("), SimpleTextAttributes.GRAYED_ATTRIBUTES);
-              }
-            }
+      protected void customizeCellRenderer(@NotNull JList<? extends FileDescriptor> list,
+                                           FileDescriptor value, int index, boolean selected, boolean hasFocus) {
+        setBackground(UIUtil.getListBackground(selected, true));
+        if (value != null) {
+          ImplementationViewElement element = value.myElement;
+          setIcon(getIconForFile(value.myFile, project));
+          append(element.getPresentableText());
+          String presentation = element.getContainerPresentation();
+          if (presentation != null) {
+            append("  ");
+            append(StringUtil.trimStart(StringUtil.trimEnd(presentation, ")"), "("), SimpleTextAttributes.GRAYED_ATTRIBUTES);
           }
-        };
-      }
-
-      @NotNull
-      @Override
-      protected ListCellRenderer<FileDescriptor> getRightRenderer() {
-        return new SimpleListCellRenderer<>() {
-          @Override
-          public void customize(@NotNull JList<? extends FileDescriptor> list,
-                                FileDescriptor value, int index, boolean selected, boolean hasFocus) {
-            if (value != null) {
-              setText(value.myElement.getLocationText());
-              setIcon(value.myElement.getLocationIcon());
-            }
-          }
-        };
+        }
       }
     };
+    ListCellRenderer<FileDescriptor> rightRenderer = new SimpleListCellRenderer<>() {
+      @Override
+      public void customize(@NotNull JList<? extends FileDescriptor> list,
+                            FileDescriptor value, int index, boolean selected, boolean hasFocus) {
+        setForeground(UIUtil.getListForeground(selected, true));
+        if (value != null) {
+          setText(value.myElement.getLocationText());
+          setIcon(value.myElement.getLocationIcon());
+        }
+      }
+    };
+    return new LeftRightRenderer<>(mainRenderer, rightRenderer);
   }
 
   @TestOnly
@@ -375,7 +365,7 @@ public class ImplementationViewComponent extends JPanel {
     fun.fun(candidates.toArray(new ImplementationViewElement[0]), files);
   }
 
-  public static Icon getIconForFile(VirtualFile virtualFile, Project project) {
+  private static Icon getIconForFile(VirtualFile virtualFile, Project project) {
     return IconUtil.getIcon(virtualFile, 0, project);
   }
 
@@ -383,18 +373,17 @@ public class ImplementationViewComponent extends JPanel {
     return myElements.length > 1 ? myFileChooser : myEditor.getContentComponent();
   }
 
-  public ActionToolbar getToolbar() {
-    return myToolbar;
-  }
-
+  @ApiStatus.Internal
   public ComboBox<FileDescriptor> getFileChooserComboBox() {
     return myFileChooser;
   }
 
+  @ApiStatus.Internal
   public JPanel getSingleEntryPanel() {
     return mySingleEntryPanel;
   }
 
+  @ApiStatus.Internal
   public JPanel getViewingPanel() {
     return myViewingPanel;
   }
@@ -566,6 +555,7 @@ public class ImplementationViewComponent extends JPanel {
 
     ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar(IMPLEMENTATION_VIEW_PLACE, group, true);
     toolbar.setReservePlaceAutoPopupIcon(false);
+    toolbar.setTargetComponent(myEditor.getContentComponent());
     return toolbar;
   }
 

@@ -16,17 +16,13 @@ abstract class MethodsFrequencyModelFactory : FrequencyModelFactory<MethodsUsage
 
   override fun modelBuilder(project: Project, language: Language): LocalModelBuilder {
     val storagesPath = StorageUtil.storagePath(project, language)
-    val storage = MethodsFrequencyStorage.getStorage(storagesPath)
+    val storage = MethodsFrequencyStorage.getStorage(storagesPath) ?: return LocalModelBuilder.DUMB_BUILDER
 
     return object : LocalModelBuilder {
 
-      override fun onStarted() {
-        storage.setValid(false)
-      }
+      override fun onStarted() = Unit
 
-      override fun onFinished() {
-        storage.setValid(true)
-      }
+      override fun onFinished(reason: LocalModelBuilder.FinishReason) = storage.setValid(reason == LocalModelBuilder.FinishReason.SUCCESS)
 
       override fun fileVisitor(): PsiElementVisitor = fileVisitor(MethodsUsagesTracker(storage))
 

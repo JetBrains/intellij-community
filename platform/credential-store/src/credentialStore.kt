@@ -8,7 +8,7 @@ import java.nio.CharBuffer
 import java.security.SecureRandom
 import java.util.*
 
-internal val LOG = logger<CredentialStore>()
+val LOG = logger<CredentialStore>()
 
 fun joinData(user: String?, password: OneTimeString?): ByteArray? {
   if (user == null && password == null) {

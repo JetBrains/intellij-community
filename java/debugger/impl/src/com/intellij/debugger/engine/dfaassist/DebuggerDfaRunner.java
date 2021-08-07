@@ -1,7 +1,18 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.engine.dfaassist;
 
-import com.intellij.codeInspection.dataFlow.*;
+import com.intellij.codeInspection.dataFlow.TypeConstraint;
+import com.intellij.codeInspection.dataFlow.TypeConstraints;
+import com.intellij.codeInspection.dataFlow.interpreter.RunnerResult;
+import com.intellij.codeInspection.dataFlow.interpreter.StandardDataFlowInterpreter;
+import com.intellij.codeInspection.dataFlow.java.ControlFlowAnalyzer;
+import com.intellij.codeInspection.dataFlow.jvm.JvmDfaMemoryStateImpl;
+import com.intellij.codeInspection.dataFlow.jvm.SpecialField;
+import com.intellij.codeInspection.dataFlow.jvm.descriptors.ArrayElementDescriptor;
+import com.intellij.codeInspection.dataFlow.jvm.descriptors.AssertionDisabledDescriptor;
+import com.intellij.codeInspection.dataFlow.lang.ir.ControlFlow;
+import com.intellij.codeInspection.dataFlow.lang.ir.DfaInstructionState;
+import com.intellij.codeInspection.dataFlow.memory.DfaMemoryState;
 import com.intellij.codeInspection.dataFlow.types.DfType;
 import com.intellij.codeInspection.dataFlow.types.DfTypes;
 import com.intellij.codeInspection.dataFlow.value.*;
@@ -30,7 +41,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-class DebuggerDfaRunner extends DataFlowRunner {
+class DebuggerDfaRunner {
   private static final Value NullConst = new Value() {
     @Override
     public VirtualMachine virtualMachine() { return null; }
@@ -49,27 +60,30 @@ class DebuggerDfaRunner extends DataFlowRunner {
   private final @Nullable ControlFlow myFlow;
   private final @Nullable DfaInstructionState myStartingState;
   private final long myModificationStamp;
+  private final DfaValueFactory myFactory;
 
   DebuggerDfaRunner(@NotNull PsiElement body, @NotNull PsiElement anchor, @NotNull StackFrameProxyEx proxy) throws EvaluateException {
-    super(body.getProject(), body.getParent() instanceof PsiClassInitializer ? ((PsiClassInitializer)body.getParent()).getContainingClass() : body);
+    myFactory = new DfaValueFactory(body.getProject());
     myBody = body;
     myAnchor = anchor;
     myProject = body.getProject();
-    myFlow = buildFlow(myBody);
+    myFlow = ControlFlowAnalyzer.buildFlow(myBody, myFactory, true);
     myStartingState = getStartingState(proxy);
     myModificationStamp = PsiModificationTracker.SERVICE.getInstance(myProject).getModificationCount();
   }
-  
+
   boolean isValid() {
     return myStartingState != null;
   }
 
-  RunnerResult interpret(InstructionVisitor visitor) {
-    if (myFlow == null || myStartingState == null || 
+  @Nullable DebuggerDfaListener interpret() {
+    if (myFlow == null || myStartingState == null ||
         PsiModificationTracker.SERVICE.getInstance(myProject).getModificationCount() != myModificationStamp) {
-      return RunnerResult.ABORTED;
+      return null;
     }
-    return interpret(myBody, visitor, myFlow, Collections.singletonList(myStartingState));
+    var interceptor = new DebuggerDfaListener();
+    StandardDataFlowInterpreter interpreter = new StandardDataFlowInterpreter(myFlow, interceptor, true);
+    return interpreter.interpret(List.of(myStartingState)) == RunnerResult.OK ? interceptor : null;
   }
 
   @Nullable
@@ -77,9 +91,9 @@ class DebuggerDfaRunner extends DataFlowRunner {
     if (myFlow == null) return null;
     int offset = myFlow.getStartOffset(myAnchor).getInstructionOffset();
     if (offset < 0) return null;
-    DfaMemoryState state = super.createMemoryState();
+    DfaMemoryState state = new JvmDfaMemoryStateImpl(myFactory);
     StateBuilder builder = new StateBuilder(proxy, state);
-    for (DfaValue dfaValue : getFactory().getValues().toArray(new DfaValue[0])) {
+    for (DfaValue dfaValue : myFactory.getValues().toArray(new DfaValue[0])) {
       if (dfaValue instanceof DfaVariableValue) {
         DfaVariableValue var = (DfaVariableValue)dfaValue;
         builder.resolveJdi(var);
@@ -90,13 +104,6 @@ class DebuggerDfaRunner extends DataFlowRunner {
       return new DfaInstructionState(myFlow.getInstruction(offset), state);
     }
     return null;
-  }
-
-  @NotNull
-  @Override
-  protected DataFlowRunner.TimeStats createStatistics() {
-    // Do not track time for DFA assist
-    return new TimeStats(false);
   }
 
   private static Value wrap(Value value) {
@@ -120,7 +127,6 @@ class DebuggerDfaRunner extends DataFlowRunner {
 
   private class StateBuilder {
     private final @NotNull PsiElementFactory myPsiFactory = JavaPsiFacade.getElementFactory(myProject);
-    private final @NotNull DfaValueFactory myFactory = getFactory();
     private final @Nullable ClassLoaderReference myContextLoader;
     private final @NotNull DfaMemoryState myMemState;
     private final @NotNull Map<Value, DfaVariableValue> myCanonicalMap = new HashMap<>();
@@ -153,7 +159,7 @@ class DebuggerDfaRunner extends DataFlowRunner {
         }
         Value qualifierValue = findJdiValue(var.getQualifier());
         if (qualifierValue == null) return null;
-        PsiModifierListOwner element = descriptor.getPsiElement();
+        PsiElement element = descriptor.getPsiElement();
         if (element instanceof PsiField && qualifierValue instanceof ObjectReference) {
           ReferenceType type = ((ObjectReference)qualifierValue).referenceType();
           PsiClass psiClass = ((PsiField)element).getContainingClass();
@@ -164,8 +170,8 @@ class DebuggerDfaRunner extends DataFlowRunner {
             }
           }
         }
-        if (descriptor instanceof DfaExpressionFactory.ArrayElementDescriptor && qualifierValue instanceof ArrayReference) {
-          int index = ((DfaExpressionFactory.ArrayElementDescriptor)descriptor).getIndex();
+        if (descriptor instanceof ArrayElementDescriptor && qualifierValue instanceof ArrayReference) {
+          int index = ((ArrayElementDescriptor)descriptor).getIndex();
           int length = ((ArrayReference)qualifierValue).length();
           if (index >= 0 && index < length) {
             return wrap(((ArrayReference)qualifierValue).getValue(index));
@@ -173,12 +179,12 @@ class DebuggerDfaRunner extends DataFlowRunner {
         }
         return null;
       }
-      if (var.getDescriptor() instanceof DfaExpressionFactory.AssertionDisabledDescriptor) {
+      if (var.getDescriptor() instanceof AssertionDisabledDescriptor) {
         ThreeState status = DebuggerUtilsEx.getEffectiveAssertionStatus(myLocation);
         // Assume that assertions are enabled if we cannot fetch the status
         return myLocation.virtualMachine().mirrorOf(status == ThreeState.NO);
       }
-      PsiModifierListOwner psi = var.getPsiVariable();
+      PsiElement psi = var.getPsiVariable();
       if (psi instanceof PsiClass) {
         // this; probably qualified
         PsiClass currentClass = PsiTreeUtil.getParentOfType(myBody, PsiClass.class);
@@ -187,7 +193,7 @@ class DebuggerDfaRunner extends DataFlowRunner {
       if (psi instanceof PsiLocalVariable || psi instanceof PsiParameter) {
         String varName = ((PsiVariable)psi).getName();
         if (varName == null || PsiResolveHelper.SERVICE.getInstance(myProject).resolveReferencedVariable(varName, myAnchor) != psi) {
-          // Another variable with the same name could be tracked by DFA in different code branch but not visible at current code location 
+          // Another variable with the same name could be tracked by DFA in different code branch but not visible at current code location
           return null;
         }
         LocalVariableProxy variable = myProxy.visibleVariableByName(varName);
@@ -208,7 +214,7 @@ class DebuggerDfaRunner extends DataFlowRunner {
           }
         }
       }
-      if (psi instanceof PsiField && psi.hasModifierProperty(PsiModifier.STATIC)) {
+      if (psi instanceof PsiField && ((PsiField)psi).hasModifierProperty(PsiModifier.STATIC)) {
         PsiClass psiClass = ((PsiField)psi).getContainingClass();
         if (psiClass != null) {
           String name = psiClass.getQualifiedName();
@@ -239,11 +245,10 @@ class DebuggerDfaRunner extends DataFlowRunner {
     void finish() {
       if (myChanged) {
         DfaVariableValue[] distinctValues = StreamEx.ofValues(myCanonicalMap)
-            .filter(v -> v.getType() != null && !TypeConstraints.exact(v.getType()).isComparedByEquals())
+            .filter(v -> !TypeConstraint.fromDfType(v.getDfType()).isComparedByEquals())
             .toArray(new DfaVariableValue[0]);
         EntryStream.ofPairs(distinctValues)
-          .filterKeyValue(
-            (left, right) -> Objects.requireNonNull(left.getType()).isConvertibleFrom(Objects.requireNonNull(right.getType())))
+          .filterKeyValue((left, right) -> left.getDfType().meet(right.getDfType()) != DfType.BOTTOM)
           .limit(20) // avoid too complex state
           .forKeyValue((left, right) -> myMemState.applyCondition(left.cond(RelationType.NE, right)));
       }
@@ -251,8 +256,8 @@ class DebuggerDfaRunner extends DataFlowRunner {
 
     private void addConditions(DfaVariableValue var, Value jdiValue) {
       DfType val = getConstantValue(jdiValue);
-      if (val != DfTypes.TOP) {
-        myMemState.applyCondition(var.eq(myFactory.fromDfType(val)));
+      if (val != DfType.TOP) {
+        myMemState.applyCondition(var.eq(val));
       }
       if (jdiValue instanceof ObjectReference) {
         ObjectReference ref = (ObjectReference)jdiValue;
@@ -267,7 +272,7 @@ class DebuggerDfaRunner extends DataFlowRunner {
         if (jdiValue instanceof ArrayReference) {
           DfaValue dfaLength = SpecialField.ARRAY_LENGTH.createValue(myFactory, var);
           int jdiLength = ((ArrayReference)jdiValue).length();
-          myMemState.applyCondition(dfaLength.eq(myFactory.getInt(jdiLength)));
+          myMemState.applyCondition(dfaLength.eq(DfTypes.intValue(jdiLength)));
         }
         else if (TypeConversionUtil.isPrimitiveWrapper(name)) {
           setSpecialField(var, ref, type, "value", SpecialField.UNBOX);
@@ -276,10 +281,10 @@ class DebuggerDfaRunner extends DataFlowRunner {
           setSpecialField(var, ref, type, "size", SpecialField.COLLECTION_SIZE);
         }
         else if (name.startsWith("java.util.Collections$Empty")) {
-          myMemState.applyCondition(SpecialField.COLLECTION_SIZE.createValue(myFactory, var).eq(myFactory.getInt(0)));
+          myMemState.applyCondition(SpecialField.COLLECTION_SIZE.createValue(myFactory, var).eq(DfTypes.intValue(0)));
         }
         else if (name.startsWith("java.util.Collections$Singleton")) {
-          myMemState.applyCondition(SpecialField.COLLECTION_SIZE.createValue(myFactory, var).eq(myFactory.getInt(1)));
+          myMemState.applyCondition(SpecialField.COLLECTION_SIZE.createValue(myFactory, var).eq(DfTypes.intValue(1)));
         }
         else if (CommonClassNames.JAVA_UTIL_OPTIONAL.equals(name) && !(var.getDescriptor() instanceof SpecialField)) {
           setSpecialField(var, ref, type, "value", SpecialField.OPTIONAL_VALUE);
@@ -352,7 +357,7 @@ class DebuggerDfaRunner extends DataFlowRunner {
       }
       if (jdiValue instanceof StringReference) {
         PsiType stringType = myPsiFactory.createTypeByFQClassName(CommonClassNames.JAVA_LANG_STRING, myBody.getResolveScope());
-        return DfTypes.constant(((StringReference)jdiValue).value(), stringType);
+        return DfTypes.referenceConstant(((StringReference)jdiValue).value(), stringType);
       }
       if (jdiValue instanceof ObjectReference) {
         ReferenceType type = ((ObjectReference)jdiValue).referenceType();
@@ -364,13 +369,13 @@ class DebuggerDfaRunner extends DataFlowRunner {
             if (enumClass != null && enumClass.isEnum()) {
               PsiField enumConst = enumClass.findFieldByName(enumConstantName, false);
               if (enumConst instanceof PsiEnumConstant) {
-                return DfTypes.constant(enumConst, psiType);
+                return DfTypes.referenceConstant(enumConst, psiType);
               }
             }
           }
         }
       }
-      return DfTypes.TOP;
+      return DfType.TOP;
     }
   }
 

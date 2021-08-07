@@ -183,7 +183,7 @@ public abstract class StringMatcher<T> {
   public static final class MatcherSet extends StringMatcher<Set<StringMatcher>> {
     private final String myPattern;
 
-    protected MatcherSet(Set<StringMatcher> target) {
+    private MatcherSet(Set<StringMatcher> target) {
       super(target);
       myPattern = StringUtil.join(target, s -> s.getPattern(), "|");
     }

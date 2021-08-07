@@ -1,6 +1,7 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.impl.attach;
 
+import com.intellij.debugger.JavaDebuggerBundle;
 import com.intellij.debugger.engine.DebugProcessImpl;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.GeneralCommandLine;
@@ -104,7 +105,7 @@ public class SAJDWPRemoteConnection extends PidRemoteConnection {
 
     private void startServer(GeneralCommandLine commandLine, boolean sudo) throws Exception {
       if (sudo) {
-        commandLine = ExecUtil.sudoCommand(commandLine, "Please enter your password to attach with su privileges: ");
+        commandLine = ExecUtil.sudoCommand(commandLine, JavaDebuggerBundle.message("debugger.attach.password.for.sudo"));
       }
       GeneralCommandLine finalCommandLine = commandLine;
       new CapturingProcessHandler.Silent(commandLine) {

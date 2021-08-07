@@ -74,7 +74,8 @@ public class IndentOptionsDetectorImpl implements IndentOptionsDetector {
 
   @Nullable
   private List<LineIndentInfo> calcLineIndentInfo(@Nullable ProgressIndicator indicator) {
-    if (myDocument == null || myDocument.getLineCount() < 3 || isFileBigToDetect()) {
+    if (myDocument == null || myDocument.getLineCount() < 3 || isFileBigToDetect() ||
+        !PsiDocumentManager.getInstance(myProject).isCommitted(myDocument)) {
       return null;
     }
 

@@ -114,12 +114,12 @@ class GradleTestRunConfigurationProducerTest : GradleTestRunConfigurationProduce
       projectData["my module"]["MyModuleTestCase"]["test2"].element
     )
     assertConfigurationFromContext<TestMethodGradleConfigurationProducer>(
-      """:test --tests "GroovyTestCase.Don\'t use single * quo\*tes"""",
-      projectData["project"]["GroovyTestCase"]["""Don\'t use single . quo\"tes"""].element
+      """:test --tests "GroovyTestCase.Don\'t use single quo\*tes"""",
+      projectData["project"]["GroovyTestCase"]["""Don\'t use single quo\"tes"""].element
     )
     assertConfigurationFromContext<PatternGradleConfigurationProducer>(
-      """:test --tests "GroovyTestCase.Don\'t use single * quo\*tes" --tests "GroovyTestCase.test2"""",
-      projectData["project"]["GroovyTestCase"]["""Don\'t use single . quo\"tes"""].element,
+      """:test --tests "GroovyTestCase.Don\'t use single quo\*tes" --tests "GroovyTestCase.test2"""",
+      projectData["project"]["GroovyTestCase"]["""Don\'t use single quo\"tes"""].element,
       projectData["project"]["GroovyTestCase"]["test2"].element
     )
   }
@@ -210,13 +210,32 @@ class GradleTestRunConfigurationProducerTest : GradleTestRunConfigurationProduce
   }
 
   @Test
+  fun `test execution action children`() {
+    val projectData = generateAndImportTemplateProject()
+    assertGutterRunActionsSize(projectData["project"]["TestCase"].element, 0)
+    assertGutterRunActionsSize(projectData["project"]["TestCase"]["test1"].element, 0)
+    assertGutterRunActionsSize(projectData["project"]["org.example.TestCaseWithMain"].element, 0)
+    assertGutterRunActionsSize(projectData["project"]["org.example.TestCaseWithMain"]["test2"].element, 0)
+  }
+
+  @Test
+  fun `test execution action children in choose per test mode`() {
+    currentExternalProjectSettings.testRunner = TestRunner.CHOOSE_PER_TEST
+    val projectData = generateAndImportTemplateProject()
+    assertGutterRunActionsSize(projectData["project"]["TestCase"].element, 2)
+    assertGutterRunActionsSize(projectData["project"]["TestCase"]["test1"].element, 2)
+    //assertGutterRunActionsSize(projectData["project"]["org.example.TestCaseWithMain"].element, 2)
+    assertGutterRunActionsSize(projectData["project"]["org.example.TestCaseWithMain"]["test2"].element, 2)
+  }
+
+  @Test
   fun `test multiple selected abstract tests`() {
     val projectData = generateAndImportTemplateProject()
     runReadActionAndWait {
       val producer = getConfigurationProducer<PatternGradleConfigurationProducer>()
       val testClass = projectData["project"]["TestCase"].element
-      val abstractTestClass = projectData["project"]["AbstractTestCase"].element
-      val abstractTestMethod = projectData["project"]["AbstractTestCase"]["test"].element
+      val abstractTestClass = projectData["project"]["org.example.AbstractTestCase"].element
+      val abstractTestMethod = projectData["project"]["org.example.AbstractTestCase"]["test"].element
       val templateConfiguration = producer.createTemplateConfiguration()
       getContextByLocation(testClass, abstractTestClass).let {
         assertTrue(producer.setupConfigurationFromContext(templateConfiguration, it, Ref(it.psiLocation)))

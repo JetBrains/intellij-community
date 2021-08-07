@@ -4,7 +4,8 @@ SHELL_SCRIPT
       PsiElement(for)('for')
       PsiWhiteSpace(' ')
       FOR_CLAUSE
-        PsiElement((()('((')
+        PsiElement(()('(')
+        PsiElement(()('(')
         PsiWhiteSpace(' ')
         COMPARISON_EXPRESSION
           MUL_EXPRESSION
@@ -48,7 +49,8 @@ SHELL_SCRIPT
               NUMBER
                 PsiElement(int)('2')
         PsiWhiteSpace(' ')
-        PsiElement()))('))')
+        PsiElement())(')')
+        PsiElement())(')')
         PsiWhiteSpace(' ')
         LIST_TERMINATOR
           PsiElement(;)(';')
@@ -74,13 +76,15 @@ SHELL_SCRIPT
       PsiElement(for)('for')
       PsiWhiteSpace(' ')
       FOR_CLAUSE
-        PsiElement((()('((')
+        PsiElement(()('(')
+        PsiElement(()('(')
         PsiWhiteSpace(' ')
         PsiElement(;)(';')
         PsiWhiteSpace(' ')
         PsiElement(;)(';')
         PsiWhiteSpace(' ')
-        PsiElement()))('))')
+        PsiElement())(')')
+        PsiElement())(')')
         PsiWhiteSpace(' ')
         LIST_TERMINATOR
           PsiElement(;)(';')
@@ -106,7 +110,8 @@ SHELL_SCRIPT
       PsiElement(for)('for')
       PsiWhiteSpace(' ')
       FOR_CLAUSE
-        PsiElement((()('((')
+        PsiElement(()('(')
+        PsiElement(()('(')
         PsiWhiteSpace(' ')
         LITERAL_EXPRESSION
           PsiElement(word)('a')
@@ -120,7 +125,8 @@ SHELL_SCRIPT
         LITERAL_EXPRESSION
           PsiElement(word)('c')
         PsiWhiteSpace(' ')
-        PsiElement()))('))')
+        PsiElement())(')')
+        PsiElement())(')')
         PsiWhiteSpace(' ')
         LIST_TERMINATOR
           PsiElement(;)(';')

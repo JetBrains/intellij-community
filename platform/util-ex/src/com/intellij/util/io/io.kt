@@ -2,12 +2,10 @@
 package com.intellij.util.io
 
 import com.intellij.util.SmartList
-import com.intellij.util.text.CharArrayCharSequence
-import java.io.InputStreamReader
+import com.intellij.util.text.CharSequenceBackedByChars
 import java.io.Reader
 import java.net.URLEncoder
 import java.nio.ByteBuffer
-import java.nio.CharBuffer
 import java.util.*
 import kotlin.math.min
 
@@ -64,22 +62,6 @@ fun Reader.readCharSequence(): CharSequence {
   }
   System.arraycopy(chars, 0, result, result.size - total, total)
   return CharSequenceBackedByChars(result)
-}
-
-// we must return string on subSequence() - JsonReaderEx will call toString in any case
-class CharSequenceBackedByChars : CharArrayCharSequence {
-  val byteBuffer: ByteBuffer
-    get() = Charsets.UTF_8.encode(CharBuffer.wrap(myChars, myStart, length))
-
-  constructor(charBuffer: CharBuffer) : super(charBuffer.array(), charBuffer.arrayOffset(), charBuffer.position())
-
-  constructor(chars: CharArray, start: Int, end: Int) : super(chars, start, end)
-
-  constructor(chars: CharArray) : super(*chars)
-
-  override fun subSequence(startIndex: Int, endIndex: Int): CharSequence {
-    return if (startIndex == 0 && endIndex == length) this else String(myChars, myStart + startIndex, endIndex - startIndex)
-  }
 }
 
 fun ByteBuffer.toByteArray(isClear: Boolean = false): ByteArray {

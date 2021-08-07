@@ -1,9 +1,11 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.siyeh.ig.psiutils;
 
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ProjectFileIndex;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.search.searches.ClassInheritorsSearch;
 import com.intellij.psi.search.searches.OverridingMethodsSearch;
@@ -19,10 +21,15 @@ import org.jetbrains.annotations.*;
 
 import java.util.List;
 import java.util.Objects;
+import java.util.Set;
+import java.util.function.Predicate;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public final class MethodUtils {
+
+  private static final Set<String> CAN_IGNORE_RETURN_VALUE_ANNOTATIONS = Set.of(
+    "org.assertj.core.util.CanIgnoreReturnValue", "com.google.errorprone.annotations.CanIgnoreReturnValue");
 
   private MethodUtils() {}
 
@@ -284,18 +291,22 @@ public final class MethodUtils {
    * Returns true if the method or constructor is trivial, i.e. does nothing of consequence. This is true when the method is empty, but
    * also when it is a constructor which only calls super, contains empty statements or "if (false)" statements.
    */
-  public static boolean isTrivial(PsiMethod method, boolean throwIsTrivial) {
+  public static boolean isTrivial(PsiMethod method, @Nullable Predicate<PsiStatement> considerTrivialPredicate) {
     if (method.hasModifierProperty(PsiModifier.NATIVE)) {
       return false;
     }
-    return isTrivial(method.getBody(), throwIsTrivial);
+    return isTrivial(method.getBody(), considerTrivialPredicate);
+  }
+
+  public static boolean isTrivial(PsiMethod method) {
+    return isTrivial(method, null);
   }
 
   public static boolean isTrivial(PsiClassInitializer initializer) {
-    return isTrivial(initializer.getBody(), false);
+    return isTrivial(initializer.getBody(), null);
   }
 
-  private static boolean isTrivial(PsiCodeBlock codeBlock, boolean throwIsTrivial) {
+  private static boolean isTrivial(PsiCodeBlock codeBlock, @Nullable Predicate<PsiStatement> trivialPredicate) {
     if (codeBlock == null) {
       return true;
     }
@@ -305,7 +316,7 @@ public final class MethodUtils {
     }
     for (PsiStatement statement : statements) {
       ProgressManager.checkCanceled();
-      if (statement instanceof PsiEmptyStatement) {
+      if (statement instanceof PsiEmptyStatement || trivialPredicate != null && trivialPredicate.test(statement)) {
         continue;
       }
       if (statement instanceof PsiReturnStatement) {
@@ -328,9 +339,6 @@ public final class MethodUtils {
         if (!JavaPsiConstructorUtil.isSuperConstructorCall(expressionStatement.getExpression())) {
           return false;
         }
-      }
-      else if (throwIsTrivial && statement instanceof PsiThrowStatement) {
-        return true;
       }
       else {
         return false;
@@ -494,5 +502,63 @@ public final class MethodUtils {
       return false;
     }
     return calledMethod.getContainingClass() == method.getContainingClass();
+  }
+
+  public static boolean hasCanIgnoreReturnValueAnnotation(@NotNull PsiMethod method, @Nullable PsiElement stopElement) {
+    return findAnnotationInTree(method, stopElement, CAN_IGNORE_RETURN_VALUE_ANNOTATIONS) != null;
+  }
+
+  /**
+   * Finds the specified annotations in the psi tree.
+   * For example first trying a method, then the surrounding class, then the surrounding package.
+   * When the element checked is a method or class, super methods and classes are also checked.
+   * @param element  the element at which to start searching
+   * @param stop  psi element to stop at, and not continue to surrounding elements
+   * @param fqAnnotationNames  the fully qualified names of the annotations to find
+   * @return the first annotation found, or null if no annotation was found.
+   */
+  @Nullable
+  public static PsiAnnotation findAnnotationInTree(PsiElement element, @Nullable PsiElement stop, @NotNull Set<String> fqAnnotationNames) {
+    while (element != null) {
+      if (element == stop) {
+        return null;
+      }
+      if (element instanceof PsiModifierListOwner) {
+        final PsiModifierListOwner modifierListOwner = (PsiModifierListOwner)element;
+        final PsiAnnotation annotation =
+          AnnotationUtil.findAnnotationInHierarchy(modifierListOwner, fqAnnotationNames);
+        if (annotation != null) {
+          return annotation;
+        }
+      }
+
+      if (element instanceof PsiClassOwner) {
+        final PsiClassOwner classOwner = (PsiClassOwner)element;
+        final String packageName = classOwner.getPackageName();
+        final PsiPackage aPackage = JavaPsiFacade.getInstance(element.getProject()).findPackage(packageName);
+        if (aPackage == null) {
+          return null;
+        }
+        final PsiAnnotation annotation = AnnotationUtil.findAnnotation(aPackage, fqAnnotationNames);
+        if(annotation != null) {
+          // Check that annotation actually belongs to the same library/source root
+          // which could be important in case of split-packages
+          final VirtualFile annotationFile = PsiUtilCore.getVirtualFile(annotation);
+          final VirtualFile currentFile = classOwner.getVirtualFile();
+          if(annotationFile != null && currentFile != null) {
+            final ProjectFileIndex projectFileIndex = ProjectFileIndex.getInstance(element.getProject());
+            final VirtualFile annotationClassRoot = projectFileIndex.getClassRootForFile(annotationFile);
+            final VirtualFile currentClassRoot = projectFileIndex.getClassRootForFile(currentFile);
+            if (!Objects.equals(annotationClassRoot, currentClassRoot)) {
+              return null;
+            }
+          }
+        }
+        return annotation;
+      }
+
+      element = element.getContext();
+    }
+    return null;
   }
 }

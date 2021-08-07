@@ -69,19 +69,19 @@ public class BytecodeAnalysisIntegrationTest extends LightJavaCodeInsightFixture
           libModel.commit();
         }
       }
-      Sdk sdk = model.getSdk();
-      if (sdk != null) {
-        // first, remove bundled JDK Annotations because they are too thorough - can't infer them automatically yet
-        sdk = PsiTestUtil.modifyJdkRoots(sdk, modificator -> {
-          modificator.setName(modificator.getName() + "-RootType" + AnnotationOrderRootType.getInstance().name());
-          modificator.removeRoots(AnnotationOrderRootType.getInstance());
-        });
-
-        sdk = PsiTestUtil.addRootsToJdk(sdk, AnnotationOrderRootType.getInstance(), annotationsRoot);
-        model.setSdk(sdk);
-      }
-
       Registry.get(ProjectBytecodeAnalysis.NULLABLE_METHOD).setValue(true, module);
+    }
+
+    @Override
+    public Sdk getSdk() {
+      Sdk sdk = super.getSdk();
+      sdk = PsiTestUtil.modifyJdkRoots(sdk, modificator -> {
+        modificator.setName(modificator.getName() + "-RootType" + AnnotationOrderRootType.getInstance().name());
+        modificator.removeRoots(AnnotationOrderRootType.getInstance());
+      });
+
+      sdk = PsiTestUtil.addRootsToJdk(sdk, AnnotationOrderRootType.getInstance(), getAnnotationsRoot());
+      return sdk;
     }
   };
 
@@ -208,7 +208,7 @@ public class BytecodeAnalysisIntegrationTest extends LightJavaCodeInsightFixture
     }
   }
 
-  public void _testExportInferredAnnotations() {
+  public void testExportInferredAnnotations() {
     PsiPackage rootPackage = JavaPsiFacade.getInstance(getProject()).findPackage("");
     assertNotNull(rootPackage);
 

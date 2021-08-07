@@ -7,7 +7,9 @@ import de.plushnikov.intellij.plugin.LombokClassNames;
 import de.plushnikov.intellij.plugin.problem.ProblemBuilder;
 import de.plushnikov.intellij.plugin.processor.LombokPsiElementUsage;
 import de.plushnikov.intellij.plugin.psi.LombokLightMethodBuilder;
+import de.plushnikov.intellij.plugin.psi.LombokLightModifierList;
 import de.plushnikov.intellij.plugin.quickfix.PsiQuickFixFactory;
+import de.plushnikov.intellij.plugin.thirdparty.LombokCopyableAnnotations;
 import de.plushnikov.intellij.plugin.thirdparty.LombokUtils;
 import de.plushnikov.intellij.plugin.util.*;
 import org.jetbrains.annotations.NotNull;
@@ -21,8 +23,7 @@ import java.util.List;
  *
  * @author Plushnikov Michail
  */
-public class GetterFieldProcessor extends AbstractFieldProcessor {
-
+public final class GetterFieldProcessor extends AbstractFieldProcessor {
   public GetterFieldProcessor() {
     super(PsiMethod.class, LombokClassNames.GETTER);
   }
@@ -129,11 +130,11 @@ public class GetterFieldProcessor extends AbstractFieldProcessor {
     }
 
     final String blockText = String.format("return %s.%s;", isStatic ? psiClass.getName() : "this", psiField.getName());
-    methodBuilder.withBody(PsiMethodUtil.createCodeBlockFromText(blockText, methodBuilder));
+    methodBuilder.withBodyText(blockText);
 
-    final PsiModifierList modifierList = methodBuilder.getModifierList();
+    final LombokLightModifierList modifierList = methodBuilder.getModifierList();
 
-    copyCopyableAnnotations(psiField, modifierList, LombokUtils.BASE_COPYABLE_ANNOTATIONS);
+    copyCopyableAnnotations(psiField, modifierList, LombokCopyableAnnotations.BASE_COPYABLE);
     PsiAnnotation fieldGetterAnnotation = PsiAnnotationSearchUtil.findAnnotation(psiField, LombokClassNames.GETTER);
     copyOnXAnnotations(fieldGetterAnnotation, modifierList, "onMethod");
     if (psiField.isDeprecated()) {

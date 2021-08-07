@@ -33,7 +33,7 @@ class WindowInfoImpl : Cloneable, WindowInfo, BaseState() {
   override var anchor by property(ToolWindowAnchor.LEFT) { it == ToolWindowAnchor.LEFT }
 
   @get:Attribute(converter = ToolWindowAnchorConverter::class)
-  override var largeStripeAnchor by property(ToolWindowAnchor.LEFT) { it == ToolWindowAnchor.LEFT }
+  override var largeStripeAnchor by property(ToolWindowAnchor.NONE) { it == ToolWindowAnchor.NONE }
 
   @get:Attribute("visibleOnLargeStripe")
   override var isVisibleOnLargeStripe by property(false)
@@ -93,6 +93,9 @@ class WindowInfoImpl : Cloneable, WindowInfo, BaseState() {
    * Defines order of tool window button inside the stripe.
    */
   override var order by property(-1)
+
+  @get:Attribute("orderOnLargeStripe")
+  override var orderOnLargeStripe by property(-1)
 
   @get:Transient
   override var isFromPersistentSettings = true

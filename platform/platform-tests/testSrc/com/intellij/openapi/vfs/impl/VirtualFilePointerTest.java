@@ -189,7 +189,7 @@ public class VirtualFilePointerTest extends BareTestFixtureTestCase {
     MessageBusConnection connection = ApplicationManager.getApplication().getMessageBus().connect(disposable);
     connection.subscribe(VirtualFileManager.VFS_CHANGES, new BulkFileListener() {
       @Override
-      public void after(@NotNull List<? extends VFileEvent> events) {
+      public void after(@NotNull List<? extends @NotNull VFileEvent> events) {
         Object url = ((VirtualFilePointerImpl)pointer).myNode.myFileOrUrl;
         assertTrue(url.toString(), url instanceof String);
         assertFalse(pointer.isValid());
@@ -210,6 +210,11 @@ public class VirtualFilePointerTest extends BareTestFixtureTestCase {
     assertEquals("[before:false, after:true]", fileToCreateListener.log.toString());
     String expectedUrl = VirtualFileManager.constructUrl(LocalFileSystem.PROTOCOL, FileUtil.toSystemIndependentName(fileToCreate.getPath()));
     assertEquals(expectedUrl.toUpperCase(Locale.US), fileToCreatePointer.getUrl().toUpperCase(Locale.US));
+  }
+
+  @Test
+  public void testCreateVFPFromStrangeJarUrlMustCrash() throws IOException {
+    UsefulTestCase.assertThrows(IllegalArgumentException.class, ()->myVirtualFilePointerManager.create("jar://C:/!/java.base", disposable, null));
   }
 
   @Test
@@ -953,7 +958,6 @@ public class VirtualFilePointerTest extends BareTestFixtureTestCase {
 
   @Test
   public void testFileUrlNormalization() {
-    assertEquals("file:/", myVirtualFilePointerManager.create("file:/", disposable, null).getUrl());
     assertEquals("file://", myVirtualFilePointerManager.create("file://", disposable, null).getUrl());
     assertEquals("file://", myVirtualFilePointerManager.create("file:///", disposable, null).getUrl());
     assertEquals("file://", myVirtualFilePointerManager.create("file:////", disposable, null).getUrl());

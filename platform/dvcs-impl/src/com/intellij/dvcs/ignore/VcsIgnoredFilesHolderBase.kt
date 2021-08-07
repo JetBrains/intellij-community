@@ -3,42 +3,23 @@ package com.intellij.dvcs.ignore
 
 import com.intellij.dvcs.repo.AbstractRepositoryManager
 import com.intellij.dvcs.repo.Repository
+import com.intellij.dvcs.repo.VcsManagedFilesHolderBase
 import com.intellij.openapi.vcs.FilePath
-import com.intellij.openapi.vcs.changes.VcsIgnoredFilesHolder
-import com.intellij.openapi.vcs.changes.VcsModifiableDirtyScope
 
 abstract class VcsIgnoredFilesHolderBase<REPOSITORY : Repository>(
   private val repositoryManager: AbstractRepositoryManager<REPOSITORY>
-) : VcsIgnoredFilesHolder {
+) : VcsManagedFilesHolderBase() {
 
-  private val vcsIgnoredHolderMap =
-    repositoryManager.repositories.associateTo(
-      hashMapOf<REPOSITORY, VcsRepositoryIgnoredFilesHolder>()) { it to getHolder(it) }
+  private val allHolders get() = repositoryManager.repositories.asSequence().map { getHolder(it) }
 
   protected abstract fun getHolder(repository: REPOSITORY): VcsRepositoryIgnoredFilesHolder
 
-  override fun isInUpdatingMode() = vcsIgnoredHolderMap.values.any(VcsRepositoryIgnoredFilesHolder::isInUpdateMode)
+  override fun isInUpdatingMode() = allHolders.any(VcsRepositoryIgnoredFilesHolder::isInUpdateMode)
 
-  override fun cleanAndAdjustScope(scope: VcsModifiableDirtyScope) {}
-
-  override fun addFile(file: FilePath) {
-    findIgnoreHolderByFile(file)?.addFile(file)
+  override fun containsFile(file: FilePath): Boolean {
+    val repository = repositoryManager.getRepositoryForFileQuick(file) ?: return false
+    return getHolder(repository).containsFile(file)
   }
 
-  override fun containsFile(file: FilePath) = findIgnoreHolderByFile(file)?.containsFile(file) ?: false
-
-  override fun values() = vcsIgnoredHolderMap.flatMap { it.value.ignoredFilePaths }
-
-  override fun startRescan() {
-    vcsIgnoredHolderMap.values.forEach { it.startRescan() }
-  }
-
-  override fun cleanAll() {
-    vcsIgnoredHolderMap.clear()
-  }
-
-  private fun findIgnoreHolderByFile(file: FilePath): VcsRepositoryIgnoredFilesHolder? =
-    repositoryManager.getRepositoryForFileQuick(file)?.let { repositoryForFile ->
-      vcsIgnoredHolderMap[repositoryForFile]
-    }
+  override fun values() = allHolders.flatMap { it.ignoredFilePaths }.toList()
 }

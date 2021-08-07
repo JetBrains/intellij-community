@@ -9,6 +9,9 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
+import com.intellij.openapi.command.undo.DocumentReference;
+import com.intellij.openapi.command.undo.DocumentReferenceManager;
+import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.colors.EditorColors;
@@ -76,7 +79,7 @@ public abstract class CodeStyleAbstractPanel implements Disposable, ComponentHig
   private String myTextToReformat;
   private final UserActivityWatcher myUserActivityWatcher = new UserActivityWatcher();
 
-  private final Alarm myUpdateAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
+  private final Alarm myUpdateAlarm;
 
   @Nullable private CodeStyleSchemesModel myModel;
   private boolean mySomethingChanged;
@@ -100,9 +103,8 @@ public abstract class CodeStyleAbstractPanel implements Disposable, ComponentHig
     myDefaultLanguage = defaultLanguage;
     myEditor = createEditor();
 
-    if (myEditor != null) {
-      myUpdateAlarm.setActivationComponent(myEditor.getComponent());
-    }
+    myUpdateAlarm = myEditor == null ? new Alarm() : new Alarm(myEditor.getComponent(), this);
+
     myUserActivityWatcher.addUserActivityListener(() -> somethingChanged());
 
     ApplicationManager.getApplication().getMessageBus().connect(this).subscribe(ComponentHighlightingListener.TOPIC, this);
@@ -229,6 +231,8 @@ public abstract class CodeStyleAbstractPanel implements Disposable, ComponentHig
           });
         Document document = myEditor.getDocument();
         document.replaceString(0, document.getTextLength(), formatted.get().getText());
+        DocumentReference docRef = DocumentReferenceManager.getInstance().create(document);
+        UndoManager.getInstance(project).nonundoableActionPerformed(docRef, false);
         if (beforeReformat != null) {
           highlightChanges(beforeReformat);
         }

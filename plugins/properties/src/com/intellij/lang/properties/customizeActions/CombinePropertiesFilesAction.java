@@ -123,11 +123,6 @@ public class CombinePropertiesFilesAction extends AnAction {
       return !newBaseName.isEmpty() && checkBaseName(newBaseName) == null;
     }
 
-    @Override
-    public boolean canClose(final String newBaseName) {
-      return true;
-    }
-
     @Nullable
     @Override
     public String getErrorText(String inputString) {

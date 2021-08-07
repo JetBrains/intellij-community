@@ -1,18 +1,32 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.server;
 
+import com.intellij.execution.process.ProcessEvent;
 import com.intellij.execution.rmi.RemoteProcessSupport;
 import com.intellij.openapi.extensions.ExtensionPointName;
-import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.maven.MavenDisposable;
 
+import java.util.function.Consumer;
+
+/**
+ * Extension point for create maven remote process.
+ * And to interact with the process and handling its callbacks.
+ * {@link MavenRemoteProcessSupport}
+ */
 public interface MavenRemoteProcessSupportFactory {
   ExtensionPointName<MavenRemoteProcessSupportFactory> MAVEN_SERVER_SUPPORT_EP_NAME = new ExtensionPointName<>("org.jetbrains.idea.maven.mavenServerSupportFactory");
 
+  /**
+   * create remote procces.
+   * @param jdk - jdk data.
+   * @param vmOptions - vm command line options.
+   * @param distribution - maven distribution data (version, maven home).
+   * @param project - idea project.
+   * @param debugPort - port for remote debugging.
+   * @return remote maven process.
+   */
   MavenRemoteProcessSupport create(Sdk jdk,
                                    String vmOptions,
                                    MavenDistribution distribution,
@@ -35,5 +49,7 @@ public interface MavenRemoteProcessSupportFactory {
       super(valueClass);
     }
     public abstract String type();
+
+    public abstract void onTerminate(Consumer<ProcessEvent> onTerminate);
   }
 }

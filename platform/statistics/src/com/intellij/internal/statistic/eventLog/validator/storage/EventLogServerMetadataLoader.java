@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.statistic.eventLog.validator.storage;
 
 import com.intellij.internal.statistic.eventLog.connection.EventLogConnectionSettings;
@@ -7,8 +7,8 @@ import com.intellij.internal.statistic.eventLog.connection.metadata.EventLogMeta
 import com.intellij.internal.statistic.eventLog.connection.metadata.EventLogMetadataUtils;
 import com.intellij.internal.statistic.utils.StatisticsUploadAssistant;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 public class EventLogServerMetadataLoader implements EventLogMetadataLoader {
@@ -33,7 +33,7 @@ public class EventLogServerMetadataLoader implements EventLogMetadataLoader {
   }
 
   @Override
-  public @Nullable String getOptionValue(@NotNull String name) {
-    return mySettingsService.getOptionValue(name);
+  public @NotNull Map<String, String> getOptionValues() {
+    return mySettingsService.getOptions();
   }
 }

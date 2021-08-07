@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl;
 
 import com.intellij.lang.ASTNode;
@@ -7,13 +7,11 @@ import com.intellij.lang.LighterASTTokenNode;
 import com.intellij.lang.impl.PsiBuilderImpl;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.impl.ApplicationInfoImpl;
+import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.ThrowableComputable;
-import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
@@ -25,10 +23,9 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.*;
 import com.intellij.util.diff.FlyweightCapableTreeStructure;
-import com.intellij.util.exception.FrequentErrorLogger;
 import com.intellij.util.graph.InboundSemiGraph;
 import com.intellij.util.graph.OutboundSemiGraph;
-import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -38,11 +35,10 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 
-@SuppressWarnings({"UtilityClassWithoutPrivateConstructor", "UnusedDeclaration", "TestOnlyProblems"})
 public final class DebugUtil {
   private static final Logger LOG = Logger.getInstance(DebugUtil.class);
 
-  public static /*final*/ boolean CHECK;
+  @SuppressWarnings("StaticNonFinalField") public static boolean CHECK;
   public static final boolean DO_EXPENSIVE_CHECKS;
   static {
     Application application = ApplicationManager.getApplication();
@@ -50,70 +46,69 @@ public final class DebugUtil {
   }
   public static final boolean CHECK_INSIDE_ATOMIC_ACTION_ENABLED = DO_EXPENSIVE_CHECKS;
 
-  @NotNull
-  public static String psiTreeToString(@NotNull final PsiElement element, final boolean skipWhitespaces) {
-    final ASTNode node = SourceTreeToPsiMap.psiElementToTree(element);
+  public static @NotNull String psiTreeToString(@NotNull PsiElement element, boolean showWhitespaces) {
+    ASTNode node = SourceTreeToPsiMap.psiElementToTree(element);
     assert node != null : element;
-    return treeToString(node, skipWhitespaces);
+    return treeToString(node, showWhitespaces);
   }
 
-  @NotNull
-  public static String treeToString(@NotNull final ASTNode root, final boolean skipWhitespaces) {
+  public static @NotNull String treeToString(@NotNull ASTNode root, boolean showWhitespaces) {
     StringBuilder buffer = new StringBuilder();
-    treeToBuffer(buffer, root, 0, skipWhitespaces, false, false, true);
+    treeToBuffer(buffer, root, 0, showWhitespaces, false, false, true);
     return buffer.toString();
   }
 
-  @NotNull
-  public static String nodeTreeToString(@NotNull final ASTNode root, final boolean skipWhitespaces) {
+  public static @NotNull String nodeTreeToString(@NotNull ASTNode root, boolean showWhitespaces) {
     StringBuilder buffer = new StringBuilder();
-    treeToBuffer(buffer, root, 0, skipWhitespaces, false, false, false);
+    treeToBuffer(buffer, root, 0, showWhitespaces, false, false, false);
     return buffer.toString();
   }
 
-  @NotNull
-  public static String treeToString(@NotNull ASTNode root, boolean skipWhitespaces, boolean showRanges) {
+  public static @NotNull String treeToString(@NotNull ASTNode root, boolean showWhitespaces, boolean showRanges) {
     StringBuilder buffer = new StringBuilder();
-    treeToBuffer(buffer, root, 0, skipWhitespaces, showRanges, false, true);
+    treeToBuffer(buffer, root, 0, showWhitespaces, showRanges, false, true);
     return buffer.toString();
   }
 
-  public static void treeToBuffer(@NotNull final Appendable buffer,
-                                  @NotNull final ASTNode root,
-                                  final int indent,
-                                  final boolean skipWhiteSpaces,
-                                  final boolean showRanges,
-                                  final boolean showChildrenRanges,
-                                  final boolean usePsi) {
-    treeToBuffer(buffer, root, indent, skipWhiteSpaces, showRanges, showChildrenRanges, usePsi, null);
+  public static void treeToBuffer(@NotNull Appendable buffer,
+                                  @NotNull ASTNode root,
+                                  int indent,
+                                  boolean showWhitespaces,
+                                  boolean showRanges,
+                                  boolean showChildrenRanges,
+                                  boolean usePsi) {
+    treeToBuffer(buffer, root, indent, showWhitespaces, showRanges, showChildrenRanges, usePsi, null);
   }
 
-  private static void treeToBuffer(@NotNull final Appendable buffer,
-                                   @NotNull final ASTNode root,
-                                   final int indent,
-                                   final boolean skipWhiteSpaces,
-                                   final boolean showRanges,
-                                   final boolean showChildrenRanges,
-                                   final boolean usePsi,
-                                   @Nullable PairConsumer<? super PsiElement, Consumer<PsiElement>> extra) {
-    ((TreeElement) root).acceptTree(
-      new TreeToBuffer(buffer, indent, skipWhiteSpaces, showRanges, showChildrenRanges, usePsi, extra));
+  private static void treeToBuffer(Appendable buffer,
+                                   ASTNode root,
+                                   int indent,
+                                   boolean showWhitespaces,
+                                   boolean showRanges,
+                                   boolean showChildrenRanges,
+                                   boolean usePsi,
+                                   @Nullable PairConsumer<? super PsiElement, ? super Consumer<? super PsiElement>> extra) {
+    ((TreeElement)root).acceptTree(new TreeToBuffer(buffer, indent, showWhitespaces, showRanges, showChildrenRanges, usePsi, extra));
   }
 
   private static class TreeToBuffer extends RecursiveTreeElementWalkingVisitor {
-    final @NonNls Appendable buffer;
-    final boolean skipWhiteSpaces;
-    final boolean showRanges;
-    final boolean showChildrenRanges;
-    final boolean usePsi;
-    final PairConsumer<? super PsiElement, Consumer<PsiElement>> extra;
-    int indent;
+    private final Appendable buffer;
+    private final boolean showWhitespaces;
+    private final boolean showRanges;
+    private final boolean showChildrenRanges;
+    private final boolean usePsi;
+    private final PairConsumer<? super PsiElement, ? super Consumer<? super PsiElement>> extra;
+    private int indent;
 
-    TreeToBuffer(Appendable buffer, int indent, boolean skipWhiteSpaces,
-                 boolean showRanges, boolean showChildrenRanges, boolean usePsi,
-                 PairConsumer<? super PsiElement, Consumer<PsiElement>> extra) {
+    private TreeToBuffer(Appendable buffer,
+                         int indent,
+                         boolean showWhitespaces,
+                         boolean showRanges,
+                         boolean showChildrenRanges,
+                         boolean usePsi,
+                         PairConsumer<? super PsiElement, ? super Consumer<? super PsiElement>> extra) {
       this.buffer = buffer;
-      this.skipWhiteSpaces = skipWhiteSpaces;
+      this.showWhitespaces = showWhitespaces;
       this.showRanges = showRanges;
       this.showChildrenRanges = showChildrenRanges;
       this.usePsi = usePsi;
@@ -123,7 +118,7 @@ public final class DebugUtil {
 
     @Override
     protected void visitNode(TreeElement root) {
-      if (shouldSkipNode(root)) {
+      if (!shouldShowNode(root)) {
         indent += 2;
         return;
       }
@@ -145,7 +140,7 @@ public final class DebugUtil {
           }
         }
         else {
-          final String text = fixWhiteSpaces(root.getText());
+          String text = fixWhiteSpaces(root.getText());
           buffer.append(root.toString()).append("('").append(text).append("')");
         }
         if (showRanges) buffer.append(root.getTextRange().toString());
@@ -167,38 +162,37 @@ public final class DebugUtil {
       return true;
     }
 
-    protected boolean shouldSkipNode(TreeElement node) {
-      return skipWhiteSpaces && node.getElementType() == TokenType.WHITE_SPACE;
+    protected boolean shouldShowNode(TreeElement node) {
+      return showWhitespaces || node.getElementType() != TokenType.WHITE_SPACE;
     }
 
     @Override
     protected void elementFinished(@NotNull ASTNode e) {
       PsiElement psiElement = extra != null && usePsi && e instanceof CompositeElement ? e.getPsi() : null;
       if (psiElement != null) {
-        extra.consume(psiElement, element ->
-          treeToBuffer(buffer, element.getNode(), indent, skipWhiteSpaces, showRanges, showChildrenRanges, true, null));
+        Consumer<PsiElement> consumer = element ->
+          treeToBuffer(buffer, element.getNode(), indent, showWhitespaces, showRanges, showChildrenRanges, true, null);
+        extra.consume(psiElement, consumer);
       }
       indent -= 2;
     }
   }
 
-  @NotNull
-  public static String lightTreeToString(@NotNull final FlyweightCapableTreeStructure<LighterASTNode> tree,
-                                         final boolean skipWhitespaces) {
-    final StringBuilder buffer = new StringBuilder();
-    lightTreeToBuffer(tree, tree.getRoot(), buffer, 0, skipWhitespaces);
+  public static @NotNull String lightTreeToString(@NotNull FlyweightCapableTreeStructure<LighterASTNode> tree, boolean showWhitespaces) {
+    StringBuilder buffer = new StringBuilder();
+    lightTreeToBuffer(tree, tree.getRoot(), buffer, 0, showWhitespaces);
     return buffer.toString();
   }
 
-  private static void lightTreeToBuffer(@NotNull final FlyweightCapableTreeStructure<LighterASTNode> tree,
-                                        @NotNull final LighterASTNode node,
-                                        @NotNull @NonNls Appendable buffer,
-                                        final int indent,
-                                        final boolean skipWhiteSpaces) {
-    final IElementType tokenType = node.getTokenType();
-    if (skipWhiteSpaces && tokenType == TokenType.WHITE_SPACE) return;
+  private static void lightTreeToBuffer(FlyweightCapableTreeStructure<LighterASTNode> tree,
+                                        @NotNull LighterASTNode node,
+                                        Appendable buffer,
+                                        int indent,
+                                        boolean showWhitespaces) {
+    IElementType tokenType = node.getTokenType();
+    if (!showWhitespaces && tokenType == TokenType.WHITE_SPACE) return;
 
-    final boolean isLeaf = (node instanceof LighterASTTokenNode);
+    boolean isLeaf = node instanceof LighterASTTokenNode;
 
     StringUtil.repeatSymbol(buffer, ' ', indent);
     try {
@@ -213,21 +207,21 @@ public final class DebugUtil {
       }
 
       if (isLeaf) {
-        final String text = ((LighterASTTokenNode)node).getText().toString();
+        String text = ((LighterASTTokenNode)node).getText().toString();
         buffer.append("('").append(fixWhiteSpaces(text)).append("')");
       }
       buffer.append('\n');
 
       if (!isLeaf) {
-        final Ref<LighterASTNode[]> kids = new Ref<>();
-        final int numKids = tree.getChildren(node, kids);
+        Ref<LighterASTNode[]> kids = new Ref<>();
+        int numKids = tree.getChildren(node, kids);
         if (numKids == 0) {
           StringUtil.repeatSymbol(buffer, ' ', indent + 2);
           buffer.append("<empty list>\n");
         }
         else {
           for (int i = 0; i < numKids; i++) {
-            lightTreeToBuffer(tree, kids.get()[i], buffer, indent + 2, skipWhiteSpaces);
+            lightTreeToBuffer(tree, kids.get()[i], buffer, indent + 2, showWhitespaces);
           }
         }
       }
@@ -237,90 +231,24 @@ public final class DebugUtil {
     }
   }
 
-  @NotNull
-  public static String stubTreeToString(@NotNull Stub root) {
+  public static @NotNull String stubTreeToString(@NotNull Stub root) {
     StringBuilder builder = new StringBuilder();
     stubTreeToBuffer(root, builder, 0);
     return builder.toString();
   }
 
-  public static void stubTreeToBuffer(@NotNull Stub node, @NotNull Appendable buffer, final int indent) {
+  public static void stubTreeToBuffer(@NotNull Stub node, @NotNull Appendable buffer, int indent) {
     StringUtil.repeatSymbol(buffer, ' ', indent);
     try {
-      final ObjectStubSerializer stubType = node.getStubType();
+      ObjectStubSerializer<?, ?> stubType = node.getStubType();
       if (stubType != null) {
         buffer.append(stubType.toString()).append(':');
       }
       buffer.append(node.toString()).append('\n');
 
-      final List<? extends Stub> children = node.getChildrenStubs();
-      for (final Stub child : children) {
+      List<? extends Stub> children = node.getChildrenStubs();
+      for (Stub child : children) {
         stubTreeToBuffer(child, buffer, indent + 2);
-      }
-    }
-    catch (IOException e) {
-      LOG.error(e);
-    }
-  }
-
-  private static void treeToBufferWithUserData(@NotNull Appendable buffer, @NotNull TreeElement root, int indent, boolean skipWhiteSpaces) {
-    if (skipWhiteSpaces && root.getElementType() == TokenType.WHITE_SPACE) return;
-
-    StringUtil.repeatSymbol(buffer, ' ', indent);
-    try {
-      final PsiElement psi = SourceTreeToPsiMap.treeElementToPsi(root);
-      assert psi != null : root;
-      if (root instanceof CompositeElement) {
-        buffer.append(psi.toString());
-      }
-      else {
-        final String text = fixWhiteSpaces(root.getText());
-        buffer.append(root.toString()).append("('").append(text).append("')");
-      }
-      buffer.append(root.getUserDataString());
-      buffer.append("\n");
-      if (root instanceof CompositeElement) {
-        PsiElement[] children = psi.getChildren();
-
-        for (PsiElement child : children) {
-          treeToBufferWithUserData(buffer, (TreeElement)SourceTreeToPsiMap.psiElementToTree(child), indent + 2, skipWhiteSpaces);
-        }
-
-        if (children.length == 0) {
-          StringUtil.repeatSymbol(buffer, ' ', indent + 2);
-          buffer.append("<empty list>\n");
-        }
-      }
-    }
-    catch (IOException e) {
-      LOG.error(e);
-    }
-  }
-
-  private static void treeToBufferWithUserData(@NotNull @NonNls Appendable buffer, @NotNull PsiElement root, int indent, boolean skipWhiteSpaces) {
-    if (skipWhiteSpaces && root instanceof PsiWhiteSpace) return;
-
-    StringUtil.repeatSymbol(buffer, ' ', indent);
-    try {
-      if (root instanceof CompositeElement) {
-        buffer.append(root.toString());
-      }
-      else {
-        final String text = fixWhiteSpaces(root.getText());
-        buffer.append(root.toString()).append("('").append(text).append("')");
-      }
-      buffer.append(((UserDataHolderBase)root).getUserDataString());
-      buffer.append("\n");
-
-      PsiElement[] children = root.getChildren();
-
-      for (PsiElement child : children) {
-        treeToBufferWithUserData(buffer, child, indent + 2, skipWhiteSpaces);
-      }
-
-      if (children.length == 0) {
-        StringUtil.repeatSymbol(buffer, ' ', indent + 2);
-        buffer.append("<empty list>\n");
       }
     }
     catch (IOException e) {
@@ -339,7 +267,7 @@ public final class DebugUtil {
     }
   }
 
-  private static void checkSubtree(@NotNull CompositeElement root) {
+  private static void checkSubtree(CompositeElement root) {
     if (root.rawFirstChild() == null) {
       if (root.rawLastChild() != null) {
         throw new IncorrectTreeStructureException(root, "firstChild == null, but lastChild != null");
@@ -382,42 +310,41 @@ public final class DebugUtil {
     if (ArrayUtil.find(elements, element) == -1) {
       throw new IncorrectTreeStructureException(element, "child cannot be found among parents children");
     }
-    //LOG.debug("checked consistence: "+System.identityHashCode(element));
   }
 
   public static void checkSameCharTabs(@NotNull ASTNode element1, @NotNull ASTNode element2) {
-    final CharTable fromCharTab = SharedImplUtil.findCharTableByTree(element1);
-    final CharTable toCharTab = SharedImplUtil.findCharTableByTree(element2);
+    CharTable fromCharTab = SharedImplUtil.findCharTableByTree(element1);
+    CharTable toCharTab = SharedImplUtil.findCharTableByTree(element2);
     LOG.assertTrue(fromCharTab == toCharTab);
   }
 
-  @NotNull
-  public static String psiToString(@NotNull PsiElement element, final boolean skipWhitespaces) {
-    return psiToString(element, skipWhitespaces, false);
+  public static @NotNull String psiToString(@NotNull PsiElement element, boolean showWhitespaces) {
+    return psiToString(element, showWhitespaces, false);
   }
 
-  @NotNull
-  public static String psiToString(@NotNull final PsiElement root, final boolean skipWhiteSpaces, final boolean showRanges) {
-    return psiToString(root, skipWhiteSpaces, showRanges, null);
+  public static @NotNull String psiToString(@NotNull PsiElement root, boolean showWhitespaces, boolean showRanges) {
+    return psiToString(root, showWhitespaces, showRanges, null);
   }
 
-  @NotNull
-  public static String psiToString(@NotNull final PsiElement root, final boolean skipWhiteSpaces, final boolean showRanges, @Nullable PairConsumer<? super PsiElement, Consumer<PsiElement>> extra) {
+  public static @NotNull String psiToString(@NotNull PsiElement root,
+                                            boolean showWhitespaces,
+                                            boolean showRanges,
+                                            @Nullable PairConsumer<? super PsiElement, ? super Consumer<? super PsiElement>> extra) {
     StringBuilder buffer = new StringBuilder();
-    psiToBuffer(buffer, root, skipWhiteSpaces, showRanges, extra);
+    psiToBuffer(buffer, root, showWhitespaces, showRanges, extra);
     return buffer.toString();
   }
 
-  @NotNull
-  public static String psiToStringIgnoringNonCode(@NotNull PsiElement element) {
+  public static @NotNull String psiToStringIgnoringNonCode(@NotNull PsiElement element) {
     StringBuilder buffer = new StringBuilder();
     ((TreeElement)element.getNode()).acceptTree(
-      new TreeToBuffer(buffer, 0, true, false, false, false, null) {
+      new TreeToBuffer(buffer, 0, false, false, false, false, null) {
         @Override
-        protected boolean shouldSkipNode(TreeElement node) {
-          return super.shouldSkipNode(node) || node instanceof PsiErrorElement || node instanceof PsiComment ||
-                 node instanceof LeafPsiElement && StringUtil.isEmptyOrSpaces(node.getText()) ||
-                 node instanceof OuterLanguageElement;
+        protected boolean shouldShowNode(TreeElement node) {
+          return super.shouldShowNode(node) &&
+                 !(node instanceof PsiErrorElement) && !(node instanceof PsiComment) &&
+                 !(node instanceof LeafPsiElement && StringUtil.isEmptyOrSpaces(node.getText())) &&
+                 !(node instanceof OuterLanguageElement);
         }
 
         @Override
@@ -428,44 +355,44 @@ public final class DebugUtil {
     return buffer.toString();
   }
 
-  private static void psiToBuffer(@NotNull Appendable buffer,
-                                  @NotNull PsiElement root,
-                                  final boolean skipWhiteSpaces,
-                                  final boolean showRanges,
-                                  @Nullable PairConsumer<? super PsiElement, Consumer<PsiElement>> extra) {
+  private static void psiToBuffer(Appendable buffer,
+                                  PsiElement root,
+                                  boolean showWhitespaces,
+                                  boolean showRanges,
+                                  @Nullable PairConsumer<? super PsiElement, ? super Consumer<? super PsiElement>> extra) {
     final ASTNode node = root.getNode();
     if (node == null) {
-      psiToBuffer(buffer, root, 0, skipWhiteSpaces, showRanges, showRanges, extra);
+      psiToBuffer(buffer, root, 0, showWhitespaces, showRanges, showRanges, extra);
     }
     else {
-      treeToBuffer(buffer, node, 0, skipWhiteSpaces, showRanges, showRanges, true, extra);
+      treeToBuffer(buffer, node, 0, showWhitespaces, showRanges, showRanges, true, extra);
     }
   }
 
-  public static void psiToBuffer(@NotNull final Appendable buffer,
-                                 @NotNull final PsiElement root,
+  public static void psiToBuffer(@NotNull Appendable buffer,
+                                 @NotNull PsiElement root,
                                  int indent,
-                                 boolean skipWhiteSpaces,
+                                 boolean showWhitespaces,
                                  boolean showRanges,
                                  boolean showChildrenRanges) {
-    psiToBuffer(buffer, root, indent, skipWhiteSpaces, showRanges, showChildrenRanges, null);
+    psiToBuffer(buffer, root, indent, showWhitespaces, showRanges, showChildrenRanges, null);
   }
 
-  private static void psiToBuffer(@NotNull final Appendable buffer,
-                                  @NotNull final PsiElement root,
-                                  final int indent,
-                                  final boolean skipWhiteSpaces,
+  private static void psiToBuffer(Appendable buffer,
+                                  PsiElement root,
+                                  int indent,
+                                  boolean showWhitespaces,
                                   boolean showRanges,
-                                  final boolean showChildrenRanges,
-                                  @Nullable PairConsumer<? super PsiElement, Consumer<PsiElement>> extra) {
-    if (skipWhiteSpaces && root instanceof PsiWhiteSpace) return;
+                                  boolean showChildrenRanges,
+                                  @Nullable PairConsumer<? super PsiElement, ? super Consumer<? super PsiElement>> extra) {
+    if (!showWhitespaces && root instanceof PsiWhiteSpace) return;
 
     StringUtil.repeatSymbol(buffer, ' ', indent);
     try {
       buffer.append(root.toString());
       PsiElement child = root.getFirstChild();
       if (child == null) {
-        final String text = root.getText();
+        String text = root.getText();
         assert text != null : "text is null for <" + root + ">";
         buffer.append("('").append(fixWhiteSpaces(text)).append("')");
       }
@@ -473,12 +400,13 @@ public final class DebugUtil {
       if (showRanges) buffer.append(root.getTextRange().toString());
       buffer.append("\n");
       while (child != null) {
-        psiToBuffer(buffer, child, indent + 2, skipWhiteSpaces, showChildrenRanges, showChildrenRanges, extra);
+        psiToBuffer(buffer, child, indent + 2, showWhitespaces, showChildrenRanges, showChildrenRanges, extra);
         child = child.getNextSibling();
       }
       if (extra != null) {
-        extra.consume(root,
-                      element -> psiToBuffer(buffer, element, indent + 2, skipWhiteSpaces, showChildrenRanges, showChildrenRanges, null));
+        Consumer<PsiElement> consumer =
+          element -> psiToBuffer(buffer, element, indent + 2, !showWhitespaces, showChildrenRanges, showChildrenRanges, null);
+        extra.consume(root, consumer);
       }
     }
     catch (IOException e) {
@@ -486,16 +414,11 @@ public final class DebugUtil {
     }
   }
 
-  @NotNull
-  private static String fixWhiteSpaces(@NotNull String text) {
-    text = StringUtil.replace(text, "\n", "\\n");
-    text = StringUtil.replace(text, "\r", "\\r");
-    text = StringUtil.replace(text, "\t", "\\t");
-    return text;
+  private static String fixWhiteSpaces(String text) {
+    return text.replace("\n", "\\n").replace("\r", "\\r").replace("\t", "\\t");
   }
 
-  @NotNull
-  public static String currentStackTrace() {
+  public static @NotNull String currentStackTrace() {
     return ExceptionUtil.currentStackTrace();
   }
 
@@ -514,37 +437,20 @@ public final class DebugUtil {
 
   private static final ThreadLocal<Object> ourPsiModificationTrace = new ThreadLocal<>();
   private static final ThreadLocal<Integer> ourPsiModificationDepth = new ThreadLocal<>();
-  private static final FrequentErrorLogger ourErrorLogger = FrequentErrorLogger.newInstance(LOG);
 
-  /**
-   * Marks a start of PSI modification action. Any PSI/AST elements invalidated inside such an action will contain a debug trace
-   * identifying this transaction, and so will {@link PsiInvalidElementAccessException} thrown when accessing such invalid
-   * elements. This should help finding out why a specific PSI element has become invalid.
-   *
-   * @param trace The debug trace that the invalidated elements should be identified by. May be null, then current stack trace is used.
-   * @deprecated use {@link #performPsiModification(String, ThrowableRunnable)} instead
-   */
-  @Deprecated
-  public static void startPsiModification(@Nullable @NlsSafe String trace) {
+  private static void beginPsiModification(@Nullable String trace) {
     if (!PsiInvalidElementAccessException.isTrackingInvalidation()) {
       return;
     }
-
     if (ourPsiModificationTrace.get() == null) {
-      ourPsiModificationTrace.set(trace != null || ApplicationInfoImpl.isInStressTest() ? trace : new Throwable());
+      ourPsiModificationTrace.set(trace != null || ApplicationManagerEx.isInStressTest() ? trace : new Throwable());
     }
     Integer depth = ourPsiModificationDepth.get();
     if (depth == null) depth = 0;
     ourPsiModificationDepth.set(depth + 1);
   }
 
-  /**
-   * Finished PSI modification action.
-   * @see #startPsiModification(String)
-   * @deprecated use {@link #performPsiModification(String, ThrowableRunnable)} instead
-   */
-  @Deprecated
-  public static void finishPsiModification() {
+  private static void endPsiModification() {
     if (!PsiInvalidElementAccessException.isTrackingInvalidation()) {
       return;
     }
@@ -552,7 +458,8 @@ public final class DebugUtil {
     if (depth == null) {
       LOG.warn("Unmatched PSI modification end", new Throwable());
       depth = 0;
-    } else {
+    }
+    else {
       depth--;
       ourPsiModificationDepth.set(depth);
     }
@@ -561,23 +468,33 @@ public final class DebugUtil {
     }
   }
 
-  public static <T extends Throwable> void performPsiModification(@NonNls String trace, @NotNull ThrowableRunnable<T> runnable) throws T {
-    startPsiModification(trace);
+  /**
+   * Any PSI/AST elements invalidated inside the give action will contain a debug trace identifying this transaction,
+   * and so will {@link PsiInvalidElementAccessException} thrown when accessing such invalid elements.
+   * This should help finding out why a specific PSI element has become invalid.
+   *
+   * @param trace The debug trace that the invalidated elements should be identified by. May be null, then current stack trace is used.
+   */
+  public static <T extends Throwable> void performPsiModification(String trace, @NotNull ThrowableRunnable<T> runnable) throws T {
+    beginPsiModification(trace);
     try {
       runnable.run();
     }
     finally {
-      finishPsiModification();
+      endPsiModification();
     }
   }
 
-  public static <T, E extends Throwable> T performPsiModification(@NlsSafe String trace, @NotNull ThrowableComputable<T, E> runnable) throws E {
-    startPsiModification(trace);
+  /**
+   * @see #performPsiModification(String, ThrowableRunnable)
+   */
+  public static <T, E extends Throwable> T performPsiModification(String trace, @NotNull ThrowableComputable<T, E> runnable) throws E {
+    beginPsiModification(trace);
     try {
       return runnable.compute();
     }
     finally {
-      finishPsiModification();
+      endPsiModification();
     }
   }
 
@@ -590,9 +507,9 @@ public final class DebugUtil {
 
   public static void onInvalidated(@NotNull PsiElement o) {
     Object trace = PsiInvalidElementAccessException.getInvalidationTrace(o);
-    if (trace != null) return;
-
-    PsiInvalidElementAccessException.setInvalidationTrace(o, currentInvalidationTrace());
+    if (trace == null) {
+      PsiInvalidElementAccessException.setInvalidationTrace(o, currentInvalidationTrace());
+    }
   }
 
   public static void onInvalidated(@NotNull FileViewProvider provider) {
@@ -602,8 +519,7 @@ public final class DebugUtil {
     }
   }
 
-  @Nullable
-  private static Object calcInvalidationTrace(@Nullable ASTNode treeElement) {
+  private static @Nullable Object calcInvalidationTrace(@Nullable ASTNode treeElement) {
     if (!PsiInvalidElementAccessException.isTrackingInvalidation()) {
       return null;
     }
@@ -614,18 +530,18 @@ public final class DebugUtil {
     return currentInvalidationTrace();
   }
 
-  @Nullable
-  private static Object currentInvalidationTrace() {
+  private static @Nullable Object currentInvalidationTrace() {
     Object trace = ourPsiModificationTrace.get();
-    return trace != null || ApplicationInfoImpl.isInStressTest() ? trace : handleUnspecifiedTrace();
+    return trace != null || ApplicationManagerEx.isInStressTest() ? trace : handleUnspecifiedTrace();
   }
 
   private static Throwable handleUnspecifiedTrace() {
     Throwable trace = new Throwable();
     if (ApplicationManager.getApplication().isUnitTestMode()) {
-      ourErrorLogger.error("PSI invalidated outside transaction", trace);
-    } else {
-      ourErrorLogger.info("PSI invalidated outside transaction", trace);
+      LOG.error("PSI invalidated outside transaction", trace);
+    }
+    else {
+      LOG.info("PSI invalidated outside transaction", trace);
     }
     return trace;
   }
@@ -637,14 +553,14 @@ public final class DebugUtil {
   public static void sleep(long millis) {
     TimeoutUtil.sleep(millis);
   }
+
   public static void checkTreeStructure(ASTNode element) {
-    if (CHECK){
+    if (CHECK) {
       doCheckTreeStructure(element);
     }
   }
 
-  @NotNull
-  public static @NonNls String diagnosePsiDocumentInconsistency(@NotNull PsiElement element, @NotNull Document document) {
+  public static @NotNull String diagnosePsiDocumentInconsistency(@NotNull PsiElement element, @NotNull Document document) {
     PsiUtilCore.ensureValid(element);
 
     PsiFile file = element.getContainingFile();
@@ -678,21 +594,19 @@ public final class DebugUtil {
     return "unknown inconsistency in " + fileDiagnostics;
   }
 
-  @NotNull
-  public static <T> String graphToString(@NotNull InboundSemiGraph<T> graph) {
+  public static @NotNull <T> String graphToString(@NotNull InboundSemiGraph<T> graph) {
     StringBuilder buffer = new StringBuilder();
     printNodes(graph.getNodes().iterator(), node -> graph.getIn(node), 0, new HashSet<>(), buffer);
     return buffer.toString();
   }
 
-  @NotNull
-  public static <T> String graphToString(@NotNull OutboundSemiGraph<T> graph) {
+  public static @NotNull <T> String graphToString(@NotNull OutboundSemiGraph<T> graph) {
     StringBuilder buffer = new StringBuilder();
     printNodes(graph.getNodes().iterator(), node -> graph.getOut(node), 0, new HashSet<>(), buffer);
     return buffer.toString();
   }
 
-  private static <T> void printNodes(@NotNull Iterator<? extends T> nodes, @NotNull Function<? super T, ? extends Iterator<T>> getter, int indent, @NotNull Set<? super T> visited, @NotNull StringBuilder buffer) {
+  private static <T> void printNodes(Iterator<? extends T> nodes, Function<? super T, ? extends Iterator<? extends T>> getter, int indent, Set<? super T> visited, StringBuilder buffer) {
     while (nodes.hasNext()) {
       T node = nodes.next();
       StringUtil.repeatSymbol(buffer, ' ', indent);
@@ -706,4 +620,20 @@ public final class DebugUtil {
       }
     }
   }
+
+  //<editor-fold desc="Deprecated stuff">
+  /** @deprecated use {@link #performPsiModification} instead */
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2022.2")
+  public static void startPsiModification(@Nullable String trace) {
+    beginPsiModification(trace);
+  }
+
+  /** @deprecated use {@link #performPsiModification} instead */
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2022.2")
+  public static void finishPsiModification() {
+    endPsiModification();
+  }
+  //</editor-fold>
 }

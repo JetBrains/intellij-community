@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.hierarchy.type;
 
 import com.intellij.ide.hierarchy.HierarchyNodeDescriptor;
@@ -16,16 +16,16 @@ import org.jetbrains.annotations.NotNull;
 import java.awt.*;
 
 public final class TypeHierarchyNodeDescriptor extends HierarchyNodeDescriptor {
-  public TypeHierarchyNodeDescriptor(@NotNull Project project, HierarchyNodeDescriptor parentDescriptor, @NotNull PsiElement classOrFunctionalExpression, final boolean isBase) {
+  public TypeHierarchyNodeDescriptor(@NotNull Project project, HierarchyNodeDescriptor parentDescriptor, @NotNull PsiElement classOrFunctionalExpression, boolean isBase) {
     super(project, parentDescriptor, classOrFunctionalExpression, isBase);
   }
 
-  public final PsiElement getPsiClass() {
+  public PsiElement getPsiClass() {
     return getPsiElement();
   }
 
   @Override
-  public final boolean update() {
+  public boolean update() {
     boolean changes = super.update();
 
     if (getPsiElement() == null) {
@@ -36,9 +36,9 @@ public final class TypeHierarchyNodeDescriptor extends HierarchyNodeDescriptor {
       setIcon(getBaseMarkerIcon(getIcon()));
     }
 
-    final PsiElement psiElement = getPsiClass();
+    PsiElement psiElement = getPsiClass();
 
-    final CompositeAppearance oldText = myHighlightedText;
+    CompositeAppearance oldText = myHighlightedText;
 
     myHighlightedText = new CompositeAppearance();
 

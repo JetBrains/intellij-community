@@ -2,14 +2,15 @@
 package com.intellij.workspaceModel.storage.impl.url
 
 import com.intellij.openapi.util.io.FileUtil
-import com.intellij.util.SmartList
 import com.intellij.util.io.URLUtil
 import com.intellij.workspaceModel.storage.impl.IntIdGenerator
 import com.intellij.workspaceModel.storage.impl.VirtualFileNameStore
 import com.intellij.workspaceModel.storage.url.VirtualFileUrl
 import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
+import it.unimi.dsi.fastutil.Hash.Strategy
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap
 import it.unimi.dsi.fastutil.ints.IntArrayList
+import it.unimi.dsi.fastutil.objects.ObjectOpenCustomHashSet
 
 open class VirtualFileUrlManagerImpl : VirtualFileUrlManager {
   private val idGenerator = IntIdGenerator()
@@ -236,12 +237,10 @@ open class VirtualFileUrlManagerImpl : VirtualFileUrlManager {
 
   internal inner class FilePathNode(val nodeId: Int, val contentId: Int, val parent: FilePathNode? = null) {
     private var virtualFileUrl: VirtualFileUrl? = null
-    private var children: MutableList<FilePathNode>? = null
+    private var children: ObjectOpenCustomHashSet<FilePathNode>? = null
 
     fun findChild(nameId: Int): FilePathNode? {
-      // If search of child node will be slow, replace SmartList to THashSet
-      // For now SmartList reduce 500Kb memory on IDEA project
-      return children?.find { it.contentId == nameId }
+      return children?.get(FilePathNode(0, nameId))
     }
 
     fun getSubtreeNodes(): List<FilePathNode> {
@@ -276,7 +275,7 @@ open class VirtualFileUrlManagerImpl : VirtualFileUrlManager {
     fun isEmpty() = children == null || children!!.isEmpty()
 
     private fun createChildrenList() {
-      if (children == null) children = SmartList()
+      if (children == null) children = ObjectOpenCustomHashSet(HASHING_STRATEGY)
     }
 
     fun print(): String {
@@ -302,6 +301,22 @@ open class VirtualFileUrlManagerImpl : VirtualFileUrlManager {
           next.print(buffer, "$childrenPrefix '- ", "$childrenPrefix     ")
         }
       }
+    }
+  }
+
+  private companion object {
+    val HASHING_STRATEGY: Strategy<FilePathNode> = object : Strategy<FilePathNode> {
+      override fun equals(node1: FilePathNode?, node2: FilePathNode?): Boolean {
+        if (node1 === node2) {
+          return true
+        }
+        if (node1 == null || node2 == null) {
+          return false
+        }
+        return node1.contentId == node2.contentId
+      }
+
+      override fun hashCode(node: FilePathNode?): Int = node?.contentId ?: 0
     }
   }
 }

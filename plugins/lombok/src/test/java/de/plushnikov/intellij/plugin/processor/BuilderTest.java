@@ -168,4 +168,8 @@ public class BuilderTest extends AbstractLombokParsingTestCase {
   public void testBuilder$BuilderWithBuilderClassName() {
     doTest(true);
   }
+
+  public void testBuilder$BuilderWithBuilderClassNameOnConstructor() {
+    doTest(true);
+  }
 }

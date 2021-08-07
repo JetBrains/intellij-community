@@ -144,14 +144,6 @@ class TempDirectory : ExternalResource() {
     return JarFileSystem.getInstance().getJarRootForLocalFile(localFile)!!
   }
 
-  @Deprecated("use newDirectory(relativePath) instead", ReplaceWith("newDirectory(relativePath)"))
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.2")
-  fun newFolder(relativePath: String): File = newDirectory(relativePath)
-
-  @Deprecated("use newDirectory() instead", ReplaceWith("newDirectory()"))
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.2")
-  fun newFolder(): File = newDirectory()
-
   private fun makeDirectories(path: Path) {
     if (!Files.isDirectory(path)) {
       makeDirectories(path.parent)

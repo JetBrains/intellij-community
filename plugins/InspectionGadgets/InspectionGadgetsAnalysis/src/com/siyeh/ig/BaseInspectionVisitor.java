@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2020 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2021 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,6 +25,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public abstract class BaseInspectionVisitor extends JavaElementVisitor {
 
@@ -68,12 +69,10 @@ public abstract class BaseInspectionVisitor extends JavaElementVisitor {
 
   protected final void registerStatementError(@NotNull PsiStatement statement, Object... infos) {
     final PsiElement statementToken = statement.getFirstChild();
-    if (statementToken == null || statementToken.getText().length() == 0) {
-      registerError(statement, infos);
+    if (statementToken == null || statementToken.getTextLength() == 0) {
+      return;
     }
-    else {
-      registerError(statementToken, infos);
-    }
+    registerError(statementToken, infos);
   }
 
   protected final void registerModuleError(@NotNull PsiJavaModule module, Object... infos) {
@@ -168,6 +167,12 @@ public abstract class BaseInspectionVisitor extends JavaElementVisitor {
     final LocalQuickFix[] fixes = createAndInitFixes(infos);
     final String description = inspection.buildErrorString(infos);
     holder.registerProblem(location, description, highlightType, fixes);
+  }
+  
+  protected final void registerPossibleProblem(@Nullable PsiElement element) {
+    if (element != null) {
+      holder.registerPossibleProblem(element);
+    }
   }
 
   protected final void registerErrorAtOffset(@NotNull PsiElement location, int offset, int length, Object... infos) {

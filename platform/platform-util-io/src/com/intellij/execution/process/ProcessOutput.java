@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.process;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -20,6 +20,14 @@ public class ProcessOutput {
 
   public ProcessOutput(int exitCode) {
     myExitCode = exitCode;
+  }
+
+  public ProcessOutput(@NotNull String stdout, @NotNull String stderr, int exitCode, boolean timeout, boolean cancelled) {
+    myStdoutBuilder.append(stdout);
+    myStderrBuilder.append(stderr);
+    myExitCode = exitCode;
+    myTimeout = timeout;
+    myCancelled = cancelled;
   }
 
   public void appendStdout(@Nullable String text) {
@@ -110,5 +118,16 @@ public class ProcessOutput {
 
   public boolean isCancelled() {
     return myCancelled;
+  }
+
+  @Override
+  public String toString() {
+    return "{" +
+           "exitCode=" + myExitCode +
+           ", timeout=" + myTimeout +
+           ", cancelled=" + myCancelled +
+           ", stdout=" + myStdoutBuilder +
+           ", stderr=" + myStderrBuilder +
+           '}';
   }
 }

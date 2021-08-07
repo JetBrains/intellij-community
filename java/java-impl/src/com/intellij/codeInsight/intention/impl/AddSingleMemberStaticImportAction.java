@@ -107,6 +107,7 @@ public class AddSingleMemberStaticImportAction extends BaseElementAtCaretIntenti
                   .createReferenceFromText(refNameElement.getText(), refExpr);
                 final PsiElement target = copy.resolve();
                 if (target != null && PsiTreeUtil.getParentOfType(target, PsiClass.class) != aClass) return null;
+                if (hasTypeArguments(refExpr.getQualifier())) return null;
               }
               return new ImportAvailability(qName + "." +refExpr.getReferenceName(), (PsiMember) resolved);
             }
@@ -116,6 +117,11 @@ public class AddSingleMemberStaticImportAction extends BaseElementAtCaretIntenti
     }
 
     return null;
+  }
+
+  private static boolean hasTypeArguments(PsiElement qualifier) {
+    return !PsiTreeUtil.processElements(qualifier, element -> !(element instanceof PsiReferenceParameterList) || 
+                                                              ((PsiReferenceParameterList)element).getTypeParameterElements().length == 0);
   }
 
   private static PsiImportStatementBase findExistingImport(PsiFile file, PsiClass aClass, String refName) {

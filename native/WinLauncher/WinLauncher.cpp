@@ -8,11 +8,8 @@
 #include <malloc.h>
 #include <memory.h>
 
-#define _UNICODE
 #include <tchar.h>
 
-#define UNICODE
-#define WIN32_LEAN_AND_MEAN
 #include <Windows.h>
 #include <ShellAPI.h>
 #include <Shlobj.h>
@@ -32,7 +29,6 @@ int vmOptionCount = 0;
 HMODULE hJVM = NULL;
 JNI_createJavaVM pCreateJavaVM = NULL;
 JavaVM* jvm = NULL;
-JNIEnv* env = NULL;
 volatile bool terminating = false;
 volatile int hookExitCode = 0;
 
@@ -51,9 +47,12 @@ bool need64BitJRE = false;
 
 void TrimLine(char* line);
 
-std::string EncodeWideACP(const std::wstring &str)
+static std::string EncodeWideACP(const std::wstring &str)
 {
-  int cbANSI = WideCharToMultiByte(CP_ACP, 0, str.c_str(), str.size(), NULL, 0, NULL, NULL);
+  const int cbANSI = WideCharToMultiByte(CP_ACP, 0, str.c_str(), str.size(), NULL, 0, NULL, NULL);
+  if (cbANSI <= 0)
+    return std::string();
+
   char* ansiBuf = new char[cbANSI];
   WideCharToMultiByte(CP_ACP, 0, str.c_str(), str.size(), ansiBuf, cbANSI, NULL, NULL);
   std::string result(ansiBuf, cbANSI);
@@ -73,14 +72,9 @@ bool FileExists(const std::string& path)
   return GetFileAttributesA(path.c_str()) != INVALID_FILE_ATTRIBUTES;
 }
 
-bool IsValidJRE(const char* path)
+static bool IsValidJRE(const std::string& path)
 {
-  std::string dllPath(path);
-  if (dllPath[dllPath.size() - 1] != '\\')
-  {
-    dllPath += "\\";
-  }
-  return FileExists(dllPath + "bin\\server\\jvm.dll") || FileExists(dllPath + "bin\\client\\jvm.dll");
+  return FileExists(path + "\\bin\\server\\jvm.dll") || FileExists(path + "\\bin\\client\\jvm.dll");
 }
 
 bool Is64BitJRE(const char* path)
@@ -336,12 +330,12 @@ void TrimLine(char* line)
   }
 }
 
-bool LoadVMOptionsFile(const char* path, std::vector<std::string>& vmOptionLines) {
+static bool LoadVMOptionsFile(const char* path, std::vector<std::string>& vmOptionLines) {
   FILE *f = fopen(path, "rt");
   if (!f) return false;
 
   char line[4096];
-  while (fgets(line, 4096, f)) {
+  while (fgets(line, sizeof(line), f)) {
     TrimLine(line);
     if (strlen(line) > 0 && line[0] != '#' && strcmp(line, "-server") != 0) {
       vmOptionLines.push_back(line);
@@ -484,7 +478,6 @@ bool LoadVMOptions() {
   std::vector<std::string> lines;
 
   GetModuleFileNameA(NULL, bin_vmoptions, _MAX_PATH);
-  size_t moduleBaseLen = strrchr(bin_vmoptions, '\\') - bin_vmoptions;
   strcat_s(bin_vmoptions, ".vmoptions");
 
   // 1. %<IDE_NAME>_VM_OPTIONS%
@@ -496,7 +489,8 @@ bool LoadVMOptions() {
   // 2. <IDE_HOME>.vmoptions (Toolbox) [+ <IDE_HOME>\bin\<exe_name>.vmoptions]
   if (vmOptionsFile == NULL) {
     strcpy_s(buffer1, _MAX_PATH, bin_vmoptions);
-    strcpy_s(buffer1 + moduleBaseLen, _MAX_PATH - moduleBaseLen, ".vmoptions");
+    char *ideHomeEnd = strrchr(buffer1, '\\') - 4;  // "bin\"
+    strcpy_s(ideHomeEnd, _MAX_PATH - (ideHomeEnd - buffer1), ".vmoptions");
     if (LoadVMOptionsFile(buffer1, lines)) {
       vmOptionsFile = buffer1;
       if (std::find(lines.begin(), lines.end(), std::string("-ea")) == lines.end()) {
@@ -512,7 +506,8 @@ bool LoadVMOptions() {
   if (vmOptionsFile == NULL) {
     LoadStringA(hInst, IDS_VM_OPTIONS_PATH, buffer1, _MAX_PATH);
     ExpandEnvironmentStringsA(buffer1, buffer2, _MAX_PATH);
-    strcat_s(buffer2, bin_vmoptions + moduleBaseLen);
+    char *exeParentEnd = strrchr(bin_vmoptions, '\\');
+    strcat_s(buffer2, exeParentEnd);
     if (LoadVMOptionsFile(buffer2, lines)) {
       vmOptionsFile = buffer2;
     }
@@ -588,22 +583,22 @@ bool LoadJVMLibrary()
   return true;
 }
 
-bool IsJBRE()
+static bool IsJBRE(JNIEnv* jenv)
 {
-  if (!env) return false;
+  if (!jenv) return false;
 
-  jclass cls = env->FindClass("java/lang/System");
+  jclass cls = jenv->FindClass("java/lang/System");
   if (!cls) return false;
 
-  jmethodID method = env->GetStaticMethodID(cls, "getProperty", "(Ljava/lang/String;)Ljava/lang/String;");
+  jmethodID method = jenv->GetStaticMethodID(cls, "getProperty", "(Ljava/lang/String;)Ljava/lang/String;");
   if (!method) return false;
 
-  jstring jvendor = (jstring)env->CallStaticObjectMethod(cls, method, env->NewStringUTF("java.vendor"));
+  jstring jvendor = (jstring)jenv->CallStaticObjectMethod(cls, method, jenv->NewStringUTF("java.vendor"));
   if (!jvendor) return false;
 
-  const char *cvendor = env->GetStringUTFChars(jvendor, NULL);
-  bool isJB = strstr(cvendor, "JetBrains") != NULL;
-  env->ReleaseStringUTFChars(jvendor, cvendor);
+  const char *cvendor = jenv->GetStringUTFChars(jvendor, NULL);
+  const bool isJB = (strstr(cvendor, "JetBrains") != NULL);
+  jenv->ReleaseStringUTFChars(jvendor, cvendor);
 
   return isJB;
 }
@@ -640,7 +635,7 @@ std::string getErrorMessage(int errorCode)
   return errorMessage;
 }
 
-bool CreateJVM()
+static JNIEnv* CreateJVM()
 {
   JavaVMInitArgs initArgs;
   initArgs.version = JNI_VERSION_1_2;
@@ -648,7 +643,8 @@ bool CreateJVM()
   initArgs.nOptions = vmOptionCount;
   initArgs.ignoreUnrecognized = JNI_FALSE;
 
-  int result = pCreateJavaVM(&jvm, &env, &initArgs);
+  JNIEnv* jenv = NULL;
+  int result = pCreateJavaVM(&jvm, &jenv, &initArgs);
 
   for (int i = 1; i < vmOptionCount; i++)
   {
@@ -674,18 +670,18 @@ bool CreateJVM()
   }
 
   // Set DPI-awareness here or let JBRE do that.
-  if (!IsJBRE()) SetProcessDPIAwareProperty();
+  if (!IsJBRE(jenv)) SetProcessDPIAwareProperty();
 
-  return result == JNI_OK;
+  return (result == JNI_OK ? jenv : NULL);
 }
 
-jobjectArray ArgsToJavaArray(std::vector<LPWSTR> args)
+static jobjectArray ArgsToJavaArray(JNIEnv* jenv, std::vector<LPWSTR> args)
 {
-  jclass stringClass = env->FindClass("java/lang/String");
-  jobjectArray result = env->NewObjectArray(args.size(), stringClass, NULL);
+  jclass stringClass = jenv->FindClass("java/lang/String");
+  jobjectArray result = jenv->NewObjectArray(args.size(), stringClass, NULL);
   for (int i = 0; i < args.size(); i++)
   {
-     env->SetObjectArrayElement(result, i, env->NewString((const jchar *)args[i], wcslen(args[i])));
+     jenv->SetObjectArrayElement(result, i, jenv->NewString((const jchar *)args[i], wcslen(args[i])));
   }
   return result;
 }
@@ -741,10 +737,10 @@ std::vector<LPWSTR> RemovePredefinedArgs(std::vector<LPWSTR> args)
   return result;
 }
 
-bool RunMainClass(std::vector<LPWSTR> args)
+static bool RunMainClass(JNIEnv* jenv, std::vector<LPWSTR> args)
 {
-  std::string mainClassName = LoadStdString(IDS_MAIN_CLASS);
-  jclass mainClass = env->FindClass(mainClassName.c_str());
+  const std::string mainClassName = LoadStdString(IDS_MAIN_CLASS);
+  jclass mainClass = jenv->FindClass(mainClassName.c_str());
   if (!mainClass)
   {
     char buf[_MAX_PATH + 256];
@@ -754,7 +750,7 @@ bool RunMainClass(std::vector<LPWSTR> args)
     return false;
   }
 
-  jmethodID mainMethod = env->GetStaticMethodID(mainClass, "main", "([Ljava/lang/String;)V");
+  jmethodID mainMethod = jenv->GetStaticMethodID(mainClass, "main", "([Ljava/lang/String;)V");
   if (!mainMethod)
   {
     std::string error = LoadStdString(IDS_ERROR_LAUNCHING_APP);
@@ -762,8 +758,8 @@ bool RunMainClass(std::vector<LPWSTR> args)
     return false;
   }
 
-  env->CallStaticVoidMethod(mainClass, mainMethod, ArgsToJavaArray(args));
-  jthrowable exc = env->ExceptionOccurred();
+  jenv->CallStaticVoidMethod(mainClass, mainMethod, ArgsToJavaArray(jenv, args));
+  jthrowable exc = jenv->ExceptionOccurred();
   if (exc)
   {
     std::string error = LoadStdString(IDS_ERROR_LAUNCHING_APP);
@@ -773,40 +769,39 @@ bool RunMainClass(std::vector<LPWSTR> args)
   return true;
 }
 
-int CallCommandLineProcessor(const std::wstring& curDir, const std::wstring& args)
+static int CallCommandLineProcessor(JNIEnv* jenv, const std::wstring& curDir, const std::wstring& args)
 {
-  JNIEnv *env;
-  JavaVMAttachArgs attachArgs;
   int exitCode = -1;
-  attachArgs.version = JNI_VERSION_1_2;
-  attachArgs.name = "WinLauncher external command processing thread";
-  attachArgs.group = NULL;
-  jvm->AttachCurrentThread((void**)&env, &attachArgs);
 
-  std::string processorClassName = LoadStdString(IDS_COMMAND_LINE_PROCESSOR_CLASS);
-  jclass processorClass = env->FindClass(processorClassName.c_str());
+  const std::string processorClassName = LoadStdString(IDS_COMMAND_LINE_PROCESSOR_CLASS);
+  jclass processorClass = jenv->FindClass(processorClassName.c_str());
   if (processorClass)
   {
-    jmethodID processMethodID = env->GetStaticMethodID(processorClass, "processWindowsLauncherCommandLine", "(Ljava/lang/String;[Ljava/lang/String;)I");
+    jmethodID processMethodID = jenv->GetStaticMethodID(processorClass, "processWindowsLauncherCommandLine", "(Ljava/lang/String;[Ljava/lang/String;)I");
     if (processMethodID)
     {
-      jstring jCurDir = env->NewString((const jchar *)curDir.c_str(), curDir.size());
-      jobjectArray jArgs = ArgsToJavaArray(RemovePredefinedArgs(ParseCommandLine(args.c_str())));
-      exitCode = (int)(env->CallStaticIntMethod(processorClass, processMethodID, jCurDir, jArgs));
-      jthrowable exc = env->ExceptionOccurred();
+      jstring jCurDir = jenv->NewString((const jchar *)curDir.c_str(), curDir.size());
+      jobjectArray jArgs = ArgsToJavaArray(jenv, RemovePredefinedArgs(ParseCommandLine(args.c_str())));
+      exitCode = jenv->CallStaticIntMethod(processorClass, processMethodID, jCurDir, jArgs);
+      jthrowable exc = jenv->ExceptionOccurred();
       if (exc)
       {
         MessageBox(NULL, _T("Error sending command line to existing instance"), _T("Error"), MB_OK);
       }
     }
   }
-
-  jvm->DetachCurrentThread();
   return exitCode;
 }
 
 DWORD WINAPI SingleInstanceThread(LPVOID args)
 {
+  JavaVMAttachArgs attachArgs{ JNI_VERSION_1_2,
+                               "WinLauncher external command processing thread",
+                               NULL };
+  JNIEnv *jenv = NULL; // NB: JNIEnv is thread-local, which is why we must obtain our own
+  jint rc = jvm->AttachCurrentThread(reinterpret_cast<void**>(&jenv), &attachArgs);
+  if (rc != JNI_OK) return 0;
+
   while (true)
   {
     WaitForSingleObject(hEvent, INFINITE);
@@ -823,7 +818,7 @@ DWORD WINAPI SingleInstanceThread(LPVOID args)
       std::wstring args = command.substr(pos + 1, second_pos - pos - 1);
       std::wstring response_id = command.substr(second_pos + 1);
 
-      int exitCode = CallCommandLineProcessor(curDir, args);
+      int exitCode = CallCommandLineProcessor(jenv, curDir, args);
 
       std::string message = std::to_string(static_cast<long long>(exitCode));
       std::string resultFileName = std::string("IntelliJLauncherResultMapping.") + std::string(response_id.begin(), response_id.end());
@@ -848,6 +843,8 @@ DWORD WINAPI SingleInstanceThread(LPVOID args)
 
     UnmapViewOfFile(view);
   }
+
+  jvm->DetachCurrentThread();
   return 0;
 }
 
@@ -1187,11 +1184,12 @@ int APIENTRY _tWinMain(HINSTANCE hInstance,
   if (!LocateJVM()) return 1;
   if (!LoadVMOptions()) return 1;
   if (!LoadJVMLibrary()) return 1;
-  if (!CreateJVM()) return 1;
+  JNIEnv* jenv = CreateJVM();
+  if (jenv == NULL) return 1;
 
   hSingleInstanceWatcherThread = CreateThread(NULL, 0, SingleInstanceThread, NULL, 0, NULL);
 
-  if (!RunMainClass(args)) return 1;
+  if (!RunMainClass(jenv, args)) return 1;
 
   jvm->DestroyJavaVM();
 

@@ -36,15 +36,11 @@ public final class VcsConfiguration implements PersistentStateComponent<VcsConfi
     !PlatformUtils.isPyCharm() && !PlatformUtils.isRubyMine() && !PlatformUtils.isCLion();
   public String CODE_SMELLS_PROFILE = null;
   public boolean CODE_SMELLS_PROFILE_LOCAL = false;
+  public String CHECK_CODE_CLEANUP_BEFORE_PROJECT_COMMIT_PROFILE = null;
   public boolean CHECK_CODE_CLEANUP_BEFORE_PROJECT_COMMIT = false;
+  public boolean CHECK_CODE_CLEANUP_BEFORE_PROJECT_COMMIT_LOCAL = false;
   public boolean CHECK_NEW_TODO = true;
   public TodoPanelSettings myTodoPanelSettings = new TodoPanelSettings();
-  public boolean PERFORM_UPDATE_IN_BACKGROUND = true;
-  public boolean PERFORM_COMMIT_IN_BACKGROUND = true;
-  public boolean PERFORM_EDIT_IN_BACKGROUND = true;
-  public boolean PERFORM_CHECKOUT_IN_BACKGROUND = true;
-  public boolean PERFORM_ADD_REMOVE_IN_BACKGROUND = true;
-  public boolean PERFORM_ROLLBACK_IN_BACKGROUND = false;
   public volatile boolean CHECK_LOCALLY_CHANGED_CONFLICTS_IN_BACKGROUND = false;
   @OptionTag(tag = "confirmMoveToFailedCommit", nameAttribute = "")
   public VcsShowConfirmationOption.Value MOVE_TO_FAILED_COMMIT_CHANGELIST = VcsShowConfirmationOption.Value.DO_NOTHING_SILENTLY;
@@ -154,13 +150,6 @@ public final class VcsConfiguration implements PersistentStateComponent<VcsConfi
 
   private static final int MAX_STORED_MESSAGES = 25;
 
-  private final PerformInBackgroundOption myUpdateOption = new UpdateInBackgroundOption();
-  private final PerformInBackgroundOption myCommitOption = new CommitInBackgroundOption();
-  private final PerformInBackgroundOption myEditOption = new EditInBackgroundOption();
-  private final PerformInBackgroundOption myCheckoutOption = new CheckoutInBackgroundOption();
-  private final PerformInBackgroundOption myAddRemoveOption = new AddRemoveInBackgroundOption();
-  private final PerformInBackgroundOption myRollbackOption = new RollbackInBackgroundOption();
-
   @Override
   public VcsConfiguration getState() {
     return this;
@@ -218,90 +207,52 @@ public final class VcsConfiguration implements PersistentStateComponent<VcsConfi
     }
   }
 
+  /**
+   * @deprecated Always start progress in background
+   */
+  @Deprecated
   public PerformInBackgroundOption getUpdateOption() {
-    return myUpdateOption;
+    return PerformInBackgroundOption.ALWAYS_BACKGROUND;
   }
 
+  /**
+   * @deprecated Always start progress in background
+   */
+  @Deprecated
   public PerformInBackgroundOption getCommitOption() {
-    return myCommitOption;
+    return PerformInBackgroundOption.ALWAYS_BACKGROUND;
   }
 
+  /**
+   * @deprecated Always start progress in background
+   */
+  @Deprecated
   public PerformInBackgroundOption getEditOption() {
-    return myEditOption;
+    return PerformInBackgroundOption.ALWAYS_BACKGROUND;
   }
 
+  /**
+   * @deprecated Always start progress in background
+   */
+  @Deprecated
   public PerformInBackgroundOption getCheckoutOption() {
-    return myCheckoutOption;
+    return PerformInBackgroundOption.ALWAYS_BACKGROUND;
   }
 
+  /**
+   * @deprecated Always start progress in background
+   */
+  @Deprecated
   public PerformInBackgroundOption getAddRemoveOption() {
-    return myAddRemoveOption;
+    return PerformInBackgroundOption.ALWAYS_BACKGROUND;
   }
 
+  /**
+   * @deprecated Always start progress in background
+   */
+  @Deprecated
   public PerformInBackgroundOption getRollbackOption() {
-    return myRollbackOption;
-  }
-
-  private class UpdateInBackgroundOption implements PerformInBackgroundOption {
-    @Override
-    public boolean shouldStartInBackground() {
-      return PERFORM_UPDATE_IN_BACKGROUND;
-    }
-  }
-
-  private class CommitInBackgroundOption implements PerformInBackgroundOption {
-    @Override
-    public boolean shouldStartInBackground() {
-      return PERFORM_COMMIT_IN_BACKGROUND;
-    }
-  }
-
-  private class EditInBackgroundOption implements PerformInBackgroundOption {
-    @Override
-    public boolean shouldStartInBackground() {
-      return PERFORM_EDIT_IN_BACKGROUND;
-    }
-
-    @Override
-    public void processSentToBackground() {
-      PERFORM_EDIT_IN_BACKGROUND = true;
-    }
-  }
-
-  private class CheckoutInBackgroundOption implements PerformInBackgroundOption {
-    @Override
-    public boolean shouldStartInBackground() {
-      return PERFORM_CHECKOUT_IN_BACKGROUND;
-    }
-
-    @Override
-    public void processSentToBackground() {
-      PERFORM_CHECKOUT_IN_BACKGROUND = true;
-    }
-  }
-
-  private class AddRemoveInBackgroundOption implements PerformInBackgroundOption {
-    @Override
-    public boolean shouldStartInBackground() {
-      return PERFORM_ADD_REMOVE_IN_BACKGROUND;
-    }
-
-    @Override
-    public void processSentToBackground() {
-      PERFORM_ADD_REMOVE_IN_BACKGROUND = true;
-    }
-  }
-
-  private class RollbackInBackgroundOption implements PerformInBackgroundOption {
-    @Override
-    public boolean shouldStartInBackground() {
-      return PERFORM_ROLLBACK_IN_BACKGROUND;
-    }
-
-    @Override
-    public void processSentToBackground() {
-      PERFORM_ROLLBACK_IN_BACKGROUND = true;
-    }
+    return PerformInBackgroundOption.ALWAYS_BACKGROUND;
   }
 
   public String getPatchFileExtension() {

@@ -25,6 +25,7 @@ import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import com.intellij.util.xmlb.XmlSerializerUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -454,8 +455,7 @@ public abstract class MasterDetailsComponent implements Configurable, DetailsCom
           group.add(action);
         }
       }
-      PopupHandler
-        .installPopupHandler(myTree, group, ActionPlaces.UNKNOWN, ActionManager.getInstance()); //popup should follow the selection
+      PopupHandler.installPopupMenu(myTree, group, "MasterDetailsTreePopup");
     }
   }
 
@@ -788,6 +788,7 @@ public abstract class MasterDetailsComponent implements Configurable, DetailsCom
     /**
      * @deprecated Use {@link #MyDeleteAction(Predicate)}
      */
+    @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
     @Deprecated
     public MyDeleteAction(@Nullable Condition<Object[]> availableCondition) {
       this(availableCondition == null ? null : (Predicate<Object[]>)availableCondition::value);
@@ -959,7 +960,7 @@ public abstract class MasterDetailsComponent implements Configurable, DetailsCom
       JBPopupFactory popupFactory = JBPopupFactory.getInstance();
       DataContext dataContext = e.getDataContext();
       ListPopupStep step = popupFactory.createActionsStep(
-        myActionGroup, dataContext, ActionPlaces.UNKNOWN, false,
+        myActionGroup, dataContext, null, false,
         false, myActionGroup.getTemplatePresentation().getText(), myTree,
         true, myPreselection != null ? myPreselection.getDefaultIndex() : 0, true);
       final ListPopup listPopup = popupFactory.createListPopup(step);

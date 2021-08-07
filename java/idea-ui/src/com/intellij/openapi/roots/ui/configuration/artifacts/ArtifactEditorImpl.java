@@ -277,7 +277,6 @@ public class ArtifactEditorImpl implements ArtifactEditorEx, DataProvider {
       toolbarComponent.setBorder(new CustomLineBorder(0, 0, 1, 0));
     }
     leftPanel.add(toolbarComponent, BorderLayout.NORTH);
-    toolbar.updateActionsImmediately();
     rightTopPanel.setPreferredSize(new Dimension(-1, toolbarComponent.getPreferredSize().height));
 
     myTabbedPane = new TabbedPaneWrapper(this);
@@ -287,7 +286,7 @@ public class ArtifactEditorImpl implements ArtifactEditorEx, DataProvider {
 
     final LayoutTree tree = myLayoutTreeComponent.getLayoutTree();
     new ShowAddPackagingElementPopupAction(this).registerCustomShortcutSet(CommonShortcuts.getNew(), tree);
-    PopupHandler.installPopupHandler(tree, createPopupActionGroup(), ActionPlaces.UNKNOWN, ActionManager.getInstance());
+    PopupHandler.installPopupMenu(tree, createPopupActionGroup(), "ArtifactLayoutTreePopup");
     ToolTipManager.sharedInstance().registerComponent(tree);
     rebuildTries();
     return getMainComponent();

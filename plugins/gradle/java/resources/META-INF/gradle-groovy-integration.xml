@@ -41,6 +41,18 @@
                      key="multiple.repository.urls" groupKey="group.names.probable.bugs" groupBundle="messages.InspectionsBundle" enabledByDefault="true" level="WARNING"
                      implementationClass="org.jetbrains.plugins.gradle.codeInspection.MultipleRepositoryUrlsInspection"/>
 
+    <localInspection language="Groovy" groupPath="Gradle" shortName="BintrayPublishingPlugin"
+                     bundle="messages.GradleInspectionBundle"
+                     key="bintray.publishing.plugin" groupKey="group.names.probable.bugs" groupBundle="messages.InspectionsBundle"
+                     enabledByDefault="true" level="WARNING"
+                     implementationClass="org.jetbrains.plugins.gradle.codeInspection.BintrayPublishingPluginInspection"/>
+
+    <localInspection language="Groovy" groupPath="Gradle" shortName="JCenterRepository"
+                     bundle="messages.GradleInspectionBundle"
+                     key="jcenter.repository" groupKey="group.names.probable.bugs" groupBundle="messages.InspectionsBundle"
+                     enabledByDefault="true" level="WARNING"
+                     implementationClass="org.jetbrains.plugins.gradle.codeInspection.JCenterRepositoryInspection"/>
+
     <runConfigurationProducer implementation="org.jetbrains.plugins.gradle.execution.GradleGroovyScriptRunConfigurationProducer"
                               order="last"/>
     <runLineMarkerContributor language="Groovy" id="gradleGroovyRunLineMarkerProvider"
@@ -51,6 +63,7 @@
                                  hostElementClass="org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrLiteral"
                                  targetClass="org.jetbrains.plugins.gradle.service.resolve.GradleProjectSymbol"
                                  implementationClass="org.jetbrains.plugins.gradle.service.resolve.GradleProjectReferenceProvider"/>
+    <methodReferencesSearch implementation="org.jetbrains.plugins.gradle.service.resolve.GradleManagedPropertySetterReferenceSearcher"/>
     <searcher forClass="com.intellij.find.usages.api.UsageSearchParameters"
               implementationClass="org.jetbrains.plugins.gradle.service.resolve.GradleProjectUsageSearcher"/>
     <searcher forClass="com.intellij.refactoring.rename.api.RenameUsageSearchParameters"
@@ -73,6 +86,7 @@
     <membersContributor implementation="org.jetbrains.plugins.gradle.service.resolve.GradleTaskContainerContributor"/>
     <membersContributor implementation="org.jetbrains.plugins.gradle.service.resolve.GradleNamedDomainCollectionContributor"/>
     <membersContributor implementation="org.jetbrains.plugins.gradle.service.resolve.GradleExtensionsContributor"/>
+    <membersContributor implementation="org.jetbrains.plugins.gradle.service.resolve.GradleExtensionMembersContributor"/>
     <callTypeCalculator implementation="org.jetbrains.plugins.gradle.service.resolve.GradleProjectCallTypeCalculator"/>
     <callTypeCalculator implementation="org.jetbrains.plugins.gradle.service.resolve.GradleArtifactCallTypeCalculator"/>
     <delegatesToProvider implementation="org.jetbrains.plugins.gradle.service.resolve.GradleTaskDeclarationClosureDelegateProvider"/>

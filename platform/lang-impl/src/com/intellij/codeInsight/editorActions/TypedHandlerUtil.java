@@ -4,7 +4,6 @@ package com.intellij.codeInsight.editorActions;
 import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorModificationUtil;
-import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.highlighter.HighlighterIterator;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
@@ -17,7 +16,7 @@ public final class TypedHandlerUtil {
                                          @NotNull IElementType gt,
                                          @NotNull TokenSet invalidInsideReference,
                                          boolean forwardDirection) {
-    HighlighterIterator iterator = ((EditorEx) editor).getHighlighter().createIterator(offset);
+    HighlighterIterator iterator = editor.getHighlighter().createIterator(offset);
     if (!forwardDirection && iterator.getTokenType() != gt) return -1;
     while ((forwardDirection && iterator.getStart() > 0
             || !forwardDirection && !iterator.atEnd())
@@ -62,7 +61,7 @@ public final class TypedHandlerUtil {
                                                         @NotNull final IElementType dot,
                                                         @NotNull final IElementType identifier,
                                                         boolean allowAfterDot) {
-    HighlighterIterator iterator = ((EditorEx) editor).getHighlighter().createIterator(offset);
+    HighlighterIterator iterator = editor.getHighlighter().createIterator(offset);
     if (iterator.atEnd()) return false;
     if (offset != iterator.getEnd() && iterator.getStart() > 0) iterator.retreat();
     final IElementType tokenType = iterator.getTokenType();

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.compiler.impl
 
 import com.intellij.build.BuildContentManager
@@ -44,8 +44,7 @@ class CompileDriverNotifications(
     private val notificationGroup = NotificationGroupManager.getInstance().getNotificationGroup("jps configuration error")
 
     private val baseNotification = notificationGroup
-      .createNotification(NotificationType.ERROR)
-      .setTitle(JavaCompilerBundle.message("notification.title.jps.cannot.start.compiler"))
+      .createNotification(JavaCompilerBundle.message("notification.title.jps.cannot.start.compiler"), NotificationType.ERROR)
       .setImportant(true)
 
     fun withExpiringAction(@NotificationContent title : String,

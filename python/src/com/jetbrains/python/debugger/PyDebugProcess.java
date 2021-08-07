@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.debugger;
 
 import com.google.common.base.Strings;
@@ -72,10 +72,7 @@ import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.resolve.PyResolveUtil;
 import com.jetbrains.python.psi.resolve.RatedResolveResult;
-import com.jetbrains.python.psi.types.PyClassType;
-import com.jetbrains.python.psi.types.PyModuleType;
-import com.jetbrains.python.psi.types.PyType;
-import com.jetbrains.python.psi.types.PyTypeParser;
+import com.jetbrains.python.psi.types.*;
 import com.jetbrains.python.testing.AbstractPythonTestRunConfiguration;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -87,9 +84,7 @@ import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-/**
- * @author yole
- */
+
 public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, ProcessListener {
 
   private static final Logger LOG = Logger.getInstance(PyDebugProcess.class);
@@ -235,6 +230,14 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
           listener.frameChanged();
         }
       }
+
+      @Override
+      public void sessionStopped() {
+        XDebugSessionListener.super.sessionStopped();
+        for (PyFrameListener listener : myFrameListeners) {
+          listener.sessionStopped();
+        }
+      }
     });
 
     session.addSessionListener(new XDebugSessionListener() {
@@ -340,7 +343,7 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
           }
           if (shouldLogConnectionException(e)) {
             NOTIFICATION_GROUP
-              .createNotification(PyBundle.message("debug.notification.title.connection.failed"), e.getMessage(), NotificationType.ERROR, null)
+              .createNotification(PyBundle.message("debug.notification.title.connection.failed"), e.getMessage(), NotificationType.ERROR)
               .notify(myProject);
           }
         }
@@ -450,7 +453,7 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
     }
     printToConsole(PyBundle.message("debugger.connected.to.pydev.debugger.build", remoteVersion), ConsoleViewContentType.SYSTEM_OUTPUT);
 
-    if (!(remoteVersion.equals(currentBuild) || remoteVersion.startsWith(currentBuild))) {
+    if (!remoteVersion.startsWith(currentBuild)) {
       LOG.warn(String.format("Wrong debugger version. Remote version: %s Current build: %s", remoteVersion, currentBuild));
       printToConsole(PyBundle.message("debugger.warning.wrong.debugger.version", currentBuild), ConsoleViewContentType.ERROR_OUTPUT);
     }
@@ -761,6 +764,12 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
   }
 
   @Override
+  public String execTableCommand(String command, TableCommandType commandType) throws PyDebuggerException {
+    final PyStackFrame frame = currentFrame();
+    return myDebugger.execTableCommand(frame.getThreadId(), frame.getFrameId(), command, commandType);
+  }
+
+  @Override
   public boolean isFrameCached(@NotNull XStackFrame contextFrame) {
     synchronized (myFrameCacheObject) {
       final PyStackFrame frame = (PyStackFrame) contextFrame;
@@ -956,7 +965,7 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
   @NotNull
   private PyStackFrame currentFrame() throws PyDebuggerException {
     if (!isConnected()) {
-      throw new PyDebuggerException(PyBundle.message("debugger.debug.process.disconnected"));
+      throw new PyDebuggerException("Disconnected");
     }
 
     final PyStackFrame frame = (PyStackFrame)getSession().getCurrentStackFrame();
@@ -1140,6 +1149,11 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
     return "";
   }
 
+  public void interruptDebugConsole() {
+    if (isConnected()) {
+      myDebugger.interruptDebugConsole();
+    }
+  }
 
   @Override
   public void startNotified(@NotNull ProcessEvent event) {
@@ -1210,7 +1224,8 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
     }
   }
 
-  public Project getProject() {
+  @Override
+  public @NotNull Project getProject() {
     return getSession().getProject();
   }
 
@@ -1233,8 +1248,9 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
       if (parentDef == null) {
         return null;
       }
+      final var context = TypeEvalContext.codeInsightFallback(file.getProject());
       List<? extends RatedResolveResult> results =
-        parentDef.resolveMember(name, null, AccessDirection.READ, PyResolveContext.defaultContext());
+        parentDef.resolveMember(name, null, AccessDirection.READ, PyResolveContext.defaultContext(context));
       if (results != null && !results.isEmpty()) {
         return XDebuggerUtil.getInstance().createPositionByElement(results.get(0).getElement());
       }

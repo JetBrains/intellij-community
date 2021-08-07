@@ -128,6 +128,7 @@ public class ScopeChooserConfigurable extends MasterDetailsComponent implements 
   }
 
   private void refreshProject() {
+    if (myProject.isDefault()) return;
     FileEditorManagerEx fileEditorManager = FileEditorManagerEx.getInstanceEx(myProject);
     for (VirtualFile openVirtualFile : fileEditorManager.getOpenFiles()) {
       fileEditorManager.updateFilePresentation(openVirtualFile);
@@ -413,7 +414,7 @@ public class ScopeChooserConfigurable extends MasterDetailsComponent implements 
     }
   }
 
-  private class MyMoveAction extends AnAction {
+  private class MyMoveAction extends DumbAwareAction {
     private final int myDirection;
 
     protected MyMoveAction(@NlsActions.ActionText String text, Icon icon, int direction) {
@@ -448,7 +449,7 @@ public class ScopeChooserConfigurable extends MasterDetailsComponent implements 
     }
   }
 
-  private class MyCopyAction extends AnAction {
+  private class MyCopyAction extends DumbAwareAction {
     MyCopyAction() {
       super(ExecutionBundle.messagePointer("copy.configuration.action.name"), COPY_ICON);
       registerCustomShortcutSet(CommonShortcuts.getDuplicate(), myTree);
@@ -472,7 +473,7 @@ public class ScopeChooserConfigurable extends MasterDetailsComponent implements 
     }
   }
 
-  private class MySaveAsAction extends AnAction {
+  private class MySaveAsAction extends DumbAwareAction {
     MySaveAsAction() {
       super(ExecutionBundle.messagePointer("action.name.save.as.configuration"), AllIcons.Actions.MenuSaveall);
     }

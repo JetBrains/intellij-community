@@ -65,7 +65,7 @@ public abstract class MavenIndexerWrapper extends MavenRemoteObjectWrapper<Maven
 
   public void releaseIndex(int localId) throws MavenServerIndexerException {
     MavenLog.LOG.debug("releaseIndex " + localId);
-    IndexData data = null;
+    IndexData data;
     synchronized (myDataMap){
       data = myDataMap.remove(localId);
     }
@@ -132,8 +132,16 @@ public abstract class MavenIndexerWrapper extends MavenRemoteObjectWrapper<Maven
     });
   }
 
+  @Nullable
   public IndexedMavenId addArtifact(final int localId, final File artifactFile) throws MavenServerIndexerException {
-    return perform(() -> getOrCreateWrappee().addArtifact(getRemoteId(localId), artifactFile, ourToken));
+    return perform(() -> {
+      try {
+        return getOrCreateWrappee().addArtifact(getRemoteId(localId), artifactFile, ourToken);
+      }
+      catch (Throwable ignore) {
+        return null;
+      }
+    });
   }
 
   public Set<MavenArtifactInfo> search(final int localId, final Query query, final int maxResult) throws MavenServerIndexerException {
@@ -141,13 +149,14 @@ public abstract class MavenIndexerWrapper extends MavenRemoteObjectWrapper<Maven
   }
 
   private int getRemoteId(int localId) throws RemoteException, MavenServerIndexerException {
-    IndexData result = null;
+    IndexData result;
     synchronized (myDataMap){
       result = myDataMap.get(localId);
     }
 
     if(result == null) {
-      MavenLog.LOG.error("index " + localId + " not found, known ids are:" + myDataMap.keySet());
+      MavenLog.LOG.warn("index " + localId + " not found, known ids are:" + myDataMap.keySet());
+      return -1;
     }
 
     if (result.remoteId == -1) {

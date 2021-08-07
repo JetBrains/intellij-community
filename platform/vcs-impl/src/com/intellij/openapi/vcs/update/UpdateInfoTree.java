@@ -173,17 +173,7 @@ public class UpdateInfoTree extends PanelWithActionsAndCloseButton {
       return TreeSpeedSearch.NODE_DESCRIPTOR_TOSTRING.convert(path);
     }, true);
 
-    myTree.addMouseListener(new PopupHandler() {
-      @Override
-      public void invokePopup(Component comp, int x, int y) {
-        final DefaultActionGroup group = (DefaultActionGroup)ActionManager.getInstance().getAction("UpdateActionGroup");
-        if (group != null) { //if no UpdateActionGroup was configured
-          ActionPopupMenu popupMenu = ActionManager.getInstance().createActionPopupMenu(ActionPlaces.UPDATE_POPUP,
-                                                                                        group);
-          popupMenu.getComponent().show(comp, x, y);
-        }
-      }
-    });
+    PopupHandler.installPopupMenu(myTree, "UpdateActionGroup", ActionPlaces.UPDATE_POPUP);
     EditSourceOnDoubleClickHandler.install(myTree);
     EditSourceOnEnterKeyHandler.install(myTree);
 

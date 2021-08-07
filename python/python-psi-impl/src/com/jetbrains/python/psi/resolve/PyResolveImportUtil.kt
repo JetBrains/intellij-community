@@ -13,7 +13,10 @@ import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.FileIndexFacade
 import com.intellij.openapi.util.Ref
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.psi.*
+import com.intellij.psi.PsiDirectory
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiFileSystemItem
+import com.intellij.psi.PsiManager
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.QualifiedName
 import com.jetbrains.python.codeInsight.typing.PyTypeShed
@@ -119,6 +122,7 @@ fun resolveTopLevelMember(name: QualifiedName, context: PyQualifiedNameResolveCo
   val memberName = name.lastComponent ?: return null
   return resolveQualifiedName(name.removeLastComponent(), context)
     .asSequence()
+    .map { PyUtil.turnDirIntoInit(it) }
     .filterIsInstance(PyFile::class.java)
     .flatMap { it.multiResolveName(memberName).asSequence() }
     .map { it.element }
@@ -179,6 +183,9 @@ private fun cachePrefix(context: PyQualifiedNameResolveContext): QualifiedName {
   }
   if (context.withoutRoots) {
     results.add("without-roots")
+  }
+  if (context.withMembers) {
+    results.add("with-members")
   }
   return QualifiedName.fromComponents(results)
 }

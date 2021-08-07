@@ -435,9 +435,10 @@ SHELL_SCRIPT
                         PsiElement(int)('0')
                 PsiElement(;)(';')
                 PsiWhiteSpace(' ')
-                GENERIC_COMMAND_DIRECTIVE
+                SHELL_COMMAND
                   ARITHMETIC_EXPANSION
-                    PsiElement((()('((')
+                    PsiElement(()('(')
+                    PsiElement(()('(')
                     ASSIGNMENT_EXPRESSION
                       LITERAL_EXPRESSION
                         PsiElement(word)('n')
@@ -449,7 +450,8 @@ SHELL_SCRIPT
                         LITERAL_EXPRESSION
                           NUMBER
                             PsiElement(int)('1')
-                    PsiElement()))('))')
+                    PsiElement())(')')
+                    PsiElement())(')')
                 PsiElement(;)(';')
                 PsiWhiteSpace(' ')
                 SIMPLE_COMMAND
@@ -1695,9 +1697,10 @@ SHELL_SCRIPT
                 PsiElement(\n)('\n')
                 PsiElement(\n)('\n')
                 PsiWhiteSpace('        ')
-                GENERIC_COMMAND_DIRECTIVE
+                SHELL_COMMAND
                   ARITHMETIC_EXPANSION
-                    PsiElement((()('((')
+                    PsiElement(()('(')
+                    PsiElement(()('(')
                     PsiWhiteSpace(' ')
                     LITERAL_EXPRESSION
                       STRING
@@ -1706,7 +1709,8 @@ SHELL_SCRIPT
                           PsiElement(var)('$position')
                         PsiElement(CLOSE_QUOTE)('"')
                     PsiWhiteSpace(' ')
-                    PsiElement()))('))')
+                    PsiElement())(')')
+                    PsiElement())(')')
                 PsiWhiteSpace(' ')
                 PsiElement(||)('||')
                 PsiWhiteSpace(' ')

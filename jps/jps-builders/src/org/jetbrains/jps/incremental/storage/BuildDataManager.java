@@ -31,13 +31,13 @@ import java.util.concurrent.ConcurrentMap;
 public class BuildDataManager implements StorageOwner {
   private static final int VERSION = 39 + (PersistentHashMapValueStorage.COMPRESSION_ENABLED ? 1:0);
   private static final Logger LOG = Logger.getInstance(BuildDataManager.class);
-  public static final int CONCURRENCY_LEVEL = BuildRunner.PARALLEL_BUILD_ENABLED? IncProjectBuilder.MAX_BUILDER_THREADS : 1;
   private static final String SRC_TO_FORM_STORAGE = "src-form";
   private static final String SRC_TO_OUTPUT_STORAGE = "src-out";
   private static final String OUT_TARGET_STORAGE = "out-target";
   private static final String MAPPINGS_STORAGE = "mappings";
   private static final String SRC_TO_OUTPUT_FILE_NAME = "data";
-  private final ConcurrentMap<BuildTarget<?>, BuildTargetStorages> myTargetStorages = new ConcurrentHashMap<>(16, 0.75f, CONCURRENCY_LEVEL);
+  private final ConcurrentMap<BuildTarget<?>, BuildTargetStorages> myTargetStorages = new ConcurrentHashMap<>(16, 0.75f,
+                                                                                                              getConcurrencyLevel());
   private final OneToManyPathsMapping mySrcToFormMap;
   private final Mappings myMappings;
   private final BuildDataPaths myDataPaths;
@@ -322,6 +322,10 @@ public class BuildDataManager implements StorageOwner {
 
   public void reportUnhandledRelativizerPaths() {
     myRelativizer.reportUnhandledPaths();
+  }
+
+  public static int getConcurrencyLevel() {
+    return BuildRunner.isParallelBuildEnabled() ? IncProjectBuilder.MAX_BUILDER_THREADS : 1;
   }
 
   private final class SourceToOutputMappingWrapper implements SourceToOutputMapping {

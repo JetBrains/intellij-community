@@ -16,6 +16,7 @@ public enum JavaElementKind {
   ANNOTATION("element.annotation"),
   ANONYMOUS_CLASS("element.anonymous_class"),
   CLASS("element.class"),
+  TYPE_PARAMETER("element.type.parameter"),
   CONSTANT("element.constant"),
   CONSTRUCTOR("element.constructor"),
   ENUM("element.enum"),
@@ -77,6 +78,7 @@ public enum JavaElementKind {
         return VARIABLE;
       case CONSTANT:
         return FIELD;
+      case TYPE_PARAMETER:
       case ANONYMOUS_CLASS:
         return CLASS;
       default:
@@ -105,6 +107,9 @@ public enum JavaElementKind {
       }
       if (psiClass.isInterface()) {
         return INTERFACE;
+      }
+      if (psiClass instanceof PsiTypeParameter) {
+        return TYPE_PARAMETER;
       }
       return CLASS;
     }

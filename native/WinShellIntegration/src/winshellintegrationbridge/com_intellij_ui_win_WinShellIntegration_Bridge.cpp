@@ -1,3 +1,5 @@
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+
 #include "com_intellij_ui_win_WinShellIntegration_Bridge.h"
 #include "win_shell_integration_bridge.h"
 

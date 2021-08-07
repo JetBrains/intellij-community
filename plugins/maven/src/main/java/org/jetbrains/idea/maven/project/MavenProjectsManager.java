@@ -5,8 +5,6 @@ import com.intellij.build.BuildProgressListener;
 import com.intellij.build.SyncViewManager;
 import com.intellij.configurationStore.SettingsSavingComponentJavaAdapter;
 import com.intellij.execution.wsl.WSLDistribution;
-import com.intellij.ide.impl.TrustChangeNotifier;
-import com.intellij.ide.impl.TrustedProjects;
 import com.intellij.ide.startup.StartupManagerEx;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
@@ -16,7 +14,7 @@ import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.externalSystem.ExternalSystemModulePropertyManager;
 import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProvider;
-import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProviderImpl;
+import com.intellij.openapi.externalSystem.service.project.ProjectDataManager;
 import com.intellij.openapi.externalSystem.service.project.autoimport.ExternalSystemProjectsWatcherImpl;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
@@ -27,8 +25,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
-import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
-import com.intellij.openapi.roots.impl.ModuleRootManagerImpl;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.ModificationTracker;
@@ -39,16 +35,11 @@ import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiModificationTracker;
-import com.intellij.util.Alarm;
-import com.intellij.util.EventDispatcher;
-import com.intellij.util.NullableConsumer;
-import com.intellij.util.ObjectUtils;
+import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.PathKt;
 import com.intellij.util.ui.update.Update;
 import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder;
-import gnu.trove.THashMap;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -126,6 +117,7 @@ public final class MavenProjectsManager extends MavenSimpleProjectComponent
   private volatile MavenSyncConsole mySyncConsole;
   private final MavenMergingUpdateQueue mySaveQueue;
   private static final int SAVE_DELAY = 1000;
+  private Module myDummyModule;
 
   public static MavenProjectsManager getInstance(@NotNull Project project) {
     return project.getService(MavenProjectsManager.class);
@@ -343,7 +335,7 @@ public final class MavenProjectsManager extends MavenSimpleProjectComponent
 
   private void applyTreeToState() {
     myState.originalFiles = myProjectsTree.getManagedFilesPaths();
-    myState.ignoredFiles = new THashSet<>(myProjectsTree.getIgnoredFilesPaths());
+    myState.ignoredFiles = new HashSet<>(myProjectsTree.getIgnoredFilesPaths());
     myState.ignoredPathMasks = myProjectsTree.getIgnoredFilesPatterns();
   }
 
@@ -430,6 +422,7 @@ public final class MavenProjectsManager extends MavenSimpleProjectComponent
       }
     });
   }
+
   private void listenForProjectsTreeChanges() {
     myProjectsTree.addListener(new MavenProjectsTree.Listener() {
       @Override
@@ -453,7 +446,7 @@ public final class MavenProjectsManager extends MavenSimpleProjectComponent
         }
 
         // resolve updated, theirs dependents, and dependents of deleted
-        Set<MavenProject> toResolve = new THashSet<>(updatedProjects);
+        Set<MavenProject> toResolve = new HashSet<>(updatedProjects);
         toResolve.addAll(myProjectsTree.getDependentProjects(ContainerUtil.concat(updatedProjects, deleted)));
 
         // do not try to resolve projects with syntactic errors
@@ -549,12 +542,12 @@ public final class MavenProjectsManager extends MavenSimpleProjectComponent
 
       myWatcher.stop();
 
-    myReadingProcessor.stop();
-    myResolvingProcessor.stop();
-    myPluginsResolvingProcessor.stop();
-    myFoldersResolvingProcessor.stop();
-    myArtifactsDownloadingProcessor.stop();
-    myPostProcessor.stop();
+      myReadingProcessor.stop();
+      myResolvingProcessor.stop();
+      myPluginsResolvingProcessor.stop();
+      myFoldersResolvingProcessor.stop();
+      myArtifactsDownloadingProcessor.stop();
+      myPostProcessor.stop();
       mySaveQueue.flush();
 
       if (isUnitTestMode()) {
@@ -581,27 +574,14 @@ public final class MavenProjectsManager extends MavenSimpleProjectComponent
     return ReadAction.compute(() -> !m.isDisposed() && ExternalSystemModulePropertyManager.getInstance(m).isMavenized());
   }
 
-  public void setMavenizedModules(Collection<Module> modules, boolean mavenized) {
-    ApplicationManager.getApplication().assertWriteAccessAllowed();
-    //todo remove 'mergeRootsChangesDuring' call when 'setMavenized' stop firing rootsChanged events (IDEA-250924)
-    ProjectRootManagerEx.getInstanceEx(myProject).mergeRootsChangesDuring(() -> {
-      for (Module m : modules) {
-        if (m.isDisposed()) continue;
-        ExternalSystemModulePropertyManager.getInstance(m).setMavenized(mavenized);
-        // force re-save (since can be stored externally)
-        if (ModuleRootManager.getInstance(m) instanceof ModuleRootManagerImpl) {
-          ((ModuleRootManagerImpl)ModuleRootManager.getInstance(m)).stateChanged();
-        }
-      }
-    });
-  }
-
   @TestOnly
   public void resetManagedFilesAndProfilesInTests(List<VirtualFile> files, MavenExplicitProfiles profiles) {
     myWatcher.resetManagedFilesAndProfilesInTests(files, profiles);
   }
 
-  public void addManagedFilesWithProfiles(final List<VirtualFile> files, MavenExplicitProfiles profiles) {
+
+  public void addManagedFilesWithProfiles(final List<VirtualFile> files, MavenExplicitProfiles profiles, Module dummyModuleToDelete) {
+    myDummyModule = dummyModuleToDelete;
     if (!isInitialized()) {
       initNew(files, profiles);
     }
@@ -611,7 +591,7 @@ public final class MavenProjectsManager extends MavenSimpleProjectComponent
   }
 
   public void addManagedFiles(@NotNull List<VirtualFile> files) {
-    addManagedFilesWithProfiles(files, MavenExplicitProfiles.NONE);
+    addManagedFilesWithProfiles(files, MavenExplicitProfiles.NONE, null);
   }
 
   public void addManagedFilesOrUnignore(@NotNull List<VirtualFile> files) {
@@ -834,7 +814,7 @@ public final class MavenProjectsManager extends MavenSimpleProjectComponent
   }
 
   public Set<MavenRemoteRepository> getRemoteRepositories() {
-    Set<MavenRemoteRepository> result = new THashSet<>();
+    Set<MavenRemoteRepository> result = new HashSet<>();
     for (MavenProject each : getProjects()) {
       result.addAll(each.getRemoteRepositories());
     }
@@ -910,6 +890,7 @@ public final class MavenProjectsManager extends MavenSimpleProjectComponent
 
   private void completeMavenSyncOnImportCompletion(MavenSyncConsole console) {
     waitForImportCompletion().onProcessed(o -> {
+      MavenUtil.notifyMavenProblems(myProject);
       console.finishImport();
     });
   }
@@ -1250,7 +1231,7 @@ public final class MavenProjectsManager extends MavenSimpleProjectComponent
       return importProjects(new IdeModifiableModelsProviderBridge(myProject, builder));
     }
     else {
-      return importProjects(new IdeModifiableModelsProviderImpl(myProject));
+      return importProjects(ProjectDataManager.getInstance().createModifiableModelsProvider(myProject));
     }
   }
 
@@ -1274,7 +1255,8 @@ public final class MavenProjectsManager extends MavenSimpleProjectComponent
                                                                       getFileToModuleMapping(new MavenModelsProvider() {
                                                                         @Override
                                                                         public Module[] getModules() {
-                                                                          return modelsProvider.getModules();
+                                                                          return ArrayUtil.remove(modelsProvider.getModules(),
+                                                                                                  myDummyModule);
                                                                         }
 
                                                                         @Override
@@ -1285,7 +1267,8 @@ public final class MavenProjectsManager extends MavenSimpleProjectComponent
                                                                       projectsToImportWithChanges,
                                                                       importModuleGroupsRequired,
                                                                       modelsProvider,
-                                                                      getImportingSettings());
+                                                                      getImportingSettings(),
+                                                                      myDummyModule);
       importer.set(projectImporter);
       postTasks.set(projectImporter.importProject());
     };
@@ -1328,7 +1311,7 @@ public final class MavenProjectsManager extends MavenSimpleProjectComponent
   }
 
   private Map<VirtualFile, Module> getFileToModuleMapping(MavenModelsProvider modelsProvider) {
-    Map<VirtualFile, Module> result = new THashMap<>();
+    Map<VirtualFile, Module> result = new HashMap<>();
     for (Module each : modelsProvider.getModules()) {
       VirtualFile f = findPomFile(each, modelsProvider);
       if (f != null) result.put(f, each);
@@ -1425,4 +1408,6 @@ public final class MavenProjectsManager extends MavenSimpleProjectComponent
       manager.runWhenFullyOpen(() -> consumer.accept(manager));
     }
   }
+
+
 }

@@ -44,9 +44,7 @@ import java.util.ArrayList;
 import java.util.BitSet;
 import java.util.List;
 
-/**
- * @author yole
- */
+
 public class PyFileElementType extends IStubFileElementType<PyFileStub> {
   public static final PyFileElementType INSTANCE = new PyFileElementType(PythonLanguage.getInstance());
 

@@ -26,8 +26,8 @@ public final class CompletionExtension<T> extends LanguageExtension<T> {
   @Override
   public void invalidateCacheForExtension(String key) {
     super.invalidateCacheForExtension(key);
-    // clear entire cache because, if languages are unloaded, we won't be able to find cache keys for unloaded dialects of
-    // given language
+    // clear the entire cache because, if languages are unloaded, we won't be able to find cache keys for unloaded dialects of
+    // a given language
     clearCache();
 
     if ("any".equals(key)) {

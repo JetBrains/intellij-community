@@ -1,7 +1,6 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.impl;
 
-import com.google.common.base.Ascii;
 import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.process.*;
 import com.intellij.execution.ui.ConsoleViewContentType;
@@ -20,6 +19,7 @@ import java.io.Writer;
 import java.nio.charset.Charset;
 
 public class ConsoleViewRunningState extends ConsoleState {
+  private static final char LF = '\n';
   private final ConsoleViewImpl myConsole;
   private final ProcessHandler myProcessHandler;
   private final ConsoleState myFinishedStated;
@@ -30,9 +30,7 @@ public class ConsoleViewRunningState extends ConsoleState {
     @Override
     public void onTextAvailable(@NotNull ProcessEvent event, @NotNull Key outputType) {
       if (outputType instanceof ProcessOutputType) {
-        myStreamsSynchronizer.doWhenStreamsSynchronized(event.getText(), (ProcessOutputType)outputType, () -> {
-          print(event.getText(), outputType);
-        });
+        myStreamsSynchronizer.doWhenStreamsSynchronized(event.getText(), (ProcessOutputType)outputType, () -> print(event.getText(), outputType));
       }
       else {
         print(event.getText(), outputType);
@@ -57,7 +55,7 @@ public class ConsoleViewRunningState extends ConsoleState {
 
     // attach to process stdin
     if (attachToStdIn) {
-      final OutputStream processInput = myProcessHandler.getProcessInput();
+      OutputStream processInput = myProcessHandler.getProcessInput();
       myUserInputWriter = processInput == null ? null : createOutputStreamWriter(processInput, processHandler);
     }
     else {
@@ -105,12 +103,12 @@ public class ConsoleViewRunningState extends ConsoleState {
   }
 
   @Override
-  public void sendUserInput(@NotNull final String input) throws IOException {
+  public void sendUserInput(@NotNull String input) throws IOException {
     if (myUserInputWriter == null) {
       throw new IOException(ExecutionBundle.message("no.user.process.input.error.message"));
     }
     char enterKeyCode = getEnterKeyCode();
-    String inputToSend = input.replace((char)Ascii.LF, enterKeyCode);
+    String inputToSend = input.replace(LF, enterKeyCode);
     myUserInputWriter.write(inputToSend);
     myUserInputWriter.flush();
   }
@@ -122,12 +120,12 @@ public class ConsoleViewRunningState extends ConsoleState {
         return (char)process.getEnterKeyCode();
       }
     }
-    return Ascii.LF;
+    return LF;
   }
 
   @NotNull
   @Override
-  public ConsoleState attachTo(@NotNull final ConsoleViewImpl console, final @NotNull ProcessHandler processHandler) {
+  public ConsoleState attachTo(@NotNull ConsoleViewImpl console, @NotNull ProcessHandler processHandler) {
     return dispose().attachTo(console, processHandler);
   }
 

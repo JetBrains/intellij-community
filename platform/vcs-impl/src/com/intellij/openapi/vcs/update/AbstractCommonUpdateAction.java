@@ -7,7 +7,7 @@ import com.intellij.history.Label;
 import com.intellij.history.LocalHistory;
 import com.intellij.history.LocalHistoryAction;
 import com.intellij.ide.errorTreeView.HotfixData;
-import com.intellij.internal.statistic.IdeActivity;
+import com.intellij.internal.statistic.StructuredIdeActivity;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationType;
 import com.intellij.openapi.actionSystem.Presentation;
@@ -48,6 +48,7 @@ import java.util.stream.Collectors;
 import static com.intellij.openapi.util.text.StringUtil.notNullize;
 import static com.intellij.openapi.util.text.StringUtil.nullize;
 import static com.intellij.openapi.vcs.VcsNotifier.STANDARD_NOTIFICATION;
+import static com.intellij.openapi.vcs.changes.actions.VcsStatisticsCollector.UPDATE_ACTIVITY;
 import static com.intellij.util.ui.UIUtil.BR;
 
 public abstract class AbstractCommonUpdateAction extends AbstractVcsAction implements UpdateInBackground {
@@ -293,7 +294,7 @@ public abstract class AbstractCommonUpdateAction extends AbstractVcsAction imple
                    final Map<AbstractVcs, Collection<FilePath>> vcsToVirtualFiles,
                    final ActionInfo actionInfo,
                    final @NlsContexts.ProgressTitle String actionName) {
-      super(project, actionName, true, VcsConfiguration.getInstance(project).getUpdateOption());
+      super(project, actionName, true);
       myProjectLevelVcsManager = ProjectLevelVcsManagerEx.getInstanceEx(project);
       myDirtyScopeManager = VcsDirtyScopeManager.getInstance(myProject);
       myRoots = roots;
@@ -333,7 +334,7 @@ public abstract class AbstractCommonUpdateAction extends AbstractVcsAction imple
       if (progressIndicator != null) {
         progressIndicator.setIndeterminate(false);
       }
-      IdeActivity activity = IdeActivity.started(myProject, "vcs", "update");
+      StructuredIdeActivity activity = UPDATE_ACTIVITY.started(myProject);
       try {
         int toBeProcessed = myVcsToVirtualFiles.size();
         int processed = 0;
@@ -446,7 +447,7 @@ public abstract class AbstractCommonUpdateAction extends AbstractVcsAction imple
         content += additionalContent;
       }
 
-      return STANDARD_NOTIFICATION.createNotification(title, content, type, null, "vcs.project.partially.updated");
+      return STANDARD_NOTIFICATION.createNotification(title, content, type).setDisplayId("vcs.project.partially.updated");
     }
 
     private int getUpdatedFilesCount() {
@@ -553,7 +554,8 @@ public abstract class AbstractCommonUpdateAction extends AbstractVcsAction imple
           content = getAllFilesAreUpToDateMessage(myRoots);
           type = NotificationType.INFORMATION;
         }
-        VcsNotifier.getInstance(myProject).notify(STANDARD_NOTIFICATION.createNotification(content, type, "vcs.project.update.finished"));
+        VcsNotifier.getInstance(myProject).notify(
+          STANDARD_NOTIFICATION.createNotification(content, type).setDisplayId("vcs.project.update.finished"));
       }
       else if (!myUpdatedFiles.isEmpty()) {
 

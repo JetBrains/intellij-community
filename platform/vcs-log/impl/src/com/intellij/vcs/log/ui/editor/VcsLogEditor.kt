@@ -13,8 +13,8 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.LightVirtualFile
 import com.intellij.vcs.log.VcsLogBundle
-import com.intellij.vcs.log.impl.disposeLogUis
 import com.intellij.vcs.log.impl.VcsLogContentUtil
+import com.intellij.vcs.log.impl.disposeLogUis
 import java.awt.BorderLayout
 import javax.swing.Icon
 import javax.swing.JComponent
@@ -22,7 +22,7 @@ import javax.swing.JPanel
 
 class VcsLogFileType private constructor() : FileType {
   override fun getName(): String = "VcsLog"
-  override fun getDescription(): String = VcsLogBundle.message("vcs.log.file.type.description")
+  override fun getDescription(): String = VcsLogBundle.message("filetype.vcs.log.description")
   override fun getDefaultExtension(): String = ""
   override fun getIcon(): Icon? = AllIcons.Vcs.Branch
   override fun isBinary(): Boolean = true

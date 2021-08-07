@@ -22,6 +22,8 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
 public abstract class ZipHandlerBase extends ArchiveHandler {
+  private static final Logger LOG = Logger.getInstance(ZipHandlerBase.class);
+
   @ApiStatus.Internal
   @SuppressWarnings("StaticNonFinalField")
   public static volatile boolean USE_CRC_INSTEAD_OF_TIMESTAMP = getUseCrcInsteadOfTimestampPropertyValue();
@@ -56,11 +58,10 @@ public abstract class ZipHandlerBase extends ArchiveHandler {
   protected @NotNull Map<String, EntryInfo> buildEntryMapForZipFile(@NotNull ZipFile zip) {
     Map<String, EntryInfo> map = new ZipEntryMap(zip.size());
 
-    Logger logger = Logger.getInstance(ZipHandlerBase.class);
     Enumeration<? extends ZipEntry> entries = zip.entries();
     while (entries.hasMoreElements()) {
       ZipEntry ze = entries.nextElement();
-      processEntry(map, logger, ze.getName(), ze.isDirectory() ? null : (parent, name) -> {
+      processEntry(map, LOG, ze.getName(), ze.isDirectory() ? null : (parent, name) -> {
         long fileStamp = USE_CRC_INSTEAD_OF_TIMESTAMP ? ze.getCrc() : getEntryFileStamp();
         return new EntryInfo(name, false, ze.getSize(), fileStamp, parent);
       });

@@ -1,12 +1,10 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build.devServer
 
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.util.io.FileUtil
 import com.sun.net.httpserver.HttpHandler
 import com.sun.net.httpserver.HttpServer
-import io.methvin.watcher.DirectoryChangeListener
-import io.methvin.watcher.DirectoryWatcher
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
@@ -15,18 +13,14 @@ import org.apache.log4j.Level
 import org.apache.log4j.PatternLayout
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
-import java.io.File
 import java.net.HttpURLConnection
 import java.net.InetAddress
 import java.net.InetSocketAddress
 import java.net.URI
-import java.nio.file.ClosedWatchServiceException
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
-import java.util.*
 import java.util.concurrent.CountDownLatch
-import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.system.exitProcess
 
 private const val SERVER_PORT = 20854
@@ -102,17 +96,16 @@ class BuildServer(val homePath: Path) {
 
   private val platformPrefixToPluginBuilder = HashMap<String, IdeBuilder>()
 
-  private val isDirWatcherStarted = AtomicBoolean()
-
   init {
     val jsonFormat = Json { isLenient = true }
     configuration = jsonFormat.decodeFromString(Configuration.serializer(), Files.readString(homePath.resolve("build/dev-build-server.json")))
   }
 
   @Synchronized
-  fun getIdeBuilder(platformPrefix: String): IdeBuilder {
+  fun checkOrCreateIdeBuilder(platformPrefix: String): IdeBuilder {
     var ideBuilder = platformPrefixToPluginBuilder.get(platformPrefix)
     if (ideBuilder != null) {
+      ideBuilder.checkChanged()
       return ideBuilder
     }
 
@@ -122,45 +115,7 @@ class BuildServer(val homePath: Path) {
 
     ideBuilder = initialBuild(productConfiguration, homePath, outDir)
     platformPrefixToPluginBuilder.put(platformPrefix, ideBuilder)
-
-    if (isDirWatcherStarted.compareAndSet(false, true)) {
-      watchChanges()
-    }
     return ideBuilder
-  }
-
-  private fun watchChanges() {
-    val moduleNamePathOffset = outDir.toString().length + 1
-    val watcher = DirectoryWatcher.builder()
-      .paths(listOf(outDir))
-      .fileHashing(false)
-      .listener(DirectoryChangeListener { event ->
-        val path = event.path()
-        // getName API is convenient, but it involves offsets computation and new Path, String, byte[] allocations,
-        // so, use old good string
-        val p = path.toString()
-        if (p.endsWith("${File.separatorChar}classpath.index") || p.endsWith("${File.separatorChar}.DS_Store")) {
-          return@DirectoryChangeListener
-        }
-
-        val moduleName = p.substring(moduleNamePathOffset, p.indexOf(File.separatorChar, moduleNamePathOffset))
-        if (moduleName != "intellij.platform.ide.impl" && moduleName != "intellij.platform.ide") {
-          for (ideBuilder in platformPrefixToPluginBuilder.values) {
-            ideBuilder.moduleChanged(moduleName, path)
-          }
-        }
-      })
-      .build()
-    Thread {
-      try {
-        watcher.watch()
-      }
-      catch (ignored: ClosedWatchServiceException) {
-      }
-    }.start()
-    Runtime.getRuntime().addShutdownHook(Thread {
-      watcher.close()
-    })
   }
 }
 
@@ -173,7 +128,8 @@ private fun createHttpServer(buildServer: BuildServer): HttpServer {
     var statusCode = HttpURLConnection.HTTP_OK
     try {
       exchange.responseHeaders.add("Content-Type", "text/plain")
-      statusMessage = buildServer.getIdeBuilder(platformPrefix).pluginBuilder.buildChanged()
+      val ideBuilder = buildServer.checkOrCreateIdeBuilder(platformPrefix)
+      statusMessage = ideBuilder.pluginBuilder.buildChanged()
       LOG.info(statusMessage)
     }
     catch (e: ConfigurationException) {
@@ -200,7 +156,7 @@ fun parseQuery(url: URI): Map<String, List<String?>> {
       val index = it.indexOf('=')
       val key = if (index > 0) it.substring(0, index) else it
       val value = if (index > 0 && it.length > index + 1) it.substring(index + 1) else null
-      AbstractMap.SimpleImmutableEntry(key, value)
+      java.util.Map.entry(key, value)
     }
     .groupBy(keySelector = { it.key }, valueTransform = { it.value })
 }

@@ -503,6 +503,10 @@
     <inspection_tool class="LocalVariableName" enabled="true" level="WEAK WARNING" enabled_by_default="true">
       <option name="namePattern" value="[a-z][A-Za-z\d_]*" />
     </inspection_tool>
+    <inspection_tool class="LoggerInitializedWithForeignClass" enabled="true" level="WARNING" enabled_by_default="true">
+      <option name="loggerClassName" value="org.apache.log4j.Logger,org.slf4j.LoggerFactory,org.apache.commons.logging.LogFactory,java.util.logging.Logger,org.apache.logging.log4j.LogManager,com.intellij.openapi.diagnostic.Logger" />
+      <option name="loggerFactoryMethodName" value="getLogger,getLogger,getLog,getLogger,getLogger,getInstance" />
+    </inspection_tool>
     <inspection_tool class="LoopStatementThatDoesntLoopJS" enabled="false" level="WARNING" enabled_by_default="false" />
     <inspection_tool class="MakoArgumentListInspection" enabled="false" level="WARNING" enabled_by_default="false" />
     <inspection_tool class="MavenDuplicateDependenciesInspection" enabled="false" level="WARNING" enabled_by_default="false" />
@@ -1098,6 +1102,16 @@
         <constraint name="T2" within="" contains="" />
         <constraint name="T3" within="" contains="" />
       </searchConfiguration>
+      <searchConfiguration name="EventLogGroup version should be &gt; 0" text="EventLogGroup($Parameter1$, $Parameter2$)" recursive="false" caseInsensitive="false" type="Kotlin" pattern_context="default" search_injected="false">
+        <constraint name="__context__" within="" contains="" />
+        <constraint name="Parameter2" regexp="0" within="" contains="" />
+        <constraint name="Parameter1" within="" contains="" />
+      </searchConfiguration>
+      <searchConfiguration name="EventLogGroup version should be &gt; 0" text="new EventLogGroup($Argument1$, $Argument2$)" recursive="false" caseInsensitive="false" type="JAVA" pattern_context="default" search_injected="false">
+        <constraint name="__context__" within="" contains="" />
+        <constraint name="Argument1" within="" contains="" />
+        <constraint name="Argument2" regexp="0" within="" contains="" />
+      </searchConfiguration>
       <searchConfiguration name="Explicit cast to specific SwiftType" uuid="4728e433-2984-33d6-8696-3fd7f55d9252" description="a type can be a type alias or a single-item tuple of a desired type. And you most likely want to support them as well" suppressId="explicit.cast.to.swift.type" problemDescriptor="Please use `SwiftTypeUtil.as&lt;type&gt;` method instead" text="$ref$ instanceof $SwiftType$" recursive="true" caseInsensitive="true" type="JAVA" pattern_context="default">
         <constraint name="__context__" within="" contains="" />
         <constraint name="ref" within="" contains="" />
@@ -1163,6 +1177,26 @@
         <constraint name="Instance" nameOfExprType="com\.intellij\.psi\.PsiAnnotationOwner" exprTypeWithinHierarchy="true" minCount="0" within="" contains="" />
         <constraint name="Parameter" within="" contains="" />
         <constraint name="__context__" within="" contains="" />
+      </replaceConfiguration>
+      <replaceConfiguration name="Graphics clipping region should be updated not replaced" suppressId="GraphicsSetClipInspection" text="$Instance$.setClip($Parameter$)" recursive="false" caseInsensitive="false" type="JAVA" pattern_context="default" reformatAccordingToStyle="false" shortenFQN="false" replacement="$Instance$.clipRect($Parameter$)" description="&lt;code&gt;setClip&lt;/code&gt; is a dangerous method that can break rendering of Swing components. It ignores the current clipping region and allows painting outside of the component. This method can be used in some specific cases, one of them is to restore the previous clip. In other cases, you have to use &lt;code&gt;Graphics.clipRect&lt;/code&gt; or &lt;code&gt;Graphics2D.clip&lt;/code&gt;.">
+        <constraint name="Instance" nameOfExprType="java\.awt\.Graphics" exprTypeWithinHierarchy="true" minCount="0" within="" contains="" />
+        <constraint name="Parameter" minCount="4" maxCount="4" within="" contains="" />
+      </replaceConfiguration>
+      <replaceConfiguration name="Graphics clipping region should be updated not replaced" suppressId="GraphicsSetClipInspection" text="$Instance$.setClip($Parameter$)" recursive="false" caseInsensitive="false" type="Kotlin" pattern_context="default" reformatAccordingToStyle="false" shortenFQN="false" replacement="$Instance$.clipRect($Parameter$)">
+        <constraint name="Instance" nameOfExprType="java\.awt\.Graphics" exprTypeWithinHierarchy="true" minCount="0" within="" contains="" />
+        <constraint name="Parameter" minCount="4" maxCount="4" within="" contains="" />
+      </replaceConfiguration>
+      <replaceConfiguration name="Graphics clipping region should be updated not replaced" suppressId="GraphicsSetClipInspection" text="$Instance$.setClip($Parameter$)" recursive="false" caseInsensitive="false" type="JAVA" pattern_context="default" reformatAccordingToStyle="false" shortenFQN="true" replacement="((java.awt.Graphics2D)$Instance$).clip($Parameter$)">
+        <constraint name="Instance" nameOfExprType="java\.awt\.Graphics" exprTypeWithinHierarchy="true" minCount="0" within="" contains="" />
+        <constraint name="Parameter" minCount="1" maxCount="1" within="" contains="" />
+      </replaceConfiguration>
+      <replaceConfiguration name="Graphics clipping region should be updated not replaced" suppressId="GraphicsSetClipInspection" text="$Instance$.setClip($Parameter$)" recursive="false" caseInsensitive="false" type="Kotlin" pattern_context="default" reformatAccordingToStyle="false" shortenFQN="true" replacement="($Instance$ as java.awt.Graphics2D).clip($Parameter$)">
+        <constraint name="Instance" nameOfExprType="java\.awt\.Graphics" exprTypeWithinHierarchy="true" minCount="0" within="" contains="" />
+        <constraint name="Parameter" minCount="1" maxCount="1" within="" contains="" />
+      </replaceConfiguration>
+      <replaceConfiguration name="Graphics clipping region should be updated not replaced" suppressId="GraphicsSetClipInspection" text="$Instance$.clip=$Parameter$" recursive="false" caseInsensitive="false" type="Kotlin" pattern_context="default" reformatAccordingToStyle="false" shortenFQN="true" replacement="($Instance$ as java.awt.Graphics2D).clip($Parameter$)">
+        <constraint name="Instance" nameOfExprType="java\.awt\.Graphics" exprTypeWithinHierarchy="true" minCount="0" within="" contains="" />
+        <constraint name="Parameter" minCount="1" maxCount="1" within="" contains="" />
       </replaceConfiguration>
       <replaceConfiguration name="incorrect DumbAware check" created="1522680840725" text="$target$ instanceof DumbAware" recursive="false" caseInsensitive="true" type="JAVA" reformatAccordingToStyle="true" shortenFQN="true" replacement="com.intellij.openapi.project.DumbService.isDumbAware($target$)">
         <constraint name="target" within="" contains="" />
@@ -1358,6 +1392,10 @@
         <constraint name="psiElement" nameOfExprType="com\.intellij\.psi\.PsiElement" exprTypeWithinHierarchy="true" within="" contains="" />
         <constraint name="__context__" within="" contains="" />
       </replaceConfiguration>
+      <searchConfiguration name="reachabilityFence() shouldn't be called with complex expression" description="Only local variable references and &quot;this&quot; should be passed to reachabilityFence() method. &#10;Passing complex expression which calculate/create some object doesn't make sense &#10;because avoiding garbage-collecting this object is trivial when the object is just created. " problemDescriptor="Only locals/'this' should be passed to reachabilityFence()" text="reachabilityFence($k$);" recursive="false" caseInsensitive="false" type="JAVA" pattern_context="default">
+        <constraint name="__context__" within="" contains="" />
+        <constraint name="k" regexp="\w+" negateName="true" within="" contains="" />
+      </searchConfiguration>
       <searchConfiguration name="remove test-only branch and use UIUtil.dispatchAllInvocationEvents() in tests" uuid="07f04ba3-90ed-3e4d-9f88-e45dfaa05771" text="if ($APP$.isUnitTestMode()) {&#10;  $DO$;&#10;} else {&#10;  $APP2$.$INV$($ARGS$);&#10;}" recursive="true" caseInsensitive="true" type="JAVA" pattern_context="default">
         <constraint name="__context__" within="" contains="" />
         <constraint name="APP" within="" contains="" />
@@ -1493,7 +1531,7 @@
       </replaceConfiguration>
       <replaceConfiguration name="stream statements can be replaced with ContainerUtil" text="$f$.stream().map($m$).collect(Collectors.toList())" recursive="false" caseInsensitive="true" type="JAVA" pattern_context="default" reformatAccordingToStyle="true" shortenFQN="true" replacement="com.intellij.util.containers.ContainerUtil.map($f$, $m$)">
         <constraint name="__context__" within="" contains="" />
-        <constraint name="f" within="" contains="" />
+        <constraint name="f" nameOfExprType="java\.util\.Collection" exprTypeWithinHierarchy="true" within="" contains="" />
         <constraint name="m" within="" contains="" />
       </replaceConfiguration>
       <replaceConfiguration name="stream statements can be replaced with ContainerUtil" text="$f$.stream().map { $m$ }.collect(Collectors.toList())" recursive="false" caseInsensitive="true" type="Kotlin" pattern_context="default" reformatAccordingToStyle="true" shortenFQN="true" replacement="$f$.stream().map { $m$ }.collect(Collectors.toList())">
@@ -1533,7 +1571,7 @@
       </replaceConfiguration>
       <replaceConfiguration name="stream statements can be replaced with ContainerUtil" text="$l$.stream().filter($f$).collect(Collectors.toList())" recursive="false" caseInsensitive="true" type="JAVA" pattern_context="default" reformatAccordingToStyle="true" shortenFQN="true" replacement="com.intellij.util.containers.ContainerUtil.filter($l$, $f$)">
         <constraint name="__context__" within="" contains="" />
-        <constraint name="l" within="" contains="" />
+        <constraint name="l" nameOfExprType="java\.util\.Collection" exprTypeWithinHierarchy="true" within="" contains="" />
         <constraint name="f" within="" contains="" />
       </replaceConfiguration>
       <replaceConfiguration name="stream statements can be replaced with ContainerUtil" text="$l$.stream().filter { $f$ }.collect(Collectors.toList())" recursive="false" caseInsensitive="true" type="Kotlin" pattern_context="default" reformatAccordingToStyle="true" shortenFQN="true" replacement="com.intellij.util.containers.ContainerUtil.filter($l$) { $f$ }">
@@ -1553,7 +1591,7 @@
       </replaceConfiguration>
       <replaceConfiguration name="stream statements can be replaced with ContainerUtil" text="$l$.stream().filter($f$).findAny().orElse(null)" recursive="false" caseInsensitive="true" type="JAVA" pattern_context="default" reformatAccordingToStyle="true" shortenFQN="true" replacement="com.intellij.util.containers.ContainerUtil.find($l$, $f$)">
         <constraint name="__context__" within="" contains="" />
-        <constraint name="l" within="" contains="" />
+        <constraint name="l" nameOfExprType="java\.util\.Collection" exprTypeWithinHierarchy="true" within="" contains="" />
         <constraint name="f" within="" contains="" />
       </replaceConfiguration>
       <replaceConfiguration name="stream statements can be replaced with ContainerUtil" text="$l$.stream().filter { $f$ }.findAny().orElse(null)" recursive="false" caseInsensitive="true" type="Kotlin" pattern_context="default" reformatAccordingToStyle="true" shortenFQN="true" replacement="com.intellij.util.containers.ContainerUtil.find($l$) { $f$ }">
@@ -1563,7 +1601,7 @@
       </replaceConfiguration>
       <replaceConfiguration name="stream statements can be replaced with ContainerUtil" text="$l$.stream().filter($f$).findFirst().orElse(null)" recursive="false" caseInsensitive="true" type="JAVA" pattern_context="default" reformatAccordingToStyle="true" shortenFQN="true" replacement="com.intellij.util.containers.ContainerUtil.find($l$, $f$)">
         <constraint name="__context__" within="" contains="" />
-        <constraint name="l" within="" contains="" />
+        <constraint name="l" nameOfExprType="java\.util\.Collection" exprTypeWithinHierarchy="true" within="" contains="" />
         <constraint name="f" within="" contains="" />
       </replaceConfiguration>
       <replaceConfiguration name="stream statements can be replaced with ContainerUtil" text="$l$.stream().filter { $f$ }.findFirst().orElse(null)" recursive="false" caseInsensitive="true" type="Kotlin" pattern_context="default" reformatAccordingToStyle="true" shortenFQN="true" replacement="com.intellij.util.containers.ContainerUtil.find($l$) { $f$ }">
@@ -1634,6 +1672,16 @@
       <replaceConfiguration name="stream statements can be replaced with ContainerUtil" text="StreamEx.of($m$).noneMatch { $p$ }" recursive="false" caseInsensitive="true" type="Kotlin" pattern_context="default" reformatAccordingToStyle="true" shortenFQN="true" replacement="!com.intellij.util.containers.ContainerUtil.exists($m$) { $p$ }">
         <constraint name="__context__" within="" contains="" />
         <constraint name="m" within="" contains="" />
+        <constraint name="p" within="" contains="" />
+      </replaceConfiguration>
+      <replaceConfiguration name="stream statements can be replaced with ContainerUtil" text="$m$.stream().noneMatch($p$)" recursive="false" caseInsensitive="true" type="JAVA" pattern_context="default" reformatAccordingToStyle="true" shortenFQN="true" replacement="!com.intellij.util.containers.ContainerUtil.exists($m$, $p$)">
+        <constraint name="__context__" within="" contains="" />
+        <constraint name="m" nameOfExprType="java\.util\.Collection" exprTypeWithinHierarchy="true" within="" contains="" />
+        <constraint name="p" within="" contains="" />
+      </replaceConfiguration>
+      <replaceConfiguration name="stream statements can be replaced with ContainerUtil" text="$m$.stream().allMatch($p$)" recursive="false" caseInsensitive="true" type="JAVA" pattern_context="default" reformatAccordingToStyle="false" shortenFQN="true" replacement="com.intellij.util.containers.ContainerUtil.and($m$, $p$)">
+        <constraint name="__context__" within="" contains="" />
+        <constraint name="m" nameOfExprType="java\.util\.Collection" exprTypeWithinHierarchy="true" within="" contains="" />
         <constraint name="p" within="" contains="" />
       </replaceConfiguration>
       <searchConfiguration name="String.getBytes() is current locale-dependant, use String.getBytes(Charset) instead" text="$s$.getBytes()" recursive="false" caseInsensitive="true" type="JAVA">
@@ -1832,7 +1880,7 @@
     <inspection_tool class="StrutsValidatorInspection" enabled="false" level="ERROR" enabled_by_default="false" />
     <inspection_tool class="SuperTearDownInFinally" enabled="true" level="WARNING" enabled_by_default="true" />
     <inspection_tool class="SwitchStatementWithConfusingDeclaration" enabled="true" level="WARNING" enabled_by_default="true" />
-    <inspection_tool class="SynchronizeOnThis" enabled="true" level="WARNING" enabled_by_default="true" />
+    <inspection_tool class="SynchronizeOnThis" enabled="false" level="WARNING" enabled_by_default="false" />
     <inspection_tool class="SystemOutErr" enabled="true" level="WARNING" enabled_by_default="true">
       <scope name="Tests" level="WARNING" enabled="false" />
     </inspection_tool>
@@ -1928,6 +1976,8 @@
       <scope name="Tests" level="WARNING" enabled="false" />
     </inspection_tool>
     <inspection_tool class="UseOfPropertiesAsHashtable" enabled="true" level="WARNING" enabled_by_default="true" />
+    <inspection_tool class="UsePluginIdEquals" enabled="true" level="WARNING" enabled_by_default="true" />
+    <inspection_tool class="UseVirtualFileEquals" enabled="true" level="WARNING" enabled_by_default="true" />
     <inspection_tool class="UtilityClassWithPublicConstructor" enabled="true" level="WARNING" enabled_by_default="true" />
     <inspection_tool class="ValidatorConfigModelInspection" enabled="false" level="ERROR" enabled_by_default="false" />
     <inspection_tool class="ValidatorModelInspection" enabled="false" level="ERROR" enabled_by_default="false" />

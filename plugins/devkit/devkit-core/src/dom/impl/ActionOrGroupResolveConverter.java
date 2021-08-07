@@ -1,11 +1,17 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.devkit.dom.impl;
 
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
+import com.intellij.codeInsight.lookup.LookupElementPresentation;
+import com.intellij.codeInsight.lookup.LookupElementRenderer;
+import com.intellij.lang.properties.psi.PropertiesFile;
+import com.intellij.lang.properties.psi.Property;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.NullableLazyValue;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.references.PomService;
@@ -13,6 +19,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.GlobalSearchScopesCore;
 import com.intellij.psi.search.ProjectScope;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.Processor;
 import com.intellij.util.xml.ConvertContext;
 import com.intellij.util.xml.DomTarget;
@@ -27,6 +34,7 @@ import org.jetbrains.idea.devkit.dom.Action;
 import org.jetbrains.idea.devkit.dom.ActionOrGroup;
 import org.jetbrains.idea.devkit.dom.Group;
 import org.jetbrains.idea.devkit.dom.index.IdeaPluginRegistrationIndex;
+import org.jetbrains.idea.devkit.util.DescriptorI18nUtil;
 
 import java.util.*;
 
@@ -95,23 +103,10 @@ public class ActionOrGroupResolveConverter extends ResolvingConverter<ActionOrGr
     String name = StringUtil.notNullize(getName(actionOrGroup), DevKitBundle.message("plugin.xml.convert.action.or.group.invalid.name"));
     LookupElementBuilder builder = psiElement == null ? LookupElementBuilder.create(name) :
                                    LookupElementBuilder.create(psiElement, name);
-
-    builder = builder.withItemTextUnderlined(actionOrGroup.getPopup().getValue() == Boolean.TRUE);
-    builder = builder.withIcon(ElementPresentationManager.getIcon(actionOrGroup));
-
-    final String text = actionOrGroup.getText().getStringValue();
-    if (StringUtil.isNotEmpty(text)) {
-      String withoutMnemonic = StringUtil.replace(text, "_", "");
-      builder = builder.withTailText(" \"" + withoutMnemonic + "\"", true);
-    }
-
-    final String description = actionOrGroup.getDescription().getStringValue();
-    if (StringUtil.isNotEmpty(description)) {
-      builder = builder.withTypeText(description);
-    }
-
-    return builder;
+    builder.putUserData(ActionOrGroupLookupRenderer.ACTION_OR_GROUP_KEY, actionOrGroup);
+    return builder.withRenderer(ActionOrGroupLookupRenderer.INSTANCE);
   }
+
 
   protected boolean isRelevant(ActionOrGroup actionOrGroup) {
     return true;
@@ -168,5 +163,52 @@ public class ActionOrGroupResolveConverter extends ResolvingConverter<ActionOrGr
   @Nullable
   private static String getName(@NotNull ActionOrGroup actionOrGroup) {
     return actionOrGroup.getId().getStringValue();
+  }
+
+
+  private static class ActionOrGroupLookupRenderer extends LookupElementRenderer<LookupElement> {
+
+    private static final ActionOrGroupLookupRenderer INSTANCE = new ActionOrGroupLookupRenderer();
+
+    private static final Key<ActionOrGroup> ACTION_OR_GROUP_KEY = Key.create("ACTION_OR_GROUP_KEY");
+
+    @Override
+    public void renderElement(LookupElement element, LookupElementPresentation presentation) {
+      presentation.setItemText(element.getLookupString());
+
+      ActionOrGroup actionOrGroup = element.getUserData(ACTION_OR_GROUP_KEY);
+      assert actionOrGroup != null;
+
+      presentation.setItemTextUnderlined(actionOrGroup.getPopup().getValue() == Boolean.TRUE);
+      presentation.setIcon(ElementPresentationManager.getIcon(actionOrGroup));
+
+      NullableLazyValue<PropertiesFile> propertiesFile =
+        NullableLazyValue.createValue(() -> DescriptorI18nUtil.findBundlePropertiesFile(actionOrGroup));
+
+      final String text = getLocalizedText(actionOrGroup, ActionOrGroup.TextType.TEXT, propertiesFile);
+      if (StringUtil.isNotEmpty(text)) {
+        String withoutMnemonic = StringUtil.replace(text, "_", "");
+        presentation.setTailText(" \"" + withoutMnemonic + "\"", true);
+      }
+
+      final String description = getLocalizedText(actionOrGroup, ActionOrGroup.TextType.DESCRIPTION, propertiesFile);
+      if (StringUtil.isNotEmpty(description)) {
+        presentation.setTypeText(description);
+      }
+    }
+
+    @Nullable
+    private static String getLocalizedText(ActionOrGroup actionOrGroup,
+                                           ActionOrGroup.TextType text,
+                                           NullableLazyValue<PropertiesFile> propertiesFile) {
+      final String plain = text.getDomValue(actionOrGroup).getStringValue();
+      if (StringUtil.isNotEmpty(plain)) return plain;
+
+      final PropertiesFile bundleFile = propertiesFile.getValue();
+      if (bundleFile == null) return null;
+
+      final Property property = ObjectUtils.tryCast(bundleFile.findPropertyByKey(text.getMessageKey(actionOrGroup)), Property.class);
+      return property != null ? property.getValue() : null;
+    }
   }
 }

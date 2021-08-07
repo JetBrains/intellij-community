@@ -130,7 +130,12 @@ public final class RedundantCastUtil {
     }
 
     @Override public void visitVariable(PsiVariable variable) {
-      processTypeCastWithExpectedType(variable.getInitializer(), variable.getType());
+      PsiExpression initializer = deparenthesizeExpression(variable.getInitializer());
+      // Do not read variable type if initializer is not a cast
+      // Variable could be a lambda parameter where there's no initializer but it's hard to determine its type
+      if (initializer instanceof PsiTypeCastExpression) {
+        processTypeCastWithExpectedType(initializer, variable.getType());
+      }
       super.visitVariable(variable);
     }
 
@@ -151,14 +156,20 @@ public final class RedundantCastUtil {
       if (rExpr instanceof PsiTypeCastExpression) {
         PsiExpression castOperand = getInnerMostOperand(rExpr);
         if (castOperand != null && lType != null) {
-          PsiType opType = getOpTypeWithExpected(castOperand, lType);
+          PsiExpression expected = getOpWithExpectedType(castOperand, lType);
+          PsiType opType = expected != null ? expected.getType() : null;
           if (opType != null) {
-            if (castOperand instanceof PsiConditionalExpression) {
-              if (!isApplicableForConditionalBranch(opType, ((PsiConditionalExpression)castOperand).getThenExpression())) return;
-              if (!isApplicableForConditionalBranch(opType, ((PsiConditionalExpression)castOperand).getElseExpression())) return;
+            if (expected instanceof PsiConditionalExpression) {
+              if (!isApplicableForConditionalBranch(opType, ((PsiConditionalExpression)expected).getThenExpression())) return;
+              if (!isApplicableForConditionalBranch(opType, ((PsiConditionalExpression)expected).getElseExpression())) return;
+            }
+            if (expected instanceof PsiSwitchExpression) {
+              for (PsiExpression resultExpression : PsiUtil.getSwitchResultExpressions((PsiSwitchExpression)expected)) {
+                if (!isApplicableForConditionalBranch(opType, resultExpression)) return;
+              }
             }
             if (TypeConversionUtil.isAssignable(lType, opType, false)) {
-              if (!isFunctionalExpressionTypePreserved((PsiTypeCastExpression)rExpr, castOperand, lType)) return;
+              if (!isFunctionalExpressionTypePreserved((PsiTypeCastExpression)rExpr, expected, lType)) return;
               addToResults((PsiTypeCastExpression)rExpr);
             }
           }
@@ -874,7 +885,7 @@ public final class RedundantCastUtil {
         if (!PsiUtil.isLanguageLevel5OrHigher(typeCast)) {
           return;
         }
-        if (!PsiPolyExpressionUtil.isInAssignmentOrInvocationContext(parent) || 
+        if (!PsiPolyExpressionUtil.isInAssignmentOrInvocationContext(parent) ||
             PsiPolyExpressionUtil.sameBooleanOrNumeric(operand, oppositeOperand)) {    //branches need to be of the same type
           if (oppositeOperand == null || !Comparing.equal(conditionalType, oppositeOperand.getType())) return;
         }
@@ -882,13 +893,10 @@ public final class RedundantCastUtil {
       addIfNarrowing(typeCast, opType, expectedTypeByParent);
     }
 
-    private static PsiType getOpTypeWithExpected(PsiExpression operand, PsiType expectedTypeByParent) {
-      PsiType opType = operand.getType();
-
+    private static PsiExpression getOpWithExpectedType(PsiExpression operand, PsiType expectedTypeByParent) {
       if (expectedTypeByParent != null && !(operand instanceof PsiFunctionalExpression)) {
         try {
           final PsiExpression initializer = (PsiExpression)LambdaUtil.copyWithExpectedType(operand, expectedTypeByParent);
-          opType = initializer.getType();
 
           if (initializer instanceof PsiMethodCallExpression) {
             JavaResolveResult newResult = ((PsiMethodCallExpression)initializer).resolveMethodGenerics();
@@ -896,10 +904,11 @@ public final class RedundantCastUtil {
               return null;
             }
           }
+          return initializer;
         }
         catch (IncorrectOperationException ignore) {}
       }
-      return opType;
+      return operand;
     }
 
     private static boolean isApplicableForConditionalBranch(PsiType opType, PsiExpression thenExpression) {

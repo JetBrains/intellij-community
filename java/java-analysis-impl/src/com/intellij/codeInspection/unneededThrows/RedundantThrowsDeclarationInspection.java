@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.unneededThrows;
 
 import com.intellij.analysis.AnalysisScope;
@@ -263,21 +263,23 @@ public final class RedundantThrowsDeclarationInspection extends GlobalJavaBatchI
           for (Map.Entry<PsiElement, PsiElement> mapping : mappings.entrySet()) {
             final PsiElement from = mapping.getKey();
             final PsiElement to = mapping.getValue();
+            if (!from.isValid()) continue;
             if (to == null) {
               new CommentTracker().deleteAndRestoreComments(from);
             }
-            else {
+            else if (to.isValid()) {
               final PsiElement element = new CommentTracker().replaceAndRestoreComments(from, to);
               instance.shortenClassReferences(element);
             }
           }
 
           for (PsiTryStatement tryStatement : tryStatements) {
-            if (tryStatement.getCatchSections().length == 0 &&
-                tryStatement.getFinallyBlock() == null &&
-                tryStatement.getResourceList() == null) {
-              BlockUtils.unwrapTryBlock(tryStatement);
-            }
+            if (!tryStatement.isValid()) continue;
+            if (tryStatement.getCatchSections().length != 0) continue;
+            if (tryStatement.getFinallyBlock() != null) continue;
+            if (tryStatement.getResourceList() != null) continue;
+
+            BlockUtils.unwrapTryBlock(tryStatement);
           }
         });
       }
@@ -497,11 +499,11 @@ public final class RedundantThrowsDeclarationInspection extends GlobalJavaBatchI
        * @param redundantTypes a list of redundant exception types
        * @param method a method for which the references should break connections to exceptions
        */
-      private void breakConnectionsFromRedundantExceptions(final @NotNull Set<PsiClassType> redundantTypes,
+      private void breakConnectionsFromRedundantExceptions(final @NotNull Set<? extends PsiClassType> redundantTypes,
                                                            final @NotNull PsiMethod method) {
         for (final @NotNull PsiCatchSection catchSection : catchToExceptionTypes.keySet()) {
           for (final @NotNull PsiType exception : catchToExceptionTypes.get(catchSection)) {
-            if (redundantTypes.stream().noneMatch(exception::isAssignableFrom)) continue;
+            if (!ContainerUtil.exists(redundantTypes, exception::isAssignableFrom)) continue;
 
             final Iterator<@NotNull PsiElement> catchTypeInducers = getExceptionInducers(exception).iterator();
             while (catchTypeInducers.hasNext()) {
@@ -588,7 +590,7 @@ public final class RedundantThrowsDeclarationInspection extends GlobalJavaBatchI
      * false otherwise
      */
     private static boolean isTagRelatedToRedundantThrow(@NotNull final PsiDocTag tag,
-                                                        @NotNull final List<PsiClassType> redundantThrows) {
+                                                        final @NotNull List<? extends PsiClassType> redundantThrows) {
       assert "throws".equals(tag.getName()) : "the tag has to be of the @throws kind";
 
       final PsiClass throwsClass = JavaDocUtil.resolveClassInTagValue(tag.getValueElement());

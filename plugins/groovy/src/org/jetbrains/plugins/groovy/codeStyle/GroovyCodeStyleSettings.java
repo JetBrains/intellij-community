@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.codeStyle;
 
 import com.intellij.application.options.CodeStyle;
@@ -42,6 +42,7 @@ public class GroovyCodeStyleSettings extends CustomCodeStyleSettings implements 
   public boolean SPACE_IN_NAMED_ARGUMENT_BEFORE_COLON = false;
   public boolean SPACE_IN_NAMED_ARGUMENT = true;
   public boolean ALIGN_MULTILINE_LIST_OR_MAP = true;
+  public boolean WRAP_CHAIN_CALLS_AFTER_DOT = false;
   public boolean SPACE_WITHIN_LIST_OR_MAP = false;
   public boolean ALIGN_NAMED_ARGS_IN_MAP = true;
   @Property(externalName = "space_before_closure_left_brace")

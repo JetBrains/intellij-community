@@ -2,6 +2,7 @@
 package com.intellij.internal.statistic.beans
 
 import com.intellij.internal.statistic.eventLog.FeatureUsageData
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
 import java.util.*
 
@@ -14,6 +15,7 @@ import java.util.*
  * * merging this metric with another one, e.g. eventId="has.config.file", eventData={"type":"dockerfile"} or eventData={"type":"docker-compose.yml"};
  * * adding more information about this metric, e.g. eventId="has.dockerfile", eventData={"version":"2.3", "location":"project.root"};
  */
+@ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
 @Deprecated("Use EventLogGroup#registerEvent and EventId#metric instead")
 fun newMetric(@NonNls eventId: String): MetricEvent {
   return MetricEvent(eventId, null)
@@ -25,6 +27,7 @@ fun newMetric(@NonNls eventId: String): MetricEvent {
  * eventId="breakpoint", eventData={"type":"line", "lang":"Java", "count":5}
  * eventId="gradle", eventData={"version":"2.3.1"}
  */
+@ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
 @Deprecated("Use EventLogGroup#registerEvent and EventId#metric instead")
 fun newMetric(@NonNls eventId: String, data: FeatureUsageData?): MetricEvent {
   return MetricEvent(eventId, data)
@@ -35,6 +38,7 @@ fun newMetric(@NonNls eventId: String, data: FeatureUsageData?): MetricEvent {
  *
  * eventId="upload.files", eventData={"value":"ON_SAVE"}
  */
+@ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
 @Deprecated("Use EventLogGroup#registerEvent and EventId#metric instead")
 fun newMetric(@NonNls eventId: String, value: String): MetricEvent {
   return newMetric(eventId, value, null)
@@ -45,6 +49,7 @@ fun newMetric(@NonNls eventId: String, value: String): MetricEvent {
  *
  * eventId="upload.files", eventData={"value":"ON_SAVE"}
  */
+@ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
 @Deprecated("Use EventLogGroup#registerEvent and EventId#metric instead")
 fun newMetric(@NonNls eventId: String, value: String, data: FeatureUsageData?): MetricEvent {
   val newData = data?.copy() ?: FeatureUsageData()
@@ -56,6 +61,7 @@ fun newMetric(@NonNls eventId: String, value: String, data: FeatureUsageData?): 
  *
  * eventId="upload.files", eventData={"value":"ON_SAVE"}
  */
+@ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
 @Deprecated("Use EventLogGroup#registerEvent and EventId#metric instead")
 fun newMetric(@NonNls eventId: String, value: Enum<*>?): MetricEvent {
   return newMetric(eventId, value, null)
@@ -66,6 +72,7 @@ fun newMetric(@NonNls eventId: String, value: Enum<*>?): MetricEvent {
  *
  * eventId="upload.files", eventData={"value":"ON_SAVE"}
  */
+@ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
 @Deprecated("Use EventLogGroup#registerEvent and EventId#metric instead")
 fun newMetric(@NonNls eventId: String, value: Enum<*>?, data: FeatureUsageData?): MetricEvent {
   val newData = data?.copy() ?: FeatureUsageData()
@@ -78,6 +85,7 @@ fun newMetric(@NonNls eventId: String, value: Enum<*>?, data: FeatureUsageData?)
  *
  * eventId="allowed.connections", eventData={"value":3}
  */
+@ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
 @Deprecated("Use EventLogGroup#registerEvent and EventId#metric instead")
 fun newMetric(@NonNls eventId: String, value: Int): MetricEvent {
   return newMetric(eventId, value, null)
@@ -88,6 +96,7 @@ fun newMetric(@NonNls eventId: String, value: Int): MetricEvent {
  *
  * eventId="allowed.connections", eventData={"value":3}
  */
+@ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
 @Deprecated("Use EventLogGroup#registerEvent and EventId#metric instead")
 fun newMetric(@NonNls eventId: String, value: Int, data: FeatureUsageData?): MetricEvent {
   val newData = data?.copy() ?: FeatureUsageData()
@@ -99,6 +108,7 @@ fun newMetric(@NonNls eventId: String, value: Int, data: FeatureUsageData?): Met
  *
  * eventId="line.spacing", eventData={"value":1.2}
  */
+@ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
 @Deprecated("Use EventLogGroup#registerEvent and EventId#metric instead")
 fun newMetric(@NonNls eventId: String, value: Float): MetricEvent {
   return newMetric(eventId, value, null)
@@ -109,6 +119,7 @@ fun newMetric(@NonNls eventId: String, value: Float): MetricEvent {
  *
  * eventId="line.spacing", eventData={"value":1.2}
  */
+@ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
 @Deprecated("Use EventLogGroup#registerEvent and EventId#metric instead")
 fun newMetric(@NonNls eventId: String, value: Float, data: FeatureUsageData?): MetricEvent {
   val newData = data?.copy() ?: FeatureUsageData()
@@ -120,6 +131,7 @@ fun newMetric(@NonNls eventId: String, value: Float, data: FeatureUsageData?): M
  *
  * eventId="font.ligatures", eventData={"enabled":true}
  */
+@ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
 @Deprecated("Use EventLogGroup#registerEvent and EventId#metric instead")
 fun newBooleanMetric(@NonNls eventId: String, enabled: Boolean): MetricEvent {
   return newBooleanMetric(eventId, enabled, null)
@@ -130,6 +142,7 @@ fun newBooleanMetric(@NonNls eventId: String, enabled: Boolean): MetricEvent {
  *
  * eventId="font.ligatures", eventData={"enabled":true}
  */
+@ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
 @Deprecated("Use EventLogGroup#registerEvent and EventId#metric instead")
 fun newBooleanMetric(@NonNls eventId: String, enabled: Boolean, data: FeatureUsageData?): MetricEvent {
   val newData = data?.copy() ?: FeatureUsageData()
@@ -141,6 +154,7 @@ fun newBooleanMetric(@NonNls eventId: String, enabled: Boolean, data: FeatureUsa
  *
  * eventId="tool.is.under.project.root", eventData={"value":true}
  */
+@ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
 @Deprecated("Use EventLogGroup#registerEvent and EventId#metric instead")
 fun newMetric(@NonNls eventId: String, value: Boolean): MetricEvent {
   return newMetric(eventId, value, null)
@@ -151,6 +165,7 @@ fun newMetric(@NonNls eventId: String, value: Boolean): MetricEvent {
  *
  * eventId="tool.is.under.project.root", eventData={"value":true}
  */
+@ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
 @Deprecated("Use EventLogGroup#registerEvent and EventId#metric instead")
 fun newMetric(@NonNls eventId: String, value: Boolean, data: FeatureUsageData? = null): MetricEvent {
   val newData = data?.copy() ?: FeatureUsageData()
@@ -162,6 +177,7 @@ fun newMetric(@NonNls eventId: String, value: Boolean, data: FeatureUsageData? =
  *
  * eventId="source_roots", eventData={"count":3}
  */
+@ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
 @Deprecated("Use EventLogGroup#registerEvent and EventId#metric instead")
 fun newCounterMetric(@NonNls eventId: String, count: Int): MetricEvent {
   return newCounterMetric(eventId, count, null)
@@ -172,6 +188,7 @@ fun newCounterMetric(@NonNls eventId: String, count: Int): MetricEvent {
  *
  * eventId="source_roots", eventData={"count":3}
  */
+@ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
 @Deprecated("Use EventLogGroup#registerEvent and EventId#metric instead")
 fun newCounterMetric(@NonNls eventId: String, count: Int, data: FeatureUsageData?): MetricEvent {
   val newData = data?.copy() ?: FeatureUsageData()

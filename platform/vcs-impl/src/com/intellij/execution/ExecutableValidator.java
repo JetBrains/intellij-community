@@ -39,8 +39,8 @@ public abstract class ExecutableValidator {
   public static final int TIMEOUT_MS = Registry.intValue("vcs.executable.validator.timeout.sec", 60) * 1000;
 
   private static final Logger LOG = Logger.getInstance(ExecutableValidator.class);
-  private static final NotificationGroup ourNotificationGroup = new NotificationGroup("External Executable Critical Failures",
-                                                                                      NotificationDisplayType.STICKY_BALLOON, true);
+  private static final NotificationGroup ourNotificationGroup =
+    NotificationGroupManager.getInstance().getNotificationGroup("External Executable Critical Failures");
   @NotNull protected final Project myProject;
 
   @NotNull private final @NlsContexts.DialogTitle String myNotificationErrorTitle;
@@ -228,7 +228,6 @@ public abstract class ExecutableValidator {
   }
 
   public class ExecutableNotValidNotification extends Notification {
-
     public ExecutableNotValidNotification() {
       this(myNotificationErrorDescription);
     }
@@ -238,7 +237,8 @@ public abstract class ExecutableValidator {
     }
 
     public ExecutableNotValidNotification(@NotNull @NlsContexts.NotificationContent String preparedDescription, @NotNull NotificationType type) {
-      super(ourNotificationGroup.getDisplayId(), "", preparedDescription, type, new NotificationListener.Adapter() {
+      super(ourNotificationGroup.getDisplayId(), preparedDescription, type);
+      setListener(new NotificationListener.Adapter() {
         @Override
         protected void hyperlinkActivated(@NotNull Notification notification, @NotNull HyperlinkEvent event) {
           showSettingsAndExpireIfFixed(notification);

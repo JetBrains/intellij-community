@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.lang.java6;
 
 import com.intellij.ReviseWhenPortedToJDK;
@@ -33,8 +33,7 @@ public class UrlClassLoader extends ClassLoader {
     //this class is compiled for Java 6 so it's enough to check that it isn't running under Java 6
     boolean isAtLeastJava7 = !System.getProperty("java.runtime.version", "unknown").startsWith("1.6.");
     boolean ibmJvm = System.getProperty("java.vm.vendor", "unknown").toLowerCase(Locale.ENGLISH).contains("ibm");
-    boolean capable =
-      isAtLeastJava7 && !ibmJvm && Boolean.parseBoolean(System.getProperty("use.parallel.class.loading", "true"));
+    boolean capable = isAtLeastJava7 && !ibmJvm;
     if (capable) {
       ourParallelCapableLoaders = Collections.synchronizedSet(new HashSet<Class<?>>());
       try {

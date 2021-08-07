@@ -30,7 +30,7 @@ public interface BulkFileListener {
   @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
   class Adapter implements BulkFileListener { }
 
-  default void before(@NotNull List<? extends VFileEvent> events) { }
+  default void before(@NotNull List<? extends @NotNull VFileEvent> events) { }
 
-  default void after(@NotNull List<? extends VFileEvent> events) { }
+  default void after(@NotNull List<? extends @NotNull VFileEvent> events) { }
 }

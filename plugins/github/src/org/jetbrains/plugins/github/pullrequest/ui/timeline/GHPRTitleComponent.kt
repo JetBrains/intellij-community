@@ -1,7 +1,9 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.pullrequest.ui.timeline
 
+import com.intellij.collaboration.async.CompletableFutureUtil.successOnEdt
 import com.intellij.openapi.progress.EmptyProgressIndicator
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.text.HtmlBuilder
 import com.intellij.openapi.util.text.HtmlChunk
@@ -19,27 +21,27 @@ import org.jetbrains.plugins.github.pullrequest.ui.GHTextActions
 import org.jetbrains.plugins.github.pullrequest.ui.details.GHPRDetailsModel
 import org.jetbrains.plugins.github.ui.util.GHUIUtil
 import org.jetbrains.plugins.github.ui.util.HtmlEditorPane
-import org.jetbrains.plugins.github.ui.util.SingleValueModel
-import org.jetbrains.plugins.github.util.successOnEdt
+import com.intellij.collaboration.ui.SingleValueModel
 import java.util.concurrent.CompletableFuture
 import javax.swing.JComponent
 import javax.swing.JLabel
 
 internal object GHPRTitleComponent {
 
-  fun create(model: SingleValueModel<GHPullRequestShort>, detailsDataProvider: GHPRDetailsDataProvider): JComponent {
+  fun create(project: Project, model: SingleValueModel<GHPullRequestShort>, detailsDataProvider: GHPRDetailsDataProvider): JComponent {
     val icon = JLabel()
     val title = HtmlEditorPane().apply {
       font = font.deriveFont((font.size * 1.5).toFloat())
     }
 
-    model.addAndInvokeValueChangedListener {
+    model.addAndInvokeListener {
       icon.icon = GHUIUtil.getPullRequestStateIcon(model.value.state, model.value.isDraft)
       title.setBody(getTitleBody(model.value.title, model.value.number.toString()))
     }
 
     if (model.value.viewerCanUpdate) {
-      val panelHandle = object : GHEditableHtmlPaneHandle(title,
+      val panelHandle = object : GHEditableHtmlPaneHandle(project,
+                                                          title,
                                                           { CompletableFuture.completedFuture(model.value.title) },
                                                           { newText ->
                                                             detailsDataProvider.updateDetails(EmptyProgressIndicator(),

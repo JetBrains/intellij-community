@@ -35,6 +35,11 @@ public abstract class JsonSchemaInjectorBase implements MultiHostInjector {
     }
 
     @Override
+    public @NotNull Language getInjectedLanguage() {
+      return language;
+    }
+
+    @Override
     public @NotNull String getPrefix() {
       return StringUtil.notNullize(prefix) ;
     }

@@ -1,16 +1,16 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.pullrequest.data
 
+import com.intellij.collaboration.async.CompletableFutureUtil
+import com.intellij.collaboration.async.CompletableFutureUtil.handleOnEdt
+import com.intellij.collaboration.async.CompletableFutureUtil.submitIOTask
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.util.Disposer
 import com.intellij.util.EventDispatcher
-import org.jetbrains.plugins.github.pullrequest.ui.SimpleEventListener
-import org.jetbrains.plugins.github.util.GithubAsyncUtil
+import com.intellij.collaboration.ui.SimpleEventListener
 import org.jetbrains.plugins.github.util.NonReusableEmptyProgressIndicator
-import org.jetbrains.plugins.github.util.handleOnEdt
-import org.jetbrains.plugins.github.util.submitIOTask
 import java.util.concurrent.CompletableFuture
 import kotlin.properties.Delegates
 
@@ -48,7 +48,7 @@ abstract class GHListLoaderBase<T>(protected val progressManager: ProgressManage
         if (indicator.isCanceled) return@handleOnEdt
         loading = false
         if (error != null) {
-          if (!GithubAsyncUtil.isCancellation(error)) this.error = error
+          if (!CompletableFutureUtil.isCancellation(error)) this.error = error
         }
         else if (list != null) {
           val startIdx = loadedData.size

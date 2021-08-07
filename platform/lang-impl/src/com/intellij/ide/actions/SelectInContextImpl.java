@@ -20,12 +20,10 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
-import com.intellij.psi.PsiDocumentManager;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiManager;
+import com.intellij.psi.*;
 import com.intellij.psi.templateLanguages.TemplateLanguageFileViewProvider;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -157,9 +155,21 @@ public final class SelectInContextImpl extends FileSelectInContext {
     }
     PsiFile psiFile = psiElement.getContainingFile();
     if (psiFile == null) {
-      return null;
+      return createFileSystemItemContext(psiElement);
     }
     return new SmartSelectInContext(psiFile, psiElement);
+  }
+
+  @Nullable
+  private static SelectInContext createFileSystemItemContext(PsiElement psiElement) {
+    PsiFileSystemItem fsItem = ObjectUtils.tryCast(psiElement, PsiFileSystemItem.class);
+    VirtualFile vfile = fsItem == null ? null : fsItem.getVirtualFile();
+    return vfile == null ? null : new FileSelectInContext(psiElement.getProject(), vfile) {
+      @Override
+      public @NotNull Object getSelectorInFile() {
+        return psiElement;
+      }
+    };
   }
 
   @Nullable

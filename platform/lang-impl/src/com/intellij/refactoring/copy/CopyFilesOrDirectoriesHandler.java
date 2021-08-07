@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.copy;
 
 import com.intellij.CommonBundle;
@@ -40,6 +40,7 @@ import com.intellij.refactoring.move.moveFilesOrDirectories.MoveFilesOrDirectori
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
@@ -256,7 +257,7 @@ public class CopyFilesOrDirectoriesHandler extends CopyHandlerDelegateBase {
 
       if (!added.isEmpty()) {
         DumbService.getInstance(project).completeJustSubmittedTasks();
-        WriteAction.run(() -> UpdateAddedFileProcessor.updateAddedFiles(added));
+        updateAddedFiles(added);
         if (openInEditor) {
           PsiFile firstFile = added.get(0);
           CopyHandler.updateSelectionInActiveProjectView(firstFile, project, doClone);
@@ -269,6 +270,18 @@ public class CopyFilesOrDirectoriesHandler extends CopyHandlerDelegateBase {
     }
     catch (final IncorrectOperationException | IOException ex) {
       Messages.showErrorDialog(project, ex.getMessage(), RefactoringBundle.message("error.title"));
+    }
+  }
+
+  public static void updateAddedFiles(List<PsiFile> added) {
+    if (added.isEmpty()) return;
+    Project project = added.get(0).getProject();
+    if (Registry.is("run.refactorings.under.progress")) {
+      ApplicationManagerEx.getApplicationEx().runWriteActionWithNonCancellableProgressInDispatchThread(
+        RefactoringBundle.message("progress.title.update.added.files"), project, null, pi -> UpdateAddedFileProcessor.updateAddedFiles(added));
+    }
+    else {
+      WriteAction.run(() -> UpdateAddedFileProcessor.updateAddedFiles(added));
     }
   }
 
@@ -302,7 +315,7 @@ public class CopyFilesOrDirectoriesHandler extends CopyHandlerDelegateBase {
       return null;
     }
     DumbService.getInstance(elementToCopy.getProject()).completeJustSubmittedTasks();
-    WriteAction.run(() -> UpdateAddedFileProcessor.updateAddedFiles(added));
+    updateAddedFiles(added);
     return added.get(0);
   }
 
@@ -326,9 +339,13 @@ public class CopyFilesOrDirectoriesHandler extends CopyHandlerDelegateBase {
           thrown.set(e);
         }
       };
-      app.runWriteActionWithCancellableProgressInDispatchThread(ObjectUtils.notNull(title, RefactoringBundle.message("command.name.copy")), 
-                                                                targetDirectory.getProject(), null, copyAction);
-      rethrow(thrown.get());
+      CommandProcessor.getInstance().executeCommand(targetDirectory.getProject(), () -> app.runWriteActionWithCancellableProgressInDispatchThread(ObjectUtils.notNull(title, RefactoringBundle.message("command.name.copy")), targetDirectory.getProject(), null, copyAction), title, null);
+      Throwable throwable = thrown.get();
+      if (throwable instanceof ProcessCanceledException) {
+        //process was canceled, don't proceed with existing files
+        return;
+      }
+      rethrow(throwable);
     }
     else {
       WriteCommandAction.writeCommandAction(targetDirectory.getProject())
@@ -344,10 +361,6 @@ public class CopyFilesOrDirectoriesHandler extends CopyHandlerDelegateBase {
   }
 
   private static void rethrow(Throwable throwable) throws IOException {
-    if (throwable instanceof ProcessCanceledException) {
-      return;
-    }
-
     if (throwable instanceof IOException) {
       throw (IOException)throwable;
     }
@@ -367,43 +380,71 @@ public class CopyFilesOrDirectoriesHandler extends CopyHandlerDelegateBase {
                                           @NotNull List<PsiFile> added) {
     SkipOverwriteChoice defaultChoice = choice != null && choice[0] > -1 ? SkipOverwriteChoice.values()[choice[0]] : null;
     try {
-      for (PsiDirectory tDirectory : existingFiles.keySet()) {
-        Collection<PsiFile> replacementFiles = existingFiles.get(tDirectory);
-        for (PsiFile replacement : replacementFiles) {
-          String name = newName == null || tDirectory != targetDirectory ? replacement.getName() : newName;
-          PsiFile existing = tDirectory.findFile(name);
-          if (existing == null) continue;
-  
-          SkipOverwriteChoice userChoice = defaultChoice;
-          if (userChoice == null) {
-            userChoice = SkipOverwriteChoice.askUser(targetDirectory, name, title, choice != null);
-
-            if (userChoice == SkipOverwriteChoice.SKIP_ALL || userChoice == SkipOverwriteChoice.OVERWRITE_ALL) {
-              defaultChoice = userChoice;
-            }
-          }
-  
-          switch (userChoice) {
-            case OVERWRITE:
-            case OVERWRITE_ALL:
-              WriteCommandAction.writeCommandAction(targetDirectory.getProject())
-                .withName(title)
-                .run(() -> {
-                  existing.delete();
-                  ((PsiDirectoryImpl)targetDirectory).executeWithUpdatingAddedFilesDisabled(() -> ContainerUtil.addIfNotNull(added, tDirectory.copyFileFrom(name, replacement)));
-                });
-              break;
-            case SKIP_ALL:
-              return;
-          }
-        }
-      }
+      defaultChoice = handleExistingFiles(defaultChoice, choice, newName, targetDirectory, title, existingFiles, added, null);
     }
     finally {
       if (choice != null && defaultChoice != null) {
         choice[0] = defaultChoice.ordinal() % 2;
       }
     }
+  }
+
+  private static SkipOverwriteChoice handleExistingFiles(SkipOverwriteChoice defaultChoice,
+                                                         int @Nullable [] choice,
+                                                         String newName,
+                                                         PsiDirectory targetDirectory,
+                                                         @NlsContexts.DialogTitle String title,
+                                                         @NotNull MultiMap<PsiDirectory, PsiFile> existingFiles,
+                                                         @NotNull List<PsiFile> added,
+                                                         ProgressIndicator progressIndicator) {
+    for (PsiDirectory tDirectory : existingFiles.keySet()) {
+      Collection<PsiFile> replacementFiles = existingFiles.get(tDirectory);
+      for (Iterator<PsiFile> iterator = replacementFiles.iterator(); iterator.hasNext(); ) {
+        PsiFile replacement = iterator.next();
+        String name = newName == null || tDirectory != targetDirectory ? replacement.getName() : newName;
+        PsiFile existing = tDirectory.findFile(name);
+        if (existing == null) continue;
+
+        SkipOverwriteChoice userChoice = defaultChoice;
+        Project project = targetDirectory.getProject();
+        if (userChoice == null) {
+          userChoice = SkipOverwriteChoice.askUser(targetDirectory, name, title, choice != null);
+
+          if (userChoice == SkipOverwriteChoice.SKIP_ALL) {
+            return userChoice;
+          }
+          else if (userChoice == SkipOverwriteChoice.OVERWRITE_ALL) {
+            Consumer<ProgressIndicator> r = pi -> handleExistingFiles(SkipOverwriteChoice.OVERWRITE_ALL, choice, newName, targetDirectory, title, existingFiles, added, pi);
+            if (Registry.is("run.refactorings.under.progress")) {
+              CommandProcessor.getInstance().executeCommand(project, () -> ApplicationManagerEx.getApplicationEx().runWriteActionWithCancellableProgressInDispatchThread(title, project, null, r), title, null);
+            }
+            else {
+              r.accept(null);
+            }
+            return SkipOverwriteChoice.OVERWRITE_ALL;
+          }
+        }
+
+        iterator.remove();
+        ThrowableRunnable<RuntimeException> doCopy = () -> {
+          if (progressIndicator != null) {
+            progressIndicator.setText2(InspectionsBundle.message("processing.progress.text", existing.getName()));
+          }
+          existing.delete();
+          ((PsiDirectoryImpl)targetDirectory).executeWithUpdatingAddedFilesDisabled(() -> ContainerUtil.addIfNotNull(added, tDirectory.copyFileFrom(name, replacement)));
+        };
+
+        if (userChoice == SkipOverwriteChoice.OVERWRITE || userChoice == SkipOverwriteChoice.OVERWRITE_ALL && !Registry.is("run.refactorings.under.progress")) {
+          WriteCommandAction.writeCommandAction(project)
+            .withName(title)
+            .run(doCopy);
+        }
+        else if (userChoice == SkipOverwriteChoice.OVERWRITE_ALL) {
+          doCopy.run();
+        }
+      }
+    }
+    return defaultChoice;
   }
 
   /**

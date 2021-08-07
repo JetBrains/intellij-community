@@ -24,10 +24,9 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.*;
 import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import java.util.Arrays;
 
 public class PsiMethodCallExpressionImpl extends ExpressionPsiElement implements PsiMethodCallExpression {
   private static final Logger LOG = Logger.getInstance(PsiMethodCallExpressionImpl.class);
@@ -66,7 +65,7 @@ public class PsiMethodCallExpressionImpl extends ExpressionPsiElement implements
     PsiReferenceExpression expression = getMethodExpression();
     PsiReferenceParameterList result = expression.getParameterList();
     if (result != null) return result;
-    LOG.error("Invalid method call expression. Children:\n" + DebugUtil.psiTreeToString(expression, false));
+    LOG.error("Invalid method call expression. Children:\n" + DebugUtil.psiTreeToString(expression, true));
     return result;
   }
 
@@ -86,7 +85,7 @@ public class PsiMethodCallExpressionImpl extends ExpressionPsiElement implements
   public PsiExpressionList getArgumentList() {
     PsiExpressionList list = (PsiExpressionList)findChildByRoleAsPsiElement(ChildRole.ARGUMENT_LIST);
     if (list == null) {
-      LOG.error("Invalid PSI for'" + getText() + ". Parent:" + DebugUtil.psiToString(getParent(), false));
+      LOG.error("Invalid PSI for'" + getText() + ". Parent:" + DebugUtil.psiToString(getParent(), true));
     }
     return list;
   }
@@ -225,9 +224,10 @@ public class PsiMethodCallExpressionImpl extends ExpressionPsiElement implements
     }
     return parentArgList != null &&
            MethodCandidateInfo.isOverloadCheck(parentArgList) &&
-           Arrays.stream(parentArgList.getExpressions())
-             .map(expression -> PsiUtil.skipParenthesizedExprDown(expression))
-             .noneMatch(expression -> expression != null && ThreadLocalTypes.hasBindingFor(expression));
+           !ContainerUtil.exists(parentArgList.getExpressions(), expression -> {
+               expression = PsiUtil.skipParenthesizedExprDown(expression);
+               return expression != null && ThreadLocalTypes.hasBindingFor(expression);
+             });
   }
 
   private static PsiType captureReturnType(PsiMethodCallExpression call,

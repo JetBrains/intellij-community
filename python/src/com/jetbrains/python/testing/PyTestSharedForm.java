@@ -19,7 +19,6 @@ import com.google.common.collect.ObjectArrays;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
-import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -27,6 +26,7 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.TextAccessor;
+import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.components.JBRadioButton;
 import com.intellij.ui.components.JBTextField;
 import com.intellij.uiDesigner.core.GridConstraints;
@@ -50,7 +50,6 @@ import javax.swing.*;
 import java.awt.*;
 import java.util.*;
 import java.util.List;
-import java.util.regex.Pattern;
 
 /**
  * Form to display run configuration.
@@ -94,14 +93,14 @@ public final class PyTestSharedForm implements SimplePropertiesProvider {
   }
 
   @Override
-  public void setPropertyValue(@NotNull final String propertyName, @Nullable final String propertyValue) {
-    myCustomOptions.get(propertyName).myOptionValue.setText(propertyValue != null ? propertyValue : "");
+  public void setPropertyValue(@NotNull final String propertyName, @Nullable final Object propertyValue) {
+    myCustomOptions.get(propertyName).setValue(propertyValue);
   }
 
   @Nullable
   @Override
-  public String getPropertyValue(@NotNull final String propertyName) {
-    return myCustomOptions.get(propertyName).myOptionValue.getText();
+  public Object getPropertyValue(@NotNull final String propertyName) {
+    return myCustomOptions.get(propertyName).getValue();
   }
 
   private PyTestSharedForm(@Nullable final Module module,
@@ -114,7 +113,8 @@ public final class PyTestSharedForm implements SimplePropertiesProvider {
     final ThreeState testClassRequired = configuration.isTestClassRequired();
 
 
-    ContextAnchor contentAnchor = (module != null ? new ModuleBasedContextAnchor(module) : new ProjectSdkContextAnchor(project, configuration.getSdk()));
+    ContextAnchor contentAnchor =
+      (module != null ? new ModuleBasedContextAnchor(module) : new ProjectSdkContextAnchor(project, configuration.getSdk()));
     myPythonTarget = new PySymbolFieldWithBrowseButton(contentAnchor,
                                                        element -> {
                                                          if (element instanceof PsiDirectory) {
@@ -178,9 +178,9 @@ public final class PyTestSharedForm implements SimplePropertiesProvider {
     if (customOptions.length == 0) {
       return;
     }
-    final Map<String, JBTextField> optionValueFields = new HashMap<>();
+    final Map<String, JComponent> optionValueFields = new HashMap<>();
     for (final PyTestCustomOption option : customOptions) {
-      final JBTextField textField = new JBTextField();
+      final JComponent textField = option.isBooleanType() ? new JBCheckBox() : new JBTextField();
       optionValueFields.put(option.getName(), textField);
     }
 
@@ -190,7 +190,7 @@ public final class PyTestSharedForm implements SimplePropertiesProvider {
     constraints.anchor = GridBagConstraints.LINE_START;
 
     for (final PyTestCustomOption option : customOptions) {
-      final JBTextField textField = optionValueFields.get(option.getName());
+      final JComponent field = optionValueFields.get(option.getName());
       final JLabel label = new JLabel(option.getLocalizedName()); // NON-NLS
       label.setHorizontalAlignment(SwingConstants.LEFT);
 
@@ -202,11 +202,15 @@ public final class PyTestSharedForm implements SimplePropertiesProvider {
       constraints.gridx = 1;
       constraints.weightx = 1.0;
       constraints.fill = GridBagConstraints.HORIZONTAL;
-      myCustomOptionsPanel.add(textField, constraints);
+      myCustomOptionsPanel.add(field, constraints);
 
       constraints.gridy++;
 
-      myCustomOptions.put(option.getName(), new OptionHolder(option, label, textField));
+      OptionHolder value = option.isBooleanType()
+                           ? new OptionHolder(option, label, (JBCheckBox)field)
+                           : new OptionHolder(option, label, (JBTextField)field);
+
+      myCustomOptions.put(option.getName(), value);
     }
   }
 
@@ -270,29 +274,5 @@ public final class PyTestSharedForm implements SimplePropertiesProvider {
       }
     }
     onTargetTypeChanged();
-  }
-
-
-  private static final class OptionHolder {
-    @NotNull
-    private final PyTestCustomOption myOption;
-    @NotNull
-    private final JLabel myOptionLabel;
-    @NotNull
-    private final JTextField myOptionValue;
-
-    private OptionHolder(@NotNull final PyTestCustomOption option,
-                         @NotNull final JLabel optionLabel,
-                         @NotNull final JTextField optionValue) {
-      myOption = option;
-      myOptionLabel = optionLabel;
-      myOptionValue = optionValue;
-    }
-
-    private void setType(@NotNull final PyRunTargetVariant type) {
-      final boolean visible = myOption.getMySupportedTypes().contains(type);
-      myOptionLabel.setVisible(visible);
-      myOptionValue.setVisible(visible);
-    }
   }
 }

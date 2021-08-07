@@ -1,12 +1,18 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.yaml.psi;
 
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.application.ex.PathManagerEx;
+import com.intellij.openapi.command.WriteCommandAction;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.ThrowableComputable;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.ElementManipulators;
 import com.intellij.psi.LiteralTextEscaper;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiLanguageInjectionHost;
+import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.testFramework.fixtures.BasePlatformTestCase;
 import org.jetbrains.yaml.YAMLParserDefinition;
@@ -152,7 +158,6 @@ public class YAMLScalarLiteralEscaperTest extends BasePlatformTestCase {
 
     final StringBuilder builder = new StringBuilder();
     assertTrue(elementLiteralEscaper.decode(ElementManipulators.getValueTextRange(scalarElement), builder));
-    assertEquals(scalarElement.getTextValue(), builder.toString());
 
     int[] offsets = new int[builder.length() + 1];
     for (int i = 0; i < builder.length() + 1; ++i) {
@@ -162,13 +167,27 @@ public class YAMLScalarLiteralEscaperTest extends BasePlatformTestCase {
     final String elementText = scalarElement.getText();
     StringBuilder description = new StringBuilder();
     for (int i = 0; i < builder.length(); ++i) {
-      description.append(builder.charAt(i))
+      description.append(StringUtil.escapeLineBreak(Character.toString(builder.charAt(i))))
         .append("->")
-        .append(elementText.subSequence(offsets[i], offsets[i + 1]))
+        .append(StringUtil.escapeLineBreak(elementText.subSequence(offsets[i], offsets[i + 1]).toString()))
         .append('\n');
     }
     assertSameLinesWithFile(getTestDataPath() + getTestName(true) + ".positions.txt",
                             Arrays.toString(offsets) + "\n" + description,
                             false);
+
+    String decodedText = builder.toString();
+    YAMLScalar scalar = WriteCommandAction.runWriteCommandAction(
+      getProject(),
+      (Computable<? extends YAMLScalar>)() -> CodeStyleManager.getInstance(getProject())
+        .performActionWithFormatterDisabled(() ->
+        ElementManipulators.handleContentChange(scalarElement, decodedText))
+    );
+    //assertEquals("element text should be the same after re-decoding", elementText, scalar.getText());
+    final StringBuilder decodedOnceAgain = new StringBuilder();
+    assertTrue(scalar.createLiteralTextEscaper().decode(ElementManipulators.getValueTextRange(scalar), decodedOnceAgain));
+    assertEquals("should decode to the same content after content change with previously decoded content",
+                 decodedText,
+                 decodedOnceAgain.toString());
   }
 }

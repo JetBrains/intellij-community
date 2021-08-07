@@ -31,7 +31,7 @@ import java.util.List;
 public class ProjectGroupActionGroup extends DefaultActionGroup implements DumbAware {
   private final ProjectGroup myGroup;
 
-  public ProjectGroupActionGroup(ProjectGroup group, List<AnAction> children) {
+  public ProjectGroupActionGroup(@NotNull ProjectGroup group, @NotNull List<? extends AnAction> children) {
     super(group.getName(), children);
     myGroup = group;
   }
@@ -42,6 +42,7 @@ public class ProjectGroupActionGroup extends DefaultActionGroup implements DumbA
       @Override
       public void actionPerformed(@NotNull AnActionEvent e) {
         myGroup.setExpanded(!myGroup.isExpanded());
+        RecentProjectsManagerBase.getInstanceEx().getState().intIncrementModificationCount();
         final JList list = getList(e);
         if (list != null) {
           final int index = list.getSelectedIndex();

@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.ift
 
+import com.intellij.openapi.application.ApplicationNamesInfo
 import com.jetbrains.python.PythonLanguage
 import com.jetbrains.python.ift.lesson.assistance.PythonEditorCodingAssistanceLesson
 import com.jetbrains.python.ift.lesson.basic.PythonContextActionsLesson
@@ -19,6 +20,7 @@ import com.jetbrains.python.ift.lesson.refactorings.PythonRenameLesson
 import com.jetbrains.python.ift.lesson.run.PythonDebugLesson
 import com.jetbrains.python.ift.lesson.run.PythonRunConfigurationLesson
 import training.dsl.LessonUtil
+import training.learn.CourseManager
 import training.learn.LessonsBundle
 import training.learn.course.LearningCourseBase
 import training.learn.course.LearningModule
@@ -30,21 +32,21 @@ import training.learn.lesson.general.assistance.QuickPopupsLesson
 import training.learn.lesson.general.navigation.FindInFilesLesson
 import training.learn.lesson.general.refactorings.ExtractMethodCocktailSortLesson
 import training.learn.lesson.general.refactorings.ExtractVariableFromBubbleLesson
-import training.util.switchOnExperimentalLessons
 
 class PythonLearningCourse : LearningCourseBase(PythonLanguage.INSTANCE.id) {
-  override fun modules() = (if (switchOnExperimentalLessons) experimentalModules() else emptyList()) + stableModules()
+  override fun modules() = onboardingTour() + stableModules() + CourseManager.instance.findCommonModules("Git")
 
-  private fun experimentalModules() = listOf(
+  private val disableOnboardingLesson get() = ApplicationNamesInfo.getInstance().fullProductNameWithEdition.equals("PyCharm Edu")
+
+  private fun onboardingTour() = if (!disableOnboardingLesson) listOf(
     LearningModule(name = PythonLessonsBundle.message("python.onboarding.module.name"),
                    description = PythonLessonsBundle.message("python.onboarding.module.description", LessonUtil.productName),
                    primaryLanguage = langSupport,
                    moduleType = LessonType.PROJECT) {
-      listOf(
-        PythonOnboardingTour(),
-      )
-    },
+      listOf(PythonOnboardingTour())
+    }
   )
+  else emptyList()
 
   private fun stableModules() = listOf(
     LearningModule(name = LessonsBundle.message("editor.basics.module.name"),

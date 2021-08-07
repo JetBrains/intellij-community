@@ -3,14 +3,14 @@ package com.intellij.openapi.wm.impl
 
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.StartupActivity
+import com.intellij.openapi.util.registry.ExperimentalUI
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.wm.ToolWindow
-import com.intellij.openapi.wm.WindowManager
 import com.intellij.openapi.wm.ex.ToolWindowManagerListener
 
 class ToolWindowToolbarActivity : StartupActivity {
   override fun runActivity(project: Project) {
-    if (!Registry.`is`("ide.new.stripes.ui")) return
+    if (!ExperimentalUI.isNewToolWindowsStripes()) return
 
     project.messageBus.connect(project).subscribe(ToolWindowManagerListener.TOPIC, ToolwindowToolbarListener(project))
   }
@@ -20,14 +20,6 @@ class ToolwindowToolbarListener(val project: Project) : ToolWindowManagerListene
   override fun toolWindowShown(toolWindow: ToolWindow) {
     if (toolWindow.isVisibleOnLargeStripe) return
     toolWindow.isVisibleOnLargeStripe = true
-
     toolWindow.largeStripeAnchor = toolWindow.anchor
-
-    getToolWindowsPane(project)?.onStripeButtonAdded(project, toolWindow, toolWindow.largeStripeAnchor, Comparator { _, _ -> 0 })
-  }
-
-  companion object {
-    private fun getToolWindowsPane(project: Project) =
-      (WindowManager.getInstance() as? WindowManagerImpl)?.getProjectFrameRootPane(project)?.toolWindowPane
   }
 }

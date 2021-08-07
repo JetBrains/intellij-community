@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build.images
 
 import com.intellij.openapi.util.JDOMUtil
@@ -188,22 +188,8 @@ internal open class IconsClassGenerator(private val projectHome: Path,
         println("Updated class: ${outFile.fileName}")
       }
       else {
-        val sb = StringBuilder()
-        var ch = Diff.buildChanges(oldLines.toTypedArray(), newLines.toTypedArray())
-        while (ch != null) {
-          val deleted = oldLines.subList(ch.line0, ch.line0 + ch.deleted)
-          val inserted = newLines.subList(ch.line1, ch.line1 + ch.inserted)
-
-          if (sb.isNotEmpty()) {
-            sb.append("=".repeat(20)).append("\n")
-          }
-          deleted.forEach { sb.append('-').append(it).append('\n') }
-          inserted.forEach { sb.append('+').append(it).append('\n') }
-
-          ch = ch.link
-        }
-
-        modifiedClasses.add(ModifiedClass(module, outFile, sb))
+        val diff = Diff.linesDiff(oldLines.toTypedArray(), newLines.toTypedArray()) ?: ""
+        modifiedClasses.add(ModifiedClass(module, outFile, diff))
       }
     }
   }
@@ -456,7 +442,7 @@ internal open class IconsClassGenerator(private val projectHome: Path,
       if (file.toString().endsWith(".svg")) {
         // don't mask any exception for svg file
         val data = loadAndNormalizeSvgFile(imageFile)
-        loadedImage = SvgTranscoder.createImage(1f, createSvgDocument(null, data.reader()), null)
+        loadedImage = SvgTranscoder.createImage(1f, createSvgDocument(null, data.byteInputStream()), null)
         key = getImageKey(data.toByteArray(), file.fileName.toString())
       }
       else {
@@ -552,7 +538,7 @@ private fun getFirstContentRootUrl(module: JpsModule) = module.contentRootsList.
 
 private fun className(name: String): CharSequence {
   val result = StringBuilder(name.length)
-  name.removePrefix("intellij.").split('-', '_', '.').forEach {
+  name.removePrefix("intellij.vcs.").removePrefix("intellij.").split('-', '_', '.').forEach {
     result.append(capitalize(it))
   }
   return toJavaIdentifier(result, result.length)

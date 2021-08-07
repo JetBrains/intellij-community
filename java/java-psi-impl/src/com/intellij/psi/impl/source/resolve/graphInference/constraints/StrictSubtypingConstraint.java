@@ -133,7 +133,7 @@ public class StrictSubtypingConstraint implements ConstraintFormula {
 
         if (SClass == null) return false;
 
-        if (((PsiClassType)myT).isRaw()) {
+        if (((PsiClassType)myT).isRaw() || myCapture && sType.isRaw()) {
           return InheritanceUtil.isInheritorOrSelf(SClass, CClass, true);
         }
 

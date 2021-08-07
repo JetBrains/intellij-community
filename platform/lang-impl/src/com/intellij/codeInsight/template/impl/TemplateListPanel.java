@@ -758,22 +758,10 @@ public class TemplateListPanel extends JPanel implements Disposable {
         myTree.repaint();
       }
     };
-
-
-    myTree.addMouseListener(new PopupHandler() {
-      @Override
-      public void invokePopup(Component comp, int x, int y) {
-        final DefaultActionGroup group = new DefaultActionGroup();
-        group.add(rename);
-        group.add(move);
-        group.add(changeContext);
-        group.add(revert);
-        group.add(ActionManager.getInstance().getAction(IdeActions.ACTION_COPY));
-        group.add(ActionManager.getInstance().getAction(IdeActions.ACTION_PASTE));
-        group.add(ActionManager.getInstance().getAction(IdeActions.ACTION_DELETE));
-        ActionManager.getInstance().createActionPopupMenu(ActionPlaces.UNKNOWN, group).getComponent().show(comp, x, y);
-      }
-    });
+    DefaultActionGroup group = new DefaultActionGroup(
+      rename, move, changeContext, revert,
+      ActionManager.getInstance().getAction(IdeActions.GROUP_BASIC_EDITOR_POPUP));
+    PopupHandler.installPopupMenu(myTree, group, "TemplateTreePopup");
   }
 
   @Nullable

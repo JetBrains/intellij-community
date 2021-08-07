@@ -1,16 +1,20 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.log.ui.table;
 
+import com.intellij.openapi.util.text.HtmlBuilder;
+import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.ui.ScrollingUtil;
 import com.intellij.ui.SimpleColoredRenderer;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ui.UIUtil;
+import com.intellij.vcs.log.VcsLogBundle;
 import com.intellij.vcs.log.impl.VcsLogUiProperties;
 import com.intellij.vcs.log.statistics.VcsLogUsageTriggerCollector;
 import com.intellij.vcs.log.ui.VcsLogColorManager;
 import com.intellij.vcs.log.util.VcsLogUiUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -29,6 +33,7 @@ public class RootCellRenderer extends SimpleColoredRenderer implements TableCell
   @NotNull private Color myColor = UIUtil.getTableBackground();
   @NotNull private Color myBorderColor = UIUtil.getTableBackground();
   private boolean isNarrow = true;
+  @NotNull private @Nls String myTooltip = "";
 
   public RootCellRenderer(@NotNull VcsLogUiProperties properties, @NotNull VcsLogColorManager colorManager) {
     myProperties = properties;
@@ -85,6 +90,8 @@ public class RootCellRenderer extends SimpleColoredRenderer implements TableCell
       isNarrow = true;
     }
 
+    myTooltip = getTooltipText(path, isNarrow);
+
     return this;
   }
 
@@ -121,5 +128,22 @@ public class RootCellRenderer extends SimpleColoredRenderer implements TableCell
   @Override
   public void setBackground(Color bg) {
     myBorderColor = bg;
+  }
+
+  @Override
+  public String getToolTipText(MouseEvent event) {
+    return myTooltip;
+  }
+
+  @NotNull
+  private @Nls String getTooltipText(@Nullable FilePath path, boolean isNarrow) {
+    String clickMessage = !isNarrow
+                          ? VcsLogBundle.message("vcs.log.click.to.collapse.paths.column.tooltip")
+                          : VcsLogBundle.message("vcs.log.click.to.expand.paths.column.tooltip");
+    if (path == null) return clickMessage;
+    return new HtmlBuilder().append(HtmlChunk.text(myColorManager.getLongName(path)).bold())
+      .br()
+      .append(clickMessage)
+      .wrapWith(HtmlChunk.html()).toString();
   }
 }

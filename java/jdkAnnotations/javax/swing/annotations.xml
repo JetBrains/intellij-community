@@ -12,6 +12,36 @@
   <item name='javax.swing.AbstractButton void setActionCommand(java.lang.String) 0'>
     <annotation name='org.jetbrains.annotations.NonNls'/>
   </item>
+  <item name='javax.swing.Action NAME'>
+    <annotation name='org.jetbrains.annotations.NonNls'/>
+  </item>
+  <item name='javax.swing.Action SHORT_DESCRIPTION'>
+    <annotation name='org.jetbrains.annotations.NonNls'/>
+  </item>
+  <item name='javax.swing.Action LONG_DESCRIPTION'>
+    <annotation name='org.jetbrains.annotations.NonNls'/>
+  </item>
+  <item name='javax.swing.Action SMALL_ICON'>
+    <annotation name='org.jetbrains.annotations.NonNls'/>
+  </item>
+  <item name='javax.swing.Action ACTION_COMMAND_KEY'>
+    <annotation name='org.jetbrains.annotations.NonNls'/>
+  </item>
+  <item name='javax.swing.Action ACCELERATOR_KEY'>
+    <annotation name='org.jetbrains.annotations.NonNls'/>
+  </item>
+  <item name='javax.swing.Action MNEMONIC_KEY'>
+    <annotation name='org.jetbrains.annotations.NonNls'/>
+  </item>
+  <item name='javax.swing.Action SELECTED_KEY'>
+    <annotation name='org.jetbrains.annotations.NonNls'/>
+  </item>
+  <item name='javax.swing.Action DISPLAYED_MNEMONIC_INDEX_KEY'>
+    <annotation name='org.jetbrains.annotations.NonNls'/>
+  </item>
+  <item name='javax.swing.Action LARGE_ICON_KEY'>
+    <annotation name='org.jetbrains.annotations.NonNls'/>
+  </item>
   <item name='javax.swing.Action java.lang.Object getValue(java.lang.String) 0'>
     <annotation name='org.jetbrains.annotations.NonNls'/>
   </item>
@@ -74,6 +104,12 @@
     <annotation name="org.intellij.lang.annotations.MagicConstant">
       <val name="intValues" val="{javax.swing.JComponent.WHEN_FOCUSED,javax.swing.JComponent.WHEN_IN_FOCUSED_WINDOW,javax.swing.JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT}" />
     </annotation>
+  </item>
+  <item name='javax.swing.JComponent void firePropertyChange(java.lang.String, boolean, boolean) 0'>
+    <annotation name='org.jetbrains.annotations.NonNls'/>
+  </item>
+  <item name='javax.swing.JComponent void firePropertyChange(java.lang.String, int, int) 0'>
+    <annotation name='org.jetbrains.annotations.NonNls'/>
   </item>
   <item name="javax.swing.JComponent void putClientProperty(java.lang.Object, java.lang.Object) 0">
     <annotation name="org.jetbrains.annotations.NonNls" />
@@ -436,6 +472,54 @@
   </item>
   <item name="javax.swing.JTable void sorterChanged(javax.swing.event.RowSorterEvent) 0">
     <annotation name="org.jetbrains.annotations.NotNull" />
+  </item>
+  <item name='javax.swing.JTree CELL_RENDERER_PROPERTY'>
+    <annotation name='org.jetbrains.annotations.NonNls'/>
+  </item>
+  <item name='javax.swing.JTree TREE_MODEL_PROPERTY'>
+    <annotation name='org.jetbrains.annotations.NonNls'/>
+  </item>
+  <item name='javax.swing.JTree ROOT_VISIBLE_PROPERTY'>
+    <annotation name='org.jetbrains.annotations.NonNls'/>
+  </item>
+  <item name='javax.swing.JTree SHOWS_ROOT_HANDLES_PROPERTY'>
+    <annotation name='org.jetbrains.annotations.NonNls'/>
+  </item>
+  <item name='javax.swing.JTree ROW_HEIGHT_PROPERTY'>
+    <annotation name='org.jetbrains.annotations.NonNls'/>
+  </item>
+  <item name='javax.swing.JTree CELL_EDITOR_PROPERTY'>
+    <annotation name='org.jetbrains.annotations.NonNls'/>
+  </item>
+  <item name='javax.swing.JTree EDITABLE_PROPERTY'>
+    <annotation name='org.jetbrains.annotations.NonNls'/>
+  </item>
+  <item name='javax.swing.JTree LARGE_MODEL_PROPERTY'>
+    <annotation name='org.jetbrains.annotations.NonNls'/>
+  </item>
+  <item name='javax.swing.JTree SELECTION_MODEL_PROPERTY'>
+    <annotation name='org.jetbrains.annotations.NonNls'/>
+  </item>
+  <item name='javax.swing.JTree VISIBLE_ROW_COUNT_PROPERTY'>
+    <annotation name='org.jetbrains.annotations.NonNls'/>
+  </item>
+  <item name='javax.swing.JTree INVOKES_STOP_CELL_EDITING_PROPERTY'>
+    <annotation name='org.jetbrains.annotations.NonNls'/>
+  </item>
+  <item name='javax.swing.JTree SCROLLS_ON_EXPAND_PROPERTY'>
+    <annotation name='org.jetbrains.annotations.NonNls'/>
+  </item>
+  <item name='javax.swing.JTree TOGGLE_CLICK_COUNT_PROPERTY'>
+    <annotation name='org.jetbrains.annotations.NonNls'/>
+  </item>
+  <item name='javax.swing.JTree LEAD_SELECTION_PATH_PROPERTY'>
+    <annotation name='org.jetbrains.annotations.NonNls'/>
+  </item>
+  <item name='javax.swing.JTree ANCHOR_SELECTION_PATH_PROPERTY'>
+    <annotation name='org.jetbrains.annotations.NonNls'/>
+  </item>
+  <item name='javax.swing.JTree EXPANDS_SELECTED_PATHS_PROPERTY'>
+    <annotation name='org.jetbrains.annotations.NonNls'/>
   </item>
   <item name='javax.swing.JTree int[] getSelectionRows()'>
     <annotation name='org.jetbrains.annotations.Nullable'/>

@@ -1,13 +1,12 @@
 <html>
 <body>
-Reports <b>.equals()</b> being called
-to compare two <b>java.math.BigDecimal</b> numbers. This is normally
-a mistake, as two <b>java.math.BigDecimal</b>s are only equal if
-they are equal in both value and scale, so that 2.0 is not equal to 2.00
-To compare <b>java.math.BigDecimal</b>s for mathematical equality,
-use <b>.compareTo()</b> instead.
+Reports <code>.equals()</code> being called to compare two <code>java.math.BigDecimal</code> numbers.
+<p>This is normally a mistake, as two <code>java.math.BigDecimal</code> numbers are only equal if
+  they are equal in both value and scale.</p>
+<p><b>Example:</b></p>
+<pre><code>if (new BigDecimal("2.0").equals(new BigDecimal("2.00"))) {}</code></pre>
+<p>After the quick-fix is applied:</p>
+<pre><code>if (new BigDecimal("2.0").compareTo(new BigDecimal("2.00")) == 0) {}</code></pre>
 <!-- tooltip end -->
-<p>
-
 </body>
 </html>

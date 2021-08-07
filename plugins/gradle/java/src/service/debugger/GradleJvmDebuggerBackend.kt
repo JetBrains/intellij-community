@@ -67,8 +67,8 @@ class GradleJvmDebuggerBackend : DebuggerBackendExtension {
           task.forkEvery = 0
         }
         if (task instanceof JavaForkOptions && (debugAllIsEnabled || taskPathsList.contains(task.path))) {
+          def moduleDir = task.project.projectDir.path
           task.doFirst {
-            def moduleDir = task.project.projectDir.path
             def debugPort = ForkedDebuggerHelper.setupDebugger('${id()}', task.path, '$parameters', moduleDir)
             def jvmArgs = task.jvmArgs.findAll{!it?.startsWith('-agentlib:jdwp') && !it?.startsWith('-Xrunjdwp')}
             jvmArgs << ForkedDebuggerHelper.JVM_DEBUG_SETUP_PREFIX + ForkedDebuggerHelper.addrFromProperty +':' + debugPort

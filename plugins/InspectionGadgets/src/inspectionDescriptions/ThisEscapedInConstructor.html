@@ -1,12 +1,16 @@
 <html>
 <body>
-Reports possible escapes of <b>this</b>
-during object construction. Escapes occur when <b>this</b>
-is used as a method argument or the object of an assignment in a constructor or
-initializer. Such escapes may result in subtle bugs, as the object is now
-available in a context in which it is not guaranteed to be initialized.
+Reports possible escapes of <code>this</code> during the object initialization. The escapes occur when <code>this</code> is used as a method argument
+or an object of assignment in a constructor or initializer. Such escapes may result in subtle bugs, as the object is now available in the
+context where it is not guaranteed to be initialized.
+<p><b>Example:</b></p>
+<pre>
+  class Foo {
+    {
+      System.out.println(this);
+    }
+  }
+</pre>
 <!-- tooltip end -->
-<p>
-
 </body>
 </html>

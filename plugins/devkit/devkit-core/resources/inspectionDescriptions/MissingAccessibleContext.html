@@ -1,17 +1,24 @@
 <html>
 <body>
-<p>Reports Swing components that fail to provide accessibility context. 
-  It will be very hard to use such components for visually impaired users who use screen readers.
+Reports Swing components that do not provide accessibility context.
+<p>
+  This information is used by screen readers. Failing to provide it makes the component inaccessible for
+  visually impaired users.
 </p>
-<p>Example:</p>
-<pre>ListCellRenderer&lt;String&gt; renderer = (list, val, index, sel, cell) -> {
-  JPanel panel = new JPanel();
-  return panel;
-};</pre>
+<p><b>Example:</b></p>
+<pre><code>  ListCellRenderer&lt;String&gt; renderer = (list, val, index, sel, cell) -> {
+    JPanel panel = new JPanel();
+    return panel;
+  };
+</code></pre>
 <p>
   To fix the problem, you should either call <code>setAccessibleName()</code> on the returned <code>JPanel</code>
   or override its <code>getAccessibleContext()</code> method.
 </p>
-<!-- tooltip end -->
+<p>
+  The returned text should reflect the purpose
+  of the component. For example, in the case of <code>ListCellRenderer</code>, this would be the text of the menu
+  item.
+</p>
 </body>
 </html>

@@ -1,15 +1,20 @@
 package org.jetbrains.plugins.textmate.language.preferences;
 
-import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.textmate.Constants;
 import org.jetbrains.plugins.textmate.language.TextMateScopeComparator;
+import org.jetbrains.plugins.textmate.language.syntax.lexer.TextMateScope;
 import org.jetbrains.plugins.textmate.plist.PListValue;
 import org.jetbrains.plugins.textmate.plist.Plist;
 
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.Map;
+
 public class ShellVariablesRegistry {
-  @NotNull private final MultiMap<String, TextMateShellVariable> myVariables = MultiMap.create();
+  @NotNull private final Map<String, Collection<TextMateShellVariable>> myVariables = new HashMap<>();
 
   /**
    * Append table with new variables
@@ -22,7 +27,7 @@ public class ShellVariablesRegistry {
         String name = variablePlist.getPlistValue(Constants.NAME_KEY, "").getString();
         String value = variablePlist.getPlistValue(Constants.VALUE_KEY, "").getString();
         if (!name.isEmpty()) {
-          myVariables.putValue(name, new TextMateShellVariable(scopeName, name, value));
+          myVariables.computeIfAbsent(name, (key) -> new ArrayList<>()).add(new TextMateShellVariable(scopeName, name, value));
         }
       }
     }
@@ -31,16 +36,20 @@ public class ShellVariablesRegistry {
   /**
    * Returns variable value by scope selector.
    *
-   * @param scopeSelector selector of current context.
+   * @param scope scope of current context.
    * @return preferences from table for given scope sorted by descending weigh
    * of rule selector relative to scope selector.
    */
   @Nullable
-  public TextMateShellVariable getVariableValue(@NotNull String name, @Nullable CharSequence scopeSelector) {
-    if (scopeSelector == null) {
+  public TextMateShellVariable getVariableValue(@NotNull String name, @Nullable TextMateScope scope) {
+    if (scope == null) {
       return null;
     }
-    return new TextMateScopeComparator<>(scopeSelector, TextMateShellVariable::getScopeSelector).max(myVariables.get(name));
+    Collection<TextMateShellVariable> variables = myVariables.get(name);
+    if (variables == null) {
+      return null;
+    }
+    return new TextMateScopeComparator<>(scope, TextMateShellVariable::getScopeSelector).max(variables);
   }
 
   public void clear() {

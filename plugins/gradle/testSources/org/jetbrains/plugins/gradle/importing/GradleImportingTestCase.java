@@ -4,6 +4,7 @@ package org.jetbrains.plugins.gradle.importing;
 import com.intellij.concurrency.IdeaForkJoinWorkerThreadFactory;
 import com.intellij.execution.RunManagerEx;
 import com.intellij.execution.RunnerAndConfigurationSettings;
+import com.intellij.execution.wsl.WSLDistribution;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.externalSystem.importing.ImportSpec;
@@ -33,6 +34,7 @@ import com.intellij.testFramework.UsefulTestCaseKt;
 import com.intellij.util.PathUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.io.PathKt;
 import com.intellij.util.lang.JavaVersion;
 import org.gradle.StartParameter;
 import org.gradle.initialization.BuildLayoutParameters;
@@ -44,6 +46,7 @@ import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.model.java.JdkVersionDetector;
+import org.jetbrains.plugins.gradle.frameworkSupport.buildscript.GradleBuildScriptBuilderUtil;
 import org.jetbrains.plugins.gradle.service.execution.GradleExternalTaskConfigurationType;
 import org.jetbrains.plugins.gradle.service.execution.GradleRunConfiguration;
 import org.jetbrains.plugins.gradle.settings.DistributionType;
@@ -51,7 +54,6 @@ import org.jetbrains.plugins.gradle.settings.GradleProjectSettings;
 import org.jetbrains.plugins.gradle.settings.GradleSettings;
 import org.jetbrains.plugins.gradle.settings.GradleSystemSettings;
 import org.jetbrains.plugins.gradle.tooling.VersionMatcherRule;
-import org.jetbrains.plugins.gradle.tooling.builder.AbstractModelBuilderTest;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
 import org.jetbrains.plugins.gradle.util.GradleUtil;
 import org.junit.Assume;
@@ -65,20 +67,24 @@ import java.io.IOException;
 import java.io.StringWriter;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.Properties;
+import java.util.function.Consumer;
 import java.util.zip.ZipException;
 import java.util.zip.ZipFile;
 
+import static org.jetbrains.plugins.gradle.tooling.VersionMatcherRule.SUPPORTED_GRADLE_VERSIONS;
 import static org.jetbrains.plugins.gradle.tooling.builder.AbstractModelBuilderTest.DistributionLocator;
-import static org.jetbrains.plugins.gradle.tooling.builder.AbstractModelBuilderTest.SUPPORTED_GRADLE_VERSIONS;
 import static org.junit.Assume.assumeThat;
 
 @RunWith(Parameterized.class)
 public abstract class GradleImportingTestCase extends ExternalSystemImportingTestCase {
-  public static final String BASE_GRADLE_VERSION = AbstractModelBuilderTest.BASE_GRADLE_VERSION;
+  public static final String BASE_GRADLE_VERSION = VersionMatcherRule.BASE_GRADLE_VERSION;
   protected static final String GRADLE_JDK_NAME = "Gradle JDK";
   private static final int GRADLE_DAEMON_TTL_MS = 10000;
 
@@ -138,14 +144,18 @@ public abstract class GradleImportingTestCase extends ExternalSystemImportingTes
     if (SystemInfo.isWindows && isGradleOlderThan("3.5")) {
       String serviceDirectory = GradleSettings.getInstance(myProject).getServiceDirectoryPath();
       File gradleUserHome = serviceDirectory != null ? new File(serviceDirectory) : new BuildLayoutParameters().getGradleUserHomeDir();
-      File scriptsCacheFolder = new File(gradleUserHome, "caches\\" + gradleVersion + "\\scripts");
+      Path cacheFile = Paths.get(gradleUserHome.getPath(), "caches", "jars-1", "cache.properties");
+      if (Files.notExists(cacheFile)) {
+        PathKt.createFile(cacheFile);
+      }
+      File scriptsCacheFolder = Paths.get(gradleUserHome.getPath(), "caches", gradleVersion, "scripts").toFile();
       if (FileUtil.delete(scriptsCacheFolder)) {
         LOG.debug("Gradle scripts cache folder has been successfully removed at " + scriptsCacheFolder.getPath());
       }
       else {
         LOG.debug("Gradle scripts cache folder has not been removed at " + scriptsCacheFolder.getPath());
       }
-      File scriptsRemappedCacheFolder = new File(gradleUserHome, "caches\\" + gradleVersion + "\\scripts-remapped");
+      File scriptsRemappedCacheFolder = Paths.get(gradleUserHome.getPath(), "caches", gradleVersion, "scripts-remapped").toFile();
       if (FileUtil.delete(scriptsRemappedCacheFolder)) {
         LOG.debug("Gradle scripts-remapped cache folder has been successfully removed at " + scriptsRemappedCacheFolder.getPath());
       }
@@ -179,6 +189,9 @@ public abstract class GradleImportingTestCase extends ExternalSystemImportingTes
 
   @NotNull
   private String requireRealJdkHome() {
+    if (myWSLDistribution != null) {
+      return requireWslJdkHome(myWSLDistribution);
+    }
     JavaVersion javaRuntimeVersion = JavaVersion.current();
     assumeTestJavaRuntime(javaRuntimeVersion);
     GradleVersion baseVersion = getCurrentGradleBaseVersion();
@@ -204,6 +217,14 @@ public abstract class GradleImportingTestCase extends ExternalSystemImportingTes
     }
   }
 
+  private String requireWslJdkHome(WSLDistribution distribution) {
+    String jdkPath = System.getProperty("wsl.jdk.path");
+    if (jdkPath == null) {
+      jdkPath = "/usr/lib/jvm/java-11-openjdk-amd64";
+    }
+    return distribution.getWindowsPath(jdkPath);
+  }
+
   protected void collectAllowedRoots(final List<String> roots, PathAssembler.LocalDistribution distribution) {
   }
 
@@ -225,7 +246,7 @@ public abstract class GradleImportingTestCase extends ExternalSystemImportingTes
       },
       () -> {
         TestDialogManager.setTestDialog(TestDialog.DEFAULT);
-        deleteBuildSystemDirectory();
+        deleteBuildSystemDirectory(myProject);
       },
       super::tearDown
     ).run();
@@ -237,7 +258,8 @@ public abstract class GradleImportingTestCase extends ExternalSystemImportingTes
     roots.add(myJdkHome);
     roots.addAll(collectRootsInside(myJdkHome));
     roots.add(PathManager.getConfigPath());
-
+    String gradleHomeEnv = System.getenv("GRADLE_USER_HOME");
+    if (gradleHomeEnv != null) roots.add(gradleHomeEnv);
     String javaHome = Environment.getVariable("JAVA_HOME");
     if (javaHome != null) roots.add(javaHome);
 
@@ -246,6 +268,11 @@ public abstract class GradleImportingTestCase extends ExternalSystemImportingTes
 
   @Parameterized.Parameters(name = "{index}: with Gradle-{0}")
   public static Collection<Object[]> data() {
+    String gradleVersionsString = System.getProperty("gradle.versions.to.run");
+    if (gradleVersionsString != null && !gradleVersionsString.isEmpty()) {
+      String[] gradleVersionsToRun = gradleVersionsString.split(",");
+      return ContainerUtil.map(gradleVersionsToRun, it -> new String[]{it});
+    }
     return Arrays.asList(SUPPORTED_GRADLE_VERSIONS);
   }
 
@@ -303,6 +330,20 @@ public abstract class GradleImportingTestCase extends ExternalSystemImportingTes
     importProject(config, null);
   }
 
+  protected @NotNull GradleBuildScriptBuilder createBuildScriptBuilder() {
+    return new GradleBuildScriptBuilder(getCurrentGradleVersion())
+      .addPrefix(MAVEN_REPOSITORY_PATCH_PLACE, "");
+  }
+
+  protected @NotNull String script(@NotNull Consumer<GradleBuildScriptBuilder> configure) {
+    return GradleBuildScriptBuilder.Companion.buildscript(this, configure);
+  }
+
+  protected @NotNull String getJUnitTestAnnotationClass() {
+    return GradleBuildScriptBuilderUtil.isSupportedJUnit5(getCurrentGradleVersion())
+           ? "org.junit.jupiter.api.Test" : "org.junit.Test";
+  }
+
   @Override
   protected ImportSpec createImportSpec() {
     ImportSpecBuilder importSpecBuilder = new ImportSpecBuilder(super.createImportSpec());
@@ -310,16 +351,24 @@ public abstract class GradleImportingTestCase extends ExternalSystemImportingTes
     return importSpecBuilder.build();
   }
 
+  private static final String MAVEN_REPOSITORY_PATCH_PLACE = "// Place for Maven repository patch";
+
   @NotNull
   protected String injectRepo(@NonNls @Language("Groovy") String config) {
-    config = "allprojects {\n" +
-             "  repositories {\n" +
-             "    maven {\n" +
-             "        url 'https://repo.labs.intellij.net/repo1'\n" +
-             "    }\n" +
-             "  }" +
-             "}\n" + config;
-    return config;
+    String mavenRepositoryPatch =
+      "allprojects {\n" +
+      "    repositories {\n" +
+      "        maven {\n" +
+      "            url 'https://repo.labs.intellij.net/repo1'\n" +
+      "        }\n" +
+      "    }\n" +
+      "}\n";
+    if (config.contains(MAVEN_REPOSITORY_PATCH_PLACE)) {
+      return config.replace(MAVEN_REPOSITORY_PATCH_PLACE, mavenRepositoryPatch);
+    }
+    else {
+      return mavenRepositoryPatch + config;
+    }
   }
 
   @NotNull
@@ -367,9 +416,10 @@ public abstract class GradleImportingTestCase extends ExternalSystemImportingTes
 
     createProjectSubFile("gradle/wrapper/gradle-wrapper.properties", writer.toString());
 
-    WrapperConfiguration wrapperConfiguration = GradleUtil.getWrapperConfiguration(getProjectPath());
-    PathAssembler.LocalDistribution localDistribution = new PathAssembler(
-      StartParameter.DEFAULT_GRADLE_USER_HOME).getDistribution(wrapperConfiguration);
+    String projectPath = getProjectPath();
+    WrapperConfiguration wrapperConfiguration = GradleUtil.getWrapperConfiguration(projectPath);
+    PathAssembler pathAssembler = new PathAssembler(StartParameter.DEFAULT_GRADLE_USER_HOME, new File(projectPath));
+    PathAssembler.LocalDistribution localDistribution = pathAssembler.getDistribution(wrapperConfiguration);
 
     File zip = localDistribution.getZipFile();
     try {
@@ -410,6 +460,10 @@ public abstract class GradleImportingTestCase extends ExternalSystemImportingTes
     else {
       assertModuleModuleDepScope(moduleName, depName, DependencyScope.PROVIDED, DependencyScope.TEST, DependencyScope.RUNTIME);
     }
+  }
+
+  protected boolean isJavaLibraryPluginSupported() {
+    return GradleBuildScriptBuilderUtil.isSupportedJavaLibraryPlugin(getCurrentGradleVersion());
   }
 
   protected boolean isGradleOlderThan(@NotNull String ver) {

@@ -46,6 +46,14 @@ class EventSchemeBuilderTest : BasePlatformTestCase() {
     doFieldTest(EventFields.StringList("fields", listOf("foo", "bar")), hashSetOf("{enum:foo|bar}"))
   }
 
+  fun `test generate string validated by inline regexp`() {
+    doFieldTest(EventFields.StringValidatedByInlineRegexp("id", "\\d+.\\d+"), hashSetOf("{regexp:\\d+.\\d+}"))
+  }
+
+  fun `test generate string list validated by inline regexp`() {
+    doFieldTest(EventFields.StringListValidatedByInlineRegexp("fields", "\\d+.\\d+"), hashSetOf("{regexp:\\d+.\\d+}"))
+  }
+
   private fun doFieldTest(eventField: EventField<*>, expectedValues: Set<String>) {
     val eventLogGroup = EventLogGroup("test.group.id", 1)
     eventLogGroup.registerEvent("test_event", eventField)

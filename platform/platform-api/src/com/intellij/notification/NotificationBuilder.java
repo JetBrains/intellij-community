@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.notification;
 
 import com.intellij.openapi.actionSystem.AnAction;
@@ -12,6 +12,8 @@ import javax.swing.*;
 import java.util.ArrayList;
 import java.util.List;
 
+/** @deprecated the class is no longer needed, since {@link Notification} itself does implement the builder pattern. */
+@Deprecated
 public final class NotificationBuilder {
   private final String myGroupId;
   private @NotNull @NlsContexts.NotificationTitle String myTitle;
@@ -116,8 +118,17 @@ public final class NotificationBuilder {
   }
 
   public @NotNull Notification build() {
-    return new Notification(myGroupId, myIcon, myTitle, mySubtitle, myContent, myType, myListener, myNotificationId,
-                            myDropDownText, myActions, myContextHelpAction, myWhenExpired, myIsImportant);
+    Notification notification = new Notification(myGroupId, myTitle, myContent, myType)
+      .setIcon(myIcon)
+      .setSubtitle(mySubtitle)
+      .whenExpired(myWhenExpired);
+    if (myListener != null) notification.setListener(myListener);
+    if (myNotificationId != null) notification.setDisplayId(myNotificationId);
+    if (myDropDownText != null) notification.setDropDownText(myDropDownText);
+    if (myActions != null) notification.addActions(myActions);
+    if (myContextHelpAction != null) notification.setContextHelpAction(myContextHelpAction);
+    if (myIsImportant != null) notification.setImportant(myIsImportant);
+    return notification;
   }
 
   public @NotNull Notification buildAndNotify(@NotNull Project project) {

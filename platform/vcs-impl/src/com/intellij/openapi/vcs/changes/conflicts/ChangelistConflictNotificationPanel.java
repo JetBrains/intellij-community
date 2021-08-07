@@ -4,6 +4,7 @@ package com.intellij.openapi.vcs.changes.conflicts;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.options.ShowSettingsUtil;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.changes.Change;
@@ -44,11 +45,13 @@ public final class ChangelistConflictNotificationPanel extends EditorNotificatio
 
     myTracker = tracker;
     myFile = file;
-    final ChangeListManager manager = tracker.getChangeListManager();
+    Project project = myTracker.getProject();
+    ChangeListManager manager = tracker.getChangeListManager();
     myChangeList = changeList;
     myLabel.setText(VcsBundle.message("changes.file.from.non.active.changelist.is.modified"));
-    createActionLabel(VcsBundle.message("link.label.move.changes"), () -> ChangelistConflictResolution.MOVE.resolveConflict(myTracker.getProject(), myChangeList.getChanges(), myFile)).
-      setToolTipText(VcsBundle.message("changes.move.changes.to.active.change.list.name", manager.getDefaultChangeList().getName()));
+    createActionLabel(VcsBundle.message("link.label.move.changes"),
+                      () -> ChangelistConflictResolution.MOVE.resolveConflict(project, myChangeList.getChanges(), myFile))
+      .setToolTipText(VcsBundle.message("changes.move.changes.to.active.change.list.name", manager.getDefaultChangeList().getName()));
 
     createActionLabel(VcsBundle.message("link.label.switch.changelist"), () -> {
       Change change = myTracker.getChangeListManager().getChange(myFile);
@@ -56,18 +59,17 @@ public final class ChangelistConflictNotificationPanel extends EditorNotificatio
         Messages.showInfoMessage(VcsBundle.message("dialog.message.no.changes.for.this.file"), VcsBundle.message("dialog.title.message"));
       }
       else {
-        ChangelistConflictResolution.SWITCH.resolveConflict(myTracker.getProject(), Collections.singletonList(change), null);
+        ChangelistConflictResolution.SWITCH.resolveConflict(project, Collections.singletonList(change), null);
       }
     }).setToolTipText(VcsBundle.message("changes.set.active.changelist.to.change.list.name", myChangeList.getName()));
 
-    createActionLabel(VcsBundle.message("link.label.ignore"), () -> myTracker.ignoreConflict(myFile, true)).setToolTipText(
-      VcsBundle.message("changes.hide.this.notification"));
+    createActionLabel(VcsBundle.message("link.label.ignore"), () -> myTracker.ignoreConflict(myFile, true))
+      .setToolTipText(VcsBundle.message("changes.hide.this.notification"));
 
     myLinksPanel.add(new InplaceButton(VcsBundle.message("tooltip.show.options.dialog"), AllIcons.General.Settings, new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {
-
-        ShowSettingsUtil.getInstance().editConfigurable(myTracker.getProject(), new ChangelistConflictConfigurable(tracker));
+        ShowSettingsUtil.getInstance().showSettingsDialog(project, ChangelistConflictConfigurable.class);
       }
     }));
   }

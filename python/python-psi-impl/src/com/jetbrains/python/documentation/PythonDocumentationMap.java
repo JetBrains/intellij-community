@@ -24,9 +24,7 @@ import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-/**
- * @author yole
- */
+
 @State(name = "PythonDocumentationMap", storages = @Storage("other.xml"))
 public class PythonDocumentationMap implements PersistentStateComponent<PythonDocumentationMap.State> {
   private static final ImmutableMap<String, String> DEFAULT_ENTRIES = ImmutableMap.<String, String>builder()
@@ -84,21 +82,14 @@ public class PythonDocumentationMap implements PersistentStateComponent<PythonDo
     myState = state;
 
     addAbsentEntriesFromDefaultState(myState);
-    removeEntriesThatHandledSpecially(myState);
-  }
-
-  private static void removeEntriesThatHandledSpecially(@NotNull State state) {
-    ArrayList<String> strings = Lists.newArrayList("django", "numpy", "scipy");
-    // those packages are handled by implementations of PythonDocumentationLinkProvider
-    state.setEntries(Maps.filterEntries(state.getEntries(), entry -> entry != null && !strings.contains(entry.getKey())));
   }
 
   private static void addAbsentEntriesFromDefaultState(@NotNull State state) {
-    state.getEntries().putAll(DEFAULT_ENTRIES);
+    DEFAULT_ENTRIES.forEach((key, value) -> state.getEntries().putIfAbsent(key, value));
   }
 
   public Map<String, String> getEntries() {
-    return ImmutableMap.copyOf(myState.getEntries());
+    return Map.copyOf(myState.getEntries());
   }
 
   public void setEntries(Map<String, String> entries) {

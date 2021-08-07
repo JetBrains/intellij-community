@@ -76,7 +76,7 @@ private fun findStrictClass(constraints: Collection<BoundConstraint>): PsiType? 
       else -> null
     }
   }
-  return strictTypes.maxWith(Comparator { left, right ->
+  return strictTypes.maxWithOrNull(Comparator { left, right ->
     if (TypesUtil.canAssign(left, right, left.resolve()!!.context!!, METHOD_PARAMETER) == OK) 1 else -1
   })
 }

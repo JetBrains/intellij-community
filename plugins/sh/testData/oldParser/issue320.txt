@@ -7,7 +7,7 @@ SHELL_SCRIPT
       ASSIGNMENT_LIST
         PsiElement(()('(')
         ARRAY_ASSIGNMENT
-          LITERAL_EXPRESSION
+          LITERAL_OPERATION
             NUMBER
               PsiElement(int)('1')
             PsiWhiteSpace(' ')
@@ -23,7 +23,7 @@ SHELL_SCRIPT
       ASSIGNMENT_LIST
         PsiElement(()('(')
         ARRAY_ASSIGNMENT
-          LITERAL_EXPRESSION
+          LITERAL_OPERATION
             NUMBER
               PsiElement(int)('0')
             PsiWhiteSpace(' ')
@@ -36,9 +36,10 @@ SHELL_SCRIPT
       PsiElement(if)('if')
       PsiWhiteSpace(' ')
       COMPOUND_LIST
-        GENERIC_COMMAND_DIRECTIVE
+        SHELL_COMMAND
           ARITHMETIC_EXPANSION
-            PsiElement((()('((')
+            PsiElement(()('(')
+            PsiElement(()('(')
             PsiWhiteSpace(' ')
             EQUALITY_EXPRESSION
               INDEX_EXPRESSION
@@ -61,7 +62,8 @@ SHELL_SCRIPT
                     PsiElement(int)('1')
                 PsiElement(])(']')
             PsiWhiteSpace(' ')
-            PsiElement()))('))')
+            PsiElement())(')')
+            PsiElement())(')')
         PsiElement(;)(';')
       PsiWhiteSpace(' ')
       THEN_CLAUSE

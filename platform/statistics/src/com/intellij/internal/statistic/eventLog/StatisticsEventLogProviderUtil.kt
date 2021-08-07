@@ -1,19 +1,19 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.statistic.eventLog
 
+import com.intellij.internal.statistic.eventLog.StatisticsEventLoggerProvider.Companion.EP_NAME
+import com.intellij.internal.statistic.utils.PluginType
 import com.intellij.internal.statistic.utils.StatisticsRecorderUtil
 import com.intellij.internal.statistic.utils.getPluginInfo
 import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.Logger
-import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.PlatformUtils
 import com.intellij.util.containers.ContainerUtil
 
 object StatisticsEventLogProviderUtil {
   private val LOG = Logger.getInstance(StatisticsEventLogProviderUtil::class.java)
-  private val EP_NAME = ExtensionPointName<StatisticsEventLoggerProvider>("com.intellij.statistic.eventLog.eventLoggerProvider")
 
   @JvmStatic
   fun getEventLogProviders(): List<StatisticsEventLoggerProvider> {
@@ -22,7 +22,7 @@ object StatisticsEventLogProviderUtil {
       return emptyList()
     }
     val isJetBrainsProduct = isJetBrainsProduct()
-    return ContainerUtil.filter(providers) { isProviderApplicable(isJetBrainsProduct, it.recorderId, it) }
+    return ContainerUtil.filter(providers) { isProviderApplicable(isJetBrainsProduct, it.recorderId, it) }.distinctBy { it.recorderId }
   }
 
   @JvmStatic
@@ -54,7 +54,8 @@ object StatisticsEventLogProviderUtil {
       if (!isJetBrainsProduct || !StatisticsRecorderUtil.isBuildInRecorder(recorderId)) {
         return true
       }
-      return getPluginInfo(extension::class.java).type.isPlatformOrJetBrainsBundled()
+      val pluginInfo = getPluginInfo(extension::class.java)
+      return pluginInfo.type == PluginType.PLATFORM || pluginInfo.type == PluginType.FROM_SOURCES || pluginInfo.isAllowedToInjectIntoFUS()
     }
     return false
   }

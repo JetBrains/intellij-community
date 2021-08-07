@@ -52,17 +52,21 @@ private fun parentWithoutWalkingDirectories(element: PsiElement): PsiElement? {
   return if (element is PsiFile) null else element.parent
 }
 
+@ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
 @Deprecated("Use PsiElement.parents() function", ReplaceWith("parents(true)"))
 fun PsiElement.parents(): Sequence<PsiElement> = parents(true)
 
+@ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
 @Deprecated("Use PsiElement.parents() function", ReplaceWith("parents(false)"))
 fun PsiElement.strictParents(): Sequence<PsiElement> = parents(false)
 
-@Deprecated("Use PsiElement.parents() function", ReplaceWith("parents(true)"))
+@get:ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
+@get:Deprecated("Use PsiElement.parents() function", ReplaceWith("parents(true)"))
 val PsiElement.parentsWithSelf: Sequence<PsiElement>
   get() = parents(true)
 
-@Deprecated("Use PsiElement.parents() function", ReplaceWith("parents(false)"))
+@get:ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
+@get:Deprecated("Use PsiElement.parents() function", ReplaceWith("parents(false)"))
 val PsiElement.parents: Sequence<PsiElement>
   get() = parents(false)
 

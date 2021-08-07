@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.javaDoc;
 
 import com.intellij.codeInspection.LocalQuickFix;
@@ -360,7 +360,7 @@ public final class JavadocHighlightUtil {
                                     @NotNull PsiElement toHighlight,
                                     @NotNull ProblemHolder holder) {
     if (!psiMethod.isConstructor() && !PsiType.VOID.equals(psiMethod.getReturnType())) {
-      boolean hasReturnTag = Stream.of(tags).anyMatch(tag -> "return".equals(tag.getName()));
+      boolean hasReturnTag = ContainerUtil.exists(tags, tag -> "return".equals(tag.getName()));
       if (!hasReturnTag) {
         String message = JavaBundle.message("inspection.javadoc.problem.missing.tag", "<code>@" + "return" + "</code>");
         holder.problem(toHighlight, message, holder.addMissingTagFix("return", ""));

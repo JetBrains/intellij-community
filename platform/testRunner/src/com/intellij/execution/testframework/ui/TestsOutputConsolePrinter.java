@@ -23,6 +23,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.terminal.TerminalExecutionConsole;
+import com.intellij.util.ui.EdtInvocationManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -35,9 +36,9 @@ public class TestsOutputConsolePrinter implements Printer, Disposable {
   // After pause action has been invoked -  all output will be redirected to special
   // myPausedPrinter which will dump all buffered data after user will continue process.
   private final DeferingPrinter myPausedPrinter = new DeferingPrinter();
-  private boolean myPaused = false;
+  private boolean myPaused;
 
-  private int myMarkOffset = 0;
+  private int myMarkOffset;
 
   private final TestFrameworkPropertyListener<Boolean> myPropertyListener = new TestFrameworkPropertyListener<>() {
     @Override
@@ -45,6 +46,7 @@ public class TestsOutputConsolePrinter implements Printer, Disposable {
       if (!value.booleanValue()) myMarkOffset = 0;
     }
   };
+  private boolean myDisposed;
 
   public TestsOutputConsolePrinter(@NotNull BaseTestsOutputConsoleView testsOutputConsoleView, @NotNull TestConsoleProperties properties, final AbstractTestProxy unboundOutputRoot) {
     myConsole = testsOutputConsoleView.getConsole();
@@ -69,17 +71,13 @@ public class TestsOutputConsolePrinter implements Printer, Disposable {
   }
 
   @Override
-  public void print(final String text, final ConsoleViewContentType contentType) {
+  public void print(final @NotNull String text, final @NotNull ConsoleViewContentType contentType) {
     myConsole.print(text, contentType);
   }
 
   @Override
   public void onNewAvailable(@NotNull final Printable printable) {
-    if (myPaused) {
-      printable.printOn(myPausedPrinter);
-    } else {
-      printable.printOn(this);
-    }
+    printable.printOn(myPaused ? myPausedPrinter : this);
   }
 
   /**
@@ -129,7 +127,7 @@ public class TestsOutputConsolePrinter implements Printer, Disposable {
   }
 
   @Override
-  public void printHyperlink(final String text, final HyperlinkInfo info) {
+  public void printHyperlink(final @NotNull String text, final HyperlinkInfo info) {
     myConsole.printHyperlink(text, info);
   }
 
@@ -145,6 +143,7 @@ public class TestsOutputConsolePrinter implements Printer, Disposable {
   @Override
   public void dispose() {
     myProperties.removeListener(TestConsoleProperties.SCROLL_TO_STACK_TRACE, myPropertyListener);
+    myDisposed = true;
   }
 
   public boolean canPause() {
@@ -152,11 +151,15 @@ public class TestsOutputConsolePrinter implements Printer, Disposable {
   }
 
   protected void scrollToBeginning() {
-    myConsole.performWhenNoDeferredOutput(() -> {
-      final AbstractTestProxy currentProxyOrRoot = getCurrentProxyOrRoot();
-      if (currentProxyOrRoot != null && !currentProxyOrRoot.isInProgress()) {
-        //do not scroll to any mark during run
-        myConsole.scrollTo(myMarkOffset);
+    EdtInvocationManager.invokeLaterIfNeeded(() -> {
+      if (!myDisposed) {
+        myConsole.performWhenNoDeferredOutput(() -> {
+          final AbstractTestProxy currentProxyOrRoot = getCurrentProxyOrRoot();
+          if (currentProxyOrRoot != null && !currentProxyOrRoot.isInProgress()) {
+            //do not scroll to any mark during run
+            myConsole.scrollTo(myMarkOffset);
+          }
+        });
       }
     });
   }
@@ -173,7 +176,7 @@ public class TestsOutputConsolePrinter implements Printer, Disposable {
   }
   
   @Override
-  public void printExpectedActualHeader(String expected, String actual) {
+  public void printExpectedActualHeader(@NotNull String expected, @NotNull String actual) {
     myProperties.printExpectedActualHeader(this, expected, actual);
   }
 }

@@ -1,13 +1,17 @@
 <html>
 <body>
-Reports inappropriate exceptions declared by methods. One use of this inspection would be to warn of
-<b>throws</b> clauses which declare overly generic exceptions (e.g. <b>java.lang.Exception</b> or <b>java.lang.Throwable</b>).
+Reports a method that declares an inappropriate exception, such as
+a <code>throws</code> clause that declares an overly generic exception (for example <code>java.lang.Exception</code> or <code>java.lang.Throwable</code>).
+<p><b>Example:</b></p>
+<pre><code>
+  void describeModule(String module) throws Exception {} // warning: Prohibited exception 'Exception' declared
+</code></pre>
 <!-- tooltip end -->
-<p>
-Use the list below to specify which exceptions should be flagged by this inspection.
-<p>
-Use the checkbox below to ignore exceptions declared on methods which override a library method.
-<p>
-
+<p>Configure the inspection:</p>
+<ul>
+  <li>Use the <b>Prohibited exceptions</b> list to specify which exceptions should be reported.</li>
+  <li>Use the <b>Ignore exceptions declared on methods overriding a library method</b> option to ignore exceptions declared by methods
+    that override a library method.</li>
+</ul>
 </body>
 </html>

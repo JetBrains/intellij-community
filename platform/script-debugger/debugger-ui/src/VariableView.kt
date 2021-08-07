@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.debugger
 
 import com.intellij.icons.AllIcons
@@ -61,31 +61,31 @@ class VariableView(override val variableName: String, private val variable: Vari
 
     if (variable !is ObjectProperty || variable.getter == null) {
       // it is "used" expression (WEB-6779 Debugger/Variables: Automatically show used variables)
-        context.memberFilter.then {
-          evaluateContext.evaluate(it.sourceNameToRaw(variable.name) ?: variable.name)
-            .onSuccess(node) {
-              if (it.wasThrown) {
-                setEvaluatedValue(viewSupport.transformErrorOnGetUsedReferenceValue(it.value, null), null, node)
-              }
-              else {
-                value = it.value
-                variable.value = it.value
-                computePresentation(it.value, node)
-              }
+      context.memberFilter.then { filter ->
+        evaluateContext.evaluate(filter.sourceNameToRaw(variable.name) ?: variable.name)
+          .onSuccess(node) {
+            if (it.wasThrown) {
+              setEvaluatedValue(viewSupport.transformErrorOnGetUsedReferenceValue(it.value, null), null, node)
             }
-            .onError(node) { setEvaluatedValue(viewSupport.transformErrorOnGetUsedReferenceValue(null, it.message), it.message, node) }
+            else {
+              value = it.value
+              variable.value = it.value
+              computePresentation(it.value, node)
+            }
+          }
+          .onError(node) { setEvaluatedValue(viewSupport.transformErrorOnGetUsedReferenceValue(null, it.message), it.message, node) }
 
-        }
+      }
       return
     }
 
     node.setPresentation(null, object : XValuePresentation() {
-      override fun renderValue(renderer: XValuePresentation.XValueTextRenderer) {
+      override fun renderValue(renderer: XValueTextRenderer) {
         renderer.renderValue("\u2026")
       }
     }, false)
-    node.setFullValueEvaluator(object : XFullValueEvaluator(" (invoke getter)") {
-      override fun startEvaluation(callback: XFullValueEvaluator.XFullValueEvaluationCallback) {
+    node.setFullValueEvaluator(object : XFullValueEvaluator(ScriptDebuggerBundle.message("full.evaluator.invoke.getter")) {
+      override fun startEvaluation(callback: XFullValueEvaluationCallback) {
         var valueModifier = variable.valueModifier
         var nonProtoContext = context
         while (nonProtoContext is VariableView && nonProtoContext.variableName == PROTOTYPE_PROP) {
@@ -155,7 +155,7 @@ class VariableView(override val variableName: String, private val variable: Vari
 
     if (remainingChildrenOffset > 0) {
       val list = remainingChildren!!
-      val to = Math.min(remainingChildrenOffset + XCompositeNode.MAX_CHILDREN_TO_SHOW, list.size)
+      val to = (remainingChildrenOffset + XCompositeNode.MAX_CHILDREN_TO_SHOW).coerceAtMost(list.size)
       val isLast = to == list.size
       node.addChildren(createVariablesList(list, remainingChildrenOffset, to, this, _memberFilter), isLast)
       if (!isLast) {
@@ -255,7 +255,7 @@ class VariableView(override val variableName: String, private val variable: Vari
       return null
     }
 
-    val to = Math.min(maxChildrenToAdd, list.size)
+    val to = maxChildrenToAdd.coerceAtMost(list.size)
     val isLast = to == list.size
     node.addChildren(createVariablesList(list, 0, to, context, memberFilter), defaultIsLast && isLast)
     if (isLast) {
@@ -279,7 +279,7 @@ class VariableView(override val variableName: String, private val variable: Vari
     }
 
     while (count > 0) {
-      if (Character.isDigit(variables.get(count - 1).name[0])) {
+      if (Character.isDigit(variables[count - 1].name[0])) {
         break
       }
       count--
@@ -294,7 +294,7 @@ class VariableView(override val variableName: String, private val variable: Vari
     if ((variables.size - count) > bucketSize) {
       notGroupedVariablesOffset = variables.size
       while (notGroupedVariablesOffset > 0) {
-        if (!variables.get(notGroupedVariablesOffset - 1).name.startsWith("__")) {
+        if (!variables[notGroupedVariablesOffset - 1].name.startsWith("__")) {
           break
         }
         notGroupedVariablesOffset--
@@ -308,8 +308,8 @@ class VariableView(override val variableName: String, private val variable: Vari
       notGroupedVariablesOffset = count
     }
 
-    for (i in notGroupedVariablesOffset..variables.size - 1) {
-      val variable = variables.get(i)
+    for (i in notGroupedVariablesOffset until variables.size) {
+      val variable = variables[i]
       groupList.add(VariableView(_memberFilter!!.rawNameToSource(variable), variable, this))
     }
 
@@ -339,7 +339,7 @@ class VariableView(override val variableName: String, private val variable: Vari
         }
       }
 
-      override fun setValue(expression: XExpression, callback: XValueModifier.XModificationCallback) {
+      override fun setValue(expression: XExpression, callback: XModificationCallback) {
         variable.valueModifier!!.setValue(variable, expression.expression, evaluateContext)
           .onSuccess {
             value = null
@@ -360,28 +360,29 @@ class VariableView(override val variableName: String, private val variable: Vari
       (value as FunctionValue).resolve()
         .onSuccess { function ->
           vm!!.scriptManager.getScript(function)
-            .onSuccess {
-              navigatable.setSourcePosition(it?.let { viewSupport.getSourceInfo(null, it, function.openParenLine, function.openParenColumn) }?.let {
-                object : XSourcePositionWrapper(it) {
-                  override fun createNavigatable(project: Project): Navigatable {
-                    return PsiVisitors.visit(myPosition, project) { _, element, _, _ ->
-                      // element will be "open paren", but we should navigate to function name,
-                      // we cannot use specific PSI type here (like JSFunction), so, we try to find reference expression (i.e. name expression)
-                      var referenceCandidate: PsiElement? = element
-                      var psiReference: PsiElement? = null
-                      while (true) {
-                        referenceCandidate = referenceCandidate?.prevSibling ?: break
-                        if (referenceCandidate is PsiReference) {
-                          psiReference = referenceCandidate
-                          break
-                        }
-                      }
-
-                      if (psiReference == null) {
-                        referenceCandidate = element.parent
+            .onSuccess { script ->
+              navigatable.setSourcePosition(
+                script?.let { viewSupport.getSourceInfo(null, it, function.openParenLine, function.openParenColumn) }?.let {
+                  object : XSourcePositionWrapper(it) {
+                    override fun createNavigatable(project: Project): Navigatable {
+                      return PsiVisitors.visit(myPosition, project) { _, element, _, _ ->
+                        // element will be "open paren", but we should navigate to function name,
+                        // we cannot use specific PSI type here (like JSFunction), so, we try to find reference expression (i.e. name expression)
+                        var referenceCandidate: PsiElement? = element
+                        var psiReference: PsiElement? = null
                         while (true) {
                           referenceCandidate = referenceCandidate?.prevSibling ?: break
                           if (referenceCandidate is PsiReference) {
+                            psiReference = referenceCandidate
+                            break
+                          }
+                        }
+
+                        if (psiReference == null) {
+                          referenceCandidate = element.parent
+                          while (true) {
+                            referenceCandidate = referenceCandidate?.prevSibling ?: break
+                            if (referenceCandidate is PsiReference) {
                             psiReference = referenceCandidate
                             break
                           }
@@ -413,7 +414,7 @@ class VariableView(override val variableName: String, private val variable: Vari
     addVarName(list, parent, variable.name)
 
     var parent: VariableContext? = context
-    while (parent != null && parent.variableName != null) {
+    while (parent?.variableName != null) {
       addVarName(list, parent.parent, parent.variableName!!)
       parent = parent.parent
     }
@@ -426,7 +427,7 @@ class VariableView(override val variableName: String, private val variable: Vari
   }
 
   private class MyFullValueEvaluator(private val value: Value) : XFullValueEvaluator(if (value is StringValue) value.length else value.valueString!!.length) {
-    override fun startEvaluation(callback: XFullValueEvaluator.XFullValueEvaluationCallback) {
+    override fun startEvaluation(callback: XFullValueEvaluationCallback) {
       if (value !is StringValue || !value.isTruncated) {
         callback.evaluated(value.valueString!!)
         return
@@ -478,8 +479,7 @@ class VariableView(override val variableName: String, private val variable: Vari
     }
 
     fun getIcon(value: Value): Icon {
-      val type = value.type
-      return when (type) {
+      return when (val type = value.type) {
         ValueType.FUNCTION -> AllIcons.Nodes.Lambda
         ValueType.ARRAY -> AllIcons.Debugger.Db_array
         else -> if (type.isObjectType) AllIcons.Debugger.Value else AllIcons.Debugger.Db_primitive
@@ -524,10 +524,10 @@ private fun createNumberPresentation(value: String): XValuePresentation {
 private val ARRAY_DESCRIPTION_PATTERN = Pattern.compile("^[a-zA-Z\\d]+[\\[(]\\d+[\\])]$")
 
 private class ArrayPresentation(length: Int, className: String?) : XValuePresentation() {
-  private val length = Integer.toString(length)
+  private val length = length.toString()
   private val className = if (className.isNullOrEmpty()) "Array" else className
 
-  override fun renderValue(renderer: XValuePresentation.XValueTextRenderer) {
+  override fun renderValue(renderer: XValueTextRenderer) {
     renderer.renderSpecialSymbol(className)
     renderer.renderSpecialSymbol("[")
     renderer.renderSpecialSymbol(length)

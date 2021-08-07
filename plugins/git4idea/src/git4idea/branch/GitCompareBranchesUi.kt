@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.branch
 
 import com.intellij.openapi.Disposable
@@ -16,7 +16,6 @@ import com.intellij.vcs.log.VcsLogFilterCollection
 import com.intellij.vcs.log.VcsLogRangeFilter
 import com.intellij.vcs.log.VcsLogRootFilter
 import com.intellij.vcs.log.data.VcsLogData
-import com.intellij.vcs.log.graph.PermanentGraph
 import com.intellij.vcs.log.impl.MainVcsLogUiProperties
 import com.intellij.vcs.log.impl.VcsLogManager
 import com.intellij.vcs.log.impl.VcsProjectLog
@@ -94,7 +93,7 @@ internal class GitCompareBranchesUi(internal val project: Project,
     override fun createLogUi(project: Project, logData: VcsLogData): MainVcsLogUi {
       val vcsLogFilterer = VcsLogFiltererImpl(logData.logProviders, logData.storage, logData.topCommitsCache, logData.commitDetailsGetter,
                                               logData.index)
-      val initialSortType = properties.get<PermanentGraph.SortType>(MainVcsLogUiProperties.BEK_SORT_TYPE)
+      val initialSortType = properties.get(MainVcsLogUiProperties.BEK_SORT_TYPE)
       val refresher = VisiblePackRefresherImpl(project, logData, collection(), initialSortType, vcsLogFilterer, logId)
 
       return MyVcsLogUi(logId, logData, colorManager, properties, refresher, rangeFilter, rootFilter)

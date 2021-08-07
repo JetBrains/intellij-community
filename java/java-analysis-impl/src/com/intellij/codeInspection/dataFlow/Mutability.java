@@ -22,6 +22,7 @@ import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
+import com.siyeh.ig.callMatcher.CallMatcher;
 import com.siyeh.ig.psiutils.ClassUtils;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import one.util.streamex.StreamEx;
@@ -61,6 +62,10 @@ public enum Mutability {
 
   public static final @NotNull String UNMODIFIABLE_ANNOTATION = UNMODIFIABLE.myAnnotation;
   public static final @NotNull String UNMODIFIABLE_VIEW_ANNOTATION = UNMODIFIABLE_VIEW.myAnnotation;
+  private static final @NotNull CallMatcher STREAM_COLLECT = CallMatcher.instanceCall(
+    CommonClassNames.JAVA_UTIL_STREAM_STREAM, "collect").parameterTypes("java.util.stream.Collector");
+  private static final @NotNull CallMatcher UNMODIFIABLE_COLLECTORS = CallMatcher.staticCall(
+    CommonClassNames.JAVA_UTIL_STREAM_COLLECTORS, "toUnmodifiableList", "toUnmodifiableSet", "toUnmodifiableMap");
   private final @PropertyKey(resourceBundle = JavaAnalysisBundle.BUNDLE) String myResourceKey;
   private final String myAnnotation;
   private final Key<CachedValue<PsiAnnotation>> myKey;
@@ -70,11 +75,11 @@ public enum Mutability {
     myAnnotation = annotation;
     myKey = annotation == null ? null : Key.create(annotation);
   }
-  
+
   public DfReferenceType asDfType() {
-    return DfTypes.customObject(TypeConstraints.TOP, DfaNullability.UNKNOWN, this, null, DfTypes.BOTTOM);
+    return DfTypes.customObject(TypeConstraints.TOP, DfaNullability.UNKNOWN, this, null, DfType.BOTTOM);
   }
-  
+
   public @NotNull @Nls String getPresentationName() {
     return JavaAnalysisBundle.message(myResourceKey);
   }
@@ -82,7 +87,7 @@ public enum Mutability {
   public boolean isUnmodifiable() {
     return this == UNMODIFIABLE || this == UNMODIFIABLE_VIEW;
   }
-  
+
   public boolean canBeModified() {
     return this == MUTABLE || this == UNKNOWN;
   }
@@ -129,7 +134,7 @@ public enum Mutability {
   @NotNull
   public static Mutability getMutability(@NotNull PsiModifierListOwner owner) {
     if (owner instanceof LightElement) return UNKNOWN;
-    return CachedValuesManager.getCachedValue(owner, () -> 
+    return CachedValuesManager.getCachedValue(owner, () ->
       CachedValueProvider.Result.create(calcMutability(owner), owner, PsiModificationTracker.MODIFICATION_COUNT));
   }
 
@@ -178,8 +183,14 @@ public enum Mutability {
         if (ClassUtils.isImmutable(initializer.getType())) {
           newMutability = UNMODIFIABLE;
         } else if (initializer instanceof PsiMethodCallExpression) {
-          PsiMethod method = ((PsiMethodCallExpression)initializer).resolveMethod();
-          newMutability = method == null ? UNKNOWN : getMutability(method);
+          PsiMethodCallExpression call = (PsiMethodCallExpression)initializer;
+          if (STREAM_COLLECT.test(call)) {
+            PsiExpression collector = call.getArgumentList().getExpressions()[0];
+            newMutability = UNMODIFIABLE_COLLECTORS.matches(collector) ? UNMODIFIABLE : UNKNOWN;
+          } else {
+            PsiMethod method = call.resolveMethod();
+            newMutability = method == null ? UNKNOWN : getMutability(method);
+          }
         }
         mutability = mutability.unite(newMutability);
         if (!mutability.isUnmodifiable()) break;

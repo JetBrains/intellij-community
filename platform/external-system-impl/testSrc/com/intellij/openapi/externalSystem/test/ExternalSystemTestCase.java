@@ -4,6 +4,8 @@ package com.intellij.openapi.externalSystem.test;
 import com.intellij.compiler.artifacts.ArtifactsTestUtil;
 import com.intellij.compiler.impl.ModuleCompileScope;
 import com.intellij.compiler.server.BuildManager;
+import com.intellij.execution.wsl.WSLDistribution;
+import com.intellij.execution.wsl.WslDistributionManager;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.WriteAction;
@@ -35,12 +37,16 @@ import com.intellij.task.ProjectTaskManager;
 import com.intellij.testFramework.*;
 import com.intellij.testFramework.fixtures.IdeaProjectTestFixture;
 import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory;
-import com.intellij.util.*;
+import com.intellij.util.ArrayUtilRt;
+import com.intellij.util.ExceptionUtil;
+import com.intellij.util.SmartList;
+import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.io.PathKt;
 import com.intellij.util.io.TestFileSystemItem;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.SystemIndependent;
 import org.jetbrains.concurrency.Promise;
 
@@ -60,6 +66,9 @@ import java.util.jar.JarEntry;
 import java.util.jar.JarOutputStream;
 import java.util.jar.Manifest;
 
+import static com.intellij.testFramework.assertions.Assertions.assertThat;
+import static com.intellij.util.PathUtil.toSystemIndependentName;
+
 /**
  * @author Vladislav.Soroka
  */
@@ -76,17 +85,21 @@ public abstract class ExternalSystemTestCase extends UsefulTestCase {
   protected VirtualFile myProjectConfig;
   protected List<VirtualFile> myAllConfigs = new ArrayList<>();
   protected boolean useProjectTaskManager;
+  protected @Nullable WSLDistribution myWSLDistribution;
 
   @Override
   public void setUp() throws Exception {
     super.setUp();
-    ensureTempDirCreated();
-
-    myTestDir = new File(ourTempDir, getTestName(false));
-    FileUtil.ensureExists(myTestDir);
-
     setUpFixtures();
     myProject = myTestFixture.getProject();
+
+    setupWsl();
+    ensureTempDirCreated();
+
+    String testDirName = "testDir" + System.currentTimeMillis();
+    myTestDir = new File(ourTempDir, testDirName);
+    FileUtil.ensureExists(myTestDir);
+
 
     EdtTestUtil.runInEdtAndWait(() -> ApplicationManager.getApplication().runWriteAction(() -> {
       try {
@@ -110,10 +123,19 @@ public abstract class ExternalSystemTestCase extends UsefulTestCase {
     }
   }
 
+  protected void setupWsl() {
+    String wslMsId = System.getProperty("wsl.distribution.name");
+    if (wslMsId == null) return;
+    List<WSLDistribution> distributions = WslDistributionManager.getInstance().getInstalledDistributions();
+    if (distributions.isEmpty()) throw new IllegalStateException("no WSL distributions configured!");
+    myWSLDistribution = distributions.stream().filter(it -> wslMsId.equals(it.getMsId())).findFirst().orElseThrow(
+      () -> new IllegalStateException("Distribution " + wslMsId + " was not found"));
+  }
+
   protected void collectAllowedRoots(List<String> roots) {
   }
 
-  public static Collection<String> collectRootsInside(String root) {
+  public static Collection<String> collectRootsInside(@NotNull String root) {
     final List<String> roots = new SmartList<>();
     roots.add(root);
     FileUtil.processFilesRecursively(new File(root), file -> {
@@ -134,7 +156,14 @@ public abstract class ExternalSystemTestCase extends UsefulTestCase {
   private void ensureTempDirCreated() throws IOException {
     if (ourTempDir != null) return;
 
-    ourTempDir = new File(FileUtil.getTempDirectory(), getTestsTempDir());
+    if (myWSLDistribution == null) {
+      ourTempDir = new File(FileUtil.getTempDirectory(), getTestsTempDir());
+    }
+    else {
+      ourTempDir = new File(myWSLDistribution.getWindowsPath("/tmp"), getTestsTempDir());
+    }
+
+
     FileUtil.delete(ourTempDir);
     FileUtil.ensureExists(ourTempDir);
   }
@@ -151,6 +180,10 @@ public abstract class ExternalSystemTestCase extends UsefulTestCase {
   }
 
   protected void setUpInWriteAction() throws Exception {
+    setUpProjectRoot();
+  }
+
+  protected void setUpProjectRoot() throws Exception {
     File projectDir = new File(myTestDir, "project");
     FileUtil.ensureExists(projectDir);
     myProjectRoot = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(projectDir);
@@ -167,7 +200,7 @@ public abstract class ExternalSystemTestCase extends UsefulTestCase {
       () -> EdtTestUtil.runInEdtAndWait(() -> tearDownFixtures()),
       () -> myProject = null,
       () -> PathKt.delete(myTestDir.toPath()),
-      () -> ExternalSystemProgressNotificationManagerImpl.assertListenersReleased(null),
+      () -> ExternalSystemProgressNotificationManagerImpl.assertListenersReleased(),
       () -> ExternalSystemProgressNotificationManagerImpl.cleanupListeners(),
       () -> super.tearDown(),
       () -> resetClassFields(getClass())
@@ -175,8 +208,10 @@ public abstract class ExternalSystemTestCase extends UsefulTestCase {
   }
 
   protected void tearDownFixtures() throws Exception {
-    myTestFixture.tearDown();
-    myTestFixture = null;
+    RunAll.runAll(
+      () -> myTestFixture.tearDown(),
+      () -> myTestFixture = null
+    );
   }
 
   private void resetClassFields(final Class<?> aClass) {
@@ -255,7 +290,7 @@ public abstract class ExternalSystemTestCase extends UsefulTestCase {
 
   @SystemIndependent
   protected String path(@NotNull String relativePath) {
-    return PathUtil.toSystemIndependentName(file(relativePath).getPath());
+    return toSystemIndependentName(file(relativePath).getPath());
   }
 
   protected File file(@NotNull String relativePath) {
@@ -386,7 +421,7 @@ public abstract class ExternalSystemTestCase extends UsefulTestCase {
   protected void buildArtifacts(String... artifactNames) {
     if (useProjectTaskManager) {
       Artifact[] artifacts = Arrays.stream(artifactNames)
-        .map(artifactName -> ArtifactsTestUtil.findArtifact(myProject, artifactName)).toArray(Artifact[]::new);
+        .map(artifactName -> findArtifact(myProject, artifactName)).toArray(Artifact[]::new);
       build(artifacts);
     }
     else {
@@ -449,9 +484,13 @@ public abstract class ExternalSystemTestCase extends UsefulTestCase {
   private CompileScope createArtifactsScope(String[] artifactNames) {
     List<Artifact> artifacts = new ArrayList<>();
     for (String name : artifactNames) {
-      artifacts.add(ArtifactsTestUtil.findArtifact(myProject, name));
+      artifacts.add(findArtifact(myProject, name));
     }
     return ArtifactCompileScope.createArtifactsScope(myProject, artifacts);
+  }
+
+  protected Artifact findArtifact(Project project, String artifactName) {
+    return ReadAction.compute(() -> ArtifactsTestUtil.findArtifact(project, artifactName));
   }
 
   protected Sdk setupJdkForModule(final String moduleName) {
@@ -483,7 +522,8 @@ public abstract class ExternalSystemTestCase extends UsefulTestCase {
   }
 
   protected void assertArtifactOutputPath(final String artifactName, final String expected) {
-    ArtifactsTestUtil.assertOutputPath(myProject, artifactName, expected);
+    Artifact artifact = findArtifact(myProject, artifactName);
+    assertThat(toSystemIndependentName(artifact.getOutputPath())).isEqualTo(expected);
   }
 
   protected void assertArtifactOutputFileName(final String artifactName, final String expected) {
@@ -491,7 +531,7 @@ public abstract class ExternalSystemTestCase extends UsefulTestCase {
   }
 
   protected void assertArtifactOutput(String artifactName, TestFileSystemItem fs) {
-    final Artifact artifact = ArtifactsTestUtil.findArtifact(myProject, artifactName);
+    final Artifact artifact = findArtifact(myProject, artifactName);
     final String outputFile = artifact.getOutputFilePath();
     assert outputFile != null;
     final File file = new File(outputFile);
@@ -573,10 +613,10 @@ public abstract class ExternalSystemTestCase extends UsefulTestCase {
     return (BiPredicate<T, U>)EQUALS_PREDICATE;
   }
 
-  public static void deleteBuildSystemDirectory() {
+  public static void deleteBuildSystemDirectory(Project project) {
     BuildManager buildManager = BuildManager.getInstance();
     if (buildManager == null) return;
-    Path buildSystemDirectory = buildManager.getBuildSystemDirectory();
+    Path buildSystemDirectory = buildManager.getBuildSystemDirectory(project);
     try {
       PathKt.delete(buildSystemDirectory);
       return;

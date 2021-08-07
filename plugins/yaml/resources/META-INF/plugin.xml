@@ -7,7 +7,9 @@
   Adds support for the <a href="https://yaml.org/">YAML</a> language.
   ]]></description>
 
-  <depends>com.intellij.modules.lang</depends>
+  <dependencies>
+    <plugin id="com.intellij.modules.lang"/>
+  </dependencies>
 
   <extensions defaultExtensionNs="com.intellij">
     <!-- YAML -->
@@ -16,7 +18,9 @@
 
     <lang.formatter language="yaml" implementationClass="org.jetbrains.yaml.formatter.YAMLFormattingModelBuilder"/>
     <enterHandlerDelegate implementation="org.jetbrains.yaml.smart.YAMLEnterAtIndentHandler" order="first"/>
+    <enterHandlerDelegate implementation="org.jetbrains.yaml.smart.YAMLInjectedElementEnterHandler" order="last"/>
     <typedHandler implementation="org.jetbrains.yaml.formatter.YAMLHyphenTypedHandler"/>
+    <quoteHandler fileType="YAML" className="org.jetbrains.yaml.smart.YamlQuoteHandler"/>
     <copyPastePreProcessor implementation="org.jetbrains.yaml.smart.YAMLCopyPasteProcessor"/>
     <lang.parserDefinition language="yaml" implementationClass="org.jetbrains.yaml.YAMLParserDefinition"/>
     <lang.commenter language="yaml" implementationClass="org.jetbrains.yaml.YAMLCommenter"/>
@@ -25,10 +29,13 @@
     <lang.braceMatcher language="yaml" implementationClass="org.jetbrains.yaml.YAMLPairedBraceMatcher"/>
     <lang.findUsagesProvider language="yaml" id="yamlFindUsagesProvider" implementationClass="org.jetbrains.yaml.YAMLFindUsagesProvider"/>
     <lang.foldingBuilder language="yaml" id="YAMLFoldingBuilder" implementationClass="org.jetbrains.yaml.folding.YAMLFoldingBuilder"/>
-    <fileType name="YAML" implementationClass="org.jetbrains.yaml.YAMLFileType" fieldName="YML" language="yaml" extensions="yml;yaml"/>
+    <fileType name="YAML" implementationClass="org.jetbrains.yaml.YAMLFileType" fieldName="YML" language="yaml" extensions="yaml;yml"/>
     <editor.backspaceModeOverride language="yaml" implementationClass="com.intellij.codeInsight.editorActions.SmartBackspaceDisabler"/>
     <lang.psiStructureViewFactory language="yaml" implementationClass="org.jetbrains.yaml.structureView.YAMLStructureViewFactory"/>
     <langCodeStyleSettingsProvider implementation="org.jetbrains.yaml.YAMLLanguageCodeStyleSettingsProvider"/>
+    <lang.whiteSpaceFormattingStrategy language="yaml"
+                                       implementationClass="org.jetbrains.yaml.formatter.YamlWhiteSpaceFormattingStrategy"/>
+    <stripTrailingSpacesFilterFactory implementation="org.jetbrains.yaml.formatter.YamlStripTrailingSpacesFilterFactory"/>
     <qualifiedNameProvider implementation="org.jetbrains.yaml.navigation.YAMLQualifiedNameProvider"/>
     <pom.declarationSearcher implementation="org.jetbrains.yaml.navigation.YAMLScalarKeyDeclarationSearcher"/>
     <fileBasedIndex implementation="org.jetbrains.yaml.navigation.YAMLKeysIndex"/>

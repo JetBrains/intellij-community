@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.statistic.eventLog
 
+import com.intellij.internal.statistic.IdeActivityDefinition
 import com.intellij.internal.statistic.eventLog.events.*
 
 /**
@@ -77,6 +78,13 @@ class EventLogGroup(val id: String, val version: Int) {
    */
   fun registerVarargEvent(eventId: String, vararg fields: EventField<*>): VarargEventId {
     return VarargEventId(this, eventId, *fields).also { addToRegisteredEvents(it) }
+  }
+
+  @JvmOverloads
+  fun registerIdeActivity(activityName: String?,
+                          startEventAdditionalFields: Array<EventField<*>> = emptyArray(),
+                          finishEventAdditionalFields: Array<EventField<*>> = emptyArray()): IdeActivityDefinition {
+    return IdeActivityDefinition(this, activityName, startEventAdditionalFields, finishEventAdditionalFields)
   }
 
   internal fun validateEventId(eventId: String) {

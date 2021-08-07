@@ -1,23 +1,21 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection;
 
 import com.intellij.openapi.util.Comparing;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.SingletonSet;
 import gnu.trove.THashMap;
 import gnu.trove.TObjectFunction;
 import gnu.trove.TObjectObjectProcedure;
 import gnu.trove.TObjectProcedure;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.AbstractMap;
-import java.util.Collection;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 /**
- * @deprecated Use {@link java.util.HashMap}
+ * @deprecated Use {@link HashMap}
  */
+@ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
 @Deprecated
 public class SmartHashMap<K,V> extends THashMap<K,V> {
   private K theKey;   // contains the only element if size() == 1
@@ -116,7 +114,7 @@ public class SmartHashMap<K,V> extends THashMap<K,V> {
   public Set<K> keySet() {
     K theKey = this.theKey;
     if (theKey != null) {
-      return new SingletonSet<>(theKey);
+      return Collections.singleton(theKey);
     }
     return super.keySet();
   }
@@ -126,7 +124,7 @@ public class SmartHashMap<K,V> extends THashMap<K,V> {
   public Collection<V> values() {
     K theKey = this.theKey;
     if (theKey != null) {
-      return new SingletonSet<>(theValue);
+      return Collections.singleton(theValue);
     }
     return super.values();
   }
@@ -136,7 +134,7 @@ public class SmartHashMap<K,V> extends THashMap<K,V> {
   public Set<Map.Entry<K, V>> entrySet() {
     K theKey = this.theKey;
     if (theKey != null) {
-      return new SingletonSet<>(new AbstractMap.SimpleEntry<>(theKey, theValue));
+      return Collections.singleton(new AbstractMap.SimpleEntry<>(theKey, theValue));
     }
     return super.entrySet();
   }

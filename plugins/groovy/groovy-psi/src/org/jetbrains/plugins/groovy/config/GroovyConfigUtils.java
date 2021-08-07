@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.config;
 
 import com.intellij.openapi.module.Module;
@@ -44,6 +44,11 @@ public final class GroovyConfigUtils extends AbstractConfigUtils {
   private static final GroovyConfigUtils ourGroovyConfigUtils = new GroovyConfigUtils();
   @NonNls private static final String LIB = "/lib";
   @NonNls private static final String EMBEDDABLE = "/embeddable";
+
+  @NlsSafe private static final String ALPHA = "alpha";
+  @NlsSafe private static final String BETA = "beta";
+  @NlsSafe private static final String RC = "rc";
+
 
   private GroovyConfigUtils() {}
 
@@ -106,7 +111,7 @@ public final class GroovyConfigUtils extends AbstractConfigUtils {
     return compareSdkVersions(sdkVersion, version) >= 0;
   }
 
-  private static int compareSdkVersions(@NotNull String leftVersion, @NotNull String rightVersion) {
+  public static int compareSdkVersions(@NotNull String leftVersion, @NotNull String rightVersion) {
     String[] leftVersionParts = leftVersion.split("[.-]");
     String[] rightVersionParts = rightVersion.split("[.-]");
     int sizes = Math.max(leftVersionParts.length, rightVersionParts.length);
@@ -122,14 +127,18 @@ public final class GroovyConfigUtils extends AbstractConfigUtils {
     return 0;
   }
 
+  public static boolean isUnstable(@NotNull String version) {
+    return version.contains(ALPHA) || version.contains(BETA) || version.contains(RC);
+  }
+
   private static int getVersionPart(String[] parts, int index) {
     String part = index < parts.length ? parts[index] : "0";
     int partNumber;
-    if (part.equals("alpha")) {
+    if (part.equals(ALPHA)) {
       partNumber = -3;
-    } else if (part.equals("beta")) {
+    } else if (part.equals(BETA)) {
       partNumber = -2;
-    } else if (part.equals("rc")) {
+    } else if (part.equals(RC)) {
       partNumber = -1;
     } else try {
       partNumber = Integer.parseInt(part);

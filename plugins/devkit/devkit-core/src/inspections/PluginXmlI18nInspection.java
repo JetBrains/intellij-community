@@ -1,6 +1,7 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.devkit.inspections;
 
+import com.intellij.codeInsight.intention.impl.config.IntentionManagerImpl;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.i18n.JavaI18nUtil;
 import com.intellij.lang.properties.PropertiesImplUtil;
@@ -34,9 +35,7 @@ import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.NameUtilCore;
-import com.intellij.util.xml.DomElement;
-import com.intellij.util.xml.DomUtil;
-import com.intellij.util.xml.GenericAttributeValue;
+import com.intellij.util.xml.*;
 import com.intellij.util.xml.highlighting.DomElementAnnotationHolder;
 import com.intellij.util.xml.highlighting.DomHighlightingHelper;
 import org.jetbrains.annotations.Nls;
@@ -68,7 +67,7 @@ public class PluginXmlI18nInspection extends DevKitPluginXmlInspectionBase {
       highlightOverrideText(holder, (OverrideText)element);
     }
     else if (element instanceof Extension) {
-     highlightExtension(holder, (Extension)element);
+      highlightExtension(holder, (Extension)element);
     }
   }
 
@@ -81,7 +80,7 @@ public class PluginXmlI18nInspection extends DevKitPluginXmlInspectionBase {
     String epName = extensionPoint.getEffectiveQualifiedName();
     if (LocalInspectionEP.LOCAL_INSPECTION.getName().equals(epName) ||
         InspectionEP.GLOBAL_INSPECTION.getName().equals(epName)) {
-      if (isInternal(extension)) {
+      if (isInternal(extension, "isInternal")) {
         return;
       }
       GenericAttributeValue implementationClass = getAttribute(extension, "implementationClass");
@@ -91,6 +90,9 @@ public class PluginXmlI18nInspection extends DevKitPluginXmlInspectionBase {
       checkNonLocalizableAttribute(holder, extension, "displayName", new InspectionI18NQuickFix());
       checkNonLocalizableAttribute(holder, extension, "groupName", null);
       //checkNonLocalizableAttribute(holder, element, "groupPath", null);
+    }
+    else if (IntentionManagerImpl.EP_INTENTION_ACTIONS.getName().equals(epName)) {
+      checkNonLocalizableTag(holder, extension, "category", null);
     }
     else if (InheritanceUtil.isInheritor(beanClass, ConfigurableEP.class.getName())) {
       checkNonLocalizableAttribute(holder, extension, "displayName", null);
@@ -108,12 +110,25 @@ public class PluginXmlI18nInspection extends DevKitPluginXmlInspectionBase {
   private static void checkNonLocalizableAttribute(DomElementAnnotationHolder holder,
                                                    DomElement element,
                                                    @NonNls String attributeName,
-                                                   InspectionI18NQuickFix fix) {
-    GenericAttributeValue displayNameAttr = getAttribute(element, attributeName);
-    if (displayNameAttr != null && displayNameAttr.getStringValue() != null) {
-      holder.createProblem(element,
+                                                   @Nullable LocalQuickFix fix) {
+    highlightNonLocalizableElement(holder, getAttribute(element, attributeName), attributeName, fix);
+  }
+
+  private static void checkNonLocalizableTag(DomElementAnnotationHolder holder,
+                                             DomElement element,
+                                             String tagName,
+                                             @Nullable LocalQuickFix quickFix) {
+    highlightNonLocalizableElement(holder, getTag(element, tagName), tagName, quickFix);
+  }
+
+  private static void highlightNonLocalizableElement(DomElementAnnotationHolder holder,
+                                                     GenericDomValue valueElement,
+                                                     @NonNls String valueElementName,
+                                                     @Nullable LocalQuickFix fix) {
+    if (valueElement != null && valueElement.getStringValue() != null) {
+      holder.createProblem(valueElement,
                            ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
-                           DevKitBundle.message("inspections.plugin.xml.i18n.inspection.tag.family.name", attributeName), null, fix);
+                           DevKitBundle.message("inspections.plugin.xml.i18n.inspection.tag.family.name", valueElementName), null, fix);
     }
   }
 
@@ -136,7 +151,8 @@ public class PluginXmlI18nInspection extends DevKitPluginXmlInspectionBase {
 
     holder.createProblem(overrideText, ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
                          DevKitBundle.message("inspections.plugin.xml.i18n.name"),
-                         null, new ActionOrGroupQuickFixAction(propertiesFile != null ? propertiesFile.getVirtualFile() : null, parent instanceof Action));
+                         null, new ActionOrGroupQuickFixAction(propertiesFile != null ? propertiesFile.getVirtualFile() : null,
+                                                               parent instanceof Action));
   }
 
   private static void highlightActionOrGroup(@NotNull DomElementAnnotationHolder holder, @NotNull ActionOrGroup actionOrGroup) {
@@ -147,7 +163,7 @@ public class PluginXmlI18nInspection extends DevKitPluginXmlInspectionBase {
     String desc = actionOrGroup.getDescription().getStringValue();
     if (text == null && desc == null) return;
 
-    if (isInternal(actionOrGroup)) return;
+    if (isInternal(actionOrGroup, "internal")) return;
 
     PropertiesFile propertiesFile = DescriptorI18nUtil.findBundlePropertiesFile(actionOrGroup);
 
@@ -157,9 +173,9 @@ public class PluginXmlI18nInspection extends DevKitPluginXmlInspectionBase {
                                                                actionOrGroup instanceof Action));
   }
 
-  private static boolean isInternal(@NotNull DomElement action) {
-    final GenericAttributeValue internal = getAttribute(action, "internal");
-    if (internal != null && "true".equals(internal.getStringValue())) return true;
+  private static boolean isInternal(@NotNull DomElement action, String internalAttributeName) {
+    final GenericAttributeValue internalAttribute = getAttribute(action, internalAttributeName);
+    if (internalAttribute != null && "true".equals(internalAttribute.getStringValue())) return true;
     return false;
   }
 
@@ -228,7 +244,7 @@ public class PluginXmlI18nInspection extends DevKitPluginXmlInspectionBase {
     return null;
   }
 
-  private static class InspectionI18NQuickFix implements LocalQuickFix, BatchQuickFix<CommonProblemDescriptor> {
+  private static class InspectionI18NQuickFix implements LocalQuickFix, BatchQuickFix {
 
     @Nls(capitalization = Nls.Capitalization.Sentence)
     @NotNull
@@ -257,7 +273,7 @@ public class PluginXmlI18nInspection extends DevKitPluginXmlInspectionBase {
       return false;
     }
 
-    private void doFix(@NotNull Project project, List<XmlTag> tags) {
+    private static void doFix(@NotNull Project project, List<XmlTag> tags) {
       choosePropertiesFileAndExtract(project, tags, selection -> {
         PropertiesFile propertiesFile = findPropertiesFile(project, selection);
         if (propertiesFile != null) {
@@ -302,7 +318,7 @@ public class PluginXmlI18nInspection extends DevKitPluginXmlInspectionBase {
     }
   }
 
-  private static final class ActionOrGroupQuickFixAction implements LocalQuickFix, BatchQuickFix<CommonProblemDescriptor> {
+  private static final class ActionOrGroupQuickFixAction implements LocalQuickFix, BatchQuickFix {
     private final VirtualFile myPropertiesFile;
     private final boolean myIsAction;
 
@@ -451,7 +467,7 @@ public class PluginXmlI18nInspection extends DevKitPluginXmlInspectionBase {
   }
 
 
-  private static class SeparatorKeyI18nQuickFix implements LocalQuickFix, BatchQuickFix<CommonProblemDescriptor> {
+  private static class SeparatorKeyI18nQuickFix implements LocalQuickFix, BatchQuickFix {
 
     @Nls(capitalization = Nls.Capitalization.Sentence)
     @NotNull
@@ -481,7 +497,7 @@ public class PluginXmlI18nInspection extends DevKitPluginXmlInspectionBase {
     }
 
 
-    private void doFix(@NotNull Project project, List<XmlTag> tags) {
+    private static void doFix(@NotNull Project project, List<XmlTag> tags) {
       choosePropertiesFileAndExtract(project, tags, selection -> {
         PropertiesFile propertiesFile = findPropertiesFile(project, selection);
         if (propertiesFile != null) {

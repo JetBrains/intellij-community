@@ -449,8 +449,7 @@ public class JsonSchemaCompletionContributor extends CompletionContributor {
       final String typeText = JsonSchemaDocumentationProvider.getBestDocumentation(true, jsonSchemaObject);
       if (!StringUtil.isEmptyOrSpaces(typeText)) {
         final String text = StringUtil.removeHtmlTags(typeText);
-        final int firstSentenceMark = text.indexOf(". ");
-        builder = builder.withTypeText(firstSentenceMark == -1 ? text : text.substring(0, firstSentenceMark + 1), true);
+        builder = builder.withTypeText(findFirstSentence(text), true);
       }
       else {
         String type = jsonSchemaObject.getTypeDescription(true);
@@ -487,6 +486,18 @@ public class JsonSchemaCompletionContributor extends CompletionContributor {
       }
 
       myVariants.add(builder);
+    }
+
+    private static @NotNull String findFirstSentence(@NotNull String sentence) {
+      int i = sentence.indexOf(". ");
+      while (i >= 0) {
+        String egText = ", e.g.";
+        if (!sentence.regionMatches(i - egText.length() + 1, egText, 0, egText.length())) {
+          return sentence.substring(0, i + 1);
+        }
+        i = sentence.indexOf(". ", i + 1);
+      }
+      return sentence;
     }
 
     @NotNull

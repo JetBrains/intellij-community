@@ -6,7 +6,9 @@ import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NlsContexts.PopupTitle;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.ActiveComponent;
+import com.intellij.ui.JBSplitter;
 import com.intellij.ui.popup.HintUpdateSupply;
 import com.intellij.util.BooleanFunction;
 import com.intellij.util.Consumer;
@@ -31,6 +33,8 @@ public class PopupChooserBuilder<T> implements IPopupChooserBuilder<T> {
   private @PopupTitle String myTitle;
   private final ArrayList<KeyStroke> myAdditionalKeystrokes = new ArrayList<>();
   private Runnable myItemChosenRunnable;
+  private JBSplitter myContentSplitter;
+  private JComponent myNorthComponent;
   private JComponent mySouthComponent;
   private JComponent myEastComponent;
   private JComponent myPreferableFocusComponent;
@@ -184,8 +188,18 @@ public class PopupChooserBuilder<T> implements IPopupChooserBuilder<T> {
     return this;
   }
 
+  public PopupChooserBuilder<T> setNorthComponent(@NotNull JComponent cmp) {
+    myNorthComponent = cmp;
+    return this;
+  }
+
   public PopupChooserBuilder<T> setSouthComponent(@NotNull JComponent cmp) {
     mySouthComponent = cmp;
+    return this;
+  }
+
+  public PopupChooserBuilder<T> setContentSplitter(@NotNull JBSplitter splitter) {
+    myContentSplitter = splitter;
     return this;
   }
 
@@ -306,25 +320,27 @@ public class PopupChooserBuilder<T> implements IPopupChooserBuilder<T> {
       myChooserComponent.autoSelect();
     }
 
-    myChooserComponent.addMouseListener(new MouseAdapter() {
-      @Override
-      public void mouseReleased(MouseEvent e) {
-        if (UIUtil.isActionClick(e, MouseEvent.MOUSE_RELEASED) && !UIUtil.isSelectionButtonDown(e) && !e.isConsumed()) {
-          if (myCloseOnEnter) {
-            closePopup(e, true);
-          }
-          else {
-            myItemChosenRunnable.run();
+    if (myCloseOnEnter || myItemChosenRunnable != null) {
+      myChooserComponent.addMouseListener(new MouseAdapter() {
+        @Override
+        public void mouseReleased(MouseEvent e) {
+          if (UIUtil.isActionClick(e, MouseEvent.MOUSE_RELEASED) && !UIUtil.isSelectionButtonDown(e) && !e.isConsumed()) {
+            if (myCloseOnEnter) {
+              closePopup(e, true);
+            }
+            else {
+              myItemChosenRunnable.run();
+            }
           }
         }
-      }
-    });
+      });
+    }
 
     registerClosePopupKeyboardAction(KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0), false);
     if (myCloseOnEnter) {
       registerClosePopupKeyboardAction(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0), true);
     }
-    else {
+    else if (myItemChosenRunnable != null) {
       registerKeyboardAction(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0), __ -> myItemChosenRunnable.run());
     }
     for (KeyStroke keystroke : myAdditionalKeystrokes) {
@@ -335,15 +351,22 @@ public class PopupChooserBuilder<T> implements IPopupChooserBuilder<T> {
     myScrollPane = myChooserComponent.createScrollPane();
 
     myScrollPane.getViewport().setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-    Insets viewportPadding = UIUtil.getListViewportPadding();
+    Insets viewportPadding = UIUtil.getListViewportPadding(StringUtil.isNotEmpty(myAd));
     ((JComponent)myScrollPane.getViewport().getView()).setBorder(
       BorderFactory.createEmptyBorder(viewportPadding.top, viewportPadding.left, viewportPadding.bottom, viewportPadding.right));
 
-    if (myChooserComponent.hasOwnScrollPane()) {
-      addCenterComponentToContentPane(contentPane, myPreferableFocusComponent);
+    JComponent contentComponent = myChooserComponent.hasOwnScrollPane() ? myPreferableFocusComponent : myScrollPane;
+
+    if (myContentSplitter != null) {
+      myContentSplitter.setFirstComponent(contentComponent);
+      addCenterComponentToContentPane(contentPane, myContentSplitter);
     }
     else {
-      addCenterComponentToContentPane(contentPane, myScrollPane);
+      addCenterComponentToContentPane(contentPane, contentComponent);
+    }
+
+    if (myNorthComponent != null) {
+      addNorthComponentToContentPane(contentPane, myNorthComponent);
     }
 
     if (mySouthComponent != null) {
@@ -402,6 +425,10 @@ public class PopupChooserBuilder<T> implements IPopupChooserBuilder<T> {
 
   private static void addEastComponentToContentPane(JPanel contentPane, JComponent component) {
     contentPane.add(component, BorderLayout.EAST);
+  }
+
+  private static void addNorthComponentToContentPane(JPanel contentPane, JComponent component) {
+    contentPane.add(component, BorderLayout.NORTH);
   }
 
   private static void addSouthComponentToContentPane(JPanel contentPane, JComponent component) {

@@ -1,23 +1,25 @@
 <html>
 <body>
-Detects transformations outside a Stream API chain that could be incorporated into it. For example:
-<pre>
+Detects transformations outside a Stream API chain that could be incorporated into it.
+<p>Example:</p>
+<pre><code>
   List&lt;String&gt; list = stream.collect(Collectors.toList());
   list.sort(null);
   return list.toArray(new String[list.size()]);
-</pre>
-could be converted to
-<pre>
+</code></pre>
+<p>After the conversion:</p>
+<pre><code>
   return stream.sorted().toArray(String[]::new);
-</pre>
+</code></pre>
 <p>
   Note that sometimes the converted stream chain may replace explicit <code>ArrayList</code> with <code>Collectors.toList()</code> or explicit
-  <code>HashSet</code> with <code>Collectors.toSet()</code>. While the current library implementation uses these collections internally,
-  this is not specified and thus can be changed in future, which may affect the semantics of your code.
+  <code>HashSet</code> with <code>Collectors.toSet()</code>. The current library implementation uses these collections internally. However,
+  this approach is not very reliable and might change in the future altering the semantics of your code.</p>
+
 <!-- tooltip end -->
-If you are concerned about this,
-use the checkbox below to suggest <code>Collectors.toCollection()</code> instead of <code>toList</code> and <code>toSet</code> collectors.
-<p>This inspection only applies to language level 8 or higher.</p>
-<p><small>New in 2017.3</small></p>
+<p>If you are concerned about it, use the <b>Do not suggest 'toList()' or 'toSet()' collectors</b> option to suggest
+  <code>Collectors.toCollection()</code> instead of <code>toList</code> and <code>toSet</code> collectors.
+<p>This inspection only reports if the language level of the project of module is 8 or higher.</p>
+<!--<p><small>New in 2017.3</small></p>-->
 </body>
 </html>

@@ -34,11 +34,20 @@ final class EditorCoordinateMapper {
     myFoldingModel = myView.getEditor().getFoldingModel();
   }
 
-  int visualLineToY(int line) {
+  public int[] visualLineToYRange(int line) {
     if (line < 0) line = 0;
-    return myView.getInsets().top +
-           line * myView.getLineHeight() +
-           myView.getEditor().getInlayModel().getHeightOfBlockElementsBeforeVisualLine(line);
+    int offset = line >= myView.getEditor().getVisibleLineCount() ? myDocument.getTextLength() + 1 : visualLineToOffset(line);
+    int lineHeight = myView.getLineHeight();
+    FoldingModelImpl foldingModel = myView.getEditor().getFoldingModel();
+    int idx = foldingModel.getLastCollapsedRegionBefore(offset);
+    int[] adjustment = foldingModel.getCustomRegionsYAdjustment(offset, idx);
+    int startY = myView.getInsets().top + line * lineHeight + adjustment[0] +
+                 myView.getEditor().getInlayModel().getHeightOfBlockElementsBeforeVisualLine(line, offset, idx);
+    return new int[] {startY, startY + lineHeight + adjustment[1]};
+  }
+
+  int visualLineToY(int line) {
+    return visualLineToYRange(line)[0];
   }
 
   int yToVisualLine(int y) {
@@ -55,15 +64,15 @@ final class EditorCoordinateMapper {
     while (lineMin < lineMax) {
       if ((yMax - yMin) == (lineMax - lineMin + 1) * lineHeight) return lineMin + (y - yMin) / lineHeight;
       int lineMid = (lineMin + lineMax) / 2;
-      int yMid = visualLineToY(lineMid);
-      if (y < yMid) {
-        int yMidMin = yMid - getInlaysHeight(lineMid, true);
+      int[] yMidRange = visualLineToYRange(lineMid);
+      if (y < yMidRange[0]) {
+        int yMidMin = yMidRange[0] - getInlaysHeight(lineMid, true);
         if (y >= yMidMin) return lineMid;
         lineMax = lineMid - 1;
         yMax = yMidMin;
       }
       else {
-        int yMidMax = yMid + lineHeight + getInlaysHeight(lineMid, false);
+        int yMidMax = yMidRange[1] + getInlaysHeight(lineMid, false);
         if (y < yMidMax) return lineMid;
         lineMin = lineMid + 1;
         yMin = yMidMax;
@@ -104,7 +113,11 @@ final class EditorCoordinateMapper {
       }
       endLogicalLine = fragment.getEndLogicalLine();
       maxVisualColumn = fragment.getEndVisualColumn();
-      if (fragment.isCollapsedFoldRegion()) {
+      FoldRegion foldRegion = fragment.getCurrentFoldRegion();
+      if (foldRegion != null) {
+        if (foldRegion instanceof CustomFoldRegion) {
+          return new VisualPosition(visualLine, 0);
+        }
         int startLogicalLine = fragment.getStartLogicalLine();
         int startLogicalColumn = fragment.getStartLogicalColumn();
         int endLogicalColumn = fragment.getEndLogicalColumn();
@@ -172,6 +185,10 @@ final class EditorCoordinateMapper {
     LogicalPosition delayedResult = null;
     boolean delayedInlay = false;
     for (VisualLineFragmentsIterator.Fragment fragment : VisualLineFragmentsIterator.create(myView, offset, false)) {
+      FoldRegion foldRegion = fragment.getCurrentFoldRegion();
+      if (foldRegion instanceof CustomFoldRegion) {
+        return new LogicalPosition(fragment.getStartLogicalLine(), fragment.getStartLogicalColumn());
+      }
       int minColumn = fragment.getStartVisualColumn();
       int maxColumn = fragment.getEndVisualColumn();
       if (delayedResult != null && minColumn != maxColumn) {
@@ -188,7 +205,7 @@ final class EditorCoordinateMapper {
         delayedResult =
           new LogicalPosition(column == maxColumn ? fragment.getEndLogicalLine() : fragment.getStartLogicalLine(),
                               fragment.visualToLogicalColumn(column),
-                              fragment.isCollapsedFoldRegion() ? column < maxColumn :
+                              foldRegion != null ? column < maxColumn :
                               !delayedInlay && fragment.isRtl() ^ pos.leansRight);
         // delaying result to check whether there's an 'invisible' fold region going next
         if (column != maxColumn) return delayedResult;
@@ -313,6 +330,9 @@ final class EditorCoordinateMapper {
       int visualLineStartOffset = visualLineToOffset(visualLine);
       int maxOffset = 0;
       for (VisualLineFragmentsIterator.Fragment fragment : VisualLineFragmentsIterator.create(myView, visualLineStartOffset, false, true)) {
+        if (fragment.getCurrentFoldRegion() instanceof CustomFoldRegion) {
+          return new VisualPosition(visualLine, 0);
+        }
         if (px <= fragment.getStartX()) {
           if (fragment.getStartVisualColumn() == 0) {
             return new VisualPosition(visualLine, 0);
@@ -384,6 +404,9 @@ final class EditorCoordinateMapper {
       int visualLineStartOffset = visualLineToOffset(visualLine);
       int maxOffset = 0;
       for (VisualLineFragmentsIterator.Fragment fragment : VisualLineFragmentsIterator.create(myView, visualLineStartOffset, false, true)) {
+        if (fragment.getCurrentFoldRegion() instanceof CustomFoldRegion) {
+          return new Point2D.Double(fragment.getStartX(), y);
+        }
         int startVisualColumn = fragment.getStartVisualColumn();
         if (column < startVisualColumn || column == startVisualColumn && !pos.leansRight) {
           break;
@@ -434,7 +457,8 @@ final class EditorCoordinateMapper {
     float x = getStartX(logicalLine);
     boolean firstFragment = true;
     for (VisualLineFragmentsIterator.Fragment fragment : VisualLineFragmentsIterator.create(myView, offset, beforeSoftWrap, true)) {
-      if (firstFragment && offset == visualLineStartOffset && !leanTowardsLargerOffsets) {
+      if (firstFragment && offset == visualLineStartOffset && !leanTowardsLargerOffsets ||
+          fragment.getCurrentFoldRegion() instanceof CustomFoldRegion) {
         x = fragment.getStartX();
         break;
       }

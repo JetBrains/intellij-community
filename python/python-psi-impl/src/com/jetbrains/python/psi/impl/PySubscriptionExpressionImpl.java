@@ -37,9 +37,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Optional;
 
-/**
- * @author yole
- */
+
 public class PySubscriptionExpressionImpl extends PyElementImpl implements PySubscriptionExpression {
   public PySubscriptionExpressionImpl(ASTNode astNode) {
     super(astNode);
@@ -96,7 +94,7 @@ public class PySubscriptionExpressionImpl extends PyElementImpl implements PySub
 
   @Override
   public PsiReference getReference() {
-    return getReference(PyResolveContext.defaultContext());
+    return getReference(PyResolveContext.defaultContext(TypeEvalContext.codeInsightFallback(getProject())));
   }
 
   @NotNull

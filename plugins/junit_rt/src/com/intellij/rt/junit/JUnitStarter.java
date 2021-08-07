@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.rt.junit;
 
 import com.intellij.rt.execution.junit.RepeatCount;
@@ -32,7 +32,7 @@ public final class JUnitStarter {
   private static String ourForkMode;
   private static String ourCommandFileName;
   private static String ourWorkingDirs;
-  protected static int ourCount = 1;
+  static int ourCount = 1;
   public static String ourRepeatCount;
 
   public static void main(String[] args) {
@@ -102,9 +102,23 @@ public final class JUnitStarter {
           continue;
         }
         else if (arg.startsWith(SOCKET)) {
-          final int port = Integer.parseInt(arg.substring(SOCKET.length()));
+          // the form of "-socket[<host>:]<port>" is expected here
+          // for example "-sockethost.docker.internal:12345" or "-socket54321"
+          final String value = arg.substring(SOCKET.length());
+          final String host;
+          final int port;
+          // NB the host might be an IPv6 address (and this kind of address contains ":")
+          int index = value.lastIndexOf(':');
+          if (index == -1) {
+            host = "127.0.0.1";
+            port = Integer.parseInt(value);
+          }
+          else {
+            host = value.substring(0, index);
+            port = Integer.parseInt(value.substring(index + 1));
+          }
           try {
-            final Socket socket = new Socket(InetAddress.getByName("127.0.0.1"), port);  //start collecting tests
+            final Socket socket = new Socket(InetAddress.getByName(host), port);  //start collecting tests
             final DataInputStream os = new DataInputStream(socket.getInputStream());
             try {
               os.readBoolean();//wait for ready flag

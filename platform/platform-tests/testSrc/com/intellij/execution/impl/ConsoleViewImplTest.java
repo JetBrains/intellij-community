@@ -16,10 +16,7 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.FoldRegion;
-import com.intellij.openapi.editor.LogicalPosition;
-import com.intellij.openapi.editor.RangeMarker;
+import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.actionSystem.EditorActionManager;
 import com.intellij.openapi.editor.actionSystem.TypedAction;
 import com.intellij.openapi.editor.ex.EditorEx;
@@ -82,6 +79,26 @@ public class ConsoleViewImplTest extends LightPlatformTestCase {
     console.waitAllRequests();
     UIUtil.dispatchAllInvocationEvents();
     assertEquals(2, console.getContentSize());
+  }
+
+  public void testTypeBeforeSelectionMustNotLeadToInvalidOffset() {
+    ConsoleViewImpl console = myConsole;
+    console.print("Initial", ConsoleViewContentType.USER_INPUT);
+    console.flushDeferredText();
+    console.clear();
+    console.print("Hi", ConsoleViewContentType.USER_INPUT);
+    console.waitAllRequests();
+    UIUtil.dispatchAllInvocationEvents();
+    assertEquals(2, console.getContentSize());
+    assertEquals(2, console.getEditor().getCaretModel().getOffset());
+    console.getEditor().getCaretModel().setCaretsAndSelections(Collections.singletonList(new CaretState(new LogicalPosition(0,0),
+                                                                                                        new LogicalPosition(0,0),
+                                                                                                        new LogicalPosition(0,2))));
+    assertEquals(0, console.getEditor().getCaretModel().getOffset());
+    typeIn(console.getEditor(), 'x');
+    console.waitAllRequests();
+    UIUtil.dispatchAllInvocationEvents();
+    assertEquals(1, console.getContentSize());
   }
 
   public void testConsolePrintsSomethingAfterDoubleClear() throws Exception {
@@ -151,7 +168,7 @@ public class ConsoleViewImplTest extends LightPlatformTestCase {
   public void testTypeInEmptyConsole() {
     ConsoleViewImpl console = myConsole;
     console.clear();
-    EditorActionManager actionManager = EditorActionManager.getInstance();
+    EditorActionManager.getInstance();
     DataContext dataContext = DataManager.getInstance().getDataContext(console.getComponent());
     TypedAction action = TypedAction.getInstance();
     action.actionPerformed(console.getEditor(), 'h', dataContext);
@@ -264,12 +281,12 @@ public class ConsoleViewImplTest extends LightPlatformTestCase {
 
   public void testLargeConsolePerformance() {
     withCycleConsoleNoFolding(UISettings.getInstance().getConsoleCycleBufferSizeKb(), console ->
-      PlatformTestUtil.startPerformanceTest("console print", 11_000, () -> {
+      PlatformTestUtil.startPerformanceTest("console print", 15_000, () -> {
         console.clear();
-        for (int i=0; i<10_000_000; i++) {
+        for (int i=0; i<20_000_000; i++) {
           console.print("hello\n", ConsoleViewContentType.NORMAL_OUTPUT);
-          PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
         }
+        PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
         console.waitAllRequests();
       }).assertTiming());
   }

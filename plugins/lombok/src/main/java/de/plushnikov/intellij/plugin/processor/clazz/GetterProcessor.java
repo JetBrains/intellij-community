@@ -22,8 +22,7 @@ import java.util.List;
  *
  * @author Plushnikov Michail
  */
-public class GetterProcessor extends AbstractClassProcessor {
-
+public final class GetterProcessor extends AbstractClassProcessor {
   public GetterProcessor() {
     super(PsiMethod.class, LombokClassNames.GETTER);
   }

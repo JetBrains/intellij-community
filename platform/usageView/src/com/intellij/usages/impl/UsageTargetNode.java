@@ -1,19 +1,13 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.usages.impl;
 
 import com.intellij.usages.UsageTarget;
-import com.intellij.usages.UsageView;
 import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
 
 class UsageTargetNode extends Node {
   UsageTargetNode(@NotNull UsageTarget target) {
     setUserObject(target);
-  }
-
-  @Override
-  public String tree2string(int indent, @NotNull String lineSeparator) {
-    return getTarget().getName();
   }
 
   @Override
@@ -33,7 +27,7 @@ class UsageTargetNode extends Node {
 
   @NotNull
   @Override
-  protected String getText(@NotNull final UsageView view) {
+  protected String getNodeText() {
     return ObjectUtils.notNull(getTarget().getPresentation().getPresentableText(), "");
   }
 

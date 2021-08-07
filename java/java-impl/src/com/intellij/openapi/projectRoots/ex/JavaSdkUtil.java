@@ -3,11 +3,15 @@ package com.intellij.openapi.projectRoots.ex;
 
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectManager;
+import com.intellij.openapi.projectRoots.JavaSdk;
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
 import com.intellij.openapi.projectRoots.JavaSdkVersionUtil;
 import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.rt.execution.CommandLineWrapper;
 import com.intellij.util.PathUtil;
@@ -75,5 +79,21 @@ public final class JavaSdkUtil {
   @Contract("null, _ -> true")
   public static boolean isJdkAtLeast(@Nullable Sdk jdk, @NotNull JavaSdkVersion expected) {
     return JavaSdkVersionUtil.isAtLeast(jdk, expected);
+  }
+
+  public static void applyJdkToProject(@NotNull Project project, @NotNull Sdk jdk) {
+    ProjectRootManagerEx rootManager = ProjectRootManagerEx.getInstanceEx(project);
+    rootManager.setProjectSdk(jdk);
+
+    JavaSdkVersion version = JavaSdk.getInstance().getVersion(jdk);
+    if (version != null) {
+      LanguageLevel maxLevel = version.getMaxLanguageLevel();
+      LanguageLevelProjectExtension extension = LanguageLevelProjectExtension.getInstance(ProjectManager.getInstance().getDefaultProject());
+      LanguageLevelProjectExtension ext = LanguageLevelProjectExtension.getInstance(project);
+      if (extension.isDefault() || maxLevel.compareTo(ext.getLanguageLevel()) < 0) {
+        ext.setLanguageLevel(maxLevel);
+        ext.setDefault(true);
+      }
+    }
   }
 }

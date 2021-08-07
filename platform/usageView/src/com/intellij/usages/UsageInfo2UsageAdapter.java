@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.usages;
 
 import com.intellij.ide.SelectInEditorManager;
@@ -51,8 +51,8 @@ public class UsageInfo2UsageAdapter implements UsageInModule, UsageInfoAdapter,
   private @NotNull Object myMergedUsageInfos; // contains all merged infos, including myUsageInfo. Either UsageInfo or UsageInfo[]
   private final int myLineNumber;
   private final int myOffset;
-  protected Icon myIcon;
-  private volatile Reference<TextChunk[]> myTextChunks; // allow to be gced and recreated on-demand because it requires a lot of memory
+  // allow to be gced and recreated on-demand because it requires a lot of memory
+  private volatile Reference<UsageNodePresentation> myCachedPresentation;
   private volatile UsageType myUsageType;
 
   public UsageInfo2UsageAdapter(final @NotNull UsageInfo usageInfo) {
@@ -110,7 +110,7 @@ public class UsageInfo2UsageAdapter implements UsageInModule, UsageInfoAdapter,
     return document.getLineNumber(startOffset);
   }
 
-  private TextChunk @NotNull [] initChunks() {
+  private TextChunk @NotNull [] computeText() {
     TextChunk[] chunks;
     VirtualFile file = getFile();
     boolean isNullOrBinary = file == null || file.getFileType().isBinary();
@@ -141,7 +141,6 @@ public class UsageInfo2UsageAdapter implements UsageInModule, UsageInfoAdapter,
         chunks = ChunkExtractor.extractChunks(psiFile, this);
       }
     }
-    myTextChunks = new SoftReference<>(chunks);
     return chunks;
   }
 
@@ -391,7 +390,7 @@ public class UsageInfo2UsageAdapter implements UsageInModule, UsageInfoAdapter,
     UsageInfo[] merged = ArrayUtil.mergeArrays(getMergedInfos(), u2.getMergedInfos());
     myMergedUsageInfos = merged.length == 1 ? merged[0] : merged;
     Arrays.sort(getMergedInfos(), BY_NAVIGATION_OFFSET);
-    myTextChunks = null; // chunks will be rebuilt lazily (IDEA-126048)
+    myCachedPresentation = null; // presentation will be rebuilt lazily (IDEA-126048)
     return true;
   }
 
@@ -399,7 +398,7 @@ public class UsageInfo2UsageAdapter implements UsageInModule, UsageInfoAdapter,
   public void reset() {
     ApplicationManager.getApplication().assertIsDispatchThread();
     myMergedUsageInfos = myUsageInfo;
-    initChunks();
+    myCachedPresentation = new SoftReference<>(new UsageNodePresentation(computeIcon(), computeText()));
   }
 
   @Override
@@ -459,29 +458,32 @@ public class UsageInfo2UsageAdapter implements UsageInModule, UsageInfoAdapter,
 
   @Override
   public TextChunk @NotNull [] getText() {
-    return doUpdateCachedText();
+    return doUpdateCachedPresentation().getText();
   }
 
   @Override
-  public TextChunk @Nullable [] getCachedText() {
-    return SoftReference.dereference(myTextChunks);
+  public final @Nullable UsageNodePresentation getCachedPresentation() {
+    return SoftReference.dereference(myCachedPresentation);
   }
 
   @Override
-  public void updateCachedText() {
-    doUpdateCachedText();
+  public final void updateCachedPresentation() {
+    doUpdateCachedPresentation();
   }
 
-  private TextChunk @NotNull [] doUpdateCachedText() {
-    TextChunk[] chunks = SoftReference.dereference(myTextChunks);
-    final long currentModificationStamp = getCurrentModificationStamp();
+  private @NotNull UsageNodePresentation doUpdateCachedPresentation() {
+    UsageNodePresentation cachedPresentation = getCachedPresentation();
+    long currentModificationStamp = getCurrentModificationStamp();
     boolean isModified = currentModificationStamp != myModificationStamp;
-    if (chunks == null || isValid() && isModified) {
-      // the check below makes sense only for valid PsiElement
-      chunks = initChunks();
+    if (cachedPresentation == null || isModified && isValid()) {
+      UsageNodePresentation presentation = new UsageNodePresentation(computeIcon(), computeText());
+      myCachedPresentation = new SoftReference<>(presentation);
       myModificationStamp = currentModificationStamp;
+      return presentation;
     }
-    return chunks;
+    else {
+      return cachedPresentation;
+    }
   }
 
   @NotNull
@@ -530,15 +532,17 @@ public class UsageInfo2UsageAdapter implements UsageInModule, UsageInfoAdapter,
 
   @Override
   public Icon getIcon() {
-    Icon icon = myIcon;
-    if (icon == null) {
-      myIcon = icon = myUsageInfo.getIcon();
+    return doUpdateCachedPresentation().getIcon();
+  }
+
+  @Nullable
+  protected Icon computeIcon() {
+    Icon icon = myUsageInfo.getIcon();
+    if (icon != null) {
+      return icon;
     }
-    if (icon == null) {
-      PsiElement psiElement = getElement();
-      myIcon = icon = psiElement != null && psiElement.isValid() && !isFindInPathUsage(psiElement) ? psiElement.getIcon(0) : null;
-    }
-    return icon;
+    PsiElement psiElement = getElement();
+    return psiElement != null && psiElement.isValid() && !isFindInPathUsage(psiElement) ? psiElement.getIcon(0) : null;
   }
 
   private boolean isFindInPathUsage(PsiElement psiElement) {
@@ -553,41 +557,32 @@ public class UsageInfo2UsageAdapter implements UsageInModule, UsageInfoAdapter,
   @Nullable
   public UsageType getUsageType() {
     UsageType usageType = myUsageType;
-
     if (usageType == null) {
-      usageType = UsageType.UNCLASSIFIED;
-      PsiFile file = getPsiFile();
-
-      if (file != null) {
-        Segment segment = getFirstSegment();
-
-        if (segment != null) {
-          Document document = PsiDocumentManager.getInstance(getProject()).getDocument(file);
-          if (document != null) {
-            ChunkExtractor extractor = ChunkExtractor.getExtractor(file);
-            SmartList<TextChunk> chunks = new SmartList<>();
-            extractor.createTextChunks(
-              this,
-              document.getCharsSequence(),
-              segment.getStartOffset(),
-              segment.getEndOffset(),
-              false,
-              chunks
-            );
-
-            for(TextChunk chunk:chunks) {
-              UsageType chunkUsageType = chunk.getType();
-              if (chunkUsageType != null) {
-                usageType = chunkUsageType;
-                break;
-              }
-            }
-          }
-        }
+      usageType = computeUsageType();
+      if (usageType == null) {
+        usageType = UsageType.UNCLASSIFIED;
       }
       myUsageType = usageType;
     }
     return usageType;
+  }
+
+  private @Nullable UsageType computeUsageType() {
+    PsiFile file = getPsiFile();
+    if (file == null) {
+      return null;
+    }
+    Segment segment = getFirstSegment();
+    if (segment == null) {
+      return null;
+    }
+    Document document = PsiDocumentManager.getInstance(getProject()).getDocument(file);
+    if (document == null) {
+      return null;
+    }
+    return ChunkExtractor.getExtractor(file).deriveUsageTypeFromHighlighting(
+      document.getCharsSequence(), segment.getStartOffset(), segment.getEndOffset()
+    );
   }
 
   @Override

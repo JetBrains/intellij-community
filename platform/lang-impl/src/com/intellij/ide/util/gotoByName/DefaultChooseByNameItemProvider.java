@@ -40,15 +40,6 @@ public class DefaultChooseByNameItemProvider implements ChooseByNameInScopeItemP
   }
 
   @Override
-  public boolean filterElements(@NotNull ChooseByNameBase base,
-                                @NotNull String pattern,
-                                boolean everywhere,
-                                @NotNull ProgressIndicator cancelled,
-                                @NotNull Processor<Object> consumer) {
-    return filterElements((ChooseByNameViewModel)base, pattern, everywhere, cancelled, consumer);
-  }
-
-  @Override
   public boolean filterElements(@NotNull ChooseByNameViewModel base,
                                 @NotNull String pattern,
                                 boolean everywhere,
@@ -225,7 +216,8 @@ public class DefaultChooseByNameItemProvider implements ChooseByNameInScopeItemP
   @NotNull
   private static FindSymbolParameters createParameters(@NotNull ChooseByNameViewModel base, @NotNull String pattern, boolean everywhere) {
     ChooseByNameModel model = base.getModel();
-    IdFilter idFilter = model instanceof ContributorsBasedGotoByModel ? ((ContributorsBasedGotoByModel)model).getIdFilter(everywhere) : null;
+    IdFilter idFilter = model instanceof ContributorsBasedGotoByModel ? IdFilter.getProjectIdFilter(
+      ((ContributorsBasedGotoByModel)model).getProject(), everywhere) : null;
     GlobalSearchScope searchScope = FindSymbolParameters.searchScopeFor(base.getProject(), everywhere);
     return new FindSymbolParameters(pattern, getNamePattern(base, pattern), searchScope, idFilter);
   }
@@ -337,11 +329,6 @@ public class DefaultChooseByNameItemProvider implements ChooseByNameInScopeItemP
       fullName = StringUtil.replace(fullName, separator, UNIVERSAL_SEPARATOR);
     }
     return matchName(fullMatcher, fullName);
-  }
-
-  @Override
-  public @NotNull List<String> filterNames(@NotNull ChooseByNameBase base, String @NotNull [] names, @NotNull String pattern) {
-    return filterNames((ChooseByNameViewModel)base, names, pattern);
   }
 
   @NotNull

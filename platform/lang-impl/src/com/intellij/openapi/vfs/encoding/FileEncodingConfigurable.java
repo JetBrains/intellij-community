@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.openapi.vfs.encoding;
 
@@ -31,6 +31,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.io.IOException;
 import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.*;
 import java.util.function.Supplier;
@@ -170,7 +171,7 @@ class FileEncodingConfigurable extends PerFileConfigurableBase<Charset> {
   @Override
   public JComponent createComponent() {
     myTablePanel.add(super.createComponent(), BorderLayout.CENTER);
-    JPanel p = createActionPanel(null, new Value<>() {
+    final class PropertiesCharsetValue implements Value<Charset> {
       @Override
       public void commit() {}
 
@@ -181,9 +182,12 @@ class FileEncodingConfigurable extends PerFileConfigurableBase<Charset> {
 
       @Override
       public void set(Charset value) {
-        myPropsCharset = value;
+        myPropsCharset = adjustChosenValue(null, value);
       }
-    });
+    }
+
+    final String nullTextValue = IdeBundle.message("encoding.name.properties.default", StandardCharsets.ISO_8859_1.displayName());
+    JPanel p = createActionPanel(new PerFileConfigurableComboBoxAction(new PropertiesCharsetValue(), null, nullTextValue));
     myPropertiesFilesEncodingCombo.add(p, BorderLayout.CENTER);
     return myPanel;
   }

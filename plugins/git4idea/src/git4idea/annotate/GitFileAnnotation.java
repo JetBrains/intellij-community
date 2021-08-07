@@ -8,6 +8,7 @@ import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.*;
+import com.intellij.openapi.vcs.annotate.AnnotationTooltipBuilder;
 import com.intellij.openapi.vcs.annotate.FileAnnotation;
 import com.intellij.openapi.vcs.annotate.LineAnnotationAspect;
 import com.intellij.openapi.vcs.annotate.LineAnnotationAspectAdapter;
@@ -32,7 +33,8 @@ import git4idea.changes.GitCommittedChangeListProvider;
 import git4idea.log.GitCommitTooltipLinkHandler;
 import git4idea.repo.GitRepository;
 import git4idea.repo.GitRepositoryManager;
-import gnu.trove.TObjectIntHashMap;
+import it.unimi.dsi.fastutil.objects.Object2IntMap;
+import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -48,7 +50,7 @@ public class GitFileAnnotation extends FileAnnotation {
 
   @NotNull private final List<LineInfo> myLines;
   @Nullable private List<VcsFileRevision> myRevisions;
-  @Nullable private TObjectIntHashMap<VcsRevisionNumber> myRevisionMap;
+  @Nullable private Object2IntMap<VcsRevisionNumber> myRevisionMap;
   @NotNull private final Map<VcsRevisionNumber, String> myCommitMessageMap = new HashMap<>();
   private final VcsLogApplicationSettings myLogSettings = ApplicationManager.getApplication().getService(VcsLogApplicationSettings.class);
 
@@ -138,7 +140,7 @@ public class GitFileAnnotation extends FileAnnotation {
   public void setRevisions(@NotNull List<VcsFileRevision> revisions) {
     myRevisions = revisions;
 
-    myRevisionMap = new TObjectIntHashMap<>();
+    myRevisionMap = new Object2IntOpenHashMap<>();
     for (int i = 0; i < myRevisions.size(); i++) {
       myRevisionMap.put(myRevisions.get(i).getRevisionNumber(), i);
     }
@@ -202,7 +204,7 @@ public class GitFileAnnotation extends FileAnnotation {
   @Nullable
   public String getCommitMessage(@NotNull VcsRevisionNumber revisionNumber) {
     if (myRevisions != null && myRevisionMap != null &&
-        myRevisionMap.contains(revisionNumber)) {
+        myRevisionMap.containsKey(revisionNumber)) {
       VcsFileRevision fileRevision = myRevisions.get(myRevisionMap.get(revisionNumber));
       return fileRevision.getCommitMessage();
     }
@@ -445,7 +447,7 @@ public class GitFileAnnotation extends FileAnnotation {
 
         GitRevisionNumber revisionNumber = lineInfo.getRevisionNumber();
         if (myRevisions != null && myRevisionMap != null &&
-            myRevisionMap.contains(revisionNumber)) {
+            myRevisionMap.containsKey(revisionNumber)) {
           int index = myRevisionMap.get(revisionNumber);
           if (index + 1 < myRevisions.size()) {
             return myRevisions.get(index + 1);

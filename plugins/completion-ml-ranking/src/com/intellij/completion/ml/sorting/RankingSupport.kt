@@ -1,7 +1,7 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.completion.ml.sorting
 
-import com.intellij.application.options.CodeCompletionOptions
+import com.intellij.application.options.CodeCompletionConfigurable
 import com.intellij.completion.ml.MLCompletionBundle
 import com.intellij.completion.ml.experiment.ExperimentStatus
 import com.intellij.completion.ml.ranker.ExperimentModelProvider
@@ -70,21 +70,28 @@ object RankingSupport {
     val application = ApplicationManager.getApplication()
     if (application.isUnitTestMode) return enabledInTests
 
-    val properties = PropertiesComponent.getInstance()
     val settings = CompletionMLRankingSettings.getInstance()
     val experimentStatus = ExperimentStatus.getInstance()
     val experimentInfo = experimentStatus.forLanguage(language)
+    val shouldSort = settings.isRankingEnabled && settings.isLanguageEnabled(provider.id)
+
     if (application.isEAP && experimentInfo.inExperiment && !experimentStatus.isDisabled()) {
       settings.updateShowDiffInExperiment(experimentInfo.shouldShowArrows)
-    }
-
-    val shouldSort = settings.isRankingEnabled && settings.isLanguageEnabled(provider.id)
-    if (shouldSort && provider.isEnabledByDefault && !properties.getBoolean(ML_ENABLED_NOTIFICATION_SHOWN_KEY)) {
-      properties.setValue(ML_ENABLED_NOTIFICATION_SHOWN_KEY, true)
-      MLEnabledNotification().notify(null)
+    } else {
+      showNotificationAboutMLOnce(shouldSort, provider.isEnabledByDefault, provider.id)
     }
 
     return shouldSort
+  }
+
+  private fun showNotificationAboutMLOnce(shouldSort: Boolean, isEnabledByDefault: Boolean, providerId: String) {
+    if (shouldSort && isEnabledByDefault && providerId == "Kotlin") {
+      val properties = PropertiesComponent.getInstance()
+      if (!properties.getBoolean(ML_ENABLED_NOTIFICATION_SHOWN_KEY)) {
+        properties.setValue(ML_ENABLED_NOTIFICATION_SHOWN_KEY, true)
+        MLEnabledNotification().notify(null)
+      }
+    }
   }
 
   @TestOnly
@@ -105,11 +112,12 @@ object RankingSupport {
           val settings = CompletionMLRankingSettings.getInstance()
           settings.isShowDiffEnabled = true
           settings.isDecorateRelevantEnabled = true
+          notification.expire()
         }
       })
       addAction(object : NotificationAction(MLCompletionBundle.message("ml.completion.notification.configure")) {
         override fun actionPerformed(e: AnActionEvent, notification: Notification) {
-          ShowSettingsUtil.getInstance().showSettingsDialog(null, CodeCompletionOptions::class.java)
+          ShowSettingsUtil.getInstance().showSettingsDialog(null, CodeCompletionConfigurable::class.java)
         }
       })
     }

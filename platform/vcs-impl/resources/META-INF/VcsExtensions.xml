@@ -73,18 +73,32 @@
     <diff.merge.MergeTool implementation="com.intellij.openapi.vcs.changes.patch.tool.ApplyPatchMergeTool"/>
     <diff.DiffTool implementation="com.intellij.openapi.vcs.changes.patch.tool.ApplyPatchDiffTool"/>
     <diff.DiffTool implementation="com.intellij.openapi.vcs.changes.patch.tool.PatchDiffTool"/>
+    <diff.DiffTool implementation="com.intellij.diff.tools.combined.CombinedUnifiedDiffTool"/>
+    <diff.DiffTool implementation="com.intellij.diff.tools.combined.CombinedSideBySideDiffTool"/>
     <diff.impl.DiffToolSubstitutor implementation="com.intellij.openapi.vcs.changes.actions.diff.lst.LocalChangeListDiffTool$Simple"/>
     <diff.impl.DiffToolSubstitutor implementation="com.intellij.openapi.vcs.changes.actions.diff.lst.LocalChangeListDiffTool$Unified"/>
 
+    <diff.DiffExtension implementation="com.intellij.diff.tools.combined.CombinedDiffRequestProcessor$CombinedDiffViewerBuilder"/>
+
     <diff.actions.ShowDiffAction.ExtensionProvider implementation="com.intellij.openapi.vcs.changes.shelf.DiffShelvedChangesActionProvider"/>
+    <diff.actions.ShowStandaloneDiffAction.ExtensionProvider implementation="com.intellij.openapi.vcs.changes.shelf.DiffShelvedChangesActionProvider"/>
     <diff.actions.ShowDiffAction.ExtensionProvider implementation="com.intellij.openapi.vcs.update.ShowUpdatedDiffActionProvider"/>
     <diff.actions.ShowDiffAction.ExtensionProvider implementation="com.intellij.openapi.vcs.history.actions.CompareRevisionsAction"/>
     <diff.actions.ShowDiffAction.ExtensionProvider implementation="com.intellij.openapi.vcs.changes.actions.diff.ShowDiffFromLocalChangesActionProvider"/>
+    <diff.actions.ShowStandaloneDiffAction.ExtensionProvider implementation="com.intellij.openapi.vcs.changes.actions.diff.ShowDiffFromLocalChangesActionProvider"/>
+    <diff.actions.ShowStandaloneDiffAction.ExtensionProvider implementation="com.intellij.openapi.vcs.changes.ui.ChangesBrowserBase$ShowStandaloneDiff"/>
+    <diff.actions.ShowDiffAction.ExtensionProvider implementation="com.intellij.openapi.vcs.changes.ShowEditorDiffPreviewActionProvider" order="first"/>
     <diff.actions.ShowDiffAction.ExtensionProvider implementation="com.intellij.openapi.vcs.changes.actions.diff.ShowDiffAction" order="last"/>
+
+    <openapi.vcs.changes.actions.CreatePatchFromChangesAction.Dialog.ExtensionProvider
+      implementation="com.intellij.openapi.vcs.changes.actions.diff.DiffViewerCreatePatchActionProvider$Dialog"/>
+    <openapi.vcs.changes.actions.CreatePatchFromChangesAction.Clipboard.ExtensionProvider
+      implementation="com.intellij.openapi.vcs.changes.actions.diff.DiffViewerCreatePatchActionProvider$Clipboard"/>
 
     <intentionAction>
       <className>com.intellij.vcs.RollbackCurrentLineIntention</className>
-      <category>Other</category>
+      <bundleName>messages.LangBundle</bundleName>
+      <categoryKey>intention.category.other</categoryKey>
     </intentionAction>
 
     <openapi.vcs.history.actions.ShowDiffAfterWithLocalAction.ExtensionProvider implementation="com.intellij.openapi.vcs.changes.shelf.DiffShelvedChangesWithLocalActionProvider"/>
@@ -179,8 +193,10 @@
     <checkinHandlerFactory implementation="com.intellij.openapi.vcs.checkin.CodeCleanupCheckinHandlerFactory" id="codeCleanup"/>
 
     <completion.preselectionBehaviourProvider implementation="com.intellij.openapi.vcs.CommitCompletionPreselectionBehaviourProvider"/>
-    <completion.contributor language="TEXT" implementationClass="com.intellij.openapi.vcs.CommitCompletionContributor" id="commitCompletion"
+    <completion.contributor language="TEXT" implementationClass="com.intellij.openapi.vcs.RecentMessagesCommitCompletionContributor" id="commitCompletion"
                             order="first, before liveTemplates"/>
+    <completion.contributor language="TEXT" implementationClass="com.intellij.openapi.vcs.ChangedFilesCommitCompletionContributor" 
+                            order="first, before liveTemplates, after commitCompletion"/>
     <completion.contributor language="TEXT" implementationClass="com.intellij.openapi.vcs.changes.ChangeListCompletionContributor"
                             order="first"/>
 
@@ -199,7 +215,7 @@
     <handleTypeFactory implementation="com.intellij.openapi.vcs.readOnlyHandler.VcsHandleTypeFactory"/>
 
     <keymapExtension implementation="com.intellij.openapi.vcs.impl.VcsKeymapExtension"/>
-    <fileType name="PATCH" implementationClass="com.intellij.openapi.vcs.changes.patch.PatchFileType" fieldName="INSTANCE" extensions="patch;diff" />
+    <fileType name="PATCH" implementationClass="com.intellij.openapi.vcs.changes.patch.PatchFileType" fieldName="INSTANCE" extensions="diff;patch" />
     <virtualFileSystem key="vcs" implementationClass="com.intellij.openapi.vcs.vfs.VcsFileSystem"/>
     <fileDocumentSynchronizationVetoer implementation="com.intellij.vcs.commit.SaveCommittingDocumentsVetoer"/>
     <fileDocumentManagerListener implementation="com.intellij.vcs.commit.SaveCommittingDocumentsVetoer"/>
@@ -241,6 +257,7 @@
     <dateTimeFormatter id="vcs.annotate" name="VCS Annotate" />
     <dateTimeFormatter id="vcs.log" name="VCS Log" />
 
+    <statistics.counterUsagesCollector implementationClass="com.intellij.openapi.vcs.changes.actions.VcsStatisticsCollector"/>
     <statistics.applicationUsagesCollector implementation="com.intellij.openapi.vcs.statistics.VcsApplicationOptionsUsagesCollector"/>
 
     <openapi.vcs.ui.cloneDialog.VcsCloneDialogExtension
@@ -294,6 +311,13 @@
     <statistics.notificationIdsHolder implementation="com.intellij.openapi.vcs.VcsNotificationIdsHolder"/>
 
     <diff.editor.diffRequestProcessorEditorCustomizer implementation="com.intellij.openapi.vcs.changes.ShowDiffInEditorTooltipInstaller"/>
+    <registryKey key="patch.context.line.count" defaultValue="3" description="Number of context lines for creating patches"/>
+
+    <advancedSetting id="vcs.annotations.preload" default="false" bundle="messages.VcsBundle" groupKey="advanced.settings.vcs"/>
+    <advancedSetting id="vcs.process.ignored" default="true" bundle="messages.VcsBundle" groupKey="advanced.settings.vcs"/>
+    <advancedSetting id="vcs.commit.tool.window" default="true" bundle="messages.VcsBundle" groupKey="advanced.settings.vcs"/>
+    <advancedSetting id="vcs.non.modal.commit.toggle.ui" default="false" bundle="messages.VcsBundle" groupKey="advanced.settings.vcs"/>
+    <advancedSetting id="vcs.push.all.with.commits" default="false" bundle="messages.VcsBundle" groupKey="advanced.settings.vcs"/>
   </extensions>
 
   <extensions defaultExtensionNs="org.jetbrains">

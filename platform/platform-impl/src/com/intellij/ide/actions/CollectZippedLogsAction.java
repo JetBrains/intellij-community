@@ -15,7 +15,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.ui.DoNotAskOption;
 import com.intellij.openapi.ui.MessageDialogBuilder;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.io.FileUtil;
@@ -54,7 +54,7 @@ public class CollectZippedLogsAction extends AnAction implements DumbAware {
         .yesText(IdeBundle.message("button.show.in.file.manager", RevealFileAction.getFileManagerName()))
         .noText(CommonBundle.getCancelButtonText())
         .icon(Messages.getWarningIcon())
-        .doNotAsk(new DialogWrapper.DoNotAskOption.Adapter() {
+        .doNotAsk(new DoNotAskOption.Adapter() {
           @Override
           public void rememberChoice(final boolean selected, final int exitCode) {
             PropertiesComponent.getInstance().setValue(CONFIRMATION_DIALOG, selected);
@@ -144,7 +144,7 @@ public class CollectZippedLogsAction extends AnAction implements DumbAware {
 
   private static File[] getJavaErrorLogs() {
     return new File(SystemProperties.getUserHome())
-      .listFiles(file -> file.isFile() && file.getName().startsWith("java_error_in") && !file.getName().endsWith("hprof"));
+      .listFiles(file -> file.isFile() && (file.getName().startsWith("java_error_in") || file.getName().startsWith("jbr_err_pid")) && !file.getName().endsWith("hprof"));
   }
 
   @NotNull

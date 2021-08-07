@@ -8,6 +8,7 @@ import org.jetbrains.idea.maven.dom.MavenDomTestCase;
 import org.jetbrains.idea.maven.dom.references.MavenPsiElementWrapper;
 import org.jetbrains.idea.maven.model.MavenConstants;
 import org.jetbrains.idea.maven.project.MavenProject;
+import org.junit.Test;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -17,6 +18,7 @@ import java.nio.charset.StandardCharsets;
  */
 public class MavenConfigImportingTest extends MavenDomTestCase {
 
+  @Test
   public void testResolveJvmConfigProperty() throws IOException {
     createProjectSubFile(MavenConstants.JVM_CONFIG_RELATIVE_PATH, "-Dver=1");
     importProject("<groupId>test</groupId>\n" +
@@ -27,6 +29,7 @@ public class MavenConfigImportingTest extends MavenDomTestCase {
     assertEquals("1", mavenProject.getMavenId().getVersion());
   }
 
+  @Test
   public void testResolveMavenConfigProperty() throws IOException {
     createProjectSubFile(MavenConstants.MAVEN_CONFIG_RELATIVE_PATH, "-Dver=1");
     importProject("<groupId>test</groupId>\n" +
@@ -37,6 +40,7 @@ public class MavenConfigImportingTest extends MavenDomTestCase {
     assertEquals("1", mavenProject.getMavenId().getVersion());
   }
 
+  @Test
   public void testResolvePropertyPriority() throws IOException {
     createProjectSubFile(MavenConstants.JVM_CONFIG_RELATIVE_PATH, "-Dver=ignore");
     createProjectSubFile(MavenConstants.MAVEN_CONFIG_RELATIVE_PATH, "-Dver=1");
@@ -52,12 +56,13 @@ public class MavenConfigImportingTest extends MavenDomTestCase {
     assertEquals("1", mavenProject.getMavenId().getVersion());
   }
 
+  @Test
   public void testResolveConfigPropertiesInModules() throws IOException {
+    assumeVersionMoreThan("3.3.1");
     createProjectSubFile(MavenConstants.MAVEN_CONFIG_RELATIVE_PATH, "-Dver=1 -DmoduleName=m1");
 
     createModulePom("m1", "<artifactId>${moduleName}</artifactId>\n" +
                           "<version>${ver}</version>\n" +
-
                           "<parent>\n" +
                           "  <groupId>test</groupId>\n" +
                           "  <artifactId>project</artifactId>\n" +
@@ -67,6 +72,7 @@ public class MavenConfigImportingTest extends MavenDomTestCase {
     importProject("<groupId>test</groupId>\n" +
                   "<artifactId>project</artifactId>\n" +
                   "<version>${ver}</version>\n" +
+                  "<packaging>pom</packaging>\n" +
 
                   "<modules>\n" +
                   "  <module>${moduleName}</module>" +
@@ -82,6 +88,7 @@ public class MavenConfigImportingTest extends MavenDomTestCase {
     assertEquals("1", module.getMavenId().getVersion());
   }
 
+  @Test
   public void testMavenConfigCompletion() throws Exception {
     createProjectSubFile(MavenConstants.MAVEN_CONFIG_RELATIVE_PATH, "-Dconfig.version=1");
     importProject("<groupId>test</groupId>\n" +
@@ -95,6 +102,7 @@ public class MavenConfigImportingTest extends MavenDomTestCase {
     assertCompletionVariants(myProjectPom, "config.version");
   }
 
+  @Test
   public void testMavenConfigReferenceResolving() throws IOException {
     createProjectSubFile(MavenConstants.MAVEN_CONFIG_RELATIVE_PATH, "-Dconfig.version=1");
     importProject("<groupId>test</groupId>\n" +
@@ -108,6 +116,7 @@ public class MavenConfigImportingTest extends MavenDomTestCase {
     assertEquals("1", ((MavenPsiElementWrapper)resolvedReference).getName());
   }
 
+  @Test
   public void testReimportOnConfigChange() throws IOException {
     VirtualFile configFile = createProjectSubFile(MavenConstants.MAVEN_CONFIG_RELATIVE_PATH, "-Dver=1");
     importProject("<groupId>test</groupId>\n" +

@@ -1,9 +1,18 @@
 <html>
 <body>
-Reports <b>static</b> methods with an identical signature as a <b>static</b> method of a superclass.
-Because <b>static</b> methods cannot override methods in superclasses, this may result in confusing semantics.
-<!-- tooltip end -->
-<p>
+Reports <code>static</code> methods with a signature identical to a <code>static</code> method of a superclass.
+Such a method may look like an override when in fact it hides the method from the superclass because
+<code>static</code> methods in Java cannot be overridden.
+<p><b>Example:</b></p>
+<pre>
+  class Parent {
+    static void method(){}
+  }
 
+  class Example extends Parent {
+    static void method(){} //warning
+  }
+</pre>
+<!-- tooltip end -->
 </body>
 </html>

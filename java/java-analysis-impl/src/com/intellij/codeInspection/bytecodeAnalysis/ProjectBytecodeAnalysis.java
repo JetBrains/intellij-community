@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.bytecodeAnalysis;
 
 import com.intellij.codeInsight.NullableNotNullManager;
@@ -7,7 +7,6 @@ import com.intellij.codeInspection.dataFlow.JavaMethodContractUtil;
 import com.intellij.codeInspection.dataFlow.MutationSignature;
 import com.intellij.codeInspection.dataFlow.StandardMethodContract;
 import com.intellij.codeInspection.dataFlow.StandardMethodContract.ValueConstraint;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
@@ -22,6 +21,7 @@ import com.intellij.psi.search.ProjectScope;
 import com.intellij.psi.util.*;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ConcurrentFactoryMap;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Stack;
@@ -61,7 +61,7 @@ public class ProjectBytecodeAnalysis {
   private final NullableNotNullManager myNullabilityManager;
 
   public static ProjectBytecodeAnalysis getInstance(@NotNull Project project) {
-    return ServiceManager.getService(project, ProjectBytecodeAnalysis.class);
+    return project.getService(ProjectBytecodeAnalysis.class);
   }
 
   public ProjectBytecodeAnalysis(Project project) {
@@ -112,10 +112,14 @@ public class ProjectBytecodeAnalysis {
       if (listOwner instanceof PsiMethod) {
         List<EKey> allKeys = collectMethodKeys((PsiMethod)listOwner, primaryKey);
         MethodAnnotations methodAnnotations = loadMethodAnnotations((PsiMethod)listOwner, primaryKey, allKeys);
+        correctMethodAnnotations((PsiMethod)listOwner, primaryKey, methodAnnotations);
         return toPsi(primaryKey, methodAnnotations);
       }
       else if (listOwner instanceof PsiParameter) {
         ParameterAnnotations parameterAnnotations = loadParameterAnnotations(primaryKey);
+        if (hasFailContract((PsiParameter)listOwner, parameterAnnotations)) {
+          return PsiAnnotation.EMPTY_ARRAY;
+        }
         return toPsi(parameterAnnotations);
       }
       else if (listOwner instanceof PsiField && listOwner.hasModifierProperty(PsiModifier.STATIC)) {
@@ -138,6 +142,50 @@ public class ProjectBytecodeAnalysis {
     }
   }
 
+  private static void correctMethodAnnotations(PsiMethod listOwner, EKey primaryKey, MethodAnnotations methodAnnotations) {
+    if (methodAnnotations.mutates.isPure()) {
+      String contractValues = methodAnnotations.contractsValues.get(primaryKey);
+      if (contractValues == null) return;
+      List<StandardMethodContract> contracts;
+      try {
+        contracts = StandardMethodContract.parseContract(contractValues);
+      }
+      catch (StandardMethodContract.ParseException ignore) {
+        return;
+      }
+      if (!ContainerUtil.exists(contracts, c -> c.getReturnValue().equals(ContractReturnValue.returnNew()))) {
+        return;
+      }
+      PsiType returnType = listOwner.getReturnType();
+      if (InheritanceUtil.isInheritor(returnType, CommonClassNames.JAVA_UTIL_COLLECTION) ||
+          InheritanceUtil.isInheritor(returnType, CommonClassNames.JAVA_UTIL_MAP)) {
+        // We consider collection/map size as collection field
+        // Also, we consider the return value of pure -> new method as local object
+        // As a result, collection wrappers produced by methods may be marked as local
+        // while still depend on something else. Let's remove contracts conservatively in this case.
+        methodAnnotations.contractsValues.remove(primaryKey);
+      }
+    }
+  }
+
+  private boolean hasFailContract(PsiParameter listOwner, ParameterAnnotations parameterAnnotations) {
+    if (!parameterAnnotations.notNull) return false;
+    PsiMethod method = ObjectUtils.tryCast(listOwner.getDeclarationScope(), PsiMethod.class);
+    if (method == null) return false;
+    int index = method.getParameterList().getParameterIndex(listOwner);
+    PsiAnnotation anno = findInferredAnnotation(method, JavaMethodContractUtil.ORG_JETBRAINS_ANNOTATIONS_CONTRACT);
+    if (anno == null) return false;
+    for (StandardMethodContract contract : JavaMethodContractUtil.parseContracts(method, anno)) {
+      if (contract.getReturnValue().isFail()) {
+        ValueConstraint constraint = contract.getParameterConstraint(index);
+        if (constraint == ValueConstraint.NULL_VALUE) {
+          return true;
+        }
+      }
+    }
+    return false;
+  }
+
   /**
    * Converts inferred method annotations to Psi annotations
    *
@@ -150,9 +198,9 @@ public class ProjectBytecodeAnalysis {
     boolean nullable = methodAnnotations.nullables.contains(primaryKey);
     MutationSignature mutationSignature = methodAnnotations.mutates;
     Map<String, String> annotationParameters = new LinkedHashMap<>();
-    String contractValues = methodAnnotations.contractsValues.get(primaryKey);
-    if (contractValues != null) {
-      annotationParameters.put("value", contractValues);
+    String contractValues = methodAnnotations.contractsValues.getOrDefault(primaryKey, "");
+    if (!contractValues.isEmpty()) {
+      annotationParameters.put("value", "\"" + contractValues + '"');
     }
     if (mutationSignature.isPure()) {
       annotationParameters.put("pure", "true");
@@ -286,7 +334,7 @@ public class ProjectBytecodeAnalysis {
     MethodAnnotations result = new MethodAnnotations();
 
     EKey pureKey = key.withDirection(Pure);
-    PuritySolver puritySolver = collectPurityEquations(pureKey);
+    PuritySolver puritySolver = collectPurityEquations(pureKey, myEquationProvider);
     Map<EKey, Effects> puritySolutions = puritySolver.solve();
 
     int arity = owner.getParameterList().getParametersCount();
@@ -295,9 +343,10 @@ public class ProjectBytecodeAnalysis {
     EKey failureKey = key.withDirection(Throw);
     Solver failureSolver = new Solver(new ELattice<>(Value.Fail, Value.Top), Value.Top);
     collectEquations(Collections.singletonList(failureKey), failureSolver);
-    if (failureSolver.solve().get(failureKey) == Value.Fail) {
+    Map<EKey, Value> failureData = failureSolver.solve();
+    if (failureData.get(failureKey.mkStable()) == Value.Fail || failureData.get(failureKey.mkUnstable()) == Value.Fail) {
       // Always failing method
-      result.contractsValues.put(key, StreamEx.constant("_", arity).joining(",", "\"", "->fail\""));
+      result.contractsValues.put(key, StreamEx.constant("_", arity).joining(",", "", "->fail"));
     }
     else {
       Solver outSolver = new Solver(new ELattice<>(Value.Bot, Value.Top), Value.Top);
@@ -328,7 +377,7 @@ public class ProjectBytecodeAnalysis {
     return new EKey(key.member, key.dirKey, stability, false);
   }
 
-  private PuritySolver collectPurityEquations(EKey key) throws EquationsLimitException {
+  private static PuritySolver collectPurityEquations(EKey key, EquationProvider<?> provider) throws EquationsLimitException {
     PuritySolver puritySolver = new PuritySolver();
     Set<EKey> queued = new HashSet<>();
     Deque<EKey> queue = new ArrayDeque<>();
@@ -346,7 +395,7 @@ public class ProjectBytecodeAnalysis {
 
       boolean stable = true;
       Effects combined = null;
-      for (Equations equations : myEquationProvider.getEquations(curKey.member)) {
+      for (Equations equations : provider.getEquations(curKey.member)) {
         stable &= equations.stable;
         Effects effects = (Effects)equations.find(curKey.getDirection())
           .orElseGet(() -> new Effects(DataValue.UnknownDataValue1,
@@ -447,22 +496,25 @@ public class ProjectBytecodeAnalysis {
     for (Map.Entry<EKey, Value> entry : solution.entrySet()) {
       // NB: keys from Psi are always stable, so we need to stabilize keys from equations
       Value value = entry.getValue();
-      if (value == Value.Top || value == Value.Bot || 
-          (value == Value.Fail && !methodAnnotations.mutates.isPure())) {
-        continue;
-      }
+      if (value == Value.Top || value == Value.Bot) continue;
       EKey key = entry.getKey().mkStable();
       Direction direction = key.getDirection();
       EKey baseKey = key.mkBase();
       if (!methodKey.equals(baseKey)) {
         continue;
       }
+      if (value == Value.Fail && direction.isNullFail() && !methodAnnotations.mutates.isPure()) {
+        if (!isPureModuloFailCause(solution, key, direction)) {
+          // Impure methods with "null->fail" contract are just assumed to have `@NotNull` annotation on the corresponding parameter
+          continue;
+        }
+      }
       if (value == Value.NotNull && direction == Out) {
         notNulls.add(methodKey);
       }
       else if (direction instanceof ParamValueBasedDirection) {
         ContractReturnValue contractReturnValue =
-          fullReturnValue.equals(ContractReturnValue.returnAny()) ? value.toReturnValue() : fullReturnValue;
+          fullReturnValue.equals(ContractReturnValue.returnAny()) || value == Value.Fail ? value.toReturnValue() : fullReturnValue;
         contractClauses.add(contractElement(arity, (ParamValueBasedDirection)direction, contractReturnValue));
       }
     }
@@ -498,9 +550,44 @@ public class ProjectBytecodeAnalysis {
                             .distinct()
                             .map(str -> str.replace(" ", "")) // for compatibility with existing tests
                             .joining(";");
-    if (!result.isEmpty()) {
-      contracts.put(methodKey, '"' + result + '"');
-    }
+    contracts.put(methodKey, result);
+  }
+
+  /**
+   * Returns true if the method is pure except calling the delegate that has failing contract in the form other than null->fail.
+   * Allows handling methods like
+   * <pre>{@code
+   * void assertNotNull(Object obj) {
+   *   assertTrue(obj != null);
+   * }}</pre>
+   * if the purity of {@code assertTrue} wasn't inferred.
+   */
+  private boolean isPureModuloFailCause(@NotNull Map<EKey, Value> solution, @NotNull EKey key, @NotNull Direction direction) throws EquationsLimitException {
+    EKey pureKey = key.withDirection(Pure);
+    Set<MemberDescriptor> resetKeys = StreamEx.of(
+      myEquationProvider.getEquations(key.member)).mapPartial(eq -> eq.find(direction)).flatMap(Result::dependencies)
+      .filter(k -> !k.getDirection().isNullFail() && solution.get(k) == Value.Fail)
+      .map(k -> k.member)
+      .toSet();
+    if (resetKeys.isEmpty()) return false;
+    PuritySolver puritySolver = collectPurityEquations(pureKey, new EquationProvider<>(myEquationProvider.myProject) {
+      @Override
+      EKey adaptKey(@NotNull EKey key) {
+        return myEquationProvider.adaptKey(key);
+      }
+
+      @Override
+      List<Equations> getEquations(MemberDescriptor method) {
+        if (resetKeys.contains(method)) {
+          return Collections.singletonList(new Equations(Collections.singletonList(
+            new DirectionResultPair(Pure.asInt(), new Effects(DataValue.UnknownDataValue2, Collections.emptySet()))), true));
+        }
+        return myEquationProvider.getEquations(method);
+      }
+    });
+    Map<EKey, Effects> solve = puritySolver.solve();
+    Effects effects = solve.get(pureKey);
+    return effects != null && !effects.isTop() && effects.effects.isEmpty();
   }
 
   private void removeConstraintFromNonNullParameter(@NotNull EKey methodKey,

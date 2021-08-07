@@ -1,7 +1,6 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.actions.searcheverywhere.statistics;
 
-import com.intellij.internal.statistic.eventLog.FeatureUsageData;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.project.Project;
 
@@ -31,7 +30,7 @@ public final class SearchFieldStatisticsCollector implements Disposable {
 
   @Override
   public void dispose() {
-    saveStat();
+    SearchEverywhereUsageTriggerCollector.SESSION_FINISHED.log(myProject, myNavKeysTyped, mySymbolKeysTyped);
   }
 
   private void initListeners() {
@@ -50,12 +49,5 @@ public final class SearchFieldStatisticsCollector implements Disposable {
         }
       }
     });
-  }
-
-  private void saveStat() {
-    FeatureUsageData data = new FeatureUsageData()
-      .addData(SearchEverywhereUsageTriggerCollector.TYPED_NAVIGATION_KEYS, myNavKeysTyped)
-      .addData(SearchEverywhereUsageTriggerCollector.TYPED_SYMBOL_KEYS, mySymbolKeysTyped);
-    SearchEverywhereUsageTriggerCollector.trigger(myProject, SearchEverywhereUsageTriggerCollector.SESSION_FINISHED, data);
   }
 }

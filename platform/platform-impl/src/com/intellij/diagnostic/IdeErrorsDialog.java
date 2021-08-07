@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.diagnostic;
 
 import com.intellij.CommonBundle;
@@ -25,6 +25,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.ui.OptionAction;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
@@ -40,11 +41,12 @@ import com.intellij.ui.components.JBTextArea;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.BooleanFunction;
 import com.intellij.util.ExceptionUtil;
+import com.intellij.util.Function;
 import com.intellij.util.text.DateFormatUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -56,11 +58,12 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ItemEvent;
 import java.io.IOException;
-import java.net.UnknownHostException;
+import java.net.SocketTimeoutException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.FileVisitResult;
 import java.util.List;
 import java.util.*;
+import java.util.stream.Collectors;
 import java.util.zip.CRC32;
 
 import static com.intellij.openapi.util.Pair.pair;
@@ -77,6 +80,7 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
   private static final String ACCEPTED_NOTICES_SEPARATOR = ":";
   private static final String DISABLE_PLUGIN_URL = "#disable";
   private static final String EA_PLUGIN_ID = "com.intellij.sisyphus";
+  private static final String LAST_OK_ACTION = "IdeErrorsDialog.LAST_OK_ACTION";
 
   private final MessagePool myMessagePool;
   private final Project myProject;
@@ -107,7 +111,6 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
 
     setTitle(DiagnosticBundle.message("error.list.title"));
     setModal(false);
-    getOKAction().putValue(FOCUSED_ACTION, Boolean.TRUE);
     init();
     setCancelButtonText(CommonBundle.message("close.action.name"));
 
@@ -144,7 +147,7 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
               }
             });
           }
-          catch (UnknownHostException e) {
+          catch (SocketTimeoutException e) {
             LOG.debug(e);
             UIUtil.invokeLaterIfNeeded(() -> {
               if (isShowing()) {
@@ -202,25 +205,20 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
     myDetailsLabel.setForeground(UIUtil.getContextHelpForeground());
     myForeignPluginWarningLabel = ComponentsKt.htmlComponent();
 
-    JPanel controls = new JPanel(new BorderLayout());
-    controls.add(actionToolbar("IdeErrorsBack", new BackAction()), BorderLayout.WEST);
-    controls.add(actionToolbar("IdeErrorsForward", new ForwardAction()), BorderLayout.EAST);
+    ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar(
+      ActionPlaces.TOOLBAR_DECORATOR_TOOLBAR, new DefaultActionGroup(new BackAction(), new ForwardAction()), true);
+    toolbar.setLayoutPolicy(ActionToolbar.NOWRAP_LAYOUT_POLICY);
+    toolbar.getComponent().setBorder(JBUI.Borders.empty());
+    ((ActionToolbarImpl)toolbar).setForceMinimumSize(true);
+    toolbar.setTargetComponent(myCountLabel);
 
     JPanel panel = new JPanel(new GridBagLayout());
-    panel.add(controls, new GridBagConstraints(0, 0, 1, 1, 0.0, 0.0, WEST, NONE, JBUI.insets(3, 0), 0, 0));
+    panel.add(toolbar.getComponent(), new GridBagConstraints(0, 0, 1, 1, 0.0, 0.0, WEST, NONE, JBUI.insets(3, 0), 0, 0));
     panel.add(myCountLabel, new GridBagConstraints(1, 0, 1, 1, 0.0, 0.0, WEST, HORIZONTAL, JBUI.insets(3, 10), 0, 0));
     panel.add(myInfoLabel, new GridBagConstraints(2, 0, 1, 1, 1.0, 0.0, WEST, HORIZONTAL, JBUI.insets(3, 0), 0, 0));
     panel.add(myDetailsLabel, new GridBagConstraints(3, 0, 1, 1, 0.0, 0.0, EAST, NONE, JBUI.insets(3, 0), 0, 0));
     panel.add(myForeignPluginWarningLabel, new GridBagConstraints(2, 1, 3, 1, 1.0, 0.0, WEST, HORIZONTAL, JBUI.emptyInsets(), 0, 0));
     return panel;
-  }
-
-  private static JComponent actionToolbar(@NonNls String id, AnAction action) {
-    ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar(id, new DefaultActionGroup(action), true);
-    toolbar.setLayoutPolicy(ActionToolbar.NOWRAP_LAYOUT_POLICY);
-    toolbar.getComponent().setBorder(JBUI.Borders.empty());
-    ((ActionToolbarImpl)toolbar).setForceMinimumSize(true);
-    return toolbar.getComponent();
   }
 
   @Override
@@ -342,6 +340,13 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
 
   @Override
   protected Action @NotNull [] createActions() {
+    String lastActionName = PropertiesComponent.getInstance().getValue(LAST_OK_ACTION);
+    ReportAction lastAction = ReportAction.findOrDefault(lastActionName);
+    List<Action> additionalActions = StreamEx.of(ReportAction.values())
+      .without(lastAction)
+      .map(action -> action.getAction(this))
+      .toList();
+    myOKAction = new CompositeAction(lastAction.getAction(this), additionalActions);
     if (SystemInfo.isWindows) {
       return new Action[]{getOKAction(), new ClearErrorsAction(), getCancelAction()};
     }
@@ -364,20 +369,6 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
   @Override
   protected String getDimensionServiceKey() {
     return "IDE.errors.dialog";
-  }
-
-  @Override
-  public void doOKAction() {
-    if (getOKAction().isEnabled()) {
-      boolean closeDialog = myMessageClusters.size() == 1;
-      boolean reportingStarted = reportMessage(selectedCluster(), closeDialog);
-      if (!closeDialog) {
-        updateControls();
-      }
-      else if (reportingStarted) {
-        super.doOKAction();
-      }
-    }
   }
 
   @Override
@@ -420,8 +411,28 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
     updateCredentialsPanel(submitter);
 
     setOKActionEnabled(cluster.canSubmit());
-    setOKButtonText(submitter != null ? submitter.getReportActionText() : DiagnosticBundle.message("error.report.impossible.action"));
-    setOKButtonTooltip(submitter != null ? null : DiagnosticBundle.message("error.report.impossible.tooltip"));
+    setDefaultReportActionText(submitter != null ? submitter.getReportActionText() : DiagnosticBundle.message("error.report.impossible.action"));
+    setDefaultReportActionTooltip(submitter != null ? null : DiagnosticBundle.message("error.report.impossible.tooltip"));
+  }
+
+  private void setDefaultReportActionText(@NlsContexts.Button @NotNull String text) {
+    Action action = getOKAction();
+    if (action instanceof CompositeAction) {
+      ((CompositeAction)action).setDefaultReportActionText(text);
+    }
+    else {
+      setOKButtonText(text);
+    }
+  }
+
+  private void setDefaultReportActionTooltip(@NlsContexts.Tooltip String text) {
+    Action action = getOKAction();
+    if (action instanceof CompositeAction) {
+      ((CompositeAction)action).setDefaultReportActionTooltip(text);
+    }
+    else {
+      setOKButtonTooltip(text);
+    }
   }
 
   private void updateLabels(@NotNull MessageCluster cluster) {
@@ -486,7 +497,7 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
     myDetailsLabel.setText(DiagnosticBundle.message("error.list.message.info", date, count));
 
     ErrorReportSubmitter submitter = cluster.submitter;
-    if (submitter == null && plugin != null && !PluginManager.getInstance().isDevelopedByJetBrains(plugin)) {
+    if (submitter == null && plugin != null && !PluginManagerCore.isDevelopedByJetBrains(plugin)) {
       myForeignPluginWarningLabel.setVisible(true);
       String vendor = plugin.getVendor();
       String vendorUrl = plugin.getVendorUrl();
@@ -531,8 +542,9 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
 
       myAttachmentsList.clear();
       myAttachmentsList.addItem(STACKTRACE_ATTACHMENT, true);
+      boolean internal = ApplicationManager.getApplication().isInternal();
       for (Attachment attachment : message.getAllAttachments()) {
-        myAttachmentsList.addItem(attachment.getName(), attachment.isIncluded());
+        myAttachmentsList.addItem(attachment.getName(), attachment.isIncluded() || internal);
       }
       myAttachmentsList.setSelectedIndex(0);
 
@@ -632,12 +644,20 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
   private void disablePlugin() {
     IdeaPluginDescriptor plugin = selectedCluster().plugin;
     if (plugin != null) {
-      confirmDisablePlugins(myProject, Collections.singleton(plugin));
+      confirmDisablePlugins(myProject, List.of(plugin));
     }
   }
 
-  public static void confirmDisablePlugins(@Nullable Project project, @NotNull Set<IdeaPluginDescriptor> pluginsToDisable) {
-    boolean hasDependents = morePluginsAffected(pluginsToDisable);
+  public static void confirmDisablePlugins(@Nullable Project project,
+                                           @NotNull List<? extends IdeaPluginDescriptor> pluginsToDisable) {
+    if (pluginsToDisable.isEmpty()) {
+      return;
+    }
+
+    Set<PluginId> pluginIdsToDisable = pluginsToDisable.stream()
+      .map(IdeaPluginDescriptor::getPluginId)
+      .collect(Collectors.toUnmodifiableSet());
+    boolean hasDependents = morePluginsAffected(pluginIdsToDisable);
 
     boolean canRestart = ApplicationManager.getApplication().isRestartCapable();
 
@@ -645,9 +665,12 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
     if (pluginsToDisable.size() == 1) {
       IdeaPluginDescriptor plugin = pluginsToDisable.iterator().next();
       message = "<html>" +
-                DiagnosticBundle.message("error.dialog.disable.prompt", plugin.getName()) + "<br/>" +
-                DiagnosticBundle.message(hasDependents ? "error.dialog.disable.prompt.deps" : "error.dialog.disable.prompt.lone") + "<br/><br/>" +
-                DiagnosticBundle.message(canRestart ? "error.dialog.disable.plugin.can.restart" : "error.dialog.disable.plugin.no.restart") +
+                DiagnosticBundle.message("error.dialog.disable.prompt", plugin.getName()) +
+                "<br/>" +
+                DiagnosticBundle.message(hasDependents ? "error.dialog.disable.prompt.deps" : "error.dialog.disable.prompt.lone") +
+                "<br/><br/>" +
+                DiagnosticBundle.message(
+                  canRestart ? "error.dialog.disable.plugin.can.restart" : "error.dialog.disable.plugin.no.restart") +
                 "</html>";
     }
     else {
@@ -675,29 +698,29 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
     }
 
     if (doDisable) {
-      for (IdeaPluginDescriptor plugin: pluginsToDisable) {
-        PluginManagerCore.disablePlugin(plugin.getPluginId());
-      }
+      PluginEnabler.HEADLESS.disablePlugins(pluginsToDisable);
       if (doRestart) {
         ApplicationManager.getApplication().restart();
       }
     }
   }
 
-  private static boolean morePluginsAffected(@NotNull Set<IdeaPluginDescriptor> pluginsToDisable) {
+  private static boolean morePluginsAffected(@NotNull Set<PluginId> pluginIdsToDisable) {
     Map<PluginId, IdeaPluginDescriptorImpl> pluginIdMap = PluginManagerCore.buildPluginIdMap();
     for (IdeaPluginDescriptor rootDescriptor : PluginManagerCore.getPlugins()) {
-      if (!rootDescriptor.isEnabled() || pluginsToDisable.contains(rootDescriptor)) {
+      if (!rootDescriptor.isEnabled() || pluginIdsToDisable.contains(rootDescriptor.getPluginId())) {
         continue;
       }
 
-      if (!PluginManagerCore.processAllDependencies((IdeaPluginDescriptorImpl)rootDescriptor, false, pluginIdMap, descriptor -> {
-        if (!descriptor.isEnabled()) {
-          // if disabled, no need to process it's dependencies
-          return FileVisitResult.SKIP_SUBTREE;
-        }
-        return pluginsToDisable.contains(descriptor) ? FileVisitResult.TERMINATE : FileVisitResult.CONTINUE;
-      })) {
+      if (!PluginManagerCore.processAllNonOptionalDependencies((IdeaPluginDescriptorImpl)rootDescriptor,
+                                                               pluginIdMap,
+                                                               (pluginId, descriptor) ->
+                                                                 Objects.requireNonNull(descriptor).isEnabled() ?
+                                                                 pluginIdsToDisable.contains(pluginId) ?
+                                                                 FileVisitResult.TERMINATE :
+                                                                 FileVisitResult.CONTINUE :
+                                                                 FileVisitResult.SKIP_SUBTREE /* no need to process its dependencies */
+      )) {
         return true;
       }
     }
@@ -761,6 +784,7 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
 
     @Override
     public void actionPerformed(ActionEvent e) {
+      IdeErrorDialogUsageCollector.logClearAll();
       myMessagePool.clearErrors();
       doCancelAction();
     }
@@ -927,16 +951,16 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
     if (plugin != null) {
       for (ErrorReportSubmitter reporter : reporters) {
         PluginDescriptor descriptor = reporter.getPluginDescriptor();
-        if (descriptor != null && plugin.getPluginId() == descriptor.getPluginId()) {
+        if (descriptor != null && Objects.equals(plugin.getPluginId(), descriptor.getPluginId())) {
           return reporter;
         }
       }
     }
 
-    if (plugin == null || PluginManager.getInstance().isDevelopedByJetBrains(plugin)) {
+    if (plugin == null || PluginManagerCore.isDevelopedByJetBrains(plugin)) {
       for (ErrorReportSubmitter reporter : reporters) {
         PluginDescriptor descriptor = reporter.getPluginDescriptor();
-        if (descriptor == null || PluginId.getId(PluginManagerCore.CORE_PLUGIN_ID) == descriptor.getPluginId()) {
+        if (descriptor == null || PluginManagerCore.CORE_ID.equals(descriptor.getPluginId())) {
           return reporter;
         }
       }
@@ -959,6 +983,171 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
     }
     else {
       out.append(DiagnosticBundle.message("error.list.message.submitted"));
+    }
+  }
+
+  private static final class CompositeAction extends AbstractAction implements OptionAction {
+
+    private final Action myMainAction;
+    private final List<? extends Action> myAdditionalActions;
+
+    private CompositeAction(@NotNull Action mainAction, @NotNull List<? extends Action> additionalActions) {
+      super((String)mainAction.getValue(Action.NAME));
+      putValue(DEFAULT_ACTION, Boolean.TRUE);
+      myMainAction = mainAction;
+      myAdditionalActions = additionalActions;
+    }
+
+    @Override
+    public void actionPerformed(ActionEvent e) {
+      myMainAction.actionPerformed(e);
+    }
+
+    @Override
+    public void setEnabled(boolean isEnabled) {
+      super.setEnabled(isEnabled);
+      myMainAction.setEnabled(isEnabled);
+      for (Action additionalAction : myAdditionalActions) {
+        additionalAction.setEnabled(isEnabled);
+      }
+    }
+
+    @Override
+    public Action @NotNull [] getOptions() {
+      return myAdditionalActions.toArray(new Action[0]);
+    }
+
+    private void setDefaultReportActionText(@NlsContexts.Button @NotNull String text) {
+      putDefaultReportActionValue(NAME, text);
+    }
+
+    private void setDefaultReportActionTooltip(@NlsContexts.Tooltip String text) {
+      putDefaultReportActionValue(SHORT_DESCRIPTION, text);
+    }
+
+    private void putDefaultReportActionValue(String key, Object value) {
+      if (myMainAction instanceof DefaultReportAction) {
+        putValue(key, value);
+        myMainAction.putValue(key, value);
+      }
+      else {
+        for (Action action : myAdditionalActions) {
+          if (action instanceof DefaultReportAction) {
+            action.putValue(key, value);
+          }
+        }
+      }
+    }
+  }
+
+  private final class DefaultReportAction extends AbstractAction {
+
+    private DefaultReportAction() {
+      super();
+    }
+
+    @Override
+    public void actionPerformed(ActionEvent e) {
+      if (isEnabled()) {
+        IdeErrorDialogUsageCollector.logReport();
+        PropertiesComponent.getInstance().setValue(LAST_OK_ACTION, ReportAction.DEFAULT.name());
+        boolean closeDialog = myMessageClusters.size() == 1;
+        boolean reportingStarted = reportMessage(selectedCluster(), closeDialog);
+        if (!closeDialog) {
+          updateControls();
+        }
+        else if (reportingStarted) {
+          IdeErrorsDialog.super.doOKAction();
+        }
+      }
+    }
+  }
+
+  private final class ReportAllAction extends AbstractAction {
+
+    private ReportAllAction() {
+      super(DiagnosticBundle.message("error.report.all.action"));
+    }
+
+    @Override
+    public void actionPerformed(ActionEvent e) {
+      if (isEnabled()) {
+        IdeErrorDialogUsageCollector.logReportAll();
+        PropertiesComponent.getInstance().setValue(LAST_OK_ACTION, ReportAction.REPORT_ALL.name());
+        boolean reportingStarted = reportAll();
+        if (reportingStarted) {
+          IdeErrorsDialog.super.doOKAction();
+        }
+      }
+    }
+  }
+
+  private final class ReportAndClearAllAction extends AbstractAction {
+
+    private ReportAndClearAllAction() {
+      super(DiagnosticBundle.message("error.report.and.clear.all.action"));
+    }
+
+    @Override
+    public void actionPerformed(ActionEvent e) {
+      if (isEnabled()) {
+        IdeErrorDialogUsageCollector.logReportAndClearAll();
+        PropertiesComponent.getInstance().setValue(LAST_OK_ACTION, ReportAction.REPORT_AND_CLEAR_ALL.name());
+        boolean reportingStarted = reportAll();
+        if (reportingStarted) {
+          myMessagePool.clearErrors();
+          IdeErrorsDialog.super.doOKAction();
+        }
+      }
+    }
+  }
+
+  private boolean reportAll() {
+    boolean reportingStarted = true;
+    for (int i = 0; i < myMessageClusters.size(); i++) {
+      MessageCluster cluster = myMessageClusters.get(i);
+      if (!cluster.canSubmit()) {
+        continue;
+      }
+      if (!(reportingStarted = reportMessage(cluster, true))) {
+        myIndex = i;
+        updateControls();
+        break;
+      }
+    }
+    return reportingStarted;
+  }
+
+  private enum ReportAction {
+
+    DEFAULT(dialog -> dialog.new DefaultReportAction()),
+    REPORT_ALL(dialog -> dialog.new ReportAllAction()),
+    REPORT_AND_CLEAR_ALL(dialog -> dialog.new ReportAndClearAllAction());
+
+    private final Function<IdeErrorsDialog, Action> myActionProducer;
+
+    ReportAction(Function<IdeErrorsDialog, Action> actionProducer) {
+      myActionProducer = actionProducer;
+    }
+
+    private @NotNull Action getAction(@NotNull IdeErrorsDialog dialog) {
+      return myActionProducer.fun(dialog);
+    }
+
+    private static @NotNull ReportAction findOrDefault(@Nullable String name) {
+      if (name != null) {
+        for (ReportAction value : values()) {
+          if (value.name().equals(name)) {
+            return value;
+          }
+        }
+      }
+      return getDefaultAction();
+    }
+
+    @NotNull
+    private static ReportAction getDefaultAction() {
+      return ApplicationManager.getApplication().isInternal() ? DEFAULT : REPORT_AND_CLEAR_ALL;
     }
   }
 }

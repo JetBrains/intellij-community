@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.diagnostic
 
 import com.intellij.credentialStore.Credentials
@@ -34,13 +34,14 @@ private const val INTERVAL = 10 * 60 * 1000L  // an interval between exceptions 
  * their own implementations of [ErrorReportSubmitter].
  */
 open class ITNReporter : ErrorReportSubmitter() {
+
   override fun getReportActionText(): String = DiagnosticBundle.message("error.report.to.jetbrains.action")
 
   override fun getPrivacyNoticeText(): String =
-    if (ErrorReportConfigurable.getCredentials().isFulfilled()) DiagnosticBundle.message("error.dialog.notice.named")
+    if (ErrorReportConfigurable.credentialsFulfilled) DiagnosticBundle.message("error.dialog.notice.named")
     else DiagnosticBundle.message("error.dialog.notice.anonymous")
 
-  override fun getReporterAccount(): String? = ErrorReportConfigurable.getCredentials()?.userName ?: ""
+  override fun getReporterAccount(): String? = ErrorReportConfigurable.userName
 
   override fun changeReporterAccount(parentComponent: Component) {
     askJBAccountCredentials(parentComponent, null)
@@ -109,7 +110,8 @@ private fun onSuccess(project: Project?, threadId: Int, eventData: Any?, callbac
     val content = XmlStringUtil.wrapInHtml(text)
     val title = DiagnosticBundle.message("error.report.submitted")
     NotificationGroupManager.getInstance().getNotificationGroup("Error Report")
-      .createNotification(title, content, NotificationType.INFORMATION, NotificationListener.URL_OPENING_LISTENER)
+      .createNotification(title, content, NotificationType.INFORMATION)
+      .setListener(NotificationListener.URL_OPENING_LISTENER)
       .setImportant(false)
       .notify(project)
   }

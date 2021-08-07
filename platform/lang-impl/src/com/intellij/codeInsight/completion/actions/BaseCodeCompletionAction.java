@@ -8,11 +8,11 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.EditorActivityManager;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiUtilBase;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.event.InputEvent;
@@ -54,7 +54,7 @@ public abstract class BaseCodeCompletionAction extends DumbAwareAction implement
     PsiFile psiFile = project == null ? null : PsiUtilBase.getPsiFileInEditor(editor, project);
     if (psiFile == null) return;
 
-    if (!EditorActivityManager.getInstance().isVisible(editor)) return;
+    if (!UIUtil.isShowing(editor.getContentComponent())) return;
     e.getPresentation().setEnabled(true);
   }
 }

@@ -1,10 +1,11 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.structuralsearch.plugin.ui.filters;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.psi.PsiElement;
+import com.intellij.structuralsearch.NamedScriptableDefinition;
 import com.intellij.structuralsearch.StructuralSearchProfile;
 import com.intellij.ui.SimpleColoredComponent;
 import org.jetbrains.annotations.NonNls;
@@ -19,6 +20,11 @@ import java.util.function.Supplier;
  */
 public abstract class FilterAction extends DumbAwareAction implements Filter {
 
+  /**
+   * This extension points causes memory leaks and other problems, because FilterActions have state.
+   * @deprecated Please use {@link com.intellij.structuralsearch.plugin.ui.filters.FilterProvider} instead.
+   */
+  @Deprecated(forRemoval = true)
   public static final ExtensionPointName<FilterAction> EP_NAME = ExtensionPointName.create("com.intellij.structuralsearch.filter");
 
   private static final AtomicInteger myFilterCount = new AtomicInteger();
@@ -28,6 +34,7 @@ public abstract class FilterAction extends DumbAwareAction implements Filter {
   private final int myPosition;
 
   private boolean myApplicable = true;
+  private boolean myActive = false;
 
   protected FilterAction(@NotNull Supplier<String> text) {
     super(text);
@@ -43,10 +50,16 @@ public abstract class FilterAction extends DumbAwareAction implements Filter {
     return myPosition;
   }
 
+  @NotNull
+  public String getShortText(NamedScriptableDefinition variable) {
+    return "";
+  }
+
   @Override
   public final void actionPerformed(@NotNull AnActionEvent e) {
     initFilter();
     myApplicable = false;
+    myActive = true;
     myTable.addFilter(this);
   }
 
@@ -61,34 +74,42 @@ public abstract class FilterAction extends DumbAwareAction implements Filter {
 
   public abstract boolean hasFilter();
 
+  final boolean isActive() {
+    if (hasFilter()) {
+      myActive = true;
+    }
+    return myActive;
+  }
+
   protected void initFilter() {}
 
   public abstract void clearFilter();
 
-  public void reset() {
+  final void reset() {
     myApplicable = true;
+    myActive = false;
   }
 
   protected abstract boolean isApplicable(List<? extends PsiElement> nodes, boolean completePattern, boolean target);
 
-  protected boolean isApplicableConstraint(@NonNls String constraintName,
-                                           List<? extends PsiElement> nodes,
-                                           boolean completePattern,
-                                           boolean target) {
+  protected final boolean isApplicableConstraint(@NonNls String constraintName,
+                                                 List<? extends PsiElement> nodes,
+                                                 boolean completePattern,
+                                                 boolean target) {
     final StructuralSearchProfile profile = myTable.getProfile();
     return profile != null && profile.isApplicableConstraint(constraintName, nodes, completePattern, target);
   }
 
-  public boolean isAvailable() {
-    return myApplicable && !hasFilter();
+  final boolean isAvailable() {
+    return myApplicable && !isActive();
   }
 
-  public boolean checkApplicable(List<? extends PsiElement> nodes, boolean completePattern, boolean target) {
+  final boolean checkApplicable(List<? extends PsiElement> nodes, boolean completePattern, boolean target) {
     return myApplicable = isApplicable(nodes, completePattern, target);
   }
 
   @Override
-  public void update(@NotNull AnActionEvent e) {
-    e.getPresentation().setEnabledAndVisible(!hasFilter() && myApplicable);
+  public final void update(@NotNull AnActionEvent e) {
+    e.getPresentation().setEnabledAndVisible(myApplicable && !isActive());
   }
 }

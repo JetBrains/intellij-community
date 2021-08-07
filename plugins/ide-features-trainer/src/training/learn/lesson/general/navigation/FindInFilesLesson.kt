@@ -7,6 +7,7 @@ import com.intellij.find.FindManager
 import com.intellij.find.SearchTextArea
 import com.intellij.find.impl.FindInProjectSettingsBase
 import com.intellij.find.impl.FindPopupPanel
+import com.intellij.find.replaceInProject.ReplaceInProjectManager
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.actionSystem.impl.ActionButton
 import com.intellij.usages.UsagePresentation
@@ -21,7 +22,10 @@ import training.learn.course.KLesson
 import training.ui.LearningUiUtil.findComponentWithTimeout
 import java.awt.event.InputEvent
 import java.awt.event.KeyEvent
-import javax.swing.*
+import javax.swing.JButton
+import javax.swing.JTable
+import javax.swing.JTextArea
+import javax.swing.KeyStroke
 
 class FindInFilesLesson(override val existedFile: String)
   : KLesson("Find in files", LessonsBundle.message("find.in.files.lesson.name")) {
@@ -138,15 +142,14 @@ class FindInFilesLesson(override val existedFile: String)
       }
     }
 
-    val replaceAllDialogTitle = FindBundle.message("find.replace.all.confirmation.title")
     task {
       val replaceAllButtonText = FindBundle.message("find.popup.replace.all.button").dropMnemonic()
       text(LessonsBundle.message("find.in.files.press.replace.all", strong(replaceAllButtonText)))
       triggerByUiComponentAndHighlight { button: JButton ->
-        button.text == replaceAllButtonText
+        button.text?.contains(replaceAllButtonText) == true
       }
-      triggerByUiComponentAndHighlight(false, false) { dialog: JDialog ->
-        dialog.title == replaceAllDialogTitle
+      stateCheck {
+        insideConfirmation()
       }
       showWarningIfPopupClosed(true)
       test {
@@ -160,7 +163,9 @@ class FindInFilesLesson(override val existedFile: String)
       val replaceButtonText = FindBundle.message("find.replace.command")
       text(LessonsBundle.message("find.in.files.confirm.replace", strong(replaceButtonText)))
       stateCheck { editor.document.charsSequence.contains("orange") }
-      restoreByUi(delayMillis = defaultRestoreDelay)
+      restoreState(delayMillis = defaultRestoreDelay) {
+        !insideConfirmation()
+      }
       test(waitEditorToBeReady = false) {
         dialog(title = "Replace All") {
           button(replaceButtonText).click()
@@ -215,6 +220,10 @@ class FindInFilesLesson(override val existedFile: String)
         recentDirectories.clear()
       }
     }
+  }
+
+  private fun insideConfirmation() = Thread.currentThread().stackTrace.any {
+    it.className.contains(ReplaceInProjectManager::class.java.simpleName)
   }
 
   override val testScriptProperties = TaskTestContext.TestScriptProperties(10)

@@ -52,7 +52,7 @@ class ServiceViewDeleteProvider implements DeleteProvider {
 
   @Override
   public boolean canDeleteElement(@NotNull DataContext dataContext) {
-    if (myServiceView.getSelectedItems().stream().noneMatch(item -> item.getViewDescriptor().getRemover() != null)) {
+    if (!ContainerUtil.exists(myServiceView.getSelectedItems(), item -> item.getViewDescriptor().getRemover() != null)) {
       return false;
     }
     JComponent detailsComponent = myServiceView.getUi().getDetailsComponent();

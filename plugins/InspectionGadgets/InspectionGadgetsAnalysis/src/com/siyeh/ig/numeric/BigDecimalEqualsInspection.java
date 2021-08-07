@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2018 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2021 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,7 +32,6 @@ import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.EqualityCheck;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import com.siyeh.ig.psiutils.ParenthesesUtils;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -57,15 +56,21 @@ public class BigDecimalEqualsInspection extends BaseInspection {
 
     @Override
     public void doFix(Project project, ProblemDescriptor descriptor) {
-      PsiMethodCallExpression call = PsiTreeUtil.getParentOfType(descriptor.getPsiElement(), PsiMethodCallExpression.class);
-      EqualityCheck check = EqualityCheck.from(call);
+      final PsiMethodCallExpression call = PsiTreeUtil.getParentOfType(descriptor.getPsiElement(), PsiMethodCallExpression.class);
+      final EqualityCheck check = EqualityCheck.from(call);
       if (check == null) return;
-      CommentTracker commentTracker = new CommentTracker();
-      final String qualifierText = commentTracker.text(check.getLeft(), ParenthesesUtils.METHOD_CALL_PRECEDENCE);
-      final String argText = commentTracker.text(check.getRight());
+      final CommentTracker commentTracker = new CommentTracker();
+      final PsiExpression left = check.getLeft();
+      final PsiExpression right = check.getRight();
+      final String qualifierText = commentTracker.text(left, ParenthesesUtils.METHOD_CALL_PRECEDENCE);
+      final String argText = commentTracker.text(right);
       @NonNls String replacement = qualifierText + ".compareTo(" + argText + ")==0";
-      if (!check.isLeftDereferenced() && NullabilityUtil.getExpressionNullability(check.getLeft(), true) != Nullability.NOT_NULL) {
-        replacement = commentTracker.text(check.getLeft(), ParenthesesUtils.EQUALITY_PRECEDENCE) + "!=null && " + replacement;
+      if (!check.isLeftDereferenced() && NullabilityUtil.getExpressionNullability(left, true) != Nullability.NOT_NULL) {
+        final boolean bothNullShouldEqual = call.getArgumentList().getExpressionCount() == 2 &&
+                                            NullabilityUtil.getExpressionNullability(right, true) != Nullability.NOT_NULL;
+        replacement = bothNullShouldEqual
+                      ? left.getText() + "==null?" + right.getText() + "==null:" + replacement
+                      : left.getText() + "!=null && " + replacement;
       }
       PsiReplacementUtil.replaceExpression(call, replacement, commentTracker);
     }
@@ -81,15 +86,14 @@ public class BigDecimalEqualsInspection extends BaseInspection {
     @Override
     public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression) {
       super.visitMethodCallExpression(expression);
-      EqualityCheck check = EqualityCheck.from(expression);
+      final EqualityCheck check = EqualityCheck.from(expression);
       if (check == null) return;
-      PsiExpression left = check.getLeft();
-      PsiExpression right = check.getRight();
+      final PsiExpression left = check.getLeft();
+      final PsiExpression right = check.getRight();
       if (!ExpressionUtils.hasType(left, "java.math.BigDecimal")) return;
       if (!ExpressionUtils.hasType(right, "java.math.BigDecimal")) return;
       if (ExpressionUtils.isVoidContext(expression)) {
-        //cheesy, but necessary, because otherwise the quickfix will
-        // produce uncompilable code (out of merely incorrect code).
+        // otherwise the quickfix will produce uncompilable code (out of merely incorrect code).
         return;
       }
       registerMethodCallError(expression);

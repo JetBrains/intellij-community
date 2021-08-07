@@ -13,4 +13,9 @@ public final class ScratchesAndConsolesIndexSetContributor extends IndexableSetC
   public Set<VirtualFile> getAdditionalRootsToIndex() {
     return ScratchFileService.getAllRootPaths();
   }
+
+  @Override
+  public @NotNull String getDebugName() {
+    return "Scratches & Consoles";
+  }
 }

@@ -36,6 +36,8 @@ import java.util.*;
 public final class FileEditorProviderManagerImpl extends FileEditorProviderManager
   implements PersistentStateComponent<FileEditorProviderManagerImpl> {
 
+  private static final @NotNull Logger LOG = Logger.getInstance(FileEditorProviderManagerImpl.class);
+
   @Override
   public FileEditorProvider @NotNull [] getProviders(@NotNull final Project project, @NotNull final VirtualFile file) {
     // Collect all possible editors
@@ -46,13 +48,23 @@ public final class FileEditorProviderManagerImpl extends FileEditorProviderManag
         if (DumbService.isDumb(project) && !DumbService.isDumbAware(provider)) {
           return false;
         }
-        return provider.accept(project, file);
+        if (!provider.accept(project, file)) {
+          return false;
+        }
+        for (FileEditorProviderSuppressor suppressor : FileEditorProviderSuppressor.EP_NAME.getExtensionList()) {
+          if (suppressor.isSuppressed(project, file, provider)) {
+            LOG.info(String.format("FileEditorProvider %s for VirtualFile %s was suppressed by FileEditorProviderSuppressor %s",
+                                   provider.getClass(), file, suppressor.getClass()));
+            return false;
+          }
+        }
+        return true;
       }))) {
         sharedProviders.add(provider);
         hideDefaultEditor |= provider.getPolicy() == FileEditorPolicy.HIDE_DEFAULT_EDITOR;
         if (provider.getPolicy() == FileEditorPolicy.HIDE_DEFAULT_EDITOR && !DumbService.isDumbAware(provider)) {
           String message = "HIDE_DEFAULT_EDITOR is supported only for DumbAware providers; " + provider.getClass() + " is not DumbAware.";
-          Logger.getInstance(FileEditorProviderManagerImpl.class).error(PluginException.createByClass(message, null, provider.getClass()));
+          LOG.error(PluginException.createByClass(message, null, provider.getClass()));
         }
       }
     }

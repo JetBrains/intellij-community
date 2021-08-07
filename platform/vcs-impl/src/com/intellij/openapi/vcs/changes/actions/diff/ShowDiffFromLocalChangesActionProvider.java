@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes.actions.diff;
 
 import com.intellij.diff.DiffDialogHints;
@@ -38,6 +38,10 @@ public class ShowDiffFromLocalChangesActionProvider implements AnActionExtension
 
   @Override
   public void update(@NotNull AnActionEvent e) {
+    updateAvailability(e);
+  }
+
+  public static void updateAvailability(@NotNull AnActionEvent e) {
     Project project = e.getData(CommonDataKeys.PROJECT);
     ChangesListView view = e.getRequiredData(ChangesListView.DATA_KEY);
 
@@ -137,17 +141,20 @@ public class ShowDiffFromLocalChangesActionProvider implements AnActionExtension
   }
 
   @NotNull
-  private static ListSelection<Producer> collectRequestProducers(@NotNull Project project,
+  public static ListSelection<Producer> collectRequestProducers(@NotNull Project project,
                                                                  @NotNull List<? extends Change> changes,
                                                                  @NotNull List<? extends FilePath> unversioned,
                                                                  @NotNull ChangesListView changesView) {
     if (changes.size() == 1 && unversioned.isEmpty()) { // show all changes from this changelist
       Change selectedChange = changes.get(0);
-      List<Change> changelistChanges = changesView.getAllChangesFromSameChangelist(selectedChange);
-      if (changelistChanges != null) {
-        int selectedIndex = ContainerUtil.indexOf(changelistChanges, it -> ChangeListChange.HASHING_STRATEGY.equals(selectedChange, it));
-        if (selectedIndex == -1) selectedIndex = changelistChanges.indexOf(selectedChange);
-        return createChangeProducers(project, changelistChanges, selectedIndex);
+      List<Change> selectedChanges = changesView.getAllChangesFromSameChangelist(selectedChange);
+      if (selectedChanges == null) {
+        selectedChanges = changesView.getAllChangesFromSameAmendNode(selectedChange);
+      }
+      if (selectedChanges != null) {
+        int selectedIndex = ContainerUtil.indexOf(selectedChanges, it -> ChangeListChange.HASHING_STRATEGY.equals(selectedChange, it));
+        if (selectedIndex == -1) selectedIndex = selectedChanges.indexOf(selectedChange);
+        return createChangeProducers(project, selectedChanges, selectedIndex);
       }
     }
 

@@ -4445,35 +4445,27 @@
     </item>
     <item name='org.apache.commons.lang.Validate void noNullElements(java.lang.Object[])'>
         <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="value" val="&quot;null-&gt;fail&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
-    </item>
-    <item name='org.apache.commons.lang.Validate void noNullElements(java.lang.Object[]) 0'>
-        <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='org.apache.commons.lang.Validate void noNullElements(java.lang.Object[], java.lang.String)'>
         <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="value" val="&quot;null,_-&gt;fail&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
-    </item>
-    <item name='org.apache.commons.lang.Validate void noNullElements(java.lang.Object[], java.lang.String) 0'>
-        <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='org.apache.commons.lang.Validate void noNullElements(java.util.Collection)'>
         <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="value" val="&quot;null-&gt;fail&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
-    </item>
-    <item name='org.apache.commons.lang.Validate void noNullElements(java.util.Collection) 0'>
-        <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='org.apache.commons.lang.Validate void noNullElements(java.util.Collection, java.lang.String)'>
         <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="value" val="&quot;null,_-&gt;fail&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
-    </item>
-    <item name='org.apache.commons.lang.Validate void noNullElements(java.util.Collection, java.lang.String) 0'>
-        <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='org.apache.commons.lang.Validate void notEmpty(java.lang.Object[])'>
         <annotation name='org.jetbrains.annotations.Contract'>
@@ -4481,17 +4473,11 @@
             <val name="pure" val="true"/>
         </annotation>
     </item>
-    <item name='org.apache.commons.lang.Validate void notEmpty(java.lang.Object[]) 0'>
-        <annotation name='org.jetbrains.annotations.NotNull'/>
-    </item>
     <item name='org.apache.commons.lang.Validate void notEmpty(java.lang.Object[], java.lang.String)'>
         <annotation name='org.jetbrains.annotations.Contract'>
             <val name="value" val="&quot;null,_-&gt;fail&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
-    </item>
-    <item name='org.apache.commons.lang.Validate void notEmpty(java.lang.Object[], java.lang.String) 0'>
-        <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='org.apache.commons.lang.Validate void notEmpty(java.lang.String)'>
         <annotation name='org.jetbrains.annotations.Contract'>
@@ -4499,17 +4485,11 @@
             <val name="pure" val="true"/>
         </annotation>
     </item>
-    <item name='org.apache.commons.lang.Validate void notEmpty(java.lang.String) 0'>
-        <annotation name='org.jetbrains.annotations.NotNull'/>
-    </item>
     <item name='org.apache.commons.lang.Validate void notEmpty(java.lang.String, java.lang.String)'>
         <annotation name='org.jetbrains.annotations.Contract'>
             <val name="value" val="&quot;null,_-&gt;fail&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
-    </item>
-    <item name='org.apache.commons.lang.Validate void notEmpty(java.lang.String, java.lang.String) 0'>
-        <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='org.apache.commons.lang.Validate void notEmpty(java.util.Collection) 0'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
@@ -4529,17 +4509,11 @@
             <val name="pure" val="true"/>
         </annotation>
     </item>
-    <item name='org.apache.commons.lang.Validate void notNull(java.lang.Object) 0'>
-        <annotation name='org.jetbrains.annotations.NotNull'/>
-    </item>
     <item name='org.apache.commons.lang.Validate void notNull(java.lang.Object, java.lang.String)'>
         <annotation name='org.jetbrains.annotations.Contract'>
             <val name="value" val="&quot;null,_-&gt;fail&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
-    </item>
-    <item name='org.apache.commons.lang.Validate void notNull(java.lang.Object, java.lang.String) 0'>
-        <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='org.apache.commons.lang.WordUtils WordUtils()'>
         <annotation name='org.jetbrains.annotations.Contract'>

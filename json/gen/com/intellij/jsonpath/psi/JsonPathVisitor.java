@@ -135,7 +135,7 @@ public class JsonPathVisitor extends PsiElementVisitor {
     visitPsiElement(o);
   }
 
-  public void visitSpliceExpression(@NotNull JsonPathSpliceExpression o) {
+  public void visitSliceExpression(@NotNull JsonPathSliceExpression o) {
     visitPsiElement(o);
   }
 

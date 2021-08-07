@@ -1,13 +1,43 @@
 <html>
 <body>
-Reports 'fall-through' in a <b>switch</b> statement.
-Fall-through is defined to occur when a series of executable statements after a <b>case</b> label is not guaranteed
-to transfer control before the next <b>case</b> label. For example if the branch is missing a <b>break</b> statement.
+Reports 'fall-through' in a <code>switch</code> statement.
+<p>Fall-through occurs when a series of executable statements after a <code>case</code> label is not guaranteed
+to transfer control before the next <code>case</code> label. For example, this can happen if the branch is missing a <code>break</code> statement.
 In that case, control falls through to the statements after
-that <b>switch</b> label, even though the <b>switch</b> expression does not equal
-the value of the fallen-through label. While occasionally intended, this construction is confusing, and is often the result of a typo.
+that <code>switch</code> label, even though the <code>switch</code> expression is not equal to
+  the value of the fallen-through label. While occasionally intended, this construction is confusing and is often the result of a typo.</p>
 <p>
 This inspection ignores any fall-through commented with a text matching the regex pattern <code>(?i)falls?\s*thro?u</code>.
+</p>
+<p>There is a fix that adds a <code>break</code> to the branch that can fall through to the next branch.</p>
+<p>Example:</p>
+<pre><code>
+    switch(x) {
+      case (4):
+          if (condition) {
+              System.out.println("3");
+              // no break here
+          } else {
+              break;
+          }
+      case (6):
+          System.out.println("4");
+    }
+</code></pre>
+<p>After the quick-fix is applied:</p>
+<pre><code>
+    switch(x) {
+        case (4):
+            if (condition) {
+                System.out.println("3");
+            } else {
+                break;
+            }
+            break;
+        case (6):
+            System.out.println("4");
+    }
+</code></pre>
 <!-- tooltip end -->
 <p>
 

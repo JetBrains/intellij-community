@@ -1,10 +1,11 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.usages.impl.rules;
 
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.navigation.NavigationItemFileStatus;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataProvider;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Iconable;
@@ -23,6 +24,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.util.List;
 import java.util.Objects;
 
 public class MethodGroupingRule extends SingleParentUsageGroupingRule {
@@ -88,10 +90,6 @@ public class MethodGroupingRule extends SingleParentUsageGroupingRule {
       myUsageViewSettings = usageViewSettings;
     }
 
-    @Override
-    public void update() {
-    }
-
     private static Icon getIconImpl(PsiMethod psiMethod) {
       return psiMethod.getIcon(Iconable.ICON_FLAG_VISIBILITY | Iconable.ICON_FLAG_READ_STATUS);
     }
@@ -110,7 +108,7 @@ public class MethodGroupingRule extends SingleParentUsageGroupingRule {
     }
 
     @Override
-    public Icon getIcon(boolean isOpen) {
+    public Icon getIcon() {
       return myIcon;
     }
 
@@ -120,7 +118,7 @@ public class MethodGroupingRule extends SingleParentUsageGroupingRule {
 
     @Override
     @NotNull
-    public String getText(UsageView view) {
+    public String getPresentableGroupText() {
       return myName;
     }
 
@@ -177,7 +175,14 @@ public class MethodGroupingRule extends SingleParentUsageGroupingRule {
     @Nullable
     @Override
     public Object getData(@NotNull String dataId) {
-      if (!isValid()) return null;
+      if (PlatformDataKeys.SLOW_DATA_PROVIDERS.is(dataId)) {
+        return List.of((DataProvider)this::getSlowData);
+      }
+      return null;
+    }
+
+    @Nullable
+    private Object getSlowData(@NotNull String dataId) {
       if (CommonDataKeys.PSI_ELEMENT.is(dataId)) {
         return getMethod();
       }

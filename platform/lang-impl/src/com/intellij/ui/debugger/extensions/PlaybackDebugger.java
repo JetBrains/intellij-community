@@ -329,7 +329,7 @@ public final class PlaybackDebugger implements UiDebuggerExtension, PlaybackRunn
     myLog.setText(null);
 
     JFrame frame = getFrame();
-    Component c = ((WindowManagerEx)WindowManager.getInstance()).getFocusedComponent(frame);
+    Component c = WindowManager.getInstance().getFocusedComponent(frame);
     if (c == null) {
       IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> IdeFocusManager.getGlobalInstance().requestFocus(frame, true));
     }

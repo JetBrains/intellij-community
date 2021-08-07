@@ -15,6 +15,7 @@
  */
 package com.intellij.refactoring.introduceparameterobject;
 
+import com.intellij.codeInsight.daemon.impl.analysis.HighlightingFeature;
 import com.intellij.codeInsight.generation.GenerateMembersUtil;
 import com.intellij.codeInsight.highlighting.ReadWriteAccessDetector;
 import com.intellij.ide.highlighter.JavaFileType;
@@ -129,14 +130,21 @@ public class JavaIntroduceParameterObjectClassDescriptor extends IntroduceParame
   }
 
   @Override
-  public String getGetterName(ParameterInfoImpl paramInfo, @NotNull PsiElement context) {
+  public String getGetterName(ParameterInfoImpl paramInfo,
+                              @NotNull PsiElement context,
+                              ReadWriteAccessDetector.Access access) {
     final ParameterBean bean = getBean(paramInfo);
     @NonNls String getter = bean != null ? bean.getGetter() : null;
     if (getter == null) {
-      getter = bean != null && bean.getField() != null ? GenerateMembersUtil.suggestGetterName(bean.getField())
-                                                       : GenerateMembersUtil
-                 .suggestGetterName(paramInfo.getName(), paramInfo.getTypeWrapper().getType(context),
-                                    context.getProject());
+      if (bean != null && bean.getField() != null) {
+        getter = GenerateMembersUtil.suggestGetterName(bean.getField());
+      }
+      else if (bean == null && access == ReadWriteAccessDetector.Access.Read && HighlightingFeature.RECORDS.isAvailable(context)) {
+        getter = paramInfo.getName();
+      }
+      else {
+        getter = GenerateMembersUtil.suggestGetterName(paramInfo.getName(), paramInfo.getTypeWrapper().getType(context), context.getProject());
+      }
     }
     return getter;
   }

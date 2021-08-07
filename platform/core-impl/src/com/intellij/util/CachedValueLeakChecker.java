@@ -1,10 +1,10 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.impl.ApplicationInfoImpl;
+import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
@@ -31,9 +31,13 @@ final class CachedValueLeakChecker {
   private static final boolean DO_CHECKS = ApplicationManager.getApplication().isUnitTestMode();
   private static final Set<String> ourCheckedKeys = ContainerUtil.newConcurrentSet();
 
-  static void checkProvider(@NotNull CachedValueProvider<?> provider, @NotNull Key<?> key, @NotNull UserDataHolder userDataHolder) {
-    if (!DO_CHECKS || ApplicationInfoImpl.isInStressTest()) return;
-    if (!ourCheckedKeys.add(key.toString())) return; // store strings because keys are created afresh in each (test) project
+  static void checkProviderDoesNotLeakPSI(@NotNull CachedValueProvider<?> provider, @NotNull Key<?> key, @NotNull UserDataHolder userDataHolder) {
+    if (!DO_CHECKS || ApplicationManagerEx.isInStressTest()) {
+      return;
+    }
+    if (!ourCheckedKeys.add(key.toString())) {
+      return; // store strings because keys are created afresh in each (test) project
+    }
 
     findReferencedPsi(provider, key, userDataHolder);
   }
@@ -57,9 +61,7 @@ final class CachedValueLeakChecker {
     };
     Map<Object, @NonNls String> roots = Collections.singletonMap(root, "CachedValueProvider " + key);
     DebugReflectionUtil.walkObjects(5, roots, PsiElement.class, shouldExamineValue, (__, backLink) -> {
-      LOG.error(
-        "Incorrect CachedValue use. Provider references PSI, causing memory leaks and possible invalid element access, provider=" +
-        root + "\n" + backLink);
+      LOG.error("Provider '" + root + "' is retaining PSI, causing memory leaks and possible invalid element access.\n" + backLink);
       return false;
     });
   }

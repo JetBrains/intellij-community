@@ -3,13 +3,6 @@ _collections_abc.AsyncGenerator.ag_await
 _collections_abc.AsyncGenerator.ag_code
 _collections_abc.AsyncGenerator.ag_frame
 _collections_abc.AsyncGenerator.ag_running
-_collections_abc.AsyncGenerator.asend
-_collections_abc.AsyncGenerator.athrow
-_collections_abc.Container.__contains__
-_collections_abc.Coroutine.send
-_collections_abc.Coroutine.throw
-_collections_abc.Generator.send
-_collections_abc.Generator.throw
 _collections_abc.ItemsView.__reversed__
 _collections_abc.KeysView.__reversed__
 _collections_abc.ValuesView.__reversed__
@@ -22,19 +15,17 @@ ast.Index.__new__
 ast.NameConstant.__new__
 ast.Num.__new__
 ast.Str.__new__
-asyncio.AbstractEventLoop.sock_sendfile
 asyncio.compat  # module removed in 3.7
-asyncio.Future.__init__
-asyncio.Future._callbacks
-asyncio.events.AbstractEventLoop.sock_sendfile
-asyncio.futures.Future.__init__
-asyncio.futures.Future._callbacks
-asyncio.proactor_events._ProactorBasePipeTransport.__del__
+asyncio.Future.__init__  # Usually initialized from c object
+asyncio.Future._callbacks  # Usually initialized from c object
+asyncio.futures.Future.__init__  # Usually initialized from c object
+asyncio.futures.Future._callbacks  # Usually initialized from c object
 builtins.dict.get
 collections.AsyncGenerator.ag_await
 collections.AsyncGenerator.ag_code
 collections.AsyncGenerator.ag_frame
 collections.AsyncGenerator.ag_running
+collections.Callable
 collections.ItemsView.__reversed__
 collections.KeysView.__reversed__
 collections.ValuesView.__reversed__
@@ -45,13 +36,10 @@ collections.abc.AsyncGenerator.ag_running
 collections.abc.ItemsView.__reversed__
 collections.abc.KeysView.__reversed__
 collections.abc.ValuesView.__reversed__
-contextvars.Context.__init__
-contextvars.Context.get
-copy.PyStringMap
+contextlib.nullcontext  # not a function at runtime
+contextvars.Context.__init__  # Default C __init__ signature is wrong
 dataclasses.field
-dataclasses.InitVar.__class_getitem__  # stubtest bug. doesn't do the right thing with overload + implicit classmethod __class_getitem__
 dummy_threading
-email.message.MIMEPart.as_string
 enum.Enum._generate_next_value_
 fractions.Fraction.__new__  # overload is too complicated for stubtest to resolve
 ftplib.FTP.__init__
@@ -61,48 +49,25 @@ functools.singledispatchmethod.__call__
 gettext.install
 gettext.translation
 hmac.new  # Stub is a white lie; see comments in the stub
-http.client.HTTPSConnection.__init__
-http.cookiejar.DefaultCookiePolicy.__init__
-http.server.SimpleHTTPRequestHandler.__init__
+http.server.SimpleHTTPRequestHandler.__init__  # *args is expanded
 importlib.abc.Traversable.__init__  # Inherits __init__ from typing.Protocol
-importlib.metadata.DistributionFinder.Context.pattern
-importlib.metadata.EntryPointBase
 ipaddress.IPv4Interface.hostmask
 ipaddress.IPv6Interface.hostmask
 ipaddress._BaseNetwork.broadcast_address
 ipaddress._BaseNetwork.hostmask
-logging.FileHandler.__init__
-logging.handlers.BaseRotatingHandler.__init__
-logging.handlers.RotatingFileHandler.__init__
-logging.handlers.TimedRotatingFileHandler.__init__
-logging.handlers.WatchedFileHandler.__init__
-macpath  # module removed in 3.8
-macurl2path  # module removed in 3.7
-mmap.MADV_[A-Z_]+  # platform dependent constants
 multiprocessing.spawn._main
-nntplib.NNTP.starttls
-os.MFD_HUGE_32MB
-os.MFD_HUGE_512MB
-os.getgrouplist
-os.sendfile
-pickle.Pickler.reducer_override
+pickle.Pickler.reducer_override  # implemented in C pickler
 # platform.uname_result's processor field is now dynamically made to exist
 platform.uname_result.__new__
 platform.uname_result._fields
 platform.uname_result.processor
-queue.SimpleQueue.__init__
-secrets.SystemRandom.getstate
-select.epoll.register
+queue.SimpleQueue.__init__  # Default C __init__ signature is wrong
+sched.Event.__doc__  # __slots__ is overridden
 smtplib.LMTP.__init__
-smtplib.SMTP.sendmail
-sre_constants.RANGE_IGNORE
-ssl.AF_INET
-ssl.PROTOCOL_SSLv3
-ssl.RAND_egd
+ssl.PROTOCOL_SSLv3  # Depends on ssl compilation
+ssl.RAND_egd  # Depends on openssl compilation
 symtable.SymbolTable.has_exec
-sys.UnraisableHookArgs
-time.CLOCK_PROF
-time.CLOCK_UPTIME
+sys.UnraisableHookArgs  # Not exported from sys
 types.ClassMethodDescriptorType.__get__
 types.CodeType.replace
 types.GenericAlias.__getattr__
@@ -127,74 +92,23 @@ typing._TypedDict.pop
 typing._TypedDict.setdefault
 typing._TypedDict.update
 typing._TypedDict.values
-unittest.doModuleCleanups
 weakref.WeakValueDictionary.update
-webbrowser.Opera.raise_opts
-xml.etree.ElementTree.XMLParser.__init__
-xml.etree.cElementTree.XMLParser.__init__
+xml.etree.ElementTree.XMLParser.__init__  # Defined in C so has general signature
+xml.etree.cElementTree.XMLParser.__init__  # Defined in C so has general signature
 
-# positional-only complaints
-builtins.bytearray.pop
-builtins.bytearray.remove
-bz2.BZ2Compressor.compress
-bz2.BZ2File.read
-bz2.BZ2File.read1
-bz2.BZ2File.readline
-bz2.BZ2File.seek
-collections.AsyncGenerator.asend
-collections.AsyncGenerator.athrow
-collections.Container.__contains__
-collections.Coroutine.send
-collections.Coroutine.throw
-collections.Generator.send
-collections.Generator.throw
-collections.OrderedDict.fromkeys
-collections.OrderedDict.setdefault
-collections.abc.AsyncGenerator.asend
-collections.abc.AsyncGenerator.athrow
-collections.abc.Container.__contains__
-collections.abc.Coroutine.send
-collections.abc.Coroutine.throw
-collections.abc.Generator.send
-collections.abc.Generator.throw
-contextlib.AsyncExitStack.callback
-contextlib.AsyncExitStack.push_async_callback
-contextlib.ExitStack.callback
-contextvars.ContextVar.reset
-contextvars.ContextVar.set
-io.IncrementalNewlineDecoder.setstate
-lzma.LZMACompressor.compress
-lzma.is_check_supported
-os.initgroups
-os.pipe2
-os.posix_fadvise
-os.posix_fallocate
-os.sched_getaffinity
-os.sched_getparam
-os.sched_getscheduler
-os.sched_rr_get_interval
-os.sched_setaffinity
-os.sched_setparam
-os.sched_setscheduler
-os.setresgid
-os.setresuid
-os.waitid
-pwd.getpwnam
-pwd.getpwuid
-random.SystemRandom.getrandbits
-secrets.SystemRandom.getrandbits
-signal.sigtimedwait
-signal.sigwaitinfo
-trace.Trace.runfunc
-zipfile.ZipExtFile.seek
 # These enums derive from (int, IntEnum) or (str, Enum). See comment in py3_common.txt
-enum.IntFlag.__new__
 pstats.SortKey.__new__
-re.RegexFlag.__new__
-socket.AddressInfo.__new__
-socket.MsgFlag.__new__
-ssl.Options.__new__
-ssl.TLSVersion.__new__
-ssl.VerifyFlags.__new__
-ssl.VerifyMode.__new__
 tkinter.EventType.__new__
+
+builtins.memoryview.__iter__  # C type that implements __getitem__
+builtins.memoryview.cast  # inspect.signature is incorrect about shape being kw-only
+collections.Coroutine.cr_await
+collections.Coroutine.cr_code
+collections.Coroutine.cr_frame
+collections.Coroutine.cr_running
+collections.Generator.gi_code
+collections.Generator.gi_frame
+collections.Generator.gi_running
+collections.Generator.gi_yieldfrom
+collections.Mapping.get  # Adding None to the Union messed up mypy
+collections.Sequence.index  # Supporting None in end is not mandatory

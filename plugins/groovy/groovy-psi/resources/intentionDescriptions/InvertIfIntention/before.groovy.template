@@ -1,2 +1,2 @@
-if (!a) {
-} else b = false;
+<spot>if (!a)</spot> {
+} else b = false

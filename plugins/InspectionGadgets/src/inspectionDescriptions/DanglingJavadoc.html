@@ -1,9 +1,31 @@
 <html>
 <body>
-Reports dangling Javadoc comments.
-Javadoc comment are dangling if they don't belong to any class, method or field.
-For example a Javadoc comment in between method declarations that have their own javadoc comments.
-Dangling Javadoc comments are ignored by the Javadoc tool and will not become part of the html documentation it generates.
+Reports Javadoc comments that don't belong to any class, method or field.
+<p>The Javadoc tool ignores dangling Javadoc comments and doesn't include them in the generated HTML documentation.</p>
+<p><b>Example:</b></p>
+<pre><code>
+  class A {
+    /**
+     * Dangling comment
+     */
+     /**
+      * Method javadoc
+      */
+      public void m(){}
+  }
+</code></pre>
+<p>A quick-fix is available to delete such comments completely or convert them into a block comment. After the quick-fix is applied:</p>
+<pre><code>
+  class A {
+  /*
+    Dangling comment
+   */
+  /**
+   * Method javadoc
+   */
+  public void m(){}
+}
+</code></pre>
 <!-- tooltip end -->
 <p>
 </body>

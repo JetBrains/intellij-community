@@ -55,7 +55,7 @@ internal class CustomDecorationPath(val frame: JFrame) : SelectedEditorFilePath(
   }
 
   private val titleChangeListener = PropertyChangeListener{
-    updateProject()
+    updateProjectPath()
   }
 
   override fun getCustomTitle(): String? {

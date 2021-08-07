@@ -3,14 +3,18 @@ package com.intellij.ui.tabs.impl;
 
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.ui.UISettings;
+import com.intellij.notification.Notification;
+import com.intellij.notification.NotificationType;
+import com.intellij.notification.Notifications;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.application.ApplicationBundle;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.reference.SoftReference;
 import com.intellij.ui.InplaceButton;
 import com.intellij.ui.MouseDragHelper;
 import com.intellij.ui.ScreenUtil;
 import com.intellij.ui.awt.RelativePoint;
-import com.intellij.ui.tabs.JBTabsPosition;
 import com.intellij.ui.tabs.TabInfo;
 import com.intellij.ui.util.Axis;
 import com.intellij.util.ui.UIUtil;
@@ -23,7 +27,7 @@ import java.awt.event.MouseEvent;
 import java.lang.ref.Reference;
 import java.lang.ref.WeakReference;
 
-public class DragHelper extends MouseDragHelper {
+public class DragHelper extends MouseDragHelper<JBTabsImpl> {
   private final JBTabsImpl myTabs;
   private TabInfo myDragSource;
   private Rectangle myDragOriginalRec;
@@ -70,8 +74,42 @@ public class DragHelper extends MouseDragHelper {
   @Override
   protected void processDragOutFinish(@NotNull MouseEvent event) {
     super.processDragOutFinish(event);
+    boolean wasSorted = prepareDisableSorting();
+    try {
+      myDragOutSource.getDragOutDelegate().dragOutFinished(event, myDragOutSource);
+    } finally {
+      disableSortingIfNeed(event, wasSorted);
+    }
+  }
 
-    myDragOutSource.getDragOutDelegate().dragOutFinished(event, myDragOutSource);
+  private static boolean prepareDisableSorting() {
+    boolean wasSorted = UISettings.getInstance().getSortTabsAlphabetically() /*&& myTabs.isAlphabeticalMode()*/;
+    if (wasSorted) {
+      UISettings.getInstance().setSortTabsAlphabetically(false);
+    }
+    return wasSorted;
+  }
+
+  private static void disableSortingIfNeed(@NotNull MouseEvent event, boolean wasSorted) {
+    if (!wasSorted) return;
+
+    if (event.isConsumed()) {//new container for separate window was created, see DockManagerImpl.MyDragSession
+      UISettings.getInstance().setSortTabsAlphabetically(true);
+    }
+    else {
+      UISettings.getInstance().fireUISettingsChanged();
+      ApplicationManager.getApplication().invokeLater(() -> {
+        Notification notification =
+          new Notification(Notifications.SYSTEM_MESSAGES_GROUP_ID, IdeBundle.message("alphabetical.mode.is.on.notification"), "", NotificationType.INFORMATION);
+        notification.addAction(
+          DumbAwareAction.create(ApplicationBundle.message("checkbox.sort.tabs.alphabetically"), e -> {
+            UISettings.getInstance().setSortTabsAlphabetically(true);
+            UISettings.getInstance().fireUISettingsChanged();
+            notification.expire();
+          }));
+        Notifications.Bus.notify(notification);
+      });
+    }
   }
 
   @Override
@@ -243,25 +281,11 @@ public class DragHelper extends MouseDragHelper {
   @Override
   protected void processDragFinish(@NotNull MouseEvent event, boolean willDragOutStart) {
     super.processDragFinish(event, willDragOutStart);
-
-    endDrag(willDragOutStart);
-
-    final JBTabsPosition position = myTabs.getTabsPosition();
-
-    if (!willDragOutStart && myTabs.isAlphabeticalMode() && position != JBTabsPosition.top && position != JBTabsPosition.bottom) {
-      Point p = new Point(event.getPoint());
-      p = SwingUtilities.convertPoint(event.getComponent(), p, myTabs);
-      if (myTabs.getVisibleRect().contains(p) && myPressedOnScreenPoint.distance(new RelativePoint(event).getScreenPoint()) > 15) {
-        final int answer = Messages.showOkCancelDialog(myTabs,
-                                                       IdeBundle.message("alphabetical.mode.is.on.warning"),
-                                                       IdeBundle.message("title.warning"),
-                                                       Messages.getQuestionIcon());
-        if (answer == Messages.OK) {
-          UISettings.getInstance().setSortTabsAlphabetically(false);
-          myTabs.relayout(true, false);
-          myTabs.revalidate();
-        }
-      }
+    boolean wasSorted = !willDragOutStart && prepareDisableSorting();
+    try {
+      endDrag(willDragOutStart);
+    } finally {
+      disableSortingIfNeed(event, wasSorted);
     }
   }
 

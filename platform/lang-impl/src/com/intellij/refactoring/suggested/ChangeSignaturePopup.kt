@@ -9,6 +9,7 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.editor.colors.EditorColorsScheme
+import com.intellij.openapi.editor.colors.EditorFontType
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.ComponentValidator
@@ -47,7 +48,7 @@ internal class ChangeSignaturePopup(
   @Nls
   private val nextButtonText = RefactoringBundle.message("suggested.refactoring.next.button.text")
 
-  private val editorFont = Font(colorsScheme.editorFontName, Font.PLAIN, colorsScheme.editorFontSize)
+  private val editorFont = colorsScheme.getFont(EditorFontType.PLAIN)
 
   private val signatureChangePage = SignatureChangesPage(signatureChangeModel, editorFont, screenSize, nameOfStuffToUpdate)
 

@@ -217,12 +217,14 @@ public class JavaGradleProjectResolver extends AbstractProjectResolverExtension 
       final String jvmArgs = toStringListLiteral(argv, " << ");
 
       final String[] lines = {
-        "gradle.taskGraph.beforeTask { Task task ->",
+        "gradle.taskGraph.whenReady { taskGraph ->",
+        "  taskGraph.allTasks.each { Task task ->",
         "    if (task instanceof JavaForkOptions && (" + names + ".contains(task.name) || " + names + ".contains(task.path))) {",
         "        def jvmArgs = task.jvmArgs.findAll{!it?.startsWith('-agentlib:jdwp') && !it?.startsWith('-Xrunjdwp')}",
         "        jvmArgs << " + jvmArgs,
         "        task.jvmArgs = jvmArgs",
         "    }",
+        "  }",
         "}",
       };
       final String script = StringUtil.join(lines, System.lineSeparator());

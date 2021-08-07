@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.devkit.actions
 
 import com.intellij.ide.fileTemplates.FileTemplateManager
@@ -7,6 +7,7 @@ import com.intellij.ide.ui.UIThemeProvider
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.LangDataKeys
+import com.intellij.openapi.actionSystem.UpdateInBackground
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.module.Module
@@ -29,7 +30,7 @@ import java.util.*
 import javax.swing.JComponent
 
 //TODO better undo support
-class NewThemeAction: AnAction() {
+class NewThemeAction : AnAction(), UpdateInBackground {
   private val THEME_JSON_TEMPLATE = "ThemeJson.json"
   private val THEME_PROVIDER_EP_NAME = UIThemeProvider.EP_NAME.name
 
@@ -54,7 +55,7 @@ class NewThemeAction: AnAction() {
 
   override fun update(e: AnActionEvent) {
     val module = e.getData(LangDataKeys.MODULE)
-    e.presentation.isEnabled = module != null && (PsiUtil.isPluginModule(module) || PluginModuleType.get(module) is PluginModuleType)
+    e.presentation.isEnabled = module != null && (PluginModuleType.get(module) is PluginModuleType || PsiUtil.isPluginModule(module))
   }
 
   @Suppress("HardCodedStringLiteral")

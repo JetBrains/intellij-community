@@ -1,6 +1,7 @@
 <html>
 <body>
-Reports redundant constructors declared inside Java records. Examples:
+<p>Reports redundant constructors declared inside Java records.</p>
+<p><b>Example 1:</b></p>
 <pre><code>
   record Point(int x, int y) {
     public Point {} // could be removed
@@ -12,8 +13,11 @@ Reports redundant constructors declared inside Java records. Examples:
       this.y = y;
     }
   }
-  
-  // could be converted to compact constructor
+</code></pre>
+<p>The quick-fix removes the redundant constructors.</p>
+<p><b>Example 2:</b></p>
+<pre><code>
+   // could be converted to compact constructor
   record Range(int from, int to) {
     public Range(int from, int to) {
       if (from > to) throw new IllegalArgumentException();
@@ -22,6 +26,7 @@ Reports redundant constructors declared inside Java records. Examples:
     }
   }
 </code></pre>
+<p>The quick-fix converts this code into a compact constructor.</p>
 <!-- tooltip end -->
 <p>This inspection only reports if the configured language level is 14 Preview or 15 Preview.</p>
 <p><small>New in 2020.1</small></p>

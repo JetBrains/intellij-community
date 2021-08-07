@@ -1,5 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl.source;
 
 import com.intellij.ide.util.PsiNavigationSupport;
@@ -15,7 +14,9 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Queryable;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileWithId;
@@ -44,6 +45,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.*;
+import java.util.function.Supplier;
 
 public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiFileWithStubSupport, Queryable, Cloneable {
   private static final Logger LOG = Logger.getInstance(PsiFileImpl.class);
@@ -699,10 +701,9 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
     return !getViewProvider().isEventSystemEnabled();
   }
 
-  @NotNull
-  private Getter<FileElement> createTreeElementPointer(@NotNull FileElement treeElement) {
+  private @NotNull Supplier<FileElement> createTreeElementPointer(@NotNull FileElement treeElement) {
     if (isKeepTreeElementByHardReference()) {
-      return new StaticGetter<>(treeElement);
+      return () -> treeElement;
     }
     return myManager.isBatchFilesProcessingMode()
                  ? new PatchedWeakReference<>(treeElement)
@@ -890,9 +891,9 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
 
       @Override
       public String getLocationString() {
-        final PsiDirectory psiDirectory = getParent();
-        if (psiDirectory != null) {
-          return psiDirectory.getVirtualFile().getPresentableUrl();
+        VirtualFile file = getViewProvider().getVirtualFile().getParent();
+        if (file != null && file.isValid() && file.isDirectory()) {
+          return file.getPresentableUrl();
         }
         return null;
       }

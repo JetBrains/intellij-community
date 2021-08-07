@@ -74,6 +74,20 @@ public class TrivialIfInspectionTest extends LightJavaInspectionTestCase {
                  "}\n");
   }
 
+  public void testAssert() {
+    doMemberTest("\n" +
+                 "  void test(int x) {\n" +
+                 "    /*'if' statement can be simplified*/if/**/ (x > 20) assert false;\n" +
+                 "}\n");
+  }
+
+  public void testIgnoreAssert() {
+    doMemberTest("\n" +
+                 "  void test(int x) {\n" +
+                 "    if (x > 20) assert false;\n" +
+                 "}\n");
+  }
+
   public void testReturnElseIf() {
     doMemberTest("\n" +
                  "  boolean b(int x) {\n" +
@@ -122,8 +136,12 @@ public class TrivialIfInspectionTest extends LightJavaInspectionTestCase {
   @Override
   protected InspectionProfileEntry getInspection() {
     TrivialIfInspection inspection = new TrivialIfInspection();
-    if (getTestName(false).endsWith("IgnoreChain")) {
+    String testName = getTestName(false);
+    if (testName.endsWith("IgnoreChain")) {
       inspection.ignoreChainedIf = true;
+    }
+    if (testName.endsWith("IgnoreAssert")) {
+      inspection.ignoreAssertStatements = true;
     }
     return inspection;
   }

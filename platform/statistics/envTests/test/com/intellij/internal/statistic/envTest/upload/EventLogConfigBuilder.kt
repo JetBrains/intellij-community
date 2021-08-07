@@ -1,6 +1,10 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.statistic.envTest.upload
 
+import com.google.gson.Gson
+import com.intellij.internal.statistic.config.EventLogExternalSettings
+import com.intellij.internal.statistic.config.bean.EventLogConfigVersions
+import com.intellij.internal.statistic.config.bean.EventLogMajorVersionBorders
 import com.intellij.internal.statistic.envTest.ApacheContainer
 import com.intellij.openapi.util.io.FileUtil
 import java.nio.file.Paths
@@ -14,6 +18,7 @@ class EventLogConfigBuilder(private val container: ApacheContainer, private val 
   private var metadataPath: String = ""
   private var fromBucket: Int = 0
   private var toBucket: Int = 256
+  private var options = hashMapOf<String, String>()
 
   fun withSendUrlPath(path: String?): EventLogConfigBuilder {
     sendPath = path
@@ -40,32 +45,33 @@ class EventLogConfigBuilder(private val container: ApacheContainer, private val 
     return this
   }
 
+  fun withOption(key: String, value: String): EventLogConfigBuilder {
+    options[key] = value
+    return this
+  }
+
   fun create() {
-    val sendUrl = sendPath?.let { """"send": "${getSendUrl()}",""" } ?: ""
-    val metadataUrl = container.getBaseUrl("$TEST_SERVER_ROOT/$metadataPath").toString()
-    val config = """
-{
-  "productCode": "${PRODUCT_CODE}",
-  "versions": [
-    {
-      "majorBuildVersionBorders": {
-        "from": "${productVersion}"
-      },
-      "releaseFilters": [
-        {
-          "releaseType": "ALL",
-          "from": $fromBucket,
-          "to": $toBucket
-        }
-      ],
-      "endpoints": {
-        $sendUrl
-        "metadata": "$metadataUrl"
-      }
+    val externalSettings = EventLogExternalSettings()
+    externalSettings.productCode = PRODUCT_CODE
+    val version = EventLogConfigVersions()
+    val majorVersionBorders = EventLogMajorVersionBorders()
+    majorVersionBorders.from = productVersion
+    version.majorBuildVersionBorders = majorVersionBorders
+    val filter = EventLogConfigVersions.EventLogConfigFilterCondition()
+    filter.releaseType = "ALL"
+    filter.from = fromBucket
+    filter.to = toBucket
+    version.releaseFilters = listOf(filter)
+    val endpoints = hashMapOf<String, String>()
+    if (sendPath != null) {
+      endpoints["send"] = getSendUrl()
     }
-  ]
-}
-    """.trimIndent()
+    endpoints["metadata"] = container.getBaseUrl("$TEST_SERVER_ROOT/$metadataPath").toString()
+    version.endpoints = endpoints
+    version.options = options
+    externalSettings.versions = listOf(version)
+
+    val config = Gson().toJson(externalSettings)
     val path = String.format(SETTINGS_ROOT, RECORDER_ID, PRODUCT_CODE)
     val file = Paths.get(tmpLocalRoot).resolve(path).toFile()
     FileUtil.writeToFile(file, config)

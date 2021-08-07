@@ -83,7 +83,7 @@ abstract class JUnitTestDiscoveryRunnableState extends TestObject {
 
   @Override
   public @Nullable SearchForTestsTask createSearchingForTestsTask(@NotNull TargetEnvironment targetEnvironment) {
-    return new SearchForTestsTask(getConfiguration().getProject(), myServerSocket) {
+    return new SearchForTestsTask(getConfiguration().getProject(), getServerSocket()) {
 
       private Set<String> myPatterns;
 

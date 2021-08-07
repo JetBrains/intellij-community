@@ -556,7 +556,7 @@ public abstract class PsiJavaFileBaseImpl extends PsiFileImpl implements PsiJava
     }
     catch (Throwable ignored) { }
     finally {
-      if (!Objects.equals(sourceLevel, virtualFile.getUserData(SHEBANG_SOURCE_LEVEL))) {
+      if (!Objects.equals(sourceLevel, virtualFile.getUserData(SHEBANG_SOURCE_LEVEL)) && virtualFile.isInLocalFileSystem()) {
         virtualFile.putUserData(SHEBANG_SOURCE_LEVEL, sourceLevel);
         VirtualFile file = virtualFile;
         ApplicationManager.getApplication().invokeLater(() -> FileContentUtilCore.reparseFiles(file),

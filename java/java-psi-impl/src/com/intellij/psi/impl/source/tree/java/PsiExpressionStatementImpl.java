@@ -38,7 +38,7 @@ public class PsiExpressionStatementImpl extends CompositePsiElement implements P
   public PsiExpression getExpression() {
     PsiExpression expression = (PsiExpression)SourceTreeToPsiMap.treeElementToPsi(findChildByType(ElementType.EXPRESSION_BIT_SET));
     if (expression != null) return expression;
-    LOG.error("Illegal PSI: \n" + DebugUtil.psiToString(getParent(), false));
+    LOG.error("Illegal PSI: \n" + DebugUtil.psiToString(getParent(), true));
     return null;
   }
 

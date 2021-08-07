@@ -2,9 +2,6 @@
 package org.jetbrains.plugins.gradle.compiler;
 
 import com.intellij.openapi.externalSystem.service.project.manage.ExternalProjectsManagerImpl;
-import com.intellij.util.Consumer;
-import org.jetbrains.plugins.gradle.importing.GradleBuildScriptBuilderEx;
-import org.jetbrains.plugins.gradle.importing.GroovyBuilder;
 import org.junit.Test;
 
 import java.io.IOException;
@@ -39,14 +36,16 @@ public class GradleJpsJavaCompilationTest extends GradleJpsCompilingTestCase {
       "    }\n" +
       "}\n");
     importProject(
-      new GradleBuildScriptBuilderEx()
+      createBuildScriptBuilder()
         .withJavaPlugin()
-        .withPrefix((Consumer<GroovyBuilder>)it -> it
-          .property("sourceCompatibility", 7)
-          .property("targetCompatibility", 7))
-        .withTaskConfiguration("compileJava", (Consumer<GroovyBuilder>)it -> it
-          .property("sourceCompatibility", 8)
-          .property("targetCompatibility", 8))
+        .withPrefix(it -> {
+          it.assign("sourceCompatibility", "7");
+          it.assign("targetCompatibility", "7");
+          it.call("compileJava", it1 -> {
+            it1.assign("sourceCompatibility", "8");
+            it1.assign("targetCompatibility", "8");
+          });
+        })
         .generate()
     );
     compileModules("project.main");

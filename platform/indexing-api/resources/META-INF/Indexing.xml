@@ -20,4 +20,5 @@
     </extensionPoint>
     <extensionPoint name="findModelExtension" interface="com.intellij.find.FindModelExtension" dynamic="true"/>
   </extensionPoints>
+
 </idea-plugin>

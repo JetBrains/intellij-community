@@ -1,0 +1,109 @@
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+
+package org.jetbrains.kotlin.idea.formatter
+
+import com.intellij.application.options.CodeStyle
+import com.intellij.internal.statistic.beans.MetricEvent
+import com.intellij.internal.statistic.eventLog.EventLogGroup
+import com.intellij.internal.statistic.eventLog.events.EventFields
+import com.intellij.internal.statistic.service.fus.collectors.ProjectUsagesCollector
+import com.intellij.internal.statistic.utils.getPluginInfoById
+import com.intellij.openapi.project.Project
+import com.intellij.psi.codeStyle.CodeStyleSettings
+import com.intellij.psi.codeStyle.CodeStyleSettingsManager
+import org.jetbrains.kotlin.idea.KotlinPluginUtil
+import org.jetbrains.kotlin.idea.PlatformVersion
+import org.jetbrains.kotlin.idea.formatter.KotlinFormatterUsageCollector.KotlinFormatterKind.*
+import org.jetbrains.kotlin.idea.search.containsKotlinFile
+import org.jetbrains.kotlin.idea.util.runReadActionInSmartMode
+
+class KotlinFormatterUsageCollector : ProjectUsagesCollector() {
+    override fun requiresReadAccess() = true
+
+    override fun getGroup(): EventLogGroup = GROUP
+
+    override fun getMetrics(project: Project): Set<MetricEvent> {
+        if (PlatformVersion.isAndroidStudio() || project.runReadActionInSmartMode { !project.containsKotlinFile() }) {
+            return emptySet()
+        }
+
+        return setOf(
+            settingsEvent.metric(
+                value1 = getKotlinFormatterKind(project),
+                value2 = getPluginInfoById(KotlinPluginUtil.KOTLIN_PLUGIN_ID),
+            )
+        )
+    }
+
+    companion object {
+        private val GROUP = EventLogGroup("kotlin.ide.formatter", 4)
+        private val settingsEvent = GROUP.registerEvent(
+            eventId = "settings",
+            eventField1 = EventFields.Enum("kind", KotlinFormatterKind::class.java),
+            eventField2 = EventFields.PluginInfo,
+        )
+
+        private val KOTLIN_OFFICIAL_CODE_STYLE: CodeStyleSettings by lazy {
+            CodeStyleSettingsManager.getInstance().cloneSettings(CodeStyle.getDefaultSettings()).also(KotlinStyleGuideCodeStyle::apply)
+        }
+
+        private val KOTLIN_OBSOLETE_CODE_STYLE: CodeStyleSettings by lazy {
+            CodeStyleSettingsManager.getInstance().cloneSettings(CodeStyle.getDefaultSettings()).also(KotlinObsoleteCodeStyle::apply)
+        }
+
+        private fun codeStylesIsEquals(lhs: CodeStyleSettings, rhs: CodeStyleSettings): Boolean =
+            lhs.kotlinCustomSettings == rhs.kotlinCustomSettings && lhs.kotlinCommonSettings == rhs.kotlinCommonSettings
+
+        fun getKotlinFormatterKind(project: Project): KotlinFormatterKind {
+            val isProject = CodeStyle.usesOwnSettings(project)
+            val currentSettings = CodeStyle.getSettings(project)
+
+            val codeStyleDefaults = currentSettings.kotlinCodeStyleDefaults()
+            return when (val supposedCodeStyleDefaults = currentSettings.supposedKotlinCodeStyleDefaults()) {
+                KotlinStyleGuideCodeStyle.CODE_STYLE_ID -> when {
+                    supposedCodeStyleDefaults != codeStyleDefaults -> paired(IDEA_WITH_BROKEN_OFFICIAL_KOTLIN, isProject)
+                    codeStylesIsEquals(currentSettings, KOTLIN_OFFICIAL_CODE_STYLE) -> paired(IDEA_OFFICIAL_KOTLIN, isProject)
+                    else -> paired(IDEA_OFFICIAL_KOTLIN_WITH_CUSTOM, isProject)
+                }
+
+                KotlinObsoleteCodeStyle.CODE_STYLE_ID -> when {
+                    supposedCodeStyleDefaults != codeStyleDefaults -> paired(IDEA_WITH_BROKEN_OBSOLETE_KOTLIN, isProject)
+                    codeStylesIsEquals(currentSettings, KOTLIN_OBSOLETE_CODE_STYLE) -> paired(IDEA_OBSOLETE_KOTLIN, isProject)
+                    else -> paired(IDEA_OBSOLETE_KOTLIN_WITH_CUSTOM, isProject)
+                }
+
+                else -> paired(IDEA_CUSTOM, isProject)
+            }
+        }
+
+        private fun paired(kind: KotlinFormatterKind, isProject: Boolean): KotlinFormatterKind {
+            if (!isProject) return kind
+
+            return when (kind) {
+                IDEA_CUSTOM -> PROJECT_CUSTOM
+
+                IDEA_OFFICIAL_KOTLIN -> PROJECT_OFFICIAL_KOTLIN
+                IDEA_OFFICIAL_KOTLIN_WITH_CUSTOM -> PROJECT_OFFICIAL_KOTLIN_WITH_CUSTOM
+                IDEA_WITH_BROKEN_OFFICIAL_KOTLIN -> PROJECT_WITH_BROKEN_OFFICIAL_KOTLIN
+
+                IDEA_OBSOLETE_KOTLIN -> PROJECT_OBSOLETE_KOTLIN
+                IDEA_OBSOLETE_KOTLIN_WITH_CUSTOM -> PROJECT_OBSOLETE_KOTLIN_WITH_CUSTOM
+                IDEA_WITH_BROKEN_OBSOLETE_KOTLIN -> PROJECT_WITH_BROKEN_OBSOLETE_KOTLIN
+
+                else -> kind
+            }
+        }
+    }
+
+    enum class KotlinFormatterKind {
+        IDEA_CUSTOM, PROJECT_CUSTOM,
+
+        IDEA_OFFICIAL_KOTLIN, PROJECT_OFFICIAL_KOTLIN,
+        IDEA_OFFICIAL_KOTLIN_WITH_CUSTOM, PROJECT_OFFICIAL_KOTLIN_WITH_CUSTOM,
+        IDEA_WITH_BROKEN_OFFICIAL_KOTLIN, PROJECT_WITH_BROKEN_OFFICIAL_KOTLIN,
+
+        IDEA_OBSOLETE_KOTLIN, PROJECT_OBSOLETE_KOTLIN,
+        IDEA_OBSOLETE_KOTLIN_WITH_CUSTOM, PROJECT_OBSOLETE_KOTLIN_WITH_CUSTOM,
+        IDEA_WITH_BROKEN_OBSOLETE_KOTLIN, PROJECT_WITH_BROKEN_OBSOLETE_KOTLIN,
+    }
+}

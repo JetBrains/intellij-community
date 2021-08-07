@@ -7,10 +7,7 @@ import com.intellij.openapi.util.*;
 import com.intellij.ui.content.AlertIcon;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManager;
-import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import javax.swing.*;
 import java.awt.*;
@@ -300,6 +297,14 @@ public class ContentImpl extends UserDataHolderBase implements Content {
   @Override
   public void fireAlert() {
     myChangeSupport.firePropertyChange(PROP_ALERT, null, true);
+  }
+
+  /**
+   * @see com.intellij.openapi.wm.impl.content.ToolWindowContentUi
+   */
+  @ApiStatus.Internal
+  public void fireTabLayout() {
+    myChangeSupport.firePropertyChange(PROP_TAB_LAYOUT, null, true);
   }
 
   @Override

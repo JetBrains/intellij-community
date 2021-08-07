@@ -1,6 +1,23 @@
 <html>
 <body>
-This inspection detects mismatched parameters in a docstring.
-Please note that it doesn&#39;t warn you of missing parameters, if none of them is mentioned in a docstring.
+<p>Reports mismatched parameters in a docstring. For example, <code>b</code> is highlighted, because there is no
+  such a parameter in the <code>add</code> function.</p>
+<pre style="font-family: monospace">
+    def add(a, c):
+    """
+    @param a:
+    @param b:
+    @return:
+    """
+    pass
+</pre>
+<p>The inspection does not warn you of missing parameters if none of them is mentioned in a docstring:</p>
+<pre style="font-family: monospace">
+def mult(a, c):
+    """
+    @return:
+    """
+    pass
+</pre>
 </body>
 </html>

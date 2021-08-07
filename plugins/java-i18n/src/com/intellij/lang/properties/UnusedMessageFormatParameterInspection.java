@@ -26,14 +26,14 @@ import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.lang.properties.psi.Property;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
+import it.unimi.dsi.fastutil.ints.IntSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 
 public class UnusedMessageFormatParameterInspection extends PropertiesInspectionBase {
   public static final String REGEXP = "regexp";
@@ -51,7 +51,7 @@ public class UnusedMessageFormatParameterInspection extends PropertiesInspection
         if (name.startsWith(REGEXP + ".") || name.endsWith("." + REGEXP)) continue;
       }
       String value = property.getValue();
-      Set<Integer> parameters = new HashSet<>();
+      IntSet parameters = new IntOpenHashSet();
       if (value != null) {
         int index = value.indexOf('{');
         while (index != -1) {
@@ -66,19 +66,19 @@ public class UnusedMessageFormatParameterInspection extends PropertiesInspection
             index = Math.min(comma, brace);
           }
           try {
-            parameters.add(new Integer(value.substring(0, index)));
+            parameters.add(Integer.parseInt(value.substring(0, index)));
           }
           catch (NumberFormatException e) {
             break;
           }
           index = value.indexOf('{');
         }
-        for (Integer integer : parameters) {
-          for (int i = 0; i < integer.intValue(); i++) {
-            if (!parameters.contains(new Integer(i))) {
+        for (int integer : parameters.toIntArray()) {
+          for (int i = 0; i < integer; i++) {
+            if (!parameters.contains(i)) {
               ASTNode[] nodes = property.getPsiElement().getNode().getChildren(null);
               PsiElement valElement = nodes.length < 3 ? property.getPsiElement() : nodes[2].getPsi();
-              final String message = JavaI18nBundle.message("unused.message.format.parameter.problem.descriptor", integer.toString(), Integer.toString(i));
+              final String message = JavaI18nBundle.message("unused.message.format.parameter.problem.descriptor", integer, Integer.toString(i));
               final String propertyKey = property.getKey();
               final LocalQuickFix[] fixes = isOnTheFly ? new LocalQuickFix[]{new RenameElementFix(((Property)property), propertyKey == null ? REGEXP : propertyKey + "." + REGEXP)} : null;
               problemDescriptors.add(manager.createProblemDescriptor(valElement, message, isOnTheFly, fixes, ProblemHighlightType.GENERIC_ERROR_OR_WARNING));

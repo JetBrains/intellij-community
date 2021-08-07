@@ -38,6 +38,7 @@ import com.intellij.ui.table.TableView;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.IntPair;
+import com.intellij.util.ModalityUiUtil;
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.containers.ContainerUtil;
@@ -136,6 +137,8 @@ public final class VcsSelectionHistoryDialog extends FrameWrapper implements Dat
     myActiveVcs = vcs;
     myVcsHistoryProvider = vcsHistoryProvider;
 
+    setIsDecorated(false);
+
     myComments = new JEditorPane(UIUtil.HTML_MIME, "");
     myComments.setPreferredSize(new JBDimension(150, 100));
     myComments.setEditable(false);
@@ -194,8 +197,7 @@ public final class VcsSelectionHistoryDialog extends FrameWrapper implements Dat
       }
     });
 
-    ActionGroup popupActions = (ActionGroup)ActionManager.getInstance().getAction("VcsSelectionHistoryDialog.Popup");
-    PopupHandler.installPopupHandler(myList, popupActions, ActionPlaces.UPDATE_POPUP, ActionManager.getInstance());
+    PopupHandler.installPopupMenu(myList, "VcsSelectionHistoryDialog.Popup", ActionPlaces.UPDATE_POPUP);
 
     setTitle(title);
     setComponent(mySplitter);
@@ -222,12 +224,12 @@ public final class VcsSelectionHistoryDialog extends FrameWrapper implements Dat
       }
 
       private void runOnEdt(@NotNull Runnable task) {
-        GuiUtils.invokeLaterIfNeeded(() -> {
+        ModalityUiUtil.invokeLaterIfNeeded(ModalityState.stateForComponent(mySplitter), () -> {
           VcsSelectionHistoryDialog dialog = VcsSelectionHistoryDialog.this;
           if (!dialog.isDisposed() && dialog.getFrame().isShowing()) {
             task.run();
           }
-        }, ModalityState.stateForComponent(mySplitter));
+        });
       }
     };
     myBlockLoader.start(this);

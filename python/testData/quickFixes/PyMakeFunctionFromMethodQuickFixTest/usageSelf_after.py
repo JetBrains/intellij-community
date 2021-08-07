@@ -1,5 +1,5 @@
 def method2():
-    print 1
+    print(1)
 
 
 class A():

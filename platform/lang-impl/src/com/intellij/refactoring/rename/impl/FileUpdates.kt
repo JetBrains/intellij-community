@@ -38,7 +38,7 @@ class FileUpdates(
       rangeMarker.document
     }
     for ((document: Document, modifications: List<Pair<RangeMarker, CharSequence>>) in byDocument) {
-      DocumentUtil.executeInBulk(document, true) {
+      DocumentUtil.executeInBulk(document) {
         for ((rangeMarker: RangeMarker, replacement: CharSequence) in modifications) {
           if (!rangeMarker.isValid) {
             LOG.warn("Cannot apply rename patch: invalid range marker. Document: $document, marker: $rangeMarker")

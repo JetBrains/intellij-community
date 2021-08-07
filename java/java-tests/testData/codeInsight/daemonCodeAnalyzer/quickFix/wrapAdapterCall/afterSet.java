@@ -1,4 +1,4 @@
-// "Wrap 1st parameter using 'Collections.singleton()'" "true"
+// "Wrap 1st argument using 'Collections.singleton()'" "true"
 import java.util.*;
 
 class Test {

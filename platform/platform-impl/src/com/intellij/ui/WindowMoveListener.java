@@ -9,10 +9,26 @@ import org.jetbrains.annotations.NotNull;
 import java.awt.*;
 import java.awt.event.MouseEvent;
 
-import static java.awt.Cursor.*;
+import static java.awt.Cursor.DEFAULT_CURSOR;
 import static java.awt.event.InputEvent.BUTTON1_MASK;
 
 public class WindowMoveListener extends WindowMouseListener {
+
+  public WindowMoveListener installTo(@NotNull Component component) {
+    component.addMouseListener(this);
+    component.addMouseMotionListener(this);
+    return this;
+  }
+
+  public void uninstallFrom(@NotNull Component component) {
+    component.removeMouseListener(this);
+    component.removeMouseMotionListener(this);
+  }
+
+  public WindowMoveListener() {
+    super(null);
+  }
+
   public WindowMoveListener(Component content) {
     super(content);
   }

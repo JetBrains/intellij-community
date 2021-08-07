@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.packaging.setupPy;
 
 import com.google.common.collect.ImmutableSet;
@@ -18,14 +18,13 @@ import com.jetbrains.python.psi.impl.PyPsiUtils;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.resolve.PyResolveImportUtil;
 import com.jetbrains.python.psi.stubs.PyClassNameIndex;
+import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-/**
- * @author yole
- */
+
 public class SetupTaskIntrospector {
   private static final Logger LOG = Logger.getInstance(SetupTaskIntrospector.class);
 
@@ -157,7 +156,8 @@ public class SetupTaskIntrospector {
       }
     }
     else if (value instanceof PyReferenceExpression) {
-      final PsiElement resolveResult = ((PyReferenceExpression)value).getReference(PyResolveContext.defaultContext()).resolve();
+      final var context = TypeEvalContext.codeInsightFallback(value.getProject());
+      final PsiElement resolveResult = ((PyReferenceExpression)value).getReference(PyResolveContext.defaultContext(context)).resolve();
       collectSequenceElements(resolveResult, result);
     }
     else if (value instanceof PyTargetExpression) {

@@ -41,7 +41,7 @@ class AnchorElementInfo extends SelfElementInfo {
   AnchorElementInfo(@NotNull PsiElement anchor,
                     @NotNull PsiFileWithStubSupport containingFile,
                     int stubId,
-                    @NotNull IStubElementType stubElementType) {
+                    @NotNull IStubElementType<?,?> stubElementType) {
     super(null,
           Identikit.fromTypes(anchor.getClass(), stubElementType, LanguageUtil.getRootLanguage(containingFile)),
           containingFile, false);
@@ -49,7 +49,7 @@ class AnchorElementInfo extends SelfElementInfo {
     assert !(anchor instanceof PsiFile) : "FileElementInfo must be used for file: "+anchor;
   }
 
-  private static long pack(int stubId, @Nullable IStubElementType stubElementType) {
+  private static long pack(int stubId, @Nullable IStubElementType<?,?> stubElementType) {
     short index = stubElementType == null ? 0 : stubElementType.getIndex();
     assert index >= 0 : "Unregistered token types not allowed here: " + stubElementType;
     return ((long)stubId) | ((long)index << 32);
@@ -68,7 +68,7 @@ class AnchorElementInfo extends SelfElementInfo {
       PsiFile file = restoreFile(manager);
       if (!(file instanceof PsiFileWithStubSupport)) return null;
       short index = (short)(typeAndId >> 32);
-      IStubElementType stubElementType = (IStubElementType)IElementType.find(index);
+      IStubElementType<?,?> stubElementType = (IStubElementType<?,?>)IElementType.find(index);
       return PsiAnchor.restoreFromStubIndex((PsiFileWithStubSupport)file, stubId, stubElementType, false);
     }
 

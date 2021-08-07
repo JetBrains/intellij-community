@@ -249,6 +249,10 @@ public final class DarculaUIUtil {
            ComponentUtil.findParentByCondition(c, p -> p instanceof JTable) != null;
   }
 
+  public static boolean isBorderless(Component c) {
+    return ((JComponent)c).getClientProperty("JComboBox.isBorderless") == Boolean.TRUE;
+  }
+
   public static final JBValue MINIMUM_WIDTH = new JBValue.Float(49); // 72px total
   public static final JBValue MINIMUM_HEIGHT = new JBValue.Float(24);
   public static final JBValue COMPACT_HEIGHT = new JBValue.Float(20);

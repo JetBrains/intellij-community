@@ -39,7 +39,7 @@ class PutAtTransformation extends Transformation {
 
   @Override
   public boolean couldApplyInternal(@NotNull GrMethodCall methodCall, @NotNull Options options) {
-    return getBase(methodCall) != null & checkArgumentsCount(methodCall, 2);
+    return getBase(methodCall) != null && checkArgumentsCount(methodCall, 2);
   }
 
   @Override

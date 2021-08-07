@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.ex;
 
 import com.intellij.codeInspection.InspectionsReportConverter;
@@ -186,13 +186,13 @@ public final class PlainTextFormatter implements InspectionsReportConverter {
   }
 
   @NotNull
-  protected String getPath(@NotNull final Element fileElement) {
+  private String getPath(@NotNull final Element fileElement) {
     return fileElement.getText().replace("file://$PROJECT_DIR$", ".");
   }
 
-  protected void writeInspectionDescription(@NotNull final Writer w,
-                                            @NotNull final InspectionToolWrapper toolWrapper,
-                                            @NotNull final Transformer transformer)
+  private void writeInspectionDescription(@NotNull final Writer w,
+                                          @NotNull final InspectionToolWrapper toolWrapper,
+                                          @NotNull final Transformer transformer)
     throws IOException, ConversionException {
 
     final StringWriter descrWriter = new StringWriter();
@@ -223,7 +223,7 @@ public final class PlainTextFormatter implements InspectionsReportConverter {
   }
 
   @NotNull
-  protected String getToolPresentableName(@NotNull final InspectionToolWrapper toolWrapper) throws IOException {
+  private String getToolPresentableName(@NotNull final InspectionToolWrapper toolWrapper) throws IOException {
     final StringBuilder buff = new StringBuilder();
 
     // inspection name

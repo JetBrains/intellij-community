@@ -41,6 +41,12 @@ public class ReflectionAccessorToEverything {
     }
 
     @Override
+    public void visitMethod(PsiMethod method) {
+      super.visitMethod(method);
+      addIfNotNull(MethodDeclarationDescriptor.createIfInaccessible(method, myOuterClass));
+    }
+
+    @Override
     public void visitThisExpression(PsiThisExpression expression) {
       super.visitThisExpression(expression);
       addIfNotNull(ThisReferenceDescriptor.createIfInaccessible(expression));

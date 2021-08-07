@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.commit
 
 import com.intellij.openapi.actionSystem.DataContext
@@ -8,6 +8,7 @@ import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.ProjectLevelVcsManager
 import com.intellij.openapi.vcs.VcsBundle.message
 import com.intellij.openapi.vcs.changes.*
+import com.intellij.openapi.vcs.changes.ChangesViewManager.isEditorPreview
 import com.intellij.openapi.vcs.changes.ui.*
 import com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode.UNVERSIONED_FILES_TAG
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager.Companion.LOCAL_CHANGES
@@ -169,7 +170,7 @@ class ChangesViewCommitPanel(private val changesViewHost: ChangesViewPanel, priv
     else super.showCommitOptions(popup, isFromToolbar, dataContext)
 
   override fun setCompletionContext(changeLists: List<LocalChangeList>) {
-    commitMessage.changeLists = changeLists
+    commitMessage.setChangesSupplier(ChangeListChangesSupplier(changeLists))
   }
 
   override fun refreshData() = ChangesViewManager.getInstanceEx(project).refreshImmediately()
@@ -197,7 +198,7 @@ class ChangesViewCommitPanel(private val changesViewHost: ChangesViewPanel, priv
 
   private fun closeEditorPreviewIfEmpty() {
     val changesViewManager = ChangesViewManager.getInstance(project) as? ChangesViewManager ?: return
-    if (!changesViewManager.isEditorPreview) return
+    if (!isEditorPreview(project)) return
 
     refreshData()
     changesViewManager.closeEditorPreview(true)

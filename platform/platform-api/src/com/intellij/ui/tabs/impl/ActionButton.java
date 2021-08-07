@@ -7,6 +7,7 @@ import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.ui.popup.IconButton;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.InplaceButton;
 import com.intellij.ui.tabs.TabInfo;
 import com.intellij.util.ui.TimedDeadzone;
@@ -128,8 +129,15 @@ class ActionButton extends IconButton implements ActionListener {
 
   private @NotNull AnActionEvent createAnEvent(InputEvent inputEvent, int modifiers) {
     Presentation presentation = myAction.getTemplatePresentation().clone();
-    DataContext context = DataManager.getInstance().getDataContext(myTabInfo.getComponent());
-    return new AnActionEvent(inputEvent, context, myPlace != null ? myPlace : ActionPlaces.UNKNOWN, presentation,
+    DataContext context = DataManager.getInstance().getDataContext(myButton);
+    DataContext compound = dataId -> {
+      if (CommonDataKeys.VIRTUAL_FILE.is(dataId)) {
+        Object object = myTabInfo.getObject();
+        if (object instanceof VirtualFile) return object;
+      }
+      return context.getData(dataId);
+    };
+    return new AnActionEvent(inputEvent, compound, myPlace != null ? myPlace : ActionPlaces.UNKNOWN, presentation,
                              ActionManager.getInstance(), modifiers);
   }
 

@@ -1,79 +1,55 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.ui;
 
 import com.intellij.diagnostic.Activity;
 import com.intellij.diagnostic.StartUpMeasurer;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfoRt;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.JreHiDpiUtil;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.ui.scale.ScaleContext;
-import com.intellij.util.Function;
 import com.intellij.util.JBHiDPIScaledImage;
-import com.intellij.util.ui.accessibility.ScreenReader;
+import org.intellij.lang.annotations.JdkConstants;
 import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.plaf.FontUIResource;
+import javax.swing.text.DefaultEditorKit;
+import javax.swing.text.StyleContext;
 import javax.swing.text.html.HTMLEditorKit;
 import javax.swing.text.html.StyleSheet;
 import java.awt.*;
+import java.awt.event.InputEvent;
+import java.awt.event.KeyEvent;
 import java.awt.geom.AffineTransform;
 import java.awt.image.BufferedImage;
 import java.awt.image.BufferedImageOp;
 import java.awt.image.ImageObserver;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.io.StringReader;
+import java.net.URL;
+import java.nio.charset.StandardCharsets;
 import java.util.Locale;
 import java.util.Map;
+import java.util.function.Function;
 
 public final class StartupUiUtil {
-  private static String ourSystemLaFClassName;
   private static volatile StyleSheet ourDefaultHtmlKitCss;
 
+  @ApiStatus.Internal
+  @NonNls public static final String[] ourPatchableFontResources = {"Button.font", "ToggleButton.font", "RadioButton.font",
+    "CheckBox.font", "ColorChooser.font", "ComboBox.font", "Label.font", "List.font", "MenuBar.font", "MenuItem.font",
+    "MenuItem.acceleratorFont", "RadioButtonMenuItem.font", "CheckBoxMenuItem.font", "Menu.font", "PopupMenu.font", "OptionPane.font",
+    "Panel.font", "ProgressBar.font", "ScrollPane.font", "Viewport.font", "TabbedPane.font", "Table.font", "TableHeader.font",
+    "TextField.font", "FormattedTextField.font", "Spinner.font", "PasswordField.font", "TextArea.font", "TextPane.font", "EditorPane.font",
+    "TitledBorder.font", "ToolBar.font", "ToolTip.font", "Tree.font"};
+
   public static final String ARIAL_FONT_NAME = "Arial";
-
-  public static @NotNull String getSystemLookAndFeelClassName() {
-    if (ourSystemLaFClassName != null) {
-      return ourSystemLaFClassName;
-    }
-
-    if (SystemInfoRt.isLinux) {
-      // Normally, GTK LaF is considered "system" when:
-      // 1) Gnome session is run
-      // 2) gtk lib is available
-      // Here we weaken the requirements to only 2) and force GTK LaF
-      // installation in order to let it properly scale default font
-      // based on Xft.dpi value.
-      try {
-        @SuppressWarnings("SpellCheckingInspection")
-        String name = "com.sun.java.swing.plaf.gtk.GTKLookAndFeel";
-        Class<?> cls = Class.forName(name);
-        LookAndFeel laf = (LookAndFeel)cls.getDeclaredConstructor().newInstance();
-        // if gtk lib is available
-        if (laf.isSupportedLookAndFeel()) {
-          ourSystemLaFClassName = name;
-          return ourSystemLaFClassName;
-        }
-      }
-      catch (Exception ignore) {
-      }
-    }
-
-    ourSystemLaFClassName = UIManager.getSystemLookAndFeelClassName();
-    return ourSystemLaFClassName;
-  }
-
-  public static void initDefaultLaF()
-    throws ClassNotFoundException, UnsupportedLookAndFeelException, InstantiationException, IllegalAccessException {
-
-    blockATKWrapper();
-
-    Activity activity = StartUpMeasurer.startActivity("LaF initialization");
-    UIManager.setLookAndFeel(getSystemLookAndFeelClassName());
-    activity.end();
-  }
 
   public static void configureHtmlKitStylesheet() {
     if (ourDefaultHtmlKitCss != null) {
@@ -134,24 +110,6 @@ public final class StartupUiUtil {
 
   static int normalizeLcdContrastValue(int lcdContrastValue) {
     return (lcdContrastValue < 100 || lcdContrastValue > 250) ? 140 : lcdContrastValue;
-  }
-
-  /*
-   * The method should be called before java.awt.Toolkit.initAssistiveTechnologies()
-   * which is called from Toolkit.getDefaultToolkit().
-   */
-  private static void blockATKWrapper() {
-    // registry must be not used here, because this method called before application loading
-    //noinspection SpellCheckingInspection
-    if (!SystemInfoRt.isLinux || !Boolean.parseBoolean(System.getProperty("linux.jdk.accessibility.atkwrapper.block", "true"))) {
-      return;
-    }
-
-    if (ScreenReader.isEnabled(ScreenReader.ATK_WRAPPER)) {
-      // Replace AtkWrapper with a dummy Object. It'll be instantiated & GC'ed right away, a NOP.
-      System.setProperty("javax.accessibility.assistive_technologies", "java.lang.Object");
-      Logger.getInstance(StartupUiUtil.class).info(ScreenReader.ATK_WRAPPER + " is blocked, see IDEA-149219");
-    }
   }
 
   static StyleSheet getDefaultHtmlKitCss() {
@@ -262,8 +220,22 @@ public final class StartupUiUtil {
       if (delegate != null) image = delegate;
       scale = hidpiImage.getScale();
 
+      double delta = 0;
+      if (Registry.is("ide.icon.scale.useAccuracyDelta", true)) {
+        // Calculate the delta based on the image size. The bigger the size - the smaller the delta.
+        int maxSize = Math.max(userWidth, userHeight);
+        if (maxSize < Integer.MAX_VALUE / 2) { // sanity check
+          int dotAccuracy = 1;
+          double pow;
+          while (maxSize > (pow = Math.pow(10, dotAccuracy))) dotAccuracy++;
+          delta = 1 / pow;
+        }
+      }
+
       AffineTransform tx = ((Graphics2D)g).getTransform();
-      if (scale == tx.getScaleX()) {
+      if (Math.abs(scale - tx.getScaleX()) <= delta) {
+        scale = tx.getScaleX();
+
         // The image has the same original scale as the graphics scale. However, the real image
         // scale - userSize/realSize - can suffer from inaccuracy due to the image user size
         // rounding to int (userSize = (int)realSize/originalImageScale). This may case quality
@@ -286,17 +258,17 @@ public final class StartupUiUtil {
         image = op.filter((BufferedImage)image, null);
       }
       if (invG != null && hasDstSize) {
-        dw = size.fun(dw);
-        dh = size.fun(dh);
+        dw = size.apply(dw);
+        dh = size.apply(dh);
       }
       if (srcBounds != null) {
-        int sx = size.fun(srcBounds.x);
-        int sy = size.fun(srcBounds.y);
-        int sw = srcBounds.width >= 0 ? size.fun(srcBounds.width) : size.fun(userWidth) - sx;
-        int sh = srcBounds.height >= 0 ? size.fun(srcBounds.height) : size.fun(userHeight) - sy;
+        int sx = size.apply(srcBounds.x);
+        int sy = size.apply(srcBounds.y);
+        int sw = srcBounds.width >= 0 ? size.apply(srcBounds.width) : size.apply(userWidth) - sx;
+        int sh = srcBounds.height >= 0 ? size.apply(srcBounds.height) : size.apply(userHeight) - sy;
         if (!hasDstSize) {
-          dw = size.fun(userWidth);
-          dh = size.fun(userHeight);
+          dw = size.apply(userWidth);
+          dh = size.apply(userHeight);
         }
         g.drawImage(image,
                     dx, dy, dx + dw, dy + dh,
@@ -331,5 +303,87 @@ public final class StartupUiUtil {
 
   public static boolean isDialogFont(@NotNull Font font) {
     return Font.DIALOG.equals(font.getFamily(Locale.US));
+  }
+
+  public static @Nullable StyleSheet loadStyleSheet(@Nullable URL url) {
+    if (url == null) {
+      return null;
+    }
+
+    try {
+      StyleSheet styleSheet = new StyleSheet();
+      styleSheet.loadRules(new InputStreamReader(url.openStream(), StandardCharsets.UTF_8), url);
+      return styleSheet;
+    }
+    catch (IOException e) {
+      Logger.getInstance(StartupUiUtil.class).warn(url + " loading failed", e);
+      return null;
+    }
+  }
+
+  public static void initInputMapDefaults(UIDefaults defaults) {
+    // Make ENTER work in JTrees
+    InputMap treeInputMap = (InputMap)defaults.get("Tree.focusInputMap");
+    if (treeInputMap != null) { // it's really possible. For example,  GTK+ doesn't have such map
+      treeInputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0), "toggle");
+    }
+    // Cut/Copy/Paste in JTextAreas
+    InputMap textAreaInputMap = (InputMap)defaults.get("TextArea.focusInputMap");
+    if (textAreaInputMap != null) { // It really can be null, for example when LAF isn't properly initialized (Alloy license problem)
+      installCutCopyPasteShortcuts(textAreaInputMap, false);
+    }
+    // Cut/Copy/Paste in JTextFields
+    InputMap textFieldInputMap = (InputMap)defaults.get("TextField.focusInputMap");
+    if (textFieldInputMap != null) { // It really can be null, for example when LAF isn't properly initialized (Alloy license problem)
+      installCutCopyPasteShortcuts(textFieldInputMap, false);
+    }
+    // Cut/Copy/Paste in JPasswordField
+    InputMap passwordFieldInputMap = (InputMap)defaults.get("PasswordField.focusInputMap");
+    if (passwordFieldInputMap != null) { // It really can be null, for example when LAF isn't properly initialized (Alloy license problem)
+      installCutCopyPasteShortcuts(passwordFieldInputMap, false);
+    }
+    // Cut/Copy/Paste in JTables
+    InputMap tableInputMap = (InputMap)defaults.get("Table.ancestorInputMap");
+    if (tableInputMap != null) { // It really can be null, for example when LAF isn't properly initialized (Alloy license problem)
+      installCutCopyPasteShortcuts(tableInputMap, true);
+    }
+  }
+
+  private static void installCutCopyPasteShortcuts(InputMap inputMap, boolean useSimpleActionKeys) {
+    String copyActionKey = useSimpleActionKeys ? "copy" : DefaultEditorKit.copyAction;
+    String pasteActionKey = useSimpleActionKeys ? "paste" : DefaultEditorKit.pasteAction;
+    String cutActionKey = useSimpleActionKeys ? "cut" : DefaultEditorKit.cutAction;
+    // Ctrl+Ins, Shift+Ins, Shift+Del
+    inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_INSERT, InputEvent.CTRL_DOWN_MASK), copyActionKey);
+    inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_INSERT, InputEvent.SHIFT_DOWN_MASK), pasteActionKey);
+    inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_DELETE, InputEvent.SHIFT_DOWN_MASK), cutActionKey);
+    // Ctrl+C, Ctrl+V, Ctrl+X
+    inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_C, InputEvent.CTRL_DOWN_MASK), copyActionKey);
+    inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_V, InputEvent.CTRL_DOWN_MASK), pasteActionKey);
+    inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_X, InputEvent.CTRL_DOWN_MASK), DefaultEditorKit.cutAction);
+  }
+
+  public static void initFontDefaults(@NotNull UIDefaults defaults, @NotNull FontUIResource uiFont) {
+    defaults.put("Tree.ancestorInputMap", null);
+    FontUIResource textFont = new FontUIResource(uiFont);
+    FontUIResource monoFont = new FontUIResource("Monospaced", Font.PLAIN, uiFont.getSize());
+
+    for (String fontResource : ourPatchableFontResources) {
+      defaults.put(fontResource, uiFont);
+    }
+
+    if (!SystemInfoRt.isMac) {
+      defaults.put("PasswordField.font", monoFont);
+    }
+    defaults.put("TextArea.font", monoFont);
+    defaults.put("TextPane.font", textFont);
+    defaults.put("EditorPane.font", textFont);
+  }
+
+  public static @NotNull FontUIResource getFontWithFallback(@Nullable String familyName, @JdkConstants.FontStyle int style, int size) {
+    // On macOS font fallback is implemented in JDK by default
+    // (except for explicitly registered fonts, e.g. the fonts we bundle with IDE, for them we don't have a solution now)
+    Font fontWithFallback = SystemInfoRt.isMac ? new Font(familyName, style, size) : new StyleContext().getFont(familyName, style, size);
+    return fontWithFallback instanceof FontUIResource ? (FontUIResource)fontWithFallback : new FontUIResource(fontWithFallback);
   }
 }

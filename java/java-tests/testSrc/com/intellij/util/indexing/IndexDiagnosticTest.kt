@@ -63,6 +63,16 @@ class IndexDiagnosticTest : JavaCodeInsightFixtureTestCase() {
 */
   }
 
+  fun `test empty index diagnostic with default fields can be deserialized`() {
+    val mapper = jacksonObjectMapper().registerKotlinModule()
+
+    val indexDiagnostic = JsonIndexDiagnostic()
+    println(mapper.writeValueAsString(indexDiagnostic))
+
+    val deserialized = mapper.readValue<JsonIndexDiagnostic>(mapper.writeValueAsString(indexDiagnostic))
+    Assert.assertEquals(indexDiagnostic, deserialized)
+  }
+
   fun `test index diagnostics json can be deserialized`() {
     val indexDiagnostic = JsonIndexDiagnostic(
       JsonIndexDiagnosticAppInfo.create(),
@@ -70,15 +80,25 @@ class IndexDiagnosticTest : JavaCodeInsightFixtureTestCase() {
       JsonProjectIndexingHistory(
         projectName = "projectName",
         times = JsonProjectIndexingHistoryTimes(
+          "reason",
           JsonDuration(123),
           JsonDuration(456),
           JsonDuration(789),
           JsonDuration(234),
           JsonDuration(345),
+          JsonDuration(345),
           JsonDateTime(ZonedDateTime.now()),
           JsonDateTime(ZonedDateTime.now()),
           JsonDuration(333),
           false
+        ),
+        fileCount = JsonProjectIndexingFileCount(
+          numberOfFileProviders = 0,
+          numberOfScannedFiles = 0,
+          numberOfFilesIndexedByInfrastructureExtensionsDuringScan = 0,
+          numberOfFilesScheduledForIndexingAfterScan = 0,
+          numberOfFilesIndexedByInfrastructureExtensionsDuringIndexingStage = 0,
+          numberOfFilesIndexedWithLoadingContent = 0
         ),
         totalStatsPerFileType = listOf(
           JsonProjectIndexingHistory.JsonStatsPerFileType(
@@ -122,7 +142,7 @@ class IndexDiagnosticTest : JavaCodeInsightFixtureTestCase() {
             JsonDuration(222),
             scannedFiles = listOf(
               JsonScanningStatistics.JsonScannedFile(
-                path = PortableFilePath.RelativePath (PortableFilePath.ProjectRoot, "src/a.java"),
+                path = PortableFilePath.RelativePath(PortableFilePath.ProjectRoot, "src/a.java"),
                 isUpToDate = true,
                 wasFullyIndexedByInfrastructureExtension = false
               )
@@ -131,12 +151,21 @@ class IndexDiagnosticTest : JavaCodeInsightFixtureTestCase() {
         ),
         fileProviderStatistics = listOf(
           JsonFileProviderIndexStatistics(
-            "providerName",
-            444,
-            33,
-            JsonDuration(123),
-            1,
-            listOf(
+            providerName = "providerName",
+            totalNumberOfIndexedFiles = 444,
+            totalNumberOfFilesFullyIndexedByExtensions = 33,
+            totalIndexingTime = JsonDuration(123),
+            contentLoadingTime = JsonDuration(456),
+            numberOfTooLargeForIndexingFiles = 1,
+            slowIndexedFiles = listOf(
+              JsonFileProviderIndexStatistics.JsonSlowIndexedFile(
+                "file",
+                JsonDuration(123),
+                JsonDuration(456),
+                JsonDuration(789)
+              )
+            ),
+            indexedFiles = listOf(
               JsonFileProviderIndexStatistics.JsonIndexedFile(
                 path = PortableFilePath.RelativePath(PortableFilePath.ProjectRoot, "src/a.java"),
                 wasFullyIndexedByExtensions = true

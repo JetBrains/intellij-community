@@ -12,6 +12,11 @@ import java.awt.*;
 import static java.lang.Math.ceil;
 
 /**
+ * A dimension which updates its scaled size when the user scale factor changes (see {@link ScaleType}).
+ * <p></p>
+ * Say, a dimension is created as 100x100 and the user scale factor is 2.0. Its scaled size will be 200x200.
+ * Then the user scale factor changes to, say, 3.0. The new scaled size will become 300x300.
+ *
  * @author Konstantin Bulenkov
  * @author tav
  */
@@ -46,10 +51,30 @@ public class JBDimension extends Dimension {
     }
   }
 
+  /**
+   * A new dimension with the provided unscaled size.
+   * <p></p>
+   * The real dimension size will be scaled according to the current user scale factor.
+   *
+   * @param width unscaled with
+   * @param height unscaled size
+   */
   public JBDimension(int width, int height) {
     this(width, height, false);
   }
 
+  /**
+   * A new dimension with the provided unscaled or pre-scaled size.
+   * <p></p>
+   * When {@code preScaled} is true, the passed size will be treated as the current scaled
+   * dimension size (and the unscaled dimension size will be calculated according to the
+   * current user scale factor). Passing {@code preScaled} as false is equal to calling
+   * {@link #JBDimension(int, int)}.
+   *
+   * @param width unscaled or pre-scaled with
+   * @param height unscaled or pre-scaled size
+   * @param preScaled whether the passed size is unscaled ot scaled
+   */
   public JBDimension(int width, int height, boolean preScaled) {
     this(width, (double)height, preScaled);
   }

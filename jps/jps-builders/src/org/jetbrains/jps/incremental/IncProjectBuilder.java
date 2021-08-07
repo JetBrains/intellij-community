@@ -1,18 +1,17 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.jps.incremental;
 
+import com.google.common.collect.Lists;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.concurrency.AppExecutorUtil;
+import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FileCollectionFactory;
 import com.intellij.util.containers.MultiMap;
-import com.intellij.util.io.MappingFailedException;
-import gnu.trove.THashMap;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.ModuleChunk;
@@ -53,6 +52,10 @@ import java.lang.invoke.MethodHandles;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
+import java.nio.file.FileSystem;
+import java.nio.file.FileSystems;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -68,6 +71,11 @@ public final class IncProjectBuilder {
   private static final Logger LOG = Logger.getInstance(IncProjectBuilder.class);
 
   private static final String CLASSPATH_INDEX_FILE_NAME = "classpath.index";
+  // CLASSPATH_INDEX_FILE_NAME cannot be used because IDEA on run creates CLASSPATH_INDEX_FILE_NAME only if some module class is loaded,
+  // so, not possible to distinguish case
+  // "classpath.index doesn't exist because deleted on module file change" vs "classpath.index doesn't exist because was not created"
+  private static final String UNMODIFIED_MARK_FILE_NAME = ".unmodified";
+
   //private static final boolean GENERATE_CLASSPATH_INDEX = Boolean.parseBoolean(System.getProperty(GlobalOptions.GENERATE_CLASSPATH_INDEX_OPTION, "false"));
   private static final boolean SYNC_DELETE = Boolean.parseBoolean(System.getProperty("jps.sync.delete", "false"));
   private static final GlobalContextKey<Set<BuildTarget<?>>> TARGET_WITH_CLEARED_OUTPUT = GlobalContextKey.create("_targets_with_cleared_output_");
@@ -206,8 +214,7 @@ public final class IncProjectBuilder {
     catch (ProjectBuildException e) {
       LOG.info(e);
       final Throwable cause = e.getCause();
-      if (cause instanceof MappingFailedException ||
-          cause instanceof IOException ||
+      if (cause instanceof IOException ||
           cause instanceof BuildDataCorruptedException ||
           (cause instanceof RuntimeException && cause.getCause() instanceof IOException)) {
         requestRebuild(e, cause);
@@ -365,7 +372,7 @@ public final class IncProjectBuilder {
 
   private static boolean isParallelBuild(CompileContext context) {
     return Boolean.parseBoolean(context.getBuilderParameter(BuildParametersKeys.IS_AUTOMAKE)) ?
-      BuildRunner.PARALLEL_BUILD_AUTOMAKE_ENABLED : BuildRunner.PARALLEL_BUILD_ENABLED;
+           BuildRunner.isParallelBuildAutomakeEnabled() : BuildRunner.isParallelBuildEnabled();
   }
 
   private void runBuild(final CompileContextImpl context, boolean forceCleanCaches) throws ProjectBuildException {
@@ -380,17 +387,33 @@ public final class IncProjectBuilder {
 
     context.addBuildListener(new ChainedTargetsBuildListener(context));
 
-    //Deletes class loader classpath index files for changed output roots
+    // deletes class loader classpath index files for changed output roots
     context.addBuildListener(new BuildListener() {
       @Override
       public void filesGenerated(@NotNull FileGeneratedEvent event) {
-        final Set<File> outputs = FileCollectionFactory.createCanonicalFileSet();
-        for (Pair<String, String> pair : event.getPaths()) {
-          outputs.add(new File(pair.getFirst()));
+        Collection<Pair<String, String>> paths = event.getPaths();
+        FileSystem fs = FileSystems.getDefault();
+        if (paths.size() == 1) {
+          deleteFiles(paths.iterator().next().first, fs);
+          return;
         }
-        for (File root : outputs) {
-          //noinspection ResultOfMethodCallIgnored
-          new File(root, CLASSPATH_INDEX_FILE_NAME).delete();
+
+        Set<String> outputs = new HashSet<>();
+        for (Pair<String, String> pair : paths) {
+          String root = pair.getFirst();
+          if (outputs.add(root)) {
+            deleteFiles(root, fs);
+          }
+        }
+      }
+
+      private void deleteFiles(String rootPath, FileSystem fs) {
+        Path root = fs.getPath(rootPath);
+        try {
+          Files.deleteIfExists(root.resolve(CLASSPATH_INDEX_FILE_NAME));
+          Files.deleteIfExists(root.resolve(UNMODIFIED_MARK_FILE_NAME));
+        }
+        catch (IOException ignore) {
         }
       }
     });
@@ -726,7 +749,7 @@ public final class IncProjectBuilder {
           okToDelete = false;
         }
         else {
-          final Set<File> _outRoot = new THashSet<>(Arrays.asList(outputRoot), FileUtil.FILE_HASHING_STRATEGY);
+          final Set<File> _outRoot = FileCollectionFactory.createCanonicalFileSet(Collections.singletonList(outputRoot));
           for (File srcRoot : allSourceRoots) {
             if (JpsPathUtil.isUnder(_outRoot, srcRoot)) {
               okToDelete = false;
@@ -849,6 +872,7 @@ public final class IncProjectBuilder {
     private final List<BuildChunkTask> myTasksDependsOnThis = new ArrayList<>();
     private int mySelfScore = 0;
     private int myDepsScore = 0;
+    private int myIndex = 0;
 
     private BuildChunkTask(BuildTargetChunk chunk) {
       myChunk = chunk;
@@ -908,19 +932,20 @@ public final class IncProjectBuilder {
 
       List<BuildTargetChunk> chunks = targetIndex.getSortedTargetChunks(myContext);
       myTasks = new ArrayList<>(chunks.size());
-      Map<BuildTarget<?>, BuildChunkTask> targetToTask = new THashMap<>(chunks.size());
+      Map<BuildTarget<?>, BuildChunkTask> targetToTask = new HashMap<>(chunks.size());
       for (BuildTargetChunk chunk : chunks) {
         BuildChunkTask task = new BuildChunkTask(chunk);
         myTasks.add(task);
         for (BuildTarget<?> target : chunk.getTargets()) {
           targetToTask.put(target, task);
-          task.mySelfScore += 1;
         }
+        task.mySelfScore = chunk.getTargets().size();
       }
 
-      Map<BuildTarget<?>, Collection<BuildTarget<?>>> transitiveDependencyCache = new HashMap<>(myTasks.size());
-
+      int taskCounter = 0;
       for (BuildChunkTask task : myTasks) {
+        task.myIndex = taskCounter;
+        taskCounter++;
         for (BuildTarget<?> target : task.getChunk().getTargets()) {
           for (BuildTarget<?> dependency : targetIndex.getDependencies(target, myContext)) {
             BuildChunkTask depTask = targetToTask.get(dependency);
@@ -928,16 +953,47 @@ public final class IncProjectBuilder {
               task.addDependency(depTask);
             }
           }
-          for (BuildTarget<?> dependency : getTransitiveDeps(targetIndex, target, myContext, transitiveDependencyCache)) {
-            BuildChunkTask depTask = targetToTask.get(dependency);
-            if (depTask != null && depTask != task) {
-              depTask.myDepsScore += task.mySelfScore;
-            }
-          }
         }
       }
 
+      Map<BuildChunkTask, ? extends Queue<BuildChunkTask>> taskToDependants = collectTaskToDependants(context, targetIndex, targetToTask);
+
+      // bitset stores indexes of transitively dependant tasks
+      HashMap<BuildChunkTask, BitSet> chunkToTransitive = new HashMap<>();
+      for (BuildChunkTask task : Lists.reverse(myTasks)) {
+        Queue<BuildChunkTask> dependantTasks = taskToDependants.get(task);
+        Set<BuildChunkTask> directDependants = new HashSet<>(dependantTasks != null ? dependantTasks : Collections.emptyList());
+        BitSet transitiveDependants = new BitSet();
+        for (BuildChunkTask directDependant : directDependants) {
+          BitSet dependantChunkTransitiveDependants = chunkToTransitive.get(directDependant);
+          transitiveDependants.or(dependantChunkTransitiveDependants);
+          transitiveDependants.set(directDependant.myIndex);
+        }
+        chunkToTransitive.put(task, transitiveDependants);
+        task.myDepsScore = transitiveDependants.cardinality();
+      }
+
       myTasksCountDown = new CountDownLatch(myTasks.size());
+    }
+
+    @NotNull
+    private Map<BuildChunkTask, ? extends Queue<BuildChunkTask>> collectTaskToDependants(CompileContext context,
+                                                                                         BuildTargetIndex targetIndex,
+                                                                                         Map<BuildTarget<?>, BuildChunkTask> targetToTask) {
+      ConcurrentHashMap<BuildChunkTask, ConcurrentLinkedQueue<BuildChunkTask>> taskToDependants = new ConcurrentHashMap<>(myTasks.size());
+      myTasks.parallelStream().forEach(task -> {
+        BuildTargetChunk chunk = task.getChunk();
+        for (BuildTarget<?> target : chunk.getTargets()) {
+          Collection<BuildTarget<?>> dependencies = targetIndex.getDependencies(target, context);
+          for (BuildTarget<?> dependency : dependencies) {
+            BuildChunkTask dependencyTask = targetToTask.get(dependency);
+            if (dependencyTask != task) {
+              taskToDependants.computeIfAbsent(dependencyTask, __ -> new ConcurrentLinkedQueue<>()).add(task);
+            }
+          }
+        }
+      });
+      return taskToDependants;
     }
 
     public void buildInParallel() throws IOException, ProjectBuildException {
@@ -1029,35 +1085,6 @@ public final class IncProjectBuilder {
         }
       });
     }
-  }
-
-  private static Iterable<? extends BuildTarget<?>> getTransitiveDeps(BuildTargetIndex index,
-                                                                      BuildTarget<?> target,
-                                                                      CompileContext context,
-                                                                      Map<BuildTarget<?>, Collection<BuildTarget<?>>> cache) {
-    if (cache.containsKey(target)) {
-      return cache.get(target);
-    }
-    Set<BuildTarget<?>> result = new HashSet<>();
-    LinkedList<BuildTarget<?>> queue = new LinkedList<>();
-    queue.add(target);
-    result.add(target);
-    while (!queue.isEmpty()) {
-      BuildTarget next = queue.pop();
-      Collection<BuildTarget<?>> transitive = cache.get(next);
-      if (transitive != null) {
-        result.addAll(transitive);
-      }
-      else {
-        Collection<BuildTarget<?>> dependencies = index.getDependencies(next, context);
-        for (BuildTarget<?> dependency : dependencies) {
-          if (dependency != target && result.add(dependency)) queue.add(dependency);
-        }
-      }
-    }
-    result.remove(target);
-    cache.put(target, result);
-    return result;
   }
 
   private void buildChunkIfAffected(CompileContext context, CompileScope scope, BuildTargetChunk chunk,
@@ -1152,8 +1179,8 @@ public final class IncProjectBuilder {
     }
 
     final ProjectDescriptor pd = context.getProjectDescriptor();
-    final Set<String> affectedOutputs = new THashSet<>(FileUtil.PATH_HASHING_STRATEGY);
-    final Set<String> affectedSources = new THashSet<>(FileUtil.PATH_HASHING_STRATEGY);
+    final Set<String> affectedOutputs = CollectionFactory.createFilePathSet();
+    final Set<String> affectedSources = CollectionFactory.createFilePathSet();
 
     final List<SourceToOutputMapping> mappings = new ArrayList<>();
     for (T target : targets) {
@@ -1225,7 +1252,6 @@ public final class IncProjectBuilder {
       });
     }
   }
-
 
   private void buildTargetsChunk(CompileContext context, BuildTargetChunk chunk, BuildProgress buildProgress) throws ProjectBuildException {
     final BuildFSState fsState = myProjectDescriptor.fsState;

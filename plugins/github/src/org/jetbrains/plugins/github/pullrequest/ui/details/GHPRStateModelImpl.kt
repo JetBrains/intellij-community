@@ -1,6 +1,9 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.pullrequest.ui.details
 
+import com.intellij.collaboration.async.CompletableFutureUtil
+import com.intellij.collaboration.async.CompletableFutureUtil.handleOnEdt
+import com.intellij.collaboration.async.CompletableFutureUtil.successOnEdt
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.progress.ProcessCanceledException
@@ -13,13 +16,10 @@ import org.jetbrains.plugins.github.pullrequest.action.ui.GithubMergeCommitMessa
 import org.jetbrains.plugins.github.pullrequest.data.GHPRMergeabilityState
 import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRChangesDataProvider
 import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRStateDataProvider
-import org.jetbrains.plugins.github.pullrequest.ui.SimpleEventListener
-import org.jetbrains.plugins.github.ui.util.SingleValueModel
+import com.intellij.collaboration.ui.SimpleEventListener
+import com.intellij.collaboration.ui.SingleValueModel
 import org.jetbrains.plugins.github.util.DelayedTaskScheduler
-import org.jetbrains.plugins.github.util.GithubAsyncUtil
 import org.jetbrains.plugins.github.util.GithubUtil.Delegates.observableField
-import org.jetbrains.plugins.github.util.handleOnEdt
-import org.jetbrains.plugins.github.util.successOnEdt
 import java.util.concurrent.CompletableFuture
 
 class GHPRStateModelImpl(private val project: Project,
@@ -45,7 +45,7 @@ class GHPRStateModelImpl(private val project: Project,
 
   override fun addAndInvokeDraftStateListener(listener: () -> Unit) {
     var lastIsDraft = isDraft
-    detailsModel.addValueChangedListener {
+    detailsModel.addListener {
       if (lastIsDraft != isDraft) listener()
       lastIsDraft = isDraft
     }
@@ -132,7 +132,7 @@ class GHPRStateModelImpl(private val project: Project,
     actionError = null
 
     val task = request()?.handleOnEdt { _, error ->
-      actionError = error?.takeIf { !GithubAsyncUtil.isCancellation(it) }
+      actionError = error?.takeIf { !CompletableFutureUtil.isCancellation(it) }
       isBusy = false
     }
     if (task == null) {

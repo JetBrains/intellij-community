@@ -32,6 +32,7 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.Collection;
 import java.util.Iterator;
+import java.util.concurrent.TimeUnit;
 
 /**
  * @author Roman.Chernyatchik
@@ -57,7 +58,8 @@ public abstract class JavaCoverageRunner extends CoverageRunner {
                                      final SimpleJavaParameters parameters,
                                      final boolean collectLineInfo,
                                      final boolean isSampling,
-                                     String sourceMapPath) {
+                                     String sourceMapPath,
+                                     final Project project) {
     appendCoverageArgument(sessionDataFilePath, patterns, parameters, collectLineInfo, isSampling);
   }
 
@@ -66,11 +68,13 @@ public abstract class JavaCoverageRunner extends CoverageRunner {
   }
 
   public void generateReport(CoverageSuitesBundle suite, Project project) throws IOException {
+    final long startNs = System.nanoTime();
     final ProjectData projectData = suite.getCoverageData();
     final ExportToHTMLSettings settings = ExportToHTMLSettings.getInstance(project);
     final File tempFile = FileUtil.createTempFile("temp", "");
     tempFile.deleteOnExit();
     new SaveHook(tempFile, true, new IdeaClassFinder(project, suite), ReportFormat.BINARY).save(projectData);
+    final long generationStartNs = System.nanoTime();
     final HTMLReportBuilder builder = ReportBuilderFactory.createHTMLReportBuilder();
     builder.setReportDir(new File(settings.OUTPUT_DIRECTORY));
     final SourceCodeProvider sourceCodeProvider = classname -> DumbService.getInstance(project).runReadActionInSmartMode(() -> {
@@ -104,6 +108,10 @@ public abstract class JavaCoverageRunner extends CoverageRunner {
         return classes;
       }
     });
+    final long endNs = System.nanoTime();
+    final long timeMs = TimeUnit.NANOSECONDS.toMillis(endNs - startNs);
+    final long generationTimeMs = TimeUnit.NANOSECONDS.toMillis(endNs - generationStartNs);
+    CoverageLogger.logHTMLReport(project, timeMs, generationTimeMs);
   }
 
   @Nullable
@@ -115,16 +123,13 @@ public abstract class JavaCoverageRunner extends CoverageRunner {
     FileUtil.writeToFile(tempFile, (arg + "\n").getBytes(StandardCharsets.UTF_8), true);
   }
 
+  @NotNull
   protected static File createTempFile() throws IOException {
     File tempFile = FileUtil.createTempFile("coverage", "args");
-    if (!SystemInfo.isWindows && tempFile.getAbsolutePath().contains(" ")) {
-      tempFile = FileUtil.createTempFile(new File(PathManager.getSystemPath(), "coverage"), "coverage", "args", true);
-      if (tempFile.getAbsolutePath().contains(" ")) {
-        final String userDefined = System.getProperty(JAVA_COVERAGE_AGENT_AGENT_PATH);
-        if (userDefined != null && new File(userDefined).isDirectory()) {
-          tempFile = FileUtil.createTempFile(new File(userDefined), "coverage", "args", true);
-        }
-      }
+    if (tempFile.getAbsolutePath().contains(" ")) {
+      String path = JavaExecutionUtil.handleSpacesInAgentPath(tempFile.getAbsolutePath(), "coverage", JAVA_COVERAGE_AGENT_AGENT_PATH);
+      if (path == null) throw new IOException("Cannot create temporary file without spaces in path.");
+      tempFile = new File(path);
     }
     return tempFile;
   }

@@ -7,7 +7,6 @@ import com.intellij.ide.hierarchy.HierarchyTreeStructure;
 import com.intellij.ide.hierarchy.JavaHierarchyUtil;
 import com.intellij.ide.hierarchy.MethodHierarchyBrowserBase;
 import com.intellij.ide.util.treeView.NodeDescriptor;
-import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.IdeActions;
@@ -16,6 +15,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
 import com.intellij.ui.PopupHandler;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -25,17 +25,16 @@ import java.util.Map;
 public class MethodHierarchyBrowser extends MethodHierarchyBrowserBase {
   private static final Logger LOG = Logger.getInstance(MethodHierarchyBrowser.class);
 
-  public MethodHierarchyBrowser(final Project project, final PsiMethod method) {
+  public MethodHierarchyBrowser(Project project, PsiMethod method) {
     super(project, method);
   }
 
   @Override
-  protected void createTrees(@NotNull Map<String, JTree> trees) {
-    final JTree tree = createTree(false);
-    ActionGroup group = (ActionGroup)ActionManager.getInstance().getAction(IdeActions.GROUP_METHOD_HIERARCHY_POPUP);
-    PopupHandler.installPopupHandler(tree, group, ActionPlaces.METHOD_HIERARCHY_VIEW_POPUP, ActionManager.getInstance());
+  protected void createTrees(@NotNull Map<? super @Nls String, ? super JTree> trees) {
+    JTree tree = createTree(false);
+    PopupHandler.installPopupMenu(tree, IdeActions.GROUP_METHOD_HIERARCHY_POPUP, ActionPlaces.METHOD_HIERARCHY_VIEW_POPUP);
 
-    final BaseOnThisMethodAction action = new BaseOnThisMethodAction();
+    BaseOnThisMethodAction action = new BaseOnThisMethodAction();
     action.registerCustomShortcutSet(ActionManager.getInstance().getAction(IdeActions.ACTION_METHOD_HIERARCHY).getShortcutSet(), tree);
 
     trees.put(getMethodType(), tree);
@@ -49,7 +48,7 @@ public class MethodHierarchyBrowser extends MethodHierarchyBrowserBase {
   }
 
   @Override
-  protected PsiElement getElementFromDescriptor(@NotNull final HierarchyNodeDescriptor descriptor) {
+  protected PsiElement getElementFromDescriptor(@NotNull HierarchyNodeDescriptor descriptor) {
     if (descriptor instanceof MethodHierarchyNodeDescriptor) {
       return ((MethodHierarchyNodeDescriptor)descriptor).getTargetElement();
     }
@@ -57,12 +56,12 @@ public class MethodHierarchyBrowser extends MethodHierarchyBrowserBase {
   }
 
   @Override
-  protected boolean isApplicableElement(@NotNull final PsiElement psiElement) {
+  protected boolean isApplicableElement(@NotNull PsiElement psiElement) {
     return psiElement instanceof PsiMethod;
   }
 
   @Override
-  protected HierarchyTreeStructure createHierarchyTreeStructure(@NotNull final String typeName, @NotNull final PsiElement psiElement) {
+  protected HierarchyTreeStructure createHierarchyTreeStructure(@NotNull String typeName, @NotNull PsiElement psiElement) {
     if (!getMethodType().equals(typeName)) {
       LOG.error("unexpected type: " + typeName);
       return null;

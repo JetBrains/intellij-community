@@ -138,8 +138,12 @@
   <action id="EditorCodeBlockStart" />
   <action id="EditorCodeBlockStartWithSelection" />
   <action id="EditorCompleteStatement" />
+  <action id="EditorCreateRectangularSelection">
+    <mouse-shortcut keystroke="shift alt button1" />
+  </action>
   <action id="EditorCreateRectangularSelectionOnMouseDrag">
     <mouse-shortcut keystroke="button2" />
+    <mouse-shortcut keystroke="shift alt button1" />
   </action>
   <action id="EditorDeleteLine">
     <keyboard-shortcut first-keystroke="shift ctrl k" />
@@ -197,7 +201,6 @@
   </action>
   <action id="EditorToggleCase" />
   <action id="EditorToggleColumnMode">
-    <mouse-shortcut keystroke="shift alt button1" />
     <keyboard-shortcut first-keystroke="shift alt i" />
   </action>
   <action id="EditorUnSelectWord">
@@ -420,6 +423,9 @@
   </action>
   <action id="RunDashboard.CopyConfiguration" />
   <action id="RunDashboard.ShowConfigurations" />
+  <action id="SaveDocument">
+    <keyboard-shortcut first-keystroke="ctrl S" />
+  </action>
   <action id="SaveAll">
     <keyboard-shortcut first-keystroke="ctrl k" second-keystroke="s" />
   </action>
@@ -542,12 +548,6 @@
   <action id="XDebugger.SetValue" />
   <action id="hg4idea.QRefresh" />
   <action id="openAssertEqualsDiff" />
-  <action id="org.intellij.plugins.markdown.ui.actions.editorLayout.EditorAndPreviewLayoutChangeAction">
-    <keyboard-shortcut first-keystroke="ctrl k" second-keystroke="v" />
-  </action>
-  <action id="org.intellij.plugins.markdown.ui.actions.editorLayout.PreviewOnlyLayoutChangeAction">
-    <keyboard-shortcut first-keystroke="shift ctrl v" />
-  </action>
   <action id="EditorDecreaseFontSize">
     <keyboard-shortcut first-keystroke="ctrl minus" />
   </action>

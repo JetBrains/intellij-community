@@ -75,7 +75,12 @@ public class QuickEditAction extends QuickEditActionKeys implements IntentionAct
                                                                      pair -> pair.second.containsRange(offsetInElement, offsetInElement));
     if (rangePair != null) {
       final Language language = rangePair.first.getContainingFile().getLanguage();
-      final Object action = language.getUserData(EDIT_ACTION_AVAILABLE);
+
+
+      Object action = host.getUserData(EDIT_ACTION_AVAILABLE);
+      if(action == null) {
+        action = language.getUserData(EDIT_ACTION_AVAILABLE);
+      }
       if (action != null && action.equals(false)) return null;
 
       myLastLanguageName = language.getDisplayName();

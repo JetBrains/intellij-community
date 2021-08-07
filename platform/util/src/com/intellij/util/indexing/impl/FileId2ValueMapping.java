@@ -1,40 +1,26 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.indexing.impl;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.SmartList;
 import com.intellij.util.indexing.ValueContainer;
-import gnu.trove.TIntArrayList;
-import gnu.trove.TIntObjectHashMap;
+import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
+import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
+import it.unimi.dsi.fastutil.ints.IntArrayList;
 
 import java.util.List;
 
-class FileId2ValueMapping<Value> {
+final class FileId2ValueMapping<Value> {
   private static final Logger LOG = Logger.getInstance(FileId2ValueMapping.class);
 
-  private final TIntObjectHashMap<Value> id2ValueMap;
+  private final Int2ObjectMap<Value> id2ValueMap = new Int2ObjectOpenHashMap<>();
   private final ValueContainerImpl<Value> valueContainer;
   private boolean myOnePerFileValidationEnabled = true;
 
   FileId2ValueMapping(ValueContainerImpl<Value> _valueContainer) {
-    id2ValueMap = new TIntObjectHashMap<>();
     valueContainer = _valueContainer;
 
-    TIntArrayList removedFileIdList = null;
+    IntArrayList removedFileIdList = null;
     List<Value> removedValueList = null;
 
     for (final ValueContainer.ValueIterator<Value> valueIterator = _valueContainer.getValueIterator(); valueIterator.hasNext();) {
@@ -45,7 +31,7 @@ class FileId2ValueMapping<Value> {
         Value previousValue = id2ValueMap.put(id, value);
         if (previousValue != null) {  // delay removal of duplicated id -> value mapping since it will affect valueIterator we are using
           if (removedFileIdList == null) {
-            removedFileIdList = new TIntArrayList();
+            removedFileIdList = new IntArrayList();
             removedValueList = new SmartList<>();
           }
           removedFileIdList.add(id);
@@ -76,7 +62,7 @@ class FileId2ValueMapping<Value> {
     if (IndexDebugProperties.EXTRA_SANITY_CHECKS && myOnePerFileValidationEnabled) {
       for (final InvertedIndexValueIterator<Value> valueIterator = valueContainer.getValueIterator(); valueIterator.hasNext();) {
         valueIterator.next();
-        LOG.assertTrue(!valueIterator.getValueAssociationPredicate().contains(inputId));
+        LOG.assertTrue(!valueIterator.getValueAssociationPredicate().test(inputId));
       }
     }
     return mapped != null;

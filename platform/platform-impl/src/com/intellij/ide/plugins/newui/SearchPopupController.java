@@ -14,6 +14,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.event.KeyEvent;
+import java.util.Collection;
 import java.util.List;
 
 /**
@@ -119,7 +120,7 @@ public abstract class SearchPopupController {
   }
 
   private void handleShowAttributeValuesPopup(@NotNull String name, @Nullable String valuePrefix, int caretPosition) {
-    List<String> values = getValues(name);
+    Collection<String> values = getValues(name);
     if (ContainerUtil.isEmpty(values)) {
       handleShowPopupForQuery();
       return;
@@ -208,8 +209,7 @@ public abstract class SearchPopupController {
   @NotNull
   protected abstract List<String> getAttributes();
 
-  @Nullable
-  protected abstract List<String> getValues(@NotNull String attribute);
+  protected abstract @Nullable Collection<String> getValues(@NotNull String attribute); // TODO to be replaced with SortedSet
 
   private void handleShowPopupForQuery() {
     hidePopup();

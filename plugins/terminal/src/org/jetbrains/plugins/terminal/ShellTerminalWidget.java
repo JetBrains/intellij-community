@@ -7,15 +7,20 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.terminal.JBTerminalSystemSettingsProviderBase;
 import com.intellij.terminal.JBTerminalWidget;
+import com.intellij.terminal.JBTerminalWidgetListener;
+import com.intellij.terminal.TerminalSplitAction;
 import com.intellij.terminal.actions.TerminalActionUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.containers.ContainerUtil;
 import com.jediterm.terminal.ProcessTtyConnector;
 import com.jediterm.terminal.Terminal;
+import com.jediterm.terminal.TextStyle;
 import com.jediterm.terminal.TtyConnector;
 import com.jediterm.terminal.model.TerminalLine;
+import com.jediterm.terminal.model.TerminalLineIntervalHighlighting;
 import com.jediterm.terminal.model.TerminalTextBuffer;
 import com.jediterm.terminal.ui.TerminalAction;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.terminal.action.RenameTerminalSessionActionKt;
@@ -33,7 +38,6 @@ public class ShellTerminalWidget extends JBTerminalWidget {
 
   private static final Logger LOG = Logger.getInstance(ShellTerminalWidget.class);
 
-  private final Project myProject;
   private boolean myEscapePressed = false;
   private String myCommandHistoryFilePath;
   private boolean myPromptUpdateNeeded = true;
@@ -46,7 +50,6 @@ public class ShellTerminalWidget extends JBTerminalWidget {
                              @NotNull JBTerminalSystemSettingsProviderBase settingsProvider,
                              @NotNull Disposable parent) {
     super(project, settingsProvider, parent);
-    myProject = project;
     myShellCommandHandlerHelper = new TerminalShellCommandHandlerHelper(this);
 
     getTerminalPanel().addPreKeyEventHandler(e -> {
@@ -57,7 +60,7 @@ public class ShellTerminalWidget extends JBTerminalWidget {
       handleAnyKeyPressed();
 
       if (e.getKeyCode() == KeyEvent.VK_ENTER || TerminalShellCommandHandlerHelper.matchedExecutor(e) != null) {
-        TerminalUsageTriggerCollector.Companion.triggerCommandExecuted(myProject);
+        TerminalUsageTriggerCollector.Companion.triggerCommandExecuted(project);
         if (myShellCommandHandlerHelper.processEnterKeyPressed(e)) {
           e.consume();
         }
@@ -67,14 +70,9 @@ public class ShellTerminalWidget extends JBTerminalWidget {
         }
       }
       else {
-        myShellCommandHandlerHelper.processKeyPressed();
+        myShellCommandHandlerHelper.processKeyPressed(e);
       }
     });
-  }
-
-  @NotNull
-  Project getProject() {
-    return myProject;
   }
 
   public void handleEnterPressed() {
@@ -197,15 +195,74 @@ public class ShellTerminalWidget extends JBTerminalWidget {
     throw new IllegalStateException("Cannot determine if there are running processes for " + connector.getClass()); //NON-NLS
   }
 
+  /**
+   * @deprecated use {@link TtyConnector#close()} instead
+   */
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
+  public void terminateProcess() {
+    TtyConnector connector = getTtyConnector();
+    if (connector != null) {
+      connector.close();
+    }
+  }
+
   @Override
   public List<TerminalAction> getActions() {
-    List<TerminalAction> baseActions = super.getActions();
+    List<TerminalAction> actions = new ArrayList<>(super.getActions());
     if (TerminalView.isInTerminalToolWindow(this)) {
-      List<TerminalAction> actions = new ArrayList<>();
       ContainerUtil.addIfNotNull(actions, TerminalActionUtil.createTerminalAction(this, RenameTerminalSessionActionKt.ACTION_ID, true));
-      return ContainerUtil.concat(baseActions, actions);
     }
-    return baseActions;
+    JBTerminalWidgetListener listener = getListener();
+    JBTerminalSystemSettingsProviderBase settingsProvider = getSettingsProvider();
+    actions.add(TerminalActionUtil.createTerminalAction(this, settingsProvider.getNewSessionActionPresentation(), l -> {
+      l.onNewSession();
+      return true;
+    }).withMnemonicKey(KeyEvent.VK_T));
+    actions.add(TerminalActionUtil.createTerminalAction(this, settingsProvider.getCloseSessionActionPresentation(), l -> {
+      l.onSessionClosed();
+      return true;
+    }).withMnemonicKey(KeyEvent.VK_T));
+
+    actions.add(TerminalSplitAction.create(true, getListener()).withMnemonicKey(KeyEvent.VK_V).separatorBefore(true));
+    actions.add(TerminalSplitAction.create(false, getListener()).withMnemonicKey(KeyEvent.VK_H));
+    if (listener != null && listener.isGotoNextSplitTerminalAvailable()) {
+      actions.add(settingsProvider.getGotoNextSplitTerminalAction(listener, true));
+      actions.add(settingsProvider.getGotoNextSplitTerminalAction(listener, false));
+    }
+    actions.add(TerminalActionUtil.createTerminalAction(this, settingsProvider.getPreviousTabActionPresentation(), l -> {
+      l.onPreviousTabSelected();
+      return true;
+    }).withMnemonicKey(KeyEvent.VK_T));
+    actions.add(TerminalActionUtil.createTerminalAction(this, settingsProvider.getNextTabActionPresentation(), l -> {
+      l.onNextTabSelected();
+      return true;
+    }).withMnemonicKey(KeyEvent.VK_T));
+    actions.add(TerminalActionUtil.createTerminalAction(this, settingsProvider.getMoveTabRightActionPresentation(), l -> {
+      l.moveTabRight();
+      return true;
+    }).withMnemonicKey(KeyEvent.VK_R).withEnabledSupplier(() -> listener != null && listener.canMoveTabRight()));
+    actions.add(TerminalActionUtil.createTerminalAction(this, settingsProvider.getMoveTabLeftActionPresentation(), l -> {
+      l.moveTabLeft();
+      return true;
+    }).withMnemonicKey(KeyEvent.VK_L).withEnabledSupplier(() -> listener != null && listener.canMoveTabLeft()));
+    actions.add(TerminalActionUtil.createTerminalAction(this, settingsProvider.getShowTabsActionPresentation(), l -> {
+      l.showTabs();
+      return true;
+    }).withMnemonicKey(KeyEvent.VK_T));
+    return actions;
+  }
+
+  public @Nullable TerminalLineIntervalHighlighting highlightLineInterval(int lineNumber, int intervalStartOffset, int intervalLength,
+                                                                          @NotNull TextStyle style) {
+    TerminalLine line = getTerminalTextBuffer().getLine(lineNumber);
+    if (line == null) {
+      LOG.error("No line found");
+      return null;
+    }
+    TerminalLineIntervalHighlighting highlighting = line.addCustomHighlighting(intervalStartOffset, intervalLength, style);
+    getTerminalPanel().repaint();
+    return highlighting;
   }
 
   public static @Nullable ProcessTtyConnector getProcessTtyConnector(@Nullable TtyConnector connector) {

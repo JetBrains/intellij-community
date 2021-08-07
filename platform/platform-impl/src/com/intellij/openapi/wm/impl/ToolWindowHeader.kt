@@ -13,6 +13,7 @@ import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.wm.ToolWindowType
 import com.intellij.openapi.wm.impl.content.ToolWindowContentUi
 import com.intellij.ui.DoubleClickListener
+import com.intellij.ui.MouseDragHelper
 import com.intellij.ui.PopupHandler
 import com.intellij.ui.UIBundle
 import com.intellij.ui.layout.migLayout.*
@@ -55,15 +56,16 @@ abstract class ToolWindowHeader internal constructor(
     westPanel = JPanel(MigLayout(createLayoutConstraints(0, 0).noVisualPadding().fillY()))
     westPanel.isOpaque = false
     westPanel.add(contentUi.tabComponent, CC().growY())
+    MouseDragHelper.setComponentDraggable(westPanel, true);
     @Suppress("LeakingThis")
     add(westPanel, CC().grow())
-    ToolWindowContentUi.initMouseListeners(westPanel, contentUi, true)
+    ToolWindowContentUi.initMouseListeners(westPanel, contentUi, true, true)
     toolbar = ActionManager.getInstance().createActionToolbar(
       ActionPlaces.TOOLWINDOW_TITLE,
       object : ActionGroup(), DumbAware {
         private val children by lazy<Array<AnAction>> {
           val tabListAction = ActionManager.getInstance().getAction("TabList")
-          arrayOf(tabListAction, actionGroup, ShowOptionsAction(), HideAction())
+          arrayOf(tabListAction, actionGroup, DockToolWindowAction(), ShowOptionsAction(), HideAction())
         }
 
         override fun getChildren(e: AnActionEvent?) = children
@@ -142,6 +144,14 @@ abstract class ToolWindowHeader internal constructor(
 
   fun getToolbar(): ActionToolbar? {
     return toolbar
+  }
+
+  fun getToolbarActions(): ActionGroup? {
+    return actionGroup
+  }
+
+  fun getToolbarWestActions(): ActionGroup? {
+    return actionGroupWest
   }
 
   override fun getData(dataId: String): Any? {

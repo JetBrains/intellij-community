@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.codeInspection.ui;
 
@@ -117,6 +117,7 @@ public class InspectionResultsView extends JPanel implements Disposable, DataPro
     myGlobalInspectionContext = globalInspectionContext;
     myProvider = provider;
     myTree = new InspectionTree(this);
+    myTree.getInspectionTreeModel().getRoot().setSingleInspectionRun(isSingleInspectionRun());
 
     mySplitter = new OnePixelSplitter(false, AnalysisUIOptions.getInstance(globalInspectionContext.getProject()).SPLITTER_PROPORTION);
     mySplitter.setFirstComponent(ScrollPaneFactory.createScrollPane(myTree, SideBorder.LEFT));
@@ -173,7 +174,7 @@ public class InspectionResultsView extends JPanel implements Disposable, DataPro
 
     getProject().getMessageBus().connect(this).subscribe(ProfileChangeAdapter.TOPIC, new ProfileChangeAdapter() {
       @Override
-      public void profileChanged(InspectionProfile profile) {
+      public void profileChanged(@NotNull InspectionProfile profile) {
         if (profile == ProjectInspectionProfileManager.getInstance(getProject()).getCurrentProfile()) {
           InspectionResultsView.this.profileChanged();
         }
@@ -264,9 +265,9 @@ public class InspectionResultsView extends JPanel implements Disposable, DataPro
     return myTree.getOccurenceNavigator().getPreviousOccurenceActionName();
   }
 
-  private static JComponent createToolbar(final DefaultActionGroup specialGroup) {
+  private JComponent createToolbar(final DefaultActionGroup specialGroup) {
     final ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.CODE_INSPECTION, specialGroup, false);
-    //toolbar.setTargetComponent(this);
+    toolbar.setTargetComponent(this);
     return toolbar.getComponent();
   }
 
@@ -345,6 +346,9 @@ public class InspectionResultsView extends JPanel implements Disposable, DataPro
               final InspectionViewNavigationPanel panel = new InspectionViewNavigationPanel(node, myTree);
               myLoadingProgressPreview = panel;
               mySplitter.setSecondComponent(panel);
+            }
+            else if (node instanceof InspectionRootNode) {
+              mySplitter.setSecondComponent(InspectionResultsViewUtil.getNothingToShowTextLabel());
             }
             else {
               LOG.error("Unexpected node: " + node.getClass());
@@ -774,11 +778,17 @@ public class InspectionResultsView extends JPanel implements Disposable, DataPro
                                     @NotNull GlobalInspectionContextImpl context,
                                     @NotNull InspectionRVContentProvider contentProvider) {
     for (Tools currentTools : tools) {
-      for (ScopeToolState state : contentProvider.getTools(currentTools)) {
-        InspectionToolWrapper toolWrapper = state.getTool();
-        if (context.getPresentation(toolWrapper).hasReportedProblems() || contentProvider.checkReportedProblems(context, toolWrapper)) {
-          return true;
+      boolean hasProblems = ReadAction.compute(() -> {
+        for (ScopeToolState state : contentProvider.getTools(currentTools)) {
+          InspectionToolWrapper toolWrapper = state.getTool();
+          if (context.getPresentation(toolWrapper).hasReportedProblems() || contentProvider.checkReportedProblems(context, toolWrapper)) {
+            return true;
+          }
         }
+        return false;
+      });
+      if (hasProblems) {
+        return true;
       }
     }
     return false;

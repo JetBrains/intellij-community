@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.core.CoreBundle;
@@ -53,7 +53,7 @@ public final class DocumentImpl extends UserDataHolderBase implements DocumentEx
   private final List<RangeMarker> myGuardedBlocks = new ArrayList<>();
   private ReadonlyFragmentModificationHandler myReadonlyFragmentModificationHandler;
 
-  @SuppressWarnings("RedundantStringConstructorCall") private final Object myLineSetLock = new String("line set lock");
+  private final Object myLineSetLock = ObjectUtils.sentinel("line set lock");
   private volatile LineSet myLineSet;
   private volatile ImmutableCharSequence myText;
   private volatile SoftReference<String> myTextString;
@@ -88,7 +88,7 @@ public final class DocumentImpl extends UserDataHolderBase implements DocumentEx
     }
 
     @Override
-    public CharSequence subSequence(int start, int end) {
+    public @NotNull CharSequence subSequence(int start, int end) {
       return myText.subSequence(start, end);
     }
 
@@ -532,9 +532,7 @@ public final class DocumentImpl extends UserDataHolderBase implements DocumentEx
   public void insertString(int offset, @NotNull CharSequence s) {
     if (offset < 0) throw new IndexOutOfBoundsException("Wrong offset: " + offset);
     if (offset > getTextLength()) {
-      throw new IndexOutOfBoundsException(
-        "Wrong offset: " + offset + "; documentLength: " + getTextLength() + "; " + s.subSequence(Math.max(0, s.length() - 20), s.length())
-      );
+      throw new IndexOutOfBoundsException("Wrong offset: " + offset + "; documentLength: " + getTextLength());
     }
     assertWriteAccess();
     assertValidSeparators(s);
@@ -670,8 +668,7 @@ public final class DocumentImpl extends UserDataHolderBase implements DocumentEx
       throw new IndexOutOfBoundsException("Wrong endOffset: " + endOffset + "; documentLength: " + getTextLength());
     }
     if (endOffset < startOffset) {
-      throw new IllegalArgumentException(
-        "endOffset < startOffset: " + endOffset + " < " + startOffset + "; documentLength: " + getTextLength());
+      throw new IllegalArgumentException("endOffset < startOffset: " + endOffset + " < " + startOffset + "; documentLength: " + getTextLength());
     }
   }
 
@@ -1015,13 +1012,13 @@ public final class DocumentImpl extends UserDataHolderBase implements DocumentEx
   }
 
   @Override
-  public final int getLineStartOffset(final int line) {
+  public int getLineStartOffset(final int line) {
     if (line == 0) return 0; // otherwise it crashed for zero-length document
     return getLineSet().getLineStart(line);
   }
 
   @Override
-  public final int getLineEndOffset(int line) {
+  public int getLineEndOffset(int line) {
     if (getTextLength() == 0 && line == 0) return 0;
     int result = getLineSet().getLineEnd(line) - getLineSeparatorLength(line);
     assert result >= 0;
@@ -1029,14 +1026,14 @@ public final class DocumentImpl extends UserDataHolderBase implements DocumentEx
   }
 
   @Override
-  public final int getLineSeparatorLength(int line) {
+  public int getLineSeparatorLength(int line) {
     int separatorLength = getLineSet().getSeparatorLength(line);
     assert separatorLength >= 0;
     return separatorLength;
   }
 
   @Override
-  public final int getLineCount() {
+  public int getLineCount() {
     int lineCount = getLineSet().getLineCount();
     assert lineCount >= 0;
     return lineCount;
@@ -1093,12 +1090,12 @@ public final class DocumentImpl extends UserDataHolderBase implements DocumentEx
   }
 
   @Override
-  public final boolean isInBulkUpdate() {
+  public boolean isInBulkUpdate() {
     return myDoingBulkUpdate;
   }
 
   @Override
-  public final void setInBulkUpdate(boolean value) {
+  public void setInBulkUpdate(boolean value) {
     if (myAssertThreading) {
       ApplicationManager.getApplication().assertIsWriteThread();
     }
@@ -1185,15 +1182,15 @@ public final class DocumentImpl extends UserDataHolderBase implements DocumentEx
   }
 
   @NotNull
-  String dumpState() {
+  public String dumpState() {
     @NonNls StringBuilder result = new StringBuilder();
-    result.append(", intervals:\n");
-    for (int line = 0; line < getLineCount(); line++) {
-      result.append(line).append(": ").append(getLineStartOffset(line)).append("-")
-        .append(getLineEndOffset(line)).append(", ");
+    result.append("intervals:\n");
+    int lineCount = getLineCount();
+    for (int line = 0; line < lineCount; line++) {
+      result.append(line).append(": ").append(getLineStartOffset(line)).append("-").append(getLineEndOffset(line)).append(", ");
     }
-    if (result.length() > 0) {
-      result.setLength(result.length() - 1);
+    if (lineCount > 0) {
+      result.setLength(result.length() - 2);
     }
     return result.toString();
   }

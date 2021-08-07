@@ -18,6 +18,7 @@ package com.siyeh.ig.bugs;
 import com.intellij.codeInspection.dataFlow.CommonDataflow;
 import com.intellij.codeInspection.dataFlow.TypeConstraint;
 import com.intellij.psi.*;
+import com.intellij.util.ThreeState;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -75,13 +76,16 @@ public class CastToIncompatibleInterfaceInspection extends BaseInspection {
       if (operandClass == null || operandClass.isInterface()) {
         return;
       }
-      if (InheritanceUtil.existsMutualSubclass(operandClass, castClass, isOnTheFly())) {
-        return;
-      }
-      if (InstanceOfUtils.findPatternCandidate(expression) != null) return;
+      ThreeState hasMutualSubclass = InheritanceUtil.existsMutualSubclass(operandClass, castClass, isOnTheFly());
+      if (hasMutualSubclass == ThreeState.YES) return;
+      if (InstanceOfUtils.findCorrespondingInstanceOf(expression) != null) return;
       PsiType psiType = TypeConstraint.fromDfType(CommonDataflow.getDfType(operand)).getPsiType(operandClass.getProject());
       if (psiType != null && castClassType.isAssignableFrom(psiType)) return;
-      registerError(castTypeElement);
+      if (hasMutualSubclass == ThreeState.UNSURE) {
+        registerPossibleProblem(castTypeElement);
+      } else {
+        registerError(castTypeElement);
+      }
     }
   }
 }

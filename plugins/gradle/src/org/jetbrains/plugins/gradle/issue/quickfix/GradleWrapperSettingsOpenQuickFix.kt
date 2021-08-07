@@ -26,7 +26,7 @@ class GradleWrapperSettingsOpenQuickFix(private val myProjectPath: String, priva
   companion object {
     fun showWrapperPropertiesFile(project: Project, projectPath: String, search: String?) {
       val wrapperPropertiesFile = GradleUtil.findDefaultWrapperPropertiesFile(projectPath) ?: return
-      OpenFileQuickFix.showFile(project, wrapperPropertiesFile.toPath(), search)
+      OpenFileQuickFix.showFile(project, wrapperPropertiesFile, search)
     }
   }
 }

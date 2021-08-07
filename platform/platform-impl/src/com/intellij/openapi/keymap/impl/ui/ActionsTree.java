@@ -186,6 +186,10 @@ public final class ActionsTree {
     reset(keymap, allQuickLists, myFilter, null);
   }
 
+  public void reset(@NotNull Keymap keymap, QuickList @NotNull [] allQuickLists, @Nullable Shortcut shortcut) {
+    reset(keymap, allQuickLists, myFilter, shortcut);
+  }
+
   public Group getMainGroup() {
     return myMainGroup;
   }

@@ -1,16 +1,20 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.fileTypes;
 
 import com.intellij.lang.Language;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.components.ComponentManagerEx;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.fileTypes.ex.FileTypeIdentifiableByVirtualFile;
 import com.intellij.openapi.util.Getter;
 import com.intellij.openapi.util.io.ByteSequence;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.function.Supplier;
 
 /**
  * A service for retrieving file types for files.
@@ -30,11 +34,18 @@ import org.jetbrains.annotations.Nullable;
  * <pre>{@code file.getFileType()}</pre>.
  * Otherwise consider moving the computation into background, e.g. via {@link com.intellij.openapi.vfs.AsyncFileListener} or
  * {@link com.intellij.openapi.application.ReadAction#nonBlocking}.
- *
- * @author yole
  */
 public abstract class FileTypeRegistry {
-  public static Getter<FileTypeRegistry> ourInstanceGetter;
+  /**
+   * @deprecated Use {@link #setInstanceSupplier(Supplier)}
+   */
+  @Deprecated
+  public static Getter<FileTypeRegistry> ourInstanceGetter = ()->((ComponentManagerEx)ApplicationManager.getApplication()).getServiceByClassName("com.intellij.openapi.fileTypes.FileTypeManager");
+
+  @ApiStatus.Internal
+  public static void setInstanceSupplier(@NotNull Supplier<? extends FileTypeRegistry> supplier) {
+    ourInstanceGetter = supplier::get;
+  }
 
   public abstract boolean isFileIgnored(@NotNull VirtualFile file);
 
@@ -53,10 +64,6 @@ public abstract class FileTypeRegistry {
   }
 
   public static FileTypeRegistry getInstance() {
-    if (ourInstanceGetter == null) {
-      // in tests FileTypeManager service maybe not preloaded, so, ourInstanceGetter is not set
-      return (FileTypeRegistry)ApplicationManager.getApplication().getPicoContainer().getComponentInstance("com.intellij.openapi.fileTypes.FileTypeManager");
-    }
     return ourInstanceGetter.get();
   }
 
@@ -120,7 +127,6 @@ public abstract class FileTypeRegistry {
   /**
    * Finds a file type with the specified name.
    */
-  @Nullable
   public abstract FileType findFileTypeByName(@NonNls @NotNull String fileTypeName);
 
   /**

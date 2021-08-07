@@ -20,7 +20,6 @@ import com.intellij.openapi.actionSystem.impl.SimpleDataContext;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.EditorActivityManager;
 import com.intellij.openapi.editor.VisualPosition;
 import com.intellij.openapi.editor.actions.EditorActionUtil;
 import com.intellij.openapi.editor.colors.EditorColors;
@@ -48,6 +47,7 @@ import com.intellij.ui.popup.list.ListPopupImpl;
 import com.intellij.util.Alarm;
 import com.intellij.util.ThreeState;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.UIUtil;
 import kotlin.Unit;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -249,7 +249,7 @@ public final class IntentionHintComponent implements Disposable, ScrollAwareHint
     }
     if (showExpanded) {
       ApplicationManager.getApplication().invokeLater(() -> {
-        if (!editor.isDisposed() && EditorActivityManager.getInstance().isVisible(editor)) {
+        if (!editor.isDisposed() && UIUtil.isShowing(editor.getContentComponent())) {
           component.showPopup(false);
         }
       }, project.getDisposed());

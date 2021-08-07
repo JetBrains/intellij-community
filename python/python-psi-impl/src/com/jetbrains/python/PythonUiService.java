@@ -113,6 +113,10 @@ public class PythonUiService {
     return null;
   }
 
+  public JComponent createListEditForm(@ColumnName String title, @NlsContexts.Label String label, List<String> stringList) {
+    return null;
+  }
+
   public JComponent onePixelSplitter(boolean b, JComponent first, JComponent second) {
     return null;
   }

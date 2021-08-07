@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.util.io;
 
 import com.intellij.jna.JnaLoader;
@@ -8,6 +8,8 @@ import com.intellij.openapi.util.io.win32.FileInfo;
 import com.intellij.openapi.util.io.win32.IdeaWin32;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
+import com.intellij.util.ArrayUtil;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.LimitedPool;
 import com.intellij.util.system.CpuArch;
@@ -25,6 +27,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.nio.file.attribute.DosFileAttributes;
@@ -59,7 +62,7 @@ public final class FileSystemUtil {
           return check(new IdeaWin32MediatorImpl());
         }
         else if ((SystemInfo.isLinux || SystemInfo.isMac && CpuArch.isIntel64() || SystemInfo.isSolaris || SystemInfo.isFreeBSD) &&
-                 JnaLoader.isLoaded() && JnaLoader.supportsDirectMapping) {
+                 JnaLoader.isLoaded() && JnaLoader.isSupportsDirectMapping()) {
           return check(new JnaUnixMediatorImpl());
         }
       }
@@ -277,7 +280,7 @@ public final class FileSystemUtil {
     private final LimitedPool<Memory> myMemoryPool = new LimitedPool.Sync<>(10, () -> new Memory(256));
 
     JnaUnixMediatorImpl() {
-      assert JnaLoader.supportsDirectMapping : "Direct mapping not available on " + Platform.RESOURCE_PREFIX;
+      assert JnaLoader.isSupportsDirectMapping() : "Direct mapping not available on " + Platform.RESOURCE_PREFIX;
 
       if ("linux-x86".equals(Platform.RESOURCE_PREFIX)) myOffsets = LINUX_32;
       else if ("linux-x86-64".equals(Platform.RESOURCE_PREFIX)) myOffsets = LINUX_64;
@@ -484,12 +487,20 @@ public final class FileSystemUtil {
   static @NotNull FileAttributes.CaseSensitivity readParentCaseSensitivityByJavaIO(@NotNull File anyChild) {
     // try to query this path by different-case strings and deduce case sensitivity from the answers
     if (!anyChild.exists()) {
+      if (LOG.isDebugEnabled()) {
+        LOG.debug("readParentCaseSensitivityByJavaIO("+anyChild+") fallback returned UNKNOWN because the child doesn't exist");
+      }
       return FileAttributes.CaseSensitivity.UNKNOWN;
     }
     File parent = anyChild.getParentFile();
     if (parent == null) {
       String probe = findCaseToggleableChild(anyChild);
-      if (probe == null) return FileAttributes.CaseSensitivity.UNKNOWN;
+      if (probe == null) {
+        if (LOG.isDebugEnabled()) {
+          LOG.debug("readParentCaseSensitivityByJavaIO("+anyChild+") fallback returned UNKNOWN because parent is null and toggleable child wasn't found. isDirectory="+anyChild.isDirectory());
+        }
+        return FileAttributes.CaseSensitivity.UNKNOWN;
+      }
       parent = anyChild;
       anyChild = new File(parent, probe);
     }
@@ -500,6 +511,18 @@ public final class FileSystemUtil {
       // we have a bad case of "123" file
       name = findCaseToggleableChild(parent);
       if (name == null) {
+        if (LOG.isDebugEnabled()) {
+          String[] list;
+          try {
+            list = parent.list();
+          }
+          catch (Exception e) {
+            list = null;
+          }
+          int count = list==null?0:list.length;
+          LOG.debug("readParentCaseSensitivityByJavaIO(" + anyChild + ") fallback returned UNKNOWN because toggleable child wasn't found among " + count +" children:\n "+StringUtil.first(StringUtil.join(
+                      ObjectUtils.notNull(list, ArrayUtil.EMPTY_STRING_ARRAY), ", "), 200, true));
+        }
         // we can't find any file with toggleable case.
         return FileAttributes.CaseSensitivity.UNKNOWN;
       }
@@ -523,6 +546,7 @@ public final class FileSystemUtil {
       }
     }
     catch (IOException e) {
+      LOG.debug("readParentCaseSensitivityByJavaIO(" + anyChild + ") fallback returned UNKNOWN because of IOException", e);
       return FileAttributes.CaseSensitivity.UNKNOWN;
     }
 
@@ -548,7 +572,7 @@ public final class FileSystemUtil {
     return detected;
   }
 
-  private static String toggleCase(String name) {
+  private static @NotNull String toggleCase(@NotNull String name) {
     String altName = name.toUpperCase(Locale.getDefault());
     if (altName.equals(name)) altName = name.toLowerCase(Locale.getDefault());
     return altName;
@@ -563,8 +587,8 @@ public final class FileSystemUtil {
   }
 
   // return child which name can be used for querying by different-case names (e.g "child.txt" vs "CHILD.TXT")
-  // or null if there are none (e.g there's only one child "123.456").
-  private static @Nullable String findCaseToggleableChild(File dir) {
+  // or null if there are none (e.g., there's only one child "123.456").
+  private static @Nullable String findCaseToggleableChild(@NotNull File dir) {
     try (DirectoryStream<Path> stream = Files.newDirectoryStream(dir.toPath())) {
       for (Path path : stream) {
         String name = path.getFileName().toString();
@@ -573,7 +597,8 @@ public final class FileSystemUtil {
         }
       }
     }
-    catch (Exception ignored) { }
+    catch (Exception ignored) {
+    }
     return null;
   }
 
@@ -655,12 +680,15 @@ public final class FileSystemUtil {
     try {
       CoreFoundation cf = CoreFoundation.INSTANCE;
 
-      CoreFoundation.CFTypeRef url = cf.CFURLCreateFromFileSystemRepresentation(null, path, path.length(), true);
+      byte[] buffer = path.getBytes(StandardCharsets.UTF_8);
+      CoreFoundation.CFTypeRef url = cf.CFURLCreateFromFileSystemRepresentation(null, buffer, buffer.length, true);
       try {
-        PointerByReference resultPtr = new PointerByReference();
+        PointerByReference resultPtr = new PointerByReference(), errorPtr = new PointerByReference();
         Pointer result;
-        if (!cf.CFURLCopyResourcePropertyForKey(url, CoreFoundation.kCFURLVolumeSupportsCaseSensitiveNamesKey, resultPtr, null)) {
-          LOG.warn("CFURLCopyResourcePropertyForKey(" + path + "): error");
+        if (!cf.CFURLCopyResourcePropertyForKey(url, CoreFoundation.kCFURLVolumeSupportsCaseSensitiveNamesKey, resultPtr, errorPtr)) {
+          Pointer error = errorPtr.getValue();
+          String description = error != null ? cf.CFErrorGetDomain(error).stringValue() + '/' + cf.CFErrorGetCode(error) : "error";
+          LOG.warn("CFURLCopyResourcePropertyForKey(" + path + "): " + description);
         }
         else if ((result = resultPtr.getValue()) == null) {
           LOG.info("CFURLCopyResourcePropertyForKey(" + path + "): property not available");
@@ -686,8 +714,11 @@ public final class FileSystemUtil {
 
     CFStringRef kCFURLVolumeSupportsCaseSensitiveNamesKey = CFStringRef.createCFString("NSURLVolumeSupportsCaseSensitiveNamesKey");
 
-    CFTypeRef CFURLCreateFromFileSystemRepresentation(CFAllocatorRef allocator, String buffer, long bufLen, boolean isDirectory);
-    boolean CFURLCopyResourcePropertyForKey(CFTypeRef url, CFStringRef key, PointerByReference propertyValueTypeRefPtr, Pointer error);
+    CFTypeRef CFURLCreateFromFileSystemRepresentation(CFAllocatorRef allocator, byte[] buffer, long bufLen, boolean isDirectory);
+    boolean CFURLCopyResourcePropertyForKey(CFTypeRef url, CFStringRef key, PointerByReference propertyValueTypeRefPtr, PointerByReference error);
+
+    CFStringRef CFErrorGetDomain(Pointer errorRef);
+    CFIndex CFErrorGetCode(Pointer errorRef);
   }
   //</editor-fold>
 

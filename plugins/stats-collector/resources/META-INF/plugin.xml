@@ -43,9 +43,6 @@
     <applicationService serviceInterface="com.intellij.stats.completion.tracker.InstallationIdProvider"
                         serviceImplementation="com.intellij.stats.completion.tracker.PermanentInstallationIdProvider"/>
 
-    <registryKey key="completion.stats.send.logs" defaultValue="true"
-                 description="Send anonymous logs about completion usage in EAP builds"/>
-
     <registryKey key="completion.stats.analytics.platform.send" defaultValue="true"
                  description="Send completion logs to Analytics Platform"/>
 

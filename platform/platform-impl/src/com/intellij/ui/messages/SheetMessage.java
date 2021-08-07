@@ -1,16 +1,17 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.messages;
 
 import com.apple.eawt.FullScreenUtilities;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.ui.DoNotAskOption;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.Gray;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.mac.MacMainFrameDecorator;
-import com.intellij.ui.mac.touchbar.TouchBarsManager;
+import com.intellij.ui.mac.touchbar.TouchbarSupport;
 import com.intellij.util.IJSwingUtilities;
 import com.intellij.util.ui.Animator;
 import org.jetbrains.annotations.Nls;
@@ -44,9 +45,10 @@ final class SheetMessage implements Disposable {
                @Nls String message,
                Icon icon,
                String[] buttons,
-               DialogWrapper.DoNotAskOption doNotAskOption,
+               DoNotAskOption doNotAskOption,
                String defaultButton,
-               String focusedButton) {
+               String focusedButton,
+               @Nullable String helpId) {
     myParent = owner;
 
     Window activeWindow = KeyboardFocusManager.getCurrentKeyboardFocusManager().getActiveWindow();
@@ -62,7 +64,7 @@ final class SheetMessage implements Disposable {
     if (myUseTransparent) {
       myWindow.setBackground(Gray.TRANSPARENT);
     }
-    myController = new SheetController(this, title, message, icon, buttons, defaultButton, doNotAskOption, focusedButton);
+    myController = new SheetController(this, title, message, icon, buttons, defaultButton, doNotAskOption, focusedButton, helpId);
     Disposer.register(this, myController);
 
     imageHeight = 0;
@@ -140,7 +142,7 @@ final class SheetMessage implements Disposable {
     }
 
     LaterInvocator.enterModal(myWindow);
-    _showTouchBar();
+    TouchbarSupport.showDialogButtons(this, myController.getSheetPanel());
     myWindow.setVisible(true);
     LaterInvocator.leaveModal(myWindow);
 
@@ -163,17 +165,6 @@ final class SheetMessage implements Disposable {
   public void dispose() {
     DialogWrapper.cleanupRootPane(myWindow.getRootPane());
     myWindow.dispose();
-  }
-
-  private void _showTouchBar() {
-    if (!TouchBarsManager.isTouchBarEnabled()) {
-      return;
-    }
-
-    final Disposable tb = TouchBarsManager.showDialogWrapperButtons(myController.getSheetPanel());
-    if (tb != null) {
-      Disposer.register(this, tb);
-    }
   }
 
   private static void maximizeIfNeeded(@Nullable Window owner) {

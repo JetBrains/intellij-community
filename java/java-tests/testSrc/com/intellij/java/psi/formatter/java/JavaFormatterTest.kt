@@ -199,6 +199,8 @@ class JavaFormatterTest : AbstractJavaFormatterTest() {
       KEEP_SIMPLE_BLOCKS_IN_ONE_LINE = true
       WHILE_ON_NEW_LINE = true
       BRACE_STYLE = CommonCodeStyleSettings.END_OF_LINE
+
+      SPACE_WITHIN_BRACES = true;
     }
     doTest()
   }
@@ -1637,7 +1639,7 @@ class Test {
       settings.KEEP_SIMPLE_METHODS_IN_ONE_LINE = true
 
       doTextTest("enum En {\n" + "    A(10) {},\n" + "    B(10) {},\n" + "    C(10);\n" + "\n" + "    En(int i) { }\n" + "}",
-                 "enum En {\n" + "    A(10) {},\n" + "    B(10) {},\n" + "    C(10);\n" + "\n" + "    En(int i) { }\n" + "}")
+                 "enum En {\n" + "    A(10) {},\n" + "    B(10) {},\n" + "    C(10);\n" + "\n" + "    En(int i) {}\n" + "}")
 
       doTextTest("class C {\n" +
                  "    void foo (Map<?, String> s) {\n" +
@@ -2326,7 +2328,7 @@ enum Foo {
     settings.METHOD_BRACE_STYLE = CommonCodeStyleSettings.NEXT_LINE_SHIFTED
     settings.KEEP_SIMPLE_METHODS_IN_ONE_LINE = true
     settings.KEEP_SIMPLE_BLOCKS_IN_ONE_LINE = false
-    doTextTest("class Foo {\n" + "    void foo() { return;}" + "}", "class Foo {\n" + "    void foo() { return;}\n" + "}")
+    doTextTest("class Foo {\n" + "    void foo() { return;}" + "}", "class Foo {\n" + "    void foo() {return;}\n" + "}")
 
     settings.BRACE_STYLE = CommonCodeStyleSettings.NEXT_LINE_SHIFTED2
     settings.KEEP_SIMPLE_METHODS_IN_ONE_LINE = false

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.testframework.sm.runner.ui;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
@@ -21,6 +21,8 @@ import com.intellij.execution.ui.ConsoleView;
 import com.intellij.ide.util.treeView.IndexComparator;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.progress.ProcessCanceledException;
@@ -34,7 +36,6 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.pom.Navigatable;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.SideBorder;
@@ -44,6 +45,7 @@ import com.intellij.util.Alarm;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.OpenSourceUtil;
 import com.intellij.util.PathUtil;
+import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.DateFormatUtil;
 import com.intellij.util.ui.UIUtil;
@@ -63,13 +65,13 @@ import javax.xml.transform.sax.SAXTransformerFactory;
 import javax.xml.transform.sax.TransformerHandler;
 import javax.xml.transform.stream.StreamResult;
 import java.awt.*;
+import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
+import java.nio.charset.StandardCharsets;
 import java.text.SimpleDateFormat;
 import java.util.List;
 import java.util.*;
-
-import static com.intellij.rt.execution.TestListenerProtocol.CLASS_CONFIGURATION;
 
 /**
  * @author: Roman Chernyatchik
@@ -112,6 +114,8 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
   private final Set<Update> myRequests = Collections.synchronizedSet(new HashSet<>());
   private final Alarm myUpdateTreeRequests = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, this);
 
+  private final String myHistoryFileName;
+
   public SMTestRunnerResultsForm(@NotNull ConsoleView consoleView,
                                  @NotNull TestConsoleProperties consoleProperties,
                                  @Nullable String splitterPropertyName) {
@@ -134,6 +138,8 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
     myContentPane.setFocusTraversalPolicy(new MyFocusTraversalPolicy(components));
     myContentPane.setFocusCycleRoot(true);
     */
+    myHistoryFileName = PathUtil.suggestFileName(consoleProperties.getConfiguration().getName()) + " - " +
+                        new SimpleDateFormat(HISTORY_DATE_FORMAT).format(new Date());
   }
 
   @Override
@@ -164,10 +170,15 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
 
       //ensure scroll to source on explicit selection only
       if (ScrollToTestSourceAction.isScrollEnabled(this)) {
-        final Navigatable descriptor = TestsUIUtil.getOpenFileDescriptor(testProxy, this);
-        if (descriptor != null) {
-          OpenSourceUtil.navigate(false, descriptor);
-        }
+        ReadAction
+          .nonBlocking(() -> TestsUIUtil.getOpenFileDescriptor(testProxy, this))
+          .finishOnUiThread(ModalityState.NON_MODAL, descriptor -> {
+            if (descriptor != null) {
+              OpenSourceUtil.navigate(false, descriptor);
+            }
+          })
+          .expireWith(this)
+          .submit(AppExecutorUtil.getAppExecutorService());
       }
     });
 
@@ -293,7 +304,7 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
     if (configuration instanceof RunConfiguration &&
         !(consoleProperties instanceof ImportedTestConsoleProperties) &&
         !myDisposed) {
-      final MySaveHistoryTask backgroundable = new MySaveHistoryTask(consoleProperties, root, (RunConfiguration)configuration);
+      final MySaveHistoryTask backgroundable = new MySaveHistoryTask(consoleProperties, root, (RunConfiguration)configuration, myHistoryFileName);
       Disposer.register(parentDisposable, new Disposable() {
         @Override
         public void dispose() {
@@ -317,7 +328,7 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
    */
   @Override
   public void onTestStarted(@NotNull final SMTestProxy testProxy) {
-    if (!testProxy.isConfig() && !CLASS_CONFIGURATION.equals(testProxy.getName())) {
+    if (!testProxy.isConfig() && !TestListenerProtocol.CLASS_CONFIGURATION.equals(testProxy.getName())) {
       updateOnTestStarted(false);
     }
     _addTestOrSuite(testProxy);
@@ -360,7 +371,7 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
 
   @Override
   public void onTestIgnored(@NotNull final SMTestProxy test) {
-    updateOnTestIgnored();
+    updateOnTestIgnored(test);
   }
 
   /**
@@ -520,7 +531,7 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
     return myFailedTestCount;
   }
 
-  protected int getIgnoredTestCount() {
+  public int getIgnoredTestCount() {
     return myIgnoredTestCount;
   }
 
@@ -726,8 +737,10 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
     updateStatusLabel(false);
   }
 
-  private void updateOnTestIgnored() {
-    myIgnoredTestCount++;
+  private void updateOnTestIgnored(@NotNull final SMTestProxy test) {
+    if (!test.isSuite()) {
+      myIgnoredTestCount++;
+    }
     updateProgressOnTestDone();
     updateStatusLabel(false);
   }
@@ -742,18 +755,25 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
     myStatusLine.setWarning(SmRunnerBundle.message("suffix.incomplete.index.was.used"));
   }
 
+  public String getHistoryFileName() {
+    return myHistoryFileName;
+  }
+
   private static class MySaveHistoryTask extends Task.Backgroundable {
 
     private final TestConsoleProperties myConsoleProperties;
     private SMTestProxy.SMRootTestProxy myRoot;
     private RunConfiguration myConfiguration;
     private File myOutputFile;
-
-    MySaveHistoryTask(TestConsoleProperties consoleProperties, SMTestProxy.SMRootTestProxy root, RunConfiguration configuration) {
+    MySaveHistoryTask(TestConsoleProperties consoleProperties,
+                      SMTestProxy.SMRootTestProxy root,
+                      RunConfiguration configuration, 
+                      String outputFile) {
       super(consoleProperties.getProject(), SmRunnerBundle.message("sm.test.runner.results.form.save.test.results.title"), true);
       myConsoleProperties = consoleProperties;
       myRoot = root;
       myConfiguration = configuration;
+      myOutputFile = new File(TestStateStorage.getTestHistoryRoot(myProject), outputFile + ".xml");
     }
 
     @Override
@@ -764,18 +784,16 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
         SAXTransformerFactory transformerFactory = (SAXTransformerFactory)TransformerFactory.newInstance();
         TransformerHandler handler = transformerFactory.newTransformerHandler();
         handler.getTransformer().setOutputProperty(OutputKeys.INDENT, "yes");
+        handler.getTransformer().setOutputProperty(OutputKeys.VERSION, "1.1");
         handler.getTransformer().setOutputProperty("{http://xml.apache.org/xslt}indent-amount", "4");
-
-        final String configurationNameIncludedDate = PathUtil.suggestFileName(myConfiguration.getName()) + " - " +
-                                                     new SimpleDateFormat(HISTORY_DATE_FORMAT).format(new Date());
-
-        myOutputFile = new File(TestStateStorage.getTestHistoryRoot(myProject), configurationNameIncludedDate + ".xml");
         FileUtilRt.createParentDirs(myOutputFile);
-        handler.setResult(new StreamResult(new FileWriter(myOutputFile)));
-        final SMTestProxy.SMRootTestProxy root = myRoot;
-        final RunConfiguration configuration = myConfiguration;
-        if (root != null && configuration != null) {
-          TestResultsXmlFormatter.execute(root, configuration, myConsoleProperties, handler);
+        try (BufferedWriter writer = new BufferedWriter(new FileWriter(myOutputFile, StandardCharsets.UTF_8))) {
+          handler.setResult(new StreamResult(writer));
+          final SMTestProxy.SMRootTestProxy root = myRoot;
+          final RunConfiguration configuration = myConfiguration;
+          if (root != null && configuration != null) {
+            TestResultsXmlFormatter.execute(root, configuration, myConsoleProperties, handler);
+          }
         }
       }
       catch (ProcessCanceledException e) {

@@ -45,6 +45,12 @@ public class NullableStuffInspectionTest extends LightJavaCodeInsightFixtureTest
     myFixture.testHighlighting(true, false, true, getTestName(false) + ".java");
   }
 
+  private void doTestWithFix(String intentionAction) {
+    doTest();
+    myFixture.launchAction(myFixture.findSingleIntention(intentionAction));
+    myFixture.checkResultByFile(getTestName(false) + "_after.java");
+  }
+
   @Override
   public void setUp() throws Exception {
     super.setUp();
@@ -289,30 +295,22 @@ public class NullableStuffInspectionTest extends LightJavaCodeInsightFixtureTest
   }
 
   public void testAnnotateQuickFixOnMethodReference() {
-    doTest();
-    myFixture.launchAction(myFixture.findSingleIntention("Annotate"));
-    myFixture.checkResultByFile(getTestName(false) + "_after.java");
+    doTestWithFix("Annotate");
   }
 
   public void testAnnotateOverridingParametersOnNotNullMethod() {
     myInspection.REPORT_ANNOTATION_NOT_PROPAGATED_TO_OVERRIDERS = true;
-    doTest();
-    myFixture.launchAction(myFixture.findSingleIntention("Annotate overridden method parameters"));
-    myFixture.checkResultByFile(getTestName(false) + "_after.java");
+    doTestWithFix("Annotate overridden method parameters");
   }
 
   public void testRemoveMethodAnnotationRemovesOverriders() {
     myInspection.REPORT_ANNOTATION_NOT_PROPAGATED_TO_OVERRIDERS = true;
-    doTest();
-    myFixture.launchAction(myFixture.findSingleIntention("Remove annotation"));
-    myFixture.checkResultByFile(getTestName(false) + "_after.java");
+    doTestWithFix("Remove annotation");
   }
 
   public void testRemoveParameterAnnotationRemovesOverriders() {
     myInspection.REPORT_ANNOTATION_NOT_PROPAGATED_TO_OVERRIDERS = true;
-    doTest();
-    myFixture.launchAction(myFixture.findSingleIntention("Remove annotation"));
-    myFixture.checkResultByFile(getTestName(false) + "_after.java");
+    doTestWithFix("Remove annotation");
   }
 
   public void testNullPassedToNullableParameter() {
@@ -330,6 +328,18 @@ public class NullableStuffInspectionTest extends LightJavaCodeInsightFixtureTest
     doTest();
   }
   
+  public void testInheritTypeUse() {
+    myInspection.REPORT_ANNOTATION_NOT_PROPAGATED_TO_OVERRIDERS = true;
+    DataFlowInspection8Test.setupTypeUseAnnotations("typeUse", myFixture);
+    doTest();
+  }
+
+  public void testInheritAmbiguous() {
+    myInspection.REPORT_ANNOTATION_NOT_PROPAGATED_TO_OVERRIDERS = true;
+    DataFlowInspection8Test.setupAmbiguousAnnotations("typeUse", myFixture);
+    doTest();
+  }
+
   public void testIncorrectPlacementAmbiguous() {
     DataFlowInspection8Test.setupAmbiguousAnnotations("typeUse", myFixture);
     doTest();
@@ -343,8 +353,32 @@ public class NullableStuffInspectionTest extends LightJavaCodeInsightFixtureTest
   public void testOverridersHaveNonDefaultAnnotation() {
     myFixture.addClass("package org.eclipse.jdt.annotation;\n\nimport java.lang.annotation.*;\n\n@Target(ElementType.PARAMETER) public @interface NonNull { }");
     myInspection.REPORT_ANNOTATION_NOT_PROPAGATED_TO_OVERRIDERS = true;
-    doTest();
-    myFixture.launchAction(myFixture.findSingleIntention("Annotate overridden method parameters"));
-    myFixture.checkResultByFile(getTestName(false) + "_after.java");
+    doTestWithFix("Annotate overridden method parameters");
+  }
+
+  public void testQuickFixOnTypeArgument() {
+    DataFlowInspection8Test.setupTypeUseAnnotations("typeUse", myFixture);
+    NullableNotNullManager manager = NullableNotNullManager.getInstance(getProject());
+    String oldDefault = manager.getDefaultNotNull();
+    try {
+      manager.setDefaultNotNull("typeUse.NotNull");
+      doTestWithFix("Annotate as @NotNull");
+    }
+    finally {
+      manager.setDefaultNotNull(oldDefault);
+    }
+  }
+
+  public void testQuickFixOnTypeArgumentNullable() {
+    DataFlowInspection8Test.setupTypeUseAnnotations("typeUse", myFixture);
+    NullableNotNullManager manager = NullableNotNullManager.getInstance(getProject());
+    String oldDefault = manager.getDefaultNotNull();
+    try {
+      manager.setDefaultNotNull("typeUse.NotNull");
+      doTestWithFix("Annotate as @NotNull");
+    }
+    finally {
+      manager.setDefaultNotNull(oldDefault);
+    }
   }
 }

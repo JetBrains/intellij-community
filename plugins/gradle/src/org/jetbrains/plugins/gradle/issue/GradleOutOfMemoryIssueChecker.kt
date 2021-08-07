@@ -40,7 +40,7 @@ class GradleOutOfMemoryIssueChecker : GradleIssueChecker {
       quickFixes.add(openFileQuickFix)
     }
 
-    val gradleUserHomeDir = BuildLayoutParameters().gradleUserHomeDir
+    val gradleUserHomeDir = issueData.buildEnvironment?.gradle?.gradleUserHome ?: BuildLayoutParameters().gradleUserHomeDir
     val commonGradleProperties = Paths.get(gradleUserHomeDir.path, "gradle.properties")
     if (commonGradleProperties.isFile()) {
       val openFileQuickFix = OpenFileQuickFix(commonGradleProperties, "org.gradle.jvmargs")

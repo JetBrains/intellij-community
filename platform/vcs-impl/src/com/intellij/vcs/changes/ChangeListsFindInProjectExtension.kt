@@ -9,6 +9,7 @@ import com.intellij.openapi.actionSystem.LangDataKeys
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.VcsDataKeys
 import com.intellij.openapi.vcs.changes.ChangeListManager
+import com.intellij.openapi.vcs.changes.ChangesUtil
 import com.intellij.psi.search.SearchScopeProvider
 import com.intellij.psi.search.scope.packageSet.NamedScope
 import com.intellij.util.ArrayUtil
@@ -20,14 +21,13 @@ class ChangeListsFindInProjectExtension : FindInProjectExtension {
     val module = LangDataKeys.MODULE_CONTEXT.getData(dataContext)
     if (module != null || project == null) return false
 
-    val changeListManager = ChangeListManager.getInstance(project)
-    if (!changeListManager.areChangeListsEnabled()) return false
+    if (!ChangesUtil.hasMeaningfulChangelists(project)) return false
 
     var changeList = ArrayUtil.getFirstElement(dataContext.getData(VcsDataKeys.CHANGE_LISTS))
     if (changeList == null) {
       val change = ArrayUtil.getFirstElement(dataContext.getData(VcsDataKeys.CHANGES))
       changeList = if (change == null) null else {
-        changeListManager.getChangeList(change)
+        ChangeListManager.getInstance(project).getChangeList(change)
       }
     }
 

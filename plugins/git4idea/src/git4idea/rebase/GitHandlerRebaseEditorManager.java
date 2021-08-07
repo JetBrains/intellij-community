@@ -3,9 +3,9 @@ package git4idea.rebase;
 
 import git4idea.GitUtil;
 import git4idea.commands.GitHandler;
+import git4idea.editor.GitRebaseEditorXmlRpcHandler;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.git4idea.editor.GitRebaseEditorXmlRpcHandler;
 
 import java.util.UUID;
 

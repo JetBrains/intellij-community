@@ -48,15 +48,12 @@ SHELL_SCRIPT
           PsiElement(word)('y')
   PsiElement(\n)('\n')
   COMMANDS_LIST
-    SIMPLE_COMMAND
-      GENERIC_COMMAND_DIRECTIVE
-        REDIRECTION
-          PsiElement(>&)('>&')
-          PsiWhiteSpace(' ')
-          PsiElement(word)('x')
-      PsiWhiteSpace(' ')
-      LITERAL
+    GENERIC_COMMAND_DIRECTIVE
+      REDIRECTION
+        PsiElement(>&)('>&')
+        PsiWhiteSpace(' ')
+        PsiElement(word)('x')
+        PsiWhiteSpace(' ')
         PsiElement(word)('.')
-      PsiWhiteSpace(' ')
-      LITERAL
+        PsiWhiteSpace(' ')
         PsiElement(word)('x')

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.util;
 
 import com.intellij.openapi.util.Computable;
@@ -16,8 +16,8 @@ import org.jetbrains.annotations.NotNull;
  * The computation will be re-run in the following circumstances:
  * <ol>
  *   <li>Garbage collector collects the result cached internally (it's kept via a {@link java.lang.ref.SoftReference}).
- *   <li>The IDE determines that cached value is outdated because some its dependencies are changed. See
- *   {@link CachedValueProvider.Result#getDependencyItems()}
+ *   <li>The IDE determines that cached value is outdated because some of its dependencies have changed.
+ *   See {@link CachedValueProvider.Result#getDependencyItems()}
  * </ol>
  *
  * The implementation is thread-safe but not atomic, i.e. if several threads request the cached value simultaneously, the computation may
@@ -25,8 +25,9 @@ import org.jetbrains.annotations.NotNull;
  * cached value providers shouldn't have side effects.<p></p>
  *
  * <b>Result equivalence</b>: CachedValue might return a different result even if the previous one
- * is still reachable and not garbage-collected, and dependencies haven't changed. Therefore CachedValue results
- * should be equivalent and interchangeable if they're called multiple times. Examples:
+ * is still reachable and not garbage-collected, and dependencies haven't changed.
+ * Therefore, CachedValue results should be equivalent and interchangeable if they're called multiple times.
+ * Examples:
  * <ul>
  *   <li>If PSI declarations are cached, {@link #equals} or at least {@link com.intellij.psi.PsiManager#areElementsEquivalent}
  *   should hold for results from the same CachedValue.</li>
@@ -38,8 +39,8 @@ import org.jetbrains.annotations.NotNull;
  * See that method's documentation for further information and advice, when a failure happens.<p></p>
  *
  * <b>Context-independence</b>: if you store the CachedValue in a field or user data of some object {@code X}, then its {@link CachedValueProvider}
- * may only depend on X and parts of global system state that don't change while {@code X} is alive and valid (e.g. application/project components/services).
- * Otherwise re-invoking the CachedValueProvider after invalidation would use outdated data and produce incorrect results,
+ * may only depend on X and parts of the global system state that don't change while {@code X} is alive and valid (e.g. application/project components/services).
+ * Otherwise, re-invoking the CachedValueProvider after invalidation would use outdated data and produce incorrect results,
  * possibly causing exceptions in places far, far away. In particular, the provider may not capture:
  * <ul>
  *   <li>Parameters of a method where CachedValue is created, except for {@code X} itself. Example:
@@ -70,9 +71,10 @@ import org.jetbrains.annotations.NotNull;
  * if the computation is inherently cyclic. Note that this is likely to result in {@link StackOverflowError},
  * so avoid such situations at all cost. If there's no other way, use
  * {@link com.intellij.openapi.util.RecursionManager#doPreventingRecursion} instead of custom thread-locals to help get out of the endless loop. Please ensure this call happens inside
- * the {@link CachedValueProvider}, not outside {@link CachedValue#getValue()} call. Otherwise you might get no caching at all, because
- * CachedValue uses {@link RecursionGuard.StackStamp#mayCacheNow()} to prevent caching incomplete values, and even the top-level
- * call would be considered incomplete if it happens inside {@code doPreventingRecursion}.
+ * the {@link CachedValueProvider}, not outside {@link CachedValue#getValue()} call.
+ * Otherwise, you might get no caching at all,
+ * because CachedValue uses {@link RecursionGuard.StackStamp#mayCacheNow()} to prevent caching incomplete values,
+ * and even the top-level call would be considered incomplete if it happens inside {@code doPreventingRecursion}.
  *
  * @param <T> The type of the computation result.
  *
@@ -93,7 +95,7 @@ public interface CachedValue<T> {
   CachedValueProvider<T> getValueProvider();
 
   /**
-   * @return whether there is a cached result inside this object and it's not outdated
+   * @return whether there is a cached result inside this object, and it's not outdated
    */
   boolean hasUpToDateValue();
 

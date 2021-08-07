@@ -1,9 +1,8 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.graph.impl;
 
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.util.Chunk;
-import com.intellij.util.containers.Stack;
 import com.intellij.util.graph.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -11,7 +10,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 
 public final class GraphAlgorithmsImpl extends GraphAlgorithms {
-
   @Nullable
   @Override
   public <Node> List<Node> findShortestPath(@NotNull InboundSemiGraph<Node> graph, @NotNull Node start, @NotNull Node finish) {
@@ -105,15 +103,16 @@ public final class GraphAlgorithmsImpl extends GraphAlgorithms {
     if (!set.add(start)) {
       return;
     }
-    final Stack<Node> stack = new Stack<>();
-    stack.push(start);
-    while (!stack.empty()) {
-      final Node currentNode = stack.pop();
-      final Iterator<Node> successorIterator = graph.getOut(currentNode);
+
+    List<Node> stack = new ArrayList<>();
+    stack.add(start);
+    while (!stack.isEmpty()) {
+      Node currentNode = stack.remove(stack.size() - 1);
+      Iterator<Node> successorIterator = graph.getOut(currentNode);
       while (successorIterator.hasNext()) {
         Node successor = successorIterator.next();
         if (set.add(successor)) {
-          stack.push(successor);
+          stack.add(successor);
         }
       }
     }

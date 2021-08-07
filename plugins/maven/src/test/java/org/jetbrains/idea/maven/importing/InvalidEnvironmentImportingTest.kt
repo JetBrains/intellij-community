@@ -4,13 +4,18 @@ package org.jetbrains.idea.maven.importing
 import com.intellij.build.SyncViewManager
 import com.intellij.build.events.BuildEvent
 import com.intellij.openapi.application.WriteAction
+import com.intellij.openapi.projectRoots.impl.JavaAwareProjectJdkTableImpl
 import com.intellij.openapi.roots.ProjectRootManager
-import org.jetbrains.idea.maven.MavenImportingTestCase
+import com.intellij.testFramework.LoggedErrorProcessor
+import junit.framework.TestCase
+import org.jetbrains.idea.maven.MavenMultiVersionImportingTestCase
 import org.jetbrains.idea.maven.execution.MavenRunnerSettings
 import org.jetbrains.idea.maven.project.MavenWorkspaceSettingsComponent
 import org.jetbrains.idea.maven.server.MavenServerCMDState
+import org.jetbrains.idea.maven.server.MavenServerManager
+import org.junit.Test
 
-class InvalidEnvironmentImportingTest : MavenImportingTestCase() {
+class InvalidEnvironmentImportingTest : MavenMultiVersionImportingTestCase() {
   private lateinit var myTestSyncViewManager: SyncViewManager
   private val myEvents: MutableList<BuildEvent> = ArrayList()
 
@@ -24,29 +29,72 @@ class InvalidEnvironmentImportingTest : MavenImportingTestCase() {
     myProjectsManager.setProgressListener(myTestSyncViewManager);
   }
 
-  fun testShouldShowWarningIfBadJDK() {
+  @Test
+  fun testShouldShowWarningIfProjectJDKIsNullAndRollbackToInternal() {
+    val oldLogger = LoggedErrorProcessor.getInstance()
     val projectSdk = ProjectRootManager.getInstance(myProject).projectSdk
     val jdkForImporter = MavenWorkspaceSettingsComponent.getInstance(myProject).settings.importingSettings.jdkForImporter
     try {
-      MavenWorkspaceSettingsComponent.getInstance(
-        myProject).settings.importingSettings.jdkForImporter = MavenRunnerSettings.USE_PROJECT_JDK;
+      LoggedErrorProcessor.setNewInstance(loggedErrorProcessor("Project JDK is not specifie", oldLogger))
+      MavenWorkspaceSettingsComponent.getInstance(myProject)
+        .settings.getImportingSettings().jdkForImporter = MavenRunnerSettings.USE_PROJECT_JDK;
       WriteAction.runAndWait<Throwable> { ProjectRootManager.getInstance(myProject).projectSdk = null }
       createAndImportProject()
-      assertEvent { it.message.startsWith("Project JDK is not specified") }
+      val connectors = MavenServerManager.getInstance().allConnectors.filter { it.project == myProject }
+      assertNotEmpty(connectors)
+      TestCase.assertEquals(JavaAwareProjectJdkTableImpl.getInstanceEx().getInternalJdk(), connectors[0].jdk);
     }
     finally {
       WriteAction.runAndWait<Throwable> { ProjectRootManager.getInstance(myProject).projectSdk = projectSdk }
       MavenWorkspaceSettingsComponent.getInstance(myProject).settings.importingSettings.jdkForImporter = jdkForImporter
+      LoggedErrorProcessor.setNewInstance(oldLogger)
     }
   }
 
+  @Test
   fun testShouldShowLogsOfMavenServerIfNotStarted() {
+    val oldLogger = LoggedErrorProcessor.getInstance()
     try {
+      LoggedErrorProcessor.setNewInstance(loggedErrorProcessor("Maven server exception for tests", oldLogger))
       MavenServerCMDState.setThrowExceptionOnNextServerStart()
       createAndImportProject()
       assertEvent { it.message.contains("Maven server exception for tests") }
-    } finally {
+    }
+    finally {
       MavenServerCMDState.resetThrowExceptionOnNextServerStart()
+      LoggedErrorProcessor.setNewInstance(oldLogger)
+    }
+  }
+
+  @Test
+  fun `test maven server not started - bad vm config`() {
+    val oldLogger = LoggedErrorProcessor.getInstance()
+    try {
+      LoggedErrorProcessor.setNewInstance(loggedErrorProcessor("java.util.concurrent.ExecutionException:", oldLogger))
+      createProjectSubFile(".mvn/jvm.config", "-Xms100m -Xmx10m")
+      createAndImportProject()
+      assertEvent { it.message.contains("Error occurred during initialization of VM") }
+    }
+    finally {
+      LoggedErrorProcessor.setNewInstance(oldLogger)
+    }
+  }
+
+  @Test
+  fun `test maven import - bad maven config`() {
+    assumeVersionMoreThan("3.3.1");
+    createProjectSubFile(".mvn/maven.config", "-aaaaT1")
+    createAndImportProject()
+    assertModules("test")
+    assertEvent { it.message.contains("Unable to parse maven.config:") }
+  }
+
+  private fun loggedErrorProcessor(search: String, oldLogger: LoggedErrorProcessor) = object : LoggedErrorProcessor() {
+    override fun processError(category: String, message: String?, t: Throwable?, details: Array<out String>): Boolean {
+      if (message != null && message.contains(search)) {
+        return false
+      }
+      return oldLogger.processError(category, message, t, details)
     }
   }
 

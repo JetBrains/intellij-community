@@ -1,14 +1,22 @@
 <html>
 <body>
-Reports <b>.equals()</b> or
-<b>.hashCode()</b> being called
-on <b>java.net.URL</b> objects. This can cause performance
-problems because those methods uses a DNS lookup
-to determine the equality of two <b>java.net.URL</b> objects.
-Depending on the availability of the network and the speed of the DNS server, this can cause
-significant delays.
-<!-- tooltip end -->
+Reports <code>hashCode()</code> and <code>equals()</code> being called on <code>java.net.URL</code> objects.
 <p>
-
+  The <code>java.net.URL</code> class internally uses an instance of <code>java.net.URLStreamHandler</code>
+  to execute <code>hashCode()</code> and <code>equals()</code>.
+  This can cause performance problems because <code>java.net.URLStreamHandler</code> performs DNS lookups.
+  Depending on the availability of the network and the speed of a DNS server this can cause significant delays.
+</p>
+<p>The problem can most likely be solved by using <code>java.net.URI</code> instead.</p>
+<p><b>Example:</b></p>
+<pre>
+  <code>
+    int f(URL url1, URL url2) {
+      if (url1.equals(url2)) return url1.hashCode();
+      else return url2.hashCode();
+    }
+  </code>
+</pre>
+<!-- tooltip end -->
 </body>
 </html>

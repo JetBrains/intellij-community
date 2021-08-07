@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.refactoring.convertToJava;
 
 import com.intellij.lang.ASTNode;
@@ -1345,7 +1345,7 @@ public class ExpressionGenerator extends Generator {
         builder.append('.');
       }
     }
-    builder.append(method.getName());
+    builder.append(GroovyToJavaGenerator.convertToJavaIdentifier(method.getName()));
     final GrSignature signature = GrClosureSignatureUtil.createSignature(method, substitutor);
     new ArgumentListGenerator(builder, this.context).generate(signature, exprs, namedArgs, closures, context);
   }

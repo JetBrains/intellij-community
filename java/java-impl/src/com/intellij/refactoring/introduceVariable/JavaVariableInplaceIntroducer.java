@@ -1,32 +1,21 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.introduceVariable;
 
 import com.intellij.codeInsight.intention.impl.TypeExpression;
 import com.intellij.codeInsight.template.TemplateBuilderImpl;
+import com.intellij.codeInsight.template.impl.TemplateManagerImpl;
+import com.intellij.codeInsight.template.impl.TemplateState;
 import com.intellij.java.JavaBundle;
-import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.openapi.actionSystem.Shortcut;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.command.CommandProcessor;
-import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.editor.ScrollType;
+import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsContexts;
@@ -42,22 +31,20 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
-import com.intellij.refactoring.JavaRefactoringSettings;
 import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.introduceParameter.AbstractJavaInplaceIntroducer;
 import com.intellij.refactoring.rename.ResolveSnapshotProvider;
+import com.intellij.refactoring.rename.inplace.SelectableInlayPresentation;
+import com.intellij.refactoring.rename.inplace.TemplateInlayUtil;
 import com.intellij.refactoring.rename.inplace.VariableInplaceRenamer;
 import com.intellij.refactoring.ui.TypeSelectorManagerImpl;
 import com.intellij.refactoring.util.RefactoringUtil;
-import com.intellij.ui.NonFocusableCheckBox;
-import com.intellij.util.ui.JBUI;
+import com.intellij.util.concurrency.NonUrgentExecutor;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -66,8 +53,6 @@ public class JavaVariableInplaceIntroducer extends AbstractJavaInplaceIntroducer
 
   private SmartPsiElementPointer<? extends PsiElement> myPointer;
 
-  private JCheckBox myCanBeFinalCb;
-  private JCheckBox myCanBeVarTypeCb;
   private final IntroduceVariableSettings mySettings;
   private final SmartPsiElementPointer<PsiElement> myChosenAnchor;
   private final boolean myCantChangeFinalModifier;
@@ -196,13 +181,6 @@ public class JavaVariableInplaceIntroducer extends AbstractJavaInplaceIntroducer
     }
 
     TypeSelectorManagerImpl.typeSelected(psiVariable.getType(), myTypeSelectorManager.getDefaultType());
-    if (myCanBeFinalCb != null) {
-      JavaRefactoringSettings.getInstance().INTRODUCE_LOCAL_CREATE_FINALS = psiVariable.hasModifierProperty(PsiModifier.FINAL);
-    }
-
-    if (myCanBeVarTypeCb != null) {
-      JavaRefactoringSettings.getInstance().INTRODUCE_LOCAL_CREATE_VAR_TYPE = myCanBeVarTypeCb.isSelected();
-    }
 
     final Document document = myEditor.getDocument();
     LOG.assertTrue(psiVariable.isValid());
@@ -248,73 +226,46 @@ public class JavaVariableInplaceIntroducer extends AbstractJavaInplaceIntroducer
   }
 
   @Override
-  @Nullable
-  protected JComponent getComponent() {
+  protected @Nullable JComponent getComponent() {
+    return null;
+  }
+
+  @Override
+  protected void afterTemplateStart() {
+    super.afterTemplateStart();
+    TemplateState templateState = TemplateManagerImpl.getTemplateState(myEditor);
+    if (templateState == null) return;
+
+    TextRange currentVariableRange = templateState.getCurrentVariableRange();
+    if (currentVariableRange == null) return;
+
     final PsiVariable variable = getVariable();
-    if (variable instanceof PsiPatternVariable && !PsiUtil.isLanguageLevel16OrHigher(variable)) return null;
-    if (myCantChangeFinalModifier && !(myCanBeVarType && variable instanceof PsiLocalVariable)) return null;
-    if (!myCantChangeFinalModifier) {
-      myCanBeFinalCb = new NonFocusableCheckBox(JavaRefactoringBundle.message("declare.final"));
-      myCanBeFinalCb.setSelected(createFinals());
-      myCanBeFinalCb.setMnemonic('f');
-      final FinalListener finalListener = new FinalListener(myEditor);
-      myCanBeFinalCb.addActionListener(new ActionListener() {
-        @Override
-        public void actionPerformed(ActionEvent e) {
-          WriteCommandAction.writeCommandAction(myProject).withName(getCommandName()).withGroupId(getCommandName()).run(() -> {
-            PsiDocumentManager.getInstance(myProject).commitDocument(myEditor.getDocument());
-            final PsiVariable variable = getVariable();
-            if (variable != null) {
-              finalListener.perform(myCanBeFinalCb.isSelected(), variable);
-            }
-          });
-        }
-      });
-    }
+    if (variable instanceof PsiPatternVariable && !PsiUtil.isLanguageLevel16OrHigher(variable)) return;
+    boolean canBeVarType = myCanBeVarType && variable instanceof PsiLocalVariable;
+    if (myCantChangeFinalModifier && !canBeVarType) return;
 
-    if (myCanBeVarType && variable instanceof PsiLocalVariable) {
-      myCanBeVarTypeCb = new NonFocusableCheckBox(JavaRefactoringBundle.message("declare.var.type"));
-      myCanBeVarTypeCb.setSelected(IntroduceVariableBase.createVarType());
-      myCanBeVarTypeCb.addActionListener(new ActionListener() {
-        @Override
-        public void actionPerformed(ActionEvent e) {
-           WriteCommandAction.writeCommandAction(myProject).withName(getCommandName()).withGroupId(getCommandName()).run(() -> {
-            final PsiVariable variable = getVariable();
-            if (variable != null) {
-              PsiTypeElement typeElement = variable.getTypeElement();
-              LOG.assertTrue(typeElement != null);
-              if (myCanBeVarTypeCb.isSelected()) {
-                IntroduceVariableBase.expandDiamondsAndReplaceExplicitTypeWithVar(typeElement, variable);
-              }
-              else {
-                typeElement = PsiTypesUtil.replaceWithExplicitType(typeElement);
-                if (typeElement != null) { //simplify as it was before `var`
-                  IntroduceVariableBase.simplifyVariableInitializer(variable.getInitializer(), typeElement.getType());
-                }
-              }
-            }
-          });
-        }
-      });
-    }
+    IntroduceVariablePopupComponent
+      popupComponent = new IntroduceVariablePopupComponent(myEditor, myProject, myCantChangeFinalModifier, canBeVarType, getCommandName(), () -> getVariable());
+    
+    SelectableInlayPresentation presentation = TemplateInlayUtil.createSettingsPresentation((EditorImpl)templateState.getEditor(), popupComponent.logStatisticsOnShowCallback());
+    TemplateInlayUtil.SelectableTemplateElement templateElement = new TemplateInlayUtil.SelectableTemplateElement(presentation) {
+      @Override
+      public void onSelect(@NotNull TemplateState templateState) {
+        super.onSelect(templateState);
+        popupComponent.logStatisticsOnShow(null);
+      }
+    };
+    TemplateInlayUtil.createNavigatableButtonWithPopup(templateState, 
+                                                       currentVariableRange.getEndOffset(),
+                                                       presentation, 
+                                                       popupComponent.createPopupPanel(), 
+                                                       templateElement,
+                                                       popupComponent.logStatisticsOnHideCallback()); 
+  }
 
-    final JPanel panel = new JPanel(new GridBagLayout());
-    panel.setBorder(null);
-
-    GridBagConstraints gridBagConstraints = new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1, 0, GridBagConstraints.NORTHWEST, GridBagConstraints.HORIZONTAL,
-                                                            JBUI.insets(5), 0, 0);
-    if (myCanBeFinalCb != null) {
-      panel.add(myCanBeFinalCb, gridBagConstraints);
-    }
-
-    if (myCanBeVarTypeCb != null) {
-      panel.add(myCanBeVarTypeCb, gridBagConstraints);
-    }
-
-    gridBagConstraints.fill = GridBagConstraints.BOTH;
-    panel.add(Box.createVerticalBox(), gridBagConstraints);
-
-    return panel;
+  @Override
+  protected void showDialogAdvertisement(@NonNls String actionId) {
+    initPopupOptionsAdvertisement();
   }
 
   @Override
@@ -423,7 +374,11 @@ public class JavaVariableInplaceIntroducer extends AbstractJavaInplaceIntroducer
 
 
   protected boolean createFinals() {
-    return IntroduceVariableBase.createFinals(myFile);
+    return createFinals(myFile);
+  }
+
+  static boolean createFinals(PsiFile file) {
+    return IntroduceVariableBase.createFinals(file);
   }
 
   public static void adjustLine(final PsiVariable psiVariable, final Document document) {
@@ -491,7 +446,13 @@ public class JavaVariableInplaceIntroducer extends AbstractJavaInplaceIntroducer
         SmartPsiElementPointer<PsiDeclarationStatement> pointer = smartPointerManager.createSmartPsiElementPointer(declarationStatement);
         myPointer = pointer;
         myEditor.putUserData(ReassignVariableUtil.DECLARATION_KEY, pointer);
-        setAdvertisementText(getAdvertisementText(declarationStatement, variable.getType(), myHasTypeSuggestion));
+        PsiType variableType = variable.getType();
+        ReadAction.nonBlocking(() -> {
+            PsiDeclarationStatement element = pointer.getElement();
+            return element != null && variableType.isValid() ? getAdvertisementText(element, variableType, myHasTypeSuggestion) : null;
+          })
+          .finishOnUiThread(ModalityState.NON_MODAL, (@NlsContexts.PopupAdvertisement String text) -> setAdvertisementText(text))
+          .submit(NonUrgentExecutor.getInstance());
       }
     }
 

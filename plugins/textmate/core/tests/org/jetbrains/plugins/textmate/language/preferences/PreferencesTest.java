@@ -3,6 +3,7 @@ package org.jetbrains.plugins.textmate.language.preferences;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.textmate.TestUtil;
 import org.jetbrains.plugins.textmate.bundles.Bundle;
+import org.jetbrains.plugins.textmate.language.syntax.lexer.TextMateScope;
 import org.jetbrains.plugins.textmate.plist.CompositePlistReader;
 import org.jetbrains.plugins.textmate.plist.Plist;
 import org.junit.Test;
@@ -18,7 +19,7 @@ public class PreferencesTest {
   @Test
   public void retrievePreferencesBySelector_1() throws Exception {
     final PreferencesRegistry preferencesRegistry = loadPreferences(TestUtil.PREFERENCES_TEST_BUNDLE);
-    final List<Preferences> preferences = preferencesRegistry.getPreferences("text.html.basic");
+    final List<Preferences> preferences = preferencesRegistry.getPreferences(TestUtil.scopeFromString("text.html.basic"));
     assertEquals(1, preferences.size());
     assertEquals(newHashSet(new TextMateBracePair('"', '"')), preferences.get(0).getSmartTypingPairs());
     assertEquals(newHashSet(new TextMateBracePair('`', '`')), preferences.get(0).getHighlightingPairs());
@@ -27,7 +28,7 @@ public class PreferencesTest {
   @Test
   public void retrievePreferencesBySelector_2() throws Exception {
     final PreferencesRegistry preferencesRegistry = loadPreferences(TestUtil.PREFERENCES_TEST_BUNDLE);
-    final List<Preferences> preferences = preferencesRegistry.getPreferences("source.php string");
+    final List<Preferences> preferences = preferencesRegistry.getPreferences(TestUtil.scopeFromString("source.php string"));
     assertEquals(1, preferences.size());
     assertEquals(newHashSet(new TextMateBracePair('(', ')')), preferences.get(0).getSmartTypingPairs());
     assertEquals(newHashSet(new TextMateBracePair('[', ']')), preferences.get(0).getHighlightingPairs());
@@ -35,8 +36,9 @@ public class PreferencesTest {
 
   @Test
   public void retrievePreferencesBySelectorCorrespondingToSelectorWeight() throws Exception {
-    final PreferencesRegistry preferencesRegistry = loadPreferences(TestUtil.PREFERENCES_TEST_BUNDLE);
-    final List<Preferences> preferences = preferencesRegistry.getPreferences("text.html source.php string.quoted.double.php");
+    PreferencesRegistry preferencesRegistry = loadPreferences(TestUtil.PREFERENCES_TEST_BUNDLE);
+    List<Preferences> preferences =
+      preferencesRegistry.getPreferences(TestUtil.scopeFromString("text.html source.php string.quoted.double.php"));
     assertEquals(2, preferences.size());
     assertEquals(newHashSet(new TextMateBracePair('(', ')')), preferences.get(0).getSmartTypingPairs());
     assertEquals(newHashSet(new TextMateBracePair('[', ']')), preferences.get(0).getHighlightingPairs());
@@ -48,21 +50,21 @@ public class PreferencesTest {
   @Test
   public void loadingWithTheSameScope() throws Exception {
     final PreferencesRegistry preferencesRegistry = loadPreferences(TestUtil.PREFERENCES_TEST_BUNDLE);
-    final Preferences preferences = mergeAll(preferencesRegistry.getPreferences("same.scope"));
+    final Preferences preferences = mergeAll(preferencesRegistry.getPreferences(TestUtil.scopeFromString("same.scope")));
     assertEquals(newHashSet(new TextMateBracePair('[', ']'), new TextMateBracePair('(', ')')), preferences.getSmartTypingPairs());
   }
 
   @Test
   public void loadHighlightingPairs() throws Exception {
     PreferencesRegistry preferencesRegistry = loadPreferences(TestUtil.MARKDOWN_TEXTMATE);
-    Preferences preferences = mergeAll(preferencesRegistry.getPreferences("text.html.markdown markup.raw, text.html.markdown meta.link"));
+    Preferences preferences = mergeAll(preferencesRegistry.getPreferences(TestUtil.scopeFromString("text.html.markdown markup.raw")));
     assertEquals(newHashSet(new TextMateBracePair('[', ']'), new TextMateBracePair('`', '`')), preferences.getHighlightingPairs());
   }
 
   @Test
   public void loadSmartTypingPairs() throws Exception {
     PreferencesRegistry preferencesRegistry = loadPreferences(TestUtil.MARKDOWN_TEXTMATE);
-    Preferences preferences = mergeAll(preferencesRegistry.getPreferences("text.html.markdown markup.raw, text.html.markdown meta.link"));
+    Preferences preferences = mergeAll(preferencesRegistry.getPreferences(TestUtil.scopeFromString("text.html.markdown markup.raw")));
     assertEquals(newHashSet(
       new TextMateBracePair('{', '}'),
       new TextMateBracePair('(', ')'),
@@ -73,7 +75,8 @@ public class PreferencesTest {
   @Test
   public void loadDisabledPairs() throws Exception {
     PreferencesRegistry preferencesRegistry = loadPreferences(TestUtil.LATEX);
-    Preferences preferences = preferencesRegistry.getPreferences("text.tex constant.character.escape.tex").iterator().next();
+    TextMateScope scope = TestUtil.scopeFromString("text.tex constant.character.escape.tex");
+    Preferences preferences = preferencesRegistry.getPreferences(scope).iterator().next();
     Set<TextMateBracePair> smartTypingPairs = preferences.getSmartTypingPairs();
     assertNotNull(smartTypingPairs);
     assertEquals(0, smartTypingPairs.size());
@@ -85,7 +88,7 @@ public class PreferencesTest {
     assertNotNull(bundle);
     final PreferencesRegistry preferencesRegistry = new PreferencesRegistry();
     for (File file : bundle.getPreferenceFiles()) {
-      for (Map.Entry<String, Plist > settingsPair : bundle.loadPreferenceFile(file, new CompositePlistReader())) {
+      for (Map.Entry<String, Plist> settingsPair : bundle.loadPreferenceFile(file, new CompositePlistReader())) {
         if (settingsPair != null) {
           preferencesRegistry.fillFromPList(settingsPair.getKey(), settingsPair.getValue());
         }

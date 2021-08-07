@@ -3,7 +3,6 @@ package com.intellij.openapi.actionSystem;
 
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.PlaceProvider;
 import org.intellij.lang.annotations.JdkConstants;
 import org.jetbrains.annotations.ApiStatus;
@@ -20,7 +19,6 @@ import java.awt.event.InputEvent;
  * @see AnAction#update(AnActionEvent)
  */
 public class AnActionEvent implements PlaceProvider {
-  private static final String ourInjectedPrefix = "$injected$.";
 
   private final InputEvent myInputEvent;
   private final ActionManager myActionManager;
@@ -76,6 +74,7 @@ public class AnActionEvent implements PlaceProvider {
 
   @NotNull
   public AnActionEvent withDataContext(@NotNull DataContext dataContext) {
+    if (myDataContext == dataContext) return this;
     AnActionEvent event = new AnActionEvent(myInputEvent, dataContext, myPlace, myPresentation,
                                             myActionManager, myModifiers, myIsContextMenuAction, myIsActionToolbar);
     event.setInjectedContext(myWorksInInjected);
@@ -151,29 +150,12 @@ public class AnActionEvent implements PlaceProvider {
     return getData(CommonDataKeys.PROJECT);
   }
 
-  @NonNls
   @NotNull
-  public static String injectedId(@NotNull String dataId) {
-    return ourInjectedPrefix + dataId;
-  }
-
-  @NonNls
-  @NotNull
-  public static String uninjectedId(@NotNull String dataId) {
-    return StringUtil.trimStart(dataId, ourInjectedPrefix);
-  }
-
-  @NotNull
-  public static DataContext getInjectedDataContext(@NotNull DataContext context) {
-    return new DataContextWrapper(context) {
-      @Nullable
-      @Override
-      public Object getData(@NotNull @NonNls String dataId) {
-        Object injected = super.getData(injectedId(dataId));
-        if (injected != null) return injected;
-        return super.getData(dataId);
-      }
-    };
+  public static DataContext getInjectedDataContext(@NotNull DataContext dataContext) {
+    if (dataContext instanceof InjectedDataContextSupplier) {
+      return ((InjectedDataContextSupplier)dataContext).getInjectedDataContext();
+    }
+    return dataContext instanceof InjectedDataContext ? dataContext : new InjectedDataContext(dataContext);
   }
 
   /**
@@ -293,5 +275,21 @@ public class AnActionEvent implements PlaceProvider {
 
   public void setUpdateSession(@Nullable UpdateSession updateSession) {
     myUpdateSession = updateSession;
+  }
+
+  @ApiStatus.Internal
+  public interface InjectedDataContextSupplier {
+    @NotNull DataContext getInjectedDataContext();
+  }
+
+  private static class InjectedDataContext extends DataContextWrapper {
+    InjectedDataContext(@NotNull DataContext context) { super(context); }
+
+    @Override
+    public @Nullable Object getData(@NotNull @NonNls String dataId) {
+      String injectedId = InjectedDataKeys.injectedId(dataId);
+      Object injected = injectedId != null ? super.getData(injectedId) : null;
+      return injected != null ? injected : super.getData(dataId);
+    }
   }
 }

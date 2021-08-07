@@ -18,20 +18,25 @@ package com.intellij.openapi.command.undo;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.ApiStatus;
+
 /**
  * @deprecated Use {@link UndoUtil} instead
  */
+@ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
 @Deprecated
 public interface UndoConstants {
   /**
    * @deprecated Use {@link UndoUtil#forceUndoIn(VirtualFile, Runnable)} instead
    */
+  @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
   @Deprecated
   Key<Boolean> FORCE_RECORD_UNDO = Key.create("FORCE_RECORD_UNDO");
 
   /**
    * @deprecated Use {@link UndoUtil#disableUndoIn(Document, Runnable)} instead
    */
+  @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
   @Deprecated
   Key<Boolean> DONT_RECORD_UNDO = Key.create("DONT_RECORD_UNDO");
 }

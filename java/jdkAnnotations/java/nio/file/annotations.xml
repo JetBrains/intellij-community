@@ -262,46 +262,161 @@
   <item name='java.nio.file.Files void delete(java.nio.file.Path) 0'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
   </item>
+  <item name='java.nio.file.Path boolean endsWith(java.lang.String)'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
+    </annotation>
+  </item>
   <item name='java.nio.file.Path boolean endsWith(java.lang.String) 0'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
     <annotation name='org.jetbrains.annotations.NonNls'/>
   </item>
+  <item name='java.nio.file.Path boolean endsWith(java.nio.file.Path)'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
+    </annotation>
+  </item>
   <item name='java.nio.file.Path boolean endsWith(java.nio.file.Path) 0'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.nio.file.Path boolean isAbsolute()'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
+    </annotation>
+  </item>
+  <item name='java.nio.file.Path boolean startsWith(java.lang.String)'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
+    </annotation>
   </item>
   <item name='java.nio.file.Path boolean startsWith(java.lang.String) 0'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
     <annotation name='org.jetbrains.annotations.NonNls'/>
   </item>
+  <item name='java.nio.file.Path boolean startsWith(java.nio.file.Path)'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
+    </annotation>
+  </item>
   <item name='java.nio.file.Path boolean startsWith(java.nio.file.Path) 0'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
   </item>
+  <item name='java.nio.file.Path int compareTo(java.nio.file.Path)'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
+    </annotation>
+  </item>
+  <item name='java.nio.file.Path int compareTo(java.nio.file.Path) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.nio.file.Path int getNameCount()'>
+    <annotation name='org.jetbrains.annotations.Range'>
+      <val name="from" val="0"/>
+      <val name="to" val="java.lang.Integer.MAX_VALUE"/>
+    </annotation>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
+    </annotation>
+  </item>
+  <item name='java.nio.file.Path int hashCode()'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
+    </annotation>
+  </item>
   <item name='java.nio.file.Path java.io.File toFile()'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
+    </annotation>
+  </item>
+  <item name='java.nio.file.Path java.lang.String toString()'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
+    </annotation>
     <annotation name='org.jetbrains.annotations.NotNull'/>
   </item>
   <item name='java.nio.file.Path java.net.URI toUri()'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
+    </annotation>
   </item>
   <item name='java.nio.file.Path java.nio.file.FileSystem getFileSystem()'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
+    </annotation>
+  </item>
+  <item name='java.nio.file.Path java.nio.file.Path getFileName()'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
+    </annotation>
   </item>
   <item name='java.nio.file.Path java.nio.file.Path getName(int)'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
+    </annotation>
+  </item>
+  <item name='java.nio.file.Path java.nio.file.Path getName(int) 0'>
+    <annotation name='org.jetbrains.annotations.Range'>
+      <val name="from" val="0"/>
+      <val name="to" val="java.lang.Integer.MAX_VALUE"/>
+    </annotation>
+  </item>
+  <item name='java.nio.file.Path java.nio.file.Path getParent()'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
+    </annotation>
+  </item>
+  <item name='java.nio.file.Path java.nio.file.Path getRoot()'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
+    </annotation>
+  </item>
+  <item name='java.nio.file.Path java.nio.file.Path normalize()'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
+    </annotation>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.nio.file.Path java.nio.file.Path of(java.lang.String, java.lang.String...)'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
+    </annotation>
   </item>
   <item name='java.nio.file.Path java.nio.file.Path of(java.lang.String, java.lang.String...) 0'>
     <annotation name='org.jetbrains.annotations.NonNls'/>
+      <annotation name='org.jetbrains.annotations.NotNull'/>
   </item>
   <item name='java.nio.file.Path java.nio.file.Path of(java.lang.String, java.lang.String...) 1'>
     <annotation name='org.jetbrains.annotations.NonNls'/>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.nio.file.Path java.nio.file.Path of(java.net.URI)'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
+    </annotation>
+  </item>
+  <item name='java.nio.file.Path java.nio.file.Path of(java.net.URI) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
   </item>
   <item name='java.nio.file.Path java.nio.file.Path relativize(java.nio.file.Path)'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
+    </annotation>
   </item>
   <item name='java.nio.file.Path java.nio.file.Path relativize(java.nio.file.Path) 0'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
   </item>
   <item name='java.nio.file.Path java.nio.file.Path resolve(java.lang.String)'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
+    </annotation>
   </item>
   <item name='java.nio.file.Path java.nio.file.Path resolve(java.lang.String) 0'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
@@ -309,12 +424,18 @@
   </item>
   <item name='java.nio.file.Path java.nio.file.Path resolve(java.nio.file.Path)'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
+    </annotation>
   </item>
   <item name='java.nio.file.Path java.nio.file.Path resolve(java.nio.file.Path) 0'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
   </item>
   <item name='java.nio.file.Path java.nio.file.Path resolveSibling(java.lang.String)'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
+    </annotation>
   </item>
   <item name='java.nio.file.Path java.nio.file.Path resolveSibling(java.lang.String) 0'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
@@ -322,15 +443,36 @@
   </item>
   <item name='java.nio.file.Path java.nio.file.Path resolveSibling(java.nio.file.Path)'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
+    </annotation>
   </item>
   <item name='java.nio.file.Path java.nio.file.Path resolveSibling(java.nio.file.Path) 0'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
   </item>
   <item name='java.nio.file.Path java.nio.file.Path subpath(int, int)'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
+    </annotation>
+  </item>
+  <item name='java.nio.file.Path java.nio.file.Path subpath(int, int) 0'>
+    <annotation name='org.jetbrains.annotations.Range'>
+      <val name="from" val="0"/>
+      <val name="to" val="java.lang.Integer.MAX_VALUE"/>
+    </annotation>
+  </item>
+  <item name='java.nio.file.Path java.nio.file.Path subpath(int, int) 1'>
+    <annotation name='org.jetbrains.annotations.Range'>
+      <val name="from" val="0"/>
+      <val name="to" val="java.lang.Integer.MAX_VALUE"/>
+    </annotation>
   </item>
   <item name='java.nio.file.Path java.nio.file.Path toAbsolutePath()'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
+    </annotation>
   </item>
   <item name='java.nio.file.Path java.nio.file.Path toRealPath(java.nio.file.LinkOption...)'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
@@ -338,8 +480,32 @@
   <item name='java.nio.file.Path java.nio.file.Path toRealPath(java.nio.file.LinkOption...) 0'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
   </item>
+  <item name='java.nio.file.Path java.nio.file.WatchKey register(java.nio.file.WatchService, java.nio.file.WatchEvent.Kind&lt;?&gt;...)'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.nio.file.Path java.nio.file.WatchKey register(java.nio.file.WatchService, java.nio.file.WatchEvent.Kind&lt;?&gt;...) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.nio.file.Path java.nio.file.WatchKey register(java.nio.file.WatchService, java.nio.file.WatchEvent.Kind&lt;?&gt;...) 1'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item
+    name='java.nio.file.Path java.nio.file.WatchKey register(java.nio.file.WatchService, java.nio.file.WatchEvent.Kind&lt;?&gt;[], java.nio.file.WatchEvent.Modifier...)'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item
+    name='java.nio.file.Path java.nio.file.WatchKey register(java.nio.file.WatchService, java.nio.file.WatchEvent.Kind&lt;?&gt;[], java.nio.file.WatchEvent.Modifier...) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item
+    name='java.nio.file.Path java.nio.file.WatchKey register(java.nio.file.WatchService, java.nio.file.WatchEvent.Kind&lt;?&gt;[], java.nio.file.WatchEvent.Modifier...) 1'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
   <item name='java.nio.file.Path java.util.Iterator&lt;java.nio.file.Path&gt; iterator()'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
+    </annotation>
   </item>
   <item name='java.nio.file.Paths java.nio.file.Path get(java.lang.String, java.lang.String...)'>
     <annotation name='org.jetbrains.annotations.NotNull'/>

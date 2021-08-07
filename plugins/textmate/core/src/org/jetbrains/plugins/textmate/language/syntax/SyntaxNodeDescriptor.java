@@ -33,8 +33,12 @@ public interface SyntaxNodeDescriptor {
   @Nullable
   CharSequence getStringAttribute(@NotNull Constants.StringKey key);
 
+  boolean hasBackReference(@NotNull Constants.StringKey key);
+
   @Nullable
   Int2ObjectMap<CharSequence> getCaptures(@NotNull Constants.CaptureKey key);
+
+  boolean hasBackReference(@NotNull Constants.CaptureKey key, int group);
 
   @NotNull
   List<SyntaxNodeDescriptor> getChildren();

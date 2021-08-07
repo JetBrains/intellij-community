@@ -1,0 +1,9 @@
+package one.two.three
+
+class Test {
+    companion object
+}
+
+fun test() {
+    one.two.three.Test.Companion
+}

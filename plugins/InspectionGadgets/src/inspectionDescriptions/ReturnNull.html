@@ -1,22 +1,51 @@
 <html>
 <body>
-Reports <b>return</b> statements with <b>null</b> return values.
+Reports <code>return</code> statements with <code>null</code> return values.
 While occasionally useful, this construct may make the code more prone
-to failing with a <b>NullPointerException</b>, and often indicates that the
-developer doesn't really understand the class' intended semantics.
-Methods annotated with a <b>@Nullable</b> annotation will be ignored by this inspection.
+to failing with a <code>NullPointerException</code>.
+<p>
+  If a method is designed to return <code>null</code>, it is suggested to mark it with the
+  <code>@Nullable</code> annotation - such methods will be ignored by this inspection.
+</p>
+<p><b>Example:</b></p>
+<pre><code>
+  class Person {
+    public String getName () {
+      return null;
+    }
+  }
+</code></pre>
+<p>After the quick-fix is applied:</p>
+<pre><code>
+  class Person {
+    @Nullable
+    public String getName () {
+      return null;
+    }
+  }
+</code></pre>
+<p>
+  If the return type is <code>java.util.Optional</code>, an additional quick-fix to convert
+  <code>null</code> to <code>Otional.empty()</code> is suggested.
+</p>
 <!-- tooltip end -->
 <p>
-Use the first checkbox below to let this inspection ignore <b>private</b> methods.
-This will also ignore return of <b>null</b> from anonymous classes and lambda's.
-<p>
-Use the bottom three checkboxes to specify whether
-<b>null</b> values on array returns, collection
-object returns, plain object returns, or a combination of the three should be reported.
-Return of <b>null</b> in methods with return type <b>java.util.Optional</b> are always reported.
-<p>
-Use the <i>Configure annotations</i> button to specify <b>@Nullable</b> annotations.
-<p>
+  Use the following options to configure the inspection:
+</p>
+<ul>
+  <li>
+    Whether to ignore <code>private</code> methods.
+    This will also ignore return of <code>null</code> from anonymous classes and lambdas.
+  </li>
+  <li>
+    Whether <code>null</code> values on array returns, collection
+    object returns, plain object returns, or a combination of the three should be reported.
+    Return of <code>null</code> in methods with return type <code>java.util.Optional</code> are always reported.
+  </li>
+  <li>
+    Click <b>Configure annotations</b> to specify which annotations should be considered 'nullable'.
+  </li>
+</ul>
 
 </body>
 </html>

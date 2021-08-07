@@ -1,7 +1,15 @@
 <html>
 <body>
-Reports <b>Optional.get()</b> method calls without an earlier check that the optional has a value.
-If the optional is empty, calling <b>Optional.get()</b> will throw an exception.
+Reports calls to <code>get()</code> on an <code>Optional</code> without checking that it has a value.
+<p>Calling <code>Optional.get()</code> on an empty <code>Optional</code> instance will throw an exception.</p>
+<p><b>Example:</b></p>
+<pre>
+  <b>void</b> x(List&lt;Integer> list) {
+    <b>final</b> Optional&lt;Integer> optional =
+      list.stream().filter(x -> x > 10).findFirst();
+    <b>final</b> Integer result = optional.get(); // problem here
+  }
+</pre>
 <!-- tooltip end -->
 </body>
 </html>

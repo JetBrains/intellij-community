@@ -1,11 +1,10 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettings;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.EditorMarkupModel;
 import com.intellij.openapi.editor.ex.ErrorStripTooltipRendererProvider;
@@ -16,6 +15,7 @@ import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
@@ -23,7 +23,7 @@ import org.jetbrains.annotations.Nullable;
 
 public final class ErrorStripeUpdateManager implements Disposable {
   public static ErrorStripeUpdateManager getInstance(Project project) {
-    return ServiceManager.getService(project, ErrorStripeUpdateManager.class);
+    return project.getService(ErrorStripeUpdateManager.class);
   }
 
   private final Project myProject;
@@ -60,7 +60,7 @@ public final class ErrorStripeUpdateManager implements Disposable {
   }
 
   @SuppressWarnings("WeakerAccess") // Used in Rider
-  protected void setOrRefreshErrorStripeRenderer(@NotNull EditorMarkupModel editorMarkupModel, @Nullable PsiFile file) {
+  void setOrRefreshErrorStripeRenderer(@NotNull EditorMarkupModel editorMarkupModel, @Nullable PsiFile file) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     if (!editorMarkupModel.isErrorStripeVisible() || file == null || !DaemonCodeAnalyzer.getInstance(myProject).isHighlightingAvailable(file)) {
       return;
@@ -73,10 +73,20 @@ public final class ErrorStripeUpdateManager implements Disposable {
       markupModelImpl.repaintTrafficLightIcon();
       if (tlr.isValid()) return;
     }
-    Editor editor = editorMarkupModel.getEditor();
-    if (editor.isDisposed()) return;
 
-    editorMarkupModel.setErrorStripeRenderer(createRenderer(editor, file));
+    ApplicationManager.getApplication().executeOnPooledThread(() -> {
+      Editor editor = editorMarkupModel.getEditor();
+      if (editor.isDisposed()) return;
+
+      TrafficLightRenderer tlRenderer = createRenderer(editor, file);
+      ApplicationManager.getApplication().invokeLater(() -> {
+        if (editor.isDisposed()) {
+          Disposer.dispose(tlRenderer); // would be registered in setErrorStripeRenderer() below
+          return;
+        }
+        editorMarkupModel.setErrorStripeRenderer(tlRenderer);
+      });
+    });
   }
 
   @NotNull
@@ -84,17 +94,18 @@ public final class ErrorStripeUpdateManager implements Disposable {
     return new DaemonTooltipRendererProvider(myProject, editor);
   }
 
-  private TrafficLightRenderer createRenderer(@NotNull Editor editor, @Nullable PsiFile file) {
+  private @NotNull TrafficLightRenderer createRenderer(@NotNull Editor editor, @Nullable PsiFile file) {
     for (TrafficLightRendererContributor contributor : TrafficLightRendererContributor.EP_NAME.getExtensionList()) {
       TrafficLightRenderer renderer = contributor.createRenderer(editor, file);
-      if (renderer != null) {
-        return renderer;
-      }
+      if (renderer != null) return renderer;
     }
+    return createFallbackRenderer(editor);
+  }
+
+  private @NotNull TrafficLightRenderer createFallbackRenderer(@NotNull Editor editor) {
     return new TrafficLightRenderer(myProject, editor.getDocument()) {
       @Override
-      @NotNull
-      protected UIController createUIController() {
+      protected @NotNull UIController createUIController() {
         return super.createUIController(editor);
       }
     };

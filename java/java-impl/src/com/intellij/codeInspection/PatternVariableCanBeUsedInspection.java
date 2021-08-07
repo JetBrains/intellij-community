@@ -11,10 +11,14 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ObjectUtils;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.psiutils.CommentTracker;
+import com.siyeh.ig.psiutils.ExpressionUtils;
 import com.siyeh.ig.psiutils.InstanceOfUtils;
+import com.siyeh.ig.psiutils.VariableAccessUtils;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.List;
 
 public class PatternVariableCanBeUsedInspection extends AbstractBaseJavaLocalInspectionTool {
   @NotNull
@@ -45,14 +49,62 @@ public class PatternVariableCanBeUsedInspection extends AbstractBaseJavaLocalIns
             !HighlightControlFlowUtil.isEffectivelyFinal(variable, scope, null)) return;
         PsiInstanceOfExpression instanceOf = InstanceOfUtils.findPatternCandidate(cast);
         if (instanceOf != null) {
+          PsiPatternVariable existingPatternVariable = null;
+          PsiPattern pattern = instanceOf.getPattern();
+          if (pattern instanceof PsiTypeTestPattern) {
+            existingPatternVariable = ((PsiTypeTestPattern)pattern).getPatternVariable();
+          }
           String name = identifier.getText();
-          holder.registerProblem(identifier,
-                                 InspectionGadgetsBundle.message("inspection.pattern.variable.can.be.used.message", name),
-                                 new PatternVariableCanBeUsedFix(name, instanceOf));
+          if (existingPatternVariable != null) {
+            holder.registerProblem(identifier,
+                                   InspectionGadgetsBundle.message("inspection.pattern.variable.can.be.used.existing.message", 
+                                                                   existingPatternVariable.getName(), name),
+                                   new ExistingPatternVariableCanBeUsedFix(name, existingPatternVariable));
+          } else {
+            holder.registerProblem(identifier,
+                                   InspectionGadgetsBundle.message("inspection.pattern.variable.can.be.used.message", name),
+                                   new PatternVariableCanBeUsedFix(name, instanceOf));
+          }
         }
       }
 
     };
+  }
+  
+  private static class ExistingPatternVariableCanBeUsedFix implements LocalQuickFix {
+    private final @NotNull String myName;
+    private final @NotNull String myPatternName;
+
+    private ExistingPatternVariableCanBeUsedFix(@NotNull String name, @NotNull PsiPatternVariable existingVariable) {
+      myName = name;
+      myPatternName = existingVariable.getName();
+    }
+
+    @Nls(capitalization = Nls.Capitalization.Sentence)
+    @NotNull
+    @Override
+    public String getName() {
+      return InspectionGadgetsBundle.message("inspection.pattern.variable.can.be.used.existing.fix.name", myName, myPatternName);
+    }
+    
+    @Nls(capitalization = Nls.Capitalization.Sentence)
+    @NotNull
+    @Override
+    public String getFamilyName() {
+      return InspectionGadgetsBundle.message("inspection.pattern.variable.can.be.used.existing.fix.family.name");
+    }
+
+    @Override
+    public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
+      PsiLocalVariable variable = PsiTreeUtil.getParentOfType(descriptor.getStartElement(), PsiLocalVariable.class);
+      if (variable == null) return;
+      List<PsiReferenceExpression> references =
+        VariableAccessUtils.getVariableReferences(variable, PsiUtil.getVariableCodeBlock(variable, null));
+      for (PsiReferenceExpression ref : references) {
+        ExpressionUtils.bindReferenceTo(ref, myPatternName);
+      }
+      new CommentTracker().deleteAndRestoreComments(variable);
+    }
   }
 
   private static class PatternVariableCanBeUsedFix implements LocalQuickFix {

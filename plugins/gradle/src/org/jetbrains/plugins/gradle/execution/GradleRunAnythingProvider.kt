@@ -11,15 +11,11 @@ import com.intellij.ide.actions.runAnything.getPath
 import com.intellij.ide.util.gotoByName.GotoClassModel2
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.externalSystem.model.project.ModuleData
-import com.intellij.openapi.externalSystem.model.task.TaskData
-import com.intellij.openapi.externalSystem.service.project.manage.ExternalProjectsDataStorage
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil.findProjectData
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.text.StringUtil.substringBeforeLast
-import com.intellij.psi.util.CachedValueProvider
-import com.intellij.psi.util.CachedValuesManager
 import com.intellij.util.containers.MultiMap
 import com.intellij.util.indexing.FindSymbolParameters
 import icons.GradleIcons
@@ -95,6 +91,7 @@ class GradleRunAnythingProvider : RunAnythingCommandLineProvider() {
       .filterNot { commandLine.completedParameters.any { task -> matchTask(task, it.first, it.second) } }
       .flatMap {
         when {
+          it.second.isFromIncludedBuild -> sequenceOf(it.first)
           it.second.isInherited -> sequenceOf(it.first.removePrefix(":"))
           else -> sequenceOf(it.first, it.first.removePrefix(":"))
         }
@@ -139,35 +136,26 @@ class GradleRunAnythingProvider : RunAnythingCommandLineProvider() {
       .flatMap { provider.getTaskOptions(it.second).asSequence() }
   }
 
-  private fun matchTask(name: String, fqName: String, taskData: TaskData): Boolean {
+  private fun matchTask(name: String, fqName: String, taskData: GradleTaskData): Boolean {
     return fqName == name ||
            fqName.removePrefix(":") == name ||
            taskData.isInherited && fqName.split(":").last() == name
   }
 
-  private fun getTasks(context: Context): Sequence<Pair<String, TaskData>> {
+  private fun getTasks(context: Context): Sequence<Pair<String, GradleTaskData>> {
     val gradlePath = context.gradlePath?.removeSuffix(":") ?: return emptySequence()
     return sequence {
-      for ((path, value) in context.tasks.entrySet()) {
-        for (taskData in value) {
-          val taskFqn = getGradleFqnTaskName(path, taskData)
-            .removePrefix(gradlePath)
-          yield(taskFqn to taskData)
-        }
+      for (taskData in context.tasks.values()) {
+        val taskFqn = taskData.getFqnTaskName().removePrefix(gradlePath)
+        yield(taskFqn to taskData)
       }
-    }
-  }
-
-  private fun fetchTasks(project: Project): Map<String, MultiMap<String, TaskData>> {
-    return CachedValuesManager.getManager(project).getCachedValue(project) {
-      CachedValueProvider.Result.create(getGradleTasksMap(project), ExternalProjectsDataStorage.getInstance(project))
     }
   }
 
   private fun createContext(project: Project, context: RunAnythingContext, dataContext: DataContext): Context {
     val externalProjectPath = context.getProjectPath()
     val gradlePath = context.getGradlePath(project)
-    val tasks = fetchTasks(project)[externalProjectPath] ?: MultiMap()
+    val tasks = getGradleTasks(project)[externalProjectPath] ?: MultiMap()
     val executor = EXECUTOR_KEY.getData(dataContext)
     return Context(context, project, gradlePath, externalProjectPath, tasks, executor)
   }
@@ -207,7 +195,7 @@ class GradleRunAnythingProvider : RunAnythingCommandLineProvider() {
     val project: Project,
     val gradlePath: String?,
     val externalProjectPath: String?,
-    val tasks: MultiMap<String, TaskData>,
+    val tasks: MultiMap<String, GradleTaskData>,
     val executor: Executor?
   )
 

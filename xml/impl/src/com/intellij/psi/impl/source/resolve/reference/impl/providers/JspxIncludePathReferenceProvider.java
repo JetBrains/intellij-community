@@ -78,11 +78,6 @@ public class JspxIncludePathReferenceProvider extends PsiReferenceProvider imple
   }
 
   @Override
-  public void setOptions(@Nullable Map<CustomizationKey, Object> options) {
-    myOptions = options;
-  }
-
-  @Override
   @Nullable
   public Map<CustomizationKey, Object> getOptions() {
     return myOptions;

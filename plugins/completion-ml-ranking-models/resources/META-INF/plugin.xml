@@ -1,4 +1,4 @@
-<idea-plugin>
+<idea-plugin implementation-detail="true">
   <id>com.intellij.completion.ml.ranking.models</id>
   <name>Machine Learning Code Completion Models</name>
   <vendor>JetBrains</vendor>
@@ -27,5 +27,6 @@
     <completion.ml.model implementation="com.jetbrains.completion.ml.ranker.ExperimentTypeScriptMLRankingProvider"/>
     <completion.ml.model implementation="com.jetbrains.completion.ml.ranker.ExperimentDartMLRankingProvider"/>
     <completion.ml.model implementation="com.jetbrains.completion.ml.ranker.ExperimentSwiftMLRankingProvider"/>
+    <completion.ml.model implementation="com.jetbrains.completion.ml.ranker.ExperimentCidrMLRankingProvider"/>
   </extensions>
 </idea-plugin>

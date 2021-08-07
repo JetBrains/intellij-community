@@ -16,7 +16,10 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ssh.SSHUtil;
 import com.intellij.util.PathUtil;
 import git4idea.i18n.GitBundle;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.regex.Matcher;
 

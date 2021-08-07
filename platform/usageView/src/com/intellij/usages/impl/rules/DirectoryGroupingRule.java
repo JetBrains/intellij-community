@@ -1,10 +1,9 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.usages.impl.rules;
 
 import com.intellij.injected.editor.VirtualFileWindow;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataProvider;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectUtil;
@@ -16,7 +15,10 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiManager;
 import com.intellij.usageView.UsageViewBundle;
-import com.intellij.usages.*;
+import com.intellij.usages.CompactGroupHelper;
+import com.intellij.usages.Usage;
+import com.intellij.usages.UsageGroup;
+import com.intellij.usages.UsageTarget;
 import com.intellij.usages.rules.SingleParentUsageGroupingRule;
 import com.intellij.usages.rules.UsageGroupingRuleEx;
 import com.intellij.usages.rules.UsageInFile;
@@ -28,12 +30,10 @@ import javax.swing.*;
 import java.io.File;
 import java.util.List;
 
-/**
- * @author yole
- */
+
 public class DirectoryGroupingRule extends SingleParentUsageGroupingRule implements DumbAware, UsageGroupingRuleEx {
   public static DirectoryGroupingRule getInstance(Project project) {
-    return ServiceManager.getService(project, DirectoryGroupingRule.class);
+    return project.getService(DirectoryGroupingRule.class);
   }
 
   protected final Project myProject;
@@ -80,6 +80,11 @@ public class DirectoryGroupingRule extends SingleParentUsageGroupingRule impleme
   }
 
   @Override
+  public int getRank() {
+    return UsageGroupingRulesDefaultRanks.DIRECTORY_STRUCTURE.getAbsoluteRank();
+  }
+
+  @Override
   public @NotNull String getGroupingActionId() {
     return "UsageGrouping.Directory";
   }
@@ -103,13 +108,13 @@ public class DirectoryGroupingRule extends SingleParentUsageGroupingRule impleme
     }
 
     @Override
-    public Icon getIcon(boolean isOpen) {
+    public Icon getIcon() {
       return myIcon;
     }
 
     @Override
     @NotNull
-    public String getText(UsageView view) {
+    public String getPresentableGroupText() {
 
       if (compactMiddleDirectories) {
         List<String> parentPathList = CompactGroupHelper.pathToPathList(myDir.getPath());
@@ -172,7 +177,7 @@ public class DirectoryGroupingRule extends SingleParentUsageGroupingRule impleme
 
     @Override
     public int compareTo(@NotNull UsageGroup usageGroup) {
-      return getText(null).compareToIgnoreCase(usageGroup.getText(null));
+      return getPresentableGroupText().compareToIgnoreCase(usageGroup.getPresentableGroupText());
     }
 
     public boolean equals(Object o) {

@@ -1,7 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.project;
 
-import com.intellij.internal.statistic.IdeActivity;
+import com.intellij.internal.statistic.StructuredIdeActivity;
 import com.intellij.openapi.diagnostic.ControlFlowException;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -159,8 +159,7 @@ public class DumbServiceMergingTaskQueue {
     private final DumbModeTask myTask;
     private final ProgressIndicatorEx myIndicator;
 
-    QueuedDumbModeTask(@NotNull DumbModeTask task,
-                       @NotNull ProgressIndicatorEx progress) {
+    QueuedDumbModeTask(@NotNull DumbModeTask task, @NotNull ProgressIndicatorEx progress) {
       myTask = task;
       myIndicator = progress;
     }
@@ -186,22 +185,17 @@ public class DumbServiceMergingTaskQueue {
 
       if (customIndicator == null) {
         customIndicator = myIndicator;
-      } else {
+      }
+      else {
         customIndicator.checkCanceled();
-        //ProgressIndicator customIndicatorFinal = customIndicator;
-        //new ProgressIndicatorListenerAdapter() {
-        //  @Override
-        //  public void cancelled() {
-        //    customIndicatorFinal.cancel();
-        //  }
-        //}.installToProgress(myIndicator);
       }
 
       myTask.performInDumbMode(customIndicator);
     }
 
-    void registerStageStarted(@NotNull IdeActivity activity) {
-      activity.stageStarted(myTask.getClass());
+    void registerStageStarted(@NotNull StructuredIdeActivity activity) {
+      activity.stageStarted(IndexingStatisticsCollector.INDEXING_STAGE,
+                            () -> Collections.singletonList(IndexingStatisticsCollector.STAGE_CLASS.with(myTask.getClass())));
     }
 
     String getInfoString() {

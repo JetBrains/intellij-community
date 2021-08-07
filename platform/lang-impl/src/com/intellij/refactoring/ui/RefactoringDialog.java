@@ -1,16 +1,15 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.ui;
 
 import com.intellij.ide.HelpTooltip;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.idea.ActionsBundle;
-import com.intellij.internal.statistic.eventLog.FeatureUsageData;
-import com.intellij.internal.statistic.service.fus.collectors.FUCounterUsageLogger;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.ui.DoNotAskOption;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
@@ -55,19 +54,13 @@ public abstract class RefactoringDialog extends DialogWrapper {
       @Override
       public void rememberChoice(boolean selected, int exitCode) {
         PropertiesComponent.getInstance().setValue(getRefactoringId() + ".OpenInEditor", selected, true);
-        report(selected, "open.in.editor.saved");
+        RefactoringDialogUsageCollector.logOpenInEditorSaved(myProject, selected, RefactoringDialog.this.getClass());
       }
 
       @Override
       public boolean isSelectedByDefault() {
         boolean selected = PropertiesComponent.getInstance().getBoolean(getRefactoringId() + ".OpenInEditor", true);
-        return report(selected, "open.in.editor.shown");
-      }
-
-      private boolean report(boolean selected, String eventId) {
-        String refactoringClassName = RefactoringDialog.this.getClass().getName();
-        FeatureUsageData data = new FeatureUsageData().addData("selected", selected).addData("class_name", refactoringClassName);
-        FUCounterUsageLogger.getInstance().logEvent(myProject, "refactoring.dialog", eventId, data);
+        RefactoringDialogUsageCollector.logOpenInEditorShown(myProject, selected, RefactoringDialog.this.getClass());
         return selected;
       }
 

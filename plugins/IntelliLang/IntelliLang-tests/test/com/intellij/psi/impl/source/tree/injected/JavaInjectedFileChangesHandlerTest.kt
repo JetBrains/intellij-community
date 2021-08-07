@@ -7,6 +7,7 @@ import com.intellij.lang.injection.InjectedLanguageManager
 import com.intellij.lang.injection.MultiHostInjector
 import com.intellij.lang.injection.MultiHostRegistrar
 import com.intellij.lang.injection.MultiHostRegistrarPlaceholderHelper
+import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.command.CommandProcessor
 import com.intellij.openapi.command.undo.UndoManager
@@ -495,6 +496,45 @@ class JavaInjectedFileChangesHandlerTest : JavaCodeInsightFixtureTestCase() {
            |    </p>
            |  </body>
            |</html>""".trimMargin(), fragmentFile.text)
+    }
+  }
+
+  fun `test text block tab in fragment editor`() {
+    with(myFixture) {
+      configureByText("classA.java", """
+        import org.intellij.lang.annotations.Language;
+        
+        class A {
+          @Language("HTML")
+          String s = ""${'"'}
+                  <html>
+                  <caret><p></p>
+                  </html>
+                  ""${'"'};
+        }
+      """.trimIndent())
+
+      val fe = injectionTestFixture.openInFragmentEditor()
+      fe.performEditorAction(IdeActions.ACTION_EDITOR_SELECT_WORD_AT_CARET)
+      fe.performEditorAction(IdeActions.ACTION_EDITOR_INDENT_SELECTION)
+      PsiDocumentManager.getInstance(project).commitAllDocuments()
+      TestCase.assertEquals("""
+           |<html>
+           |    <p></p>
+           |</html>
+           |""".trimMargin(), fe.file.text)
+      myFixture.checkResult("""
+        |import org.intellij.lang.annotations.Language;
+        |
+        |class A {
+        |  @Language("HTML")
+        |  String s = ""${'"'}
+        |          <html>
+        |              <p></p>
+        |          </html>
+        |                    ""${'"'};
+        |}
+      """.trimMargin())
     }
   }
 

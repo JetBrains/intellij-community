@@ -12,6 +12,7 @@ import com.intellij.codeInsight.hint.EditorHintListener;
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.lookup.*;
 import com.intellij.codeInsight.lookup.impl.LookupImpl;
+import com.intellij.codeWithMe.ClientId;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
@@ -51,14 +52,13 @@ import com.intellij.psi.PsiReference;
 import com.intellij.psi.ReferenceRange;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.testFramework.TestModeFlags;
-import com.intellij.ui.GuiUtils;
 import com.intellij.ui.LightweightHint;
+import com.intellij.util.ModalityUiUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.DumbModeAccessType;
-import com.intellij.util.indexing.FileBasedIndex;
 import com.intellij.util.messages.SimpleMessageBusConnection;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
@@ -153,7 +153,8 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
                                 new ProjectEmptyCompletionNotifier();
 
     myLookupManagerListener = evt -> {
-      if (evt.getNewValue() != null) {
+      @Nullable Lookup newLookup = (Lookup)evt.getNewValue();
+      if (newLookup != null && newLookup.getEditor() == myEditor) {
         LOG.error("An attempt to change the lookup during completion, phase = " + CompletionServiceImpl.getCompletionPhase());
       }
     };
@@ -487,7 +488,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
   public void closeAndFinish(boolean hideLookup) {
     if (!myLookup.isLookupDisposed()) {
       Lookup lookup = LookupManager.getActiveLookup(myEditor);
-      if (lookup != null && lookup != myLookup) {
+      if (lookup != null && lookup != myLookup && ClientId.isCurrentlyUnderLocalId()) {
         LOG.error("lookup changed: " + lookup + "; " + this);
       }
     }
@@ -580,7 +581,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
     myFreezeSemaphore.up();
     myFinishSemaphore.up();
 
-    GuiUtils.invokeLaterIfNeeded(() -> {
+    ModalityUiUtil.invokeLaterIfNeeded(myQueue.getModalityState(), () -> {
       final CompletionPhase phase = CompletionServiceImpl.getCompletionPhase();
       if (!(phase instanceof CompletionPhase.BgCalculation) || phase.indicator != this) return;
 
@@ -618,7 +619,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
           CompletionServiceImpl.setCompletionPhase(new CompletionPhase.ItemsCalculated(this));
         }
       }
-    }, myQueue.getModalityState());
+    });
   }
 
   private boolean hideAutopopupIfMeaningless() {
@@ -757,7 +758,9 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
 
     final CompletionProgressIndicator current = CompletionServiceImpl.getCurrentCompletionProgressIndicator();
     if (this != current) {
-      LOG.error(current + "!=" + this);
+      LOG.error(current + "!=" + this + ";" +
+                "current phase=" + CompletionServiceImpl.getCompletionPhase() + ";" +
+                "clientId=" + ClientId.getCurrent());
     }
 
     hideAutopopupIfMeaningless();

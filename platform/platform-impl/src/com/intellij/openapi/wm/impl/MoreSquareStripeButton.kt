@@ -3,9 +3,7 @@ package com.intellij.openapi.wm.impl
 
 import com.intellij.icons.AllIcons
 import com.intellij.ide.HelpTooltip
-import com.intellij.ide.actions.ActivateToolWindowAction
 import com.intellij.ide.actions.ToolwindowSwitcher
-import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.Presentation
@@ -23,11 +21,11 @@ class MoreSquareStripeButton(toolwindowSideBar: ToolwindowToolbar) :
   ActionButton(createAction(toolwindowSideBar), createPresentation(), ActionPlaces.TOOLWINDOW_TOOLBAR_BAR, Dimension(40, 40)) {
 
   override fun updateToolTipText() {
-    HelpTooltip().apply {
-      setTitle(UIBundle.message("title.tool.window.square.more"))
-      setLocation(HelpTooltip.Alignment.RIGHT)
-      installOn(this@MoreSquareStripeButton)
-    }
+    HelpTooltip().
+      setTitle(UIBundle.message("title.tool.window.square.more")).
+      setLocation(HelpTooltip.Alignment.RIGHT).
+      setInitialDelay(0).setHideDelay(0).
+      installOn(this)
   }
 
   companion object {

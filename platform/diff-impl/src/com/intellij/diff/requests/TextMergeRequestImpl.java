@@ -57,8 +57,6 @@ public class TextMergeRequestImpl extends TextMergeRequest {
     myContents = contents;
     myTitles = contentTitles;
     myTitle = title;
-
-    onAssigned(true);
   }
 
   @NotNull
@@ -87,44 +85,35 @@ public class TextMergeRequestImpl extends TextMergeRequest {
 
   @Override
   public void applyResult(@NotNull MergeResult result) {
-    try {
-      final CharSequence applyContent;
-      switch (result) {
-        case CANCEL:
-          applyContent = MergeUtil.shouldRestoreOriginalContentOnCancel(this) ? myOriginalContent : null;
-          break;
-        case LEFT:
-          CharSequence leftContent = ThreeSide.LEFT.select(getContents()).getDocument().getImmutableCharSequence();
-          applyContent = StringUtil.convertLineSeparators(leftContent.toString());
-          break;
-        case RIGHT:
-          CharSequence rightContent = ThreeSide.RIGHT.select(getContents()).getDocument().getImmutableCharSequence();
-          applyContent = StringUtil.convertLineSeparators(rightContent.toString());
-          break;
-        case RESOLVED:
-          applyContent = null;
-          break;
-        default:
-          throw new IllegalArgumentException(result.toString());
-      }
-
-      if (applyContent != null) {
-        DiffUtil.executeWriteCommand(myOutput.getDocument(), myProject, null, () -> myOutput.getDocument().setText(applyContent));
-      }
-
-      MergeCallback.getCallback(this).applyResult(result);
+    final CharSequence applyContent;
+    switch (result) {
+      case CANCEL:
+        applyContent = MergeUtil.shouldRestoreOriginalContentOnCancel(this) ? myOriginalContent : null;
+        break;
+      case LEFT:
+        CharSequence leftContent = ThreeSide.LEFT.select(getContents()).getDocument().getImmutableCharSequence();
+        applyContent = StringUtil.convertLineSeparators(leftContent.toString());
+        break;
+      case RIGHT:
+        CharSequence rightContent = ThreeSide.RIGHT.select(getContents()).getDocument().getImmutableCharSequence();
+        applyContent = StringUtil.convertLineSeparators(rightContent.toString());
+        break;
+      case RESOLVED:
+        applyContent = null;
+        break;
+      default:
+        throw new IllegalArgumentException(result.toString());
     }
-    finally {
-      onAssigned(false);
+
+    if (applyContent != null) {
+      DiffUtil.executeWriteCommand(myOutput.getDocument(), myProject, null, () -> myOutput.getDocument().setText(applyContent));
     }
+
+    MergeCallback.getCallback(this).applyResult(result);
   }
 
   @Override
-  public void resultRetargeted() {
-    onAssigned(false);
-  }
-
-  private void onAssigned(boolean assigned) {
+  public void onAssigned(boolean assigned) {
     myOutput.onAssigned(assigned);
     for (DocumentContent content : myContents) {
       content.onAssigned(assigned);

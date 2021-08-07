@@ -127,19 +127,19 @@
 
     <intentionAction>
       <className>org.intellij.lang.xpath.xslt.intentions.AddOptionalArgumentsIntention</className>
-      <category>XSLT</category>
+      <categoryKey>configurable.xslt.display.name</categoryKey>
     </intentionAction>
     <intentionAction>
       <className>org.intellij.lang.xpath.xslt.intentions.ConvertIfToChooseIntention</className>
-      <category>XSLT</category>
+      <categoryKey>configurable.xslt.display.name</categoryKey>
     </intentionAction>
     <intentionAction>
       <className>org.intellij.lang.xpath.xslt.intentions.ReplaceWithXslAttribute</className>
-      <category>XSLT</category>
+      <categoryKey>configurable.xslt.display.name</categoryKey>
     </intentionAction>
     <intentionAction>
       <className>org.intellij.lang.xpath.xslt.intentions.InlineXslAttribute</className>
-      <category>XSLT</category>
+      <categoryKey>configurable.xslt.display.name</categoryKey>
     </intentionAction>
 
     <applicationConfigurable groupId="tools" instance="org.intellij.plugins.xpathView.XPathConfigurable" id="xpath.settings"

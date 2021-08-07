@@ -9,17 +9,14 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 import com.intellij.openapi.editor.actionSystem.EditorActionManager;
-import com.intellij.openapi.editor.ex.EditorEx;
+import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
 import com.intellij.sh.ShLanguage;
 import com.intellij.util.DocumentUtil;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 abstract class ShBaseGenerateAction extends CodeInsightAction implements CodeInsightActionHandler {
-  @NonNls protected static final String FEATURE_ACTION_ID = "GenerateActionUsed";
-
   @Override
   protected boolean isValidForFile(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
     return file.getLanguage().is(ShLanguage.INSTANCE);
@@ -36,6 +33,6 @@ abstract class ShBaseGenerateAction extends CodeInsightAction implements CodeIns
     caret.moveToOffset(lineEndOffset);
 
     EditorActionHandler actionHandler = EditorActionManager.getInstance().getActionHandler(IdeActions.ACTION_EDITOR_ENTER);
-    actionHandler.execute(editor, caret, ((EditorEx)editor).getDataContext());
+    actionHandler.execute(editor, caret, EditorUtil.getEditorDataContext(editor));
   }
 }

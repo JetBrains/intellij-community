@@ -6,6 +6,7 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.PlainTextFileType;
 import com.intellij.openapi.fileTypes.ex.FileTypeManagerEx;
+import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.sh.ShFileType;
@@ -50,7 +51,8 @@ public class ShFileTypeDetectorTest extends BasePlatformTestCase {
     PsiDocumentManager documentManager = PsiDocumentManager.getInstance(getProject());
     FileDocumentManager.getInstance().saveDocument(documentManager.getDocument(psiFile));
     ApplicationManager.getApplication().runWriteAction(() -> {
-      ((FileTypeManagerEx)FileTypeManager.getInstance()).fireFileTypesChanged();
+      FileTypeManagerEx fileTypeManagerEx = (FileTypeManagerEx)FileTypeManager.getInstance();
+      fileTypeManagerEx.makeFileTypesChange("sh file type detector test", EmptyRunnable.getInstance());
     });
     assertTrue(expectedFileType.isInstance(myFixture.getFile().getFileType()));
   }

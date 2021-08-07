@@ -13,7 +13,7 @@ public class <warning descr="Non-serializable class 'NonSerializableWithSerializ
 
     private void writeObject(java.io.ObjectOutputStream str)
     {
-        new <warning descr="Non-serializable anonymous class extending 'Object' defines 'readObject()'">Object</warning>() {
+        new <warning descr="Non-serializable anonymous class derived from 'Object' defines 'readObject()'">Object</warning>() {
             void readObject(java.io.ObjectInputStream x) {}
         };
     }

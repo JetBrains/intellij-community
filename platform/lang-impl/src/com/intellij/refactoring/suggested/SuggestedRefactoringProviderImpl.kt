@@ -27,7 +27,7 @@ class SuggestedRefactoringProviderImpl(project: Project) : SuggestedRefactoringP
 
   internal class Startup : StartupActivity.DumbAware {
     override fun runActivity(project: Project) {
-      if (!ApplicationManager.getApplication().isUnitTestMode) {
+      if (!ApplicationManager.getApplication().isHeadlessEnvironment) {
         getInstance(project)
       }
     }

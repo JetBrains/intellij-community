@@ -6,6 +6,8 @@ import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.util.PotemkinProgress;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.NlsSafe;
@@ -13,15 +15,20 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.ProcessEventListener;
+import com.intellij.openapi.vcs.VcsEnvCustomizer;
+import com.intellij.openapi.vcs.VcsEnvCustomizer.VcsExecutableContext;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.EnvironmentUtil;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.ThrowableConsumer;
 import com.intellij.vcs.VcsLocaleHelper;
 import com.intellij.vcsUtil.VcsFileUtil;
+import git4idea.GitVcs;
 import git4idea.config.GitExecutable;
+import git4idea.config.GitExecutableContext;
 import git4idea.config.GitExecutableManager;
 import git4idea.config.GitVersionSpecialty;
 import org.jetbrains.annotations.ApiStatus;
@@ -63,8 +70,7 @@ public abstract class GitHandler {
   private final EventDispatcher<ProcessEventListener> myListeners = EventDispatcher.create(ProcessEventListener.class);
   protected boolean mySilent; // if true, the command execution is not logged in version control view
 
-  private boolean myWithLowPriority;
-  private boolean myWithNoTty;
+  private final GitExecutableContext myExecutableContext;
 
   private long myStartTime; // git execution start timestamp
   private static final long LONG_TIME = 10 * 1000;
@@ -94,11 +100,11 @@ public abstract class GitHandler {
    * @param vcsRoot a process directory
    * @param command a command to execute
    */
-  protected GitHandler(@NotNull Project project,
+  protected GitHandler(@Nullable Project project,
                        @NotNull VirtualFile vcsRoot,
                        @NotNull GitCommand command,
                        @NotNull List<String> configParameters) {
-    this(project, VfsUtil.virtualToIoFile(vcsRoot), command, configParameters);
+    this(project, VfsUtilCore.virtualToIoFile(vcsRoot), command, configParameters);
   }
 
   /**
@@ -131,6 +137,13 @@ public abstract class GitHandler {
 
     myStdoutSuppressed = true;
     mySilent = myCommand.lockingPolicy() != GitCommand.LockingPolicy.WRITE;
+
+    GitVcs gitVcs = myProject != null ? GitVcs.getInstance(myProject) : null;
+    VirtualFile root = VfsUtil.findFileByIoFile(directory, true);
+    VcsEnvCustomizer.ExecutableType executableType = myExecutable instanceof GitExecutable.Wsl
+                                                     ? VcsEnvCustomizer.ExecutableType.WSL
+                                                     : VcsEnvCustomizer.ExecutableType.LOCAL;
+    myExecutableContext = new GitExecutableContext(gitVcs, root, executableType);
   }
 
   @NotNull
@@ -162,6 +175,10 @@ public abstract class GitHandler {
     return myCommandLine.getWorkDirectory();
   }
 
+  public VcsExecutableContext getExecutableContext() {
+    return myExecutableContext;
+  }
+
   @NotNull
   public GitExecutable getExecutable() {
     return myExecutable;
@@ -180,14 +197,14 @@ public abstract class GitHandler {
    * Execute process with lower priority
    */
   public void withLowPriority() {
-    myWithLowPriority = true;
+    myExecutableContext.withLowPriority(true);
   }
 
   /**
    * Detach git process from IDE TTY session
    */
   public void withNoTty() {
-    myWithNoTty = true;
+    myExecutableContext.withNoTty(true);
   }
 
   public void addParameters(@NonNls String @NotNull ... parameters) {
@@ -424,7 +441,9 @@ public abstract class GitHandler {
       }
 
       prepareEnvironment();
-      myExecutable.patchCommandLine(this, myCommandLine, myWithLowPriority, myWithNoTty);
+      myExecutable.patchCommandLine(this, myCommandLine, myExecutableContext);
+
+      OUTPUT_LOG.debug(String.format("%s %% %s started: %s", getCommand(), this.hashCode(), myCommandLine));
 
       // start process
       myProcess = startProcess();
@@ -449,6 +468,15 @@ public abstract class GitHandler {
     }
     executionEnvironment.putAll(VcsLocaleHelper.getDefaultLocaleEnvironmentVars("git"));
     executionEnvironment.putAll(myCustomEnv);
+
+    // customizers take read locks, which could not be acquired under potemkin progress
+    if (!(ProgressManager.getInstance().getProgressIndicator() instanceof PotemkinProgress)) {
+      VcsEnvCustomizer.EP_NAME.forEachExtensionSafe(customizer -> {
+        customizer.customizeCommandAndEnvironment(myProject, executionEnvironment, myExecutableContext);
+      });
+
+      executionEnvironment.remove("PS1"); // ensure we won't get detected as interactive shell because of faulty customizer
+    }
   }
 
   protected abstract Process startProcess() throws ExecutionException;

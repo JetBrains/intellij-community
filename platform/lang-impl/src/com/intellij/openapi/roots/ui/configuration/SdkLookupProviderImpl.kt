@@ -1,13 +1,11 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.roots.ui.configuration
 
-import com.intellij.openapi.application.invokeAndWaitIfNeeded
 import com.intellij.openapi.components.service
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.util.ProgressIndicatorBase
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.ui.configuration.SdkLookupProvider.SdkInfo
-import com.intellij.openapi.wm.ex.ProgressIndicatorEx
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.concurrency.AsyncPromise
@@ -18,6 +16,9 @@ class SdkLookupProviderImpl : SdkLookupProvider {
 
   @Volatile
   private var context: SdkLookupContext? = null
+
+  override val progressIndicator: ProgressIndicator?
+    get() = context?.progressIndicator
 
   override fun newLookupBuilder(): SdkLookupBuilder {
     return CommonSdkLookupBuilder(lookup = ::lookup)
@@ -38,19 +39,14 @@ class SdkLookupProviderImpl : SdkLookupProvider {
     return context?.blockingGetSdk()
   }
 
-  override fun onProgress(progressIndicator: ProgressIndicator) {
-    context?.onProgress(progressIndicator)
-  }
-
   private fun lookup(builder: CommonSdkLookupBuilder) {
-    val context = SdkLookupContext()
+    val progressIndicator = builder.progressIndicator ?: ProgressIndicatorBase()
+    val context = SdkLookupContext(progressIndicator)
     this.context = context
-    context.onProgress(builder.progressIndicator)
-    val progressIndicator = context.progressIndicator ?: ProgressIndicatorBase()
 
     val parameters = builder
       .copy(
-        progressIndicator = progressIndicator,
+        progressIndicator = context.progressIndicator,
         //listeners are merged, so copy is the way to avoid chaining the listeners
         onSdkNameResolved = { sdk ->
           context.setSdkInfo(sdk)
@@ -61,25 +57,18 @@ class SdkLookupProviderImpl : SdkLookupProvider {
           builder.onSdkResolved(sdk)
         }
       )
-    invokeAndWaitIfNeeded {
-      service<SdkLookup>().lookup(parameters)
-    }
+    service<SdkLookup>().lookup(parameters)
   }
 
-  private class SdkLookupContext {
+  private class SdkLookupContext(val progressIndicator: ProgressIndicator) {
     private val sdk = AsyncPromise<Sdk?>()
     private val sdkInfo = AtomicReference<SdkInfo>(SdkInfo.Unresolved)
-    var progressIndicator : ProgressIndicator? = null
 
     @TestOnly
     fun getSdkPromiseForTests() = sdk
     fun getSdkInfo(): SdkInfo = sdkInfo.get()
     fun getSdk(): Sdk? = if (getSdkInfo() is SdkInfo.Resolved) sdk.get() else null
     fun blockingGetSdk(): Sdk? = sdk.get()
-
-    fun onProgress(progressIndicator: ProgressIndicator?) {
-      this.progressIndicator = progressIndicator
-    }
 
     fun setSdkInfo(sdk: Sdk?) {
       when (sdk) {

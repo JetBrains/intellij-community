@@ -15,6 +15,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.*;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * @author Eugene Zhuravlev
@@ -312,33 +313,31 @@ public class PersistentMapPerformanceTest extends PersistentMapTestBase {
 
   public void testPerformance() throws IOException {
     final IntObjectCache<String> stringCache = new IntObjectCache<>(2000);
-    PersistentMapImpl<String, String> unwrappedMap = PersistentMapImpl.unwrap(myMap);
-    final IntObjectCache.DeletedPairsListener listener = (key, mapKey) -> {
+    IntObjectCache.DeletedPairsListener<String> listener = (key, mapKey) -> {
       try {
-        final String _mapKey = (String)mapKey;
-        assertEquals(unwrappedMap.enumerate(_mapKey), key);
-
-        final String expectedMapValue = _mapKey == null ? null : _mapKey + "_value";
-        final String actual = myMap.get(_mapKey);
+        final String expectedMapValue = mapKey == null ? null : mapKey + "_value";
+        final String actual = myMap.get(mapKey);
         assertEquals(expectedMapValue, actual);
 
-        myMap.remove(_mapKey);
+        myMap.remove(mapKey);
 
-        assertNull(myMap.get(_mapKey));
+        assertNull(myMap.get(mapKey));
       }
       catch (IOException e) {
         throw new RuntimeException(e);
       }
     };
 
+    AtomicInteger count = new AtomicInteger();
     PlatformTestUtil.startPerformanceTest("put/remove", 9000, () -> {
       try {
         stringCache.addDeletedPairsListener(listener);
         for (int i = 0; i < 100000; ++i) {
           final String string = createRandomString();
-          final int id = unwrappedMap.enumerate(string);
-          stringCache.put(id, string);
-          myMap.put(string, string + "_value");
+          if (!myMap.containsMapping(string)) {
+            stringCache.put(count.incrementAndGet(), string);
+            myMap.put(string, string + "_value");
+          }
         }
         stringCache.removeDeletedPairsListener(listener);
         for (String key : stringCache) {

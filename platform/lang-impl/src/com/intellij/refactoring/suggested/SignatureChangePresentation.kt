@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.suggested
 
 import com.intellij.ide.ui.AntialiasingType
@@ -33,7 +33,7 @@ class SignatureChangePresentation(
   private val dummyFontRenderContext = FontRenderContext(
     AffineTransform(),
     AntialiasingType.getKeyForCurrentScope(false),
-    UISettings.PREFERRED_FRACTIONAL_METRICS_VALUE
+    UISettings.getPreferredFractionalMetricsValue()
   )
 
   val requiredSize by lazy {
@@ -93,7 +93,7 @@ class SignatureChangePresentation(
         when (fragment) {
           is TextFragment.Group -> { } // children processed by forAllFragments()
           is TextFragment.Leaf -> width += font.getStringBounds(fragment.text, context).width.ceilToInt()
-          is TextFragment.LineBreak -> width += font.getStringBounds(fragment.spaceInHorizontalMode, context).width.ceilToInt()
+          is TextFragment.LineBreak -> if (fragment.spaceInHorizontalMode.isNotEmpty()) width += font.getStringBounds(fragment.spaceInHorizontalMode, context).width.ceilToInt()
         }
       }
       return Dimension(width, lineHeight(context))
@@ -240,7 +240,7 @@ class SignatureChangePresentation(
 
       val metrics = font.getLineMetrics(text, fontRenderContext)
 
-      val newX = x + font.getStringBounds(text, fontRenderContext).width.ceilToInt()
+      val newX = x + if (text.isNotEmpty()) font.getStringBounds(text, fontRenderContext).width.ceilToInt() else 0
 
       if (g != null) {
         if (backgroundColor != null) {

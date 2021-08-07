@@ -37,8 +37,10 @@
     <extensionPoint name="artifactBuilder" interface="org.jetbrains.idea.maven.execution.build.MavenArtifactBuilder" dynamic="true"/>
     <extensionPoint name="targetConfigurationExtension" interface="org.jetbrains.idea.maven.execution.target.TargetConfigurationMavenExtension" dynamic="true"/>
     <extensionPoint name="log.parser" interface="org.jetbrains.idea.maven.externalSystemIntegration.output.MavenLoggedEventParser" dynamic="true"/>
+    <extensionPoint name="log.spy.parser" interface="org.jetbrains.idea.maven.externalSystemIntegration.output.MavenSpyLoggedEventParser" dynamic="true"/>
     <extensionPoint name="mavenServerSupportFactory" interface="org.jetbrains.idea.maven.server.MavenRemoteProcessSupportFactory" dynamic="true"/>
     <extensionPoint name="remotePathTransformerFactory" interface="org.jetbrains.idea.maven.server.RemotePathTransformerFactory" dynamic="true"/>
+    <extensionPoint name="log.import.parser" interface="org.jetbrains.idea.maven.externalSystemIntegration.output.importproject.MavenImportLoggedEventParser" dynamic="true"/>
   </extensionPoints>
 
   <depends>com.intellij.properties</depends>
@@ -80,6 +82,8 @@
     <compiler.task execute="BEFORE" implementation="org.jetbrains.idea.maven.project.MavenResourceConfigurationGeneratorCompileTask"/>
     <compiler.task execute="BEFORE" implementation="org.jetbrains.idea.maven.tasks.MavenTasksManager$MavenBeforeCompileTask"/>
     <compiler.task execute="AFTER" implementation="org.jetbrains.idea.maven.tasks.MavenTasksManager$MavenAfterCompileTask"/>
+
+    <consoleFilterProvider implementation="org.jetbrains.idea.maven.project.MavenConsoleFilterProvider"/>
 
     <projectConfigurable groupId="build.tools" groupWeight="120" instance="org.jetbrains.idea.maven.utils.MavenSettings" id="MavenSettings"
                          bundle="messages.MavenProjectBundle"
@@ -214,11 +218,6 @@
 
     <standardResourceProvider implementation="org.jetbrains.idea.maven.dom.MavenSchemaProvider"/>
 
-    <projectService serviceImplementation="org.jetbrains.idea.maven.dom.MavenDomElementDescriptorHolder"/>
-    <projectService serviceImplementation="org.jetbrains.idea.maven.navigator.actions.ExecuteMavenGoalHistoryService"/>
-    <applicationService serviceImplementation="org.jetbrains.idea.maven.dom.converters.MavenDomConvertersRegistry"/>
-    <applicationService serviceImplementation="org.jetbrains.idea.maven.dom.converters.repositories.MavenRepositoriesProvider"/>
-
     <typedHandler implementation="org.jetbrains.idea.maven.dom.code.MavenTypedHandlerDelegate"/>
     <backspaceHandlerDelegate implementation="org.jetbrains.idea.maven.dom.code.MavenBackspaceHandlerDelegate"/>
 
@@ -242,10 +241,8 @@
     <virtualFileSystem key="maven-properties" implementationClass="org.jetbrains.idea.maven.vfs.MavenPropertiesVirtualFileSystem"/>
 
     <projectService serviceImplementation="org.jetbrains.idea.maven.project.MavenWorkspaceSettingsComponent"/>
-    <projectService serviceImplementation="org.jetbrains.idea.maven.execution.MavenRunner"/>
     <projectService serviceImplementation="org.jetbrains.idea.maven.project.MavenProjectSettings"/>
 
-    <projectService serviceImplementation="org.jetbrains.idea.maven.utils.MavenRehighlighter"/>
     <projectModelModifier implementation="org.jetbrains.idea.maven.importing.MavenProjectModelModifier"/>
 
     <compiler.updateResourcesBuildContributor implementation="org.jetbrains.idea.maven.execution.MavenUpdateResourcesBuildContributor"/>
@@ -259,6 +256,15 @@
 
     <registryKey key="maven.import.compiler.arguments" defaultValue="true"
                  description="Enable importing of the maven compiler plugin arguments"/>
+
+    <registryKey key="maven.create.dummy.module.on.first.import" defaultValue="true"
+                 description="Create maven dummy module on import"/>
+
+    <registryKey key="maven.server.per.idea.project" defaultValue="false"
+                 description="Single Maven server per idea project, .mvn could be ignored"/>
+
+    <registryKey key="maven.always.reset" defaultValue="false"
+                 description="Always reset maven dependencies and folders"/>
 
     <registryKey key="maven.print.import.stacktraces" defaultValue="false"
                  description="Print maven server stacktraces in log"/>
@@ -277,8 +283,14 @@
     <registryKey key="maven.server.debug.default" defaultValue="false"
                  description="Debug maven server for default project"/>
 
+    <registryKey key="maven.server.vm.remove.javaagent" defaultValue="true"
+                 description="Maven server remove -javaagent vm parameter"/>
+
     <registryKey key="maven.modules.do.not.ignore.on.delete" defaultValue="false"
                  description="Deleted maven modules will not be marked as ignored"/>
+
+    <registryKey key="maven.consumer.pom.support" defaultValue="false"
+                 description="Enable Maven consumer pom support"/>
 
     <intentionAction>
       <className>org.jetbrains.idea.maven.dom.converters.MavenArtifactCoordinatesConverter$MyUpdateIndicesIntention</className>
@@ -287,8 +299,14 @@
     <module.workingDirectoryProvider implementation="org.jetbrains.idea.maven.project.MavenWorkingDirectoryProvider"/>
     <notificationGroup id="Maven" displayType="BALLOON"/>
     <toolWindowAllowlist id="Maven"/>
-    <compiler.buildIssueContributor implementation="org.jetbrains.idea.maven.externalSystemIntegration.output.quickfixes.JpsReleaseVersion5QuickFix" />
+    <toolWindowExtractorMode id="Maven" mode="mirror"/>
+    <compiler.buildIssueContributor implementation="org.jetbrains.idea.maven.externalSystemIntegration.output.quickfixes.JpsLanguageLevelQuickFix" />
     <untrustedModeProvider implementation="org.jetbrains.idea.maven.project.MavenUntrustedModeProvider" />
+
+    <starter.moduleImporter implementation="org.jetbrains.idea.maven.starters.MavenStarterModuleImporter"/>
+
+    <dependencyCollector kind="java" implementation="org.jetbrains.idea.maven.project.MavenDependencyCollector"/>
+    <newProjectWizard.buildSystem.java implementation="org.jetbrains.idea.maven.wizards.MavenJavaBuildSystemType"/>
   </extensions>
 
   <extensions defaultExtensionNs="com.intellij.properties">
@@ -441,11 +459,14 @@
     <executionEnvironmentProvider
       implementation="org.jetbrains.idea.maven.execution.MavenApplicationConfigurationExecutionEnvironmentProvider"/>
 
-    <log.parser implementation="org.jetbrains.idea.maven.externalSystemIntegration.output.parsers.MavenBadConfigEventParser"/>
     <log.parser implementation="org.jetbrains.idea.maven.externalSystemIntegration.output.parsers.JavaBuildErrorNotification"/>
     <log.parser implementation="org.jetbrains.idea.maven.externalSystemIntegration.output.parsers.KotlinBuildErrorNotification"/>
     <log.parser implementation="org.jetbrains.idea.maven.externalSystemIntegration.output.parsers.WarningNotifier"/>
     <log.parser implementation="org.jetbrains.idea.maven.externalSystemIntegration.output.quickfixes.SourceOptionQuickFix"/>
+    <log.parser implementation="org.jetbrains.idea.maven.externalSystemIntegration.output.quickfixes.MavenBadJvmConfigEventParser"/>
+    <log.parser implementation="org.jetbrains.idea.maven.externalSystemIntegration.output.quickfixes.MavenBadConfigEventParser"/>
+    <log.import.parser implementation="org.jetbrains.idea.maven.externalSystemIntegration.output.quickfixes.MavenImportBadJvmConfigEventParser"/>
+    <log.import.parser implementation="org.jetbrains.idea.maven.externalSystemIntegration.output.quickfixes.MavenImportBadConfigEventParser"/>
   </extensions>
   <extensions defaultExtensionNs="org.jetbrains.idea.reposearch">
     <provider implementation="org.jetbrains.idea.maven.onlinecompletion.MavenCompletionProviderFactory"/>
@@ -698,4 +719,8 @@
     </group>
 
   </actions>
+
+  <projectListeners>
+    <listener class="org.jetbrains.idea.maven.project.MavenDependencyUpdater" topic="org.jetbrains.idea.maven.project.MavenImportListener"/>
+  </projectListeners>
 </idea-plugin>

@@ -30,6 +30,8 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Arrays;
 import java.util.function.Predicate;
 
+import static org.junit.Assert.assertNotEquals;
+
 @SkipSlowTestLocally
 public class CompilerReferenceDataInCompletionTest extends CompilerReferencesTestBase {
   @Override
@@ -113,8 +115,8 @@ public class CompilerReferenceDataInCompletionTest extends CompilerReferencesTes
     myFixture.type(phraseToComplete);
     final LookupElement[] completionVariantsAfterCompilation = myFixture.complete(CompletionType.BASIC);
 
-    assertFalse("Seems the test doesn't test anything: compiler indices doesn't affect on sorting",
-                Arrays.toString(completionVariantsBeforeCompilation).equals(Arrays.toString(completionVariantsAfterCompilation)));
+    assertNotEquals("Seems the test doesn't test anything: compiler indices doesn't affect on sorting",
+                    Arrays.toString(completionVariantsBeforeCompilation), Arrays.toString(completionVariantsAfterCompilation));
 
     final String[] orderedMethods = Arrays.stream(completionVariantsAfterCompilation)
       .map(l -> l.getObject())

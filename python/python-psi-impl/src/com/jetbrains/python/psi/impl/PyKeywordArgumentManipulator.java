@@ -25,9 +25,7 @@ import com.jetbrains.python.psi.PyElementGenerator;
 import com.jetbrains.python.psi.PyKeywordArgument;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author yole
- */
+
 public class PyKeywordArgumentManipulator extends AbstractElementManipulator<PyKeywordArgument> {
   @Override
   public PyKeywordArgument handleContentChange(@NotNull PyKeywordArgument element, @NotNull TextRange range, String newContent) throws IncorrectOperationException {

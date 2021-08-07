@@ -3,7 +3,6 @@ package org.jetbrains.plugins.github.ui.cloneDialog
 
 import com.intellij.ui.ColoredListCellRenderer
 import com.intellij.ui.SimpleTextAttributes
-import com.intellij.util.ui.cloneDialog.SearchableListItem
 import org.jetbrains.annotations.Nls
 import org.jetbrains.plugins.github.api.data.GithubRepo
 import org.jetbrains.plugins.github.api.data.GithubUser
@@ -12,9 +11,7 @@ import javax.swing.JList
 
 sealed class GHRepositoryListItem(
   val account: GithubAccount
-) : SearchableListItem {
-  override val stringToSearch: String?
-    get() = ""
+) {
 
   abstract fun customizeRenderer(renderer: ColoredListCellRenderer<GHRepositoryListItem>,
                                  list: JList<out GHRepositoryListItem>)
@@ -39,7 +36,6 @@ sealed class GHRepositoryListItem(
     val user: GithubUser,
     val repo: GithubRepo
   ) : GHRepositoryListItem(account) {
-    override val stringToSearch get() = repo.fullName
 
     override fun customizeRenderer(renderer: ColoredListCellRenderer<GHRepositoryListItem>,
                                    list: JList<out GHRepositoryListItem>): Unit =

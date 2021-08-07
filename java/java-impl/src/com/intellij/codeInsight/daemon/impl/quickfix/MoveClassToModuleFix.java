@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.daemon.QuickFixActionRegistrar;
@@ -14,7 +14,7 @@ import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.ex.EditorEx;
+import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootManager;
@@ -111,11 +111,6 @@ public class MoveClassToModuleFix implements IntentionAction {
           protected String getContainerText(PsiClass element, String name) {
             return null;
           }
-
-          @Override
-          protected int getIconFlags() {
-            return 0;
-          }
         })
         .setMovable(false)
         .setResizable(false)
@@ -128,7 +123,7 @@ public class MoveClassToModuleFix implements IntentionAction {
 
   private void moveClass(Project project, Editor editor, PsiFile file, PsiClass aClass) {
     RefactoringActionHandler moveHandler = RefactoringActionHandlerFactory.getInstance().createMoveHandler();
-    DataContext dataContext = ((EditorEx)editor).getDataContext();
+    DataContext dataContext = EditorUtil.getEditorDataContext(editor);
     final String fqName = aClass.getQualifiedName();
     LOG.assertTrue(fqName != null);
     PsiDirectory directory = PackageUtil

@@ -295,7 +295,7 @@ public final class FavoritesTreeViewPanel extends JPanel implements DataProvider
         selectedElements.addAll(ContainerUtil.map(favoriteManager.getVirtualFiles(listname, false), file -> new OpenFileDescriptor(myProject, file)));
       }
       selectedElements.addAll(getSelectedElements(Navigatable.class));
-      return selectedElements.isEmpty() ? null : NavigatableInterceptor.wrap(selectedElements.toArray(new Navigatable[0]), this::logNavigation);
+      return selectedElements.isEmpty() ? null : NavigatableInterceptor.wrap(selectedElements.toArray(Navigatable.EMPTY_NAVIGATABLE_ARRAY), this::logNavigation);
     }
 
     if (PlatformDataKeys.CUT_PROVIDER.is(dataId)) {

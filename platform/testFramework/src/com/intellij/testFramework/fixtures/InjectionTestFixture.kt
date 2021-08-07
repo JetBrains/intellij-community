@@ -2,6 +2,7 @@
 package com.intellij.testFramework.fixtures
 
 import com.intellij.codeInsight.intention.impl.QuickEditAction
+import com.intellij.codeInsight.intention.impl.QuickEditHandler
 import com.intellij.lang.injection.InjectedLanguageManager
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.fileEditor.FileEditorManager
@@ -15,9 +16,8 @@ import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.testFramework.UsefulTestCase
 import junit.framework.TestCase
+import org.junit.Assert
 import java.util.*
-import kotlin.collections.HashSet
-import kotlin.test.fail
 
 class InjectionTestFixture(private val javaFixture: CodeInsightTestFixture) {
 
@@ -52,9 +52,13 @@ class InjectionTestFixture(private val javaFixture: CodeInsightTestFixture) {
   }
 
   fun assertInjectedContent(vararg expectedInjectFileTexts: String) {
-    UsefulTestCase.assertSameElements("injected content expected",
+    assertInjectedContent("injected content expected", expectedInjectFileTexts.toList())
+  }
+
+  fun assertInjectedContent(message: String, expectedFilesTexts: List<String>) {
+    UsefulTestCase.assertSameElements(message,
                                       getAllInjections().mapTo(HashSet()) { it.second }.map { it.text },
-                                      expectedInjectFileTexts.toList())
+                                      expectedFilesTexts)
   }
 
   fun assertInjected(vararg expectedInjections: InjectionAssertionData) {
@@ -65,7 +69,7 @@ class InjectionTestFixture(private val javaFixture: CodeInsightTestFixture) {
     while (expected.isNotEmpty()) {
       val (text, injectedLanguage) = expected.pop()
       val found = (foundInjections.find { (psi, file) -> psi.text == text && file.language.id == injectedLanguage }
-                   ?: fail(
+                   ?: Assert.fail(
                      "no injection '$text' -> '$injectedLanguage' were found, remains: ${foundInjections.joinToString { (psi, file) -> "'${psi.text}' -> '${file.language}'" }}   "))
       foundInjections.remove(found)
     }
@@ -73,16 +77,20 @@ class InjectionTestFixture(private val javaFixture: CodeInsightTestFixture) {
   }
 
   fun openInFragmentEditor(): EditorTestFixture {
-    val project = javaFixture.project
-    val quickEditHandler = QuickEditAction().invokeImpl(project, topLevelEditor, topLevelFile)
+    val quickEditHandler = QuickEditAction().invokeImpl(javaFixture.project, topLevelEditor, topLevelFile)
+    return openInFragmentEditor(quickEditHandler)
+  }
+  
+  fun openInFragmentEditor(quickEditHandler: QuickEditHandler): EditorTestFixture {
     val injectedFile = quickEditHandler.newFile
+    val project = javaFixture.project
     val documentWindow = InjectedLanguageUtil.getDocumentWindow(injectedElement?.containingFile!!)
     val offset = topLevelEditor.caretModel.offset
     val unEscapedOffset = InjectedLanguageUtil.hostToInjectedUnescaped(documentWindow, offset)
     val fragmentEditor = FileEditorManagerEx.getInstanceEx(project).openTextEditor(
       OpenFileDescriptor(project, injectedFile.virtualFile, unEscapedOffset), true
     )
-    return EditorTestFixture(project, fragmentEditor, injectedFile.virtualFile)
+    return EditorTestFixture(project, fragmentEditor!!, injectedFile.virtualFile)
   }
 
   val topLevelFile: PsiFile

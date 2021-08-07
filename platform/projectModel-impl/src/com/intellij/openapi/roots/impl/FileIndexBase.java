@@ -50,7 +50,7 @@ abstract class FileIndexBase implements FileIndex {
             }
             return SKIP_CHILDREN;
           }
-          if (info.isIgnored()) {
+          if (info.isIgnored() || info instanceof NonProjectDirectoryInfo && !((NonProjectDirectoryInfo)info).hasContentEntriesBeneath()) {
             // it's certain nothing can be found under ignored directory
             return SKIP_CHILDREN;
           }
@@ -74,9 +74,7 @@ abstract class FileIndexBase implements FileIndex {
     if (processor instanceof ContentIteratorEx) {
       return (ContentIteratorEx)processor;
     }
-    return fileOrDir -> {
-      return processor.processFile(fileOrDir) ? ContentIteratorEx.Status.CONTINUE : ContentIteratorEx.Status.STOP;
-    };
+    return fileOrDir -> processor.processFile(fileOrDir) ? ContentIteratorEx.Status.CONTINUE : ContentIteratorEx.Status.STOP;
   }
 
   @Override

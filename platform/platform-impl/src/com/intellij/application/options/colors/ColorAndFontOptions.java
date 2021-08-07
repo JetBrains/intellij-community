@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.application.options.colors;
 
@@ -36,9 +36,9 @@ import com.intellij.psi.search.scope.packageSet.PackageSet;
 import com.intellij.ui.ComponentUtil;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
-import it.unimi.dsi.fastutil.Hash;
-import it.unimi.dsi.fastutil.objects.ObjectOpenCustomHashSet;
+import com.intellij.util.containers.HashingStrategy;
 import org.jdom.Attribute;
 import org.jdom.Element;
 import org.jetbrains.annotations.ApiStatus;
@@ -488,7 +488,7 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract
     @Override
     @NotNull
     public NewColorAndFontPanel createPanel(@NotNull ColorAndFontOptions options) {
-      FontEditorPreview previewPanel = new FontEditorPreview(()->options.getSelectedScheme(), false) {
+      FontEditorPreview previewPanel = new FontEditorPreview(()->options.getSelectedScheme(), true) {
         @Override
         protected EditorColorsScheme updateOptionsScheme(EditorColorsScheme selectedScheme) {
           return ConsoleViewUtil.updateConsoleColorScheme(selectedScheme);
@@ -587,7 +587,7 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract
 
 
   private static void initScopesDescriptors(@NotNull List<? super EditorSchemeAttributeDescriptor> descriptions, @NotNull MyColorScheme scheme) {
-    Set<Pair<NamedScope,NamedScopesHolder>> namedScopes = new ObjectOpenCustomHashSet<>(new Hash.Strategy<>() {
+    Set<Pair<NamedScope,NamedScopesHolder>> namedScopes = CollectionFactory.createCustomHashingStrategySet(new HashingStrategy<>() {
       @Override
       public int hashCode(@Nullable Pair<NamedScope, NamedScopesHolder> object) {
         return object == null ? 0 : object.getFirst().getScopeId().hashCode();
@@ -1260,7 +1260,7 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract
           metaInfo = JDOMUtil.load(JDOMUtil.writeElement(metaInfo));
           scheme.addContent(0, metaInfo);
         }
-        JDOMUtil.write(scheme, path.toFile());
+        JDOMUtil.write(scheme, path);
         VirtualFileManager.getInstance().syncRefresh();
       }
       catch (Exception e) {

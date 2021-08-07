@@ -1,7 +1,6 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.lang;
 
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -24,11 +23,8 @@ import java.util.jar.Manifest;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
-@ApiStatus.Internal
 // ZipFile's native implementation (ZipFile.c, zip_util.c) has path -> file descriptor cache
-public final class JdkZipResourceFile implements ResourceFile {
-  private final SoftReference<JarMemoryLoader> memoryLoader;
-
+final class JdkZipResourceFile implements ResourceFile {
   private volatile SoftReference<ZipFile> zipFileSoftReference;
   private final boolean lockJars;
   private final File file;
@@ -36,27 +32,10 @@ public final class JdkZipResourceFile implements ResourceFile {
 
   private static final Object lock = new Object();
 
-  public JdkZipResourceFile(@NotNull Path path, boolean lockJars, boolean preloadJarContents, boolean isSecureLoader) throws IOException {
+  JdkZipResourceFile(@NotNull Path path, boolean lockJars, boolean isSecureLoader) {
     this.lockJars = lockJars;
     this.file = path.toFile();
     this.isSecureLoader = isSecureLoader;
-
-    SoftReference<JarMemoryLoader> memoryLoader = null;
-    if (preloadJarContents) {
-      // IOException from opening is propagated to caller if zip file isn't valid
-      try {
-        JarMemoryLoader loader = preload(path);
-        if (loader != null) {
-          memoryLoader = new SoftReference<>(loader);
-        }
-      }
-      finally {
-        if (!lockJars) {
-          close();
-        }
-      }
-    }
-    this.memoryLoader = memoryLoader;
   }
 
   @SuppressWarnings("DuplicatedCode")
@@ -72,8 +51,8 @@ public final class JdkZipResourceFile implements ResourceFile {
   }
 
   @NotNull ZipFile getZipFile() throws IOException {
-    // This code is executed at least 100K times (O(number of classes needed to load)) and it takes considerable time to open ZipFile's
-    // such number of times so we store reference to ZipFile if we allowed to lock the file (assume it isn't changed)
+    // This code is executed at least 100K times (O(number of classes needed to load)), and it takes considerable time to open ZipFile's
+    // such number of times, so we store reference to ZipFile if we allowed to lock the file (assume it isn't changed)
     if (!lockJars) {
       return createZipFile(file);
     }
@@ -101,50 +80,35 @@ public final class JdkZipResourceFile implements ResourceFile {
     return isSecureLoader ? new JarFile(file) : new ZipFile(file);
   }
 
-  public void close() throws IOException {
-    SoftReference<ZipFile> ref = zipFileSoftReference;
-    ZipFile zipFile = ref == null ? null : ref.get();
-    if (zipFile != null) {
-      zipFileSoftReference = null;
-      zipFile.close();
-    }
-  }
-
   @Override
   public @Nullable Class<?> findClass(@NotNull String fileName, String className, JarLoader jarLoader, ClassPath.ClassDataConsumer classConsumer)
     throws IOException {
-    JarMemoryLoader memoryLoader = this.memoryLoader == null ? null : this.memoryLoader.get();
-    if (memoryLoader != null) {
-      byte[] data = memoryLoader.getBytes(fileName);
-      if (data != null) {
-        return classConsumer.consumeClassData(className, data, jarLoader, null);
-      }
-    }
-
     ZipFile zipFile = getZipFile();
-    ZipEntry entry = zipFile.getEntry(fileName);
-    if (entry == null) {
-      return null;
-    }
+    try {
+      ZipEntry entry = zipFile.getEntry(fileName);
+      if (entry == null) {
+        return null;
+      }
 
-    byte[] bytes;
-    try (InputStream stream = zipFile.getInputStream(entry)) {
-      bytes = loadBytes(stream, (int)entry.getSize());
+      byte[] bytes;
+      try (InputStream stream = zipFile.getInputStream(entry)) {
+        bytes = loadBytes(stream, (int)entry.getSize());
+      }
+
+      ProtectionDomain protectionDomain;
+      if (jarLoader instanceof SecureJarLoader) {
+        protectionDomain = ((SecureJarLoader)jarLoader).getProtectionDomain((JarEntry)entry, new URL(jarLoader.url, entry.getName()));
+      }
+      else {
+        protectionDomain = null;
+      }
+      return classConsumer.consumeClassData(className, bytes, jarLoader, protectionDomain);
     }
     finally {
       if (!lockJars) {
-        close();
+        zipFile.close();
       }
     }
-
-    ProtectionDomain protectionDomain;
-    if (jarLoader instanceof SecureJarLoader) {
-      protectionDomain = ((SecureJarLoader)jarLoader).getProtectionDomain((JarEntry)entry, new URL(jarLoader.url, entry.getName()));
-    }
-    else {
-      protectionDomain = null;
-    }
-    return classConsumer.consumeClassData(className, bytes, jarLoader, protectionDomain);
   }
 
   @Override
@@ -155,16 +119,9 @@ public final class JdkZipResourceFile implements ResourceFile {
 
   @Override
   public @Nullable Resource getResource(@NotNull String name, @NotNull JarLoader jarLoader) throws IOException {
-    JarMemoryLoader loader = memoryLoader == null ? null : memoryLoader.get();
-    if (loader != null) {
-      Resource resource = loader.getResource(name);
-      if (resource != null) {
-        return resource;
-      }
-    }
-
+    ZipFile zipFile = getZipFile();
     try {
-      ZipEntry entry = getZipFile().getEntry(name);
+      ZipEntry entry = zipFile.getEntry(name);
       if (entry == null) {
         return null;
       }
@@ -177,70 +134,40 @@ public final class JdkZipResourceFile implements ResourceFile {
     }
     finally {
       if (!lockJars) {
-        close();
+        zipFile.close();
       }
     }
-  }
-
-  public @Nullable JarMemoryLoader preload(@NotNull Path basePath) throws IOException {
-    ZipFile zipFile = getZipFile();
-    Enumeration<? extends ZipEntry> entries = zipFile.entries();
-    if (!entries.hasMoreElements()) {
-      return null;
-    }
-
-    ZipEntry sizeEntry = entries.nextElement();
-    if (sizeEntry == null || !sizeEntry.getName().equals(JarMemoryLoader.SIZE_ENTRY)) {
-      return null;
-    }
-
-    byte[] bytes = loadBytes(zipFile.getInputStream(sizeEntry), 2);
-    int size = ((bytes[1] & 0xFF) << 8) + (bytes[0] & 0xFF);
-
-    Object[] table = new Object[((size * 4) + 1) & ~1];
-    String baseUrl = JarLoader.fileToUri(basePath).toString();
-    for (int i = 0; i < size && entries.hasMoreElements(); i++) {
-      ZipEntry entry = entries.nextElement();
-      String name = entry.getName();
-      int index = JarMemoryLoader.probePlain(name, table);
-      if (index >= 0) {
-        throw new IllegalArgumentException("duplicate name: " + name);
-      }
-      else {
-        byte[] content;
-        try (InputStream stream = zipFile.getInputStream(entry)) {
-          content = loadBytes(stream, (int)entry.getSize());
-        }
-
-        int dest = -(index + 1);
-        table[dest] = name;
-        table[dest + 1] = new MemoryResource(baseUrl, content, name);
-      }
-    }
-    return new JarMemoryLoader(table);
   }
 
   @Override
   public @Nullable Attributes loadManifestAttributes() throws IOException {
     ZipFile zipFile = getZipFile();
-    ZipEntry entry = zipFile.getEntry(JarFile.MANIFEST_NAME);
-    if (entry == null) {
+    try {
+      ZipEntry entry = zipFile.getEntry(JarFile.MANIFEST_NAME);
+      if (entry == null) {
+        return null;
+      }
+
+      try (InputStream stream = zipFile.getInputStream(entry)) {
+        return new Manifest(stream).getMainAttributes();
+      }
+      catch (Exception ignored) {
+      }
       return null;
     }
-
-    try (InputStream stream = zipFile.getInputStream(entry)) {
-      return new Manifest(stream).getMainAttributes();
+    finally {
+      if (!lockJars){
+        zipFile.close();
+      }
     }
-    catch (Exception ignored) {
-    }
-    return null;
   }
 
   @Override
   public @NotNull ClasspathCache.IndexRegistrar buildClassPathCacheData() throws IOException {
+    ZipFile zipFile = getZipFile();
     try {
       ClasspathCache.LoaderDataBuilder builder = new ClasspathCache.LoaderDataBuilder(true);
-      Enumeration<? extends ZipEntry> entries = getZipFile().entries();
+      Enumeration<? extends ZipEntry> entries = zipFile.entries();
       while (entries.hasMoreElements()) {
         ZipEntry entry = entries.nextElement();
         String name = entry.getName();
@@ -257,7 +184,7 @@ public final class JdkZipResourceFile implements ResourceFile {
     }
     finally {
       if (!lockJars) {
-        close();
+        zipFile.close();
       }
     }
   }
@@ -301,12 +228,13 @@ public final class JdkZipResourceFile implements ResourceFile {
 
     @Override
     public byte @NotNull [] getBytes() throws IOException {
-      try (InputStream stream = file.getZipFile().getInputStream(entry)) {
+      ZipFile zipFile = file.getZipFile();
+      try (InputStream stream = zipFile.getInputStream(entry)) {
         return loadBytes(stream, (int)entry.getSize());
       }
       finally {
         if (!file.lockJars) {
-          file.close();
+          zipFile.close();
         }
       }
     }
@@ -319,12 +247,13 @@ public final class JdkZipResourceFile implements ResourceFile {
 
     @Override
     public byte @NotNull [] getBytes() throws IOException {
-      try (InputStream stream = file.getZipFile().getInputStream(entry)) {
+      ZipFile zipFile = file.getZipFile();
+      try (InputStream stream = zipFile.getInputStream(entry)) {
         return loadBytes(stream, (int)entry.getSize());
       }
       finally {
         if (!file.lockJars) {
-          file.close();
+          zipFile.close();
         }
       }
     }

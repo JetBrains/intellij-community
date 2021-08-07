@@ -5,6 +5,8 @@ import com.intellij.codeInspection.ex.EntryPointsManagerBase;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.testFramework.IdeaTestUtil;
 
+import java.util.List;
+
 public class UnusedDeclarationTest extends AbstractUnusedDeclarationTest {
 
   public void testSCR6067() {
@@ -97,13 +99,13 @@ public class UnusedDeclarationTest extends AbstractUnusedDeclarationTest {
   }
 
   public void testAdditionalAnnotations() {
-    final String testAnnotation = "Annotated";
-    EntryPointsManagerBase.getInstance(getProject()).ADDITIONAL_ANNOTATIONS.add(testAnnotation);
+    final List<String> testAnnotations = List.of("Annotated", "RequestMapping", "Ann1");
+    EntryPointsManagerBase.getInstance(getProject()).ADDITIONAL_ANNOTATIONS.addAll(testAnnotations);
     try {
       doTest();
     }
     finally {
-      EntryPointsManagerBase.getInstance(getProject()).ADDITIONAL_ANNOTATIONS.remove(testAnnotation);
+      EntryPointsManagerBase.getInstance(getProject()).ADDITIONAL_ANNOTATIONS.removeAll(testAnnotations);
     }
   }
 

@@ -6,6 +6,7 @@ import com.intellij.openapi.application.PathManager;
 import com.intellij.testFramework.TestDataPath;
 import com.intellij.testFramework.builders.JavaModuleFixtureBuilder;
 import kotlin.KotlinVersion;
+import org.jetbrains.kotlin.idea.artifacts.KotlinArtifacts;
 import org.junit.Assume;
 
 import java.io.File;
@@ -26,10 +27,8 @@ public class KtUastCallMatcherTest extends UastCallMatcherTestBase {
   @Override
   protected void tuneFixture(JavaModuleFixtureBuilder moduleBuilder) {
     super.tuneFixture(moduleBuilder);
-    //TODO check if adding kotlin-stdlib is redundant
-    String kotlinDir = PathManager.getHomePath().replace(File.separatorChar, '/') +
-                       "/community/build/dependencies/build/kotlin/Kotlin/kotlinc/lib";
-    moduleBuilder.addLibraryJars("kotlin-stdlib", kotlinDir, "kotlin-stdlib.jar");
+    File kotlinStdlib = KotlinArtifacts.getInstance().getKotlinStdlib();
+    moduleBuilder.addLibraryJars("kotlin-stdlib", kotlinStdlib.getParent(), kotlinStdlib.getName());
   }
 
 

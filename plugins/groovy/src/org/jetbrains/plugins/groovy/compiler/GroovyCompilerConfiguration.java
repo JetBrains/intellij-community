@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.plugins.groovy.compiler;
 
@@ -6,7 +6,6 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.compiler.options.ExcludedEntriesConfiguration;
 import com.intellij.openapi.compiler.options.ExcludesConfiguration;
 import com.intellij.openapi.components.PersistentStateComponent;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.project.Project;
@@ -52,7 +51,7 @@ public class GroovyCompilerConfiguration implements PersistentStateComponent<Jps
   }
 
   public static GroovyCompilerConfiguration getInstance(Project project) {
-    return ServiceManager.getService(project, GroovyCompilerConfiguration.class);
+    return project.getService(GroovyCompilerConfiguration.class);
   }
 
   public boolean isInvokeDynamic() {

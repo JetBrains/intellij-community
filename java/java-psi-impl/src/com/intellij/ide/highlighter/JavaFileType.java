@@ -28,7 +28,7 @@ public final class JavaFileType extends LanguageFileType {
   @Override
   @NotNull
   public String getDescription() {
-    return JavaPsiBundle.message("filetype.description.java");
+    return JavaPsiBundle.message("filetype.java.description");
   }
 
   @Override

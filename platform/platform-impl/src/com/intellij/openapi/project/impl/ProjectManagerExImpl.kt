@@ -1,11 +1,13 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+@file:Suppress("ReplaceNegatedIsEmptyWithIsNotEmpty")
 package com.intellij.openapi.project.impl
 
 import com.intellij.conversion.ConversionResult
 import com.intellij.conversion.ConversionService
+import com.intellij.diagnostic.Activity
 import com.intellij.diagnostic.ActivityCategory
 import com.intellij.diagnostic.StartUpMeasurer
-import com.intellij.diagnostic.runMainActivity
+import com.intellij.diagnostic.runActivity
 import com.intellij.featureStatistics.fusCollectors.LifecycleUsageTriggerCollector
 import com.intellij.ide.AppLifecycleListener
 import com.intellij.ide.GeneralSettings
@@ -18,6 +20,7 @@ import com.intellij.ide.lightEdit.LightEditCompatible
 import com.intellij.ide.startup.impl.StartupManagerImpl
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.components.ComponentManagerEx
 import com.intellij.openapi.components.StorageScheme
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
@@ -39,9 +42,8 @@ import com.intellij.platform.PlatformProjectOpenProcessor
 import com.intellij.project.ProjectStoreOwner
 import com.intellij.projectImport.ProjectAttachProcessor
 import com.intellij.projectImport.ProjectOpenedCallback
-import com.intellij.serviceContainer.processProjectComponents
-import com.intellij.ui.GuiUtils
 import com.intellij.ui.IdeUICustomization
+import com.intellij.util.ModalityUiUtil
 import com.intellij.util.io.delete
 import org.jetbrains.annotations.ApiStatus
 import java.awt.event.InvocationEvent
@@ -72,57 +74,73 @@ open class ProjectManagerExImpl : ProjectManagerImpl() {
   }
 
   final override fun openProjectAsync(projectStoreBaseDir: Path, options: OpenProjectTask): CompletableFuture<Project?> {
-    val app = ApplicationManager.getApplication()
-    if (LOG.isDebugEnabled && !app.isUnitTestMode) {
+    if (LOG.isDebugEnabled && !ApplicationManager.getApplication().isUnitTestMode) {
       LOG.debug("open project: $options", Exception())
     }
 
-    if (options.project != null && isProjectOpened(options.project)) {
+    if (options.project != null && isProjectOpened(options.project as Project)) {
       return CompletableFuture.completedFuture(null)
     }
 
-    val activity = StartUpMeasurer.startMainActivity("project opening preparation")
+    val activity = StartUpMeasurer.startActivity("project opening preparation")
     if (!options.forceOpenInNewFrame) {
       val openProjects = openProjects
-      if (!openProjects.isNullOrEmpty()) {
+      if (!openProjects.isEmpty()) {
         var projectToClose = options.projectToClose
         if (projectToClose == null) {
           // if several projects are opened, ask to reuse not last opened project frame, but last focused (to avoid focus switching)
           val lastFocusedFrame = IdeFocusManager.getGlobalInstance().lastFocusedFrame
           projectToClose = lastFocusedFrame?.project
           if (projectToClose == null || projectToClose is LightEditCompatible) {
-            projectToClose = openProjects[openProjects.size - 1]
+            projectToClose = openProjects.last()
           }
         }
+
         // this null assertion is required to overcome bug in new version of KT compiler: KT-40034
         @Suppress("UNNECESSARY_NOT_NULL_ASSERTION")
-        if (checkExistingProjectOnOpen(projectToClose!!, options.callback, projectStoreBaseDir, this)) {
+        if (checkExistingProjectOnOpen(projectToClose!!, options.callback, projectStoreBaseDir, options.projectName, this)) {
           return CompletableFuture.completedFuture(null)
         }
       }
     }
+    return doOpenAsync(options, projectStoreBaseDir, activity)
+  }
 
-    val frameAllocator = if (app.isHeadlessEnvironment) ProjectFrameAllocator(options) else ProjectUiFrameAllocator(options, projectStoreBaseDir)
+  private fun doOpenAsync(options: OpenProjectTask,
+                          projectStoreBaseDir: Path,
+                          activity: Activity): CompletableFuture<Project?> {
+    val frameAllocator = if (ApplicationManager.getApplication().isHeadlessEnvironment) ProjectFrameAllocator(options)
+    else ProjectUiFrameAllocator(options, projectStoreBaseDir)
     val disableAutoSaveToken = SaveAndSyncHandler.getInstance().disableAutoSave()
-    return frameAllocator.run {
+    return frameAllocator.run { indicator ->
       activity.end()
       val result: PrepareProjectResult
       if (options.project == null) {
         result = prepareProject(options, projectStoreBaseDir) ?: return@run null
       }
       else {
-        result = PrepareProjectResult(options.project, null)
+        result = PrepareProjectResult(options.project as Project, null)
       }
 
       val project = result.project
+      if (!addToOpened(project)) {
+        return@run null
+      }
+
       frameAllocator.projectLoaded(project)
-      if (doOpenProject(project)) {
-        frameAllocator.projectOpened(project)
-        result
+      try {
+        openProject(project, indicator, isRunStartUpActivitiesEnabled(project)).join()
       }
-      else {
-        null
+      catch (e: ProcessCanceledException) {
+        ApplicationManager.getApplication().invokeAndWait {
+          closeProject(project, /* saveProject = */false, /* dispose = */true, /* checkCanClose = */false)
+        }
+        ApplicationManager.getApplication().messageBus.syncPublisher(AppLifecycleListener.TOPIC).projectOpenFailed()
+        return@run null
       }
+
+      frameAllocator.projectOpened(project)
+      result
     }
       .handle(BiFunction { result, error ->
         disableAutoSaveToken.finish()
@@ -153,16 +171,13 @@ open class ProjectManagerExImpl : ProjectManagerImpl() {
       val projectFilePath = if (store.storageScheme == StorageScheme.DIRECTORY_BASED) store.directoryStorePath!! else store.projectFilePath
       for (p in openProjects) {
         if (ProjectUtil.isSameProject(projectFilePath, p)) {
-          GuiUtils.invokeLaterIfNeeded({ ProjectUtil.focusProjectWindow(p, false) }, ModalityState.NON_MODAL)
+          ModalityUiUtil.invokeLaterIfNeeded(ModalityState.NON_MODAL
+          ) { ProjectUtil.focusProjectWindow(p, false) }
           return false
         }
       }
     }
-    return doOpenProject(project)
-  }
 
-  @ApiStatus.Internal
-  private fun doOpenProject(project: Project): Boolean {
     if (!addToOpened(project)) {
       return false
     }
@@ -173,7 +188,7 @@ open class ProjectManagerExImpl : ProjectManagerImpl() {
     }
 
     try {
-      openProject(project, ProgressManager.getInstance().progressIndicator, isRunStartUpActivitiesEnabled(project))
+      openProject(project, ProgressManager.getInstance().progressIndicator, isRunStartUpActivitiesEnabled(project)).join()
     }
     catch (e: ProcessCanceledException) {
       app.invokeAndWait { closeProject(project, /* saveProject = */false, /* dispose = */true, /* checkCanClose = */false) }
@@ -218,7 +233,7 @@ open class ProjectManagerExImpl : ProjectManagerImpl() {
   }
 
   protected open fun instantiateProject(projectStoreBaseDir: Path, options: OpenProjectTask): ProjectImpl {
-    val activity = StartUpMeasurer.startMainActivity("project instantiation")
+    val activity = StartUpMeasurer.startActivity("project instantiation")
     val project = ProjectExImpl(projectStoreBaseDir, options.projectName)
     activity.end()
     options.beforeInit?.invoke(project)
@@ -240,7 +255,7 @@ open class ProjectManagerExImpl : ProjectManagerImpl() {
         val conversionService = ConversionService.getInstance()
         if (conversionService != null) {
           indicator?.text = IdeUICustomization.getInstance().projectMessage("progress.text.project.checking.configuration")
-          conversionResult = runMainActivity("project conversion") {
+          conversionResult = runActivity("project conversion") {
             conversionService.convert(projectStoreBaseDir)
           }
           if (conversionResult.openingIsCanceled()) {
@@ -259,6 +274,8 @@ open class ProjectManagerExImpl : ProjectManagerImpl() {
         }
       }
     }
+
+    project.putUserData(PlatformProjectOpenProcessor.PROJECT_NEWLY_OPENED, options.isNewProject)
 
     @Suppress("UNNECESSARY_NOT_NULL_ASSERTION")
     if (options.beforeOpen != null && !options.beforeOpen!!(project)) {
@@ -294,68 +311,76 @@ private fun message(e: Throwable): String {
 private fun checkExistingProjectOnOpen(projectToClose: Project,
                                        callback: ProjectOpenedCallback?,
                                        projectDir: Path?,
+                                       projectName: String?,
                                        projectManager: ProjectManagerExImpl): Boolean {
-  val result = CompletableFuture<Boolean>()
-
   val settings = GeneralSettings.getInstance()
   val isValidProject = projectDir != null && ProjectUtil.isValidProjectPath(projectDir)
+  var result = false
 
-  ApplicationManager.getApplication().invokeAndWait{
-    try {
-      if (projectDir != null && ProjectAttachProcessor.canAttachToProject() &&
-          (!isValidProject || settings.confirmOpenNewProject == GeneralSettings.OPEN_PROJECT_ASK)) {
-        val exitCode = ProjectUtil.confirmOpenOrAttachProject()
-        if (exitCode == -1) {
-          result.complete(true)
-          return@invokeAndWait
-        }
-        else if (exitCode == GeneralSettings.OPEN_PROJECT_SAME_WINDOW) {
-          if (!projectManager.closeAndDispose(projectToClose)) {
-            result.complete(true)
-            return@invokeAndWait
-          }
-        }
-        else if (exitCode == GeneralSettings.OPEN_PROJECT_SAME_WINDOW_ATTACH) {
-          if (PlatformProjectOpenProcessor.attachToProject(projectToClose, projectDir, callback)) {
-            result.complete(true)
-            return@invokeAndWait
-          }
-        }
-        // process all pending events that can interrupt focus flow
-        // todo this can be removed after taming the focus beast
-        IdeEventQueue.getInstance().flushQueue()
+  // modality per thread, it means that we cannot use invokeLater, because after getting result from EDT, we MUST continue execution
+  // in ORIGINAL thread
+  ApplicationManager.getApplication().invokeAndWait task@{
+    if (projectDir != null && ProjectAttachProcessor.canAttachToProject() &&
+        (!isValidProject || settings.confirmOpenNewProject == GeneralSettings.OPEN_PROJECT_ASK)) {
+      val exitCode = ProjectUtil.confirmOpenOrAttachProject()
+      if (exitCode == -1) {
+        result = true
+        return@task
       }
-      else {
-        val exitCode = ProjectUtil.confirmOpenNewProject(false)
-        if (exitCode == GeneralSettings.OPEN_PROJECT_SAME_WINDOW) {
-          if (!projectManager.closeAndDispose(projectToClose)) {
-            result.complete(true)
-            return@invokeAndWait
-          }
-        }
-        else if (exitCode != GeneralSettings.OPEN_PROJECT_NEW_WINDOW) {
-          // not in a new window
-          result.complete(true)
-          return@invokeAndWait
+      else if (exitCode == GeneralSettings.OPEN_PROJECT_SAME_WINDOW) {
+        if (!projectManager.closeAndDispose(projectToClose)) {
+          result = true
+          return@task
         }
       }
-
-      result.complete(false)
-    } catch (err: Throwable) {
-      result.completeExceptionally(err)
+      else if (exitCode == GeneralSettings.OPEN_PROJECT_SAME_WINDOW_ATTACH) {
+        if (PlatformProjectOpenProcessor.attachToProject(projectToClose, projectDir, callback)) {
+          result = true
+          return@task
+        }
+      }
+      // process all pending events that can interrupt focus flow
+      // todo this can be removed after taming the focus beast
+      IdeEventQueue.getInstance().flushQueue()
     }
-  }
+    else {
+      val mode = GeneralSettings.getInstance().confirmOpenNewProject
+      if (mode == GeneralSettings.OPEN_PROJECT_SAME_WINDOW_ATTACH) {
+        if (projectDir != null && PlatformProjectOpenProcessor.attachToProject(projectToClose, projectDir, callback)) {
+          result = true
+          return@task
+        }
+      }
 
-  return result.get()
+      val projectNameValue = projectName ?: projectDir?.fileName?.toString() ?: projectDir?.toString()
+      val exitCode = ProjectUtil.confirmOpenNewProject(false, projectNameValue)
+      if (exitCode == GeneralSettings.OPEN_PROJECT_SAME_WINDOW) {
+        if (!projectManager.closeAndDispose(projectToClose)) {
+          result = true
+          return@task
+        }
+      }
+      else if (exitCode != GeneralSettings.OPEN_PROJECT_NEW_WINDOW) {
+        // not in a new window
+        result = true
+        return@task
+      }
+    }
+
+    result = false
+  }
+  return result
 }
 
-private fun openProject(project: Project, indicator: ProgressIndicator?, runStartUpActivities: Boolean) {
-  val waitEdtActivity = StartUpMeasurer.startMainActivity("placing calling projectOpened on event queue")
+private fun openProject(project: Project, indicator: ProgressIndicator?, runStartUpActivities: Boolean): CompletableFuture<*> {
+  val waitEdtActivity = StartUpMeasurer.startActivity("placing calling projectOpened on event queue")
   if (indicator != null) {
     indicator.text = if (ApplicationManager.getApplication().isInternal) "Waiting on event queue..."  // NON-NLS (internal mode)
                      else ProjectBundle.message("project.preparing.workspace")
     indicator.isIndeterminate = true
   }
+
+  // invokeLater cannot be used for now
   ApplicationManager.getApplication().invokeAndWait {
     waitEdtActivity.end()
     if (indicator != null && ApplicationManager.getApplication().isInternal) {
@@ -363,22 +388,32 @@ private fun openProject(project: Project, indicator: ProgressIndicator?, runStar
     }
 
     ProjectManagerImpl.LOG.debug("projectOpened")
+
     LifecycleUsageTriggerCollector.onProjectOpened(project)
-    val activity = StartUpMeasurer.startMainActivity("project opened callbacks")
-    ApplicationManager.getApplication().messageBus.syncPublisher(ProjectManager.TOPIC).projectOpened(project)
-    // https://jetbrains.slack.com/archives/C5E8K7FL4/p1495015043685628
-    // projectOpened in the project components is called _after_ message bus event projectOpened for ages
-    // old behavior is preserved for now (smooth transition, to not break all), but this order is not logical,
-    // because ProjectComponent.projectOpened it is part of project initialization contract, but message bus projectOpened it is just an event
-    // (and, so, should be called after project initialization)
-    processProjectComponents(project.picoContainer) { component, pluginDescriptor ->
-      StartupManagerImpl.runActivity {
+    val activity = StartUpMeasurer.startActivity("project opened callbacks")
+
+    runActivity("projectOpened event executing") {
+      ApplicationManager.getApplication().messageBus.syncPublisher(ProjectManager.TOPIC).projectOpened(project)
+    }
+
+    @Suppress("DEPRECATION")
+    (project as ComponentManagerEx)
+      .processInitializedComponents(com.intellij.openapi.components.ProjectComponent::class.java) { component, pluginDescriptor ->
+      ProgressManager.checkCanceled()
+      try {
         val componentActivity = StartUpMeasurer.startActivity(component.javaClass.name, ActivityCategory.PROJECT_OPEN_HANDLER,
-                                                              pluginDescriptor.pluginId.idString)
+          pluginDescriptor.pluginId.idString)
         component.projectOpened()
         componentActivity.end()
       }
+      catch (e: ProcessCanceledException) {
+        throw e
+      }
+      catch (e: Throwable) {
+        ProjectManagerImpl.LOG.error(e)
+      }
     }
+
     activity.end()
     ProjectImpl.ourClassesAreLoaded = true
   }
@@ -386,6 +421,8 @@ private fun openProject(project: Project, indicator: ProgressIndicator?, runStar
   if (runStartUpActivities) {
     (StartupManager.getInstance(project) as StartupManagerImpl).projectOpened(indicator)
   }
+
+  return CompletableFuture.completedFuture(null)
 }
 
 // allow `invokeAndWait` inside startup activities

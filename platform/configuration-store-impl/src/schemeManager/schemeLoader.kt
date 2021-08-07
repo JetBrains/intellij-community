@@ -1,11 +1,13 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.configurationStore.schemeManager
 
 import com.intellij.configurationStore.*
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.options.NonLazySchemeProcessor
+import com.intellij.openapi.options.Scheme
 import com.intellij.openapi.project.ProjectBundle
 import com.intellij.openapi.util.JDOMUtil
+import com.intellij.openapi.util.createXmlStreamReader
 import com.intellij.openapi.vfs.CharsetToolkit
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
@@ -14,8 +16,6 @@ import com.intellij.util.io.createDirectories
 import com.intellij.util.io.systemIndependentPath
 import org.jdom.Element
 import org.jetbrains.annotations.NonNls
-import org.xmlpull.mxp1.MXParser
-import org.xmlpull.v1.XmlPullParser
 import java.io.IOException
 import java.io.InputStream
 import java.nio.file.Path
@@ -23,11 +23,13 @@ import java.security.MessageDigest
 import java.util.*
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.function.Function
+import javax.xml.stream.XMLStreamConstants
+import javax.xml.stream.XMLStreamReader
 
-internal class SchemeLoader<T : Any, MUTABLE_SCHEME : T>(private val schemeManager: SchemeManagerImpl<T, MUTABLE_SCHEME>,
-                                                         private val oldSchemes: List<T>,
-                                                         private val preScheduledFilesToDelete: MutableSet<String>,
-                                                         private val isDuringLoad: Boolean) {
+internal class SchemeLoader<T: Scheme, MUTABLE_SCHEME : T>(private val schemeManager: SchemeManagerImpl<T, MUTABLE_SCHEME>,
+                                                           private val oldSchemes: List<T>,
+                                                           private val preScheduledFilesToDelete: MutableSet<String>,
+                                                           private val isDuringLoad: Boolean) {
   private val filesToDelete: MutableSet<String> = HashSet()
 
   private val schemes: MutableList<T> = oldSchemes.toMutableList()
@@ -157,7 +159,7 @@ internal class SchemeLoader<T : Any, MUTABLE_SCHEME : T>(private val schemeManag
       val bytes = preloadedBytes ?: input!!.readBytes()
       lazyPreloadScheme(bytes, schemeManager.isOldSchemeNaming) { name, parser ->
         val attributeProvider = Function<String, String?> {
-          if (parser.eventType == XmlPullParser.START_TAG) {
+          if (parser.eventType == XMLStreamConstants.START_ELEMENT) {
             parser.getAttributeValue(null, it)
           }
           else {
@@ -179,7 +181,7 @@ internal class SchemeLoader<T : Any, MUTABLE_SCHEME : T>(private val schemeManag
     }
     else {
       val element = when (preloadedBytes) {
-        null -> JDOMUtil.load(CharsetToolkit.inputStreamSkippingBOM(input!!.buffered()))
+        null -> JDOMUtil.load(input)
         else -> JDOMUtil.load(CharsetToolkit.inputStreamSkippingBOM(preloadedBytes.inputStream()))
       }
       scheme = (processor as NonLazySchemeProcessor).readScheme(element, isDuringLoad) ?: return null
@@ -214,22 +216,21 @@ internal class SchemeLoader<T : Any, MUTABLE_SCHEME : T>(private val schemeManag
   }
 }
 
-internal inline fun lazyPreloadScheme(bytes: ByteArray, isOldSchemeNaming: Boolean, consumer: (name: String?, parser: XmlPullParser) -> Unit) {
-  val parser = MXParser()
-  parser.setInput(bytes.inputStream().reader())
-  consumer(preload(isOldSchemeNaming, parser), parser)
+internal inline fun lazyPreloadScheme(bytes: ByteArray, isOldSchemeNaming: Boolean, consumer: (name: String?, parser: XMLStreamReader) -> Unit) {
+  val reader = createXmlStreamReader(CharsetToolkit.inputStreamSkippingBOM(bytes.inputStream()))
+  consumer(preload(isOldSchemeNaming, reader), reader)
 }
 
 @Suppress("HardCodedStringLiteral")
-private fun preload(isOldSchemeNaming: Boolean, parser: MXParser): String? {
+private fun preload(isOldSchemeNaming: Boolean, parser: XMLStreamReader): String? {
   var eventType = parser.eventType
 
   fun findName(): String? {
     eventType = parser.next()
-    while (eventType != XmlPullParser.END_DOCUMENT) {
+    while (eventType != XMLStreamConstants.END_DOCUMENT) {
       when (eventType) {
-        XmlPullParser.START_TAG -> {
-          if (parser.name == "option" && parser.getAttributeValue(null, "name") == "myName") {
+        XMLStreamConstants.START_ELEMENT -> {
+          if (parser.localName == "option" && parser.getAttributeValue(null, "name") == "myName") {
             return parser.getAttributeValue(null, "value")
           }
         }
@@ -242,16 +243,16 @@ private fun preload(isOldSchemeNaming: Boolean, parser: MXParser): String? {
 
   do {
     when (eventType) {
-      XmlPullParser.START_TAG -> {
-        if (!isOldSchemeNaming || parser.name != "component") {
-          if (parser.name == "profile" || (isOldSchemeNaming && parser.name == "copyright")) {
+      XMLStreamConstants.START_ELEMENT -> {
+        if (!isOldSchemeNaming || parser.localName != "component") {
+          if (parser.localName == "profile" || (isOldSchemeNaming && parser.localName == "copyright")) {
             return findName()
           }
-          else if (parser.name == "inspections") {
+          else if (parser.localName == "inspections") {
             // backward compatibility - we don't write PROFILE_NAME_TAG anymore
             return parser.getAttributeValue(null, "profile_name") ?: findName()
           }
-          else if (parser.name == "configuration") {
+          else if (parser.localName == "configuration") {
             // run configuration
             return parser.getAttributeValue(null, "name")
           }
@@ -263,7 +264,7 @@ private fun preload(isOldSchemeNaming: Boolean, parser: MXParser): String? {
     }
     eventType = parser.next()
   }
-  while (eventType != XmlPullParser.END_DOCUMENT)
+  while (eventType != XMLStreamConstants.END_DOCUMENT)
   return null
 }
 

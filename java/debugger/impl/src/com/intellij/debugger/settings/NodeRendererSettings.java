@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.settings;
 
 import com.intellij.debugger.DebuggerContext;
@@ -427,6 +427,7 @@ public class NodeRendererSettings implements PersistentStateComponent<Element> {
 
   private static final class MapEntryLabelRenderer extends ReferenceRenderer
     implements ValueLabelRenderer, XValuePresentationProvider, OnDemandRenderer {
+    private static final Key<Boolean> RENDERER_MUTED = Key.create("RENDERER_MUTED");
     private static final Key<ValueDescriptorImpl> KEY_DESCRIPTOR = Key.create("KEY_DESCRIPTOR");
     private static final Key<ValueDescriptorImpl> VALUE_DESCRIPTOR = Key.create("VALUE_DESCRIPTOR");
 
@@ -442,6 +443,7 @@ public class NodeRendererSettings implements PersistentStateComponent<Element> {
     @Override
     public String calcLabel(ValueDescriptor descriptor, EvaluationContext evaluationContext, DescriptorLabelListener listener) throws EvaluateException {
       if (!isShowValue(descriptor, evaluationContext)) {
+        descriptor.putUserData(RENDERER_MUTED, true);
         return "";
       }
       String keyText = calcExpression(evaluationContext, descriptor, myKeyExpression, listener, KEY_DESCRIPTOR);
@@ -520,6 +522,9 @@ public class NodeRendererSettings implements PersistentStateComponent<Element> {
       return new JavaValuePresentation(descriptor) {
         @Override
         public void renderValue(@NotNull XValueTextRenderer renderer, @Nullable XValueNodeImpl node) {
+          if (isMuted()) {
+            return;
+          }
           renderDescriptor(KEY_DESCRIPTOR, renderer, node);
           renderer.renderComment(" -> ");
           renderDescriptor(VALUE_DESCRIPTOR, renderer, node);
@@ -553,7 +558,11 @@ public class NodeRendererSettings implements PersistentStateComponent<Element> {
         @Nullable
         @Override
         public String getType() {
-          return inCollection ? null : super.getType();
+          return inCollection && !isMuted() ? null : super.getType();
+        }
+
+        private boolean isMuted() {
+          return myValueDescriptor.getUserData(RENDERER_MUTED) != null && !OnDemandRenderer.isCalculated(myValueDescriptor);
         }
       };
     }

@@ -7,16 +7,27 @@ import com.intellij.codeInsight.NullabilityAnnotationInfo;
 import com.intellij.codeInsight.NullableNotNullManager;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightControlFlowUtil;
 import com.intellij.codeInsight.daemon.impl.analysis.JavaGenericsUtil;
-import com.intellij.codeInspection.dataFlow.instructions.FinishElementInstruction;
-import com.intellij.codeInspection.dataFlow.instructions.Instruction;
-import com.intellij.codeInspection.dataFlow.instructions.MethodCallInstruction;
-import com.intellij.codeInspection.dataFlow.instructions.ReturnInstruction;
+import com.intellij.codeInspection.dataFlow.interpreter.RunnerResult;
+import com.intellij.codeInspection.dataFlow.interpreter.StandardDataFlowInterpreter;
+import com.intellij.codeInspection.dataFlow.java.ControlFlowAnalyzer;
+import com.intellij.codeInspection.dataFlow.java.inst.MethodCallInstruction;
+import com.intellij.codeInspection.dataFlow.jvm.descriptors.PlainDescriptor;
+import com.intellij.codeInspection.dataFlow.lang.DfaListener;
+import com.intellij.codeInspection.dataFlow.lang.ir.*;
+import com.intellij.codeInspection.dataFlow.memory.DfaMemoryState;
+import com.intellij.codeInspection.dataFlow.types.DfPrimitiveType;
+import com.intellij.codeInspection.dataFlow.types.DfReferenceType;
 import com.intellij.codeInspection.dataFlow.types.DfType;
 import com.intellij.codeInspection.dataFlow.types.DfTypes;
+import com.intellij.codeInspection.dataFlow.value.DfaValueFactory;
 import com.intellij.codeInspection.dataFlow.value.DfaVariableValue;
+import com.intellij.codeInspection.dataFlow.value.RelationType;
 import com.intellij.codeInspection.util.OptionalUtil;
 import com.intellij.lang.java.JavaLanguage;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.searches.DeepestSuperMethodsSearch;
@@ -73,7 +84,7 @@ public final class DfaPsiUtil {
       return Nullability.UNKNOWN;
     }
 
-    if (owner instanceof PsiEnumConstant || PsiUtil.isAnnotationMethod(owner)) {
+    if (owner instanceof PsiEnumConstant) {
       return Nullability.NOT_NULL;
     }
     if (owner instanceof PsiMethod && isEnumPredefinedMethod((PsiMethod)owner)) {
@@ -318,10 +329,13 @@ public final class DfaPsiUtil {
       @NotNull
       @Override
       public Result<Set<PsiField>> compute() {
-        final Map<PsiField, Boolean> map = new HashMap<>();
-        final DataFlowRunner dfaRunner = new DataFlowRunner(body.getProject()) {
-          PsiElement currentBlock;
-
+        DfaValueFactory factory = new DfaValueFactory(body.getProject());
+        ControlFlow flow = ControlFlowAnalyzer.buildFlow(body, factory, true);
+        if (flow == null) {
+          return Result.create(Set.of(), body, PsiModificationTracker.MODIFICATION_COUNT);
+        }
+        var interpreter = new StandardDataFlowInterpreter(flow, DfaListener.EMPTY) {
+          final Map<PsiField, Boolean> map = new HashMap<>();
           private boolean isCallExposingNonInitializedFields(Instruction instruction) {
             if (!(instruction instanceof MethodCallInstruction)) {
               return false;
@@ -359,29 +373,20 @@ public final class DfaPsiUtil {
           }
 
           @Override
-          protected @NotNull List<DfaInstructionState> createInitialInstructionStates(@NotNull PsiElement psiBlock,
-                                                                                      @NotNull Collection<? extends DfaMemoryState> memStates,
-                                                                                      @NotNull ControlFlow flow) {
-            currentBlock = psiBlock;
-            return super.createInitialInstructionStates(psiBlock, memStates, flow);
-          }
-
-          @Override
-          protected DfaInstructionState @NotNull [] acceptInstruction(@NotNull InstructionVisitor visitor,
-                                                                      @NotNull DfaInstructionState instructionState) {
+          protected DfaInstructionState @NotNull [] acceptInstruction(@NotNull DfaInstructionState instructionState) {
             Instruction instruction = instructionState.getInstruction();
             if (instruction instanceof FinishElementInstruction) {
               Set<DfaVariableValue> vars = ((FinishElementInstruction)instruction).getVarsToFlush();
               vars.removeIf(v -> {
-                PsiModifierListOwner variable = v.getPsiVariable();
+                PsiElement variable = v.getPsiVariable();
                 return variable instanceof PsiField && ((PsiField)variable).getContainingClass() == containingClass;
               });
             }
-            if (currentBlock == body &&
-                (isCallExposingNonInitializedFields(instruction) ||
-                 instruction instanceof ReturnInstruction && !((ReturnInstruction)instruction).isViaException())) {
+            if ((isCallExposingNonInitializedFields(instruction) || instruction instanceof ReturnInstruction)) {
               for (PsiField field : containingClass.getFields()) {
-                if (!instructionState.getMemoryState().isNotNull(getFactory().getVarFactory().createVariableValue(field))) {
+                DfaVariableValue value = PlainDescriptor.createVariableValue(getFactory(), field);
+                DfType dfType = instructionState.getMemoryState().getDfType(value);
+                if (dfType.isSuperType(DfTypes.NULL)) {
                   map.put(field, false);
                 }
                 else if (!map.containsKey(field)) {
@@ -390,17 +395,18 @@ public final class DfaPsiUtil {
               }
               return DfaInstructionState.EMPTY_ARRAY;
             }
-            return super.acceptInstruction(visitor, instructionState);
+            return super.acceptInstruction(instructionState);
           }
         };
-        final RunnerResult rc = dfaRunner.analyzeMethod(body, new StandardInstructionVisitor());
+        DfaMemoryState state = DfaUtil.createStateWithEnabledAssertions(factory);
+        final RunnerResult rc = interpreter.interpret(state);
         Set<PsiField> notNullFields = new HashSet<>();
         if (rc == RunnerResult.OK) {
-          for (Map.Entry<PsiField, Boolean> entry : map.entrySet()) {
-            if (entry.getValue()) {
-              notNullFields.add(entry.getKey());
+          interpreter.map.forEach((key, value) -> {
+            if (value) {
+              notNullFields.add(key);
             }
-          }
+          });
         }
         return Result.create(notNullFields, body, PsiModificationTracker.MODIFICATION_COUNT);
       }
@@ -455,12 +461,12 @@ public final class DfaPsiUtil {
             constructor.accept(visitor);
           }
         }
- 
+
         for (PsiClassInitializer initializer : psiClass.getInitializers()) {
           if (initializer.getLanguage().isKindOf(JavaLanguage.INSTANCE)) {
             initializer.accept(visitor);
           }
-        } 
+        }
 
         return Result.create(result, psiClass);
       }
@@ -609,10 +615,78 @@ public final class DfaPsiUtil {
   @NotNull
   public static DfType fromLiteral(@NotNull PsiLiteralExpression expr) {
     PsiType type = expr.getType();
-    if (type == null) return DfTypes.TOP;
+    if (type == null) return DfType.TOP;
     if (PsiType.NULL.equals(type)) return DfTypes.NULL;
     Object value = expr.getValue();
     if (value == null) return DfTypes.typedObject(type, Nullability.NOT_NULL);
     return DfTypes.constant(value, type);
+  }
+
+  /**
+   * Create RelationType from Java token
+   * @param type Java token
+   * @return RelationType
+   */
+  @Nullable
+  public static RelationType getRelationByToken(IElementType type) {
+    if(JavaTokenType.EQEQ.equals(type)) {
+      return RelationType.EQ;
+    }
+    if(JavaTokenType.NE.equals(type)) {
+      return RelationType.NE;
+    }
+    if(JavaTokenType.LT.equals(type)) {
+      return RelationType.LT;
+    }
+    if(JavaTokenType.GT.equals(type)) {
+      return RelationType.GT;
+    }
+    if(JavaTokenType.LE.equals(type)) {
+      return RelationType.LE;
+    }
+    if(JavaTokenType.GE.equals(type)) {
+      return RelationType.GE;
+    }
+    if(JavaTokenType.INSTANCEOF_KEYWORD.equals(type)) {
+      return RelationType.IS;
+    }
+    return null;
+  }
+
+  /**
+   * Tries to convert {@link DfType} to {@link PsiType}.
+   *
+   * @param project project
+   * @param dfType DfType to convert
+   * @return converted DfType; null if no corresponding PsiType found.
+   */
+  public static @Nullable PsiType dfTypeToPsiType(@NotNull Project project, @Nullable DfType dfType) {
+    if (dfType instanceof DfPrimitiveType) {
+      return ((DfPrimitiveType)dfType).getPsiType();
+    }
+    if (dfType instanceof DfReferenceType) {
+      return ((DfReferenceType)dfType).getConstraint().getPsiType(project);
+    }
+    return null;
+  }
+
+  /**
+   * @param value constant value
+   * @return human readable representation of the value
+   */
+  public static @NlsSafe String renderValue(Object value) {
+    if (value == null) return "null";
+    if (value instanceof String) return '"' + StringUtil.escapeStringCharacters((String)value) + '"';
+    if (value instanceof Float) return value + "f";
+    if (value instanceof Long) return value + "L";
+    if (value instanceof PsiField) {
+      PsiField field = (PsiField)value;
+      PsiClass containingClass = field.getContainingClass();
+      return containingClass == null ? field.getName() : containingClass.getName() + "." + field.getName();
+    }
+    if (value instanceof PsiType) {
+      return ((PsiType)value).getPresentableText();
+    }
+    return value.toString();
   }
 }

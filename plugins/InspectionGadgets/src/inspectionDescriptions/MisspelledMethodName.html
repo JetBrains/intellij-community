@@ -1,9 +1,17 @@
 <html>
 <body>
-Reports on cases where multiple methods of a class have names which differ only by
-case. Such method names may be very confusing.
+Reports cases in which multiple methods of a class have the names that differ only by
+case. Such names may be very confusing.
+<p><b>Example:</b> <pre>
+<code>
+public int hashcode() {//reported, should be hashCode probably?
+  return 0;
+}
+</code></pre>
+<p>A quick-fix that renames such methods is available only in the editor.</p>
 <!-- tooltip end -->
-<p>Use the checkbox below to ignore methods overriding or implementing a method from a superclass.
+<p>Use the <b>Ignore methods overriding/implementing a super method</b> option to ignore methods overriding or implementing a method from
+  the superclass.
 <p>
 
 </body>

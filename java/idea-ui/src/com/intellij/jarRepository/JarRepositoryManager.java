@@ -60,6 +60,10 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 import java.util.function.Function;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+
+import static com.intellij.jarRepository.JarRepositoryAuthenticationDataProviderKt.obtainAuthenticationData;
 
 public final class JarRepositoryManager {
   private static final Logger LOG = Logger.getInstance(JarRepositoryManager.class);
@@ -147,7 +151,7 @@ public final class JarRepositoryManager {
   private static NewLibraryConfiguration createNewLibraryConfiguration(RepositoryLibraryProperties props,
                                                                        Collection<? extends OrderRoot> roots) {
     return new NewLibraryConfiguration(
-      RepositoryLibraryDescription.findDescription(props).getDisplayName(props.getVersion()),
+      suggestLibraryName(props),
       RepositoryLibraryType.getInstance(),
       props) {
       @Override
@@ -155,6 +159,15 @@ public final class JarRepositoryManager {
         editor.addRoots(roots);
       }
     };
+  }
+
+  private static String suggestLibraryName(RepositoryLibraryProperties props) {
+    return
+      Stream.of(props.getGroupId(), props.getArtifactId())
+        .flatMap(s -> Stream.of(s.split("[.:-]")))
+        .distinct()
+        .filter(s -> !s.equals("com") && !s.equals("org"))
+        .collect(Collectors.joining("."));
   }
 
 
@@ -488,9 +501,9 @@ public final class JarRepositoryManager {
 
   private static abstract class AetherJob<T> implements Function<ProgressIndicator, T> {
     @NotNull
-    private final Collection<? extends RemoteRepositoryDescription> myRepositories;
+    private final Collection<RemoteRepositoryDescription> myRepositories;
 
-    AetherJob(@NotNull Collection<? extends RemoteRepositoryDescription> repositories) {
+    AetherJob(@NotNull Collection<RemoteRepositoryDescription> repositories) {
       myRepositories = repositories;
     }
 
@@ -504,12 +517,7 @@ public final class JarRepositoryManager {
         indicator.setText(getProgressText());
         indicator.setIndeterminate(true);
 
-        final ArrayList<RemoteRepository> remotes = new ArrayList<>();
-        for (RemoteRepositoryDescription repository : myRepositories) {
-          remotes.add(
-            ArtifactRepositoryManager.createRemoteRepository(repository.getId(), repository.getUrl(), repository.isAllowSnapshots())
-          );
-        }
+        List<RemoteRepository> remotes = createRemoteRepositories(myRepositories);
         try {
           return perform(indicator, new ArtifactRepositoryManager(getLocalRepositoryPath(), remotes, new ProgressConsumer() {
             @Override
@@ -533,8 +541,21 @@ public final class JarRepositoryManager {
       return getDefaultResult();
     }
 
+    private static List<RemoteRepository> createRemoteRepositories(Collection<RemoteRepositoryDescription> repositoryDescriptions) {
+      ArrayList<RemoteRepository> remotes = new ArrayList<>();
+      for (RemoteRepositoryDescription repository : repositoryDescriptions) {
+        ArtifactRepositoryManager.ArtifactAuthenticationData authData = obtainAuthenticationData(repository.getUrl());
+        remotes.add(
+          ArtifactRepositoryManager.createRemoteRepository(repository.getId(), repository.getUrl(), authData, repository.isAllowSnapshots())
+        );
+      }
+      return remotes;
+    }
+
     protected abstract @NlsContexts.ProgressText String getProgressText();
+
     protected abstract T perform(ProgressIndicator progress, @NotNull ArtifactRepositoryManager manager) throws Exception;
+
     protected abstract T getDefaultResult();
   }
 

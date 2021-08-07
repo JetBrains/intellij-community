@@ -31,9 +31,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-/**
- * @author yole
- */
+
 public class DocStringReferenceProvider extends PsiReferenceProvider {
   @Override
   public boolean acceptsTarget(@NotNull PsiElement target) {

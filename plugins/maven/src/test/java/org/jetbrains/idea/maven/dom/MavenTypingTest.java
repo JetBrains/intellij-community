@@ -16,8 +16,10 @@
 package org.jetbrains.idea.maven.dom;
 
 import com.intellij.openapi.vfs.VirtualFile;
+import org.junit.Test;
 
 public class MavenTypingTest extends MavenDomTestCase {
+  @Test
   public void testTypingOpenBrace() {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
@@ -31,6 +33,7 @@ public class MavenTypingTest extends MavenDomTestCase {
                      "<name>${<caret>}</name>");
   }
 
+  @Test 
   public void testTypingOpenBraceInsideOtherBrace() {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
@@ -44,6 +47,7 @@ public class MavenTypingTest extends MavenDomTestCase {
                      "<name>${{<caret></name>");
   }
 
+  @Test 
   public void testTypingOpenBraceWithExistingClosedBrace() {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
@@ -57,6 +61,7 @@ public class MavenTypingTest extends MavenDomTestCase {
                      "<name>${<caret>}</name>");
   }
 
+  @Test 
   public void testTypingOpenBraceBeforeChar() {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
@@ -70,6 +75,7 @@ public class MavenTypingTest extends MavenDomTestCase {
                      "<name>${<caret>foo</name>");
   }
 
+  @Test 
   public void testTypingOpenBraceBeforeWhitespace() {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
@@ -83,6 +89,7 @@ public class MavenTypingTest extends MavenDomTestCase {
                      "<name>${<caret>} foo</name>");
   }
 
+  @Test 
   public void testTypingOpenBraceWithoutDollar() {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
@@ -96,6 +103,7 @@ public class MavenTypingTest extends MavenDomTestCase {
                      "<name>{<caret></name>");
   }
 
+  @Test 
   public void testTypingOpenBraceInTheEndOfFile() throws Exception {
     VirtualFile f = createProjectSubFile("pom.xml",
                                          "<project>" +
@@ -112,9 +120,8 @@ public class MavenTypingTest extends MavenDomTestCase {
                                   "  <name>${<caret>}");
   }
 
-  public void testTypingOpenBraceInsideTagDoesNothing() {
-    if (ignore()) return;
-
+  @Test 
+  public void testTypingOpenBraceInsideTag() {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<version>1</version>" +
@@ -124,15 +131,17 @@ public class MavenTypingTest extends MavenDomTestCase {
                      "<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<version>1</version>" +
-                     "<${<caret>name>");
+                     "<${<caret>}name>");
   }
 
+  @Test 
   public void testDoNotHandleNonMavenFiles() throws Exception {
     VirtualFile f = createProjectSubFile("foo.xml", "$<caret>");
 
     assertTypeResultInRegularFile(f, '{', "${<caret>");
   }
 
+  @Test 
   public void testWorksInFilteredResources() throws Exception {
     createProjectSubDir("res");
 
@@ -155,6 +164,7 @@ public class MavenTypingTest extends MavenDomTestCase {
     assertTypeResultInRegularFile(f, '{', "foo=${<caret>}");
   }
 
+  @Test 
   public void testDoesNotWorInNotFilteredResources() throws Exception {
     createProjectSubDir("res");
 
@@ -177,6 +187,7 @@ public class MavenTypingTest extends MavenDomTestCase {
     assertTypeResultInRegularFile(f, '{', "foo=${<caret>");
   }
 
+  @Test 
   public void testDeletingOpenBrace() throws Exception {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
@@ -189,6 +200,7 @@ public class MavenTypingTest extends MavenDomTestCase {
                           "<name>$<caret></name>");
   }
 
+  @Test 
   public void testDeletingOpenBraceWithTextInside() throws Exception {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
@@ -201,6 +213,7 @@ public class MavenTypingTest extends MavenDomTestCase {
                           "<name>$<caret>foo}</name>");
   }
 
+  @Test 
   public void testDeletingOpenBraceWithoutClosed() throws Exception {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
@@ -213,11 +226,13 @@ public class MavenTypingTest extends MavenDomTestCase {
                           "<name>$<caret></name>");
   }
 
+  @Test 
   public void testDoNotHandleDeletionInsideRegularFile() throws Exception {
     VirtualFile f = createProjectSubFile("foo.html", "${<caret>}");
     assertBackspaceResultInRegularFile(f, "$<caret>}");
   }
 
+  @Test 
   public void testDeletingInTheEndOfFile() throws Exception {
     VirtualFile f = createProjectSubFile("pom.xml",
                                          "<project>" +

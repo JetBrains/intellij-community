@@ -85,7 +85,7 @@ public class MakeStaticHandler implements RefactoringActionHandler, ContextAware
   @Override
   public boolean isAvailableForQuickList(@NotNull Editor editor, @NotNull PsiFile file, @NotNull DataContext dataContext) {
     PsiElement element = BaseRefactoringAction.getElementAtCaret(editor, file);
-    return RefactoringActionContextUtil.getJavaMethodHeader(element) != null;
+    return RefactoringActionContextUtil.getJavaMethodHeader(element) != null || RefactoringActionContextUtil.isJavaClassHeader(element);
   }
 
   public static void invoke(final PsiTypeParameterListOwner member) {

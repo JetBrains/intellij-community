@@ -5,6 +5,7 @@ import com.intellij.ide.scratch.RootType;
 import com.intellij.ide.ui.VirtualFileAppearanceListener;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.AdditionalLibraryRootsListener;
 import com.intellij.openapi.roots.ModuleRootEvent;
 import com.intellij.openapi.roots.ModuleRootListener;
 import com.intellij.openapi.util.Ref;
@@ -43,9 +44,10 @@ public abstract class ProjectFileNodeUpdater {
         updateFromRoot();
       }
     });
+    connection.subscribe(AdditionalLibraryRootsListener.TOPIC, (presentableLibraryName, oldRoots, newRoots, libraryNameForDebug) -> updateFromRoot());
     connection.subscribe(VFS_CHANGES, new BulkFileListener() {
       @Override
-      public void after(@NotNull List<? extends VFileEvent> events) {
+      public void after(@NotNull List<? extends @NotNull VFileEvent> events) {
         for (VFileEvent event : events) {
           if (event instanceof VFileCreateEvent) {
             VFileCreateEvent create = (VFileCreateEvent)event;

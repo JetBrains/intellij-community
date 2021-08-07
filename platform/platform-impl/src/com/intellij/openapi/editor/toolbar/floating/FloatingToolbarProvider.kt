@@ -5,10 +5,11 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.extensions.ExtensionPointName
+import org.jetbrains.annotations.ApiStatus
 
 interface FloatingToolbarProvider {
-
-  @Deprecated("Use [order] option in plugin.xml")
+  @get:ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
+  @get:Deprecated("Use [order] option in plugin.xml")
   val priority: Int
     get() = 0
 

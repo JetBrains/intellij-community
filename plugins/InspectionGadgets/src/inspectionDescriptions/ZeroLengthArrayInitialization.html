@@ -1,12 +1,15 @@
 <html>
 <body>
-Reports on allocations of arrays with known lengths of zero. Since array lengths in
-Java are non-modifiable, it is almost always possible to share zero-length arrays, rather than repeatedly
-allocating new zero-length arrays. Such sharing may provide useful optimizations in program runtime or
-footprint. Note that this inspection does not report zero-length arrays allocated as static final fields,
-as it is assumed that those arrays are being used to implement array sharing.
-<!-- tooltip end -->
+Reports allocations of arrays with known lengths of zero.
 <p>
+  Since array lengths in Java are non-modifiable, it is almost always possible to share zero-length arrays, rather than repeatedly
+  allocate new ones. Such sharing may provide useful optimizations in the program runtime or footprint.
+</p>
+<p>
+  Note that the inspection does not report zero-length arrays allocated as static final fields,
+  since those arrays are assumed to be used for implementing array sharing.
+</p>
+<!-- tooltip end -->
 
 </body>
 </html>

@@ -1,29 +1,36 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.diagnostic;
 
+import com.intellij.ide.plugins.cl.PluginAwareClassLoader;
+import com.intellij.openapi.extensions.PluginId;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 public final class ImplementationConflictException extends RuntimeException {
   @NotNull
-  private final Collection<Class<?>> myConflictingClasses;
+  private final Set<PluginId> myConflictingPluginIds = new HashSet<>();
+  private boolean myConflictWithPlatform;
 
   public ImplementationConflictException(String message, Throwable cause, Object @NotNull ... implementationObjects) {
     super(message, cause);
-    final List<Class<?>> classes = new ArrayList<>(implementationObjects.length);
-    for (Object object : implementationObjects) {
-      classes.add(object.getClass());
-    }
 
-    myConflictingClasses = Collections.unmodifiableList(classes);
+    for (Object object : implementationObjects) {
+      final ClassLoader classLoader = object.getClass().getClassLoader();
+      if (classLoader instanceof PluginAwareClassLoader) {
+        myConflictingPluginIds.add(((PluginAwareClassLoader)classLoader).getPluginId());
+      }
+      else {
+        myConflictWithPlatform = true;
+      }
+    }
   }
 
-  @NotNull
-  public Collection<Class<?>> getConflictingClasses() {
-    return myConflictingClasses;
+  public @NotNull Set<PluginId> getConflictingPluginIds() {
+    return myConflictingPluginIds;
+  }
+
+  public boolean isConflictWithPlatform() {
+    return myConflictWithPlatform;
   }
 }

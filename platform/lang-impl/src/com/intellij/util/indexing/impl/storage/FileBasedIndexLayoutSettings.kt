@@ -53,7 +53,7 @@ internal object FileBasedIndexLayoutSettings {
       }
 
       // scan for exact layout id & version match
-      for (bean in FileBasedIndexLayoutProvider.STORAGE_LAYOUT_EP_NAME.extensionList) {
+      for (bean in DefaultIndexStorageLayout.availableLayouts) {
         if (bean.id == id && bean.version == version) {
           currentLayout = Ref.create(bean)
           return false
@@ -61,7 +61,7 @@ internal object FileBasedIndexLayoutSettings {
       }
 
       // scan only matched id
-      for (bean in FileBasedIndexLayoutProvider.STORAGE_LAYOUT_EP_NAME.extensionList) {
+      for (bean in DefaultIndexStorageLayout.availableLayouts) {
         if (bean.id == id) {
           setUsedLayout(bean)
           currentLayout = Ref.create(bean)

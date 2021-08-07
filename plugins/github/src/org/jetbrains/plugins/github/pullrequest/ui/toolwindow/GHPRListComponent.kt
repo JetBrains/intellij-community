@@ -1,6 +1,9 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.pullrequest.ui.toolwindow
 
+import com.intellij.collaboration.ui.SingleValueModel
+import com.intellij.collaboration.ui.codereview.OpenReviewButton
+import com.intellij.collaboration.ui.codereview.OpenReviewButtonViewModel
 import com.intellij.ide.DataManager
 import com.intellij.ide.plugins.newui.VerticalLayout
 import com.intellij.openapi.Disposable
@@ -16,8 +19,6 @@ import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.ListUiUtil
 import com.intellij.util.ui.StatusText
 import com.intellij.util.ui.UIUtil
-import com.intellij.util.ui.codereview.OpenReviewButton
-import com.intellij.util.ui.codereview.OpenReviewButtonViewModel
 import com.intellij.vcs.log.ui.frame.ProgressStripe
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestShort
 import org.jetbrains.plugins.github.i18n.GithubBundle
@@ -33,7 +34,6 @@ import org.jetbrains.plugins.github.pullrequest.ui.GHApiLoadingErrorHandler
 import org.jetbrains.plugins.github.ui.component.GHHandledErrorPanelModel
 import org.jetbrains.plugins.github.ui.component.GHHtmlErrorPanel
 import org.jetbrains.plugins.github.ui.util.BoundedRangeModelThresholdListener
-import org.jetbrains.plugins.github.ui.util.SingleValueModel
 import java.awt.FlowLayout
 import java.awt.event.ActionListener
 import java.awt.event.MouseEvent
@@ -85,9 +85,8 @@ internal object GHPRListComponent {
       DataManager.registerDataProvider(it) { dataId ->
         if (GHPRActionKeys.SELECTED_PULL_REQUEST.`is`(dataId)) it.selectedValue else null
       }
-      PopupHandler.installSelectionListPopup(it,
-                                             actionManager.getAction("Github.PullRequest.ToolWindow.List.Popup") as ActionGroup,
-                                             ActionPlaces.UNKNOWN, actionManager)
+      val groupId = "Github.PullRequest.ToolWindow.List.Popup"
+      PopupHandler.installSelectionListPopup(it, actionManager.getAction(groupId) as ActionGroup, groupId)
       val shortcuts = CompositeShortcutSet(CommonShortcuts.ENTER, CommonShortcuts.DOUBLE_CLICK_1)
       EmptyAction.registerWithShortcutSet("Github.PullRequest.Show", shortcuts, it)
       ListSpeedSearch(it) { item -> item.title }
@@ -108,7 +107,7 @@ internal object GHPRListComponent {
       if (searchStringModel.value != searchQueryHolder.queryString)
         searchStringModel.value = searchQueryHolder.queryString
     }
-    searchStringModel.addValueChangedListener {
+    searchStringModel.addListener {
       searchQueryHolder.queryString = searchStringModel.value
     }
 
@@ -205,18 +204,22 @@ internal object GHPRListComponent {
       emptyText.clear()
       if (listLoader.loading || listLoader.error != null) return
 
-      if (searchHolder.query != GHPRSearchQuery.DEFAULT) {
+
+      val query = searchHolder.query
+      if (query == GHPRSearchQuery.DEFAULT) {
         emptyText.appendText(GithubBundle.message("pull.request.list.no.matches"))
-          .appendSecondaryText(GithubBundle.message("pull.request.list.reset.filters"), SimpleTextAttributes.LINK_ATTRIBUTES,
-                               ActionListener {
-                                 searchHolder.query = GHPRSearchQuery.DEFAULT
-                               })
+          .appendSecondaryText(GithubBundle.message("pull.request.list.reset.filters"),
+                               SimpleTextAttributes.LINK_ATTRIBUTES,
+                               ActionListener { searchHolder.query = GHPRSearchQuery.EMPTY })
+      }
+      else if (query.isEmpty()) {
+        emptyText.appendText(GithubBundle.message("pull.request.list.nothing.loaded"))
       }
       else {
-        emptyText.appendText(GithubBundle.message("pull.request.list.nothing.loaded"))
-          .appendSecondaryText(GithubBundle.message("pull.request.list.refresh"), SimpleTextAttributes.LINK_ATTRIBUTES, ActionListener {
-            listLoader.reset()
-          })
+        emptyText.appendText(GithubBundle.message("pull.request.list.no.matches"))
+          .appendSecondaryText(GithubBundle.message("pull.request.list.reset.filters.to.default", GHPRSearchQuery.DEFAULT.toString()),
+                               SimpleTextAttributes.LINK_ATTRIBUTES,
+                               ActionListener { searchHolder.query = GHPRSearchQuery.DEFAULT })
       }
     }
   }

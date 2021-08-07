@@ -1,8 +1,11 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.diagnostic;
 
 import com.intellij.ide.IdeBundle;
-import com.intellij.notification.*;
+import com.intellij.notification.Notification;
+import com.intellij.notification.NotificationAction;
+import com.intellij.notification.NotificationListener;
+import com.intellij.notification.NotificationType;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
@@ -16,7 +19,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-class JitWatcher {
+final class JitWatcher {
   private static final Logger LOG = Logger.getInstance(JitWatcher.class);
 
   private final AtomicBoolean myJitProblemReported = new AtomicBoolean();
@@ -72,23 +75,23 @@ class JitWatcher {
       String action = IdeBundle.message(app.isRestartCapable() ? "ide.restart.action" : "ide.shutdown.action");
       String title = IdeBundle.message("notification.title.jit.compiler.disabled");
       String content = IdeBundle.message("notification.content.jit.compiler.disabled");
-      NotificationListener listener = new NotificationListener.Adapter() {
-        @Override
-        protected void hyperlinkActivated(@NotNull Notification notification, @NotNull HyperlinkEvent e) {
-          if ("help".equals(e.getDescription())) {
-            HelpManager.getInstance().invokeHelp("Tuning_product_");
+      new Notification("PerformanceWatcher", title, content, NotificationType.ERROR)
+        .setListener(new NotificationListener.Adapter() {
+          @Override
+          protected void hyperlinkActivated(@NotNull Notification notification, @NotNull HyperlinkEvent e) {
+            if ("help".equals(e.getDescription())) {
+              HelpManager.getInstance().invokeHelp("Tuning_product_");
+            }
           }
-        }
-      };
-      Notification notification = new Notification("PerformanceWatcher", title, content, NotificationType.ERROR, listener).
-        addAction(new NotificationAction(action) {
+        })
+        .addAction(new NotificationAction(action) {
           @Override
           public void actionPerformed(@NotNull AnActionEvent e, @NotNull Notification notification) {
             notification.expire();
             app.restart(true);
           }
-        });
-      notification.notify(null);
+        })
+        .notify(null);
     }
   }
 

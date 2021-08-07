@@ -164,6 +164,14 @@ public class RemoteDebugger implements ProcessDebugger {
   }
 
   @Override
+  @Nullable
+  public String execTableCommand(String threadId, String frameId, String command, TableCommandType commandType) throws PyDebuggerException {
+    final TableCommand tableCommand = new TableCommand(this, threadId, frameId, command, commandType);
+    tableCommand.execute();
+    return tableCommand.getCommandResult();
+  }
+
+  @Override
   public XValueChildrenList loadFrame(final String threadId, final String frameId) throws PyDebuggerException {
     return executeCommand(new GetFrameCommand(this, threadId, frameId)).getVariables();
   }
@@ -800,6 +808,17 @@ public class RemoteDebugger implements ProcessDebugger {
       if (isConnected()) {
         LOG.error(command);
       }
+    }
+  }
+
+  @Override
+  public void interruptDebugConsole() {
+    InterruptDebugConsoleCommand interruptCommand = new InterruptDebugConsoleCommand(this);
+    try {
+      interruptCommand.execute();
+    }
+    catch (PyDebuggerException e) {
+      LOG.error(e);
     }
   }
 }

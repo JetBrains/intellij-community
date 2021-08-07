@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.formatter.blocks;
 
 import com.intellij.formatting.*;
@@ -794,7 +794,6 @@ public class GroovyBlockGenerator {
       if (i > 0) {
         processNestedChildrenPrefix(list, aligner, false, nodes.subList(0, i), wrap);
       }
-      Wrap synWrap = Wrap.createWrap(WrapType.NONE, false);
       Indent indent = getContinuationWithoutFirstIndent();
 
       List<Block> childBlocks = new ArrayList<>();
@@ -802,14 +801,21 @@ public class GroovyBlockGenerator {
       if (aligner != null) {
         aligner.append(dotNode.getPsi());
       }
-      childBlocks.add(new GroovyBlock(dotNode, getIndent(dotNode), getChildWrap(dotNode), myContext));
+
+      Wrap noneWrap = Wrap.createWrap(WrapType.NONE, false);
+
+      boolean shouldWrapAfterDot = myContext.getGroovySettings().WRAP_CHAIN_CALLS_AFTER_DOT;
+      Wrap identifierWrap = shouldWrapAfterDot ? wrap : noneWrap;
+      Wrap dotWrap = shouldWrapAfterDot ? noneWrap : wrap;
+
+      childBlocks.add(new GroovyBlock(dotNode, getIndent(dotNode), dotWrap, myContext));
 
       List<ASTNode> callNodes = nodes.subList(i + 1, nodes.size());
       if (!callNodes.isEmpty()) {
-        childBlocks.add(new MethodCallWithoutQualifierBlock(wrap, topLevel, callNodes, myContext));
+        childBlocks.add(new MethodCallWithoutQualifierBlock(identifierWrap, topLevel, callNodes, myContext));
       }
 
-      SyntheticGroovyBlock synBlock = new SyntheticGroovyBlock(childBlocks, synWrap, indent, indent, myContext);
+      SyntheticGroovyBlock synBlock = new SyntheticGroovyBlock(childBlocks, noneWrap, indent, indent, myContext);
       list.add(synBlock);
 
       return;

@@ -1,8 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.documentation.render;
 
-import com.intellij.openapi.editor.EditorCustomElementRenderer;
-import com.intellij.openapi.editor.Inlay;
+import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.event.EditorMouseEvent;
 import com.intellij.openapi.editor.event.EditorMouseEventArea;
 import com.intellij.openapi.editor.event.EditorMouseListener;
@@ -48,6 +47,7 @@ class DocRenderMouseEventBridge implements EditorMouseListener, EditorMouseMotio
     if (e.getArea() != EditorMouseEventArea.EDITING_AREA) return;
 
     checkPaneSelection(redispatchEvent(e, MouseEvent.MOUSE_DRAGGED, myDragPane));
+    if (myDragPane != null && !DocRenderItem.useOldBackend(e.getEditor())) e.consume();
   }
 
   @Override
@@ -102,24 +102,54 @@ class DocRenderMouseEventBridge implements EditorMouseListener, EditorMouseMotio
                                                         @Nullable DocRenderer.EditorPane targetPane) {
     MouseEvent mouseEvent = event.getMouseEvent();
     Point mousePoint = mouseEvent.getPoint();
-    Inlay inlay = event.getInlay();
-    if (inlay != null) {
-      EditorCustomElementRenderer renderer = inlay.getRenderer();
-      if (renderer instanceof DocRenderer) {
-        Rectangle relativeBounds = ((DocRenderer)renderer).getEditorPaneBoundsWithinInlay(inlay);
-        Rectangle inlayBounds = inlay.getBounds();
-        assert inlayBounds != null;
-        int x = mousePoint.x - inlayBounds.x - relativeBounds.x;
-        int y = mousePoint.y - inlayBounds.y - relativeBounds.y;
-        if (x >= 0 && x < relativeBounds.width && y >= 0 && y < relativeBounds.height) {
-          DocRenderer.EditorPane editorPane = ((DocRenderer)renderer).getRendererComponent(inlay, relativeBounds.width);
-          if (eventId != MouseEvent.MOUSE_DRAGGED || targetPane == editorPane) {
-            int button = mouseEvent.getButton();
-            dispatchEvent(editorPane, new MouseEvent(editorPane, eventId, 0, mouseEvent.getModifiersEx(), x, y,
-                                                     mouseEvent.getClickCount(), false,
-                                                     // hack to process middle-button clicks (JEditorPane ignores them)
-                                                     button == MouseEvent.BUTTON2 ? MouseEvent.BUTTON1 : button));
-            return editorPane;
+    Editor editor = event.getEditor();
+    if (DocRenderItem.useOldBackend(editor)) {
+      Inlay inlay = event.getInlay();
+      if (inlay != null) {
+        EditorCustomElementRenderer renderer = inlay.getRenderer();
+        if (renderer instanceof DocRenderer) {
+          DocRenderer dr = (DocRenderer)renderer;
+          Rectangle relativeBounds = dr.getEditorPaneBoundsWithinRenderer(inlay.getWidthInPixels(), inlay.getHeightInPixels());
+          Rectangle inlayBounds = inlay.getBounds();
+          assert inlayBounds != null;
+          int x = mousePoint.x - inlayBounds.x - relativeBounds.x;
+          int y = mousePoint.y - inlayBounds.y - relativeBounds.y;
+          if (x >= 0 && x < relativeBounds.width && y >= 0 && y < relativeBounds.height) {
+            DocRenderer.EditorPane editorPane = dr.getRendererComponent(editor, relativeBounds.width);
+            if (eventId != MouseEvent.MOUSE_DRAGGED || targetPane == editorPane) {
+              int button = mouseEvent.getButton();
+              dispatchEvent(editorPane, new MouseEvent(editorPane, eventId, 0, mouseEvent.getModifiersEx(), x, y,
+                                                       mouseEvent.getClickCount(), false,
+                                                       // hack to process middle-button clicks (JEditorPane ignores them)
+                                                       button == MouseEvent.BUTTON2 ? MouseEvent.BUTTON1 : button));
+              return editorPane;
+            }
+          }
+        }
+      }
+    }
+    else {
+      FoldRegion foldRegion = event.getCollapsedFoldRegion();
+      if (foldRegion instanceof CustomFoldRegion) {
+        CustomFoldRegion cfr = (CustomFoldRegion)foldRegion;
+        CustomFoldRegionRenderer r = cfr.getRenderer();
+        if (r instanceof DocRenderer) {
+          DocRenderer renderer = (DocRenderer)r;
+          Rectangle relativeBounds = renderer.getEditorPaneBoundsWithinRenderer(cfr.getWidthInPixels(), cfr.getHeightInPixels());
+          Point location = cfr.getLocation();
+          assert location != null;
+          int x = mousePoint.x - location.x - relativeBounds.x;
+          int y = mousePoint.y - location.y - relativeBounds.y;
+          if (x >= 0 && x < relativeBounds.width && y >= 0 && y < relativeBounds.height) {
+            DocRenderer.EditorPane editorPane = renderer.getRendererComponent(editor, relativeBounds.width);
+            if (eventId != MouseEvent.MOUSE_DRAGGED || targetPane == editorPane) {
+              int button = mouseEvent.getButton();
+              dispatchEvent(editorPane, new MouseEvent(editorPane, eventId, 0, mouseEvent.getModifiersEx(), x, y,
+                                                       mouseEvent.getClickCount(), false,
+                                                       // hack to process middle-button clicks (JEditorPane ignores them)
+                                                       button == MouseEvent.BUTTON2 ? MouseEvent.BUTTON1 : button));
+              return editorPane;
+            }
           }
         }
       }

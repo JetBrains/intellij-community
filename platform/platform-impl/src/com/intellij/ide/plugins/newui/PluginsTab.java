@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.plugins.newui;
 
 import com.intellij.ide.IdeBundle;
@@ -30,7 +30,6 @@ import javax.swing.*;
 import javax.swing.event.DocumentEvent;
 import java.awt.*;
 import java.awt.event.KeyEvent;
-import java.util.List;
 import java.util.function.Consumer;
 
 /**
@@ -65,13 +64,9 @@ public abstract class PluginsTab {
 
   private final Consumer<PluginsGroupComponent> mySelectionListener = panel -> {
     int key = mySearchPanel.getPanel() == panel ? 1 : 0;
-    if (myCardPanel.getKey() != key) {
-      return;
+    if (myCardPanel.getKey() == key) {
+      myDetailsPage.showPlugins(panel.getSelection());
     }
-
-    List<ListPluginComponent> selection = panel.getSelection();
-    int size = selection.size();
-    myDetailsPage.showPlugin(size == 1 ? selection.get(0) : null, size > 1);
   };
 
   @NotNull
@@ -247,7 +242,6 @@ public abstract class PluginsTab {
 
   public void setSearchQuery(@Nullable String query) {
     mySearchTextField.setTextIgnoreEvents(query);
-    mySearchTextField.requestFocus();
     if (query == null) {
       hideSearchPanel();
     }
@@ -259,7 +253,7 @@ public abstract class PluginsTab {
   public void showSearchPanel(@NotNull String query) {
     if (mySearchPanel.isEmpty()) {
       myCardPanel.select(1, true);
-      myDetailsPage.showPlugin(null, false);
+      myDetailsPage.showPlugin(null);
     }
     mySearchPanel.setQuery(query);
     mySearchTextField.addCurrentTextToHistory();

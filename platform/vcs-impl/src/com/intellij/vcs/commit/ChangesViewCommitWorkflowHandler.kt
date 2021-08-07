@@ -14,11 +14,11 @@ import com.intellij.openapi.vcs.VcsDataKeys.COMMIT_WORKFLOW_HANDLER
 import com.intellij.openapi.vcs.changes.*
 import com.intellij.openapi.vcs.checkin.CheckinHandler
 import com.intellij.util.EventDispatcher
-import it.unimi.dsi.fastutil.objects.ObjectOpenCustomHashSet
+import com.intellij.util.containers.CollectionFactory
 import java.util.*
 import kotlin.properties.Delegates.observable
 
-private fun Collection<Change>.toPartialAwareSet() = ObjectOpenCustomHashSet(this, ChangeListChange.HASHING_STRATEGY)
+private fun Collection<Change>.toPartialAwareSet() = CollectionFactory.createCustomHashingStrategySet(ChangeListChange.HASHING_STRATEGY).also { it.addAll(this) }
 
 internal class ChangesViewCommitWorkflowHandler(
   override val workflow: ChangesViewCommitWorkflow,
@@ -113,7 +113,7 @@ internal class ChangesViewCommitWorkflowHandler(
 
   fun synchronizeInclusion(changeLists: List<LocalChangeList>, unversionedFiles: List<FilePath>) {
     if (!inclusionModel.isInclusionEmpty()) {
-      val possibleInclusion: MutableSet<Any> = changeLists.flatMapTo(ObjectOpenCustomHashSet(ChangeListChange.HASHING_STRATEGY)) { it.changes }
+      val possibleInclusion: MutableSet<Any> = changeLists.flatMapTo(CollectionFactory.createCustomHashingStrategySet(ChangeListChange.HASHING_STRATEGY)) { it.changes }
       possibleInclusion.addAll(unversionedFiles)
 
       inclusionModel.retainInclusion(possibleInclusion)
@@ -196,13 +196,21 @@ internal class ChangesViewCommitWorkflowHandler(
 
   private fun changeListDataChanged() {
     commitAuthor = currentChangeList?.author
+    commitAuthorDate = currentChangeList?.authorDate
   }
 
   override fun commitAuthorChanged() {
     val changeList = changeListManager.getChangeList(currentChangeList?.id) ?: return
     if (commitAuthor == changeList.author) return
 
-    changeListManager.editChangeListData(changeList.name, ChangeListData.of(commitAuthor, changeList.authorDate))
+    changeListManager.editChangeListData(changeList.name, ChangeListData.of(commitAuthor, commitAuthorDate))
+  }
+
+  override fun commitAuthorDateChanged() {
+    val changeList = changeListManager.getChangeList(currentChangeList?.id) ?: return
+    if (commitAuthorDate == changeList.authorDate) return
+
+    changeListManager.editChangeListData(changeList.name, ChangeListData.of(commitAuthor, commitAuthorDate))
   }
 
   override fun inclusionChanged() {

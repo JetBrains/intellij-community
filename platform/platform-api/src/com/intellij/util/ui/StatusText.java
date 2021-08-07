@@ -10,7 +10,6 @@ import com.intellij.ui.components.JBViewport;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -22,12 +21,6 @@ import java.util.List;
 
 public abstract class StatusText {
   public static final SimpleTextAttributes DEFAULT_ATTRIBUTES = SimpleTextAttributes.GRAYED_ATTRIBUTES;
-  /**
-   * @deprecated Use {@link #getDefaultEmptyText()} instead
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.2")
-  public static final String DEFAULT_EMPTY_TEXT = "Nothing to show";
 
   private static final int Y_GAP = 2;
 
@@ -83,7 +76,7 @@ public abstract class StatusText {
         if (e.getButton() == MouseEvent.BUTTON1 && clickCount == 1) {
           ActionListener actionListener = findActionListenerAt(e.getPoint());
           if (actionListener != null) {
-            actionListener.actionPerformed(new ActionEvent(this, 0, ""));
+            actionListener.actionPerformed(new ActionEvent(e, 0, ""));
             return true;
           }
         }
@@ -197,6 +190,11 @@ public abstract class StatusText {
     int x = (ownerRec.width - size.width) / 2;
     int y = (ownerRec.height - size.height) / (myShowAboveCenter ? 3 : 2);
     return new Rectangle(x, y, size.width, size.height);
+  }
+
+  public Point getPointBelow() {
+    final var textComponentBound = getTextComponentBound();
+    return new Point(textComponentBound.x, textComponentBound.y + textComponentBound.height);
   }
 
   public final boolean isShowAboveCenter() {

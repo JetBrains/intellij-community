@@ -2,6 +2,7 @@
 package org.jetbrains.intellij.build
 
 import org.jetbrains.intellij.build.impl.JpsCompilationData
+import org.jetbrains.intellij.build.kotlin.KotlinBinaries
 import org.jetbrains.jps.model.JpsModel
 import org.jetbrains.jps.model.JpsProject
 import org.jetbrains.jps.model.module.JpsModule
@@ -53,6 +54,16 @@ abstract class DelegatingCompilationContext implements CompilationContext {
   @Override
   JpsCompilationData getCompilationData() {
     return delegate.getCompilationData()
+  }
+
+  @Override
+  KotlinBinaries getKotlinBinaries() {
+    return delegate.getKotlinBinaries()
+  }
+
+  @Override
+  File getProjectOutputDirectory() {
+    return delegate.getProjectOutputDirectory()
   }
 
   @Override

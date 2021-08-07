@@ -1,23 +1,24 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.xdebugger.impl.frame;
 
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.actionSystem.DataKey;
+import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.fileEditor.OpenFileDescriptor;
+import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.ListItemDescriptorAdapter;
 import com.intellij.openapi.util.NlsContexts;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.search.scope.NonProjectFilesScope;
 import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.FileColorManager;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.popup.list.GroupedItemsListRenderer;
+import com.intellij.util.IJSwingUtilities;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.TextTransferable;
 import com.intellij.util.ui.UIUtil;
@@ -25,17 +26,17 @@ import com.intellij.xdebugger.XDebuggerBundle;
 import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.frame.XStackFrame;
 import com.intellij.xml.util.XmlStringUtil;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.plaf.FontUIResource;
 import java.awt.*;
-import java.util.HashMap;
+import java.util.*;
 import java.util.List;
-import java.util.Map;
 
-public class XDebuggerFramesList extends DebuggerFramesList {
+public class XDebuggerFramesList extends DebuggerFramesList implements DataProvider {
   private final Project myProject;
   private final Map<VirtualFile, Color> myFileColors = new HashMap<>();
   private static final DataKey<XDebuggerFramesList> FRAMES_LIST = DataKey.create("FRAMES_LIST");
@@ -75,29 +76,10 @@ public class XDebuggerFramesList extends DebuggerFramesList {
     }
   }
 
-  private XStackFrame mySelectedFrame;
-
   public XDebuggerFramesList(@NotNull Project project) {
     myProject = project;
 
     doInit();
-    setDataProvider(dataId -> {
-      if (mySelectedFrame != null) {
-        if (CommonDataKeys.VIRTUAL_FILE.is(dataId)) {
-          return getFile(mySelectedFrame);
-        }
-        else if (CommonDataKeys.PSI_FILE.is(dataId)) {
-          VirtualFile file = getFile(mySelectedFrame);
-          if (file != null && file.isValid()) {
-            return PsiManager.getInstance(myProject).findFile(file);
-          }
-        }
-      }
-      if (FRAMES_LIST.is(dataId)) {
-        return XDebuggerFramesList.this;
-      }
-      return null;
-    });
 
     // This is a workaround for the performance issue IDEA-187063
     // default font generates too much garbage in deriveFont
@@ -108,9 +90,112 @@ public class XDebuggerFramesList extends DebuggerFramesList {
   }
 
   @Override
+  public @Nullable Object getData(@NonNls @NotNull String dataId) {
+    if (FRAMES_LIST.is(dataId)) {
+      return this;
+    }
+    // Because of the overridden locationToIndex(), the default logic of retrieving the context menu point doesn't work.
+    // Here, were mimic the way PopupFactoryImpl.guessBestPopupLocation(JComponent) calculates it for JLists.
+    if (PlatformDataKeys.CONTEXT_MENU_POINT.is(dataId)) {
+      int index = getSelectedIndex();
+      if (index != -1) {
+        Rectangle cellBounds = getCellBounds(index, index);
+        if (cellBounds != null) {
+          Rectangle visibleRect = getVisibleRect();
+          return new Point(visibleRect.x + visibleRect.width / 4, cellBounds.y + cellBounds.height - 1);
+        }
+      }
+      return null;
+    }
+    if (PlatformDataKeys.SLOW_DATA_PROVIDERS.is(dataId)) {
+      XStackFrame frame = getSelectedFrame();
+      if (frame != null) {
+        return List.<DataProvider>of(realDataId -> getSlowData(frame, realDataId));
+      }
+    }
+    return null;
+  }
+
+  @Nullable
+  private Object getSlowData(@NotNull XStackFrame frame, @NonNls String dataId) {
+    if (CommonDataKeys.NAVIGATABLE.is(dataId)) {
+      return getFrameNavigatable(frame);
+    }
+    if (CommonDataKeys.VIRTUAL_FILE.is(dataId)) {
+      return getFile(frame);
+    }
+    if (CommonDataKeys.PSI_FILE.is(dataId)) {
+      VirtualFile file = getFile(frame);
+      if (file != null && file.isValid()) {
+        return PsiManager.getInstance(myProject).findFile(file);
+      }
+    }
+    return null;
+  }
+
+  @Override
   public void clear() {
     super.clear();
     myFileColors.clear();
+  }
+
+  public boolean selectFrame(@NotNull XStackFrame toSelect) {
+    //noinspection unchecked
+    if (!Objects.equals(getSelectedValue(), toSelect) && getModel().contains(toSelect)) {
+      setSelectedValue(toSelect, true);
+      return true;
+    }
+    return false;
+  }
+
+  public boolean selectFrame(int indexToSelect) {
+    if (getSelectedIndex() != indexToSelect &&
+        getElementCount() > indexToSelect &&
+        getModel().getElementAt(indexToSelect) != null) {
+      setSelectedIndex(indexToSelect);
+      return true;
+    }
+    return false;
+  }
+
+  public @Nullable XStackFrame getSelectedFrame() {
+    Object value = getSelectedValue();
+    return value instanceof XStackFrame ? (XStackFrame)value : null;
+  }
+
+  @Override
+  protected @Nullable Navigatable getSelectedFrameNavigatable() {
+    XStackFrame frame = getSelectedFrame();
+    Navigatable navigatable = frame != null ? getFrameNavigatable(frame) : null;
+    if (navigatable instanceof OpenFileDescriptor) {
+      ((OpenFileDescriptor)navigatable).setUsePreviewTab(true);
+    }
+    return navigatable != null ? keepFocus(navigatable) : null;
+  }
+
+  /**
+   * Forbids focus requests unless the editor area is already focused.
+   */
+  private @NotNull Navigatable keepFocus(@NotNull Navigatable navigatable) {
+    FileEditorManagerEx fileEditorManager = FileEditorManagerEx.getInstanceEx(myProject);
+    boolean isEditorAreaFocused = IJSwingUtilities.hasFocus(fileEditorManager.getComponent());
+    return isEditorAreaFocused ? navigatable : new Navigatable() {
+      @Override
+      public void navigate(boolean requestFocus) {
+        navigatable.navigate(false);
+      }
+
+      @Override
+      public boolean canNavigate() { return navigatable.canNavigate(); }
+
+      @Override
+      public boolean canNavigateToSource() { return navigatable.canNavigateToSource(); }
+    };
+  }
+
+  private @Nullable Navigatable getFrameNavigatable(@NotNull XStackFrame frame) {
+    XSourcePosition position = frame.getSourcePosition();
+    return position != null ? position.createNavigatable(myProject) : null;
   }
 
   @Nullable
@@ -122,19 +207,6 @@ public class XDebuggerFramesList extends DebuggerFramesList {
   @Override
   protected ListCellRenderer createListRenderer() {
     return new XDebuggerGroupedFrameListRenderer();
-  }
-
-  @Override
-  protected void onFrameChanged(final Object selectedValue) {
-    if (mySelectedFrame != selectedValue) {
-      SwingUtilities.invokeLater(this::repaint);
-      if (selectedValue instanceof XStackFrame) {
-        mySelectedFrame = (XStackFrame)selectedValue;
-      }
-      else {
-        mySelectedFrame = null;
-      }
-    }
   }
 
   private class XDebuggerGroupedFrameListRenderer extends GroupedItemsListRenderer {
@@ -210,7 +282,7 @@ public class XDebuggerFramesList extends DebuggerFramesList {
           setBackground(c);
         }
       }
-      else if (Registry.is("debugger.new.debug.tool.window.view")){
+      else {
         setBackground(UIUtil.getListSelectionBackground(hasFocus));
         setForeground(UIUtil.getListSelectionForeground(hasFocus));
         mySelectionForeground = getForeground();

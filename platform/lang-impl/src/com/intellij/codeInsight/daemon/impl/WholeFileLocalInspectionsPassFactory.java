@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeHighlighting.*;
@@ -8,10 +8,11 @@ import com.intellij.codeInspection.InspectionProfile;
 import com.intellij.codeInspection.ex.InspectionProfileWrapper;
 import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.ProperTextRange;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.profile.ProfileChangeAdapter;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
@@ -23,10 +24,17 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 import java.util.Set;
 
-final class WholeFileLocalInspectionsPassFactory implements TextEditorHighlightingPassFactory, Disposable {
+final class WholeFileLocalInspectionsPassFactory implements TextEditorHighlightingPassFactory, Disposable, MainHighlightingPassFactory {
   private final Set<PsiFile> mySkipWholeInspectionsCache = ContainerUtil.createWeakSet(); // guarded by mySkipWholeInspectionsCache
   private final ObjectIntMap<PsiFile> myPsiModificationCount = ContainerUtil.createWeakKeyIntValueMap(); // guarded by myPsiModificationCount
   private final Project myProject;
+
+  @Override
+  public TextEditorHighlightingPass createMainHighlightingPass(@NotNull PsiFile file,
+                                                               @NotNull Document document,
+                                                               @NotNull HighlightInfoProcessor highlightInfoProcessor) {
+    return createPass(file, LocalInspectionsPass.EMPTY_PRIORITY_RANGE, document);
+  }
 
   static final class MyRegistrar implements TextEditorHighlightingPassFactoryRegistrar {
     @Override
@@ -43,7 +51,7 @@ final class WholeFileLocalInspectionsPassFactory implements TextEditorHighlighti
 
     myProject.getMessageBus().connect(this).subscribe(ProfileChangeAdapter.TOPIC, new ProfileChangeAdapter() {
       @Override
-      public void profileChanged(InspectionProfile profile) {
+      public void profileChanged(@NotNull InspectionProfile profile) {
         clearCaches();
       }
 
@@ -87,8 +95,13 @@ final class WholeFileLocalInspectionsPassFactory implements TextEditorHighlighti
         return null;
       }
     }
-    ProperTextRange visibleRange = VisibleHighlightingPassFactory.calculateVisibleRange(editor);
-    return new LocalInspectionsPass(file, editor.getDocument(), 0, file.getTextLength(), visibleRange, true,
+    return createPass(file, VisibleHighlightingPassFactory.calculateVisibleRange(editor), editor.getDocument());
+  }
+
+  @NotNull
+  private LocalInspectionsPass createPass(@NotNull PsiFile file,
+                                          TextRange visibleRange, @NotNull final Document document) {
+    return new LocalInspectionsPass(file, document, 0, file.getTextLength(), visibleRange, true,
                                     new DefaultHighlightInfoProcessor(), false) {
       @Override
       protected boolean isAcceptableLocalTool(@NotNull LocalInspectionToolWrapper wrapper) {

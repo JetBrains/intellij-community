@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.indexing.impl.storage
 
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressManager
@@ -15,7 +16,7 @@ import java.io.*
 import java.nio.file.FileAlreadyExistsException
 import java.nio.file.Files
 import java.nio.file.Path
-import java.util.concurrent.atomic.AtomicInteger
+import java.util.*
 import kotlin.math.abs
 
 interface AbstractIntLog : Closeable, Flushable {
@@ -60,12 +61,19 @@ class IntLog @Throws(IOException::class) constructor(private val baseStorageFile
     try {
       val l = System.currentTimeMillis()
       doForce()
-      val uniqueInputs = IntOpenHashSet()
-      val uselessRecords = AtomicInteger()
-      withLock(true) {
+      val uniqueInputs = BitSet()
+      var uselessRecords = 0
+      var usefulRecords = 0
+      val isReadAction = ApplicationManager.getApplication().isReadAccessAllowed
+
+      if (isReadAction) {
         ProgressManager.checkCanceled()
-        if (!myKeyHashToVirtualFileMapping.processAll { key ->
-            ProgressManager.checkCanceled()
+      }
+      withLock(true) {
+        if (!myKeyHashToVirtualFileMapping.processAll { _, key ->
+            if (isReadAction) {
+              ProgressManager.checkCanceled()
+            }
             val inputId = key[1]
             val data = key[0]
 
@@ -73,8 +81,13 @@ class IntLog @Throws(IOException::class) constructor(private val baseStorageFile
               return@processAll false
             }
 
-            if (!uniqueInputs.add(inputId)) {
-              uselessRecords.incrementAndGet()
+            val isPresent = uniqueInputs.get(inputId)
+            if (isPresent) {
+              uselessRecords++
+            }
+            else {
+              uniqueInputs.set(inputId)
+              usefulRecords++
             }
 
             true
@@ -83,7 +96,7 @@ class IntLog @Throws(IOException::class) constructor(private val baseStorageFile
         }
         true
       }
-      if (uselessRecords.get() >= uniqueInputs.size) {
+      if (uselessRecords >= usefulRecords) {
         setRequiresCompaction()
       }
 
@@ -212,13 +225,13 @@ class IntLog @Throws(IOException::class) constructor(private val baseStorageFile
       val oldDataFile = getDataFile()
       val oldMapping = AppendableStorageBackedByResizableMappedFile(oldDataFile,
                                                                     0,
-                                                                    null,
+                                                                    storageLockContext,
                                                                     PagedFileStorage.MB,
                                                                     true,
                                                                     IntPairInArrayKeyDescriptor)
       oldMapping.lockRead()
       try {
-        oldMapping.processAll { key: IntArray ->
+        oldMapping.processAll { _, key: IntArray ->
           val inputId = key[1]
           val keyHash = key[0]
           val absInputId = abs(inputId)
@@ -241,7 +254,7 @@ class IntLog @Throws(IOException::class) constructor(private val baseStorageFile
       val newDataFile = oldDataFile.resolveSibling(newDataFileName)
       val newMapping = AppendableStorageBackedByResizableMappedFile(newDataFile,
                                                                     32 * 2 * data.size,
-                                                                    null,
+                                                                    storageLockContext,
                                                                     PagedFileStorage.MB,
                                                                     true,
                                                                     IntPairInArrayKeyDescriptor)

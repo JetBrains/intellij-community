@@ -6,6 +6,7 @@ import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
+import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
@@ -186,23 +187,29 @@ public final class GroovyDslFileIndex {
     }
   }
 
-  public static boolean processExecutors(PsiType psiType,
-                                         PsiElement place,
-                                         PairProcessor<? super CustomMembersHolder, ? super GroovyClassDescriptor> processor) {
+  public static boolean processExecutors(
+    @NotNull PsiClassType psiType,
+    @NotNull PsiElement place,
+    @NotNull PairProcessor<? super CustomMembersHolder, ? super GroovyClassDescriptor> processor
+  ) {
     if (insideAnnotation(place)) {
       // Basic filter, all DSL contexts are applicable for reference expressions only
       return true;
     }
 
     final PsiFile placeFile = place.getContainingFile().getOriginalFile();
+    final PsiClass psiClass = psiType.resolve();
+    if (psiClass == null) {
+      return true;
+    }
 
-    NotNullLazyValue<String> typeText = NotNullLazyValue.createValue(() -> psiType.getCanonicalText(false));
     for (GroovyDslScript script : getDslScripts(placeFile.getProject())) {
-      if (!script.processExecutor(psiType, place, placeFile, typeText, processor)) {
+      GroovyClassDescriptor descriptor = new GroovyClassDescriptor(psiType, psiClass, place, placeFile);
+      CustomMembersHolder holder = script.processExecutor(descriptor);
+      if (!processor.process(holder, descriptor)) {
         return false;
       }
     }
-
     return true;
   }
 
@@ -259,6 +266,9 @@ public final class GroovyDslFileIndex {
     final GlobalSearchScope scope = GlobalSearchScope.allScope(project);
 
     for (VirtualFile vfile : FileTypeIndex.getFiles(GdslFileType.INSTANCE, scope)) {
+      if (FileTypeRegistry.getInstance().getFileTypeByFileName(vfile.getNameSequence()) != GdslFileType.INSTANCE) {
+        continue;
+      }
       if (!vfile.isValid()) {
         continue;
       }
@@ -425,7 +435,7 @@ public final class GroovyDslFileIndex {
 
   public static class MyFileListener implements BulkFileListener {
     @Override
-    public void after(@NotNull List<? extends VFileEvent> events) {
+    public void after(@NotNull List<? extends @NotNull VFileEvent> events) {
       for (VFileEvent event : events) {
         if (event instanceof VFileContentChangeEvent && !event.isFromRefresh()) {
           VirtualFile file = event.getFile();

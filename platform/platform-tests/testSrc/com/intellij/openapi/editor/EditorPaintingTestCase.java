@@ -72,8 +72,8 @@ public abstract class EditorPaintingTestCase extends AbstractEditorTest {
     BufferedImage originalImage = paintEditor(false, null, null);
     BufferedImage updatedImage = createImageForPainting(originalImage.getWidth(), originalImage.getHeight());
     originalImage.copyData(updatedImage.getRaster());
-    paintEditor(false, updatedImage,
-                new Rectangle(0, getEditor().visualLineToY(visualLine), updatedImage.getWidth(), getEditor().getLineHeight()));
+    int[] yRange = getEditor().visualLineToYRange(visualLine);
+    paintEditor(false, updatedImage, new Rectangle(0, yRange[0], updatedImage.getWidth(), yRange[1] - yRange[0]));
     assertImagesEqual(originalImage, updatedImage, null);
   }
 

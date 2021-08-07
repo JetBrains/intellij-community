@@ -6,7 +6,9 @@ import com.intellij.codeInsight.TailType;
 import com.intellij.codeInsight.completion.*;
 import com.intellij.codeInsight.daemon.impl.JavaColorProvider;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightControlFlowUtil;
+import com.intellij.codeInsight.daemon.impl.quickfix.BringVariableIntoScopeFix;
 import com.intellij.codeInsight.lookup.impl.JavaElementLookupRenderer;
+import com.intellij.codeInspection.dataFlow.jvm.descriptors.PlainDescriptor;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.RangeMarker;
@@ -21,6 +23,7 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ui.ColorIcon;
 import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -41,18 +44,26 @@ public class VariableLookupItem extends LookupItem<PsiVariable> implements Typed
   private String myForcedQualifier;
 
   public VariableLookupItem(PsiVariable var) {
-    this(var, null);
+    this(var, null, null);
   }
 
   public VariableLookupItem(PsiField field, boolean shouldImport) {
-    this(field, new MemberLookupHelper(field, field.getContainingClass(), shouldImport, false));
+    this(field, new MemberLookupHelper(field, field.getContainingClass(), shouldImport, false), null);
   }
 
-  private VariableLookupItem(@NotNull PsiVariable var, @Nullable MemberLookupHelper helper) {
+  /**
+   * @param var      variable to lookup
+   * @param tailText specific tail text to insert (initializer text is used if not specified)
+   */
+  public VariableLookupItem(@NotNull PsiVariable var, @NotNull @Nls String tailText) {
+    this(var, null, tailText);
+  }
+
+  private VariableLookupItem(@NotNull PsiVariable var, @Nullable MemberLookupHelper helper, @Nullable @Nls String tailText) {
     super(var, Objects.requireNonNull(var.getName()));
     myHelper = helper;
     myColor = getInitializerColor(var);
-    myTailText = getInitializerText(var);
+    myTailText = tailText == null ? getInitializerText(var) : tailText;
     myNegatable = PsiType.BOOLEAN.isAssignableFrom(var.getType());
   }
 
@@ -80,6 +91,7 @@ public class VariableLookupItem extends LookupItem<PsiVariable> implements Typed
   @Nullable
   private String getInitializerText(PsiVariable var) {
     if (myColor != null || !var.hasModifierProperty(PsiModifier.FINAL) || !var.hasModifierProperty(PsiModifier.STATIC)) return null;
+    if (PlainDescriptor.hasInitializationHacks(var)) return null;
 
     PsiElement initializer = var instanceof PsiEnumConstant ? ((PsiEnumConstant)var).getArgumentList() : getInitializer(var);
     String initText = initializer == null ? null : initializer.getText();
@@ -218,6 +230,13 @@ public class VariableLookupItem extends LookupItem<PsiVariable> implements Typed
     PsiElement target = ref == null ? null : ref.resolve();
     if (target instanceof PsiLocalVariable || target instanceof PsiParameter) {
       makeFinalIfNeeded(context, (PsiVariable)target);
+    }
+    if (target == null && ref != null &&
+        JavaPsiFacade.getInstance(context.getProject()).getResolveHelper().resolveReferencedVariable(variable.getName(), ref) == null) {
+      BringVariableIntoScopeFix fix = BringVariableIntoScopeFix.fromReference(ref);
+      if (fix != null && fix.isAvailable(context.getProject(), context.getEditor(), context.getFile())) {
+        fix.invoke(context.getProject(), context.getEditor(), context.getFile());
+      }
     }
 
     final char completionChar = context.getCompletionChar();

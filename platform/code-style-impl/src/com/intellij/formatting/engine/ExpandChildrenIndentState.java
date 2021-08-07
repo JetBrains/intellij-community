@@ -57,10 +57,9 @@ public class ExpandChildrenIndentState extends State {
     final ExpandableIndent indent = myIterator.next();
     Collection<AbstractBlockWrapper> blocksToExpandIndent = myExpandableIndents.get(indent);
     if (shouldExpand(blocksToExpandIndent)) {
+      indent.enforceIndent();
       for (AbstractBlockWrapper block : blocksToExpandIndent) {
-        indent.setEnforceIndent(true);
         reindentNewLineChildren(block);
-        indent.setEnforceIndent(false);
       }
     }
 

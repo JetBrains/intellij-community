@@ -124,11 +124,12 @@ public final class FilePageCache {
     }
   }
 
+  @NotNull("Seems accessed storage has been closed")
   private PagedFileStorage getRegisteredPagedFileStorageByIndex(int index) {
     return myIndex2Storage.get(index);
   }
 
-  DirectBufferWrapper get(Integer key, boolean read, boolean readOnly) {
+  DirectBufferWrapper get(Integer key, boolean read, boolean readOnly) throws IOException {
     DirectBufferWrapper wrapper;
     try {         // fast path
       mySegmentsAccessLock.lock();
@@ -212,10 +213,9 @@ public final class FilePageCache {
   }
 
   @NotNull
-  private DirectBufferWrapper createValue(Integer key, boolean read, boolean readOnly) {
+  private DirectBufferWrapper createValue(Integer key, boolean read, boolean readOnly) throws IOException {
     final int storageIndex = key & FILE_INDEX_MASK;
     PagedFileStorage owner = getRegisteredPagedFileStorageByIndex(storageIndex);
-    assert owner != null: "No storage for index " + storageIndex;
     owner.getStorageLockContext().checkThreadAccess(read);
     long off = (long)(key & MAX_PAGES_COUNT) * owner.myPageSize;
     long ownerLength = owner.length();
@@ -224,64 +224,16 @@ public final class FilePageCache {
     }
 
     int min = (int)Math.min(ownerLength - off, owner.myPageSize);
-    DirectBufferWrapper wrapper = readOnly
-                                ? DirectBufferWrapper.readOnlyDirect(owner, off, min)
-                                : DirectBufferWrapper.readWriteDirect(owner, off, min);
-    Throwable oome = null;
-    while (true) {
-      try {
-        // ensure it's allocated
-        wrapper.getBuffer();
-        if (oome != null) {
-          LOG.info("Successfully recovered OOME in memory mapping: -Xmx=" + Runtime.getRuntime().maxMemory() / PagedFileStorage.MB + "MB " +
-                   "new size limit: " + mySizeLimit / PagedFileStorage.MB + "MB " +
-                   "trying to allocate " + wrapper.getLength() + " block");
-        }
-        return wrapper;
-      }
-      catch (IOException e) {
-        throw new MappingFailedException("Cannot map buffer", e);
-      }
-      catch (OutOfMemoryError e) {
-        oome = e;
-        if (mySizeLimit > LOWER_LIMIT) {
-          mySizeLimit -= owner.myPageSize;
-        }
-        long newSize = mySize - owner.myPageSize;
-        if (newSize < 0) {
-          LOG.info("Currently allocated:" + mySize);
-          LOG.info("Mapping failed due to OOME. Current buffers: " + mySegments);
-          LOG.info(oome);
-          try {
-            Class<?> aClass = Class.forName("java.nio.Bits");
-            Field reservedMemory = aClass.getDeclaredField("reservedMemory");
-            reservedMemory.setAccessible(true);
-            Field maxMemory = aClass.getDeclaredField("maxMemory");
-            maxMemory.setAccessible(true);
-            Object max, reserved;
-            //noinspection SynchronizationOnLocalVariableOrMethodParameter
-            synchronized (aClass) {
-              max = maxMemory.get(null);
-              reserved = reservedMemory.get(null);
-            }
-            LOG.info("Max memory:" + max + ", reserved memory:" + reserved);
-          }
-          catch (Throwable ignored) { }
-          throw new MappingFailedException(
-            "Cannot recover from OOME in memory mapping: -Xmx=" + Runtime.getRuntime().maxMemory() / PagedFileStorage.MB + "MB " +
-            "new size limit: " + mySizeLimit / PagedFileStorage.MB + "MB " +
-            "trying to allocate " + wrapper.getLength() + " block", e);
-        }
-        ensureSize(newSize); // next try
-      }
-    }
+    return readOnly
+           ? DirectBufferWrapper.readOnlyDirect(owner, off, min)
+           : DirectBufferWrapper.readWriteDirect(owner, off, min);
   }
 
   @Nullable
   private Map<Integer, DirectBufferWrapper> getBuffersOrderedForOwner(int index, StorageLockContext storageLockContext) {
     mySegmentsAccessLock.lock();
     try {
-      storageLockContext.checkThreadAccess(false);
+      storageLockContext.checkThreadAccess(true);
       Map<Integer, DirectBufferWrapper> mineBuffers = null;
       for (Map.Entry<Integer, DirectBufferWrapper> entry : mySegments.entrySet()) {
         if ((entry.getKey() & FILE_INDEX_MASK) == index) {
@@ -322,6 +274,7 @@ public final class FilePageCache {
   }
 
   void flushBuffersForOwner(int index, StorageLockContext storageLockContext) throws IOException {
+    storageLockContext.checkThreadAccess(false);
     Map<Integer, DirectBufferWrapper> buffers = getBuffersOrderedForOwner(index, storageLockContext);
 
     if (buffers != null) {

@@ -2,7 +2,6 @@
 package com.intellij.workspaceModel.ide.impl.legacyBridge.facet
 
 import com.intellij.facet.Facet
-import com.intellij.facet.FacetManagerImpl
 import com.intellij.facet.ModifiableFacetModel
 import com.intellij.facet.impl.FacetModelBase
 import com.intellij.facet.impl.FacetUtil
@@ -13,13 +12,13 @@ import com.intellij.openapi.roots.ProjectModelExternalSource
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.util.containers.ContainerUtil
+import com.intellij.workspaceModel.ide.CustomModuleEntitySource
 import com.intellij.workspaceModel.ide.JpsFileEntitySource
 import com.intellij.workspaceModel.ide.JpsImportedEntitySource
 import com.intellij.workspaceModel.ide.WorkspaceModel
-import com.intellij.workspaceModel.ide.CustomModuleEntitySource
 import com.intellij.workspaceModel.ide.impl.legacyBridge.facet.FacetModelBridge.Companion.facetMapping
 import com.intellij.workspaceModel.ide.impl.legacyBridge.facet.FacetModelBridge.Companion.mutableFacetMapping
-import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleManagerComponentBridge.Companion.findModuleEntity
+import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleManagerBridgeImpl.Companion.findModuleEntity
 import com.intellij.workspaceModel.ide.legacyBridge.ModifiableFacetModelBridge
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleBridge
 import com.intellij.workspaceModel.storage.WorkspaceEntityStorage
@@ -28,9 +27,9 @@ import com.intellij.workspaceModel.storage.WorkspaceEntityStorageDiffBuilder
 import com.intellij.workspaceModel.storage.bridgeEntities.*
 
 class ModifiableFacetModelBridgeImpl(private val initialStorage: WorkspaceEntityStorage,
-                                              private val diff: WorkspaceEntityStorageDiffBuilder,
-                                              val moduleBridge: ModuleBridge,
-                                              private val facetManager: FacetManagerBridge)
+                                     private val diff: WorkspaceEntityStorageDiffBuilder,
+                                     val moduleBridge: ModuleBridge,
+                                     private val facetManager: FacetManagerBridge)
   : FacetModelBase(), ModifiableFacetModelBridge {
   private val listeners: MutableList<ModifiableFacetModel.Listener> = ContainerUtil.createLockFreeCopyOnWriteList()
 
@@ -59,7 +58,7 @@ class ModifiableFacetModelBridgeImpl(private val initialStorage: WorkspaceEntity
     val facetTypeId = if (facet !is InvalidFacet) facet.type.stringId else facet.configuration.facetState.facetType
     val entity = diff.addFacetEntity(facet.name, facetTypeId, facetConfigurationXml, moduleEntity, underlyingEntity, source)
     diff.mutableFacetMapping().addMapping(entity, facet)
-    FacetManagerImpl.setExternalSource(facet, externalSource)
+    facet.externalSource = externalSource
     facetsChanged()
   }
 

@@ -1,6 +1,7 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.diagnostic;
 
+import com.intellij.codeWithMe.ClientId;
 import com.intellij.icons.AllIcons;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationAction;
@@ -19,11 +20,11 @@ import com.intellij.openapi.wm.impl.ProjectFrameHelper;
 import com.intellij.ui.BalloonLayout;
 import com.intellij.ui.BalloonLayoutData;
 import com.intellij.ui.ClickListener;
-import com.intellij.ui.JBColor;
 import com.intellij.ui.components.panels.NonOpaquePanel;
+import com.intellij.util.SystemProperties;
 import com.intellij.util.concurrency.EdtExecutorService;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -91,14 +92,6 @@ public final class IdeMessagePanel extends NonOpaquePanel implements MessagePool
     return this;
   }
 
-  /** @deprecated use {@link #openErrorsDialog(LogMessage)} */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2020.3")
-  @SuppressWarnings("SpellCheckingInspection")
-  public void openFatals(@Nullable LogMessage message) {
-    openErrorsDialog(message);
-  }
-
   public void openErrorsDialog(@Nullable LogMessage message) {
     if (myDialog != null) return;
     if (myOpeningInProgress) return;
@@ -109,7 +102,10 @@ public final class IdeMessagePanel extends NonOpaquePanel implements MessagePool
       public void run() {
         if (!isOtherModalWindowActive()) {
           try {
-            doOpenErrorsDialog(message);
+            // always show IDE errors to the host
+            ClientId.withClientId(ClientId.getLocalId(), () -> {
+              doOpenErrorsDialog(message);
+            });
           }
           finally {
             myOpeningInProgress = false;
@@ -196,31 +192,29 @@ public final class IdeMessagePanel extends NonOpaquePanel implements MessagePool
     return frame instanceof Window && ((Window)frame).isActive();
   }
 
-  private static final Color TEXT_COLOR = JBColor.namedColor("Notification.errorForeground", NotificationsManagerImpl.DEFAULT_TEXT_COLOR);
-  private static final Color FILL_COLOR = JBColor.namedColor("Notification.errorBackground", new JBColor(0XF5E6E7, 0X593D41));
-  private static final Color BORDER_COLOR = JBColor.namedColor("Notification.errorBorderColor", new JBColor(0XE0A8A9, 0X73454B));
-
   private void showErrorNotification(@NotNull Project project) {
+    if (SystemProperties.is("fatal.error.icon.disable.blinking")) return;
     String title = DiagnosticBundle.message("error.new.notification.title");
     String linkText = DiagnosticBundle.message("error.new.notification.link");
     //noinspection UnresolvedPluginConfigReference
-    Notification notification = new Notification("", AllIcons.Ide.FatalError, title, null, null, NotificationType.ERROR, null);
-    notification.addAction(new NotificationAction(linkText) {
-      @Override
-      public void actionPerformed(@NotNull AnActionEvent e, @NotNull Notification notification) {
-        notification.expire();
-        openErrorsDialog(null);
-      }
-    });
+    Notification notification = new Notification("", title, NotificationType.ERROR)
+      .setIcon(AllIcons.Ide.FatalError)
+      .addAction(new NotificationAction(linkText) {
+        @Override
+        public void actionPerformed(@NotNull AnActionEvent e, @NotNull Notification notification) {
+          notification.expire();
+          openErrorsDialog(null);
+        }
+      });
 
     BalloonLayout layout = myFrame.getBalloonLayout();
     assert layout != null : myFrame;
 
     BalloonLayoutData layoutData = BalloonLayoutData.createEmpty();
     layoutData.fadeoutTime = 5000;
-    layoutData.textColor = TEXT_COLOR;
-    layoutData.fillColor = FILL_COLOR;
-    layoutData.borderColor = BORDER_COLOR;
+    layoutData.textColor = JBUI.CurrentTheme.Notification.Error.FOREGROUND;
+    layoutData.fillColor = JBUI.CurrentTheme.Notification.Error.BACKGROUND;
+    layoutData.borderColor = JBUI.CurrentTheme.Notification.Error.BORDER_COLOR;
 
     assert myBalloon == null;
     myBalloon = NotificationsManagerImpl.createBalloon(myFrame, notification, false, false, new Ref<>(layoutData), project);

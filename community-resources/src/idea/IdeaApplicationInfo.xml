@@ -1,20 +1,18 @@
 <component xmlns="http://jetbrains.org/intellij/schema/application-info"
            xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
            xsi:schemaLocation="http://jetbrains.org/intellij/schema/application-info http://jetbrains.org/intellij/schema/ApplicationInfo.xsd">
-  <version major="2021" minor="2" eap="true"/>
+  <version major="2021" minor="3" eap="true"/>
   <company name="JetBrains s.r.o." url="https://www.jetbrains.com"/>
   <build number="IC-__BUILD__" date="__BUILD_DATE__"/>
   <logo url="/idea_community_logo.png" textcolor="ffffff" progressColor="ffae00" progressY="397" progressHeight="3" />
-  <about url="/idea_community_about.png" foreground="939598" copyrightForeground="939598" linkColor="095fdc" logoX="540" logoY="300" logoW="100" logoH="100"/>
+  <about url="/idea_community_about.png" foreground="ffffff" copyrightForeground="ffffff" linkColor="095fdc" logoX="540" logoY="300" logoW="100" logoH="100"/>
   <icon ico="idea_CE.ico" svg="/idea-ce.svg" svg-small="/idea-ce_16.svg"/>
   <icon-eap svg="/idea-ce-eap.svg" svg-small="/idea-ce-eap_16.svg"/>
-  <package code="__PACKAGE_CODE__"/>
   <names product="IDEA" fullname="IntelliJ IDEA" edition="Community Edition" script="idea" motto="Capable and Ergonomic IDE for JVM"/>
   <essential-plugin>com.intellij.java</essential-plugin>
   <essential-plugin>com.intellij.java.ide</essential-plugin>
 
   <welcome-screen logo-url="/Logo_welcomeScreen_CE.png"/>
-  <customize-ide-wizard provider="com.intellij.ide.customize.CustomizeIdeaWizardStepsProvider"/>
 
   <editor background-url="/idea_logo_welcome.png"/>
 
@@ -27,8 +25,20 @@
   <documentation url="https://www.jetbrains.com/idea/resources/"/>
   <support url="https://intellij-support.jetbrains.com/hc/en-us/requests/new?ticket_form_id=66731&amp;product=IDEA&amp;build=$BUILD&amp;os=$OS&amp;timezone=$TIMEZONE"/>
   <youtrack url="https://youtrack.jetbrains.com/newissue?project=IDEA&amp;clearDraft=true&amp;description=$DESCR" />
-  <feedback url="https://www.jetbrains.com/feedback/feedback.jsp?product=IDEA&amp;build=$BUILD&amp;timezone=$TIMEZONE&amp;eval=$EVAL"/>
-  <whatsnew url="https://www.jetbrains.com/idea/whatsnew/"/>
+  <feedback url="https://www.jetbrains.com/feedback/feedback.jsp?product=IDEA&amp;build=$BUILD&amp;timezone=$TIMEZONE&amp;eval=$EVAL"
+    zendesk-form-id="360001912739" zendesk-url="https://jbsintellij.zendesk.com">
+    <field id="28147552" value="ij_idea"/>
+    <field id="28102551" value="sl_unknown"/>   <!-- country -->
+    <field id="29444529" type="rating"/>
+    <field id="28500325" type="build"/>
+    <field id="28151042" type="os"/>
+    <field id="28500645" type="timezone"/>
+    <field id="28351649" type="eval"/>
+    <field id="360021010939" type="systeminfo"/>
+    <field id="22996310" type="needsupport"/>
+    <field id="28116681" type="topic"/>
+  </feedback>
+  <whatsnew url="https://www.jetbrains.com/idea/whatsnew/" eligibility="auto"/>
   <keymap win="https://www.jetbrains.com/idea/docs/IntelliJIDEA_ReferenceCard.pdf"
           mac="https://www.jetbrains.com/idea/docs/IntelliJIDEA_ReferenceCard_Mac.pdf"/>
   <jetbrains-tv url="https://www.youtube.com/user/intellijideavideo"/>

@@ -40,7 +40,7 @@ public interface JsonPathTypes {
   IElementType REGEX_LITERAL = new JsonPathElementType("REGEX_LITERAL");
   IElementType ROOT_SEGMENT = new JsonPathElementType("ROOT_SEGMENT");
   IElementType SEGMENT_EXPRESSION = new JsonPathElementType("SEGMENT_EXPRESSION");
-  IElementType SPLICE_EXPRESSION = new JsonPathElementType("SPLICE_EXPRESSION");
+  IElementType SLICE_EXPRESSION = new JsonPathElementType("SLICE_EXPRESSION");
   IElementType STRING_LITERAL = new JsonPathElementType("STRING_LITERAL");
   IElementType UNARY_MINUS_EXPRESSION = new JsonPathElementType("UNARY_MINUS_EXPRESSION");
   IElementType UNARY_NOT_EXPRESSION = new JsonPathElementType("UNARY_NOT_EXPRESSION");
@@ -181,8 +181,8 @@ public interface JsonPathTypes {
       else if (type == SEGMENT_EXPRESSION) {
         return new JsonPathSegmentExpressionImpl(node);
       }
-      else if (type == SPLICE_EXPRESSION) {
-        return new JsonPathSpliceExpressionImpl(node);
+      else if (type == SLICE_EXPRESSION) {
+        return new JsonPathSliceExpressionImpl(node);
       }
       else if (type == STRING_LITERAL) {
         return new JsonPathStringLiteralImpl(node);

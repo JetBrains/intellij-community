@@ -702,7 +702,8 @@ SHELL_SCRIPT
             PsiElement(STRING_CONTENT)('hello world ')
             PsiElement($)('$')
             ARITHMETIC_EXPANSION
-              PsiElement((()('((')
+              PsiElement(()('(')
+              PsiElement(()('(')
               MUL_EXPRESSION
                 LITERAL_EXPRESSION
                   NUMBER
@@ -711,7 +712,8 @@ SHELL_SCRIPT
                 LITERAL_EXPRESSION
                   NUMBER
                     PsiElement(int)('6')
-              PsiElement()))('))')
+              PsiElement())(')')
+              PsiElement())(')')
             PsiElement(CLOSE_QUOTE)('"')
       PsiWhiteSpace(' ')
       PsiElement(]])(']]')

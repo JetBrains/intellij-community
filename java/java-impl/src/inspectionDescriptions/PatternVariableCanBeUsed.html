@@ -1,13 +1,14 @@
 <html>
 <body>
-Reports local variable declarations that can be replaced with pattern variables. E.g.:
+Reports local variable declarations that can be replaced with pattern variables, which are usually more compact.
+<p><b>Example:</b></p>
 <pre><code>
   if (obj instanceof String) {
     String str = (String) obj;
     System.out.println(str);
   }
 </code></pre>
-Can be replaced with:
+<p>Can be replaced with:</p>
 <pre><code>
   if (obj instanceof String str) {
     System.out.println(str);

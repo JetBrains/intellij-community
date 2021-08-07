@@ -65,6 +65,11 @@ public class OnePixelSplitter extends JBSplitter {
     init();
   }
 
+  public OnePixelSplitter(boolean vertical, @NotNull @NonNls String proportionKey, float minProp, float maxProp) {
+    super(vertical, proportionKey,  minProp, maxProp);
+    init();
+  }
+
   protected void init() {
     setDividerWidth(1);
     setFocusable(false);

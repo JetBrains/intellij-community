@@ -6,6 +6,7 @@ import com.intellij.icons.AllIcons;
 import com.intellij.ide.AboutPopupDescriptionProvider;
 import com.intellij.ide.BrowserUtil;
 import com.intellij.ide.IdeBundle;
+import com.intellij.ide.nls.NlsMessages;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.ide.ui.UISettings;
@@ -42,7 +43,6 @@ import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.Alarm;
 import com.intellij.util.MathUtil;
 import com.intellij.util.PlatformUtils;
-import com.intellij.util.text.DateFormatUtil;
 import com.intellij.util.ui.*;
 import com.intellij.util.ui.accessibility.AccessibleContextUtil;
 import org.jetbrains.annotations.Nls;
@@ -62,6 +62,8 @@ import java.io.File;
 import java.io.IOException;
 import java.lang.management.GarbageCollectorMXBean;
 import java.lang.management.ManagementFactory;
+import java.text.DateFormat;
+import java.text.MessageFormat;
 import java.text.SimpleDateFormat;
 import java.util.List;
 import java.util.*;
@@ -139,6 +141,28 @@ public final class AboutPopup {
     catch (Exception ignore) { }
   }
 
+  static @Nullable String loadThirdPartyLibraries() {
+    final File thirdPartyLibrariesFile = new File(PathManager.getHomePath(), THIRD_PARTY_LIBRARIES_FILE_PATH);
+    if (thirdPartyLibrariesFile.isFile()) {
+      try {
+        return FileUtil.loadFile(thirdPartyLibrariesFile);
+      }
+      catch (IOException e) {
+        LOG.warn(e);
+      }
+    }
+    return null;
+  }
+
+  static @NotNull @Nls String getCopyrightText() {
+    ApplicationInfoEx appInfo = ApplicationInfoEx.getInstanceEx();
+    // Copyright message should not be translated
+    @NlsSafe
+    String copyrightText = String.format(Locale.ROOT,
+                                         "Copyright © %s–%d %s", appInfo.getCopyrightStart(), Calendar.getInstance(Locale.US).get(Calendar.YEAR), appInfo.getCompanyName());
+    return copyrightText;
+  }
+
   private static final class InfoSurface extends JPanel {
     private static final ExtensionPointName<AboutPopupDescriptionProvider> EP_NAME = new ExtensionPointName<>("com.intellij.aboutPopupDescriptionProvider");
 
@@ -178,15 +202,21 @@ public final class AboutPopup {
       appendLast();
 
       String buildInfo = IdeBundle.message("about.box.build.number", appInfo.getBuild().asString());
+      String buildInfoNonLocalized = MessageFormat.format("Build #{0}", appInfo.getBuild().asString());
       Date timestamp = appInfo.getBuildDate().getTime();
       if (appInfo.getBuild().isSnapshot()) {
-        buildInfo += IdeBundle.message("about.box.build.date.time", DateFormatUtil.formatAboutDialogDate(timestamp), new SimpleDateFormat("HH:mm").format(timestamp));
+        String time = new SimpleDateFormat("HH:mm").format(timestamp);
+        buildInfo += IdeBundle.message("about.box.build.date.time", NlsMessages.formatDateLong(timestamp), time);
+        buildInfoNonLocalized += MessageFormat.format(", built on {0} at {1}",
+                                                      DateFormat.getDateInstance(DateFormat.LONG, Locale.US).format(timestamp), time);
       }
       else {
-        buildInfo += IdeBundle.message("about.box.build.date", DateFormatUtil.formatAboutDialogDate(timestamp));
+        buildInfo += IdeBundle.message("about.box.build.date", NlsMessages.formatDateLong(timestamp));
+        buildInfoNonLocalized += MessageFormat.format(", built on {0}",
+                                                      DateFormat.getDateInstance(DateFormat.LONG, Locale.US).format(timestamp));
       }
       myLines.add(new AboutBoxLine(buildInfo));
-      appendLast();
+      myInfo.append(buildInfoNonLocalized).append("\n");
 
       myLines.add(new AboutBoxLine(""));
 
@@ -209,28 +239,12 @@ public final class AboutPopup {
       String javaVersion = properties.getProperty("java.runtime.version", properties.getProperty("java.version", "unknown"));
       String arch = properties.getProperty("os.arch", "");
       myLines.add(new AboutBoxLine(IdeBundle.message("about.box.jre", javaVersion, arch)));
-      appendLast();
+      myInfo.append(MessageFormat.format("Runtime version: {0} {1}\n", javaVersion, arch));
 
       String vmVersion = properties.getProperty("java.vm.name", "unknown");
       String vmVendor = properties.getProperty("java.vendor", "unknown");
       myLines.add(new AboutBoxLine(IdeBundle.message("about.box.vm", vmVersion, vmVendor)));
-      appendLast();
-
-      for (AboutPopupDescriptionProvider aboutInfoProvider : EP_NAME.getExtensions()) {
-        String description = aboutInfoProvider.getDescription();
-        if (description == null) continue;
-
-        String[] lines = description.split("[\n]+");
-
-        if (lines.length == 0) continue;
-
-        myLines.add(new AboutBoxLine(""));
-
-        for (String line : lines) {
-          myLines.add(new AboutBoxLine(line));
-          appendLast();
-        }
-      }
+      myInfo.append(MessageFormat.format("VM: {0} by {1}\n", vmVersion, vmVendor));
 
       myLines.add(new AboutBoxLine(""));
       myLines.add(new AboutBoxLine(""));
@@ -330,20 +344,6 @@ public final class AboutPopup {
         }
       });
     }
-
-    private static @Nullable String loadThirdPartyLibraries() {
-      final File thirdPartyLibrariesFile = new File(PathManager.getHomePath(), THIRD_PARTY_LIBRARIES_FILE_PATH);
-      if (thirdPartyLibrariesFile.isFile()) {
-        try {
-          return FileUtil.loadFile(thirdPartyLibrariesFile);
-        }
-        catch (IOException e) {
-          LOG.warn(e);
-        }
-      }
-      return null;
-    }
-
     private static Rectangle getCopyIconArea() {
       return new Rectangle(getCopyIconCoord(), JBUI.size(16));
     }
@@ -360,9 +360,13 @@ public final class AboutPopup {
       GraphicsConfig config = new GraphicsConfig(g);
       UISettings.setupAntialiasing(g);
 
-      Font labelFont = JBFont.label();
+      Font labelFont;
       if (SystemInfo.isWindows) {
         labelFont = JBUI.Fonts.create("Segoe UI", 14);
+      } else if (SystemInfo.isMac) {
+        labelFont = JBUI.Fonts.create("Helvetica Neue", 13);
+      } else {
+        labelFont = JBUI.Fonts.create("Arial", 14);
       }
 
       int startFontSize = 14;
@@ -399,14 +403,13 @@ public final class AboutPopup {
         color = new Color((int)copyrightForeground, copyrightForeground > 0xffffff);
       }
       g2.setColor(color);
-      if (SystemInfo.isMac) {
-        g2.setFont(JBUI.Fonts.miniFont());
+      if (SystemInfo.isWindows) {
+        g.setFont(JBUI.Fonts.create("Segoe UI", 10));
+      } else if (SystemInfo.isMac) {
+        g.setFont(JBUI.Fonts.create("Helvetica Neue", 10));
+      } else {
+        g.setFont(JBUI.Fonts.create("Arial", 10));
       }
-      else {
-        g2.setFont(JBUI.Fonts.create("Segoe UI", 12));
-      }
-
-      g2.setColor(createColor(appInfo.getAboutForeground()));
 
       JBPoint copyrightCoord = getCopyrightCoord();
       g2.drawString(getCopyrightText(), copyrightCoord.x, copyrightCoord.y);
@@ -427,30 +430,21 @@ public final class AboutPopup {
       }
     }
 
-    private static @NotNull @Nls String getCopyrightText() {
-      ApplicationInfoEx appInfo = ApplicationInfoEx.getInstanceEx();
-      // Copyright message should not be translated
-      @NlsSafe
-      String copyrightText = String.format(Locale.ROOT,
-        "Copyright © %s–%d %s", appInfo.getCopyrightStart(), Calendar.getInstance(Locale.US).get(Calendar.YEAR), appInfo.getCompanyName());
-      return copyrightText;
-    }
-
     private @NotNull TextRenderer createTextRenderer(Graphics2D g) {
       Rectangle r = getTextRendererRect();
       return new TextRenderer(r.x, r.y, r.width, r.height, g);
     }
 
     private static JBRectangle getTextRendererRect() {
-      return new JBRectangle(115, 156, 500, 220);
+      return new JBRectangle(49, 169, 500, 220);
     }
 
     private static JBPoint getCopyrightCoord() {
-      return new JBPoint(115, 395);
+      return new JBPoint(49, 365);
     }
 
     private static JBPoint getCopyIconCoord() {
-      return new JBPoint(66, 156);
+      return new JBPoint(15, 155);
     }
 
     public String getText() {
@@ -662,8 +656,15 @@ public final class AboutPopup {
     return rgba == -1 ? Color.BLACK : new Color((int)rgba, rgba > 0xffffff);
   }
 
-  private static @NotNull String getExtraInfo() {
+  static @NotNull String getExtraInfo() {
     String extraInfo = SystemInfo.getOsNameAndVersion() + "\n";
+
+    for (AboutPopupDescriptionProvider aboutInfoProvider : InfoSurface.EP_NAME.getExtensions()) {
+      String description = aboutInfoProvider.getDescription();
+      if (description != null) {
+        extraInfo += description + "\n";
+      }
+    }
 
     extraInfo += "GC: " + ManagementFactory.getGarbageCollectorMXBeans().stream()
              .map(GarbageCollectorMXBean::getName).collect(StringUtil.joining()) + "\n";
@@ -783,7 +784,7 @@ public final class AboutPopup {
         viewer.setText(resultHtmlText);
 
         StyleSheet styleSheet = ((HTMLDocument)viewer.getDocument()).getStyleSheet();
-        styleSheet.addRule("body {font-family: \"Segoe UI\", Tahoma, sans-serif;}");
+        styleSheet.addRule("body {font-family: \"Segoe UI\", Tahoma, \"Helvetica Neue\", Helvetica, Arial, sans-serif;}");
         styleSheet.addRule("body {margin-top:0;padding-top:0;}");
         styleSheet.addRule("body {font-size:" + JBUIScale.scaleFontSize((float)14) + "pt;}");
 
@@ -815,7 +816,9 @@ public final class AboutPopup {
       }
     };
 
-    ourPopup.cancel();
+    if (ourPopup != null) {
+      ourPopup.cancel();
+    }
     dialog.setTitle(IdeBundle.message("dialog.title.third.party.software",
                                       ApplicationNamesInfo.getInstance().getFullProductName(),
                                       ApplicationInfo.getInstance().getFullVersion()));

@@ -29,7 +29,7 @@ public final class ConvertIndentsUtil {
 
   private static int processIndents(Document document, int tabSize, TextRange textRange, IndentBuilder indentBuilder) {
     int[] changedLines = {0};
-    DocumentUtil.executeInBulk(document, true, () -> {
+    DocumentUtil.executeInBulk(document, () -> {
       int startLine = document.getLineNumber(textRange.getStartOffset());
       int endLine = document.getLineNumber(textRange.getEndOffset());
       for (int line = startLine; line <= endLine; line++) {

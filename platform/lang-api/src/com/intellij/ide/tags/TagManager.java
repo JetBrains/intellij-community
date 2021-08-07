@@ -1,10 +1,11 @@
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.tags;
 
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.PsiElement;
-import com.intellij.ui.ColoredTextContainer;
+import com.intellij.ui.ColoredText;
 import com.intellij.ui.SimpleTextAttributes;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
@@ -26,24 +27,26 @@ public abstract class TagManager {
 
   @NotNull
   public static TagManager getInstance(@NotNull Project project) {
-    return ServiceManager.getService(project, TagManager.class);
+    return project.getService(TagManager.class);
   }
 
   public static boolean isEnabled() {
     return Registry.is("ide.element.tags.enabled");
   }
 
-  @Nullable
-  public static Icon appendTags(@Nullable PsiElement element, @NotNull ColoredTextContainer component) {
+  public static Pair<@Nullable Icon, @NotNull ColoredText> getTagIconAndText(@Nullable PsiElement element) {
     Collection<TagManager.Tag> tags = getElementTags(element);
+    ColoredText.Builder ct = ColoredText.builder();
     Icon tagIcon = null;
     for (TagManager.Tag tag : tags) {
       if (tagIcon == null) tagIcon = tag.icon;
       if (tag.text.isEmpty()) continue;
-      component.append(tag.text + " ", SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES
-        .derive(SimpleTextAttributes.STYLE_BOLD, tag.color, null, null));
+      ct.append(
+        tag.text + " ",
+        SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES.derive(SimpleTextAttributes.STYLE_BOLD, tag.color, null, null)
+      );
     }
-    return tagIcon;
+    return Pair.create(tagIcon, ct.build());
   }
 
   public static @NotNull Collection<Tag> getElementTags(@Nullable PsiElement element) {

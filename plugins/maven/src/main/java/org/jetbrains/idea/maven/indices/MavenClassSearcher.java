@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.indices;
 
 import com.intellij.openapi.project.Project;
@@ -6,7 +6,6 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.VersionComparatorUtil;
-import gnu.trove.THashMap;
 import org.apache.lucene.index.Term;
 import org.apache.lucene.search.MatchAllDocsQuery;
 import org.apache.lucene.search.Query;
@@ -22,7 +21,7 @@ import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 import java.util.stream.Collectors;
 
-public class MavenClassSearcher extends MavenSearcher<MavenClassSearchResult> {
+public final class MavenClassSearcher extends MavenSearcher<MavenClassSearchResult> {
   public static final String TERM = MavenServerIndexer.SEARCH_TERM_CLASS_NAMES;
 
   @Override
@@ -39,7 +38,7 @@ public class MavenClassSearcher extends MavenSearcher<MavenClassSearchResult> {
     return results;
   }
 
-  protected Pair<String, Query> preparePatternAndQuery(String pattern) {
+  private Pair<String, Query> preparePatternAndQuery(String pattern) {
     pattern = pattern.toLowerCase();
     if (pattern.trim().length() == 0) {
       return new Pair<>(pattern, new MatchAllDocsQuery());
@@ -65,7 +64,7 @@ public class MavenClassSearcher extends MavenSearcher<MavenClassSearchResult> {
     return new Pair<>(pattern, new WildcardQuery(new Term(TERM, queryPattern)));
   }
 
-  protected Collection<MavenClassSearchResult> processResults(Set<MavenArtifactInfo> infos, String pattern, int maxResult) {
+  private Collection<MavenClassSearchResult> processResults(Set<MavenArtifactInfo> infos, String pattern, int maxResult) {
     if (pattern.length() == 0 || pattern.equals("*")) {
       pattern = "^/(.*)$";
     }
@@ -92,7 +91,7 @@ public class MavenClassSearcher extends MavenSearcher<MavenClassSearchResult> {
       return Collections.emptyList();
     }
 
-    Map<String, MavenClassSearchResult> result = new THashMap<>();
+    Map<String, MavenClassSearchResult> result = new HashMap<>();
     for (MavenArtifactInfo each : infos) {
       if (each.getClassNames() == null) continue;
 

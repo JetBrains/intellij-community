@@ -12,13 +12,13 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.util.Function;
-import com.jetbrains.python.PyPsiPackageUtil;
-import com.jetbrains.python.packaging.PyPackage;
 import com.jetbrains.python.packaging.PyPackageUtil;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.sdk.PythonSdkType;
 import com.jetbrains.python.sdk.PythonSdkUtil;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
 import java.util.Collection;
@@ -59,12 +59,11 @@ final class TestRunnerDetector implements Function<Pair<Module, Collection<Virtu
     //check if installed in sdk
     final Sdk sdk = PythonSdkUtil.findPythonSdk(module);
     if (sdk != null && sdk.getSdkType() instanceof PythonSdkType) {
-      final List<PyPackage> packages = PyPackageUtil.refreshAndGetPackagesModally(sdk);
-      for (final String framework : PyTestFrameworkService.getFrameworkNamesArray()) {
-        if (PyPsiPackageUtil.findPackage(packages, framework) != null) {
-          testRunner = PyTestFrameworkService.getSdkReadableNameByFramework(framework);
-          break;
-        }
+      PyPackageUtil.refreshAndGetPackagesModally(sdk);
+      var factories = PythonTestConfigurationType.getInstance().getTypedFactories();
+      var factory = factories.stream().filter(o -> o.isFrameworkInstalled(sdk)).findFirst();
+      if (factory.isPresent()) {
+        testRunner = factory.get().getId();
       }
     }
     if (!testRunner.isEmpty()) {
@@ -81,14 +80,25 @@ final class TestRunnerDetector implements Function<Pair<Module, Collection<Virtu
     if (psiFile instanceof PyFile) {
       final List<PyImportElement> importTargets = ((PyFile)psiFile).getImportTargets();
       for (PyImportElement importElement : importTargets) {
-        for (final String framework : PyTestFrameworkService.getFrameworkNamesArray()) {
-          if (framework.equals(importElement.getVisibleName())) {
-            return PyTestFrameworkService.getSdkReadableNameByFramework(framework);
-          }
+        String name = importElement.getVisibleName();
+        if (name != null) {
+          @NonNls String runnerId = findSdkByPackage(name);
+          if (runnerId != null) return runnerId;
         }
       }
     }
     return "";
+  }
+
+  @Nullable
+  private static @NonNls String findSdkByPackage(@NotNull String packageToFind) {
+    for (var factory : PythonTestConfigurationType.getInstance().getTypedFactories()) {
+      var packageRequired = factory.getPackageRequired();
+      if (packageRequired != null && packageRequired.equals(packageToFind)) {
+        return factory.getId();
+      }
+    }
+    return null;
   }
 
   @NotNull
@@ -99,11 +109,8 @@ final class TestRunnerDetector implements Function<Pair<Module, Collection<Virtu
       final PyExpression argumentValue = setupCall.getKeywordArgument(argumentName);
       if (argumentValue instanceof PyStringLiteralExpression) {
         final String stringValue = ((PyStringLiteralExpression)argumentValue).getStringValue();
-        for (final String framework : PyTestFrameworkService.getFrameworkNamesArray()) {
-          if (stringValue.contains(framework)) {
-            return PyTestFrameworkService.getSdkReadableNameByFramework(framework);
-          }
-        }
+        @NonNls String runnerId = findSdkByPackage(stringValue);
+        if (runnerId != null) return runnerId;
       }
     }
     return "";

@@ -1,8 +1,10 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.util.text;
 
-import gnu.trove.TIntArrayList;
-import gnu.trove.TLongArrayList;
+import it.unimi.dsi.fastutil.ints.IntArrayList;
+import it.unimi.dsi.fastutil.ints.IntList;
+import it.unimi.dsi.fastutil.longs.LongArrayList;
+import it.unimi.dsi.fastutil.longs.LongList;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -45,8 +47,8 @@ public final class Formats {
 
   @Contract(pure = true)
   private static @NotNull String formatDuration(long duration, @NotNull String unitSeparator, int maxFragments) {
-    TLongArrayList unitValues = new TLongArrayList();
-    TIntArrayList unitIndices = new TIntArrayList();
+    LongList unitValues = new LongArrayList();
+    IntList unitIndices = new IntArrayList();
 
     long count = duration;
     int i = 1;
@@ -56,19 +58,19 @@ public final class Formats {
       long remainder = count % multiplier;
       count /= multiplier;
       if (remainder != 0 || !unitValues.isEmpty()) {
-        unitValues.insert(0, remainder);
-        unitIndices.insert(0, i - 1);
+        unitValues.add(0, remainder);
+        unitIndices.add(0, i - 1);
       }
     }
-    unitValues.insert(0, count);
-    unitIndices.insert(0, i - 1);
+    unitValues.add(0, count);
+    unitIndices.add(0, i - 1);
 
     if (unitValues.size() > maxFragments) {
-      int lastUnitIndex = unitIndices.get(maxFragments - 1);
+      int lastUnitIndex = unitIndices.getInt(maxFragments - 1);
       long lastMultiplier = TIME_MULTIPLIERS[lastUnitIndex];
       // Round up if needed
-      if (unitValues.get(maxFragments) > lastMultiplier / 2) {
-        long increment = lastMultiplier - unitValues.get(maxFragments);
+      if (unitValues.getLong(maxFragments) > lastMultiplier / 2) {
+        long increment = lastMultiplier - unitValues.getLong(maxFragments);
         for (int unit = lastUnitIndex - 1; unit > 0; unit--) {
           increment *= TIME_MULTIPLIERS[unit];
         }
@@ -79,7 +81,7 @@ public final class Formats {
     StringBuilder result = new StringBuilder();
     for (i = 0; i < unitValues.size() && i < maxFragments; i++) {
       if (i > 0) result.append(" ");
-      result.append(unitValues.get(i)).append(unitSeparator).append(TIME_UNITS[unitIndices.get(i)]);
+      result.append(unitValues.getLong(i)).append(unitSeparator).append(TIME_UNITS[unitIndices.getInt(i)]);
     }
     return result.toString();
   }

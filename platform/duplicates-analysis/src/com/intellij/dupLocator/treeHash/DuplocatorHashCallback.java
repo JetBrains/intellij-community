@@ -13,8 +13,6 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.usageView.UsageInfo;
-import com.thoughtworks.xstream.io.HierarchicalStreamWriter;
-import com.thoughtworks.xstream.io.xml.PrettyPrintWriter;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.Object2IntMap;
@@ -25,6 +23,9 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.xml.stream.XMLOutputFactory;
+import javax.xml.stream.XMLStreamException;
+import javax.xml.stream.XMLStreamWriter;
 import java.io.BufferedWriter;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -286,22 +287,22 @@ public class DuplocatorHashCallback implements FragmentsCollector {
     };
   }
 
-  public void report(@NotNull Path dir, @NotNull Project project) throws IOException {
+  public void report(@NotNull Path dir, @NotNull Project project) throws IOException, XMLStreamException {
     int[] hashCodes = myDuplicates.keySet().toIntArray();
     //fragments
     try (BufferedWriter fileWriter = Files.newBufferedWriter(dir.resolve("fragments.xml"))) {
-      HierarchicalStreamWriter writer = new PrettyPrintWriter(fileWriter);
-      writer.startNode("root");
+      XMLStreamWriter writer = XMLOutputFactory.newDefaultFactory().createXMLStreamWriter(fileWriter);
+      writer.writeStartElement("root");
       for (int hash : hashCodes) {
         List<List<PsiFragment>> dupList = myDuplicates.get(hash);
-        writer.startNode("hash");
-        writer.addAttribute("val", String.valueOf(hash));
+        writer.writeStartElement("hash");
+        writer.writeAttribute("val", String.valueOf(hash));
         for (final List<PsiFragment> psiFragments : dupList) {
           writeFragments(psiFragments, writer, project, false);
         }
-        writer.endNode();
+        writer.writeEndElement();
       }
-      writer.endNode(); //root node
+      writer.writeEndElement(); //root node
       writer.flush();
     }
 
@@ -309,27 +310,27 @@ public class DuplocatorHashCallback implements FragmentsCollector {
   }
 
   //duplicates
-  public static void writeDuplicates(@NotNull Path dir, @NotNull Project project, DupInfo info) throws IOException {
+  public static void writeDuplicates(@NotNull Path dir, @NotNull Project project, DupInfo info) throws IOException, XMLStreamException {
     try (BufferedWriter fileWriter = Files.newBufferedWriter(dir.resolve("duplicates.xml"))) {
-      HierarchicalStreamWriter writer = new PrettyPrintWriter(fileWriter);
-      writer.startNode("root");
+      XMLStreamWriter writer = XMLOutputFactory.newDefaultFactory().createXMLStreamWriter(fileWriter);
+      writer.writeStartElement("root");
       final int patterns = info.getPatterns();
       for (int i = 0; i < patterns; i++) {
-        writer.startNode("duplicate");
-        writer.addAttribute("cost", String.valueOf(info.getPatternCost(i)));
-        writer.addAttribute("hash", String.valueOf(info.getHash(i)));
+        writer.writeStartElement("duplicate");
+        writer.writeAttribute("cost", String.valueOf(info.getPatternCost(i)));
+        writer.writeAttribute("hash", String.valueOf(info.getHash(i)));
         writeFragments(Arrays.asList(info.getFragmentOccurences(i)), writer, project, true);
-        writer.endNode();
+        writer.writeEndElement();
       }
-      writer.endNode(); //root node
+      writer.writeEndElement(); //root node
       writer.flush();
     }
   }
 
   private static void writeFragments(List<? extends PsiFragment> psiFragments,
-                                     HierarchicalStreamWriter writer,
+                                     XMLStreamWriter writer,
                                      @NotNull Project project,
-                                     boolean shouldWriteOffsets) {
+                                     boolean shouldWriteOffsets) throws XMLStreamException {
     final PathMacroManager macroManager = PathMacroManager.getInstance(project);
     final PsiDocumentManager documentManager = PsiDocumentManager.getInstance(project);
 
@@ -337,31 +338,31 @@ public class DuplocatorHashCallback implements FragmentsCollector {
       final PsiFile psiFile = fragment.getFile();
       final VirtualFile virtualFile = psiFile != null ? psiFile.getVirtualFile() : null;
       if (virtualFile != null) {
-        writer.startNode("fragment");
-        writer.addAttribute("file", macroManager.collapsePath(virtualFile.getUrl()));
+        writer.writeStartElement("fragment");
+        writer.writeAttribute("file", macroManager.collapsePath(virtualFile.getUrl()));
         if (shouldWriteOffsets) {
           final Document document = documentManager.getDocument(psiFile);
           LOG.assertTrue(document != null);
           int startOffset = fragment.getStartOffset();
           final int line = document.getLineNumber(startOffset);
-          writer.addAttribute("line", String.valueOf(line));
+          writer.writeAttribute("line", String.valueOf(line));
           final int lineStartOffset = document.getLineStartOffset(line);
           if (Strings.isEmptyOrSpaces(document.getText().substring(lineStartOffset, startOffset))) {
             startOffset = lineStartOffset;
           }
-          writer.addAttribute("start", String.valueOf(startOffset));
-          writer.addAttribute("end", String.valueOf(fragment.getEndOffset()));
+          writer.writeAttribute("start", String.valueOf(startOffset));
+          writer.writeAttribute("end", String.valueOf(fragment.getEndOffset()));
           if (fragment.containsMultipleFragments()) {
             final int[][] offsets = fragment.getOffsets();
             for (int[] offset : offsets) {
-              writer.startNode("offset");
-              writer.addAttribute("start", String.valueOf(offset[0]));
-              writer.addAttribute("end", String.valueOf(offset[1]));
-              writer.endNode();
+              writer.writeStartElement("offset");
+              writer.writeAttribute("start", String.valueOf(offset[0]));
+              writer.writeAttribute("end", String.valueOf(offset[1]));
+              writer.writeEndElement();
             }
           }
         }
-        writer.endNode();
+        writer.writeEndElement();
       }
     }
   }

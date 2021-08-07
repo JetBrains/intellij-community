@@ -1,6 +1,6 @@
 class Test
 {
-<error descr="Duplicate class: 'Test'">class Test</error>
+class <error descr="Duplicate class: 'Test'">Test</error>
 {
     public void x()
     {

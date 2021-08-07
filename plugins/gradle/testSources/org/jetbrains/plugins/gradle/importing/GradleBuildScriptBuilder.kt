@@ -1,215 +1,162 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.gradle.importing
 
-import java.util.ArrayList
-import kotlin.collections.LinkedHashSet
+import com.intellij.openapi.util.Version
+import org.gradle.util.GradleVersion
+import org.jetbrains.plugins.gradle.frameworkSupport.buildscript.AbstractGradleBuildScriptBuilder
+import org.jetbrains.plugins.gradle.frameworkSupport.buildscript.isSupportedJavaLibraryPlugin
+import org.jetbrains.plugins.gradle.frameworkSupport.script.GroovyScriptBuilder
+import org.jetbrains.plugins.gradle.frameworkSupport.script.ScriptElement.Statement.Expression
+import org.jetbrains.plugins.gradle.frameworkSupport.script.ScriptTreeBuilder
+import java.io.File
+import java.util.function.Consumer
+import kotlin.apply as applyKt
 
-open class GradleBuildScriptBuilder {
+@Suppress("MemberVisibilityCanBePrivate", "unused")
+open class GradleBuildScriptBuilder(
+  gradleVersion: GradleVersion
+) : AbstractGradleBuildScriptBuilder<GradleBuildScriptBuilder>(gradleVersion) {
 
-  private val imports = LinkedHashSet<String>()
-  private val buildScriptPrefixes = ArrayList<String>()
-  private val buildScriptDependencies = LinkedHashSet<String>()
-  private val buildScriptRepositories = LinkedHashSet<String>()
-  private val buildScriptPostfixes = ArrayList<String>()
-  private val plugins = LinkedHashSet<String>()
-  private val applicablePlugins = LinkedHashSet<String>()
-  private val prefixes = ArrayList<String>()
-  private val dependencies = LinkedHashSet<String>()
-  private val repositories = LinkedHashSet<String>()
-  private val postfixes = ArrayList<String>()
+  override val scriptBuilder = GroovyScriptBuilder()
 
-  /**
-   * ...
-   * import [import]
-   * buildscript { ... }
-   * ...
-   * repositories { ... }
-   * dependencies { ... }
-   * ...
-   */
-  fun addImport(import: String) = apply {
-    imports.add(import)
-  }
+  override fun apply(action: GradleBuildScriptBuilder.() -> Unit) = applyKt(action)
 
-  /**
-   * buildscript {
-   *   ...
-   *   [prefix]
-   *   repositories { ... }
-   *   dependencies { ... }
-   *   ...
-   * }
-   */
-  fun addBuildScriptPrefix(prefix: String) = apply {
-    buildScriptPrefixes.add(prefix)
-  }
+  fun applyPlugin(plugin: String) =
+    withPrefix { call("apply", argument("plugin", code(plugin))) }
 
-  /**
-   * buildscript {
-   *   dependencies {
-   *     ...
-   *     [dependency]
-   *   }
-   * }
-   */
-  fun addBuildScriptDependency(dependency: String) = apply {
-    buildScriptDependencies.add(dependency)
-  }
-
-  /**
-   * buildscript {
-   *   repositories {
-   *     ...
-   *     [repository]
-   *   }
-   * }
-   */
-  fun addBuildScriptRepository(repository: String) = apply {
-    buildScriptRepositories.add(repository)
-  }
-
-
-  /**
-   * buildscript {
-   *   ...
-   *   repositories { ... }
-   *   dependencies { ... }
-   *   ...
-   *   [postfix]
-   * }
-   */
-  fun addBuildScriptPostfix(postfix: String) = apply {
-    buildScriptPostfixes.add(postfix)
-  }
-
-  /**
-   * plugins {
-   *   ...
-   *   [plugin]
-   * }
-   */
-  fun addPlugin(plugin: String) = apply {
-    plugins.add(plugin)
-  }
-
-  /**
-   * apply plugin: [plugin]
-   */
-  fun applyPlugin(plugin: String) = apply {
-    applicablePlugins.add(plugin)
-  }
-
-  /**
-   * buildscript { ... }
-   * ...
-   * [prefix]
-   * repositories { ... }
-   * dependencies { ... }
-   * ...
-   */
-  fun addPrefix(vararg prefix: String) = apply {
-    prefixes.addAll(prefix)
-  }
-
-  /**
-   * dependencies {
-   *   ...
-   *   [dependency]
-   * }
-   */
-  fun addDependency(dependency: String) = apply {
-    dependencies.add(dependency)
-  }
-
-  /**
-   * repositories {
-   *   ...
-   *   [repository]
-   * }
-   */
-  fun addRepository(repository: String) = apply {
-    repositories.add(repository)
-  }
-
-
-  /**
-   * buildscript { ... }
-   * ...
-   * repositories { ... }
-   * dependencies { ... }
-   * ...
-   * [postfix]
-   */
-  fun addPostfix(vararg postfix: String) = apply {
-    postfixes.addAll(postfix)
-  }
-
-  /**
-   * @return content for build.gradle
-   */
-  fun generate() = StringBuilder().apply {
-    appendImports()
-    appendBuildScript()
-    appendPlugins()
-    applyPlugins()
-    appendText(prefixes, "")
-    appendRepositories(repositories, "")
-    appendDependencies(dependencies, "")
-    appendText(postfixes, "")
-  }.toString()
-
-  private fun StringBuilder.appendImports() = apply {
-    for (import in imports) {
-      append("import ").appendln(import)
+  fun withTask(name: String, type: String? = null, configure: ScriptTreeBuilder.() -> Unit = {}) =
+    withPostfix {
+      when (type) {
+        null -> call("tasks.create", string(name), configure = configure)
+        else -> call("tasks.create", string(name), code(type), configure = configure)
+      }
     }
-  }
 
-  private fun StringBuilder.appendPlugins() = appendBlock("plugins") {
-    for (plugin in plugins) {
-      append("  ").appendln(plugin)
+  // Note: These are Element building functions
+  fun project(name: String) = call("project", name)
+  fun project(name: String, configuration: String) = call("project", "path" to name, "configuration" to configuration)
+
+  fun project(name: String, configure: Consumer<GradleBuildScriptBuilder>) = project(name) { configure.accept(this) }
+  fun project(name: String, configure: GradleBuildScriptBuilder.() -> Unit) =
+    withPrefix {
+      call("project", name) {
+        addElements(GradleBuildScriptChildBuilder().also(configure).generateTree())
+      }
     }
-  }
 
-  private fun StringBuilder.applyPlugins() = apply {
-    for (plugin in applicablePlugins) {
-      append("apply plugin: ").appendln(plugin)
+  fun configure(expression: Expression, configure: Consumer<GradleBuildScriptBuilder>) = configure(expression) { configure.accept(this) }
+  fun configure(expression: Expression, configure: GradleBuildScriptBuilder.() -> Unit) =
+    withPrefix {
+      call("configure", expression) {
+        addElements(GradleBuildScriptChildBuilder().also(configure).generateTree())
+      }
     }
+
+  fun allprojects(configure: Consumer<GradleBuildScriptBuilder>) = allprojects { configure.accept(this) }
+  fun allprojects(configure: GradleBuildScriptBuilder.() -> Unit) =
+    withPrefix {
+      call("allprojects") {
+        addElements(GradleBuildScriptChildBuilder().also(configure).generateTree())
+      }
+    }
+
+  fun subprojects(configure: GradleBuildScriptBuilder.() -> Unit) =
+    withPrefix {
+      call("subprojects") {
+        addElements(GradleBuildScriptChildBuilder().also(configure).generateTree())
+      }
+    }
+
+  fun subprojects(configure: Consumer<GradleBuildScriptBuilder>) = subprojects { configure.accept(this) }
+
+  fun withGradleIdeaExtPluginIfCan() = apply {
+    val localDirWithJar = System.getenv("GRADLE_IDEA_EXT_PLUGIN_DIR")?.let(::File)
+    if (localDirWithJar == null) {
+      withGradleIdeaExtPlugin()
+      return@apply
+    }
+    if (!localDirWithJar.exists()) throw RuntimeException("Directory $localDirWithJar not found")
+    if (!localDirWithJar.isDirectory) throw RuntimeException("File $localDirWithJar is not directory")
+    val template = "gradle-idea-ext-.+-SNAPSHOT\\.jar".toRegex()
+    val jarFile = localDirWithJar.listFiles()?.find { it.name.matches(template) }
+    if (jarFile == null) throw RuntimeException("Jar with gradle-idea-ext plugin not found")
+    if (!jarFile.isFile) throw RuntimeException("Invalid jar file $jarFile")
+    withLocalGradleIdeaExtPlugin(jarFile)
   }
 
-  private fun StringBuilder.appendBuildScript() = appendBlock("buildscript") {
-    appendText(buildScriptPrefixes, "  ")
-    appendRepositories(buildScriptRepositories, "  ")
-    appendDependencies(buildScriptDependencies, "  ")
-    appendText(buildScriptPostfixes, "  ")
+  fun withGradleIdeaExtPlugin() =
+    withPlugin("org.jetbrains.gradle.plugin.idea-ext", IDEA_EXT_PLUGIN_VERSION)
+
+  fun withLocalGradleIdeaExtPlugin(jarFile: File) = apply {
+    withBuildScriptMavenCentral()
+    addBuildScriptClasspath(jarFile)
+    addBuildScriptClasspath("com.google.code.gson:gson:2.8.2")
+    addBuildScriptClasspath("com.google.guava:guava:25.1-jre")
+    applyPlugin("'org.jetbrains.gradle.plugin.idea-ext'")
   }
 
-  private fun StringBuilder.appendText(text: Iterable<String>, indent: String) = apply {
-    for (paragraph in text) {
-      for (line in paragraph.split('\n')) {
-        append(indent).appendln(line)
+  override fun withBuildScriptMavenCentral() =
+    withBuildScriptMavenCentral(false)
+
+  override fun withMavenCentral() =
+    withMavenCentral(false)
+
+  fun withBuildScriptMavenCentral(useOldStyleMetadata: Boolean) =
+    withBuildScriptRepository {
+      mavenCentralRepository(useOldStyleMetadata)
+    }
+
+  fun withMavenCentral(useOldStyleMetadata: Boolean) =
+    withRepository {
+      mavenCentralRepository(useOldStyleMetadata)
+    }
+
+  private fun ScriptTreeBuilder.mavenCentralRepository(useOldStyleMetadata: Boolean = false) {
+    call("maven") {
+      call("url", "https://repo.labs.intellij.net/repo1")
+      if (useOldStyleMetadata) {
+        call("metadataSources") {
+          call("mavenPom")
+          call("artifact")
+        }
       }
     }
   }
 
-  private fun StringBuilder.appendRepositories(repositories: Iterable<String>, indent: String) = appendBlock("repositories", indent) {
-    for (repository in repositories) {
-      append("  ").append(indent).appendln(repository)
-    }
+  private inner class GradleBuildScriptChildBuilder : GradleBuildScriptBuilder(gradleVersion) {
+
+    override fun withJavaPlugin() =
+      applyPlugin("'java'")
+
+    override fun withJavaLibraryPlugin() =
+      if (isSupportedJavaLibraryPlugin(gradleVersion))
+        applyPlugin("'java-library'")
+      else
+        applyPlugin("'java'")
+
+    override fun withIdeaPlugin() =
+      applyPlugin("'idea'")
   }
 
-  private fun StringBuilder.appendDependencies(dependencies: Iterable<String>, indent: String) = appendBlock("dependencies", indent) {
-    for (dependency in dependencies) {
-      append("  ").append(indent).appendln(dependency)
-    }
-  }
+  companion object {
+    const val IDEA_EXT_PLUGIN_VERSION = "0.10"
 
-  private fun StringBuilder.appendBlock(blockName: String, indent: String = "", appendBlock: StringBuilder.() -> Unit) = apply {
-    val builder = StringBuilder()
-    builder.appendBlock()
-    if (builder.isNotEmpty()) {
-      append(indent).append(blockName).appendln(" {")
-      append(builder)
-      append(indent).appendln("}")
-    }
+    @JvmStatic
+    fun extPluginVersionIsAtLeast(version: String) =
+      Version.parseVersion(IDEA_EXT_PLUGIN_VERSION)!! >= Version.parseVersion(version)!!
+
+    @JvmStatic
+    fun buildscript(gradleVersion: GradleVersion, configure: Consumer<GradleBuildScriptBuilder>) =
+      buildscript(gradleVersion, configure::accept)
+
+    fun buildscript(gradleVersion: GradleVersion, configure: GradleBuildScriptBuilder.() -> Unit) =
+      GradleBuildScriptBuilder(gradleVersion).apply(configure).generate()
+
+    @JvmStatic
+    fun GradleImportingTestCase.buildscript(configure: Consumer<GradleBuildScriptBuilder>) =
+      buildscript(configure::accept)
+
+    fun GradleImportingTestCase.buildscript(configure: GradleBuildScriptBuilder.() -> Unit) =
+      createBuildScriptBuilder().apply(configure).generate()
   }
 }

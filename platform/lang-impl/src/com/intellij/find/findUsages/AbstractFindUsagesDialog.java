@@ -7,20 +7,24 @@ import com.intellij.ide.util.scopeChooser.ScopeChooserCombo;
 import com.intellij.internal.statistic.eventLog.FeatureUsageData;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.ui.panel.ComponentPanelBuilder;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.SearchScope;
-import com.intellij.ui.IdeBorderFactory;
-import com.intellij.ui.SeparatorFactory;
+import com.intellij.ui.RelativeFont;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.StateRestoringCheckBox;
+import com.intellij.ui.components.JBLabel;
 import com.intellij.usageView.UsageViewContentManager;
+import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.border.Border;
 import java.awt.*;
 
 /**
@@ -44,6 +48,7 @@ public abstract class AbstractFindUsagesDialog extends DialogWrapper {
   protected JCheckBox myCbToSkipResultsWhenOneUsage;
 
   private ScopeChooserCombo myScopeCombo;
+  private int myFindOptionsCount;
 
   protected AbstractFindUsagesDialog(@NotNull Project project,
                                      @NotNull FindUsagesOptions findUsagesOptions,
@@ -82,13 +87,13 @@ public abstract class AbstractFindUsagesDialog extends DialogWrapper {
     JPanel panel = new JPanel(new GridBagLayout());
     GridBagConstraints gbConstraints = new GridBagConstraints();
 
-    gbConstraints.insets = new Insets(0, 0, UIUtil.DEFAULT_VGAP, 0);
+    gbConstraints.insets = JBUI.insetsBottom(UIUtil.DEFAULT_VGAP);
     gbConstraints.fill = GridBagConstraints.NONE;
     gbConstraints.weightx = 1;
     gbConstraints.weighty = 1;
     gbConstraints.anchor = GridBagConstraints.WEST;
     final SimpleColoredComponent coloredComponent = new SimpleColoredComponent();
-    coloredComponent.setIpad(new Insets(0,0,0,0));
+    coloredComponent.setIpad(JBUI.emptyInsets());
     coloredComponent.setMyBorder(null);
     configureLabelComponent(coloredComponent);
     panel.add(coloredComponent, gbConstraints);
@@ -102,22 +107,21 @@ public abstract class AbstractFindUsagesDialog extends DialogWrapper {
   protected JComponent createCenterPanel() {
     JPanel panel = new JPanel(new GridBagLayout());
 
-    JPanel _panel = new JPanel(new BorderLayout());
-    panel.add(_panel, new GridBagConstraints(0, 1, 1, 1, 1.0, 0.0, GridBagConstraints.CENTER, GridBagConstraints.HORIZONTAL,
-                                             new Insets(0, 0, 0, 0), 0, 0));
+    JPanel allOptionsPanel = createAllOptionsPanel();
+    if (allOptionsPanel != null) {
+      panel.add(allOptionsPanel, new GridBagConstraints(0, 0, 1, 1, 1.0, 1.0, GridBagConstraints.CENTER, GridBagConstraints.BOTH,
+                                                        JBUI.emptyInsets(), 0, 0));
+    }
 
     if (myIsShowInNewTabVisible) {
       myCbToOpenInNewTab = new JCheckBox(FindBundle.message("find.open.in.new.tab.checkbox"));
       myCbToOpenInNewTab.setSelected(myToShowInNewTab);
       myCbToOpenInNewTab.setEnabled(myIsShowInNewTabEnabled);
-      _panel.add(myCbToOpenInNewTab, BorderLayout.EAST);
+
+      panel.add(myCbToOpenInNewTab, new GridBagConstraints(0, 1, 1, 1, 1.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.HORIZONTAL,
+                                                           JBUI.insets(15, 0, 13, 0), 0, 0));
     }
 
-    JPanel allOptionsPanel = createAllOptionsPanel();
-    if (allOptionsPanel != null) {
-      panel.add(allOptionsPanel, new GridBagConstraints(0, 0, 1, 1, 1.0, 1.0, GridBagConstraints.CENTER, GridBagConstraints.BOTH,
-                                                        new Insets(0, 0, 0, 0), 0, 0));
-    }
     return panel;
   }
 
@@ -189,72 +193,78 @@ public abstract class AbstractFindUsagesDialog extends DialogWrapper {
   }
 
   protected StateRestoringCheckBox addCheckboxToPanel(@NlsContexts.Checkbox String name, boolean toSelect, JPanel panel, boolean toUpdate) {
+    StateRestoringCheckBox cb = createCheckbox(name, toSelect, toUpdate);
+    JComponent decoratedCheckbox = new ComponentPanelBuilder(cb).createPanel();
+    decoratedCheckbox.setAlignmentX(Component.LEFT_ALIGNMENT);
+    decoratedCheckbox.setBorder(JBUI.Borders.emptyBottom(8));
+
+    panel.add(decoratedCheckbox);
+    return cb;
+  }
+
+  protected StateRestoringCheckBox createCheckbox(@NlsContexts.Checkbox String name, boolean toSelect, boolean toUpdate) {
     StateRestoringCheckBox cb = new StateRestoringCheckBox(name);
     cb.setSelected(toSelect);
-    panel.add(cb);
+    cb.setAlignmentX(Component.LEFT_ALIGNMENT);
     if (toUpdate) {
       cb.addActionListener(___ -> update());
     }
+    myFindOptionsCount++;
     return cb;
   }
 
   protected JPanel createAllOptionsPanel() {
-    JPanel allOptionsPanel = new JPanel();
-
     JPanel findWhatPanel = createFindWhatPanel();
-    JPanel usagesOptionsPanel = createUsagesOptionsPanel();
-    int grids = 0;
     if (findWhatPanel != null) {
-      grids++;
-    }
-    if (usagesOptionsPanel != null) {
-      grids++;
-    }
-    if (grids != 0) {
-      allOptionsPanel.setLayout(new GridLayout(1, grids, 8, 0));
-      if (findWhatPanel != null) {
-        allOptionsPanel.add(findWhatPanel);
-      }
-      if (usagesOptionsPanel != null) {
-        allOptionsPanel.add(usagesOptionsPanel);
+      addUsagesOptions(findWhatPanel);
+
+      if (myFindOptionsCount > 2) {
+        JPanel panel = new JPanel(new BorderLayout());
+        panel.add(new Title(FindBundle.message("find.what.group"), JBUI.Borders.empty(4, 0, 8, 0), null), BorderLayout.NORTH);
+        findWhatPanel.setBorder(JBUI.Borders.emptyLeft(17));
+        panel.add(findWhatPanel, BorderLayout.CENTER);
+
+        findWhatPanel = panel;
       }
     }
 
     JComponent scopePanel = createSearchScopePanel();
     if (scopePanel != null) {
       JPanel panel = new JPanel(new BorderLayout());
-      panel.add(allOptionsPanel, BorderLayout.NORTH);
+      if (findWhatPanel != null) {
+        panel.add(findWhatPanel, BorderLayout.NORTH);
+        scopePanel.setBorder(JBUI.Borders.emptyTop(9));
+      }
       panel.add(scopePanel, BorderLayout.SOUTH);
       return panel;
     }
+    else if (findWhatPanel != null && myFindOptionsCount <= 2) {
+      findWhatPanel.setBorder(JBUI.Borders.emptyTop(9));
+    }
 
-    return allOptionsPanel;
+    return findWhatPanel;
   }
 
   @Nullable
-  protected abstract JPanel createFindWhatPanel();
+  protected JPanel createFindWhatPanel() {
+    if (mySearchForTextOccurrencesAvailable || myIsShowInNewTabVisible) {
+      JPanel findWhatPanel = new JPanel();
+      findWhatPanel.setLayout(new BoxLayout(findWhatPanel, BoxLayout.Y_AXIS));
+      return findWhatPanel;
+    }
+    return null;
+  }
 
-  protected void addUsagesOptions(JPanel optionsPanel) {
+  protected void addUsagesOptions(JPanel panel) {
     if (mySearchForTextOccurrencesAvailable) {
       myCbToSearchForTextOccurrences = addCheckboxToPanel(FindBundle.message("find.options.search.for.text.occurrences.checkbox"),
-                                                         myFindUsagesOptions.isSearchForTextOccurrences, optionsPanel, false);
-
+                                                         myFindUsagesOptions.isSearchForTextOccurrences, panel, false);
     }
 
     if (myIsShowInNewTabVisible) {
       myCbToSkipResultsWhenOneUsage = addCheckboxToPanel(FindBundle.message("find.options.skip.results.tab.with.one.usage.checkbox"),
-                                                         FindSettings.getInstance().isSkipResultsWithOneUsage(), optionsPanel, false);
-
+                                                         FindSettings.getInstance().isSkipResultsWithOneUsage(), panel, false);
     }
-  }
-
-  @Nullable
-  protected JPanel createUsagesOptionsPanel() {
-    JPanel optionsPanel = new JPanel();
-    optionsPanel.setBorder(IdeBorderFactory.createTitledBorder(FindBundle.message("find.options.group")));
-    optionsPanel.setLayout(new BoxLayout(optionsPanel, BoxLayout.Y_AXIS));
-    addUsagesOptions(optionsPanel);
-    return optionsPanel.getComponents().length == 0 ? null : optionsPanel;
   }
 
   @Nullable
@@ -265,8 +275,9 @@ public abstract class AbstractFindUsagesDialog extends DialogWrapper {
     myScopeCombo = new ScopeChooserCombo(myProject, mySearchInLibrariesAvailable, true, scope);
     Disposer.register(myDisposable, myScopeCombo);
     optionsPanel.add(myScopeCombo, BorderLayout.CENTER);
-    JComponent separator = SeparatorFactory.createSeparator(FindBundle.message("find.scope.label"), myScopeCombo.getComboBox());
-    optionsPanel.add(separator, BorderLayout.NORTH);
+
+    Title scopeTitle = new Title(FindBundle.message("find.scope.label"), JBUI.Borders.emptyBottom(4), myScopeCombo.getComboBox());
+    optionsPanel.add(scopeTitle, BorderLayout.NORTH);
     return optionsPanel;
   }
 
@@ -286,6 +297,49 @@ public abstract class AbstractFindUsagesDialog extends DialogWrapper {
   protected final void addScopeData(FeatureUsageData data, SearchScope scope) {
     if (FindUsagesStatisticsCollector.SearchableScopeField.isPredefinedScope(myProject, scope)) {
       data.addData("searchScope", scope.getDisplayName());
+    }
+  }
+
+  private static class Title extends JPanel {
+    private Title(@NlsContexts.Separator String text, @NotNull Border border, @Nullable JComponent labelFor) {
+      setLayout(new BoxLayout(this, BoxLayout.X_AXIS));
+      setBorder(border);
+      setAlignmentX(Component.LEFT_ALIGNMENT);
+
+      add(new TitleLabel(text, labelFor));
+      add(Box.createVerticalGlue());
+    }
+  }
+
+  private static class TitleLabel extends JBLabel {
+    private @NlsContexts.Separator String originalText;
+
+    private TitleLabel(@NlsContexts.Separator String text, @Nullable JComponent labelFor) {
+      originalText = text;
+      setLabelFor(labelFor);
+      updateLabelFont();
+    }
+
+    @Override
+    public void updateUI() {
+      super.updateUI();
+      updateLabelFont();
+    }
+
+    @Override
+    public @NlsContexts.Separator String getText() {
+      return originalText;
+    }
+
+    @Override
+    public void setText(@NlsContexts.Separator String text) {
+      originalText = text;
+      super.setText(text != null && text.startsWith("<html>") ? text : UIUtil.replaceMnemonicAmpersand(originalText));
+    }
+
+    private void updateLabelFont() {
+      Font labelFont = StartupUiUtil.getLabelFont();
+      setFont(RelativeFont.NORMAL.fromResource("TitledSeparator.fontSizeOffset", 0).derive(labelFont));
     }
   }
 }

@@ -335,7 +335,8 @@ SHELL_SCRIPT
       SIMPLE_COMMAND_ELEMENT
         PsiElement($)('$')
         ARITHMETIC_EXPANSION
-          PsiElement((()('((')
+          PsiElement(()('(')
+          PsiElement(()('(')
           PsiWhiteSpace(' ')
           ADD_EXPRESSION
             LITERAL_EXPRESSION
@@ -346,7 +347,8 @@ SHELL_SCRIPT
               NUMBER
                 PsiElement(int)('2')
           PsiWhiteSpace(' ')
-          PsiElement()))('))')
+          PsiElement())(')')
+          PsiElement())(')')
   PsiElement(\n)('\n')
   COMMANDS_LIST
     ASSIGNMENT_COMMAND
@@ -359,7 +361,8 @@ SHELL_SCRIPT
         PsiElement(word)('.git')
       PsiElement($)('$')
       ARITHMETIC_EXPANSION
-        PsiElement((()('((')
+        PsiElement(()('(')
+        PsiElement(()('(')
         PsiWhiteSpace(' ')
         ADD_EXPRESSION
           LITERAL_EXPRESSION
@@ -370,7 +373,8 @@ SHELL_SCRIPT
             NUMBER
               PsiElement(int)('2')
         PsiWhiteSpace(' ')
-        PsiElement()))('))')
+        PsiElement())(')')
+        PsiElement())(')')
   PsiElement(\n)('\n')
   PsiElement(\n)('\n')
   COMMANDS_LIST
@@ -394,7 +398,8 @@ SHELL_SCRIPT
         PsiElement(word)('.git')
       PsiElement($)('$')
       ARITHMETIC_EXPANSION
-        PsiElement((()('((')
+        PsiElement(()('(')
+        PsiElement(()('(')
         PsiWhiteSpace(' ')
         ADD_EXPRESSION
           LITERAL_EXPRESSION
@@ -405,7 +410,8 @@ SHELL_SCRIPT
             NUMBER
               PsiElement(int)('2')
         PsiWhiteSpace(' ')
-        PsiElement()))('))')
+        PsiElement())(')')
+        PsiElement())(')')
   PsiElement(\n)('\n')
   PsiElement(\n)('\n')
   COMMANDS_LIST

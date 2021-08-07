@@ -1,6 +1,18 @@
 <html>
 <body>
-This inspection detects call for function &quot;set&quot; which can be replaced with
-set literal.
+<p>Reports calls to the <code>set</code> function that can be replaced with
+  the <code>set</code> literal.</p>
+<p><b>Example:</b></p>
+<pre style="font-family: monospace">
+def do_mult(a, b):
+    c = a * b
+    return set([c, a, b])
+</pre>
+<p>When the quick-fix is applied, the code changes to:</p>
+<pre style="font-family: monospace">
+def do_mult(a, b):
+    c = a * b
+    return {c, a, b}
+</pre>
 </body>
 </html>

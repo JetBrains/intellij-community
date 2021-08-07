@@ -31,12 +31,17 @@ import com.intellij.util.PathUtilRt;
 import com.intellij.util.PlatformUtils;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.nio.file.Path;
 import java.util.*;
 import java.util.stream.Collectors;
 
 public class ModuleDeleteProvider  implements DeleteProvider, TitledHandler  {
+  public static ModuleDeleteProvider getInstance() {
+    return ApplicationManager.getApplication().getService(ModuleDeleteProvider.class);
+  }
+
   @Override
   public boolean canDeleteElement(@NotNull DataContext dataContext) {
     final Module[] modules = LangDataKeys.MODULE_CONTEXT_ARRAY.getData(dataContext);
@@ -80,40 +85,48 @@ public class ModuleDeleteProvider  implements DeleteProvider, TitledHandler  {
     }
 
     String names = StringUtil.join(moduleDescriptions, description -> "'" + description.getName() + "'", ", ");
-    int ret = Messages.showOkCancelDialog(getConfirmationText(names, moduleDescriptions.size()), getActionTitle(), CommonBundle.message("button.remove"), CommonBundle.getCancelButtonText(), Messages.getQuestionIcon());
+    String dialogTitle = StringUtil.trimEnd(getActionTitle(), "...");
+    int ret = Messages.showOkCancelDialog(getConfirmationText(names, moduleDescriptions.size()), dialogTitle, CommonBundle.message("button.remove"), CommonBundle.getCancelButtonText(), Messages.getQuestionIcon());
     if (ret != Messages.OK) return;
     CommandProcessor.getInstance().executeCommand(project, () -> {
       final Runnable action = () -> {
-        final ModuleManager moduleManager = ModuleManager.getInstance(project);
-        final Module[] currentModules = moduleManager.getModules();
-        final ModifiableModuleModel modifiableModuleModel = moduleManager.getModifiableModel();
-        final Map<Module, ModifiableRootModel> otherModuleRootModels = new HashMap<>();
-        Set<String> moduleNamesToDelete = moduleDescriptions.stream().map(ModuleDescription::getName).collect(Collectors.toSet());
-        for (final Module otherModule : currentModules) {
-          if (!moduleNamesToDelete.contains(otherModule.getName())) {
-            otherModuleRootModels.put(otherModule, ModuleRootManager.getInstance(otherModule).getModifiableModel());
-          }
-        }
-        removeDependenciesOnModules(moduleNamesToDelete, otherModuleRootModels.values());
-        if (modules != null) {
-          for (final Module module : modules) {
-            for (ProjectAttachProcessor processor : ProjectAttachProcessor.EP_NAME.getExtensionList()) {
-              processor.beforeDetach(module);
-            }
-            modifiableModuleModel.disposeModule(module);
-          }
-        }
-        final ModifiableRootModel[] modifiableRootModels = otherModuleRootModels.values().toArray(new ModifiableRootModel[0]);
-        ModifiableModelCommitter.multiCommit(modifiableRootModels, modifiableModuleModel);
-        if (unloadedModules != null) {
-          moduleManager.removeUnloadedModules(unloadedModules);
-        }
+        detachModules(project, moduleDescriptions, modules, unloadedModules);
       };
       ApplicationManager.getApplication().runWriteAction(action);
     }, ProjectBundle.message("module.remove.command"), null);
   }
 
-  private static @NlsContexts.DialogMessage String getConfirmationText(String names, int numberOfModules) {
+  public static void detachModules(@NotNull Project project,
+                                   @NotNull List<ModuleDescription> moduleDescriptions,
+                                   Module @Nullable [] modules,
+                                   @Nullable List<UnloadedModuleDescription> unloadedModules) {
+    final ModuleManager moduleManager = ModuleManager.getInstance(project);
+    final Module[] currentModules = moduleManager.getModules();
+    final ModifiableModuleModel modifiableModuleModel = moduleManager.getModifiableModel();
+    final Map<Module, ModifiableRootModel> otherModuleRootModels = new HashMap<>();
+    Set<String> moduleNamesToDelete = moduleDescriptions.stream().map(ModuleDescription::getName).collect(Collectors.toSet());
+    for (final Module otherModule : currentModules) {
+      if (!moduleNamesToDelete.contains(otherModule.getName())) {
+        otherModuleRootModels.put(otherModule, ModuleRootManager.getInstance(otherModule).getModifiableModel());
+      }
+    }
+    removeDependenciesOnModules(moduleNamesToDelete, otherModuleRootModels.values());
+    if (modules != null) {
+      for (final Module module : modules) {
+        for (ProjectAttachProcessor processor : ProjectAttachProcessor.EP_NAME.getExtensionList()) {
+          processor.beforeDetach(module);
+        }
+        modifiableModuleModel.disposeModule(module);
+      }
+    }
+    final ModifiableRootModel[] modifiableRootModels = otherModuleRootModels.values().toArray(new ModifiableRootModel[0]);
+    ModifiableModelCommitter.multiCommit(modifiableRootModels, modifiableModuleModel);
+    if (unloadedModules != null) {
+      moduleManager.removeUnloadedModules(unloadedModules);
+    }
+  }
+
+  protected @NlsContexts.DialogMessage String getConfirmationText(String names, int numberOfModules) {
     if (ProjectAttachProcessor.canAttachToProject()) {
       return ProjectBundle.message("project.remove.confirmation.prompt", names, numberOfModules);
     }

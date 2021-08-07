@@ -20,7 +20,8 @@ import com.intellij.execution.configurations.RunProfileState
 import com.intellij.execution.runners.ExecutionEnvironment
 import com.intellij.openapi.options.SettingsEditor
 import com.intellij.openapi.project.Project
-import com.jetbrains.python.PyNames
+import com.intellij.openapi.projectRoots.Sdk
+import com.jetbrains.python.PyBundle
 import com.jetbrains.python.PythonHelper
 
 /**
@@ -37,7 +38,7 @@ class PyTrialTestExecutionEnvironment(configuration: PyTrialTestConfiguration, e
 
 
 class PyTrialTestConfiguration(project: Project, factory: PyTrialTestFactory)
-  : PyAbstractTestConfiguration(project, factory, PyTestFrameworkService.getSdkReadableNameByFramework(PyNames.TRIAL_TEST)) {
+  : PyAbstractTestConfiguration(project, factory) {
 
 
   override fun getState(executor: Executor, environment: ExecutionEnvironment): RunProfileState? =
@@ -47,16 +48,17 @@ class PyTrialTestConfiguration(project: Project, factory: PyTrialTestFactory)
     PyTrialTestSettingsEditor(this)
 
   override fun shouldSeparateTargetPath() = false
-
-  override fun isFrameworkInstalled(): Boolean = VFSTestFrameworkListener.getInstance().isTestFrameworkInstalled(sdk, PyNames.TRIAL_TEST)
-
 }
 
 
-class PyTrialTestFactory : PyAbstractTestFactory<PyTrialTestConfiguration>() {
+class PyTrialTestFactory(type:PythonTestConfigurationType) : PyAbstractTestFactory<PyTrialTestConfiguration>(type) {
   override fun createTemplateConfiguration(project: Project): PyTrialTestConfiguration = PyTrialTestConfiguration(project, this)
 
-  override fun getName(): String = PyTestFrameworkService.getSdkReadableNameByFramework(PyNames.TRIAL_TEST)
+  override fun getName(): String = PyBundle.message("runcfg.trial.display_name")
 
   override fun getId(): String = "Twisted Trial"
+
+  override fun onlyClassesAreSupported(sdk: Sdk): Boolean = true
+
+  override val packageRequired: String = "Twisted"
 }

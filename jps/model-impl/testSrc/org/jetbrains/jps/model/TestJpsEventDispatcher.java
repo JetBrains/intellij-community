@@ -22,7 +22,7 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
-class TestJpsEventDispatcher extends JpsEventDispatcherBase implements JpsEventDispatcher {
+public class TestJpsEventDispatcher extends JpsEventDispatcherBase implements JpsEventDispatcher {
   private final List<JpsElement> myAdded = new ArrayList<>();
   private final List<JpsElement> myRemoved = new ArrayList<>();
   private final List<JpsElement> myChanged = new ArrayList<>();

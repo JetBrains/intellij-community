@@ -2,6 +2,7 @@
 package com.intellij.debugger.impl;
 
 import com.intellij.configurationStore.XmlSerializer;
+import com.intellij.debugger.DebuggerGlobalSearchScope;
 import com.intellij.debugger.JavaDebuggerBundle;
 import com.intellij.debugger.actions.DebuggerAction;
 import com.intellij.debugger.engine.*;
@@ -333,6 +334,15 @@ public class DebuggerUtilsImpl extends DebuggerUtilsEx{
                                                              ARRAY_CLASS_TEXT);
     PsiUtil.FILE_LANGUAGE_LEVEL_KEY.set(psiFile, level);
     return ((PsiJavaFile)psiFile).getClasses()[0];
+  }
+
+  @Override
+  protected @Nullable GlobalSearchScope getFallbackAllScope(@NotNull GlobalSearchScope scope, @NotNull Project project) {
+    if (scope instanceof DebuggerGlobalSearchScope) {
+      return ((DebuggerGlobalSearchScope)scope).fallbackAllScope();
+    }
+    GlobalSearchScope allScope = GlobalSearchScope.allScope(project);
+    return !allScope.equals(scope) ? allScope : null;
   }
 
   @NotNull

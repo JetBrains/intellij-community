@@ -45,7 +45,7 @@ public final class ClipboardSynchronizer implements Disposable {
   }
 
   public ClipboardSynchronizer() {
-    if (ApplicationManager.getApplication().isHeadlessEnvironment() && ApplicationManager.getApplication().isUnitTestMode()) {
+    if (ApplicationManager.getApplication().isHeadlessEnvironment()) {
       myClipboardHandler = new HeadlessClipboardHandler();
     }
     else if (Patches.SLOW_GETTING_CLIPBOARD_CONTENTS && SystemInfoRt.isMac) {

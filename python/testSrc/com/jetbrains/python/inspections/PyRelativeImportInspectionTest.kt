@@ -11,12 +11,10 @@ import org.jetbrains.annotations.NonNls
 class PyRelativeImportInspectionTest: PyInspectionTestCase() {
   override fun setUp() {
     super.setUp()
-    setLanguageLevel(LanguageLevel.getLatest())
     RegistryManager.getInstance()["python.explicit.namespace.packages"].resetToDefault()
   }
 
   override fun tearDown() {
-    setLanguageLevel(LanguageLevel.getDefault())
     RegistryManager.getInstance()["python.explicit.namespace.packages"].resetToDefault()
     super.tearDown()
   }

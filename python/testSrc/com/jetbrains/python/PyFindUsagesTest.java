@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python;
 
 import com.intellij.codeInsight.TargetElementUtil;
@@ -10,9 +10,7 @@ import com.jetbrains.python.psi.LanguageLevel;
 
 import java.util.*;
 
-/**
- * @author yole
- */
+
 public class PyFindUsagesTest extends PyTestCase {
   public void testInitUsages() {   // PY-292
     final Collection<UsageInfo> usages = myFixture.testFindUsages("findUsages/InitUsages.py");

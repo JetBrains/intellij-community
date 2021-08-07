@@ -1,10 +1,8 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.mac;
 
-import com.apple.eawt.AppEvent;
-import com.apple.eawt.Application;
-import com.apple.eawt.OpenURIHandler;
 import com.intellij.diagnostic.LoadingState;
+import com.intellij.ide.CommandLineCustomHandler;
 import com.intellij.ide.CommandLineProcessor;
 import com.intellij.ide.CommandLineProcessorResult;
 import com.intellij.ide.DataManager;
@@ -23,7 +21,6 @@ import com.intellij.openapi.keymap.impl.IdeKeyEventDispatcher;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.util.BuildNumber;
-import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.mac.foundation.Foundation;
@@ -32,10 +29,13 @@ import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.sun.jna.Callback;
 import io.netty.handler.codec.http.QueryStringDecoder;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.desktop.OpenURIEvent;
+import java.awt.desktop.OpenURIHandler;
 import java.awt.event.MouseEvent;
 import java.io.File;
 import java.nio.file.Path;
@@ -46,19 +46,18 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+@ApiStatus.Internal
 public final class MacOSApplicationProvider {
   private static final Logger LOG = Logger.getInstance(MacOSApplicationProvider.class);
 
   private MacOSApplicationProvider() { }
 
   public static void initApplication() {
-    if (SystemInfoRt.isMac) {
-      try {
-        Worker.initMacApplication();
-      }
-      catch (Throwable t) {
-        LOG.warn(t);
-      }
+    try {
+      Worker.initMacApplication();
+    }
+    catch (Throwable t) {
+      LOG.warn(t);
     }
   }
 
@@ -67,22 +66,22 @@ public final class MacOSApplicationProvider {
     @SuppressWarnings({"FieldCanBeLocal", "unused"}) private static Object UPDATE_CALLBACK_REF;
 
     static void initMacApplication() {
-      Application application = Application.getApplication();
+      Desktop desktop = Desktop.getDesktop();
 
-      application.setAboutHandler(event -> {
+      desktop.setAboutHandler(event -> {
         if (LoadingState.COMPONENTS_LOADED.isOccurred()) {
           AboutAction.perform(getProject(false));
         }
       });
 
-      application.setPreferencesHandler(event -> {
+      desktop.setPreferencesHandler(event -> {
         if (LoadingState.COMPONENTS_LOADED.isOccurred()) {
           Project project = Objects.requireNonNull(getProject(true));
           submit("Preferences", () -> ShowSettingsAction.perform(project));
         }
       });
 
-      application.setQuitHandler((event, response) -> {
+      desktop.setQuitHandler((event, response) -> {
         if (LoadingState.COMPONENTS_LOADED.isOccurred()) {
           submit("Quit", () -> ApplicationManager.getApplication().exit());
           response.cancelQuit();
@@ -92,11 +91,9 @@ public final class MacOSApplicationProvider {
         }
       });
 
-      application.setOpenFileHandler(event -> {
+      desktop.setOpenFileHandler(event -> {
         List<File> files = event.getFiles();
-        if (files.isEmpty()) {
-          return;
-        }
+        if (files.isEmpty()) return;
 
         List<Path> list = ContainerUtil.map(files, file -> file.toPath());
         if (LoadingState.COMPONENTS_LOADED.isOccurred()) {
@@ -104,7 +101,7 @@ public final class MacOSApplicationProvider {
           submit("OpenFile", () -> ProjectUtil.tryOpenFiles(project, list, "MacMenu"));
         }
         else {
-          IdeStarter.openFilesOnLoading(list);
+          IdeStarter.Companion.openFilesOnLoading(list);
         }
       });
 
@@ -202,18 +199,29 @@ public final class MacOSApplicationProvider {
         return;
       }
 
-      Application.getApplication().setOpenURIHandler(new OpenURIHandler() {
+      Desktop.getDesktop().setOpenURIHandler(new OpenURIHandler() {
         @Override
-        public void openURI(AppEvent.OpenURIEvent event) {
+        public void openURI(OpenURIEvent event) {
           Map<String, List<String>> parameters = new QueryStringDecoder(event.getURI()).parameters();
+
+          String uri = event.getURI().toString();
+          LOG.debug("Open URI: " + uri);
+
           String file = ContainerUtil.getFirstItem(parameters.get("file"));
-          if (file == null) {
+
+          if (!LoadingState.COMPONENTS_LOADED.isOccurred()) {
+            if (file == null) {
+              CommandLineCustomHandler.StartupService.initialArguments = List.of(uri);
+            } else {
+              // handle paths like /file/foo\qwe
+              Path path = Paths.get(FileUtilRt.toSystemDependentName(file)).normalize();
+              IdeStarter.Companion.openFilesOnLoading(Collections.singletonList(path));
+            }
             return;
           }
 
-          if (!LoadingState.COMPONENTS_LOADED.isOccurred()) {
-            // handle paths like /file/foo\qwe
-            IdeStarter.openFilesOnLoading(Collections.singletonList(Paths.get(FileUtilRt.toSystemDependentName(file)).normalize()));
+          if (file == null) {
+            CommandLineCustomHandler.Companion.process(List.of(uri));
             return;
           }
 

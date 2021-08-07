@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.settings;
 
 import com.intellij.internal.statistic.beans.MetricEvent;
@@ -30,7 +30,6 @@ public class DebuggerSettingsStatisticsCollector extends ApplicationUsagesCollec
     DebuggerSettings settings = DebuggerSettings.getInstance();
     DebuggerSettings sDefault = new DebuggerSettings();
 
-    addBoolIfDiffers(set, settings, sDefault, s -> s.FORCE_CLASSIC_VM, "forceClassicVm");
     addBoolIfDiffers(set, settings, sDefault, s -> s.DISABLE_JIT, "disableJit");
     addBoolIfDiffers(set, settings, sDefault, s -> s.SHOW_ALTERNATIVE_SOURCE, "showAlternativeSource");
     addBoolIfDiffers(set, settings, sDefault, s -> s.HOTSWAP_IN_BACKGROUND, "hotswapInBackround");

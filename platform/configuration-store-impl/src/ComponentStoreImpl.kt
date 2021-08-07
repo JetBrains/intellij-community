@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.configurationStore
 
 import com.intellij.configurationStore.statistic.eventLog.FeatureUsageSettingsEvents
@@ -20,14 +20,15 @@ import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.JDOMUtil
+import com.intellij.openapi.util.*
 import com.intellij.openapi.util.registry.Registry
-import com.intellij.openapi.util.use
 import com.intellij.openapi.vfs.newvfs.impl.VfsRootAccess
 import com.intellij.util.ArrayUtilRt
 import com.intellij.util.SmartList
 import com.intellij.util.SystemProperties
 import com.intellij.util.ThreeState
 import com.intellij.util.concurrency.annotations.RequiresEdt
+import com.intellij.util.containers.toArray
 import com.intellij.util.messages.MessageBus
 import com.intellij.util.xmlb.XmlSerializerUtil
 import kotlinx.coroutines.runBlocking
@@ -508,7 +509,7 @@ abstract class ComponentStoreImpl : IComponentStore {
   protected open fun <T> getStorageSpecs(component: PersistentStateComponent<T>,
                                          stateSpec: State,
                                          operation: StateStorageOperation): List<Storage> {
-    val storages = stateSpec.storages
+    val storages = stateSpec.storages.modifyPerOsStorages()
     if (storages.size == 1 || component is StateStorageChooserEx) {
       return storages.toList()
     }
@@ -521,6 +522,20 @@ abstract class ComponentStoreImpl : IComponentStore {
       throw AssertionError("No storage specified")
     }
     return storages.sortByDeprecated()
+  }
+
+  private fun Array<out Storage>.modifyPerOsStorages(): Array<Storage> {
+    val result = mutableListOf<Storage>()
+    for (storage in this) {
+      if (storage.roamingType == RoamingType.PER_OS) {
+        result.add(StorageImpl.copyWithNewValue(storage, getOsDependentStorage(storage.value)))
+        result.add(StorageImpl.deprecatedCopy(storage))
+      }
+      else {
+        result.add(storage)
+      }
+    }
+    return result.toArray(arrayOf())
   }
 
   final override fun isReloadPossible(componentNames: Set<String>): Boolean = !componentNames.any { isNotReloadable(it) }

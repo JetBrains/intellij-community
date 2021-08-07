@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.daemon.impl.analysis;
 
 import com.intellij.codeInsight.daemon.JavaErrorBundle;
@@ -34,8 +34,6 @@ import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.psiutils.VariableAccessUtils;
-import it.unimi.dsi.fastutil.objects.Object2ObjectOpenCustomHashMap;
-import it.unimi.dsi.fastutil.objects.ObjectOpenCustomHashSet;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -361,8 +359,9 @@ public final class GenericsHighlightUtil {
       final PsiClass superClass = result.getElement();
       if (superClass == null || visited.contains(superClass)) continue;
       PsiSubstitutor superTypeSubstitutor = result.getSubstitutor();
+      PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(aClass.getProject());
       //JLS 4.8 The superclasses (respectively, superinterfaces) of a raw type are the erasures of the superclasses (superinterfaces) of any of the parameterizations of the generic type.
-      superTypeSubstitutor = PsiUtil.isRawSubstitutor(aClass, derivedSubstitutor) ? JavaPsiFacade.getElementFactory(aClass.getProject()).createRawSubstitutor(superClass)
+      superTypeSubstitutor = PsiUtil.isRawSubstitutor(aClass, derivedSubstitutor) ? elementFactory.createRawSubstitutor(superClass)
                                                                                   : MethodSignatureUtil.combineSubstitutors(superTypeSubstitutor, derivedSubstitutor);
 
       final PsiSubstitutor inheritedSubstitutor = inheritedClasses.get(superClass);
@@ -373,10 +372,18 @@ public final class GenericsHighlightUtil {
           PsiType type2 = superTypeSubstitutor.substitute(typeParameter);
 
           if (!Comparing.equal(type1, type2)) {
-            String description = JavaErrorBundle.message("generics.cannot.be.inherited.with.different.type.arguments",
-                                                         HighlightUtil.formatClass(superClass),
-                                                         JavaHighlightUtil.formatType(type1),
-                                                         JavaHighlightUtil.formatType(type2));
+            String description;
+            if (type1 != null && type2 != null) {
+              description = JavaErrorBundle.message("generics.cannot.be.inherited.with.different.type.arguments",
+                                                    HighlightUtil.formatClass(superClass),
+                                                    JavaHighlightUtil.formatType(type1),
+                                                    JavaHighlightUtil.formatType(type2));
+            }
+            else {
+              description = JavaErrorBundle.message("generics.cannot.be.inherited.as.raw.and.generic",
+                                                    HighlightUtil.formatClass(superClass), 
+                                                    JavaHighlightUtil.formatType(type1 != null ? type1 : type2));
+            }
             return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(textRange).descriptionAndTooltip(description).create();
           }
         }
@@ -397,9 +404,9 @@ public final class GenericsHighlightUtil {
     final Collection<HierarchicalMethodSignature> signaturesWithSupers = aClass.getVisibleSignatures();
     PsiManager manager = aClass.getManager();
     Map<MethodSignature, MethodSignatureBackedByPsiMethod> sameErasureMethods =
-      new Object2ObjectOpenCustomHashMap<>(MethodSignatureUtil.METHOD_PARAMETERS_ERASURE_EQUALITY);
+      MethodSignatureUtil.createErasedMethodSignatureMap();
 
-    final Set<MethodSignature> foundProblems = new ObjectOpenCustomHashSet<>(MethodSignatureUtil.METHOD_PARAMETERS_ERASURE_EQUALITY);
+    final Set<MethodSignature> foundProblems = MethodSignatureUtil.createErasedMethodSignatureSet();
     for (HierarchicalMethodSignature signature : signaturesWithSupers) {
       HighlightInfo info = checkSameErasureNotSubSignatureInner(signature, manager, aClass, sameErasureMethods);
       if (info != null && foundProblems.add(signature)) {
@@ -443,7 +450,7 @@ public final class GenericsHighlightUtil {
    */
   @Nullable
   public static @NlsContexts.DetailedDescription String getUnrelatedDefaultsMessage(@NotNull PsiClass aClass,
-                                                                                    @NotNull Collection<PsiMethod> overrideEquivalentSuperMethods,
+                                                                                    @NotNull Collection<? extends PsiMethod> overrideEquivalentSuperMethods,
                                                                                     boolean skipMethodInSelf) {
     if (overrideEquivalentSuperMethods.size() <= 1) return null;
     final boolean isInterface = aClass.isInterface();
@@ -543,7 +550,7 @@ public final class GenericsHighlightUtil {
   }
 
   private static boolean hasNotOverriddenAbstract(@NotNull List<? extends PsiClass> defaultContainingClasses, @NotNull PsiClass abstractMethodContainingClass) {
-    return defaultContainingClasses.stream().noneMatch(containingClass -> belongToOneHierarchy(containingClass, abstractMethodContainingClass));
+    return !ContainerUtil.exists(defaultContainingClasses, containingClass -> belongToOneHierarchy(containingClass, abstractMethodContainingClass));
   }
 
   private static @Nls String hasUnrelatedDefaults(@NotNull List<? extends PsiClass> defaults) {
@@ -568,7 +575,7 @@ public final class GenericsHighlightUtil {
     final PsiClass superClass = psiClass.getSuperClass();
     if (superClass != null && superClass.hasTypeParameters()) {
       final Collection<HierarchicalMethodSignature> visibleSignatures = superClass.getVisibleSignatures();
-      final Map<MethodSignature, PsiMethod> overrideEquivalent = new Object2ObjectOpenCustomHashMap<>(MethodSignatureUtil.METHOD_PARAMETERS_ERASURE_EQUALITY);
+      final Map<MethodSignature, PsiMethod> overrideEquivalent = MethodSignatureUtil.createErasedMethodSignatureMap();
       for (HierarchicalMethodSignature hms : visibleSignatures) {
         final PsiMethod method = hms.getMethod();
         if (method.isConstructor()) continue;

@@ -43,7 +43,6 @@ import git4idea.branch.GitBranchUtil;
 import git4idea.changes.GitChangeUtils;
 import git4idea.changes.GitCommittedChangeList;
 import git4idea.commands.*;
-import git4idea.config.GitConfigUtil;
 import git4idea.i18n.GitBundle;
 import git4idea.repo.GitBranchTrackInfo;
 import git4idea.repo.GitRemote;
@@ -349,19 +348,16 @@ public final class GitUtil {
   }
 
   /**
-   * Return a git root for the file path (the parent directory with ".git" subdirectory)
+   * Return a git root for the file path (the parent directory with ".git" subdirectory).
+   * Uses nio to access the file system.
    *
-   * @param filePath a file path
    * @return git root for the file or null if the file is not under git
-   *
-   * @deprecated because uses the java.io.File.
-   * @use GitRepositoryManager#getRepositoryForFile().
+   * @see GitRepositoryManager#getRepositoryForFile(FilePath)
    */
-  @Deprecated
   @Nullable
-  public static VirtualFile getGitRootOrNull(@NotNull final FilePath filePath) {
+  public static VirtualFile findGitRootFor(@NotNull Path path) {
     try {
-      Path root = Paths.get(filePath.getPath());
+      Path root = path;
       while (root != null) {
         if (isGitRoot(root)) {
           return LocalFileSystem.getInstance().findFileByNioFile(root);
@@ -377,32 +373,39 @@ public final class GitUtil {
   }
 
   public static boolean isGitRoot(@NotNull File folder) {
-    return isGitRoot(folder.toPath());
-  }
-
-  /**
-   * Return a git root for the file (the parent directory with ".git" subdirectory)
-   *
-   * @param file the file to check
-   * @return git root for the file or null if the file is not not under Git
-   *
-   * @deprecated because uses the java.io.File.
-   * @use GitRepositoryManager#getRepositoryForFile().
-   */
-  @Deprecated
-  @Nullable
-  public static VirtualFile gitRootOrNull(final VirtualFile file) {
-    return getGitRootOrNull(VcsUtil.getFilePath(file.getPath()));
+    try {
+      return isGitRoot(folder.toPath());
+    }
+    catch (InvalidPathException e) {
+      LOG.warn(e.getMessage());
+      return false;
+    }
   }
 
   /**
    * Check if the virtual file under git
-   *
-   * @param vFile a virtual file
-   * @return true if the file is under git
    */
-  public static boolean isUnderGit(final VirtualFile vFile) {
-    return gitRootOrNull(vFile) != null;
+  public static boolean isUnderGit(@NotNull VirtualFile vFile) {
+    try {
+      return findGitRootFor(vFile.toNioPath()) != null;
+    }
+    catch (InvalidPathException e) {
+      LOG.warn(e.getMessage());
+      return false;
+    }
+  }
+
+  /**
+   * Check if the file path is under git
+   */
+  public static boolean isUnderGit(@NotNull FilePath path) {
+    try {
+      return findGitRootFor(Paths.get(path.getPath())) != null;
+    }
+    catch (InvalidPathException e) {
+      LOG.warn(e.getMessage());
+      return false;
+    }
   }
 
 
@@ -419,16 +422,6 @@ public final class GitUtil {
       committerName = GitBundle.message("commit.author.with.committer", authorName, committerName);
     }
     return committerName;
-  }
-
-  /**
-   * Check if the file path is under git
-   *
-   * @param path the path
-   * @return true if the file path is under git
-   */
-  public static boolean isUnderGit(final FilePath path) {
-    return getGitRootOrNull(path) != null;
   }
 
   @NotNull
@@ -518,7 +511,7 @@ public final class GitUtil {
   @NotNull
   public static String unescapePath(@NotNull @NonNls String path) throws VcsException {
     try {
-      return VcsFileUtil.unescapeGitPath(path, GitConfigUtil.getFileNameEncoding());
+      return VcsFileUtil.unescapeGitPath(path);
     }
     catch (IllegalStateException e) {
       throw new VcsException(e);

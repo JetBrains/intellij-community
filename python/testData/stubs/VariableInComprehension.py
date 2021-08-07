@@ -1,1 +1,1 @@
-print [xyzzy for xyzzy in range(1, 10)]
+print([xyzzy for xyzzy in range(1, 10)])

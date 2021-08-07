@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.notification.impl;
 
 import com.intellij.codeInsight.hint.TooltipController;
@@ -15,6 +15,7 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ProjectManagerListener;
@@ -41,6 +42,7 @@ import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.FontUtil;
 import com.intellij.util.IconUtil;
+import com.intellij.util.ModalityUiUtil;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.ui.AbstractLayoutManager;
 import com.intellij.util.ui.JBInsets;
@@ -50,6 +52,7 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.accessibility.AccessibleContext;
 import javax.swing.*;
 import javax.swing.event.HyperlinkEvent;
 import javax.swing.event.HyperlinkListener;
@@ -69,10 +72,10 @@ import java.util.function.Function;
 
 public final class NotificationsManagerImpl extends NotificationsManager {
   public static final Color DEFAULT_TEXT_COLOR = new JBColor(Gray._0, Gray._191);
-  public static final Color FILL_COLOR =
-    JBColor.namedColor("Notification.background", new JBColor(Gray._242, new Color(78, 80, 82)));
-  public static final Color BORDER_COLOR =
-    JBColor.namedColor("Notification.borderColor", new JBColor(Gray._178.withAlpha(205), new Color(86, 90, 92, 205)));
+  public static final Color FILL_COLOR = JBColor.namedColor("Notification.background", new JBColor(Gray._242, new Color(0x4E5052)));
+  public static final Color BORDER_COLOR = JBColor.namedColor("Notification.borderColor", new JBColor(0xCDB2B2B2, 0xCD565A5C));
+
+  private static final Logger LOG = Logger.getInstance(NotificationsManagerImpl.class);
 
   private @Nullable List<Notification> myEarlyNotifications = new ArrayList<>();
 
@@ -95,7 +98,7 @@ public final class NotificationsManagerImpl extends NotificationsManager {
 
   public void expireAll() {
     EventLog.expireNotifications();
- }
+  }
 
   @Override
   public <T extends Notification> T @NotNull [] getNotificationsOfType(@NotNull Class<T> klass, @Nullable Project project) {
@@ -125,11 +128,13 @@ public final class NotificationsManagerImpl extends NotificationsManager {
 
     if (configuration.SHOW_BALLOONS) {
       if (project == null) {
-        GuiUtils.invokeLaterIfNeeded(() -> showNotification(notification, null), ModalityState.any(), ApplicationManager.getApplication().getDisposed());
+        ModalityUiUtil.invokeLaterIfNeeded(ModalityState.any(), ApplicationManager.getApplication().getDisposed(),
+                                           () -> showNotification(notification, null)
+        );
       }
       else if (!project.isDisposed()) {
         StartupManager.getInstance(project).runAfterOpened(() -> {
-          GuiUtils.invokeLaterIfNeeded(() -> showNotification(notification, project), ModalityState.any(), project.getDisposed());
+          ModalityUiUtil.invokeLaterIfNeeded(ModalityState.any(), project.getDisposed(), () -> showNotification(notification, project));
         });
       }
     }
@@ -141,12 +146,15 @@ public final class NotificationsManagerImpl extends NotificationsManager {
     if (myEarlyNotifications != null) {
       List<Notification> copy = myEarlyNotifications;
       myEarlyNotifications = null;
+      if (LOG.isDebugEnabled()) LOG.debug("dispatching early notifications: " + copy);
       copy.forEach(early -> showNotification(early, null));
     }
   }
 
   @RequiresEdt
   private void showNotification(Notification notification, @Nullable Project project) {
+    if (LOG.isDebugEnabled()) LOG.debug("incoming: " + notification + ", project=" + project);
+
     if (myEarlyNotifications != null) {
       myEarlyNotifications.add(notification);
       return;
@@ -164,12 +172,14 @@ public final class NotificationsManagerImpl extends NotificationsManager {
 
     switch (type) {
       case NONE:
+        if (LOG.isDebugEnabled()) LOG.debug("not shown (type=NONE): " + notification);
         return;
 
       case STICKY_BALLOON:
       case BALLOON:
       default:
         Balloon balloon = notifyByBalloon(notification, type, project);
+        if (balloon == null && LOG.isDebugEnabled()) LOG.debug("not shown (no balloon): " + notification);
         if (project != null && !project.isDefault() && (!settings.isShouldLog() || type == NotificationDisplayType.STICKY_BALLOON)) {
           if (balloon == null) {
             notification.expire();
@@ -258,7 +268,9 @@ public final class NotificationsManagerImpl extends NotificationsManager {
     }
   }
 
-  private static @Nullable Balloon notifyByBalloon(Notification notification, NotificationDisplayType displayType, @Nullable Project project) {
+  private static @Nullable Balloon notifyByBalloon(Notification notification,
+                                                   NotificationDisplayType displayType,
+                                                   @Nullable Project project) {
     if (isDummyEnvironment()) {
       return null;
     }
@@ -306,13 +318,15 @@ public final class NotificationsManagerImpl extends NotificationsManager {
       layoutData.project = project;
     }
 
-    ((BalloonImpl)balloon).startFadeoutTimer(0);
-    if (displayType == NotificationDisplayType.BALLOON || ProjectUtil.getOpenProjects().length == 0) {
-      frameActivateBalloonListener(balloon, () -> {
-        if (!balloon.isDisposed()) {
-          ((BalloonImpl)balloon).startSmartFadeoutTimer(10000);
-        }
-      });
+    if (balloon instanceof BalloonImpl) {
+      ((BalloonImpl)balloon).startFadeoutTimer(0);
+      if (displayType == NotificationDisplayType.BALLOON || ProjectUtil.getOpenProjects().length == 0) {
+        frameActivateBalloonListener(balloon, () -> {
+          if (!balloon.isDisposed()) {
+            ((BalloonImpl)balloon).startSmartFadeoutTimer(10000);
+          }
+        });
+      }
     }
 
     NotificationCollector.getInstance().logBalloonShown(project, displayType, notification, layoutData != null && layoutData.isExpandable);
@@ -327,13 +341,14 @@ public final class NotificationsManagerImpl extends NotificationsManager {
     else {
       Disposable listenerDisposable = Disposer.newDisposable();
       Disposer.register(parentDisposable, listenerDisposable);
-      ApplicationManager.getApplication().getMessageBus().connect(parentDisposable).subscribe(FrameStateListener.TOPIC, new FrameStateListener() {
-        @Override
-        public void onFrameActivated() {
-          Disposer.dispose(listenerDisposable);
-          callback.run();
-        }
-      });
+      ApplicationManager.getApplication().getMessageBus().connect(parentDisposable)
+        .subscribe(FrameStateListener.TOPIC, new FrameStateListener() {
+          @Override
+          public void onFrameActivated() {
+            Disposer.dispose(listenerDisposable);
+            callback.run();
+          }
+        });
     }
   }
 
@@ -380,7 +395,7 @@ public final class NotificationsManagerImpl extends NotificationsManager {
       layoutData.mergeData = null;
     }
     layoutData.id = notification.id;
-    layoutData.displayId = notification.displayId;
+    layoutData.displayId = notification.getDisplayId();
     layoutDataRef.set(layoutData);
 
     if (layoutData.textColor == null) {
@@ -432,6 +447,7 @@ public final class NotificationsManagerImpl extends NotificationsManager {
 
     String textContent = NotificationsUtil.buildHtml(notification, style, true, null, fontStyle);
     text.setText(textContent);
+    setTextAccessibleName(text, textContent);
     text.setEditable(false);
     text.setOpaque(false);
 
@@ -498,7 +514,8 @@ public final class NotificationsManagerImpl extends NotificationsManager {
         pane.setPreferredSize(text.getPreferredSize());
       }
       else {
-        pane.setPreferredSize(new Dimension(text.getPreferredSize().width, (int)Math.min(layoutData.fullHeight, windowComponent.getHeight() * 0.75)));
+        pane.setPreferredSize(
+          new Dimension(text.getPreferredSize().width, (int)Math.min(layoutData.fullHeight, windowComponent.getHeight() * 0.75)));
       }
     }
     else if (layoutData.twoLineHeight < layoutData.fullHeight) {
@@ -558,7 +575,9 @@ public final class NotificationsManagerImpl extends NotificationsManager {
     if (notification.hasTitle()) {
       String titleStyle = StringUtil.defaultIfEmpty(fontStyle, "") + "white-space:nowrap;";
       JLabel title = new JLabel();
-      title.setText(NotificationsUtil.buildHtml(notification, titleStyle, false, null, null));
+      String titleContent = NotificationsUtil.buildHtml(notification, titleStyle, false, null, null);
+      title.setText(titleContent);
+      setTextAccessibleName(title, titleContent);
       title.setOpaque(false);
       title.setForeground(layoutData.textColor);
       centerPanel.addTitle(title);
@@ -650,17 +669,21 @@ public final class NotificationsManagerImpl extends NotificationsManager {
       builder.setFadeoutTime(layoutData.fadeoutTime);
     }
 
-    BalloonImpl balloon = (BalloonImpl)builder.createBalloon();
-    balloon.getContent().addMouseListener(new MouseAdapter() { });
-    balloon.setAnimationEnabled(false);
-    notification.setBalloon(balloon);
+    Balloon balloon = builder.createBalloon();
 
-    balloon.setShadowBorderProvider(new NotificationBalloonShadowBorderProvider(layoutData.fillColor, layoutData.borderColor));
+    if (balloon instanceof BalloonImpl) {
+      var balloonImpl = (BalloonImpl)balloon;
+      balloonImpl.getContent().addMouseListener(new MouseAdapter() {
+      });
+      balloon.setAnimationEnabled(false);
+      balloonImpl.setShadowBorderProvider(new NotificationBalloonShadowBorderProvider(layoutData.fillColor, layoutData.borderColor));
 
-    if (!layoutData.welcomeScreen) {
-      balloon.setActionProvider(
-        new NotificationBalloonActionProvider(balloon, centerPanel.getTitle(), layoutData, notification.getGroupId(), notification.id, notification.displayId));
+      if (!layoutData.welcomeScreen) {
+        balloonImpl.setActionProvider(new NotificationBalloonActionProvider(
+          balloonImpl, centerPanel.getTitle(), layoutData, notification.getGroupId(), notification.id, notification.getDisplayId()));
+      }
     }
+    notification.setBalloon(balloon);
 
     ApplicationManager.getApplication().getMessageBus().connect(balloon).subscribe(LafManagerListener.TOPIC, source -> {
       HTMLEditorKit newKit = new UIUtil.JBWordWrapHtmlEditorKit();
@@ -673,6 +696,11 @@ public final class NotificationsManagerImpl extends NotificationsManager {
 
     Disposer.register(parentDisposable, balloon);
     return balloon;
+  }
+
+  private static void setTextAccessibleName(@NotNull JComponent component, @NotNull String htmlContent) {
+    component.putClientProperty(AccessibleContext.ACCESSIBLE_NAME_PROPERTY,
+                                StringUtil.unescapeXmlEntities(StringUtil.stripHtml(htmlContent, " ")));
   }
 
   public static @NotNull JScrollPane createBalloonScrollPane(@NotNull Component content, boolean configure) {
@@ -691,13 +719,16 @@ public final class NotificationsManagerImpl extends NotificationsManager {
     pane.getVerticalScrollBar().setBackground(fillColor);
   }
 
-  private static void createActionPanel(Notification notification, NotificationCenterPanel centerPanel, int gap, HoverAdapter hoverAdapter) {
-    NotificationActionPanel actionPanel = new NotificationActionPanel(gap, notification.getCollapseActionsDirection());
+  private static void createActionPanel(Notification notification,
+                                        NotificationCenterPanel centerPanel,
+                                        int gap,
+                                        HoverAdapter hoverAdapter) {
+    NotificationActionPanel actionPanel = new NotificationActionPanel(gap, notification.getCollapseDirection());
     centerPanel.addActionPanel(actionPanel);
 
     List<AnAction> actions = notification.getActions();
 
-    if (actions.size() > 2 && notification.getCollapseActionsDirection() == Notification.CollapseActionsDirection.KEEP_RIGHTMOST) {
+    if (actions.size() > 1 && notification.getCollapseDirection() == Notification.CollapseActionsDirection.KEEP_RIGHTMOST) {
       addDropDownAction(notification, actionPanel);
     }
 
@@ -712,7 +743,7 @@ public final class NotificationsManagerImpl extends NotificationsManager {
         }, action));
     }
 
-    if (actions.size() > 2 && notification.getCollapseActionsDirection() == Notification.CollapseActionsDirection.KEEP_LEFTMOST) {
+    if (actions.size() > 1 && notification.getCollapseDirection() == Notification.CollapseActionsDirection.KEEP_LEFTMOST) {
       addDropDownAction(notification, actionPanel);
     }
 
@@ -982,14 +1013,6 @@ public final class NotificationsManagerImpl extends NotificationsManager {
         }
       });
     }
-
-    @Override
-    protected @NotNull Rectangle getTextBounds() {
-      Rectangle bounds = super.getTextBounds();
-      bounds.x -= getIcon().getIconWidth();
-      bounds.width += 8;
-      return bounds;
-    }
   }
 
   private static void showPopup(@NotNull LinkLabel<?> link, @NotNull DefaultActionGroup group) {
@@ -1030,7 +1053,8 @@ public final class NotificationsManagerImpl extends NotificationsManager {
         }
       }
     }
-    catch (BadLocationException ignored) { }
+    catch (BadLocationException ignored) {
+    }
     return null;
   }
 
@@ -1045,7 +1069,8 @@ public final class NotificationsManagerImpl extends NotificationsManager {
         }
       }
     }
-    catch (BadLocationException ignored) { }
+    catch (BadLocationException ignored) {
+    }
     return 0;
   }
 
@@ -1055,7 +1080,7 @@ public final class NotificationsManagerImpl extends NotificationsManager {
 
     private NotificationCenterPanel(JEditorPane text, BalloonLayoutData layoutData) {
       super(new CenteredLayoutWithActions(text, layoutData));
-      myLayout = (CenteredLayoutWithActions) getLayout();
+      myLayout = (CenteredLayoutWithActions)getLayout();
       myLayoutData = layoutData;
     }
 
@@ -1099,7 +1124,8 @@ public final class NotificationsManagerImpl extends NotificationsManager {
 
         width = myLayoutData.configuration.beforeGearSpace;
         x -= width;
-        ((Graphics2D)g).setPaint(new GradientPaint(x, y, ColorUtil.withAlpha(myLayoutData.fillColor, 0.2), x + width, y, myLayoutData.fillColor));
+        ((Graphics2D)g)
+          .setPaint(new GradientPaint(x, y, ColorUtil.withAlpha(myLayoutData.fillColor, 0.2), x + width, y, myLayoutData.fillColor));
         g.fillRect(x, y, width, height);
       }
     }
@@ -1249,7 +1275,7 @@ public final class NotificationsManagerImpl extends NotificationsManager {
         int expandWidth = myExpandAction == null || myLayoutData.showMinSize ? 0 : myExpandAction.getPreferredSize().width;
         width -= myLayoutData.configuration.actionGap + expandWidth;
 
-        if (myActionPanel.actionLinks.size() > 2) {
+        if (myActionPanel.actionLinks.size() > 1) {
           myActionPanel.groupedActionsLink.setVisible(false);
           for (LinkLabel<AnAction> link : myActionPanel.actionLinks) {
             link.setVisible(true);
@@ -1267,7 +1293,9 @@ public final class NotificationsManagerImpl extends NotificationsManager {
             myActionPanel.actionLinks.get(collapseIndex).setVisible(false);
             collapseIndex += collapseDelta;
             myActionPanel.doLayout();
-            while (myActionPanel.getPreferredSize().width > width && collapseIndex >= 0 && collapseIndex < myActionPanel.actionLinks.size()) {
+            while (myActionPanel.getPreferredSize().width > width &&
+                   collapseIndex >= 0 &&
+                   collapseIndex < myActionPanel.actionLinks.size()) {
               myActionPanel.actionLinks.get(collapseIndex).setVisible(false);
               collapseIndex += collapseDelta;
               myActionPanel.doLayout();

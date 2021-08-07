@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide
 
 import com.intellij.application.options.editor.CheckboxDescriptor
@@ -11,11 +11,13 @@ import com.intellij.openapi.options.BoundCompositeSearchableConfigurable
 import com.intellij.openapi.options.SearchableConfigurable
 import com.intellij.openapi.options.ex.ConfigurableWrapper
 import com.intellij.openapi.ui.DialogPanel
-import com.intellij.openapi.ui.panel.ComponentPanelBuilder
+import com.intellij.ui.HyperlinkLabel
 import com.intellij.ui.IdeUICustomization
 import com.intellij.ui.layout.*
 import com.intellij.util.PlatformUtils
+import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
+import javax.swing.JComponent
 
 // @formatter:off
 private val model = GeneralSettings.getInstance()
@@ -66,11 +68,11 @@ class GeneralSettingsConfigurable: BoundCompositeSearchableConfigurable<Searchab
           label(IdeBundle.message("group.settings.process.tab.close"))
           buttonGroup(model::getProcessCloseConfirmation, model::setProcessCloseConfirmation) {
             radioButton(IdeBundle.message("radio.process.close.terminate"), GeneralSettings.ProcessCloseConfirmation.TERMINATE)
-            radioButton(IdeBundle.message("radio.process.close.disconnect"), GeneralSettings.ProcessCloseConfirmation.DISCONNECT)
-            radioButton(IdeBundle.message("radio.process.close.ask"), GeneralSettings.ProcessCloseConfirmation.ASK)
+            radioButton(IdeBundle.message("radio.process.close.disconnect"), GeneralSettings.ProcessCloseConfirmation.DISCONNECT).withLargeLeftGap()
+            radioButton(IdeBundle.message("radio.process.close.ask"), GeneralSettings.ProcessCloseConfirmation.ASK).withLargeLeftGap()
           }
         }
-      }
+      }.largeGapAfter()
 
       titledRow(IdeUICustomization.getInstance().projectMessage("tab.title.project")) {
         row {
@@ -81,8 +83,11 @@ class GeneralSettingsConfigurable: BoundCompositeSearchableConfigurable<Searchab
             label(IdeUICustomization.getInstance().projectMessage("label.open.project.in"))
             buttonGroup(model::getConfirmOpenNewProject, model::setConfirmOpenNewProject) {
               radioButton(IdeUICustomization.getInstance().projectMessage("radio.button.open.project.in.the.new.window"), GeneralSettings.OPEN_PROJECT_NEW_WINDOW)
-              radioButton(IdeUICustomization.getInstance().projectMessage("radio.button.open.project.in.the.same.window"), GeneralSettings.OPEN_PROJECT_SAME_WINDOW)
-              radioButton(IdeUICustomization.getInstance().projectMessage("radio.button.confirm.window.to.open.project.in"), GeneralSettings.OPEN_PROJECT_ASK)
+              radioButton(IdeUICustomization.getInstance().projectMessage("radio.button.open.project.in.the.same.window"), GeneralSettings.OPEN_PROJECT_SAME_WINDOW).withLargeLeftGap()
+              radioButton(IdeUICustomization.getInstance().projectMessage("radio.button.confirm.window.to.open.project.in"), GeneralSettings.OPEN_PROJECT_ASK).withLargeLeftGap()
+              if (PlatformUtils.isPyCharmDs()) {
+                radioButton(IdeUICustomization.getInstance().projectMessage("radio.button.attach"), GeneralSettings.OPEN_PROJECT_SAME_WINDOW_ATTACH).withLargeLeftGap()
+              }
             }
           }
         }
@@ -92,14 +97,15 @@ class GeneralSettingsConfigurable: BoundCompositeSearchableConfigurable<Searchab
             checkBox(mySkipWelcomeScreen)
           }
         }
-        row {
-          cell {
+        nestedPanel {
+          row {
             label(IdeUICustomization.getInstance().projectMessage("settings.general.default.directory"))
             textFieldWithBrowseButton(model::getDefaultProjectDirectory, model::setDefaultProjectDirectory,
                                       fileChooserDescriptor = FileChooserDescriptorFactory.createSingleFolderDescriptor()
                                         .also { it.putUserData(PathChooserDialog.PREFER_LAST_OVER_EXPLICIT, false) })
               .growPolicy(GrowPolicy.MEDIUM_TEXT)
-              .comment(IdeBundle.message("settings.general.directory.preselected"), 80)
+              .comment(IdeBundle.message("settings.general.directory.preselected"), 80, true)
+            label("").constraints(CCFlags.pushX)
           }
         }
       }
@@ -122,16 +128,21 @@ class GeneralSettingsConfigurable: BoundCompositeSearchableConfigurable<Searchab
         row {
           checkBox(myChkSyncOnFrameActivation)
         }
-        createNoteOrCommentRow(ComponentPanelBuilder.createCommentComponent(IdeBundle.message("label.autosave.comment"), true, -1, true)).apply {
-          link(IdeBundle.message("label.autosave.comment.how.it.works"), UIUtil.ComponentStyle.SMALL) {
-            HelpManager.getInstance().invokeHelp("autosave")
-          }
-        }
+        createNoteOrCommentRow(createAutosaveComment())
       }
 
       for (configurable in configurables) {
         appendDslConfigurableRow(configurable)
       }
+    }
+  }
+
+  private fun createAutosaveComment(): JComponent {
+    return HyperlinkLabel().apply {
+      setTextWithHyperlink(IdeBundle.message("label.autosave.comment"))
+      foreground = JBUI.CurrentTheme.ContextHelp.FOREGROUND
+      UIUtil.applyStyle(UIUtil.ComponentStyle.SMALL, this)
+      addHyperlinkListener { HelpManager.getInstance().invokeHelp("autosave") }
     }
   }
 

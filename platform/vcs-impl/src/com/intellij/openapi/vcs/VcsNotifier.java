@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs;
 
 import com.intellij.notification.*;
@@ -6,26 +6,22 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsContexts.NotificationContent;
 import com.intellij.openapi.util.NlsContexts.NotificationTitle;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import java.util.Collection;
 
-import static com.intellij.util.ui.UIUtil.*;
+import static com.intellij.util.ui.UIUtil.BR;
+import static com.intellij.util.ui.UIUtil.LINE_SEPARATOR;
 
 public class VcsNotifier {
-  public static final NotificationGroup NOTIFICATION_GROUP_ID = NotificationGroup.toolWindowGroup(
-    "Vcs Messages", ChangesViewContentManager.TOOLWINDOW_ID);
-  public static final NotificationGroup IMPORTANT_ERROR_NOTIFICATION = new NotificationGroup(
-    "Vcs Important Messages", NotificationDisplayType.STICKY_BALLOON, true);
-  public static final NotificationGroup STANDARD_NOTIFICATION = new NotificationGroup(
-    "Vcs Notifications", NotificationDisplayType.BALLOON, true);
-  public static final NotificationGroup SILENT_NOTIFICATION = new NotificationGroup(
-    "Vcs Silent Notifications", NotificationDisplayType.NONE, true);
+  public static final NotificationGroup NOTIFICATION_GROUP_ID =
+    NotificationGroupManager.getInstance().getNotificationGroup("Vcs Messages");
+  public static final NotificationGroup IMPORTANT_ERROR_NOTIFICATION =
+    NotificationGroupManager.getInstance().getNotificationGroup("Vcs Important Messages");
+  public static final NotificationGroup STANDARD_NOTIFICATION =
+    NotificationGroupManager.getInstance().getNotificationGroup("Vcs Notifications");
+  public static final NotificationGroup SILENT_NOTIFICATION =
+    NotificationGroupManager.getInstance().getNotificationGroup("Vcs Silent Notifications");
 
   private final @NotNull Project myProject;
 
@@ -65,12 +61,11 @@ public class VcsNotifier {
                                   @NotificationTitle @NotNull String title,
                                   @NotificationContent @NotNull String message,
                                   boolean showDetailsAction) {
-    if (showDetailsAction && ProjectLevelVcsManager.getInstance(myProject).isConsoleVisible()) {
-      return notifyError(null, title, message, createShowDetailsAction());
+    Notification notification = createNotification(IMPORTANT_ERROR_NOTIFICATION, displayId, title, message, NotificationType.ERROR, null);
+    if (showDetailsAction) {
+      addShowDetailsAction(myProject, notification);
     }
-    else {
-      return notifyError(displayId, title, message);
-    }
+    return notify(notification);
   }
 
   /**
@@ -217,16 +212,6 @@ public class VcsNotifier {
                                           @NotificationTitle @NotNull String title,
                                           @NotificationContent @NotNull String message) {
     return notify(IMPORTANT_ERROR_NOTIFICATION, displayId, title, message, NotificationType.INFORMATION);
-  }
-
-  /**
-   * @deprecated use {@link #notifyInfo(String, String, String)} instead
-   */
-  @ApiStatus.ScheduledForRemoval(inVersion = "2020.4")
-  @Deprecated
-  @NotNull
-  public Notification notifyInfo(@NotificationContent @NotNull String message) {
-    return notifyInfo(null, "", message);
   }
 
   /**
@@ -399,7 +384,10 @@ public class VcsNotifier {
       title = "";
     }
     // if both title and message were empty, then it is a problem in the calling code => Notifications engine assertion will notify.
-    return notificationGroup.createNotification(title, message, type, listener, StringUtil.nullize(displayId));
+    Notification notification = notificationGroup.createNotification(title, message, type);
+    if (displayId != null && !displayId.isEmpty()) notification.setDisplayId(displayId);
+    if (listener != null) notification.setListener(listener);
+    return notification;
   }
 
   @NotNull
@@ -427,29 +415,21 @@ public class VcsNotifier {
     return notify(notification);
   }
 
-  @NotNull
-  private NotificationAction createShowDetailsAction() {
-    return NotificationAction.createSimple(
-      VcsBundle.message("notification.showDetailsInConsole"),
-      () -> {
-        ProjectLevelVcsManager vcsManager = ProjectLevelVcsManager.getInstance(myProject);
+  public static void addShowDetailsAction(@NotNull Project project, @NotNull Notification notification) {
+    if (ProjectLevelVcsManager.getInstance(project).isConsoleVisible()) {
+      notification.addAction(NotificationAction.createSimple(VcsBundle.message("notification.showDetailsInConsole"), () -> {
+        ProjectLevelVcsManager vcsManager = ProjectLevelVcsManager.getInstance(project);
         vcsManager.showConsole(vcsManager::scrollConsoleToTheEnd);
-      }
-    );
+      }));
+    }
   }
 
   @Nls
   @NotNull
   private static String buildNotificationMessage(@Nls String message,
                                                  @Nullable Collection<? extends Exception> errors) {
-    @Nls StringBuilder desc = new StringBuilder(message.replace(LINE_SEPARATOR, BR));
-
-    String messages = stringifyErrors(errors);
-    if (!messages.isEmpty()) {
-      desc.append(StringUtil.join(messages, HR, BR));
-    }
-
-    return desc.toString();
+    return message.replace(LINE_SEPARATOR, BR) +
+           stringifyErrors(errors);
   }
 
   /**
@@ -457,11 +437,11 @@ public class VcsNotifier {
    * Line separator is also replaced by &lt;br/&gt;
    */
   @NotNull
-  private static String stringifyErrors(@Nullable Collection<? extends Exception> errors) {
+  private static @Nls String stringifyErrors(@Nullable Collection<? extends Exception> errors) {
     if (errors == null || errors.isEmpty()) {
       return "";
     }
-    StringBuilder content = new StringBuilder();
+    @Nls StringBuilder content = new StringBuilder();
     for (Exception e : errors) {
       if (e instanceof VcsException) {
         VcsException vcsException = (VcsException)e;

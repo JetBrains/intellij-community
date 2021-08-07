@@ -7,8 +7,8 @@ import com.intellij.codeInsight.lookup.LookupEx;
 import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.codeInsight.lookup.impl.LookupImpl;
 import com.intellij.ide.IdeEventQueue;
-import com.intellij.internal.statistic.eventLog.FeatureUsageData;
-import com.intellij.internal.statistic.service.fus.collectors.FUCounterUsageLogger;
+import com.intellij.internal.statistic.eventLog.events.EventFields;
+import com.intellij.internal.statistic.eventLog.events.EventPair;
 import com.intellij.lang.ContextAwareActionHandler;
 import com.intellij.lang.Language;
 import com.intellij.openapi.actionSystem.*;
@@ -51,6 +51,7 @@ public abstract class BaseRefactoringAction extends AnAction implements UpdateIn
                                                         @NotNull String place) {
     if (ActionPlaces.isPopupPlace(place)) {
       final RefactoringActionHandler handler = getHandler(context);
+      if (handler == null) return false;
       if (handler instanceof ContextAwareActionHandler) {
         ContextAwareActionHandler contextAwareActionHandler = (ContextAwareActionHandler)handler;
         if (!contextAwareActionHandler.isAvailableForQuickList(editor, file, context)) {
@@ -142,14 +143,14 @@ public abstract class BaseRefactoringAction extends AnAction implements UpdateIn
     final Language language = file != null
                               ? file.getLanguage()
                               : (elements.length > 0 ? elements[0].getLanguage() : null);
-    FeatureUsageData data = new FeatureUsageData()
-      .addData("handler", handler.getClass().getName())
-      .addLanguage(language);
+    ArrayList<EventPair<?>> data = new ArrayList<>();
+    data.add(RefactoringUsageCollector.HANDLER.with(handler.getClass()));
+    data.add(EventFields.Language.with(language));
     if (elements.length > 0) {
-      data.addData("element", elements[0].getClass().getName());
+      data.add(RefactoringUsageCollector.ELEMENT.with(elements[0].getClass()));
     }
 
-    FUCounterUsageLogger.getInstance().logEvent(project, "refactoring", "handler.invoked", data);
+    RefactoringUsageCollector.HANDLER_INVOKED.log(project, data);
 
     if (editor != null) {
       if (file == null) return;

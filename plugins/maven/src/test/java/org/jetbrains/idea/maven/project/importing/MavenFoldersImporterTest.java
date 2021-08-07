@@ -17,24 +17,27 @@ package org.jetbrains.idea.maven.project.importing;
 
 import com.intellij.ProjectTopics;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProviderImpl;
+import com.intellij.openapi.externalSystem.service.project.ProjectDataManager;
+import com.intellij.openapi.module.LanguageLevelUtil;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vcs.changes.VcsIgnoreManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.idea.maven.MavenImportingTestCase;
+import org.jetbrains.idea.maven.MavenMultiVersionImportingTestCase;
 import org.jetbrains.idea.maven.importing.MavenFoldersImporter;
 import org.jetbrains.idea.maven.importing.MavenRootModelAdapter;
 import org.jetbrains.idea.maven.importing.MavenRootModelAdapterLegacyImpl;
 import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes;
 import org.jetbrains.jps.model.java.JavaSourceRootProperties;
 import org.jetbrains.jps.model.java.JavaSourceRootType;
+import org.junit.Test;
 
 import java.io.File;
 
-public class MavenFoldersImporterTest extends MavenImportingTestCase {
+public class MavenFoldersImporterTest extends MavenMultiVersionImportingTestCase {
+  @Test
   public void testUpdatingExternallyCreatedFolders() {
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
@@ -52,6 +55,7 @@ public class MavenFoldersImporterTest extends MavenImportingTestCase {
     assertNull(myProjectRoot.findChild("target"));
   }
 
+  @Test 
   public void testIgnoreTargetFolder() {
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
@@ -69,6 +73,7 @@ public class MavenFoldersImporterTest extends MavenImportingTestCase {
     }
   }
 
+  @Test 
   public void testUpdatingFoldersForAllTheProjects() {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
@@ -109,6 +114,7 @@ public class MavenFoldersImporterTest extends MavenImportingTestCase {
     assertGeneratedSources("m2", "target/generated-sources/yyy");
   }
 
+  @Test 
   public void testDoesNotTouchSourceFolders() {
     createStdProjectFolders();
     importProject("<groupId>test</groupId>" +
@@ -128,6 +134,7 @@ public class MavenFoldersImporterTest extends MavenImportingTestCase {
     assertTestResources("project", "src/test/resources");
   }
 
+  @Test 
   public void testDoesNotExcludeRegisteredSources() {
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
@@ -140,7 +147,7 @@ public class MavenFoldersImporterTest extends MavenImportingTestCase {
     ApplicationManager.getApplication().runWriteAction(() -> {
       MavenRootModelAdapter adapter = new MavenRootModelAdapter(new MavenRootModelAdapterLegacyImpl(myProjectsTree.findProject(myProjectPom),
                                                                                                     getModule("project"),
-                                                                                                    new IdeModifiableModelsProviderImpl(myProject)));
+                                                                                                    ProjectDataManager.getInstance().createModifiableModelsProvider(myProject)));
       adapter.addSourceFolder(sourceDir.getPath(), JavaSourceRootType.SOURCE);
       adapter.getRootModel().commit();
     });
@@ -152,6 +159,7 @@ public class MavenFoldersImporterTest extends MavenImportingTestCase {
     assertExcludes("project", "target");
   }
 
+  @Test 
   public void testDoesNothingWithNonMavenModules() {
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
@@ -161,6 +169,7 @@ public class MavenFoldersImporterTest extends MavenImportingTestCase {
     updateProjectFolders(); // shouldn't throw exceptions
   }
 
+  @Test 
   public void testDoNotUpdateOutputFoldersWhenUpdatingExcludedFolders() {
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
@@ -169,7 +178,7 @@ public class MavenFoldersImporterTest extends MavenImportingTestCase {
     ApplicationManager.getApplication().runWriteAction(() -> {
       MavenRootModelAdapter adapter = new MavenRootModelAdapter(new MavenRootModelAdapterLegacyImpl(myProjectsTree.findProject(myProjectPom),
                                                                 getModule("project"),
-                                                                new IdeModifiableModelsProviderImpl(myProject)));
+                                                                ProjectDataManager.getInstance().createModifiableModelsProvider(myProject)));
       adapter.useModuleOutput(new File(myProjectRoot.getPath(), "target/my-classes").getPath(),
                               new File(myProjectRoot.getPath(), "target/my-test-classes").getPath());
       adapter.getRootModel().commit();
@@ -184,6 +193,7 @@ public class MavenFoldersImporterTest extends MavenImportingTestCase {
     assertTrue(compiler.getCompilerOutputUrlForTests(), compiler.getCompilerOutputUrlForTests().endsWith("my-test-classes"));
   }
 
+  @Test 
   public void testDoNotCommitIfFoldersWasNotChanged() {
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
@@ -202,6 +212,7 @@ public class MavenFoldersImporterTest extends MavenImportingTestCase {
     assertEquals(0, count[0]);
   }
 
+  @Test 
   public void testCommitOnlyOnceForAllModules() {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
@@ -242,6 +253,7 @@ public class MavenFoldersImporterTest extends MavenImportingTestCase {
     assertEquals(1, count[0]);
   }
 
+  @Test 
   public void testMarkSourcesAsGeneratedOnReImport() {
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
@@ -264,6 +276,7 @@ public class MavenFoldersImporterTest extends MavenImportingTestCase {
     assertGeneratedSources("project", "target/generated-sources/xxx");
   }
 
+  @Test 
   public void testCustomPomFileNameDefaultContentRoots() throws Exception {
     createProjectSubFile("m1/customName.xml", createPomXml(
                   "<artifactId>m1</artifactId>" +
@@ -295,6 +308,7 @@ public class MavenFoldersImporterTest extends MavenImportingTestCase {
     assertContentRoots("m1", getProjectPath() + "/m1");
   }
 
+  @Test 
   public void testCustomPomFileNameCustomContentRoots() throws Exception {
     createProjectSubFile("m1/pom.xml", createPomXml(
                   "<artifactId>m1-pom</artifactId>" +
@@ -341,6 +355,7 @@ public class MavenFoldersImporterTest extends MavenImportingTestCase {
     assertContentRoots("m1-custom", getProjectPath() + "/m1/sources", getProjectPath() + "/m1/tests");
   }
 
+  @Test 
   public void testContentRootOutsideOfModuleDir() throws Exception {
     createProjectSubFile("m1/pom.xml", createPomXml(
       "<artifactId>m1-pom</artifactId>" +
@@ -389,6 +404,7 @@ public class MavenFoldersImporterTest extends MavenImportingTestCase {
     assertContentRoots("m1-custom", getProjectPath() + "/custom-sources");
   }
 
+  @Test 
   public void testOverrideLanguageLevelFromParentPom() throws Exception {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
@@ -436,9 +452,10 @@ public class MavenFoldersImporterTest extends MavenImportingTestCase {
 
     importProject();
 
-    assertEquals(LanguageLevel.JDK_11, LanguageLevelModuleExtensionImpl.getInstance(getModule("m1-pom")).getLanguageLevel());
+    assertEquals(LanguageLevel.JDK_11, LanguageLevelUtil.getCustomLanguageLevel(getModule("m1-pom")));
   }
 
+  @Test 
   public void testReleaseHasPriorityInParentPom() throws Exception {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
@@ -486,7 +503,7 @@ public class MavenFoldersImporterTest extends MavenImportingTestCase {
 
     importProject();
 
-    assertEquals(LanguageLevel.JDK_1_9, LanguageLevelModuleExtensionImpl.getInstance(getModule("m1-pom")).getLanguageLevel());
+    assertEquals(LanguageLevel.JDK_1_9, LanguageLevelUtil.getCustomLanguageLevel(getModule("m1-pom")));
   }
 
   private void updateProjectFolders() {

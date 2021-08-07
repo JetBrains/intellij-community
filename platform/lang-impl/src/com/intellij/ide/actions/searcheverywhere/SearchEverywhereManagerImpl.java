@@ -1,10 +1,9 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.actions.searcheverywhere;
 
 import com.intellij.codeWithMe.ClientId;
 import com.intellij.ide.actions.BigPopupUI;
 import com.intellij.ide.actions.OpenInRightSplitAction;
-import com.intellij.ide.actions.searcheverywhere.statistics.SearchEverywhereUsageTriggerCollector;
 import com.intellij.ide.lightEdit.LightEdit;
 import com.intellij.ide.lightEdit.LightEditCompatible;
 import com.intellij.openapi.actionSystem.*;
@@ -32,7 +31,6 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.MouseEvent;
 import java.util.List;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -44,7 +42,7 @@ import static com.intellij.ide.actions.searcheverywhere.statistics.SearchEverywh
 
 public final class SearchEverywhereManagerImpl implements SearchEverywhereManager {
   public static final String ALL_CONTRIBUTORS_GROUP_ID = "SearchEverywhereContributor.All";
-  private static final String LOCATION_SETTINGS_KEY = "search.everywhere.popup";
+  public static final String LOCATION_SETTINGS_KEY = "search.everywhere.popup";
 
   public static final DataKey<Boolean> IS_SELECT_SEARCH_TEXT = DataKey.create("search.everywhere.is.select.search.text");
 
@@ -106,7 +104,7 @@ public final class SearchEverywhereManagerImpl implements SearchEverywhereManage
       .setCancelKeyEnabled(false)
       .setCancelCallback(() -> {
         saveSearchText();
-        SearchEverywhereUsageTriggerCollector.trigger(myProject, DIALOG_CLOSED);
+        DIALOG_CLOSED.log(myProject);
         return true;
       })
       .addUserData("SIMPLE_WINDOW")
@@ -170,7 +168,7 @@ public final class SearchEverywhereManagerImpl implements SearchEverywhereManage
     Map<SearchEverywhereContributor<?>, SearchEverywhereTabDescriptor> res = new HashMap<>();
     res.put(new TopHitSEContributor(project, contextComponent, s -> mySearchEverywhereUI.getSearchField().setText(s)),
             SearchEverywhereTabDescriptor.IDE);
-    res.put(new RecentFilesSEContributor(initEvent), SearchEverywhereTabDescriptor.PROJECT);
+    res.put(PSIPresentationBgRendererWrapper.wrapIfNecessary(new RecentFilesSEContributor(initEvent)), SearchEverywhereTabDescriptor.PROJECT);
     res.put(new RunConfigurationsSEContributor(project, contextComponent, () -> mySearchEverywhereUI.getSearchField().getText()),
             SearchEverywhereTabDescriptor.IDE);
 
@@ -186,7 +184,7 @@ public final class SearchEverywhereManagerImpl implements SearchEverywhereManage
   private void calcPositionAndShow(@NotNull AnActionEvent initEvent,
                                    Project project,
                                    JBPopup balloon) {
-    if(initEvent.getPlace().equals(ActionPlaces.NEW_TOOLBAR)){
+    if(initEvent.getPlace().equals(ActionPlaces.RUN_TOOLBAR)){
       var component = (Component)initEvent.getInputEvent().getSource();
       balloon.setLocation(component.getLocationOnScreen());
       ((AbstractPopup)balloon).show(component, 0, 0, true);
@@ -376,6 +374,7 @@ public final class SearchEverywhereManagerImpl implements SearchEverywhereManage
     addShortcut(res, "FileSearchEverywhereContributor", "GotoFile");
     addShortcut(res, "SymbolSearchEverywhereContributor", "GotoSymbol");
     addShortcut(res, "ActionSearchEverywhereContributor", "GotoAction");
+    addShortcut(res, "DbSETablesContributor", "GotoDatabaseObject");
 
     return res;
   }

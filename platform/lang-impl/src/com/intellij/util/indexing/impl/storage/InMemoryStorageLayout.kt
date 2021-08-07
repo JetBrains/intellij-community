@@ -19,15 +19,17 @@ class InMemoryStorageLayoutProvider : FileBasedIndexLayoutProvider {
 }
 
 class InMemoryStorageLayout<K, V>(private val myExtension: FileBasedIndexExtension<K, V>) : VfsAwareIndexStorageLayout<K, V> {
-  override fun createOrClearIndexStorage(): IndexStorage<K, V> {
+  override fun openIndexStorage(): IndexStorage<K, V> {
     return InMemoryIndexStorage(myExtension.keyDescriptor)
   }
 
-  override fun createOrClearForwardIndex(): ForwardIndex {
+  override fun openForwardIndex(): ForwardIndex {
     return InMemoryForwardIndex()
   }
 
   override fun getForwardIndexAccessor(): ForwardIndexAccessor<K, V> {
     return MapForwardIndexAccessor(InputMapExternalizer(myExtension))
   }
+
+  override fun clearIndexData() = Unit
 }

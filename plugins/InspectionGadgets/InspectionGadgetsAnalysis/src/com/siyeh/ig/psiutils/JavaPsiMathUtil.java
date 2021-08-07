@@ -1,9 +1,12 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.siyeh.ig.psiutils;
 
+import com.intellij.codeInspection.dataFlow.DfaPsiUtil;
+import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet;
 import com.intellij.codeInspection.dataFlow.value.RelationType;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ArrayUtil;
 import one.util.streamex.StreamEx;
@@ -84,7 +87,7 @@ public final class JavaPsiMathUtil {
   public static String simplifyComparison(PsiExpression comparison, @NotNull CommentTracker ct) {
     if (!(comparison instanceof PsiBinaryExpression)) return null;
     PsiBinaryExpression binOp = (PsiBinaryExpression)comparison;
-    RelationType relationType = RelationType.fromElementType(binOp.getOperationTokenType());
+    RelationType relationType = DfaPsiUtil.getRelationByToken(binOp.getOperationTokenType());
     if (relationType == null) return null;
     String operator = binOp.getOperationSign().getText();
     PsiExpression left = PsiUtil.skipParenthesizedExprDown(binOp.getLOperand());
@@ -230,5 +233,36 @@ public final class JavaPsiMathUtil {
       }
     }
     return null;
+  }
+
+  /**
+   * Returns long range set for expression compared to a constant  or null if comparison is unsupported.
+   * Supports int and long constants. Supports nonConstantOperand of any type.
+   * E.g. if comparison expression is nonConstantOperand < 1, the {Long.MIN_VALUE..0} will be returned.
+   * Note: returned LongRangeSet may contain numbers outside of int range, even if nonConstantOperand has int type
+   *
+   * @param nonConstantOperand expression which is compared to int or long constant.
+   * @return long range set
+   */
+  @Nullable
+  public static LongRangeSet getRangeFromComparison(@NotNull PsiExpression nonConstantOperand) {
+    final PsiBinaryExpression binOp =
+      tryCast(PsiUtil.skipParenthesizedExprUp(nonConstantOperand.getParent()), PsiBinaryExpression.class);
+    if (binOp == null) return null;
+    final PsiJavaToken sign = binOp.getOperationSign();
+    final IElementType tokenType = sign.getTokenType();
+    RelationType relation = DfaPsiUtil.getRelationByToken(tokenType);
+    if (relation == null) return null;
+    final PsiExpression constOperand =
+      PsiTreeUtil.isAncestor(binOp.getLOperand(), nonConstantOperand, false) ? binOp.getROperand() : binOp.getLOperand();
+    if (constOperand == null) return null;
+    final Object constantExpression = ExpressionUtils.computeConstantExpression(constOperand);
+    if (!(constantExpression instanceof Integer) && !(constantExpression instanceof Long)) return null;
+    long value = ((Number)constantExpression).longValue();
+    boolean yodaCondition = constOperand == binOp.getLOperand();
+    if (yodaCondition) {
+      relation = relation.getFlipped();
+    }
+    return LongRangeSet.point(value).fromRelation(relation);
   }
 }

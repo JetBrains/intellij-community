@@ -8,13 +8,13 @@ import com.intellij.openapi.progress.*;
 import com.intellij.openapi.progress.util.PingProgress;
 import com.intellij.openapi.progress.util.ProgressIndicatorBase;
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
-import com.intellij.openapi.progress.util.ProgressWindow;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.ui.SystemNotifications;
-import com.intellij.util.concurrency.PlainEdtExecutor;
+import com.intellij.util.concurrency.EdtExecutorService;
+import com.intellij.util.concurrency.SameThreadExecutor;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -24,7 +24,9 @@ import javax.swing.*;
 import java.awt.*;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Executor;
 import java.util.concurrent.Future;
+import java.util.function.Supplier;
 
 public class ProgressManagerImpl extends CoreProgressManager implements Disposable {
   private static final Key<Boolean> SAFE_PROGRESS_INDICATOR = Key.create("SAFE_PROGRESS_INDICATOR");
@@ -84,9 +86,9 @@ public class ProgressManagerImpl extends CoreProgressManager implements Disposab
   }
 
   @Override
-  public boolean runProcessWithProgressSynchronously(@NotNull Task task, @Nullable JComponent parentComponent) {
+  public boolean runProcessWithProgressSynchronously(@NotNull Task task) {
     long start = System.currentTimeMillis();
-    boolean result = super.runProcessWithProgressSynchronously(task, parentComponent);
+    boolean result = super.runProcessWithProgressSynchronously(task);
     if (result) {
       long end = System.currentTimeMillis();
       Task.NotificationInfo notificationInfo = task.notifyFinished();
@@ -106,16 +108,19 @@ public class ProgressManagerImpl extends CoreProgressManager implements Disposab
   }
 
   @Override
-  protected @NotNull TaskRunnable createTaskRunnable(@NotNull Task task,
-                                                     @NotNull ProgressIndicator indicator,
-                                                     @Nullable Runnable continuation) {
+  protected final void startTask(@NotNull Task task,
+                                 @NotNull ProgressIndicator indicator,
+                                 @Nullable Runnable continuation) {
+    ProgressManagerListener listener = getProjectManagerListener();
     try {
-      return super.createTaskRunnable(task, indicator, continuation);
+      listener.beforeTaskStart(task, indicator);
     }
     finally {
-      if (indicator instanceof ProgressWindow) {
-        ApplicationManager.getApplication().getMessageBus().syncPublisher(ProgressManagerListener.TOPIC)
-          .onTaskRunnableCreated(task, indicator, continuation);
+      try {
+        super.startTask(task, indicator, continuation);
+      }
+      finally {
+        listener.afterTaskStart(task, indicator);
       }
     }
   }
@@ -123,16 +128,17 @@ public class ProgressManagerImpl extends CoreProgressManager implements Disposab
   @Override
   @NotNull
   public Future<?> runProcessWithProgressAsynchronously(@NotNull Task.Backgroundable task) {
-    CompletableFuture<@NotNull ProgressIndicator> progressIndicator = CompletableFuture.supplyAsync(
-      () -> {
-        if (ApplicationManager.getApplication().isHeadlessEnvironment()) {
-          return shouldKeepTasksAsynchronousInHeadlessMode()
-                 ? new ProgressIndicatorBase()
-                 : new EmptyProgressIndicator();
-        }
-        Project project = task.getProject();
-        return project != null && project.isDisposed() ? new EmptyProgressIndicator() : new BackgroundableProcessIndicator(task);
-      }, PlainEdtExecutor.INSTANCE);
+    Supplier<@NotNull ProgressIndicator> supplier = () -> {
+      if (ApplicationManager.getApplication().isHeadlessEnvironment()) {
+        return shouldKeepTasksAsynchronousInHeadlessMode()
+               ? new ProgressIndicatorBase()
+               : new EmptyProgressIndicator();
+      }
+      Project project = task.getProject();
+      return project != null && project.isDisposed() ? new EmptyProgressIndicator() : new BackgroundableProcessIndicator(task);
+    };
+    Executor executor = ApplicationManager.getApplication().isDispatchThread() ? SameThreadExecutor.INSTANCE : EdtExecutorService.getInstance();
+    CompletableFuture<@NotNull ProgressIndicator> progressIndicator = CompletableFuture.supplyAsync(supplier, executor);
     return runProcessWithProgressAsync(task, progressIndicator, null, null, null);
   }
 
@@ -148,13 +154,20 @@ public class ProgressManagerImpl extends CoreProgressManager implements Disposab
   }
 
   @Override
-  protected void finishTask(@NotNull Task task, boolean canceled, @Nullable Throwable error) {
+  protected final void finishTask(@NotNull Task task,
+                                  boolean canceled,
+                                  @Nullable Throwable error) {
+    ProgressManagerListener listener = getProjectManagerListener();
     try {
-      super.finishTask(task, canceled, error);
+      listener.beforeTaskFinished(task);
     }
     finally {
-      ApplicationManager.getApplication().getMessageBus().syncPublisher(ProgressManagerListener.TOPIC)
-        .onTaskFinished(task, canceled, error);
+      try {
+        super.finishTask(task, canceled, error);
+      }
+      finally {
+        listener.afterTaskFinished(task);
+      }
     }
   }
 
@@ -204,5 +217,11 @@ public class ProgressManagerImpl extends CoreProgressManager implements Disposab
   @Override
   protected void prioritizingFinished() {
     removeCheckCanceledHook(mySleepHook);
+  }
+
+  private static @NotNull ProgressManagerListener getProjectManagerListener() {
+    return ApplicationManager.getApplication()
+      .getMessageBus()
+      .syncPublisher(ProgressManagerListener.TOPIC);
   }
 }

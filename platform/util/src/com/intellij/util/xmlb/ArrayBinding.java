@@ -1,8 +1,9 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.xmlb;
 
 import com.intellij.serialization.MutableAccessor;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.XmlElement;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -23,7 +24,17 @@ final class ArrayBinding extends AbstractCollectionBinding  {
   }
 
   @Override
-  protected @NotNull Object doDeserializeList(@Nullable Object context, @NotNull List<? extends Element> elements) {
+  protected @NotNull Object doDeserializeList(@Nullable Object context, @NotNull List<Element> elements) {
+    int size = elements.size();
+    Object[] result = ArrayUtil.newArray(itemType, size);
+    for (int i = 0; i < size; i++) {
+      result[i] = deserializeItem(elements.get(i), context);
+    }
+    return result;
+  }
+
+  @Override
+  protected @NotNull Object doDeserializeList2(@Nullable Object context, @NotNull List<XmlElement> elements) {
     int size = elements.size();
     Object[] result = ArrayUtil.newArray(itemType, size);
     for (int i = 0; i < size; i++) {

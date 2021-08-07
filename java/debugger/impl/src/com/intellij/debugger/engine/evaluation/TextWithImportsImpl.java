@@ -126,8 +126,9 @@ public final class TextWithImportsImpl implements TextWithImports{
   @Nullable
   public static XExpression toXExpression(@Nullable TextWithImports text) {
     if (text != null && !text.getText().isEmpty()) {
+      FileType fileType = text.getFileType();
       return new XExpressionImpl(text.getText(),
-                                 LanguageUtil.getFileTypeLanguage(text.getFileType()),
+                                 fileType == null ? null :LanguageUtil.getFileTypeLanguage(fileType),
                                  StringUtil.nullize(text.getImports()),
                                  getMode(text.getKind()));
     }

@@ -22,10 +22,13 @@
     <orderEntry type="library" name="lz4-java" level="project" />
     <orderEntry type="library" name="commons-compress" level="project" />
     <orderEntry type="library" name="fastutil-min" level="project" />
+    <orderEntry type="library" name="kotlin-stdlib-jdk8" level="project" />
     <orderEntry type="module" module-name="intellij.platform.util.strings" exported="" />
     <orderEntry type="module" module-name="intellij.platform.util.collections" exported="" />
     <orderEntry type="module" module-name="intellij.platform.util.text.matching" exported="" />
     <orderEntry type="module" module-name="intellij.platform.util.diagnostic" exported="" />
+    <orderEntry type="library" name="aalto-xml" level="project" />
+    <orderEntry type="module" module-name="intellij.platform.util.xmlDom" />
   </component>
   <component name="copyright">
     <Base>

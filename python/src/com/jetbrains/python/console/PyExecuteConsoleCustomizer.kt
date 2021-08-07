@@ -53,8 +53,18 @@ interface PyExecuteConsoleCustomizer {
    * Return a run configuration created from the context
    */
   fun getContextConfig(dataContext: DataContext): PythonRunConfiguration? = null
+
+  /**
+   * Return true if console is starting and schedule command execution
+   */
+  fun isConsoleStarting(virtualFile: VirtualFile?, commandText: String?): Boolean = false
+
+  /**
+   * Notify that runner started execution, but console process will be started later
+   */
+  fun notifyRunnerStart(virtualFile: VirtualFile, runner: PydevConsoleRunner) {}
 }
 
 enum class DescriptorType {
-  NEW, EXISTING
+  NEW, EXISTING, STARTING, NON_INTERACTIVE
 }

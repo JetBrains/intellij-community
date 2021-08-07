@@ -15,12 +15,12 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.compiler.CompilerMessage
 import com.intellij.openapi.compiler.CompilerMessageCategory
-import com.intellij.openapi.module.ModifiableModuleModel
-import com.intellij.openapi.module.Module
-import com.intellij.openapi.module.ModuleManager
-import com.intellij.openapi.module.StdModuleTypes
+import com.intellij.openapi.module.*
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.roots.*
+import com.intellij.openapi.roots.ContentEntry
+import com.intellij.openapi.roots.ModifiableRootModel
+import com.intellij.openapi.roots.ModuleRootManager
+import com.intellij.openapi.roots.ModuleRootModificationUtil
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.ThrowableComputable
 import com.intellij.openapi.util.io.FileUtil
@@ -28,11 +28,7 @@ import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.pom.java.LanguageLevel
 import com.intellij.psi.PsiFile
-import com.intellij.testFramework.CompilerTester
-import com.intellij.testFramework.EdtTestUtil
-import com.intellij.testFramework.IdeaTestUtil
-import com.intellij.testFramework.PlatformTestUtil
-import com.intellij.testFramework.PsiTestUtil
+import com.intellij.testFramework.*
 import com.intellij.testFramework.builders.JavaModuleFixtureBuilder
 import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase
 import com.intellij.util.SystemProperties
@@ -44,6 +40,8 @@ import org.jetbrains.plugins.groovy.GroovyProjectDescriptors
 import org.jetbrains.plugins.groovy.runner.GroovyScriptRunConfiguration
 import org.jetbrains.plugins.groovy.runner.GroovyScriptRunConfigurationType
 import org.jetbrains.plugins.groovy.util.Slow
+
+import java.nio.file.Path
 /**
  * @author aalmiray
  * @author peter
@@ -91,6 +89,7 @@ abstract class GroovyCompilerTestCase extends JavaCodeInsightFixtureTestCase imp
 
   @Override
   protected void tearDown() throws Exception {
+    Path buildDir = BuildManager.getInstance().getBuildSystemDirectory(myFixture.getProject());
     try {
       EdtTestUtil.runInEdtAndWait {
         try {
@@ -106,7 +105,7 @@ abstract class GroovyCompilerTestCase extends JavaCodeInsightFixtureTestCase imp
       }
     }
     finally {
-      PathKt.delete(BuildManager.getInstance().getBuildSystemDirectory())
+      PathKt.delete(buildDir)
     }
   }
 
@@ -143,7 +142,7 @@ abstract class GroovyCompilerTestCase extends JavaCodeInsightFixtureTestCase imp
         } else {
           PsiTestUtil.addContentRoot(dep, depRoot)
         }
-        IdeaTestUtil.setModuleLanguageLevel(dep, LanguageLevelModuleExtensionImpl.getInstance(module).getLanguageLevel())
+        IdeaTestUtil.setModuleLanguageLevel(dep, LanguageLevelUtil.getCustomLanguageLevel(module))
 
         return dep
     } as ThrowableComputable<Module,RuntimeException>)

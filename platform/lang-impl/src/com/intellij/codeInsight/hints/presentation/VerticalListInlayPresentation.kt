@@ -64,7 +64,7 @@ class VerticalListInlayPresentation(
   }
 
   fun calcDimensions() {
-    width = presentations.maxBy { it.width }!!.width
+    width = presentations.maxByOrNull { it.width }!!.width
     height = presentations.sumBy { it.height }
   }
 

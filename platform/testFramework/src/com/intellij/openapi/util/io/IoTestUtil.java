@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.util.io;
 
 import com.intellij.ReviseWhenPortedToJDK;
@@ -11,6 +11,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.util.PathUtil;
 import com.intellij.util.io.SuperUserStatus;
 import org.jetbrains.annotations.NotNull;
@@ -23,6 +24,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.*;
 import java.util.function.Predicate;
 import java.util.jar.JarFile;
@@ -47,22 +49,19 @@ public final class IoTestUtil {
   @SuppressWarnings("SpellCheckingInspection")
   private static final String[] UNICODE_PARTS = {"Юникоде", "Úñíçødê"};
 
-  @Nullable
-  public static String getUnicodeName() {
+  public static @Nullable String getUnicodeName() {
     return filterParts(PathUtil::isValidFileName);
   }
 
-  @Nullable
-  public static String getUnicodeName(String forEncoding) {
+  public static @Nullable String getUnicodeName(String forEncoding) {
     return filterParts(Charset.forName(forEncoding).newEncoder()::canEncode);
   }
 
-  private static String filterParts(Predicate<? super String> predicate) {
+  private static String filterParts(Predicate<String> predicate) {
     return StringUtil.nullize(Stream.of(UNICODE_PARTS).filter(predicate).collect(Collectors.joining("_")));
   }
 
-  @NotNull
-  public static File getTempDirectory() {
+  public static @NotNull File getTempDirectory() {
     File dir = new File(FileUtil.getTempDirectory());
     dir = expandWindowsPath(dir);
     return dir;
@@ -86,7 +85,7 @@ public final class IoTestUtil {
     return createSymLink(target, link, Boolean.valueOf(shouldExist));
   }
 
-  /** A drop-in replacement for `Files#createSymbolicLink` needed until migrating to Java 13+ */
+  /** A drop-in replacement for `Files#createSymbolicLink`, needed until migrating to Java 13+ */
   public static @NotNull Path createSymbolicLink(@NotNull Path link, @NotNull Path target) throws IOException {
     try {
       return createSymLink(target.toString(), link.toString(), null).toPath();
@@ -97,7 +96,8 @@ public final class IoTestUtil {
   }
 
   private static File createSymLink(String target, String link, @Nullable Boolean shouldExist) {
-    File linkFile = getFullLinkPath(link), targetFile = new File(target);
+    File linkFile = getFullLinkPath(link);
+    File targetFile = new File(target);
     try {
       if (symLinkMode == Boolean.TRUE) {
         Files.createSymbolicLink(linkFile.toPath(), targetFile.toPath());
@@ -154,8 +154,12 @@ public final class IoTestUtil {
     assumeTrue("'wsl.exe' not found in %Path%", WSLDistribution.findWslExe() != null);
   }
 
-  @NotNull
-  public static File createJunction(@NotNull String target, @NotNull String junction) {
+  public static @NotNull Path createWslTempDir(@NotNull String wsl, @NotNull String testName) throws IOException {
+    return Files.createTempDirectory(Paths.get("\\\\wsl$\\" + wsl + "\\tmp"),
+                                     UsefulTestCase.TEMP_DIR_MARKER + testName + "_");
+  }
+
+  public static @NotNull File createJunction(@NotNull String target, @NotNull String junction) {
     assertTrue(SystemInfo.isWindows);
     File targetFile = new File(target);
     assertTrue(targetFile.getPath(), targetFile.isDirectory());
@@ -170,8 +174,7 @@ public final class IoTestUtil {
     assertTrue(new File(junction).delete());
   }
 
-  @NotNull
-  public static File createSubst(@NotNull String target) {
+  public static @NotNull File createSubst(@NotNull String target) {
     assertTrue(SystemInfo.isWindows);
     File targetFile = new File(target);
     assertTrue(targetFile.getPath(), targetFile.isDirectory());
@@ -210,7 +213,7 @@ public final class IoTestUtil {
     return linkFile;
   }
 
-  private static @NotNull String runCommand(String @NotNull ... command) {
+  private static String runCommand(String... command) {
     try {
       GeneralCommandLine cmd = new GeneralCommandLine(command).withRedirectErrorStream(true);
       ProcessOutput output = ExecUtil.execAndGetOutput(cmd, 30_000);
@@ -241,13 +244,11 @@ public final class IoTestUtil {
                roundedExpected != roundedActual);
   }
 
-  @NotNull
-  public static File createTestJar(@NotNull File jarFile) {
+  public static @NotNull File createTestJar(@NotNull File jarFile) {
     return createTestJar(jarFile, JarFile.MANIFEST_NAME, "");
   }
 
-  @NotNull
-  public static File createTestJar(@NotNull File jarFile, String @NotNull ... namesAndTexts) {
+  public static @NotNull File createTestJar(@NotNull File jarFile, String @NotNull ... namesAndTexts) {
     try (ZipOutputStream stream = new ZipOutputStream(new FileOutputStream(jarFile))) {
       for (int i = 0; i < namesAndTexts.length; i += 2) {
         stream.putNextEntry(new ZipEntry(namesAndTexts[i]));
@@ -261,8 +262,7 @@ public final class IoTestUtil {
     }
   }
 
-  @NotNull
-  public static File createTestJar(@NotNull File jarFile, @NotNull Collection<? extends Pair<String, byte[]>> namesAndContents) {
+  public static @NotNull File createTestJar(@NotNull File jarFile, @NotNull Collection<Pair<String, byte[]>> namesAndContents) {
     try (ZipOutputStream stream = new ZipOutputStream(new FileOutputStream(jarFile))) {
       for (Pair<String, byte[]> p : namesAndContents) {
         String name = p.first;
@@ -278,8 +278,7 @@ public final class IoTestUtil {
     }
   }
 
-  @NotNull
-  public static File createTestJar(@NotNull File jarFile, @NotNull File root) {
+  public static @NotNull File createTestJar(@NotNull File jarFile, @NotNull File root) {
     try (ZipOutputStream stream = new ZipOutputStream(new FileOutputStream(jarFile))) {
       FileUtil.visitFiles(root, file -> {
         if (file.isFile()) {
@@ -304,35 +303,29 @@ public final class IoTestUtil {
     }
   }
 
-  @NotNull
-  public static File createTestDir(@NotNull String name) {
+  public static @NotNull File createTestDir(@NotNull String name) {
     return createTestDir(getTempDirectory(), name);
   }
 
-  @NotNull
-  public static File createTestDir(@NotNull File parent, @NotNull String name) {
+  public static @NotNull File createTestDir(@NotNull File parent, @NotNull String name) {
     File dir = new File(parent, name);
     assertTrue(dir.getPath(), dir.mkdirs());
     return dir;
   }
 
-  @NotNull
-  public static File createTestFile(@NotNull String name) {
+  public static @NotNull File createTestFile(@NotNull String name) {
     return createTestFile(name, null);
   }
 
-  @NotNull
-  public static File createTestFile(@NotNull String name, @Nullable String content) {
+  public static @NotNull File createTestFile(@NotNull String name, @Nullable String content) {
     return createTestFile(getTempDirectory(), name, content);
   }
 
-  @NotNull
-  public static File createTestFile(@NotNull File parent, @NotNull String name) {
+  public static @NotNull File createTestFile(@NotNull File parent, @NotNull String name) {
     return createTestFile(parent, name, null);
   }
 
-  @NotNull
-  public static File createTestFile(@NotNull File parent, @NotNull String name, @Nullable String content) {
+  public static @NotNull File createTestFile(@NotNull File parent, @NotNull String name, @Nullable String content) {
     try {
       assertTrue(parent.getPath(), parent.isDirectory() || parent.mkdirs());
       File file = new File(parent, name);
@@ -347,7 +340,7 @@ public final class IoTestUtil {
     }
   }
 
-  public static void delete(File... files) {
+  public static void delete(File @NotNull ... files) {
     for (File file : files) {
       if (file != null) {
         FileUtil.delete(file);
@@ -355,7 +348,7 @@ public final class IoTestUtil {
     }
   }
 
-  public static void updateFile(@NotNull File file, String content) {
+  public static void writeToFile(@NotNull File file, @NotNull String content) {
     try {
       FileUtil.writeToFile(file, content);
     }
@@ -375,8 +368,7 @@ public final class IoTestUtil {
             return Boolean.TRUE;
           }
           catch (IOException e) {
-            //noinspection RedundantSuppression,SSBasedInspection
-            Logger.getInstance("#com.intellij.openapi.util.io.IoTestUtil").debug(e);
+            Logger.getInstance(IoTestUtil.class).debug(e);
             runCommand("cmd", "/C", "mklink", link.toString(), target.getFileName().toString());
             return Boolean.FALSE;
           }
@@ -390,8 +382,7 @@ public final class IoTestUtil {
       }
     }
     catch (Throwable t) {
-      //noinspection RedundantSuppression,SSBasedInspection
-      Logger.getInstance("#com.intellij.openapi.util.io.IoTestUtil").debug(t);
+      Logger.getInstance(IoTestUtil.class).debug(t);
       return null;
     }
   }
@@ -443,7 +434,9 @@ public final class IoTestUtil {
     String changeOut = runCommand("fsutil", "file", "setCaseSensitiveInfo", dir.getPath(), caseSensitive ? "enable" : "disable");
     String out = runCommand("fsutil", "file", "queryCaseSensitiveInfo", dir.getPath());
     if (!out.endsWith(caseSensitive ? "enabled." : "disabled.")) {
-      throw new IOException("Can't setCaseSensitivity("+dir+", "+caseSensitive+"). 'fsutil.exe setCaseSensitiveInfo' output:"+changeOut+"; 'fsutil.exe getCaseSensitiveInfo' output:"+out);
+      throw new IOException("Can't setCaseSensitivity(" + dir + ", " + caseSensitive + ")." +
+                            " 'fsutil.exe setCaseSensitiveInfo' output:" + changeOut + ";" +
+                            " 'fsutil.exe getCaseSensitiveInfo' output:" + out);
     }
   }
 }

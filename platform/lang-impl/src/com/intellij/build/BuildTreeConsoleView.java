@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.build;
 
 import com.intellij.build.events.*;
@@ -36,7 +36,7 @@ import com.intellij.openapi.editor.actions.ToggleUseSoftWrapsToolbarAction;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.impl.softwrap.SoftWrapAppliancePlaces;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
-import com.intellij.openapi.progress.util.ProgressWindow;
+import com.intellij.openapi.progress.util.ProgressIndicatorWithDelayedPresentation;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
@@ -54,10 +54,7 @@ import com.intellij.ui.tree.StructureTreeModel;
 import com.intellij.ui.tree.TreePathUtil;
 import com.intellij.ui.tree.TreeVisitor;
 import com.intellij.ui.treeStructure.Tree;
-import com.intellij.util.EditSourceOnDoubleClickHandler;
-import com.intellij.util.EditSourceOnEnterKeyHandler;
-import com.intellij.util.ObjectUtils;
-import com.intellij.util.SystemProperties;
+import com.intellij.util.*;
 import com.intellij.util.concurrency.Invoker;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.SmartHashSet;
@@ -133,7 +130,7 @@ public class BuildTreeConsoleView implements ConsoleView, DataProvider, BuildCon
                         : new DefaultBuildDescriptor(buildDescriptor);
     myNodeFilters = ContainerUtil.newConcurrentSet();
     myWorkingDir = FileUtil.toSystemIndependentName(buildDescriptor.getWorkingDir());
-    myNavigateToTheFirstErrorLocation = project.getService(BuildWorkspaceConfiguration.class).isShowFirstErrorInEditor();
+    myNavigateToTheFirstErrorLocation = isNavigateToTheFirstErrorLocation(project, buildDescriptor);
 
     myRootNode = new ExecutionNode(myProject, null, true, this::isCorrectThread);
     myBuildProgressRootNode = new ExecutionNode(myProject, myRootNode, true, this::isCorrectThread);
@@ -145,6 +142,7 @@ public class BuildTreeConsoleView implements ConsoleView, DataProvider, BuildCon
     AsyncTreeModel asyncTreeModel = new AsyncTreeModel(myTreeModel, this);
     asyncTreeModel.addTreeModelListener(new ExecutionNodeAutoExpandingListener());
     myTree = initTree(asyncTreeModel);
+    myTree.getAccessibleContext().setAccessibleName(IdeBundle.message("buildToolWindow.tree.accessibleName"));
 
     JPanel myContentPanel = new JPanel();
     myContentPanel.setLayout(new CardLayout());
@@ -160,6 +158,17 @@ public class BuildTreeConsoleView implements ConsoleView, DataProvider, BuildCon
     myPanel.add(myThreeComponentsSplitter, BorderLayout.CENTER);
     BuildTreeFilters.install(this);
     myOccurrenceNavigatorSupport = new ProblemOccurrenceNavigatorSupport(myTree);
+  }
+
+  private static boolean isNavigateToTheFirstErrorLocation(@NotNull Project project, @NotNull BuildDescriptor buildDescriptor) {
+    ThreeState isNavigateToError =
+      buildDescriptor instanceof DefaultBuildDescriptor
+      ? ((DefaultBuildDescriptor)buildDescriptor).isNavigateToError()
+      : ThreeState.UNSURE;
+    BuildWorkspaceConfiguration workspaceConfiguration = BuildWorkspaceConfiguration.getInstance(project);
+    return isNavigateToError == ThreeState.UNSURE
+           ? workspaceConfiguration.isShowFirstErrorInEditor()
+           : isNavigateToError.toBoolean();
   }
 
   private boolean isCorrectThread() {
@@ -818,7 +827,7 @@ public class BuildTreeConsoleView implements ConsoleView, DataProvider, BuildCon
       List<Navigatable> navigatable = each.getNavigatables();
       navigatables.addAll(navigatable);
     }
-    return navigatables.isEmpty() ? null : navigatables.toArray(new Navigatable[0]);
+    return navigatables.isEmpty() ? null : navigatables.toArray(Navigatable.EMPTY_NAVIGATABLE_ARRAY);
   }
 
   private ExecutionNode[] getSelectedNodes() {
@@ -909,7 +918,7 @@ public class BuildTreeConsoleView implements ConsoleView, DataProvider, BuildCon
                        @NotNull BuildViewSettingsProvider buildViewSettingsProvider) {
       myProject = project;
       myPanel = new NonOpaquePanel(new BorderLayout());
-      myPanelWithProgress = new BuildProgressStripe(myPanel, parentDisposable, ProgressWindow.DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS);
+      myPanelWithProgress = new BuildProgressStripe(myPanel, parentDisposable, ProgressIndicatorWithDelayedPresentation.DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS);
       myViewSettingsProvider = buildViewSettingsProvider;
       myExecutionConsoleFilters = executionConsoleFilters;
       Disposer.register(parentDisposable, this);
@@ -932,10 +941,12 @@ public class BuildTreeConsoleView implements ConsoleView, DataProvider, BuildCon
       consoleComponent.setFocusable(true);
       myPanel.add(myView.getComponent(), BorderLayout.CENTER);
       myConsoleToolbarActionGroup = new DefaultActionGroup();
+      myConsoleToolbarActionGroup.copyFromGroup(createDefaultTextConsoleToolbar());
       myToolbar = ActionManager.getInstance().createActionToolbar("BuildConsole", myConsoleToolbarActionGroup, false);
-      showTextConsoleToolbarActions();
+      myToolbar.setTargetComponent(myView);
       myPanel.add(myToolbar.getComponent(), BorderLayout.EAST);
       tree.addTreeSelectionListener(e -> {
+        if (Disposer.isDisposed(myView)) return;
         TreePath path = e.getPath();
         if (path == null || !e.isAddedPath()) {
           return;

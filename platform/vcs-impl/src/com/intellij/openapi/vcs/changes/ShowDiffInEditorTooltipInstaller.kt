@@ -1,6 +1,7 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes
 
+import com.intellij.diff.editor.DiffContentVirtualFile
 import com.intellij.diff.editor.DiffRequestProcessorEditorCustomizer
 import com.intellij.diff.impl.DiffRequestProcessor
 import com.intellij.openapi.Disposable
@@ -23,7 +24,7 @@ class ShowDiffInEditorTooltipInstaller : DiffRequestProcessorEditorCustomizer {
 
 private class ShowDiffInEditorTabTooltipHolder(disposable: Disposable,
                                                private val diffProcessor: DiffRequestProcessor) :
-  VcsEditorTabFilesListener, Disposable {
+  DefaultDiffEditorTabFilesListener(), Disposable {
 
   companion object {
     const val TOOLTIP_ID = "show.diff.in.editor"
@@ -39,7 +40,7 @@ private class ShowDiffInEditorTabTooltipHolder(disposable: Disposable,
     ApplicationManager.getApplication().messageBus.connect(this).subscribe(VcsEditorTabFilesListener.TOPIC, this)
   }
 
-  override fun shouldOpenInNewWindowChanged(shouldOpenInNewWindow: Boolean) {
+  override fun shouldOpenInNewWindowChanged(diffFile: DiffContentVirtualFile, shouldOpenInNewWindow: Boolean) {
     if (shouldOpenInNewWindow) {
       showGotItTooltip()
     }

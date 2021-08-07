@@ -5,6 +5,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiJvmModifiersOwner
 import com.intellij.psi.PsiModifier
 import com.intellij.psi.PsiModifierListOwner
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.uast.visitor.UastTypedVisitor
 
 /**
@@ -14,6 +15,8 @@ interface UDeclaration : UElement, PsiJvmModifiersOwner, UAnnotated {
   /**
    * Returns the original declaration (which is *always* unwrapped, never a [UDeclaration]).
    */
+  @get:ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
+  @get:Deprecated("see the base property description")
   @Deprecated("see the base property description", ReplaceWith("javaPsi"))
   override val psi: PsiModifierListOwner
 

@@ -54,14 +54,6 @@ public class PyBaseElementImpl<T extends StubElement> extends StubBasedPsiElemen
     return className;
   }
 
-  @NotNull
-  @Override
-  public PsiElement getNavigationElement() {
-    // TODO: Limit to classes, functions, targets?
-    final PsiElement element = PyiUtil.getOriginalElement(this);
-    return element != null ? element : super.getNavigationElement();
-  }
-
   @Override
   public void accept(@NotNull PsiElementVisitor visitor) {
     PyUtil.verboseOnly(() -> PyPsiUtils.assertValid(this));
@@ -147,9 +139,9 @@ public class PyBaseElementImpl<T extends StubElement> extends StubBasedPsiElemen
 
     List<PsiReference> referencesList = new ArrayList<>();
     final PsiFile file = element.getContainingFile();
-    final PyResolveContext resolveContext = file != null ?
-                                     PyResolveContext.implicitContext().withTypeEvalContext(TypeEvalContext.codeAnalysis(file.getProject(), file)) :
-                                     PyResolveContext.implicitContext();
+    final var context =
+      file != null ? TypeEvalContext.codeAnalysis(file.getProject(), file) : TypeEvalContext.codeInsightFallback(element.getProject());
+    final PyResolveContext resolveContext = PyResolveContext.implicitContext(context);
     while (element != null) {
       addReferences(offset, element, referencesList, resolveContext);
       offset = element.getStartOffsetInParent() + offset;

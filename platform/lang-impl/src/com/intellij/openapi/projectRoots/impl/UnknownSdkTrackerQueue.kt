@@ -31,7 +31,7 @@ internal abstract class UnknownSdkCollectorQueue(mergingTimeSpaceMillis : Int) :
     myUpdateQueue.queue(object : Update(this) {
       override fun run() {
         val collector = task.createCollector() ?: return
-        collector.run { collectSdksPromise { task.onLookupCompleted(it) } }
+        collector.run { collectSdksPromise(this@UnknownSdkCollectorQueue) { task.onLookupCompleted(it) } }
       }
     })
   }

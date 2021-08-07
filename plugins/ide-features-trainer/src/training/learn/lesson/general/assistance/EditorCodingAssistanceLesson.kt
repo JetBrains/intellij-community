@@ -2,13 +2,15 @@
 package training.learn.lesson.general.assistance
 
 import com.intellij.ide.IdeBundle
+import com.intellij.ui.HyperlinkLabel
 import org.apache.commons.lang.StringEscapeUtils
+import org.jetbrains.annotations.Nls
 import training.dsl.*
 import training.dsl.LessonUtil.restoreIfModifiedOrMoved
 import training.learn.LessonsBundle
 import training.learn.course.KLesson
-import training.ui.LessonMessagePane
 import training.util.PerformActionUtil
+import java.awt.Rectangle
 import javax.swing.JEditorPane
 
 abstract class EditorCodingAssistanceLesson(private val sample: LessonSample) :
@@ -30,7 +32,15 @@ abstract class EditorCodingAssistanceLesson(private val sample: LessonSample) :
       LessonsBundle.message("editor.coding.assistance.goto.next.error", action(it))
     }
 
-    fixErrorUsingIntentionTask(errorIntentionText, errorFixedText) { addFixErrorTaskText() }
+    task("ShowIntentionActions") {
+      text(getFixErrorTaskText())
+      stateCheck { editor.document.charsSequence.contains(errorFixedText) }
+      restoreIfModifiedOrMoved()
+      test {
+        Thread.sleep(500)
+        invokeIntention(errorIntentionText)
+      }
+    }
 
     task("GotoNextError") {
       text(LessonsBundle.message("editor.coding.assistance.goto.next.warning", action(it)))
@@ -49,9 +59,10 @@ abstract class EditorCodingAssistanceLesson(private val sample: LessonSample) :
 
     task("ShowErrorDescription") {
       text(LessonsBundle.message("editor.coding.assistance.show.warning.description", action(it)))
-      val inspectionInfoLabelText = StringEscapeUtils.escapeHtml(IdeBundle.message("inspection.message.inspection.info"))  // escapeHtml required in case of hieroglyph localization
+      // escapeHtml required in case of hieroglyph localization
+      val inspectionInfoLabelText = StringEscapeUtils.escapeHtml(IdeBundle.message("inspection.message.inspection.info"))
       triggerByUiComponentAndHighlight<JEditorPane>(false, false) { ui ->
-        ui.text.contains(inspectionInfoLabelText)
+        ui.text?.contains(inspectionInfoLabelText) == true
       }
       restoreIfModifiedOrMoved()
       test {
@@ -61,8 +72,20 @@ abstract class EditorCodingAssistanceLesson(private val sample: LessonSample) :
       }
     }
 
-    fixErrorUsingIntentionTask(warningIntentionText, warningFixedText) {
-      text(LessonsBundle.message("editor.coding.assistance.fix.warning", action("ShowIntentionActions"), strong(warningIntentionText)))
+    task {
+      text(LessonsBundle.message("editor.coding.assistance.fix.warning") + " " + getFixWarningText())
+      triggerByPartOfComponent { ui: HyperlinkLabel ->
+        if (ui.text == warningIntentionText) {
+          Rectangle(ui.x - 20, ui.y - 10, ui.width + 125, ui.height + 10)
+        }
+        else null
+      }
+      stateCheck { editor.document.charsSequence.contains(warningFixedText) }
+      restoreByUi()
+      test {
+        Thread.sleep(500)
+        invokeActionViaShortcut("ALT SHIFT ENTER")
+      }
     }
 
     caret(variableNameToHighlight)
@@ -75,29 +98,12 @@ abstract class EditorCodingAssistanceLesson(private val sample: LessonSample) :
     }
   }
 
-  private fun LessonContext.fixErrorUsingIntentionTask(errorIntentionText: String,
-                                                       errorFixedText: String,
-                                                       addText: TaskContext.() -> Unit) {
-    task("ShowIntentionActions") {
-      addText()
-      triggerByListItemAndHighlight { item -> isHighlightedListItem(item.toString()) }
-      stateCheck { editor.document.charsSequence.contains(errorFixedText) }
-      restoreIfModifiedOrMoved()
-      test {
-        Thread.sleep(500)
-        invokeIntention(errorIntentionText)
-      }
-    }
+  protected open fun LearningDslBase.getFixErrorTaskText(): @Nls String {
+    return LessonsBundle.message("editor.coding.assistance.fix.error", action("ShowIntentionActions"),
+                                 strong(errorIntentionText))
   }
 
-  protected open fun isHighlightedListItem(item: String): Boolean {
-    return item == errorIntentionText || item == warningIntentionText
-  }
-
-
-  protected open fun TaskContext.addFixErrorTaskText() {
-    text(LessonsBundle.message("editor.coding.assistance.fix.error", action("ShowIntentionActions"), strong(errorIntentionText)))
-  }
+  protected abstract fun getFixWarningText(): @Nls String
 
   private fun TaskTestContext.invokeIntention(intentionText: String) {
     actions("ShowIntentionActions")

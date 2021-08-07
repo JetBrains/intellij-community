@@ -3,8 +3,10 @@
 package com.intellij.codeInsight.actions;
 
 import com.intellij.CodeStyleBundle;
+import com.intellij.application.options.CodeStyle;
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.formatting.FormattingProgressTask;
+import com.intellij.formatting.KeptLineFeedsCollector;
 import com.intellij.lang.Language;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -13,8 +15,7 @@ import com.intellij.openapi.editor.ex.util.EditorScrollingPositionKeeper;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.NlsContexts;
-import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.ChangedRangesInfo;
@@ -27,10 +28,12 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 import java.util.concurrent.FutureTask;
 
 public class ReformatCodeProcessor extends AbstractLayoutCodeProcessor {
   private static final Logger LOG = Logger.getInstance(ReformatCodeProcessor.class);
+  private static final Key<Long> SECOND_FORMAT_KEY = Key.create("second.format");
 
   private final Collection<TextRange> myRanges = new ArrayList<>();
   private SelectionModel mySelectionModel;
@@ -69,6 +72,16 @@ public class ReformatCodeProcessor extends AbstractLayoutCodeProcessor {
     }
   }
 
+  @SuppressWarnings("unused") // Used in Rider
+  public ReformatCodeProcessor(@NotNull PsiFile file, TextRange[] ranges) {
+    super(file.getProject(), file, getProgressText(), getCommandName(), false);
+    for (TextRange range : ranges) {
+      if (range != null) {
+        myRanges.add(range);
+      }
+    }
+  }
+
   public ReformatCodeProcessor(@NotNull PsiFile file, boolean processChangedTextOnly) {
     super(file.getProject(), file, getProgressText(), getCommandName(), processChangedTextOnly);
   }
@@ -86,64 +99,93 @@ public class ReformatCodeProcessor extends AbstractLayoutCodeProcessor {
     super(project, files, getProgressText(), commandName, postRunnable, processChangedTextOnly);
   }
 
+  public void setDoNotKeepLineBreaks(PsiFile file) {
+    file.putUserData(SECOND_FORMAT_KEY, file.getModificationStamp());
+  }
+
   @Override
   @NotNull
   protected FutureTask<Boolean> prepareTask(@NotNull final PsiFile file, final boolean processChangedTextOnly)
     throws IncorrectOperationException
   {
     return new FutureTask<>(() -> {
-      FormattingProgressTask.FORMATTING_CANCELLED_FLAG.set(false);
+      PsiFile fileToProcess = ensureValid(file);
+      if (fileToProcess == null) return false;
+      Ref<Boolean> result = new Ref<>();
+      CodeStyle.doWithTemporarySettings(myProject, CodeStyle.getSettings(fileToProcess), (settings) -> {
+        if (isDoNotKeepLineBreaks(file)) {
+          settings.getCommonSettings(fileToProcess.getLanguage()).KEEP_LINE_BREAKS = false;
+        }
+        result.set(doReformat(file, processChangedTextOnly));
+      });
+      return result.get() ;
+    });
+  }
+
+  private boolean doReformat(@NotNull PsiFile fileToProcess, boolean processChangedTextOnly) {
+    FormattingProgressTask.FORMATTING_CANCELLED_FLAG.set(false);
+    try {
+      Document document = PsiDocumentManager.getInstance(myProject).getDocument(fileToProcess);
+      final LayoutCodeInfoCollector infoCollector = getInfoCollector();
+      LOG.assertTrue(infoCollector == null || document != null);
+
+      CharSequence before = document == null
+       ? null
+       : document.getImmutableCharSequence();
+      KeptLineFeedsCollector.setup(fileToProcess);
       try {
-        PsiFile fileToProcess = ensureValid(file);
-        if (fileToProcess == null) return false;
-
-        Document document = PsiDocumentManager.getInstance(myProject).getDocument(fileToProcess);
-        final LayoutCodeInfoCollector infoCollector = getInfoCollector();
-        LOG.assertTrue(infoCollector == null || document != null);
-
-        CharSequence before = document == null
-         ? null
-         : document.getImmutableCharSequence();
-
-        try {
-          EditorScrollingPositionKeeper.perform(document, true, () -> SlowOperations.allowSlowOperations(() -> {
-            if (processChangedTextOnly) {
-              ChangedRangesInfo info = VcsFacade.getInstance().getChangedRangesInfo(fileToProcess);
-              if (info != null) {
-                assertFileIsValid(fileToProcess);
-                CodeStyleManager.getInstance(myProject).reformatTextWithContext(fileToProcess, info);
-              }
+        EditorScrollingPositionKeeper.perform(document, true, () -> SlowOperations.allowSlowOperations(() -> {
+          if (processChangedTextOnly) {
+            ChangedRangesInfo info = VcsFacade.getInstance().getChangedRangesInfo(fileToProcess);
+            if (info != null) {
+              assertFileIsValid(fileToProcess);
+              CodeStyleManager.getInstance(myProject).reformatTextWithContext(fileToProcess, info);
             }
-            else {
-              Collection<TextRange> ranges = getRangesToFormat(fileToProcess);
-              CodeStyleManager.getInstance(myProject).reformatText(fileToProcess, ranges);
-            }
-          }));
-        }
-        catch (ProcessCanceledException pce) {
-          if (before != null) {
-            document.setText(before);
           }
-          if (infoCollector != null) {
-            infoCollector.setReformatCodeNotification(CodeInsightBundle.message("hint.text.formatting.canceled"));
+          else {
+            Collection<TextRange> ranges = getRangesToFormat(fileToProcess);
+            CodeStyleManager.getInstance(myProject).reformatText(fileToProcess, ranges);
           }
-           return false;
-        }
-
-        if (infoCollector != null) {
-          prepareUserNotificationMessage(document, before);
-        }
-
-        return !FormattingProgressTask.FORMATTING_CANCELLED_FLAG.get();
+        }));
       }
-      catch (IncorrectOperationException e) {
-        LOG.error(e);
-        return false;
+      catch (ProcessCanceledException pce) {
+        if (before != null) {
+          document.setText(before);
+        }
+        if (infoCollector != null) {
+          infoCollector.setReformatCodeNotification(CodeInsightBundle.message("hint.text.formatting.canceled"));
+        }
+         return false;
       }
       finally {
-        myRanges.clear();
+        List<Segment> segments = KeptLineFeedsCollector.getLineFeedsAndCleanup();
+        if (!segments.isEmpty() && infoCollector != null) {
+          infoCollector.setSecondFormatNotification(CodeInsightBundle.message("hint.text.custom.line.breaks.are.preserved"));
+          setDoNotKeepLineBreaks(fileToProcess);
+        }
+        else {
+          fileToProcess.putUserData(SECOND_FORMAT_KEY, null);
+        }
       }
-    });
+
+      if (infoCollector != null) {
+        prepareUserNotificationMessage(document, before);
+      }
+
+      return !FormattingProgressTask.FORMATTING_CANCELLED_FLAG.get();
+    }
+    catch (IncorrectOperationException e) {
+      LOG.error(e);
+      return false;
+    }
+    finally {
+      myRanges.clear();
+    }
+  }
+
+  private static boolean isDoNotKeepLineBreaks(PsiFile file) {
+    Long cachedValue = SECOND_FORMAT_KEY.get(file);
+    return cachedValue != null && cachedValue == file.getModificationStamp();
   }
 
   @Nullable

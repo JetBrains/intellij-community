@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.codeInsight.regexp;
 
 import com.intellij.lang.Language;
@@ -21,9 +21,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-/**
- * @author yole
- */
+
 public class PythonRegexpInjector implements MultiHostInjector {
   private static final class RegexpMethodDescriptor {
     @NotNull private final String methodName;
@@ -74,7 +72,7 @@ public class PythonRegexpInjector implements MultiHostInjector {
     if (callee instanceof PyReferenceExpression && canBeRegexpCall(callee)) {
       final PyReferenceExpression referenceExpression = (PyReferenceExpression)callee;
       final TypeEvalContext context = TypeEvalContext.codeAnalysis(call.getProject(), call.getContainingFile());
-      return referenceExpression.getReference(PyResolveContext.defaultContext().withTypeEvalContext(context)).resolve();
+      return referenceExpression.getReference(PyResolveContext.defaultContext(context)).resolve();
     }
 
     return null;

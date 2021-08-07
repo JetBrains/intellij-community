@@ -1,8 +1,8 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.lang;
 
-import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.rules.TempDirectory;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.ThrowableConsumer;
@@ -48,7 +48,7 @@ public class UrlClassLoaderTest {
     tempDir.newFile("dir/a.txt");
 
     Path path = tempDir.getRoot().toPath();
-    UrlClassLoader customCl = UrlClassLoader.build().files(List.of(path)).get();
+    UrlClassLoader customCl = builder().files(List.of(path)).get();
     try (URLClassLoader standardCl = new URLClassLoader(new URL[]{path.toUri().toURL()})) {
       String relativePathToFile = "dir/a.txt";
       assertNotNull(customCl.findResource(relativePathToFile));
@@ -68,7 +68,7 @@ public class UrlClassLoaderTest {
     List<String> resourceNames = new ArrayList<>();
     List<Path> files = new ArrayList<>();
 
-    for (File file : Objects.requireNonNull(new File(PathManager.getHomePathFor(UrlClassLoader.class) + "/lib").listFiles())) {
+    for (File file : Objects.requireNonNull(new File(PlatformTestUtil.getCommunityPath(), "lib").listFiles())) {
       if (file.getName().endsWith(".jar")) {
         files.add(file.toPath());
 
@@ -84,6 +84,9 @@ public class UrlClassLoaderTest {
       }
     }
 
+    assertThat(files).isNotEmpty();
+    assertThat(resourceNames).isNotEmpty();
+
     int attemptCount = 1000;
     int threadCount = 3;
     int resourceCount = 20;
@@ -92,7 +95,7 @@ public class UrlClassLoaderTest {
     try {
       Random random = new Random();
       for (int attempt = 0; attempt < attemptCount; attempt++) {
-        PathClassLoader loader = new PathClassLoader(UrlClassLoader.build().files(files).parent(null));
+        PathClassLoader loader = new PathClassLoader(builder().files(files).parent(null));
         List<String> namesToLoad = new ArrayList<>();
         for (int j = 0; j < resourceCount; j++) {
           namesToLoad.add(resourceNames.get(random.nextInt(resourceNames.size())));
@@ -129,14 +132,14 @@ public class UrlClassLoaderTest {
     Path theGood = createTestJar(tempDir.newFile("1_normal.jar"), entryName, "-").toPath();
     Path theBad = tempDir.newFile("2_broken.jar", new byte[1024]).toPath();
 
-    UrlClassLoader flat = UrlClassLoader.build().files(List.of(theBad, theGood)).get();
+    UrlClassLoader flat = builder().files(List.of(theBad, theGood)).get();
     assertThat(findResource(flat, entryName, false)).isNotNull();
 
     String content = Attributes.Name.MANIFEST_VERSION + ": 1.0\n" +
                      Attributes.Name.CLASS_PATH + ": " + theBad.toUri().toURL() + " " + theGood.toUri().toURL() + "\n\n";
     Path theUgly = createTestJar(tempDir.newFile(ClassPath.CLASSPATH_JAR_FILE_NAME_PREFIX + "_3.jar"), JarFile.MANIFEST_NAME, content).toPath();
 
-    UrlClassLoader recursive = UrlClassLoader.build().files(List.of(theUgly)).get();
+    UrlClassLoader recursive = builder().files(List.of(theUgly)).get();
     assertThat(recursive.findResource(entryName)).isNotNull();
   }
 
@@ -145,7 +148,7 @@ public class UrlClassLoaderTest {
     String resourceDirName = "test_res_dir";
     String resourceDirName2 = "test_res_dir2";
     File theGood = createTestJar(tempDir.newFile("1_normal.jar"), resourceDirName + "/test_res.txt", "-", resourceDirName2 + "/", null);
-    UrlClassLoader flat = UrlClassLoader.build().files(Collections.singletonList(theGood.toPath())).get();
+    UrlClassLoader flat = builder().files(List.of(theGood.toPath())).get();
 
     String resourceDirNameWithSlash = resourceDirName + "/";
     String resourceDirNameWithSlash_ = "/" + resourceDirNameWithSlash;
@@ -205,7 +208,7 @@ public class UrlClassLoaderTest {
   }
 
   private static void withCustomCachedClassloader(Path url, ThrowableConsumer<UrlClassLoader, IOException> testAction) throws IOException {
-    testAction.consume(UrlClassLoader.build().useCache().files(List.of(url)).get());
+    testAction.consume(builder().useCache().files(List.of(url)).get());
   }
 
   @Test
@@ -216,7 +219,11 @@ public class UrlClassLoaderTest {
 
     String entryName = "test_res_dir/test_res.txt";
     File jar = createTestJar(tempDir.newFile("test.jar"), entryName, "-");
-    UrlClassLoader cl = UrlClassLoader.build().files(Collections.singletonList(uncRootPath.resolve(jar.getName()))).get();
+    UrlClassLoader cl = builder().files(List.of(uncRootPath.resolve(jar.getName()))).get();
     assertNotNull(cl.findResource(entryName));
+  }
+
+  private static UrlClassLoader.Builder builder() {
+    return UrlClassLoader.build().allowLock(false);
   }
 }

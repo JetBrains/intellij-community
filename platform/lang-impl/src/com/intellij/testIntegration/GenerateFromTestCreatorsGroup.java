@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.testIntegration;
 
 import com.intellij.lang.LangBundle;
@@ -24,12 +24,12 @@ public class GenerateFromTestCreatorsGroup extends ActionGroup {
     Project project = e.getData(CommonDataKeys.PROJECT);
     PsiFile file = e.getData(CommonDataKeys.PSI_FILE);
     Editor editor = e.getData(CommonDataKeys.EDITOR);
-    if (project == null || file == null) {
+    if (project == null || file == null || editor == null) {
       return AnAction.EMPTY_ARRAY;
     }
     List<AnAction> result = new SmartList<>();
     for (TestCreator creator : LanguageTestCreators.INSTANCE.allForLanguage(file.getLanguage())) {
-      result.add(new AnAction() {
+      class Action extends AnAction implements UpdateInBackground {
         @Override
         public void actionPerformed(@NotNull AnActionEvent e) {
           creator.createTest(project, editor, file);
@@ -47,7 +47,8 @@ public class GenerateFromTestCreatorsGroup extends ActionGroup {
         public boolean isDumbAware() {
           return DumbService.isDumbAware(creator);
         }
-      });
+      }
+      result.add(new Action());
     }
     return result.toArray(AnAction.EMPTY_ARRAY);
   }

@@ -1,33 +1,31 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi;
 
 import com.intellij.lang.Language;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.extensions.AbstractExtensionPointBean;
 import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.extensions.PluginAware;
+import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.extensions.RequiredElement;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.patterns.ElementPattern;
 import com.intellij.patterns.ElementPatternBean;
 import com.intellij.patterns.StandardPatterns;
 import com.intellij.util.KeyedLazyInstance;
-import com.intellij.util.NullableFunction;
-import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.xmlb.annotations.Attribute;
-import com.intellij.util.xmlb.annotations.Property;
-import com.intellij.util.xmlb.annotations.Tag;
-import com.intellij.util.xmlb.annotations.XCollection;
+import com.intellij.util.xmlb.annotations.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 /**
  * Registers a {@link PsiReferenceProvider} for given pattern(s)
  * via extension point {@code com.intellij.psi.referenceProvider}.
  */
-public class PsiReferenceProviderBean extends AbstractExtensionPointBean implements KeyedLazyInstance<PsiReferenceProviderBean> {
-
+public class PsiReferenceProviderBean implements KeyedLazyInstance<PsiReferenceProviderBean>, PluginAware {
   public static final ExtensionPointName<PsiReferenceProviderBean> EP_NAME =
     new ExtensionPointName<>("com.intellij.psi.referenceProvider");
 
@@ -45,38 +43,50 @@ public class PsiReferenceProviderBean extends AbstractExtensionPointBean impleme
   @XCollection
   @RequiredElement
   public ElementPatternBean[] patterns;
+  private PluginDescriptor pluginDescriptor;
 
   public String getDescription() {
     return description;
   }
 
-  private static final Logger LOG = Logger.getInstance(PsiReferenceProviderBean.class);
-
   public PsiReferenceProvider instantiate() {
     try {
-      return instantiateClass(className, ApplicationManager.getApplication().getPicoContainer());
+      return ApplicationManager.getApplication().instantiateClass(className, pluginDescriptor);
+    }
+    catch (ProcessCanceledException e) {
+      throw e;
     }
     catch (Exception e) {
-      LOG.error(e);
+      Logger.getInstance(PsiReferenceProviderBean.class).error(e);
     }
     return null;
   }
 
-  private static final NullableFunction<ElementPatternBean, ElementPattern<? extends PsiElement>> PATTERN_NULLABLE_FUNCTION =
-    elementPatternBean -> elementPatternBean.compilePattern();
+  @Override
+  @Transient
+  public void setPluginDescriptor(@NotNull PluginDescriptor pluginDescriptor) {
+    this.pluginDescriptor = pluginDescriptor;
+  }
 
   @Nullable
   public ElementPattern<PsiElement> createElementPattern() {
     if (patterns.length > 1) {
-      List<ElementPattern<? extends PsiElement>> list = ContainerUtil.mapNotNull(patterns, PATTERN_NULLABLE_FUNCTION);
+      List<ElementPattern<PsiElement>> result = new ArrayList<>(patterns.length);
+      for (ElementPatternBean t : patterns) {
+        ElementPattern<PsiElement> o = t.compilePattern();
+        if (o != null) {
+          result.add(o);
+        }
+      }
+      result = result.isEmpty() ? Collections.emptyList() : result;
       //noinspection unchecked
-      return StandardPatterns.or(list.toArray(new ElementPattern[0]));
+      return StandardPatterns.or(result.toArray(new ElementPattern[0]));
     }
     else if (patterns.length == 1) {
       return patterns[0].compilePattern();
     }
     else {
-      LOG.error("At least one pattern should be specified");
+      Logger.getInstance(PsiReferenceProviderBean.class).error("At least one pattern should be specified");
       return null;
     }
   }

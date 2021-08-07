@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.command.impl;
 
 import com.intellij.idea.Main;
@@ -41,8 +41,10 @@ final class UpdatePluginsApp implements ApplicationStarter {
       System.exit(0);
     }
 
-    Collection<PluginDownloader> availableUpdates = UpdateChecker.getPluginUpdates();
-    if (availableUpdates == null) {
+    Collection<PluginDownloader> availableUpdates = UpdateChecker.getInternalPluginUpdates()
+      .getPluginUpdates()
+      .getAllEnabled();
+    if (availableUpdates.isEmpty()) {
       log("All plugins up to date.");
       System.exit(0);
       return;

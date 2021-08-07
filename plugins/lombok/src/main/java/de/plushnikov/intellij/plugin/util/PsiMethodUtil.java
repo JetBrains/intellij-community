@@ -1,6 +1,6 @@
 package de.plushnikov.intellij.plugin.util;
 
-import com.intellij.psi.*;
+import com.intellij.psi.PsiMethod;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
@@ -9,11 +9,6 @@ import java.util.Collection;
  * @author Plushnikov Michail
  */
 public final class PsiMethodUtil {
-  @NotNull
-  public static PsiCodeBlock createCodeBlockFromText(@NotNull String blockText, @NotNull PsiElement psiElement) {
-    final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(psiElement.getProject());
-    return elementFactory.createCodeBlockFromText("{" + blockText + "}", psiElement);
-  }
 
   public static boolean hasMethodByName(@NotNull Collection<PsiMethod> classMethods, @NotNull String methodName, int paramCount) {
     return classMethods.stream()

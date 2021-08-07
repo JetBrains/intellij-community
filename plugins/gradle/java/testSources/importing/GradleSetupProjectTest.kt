@@ -18,6 +18,7 @@ import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vfs.VirtualFile
 import org.jetbrains.plugins.gradle.action.ImportProjectFromScriptAction
+import org.jetbrains.plugins.gradle.importing.GradleBuildScriptBuilder.Companion.buildscript
 import org.jetbrains.plugins.gradle.settings.GradleSettings
 import org.jetbrains.plugins.gradle.util.GradleConstants.SYSTEM_ID
 import org.jetbrains.plugins.gradle.util.waitForProjectReload
@@ -59,7 +60,7 @@ class GradleSetupProjectTest : ExternalSystemSetupProjectTest, GradleImportingTe
       includeBuild '../$name-composite'
       includeFlat '$name-module'
     """.trimIndent())
-    val buildScript = GradleBuildScriptBuilderEx().withJavaPlugin().generate()
+    val buildScript = buildscript { withJavaPlugin() }
     createProjectSubFile("$name-composite/build.gradle", buildScript)
     createProjectSubFile("$name-module/build.gradle", buildScript)
     createProjectSubFile("$name-project/module/build.gradle", buildScript)

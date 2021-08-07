@@ -6,5 +6,8 @@ import com.intellij.workspaceModel.storage.EntityTypesResolver
 object SimpleEntityTypesResolver : EntityTypesResolver {
   override fun getPluginId(clazz: Class<*>): String? = null
 
-  override fun resolveClass(name: String, pluginId: String?): Class<*> = this.javaClass.classLoader.loadClass(name)
+  override fun resolveClass(name: String, pluginId: String?): Class<*> {
+    if (name.startsWith("[")) return Class.forName(name)
+    return this.javaClass.classLoader.loadClass(name)
+  }
 }

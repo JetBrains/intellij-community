@@ -1,9 +1,8 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.byteCodeViewer;
 
 import com.intellij.codeInsight.documentation.DockablePopupManager;
 import com.intellij.ide.util.JavaAnonymousClassesHelper;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.extensions.ExtensionPointName;
@@ -48,7 +47,7 @@ public final class ByteCodeViewerManager extends DockablePopupManager<ByteCodeVi
   private static final @NonNls String BYTECODE_AUTO_UPDATE_ENABLED = "BYTE_CODE_AUTO_UPDATE_ENABLED";
 
   public static ByteCodeViewerManager getInstance(Project project) {
-    return ServiceManager.getService(project, ByteCodeViewerManager.class);
+    return project.getService(ByteCodeViewerManager.class);
   }
 
   public ByteCodeViewerManager(Project project) {
@@ -156,7 +155,7 @@ public final class ByteCodeViewerManager extends DockablePopupManager<ByteCodeVi
     doUpdateComponent(element, getByteCode(element));
   }
 
-  protected void doUpdateComponent(@NotNull PsiElement element, final String newText) {
+  void doUpdateComponent(@NotNull PsiElement element, final String newText) {
     Content content = myToolWindow.getContentManager().getSelectedContent();
     if (content != null) {
       updateByteCode(element, (ByteCodeViewerComponent)content.getComponent(), content, newText);

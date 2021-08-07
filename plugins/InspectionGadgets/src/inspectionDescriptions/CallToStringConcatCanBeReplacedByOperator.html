@@ -1,11 +1,21 @@
 <html>
 <body>
-Reports calls to the <b>concat</b> method
-of a <b>java.lang.String</b> object. Such calls can be
-replaced with the '+' operator for increased code clarity and possible increased
-performance if the method was invoked on a constant with a constant argument.
-<!-- tooltip end -->
+Reports calls to <code>java.lang.String.concat()</code>.
 <p>
-
+  Such calls can be replaced with the <code>+</code> operator for clarity and possible increased
+  performance if the method was invoked on a constant with a constant argument.</p>
+<p><b>Example:</b></p>
+<pre>
+  String foo(String name) {
+    return name.concat("foo");
+  }
+</pre>
+<p>After the quick-fix is applied:</p>
+<pre>
+  String foo(String name) {
+    return name + "foo";
+  }
+</pre>
+<!-- tooltip end -->
 </body>
 </html>

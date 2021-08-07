@@ -543,4 +543,23 @@ public final class UpdateHighlightersUtil {
       assert contains: info;
     }
   }
+
+  /**
+   * Remove all highlighters with exactly the given range from {@link DocumentMarkupModel}.
+   * This might be useful in quick fixes and intention actions to provide immediate feedback.
+   * Note that all highlighters at the given range are removed, not only the ones produced by your inspection,
+   * but most likely that will look fine:
+   * they'll be restored when the new highlighting pass is finished.
+   * This method currently works in O(total highlighter count in file) time.
+   */
+  public static void removeHighlightersWithExactRange(@NotNull Document document, @NotNull Project project, @NotNull Segment range) {
+    MarkupModel model = DocumentMarkupModel.forDocument(document, project, false);
+    if (model == null) return;
+
+    for (RangeHighlighter highlighter : model.getAllHighlighters()) {
+      if (TextRange.areSegmentsEqual(range, highlighter)) {
+        model.removeHighlighter(highlighter);
+      }
+    }
+  }
 }

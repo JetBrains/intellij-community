@@ -23,7 +23,6 @@ import com.intellij.util.containers.ConcurrentFactoryMap;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Interner;
 import com.intellij.util.containers.JBIterable;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -163,7 +162,7 @@ public final class ClassInnerStuffCache {
 
   @NotNull
   private Map<String, PsiField> getFieldsMap() {
-    Map<String, PsiField> cachedFields = new java.util.HashMap<>();
+    Map<String, PsiField> cachedFields = new HashMap<>();
     for (PsiField field : myClass.getOwnFields()) {
       String name = field.getName();
       if (!cachedFields.containsKey(name)) {
@@ -215,14 +214,6 @@ public final class ClassInnerStuffCache {
 
   private static PsiMethod makeValueOfMethod(PsiExtensibleClass enumClass) {
     return new EnumSyntheticMethod(enumClass, EnumMethodKind.ValueOf);
-  }
-
-  /**
-   * @deprecated does nothing
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2020.3")
-  public void dropCaches() {
   }
 
   private enum EnumMethodKind {

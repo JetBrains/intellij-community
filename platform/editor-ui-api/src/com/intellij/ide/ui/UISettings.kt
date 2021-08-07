@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.ui
 
 import com.intellij.diagnostic.LoadingState
@@ -8,6 +8,7 @@ import com.intellij.openapi.components.PersistentStateComponentWithModificationT
 import com.intellij.openapi.components.State
 import com.intellij.openapi.components.Storage
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.util.IconLoader
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.SystemInfo
@@ -57,14 +58,6 @@ class UISettings @NonInjectable constructor(private val notRoamableOptions: NotR
 
   val animateWindows: Boolean
     get() = Registry.`is`("ide.animate.toolwindows", false)
-
-  @get:Deprecated("use StatusBarWidgetSettings#isEnabled(MemoryUsagePanel.WIDGET_ID)")
-  @get:ScheduledForRemoval(inVersion = "2021.2")
-  var showMemoryIndicator: Boolean
-    get() = state.showMemoryIndicator
-    set(value) {
-      state.showMemoryIndicator = value
-    }
 
   var colorBlindness: ColorBlindness?
     get() = state.colorBlindness
@@ -148,13 +141,7 @@ class UISettings @NonInjectable constructor(private val notRoamableOptions: NotR
     get() = state.closeTabButtonOnTheRight
 
   val cycleScrolling: Boolean
-    get() = Registry.`is`("ide.cycle.scrolling", false)
-
-  var navigateToPreview: Boolean
-    get() = state.navigateToPreview
-    set(value) {
-      state.navigateToPreview = value
-    }
+    get() = AdvancedSettings.getBoolean("ide.cycle.scrolling")
 
   var selectedTabsLayoutInfoId: @NonNls String?
     get() = state.selectedTabsLayoutInfoId
@@ -421,12 +408,6 @@ class UISettings @NonInjectable constructor(private val notRoamableOptions: NotR
   val showInplaceCommentsInternal: Boolean
     get() = showInplaceComments && ApplicationManager.getApplication()?.isInternal ?: false
 
-  var enableAlphaMode: Boolean
-    get() = state.enableAlphaMode
-    set(value) {
-      state.enableAlphaMode = value
-    }
-
   var fullPathsInWindowHeader: Boolean
     get() = state.fullPathsInWindowHeader
     set(value) {
@@ -439,13 +420,6 @@ class UISettings @NonInjectable constructor(private val notRoamableOptions: NotR
       state.mergeMainMenuWithWindowTitle = value
     }
 
-
-  init {
-    // TODO Remove the registry keys and migration code in 2019.3
-    if (SystemProperties.`is`("tabs.alphabetical")) {
-      sortTabsAlphabetically = true
-    }
-  }
 
   companion object {
     init {
@@ -493,19 +467,42 @@ class UISettings @NonInjectable constructor(private val notRoamableOptions: NotR
     val shadowInstance: UISettings
       get() = instanceOrNull ?: UISettings(NotRoamableUiSettings())
 
+    private fun calcFractionalMetricsHint(registryKey: String, defaultValue: Boolean): Any {
+      val hint: Boolean
+      if (LoadingState.APP_STARTED.isOccurred) {
+        val registryValue = Registry.get(registryKey)
+        if (registryValue.isMultiValue) {
+          val option = registryValue.selectedOption
+          if (option.equals("Enabled")) hint = true
+          else if (option.equals("Disabled")) hint = false
+          else hint = defaultValue
+        }
+        else {
+          hint = if (registryValue.isBoolean && registryValue.asBoolean()) true else defaultValue
+        }
+      }
+      else hint = defaultValue
+      return if (hint) RenderingHints.VALUE_FRACTIONALMETRICS_ON else RenderingHints.VALUE_FRACTIONALMETRICS_OFF
+    }
+
+    fun getPreferredFractionalMetricsValue(): Any {
+      val enableByDefault = SystemInfo.isMacOSCatalina || (FontSubpixelResolution.ENABLED
+                                                           && AntialiasingType.getKeyForCurrentScope(false) ==
+                                                           RenderingHints.VALUE_TEXT_ANTIALIAS_ON)
+      return calcFractionalMetricsHint("ide.text.fractional.metrics", enableByDefault)
+    }
+
     @JvmStatic
-    val PREFERRED_FRACTIONAL_METRICS_VALUE: Any
+    val editorFractionalMetricsHint: Any
       get() {
-        return if (!Registry.`is`("ide.disable.fractionalMetrics", false)
-                   && SystemProperties.getBooleanProperty("idea.force.use.fractional.metrics", SystemInfo.isMacOSCatalina))
-          RenderingHints.VALUE_FRACTIONALMETRICS_ON
-        else
-          RenderingHints.VALUE_FRACTIONALMETRICS_OFF
+        val enableByDefault = FontSubpixelResolution.ENABLED
+                              && AntialiasingType.getKeyForCurrentScope(true) == RenderingHints.VALUE_TEXT_ANTIALIAS_ON
+        return calcFractionalMetricsHint("editor.text.fractional.metrics", enableByDefault)
       }
 
     @JvmStatic
     fun setupFractionalMetrics(g2d: Graphics2D) {
-      g2d.setRenderingHint(RenderingHints.KEY_FRACTIONALMETRICS, PREFERRED_FRACTIONAL_METRICS_VALUE)
+      g2d.setRenderingHint(RenderingHints.KEY_FRACTIONALMETRICS, getPreferredFractionalMetricsValue())
     }
 
     /**
@@ -676,9 +673,8 @@ class UISettings @NonInjectable constructor(private val notRoamableOptions: NotR
     if (state.ideAAType == AntialiasingType.SUBPIXEL && !AntialiasingType.canUseSubpixelAAForIDE()) {
       state.ideAAType = AntialiasingType.GREYSCALE
     }
-    if (state.moveMouseOnDefaultButton) {
-      Registry.get("ide.settings.move.mouse.on.default.button").setValue(true)
-      state.moveMouseOnDefaultButton = false
+    if (state.editorAAType == AntialiasingType.SUBPIXEL && !AntialiasingType.canUseSubpixelAAForEditor()) {
+      state.editorAAType = AntialiasingType.GREYSCALE
     }
     if (!state.allowMergeButtons) {
       Registry.get("ide.allow.merge.buttons").setValue(false)

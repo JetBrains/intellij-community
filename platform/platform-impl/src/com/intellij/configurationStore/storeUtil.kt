@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.configurationStore
 
 import com.intellij.diagnostic.PluginException
@@ -9,22 +9,25 @@ import com.intellij.ide.plugins.PluginUtil
 import com.intellij.notification.Notification
 import com.intellij.notification.NotificationGroup
 import com.intellij.notification.NotificationType
+import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.application.TransactionGuardImpl
+import com.intellij.openapi.application.ex.ApplicationInfoEx
 import com.intellij.openapi.application.ex.ApplicationManagerEx
-import com.intellij.openapi.components.ComponentManager
-import com.intellij.openapi.components.PersistentStateComponent
-import com.intellij.openapi.components.State
-import com.intellij.openapi.components.stateStore
+import com.intellij.openapi.components.*
+import com.intellij.openapi.components.impl.stores.IComponentStore
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.processOpenedProjects
+import com.intellij.openapi.util.SystemInfo
 import com.intellij.util.ExceptionUtil
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import kotlinx.coroutines.runBlocking
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.CalledInAny
+import java.nio.file.Path
 import java.util.concurrent.CancellationException
 
 private val LOG = Logger.getInstance("#com.intellij.openapi.components.impl.stores.StoreUtil")
@@ -64,7 +67,7 @@ class StoreUtil private constructor() {
      * Save all unsaved documents, project and application settings. Must be called from EDT.
      * Use with care because it blocks EDT. Any new usage should be reviewed.
      *
-     * @param forceSavingAllSettings Whether to force save non-roamable component configuration.
+     * @param forceSavingAllSettings if `true` [Storage.useSaveThreshold] attribute will be ignored and settings of all components will be saved
      */
     @RequiresEdt
     @JvmStatic
@@ -108,7 +111,7 @@ suspend fun saveSettings(componentManager: ComponentManager, forceSavingAllSetti
 
     val pluginId = PluginUtil.getInstance().findPluginId(e)
     val groupId = NotificationGroup.createIdWithTitle("Settings Error", IdeBundle.message("notification.group.settings.error"))
-    val notification = if (pluginId == null) {
+    val notification = if (pluginId == null || (ApplicationInfo.getInstance() as ApplicationInfoEx).isEssentialPlugin(pluginId)) {
       Notification(groupId, IdeBundle.message("notification.title.unable.to.save.settings"),
                    IdeBundle.message("notification.content.failed.to.save.settings", messagePostfix),
                    NotificationType.ERROR)
@@ -144,6 +147,51 @@ fun getStateSpec(originalClass: Class<*>): State? {
     aClass = aClass.superclass ?: break
   }
   return null
+}
+
+/**
+ * Returns the path to the storage file for the given [PersistentStateComponent].
+ * The storage file is defined by [Storage.value] of the [State] annotation, and is located under the APP_CONFIG directory.
+ *
+ * Returns null if there is no State or Storage annotation on the given class.
+ *
+ * *NB:* Don't use this method without a strict reason: the storage location is an implementation detail.
+ */
+@ApiStatus.Internal
+fun getPersistentStateComponentStorageLocation(clazz: Class<*>): Path? {
+  return getDefaultStoragePathSpec(clazz)?.let { fileSpec ->
+    ApplicationManager.getApplication().getService(IComponentStore::class.java).storageManager.expandMacro(fileSpec)
+  }
+}
+
+/**
+ * Returns the default storage file specification for the given [PersistentStateComponent] as defined by [Storage.value]
+ */
+fun getDefaultStoragePathSpec(clazz: Class<*>): String? {
+  return getStateSpec(clazz)?.let { getDefaultStoragePathSpec(it) }
+}
+
+fun getDefaultStoragePathSpec(state: State): String? {
+  val storage = state.storages.find { !it.deprecated }
+  return storage?.let { getStoragePathSpec(storage) }
+}
+
+fun getStoragePathSpec(storage: Storage): String {
+  @Suppress("DEPRECATION")
+  val pathSpec = storage.value.ifEmpty { storage.file }
+  return if (storage.roamingType == RoamingType.PER_OS) getOsDependentStorage(pathSpec) else pathSpec
+}
+
+fun getOsDependentStorage(storagePathSpec: String): String {
+  return getPerOsSettingsStorageFolderName() + "/" + storagePathSpec
+}
+
+fun getPerOsSettingsStorageFolderName(): String {
+  if (SystemInfo.isMac) return "mac"
+  if (SystemInfo.isWindows) return "windows"
+  if (SystemInfo.isLinux) return "linux"
+  if (SystemInfo.isFreeBSD) return "freebsd"
+  return if (SystemInfo.isUnix) "unix" else "other_os"
 }
 
 /**

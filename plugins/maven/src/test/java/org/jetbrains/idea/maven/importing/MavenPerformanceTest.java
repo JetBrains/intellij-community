@@ -18,16 +18,17 @@ package org.jetbrains.idea.maven.importing;
 import com.intellij.idea.Bombed;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import org.jetbrains.idea.maven.MavenImportingTestCase;
+import org.jetbrains.idea.maven.MavenMultiVersionImportingTestCase;
 import org.jetbrains.idea.maven.model.MavenExplicitProfiles;
 import org.jetbrains.idea.maven.project.MavenProject;
+import org.junit.Test;
 
 import java.util.Calendar;
 import java.util.Collections;
 import java.util.List;
 
 @Bombed(user = "cdr", year = 3000, month = Calendar.FEBRUARY, day = 1, description = "do not run on build server")
-public abstract class MavenPerformanceTest extends MavenImportingTestCase {
+public abstract class MavenPerformanceTest extends MavenMultiVersionImportingTestCase {
   @Override
   protected void setUp() throws Exception {
     super.setUp();
@@ -36,21 +37,25 @@ public abstract class MavenPerformanceTest extends MavenImportingTestCase {
     myProjectsManager.resetManagedFilesAndProfilesInTests(Collections.singletonList(file), MavenExplicitProfiles.NONE);
   }
 
+  @Test
   public void testReading() {
     measure(4000, () -> waitForReadingCompletion());
   }
 
+  @Test
   public void testImporting() {
     waitForReadingCompletion();
     measure(8, () -> myProjectsManager.importProjects());
   }
 
+  @Test
   public void testReImporting() {
     waitForReadingCompletion();
     myProjectsManager.importProjects();
     measure(2, () -> myProjectsManager.importProjects());
   }
 
+  @Test
   public void testResolving() {
     waitForReadingCompletion();
     List<MavenProject> mavenProjects = myProjectsManager.getProjects();

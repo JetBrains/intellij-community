@@ -80,7 +80,7 @@ class LocalHistoryEventDispatcher {
       @Override
       public boolean visitFile(@NotNull VirtualFile f) {
         if (isVersioned(f)) {
-          myVcs.created(f.getPath(), f.isDirectory());
+          myVcs.created(myGateway.getPathOrUrl(f), f.isDirectory());
         }
         return true;
       }
@@ -102,7 +102,7 @@ class LocalHistoryEventDispatcher {
 
     Pair<StoredContent, Long> content = myGateway.acquireAndUpdateActualContent(f, null);
     if (content != null) {
-      myVcs.contentChanged(f.getPath(), content.first, content.second);
+      myVcs.contentChanged(myGateway.getPathOrUrl(f), content.first, content.second);
     }
   }
 
@@ -132,13 +132,13 @@ class LocalHistoryEventDispatcher {
       if (!wasVersioned && !isVersioned) return;
 
       String oldName = (String)e.getOldValue();
-      myVcs.renamed(f.getPath(), oldName);
+      myVcs.renamed(myGateway.getPathOrUrl(f), oldName);
     }
     else if (VirtualFile.PROP_WRITABLE.equals(e.getPropertyName())) {
       if (!isVersioned(e.getFile())) return;
       VirtualFile f = e.getFile();
       if (!f.isDirectory()) {
-        myVcs.readOnlyStatusChanged(f.getPath(), !(Boolean)e.getOldValue());
+        myVcs.readOnlyStatusChanged(myGateway.getPathOrUrl(f), !(Boolean)e.getOldValue());
       }
     }
   }
@@ -153,14 +153,14 @@ class LocalHistoryEventDispatcher {
 
     if (!wasVersioned && !isVersioned) return;
 
-    myVcs.moved(f.getPath(), e.getOldParent().getPath());
+    myVcs.moved(myGateway.getPathOrUrl(f), myGateway.getPathOrUrl(e.getOldParent()));
   }
 
   private void beforeFileDeletion(@NotNull VFileDeleteEvent e) {
     VirtualFile f = e.getFile();
     Entry entry = myGateway.createEntryForDeletion(f);
     if (entry != null) {
-      myVcs.deleted(f.getPath(), entry);
+      myVcs.deleted(myGateway.getPathOrUrl(f), entry);
     }
   }
 
@@ -240,13 +240,13 @@ class LocalHistoryEventDispatcher {
 
   public static class LocalHistoryBulkFileListener implements BulkFileListener {
     @Override
-    public void before(@NotNull List<? extends VFileEvent> events) {
+    public void before(@NotNull List<? extends @NotNull VFileEvent> events) {
       LocalHistoryEventDispatcher dispatcher = LocalHistoryImpl.getInstanceImpl().getEventDispatcher();
       if (dispatcher != null) dispatcher.handleBeforeEvents(events);
     }
 
     @Override
-    public void after(@NotNull List<? extends VFileEvent> events) {
+    public void after(@NotNull List<? extends @NotNull VFileEvent> events) {
       LocalHistoryEventDispatcher dispatcher = LocalHistoryImpl.getInstanceImpl().getEventDispatcher();
       if (dispatcher != null) dispatcher.handleAfterEvents(events);
     }

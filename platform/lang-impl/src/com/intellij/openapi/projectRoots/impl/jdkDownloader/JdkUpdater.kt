@@ -29,8 +29,6 @@ import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.text.VersionComparatorUtil
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicLong
-import java.util.concurrent.locks.ReentrantLock
-import kotlin.concurrent.withLock
 
 /**
  * This extension point is used to collect
@@ -180,8 +178,6 @@ internal class JdkUpdatesCollector(
         it.suggestedSdkName == actualItem.suggestedSdkName && it.arch == actualItem.arch && it.os == actualItem.os
       } ?: continue
 
-      if (!service<JdkUpdaterState>().isAllowed(jdk, feedItem)) continue
-
       //internal versions are not considered here (JBRs?)
       if (VersionComparatorUtil.compare(feedItem.jdkVersion, actualItem.jdkVersion) <= 0) continue
 
@@ -193,37 +189,5 @@ internal class JdkUpdatesCollector(
     for (jdk in noUpdatesFor) {
       notifications.hideNotification(jdk)
     }
-  }
-}
-
-@Service //Application service
-class JdkUpdaterNotifications : Disposable {
-  private val lock = ReentrantLock()
-  private val pendingNotifications = HashMap<Sdk, JdkUpdateNotification>()
-
-  override fun dispose() : Unit = lock.withLock {
-    pendingNotifications.clear()
-  }
-
-  fun showNotification(jdk: Sdk, actualItem: JdkItem, newItem: JdkItem) : Unit = lock.withLock {
-    val newNotification = JdkUpdateNotification(
-      jdk = jdk,
-      oldItem = actualItem,
-      newItem = newItem,
-      whenComplete = {
-        lock.withLock {
-          pendingNotifications.remove(jdk, it)
-        }
-      }
-    )
-
-    val currentNotification = pendingNotifications[jdk]
-    if (currentNotification != null && !currentNotification.tryReplaceWithNewerNotification(newNotification)) return
-    pendingNotifications[jdk] = newNotification
-    newNotification
-  }.showNotificationIfAbsent()
-
-  fun hideNotification(jdk: Sdk) = lock.withLock {
-    pendingNotifications[jdk]?.tryReplaceWithNewerNotification()
   }
 }

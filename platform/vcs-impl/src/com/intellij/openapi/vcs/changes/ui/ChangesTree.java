@@ -156,13 +156,14 @@ public abstract class ChangesTree extends Tree implements DataProvider {
 
     TreePath path = getPathForLocation(p.x, p.y);
     if (path == null) return null;
+    if (!isIncludable(path)) return null;
 
     Rectangle pathBounds = getPathBounds(path);
     if (pathBounds == null) return null;
 
     Rectangle checkBoxBounds = pathBounds.getBounds();
-    checkBoxBounds.setSize(getCheckboxWidth(), checkBoxBounds.height);
-    if (!checkBoxBounds.contains(p) || !isIncludable(path)) return null;
+    checkBoxBounds.setSize(myCheckboxWidth, checkBoxBounds.height);
+    if (!checkBoxBounds.contains(p)) return null;
 
     return path;
   }
@@ -172,8 +173,10 @@ public abstract class ChangesTree extends Tree implements DataProvider {
       @Override
       protected int getRendererRelativeX(@NotNull MouseEvent e, @NotNull JTree tree, @NotNull TreePath path) {
         int x = super.getRendererRelativeX(e, tree, path);
-
-        return x - getCheckboxWidth();
+        if (myShowCheckboxes && isIncludable(path)) {
+          x -= myCheckboxWidth;
+        }
+        return x;
       }
 
       @Override
@@ -183,11 +186,6 @@ public abstract class ChangesTree extends Tree implements DataProvider {
         }
       }
     }.installOn(this);
-  }
-
-  private int getCheckboxWidth() {
-    if (!myShowCheckboxes) return 0;
-    return myCheckboxWidth;
   }
 
   @NotNull
@@ -283,7 +281,7 @@ public abstract class ChangesTree extends Tree implements DataProvider {
   }
 
   public void installPopupHandler(ActionGroup group) {
-    PopupHandler.installPopupHandler(this, group, ActionPlaces.UNKNOWN);
+    PopupHandler.installPopupMenu(this, group, "ChangesTreePopup");
   }
 
   public JComponent getPreferredFocusedComponent() {

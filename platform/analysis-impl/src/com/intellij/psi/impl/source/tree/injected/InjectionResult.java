@@ -1,7 +1,6 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl.source.tree.injected;
 
-import com.intellij.openapi.util.Getter;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.injection.ReferenceInjector;
@@ -9,8 +8,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
+import java.util.function.Supplier;
 
-class InjectionResult implements Getter<InjectionResult> {
+final class InjectionResult implements Supplier<InjectionResult> {
   private final PsiFile myHostFile;
   @Nullable final List<? extends PsiFile> files;
   @Nullable final List<? extends Pair<ReferenceInjector, Place>> references;

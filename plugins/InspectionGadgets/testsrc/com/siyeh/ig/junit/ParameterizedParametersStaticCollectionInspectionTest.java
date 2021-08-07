@@ -1,9 +1,12 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.siyeh.ig.junit;
 
+import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
+import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.LightJavaInspectionTestCase;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 public class ParameterizedParametersStaticCollectionInspectionTest extends LightJavaCodeInsightFixtureTestCase {
@@ -11,7 +14,6 @@ public class ParameterizedParametersStaticCollectionInspectionTest extends Light
   protected String getBasePath() {
     return LightJavaInspectionTestCase.INSPECTION_GADGETS_TEST_DATA_PATH + "com/siyeh/igtest/junit/parameterized";
   }
-
 
   @Override
   protected void setUp() throws Exception {
@@ -39,12 +41,28 @@ public class ParameterizedParametersStaticCollectionInspectionTest extends Light
     myFixture.testHighlighting(getTestName(false) + ".java");
   }
 
-  public void testCreatemethod() {
-    doTest();
+  private void checkQuickFix(@NotNull @Nls String intentionName) {
+    final IntentionAction intention = myFixture.getAvailableIntention(intentionName);
+    assertNotNull(intention);
+    myFixture.launchAction(intention);
+    myFixture.checkResultByFile(getTestName(false) + ".after.java");
   }
 
-  public void testWrongsignature() { doTest(); }
+  public void testCreatemethod() {
+    doTest();
+    checkQuickFix(InspectionGadgetsBundle.message("fix.data.provider.create.method.fix.name"));
+  }
+
+  public void testWrongsignature() {
+    doTest();
+    checkQuickFix(InspectionGadgetsBundle.message("fix.data.provider.signature.fix.name", "public static Collection regExValues()"));
+  }
+
   public void testWrongsignature1() { doTest(); }
   public void testWrongsignature2() { doTest(); }
+  public void testWrongsignature3() { doTest(); }
+  public void testCorrectSignature() { doTest(); }
+  public void testCorrectSignature2() { doTest(); }
+  public void testMultipleMethods() { doTest(); }
 
 }

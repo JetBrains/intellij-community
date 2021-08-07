@@ -1,4 +1,4 @@
-<idea-plugin>
+<idea-plugin package="com.intellij.completion.ml">
   <id>com.intellij.completion.ml.ranking</id>
   <name>Machine Learning Code Completion</name>
   <vendor>JetBrains</vendor>
@@ -13,8 +13,9 @@
       Editor | General | Code Completion | "Machine Learning Assistant Code Completion" section.</p>
     ]]></description>
 
-  <depends>com.intellij.modules.lang</depends>
-  <depends>com.intellij.modules.platform</depends>
+  <dependencies>
+    <plugin id="com.intellij.modules.lang"/>
+  </dependencies>
 
   <extensionPoints>
     <extensionPoint name="features.policy" beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
@@ -28,7 +29,14 @@
     <extensionPoint qualifiedName="com.intellij.completion.ml.lookupFeatures" beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
       <with attribute="implementationClass" implements="com.intellij.completion.ml.sorting.LookupFeatureProvider"/>
     </extensionPoint>
+
     <extensionPoint qualifiedName="com.intellij.completion.ml.elementIdProvider" dynamic="true" interface="com.intellij.completion.ml.util.LookupElementIdProvider" />
+
+    <extensionPoint qualifiedName="com.intellij.completion.ml.localModelProvider" dynamic="true" interface="com.intellij.completion.ml.ranker.local.LocalZipModelProvider" />
+
+    <extensionPoint qualifiedName="com.intellij.completion.ml.featuresOverride" beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
+      <with attribute="implementationClass" implements="com.intellij.completion.ml.features.RankingFeaturesOverrides"/>
+    </extensionPoint>
   </extensionPoints>
 
   <resource-bundle>messages.MlCompletionBundle</resource-bundle>
@@ -91,14 +99,14 @@
     <completion.ml.elementFeatures language="" implementationClass="com.intellij.completion.ml.common.ContextSimilarityFeatures"/>
     <completion.ml.elementFeatures language="" implementationClass="com.intellij.completion.ml.common.RecentPlacesFeatures"/>
     <completion.ml.elementFeatures language="" implementationClass="com.intellij.codeInsight.completion.ml.VcsFeatureProvider"/>
-    <completion.ml.lookupFeatures language="JAVA" implementationClass="com.intellij.completion.ml.sorting.RecommendersLookupFeatureProvider"/>
 
     <lookup.usageDetails implementation="com.intellij.completion.ml.features.MLRankingLookupUsageDescriptor"/>
 
     <statistics.validation.customValidationRule
       implementation="com.intellij.completion.ml.settings.MLCompletionSettingsCollector$MLRankingSettingsValidationRule"/>
     <statistics.counterUsagesCollector implementationClass="com.intellij.completion.ml.settings.MLCompletionSettingsCollector"/>
-
+    <completion.ml.localModelProvider implementation="com.intellij.completion.ml.ranker.local.randomforest.LocalRandomForestProvider" />
+    <completion.ml.localModelProvider implementation="com.intellij.completion.ml.ranker.local.catboost.LocalCatBoostModelProvider" />
   </extensions>
 
   <projectListeners>

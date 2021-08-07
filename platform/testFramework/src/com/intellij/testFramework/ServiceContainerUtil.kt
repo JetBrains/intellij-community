@@ -1,11 +1,16 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 @file:JvmName("ServiceContainerUtil")
 package com.intellij.testFramework
 
+import com.intellij.ide.plugins.IdeaPluginDescriptorImpl
+import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.Application
 import com.intellij.openapi.components.ComponentManager
+import com.intellij.openapi.components.ServiceDescriptor
 import com.intellij.openapi.extensions.BaseExtensionPointName
 import com.intellij.openapi.extensions.DefaultPluginDescriptor
+import com.intellij.openapi.project.Project
 import com.intellij.serviceContainer.ComponentManagerImpl
 import com.intellij.util.messages.ListenerDescriptor
 import com.intellij.util.messages.MessageBusOwner
@@ -23,19 +28,16 @@ fun <T : Any> ComponentManager.replaceService(serviceInterface: Class<T>, instan
   (this as ComponentManagerImpl).replaceServiceInstance(serviceInterface, instance, parentDisposable)
 }
 
-/**
- * Returns old instance.
- */
 @TestOnly
-fun <T : Any> ComponentManager.registerComponentInstance(componentInterface: Class<T>, instance: T, parentDisposable: Disposable?): T? {
-  return (this as ComponentManagerImpl).replaceComponentInstance(componentInterface, instance, parentDisposable)
+fun <T : Any> ComponentManager.registerComponentInstance(componentInterface: Class<T>, instance: T, parentDisposable: Disposable?) {
+  (this as ComponentManagerImpl).replaceComponentInstance(componentInterface, instance, parentDisposable)
 }
 
 @Suppress("DeprecatedCallableAddReplaceWith")
 @TestOnly
 @Deprecated("Pass parentDisposable")
-fun <T : Any> ComponentManager.registerComponentInstance(componentInterface: Class<T>, instance: T): T? {
-  return (this as ComponentManagerImpl).replaceComponentInstance(componentInterface, instance, null)
+fun <T : Any> ComponentManager.registerComponentInstance(componentInterface: Class<T>, instance: T) {
+  (this as ComponentManagerImpl).replaceComponentInstance(componentInterface, instance, null)
 }
 
 @TestOnly
@@ -51,7 +53,31 @@ fun <T : Any> ComponentManager.registerExtension(name: BaseExtensionPointName<*>
 
 @TestOnly
 fun ComponentManager.getServiceImplementationClassNames(prefix: String): List<String> {
-  return (this as ComponentManagerImpl).getServiceImplementationClassNames(prefix)
+  val result = ArrayList<String>()
+  processAllServiceDescriptors(this) { serviceDescriptor ->
+    val implementation = serviceDescriptor.implementation ?: return@processAllServiceDescriptors
+    if (implementation.startsWith(prefix)) {
+      result.add(implementation)
+    }
+  }
+  return result
+}
+
+fun processAllServiceDescriptors(componentManager: ComponentManager, consumer: (ServiceDescriptor) -> Unit) {
+  for (plugin in PluginManagerCore.getLoadedPlugins()) {
+    val pluginDescriptor = plugin as IdeaPluginDescriptorImpl
+    val containerDescriptor = when (componentManager) {
+      is Application -> pluginDescriptor.appContainerDescriptor
+      is Project -> pluginDescriptor.projectContainerDescriptor
+      else -> pluginDescriptor.moduleContainerDescriptor
+    }
+    containerDescriptor.services.forEach {
+      if ((componentManager as? ComponentManagerImpl)?.isServiceSuitable(it) != false &&
+          (it.os == null || componentManager.isSuitableForOs(it.os))) {
+        consumer(it)
+      }
+    }
+  }
 }
 
 fun createSimpleMessageBusOwner(owner: String): MessageBusOwner {

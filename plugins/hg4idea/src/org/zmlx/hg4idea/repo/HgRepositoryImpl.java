@@ -12,8 +12,8 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.FilePath;
-import com.intellij.openapi.vcs.changes.ChangesViewI;
-import com.intellij.openapi.vcs.changes.ChangesViewManager;
+import com.intellij.openapi.vcs.changes.ChangeListManagerImpl;
+import com.intellij.openapi.vcs.changes.VcsManagedFilesHolder;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
@@ -250,24 +250,23 @@ public final class HgRepositoryImpl extends RepositoryImpl implements HgReposito
   }
 
   private static class MyIgnoredHolderAsyncListener implements VcsIgnoredHolderUpdateListener {
-    @NotNull private final ChangesViewI myChangesViewI;
     @NotNull private final Project myProject;
 
     MyIgnoredHolderAsyncListener(@NotNull Project project) {
-      myChangesViewI = ChangesViewManager.getInstance(project);
       myProject = project;
     }
 
     @Override
     public void updateStarted() {
-      myChangesViewI.scheduleRefresh();//TODO optimize: remove additional refresh
+      BackgroundTaskUtil.syncPublisher(myProject, VcsManagedFilesHolder.TOPIC).updatingModeChanged();
     }
 
     @Override
     public void updateFinished(@NotNull Collection<FilePath> ignoredPaths, boolean isFullRescan) {
       if(myProject.isDisposed()) return;
 
-      myChangesViewI.scheduleRefresh();
+      BackgroundTaskUtil.syncPublisher(myProject, VcsManagedFilesHolder.TOPIC).updatingModeChanged();
+      ChangeListManagerImpl.getInstanceImpl(myProject).notifyUnchangedFileStatusChanged();
     }
   }
 }

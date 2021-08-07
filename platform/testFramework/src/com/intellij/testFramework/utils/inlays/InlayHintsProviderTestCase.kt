@@ -12,10 +12,19 @@ import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import java.util.regex.Pattern
 
 abstract class InlayHintsProviderTestCase : BasePlatformTestCase() {
-  fun <T : Any> testProvider(fileName: String, expectedText: String, provider: InlayHintsProvider<T>, settings: T = provider.createSettings()) {
+  fun <T : Any> testProvider(fileName: String,
+                             expectedText: String,
+                             provider: InlayHintsProvider<T>,
+                             settings: T = provider.createSettings()) {
     val sourceText = InlayData.pattern.matcher(expectedText).replaceAll("")
     myFixture.configureByText(fileName, sourceText)
+    val actualText = dumpInlayHints(sourceText, provider, settings)
+    assertEquals(expectedText, actualText)
+  }
 
+  protected fun <T : Any> dumpInlayHints(sourceText: String,
+                                         provider: InlayHintsProvider<T>,
+                                         settings: T = provider.createSettings()): String {
     val file = myFixture.file!!
     val editor = myFixture.editor
     val sink = InlayHintsSinkImpl(editor)
@@ -33,7 +42,7 @@ abstract class InlayHintsProviderTestCase : BasePlatformTestCase() {
     blockElements.mapTo(inlays) { InlayData(it, InlayType.Block) }
     val document = myFixture.getDocument(file)
     inlays.sortBy { it.effectiveOffset(document) }
-    val actualText = buildString {
+    return buildString {
       var currentOffset = 0
       for (inlay in inlays) {
         val nextOffset = inlay.effectiveOffset(document)
@@ -43,11 +52,10 @@ abstract class InlayHintsProviderTestCase : BasePlatformTestCase() {
       }
       append(sourceText.substring(currentOffset, sourceText.length))
     }
-    assertEquals(expectedText, actualText)
   }
 
   private data class InlayData(val inlay: Inlay<*>, val type: InlayType) {
-    fun effectiveOffset(document: Document) : Int {
+    fun effectiveOffset(document: Document): Int {
       return when (type) {
         InlayType.Inline -> inlay.offset
         InlayType.Block -> {

@@ -1,15 +1,16 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package training.statistic
 
-import com.intellij.ide.RecentProjectsManagerBase
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.internal.statistic.eventLog.EventLogGroup
+import com.intellij.internal.statistic.eventLog.FeatureUsageData
 import com.intellij.internal.statistic.eventLog.events.*
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.keymap.Keymap
 import com.intellij.openapi.keymap.KeymapManager
 import com.intellij.openapi.keymap.impl.DefaultKeymapImpl
+import com.intellij.openapi.util.BuildNumber
 import com.intellij.util.TimeoutUtil
 import training.lang.LangManager
 import training.learn.CourseManager
@@ -23,16 +24,22 @@ import training.statistic.FeatureUsageStatisticConsts.DURATION
 import training.statistic.FeatureUsageStatisticConsts.EXPAND_WELCOME_PANEL
 import training.statistic.FeatureUsageStatisticConsts.KEYMAP_SCHEME
 import training.statistic.FeatureUsageStatisticConsts.LANGUAGE
+import training.statistic.FeatureUsageStatisticConsts.LAST_BUILD_LEARNING_OPENED
 import training.statistic.FeatureUsageStatisticConsts.LEARN_PROJECT_OPENED_FIRST_TIME
 import training.statistic.FeatureUsageStatisticConsts.LEARN_PROJECT_OPENING_WAY
 import training.statistic.FeatureUsageStatisticConsts.LESSON_ID
 import training.statistic.FeatureUsageStatisticConsts.MODULE_NAME
+import training.statistic.FeatureUsageStatisticConsts.NEED_SHOW_NEW_LESSONS_NOTIFICATIONS
+import training.statistic.FeatureUsageStatisticConsts.NEW_LESSONS_COUNT
+import training.statistic.FeatureUsageStatisticConsts.NEW_LESSONS_NOTIFICATION_SHOWN
 import training.statistic.FeatureUsageStatisticConsts.NON_LEARNING_PROJECT_OPENED
 import training.statistic.FeatureUsageStatisticConsts.PASSED
 import training.statistic.FeatureUsageStatisticConsts.PROGRESS
 import training.statistic.FeatureUsageStatisticConsts.REASON
 import training.statistic.FeatureUsageStatisticConsts.RESTORE
 import training.statistic.FeatureUsageStatisticConsts.SHORTCUT_CLICKED
+import training.statistic.FeatureUsageStatisticConsts.SHOULD_SHOW_NEW_LESSONS
+import training.statistic.FeatureUsageStatisticConsts.SHOW_NEW_LESSONS
 import training.statistic.FeatureUsageStatisticConsts.START
 import training.statistic.FeatureUsageStatisticConsts.START_MODULE_ACTION
 import training.statistic.FeatureUsageStatisticConsts.STOPPED
@@ -52,16 +59,16 @@ internal class StatisticBase : CounterUsagesCollector() {
   }
 
   enum class LessonStopReason {
-    CLOSE_PROJECT, RESTART, CLOSE_FILE, OPEN_MODULES, OPEN_NEXT_OR_PREV_LESSON
+    CLOSE_PROJECT, RESTART, CLOSE_FILE, OPEN_MODULES, OPEN_NEXT_OR_PREV_LESSON, EXIT_LINK
   }
 
   companion object {
     private val LOG = logger<StatisticBase>()
     private val sessionLessonTimestamp: ConcurrentHashMap<String, Long> = ConcurrentHashMap()
     private var prevRestoreLessonProgress: LessonProgress = LessonProgress("", 0)
-    private val GROUP: EventLogGroup = EventLogGroup("ideFeaturesTrainer", 9)
+    private val GROUP: EventLogGroup = EventLogGroup("ideFeaturesTrainer", 13)
 
-    var isLearnProjectClosing = false
+    var isLearnProjectCloseLogged = false
 
     // FIELDS
     private val lessonIdField = EventFields.StringValidatedByCustomRule(LESSON_ID, LESSON_ID)
@@ -76,6 +83,19 @@ internal class StatisticBase : CounterUsagesCollector() {
     private val inputEventField = EventFields.InputEvent
     private val learnProjectOpeningWayField = EventFields.Enum<LearnProjectOpeningWay>(LEARN_PROJECT_OPENING_WAY)
     private val reasonField = EventFields.Enum<LessonStopReason>(REASON)
+    private val newLessonsCount = EventFields.Int(NEW_LESSONS_COUNT)
+    private val showNewLessonsState = EventFields.Boolean(SHOULD_SHOW_NEW_LESSONS)
+    private val lastBuildLearningOpened = object : PrimitiveEventField<String?>() {
+      override val name: String = LAST_BUILD_LEARNING_OPENED
+      override val validationRule: List<String>
+        get() = listOf("{regexp#version}")
+
+      override fun addData(fuData: FeatureUsageData, value: String?) {
+        if (value != null) {
+          fuData.addData(name, value)
+        }
+      }
+    }
 
     // EVENTS
     private val lessonStartedEvent: EventId2<String?, String?> = GROUP.registerEvent(START, lessonIdField, languageField)
@@ -93,6 +113,13 @@ internal class StatisticBase : CounterUsagesCollector() {
       GROUP.registerEvent(LEARN_PROJECT_OPENED_FIRST_TIME, learnProjectOpeningWayField, languageField)
     private val nonLearningProjectOpened: EventId1<LearnProjectOpeningWay> =
       GROUP.registerEvent(NON_LEARNING_PROJECT_OPENED, learnProjectOpeningWayField)
+
+    private val newLessonsNotificationShown =
+      GROUP.registerEvent(NEW_LESSONS_NOTIFICATION_SHOWN, newLessonsCount, lastBuildLearningOpened)
+    private val showNewLessonsEvent =
+      GROUP.registerEvent(SHOW_NEW_LESSONS, newLessonsCount, lastBuildLearningOpened)
+    private val needShowNewLessonsNotifications =
+      GROUP.registerEvent(NEED_SHOW_NEW_LESSONS_NOTIFICATIONS, newLessonsCount, lastBuildLearningOpened, showNewLessonsState)
 
     // LOGGING
     fun logLessonStarted(lesson: Lesson) {
@@ -120,10 +147,13 @@ internal class StatisticBase : CounterUsagesCollector() {
         val lessonId = lessonManager.currentLesson!!.id
         val taskId = lessonManager.currentLessonExecutor!!.currentTaskIndex
         lessonStoppedEvent.log(lessonIdField with lessonId,
-          taskIdField with taskId.toString(),
-          languageField with courseLanguage(),
-          reasonField with reason
+                               taskIdField with taskId.toString(),
+                               languageField with courseLanguage(),
+                               reasonField with reason
         )
+        if (reason == LessonStopReason.CLOSE_PROJECT || reason == LessonStopReason.EXIT_LINK) {
+          isLearnProjectCloseLogged = true
+        }
       }
     }
 
@@ -160,7 +190,9 @@ internal class StatisticBase : CounterUsagesCollector() {
     }
 
     fun logLearnProjectOpenedForTheFirstTime(way: LearnProjectOpeningWay) {
-      if (RecentProjectsManagerBase.instanceEx.getRecentPaths().isEmpty()) {
+      val langManager = LangManager.getInstance()
+      val langSupport = langManager.getLangSupport() ?: return
+      if (langManager.getLearningProjectPath(langSupport) == null) {
         LearnProjectState.instance.firstTimeOpenedWay = way
         learnProjectOpenedFirstTimeEvent.log(way, courseLanguage())
       }
@@ -168,6 +200,18 @@ internal class StatisticBase : CounterUsagesCollector() {
 
     fun logNonLearningProjectOpened(way: LearnProjectOpeningWay) {
       nonLearningProjectOpened.log(way)
+    }
+
+    fun logNewLessonsNotification(newLessonsCount: Int, previousOpenedVersion: BuildNumber?) {
+      newLessonsNotificationShown.log(newLessonsCount, previousOpenedVersion?.asString())
+    }
+
+    fun logShowNewLessonsEvent(newLessonsCount: Int, previousOpenedVersion: BuildNumber?) {
+      showNewLessonsEvent.log(newLessonsCount, previousOpenedVersion?.asString())
+    }
+
+    fun logShowNewLessonsNotificationState(newLessonsCount: Int, previousOpenedVersion: BuildNumber?, showNewLessons: Boolean) {
+      needShowNewLessonsNotifications.log(newLessonsCount, previousOpenedVersion?.asString(), showNewLessons)
     }
 
     private fun courseLanguage() = LangManager.getInstance().getLangSupport()?.primaryLanguage?.toLowerCase() ?: ""

@@ -3,7 +3,6 @@ package com.jetbrains.python.inspections;
 
 import com.intellij.psi.PsiFile;
 import com.jetbrains.python.fixtures.PyInspectionTestCase;
-import com.jetbrains.python.psi.LanguageLevel;
 import org.jetbrains.annotations.NotNull;
 
 public class PyProtectedMemberInspectionTest extends PyInspectionTestCase {
@@ -46,14 +45,12 @@ public class PyProtectedMemberInspectionTest extends PyInspectionTestCase {
   }
 
   public void testAnnotation() {
-    runWithLanguageLevel(LanguageLevel.PYTHON34, () -> {
-      PyProtectedMemberInspection inspection = new PyProtectedMemberInspection();
-      inspection.ignoreAnnotations = true;
-      myFixture.enableInspections(inspection);
-      final PsiFile currentFile = myFixture.configureByFile(getTestFilePath());
-      myFixture.checkHighlighting(isWarning(), isInfo(), isWeakWarning());
-      assertSdkRootsNotParsed(currentFile);
-    });
+    PyProtectedMemberInspection inspection = new PyProtectedMemberInspection();
+    inspection.ignoreAnnotations = true;
+    myFixture.enableInspections(inspection);
+    final PsiFile currentFile = myFixture.configureByFile(getTestFilePath());
+    myFixture.checkHighlighting(isWarning(), isInfo(), isWeakWarning());
+    assertSdkRootsNotParsed(currentFile);
   }
 
   //PY-14234
@@ -76,12 +73,12 @@ public class PyProtectedMemberInspectionTest extends PyInspectionTestCase {
 
   // PY-26112
   public void testMemberResolvedToStub() {
-    runWithLanguageLevel(LanguageLevel.PYTHON35, this::doMultiFileTest);
+    doMultiFileTest();
   }
 
   // PY-27148
   public void testTypingNamedTuple() {
-    runWithLanguageLevel(LanguageLevel.PYTHON36, this::doTest);
+    doTest();
   }
 
   // PY-26139
@@ -97,19 +94,16 @@ public class PyProtectedMemberInspectionTest extends PyInspectionTestCase {
   // PY-32485
   public void testProtectedMemberOfSameFileClass() {
     // created file should be considered as located inside a package so Python 3 is used here
-    runWithLanguageLevel(
-      LanguageLevel.PYTHON34,
-      () -> doTestByText("class A:\n" +
-                         "    def __init__(self, arg):\n" +
-                         "        self._arg = arg\n" +
-                         "\n" +
-                         "    def _f(self):\n" +
-                         "        return self._arg\n" +
-                         "\n" +
-                         "a = A(1)\n" +
-                         "print(<weak_warning descr=\"Access to a protected member _arg of a class\">a._arg</weak_warning>)\n" +
-                         "print(<weak_warning descr=\"Access to a protected member _f of a class\">a._f</weak_warning>())")
-    );
+    doTestByText("class A:\n" +
+                 "    def __init__(self, arg):\n" +
+                 "        self._arg = arg\n" +
+                 "\n" +
+                 "    def _f(self):\n" +
+                 "        return self._arg\n" +
+                 "\n" +
+                 "a = A(1)\n" +
+                 "print(<weak_warning descr=\"Access to a protected member _arg of a class\">a._arg</weak_warning>)\n" +
+                 "print(<weak_warning descr=\"Access to a protected member _f of a class\">a._f</weak_warning>())");
   }
 
   @NotNull

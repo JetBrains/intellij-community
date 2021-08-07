@@ -5,9 +5,7 @@ import com.google.gson.GsonBuilder;
 import com.google.gson.JsonIOException;
 import com.google.gson.JsonSyntaxException;
 import com.intellij.openapi.util.io.FileUtilRt;
-import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.containers.FactoryMap;
-import com.intellij.util.containers.MultiMap;
+import com.intellij.openapi.util.text.Strings;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.textmate.plist.PListValue;
 import org.jetbrains.plugins.textmate.plist.Plist;
@@ -26,8 +24,8 @@ import static org.jetbrains.plugins.textmate.Constants.*;
 import static org.jetbrains.plugins.textmate.plist.PListValue.*;
 
 public class VSCBundle extends Bundle {
-  private final Map<String, Collection<String>> grammarToExtensions = new HashMap<>();
-  private final MultiMap<String, String> configToScopes = new MultiMap<>();
+  private final Map<String, Collection<String>> grammarToExtensions = new LinkedHashMap<>();
+  private final Map<String, Collection<String>> configToScopes = new HashMap<>();
 
   public VSCBundle(@NotNull String name,
                    @NotNull String bundle) {
@@ -40,7 +38,6 @@ public class VSCBundle extends Bundle {
     loadExtensions();
     //noinspection SSBasedInspection
     return grammarToExtensions.keySet().stream().map((path) -> new File(bundleFile, path)).collect(Collectors.toList());
-
   }
 
   @Override
@@ -63,7 +60,7 @@ public class VSCBundle extends Bundle {
           Object languages = ((Map)contributes).get("languages");
           Object grammars = ((Map)contributes).get("grammars");
           if (languages instanceof ArrayList && grammars instanceof ArrayList) {
-            Map<String, Collection<String>> idToExtension = FactoryMap.create(s -> new HashSet<>());
+            Map<String, Collection<String>> idToExtension = new HashMap<>();
             Map<String, String> idToConfig = new HashMap<>();
             for (Object language : (ArrayList)languages) {
               if (language instanceof Map) {
@@ -71,12 +68,12 @@ public class VSCBundle extends Bundle {
                 if (id instanceof String) {
                   Object extensions = ((Map)language).get("extensions");
                   if (extensions instanceof ArrayList) {
-                    Stream<String> stream = ((ArrayList)extensions).stream().map(ext -> StringUtil.trimStart((String)ext, "."));
-                    idToExtension.get(id).addAll(stream.collect(Collectors.toList()));
+                    Stream<String> stream = ((ArrayList)extensions).stream().map(ext -> Strings.trimStart((String)ext, "."));
+                    idToExtension.computeIfAbsent((String)id, (key) -> new HashSet<>()).addAll(stream.collect(Collectors.toList()));
                   }
                   Object filenames = ((Map)language).get("filenames");
                   if (filenames instanceof ArrayList) {
-                    idToExtension.get(id).addAll((ArrayList)filenames);
+                    idToExtension.computeIfAbsent((String)id, (key) -> new HashSet<>()).addAll((ArrayList)filenames);
                   }
                   Object configuration = ((Map)language).get("configuration");
                   if (configuration instanceof String) {
@@ -85,20 +82,20 @@ public class VSCBundle extends Bundle {
                 }
               }
             }
-            Map<String, Collection<String>> grammarExtensions = new HashMap<>();
-            MultiMap<String, String> scopeConfig = new MultiMap<>();
+            Map<String, Collection<String>> grammarExtensions = new LinkedHashMap<>();
+            Map<String, Collection<String>> scopeConfig = new HashMap<>();
             for (Object grammar : (ArrayList)grammars) {
               if (grammar instanceof Map) {
                 Object path = ((Map)grammar).get("path");
                 Object language = ((Map)grammar).get("language");
-                Collection<String> extensions = idToExtension.get(language);
+                Collection<String> extensions = idToExtension.getOrDefault(language, emptyList());
                 if (path instanceof String) {
                   grammarExtensions.put((String)path, extensions);
                 }
                 Object scopeName = ((Map)grammar).get("scopeName");
                 String config = idToConfig.get(language);
                 if (scopeName instanceof String && config != null) {
-                  scopeConfig.putValue(config, (String)scopeName);
+                  scopeConfig.computeIfAbsent(config, (key) -> new ArrayList<>()).add((String)scopeName);
                 }
                 Object embedded = ((Map)grammar).get("embeddedLanguages");
                 if (embedded instanceof Map) {
@@ -107,7 +104,7 @@ public class VSCBundle extends Bundle {
                     if (embeddedScope instanceof String && embeddedLanguage instanceof String) {
                       String embeddedConfig = idToConfig.get(embeddedLanguage);
                       if (embeddedConfig != null) {
-                        scopeConfig.putValue(embeddedConfig, (String)embeddedScope);
+                        scopeConfig.computeIfAbsent(embeddedConfig, (key) -> new ArrayList<>()).add((String)embeddedScope);
                       }
                     }
                   }
@@ -115,7 +112,7 @@ public class VSCBundle extends Bundle {
               }
             }
             grammarToExtensions.putAll(grammarExtensions);
-            configToScopes.putAllValues(scopeConfig);
+            configToScopes.putAll(scopeConfig);
           }
         }
       }
@@ -137,7 +134,7 @@ public class VSCBundle extends Bundle {
     //noinspection SSBasedInspection
     return configToScopes.get(FileUtilRt.toSystemIndependentName(
       Objects.requireNonNull(FileUtilRt.getRelativePath(bundleFile, file)))).stream()
-      .map(scope -> new AbstractMap.SimpleImmutableEntry<>(scope, fromJson))
+      .map(scope -> Map.entry(scope, fromJson))
       .collect(Collectors.toList());
   }
 

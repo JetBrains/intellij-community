@@ -6,6 +6,7 @@ package com.intellij.java.codeInspection
 import com.intellij.analysis.AnalysisScope
 import com.intellij.codeInspection.ex.GlobalInspectionToolWrapper
 import com.intellij.codeInspection.ex.InspectionToolWrapper
+import com.intellij.codeInspection.ui.InspectionToolPresentation
 import com.intellij.codeInspection.unnecessaryModuleDependency.UnnecessaryModuleDependencyInspection
 import com.intellij.openapi.module.JavaModuleType
 import com.intellij.openapi.module.Module
@@ -16,6 +17,7 @@ import com.intellij.testFramework.InspectionTestUtil
 import com.intellij.testFramework.PsiTestUtil
 import com.intellij.testFramework.createGlobalContextForTool
 import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase
+import org.jetbrains.annotations.NotNull
 import org.jetbrains.jps.model.java.JavaSourceRootType
 import org.jetbrains.jps.model.java.JpsJavaExtensionService
 import org.junit.Assert
@@ -30,6 +32,35 @@ class UnnecessaryModuleDependencyInspectionTest : JavaCodeInsightFixtureTestCase
     myFixture.addFileToProject("mod2/Class2.java", "public class Class2 extends Class1 {}")
 
     assertInspectionProducesZeroResults()
+  }
+
+  fun testDependencyThrough2Paths() {
+    val mod1 = PsiTestUtil.addModule(project, JavaModuleType.getModuleType(), "mod1", myFixture.tempDirFixture.findOrCreateDir("mod1"))
+    val mod2 = PsiTestUtil.addModule(project, JavaModuleType.getModuleType(), "mod2", myFixture.tempDirFixture.findOrCreateDir("mod2"))
+    ModuleRootModificationUtil.addDependency(module, mod1, DependencyScope.COMPILE, false)
+    ModuleRootModificationUtil.addDependency(module, mod2, DependencyScope.COMPILE, false)
+    ModuleRootModificationUtil.addDependency(mod1, mod2, DependencyScope.COMPILE, false)
+
+
+    myFixture.addClass("public class Class0 {}")
+    myFixture.addFileToProject("mod1/I2.java", "interface I2 extends I1 {}")
+    myFixture.addFileToProject("mod2/I1.java", "public interface I1 {}")
+    myFixture.addClass("public class Class1 extends Class0 implements I1 {}")
+
+    assertReportedProblems("Module '${module.name}' sources do not depend on module 'mod1' sources")
+  }
+
+  fun testUsageInXml() {
+    val mod1 = PsiTestUtil.addModule(project, JavaModuleType.getModuleType(), "mod1", myFixture.tempDirFixture.findOrCreateDir("mod1"))
+    val mod2 = PsiTestUtil.addModule(project, JavaModuleType.getModuleType(), "mod2", myFixture.tempDirFixture.findOrCreateDir("mod2"))
+    ModuleRootModificationUtil.addDependency(mod1, module, DependencyScope.COMPILE, false)
+    ModuleRootModificationUtil.addDependency(mod1, mod2, DependencyScope.COMPILE, false)
+    
+
+    myFixture.addClass("package a; public class Class0 {}")
+    myFixture.addFileToProject("mod1/classes.xml", "<root><class name='a.Class0'/></root>")
+    myFixture.addFileToProject("mod2/Class2.java", "public class Class2 {{Runnable r = new Runnable() {};}}")
+    assertReportedProblems("Module 'mod1' sources do not depend on module 'mod2' sources")
   }
 
   fun testRequireSuperClassInUnusedReturnTypeOfFactory() {
@@ -98,16 +129,7 @@ class UnnecessaryModuleDependencyInspectionTest : JavaCodeInsightFixtureTestCase
   fun testDeepExportedDependenciesWithDirectDependency() {
     val topModule = deepDepends()
     ModuleRootModificationUtil.addDependency(topModule, module)
-    val toolWrapper: InspectionToolWrapper<*, *> = GlobalInspectionToolWrapper(UnnecessaryModuleDependencyInspection())
-    val scope = AnalysisScope(project)
-    val globalContext = createGlobalContextForTool(scope, project, listOf(toolWrapper))
-    InspectionTestUtil.runTool(toolWrapper, scope, globalContext)
-    val presentation = globalContext.getPresentation(toolWrapper)
-    presentation.updateContent()
-    Assert.assertTrue(presentation.problemDescriptors.joinToString { problem -> problem.descriptionTemplate },
-                      presentation.hasReportedProblems())
-    Assert.assertEquals("Module 'mod3' sources do not depend on module 'mod2' sources",
-                        presentation.problemDescriptors.joinToString { problem -> problem.descriptionTemplate })
+    assertReportedProblems("Module 'mod3' sources do not depend on module 'mod2' sources")
   }
 
   fun testDuplicatedDependencies() {
@@ -153,14 +175,27 @@ class UnnecessaryModuleDependencyInspectionTest : JavaCodeInsightFixtureTestCase
   }
 
   private fun assertInspectionProducesZeroResults() {
+    val presentation = getReportedProblems()
+    Assert.assertFalse(presentation.problemDescriptors.joinToString { problem -> problem.descriptionTemplate },
+                       presentation.hasReportedProblems())
+  }
+
+  private fun assertReportedProblems(expectedProblems: String) {
+    val presentation = getReportedProblems()
+    Assert.assertTrue(presentation.problemDescriptors.joinToString { problem -> problem.descriptionTemplate },
+                      presentation.hasReportedProblems())
+    Assert.assertEquals(expectedProblems,
+                        presentation.problemDescriptors.joinToString { problem -> problem.descriptionTemplate })
+  }
+
+  private fun getReportedProblems(): @NotNull InspectionToolPresentation {
     val toolWrapper: InspectionToolWrapper<*, *> = GlobalInspectionToolWrapper(UnnecessaryModuleDependencyInspection())
     val scope = AnalysisScope(project)
     val globalContext = createGlobalContextForTool(scope, project, listOf(toolWrapper))
     InspectionTestUtil.runTool(toolWrapper, scope, globalContext)
     val presentation = globalContext.getPresentation(toolWrapper)
     presentation.updateContent()
-    Assert.assertFalse(presentation.problemDescriptors.joinToString { problem -> problem.descriptionTemplate },
-                       presentation.hasReportedProblems())
+    return presentation
   }
 
   private fun addModuleDependencies(): Module {

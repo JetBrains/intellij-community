@@ -1,7 +1,8 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.xmlb;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.util.XmlElement;
 import org.jdom.Content;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
@@ -13,17 +14,16 @@ import java.util.List;
 public interface Binding {
   Logger LOG = Logger.getInstance(Binding.class);
 
-  @Nullable
-  Object serialize(@NotNull Object o, @Nullable Object context, @Nullable SerializationFilter filter);
+  @Nullable Object serialize(@NotNull Object o, @Nullable Object context, @Nullable SerializationFilter filter);
 
-  default boolean isBoundTo(@NotNull Element element) {
-    return false;
-  }
+  boolean isBoundTo(@NotNull Element element);
+
+  boolean isBoundTo(@NotNull XmlElement element);
 
   default void init(@NotNull Type originalType, @NotNull Serializer serializer) {
   }
 
-  static @Nullable Object deserializeList(@NotNull Binding binding, @Nullable Object context, @NotNull List<? extends Element> nodes) {
+  static @Nullable Object deserializeList(@NotNull Binding binding, @Nullable Object context, @NotNull List<Element> nodes) {
     if (binding instanceof MultiNodeBinding) {
       return ((MultiNodeBinding)binding).deserializeList(context, nodes);
     }
@@ -40,12 +40,30 @@ public interface Binding {
     }
   }
 
+  static @Nullable Object deserializeList2(@NotNull Binding binding, @Nullable Object context, @NotNull List<XmlElement> nodes) {
+    if (binding instanceof MultiNodeBinding) {
+      return ((MultiNodeBinding)binding).deserializeList2(context, nodes);
+    }
+    else {
+      if (nodes.size() == 1) {
+        return binding.deserializeUnsafe(context, nodes.get(0));
+      }
+      else if (nodes.isEmpty()) {
+        return null;
+      }
+      else {
+        throw new AssertionError("Duplicate data for " + binding + " will be ignored");
+      }
+    }
+  }
+
   Object deserializeUnsafe(Object context, @NotNull Element element);
 
-  static void addContent(final @NotNull Element targetElement, final Object node) {
+  Object deserializeUnsafe(Object context, @NotNull XmlElement element);
+
+  static void addContent(@NotNull Element targetElement, Object node) {
     if (node instanceof Content) {
-      Content content = (Content)node;
-      targetElement.addContent(content);
+      targetElement.addContent((Content)node);
     }
     else if (node instanceof List) {
       //noinspection unchecked

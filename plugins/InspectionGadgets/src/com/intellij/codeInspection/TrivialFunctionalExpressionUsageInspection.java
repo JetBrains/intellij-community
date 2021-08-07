@@ -13,6 +13,7 @@ import com.intellij.refactoring.util.InlineUtil;
 import com.intellij.refactoring.util.LambdaRefactoringUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.psiutils.*;
 import one.util.streamex.StreamEx;
@@ -20,11 +21,9 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.function.Predicate;
-import java.util.stream.Stream;
 
 public class TrivialFunctionalExpressionUsageInspection extends AbstractBaseJavaLocalInspectionTool {
   @NotNull
@@ -70,8 +69,7 @@ public class TrivialFunctionalExpressionUsageInspection extends AbstractBaseJava
           return CodeBlockSurrounder.canSurround(call);
         };
         Predicate<PsiMethodCallExpression> checkWrites = call ->
-          Arrays.stream(expression.getParameterList().getParameters())
-            .noneMatch(parameter -> VariableAccessUtils.variableIsAssigned(parameter, body));
+          !ContainerUtil.exists(expression.getParameterList().getParameters(), parameter -> VariableAccessUtils.variableIsAssigned(parameter, body));
 
         doCheckMethodCallOnFunctionalExpression(expression, checkBody.and(checkWrites));
       }
@@ -149,7 +147,7 @@ public class TrivialFunctionalExpressionUsageInspection extends AbstractBaseJava
     PsiMethodCallExpression callExpression = PsiTreeUtil.getParentOfType(lambda, PsiMethodCallExpression.class);
     if (callExpression == null) return lambda;
     PsiExpression[] arguments = callExpression.getArgumentList().getExpressions();
-    if (Stream.of(arguments).noneMatch(SideEffectChecker::mayHaveSideEffects)) return lambda;
+    if (!ContainerUtil.exists(arguments, SideEffectChecker::mayHaveSideEffects)) return lambda;
 
     CodeBlockSurrounder surrounder = CodeBlockSurrounder.forExpression(lambda);
     if (surrounder == null) return null;

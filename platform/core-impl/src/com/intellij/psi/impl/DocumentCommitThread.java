@@ -23,18 +23,15 @@ import com.intellij.openapi.util.ProperTextRange;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.AbstractFileViewProvider;
-import com.intellij.psi.FileViewProvider;
-import com.intellij.psi.PsiDocumentManager;
-import com.intellij.psi.PsiFile;
+import com.intellij.psi.*;
 import com.intellij.psi.text.BlockSupport;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.SmartList;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.concurrency.BoundedTaskExecutor;
 import com.intellij.util.ui.EdtInvocationManager;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import java.util.List;
@@ -46,9 +43,8 @@ import java.util.concurrent.TimeoutException;
 
 public final class DocumentCommitThread implements Disposable, DocumentCommitProcessor {
   private static final Logger LOG = Logger.getInstance(DocumentCommitThread.class);
-  private static final @NonNls String SYNC_COMMIT_REASON = "Sync commit";
 
-  private final ExecutorService executor = AppExecutorUtil.createBoundedApplicationPoolExecutor("Document Committing Pool", AppExecutorUtil.getAppExecutorService(), 1, this);
+  private final ExecutorService executor = AppExecutorUtil.createBoundedApplicationPoolExecutor("Document Commit Pool", AppExecutorUtil.getAppExecutorService(), 1, this);
   private volatile boolean isDisposed;
 
   static DocumentCommitThread getInstance() {
@@ -65,31 +61,26 @@ public final class DocumentCommitThread implements Disposable, DocumentCommitPro
 
   @Override
   public void commitAsynchronously(@NotNull Project project,
+                                   @NotNull PsiDocumentManagerBase documentManager,
                                    @NotNull Document document,
                                    @NonNls @NotNull Object reason,
-                                   @NotNull ModalityState modality) {
+                                   @NotNull ModalityState modality,
+                                   @NotNull FileViewProvider cachedViewProvider) {
     assert !isDisposed : "already disposed";
     if (!project.isInitialized()) return;
 
-    PsiDocumentManagerBase documentManager = (PsiDocumentManagerBase)PsiDocumentManager.getInstance(project);
-    assert documentManager.isEventSystemEnabled(document) : "Asynchronous commit is only supported for physical PSI" +
-                                                            ", document=" + document +
-                                                            ", viewProvider=" + documentManager.getCachedViewProvider(document);
+    assert cachedViewProvider.isEventSystemEnabled() : "Asynchronous commit is only supported for physical PSI" +
+                                                       ", document=" + document +
+                                                       ", cachedViewProvider=" + cachedViewProvider +" ("+cachedViewProvider.getClass()+")";
     TransactionGuard.getInstance().assertWriteSafeContext(modality);
 
-    CommitTask task =
-      new CommitTask(project, document, reason, modality, documentManager.getLastCommittedText(document));
+    CommitTask task = new CommitTask(project, document, reason, modality, documentManager.getLastCommittedText(document), cachedViewProvider);
     ReadAction
-      .nonBlocking(() -> commitUnderProgress(task, false))
+      .nonBlocking(() -> commitUnderProgress(task, false, documentManager))
       .expireWhen(() -> project.isDisposed() || isDisposed || !documentManager.isInUncommittedSet(document) || !task.isStillValid())
       .coalesceBy(task)
       .finishOnUiThread(modality, Runnable::run)
       .submit(executor);
-  }
-
-  @SuppressWarnings("unused")
-  private void log(Project project, @NonNls String msg, @Nullable CommitTask task, @NonNls Object... args) {
-    //System.out.println(msg + "; task: "+task + "; args: "+StringUtil.first(java.util.Arrays.toString(args), 80, true));
   }
 
   @Override
@@ -107,86 +98,74 @@ public final class DocumentCommitThread implements Disposable, DocumentCommitPro
       throw new RuntimeException(s);
     }
 
-    CommitTask task = new CommitTask(project, document, SYNC_COMMIT_REASON, ModalityState.defaultModalityState(),
-                                     PsiDocumentManager.getInstance(project).getLastCommittedText(document));
+    PsiDocumentManagerBase documentManager = (PsiDocumentManagerBase)PsiDocumentManager.getInstance(project);
+    CommitTask task = new CommitTask(project, document, "Sync commit", ModalityState.defaultModalityState(),
+                                     documentManager.getLastCommittedText(document), psiFile.getViewProvider());
 
-    commitUnderProgress(task, true).run();
+    commitUnderProgress(task, true, documentManager).run();
   }
 
   // returns finish commit Runnable (to be invoked later in EDT) or null on failure
   @NotNull
-  private Runnable commitUnderProgress(@NotNull CommitTask task, boolean synchronously) {
-    Document document = task.getDocument();
+  private Runnable commitUnderProgress(@NotNull CommitTask task, boolean synchronously, @NotNull PsiDocumentManagerBase documentManager) {
+    Document document = task.document;
     Project project = task.project;
-    PsiDocumentManagerBase documentManager = (PsiDocumentManagerBase)PsiDocumentManager.getInstance(project);
     List<BooleanRunnable> finishProcessors = new SmartList<>();
     List<BooleanRunnable> reparseInjectedProcessors = new SmartList<>();
 
     FileViewProvider viewProvider = documentManager.getCachedViewProvider(document);
     if (viewProvider == null) {
-      finishProcessors.add(handleCommitWithoutPsi(documentManager, task));
+      finishProcessors.add(handleCommitWithoutPsi(task, documentManager));
     }
     else {
+      // while we were messing around transferring things to background thread, the viewprovider can become obsolete
+      // when e.g. virtual file was renamed. store new provider to retain it from GC
+      task.cachedViewProvider = viewProvider;
+
       for (PsiFile file : viewProvider.getAllFiles()) {
         FileASTNode oldFileNode = file.getNode();
         if (oldFileNode == null) {
-          throw new AssertionError("No node for " + file.getClass() + " in " + file.getViewProvider().getClass() + " of size " + StringUtil.formatFileSize(document.getTextLength()));
+          throw new AssertionError("No node for " + file.getClass() + " in " + file.getViewProvider().getClass() +
+                                   " of size " + StringUtil.formatFileSize(document.getTextLength()) +
+                                   " (is too large = " + SingleRootFileViewProvider
+                                     .isTooLargeForIntelligence(viewProvider.getVirtualFile(), (long)document.getTextLength()) + ")");
         }
         ProperTextRange changedPsiRange = ChangedPsiRangeUtil
-          .getChangedPsiRange(file, task.document, task.myLastCommittedText, document.getImmutableCharSequence());
+          .getChangedPsiRange(file, document, task.myLastCommittedText, document.getImmutableCharSequence());
         if (changedPsiRange != null) {
-          BooleanRunnable finishProcessor = doCommit(task, file, oldFileNode, changedPsiRange, reparseInjectedProcessors);
+          BooleanRunnable finishProcessor = doCommit(task, file, oldFileNode, changedPsiRange, reparseInjectedProcessors, documentManager);
           finishProcessors.add(finishProcessor);
         }
       }
     }
 
-    return createFinishCommitRunnable(task, synchronously, finishProcessors, reparseInjectedProcessors);
-  }
-
-  @NotNull
-  private Runnable createFinishCommitRunnable(@NotNull CommitTask task,
-                                              boolean synchronously,
-                                              @NotNull List<? extends BooleanRunnable> finishProcessors,
-                                              @NotNull List<? extends BooleanRunnable> reparseInjectedProcessors) {
     return () -> {
-      Document document = task.getDocument();
-      Project project = task.project;
       if (project.isDisposed()) {
         return;
       }
-      PsiDocumentManagerBase documentManager = (PsiDocumentManagerBase)PsiDocumentManager.getInstance(project);
-      if (documentManager.isEventSystemEnabled(document)) {
-        ApplicationManager.getApplication().assertIsWriteThread();
-      }
-      boolean success = documentManager.finishCommit(document, finishProcessors, reparseInjectedProcessors,
-                                                                         synchronously, task.reason);
+      boolean success = documentManager.finishCommit(document, finishProcessors, reparseInjectedProcessors, synchronously, task.reason);
       if (synchronously) {
         assert success;
       }
       if (synchronously || success) {
         assert !documentManager.isInUncommittedSet(document);
       }
-      if (success) {
-        log(project, "Commit finished", task);
-      }
-      else {
+      if (!success && viewProvider != null && viewProvider.isEventSystemEnabled()) {
         // add document back to the queue
-        commitAsynchronously(project, document, "Re-added back", task.myCreationModality);
+        commitAsynchronously(project, documentManager, document, "Re-added back", task.myCreationModality, viewProvider);
       }
     };
   }
 
   @NotNull
-  private BooleanRunnable handleCommitWithoutPsi(@NotNull PsiDocumentManagerBase documentManager, @NotNull CommitTask task) {
+  private static BooleanRunnable handleCommitWithoutPsi(@NotNull CommitTask task,
+                                                        @NotNull PsiDocumentManagerBase documentManager) {
     return () -> {
-      log(task.project, "Finishing without PSI", task);
-      Document document = task.getDocument();
-      if (!task.isStillValid() || documentManager.getCachedViewProvider(document) != null) {
+      if (!task.isStillValid() || documentManager.getCachedViewProvider(task.document) != null) {
         return false;
       }
 
-      documentManager.handleCommitWithoutPsi(document);
+      documentManager.handleCommitWithoutPsi(task.document);
       return true;
     };
   }
@@ -213,6 +192,7 @@ public final class DocumentCommitThread implements Disposable, DocumentCommitPro
     @NotNull private final Document document;
     @NotNull final Project project;
     private final int modificationSequence; // store initial document modification sequence here to check if it changed later before commit in EDT
+    private volatile @NotNull FileViewProvider cachedViewProvider; // to retain viewProvider to avoid surprising getCachedProvider() == null half-way through commit
 
     @NotNull final Object reason;
     @NotNull final ModalityState myCreationModality;
@@ -220,21 +200,22 @@ public final class DocumentCommitThread implements Disposable, DocumentCommitPro
 
     CommitTask(@NotNull Project project,
                @NotNull Document document,
-               @NotNull Object reason,
+               @NotNull @NonNls Object reason,
                @NotNull ModalityState modality,
-               @NotNull CharSequence lastCommittedText) {
+               @NotNull CharSequence lastCommittedText,
+               @NotNull FileViewProvider cachedViewProvider) {
       this.document = document;
       this.project = project;
       this.reason = reason;
       myCreationModality = modality;
       myLastCommittedText = lastCommittedText;
       modificationSequence = ((DocumentEx)document).getModificationSequence();
+      this.cachedViewProvider = cachedViewProvider;
     }
 
     @NonNls
     @Override
     public String toString() {
-      Document document = getDocument();
       String reasonInfo = " task reason: " + StringUtil.first(String.valueOf(reason), 180, true) +
                           (isStillValid() ? "" : "; changed: old seq=" + modificationSequence + ", new seq=" + ((DocumentEx)document).getModificationSequence());
       String contextInfo = " modality: " + myCreationModality;
@@ -248,35 +229,30 @@ public final class DocumentCommitThread implements Disposable, DocumentCommitPro
 
       CommitTask task = (CommitTask)o;
 
-      return Comparing.equal(getDocument(),task.getDocument()) && project.equals(task.project);
+      return Comparing.equal(document, task.document) && project.equals(task.project);
     }
 
     @Override
     public int hashCode() {
-      int result = getDocument().hashCode();
+      int result = document.hashCode();
       result = 31 * result + project.hashCode();
       return result;
     }
 
     boolean isStillValid() {
-      Document document = getDocument();
       return ((DocumentEx)document).getModificationSequence() == modificationSequence;
-    }
-
-    @NotNull
-    Document getDocument() {
-      return document;
     }
   }
 
-  // returns runnable to execute under write action in AWT to finish the commit, updates "outChangedRange"
+  // returns runnable to execute under write action in AWT to finish the commit
   @NotNull
   private static BooleanRunnable doCommit(@NotNull CommitTask task,
                                           @NotNull PsiFile file,
                                           @NotNull FileASTNode oldFileNode,
                                           @NotNull ProperTextRange changedPsiRange,
-                                          @NotNull List<? super BooleanRunnable> outReparseInjectedProcessors) {
-    Document document = task.getDocument();
+                                          @NotNull List<? super BooleanRunnable> outReparseInjectedProcessors,
+                                          @NotNull PsiDocumentManagerBase documentManager) {
+    Document document = task.document;
     CharSequence newDocumentText = document.getImmutableCharSequence();
 
     Boolean data = document.getUserData(BlockSupport.DO_NOT_REPARSE_INCREMENTALLY);
@@ -284,8 +260,6 @@ public final class DocumentCommitThread implements Disposable, DocumentCommitPro
       document.putUserData(BlockSupport.DO_NOT_REPARSE_INCREMENTALLY, null);
       file.putUserData(BlockSupport.DO_NOT_REPARSE_INCREMENTALLY, data);
     }
-
-    PsiDocumentManagerBase documentManager = (PsiDocumentManagerBase)PsiDocumentManager.getInstance(task.project);
 
     DiffLog diffLog;
     ProgressIndicator indicator = ProgressIndicatorProvider.getGlobalProgressIndicator();
@@ -332,7 +306,7 @@ public final class DocumentCommitThread implements Disposable, DocumentCommitPro
       diffLog.doActualPsiChange(file);
 
       assertAfterCommit(document, file, oldFileNode);
-
+      ObjectUtils.reachabilityFence(task.cachedViewProvider); // just to make an impression the field is used
       return true;
     };
   }

@@ -21,9 +21,7 @@ import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.psi.PyExceptPart;
 import com.jetbrains.python.psi.stubs.PyExceptPartStub;
 
-/**
- * @author yole
- */
+
 public class PyExceptPartStubImpl extends StubBase<PyExceptPart> implements PyExceptPartStub {
   protected PyExceptPartStubImpl(final StubElement parent) {
     super(parent, PyElementTypes.EXCEPT_PART);

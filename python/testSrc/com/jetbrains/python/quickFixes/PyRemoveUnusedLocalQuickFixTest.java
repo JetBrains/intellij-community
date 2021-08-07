@@ -49,51 +49,37 @@ public class PyRemoveUnusedLocalQuickFixTest extends PyQuickFixTestCase {
   // PY-26418
   // TODO: PY-43505
   public void _testTwoWithItemsFirstUnused() {
-    runWithLanguageLevel(LanguageLevel.getLatest(), () -> {
-      doQuickFixTest(PyUnusedLocalInspection.class, PyPsiBundle.message("QFIX.NAME.remove.with.target"));
-    });
+    doQuickFixTest(PyUnusedLocalInspection.class, PyPsiBundle.message("QFIX.NAME.remove.with.target"));
   }
 
   // PY-26418
   public void testTwoWithItemsSecondUnused() {
-    runWithLanguageLevel(LanguageLevel.getLatest(), () -> {
-      doQuickFixTest(PyUnusedLocalInspection.class, PyPsiBundle.message("QFIX.NAME.remove.with.target"));
-    });
+    doQuickFixTest(PyUnusedLocalInspection.class, PyPsiBundle.message("QFIX.NAME.remove.with.target"));
   }
 
   // PY-17901
   public void testRemoveAssignmentStatementTarget() {
-    runWithLanguageLevel(LanguageLevel.getLatest(), () -> {
-      doQuickFixTest(PyUnusedLocalInspection.class, PyPsiBundle.message("QFIX.NAME.remove.assignment.target"));
-    });
+    doQuickFixTest(PyUnusedLocalInspection.class, PyPsiBundle.message("QFIX.NAME.remove.assignment.target"));
   }
 
   // PY-28782
   public void testRemoveChainedAssignmentStatementFirstTarget() {
-    runWithLanguageLevel(LanguageLevel.getLatest(), () -> {
-      doQuickFixTest(PyUnusedLocalInspection.class, PyPsiBundle.message("QFIX.NAME.remove.assignment.target"));
-    });
+    doQuickFixTest(PyUnusedLocalInspection.class, PyPsiBundle.message("QFIX.NAME.remove.assignment.target"));
   }
 
   // PY-28782
   public void testRemoveChainedAssignmentStatementSecondTarget() {
-    runWithLanguageLevel(LanguageLevel.getLatest(), () -> {
-      doQuickFixTest(PyUnusedLocalInspection.class, PyPsiBundle.message("QFIX.NAME.remove.assignment.target"));
-    });
+    doQuickFixTest(PyUnusedLocalInspection.class, PyPsiBundle.message("QFIX.NAME.remove.assignment.target"));
   }
 
   // PY-28782
   public void testRemoveChainedAssignmentStatementUnpackingFirstTarget() {
-    runWithLanguageLevel(LanguageLevel.getLatest(), () -> {
-      doTestNotIgnoreTupleUnpacking(PyPsiBundle.message("INSP.unused.locals.replace.with.wildcard"));
-    });
+    doTestNotIgnoreTupleUnpacking(PyPsiBundle.message("INSP.unused.locals.replace.with.wildcard"));
   }
 
   // PY-28782
   public void testRemoveChainedAssignmentStatementUnpackingSecondTarget() {
-    runWithLanguageLevel(LanguageLevel.getLatest(), () -> {
-      doTestNotIgnoreTupleUnpacking(PyPsiBundle.message("INSP.unused.locals.replace.with.wildcard"));
-    });
+    doTestNotIgnoreTupleUnpacking(PyPsiBundle.message("INSP.unused.locals.replace.with.wildcard"));
   }
 
   private void doTestNotIgnoreTupleUnpacking(@NotNull String hint) {

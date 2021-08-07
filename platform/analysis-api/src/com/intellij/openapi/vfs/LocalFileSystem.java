@@ -1,8 +1,7 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vfs;
 
 import com.intellij.openapi.vfs.newvfs.NewVirtualFileSystem;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.SystemIndependent;
@@ -59,10 +58,10 @@ public abstract class LocalFileSystem extends NewVirtualFileSystem {
   }
 
   /**
-   * See {@link #refreshIoFiles(Iterable, boolean, boolean, Runnable)}.
+   * See {@link #refreshNioFiles(Iterable, boolean, boolean, Runnable)}.
    */
   public final void refreshNioFiles(@NotNull Iterable<? extends Path> files) {
-    refreshIoFiles(ContainerUtil.map(files, Path::toFile), false, false, null);
+    refreshNioFiles(files, false, false, null);
   }
 
   /**
@@ -71,6 +70,8 @@ public abstract class LocalFileSystem extends NewVirtualFileSystem {
    * use {@link VfsUtil#markDirtyAndRefresh(boolean, boolean, boolean, File...)} instead.
    */
   public abstract void refreshIoFiles(@NotNull Iterable<? extends File> files, boolean async, boolean recursive, @Nullable Runnable onFinish);
+
+  public abstract void refreshNioFiles(@NotNull Iterable<? extends Path> files, boolean async, boolean recursive, @Nullable Runnable onFinish);
 
   /**
    * Performs a non-recursive synchronous refresh of specified files.
@@ -92,6 +93,10 @@ public abstract class LocalFileSystem extends NewVirtualFileSystem {
     return result.size() == 1 ? result.iterator().next() : null;
   }
 
+  /**
+   * Starts watching a given set of roots. Please note that it's a client's responsibility to make sure that
+   * files and directories the client is interested in are loaded into VFS.
+   */
   public @NotNull Set<WatchRequest> addRootsToWatch(@NotNull Collection<String> rootPaths, boolean watchRecursively) {
     if (rootPaths.isEmpty()) {
       return Collections.emptySet();

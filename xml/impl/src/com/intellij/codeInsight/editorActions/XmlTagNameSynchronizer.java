@@ -20,17 +20,11 @@ import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.*;
-import com.intellij.openapi.editor.event.DocumentEvent;
-import com.intellij.openapi.editor.event.DocumentListener;
-import com.intellij.openapi.editor.event.EditorFactoryEvent;
-import com.intellij.openapi.editor.event.EditorFactoryListener;
+import com.intellij.openapi.editor.event.*;
 import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Couple;
-import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.core.impl.PomModelImpl;
@@ -38,7 +32,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiDocumentManagerBase;
 import com.intellij.psi.impl.source.tree.LeafPsiElement;
 import com.intellij.psi.impl.source.tree.TreeUtil;
-import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
+import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtilBase;
 import com.intellij.psi.templateLanguages.OuterLanguageElement;
 import com.intellij.psi.templateLanguages.TemplateLanguage;
 import com.intellij.psi.templateLanguages.TemplateLanguageUtil;
@@ -52,8 +46,10 @@ import com.intellij.xml.util.XmlUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Comparator;
 import java.util.Objects;
 import java.util.Set;
+import java.util.TreeSet;
 import java.util.stream.Stream;
 
 import static com.intellij.util.ObjectUtils.doIfNotNull;
@@ -68,7 +64,7 @@ public final class XmlTagNameSynchronizer implements EditorFactoryListener {
 
   private static final Key<TagNameSynchronizer> SYNCHRONIZER_KEY = Key.create("tag_name_synchronizer");
 
-  private XmlTagNameSynchronizer() {}
+  private XmlTagNameSynchronizer() { }
 
   private static void createSynchronizerFor(Editor editor) {
     Project project = editor.getProject();
@@ -151,8 +147,9 @@ public final class XmlTagNameSynchronizer implements EditorFactoryListener {
     }
   }
 
-  private static final class TagNameSynchronizer implements DocumentListener, Disposable {
+  private static final class TagNameSynchronizer implements DocumentListener, CaretListener, Disposable {
     private static final Key<Couple<RangeMarker>> MARKERS_KEY = Key.create("tag.name.synchronizer.markers");
+    private static final TreeSet<Segment> allMarkers = new TreeSet<>(Comparator.comparingInt(Segment::getStartOffset));
     private final PsiDocumentManagerBase myDocumentManager;
     private final Language myLanguage;
     private final EditorImpl myEditor;
@@ -169,12 +166,29 @@ public final class XmlTagNameSynchronizer implements EditorFactoryListener {
     @Override
     public void dispose() {
       myEditor.putUserData(SYNCHRONIZER_KEY, null);
+      allMarkers.clear();
     }
 
     private void listenForDocumentChanges() {
       Disposer.register(myEditor.getDisposable(), this);
       myEditor.getDocument().addDocumentListener(this, this);
+      myEditor.getCaretModel().addCaretListener(this, this);
       myEditor.putUserData(SYNCHRONIZER_KEY, this);
+      for (Caret caret : myEditor.getCaretModel().getAllCarets()) {
+        Couple<RangeMarker> markers = getMarkers(caret);
+        if (markers != null) {
+          allMarkers.add(markers.first);
+          allMarkers.add(markers.second);
+        }
+      }
+    }
+
+    @Override
+    public void caretRemoved(@NotNull CaretEvent event) {
+      Caret caret = event.getCaret();
+      if (caret != null) {
+        clearMarkers(caret);
+      }
     }
 
     @Override
@@ -209,11 +223,22 @@ public final class XmlTagNameSynchronizer implements EditorFactoryListener {
         }
       }
 
-      Couple<RangeMarker> markers = caret.getUserData(MARKERS_KEY);
+      Couple<RangeMarker> markers = getMarkers(caret);
       if (markers != null && !fitsInMarker(markers, offset, oldLength)) {
         clearMarkers(caret);
         markers = null;
       }
+
+      int caretOffset = caret.getOffset();
+      Segment floor = allMarkers.floor(new TextRange(caretOffset, caretOffset));
+      // Skip markers creation if cursors cover same tag area as other cursors
+      if (floor != null
+          && (markers == null || (floor != markers.second && floor != markers.first))
+          && caretOffset <= floor.getEndOffset()) {
+        clearMarkers(caret);
+        return;
+      }
+
       if (markers == null) {
         final PsiFile file = myDocumentManager.getPsiFile(document);
         if (file == null || myDocumentManager.getSynchronizer().isInSynchronization(document)) return;
@@ -233,7 +258,7 @@ public final class XmlTagNameSynchronizer implements EditorFactoryListener {
         support.setGreedyToRight(true);
         markers = Couple.of(leader, support);
         if (!fitsInMarker(markers, offset, oldLength)) return;
-        caret.putUserData(MARKERS_KEY, markers);
+        setMarkers(caret, markers);
       }
     }
 
@@ -242,9 +267,21 @@ public final class XmlTagNameSynchronizer implements EditorFactoryListener {
       return leader.isValid() && offset >= leader.getStartOffset() && offset + oldLength <= leader.getEndOffset();
     }
 
+    private static Couple<RangeMarker> getMarkers(Caret caret) {
+      return caret.getUserData(MARKERS_KEY);
+    }
+
+    private static void setMarkers(Caret caret, Couple<RangeMarker> markers) {
+      caret.putUserData(MARKERS_KEY, markers);
+      allMarkers.add(markers.first);
+      allMarkers.add(markers.second);
+    }
+
     private static void clearMarkers(Caret caret) {
       Couple<RangeMarker> markers = caret.getUserData(MARKERS_KEY);
       if (markers != null) {
+        allMarkers.remove(markers.first);
+        allMarkers.remove(markers.second);
         markers.first.dispose();
         markers.second.dispose();
         caret.putUserData(MARKERS_KEY, null);
@@ -288,18 +325,19 @@ public final class XmlTagNameSynchronizer implements EditorFactoryListener {
 
     void beforeCommandFinished() {
       CaretAction action = caret -> {
-        Couple<RangeMarker> markers = caret.getUserData(MARKERS_KEY);
-        if (markers == null || !markers.first.isValid() || !markers.second.isValid()) return;
+        Couple<RangeMarker> markers = getMarkers(caret);
         final Document document = myEditor.getDocument();
+        if (markers == null
+            || !markers.first.isValid()
+            || !markers.second.isValid()
+            || getNameToReplace(document, markers) == null) {
+          return;
+        }
+
         final Runnable apply = () -> {
-          final RangeMarker leader = markers.first;
-          final RangeMarker support = markers.second;
-          if (document.getTextLength() < leader.getEndOffset()) {
-            return;
-          }
-          final String name = document.getText(new TextRange(leader.getStartOffset(), leader.getEndOffset()));
-          if (document.getTextLength() >= support.getEndOffset() &&
-              !name.equals(document.getText(new TextRange(support.getStartOffset(), support.getEndOffset())))) {
+          final String name = getNameToReplace(document, markers);
+          if (name != null) {
+            final RangeMarker support = markers.second;
             document.replaceString(support.getStartOffset(), support.getEndOffset(), name);
           }
         };
@@ -327,10 +365,24 @@ public final class XmlTagNameSynchronizer implements EditorFactoryListener {
       }
     }
 
+    private static @Nullable String getNameToReplace(final Document document, @NotNull Couple<RangeMarker> markers) {
+      final RangeMarker leader = markers.first;
+      final RangeMarker support = markers.second;
+      if (document.getTextLength() < leader.getEndOffset()) {
+        return null;
+      }
+      final String name = document.getText(new TextRange(leader.getStartOffset(), leader.getEndOffset()));
+      if (document.getTextLength() >= support.getEndOffset() &&
+          !name.equals(document.getText(new TextRange(support.getStartOffset(), support.getEndOffset())))) {
+        return name;
+      }
+      return null;
+    }
+
     private RangeMarker findSupport(RangeMarker leader, PsiFile file, Document document) {
       final TextRange leaderRange = new TextRange(leader.getStartOffset(), leader.getEndOffset());
       final int offset = leader.getStartOffset();
-      PsiElement element = findNameElement(InjectedLanguageUtil.findElementAtNoCommit(file, offset));
+      PsiElement element = findNameElement(InjectedLanguageUtilBase.findElementAtNoCommit(file, offset));
       TextRange support = findSupportRange(element);
       if (!isSupportRangeValid(document, leaderRange, support) &&
           file.getViewProvider() instanceof MultiplePsiFilesPerDocumentFileViewProvider) {

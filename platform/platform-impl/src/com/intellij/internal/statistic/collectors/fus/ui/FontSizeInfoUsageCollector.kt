@@ -4,8 +4,8 @@ package com.intellij.internal.statistic.collectors.fus.ui
 import com.intellij.ide.ui.UISettings
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.internal.statistic.beans.MetricEvent
-import com.intellij.internal.statistic.beans.newMetric
-import com.intellij.internal.statistic.eventLog.FeatureUsageData
+import com.intellij.internal.statistic.eventLog.EventLogGroup
+import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.service.fus.collectors.ApplicationUsagesCollector
 import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.editor.colors.impl.AppEditorFontOptions
@@ -14,42 +14,65 @@ import com.intellij.openapi.editor.colors.impl.AppEditorFontOptions
  * @author Konstantin Bulenkov
  */
 class FontSizeInfoUsageCollector : ApplicationUsagesCollector() {
+  companion object {
+    private val GROUP = EventLogGroup("ui.fonts", 4)
+
+    val FONT_NAME = EventFields.String(
+      "font_name", arrayListOf(
+      "Monospaced", "Menlo", "DejaVu_Sans_Mono", ".SFNSText-Regular", "Fira_Code", "Lucida_Grande", "Source_Code_Pro", "Segoe_UI", "Ubuntu",
+      ".SF_NS_Text", "Consolas", "Noto_Sans_Regular", "Microsoft_YaHei", "Fira_Code_Retina", "Cantarell_Regular", "Microsoft_YaHei_UI",
+      "Monaco", "Noto_Sans", "Dialog.plain", "Fira_Code_Medium", "Courier_New", "Tahoma", "Hack", "DejaVu_Sans", "Ubuntu_Mono",
+      "Droid_Sans_Mono", "Dialog", "Inconsolata", "Malgun_Gothic", "Cantarell", "DialogInput", "Yu_Gothic_UI_Regular", "Roboto",
+      "Liberation_Mono", "Lucida_Console", "D2Coding", "Lucida_Sans_Typewriter", "Fira_Code_Light", "Droid_Sans", "Verdana", "Arial",
+      "Roboto_Mono", "Segoe_UI_Semibold", "SF_Mono", "Droid_Sans_Mono_Slashed", "LucidaGrande", "Operator_Mono", "Ayuthaya", "Hasklig",
+      "Iosevka", "Andale_Mono", "Anonymous_Pro", "Anonymous_Pro_for_Powerline", "D2Coding_ligature", "Dank_Mono",
+      "DejaVu_Sans_Mono_for_Powerline", "Fantasque_Sans_Mono", "Fira_Mono_for_Powerline", "Hack_Nerd_Font", "IBM_Plex_Mono",
+      "Meslo_LG_L_DZ_for_Powerline", "Meslo_LG_M_for_Powerline", "Meslo_LG_S_for_Powerline", "Microsoft_YaHei_Mono",
+      "Noto_Mono_for_Powerline", "Noto_Sans_Mono", "PT_Mono", "PragmataPro", "SourceCodePro+Powerline+Awesome_Regular",
+      "Source_Code_Pro_Semibold", "Source_Code_Pro_for_Powerline", "Ubuntu_Mono_derivative_Powerline", "YaHei_Consolas_Hybrid",
+      "mononoki", "Bitstream_Vera_Sans_Mono", "Comic_Sans_MS", "Courier_10_Pitch", "Cousine", "2Coding_ligature", "Droid_Sans_Mono_Dotted",
+      "Inconsolata-dz", "Input", "Input_Mono", "Meslo_LG_M_DZ_for_Powerline", "Migu_2M", "Monoid", "Operator_Mono_Book",
+      "Operator_Mono_Lig", "Operator_Mono_Medium", "Abadi_MT_Condensed_Extra_Bold", "Al_Bayan", "Meiryo", "Microsoft_JhengHei",
+      "Microsoft_Yahei_UI", "SansSerif", "Ubuntu_Light", "JetBrains_Mono", ".AppleSystemUIFont", ".SFNS-Regular"
+    ))
+
+    val FONT_SIZE = EventFields.Int("font_size")
+    val LINE_SPACING = EventFields.Float("line_spacing")
+    val FONT_SIZE_STRING = EventFields.String(
+      "font_size", arrayListOf("X_SMALL", "X_LARGE", "XX_SMALL", "XX_LARGE", "SMALL", "MEDIUM", "LARGE")
+    )
+
+    val UI_FONT = GROUP.registerEvent("UI", FONT_NAME, FONT_SIZE)
+    val PRESENTATION_MODE_FONT = GROUP.registerEvent("Presentation.mode", FONT_SIZE)
+    val EDITOR_FONT = GROUP.registerEvent("Editor", FONT_NAME, FONT_SIZE, LINE_SPACING)
+    val IDE_EDITOR_FONT = GROUP.registerEvent("IDE.editor", FONT_NAME, FONT_SIZE, LINE_SPACING)
+    val CONSOLE_FONT = GROUP.registerEvent("Console", FONT_NAME, FONT_SIZE, LINE_SPACING)
+    val QUICK_DOC_FONT = GROUP.registerEvent("QuickDoc", FONT_SIZE_STRING)
+  }
+
+  override fun getGroup(): EventLogGroup = GROUP
+
   override fun getMetrics(): Set<MetricEvent> {
     val scheme = EditorColorsManager.getInstance().globalScheme
     val ui = UISettings.shadowInstance
     val usages = mutableSetOf(
-      newFontMetric("UI", ui.fontFace, ui.fontSize, null),
-      newFontMetric("Presentation.mode", null, ui.presentationModeFontSize, null)
+      UI_FONT.metric(ui.fontFace, ui.fontSize),
+      PRESENTATION_MODE_FONT.metric(ui.presentationModeFontSize)
     )
     if (!scheme.isUseAppFontPreferencesInEditor) {
-      usages += newFontMetric("Editor", scheme.editorFontName, scheme.editorFontSize, scheme.lineSpacing)
+      usages += EDITOR_FONT.metric(scheme.editorFontName, scheme.editorFontSize, scheme.lineSpacing)
     }
     else {
       val appPrefs = AppEditorFontOptions.getInstance().fontPreferences
-      usages += newFontMetric("IDE.editor", appPrefs.fontFamily, appPrefs.getSize(appPrefs.fontFamily), appPrefs.lineSpacing)
+      usages += IDE_EDITOR_FONT.metric(appPrefs.fontFamily, appPrefs.getSize(appPrefs.fontFamily), appPrefs.lineSpacing)
     }
     if (!scheme.isUseEditorFontPreferencesInConsole) {
-      usages += newFontMetric("Console", scheme.consoleFontName, scheme.consoleFontSize, scheme.consoleLineSpacing)
+      usages += CONSOLE_FONT.metric(scheme.consoleFontName, scheme.consoleFontSize, scheme.consoleLineSpacing)
     }
     val quickDocFontSize = PropertiesComponent.getInstance().getValue("quick.doc.font.size.v3")
     if (quickDocFontSize != null) {
-      usages += newMetric("QuickDoc", FeatureUsageData().addData("font_size", quickDocFontSize))
+      usages += QUICK_DOC_FONT.metric(quickDocFontSize)
     }
-
     return usages
   }
-
-  private fun newFontMetric(metricId: String, fontName: String?, size: Int?, lineSpacing: Float?): MetricEvent {
-    val data = FeatureUsageData()
-    fontName?.let { data.addData("font_name", it) }
-    size?.let { data.addData("font_size", it) }
-    lineSpacing?.let { data.addData("line_spacing", it) }
-    return MetricEvent(metricId, data)
-  }
-
-  override fun getGroupId(): String {
-    return "ui.fonts"
-  }
-
-  override fun getVersion(): Int = 3
 }

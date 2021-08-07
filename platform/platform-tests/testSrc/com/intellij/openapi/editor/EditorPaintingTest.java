@@ -17,6 +17,7 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.geom.Rectangle2D;
 import java.util.Collections;
 
 @TestDataPath("$CONTENT_ROOT/testData/editor/painting")
@@ -263,6 +264,35 @@ public class EditorPaintingTest extends EditorPaintingTestCase {
     checkResult();
   }
 
+  public void testCaretAtFoldRegion() throws Exception {
+    initText("test");
+    addCollapsedFoldRegion(0, 4, ".");
+    checkResultWithGutter();
+  }
+
+  public void testCustomFoldRegion() throws Exception {
+    initText("a\nb\nc");
+    addCustomLinesFolding(1, 1);
+    checkResultWithGutter();
+  }
+
+  public void testCustomFoldRegionWithCaret() throws Exception {
+    initText("a\n<caret>b\nc");
+    addCustomLinesFolding(1, 1);
+    checkResultWithGutter();
+  }
+
+  public void testCustomFoldRegionWithCaretAtEnd() throws Exception {
+    initText("a\nb<caret>\nc");
+    addCustomLinesFolding(1, 1);
+    checkResultWithGutter();
+  }
+
+  private void addCustomLinesFolding(int startLine, int endLine) {
+    FoldingModel foldingModel = getEditor().getFoldingModel();
+    foldingModel.runBatchFoldingOperation(() -> foldingModel.addCustomLinesFolding(startLine, endLine, new OurCustomFoldRegionRenderer()));
+  }
+
   private void runIndentsPass() {
     IndentsPass indentsPass = new IndentsPass(getProject(), getEditor(), getFile());
     indentsPass.doCollectInformation(new EmptyProgressIndicator());
@@ -316,6 +346,38 @@ public class EditorPaintingTest extends EditorPaintingTestCase {
     @Override
     public GutterIconRenderer calcGutterIconRenderer(@NotNull Inlay inlay) {
       return myGutterIconRenderer;
+    }
+  }
+
+  private static class OurCustomFoldRegionRenderer implements CustomFoldRegionRenderer {
+    private static final int WIDTH = 25;
+    private static final int HEIGHT = 15;
+
+    @Override
+    public int calcWidthInPixels(@NotNull CustomFoldRegion region) {
+      return WIDTH;
+    }
+
+    @Override
+    public int calcHeightInPixels(@NotNull CustomFoldRegion region) {
+      return HEIGHT;
+    }
+
+    @Override
+    public void paint(@NotNull CustomFoldRegion region,
+                      @NotNull Graphics2D g,
+                      @NotNull Rectangle2D targetRegion,
+                      @NotNull TextAttributes textAttributes) {
+      g.setColor(Color.pink);
+      Rectangle r = targetRegion.getBounds();
+      int startX = r.x;
+      int endX = r.x + r.width - 1;
+      int startY = r.y;
+      int endY = r.y + r.height - 1;
+      g.drawLine(startX, startY, startX, endY);
+      g.drawLine(startX, endY, endX, endY);
+      g.drawLine(endX, endY, endX, startY);
+      g.drawLine(endX, startY, startX, startY);
     }
   }
 }

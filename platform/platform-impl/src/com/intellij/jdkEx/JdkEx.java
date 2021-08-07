@@ -19,9 +19,10 @@ import java.util.List;
  * Provides extensions for OpenJDK API, implemented in JetBrains JDK.
  * For OpenJDK defaults to some meaningful results where applicable or otherwise throws runtime exception.
  *
+ * WARNING: For internal usage only.
+ *
  * @author tav
  */
-@ApiStatus.Experimental
 public final class JdkEx {
   @SuppressWarnings("unused")
   @NotNull

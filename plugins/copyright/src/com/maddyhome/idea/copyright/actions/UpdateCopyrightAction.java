@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.maddyhome.idea.copyright.actions;
 
@@ -14,6 +14,7 @@ import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
+import com.intellij.openapi.progress.PerformInBackgroundOption;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
@@ -111,41 +112,7 @@ public final class UpdateCopyrightAction extends BaseAnalysisAction {
   @Override
   protected void analyze(@NotNull final Project project, @NotNull final AnalysisScope scope) {
     PropertiesComponent.getInstance().setValue(UPDATE_EXISTING_COPYRIGHTS, String.valueOf(myUpdateExistingCopyrightsCb.isSelected()), "true");
-    final Map<PsiFile, Runnable> preparations = new LinkedHashMap<>();
-    Task.Backgroundable task = new Task.Backgroundable(project, CopyrightBundle.message("task.title.prepare.copyright"), true) {
-      @Override
-      public void run(@NotNull final ProgressIndicator indicator) {
-        scope.accept(new PsiElementVisitor() {
-          @Override
-          public void visitFile(@NotNull final PsiFile file) {
-            if (indicator.isCanceled()) {
-              return;
-            }
-            final Module module = ModuleUtilCore.findModuleForPsiElement(file);
-            final UpdateCopyrightProcessor processor = new UpdateCopyrightProcessor(project, module, file);
-            final Runnable runnable = processor.preprocessFile(file, myUpdateExistingCopyrightsCb.isSelected());
-            if (runnable != EmptyRunnable.getInstance()) {
-              preparations.put(file, runnable);
-            }
-          }
-        });
-      }
-
-      @Override
-      public void onSuccess() {
-        if (!preparations.isEmpty()) {
-          if (!FileModificationService.getInstance().preparePsiElementsForWrite(preparations.keySet())) return;
-          final SequentialModalProgressTask progressTask = new SequentialModalProgressTask(project, UpdateCopyrightProcessor.TITLE.get(), true);
-          progressTask.setMinIterationTime(200);
-          progressTask.setTask(new UpdateCopyrightSequentialTask(preparations, progressTask));
-          CommandProcessor.getInstance().executeCommand(project, () -> {
-            CommandProcessor.getInstance().markCurrentCommandAsGlobal(project);
-            ProgressManager.getInstance().run(progressTask);
-          }, getTemplatePresentation().getText(), null);
-        }
-      }
-    };
-
+    Task.Backgroundable task = new UpdateCopyrightTask(project, scope, myUpdateExistingCopyrightsCb.isSelected(), PerformInBackgroundOption.ALWAYS_BACKGROUND);
     ProgressManager.getInstance().run(task);
   }
 
@@ -195,5 +162,54 @@ public final class UpdateCopyrightAction extends BaseAnalysisAction {
     }
 
     return true;
+  }
+
+  public static class UpdateCopyrightTask extends Task.ConditionalModal {
+    private final Map<PsiFile, Runnable> preparations = new LinkedHashMap<>();
+    private @NotNull final AnalysisScope myScope;
+    private final boolean myAllowReplacement;
+
+    public UpdateCopyrightTask(@NotNull Project project,
+                               @NotNull AnalysisScope scope,
+                               boolean allowReplacement,
+                               @NotNull PerformInBackgroundOption options) {
+      super(project, CopyrightBundle.message("task.title.prepare.copyright"), true, options);
+      myScope = scope;
+      myAllowReplacement = allowReplacement;
+    }
+
+    @Override
+    public void run(@NotNull final ProgressIndicator indicator) {
+      myScope.accept(new PsiElementVisitor() {
+        @Override
+        public void visitFile(@NotNull final PsiFile file) {
+          if (indicator.isCanceled()) {
+            return;
+          }
+          final Module module = ModuleUtilCore.findModuleForPsiElement(file);
+          final UpdateCopyrightProcessor processor = new UpdateCopyrightProcessor(file.getProject(), module, file);
+          
+          final Runnable runnable = processor.preprocessFile(file, myAllowReplacement);
+          if (runnable != EmptyRunnable.getInstance()) {
+            preparations.put(file, runnable);
+          }
+        }
+      });
+    }
+
+    @Override
+    public void onSuccess() {
+      if (!preparations.isEmpty()) {
+        if (!FileModificationService.getInstance().preparePsiElementsForWrite(preparations.keySet())) return;
+        final SequentialModalProgressTask
+          progressTask = new SequentialModalProgressTask(myProject, UpdateCopyrightProcessor.TITLE.get(), true);
+        progressTask.setMinIterationTime(200);
+        progressTask.setTask(new UpdateCopyrightSequentialTask(preparations, progressTask));
+        CommandProcessor.getInstance().executeCommand(myProject, () -> {
+          CommandProcessor.getInstance().markCurrentCommandAsGlobal(myProject);
+          ProgressManager.getInstance().run(progressTask);
+        }, UpdateCopyrightProcessor.TITLE.get(), null);
+      }
+    }
   }
 }

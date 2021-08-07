@@ -740,8 +740,6 @@ public class PlatformIconsAPITest extends TestCase {
     "/nodes/tabPin.png",
     "/nodes/tag.png",
     "/nodes/testSourceFolder.png",
-    "/nodes/treeDownArrow.png",
-    "/nodes/treeRightArrow.png",
     "/nodes/undeploy.png",
     "/nodes/unknownJdk.png",
     "/nodes/upFolder.png",

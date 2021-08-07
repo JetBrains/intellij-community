@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.appengine.sdk.impl;
 
 import com.intellij.appengine.sdk.AppEngineSdk;
@@ -14,8 +14,6 @@ import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.util.containers.ContainerUtil;
-import gnu.trove.THashMap;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.appengine.model.impl.JpsAppEngineModuleExtensionImpl;
@@ -153,7 +151,7 @@ public class AppEngineSdkImpl implements AppEngineSdk {
       }
       catch (IOException e) {
         LOG.error(e);
-        myMethodsBlackList = new THashMap<>();
+        myMethodsBlackList = new HashMap<>();
       }
     }
     final Set<String> methods = myMethodsBlackList.get(className);
@@ -223,7 +221,7 @@ public class AppEngineSdkImpl implements AppEngineSdk {
   private Map<String, Set<String>> loadBlackList() throws IOException {
     final InputStream stream = getClass().getResourceAsStream("/data/methodsBlacklist.txt");
     LOG.assertTrue(stream != null, "/data/methodsBlacklist.txt not found");
-    final THashMap<String, Set<String>> map = new THashMap<>();
+    final Map<String, Set<String>> map = new HashMap<>();
     BufferedReader reader = new BufferedReader(new InputStreamReader(stream, StandardCharsets.UTF_8));
     try {
       String line;
@@ -231,7 +229,7 @@ public class AppEngineSdkImpl implements AppEngineSdk {
         final int i = line.indexOf(':');
         String className = line.substring(0, i);
         String methods = line.substring(i + 1);
-        map.put(className, new THashSet<>(StringUtil.split(methods, ",")));
+        map.put(className, new HashSet<>(StringUtil.split(methods, ",")));
       }
     }
     finally {

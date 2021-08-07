@@ -1,7 +1,7 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.rmi;
 
-class IdeaWatchdogImpl implements IdeaWatchdog {
+final class IdeaWatchdogImpl implements IdeaWatchdog {
   volatile long lastTimePinged;
   volatile boolean dead = false;
 
@@ -13,6 +13,11 @@ class IdeaWatchdogImpl implements IdeaWatchdog {
   @Override
   public void die() {
     dead = true;
+  }
+
+  @Override
+  public void dieNow(int exitCode) {
+    System.exit(exitCode);
   }
 
   @Override

@@ -28,13 +28,6 @@ class VcsOptionsUsagesCollector : ProjectUsagesCollector() {
     addBoolIfDiffers(set, conf, confDefault, { it.MAKE_NEW_CHANGELIST_ACTIVE }, "changelist.make.new.active")
     addBoolIfDiffers(set, conf, confDefault, { it.PRESELECT_EXISTING_CHANGELIST }, "changelist.preselect.existing")
 
-    addBoolIfDiffers(set, conf, confDefault, { it.PERFORM_UPDATE_IN_BACKGROUND }, "perform.update.in.background")
-    addBoolIfDiffers(set, conf, confDefault, { it.PERFORM_COMMIT_IN_BACKGROUND }, "perform.commit.in.background")
-    addBoolIfDiffers(set, conf, confDefault, { it.PERFORM_EDIT_IN_BACKGROUND }, "perform.edit.in.background")
-    addBoolIfDiffers(set, conf, confDefault, { it.PERFORM_CHECKOUT_IN_BACKGROUND }, "perform.checkout.in.background")
-    addBoolIfDiffers(set, conf, confDefault, { it.PERFORM_ADD_REMOVE_IN_BACKGROUND }, "perform.add_remove.in.background")
-    addBoolIfDiffers(set, conf, confDefault, { it.PERFORM_ROLLBACK_IN_BACKGROUND }, "perform.rollback.in.background")
-
     addBoolIfDiffers(set, conf, confDefault, { it.CHECK_CODE_SMELLS_BEFORE_PROJECT_COMMIT }, "commit.before.check.code.smell")
     addBoolIfDiffers(set, conf, confDefault, { it.CHECK_CODE_CLEANUP_BEFORE_PROJECT_COMMIT }, "commit.before.check.code.cleanup")
     addBoolIfDiffers(set, conf, confDefault, { it.CHECK_NEW_TODO }, "commit.before.check.todo")

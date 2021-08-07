@@ -165,8 +165,8 @@ public class MoveFilesOrDirectoriesProcessor extends BaseRefactoringProcessor {
         }
       }
 
-      Map<PsiFile, List<UsageInfo>> foundUsages = branch == null ? myFoundUsages : EntryStream
-        .of(myFoundUsages)
+      Map<PsiFile, List<UsageInfo>> foundUsages = branch == null ? myFoundUsages :
+         EntryStream.of(myFoundUsages)
         .mapValues(infos -> ContainerUtil.map(infos, info -> ((BranchableUsageInfo) info).obtainBranchCopy(branch)))
         .toMap();
 

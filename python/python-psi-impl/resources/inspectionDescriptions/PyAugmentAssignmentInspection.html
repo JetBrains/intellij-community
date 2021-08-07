@@ -1,5 +1,17 @@
 <html>
 <body>
-This inspection highlights assignment that can be replaced with augmented assignment.
+<p>Reports assignments that can be replaced with augmented assignments.</p>
+<p><b>Example:</b></p>
+<pre style="font-family: monospace">
+a = 23
+b = 3
+a = a + b
+</pre>
+<p>After the quick-fix is applied, the code changes to:</p>
+<pre style="font-family: monospace">
+a = 23
+b = 3
+a += b
+</pre>
 </body>
 </html>

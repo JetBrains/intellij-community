@@ -5,10 +5,13 @@ import com.intellij.execution.Executor;
 import com.intellij.execution.RunManager;
 import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.actions.ChooseRunConfigurationPopup;
+import com.intellij.execution.impl.statistics.RunConfigurationOptionUsagesCollector;
 import com.intellij.ide.actions.runAnything.RunAnythingRunConfigurationItem;
 import com.intellij.ide.actions.runAnything.RunAnythingUtil;
 import com.intellij.ide.actions.runAnything.items.RunAnythingItem;
+import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -30,12 +33,17 @@ public abstract class RunAnythingRunConfigurationProvider extends RunAnythingPro
     assert executor != null;
 
     Object value = wrapper.getValue();
-    if (value instanceof RunnerAndConfigurationSettings &&
-        !RunManager.getInstance(fetchProject(dataContext)).hasSettings((RunnerAndConfigurationSettings)value)) {
-      RunManager.getInstance(fetchProject(dataContext)).addConfiguration((RunnerAndConfigurationSettings)value);
+    Project project = fetchProject(dataContext);
+    if (value instanceof RunnerAndConfigurationSettings) {
+      RunnerAndConfigurationSettings runnerAndConfigurationSettings = (RunnerAndConfigurationSettings)value;
+      if (!RunManager.getInstance(project).hasSettings(runnerAndConfigurationSettings)) {
+        RunManager.getInstance(project).addConfiguration(runnerAndConfigurationSettings);
+        RunConfigurationOptionUsagesCollector.logAddNew(
+          project, runnerAndConfigurationSettings.getType().getId(), ActionPlaces.RUN_ANYTHING_POPUP);
+      }
     }
 
-    wrapper.perform(fetchProject(dataContext), executor, dataContext);
+    wrapper.perform(project, executor, dataContext);
   }
 
   @Nullable

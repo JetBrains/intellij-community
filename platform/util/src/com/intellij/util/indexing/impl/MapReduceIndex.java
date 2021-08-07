@@ -77,8 +77,8 @@ public abstract class MapReduceIndex<Key,Value, Input> implements InvertedIndex<
                            @NotNull IndexStorageLayout<Key, Value> indexStorageLayout,
                            @Nullable ReadWriteLock lock) throws IOException {
     this(extension,
-         indexStorageLayout.createOrClearIndexStorage(),
-         indexStorageLayout.createOrClearForwardIndex(),
+         indexStorageLayout.openIndexStorage(),
+         indexStorageLayout.openForwardIndex(),
          indexStorageLayout.getForwardIndexAccessor(),
          lock);
   }
@@ -103,7 +103,7 @@ public abstract class MapReduceIndex<Key,Value, Input> implements InvertedIndex<
     try {
       myForwardIndex = forwardIndex == null ? null : forwardIndex.compute();
     } catch (IOException e) {
-      clearAndDispose();
+      tryDispose();
       throw e;
     }
     myForwardIndexAccessor = forwardIndexAccessor;
@@ -111,12 +111,15 @@ public abstract class MapReduceIndex<Key,Value, Input> implements InvertedIndex<
     LOG.assertTrue(myForwardIndex instanceof IntForwardIndex == myForwardIndexAccessor instanceof IntForwardIndexAccessor,
                    "Invalid index configuration for " + myIndexId);
     myLock = lock == null ? new ReentrantReadWriteLock() : lock;
-    myValueSerializationChecker = IndexDebugProperties.DEBUG ? new ValueSerializationChecker<>(extension) : null;
+    myValueSerializationChecker = IndexDebugProperties.DEBUG ? new ValueSerializationChecker<>(extension, getSerializationProblemReporter()) : null;
   }
 
-  protected void clearAndDispose() {
+  protected @NotNull ValueSerializationProblemReporter getSerializationProblemReporter() {
+    return ValueSerializationChecker.DEFAULT_SERIALIZATION_PROBLEM_REPORTER;
+  }
+
+  protected void tryDispose() {
     try {
-      clear();
       dispose();
     } catch (Exception e) {
       LOG.info(e);
@@ -206,15 +209,19 @@ public abstract class MapReduceIndex<Key,Value, Input> implements InvertedIndex<
     myLowMemoryFlusher.stop();
     myLock.writeLock().lock();
     try {
+      myDisposed = true;
       doDispose();
     }
     catch (StorageException e) {
       LOG.error(e);
     }
     finally {
-      myDisposed = true;
       myLock.writeLock().unlock();
     }
+  }
+
+  protected boolean isDisposed() {
+    return myDisposed;
   }
 
   protected void doDispose() throws StorageException {
@@ -236,7 +243,7 @@ public abstract class MapReduceIndex<Key,Value, Input> implements InvertedIndex<
   public ValueContainer<Value> getData(@NotNull final Key key) throws StorageException {
     myLock.readLock().lock();
     try {
-      if (myDisposed) {
+      if (isDisposed()) {
         return new ValueContainerImpl<>();
       }
       IndexDebugProperties.DEBUG_INDEX_ID.set(myIndexId);
@@ -276,6 +283,11 @@ public abstract class MapReduceIndex<Key,Value, Input> implements InvertedIndex<
     return new IndexUpdateComputable(updateData, data);
   }
 
+  @ApiStatus.Internal
+  protected void checkNonCancellableSection() {
+
+  }
+
   protected void updateForwardIndex(int inputId, @NotNull InputData<Key, Value> data) throws IOException {
     if (myForwardIndex != null) {
       if (myUseIntForwardIndex) {
@@ -305,7 +317,7 @@ public abstract class MapReduceIndex<Key,Value, Input> implements InvertedIndex<
     }
     Map<Key, Value> data = mapByIndexer(inputId,  content);
     if (myValueSerializationChecker != null) {
-      myValueSerializationChecker.checkValuesHaveProperEqualsAndHashCode(data, content);
+      myValueSerializationChecker.checkValueSerialization(data, content);
     }
     checkCanceled();
     return new InputData<>(data);
@@ -393,6 +405,7 @@ public abstract class MapReduceIndex<Key,Value, Input> implements InvertedIndex<
 
     @Override
     public Boolean compute() {
+      checkNonCancellableSection();
       try {
         MapReduceIndex.this.updateWithMap(myUpdateData);
       }

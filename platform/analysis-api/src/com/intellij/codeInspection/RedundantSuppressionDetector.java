@@ -33,6 +33,7 @@ public interface RedundantSuppressionDetector {
   /**
    * @return range with {@code toolId} to highlight in the editor
    */
+  @Nullable
   default TextRange getHighlightingRange(PsiElement elementWithSuppression, String toolId) {
     String suppressionElementText = elementWithSuppression.getText();
     int idx = StringUtil.indexOfIgnoreCase(suppressionElementText, toolId, 0);

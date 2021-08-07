@@ -1,36 +1,32 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package training.dsl.impl
 
-import com.intellij.openapi.application.invokeLater
+import com.intellij.ide.IdeBundle
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.ui.popup.Balloon
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.ui.popup.JBPopupListener
 import com.intellij.openapi.ui.popup.LightweightWindowEvent
-import com.intellij.ui.UIBundle
 import com.intellij.ui.awt.RelativePoint
 import com.intellij.util.Alarm
+import com.intellij.util.ui.JBUI
 import training.dsl.LearningBalloonConfig
 import training.dsl.TaskContext
 import training.dsl.TaskRuntimeContext
 import training.learn.ActionsRecorder
-import training.learn.LearnBundle
-import training.learn.lesson.LessonManager
 import training.ui.LearningUiHighlightingManager
 import training.ui.LessonMessagePane
 import training.ui.MessageFactory
 import training.ui.UISettings
-import java.awt.Component
-import java.awt.Dimension
-import java.awt.Point
+import java.awt.*
 import java.awt.event.ActionEvent
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.Future
 import javax.swing.*
 import javax.swing.border.EmptyBorder
+import javax.swing.tree.TreePath
 
-data class TaskProperties(var hasDetection: Boolean = false, var messagesNumber: Int = 0)
+internal data class TaskProperties(var hasDetection: Boolean = false, var messagesNumber: Int = 0)
 
 internal object LessonExecutorUtil {
   /** This task is a real task with some event required and corresponding text. Used for progress indication. */
@@ -46,67 +42,90 @@ internal object LessonExecutorUtil {
     return fakeTaskContext.messages
   }
 
-  fun showBalloonMessage(text: String, ui: JComponent, balloonConfig: LearningBalloonConfig, actionsRecorder: ActionsRecorder, project: Project) {
+  fun showBalloonMessage(text: String,
+                         ui: JComponent,
+                         balloonConfig: LearningBalloonConfig,
+                         actionsRecorder: ActionsRecorder,
+                         lessonExecutor: LessonExecutor) {
+    if (balloonConfig.delayBeforeShow == 0) {
+      showBalloonMessage(text, ui, balloonConfig, actionsRecorder, lessonExecutor, true)
+    }
+    else {
+      val delayed = {
+        if (!actionsRecorder.disposed) {
+          showBalloonMessage(text, ui, balloonConfig, actionsRecorder, lessonExecutor, true)
+        }
+      }
+      Alarm().addRequest(delayed, balloonConfig.delayBeforeShow)
+    }
+  }
+
+  private fun showBalloonMessage(text: String,
+                                 ui: JComponent,
+                                 balloonConfig: LearningBalloonConfig,
+                                 actionsRecorder: ActionsRecorder,
+                                 lessonExecutor: LessonExecutor,
+                                 useAnimationCycle: Boolean) {
     val messages = MessageFactory.convert(text)
     val messagesPane = LessonMessagePane(false)
+    messagesPane.border = null
     messagesPane.setBounds(0, 0, balloonConfig.width.takeIf { it != 0 } ?: 500, 1000)
     messagesPane.isOpaque = false
-    messagesPane.addMessage(messages)
+    messagesPane.addMessage(messages, LessonMessagePane.MessageProperties(visualIndex = lessonExecutor.visualIndexNumber))
 
     val preferredSize = messagesPane.preferredSize
 
-    messagesPane.toolTipText = LearnBundle.message("learn.stop.hint")
     val balloonPanel = JPanel()
-    balloonPanel.border = EmptyBorder(8, 8, 8, 8)
     balloonPanel.isOpaque = false
     balloonPanel.layout = BoxLayout(balloonPanel, BoxLayout.Y_AXIS)
-    var height = preferredSize.height + 16
-    val width = (if (balloonConfig.width != 0) balloonConfig.width else (preferredSize.width + 2)) + 16
+    balloonPanel.border = UISettings.instance.balloonAdditionalBorder
+    val insets = UISettings.instance.balloonAdditionalBorder.borderInsets
+
+    var height = preferredSize.height + insets.top + insets.bottom
+    val width = (if (balloonConfig.width != 0) balloonConfig.width else (preferredSize.width + insets.left + insets.right + 6))
     balloonPanel.add(messagesPane)
+    messagesPane.alignmentX = Component.LEFT_ALIGNMENT
     val gotItCallBack = balloonConfig.gotItCallBack
     val gotItButton = if (gotItCallBack != null) JButton().also {
       balloonPanel.add(it)
-      it.action = object : AbstractAction(UIBundle.message("got.it")) {
+      it.alignmentX = Component.LEFT_ALIGNMENT
+      it.border = EmptyBorder(JBUI.scale(10), UISettings.instance.balloonIndent, JBUI.scale(2), 0)
+      it.background = Color(0, true)
+      it.putClientProperty("gotItButton", true)
+      it.putClientProperty("JButton.backgroundColor", UISettings.instance.tooltipButtonBackgroundColor)
+      it.foreground = UISettings.instance.tooltipTextColor
+      it.action = object : AbstractAction(IdeBundle.message("got.it.button.name")) {
         override fun actionPerformed(e: ActionEvent?) {
           gotItCallBack()
         }
       }
-      it.isSelected = true
-      it.isFocusable = true
       height += it.preferredSize.height
     }
     else null
-    gotItButton?.isSelected = true
 
     balloonPanel.preferredSize = Dimension(width, height)
 
     val balloon = JBPopupFactory.getInstance().createBalloonBuilder(balloonPanel)
       .setCloseButtonEnabled(false)
-      .setAnimationCycle(0)
+      .setAnimationCycle(if (useAnimationCycle) balloonConfig.animationCycle else 0)
+      .setCornerToPointerDistance(balloonConfig.cornerToPointerDistance)
+      .setPointerSize(Dimension(16, 8))
       .setHideOnAction(false)
       .setHideOnClickOutside(false)
       .setBlockClicksThroughBalloon(true)
-      .setFillColor(UISettings.instance.backgroundColor)
-      .setBorderColor(UISettings.instance.activeTaskBorder)
+      .setFillColor(UISettings.instance.tooltipBackgroundColor)
+      .setBorderColor(UISettings.instance.tooltipBackgroundColor)
       .setHideOnCloseClick(false)
       .setDisposable(actionsRecorder)
-      .setCloseButtonEnabled(true)
       .createBalloon()
 
 
     balloon.addListener(object : JBPopupListener {
       override fun onClosed(event: LightweightWindowEvent) {
         val checkStopLesson = {
-          invokeLater {
-            if (actionsRecorder.disposed) return@invokeLater
-            val yesNo = Messages.showYesNoDialog(project, LearnBundle.message("learn.stop.lesson.question"), LearnBundle.message("learn.stop.lesson"), null)
-            if (yesNo == Messages.YES) {
-              LessonManager.instance.stopLesson()
-            }
-            else {
-              if (actionsRecorder.disposed) return@invokeLater
-              showBalloonMessage(text, ui, balloonConfig, actionsRecorder, project)
-            }
+          lessonExecutor.taskInvokeLater {
+            if (!actionsRecorder.disposed)
+              showBalloonMessage(text, ui, balloonConfig, actionsRecorder, lessonExecutor, false)
           }
         }
         Alarm().addRequest(checkStopLesson, 500) // it is a hacky a little bit
@@ -138,12 +157,12 @@ internal object LessonExecutorUtil {
 }
 
 
-
 private class ExtractTaskPropertiesContext(override val project: Project) : TaskContext() {
   var textCount = 0
   var hasDetection = false
 
   override fun text(text: String, useBalloon: LearningBalloonConfig?) {
+    if (useBalloon?.duplicateMessage == false) return
     textCount++
   }
 
@@ -154,6 +173,7 @@ private class ExtractTaskPropertiesContext(override val project: Project) : Task
   override fun trigger(checkId: (String) -> Boolean) {
     hasDetection = true
   }
+
   override fun <T> trigger(actionId: String, calculateState: TaskRuntimeContext.() -> T, checkState: TaskRuntimeContext.(T, T) -> Boolean) {
     hasDetection = true
   }
@@ -185,7 +205,32 @@ private class ExtractTaskPropertiesContext(override val project: Project) : Task
   }
 
   @Suppress("OverridingDeprecatedMember")
-  override fun triggerByUiComponentAndHighlight(findAndHighlight: TaskRuntimeContext.() -> () -> Component)  {
+  override fun <T : Component> triggerByFoundPathAndHighlightImpl(componentClass: Class<T>,
+                                                                  highlightBorder: Boolean,
+                                                                  highlightInside: Boolean,
+                                                                  usePulsation: Boolean,
+                                                                  selector: ((candidates: Collection<T>) -> T?)?,
+                                                                  rectangle: TaskRuntimeContext.(T) -> Rectangle?) {
+    hasDetection = true
+  }
+
+  @Suppress("OverridingDeprecatedMember")
+  override fun <ComponentType : Component> triggerByUiComponentAndHighlightImpl(componentClass: Class<ComponentType>,
+                                                                                highlightBorder: Boolean,
+                                                                                highlightInside: Boolean,
+                                                                                usePulsation: Boolean,
+                                                                                selector: ((candidates: Collection<ComponentType>) -> ComponentType?)?,
+                                                                                finderFunction: TaskRuntimeContext.(ComponentType) -> Boolean) {
+    hasDetection = true
+  }
+
+  override fun triggerByFoundListItemAndHighlight(options: LearningUiHighlightingManager.HighlightingOptions,
+                                                  checkList: TaskRuntimeContext.(list: JList<*>) -> Int?) {
+    hasDetection = true
+  }
+
+  override fun triggerByFoundPathAndHighlight(options: LearningUiHighlightingManager.HighlightingOptions,
+                                              checkTree: TaskRuntimeContext.(tree: JTree) -> TreePath?) {
     hasDetection = true
   }
 
@@ -201,6 +246,7 @@ private class ExtractTaskPropertiesContext(override val project: Project) : Task
 private class ExtractTextTaskContext(override val project: Project) : TaskContext() {
   val messages = ArrayList<String>()
   override fun text(text: String, useBalloon: LearningBalloonConfig?) {
+    if (useBalloon?.duplicateMessage == false) return
     messages.add(text)
   }
 }

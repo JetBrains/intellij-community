@@ -6,6 +6,7 @@ import com.intellij.facet.mock.MockFacetType
 import com.intellij.facet.mock.registerFacetType
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ex.PathManagerEx
+import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.module.ConfigurationErrorDescription
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.module.impl.ProjectLoadingErrorsHeadlessNotifier
@@ -18,8 +19,15 @@ import com.intellij.packaging.artifacts.ArtifactManager
 import com.intellij.packaging.impl.elements.FileCopyPackagingElement
 import com.intellij.testFramework.*
 import com.intellij.testFramework.configurationStore.copyFilesAndReloadProject
+import com.intellij.workspaceModel.ide.JpsImportedEntitySource
+import com.intellij.workspaceModel.ide.WorkspaceModel
 import com.intellij.workspaceModel.ide.impl.jps.serialization.*
+import com.intellij.workspaceModel.storage.DummyParentEntitySource
+import com.intellij.workspaceModel.storage.bridgeEntities.ExternalSystemModuleOptionsEntity
+import com.intellij.workspaceModel.storage.bridgeEntities.ModuleCustomImlDataEntity
+import com.intellij.workspaceModel.storage.bridgeEntities.ModuleEntity
 import org.assertj.core.api.Assertions.assertThat
+import org.junit.Assume.assumeTrue
 import org.junit.ClassRule
 import org.junit.Rule
 import org.junit.Test
@@ -86,11 +94,15 @@ class ReloadProjectTest {
   @Test
   fun `change artifact`() {
     loadProjectAndCheckResults("changeArtifact/initial") { project ->
-      val artifact = ArtifactManager.getInstance(project).artifacts.single()
+      val artifact = runReadAction {
+        ArtifactManager.getInstance(project).artifacts.single()
+      }
       assertThat(artifact.name).isEqualTo("a")
       assertThat((artifact.rootElement.children.single() as FileCopyPackagingElement).filePath).endsWith("/a.txt")
       copyFilesAndReload(project, "changeArtifact/update")
-      val artifact2 = ArtifactManager.getInstance(project).artifacts.single()
+      val artifact2 = runReadAction {
+        ArtifactManager.getInstance(project).artifacts.single()
+      }
       assertThat(artifact2.name).isEqualTo("a")
       assertThat((artifact2.rootElement.children.single() as FileCopyPackagingElement).filePath).endsWith("/bbb.txt")
     }
@@ -99,7 +111,7 @@ class ReloadProjectTest {
   @Test
   fun `change iml file content to invalid xml`() {
     val errors = ArrayList<ConfigurationErrorDescription>()
-    ProjectLoadingErrorsHeadlessNotifier.setErrorHandler(errors::add, disposable.disposable)
+    ProjectLoadingErrorsHeadlessNotifier.setErrorHandler(disposable.disposable, errors::add)
     loadProjectAndCheckResults("changeImlContentToInvalidXml/initial") { project ->
       copyFilesAndReload(project, "changeImlContentToInvalidXml/update")
       assertThat(ModuleManager.getInstance(project).modules.single().name).isEqualTo("foo")
@@ -120,7 +132,14 @@ class ReloadProjectTest {
       copyFilesAndReload(project, "facet-in-module-with-custom-storage/update")
       val changedFacet = FacetManager.getInstance(module).getFacetByType(MockFacetType.ID)!!
       assertThat(changedFacet.configuration.data).isEqualTo("changed-data")
-    }
+
+      val entityStorage = WorkspaceModel.getInstance(project).entityStorage.current
+      assumeTrue(entityStorage.entities(ModuleEntity::class.java).single().entitySource is DummyParentEntitySource)
+      assumeTrue(entityStorage.entities(ModuleCustomImlDataEntity::class.java).single().entitySource is JpsImportedEntitySource)
+      val moduleOptionsEntity = entityStorage.entities(ExternalSystemModuleOptionsEntity::class.java).single()
+      assertThat(moduleOptionsEntity.externalSystem).isEqualTo("GRADLE")
+      assertThat(moduleOptionsEntity.externalSystemModuleVersion).isEqualTo("42.0")
+     }
   }
 
   private suspend fun copyFilesAndReload(project: Project, relativePath: String) {

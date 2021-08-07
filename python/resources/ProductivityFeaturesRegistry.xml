@@ -8,7 +8,7 @@
       successive-show="5"/>
     <feature
       id="navigation.popup.file"
-      tip-file="GoToClass.html"
+      tip-file="GoToFile.html"
       min-usage-count="2"
       first-show="3"
       successive-show="5"/>

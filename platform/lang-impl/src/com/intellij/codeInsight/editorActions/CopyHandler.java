@@ -3,8 +3,11 @@
 package com.intellij.codeInsight.editorActions;
 
 import com.intellij.ide.DataManager;
+import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.Editor;
@@ -16,15 +19,15 @@ import com.intellij.openapi.editor.actions.EditorActionUtil;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.impl.EditorCopyPasteHelperImpl;
 import com.intellij.openapi.ide.CopyPasteManager;
+import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.registry.Registry;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.SlowOperations;
-import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.concurrency.AppExecutorUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -61,7 +64,7 @@ public class CopyHandler extends EditorActionHandler implements CopyAction.Trans
 
     final SelectionModel selectionModel = editor.getSelectionModel();
     if (!selectionModel.hasSelection(true)) {
-      if (Registry.is(CopyAction.SKIP_COPY_AND_CUT_FOR_EMPTY_SELECTION_KEY)) {
+      if (CopyAction.isSkipCopyPasteForEmptySelection()) {
         return;
       }
       editor.getCaretModel().runForEachCaret(__ -> selectionModel.selectLineAtCaret());
@@ -70,6 +73,7 @@ public class CopyHandler extends EditorActionHandler implements CopyAction.Trans
     }
 
     Transferable transferable = getSelection(editor, project, file);
+    if (transferable == null) return;
 
     CopyPasteManager.getInstance().setContents(transferable);
     if (editor instanceof EditorEx) {
@@ -89,19 +93,36 @@ public class CopyHandler extends EditorActionHandler implements CopyAction.Trans
     return getSelection(editor, project, file);
   }
 
-  private static @NotNull Transferable getSelection(@NotNull Editor editor, @NotNull Project project, @NotNull PsiFile file) {
-    commitDocuments(editor, project);
+  /**
+   * @return transferable, or null if copy action was cancelled by a user
+   */
+  private static @Nullable Transferable getSelection(@NotNull Editor editor, @NotNull Project project, @NotNull PsiFile file) {
+    TypingActionsExtension typingActionsExtension = TypingActionsExtension.findForContext(project, editor);
+    try {
+      typingActionsExtension.startCopy(project, editor);
+      return ProgressManager.getInstance().runProcessWithProgressSynchronously(
+        () -> ReadAction.compute(() -> getSelectionAction(editor, project, file)),
+        ActionsBundle.message("action.EditorCopy.text"), true, project);
+    }
+    finally {
+      typingActionsExtension.endCopy(project, editor);
+    }
+  }
 
+  private static @NotNull Transferable getSelectionAction(@NotNull Editor editor, @NotNull Project project, @NotNull PsiFile file) {
     SelectionModel selectionModel = editor.getSelectionModel();
     final int[] startOffsets = selectionModel.getBlockSelectionStarts();
     final int[] endOffsets = selectionModel.getBlockSelectionEnds();
 
     final List<TextBlockTransferableData> transferableDataList = new ArrayList<>();
 
-    DumbService.getInstance(project).withAlternativeResolveEnabled(() -> SlowOperations.allowSlowOperations(() -> {
+    DumbService.getInstance(project).withAlternativeResolveEnabled(() -> {
       for (CopyPastePostProcessor<? extends TextBlockTransferableData> processor : CopyPastePostProcessor.EP_NAME.getExtensionList()) {
         try {
           transferableDataList.addAll(processor.collectTransferableData(file, editor, startOffsets, endOffsets));
+        }
+        catch (ProcessCanceledException ex) {
+          throw ex;
         }
         catch (IndexNotReadyException e) {
           LOG.debug(e);
@@ -110,7 +131,7 @@ public class CopyHandler extends EditorActionHandler implements CopyAction.Trans
           LOG.error(e);
         }
       }
-    }));
+    });
 
     String text = editor.getCaretModel().supportsMultipleCarets()
                   ? EditorCopyPasteHelperImpl.getSelectedTextForClipboard(editor, transferableDataList)
@@ -120,6 +141,9 @@ public class CopyHandler extends EditorActionHandler implements CopyAction.Trans
     for (CopyPastePreProcessor processor : CopyPastePreProcessor.EP_NAME.getExtensionList()) {
       try {
         escapedText = processor.preprocessOnCopy(file, startOffsets, endOffsets, rawText);
+      }
+      catch (ProcessCanceledException ex) {
+        throw ex;
       }
       catch (Throwable e) {
         LOG.error(e);
@@ -131,26 +155,5 @@ public class CopyHandler extends EditorActionHandler implements CopyAction.Trans
     return new TextBlockTransferable(escapedText != null ? escapedText : rawText,
                                      transferableDataList,
                                      escapedText != null ? new RawText(rawText) : null);
-  }
-
-  private static void commitDocuments(@NotNull Editor editor, @NotNull Project project) {
-    final List<CopyPastePostProcessor<? extends TextBlockTransferableData>> postProcessors =
-      ContainerUtil.filter(CopyPastePostProcessor.EP_NAME.getExtensionList(), p -> p.requiresAllDocumentsToBeCommitted(editor, project));
-    final List<CopyPastePreProcessor> preProcessors =
-      ContainerUtil.filter(CopyPastePreProcessor.EP_NAME.getExtensionList(), p -> p.requiresAllDocumentsToBeCommitted(editor, project));
-    final boolean commitAllDocuments = !preProcessors.isEmpty() || !postProcessors.isEmpty();
-    if (LOG.isDebugEnabled()) {
-      LOG.debug("CommitAllDocuments: " + commitAllDocuments);
-      if (commitAllDocuments) {
-        final String processorNames = StringUtil.join(preProcessors, ",") + "," + StringUtil.join(postProcessors, ",");
-        LOG.debug("Processors with commitAllDocuments requirement: [" + processorNames + "]");
-      }
-    }
-    if (commitAllDocuments) {
-      PsiDocumentManager.getInstance(project).commitAllDocuments();
-    }
-    else {
-      PsiDocumentManager.getInstance(project).commitDocument(editor.getDocument());
-    }
   }
 }

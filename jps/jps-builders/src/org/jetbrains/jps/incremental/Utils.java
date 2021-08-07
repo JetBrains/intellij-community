@@ -16,6 +16,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Collection;
 import java.util.Map;
+import java.util.function.Function;
 
 /**
  * @author Eugene Zhuravlev
@@ -44,7 +45,13 @@ public final class Utils {
     return getDataStorageRoot(ourSystemRoot, projectPath);
   }
 
+
   public static File getDataStorageRoot(final File systemRoot, String projectPath) {
+    return getDataStorageRoot(systemRoot, projectPath, s -> s.hashCode());
+  }
+
+  public static File getDataStorageRoot(final File systemRoot, String projectPath, Function<String, Integer> hashFunction) {
+
     projectPath = FileUtil.toCanonicalPath(projectPath);
     if (projectPath == null) {
       return null;
@@ -56,7 +63,7 @@ public final class Utils {
     final Path rootFile = Paths.get(projectPath);
     if (!Files.isDirectory(rootFile) && projectPath.endsWith(".ipr")) {
       name = StringUtil.trimEnd(rootFile.getFileName().toString(), ".ipr");
-      locationHash = projectPath.hashCode();
+      locationHash = hashFunction.apply(projectPath);
     }
     else {
       Path directoryBased = null;
@@ -73,7 +80,7 @@ public final class Utils {
         return null;
       }
       name = PathUtilRt.suggestFileName(JpsProjectLoader.getDirectoryBaseProjectName(directoryBased));
-      locationHash = directoryBased.toString().hashCode();
+      locationHash = hashFunction.apply(directoryBased.toString());
     }
 
     return new File(systemRoot, StringUtil.toLowerCase(name) + "_" + Integer.toHexString(locationHash));
@@ -96,6 +103,6 @@ public final class Utils {
     if (maxMbytes < 0) {
       return -1; // in case of int overflow, return -1 to let VM choose the heap size
     }
-    return Math.max(maxMbytes / 3, 256); // per-forked process: minimum 256 Mb, maximum 33% from JPS max heap size
+    return Math.max(maxMbytes, 256); // per-forked process: minimum 256 Mb
   }
 }

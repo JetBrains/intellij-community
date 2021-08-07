@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.server;
 
 import com.intellij.openapi.util.Comparing;
@@ -7,8 +7,6 @@ import com.intellij.util.ExceptionUtilRt;
 import com.intellij.util.Function;
 import com.intellij.util.ReflectionUtilRt;
 import com.intellij.util.containers.ContainerUtilRt;
-import gnu.trove.THashMap;
-import gnu.trove.THashSet;
 import org.apache.commons.cli.ParseException;
 import org.apache.maven.*;
 import org.apache.maven.artifact.Artifact;
@@ -417,7 +415,7 @@ public class Maven30ServerEmbedderImpl extends Maven3ServerEmbedder {
   }
 
   private static Collection<String> collectProfilesIds(List<Profile> profiles) {
-    Collection<String> result = new THashSet<String>();
+    Collection<String> result = new HashSet<String>();
     for (Profile each : profiles) {
       if (each.getId() != null) {
         result.add(each.getId());
@@ -698,7 +696,7 @@ public class Maven30ServerEmbedderImpl extends Maven3ServerEmbedder {
               }
 
               project.setArtifacts(artifacts);
-              executionResults.add(new MavenExecutionResult(project, dependencyResolutionResult, exceptions));
+              executionResults.add(new MavenExecutionResult(project, dependencyResolutionResult, exceptions, buildingResult.getProblems()));
             }
           }
         }
@@ -886,7 +884,7 @@ public class Maven30ServerEmbedderImpl extends Maven3ServerEmbedder {
   private MavenServerExecutionResult createExecutionResult(@Nullable File file, MavenExecutionResult result, DependencyNode rootNode)
     throws RemoteException {
     Collection<MavenProjectProblem> problems = MavenProjectProblem.createProblemsList();
-    THashSet<MavenId> unresolvedArtifacts = new THashSet<MavenId>();
+    Set<MavenId> unresolvedArtifacts = new HashSet<MavenId>();
 
     validate(file, result.getExceptions(), problems, unresolvedArtifacts);
 
@@ -978,7 +976,7 @@ public class Maven30ServerEmbedderImpl extends Maven3ServerEmbedder {
   }
 
   private Set<MavenId> retrieveUnresolvedArtifactIds() {
-    Set<MavenId> result = new THashSet<MavenId>();
+    Set<MavenId> result = new HashSet<MavenId>();
     // TODO collect unresolved artifacts
     //((CustomMaven3WagonManager)getComponent(WagonManager.class)).getUnresolvedCollector().retrieveUnresolvedIds(result);
     //((CustomMaven30ArtifactResolver)getComponent(ArtifactResolver.class)).getUnresolvedCollector().retrieveUnresolvedIds(result);
@@ -990,7 +988,7 @@ public class Maven30ServerEmbedderImpl extends Maven3ServerEmbedder {
   public MavenArtifact resolve(@NotNull MavenArtifactInfo info,
                                @NotNull List<MavenRemoteRepository> remoteRepositories,
                                MavenToken token)
-    throws RemoteException, MavenServerProcessCanceledException {
+    throws RemoteException {
     MavenServerUtil.checkToken(token);
     return doResolve(info, remoteRepositories);
   }
@@ -999,7 +997,7 @@ public class Maven30ServerEmbedderImpl extends Maven3ServerEmbedder {
   @Override
   public List<MavenArtifact> resolveTransitively(@NotNull List<MavenArtifactInfo> artifacts,
                                                  @NotNull List<MavenRemoteRepository> remoteRepositories, MavenToken token)
-    throws RemoteException, MavenServerProcessCanceledException {
+    throws RemoteException {
     MavenServerUtil.checkToken(token);
 
     try {
@@ -1014,7 +1012,7 @@ public class Maven30ServerEmbedderImpl extends Maven3ServerEmbedder {
         .resolveTransitively(toResolve, project, Collections.EMPTY_MAP, myLocalRepository, convertRepositories(remoteRepositories),
                              getComponent(ArtifactMetadataSource.class)).getArtifacts();
 
-      return MavenModelConverter.convertArtifacts(res, new THashMap<Artifact, MavenArtifact>(), getLocalRepositoryFile());
+      return MavenModelConverter.convertArtifacts(res, new HashMap<Artifact, MavenArtifact>(), getLocalRepositoryFile());
     }
     catch (ArtifactResolutionException e) {
       Maven3ServerGlobals.getLogger().info(e);

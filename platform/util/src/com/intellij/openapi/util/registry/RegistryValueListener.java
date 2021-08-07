@@ -15,12 +15,4 @@ public interface RegistryValueListener {
 
   default void afterValueChanged(@NotNull RegistryValue value) {
   }
-
-  /**
-   * @deprecated implement {@link RegistryValueListener} directly
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.2")
-  class Adapter implements RegistryValueListener {
-  }
 }

@@ -2,6 +2,9 @@
 <project version="4">
   <component name="EntryPointsManager">
     <entry_points version="2.0" />
+    <writeAnnotations>
+      <writeAnnotation name="com.sampullara.cli.Argument" />
+    </writeAnnotations>
   </component>
   <component name="FrameworkDetectionExcludesConfiguration" detection-enabled="false"/>
   <component name="IdProvider" IDEtalkID="88DB5D232B345F18EEFB2825E88EC093" />

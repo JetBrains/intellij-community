@@ -24,12 +24,8 @@ import org.jetbrains.annotations.Nullable;
  */
 public class UnnecessaryUnaryMinusInspectionTest extends LightJavaInspectionTestCase {
 
-  public void testPolyadicExpression() {
-    doStatementTest("int s = 1 + /*Unnecessary unary minus*/-/**/1 + 1;");
-  }
-
-  public void testNoWarningOnString() {
-    doStatementTest("String s = \"Hello World\" + -1 + \"asdf\";");
+  public void testUnaryMinus() {
+    doTest();
   }
 
   @Nullable

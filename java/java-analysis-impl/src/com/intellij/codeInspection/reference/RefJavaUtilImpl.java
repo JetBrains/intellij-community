@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.codeInspection.reference;
 
@@ -54,7 +54,7 @@ public class RefJavaUtilImpl extends RefJavaUtil {
                        public boolean visitAnnotation(@NotNull UAnnotation node) {
                          PsiClass javaClass = node.resolve();
                          if (javaClass != null) {
-                           final RefClassImpl refClass = (RefClassImpl)refFrom.getRefManager().getReference(javaClass.getOriginalElement());
+                           final RefElement refClass = refFrom.getRefManager().getReference(javaClass.getOriginalElement());
                            refFrom.addReference(refClass, javaClass.getOriginalElement(), decl, false, true, null);
                          }
                          return false;
@@ -78,8 +78,8 @@ public class RefJavaUtilImpl extends RefJavaUtil {
                                }
                                UClass target = UastContextKt.toUElement(classType.resolve(), UClass.class);
                                if (target != null) {
-                                 final RefClassImpl refClass = (RefClassImpl)refFrom.getRefManager().getReference(target.getSourcePsi());
-                                 refFrom.addReference(refClass, target.getSourcePsi(), decl, false, true, null);
+                                 final RefElement refElement = refFrom.getRefManager().getReference(target.getSourcePsi());
+                                 refFrom.addReference(refElement, target.getSourcePsi(), decl, false, true, null);
                                }
                                return null;
                              }
@@ -100,8 +100,8 @@ public class RefJavaUtilImpl extends RefJavaUtil {
                          visitReferenceExpression(node);
                          if (target instanceof PsiClass) {
                            final PsiClass aClass = (PsiClass)target;
-                           final RefClassImpl refClass = (RefClassImpl)refFrom.getRefManager().getReference(aClass);
-                           refFrom.addReference(refClass, aClass, decl, false, true, null);
+                           final RefElement refElement = refFrom.getRefManager().getReference(aClass);
+                           refFrom.addReference(refElement, aClass, decl, false, true, null);
                          }
                          return false;
                        }
@@ -290,8 +290,9 @@ public class RefJavaUtilImpl extends RefJavaUtil {
                          for (UTypeReferenceExpression type : uClass.getUastSuperTypes()) {
                            type.accept(this);
                          }
-                         RefClassImpl refClass = (RefClassImpl)refFrom.getRefManager().getReference(uClass.getSourcePsi());
-                         refFrom.addReference(refClass, uClass.getSourcePsi(), decl, false, true, null);
+                         PsiElement sourcePsi = uClass.getSourcePsi();
+                         RefElement refWhat = refFrom.getRefManager().getReference(sourcePsi);
+                         refFrom.addReference(refWhat, sourcePsi, decl, false, true, null);
                          return true;
                        }
 
@@ -552,7 +553,12 @@ public class RefJavaUtilImpl extends RefJavaUtil {
       uElement = uElement.getUastParent();
     }
 
-    return uElement != null ? (RefClass)refManager.getReference(uElement.getSourcePsi()) : null;
+    if (uElement != null) {
+      RefElement reference = refManager.getReference(uElement.getSourcePsi());
+      return reference instanceof RefClass ? (RefClass)reference : null;
+    }
+
+    return null;
   }
 
   @Override

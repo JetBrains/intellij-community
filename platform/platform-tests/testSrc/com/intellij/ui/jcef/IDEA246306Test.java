@@ -4,6 +4,7 @@ package com.intellij.ui.jcef;
 import com.intellij.testFramework.ApplicationRule;
 import com.intellij.ui.scale.TestScaleHelper;
 import org.junit.After;
+import org.junit.Before;
 import org.junit.ClassRule;
 import org.junit.Test;
 
@@ -27,6 +28,11 @@ public class IDEA246306Test {
 
   @ClassRule public static final ApplicationRule appRule = new ApplicationRule();
 
+  @Before
+  public void before() {
+    TestScaleHelper.assumeStandalone();
+  }
+
   @After
   public void after() {
     TestScaleHelper.restoreProperties();
@@ -34,8 +40,6 @@ public class IDEA246306Test {
 
   @Test
   public void test() {
-    TestScaleHelper.assumeStandalone();
-
     new MyBrowser();
     new MyBrowser();
   }
@@ -43,12 +47,12 @@ public class IDEA246306Test {
   static class MyBrowser extends JBCefBrowser {
     static final JBCefClient ourClient = JBCefApp.getInstance().createClient();
 
-    final JBCefJSQuery myQuery = JBCefJSQuery.create(this);
+    final JBCefJSQuery myQuery = JBCefJSQuery.create((JBCefBrowserBase)this);
     final CountDownLatch latch = new CountDownLatch(1);
 
     @SuppressWarnings("ObjectToString")
     MyBrowser() {
-      super(ourClient, "chrome:version");
+      super(createBuilder().setClient(ourClient).setUrl("chrome:version"));
       myQuery.addHandler(result -> {
         System.out.println("query: result " + result + ", on " + this);
         if (!result.equals(this.toString())) {
@@ -58,17 +62,16 @@ public class IDEA246306Test {
         return null;
       });
 
-      invokeAndWaitForLoad(this, () -> SwingUtilities.invokeLater(() -> {
+      invokeAndWaitForLoad(this, () -> {
         JFrame frame = new JFrame(JBCefLoadHtmlTest.class.getName());
         frame.setSize(640, 480);
         frame.setLocationRelativeTo(null);
         frame.add(getComponent(), BorderLayout.CENTER);
         frame.setVisible(true);
-      }));
+      });
 
-      invokeAndWaitForLatch(latch, () -> SwingUtilities.invokeLater(() -> {
-        getCefBrowser().executeJavaScript(myQuery.inject("'" + this + "'"), getCefBrowser().getURL(), 0);
-      }));
+      invokeAndWaitForLatch(latch,
+        () -> getCefBrowser().executeJavaScript(myQuery.inject("'" + this + "'"), getCefBrowser().getURL(), 0));
     }
   }
 }

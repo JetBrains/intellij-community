@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.editor.actions;
 
 import com.intellij.ide.IdeBundle;
@@ -12,6 +12,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.PerformInBackgroundOption;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
@@ -21,7 +22,6 @@ import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileVisitor;
-import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
@@ -77,7 +77,7 @@ public class RemoveBomAction extends AnAction implements DumbAware {
     List<VirtualFile> filesToProcess = getFilesWithBom(files);
     if (filesToProcess.isEmpty()) return;
     List<VirtualFile> filesUnableToProcess = new ArrayList<>();
-    new Task.Backgroundable(getEventProject(e), IdeBundle.message("removing.BOM"), true, () -> false) {
+    new Task.Backgroundable(getEventProject(e), IdeBundle.message("removing.BOM"), true, PerformInBackgroundOption.DEAF) {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
         indicator.setIndeterminate(false);
@@ -87,7 +87,7 @@ public class RemoveBomAction extends AnAction implements DumbAware {
           indicator.setFraction(i*1.0/filesToProcess.size());
           indicator.setText2(StringUtil.shortenPathWithEllipsis(virtualFile.getPresentableUrl(), 40));
           byte[] bom = virtualFile.getBOM();
-          if (virtualFile instanceof NewVirtualFile && bom != null) {
+          if (bom != null) {
             if (isBOMMandatory(virtualFile) ) {
               filesUnableToProcess.add(virtualFile);
             }
@@ -115,14 +115,13 @@ public class RemoveBomAction extends AnAction implements DumbAware {
 
   private static void doRemoveBOM(@NotNull VirtualFile virtualFile, byte @NotNull [] bom) {
     virtualFile.setBOM(null);
-    NewVirtualFile file = (NewVirtualFile)virtualFile;
     try {
-      byte[] bytes = file.contentsToByteArray();
+      byte[] bytes = virtualFile.contentsToByteArray();
       byte[] contentWithStrippedBom = Arrays.copyOfRange(bytes, bom.length, bytes.length);
-      WriteAction.runAndWait(() -> file.setBinaryContent(contentWithStrippedBom));
+      WriteAction.runAndWait(() -> virtualFile.setBinaryContent(contentWithStrippedBom));
     }
     catch (IOException ex) {
-      LOG.warn("Unexpected exception occurred on attempt to remove BOM from file " + file, ex);
+      LOG.warn("Unexpected exception occurred on attempt to remove BOM from file " + virtualFile, ex);
     }
   }
 

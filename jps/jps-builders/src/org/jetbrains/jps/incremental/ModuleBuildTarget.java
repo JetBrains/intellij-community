@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.jps.incremental;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -6,6 +6,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.FileCollectionFactory;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.ProjectPaths;
@@ -34,6 +35,8 @@ import org.jetbrains.jps.model.module.JpsTypedModuleSourceRoot;
 import org.jetbrains.jps.service.JpsServiceManager;
 
 import java.io.File;
+import java.io.FileFilter;
+import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -88,7 +91,7 @@ public final class ModuleBuildTarget extends JVMModuleBuildTarget<JavaSourceRoot
   }
 
   @Override
-  public final boolean isCompiledBeforeModuleLevelBuilders() {
+  public boolean isCompiledBeforeModuleLevelBuilders() {
     return false;
   }
 
@@ -160,8 +163,8 @@ public final class ModuleBuildTarget extends JVMModuleBuildTarget<JavaSourceRoot
           excludes.add(outputDir);
         }
       }
-
-      roots.add(new JavaSourceRootDescriptor(sourceRoot.getFile(), this, false, false, packagePrefix, excludes));
+      FileFilter filterForExcludedPatterns = index.getModuleFileFilterHonorExclusionPatterns(myModule);
+      roots.add(new JavaSourceRootDescriptor(sourceRoot.getFile(), this, false, false, packagePrefix, excludes, filterForExcludedPatterns));
     }
     return roots;
   }
@@ -177,7 +180,7 @@ public final class ModuleBuildTarget extends JVMModuleBuildTarget<JavaSourceRoot
     final JpsModule module = getModule();
     final PathRelativizerService relativizer = pd.dataManager.getRelativizer();
 
-    final StringBuilder logBuilder = LOG.isDebugEnabled()? new StringBuilder() : null;
+    final StringBuilder logBuilder = LOG.isDebugEnabled() ? new StringBuilder() : null;
 
     int fingerprint = getDependenciesFingerprint(logBuilder, relativizer);
 
@@ -219,7 +222,27 @@ public final class ModuleBuildTarget extends JVMModuleBuildTarget<JavaSourceRoot
     final String hash = Integer.toHexString(fingerprint);
     out.write(hash);
     if (logBuilder != null) {
-      LOG.debug("Configuration hash for " + getPresentableName() + ": " + hash + "\n" + logBuilder);
+      File configurationTextFile = new File(pd.getTargetsState().getDataPaths().getTargetDataRoot(this), "config.dat.debug.txt");
+      @NonNls String oldText;
+      try {
+        oldText = FileUtil.loadFile(configurationTextFile);
+      }
+      catch (IOException e) {
+        oldText = null;
+      }
+      String newText = logBuilder.toString();
+      if (!newText.equals(oldText)) {
+        if (oldText != null) {
+          LOG.debug("Configuration differs from the last recorded one for " + getPresentableName() + ".\nRecorded configuration:\n" + oldText +
+                    "\nCurrent configuration (hash=" + hash + "):\n" + newText);
+        }
+        try {
+          FileUtil.writeToFile(configurationTextFile, newText);
+        }
+        catch (IOException e) {
+          LOG.debug(e);
+        }
+      }
     }
   }
 

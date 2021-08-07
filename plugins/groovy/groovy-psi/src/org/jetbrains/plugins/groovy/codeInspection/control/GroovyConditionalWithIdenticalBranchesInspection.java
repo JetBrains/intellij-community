@@ -49,9 +49,11 @@ public class GroovyConditionalWithIdenticalBranchesInspection extends BaseInspec
 
     @Override
     public void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) throws IncorrectOperationException {
-      final PsiElement element = descriptor.getPsiElement();
-      if (!(element instanceof GrConditionalExpression)) return;
-      final GrConditionalExpression expression = (GrConditionalExpression)element;
+      PsiElement element = descriptor.getPsiElement();
+      if (element == null) return;
+      final PsiElement parent = element.getParent();
+      if (!(parent instanceof GrConditionalExpression)) return;
+      final GrConditionalExpression expression = (GrConditionalExpression)parent;
       final GrExpression thenBranch = expression.getThenBranch();
       replaceExpression(expression, thenBranch.getText());
     }

@@ -1,20 +1,18 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build.impl
 
 import com.intellij.openapi.util.SystemInfoRt
+import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.io.FileUtilRt
+import com.intellij.openapi.util.io.NioFiles
 import groovy.transform.CompileStatic
 import groovy.transform.TypeCheckingMode
 import org.jetbrains.annotations.Nullable
 import org.jetbrains.intellij.build.BuildContext
-import org.jetbrains.intellij.build.OsFamily
+import org.jetbrains.intellij.build.BuildOptions
 import org.jetbrains.intellij.build.WindowsDistributionCustomizer
 
-import java.nio.file.Files
-import java.nio.file.Path
-import java.nio.file.Paths
-import java.nio.file.StandardCopyOption
-import java.nio.file.StandardOpenOption
+import java.nio.file.*
 
 @CompileStatic
 final class WinExeInstallerBuilder {
@@ -69,7 +67,7 @@ final class WinExeInstallerBuilder {
   }
 
   @CompileStatic(TypeCheckingMode.SKIP)
-  String buildInstaller(Path winDistPath, Path additionalDirectoryToInclude, String suffix, boolean jre32BitVersionSupported) {
+  String buildInstaller(Path winDistPath, Path additionalDirectoryToInclude, String suffix) {
     if (!SystemInfoRt.isWindows && !SystemInfoRt.isLinux) {
       buildContext.messages.warning("Windows installer can be built only under Windows or Linux")
       return null
@@ -96,7 +94,7 @@ final class WinExeInstallerBuilder {
 
     if (SystemInfoRt.isLinux) {
       Path ideaNsiPath = nsiConfDir.resolve("idea.nsi")
-      Files.writeString(ideaNsiPath, BuildUtils.replaceAll(ideaNsiPath.text, ["\${IMAGES_LOCATION}\\": "\${IMAGES_LOCATION}/"], ""))
+      Files.writeString(ideaNsiPath, BuildUtils.replaceAll(Files.readString(ideaNsiPath), ["\${IMAGES_LOCATION}\\": "\${IMAGES_LOCATION}/"], ""))
     }
 
     try {
@@ -117,11 +115,17 @@ final class WinExeInstallerBuilder {
       buildContext.messages.error("Failed to generated list of files for NSIS installer: $e")
     }
 
-    prepareConfigurationFiles(nsiConfDir, winDistPath, jre32BitVersionSupported)
+    prepareConfigurationFiles(nsiConfDir, winDistPath)
     customizer.customNsiConfigurationFiles.each {
       Path file = Paths.get(it)
       Files.copy(file, nsiConfDir.resolve(file.fileName), StandardCopyOption.REPLACE_EXISTING)
     }
+
+    // Log final nsi directory to make debugging easier
+    def logDir = new File(buildContext.paths.buildOutputRoot, "log")
+    def nsiLogDir = new File(logDir, "nsi")
+    NioFiles.deleteRecursively(nsiLogDir.toPath())
+    FileUtil.copyDir(nsiConfDir.toFile(), nsiLogDir)
 
     ant.unzip(src: "$communityHome/build/tools/NSIS.zip", dest: box)
     buildContext.messages.block("Running NSIS tool to build .exe installer for Windows") {
@@ -153,16 +157,15 @@ final class WinExeInstallerBuilder {
     if (!new File(installerPath).exists()) {
       buildContext.messages.error("Windows installer wasn't created.")
     }
-
-    buildContext.signExeFile(installerPath)
+    buildContext.executeStep("Signing $installerPath", BuildOptions.WIN_SIGN_STEP) {
+      buildContext.signFile(installerPath)
+    }
     buildContext.notifyArtifactBuilt(installerPath)
     return installerPath
   }
 
-  private void prepareConfigurationFiles(Path nsiConfDir, Path winDistPath, boolean jre32BitVersionSupported) {
+  private void prepareConfigurationFiles(Path nsiConfDir, Path winDistPath) {
     def productProperties = buildContext.productProperties
-    def x64LauncherName = "${productProperties.baseFileName}64.exe"
-    def mainExeLauncherName = customizer.include32BitLauncher ? "${productProperties.baseFileName}.exe" : x64LauncherName
 
     Files.writeString(nsiConfDir.resolve("paths.nsi"), """
 !define IMAGES_LOCATION "${FileUtilRt.toSystemDependentName(customizer.installerImagesPath)}"
@@ -173,21 +176,17 @@ final class WinExeInstallerBuilder {
 
     def extensionsList = getFileAssociations()
     def fileAssociations = extensionsList.isEmpty() ? "NoAssociation" : extensionsList.join(",")
-    def linkToX86Jre = customizer.include32BitLauncher ? buildContext.bundledJreManager.x86JreDownloadUrl(OsFamily.WINDOWS) : null
     Files.writeString(nsiConfDir.resolve("strings.nsi"), """
 !define MANUFACTURER "${buildContext.applicationInfo.shortCompanyName}"
 !define MUI_PRODUCT  "${customizer.getFullNameIncludingEdition(buildContext.applicationInfo)}"
 !define PRODUCT_FULL_NAME "${customizer.getFullNameIncludingEditionAndVendor(buildContext.applicationInfo)}"
-!define PRODUCT_EXE_FILE "$mainExeLauncherName"
-!define PRODUCT_EXE_FILE_64 "$x64LauncherName"
+!define PRODUCT_EXE_FILE "${productProperties.baseFileName}64.exe"
 !define PRODUCT_ICON_FILE "install.ico"
 !define PRODUCT_UNINST_ICON_FILE "uninstall.ico"
 !define PRODUCT_LOGO_FILE "logo.bmp"
 !define PRODUCT_HEADER_FILE "headerlogo.bmp"
 !define ASSOCIATION "$fileAssociations"
 !define UNINSTALL_WEB_PAGE "${customizer.getUninstallFeedbackPageUrl(buildContext.applicationInfo) ?: "feedback_web_page"}"
-!define LINK_TO_JRE "$linkToX86Jre"
-!define JRE_32BIT_VERSION_SUPPORTED "${jre32BitVersionSupported ? 1 : 0 }"
 
 ; if SHOULD_SET_DEFAULT_INSTDIR != 0 then default installation directory will be directory where highest-numbered IDE build has been installed
 ; set to 1 for release build

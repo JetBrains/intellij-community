@@ -4,6 +4,6 @@ class Test {
       String builder = "a" +  //comment
               "b" +
               "c";
-      return builder;
+    return builder;
   }
 }

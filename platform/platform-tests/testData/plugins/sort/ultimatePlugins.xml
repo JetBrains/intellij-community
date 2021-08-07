@@ -1333,6 +1333,11 @@
     <depends>-org-jetbrains-plugins-yaml-</depends>
     <depends>com.intellij.modules.clion</depends>
   </idea-plugin>
+  <idea-plugin url="file://out/intellij.cidr.linkerscript/META-INF/plugin.xml">
+    <id>-org-jetbrains-plugins-linkerscript-</id>
+    <name>LinkerScript</name>
+    <depends>com.intellij.modules.clion</depends>
+  </idea-plugin>
   <idea-plugin url="file://out/intellij.sh/META-INF/plugin.xml">
     <id>-com-jetbrains-sh-</id>
     <name>Shell Script</name>

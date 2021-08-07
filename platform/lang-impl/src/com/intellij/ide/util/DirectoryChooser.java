@@ -34,6 +34,7 @@ import com.intellij.ui.SideBorder;
 import com.intellij.ui.TabbedPaneWrapper;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ArrayUtilRt;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.PlatformIcons;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.update.UiNotifyConnector;
@@ -372,7 +373,7 @@ public class DirectoryChooser extends DialogWrapper {
         final PsiDirectory directory = getDirectory();
         final VirtualFile virtualFile = directory != null ? directory.getVirtualFile() : null;
         myRelativeToProjectPath = virtualFile != null
-               ? ProjectUtil.calcRelativeToProjectPath(virtualFile, directory.getProject(), true, false, true)
+               ? ProjectUtil.calcRelativeToProjectPath(virtualFile, directory.getProject(), true, false, true) + ObjectUtils.notNull(myPostfix, "")
                : getPresentableUrl();
       }
       return myRelativeToProjectPath;

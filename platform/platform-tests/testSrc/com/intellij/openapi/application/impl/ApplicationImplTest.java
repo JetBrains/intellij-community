@@ -39,8 +39,6 @@ import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
-import static com.intellij.util.TestTimeOut.setTimeout;
-
 @RunFirst
 public class ApplicationImplTest extends LightPlatformTestCase {
   private TestTimeOut t;
@@ -49,7 +47,7 @@ public class ApplicationImplTest extends LightPlatformTestCase {
   protected void setUp() throws Exception {
     super.setUp();
     exception = null;
-    t = setTimeout(2, TimeUnit.MINUTES);
+    t = TestTimeOut.setTimeout(2, TimeUnit.MINUTES);
   }
 
   @Override
@@ -62,14 +60,14 @@ public class ApplicationImplTest extends LightPlatformTestCase {
   private volatile Throwable exception;
 
   public void testRead50Write50LockPerformance() {
-    runReadWrites(600_000, 600_000, 2000);
+    runReadWrites(500_000, 500_000, 2000);
   }
 
   public void testRead100Write0LockPerformance() {
-    runReadWrites(60_000_000, 0, 10_000);
+    runReadWrites(50_000_000, 0, 10_000);
   }
 
-  private static void runReadWrites(final int readIterations, final int writeIterations, int expectedMs) {
+  private void runReadWrites(final int readIterations, final int writeIterations, int expectedMs) {
     NonBlockingReadActionImpl.waitForAsyncTaskCompletion(); // someone might've submitted a task depending on app events which we disable now
     final ApplicationImpl application = (ApplicationImpl)ApplicationManager.getApplication();
     Disposable disposable = Disposer.newDisposable();
@@ -77,7 +75,7 @@ public class ApplicationImplTest extends LightPlatformTestCase {
     application.assertIsDispatchThread();
 
     try {
-      PlatformTestUtil.startPerformanceTest("lock/unlock", expectedMs, () -> {
+      PlatformTestUtil.startPerformanceTest("lock/unlock "+getTestName(false), expectedMs, () -> {
         final int numOfThreads = JobSchedulerImpl.getJobPoolParallelism();
         List<Job<Void>> threads = new ArrayList<>(numOfThreads);
         for (int i = 0; i < numOfThreads; i++) {
@@ -91,11 +89,9 @@ public class ApplicationImplTest extends LightPlatformTestCase {
           threads.add(thread);
         }
 
-        if (writeIterations > 0) {
-          for (int i = 0; i < writeIterations; i++) {
-            ApplicationManager.getApplication().runWriteAction(() -> {
-            });
-          }
+        for (int i = 0; i < writeIterations; i++) {
+          ApplicationManager.getApplication().runWriteAction(() -> {
+          });
         }
         waitWithTimeout(threads);
       }).assertTiming();
@@ -216,8 +212,7 @@ public class ApplicationImplTest extends LightPlatformTestCase {
         // make sure EDT called writelock
         while (!application.myLock.writeRequested) checkTimeout();
 
-        TestTimeOut c = setTimeout(100, TimeUnit.MILLISECONDS);
-        while (!c.timedOut()) {
+        doFor(100, TimeUnit.MILLISECONDS, ()->{
           checkTimeout();
           assertTrue(aboutToAcquireWrite.get());
           assertTrue(read1Acquired.get());
@@ -231,13 +226,12 @@ public class ApplicationImplTest extends LightPlatformTestCase {
           assertFalse(application.isWriteActionInProgress());
           assertFalse(application.isWriteAccessAllowed());
           assertTrue(application.isWriteActionPending());
-        }
+        });
 
         holdRead1.set(false);
         while (!writeAcquired.get()) checkTimeout();
 
-        c = setTimeout(100, TimeUnit.MILLISECONDS);
-        while (!c.timedOut()) {
+        doFor(100, TimeUnit.MILLISECONDS, ()->{
           checkTimeout();
           assertTrue(aboutToAcquireWrite.get());
           assertTrue(read1Acquired.get());
@@ -251,14 +245,13 @@ public class ApplicationImplTest extends LightPlatformTestCase {
           assertTrue(application.isWriteActionInProgress());
           assertFalse(application.isWriteAccessAllowed());
           assertFalse(application.isWriteActionPending());
-        }
+        });
 
         holdWrite.set(false);
 
         while (!read2AboutToRelease.get()) checkTimeout();
 
-        c = setTimeout(100, TimeUnit.MILLISECONDS);
-        while (!c.timedOut()) {
+        doFor(100, TimeUnit.MILLISECONDS, ()->{
           checkTimeout();
           assertTrue(aboutToAcquireWrite.get());
           assertTrue(read1Acquired.get());
@@ -271,7 +264,7 @@ public class ApplicationImplTest extends LightPlatformTestCase {
           assertFalse(application.isWriteActionInProgress());
           assertFalse(application.isWriteAccessAllowed());
           assertFalse(application.isWriteActionPending());
-        }
+        });
       }
       catch (Throwable e) {
         exception = e;
@@ -457,19 +450,13 @@ public class ApplicationImplTest extends LightPlatformTestCase {
         exception = e;
       }
     });
-    TestTimeOut p = setTimeout(500, TimeUnit.MILLISECONDS);
-    while (!p.timedOut()) {
-      UIUtil.dispatchAllInvocationEvents();
-    }
+    pumpEventsFor(500, TimeUnit.MILLISECONDS);
     joinWithTimeout(thread);
     if (exception != null) throw exception;
   }
 
-  public void testRWLockPerformance() {
-    TestTimeOut p = setTimeout(2, TimeUnit.SECONDS);
-    while (!p.timedOut()) {
-      UIUtil.dispatchAllInvocationEvents();
-    }
+  public void testRWLockPerformance() throws Throwable {
+    pumpEventsFor(2, TimeUnit.SECONDS);
     int readIterations = 200_000_000;
     ApplicationManager.getApplication().assertIsDispatchThread();
     ReadMostlyRWLock lock = new ReadMostlyRWLock(Thread.currentThread());
@@ -482,12 +469,9 @@ public class ApplicationImplTest extends LightPlatformTestCase {
         // It's critical there are no collisions in the thread-local map
         ReflectionUtil.resetField(Thread.currentThread(), myThreadLocalsField);
         for (int r = 0; r < readIterations; r++) {
-          try {
-            lock.readLock();
-          }
-          finally {
-            lock.readUnlock();
-          }
+          ReadMostlyRWLock.Reader reader = lock.startRead();
+          assertNotNull(reader);
+          lock.endRead(reader);
         }
         return null;
       }
@@ -499,6 +483,17 @@ public class ApplicationImplTest extends LightPlatformTestCase {
       List<Future<Void>> futures = AppExecutorUtil.getAppExecutorService().invokeAll(callables);
       ConcurrencyUtil.getAll(futures);
     }).assertTiming();
+  }
+
+  private static void pumpEventsFor(int timeOut, @NotNull TimeUnit unit) throws Throwable {
+    doFor(timeOut, unit, () -> UIUtil.dispatchAllInvocationEvents());
+  }
+
+  private static void doFor(int timeOut, @NotNull TimeUnit unit, @NotNull ThrowableRunnable<?> runnable) throws Throwable {
+    long due = unit.toMillis(timeOut) + System.currentTimeMillis();
+    while (System.currentTimeMillis() <= due) {
+      runnable.run();
+    }
   }
 
   public void testCheckCanceledReadAction() throws Exception {

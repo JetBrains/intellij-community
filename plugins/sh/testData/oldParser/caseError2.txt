@@ -2,7 +2,7 @@ SHELL_SCRIPT
   COMMANDS_LIST
     CASE_COMMAND
       PsiElement(case)('case')
-      PsiErrorElement:'!', $, <number>, <string>, ARITH_SQUARE_LEFT, OPEN_BACKQUOTE, file descriptor, var, word or '{' expected, got 'esac'
+      PsiErrorElement:'!', $, <number>, <string>, ARITH_SQUARE_LEFT, OPEN_BACKQUOTE, file descriptor, var or '{' expected, got 'esac'
         <empty list>
       PsiWhiteSpace(' ')
       PsiElement(esac)('esac')

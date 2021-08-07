@@ -33,13 +33,13 @@ public @interface Required {
   boolean value() default true;
 
   /**
-   * @return whether the annotated method return value ({@link com.intellij.util.xml.GenericDomValue})
+   * @return whether the annotated method return value ({@link GenericDomValue})
    * should have non-empty value: {@link GenericDomValue#getStringValue()} != null
    */
   boolean nonEmpty() default true;
 
   /**
-   * @return whether the annotated method return value ({@link com.intellij.util.xml.GenericDomValue})
+   * @return whether the annotated method return value ({@link GenericDomValue})
    * string value should be identifier: {@link GenericDomValue#getStringValue()}.
    *
    * @see com.intellij.psi.PsiNameHelper#isIdentifier(String)

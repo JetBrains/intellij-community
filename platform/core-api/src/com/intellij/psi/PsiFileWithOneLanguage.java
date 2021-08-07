@@ -3,9 +3,10 @@ package com.intellij.psi;
 
 /**
  * Represents a file that contains elements with only one language.
- * That simplifies language detection in editor position: procedure doesn't need re-parse lazy elements.
- * For example HTML file is not a mono-language file - it may contain HTML and CSS elements in one psi-tree,
- * but C/C++ file has mono-language implementation, although C/C++ file may contain the injections of other languages.
+ * It simplifies language detection in the editor caret position: procedure doesn't need to re-parse lazy elements.
+ * For example, an HTML file is not a mono-language file: it may contain HTML and CSS elements in one PSI tree.
+ * On the other hand, C/C++ files have a mono-language implementation.
+ * (although C/C++ file may contain injections of other languages, but these do not interfere with the main file PSI tree).
  */
 public interface PsiFileWithOneLanguage extends PsiFile {
 }

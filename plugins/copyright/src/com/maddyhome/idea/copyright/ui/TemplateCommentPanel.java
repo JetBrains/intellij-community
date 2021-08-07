@@ -60,6 +60,7 @@ public class TemplateCommentPanel implements SearchableConfigurable {
   private JTextField txtLengthBefore;
   private JTextField txtLengthAfter;
   private JCheckBox cbAddBlank;
+  private JCheckBox cbAddBlankBefore;
   private JCheckBox cbSeparatorAfter;
   private JCheckBox cbBox;
   private JTextField txtFiller;
@@ -252,6 +253,7 @@ public class TemplateCommentPanel implements SearchableConfigurable {
     res.setFileTypeOverride(getOverrideChoice());
     res.setRelativeBefore(rbBefore.isSelected());
     res.setAddBlankAfter(cbAddBlank.isSelected());
+    res.setAddBlankBefore(cbAddBlankBefore.isSelected());
     if (fileLocations != null) {
       for (int i = 0; i < fileLocations.length; i++) {
         if (fileLocations[i].isSelected()) {
@@ -280,6 +282,7 @@ public class TemplateCommentPanel implements SearchableConfigurable {
         rbBefore.setEnabled(false);
         rbAfter.setEnabled(false);
         cbAddBlank.setEnabled(false);
+        cbAddBlankBefore.setEnabled(false);
         if (fileLocations != null) {
           for (JRadioButton fileLocation : fileLocations) {
             fileLocation.setEnabled(false);
@@ -294,6 +297,7 @@ public class TemplateCommentPanel implements SearchableConfigurable {
         rbBefore.setEnabled(isTemplate);
         rbAfter.setEnabled(isTemplate);
         cbAddBlank.setEnabled(isTemplate);
+        cbAddBlankBefore.setEnabled(isTemplate);
         if (fileLocations != null) {
           for (JRadioButton fileLocation : fileLocations) {
             fileLocation.setEnabled(true);
@@ -307,6 +311,7 @@ public class TemplateCommentPanel implements SearchableConfigurable {
         rbBefore.setEnabled(true);
         rbAfter.setEnabled(true);
         cbAddBlank.setEnabled(true);
+        cbAddBlankBefore.setEnabled(true);
         if (fileLocations != null) {
           for (JRadioButton fileLocation : fileLocations) {
             fileLocation.setEnabled(true);
@@ -420,6 +425,7 @@ public class TemplateCommentPanel implements SearchableConfigurable {
       rbAfter.setSelected(true);
     }
     cbAddBlank.setSelected(options.isAddBlankAfter());
+    cbAddBlankBefore.setSelected(options.isAddBlankBefore());
 
     if (fileLocations != null) {
       int choice = options.getFileLocation() - 1;

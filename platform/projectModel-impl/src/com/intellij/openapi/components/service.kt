@@ -3,8 +3,8 @@ package com.intellij.openapi.components
 
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.impl.stores.IComponentStore
+import com.intellij.openapi.components.impl.stores.IComponentStoreOwner
 import com.intellij.openapi.project.Project
-import com.intellij.project.ProjectStoreOwner
 
 inline fun <reified T : Any> service(): T {
   val serviceClass = T::class.java
@@ -23,9 +23,8 @@ inline fun <reified T : Any> Project.serviceIfCreated(): T? = getServiceIfCreate
 val ComponentManager.stateStore: IComponentStore
   get() {
     return when (this) {
-      is ProjectStoreOwner -> this.componentStore
+      is IComponentStoreOwner -> this.componentStore
       else -> {
-        // module or application service
         getService(IComponentStore::class.java)
       }
     }

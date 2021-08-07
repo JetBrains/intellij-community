@@ -1,6 +1,9 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.completion.ml.experiment
 
+import kotlinx.serialization.Serializable
+
+@Serializable
 data class ExperimentConfig(val version: Int,
                             val groups: List<ExperimentGroupConfig>,
                             val languages: List<ExperimentLanguageConfig>) {
@@ -10,12 +13,14 @@ data class ExperimentConfig(val version: Int,
   }
 }
 
+@Serializable
 data class ExperimentGroupConfig(val number: Int,
                                  val description: String,
                                  val useMLRanking: Boolean,
                                  val showArrows: Boolean,
                                  val calculateFeatures: Boolean)
 
+@Serializable
 data class ExperimentLanguageConfig(val id: String,
                                     val experimentBucketsCount: Int,
                                     val includeGroups: List<Int>)

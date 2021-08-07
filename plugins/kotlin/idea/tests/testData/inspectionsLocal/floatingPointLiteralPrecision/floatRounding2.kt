@@ -1,0 +1,3 @@
+// WITH_RUNTIME
+
+val x = <caret>1.00000000000000002f

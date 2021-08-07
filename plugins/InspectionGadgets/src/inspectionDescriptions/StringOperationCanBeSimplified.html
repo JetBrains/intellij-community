@@ -1,14 +1,23 @@
 <html>
 <body>
-Reports redundant operations with Strings.
-Examples:
-<ul>
-  <li>calling <code>toString()</code> or <code>substring(0)</code> on a <code>String</code></li>
-  <li>calling <code>toString().substring()</code> on a <code>StringBuilder</code></li>
-  <li>using redundant <code>String</code> constructors. Note that the proposed quick-fix
-    affects <code>String</code> referential equality. If you need to preserve it (which is
-    considered a bad practice), suppress the warning or use the <strong>Do not report String constructors</strong> option.</li>
-</ul>
+Reports redundant <code>String</code> constructors and calls to methods like <code>toString()</code> or <code>substring()</code>
+when they can be replaced with a simplified expression.
+<p>For example, calls to these methods can be safely removed in cases
+  like <code>"string".substring(0)</code>, <code>"string".toString()</code>, or
+  <code>new StringBuilder().toString().substring(1,3)</code>.</p>
+<p>Example:</p>
+<pre><code>
+  System.out.println(new String("message"));
+</code></pre>
+<p>After the quick-fix is applied:</p>
+<pre><code>
+  System.out.println("message");
+</code></pre>
+<p>
+  Note that the quick-fix removes the redundant constructor, and this may affect <code>String</code> referential equality.
+  If you need to preserve it even though it is considered bad practice, suppress the warning or configure the settings to ignore
+  redundant <code>String</code> constructors.
+</p>
 <!-- tooltip end -->
 <p><small>New in 2018.1</small></p>
 </body>

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.ignore
 
 import com.intellij.configurationStore.saveComponentManager
@@ -94,6 +94,24 @@ class GitIgnoredFileTest : GitSingleRepoTest() {
          # Default ignored files
          /$SHELF/
          /${workspaceFile.fileName}
+     """)
+  }
+
+  fun `test generation default gitignore content in config dir`() {
+    val gitIgnore = file("$DIRECTORY_STORE_FOLDER/$GITIGNORE").assertNotExists().file
+
+    GitIgnoreInStoreDirGenerator(project).run()
+
+    assertGitignoreValid(gitIgnore,
+                         """
+        # Default ignored files
+        /shelf/
+        /workspace.xml
+        # Datasource local storage ignored files
+        /dataSources/
+        /dataSources.local.xml
+        # Editor-based HTTP Client requests
+        /httpRequests/
      """)
   }
 
@@ -551,7 +569,7 @@ internal fun assertGitignoreValid(ignoreFile: File, gitIgnoreExpectedContent: St
   val generatedGitIgnoreContent = ignoreFile.readText()
   assertFalse("Generated ignore file is empty", generatedGitIgnoreContent.isBlank())
   assertFalse("Generated ignore file content should be system-independent", generatedGitIgnoreContent.contains('\\'))
-  UsefulTestCase.assertContainsOrdered(generatedGitIgnoreContent.lines(), gitIgnoreExpectedContentList)
+  UsefulTestCase.assertContainsElements(generatedGitIgnoreContent.lines(), gitIgnoreExpectedContentList)
 }
 
 internal fun VirtualFile.findOrCreateDir(dirName: String) = this.findChild(dirName) ?: createChildDirectory(this, dirName)

@@ -219,6 +219,13 @@ public class AnsiEscapeDecoderTest extends LightPlatformTestCase {
     ));
   }
 
+  public void testDECKPAM() {
+    check(false, ContainerUtil.newArrayList(
+      new ColoredText("\u001B=Hello", ProcessOutputTypes.STDOUT)
+        .addExpected("Hello", STDOUT_KEY)
+    ));
+  }
+
   private static void check(@NotNull ColoredText text) {
     check(true, Collections.singletonList(text));
   }

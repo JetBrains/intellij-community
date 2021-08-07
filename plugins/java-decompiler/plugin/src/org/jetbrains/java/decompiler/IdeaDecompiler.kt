@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.java.decompiler
 
 import com.intellij.application.options.CodeStyle
@@ -7,7 +7,6 @@ import com.intellij.ide.highlighter.JavaClassFileType
 import com.intellij.ide.highlighter.JavaFileType
 import com.intellij.ide.plugins.DynamicPlugins
 import com.intellij.ide.plugins.IdeaPluginDescriptorImpl
-import com.intellij.ide.plugins.PluginDescriptorLoader
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.application.ApplicationManager
@@ -101,11 +100,9 @@ class IdeaDecompiler : ClassFileDecompilers.Light() {
               PluginManagerCore.disablePlugin(id)
 
               val plugin = PluginManagerCore.getPlugin(id)
-              if (plugin is IdeaPluginDescriptorImpl) {
-                val descriptor = PluginDescriptorLoader.loadFullDescriptor(plugin)
-                if (DynamicPlugins.allowLoadUnloadWithoutRestart(descriptor)) {
-                  val task = DynamicPlugins.getPluginUnloadingTask(descriptor, DynamicPlugins.UnloadPluginOptions(disable = true, save = false))
-                  ApplicationManager.getApplication().invokeLater(task)
+              if (plugin is IdeaPluginDescriptorImpl && DynamicPlugins.allowLoadUnloadWithoutRestart(plugin)) {
+                ApplicationManager.getApplication().invokeLater {
+                  DynamicPlugins.unloadPlugin(plugin, DynamicPlugins.UnloadPluginOptions(save = false))
                 }
               }
             }

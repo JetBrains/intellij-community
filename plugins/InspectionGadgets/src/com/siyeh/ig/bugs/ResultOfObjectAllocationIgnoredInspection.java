@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.siyeh.ig.bugs;
 
 import com.intellij.psi.*;
@@ -32,7 +32,7 @@ public class ResultOfObjectAllocationIgnoredInspection extends BaseInspection {
   @SuppressWarnings("DialogTitleCapitalization")
   public JComponent createOptionsPanel() {
     return UiUtils.createTreeClassChooserList(ignoredClasses,
-                                              InspectionGadgetsBundle.message("options.title.ignored.classes"),
+                                              InspectionGadgetsBundle.message("options.label.ignored.classes"),
                                               InspectionGadgetsBundle.message("result.of.object.allocation.ignored.options.chooserTitle"));
   }
 

@@ -24,6 +24,7 @@ import org.jetbrains.annotations.NotNull;
  */
 public interface RefImplicitConstructor extends RefMethod {
   @NotNull
+  @Override
   default RefClass getOwnerClass() {
     throw new UnsupportedOperationException();
   }

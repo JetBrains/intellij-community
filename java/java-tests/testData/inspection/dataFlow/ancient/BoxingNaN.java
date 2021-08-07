@@ -3,19 +3,19 @@ class DoubleTrouble {
         {
         Double a = Double.NaN;
         double b = a;//Double.NaN;
-        if (<warning descr="Condition 'b == Double.NaN' is always 'false'">b == Double.NaN</warning>) {
+        if (b == Double.NaN) {
             ;
         }
         }
 
-        if (<warning descr="Condition 'Float.NaN != Float.NaN' is always 'true'">Float.NaN != Float.NaN</warning>) {
+        if (Float.NaN != Float.NaN) {
 
         }
 
         {
           double a = Double.NaN;
           double b = Double.NaN;
-          if (<warning descr="Condition 'Double.NaN == a' is always 'false'">Double.NaN == a</warning>) {}
+          if (Double.NaN == a) {}
           if (<warning descr="Condition 'b == a' is always 'false'">b == a</warning>) {}
         }
     }

@@ -91,7 +91,7 @@ final class ServiceViewNavBarPanel extends NavBarPanel {
     }
 
     @Override
-    public void updateModelAsync(DataContext dataContext, @Nullable Runnable callback) {
+    public void updateModelAsync(@NotNull DataContext dataContext, @Nullable Runnable callback) {
     }
 
     @Override
@@ -122,7 +122,7 @@ final class ServiceViewNavBarPanel extends NavBarPanel {
     }
 
     @Override
-    protected List<Object> getChildren(Object object) {
+    public List<Object> getChildren(Object object) {
       if (object == myRoot) {
         return new ArrayList<>(myViewModel.getVisibleRoots());
       }

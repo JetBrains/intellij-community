@@ -2,15 +2,16 @@
 package com.intellij.codeInspection.dataFlow.types;
 
 import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet;
+import com.intellij.codeInspection.dataFlow.value.RelationType;
 import com.intellij.psi.PsiPrimitiveType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Objects;
 
-class DfLongConstantType extends DfConstantType<Long> implements DfLongType {
+public class DfLongConstantType extends DfConstantType<Long> implements DfLongType {
   private final @Nullable LongRangeSet myWideRange;
-  
+
   DfLongConstantType(long value, @Nullable LongRangeSet wideRange) {
     super(value);
     myWideRange = wideRange;
@@ -45,7 +46,17 @@ class DfLongConstantType extends DfConstantType<Long> implements DfLongType {
   }
 
   @Override
+  public @NotNull DfType fromRelation(@NotNull RelationType relationType) {
+    return DfLongType.super.fromRelation(relationType);
+  }
+
+  @Override
   public boolean equals(Object obj) {
     return this == obj || super.equals(obj) && Objects.equals(((DfLongConstantType)obj).myWideRange, myWideRange);
+  }
+
+  @Override
+  public @NotNull String toString() {
+    return getValue() + "L";
   }
 }

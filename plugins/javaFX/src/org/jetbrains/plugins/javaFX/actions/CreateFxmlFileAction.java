@@ -22,6 +22,8 @@ import com.intellij.ide.fileTemplates.FileTemplateManager;
 import com.intellij.ide.fileTemplates.actions.CreateFromTemplateActionBase;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
@@ -30,26 +32,34 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.util.CachedValueProvider;
+import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.util.PathUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes;
+import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
 import org.jetbrains.plugins.javaFX.JavaFXBundle;
 import org.jetbrains.plugins.javaFX.fxml.JavaFxFileTypeFactory;
 
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Map;
+import java.util.Set;
+
+import static com.intellij.psi.search.GlobalSearchScope.moduleWithDependenciesAndLibrariesScope;
+import static org.jetbrains.plugins.javaFX.fxml.JavaFxCommonNames.JAVAFX_APPLICATION_APPLICATION;
 
 /**
  * @author pdolgov
  */
-public class CreateFxmlFileAction extends CreateFromTemplateActionBase {
+public final class CreateFxmlFileAction extends CreateFromTemplateActionBase implements UpdateInBackground {
   private static final String INTERNAL_TEMPLATE_NAME = "FxmlFile.fxml";
 
   public CreateFxmlFileAction() {
-    super(JavaFXBundle.message("javafx.create.new.fxml.file.title"), JavaFXBundle.message("javafx.create.new.fxml.file.description"), AllIcons.FileTypes.Xml);
+    super(JavaFXBundle.message("javafx.create.new.fxml.file.title"), JavaFXBundle.message("javafx.create.new.fxml.file.description"),
+          AllIcons.FileTypes.Xml);
   }
 
   @Override
@@ -57,7 +67,6 @@ public class CreateFxmlFileAction extends CreateFromTemplateActionBase {
     return FileTemplateManager.getInstance(project).getInternalTemplate(INTERNAL_TEMPLATE_NAME);
   }
 
-  @Nullable
   @Override
   protected Map<String, String> getLiveTemplateDefaults(DataContext dataContext, @NotNull PsiFile file) {
     String packageName = ReadAction.compute(() -> {
@@ -115,28 +124,39 @@ public class CreateFxmlFileAction extends CreateFromTemplateActionBase {
     final DataContext dataContext = e.getDataContext();
     final Presentation presentation = e.getPresentation();
 
-    presentation.setEnabledAndVisible(isAvailable(dataContext));
+    presentation.setEnabledAndVisible(isJavaFxTemplateAvailable(dataContext, JavaModuleSourceRootTypes.PRODUCTION));
   }
 
-  private static boolean isAvailable(DataContext dataContext) {
+  static boolean isJavaFxTemplateAvailable(DataContext dataContext, Set<? extends JpsModuleSourceRootType<?>> requiredRootTypes) {
     final Project project = CommonDataKeys.PROJECT.getData(dataContext);
     final IdeView view = LangDataKeys.IDE_VIEW.getData(dataContext);
     if (project == null || view == null) {
       return false;
     }
-    
+
     final PsiDirectory[] directories = view.getDirectories();
     if (directories.length == 0) {
       return false;
     }
-    
-    if (JavaPsiFacade.getInstance(project).findPackage("javafx") == null) {
+
+    Module module = ModuleUtilCore.findModuleForFile(directories[0].getVirtualFile(), project);
+    if (!hasJavaFxDependency(module)) {
       return false;
     }
 
     final ProjectFileIndex index = ProjectRootManager.getInstance(project).getFileIndex();
     return Arrays.stream(directories)
-                 .map(PsiDirectory::getVirtualFile)
-                 .anyMatch(virtualFile -> index.isUnderSourceRootOfType(virtualFile, JavaModuleSourceRootTypes.PRODUCTION));
+      .map(PsiDirectory::getVirtualFile)
+      .anyMatch(virtualFile -> index.isUnderSourceRootOfType(virtualFile, requiredRootTypes));
+  }
+
+  private static boolean hasJavaFxDependency(@Nullable Module module) {
+    if (module == null || module.isDisposed()) return false;
+
+    return CachedValuesManager.getManager(module.getProject()).getCachedValue(module, () -> {
+      boolean hasClass = JavaPsiFacade.getInstance(module.getProject())
+                           .findClass(JAVAFX_APPLICATION_APPLICATION, moduleWithDependenciesAndLibrariesScope(module)) != null;
+      return CachedValueProvider.Result.create(hasClass, ProjectRootManager.getInstance(module.getProject()));
+    });
   }
 }

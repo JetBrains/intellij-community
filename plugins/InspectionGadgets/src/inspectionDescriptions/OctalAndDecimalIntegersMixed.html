@@ -1,8 +1,14 @@
 <html>
 <body>
 Reports mixed octal and decimal integer literals in a single array initializer.
-This is often due to copying a list of numbers into an array initializer, where
-some of the numbers in the array are zero-padded, and will thus be interpreted by the Java compiler as octal.
+This situation might happen when you copy a list of numbers into an array initializer.
+Some numbers in the array might be zero-padded and the compiler will interpret them as octal.
+<p><b>Example:</b></p>
+<pre><code>int[] elapsed = {1, 13, 052};</code></pre>
+<p>After the quick-fix that removes a leading zero is applied:</p>
+<pre><code>int[] elapsed = {1, 13, 52};</code></pre>
+<p>If it is an octal number (for example, after a variable inline), then you can use another quick-fix that converts octal to decimal:</p>
+<code>int[] elapsed = {1, 13, 42};</code>
 <!-- tooltip end -->
 <p>
 

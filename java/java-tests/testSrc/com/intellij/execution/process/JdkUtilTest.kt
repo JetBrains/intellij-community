@@ -1,12 +1,11 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.process
 
 import com.intellij.execution.CommandLineWrapperUtil
 import com.intellij.execution.configurations.ParametersList
 import com.intellij.execution.configurations.SimpleJavaParameters
-import com.intellij.execution.target.TargetEnvironmentAwareRunProfileState
-import com.intellij.execution.target.local.LocalTargetEnvironmentFactory
-import com.intellij.openapi.projectRoots.JdkUtil
+import com.intellij.execution.target.TargetProgressIndicator
+import com.intellij.execution.target.local.LocalTargetEnvironmentRequest
 import com.intellij.openapi.projectRoots.SimpleJavaSdkType
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.rt.execution.CommandLineWrapper
@@ -125,11 +124,9 @@ class JdkUtilTest : BareTestFixtureTestCase() {
   }
 
   private fun doTest(vararg expected: String) {
-    val environmentFactory = LocalTargetEnvironmentFactory()
-    val request = environmentFactory.createRequest()
-    val cmd = parameters.toCommandLine(request, environmentFactory.targetConfiguration)
-    val environment = environmentFactory.prepareRemoteEnvironment(request, TargetEnvironmentAwareRunProfileState.TargetProgressIndicator.EMPTY)
-    cmd.getUserData(JdkUtil.COMMAND_LINE_SETUP_KEY)!!.provideEnvironment(environment, TargetEnvironmentAwareRunProfileState.TargetProgressIndicator.EMPTY)
+    val request = LocalTargetEnvironmentRequest()
+    val cmd = parameters.toCommandLine(request)
+    request.prepareEnvironment(TargetProgressIndicator.EMPTY)
     filesToDelete = cmd.filesToDeleteOnTermination
 
     val actual = ParametersList()

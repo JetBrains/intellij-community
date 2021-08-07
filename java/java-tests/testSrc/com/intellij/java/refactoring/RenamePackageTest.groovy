@@ -35,4 +35,27 @@ class RenamePackageTest extends JavaCodeInsightFixtureTestCase {
     assert myFixture.javaFacade.findPackage('p') == null
     assert myFixture.javaFacade.findPackage('p1').directories.size() == 2
   }
+
+  void "test rename in resources"() {
+    myFixture.addFileToProject("src/p/p/m.txt", "").virtualFile
+    VirtualFile c = myFixture.addFileToProject("src/bar/C.java", """package bar; 
+class C { 
+  {
+     C.class.getResource("/p/p/m.txt");
+  } 
+}""").virtualFile
+
+    PsiTestUtil.removeSourceRoot(module, ModuleRootManager.getInstance(module).sourceRoots[0])
+    PsiTestUtil.addSourceRoot(module, myFixture.tempDirFixture.getFile('src'))
+
+    myFixture.renameElement(myFixture.findPackage('p.p'), 'p.p1')
+    FileDocumentManager.instance.saveAllDocuments()
+
+    assert VfsUtilCore.loadText(c) == """package bar; 
+class C { 
+  {
+     C.class.getResource("/p/p1/m.txt");
+  } 
+}"""
+  }
 }

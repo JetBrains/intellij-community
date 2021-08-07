@@ -76,8 +76,6 @@ public class ManualArrayToCollectionCopy {
         List<Double> rowObj = new ArrayList<Double>();
         double[] polynom = new double[] { 0, 0, 0, 0 };
 
-        // верно добавляет в строчку объекты, но предлагает заменить на Collections.addAll(...)
-        // кричит о том, что ручное копирование массива в коллекцию
         for (int i = 0; i < polynom.length; i++) { // warning about manual copy
             Double d = polynom[i];
             rowObj.add(d);

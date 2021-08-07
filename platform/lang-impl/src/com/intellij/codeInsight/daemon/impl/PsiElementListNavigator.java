@@ -40,16 +40,16 @@ public final class PsiElementListNavigator {
   private PsiElementListNavigator() {
   }
 
-  public static <T extends NavigatablePsiElement> void openTargets(MouseEvent e,
-                                                                   T[] targets,
+  public static <T extends NavigatablePsiElement> void openTargets(@NotNull MouseEvent e,
+                                                                   T @NotNull [] targets,
                                                                    @NlsContexts.PopupTitle String title,
                                                                    @NlsContexts.TabTitle final String findUsagesTitle,
                                                                    ListCellRenderer<? super T> listRenderer) {
     openTargets(e, targets, title, findUsagesTitle, listRenderer, (BackgroundUpdaterTask)null);
   }
 
-  public static <T extends NavigatablePsiElement> void openTargets(MouseEvent e,
-                                                                   T[] targets,
+  public static <T extends NavigatablePsiElement> void openTargets(@NotNull MouseEvent e,
+                                                                   T @NotNull [] targets,
                                                                    @NlsContexts.PopupTitle String title,
                                                                    @NlsContexts.TabTitle String findUsagesTitle,
                                                                    ListCellRenderer<? super T> listRenderer,
@@ -66,16 +66,16 @@ public final class PsiElementListNavigator {
     }
   }
 
-  public static <T extends NavigatablePsiElement> void openTargets(Editor e,
-                                                                   T[] targets,
+  public static <T extends NavigatablePsiElement> void openTargets(@NotNull Editor e,
+                                                                   T @NotNull [] targets,
                                                                    @NlsContexts.PopupTitle String title,
                                                                    @NlsContexts.TabTitle final String findUsagesTitle,
                                                                    ListCellRenderer<? super T> listRenderer) {
     openTargets(e, targets, title, findUsagesTitle, listRenderer, null);
   }
 
-  public static <T extends NavigatablePsiElement> void openTargets(Editor e,
-                                                                   T[] targets,
+  public static <T extends NavigatablePsiElement> void openTargets(@NotNull Editor e,
+                                                                   T @NotNull [] targets,
                                                                    @NlsContexts.PopupTitle String title,
                                                                    @NlsContexts.TabTitle final String findUsagesTitle,
                                                                    ListCellRenderer<? super T> listRenderer,
@@ -100,7 +100,7 @@ public final class PsiElementListNavigator {
   }
 
   @Nullable
-  public static <T extends NavigatablePsiElement> JBPopup navigateOrCreatePopup(final T[] targets,
+  public static <T extends NavigatablePsiElement> JBPopup navigateOrCreatePopup(final T @NotNull [] targets,
                                                                                 final @NlsContexts.PopupTitle String title,
                                                                                 final @NlsContexts.TabTitle String findUsagesTitle,
                                                                                 final ListCellRenderer<? super T> listRenderer,
@@ -165,31 +165,31 @@ public final class PsiElementListNavigator {
     }
 
     @NotNull
-    public NavigateOrPopupHelper setFindUsagesTitle(@Nullable @NlsContexts.TabTitle String findUsagesTitle) {
+    public NavigateOrPopupHelper<T> setFindUsagesTitle(@Nullable @NlsContexts.TabTitle String findUsagesTitle) {
       myFindUsagesTitle = findUsagesTitle;
       return this;
     }
 
     @NotNull
-    public NavigateOrPopupHelper setListRenderer(@Nullable ListCellRenderer<? super NavigatablePsiElement> listRenderer) {
+    public NavigateOrPopupHelper<T> setListRenderer(@Nullable ListCellRenderer<? super T> listRenderer) {
       myListRenderer = listRenderer;
       return this;
     }
 
     @NotNull
-    public NavigateOrPopupHelper setListUpdaterTask(@Nullable BackgroundUpdaterTask listUpdaterTask) {
+    public NavigateOrPopupHelper<T> setListUpdaterTask(@Nullable BackgroundUpdaterTask listUpdaterTask) {
       myListUpdaterTask = listUpdaterTask;
       return this;
     }
 
     @NotNull
-    public NavigateOrPopupHelper setTargetsConsumer(@NotNull Consumer<? super NavigatablePsiElement[]> targetsConsumer) {
+    public NavigateOrPopupHelper<T> setTargetsConsumer(@NotNull Consumer<? super T[]> targetsConsumer) {
       myTargetsConsumer = targetsConsumer;
       return this;
     }
 
     @NotNull
-    public NavigateOrPopupHelper setProject(@Nullable Project project) {
+    public NavigateOrPopupHelper<T> setProject(@Nullable Project project) {
       myProject = project;
       return this;
     }
@@ -197,10 +197,12 @@ public final class PsiElementListNavigator {
     @Nullable
     public final JBPopup navigateOrCreatePopup() {
       if (myTargets.length == 0) {
-        if (!allowEmptyTargets())
+        if (!allowEmptyTargets()) {
           return null; // empty initial targets are not allowed
-        if (myListUpdaterTask == null || myListUpdaterTask.isFinished())
+        }
+        if (myListUpdaterTask == null || myListUpdaterTask.isFinished()) {
           return null; // there will be no targets.
+        }
       }
       if (myTargets.length == 1 && (myListUpdaterTask == null || myListUpdaterTask.isFinished())) {
         myTargetsConsumer.consume(myTargets);
@@ -222,7 +224,8 @@ public final class PsiElementListNavigator {
         setRenderer(myListRenderer).
         withHintUpdateSupply().
         setResizable(true).
-        setItemsChosenCallback(elements -> myTargetsConsumer.consume((T[])elements.toArray(NavigatablePsiElement.EMPTY_NAVIGATABLE_ELEMENT_ARRAY))).
+        setItemsChosenCallback(
+          elements -> myTargetsConsumer.consume((T[])elements.toArray(NavigatablePsiElement.EMPTY_NAVIGATABLE_ELEMENT_ARRAY))).
         setCancelCallback(() -> {
           if (myListUpdaterTask != null) {
             myListUpdaterTask.cancelTask();

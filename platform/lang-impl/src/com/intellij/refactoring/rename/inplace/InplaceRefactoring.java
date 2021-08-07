@@ -84,6 +84,7 @@ public abstract class InplaceRefactoring {
   protected static final Logger LOG = Logger.getInstance(VariableInplaceRenamer.class);
   @NonNls protected static final String PRIMARY_VARIABLE_NAME = "PrimaryVariable";
   @NonNls protected static final String OTHER_VARIABLE_NAME = "OtherVariable";
+  public static final Key<Boolean> INPLACE_RENAME_ALLOWED = Key.create("EditorInplaceRenameAllowed");
   public static final Key<InplaceRefactoring> INPLACE_RENAMER = Key.create("EditorInplaceRenamer");
   public static final Key<Boolean> INTRODUCE_RESTART = Key.create("INTRODUCE_RESTART");
   private static boolean ourShowBalloonInHeadlessMode = false;
@@ -167,7 +168,7 @@ public abstract class InplaceRefactoring {
 
 
   public boolean performInplaceRefactoring(@Nullable final LinkedHashSet<String> nameSuggestions) {
-    if (myEditor instanceof ImaginaryEditor) return false;
+    if (myEditor instanceof ImaginaryEditor && myEditor.getUserData(INPLACE_RENAME_ALLOWED) != Boolean.TRUE) return false;
     myNameSuggestions = nameSuggestions;
     if (InjectedLanguageUtil.isInInjectedLanguagePrefixSuffix(myElementToRename)) {
       return false;
@@ -439,7 +440,8 @@ public abstract class InplaceRefactoring {
         variableHighlights(template, templateState).forEach((range, attributesKey) -> {
           TextAttributes attributes = colorsManager.getGlobalScheme().getAttributes(attributesKey);
           if (attributes != null) {
-            rangesToHighlight.put(range, attributes);
+            TextAttributesWithKey attributesWithKey = new TextAttributesWithKey(attributes, attributesKey);
+            rangesToHighlight.put(range, attributesWithKey);
           }
         });
       }
@@ -734,7 +736,12 @@ public abstract class InplaceRefactoring {
     for (Map.Entry<TextRange, TextAttributes> entry : ranges.entrySet()) {
       TextRange range = entry.getKey();
       TextAttributes attributes = entry.getValue();
-      highlightManager.addOccurrenceHighlight(editor, range.getStartOffset(), range.getEndOffset(), attributes, 0, highlighters, null);
+      if (attributes instanceof TextAttributesWithKey) {
+        TextAttributesKey attributesKey = ((TextAttributesWithKey)attributes).getTextAttributesKey();
+        highlightManager.addOccurrenceHighlight(editor, range.getStartOffset(), range.getEndOffset(), attributesKey, 0, highlighters);
+      } else {
+        highlightManager.addOccurrenceHighlight(editor, range.getStartOffset(), range.getEndOffset(), attributes, 0, highlighters, null);
+      }
     }
 
     for (RangeHighlighter highlighter : highlighters) {
@@ -965,6 +972,19 @@ public abstract class InplaceRefactoring {
     }
   }
 
+  private static class TextAttributesWithKey extends TextAttributes {
+    private final @NotNull TextAttributesKey myTextAttributesKey;
+
+    TextAttributesWithKey(@NotNull TextAttributes textAttributes, @NotNull TextAttributesKey textAttributesKey) {
+      myTextAttributesKey = textAttributesKey;
+      copyFrom(textAttributes);
+    }
+
+    @NotNull TextAttributesKey getTextAttributesKey() {
+      return myTextAttributesKey;
+    }
+  }
+
   private class MyTemplateListener extends TemplateEditingAdapter {
     @Override
     public void beforeTemplateFinished(@NotNull final TemplateState templateState, Template template) {
@@ -1000,7 +1020,10 @@ public abstract class InplaceRefactoring {
       finally {
         if (!bind) {
           try {
-            ((EditorImpl)InjectedLanguageEditorUtil.getTopLevelEditor(myEditor)).stopDumbLater();
+            Editor editor = InjectedLanguageEditorUtil.getTopLevelEditor(myEditor);
+            if (editor instanceof EditorImpl) {
+              ((EditorImpl)editor).stopDumbLater();
+            }
           }
           finally {
             FinishMarkAction.finish(myProject, myEditor, myMarkAction);

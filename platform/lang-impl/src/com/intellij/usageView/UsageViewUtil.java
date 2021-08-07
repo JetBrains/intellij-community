@@ -17,6 +17,7 @@ import com.intellij.psi.ElementDescriptionUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReference;
+import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.util.MoveRenameUsageInfo;
 import com.intellij.refactoring.util.NonCodeUsageInfo;
@@ -44,13 +45,13 @@ public final class UsageViewUtil {
 
   @NotNull
   public static @NlsSafe String getShortName(@NotNull PsiElement psiElement) {
-    LOG.assertTrue(psiElement.isValid(), psiElement);
+    PsiUtilCore.ensureValid(psiElement);
     return ElementDescriptionUtil.getElementDescription(psiElement, UsageViewShortNameLocation.INSTANCE);
   }
 
   @NotNull
   public static @NlsSafe String getLongName(@NotNull PsiElement psiElement) {
-    LOG.assertTrue(psiElement.isValid(), psiElement);
+    PsiUtilCore.ensureValid(psiElement);
     return ElementDescriptionUtil.getElementDescription(psiElement, UsageViewLongNameLocation.INSTANCE);
   }
 

@@ -42,7 +42,7 @@ public class DeleteLineAction extends TextComponentEditorAction {
     }
 
     @Override
-    public void executeWriteAction(final Editor editor, Caret caret, DataContext dataContext) {
+    public void executeWriteAction(final @NotNull Editor editor, Caret caret, DataContext dataContext) {
       FeatureUsageTracker.getInstance().triggerFeatureUsed("editor.delete.line");
       CommandProcessor.getInstance().setCurrentCommandGroupId(EditorActionUtil.DELETE_COMMAND_GROUP);
       CopyPasteManager.getInstance().stopKillRings();

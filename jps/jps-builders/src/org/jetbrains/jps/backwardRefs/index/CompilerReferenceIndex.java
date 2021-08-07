@@ -12,6 +12,7 @@ import com.intellij.util.Processor;
 import com.intellij.util.indexing.IndexExtension;
 import com.intellij.util.indexing.IndexId;
 import com.intellij.util.indexing.InvertedIndex;
+import com.intellij.util.indexing.StorageException;
 import com.intellij.util.indexing.impl.IndexStorage;
 import com.intellij.util.indexing.impl.MapIndexStorage;
 import com.intellij.util.indexing.impl.MapReduceIndex;
@@ -45,21 +46,8 @@ public class CompilerReferenceIndex<Input> {
   private final PersistentStringEnumerator myFilePathEnumerator;
   private final File myBuildDir;
   private final File myIndicesDir;
-  private final LowMemoryWatcher myLowMemoryWatcher = LowMemoryWatcher.register(new Runnable() {
-    @Override
-    public void run() {
-      synchronized (myNameEnumerator) {
-        if (!myNameEnumerator.isClosed()) {
-          myNameEnumerator.force();
-        }
-      }
-      synchronized (myFilePathEnumerator) {
-        if (!myFilePathEnumerator.isClosed()) {
-          myFilePathEnumerator.force();
-        }
-      }
-    }
-  });
+  private final LowMemoryWatcher myLowMemoryWatcher = LowMemoryWatcher.register(() -> force());
+
   private volatile Throwable myRebuildRequestCause;
 
   public CompilerReferenceIndex(Collection<? extends IndexExtension<?, ?, ? super Input>> indices, File buildDir, boolean readOnly,
@@ -122,6 +110,28 @@ public class CompilerReferenceIndex<Input> {
     catch (IOException e) {
       removeIndexFiles(myBuildDir, e);
       throw new BuildDataCorruptedException(e);
+    }
+  }
+
+  public void force() {
+    synchronized (myNameEnumerator) {
+      if (!myNameEnumerator.isClosed()) {
+        myNameEnumerator.force();
+      }
+    }
+    synchronized (myFilePathEnumerator) {
+      if (!myFilePathEnumerator.isClosed()) {
+        myFilePathEnumerator.force();
+      }
+    }
+
+    for (InvertedIndex<?, ?, Input> index : myIndices.values()) {
+      try {
+        index.flush();
+      }
+      catch (StorageException e) {
+        LOG.error(e);
+      }
     }
   }
 
@@ -299,12 +309,8 @@ public class CompilerReferenceIndex<Input> {
                                            16 * 1024,
                                            false,
                                            true,
+                                           false,
                                            readOnly,
-                                           null) {
-      @Override
-      public void checkCanceled() {
-        //TODO
-      }
-    };
+                                           null);
   }
 }

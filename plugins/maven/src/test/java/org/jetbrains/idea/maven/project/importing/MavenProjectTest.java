@@ -4,22 +4,24 @@ package org.jetbrains.idea.maven.project.importing;
 
 import com.intellij.compiler.CompilerConfiguration;
 import com.intellij.compiler.CompilerConfigurationImpl;
-import com.intellij.openapi.roots.LanguageLevelModuleExtensionImpl;
+import com.intellij.openapi.module.LanguageLevelUtil;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
-import org.jetbrains.idea.maven.MavenImportingTestCase;
+import org.jetbrains.idea.maven.MavenMultiVersionImportingTestCase;
 import org.jetbrains.idea.maven.model.MavenArtifactNode;
 import org.jetbrains.idea.maven.model.MavenPlugin;
 import org.jetbrains.idea.maven.model.MavenRemoteRepository;
 import org.jetbrains.idea.maven.project.MavenProject;
 import org.jetbrains.idea.maven.utils.MavenJDOMUtil;
+import org.junit.Test;
 
 import java.io.File;
 import java.util.*;
 
-public class MavenProjectTest extends MavenImportingTestCase {
+public class MavenProjectTest extends MavenMultiVersionImportingTestCase {
+  @Test 
   public void testCollectingPlugins() {
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
@@ -47,6 +49,7 @@ public class MavenProjectTest extends MavenImportingTestCase {
     assertDeclaredPlugins(p("group1", "id1"), p("group1", "id2"), p("group2", "id1"));
   }
 
+  @Test 
   public void testPluginsContainDefaultPlugins() {
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
@@ -66,6 +69,7 @@ public class MavenProjectTest extends MavenImportingTestCase {
     assertContain(p(getMavenProject().getPlugins()), p("group1", "id1"), p("org.apache.maven.plugins", "maven-compiler-plugin"));
   }
 
+  @Test 
   public void testDefaultPluginsAsDeclared() {
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
@@ -84,6 +88,7 @@ public class MavenProjectTest extends MavenImportingTestCase {
     assertDeclaredPlugins(p("org.apache.maven.plugins", "maven-compiler-plugin"));
   }
 
+  @Test 
   public void testDoNotDuplicatePluginsFromBuildAndManagement() {
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
@@ -110,6 +115,7 @@ public class MavenProjectTest extends MavenImportingTestCase {
     assertDeclaredPlugins(p("org.apache.maven.plugins", "maven-compiler-plugin"));
   }
 
+  @Test 
   public void testCollectingPluginsFromProfilesAlso() {
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
@@ -164,6 +170,7 @@ public class MavenProjectTest extends MavenImportingTestCase {
     assertDeclaredPlugins(p("group", "id"), p("group1", "id1"), p("group2", "id2"));
   }
 
+  @Test
   public void testFindingPlugin() {
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
@@ -214,6 +221,7 @@ public class MavenProjectTest extends MavenImportingTestCase {
     assertNull(findPlugin("group2", "id2"));
   }
 
+  @Test 
   public void testFindingDefaultPlugin() {
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
@@ -235,6 +243,7 @@ public class MavenProjectTest extends MavenImportingTestCase {
     assertNotNull(findPlugin("org.apache.maven.plugins", "maven-compiler-plugin"));
   }
 
+  @Test 
   public void testFindingMavenGroupPluginWithDefaultPluginGroup() {
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
@@ -254,6 +263,7 @@ public class MavenProjectTest extends MavenImportingTestCase {
     assertNull(findPlugin("some.other.group.id", "some.plugin.id"));
   }
 
+  @Test 
   public void testPluginConfiguration() {
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
@@ -292,6 +302,7 @@ public class MavenProjectTest extends MavenImportingTestCase {
     assertNull(findPluginConfig("group", "id3", "one.two.three"));
   }
 
+  @Test 
   public void testPluginGoalConfiguration() {
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
@@ -336,6 +347,7 @@ public class MavenProjectTest extends MavenImportingTestCase {
     assertEquals("b", findPluginGoalConfig("group", "id", "testCompile", "one.two"));
   }
 
+  @Test 
   public void testPluginConfigurationHasResolvedVariables() {
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
@@ -361,6 +373,7 @@ public class MavenProjectTest extends MavenImportingTestCase {
     assertEquals("somePath", findPluginConfig("group", "id", "one"));
   }
 
+  @Test 
   public void testPluginConfigurationWithStandardVariable() {
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
@@ -383,6 +396,7 @@ public class MavenProjectTest extends MavenImportingTestCase {
                  FileUtil.toSystemIndependentName(findPluginConfig("group", "id", "one")));
   }
 
+  @Test 
   public void testPluginConfigurationWithColons() {
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
@@ -403,6 +417,7 @@ public class MavenProjectTest extends MavenImportingTestCase {
     assertNull(findPluginConfig("group", "id", "two:three"));
   }
 
+  @Test 
   public void testMergingPluginConfigurationFromBuildAndProfiles() {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
@@ -458,6 +473,7 @@ public class MavenProjectTest extends MavenImportingTestCase {
     assertEquals("true", plugin.getConfigurationElement().getChildText("debug"));
   }
 
+  @Test 
   public void testCompilerPluginConfigurationFromProperties() {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
@@ -475,6 +491,7 @@ public class MavenProjectTest extends MavenImportingTestCase {
     assertEquals("1.7", getMavenProject().getTargetLevel());
   }
 
+  @Test 
   public void testCompilerPluginConfigurationFromPropertiesOverride() {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
@@ -505,6 +522,7 @@ public class MavenProjectTest extends MavenImportingTestCase {
     assertEquals("1.4", getMavenProject().getTargetLevel());
   }
 
+  @Test 
   public void testCompilerPluginConfigurationRelease() {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
@@ -525,9 +543,10 @@ public class MavenProjectTest extends MavenImportingTestCase {
     importProject();
 
     assertEquals("7", getMavenProject().getReleaseLevel());
-    assertEquals(LanguageLevel.JDK_1_7, LanguageLevelModuleExtensionImpl.getInstance(getModule("project")).getLanguageLevel());
+    assertEquals(LanguageLevel.JDK_1_7, LanguageLevelUtil.getCustomLanguageLevel(getModule("project")));
   }
 
+  @Test 
   public void testCompilerPluginConfigurationCompilerArguments() {
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
@@ -555,6 +574,145 @@ public class MavenProjectTest extends MavenImportingTestCase {
                                     "-Averbose=true", "-parameters", "-bootclasspath", "rt.jar_path_here");
   }
 
+  @Test
+  public void testCompilerPluginConfigurationCompilerArgumentsParameters() {
+    importProject("<groupId>test</groupId>" +
+                  "<artifactId>project</artifactId>" +
+                  "<version>1</version>" +
+                  "<build>" +
+                  "  <plugins>" +
+                  "    <plugin>" +
+                  "      <groupId>org.apache.maven.plugins</groupId>" +
+                  "      <artifactId>maven-compiler-plugin</artifactId>" +
+                  "      <configuration>" +
+                  "        <parameters>true</parameters>" +
+                  "      </configuration>" +
+                  "    </plugin>" +
+                  "  </plugins>" +
+                  "</build>");
+
+    CompilerConfigurationImpl compilerConfiguration = (CompilerConfigurationImpl)CompilerConfiguration.getInstance(myProject);
+    assertEquals("Javac", compilerConfiguration.getDefaultCompiler().getId());
+    assertUnorderedElementsAreEqual(compilerConfiguration.getAdditionalOptions(getModule("project")),"-parameters");
+  }
+
+  @Test
+  public void testCompilerPluginConfigurationCompilerArgumentsParametersFalse() {
+    importProject("<groupId>test</groupId>" +
+                  "<artifactId>project</artifactId>" +
+                  "<version>1</version>" +
+                  "<build>" +
+                  "  <plugins>" +
+                  "    <plugin>" +
+                  "      <groupId>org.apache.maven.plugins</groupId>" +
+                  "      <artifactId>maven-compiler-plugin</artifactId>" +
+                  "      <configuration>" +
+                  "        <parameters>false</parameters>" +
+                  "      </configuration>" +
+                  "    </plugin>" +
+                  "  </plugins>" +
+                  "</build>");
+
+    CompilerConfigurationImpl compilerConfiguration = (CompilerConfigurationImpl)CompilerConfiguration.getInstance(myProject);
+    assertEquals("Javac", compilerConfiguration.getDefaultCompiler().getId());
+    assertEmpty(compilerConfiguration.getAdditionalOptions(getModule("project")));
+  }
+
+  @Test
+  public void testCompilerPluginConfigurationCompilerArgumentsParametersPropertyOverride() {
+    importProject("<groupId>test</groupId>" +
+                  "<artifactId>project</artifactId>" +
+                  "<version>1</version>" +
+                  "<properties>" +
+                  "  <maven.compiler.parameters>true</maven.compiler.parameters>" +
+                  "</properties>" +
+                  "<build>" +
+                  "  <plugins>" +
+                  "    <plugin>" +
+                  "      <groupId>org.apache.maven.plugins</groupId>" +
+                  "      <artifactId>maven-compiler-plugin</artifactId>" +
+                  "      <configuration>" +
+                  "        <parameters>false</parameters>" +
+                  "      </configuration>" +
+                  "    </plugin>" +
+                  "  </plugins>" +
+                  "</build>");
+
+    CompilerConfigurationImpl compilerConfiguration = (CompilerConfigurationImpl)CompilerConfiguration.getInstance(myProject);
+    assertEquals("Javac", compilerConfiguration.getDefaultCompiler().getId());
+    assertEmpty(compilerConfiguration.getAdditionalOptions(getModule("project")));
+  }
+
+  @Test
+  public void testCompilerPluginConfigurationCompilerArgumentsParametersPropertyOverride1() {
+    importProject("<groupId>test</groupId>" +
+                  "<artifactId>project</artifactId>" +
+                  "<version>1</version>" +
+                  "<properties>" +
+                  "  <maven.compiler.parameters>false</maven.compiler.parameters>" +
+                  "</properties>" +
+                  "<build>" +
+                  "  <plugins>" +
+                  "    <plugin>" +
+                  "      <groupId>org.apache.maven.plugins</groupId>" +
+                  "      <artifactId>maven-compiler-plugin</artifactId>" +
+                  "      <configuration>" +
+                  "        <parameters>true</parameters>" +
+                  "      </configuration>" +
+                  "    </plugin>" +
+                  "  </plugins>" +
+                  "</build>");
+
+    CompilerConfigurationImpl compilerConfiguration = (CompilerConfigurationImpl)CompilerConfiguration.getInstance(myProject);
+    assertEquals("Javac", compilerConfiguration.getDefaultCompiler().getId());
+    assertUnorderedElementsAreEqual(compilerConfiguration.getAdditionalOptions(getModule("project")),"-parameters");
+  }
+
+  @Test
+  public void testCompilerPluginConfigurationCompilerArgumentsParametersProperty() {
+    importProject("<groupId>test</groupId>" +
+                  "<artifactId>project</artifactId>" +
+                  "<version>1</version>" +
+                  "<properties>" +
+                  "  <maven.compiler.parameters>true</maven.compiler.parameters>" +
+                  "</properties>" +
+                  "<build>" +
+                  "  <plugins>" +
+                  "    <plugin>" +
+                  "      <groupId>org.apache.maven.plugins</groupId>" +
+                  "      <artifactId>maven-compiler-plugin</artifactId>" +
+                  "    </plugin>" +
+                  "  </plugins>" +
+                  "</build>");
+
+    CompilerConfigurationImpl compilerConfiguration = (CompilerConfigurationImpl)CompilerConfiguration.getInstance(myProject);
+    assertEquals("Javac", compilerConfiguration.getDefaultCompiler().getId());
+    assertUnorderedElementsAreEqual(compilerConfiguration.getAdditionalOptions(getModule("project")),"-parameters");
+  }
+
+  @Test
+  public void testCompilerPluginConfigurationCompilerArgumentsParametersPropertyFalse() {
+    importProject("<groupId>test</groupId>" +
+                  "<artifactId>project</artifactId>" +
+                  "<version>1</version>" +
+                  "<properties>" +
+                  "  <maven.compiler.parameters>false</maven.compiler.parameters>" +
+                  "</properties>" +
+                  "<build>" +
+                  "  <plugins>" +
+                  "    <plugin>" +
+                  "      <groupId>org.apache.maven.plugins</groupId>" +
+                  "      <artifactId>maven-compiler-plugin</artifactId>" +
+                  "    </plugin>" +
+                  "  </plugins>" +
+                  "</build>");
+
+    CompilerConfigurationImpl compilerConfiguration = (CompilerConfigurationImpl)CompilerConfiguration.getInstance(myProject);
+    assertEquals("Javac", compilerConfiguration.getDefaultCompiler().getId());
+    assertEmpty(compilerConfiguration.getAdditionalOptions(getModule("project")));
+  }
+
+  @Test 
   public void testCompilerPluginConfigurationUnresolvedCompilerArguments() {
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
@@ -589,7 +747,7 @@ public class MavenProjectTest extends MavenImportingTestCase {
 
   // commenting the test as the errorProne module is not available to IJ community project
   // TODO move the test to the errorProne module
-  //public void testCompilerPluginErrorProneConfiguration() {
+  //public void stestCompilerPluginErrorProneConfiguration() {
   //  importProject("<groupId>test</groupId>" +
   //                "<artifactId>project</artifactId>" +
   //                "<version>1</version>" +
@@ -621,6 +779,7 @@ public class MavenProjectTest extends MavenImportingTestCase {
   //  assertEmpty(compilerConfiguration.getAdditionalOptions(getModule("project")));
   //}
 
+  @Test 
   public void testMergingPluginConfigurationFromBuildProfilesAndPluginsManagement() {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
@@ -673,6 +832,7 @@ public class MavenProjectTest extends MavenImportingTestCase {
     assertEquals("true", plugin.getConfigurationElement().getChildText("debug"));
   }
 
+  @Test 
   public void testDoesNotCollectProfilesWithoutId() {
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
@@ -686,9 +846,10 @@ public class MavenProjectTest extends MavenImportingTestCase {
                   "  </profile>" +
                   "</profiles>");
 
-    assertOrderedElementsAreEqual(getMavenProject().getProfilesIds(), "one", "default");
+    assertUnorderedElementsAreEqual(getMavenProject().getProfilesIds(), "one", "default");
   }
 
+  @Test 
   public void testCollectingRepositories() {
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
@@ -712,6 +873,7 @@ public class MavenProjectTest extends MavenImportingTestCase {
     assertEquals("central", result.get(2).getId());
   }
 
+  @Test 
   public void testOverridingCentralRepository() {
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
@@ -730,6 +892,7 @@ public class MavenProjectTest extends MavenImportingTestCase {
     assertEquals("http://my.repository.com", result.get(0).getUrl());
   }
 
+  @Test 
   public void testCollectingRepositoriesFromParent() {
     VirtualFile m1 = createModulePom("p1",
                                      "<groupId>test</groupId>" +
@@ -774,6 +937,7 @@ public class MavenProjectTest extends MavenImportingTestCase {
     assertEquals("central", result.get(2).getId());
   }
 
+  @Test 
   public void testMavenModelMap() {
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
@@ -799,6 +963,7 @@ public class MavenProjectTest extends MavenImportingTestCase {
     assertEquals(null, map.get("build.pluginMap"));
   }
 
+  @Test 
   public void testDependenciesTree() {
     VirtualFile m1 = createModulePom("p1",
                                      "<groupId>test</groupId>" +
@@ -843,6 +1008,7 @@ public class MavenProjectTest extends MavenImportingTestCase {
                             "test:m2:jar:1->(junit:junit:jar:4.0->(),test:lib2:jar:1->()),test:lib1:jar:1->()");
   }
 
+  @Test 
   public void testDependenciesTreeWithTypesAndClassifiers() {
     VirtualFile m1 = createModulePom("p1",
                                      "<groupId>test</groupId>" +
@@ -879,6 +1045,7 @@ public class MavenProjectTest extends MavenImportingTestCase {
                             "test:m2:pom:test:1->(test:lib:jar:1->())");
   }
 
+  @Test 
   public void testDependenciesTreeWithConflict() {
     VirtualFile m1 = createModulePom("p1",
                                      "<groupId>test</groupId>" +
@@ -922,6 +1089,7 @@ public class MavenProjectTest extends MavenImportingTestCase {
                nodes.get(1).getArtifact());
   }
 
+  @Test 
   public void testDependencyTreeDuplicates() {
     VirtualFile m1 = createModulePom("p1",
                                      "<groupId>test</groupId>" +

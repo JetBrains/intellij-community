@@ -1,7 +1,23 @@
 <html>
 <body>
-Reports condition chains where a value range is checked which could be simplified to a single check. E.g. <b>x > 2 && x &lt; 4</b> could be
-  simplified to <b>x == 3</b> or <b>arr.length == 0 || arr.length > 1</b> could be simplified to <b>arr.length != 1</b>. 
+Reports condition chains in which a value range is checked and these condition chains can be simplified to a single check.
+<p>The quick-fix replaces a condition chain with a simplified expression:</p>
+<p>Example:</p>
+<pre>
+  x > 2 && x &lt; 4
+</pre>
+<p>After the quick-fix is applied:</p>
+<pre>
+  x == 3
+</pre>
+<p>Example:</p>
+<pre>
+  arr.length == 0 || arr.length > 1
+</pre>
+<p>After the quick-fix is applied:</p>
+<pre>
+  arr.length != 1
+</pre>
 <!-- tooltip end -->
 <p><small>New in 2019.1</small></p>
 </body>

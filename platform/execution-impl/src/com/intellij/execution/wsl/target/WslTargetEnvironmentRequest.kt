@@ -1,20 +1,21 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.wsl.target
 
 import com.intellij.execution.Platform
-import com.intellij.execution.target.BaseTargetEnvironmentRequest
-import com.intellij.execution.target.HostPort
+import com.intellij.execution.process.PtyCommandLineOptions
+import com.intellij.execution.target.*
 import com.intellij.execution.target.TargetEnvironment.*
-import com.intellij.execution.target.TargetEnvironmentRequest
-import com.intellij.execution.target.TargetPlatform
 import com.intellij.execution.target.value.TargetValue
-import java.util.*
+import com.intellij.execution.wsl.WSLCommandLineOptions
+import com.intellij.ide.IdeBundle
 
 class WslTargetEnvironmentRequest : BaseTargetEnvironmentRequest {
-  val config: WslTargetEnvironmentConfiguration
+  override val configuration: WslTargetEnvironmentConfiguration
+  var ptyOptions: PtyCommandLineOptions? = null
+  val wslOptions: WSLCommandLineOptions = WSLCommandLineOptions()
 
   constructor(config: WslTargetEnvironmentConfiguration) {
-    this.config = config
+    this.configuration = config
   }
 
   private constructor(config: WslTargetEnvironmentConfiguration,
@@ -23,11 +24,11 @@ class WslTargetEnvironmentRequest : BaseTargetEnvironmentRequest {
                       targetPortBindings: MutableSet<TargetPortBinding>,
                       localPortBindings: MutableSet<LocalPortBinding>) : super(uploadVolumes, downloadVolumes, targetPortBindings,
                                                                                localPortBindings) {
-    this.config = config
+    this.configuration = config
   }
 
   override fun duplicate(): WslTargetEnvironmentRequest {
-    return WslTargetEnvironmentRequest(config,
+    return WslTargetEnvironmentRequest(configuration,
                                        HashSet(uploadVolumes),
                                        HashSet(downloadVolumes),
                                        HashSet(targetPortBindings),
@@ -56,5 +57,13 @@ class WslTargetEnvironmentRequest : BaseTargetEnvironmentRequest {
 
   override fun bindLocalPort(localPort: Int): TargetValue<HostPort> {
     return TargetValue.fixed(HostPort("localhost", localPort))
+  }
+
+  override fun prepareEnvironment(progressIndicator: TargetProgressIndicator): TargetEnvironment {
+    val distribution = configuration.distribution
+    if (distribution == null) {
+      error(IdeBundle.message("wsl.no.distribution.found.error"))
+    }
+    return WslTargetEnvironment(this, distribution).also { environmentPrepared(it, progressIndicator) }
   }
 }

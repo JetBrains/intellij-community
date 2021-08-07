@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.actions;
 
 import com.intellij.debugger.JavaDebuggerBundle;
@@ -12,9 +12,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
 import com.intellij.util.ArrayUtil;
 
-/**
- * @author yole
- */
+
 public class DebuggerKeymapExtension implements KeymapExtension {
   @Override
   public KeymapGroup createGroup(final Condition<? super AnAction> filtered, final Project project) {

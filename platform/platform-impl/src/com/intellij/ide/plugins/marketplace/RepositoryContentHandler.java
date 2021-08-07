@@ -1,7 +1,7 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.plugins.marketplace;
 
-import com.intellij.ide.plugins.IdeaPluginDescriptorImpl;
+import com.intellij.ide.plugins.PluginManager;
 import com.intellij.ide.plugins.PluginNode;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.util.text.StringUtil;
@@ -86,7 +86,7 @@ class RepositoryContentHandler extends DefaultHandler {
     }
     else if (qName.equals(IDEA_VERSION)) {
       currentPlugin.setSinceBuild(attributes.getValue(SINCE_BUILD));
-      currentPlugin.setUntilBuild(IdeaPluginDescriptorImpl.convertExplicitBigNumberInUntilBuildToStar(attributes.getValue(UNTIL_BUILD)));
+      currentPlugin.setUntilBuild(PluginManager.convertExplicitBigNumberInUntilBuildToStar(attributes.getValue(UNTIL_BUILD)));
     }
     else if (qName.equals(VENDOR)) {
       currentPlugin.setVendorEmail(attributes.getValue(EMAIL));

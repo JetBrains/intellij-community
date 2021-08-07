@@ -1,9 +1,9 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+@file:Suppress("DeprecatedCallableAddReplaceWith", "ReplaceNegatedIsEmptyWithIsNotEmpty", "ReplaceGetOrSet", "ReplacePutWithAssignment")
 package com.intellij.serviceContainer
 
-import com.intellij.diagnostic.LoadingState
-import com.intellij.diagnostic.PluginException
-import com.intellij.diagnostic.StartUpMeasurer
+import com.intellij.diagnostic.*
+import com.intellij.diagnostic.StartUpMeasurer.startActivity
 import com.intellij.ide.plugins.*
 import com.intellij.ide.plugins.cl.PluginAwareClassLoader
 import com.intellij.idea.Main
@@ -15,103 +15,69 @@ import com.intellij.openapi.application.invokeAndWaitIfNeeded
 import com.intellij.openapi.components.*
 import com.intellij.openapi.components.ServiceDescriptor.PreloadMode
 import com.intellij.openapi.components.impl.stores.IComponentStore
+import com.intellij.openapi.components.impl.stores.IComponentStoreOwner
 import com.intellij.openapi.diagnostic.Attachment
 import com.intellij.openapi.diagnostic.ControlFlowException
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.*
+import com.intellij.openapi.extensions.impl.ExtensionPointImpl
 import com.intellij.openapi.extensions.impl.ExtensionsAreaImpl
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressIndicatorProvider
 import com.intellij.openapi.progress.ProgressManager
-import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Condition
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.util.UserDataHolderBase
-import com.intellij.util.ReflectionUtil
-import com.intellij.util.SmartList
-import com.intellij.util.SystemProperties
+import com.intellij.util.ArrayUtil
 import com.intellij.util.messages.*
 import com.intellij.util.messages.impl.MessageBusEx
 import com.intellij.util.messages.impl.MessageBusImpl
-import com.intellij.util.pico.DefaultPicoContainer
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.Internal
-import org.jetbrains.annotations.Nullable
 import org.jetbrains.annotations.TestOnly
+import org.picocontainer.ComponentAdapter
 import org.picocontainer.PicoContainer
+import java.lang.invoke.MethodHandles
+import java.lang.invoke.MethodType
 import java.lang.reflect.Constructor
 import java.lang.reflect.InvocationTargetException
 import java.lang.reflect.Modifier
-import java.util.concurrent.CompletableFuture
-import java.util.concurrent.ConcurrentHashMap
-import java.util.concurrent.ConcurrentMap
-import java.util.concurrent.Executor
+import java.util.*
+import java.util.concurrent.*
 import java.util.concurrent.atomic.AtomicReference
-import java.util.function.Consumer
 
 internal val LOG = logger<ComponentManagerImpl>()
+private val constructorParameterResolver = ConstructorParameterResolver()
+private val methodLookup = MethodHandles.lookup()
+private val emptyConstructorMethodType = MethodType.methodType(Void.TYPE)
 
 @Internal
-abstract class ComponentManagerImpl @JvmOverloads constructor(internal val parent: ComponentManagerImpl?,
-                                                              setExtensionsRootArea: Boolean = parent == null) : ComponentManager, Disposable.Parent, MessageBusOwner, UserDataHolderBase() {
+abstract class ComponentManagerImpl @JvmOverloads constructor(
+  internal val parent: ComponentManagerImpl?,
+  setExtensionsRootArea: Boolean = parent == null
+) : ComponentManager, Disposable.Parent, MessageBusOwner, UserDataHolderBase(), PicoContainer, ComponentManagerEx, IComponentStoreOwner {
   protected enum class ContainerState {
     PRE_INIT, COMPONENT_CREATED, DISPOSE_IN_PROGRESS, DISPOSED, DISPOSE_COMPLETED
   }
 
   companion object {
-    private val constructorParameterResolver = ConstructorParameterResolver()
-
-    @JvmStatic
     @Internal
-    val fakeCorePluginDescriptor = DefaultPluginDescriptor(PluginManagerCore.CORE_ID, null)
+    @JvmField val fakeCorePluginDescriptor = DefaultPluginDescriptor(PluginManagerCore.CORE_ID, null)
 
-    // not as file level function to avoid scope cluttering
+    @Suppress("ReplaceJavaStaticMethodWithKotlinAnalog")
     @Internal
-    fun <T> isLightService(serviceClass: Class<T>): Boolean {
-      return Modifier.isFinal(serviceClass.modifiers) && serviceClass.isAnnotationPresent(Service::class.java)
-    }
-
-    @ApiStatus.Internal
-    fun processAllDescriptors(componentManager: ComponentManager, consumer: (ServiceDescriptor) -> Unit) {
-      for (plugin in PluginManagerCore.getLoadedPlugins()) {
-        val pluginDescriptor = plugin as IdeaPluginDescriptorImpl
-        val containerDescriptor = when (componentManager) {
-          is Application -> pluginDescriptor.app
-          is Project -> pluginDescriptor.project
-          else -> pluginDescriptor.module
-        }
-        containerDescriptor.services.forEach(consumer)
-      }
-    }
-
-    private inline fun executeRegisterTask(mainPluginDescriptor: IdeaPluginDescriptorImpl,
-                                           mainContainerDescriptor: ContainerDescriptor,
-                                           componentManager: ComponentManagerImpl,
-                                           task: (IdeaPluginDescriptorImpl, ContainerDescriptor) -> Unit) {
-      task(mainPluginDescriptor, mainContainerDescriptor)
-      for (dep in mainPluginDescriptor.pluginDependencies) {
-        if (dep.isDisabledOrBroken) {
-          continue
-        }
-
-        val subPluginDescriptor = dep.subDescriptor ?: continue
-        task(subPluginDescriptor, componentManager.getContainerDescriptor(subPluginDescriptor))
-
-        for (subDep in subPluginDescriptor.pluginDependencies) {
-          if (!subDep.isDisabledOrBroken) {
-            val d = subDep.subDescriptor ?: continue
-            task(d, componentManager.getContainerDescriptor(d))
-            assert(d.pluginDependencies.isEmpty() || d.pluginDependencies.all { it.subDescriptor == null })
-          }
-        }
-      }
-    }
+    @JvmField val badWorkspaceComponents: Set<String> = java.util.Set.of(
+      "jetbrains.buildServer.codeInspection.InspectionPassRegistrar",
+      "jetbrains.buildServer.testStatus.TestStatusPassRegistrar",
+      "jetbrains.buildServer.customBuild.lang.gutterActions.CustomBuildParametersGutterActionsHighlightingPassRegistrar",
+    )
 
     // not as file level function to avoid scope cluttering
     @ApiStatus.Internal
     fun createAllServices(componentManager: ComponentManagerImpl, exclude: Set<String>) {
-      for (o in componentManager.picoContainer.unsafeGetAdapters()) {
+      for (o in componentManager.componentKeyToAdapter.values) {
         if (o !is ServiceComponentAdapter) {
           continue
         }
@@ -123,7 +89,7 @@ abstract class ComponentManagerImpl @JvmOverloads constructor(internal val paren
             continue
           }
           if (implementation == "org.jetbrains.plugins.grails.lang.gsp.psi.gsp.impl.gtag.GspTagDescriptorService") {
-            // requires read action
+            // requires a read action
             continue
           }
 
@@ -143,14 +109,17 @@ abstract class ComponentManagerImpl @JvmOverloads constructor(internal val paren
     }
   }
 
-  internal val picoContainer: DefaultPicoContainer = DefaultPicoContainer(parent?.picoContainer)
+  private val componentKeyToAdapter = ConcurrentHashMap<Any, ComponentAdapter>()
+  private val componentAdapters = LinkedHashSetWrapper<ComponentAdapter>()
+  private val serviceInstanceHotCache = ConcurrentHashMap<Class<*>, Any?>()
+
   protected val containerState = AtomicReference(ContainerState.PRE_INIT)
 
   protected val containerStateName: String
     get() = containerState.get().name
 
   @Suppress("LeakingThis")
-  private val extensionArea = ExtensionsAreaImpl(this)
+  private val _extensionArea by lazy { ExtensionsAreaImpl(this) }
 
   private var messageBus: MessageBusImpl? = null
 
@@ -165,27 +134,40 @@ abstract class ComponentManagerImpl @JvmOverloads constructor(internal val paren
   @Suppress("LeakingThis")
   internal val serviceParentDisposable = Disposer.newDisposable("services of ${javaClass.name}@${System.identityHashCode(this)}")
 
-  private val lightServices: ConcurrentMap<Class<*>, Any>? = when {
-    parent == null || parent.picoContainer.parent == null -> ConcurrentHashMap()
-    else -> null
-  }
+  protected open val isLightServiceSupported = parent?.parent == null
+  protected open val isMessageBusSupported = parent?.parent == null
+  protected open val isComponentSupported = true
+  protected open val isExtensionSupported = true
 
-  @Suppress("DEPRECATION")
-  private val baseComponents: MutableList<BaseComponent> = SmartList()
+  @Volatile
+  internal var componentContainerIsReadonly: String? = null
 
-  protected open val componentStore: IComponentStore
+  override val componentStore: IComponentStore
     get() = getService(IComponentStore::class.java)!!
 
   init {
     if (setExtensionsRootArea) {
-      Extensions.setRootArea(extensionArea)
+      Extensions.setRootArea(_extensionArea)
     }
   }
 
-  override fun getPicoContainer(): PicoContainer = checkStateAndGetPicoContainer()
+  @Deprecated("Use ComponentManager API", level = DeprecationLevel.ERROR)
+  final override fun getPicoContainer(): PicoContainer {
+    checkState()
+    return this
+  }
 
-  @Volatile
-  internal var componentContainerIsReadonly: String? = null
+  private fun registerAdapter(componentAdapter: ComponentAdapter, pluginDescriptor: PluginDescriptor?) {
+    if (componentKeyToAdapter.putIfAbsent(componentAdapter.componentKey, componentAdapter) != null) {
+      val error = "Key ${componentAdapter.componentKey} duplicated"
+      if (pluginDescriptor == null) {
+        throw PluginException.createByClass(error, null, componentAdapter.javaClass)
+      }
+      else {
+        throw PluginException(error, null, pluginDescriptor.pluginId)
+      }
+    }
+  }
 
   @Internal
   fun forbidGettingServices(reason: String): AccessToken {
@@ -198,12 +180,11 @@ abstract class ComponentManagerImpl @JvmOverloads constructor(internal val paren
     return token
   }
 
-  private fun checkStateAndGetPicoContainer(): DefaultPicoContainer {
+  private fun checkState() {
     if (containerState.get() == ContainerState.DISPOSE_COMPLETED) {
       ProgressManager.checkCanceled()
       throw AlreadyDisposedException("Already disposed: $this")
     }
-    return picoContainer
   }
 
   final override fun getMessageBus(): MessageBus {
@@ -213,7 +194,7 @@ abstract class ComponentManagerImpl @JvmOverloads constructor(internal val paren
     }
 
     val messageBus = messageBus
-    if (messageBus == null) {
+    if (messageBus == null || !isMessageBusSupported) {
       LOG.error("Do not use module level message bus")
       return getOrCreateMessageBusUnderLock()
     }
@@ -232,44 +213,49 @@ abstract class ComponentManagerImpl @JvmOverloads constructor(internal val paren
     indicator.fraction = getPercentageOfComponentsLoaded()
   }
 
-  protected fun getPercentageOfComponentsLoaded(): Double {
+  @Internal
+  fun getPercentageOfComponentsLoaded(): Double {
     return instantiatedComponentCount.toDouble() / componentConfigCount
   }
 
-  final override fun getExtensionArea() = extensionArea
-
-  fun registerComponents(plugins: List<IdeaPluginDescriptorImpl>) {
-    registerComponents(plugins, null)
+  override fun getExtensionArea(): ExtensionsAreaImpl {
+    if (!isExtensionSupported) {
+      error("Extensions aren't supported")
+    }
+    return _extensionArea
   }
 
   @Internal
-  open fun registerComponents(plugins: List<IdeaPluginDescriptorImpl>, listenerCallbacks: MutableList<Runnable>?) {
+  open fun registerComponents(plugins: List<IdeaPluginDescriptorImpl>,
+                              app: Application?,
+                              precomputedExtensionModel: PrecomputedExtensionModel?,
+                              listenerCallbacks: List<Runnable>?) {
     val activityNamePrefix = activityNamePrefix()
 
-    val app = getApplication()
-    val headless = app == null || app.isHeadlessEnvironment
     var newComponentConfigCount = 0
     var map: ConcurrentMap<String, MutableList<ListenerDescriptor>>? = null
-    val isHeadlessMode = app?.isHeadlessEnvironment == true
-    val isUnitTestMode = app?.isUnitTestMode == true
+    val isHeadless = app == null || app.isHeadlessEnvironment
+    val isUnitTestMode = app?.isUnitTestMode ?: false
 
-    val clonePoint = parent != null
+    var activity = activityNamePrefix?.let { startActivity("${it}service and ep registration") }
 
-    var activity = activityNamePrefix?.let { StartUpMeasurer.startMainActivity("${it}service and ep registration") }
     // register services before registering extensions because plugins can access services in their
     // extensions which can be invoked right away if the plugin is loaded dynamically
+    val extensionPoints = if (precomputedExtensionModel == null) HashMap(extensionArea.extensionPoints) else null
     for (mainPlugin in plugins) {
-      val mainContainerDescriptor = getContainerDescriptor(mainPlugin)
 
-      executeRegisterTask(mainPlugin, mainContainerDescriptor, this) { pluginDescriptor, containerDescriptor ->
+      executeRegisterTask(mainPlugin) { pluginDescriptor ->
+        val containerDescriptor = getContainerDescriptor(pluginDescriptor)
         registerServices(containerDescriptor.services, pluginDescriptor)
       }
 
-      executeRegisterTask(mainPlugin, mainContainerDescriptor, this) { pluginDescriptor, containerDescriptor ->
-        newComponentConfigCount += registerComponents(pluginDescriptor, containerDescriptor, headless)
+      executeRegisterTask(mainPlugin) { pluginDescriptor ->
+        val containerDescriptor = getContainerDescriptor(pluginDescriptor)
+        newComponentConfigCount += registerComponents(pluginDescriptor, containerDescriptor, isHeadless)
       }
 
-      executeRegisterTask(mainPlugin, mainContainerDescriptor, this) { _, containerDescriptor ->
+      executeRegisterTask(mainPlugin) { pluginDescriptor ->
+        val containerDescriptor = getContainerDescriptor(pluginDescriptor)
         containerDescriptor.listeners?.let { listeners ->
           var m = map
           if (m == null) {
@@ -277,18 +263,26 @@ abstract class ComponentManagerImpl @JvmOverloads constructor(internal val paren
             map = m
           }
           for (listener in listeners) {
-            if ((isUnitTestMode && !listener.activeInTestMode) || (isHeadlessMode && !listener.activeInHeadlessMode)) {
+            if ((isUnitTestMode && !listener.activeInTestMode) || (isHeadless && !listener.activeInHeadlessMode)) {
               continue
             }
 
+            if (listener.os != null && !isSuitableForOs(listener.os)) {
+              continue
+            }
+
+            listener.pluginDescriptor = pluginDescriptor
             m.computeIfAbsent(listener.topicClassName) { ArrayList() }.add(listener)
           }
         }
       }
 
-      executeRegisterTask(mainPlugin, mainContainerDescriptor, this) { _, containerDescriptor ->
-        containerDescriptor.extensionPoints?.let {
-          extensionArea.registerExtensionPoints(it, clonePoint)
+      if (extensionPoints != null) {
+        executeRegisterTask(mainPlugin) { pluginDescriptor ->
+          val containerDescriptor = getContainerDescriptor(pluginDescriptor)
+          containerDescriptor.extensionPoints?.let {
+            ExtensionsAreaImpl.createExtensionPoints(it, this, extensionPoints, pluginDescriptor)
+          }
         }
       }
     }
@@ -297,11 +291,21 @@ abstract class ComponentManagerImpl @JvmOverloads constructor(internal val paren
       activity = activity.endAndStart("${activityNamePrefix}extension registration")
     }
 
-    for (mainPlugin in plugins) {
-      executeRegisterTask(mainPlugin, getContainerDescriptor(mainPlugin), this) { pluginDescriptor, containerDescriptor ->
-        pluginDescriptor.registerExtensions(extensionArea, containerDescriptor, listenerCallbacks)
+    if (precomputedExtensionModel == null) {
+      val immutableExtensionPoints = if (extensionPoints!!.isEmpty()) Collections.emptyMap() else java.util.Map.copyOf(extensionPoints)
+      extensionArea.setPoints(immutableExtensionPoints)
+
+      for (mainPlugin in plugins) {
+        executeRegisterTask(mainPlugin) { pluginDescriptor ->
+          val containerDescriptor = getContainerDescriptor(pluginDescriptor)
+          pluginDescriptor.registerExtensions(immutableExtensionPoints, containerDescriptor, listenerCallbacks)
+        }
       }
     }
+    else {
+      registerExtensionPointsAndExtensionByPrecomputedModel(precomputedExtensionModel, listenerCallbacks)
+    }
+
     activity?.end()
 
     if (componentConfigCount == -1) {
@@ -309,12 +313,12 @@ abstract class ComponentManagerImpl @JvmOverloads constructor(internal val paren
     }
 
     // app - phase must be set before getMessageBus()
-    if (picoContainer.parent == null && !LoadingState.COMPONENTS_REGISTERED.isOccurred /* loading plugin on the fly */) {
+    if (parent == null && !LoadingState.COMPONENTS_REGISTERED.isOccurred /* loading plugin on the fly */) {
       StartUpMeasurer.setCurrentState(LoadingState.COMPONENTS_REGISTERED)
     }
 
     // ensure that messageBus is created, regardless of lazy listeners map state
-    if (parent?.parent == null) {
+    if (isMessageBusSupported) {
       val messageBus = getOrCreateMessageBusUnderLock()
       map?.let {
         (messageBus as MessageBusEx).setLazyListeners(it)
@@ -322,15 +326,60 @@ abstract class ComponentManagerImpl @JvmOverloads constructor(internal val paren
     }
   }
 
+  private fun registerExtensionPointsAndExtensionByPrecomputedModel(precomputedExtensionModel: PrecomputedExtensionModel,
+                                                                    listenerCallbacks: List<Runnable>?) {
+    assert(extensionArea.extensionPoints.isEmpty())
+    val n = precomputedExtensionModel.pluginDescriptors.size
+    if (n == 0) {
+      return
+    }
+
+    val result = HashMap<String, ExtensionPointImpl<*>>(precomputedExtensionModel.extensionPointTotalCount)
+    for (i in 0 until n) {
+      ExtensionsAreaImpl.createExtensionPoints(precomputedExtensionModel.extensionPoints[i],
+                                               this,
+                                               result,
+                                               precomputedExtensionModel.pluginDescriptors[i])
+    }
+
+    val immutableExtensionPoints = java.util.Map.copyOf(result)
+    extensionArea.setPoints(immutableExtensionPoints)
+
+    for ((name, pairs) in precomputedExtensionModel.nameToExtensions) {
+      val point = immutableExtensionPoints.get(name) ?: continue
+      for ((pluginDescriptor, list) in pairs) {
+        if (!list.isEmpty()) {
+          point.registerExtensions(list, pluginDescriptor, listenerCallbacks)
+        }
+      }
+    }
+  }
+
   private fun registerComponents(pluginDescriptor: IdeaPluginDescriptor, containerDescriptor: ContainerDescriptor, headless: Boolean): Int {
     var count = 0
     for (descriptor in (containerDescriptor.components ?: return 0)) {
-      if (!descriptor.prepareClasses(headless) || !isComponentSuitable(descriptor)) {
+      var implementationClass = descriptor.implementationClass
+      if (headless && descriptor.headlessImplementationClass != null) {
+        if (descriptor.headlessImplementationClass.isEmpty()) {
+          continue
+        }
+
+        implementationClass = descriptor.headlessImplementationClass
+      }
+
+      if (descriptor.os != null && !isSuitableForOs(descriptor.os)) {
+        continue
+      }
+
+      if (!isComponentSuitable(descriptor)) {
         continue
       }
 
       try {
-        registerComponent(descriptor, pluginDescriptor)
+        registerComponent(interfaceClassName = descriptor.interfaceClass ?: descriptor.implementationClass!!,
+                          implementationClassName = implementationClass,
+                          config = descriptor,
+                          pluginDescriptor = pluginDescriptor)
         count++
       }
       catch (e: Throwable) {
@@ -349,10 +398,10 @@ abstract class ComponentManagerImpl @JvmOverloads constructor(internal val paren
 
     val activity = when (val activityNamePrefix = activityNamePrefix()) {
       null -> null
-      else -> StartUpMeasurer.startMainActivity("$activityNamePrefix${StartUpMeasurer.Activities.CREATE_COMPONENTS_SUFFIX}")
+      else -> startActivity("$activityNamePrefix${StartUpMeasurer.Activities.CREATE_COMPONENTS_SUFFIX}")
     }
 
-    for (componentAdapter in picoContainer.componentAdapters) {
+    for (componentAdapter in componentAdapters.getImmutableSet()) {
       if (componentAdapter is MyComponentAdapter) {
         componentAdapter.getInstance<Any>(this, keyClass = null, indicator = indicator)
       }
@@ -365,61 +414,86 @@ abstract class ComponentManagerImpl @JvmOverloads constructor(internal val paren
 
   @TestOnly
   fun registerComponentImplementation(componentKey: Class<*>, componentImplementation: Class<*>, shouldBeRegistered: Boolean) {
-    val picoContainer = checkStateAndGetPicoContainer()
-    val adapter = picoContainer.unregisterComponent(componentKey) as MyComponentAdapter?
+    checkState()
+    var adapter = unregisterComponent(componentKey) as MyComponentAdapter?
     if (shouldBeRegistered) {
       LOG.assertTrue(adapter != null)
     }
+
     val pluginDescriptor = DefaultPluginDescriptor("test registerComponentImplementation")
-    picoContainer.registerComponent(MyComponentAdapter(componentKey, componentImplementation.name, pluginDescriptor, this,
-                                                       componentImplementation))
+    adapter = MyComponentAdapter(componentKey, componentImplementation.name, pluginDescriptor, this, componentImplementation)
+    registerAdapter(adapter, adapter.pluginDescriptor)
+    componentAdapters.add(adapter)
   }
 
   @TestOnly
-  fun <T : Any> replaceComponentInstance(componentKey: Class<T>, componentImplementation: T, parentDisposable: Disposable?): T? {
-    val adapter = checkStateAndGetPicoContainer().getComponentAdapter(componentKey) as MyComponentAdapter
-    return adapter.replaceInstance(componentImplementation, parentDisposable)
+  fun <T : Any> replaceComponentInstance(componentKey: Class<T>, componentImplementation: T, parentDisposable: Disposable?) {
+    checkState()
+    val adapter = getComponentAdapter(componentKey) as MyComponentAdapter
+    adapter.replaceInstance(componentKey, componentImplementation, parentDisposable, null)
   }
 
-  private fun registerComponent(config: ComponentConfig, pluginDescriptor: PluginDescriptor) {
-    val interfaceClass = Class.forName(config.interfaceClass, true, pluginDescriptor.pluginClassLoader)
-
-    if (config.options != null && java.lang.Boolean.parseBoolean(config.options!!.get("overrides"))) {
-      picoContainer.unregisterComponent(interfaceClass) ?: throw PluginException("$config does not override anything",
-                                                                                 pluginDescriptor.pluginId)
-    }
-
-    val implementationClass = when (config.interfaceClass) {
-      config.implementationClass -> interfaceClass.name
-      else -> config.implementationClass
+  private fun registerComponent(interfaceClassName: String,
+                                implementationClassName: String?,
+                                config: ComponentConfig,
+                                pluginDescriptor: PluginDescriptor) {
+    val interfaceClass = pluginDescriptor.pluginClassLoader.loadClass(interfaceClassName)
+    val options = config.options
+    if (config.overrides) {
+      unregisterComponent(interfaceClass) ?: throw PluginException("$config does not override anything", pluginDescriptor.pluginId)
     }
 
     // implementationClass == null means we want to unregister this component
-    if (!implementationClass.isNullOrEmpty()) {
-      val ws = config.options != null && java.lang.Boolean.parseBoolean(config.options!!.get("workspace"))
-      picoContainer.registerComponent(MyComponentAdapter(interfaceClass, implementationClass, pluginDescriptor, this, null, ws))
+    if (implementationClassName == null) {
+      return
     }
+
+    if (options != null && java.lang.Boolean.parseBoolean(options.get("workspace")) &&
+        !badWorkspaceComponents.contains(implementationClassName)) {
+      LOG.error("workspace option is deprecated (implementationClass=$implementationClassName)")
+    }
+
+    val adapter = MyComponentAdapter(interfaceClass, implementationClassName, pluginDescriptor, this, null)
+    registerAdapter(adapter, adapter.pluginDescriptor)
+    componentAdapters.add(adapter)
   }
 
-  internal open fun getApplication(): Application? = if (this is Application) this else ApplicationManager.getApplication()
+  open fun getApplication(): Application? {
+    return if (parent == null || this is Application) this as Application else parent.getApplication()
+  }
 
-  private fun registerServices(services: List<ServiceDescriptor>, pluginDescriptor: IdeaPluginDescriptor) {
-    val picoContainer = checkStateAndGetPicoContainer()
+  protected fun registerServices(services: List<ServiceDescriptor>, pluginDescriptor: IdeaPluginDescriptor) {
+    checkState()
+
+    val app = getApplication()!!
     for (descriptor in services) {
+      if (!isServiceSuitable(descriptor) || descriptor.os != null && !isSuitableForOs(descriptor.os)) {
+        continue
+      }
+
       // Allow to re-define service implementations in plugins.
       // Empty serviceImplementation means we want to unregister service.
-      if (descriptor.overrides && picoContainer.unregisterComponent(descriptor.getInterface()) == null) {
-        throw PluginException("Service: ${descriptor.getInterface()} doesn't override anything", pluginDescriptor.pluginId)
+      val key = descriptor.getInterface()
+      if (descriptor.overrides && componentKeyToAdapter.remove(key) == null) {
+        throw PluginException("Service $key doesn't override anything", pluginDescriptor.pluginId)
       }
 
       // empty serviceImplementation means we want to unregister service
-      if (descriptor.implementation != null) {
-        picoContainer.registerComponent(ServiceComponentAdapter(descriptor, pluginDescriptor, this))
+      val implementation = when {
+        descriptor.testServiceImplementation != null && app.isUnitTestMode -> descriptor.testServiceImplementation
+        descriptor.headlessImplementation != null && app.isHeadlessEnvironment -> descriptor.headlessImplementation
+        else -> descriptor.serviceImplementation
+      }
+
+      if (implementation != null) {
+        val componentAdapter = ServiceComponentAdapter(descriptor, pluginDescriptor, this)
+        if (componentKeyToAdapter.putIfAbsent(key, componentAdapter) != null) {
+          throw PluginException("Key $key duplicated", pluginDescriptor.pluginId)
+        }
       }
     }
   }
 
-  @Internal
   internal fun handleInitComponentError(error: Throwable, componentClassName: String, pluginId: PluginId) {
     if (handlingInitComponentError) {
       return
@@ -433,7 +507,7 @@ abstract class ComponentManagerImpl @JvmOverloads constructor(internal val paren
       }
 
       var effectivePluginId = pluginId
-      if (effectivePluginId == PluginManagerCore.CORE_ID && effectivePluginId == PluginManagerCore.CORE_ID) {
+      if (effectivePluginId == PluginManagerCore.CORE_ID) {
         effectivePluginId = PluginManagerCore.getPluginOrPlatformByClassName(componentClassName) ?: PluginManagerCore.CORE_ID
       }
 
@@ -445,21 +519,27 @@ abstract class ComponentManagerImpl @JvmOverloads constructor(internal val paren
   }
 
   internal fun initializeComponent(component: Any, serviceDescriptor: ServiceDescriptor?, pluginId: PluginId?) {
-    if (serviceDescriptor == null || !(component is PathMacroManager || component is IComponentStore || component is MessageBusFactory)) {
+    if (serviceDescriptor == null || !isPreInitialized(component)) {
       LoadingState.CONFIGURATION_STORE_INITIALIZED.checkOccurred()
       componentStore.initComponent(component, serviceDescriptor, pluginId)
     }
   }
 
+  protected open fun isPreInitialized(component: Any): Boolean {
+    return component is PathMacroManager || component is IComponentStore || component is MessageBusFactory
+  }
+
   protected abstract fun getContainerDescriptor(pluginDescriptor: IdeaPluginDescriptorImpl): ContainerDescriptor
 
   final override fun <T : Any> getComponent(interfaceClass: Class<T>): T? {
-    val picoContainer = checkStateAndGetPicoContainer()
-    val adapter = picoContainer.getComponentAdapter(interfaceClass)
+    assertComponentsSupported()
+    checkState()
+
+    val adapter = getComponentAdapter(interfaceClass)
     if (adapter == null) {
       checkCanceledIfNotInClassInit()
       if (containerState.get() == ContainerState.DISPOSE_COMPLETED) {
-        throwContainerIsAlreadyDisposed(interfaceClass, ProgressManager.getGlobalProgressIndicator())
+        throwAlreadyDisposedError(interfaceClass.name, this, ProgressManager.getGlobalProgressIndicator())
       }
       return null
     }
@@ -468,51 +548,67 @@ abstract class ComponentManagerImpl @JvmOverloads constructor(internal val paren
       LOG.error("$interfaceClass it is a service, use getService instead of getComponent")
     }
 
-    @Suppress("UNCHECKED_CAST")
-    return when (adapter) {
-      is BaseComponentAdapter -> {
-        if (parent != null && adapter.componentManager !== this) {
-          LOG.error("getComponent must be called on appropriate container (current: $this, expected: ${adapter.componentManager})")
-        }
-
-        val indicator = ProgressManager.getGlobalProgressIndicator()
-        if (containerState.get() == ContainerState.DISPOSE_COMPLETED) {
-          adapter.throwAlreadyDisposedError(this, indicator)
-        }
-        adapter.getInstance(adapter.componentManager, interfaceClass, indicator = indicator)
+    if (adapter is BaseComponentAdapter) {
+      if (parent != null && adapter.componentManager !== this) {
+        LOG.error("getComponent must be called on appropriate container (current: $this, expected: ${adapter.componentManager})")
       }
-      else -> adapter.getComponentInstance(picoContainer) as T
+
+      val indicator = ProgressManager.getGlobalProgressIndicator()
+      if (containerState.get() == ContainerState.DISPOSE_COMPLETED) {
+        adapter.throwAlreadyDisposedError(this, indicator)
+      }
+      return adapter.getInstance(adapter.componentManager, interfaceClass, indicator = indicator)
+    }
+    else {
+      @Suppress("UNCHECKED_CAST")
+      return adapter.getComponentInstance(this) as T
     }
   }
 
-  final override fun <T : Any> getService(serviceClass: Class<T>) = doGetService(serviceClass, true)
+  override fun <T : Any> getService(serviceClass: Class<T>): T? {
+    // `computeIfAbsent` cannot be used because of recursive update
+    var result = serviceInstanceHotCache.get(serviceClass)
+    if (result == null) {
+      result = doGetService(serviceClass, true) ?: return null
+      serviceInstanceHotCache.putIfAbsent(serviceClass, result)
+    }
+    @Suppress("UNCHECKED_CAST")
+    return result as T?
+  }
 
-  final override fun <T : Any> getServiceIfCreated(serviceClass: Class<T>) = doGetService(serviceClass, false)
+  @Suppress("UNCHECKED_CAST")
+  override fun <T : Any> getServiceIfCreated(serviceClass: Class<T>): T? = serviceInstanceHotCache.get(serviceClass) as T?
 
-  private fun <T : Any> doGetService(serviceClass: Class<T>, createIfNeeded: Boolean): T? {
-    val lightServices = lightServices
-    if (lightServices != null && isLightService(serviceClass)) {
-      return getLightService(serviceClass, createIfNeeded)
+  protected open fun <T : Any> doGetService(serviceClass: Class<T>, createIfNeeded: Boolean): T? {
+    val key = serviceClass.name
+    val adapter = componentKeyToAdapter.get(key)
+    if (adapter is ServiceComponentAdapter) {
+      if (createIfNeeded && containerState.get() == ContainerState.DISPOSE_COMPLETED) {
+        throwAlreadyDisposedError(adapter.toString(), this, ProgressIndicatorProvider.getGlobalProgressIndicator())
+      }
+      return adapter.getInstance(this, serviceClass, createIfNeeded)
+    }
+    else if (adapter is LightServiceComponentAdapter) {
+      if (createIfNeeded && containerState.get() == ContainerState.DISPOSE_COMPLETED) {
+        throwAlreadyDisposedError(adapter.toString(), this, ProgressIndicatorProvider.getGlobalProgressIndicator())
+      }
+
+      @Suppress("UNCHECKED_CAST")
+      return adapter.getComponentInstance(null) as T
     }
 
-    val key = serviceClass.name
-    val adapter = picoContainer.getServiceAdapter(key) as? ServiceComponentAdapter
-    val indicator = ProgressManager.getGlobalProgressIndicator()
-    if (adapter != null) {
-      if (createIfNeeded && containerState.get() == ContainerState.DISPOSE_COMPLETED) {
-        adapter.throwAlreadyDisposedError(this, indicator)
-      }
-      return adapter.getInstance(this, serviceClass, createIfNeeded, indicator)
+    if (isLightServiceSupported && isLightService(serviceClass)) {
+      return if (createIfNeeded) getOrCreateLightService(serviceClass) else null
     }
 
     checkCanceledIfNotInClassInit()
 
-    // if container is fully disposed, all adapters maybe removed
+    // if the container is fully disposed, all adapters may be removed
     if (containerState.get() == ContainerState.DISPOSE_COMPLETED) {
       if (!createIfNeeded) {
         return null
       }
-      throwContainerIsAlreadyDisposed(serviceClass, indicator)
+      throwAlreadyDisposedError(serviceClass.name, this, ProgressIndicatorProvider.getGlobalProgressIndicator())
     }
 
     if (parent != null) {
@@ -523,45 +619,50 @@ abstract class ComponentManagerImpl @JvmOverloads constructor(internal val paren
       }
     }
 
+    if (isLightServiceSupported && !serviceClass.isInterface && !Modifier.isFinal(serviceClass.modifiers) &&
+        serviceClass.isAnnotationPresent(Service::class.java)) {
+      throw PluginException.createByClass("Light service class $serviceClass must be final", null, serviceClass)
+    }
+
     val result = getComponent(serviceClass) ?: return null
-    val message = "$key requested as a service, but it is a component - convert it to a service or " +
-                  "change call to ${if (parent == null) "ApplicationManager.getApplication().getComponent()" else "project.getComponent()"}"
-    if (SystemProperties.`is`("idea.test.getService.assert.as.warn")) {
-      LOG.warn(message)
-    }
-    else {
-      PluginException.logPluginError(LOG, message, null, serviceClass)
-    }
+    PluginException.logPluginError(LOG,
+      "$key requested as a service, but it is a component - " +
+      "convert it to a service or change call to " +
+      if (parent == null) "ApplicationManager.getApplication().getComponent()" else "project.getComponent()",
+      null, serviceClass)
     return result
   }
 
-  private fun throwContainerIsAlreadyDisposed(interfaceClass: Class<*>, indicator: @Nullable ProgressIndicator?) {
-    val error = AlreadyDisposedException("Cannot create ${interfaceClass.name} because container is already disposed: ${toString()}")
-    if (indicator == null) {
-      throw error
-    }
-    else {
-      throw ProcessCanceledException(error)
+  private fun <T : Any> getOrCreateLightService(serviceClass: Class<T>): T {
+    checkThatCreatingOfLightServiceIsAllowed(serviceClass)
+    synchronized(serviceClass) {
+      val adapter = componentKeyToAdapter.get(serviceClass.name) as LightServiceComponentAdapter?
+      if (adapter != null) {
+        @Suppress("UNCHECKED_CAST")
+        return adapter.getComponentInstance(null) as T
+      }
+
+      LoadingState.COMPONENTS_REGISTERED.checkOccurred()
+
+      var result: T? = null
+      if (ProgressIndicatorProvider.getGlobalProgressIndicator() == null) {
+        result = createLightService(serviceClass)
+      }
+      else {
+        ProgressManager.getInstance().executeNonCancelableSection {
+          result = createLightService(serviceClass)
+        }
+      }
+      result!!.let {
+        registerAdapter(LightServiceComponentAdapter(it), pluginDescriptor = null)
+        return it
+      }
     }
   }
 
-  internal fun <T : Any> getLightService(serviceClass: Class<T>, createIfNeeded: Boolean): T? {
-    val lightServices = lightServices!!
-    @Suppress("UNCHECKED_CAST")
-    val result = lightServices.get(serviceClass) as T?
-    if (result != null || !createIfNeeded) {
-      return result
-    }
-
+  private fun checkThatCreatingOfLightServiceIsAllowed(serviceClass: Class<*>) {
     if (isDisposed) {
-      val error = AlreadyDisposedException(
-        "Cannot create light service ${serviceClass.name} because container is already disposed (container=$this)")
-      if (ProgressIndicatorProvider.getGlobalProgressIndicator() == null) {
-        throw error
-      }
-      else {
-        throw ProcessCanceledException(error)
-      }
+      throwAlreadyDisposedError("light service ${serviceClass.name}", this, ProgressIndicatorProvider.getGlobalProgressIndicator())
     }
 
     // assertion only for non-platform plugins
@@ -569,56 +670,11 @@ abstract class ComponentManagerImpl @JvmOverloads constructor(internal val paren
     if (classLoader is PluginAwareClassLoader && !isGettingServiceAllowedDuringPluginUnloading(classLoader.pluginDescriptor)) {
       componentContainerIsReadonly?.let {
         val error = AlreadyDisposedException(
-          "Cannot create light service ${serviceClass.name} because container in read-only mode (reason=$it, container=$this")
-        if (ProgressIndicatorProvider.getGlobalProgressIndicator() == null) {
-          throw error
-        }
-        else {
-          throw ProcessCanceledException(error)
-        }
+          "Cannot create light service ${serviceClass.name} because container in read-only mode (reason=$it, container=$this"
+        )
+        throw if (ProgressIndicatorProvider.getGlobalProgressIndicator() == null) error else ProcessCanceledException(error)
       }
     }
-
-    synchronized(serviceClass) {
-      return getOrCreateLightService(serviceClass, lightServices)
-    }
-  }
-
-  @Internal
-  fun getServiceImplementationClassNames(prefix: String): List<String> {
-    val result = ArrayList<String>()
-    processAllDescriptors(this) { serviceDescriptor ->
-      val implementation = serviceDescriptor.implementation ?: return@processAllDescriptors
-      if (implementation.startsWith(prefix)) {
-        result.add(implementation)
-      }
-    }
-    return result
-  }
-
-  private fun <T : Any> getOrCreateLightService(serviceClass: Class<T>, cache: ConcurrentMap<Class<*>, Any>): T {
-    LoadingState.COMPONENTS_REGISTERED.checkOccurred()
-
-    @Suppress("UNCHECKED_CAST")
-    var result = cache.get(serviceClass) as T?
-    if (result != null) {
-      return result
-    }
-
-    if (ProgressIndicatorProvider.getGlobalProgressIndicator() == null) {
-      result = createLightService(serviceClass)
-    }
-    else {
-      ProgressManager.getInstance().executeNonCancelableSection {
-        result = createLightService(serviceClass)
-      }
-    }
-
-    val prevValue = cache.put(serviceClass, result)
-    if (prevValue != null) {
-      LOG.error("Light service ${serviceClass.name} is already created (existingInstance=$prevValue)")
-    }
-    return result!!
   }
 
   @Synchronized
@@ -628,7 +684,7 @@ abstract class ComponentManagerImpl @JvmOverloads constructor(internal val paren
       return messageBus
     }
 
-    messageBus = MessageBusFactory.getInstance().createMessageBus(this, parent?.messageBus) as MessageBusImpl
+    messageBus = getApplication()!!.getService(MessageBusFactory::class.java).createMessageBus(this, parent?.messageBus) as MessageBusImpl
     if (StartUpMeasurer.isMeasuringPluginStartupCosts()) {
       messageBus.setMessageDeliveryListener { topic, messageName, handler, duration ->
         if (!StartUpMeasurer.isMeasuringPluginStartupCosts()) {
@@ -656,28 +712,49 @@ abstract class ComponentManagerImpl @JvmOverloads constructor(internal val paren
    */
   @Internal
   fun registerComponent(key: Class<*>, implementation: Class<*>, pluginDescriptor: PluginDescriptor, override: Boolean) {
-    val picoContainer = checkStateAndGetPicoContainer()
-    if (override && picoContainer.unregisterComponent(key) == null) {
-      throw PluginException("Component $key doesn't override anything", pluginDescriptor.pluginId)
+    assertComponentsSupported()
+    checkState()
+
+    val adapter = MyComponentAdapter(key, implementation.name, pluginDescriptor, this, implementation)
+    if (override) {
+      overrideAdapter(adapter, pluginDescriptor)
+      componentAdapters.replace(adapter)
     }
-    picoContainer.registerComponent(MyComponentAdapter(key, implementation.name, pluginDescriptor, this, implementation))
+    else {
+      registerAdapter(adapter, pluginDescriptor)
+      componentAdapters.add(adapter)
+    }
+  }
+
+  private fun overrideAdapter(adapter: ComponentAdapter, pluginDescriptor: PluginDescriptor) {
+    val componentKey = adapter.componentKey
+    if (componentKeyToAdapter.put(componentKey, adapter) == null) {
+      componentKeyToAdapter.remove(componentKey)
+      throw PluginException("Key $componentKey doesn't override anything", pluginDescriptor.pluginId)
+    }
   }
 
   /**
    * Use only if approved by core team.
    */
   @Internal
-  fun registerService(serviceInterface: Class<*>, implementation: Class<*>, pluginDescriptor: PluginDescriptor, override: Boolean) {
-    val serviceKey = serviceInterface.name
-    val picoContainer = checkStateAndGetPicoContainer()
-    if (override && picoContainer.unregisterComponent(serviceKey) == null) {
-      throw PluginException("Service $serviceKey doesn't override anything", pluginDescriptor.pluginId)
-    }
+  fun registerService(serviceInterface: Class<*>,
+                      implementation: Class<*>,
+                      pluginDescriptor: PluginDescriptor,
+                      override: Boolean,
+                      preloadMode: PreloadMode = PreloadMode.FALSE) {
+    checkState()
 
-    val descriptor = ServiceDescriptor()
-    descriptor.serviceInterface = serviceInterface.name
-    descriptor.serviceImplementation = implementation.name
-    picoContainer.registerComponent(ServiceComponentAdapter(descriptor, pluginDescriptor, this, implementation))
+    val descriptor = ServiceDescriptor(serviceInterface.name, implementation.name, null, null, false,
+                                       null, preloadMode, null, null)
+    val adapter = ServiceComponentAdapter(descriptor, pluginDescriptor, this, implementation)
+    if (override) {
+      overrideAdapter(adapter, pluginDescriptor)
+    }
+    else {
+      registerAdapter(adapter, pluginDescriptor)
+    }
+    serviceInstanceHotCache.remove(serviceInterface)
   }
 
   /**
@@ -686,41 +763,55 @@ abstract class ComponentManagerImpl @JvmOverloads constructor(internal val paren
   @Internal
   fun <T : Any> registerServiceInstance(serviceInterface: Class<T>, instance: T, pluginDescriptor: PluginDescriptor) {
     val serviceKey = serviceInterface.name
-    val picoContainer = checkStateAndGetPicoContainer()
-    picoContainer.unregisterComponent(serviceKey)
+    checkState()
 
-    val descriptor = ServiceDescriptor()
-    descriptor.serviceInterface = serviceKey
-    descriptor.serviceImplementation = instance.javaClass.name
-    picoContainer.registerComponent(ServiceComponentAdapter(descriptor, pluginDescriptor, this, instance.javaClass, instance))
+    val descriptor = ServiceDescriptor(serviceKey, instance.javaClass.name, null, null, false,
+                                       null, PreloadMode.FALSE, null, null)
+    componentKeyToAdapter.put(serviceKey, ServiceComponentAdapter(descriptor, pluginDescriptor, this, instance.javaClass, instance))
+    serviceInstanceHotCache.put(serviceInterface, instance)
   }
 
   @TestOnly
   @Internal
   fun <T : Any> replaceServiceInstance(serviceInterface: Class<T>, instance: T, parentDisposable: Disposable) {
+    checkState()
     if (isLightService(serviceInterface)) {
-      lightServices!!.put(serviceInterface, instance)
+      val adapter = LightServiceComponentAdapter(instance)
+      val key = adapter.componentKey
+      componentKeyToAdapter.put(key, adapter)
       Disposer.register(parentDisposable, Disposable {
-        lightServices.remove(serviceInterface)
+        componentKeyToAdapter.remove(key)
+        serviceInstanceHotCache.remove(serviceInterface)
       })
+      serviceInstanceHotCache.put(serviceInterface, instance)
     }
     else {
-      val adapter = checkStateAndGetPicoContainer().getServiceAdapter(serviceInterface.name) as ServiceComponentAdapter
-      adapter.replaceInstance(instance, parentDisposable)
+      val adapter = componentKeyToAdapter.get(serviceInterface.name) as ServiceComponentAdapter
+      adapter.replaceInstance(serviceInterface, instance, parentDisposable, serviceInstanceHotCache)
     }
+  }
+
+  @Internal
+  fun <T : Any> replaceRegularServiceInstance(serviceInterface: Class<T>, instance: T) {
+    checkState()
+    val adapter = componentKeyToAdapter.get(serviceInterface.name) as ServiceComponentAdapter
+    (adapter.replaceInstance(serviceInterface, instance, serviceParentDisposable, serviceInstanceHotCache) as? Disposable)?.let {
+      Disposer.dispose(it)
+    }
+    serviceInstanceHotCache.put(serviceInterface, instance)
   }
 
   private fun <T : Any> createLightService(serviceClass: Class<T>): T {
     val startTime = StartUpMeasurer.getCurrentTime()
+    val pluginId = (serviceClass.classLoader as? PluginAwareClassLoader)?.pluginId ?: PluginManagerCore.CORE_ID
 
-    val result = instantiateClass(serviceClass, null)
+    val result = instantiateClass(serviceClass, pluginId)
     if (result is Disposable) {
       Disposer.register(serviceParentDisposable, result)
     }
 
-    val pluginId = (serviceClass.classLoader as? PluginAwareClassLoader)?.pluginId
     initializeComponent(result, null, pluginId)
-    StartUpMeasurer.addCompletedActivity(startTime, serviceClass, getServiceActivityCategory(this), pluginId?.idString)
+    StartUpMeasurer.addCompletedActivity(startTime, serviceClass, getActivityCategory(isExtension = false), pluginId.idString)
     return result
   }
 
@@ -729,18 +820,17 @@ abstract class ComponentManagerImpl @JvmOverloads constructor(internal val paren
     return doLoadClass(className, pluginDescriptor) as Class<T>
   }
 
-  final override fun <T : Any> instantiateClass(aClass: Class<T>, pluginId: PluginId?): T {
+  final override fun <T : Any> instantiateClass(aClass: Class<T>, pluginId: PluginId): T {
     checkCanceledIfNotInClassInit()
 
     try {
       if (parent == null) {
-        val constructor = aClass.getDeclaredConstructor()
-        constructor.isAccessible = true
-        return constructor.newInstance()
+        @Suppress("UNCHECKED_CAST")
+        return MethodHandles.privateLookupIn(aClass, methodLookup).findConstructor(aClass, emptyConstructorMethodType).invoke() as T
       }
       else {
         val constructors: Array<Constructor<*>> = aClass.declaredConstructors
-        var constructor: Constructor<*>? = if (constructors.size > 1) {
+        var constructor = if (constructors.size > 1) {
           // see ConfigurableEP - prefer constructor that accepts our instance
           constructors.firstOrNull { it.parameterCount == 1 && it.parameterTypes[0].isAssignableFrom(javaClass) }
         }
@@ -755,10 +845,13 @@ abstract class ComponentManagerImpl @JvmOverloads constructor(internal val paren
 
         constructor.isAccessible = true
         @Suppress("UNCHECKED_CAST")
-        return when (constructor.parameterCount) {
-          1 -> constructor.newInstance(getActualContainerInstance())
-          else -> constructor.newInstance()
-        } as T
+        if (constructor.parameterCount == 1) {
+          return constructor.newInstance(getActualContainerInstance()) as T
+        }
+        else {
+          @Suppress("UNCHECKED_CAST")
+          return MethodHandles.privateLookupIn(aClass, methodLookup).unreflectConstructor(constructor).invoke() as T
+        }
       }
     }
     catch (e: Throwable) {
@@ -773,12 +866,7 @@ abstract class ComponentManagerImpl @JvmOverloads constructor(internal val paren
       }
 
       val message = "Cannot create class ${aClass.name} (classloader=${aClass.classLoader})"
-      if (pluginId == null) {
-        throw PluginException.createByClass(message, e, aClass)
-      }
-      else {
-        throw PluginException(message, e, pluginId)
-      }
+      throw PluginException(message, e, pluginId)
     }
   }
 
@@ -792,7 +880,7 @@ abstract class ComponentManagerImpl @JvmOverloads constructor(internal val paren
     get() = true
 
   final override fun <T : Any> instantiateClass(className: String, pluginDescriptor: PluginDescriptor): T {
-    val pluginId = pluginDescriptor.pluginId!!
+    val pluginId = pluginDescriptor.pluginId
     try {
       @Suppress("UNCHECKED_CAST")
       return instantiateClass(doLoadClass(className, pluginDescriptor) as Class<T>, pluginId)
@@ -829,62 +917,70 @@ abstract class ComponentManagerImpl @JvmOverloads constructor(internal val paren
 
   final override fun createError(error: Throwable, pluginId: PluginId): RuntimeException {
     return when (val effectiveError: Throwable = if (error is InvocationTargetException) error.targetException else error) {
-      is ProcessCanceledException, is ExtensionNotApplicableException -> effectiveError as RuntimeException
-      else -> createPluginExceptionIfNeeded(effectiveError, pluginId)
+      is ProcessCanceledException, is ExtensionNotApplicableException, is PluginException -> effectiveError as RuntimeException
+      else -> PluginException(effectiveError, pluginId)
     }
   }
 
   final override fun createError(message: String, pluginId: PluginId) = PluginException(message, pluginId)
 
-  final override fun createError(message: String, pluginId: PluginId, attachments: MutableMap<String, String>?): RuntimeException {
-    return PluginException(message, pluginId, attachments?.map { Attachment(it.key, it.value) } ?: emptyList())
+  final override fun createError(message: String,
+                                 error: Throwable?,
+                                 pluginId: PluginId, 
+                                 attachments: MutableMap<String, String>?): RuntimeException {
+    return PluginException(message, error, pluginId, attachments?.map { Attachment(it.key, it.value) } ?: emptyList())
   }
 
   @Internal
-  fun unloadServices(services: List<ServiceDescriptor>, pluginId: PluginId) {
-    if (services.isNotEmpty()) {
-      val container = checkStateAndGetPicoContainer()
-      val stateStore = stateStore
+  open fun unloadServices(services: List<ServiceDescriptor>, pluginId: PluginId) {
+    checkState()
+
+    if (!services.isEmpty()) {
+      val store = componentStore
       for (service in services) {
-        val adapter = (container.unregisterComponent(service.`interface`) ?: continue) as ServiceComponentAdapter
+        val adapter = (componentKeyToAdapter.remove(service.`interface`) ?: continue) as ServiceComponentAdapter
         val instance = adapter.getInitializedInstance() ?: continue
         if (instance is Disposable) {
           Disposer.dispose(instance)
         }
-        stateStore.unloadComponent(instance)
+        store.unloadComponent(instance)
       }
     }
 
-    if (lightServices != null) {
-      val iterator = lightServices.iterator()
+    if (isLightServiceSupported) {
+      val store = componentStore
+      val iterator = componentKeyToAdapter.values.iterator()
       while (iterator.hasNext()) {
-        val entry = iterator.next()
-        if ((entry.key.classLoader as? PluginAwareClassLoader)?.pluginId == pluginId) {
-          val instance = entry.value
+        val adapter = iterator.next() as? LightServiceComponentAdapter ?: continue
+        val instance = adapter.getComponentInstance(null)
+        if ((instance.javaClass.classLoader as? PluginAwareClassLoader)?.pluginId == pluginId) {
           if (instance is Disposable) {
             Disposer.dispose(instance)
           }
-          stateStore.unloadComponent(instance)
+          store.unloadComponent(instance)
           iterator.remove()
         }
       }
     }
+
+    serviceInstanceHotCache.clear()
   }
 
   @Internal
   open fun activityNamePrefix(): String? = null
 
-  data class ServicePreloadingResult(val asyncPreloadedServices: CompletableFuture<Void?>,
-                                     val syncPreloadedServices: CompletableFuture<Void?>)
-
   @ApiStatus.Internal
-  fun preloadServices(plugins: List<IdeaPluginDescriptorImpl>, executor: Executor, onlyIfAwait: Boolean = false): ServicePreloadingResult {
-    val asyncPreloadedServices = mutableListOf<CompletableFuture<Void>>()
-    val syncPreloadedServices = mutableListOf<CompletableFuture<Void>>()
+  open fun preloadServices(plugins: List<IdeaPluginDescriptorImpl>,
+                      activityPrefix: String,
+                      onlyIfAwait: Boolean = false): Pair<CompletableFuture<Void?>, CompletableFuture<Void?>> {
+    val asyncPreloadedServices = mutableListOf<ForkJoinTask<*>>()
+    val syncPreloadedServices = mutableListOf<ForkJoinTask<*>>()
     for (plugin in plugins) {
-      serviceLoop@
-      for (service in getContainerDescriptor(plugin).services) {
-        val list = when (service.preload) {
+      serviceLoop@ for (service in getContainerDescriptor(plugin).services) {
+        if (!isServiceSuitable(service) || service.os != null && !isSuitableForOs(service.os)) {
+          continue@serviceLoop
+        }
+        val list: MutableList<ForkJoinTask<*>> = when (service.preload) {
           PreloadMode.TRUE -> {
             if (onlyIfAwait) {
               continue@serviceLoop
@@ -909,33 +1005,52 @@ abstract class ComponentManagerImpl @JvmOverloads constructor(internal val paren
               asyncPreloadedServices
             }
           }
-          PreloadMode.AWAIT -> {
-            syncPreloadedServices
-          }
+          PreloadMode.AWAIT -> syncPreloadedServices
           PreloadMode.FALSE -> continue@serviceLoop
           else -> throw IllegalStateException("Unknown preload mode ${service.preload}")
         }
 
-        val future = CompletableFuture.runAsync(Runnable {
-          if (!isServicePreloadingCancelled && !isDisposed) {
-            val adapter = picoContainer.getServiceAdapter(service.getInterface()) as ServiceComponentAdapter? ?: return@Runnable
-            try {
-              adapter.getInstance<Any>(this, null)
-            }
-            catch (ignore: AlreadyDisposedException) {
-            }
-            catch (e: StartupAbortedException) {
-              isServicePreloadingCancelled = true
-              throw e
-            }
+        list.add(ForkJoinTask.adapt task@{
+          if (isServicePreloadingCancelled || isDisposed) {
+            return@task
           }
-        }, executor)
 
-        list.add(future)
+          try {
+            instantiateService(service)
+          }
+          catch (ignore: AlreadyDisposedException) {
+          }
+          catch (e: StartupAbortedException) {
+            isServicePreloadingCancelled = true
+            throw e
+          }
+        })
       }
     }
-    return ServicePreloadingResult(asyncPreloadedServices = CompletableFuture.allOf(*asyncPreloadedServices.toTypedArray()),
-                                   syncPreloadedServices = CompletableFuture.allOf(*syncPreloadedServices.toTypedArray()))
+
+    return Pair(
+      CompletableFuture.runAsync({
+        runActivity("${activityPrefix}service async preloading") {
+          ForkJoinTask.invokeAll(asyncPreloadedServices)
+        }
+      }, ForkJoinPool.commonPool()),
+      CompletableFuture.runAsync({
+        runActivity("${activityPrefix}service sync preloading") {
+          ForkJoinTask.invokeAll(syncPreloadedServices)
+        }
+      }, ForkJoinPool.commonPool())
+    )
+  }
+
+  protected open fun instantiateService(service: ServiceDescriptor) {
+    val adapter = componentKeyToAdapter.get(service.getInterface()) as ServiceComponentAdapter? ?: return
+    val instance = adapter.getInstance<Any>(this, null)
+    if (instance != null) {
+      val implClass = instance.javaClass
+      if (Modifier.isFinal(implClass.modifiers)) {
+        serviceInstanceHotCache.putIfAbsent(implClass, instance)
+      }
+    }
   }
 
   override fun isDisposed(): Boolean {
@@ -966,8 +1081,8 @@ abstract class ComponentManagerImpl @JvmOverloads constructor(internal val paren
     Disposer.disposeChildren(this, null)
 
     val messageBus = messageBus
-    // There is a chance that someone will try to connect to message bus and will get NPE because of disposed connection disposable,
-    // because container state is not yet set to DISPOSE_IN_PROGRESS.
+    // There is a chance that someone will try to connect to the message bus and will get NPE because of disposed connection disposable,
+    // because the container state is not yet set to DISPOSE_IN_PROGRESS.
     // So, 1) dispose connection children 2) set state DISPOSE_IN_PROGRESS 3) dispose connection
     messageBus?.disposeConnectionChildren()
 
@@ -984,13 +1099,15 @@ abstract class ComponentManagerImpl @JvmOverloads constructor(internal val paren
     // dispose components and services
     Disposer.dispose(serviceParentDisposable)
 
-    // release references to services instances
-    picoContainer.release()
+    // release references to the service instances
+    componentKeyToAdapter.clear()
+    componentAdapters.clear()
+    serviceInstanceHotCache.clear()
 
     val messageBus = messageBus
-    if (messageBus != null ) {
+    if (messageBus != null) {
       // Must be after disposing of serviceParentDisposable, because message bus disposes child buses, so, we must dispose all services first.
-      // For example, service ModuleManagerImpl disposes modules, each module, in turn, disposes module's message bus (child bus of application).
+      // For example, service ModuleManagerImpl disposes modules; each module, in turn, disposes module's message bus (child bus of application).
       Disposer.dispose(messageBus)
       this.messageBus = null
     }
@@ -1008,8 +1125,9 @@ abstract class ComponentManagerImpl @JvmOverloads constructor(internal val paren
   }
 
   @Suppress("DEPRECATION")
-  override fun getComponent(name: String): BaseComponent? {
-    for (componentAdapter in checkStateAndGetPicoContainer().unsafeGetAdapters()) {
+  final override fun getComponent(name: String): BaseComponent? {
+    checkState()
+    for (componentAdapter in componentKeyToAdapter.values) {
       if (componentAdapter is MyComponentAdapter) {
         val instance = componentAdapter.getInitializedInstance()
         if (instance is BaseComponent && name == instance.componentName) {
@@ -1020,7 +1138,6 @@ abstract class ComponentManagerImpl @JvmOverloads constructor(internal val paren
     return null
   }
 
-  @Internal
   internal fun componentCreated(indicator: ProgressIndicator?) {
     instantiatedComponentCount++
 
@@ -1030,21 +1147,15 @@ abstract class ComponentManagerImpl @JvmOverloads constructor(internal val paren
     }
   }
 
-  override fun <T : Any> getComponentInstancesOfType(baseClass: Class<T>, createIfNeeded: Boolean): List<T> {
-    var result: MutableList<T>? = null
-    // we must use instances only from our adapter (could be service or something else)
-    for (componentAdapter in checkStateAndGetPicoContainer().componentAdapters) {
-      if (componentAdapter is MyComponentAdapter && ReflectionUtil.isAssignable(baseClass, componentAdapter.componentImplementation)) {
-        val instance = componentAdapter.getInstance<T>(this, null, createIfNeeded, null)
-        if (instance != null) {
-          if (result == null) {
-            result = ArrayList()
-          }
-          result.add(instance)
-        }
-      }
-    }
-    return result ?: emptyList()
+  final override fun <T : Any> getServiceByClassName(serviceClassName: String): T? {
+    checkState()
+    val adapter = componentKeyToAdapter.get(serviceClassName) as ServiceComponentAdapter?
+    return adapter?.getInstance(this, keyClass = null)
+  }
+
+  @ApiStatus.Internal
+  open fun isServiceSuitable(descriptor: ServiceDescriptor): Boolean {
+    return descriptor.client == null
   }
 
   protected open fun isComponentSuitable(componentConfig: ComponentConfig): Boolean {
@@ -1052,18 +1163,252 @@ abstract class ComponentManagerImpl @JvmOverloads constructor(internal val paren
     return !java.lang.Boolean.parseBoolean(options.get("internal")) || ApplicationManager.getApplication().isInternal
   }
 
-  override fun getDisposed(): Condition<*> {
-    return Condition<Any?> { isDisposed }
-  }
+  final override fun getDisposed(): Condition<*> = Condition<Any?> { isDisposed }
 
-  @Internal
-  fun processServices(processor: Consumer<Any>) {
-    lightServices?.values?.forEach(processor)
-    for (adapter in picoContainer.componentAdapters) {
+  @ApiStatus.Internal
+  fun processInitializedComponentsAndServices(processor: (Any) -> Unit) {
+    for (adapter in componentKeyToAdapter.values) {
       if (adapter is BaseComponentAdapter) {
-        processor.accept(adapter.getInitializedInstance() ?: continue)
+        processor(adapter.getInitializedInstance() ?: continue)
+      }
+      else if (adapter is LightServiceComponentAdapter) {
+        processor(adapter.getComponentInstance(null))
       }
     }
+  }
+
+  @ApiStatus.Internal
+  fun processAllImplementationClasses(processor: (componentClass: Class<*>, plugin: PluginDescriptor?) -> Unit) {
+    for (adapter in componentKeyToAdapter.values) {
+      if (adapter is ServiceComponentAdapter) {
+        val aClass = try {
+          adapter.getImplementationClass()
+        }
+        catch (e: Throwable) {
+          // well, the component is registered, but the required jar is not added to the classpath (community edition or junior IDE)
+          LOG.warn(e)
+          continue
+        }
+
+        processor(aClass, adapter.pluginDescriptor)
+      }
+      else {
+        val pluginDescriptor = if (adapter is BaseComponentAdapter) adapter.pluginDescriptor else null
+        if (pluginDescriptor != null) {
+          val aClass = try {
+            adapter.componentImplementation
+          }
+          catch (e: Throwable) {
+            LOG.warn(e)
+            continue
+          }
+
+          processor(aClass, pluginDescriptor)
+        }
+      }
+    }
+  }
+
+  final override fun getComponentAdapter(componentKey: Any): ComponentAdapter? {
+    assertComponentsSupported()
+
+    val adapter = getFromCache(componentKey)
+    return if (adapter == null && parent != null) parent.getComponentAdapter(componentKey) else adapter
+  }
+
+  private fun getFromCache(componentKey: Any): ComponentAdapter? {
+    val adapter = componentKeyToAdapter.get(componentKey)
+    if (adapter == null) {
+      return if (componentKey is Class<*>) componentKeyToAdapter.get(componentKey.name) else null
+    }
+    else {
+      return adapter
+    }
+  }
+
+  fun unregisterComponent(componentKey: Any): ComponentAdapter? {
+    assertComponentsSupported()
+
+    val adapter = componentKeyToAdapter.remove(componentKey) ?: return null
+    componentAdapters.remove(adapter)
+    return adapter
+  }
+
+  final override fun getComponentInstance(componentKey: Any): Any? {
+    assertComponentsSupported()
+
+    val adapter = getFromCache(componentKey)
+    if (adapter == null) {
+      return parent?.getComponentInstance(componentKey)
+    }
+    else {
+      return adapter.getComponentInstance(this)
+    }
+  }
+
+  final override fun getComponentInstanceOfType(componentType: Class<*>): Any? {
+    throw UnsupportedOperationException("Do not use getComponentInstanceOfType()")
+  }
+
+  fun registerComponentInstance(componentKey: Any, componentInstance: Any): ComponentAdapter {
+    assertComponentsSupported()
+
+    val componentAdapter = object : ComponentAdapter {
+      override fun getComponentInstance(container: PicoContainer) = componentInstance
+
+      override fun getComponentKey() = componentKey
+
+      override fun getComponentImplementation() = componentInstance.javaClass
+
+      override fun toString() = "${javaClass.name}[$componentKey]"
+    }
+    if (componentKeyToAdapter.putIfAbsent(componentAdapter.componentKey, componentAdapter) != null) {
+      throw IllegalStateException("Key ${componentAdapter.componentKey} duplicated")
+    }
+    componentAdapters.add(componentAdapter)
+    return componentAdapter
+  }
+
+  private fun assertComponentsSupported() {
+    if (!isComponentSupported) {
+      error("components aren't support")
+    }
+  }
+
+  // project level extension requires Project as constructor argument, so, for now, constructor injection is disabled only for app level
+  final override fun isInjectionForExtensionSupported() = parent != null
+
+  internal fun getComponentAdapterOfType(componentType: Class<*>): ComponentAdapter? {
+    componentKeyToAdapter.get(componentType)?.let {
+      return it
+    }
+
+    for (adapter in componentAdapters.getImmutableSet()) {
+      val descendant = adapter.componentImplementation
+      if (componentType === descendant || componentType.isAssignableFrom(descendant)) {
+        return adapter
+      }
+    }
+    return null
+  }
+
+  final override fun <T : Any> processInitializedComponents(aClass: Class<T>, processor: (T, PluginDescriptor) -> Unit) {
+    // We must use instances only from our adapter (could be service or something else).
+    // unsafeGetAdapters should be not used here as ProjectManagerImpl uses it to call projectOpened
+    for (adapter in componentAdapters.getImmutableSet()) {
+      if (adapter is MyComponentAdapter) {
+        val component = adapter.getInitializedInstance()
+        if (component != null && aClass.isAssignableFrom(component.javaClass)) {
+          @Suppress("UNCHECKED_CAST")
+          processor(component as T, adapter.pluginDescriptor)
+        }
+      }
+    }
+  }
+
+  final override fun getActivityCategory(isExtension: Boolean): ActivityCategory {
+    return when {
+      parent == null -> if (isExtension) ActivityCategory.APP_EXTENSION else ActivityCategory.APP_SERVICE
+      parent.parent == null -> if (isExtension) ActivityCategory.PROJECT_EXTENSION else ActivityCategory.PROJECT_SERVICE
+      else -> if (isExtension) ActivityCategory.MODULE_EXTENSION else ActivityCategory.MODULE_SERVICE
+    }
+  }
+
+  final override fun hasComponent(componentKey: Class<*>): Boolean {
+    val adapter = componentKeyToAdapter.get(componentKey) ?: componentKeyToAdapter.get(componentKey.name)
+    return adapter != null || (parent != null && parent.hasComponent(componentKey))
+  }
+
+  @Deprecated(message = "Use extensions", level = DeprecationLevel.ERROR)
+  final override fun <T : Any> getComponents(baseClass: Class<T>): Array<T> {
+    checkState()
+    val result = mutableListOf<T>()
+    // we must use instances only from our adapter (could be service or something else)
+    for (componentAdapter in componentAdapters.getImmutableSet()) {
+      if (componentAdapter is MyComponentAdapter) {
+        val implementationClass = componentAdapter.getImplementationClass()
+        if (baseClass === implementationClass || baseClass.isAssignableFrom(implementationClass)) {
+          val instance = componentAdapter.getInstance<T>(componentManager = this, keyClass = null, createIfNeeded = false)
+          if (instance != null) {
+            result.add(instance)
+          }
+        }
+      }
+    }
+    @Suppress("DEPRECATION")
+    return ArrayUtil.toObjectArray(result, baseClass)
+  }
+
+  final override fun isSuitableForOs(os: ExtensionDescriptor.Os): Boolean {
+    return when (os) {
+      ExtensionDescriptor.Os.mac -> SystemInfoRt.isMac
+      ExtensionDescriptor.Os.linux -> SystemInfoRt.isLinux
+      ExtensionDescriptor.Os.windows -> SystemInfoRt.isWindows
+      ExtensionDescriptor.Os.unix -> SystemInfoRt.isUnix
+      ExtensionDescriptor.Os.freebsd -> SystemInfoRt.isFreeBSD
+      else -> throw IllegalArgumentException("Unknown OS '$os'")
+    }
+  }
+}
+
+/**
+ * A linked hash set that's copied on write operations.
+ */
+private class LinkedHashSetWrapper<T : Any> {
+  private val lock = Any()
+
+  @Volatile
+  private var immutableSet: Set<T>? = null
+  private var synchronizedSet = LinkedHashSet<T>()
+
+  fun add(element: T) {
+    synchronized(lock) {
+      if (!synchronizedSet.contains(element)) {
+        copySyncSetIfExposedAsImmutable().add(element)
+      }
+    }
+  }
+
+  private fun copySyncSetIfExposedAsImmutable(): LinkedHashSet<T> {
+    if (immutableSet != null) {
+      immutableSet = null
+      synchronizedSet = LinkedHashSet(synchronizedSet)
+    }
+    return synchronizedSet
+  }
+
+  fun remove(element: T) {
+    synchronized(lock) { copySyncSetIfExposedAsImmutable().remove(element) }
+  }
+
+  fun replace(element: T) {
+    synchronized(lock) {
+      val set = copySyncSetIfExposedAsImmutable()
+      set.remove(element)
+      set.add(element)
+    }
+  }
+
+  fun clear() {
+    synchronized(lock) {
+      immutableSet = null
+      synchronizedSet = LinkedHashSet()
+    }
+  }
+
+  fun getImmutableSet(): Set<T> {
+    var result = immutableSet
+    if (result == null) {
+      synchronized(lock) {
+        result = immutableSet
+        if (result == null) {
+          // Expose the same set as immutable. It should never be modified again. Next add/remove operations will copy synchronizedSet
+          result = Collections.unmodifiableSet(synchronizedSet)
+          immutableSet = result
+        }
+      }
+    }
+    return result!!
   }
 }
 
@@ -1096,10 +1441,6 @@ fun handleComponentError(t: Throwable, componentClassName: String?, pluginId: Pl
   }
 }
 
-internal fun isGettingServiceAllowedDuringPluginUnloading(descriptor: PluginDescriptor): Boolean {
-  return descriptor.isRequireRestart || descriptor.pluginId == PluginManagerCore.CORE_ID || descriptor.pluginId == PluginManagerCore.JAVA_PLUGIN_ID
-}
-
 private fun doLoadClass(name: String, pluginDescriptor: PluginDescriptor): Class<*> {
   // maybe null in unit tests
   val classLoader = pluginDescriptor.pluginClassLoader ?: ComponentManagerImpl::class.java.classLoader
@@ -1109,4 +1450,14 @@ private fun doLoadClass(name: String, pluginDescriptor: PluginDescriptor): Class
   else {
     return classLoader.loadClass(name)
   }
+}
+
+private class LightServiceComponentAdapter(private val initializedInstance: Any) : ComponentAdapter {
+  override fun getComponentKey(): String = initializedInstance.javaClass.name
+
+  override fun getComponentImplementation() = initializedInstance.javaClass
+
+  override fun getComponentInstance(container: PicoContainer?) = initializedInstance
+
+  override fun toString() = componentKey
 }

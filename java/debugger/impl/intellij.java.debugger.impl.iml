@@ -24,13 +24,13 @@
     <orderEntry type="module" module-name="intellij.java.debugger.memory.agent" />
     <orderEntry type="module-library">
       <library name="sa-jdwp" type="repository">
-        <properties maven-id="org.jetbrains.intellij.deps:sa-jdwp:1.15" />
+        <properties maven-id="org.jetbrains.intellij.deps:sa-jdwp:1.19" />
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/sa-jdwp/1.15/sa-jdwp-1.15.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/sa-jdwp/1.19/sa-jdwp-1.19.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/sa-jdwp/1.15/sa-jdwp-1.15-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/sa-jdwp/1.19/sa-jdwp-1.19-sources.jar!/" />
         </SOURCES>
       </library>
     </orderEntry>
@@ -42,6 +42,7 @@
     <orderEntry type="library" name="fastutil-min" level="project" />
     <orderEntry type="module" module-name="intellij.platform.ide.util.io" />
     <orderEntry type="library" name="gson" level="project" />
+    <orderEntry type="library" name="ASM" level="project" />
   </component>
   <component name="copyright">
     <Base>

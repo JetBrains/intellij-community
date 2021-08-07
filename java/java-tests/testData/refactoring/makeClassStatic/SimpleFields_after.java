@@ -1,8 +1,8 @@
 public class YoYo {
     int y;
     static class YoYoYo {
-        private YoYo anObject;
-        private int y;
+        private final YoYo anObject;
+        private final int y;
 
         public YoYoYo(YoYo anObject, int y) {
             this.anObject = anObject;

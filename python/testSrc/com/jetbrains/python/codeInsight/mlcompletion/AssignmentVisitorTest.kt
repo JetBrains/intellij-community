@@ -6,7 +6,6 @@ import com.intellij.psi.util.PsiTreeUtil
 import com.jetbrains.python.codeInsight.mlcompletion.prev2calls.AssignmentVisitor
 import com.jetbrains.python.codeInsight.mlcompletion.prev2calls.ImportsVisitor
 import com.jetbrains.python.fixtures.PyTestCase
-import com.jetbrains.python.psi.LanguageLevel
 import com.jetbrains.python.psi.PyClass
 import com.jetbrains.python.psi.PyFile
 import com.jetbrains.python.psi.PyFunction
@@ -14,11 +13,6 @@ import junit.framework.TestCase
 
 class AssignmentVisitorTest: PyTestCase() {
   override fun getTestDataPath(): String = super.getTestDataPath() + "/codeInsight/mlcompletion/prev2calls"
-
-  override fun setUp() {
-    super.setUp()
-    setLanguageLevel(LanguageLevel.PYTHON36)
-  }
 
   fun testAssignmentVisitorOnePrevCall() = testAssignmentVisitor(arrayListOf(Pair("numpy", "arange")))
   fun testAssignmentVisitorTwoPrevCalls() = testAssignmentVisitor(arrayListOf(

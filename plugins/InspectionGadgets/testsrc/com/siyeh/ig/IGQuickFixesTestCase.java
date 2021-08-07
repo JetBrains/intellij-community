@@ -5,6 +5,7 @@ import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.pom.java.LanguageLevel;
+import com.intellij.testFramework.TestDataPath;
 import com.intellij.testFramework.builders.JavaModuleFixtureBuilder;
 import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase;
 import com.intellij.util.ArrayUtilRt;
@@ -14,6 +15,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author anna
  */
+@TestDataPath("$CONTENT_ROOT/../test")
 public abstract class IGQuickFixesTestCase extends JavaCodeInsightFixtureTestCase {
   protected String myDefaultHint = null;
   protected String myRelativePath = null;

@@ -29,10 +29,8 @@ import static com.intellij.openapi.roots.ui.configuration.JdkComboBox.JdkComboBo
  * @author Eugene Zhuravlev
  */
 public class JdkComboBox extends SdkComboBoxBase<JdkComboBoxItem> {
-  private static final Logger LOG = Logger.getInstance(JdkComboBox.class);
+  private final @Nullable Project myProject;
   @NotNull private final Consumer<Sdk> myOnNewSdkAdded;
-
-  @Nullable private JButton mySetUpButton;
 
   /**
    * @deprecated since {@link #setSetupButton} methods are deprecated, use the
@@ -89,8 +87,28 @@ public class JdkComboBox extends SdkComboBoxBase<JdkComboBoxItem> {
                      @Nullable Condition<? super Sdk> sdkFilter,
                      @Nullable Condition<? super SdkTypeId> creationFilter,
                      @Nullable Consumer<? super Sdk> onNewSdkAdded) {
+    this(project, sdkModel, sdkTypeFilter, sdkFilter, null, creationFilter, onNewSdkAdded);
+  }
+
+  /**
+   * Creates new Sdk selector combobox
+   * @param project current project (if any)
+   * @param sdkModel the sdks model
+   * @param sdkTypeFilter sdk types filter predicate to show
+   * @param sdkFilter filters Sdk instances that are listed, it implicitly includes the {@param sdkTypeFilter}
+   * @param suggestedSdkFilter
+   * @param creationFilter a filter of SdkType that allowed to create a new Sdk with that control
+   * @param onNewSdkAdded a callback that is executed once a new Sdk is added to the list
+   */
+  public JdkComboBox(@Nullable Project project,
+                     @NotNull ProjectSdksModel sdkModel,
+                     @Nullable Condition<? super SdkTypeId> sdkTypeFilter,
+                     @Nullable Condition<? super Sdk> sdkFilter,
+                     @Nullable Condition<? super SdkListItem.SuggestedItem> suggestedSdkFilter,
+                     @Nullable Condition<? super SdkTypeId> creationFilter,
+                     @Nullable Consumer<? super Sdk> onNewSdkAdded) {
     this(project,
-         new SdkListModelBuilder(project, sdkModel, sdkTypeFilter, SimpleJavaSdkType.notSimpleJavaSdkType(creationFilter), sdkFilter),
+         new SdkListModelBuilder(project, sdkModel, sdkTypeFilter, SimpleJavaSdkType.notSimpleJavaSdkType(creationFilter), sdkFilter, suggestedSdkFilter, null),
          onNewSdkAdded);
   }
 
@@ -103,6 +121,7 @@ public class JdkComboBox extends SdkComboBoxBase<JdkComboBoxItem> {
                      @NotNull SdkListModelBuilder modelBuilder,
                      @Nullable Consumer<? super Sdk> onNewSdkAdded) {
     super(modelBuilder);
+    myProject = project;
     myOnNewSdkAdded = sdk -> {
       if (onNewSdkAdded != null) {
         onNewSdkAdded.consume(sdk);
@@ -161,26 +180,6 @@ public class JdkComboBox extends SdkComboBoxBase<JdkComboBoxItem> {
                                 final JdkComboBoxItem firstItem,
                                 @Nullable final Condition<? super Sdk> additionalSetup,
                                 final boolean moduleJdkSetup) {
-    setSetupButton(setUpButton, project, jdksModel, firstItem, additionalSetup,"");
-  }
-
-  /**
-   * @deprecated Use the overloaded constructor to pass these parameters directly to
-   * that class. The {@param setUpButton} is no longer used, the JdkComboBox shows
-   * all the needed actions in the popup. The button will be made invisible.
-   */
-  @Deprecated
-  @SuppressWarnings("unused")
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.2")
-  public void setSetupButton(final JButton setUpButton,
-                                @Nullable final Project project,
-                                final ProjectSdksModel jdksModel,
-                                final JdkComboBoxItem firstItem,
-                                @Nullable final Condition<? super Sdk> additionalSetup,
-                                final String actionGroupTitle) {
-
-    mySetUpButton = setUpButton;
-    mySetUpButton.setVisible(false);
   }
 
   public void setEditButton(@NotNull JButton editButton,
@@ -203,46 +202,28 @@ public class JdkComboBox extends SdkComboBoxBase<JdkComboBoxItem> {
     });
   }
 
-  /**
-   *
-   * @deprecated the popup shown by the SetUp button is now included
-   * directly into the popup, you may remove the button from your UI,
-   * see {@link #setSetupButton(JButton, Project, ProjectSdksModel, JdkComboBoxItem, Condition, boolean)}
-   * for more details
-   */
-  @Nullable
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.2")
-  public JButton getSetUpButton() {
-    return mySetUpButton;
-  }
-
   @Nullable
   @Override
   public JdkComboBoxItem getSelectedItem() {
     return (JdkComboBoxItem)super.getSelectedItem();
   }
 
-  @Nullable
-  public Sdk getSelectedJdk() {
-    final JdkComboBoxItem selectedItem = getSelectedItem();
-    return selectedItem != null? selectedItem.getJdk() : null;
+  /**
+   * Returns selected JDK or null if there is no selection or Project JDK inherited.
+   *
+   * @see #isProjectJdkSelected()
+   */
+  public @Nullable Sdk getSelectedJdk() {
+    JdkComboBoxItem selectedItem = getSelectedItem();
+    return selectedItem != null ? selectedItem.getJdk() : null;
+  }
+
+  public boolean isProjectJdkSelected() {
+    return getSelectedItem() instanceof ProjectJdkComboBoxItem;
   }
 
   public void setSelectedJdk(@Nullable Sdk jdk) {
     setSelectedItem(jdk);
-  }
-
-  /**
-   * @deprecated use {@link #reloadModel()}, you may also need to call
-   * {@link #showNoneSdkItem()} or {@link #showProjectSdkItem()} once
-   */
-  @Deprecated
-  @SuppressWarnings("unused")
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.2")
-  public void reloadModel(JdkComboBoxItem firstItem, @Nullable Project project) {
-    processFirstItem(firstItem);
-    reloadModel();
   }
 
   private void processFirstItem(@Nullable JdkComboBoxItem firstItem) {
@@ -266,7 +247,8 @@ public class JdkComboBox extends SdkComboBoxBase<JdkComboBoxItem> {
 
     DialogWrapper dialogWrapper = DialogWrapper.findInstance(this);
     if (dialogWrapper == null) {
-      LOG.warn("Cannot find DialogWrapper parent for the JdkComboBox " + this + ", SDK search is disabled", new RuntimeException());
+      Logger.getInstance(JdkComboBox.class)
+        .warn("Cannot find DialogWrapper parent for the JdkComboBox " + this + ", SDK search is disabled", new RuntimeException());
       return;
     }
 

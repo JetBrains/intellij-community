@@ -1,22 +1,9 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection;
 
 import com.intellij.application.options.CodeStyle;
 import com.intellij.lang.LangBundle;
+import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorSettings;
@@ -29,6 +16,7 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import org.jetbrains.annotations.NotNull;
@@ -59,8 +47,26 @@ public class ProblematicWhitespaceInspection extends LocalInspectionTool {
         return;
       }
       final EditorSettings settings = editor.getSettings();
+      settings.setLeadingWhitespaceShown(true);
       settings.setWhitespacesShown(!settings.isWhitespacesShown());
       editor.getComponent().repaint();
+    }
+  }
+
+  private static class ReformatFileFix implements LocalQuickFix {
+
+    @Override
+    public @NotNull String getFamilyName() {
+      return LangBundle.message("problematic.whitespace.reformat.quickfix");
+    }
+
+    @Override
+    public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
+      final PsiElement file = descriptor.getPsiElement();
+      if (!(file instanceof PsiFile)) {
+        return;
+      }
+      CodeStyleManager.getInstance(project).reformat(file, true);
     }
   }
 
@@ -87,8 +93,15 @@ public class ProblematicWhitespaceInspection extends LocalInspectionTool {
       if (!(fileType instanceof LanguageFileType)) {
         return;
       }
+      if (file != file.getViewProvider().getAllFiles().get(0)) {
+        return;
+      }
+      final InjectedLanguageManager injectedLanguageManager = InjectedLanguageManager.getInstance(file.getProject());
+      if (injectedLanguageManager.isInjectedFragment(file)) {
+        return;
+      }
       final CodeStyleSettings settings = CodeStyle.getSettings(file);
-      final CommonCodeStyleSettings.IndentOptions indentOptions = settings.getIndentOptions(fileType);
+      final CommonCodeStyleSettings.IndentOptions indentOptions = settings.getIndentOptionsByFile(file);
       final boolean useTabs = indentOptions.USE_TAB_CHARACTER;
       final boolean smartTabs = indentOptions.SMART_TABS;
       final Document document = PsiDocumentManager.getInstance(file.getProject()).getDocument(file);
@@ -155,10 +168,11 @@ public class ProblematicWhitespaceInspection extends LocalInspectionTool {
                                  ? LangBundle.message("problematic.whitespace.spaces.problem.descriptor", file.getName())
                                  : LangBundle.message("problematic.whitespace.tabs.problem.descriptor", file.getName());
       if (myIsOnTheFly) {
-        myHolder.registerProblem(file, description, ProblemHighlightType.GENERIC_ERROR_OR_WARNING, new ShowWhitespaceFix());
+        myHolder.registerProblem(file, description, ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
+                                 new ReformatFileFix(), new ShowWhitespaceFix());
       }
       else {
-        myHolder.registerProblem(file, description, ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
+        myHolder.registerProblem(file, description, ProblemHighlightType.GENERIC_ERROR_OR_WARNING, new ReformatFileFix());
       }
       return true;
     }

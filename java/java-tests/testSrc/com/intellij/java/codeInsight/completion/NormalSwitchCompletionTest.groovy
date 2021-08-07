@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.codeInsight.completion
 
 import com.intellij.testFramework.LightProjectDescriptor
@@ -10,7 +10,7 @@ class NormalSwitchCompletionTest extends NormalCompletionTestCase {
   @NotNull
   @Override
   protected LightProjectDescriptor getProjectDescriptor() {
-    return JAVA_15
+    return JAVA_17
   }
 
   void testDefaultInRuleSwitch() { doTest() }
@@ -22,4 +22,16 @@ class NormalSwitchCompletionTest extends NormalCompletionTestCase {
   void testInsideYieldInSwitchExpression() { doTest() }
   void testInsideRuleInSwitchExpression() { doTest() }
   void testBreakDeepInsideSwitchExpression() { doTest() }
+
+  void testCompletePatternVariableInSwitchExpr() { doTest() }
+  void testCompletePatternVariableInSwitchStmt() { doTest() }
+
+  void testCompleteConstantInSwitchExpr() { doTest() }
+  void testCompleteConstantInSwitchStmt() { doTest() }
+
+  void testCompleteNullInSwitchStmt() { doTest() }
+  void testCompleteNullInSwitchExpr() { doTest() }
+
+  void testCompletePatternVariableSwitchStmt() { doTest() }
+  void testCompletePatternVariableSwitchExpr() { doTest() }
 }

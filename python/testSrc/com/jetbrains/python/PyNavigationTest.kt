@@ -5,7 +5,6 @@ import com.intellij.codeInsight.navigation.actions.GotoDeclarationOrUsageHandler
 import com.intellij.codeInsight.navigation.actions.GotoDeclarationOrUsageHandler2.GTDUOutcome
 import com.intellij.ide.util.gotoByName.GotoSymbolModel2
 import com.intellij.psi.PsiElement
-import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.fixtures.CodeInsightTestUtil
 import com.jetbrains.python.fixtures.PyTestCase
 import com.jetbrains.python.psi.PyClass
@@ -208,6 +207,4 @@ class PyNavigationTest : PyTestCase() {
   override fun getTestDataPath(): String {
     return super.getTestDataPath() + "/navigation"
   }
-
-  override fun getProjectDescriptor(): LightProjectDescriptor? = ourPyLatestDescriptor
 }

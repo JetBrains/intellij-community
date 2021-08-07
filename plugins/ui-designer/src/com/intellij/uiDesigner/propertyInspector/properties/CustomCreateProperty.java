@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.uiDesigner.propertyInspector.properties;
 
@@ -6,7 +6,6 @@ import com.intellij.codeInsight.FileModificationService;
 import com.intellij.ide.util.PsiNavigationSupport;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
@@ -33,14 +32,12 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 import java.util.List;
 
-/**
- * @author yole
- */
+
 public class CustomCreateProperty extends Property<RadComponent, Boolean> {
   private static final Logger LOG = Logger.getInstance(CustomCreateProperty.class);
 
   public static CustomCreateProperty getInstance(Project project) {
-    return ServiceManager.getService(project, CustomCreateProperty.class);
+    return project.getService(CustomCreateProperty.class);
   }
 
   private final BooleanRenderer myRenderer = new BooleanRenderer();

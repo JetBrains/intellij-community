@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.psi.impl.statements;
 
 import com.intellij.lang.ASTNode;
@@ -11,7 +11,6 @@ import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.stubs.IStubElementType;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -19,7 +18,6 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
-import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrListOrMap;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifier;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
@@ -33,8 +31,6 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.stubs.GrVariableStubBase;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
-
-import static org.jetbrains.plugins.groovy.lang.typing.TuplesKt.getMultiAssignmentType;
 
 /**
  * @author ilyas
@@ -128,15 +124,6 @@ public abstract class GrVariableBaseImpl<T extends GrVariableStubBase> extends G
 
   @Override
   @Nullable
-  public PsiType getDeclaredType() {
-    GrTypeElement typeElement = getTypeElementGroovy();
-    if (typeElement != null) return typeElement.getType();
-
-    return null;
-  }
-
-  @Override
-  @Nullable
   public PsiType getTypeGroovy() {
     GrTypeElement typeElement = getTypeElementGroovy();
     PsiType declaredType = null;
@@ -151,31 +138,10 @@ public abstract class GrVariableBaseImpl<T extends GrVariableStubBase> extends G
     if (declaredType == null) {
       return initializerType;
     }
-    if (initializerType instanceof PsiClassType && TypesUtil.isAssignable(declaredType, initializerType, this)) {
+    if (initializerType instanceof PsiClassType && TypesUtil.isAssignableWithoutConversions(declaredType, initializerType)) {
       return initializerType;
     }
     return declaredType;
-  }
-
-  @Override
-  public @Nullable PsiType getInitializerType() {
-    PsiElement parent = getParent();
-    if (parent instanceof GrVariableDeclaration) {
-      GrVariableDeclaration declaration = (GrVariableDeclaration)parent;
-      if (declaration.isTuple()) {
-        GrExpression rValue = declaration.getTupleInitializer();
-        if (rValue == null) {
-          return null;
-        }
-        int position = ArrayUtil.indexOf(declaration.getVariables(), this);
-        if (position < 0) {
-          return null;
-        }
-        return getMultiAssignmentType(rValue, position);
-      }
-    }
-    GrExpression rValue = getInitializerGroovy();
-    return rValue == null ? null : rValue.getType();
   }
 
   @Override
@@ -222,23 +188,7 @@ public abstract class GrVariableBaseImpl<T extends GrVariableStubBase> extends G
   }
 
   @Override
-  @Nullable
-  public GrExpression getInitializerGroovy() {
-    final PsiElement parent = getParent();
-    if (parent instanceof GrVariableDeclaration && ((GrVariableDeclaration)parent).isTuple()){
-      final GrVariableDeclaration tuple = (GrVariableDeclaration)parent;
-      final GrExpression initializer = tuple.getTupleInitializer();
-
-      if (initializer instanceof GrListOrMap){
-        final GrListOrMap listOrMap = (GrListOrMap)initializer;
-        final GrExpression[] initializers = listOrMap.getInitializers();
-
-        final int varNumber = ArrayUtil.indexOf(tuple.getVariables(), this);
-        if (initializers.length < varNumber + 1) return null;
-
-        return initializers[varNumber];
-      }
-    }
+  public @Nullable GrExpression getInitializerGroovy() {
     return GroovyPsiElementImpl.findExpressionChild(this);
   }
 

@@ -35,7 +35,7 @@ class LightJava11HighlightingTest : LightJavaCodeInsightFixtureTestCase() {
                                          """#!/path/to/java
                                  |class Main {{
                                  |int i = 0;
-                                 |i*<error descr="';' expected"><error descr="Expression expected"><error descr="Unexpected token">*</error></error></error>;
+                                 |i*<error descr="Expression expected"><error descr="Unexpected token">*</error></error>;
                                  |}}""".trimMargin())
     myFixture.checkHighlighting()
     Assert.assertTrue(HighlightClassUtil.isJavaHashBangScript(file))

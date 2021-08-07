@@ -5,6 +5,7 @@ import com.intellij.testFramework.ApplicationRule;
 import com.intellij.ui.scale.TestScaleHelper;
 import junit.framework.TestCase;
 import org.junit.After;
+import org.junit.Before;
 import org.junit.ClassRule;
 import org.junit.Test;
 
@@ -29,6 +30,11 @@ public class IDEA232594Test {
 
   static final AtomicInteger CALLBACL_COUNT = new AtomicInteger(0);
 
+  @Before
+  public void before() {
+    TestScaleHelper.assumeStandalone();
+  }
+
   @After
   public void after() {
     TestScaleHelper.restoreProperties();
@@ -36,8 +42,6 @@ public class IDEA232594Test {
 
   @Test
   public void test() {
-    TestScaleHelper.assumeStandalone();
-
     JBCefBrowser browser = new JBCefBrowser("chrome:version");
 
     JBCefJSQuery jsQuery = JBCefJSQuery.create(browser);
@@ -49,17 +53,16 @@ public class IDEA232594Test {
       return null;
     });
 
-    invokeAndWaitForLoad(browser, () -> SwingUtilities.invokeLater(() -> {
+    invokeAndWaitForLoad(browser, () -> {
       JFrame frame = new JFrame(JBCefLoadHtmlTest.class.getName());
       frame.setSize(640, 480);
       frame.setLocationRelativeTo(null);
       frame.add(browser.getComponent(), BorderLayout.CENTER);
       frame.setVisible(true);
-    }));
+    });
 
-    invokeAndWaitForLoad(browser, () -> SwingUtilities.invokeLater(() -> {
-      browser.getCefBrowser().executeJavaScript(jsQuery.inject("'hello'"), "about:blank", 0);
-    }));
+    invokeAndWaitForLoad(browser,
+      () -> browser.getCefBrowser().executeJavaScript(jsQuery.inject("'hello'"), "about:blank", 0));
 
     TestCase.assertEquals("JS callback has been erroneously called on page reload", 1, CALLBACL_COUNT.get());
   }

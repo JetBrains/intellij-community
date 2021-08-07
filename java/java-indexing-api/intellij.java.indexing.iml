@@ -12,7 +12,5 @@
     <orderEntry type="module" module-name="intellij.java.psi" />
     <orderEntry type="module" module-name="intellij.platform.indexing" />
     <orderEntry type="module" module-name="intellij.platform.concurrency" />
-    <orderEntry type="library" name="Trove4j" level="project" />
-    <orderEntry type="library" name="fastutil-min" level="project" />
   </component>
 </module>

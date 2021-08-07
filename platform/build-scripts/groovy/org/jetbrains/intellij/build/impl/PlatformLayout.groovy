@@ -1,14 +1,17 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build.impl
 
+
+import com.intellij.util.containers.MultiMap
 import groovy.transform.CompileStatic
 import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.jps.model.java.JpsJavaClasspathKind
 import org.jetbrains.jps.model.java.JpsJavaExtensionService
+import org.jetbrains.jps.model.library.JpsLibrary
+import org.jetbrains.jps.model.module.JpsModule
 import org.jetbrains.jps.model.module.JpsModuleReference
 
 import java.util.function.Consumer
-
 /**
  * Describes layout of the platform (*.jar files in IDE_HOME/lib directory).
  * <p>
@@ -36,7 +39,7 @@ final class PlatformLayout extends BaseLayout {
     body()
   }
 
-  static class PlatformLayoutSpec extends BaseLayoutSpec {
+  static final class PlatformLayoutSpec extends BaseLayoutSpec {
     final PlatformLayout layout
 
     PlatformLayoutSpec(PlatformLayout layout) {
@@ -66,17 +69,31 @@ final class PlatformLayout extends BaseLayout {
      */
     void withProjectLibrariesFromIncludedModules(BuildContext context) {
       context.messages.debug("Collecting project libraries used by platform modules")
-      layout.moduleJars.values().each {
-        def module = context.findRequiredModule(it)
-        JpsJavaExtensionService.dependencies(module).includedIn(JpsJavaClasspathKind.PRODUCTION_RUNTIME).libraries.findAll {
-          !(it.createReference().parentReference instanceof JpsModuleReference) &&
-          !layout.projectLibrariesToUnpack.values().contains(it.name) &&
-          !layout.excludedProjectLibraries.contains(it.name)
-        }.each {
-          context.messages.debug(" module '$module.name': '$it.name'")
-          withProjectLibrary(it.name)
-        }
+
+      def librariesToInclude = layout.computeProjectLibrariesFromIncludedModules(context)
+      librariesToInclude.entrySet().each { entry ->
+        context.messages.debug(" library '${entry.key.name}': used in ${entry.value.collect { "'$it.name'" }.join(", ")}")
+        withProjectLibrary(entry.key.name)
       }
     }
+  }
+
+  MultiMap<JpsLibrary, JpsModule> computeProjectLibrariesFromIncludedModules(BuildContext context) {
+    MultiMap<JpsLibrary, JpsModule> result = MultiMap.createLinked()
+    Collection<String> libsToUnpack = projectLibrariesToUnpack.values()
+    for (String moduleName in moduleJars.values()) {
+      JpsModule module = context.findRequiredModule(moduleName)
+      for (
+        JpsLibrary library : JpsJavaExtensionService.dependencies(module).includedIn(JpsJavaClasspathKind.PRODUCTION_RUNTIME).libraries) {
+        if (library.createReference().parentReference instanceof JpsModuleReference ||
+            libsToUnpack.contains(library.name) ||
+            excludedProjectLibraries.contains(library.name)) {
+          continue
+        }
+
+        result.putValue(library, module)
+      }
+    }
+    return result
   }
 }

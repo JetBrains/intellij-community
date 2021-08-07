@@ -78,6 +78,7 @@ To use the <b>Ant</b> tool window, select <b>View > Tool Windows > Ant Build</b>
 
     <toolWindow anchor="right" icon="AllIcons.Toolwindows.ToolWindowAnt" id="Ant"
                 factoryClass="com.intellij.lang.ant.config.impl.AntToolWindowFactory"/>
+    <toolWindowExtractorMode id="Ant" mode="mirror"/>
     <configurationType implementation="com.intellij.lang.ant.config.execution.AntRunConfigurationType"/>
     <programRunner implementation="com.intellij.lang.ant.config.execution.AntRunner"/>
 

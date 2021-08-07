@@ -16,6 +16,9 @@ import java.lang.reflect.Field;
 import static com.intellij.util.ui.FocusUtil.findFocusableComponentIn;
 
 public class IdeFocusTraversalPolicy extends LayoutFocusTraversalPolicy {
+
+  private static final SwingDefaultFocusTraversalPolicy DEFAULT_TRAVERSAL_POLICY = new SwingDefaultFocusTraversalPolicy();
+
   @Override
   public Component getDefaultComponent(Container focusCycleRoot) {
     if (!(focusCycleRoot instanceof JComponent)) {
@@ -58,7 +61,7 @@ public class IdeFocusTraversalPolicy extends LayoutFocusTraversalPolicy {
       }
     }
 
-    return siblingComponent.isFocusable() ? siblingComponent : findFocusableComponentIn((JComponent)siblingComponent, null);
+    return siblingComponent.isFocusable() ? siblingComponent : findFocusableComponentIn(siblingComponent, null);
   }
 
   /**
@@ -154,11 +157,23 @@ public class IdeFocusTraversalPolicy extends LayoutFocusTraversalPolicy {
       return ((JTextComponent)component).isEditable();
     }
 
+    if(component instanceof JLabel) {
+      return DEFAULT_TRAVERSAL_POLICY.accept(component);
+    }
+
     return
       component instanceof AbstractButton ||
       component instanceof JList ||
       component instanceof JTree ||
       component instanceof JTable ||
       component instanceof JComboBox;
+  }
+
+  // Create our own subclass and change accept to public so that we can call accept.
+  private static class SwingDefaultFocusTraversalPolicy extends DefaultFocusTraversalPolicy {
+    @Override
+    public boolean accept(Component aComponent) {
+      return super.accept(aComponent);
+    }
   }
 }

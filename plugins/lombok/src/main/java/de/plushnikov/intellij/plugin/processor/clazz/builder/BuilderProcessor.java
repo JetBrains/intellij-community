@@ -34,7 +34,7 @@ public class BuilderProcessor extends AbstractClassProcessor {
   }
 
   private BuilderHandler getBuilderHandler() {
-    return ApplicationManager.getApplication().getService(BuilderHandler.class);
+    return new BuilderHandler();
   }
 
   private AllArgsConstructorProcessor getAllArgsConstructorProcessor() {
@@ -85,7 +85,7 @@ public class BuilderProcessor extends AbstractClassProcessor {
     }
 
     final BuilderHandler builderHandler = getBuilderHandler();
-    final String builderClassName = builderHandler.getBuilderClassName(psiClass, psiAnnotation, null);
+    final String builderClassName = BuilderHandler.getBuilderClassName(psiClass, psiAnnotation, null);
     final PsiClass builderClass = psiClass.findInnerClassByName(builderClassName, false);
     if (null != builderClass) {
       target.addAll(

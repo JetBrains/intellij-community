@@ -16,17 +16,24 @@
 package com.intellij.ide.projectWizard;
 
 import com.intellij.ide.IdeBundle;
+import com.intellij.ide.IdeCoreBundle;
 import com.intellij.ide.util.newProjectWizard.AbstractProjectWizard;
 import com.intellij.ide.util.newProjectWizard.StepSequence;
 import com.intellij.ide.util.projectWizard.ModuleWizardStep;
+import com.intellij.openapi.application.Experiments;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.border.Border;
 import java.awt.*;
+import java.util.Set;
+import java.util.function.Predicate;
 
 /**
  * @author Dmitry Avdeev
@@ -36,12 +43,12 @@ public class NewProjectWizard extends AbstractProjectWizard {
   private final StepSequence mySequence = new StepSequence();
 
   public NewProjectWizard(@Nullable Project project, @NotNull ModulesProvider modulesProvider, @Nullable String defaultPath) {
-    super(IdeBundle.message(project == null ? "title.new.project" : "title.add.module"), project, defaultPath);
+    super(IdeCoreBundle.message(project == null ? "title.new.project" : "title.add.module"), project, defaultPath);
     init(modulesProvider);
   }
 
   public NewProjectWizard(Project project, Component dialogParent, ModulesProvider modulesProvider, String defaultModuleName) {
-    super(IdeBundle.message("title.add.module"), project, dialogParent);
+    super(IdeCoreBundle.message("title.add.module"), project, dialogParent);
     myWizardContext.setDefaultModuleName(defaultModuleName);
     init(modulesProvider);
   }
@@ -51,16 +58,31 @@ public class NewProjectWizard extends AbstractProjectWizard {
     ProjectTypeStep projectTypeStep = new ProjectTypeStep(myWizardContext, this, modulesProvider);
     Disposer.register(getDisposable(), projectTypeStep);
     mySequence.addCommonStep(projectTypeStep);
-    ChooseTemplateStep chooseTemplateStep = new ChooseTemplateStep(myWizardContext, projectTypeStep);
-    mySequence.addCommonStep(chooseTemplateStep);
-    mySequence.addCommonFinishingStep(new ProjectSettingsStep(myWizardContext), null);
+    ChooseTemplateStep chooseTemplateStep = null;
+    if (!isNewWizard()) {
+      chooseTemplateStep = new ChooseTemplateStep(myWizardContext, projectTypeStep);
+      mySequence.addCommonStep(chooseTemplateStep);
+    }
+    //hacky: new wizard module ID should starts with newWizard, to be removed later, on migrating on new API.
+    Predicate<Set<String>> predicate = strings -> !isNewWizard() ||
+                                                  !ContainerUtil.exists(strings, type -> type.startsWith("newWizard"));
+    mySequence.addCommonFinishingStep(new ProjectSettingsStep(myWizardContext), predicate);
     for (ModuleWizardStep step : mySequence.getAllSteps()) {
       addStep(step);
     }
-    if (myWizardContext.isCreatingNewProject() && Registry.is("new.project.load.remote.templates")) {
+    if (myWizardContext.isCreatingNewProject() && Registry.is("new.project.load.remote.templates") && !isNewWizard()) {
       projectTypeStep.loadRemoteTemplates(chooseTemplateStep);
     }
     super.init();
+  }
+
+  private static boolean isNewWizard() {
+    return Experiments.getInstance().isFeatureEnabled("new.project.wizard");
+  }
+
+  @Override
+  protected @Nullable Border createContentPaneBorder() {
+    return isNewWizard() ? JBUI.Borders.empty() : super.createContentPaneBorder();
   }
 
   @Nullable

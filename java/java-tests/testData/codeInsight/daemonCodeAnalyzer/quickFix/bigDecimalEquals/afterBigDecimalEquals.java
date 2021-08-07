@@ -20,6 +20,10 @@ class BigDecimalEquals {
     }
   }
 
+  boolean x(BigDecimal upper, BigDecimal lower) {
+    return upper == null ? lower == null : upper.compareTo(lower) == 0;
+  }
+
   boolean test(int x, BigDecimal d1, BigDecimal d2) {
     return switch(x) {
       default -> d1.compareTo(d2) == 0;

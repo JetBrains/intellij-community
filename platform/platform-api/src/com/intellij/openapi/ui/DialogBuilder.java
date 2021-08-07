@@ -3,15 +3,15 @@ package com.intellij.openapi.ui;
 
 import com.intellij.CommonBundle;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NlsActions;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NlsContexts.DialogTitle;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.openapi.util.NlsContexts;
 import org.intellij.lang.annotations.MagicConstant;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -20,13 +20,13 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.util.ArrayList;
+import java.util.List;
 
 /**
  * The DialogBuilder is a simpler alternative to {@link DialogWrapper}.
  * There is no need to create a subclass (which is needed in the DialogWrapper), which can be nice for simple dialogs.
  */
 public class DialogBuilder implements Disposable {
-  private static final Logger LOG = Logger.getInstance(DialogBuilder.class);
 
   @NonNls public static final String REQUEST_FOCUS_ENABLED = "requestFocusEnabled";
 
@@ -168,6 +168,7 @@ public class DialogBuilder implements Disposable {
   /**
    * @deprecated Dialog action buttons should be right-aligned.
    */
+  @ApiStatus.ScheduledForRemoval(inVersion = "2022.2")
   @Deprecated
   public void setButtonsAlignment(@MagicConstant(intValues = {SwingConstants.CENTER, SwingConstants.RIGHT}) int alignment) {
     myDialogWrapper.setButtonsAlignment(alignment);
@@ -218,7 +219,7 @@ public class DialogBuilder implements Disposable {
     return get(getActionDescriptors(), OkActionDescriptor.class);
   }
 
-  private static CustomizableAction get(final java.util.List<? extends ActionDescriptor> actionDescriptors, final Class aClass) {
+  private static CustomizableAction get(final List<? extends ActionDescriptor> actionDescriptors, final Class aClass) {
     for (ActionDescriptor actionDescriptor : actionDescriptors) {
       if (actionDescriptor.getClass().isAssignableFrom(aClass)) return (CustomizableAction)actionDescriptor;
     }

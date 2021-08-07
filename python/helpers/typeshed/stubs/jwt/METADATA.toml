@@ -1,2 +1,3 @@
 version = "0.1"
 requires = ["types-cryptography"]
+obsolete_since = "2.0.0"

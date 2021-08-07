@@ -1,9 +1,10 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.impl.attach;
 
 import com.intellij.codeInsight.hints.presentation.InlayPresentation;
 import com.intellij.codeInsight.hints.presentation.PresentationFactory;
 import com.intellij.codeInsight.hints.presentation.PresentationRenderer;
+import com.intellij.debugger.actions.JavaDebuggerActionsCollector;
 import com.intellij.execution.filters.ConsoleFilterProvider;
 import com.intellij.execution.filters.Filter;
 import com.intellij.execution.impl.InlayProvider;
@@ -68,11 +69,12 @@ public class JavaDebuggerConsoleFilterProvider implements ConsoleFilterProvider 
     @Override
     public EditorCustomElementRenderer createInlayRenderer(Editor editor) {
       PresentationFactory factory = new PresentationFactory((EditorImpl)editor);
-      InlayPresentation presentation = factory.referenceOnHover(factory.roundWithBackground(factory.smallText("Attach debugger")),
-                                                                (event, point) -> {
-                                                                  JavaAttachDebuggerProvider
-                                                                    .attach(myTransport, myAddress, null, editor.getProject());
-                                                                });
+      InlayPresentation presentation = factory.referenceOnHover(
+        factory.roundWithBackground(factory.smallText("Attach debugger")),
+        (event, point) -> {
+          JavaDebuggerActionsCollector.attachFromConsoleInlay.log();
+          JavaAttachDebuggerProvider.attach(myTransport, myAddress, null, editor.getProject());
+        });
       return new PresentationRenderer(presentation);
     }
   }

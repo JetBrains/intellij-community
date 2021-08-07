@@ -333,13 +333,13 @@ public class JavaFormatterAlignmentTest extends AbstractJavaFormatterTest {
     doMethodTest("try (MyResource r1 = null;\n" +
                  "MyResource r2 = null) { }",
                  "try (MyResource r1 = null;\n" +
-                 "     MyResource r2 = null) { }");
+                 "     MyResource r2 = null) {}");
 
     getSettings().ALIGN_MULTILINE_RESOURCES = false;
     doMethodTest("try (MyResource r1 = null;\n" +
                  "MyResource r2 = null) { }",
                  "try (MyResource r1 = null;\n" +
-                 "        MyResource r2 = null) { }");
+                 "        MyResource r2 = null) {}");
   }
 
 
@@ -824,6 +824,7 @@ public class JavaFormatterAlignmentTest extends AbstractJavaFormatterTest {
 
   public void test_AlignSubsequentOneLineMethods() {
     getSettings().KEEP_SIMPLE_METHODS_IN_ONE_LINE = true;
+    getSettings().SPACE_WITHIN_BRACES = true;
     getSettings().ALIGN_SUBSEQUENT_SIMPLE_METHODS = true;
     doTextTest(
       "public class Test {\n" +

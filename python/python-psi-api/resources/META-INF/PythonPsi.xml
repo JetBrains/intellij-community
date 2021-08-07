@@ -45,7 +45,7 @@
   <extensions defaultExtensionNs="com.intellij">
     <fileType name="Python"
               language="Python"
-              extensions="py;pyw;"
+              extensions="py;pyw"
               hashBangs="python"
               implementationClass="com.jetbrains.python.PythonFileType"
               fieldName="INSTANCE"/>

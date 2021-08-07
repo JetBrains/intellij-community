@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.history;
 
 import com.intellij.CommonBundle;
@@ -17,7 +17,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.util.Clock;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.Getter;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.*;
@@ -68,6 +67,7 @@ import java.awt.datatransfer.StringSelection;
 import java.io.IOException;
 import java.util.List;
 import java.util.*;
+import java.util.function.Supplier;
 
 import static com.intellij.util.ObjectUtils.notNull;
 import static java.util.Comparator.comparing;
@@ -320,8 +320,8 @@ public final class FileHistoryPanelImpl extends JPanel implements DataProvider, 
 
   private void setupDualView(@NotNull DefaultActionGroup group) {
     myDualView.setShowGrid(true);
-    PopupHandler.installPopupHandler(myDualView.getTreeView(), group, ActionPlaces.UPDATE_POPUP, ActionManager.getInstance());
-    PopupHandler.installPopupHandler(myDualView.getFlatView(), group, ActionPlaces.UPDATE_POPUP, ActionManager.getInstance());
+    PopupHandler.installPopupMenu(myDualView.getTreeView(), group, ActionPlaces.UPDATE_POPUP);
+    PopupHandler.installPopupMenu(myDualView.getFlatView(), group, ActionPlaces.UPDATE_POPUP);
     IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> IdeFocusManager.getGlobalInstance().requestFocus(myDualView, true));
 
     myDualView.addListSelectionListener(e -> updateMessage());
@@ -353,7 +353,7 @@ public final class FileHistoryPanelImpl extends JPanel implements DataProvider, 
   }
 
   @NotNull
-  protected JComponent createCenterPanel() {
+  private JComponent createCenterPanel() {
     mySplitter = new OnePixelSplitter(true, "vcs.history.splitter.proportion", 0.6f);
     mySplitter.setFirstComponent(myDualView);
 
@@ -728,14 +728,6 @@ public final class FileHistoryPanelImpl extends JPanel implements DataProvider, 
     @Override
     protected void customizeCellRenderer(@NotNull JTable table, @Nullable Object value, boolean selected, boolean hasFocus, int row, int column) {
       setToolTipText(myTooltipText);
-      if (selected || hasFocus) {
-        setBackground(table.getSelectionBackground());
-        setForeground(table.getSelectionForeground());
-      }
-      else {
-        setBackground(table.getBackground());
-        setForeground(table.getForeground());
-      }
       if (value != null)  {
         //noinspection HardCodedStringLiteral
         append(value.toString(), getDefaultAttributes());
@@ -896,11 +888,11 @@ public final class FileHistoryPanelImpl extends JPanel implements DataProvider, 
     }
   }
 
-  private static class MyTreeCellRenderer implements TreeCellRenderer {
+  private static final class MyTreeCellRenderer implements TreeCellRenderer {
     private final TreeCellRenderer myDefaultCellRenderer;
-    private final Getter<? extends VcsHistorySession> myHistorySession;
+    private final Supplier<? extends VcsHistorySession> myHistorySession;
 
-    MyTreeCellRenderer(final TreeCellRenderer defaultCellRenderer, final Getter<? extends VcsHistorySession> historySession) {
+    MyTreeCellRenderer(final TreeCellRenderer defaultCellRenderer, final Supplier<? extends VcsHistorySession> historySession) {
       myDefaultCellRenderer = defaultCellRenderer;
       myHistorySession = historySession;
     }
@@ -939,10 +931,10 @@ public final class FileHistoryPanelImpl extends JPanel implements DataProvider, 
     }
   }
 
-  private static class MyCellWrapper implements CellWrapper {
-    private final Getter<? extends VcsHistorySession> myHistorySession;
+  private static final class MyCellWrapper implements CellWrapper {
+    private final Supplier<? extends VcsHistorySession> myHistorySession;
 
-    MyCellWrapper(final Getter<? extends VcsHistorySession> historySession) {
+    MyCellWrapper(final Supplier<? extends VcsHistorySession> historySession) {
       myHistorySession = historySession;
     }
 

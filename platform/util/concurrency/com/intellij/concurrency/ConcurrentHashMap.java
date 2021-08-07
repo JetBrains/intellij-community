@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.concurrency;
 
 /*
@@ -13,7 +13,6 @@ import com.intellij.util.containers.ThreadLocalRandom;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.ObjectStreamField;
-import java.io.Serializable;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.VarHandle;
 import java.lang.reflect.ParameterizedType;
@@ -1372,7 +1371,7 @@ final class ConcurrentHashMap<K,V> extends AbstractMap<K,V>
      * Stripped-down version of helper class used in previous version,
      * declared for the sake of serialization compatibility.
      */
-    static class Segment<K,V> extends ReentrantLock implements Serializable {
+    static class Segment<K,V> extends ReentrantLock implements java.io.Serializable {
         private static final long serialVersionUID = 2249069246763182397L;
         final float loadFactor;
         Segment(float lf) { this.loadFactor = lf; }
@@ -1488,7 +1487,7 @@ final class ConcurrentHashMap<K,V> extends AbstractMap<K,V>
             for (Node<K,V> p; (p = it.advance()) != null; ) {
                 K k = p.key;
                 V v = p.val;
-                Map.Entry<K,V> e = new AbstractMap.SimpleImmutableEntry<>(k, v);
+                Map.Entry<K,V> e = Map.entry(k, v);
                 if (function.test(e) && replaceNode(k, null, v) != null)
                     removed = true;
             }

@@ -11,7 +11,7 @@ import com.intellij.openapi.roots.libraries.Library
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.indexing.AdditionalIndexableFileSet
 import com.intellij.util.indexing.IndexableSetContributor
-import java.util.*
+import org.jetbrains.annotations.Nls
 import java.util.function.Predicate
 
 internal class DefaultProjectIndexableFilesContributor : IndexableFilesContributor {
@@ -85,5 +85,11 @@ internal class AdditionalLibraryRootsContributor : IndexableFilesContributor {
   override fun getOwnFilePredicate(project: Project): Predicate<VirtualFile> {
     return Predicate { false }
     // todo: synthetic library changes are served in DefaultProjectIndexableFilesContributor
+  }
+
+  companion object {
+    @JvmStatic
+    fun createIndexingIterator(presentableLibraryName: @Nls String?, rootsToIndex: List<VirtualFile>, libraryNameForDebug: String): IndexableFilesIterator =
+      AdditionalLibraryIndexableAddedFilesIterator(presentableLibraryName, rootsToIndex, libraryNameForDebug)
   }
 }

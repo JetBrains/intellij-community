@@ -116,7 +116,7 @@ public class AdjustFunctionContextFix extends LocalQuickFixAndIntentionActionOnP
       PsiMethodReferenceExpression methodRef = (PsiMethodReferenceExpression)expression;
       actualReturnType = PsiMethodReferenceUtil.getMethodReferenceReturnType(methodRef);
     } else {
-      actualReturnType = PsiResolveHelper.ourGraphGuard.doPreventingRecursion(expression, true, () -> expression.getType());
+      actualReturnType = expression.getType();
     }
     String targetMethodName = remapper.apply(actualReturnType);
     if (targetMethodName == null) return null;

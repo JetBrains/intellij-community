@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl.compiled;
 
 import com.intellij.diagnostic.PluginException;
@@ -15,6 +15,7 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DefaultProjectFactory;
 import com.intellij.openapi.project.IndexNotReadyException;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
 import com.intellij.openapi.roots.FileIndexFacade;
 import com.intellij.openapi.ui.Queryable;
@@ -474,13 +475,18 @@ public class ClsFileImpl extends PsiBinaryFileImpl
     if (stubTree != null) return stubTree;
 
     // build newStub out of lock to avoid deadlock
-    StubTree newStubTree = (StubTree)StubTreeLoader.getInstance().readOrBuild(getProject(), getVirtualFile(), this);
+    StubTreeLoader stubTreeLoader = StubTreeLoader.getInstance();
+    Project project = getProject();
+    VirtualFile virtualFile = getVirtualFile();
+    boolean isDefault = project.isDefault(); // happens on decompile
+    StubTree newStubTree = (StubTree)(isDefault ? stubTreeLoader.build(null, virtualFile, this)
+                                               : stubTreeLoader.readOrBuild(project, virtualFile, this));
     if (newStubTree == null) {
-      if (LOG.isDebugEnabled()) LOG.debug("No stub for class file " + getVirtualFile().getPresentableUrl());
+      if (LOG.isDebugEnabled()) LOG.debug("No stub for class file " + virtualFile.getPresentableUrl());
       newStubTree = new StubTree(new PsiJavaFileStubImpl("corrupted_class_files", true));
     }
     else if (!(newStubTree.getRoot() instanceof PsiClassHolderFileStub)) {
-      if (LOG.isDebugEnabled()) LOG.debug("Invalid stub for class file " + getVirtualFile().getPresentableUrl() + ": " + newStubTree.getRoot());
+      if (LOG.isDebugEnabled()) LOG.debug("Invalid stub for class file " + virtualFile.getPresentableUrl() + ": " + newStubTree.getRoot());
       newStubTree = new StubTree(new PsiJavaFileStubImpl("corrupted_class_files", true));
     }
 
@@ -537,8 +543,8 @@ public class ClsFileImpl extends PsiBinaryFileImpl
 
   public static @NotNull CharSequence decompile(@NotNull VirtualFile file) {
     PsiManager manager = PsiManager.getInstance(DefaultProjectFactory.getInstance().getDefaultProject());
-    final ClsFileImpl clsFile = new ClsFileImpl(new ClassFileViewProvider(manager, file), true);
-    final StringBuilder buffer = new StringBuilder();
+    ClsFileImpl clsFile = new ClsFileImpl(new ClassFileViewProvider(manager, file), true);
+    StringBuilder buffer = new StringBuilder();
     ApplicationManager.getApplication().runReadAction(() -> clsFile.appendMirrorText(buffer));
     return buffer;
   }
@@ -583,7 +589,7 @@ public class ClsFileImpl extends PsiBinaryFileImpl
     catch (ProcessCanceledException e) {
       throw e;
     }
-    catch (Exception e) {
+    catch (Throwable e) {
       throw new ClsFormatException(file.getPath() + ": " + e.getMessage(), e);
     }
   }

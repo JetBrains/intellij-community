@@ -35,10 +35,15 @@ Includes the following features:</p>
     <extensionPoint qualifiedName="org.intellij.markdown.markdownExtension"
                     interface="org.intellij.plugins.markdown.extensions.MarkdownExtension"
                     dynamic="true"/>
+    <extensionPoint qualifiedName="org.intellij.markdown.markdownExportProvider"
+                    interface="org.intellij.plugins.markdown.fileActions.export.MarkdownExportProvider"
+                    dynamic="true"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
-    <fileType name="Markdown" extensions="md;markdown" language="Markdown"
+    <httpRequestHandler implementation="org.intellij.plugins.markdown.google.authorization.GoogleOAuthCallbackHandler"/>
+
+    <fileType name="Markdown" extensions="markdown;md" language="Markdown"
               implementationClass="org.intellij.plugins.markdown.lang.MarkdownFileType" fieldName="INSTANCE"/>
     <lang.fileViewProviderFactory language="Markdown" implementationClass="org.intellij.plugins.markdown.lang.MarkdownFileViewProviderFactory"/>
     <lang.parserDefinition language="Markdown" implementationClass="org.intellij.plugins.markdown.lang.parser.MarkdownParserDefinition"/>
@@ -65,14 +70,23 @@ Includes the following features:</p>
     <multiHostInjector implementation="org.intellij.plugins.markdown.injection.CodeFenceInjector"/>
 
     <completion.contributor language="Markdown"
-                            implementationClass="org.intellij.plugins.markdown.injection.LanguageListCompletionContributor"/>
+                            implementationClass="org.intellij.plugins.markdown.editor.MarkdownCompletionContributor"/>
 
     <fileEditorProvider implementation="org.intellij.plugins.markdown.ui.preview.MarkdownSplitEditorProvider"/>
 
-    <customPasteProvider implementation="org.intellij.plugins.markdown.editor.MarkdownImagePasteProvider"/>
+    <customPasteProvider implementation="org.intellij.plugins.markdown.editor.images.MarkdownImagePasteProvider"/>
+
+    <customFileDropHandler implementation="org.intellij.plugins.markdown.editor.images.MarkdownImageFileDropHandler"/>
 
     <spellchecker.support language="Markdown"
                           implementationClass="org.intellij.plugins.markdown.spellchecking.MarkdownSpellcheckingStrategy"/>
+
+    <customFileDropHandler implementation="org.intellij.plugins.markdown.fileActions.importFrom.docx.MarkdownDocxFileDropHandler"/>
+
+    <breadcrumbsInfoProvider implementation="org.intellij.plugins.markdown.breadcrumbs.MarkdownBreadcrumbsProvider"/>
+
+    <applicationService serviceImplementation="org.intellij.plugins.markdown.google.authorization.GoogleOAuthService"/>
+    <filePasteProvider implementation="org.intellij.plugins.markdown.fileActions.importFrom.googleDocs.GoogleDocsImportPasteProvider"/>
 
     <applicationService serviceImplementation="org.intellij.plugins.markdown.settings.pandoc.PandocApplicationSettings"/>
     <applicationConfigurable id="Settings.Pandoc"
@@ -90,6 +104,7 @@ Includes the following features:</p>
     </applicationConfigurable>
     <applicationService serviceImplementation="org.intellij.plugins.markdown.settings.MarkdownApplicationSettings"/>
     <applicationService serviceImplementation="org.intellij.plugins.markdown.ui.preview.html.MarkdownCodeFencePluginCache"/>
+    <applicationService serviceImplementation="org.intellij.plugins.markdown.fileActions.export.MarkdownHtmlExportSettings"/>
     <lang.psiStructureViewFactory language="Markdown"
                                   implementationClass="org.intellij.plugins.markdown.structureView.MarkdownStructureViewFactory"/>
     <psi.referenceContributor implementation="org.intellij.plugins.markdown.lang.references.MarkdownReferenceProvider"/>
@@ -104,11 +119,30 @@ Includes the following features:</p>
     <lang.foldingBuilder language="Markdown" implementationClass="org.intellij.plugins.markdown.folding.MarkdownFoldingBuilder"/>
     <stubIndex implementation="org.intellij.plugins.markdown.lang.index.MarkdownHeadersIndex"/>
     <stubElementTypeHolder class="org.intellij.plugins.markdown.lang.MarkdownElementTypes"/>
+    <anchorReferenceProvider implementation="org.intellij.plugins.markdown.lang.references.MissingExtensionPathReferenceProvider"/>
     <anchorReferenceProvider implementation="org.intellij.plugins.markdown.lang.references.MarkdownAnchorPathReferenceProvider"/>
     <todoIndexer filetype="Markdown" implementationClass="org.intellij.plugins.markdown.highlighting.MarkdownTodoIndexer" />
     <indexPatternBuilder implementation="org.intellij.plugins.markdown.highlighting.MarkdownIndexPatternBuilder" />
-    <enterHandlerDelegate implementation="org.intellij.plugins.markdown.editor.MarkdownEnterHandler"/>
+    <enterHandlerDelegate id="MarkdownEnterHandler"
+                          implementation="org.intellij.plugins.markdown.editor.MarkdownEnterHandler"/>
     <highlightErrorFilter implementation="org.intellij.plugins.markdown.injection.MarkdownCodeFenceErrorHighlightingIntention$CodeFenceHighlightErrorFilter"/>
+    <extendWordSelectionHandler implementation="org.intellij.plugins.markdown.editor.MarkdownCodeSpanExtendWordSelectionHandler"/>
+
+    <typedHandler implementation="org.intellij.plugins.markdown.editor.lists.MarkdownListItemCreatingTypedHandlerDelegate"/>
+
+    <lineIndentProvider implementation="org.intellij.plugins.markdown.editor.lists.MarkdownListIndentProvider"/>
+    <enterHandlerDelegate implementation="org.intellij.plugins.markdown.editor.lists.MarkdownListEnterHandlerDelegate"
+                          order="before MarkdownEnterHandler"/> <!-- to be able to handle Enter inside indent -->
+
+    <backspaceHandlerDelegate implementation="org.intellij.plugins.markdown.editor.lists.MarkdownListMarkerBackspaceHandlerDelegate"/>
+    <backspaceHandlerDelegate implementation="org.intellij.plugins.markdown.editor.lists.MarkdownListIndentBackspaceHandlerDelegate"
+                              order="before SmartIndentingBackspaceHandler"/>
+
+    <editorActionHandler action="EditorTab" implementationClass="org.intellij.plugins.markdown.editor.lists.MarkdownListItemTabHandler"/>
+    <editorActionHandler action="EditorIndentSelection" implementationClass="org.intellij.plugins.markdown.editor.lists.MarkdownListItemTabHandler"/>
+    <editorActionHandler action="EditorUnindentSelection" implementationClass="org.intellij.plugins.markdown.editor.lists.MarkdownListItemUnindentHandler"/>
+
+    <actionPromoter implementation="org.intellij.plugins.markdown.ui.actions.MarkdownActionPromoter"/>
 
     <!--Formatting-->
     <langCodeStyleSettingsProvider implementation="org.intellij.plugins.markdown.lang.formatter.settings.MarkdownCodeStyleSettingsProvider"/>
@@ -117,9 +151,21 @@ Includes the following features:</p>
 
     <lang.commenter language="Markdown" implementationClass="org.intellij.plugins.markdown.lang.MarkdownCommenter"/>
 
+    <codeInsight.lineMarkerProvider language="Markdown" implementationClass="org.intellij.plugins.markdown.extensions.common.plantuml.PlantUMLCodeFenceDownloadLineMarkerProvider"/>
+    <codeInsight.lineMarkerProvider language="Markdown" implementationClass="org.intellij.plugins.markdown.extensions.jcef.mermaid.MermaidCodeFenceDownloadLineMarkerProvider"/>
+    <codeInsight.lineMarkerProvider language="Markdown" implementationClass="org.intellij.plugins.markdown.editor.images.ConfigureMarkdownImageLineMarkerProvider"/>
+    <codeInsight.lineMarkerProvider language="HTML" implementationClass="org.intellij.plugins.markdown.editor.images.ConfigureHtmlImageLineMarkerProvider"/>
+    <codeInsight.lineMarkerProvider language="Markdown" implementationClass="org.intellij.plugins.markdown.editor.images.ConfigureTextHtmlImageLineMarkerProvider"/>
+
     <intentionAction>
       <className>org.intellij.plugins.markdown.injection.MarkdownCodeFenceErrorHighlightingIntention</className>
-      <category>Markdown</category>
+      <bundleName>messages.MarkdownBundle</bundleName>
+      <categoryKey>markdown.intention.category</categoryKey>
+    </intentionAction>
+    <intentionAction>
+      <className>org.intellij.plugins.markdown.editor.images.MarkdownConfigureImageIntention</className>
+      <bundleName>messages.MarkdownBundle</bundleName>
+      <categoryKey>markdown.intention.category</categoryKey>
     </intentionAction>
     <notificationGroup id="Markdown" displayType="BALLOON"/>
 
@@ -141,6 +187,14 @@ Includes the following features:</p>
     <registryKey key="markdown.structure.view.list.visibility"
                  defaultValue="false"
                  description="Determines whether lists are visible in the document structure view"/>
+
+    <registryKey key="markdown.google.docs.import.paste.link.enable"
+                 defaultValue="false"
+                 description="Temporarily disabling the ability to import documents from Google by inserting a link"/>
+
+    <registryKey key="markdown.google.docs.import.action.enable"
+                 defaultValue="false"
+                 description="Temporarily disable the action of the import docs from google"/>
   </extensions>
 
   <applicationListeners>
@@ -162,29 +216,49 @@ Includes the following features:</p>
 
     <fenceLanguageProvider implementation="org.intellij.plugins.markdown.extensions.jcef.mermaid.MermaidCodeFenceLanguageProvider"/>
     <markdownExtension implementation="org.intellij.plugins.markdown.extensions.jcef.mermaid.MermaidCodeGeneratingProviderExtension"/>
+
+    <!--suppress PluginXmlValidity -->
+    <markdownExportProvider implementation="org.intellij.plugins.markdown.fileActions.export.MarkdownDocxExportProvider"/>
+    <!--suppress PluginXmlValidity -->
+    <markdownExportProvider implementation="org.intellij.plugins.markdown.fileActions.export.MarkdownPdfExportProvider"/>
+    <!--suppress PluginXmlValidity -->
+    <markdownExportProvider implementation="org.intellij.plugins.markdown.fileActions.export.MarkdownHtmlExportProvider"/>
   </extensions>
 
   <actions>
-    <group id="Markdown.Toolbar.Left" class="com.intellij.openapi.actionSystem.DefaultActionGroup">
+    <group id="Markdown.Toolbar.Floating" class="com.intellij.openapi.actionSystem.DefaultActionGroup">
       <action class="org.intellij.plugins.markdown.ui.actions.styling.ToggleBoldAction"
               id="org.intellij.plugins.markdown.ui.actions.styling.ToggleBoldAction"
               icon="MarkdownIcons.EditorActions.Bold">
-      </action>
-
-      <action class="org.intellij.plugins.markdown.ui.actions.styling.ToggleStrikethroughAction"
-              id="org.intellij.plugins.markdown.ui.actions.styling.ToggleStrikethroughAction"
-              icon="MarkdownIcons.EditorActions.Strike_through">
+        <keyboard-shortcut first-keystroke="control B" keymap="$default"/>
       </action>
 
       <action class="org.intellij.plugins.markdown.ui.actions.styling.ToggleItalicAction"
               id="org.intellij.plugins.markdown.ui.actions.styling.ToggleItalicAction"
               icon="MarkdownIcons.EditorActions.Italic">
+        <keyboard-shortcut first-keystroke="control I" keymap="$default"/>
+      </action>
+
+      <action class="org.intellij.plugins.markdown.ui.actions.styling.ToggleStrikethroughAction"
+              id="org.intellij.plugins.markdown.ui.actions.styling.ToggleStrikethroughAction"
+              icon="MarkdownIcons.EditorActions.Strike_through">
+        <keyboard-shortcut first-keystroke="control shift S" keymap="$default"/>
       </action>
 
       <action class="org.intellij.plugins.markdown.ui.actions.styling.ToggleCodeSpanAction"
               id="org.intellij.plugins.markdown.ui.actions.styling.ToggleCodeSpanAction"
               icon="MarkdownIcons.EditorActions.Code_span">
+        <keyboard-shortcut first-keystroke="control shift C" keymap="$default"/>
       </action>
+
+      <action class="org.intellij.plugins.markdown.ui.actions.styling.MarkdownCreateLinkAction"
+              id="org.intellij.plugins.markdown.ui.actions.styling.MarkdownCreateLinkAction"
+              icon="MarkdownIcons.EditorActions.Link">
+        <keyboard-shortcut first-keystroke="control shift U" keymap="$default"/>
+        <add-to-group group-id="GenerateGroup" anchor="last"/>
+      </action>
+
+      <separator/>
 
       <action class="org.intellij.plugins.markdown.ui.actions.styling.HeaderDownAction"
               id="org.intellij.plugins.markdown.ui.actions.styling.HeaderDownAction"
@@ -196,36 +270,41 @@ Includes the following features:</p>
               icon="MarkdownIcons.EditorActions.Header_level_up">
       </action>
 
-      <action class="org.intellij.plugins.markdown.ui.actions.styling.MarkdownIntroduceLinkReferenceAction"
-              id="org.intellij.plugins.markdown.ui.actions.styling.MarkdownIntroduceLinkReferenceAction"
-              icon="MarkdownIcons.EditorActions.Link">
+      <separator/>
+
+      <action class="org.intellij.plugins.markdown.ui.actions.styling.InsertImageAction"
+              id="org.intellij.plugins.markdown.ui.actions.styling.InsertImageAction"
+              icon="AllIcons.General.LayoutPreviewOnly">
+        <keyboard-shortcut first-keystroke="control U" keymap="$default"/>
+        <add-to-group group-id="GenerateGroup" anchor="last"/>
       </action>
     </group>
 
-    <action class="org.intellij.plugins.markdown.ui.actions.editorLayout.CyclicSplitLayoutChangeAction"
-            id="org.intellij.plugins.markdown.ui.actions.editorLayout.CyclicSplitLayoutChangeAction"
-            icon="AllIcons.Actions.PreviewDetails"
-            use-shortcut-of="ParameterInfo">
+    <action class="org.intellij.plugins.markdown.ui.actions.styling.MarkdownIntroduceLinkReferenceAction"
+            id="org.intellij.plugins.markdown.ui.actions.styling.MarkdownIntroduceLinkReferenceAction"
+            icon="MarkdownIcons.EditorActions.Link">
     </action>
 
+    <group id="Markdown.Toolbar.Left" class="com.intellij.openapi.actionSystem.DefaultActionGroup">
+    </group>
+
     <group id="Markdown.Toolbar.Right" class="com.intellij.openapi.actionSystem.DefaultActionGroup">
-      <action class="org.intellij.plugins.markdown.ui.actions.editorLayout.EditorOnlyLayoutChangeAction"
-              id="org.intellij.plugins.markdown.ui.actions.editorLayout.EditorOnlyLayoutChangeAction"
-              icon="AllIcons.General.LayoutEditorOnly">
-      </action>
-      <action class="org.intellij.plugins.markdown.ui.actions.editorLayout.EditorAndPreviewLayoutChangeAction"
-              id="org.intellij.plugins.markdown.ui.actions.editorLayout.EditorAndPreviewLayoutChangeAction"
-              icon="AllIcons.General.LayoutEditorPreview">
-      </action>
-      <action class="org.intellij.plugins.markdown.ui.actions.editorLayout.PreviewOnlyLayoutChangeAction"
-              id="org.intellij.plugins.markdown.ui.actions.editorLayout.PreviewOnlyLayoutChangeAction"
-              icon="AllIcons.General.LayoutPreviewOnly">
-      </action>
-      <separator/>
       <action class="org.intellij.plugins.markdown.ui.actions.scrolling.AutoScrollAction"
               id="org.intellij.plugins.markdown.ui.actions.scrolling.AutoScrollAction"
               icon="AllIcons.Actions.SynchronizeScrolling">
       </action>
+    </group>
+
+    <group id="Markdown.Tools" popup="true">
+      <add-to-group group-id="ToolsMenu" anchor="before" relative-to-action="ExternalToolsGroup"/>
+      <action id="org.intellij.plugins.markdown.fileActions.importFrom.docx.MarkdownImportFromDocxAction"
+              class="org.intellij.plugins.markdown.fileActions.importFrom.docx.MarkdownImportFromDocxAction"/>
+      <action id="org.intellij.plugins.markdown.fileActions.importFrom.googleDocs.GoogleDocsImportAction"
+              class="org.intellij.plugins.markdown.fileActions.importFrom.googleDocs.GoogleDocsImportAction"/>
+      <action id="org.intellij.plugins.markdown.fileActions.export.MarkdownExportAction"
+              class="org.intellij.plugins.markdown.fileActions.export.MarkdownExportAction"/>
+      <action id="org.intellij.plugins.markdown.ui.actions.ConfigurePandocAction"
+              class="org.intellij.plugins.markdown.ui.actions.ConfigurePandocAction"/>
     </group>
   </actions>
 </idea-plugin>

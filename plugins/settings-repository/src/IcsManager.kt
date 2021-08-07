@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.settingsRepository
 
 import com.intellij.configurationStore.StreamProvider
@@ -27,13 +27,11 @@ import org.jetbrains.settingsRepository.git.GitRepositoryService
 import org.jetbrains.settingsRepository.git.processChildren
 import java.io.InputStream
 import java.nio.file.Path
-import java.nio.file.Paths
-import kotlin.properties.Delegates
 
 internal val LOG = logger<IcsManager>()
 
 internal val icsManager by lazy(LazyThreadSafetyMode.NONE) {
-  ApplicationLoadListener.EP_NAME.findExtensionOrFail(IcsApplicationLoadListener::class.java).icsManager
+  ApplicationLoadListener.EP_NAME.findExtensionOrFail(IcsApplicationLoadListener::class.java).icsManager!!
 }
 
 class IcsManager @JvmOverloads constructor(dir: Path,
@@ -92,24 +90,6 @@ class IcsManager @JvmOverloads constructor(dir: Path,
     }
   }
 
-  inner class ApplicationLevelProvider : IcsStreamProvider(null) {
-    override fun delete(fileSpec: String, roamingType: RoamingType): Boolean {
-      if (!isRepositoryActive) {
-        return false
-      }
-
-      if (syncManager.writeAndDeleteProhibited) {
-        throw IllegalStateException("Delete is prohibited now")
-      }
-
-      if (repositoryManager.delete(toRepositoryPath(fileSpec, roamingType))) {
-        scheduleCommit()
-      }
-
-      return true
-    }
-  }
-
   suspend fun sync(syncType: SyncType, project: Project? = null, localRepositoryInitializer: (() -> Unit)? = null): Boolean {
     return syncManager.sync(syncType, project, localRepositoryInitializer)
   }
@@ -135,14 +115,14 @@ class IcsManager @JvmOverloads constructor(dir: Path,
   fun setApplicationLevelStreamProvider() {
     val storageManager = ApplicationManager.getApplication().stateStore.storageManager
     // just to be sure
-    storageManager.removeStreamProvider(ApplicationLevelProvider::class.java)
-    storageManager.addStreamProvider(ApplicationLevelProvider(), first = true)
+    storageManager.removeStreamProvider(IcsStreamProvider::class.java)
+    storageManager.addStreamProvider(IcsStreamProvider(), first = true)
   }
 
   fun beforeApplicationLoaded(app: Application) {
     isRepositoryActive = repositoryManager.isRepositoryExists()
 
-    app.stateStore.storageManager.addStreamProvider(ApplicationLevelProvider())
+    app.stateStore.storageManager.addStreamProvider(IcsStreamProvider())
 
     val messageBusConnection = app.messageBus.simpleConnect()
     messageBusConnection.subscribe(AppLifecycleListener.TOPIC, object : AppLifecycleListener {
@@ -163,7 +143,7 @@ class IcsManager @JvmOverloads constructor(dir: Path,
     })
   }
 
-  open inner class IcsStreamProvider(private val projectId: String?) : StreamProvider {
+  inner class IcsStreamProvider : StreamProvider {
     override val enabled: Boolean
       get() = this@IcsManager.isActive
 
@@ -173,9 +153,9 @@ class IcsManager @JvmOverloads constructor(dir: Path,
     override fun isApplicable(fileSpec: String, roamingType: RoamingType): Boolean = isRepositoryActive
 
     override fun processChildren(path: String, roamingType: RoamingType, filter: (name: String) -> Boolean, processor: (name: String, input: InputStream, readOnly: Boolean) -> Boolean): Boolean {
-      val fullPath = toRepositoryPath(path, roamingType, null)
+      val fullPath = toRepositoryPath(path, roamingType)
 
-      // first of all we must load read-only schemes - scheme could be overridden if bundled or read-only, so, such schemes must be loaded first
+      // first we must load read-only schemes - scheme could be overridden if bundled or read-only, so, such schemes must be loaded first
       for (repository in readOnlySourcesManager.repositories) {
         repository.processChildren(fullPath, filter) { name, input -> processor(name, input, true) }
       }
@@ -193,32 +173,42 @@ class IcsManager @JvmOverloads constructor(dir: Path,
         throw IllegalStateException("Save is prohibited now")
       }
 
-      if (doSave(fileSpec, content, size, roamingType) && isAutoCommit(fileSpec, roamingType)) {
+      if (doSave(fileSpec, content, size, roamingType)) {
         scheduleCommit()
       }
     }
 
-    fun doSave(fileSpec: String, content: ByteArray, size: Int, roamingType: RoamingType): Boolean = repositoryManager.write(toRepositoryPath(fileSpec, roamingType, projectId), content, size)
-
-    protected open fun isAutoCommit(fileSpec: String, roamingType: RoamingType): Boolean = true
+    fun doSave(fileSpec: String, content: ByteArray, size: Int, roamingType: RoamingType): Boolean = repositoryManager.write(toRepositoryPath(fileSpec, roamingType), content, size)
 
     override fun read(fileSpec: String, roamingType: RoamingType, consumer: (InputStream?) -> Unit): Boolean {
       if (!isRepositoryActive) {
         return false
       }
 
-      repositoryManager.read(toRepositoryPath(fileSpec, roamingType, projectId), consumer)
+      repositoryManager.read(toRepositoryPath(fileSpec, roamingType), consumer)
       return true
     }
 
     override fun delete(fileSpec: String, roamingType: RoamingType): Boolean {
-      return false
+      if (!isRepositoryActive) {
+        return false
+      }
+
+      if (syncManager.writeAndDeleteProhibited) {
+        throw IllegalStateException("Delete is prohibited now")
+      }
+
+      if (repositoryManager.delete(toRepositoryPath(fileSpec, roamingType))) {
+        scheduleCommit()
+      }
+
+      return true
     }
   }
 }
 
 internal class IcsApplicationLoadListener : ApplicationLoadListener {
-  var icsManager: IcsManager by Delegates.notNull()
+  var icsManager: IcsManager? = null
     private set
 
   override fun beforeApplicationLoaded(application: Application, configPath: Path) {
@@ -227,9 +217,10 @@ internal class IcsApplicationLoadListener : ApplicationLoadListener {
     }
 
     val customPath = System.getProperty("ics.settingsRepository")
-    val pluginSystemDir = if (customPath == null) configPath.resolve("settingsRepository") else Paths.get(FileUtil.expandUserHome(customPath))
+    val pluginSystemDir = if (customPath == null) configPath.resolve("settingsRepository") else Path.of(FileUtil.expandUserHome(customPath))
     @Suppress("IncorrectParentDisposable") // this plugin is special and can't be dynamic anyway
-    icsManager = IcsManager(pluginSystemDir, application)
+    val icsManager = IcsManager(pluginSystemDir, application)
+    this.icsManager = icsManager
 
     val repositoryManager = icsManager.repositoryManager
     if (repositoryManager.isRepositoryExists() && repositoryManager is GitRepositoryManager) {

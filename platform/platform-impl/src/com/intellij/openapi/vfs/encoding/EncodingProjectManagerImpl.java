@@ -22,7 +22,7 @@ import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.startup.StartupActivity;
 import com.intellij.openapi.util.*;
-import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -32,8 +32,8 @@ import com.intellij.openapi.vfs.newvfs.events.VFileContentChangeEvent;
 import com.intellij.openapi.vfs.newvfs.impl.VirtualFileSystemEntry;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointer;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
-import com.intellij.ui.GuiUtils;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.ModalityUiUtil;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashingStrategy;
@@ -63,12 +63,15 @@ public final class EncodingProjectManagerImpl extends EncodingProjectManager imp
     @Override
     public int hashCode(VirtualFilePointer pointer) {
       // TODO !! hashCode is unstable - VirtualFilePointer URL can change
-      return FileUtil.PATH_HASHING_STRATEGY.computeHashCode(pointer.getUrl());
+      String url = pointer.getUrl();
+      return SystemInfoRt.isFileSystemCaseSensitive ? url.hashCode() : StringUtilRt.stringHashCodeInsensitive(url);
     }
 
     @Override
     public boolean equals(VirtualFilePointer o1, VirtualFilePointer o2) {
-      return FileUtil.PATH_HASHING_STRATEGY.equals(o1.getUrl(), o2.getUrl());
+      String u1 = o1.getUrl();
+      String u2 = o2.getUrl();
+      return u1 == u2 || (SystemInfoRt.isFileSystemCaseSensitive ? u1.equals(u2) : u1.equalsIgnoreCase(u2));
     }
   });
   private volatile Charset myProjectCharset;
@@ -81,8 +84,9 @@ public final class EncodingProjectManagerImpl extends EncodingProjectManager imp
   static final class EncodingProjectManagerStartUpActivity implements StartupActivity.DumbAware {
     @Override
     public void runActivity(@NotNull Project project) {
-      GuiUtils.invokeLaterIfNeeded(() -> ((EncodingProjectManagerImpl)getInstance(project)).reloadAlreadyLoadedDocuments(),
-                                   ModalityState.NON_MODAL, project.getDisposed());
+      ModalityUiUtil.invokeLaterIfNeeded(ModalityState.NON_MODAL, project.getDisposed(),
+                                         () -> ((EncodingProjectManagerImpl)getInstance(project)).reloadAlreadyLoadedDocuments()
+      );
     }
   }
 
@@ -278,11 +282,18 @@ public final class EncodingProjectManagerImpl extends EncodingProjectManager imp
       .collect(Collectors.toMap(p -> p.getFirst(), p -> p.getSecond(), (c1, c2) -> c1));
   }
 
+  /**
+   * @return readonly map of current mappings. to modify mappings use {@link #setPointerMapping(Map)}
+   */
+  @NotNull
+  public Map<? extends VirtualFilePointer, ? extends Charset> getAllPointersMappings() {
+    return Collections.unmodifiableMap(myMapping);
+  }
+
   public void setMapping(@NotNull Map<? extends VirtualFile, ? extends Charset> mapping) {
     ApplicationManager.getApplication().assertIsWriteThread();
     FileDocumentManager.getInstance().saveAllDocuments();  // consider all files as unmodified
     final Map<VirtualFilePointer, Charset> newMap = new HashMap<>(mapping.size());
-    final Map<VirtualFilePointer, Charset> oldMap = new HashMap<>(myMapping);
 
     // ChangeFileEncodingAction should not start progress "reload files..."
     suppressReloadDuring(() -> {
@@ -298,27 +309,47 @@ public final class EncodingProjectManagerImpl extends EncodingProjectManager imp
           if (!fileIndex.isInContent(virtualFile)) continue;
           VirtualFilePointer pointer = VirtualFilePointerManager.getInstance().create(virtualFile, this, null);
 
-          if (!virtualFile.isDirectory() && !Comparing.equal(charset, oldMap.get(pointer))) {
-            Document document;
-            byte[] bytes;
-            try {
-              document = FileDocumentManager.getInstance().getDocument(virtualFile);
-              if (document == null) throw new IOException();
-              bytes = virtualFile.contentsToByteArray();
-            }
-            catch (IOException e) {
-              continue;
-            }
-            // ask whether to reload/convert when in doubt
-            boolean changed = new ChangeFileEncodingAction().chosen(document, null, virtualFile, bytes, charset);
-
-            if (!changed) continue;
-          }
+          if (!fileEncodingChanged(virtualFile, myMapping.get(pointer), charset)) continue;
           newMap.put(pointer, charset);
         }
       }
     });
 
+    updateMapping(newMap);
+  }
+
+
+  public void setPointerMapping(@NotNull Map<? extends VirtualFilePointer, ? extends Charset> mapping) {
+    ApplicationManager.getApplication().assertIsWriteThread();
+    FileDocumentManager.getInstance().saveAllDocuments();  // consider all files as unmodified
+    final Map<VirtualFilePointer, Charset> newMap = new HashMap<>(mapping.size());
+
+    // ChangeFileEncodingAction should not start progress "reload files..."
+    suppressReloadDuring(() -> {
+      ProjectFileIndex fileIndex = ProjectRootManager.getInstance(myProject).getFileIndex();
+      for (Map.Entry<? extends VirtualFilePointer, ? extends Charset> entry : mapping.entrySet()) {
+        VirtualFilePointer filePointer = entry.getKey();
+        Charset charset = entry.getValue();
+        if (charset == null) throw new IllegalArgumentException("Null charset for " + filePointer + "; mapping: " + mapping);
+        if (filePointer == null) {
+          myProjectCharset = charset;
+        }
+        else {
+          final VirtualFile virtualFile = filePointer.getFile();
+          if (virtualFile != null) {
+            if (!fileIndex.isInContent(virtualFile)
+                || !fileEncodingChanged(virtualFile, myMapping.get(filePointer), charset)) continue;
+          }
+          newMap.put(filePointer, charset);
+        }
+      }
+    });
+
+    updateMapping(newMap);
+  }
+
+  private void updateMapping(Map<VirtualFilePointer, Charset> newMap) {
+    Map<VirtualFilePointer, Charset> oldMap = new HashMap<>(myMapping);
     myMapping.clear();
     myMapping.putAll(newMap);
 
@@ -360,6 +391,26 @@ public final class EncodingProjectManagerImpl extends EncodingProjectManager imp
     }
 
     myModificationTracker.incModificationCount();
+  }
+
+  private static boolean fileEncodingChanged(@NotNull VirtualFile virtualFile,
+                                             @Nullable Charset oldCharset,
+                                             @NotNull Charset newCharset) {
+    if (!virtualFile.isDirectory() && !Comparing.equal(newCharset, oldCharset)) {
+      Document document;
+      byte[] bytes;
+      try {
+        document = FileDocumentManager.getInstance().getDocument(virtualFile);
+        if (document == null) throw new IOException();
+        bytes = virtualFile.contentsToByteArray();
+      }
+      catch (IOException e) {
+        return false;
+      }
+      // ask whether to reload/convert when in doubt
+      return new ChangeFileEncodingAction().chosen(document, null, virtualFile, bytes, newCharset);
+    }
+    return true;
   }
 
   @NotNull

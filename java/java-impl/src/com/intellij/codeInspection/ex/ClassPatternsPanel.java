@@ -166,11 +166,6 @@ class ClassPatternsPanel extends JPanel {
     }
 
     @Override
-    public boolean checkInput(String inputString) {
-      return getErrorText(inputString) == null;
-    }
-
-    @Override
     public boolean canClose(String inputString) {
       return getErrorText(inputString) == null;
     }

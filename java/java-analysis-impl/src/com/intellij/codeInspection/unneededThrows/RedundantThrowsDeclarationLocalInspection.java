@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.unneededThrows;
 
 import com.intellij.codeInsight.ExceptionUtil;
@@ -12,8 +12,9 @@ import com.intellij.codeInspection.util.IntentionFamilyName;
 import com.intellij.codeInspection.util.IntentionName;
 import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.lang.jvm.JvmModifier;
+import com.intellij.openapi.diagnostic.Attachment;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.javadoc.PsiDocComment;
@@ -39,6 +40,8 @@ import static com.intellij.psi.PsiModifier.ABSTRACT;
 
 @SuppressWarnings("InspectionDescriptionNotFoundInspection") // delegates
 public final class RedundantThrowsDeclarationLocalInspection extends AbstractBaseJavaLocalInspectionTool {
+  private static final Logger LOGGER = Logger.getInstance(RedundantThrowsDeclarationLocalInspection.class.getName());
+
   @NotNull private final RedundantThrowsDeclarationInspection myGlobalTool;
 
   @TestOnly
@@ -91,11 +94,14 @@ public final class RedundantThrowsDeclarationLocalInspection extends AbstractBas
     if (JavaHighlightUtil.isSerializationRelatedMethod(method, method.getContainingClass())) return StreamEx.empty();
 
     final PsiReferenceList throwsList = method.getThrowsList();
-    final StreamEx<ThrowRefType> redundantInThrowsList = StreamEx.zip(throwsList.getReferenceElements(),
-                                                                      throwsList.getReferencedTypes(),
-                                                                      ThrowRefType::new);
 
-    return redundantInThrowsList
+    checkInconsistency(throwsList, method.getClass().getSimpleName());
+
+    final PsiJavaCodeReferenceElement[] referenceElements = throwsList.getReferenceElements();
+
+    final PsiElementFactory factory = JavaPsiFacade.getElementFactory(method.getProject());
+    return StreamEx.of(referenceElements)
+      .map(ref -> new ThrowRefType(ref, factory.createType(ref)))
       .filter(ThrowRefType::isCheckedException)
       .filter(p -> !p.isRemoteExceptionInRemoteMethod(method));
   }
@@ -237,10 +243,15 @@ public final class RedundantThrowsDeclarationLocalInspection extends AbstractBas
        * @return the set of throws declarations as strings from the throws list excluding the currently eliminated throws declaration
        */
       private static List<PsiClassType> getThrowsListWithoutCurrent(@NotNull final PsiReferenceList throwsList,
-                                                                   @NotNull final PsiJavaCodeReferenceElement currentRef) {
-        return StreamEx.zip(throwsList.getReferenceElements(), throwsList.getReferencedTypes(), Pair::create)
-          .filter(pair -> pair.getFirst() != currentRef)
-          .map(pair -> pair.getSecond())
+                                                                    @NotNull final PsiJavaCodeReferenceElement currentRef) {
+        final PsiJavaCodeReferenceElement[] referenceElements = throwsList.getReferenceElements();
+
+        checkInconsistency(throwsList);
+
+        final PsiElementFactory factory = JavaPsiFacade.getElementFactory(throwsList.getProject());
+        return StreamEx.of(referenceElements)
+          .filter(ref -> ref != currentRef)
+          .map(factory::createType)
           .toList();
       }
     }
@@ -375,6 +386,40 @@ public final class RedundantThrowsDeclarationLocalInspection extends AbstractBas
           .filter(e -> ! ExceptionUtil.isGeneralExceptionType(e))
           .noneMatch(e -> e.isAssignableFrom(myType));
       }
+    }
+  }
+
+  /**
+   * See {@link #checkInconsistency(PsiReferenceList, String)}
+   * @param throwsList
+   */
+  private static void checkInconsistency(@NotNull PsiReferenceList throwsList) {
+    checkInconsistency(throwsList, null);
+  }
+
+  /**
+   * Check the weird inconsistencies when the length of {@link PsiReferenceList#getReferencedTypes} varies from
+   * {@link PsiReferenceList#getReferenceElements} in the throws list
+   * @param throwsList the throws list element to examine
+   * @param methodClassName the class of the method the throws list is from. If the value is null then calculate it with
+   * {@link PsiTreeUtil#getParentOfType}
+   */
+  private static void checkInconsistency(@NotNull PsiReferenceList throwsList, @Nullable String methodClassName) {
+
+    final PsiJavaCodeReferenceElement[] referenceElements = throwsList.getReferenceElements();
+
+    final PsiClassType[] referencedTypes = throwsList.getReferencedTypes();
+
+    if (referenceElements.length != referencedTypes.length) {
+      if (methodClassName == null) {
+        final PsiMethod method = PsiTreeUtil.getParentOfType(throwsList, PsiMethod.class);
+
+        methodClassName = method != null ? method.getClass().getSimpleName() : "null";
+      }
+      LOGGER.error("Stub-PSI inconsistency detected. " +
+                   "The number of elements in the throws list doesn't match the number of types in the throws list. " +
+                   "The method's class is " + methodClassName,
+                   new Attachment("throwsList.sourcePsi.txt", throwsList.isValid() ? throwsList.getText() : "<invalid>"));
     }
   }
 }

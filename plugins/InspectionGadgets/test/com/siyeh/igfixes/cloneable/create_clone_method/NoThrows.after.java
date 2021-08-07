@@ -1,8 +1,11 @@
 class NoThrows extends Parent implements Cloneable {
+    private String[] ss;
 
     @Override
     public NoThrows clone() {
-        return (NoThrows) super.clone();
+        NoThrows clone = (NoThrows) super.clone();
+        // TODO: copy mutable state here, so the clone can't change the internals of the original
+        return clone;
     }
 }
 class Parent implements Cloneable {

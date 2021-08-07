@@ -27,8 +27,8 @@ import javax.swing.JPanel
 class GHPRToolWindowFactory : ToolWindowFactory, DumbAware {
 
   override fun createToolWindowContent(project: Project, toolWindow: ToolWindow) = with(toolWindow as ToolWindowEx) {
-    setTitleActions(listOf(GHPRSelectPullRequestForFileAction(),
-                           EmptyAction.registerWithShortcutSet("Github.Create.Pull.Request", CommonShortcuts.getNew(), component)))
+    setTitleActions(listOf(EmptyAction.registerWithShortcutSet("Github.Create.Pull.Request", CommonShortcuts.getNew(), component),
+                           GHPRSelectPullRequestForFileAction()))
     setAdditionalGearActions(DefaultActionGroup(GHPRSwitchRemoteAction()))
     component.putClientProperty(ToolWindowContentUi.HIDE_ID_LABEL, "true")
     with(contentManager) {

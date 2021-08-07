@@ -7,7 +7,9 @@ import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.actions.VcsContextFactory;
 import org.jetbrains.annotations.*;
 
+import java.util.Arrays;
 import java.util.Collection;
+import java.util.List;
 
 public abstract class LocalChangeList implements Cloneable, ChangeList {
   @NonNls public static final String OLD_DEFAULT_NAME = "Default";
@@ -16,11 +18,17 @@ public abstract class LocalChangeList implements Cloneable, ChangeList {
     return VcsContextFactory.SERVICE.getInstance().createLocalChangeList(project, name);
   }
 
+  public static List<String> getAllDefaultNames() {
+    return Arrays.asList(VcsBundle.message("changes.default.changelist.name"),
+                         VcsBundle.message("changes.default.changelist.name.old"),
+                         OLD_DEFAULT_NAME);
+  }
+
   @Override
   public abstract Collection<Change> getChanges();
 
   /**
-   * Logical id that identifies the changelist and should survive name changing.
+   * Logical id that identifies the changelist and should survive name change.
    */
   @NotNull
   @NonNls
@@ -49,7 +57,7 @@ public abstract class LocalChangeList implements Cloneable, ChangeList {
   public abstract LocalChangeList copy();
 
   public boolean hasDefaultName() {
-    return getDefaultName().equals(getName()) || OLD_DEFAULT_NAME.equals(getName());
+    return getAllDefaultNames().contains(getName());
   }
 
   public boolean isBlank() {

@@ -98,16 +98,16 @@ public class GotoSymbolModel2 extends FilteringGotoByModel<LanguageRef> {
   @Override
   public void saveInitialCheckBoxState(boolean state) {
     PropertiesComponent propertiesComponent = PropertiesComponent.getInstance(myProject);
-    if (Boolean.TRUE.toString().equals(propertiesComponent.getValue("GoToClass.toSaveIncludeLibraries"))){
+    if (Boolean.TRUE.toString().equals(propertiesComponent.getValue("GoToClass.toSaveIncludeLibraries"))) {
       propertiesComponent.setValue("GoToSymbol.includeLibraries", Boolean.toString(state));
     }
   }
 
   @Override
   public String getFullName(@NotNull final Object element) {
-    for(ChooseByNameContributor c: getContributorList()) {
+    for (ChooseByNameContributor c : getContributorList()) {
       if (c instanceof GotoClassContributor) {
-        String result = ((GotoClassContributor) c).getQualifiedName((NavigationItem) element);
+        String result = ((GotoClassContributor)c).getQualifiedName((NavigationItem)element);
         if (result != null) {
           return result;
         }

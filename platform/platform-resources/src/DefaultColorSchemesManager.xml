@@ -13,6 +13,7 @@
       <option name="INDENT_GUIDE" value="e6e6e6"/>
       <option name="GUTTER_BACKGROUND" value="f0f0f0" />
       <option name="DOCUMENTATION_COLOR" value="f7f7f7"/>
+      <option name="LOOKUP_COLOR" value="f7f7f7"/>
       <option name="NOTIFICATION_BACKGROUND" value="fff8d1" />
       <option name="SELECTED_INDENT_GUIDE" value="c8c8c8"/>
       <option name="SELECTION_FOREGROUND" value="ffffff"/>
@@ -1150,6 +1151,11 @@
             <option name="ERROR_STRIPE_COLOR" />
           </value>
         </option>
+        <option name="TERMINAL_COMMAND_TO_RUN_USING_IDE">
+          <value>
+            <option name="BACKGROUND" value="CFEFC6" />
+          </value>
+        </option>
         <option name="SPY-JS.FUNCTION_SCOPE">
           <value>
             <option name="BACKGROUND" value="ffffd7"/>
@@ -1300,6 +1306,7 @@
       <option name="FILESTATUS_modifiedOutside" value="6897bb" />
       <option name="GUTTER_BACKGROUND" value="313335" />
       <option name="DOCUMENTATION_COLOR" value="46484a"/>
+      <option name="LOOKUP_COLOR" value="46484a"/>
       <option name="INDENT_GUIDE" value="373737" />
       <option name="LINE_NUMBERS_COLOR" value="606366" />
       <option name="LINE_NUMBER_ON_CARET_ROW_COLOR" value="a4a3a3" />
@@ -1536,6 +1543,11 @@
         <value>
           <option name="FOREGROUND" value="E5BF00" />
           <option name="BACKGROUND" value="A87B00" />
+        </value>
+      </option>
+      <option name="TERMINAL_COMMAND_TO_RUN_USING_IDE">
+        <value>
+          <option name="BACKGROUND" value="40503C" />
         </value>
       </option>
       <option name="CSS.COLOR">
@@ -2142,11 +2154,6 @@
       </option>
       <option name="PROPERTIES.VALID_STRING_ESCAPE">
         <value />
-      </option>
-      <option name="PY.BUILTIN_NAME">
-        <value>
-          <option name="FOREGROUND" value="8888c6" />
-        </value>
       </option>
       <option name="REGEXP.BRACES">
         <value>

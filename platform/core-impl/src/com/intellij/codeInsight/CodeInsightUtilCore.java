@@ -44,6 +44,7 @@ public abstract class CodeInsightUtilCore extends FileModificationService {
     return findElementInRange(file, startOffset, endOffset, klass, language, null);
   }
 
+  @Nullable
   private static <T extends PsiElement> T findElementInRange(@NotNull PsiFile file,
                                                              int startOffset,
                                                              int endOffset,
@@ -76,10 +77,12 @@ public abstract class CodeInsightUtilCore extends FileModificationService {
     return element;
   }
 
+  @Nullable
   public static <T extends PsiElement> T forcePsiPostprocessAndRestoreElement(@NotNull T element) {
     return forcePsiPostprocessAndRestoreElement(element, false);
   }
 
+  @Nullable
   public static <T extends PsiElement> T forcePsiPostprocessAndRestoreElement(@NotNull T element,
                                                                               boolean useFileLanguage) {
     final PsiFile psiFile = element.getContainingFile();

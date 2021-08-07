@@ -5,6 +5,7 @@ import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.configurations.ModuleBasedConfiguration;
 import com.intellij.execution.target.TargetEnvironmentAwareRunProfile;
 import com.intellij.execution.target.TargetEnvironmentConfiguration;
+import com.intellij.execution.target.TargetEnvironmentConfigurations;
 import com.intellij.execution.target.TargetEnvironmentsManager;
 import com.intellij.openapi.ui.LabeledComponent;
 import com.intellij.openapi.util.Comparing;
@@ -21,7 +22,7 @@ public class TargetPathFragment<T extends TargetEnvironmentAwareRunProfile> exte
           LabeledComponent.create(new JTextField(), ExecutionBundle.message("label.project.path.on.target"), BorderLayout.WEST), -1,
           (t, component) -> component.getComponent().setText(getPath(t)),
           (t, component) -> setPath(t, component.getComponent().getText()),
-          t -> t.getDefaultTargetName() != null);
+          t -> TargetEnvironmentConfigurations.getEffectiveTargetName(t) != null);
   }
 
   private static String getPath(TargetEnvironmentAwareRunProfile t) {
@@ -30,7 +31,7 @@ public class TargetPathFragment<T extends TargetEnvironmentAwareRunProfile> exte
       return configuration.getProjectPathOnTarget();
     }
 
-    String targetName = t.getDefaultTargetName();
+    String targetName = TargetEnvironmentConfigurations.getEffectiveTargetName(t, configuration.getProject());
     if (targetName == null) return "";
     TargetEnvironmentConfiguration targetEnvironmentConfiguration =
       TargetEnvironmentsManager.getInstance(configuration.getProject()).getTargets().findByName(targetName);
@@ -41,7 +42,7 @@ public class TargetPathFragment<T extends TargetEnvironmentAwareRunProfile> exte
     ModuleBasedConfiguration<?, ?> configuration = (ModuleBasedConfiguration)t;
     configuration.setProjectPathOnTarget(path);
 
-    String targetName = t.getDefaultTargetName();
+    String targetName = TargetEnvironmentConfigurations.getEffectiveTargetName(t, configuration.getProject());
     if (targetName == null) return;
     TargetEnvironmentConfiguration targetEnvironmentConfiguration =
       TargetEnvironmentsManager.getInstance(configuration.getProject()).getTargets().findByName(targetName);

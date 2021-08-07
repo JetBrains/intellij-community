@@ -18,6 +18,7 @@ public class JavaErrorQuickFixProvider implements ErrorQuickFixProvider {
     String description = errorElement.getErrorDescription();
     if (description.equals(JavaPsiBundle.message("expected.semicolon"))) {
       QuickFixAction.registerQuickFixAction(info, new InsertMissingTokenFix(";"));
+      HighlightFixUtil.registerFixesForExpressionStatement(info, parent);
     }
     if (parent instanceof PsiTryStatement && description.equals(JavaPsiBundle.message("expected.catch.or.finally"))) {
       QuickFixAction.registerQuickFixAction(info, new AddExceptionToCatchFix(false));

@@ -1,8 +1,9 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.application.options;
 
 import com.intellij.application.options.codeStyle.CodeStyleSchemesModel;
-import com.intellij.application.options.codeStyle.excludedFiles.ExcludedFilesList;
+import com.intellij.application.options.codeStyle.excludedFiles.ExcludedGlobPatternsPanel;
+import com.intellij.application.options.codeStyle.excludedFiles.ExcludedScopesPanel;
 import com.intellij.lang.Language;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.application.ApplicationManager;
@@ -17,6 +18,7 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.ex.ConfigurableWrapper;
+import com.intellij.openapi.options.ex.Settings;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.VerticalFlowLayout;
@@ -28,7 +30,7 @@ import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.codeStyle.CodeStyleConstraints;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
-import com.intellij.ui.IdeBorderFactory;
+import com.intellij.ui.AncestorListenerAdapter;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.awt.RelativePoint;
@@ -44,13 +46,14 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.event.AncestorEvent;
 import java.awt.*;
 import java.util.List;
 import java.util.Objects;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 
-final class GeneralCodeStylePanel extends CodeStyleAbstractPanel {
+public final class GeneralCodeStylePanel extends CodeStyleAbstractPanel {
   private static final ExtensionPointName<GeneralCodeStyleOptionsProviderEP> EP_NAME = new ExtensionPointName<>("com.intellij.generalCodeStyleOptionsProvider");
 
   @SuppressWarnings("UnusedDeclaration")
@@ -75,11 +78,12 @@ final class GeneralCodeStylePanel extends CodeStyleAbstractPanel {
   private JBLabel myVisualGuidesHint;
   private JBLabel myLineSeparatorHint;
   private JBLabel myVisualGuidesLabel;
-  private ExcludedFilesList myExcludedFilesList;
-  private JPanel myExcludedFilesPanel;
-  private JPanel myToolbarPanel;
   private JBTabbedPane myTabbedPane;
-  private final JScrollPane myScrollPane;
+  private ExcludedGlobPatternsPanel myExcludedPatternsPanel;
+  private ExcludedScopesPanel       myExcludedScopesPanel;
+  private JPanel myGeneralTab;
+  private JPanel myFormatterTab;
+  private final JScrollPane         myScrollPane;
   private static int ourSelectedTabIndex = -1;
 
   public GeneralCodeStylePanel(CodeStyleSettings settings) {
@@ -104,7 +108,7 @@ final class GeneralCodeStylePanel extends CodeStyleAbstractPanel {
 
     myAutodetectIndentsBox.setBorder(JBUI.Borders.emptyTop(10));
 
-    myPanel.setBorder(JBUI.Borders.empty(0, 10));
+    myPanel.setBorder(JBUI.Borders.empty());
     myScrollPane = ScrollPaneFactory.createScrollPane(null, true);
     myScrollPane.setViewport(new GradientViewport(myPanel, JBUI.insetsTop(5), true));
 
@@ -117,16 +121,26 @@ final class GeneralCodeStylePanel extends CodeStyleAbstractPanel {
     myLineSeparatorHint.setForeground(JBColor.GRAY);
     myLineSeparatorHint.setFont(UIUtil.getLabelFont(UIUtil.FontSize.SMALL));
 
-    myExcludedFilesList.initModel();
-    myToolbarPanel.add(myExcludedFilesList.getDecorator().createPanel());
-    myExcludedFilesPanel
-      .setBorder(IdeBorderFactory.createTitledBorder(ApplicationBundle.message("settings.code.style.general.excluded.files")));
+    myGeneralTab.setBorder(JBUI.Borders.empty(15, 15, 0, 0));
+    myFormatterTab.setBorder(JBUI.Borders.empty(15, 15, 0, 0));
+    myMarkerOptionsPanel.setBorder(JBUI.Borders.emptyTop(10));
+
     if (ourSelectedTabIndex >= 0) {
       myTabbedPane.setSelectedIndex(ourSelectedTabIndex);
     }
     myTabbedPane.addChangeListener(__ -> {
       //noinspection AssignmentToStaticFieldFromInstanceMethod
       ourSelectedTabIndex = myTabbedPane.getSelectedIndex();
+    });
+    myTabbedPane.addAncestorListener(new AncestorListenerAdapter() {
+      @Override
+      public void ancestorAdded(AncestorEvent event) {
+        // The 'Code Style' page has become visible, either the first time, or after switching to some other page in Settings (Preferences) and then back to this page.
+        if (ourSelectedTabIndex > 0 && myTabbedPane.getSelectedIndex() != ourSelectedTabIndex) {
+          // At the moment of writing this code, it's possible to get to this line of code only via selectFormatterTab(Settings) method.
+          myTabbedPane.setSelectedIndex(ourSelectedTabIndex);
+        }
+      }
     });
     EP_NAME.addExtensionPointListener(
       new ExtensionPointListener<>() {
@@ -179,7 +193,8 @@ final class GeneralCodeStylePanel extends CodeStyleAbstractPanel {
     myVisualGuides.validateContent();
     myRightMarginField.validateContent();
     settings.setDefaultSoftMargins(myVisualGuides.getValue());
-    myExcludedFilesList.apply(settings);
+    myExcludedScopesPanel.apply(settings);
+    myExcludedPatternsPanel.apply(settings);
 
     settings.LINE_SEPARATOR = getSelectedLineSeparator();
 
@@ -207,7 +222,9 @@ final class GeneralCodeStylePanel extends CodeStyleAbstractPanel {
     myVisualGuides = new CommaSeparatedIntegersField(ApplicationBundle.message("settings.code.style.visual.guides"),
                                                      0, CodeStyleConstraints.MAX_RIGHT_MARGIN,
                                                      ApplicationBundle.message("settings.code.style.visual.guides.optional"));
-    myExcludedFilesList = new ExcludedFilesList();
+    myExcludedPatternsPanel = new ExcludedGlobPatternsPanel();
+    myExcludedPatternsPanel.setBorder(JBUI.Borders.emptyTop(5));
+    myExcludedScopesPanel = new ExcludedScopesPanel();
   }
 
   @Nullable
@@ -249,7 +266,8 @@ final class GeneralCodeStylePanel extends CodeStyleAbstractPanel {
   public boolean isModified(CodeStyleSettings settings) {
     if (!myVisualGuides.getValue().equals(settings.getDefaultSoftMargins())) return true;
 
-    if (myExcludedFilesList.isModified(settings)) return true;
+    if (myExcludedScopesPanel.isModified(settings)) return true;
+    if (myExcludedPatternsPanel.isModified(settings)) return true;
 
     if (!Objects.equals(getSelectedLineSeparator(), settings.LINE_SEPARATOR)) {
       return true;
@@ -288,7 +306,8 @@ final class GeneralCodeStylePanel extends CodeStyleAbstractPanel {
   protected void resetImpl(final CodeStyleSettings settings) {
     myVisualGuides.setValue(settings.getDefaultSoftMargins());
 
-    myExcludedFilesList.reset(settings);
+    myExcludedScopesPanel.reset(settings);
+    myExcludedPatternsPanel.reset(settings);
 
     String lineSeparator = settings.LINE_SEPARATOR;
     if ("\n".equals(lineSeparator)) {
@@ -357,7 +376,7 @@ final class GeneralCodeStylePanel extends CodeStyleAbstractPanel {
   @Override
   public void setModel(@NotNull CodeStyleSchemesModel model) {
     super.setModel(model);
-    myExcludedFilesList.setSchemesModel(model);
+    myExcludedScopesPanel.setSchemesModel(model);
   }
 
   @Override
@@ -382,5 +401,10 @@ final class GeneralCodeStylePanel extends CodeStyleAbstractPanel {
 
   private static @NlsContexts.ListItem String getMacintoshString() {
     return ApplicationBundle.message("combobox.crlf.mac");
+  }
+
+  public static void selectFormatterTab(@NotNull Settings settings) {
+    ourSelectedTabIndex = 1;
+    settings.select(settings.find(CodeStyleSchemesConfigurable.CONFIGURABLE_ID));
   }
 }

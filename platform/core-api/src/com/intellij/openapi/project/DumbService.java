@@ -1,12 +1,14 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.project;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.extensions.ExtensionPoint;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.ProjectExtensionPointName;
+import com.intellij.openapi.extensions.impl.ExtensionPointImpl;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.*;
@@ -19,14 +21,11 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.List;
+import java.util.*;
 
 /**
  * A service managing the IDE's 'dumb' mode: when indexes are updated in the background, and the functionality is very much limited.
- * Only the explicitly allowed functionality is available. Usually, it's allowed by implementing {@link DumbAware} interface.<p></p>
+ * Only the explicitly allowed functionality is available. Usually, it's allowed by implementing {@link DumbAware} interface.
  * <p>
  * "Dumb" mode starts and ends in a {@link com.intellij.openapi.application.WriteAction}, so if you're inside a {@link ReadAction}
  * on a background thread, it won't suddenly begin in the middle of your operation. But note that whenever you start
@@ -60,13 +59,23 @@ public abstract class DumbService {
   }
 
   public static @NotNull <T> List<T> getDumbAwareExtensions(@NotNull Project project, @NotNull ExtensionPointName<T> extensionPoint) {
-    List<T> list = extensionPoint.getExtensionList();
-    if (list.isEmpty()) {
-      return list;
+    ExtensionPoint<T> point = extensionPoint.getPoint();
+    int size = point.size();
+    if (size == 0) {
+      return Collections.emptyList();
     }
 
-    DumbService dumbService = getInstance(project);
-    return dumbService.filterByDumbAwareness(list);
+    if (!getInstance(project).isDumb()) {
+      return point.getExtensionList();
+    }
+
+    List<T> result = new ArrayList<>(size);
+    for (T element : ((ExtensionPointImpl<T>)point)) {
+      if (isDumbAware(element)) {
+        result.add(element);
+      }
+    }
+    return result;
   }
 
   public static @NotNull <T> List<T> getDumbAwareExtensions(@NotNull Project project, @NotNull ProjectExtensionPointName<T> extensionPoint) {
@@ -80,7 +89,8 @@ public abstract class DumbService {
    * <li>project is initialized</li>
    * <li>and there's no dumb mode in progress</li>
    * </ul>
-   * This may also happen immediately if these conditions are already met.<p/>
+   * This may also happen immediately if these conditions are already met.
+   * <p>
    * Note that it's not guaranteed that the dumb mode won't start again during this runnable execution, it should manage that situation explicitly.
    */
   public abstract void runWhenSmart(@NotNull Runnable runnable);
@@ -189,7 +199,7 @@ public abstract class DumbService {
   }
 
   /**
-   * @return all the elements of the given array if there's no dumb mode currently, or the dumb-aware ones if {@link #isDumb()} is true.
+   * @return all the elements of the given array if there's no dumb mode currently, or the dumb-aware ones if {@link #isDumb()} is {@code true}.
    * @see #isDumbAware(Object)
    */
   public @NotNull <T> List<T> filterByDumbAwareness(T @NotNull [] array) {
@@ -217,15 +227,17 @@ public abstract class DumbService {
   }
 
   /**
-   * Queues a task to be executed in "dumb mode", where access to indexes is forbidden. Tasks are executed sequentially
-   * in background unless {@link #completeJustSubmittedTasks()} is called in the same dispatch thread activity.<p/>
+   * Queues a task to be executed in "dumb mode", where access to indices is forbidden. Tasks are executed sequentially
+   * in background unless {@link #completeJustSubmittedTasks()} is called in the same dispatch thread activity.
    * <p>
-   * Tasks can specify custom "equality" policy via their constructor. Calling this method has no effect if an "equal" task is already enqueued (but not yet running).
+   * Tasks can specify custom "equality" policy via their constructor.
+   * Calling this method has no effect if an "equal" task is already enqueued (but not yet running).
    */
   public abstract void queueTask(@NotNull DumbModeTask task);
 
   /**
-   * Cancels the given task. If it's in the queue, it won't be executed. If it's already running, its {@link com.intellij.openapi.progress.ProgressIndicator} is canceled, so the next {@link ProgressManager#checkCanceled()} call
+   * Cancels the given task. If it's in the queue, it won't be executed. If it's already running, its
+   * {@link com.intellij.openapi.progress.ProgressIndicator} is canceled, so the next {@link ProgressManager#checkCanceled()} call
    * will throw {@link ProcessCanceledException}.
    */
   public abstract void cancelTask(@NotNull DumbModeTask task);
@@ -238,10 +250,11 @@ public abstract class DumbService {
 
   /**
    * Runs the "just submitted" tasks under a modal dialog. "Just submitted" means that tasks were queued for execution
-   * earlier within the same Swing event dispatch thread event processing, and there were no other tasks already running at that moment. Otherwise, this method does nothing.<p/>
+   * earlier within the same Swing event dispatch thread event processing, and there were no other tasks already running at that moment.
+   * Otherwise, this method does nothing.
    * <p>
    * This functionality can be useful in refactorings (invoked in "smart mode"), when after VFS or root changes
-   * (which could start "dumb mode") some reference resolve is required (which again requires "smart mode").<p/>
+   * (which could start "dumb mode") some references need to be resolved (which again requires "smart mode").
    * <p>
    * Should be invoked on dispatch thread.
    * It's the caller's responsibility to invoke this method only when the model is in internally consistent state,
@@ -308,20 +321,21 @@ public abstract class DumbService {
   }
 
   /**
-   * Enables or disables alternative resolve strategies for the current thread.<p/>
+   * Enables or disables alternative resolve strategies for the current thread.
    * <p>
    * Normally reference resolution uses indexes, and hence is not available in dumb mode. In some cases, alternative ways
    * of performing resolve are available, although much slower. It's impractical to always use these ways because it'll
    * lead to overloaded CPU (especially given there's also indexing in progress). But for some explicit user actions
-   * (e.g., explicit Goto Declaration) turning on these slower methods is beneficial.<p/>
+   * (e.g., explicit Goto Declaration) turning on these slower methods is beneficial.
    * <p>
-   * NOTE: even with alternative resolution enabled, methods like resolve(), findClass() etc may still throw
+   * NOTE: even with alternative resolution enabled, methods like resolve(), findClass() etc. may still throw
    * {@link IndexNotReadyException}. So alternative resolve is not a panacea, it might help provide navigation in some cases
-   * but not in all.<p/>
+   * but not in all.
    * <p>
    * A typical usage would involve {@code try-finally}, where the alternative resolution is first enabled, then an action is performed,
    * and then alternative resolution is turned off in the {@code finally} block.
-   * @deprecated Use {@link #runWithAlternativeResolveEnabled(ThrowableRunnable)} or {@link #computeWithAlternativeResolveEnabled(ThrowableComputable)} or {@link #withAlternativeResolveEnabled(Runnable)} instead
+   * @deprecated Use {@link #runWithAlternativeResolveEnabled(ThrowableRunnable)} or {@link #computeWithAlternativeResolveEnabled(ThrowableComputable)}
+   * or {@link #withAlternativeResolveEnabled(Runnable)} instead
    */
   @Deprecated
   public abstract void setAlternativeResolveEnabled(boolean enabled);
@@ -388,12 +402,12 @@ public abstract class DumbService {
   }
 
   /**
-   * Runs a heavy activity and suspends indexing (if any) for this time. The user still can manually pause and resume the indexing. In that case, indexing won't be resumed automatically after the activity finishes.
+   * Runs a heavy activity and suspends indexing (if any) for this time. The user still can manually pause and resume the indexing.
+   * In that case, indexing won't be resumed automatically after the activity finishes.
    *
    * @param activityName the text (a noun phrase) to display as a reason for the indexing being paused
    */
-  public abstract void suspendIndexingAndRun(@NotNull @NlsContexts.ProgressText String activityName,
-                                             @NotNull Runnable activity);
+  public abstract void suspendIndexingAndRun(@NotNull @NlsContexts.ProgressText String activityName, @NotNull Runnable activity);
 
   /**
    * Checks whether {@link #isDumb()} is true for the current project and if it's currently suspended by user or a {@link #suspendIndexingAndRun} call.
@@ -401,6 +415,9 @@ public abstract class DumbService {
    * in the next line of the calling code.
    */
   public abstract boolean isSuspendedDumbMode();
+
+  @ApiStatus.Internal
+  public abstract void runWithWaitForSmartModeDisabled(@NotNull Runnable runnable);
 
   /**
    * @see #DUMB_MODE
