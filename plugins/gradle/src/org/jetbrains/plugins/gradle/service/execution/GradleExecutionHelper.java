@@ -19,6 +19,7 @@ import com.intellij.openapi.externalSystem.util.OutputWrapper;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Couple;
+import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.io.StreamUtil;
@@ -51,6 +52,7 @@ import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.util.*;
+import java.util.function.Supplier;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -209,20 +211,24 @@ public class GradleExecutionHelper {
       settings.setRemoteProcessIdleTtlInMs(100);
       settings.setArguments(ContainerUtil.emptyList());
 
-      if (ExternalSystemExecutionAware.Companion.getEnvironmentConfigurationProvider(settings) == null) {
-        String initScriptPath = setupWrapperTaskInInitScript(gradleVersion);
-        settings.withArguments(GradleConstants.INIT_SCRIPT_CMD_OPTION, initScriptPath);
+      if (ExternalSystemExecutionAware.Companion.getEnvironmentConfigurationProvider(settings) != null) {
+        // todo add the support for org.jetbrains.plugins.gradle.settings.DistributionType.WRAPPED
+        executeWrapperTask(id, settings, listener, connection, cancellationToken);
+
+        Path wrapperPropertiesFile = GradleUtil.findDefaultWrapperPropertiesFile(projectPath);
+        if (wrapperPropertiesFile != null) {
+          settings.setWrapperPropertyFile(wrapperPropertiesFile.toString());
+        }
       }
+      else {
+        Supplier<String> propertiesFile = setupWrapperTaskInInitScript(gradleVersion, settings);
 
-      // todo add the support for org.jetbrains.plugins.gradle.settings.DistributionType.WRAPPED
-      BuildLauncher launcher = getBuildLauncher(id, connection, settings, listener);
-      launcher.withCancellationToken(cancellationToken);
-      launcher.forTasks("wrapper");
-      launcher.run();
+        executeWrapperTask(id, settings, listener, connection, cancellationToken);
 
-      Path wrapperPropertiesFile = GradleUtil.findDefaultWrapperPropertiesFile(projectPath);
-      if (wrapperPropertiesFile != null) {
-        settings.setWrapperPropertyFile(wrapperPropertiesFile.toString());
+        String wrapperPropertiesFile = propertiesFile.get();
+        if (wrapperPropertiesFile != null) {
+          settings.setWrapperPropertyFile(wrapperPropertiesFile);
+        }
       }
     }
     catch (ProcessCanceledException e) {
@@ -244,11 +250,27 @@ public class GradleExecutionHelper {
     }
   }
 
-  private static @NotNull String setupWrapperTaskInInitScript(@Nullable GradleVersion gradleVersion) throws IOException {
+  private void executeWrapperTask(
+    @NotNull ExternalSystemTaskId id,
+    @NotNull GradleExecutionSettings settings,
+    @NotNull ExternalSystemTaskNotificationListener listener,
+    @NotNull ProjectConnection connection,
+    @NotNull CancellationToken cancellationToken
+  ) {
+    BuildLauncher launcher = getBuildLauncher(id, connection, settings, listener);
+    launcher.withCancellationToken(cancellationToken);
+    launcher.forTasks("wrapper");
+    launcher.run();
+  }
+
+  private static @NotNull Supplier<String> setupWrapperTaskInInitScript(
+    @Nullable GradleVersion gradleVersion,
+    @NotNull GradleExecutionSettings settings
+  ) throws IOException {
     String wrapperFilesLocationPath = FileUtil.createTempDirectory("wrap", "loc").getCanonicalPath();
     String jarFile = FileUtil.join(wrapperFilesLocationPath, "gradle-wrapper.jar");
     String scriptFile = FileUtil.join(wrapperFilesLocationPath, "gradlew");
-    String propertiesFile = FileUtil.join(wrapperFilesLocationPath, "path.tmp");
+    String fileWithPathToProperties = FileUtil.join(wrapperFilesLocationPath, "path.tmp");
 
     StringJoiner lines = new StringJoiner(System.lineSeparator());
     lines.add("");
@@ -263,15 +285,17 @@ public class GradleExecutionHelper {
       lines.add("    wrapper.gradleVersion = '" + gradleVersion.getVersion() + "'");
     }
     lines.add("    wrapper.doLast {");
-    lines.add("      def propertiesFile = new File('" + StringUtil.escapeBackSlashes(propertiesFile) + "')");
-    lines.add("      propertiesFile.write wrapper.propertiesFile.getCanonicalPath()");
+    lines.add("      def fileWithPathToProperties = new File('" + StringUtil.escapeBackSlashes(fileWithPathToProperties) + "')");
+    lines.add("      fileWithPathToProperties.write wrapper.propertiesFile.getCanonicalPath()");
     lines.add("    }");
     lines.add("  }");
     lines.add("}");
     lines.add("");
 
     File initScriptFile = writeToFileGradleInitScript(lines.toString(), "wrapper_init");
-    return initScriptFile.getCanonicalPath();
+    settings.withArguments(GradleConstants.INIT_SCRIPT_CMD_OPTION, initScriptFile.getCanonicalPath());
+
+    return () -> FileUtil.loadFileOrNull(fileWithPathToProperties);
   }
 
   @NotNull

@@ -1387,6 +1387,19 @@ public class FileUtil extends FileUtilRt {
     NioFiles.setExecutable(file.toPath());
   }
 
+  public static @Nullable String loadFileOrNull(@NotNull String path) {
+    return loadFileOrNull(new File(path));
+  }
+
+  public static @Nullable String loadFileOrNull(@NotNull File file) {
+    try {
+      return loadFile(file);
+    }
+    catch (IOException e) {
+      return null;
+    }
+  }
+
   @NotNull
   public static String loadFile(@NotNull File file) throws IOException {
     return FileUtilRt.loadFile(file);
