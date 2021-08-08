@@ -71,15 +71,15 @@ class CustomKotlinCompilerReferenceTest : KotlinCompilerReferenceTestBase() {
     fun testSimpleJavaLibraryClass() {
         myFixture.configureByFiles("Main.kt", "Boo.kt")
         rebuildProject()
-        TestCase.assertEquals(null, getReferentFiles(myFixture.findClass(CommonClassNames.JAVA_UTIL_ARRAY_LIST), false))
+        TestCase.assertEquals(setOf("Main.kt"), getReferentFiles(myFixture.findClass(CommonClassNames.JAVA_UTIL_ARRAY_LIST), true))
     }
 
     fun testHierarchyJavaLibraryClass() {
         myFixture.configureByFiles("Main.kt", "Boo.kt", "Doo.kt", "Foo.kt")
         rebuildProject()
-        TestCase.assertEquals(null, getReferentFiles(myFixture.findClass("java.util.AbstractList"), false))
+        TestCase.assertEquals(setOf("Foo.kt"), getReferentFiles(myFixture.findClass("java.util.AbstractList"), true))
         myFixture.addFileToProject("Another.kt", "")
-        TestCase.assertEquals(null, getReferentFiles(myFixture.findClass("java.util.AbstractList"), false))
+        TestCase.assertEquals(setOf("Foo.kt"), getReferentFiles(myFixture.findClass("java.util.AbstractList"), true))
     }
 
     fun testTopLevelConstantWithJvmName() {

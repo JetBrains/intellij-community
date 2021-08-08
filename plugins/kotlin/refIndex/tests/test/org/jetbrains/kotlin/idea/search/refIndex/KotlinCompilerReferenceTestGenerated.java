@@ -216,7 +216,16 @@ public abstract class KotlinCompilerReferenceTestGenerated extends AbstractKotli
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/compilerIndex/functions/hierarchy")
-        public abstract static class Hierarchy extends AbstractKotlinCompilerReferenceTest {
+        public static class Hierarchy extends AbstractKotlinCompilerReferenceTest {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("fromLibrary")
+            public void testFromLibrary() throws Exception {
+                runTest("testData/compilerIndex/functions/hierarchy/fromLibrary/");
+            }
+
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/compilerIndex/functions/hierarchy/java")
             public static class Java extends AbstractKotlinCompilerReferenceTest {

@@ -258,7 +258,10 @@ class KotlinCompilerReferenceIndexService(val project: Project) : Disposable, Mo
     fun getSubtypesOfInTests(fqName: FqName, deep: Boolean): Sequence<FqName>? = storage?.getSubtypesOf(fqName, deep)
 
     @TestOnly
-    fun getSubtypesOfInTests(hierarchyElement: PsiElement): Sequence<FqName> = getSubtypesOf(hierarchyElement)
+    fun getSubtypesOfInTests(hierarchyElement: PsiElement, isFromLibrary: Boolean = false): Sequence<FqName> = getSubtypesOf(
+        hierarchyElement,
+        isFromLibrary,
+    )
 
     @TestOnly
     fun findReferenceFilesInTests(element: PsiElement): Set<VirtualFile>? = referentFiles(element)
@@ -266,22 +269,30 @@ class KotlinCompilerReferenceIndexService(val project: Project) : Disposable, Mo
     private fun referentFiles(element: PsiElement): Set<VirtualFile>? = tryWithReadLock(fun(): Set<VirtualFile>? {
         val storage = storage ?: return null
         val originalElement = element.unwrapped ?: return null
-        val originalFqNames = extractFqNames(originalElement)?.asSequence() ?: return null
+        val originalFqNames = extractFqNames(originalElement) ?: return null
         val virtualFile = PsiUtilCore.getVirtualFile(element) ?: return null
         if (projectFileIndex.isInSource(virtualFile) && virtualFile in dirtyScopeHolder) return null
-        if (projectFileIndex.isInLibrary(virtualFile)) return null
-        val additionalFqNames = findSubclassesFqNamesIfApplicable(originalElement)?.let { subclassesFqNames ->
+
+        val isFromLibrary = projectFileIndex.isInLibrary(virtualFile)
+        originalFqNames.takeIf { isFromLibrary }?.singleOrNull()?.asString()?.let { fqName ->
+            // "Any" is not in the subtypes storage
+            if (fqName.startsWith(CommonClassNames.JAVA_LANG_OBJECT) || fqName.startsWith("kotlin.Any")) {
+                return null
+            }
+        }
+
+        val additionalFqNames = findSubclassesFqNamesIfApplicable(originalElement, isFromLibrary)?.let { subclassesFqNames ->
             subclassesFqNames.flatMap { subclass -> originalFqNames.map { subclass.child(it.shortName()) } }
         }.orEmpty()
 
-        return originalFqNames.plus(additionalFqNames).flatMapTo(mutableSetOf()) { currentFqName ->
+        return originalFqNames.toSet().plus(additionalFqNames).flatMapTo(mutableSetOf()) { currentFqName ->
             val name = currentFqName.shortName().asString()
             val scope = currentFqName.parent().takeUnless(FqName::isRoot)?.asString() ?: ""
             storage.get(LookupSymbol(name, scope)).mapNotNull { VfsUtil.findFile(Path(it), true) }
         }
     })
 
-    private fun findSubclassesFqNamesIfApplicable(element: PsiElement): Sequence<FqName>? {
+    private fun findSubclassesFqNamesIfApplicable(element: PsiElement, isFromLibrary: Boolean): Sequence<FqName>? {
         val hierarchyElement = when (element) {
             is KtClassOrObject -> null
             is PsiMember -> element.containingClass
@@ -289,32 +300,65 @@ class KotlinCompilerReferenceIndexService(val project: Project) : Disposable, Mo
             else -> null
         } ?: return null
 
-        return getSubtypesOf(hierarchyElement)
+        return getSubtypesOf(hierarchyElement, isFromLibrary)
     }
 
-    private fun getSubtypesOf(hierarchyElement: PsiElement): Sequence<FqName> {
-        val fqName = hierarchyElement.getKotlinFqName() ?: return emptySequence()
-        val kotlinInitialValues = getDirectSubtypesOfFromKotlin(fqName)
-        val javaInitialValues = LanguageCompilerRefAdapter.findAdapter(hierarchyElement, true)?.let { adapter ->
-            getDirectSubtypesOfFromJava { adapter.asCompilerRef(hierarchyElement, it) }
-        }.orEmpty()
-
-        return generateRecursiveSequence(kotlinInitialValues + javaInitialValues) { fqNameWrapper ->
+    private fun getSubtypesOf(hierarchyElement: PsiElement, isFromLibrary: Boolean): Sequence<FqName> =
+        generateRecursiveSequence(computeInitialElementsSequence(hierarchyElement, isFromLibrary)) { fqNameWrapper ->
             val javaValues = getDirectSubtypesOfFromJava { CompilerRef.JavaCompilerClassRef(it.tryEnumerate(fqNameWrapper.jvmFqName)) }
             val kotlinValues = getDirectSubtypesOfFromKotlin(fqNameWrapper.fqName)
             kotlinValues + javaValues
         }.map(FqNameWrapper::fqName)
+
+    private fun computeInitialElementsSequence(hierarchyElement: PsiElement, isFromLibrary: Boolean): Sequence<FqNameWrapper> {
+        val initialElements = if (isFromLibrary) {
+            computeInLibraryScope { findHierarchyInLibrary(hierarchyElement) }
+        } else {
+            setOf(hierarchyElement)
+        }
+
+        val kotlinInitialValues = initialElements.asSequence().mapNotNull(PsiElement::getKotlinFqName).flatMap { fqName ->
+            fqName.computeDirectSubtypes(
+                withSelf = isFromLibrary,
+                selfAction = { FqNameWrapper.createFromFqName(it) },
+                subtypesAction = { getDirectSubtypesOfFromKotlin(it) }
+            )
+        }
+
+        val javaInitialValues = initialElements.asSequence().flatMap { currentHierarchyElement ->
+            currentHierarchyElement.computeDirectSubtypes(
+                withSelf = isFromLibrary,
+                selfAction = { FqNameWrapper.createFromPsiElement(it) },
+                subtypesAction = { getDirectSubtypesOfFromJava(it) }
+            )
+        }
+
+        return kotlinInitialValues + javaInitialValues
+    }
+
+    private fun <T> T.computeDirectSubtypes(
+        withSelf: Boolean,
+        selfAction: (T) -> FqNameWrapper?,
+        subtypesAction: (T) -> Sequence<FqNameWrapper>,
+    ): Sequence<FqNameWrapper> {
+        val directSubtypesFromJava = subtypesAction(this)
+        return selfAction.takeIf { withSelf }?.invoke(this)?.let { sequenceOf(it) + directSubtypesFromJava } ?: directSubtypesFromJava
     }
 
     private fun getDirectSubtypesOfFromKotlin(fqName: FqName): Sequence<FqNameWrapper> = storage?.getSubtypesOf(fqName, false)
         ?.map(FqNameWrapper.Companion::createFromFqName)
         .orEmpty()
 
-    private fun getDirectSubtypesOfFromJava(numerator: (NameEnumerator) -> CompilerRef?): Sequence<FqNameWrapper> =
-        compilerReferenceServiceBase?.getDirectInheritorsNames(numerator)
+    private fun getDirectSubtypesOfFromJava(compilerRefProvider: (NameEnumerator) -> CompilerRef?): Sequence<FqNameWrapper> =
+        compilerReferenceServiceBase?.getDirectInheritorsNames(compilerRefProvider)
             ?.asSequence()
             ?.map(FqNameWrapper.Companion::createFromSearchId)
             .orEmpty()
+
+    private fun getDirectSubtypesOfFromJava(hierarchyElement: PsiElement): Sequence<FqNameWrapper> =
+        LanguageCompilerRefAdapter.findAdapter(hierarchyElement, true)?.let { adapter ->
+            getDirectSubtypesOfFromJava { adapter.asCompilerRef(hierarchyElement, it) }
+        }.orEmpty()
 
     private val compilerReferenceServiceBase: CompilerReferenceServiceBase<*>?
         get() = CompilerReferenceService.getInstanceIfEnabled(project)?.safeAs()
@@ -335,25 +379,15 @@ class KotlinCompilerReferenceIndexService(val project: Project) : Disposable, Mo
                 }
             }
 
-    private fun findHierarchyInLibrary(basePsiElement: PsiElement): List<FqName> {
-        val baseClass = when (basePsiElement) {
-            is KtClassOrObject, is PsiClass -> basePsiElement
-            is PsiMember -> basePsiElement.containingClass
-            is KtDeclaration -> basePsiElement.containingClassOrObject
-            else -> null
-        } ?: return emptyList()
-
-        val overridden: MutableList<FqName> = baseClass.getKotlinFqName()?.let { mutableListOf(it) } ?: mutableListOf()
+    private fun findHierarchyInLibrary(hierarchyElement: PsiElement): Set<PsiElement> {
+        val overridden: MutableSet<PsiElement> = linkedSetOf(hierarchyElement)
         val processor = Processor { clazz: PsiClass ->
-            clazz.takeUnless { it.hasModifierProperty(PsiModifier.PRIVATE) }
-                ?.let { runReadAction { it.qualifiedName } }
-                ?.let { overridden += FqName(it) }
-
+            clazz.takeUnless { it.hasModifierProperty(PsiModifier.PRIVATE) }?.let { overridden += clazz }
             true
         }
 
         HierarchySearchRequest(
-            originalElement = baseClass,
+            originalElement = hierarchyElement,
             searchScope = ProjectScope.getLibrariesScope(project),
             searchDeeply = true,
         ).searchInheritors().forEach(processor)

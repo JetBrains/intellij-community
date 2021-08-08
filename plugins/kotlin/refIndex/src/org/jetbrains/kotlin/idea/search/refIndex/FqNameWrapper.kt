@@ -3,44 +3,44 @@ package org.jetbrains.kotlin.idea.search.refIndex
 
 import com.intellij.compiler.backwardRefs.SearchId
 import com.intellij.openapi.util.IntellijInternalApi
+import com.intellij.psi.PsiClass
+import com.intellij.psi.PsiElement
+import com.intellij.psi.util.ClassUtil
+import org.jetbrains.kotlin.idea.util.jvmFqName
+import org.jetbrains.kotlin.idea.util.toJvmFqName
 import org.jetbrains.kotlin.name.FqName
+import org.jetbrains.kotlin.psi.KtClassOrObject
 
 @IntellijInternalApi
 sealed class FqNameWrapper {
     abstract val fqName: FqName
     abstract val jvmFqName: String
 
-    private class FqNameBasedWrapper(override val fqName: FqName) : FqNameWrapper() {
-        /**
-         * it is impossible to unambiguously convert "fqName" into "jvmFqName" without additional information
-         */
-        override val jvmFqName: String by lazy(fun(): String {
-            val asString = fqName.asString()
-            var startIndex = 0
-            while (startIndex != -1) { // always true
-                val dotIndex = asString.indexOf('.', startIndex)
-                if (dotIndex == -1) return asString
-
-                startIndex = dotIndex + 1
-                val charAfterDot = asString.getOrNull(startIndex) ?: return asString
-                if (!charAfterDot.isLetter()) return asString
-                if (charAfterDot.isUpperCase()) return buildString {
-                    append(asString.subSequence(0, startIndex))
-                    append(asString.substring(startIndex).replace('.', '$'))
-                }
-            }
-
-            return asString
-        })
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (other !is FqNameWrapper) return false
+        if (jvmFqName != other.jvmFqName) return false
+        return true
     }
 
-    private class JvmFqNameBasedWrapper(override val jvmFqName: String) : FqNameWrapper() {
-        override val fqName: FqName = FqName(jvmFqName.replace('$', '.'))
-    }
+    override fun hashCode(): Int = jvmFqName.hashCode()
 
     companion object {
         fun createFromFqName(fqName: FqName): FqNameWrapper = FqNameBasedWrapper(fqName)
         fun createFromJvmFqName(jvmFqName: String): FqNameWrapper = JvmFqNameBasedWrapper(jvmFqName)
         fun createFromSearchId(searchId: SearchId): FqNameWrapper = JvmFqNameBasedWrapper(searchId.deserializedName)
+        fun createFromPsiElement(clazz: PsiElement): FqNameWrapper? = when (clazz) {
+            is PsiClass -> ClassUtil.getJVMClassName(clazz)
+            is KtClassOrObject -> clazz.jvmFqName
+            else -> null
+        }?.let(::createFromJvmFqName)
     }
+}
+
+private class FqNameBasedWrapper(override val fqName: FqName) : FqNameWrapper() {
+    override val jvmFqName: String = fqName.toJvmFqName
+}
+
+private class JvmFqNameBasedWrapper(override val jvmFqName: String) : FqNameWrapper() {
+    override val fqName: FqName = FqName(jvmFqName.replace('$', '.'))
 }

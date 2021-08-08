@@ -5,10 +5,10 @@ import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.impl.source.PsiFileWithStubSupport;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.util.PsiUtilCore;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.backwardRefs.CompilerRef;
@@ -38,6 +38,12 @@ public interface LanguageCompilerRefAdapter {
   }
 
   @Nullable
+  static LanguageCompilerRefAdapter findAdapter(@NotNull PsiFile file, boolean includeExternalLanguageHelper) {
+    final FileType fileType = file.getFileType();
+    return findAdapter(fileType, includeExternalLanguageHelper);
+  }
+
+  @Nullable
   static LanguageCompilerRefAdapter findAdapter(@NotNull FileType fileType) {
     return findAdapter(fileType, false);
   }
@@ -60,7 +66,7 @@ public interface LanguageCompilerRefAdapter {
 
   @Nullable
   static LanguageCompilerRefAdapter findAdapter(@NotNull PsiElement element, boolean includeExternalLanguageHelper) {
-    final VirtualFile file = PsiUtilCore.getVirtualFile(element);
+    final PsiFile file = element.getContainingFile();
     return file == null ? null : findAdapter(file, includeExternalLanguageHelper);
   }
 

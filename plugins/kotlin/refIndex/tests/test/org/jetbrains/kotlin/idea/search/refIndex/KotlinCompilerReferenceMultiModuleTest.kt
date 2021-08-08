@@ -96,8 +96,6 @@ class KotlinCompilerReferenceMultiModuleTest : KotlinCompilerReferenceTestBase()
      * [org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerReferenceIndexService.buildScopeWithReferences]
      */
     fun `test dirty scope`() {
-        // TODO support library declaration or rewrite it
-        return
         val m1 = PsiTestUtil.addModule(project, JavaModuleType.getModuleType(), "m1", myFixture.tempDirFixture.findOrCreateDir("m1"))
         val f1 = myFixture.addFileToProject("m1/f1.java", "package one;\nclass JavaClass {}")
         val f2 = myFixture.addFileToProject("m1/f2.kt", "package one\nclass KotlinClass")
