@@ -760,7 +760,7 @@ public final class PyTypeChecker {
     return result;
   }
 
-  private static void collectGenerics(@Nullable PyType type,
+  public static void collectGenerics(@Nullable PyType type,
                                       @NotNull TypeEvalContext context,
                                       @NotNull Generics generics,
                                       @NotNull Set<? super PyType> visited) {
