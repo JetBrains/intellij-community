@@ -225,7 +225,7 @@ internal class ApplicationStoreTest {
     }
   }
 
-  private fun createComponentData(foo: String) = """<component name="A" foo="$foo" />"""
+  private fun createComponentData(fooValue: String, componentName: String = "A") = """<component name="$componentName" foo="$fooValue" />"""
 
   @Test
   fun `remove data from deprecated storage if another component data exists`() = runBlocking<Unit> {
@@ -458,6 +458,29 @@ internal class ApplicationStoreTest {
     val component = PerOsComponent()
     componentStore.initComponent(component, null, null)
     assertThat(component.foo).isEqualTo("new")
+  }
+
+  @Test
+  fun `can keep xml file name when deprecating roaming type`() = runBlocking {
+
+    @State(name = "Comp", storages = [
+      Storage("old.xml", roamingType = RoamingType.PER_OS, deprecated = true),
+      Storage("old.xml", roamingType = RoamingType.DEFAULT)])
+    class Comp : FooComponent()
+
+    val os = getPerOsSettingsStorageFolderName()
+    writeConfig("$os/old.xml", """<application>${createComponentData("old", "Comp")}</application>""")
+    testAppConfig.refreshVfs()
+
+    val component = Comp()
+    componentStore.initComponent(component, null, null)
+    assertThat(component.foo).isEqualTo("old")
+
+    componentStore.save()
+
+    val fs = testAppConfig.fileSystem
+    assertFalse("$os/old.xml was not removed", testAppConfig.resolve(fs.getPath(os, "old.xml")).exists())
+    assertTrue("New old.xml without os prefix not found", testAppConfig.resolve("old.xml").exists())
   }
 
   @State(name = "A", storages = [Storage(value = "peros.xml", roamingType = RoamingType.PER_OS)])
