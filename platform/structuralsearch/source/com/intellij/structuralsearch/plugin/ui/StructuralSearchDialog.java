@@ -1227,8 +1227,9 @@ public class StructuralSearchDialog extends DialogWrapper implements DocumentLis
     getProject().putUserData(STRUCTURAL_SEARCH_PREVIOUS_CONFIGURATION, myConfiguration);
     storeDimensions();
 
-    final PropertiesComponent properties = PropertiesComponent.getInstance();
-    properties.setValue(FILTERS_VISIBLE_STATE, isFilterPanelVisible(), true);
+    if (mySearchEditorPanel != null) {
+      PropertiesComponent.getInstance().setValue(FILTERS_VISIBLE_STATE, isFilterPanelVisible(), true);
+    }
     StructuralSearchPlugin.getInstance(getProject()).setDialog(null);
     myAlarm.cancelAllRequests();
     mySearchCriteriaEdit.removeNotify();
