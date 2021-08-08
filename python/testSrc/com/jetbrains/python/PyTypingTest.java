@@ -1523,6 +1523,32 @@ public class PyTypingTest extends PyTestCase {
            "expr: TypeAlias = int\n");
   }
 
+  // PY-29257
+  public void testParameterizedTypeAliasForPartiallyGenericType() {
+    doTest("dict[str, int]",
+           "from typing import TypeVar\n" +
+           "T = TypeVar('T')\n" +
+           "dict_t1 = dict[str, T]\n" +
+           "expr: dict_t1[int]");
+
+    doTest("dict[str, int]",
+           "from typing import TypeVar\n" +
+           "T = TypeVar('T')\n" +
+           "dict_t1 = dict[T, int]\n" +
+           "expr: dict_t1[str]");
+  }
+
+  // PY-49582
+  public void testParameterizedTypeAliasForGenericUnion() {
+    doTest("str | Awaitable[str] | None",
+           "from typing import Awaitable, Optional, TypeVar, Union\n" +
+           "T = TypeVar('T')\n" +
+           "Input = Union[T, Awaitable[T]]\n" +
+           "\n" +
+           "def f(expr: Optional[Input[str]]):\n" +
+           "    pass\n");
+  }
+
   // PY-44974
   public void testBitwiseOrUnionIsInstance() {
     doTest("str | dict | int",

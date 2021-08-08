@@ -688,7 +688,7 @@ public final class PyTypeChecker {
     return !collected.isEmpty();
   }
 
-  private static void collectGenerics(@Nullable PyType type,
+  public static void collectGenerics(@Nullable PyType type,
                                       @NotNull TypeEvalContext context,
                                       @NotNull Set<? super PyGenericType> collected,
                                       @NotNull Set<? super PyType> visited) {
