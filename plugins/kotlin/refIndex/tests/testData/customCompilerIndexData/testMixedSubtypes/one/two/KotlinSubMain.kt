@@ -15,4 +15,8 @@ object ObjectKotlin : SubMainJavaClass.SubNestedJava() {
     }
 }
 
-class K : MainJava.Wrapper.NestedWrapper()
+open class K : MainJava.Wrapper.NestedWrapper()
+
+typealias AliasToK = K
+
+class KotlinFromAlias : AliasToK()

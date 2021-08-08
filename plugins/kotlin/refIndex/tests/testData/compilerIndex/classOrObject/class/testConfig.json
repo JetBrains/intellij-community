@@ -2,6 +2,7 @@
     "usages": [
         "Main.kt",
         "Foo.kt",
-        "Boo.kt"
+        "Boo.kt",
+        "TypeAlias.kt"
     ]
 }

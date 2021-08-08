@@ -3,6 +3,7 @@
         "Main.kt",
         "Doo.kt",
         "Foo.kt",
-        "Usage.kt"
+        "Usage.kt",
+        "TypeAliasUsage.kt"
     ]
 }

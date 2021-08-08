@@ -131,6 +131,7 @@ class CustomKotlinCompilerReferenceTest : KotlinCompilerReferenceTestBase() {
         assertEquals(
             listOf(
                 "main.another.one.two.K",
+                "main.another.one.two.KotlinFromAlias",
                 "main.another.one.two.KotlinMain",
                 "main.another.one.two.KotlinMain.NestedKotlinMain",
                 "main.another.one.two.KotlinMain.NestedKotlinNestedMain",

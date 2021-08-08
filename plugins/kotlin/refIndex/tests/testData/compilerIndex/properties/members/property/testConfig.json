@@ -4,6 +4,7 @@
         "Doo.kt",
         "Foo.kt",
         "Child.kt",
-        "ChildUsage.kt"
+        "ChildUsage.kt",
+        "TypeAliasUsage.kt"
     ]
 }
