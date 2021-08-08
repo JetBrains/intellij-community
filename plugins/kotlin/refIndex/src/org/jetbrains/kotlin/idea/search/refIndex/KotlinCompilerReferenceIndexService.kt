@@ -258,6 +258,9 @@ class KotlinCompilerReferenceIndexService(val project: Project) : Disposable, Mo
     fun getSubtypesOfInTests(fqName: FqName, deep: Boolean): Sequence<FqName>? = storage?.getSubtypesOf(fqName, deep)
 
     @TestOnly
+    fun getSubtypesOfInTests(hierarchyElement: PsiElement): Sequence<FqName> = getSubtypesOf(hierarchyElement)
+
+    @TestOnly
     fun findReferenceFilesInTests(element: PsiElement): Set<VirtualFile>? = referentFiles(element)
 
     private fun referentFiles(element: PsiElement): Set<VirtualFile>? = tryWithReadLock(fun(): Set<VirtualFile>? {
@@ -296,17 +299,22 @@ class KotlinCompilerReferenceIndexService(val project: Project) : Disposable, Mo
             getDirectSubtypesOfFromJava { adapter.asCompilerRef(hierarchyElement, it) }
         }.orEmpty()
 
-        return generateRecursiveSequence(kotlinInitialValues + javaInitialValues) { currentFqName ->
-            val javaValues = getDirectSubtypesOfFromJava { CompilerRef.JavaCompilerClassRef(it.tryEnumerate(currentFqName.asString())) }
-            val kotlinValues = getDirectSubtypesOfFromKotlin(currentFqName)
+        return generateRecursiveSequence(kotlinInitialValues + javaInitialValues) { fqNameWrapper ->
+            val javaValues = getDirectSubtypesOfFromJava { CompilerRef.JavaCompilerClassRef(it.tryEnumerate(fqNameWrapper.jvmFqName)) }
+            val kotlinValues = getDirectSubtypesOfFromKotlin(fqNameWrapper.fqName)
             kotlinValues + javaValues
-        }
+        }.map(FqNameWrapper::fqName)
     }
 
-    private fun getDirectSubtypesOfFromKotlin(fqName: FqName): Sequence<FqName> = storage?.getSubtypesOf(fqName, false).orEmpty()
+    private fun getDirectSubtypesOfFromKotlin(fqName: FqName): Sequence<FqNameWrapper> = storage?.getSubtypesOf(fqName, false)
+        ?.map(FqNameWrapper.Companion::createFromFqName)
+        .orEmpty()
 
-    private fun getDirectSubtypesOfFromJava(numerator: (NameEnumerator) -> CompilerRef?): Sequence<FqName> =
-        compilerReferenceServiceBase?.getDirectInheritorsNames(numerator)?.asSequence()?.map { FqName(it.deserializedName) }.orEmpty()
+    private fun getDirectSubtypesOfFromJava(numerator: (NameEnumerator) -> CompilerRef?): Sequence<FqNameWrapper> =
+        compilerReferenceServiceBase?.getDirectInheritorsNames(numerator)
+            ?.asSequence()
+            ?.map(FqNameWrapper.Companion::createFromSearchId)
+            .orEmpty()
 
     private val compilerReferenceServiceBase: CompilerReferenceServiceBase<*>?
         get() = CompilerReferenceService.getInstanceIfEnabled(project)?.safeAs()

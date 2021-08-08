@@ -66,5 +66,11 @@ abstract class KotlinCompilerReferenceTestBase : CompilerReferencesTestBase() {
         return sequence?.map { it.asString() }?.sorted()?.toList()
     }
 
+    protected fun findHierarchy(hierarchyElement: PsiElement): List<String>? = KotlinCompilerReferenceIndexService[project]
+        .getSubtypesOfInTests(hierarchyElement)
+        ?.map(FqName::asString)
+        ?.sorted()
+        ?.toList()
+
     protected fun forEachBoolean(action: (Boolean) -> Unit) = listOf(true, false).forEach(action)
 }

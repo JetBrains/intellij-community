@@ -23,7 +23,7 @@ abstract class AbstractKotlinCompilerReferenceTest : KotlinCompilerReferenceTest
 
         val usages = config[USAGES]?.asJsonArray?.map { it.asString }
         val mainFile = config["mainFile"]?.asString ?: usages?.first() ?: error("Main file not found")
-        val shouldBeFixed = config[SHOULD_BE_USAGE]?.asJsonArray?.map { it.asString }.orEmpty()
+        val shouldBeFixed = config[SHOULD_BE_USAGE]?.asJsonArray?.map { it.asString }?.toSet().orEmpty()
         val usagesSet = usages?.also {
             it.intersect(shouldBeFixed).ifNotEmpty { error("$this should be omitted in '$USAGES'") }
         }?.toSortedSet()

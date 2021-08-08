@@ -101,16 +101,9 @@ class CustomKotlinCompilerReferenceTest : KotlinCompilerReferenceTestBase() {
             """.trimIndent()
         )
 
-        val clazz = myFixture.findClass("one.two.K")
-        val deepSubtypes = ClassInheritorsSearch.search(clazz, true)
-            .findAll()
-            .map { it.getKotlinFqName().toString() }
-            .sorted()
-
-        val subtypes = ClassInheritorsSearch.search(clazz, false)
-            .findAll()
-            .map { it.getKotlinFqName().toString() }
-            .sorted()
+        val mainClassName = "one.two.K"
+        val deepSubtypes = findClassSubtypes(mainClassName, true)
+        val subtypes = findClassSubtypes(mainClassName, false)
 
         assertEquals(listOf("one.two.KK", "one.two.KK2"), subtypes)
         assertEquals(listOf("one.two.KK", "one.two.KK2", "one.two.KKK", "one.two.KKK2"), deepSubtypes)
@@ -130,4 +123,40 @@ class CustomKotlinCompilerReferenceTest : KotlinCompilerReferenceTestBase() {
         //assertEquals(listOf("one.two.KK"), findSubOrSuperTypes("one.two.KKK", deep = false, subtypes = false))
         //assertEquals(listOf("one.two.K", "one.two.KK"), findSubOrSuperTypes("one.two.KKK", deep = true, subtypes = false))
     }
+
+    fun testMixedSubtypes() {
+        myFixture.configureByFiles("one/two/MainJava.java", "one/two/SubMainJavaClass.java", "one/two/KotlinSubMain.kt")
+        val className = "one.two.MainJava"
+        val subtypes = findClassSubtypes(className, true)
+        assertEquals(
+            listOf(
+                "main.another.one.two.K",
+                "main.another.one.two.KotlinMain",
+                "main.another.one.two.KotlinMain.NestedKotlinMain",
+                "main.another.one.two.KotlinMain.NestedKotlinNestedMain",
+                "main.another.one.two.KotlinMain.NestedKotlinSubMain",
+                "main.another.one.two.ObjectKotlin",
+                "main.another.one.two.ObjectKotlin.NestedObjectKotlin.NestedNestedKotlin",
+                "one.two.MainJava.InnerJava",
+                "one.two.MainJava.InnerJava2",
+                "one.two.MainJava.NestedJava",
+                "one.two.MainJava.Wrapper.NestedWrapper",
+                "one.two.SubMainJavaClass",
+                "one.two.SubMainJavaClass.SubInnerClass",
+                "one.two.SubMainJavaClass.SubNestedJava"
+            ),
+            subtypes,
+        )
+
+        rebuildProject()
+        assertEquals(
+            subtypes,
+            findHierarchy(myFixture.findClass(className)),
+        )
+    }
+
+    private fun findClassSubtypes(className: String, deep: Boolean) = ClassInheritorsSearch.search(myFixture.findClass(className), deep)
+        .findAll()
+        .map { it.getKotlinFqName().toString() }
+        .sorted()
 }
