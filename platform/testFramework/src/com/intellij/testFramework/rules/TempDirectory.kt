@@ -65,9 +65,9 @@ class TempDirectory : ExternalResource() {
     myVirtualFileRoot = null
     myRoot = null
     myName = null
-    JarFileSystemImpl.cleanupForNextTest()
 
     RunAll(
+      { JarFileSystemImpl.cleanupForNextTest() },
       { if (vfsDir != null) VfsTestUtil.deleteFile(vfsDir) },
       { if (path != null) FileUtil.delete(path) }
     ).run()
