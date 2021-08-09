@@ -60,12 +60,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.event.HyperlinkEvent;
-import javax.swing.event.HyperlinkListener;
 import javax.swing.plaf.TextUI;
 import javax.swing.text.View;
 import javax.swing.text.html.HTML;
-import javax.swing.text.html.HTMLDocument;
 import java.awt.*;
 import java.awt.event.MouseEvent;
 import java.lang.ref.Reference;
@@ -115,7 +112,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
   private @Nls String myText; // myEditorPane.getText() surprisingly crashes.., let's cache the text
   private final JComponent myControlPanel;
   private boolean myControlPanelVisible;
-  private int myHighlightedLink = -1;
+  private final DocumentationLinkHandler myLinkHandler;
   private final boolean myStoreSize;
   private boolean myManuallyResized;
 
@@ -203,9 +200,13 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
     myEditorPane.addMouseListener(popupHandler);
     Disposer.register(this, () -> myEditorPane.removeMouseListener(popupHandler));
 
-    new NextLinkAction().registerCustomShortcutSet(CustomShortcutSet.fromString("TAB"), this);
-    new PreviousLinkAction().registerCustomShortcutSet(CustomShortcutSet.fromString("shift TAB"), this);
-    new ActivateLinkAction().registerCustomShortcutSet(CustomShortcutSet.fromString("ENTER"), this);
+    myLinkHandler = DocumentationLinkHandler.createAndRegister(
+      myEditorPane, this,
+      href -> manager.navigateByLink(this, null, href)
+    );
+    for (AnAction action : myLinkHandler.createLinkActions()) {
+      action.registerCustomShortcutSet(this, this);
+    }
 
     DefaultActionGroup toolbarActions = new DefaultActionGroup();
     toolbarActions.addAll(navigationAndAdditionalActions);
@@ -297,23 +298,6 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
     myControlPanel = myToolBar.getComponent();
     myControlPanel.setBorder(IdeBorderFactory.createBorder(UIUtil.getTooltipSeparatorColor(), SideBorder.BOTTOM));
     myControlPanelVisible = false;
-
-    HyperlinkListener hyperlinkListener = new HyperlinkListener() {
-      @Override
-      public void hyperlinkUpdate(HyperlinkEvent e) {
-        HyperlinkEvent.EventType type = e.getEventType();
-        if (type == HyperlinkEvent.EventType.ACTIVATED) {
-          manager.navigateByLink(DocumentationComponent.this, null, e.getDescription());
-        }
-      }
-    };
-    myEditorPane.addHyperlinkListener(hyperlinkListener);
-    Disposer.register(this, new Disposable() {
-      @Override
-      public void dispose() {
-        myEditorPane.removeHyperlinkListener(hyperlinkListener);
-      }
-    });
 
     if (myHint != null) {
       Disposer.register(myHint, this);
@@ -556,7 +540,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
 
     updateControlState();
 
-    highlightLink(-1);
+    myLinkHandler.highlightLink(-1);
 
     myEditorPane.setText(myText);
     myEditorPane.applyFontProps(getQuickDocFontSize());
@@ -751,14 +735,14 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
 
   private Context saveContext() {
     Rectangle rect = myScrollPane.getViewport().getViewRect();
-    return new Context(myElement, myText, myExternalUrl, myProvider, rect, myHighlightedLink);
+    return new Context(myElement, myText, myExternalUrl, myProvider, rect, myLinkHandler.getHighlightedLink());
   }
 
   private void restoreContext(@NotNull Context context) {
     myExternalUrl = context.externalUrl;
     myProvider = context.provider;
     setDataInternal(context.element, context.text, context.viewRect, null);
-    highlightLink(context.highlightedLink);
+    myLinkHandler.highlightLink(context.highlightedLink);
 
     if (myManager != null) {
       PsiElement element  = context.element.getElement();
@@ -919,20 +903,6 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
     myHint = null;
   }
 
-  private int getLinkCount() {
-    HTMLDocument document = (HTMLDocument)myEditorPane.getDocument();
-    int linkCount = 0;
-    for (HTMLDocument.Iterator it = document.getIterator(HTML.Tag.A); it.isValid(); it.next()) {
-      if (it.getAttributes().isDefined(HTML.Attribute.HREF)) linkCount++;
-    }
-    return linkCount;
-  }
-
-  private void highlightLink(int n) {
-    myHighlightedLink = n;
-    myEditorPane.highlightLink(n);
-  }
-
   private static class Context {
     final SmartPsiElementPointer<PsiElement> element;
     final @Nls String text;
@@ -974,34 +944,6 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
         // resize popup according to new font size, if user didn't set popup size manually
         if (!myManuallyResized && myHint != null && myHint.getDimensionServiceKey() == null) showHint();
       });
-    }
-  }
-
-  private class PreviousLinkAction extends AnAction implements HintManagerImpl.ActionToIgnore {
-    @Override
-    public void actionPerformed(@NotNull AnActionEvent e) {
-      int linkCount = getLinkCount();
-      if (linkCount <= 0) return;
-      highlightLink(myHighlightedLink < 0 ? (linkCount - 1) : (myHighlightedLink + linkCount - 1) % linkCount);
-    }
-  }
-
-  private class NextLinkAction extends AnAction implements HintManagerImpl.ActionToIgnore {
-    @Override
-    public void actionPerformed(@NotNull AnActionEvent e) {
-      int linkCount = getLinkCount();
-      if (linkCount <= 0) return;
-      highlightLink((myHighlightedLink + 1) % linkCount);
-    }
-  }
-
-  private class ActivateLinkAction extends AnAction implements HintManagerImpl.ActionToIgnore {
-    @Override
-    public void actionPerformed(@NotNull AnActionEvent e) {
-      String href = myEditorPane.getLinkHref(myHighlightedLink);
-      if (href != null) {
-        myManager.navigateByLink(DocumentationComponent.this, null, href);
-      }
     }
   }
 

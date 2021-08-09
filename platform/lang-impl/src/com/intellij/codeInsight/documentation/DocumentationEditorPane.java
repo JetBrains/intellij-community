@@ -144,4 +144,13 @@ class DocumentationEditorPane extends JEditorPane {
            ? (String)link.getAttributes().getAttribute(HTML.Attribute.HREF)
            : null;
   }
+
+  int getLinkCount() {
+    HTMLDocument document = (HTMLDocument)getDocument();
+    int linkCount = 0;
+    for (HTMLDocument.Iterator it = document.getIterator(HTML.Tag.A); it.isValid(); it.next()) {
+      if (it.getAttributes().isDefined(HTML.Attribute.HREF)) linkCount++;
+    }
+    return linkCount;
+  }
 }
