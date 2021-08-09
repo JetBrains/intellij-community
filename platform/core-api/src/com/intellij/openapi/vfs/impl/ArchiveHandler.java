@@ -153,7 +153,8 @@ public abstract class ArchiveHandler {
     clearCaches();
   }
 
-  protected void clearCaches() {
+  @ApiStatus.OverrideOnly
+  public void clearCaches() {
     synchronized (myLock) {
       myEntries.clear();
       myChildrenEntries.clear();

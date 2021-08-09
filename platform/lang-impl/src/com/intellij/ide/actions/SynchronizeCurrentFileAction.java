@@ -7,31 +7,42 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileSystem;
+import com.intellij.openapi.vfs.newvfs.ArchiveFileSystem;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.openapi.vfs.newvfs.RefreshQueue;
 import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.WindowManager;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-public class SynchronizeCurrentFileAction extends AnAction implements DumbAware {
+final class SynchronizeCurrentFileAction extends DumbAwareAction {
   @Override
   public void update(@NotNull AnActionEvent e) {
-    e.getPresentation().setEnabledAndVisible(e.getProject() != null && localFiles(e).findAny().isPresent());
+    e.getPresentation().setEnabledAndVisible(e.getProject() != null && getSupportedFiles(e).findAny().isPresent());
   }
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
-    Project project = getEventProject(e);
-    List<VirtualFile> files = localFiles(e).collect(Collectors.toList());
-    if (project == null || files.isEmpty()) return;
+    Project project = e.getProject();
+    if (project == null) return;
+    List<VirtualFile> files = getSupportedFiles(e).collect(Collectors.toList());
+    if (files.isEmpty()) return;
 
     for (VirtualFile file : files) {
+      VirtualFileSystem fs = file.getFileSystem();
+      if (fs instanceof ArchiveFileSystem) {
+        ((ArchiveFileSystem)fs).clearArchiveCache(file);
+      }
+
       if (file.isDirectory()) file.getChildren();
       if (file instanceof NewVirtualFile) {
         ((NewVirtualFile)file).markClean();
@@ -42,16 +53,23 @@ public class SynchronizeCurrentFileAction extends AnAction implements DumbAware 
     RefreshQueue.getInstance().refresh(true, true, () -> postRefresh(project, files), files);
   }
 
-  private static void postRefresh(Project project, List<VirtualFile> files) {
-    VcsFacade.getInstance().markFilesDirty(project, files);
+  private static void postRefresh(@NotNull Project project, @NotNull List<VirtualFile> files) {
+    List<VirtualFile> localFiles = ContainerUtil.filter(files, f -> f.isInLocalFileSystem());
+    if (!localFiles.isEmpty()) {
+      VcsFacade.getInstance().markFilesDirty(project, localFiles);
+    }
     StatusBar statusBar = WindowManager.getInstance().getStatusBar(project);
     if (statusBar != null) {
       statusBar.setInfo(IdeBundle.message("action.sync.completed.successfully"));
     }
   }
 
-  private static Stream<VirtualFile> localFiles(AnActionEvent e) {
+  private static @NotNull Stream<VirtualFile> getSupportedFiles(AnActionEvent e) {
     VirtualFile[] files = e.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY);
-    return files != null ? Stream.of(files).filter(f -> f.isValid() && f.isInLocalFileSystem()) : Stream.empty();
+    return files != null ? Stream.of(files).filter(f -> {
+      if (!f.isValid()) return false;
+      VirtualFileSystem fs = f.getFileSystem();
+      return fs instanceof LocalFileSystem || fs instanceof ArchiveFileSystem;
+    }) : Stream.empty();
   }
 }

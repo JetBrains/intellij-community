@@ -70,6 +70,11 @@ public class TimedZipHandler extends ZipHandlerBase {
   @Override
   public void dispose() {
     super.dispose();
+  }
+
+  @Override
+  public void clearCaches() {
+    super.clearCaches();
     myHandle.invalidateZipReference();
   }
 
