@@ -17,4 +17,6 @@ final class PyCharmBuildOptions {
    * to PyCharm Professional
    */
   static final boolean bundleDatalorePlugin = SystemProperties.getBooleanProperty("intellij.build.pycharm.bundle.datalore.plugin", true)
+
+  static final boolean buildSharedIndexes = SystemProperties.getBooleanProperty("intellij.build.pycharm.shared.indexes", true)
 }
