@@ -11,13 +11,13 @@ object Versions {
     val KTOR = version("1.6.0")
     val JUNIT = version("4.13")
     val JUNIT5 = version("5.6.0")
-    val JETBRAINS_COMPOSE = version("0.4.0")
+    val JETBRAINS_COMPOSE = version("1.0.0-alpha3")
 
-    val KOTLIN_VERSION_FOR_COMPOSE = version("1.5.10")
+    val KOTLIN_VERSION_FOR_COMPOSE = version("1.5.21")
     val GRADLE_VERSION_FOR_COMPOSE = version("6.9")
 
     object COMPOSE {
-        val ANDROID_ACTIVITY_COMPOSE = version("1.3.0-alpha03")
+        val ANDROID_ACTIVITY_COMPOSE = version("1.3.0")
     }
 
     object ANDROID {
