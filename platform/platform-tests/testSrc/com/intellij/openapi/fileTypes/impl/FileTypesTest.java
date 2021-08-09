@@ -171,6 +171,13 @@ public class FileTypesTest extends HeavyPlatformTestCase {
     assertFalse(myFileTypeManager.isFileIgnored(createTempVirtualFile("x.txt", null, "", StandardCharsets.UTF_8)));
   }
 
+  public void testEmptyFileWithoutExtension() throws IOException {
+    VirtualFile foo = getVirtualFile(createTempFile("foo", ""));
+    WriteAction.run(() -> myFileTypeManager.associatePattern(DetectedByContentFileType.INSTANCE, "foo"));
+    FileType type = myFileTypeManager.getFileTypeByFile(foo); // foo.getFileType() will call FileTypeRegistry.getInstance() which we try to avoid
+    assertFalse(type.getName(), type.isBinary());
+  }
+
   private static void checkNotAssociated(@NotNull FileType fileType,
                                          @NotNull String extension,
                                          @NotNull FileTypeAssocTable<FileType> associations) {
