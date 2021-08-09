@@ -23,6 +23,9 @@ final class JavaPluginLayout {
       // JavacRemoteProto generated against protobuf-java6; don't let it sneak into the IDE classpath and shadow its JavacRemoteProto.
       withModule("intellij.platform.jps.build.javac.rt.rpc", "rt/jps-javac-rt-rpc.jar")
       withModuleLibrary("protobuf-java6", "intellij.platform.jps.build.javac.rt.rpc", "rt")
+      // used by JPS, cannot be packed into 3rd-party.jar
+      //noinspection SpellCheckingInspection
+      withModuleLibrary("qdox-java-parser", "intellij.platform.jps.build", "qdox.jar")
 
       ["intellij.java.compiler.antTasks",
        "intellij.java.guiForms.compiler",
