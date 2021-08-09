@@ -2,6 +2,8 @@
 package org.jetbrains.kotlin.idea.search.refIndex
 
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.vfs.VfsUtil
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.containers.generateRecursiveSequence
 import com.intellij.util.io.EnumeratorStringDescriptor
 import com.intellij.util.io.PersistentHashMap
@@ -11,19 +13,19 @@ import org.jetbrains.jps.builders.java.JavaModuleBuildTargetType
 import org.jetbrains.jps.builders.storage.BuildDataPaths
 import org.jetbrains.kotlin.incremental.KOTLIN_CACHE_DIRECTORY_NAME
 import org.jetbrains.kotlin.incremental.LookupStorage
+import org.jetbrains.kotlin.incremental.LookupSymbol
+import org.jetbrains.kotlin.incremental.storage.BasicMapsOwner.Companion.CACHE_EXTENSION
 import org.jetbrains.kotlin.incremental.storage.CollectionExternalizer
-import org.jetbrains.kotlin.incremental.storage.FileToPathConverter
+import org.jetbrains.kotlin.incremental.storage.RelativeFileToPathConverter
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.utils.addToStdlib.ifNotEmpty
+import java.io.File
 import java.nio.file.Path
 import kotlin.io.path.*
 
 class KotlinCompilerReferenceIndexStorage(
-    private val targetDataDir: Path,
-    pathConverter: FileToPathConverter,
-) : LookupStorage(
-    targetDataDir.toFile(),
-    pathConverter,
+    targetDataDir: Path,
+    projectPath: String,
 ) {
     companion object {
         /**
@@ -36,14 +38,19 @@ class KotlinCompilerReferenceIndexStorage(
      * [org.jetbrains.kotlin.incremental.storage.BasicMapsOwner.storageFile]
      */
     private val String.asStorageName: String get() = "$this.$CACHE_EXTENSION"
-    private val String.storagePath: Path get() = targetDataDir.resolve(asStorageName)
 
-    private val subtypesStorage = ClassOneToManyStorage(SUBTYPES.storagePath)
+    private val lookupStorage = LookupStorage(targetDataDir.toFile(), RelativeFileToPathConverter(File(projectPath)))
+    private val subtypesStorage = ClassOneToManyStorage(targetDataDir.resolve(SUBTYPES.asStorageName))
 
-    override fun close() {
+    fun close() {
+        lookupStorage.close()
         subtypesStorage.closeAndClean()
-        super.close()
     }
+
+    fun getUsages(fqName: FqName): List<VirtualFile> = LookupSymbol(
+        name = fqName.shortName().asString(),
+        scope = fqName.parent().takeUnless(FqName::isRoot)?.asString() ?: "",
+    ).let(lookupStorage::get).mapNotNull { VfsUtil.findFile(Path(it), true) }
 
     fun getSubtypesOf(fqName: FqName, deep: Boolean): Sequence<FqName> = subtypesStorage[fqName, deep]
 

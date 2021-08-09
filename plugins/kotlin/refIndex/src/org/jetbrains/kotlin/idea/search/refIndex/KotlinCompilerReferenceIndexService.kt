@@ -27,7 +27,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.startup.StartupActivity
 import com.intellij.openapi.util.ModificationTracker
-import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.*
 import com.intellij.psi.search.GlobalSearchScope
@@ -54,8 +53,6 @@ import org.jetbrains.kotlin.idea.search.not
 import org.jetbrains.kotlin.idea.search.restrictToKotlinSources
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import org.jetbrains.kotlin.idea.util.application.runReadAction
-import org.jetbrains.kotlin.incremental.LookupSymbol
-import org.jetbrains.kotlin.incremental.storage.RelativeFileToPathConverter
 import org.jetbrains.kotlin.load.java.getPropertyNamesCandidatesByAccessorName
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
@@ -65,7 +62,6 @@ import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
 import org.jetbrains.kotlin.psi.psiUtil.parameterIndex
 import org.jetbrains.kotlin.synthetic.canBePropertyAccessor
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
-import java.io.File
 import java.nio.file.Path
 import java.util.*
 import java.util.concurrent.TimeUnit
@@ -73,7 +69,6 @@ import java.util.concurrent.atomic.LongAdder
 import java.util.concurrent.locks.ReentrantReadWriteLock
 import kotlin.concurrent.read
 import kotlin.concurrent.write
-import kotlin.io.path.Path
 import kotlin.io.path.exists
 import kotlin.io.path.isDirectory
 import kotlin.io.path.listDirectoryEntries
@@ -214,8 +209,7 @@ class KotlinCompilerReferenceIndexService(val project: Project) : Disposable, Mo
     private val hasIncrementalIndex: Boolean get() = buildDataPaths?.kotlinDataContainer != null
 
     private fun openStorage() {
-        val basePath = runReadAction { projectIfNotDisposed?.basePath } ?: return
-        val pathConverter = RelativeFileToPathConverter(File(basePath))
+        val projectPath = runReadAction { projectIfNotDisposed?.basePath } ?: return
         val buildDataPaths = buildDataPaths
         val kotlinDataPath = buildDataPaths?.kotlinDataContainer ?: run {
             LOG.warn("try to open storage without index directory")
@@ -223,7 +217,7 @@ class KotlinCompilerReferenceIndexService(val project: Project) : Disposable, Mo
         }
 
         val initializationTime = measureNanoTime {
-            storage = KotlinCompilerReferenceIndexStorage(kotlinDataPath, pathConverter).apply {
+            storage = KotlinCompilerReferenceIndexStorage(kotlinDataPath, projectPath).apply {
                 initialize(buildDataPaths)
             }
         }
@@ -285,11 +279,7 @@ class KotlinCompilerReferenceIndexService(val project: Project) : Disposable, Mo
             subclassesFqNames.flatMap { subclass -> originalFqNames.map { subclass.child(it.shortName()) } }
         }.orEmpty()
 
-        return originalFqNames.toSet().plus(additionalFqNames).flatMapTo(mutableSetOf()) { currentFqName ->
-            val name = currentFqName.shortName().asString()
-            val scope = currentFqName.parent().takeUnless(FqName::isRoot)?.asString() ?: ""
-            storage.get(LookupSymbol(name, scope)).mapNotNull { VfsUtil.findFile(Path(it), true) }
-        }
+        return originalFqNames.toSet().plus(additionalFqNames).flatMapTo(mutableSetOf(), storage::getUsages)
     })
 
     private fun findSubclassesFqNamesIfApplicable(element: PsiElement, isFromLibrary: Boolean): Sequence<FqName>? {
