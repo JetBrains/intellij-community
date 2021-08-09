@@ -23,7 +23,9 @@ public interface ExternalDocumentationHandler {
     return false;
   }
 
-  @NotNull String fetchExternalDocumentation(@NotNull String link, @Nullable PsiElement element);
+  default @NotNull String fetchExternalDocumentation(@NotNull String link, @Nullable PsiElement element) {
+    return "";
+  }
 
   /**
    * Defines whether we will show external documentation
