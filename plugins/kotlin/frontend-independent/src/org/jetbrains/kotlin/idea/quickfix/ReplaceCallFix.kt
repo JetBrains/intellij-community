@@ -109,27 +109,15 @@ class ReplaceWithDotCallFix(
             replaced = replace(parent, project, editor) ?: return
         }
     }
+}
 
-    companion object : QuickFixesPsiBasedFactory<PsiElement>(PsiElement::class, PsiElementSuitabilityCheckers.ALWAYS_SUITABLE) {
-        override fun doCreateQuickFix(psiElement: PsiElement): List<IntentionAction> {
-            val qualifiedExpression = psiElement.getParentOfType<KtSafeQualifiedExpression>(strict = false)
-                ?: return emptyList()
-
-            var parent = qualifiedExpression.getQualifiedExpressionForReceiver() as? KtSafeQualifiedExpression
-            var callChainCount = 0
-            TODO("FIX ME LATER")
-            //if (parent != null) {
-            //    val bindingContext = qualifiedExpression.analyze(BodyResolveMode.PARTIAL_WITH_DIAGNOSTICS)
-            //    while (parent is KtQualifiedExpression) {
-            //        val compilerReports = bindingContext.diagnostics.forElement(parent.operationTokenNode as PsiElement)
-            //        if (compilerReports.none { it.factory == Errors.UNNECESSARY_SAFE_CALL }) break
-            //        callChainCount++
-            //        parent = parent.getQualifiedExpressionForReceiver() as? KtSafeQualifiedExpression
-            //    }
-            //}
-
-            return listOf(ReplaceWithDotCallFix(qualifiedExpression, callChainCount))
-        }
+object ReplaceWithDotCallFixFirFactory : QuickFixesPsiBasedFactory<PsiElement>(PsiElement::class, PsiElementSuitabilityCheckers.ALWAYS_SUITABLE) {
+    override fun doCreateQuickFix(psiElement: PsiElement): List<IntentionAction> {
+        // TODO change implementation to match FE10 functionality org.jetbrains.kotlin.idea.quickfix.ReplaceWithDotCallFixFactory
+        //   KTIJ-5667
+        val qualifiedExpression = psiElement.getParentOfType<KtSafeQualifiedExpression>(strict = false)
+            ?: return emptyList()
+        return listOf(ReplaceWithDotCallFix(qualifiedExpression))
     }
 }
 
