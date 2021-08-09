@@ -59,7 +59,7 @@ public class EdtDataContext implements DataContext, UserDataHolder, AnActionEven
     myManager = (DataManagerImpl)DataManager.getInstance();
   }
 
-  private EdtDataContext(@NotNull Reference<Component> compRef,
+  private EdtDataContext(@Nullable Reference<Component> compRef,
                          @NotNull Map<String, Object> cachedData,
                          @NotNull Ref<KeyFMap> userData,
                          @NotNull DataManagerImpl manager,
@@ -176,7 +176,7 @@ public class EdtDataContext implements DataContext, UserDataHolder, AnActionEven
   enum NullResult {INSTANCE}
 
   private static class InjectedDataContext extends EdtDataContext {
-    InjectedDataContext(@NotNull Reference<Component> compRef,
+    InjectedDataContext(@Nullable Reference<Component> compRef,
                         @NotNull Map<String, Object> cachedData,
                         @NotNull Ref<KeyFMap> userData,
                         @NotNull DataManagerImpl manager,
