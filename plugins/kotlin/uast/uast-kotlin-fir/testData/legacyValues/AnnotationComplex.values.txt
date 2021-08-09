@@ -30,7 +30,7 @@ UFile (package = ) [public abstract annotation Annotation {...]
                 UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 1)) [<init>(arrayOf("sar1", "sar2"))] = Undetermined
                     UIdentifier (Identifier (Annotation)) [UIdentifier (Identifier (Annotation))]
                     USimpleNameReferenceExpression (identifier = <init>, resolvesTo = PsiClass: Annotation) [<init>] = Undetermined
-                    UCallExpression (kind = UastCallKind(name='method_call'), argCount = 2)) [arrayOf("sar1", "sar2")] = Undetermined
+                    UCallExpression (kind = UastCallKind(name='array_initializer'), argCount = 2)) [arrayOf("sar1", "sar2")] = Undetermined
                         UIdentifier (Identifier (arrayOf)) [UIdentifier (Identifier (arrayOf))]
                         USimpleNameReferenceExpression (identifier = arrayOf, resolvesTo = null) [arrayOf] = Undetermined
                         ULiteralExpression (value = "sar1") ["sar1"] = Undetermined

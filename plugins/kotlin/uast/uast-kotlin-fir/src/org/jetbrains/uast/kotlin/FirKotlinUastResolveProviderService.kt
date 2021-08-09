@@ -161,9 +161,10 @@ interface FirKotlinUastResolveProviderService : BaseKotlinUastResolveProviderSer
         analyseForUast(ktCallElement) {
             val resolvedFunctionLikeSymbol =
                 ktCallElement.resolveCall()?.targetFunction?.candidates?.singleOrNull() ?: return UastCallKind.METHOD_CALL
-            return when (resolvedFunctionLikeSymbol) {
-                is KtConstructorSymbol -> UastCallKind.CONSTRUCTOR_CALL
-                // TODO: NESTED_ARRAY_INITIALIZER
+            val fqName = resolvedFunctionLikeSymbol.callableIdIfNonLocal?.asSingleFqName()
+            return when {
+                resolvedFunctionLikeSymbol is KtConstructorSymbol -> UastCallKind.CONSTRUCTOR_CALL
+                fqName != null && isAnnotationArgumentArrayInitializer(ktCallElement, fqName) -> UastCallKind.NESTED_ARRAY_INITIALIZER
                 else -> UastCallKind.METHOD_CALL
             }
         }

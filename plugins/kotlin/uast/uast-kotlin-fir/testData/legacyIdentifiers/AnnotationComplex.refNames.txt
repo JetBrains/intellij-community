@@ -10,7 +10,7 @@ Annotation -> USimpleNameReferenceExpression (identifier = Annotation) from KtNa
 AnnotationArray -> UAnnotation (fqName = AnnotationArray) from KtNameReferenceExpression
 Annotation -> UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 1)) from KtNameReferenceExpression
 strings -> USimpleNameReferenceExpression (identifier = strings) from KtNameReferenceExpression
-arrayOf -> UCallExpression (kind = UastCallKind(name='method_call'), argCount = 2)) from KtNameReferenceExpression
+arrayOf -> UCallExpression (kind = UastCallKind(name='array_initializer'), argCount = 2)) from KtNameReferenceExpression
 AnnotationArray -> UAnnotation (fqName = AnnotationArray) from KtNameReferenceExpression
 Annotation -> UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 1)) from KtNameReferenceExpression
 strings -> USimpleNameReferenceExpression (identifier = strings) from KtNameReferenceExpression
