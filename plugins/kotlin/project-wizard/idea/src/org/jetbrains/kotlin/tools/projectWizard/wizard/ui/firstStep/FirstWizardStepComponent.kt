@@ -89,6 +89,9 @@ class ProjectSettingsComponent(ideWizard: IdeWizard) : DynamicComponent(ideWizar
             }
             row {
                 buildSystemAdditionalSettingsComponent.component(growX)
+            }.largeGapAfter()
+            row {
+                cell { comment(KotlinNewProjectWizardUIBundle.message("feedback.link.tooltip.text")).constraints(pushY) }
             }
         }.addBorder(JBUI.Borders.emptyRight(UIConstants.PADDING))
     }
