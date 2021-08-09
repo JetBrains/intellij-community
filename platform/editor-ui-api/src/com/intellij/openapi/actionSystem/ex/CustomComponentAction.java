@@ -27,15 +27,24 @@ public interface CustomComponentAction {
    *   </li>
    *   <li>Do not access and refresh the component in {@link AnAction#update(AnActionEvent)} method using {@link CustomComponentAction#COMPONENT_KEY}.
    *   That is especially true for actions capable of updating their presentations on a background thread.
-   *   Instead, a {@link java.beans.PropertyChangeListener} shall be used to synchronize the provided {@link Presentation} and the component state.
-   *   That is because an update can be called on any presentation and the result can be thrown away without really applying.</li>
+   *   Instead, {@link CustomComponentAction#updateCustomComponent(JComponent, Presentation)}
+   *   or a {@link java.beans.PropertyChangeListener} shall be used to synchronize the provided {@link Presentation} and the component state.
+   *   That is because an update can be called on any presentation and the result can be thrown away without really applying.
+   *   Also, for {@link com.intellij.openapi.actionSystem.UpdateInBackground} actions the update is called on a background thread.</li>
    * </ul>
-   * For more details see how {@link com.intellij.openapi.actionSystem.impl.ActionButton} is implemented.
+   *
+   * @see com.intellij.openapi.actionSystem.impl.ActionButton
+   * @see com.intellij.openapi.actionSystem.UpdateInBackground
    */
   default @NotNull JComponent createCustomComponent(@NotNull Presentation presentation, @NotNull String place) {
     return createCustomComponent(presentation);
   }
 
+  /**
+   * This method shall be used to update the specific custom component after a successful action update.
+   */
+  default void updateCustomComponent(@NotNull JComponent component, @NotNull Presentation presentation) {
+  }
 
   /** @deprecated Use {@link CustomComponentAction#createCustomComponent(Presentation, String)} */
   @Deprecated

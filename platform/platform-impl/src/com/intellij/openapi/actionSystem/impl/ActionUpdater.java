@@ -136,6 +136,7 @@ final class ActionUpdater {
       AnAction action = entry.getKey();
       Presentation orig = myPresentationFactory.getPresentation(action);
       Presentation copy = entry.getValue();
+      JComponent customComponent = null;
       if (action instanceof CustomComponentAction) {
         // toolbar may have already created a custom component, do not erase it
         JComponent copyC = copy.getClientProperty(CustomComponentAction.COMPONENT_KEY);
@@ -143,9 +144,13 @@ final class ActionUpdater {
         if (copyC == null && origC != null) {
           copy.putClientProperty(CustomComponentAction.COMPONENT_KEY, origC);
         }
+        customComponent = origC;
       }
       orig.copyFrom(copy);
       reflectSubsequentChangesInOriginalPresentation(orig, copy);
+      if (customComponent != null && orig.isVisible()) {
+        ((CustomComponentAction)action).updateCustomComponent(customComponent, orig);
+      }
     }
   }
 
