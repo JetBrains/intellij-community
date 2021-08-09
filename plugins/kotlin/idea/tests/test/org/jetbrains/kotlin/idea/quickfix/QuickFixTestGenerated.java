@@ -2660,6 +2660,24 @@ public abstract class QuickFixTestGenerated extends AbstractQuickFixTest {
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("testData/quickfix/convertIllegalEscapeToUnicodeEscape")
+    public static class ConvertIllegalEscapeToUnicodeEscape extends AbstractQuickFixTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("formFeed.kt")
+        public void testFormFeed() throws Exception {
+            runTest("testData/quickfix/convertIllegalEscapeToUnicodeEscape/formFeed.kt");
+        }
+
+        @TestMetadata("formFeedInStringTemplate.kt")
+        public void testFormFeedInStringTemplate() throws Exception {
+            runTest("testData/quickfix/convertIllegalEscapeToUnicodeEscape/formFeedInStringTemplate.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/quickfix/convertLateinitPropertyToNotNullDelegate")
     public static class ConvertLateinitPropertyToNotNullDelegate extends AbstractQuickFixTest {
         private void runTest(String testDataFilePath) throws Exception {
