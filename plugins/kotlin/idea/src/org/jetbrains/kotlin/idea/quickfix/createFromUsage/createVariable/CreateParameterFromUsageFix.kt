@@ -21,7 +21,7 @@ import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 import java.lang.ref.WeakReference
 
 class CreateParameterFromUsageFix<E : KtElement>(
-    val originalExpression: E,
+    originalExpression: E,
     private val dataProvider: () -> CreateParameterData<E>?
 ) : CreateFromUsageFixBase<E>(originalExpression) {
     private var parameterInfoReference: WeakReference<KotlinParameterInfo>? = null
@@ -54,7 +54,7 @@ class CreateParameterFromUsageFix<E : KtElement>(
     override fun startInWriteAction() = false
 
     private fun runChangeSignature(project: Project, editor: Editor?) {
-        element ?: return
+        val originalExpression = element ?: return
         val parameterInfo = parameterInfo() ?: return
         val config = object : KotlinChangeSignatureConfiguration {
             override fun configure(originalDescriptor: KotlinMethodDescriptor): KotlinMethodDescriptor {
