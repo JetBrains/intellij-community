@@ -3,6 +3,7 @@ package com.jetbrains.python.inspections.unusedLocal;
 
 import com.intellij.codeInspection.LocalInspectionToolSession;
 import com.intellij.codeInspection.ProblemsHolder;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.util.Key;
 import com.intellij.psi.PsiElementVisitor;
 import com.jetbrains.python.PyPsiBundle;
@@ -41,7 +42,7 @@ public class PyUnusedLocalInspection extends PyInspection {
   public void inspectionFinished(@NotNull LocalInspectionToolSession session, @NotNull ProblemsHolder holder) {
     final PyUnusedLocalInspectionVisitor visitor = session.getUserData(KEY);
     if (visitor != null) {
-      visitor.registerProblems();
+      ReadAction.run(() -> visitor.registerProblems());
       session.putUserData(KEY, null);
     }
   }
