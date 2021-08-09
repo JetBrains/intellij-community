@@ -6,6 +6,7 @@ import com.intellij.codeInsight.intention.LowPriorityAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.idea.KotlinBundle
+import org.jetbrains.kotlin.idea.debugger.sequence.psi.receiverValue
 import org.jetbrains.kotlin.idea.inspections.dfa.getKotlinType
 import org.jetbrains.kotlin.idea.inspections.findExistingEditor
 import org.jetbrains.kotlin.idea.intentions.loopToCallChain.isConstant
