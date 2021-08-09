@@ -7,14 +7,14 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.ui.popup.JBPopup
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.ui.popup.PopupComponent
+import java.awt.GridBagConstraints
 import java.awt.GridBagLayout
 import java.awt.Window
 import java.awt.event.MouseAdapter
 import java.awt.event.MouseEvent
 import javax.swing.JPanel
-import java.awt.GridBagConstraints
 
-class CodeFragmentPopup(val editor: Editor, val lines: IntRange, private val onClick: Runnable): Disposable {
+internal class CodeFragmentPopup(val editor: Editor, val lines: IntRange, private val onClick: Runnable): Disposable {
 
   private val fillConstraints = GridBagConstraints().apply {
     fill = GridBagConstraints.BOTH

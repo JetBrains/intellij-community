@@ -12,9 +12,12 @@ import com.intellij.openapi.editor.ex.util.EditorUtil
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
 import com.intellij.ui.awt.RelativePoint
+import com.intellij.util.ui.PositionTracker
+import java.awt.Component
 import java.awt.Dimension
 import java.awt.Point
 import java.awt.Rectangle
+import javax.swing.JComponent
 
 interface EditorCodePreview: Disposable {
 
@@ -24,7 +27,6 @@ interface EditorCodePreview: Disposable {
 
     private val EDITOR_PREVIEW_KEY = Key<EditorCodePreview>("EditorCodePreview")
 
-    @JvmStatic
     fun create(editor: Editor): EditorCodePreview {
       require(getActivePreview(editor) == null)
       val codePreview = if (ApplicationManager.getApplication().isUnitTestMode) EditorCodePreviewTestImpl() else EditorCodePreviewImpl(editor)
@@ -42,8 +44,6 @@ interface EditorCodePreview: Disposable {
 
 private class EditorCodePreviewImpl(val editor: Editor): EditorCodePreview, Disposable {
 
-  private val tracker = LocationTracker(editor.component)
-
   private var popups: List<CodeFragmentPopup> = emptyList()
 
   private val documentListener = object : BulkAwareDocumentListener.Simple {
@@ -58,8 +58,7 @@ private class EditorCodePreviewImpl(val editor: Editor): EditorCodePreview, Disp
   private set
 
   init {
-    tracker.subscribe { updatePopupPositions() }
-    Disposer.register(this, tracker)
+    addPositionListener(this, editor.component) { updatePopupPositions() }
     editor.scrollingModel.addVisibleAreaListener(VisibleAreaListener { updatePopupPositions() }, this)
     editor.document.addDocumentListener(documentListener, this)
   }
@@ -71,8 +70,7 @@ private class EditorCodePreviewImpl(val editor: Editor): EditorCodePreview, Disp
     updatePopupPositions()
   }
 
-  override fun dispose() {
-  }
+  override fun dispose() { }
 
   private fun updatePopupPositions() {
     if (editor.isDisposed) return
@@ -150,9 +148,27 @@ private class EditorCodePreviewImpl(val editor: Editor): EditorCodePreview, Disp
     return Rectangle(visibleArea.x, y, visibleArea.width, height)
   }
 
+  private fun addPositionListener(disposable: Disposable, component: JComponent, listener: () -> Unit) {
+    val tracker = object : PositionTracker<Component>(component) {
+      override fun recalculateLocation(visibleArea: Component): RelativePoint = RelativePoint(component, Point(0, 0))
+    }
+    Disposer.register(disposable, tracker)
+    val client = object : PositionTracker.Client<Component> {
+      override fun dispose() {}
+      override fun revalidate() {
+        revalidate(tracker)
+      }
+      override fun revalidate(tracker: PositionTracker<Component>) {
+        listener()
+      }
+    }
+    Disposer.register(disposable, client)
+    tracker.init(client)
+  }
+
 }
 
-class EditorCodePreviewTestImpl: EditorCodePreview {
+private class EditorCodePreviewTestImpl: EditorCodePreview {
   override fun addPreview(lines: IntRange, onClick: () -> Unit) {}
   override fun dispose() {}
 }
