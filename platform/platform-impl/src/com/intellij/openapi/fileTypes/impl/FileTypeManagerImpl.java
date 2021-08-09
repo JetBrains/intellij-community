@@ -1556,6 +1556,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
         myRemovedMappingTracker.add(matcher, fileTypeName, false);
       }
       myUnresolvedMappings.remove(matcher);
+      tryToResolveMapping(typeName, matcher);
     }
   }
 
