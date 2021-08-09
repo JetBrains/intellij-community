@@ -3,6 +3,7 @@ package com.intellij.xdebugger.impl.ui
 
 import com.intellij.debugger.ui.DebuggerContentInfo
 import com.intellij.execution.runners.ExecutionEnvironment
+import com.intellij.execution.runners.PreferredPlace
 import com.intellij.execution.runners.RunTab
 import com.intellij.execution.ui.layout.LayoutAttractionPolicy
 import com.intellij.execution.ui.layout.PlaceInGrid
@@ -113,7 +114,7 @@ class XDebugSessionTab3(
 
     val gearActions = DefaultActionGroup().apply {
       templatePresentation.text = ActionsBundle.message("group.XDebugger.settings.text")
-      templatePresentation.icon = AllIcons.General.Gear
+      templatePresentation.icon = AllIcons.General.Settings
       isPopup = true
       addAll(*myUi.options.settingsActionsList)
       registerAdditionalActions(DefaultActionGroup(), DefaultActionGroup(), this)
@@ -124,17 +125,17 @@ class XDebugSessionTab3(
 
     val more = MoreActionGroup()
     more.addAll(getCustomizedActionGroup(XDebuggerActions.TOOL_WINDOW_TOP_TOOLBAR_3_EXTRA_GROUP))
-    more.addSeparator()
-    more.add(gearActions)
     toolbar.add(more)
+    more.addSeparator()
 
     fun addWithConstraints(actions: List<AnAction>, constraints: Constraints) {
       actions.asSequence()
-        .filterNot {
-          it.templatePresentation.getClientProperty(RunTab.HIDE_FROM_TOOLBAR) == true
-        }
         .forEach {
-          toolbar.add(it, constraints)
+          if (it.templatePresentation.getClientProperty(RunTab.PREFERRED_PLACE) == PreferredPlace.MORE_GROUP) {
+            more.add(it)
+          } else {
+            toolbar.add(it, constraints)
+          }
         }
     }
 
@@ -142,6 +143,9 @@ class XDebugSessionTab3(
     addWithConstraints(session.restartActions.asReversed(), Constraints(Anchor.AFTER, IdeActions.ACTION_RERUN))
     addWithConstraints(session.extraActions.asReversed(), Constraints(Anchor.AFTER, IdeActions.ACTION_STOP_PROGRAM))
     addWithConstraints(session.extraStopActions, Constraints(Anchor.AFTER, IdeActions.ACTION_STOP_PROGRAM))
+
+    more.addSeparator()
+    more.add(gearActions)
 
     myUi.options.setTopLeftToolbar(toolbar, ActionPlaces.DEBUGGER_TOOLBAR)
 

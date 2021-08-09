@@ -176,11 +176,14 @@ public final class RunContentBuilder extends RunTab {
     final DefaultActionGroup actionGroup = new DefaultActionGroup();
     actionGroup.add(ActionManager.getInstance().getAction(IdeActions.ACTION_RERUN));
     final AnAction[] actions = contentDescriptor.getRestartActions();
+    final MoreActionGroup moreGroup = new MoreActionGroup();
     if (!isNewLayout) {
       actionGroup.addAll(actions);
     } else {
       for (AnAction action : actions) {
-        if (!Boolean.TRUE.equals(action.getTemplatePresentation().getClientProperty(RunTab.HIDE_FROM_TOOLBAR))) {
+        if (action.getTemplatePresentation().getClientProperty(RunTab.PREFERRED_PLACE) == PreferredPlace.MORE_GROUP) {
+          moreGroup.add(action);
+        } else {
           actionGroup.add(action);
         }
       }
@@ -213,16 +216,15 @@ public final class RunContentBuilder extends RunTab {
       actionGroup.add(PinToolwindowTabAction.getPinAction());
     } else {
       actionGroup.addSeparator();
-      MoreActionGroup more = new MoreActionGroup();
       for (AnAction action : myRunnerActions) {
-        if (Boolean.TRUE.equals(action.getTemplatePresentation().getClientProperty(RunTab.TAKE_OUT_OF_MORE_GROUP))) {
+        if (PreferredPlace.TOOLBAR == action.getTemplatePresentation().getClientProperty(RunTab.PREFERRED_PLACE)) {
           actionGroup.add(action);
         } else {
-          more.add(action);
+          moreGroup.add(action);
         }
       }
 
-      actionGroup.add(more);
+      actionGroup.add(moreGroup);
     }
     return actionGroup;
   }

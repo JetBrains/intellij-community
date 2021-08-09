@@ -48,16 +48,8 @@ public abstract class RunTab implements DataProvider, Disposable {
    * This option has to be set into {@link AnAction#getTemplatePresentation()}.
    * Works only if new UI is enabled.
    */
-  public static final Key<Boolean> TAKE_OUT_OF_MORE_GROUP = Key.create("RunTab.putOnToolbar");
-
-  /**
-   * Hides some actions from the toolbar.
-   * <p>
-   * This option has to be set into {@link AnAction#getTemplatePresentation()}.
-   * Works only if new UI is enabled.
-   */
   @ApiStatus.Experimental
-  public static final Key<Boolean> HIDE_FROM_TOOLBAR = Key.create("RunTab.hideFromToolbar");
+  public static final Key<PreferredPlace> PREFERRED_PLACE = Key.create("RunTab.preferredActionPlace");
 
   @NotNull
   protected final RunnerLayoutUi myUi;

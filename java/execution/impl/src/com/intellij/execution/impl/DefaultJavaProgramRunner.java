@@ -391,7 +391,7 @@ public class DefaultJavaProgramRunner implements JvmPatchableProgramRunner<Runne
         }
       });
 
-      getTemplatePresentation().putClientProperty(RunTab.TAKE_OUT_OF_MORE_GROUP, Boolean.TRUE);
+      getTemplatePresentation().putClientProperty(RunTab.PREFERRED_PLACE, PreferredPlace.TOOLBAR);
     }
 
     @Override

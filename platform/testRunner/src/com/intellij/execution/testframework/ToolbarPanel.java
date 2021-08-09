@@ -5,6 +5,7 @@ package com.intellij.execution.testframework;
 import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.configurations.RunProfile;
+import com.intellij.execution.runners.PreferredPlace;
 import com.intellij.execution.runners.RunTab;
 import com.intellij.execution.testframework.actions.ScrollToTestSourceAction;
 import com.intellij.execution.testframework.actions.TestFrameworkActions;
@@ -95,8 +96,7 @@ public class ToolbarPanel extends JPanel implements OccurenceNavigator, Disposab
     final AnAction[] importActions = properties.createImportActions();
     if (importActions != null) {
       for (AnAction importAction : importActions) {
-        Boolean takeOutOf = importAction.getTemplatePresentation().getClientProperty(RunTab.TAKE_OUT_OF_MORE_GROUP);
-        if (Boolean.TRUE.equals(takeOutOf)) {
+        if (importAction.getTemplatePresentation().getClientProperty(RunTab.PREFERRED_PLACE) == PreferredPlace.TOOLBAR) {
           actionGroup.add(importAction);
         } else {
           moreGroup.add(importAction);
