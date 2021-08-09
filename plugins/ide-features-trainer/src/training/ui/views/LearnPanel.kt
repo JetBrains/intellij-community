@@ -76,7 +76,7 @@ internal class LearnPanel(val learnToolWindow: LearnToolWindow) : JPanel() {
       add(footer, BorderLayout.PAGE_END)
     }
 
-    preferredSize = Dimension(UISettings.instance.width, 100)
+    preferredSize = Dimension(UISettings.instance.panelWidth, 100)
     with(UISettings.instance) {
       border = EmptyBorder(northInset, JBUI.scale(18), southInset, JBUI.scale(18))
     }
@@ -136,7 +136,10 @@ internal class LearnPanel(val learnToolWindow: LearnToolWindow) : JPanel() {
     lessonMessagePane.alignmentX = Component.LEFT_ALIGNMENT
     lessonMessagePane.margin = JBUI.emptyInsets()
     lessonMessagePane.border = EmptyBorder(0, 0, JBUI.scale(20), JBUI.scale(14))
-    lessonMessagePane.maximumSize = Dimension(UISettings.instance.width, 10000)
+
+    preferredSize = Dimension(UISettings.instance.panelWidth, preferredSize.height)
+
+    revalidate()
 
     //Set Next Button UI
     listOf(nextButton, prevButton).forEach {
@@ -244,16 +247,9 @@ internal class LearnPanel(val learnToolWindow: LearnToolWindow) : JPanel() {
     }
   }
 
-  /** This important magic method is needed for [getPreferredSize]: it calculates the `lessonPanel.minimumSize`  */
   private fun adjustMessagesArea() {
-    //invoke #getPreferredSize explicitly to update actual size of LessonMessagePane
-    lessonMessagePane.preferredSize
-
-    //Pack lesson panel
-    lessonPanel.repaint()
-    //run to update LessonMessagePane.getMinimumSize and LessonMessagePane.getPreferredSize
-    lessonPanelBoxLayout.invalidateLayout(lessonPanel)
-    lessonPanelBoxLayout.layoutContainer(lessonPanel)
+    revalidate()
+    repaint()
   }
 
   fun resetMessagesNumber(number: Int) {
@@ -322,13 +318,6 @@ internal class LearnPanel(val learnToolWindow: LearnToolWindow) : JPanel() {
 
   @NlsSafe
   private fun getNextLessonKeyStrokeText() = "Enter"
-
-  /** It is a magic implementation and need to invoke [adjustMessagesArea] before the use of this method (from Swing library code) */
-  override fun getPreferredSize(): Dimension {
-    if (lessonPanel.minimumSize == null) return Dimension(10, 10)
-    return Dimension(lessonPanel.minimumSize.getWidth().toInt() + UISettings.instance.westInset + UISettings.instance.eastInset,
-                     lessonPanel.minimumSize.getHeight().toInt() + footer.minimumSize.getHeight().toInt() + UISettings.instance.northInset + UISettings.instance.southInset)
-  }
 
   fun makeNextButtonSelected() {
     rootPane?.defaultButton = nextButton
