@@ -231,6 +231,9 @@ public final class Utils {
                        boolean isWindowMenu,
                        boolean useDarkIcons,
                        @Nullable RelativePoint relativePoint) {
+    if (ApplicationManagerEx.getApplicationEx().isWriteActionInProgress()) {
+      throw new ProcessCanceledException();
+    }
     Runnable removeIcon = addLoadingIcon(relativePoint, context, place);
     List<AnAction> list = expandActionGroupImpl(LaterInvocator.isInModalContext(), group, presentationFactory, context, place, true,
                                                 removeIcon, component);
