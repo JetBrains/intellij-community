@@ -3,6 +3,7 @@
 package org.jetbrains.uast.kotlin
 
 import com.intellij.psi.*
+import org.jetbrains.kotlin.backend.common.descriptors.explicitParameters
 import org.jetbrains.kotlin.builtins.createFunctionType
 import org.jetbrains.kotlin.codegen.state.KotlinTypeMapper
 import org.jetbrains.kotlin.config.LanguageVersionSettings
@@ -130,11 +131,14 @@ interface KotlinUastResolveProviderService : BaseKotlinUastResolveProviderServic
     override fun getImplicitParameters(
         ktLambdaExpression: KtLambdaExpression,
         parent: UElement,
-        parametersSelector: CallableDescriptor.() -> List<ParameterDescriptor>
+        includeExplicitParameters: Boolean,
     ): List<KotlinUParameter> {
         val functionDescriptor =
             ktLambdaExpression.analyze()[BindingContext.FUNCTION, ktLambdaExpression.functionLiteral] ?: return emptyList()
-        return functionDescriptor.parametersSelector().map { p ->
+
+        val parameters = if (includeExplicitParameters) functionDescriptor.explicitParameters else functionDescriptor.valueParameters
+
+        return parameters.map { p ->
             KotlinUParameter(
                 UastKotlinPsiParameterBase(
                     name = p.name.asString(),
