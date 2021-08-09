@@ -1,12 +1,14 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.i18n;
 
-import com.intellij.codeInspection.*;
+import com.intellij.codeInspection.AbstractBaseJavaLocalInspectionTool;
+import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.java.i18n.JavaI18nBundle;
 import com.intellij.javaee.ExternalResourceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
@@ -21,7 +23,6 @@ import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -36,26 +37,17 @@ public class ConvertToBasicLatinInspection extends AbstractBaseJavaLocalInspecti
   @Override
   public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, boolean isOnTheFly) {
     return new JavaElementVisitor() {
-      @Nullable
-      private ProblemDescriptor getProblem(@NotNull PsiElement element) {
-        if (IOUtil.isAscii(element.getText())) return null;
+      private void handle(@NotNull PsiElement element) {
+        if (IOUtil.isAscii(element.getText())) return;
         // "Basic Latin" is a proper noun
         //noinspection DialogTitleCapitalization
-        return holder.getManager().createProblemDescriptor(element,
-                                                           (TextRange)null,
-                                                           JavaI18nBundle.message("inspection.convert.to.basic.latin"),
-                                                           ProblemHighlightType.INFORMATION,
-                                                           isOnTheFly,
-                                                           new MyLocalQuickFix());
+        holder.registerProblem(element, JavaI18nBundle.message("inspection.convert.to.basic.latin"), new MyLocalQuickFix());
       }
 
       @Override
       public void visitComment(@NotNull PsiComment comment) {
         super.visitComment(comment);
-        final ProblemDescriptor descriptor = getProblem(comment);
-        if (descriptor != null) {
-          holder.registerProblem(descriptor);
-        }
+        handle(comment);
       }
 
       @Override
@@ -65,19 +57,13 @@ public class ConvertToBasicLatinInspection extends AbstractBaseJavaLocalInspecti
         if (!LITERALS.contains(((PsiLiteralExpressionImpl)expression).getLiteralElementType())) {
           return;
         }
-        final ProblemDescriptor descriptor = getProblem(expression);
-        if (descriptor != null) {
-          holder.registerProblem(descriptor);
-        }
+        handle(expression);
       }
 
       @Override
       public void visitDocComment(PsiDocComment comment) {
         super.visitDocComment(comment);
-        final ProblemDescriptor descriptor = getProblem(comment);
-        if (descriptor != null) {
-          holder.registerProblem(descriptor);
-        }
+        handle(comment);
       }
     };
   }
@@ -112,7 +98,9 @@ public class ConvertToBasicLatinInspection extends AbstractBaseJavaLocalInspecti
 
   private static class LiteralHandler extends Handler {
     @Override
-    protected @NotNull PsiElement getSubstitution(@NotNull PsiElementFactory factory, @NotNull PsiElement element, @NotNull String newText) {
+    protected @NotNull PsiElement getSubstitution(@NotNull PsiElementFactory factory,
+                                                  @NotNull PsiElement element,
+                                                  @NotNull String newText) {
       return factory.createExpressionFromText(newText, element.getParent());
     }
 
@@ -144,7 +132,9 @@ public class ConvertToBasicLatinInspection extends AbstractBaseJavaLocalInspecti
     }
 
     @Override
-    protected @NotNull PsiElement getSubstitution(@NotNull PsiElementFactory factory, @NotNull PsiElement element, @NotNull String newText) {
+    protected @NotNull PsiElement getSubstitution(@NotNull PsiElementFactory factory,
+                                                  @NotNull PsiElement element,
+                                                  @NotNull String newText) {
       return factory.createCommentFromText(newText, element.getParent());
     }
 
