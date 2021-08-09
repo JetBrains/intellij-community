@@ -31,6 +31,8 @@ class ModulesPanel(project: Project) : JPanel() {
     initModulesPanel()
 
     revalidate()
+
+    preferredSize = Dimension(UISettings.instance.panelWidth, preferredSize.height)
     repaint()
   }
 
@@ -103,11 +105,6 @@ class ModulesPanel(project: Project) : JPanel() {
     shiftedFooter.add(Box.createHorizontalGlue())
 
     add(shiftedFooter)
-  }
-
-  override fun getPreferredSize(): Dimension {
-    return Dimension(modulesPanel.minimumSize.getWidth().toInt() + UISettings.instance.westInset + UISettings.instance.eastInset,
-                     super.getPreferredSize().height)
   }
 
   fun updateMainPanel() {
