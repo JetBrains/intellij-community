@@ -184,7 +184,7 @@ class KotlinMPPGradleModelBuilder : ModelBuilderService {
             regularDependencies = sourceSetDependenciesBuilder,
             intransitiveDependencies = intransitiveSourceSetDependenciesBuilder,
             dependsOnSourceSets = dependsOnSourceSets,
-            additionalVisibleSourceSets = getAdditionalVisibleSourceSets(project, gradleSourceSet.name)
+            additionalVisibleSourceSets = getAdditionalVisibleSourceSets(project, gradleSourceSet)
         )
     }
 
