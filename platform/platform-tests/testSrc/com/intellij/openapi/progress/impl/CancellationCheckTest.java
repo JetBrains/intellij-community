@@ -72,11 +72,11 @@ public class CancellationCheckTest extends LightPlatformTestCase {
       assertTrue(cancellationFailure.getMessage().startsWith("AWT-EventQueue-0 last checkCanceled was 9000 ms ago"));
       Throwable lastRecordedCheck = cancellationFailure.getCause();
       assertEquals("previous check cancellation call", lastRecordedCheck.getMessage());
-      assertEquals("checkCancellationDiff, access$checkCancellationDiff, runHook, runCheckCanceledHooks, checkCanceled, checkCanceled",
+      assertEquals("checkCancellationDiff, withCancellationCheck$lambda-3, runCheckCanceledHooks, checkCanceled, checkCanceled",
                    StreamEx.of(lastRecordedCheck.getStackTrace())
                      .map(s -> s.getMethodName())
                      .without("lambda$createCheckCanceledHook$3")
-                     .limit(6)
+                     .limit(5)
                      .joining(", "));
     }
   }
