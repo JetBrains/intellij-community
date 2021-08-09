@@ -14,7 +14,7 @@ import javax.swing.border.EmptyBorder
 internal class UISettings {
 
   //GENERAL UI SETTINGS
-  val width: Int by lazy { JBUI.scale(500) }
+  val panelWidth: Int by lazy { JBUI.scale(460) }
 
   //MAIN INSETS
   val northInset: Int by lazy { JBUI.scale(20) }
