@@ -2,6 +2,7 @@
 package training.ui.views
 
 import com.intellij.ui.JBColor
+import com.intellij.ui.paint.RectanglePainter
 import com.intellij.util.ui.JBUI
 import training.learn.LearnBundle
 import training.ui.UISettings
@@ -24,7 +25,7 @@ class NewContentLabel : JLabel(LearnBundle.message("new.content.marker.text")) {
     g2.color = JBColor(0x62B543, 0x4E8C42)
     g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON)
     g2.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL, RenderingHints.VALUE_STROKE_NORMALIZE)
-    g2.fillRoundRect(0, 0, size.width, size.height, JBUI.scale(5), JBUI.scale(5))
+    RectanglePainter.FILL.paint(g2, 0, 0, width, height, height)
     super.paint(g)
   }
 }
