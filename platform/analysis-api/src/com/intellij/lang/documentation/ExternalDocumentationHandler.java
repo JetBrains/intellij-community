@@ -19,7 +19,9 @@ public interface ExternalDocumentationHandler {
     return false;
   }
 
-  boolean canFetchDocumentationLink(String link);
+  default boolean canFetchDocumentationLink(String link) {
+    return false;
+  }
 
   @NotNull String fetchExternalDocumentation(@NotNull String link, @Nullable PsiElement element);
 
