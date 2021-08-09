@@ -30,6 +30,7 @@ import com.intellij.ui.tabs.JBTabs;
 import com.intellij.ui.tabs.JBTabsEx;
 import com.intellij.ui.tabs.TabInfo;
 import com.intellij.util.ArrayUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -55,6 +56,7 @@ public abstract class RunTab implements DataProvider, Disposable {
    * This option has to be set into {@link AnAction#getTemplatePresentation()}.
    * Works only if new UI is enabled.
    */
+  @ApiStatus.Experimental
   public static final Key<Boolean> HIDE_FROM_TOOLBAR = Key.create("RunTab.hideFromToolbar");
 
   @NotNull

@@ -11,6 +11,7 @@ import com.intellij.icons.AllIcons
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.idea.ActionsBundle
 import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.actionSystem.impl.MoreActionGroup
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.wm.ToolWindowAnchor
 import com.intellij.openapi.wm.impl.InternalDecoratorImpl
@@ -25,10 +26,7 @@ import com.intellij.xdebugger.impl.frame.XFramesView
 import com.intellij.xdebugger.impl.frame.XVariablesView
 import com.intellij.xdebugger.impl.frame.XWatchesViewImpl
 import java.awt.Dimension
-import java.awt.event.ComponentAdapter
-import java.awt.event.ComponentEvent
 import javax.swing.Icon
-import javax.swing.JComponent
 
 class XDebugSessionTab3(
   session: XDebugSessionImpl,
@@ -78,7 +76,7 @@ class XDebugSessionTab3(
       variablesView = XVariablesView(session)
       registerView(DebuggerContentInfo.VARIABLES_CONTENT, variablesView)
       variables = variablesView
-      
+
       watchesView = XWatchesViewImpl(session, false, true, false)
       registerView(DebuggerContentInfo.WATCHES_CONTENT, watchesView)
       myWatchesView = watchesView
@@ -112,12 +110,26 @@ class XDebugSessionTab3(
 
   override fun initToolbars(session: XDebugSessionImpl) {
     (myUi as? RunnerLayoutUiImpl)?.setLeftToolbarVisible(false)
+
+    val gearActions = DefaultActionGroup().apply {
+      templatePresentation.text = ActionsBundle.message("group.XDebugger.settings.text")
+      templatePresentation.icon = AllIcons.General.Gear
+      isPopup = true
+      addAll(*myUi.options.settingsActionsList)
+      registerAdditionalActions(DefaultActionGroup(), DefaultActionGroup(), this)
+    }
+
     val toolbar = DefaultActionGroup()
     toolbar.addAll(getCustomizedActionGroup(XDebuggerActions.TOOL_WINDOW_TOP_TOOLBAR_3_GROUP))
 
+    val more = MoreActionGroup()
+    more.addAll(getCustomizedActionGroup(XDebuggerActions.TOOL_WINDOW_TOP_TOOLBAR_3_EXTRA_GROUP))
+    more.addSeparator()
+    more.add(gearActions)
+    toolbar.add(more)
+
     fun addWithConstraints(actions: List<AnAction>, constraints: Constraints) {
-      // reversed because it was like this in the original tab
-      actions.asReversed().asSequence()
+      actions.asSequence()
         .filterNot {
           it.templatePresentation.getClientProperty(RunTab.HIDE_FROM_TOOLBAR) == true
         }
@@ -126,22 +138,16 @@ class XDebugSessionTab3(
         }
     }
 
-    addWithConstraints(session.restartActions, Constraints(Anchor.AFTER, IdeActions.ACTION_RERUN))
-    addWithConstraints(session.extraActions, Constraints(Anchor.AFTER, IdeActions.ACTION_STOP_PROGRAM))
+    // reversed because it was like this in the original tab
+    addWithConstraints(session.restartActions.asReversed(), Constraints(Anchor.AFTER, IdeActions.ACTION_RERUN))
+    addWithConstraints(session.extraActions.asReversed(), Constraints(Anchor.AFTER, IdeActions.ACTION_STOP_PROGRAM))
     addWithConstraints(session.extraStopActions, Constraints(Anchor.AFTER, IdeActions.ACTION_STOP_PROGRAM))
 
     myUi.options.setTopLeftToolbar(toolbar, ActionPlaces.DEBUGGER_TOOLBAR)
 
     mySingleContentSupplier = object : RunTabSupplier(toolbar) {
       override fun getContentActions(): List<AnAction> {
-        if (mySession == null) return super.getContentActions() + PinToolwindowTabAction.getPinAction()
-        val settings = mutableListOf(PinToolwindowTabAction.getPinAction(), Separator.create())
-        settings.addAll(myUi.options.settingsActionsList)
-        return super.getContentActions() + DefaultActionGroup(ActionsBundle.messagePointer("group.XDebugger.settings.text"), settings).apply {
-          registerAdditionalActions(DefaultActionGroup(), DefaultActionGroup(), this)
-          isPopup = true
-          templatePresentation.icon = AllIcons.General.Settings
-        }
+        return super.getContentActions() + PinToolwindowTabAction.getPinAction()
       }
     }
   }

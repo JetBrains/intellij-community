@@ -28,6 +28,7 @@ public interface XDebuggerActions {
 
   @NonNls String TOOL_WINDOW_TOP_TOOLBAR_GROUP = "XDebugger.ToolWindow.TopToolbar";
   @NonNls String TOOL_WINDOW_TOP_TOOLBAR_3_GROUP = "XDebugger.ToolWindow.TopToolbar3";
+  @NonNls String TOOL_WINDOW_TOP_TOOLBAR_3_EXTRA_GROUP = "XDebugger.ToolWindow.TopToolbar3.Extra";
   @NonNls String TOOL_WINDOW_LEFT_TOOLBAR_GROUP = "XDebugger.ToolWindow.LeftToolbar";
   @NonNls String EVALUATE_DIALOG_TREE_POPUP_GROUP = "XDebugger.Evaluation.Dialog.Tree.Popup";
   @NonNls String INSPECT_TREE_POPUP_GROUP = "XDebugger.Inspect.Tree.Popup";
