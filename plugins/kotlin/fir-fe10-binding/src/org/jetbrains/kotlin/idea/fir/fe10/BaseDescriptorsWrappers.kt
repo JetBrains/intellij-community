@@ -391,7 +391,7 @@ class KtSymbolBasedAnonymousFunctionDescriptor(
     override val ktSymbol: KtAnonymousFunctionSymbol,
     context: FE10BindingContext
 ) : KtSymbolBasedFunctionLikeDescriptor(context), SimpleFunctionDescriptor {
-    override fun getName(): Name = SpecialNames.ANONYMOUS_FUNCTION
+    override fun getName(): Name = SpecialNames.ANONYMOUS
 
     override fun getExtensionReceiverParameter(): ReceiverParameterDescriptor? = getExtensionReceiverParameter(ktSymbol)
     override fun getDispatchReceiverParameter(): ReceiverParameterDescriptor? = null
