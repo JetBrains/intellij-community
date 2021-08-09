@@ -1,365 +1,346 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.ide.browsers;
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+package com.intellij.ide.browsers
 
-import com.intellij.ide.GeneralSettings;
-import com.intellij.ide.IdeBundle;
-import com.intellij.openapi.fileChooser.FileChooserDescriptor;
-import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
-import com.intellij.openapi.options.ShowSettingsUtil;
-import com.intellij.openapi.ui.ComboBox;
-import com.intellij.openapi.ui.TextFieldWithBrowseButton;
-import com.intellij.openapi.util.Comparing;
-import com.intellij.ui.CollectionComboBoxModel;
-import com.intellij.ui.IdeBorderFactory;
-import com.intellij.ui.SimpleListCellRenderer;
-import com.intellij.ui.TitledSeparator;
-import com.intellij.ui.components.JBCheckBox;
-import com.intellij.util.Function;
-import com.intellij.util.PathUtil;
-import com.intellij.util.ui.ColumnInfo;
-import com.intellij.util.ui.ListTableModel;
-import com.intellij.util.ui.LocalPathCellEditor;
-import com.intellij.util.ui.table.IconTableCellRenderer;
-import com.intellij.util.ui.table.TableModelEditor;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.ide.GeneralSettings
+import com.intellij.ide.IdeBundle
+import com.intellij.ide.browsers.BrowserLauncherAppless.Companion.canUseSystemDefaultBrowserPolicy
+import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
+import com.intellij.openapi.options.ShowSettingsUtil
+import com.intellij.openapi.ui.ComboBox
+import com.intellij.openapi.ui.TextFieldWithBrowseButton
+import com.intellij.openapi.util.Comparing
+import com.intellij.ui.CollectionComboBoxModel
+import com.intellij.ui.SimpleListCellRenderer
+import com.intellij.ui.components.JBCheckBox
+import com.intellij.ui.layout.*
+import com.intellij.util.Function
+import com.intellij.util.PathUtil
+import com.intellij.util.ui.ColumnInfo
+import com.intellij.util.ui.LocalPathCellEditor
+import com.intellij.util.ui.table.IconTableCellRenderer
+import com.intellij.util.ui.table.TableModelEditor
+import com.intellij.util.ui.table.TableModelEditor.DialogItemEditor
+import com.intellij.util.ui.table.TableModelEditor.EditableColumnInfo
+import java.awt.event.ItemEvent
+import java.util.*
+import javax.swing.DefaultComboBoxModel
+import javax.swing.JComponent
+import javax.swing.JPanel
+import javax.swing.event.TableModelEvent
+import javax.swing.table.TableCellEditor
+import javax.swing.table.TableCellRenderer
 
-import javax.swing.*;
-import javax.swing.event.TableModelEvent;
-import javax.swing.table.TableCellEditor;
-import javax.swing.table.TableCellRenderer;
-import java.awt.event.ItemEvent;
-import java.awt.event.ItemListener;
-import java.util.ArrayList;
-import java.util.UUID;
+internal class BrowserSettingsPanel {
 
-import static com.intellij.util.ui.table.TableModelEditor.EditableColumnInfo;
+  private lateinit var browsersTable: JComponent
+  private lateinit var browsersEditor: TableModelEditor<ConfigurableWebBrowser>
+  private lateinit var alternativeBrowserPathField: TextFieldWithBrowseButton
+  private lateinit var defaultBrowserPolicyComboBox: ComboBox<DefaultBrowserPolicy>
+  private lateinit var serverReloadModeComboBox: ComboBox<ReloadMode>
+  private lateinit var previewReloadModeComboBox: ComboBox<ReloadMode>
+  private lateinit var showBrowserHover: JBCheckBox
+  private lateinit var showBrowserHoverXml: JBCheckBox
+  private var customPathValue: String? = null
 
-final class BrowserSettingsPanel {
-  private static final FileChooserDescriptor APP_FILE_CHOOSER_DESCRIPTOR = FileChooserDescriptorFactory.createSingleFileOrExecutableAppDescriptor();
-
-  private static final EditableColumnInfo<ConfigurableWebBrowser, String> PATH_COLUMN_INFO =
-    new EditableColumnInfo<>(IdeBundle.message("settings.browsers.column.path")) {
-      @Override
-      public String valueOf(ConfigurableWebBrowser item) {
-        return PathUtil.toSystemDependentName(item.getPath());
+  private val root: JPanel = panel {
+    val itemEditor: DialogItemEditor<ConfigurableWebBrowser> = object : DialogItemEditor<ConfigurableWebBrowser> {
+      override fun getItemClass(): Class<ConfigurableWebBrowser> {
+        return ConfigurableWebBrowser::class.java
       }
 
-      @Override
-      public void setValue(ConfigurableWebBrowser item, String value) {
-        item.setPath(value);
+      override fun clone(item: ConfigurableWebBrowser, forInPlaceEditing: Boolean): ConfigurableWebBrowser {
+        return ConfigurableWebBrowser(if (forInPlaceEditing) item.id else UUID.randomUUID(),
+                                      item.family, item.name, item.path, item.isActive,
+                                      if (forInPlaceEditing) item.specificSettings else cloneSettings(item))
       }
 
-      @Nullable
-      @Override
-      public TableCellEditor getEditor(ConfigurableWebBrowser item) {
-        return new LocalPathCellEditor().fileChooserDescriptor(APP_FILE_CHOOSER_DESCRIPTOR).normalizePath(true);
-      }
-    };
-
-  private static final EditableColumnInfo<ConfigurableWebBrowser, Boolean> ACTIVE_COLUMN_INFO = new EditableColumnInfo<>() {
-    @Override
-    public Class getColumnClass() {
-      return Boolean.class;
-    }
-
-    @Override
-    public Boolean valueOf(ConfigurableWebBrowser item) {
-      return item.isActive();
-    }
-
-    @Override
-    public void setValue(ConfigurableWebBrowser item, Boolean value) {
-      item.setActive(value);
-    }
-  };
-
-  private static final ColumnInfo[] COLUMNS = {ACTIVE_COLUMN_INFO,
-    new EditableColumnInfo<ConfigurableWebBrowser, String>(IdeBundle.message("settings.browsers.column.name")) {
-      @Override
-      public String valueOf(ConfigurableWebBrowser item) {
-        return item.getName();
-      }
-
-      @Override
-      public void setValue(ConfigurableWebBrowser item, String value) {
-        item.setName(value);
-      }
-    },
-    new ColumnInfo<ConfigurableWebBrowser, BrowserFamily>(IdeBundle.message("settings.browsers.column.family")) {
-      @Override
-      public Class getColumnClass() {
-        return BrowserFamily.class;
-      }
-
-      @Override
-      public BrowserFamily valueOf(ConfigurableWebBrowser item) {
-        return item.getFamily();
-      }
-
-      @Override
-      public void setValue(ConfigurableWebBrowser item, BrowserFamily value) {
-        item.setFamily(value);
-        item.setSpecificSettings(value.createBrowserSpecificSettings());
-      }
-
-      @NotNull
-      @Override
-      public TableCellRenderer getRenderer(ConfigurableWebBrowser item) {
-        return IconTableCellRenderer.ICONABLE;
-      }
-
-      @Override
-      public boolean isCellEditable(ConfigurableWebBrowser item) {
-        return !WebBrowserManager.getInstance().isPredefinedBrowser(item);
-      }
-    },
-    PATH_COLUMN_INFO};
-
-  private JPanel root;
-
-  private TextFieldWithBrowseButton alternativeBrowserPathField;
-
-  private JPanel defaultBrowserPanel;
-
-  @SuppressWarnings("UnusedDeclaration")
-  private JComponent browsersTable;
-
-  private ComboBox<DefaultBrowserPolicy> defaultBrowserPolicyComboBox;
-  private ComboBox<ReloadMode> serverReloadModeComboBox;
-  private ComboBox<ReloadMode> previewReloadModeComboBox;
-  private JBCheckBox showBrowserHover;
-  private JBCheckBox showBrowserHoverXml;
-  private JPanel browserPopupPanel;
-  private JPanel reloadBehavior;
-
-  private TableModelEditor<ConfigurableWebBrowser> browsersEditor;
-
-  private String customPathValue;
-
-  BrowserSettingsPanel() {
-    alternativeBrowserPathField.addBrowseFolderListener(IdeBundle.message("title.select.path.to.browser"), null, null, APP_FILE_CHOOSER_DESCRIPTOR);
-    defaultBrowserPanel.setBorder(TitledSeparator.createEmptyBorder());
-
-    ArrayList<DefaultBrowserPolicy> defaultBrowserPolicies = new ArrayList<>();
-    if (BrowserLauncherAppless.canUseSystemDefaultBrowserPolicy()) {
-      defaultBrowserPolicies.add(DefaultBrowserPolicy.SYSTEM);
-    }
-    defaultBrowserPolicies.add(DefaultBrowserPolicy.FIRST);
-    defaultBrowserPolicies.add(DefaultBrowserPolicy.ALTERNATIVE);
-
-    defaultBrowserPolicyComboBox.setModel(new CollectionComboBoxModel<>(defaultBrowserPolicies));
-    defaultBrowserPolicyComboBox.addItemListener(new ItemListener() {
-      @Override
-      public void itemStateChanged(@NotNull ItemEvent e) {
-        boolean customPathEnabled = e.getItem() == DefaultBrowserPolicy.ALTERNATIVE;
-        if (e.getStateChange() == ItemEvent.DESELECTED) {
-          if (customPathEnabled) {
-            customPathValue = alternativeBrowserPathField.getText();
-          }
-        }
-        else if (e.getStateChange() == ItemEvent.SELECTED) {
-          alternativeBrowserPathField.setEnabled(customPathEnabled);
-          updateCustomPathTextFieldValue((DefaultBrowserPolicy)e.getItem());
-        }
-      }
-    });
-
-    defaultBrowserPolicyComboBox.setRenderer(SimpleListCellRenderer.create("", value -> {
-      String text = value == DefaultBrowserPolicy.SYSTEM ? IdeBundle.message("settings.browsers.system.default") :
-                    value == DefaultBrowserPolicy.FIRST ? IdeBundle.message("settings.browsers.first.listed") :
-                    value == DefaultBrowserPolicy.ALTERNATIVE ? IdeBundle.message("settings.browsers.custom.path") :
-                    null;
-      if (text == null) throw new IllegalStateException(String.valueOf(value));
-      return text;
-    }));
-    serverReloadModeComboBox.setModel(new DefaultComboBoxModel<>(ReloadMode.values()));
-    previewReloadModeComboBox.setModel(new DefaultComboBoxModel<>(ReloadMode.values()));
-    serverReloadModeComboBox.setRenderer(SimpleListCellRenderer.create("", (it) -> it.getTitle() ));
-    previewReloadModeComboBox.setRenderer(SimpleListCellRenderer.create("", (it) -> it.getTitle() ));
-
-    browserPopupPanel.setBorder(IdeBorderFactory.createTitledBorder(IdeBundle.message("settings.browsers.show.browser.popup.in.the.editor")));
-    reloadBehavior.setBorder(IdeBorderFactory.createTitledBorder(IdeBundle.message("settings.browsers.reload.behavior")));
-  }
-
-  private void updateCustomPathTextFieldValue(@NotNull DefaultBrowserPolicy browser) {
-    if (browser == DefaultBrowserPolicy.ALTERNATIVE) {
-      alternativeBrowserPathField.setText(customPathValue);
-    }
-    else if (browser == DefaultBrowserPolicy.FIRST) {
-      setCustomPathToFirstListed();
-    }
-    else {
-      alternativeBrowserPathField.setText("");
-    }
-  }
-
-  private void createUIComponents() {
-    TableModelEditor.DialogItemEditor<ConfigurableWebBrowser> itemEditor = new TableModelEditor.DialogItemEditor<>() {
-      @NotNull
-      @Override
-      public Class<ConfigurableWebBrowser> getItemClass() {
-        return ConfigurableWebBrowser.class;
-      }
-
-      @Override
-      public ConfigurableWebBrowser clone(@NotNull ConfigurableWebBrowser item, boolean forInPlaceEditing) {
-        return new ConfigurableWebBrowser(forInPlaceEditing ? item.getId() : UUID.randomUUID(),
-                                          item.getFamily(), item.getName(), item.getPath(), item.isActive(),
-                                          forInPlaceEditing ? item.getSpecificSettings() : cloneSettings(item));
-      }
-
-      @Override
-      public void edit(@NotNull ConfigurableWebBrowser browser,
-                       @NotNull Function<? super ConfigurableWebBrowser, ? extends ConfigurableWebBrowser> mutator,
-                       boolean isAdd) {
-        BrowserSpecificSettings settings = cloneSettings(browser);
+      override fun edit(browser: ConfigurableWebBrowser,
+                        mutator: Function<in ConfigurableWebBrowser, out ConfigurableWebBrowser>,
+                        isAdd: Boolean) {
+        val settings = cloneSettings(browser)
         if (settings != null && ShowSettingsUtil.getInstance().editConfigurable(browsersTable, settings.createConfigurable())) {
-          mutator.fun(browser).setSpecificSettings(settings);
+          mutator.`fun`(browser).specificSettings = settings
         }
       }
 
-      @Nullable
-      private BrowserSpecificSettings cloneSettings(@NotNull ConfigurableWebBrowser browser) {
-        BrowserSpecificSettings settings = browser.getSpecificSettings();
-        if (settings == null) {
-          return null;
+      private fun cloneSettings(browser: ConfigurableWebBrowser): BrowserSpecificSettings? {
+        val settings = browser.specificSettings ?: return null
+        val newSettings = browser.family.createBrowserSpecificSettings()!!
+        TableModelEditor.cloneUsingXmlSerialization(settings, newSettings)
+        return newSettings
+      }
+
+      override fun applyEdited(oldItem: ConfigurableWebBrowser, newItem: ConfigurableWebBrowser) {
+        oldItem.specificSettings = newItem.specificSettings
+      }
+
+      override fun isEditable(browser: ConfigurableWebBrowser): Boolean {
+        return browser.specificSettings != null
+      }
+
+      override fun isRemovable(item: ConfigurableWebBrowser): Boolean {
+        return !WebBrowserManager.getInstance().isPredefinedBrowser(item)
+      }
+    }
+
+    browsersEditor = TableModelEditor(COLUMNS, itemEditor, IdeBundle.message("settings.browsers.no.web.browsers.configured"))
+      .modelListener(object : TableModelEditor.DataChangedListener<ConfigurableWebBrowser?>() {
+        override fun tableChanged(event: TableModelEvent) {
+          update()
         }
 
-        BrowserSpecificSettings newSettings = browser.getFamily().createBrowserSpecificSettings();
-        assert newSettings != null;
-        TableModelEditor.cloneUsingXmlSerialization(settings, newSettings);
-        return newSettings;
-      }
-
-      @Override
-      public void applyEdited(@NotNull ConfigurableWebBrowser oldItem, @NotNull ConfigurableWebBrowser newItem) {
-        oldItem.setSpecificSettings(newItem.getSpecificSettings());
-      }
-
-      @Override
-      public boolean isEditable(@NotNull ConfigurableWebBrowser browser) {
-        return browser.getSpecificSettings() != null;
-      }
-
-      @Override
-      public boolean isRemovable(@NotNull ConfigurableWebBrowser item) {
-        return !WebBrowserManager.getInstance().isPredefinedBrowser(item);
-      }
-    };
-    browsersEditor = new TableModelEditor<>(COLUMNS, itemEditor, IdeBundle.message("settings.browsers.no.web.browsers.configured"))
-      .modelListener(new TableModelEditor.DataChangedListener<>() {
-        @Override
-        public void tableChanged(@NotNull TableModelEvent event) {
-          update();
-        }
-
-        @Override
-        public void dataChanged(@NotNull ColumnInfo<ConfigurableWebBrowser, ?> columnInfo, int rowIndex) {
-          if (columnInfo == PATH_COLUMN_INFO || columnInfo == ACTIVE_COLUMN_INFO) {
-            update();
+        override fun dataChanged(columnInfo: ColumnInfo<ConfigurableWebBrowser?, *>, rowIndex: Int) {
+          if (columnInfo === PATH_COLUMN_INFO || columnInfo === ACTIVE_COLUMN_INFO) {
+            update()
           }
         }
 
-        private void update() {
-          if (getDefaultBrowser() == DefaultBrowserPolicy.FIRST) {
-            setCustomPathToFirstListed();
+        private fun update() {
+          if (defaultBrowser == DefaultBrowserPolicy.FIRST) {
+            setCustomPathToFirstListed()
           }
         }
-      });
-    browsersTable = browsersEditor.createComponent();
-  }
+      })
 
-  private void setCustomPathToFirstListed() {
-    ListTableModel<ConfigurableWebBrowser> model = browsersEditor.getModel();
-    for (int i = 0, n = model.getRowCount(); i < n; i++) {
-      ConfigurableWebBrowser browser = model.getRowValue(i);
-      if (browser.isActive() && browser.getPath() != null) {
-        alternativeBrowserPathField.setText(browser.getPath());
-        return;
+    row {
+      cell(isFullWidth = true) {
+        component(browsersEditor.createComponent()).constraints(grow, pushY).applyToComponent { browsersTable = this }
       }
     }
 
-    alternativeBrowserPathField.setText("");
-  }
+    row {
+      cell(isFullWidth = true) {
+        val defaultBrowserPolicies = ArrayList<DefaultBrowserPolicy>()
+        if (canUseSystemDefaultBrowserPolicy()) {
+          defaultBrowserPolicies.add(DefaultBrowserPolicy.SYSTEM)
+        }
+        defaultBrowserPolicies.add(DefaultBrowserPolicy.FIRST)
+        defaultBrowserPolicies.add(DefaultBrowserPolicy.ALTERNATIVE)
 
-  @NotNull
-  public JPanel getComponent() {
-    return root;
-  }
-
-  public boolean isModified() {
-    WebBrowserManager browserManager = WebBrowserManager.getInstance();
-    GeneralSettings generalSettings = GeneralSettings.getInstance();
-
-    DefaultBrowserPolicy defaultBrowserPolicy = getDefaultBrowser();
-    if (getDefaultBrowserPolicy(browserManager) != defaultBrowserPolicy ||
-        browserManager.isShowBrowserHover() != showBrowserHover.isSelected() ||
-        browserManager.isShowBrowserHoverXml() != showBrowserHoverXml.isSelected() ||
-        browserManager.getWebPreviewReloadMode() != previewReloadModeComboBox.getItem() ||
-        browserManager.getWebServerReloadMode() != serverReloadModeComboBox.getItem()) {
-      return true;
+        label(IdeBundle.message("settings.browsers.default.browser"))
+        component(ComboBox(CollectionComboBoxModel(defaultBrowserPolicies))).applyToComponent {
+          this.renderer = SimpleListCellRenderer.create("") { value: DefaultBrowserPolicy ->
+            when (value) {
+              DefaultBrowserPolicy.SYSTEM -> IdeBundle.message("settings.browsers.system.default")
+              DefaultBrowserPolicy.FIRST -> IdeBundle.message("settings.browsers.first.listed")
+              DefaultBrowserPolicy.ALTERNATIVE -> IdeBundle.message("settings.browsers.custom.path")
+            }
+          }
+          this.addItemListener { e ->
+            val customPathEnabled = e.item === DefaultBrowserPolicy.ALTERNATIVE
+            if (e.stateChange == ItemEvent.DESELECTED) {
+              if (customPathEnabled) {
+                customPathValue = alternativeBrowserPathField.text
+              }
+            }
+            else if (e.stateChange == ItemEvent.SELECTED) {
+              alternativeBrowserPathField.isEnabled = customPathEnabled
+              updateCustomPathTextFieldValue(e.item as DefaultBrowserPolicy)
+            }
+          }
+          defaultBrowserPolicyComboBox = this
+        }
+        component(TextFieldWithBrowseButton()).applyToComponent {
+          this.addBrowseFolderListener(IdeBundle.message("title.select.path.to.browser"), null, null, APP_FILE_CHOOSER_DESCRIPTOR)
+          alternativeBrowserPathField = this
+        }
+      }
     }
 
-    if (defaultBrowserPolicy == DefaultBrowserPolicy.ALTERNATIVE &&
-        !Comparing.strEqual(generalSettings.getBrowserPath(), alternativeBrowserPathField.getText())) {
-      return true;
+    titledRow(IdeBundle.message("settings.browsers.show.browser.popup.in.the.editor")) {
+      row {
+        checkBox(IdeBundle.message("settings.browsers.show.browser.popup.html")).applyToComponent {
+          showBrowserHover = this
+        }
+      }
+      row {
+        checkBox(IdeBundle.message("settings.browsers.show.browser.popup.xml")).applyToComponent {
+          showBrowserHoverXml = this
+        }
+      }
     }
 
-    return browsersEditor.isModified();
+    titledRow(IdeBundle.message("settings.browsers.reload.behavior")) {
+      row(IdeBundle.message("setting.value.reload.mode.server")) {
+        component(ComboBox(DefaultComboBoxModel(ReloadMode.values()))).applyToComponent {
+          this.renderer = SimpleListCellRenderer.create("") { it.title }
+          serverReloadModeComboBox = this
+        }
+      }
+      row(IdeBundle.message("setting.value.reload.mode.preview")) {
+        component(ComboBox(DefaultComboBoxModel(ReloadMode.values()))).applyToComponent {
+          this.renderer = SimpleListCellRenderer.create("") { it.title }
+          previewReloadModeComboBox = this
+        }
+      }
+    }
   }
 
-  public void apply() {
-    GeneralSettings settings = GeneralSettings.getInstance();
+  private fun updateCustomPathTextFieldValue(browser: DefaultBrowserPolicy) {
+    when (browser) {
+      DefaultBrowserPolicy.ALTERNATIVE -> {
+        alternativeBrowserPathField.setText(customPathValue)
+      }
+      DefaultBrowserPolicy.FIRST -> {
+        setCustomPathToFirstListed()
+      }
+      else -> {
+        alternativeBrowserPathField.text = ""
+      }
+    }
+  }
 
-    settings.setUseDefaultBrowser(getDefaultBrowser() == DefaultBrowserPolicy.SYSTEM);
+  private fun setCustomPathToFirstListed() {
+    val model = browsersEditor.model
+    var i = 0
+    val n = model.rowCount
+    while (i < n) {
+      val browser = model.getRowValue(i)
+      if (browser.isActive && browser.path != null) {
+        alternativeBrowserPathField.setText(browser.path)
+        return
+      }
+      i++
+    }
+    alternativeBrowserPathField.text = ""
+  }
 
-    if (alternativeBrowserPathField.isEnabled()) {
-      settings.setBrowserPath(alternativeBrowserPathField.getText());
+  val component: JPanel
+    get() = root
+
+  val isModified: Boolean
+    get() {
+      val browserManager = WebBrowserManager.getInstance()
+      val generalSettings = GeneralSettings.getInstance()
+      val defaultBrowserPolicy = defaultBrowser
+      if (getDefaultBrowserPolicy(browserManager) != defaultBrowserPolicy ||
+          browserManager.isShowBrowserHover != showBrowserHover.isSelected ||
+          browserManager.isShowBrowserHoverXml != showBrowserHoverXml.isSelected ||
+          browserManager.getWebPreviewReloadMode() !== previewReloadModeComboBox.item ||
+          browserManager.getWebServerReloadMode() !== serverReloadModeComboBox.item) {
+        return true
+      }
+      return if (defaultBrowserPolicy == DefaultBrowserPolicy.ALTERNATIVE &&
+                 !Comparing.strEqual(generalSettings.browserPath, alternativeBrowserPathField.text)) {
+        true
+      }
+      else browsersEditor.isModified
     }
 
-    WebBrowserManager browserManager = WebBrowserManager.getInstance();
-    browserManager.setShowBrowserHover(showBrowserHover.isSelected());
-    browserManager.setShowBrowserHoverXml(showBrowserHoverXml.isSelected());
-    browserManager.defaultBrowserPolicy = getDefaultBrowser();
-    browserManager.webPreviewReloadMode = previewReloadModeComboBox.getItem();
-    browserManager.webServerReloadMode = serverReloadModeComboBox.getItem();
-    browserManager.setList(browsersEditor.apply());
-  }
-
-  private DefaultBrowserPolicy getDefaultBrowser() {
-    return (DefaultBrowserPolicy)defaultBrowserPolicyComboBox.getSelectedItem();
-  }
-
-  public void reset() {
-    final WebBrowserManager browserManager = WebBrowserManager.getInstance();
-    DefaultBrowserPolicy effectiveDefaultBrowserPolicy = getDefaultBrowserPolicy(browserManager);
-    defaultBrowserPolicyComboBox.setSelectedItem(effectiveDefaultBrowserPolicy);
-    previewReloadModeComboBox.setItem(browserManager.getWebPreviewReloadMode());
-    serverReloadModeComboBox.setItem(browserManager.getWebServerReloadMode());
-
-    GeneralSettings settings = GeneralSettings.getInstance();
-    showBrowserHover.setSelected(browserManager.isShowBrowserHover());
-    showBrowserHoverXml.setSelected(browserManager.isShowBrowserHoverXml());
-    browsersEditor.reset(browserManager.getList());
-
-    customPathValue = settings.getBrowserPath();
-    alternativeBrowserPathField.setEnabled(effectiveDefaultBrowserPolicy == DefaultBrowserPolicy.ALTERNATIVE);
-    updateCustomPathTextFieldValue(effectiveDefaultBrowserPolicy);
-  }
-
-  private static DefaultBrowserPolicy getDefaultBrowserPolicy(WebBrowserManager manager) {
-    DefaultBrowserPolicy policy = manager.getDefaultBrowserPolicy();
-    if (policy != DefaultBrowserPolicy.SYSTEM || BrowserLauncherAppless.canUseSystemDefaultBrowserPolicy()) {
-      return policy;
+  fun apply() {
+    val settings = GeneralSettings.getInstance()
+    settings.isUseDefaultBrowser = defaultBrowser == DefaultBrowserPolicy.SYSTEM
+    if (alternativeBrowserPathField.isEnabled) {
+      settings.browserPath = alternativeBrowserPathField.text
     }
-    // if system default browser policy cannot be used
-    return DefaultBrowserPolicy.ALTERNATIVE;
+    val browserManager = WebBrowserManager.getInstance()
+    browserManager.isShowBrowserHover = showBrowserHover.isSelected
+    browserManager.isShowBrowserHoverXml = showBrowserHoverXml.isSelected
+    browserManager.defaultBrowserPolicy = defaultBrowser
+    browserManager.webPreviewReloadMode = previewReloadModeComboBox.item
+    browserManager.webServerReloadMode = serverReloadModeComboBox.item
+    browserManager.list = browsersEditor.apply()
   }
 
-  public void selectBrowser(@NotNull WebBrowser browser) {
-    if (browser instanceof ConfigurableWebBrowser) {
-      browsersEditor.selectItem((ConfigurableWebBrowser)browser);
+  private val defaultBrowser: DefaultBrowserPolicy
+    get() = defaultBrowserPolicyComboBox.selectedItem as DefaultBrowserPolicy
+
+  fun reset() {
+    val browserManager = WebBrowserManager.getInstance()
+    val effectiveDefaultBrowserPolicy = getDefaultBrowserPolicy(browserManager)
+    defaultBrowserPolicyComboBox.selectedItem = effectiveDefaultBrowserPolicy
+    previewReloadModeComboBox.item = browserManager.getWebPreviewReloadMode()
+    serverReloadModeComboBox.item = browserManager.getWebServerReloadMode()
+    val settings = GeneralSettings.getInstance()
+    showBrowserHover.isSelected = browserManager.isShowBrowserHover
+    showBrowserHoverXml.isSelected = browserManager.isShowBrowserHoverXml
+    browsersEditor.reset(browserManager.list)
+    customPathValue = settings.browserPath
+    alternativeBrowserPathField.isEnabled = effectiveDefaultBrowserPolicy == DefaultBrowserPolicy.ALTERNATIVE
+    updateCustomPathTextFieldValue(effectiveDefaultBrowserPolicy)
+  }
+
+  fun selectBrowser(browser: WebBrowser) {
+    if (browser is ConfigurableWebBrowser) {
+      browsersEditor.selectItem(browser)
+    }
+  }
+
+  companion object {
+    private val APP_FILE_CHOOSER_DESCRIPTOR = FileChooserDescriptorFactory.createSingleFileOrExecutableAppDescriptor()
+    private val PATH_COLUMN_INFO: EditableColumnInfo<ConfigurableWebBrowser, String> = object : EditableColumnInfo<ConfigurableWebBrowser, String>(
+      IdeBundle.message("settings.browsers.column.path")) {
+      override fun valueOf(item: ConfigurableWebBrowser): String? {
+        return PathUtil.toSystemDependentName(item.path)
+      }
+
+      override fun setValue(item: ConfigurableWebBrowser, value: String) {
+        item.path = value
+      }
+
+      override fun getEditor(item: ConfigurableWebBrowser): TableCellEditor? {
+        return LocalPathCellEditor().fileChooserDescriptor(APP_FILE_CHOOSER_DESCRIPTOR).normalizePath(true)
+      }
+    }
+    private val ACTIVE_COLUMN_INFO: EditableColumnInfo<ConfigurableWebBrowser, Boolean> = object : EditableColumnInfo<ConfigurableWebBrowser, Boolean>() {
+      override fun getColumnClass(): Class<*> {
+        return Boolean::class.java
+      }
+
+      override fun valueOf(item: ConfigurableWebBrowser): Boolean {
+        return item.isActive
+      }
+
+      override fun setValue(item: ConfigurableWebBrowser, value: Boolean) {
+        item.isActive = value
+      }
+    }
+
+    private val COLUMNS = arrayOf<ColumnInfo<*, *>>(
+      ACTIVE_COLUMN_INFO,
+      object : EditableColumnInfo<ConfigurableWebBrowser, String>(
+        IdeBundle.message("settings.browsers.column.name")) {
+        override fun valueOf(item: ConfigurableWebBrowser): String {
+          return item.name
+        }
+
+        override fun setValue(item: ConfigurableWebBrowser, value: String) {
+          item.name = value
+        }
+      },
+      object : ColumnInfo<ConfigurableWebBrowser, BrowserFamily>(
+        IdeBundle.message("settings.browsers.column.family")) {
+        override fun getColumnClass(): Class<*> {
+          return BrowserFamily::class.java
+        }
+
+        override fun valueOf(item: ConfigurableWebBrowser): BrowserFamily {
+          return item.family
+        }
+
+        override fun setValue(item: ConfigurableWebBrowser, value: BrowserFamily) {
+          item.family = value
+          item.specificSettings = value.createBrowserSpecificSettings()
+        }
+
+        override fun getRenderer(item: ConfigurableWebBrowser): TableCellRenderer {
+          return IconTableCellRenderer.ICONABLE
+        }
+
+        override fun isCellEditable(item: ConfigurableWebBrowser): Boolean {
+          return !WebBrowserManager.getInstance().isPredefinedBrowser(item)
+        }
+      },
+      PATH_COLUMN_INFO
+    )
+
+    private fun getDefaultBrowserPolicy(manager: WebBrowserManager): DefaultBrowserPolicy {
+      val policy = manager.getDefaultBrowserPolicy()
+      return if (policy != DefaultBrowserPolicy.SYSTEM || canUseSystemDefaultBrowserPolicy()) {
+        policy
+      }
+      else DefaultBrowserPolicy.ALTERNATIVE
+      // if system default browser policy cannot be used
     }
   }
 }
