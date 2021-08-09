@@ -3,9 +3,6 @@
 package org.jetbrains.uast.kotlin
 
 import com.intellij.psi.PsiType
-import org.jetbrains.kotlin.backend.common.descriptors.explicitParameters
-import org.jetbrains.kotlin.descriptors.CallableDescriptor
-import org.jetbrains.kotlin.descriptors.ParameterDescriptor
 import org.jetbrains.kotlin.psi.KtBlockExpression
 import org.jetbrains.kotlin.psi.KtLambdaExpression
 import org.jetbrains.uast.*
@@ -42,20 +39,20 @@ class KotlinULambdaExpression(
     }
 
     override val valueParameters by lz {
-        getParameters { valueParameters }
+        getParameters(includeExplicitParameters = false)
     }
 
     override val parameters: List<UParameter> by lz {
-        getParameters { explicitParameters }
+        getParameters(includeExplicitParameters = true)
     }
 
-    private fun getParameters(parametersSelector: CallableDescriptor.() -> List<ParameterDescriptor>): List<UParameter> {
+    private fun getParameters(includeExplicitParameters: Boolean): List<UParameter> {
         val explicitParameters = sourcePsi.valueParameters.mapIndexed { i, p ->
             KotlinUParameter(UastKotlinPsiParameter.create(p, sourcePsi, this, i), p, this)
         }
         if (explicitParameters.isNotEmpty()) return explicitParameters
 
-        return baseResolveProviderService.getImplicitParameters(sourcePsi, this, parametersSelector)
+        return baseResolveProviderService.getImplicitParameters(sourcePsi, this, includeExplicitParameters)
     }
 
     override fun asRenderString(): String {
