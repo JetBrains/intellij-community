@@ -33,7 +33,6 @@ import org.jetbrains.jps.incremental.GlobalContextKey;
 import javax.tools.Diagnostic;
 import java.io.File;
 import java.net.InetAddress;
-import java.net.UnknownHostException;
 import java.util.*;
 import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
@@ -93,14 +92,8 @@ public class ExternalJavacManager extends ProcessAdapter {
                                      compilationRequestsHandler);
         }
       });
-    try {
-      final InetAddress loopback = InetAddress.getByName(null);
-      myChannelRegistrar.add(bootstrap.bind(loopback, listenPort).syncUninterruptibly().channel());
-      myListenPort = listenPort;
-    }
-    catch (UnknownHostException e) {
-      throw new RuntimeException(e);
-    }
+    myChannelRegistrar.add(bootstrap.bind(InetAddress.getLoopbackAddress(), listenPort).syncUninterruptibly().channel());
+    myListenPort = listenPort;
   }
 
 
@@ -343,7 +336,7 @@ public class ExternalJavacManager extends ProcessAdapter {
 
     appendParam(cmdLine, ExternalJavacProcess.class.getName());
     appendParam(cmdLine, processId.toString());
-    appendParam(cmdLine, "127.0.0.1");
+    appendParam(cmdLine, InetAddress.getLoopbackAddress().getHostName());
     appendParam(cmdLine, Integer.toString(port));
     appendParam(cmdLine, Boolean.toString(keepProcessAlive));  // keep in memory after build finished
 
