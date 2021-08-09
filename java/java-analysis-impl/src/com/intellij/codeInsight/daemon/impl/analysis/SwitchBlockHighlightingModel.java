@@ -711,7 +711,6 @@ public class SwitchBlockHighlightingModel {
         return;
       }
       registerDeleteDefaultFix(myFile, info);
-      ProblemDescriptor descriptor = ProblemDescriptorUtil.toProblemDescriptor(myFile, info);
     }
 
     private void checkSealedClassCompleteness(@NotNull PsiClass selectorClass,
