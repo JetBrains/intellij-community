@@ -249,13 +249,15 @@ interface FirKotlinUastResolveProviderService : BaseKotlinUastResolveProviderSer
     override fun getCommonSupertype(left: KtExpression, right: KtExpression, uExpression: UExpression): PsiType? {
         val ktElement = uExpression.sourcePsi as? KtExpression ?: return null
         analyseForUast(ktElement) {
-            return commonSuperType(listOf(left.getKtType(), right.getKtType()))?.asPsiType(ktElement, TypeMappingMode.DEFAULT_UAST)
+            val leftType = left.getKtType() ?: return null
+            val rightType = right.getKtType()  ?: return null
+            return commonSuperType(listOf(leftType, rightType))?.asPsiType(ktElement, TypeMappingMode.DEFAULT_UAST)
         }
     }
 
     override fun getType(ktExpression: KtExpression, source: UElement): PsiType? {
         analyseForUast(ktExpression) {
-            return ktExpression.getKtType().asPsiType(ktExpression, TypeMappingMode.DEFAULT_UAST)
+            return ktExpression.getKtType()?.asPsiType(ktExpression, TypeMappingMode.DEFAULT_UAST)
         }
     }
 

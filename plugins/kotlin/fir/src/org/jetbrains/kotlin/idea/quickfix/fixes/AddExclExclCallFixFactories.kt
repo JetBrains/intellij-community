@@ -90,7 +90,7 @@ object AddExclExclCallFixFactories {
 
     val iteratorOnNullableFactory = diagnosticFixFactory(KtFirDiagnostic.IteratorOnNullable::class) { diagnostic ->
         val expression = diagnostic.psi as? KtExpression ?: return@diagnosticFixFactory emptyList()
-        val type = expression.getKtType()
+        val type = expression?.getKtType() ?: return@diagnosticFixFactory emptyList()
         if (!type.canBeNull) return@diagnosticFixFactory emptyList()
 
         // NOTE: This is different from FE1.0 in that we offer the fix even if the function does NOT have the `operator` modifier.

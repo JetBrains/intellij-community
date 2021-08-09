@@ -63,7 +63,7 @@ object AddWhenRemainingBranchFixFactories {
             } ?: return@buildList
 
             add(HLQuickFix(whenExpression, Input(missingCases, null), applicator))
-            val baseClassSymbol = subjectExpression.getKtType().expandedClassSymbol ?: return@buildList
+            val baseClassSymbol = subjectExpression.getKtType()?.expandedClassSymbol ?: return@buildList
             val enumToStarImport = baseClassSymbol.classIdIfNonLocal
             if (baseClassSymbol.classKind == KtClassKind.ENUM_CLASS && enumToStarImport != null) {
                 add(HLQuickFix(whenExpression, Input(missingCases, enumToStarImport), applicatorUsingStarImport))
