@@ -13,7 +13,7 @@ import java.awt.event.MouseAdapter
 import java.awt.event.MouseEvent
 import javax.swing.JPanel
 
-internal class CodeFragmentPopup(val editor: Editor, val lines: IntRange, private val onClick: Runnable): Disposable {
+internal class CodeFragmentPopup(val editor: Editor, val lines: IntRange, private val onClickAction: () -> Unit): Disposable {
 
   private val fillConstraints = GridBagConstraints().apply {
     fill = GridBagConstraints.BOTH
@@ -27,7 +27,7 @@ internal class CodeFragmentPopup(val editor: Editor, val lines: IntRange, privat
     add(createEditorFragment(editor, lines), fillConstraints)
     addMouseListener(object : MouseAdapter() {
       override fun mouseClicked(e: MouseEvent) {
-        onClick.run()
+        onClickAction()
       }
     })
   }

@@ -19,9 +19,13 @@ import java.awt.Point
 import java.awt.Rectangle
 import javax.swing.JComponent
 
+/**
+ * Ensures that in-editor code fragments are always visible.
+ * For any invisible fragment creates a popup and places it on top of the first or last visible lines (depends on required scroll direction).
+ */
 interface EditorCodePreview: Disposable {
 
-  fun addPreview(lines: IntRange, onClick: () -> Unit)
+  fun addPreview(lines: IntRange, onClickAction: () -> Unit)
 
   companion object {
 
@@ -63,8 +67,8 @@ private class EditorCodePreviewImpl(val editor: Editor): EditorCodePreview, Disp
     editor.document.addDocumentListener(documentListener, this)
   }
 
-  override fun addPreview(lines: IntRange, onClick: () -> Unit){
-    val newPopup = CodeFragmentPopup(editor, lines, onClick)
+  override fun addPreview(lines: IntRange, onClickAction: () -> Unit){
+    val newPopup = CodeFragmentPopup(editor, lines, onClickAction)
     Disposer.register(this, newPopup)
     popups = (popups + newPopup).sortedBy { it.lines.first }
     updatePopupPositions()
@@ -169,6 +173,6 @@ private class EditorCodePreviewImpl(val editor: Editor): EditorCodePreview, Disp
 }
 
 private class EditorCodePreviewTestImpl: EditorCodePreview {
-  override fun addPreview(lines: IntRange, onClick: () -> Unit) {}
+  override fun addPreview(lines: IntRange, onClickAction: () -> Unit) {}
   override fun dispose() {}
 }
