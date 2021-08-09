@@ -1234,18 +1234,27 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
       DocumentationProvider provider = getProviderFromElement(context);
       PsiElement targetElement = provider.getDocumentationElementForLink(manager, refText, context);
       if (targetElement == null) {
-        for (Language language : Language.getRegisteredLanguages()) {
-          DocumentationProvider documentationProvider = LanguageDocumentation.INSTANCE.forLanguage(language);
-          if (documentationProvider != null) {
-            targetElement = documentationProvider.getDocumentationElementForLink(manager, refText, context);
-            if (targetElement != null) {
-              break;
-            }
-          }
-        }
+        targetElement = targetFromLanguageProviders(manager, refText, context);
       }
       if (targetElement != null) {
         return Pair.create(targetElement, ref);
+      }
+    }
+    return null;
+  }
+
+  private static @Nullable PsiElement targetFromLanguageProviders(
+    @NotNull PsiManager manager,
+    @NotNull String link,
+    @Nullable PsiElement context
+  ) {
+    for (Language language : Language.getRegisteredLanguages()) {
+      DocumentationProvider documentationProvider = LanguageDocumentation.INSTANCE.forLanguage(language);
+      if (documentationProvider != null) {
+        PsiElement targetElement = documentationProvider.getDocumentationElementForLink(manager, link, context);
+        if (targetElement != null) {
+          return targetElement;
+        }
       }
     }
     return null;
