@@ -1,35 +1,28 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection
 
-import com.intellij.analysis.JvmAnalysisBundle
 import com.intellij.codeInspection.tests.JUnit5AssertionsConverterInspectionTestBase
 import com.intellij.jvm.analysis.JvmAnalysisKtTestsUtil
-import com.siyeh.ig.junit.JUnitCommonClassNames
 
 class KotlinJUnit5AssertionsConverterInspectionTest : JUnit5AssertionsConverterInspectionTestBase() {
   override val fileExt: String = "kt"
 
   override fun getBasePath() = JvmAnalysisKtTestsUtil.TEST_DATA_PROJECT_RELATIVE_BASE_PATH + "/codeInspection/junit5assertionsconverter"
 
-  fun `test AssertArrayEquals`() =
-    doAssertionTest("AssertArrayEquals", JUnitCommonClassNames.ORG_JUNIT_JUPITER_API_ASSERTIONS)
+  fun `test AssertArrayEquals`() = testQuickFixAll("AssertArrayEquals")
 
-  fun `test AssertArrayEquals message`() =
-    doAssertionTest("AssertArrayEqualsMessage", JUnitCommonClassNames.ORG_JUNIT_JUPITER_API_ASSERTIONS)
+  fun `test AssertArrayEquals message`() = testQuickFixAll("AssertArrayEqualsMessage")
 
-  fun `test AssertEquals`() = doAssertionTest("AssertEquals", JUnitCommonClassNames.ORG_JUNIT_JUPITER_API_ASSERTIONS)
+  fun `test AssertEquals`() = testQuickFixAll("AssertEquals")
 
-  fun `test AssertNotEqualsWithDelta`() = doQfUnavailableTest(
-    "AssertNotEqualsWithDelta",
-    JvmAnalysisBundle.message("jvm.inspections.junit5.assertions.converter.quickfix", JUnitCommonClassNames.ORG_JUNIT_JUPITER_API_ASSERTIONS)
-  )
+  fun `test AssertNotEqualsWithDelta`() = testQuickFixUnavailableAll("AssertNotEqualsWithDelta")
 
-  fun `test AssertThat`() = doAssertionTest("AssertThat", JUnitCommonClassNames.ORG_HAMCREST_MATCHER_ASSERT)
+  fun `test AssertThat`() = testQuickFixAll("AssertThat")
 
-  fun `test AssertTrue`() = doAssertionTest("AssertTrue", JUnitCommonClassNames.ORG_JUNIT_JUPITER_API_ASSERTIONS)
+  fun `test AssertTrue`() = testQuickFixAll("AssertTrue")
 
   fun `test AssertTrue method reference`() =
-    doAssertionTest("AssertTrueMethodRef", JUnitCommonClassNames.ORG_JUNIT_JUPITER_API_ASSERTIONS)
+    testQuickFixAll("AssertTrueMethodRef")
 
-  fun `test AssumeTrue`() = doAssertionTest("AssumeTrue", JUnitCommonClassNames.ORG_JUNIT_JUPITER_API_ASSUMPTIONS)
+  fun `test AssumeTrue`() = testQuickFixAll("AssumeTrue")
 }

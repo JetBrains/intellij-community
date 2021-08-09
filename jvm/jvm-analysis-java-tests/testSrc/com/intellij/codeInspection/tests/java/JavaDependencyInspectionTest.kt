@@ -7,6 +7,8 @@ import com.intellij.psi.search.scope.packageSet.NamedScope
 import com.intellij.psi.search.scope.packageSet.PackageSetFactory
 
 class JavaDependencyInspectionTest : DependencyInspectionTestBase() {
+  override val fileExt: String = "java"
+
   override fun setUp() {
     super.setUp()
     myFixture.addFileToProject("$clientFileNameImport.java", """

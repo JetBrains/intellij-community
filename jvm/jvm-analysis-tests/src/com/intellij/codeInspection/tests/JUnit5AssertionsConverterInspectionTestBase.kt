@@ -1,10 +1,11 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.tests
 
-import com.intellij.analysis.JvmAnalysisBundle
 import com.intellij.codeInspection.JUnit5AssertionsConverterInspection
 
-abstract class JUnit5AssertionsConverterInspectionTestBase : UastQfInspectionTestBase(inspection) {
+abstract class JUnit5AssertionsConverterInspectionTestBase : UastInspectionTestBase() {
+  override val inspection = JUnit5AssertionsConverterInspection()
+
   override fun setUp() {
     super.setUp()
 
@@ -69,13 +70,5 @@ abstract class JUnit5AssertionsConverterInspectionTestBase : UastQfInspectionTes
         public static void assumeTrue(boolean b, String message) {}
       }
     """.trimIndent())
-  }
-
-  protected fun doAssertionTest(name: String, className: String) {
-    doQfAvailableTest(name, JvmAnalysisBundle.message("jvm.inspections.junit5.assertions.converter.quickfix", className))
-  }
-
-  companion object {
-    private val inspection = JUnit5AssertionsConverterInspection()
   }
 }

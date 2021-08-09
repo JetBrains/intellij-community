@@ -9,7 +9,9 @@ import com.intellij.lang.annotation.HighlightSeverity
 import com.intellij.openapi.editor.markup.EffectType
 import java.util.*
 
-abstract class TestFailedLineInspectionTestBase : UastInspectionTestBase(inspection) {
+abstract class TestFailedLineInspectionTestBase : UastInspectionTestBase() {
+  override val inspection = TestFailedLineInspection()
+
   override fun setUp() {
     super.setUp()
     myFixture.addClass("package junit.framework; public class TestCase {}")
@@ -34,9 +36,5 @@ abstract class TestFailedLineInspectionTestBase : UastInspectionTestBase(inspect
     val attributes = infos[0].forcedTextAttributes
     assertNotNull(attributes)
     assertEquals(EffectType.BOLD_DOTTED_LINE, attributes.effectType)
-  }
-
-  companion object {
-    private val inspection = TestFailedLineInspection()
   }
 }

@@ -4,6 +4,8 @@ import com.intellij.codeInspection.tests.TestFailedLineInspectionTestBase
 import com.intellij.jvm.analysis.JvmAnalysisTestsUtil
 
 class JavaTestFailedLineInspectionTest : TestFailedLineInspectionTestBase() {
+  override val fileExt: String = "java"
+
   override fun getTestDataPath() = JvmAnalysisTestsUtil.TEST_DATA_PROJECT_RELATIVE_BASE_PATH + "/codeInspection/testfailedline"
 
   fun testMainTest() {

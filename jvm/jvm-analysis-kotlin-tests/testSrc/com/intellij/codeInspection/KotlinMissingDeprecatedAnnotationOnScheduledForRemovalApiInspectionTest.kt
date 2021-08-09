@@ -6,10 +6,9 @@ import com.intellij.testFramework.TestDataPath
 
 @TestDataPath("\$CONTENT_ROOT/testData/codeInspection/missingDeprecatedAnnotationOnScheduledForRemovalApi")
 class KotlinMissingDeprecatedAnnotationOnScheduledForRemovalApiInspectionTest : MissingDeprecatedAnnotationOnScheduledForRemovalApiInspectionTestBase() {
+  override val fileExt: String = "kt"
 
   override fun getBasePath() = JvmAnalysisKtTestsUtil.TEST_DATA_PROJECT_RELATIVE_BASE_PATH + "/codeInspection/missingDeprecatedAnnotationOnScheduledForRemovalApi"
 
-  fun `test missing @Deprecated on @ScheduledForRemoval APIs`() {
-    myFixture.testHighlighting("missingDeprecatedAnnotations.kt")
-  }
+  fun `test missing @Deprecated on @ScheduledForRemoval APIs`() = testHighlighting("missingDeprecatedAnnotations")
 }

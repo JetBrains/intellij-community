@@ -4,11 +4,11 @@ import com.intellij.codeInspection.tests.JUnitRuleInspectionTestBase
 import com.intellij.jvm.analysis.JvmAnalysisKtTestsUtil
 
 class KotlinJUnitRuleInspectionTest : JUnitRuleInspectionTestBase() {
+  override val fileExt: String = "kt"
+
   override fun getBasePath() = JvmAnalysisKtTestsUtil.TEST_DATA_PROJECT_RELATIVE_BASE_PATH + "/codeInspection/junitrule"
 
-  fun `test @Rule highlighting`() {
-    myFixture.testHighlighting("Rule.kt")
-  }
+  fun `test @Rule highlighting`() = testHighlighting("Rule")
 
   fun `test @Rule quickFixes`() {
     val quickfixes = myFixture.getAllQuickFixes("RuleQf.kt")
@@ -16,9 +16,7 @@ class KotlinJUnitRuleInspectionTest : JUnitRuleInspectionTestBase() {
     myFixture.checkResultByFile("RuleQf.after.kt")
   }
 
-  fun `test @ClassRule highlighting`() {
-    myFixture.testHighlighting("ClassRule.kt")
-  }
+  fun `test @ClassRule highlighting`() = testHighlighting("ClassRule")
 
   fun `test @ClassRule quickFixes`() {
     val quickfixes = myFixture.getAllQuickFixes("ClassRuleQf.kt")

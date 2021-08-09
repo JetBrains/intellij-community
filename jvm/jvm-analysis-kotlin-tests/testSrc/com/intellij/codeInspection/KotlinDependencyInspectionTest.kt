@@ -7,6 +7,8 @@ import com.intellij.psi.search.scope.packageSet.NamedScope
 import com.intellij.psi.search.scope.packageSet.PackageSetFactory
 
 class KotlinDependencyInspectionTest : DependencyInspectionTestBase() {
+  override val fileExt: String = "kt"
+
   override fun setUp() {
     super.setUp()
     myFixture.addFileToProject("$clientFileNameImport.kt", """
@@ -39,13 +41,9 @@ class KotlinDependencyInspectionTest : DependencyInspectionTestBase() {
     }
   }
 
-  fun `test illegal imported dependency`() {
-    myFixture.testHighlighting("$clientFileNameImport.kt")
-  }
+  fun `test illegal imported dependency`() = testHighlighting(clientFileNameImport)
 
-  fun `test illegal fully qualified dependency`() {
-    myFixture.testHighlighting("$clientFileNameFq.kt")
-  }
+  fun `test illegal fully qualified dependency`() = testHighlighting(clientFileNameFq)
 
   companion object {
     const val clientFileName: String = "ClientFile"

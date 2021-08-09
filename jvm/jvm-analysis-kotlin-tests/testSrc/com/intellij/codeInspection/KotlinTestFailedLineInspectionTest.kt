@@ -4,6 +4,8 @@ import com.intellij.codeInspection.tests.TestFailedLineInspectionTestBase
 import com.intellij.jvm.analysis.JvmAnalysisKtTestsUtil
 
 class KotlinTestFailedLineInspectionTest : TestFailedLineInspectionTestBase() {
+  override val fileExt: String = "kt"
+
   override fun getBasePath() = JvmAnalysisKtTestsUtil.TEST_DATA_PROJECT_RELATIVE_BASE_PATH + "/codeInspection/testfailedline"
 
   fun testMainTest() {
