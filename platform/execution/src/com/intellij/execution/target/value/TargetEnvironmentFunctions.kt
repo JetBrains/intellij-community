@@ -7,6 +7,7 @@ import com.intellij.execution.target.HostPort
 import com.intellij.execution.target.TargetEnvironment
 import com.intellij.execution.target.TargetEnvironmentRequest
 import com.intellij.execution.target.TargetPlatform
+import com.intellij.execution.target.local.LocalTargetEnvironmentRequest
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.util.io.FileUtil
 import java.io.File
@@ -41,8 +42,8 @@ fun <T> Iterable<TargetEnvironmentFunction<T>>.joinToStringFunction(separator: C
   JoinedStringTargetEnvironmentFunction(iterable = this, separator = separator)
 
 fun TargetEnvironmentRequest.getTargetEnvironmentValueForLocalPath(localPath: String): TargetEnvironmentFunction<String> {
-  val (uploadRoot, relativePath) = getUploadRootForLocalPath(localPath)
-                             ?: throw IllegalArgumentException("Local path \"$localPath\" is not registered within uploads in the request")
+  if (this is LocalTargetEnvironmentRequest) return constant(localPath)
+  val (uploadRoot, relativePath) = getUploadRootForLocalPath(localPath) ?: throw IllegalArgumentException("Local path \"$localPath\" is not registered within uploads in the request")
   return TargetEnvironmentFunction { targetEnvironment ->
     val volume = targetEnvironment.uploadVolumes[uploadRoot]
                  ?: throw IllegalStateException("Upload root \"$uploadRoot\" is expected to be created in the target environment")
