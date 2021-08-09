@@ -670,8 +670,13 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
         if (ScratchUtil.isScratch(file.getParent())) return PlainTextFileType.INSTANCE;
       }
     }
-    else if (fileType == null) {
-      return myDetectionService.getOrDetectFromContent(file, content);
+    else if (fileType == null || fileType == DetectedByContentFileType.INSTANCE) {
+      // should run detectors for 'DetectedByContentFileType' type and if failed, return text
+      FileType detected = myDetectionService.getOrDetectFromContent(file, content);
+      if (detected == UnknownFileType.INSTANCE && fileType == DetectedByContentFileType.INSTANCE) {
+        return DetectedByContentFileType.INSTANCE;
+      }
+      return detected;
     }
     return ObjectUtils.notNull(fileType, UnknownFileType.INSTANCE);
   }
@@ -704,7 +709,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
     }
 
     FileType fileType = getFileTypeByFileName(file.getNameSequence());
-    if (fileType == UnknownFileType.INSTANCE || fileType == DetectedByContentFileType.INSTANCE) {
+    if (fileType == UnknownFileType.INSTANCE) {
       fileType = null;
     }
     if (toLog()) {
