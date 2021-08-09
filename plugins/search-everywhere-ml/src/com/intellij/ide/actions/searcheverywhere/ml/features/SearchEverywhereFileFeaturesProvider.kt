@@ -62,13 +62,21 @@ internal class SearchEverywhereFileFeaturesProvider : SearchEverywhereElementFea
     return statsCopy
   }
 
+  override fun isElementSupported(element: Any): Boolean {
+    return when (element) {
+      is PsiFileSystemItem -> element.virtualFile != null
+      is PSIPresentationBgRendererWrapper.PsiItemWithPresentation -> isElementSupported(element.item)
+      else -> false
+    }
+  }
+
   override fun getElementFeatures(element: Any,
                                   currentTime: Long,
                                   queryLength: Int,
                                   elementPriority: Int,
                                   cache: Any?): Map<String, Any> {
     val item = when (element) {
-      is PSIPresentationBgRendererWrapper.PsiItemWithPresentation -> (element.item as? PsiFileSystemItem) ?: return emptyMap()
+      is PSIPresentationBgRendererWrapper.PsiItemWithPresentation -> element.item as PsiFileSystemItem
       is PsiFileSystemItem -> element
       else -> return emptyMap()
     }

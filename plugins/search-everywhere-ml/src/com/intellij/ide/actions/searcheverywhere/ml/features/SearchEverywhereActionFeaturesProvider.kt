@@ -30,6 +30,10 @@ internal class SearchEverywhereActionFeaturesProvider : SearchEverywhereElementF
     private const val USAGES_PER_USER_RATIO_DATA_KEY = "usagesPerUserRatio"
   }
 
+  override fun isElementSupported(element: Any): Boolean {
+    return element is GotoActionModel.MatchedValue
+  }
+
   override fun getElementFeatures(element: Any,
                                   currentTime: Long,
                                   queryLength: Int,

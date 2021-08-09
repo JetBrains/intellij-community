@@ -13,6 +13,10 @@ abstract class SearchEverywhereElementFeaturesProvider {
     fun getFeatureProviders(): List<SearchEverywhereElementFeaturesProvider> {
       return EP_NAME.extensionList
     }
+
+    fun isElementSupported(element: Any): Boolean {
+      return getFeatureProviders().any { it.isElementSupported(element) }
+    }
   }
 
   /**
@@ -21,6 +25,11 @@ abstract class SearchEverywhereElementFeaturesProvider {
   open fun getDataToCache(project: Project?): Any? {
     return null
   }
+
+  /**
+   * Returns true if the element is supported by the feature provider.
+   */
+  abstract fun isElementSupported(element: Any): Boolean
 
   abstract fun getElementFeatures(element: Any,
                                   currentTime: Long,

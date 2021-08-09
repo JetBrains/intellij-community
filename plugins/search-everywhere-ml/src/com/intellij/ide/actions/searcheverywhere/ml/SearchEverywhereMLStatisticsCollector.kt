@@ -1,15 +1,14 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.actions.searcheverywhere.ml
 
-import com.intellij.ide.actions.searcheverywhere.PSIPresentationBgRendererWrapper
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereFoundElementInfo
 import com.intellij.ide.actions.searcheverywhere.ml.SearchEverywhereMlSessionService.Companion.RECORDER_CODE
+import com.intellij.ide.actions.searcheverywhere.ml.features.SearchEverywhereElementFeaturesProvider
 import com.intellij.ide.util.gotoByName.GotoActionModel
 import com.intellij.internal.statistic.eventLog.EventLogGroup
 import com.intellij.internal.statistic.eventLog.StatisticsEventLogProviderUtil
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.project.Project
-import com.intellij.psi.PsiFileSystemItem
 import com.intellij.util.concurrency.NonUrgentExecutor
 import kotlin.math.round
 
@@ -85,7 +84,7 @@ internal class SearchEverywhereMLStatisticsCollector {
         data[SELECTED_ELEMENTS_DATA_KEY] = selectedElements.map {
           if (it < elements.size) {
             val element = elements[it].element
-            if (isMLSupportedElement(element)) {
+            if (SearchEverywhereElementFeaturesProvider.isElementSupported(element)) {
               return@map elementIdProvider.getId(element)
             }
           }
@@ -99,7 +98,7 @@ internal class SearchEverywhereMLStatisticsCollector {
           CONTRIBUTOR_ID_KEY to it.contributor.searchProviderId
         )
 
-        if (isMLSupportedElement(it.element)) {
+        if (SearchEverywhereElementFeaturesProvider.isElementSupported(it.element)) {
           addElementFeatures(elementIdProvider, it, state, result, actionManager)
         }
         result
@@ -146,12 +145,6 @@ internal class SearchEverywhereMLStatisticsCollector {
     if ((element is GotoActionModel.MatchedValue) && (element.value is GotoActionModel.ActionWrapper)) {
       operation(element.value as GotoActionModel.ActionWrapper)
     }
-  }
-
-  private fun isMLSupportedElement(element: Any): Boolean {
-    return (element is GotoActionModel.MatchedValue)
-           || (element is PSIPresentationBgRendererWrapper.PsiItemWithPresentation)
-           || (element is PsiFileSystemItem)
   }
 
   companion object {

@@ -110,9 +110,7 @@ class SearchEverywhereMlItemIdProvider {
   fun getId(element: Any): Int {
     val key = when (element) {
       is GotoActionModel.MatchedValue -> getActionKey(element)
-      is PSIPresentationBgRendererWrapper.PsiItemWithPresentation -> {
-        (element.item as? PsiFileSystemItem)?.virtualFile ?: throw IllegalArgumentException("Illegal argument type ${element.javaClass.name}")
-      }
+      is PSIPresentationBgRendererWrapper.PsiItemWithPresentation -> (element.item as PsiFileSystemItem).virtualFile
       is PsiFileSystemItem -> element.virtualFile
       else -> throw IllegalArgumentException("Illegal argument type ${element.javaClass.name}")
     }

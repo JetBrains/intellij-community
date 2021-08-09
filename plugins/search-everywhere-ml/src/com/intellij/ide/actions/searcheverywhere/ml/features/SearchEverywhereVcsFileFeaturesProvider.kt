@@ -10,6 +10,14 @@ class SearchEverywhereVcsFileFeaturesProvider : SearchEverywhereElementFeaturesP
     private const val IS_CHANGED_DATA_KEY = "isChanged"
   }
 
+  override fun isElementSupported(element: Any): Boolean {
+    return when (element) {
+      is PsiFileSystemItem -> true
+      is PSIPresentationBgRendererWrapper.PsiItemWithPresentation -> element.item is PsiFileSystemItem
+      else -> false
+    }
+  }
+
   override fun getElementFeatures(element: Any, currentTime: Long, queryLength: Int, elementPriority: Int, cache: Any?): Map<String, Any> {
     val item = when (element) {
       is PSIPresentationBgRendererWrapper.PsiItemWithPresentation -> (element.item as? PsiFileSystemItem) ?: return emptyMap()
