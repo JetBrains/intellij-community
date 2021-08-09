@@ -83,7 +83,12 @@ interface FirKotlinUastResolveProviderService : BaseKotlinUastResolveProviderSer
         }
     }
 
-    override fun getImplicitParameters(ktLambdaExpression: KtLambdaExpression, parent: UElement): List<KotlinUParameter> {
+    override fun getImplicitParameters(
+        ktLambdaExpression: KtLambdaExpression,
+        parent: UElement,
+        includeExplicitParameters: Boolean
+    ): List<KotlinUParameter> {
+        // TODO receiver parameter, dispatch parameter like in org.jetbrains.uast.kotlin.KotlinUastResolveProviderService.getImplicitParameters
         analyseForUast(ktLambdaExpression) {
             return ktLambdaExpression.functionLiteral.getAnonymousFunctionSymbol().valueParameters.map { p ->
                 KotlinUParameter(
