@@ -8,13 +8,12 @@ import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.codeInspection.util.InspectionMessage;
 import com.intellij.codeInspection.util.IntentionFamilyName;
 import com.intellij.codeInspection.util.IntentionName;
+import com.intellij.ide.actions.ShowSettingsUtilImpl;
 import com.intellij.openapi.application.ex.ApplicationUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.ModuleUtilCore;
-import com.intellij.openapi.options.ConfigurableGroup;
-import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.options.ex.ConfigurableExtensionPointUtil;
 import com.intellij.openapi.options.ex.ConfigurableVisitor;
 import com.intellij.openapi.progress.ProcessCanceledException;
@@ -35,7 +34,6 @@ import com.intellij.util.PlatformUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyPsiBundle;
 import com.jetbrains.python.PythonIdeLanguageCustomization;
-import com.jetbrains.python.configuration.PyActiveSdkModuleConfigurable;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.psi.PyFile;
 import com.jetbrains.python.sdk.*;
@@ -333,8 +331,10 @@ public final class PyInterpreterInspection extends PyInspection {
     }
 
     public static void showPythonInterpreterSettings(@NotNull Project project, @NotNull Module module) {
-      if (hasPythonSdkConfigurable(project)) {
-        ShowSettingsUtil.getInstance().showSettingsDialog(project, PyActiveSdkModuleConfigurable.class);
+      final var id = "com.jetbrains.python.configuration.PyActiveSdkModuleConfigurable";
+      final var group = ConfigurableExtensionPointUtil.getConfigurableGroup(project, true);
+      if (ConfigurableVisitor.findById(id, Collections.singletonList(group)) != null) {
+        ShowSettingsUtilImpl.showSettingsDialog(project, id, null);
         return;
       }
 
@@ -345,13 +345,6 @@ public final class PyInterpreterInspection extends PyInspection {
       else {
         settingsService.openModuleSettings(module);
       }
-    }
-
-    private static boolean hasPythonSdkConfigurable(@NotNull Project project) {
-      if (PlatformUtils.isPyCharm()) return true;
-
-      final List<ConfigurableGroup> groups = Collections.singletonList(ConfigurableExtensionPointUtil.getConfigurableGroup(project, true));
-      return ConfigurableVisitor.findByType(PyActiveSdkModuleConfigurable.class, groups) != null;
     }
 
     private static boolean justOneModuleInheritingSdk(@NotNull Project project, @NotNull Module module) {
