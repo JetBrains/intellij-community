@@ -1223,7 +1223,6 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
 
   private @Nullable Pair<@NotNull PsiElement, @Nullable String> getTarget(@Nullable PsiElement context, @Nullable String url) {
     if (context != null && url != null && url.startsWith(DocumentationManagerProtocol.PSI_ELEMENT_PROTOCOL)) {
-      PsiManager manager = PsiManager.getInstance(getProject(context));
       String refText = url.substring(DocumentationManagerProtocol.PSI_ELEMENT_PROTOCOL.length());
       int separatorPos = refText.lastIndexOf(DocumentationManagerProtocol.PSI_ELEMENT_PROTOCOL_REF_SEPARATOR);
       String ref = null;
@@ -1231,16 +1230,26 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
         ref = refText.substring(separatorPos + DocumentationManagerProtocol.PSI_ELEMENT_PROTOCOL_REF_SEPARATOR.length());
         refText = refText.substring(0, separatorPos);
       }
-      DocumentationProvider provider = getProviderFromElement(context);
-      PsiElement targetElement = provider.getDocumentationElementForLink(manager, refText, context);
-      if (targetElement == null) {
-        targetElement = targetFromLanguageProviders(manager, refText, context);
-      }
+      PsiElement targetElement = targetElement(getProject(context), refText, context);
       if (targetElement != null) {
         return Pair.create(targetElement, ref);
       }
     }
     return null;
+  }
+
+  private static @Nullable PsiElement targetElement(
+    @NotNull Project project,
+    @NotNull String link,
+    @Nullable PsiElement context
+  ) {
+    PsiManager manager = PsiManager.getInstance(project);
+    DocumentationProvider provider = getProviderFromElement(context);
+    PsiElement targetElement = provider.getDocumentationElementForLink(manager, link, context);
+    if (targetElement != null) {
+      return targetElement;
+    }
+    return targetFromLanguageProviders(manager, link, context);
   }
 
   private static @Nullable PsiElement targetFromLanguageProviders(
