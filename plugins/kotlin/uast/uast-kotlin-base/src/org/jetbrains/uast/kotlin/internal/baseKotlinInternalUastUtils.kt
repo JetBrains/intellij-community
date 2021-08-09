@@ -10,8 +10,12 @@ import org.jetbrains.kotlin.asJava.elements.KtLightElement
 import org.jetbrains.kotlin.asJava.elements.KtLightMember
 import org.jetbrains.kotlin.asJava.findFacadeClass
 import org.jetbrains.kotlin.asJava.toLightClass
+import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
+import org.jetbrains.kotlin.psi.psiUtil.getParentOfType
+import org.jetbrains.kotlin.psi.psiUtil.parents
+import org.jetbrains.kotlin.resolve.ArrayFqNames
 import org.jetbrains.uast.UDeclaration
 import org.jetbrains.uast.UElement
 import org.jetbrains.uast.UastErrorType
@@ -69,4 +73,16 @@ fun KtClassOrObject.toPsiType(): PsiType {
         lightClass.baseClassType
     else
         PsiTypesUtil.getClassType(lightClass)
+}
+
+private val KtCallElement.isAnnotationArgument: Boolean
+    // KtAnnotationEntry (or KtCallExpression when annotation is nested) -> KtValueArgumentList -> KtValueArgument -> arrayOf call
+    get() = when (val elementAt2 = parents.elementAtOrNull(2)) {
+        is KtAnnotationEntry -> true
+        is KtCallExpression -> elementAt2.getParentOfType<KtAnnotationEntry>(true, KtDeclaration::class.java) != null
+        else -> false
+    }
+
+fun isAnnotationArgumentArrayInitializer(ktCallElement: KtCallElement, fqNameOfCallee: FqName): Boolean {
+    return ktCallElement.isAnnotationArgument && fqNameOfCallee in ArrayFqNames.ARRAY_CALL_FQ_NAMES
 }
