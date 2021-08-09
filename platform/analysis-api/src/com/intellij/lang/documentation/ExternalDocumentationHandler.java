@@ -15,7 +15,9 @@ public interface ExternalDocumentationHandler {
     return false;
   }
 
-  boolean handleExternalLink(PsiManager psiManager, String link, PsiElement context);
+  default boolean handleExternalLink(PsiManager psiManager, String link, PsiElement context) {
+    return false;
+  }
 
   boolean canFetchDocumentationLink(String link);
 
