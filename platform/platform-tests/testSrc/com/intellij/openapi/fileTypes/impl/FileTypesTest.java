@@ -9,7 +9,6 @@ import com.intellij.ide.highlighter.custom.SyntaxTable;
 import com.intellij.ide.plugins.IdeaPluginDescriptorImpl;
 import com.intellij.ide.plugins.PluginDescriptorTestKt;
 import com.intellij.ide.plugins.PluginManagerCore;
-import com.intellij.idea.Bombed;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
@@ -24,7 +23,6 @@ import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
-import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider;
 import com.intellij.openapi.fileTypes.*;
 import com.intellij.openapi.fileTypes.ex.DetectedByContentFileType;
 import com.intellij.openapi.fileTypes.ex.FakeFileType;
@@ -174,17 +172,11 @@ public class FileTypesTest extends HeavyPlatformTestCase {
     assertFalse(myFileTypeManager.isFileIgnored(createTempVirtualFile("x.txt", null, "", StandardCharsets.UTF_8)));
   }
 
-  @Bombed(year = 2021, month = Calendar.JULY, day = 13, user = "cdr")
   public void testEmptyFileWithoutExtension() throws IOException {
     VirtualFile foo = getVirtualFile(createTempFile("foo", ""));
-    FileTypeManagerEx managerEx = FileTypeManagerEx.getInstanceEx();
-    try {
-      WriteAction.run(() -> managerEx.associatePattern(DetectedByContentFileType.INSTANCE, "foo"));
-      assertTrue(TextEditorProvider.isTextFile(foo));
-    }
-    finally {
-      WriteAction.run(() -> managerEx.removeAssociation(DetectedByContentFileType.INSTANCE, new ExactFileNameMatcher("foo")));
-    }
+    WriteAction.run(() -> myFileTypeManager.associatePattern(DetectedByContentFileType.INSTANCE, "foo"));
+    FileType type = myFileTypeManager.getFileTypeByFile(foo); // foo.getFileType() will call FileTypeRegistry.getInstance() which we try to avoid
+    assertFalse(type.getName(), type.isBinary());
   }
 
   private static void checkNotAssociated(@NotNull FileType fileType,
