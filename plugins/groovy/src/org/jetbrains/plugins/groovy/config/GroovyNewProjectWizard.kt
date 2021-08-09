@@ -13,7 +13,7 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.fileChooser.FileChooserFactory
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.projectRoots.JavaSdk
+import com.intellij.openapi.projectRoots.JavaSdkType
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.ModifiableRootModel
 import com.intellij.openapi.roots.libraries.LibraryType
@@ -45,7 +45,7 @@ class GroovyNewProjectWizard : NewProjectWizard<GroovyModuleSettings> {
   override var settingsFactory = { GroovyModuleSettings() }
 
   override fun settingsList(settings: GroovyModuleSettings): List<SettingsComponent> {
-    val sdkCombo = JdkComboBox(null, ProjectSdksModel(), { it is JavaSdk }, null, null, null)
+    val sdkCombo = JdkComboBox(null, ProjectSdksModel().also { it.syncSdks() }, { it is JavaSdkType }, null, null, null)
       .apply { minimumSize = Dimension(0, 0) }
       .also { combo -> combo.addItemListener { settings.javaSdk = combo.selectedJdk } }
     lateinit var disposableComponent: Disposable
