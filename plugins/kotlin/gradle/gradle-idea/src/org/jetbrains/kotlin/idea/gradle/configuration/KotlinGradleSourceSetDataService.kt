@@ -200,7 +200,7 @@ class KotlinGradleLibraryDataService : AbstractProjectDataService<LibraryData, V
 }
 
 fun detectPlatformKindByPlugin(moduleNode: DataNode<ModuleData>): IdePlatformKind<*>? {
-    val pluginId = moduleNode.kotlinGradleSourceSetData.platformPluginId
+    val pluginId = moduleNode.kotlinGradleProjectDataOrNull?.platformPluginId
     return IdePlatformKind.ALL_KINDS.firstOrNull { it.tooling.gradlePluginId == pluginId }
 }
 
@@ -211,7 +211,7 @@ fun detectPlatformKindByPlugin(moduleNode: DataNode<ModuleData>): IdePlatformKin
     level = DeprecationLevel.ERROR
 )
 fun detectPlatformByPlugin(moduleNode: DataNode<ModuleData>): TargetPlatformKind<*>? {
-    return when (moduleNode.kotlinGradleSourceSetData.platformPluginId) {
+    return when (moduleNode.kotlinGradleProjectDataOrFail.platformPluginId) {
         "kotlin-platform-jvm" -> TargetPlatformKind.Jvm[JvmTarget.DEFAULT]
         "kotlin-platform-js" -> TargetPlatformKind.JavaScript
         "kotlin-platform-common" -> TargetPlatformKind.Common
@@ -245,10 +245,10 @@ fun configureFacetByGradleModule(
     sourceSetName: String? = sourceSetNode?.data?.id?.let { it.substring(it.lastIndexOf(':') + 1) }
 ): KotlinFacet? {
     if (moduleNode.kotlinSourceSetData?.sourceSetInfo != null) return null // Suppress in the presence of new MPP model
-    val kotlinGradleSourceSetData = moduleNode.kotlinGradleSourceSetData
-    if (!kotlinGradleSourceSetData.isResolved) return null
+    val kotlinGradleProjectData = moduleNode.kotlinGradleProjectDataOrNull ?: return null
+    if (!kotlinGradleProjectData.isResolved) return null
 
-    if (!kotlinGradleSourceSetData.hasKotlinPlugin) {
+    if (!kotlinGradleProjectData.hasKotlinPlugin) {
         val facetModel = modelsProvider.getModifiableFacetModel(ideModule)
         val facet = facetModel.getFacetByType(KotlinFacetType.TYPE_ID)
         if (facet != null) {
@@ -264,27 +264,29 @@ fun configureFacetByGradleModule(
     val platform = platformKind?.defaultPlatform
 
     val kotlinFacet = ideModule.getOrCreateFacet(modelsProvider, false, GradleConstants.SYSTEM_ID.id)
+    val kotlinGradleSourceSetData = sourceSetNode?.kotlinGradleSourceSetDataOrFail
     kotlinFacet.configureFacet(
         compilerVersion = compilerVersion,
         platform = platform,
         modelsProvider = modelsProvider,
-        additionalVisibleModuleNames = if (sourceSetName != null)
-            getAdditionalVisibleModuleNames(moduleNode, sourceSetName) else emptySet()
+        additionalVisibleModuleNames = sourceSetNode?.let { getAdditionalVisibleModuleNames(moduleNode, it) }.orEmpty()
     )
 
     if (sourceSetNode == null) {
-        ideModule.compilerArgumentsBySourceSet = kotlinGradleSourceSetData.compilerArgumentsBySourceSet
+        ideModule.compilerArgumentsBySourceSet = moduleNode.compilerArgumentsBySourceSet
         ideModule.sourceSetName = sourceSetName
     }
     ideModule.hasExternalSdkConfiguration = sourceSetNode?.data?.sdkName != null
 
-    val argsInfo = kotlinGradleSourceSetData.compilerArgumentsBySourceSet?.get(sourceSetName ?: "main")
+    val argsInfo = kotlinGradleSourceSetData?.compilerArguments
     if (argsInfo != null) {
         configureFacetByCompilerArguments(kotlinFacet, argsInfo, modelsProvider)
     }
 
+    val implementedModulesAware = (kotlinGradleSourceSetData ?: kotlinGradleProjectData) as ImplementedModulesAware
+
     with(kotlinFacet.configuration.settings) {
-        implementedModuleNames = (sourceSetNode ?: moduleNode).kotlinGradleSourceSetData.implementedModuleNames.toList()
+        implementedModuleNames = implementedModulesAware.implementedModuleNames
         productionOutputPath = getExplicitOutputPath(moduleNode, platformKind, "main")
         testOutputPath = getExplicitOutputPath(moduleNode, platformKind, "test")
     }
@@ -313,13 +315,18 @@ private fun getExplicitOutputPath(moduleNode: DataNode<ModuleData>, platformKind
         return null
     }
 
-    val k2jsArgumentList =
-        moduleNode.kotlinGradleSourceSetData.compilerArgumentsBySourceSet?.get(sourceSet)?.currentArguments ?: return null
+    val sourceSetDataNode = ExternalSystemApiUtil.findAll(moduleNode, GradleSourceSetData.KEY).find { it.data.moduleName == sourceSet }
+        ?: return null
+    val kotlinSourceSetDataNode = ExternalSystemApiUtil.findAll(sourceSetDataNode, KotlinGradleSourceSetData.KEY).singleOrNull()
+        ?: return null
+
+    val k2jsArgumentList = kotlinSourceSetDataNode.data.compilerArguments.currentArguments
     return K2JSCompilerArguments().apply { parseCommandLineArguments(k2jsArgumentList, this) }.outputFile
 }
 
-private fun getAdditionalVisibleModuleNames(moduleNode: DataNode<ModuleData>, sourceSetName: String): Set<String> {
-    return moduleNode.kotlinGradleSourceSetData.additionalVisibleSourceSets[sourceSetName].orEmpty()
+private fun getAdditionalVisibleModuleNames(moduleNode: DataNode<ModuleData>, sourceSetNode: DataNode<GradleSourceSetData>): Set<String> {
+    return ExternalSystemApiUtil.findAll(sourceSetNode, KotlinGradleSourceSetData.KEY)
+        .single()?.data?.additionalVisibleSourceSets.orEmpty()
         .mapNotNull { additionalVisibleSourceSetName ->
             moduleNode.children.map { it.data }
                 .filterIsInstance<GradleSourceSetData>().find { otherGradleSourceSetData ->

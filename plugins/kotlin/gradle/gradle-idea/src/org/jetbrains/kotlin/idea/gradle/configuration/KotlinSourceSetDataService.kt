@@ -174,7 +174,7 @@ class KotlinSourceSetDataService : AbstractProjectDataService<GradleSourceSetDat
 
             val platformKinds = kotlinSourceSet.actualPlatforms.platforms //TODO(auskov): fix calculation of jvm target
                 .map { IdePlatformKindTooling.getTooling(it).kind }
-                .flatMap { it.toSimplePlatforms(moduleData, mainModuleNode.kotlinGradleSourceSetData.isHmpp, projectPlatforms) }
+                .flatMap { it.toSimplePlatforms(moduleData, mainModuleNode.kotlinGradleProjectDataOrFail.isHmpp, projectPlatforms) }
                 .distinct()
                 .toSet()
 
@@ -185,13 +185,13 @@ class KotlinSourceSetDataService : AbstractProjectDataService<GradleSourceSetDat
             // because this DataService was separated from KotlinGradleSourceSetDataService for MPP projects only
             val id = if (compilerArguments?.multiPlatform == true) GradleConstants.SYSTEM_ID.id else null
             val kotlinFacet = ideModule.getOrCreateFacet(modelsProvider, false, id)
-            val kotlinGradleSourceSetData = mainModuleNode.kotlinGradleSourceSetData
+            val kotlinGradleProjectData = mainModuleNode.kotlinGradleProjectDataOrFail
             kotlinFacet.configureFacet(
                 compilerVersion = compilerVersion,
                 platform = platform,
                 modelsProvider = modelsProvider,
-                hmppEnabled = kotlinGradleSourceSetData.isHmpp,
-                pureKotlinSourceFolders = kotlinGradleSourceSetData.pureKotlinSourceFolders.toList(),
+                hmppEnabled = kotlinGradleProjectData.isHmpp,
+                pureKotlinSourceFolders = kotlinGradleProjectData.pureKotlinSourceFolders.toList(),
                 dependsOnList = kotlinSourceSet.dependsOn,
                 additionalVisibleModuleNames = kotlinSourceSet.additionalVisible
             )
@@ -232,7 +232,7 @@ class KotlinSourceSetDataService : AbstractProjectDataService<GradleSourceSetDat
                     testOutputPath = null
                 }
 
-                this.pureKotlinSourceFolders = kotlinGradleSourceSetData.pureKotlinSourceFolders.toList()
+                this.pureKotlinSourceFolders = kotlinGradleProjectData.pureKotlinSourceFolders.toList()
             }
 
             return kotlinFacet
