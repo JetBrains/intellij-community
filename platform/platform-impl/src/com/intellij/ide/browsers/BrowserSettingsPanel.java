@@ -131,6 +131,7 @@ final class BrowserSettingsPanel {
   private JBCheckBox showBrowserHover;
   private JBCheckBox showBrowserHoverXml;
   private JPanel browserPopupPanel;
+  private JPanel reloadBehavior;
 
   private TableModelEditor<ConfigurableWebBrowser> browsersEditor;
 
@@ -178,6 +179,7 @@ final class BrowserSettingsPanel {
     previewReloadModeComboBox.setRenderer(SimpleListCellRenderer.create("", (it) -> it.getTitle() ));
 
     browserPopupPanel.setBorder(IdeBorderFactory.createTitledBorder(IdeBundle.message("settings.browsers.show.browser.popup.in.the.editor")));
+    reloadBehavior.setBorder(IdeBorderFactory.createTitledBorder(IdeBundle.message("settings.browsers.reload.behavior")));
   }
 
   private void updateCustomPathTextFieldValue(@NotNull DefaultBrowserPolicy browser) {
