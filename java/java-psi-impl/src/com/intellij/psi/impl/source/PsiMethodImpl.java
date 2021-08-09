@@ -30,6 +30,7 @@ import com.intellij.ui.icons.RowIcon;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.PlatformIcons;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.List;
@@ -37,7 +38,8 @@ import java.util.Map;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-public class PsiMethodImpl extends JavaStubPsiElement<PsiMethodStub> implements PsiMethod, Queryable {
+public class PsiMethodImpl extends JavaStubPsiElement<PsiMethodStub> implements PsiExtensibleMethod, Queryable {
+  private final MethodInnerStuffCache myInnersCache;
   private SoftReference<PsiType> myCachedType;
 
   public PsiMethodImpl(final PsiMethodStub stub) {
@@ -46,10 +48,12 @@ public class PsiMethodImpl extends JavaStubPsiElement<PsiMethodStub> implements 
 
   protected PsiMethodImpl(final PsiMethodStub stub, final IStubElementType type) {
     super(stub, type);
+    this.myInnersCache = new MethodInnerStuffCache(this);
   }
 
   public PsiMethodImpl(final ASTNode node) {
     super(node);
+    this.myInnersCache = new MethodInnerStuffCache(this);
   }
 
   @Override
@@ -154,13 +158,34 @@ public class PsiMethodImpl extends JavaStubPsiElement<PsiMethodStub> implements 
   }
 
   @Override
-  public PsiTypeParameterList getTypeParameterList() {
+  public @NotNull PsiParameterList getParameterList() {
+    return myInnersCache.getParametersList();
+  }
+
+  @Override
+  public @NotNull PsiReferenceList getThrowsList() {
+    return myInnersCache.getThrowsList();
+  }
+
+  @Override
+  public @Nullable PsiCodeBlock getBody() {
+    return myInnersCache.getBody();
+  }
+
+  @Override
+  @NotNull
+  public PsiTypeParameterList getOwnTypeParametersList() {
     return getRequiredStubOrPsiChild(JavaStubElementTypes.TYPE_PARAMETER_LIST);
   }
 
   @Override
   public boolean hasTypeParameters() {
     return PsiImplUtil.hasTypeParameters(this);
+  }
+
+  @Override
+  public PsiTypeParameterList getTypeParameterList() {
+    return myInnersCache.getTypeParametersList();
   }
 
   @Override
@@ -200,7 +225,7 @@ public class PsiMethodImpl extends JavaStubPsiElement<PsiMethodStub> implements 
 
   @Override
   @NotNull
-  public PsiParameterList getParameterList() {
+  public PsiParameterList getOwnParametersList() {
     PsiParameterList list = getStubOrPsiChild(JavaStubElementTypes.PARAMETER_LIST);
     if (list == null) {
       return CachedValuesManager.getCachedValue(this, () -> {
@@ -228,7 +253,7 @@ public class PsiMethodImpl extends JavaStubPsiElement<PsiMethodStub> implements 
 
   @Override
   @NotNull
-  public PsiReferenceList getThrowsList() {
+  public PsiReferenceList getOwnThrowsList() {
     PsiReferenceList child = getStubOrPsiChild(JavaStubElementTypes.THROWS_LIST);
     if (child != null) return child;
 
@@ -240,7 +265,8 @@ public class PsiMethodImpl extends JavaStubPsiElement<PsiMethodStub> implements 
   }
 
   @Override
-  public PsiCodeBlock getBody() {
+  @Nullable
+  public PsiCodeBlock getOwnBody() {
     return (PsiCodeBlock)getNode().findChildByRoleAsPsiElement(ChildRole.METHOD_BODY);
   }
 
