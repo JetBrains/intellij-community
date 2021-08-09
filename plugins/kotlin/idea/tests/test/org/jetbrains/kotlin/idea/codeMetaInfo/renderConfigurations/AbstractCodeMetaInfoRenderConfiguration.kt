@@ -86,7 +86,10 @@ open class HighlightingConfiguration(
             DescriptionRenderingOption.NEVER -> {}
 
             DescriptionRenderingOption.ALWAYS, DescriptionRenderingOption.IF_NOT_NULL -> {
-                params.add("descr='${sanitizeLineBreaks(highlightingCodeMetaInfo.highlightingInfo.description)}'")
+                val description = highlightingCodeMetaInfo.highlightingInfo.description
+                if (description != null) {
+                    params.add("descr='${sanitizeLineBreaks(description)}'")
+                }
             }
         }
 
