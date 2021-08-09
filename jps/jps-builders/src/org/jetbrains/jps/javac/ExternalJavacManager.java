@@ -336,7 +336,7 @@ public class ExternalJavacManager extends ProcessAdapter {
 
     appendParam(cmdLine, ExternalJavacProcess.class.getName());
     appendParam(cmdLine, processId.toString());
-    appendParam(cmdLine, InetAddress.getLoopbackAddress().getHostName());
+    appendParam(cmdLine, InetAddress.getLoopbackAddress().getHostAddress());
     appendParam(cmdLine, Integer.toString(port));
     appendParam(cmdLine, Boolean.toString(keepProcessAlive));  // keep in memory after build finished
 
