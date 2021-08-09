@@ -11,7 +11,9 @@ import org.jetbrains.annotations.Nullable;
  */
 public interface ExternalDocumentationHandler {
 
-  boolean handleExternal(PsiElement element, PsiElement originalElement);
+  default boolean handleExternal(PsiElement element, PsiElement originalElement) {
+    return false;
+  }
 
   boolean handleExternalLink(PsiManager psiManager, String link, PsiElement context);
 
