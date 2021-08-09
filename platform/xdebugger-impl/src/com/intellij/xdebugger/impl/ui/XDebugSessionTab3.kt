@@ -101,7 +101,7 @@ class XDebugSessionTab3(
     addVariablesAndWatches(session)
 
     val name = debuggerContentId
-    val content = myUi.createContent(name, splitter, XDebuggerBundle.message("xdebugger.debugger.tab.title"), null, framesView.defaultFocusedComponent).apply {
+    val content = myUi.createContent(name, splitter, XDebuggerBundle.message("xdebugger.threads.vars.tab.title"), null, framesView.defaultFocusedComponent).apply {
       isCloseable = false
     }
 

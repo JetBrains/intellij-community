@@ -11,6 +11,7 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.ui.JBPopupMenu
 import com.intellij.openapi.util.*
+import com.intellij.openapi.util.text.StringUtil
 import com.intellij.ui.MouseDragHelper
 import com.intellij.ui.PopupHandler
 import com.intellij.ui.awt.RelativePoint
@@ -232,20 +233,23 @@ internal class SingleContentLayout(
   override fun updateIdLabel(label: BaseLabel) {
     if (!isSingleContentView) {
       label.icon = null
+      label.toolTipText = null
       super.updateIdLabel(label)
     }
     else if (myTabs.size == 1) {
       label.icon = myTabs[0].content.icon
+      val displayName = myTabs[0].content.displayName
       label.text = createProcessName(
         prefix = myUi.window.stripeTitle,
-        title = myTabs[0].content.displayName
+        title = displayName
       )
-      label.border = JBUI.Borders.empty(0, 2, 0, 10)
+      label.toolTipText = displayName
+      label.border = JBUI.Borders.empty(0, 2, 0, 7)
     }
   }
 
   @NlsSafe
-  private fun createProcessName(title: String, prefix: String? = null) = prefix?.let { "$it $title" } ?: title
+  private fun createProcessName(title: String, prefix: String? = null) = prefix?.let { "$it:" } ?: title
 
   private inner class TabAdapter(
     val content: Content,
