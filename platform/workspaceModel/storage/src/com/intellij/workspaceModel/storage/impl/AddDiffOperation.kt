@@ -4,6 +4,7 @@ package com.intellij.workspaceModel.storage.impl
 import com.google.common.collect.HashBiMap
 import com.google.common.collect.HashMultimap
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.diagnostic.trace
 import com.intellij.workspaceModel.storage.*
 import java.io.File
 
@@ -18,11 +19,19 @@ internal class AddDiffOperation(val target: WorkspaceEntityStorageBuilderImpl, v
   fun addDiff() {
     if (target === diff) LOG.error("Trying to apply diff to itself")
 
+    if (LOG.isTraceEnabled) {
+      target.assertConsistency()
+      diff.assertConsistency()
+      LOG.trace("Before starting addDiff no consistency issues were found")
+    }
+
     for ((_, change) in diffLog) {
       when (change) {
         is ChangeEntry.AddEntity<out WorkspaceEntity> -> {
           @Suppress("UNCHECKED_CAST")
           change as ChangeEntry.AddEntity<WorkspaceEntity>
+
+          LOG.trace { "addDiff: newEntity" }
 
           checkPersistentId(change.entityData, null)
 
@@ -55,6 +64,7 @@ internal class AddDiffOperation(val target: WorkspaceEntityStorageBuilderImpl, v
           target.changeLog.addAddEvent(targetEntityId.id, targetEntityData)
         }
         is ChangeEntry.RemoveEntity -> {
+          LOG.trace { "addDiff: remove entity. ${change.id}" }
           val sourceEntityId = change.id.asThis()
 
           // This sourceEntityId is definitely not presented in replaceMap as a key, so we can just remove this entity from target
@@ -69,12 +79,15 @@ internal class AddDiffOperation(val target: WorkspaceEntityStorageBuilderImpl, v
           }
         }
         is ChangeEntry.ReplaceEntity<out WorkspaceEntity> -> {
+          LOG.trace { "addDiff: replace entity" }
           replaceOperation(change)
         }
         is ChangeEntry.ChangeEntitySource<out WorkspaceEntity> -> {
+          LOG.trace { "addDiff: change entity source" }
           replaceSourceOperation(change.newData)
         }
         is ChangeEntry.ReplaceAndChangeSource<out WorkspaceEntity> -> {
+          LOG.trace { "addDiff: replace and change source" }
           replaceOperation(change.dataChange)
           replaceSourceOperation(change.sourceChange.newData)
         }
@@ -349,6 +362,7 @@ internal class AddDiffOperation(val target: WorkspaceEntityStorageBuilderImpl, v
         if (existingIdCheck) {
           // target persistent id exists already.
           val existingEntityData = target.entityDataByIdOrDie(existingIds)
+          LOG.debug("Removing existing entity... $existingIds")
           target.removeEntity(existingEntityData.createEntity(target))
           target.addDiffAndReport(
             """

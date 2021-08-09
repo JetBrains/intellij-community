@@ -1,11 +1,11 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.workspaceModel.storage.propertyBased
 
+import com.intellij.workspaceModel.storage.ClassConversion
 import com.intellij.workspaceModel.storage.EntitySource
 import com.intellij.workspaceModel.storage.ModifiableWorkspaceEntity
 import com.intellij.workspaceModel.storage.WorkspaceEntity
 import com.intellij.workspaceModel.storage.entities.*
-import com.intellij.workspaceModel.storage.ClassConversion
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityBase
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityStorageBuilderImpl
 import com.intellij.workspaceModel.storage.impl.exceptions.PersistentIdAlreadyExistsException
@@ -21,7 +21,8 @@ internal fun getEntityManipulation(workspace: WorkspaceEntityStorageBuilderImpl)
     RemoveSomeEntity.create(workspace),
     EntityManipulation.addManipulations(workspace),
     EntityManipulation.modifyManipulations(workspace),
-    ChangeEntitySource.create(workspace)
+    ChangeEntitySource.create(workspace),
+    EntitiesBySource.create(workspace),
   )
 }
 
@@ -55,6 +56,20 @@ internal interface EntityManipulation {
       // Do not enable at the moment. A lot of issues about entities with persistentId
       //NamedEntityManipulation
     )
+  }
+}
+
+private class EntitiesBySource(private val storage: WorkspaceEntityStorageBuilderImpl) : ImperativeCommand {
+  override fun performCommand(env: ImperativeCommand.Environment) {
+    val source = env.generateValue(sources, null)
+
+    // Check no exceptions.
+    // XXX Can we check anything else?
+    storage.entitiesBySource { it == source }
+  }
+
+  companion object {
+    fun create(workspace: WorkspaceEntityStorageBuilderImpl): Generator<EntitiesBySource> = Generator.constant(EntitiesBySource(workspace))
   }
 }
 
