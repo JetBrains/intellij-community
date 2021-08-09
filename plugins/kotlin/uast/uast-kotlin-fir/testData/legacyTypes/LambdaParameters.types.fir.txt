@@ -1,0 +1,25 @@
+UFile (package = ) [public final class LambdaParametersKt {...]
+    UClass (name = LambdaParametersKt) [public final class LambdaParametersKt {...}]
+        UMethod (name = lambdaWithRecivier) [public static final fun lambdaWithRecivier() : void {...}]
+            UBlockExpression [{...}] : PsiType:String
+                UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1)) [buildString({ ...})] : PsiType:String
+                    UIdentifier (Identifier (buildString)) [UIdentifier (Identifier (buildString))]
+                    USimpleNameReferenceExpression (identifier = buildString, resolvesTo = null) [buildString] : PsiType:String
+                    ULambdaExpression [{ ...}] : PsiType:Function1<? super StringBuilder, ? extends Unit>
+                        UBlockExpression [{...}] : PsiType:Unit
+                            UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1)) [append("a")] : PsiType:NonExistentClass
+                                UIdentifier (Identifier (append)) [UIdentifier (Identifier (append))]
+                                USimpleNameReferenceExpression (identifier = append, resolvesTo = null) [append] : PsiType:NonExistentClass
+                                ULiteralExpression (value = "a") ["a"] : PsiType:String
+        UMethod (name = itParameter) [public static final fun itParameter() : void {...}]
+            UBlockExpression [{...}] : PsiType:int
+                UQualifiedReferenceExpression [10.let({ var it: <ErrorType> ->...})] : PsiType:int
+                    ULiteralExpression (value = 10) [10] : PsiType:int
+                    UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1)) [let({ var it: <ErrorType> ->...})] : PsiType:int
+                        UIdentifier (Identifier (let)) [UIdentifier (Identifier (let))]
+                        USimpleNameReferenceExpression (identifier = let, resolvesTo = null) [let] : PsiType:int
+                        ULambdaExpression [{ var it: <ErrorType> ->...}] : PsiType:Function1<? super Integer, ? extends Integer>
+                            UParameter (name = it) [var it: <ErrorType>]
+                            UBlockExpression [{...}] : PsiType:int
+                                UReturnExpression [return it]
+                                    USimpleNameReferenceExpression (identifier = it) [it] : PsiType:int
