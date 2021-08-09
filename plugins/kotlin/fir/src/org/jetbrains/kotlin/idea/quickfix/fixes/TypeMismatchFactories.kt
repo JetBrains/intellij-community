@@ -31,7 +31,8 @@ object TypeMismatchFactories {
 
     val smartcastImpossibleFactory = diagnosticFixFactory(KtFirDiagnostic.SmartcastImpossible::class) { diagnostic ->
         val psi = diagnostic.psi
-        getFixesForTypeMismatch(psi, expectedType = diagnostic.desiredType, actualType = psi.getKtType())
+        val actualType = psi.getKtType() ?: return@diagnosticFixFactory emptyList()
+        getFixesForTypeMismatch(psi, expectedType = diagnostic.desiredType, actualType = actualType)
     }
 
     private fun KtAnalysisSession.getFixesForTypeMismatch(
