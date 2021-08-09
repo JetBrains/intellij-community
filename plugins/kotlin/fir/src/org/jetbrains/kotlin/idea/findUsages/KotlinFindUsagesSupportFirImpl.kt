@@ -84,7 +84,7 @@ class KotlinFindUsagesSupportFirImpl : KotlinFindUsagesSupport {
                     val filteredDeclarations =
                         if (ignore != null) renderToPsi.filter { ignore.contains(it.first) } else renderToPsi
 
-                    val renderedClass = containingClass.name?.asString() ?: SpecialNames.ANONYMOUS //TODO render class
+                    val renderedClass = containingClass.name?.asString() ?: SpecialNames.ANONYMOUS_STRING //TODO render class
 
                     AnalyzedModel(renderedClass, filteredDeclarations.toMap())
                 }
