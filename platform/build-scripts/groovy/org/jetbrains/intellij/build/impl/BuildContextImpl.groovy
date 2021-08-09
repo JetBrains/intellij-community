@@ -354,6 +354,10 @@ final class BuildContextImpl extends BuildContext {
       jvmArgs.add('-Didea.jre.check=true')
     }
 
+    if (productProperties.useSplash) {
+      //noinspection SpellCheckingInspection
+      jvmArgs.add('-Dsplash=true')
+    }
     return jvmArgs
   }
 }
