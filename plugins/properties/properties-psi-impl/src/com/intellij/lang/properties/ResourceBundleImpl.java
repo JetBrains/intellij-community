@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.lang.properties;
 
 import com.intellij.lang.properties.psi.PropertiesFile;
@@ -13,16 +11,14 @@ import org.jetbrains.annotations.NotNull;
 import java.util.List;
 import java.util.Objects;
 
-/**
- * @author Alexey
- */
-public class ResourceBundleImpl extends ResourceBundle {
+public final class ResourceBundleImpl extends ResourceBundle {
   @NotNull
   private final SmartPsiElementPointer<PsiFile> myDefaultPropertiesFile;
   private boolean myValid = true;
 
   public ResourceBundleImpl(@NotNull final PropertiesFile defaultPropertiesFile) {
-    myDefaultPropertiesFile = SmartPointerManager.getInstance(defaultPropertiesFile.getProject()).createSmartPsiElementPointer(defaultPropertiesFile.getContainingFile());
+    myDefaultPropertiesFile = SmartPointerManager.getInstance(defaultPropertiesFile.getProject())
+      .createSmartPsiElementPointer(defaultPropertiesFile.getContainingFile());
   }
 
   @NotNull

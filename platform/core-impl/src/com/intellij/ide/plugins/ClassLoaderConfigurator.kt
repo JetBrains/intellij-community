@@ -330,7 +330,7 @@ private fun createPluginDependencyAndContentBasedScope(descriptor: IdeaPluginDes
   }
 
   val pluginId = descriptor.pluginId.idString
-  return PluginClassLoader.ResolveScopeManager { name, packagePrefix, force ->
+  return PluginClassLoader.ResolveScopeManager { name, _, force ->
     if (force) {
       return@ResolveScopeManager null
     }

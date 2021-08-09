@@ -869,8 +869,7 @@ abstract class ComponentManagerImpl @JvmOverloads constructor(
         throw e
       }
 
-      val message = "Cannot create class ${aClass.name} (classloader=${aClass.classLoader})"
-      throw PluginException(message, e, pluginId)
+      throw PluginException("Cannot create class ${aClass.name} (classloader=${aClass.classLoader})", e, pluginId)
     }
   }
 
