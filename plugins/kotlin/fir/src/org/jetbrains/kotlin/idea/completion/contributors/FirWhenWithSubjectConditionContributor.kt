@@ -44,7 +44,7 @@ internal class FirWhenWithSubjectConditionContributor(
         val whenExpression = whenCondition.parentOfType<KtWhenExpression>() ?: return
         val subject = whenExpression.subjectExpression ?: return
         val allConditionsExceptCurrent = whenExpression.entries.flatMap { entry -> entry.conditions.filter { it != whenCondition } }
-        val subjectType = subject.getKtType()
+        val subjectType = subject.getKtType() ?: return
         val classSymbol = getClassSymbol(subjectType)
         val visibilityChecker = CompletionVisibilityChecker.create(basicContext, positionContext)
         val isSingleCondition = whenCondition.isSingleConditionInEntry()

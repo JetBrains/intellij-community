@@ -47,7 +47,7 @@ class KtSymbolBasedBindingContext(val context: FE10BindingContext) : BindingCont
 
     override fun getType(expression: KtExpression): KotlinType? =
         context.withAnalysisSession {
-            expression.getKtType().toKotlinType(context)
+            expression.getKtType()?.toKotlinType(context)
         }
 
     override fun <K : Any?, V : Any?> getKeys(slice: WritableSlice<K, V>?): Collection<K> =

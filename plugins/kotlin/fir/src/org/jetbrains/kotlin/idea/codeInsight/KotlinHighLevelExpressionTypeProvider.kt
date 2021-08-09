@@ -21,7 +21,9 @@ class KotlinHighLevelExpressionTypeProvider : KotlinExpressionTypeProvider() {
         KotlinBundle.message("dialog.title.getting.expression.type")
     ) {
         @NlsSafe
-        val rendered = element.getKtType().render()
+        val ktType = element.getKtType()
+            ?: return@analyseInModalWindow KotlinBundle.message("type.provider.unknown.type")
+        val rendered = ktType.render()
         StringUtil.escapeXmlEntities(rendered)
     }
 
