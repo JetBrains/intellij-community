@@ -1222,20 +1222,35 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
   }
 
   private @Nullable Pair<@NotNull PsiElement, @Nullable String> getTarget(@Nullable PsiElement context, @Nullable String url) {
-    if (context != null && url != null && url.startsWith(DocumentationManagerProtocol.PSI_ELEMENT_PROTOCOL)) {
-      String refText = url.substring(DocumentationManagerProtocol.PSI_ELEMENT_PROTOCOL.length());
-      int separatorPos = refText.lastIndexOf(DocumentationManagerProtocol.PSI_ELEMENT_PROTOCOL_REF_SEPARATOR);
-      String ref = null;
-      if (separatorPos >= 0) {
-        ref = refText.substring(separatorPos + DocumentationManagerProtocol.PSI_ELEMENT_PROTOCOL_REF_SEPARATOR.length());
-        refText = refText.substring(0, separatorPos);
-      }
-      PsiElement targetElement = targetElement(getProject(context), refText, context);
-      if (targetElement != null) {
-        return Pair.create(targetElement, ref);
-      }
+    if (context == null || url == null) {
+      return null;
+    }
+    Pair<String, String> linkAndRef = parseUrl(url);
+    if (linkAndRef == null) {
+      return null;
+    }
+    PsiElement targetElement = targetElement(getProject(context), linkAndRef.first, context);
+    if (targetElement != null) {
+      return Pair.create(targetElement, linkAndRef.second);
     }
     return null;
+  }
+
+  private static @Nullable Pair<@NotNull String, @Nullable String> parseUrl(@NotNull String url) {
+    if (!url.startsWith(DocumentationManagerProtocol.PSI_ELEMENT_PROTOCOL)) {
+      return null;
+    }
+    String withoutProtocol = url.substring(DocumentationManagerProtocol.PSI_ELEMENT_PROTOCOL.length());
+    int separatorPos = withoutProtocol.lastIndexOf(DocumentationManagerProtocol.PSI_ELEMENT_PROTOCOL_REF_SEPARATOR);
+    if (separatorPos >= 0) {
+      return Pair.create(
+        withoutProtocol.substring(0, separatorPos),
+        withoutProtocol.substring(separatorPos + DocumentationManagerProtocol.PSI_ELEMENT_PROTOCOL_REF_SEPARATOR.length())
+      );
+    }
+    else {
+      return Pair.create(withoutProtocol, null);
+    }
   }
 
   private static @Nullable PsiElement targetElement(
