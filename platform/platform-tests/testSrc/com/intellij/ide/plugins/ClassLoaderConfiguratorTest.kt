@@ -88,7 +88,7 @@ internal class ClassLoaderConfiguratorTest {
     classLoaderConfigurator.configure()
 
     assertThat((barPlugin.classLoader as PluginClassLoader)._getParents().map { it.descriptorPath })
-      .containsExactly(null, "com.example.sub.xml")
+      .containsExactly("com.example.sub.xml", null)
   }
 
   @Suppress("PluginXmlValidity")
