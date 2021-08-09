@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.compiler.artifacts
 
 import com.intellij.openapi.application.WriteAction
@@ -155,7 +155,7 @@ class ElementsModificationTest {
   }
 
   @Test
-  fun `change change path in jar for extracted directory`() {
+  fun `change path in jar for extracted directory`() {
     val project = projectModel.project
 
     val artifactManager = ArtifactManager.getInstance(project)
