@@ -5,7 +5,9 @@ package org.jetbrains.plugins.groovy.lang.typing
 
 import com.intellij.lang.java.beans.PropertyKind
 import com.intellij.psi.*
+import org.jetbrains.plugins.groovy.lang.psi.api.GrFunctionalExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrAccessorMethod
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil
 import org.jetbrains.plugins.groovy.lang.psi.util.checkKind
 import org.jetbrains.plugins.groovy.lang.resolve.api.GroovyProperty
@@ -34,6 +36,12 @@ private fun getReadPropertyBaseType(result: GroovyResolveResult): PsiType? {
   }
   else if (resolved is PsiMethod) {
     if (resolved.checkKind(PropertyKind.GETTER) || resolved.checkKind(PropertyKind.BOOLEAN_GETTER)) {
+      if (resolved is GrAccessorMethod) {
+        val initializer = resolved.property.initializerGroovy
+        if (initializer is GrFunctionalExpression) {
+          return GroovyPsiClosureType(initializer)
+        }
+      }
       return resolved.returnType
     }
   }
