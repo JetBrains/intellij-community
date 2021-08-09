@@ -93,7 +93,6 @@ public abstract class LightJavaCodeInsightFixtureTestCase extends UsefulTestCase
 
   @Override
   protected void setUp() throws Exception {
-    initIndexingMode();
     super.setUp();
 
     IdeaTestFixtureFactory factory = IdeaTestFixtureFactory.getFixtureFactory();
