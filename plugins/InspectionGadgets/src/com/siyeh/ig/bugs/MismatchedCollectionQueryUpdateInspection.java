@@ -611,8 +611,13 @@ public class MismatchedCollectionQueryUpdateInspection extends BaseInspection {
     return getCollectionQueryUpdateInfo(variable, codeBlock, queryNames, updateNames);
   }
 
-  public static boolean isUnmodified(PsiMethodCallExpression methodCall) {
-    final PsiExpression effectiveReference =  findEffectiveReference(methodCall);
+  /**
+   * @param collectCall a method call returning a list (e.g. {@code Stream.of(1, 2, 3).collect(Collectors.toList())})
+   * @return {@code true} if it's known that the result of {@code collectCall} is never updated;
+   * {@code false} if updated or not known
+   */
+  public static boolean isUnmodified(PsiMethodCallExpression collectCall) {
+    final PsiExpression effectiveReference =  findEffectiveReference(collectCall);
     QueryUpdateInfo info = new QueryUpdateInfo();
     new Visitor(null, defaultQueryNames, defaultUpdateNames, info).process(effectiveReference);
     if (!info.updated) return true;
