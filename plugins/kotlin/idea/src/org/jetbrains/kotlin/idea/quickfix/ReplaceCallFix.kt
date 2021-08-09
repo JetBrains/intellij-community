@@ -3,6 +3,7 @@
 package org.jetbrains.kotlin.idea.quickfix
 
 import com.intellij.codeInsight.intention.IntentionAction
+import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.diagnostics.Diagnostic
 import org.jetbrains.kotlin.diagnostics.Errors
 import org.jetbrains.kotlin.idea.analysis.analyzeAsReplacement
@@ -96,3 +97,23 @@ object ReplaceWithSafeCallForScopeFunctionFixFactory : KotlinSingleIntentionActi
     }
 }
 
+object ReplaceWithDotCallFixFactory : QuickFixesPsiBasedFactory<PsiElement>(PsiElement::class, PsiElementSuitabilityCheckers.ALWAYS_SUITABLE) {
+    override fun doCreateQuickFix(psiElement: PsiElement): List<IntentionAction> {
+        val qualifiedExpression = psiElement.getParentOfType<KtSafeQualifiedExpression>(strict = false)
+            ?: return emptyList()
+
+        var parent = qualifiedExpression.getQualifiedExpressionForReceiver() as? KtSafeQualifiedExpression
+        var callChainCount = 0
+        if (parent != null) {
+            val bindingContext = qualifiedExpression.analyze(BodyResolveMode.PARTIAL_WITH_DIAGNOSTICS)
+            while (parent is KtQualifiedExpression) {
+                val compilerReports = bindingContext.diagnostics.forElement(parent.operationTokenNode as PsiElement)
+                if (compilerReports.none { it.factory == Errors.UNNECESSARY_SAFE_CALL }) break
+                callChainCount++
+                parent = parent.getQualifiedExpressionForReceiver() as? KtSafeQualifiedExpression
+            }
+        }
+
+        return listOf(ReplaceWithDotCallFix(qualifiedExpression, callChainCount))
+    }
+}
