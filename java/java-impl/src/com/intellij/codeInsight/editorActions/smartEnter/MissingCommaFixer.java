@@ -5,6 +5,7 @@ import com.intellij.core.JavaPsiBundle;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
 
 public class MissingCommaFixer implements Fixer {
@@ -16,6 +17,7 @@ public class MissingCommaFixer implements Fixer {
     }
     PsiElement parent = psiElement.getParent();
     if (!(parent instanceof PsiExpressionList)) return;
+    if (!hasRParenth(psiElement, parent)) return;
     PsiElement next = PsiTreeUtil.skipWhitespacesAndCommentsForward(psiElement);
     if (!(next instanceof PsiExpression)) return;
     PsiElement call = parent.getParent();
@@ -28,5 +30,14 @@ public class MissingCommaFixer implements Fixer {
       }
     }
     editor.getDocument().insertString(psiElement.getTextOffset(), ",");
+  }
+
+  private static boolean hasRParenth(PsiElement psiElement, PsiElement parent) {
+    for (PsiElement sibling = parent.getLastChild(); sibling != psiElement; sibling = sibling.getPrevSibling()) {
+      if (PsiUtil.isJavaToken(sibling, JavaTokenType.RPARENTH)) {
+        return true;
+      }
+    }
+    return false;
   }
 }
