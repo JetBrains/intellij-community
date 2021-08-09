@@ -1,27 +1,27 @@
 // FIR_IDENTICAL
-// <!HIGHLIGHTING("descr='TODO This is a todo in line comment'; textAttributesKey='null'")!>TODO This is a todo in line comment<!>
+// <!HIGHLIGHTING("descr='TODO This is a todo in line comment'")!>TODO This is a todo in line comment<!>
 
-/* <!HIGHLIGHTING("descr='TODO This is a todo in block comment '; textAttributesKey='null'")!>TODO This is a todo in block comment <!>*/
-
-/**
- * <!HIGHLIGHTING("descr='TODO This is a todo in KDoc'; textAttributesKey='null'")!>TODO This is a todo in KDoc<!>
- */
-
-//<!HIGHLIGHTING("descr='todo: This is multiline td and even longer up to this line'; textAttributesKey='null'")!>todo: This is<!>
-// <!HIGHLIGHTING("descr='todo: This is multiline td and even longer up to this line'; textAttributesKey='null'")!>multiline td<!>
-/* <!HIGHLIGHTING("descr='todo: This is multiline td and even longer up to this line'; textAttributesKey='null'")!>and even longer<!>
-   <!HIGHLIGHTING("descr='todo: This is multiline td and even longer up to this line'; textAttributesKey='null'")!>up to this line<!>
- */
+/* <!HIGHLIGHTING("descr='TODO This is a todo in block comment '")!>TODO This is a todo in block comment <!>*/
 
 /**
- * <!HIGHLIGHTING("descr='todo: This is multiline td'; textAttributesKey='null'")!>todo: This is<!>
- *  <!HIGHLIGHTING("descr='todo: This is multiline td'; textAttributesKey='null'")!>multiline td<!>
+ * <!HIGHLIGHTING("descr='TODO This is a todo in KDoc'")!>TODO This is a todo in KDoc<!>
  */
 
-//<!HIGHLIGHTING("descr='todo: This is'; textAttributesKey='null'")!>todo: This is<!>
+//<!HIGHLIGHTING("descr='todo: This is multiline td and even longer up to this line'")!>todo: This is<!>
+// <!HIGHLIGHTING("descr='todo: This is multiline td and even longer up to this line'")!>multiline td<!>
+/* <!HIGHLIGHTING("descr='todo: This is multiline td and even longer up to this line'")!>and even longer<!>
+   <!HIGHLIGHTING("descr='todo: This is multiline td and even longer up to this line'")!>up to this line<!>
+ */
+
+/**
+ * <!HIGHLIGHTING("descr='todo: This is multiline td'")!>todo: This is<!>
+ *  <!HIGHLIGHTING("descr='todo: This is multiline td'")!>multiline td<!>
+ */
+
+//<!HIGHLIGHTING("descr='todo: This is'")!>todo: This is<!>
 //single line td
 
 /**
- * <!HIGHLIGHTING("descr='todo: This is'; textAttributesKey='null'")!>todo: This is<!>
+ * <!HIGHLIGHTING("descr='todo: This is'")!>todo: This is<!>
  * single line td also
  */
