@@ -36,12 +36,12 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.filter
+import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.newCoroutineContext
-import kotlinx.coroutines.withContext
 import java.awt.Dimension
 import javax.swing.BorderFactory
 import javax.swing.JScrollPane
@@ -159,15 +159,13 @@ internal class PackageManagementPanel(
             .launchIn(this)
 
         rootDataModelProvider.dataModelFlow.onEach { data ->
-            val tableItems = withContext(Dispatchers.ReadActions) {
-                computePackagesTableItems(
-                    project = project,
-                    packages = data.packageModels,
-                    selectedPackage = data.selectedPackage,
-                    targetModules = data.targetModules,
-                    traceInfo = data.traceInfo
-                )
-            }
+            val tableItems = computePackagesTableItems(
+                project = project,
+                packages = data.packageModels,
+                selectedPackage = data.selectedPackage,
+                targetModules = data.targetModules,
+                traceInfo = data.traceInfo
+            )
 
             packagesListPanel.display(
                 PackagesListPanel.ViewModel(
@@ -192,7 +190,9 @@ internal class PackageManagementPanel(
                     invokeLaterScope = this
                 )
             )
-        }.launchIn(this)
+        }
+            .flowOn(Dispatchers.ReadActions)
+            .launchIn(this)
     }
 
     private fun updatePackageDetailsVisible(becomeVisible: Boolean) {
