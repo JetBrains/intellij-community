@@ -252,7 +252,8 @@ public abstract class QuickFixFactory {
   @NotNull
   public abstract IntentionAction createRenameFileFix(@NotNull String newName);
 
-  public abstract @NotNull LocalQuickFix createRenameFix();
+  @Nullable
+  public abstract IntentionAction createRenameFix(@NotNull PsiElement element, @Nullable Object highlightInfo);
 
   @NotNull
   public abstract LocalQuickFixAndIntentionActionOnPsiElement createRenameElementFix(@NotNull PsiNamedElement element);
@@ -537,7 +538,8 @@ public abstract class QuickFixFactory {
 
   public abstract @NotNull IntentionAction createIterateFix(@NotNull PsiExpression expression);
 
-  public abstract @NotNull LocalQuickFixAndIntentionActionOnPsiElement createDeleteSwitchLabelFix(@NotNull PsiCaseLabelElement labelElement);
+  public abstract @NotNull IntentionAction createDeleteSwitchLabelFix(@NotNull PsiCaseLabelElement labelElement);
 
-  public abstract @NotNull LocalQuickFix createDeleteDefaultFix();
+  @Nullable
+  public abstract IntentionAction createDeleteDefaultFix(@NotNull PsiFile file, @Nullable Object highlightInfo);
 }
