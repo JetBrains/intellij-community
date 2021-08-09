@@ -1,0 +1,2 @@
+// "Convert to unicode escape" "true"
+val c = '\u000c'
