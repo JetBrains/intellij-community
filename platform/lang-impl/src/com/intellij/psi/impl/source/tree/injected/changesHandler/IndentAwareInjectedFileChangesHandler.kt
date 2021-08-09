@@ -75,9 +75,7 @@ class IndentAwareInjectedFileChangesHandler(shreds: List<Shred>, editor: Editor,
       var rangeInHost = affectedMarker.hostMarker.range
 
       myHostEditor.caretModel.moveToOffset(rangeInHost.startOffset)
-      val newText0 = if (affectedMarker.host?.getUserData(InjectionMeta.SUPPRESS_COPY_PASTE_HANDLER_IN_FE) == true)
-        markerText
-      else
+      val newText0 =
         CopyPastePreProcessor.EP_NAME.extensionList.fold(markerText) { newText, preProcessor ->
           preProcessor.preprocessOnPaste(myProject, hostPsiFile, myHostEditor, newText, null).also { r ->
             if (r != newText) {

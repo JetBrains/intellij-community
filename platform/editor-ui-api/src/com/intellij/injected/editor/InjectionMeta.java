@@ -8,7 +8,5 @@ import org.jetbrains.annotations.ApiStatus;
 public class InjectionMeta {
 
   public final static Key<String> INJECTION_INDENT = Key.create("INJECTION_INDENT");
-  
-  public final static Key<Boolean> SUPPRESS_COPY_PASTE_HANDLER_IN_FE = Key.create("SUPPRESS_COPY_PASTE_HANDLER_IN_FE");
 
 }

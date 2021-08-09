@@ -22,6 +22,7 @@ import org.jetbrains.yaml.*;
 import org.jetbrains.yaml.psi.YAMLDocument;
 import org.jetbrains.yaml.psi.YAMLFile;
 import org.jetbrains.yaml.psi.YAMLKeyValue;
+import org.jetbrains.yaml.psi.YAMLScalarList;
 import org.jetbrains.yaml.psi.impl.YAMLBlockMappingImpl;
 import org.jetbrains.yaml.refactoring.rename.YamlKeyValueRenameInputValidator;
 
@@ -80,6 +81,10 @@ public class YAMLCopyPasteProcessor implements CopyPastePreProcessor {
     PsiElement element = file.findElementAt(caretOffset);
 
     if (element != null) {
+      if (PsiUtilCore.getElementType(element) == YAMLTokenTypes.SCALAR_LIST ||
+          element.getParent() instanceof YAMLScalarList) {
+        return false;
+      }
       TokenSet ends = TokenSet.create(YAMLTokenTypes.EOL, YAMLTokenTypes.SCALAR_EOL, YAMLTokenTypes.COMMENT);
       IElementType nextType = PsiUtilCore.getElementType(element.getNextSibling());
       if (PsiUtilCore.getElementType(element) == YAMLTokenTypes.INDENT && (nextType == null || ends.contains(nextType))) {

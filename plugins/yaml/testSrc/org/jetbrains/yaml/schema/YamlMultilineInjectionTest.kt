@@ -807,7 +807,39 @@ class YamlMultilineInjectionTest : BasePlatformTestCase() {
               \  "
     """.trimIndent())
   }
-  
+
+  fun testMultilineInQuotedFragment() {
+    myFixture.configureByText("test.yaml", """
+        X: "<caret>"
+        
+    """.trimIndent())
+
+    myInjectionFixture.assertInjectedLangAtCaret("XML")
+    val fe = myInjectionFixture.openInFragmentEditor()
+    fe.type("""
+      <html>
+      <body>
+      <h1>
+    """.trimIndent())
+    PsiDocumentManager.getInstance(project).commitAllDocuments()
+    assertEquals("fragment editor should be", """
+      <html>
+          <body>
+              <h1></h1>
+          </body>
+      </html>
+    """.trimIndent(), fe.file.text)
+    myFixture.checkResult("""
+      X: "<html>\n\
+         \    <body>\n\
+         \        <h1></h1>\n\
+         \    </body>
+         </html>"
+      
+    """.trimIndent())
+  }
+
+
   fun testYamlToYamlQuotedMultiline() {
     myFixture.configureByText("test.yaml", """
         myyaml: "abc: \<caret>
