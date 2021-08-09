@@ -3,6 +3,8 @@ package com.intellij.featureStatistics;
 
 import com.intellij.internal.statistic.eventLog.EventLogListenersManager;
 import com.intellij.internal.statistic.eventLog.EventLogSystemLogger;
+import com.intellij.internal.statistic.eventLog.LogEvent;
+import com.intellij.internal.statistic.eventLog.StatisticsEventLogListener;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -251,17 +253,34 @@ public final class ProductivityFeaturesRegistryImpl extends ProductivityFeatures
         var registryImpl = (ProductivityFeaturesRegistryImpl)registry;
         FeatureUsageTracker usageTracker = FeatureUsageTracker.getInstance();
         if (usageTracker != null && !isSubscribed.getAndSet(true)) {
-          ApplicationManager.getApplication().getService(EventLogListenersManager.class).subscribe((logEvent, rawEventId, rawData) -> {
-            FeatureDescriptor feature = registryImpl.getFeatureDescriptorByLogEvent(logEvent.getGroup().getId(),
-                                                                                    logEvent.getEvent().getId(),
-                                                                                    logEvent.getEvent().getData());
-            if (feature != null) {
-              usageTracker.triggerFeatureUsed(feature.getId());
-            }
-          }, EventLogSystemLogger.DEFAULT_RECORDER);
+          ApplicationManager.getApplication().getService(EventLogListenersManager.class)
+            .subscribe(new EventLogListener(registryImpl, usageTracker), EventLogSystemLogger.DEFAULT_RECORDER);
         }
-      } else {
+      }
+      else {
         LOG.warn("No ProductivityFeaturesRegistry implementation. Features from Event Log won't be recorded");
+      }
+    }
+
+    private static class EventLogListener implements StatisticsEventLogListener {
+      private final ProductivityFeaturesRegistryImpl myFeaturesRegistry;
+      private final FeatureUsageTracker myUsageTracker;
+
+      private EventLogListener(ProductivityFeaturesRegistryImpl featuresRegistry, FeatureUsageTracker usageTracker) {
+        myFeaturesRegistry = featuresRegistry;
+        myUsageTracker = usageTracker;
+      }
+
+      @Override
+      public void onLogEvent(@NotNull LogEvent validatedEvent,
+                             @Nullable String rawEventId,
+                             @Nullable Map<String, ?> rawData) {
+        FeatureDescriptor feature = myFeaturesRegistry.getFeatureDescriptorByLogEvent(validatedEvent.getGroup().getId(),
+                                                                                      validatedEvent.getEvent().getId(),
+                                                                                      validatedEvent.getEvent().getData());
+        if (feature != null) {
+          myUsageTracker.triggerFeatureUsed(feature.getId());
+        }
       }
     }
   }
