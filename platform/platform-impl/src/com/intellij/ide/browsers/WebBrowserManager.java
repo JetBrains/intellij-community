@@ -83,7 +83,7 @@ public final class WebBrowserManager extends SimpleModificationTracker implement
   private boolean myShowBrowserHoverXml = false;
   DefaultBrowserPolicy defaultBrowserPolicy = DefaultBrowserPolicy.SYSTEM;
   ReloadMode webServerReloadMode = ReloadMode.RELOAD_ON_SAVE;
-  ReloadMode webPreviewReloadMode = ReloadMode.RELOAD_ON_CHANGE;
+  ReloadMode webPreviewReloadMode = ReloadMode.RELOAD_ON_SAVE;
 
   public WebBrowserManager() {
     browsers = new ArrayList<>(getPredefinedBrowsers());
