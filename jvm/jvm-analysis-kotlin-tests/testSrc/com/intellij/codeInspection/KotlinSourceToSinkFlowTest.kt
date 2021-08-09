@@ -1,10 +1,19 @@
 package com.intellij.codeInspection
 
 import com.intellij.codeInspection.sourceToSink.SourceToSinkFlowInspection
-import com.intellij.jvm.analysis.JvmAnalysisKtTestsUtil
+import com.intellij.jvm.analysis.KotlinJvmAnalysisTestUtil
+import com.intellij.openapi.application.PathManager
+import com.intellij.testFramework.TestDataPath
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
+import java.io.File
 
+private const val inspectionPath = "/codeInspection/sourceToSinkFlow"
+
+@TestDataPath("\$CONTENT_ROOT/testData$inspectionPath")
 class KotlinSourceToSinkFlowTest: LightJavaCodeInsightFixtureTestCase() {
+  override fun getBasePath() = KotlinJvmAnalysisTestUtil.TEST_DATA_PROJECT_RELATIVE_BASE_PATH + inspectionPath
+
+  override fun getTestDataPath(): String = PathManager.getCommunityHomePath().replace(File.separatorChar, '/') + basePath
 
   override fun setUp() {
     super.setUp()
@@ -18,10 +27,10 @@ class KotlinSourceToSinkFlowTest: LightJavaCodeInsightFixtureTestCase() {
     """.trimIndent())
     myFixture.addClass("""
       package org.checkerframework.checker.tainting.qual;
-
+      
       import java.lang.annotation.ElementType;
       import java.lang.annotation.Target;
-
+      
       @Target({ElementType.TYPE_USE, ElementType.TYPE_PARAMETER})
       public @interface Untainted {
       }
@@ -29,8 +38,6 @@ class KotlinSourceToSinkFlowTest: LightJavaCodeInsightFixtureTestCase() {
     """.trimIndent())
     myFixture.enableInspections(SourceToSinkFlowInspection())
   }
-
-  override fun getBasePath() = JvmAnalysisKtTestsUtil.TEST_DATA_PROJECT_RELATIVE_BASE_PATH + "/codeInspection/sourceToSinkFlow"
 
   fun testSimple() {
     myFixture.testHighlighting("Simple.kt")

@@ -2,11 +2,13 @@ package com.intellij.codeInspection.tests
 
 import com.intellij.codeInspection.InspectionProfileEntry
 import com.intellij.codeInspection.InspectionsBundle
+import com.intellij.openapi.application.PathManager
 import com.intellij.pom.java.LanguageLevel
 import com.intellij.testFramework.IdeaTestUtil
 import com.intellij.testFramework.InspectionTestUtil
 import com.intellij.testFramework.builders.JavaModuleFixtureBuilder
 import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase
+import java.io.File
 
 abstract class UastInspectionTestBase : JavaCodeInsightFixtureTestCase() {
   abstract val fileExt: String
@@ -49,6 +51,8 @@ abstract class UastInspectionTestBase : JavaCodeInsightFixtureTestCase() {
     val inspection = InspectionTestUtil.instantiateTool(inspection.javaClass) ?: error("No inspection to test.")
     testQuickFixUnavailable(name, InspectionsBundle.message("fix.all.inspection.problems.in.file", inspection.displayName))
   }
+
+  override fun getTestDataPath(): String = PathManager.getCommunityHomePath().replace(File.separatorChar, '/') + basePath
 
   override fun tearDown() {
     try {

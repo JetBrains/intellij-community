@@ -2,12 +2,16 @@
 package com.intellij.codeInspection
 
 import com.intellij.codeInspection.tests.JUnit5ConverterInspectionTestBase
-import com.intellij.jvm.analysis.JvmAnalysisKtTestsUtil
+import com.intellij.jvm.analysis.KotlinJvmAnalysisTestUtil
+import com.intellij.testFramework.TestDataPath
 
+private const val inspectionPath = "/codeInspection/junit5converter"
+
+@TestDataPath("\$CONTENT_ROOT/testData$inspectionPath")
 class KotlinJUnit5ConverterInspectionTest : JUnit5ConverterInspectionTestBase() {
-  override val fileExt: String = "kt"
+  override fun getBasePath() = KotlinJvmAnalysisTestUtil.TEST_DATA_PROJECT_RELATIVE_BASE_PATH + inspectionPath
 
-  override fun getBasePath() = JvmAnalysisKtTestsUtil.TEST_DATA_PROJECT_RELATIVE_BASE_PATH + "/codeInspection/junit5converter"
+  override val fileExt: String = "kt"
 
   fun `test qualified conversion`() = testQuickFixAll("Qualified")
 

@@ -1,12 +1,16 @@
 package com.intellij.codeInspection.tests.java
 
 import com.intellij.codeInspection.tests.TestOnlyInspectionTestBase
-import com.intellij.jvm.analysis.JvmAnalysisTestsUtil
+import com.intellij.jvm.analysis.JavaJvmAnalysisTestUtil
+import com.intellij.testFramework.TestDataPath
 
+private const val inspectionPath = "/codeInspection/testonly"
+
+@TestDataPath("\$CONTENT_ROOT/testData$inspectionPath")
 class JavaTestOnlyInspectionTest : TestOnlyInspectionTestBase() {
-  override val fileExt: String = "java"
+  override fun getBasePath() = JavaJvmAnalysisTestUtil.TEST_DATA_PROJECT_RELATIVE_BASE_PATH + inspectionPath
 
-  override fun getTestDataPath() = JvmAnalysisTestsUtil.TEST_DATA_PROJECT_RELATIVE_BASE_PATH + "/codeInspection/testonly"
+  override val fileExt: String = "java"
 
   fun `test @TestOnly not highlighting in javadoc`() = testHighlighting("TestOnlyDoc")
 

@@ -3,11 +3,17 @@ package com.intellij.codeInspection
 
 import com.intellij.execution.junit.codeInsight.JUnit5MalformedParameterizedInspection
 import com.intellij.execution.junit.codeInsight.JUnit5TestFrameworkSetupUtil
-import com.intellij.jvm.analysis.JvmAnalysisKtTestsUtil
+import com.intellij.jvm.analysis.KotlinJvmAnalysisTestUtil
 import com.intellij.testFramework.LightProjectDescriptor
+import com.intellij.testFramework.TestDataPath
 import com.siyeh.ig.LightJavaInspectionTestCase
 
+private const val inspectionPath = "/codeInspection/junit5malformed"
+
+@TestDataPath("\$CONTENT_ROOT/testData$inspectionPath")
 class KotlinJUnit5MalformedParameterizedUsageTest : LightJavaInspectionTestCase() {
+  override fun getBasePath() = KotlinJvmAnalysisTestUtil.TEST_DATA_PROJECT_RELATIVE_BASE_PATH + inspectionPath
+
   override fun getInspection(): InspectionProfileEntry {
     return JUnit5MalformedParameterizedInspection()
   }
@@ -33,8 +39,7 @@ class KotlinJUnit5MalformedParameterizedUsageTest : LightJavaInspectionTestCase(
     doTest()
   }
 
-  override fun getBasePath() =
-    "${JvmAnalysisKtTestsUtil.TEST_DATA_PROJECT_RELATIVE_BASE_PATH}/codeInspection/junit5malformed"
+
 
   override fun getProjectDescriptor(): LightProjectDescriptor {
     return JAVA_8

@@ -2,12 +2,16 @@
 package com.intellij.codeInspection.tests.java
 
 import com.intellij.codeInspection.tests.JUnit5AssertionsConverterInspectionTestBase
-import com.intellij.jvm.analysis.JvmAnalysisTestsUtil
+import com.intellij.jvm.analysis.JavaJvmAnalysisTestUtil
+import com.intellij.testFramework.TestDataPath
 
+private const val inspectionPath = "/codeInspection/junit5assertionsconverter"
+
+@TestDataPath("\$CONTENT_ROOT/testData$inspectionPath")
 class JavaJUnit5AssertionsConverterInspectionTest : JUnit5AssertionsConverterInspectionTestBase() {
-  override val fileExt: String = "java"
+  override fun getBasePath() = JavaJvmAnalysisTestUtil.TEST_DATA_PROJECT_RELATIVE_BASE_PATH + inspectionPath
 
-  override fun getTestDataPath() = JvmAnalysisTestsUtil.TEST_DATA_PROJECT_RELATIVE_BASE_PATH + "/codeInspection/junit5assertionsconverter"
+  override val fileExt: String = "java"
 
   fun `test AssertArrayEquals`() = testQuickFixAll("AssertArrayEquals")
 

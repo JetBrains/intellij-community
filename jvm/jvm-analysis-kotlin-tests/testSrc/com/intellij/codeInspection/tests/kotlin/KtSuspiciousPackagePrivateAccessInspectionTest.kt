@@ -1,10 +1,10 @@
 package com.intellij.codeInspection.tests.kotlin
 
-import com.intellij.jvm.analysis.JvmAnalysisKtTestsUtil
+import com.intellij.jvm.analysis.KotlinJvmAnalysisTestUtil
 import com.intellij.testFramework.TestDataPath
 import com.siyeh.ig.dependency.SuspiciousPackagePrivateAccessInspectionTestCase
 
-@TestDataPath("/testData/codeInspection/suspiciousPackagePrivateAccess")
+@TestDataPath("\$CONTENT_ROOT/testData/codeInspection/suspiciousPackagePrivateAccess")
 class KtSuspiciousPackagePrivateAccessInspectionTest : SuspiciousPackagePrivateAccessInspectionTestCase("kt") {
   fun testAccessingPackagePrivateMembers() {
     doTestWithDependency()
@@ -22,5 +22,5 @@ class KtSuspiciousPackagePrivateAccessInspectionTest : SuspiciousPackagePrivateA
     doTestWithDependency()
   }
 
-  override fun getBasePath() = "${JvmAnalysisKtTestsUtil.TEST_DATA_PROJECT_RELATIVE_BASE_PATH}/codeInspection/suspiciousPackagePrivateAccess"
+  override fun getBasePath() = "${KotlinJvmAnalysisTestUtil.TEST_DATA_PROJECT_RELATIVE_BASE_PATH}/codeInspection/suspiciousPackagePrivateAccess"
 }

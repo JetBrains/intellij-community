@@ -2,7 +2,7 @@
 package com.intellij.codeInspection.tests.java;
 
 import com.intellij.codeInspection.sourceToSink.SourceToSinkFlowInspection;
-import com.intellij.jvm.analysis.JvmAnalysisTestsUtil;
+import com.intellij.jvm.analysis.JavaJvmAnalysisTestUtil;
 import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 import org.jetbrains.annotations.NotNull;
@@ -36,8 +36,8 @@ public class SourceToSinkFlowInspectionTest extends LightJavaCodeInsightFixtureT
   }
 
   @Override
-  protected String getTestDataPath() {
-    return JvmAnalysisTestsUtil.TEST_DATA_PROJECT_RELATIVE_BASE_PATH + "/codeInspection/sourceToSinkFlow";
+  protected String getBasePath() {
+    return JavaJvmAnalysisTestUtil.TEST_DATA_PROJECT_RELATIVE_BASE_PATH + "/codeInspection/sourceToSinkFlow";
   }
 
   public void testSimple() throws Exception {

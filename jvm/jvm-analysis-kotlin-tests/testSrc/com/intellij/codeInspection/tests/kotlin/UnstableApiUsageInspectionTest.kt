@@ -2,7 +2,8 @@
 package com.intellij.codeInspection.tests.kotlin
 
 import com.intellij.codeInspection.UnstableApiUsageInspection
-import com.intellij.jvm.analysis.JvmAnalysisKtTestsUtil
+import com.intellij.jvm.analysis.KotlinJvmAnalysisTestUtil
+import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.vfs.VirtualFileFilter
 import com.intellij.testFramework.TestDataPath
 import com.intellij.testFramework.builders.JavaModuleFixtureBuilder
@@ -10,13 +11,16 @@ import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase
 import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl
 import com.intellij.util.PathUtil
 import org.jetbrains.annotations.ApiStatus
+import java.io.File
 
 @TestDataPath("\$CONTENT_ROOT/testData/codeInspection/unstableApiUsage/experimental")
 class UnstableApiUsageInspectionTest : JavaCodeInsightFixtureTestCase() {
 
   private val inspection = UnstableApiUsageInspection()
 
-  override fun getBasePath() = "${JvmAnalysisKtTestsUtil.TEST_DATA_PROJECT_RELATIVE_BASE_PATH}/codeInspection/unstableApiUsage/experimental"
+  override fun getBasePath() = "${KotlinJvmAnalysisTestUtil.TEST_DATA_PROJECT_RELATIVE_BASE_PATH}/codeInspection/unstableApiUsage/experimental"
+
+  override fun getTestDataPath(): String = PathManager.getCommunityHomePath().replace(File.separatorChar, '/') + basePath
 
   override fun tuneFixture(moduleBuilder: JavaModuleFixtureBuilder<*>) {
     moduleBuilder.addLibrary("util", PathUtil.getJarPathForClass(ApiStatus::class.java))
@@ -79,7 +83,9 @@ class ScheduledForRemovalApiUsageTest: JavaCodeInsightFixtureTestCase() {
 
   private val inspection = UnstableApiUsageInspection()
 
-  override fun getBasePath() = "${JvmAnalysisKtTestsUtil.TEST_DATA_PROJECT_RELATIVE_BASE_PATH}/codeInspection/unstableApiUsage/scheduledForRemoval"
+  override fun getBasePath() = "${KotlinJvmAnalysisTestUtil.TEST_DATA_PROJECT_RELATIVE_BASE_PATH}/codeInspection/unstableApiUsage/scheduledForRemoval"
+
+  override fun getTestDataPath(): String = PathManager.getCommunityHomePath().replace(File.separatorChar, '/') + basePath
 
   override fun tuneFixture(moduleBuilder: JavaModuleFixtureBuilder<*>) {
     moduleBuilder.addLibrary("util", PathUtil.getJarPathForClass(ApiStatus::class.java))

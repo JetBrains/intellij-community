@@ -3,12 +3,21 @@ package com.intellij.codeInspection
 
 import com.intellij.execution.junit.codeInsight.JUnit5MalformedParameterizedInspection
 import com.intellij.execution.junit.codeInsight.JUnit5TestFrameworkSetupUtil
-import com.intellij.jvm.analysis.JvmAnalysisKtTestsUtil
+import com.intellij.jvm.analysis.KotlinJvmAnalysisTestUtil
+import com.intellij.openapi.application.PathManager
 import com.intellij.pom.java.LanguageLevel
+import com.intellij.testFramework.TestDataPath
 import com.intellij.testFramework.builders.JavaModuleFixtureBuilder
 import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase
+import java.io.File
 
+private const val inspectionPath = "/codeInspection/junit5malformed"
+
+@TestDataPath("\$CONTENT_ROOT/testData$inspectionPath")
 class KotlinJUnit5MalformedParameterizedTest : JavaCodeInsightFixtureTestCase() {
+  override fun getBasePath() = KotlinJvmAnalysisTestUtil.TEST_DATA_PROJECT_RELATIVE_BASE_PATH + inspectionPath
+
+  override fun getTestDataPath(): String = PathManager.getCommunityHomePath().replace(File.separatorChar, '/') + basePath
 
   override fun tuneFixture(moduleBuilder: JavaModuleFixtureBuilder<*>) {
     moduleBuilder.setLanguageLevel(LanguageLevel.JDK_1_8)
@@ -40,9 +49,6 @@ class KotlinJUnit5MalformedParameterizedTest : JavaCodeInsightFixtureTestCase() 
   companion object {
     private val inspection = JUnit5MalformedParameterizedInspection()
   }
-
-  override fun getBasePath() =
-    "${JvmAnalysisKtTestsUtil.TEST_DATA_PROJECT_RELATIVE_BASE_PATH}/codeInspection/junit5malformed"
 
   fun `test CantResolveTarget`() {
     myFixture.testHighlighting("CantResolveTarget.kt")
