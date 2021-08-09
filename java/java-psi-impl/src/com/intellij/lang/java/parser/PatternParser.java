@@ -10,7 +10,8 @@ import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 
 import static com.intellij.lang.PsiBuilderUtil.expect;
-import static com.intellij.lang.java.parser.JavaParserUtil.*;
+import static com.intellij.lang.java.parser.JavaParserUtil.done;
+import static com.intellij.lang.java.parser.JavaParserUtil.error;
 
 public class PatternParser {
   private static final TokenSet PATTERN_MODIFIERS = TokenSet.create(JavaTokenType.FINAL_KEYWORD);
@@ -76,7 +77,8 @@ public class PatternParser {
     PsiBuilder.Marker type = myParser.getReferenceParser().parseType(builder, ReferenceParser.EAT_LAST_DOT | ReferenceParser.WILDCARD);
     // guarded by isPattern
     assert type != null;
-    assert expect(builder, JavaTokenType.IDENTIFIER);
+    boolean hasIdentifier = expect(builder, JavaTokenType.IDENTIFIER);
+    assert hasIdentifier : "identifier expected";
     done(patternVariable, JavaElementType.PATTERN_VARIABLE);
     done(pattern, JavaElementType.TYPE_TEST_PATTERN);
     return pattern;
