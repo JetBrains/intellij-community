@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.lang.documentation;
 
 import com.intellij.psi.PsiElement;
@@ -10,23 +10,23 @@ import org.jetbrains.annotations.Nullable;
  * Implement additionally in your {@link DocumentationProvider}.
  */
 public interface ExternalDocumentationHandler {
+
   boolean handleExternal(PsiElement element, PsiElement originalElement);
+
   boolean handleExternalLink(PsiManager psiManager, String link, PsiElement context);
+
   boolean canFetchDocumentationLink(String link);
-  
-  @NotNull
-  String fetchExternalDocumentation(@NotNull String link, @Nullable PsiElement element);
+
+  @NotNull String fetchExternalDocumentation(@NotNull String link, @Nullable PsiElement element);
 
   /**
    * Defines whether we will show external documentation
    * link at the bottom of the documentation pane or not.
    *
-   *
    * @return true if external documentation link should be
    * shown, false otherwise
    */
-  default boolean canHandleExternal(@Nullable PsiElement element,
-                                    @Nullable PsiElement originalElement) {
+  default boolean canHandleExternal(@Nullable PsiElement element, @Nullable PsiElement originalElement) {
     return true;
   }
 
