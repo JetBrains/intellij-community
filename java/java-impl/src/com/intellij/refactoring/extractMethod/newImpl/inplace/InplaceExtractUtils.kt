@@ -2,6 +2,7 @@
 package com.intellij.refactoring.extractMethod.newImpl.inplace
 
 import com.intellij.codeInsight.highlighting.HighlightManager
+import com.intellij.codeInsight.hint.EditorCodePreview
 import com.intellij.codeInsight.template.Template
 import com.intellij.codeInsight.template.TemplateEditingAdapter
 import com.intellij.codeInsight.template.impl.TemplateState
