@@ -2,6 +2,7 @@
 package com.intellij.workspaceModel.ide
 
 import com.intellij.openapi.application.runWriteActionAndWait
+import com.intellij.openapi.module.EmptyModuleType
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.impl.RootConfigurationAccessor
@@ -10,6 +11,8 @@ import com.intellij.testFramework.rules.ProjectModelRule
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleManagerBridgeImpl
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.roots.ModuleRootComponentBridge
 import com.intellij.workspaceModel.ide.legacyBridge.ModifiableRootModelBridge
+import com.intellij.workspaceModel.ide.legacyBridge.ModuleBridge
+import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder
 import com.intellij.workspaceModel.storage.toBuilder
 import org.junit.ClassRule
 import org.junit.Rule
@@ -41,6 +44,24 @@ class ModifiableRootModelBridgeTest {
 
       modifiableModel.prepareForCommit()
       modifiableModel.postCommit()
+    }
+  }
+
+  @Test(expected = Test.None::class)
+  fun `getting module root model from modifiable module`() {
+    runWriteActionAndWait {
+      val moduleModifiableModel = ModuleManager.getInstance(projectModel.project).modifiableModel
+      val newModule = moduleModifiableModel.newModule(projectModel.projectRootDir.resolve("myModule/myModule.iml"),
+                                                      EmptyModuleType.EMPTY_MODULE) as ModuleBridge
+
+
+      val moduleRootManager = ModuleRootManager.getInstance(newModule) as ModuleRootComponentBridge
+
+      // Assert no exceptions
+      val model = moduleRootManager.getModifiableModel(newModule.diff!! as WorkspaceEntityStorageBuilder,
+                                                       RootConfigurationAccessor.DEFAULT_INSTANCE)
+      model.dispose()
+      moduleModifiableModel.dispose()
     }
   }
 }
