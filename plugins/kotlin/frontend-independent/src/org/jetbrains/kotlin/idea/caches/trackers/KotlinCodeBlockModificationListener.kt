@@ -111,9 +111,5 @@ class KotlinCodeBlockModificationListener(project: Project) : PsiTreeChangePrepr
         kotlinOutOfCodeBlockTrackerImpl.incModificationCount()
     }
 
-    fun incModificationCount() {
-        kotlinOutOfCodeBlockTrackerImpl.incModificationCount()
-    }
-
     override fun dispose() = Unit
 }
