@@ -28,13 +28,11 @@ import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.ProjectStr
 import org.jetbrains.annotations.NotNull;
 
 public class AddLibraryToModuleDependenciesAction extends DumbAwareAction {
-  @NotNull private final Project myProject;
   @NotNull private final BaseLibrariesConfigurable myConfigurable;
 
-  public AddLibraryToModuleDependenciesAction(@NotNull Project project, @NotNull BaseLibrariesConfigurable configurable) {
+  public AddLibraryToModuleDependenciesAction(@NotNull BaseLibrariesConfigurable configurable) {
     super(JavaUiBundle.message("action.text.add.to.modules"), JavaUiBundle.message(
       "action.description.add.the.library.to.the.dependencies.list.of.chosen.modules"), null);
-    myProject = project;
     myConfigurable = configurable;
   }
 
