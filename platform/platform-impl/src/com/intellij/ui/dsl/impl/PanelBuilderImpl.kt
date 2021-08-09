@@ -4,19 +4,16 @@ package com.intellij.ui.dsl.impl
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.util.NlsContexts
-import com.intellij.ui.dsl.CellBuilderBase
-import com.intellij.ui.dsl.PanelBuilder
-import com.intellij.ui.dsl.RIGHT_GAP_UNASSIGNED
-import com.intellij.ui.dsl.RowBuilder
+import com.intellij.ui.dsl.*
 import com.intellij.ui.dsl.gridLayout.Gaps
 import com.intellij.ui.dsl.gridLayout.HorizontalAlign
 import com.intellij.ui.dsl.gridLayout.JBGrid
 import com.intellij.ui.dsl.gridLayout.VerticalAlign
 import com.intellij.ui.dsl.gridLayout.builders.RowsGridBuilder
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.annotations.Nls
 import javax.swing.*
 import javax.swing.text.JTextComponent
+import kotlin.math.min
 
 @ApiStatus.Experimental
 internal class PanelBuilderImpl(private val dialogPanelConfig: DialogPanelConfig) : CellBuilderBaseImpl<PanelBuilder>(
@@ -29,10 +26,6 @@ internal class PanelBuilderImpl(private val dialogPanelConfig: DialogPanelConfig
   }
 
   private val rows = mutableListOf<RowBuilderImpl>()
-
-  override fun row(@Nls label: String, init: RowBuilder.() -> Unit): RowBuilder {
-    return row(JLabel(label), init)
-  }
 
   override fun row(label: JLabel?, init: RowBuilder.() -> Unit): RowBuilder {
     val result = RowBuilderImpl(dialogPanelConfig, label)
@@ -62,51 +55,98 @@ internal class PanelBuilderImpl(private val dialogPanelConfig: DialogPanelConfig
   }
 
   fun build(panel: DialogPanel, grid: JBGrid) {
-    val maxColumnsCount = rows.filterNot { it.independent }.maxOf { it.cells.size }
+    val maxColumnsCount = getMaxColumnsCount()
     val rowsGridBuilder = RowsGridBuilder(panel, grid = grid)
 
     for (row in rows) {
-      if (row.independent) {
-        val subGrid = rowsGridBuilder.subGrid(width = maxColumnsCount, horizontalAlign = HorizontalAlign.FILL,
-                                              verticalAlign = VerticalAlign.FILL)
-        buildRowAndComment(row, row.cells.size, panel, RowsGridBuilder(panel, subGrid))
-        rowsGridBuilder.row()
+      if (row.cells.isEmpty()) {
+        LOG.warn("Row should not be empty")
+        continue
       }
-      else {
-        buildRowAndComment(row, maxColumnsCount, panel, rowsGridBuilder)
+
+      when (row.rowLayout) {
+        RowLayout.INDEPENDENT -> {
+          val subGrid = rowsGridBuilder.subGrid(width = maxColumnsCount, horizontalAlign = HorizontalAlign.FILL,
+                                                verticalAlign = VerticalAlign.FILL)
+          val subGridBuilder = RowsGridBuilder(panel, subGrid)
+          val cells = row.cells
+          buildRow(cells, row.label != null, cells.size, panel, subGridBuilder)
+          subGridBuilder.row()
+
+          buildCommentRow(cells, cells.size, subGridBuilder)
+          rowsGridBuilder.row()
+        }
+
+        RowLayout.LABEL_ALIGNED -> {
+          buildCell(row.cells[0], true, row.cells.size == 1, 1, panel, rowsGridBuilder)
+
+          if (row.cells.size > 1) {
+            val subGrid = rowsGridBuilder.subGrid(width = maxColumnsCount - 1, horizontalAlign = HorizontalAlign.FILL,
+                                                  verticalAlign = VerticalAlign.FILL)
+            val subGridBuilder = RowsGridBuilder(panel, subGrid)
+            val cells = row.cells.subList(1, row.cells.size)
+            buildRow(cells, false, cells.size, panel, subGridBuilder)
+          }
+          rowsGridBuilder.row()
+
+          val commentedCellIndex = getCommentedCellIndex(row.cells)
+          when {
+            commentedCellIndex in 0..1 -> {
+              buildCommentRow(row.cells, maxColumnsCount, rowsGridBuilder)
+            }
+            commentedCellIndex > 1 -> {
+              // Always put comment for cells with index more than 1 at second cell because it's hard to implement
+              // more correct behaviour now. Can be fixed later
+              buildCommentRow(listOf(row.cells[0], row.cells[commentedCellIndex]), maxColumnsCount, rowsGridBuilder)
+            }
+          }
+        }
+
+        RowLayout.PARENT_GRID -> {
+          buildRow(row.cells, row.label != null, maxColumnsCount, panel, rowsGridBuilder)
+          rowsGridBuilder.row()
+
+          buildCommentRow(row.cells, maxColumnsCount, rowsGridBuilder)
+        }
       }
     }
   }
 
-  private fun buildRowAndComment(row: RowBuilderImpl, maxColumnsCount: Int, panel: DialogPanel, builder: RowsGridBuilder) {
-    for ((cellIndex, cell) in row.cells.withIndex()) {
-      val lastCell = cellIndex == row.cells.size - 1
-      val rightGap = getRightGap(cell, lastCell, row.label != null && cellIndex == 0)
+  private fun buildRow(cells: List<CellBuilderBase<*>>,
+                       firstCellLabel: Boolean,
+                       maxColumnsCount: Int,
+                       panel: DialogPanel,
+                       builder: RowsGridBuilder) {
+    for ((cellIndex, cell) in cells.withIndex()) {
+      val lastCell = cellIndex == cells.size - 1
       val width = if (lastCell) maxColumnsCount - cellIndex else 1
-
-      when (cell) {
-        is CellBuilderImpl<*> -> {
-          val insets = cell.component.insets
-          val visualPaddings = Gaps(top = insets.top, left = insets.left, bottom = insets.bottom, right = insets.right)
-          val verticalGap = getDefaultVerticalGap(cell.component)
-          val gaps = Gaps(top = verticalGap, bottom = verticalGap, right = rightGap)
-          builder.cell(cell.component, width = width, horizontalAlign = cell.horizontalAlign, verticalAlign = cell.verticalAlign,
-                       gaps = gaps, visualPaddings = visualPaddings)
-        }
-        is PanelBuilderImpl -> {
-          // todo visualPaddings
-          val gaps = Gaps(right = rightGap)
-          val subGrid = builder.subGrid(width = width, horizontalAlign = cell.horizontalAlign, verticalAlign = cell.verticalAlign,
-                                        gaps = gaps)
-
-          cell.build(panel, subGrid)
-        }
-        else -> throw IllegalArgumentException()
-      }
+      buildCell(cell, firstCellLabel && cellIndex == 0, lastCell, width, panel, builder)
     }
+  }
 
-    builder.row()
-    createCommentRow(row, maxColumnsCount, builder)
+  private fun buildCell(cell: CellBuilderBase<*>, rowLabel: Boolean, lastCell: Boolean, width: Int,
+                        panel: DialogPanel, builder: RowsGridBuilder) {
+    val rightGap = getRightGap(cell, lastCell, rowLabel)
+
+    when (cell) {
+      is CellBuilderImpl<*> -> {
+        val insets = cell.component.insets
+        val visualPaddings = Gaps(top = insets.top, left = insets.left, bottom = insets.bottom, right = insets.right)
+        val verticalGap = getDefaultVerticalGap(cell.component)
+        val gaps = Gaps(top = verticalGap, bottom = verticalGap, right = rightGap)
+        builder.cell(cell.component, width = width, horizontalAlign = cell.horizontalAlign, verticalAlign = cell.verticalAlign,
+                     gaps = gaps, visualPaddings = visualPaddings)
+      }
+      is PanelBuilderImpl -> {
+        // todo visualPaddings
+        val gaps = Gaps(right = rightGap)
+        val subGrid = builder.subGrid(width = width, horizontalAlign = cell.horizontalAlign, verticalAlign = cell.verticalAlign,
+                                      gaps = gaps)
+
+        cell.build(panel, subGrid)
+      }
+      else -> throw IllegalArgumentException()
+    }
   }
 
   /**
@@ -117,6 +157,16 @@ internal class PanelBuilderImpl(private val dialogPanelConfig: DialogPanelConfig
         clazz.isInstance(component)
       }) dialogPanelConfig.spacing.verticalComponentGap
     else 0
+  }
+
+  private fun getMaxColumnsCount(): Int {
+    return rows.maxOf {
+      when (it.rowLayout) {
+        RowLayout.INDEPENDENT -> 1
+        RowLayout.LABEL_ALIGNED -> min(2, it.cells.size)
+        RowLayout.PARENT_GRID -> it.cells.size
+      }
+    }
   }
 
   private fun getRightGap(cell: CellBuilderBase<*>, lastCell: Boolean, rowLabel: Boolean): Int {
@@ -139,25 +189,30 @@ internal class PanelBuilderImpl(private val dialogPanelConfig: DialogPanelConfig
   /**
    * Appends comment (currently one comment for a row is supported, can be fixed later)
    */
-  private fun createCommentRow(row: RowBuilderImpl, maxColumnsCount: Int, builder: RowsGridBuilder) {
-    for ((column, cell) in row.cells.withIndex()) {
-      cell.comment?.let { comment ->
-        val additionalHorizontalIndent = if (cell is CellBuilderImpl<*> && cell.viewComponent is JToggleButton)
-          dialogPanelConfig.spacing.horizontalIndent
-        else
-          0
-
-        if (row.label != null && column == 1) {
-          builder.cell(comment, width = maxColumnsCount)
-        }
-        else {
-          val gaps = Gaps(left = additionalHorizontalIndent, bottom = dialogPanelConfig.spacing.verticalCommentBottomGap)
-          builder.skip(column)
-          builder.cell(comment, maxColumnsCount - column, gaps = gaps)
-        }
-        builder.row()
-        return
-      }
+  private fun buildCommentRow(cells: List<CellBuilderBase<*>>,
+                              maxColumnsCount: Int,
+                              builder: RowsGridBuilder) {
+    val commentedCellIndex = getCommentedCellIndex(cells)
+    if (commentedCellIndex < 0) {
+      return
     }
+
+    val cell = cells[commentedCellIndex]
+    val gaps = Gaps(left = getAdditionalHorizontalIndent(cell), bottom = dialogPanelConfig.spacing.verticalCommentBottomGap)
+    builder.skip(commentedCellIndex)
+    builder.cell(cell.comment!!, maxColumnsCount - commentedCellIndex, gaps = gaps)
+    builder.row()
+    return
+  }
+
+  private fun getAdditionalHorizontalIndent(cell: CellBuilderBase<*>): Int {
+    return if (cell is CellBuilderImpl<*> && cell.viewComponent is JToggleButton)
+      dialogPanelConfig.spacing.horizontalIndent
+    else
+      0
+  }
+
+  private fun getCommentedCellIndex(cells: List<CellBuilderBase<*>>): Int {
+    return cells.indexOfFirst { it.comment != null }
   }
 }

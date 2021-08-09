@@ -28,7 +28,7 @@ class RowsGridBuilder(private val panel: JComponent, grid: JBGrid? = null) {
   }
 
   /**
-   * Starts new row. Can be omitted for the first row
+   * Starts new row. Can be omitted for the first and last rows
    *
    * @param distance distance between previous row and new one. Not used for the first row
    * @param resizable true if new row is resizable

@@ -31,7 +31,7 @@ interface CellBuilderBase<T : CellBuilderBase<T>> {
 
   /**
    * Separates next cell in current row with [SpacingConfiguration.horizontalLabelGap]. This gap is set automatically
-   * by [PanelBuilderBase.row] methods and should be used only in rare cases like CheckBox with related TextField.
+   * by [PanelBuilderBase.row] methods and should be used only in rare cases.
    * Should not be used for last cell in a row
    */
   fun rightLabelGap(): CellBuilderBase<T>

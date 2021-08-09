@@ -4,10 +4,7 @@ package com.intellij.ui.dsl.impl
 import com.intellij.BundleBase
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.ui.components.JBCheckBox
-import com.intellij.ui.dsl.CellBuilder
-import com.intellij.ui.dsl.CellBuilderBase
-import com.intellij.ui.dsl.PanelBuilder
-import com.intellij.ui.dsl.RowBuilder
+import com.intellij.ui.dsl.*
 import org.jetbrains.annotations.ApiStatus
 import java.awt.event.ActionEvent
 import javax.swing.JButton
@@ -17,7 +14,7 @@ import javax.swing.JLabel
 @ApiStatus.Experimental
 internal class RowBuilderImpl(private val dialogPanelConfig: DialogPanelConfig, val label: JLabel?) : RowBuilder {
 
-  var independent = false
+  var rowLayout = if (label == null) RowLayout.INDEPENDENT else RowLayout.LABEL_ALIGNED
     private set
 
   val cells: List<CellBuilderBase<*>>
@@ -29,8 +26,8 @@ internal class RowBuilderImpl(private val dialogPanelConfig: DialogPanelConfig, 
     label?.let { cell(it) }
   }
 
-  override fun independent(): RowBuilder {
-    independent = true
+  override fun layout(rowLayout: RowLayout): RowBuilder {
+    this.rowLayout = rowLayout
     return this
   }
 

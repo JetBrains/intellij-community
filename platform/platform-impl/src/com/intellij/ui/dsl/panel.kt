@@ -10,7 +10,6 @@ import org.jetbrains.annotations.ApiStatus
 /*
 todo
 remove first/last gaps
-panel in ShelfProjectConfigurable
 */
 
 @ApiStatus.Experimental

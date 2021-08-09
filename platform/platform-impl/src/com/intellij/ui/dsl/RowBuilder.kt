@@ -6,7 +6,32 @@ import com.intellij.ui.components.JBCheckBox
 import org.jetbrains.annotations.ApiStatus
 import java.awt.event.ActionEvent
 import javax.swing.JButton
+import javax.swing.JCheckBox
 import javax.swing.JComponent
+
+/**
+ * Determines relation between row grid and parent's grid
+ */
+enum class RowLayout {
+  /**
+   * All cells of the row including label independent of parent grid.
+   * That means the row has own grid
+   */
+  INDEPENDENT,
+
+  /**
+   * Label is aligned, other components independent of parent grid. If label is not provided
+   * then first cell (sometimes can be [JCheckBox] for example) is considered as a label.
+   * That means label is in parent grid, other components have own grid
+   */
+  LABEL_ALIGNED,
+
+  /**
+   * All components including label are in parent grid
+   * That means label and other components are in parent grid
+   */
+  PARENT_GRID
+}
 
 @DslMarker
 private annotation class RowBuilderMarker
@@ -16,9 +41,10 @@ private annotation class RowBuilderMarker
 interface RowBuilder {
 
   /**
-   * Makes cells of the row independent of parent grid, which means the row has own grid
+   * Layout of the row.
+   * Default value is [RowLayout.LABEL_ALIGNED] when label is provided for the row, [RowLayout.INDEPENDENT] otherwise
    */
-  fun independent(): RowBuilder
+  fun layout(rowLayout: RowLayout): RowBuilder
 
   fun <T : JComponent> cell(component: T): CellBuilder<T>
 
