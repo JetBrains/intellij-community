@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.settings;
 
 import com.intellij.debugger.DebuggerContext;
@@ -40,6 +40,7 @@ import com.intellij.util.EventDispatcher;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.xdebugger.frame.presentation.XValuePresentation;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl;
+import com.siyeh.ig.psiutils.ExpressionUtils;
 import com.sun.jdi.Value;
 import org.jdom.Element;
 import org.jetbrains.annotations.Debug;
@@ -291,8 +292,8 @@ public class NodeRendererSettings implements PersistentStateComponent<Element> {
     if (value == null) {
       return null;
     }
-    if (value instanceof PsiLiteralValue) {
-      return String.valueOf(((PsiLiteralValue)value).getValue());
+    if (value instanceof PsiExpression) {
+      return (String)ExpressionUtils.computeConstantExpression(((PsiExpression)value));
     }
     throw new IllegalStateException("String literal expected, but was " + value);
   }
