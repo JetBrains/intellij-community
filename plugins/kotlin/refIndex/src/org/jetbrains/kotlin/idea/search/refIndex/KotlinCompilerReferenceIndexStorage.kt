@@ -100,10 +100,13 @@ private class ClassOneToManyStorage(storagePath: Path) {
 
     fun closeAndClean(): Unit = storage.closeAndClean()
 
-    fun add(key: String, newValues: Collection<String>): Unit = storage.put(
-        key,
-        storage[key]?.plus(newValues)?.distinct() ?: newValues,
-    )
+    fun add(key: String, newValues: Collection<String>) {
+        newValues.singleOrNull()?.let { newValue ->
+            return add(key, newValue)
+        }
+
+        storage.put(key, storage[key]?.toMutableSet()?.apply { this += newValues } ?: newValues)
+    }
 
     fun add(key: String, newValue: String) {
         val oldValues = storage[key]
