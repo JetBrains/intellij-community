@@ -1225,11 +1225,20 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
     if (context == null || url == null) {
       return null;
     }
+    return targetAndRef(getProject(context), url, context);
+  }
+
+  @Internal
+  public static @Nullable Pair<@NotNull PsiElement, @Nullable String> targetAndRef(
+    @NotNull Project project,
+    @NotNull String url,
+    @Nullable PsiElement context
+  ) {
     Pair<String, String> linkAndRef = parseUrl(url);
     if (linkAndRef == null) {
       return null;
     }
-    PsiElement targetElement = targetElement(getProject(context), linkAndRef.first, context);
+    PsiElement targetElement = targetElement(project, linkAndRef.first, context);
     if (targetElement != null) {
       return Pair.create(targetElement, linkAndRef.second);
     }
