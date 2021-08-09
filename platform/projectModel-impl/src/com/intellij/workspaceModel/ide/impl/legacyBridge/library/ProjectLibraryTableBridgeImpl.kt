@@ -2,6 +2,8 @@
 package com.intellij.workspaceModel.ide.impl.legacyBridge.library
 
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.runInEdt
+import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.project.Project
@@ -136,13 +138,17 @@ class ProjectLibraryTableBridgeImpl(
       .toList()
     LOG.debug("Initial load of project-level libraries")
     if (libraries.isNotEmpty()) {
-      WorkspaceModel.getInstance(project).updateProjectModelSilent {
-        libraries.forEach { (entity, library) ->
-          it.mutableLibraryMap.addIfAbsent(entity, library)
+      runInEdt {
+        runWriteAction {
+          WorkspaceModel.getInstance(project).updateProjectModelSilent {
+            libraries.forEach { (entity, library) ->
+              it.mutableLibraryMap.addIfAbsent(entity, library)
+            }
+          }
+          libraries.forEach { (_, library) ->
+            dispatcher.multicaster.afterLibraryAdded(library)
+          }
         }
-      }
-      libraries.forEach { (_, library) ->
-        dispatcher.multicaster.afterLibraryAdded(library)
       }
     }
   }
