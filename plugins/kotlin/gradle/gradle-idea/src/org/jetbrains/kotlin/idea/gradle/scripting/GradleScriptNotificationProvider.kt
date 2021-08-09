@@ -14,6 +14,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.projectImport.ProjectImportProvider
 import com.intellij.ui.EditorNotificationPanel
 import com.intellij.ui.EditorNotifications
+import org.jetbrains.annotations.Nls
 import org.jetbrains.kotlin.idea.KotlinFileType
 import org.jetbrains.kotlin.idea.gradle.KotlinIdeaGradleBundle
 import org.jetbrains.kotlin.idea.configuration.GRADLE_SYSTEM_ID
@@ -112,9 +113,7 @@ class GradleScriptNotificationProvider(private val project: Project) :
                     }
                 }
                 val help = configurationsAreMissingRequestNeededHelp()
-                if (help != null) {
-                    contextHelp(help)
-                }
+                contextHelp(help)
             }
             notEvaluatedInLastImport -> EditorNotificationPanel().apply {
                 text(configurationsAreMissingAfterRequest())
@@ -218,9 +217,9 @@ class GradleScriptNotificationProvider(private val project: Project) :
         return null
     }
 
-    private fun EditorNotificationPanel.contextHelp(text: String) {
+    private fun EditorNotificationPanel.contextHelp(@Nls text: String) {
         val helpIcon = createActionLabel("") {}
-        helpIcon.setIcon(AllIcons.General.ContextHelp)
+        helpIcon.icon = AllIcons.General.ContextHelp
         helpIcon.setUseIconAsLink(true)
         helpIcon.toolTipText = text
     }

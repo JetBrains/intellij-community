@@ -19,6 +19,7 @@ import com.intellij.openapi.vfs.WritingAccessProvider
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import org.gradle.util.GradleVersion
+import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.kotlin.config.ApiVersion
 import org.jetbrains.kotlin.config.LanguageFeature
@@ -107,7 +108,7 @@ abstract class KotlinWithGradleConfigurator : KotlinProjectConfigurator {
     }
 
     fun configureSilently(project: Project, modules: List<Module>, version: String): NotificationMessageCollector {
-        return project.executeCommand(KotlinIdeaGradleBundle.message("comman.name.configure.kotlin")) {
+        return project.executeCommand(KotlinIdeaGradleBundle.message("command.name.configure.kotlin")) {
             val collector = createConfigureKotlinNotificationCollector(project)
             val changedFiles = configureWithVersion(project, modules, version, collector)
 
@@ -337,7 +338,7 @@ abstract class KotlinWithGradleConfigurator : KotlinProjectConfigurator {
 
         private fun canConfigureFile(file: PsiFile): Boolean = WritingAccessProvider.isPotentiallyWritable(file.virtualFile, null)
 
-        private fun showErrorMessage(project: Project, message: String?) {
+        private fun showErrorMessage(project: Project, @Nls message: String?) {
             Messages.showErrorDialog(
                 project,
                 "<html>" + KotlinIdeaGradleBundle.message("text.couldn.t.configure.kotlin.gradle.plugin.automatically") + "<br/>" +

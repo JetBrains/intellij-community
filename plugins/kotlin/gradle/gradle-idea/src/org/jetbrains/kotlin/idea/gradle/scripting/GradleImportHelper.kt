@@ -18,6 +18,7 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.LightVirtualFileBase
 import org.gradle.util.GradleVersion
+import org.jetbrains.annotations.Nls
 import org.jetbrains.kotlin.idea.KotlinFileType
 import org.jetbrains.kotlin.idea.KotlinIcons
 import org.jetbrains.kotlin.idea.gradle.KotlinIdeaGradleBundle
@@ -53,10 +54,10 @@ fun runPartialGradleImport(project: Project, root: GradleBuildRoot) {
     )
 }
 
-fun configurationsAreMissingRequestNeeded() = KotlinIdeaGradleBundle.message("notification.wasNotImportedAfterCreation.text")
-fun getConfigurationsActionText() = KotlinIdeaGradleBundle.message("action.text.load.script.configurations")
-fun configurationsAreMissingRequestNeededHelp(): String? = KotlinIdeaGradleBundle.message("notification.wasNotImportedAfterCreation.help")
-fun configurationsAreMissingAfterRequest(): String = KotlinIdeaGradleBundle.message("notification.notEvaluatedInLastImport.text")
+@Nls fun configurationsAreMissingRequestNeeded() = KotlinIdeaGradleBundle.message("notification.wasNotImportedAfterCreation.text")
+@Nls fun getConfigurationsActionText() = KotlinIdeaGradleBundle.message("action.text.load.script.configurations")
+@Nls fun configurationsAreMissingRequestNeededHelp(): String = KotlinIdeaGradleBundle.message("notification.wasNotImportedAfterCreation.help")
+@Nls fun configurationsAreMissingAfterRequest(): String = KotlinIdeaGradleBundle.message("notification.notEvaluatedInLastImport.text")
 
 fun autoReloadScriptConfigurations(project: Project, file: VirtualFile): Boolean {
     val definition = file.findScriptDefinition(project) ?: return false
