@@ -15,7 +15,7 @@ import org.jetbrains.kotlin.idea.fir.api.fixes.HLQuickFix
 import org.jetbrains.kotlin.idea.fir.api.fixes.diagnosticFixFactory
 import org.jetbrains.kotlin.idea.frontend.api.KtAnalysisSession
 import org.jetbrains.kotlin.idea.frontend.api.calls.KtCall
-import org.jetbrains.kotlin.idea.frontend.api.calls.KtVariableWithInvokeFunctionCall
+import org.jetbrains.kotlin.idea.frontend.api.calls.KtFunctionalTypeVariableCall
 import org.jetbrains.kotlin.idea.frontend.api.fir.diagnostics.KtFirDiagnostic
 import org.jetbrains.kotlin.idea.frontend.api.symbols.KtCallableSymbol
 import org.jetbrains.kotlin.lexer.KtTokens
@@ -154,7 +154,7 @@ object WrapWithSafeLetCallFixFactories {
     private fun KtAnalysisSession.isCallingFunctionalTypeVariableInLocalScope(callExpression: KtCallExpression): Boolean? {
         val calleeName = callExpression.calleeExpression?.text ?: return null
         val callSite = callExpression.parent as? KtQualifiedExpression ?: callExpression
-        val functionalVariableSymbol = (callExpression.resolveCall() as? KtVariableWithInvokeFunctionCall)?.target ?: return false
+        val functionalVariableSymbol = (callExpression.resolveCall() as? KtFunctionalTypeVariableCall)?.target ?: return false
         val localScope = callExpression.containingKtFile.getScopeContextForPosition(callSite)
         // If no symbol in the local scope contains the called symbol, then the symbol must be a member symbol.
         return localScope.scopes.getCallableSymbols { it.identifierOrNullIfSpecial == calleeName }.any { it == functionalVariableSymbol }
