@@ -1,5 +1,5 @@
 <idea-plugin>
-  <module value="org.intellij.datavis.r.inlays.visualisation" />
+  <module value="org.intellij.notebooks.visualization" />
   <depends>com.intellij.platform.images</depends>
   <extensionPoints>
     <extensionPoint qualifiedName="com.intellij.datavis.inlays.inlayDescriptorProvider"
