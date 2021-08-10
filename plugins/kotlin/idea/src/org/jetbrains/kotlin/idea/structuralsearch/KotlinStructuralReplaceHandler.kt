@@ -30,11 +30,12 @@ import java.lang.Integer.min
 
 class KotlinStructuralReplaceHandler(private val project: Project) : StructuralReplaceHandler() {
     override fun replace(info: ReplacementInfo, options: ReplaceOptions) {
-        val searchTemplate = StructuralSearchUtil.getPresentableElement(
-            PatternCompiler.compilePattern(project, options.matchOptions, true, true).let { it.targetNode ?: it.nodes.current() }
-        )
+        val searchTemplate =
+            StructuralSearchUtil.getPresentableElement(PatternCompiler.compilePattern(project, options.matchOptions, true, true)
+                                                           .let { it.targetNode ?: it.nodes.current() })
+        val fileType = options.matchOptions.fileType ?: return
         val replaceTemplates = MatcherImplUtil.createTreeFromText(
-            info.replacement.fixPattern(), PatternTreeContext.Block, options.matchOptions.fileType!!, project
+            info.replacement.fixPattern(), PatternTreeContext.Block, fileType, project
         )
         for (i in 0 until info.matchesCount) {
             val match = StructuralSearchUtil.getPresentableElement(info.getMatch(i)) ?: break
@@ -78,22 +79,26 @@ class KotlinStructuralReplaceHandler(private val project: Project) : StructuralR
                 replaceCallableDeclaration(searchTemplate, match)
             }
             when {
-                this is KtClassOrObject && searchTemplate is KtClassOrObject && match is KtClassOrObject ->
-                    replaceClassOrObject(searchTemplate, match)
-                this is KtNamedFunction && searchTemplate is KtNamedFunction && match is KtNamedFunction ->
-                    replaceNamedFunction(searchTemplate, match)
-                this is KtProperty && searchTemplate is KtProperty && match is KtProperty ->
-                    replaceProperty(searchTemplate, match)
+                this is KtClassOrObject && searchTemplate is KtClassOrObject && match is KtClassOrObject -> replaceClassOrObject(
+                    searchTemplate, match
+                )
+                this is KtNamedFunction && searchTemplate is KtNamedFunction && match is KtNamedFunction -> replaceNamedFunction(
+                    searchTemplate, match
+                )
+                this is KtProperty && searchTemplate is KtProperty && match is KtProperty -> replaceProperty(searchTemplate, match)
             }
         } else { // KtExpression
             when {
                 this is KtWhenExpression -> replaceWhenExpression()
-                this is KtLambdaExpression && searchTemplate is KtLambdaExpression && match is KtLambdaExpression ->
-                    replaceLambdaExpression(searchTemplate, match)
-                this is KtDotQualifiedExpression && searchTemplate is KtDotQualifiedExpression && match is KtDotQualifiedExpression ->
-                    replaceDotQualifiedExpression(searchTemplate, match)
-                this is KtCallExpression && searchTemplate is KtCallExpression && match is KtCallExpression ->
-                    replaceCallExpression(searchTemplate, match)
+                this is KtLambdaExpression && searchTemplate is KtLambdaExpression && match is KtLambdaExpression -> replaceLambdaExpression(
+                    searchTemplate, match
+                )
+                this is KtDotQualifiedExpression && searchTemplate is KtDotQualifiedExpression && match is KtDotQualifiedExpression -> replaceDotQualifiedExpression(
+                    searchTemplate, match
+                )
+                this is KtCallExpression && searchTemplate is KtCallExpression && match is KtCallExpression -> replaceCallExpression(
+                    searchTemplate, match
+                )
             }
             fixWhiteSpace(match)
         }
@@ -108,8 +113,7 @@ class KotlinStructuralReplaceHandler(private val project: Project) : StructuralR
     }
 
     private fun KtDotQualifiedExpression.replaceDotQualifiedExpression(
-        searchTemplate: KtDotQualifiedExpression,
-        match: KtDotQualifiedExpression
+        searchTemplate: KtDotQualifiedExpression, match: KtDotQualifiedExpression
     ) {
         receiverExpression.structuralReplace(searchTemplate.receiverExpression, match.receiverExpression)
         val selectorExpr = selectorExpression
@@ -131,11 +135,10 @@ class KotlinStructuralReplaceHandler(private val project: Project) : StructuralR
         if (valueParameters.isEmpty() && searchTemplate.valueParameters.isEmpty()) { // { $A$ } templates
             match.functionLiteral.valueParameterList?.let {
                 functionLiteral.addAfter(it, functionLiteral.lBrace)
-                functionLiteral.addAfter(match.functionLiteral.arrow!!, functionLiteral.valueParameterList!!)
-                functionLiteral.addSurroundingWhiteSpace(
-                    functionLiteral.valueParameterList!!,
-                    match.functionLiteral.valueParameterList!!
-                )
+                functionLiteral.valueParameterList?.let { vPl ->
+                    match.functionLiteral.arrow?.let { mArrow -> functionLiteral.addAfter(mArrow, vPl) }
+                    match.functionLiteral.valueParameterList?.let { mVpl -> functionLiteral.addSurroundingWhiteSpace(vPl, mVpl) }
+                }
             }
         }
         if (valueParameters.isEmpty()) {
@@ -148,9 +151,9 @@ class KotlinStructuralReplaceHandler(private val project: Project) : StructuralR
             val searchPar = searchTemplate.valueParameters.getOrElse(i) { return@forEachIndexed }
             val matchPar = match.valueParameters.getOrElse(i) { return@forEachIndexed }
             if (par.typeReference == null && searchPar.typeReference == null) {
-                matchPar.typeReference?.let {
-                    par.typeReference = it
-                    par.addSurroundingWhiteSpace(par.typeReference!!, it)
+                matchPar.typeReference?.let { mTr ->
+                    par.typeReference = mTr
+                    par.typeReference?.let { pTr -> par.addSurroundingWhiteSpace(pTr, mTr) }
                 }
             }
         }
@@ -168,16 +171,15 @@ class KotlinStructuralReplaceHandler(private val project: Project) : StructuralR
     }
 
     private fun KtModifierListOwner.replaceModifier(
-        searchTemplate: KtModifierListOwner,
-        match: KtModifierListOwner,
-        modifier: KtModifierKeywordToken
+        searchTemplate: KtModifierListOwner, match: KtModifierListOwner, modifier: KtModifierKeywordToken
     ): KtModifierListOwner {
         if (!hasModifier(modifier) && match.hasModifier(modifier) && !searchTemplate.hasModifier(modifier)) {
             addModifier(modifier)
-            modifierList?.addSurroundingWhiteSpace(
-                modifierList?.getModifier(modifier)!!,
-                match.modifierList?.getModifier(modifier)!!
-            )
+            modifierList?.getModifier(modifier)?.let { mod ->
+                match.modifierList?.getModifier(modifier)?.let { mMod ->
+                    modifierList?.addSurroundingWhiteSpace(mod, mMod)
+                }
+            }
         }
         return this
     }
@@ -195,8 +197,7 @@ class KotlinStructuralReplaceHandler(private val project: Project) : StructuralR
     }
 
     private fun KtDeclaration.replaceDeclaration(searchTemplate: KtDeclaration, match: KtDeclaration): KtDeclaration {
-        if (modifierList?.annotationEntries?.isEmpty() == true) {
-            // remove @ symbol for when annotation count filter is equal to 0
+        if (modifierList?.annotationEntries?.isEmpty() == true) { // remove @ symbol for when annotation count filter is equal to 0
             val atElement = modifierList?.children?.find { it is PsiErrorElement }
             atElement?.delete()
         }
@@ -213,7 +214,11 @@ class KotlinStructuralReplaceHandler(private val project: Project) : StructuralR
             if (visibilityModifierType() == null && searchTemplate.visibilityModifierType() == null) {
                 match.visibilityModifierType()?.let {
                     addModifier(it)
-                    modifierList?.addSurroundingWhiteSpace(visibilityModifier()!!, match.visibilityModifier()!!)
+                    visibilityModifier()?.let { vM ->
+                        match.visibilityModifier()?.let { mVm ->
+                            modifierList?.addSurroundingWhiteSpace(vM, mVm)
+                        }
+                    }
                 }
             }
             return this
@@ -223,8 +228,7 @@ class KotlinStructuralReplaceHandler(private val project: Project) : StructuralR
     }
 
     private fun KtCallableDeclaration.replaceCallableDeclaration(
-        searchTemplate: KtCallableDeclaration,
-        match: KtCallableDeclaration
+        searchTemplate: KtCallableDeclaration, match: KtCallableDeclaration
     ): KtCallableDeclaration {
         if (receiverTypeReference == null && searchTemplate.receiverTypeReference == null) {
             match.receiverTypeReference?.let(this::setReceiverTypeReference)
@@ -232,8 +236,8 @@ class KotlinStructuralReplaceHandler(private val project: Project) : StructuralR
         if (typeReference == null || searchTemplate.typeReference == null) {
             match.typeReference?.let { matchTr ->
                 typeReference = matchTr
-                addSurroundingWhiteSpace(typeReference!!, matchTr)
-                addSurroundingWhiteSpace(colon!!, match.colon!!)
+                typeReference?.let { addSurroundingWhiteSpace(it, matchTr) }
+                colon?.let { c -> match.colon?.let { mC -> addSurroundingWhiteSpace(c, mC) } }
             }
         }
         val searchParam = searchTemplate.valueParameterList
@@ -261,7 +265,8 @@ class KotlinStructuralReplaceHandler(private val project: Project) : StructuralR
         if (primaryConstructorModifierList == null && searchTemplate.primaryConstructorModifierList == null) {
             match.primaryConstructorModifierList?.let { matchModList ->
                 matchModList.visibilityModifierType()?.let { primaryConstructor?.addModifier(it) }
-                addSurroundingWhiteSpace(primaryConstructor!!, match.primaryConstructor!!)
+                primaryConstructor?.let { pC -> match.primaryConstructor?.let { mPc -> addSurroundingWhiteSpace(pC, mPc) } }
+
             }
         }
 
@@ -271,27 +276,25 @@ class KotlinStructuralReplaceHandler(private val project: Project) : StructuralR
             searchParamList, matchParamList
         )
 
-        if (getSuperTypeList() == null && searchTemplate.getSuperTypeList() == null) {
-            // replace all entries
+        if (getSuperTypeList() == null && searchTemplate.getSuperTypeList() == null) { // replace all entries
             match.superTypeListEntries.forEach {
                 val superTypeEntry = addSuperTypeListEntry(it)
                 getSuperTypeList()?.addSurroundingWhiteSpace(superTypeEntry, it)
             }
 
             // format commas
-            val matchCommas = match.getSuperTypeList()?.node?.children()
-                ?.filter { it.elementType == KtTokens.COMMA }
-                ?.map { it.psi }
-                ?.toList()
+            val matchCommas =
+                match.getSuperTypeList()?.node?.children()?.filter { it.elementType == KtTokens.COMMA }?.map { it.psi }?.toList()
             getSuperTypeList()?.node?.children()?.filter { it.elementType == KtTokens.COMMA }?.forEachIndexed { index, element ->
-                getSuperTypeList()?.addSurroundingWhiteSpace(element.psi, matchCommas!![index])
+                matchCommas?.get(index)?.let { mC -> getSuperTypeList()?.addSurroundingWhiteSpace(element.psi, mC) }
             }
 
             // format semi colon
             if (superTypeListEntries.isNotEmpty() && match.superTypeListEntries.isNotEmpty()) {
-                node.children().find { it.elementType == KtTokens.COLON }?.let { replaceColon -> // TODO replace by getColon in 1.4.30
-                    val matchColon = match.node.children().find { it.elementType == KtTokens.COLON }!!
-                    addSurroundingWhiteSpace(replaceColon.psi, matchColon.psi)
+                getColon()?.let { replaceColon ->
+                    match.getColon()?.let { matchColon ->
+                        addSurroundingWhiteSpace(replaceColon, matchColon)
+                    }
                 }
             }
         }
@@ -338,8 +341,7 @@ class KotlinStructuralReplaceHandler(private val project: Project) : StructuralR
     }
 
     private fun KtParameterList.replaceParameterList(
-        searchTemplate: KtParameterList,
-        match: KtParameterList
+        searchTemplate: KtParameterList, match: KtParameterList
     ): KtParameterList {
         parameters.forEachIndexed { i, param ->
             val searchParam = searchTemplate.parameters.getOrNull(i)
@@ -348,22 +350,21 @@ class KotlinStructuralReplaceHandler(private val project: Project) : StructuralR
                 addSurroundingWhiteSpace(param, matchParam)
             }
             if (param.valOrVarKeyword == null && searchParam?.valOrVarKeyword == null) {
-                matchParam.valOrVarKeyword?.let {
-                    param.addBefore(it, param.nameIdentifier)
-                    param.addSurroundingWhiteSpace(param.valOrVarKeyword!!, it)
+                matchParam.valOrVarKeyword?.let { mVal ->
+                    param.addBefore(mVal, param.nameIdentifier)
+                    param.valOrVarKeyword?.let { param.addSurroundingWhiteSpace(it, mVal) }
                 }
             }
             if (param.typeReference == null && searchParam?.typeReference == null) {
                 matchParam.typeReference?.let {
                     param.typeReference = it
-                    param.addSurroundingWhiteSpace(param.colon!!, matchParam.colon!!)
+                    param.colon?.let { pColon -> matchParam.colon?.let { mColon -> param.addSurroundingWhiteSpace(pColon, mColon) } }
                 }
-
             }
             if (!param.hasDefaultValue() && searchParam?.hasDefaultValue() != true) {
                 matchParam.defaultValue?.let {
                     param.setDefaultValue(it)
-                    param.addSurroundingWhiteSpace(param.equalsToken!!, matchParam.equalsToken!!)
+                    param.equalsToken?.let { pEq -> matchParam.equalsToken?.let { mEq -> param.addSurroundingWhiteSpace(pEq, mEq) } }
                 }
             }
         }
