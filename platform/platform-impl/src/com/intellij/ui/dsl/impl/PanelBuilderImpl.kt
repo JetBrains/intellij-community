@@ -3,7 +3,10 @@ package com.intellij.ui.dsl.impl
 
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.ui.DialogPanel
+import com.intellij.openapi.ui.OnePixelDivider
 import com.intellij.openapi.util.NlsContexts
+import com.intellij.ui.SeparatorComponent
+import com.intellij.ui.TitledSeparator
 import com.intellij.ui.dsl.*
 import com.intellij.ui.dsl.gridLayout.Gaps
 import com.intellij.ui.dsl.gridLayout.HorizontalAlign
@@ -34,13 +37,41 @@ internal class PanelBuilderImpl(private val dialogPanelConfig: DialogPanelConfig
     return result
   }
 
-  override fun alignHorizontal(horizontalAlign: HorizontalAlign): PanelBuilder {
-    super.alignHorizontal(horizontalAlign)
+  override fun panelRow(title: String?, independent: Boolean, init: PanelBuilder.() -> Unit): RowBuilder {
+    val component = if (title == null)
+      SeparatorComponent(0, OnePixelDivider.BACKGROUND, null)
+    else
+      TitledSeparator(title)
+
+    if (independent) {
+      return row {
+        val panel = panel {
+          row {
+            cell(component)
+              .horizontalAlign(HorizontalAlign.FILL)
+          }
+        }
+
+        panel.init()
+      }
+    }
+
+    // todo
+    return RowBuilderImpl(dialogPanelConfig)
+  }
+
+  override fun horizontalAlign(horizontalAlign: HorizontalAlign): PanelBuilder {
+    super.horizontalAlign(horizontalAlign)
     return this
   }
 
-  override fun alignVertical(verticalAlign: VerticalAlign): PanelBuilder {
-    super.alignVertical(verticalAlign)
+  override fun verticalAlign(verticalAlign: VerticalAlign): PanelBuilder {
+    super.verticalAlign(verticalAlign)
+    return this
+  }
+
+  override fun resizableColumn(): PanelBuilder {
+    super.resizableColumn()
     return this
   }
 
@@ -74,6 +105,7 @@ internal class PanelBuilderImpl(private val dialogPanelConfig: DialogPanelConfig
           subGridBuilder.row()
 
           buildCommentRow(cells, cells.size, subGridBuilder)
+          setLastColumnResizable(subGridBuilder)
           rowsGridBuilder.row()
         }
 
@@ -86,6 +118,7 @@ internal class PanelBuilderImpl(private val dialogPanelConfig: DialogPanelConfig
             val subGridBuilder = RowsGridBuilder(panel, subGrid)
             val cells = row.cells.subList(1, row.cells.size)
             buildRow(cells, false, cells.size, panel, subGridBuilder)
+            setLastColumnResizable(subGridBuilder)
           }
           rowsGridBuilder.row()
 
@@ -109,6 +142,14 @@ internal class PanelBuilderImpl(private val dialogPanelConfig: DialogPanelConfig
           buildCommentRow(row.cells, maxColumnsCount, rowsGridBuilder)
         }
       }
+    }
+
+    setLastColumnResizable(rowsGridBuilder)
+  }
+
+  private fun setLastColumnResizable(builder: RowsGridBuilder) {
+    if (builder.resizableColumns.isEmpty() && builder.columnsCount > 0) {
+      builder.resizableColumns = setOf(builder.columnsCount - 1)
     }
   }
 
@@ -135,6 +176,7 @@ internal class PanelBuilderImpl(private val dialogPanelConfig: DialogPanelConfig
         val verticalGap = getDefaultVerticalGap(cell.component)
         val gaps = Gaps(top = verticalGap, bottom = verticalGap, right = rightGap)
         builder.cell(cell.component, width = width, horizontalAlign = cell.horizontalAlign, verticalAlign = cell.verticalAlign,
+                     resizableColumn = cell.resizableColumn,
                      gaps = gaps, visualPaddings = visualPaddings)
       }
       is PanelBuilderImpl -> {

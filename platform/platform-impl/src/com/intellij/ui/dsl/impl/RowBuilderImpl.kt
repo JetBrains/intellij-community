@@ -12,7 +12,7 @@ import javax.swing.JComponent
 import javax.swing.JLabel
 
 @ApiStatus.Experimental
-internal class RowBuilderImpl(private val dialogPanelConfig: DialogPanelConfig, val label: JLabel?) : RowBuilder {
+internal class RowBuilderImpl(private val dialogPanelConfig: DialogPanelConfig, val label: JLabel? = null) : RowBuilder {
 
   var rowLayout = if (label == null) RowLayout.INDEPENDENT else RowLayout.LABEL_ALIGNED
     private set

@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.dsl
 
+import com.intellij.openapi.util.NlsContexts
 import com.intellij.ui.components.Label
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
@@ -14,4 +15,9 @@ interface PanelBuilderBase {
   }
 
   fun row(label: JLabel? = null, init: RowBuilder.() -> Unit): RowBuilder
+
+  /**
+   * Adds panel with a title and some space before the panel
+   */
+  fun panelRow(@NlsContexts.BorderTitle title: String? = null, independent: Boolean = true, init: PanelBuilder.() -> Unit): RowBuilder
 }

@@ -5,6 +5,8 @@ import com.intellij.ui.dsl.gridLayout.HorizontalAlign
 import com.intellij.ui.dsl.gridLayout.VerticalAlign
 import com.intellij.ui.layout.*
 import org.jetbrains.annotations.ApiStatus
+import java.awt.event.ActionEvent
+import java.awt.event.ActionListener
 import javax.swing.AbstractButton
 import javax.swing.JComponent
 import kotlin.reflect.KMutableProperty0
@@ -12,9 +14,11 @@ import kotlin.reflect.KMutableProperty0
 @ApiStatus.Experimental
 interface CellBuilder<T : JComponent> : CellBuilderBase<CellBuilder<T>> {
 
-  override fun alignHorizontal(horizontalAlign: HorizontalAlign): CellBuilder<T>
+  override fun horizontalAlign(horizontalAlign: HorizontalAlign): CellBuilder<T>
 
-  override fun alignVertical(verticalAlign: VerticalAlign): CellBuilder<T>
+  override fun verticalAlign(verticalAlign: VerticalAlign): CellBuilder<T>
+
+  override fun resizableColumn(): CellBuilder<T>
 
   override fun comment(comment: String, maxLineLength: Int): CellBuilder<T>
 
@@ -42,4 +46,8 @@ fun <T : AbstractButton> CellBuilder<T>.bind(prop: KMutableProperty0<Boolean>): 
 
 fun <T : AbstractButton> CellBuilder<T>.bind(getter: () -> Boolean, setter: (Boolean) -> Unit): CellBuilder<T> {
   return bind(PropertyBinding(getter, setter))
+}
+
+fun <T : AbstractButton> CellBuilder<T>.actionListener(actionListener: (event: ActionEvent, component: T) -> Unit): CellBuilder<T> {
+  return applyToComponent { addActionListener(ActionListener { actionListener(it, this) }) }
 }

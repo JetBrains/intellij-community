@@ -19,12 +19,20 @@ interface CellBuilderBase<T : CellBuilderBase<T>> {
 
   val horizontalAlign: HorizontalAlign
   val verticalAlign: VerticalAlign
+  val resizableColumn: Boolean
   val rightGap: Int
   val comment: JComponent?
 
-  fun alignHorizontal(horizontalAlign: HorizontalAlign): CellBuilderBase<T>
+  fun horizontalAlign(horizontalAlign: HorizontalAlign): CellBuilderBase<T>
 
-  fun alignVertical(verticalAlign: VerticalAlign): CellBuilderBase<T>
+  fun verticalAlign(verticalAlign: VerticalAlign): CellBuilderBase<T>
+
+  /**
+   * Marks column of the cell as resizable: the column occupies all extra space in panel and changes size together with panel.
+   * It's possible to have several resizable columns, which means extra space is shared between them.
+   * There is no need to set resizable for cells from one column: it has no effect
+   */
+  fun resizableColumn(): CellBuilderBase<T>
 
   fun comment(@NlsContexts.DetailedDescription comment: String,
               maxLineLength: Int = ComponentPanelBuilder.MAX_COMMENT_WIDTH): CellBuilderBase<T>

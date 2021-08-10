@@ -18,13 +18,18 @@ internal class CellBuilderImpl<T : JComponent>(
 
   private var applyIfEnabled = false
 
-  override fun alignHorizontal(horizontalAlign: HorizontalAlign): CellBuilder<T> {
-    super.alignHorizontal(horizontalAlign)
+  override fun horizontalAlign(horizontalAlign: HorizontalAlign): CellBuilder<T> {
+    super.horizontalAlign(horizontalAlign)
     return this
   }
 
-  override fun alignVertical(verticalAlign: VerticalAlign): CellBuilder<T> {
-    super.alignVertical(verticalAlign)
+  override fun verticalAlign(verticalAlign: VerticalAlign): CellBuilder<T> {
+    super.verticalAlign(verticalAlign)
+    return this
+  }
+
+  override fun resizableColumn(): CellBuilder<T> {
+    super.resizableColumn()
     return this
   }
 

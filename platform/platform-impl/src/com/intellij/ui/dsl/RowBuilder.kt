@@ -48,6 +48,9 @@ interface RowBuilder {
 
   fun <T : JComponent> cell(component: T): CellBuilder<T>
 
+  /**
+   * Creates subpanel inside cell of the row
+   */
   fun panel(init: PanelBuilder.() -> Unit): PanelBuilder
 
   fun checkBox(@NlsContexts.Checkbox text: String): CellBuilder<JBCheckBox>

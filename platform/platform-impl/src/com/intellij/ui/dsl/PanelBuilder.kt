@@ -8,9 +8,11 @@ import org.jetbrains.annotations.ApiStatus
 @ApiStatus.Experimental
 interface PanelBuilder : PanelBuilderBase, CellBuilderBase<PanelBuilder> {
 
-  override fun alignHorizontal(horizontalAlign: HorizontalAlign): PanelBuilder
+  override fun horizontalAlign(horizontalAlign: HorizontalAlign): PanelBuilder
 
-  override fun alignVertical(verticalAlign: VerticalAlign): PanelBuilder
+  override fun verticalAlign(verticalAlign: VerticalAlign): PanelBuilder
+
+  override fun resizableColumn(): PanelBuilder
 
   override fun comment(comment: String, maxLineLength: Int): PanelBuilder
 
