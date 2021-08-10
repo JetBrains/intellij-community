@@ -538,7 +538,7 @@ public final class IntentionHintComponent implements Disposable, ScrollAwareHint
       injectionHighlighter.dropHighlight();
 
       if (source instanceof DataProvider) {
-        final Object selectedItem = PlatformDataKeys.SELECTED_ITEM.getData((DataProvider)source);
+        final Object selectedItem = PlatformCoreDataKeys.SELECTED_ITEM.getData((DataProvider)source);
         if (selectedItem instanceof IntentionActionWithTextCaching) {
           IntentionAction action = IntentionActionDelegate.unwrap(((IntentionActionWithTextCaching)selectedItem).getAction());
           if (that.myPopup instanceof ListPopupImpl) {

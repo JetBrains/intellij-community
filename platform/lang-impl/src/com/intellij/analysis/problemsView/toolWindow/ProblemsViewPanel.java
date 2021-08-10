@@ -233,7 +233,7 @@ public class ProblemsViewPanel extends OnePixelSplitter implements Disposable, D
     }
     Node node = getSelectedNode();
     if (node != null) {
-      if (PlatformDataKeys.SELECTED_ITEM.is(dataId)) return node;
+      if (PlatformCoreDataKeys.SELECTED_ITEM.is(dataId)) return node;
       if (CommonDataKeys.NAVIGATABLE.is(dataId)) return node.getNavigatable();
       if (CommonDataKeys.VIRTUAL_FILE.is(dataId)) return node.getVirtualFile();
       if (CommonDataKeys.NAVIGATABLE_ARRAY.is(dataId)) {

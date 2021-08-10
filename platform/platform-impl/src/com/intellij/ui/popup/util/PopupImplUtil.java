@@ -2,7 +2,7 @@
 package com.intellij.ui.popup.util;
 
 import com.intellij.ide.ProhibitAWTEvents;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
@@ -45,11 +45,11 @@ public final class PopupImplUtil {
   }
 
   public static @Nullable Object getDataImplForList(@NotNull JList<?> list, @NotNull String dataId) {
-    if (PlatformDataKeys.SELECTED_ITEM.is(dataId)) {
+    if (PlatformCoreDataKeys.SELECTED_ITEM.is(dataId)) {
       int index = list.getSelectedIndex();
       return index > -1 ? list.getSelectedValue() : ObjectUtils.NULL;
     }
-    else if (PlatformDataKeys.SELECTED_ITEMS.is(dataId)) {
+    else if (PlatformCoreDataKeys.SELECTED_ITEMS.is(dataId)) {
       Object[] values = list.getSelectedValues();
       for (int i = 0; i < values.length; i++) {
         if (values[i] == null) {

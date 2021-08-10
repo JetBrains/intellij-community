@@ -9,7 +9,7 @@ import com.intellij.ide.projectView.PresentationData;
 import com.intellij.ide.util.treeView.PresentableNodeDescriptor;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.actionSystem.DataProvider;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NlsSafe;
@@ -181,7 +181,7 @@ final class ServiceViewDragHelper {
     @Nullable
     @Override
     public Object getData(@NotNull String dataId) {
-      if (PlatformDataKeys.SELECTED_ITEMS.is(dataId)) {
+      if (PlatformCoreDataKeys.SELECTED_ITEMS.is(dataId)) {
         return ContainerUtil.map2Array(myItems, ServiceViewItem::getValue);
       }
       return null;

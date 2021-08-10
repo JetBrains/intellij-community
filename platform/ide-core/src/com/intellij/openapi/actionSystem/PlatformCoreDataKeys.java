@@ -50,4 +50,16 @@ public class PlatformCoreDataKeys extends CommonDataKeys {
    * That slow part shall be returned when this data key is requested.
    */
   public static final DataKey<Iterable<DataProvider>> SLOW_DATA_PROVIDERS = DataKey.create("slowDataProviders");
+  /**
+   * Returns single selection item.
+   *
+   * @see #SELECTED_ITEMS
+   */
+  public static final DataKey<Object> SELECTED_ITEM = DataKey.create("selectedItem");
+  /**
+   * Returns multi selection items.
+   *
+   * @see #SELECTED_ITEM
+   */
+  public static final DataKey<Object[]> SELECTED_ITEMS = DataKey.create("selectedItems");
 }
