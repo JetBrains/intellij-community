@@ -266,18 +266,18 @@ public class NodeRendererSettings implements PersistentStateComponent<Element> {
     try {
       visitAnnotatedElements(Debug.Renderer.class.getName().replace("$", "."), project, (e, annotation) -> {
         if (e instanceof PsiClass) {
-          String text = getAttributeValue(annotation, "text");
-          LabelRenderer labelRenderer = StringUtil.isEmpty(text) ? null : createLabelRenderer(null, text, null);
-          String childrenArray = getAttributeValue(annotation, "childrenArray");
-          String isLeaf = getAttributeValue(annotation, "hasChildren");
-          ExpressionChildrenRenderer childrenRenderer =
-            StringUtil.isEmpty(childrenArray) ? null : createExpressionArrayChildrenRenderer(childrenArray, isLeaf, myArrayRenderer);
+            String text = getAttributeValue(annotation, "text");
+            LabelRenderer labelRenderer = StringUtil.isEmpty(text) ? null : createLabelRenderer(null, text, null);
+            String childrenArray = getAttributeValue(annotation, "childrenArray");
+            String isLeaf = getAttributeValue(annotation, "hasChildren");
+            ExpressionChildrenRenderer childrenRenderer =
+              StringUtil.isEmpty(childrenArray) ? null : createExpressionArrayChildrenRenderer(childrenArray, isLeaf, myArrayRenderer);
           PsiClass cls = ((PsiClass)e);
-          CompoundReferenceRenderer renderer = createCompoundReferenceRenderer(
+            CompoundReferenceRenderer renderer = createCompoundReferenceRenderer(
             cls.getQualifiedName(), cls.getQualifiedName(), labelRenderer, childrenRenderer);
-          renderer.setEnabled(true);
-          renderers.add(renderer);
-        }
+            renderer.setEnabled(true);
+            renderers.add(renderer);
+          }
       });
     }
     catch (IndexNotReadyException | ProcessCanceledException ignore) {
@@ -293,7 +293,10 @@ public class NodeRendererSettings implements PersistentStateComponent<Element> {
       return null;
     }
     if (value instanceof PsiExpression) {
-      return (String)ExpressionUtils.computeConstantExpression(((PsiExpression)value));
+      Object res = ExpressionUtils.computeConstantExpression(((PsiExpression)value));
+      if (res instanceof String){
+        return (String)res;
+      }
     }
     throw new IllegalStateException("String literal expected, but was " + value);
   }
