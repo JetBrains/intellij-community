@@ -108,6 +108,10 @@ public class PsiSymbolTreeElement extends PsiTreeElementBase<PsiElement> {
 
   protected @Nullable Navigatable getNavigatable() {
     var symbolDeclaration = getSymbolDeclaration();
+    return getNavigatable(symbolDeclaration);
+  }
+  
+  static public @Nullable Navigatable getNavigatable(@Nullable PsiSymbolDeclaration symbolDeclaration) {
     if (symbolDeclaration == null) {
       LOG.debug("No symbol declaration for navigation");
       return null;
