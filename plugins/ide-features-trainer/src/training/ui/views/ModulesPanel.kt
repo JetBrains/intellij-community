@@ -31,8 +31,6 @@ class ModulesPanel(project: Project) : JPanel() {
     initModulesPanel()
 
     revalidate()
-
-    preferredSize = Dimension(UISettings.instance.panelWidth, preferredSize.height)
     repaint()
   }
 
@@ -50,6 +48,7 @@ class ModulesPanel(project: Project) : JPanel() {
     removeAll()
     addHeaderPanel()
     modulesPanel.alignmentX = LEFT_ALIGNMENT
+    modulesPanel.maximumSize = Dimension(UISettings.instance.let { it.panelWidth - (it.westInset + it.eastInset) }, 10000)
     add(modulesPanel)
     add(Box.createVerticalGlue())
     addFooter()
