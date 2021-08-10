@@ -9,7 +9,7 @@ import org.jetbrains.annotations.Nls
 import java.awt.Component
 
 interface CredentialStoreUiService {
-  fun notify(title: String, content: String, project: Project?, action: NotificationAction?) {
+  fun notify(@NlsContexts.NotificationTitle title: String, @NlsContexts.NotificationContent content: String, project: Project?, action: NotificationAction?) {
   }
 
   fun showChangeMasterPasswordDialog(contextComponent: Component?,
