@@ -9,6 +9,9 @@ import groovy.transform.CompileStatic
  */
 @CompileStatic
 final class PyCharmBuildOptions {
+  /** Build pydevd package step name */
+  static final String PYDEVD_PACKAGE = "pydevd_package"
+
   /**
    * Pass 'false' to skip bundling <a href="http://google.comhttps://plugins.jetbrains.com/plugin/12174-datalore">Datalore plugin</a>
    * to PyCharm Professional
