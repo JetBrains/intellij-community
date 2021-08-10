@@ -286,7 +286,7 @@ class CommunityLibraryLicenses {
                        url: "https://github.com/googleapis/google-api-java-client-services/tree/master/clients/google-api-services-drive/v3",
                        licenseUrl: "https://github.com/googleapis/google-api-java-client-services/blob/master/LICENSE").apache(),
     new LibraryLicense(libraryName: "Gradle", url: "http://gradle.org/", licenseUrl: "http://gradle.org/license").apache(),
-    new LibraryLicense(name: "Grazie Language Detector", libraryName: "tanvd.grazi:grazi-language-detector:0.1.13").apache(),
+    new LibraryLicense(name: "Grazie Language Detector", libraryName: "ai.grazie:nlp-detector:0.0.2").apache(),
     new LibraryLicense(libraryName: "Grazie NLP tokenizer").apache(),
     new LibraryLicense(name: "Grazie SpellChecker", libraryName: "grazie-spellchecker").apache(),
     new LibraryLicense(name: "Groovy", libraryName: "org.codehaus.groovy:groovy", url: "https://groovy-lang.org/").apache(),
