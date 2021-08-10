@@ -65,6 +65,10 @@
                      groupBundle="messages.JvmAnalysisBundle" bundle="messages.JvmAnalysisBundle"
                      groupKey="jvm.inspections.group.name" key="jvm.inspections.junit5.converter.display.name"
                      implementationClass="com.intellij.codeInspection.JUnit5ConverterInspection"/>
+    <localInspection language="UAST" enabledByDefault="true" level="WARNING" suppressId="CallToThreadRun" shortName="ThreadRun"
+                     groupBundle="messages.JvmAnalysisBundle" bundle="messages.JvmAnalysisBundle"
+                     groupKey="jvm.inspections.group.name" key="jvm.inspections.thread.run.display.name"
+                     implementationClass="com.intellij.codeInspection.ThreadRunInspection"/>
     <notificationGroup id="UAST" displayType="BALLOON"/>
   </extensions>
   <extensions defaultExtensionNs="com.intellij.codeInsight">

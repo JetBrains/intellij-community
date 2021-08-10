@@ -2632,9 +2632,6 @@
     <localInspection groupPath="Java" language="JAVA" suppressId="CallToThreadSetPriority" shortName="ThreadPriority" bundle="messages.InspectionGadgetsBundle"
                      key="thread.priority.display.name" groupBundle="messages.InspectionsBundle" groupKey="group.names.threading.issues"
                      enabledByDefault="false" level="WARNING" implementationClass="com.siyeh.ig.threading.ThreadPriorityInspection"/>
-    <localInspection groupPath="Java" language="JAVA" suppressId="CallToThreadRun" shortName="ThreadRun" bundle="messages.InspectionGadgetsBundle"
-                     key="thread.run.display.name" groupBundle="messages.InspectionsBundle" groupKey="group.names.threading.issues"
-                     enabledByDefault="true" level="WARNING" implementationClass="com.siyeh.ig.threading.ThreadRunInspection"/>
     <localInspection groupPath="Java" language="JAVA" suppressId="CallToThreadStartDuringObjectConstruction" shortName="ThreadStartInConstruction"
                      bundle="messages.InspectionGadgetsBundle" key="thread.start.in.construction.display.name"
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.threading.issues" enabledByDefault="false"
