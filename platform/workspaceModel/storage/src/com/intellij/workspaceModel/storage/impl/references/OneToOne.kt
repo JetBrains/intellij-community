@@ -9,14 +9,13 @@ import kotlin.reflect.KProperty
 
 class OneToOneParent private constructor() {
   class Nullable<Parent : WorkspaceEntityBase, Child : WorkspaceEntityBase>(
-    private val childClass: Class<Child>,
-    private val isParentInChildNullable: Boolean,
+    private val childClass: Class<Child>
   ) : ReadOnlyProperty<Parent, Child?> {
     private var connectionId: ConnectionId? = null
 
     override fun getValue(thisRef: Parent, property: KProperty<*>): Child? {
       if (connectionId == null) {
-        connectionId = ConnectionId.create(thisRef.javaClass, childClass, ONE_TO_ONE, isParentInChildNullable)
+        connectionId = ConnectionId.create(thisRef.javaClass, childClass, ONE_TO_ONE, false)
       }
       return thisRef.snapshot.extractOneToOneChild(connectionId!!, thisRef.id)
     }
@@ -56,14 +55,13 @@ class MutableOneToOneParent private constructor() {
   class Nullable<Parent : WorkspaceEntityBase, Child : WorkspaceEntityBase, ModifParent : ModifiableWorkspaceEntityBase<Parent>>(
     private val parentClass: Class<Parent>,
     private val childClass: Class<Child>,
-    private val isParentInChildNullable: Boolean,
   ) : ReadWriteProperty<ModifParent, Child?> {
 
     private var connectionId: ConnectionId? = null
 
     override fun getValue(thisRef: ModifParent, property: KProperty<*>): Child? {
       if (connectionId == null) {
-        connectionId = ConnectionId.create(parentClass, childClass, ONE_TO_ONE, isParentInChildNullable)
+        connectionId = ConnectionId.create(parentClass, childClass, ONE_TO_ONE, false)
       }
       return thisRef.diff.extractOneToOneChild(connectionId!!, thisRef.id)!!
     }
@@ -73,7 +71,7 @@ class MutableOneToOneParent private constructor() {
         throw IllegalStateException("Modifications are allowed inside 'addEntity' and 'modifyEntity' methods only!")
       }
       if (connectionId == null) {
-        connectionId = ConnectionId.create(parentClass, childClass, ONE_TO_ONE, isParentInChildNullable)
+        connectionId = ConnectionId.create(parentClass, childClass, ONE_TO_ONE, false)
       }
       thisRef.diff.updateOneToOneChildOfParent(connectionId!!, thisRef.id, value)
     }
