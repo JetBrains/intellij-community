@@ -16,3 +16,5 @@ inline fun <T: Any> T?.alsoIfNull(block: () -> Unit): T? {
 
 inline fun <T> T.applyIf(condition: Boolean, body: T.() -> T): T =
   if (condition) body() else this
+
+typealias AsyncSupplier<T> = suspend () -> T

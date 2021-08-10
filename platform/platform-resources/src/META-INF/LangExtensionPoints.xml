@@ -603,6 +603,8 @@
     <extensionPoint name="lang.symbolTypeProvider" dynamic="true" interface="com.intellij.codeInsight.navigation.SymbolTypeProvider"/>
     <extensionPoint name="readerModeProvider" dynamic="true" interface="com.intellij.codeInsight.actions.ReaderModeProvider"/>
     <extensionPoint name="readerModeMatcher" dynamic="true" interface="com.intellij.codeInsight.actions.ReaderModeMatcher"/>
+    <extensionPoint name="lang.documentationLinkHandler" dynamic="true"
+                    interface="com.intellij.lang.documentation.DocumentationLinkResolver"/>
   </extensionPoints>
 </idea-plugin>
 
