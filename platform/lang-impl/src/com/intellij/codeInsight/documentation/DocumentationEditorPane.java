@@ -11,6 +11,7 @@ import com.intellij.util.ui.GraphicsUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.accessibility.ScreenReader;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -29,6 +30,7 @@ class DocumentationEditorPane extends JEditorPane {
 
   private final Map<KeyStroke, ActionListener> myKeyboardActions;
   private final Supplier<? extends @Nullable PsiElement> myElementSupplier;
+  private @Nls String myText = ""; // getText() surprisingly crashes…, let's cache the text
 
   DocumentationEditorPane(
     @NotNull Map<KeyStroke, ActionListener> keyboardActions,
@@ -49,6 +51,17 @@ class DocumentationEditorPane extends JEditorPane {
     setBackground(EditorColorsUtil.getGlobalOrDefaultColor(DocumentationComponent.COLOR_KEY));
     setEditorKit(new DocumentationHtmlEditorKit(this));
     setBorder(JBUI.Borders.empty());
+  }
+
+  @Override
+  public @Nls String getText() {
+    return myText;
+  }
+
+  @Override
+  public void setText(@Nls String t) {
+    myText = t;
+    super.setText(t);
   }
 
   @Override

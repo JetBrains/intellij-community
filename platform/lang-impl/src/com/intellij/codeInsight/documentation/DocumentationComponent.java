@@ -104,7 +104,6 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
 
   private final JScrollPane myScrollPane;
   private final DocumentationHintEditorPane myEditorPane;
-  private @Nls String myText; // myEditorPane.getText() surprisingly crashes.., let's cache the text
   private final JComponent myControlPanel;
   private boolean myControlPanelVisible;
   private final DocumentationLinkHandler myLinkHandler;
@@ -139,7 +138,6 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
       DocumentationScrollPane.keyboardActions(myScrollPane),
       this::getElement
     );
-    myText = "";
     myScrollPane.setViewportView(myEditorPane);
     myScrollPane.addMouseWheelListener(new FontSizeMouseWheelListener(myEditorPane::applyFontProps));
 
@@ -488,20 +486,19 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
     myIsEmpty = false;
     if (myManager == null) return;
 
-    myText = text;
     setElement(element);
     if (element != null && element.getElement() != null) {
       myManager.updateToolWindowTabName(element.getElement());
     }
 
-    showHint(viewRect, ref);
+    showHint(text, viewRect, ref);
 
     if (myManager != null) {
       myManager.getProject().getMessageBus().syncPublisher(DocumentationComponentListener.TOPIC).onComponentDataChanged();
     }
   }
 
-  protected void showHint(@NotNull Rectangle viewRect, @Nullable String ref) {
+  protected void showHint(@Nls @NotNull String text, @NotNull Rectangle viewRect, @Nullable String ref) {
     String refToUse;
     Rectangle viewRectToUse;
     if (DocumentationManagerProtocol.KEEP_SCROLLING_POSITION_REF.equals(ref)) {
@@ -517,7 +514,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
 
     myLinkHandler.highlightLink(-1);
 
-    myEditorPane.setText(myText);
+    myEditorPane.setText(text);
     myEditorPane.applyFontProps(getQuickDocFontSize());
 
     showHint();
@@ -604,7 +601,6 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
   @Override
   public int getPreferredHeight(int width) {
     myEditorPane.setBounds(0, 0, width, MAX_DEFAULT.height);
-    myEditorPane.setText(myText);
     Dimension preferredSize = myEditorPane.getPreferredSize();
 
     int height = preferredSize.height + (needsToolbar() ? myControlPanel.getPreferredSize().height : 0);
@@ -665,7 +661,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
 
   private Context saveContext() {
     Rectangle rect = myScrollPane.getViewport().getViewRect();
-    return new Context(myElement, myText, myExternalUrl, myProvider, rect, myLinkHandler.getHighlightedLink());
+    return new Context(myElement, myEditorPane.getText(), myExternalUrl, myProvider, rect, myLinkHandler.getHighlightedLink());
   }
 
   private void restoreContext(@NotNull Context context) {
@@ -816,11 +812,11 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
   }
 
   public @Nls String getText() {
-    return myText;
+    return myEditorPane.getText();
   }
 
   public @Nls String getDecoratedText() {
-    return myText;
+    return myEditorPane.getText();
   }
 
   @Override
