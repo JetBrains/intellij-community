@@ -13,10 +13,8 @@ import org.jetbrains.kotlin.tools.projectWizard.core.service.WizardService
 import org.jetbrains.kotlin.tools.projectWizard.phases.GenerationPhase
 import org.jetbrains.kotlin.tools.projectWizard.plugins.buildSystem.allIRModules
 import org.jetbrains.kotlin.tools.projectWizard.settings.buildsystem.path
-import org.jetbrains.kotlin.tools.projectWizard.plugins.buildSystem.allModulesPaths
 import org.jetbrains.kotlin.tools.projectWizard.settings.buildsystem.Module
 import org.jetbrains.kotlin.tools.projectWizard.settings.buildsystem.ModuleReference
-import org.jetbrains.kotlin.tools.projectWizard.settings.buildsystem.path
 import kotlin.reflect.KClass
 
 
@@ -163,10 +161,17 @@ class Context private constructor(
         }
 
         val <V : Any> SettingReference<V, SettingType<V>>.savedOrDefaultValue: V?
-            get() = setting.getSavedValueForSetting() ?: when (val defaultValue = setting.defaultValue) {
-                is SettingDefaultValue.Value -> defaultValue.value
-                is SettingDefaultValue.Dynamic<V> -> defaultValue.getter(this@Reader, this)
-                null -> null
+            get() {
+                val savedValue = setting.getSavedValueForSetting()?.takeIf {
+                    // loaded value might be no longer relevant for the current context, e.g. IDE plugins can be disabled
+                    read { setting.validator.validate(this, it) } == ValidationResult.OK
+                }
+
+                return savedValue ?: when (val defaultValue = setting.defaultValue) {
+                    is SettingDefaultValue.Value -> defaultValue.value
+                    is SettingDefaultValue.Dynamic<V> -> defaultValue.getter(this@Reader, this)
+                    null -> null
+                }
             }
 
         val <V : Any, T : SettingType<V>> SettingReference<V, T>.setting: Setting<V, T>
