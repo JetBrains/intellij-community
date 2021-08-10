@@ -5,7 +5,7 @@
 
 package org.jetbrains.kotlin.idea.fir.low.level.api.lazy.resolve
 
-import com.intellij.psi.util.parentsOfType
+import com.intellij.psi.util.PsiTreeUtil
 import org.jetbrains.kotlin.fir.declarations.*
 import org.jetbrains.kotlin.fir.psi
 import org.jetbrains.kotlin.fir.render
@@ -14,17 +14,14 @@ import org.jetbrains.kotlin.fir.resolve.ScopeSession
 import org.jetbrains.kotlin.fir.resolve.firSymbolProvider
 import org.jetbrains.kotlin.fir.resolve.providers.FirProvider
 import org.jetbrains.kotlin.idea.fir.low.level.api.element.builder.FirTowerDataContextCollector
-import org.jetbrains.kotlin.idea.fir.low.level.api.trasformers.FirDesignatedBodyResolveTransformerForIDE
 import org.jetbrains.kotlin.idea.fir.low.level.api.element.builder.getNonLocalContainingOrThisDeclaration
 import org.jetbrains.kotlin.idea.fir.low.level.api.file.builder.FirFileBuilder
 import org.jetbrains.kotlin.idea.fir.low.level.api.file.builder.ModuleFileCache
 import org.jetbrains.kotlin.idea.fir.low.level.api.providers.firIdeProvider
+import org.jetbrains.kotlin.idea.fir.low.level.api.trasformers.FirDesignatedBodyResolveTransformerForIDE
 import org.jetbrains.kotlin.idea.fir.low.level.api.trasformers.FirDesignatedContractsResolveTransformerForIDE
 import org.jetbrains.kotlin.idea.fir.low.level.api.trasformers.FirDesignatedImplicitTypesTransformerForIDE
 import org.jetbrains.kotlin.idea.fir.low.level.api.util.*
-import org.jetbrains.kotlin.idea.fir.low.level.api.util.checkCanceled
-import org.jetbrains.kotlin.idea.fir.low.level.api.util.executeWithoutPCE
-import org.jetbrains.kotlin.idea.fir.low.level.api.util.findSourceNonLocalFirDeclaration
 import org.jetbrains.kotlin.psi.*
 
 internal class FirLazyDeclarationResolver(
@@ -206,7 +203,7 @@ internal class FirLazyDeclarationResolver(
     ): List<FirDeclaration> = buildList {
         if (this !is FirFile) {
             val ktDeclaration = ktDeclaration
-            ktDeclaration.parentsOfType<KtClassOrObject>(withSelf = true)
+            PsiTreeUtil.collectParents(ktDeclaration, KtClassOrObject::class.java, true) { _ -> true }
                 .filter { it !is KtEnumEntry }
                 .map { it.findSourceNonLocalFirDeclaration(firFileBuilder, provider.symbolProvider, moduleFileCache, containerFirFile) }
                 .toList()
