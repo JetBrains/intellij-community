@@ -9,3 +9,4 @@ class Bar {
 fun test(foo: Foo?) {
     foo<caret>.bar()
 }
+/* IGNORE_FIR */
