@@ -138,13 +138,10 @@ final class ActionUpdater {
       Presentation copy = entry.getValue();
       JComponent customComponent = null;
       if (action instanceof CustomComponentAction) {
-        // toolbar may have already created a custom component, do not erase it
-        JComponent copyC = copy.getClientProperty(CustomComponentAction.COMPONENT_KEY);
-        JComponent origC = orig.getClientProperty(CustomComponentAction.COMPONENT_KEY);
-        if (copyC == null && origC != null) {
-          copy.putClientProperty(CustomComponentAction.COMPONENT_KEY, origC);
-        }
-        customComponent = origC;
+        // 1. toolbar may have already created a custom component, do not erase it
+        // 2. presentation factory may be just reset, do not reuse component from a copy
+        customComponent = orig.getClientProperty(CustomComponentAction.COMPONENT_KEY);
+        copy.putClientProperty(CustomComponentAction.COMPONENT_KEY, customComponent);
       }
       orig.copyFrom(copy);
       reflectSubsequentChangesInOriginalPresentation(orig, copy);
