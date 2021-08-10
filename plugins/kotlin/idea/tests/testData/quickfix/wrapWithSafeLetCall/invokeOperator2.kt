@@ -11,3 +11,4 @@ class Baz {
 fun test(foo: Foo) {
     foo.bar?.baz<caret>()
 }
+/* IGNORE_FIR */
