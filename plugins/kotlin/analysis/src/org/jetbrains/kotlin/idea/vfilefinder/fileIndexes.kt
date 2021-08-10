@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.vfilefinder
 
 import com.intellij.ide.highlighter.JavaClassFileType
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.util.indexing.*
 import com.intellij.util.io.IOUtil
@@ -60,6 +61,8 @@ abstract class KotlinFileIndexBase<T>(classOfIndex: Class<T>) : ScalarIndexExten
                 } else {
                     emptyMap()
                 }
+            } catch (e: ProcessCanceledException) {
+                throw e
             } catch (e: Throwable) {
                 LOG.warn("Error while indexing file " + it.fileName, e)
                 emptyMap()
