@@ -7,6 +7,6 @@ import groovy.transform.CompileStatic
 class NotebookProperties {
   /** Common, language-agnostic modules for notebook support (like for Jupyter, or R Markdown). */
   static final List<String> NOTEBOOK_IMPLEMENTATION_MODULES = [
-    "intellij.visualisation",
+    "intellij.notebooks.visualization",
   ]
 }
