@@ -298,7 +298,7 @@ public class NodeRendererSettings implements PersistentStateComponent<Element> {
         return (String)res;
       }
     }
-    throw new IllegalStateException("String literal expected, but was " + value);
+    throw new IllegalStateException("Constant string expression expected, but was " + value);
   }
 
   public Renderer readRenderer(Element root) throws InvalidDataException {
