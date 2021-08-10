@@ -90,6 +90,13 @@ abstract class LocalLineStatusTrackerImpl<R : Range>(
   @RequiresEdt
   abstract fun setBaseRevision(vcsContent: CharSequence)
 
+  override fun setBaseRevision(vcsContent: CharSequence, beforeUnfreeze: (() -> Unit)?) {
+    super.setBaseRevision(vcsContent, beforeUnfreeze)
+
+    if (blocks.isEmpty() && isOperational()) {
+      saveDocumentWhenUnchanged(project, document)
+    }
+  }
 
   override fun scrollAndShowHint(range: Range, editor: Editor) {
     renderer.scrollAndShow(editor, range)
