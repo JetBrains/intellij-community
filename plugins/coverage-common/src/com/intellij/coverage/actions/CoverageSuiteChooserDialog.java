@@ -13,7 +13,9 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.ValidationInfo;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileVisitor;
 import com.intellij.ui.*;
 import com.intellij.util.IconUtil;
 import com.intellij.util.PlatformIcons;
@@ -276,14 +278,24 @@ public class CoverageSuiteChooserDialog extends DialogWrapper {
 
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
-      final VirtualFile file =
-        FileChooser.chooseFile(new FileChooserDescriptor(true, false, false, false, false, false) {
+      final VirtualFile[] selectedFiles =
+        FileChooser.chooseFiles(new FileChooserDescriptor(true, true, false, false,
+                                                          false, true), myProject, null);
+
+      Set<VirtualFile> validFiles = new HashSet<>();
+      for (VirtualFile file : selectedFiles) {
+        VfsUtilCore.visitChildrenRecursively(file, new VirtualFileVisitor<Void>() {
           @Override
-          public boolean isFileSelectable(VirtualFile file) {
-            return getCoverageRunner(file) != null;
+          public boolean visitFile(@NotNull VirtualFile child) {
+            if (getCoverageRunner(child) != null) {
+              validFiles.add(child);
+            }
+            return true;
           }
-        }, myProject, null);
-      if (file != null) {
+        });
+      }
+
+      validFiles.forEach(file -> {
         //ensure timestamp in vfs is updated
         VfsUtil.markDirtyAndRefresh(false, false, false, file);
 
@@ -333,7 +345,7 @@ public class CoverageSuiteChooserDialog extends DialogWrapper {
         });
         updateTree();
         TreeUtil.selectNode(mySuitesTree, suiteNode);
-      }
+      });
     }
   }
 
