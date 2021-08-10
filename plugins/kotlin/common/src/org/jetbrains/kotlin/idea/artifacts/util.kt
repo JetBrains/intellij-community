@@ -13,11 +13,10 @@ import java.io.File
 import java.security.MessageDigest
 
 internal fun findLibrary(
-        repoLocation: RepoLocation,
-        library: String,
-        groupId: String,
-        artifactId: String,
-        kind: LibraryFileKind = LibraryFileKind.CLASSES
+    library: String,
+    groupId: String,
+    artifactId: String,
+    kind: LibraryFileKind = LibraryFileKind.CLASSES
 ): File {
     val librariesDir = File(PathManager.getHomePath(), ".idea/libraries")
     if (!librariesDir.exists()) {
@@ -32,19 +31,18 @@ internal fun findLibrary(
     val document = libraryFile.inputStream().use { stream -> SAXBuilder().build(stream) }
     val urlScheme = "jar://"
     val pathInRepository = groupId.replace('.', '/') + '/' + artifactId
-    val pathPrefix = "$urlScheme$repoLocation/$pathInRepository/"
 
     val root = document.rootElement
-                       .getChild("library")
-                       ?.getChild(kind.name)
-                       ?.getChildren("root")
-                       ?.singleOrNull { (it.getAttributeValue("url") ?: "").startsWith(pathPrefix) }
-               ?: throw IllegalStateException("Root '$pathInRepository' not found in library $library")
+        .getChild("library")
+        ?.getChild(kind.name)
+        ?.getChildren("root")
+        ?.singleOrNull { it.getAttributeValue("url")?.contains(pathInRepository) == true }
+        ?: throw IllegalStateException("Root '$pathInRepository' not found in library $library")
 
-    val url = root.getAttributeValue("url") ?: ""
-    val path = url.drop(urlScheme.length).dropLast(2) // last '!/'
+    val url = root.getAttributeValue("url") ?: error("")
+    val path = url.also { check(it.startsWith(urlScheme)) }.removePrefix(urlScheme).dropLast(2) // last '!/'
 
-    val result = File(substitutePathVariables(path))
+    val result = substitutePathVariables(path)
     if (!result.exists()) {
         if (kind == LibraryFileKind.SOURCES) {
             val version = result.nameWithoutExtension.drop(artifactId.length + 1).dropLast(kind.classifierSuffix.length)
@@ -95,19 +93,20 @@ private val remoteMavenRepositories: List<RemoteRepository> by lazy {
     return@lazy repositories
 }
 
-private fun substitutePathVariables(path: String): String {
-    if (path.startsWith("${RepoLocation.PROJECT_DIR}/")) {
-        val projectDir = File(PathManager.getHomePath())
-        return projectDir.resolve(path.drop(RepoLocation.PROJECT_DIR.toString().length)).absolutePath
+private fun substitutePathVariables(path: String): File {
+    when {
+      path.startsWith("${RepoLocation.PROJECT_DIR}") -> {
+          val projectDir = File(PathManager.getHomePath())
+          return projectDir.resolve(path.removePrefix(RepoLocation.PROJECT_DIR.toString()).removePrefix("/"))
+      }
+      path.startsWith("${RepoLocation.MAVEN_REPOSITORY}") -> {
+          val m2 = System.getenv("M2_HOME")?.let { File(it) }
+              ?: File(System.getProperty("user.home", null) ?: error("Unable to get the user home directory"), ".m2")
+          val repoDir = m2.resolve("repository")
+          return repoDir.resolve(path.removePrefix(RepoLocation.MAVEN_REPOSITORY.toString()).removePrefix("/"))
+      }
+      else -> return File(path)
     }
-    else if (path.startsWith("${RepoLocation.MAVEN_REPOSITORY}/")) {
-        val m2 = System.getenv("M2_HOME")?.let { File(it) }
-                 ?: File(System.getProperty("user.home", null) ?: error("Unable to get the user home directory"), ".m2")
-        val repoDir = m2.resolve("repository")
-        return repoDir.absolutePath + path.drop(RepoLocation.MAVEN_REPOSITORY.toString().length)
-    }
-
-    return path
 }
 
 private fun resolveArtifact(groupId: String, artifactId: String, version: String, kind: LibraryFileKind): File {

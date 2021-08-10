@@ -73,7 +73,6 @@ private object ProductionKotlinArtifacts : KotlinArtifacts(run {
 
 private object KotlinArtifactsFromSources : KotlinArtifacts(run {
     val jar = findLibrary(
-        RepoLocation.MAVEN_REPOSITORY,
         KOTLINC_DIST_JPS_LIB_XML_NAME,
         "org.jetbrains.kotlin",
         "kotlin-dist-for-ide"
