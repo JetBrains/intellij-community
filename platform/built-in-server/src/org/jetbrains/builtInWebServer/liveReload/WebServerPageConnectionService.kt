@@ -5,6 +5,7 @@ import com.google.common.net.HttpHeaders
 import com.intellij.CommonBundle
 import com.intellij.concurrency.JobScheduler
 import com.intellij.ide.browsers.ReloadMode
+import com.intellij.ide.browsers.WebBrowserXmlService
 import com.intellij.ide.browsers.actions.WebPreviewFileEditor
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
@@ -75,7 +76,7 @@ class WebServerPageConnectionService {
     val uri = request.uri()
     if (uri != null && uri.contains(RELOAD_URL_PARAM)) {
       val decoder = QueryStringDecoder(uri)
-      reloadRequest = ReloadMode.valueOf(decoder.parameters()[RELOAD_URL_PARAM]?.get(0) ?: ReloadMode.DISABLED.name)
+      reloadRequest = decoder.parameters()[RELOAD_URL_PARAM]?.get(0)?.let { ReloadMode.valueOf(it) } ?: ReloadMode.DISABLED
     }
     if (reloadRequest == ReloadMode.DISABLED && myState.isEmpty) return null
     val file = fileSupplier.get()
@@ -88,6 +89,7 @@ class WebServerPageConnectionService {
       LOGGER.warn("VirtualFile for $uri isn't resolved, reload on save can't be started")
       return null
     }
+    if (!WebBrowserXmlService.getInstance().isHtmlFile(file)) return null
     val clientId = myState.pageRequested(uri, file, reloadRequest)
 
     val optionalConsoleLog =
