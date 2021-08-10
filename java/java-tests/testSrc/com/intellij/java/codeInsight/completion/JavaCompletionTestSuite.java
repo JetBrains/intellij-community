@@ -3,6 +3,7 @@ package com.intellij.java.codeInsight.completion;
 
 import com.intellij.TestAll;
 import com.intellij.TestCaseLoader;
+import com.intellij.java.codeInsight.completion.ml.JavaCompletionFeaturesTest;
 import com.intellij.testFramework.SkipSlowTestLocally;
 import com.intellij.testFramework.TestIndexingModeSupporter;
 import junit.framework.Test;
