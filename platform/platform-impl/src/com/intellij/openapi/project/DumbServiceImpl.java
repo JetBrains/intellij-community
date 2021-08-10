@@ -168,6 +168,7 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
       myRunWhenSmartQueue.clear();
     }
     myTaskQueue.disposePendingTasks();
+    myHeavyActivities.disposeSuspender();
   }
 
   @Override
