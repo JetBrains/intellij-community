@@ -32,6 +32,7 @@ import com.intellij.openapi.diff.DiffBundle;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.SelectionModel;
+import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileTypes.FileType;
@@ -85,7 +86,7 @@ public class CompareClipboardWithSelectionAction extends BaseShowDiffAction {
     assert editor != null;
 
     DiffContent selectedContent = e.getData(DiffDataKeys.CURRENT_CONTENT);
-    DocumentContent content2 = createContent(project, editor, editorFileType, selectedContent);
+    DocumentContent content2 = createContent(project, editor, editorFileType, selectedContent, e);
     DocumentContent content1 = DiffContentFactory.getInstance().createClipboardContent(project, content2);
     content1.putUserData(BlankDiffWindowUtil.REMEMBER_CONTENT_KEY, true);
 
@@ -104,7 +105,8 @@ public class CompareClipboardWithSelectionAction extends BaseShowDiffAction {
   private static DocumentContent createContent(@Nullable Project project,
                                                @NotNull Editor editor,
                                                @Nullable FileType type,
-                                               @Nullable DiffContent selectedContent) {
+                                               @Nullable DiffContent selectedContent,
+                                               @NotNull AnActionEvent e) {
     DocumentContent content = null;
     if (selectedContent instanceof DocumentContent) {
       Document contentDocument = ((DocumentContent)selectedContent).getDocument();
@@ -119,7 +121,7 @@ public class CompareClipboardWithSelectionAction extends BaseShowDiffAction {
     }
 
     SelectionModel selectionModel = editor.getSelectionModel();
-    if (selectionModel.hasSelection()) {
+    if (selectionModel.hasSelection() && !EditorUtil.contextMenuInvokedOutsideOfSelection(e)) {
       TextRange range = new TextRange(selectionModel.getSelectionStart(), selectionModel.getSelectionEnd());
       content = DiffContentFactory.getInstance().createFragment(project, content, range);
     }

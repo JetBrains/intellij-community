@@ -122,6 +122,8 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.IntFunction;
 import java.util.function.Predicate;
 
+import static com.intellij.openapi.editor.ex.util.EditorUtil.isCaretInsideSelection;
+
 public final class EditorImpl extends UserDataHolderBase implements EditorEx, HighlighterClient, Queryable, Dumpable,
                                                                     CodeStyleSettingsListener, FocusListener {
   public static final int TEXT_ALIGNMENT_LEFT = 0;
@@ -3229,7 +3231,10 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
     @Override
     public boolean isCopyVisible(@NotNull DataContext dataContext) {
-      return getSelectionModel().hasSelection(true);
+      Caret caret = dataContext.getData(CommonDataKeys.CARET);
+      return PlatformUtils.isDataGrip() && caret != null
+             ? isCaretInsideSelection(caret)
+             : getSelectionModel().hasSelection(true);
     }
 
     @Override
@@ -3244,7 +3249,11 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
     @Override
     public boolean isCutVisible(@NotNull DataContext dataContext) {
-      return isCutEnabled(dataContext) && getSelectionModel().hasSelection(true);
+      Caret caret = dataContext.getData(CommonDataKeys.CARET);
+      return isCutEnabled(dataContext) &&
+             (PlatformUtils.isDataGrip() && caret != null
+              ? isCaretInsideSelection(caret)
+              : getSelectionModel().hasSelection(true));
     }
 
     @Override
