@@ -65,7 +65,7 @@ internal class ImportQuickFix(
         val project = file.project
 
         val elementRange = element.textRange
-        val autoImportHintText = "Import ${importCandidates.first().asString()}?"
+        val autoImportHintText = KotlinBundle.message("fix.import.question", importCandidates.first().asString())
 
         HintManager.getInstance().showQuestionHint(
             editor,
