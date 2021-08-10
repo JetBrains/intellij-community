@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vfs.newvfs.persistent;
 
 import com.intellij.concurrency.ConcurrentCollectionFactory;
@@ -1156,20 +1156,41 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
     PingProgress.interactWithEdtProgress();
     // do defensive copy to cope with ill-written listeners that save passed list for later processing
     List<VFileEvent> toSend = ContainerUtil.immutableList(applyEvents.toArray(new VFileEvent[0]));
+    Throwable x = null;
 
     try {
       if (excludeAsyncListeners) AsyncEventSupport.markAsynchronouslyProcessedEvents(toSend);
 
-      fireBeforeEvents(publisher, toSend);
+      try {
+        fireBeforeEvents(publisher, toSend);
+      }
+      catch (Throwable t) {
+        x = t;
+      }
 
       PingProgress.interactWithEdtProgress();
-      applyActions.forEach(Runnable::run);
+      for (Runnable runnable : applyActions) {
+        try {
+          runnable.run();
+        }
+        catch (Throwable t) {
+          if (x != null) t.addSuppressed(x);
+          x = t;
+        }
+      }
 
       PingProgress.interactWithEdtProgress();
-      fireAfterEvents(publisher, toSend);
+      try {
+        fireAfterEvents(publisher, toSend);
+      }
+      catch (Throwable t) {
+        if (x != null) t.addSuppressed(x);
+        x = t;
+      }
     }
     finally {
       if (excludeAsyncListeners) AsyncEventSupport.unmarkAsynchronouslyProcessedEvents(toSend);
+      if (x != null) ExceptionUtil.rethrow(x);
     }
   }
 
