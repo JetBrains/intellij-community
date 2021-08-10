@@ -1,4 +1,4 @@
-// "Change to val" "true"
+// "Change to 'val'" "true"
 annotation class Ann(
     val a: Int,
     val b: Int
