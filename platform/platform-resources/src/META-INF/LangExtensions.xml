@@ -1449,6 +1449,8 @@
     <recoveryAction implementation="com.intellij.util.indexing.RefreshIndexableFilesAction"/>
 
     <lang.documentationLinkHandler implementation="com.intellij.lang.documentation.psi.PsiDocumentationLinkResolver"/>
+    <getDataRule key="documentation.targets"
+                 implementationClass="com.intellij.lang.documentation.ide.actions.DocumentationTargetsDataRule"/>
   </extensions>
   <applicationListeners>
     <listener class="com.intellij.util.indexing.FileBasedIndexPluginListener" topic="com.intellij.ide.plugins.DynamicPluginListener"/>

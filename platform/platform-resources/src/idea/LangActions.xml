@@ -277,6 +277,14 @@
 
       <add-to-group group-id="ViewMenu" anchor="after" relative-to-action="ViewAppearanceGroup"/>
     </group>
+    <action id="Documentation.ToggleShowInPopup"
+            class="com.intellij.lang.documentation.ide.actions.ToggleShowDocsInPopupAction"/>
+    <action id="Documentation.TurnOffAutoUpdate"
+            class="com.intellij.lang.documentation.ide.actions.TurnOffAutoUpdateAction"
+            icon="AllIcons.Toolbar.Pin"
+            use-shortcut-of="QuickJavaDoc">
+      <add-to-group group-id="ToolWindowContextMenu" anchor="last"/>
+    </action>
 
     <group id="CodeEditorBaseGroup">
       <group id="CodeEditorViewGroup">

@@ -93,6 +93,17 @@ public class DocumentationEditorPane extends JEditorPane {
     }
   }
 
+  @NotNull Dimension getPackedSize(int minWidth, int maxWidth) {
+    int width = Math.max(Math.max(definitionPreferredWidth(), getMinimumSize().width), minWidth);
+    int height = getPreferredHeightByWidth(Math.min(width, maxWidth));
+    return new Dimension(width, height);
+  }
+
+  private int getPreferredHeightByWidth(int width) {
+    setSize(width, Short.MAX_VALUE);
+    return getPreferredSize().height;
+  }
+
   int getPreferredWidth() {
     int definitionPreferredWidth = definitionPreferredWidth();
     return definitionPreferredWidth < 0 ? getPreferredSize().width

@@ -21,6 +21,7 @@ import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.LightweightHint;
 import com.intellij.util.Alarm;
 import com.intellij.util.BitUtil;
@@ -156,6 +157,9 @@ public class LookupManagerImpl extends LookupManager {
   }
 
   private void showDocOnItemChange(@NotNull Lookup lookup, @NotNull Alarm alarm) {
+    if (Registry.is("documentation.v2")) {
+      return;
+    }
     lookup.addLookupListener(new LookupListener() {
       @Override
       public void itemSelected(@NotNull LookupEvent event) {

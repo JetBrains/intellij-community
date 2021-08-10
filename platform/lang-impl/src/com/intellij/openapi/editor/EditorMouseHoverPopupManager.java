@@ -65,6 +65,8 @@ import java.lang.ref.Reference;
 import java.lang.ref.WeakReference;
 import java.util.Objects;
 
+import static com.intellij.lang.documentation.ide.impl.DocumentationTargetHoverInfoKt.calcTargetDocumentationInfo;
+
 public class EditorMouseHoverPopupManager implements Disposable {
 
   static final Logger LOG = Logger.getInstance(EditorMouseHoverPopupManager.class);
@@ -508,7 +510,11 @@ public class EditorMouseHoverPopupManager implements Disposable {
     @Nullable
     protected EditorHoverInfo calcInfo(@NotNull Editor editor) {
       var highlightHoverInfo = HighlightHoverInfo.highlightHoverInfo(editor, getHighlightInfo());
-      var documentationHoverInfo = documentationPsiHoverInfo(editor);
+      var documentationHoverInfo = Registry.is("documentation.v2")
+                                   ? EditorSettingsExternalizable.getInstance().isShowQuickDocOnMouseOverElement()
+                                     ? calcTargetDocumentationInfo(Objects.requireNonNull(editor.getProject()), editor, targetOffset)
+                                     : null
+                                   : documentationPsiHoverInfo(editor);
       return highlightHoverInfo == null && documentationHoverInfo == null
              ? null
              : new EditorHoverInfo(highlightHoverInfo, documentationHoverInfo);

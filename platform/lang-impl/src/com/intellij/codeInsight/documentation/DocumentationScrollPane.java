@@ -1,19 +1,26 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.documentation;
 
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.accessibility.ScreenReader;
 import org.jetbrains.annotations.ApiStatus.Internal;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
+import java.awt.*;
 import java.awt.event.ActionListener;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+
+import static com.intellij.codeInsight.documentation.DocumentationComponent.MAX_DEFAULT;
+import static com.intellij.codeInsight.documentation.DocumentationComponent.MIN_DEFAULT;
+import static com.intellij.lang.documentation.ide.ui.UiKt.FORCED_WIDTH;
 
 @Internal
 public final class DocumentationScrollPane extends JBScrollPane {
@@ -22,6 +29,36 @@ public final class DocumentationScrollPane extends JBScrollPane {
     super(VERTICAL_SCROLLBAR_AS_NEEDED, HORIZONTAL_SCROLLBAR_AS_NEEDED);
     setBorder(JBUI.Borders.empty());
     setViewportBorder(null);
+  }
+
+  @Override
+  public Dimension getPreferredSize() {
+    if (!Registry.is("documentation.v2")) {
+      return super.getPreferredSize();
+    }
+    Integer forcedWidth = UIUtil.getClientProperty(this, FORCED_WIDTH);
+    int minWidth = forcedWidth == null ? MIN_DEFAULT.width() : forcedWidth;
+    return getPreferredSize(minWidth, MAX_DEFAULT.width(), MAX_DEFAULT.height());
+  }
+
+  private @NotNull Dimension getPreferredSize(int minWidth, int maxWidth, int maxHeight) {
+    Dimension paneSize = ((DocumentationEditorPane)getViewport().getView()).getPackedSize(minWidth, maxWidth);
+
+    JScrollBar hBar = getHorizontalScrollBar();
+    boolean hasHBar = paneSize.width > maxWidth && hBar.isOpaque();
+    int hBarHeight = hasHBar ? hBar.getPreferredSize().height : 0;
+
+    JScrollBar vBar = getVerticalScrollBar();
+    boolean hasVBar = paneSize.height + hBarHeight > maxHeight && vBar.isOpaque();
+    int vBarWidth = hasVBar ? vBar.getPreferredSize().width : 0;
+
+    Insets insets = getInsets();
+    int preferredWidth = paneSize.width + vBarWidth + insets.left + insets.right;
+    int preferredHeight = paneSize.height + hBarHeight + insets.top + insets.bottom;
+    return new Dimension(
+      Math.min(preferredWidth, maxWidth),
+      Math.min(preferredHeight, maxHeight)
+    );
   }
 
   public static @NotNull Map<KeyStroke, ActionListener> keyboardActions(@NotNull JScrollPane target) {
