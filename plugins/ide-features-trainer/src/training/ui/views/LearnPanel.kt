@@ -32,6 +32,8 @@ import javax.swing.border.MatteBorder
 import kotlin.math.max
 
 internal class LearnPanel(val learnToolWindow: LearnToolWindow) : JPanel() {
+  private val sideOffsetBeforeScaling = 18
+
   private val lessonPanel = JPanel()
 
   private val moduleNameLabel: JLabel = LinkLabelWithBackArrow<Any> { _, _ ->
@@ -58,6 +60,10 @@ internal class LearnPanel(val learnToolWindow: LearnToolWindow) : JPanel() {
   }
 
   fun reinitMe(lesson: Lesson) {
+    with(UISettings.instance) {
+      border = EmptyBorder(northInset, JBUI.scale(sideOffsetBeforeScaling), southInset, JBUI.scale(sideOffsetBeforeScaling))
+    }
+
     scrollToNewMessages = true
     clearMessages()
     footer.removeAll()
@@ -75,11 +81,18 @@ internal class LearnPanel(val learnToolWindow: LearnToolWindow) : JPanel() {
       initFooterPanel(lesson)
       add(footer, BorderLayout.PAGE_END)
     }
+  }
 
-    preferredSize = Dimension(UISettings.instance.panelWidth, 100)
-    with(UISettings.instance) {
-      border = EmptyBorder(northInset, JBUI.scale(18), southInset, JBUI.scale(18))
-    }
+  fun updatePanelSize(viewAreaWidth: Int) {
+    val width = max(UISettings.instance.panelWidth, viewAreaWidth) - 2 * sideOffsetBeforeScaling
+    lessonMessagePane.preferredSize = null
+    lessonMessagePane.setBounds(0, 0, width, 10000)
+    lessonMessagePane.revalidate()
+    lessonMessagePane.repaint()
+    lessonMessagePane.preferredSize = Dimension(width, lessonMessagePane.preferredSize.height)
+
+    revalidate()
+    repaint()
   }
 
   private fun initFooterPanel(lesson: Lesson) {
@@ -137,10 +150,6 @@ internal class LearnPanel(val learnToolWindow: LearnToolWindow) : JPanel() {
     lessonMessagePane.margin = JBUI.emptyInsets()
     lessonMessagePane.border = EmptyBorder(0, 0, JBUI.scale(20), JBUI.scale(14))
 
-    preferredSize = Dimension(UISettings.instance.panelWidth, preferredSize.height)
-
-    revalidate()
-
     //Set Next Button UI
     listOf(nextButton, prevButton).forEach {
       it.margin = JBUI.emptyInsets()
@@ -159,7 +168,11 @@ internal class LearnPanel(val learnToolWindow: LearnToolWindow) : JPanel() {
     updateNavigationButtons()
 
     lessonPanel.add(createHeaderPanel())
-    lessonPanel.add(Box.createVerticalStrut(JBUI.scale(19)))
+    val rigidWidth = JBUI.scale(UISettings.instance.panelWidth - 2 * sideOffsetBeforeScaling)
+    val rigid = (Box.createRigidArea(Dimension(rigidWidth, JBUI.scale(19))) as JComponent).also {
+      it.alignmentX = Component.LEFT_ALIGNMENT
+    }
+    lessonPanel.add(rigid)
     lessonPanel.add(lessonNameLabel)
     lessonPanel.add(lessonMessagePane)
     lessonPanel.add(buttonPanel)
@@ -248,6 +261,7 @@ internal class LearnPanel(val learnToolWindow: LearnToolWindow) : JPanel() {
   }
 
   private fun adjustMessagesArea() {
+    updatePanelSize(learnToolWindow.getVisibleAreaWidth())
     revalidate()
     repaint()
   }
