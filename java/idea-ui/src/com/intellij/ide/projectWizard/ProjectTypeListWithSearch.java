@@ -9,6 +9,7 @@ import com.intellij.ui.components.JBList;
 import com.intellij.ui.speedSearch.NameFilteringListModel;
 import com.intellij.ui.speedSearch.SpeedSearch;
 import com.intellij.util.Function;
+import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -24,6 +25,8 @@ public class ProjectTypeListWithSearch<T> extends JPanel {
     SearchTextField searchTextField = new SearchTextField();
     add(searchTextField, BorderLayout.NORTH);
     add(scrollPane, BorderLayout.CENTER);
+
+    scrollPane.setBorder(JBUI.Borders.empty());
 
     SpeedSearch speedSearch = new SpeedSearch();
     speedSearch.setEnabled(true);
