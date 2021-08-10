@@ -78,7 +78,6 @@ class GitConflictsView(
 
     override fun update(e: AnActionEvent) {
       e.presentation.isEnabled = conflictsPanel.canShowMergeWindowForSelection()
-      updateButtonFromPresentation(e)
     }
 
     override fun actionPerformed(e: AnActionEvent) {
@@ -92,7 +91,6 @@ class GitConflictsView(
 
     override fun update(e: AnActionEvent) {
       e.presentation.isEnabled = conflictsPanel.canAcceptConflictSideForSelection()
-      updateButtonFromPresentation(e)
     }
 
     override fun actionPerformed(e: AnActionEvent) {
