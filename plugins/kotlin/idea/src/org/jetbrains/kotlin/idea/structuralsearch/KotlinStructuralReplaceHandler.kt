@@ -3,6 +3,7 @@
 package org.jetbrains.kotlin.idea.structuralsearch
 
 import com.intellij.openapi.project.Project
+import com.intellij.psi.PsiComment
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiErrorElement
 import com.intellij.psi.PsiWhiteSpace
@@ -304,12 +305,15 @@ class KotlinStructuralReplaceHandler(private val project: Project) : StructuralR
     private fun KtNamedFunction.replaceNamedFunction(searchTemplate: KtNamedFunction, match: KtNamedFunction): KtNamedFunction {
         FUN_MODIFIERS.forEach { replaceModifier(searchTemplate, match, it) }
         fixModifierListFormatting(match)
-        if (receiverTypeReference?.findDescendantOfType<PsiErrorElement> { true } != null) { //
+        if (receiverTypeReference?.findDescendantOfType<PsiErrorElement> { true } != null) {
             findDescendantOfType<PsiElement> { it.elementType == KtTokens.DOT }?.delete()
         }
         if (!hasBody() && !searchTemplate.hasBody()) {
             match.equalsToken?.let { addFormatted(it) }
             match.bodyExpression?.let { addFormatted(it) }
+        }
+        if (lastChild !is PsiComment && searchTemplate.lastChild !is PsiComment && match.lastChild is PsiComment) {
+            match.lastChild?.let { addFormatted(it) }
         }
         return this
     }
