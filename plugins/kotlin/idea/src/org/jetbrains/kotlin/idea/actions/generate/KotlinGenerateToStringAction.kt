@@ -11,6 +11,7 @@ import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.util.Key
 import com.intellij.psi.PsiNameIdentifierOwner
 import com.intellij.util.IncorrectOperationException
+import org.jetbrains.annotations.Nls
 import org.jetbrains.kotlin.builtins.KotlinBuiltIns
 import org.jetbrains.kotlin.descriptors.ClassDescriptor
 import org.jetbrains.kotlin.descriptors.FunctionDescriptor
@@ -53,7 +54,7 @@ class KotlinGenerateToStringAction : KotlinGenerateMemberActionBase<KotlinGenera
         val project: Project
     )
 
-    enum class Generator(val text: String) {
+    enum class Generator(@Nls val text: String) {
         SINGLE_TEMPLATE(KotlinBundle.message("action.generate.tostring.template.single")) {
             override fun generate(info: Info): String {
                 val className = info.classDescriptor.name.asString()
@@ -175,7 +176,7 @@ class KotlinGenerateToStringAction : KotlinGenerateMemberActionBase<KotlinGenera
                     project)
     }
 
-    private fun generateToString(targetClass: KtClassOrObject, info: Info): KtNamedFunction? {
+    private fun generateToString(targetClass: KtClassOrObject, info: Info): KtNamedFunction {
         val superToString = info.classDescriptor.getSuperClassOrAny().findDeclaredToString(true)!!
         return generateFunctionSkeleton(superToString, targetClass).apply {
             replaceBody {
@@ -186,7 +187,7 @@ class KotlinGenerateToStringAction : KotlinGenerateMemberActionBase<KotlinGenera
 
     override fun generateMembers(project: Project, editor: Editor?, info: Info): List<KtDeclaration> {
         val targetClass = info.classDescriptor.source.getPsi() as KtClass
-        val prototype = generateToString(targetClass, info) ?: return emptyList()
+        val prototype = generateToString(targetClass, info)
         val anchor = with(targetClass.declarations) { lastIsInstanceOrNull<KtNamedFunction>() ?: lastOrNull() }
         return insertMembersAfter(editor, targetClass, listOf(prototype), anchor)
     }

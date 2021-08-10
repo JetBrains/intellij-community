@@ -6,8 +6,9 @@ import com.intellij.psi.PsiElement
 import com.intellij.refactoring.RefactoringBundle
 import com.intellij.usageView.UsageViewBundle
 import com.intellij.usageView.UsageViewDescriptor
+import org.jetbrains.annotations.Nls
 
-class KotlinUsagesViewDescriptor(private val element: PsiElement, private val elementsHeader: String) : UsageViewDescriptor {
+class KotlinUsagesViewDescriptor(private val element: PsiElement, @Nls private val elementsHeader: String) : UsageViewDescriptor {
     override fun getElements(): Array<PsiElement> = arrayOf(element)
 
     override fun getProcessedElementsHeader(): String = elementsHeader

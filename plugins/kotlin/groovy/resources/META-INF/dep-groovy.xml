@@ -2,7 +2,7 @@
   <extensions defaultExtensionNs="com.intellij">
     <localInspection
             implementationClass="org.jetbrains.kotlin.idea.groovy.inspections.DifferentKotlinGradleVersionInspection"
-            groupName="Kotlin"
+            groupBundle="messages.KotlinBundle" groupKey="group.names.kotlin"
             enabledByDefault="true"
             language="Groovy"
             hasStaticDescription="true"
@@ -10,7 +10,7 @@
 
     <localInspection
             implementationClass="org.jetbrains.kotlin.idea.groovy.inspections.DifferentStdlibGradleVersionInspection"
-            groupName="Kotlin"
+            groupBundle="messages.KotlinBundle" groupKey="group.names.kotlin"
             enabledByDefault="true"
             language="Groovy"
             hasStaticDescription="true"
@@ -18,7 +18,7 @@
 
     <localInspection
             implementationClass="org.jetbrains.kotlin.idea.groovy.inspections.DeprecatedGradleDependencyInspection"
-            groupName="Kotlin"
+            groupBundle="messages.KotlinBundle" groupKey="group.names.kotlin"
             enabledByDefault="true"
             cleanupTool="true"
             language="Groovy"
@@ -28,7 +28,7 @@
     <localInspection
             implementationClass="org.jetbrains.kotlin.idea.groovy.inspections.GradleKotlinxCoroutinesDeprecationInspection"
             groupPath="Kotlin,Migration"
-            groupName="Gradle"
+            groupBundle="messages.KotlinBundle" groupKey="group.names.gradle"
             enabledByDefault="true"
             language="Groovy"
             hasStaticDescription="true"

@@ -41,6 +41,7 @@ public class KotlinTryFinallySurrounder extends KotlinTrySurrounderBase {
         return blockExpression.getTextRange();
     }
 
+    @SuppressWarnings("DialogTitleCapitalization")
     @Override
     public String getTemplateDescription() {
         return CodeInsightBundle.message("surround.with.try.finally.template");

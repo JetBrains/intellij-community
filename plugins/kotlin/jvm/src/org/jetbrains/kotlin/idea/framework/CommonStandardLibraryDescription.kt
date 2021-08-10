@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.framework
 
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.libraries.LibraryKind
+import org.jetbrains.annotations.Nls
 import org.jetbrains.kotlin.idea.KotlinJvmBundle
 
 class CommonStandardLibraryDescription(project: Project?) : CustomLibraryDescriptorWithDeferredConfig(
@@ -14,8 +15,12 @@ class CommonStandardLibraryDescription(project: Project?) : CustomLibraryDescrip
         val KOTLIN_COMMON_STDLIB_KIND: LibraryKind = LibraryKind.create("kotlin-stdlib-common")
         const val LIBRARY_NAME = "KotlinStdlibCommon"
 
-        val DIALOG_TITLE get() = KotlinJvmBundle.message("create.kotlin.common.standard.library")
-        val LIBRARY_CAPTION get() = KotlinJvmBundle.message("kotlin.common.standard.library")
+        val DIALOG_TITLE
+            @Nls
+            get() = KotlinJvmBundle.message("create.kotlin.common.standard.library")
+        val LIBRARY_CAPTION
+            @Nls
+            get() = KotlinJvmBundle.message("kotlin.common.standard.library")
         val SUITABLE_LIBRARY_KINDS: Set<LibraryKind> = setOf(KOTLIN_COMMON_STDLIB_KIND)
     }
 }

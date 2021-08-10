@@ -2,6 +2,7 @@
 
 package org.jetbrains.kotlin.tools.projectWizard.wizard.ui
 
+import com.intellij.openapi.util.NlsSafe
 import javax.swing.Spring
 import javax.swing.SpringLayout
 
@@ -11,7 +12,7 @@ internal operator fun Spring.minus(other: Spring) = this + Spring.minus(other)
 internal operator fun Spring.unaryMinus() = Spring.minus(this)
 internal operator fun Spring.times(by: Float) = Spring.scale(this, by)
 internal fun Int.asSpring() = Spring.constant(this)
-internal operator fun SpringLayout.Constraints.get(edgeName: String) = getConstraint(edgeName)
+internal operator fun SpringLayout.Constraints.get(@NlsSafe edgeName: String) = getConstraint(edgeName)
 internal operator fun SpringLayout.Constraints.set(edgeName: String, spring: Spring) {
     setConstraint(edgeName, spring)
 }

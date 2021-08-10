@@ -3,6 +3,7 @@ package org.jetbrains.kotlin.idea.highlighter.markers
 
 import com.intellij.codeInsight.daemon.DaemonBundle
 import com.intellij.codeInsight.navigation.BackgroundUpdaterTask
+import com.intellij.ide.IdeDeprecatedMessagesBundle
 import com.intellij.ide.util.MethodCellRenderer
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.IdeActions
@@ -62,7 +63,7 @@ fun getSubclassedClassTooltip(klass: PsiClass): String? {
     ClassInheritorsSearch.search(klass).forEach(PsiElementProcessorAdapter(processor))
 
     if (processor.isOverflow) {
-        return DaemonBundle.message(if (klass.isInterface) "interface.is.implemented.too.many" else "class.is.subclassed.too.many")
+        return if (klass.isInterface) IdeDeprecatedMessagesBundle.message("interface.is.implemented.too.many") else DaemonBundle.message("class.is.subclassed.too.many")
     }
 
     val subclasses = processor.toArray(PsiClass.EMPTY_ARRAY)
@@ -75,7 +76,7 @@ fun getSubclassedClassTooltip(klass: PsiClass): String? {
             null
     }
 
-    val start = DaemonBundle.message(if (klass.isInterface) "interface.is.implemented.by.header" else "class.is.subclassed.by.header")
+    val start = IdeDeprecatedMessagesBundle.message(if (klass.isInterface) "interface.is.implemented.by.header" else "class.is.subclassed.by.header")
     val shortcuts = ActionManager.getInstance().getAction(IdeActions.ACTION_GOTO_IMPLEMENTATION).shortcutSet.shortcuts
     val shortcut = shortcuts.firstOrNull()
     val shortCutText = if (shortcut != null)
@@ -181,11 +182,12 @@ private class OverridingMethodsUpdater(
         if (o1 is PsiMethod && o2 is PsiMethod) comparator.compare(o1, o2) else 0
     }
 ) {
+    @Suppress("DialogTitleCapitalization")
     override fun getCaption(size: Int): String {
         return if (myMethod.hasModifierProperty(PsiModifier.ABSTRACT))
-            DaemonBundle.message("navigation.title.implementation.method", myMethod.name, size)!!
+            DaemonBundle.message("navigation.title.implementation.method", myMethod.name, size)
         else
-            DaemonBundle.message("navigation.title.overrider.method", myMethod.name, size)!!
+            DaemonBundle.message("navigation.title.overrider.method", myMethod.name, size)
     }
 
     override fun run(indicator: ProgressIndicator) {

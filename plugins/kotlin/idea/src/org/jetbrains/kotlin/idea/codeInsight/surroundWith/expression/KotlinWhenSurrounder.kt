@@ -8,12 +8,14 @@ import org.jetbrains.kotlin.psi.KtWhenExpression
 import com.intellij.codeInsight.CodeInsightUtilBase
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.TextRange
 import com.intellij.refactoring.suggested.startOffset
 import org.jetbrains.kotlin.idea.core.replaced
 import org.jetbrains.kotlin.idea.quickfix.AddWhenRemainingBranchesFix
 
 class KotlinWhenSurrounder : KotlinExpressionSurrounder() {
+    @NlsSafe
     override fun getTemplateDescription() = "when (expr) {}"
 
     override fun surroundExpression(project: Project, editor: Editor, expression: KtExpression): TextRange {

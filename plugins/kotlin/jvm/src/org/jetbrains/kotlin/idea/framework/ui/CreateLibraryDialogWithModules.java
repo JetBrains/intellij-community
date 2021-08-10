@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.framework.ui;
 
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.kotlin.idea.configuration.KotlinProjectConfigurator;
 
@@ -20,8 +21,8 @@ public class CreateLibraryDialogWithModules extends CreateLibraryDialogBase {
             @NotNull KotlinProjectConfigurator configurator,
             @NotNull String defaultPath,
             boolean showPathPanel,
-            @NotNull String title,
-            @NotNull String libraryCaption,
+            @Nls @NotNull String title,
+            @Nls @NotNull String libraryCaption,
             @NotNull Collection<Module> excludeModules
     ) {
         super(project, defaultPath, title, libraryCaption);

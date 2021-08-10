@@ -147,7 +147,7 @@ abstract class ChangeFunctionSignatureFix(
                     override fun forcePerformForSelectedFunctionOnly() = false
                 },
                 context,
-                KotlinBundle.message("fix.change.signature.remove.parameter", parameterDescriptor.name.asString())
+                KotlinBundle.message("fix.change.signature.remove.parameter.command", parameterDescriptor.name.asString())
             )
         }
 

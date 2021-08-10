@@ -3,6 +3,7 @@
 package org.jetbrains.kotlin.idea.refactoring.pullUp
 
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiNamedElement
@@ -10,6 +11,7 @@ import com.intellij.psi.search.LocalSearchScope
 import com.intellij.psi.search.searches.ReferencesSearch
 import com.intellij.refactoring.RefactoringBundle
 import com.intellij.util.containers.MultiMap
+import org.jetbrains.annotations.Nls
 import org.jetbrains.kotlin.asJava.unwrapped
 import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.idea.KotlinBundle
@@ -115,15 +117,31 @@ private val CALLABLE_RENDERER = IdeDescriptorRenderers.SOURCE_CODE_SHORT_NAMES_N
     startFromName = false
 }
 
+@Nls
 fun DeclarationDescriptor.renderForConflicts(): String {
     return when (this) {
-        is ClassDescriptor -> "${DescriptorRenderer.getClassifierKindPrefix(this)} " +
-                IdeDescriptorRenderers.SOURCE_CODE.renderClassifierName(this)
-        is FunctionDescriptor -> KotlinBundle.message("text.function.in.ticks.0", CALLABLE_RENDERER.render(this))
-        is PropertyDescriptor -> KotlinBundle.message("text.property.in.ticks.0", CALLABLE_RENDERER.render(this))
-        is PackageFragmentDescriptor -> fqName.asString()
-        is PackageViewDescriptor -> fqName.asString()
-        else -> ""
+        is ClassDescriptor -> {
+            @NlsSafe val text = "${DescriptorRenderer.getClassifierKindPrefix(this)} " +
+                    IdeDescriptorRenderers.SOURCE_CODE.renderClassifierName(this)
+            text
+        }
+        is FunctionDescriptor -> {
+            KotlinBundle.message("text.function.in.ticks.0", CALLABLE_RENDERER.render(this))
+        }
+        is PropertyDescriptor -> {
+            KotlinBundle.message("text.property.in.ticks.0", CALLABLE_RENDERER.render(this))
+        }
+        is PackageFragmentDescriptor -> {
+            @NlsSafe val text = fqName.asString()
+            text
+        }
+        is PackageViewDescriptor -> {
+            @NlsSafe val text = fqName.asString()
+            text
+        }
+        else -> {
+            ""
+        }
     }
 }
 

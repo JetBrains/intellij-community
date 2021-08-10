@@ -6,13 +6,11 @@ import com.intellij.ide.JavaUiBundle
 import com.intellij.openapi.extensions.Extensions
 import com.intellij.openapi.fileChooser.FileChooserDescriptor
 import com.intellij.openapi.fileChooser.FileElement
-import com.intellij.openapi.fileTypes.PlainTextFileType
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectBundle
 import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.roots.libraries.*
 import com.intellij.openapi.roots.libraries.ui.DescendentBasedRootFilter
-import com.intellij.openapi.roots.libraries.ui.FileTypeBasedRootFilter
 import com.intellij.openapi.roots.libraries.ui.LibraryEditorComponent
 import com.intellij.openapi.roots.libraries.ui.RootDetector
 import com.intellij.openapi.roots.ui.configuration.libraryEditor.DefaultLibraryRootsComponentDescriptor
@@ -26,6 +24,7 @@ import javax.swing.JComponent
 class JSLibraryType : LibraryType<DummyLibraryProperties>(JSLibraryKind) {
     override fun createPropertiesEditor(editorComponent: LibraryEditorComponent<DummyLibraryProperties>) = null
 
+    @Suppress("HardCodedStringLiteral")
     override fun getCreateActionName() = "Kotlin/JS"
 
     override fun createNewLibrary(

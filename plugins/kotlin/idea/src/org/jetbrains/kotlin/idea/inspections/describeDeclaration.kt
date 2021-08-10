@@ -2,6 +2,7 @@
 
 package org.jetbrains.kotlin.idea.inspections
 
+import org.jetbrains.annotations.Nls
 import org.jetbrains.kotlin.idea.KotlinBundle
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.isPropertyParameter
@@ -9,6 +10,7 @@ import org.jetbrains.kotlin.psi.psiUtil.isPropertyParameter
 /**
  * @return string description of declaration, like `Function "describe"`
  */
+@Nls
 fun KtNamedDeclaration.describe(): String? = when (this) {
     is KtClass -> "${if (isInterface()) KotlinBundle.message("interface") else KotlinBundle.message("class")} \"$name\""
     is KtObjectDeclaration -> KotlinBundle.message("object.0", name.toString())

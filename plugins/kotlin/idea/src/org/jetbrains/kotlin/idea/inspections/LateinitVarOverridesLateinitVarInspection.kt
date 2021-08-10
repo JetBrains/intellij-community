@@ -22,7 +22,7 @@ class LateinitVarOverridesLateinitVarInspection : AbstractKotlinInspection() {
             if (descriptor.overriddenDescriptors.any { (it as? PropertyDescriptor)?.let { d -> d.isLateInit && d.isVar } == true }) {
                 holder.registerProblem(
                     identifier,
-                    KotlinBundle.message("lateinit.var.overrides.lateinit.var")
+                    KotlinBundle.message("title.lateinit.var.overrides.lateinit.var")
                 )
             }
         }

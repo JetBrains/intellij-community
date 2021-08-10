@@ -383,7 +383,7 @@ class MoveMemberToCompanionObjectIntention : SelfTargetingRangeIntention<KtNamed
                         ) {
                             doMove(it, element, externalUsages, outerInstanceUsages, editor)
                         }
-                    }, KotlinBundle.message("move.to.companion.object"), null)
+                    }, KotlinBundle.message("move.to.companion.object.command"), null)
                 }
 
                 if (isUnitTestMode()) performMove() else invokeLater { performMove() }

@@ -12,6 +12,7 @@ import com.intellij.openapi.ui.popup.util.BaseListPopupStep
 import org.jetbrains.kotlin.diagnostics.Diagnostic
 import org.jetbrains.kotlin.idea.analysis.analyzeAsReplacement
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
+import org.jetbrains.kotlin.idea.completion.KotlinIdeaCompletionBundle
 import org.jetbrains.kotlin.idea.refactoring.fqName.fqName
 import org.jetbrains.kotlin.idea.util.application.executeWriteCommand
 import org.jetbrains.kotlin.psi.*
@@ -27,7 +28,7 @@ class SpecifySuperTypeFix(
     private val superTypes: List<String>
 ) : KotlinQuickFixAction<KtSuperExpression>(superExpression) {
 
-    override fun getText() = "Specify supertype"
+    override fun getText() = KotlinIdeaCompletionBundle.message("intention.name.specify.supertype")
 
     override fun getFamilyName() = text
 
@@ -54,7 +55,7 @@ class SpecifySuperTypeFix(
     }
 
     private fun createListPopupStep(superExpression: KtSuperExpression, superTypes: List<String>): ListPopupStep<*> {
-        return object : BaseListPopupStep<String>("Choose supertype", superTypes) {
+        return object : BaseListPopupStep<String>(KotlinIdeaCompletionBundle.message("popup.title.choose.supertype"), superTypes) {
             override fun isAutoSelectionEnabled() = false
 
             override fun onChosen(selectedValue: String, finalChoice: Boolean): PopupStep<*>? {

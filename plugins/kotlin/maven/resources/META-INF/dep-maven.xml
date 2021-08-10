@@ -45,35 +45,35 @@
 
   <extensions defaultExtensionNs="com.intellij">
     <localInspection implementationClass="org.jetbrains.kotlin.idea.maven.inspections.KotlinMavenPluginPhaseInspection"
-                     groupName="Kotlin"
+                     groupBundle="messages.KotlinBundle" groupKey="group.names.kotlin"
                      enabledByDefault="true"
                      language="XML"
                      hasStaticDescription="true"
                      level="WARNING" key="inspection.kotlin.maven.plugin.phase.display.name" bundle="messages.KotlinBundle"/>
 
     <localInspection implementationClass="org.jetbrains.kotlin.idea.maven.inspections.KotlinTestJUnitInspection"
-                     groupName="Kotlin"
+                     groupBundle="messages.KotlinBundle" groupKey="group.names.kotlin"
                      enabledByDefault="true"
                      language="XML"
                      hasStaticDescription="true"
                      level="WARNING" key="inspection.kotlin.test.j.unit.display.name" bundle="messages.KotlinBundle"/>
 
     <localInspection implementationClass="org.jetbrains.kotlin.idea.maven.inspections.DifferentMavenStdlibVersionInspection"
-                     groupName="Kotlin"
+                     groupBundle="messages.KotlinBundle" groupKey="group.names.kotlin"
                      enabledByDefault="true"
                      language="XML"
                      hasStaticDescription="true"
                      level="WARNING" key="inspection.different.maven.stdlib.version.display.name" bundle="messages.KotlinBundle"/>
 
     <localInspection implementationClass="org.jetbrains.kotlin.idea.maven.inspections.DifferentKotlinMavenVersionInspection"
-                     groupName="Kotlin"
+                     groupBundle="messages.KotlinBundle" groupKey="group.names.kotlin"
                      enabledByDefault="true"
                      language="XML"
                      hasStaticDescription="true"
                      level="WARNING" key="inspection.different.kotlin.maven.version.display.name" bundle="messages.KotlinBundle"/>
 
     <localInspection implementationClass="org.jetbrains.kotlin.idea.maven.inspections.DeprecatedMavenDependencyInspection"
-                     groupName="Kotlin"
+                     groupBundle="messages.KotlinBundle" groupKey="group.names.kotlin"
                      enabledByDefault="true"
                      cleanupTool="true"
                      language="XML"
@@ -82,7 +82,7 @@
 
     <localInspection implementationClass="org.jetbrains.kotlin.idea.maven.inspections.MavenCoroutinesDeprecationInspection"
                      groupPath="Kotlin,Migration"
-                     groupName="Maven"
+                     groupBundle="messages.KotlinBundle" groupKey="group.names.maven"
                      enabledByDefault="true"
                      language="XML"
                      hasStaticDescription="true"
@@ -90,11 +90,13 @@
 
     <intentionAction>
       <className>org.jetbrains.kotlin.idea.maven.actions.MavenPluginSourcesMoveToBuild</className>
-      <category>Kotlin</category>
+      <bundleName>messages.KotlinBundle</bundleName>
+      <categoryKey>group.names.kotlin</categoryKey>
     </intentionAction>
     <intentionAction>
       <className>org.jetbrains.kotlin.idea.maven.actions.MavenPluginSourcesMoveToExecutionIntention</className>
-      <category>Kotlin</category>
+      <bundleName>messages.KotlinBundle</bundleName>
+      <categoryKey>group.names.kotlin</categoryKey>
     </intentionAction>
     <codeInsight.unresolvedReferenceQuickFixProvider
             implementation="org.jetbrains.kotlin.idea.maven.inspections.KotlinMavenUnresolvedReferenceQuickFixProvider" />

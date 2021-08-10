@@ -6,6 +6,7 @@ import com.intellij.codeInsight.hints.InlayInfo
 import com.intellij.codeInsight.hints.Option
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.psi.PsiElement
+import org.jetbrains.annotations.Nls
 import org.jetbrains.kotlin.idea.KotlinBundle
 import org.jetbrains.kotlin.idea.parameterInfo.*
 import org.jetbrains.kotlin.idea.quickfix.createFromUsage.callableBuilder.getReturnTypeReference
@@ -15,7 +16,7 @@ import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 @Suppress("UnstableApiUsage")
-enum class HintType(private val showDesc: String, defaultEnabled: Boolean) {
+enum class HintType(@Nls private val showDesc: String, defaultEnabled: Boolean) {
 
     PROPERTY_HINT(
         KotlinBundle.message("hints.settings.types.property"),
@@ -145,7 +146,7 @@ enum class HintType(private val showDesc: String, defaultEnabled: Boolean) {
         return provideHints(elem).map { InlayInfoDetails(it, listOf(TextInlayInfoDetail(it.text))) }
     }
 
-    val option = Option("SHOW_${this.name}", this.showDesc, defaultEnabled)
+    val option = Option("SHOW_${this.name}", { this.showDesc }, defaultEnabled)
     val enabled
         get() = option.get()
 }

@@ -9,12 +9,13 @@ import com.intellij.codeInsight.template.ExpressionContext
 import com.intellij.codeInsight.template.TextResult
 import com.intellij.codeInsight.template.impl.TemplateManagerImpl
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil
+import org.jetbrains.annotations.Nls
 
 //TODO: move it somewhere else and reuse
 abstract class ChooseValueExpression<in T : Any>(
     lookupItems: Collection<T>,
     defaultItem: T,
-    private val advertisementText: String? = null
+    @Nls private val advertisementText: String? = null
 ) : Expression() {
     protected abstract fun getLookupString(element: T): String
     protected abstract fun getResult(element: T): String
@@ -25,13 +26,9 @@ abstract class ChooseValueExpression<in T : Any>(
     private val lookupItems: Array<LookupElement> = lookupItems.map { suggestion ->
         LookupElementBuilder.create(suggestion, getLookupString(suggestion)).withInsertHandler { context, item ->
             val topLevelEditor = InjectedLanguageUtil.getTopLevelEditor(context.editor)
-            val templateState = TemplateManagerImpl.getTemplateState(topLevelEditor)
-            if (templateState != null) {
-                val range = templateState.currentVariableRange
-                if (range != null) {
-                    @Suppress("UNCHECKED_CAST")
-                    topLevelEditor.document.replaceString(range.startOffset, range.endOffset, getResult(item.`object` as T))
-                }
+            TemplateManagerImpl.getTemplateState(topLevelEditor)?.currentVariableRange?.let { range ->
+                @Suppress("UNCHECKED_CAST")
+                topLevelEditor.document.replaceString(range.startOffset, range.endOffset, getResult(item.`object` as T))
             }
         }
     }.toTypedArray()
@@ -48,7 +45,7 @@ abstract class ChooseValueExpression<in T : Any>(
 class ChooseStringExpression(
     suggestions: Collection<String>,
     default: String = suggestions.first(),
-    advertisementText: String? = null
+    @Nls advertisementText: String? = null
 ) : ChooseValueExpression<String>(suggestions, default, advertisementText) {
     override fun getLookupString(element: String) = element
     override fun getResult(element: String) = element

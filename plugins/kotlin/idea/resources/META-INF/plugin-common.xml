@@ -400,13 +400,20 @@
 
     <projectConfigurable instance="org.jetbrains.kotlin.idea.compiler.configuration.KotlinCompilerConfigurableTab"
                          id="project.kotlinCompiler"
-                         displayName="Kotlin Compiler"
+                         bundle="messages.KotlinBundle"
+                         key="kotlin.compiler.configurable"
                          parentId="project.propCompiler"/>
 
-    <applicationConfigurable groupId="language" displayName="Kotlin" id="preferences.language.Kotlin"
+    <applicationConfigurable groupId="language"
+                             bundle="messages.KotlinBundle"
+                             key="kotlin.language.configurable"
+                             id="preferences.language.Kotlin"
                              instance="org.jetbrains.kotlin.idea.configuration.KotlinLanguageConfiguration"/>
 
-    <projectConfigurable groupId="language" displayName="Kotlin Scripting" id="preferences.language.Kotlin.scripting"
+    <projectConfigurable groupId="language"
+                         bundle="messages.KotlinBundle"
+                         key="kotlin.scripting.configurable"
+                         id="preferences.language.Kotlin.scripting"
                          instance="org.jetbrains.kotlin.idea.script.configuration.KotlinScriptingSettingsConfigurable"
                          parentId="preferences.language.Kotlin"/>
 
@@ -694,10 +701,9 @@
 
     <lang.substitutor language="kotlin" order="last" implementationClass="org.jetbrains.kotlin.idea.KotlinLanguageSubstitutor"/>
 
-
     <localInspection implementationClass="org.jetbrains.kotlin.idea.inspections.collections.RedundantAsSequenceInspection"
                      groupPath="Kotlin"
-                     groupName="Style issues"
+                     groupBundle="messages.KotlinBundle" groupKey="group.names.style.issues"
                      enabledByDefault="true"
                      level="WEAK WARNING"
                      language="kotlin"

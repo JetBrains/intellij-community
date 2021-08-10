@@ -6,6 +6,7 @@ import com.intellij.codeInsight.generation.ClassMemberWithElement
 import com.intellij.codeInsight.generation.MemberChooserObject
 import com.intellij.codeInsight.generation.PsiElementMemberChooserObject
 import com.intellij.openapi.util.Iconable
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiMember
@@ -62,6 +63,7 @@ open class DescriptorMemberChooserObject(
             classifierNamePolicy = ClassifierNamePolicy.SHORT
         }
 
+        @NlsSafe
         fun getText(descriptor: DeclarationDescriptor): String {
             return if (descriptor is ClassDescriptor)
                 descriptor.fqNameUnsafe.render()

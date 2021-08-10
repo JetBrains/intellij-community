@@ -8,6 +8,7 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.ui.popup.JBPopupListener
 import com.intellij.openapi.ui.popup.LightweightWindowEvent
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.psi.PsiComment
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
@@ -183,11 +184,11 @@ private fun smartSelectElement(
     val highlighter = ScopeHighlighter(editor)
     val title: String = if (elementKinds.size == 1) {
         when (elementKinds.iterator().next()) {
-            CodeInsightUtils.ElementKind.EXPRESSION -> "Expressions"
-            CodeInsightUtils.ElementKind.TYPE_ELEMENT, CodeInsightUtils.ElementKind.TYPE_CONSTRUCTOR -> "Types"
+            CodeInsightUtils.ElementKind.EXPRESSION -> KotlinBundle.message("popup.title.expressions")
+            CodeInsightUtils.ElementKind.TYPE_ELEMENT, CodeInsightUtils.ElementKind.TYPE_CONSTRUCTOR -> KotlinBundle.message("popup.title.types")
         }
     } else {
-        "Elements"
+        KotlinBundle.message("popup.title.elements")
     }
 
     JBPopupFactory.getInstance()
@@ -225,6 +226,7 @@ private fun smartSelectElement(
         .showInBestPositionFor(editor)
 }
 
+@NlsSafe
 fun getExpressionShortText(element: KtElement): String {
     val text = element.renderTrimmed().trimStart()
     val firstNewLinePos = text.indexOf('\n')

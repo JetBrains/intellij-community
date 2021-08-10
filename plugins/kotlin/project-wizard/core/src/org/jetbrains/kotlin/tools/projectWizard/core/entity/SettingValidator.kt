@@ -58,7 +58,7 @@ sealed class ValidationResult {
         override val isOk = true
     }
 
-    data class ValidationError(val messages: List<String>, val target: Any? = null) : ValidationResult() {
+    data class ValidationError(val messages: List<@Nls String>, val target: Any? = null) : ValidationResult() {
         constructor(@Nls message: String, target: Any? = null) : this(listOf(message), target)
 
         override val isOk = false
@@ -74,7 +74,7 @@ sealed class ValidationResult {
         fun create(condition: Boolean, @Nls message: String) =
             if (condition) OK else ValidationError(message)
 
-        inline fun create(condition: Boolean, message: () -> String) =
+        inline fun create(condition: Boolean, message: () -> @Nls String) =
             if (condition) OK else ValidationError(message())
     }
 }

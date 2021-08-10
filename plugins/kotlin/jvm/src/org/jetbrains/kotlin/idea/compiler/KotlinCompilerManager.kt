@@ -58,6 +58,7 @@ class KotlinCompilerStartupActivity : StartupActivity {
 
     override fun runActivity(project: Project) {
         project.messageBus.connect().subscribe(CompilerTopics.COMPILATION_STATUS, object : CompilationStatusListener {
+            @Suppress("HardCodedStringLiteral")
             override fun compilationFinished(aborted: Boolean, errors: Int, warnings: Int, compileContext: CompileContext) {
                 for (error in compileContext.getMessages(CompilerMessageCategory.ERROR)) {
                     val message = error.message

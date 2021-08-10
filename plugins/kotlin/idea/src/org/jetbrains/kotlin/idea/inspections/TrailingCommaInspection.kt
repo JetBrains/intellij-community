@@ -8,6 +8,8 @@ import com.intellij.codeInspection.ProblemDescriptor
 import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel
+import com.intellij.codeInspection.util.InspectionMessage
+import com.intellij.codeInspection.util.IntentionFamilyName
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
@@ -16,6 +18,7 @@ import com.intellij.psi.PsiElementVisitor
 import com.intellij.psi.codeStyle.CodeStyleManager
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager
 import com.intellij.psi.util.PsiTreeUtil
+import org.jetbrains.annotations.Nls
 import org.jetbrains.kotlin.idea.KotlinBundle
 import org.jetbrains.kotlin.idea.formatter.TrailingCommaVisitor
 import org.jetbrains.kotlin.idea.formatter.kotlinCustomSettings
@@ -112,8 +115,8 @@ class TrailingCommaInspection(
 
         private fun reportProblem(
             commaOrElement: PsiElement,
-            message: String,
-            fixMessage: String,
+            @InspectionMessage message: String,
+            @IntentionFamilyName fixMessage: String,
             highlightType: ProblemHighlightType = ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
             checkTrailingCommaSettings: Boolean = true,
         ) {
@@ -169,7 +172,7 @@ class TrailingCommaInspection(
         }
 
         private fun createQuickFix(
-            fixMessage: String,
+            @IntentionFamilyName fixMessage: String,
             commaOwner: KtElement,
         ): LocalQuickFix = object : LocalQuickFix {
             val commaOwnerPointer = commaOwner.createSmartPointer()

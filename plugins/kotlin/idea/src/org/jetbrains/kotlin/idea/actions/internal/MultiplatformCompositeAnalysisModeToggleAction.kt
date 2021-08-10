@@ -11,7 +11,7 @@ import org.jetbrains.kotlin.idea.project.useCompositeAnalysis
 
 class MultiplatformCompositeAnalysisToggleAction :
     ToggleAction(
-        KotlinBundle.message("toggle.composite.analysis.mode.for.multiplatform"),
+        KotlinBundle.message("title.toggle.composite.analysis.mode.for.multiplatform"),
         KotlinBundle.message("analyse.modules.with.different.platforms.together"),
         null
     ) {

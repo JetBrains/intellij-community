@@ -6,6 +6,7 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.ScrollType
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
+import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiWhiteSpace
@@ -19,11 +20,11 @@ import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.*
 import org.jetbrains.kotlin.utils.SmartList
 
-fun showErrorHint(project: Project, editor: Editor, message: String, title: String) {
+fun showErrorHint(project: Project, editor: Editor, @NlsContexts.DialogMessage message: String, @NlsContexts.DialogTitle title: String) {
     CodeInsightUtils.showErrorHint(project, editor, message, title, null)
 }
 
-fun showErrorHintByKey(project: Project, editor: Editor, messageKey: String, title: String) {
+fun showErrorHintByKey(project: Project, editor: Editor, messageKey: String, @NlsContexts.DialogTitle title: String) {
     showErrorHint(project, editor, KotlinBundle.message(messageKey), title)
 }
 
@@ -60,10 +61,10 @@ fun selectElementsWithTargetSibling(
 }
 
 fun selectElementsWithTargetParent(
-    operationName: String,
+    @NlsContexts.DialogTitle operationName: String,
     editor: Editor,
     file: KtFile,
-    title: String,
+    @NlsContexts.DialogTitle title: String,
     elementKinds: Collection<CodeInsightUtils.ElementKind>,
     elementValidator: (List<PsiElement>) -> String?,
     getContainers: (elements: List<PsiElement>, commonParent: PsiElement) -> List<PsiElement>,

@@ -12,6 +12,7 @@ import com.intellij.openapi.ui.popup.ListPopupStep
 import com.intellij.openapi.ui.popup.PopupStep
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep
 import com.intellij.util.PlatformIcons
+import org.jetbrains.annotations.Nls
 import org.jetbrains.kotlin.builtins.KotlinBuiltIns
 import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.descriptors.Modality.ABSTRACT
@@ -39,10 +40,8 @@ class AddPropertyToSupertypeFix private constructor(
 
     private class PropertyData(val signaturePreview: String, val sourceCode: String, val targetClass: KtClass)
 
-    override fun getText(): String {
-        val single = properties.singleOrNull()
-        return if (single != null) actionName(single) else KotlinBundle.message("fix.add.property.to.supertype.text.generic")
-    }
+    override fun getText(): String =
+        properties.singleOrNull()?.let { actionName(it) } ?: KotlinBundle.message("fix.add.property.to.supertype.text.generic")
 
     override fun getFamilyName() = KotlinBundle.message("fix.add.property.to.supertype.family")
 
@@ -88,9 +87,9 @@ class AddPropertyToSupertypeFix private constructor(
         }
     }
 
-    private fun actionName(propertyData: PropertyData): String {
-        return KotlinBundle.message("fix.add.property.to.supertype.text", propertyData.signaturePreview, propertyData.targetClass.name.toString())
-    }
+    @Nls
+    private fun actionName(propertyData: PropertyData): String =
+        KotlinBundle.message("fix.add.property.to.supertype.text", propertyData.signaturePreview, propertyData.targetClass.name.toString())
 
     companion object : KotlinSingleIntentionActionFactory() {
         override fun createAction(diagnostic: Diagnostic): IntentionAction? {

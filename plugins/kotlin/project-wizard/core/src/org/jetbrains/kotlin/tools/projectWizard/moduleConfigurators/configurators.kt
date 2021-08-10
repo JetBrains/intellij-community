@@ -2,6 +2,7 @@
 package org.jetbrains.kotlin.tools.projectWizard.moduleConfigurators
 
 
+import com.intellij.openapi.util.NlsSafe
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.kotlin.tools.projectWizard.KotlinNewProjectWizardBundle
 import org.jetbrains.kotlin.tools.projectWizard.core.*
@@ -100,6 +101,7 @@ enum class TargetJvmVersion(@NonNls val value: String) : DisplayableSettingItem 
     JVM_16("16");
 
     override val text: String
+        @NlsSafe
         get() = value
 }
 
@@ -143,7 +145,7 @@ object JvmSinglePlatformModuleConfigurator : JvmModuleConfigurator,
 
     override val canContainSubModules = true
 
-    override fun createKotlinPluginIR(configurationData: ModulesToIrConversionData, module: Module): KotlinBuildSystemPluginIR? =
+    override fun createKotlinPluginIR(configurationData: ModulesToIrConversionData, module: Module): KotlinBuildSystemPluginIR =
         KotlinBuildSystemPluginIR(
             KotlinBuildSystemPluginIR.Type.jvm,
             version = configurationData.kotlinVersion

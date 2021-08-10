@@ -7,6 +7,7 @@ package org.jetbrains.kotlin.idea.frontend.api.computation
 
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.command.CommandProcessor
+import com.intellij.openapi.util.NlsContexts
 import com.intellij.psi.util.PsiModificationTracker
 import org.jetbrains.kotlin.idea.frontend.api.KtAnalysisSession
 import org.jetbrains.kotlin.idea.frontend.api.analyzeWithReadAction
@@ -27,7 +28,7 @@ class ApplicableComputation<ELEMENT : KtElement, DATA : Any>(
     val computation: KtAnalysisSession.(ELEMENT) -> DATA?,
     val application: (ELEMENT, DATA) -> Unit,
     val psiChecker: (ELEMENT) -> Boolean = { true },
-    val computationTitle: String,
+    @NlsContexts.Command val computationTitle: String,
 ) {
     @Suppress("EXPERIMENTAL_API_USAGE", "EXPERIMENTAL_UNSIGNED_LITERALS")
     fun computeAndApply(element: ELEMENT, tryCount: UInt = UInt.MAX_VALUE): ApplicableComputationResult {

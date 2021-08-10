@@ -169,12 +169,12 @@ class KtScratchFileEditorWithPreview private constructor(
      * That's why we set long and descriptive [Presentation.getText], but short [Presentation.getDescription].
      */
     override fun getShowEditorAction(): ToggleAction = super.getShowEditorAction().apply {
-        templatePresentation.text = KotlinJvmBundle.message("scratch.inlay.output.mode")
+        templatePresentation.text = KotlinJvmBundle.message("scratch.inlay.output.mode.title")
         templatePresentation.description = KotlinJvmBundle.message("scratch.inlay.output.mode.description")
     }
 
     override fun getShowEditorAndPreviewAction(): ToggleAction = super.getShowEditorAndPreviewAction().apply {
-        templatePresentation.text = KotlinJvmBundle.message("scratch.side.panel.output.mode")
+        templatePresentation.text = KotlinJvmBundle.message("scratch.side.panel.output.mode.title")
         templatePresentation.description = KotlinJvmBundle.message("scratch.side.panel.output.mode.description")
     }
 

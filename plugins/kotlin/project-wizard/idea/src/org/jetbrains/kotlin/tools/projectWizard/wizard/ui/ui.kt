@@ -4,6 +4,8 @@ package org.jetbrains.kotlin.tools.projectWizard.wizard.ui
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.progress.ProgressManager
+import com.intellij.openapi.util.NlsContexts
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.ThrowableComputable
 import com.intellij.ui.ColorUtil
 import com.intellij.ui.PopupHandler
@@ -30,7 +32,7 @@ import javax.swing.border.Border
 import javax.swing.event.DocumentEvent
 import javax.swing.event.DocumentListener
 
-internal inline fun label(text: String, bold: Boolean = false, init: JBLabel.() -> Unit = {}) = JBLabel().apply {
+internal inline fun label(@NlsContexts.Label text: String, bold: Boolean = false, init: JBLabel.() -> Unit = {}) = JBLabel().apply {
     font = UIUtil.getLabelFont().deriveFont(if (bold) Font.BOLD else Font.PLAIN)
     this.text = text
     init()
@@ -41,7 +43,7 @@ inline fun customPanel(layout: LayoutManager? = BorderLayout(), init: JPanel.() 
 inline fun borderPanel(init: BorderLayoutPanel.() -> Unit = {}) = BorderLayoutPanel().apply(init)
 
 
-fun textField(defaultValue: String?, onUpdated: (value: String) -> Unit) =
+fun textField(@Nls defaultValue: String?, onUpdated: (value: String) -> Unit) =
     JBTextField(defaultValue)
         .withOnUpdatedListener(onUpdated)
 
@@ -53,8 +55,10 @@ fun <F : JTextField> F.withOnUpdatedListener(onUpdated: (value: String) -> Unit)
     })
 }
 
+@NlsSafe
 internal fun String.asHtml() = "<html><body>$this</body></html>"
 
+@Nls
 fun ValidationResult.ValidationError.asHtml() = when (messages.size) {
     0 -> ""
     1 -> messages.single()

@@ -8,12 +8,14 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep
 import com.intellij.openapi.util.Key
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.Ref
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiManager
 import com.intellij.ui.EditorNotificationPanel
 import com.intellij.ui.EditorNotifications
 import com.intellij.ui.HyperlinkLabel
+import org.jetbrains.annotations.Nls
 import org.jetbrains.kotlin.idea.KotlinBundle
 import org.jetbrains.kotlin.idea.KotlinFileType
 import org.jetbrains.kotlin.idea.core.script.ScriptDefinitionsManager
@@ -66,19 +68,21 @@ class MultipleScriptDefinitionsChecker(private val project: Project) : EditorNot
 
         private fun createNotification(psiFile: KtFile, defs: List<ScriptDefinition>): EditorNotificationPanel =
             EditorNotificationPanel().apply {
-                setText(
-                    KotlinBundle.message("script.text.multiple.script.definitions.are.applicable.for.this.script", defs.first().name))
+                text = KotlinBundle.message("script.text.multiple.script.definitions.are.applicable.for.this.script", defs.first().name)
                 createComponentActionLabel(
                     KotlinBundle.message("script.action.text.show.all")
                 ) { label ->
                     val list = JBPopupFactory.getInstance().createListPopup(
                         object : BaseListPopupStep<ScriptDefinition>(null, defs) {
-                            override fun getTextFor(value: ScriptDefinition): String =
-                                value.asLegacyOrNull<KotlinScriptDefinitionFromAnnotatedTemplate>()?.let {
+                            override fun getTextFor(value: ScriptDefinition): String {
+                                @NlsSafe
+                                val text = value.asLegacyOrNull<KotlinScriptDefinitionFromAnnotatedTemplate>()?.let {
                                     it.name + " (${it.scriptFilePattern})"
                                 } ?: value.asLegacyOrNull<StandardIdeScriptDefinition>()?.let {
                                     it.name + " (${KotlinParserDefinition.STD_SCRIPT_EXT})"
                                 } ?: (value.name + " (${value.fileExtension})")
+                                return text
+                            }
                         }
                     )
                     list.showUnderneathOf(label)
@@ -94,7 +98,7 @@ class MultipleScriptDefinitionsChecker(private val project: Project) : EditorNot
                 }
             }
 
-        private fun EditorNotificationPanel.createComponentActionLabel(labelText: String, callback: (HyperlinkLabel) -> Unit) {
+        private fun EditorNotificationPanel.createComponentActionLabel(@Nls labelText: String, callback: (HyperlinkLabel) -> Unit) {
             val label: Ref<HyperlinkLabel> = Ref.create()
             label.set(createActionLabel(labelText) {
                 callback(label.get())

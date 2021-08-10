@@ -6,6 +6,7 @@
 package org.jetbrains.kotlin.idea.fir.inspections
 
 import com.intellij.openapi.editor.Editor
+import org.jetbrains.kotlin.idea.KotlinBundle
 import org.jetbrains.kotlin.idea.frontend.api.KtAnalysisSession
 import org.jetbrains.kotlin.idea.frontend.api.types.*
 import org.jetbrains.kotlin.psi.KtNamedFunction
@@ -14,7 +15,7 @@ import org.jetbrains.kotlin.psi.KtPsiFactory
 class AddFunctionReturnTypeIntention :
     AbstractHighLevelApiBasedIntention<KtNamedFunction, TypeCandidate>(
         KtNamedFunction::class.java,
-        { "Specify type explicitly" }
+        { KotlinBundle.message("intention.add.function.return.type.specify.type.explicitly") }
     ) {
     override fun isApplicableByPsi(element: KtNamedFunction): Boolean =
         element.typeReference == null && !element.hasBlockBody()

@@ -20,6 +20,7 @@ import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode;
 import org.jetbrains.kotlin.types.KotlinType;
 
 public class KotlinNotSurrounder extends KotlinExpressionSurrounder {
+    @SuppressWarnings("DialogTitleCapitalization")
     @Override
     public String getTemplateDescription() {
         return CodeInsightBundle.message("surround.with.not.template");

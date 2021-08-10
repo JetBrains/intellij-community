@@ -16,10 +16,10 @@ import com.intellij.refactoring.move.MoveHandlerDelegate
 import com.intellij.refactoring.move.moveClassesOrPackages.MoveClassesOrPackagesImpl
 import com.intellij.refactoring.move.moveFilesOrDirectories.MoveFilesOrDirectoriesUtil
 import com.intellij.refactoring.util.CommonRefactoringUtil
+import org.jetbrains.annotations.Nls
 import org.jetbrains.kotlin.asJava.unwrapped
 import org.jetbrains.kotlin.idea.KotlinBundle
 import org.jetbrains.kotlin.idea.core.getPackage
-import org.jetbrains.kotlin.idea.refactoring.KotlinRefactoringSettings
 import org.jetbrains.kotlin.idea.refactoring.canRefactor
 import org.jetbrains.kotlin.idea.refactoring.move.moveDeclarations.ui.KotlinAwareMoveFilesOrDirectoriesDialog
 import org.jetbrains.kotlin.idea.refactoring.move.moveDeclarations.ui.KotlinSelectNestedClassRefactoringDialog
@@ -178,7 +178,7 @@ class MoveKotlinDeclarationsHandler internal constructor(private val handlerActi
                 val message =
                     RefactoringBundle.getCannotRefactorMessage(KotlinBundle.message("text.move.declaration.proceed.move.without.mpp.counterparts.text"))
                 val title =
-                    RefactoringBundle.getCannotRefactorMessage(KotlinBundle.message("text.move.declaration.proceed.move.without.mpp.counterparts.title"))
+                    KotlinBundle.message("text.move.declaration.proceed.move.without.mpp.counterparts.title")
                 val proceedWithIncompleteRefactoring = Messages.showYesNoDialog(project, message, title, Messages.getWarningIcon())
                 if (proceedWithIncompleteRefactoring != Messages.YES) return true
             }
@@ -310,4 +310,6 @@ class MoveKotlinDeclarationsHandler internal constructor(private val handlerActi
     }
 }
 
-private val MOVE_DECLARATIONS: String get() = KotlinBundle.message("text.move.declarations")
+private val MOVE_DECLARATIONS: String
+    @Nls
+    get() = KotlinBundle.message("text.move.declarations")

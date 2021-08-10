@@ -134,7 +134,7 @@ abstract class KotlinGenerateTestSupportActionBase(
 
     private fun doGenerate(editor: Editor, file: PsiFile, klass: KtClassOrObject, framework: TestFramework) {
         val project = file.project
-        val commandName = KotlinBundle.message("action.generate.test.support.generate.test.function")
+        val commandName = KotlinBundle.message("command.generate.test.support.generate.test.function")
 
         val fileTemplateDescriptor = methodKind.getFileTemplateDescriptor(framework)
         val fileTemplate = FileTemplateManager.getInstance(project).getCodeTemplate(fileTemplateDescriptor.fileName)

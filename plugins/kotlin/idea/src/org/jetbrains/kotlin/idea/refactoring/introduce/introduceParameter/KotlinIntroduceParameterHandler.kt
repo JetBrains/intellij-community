@@ -15,6 +15,7 @@ import com.intellij.refactoring.RefactoringActionHandler
 import com.intellij.refactoring.introduce.inplace.AbstractInplaceIntroducer
 import com.intellij.util.SmartList
 import com.intellij.util.containers.MultiMap
+import org.jetbrains.annotations.Nls
 import org.jetbrains.kotlin.descriptors.ClassDescriptor
 import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
 import org.jetbrains.kotlin.descriptors.FunctionDescriptor
@@ -546,5 +547,9 @@ open class KotlinIntroduceLambdaParameterHandler(
     }
 }
 
-val INTRODUCE_PARAMETER: String = KotlinBundle.message("name.introduce.parameter1")
-val INTRODUCE_LAMBDA_PARAMETER: String = KotlinBundle.message("name.introduce.lambda.parameter")
+val INTRODUCE_PARAMETER: String
+    @Nls
+    get() = KotlinBundle.message("name.introduce.parameter1")
+val INTRODUCE_LAMBDA_PARAMETER: String
+    @Nls
+    get() = KotlinBundle.message("name.introduce.lambda.parameter")

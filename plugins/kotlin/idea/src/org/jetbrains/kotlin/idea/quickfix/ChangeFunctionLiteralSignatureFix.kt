@@ -5,6 +5,7 @@ package org.jetbrains.kotlin.idea.quickfix
 import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.NlsContexts
 import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.descriptors.FunctionDescriptor
 import org.jetbrains.kotlin.diagnostics.Diagnostic
@@ -25,6 +26,10 @@ class ChangeFunctionLiteralSignatureFix private constructor(
 ) : ChangeFunctionSignatureFix(functionLiteral, functionDescriptor) {
 
     override fun getText() = KotlinBundle.message("fix.change.signature.lambda")
+
+    private val commandName: String
+        @NlsContexts.Command
+        get() = KotlinBundle.message("fix.change.signature.lambda.command")
 
     override fun invoke(project: Project, editor: Editor?, file: KtFile) {
         val element = element ?: return
@@ -48,7 +53,7 @@ class ChangeFunctionLiteralSignatureFix private constructor(
                 override fun forcePerformForSelectedFunctionOnly() = false
             },
             element,
-            text
+            commandName
         )
     }
 

@@ -9,7 +9,9 @@ import com.intellij.openapi.fileChooser.FileTextField;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
+import com.intellij.openapi.util.NlsContexts;
 import org.jdesktop.swingx.VerticalLayout;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.kotlin.idea.KotlinJvmBundle;
@@ -19,10 +21,16 @@ import javax.swing.*;
 class ChoosePathDialog extends DialogWrapper {
     private final Project myProject;
     private final String defaultPath;
+    @Nls
     private final String description;
     private TextFieldWithBrowseButton myPathField;
 
-    public ChoosePathDialog(@Nullable Project project, @NotNull String title, @NotNull String defaultPath, @Nullable String description) {
+    public ChoosePathDialog(
+            @Nullable Project project,
+            @NlsContexts.DialogTitle @NotNull String title,
+            @NotNull String defaultPath,
+            @Nls @Nullable String description
+    ) {
         super(project);
         myProject = project;
         this.defaultPath = defaultPath;

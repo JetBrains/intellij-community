@@ -22,6 +22,7 @@ import com.intellij.ui.components.JBLabel
 import com.intellij.ui.components.JBTextField
 import com.intellij.uiDesigner.core.GridConstraints
 import kotlinx.coroutines.*
+import org.jetbrains.annotations.Nls
 import org.jetbrains.kotlin.idea.KotlinBundle
 import org.jetbrains.kotlin.idea.KotlinFileType
 import org.jetbrains.kotlin.idea.caches.project.ModuleOrigin
@@ -56,7 +57,7 @@ abstract class AbstractCompletionBenchmarkAction : AnAction() {
     ): AbstractCompletionBenchmarkScenario?
 
     companion object {
-        fun showPopup(project: Project, text: String) {
+        fun showPopup(project: Project, @Nls text: String) {
             val statusBar = WindowManager.getInstance().getStatusBar(project)
             JBPopupFactory.getInstance()
                 .createHtmlTextBalloonBuilder(text, MessageType.ERROR, null)
@@ -85,7 +86,7 @@ abstract class AbstractCompletionBenchmarkAction : AnAction() {
                 .filterTo(mutableListOf()) { it.isUsableForBenchmark() && filePredicate(it) }
         }
 
-        internal fun JPanel.addBoxWithLabel(tooltip: String, label: String = "$tooltip:", default: String, i: Int): JBTextField {
+        internal fun JPanel.addBoxWithLabel(@Nls tooltip: String, @Nls label: String = "$tooltip:", default: String, i: Int): JBTextField {
             this.add(JBLabel(label), GridConstraints().apply { row = i; column = 0 })
             val textField = JBTextField().apply {
                 text = default
@@ -157,7 +158,7 @@ internal abstract class AbstractCompletionBenchmarkScenario(
             }
             editor.moveCaret(editor.caretModel.offset + text.length + 1)
             AutoPopupController.getInstance(project).scheduleAutoPopup(editor, CompletionType.BASIC, null)
-        }, "insertTextAndInvokeCompletion", "completionBenchmark")
+        }, "InsertTextAndInvokeCompletion", "completionBenchmark")
 
         val result = try {
             withTimeout(timeout) { collectResult(file, location) }
@@ -170,7 +171,7 @@ internal abstract class AbstractCompletionBenchmarkScenario(
                 document.deleteString(offset, offset + text.length + 2)
                 PsiDocumentManager.getInstance(project).commitDocument(document)
             }
-        }, "revertToOriginal", "completionBenchmark")
+        }, "RevertToOriginal", "completionBenchmark")
 
         delay(100)
         return result

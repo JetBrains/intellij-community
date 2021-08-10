@@ -7,10 +7,11 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiPackage
 import com.intellij.testIntegration.createTest.CreateTestDialog
+import org.jetbrains.annotations.Nls
 
 class KotlinCreateTestDialog(
     project: Project,
-    title: String,
+    @Nls title: String,
     targetClass: PsiClass?,
     targetPackage: PsiPackage?,
     targetModule: Module

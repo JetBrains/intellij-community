@@ -2,6 +2,7 @@
 
 package org.jetbrains.kotlin.idea.codeInsight
 
+import com.intellij.openapi.util.NlsSafe
 import org.jetbrains.kotlin.descriptors.CallableDescriptor
 import org.jetbrains.kotlin.descriptors.ClassifierDescriptor
 import org.jetbrains.kotlin.idea.KotlinBundle
@@ -54,6 +55,7 @@ class KotlinExpressionTypeProviderDescriptorsImpl : KotlinExpressionTypeProvider
         return "<html>${renderExpressionType(element, bindingContext)}</html>"
     }
 
+    @NlsSafe
     private fun renderExpressionType(element: KtExpression, bindingContext: BindingContext): String {
         if (element is KtCallableDeclaration) {
             val descriptor = bindingContext[BindingContext.DECLARATION_TO_DESCRIPTOR, element] as? CallableDescriptor

@@ -224,7 +224,7 @@ class RenameKotlinPropertyProcessor : RenameKotlinPsiProcessor() {
         val result = Messages.showYesNoCancelDialog(
             deepestSuperDeclaration.project,
             message,
-            KotlinBundle.message("text.rename.warning"),
+            KotlinBundle.message("title.rename.warning"),
             Messages.getQuestionIcon()
         )
 
@@ -278,7 +278,7 @@ class RenameKotlinPropertyProcessor : RenameKotlinPsiProcessor() {
         }
 
         val superPsiMethods = listOfNotNull(deepestSuperDeclaration.getRepresentativeLightMethod())
-        checkSuperMethodsWithPopup(callableDeclaration, superPsiMethods, RefactoringBundle.message("rename.title"), editor) {
+        checkSuperMethodsWithPopup(callableDeclaration, superPsiMethods, "rename", editor) {
             preprocessAndPass(if (it.size > 1) deepestSuperDeclaration else callableDeclaration)
         }
     }

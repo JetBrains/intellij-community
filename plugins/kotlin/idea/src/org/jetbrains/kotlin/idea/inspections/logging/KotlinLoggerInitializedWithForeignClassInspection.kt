@@ -58,11 +58,11 @@ class KotlinLoggerInitializedWithForeignClassInspection : AbstractKotlinInspecti
         val table = ListTable(
             ListWrappingTableModel(
                 listOf(loggerFactoryClassNames, loggerFactoryMethodNames),
-                KotlinBundle.message("logger.factory.class.name"),
-                KotlinBundle.message("logger.factory.method.name")
+                KotlinBundle.message("title.logger.factory.class.name"),
+                KotlinBundle.message("title.logger.factory.method.name")
             )
         )
-        return UiUtils.createAddRemoveTreeClassChooserPanel(table, KotlinBundle.message("choose.logger.factory.class"))
+        return UiUtils.createAddRemoveTreeClassChooserPanel(table, KotlinBundle.message("title.choose.logger.factory.class"))
     }
 
     override fun readSettings(element: Element) {

@@ -11,7 +11,7 @@ import org.jetbrains.kotlin.utils.WrappedValues
 
 class StoredExceptionsThrowToggleAction :
     ToggleAction(
-        KotlinBundle.message("internal.toggle.throwing.cached.pce"),
+        KotlinBundle.message("internal.toggle.throwing.cached.pce.title"),
         KotlinBundle.message("rethrow.stored.pce.as.a.new.runtime.exception"),
         null
     ) {

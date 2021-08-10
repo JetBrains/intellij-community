@@ -9,6 +9,7 @@ import com.intellij.openapi.editor.markup.TextAttributes
 import com.intellij.openapi.roots.ui.util.CompositeAppearance
 import com.intellij.openapi.util.Comparing
 import com.intellij.openapi.util.Iconable
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.pom.Navigatable
 import com.intellij.psi.PsiElement
@@ -96,6 +97,7 @@ class KotlinCallHierarchyNodeDescriptor(
             )
         }
 
+        @NlsSafe
         val packageName = KtPsiUtil.getPackageName(targetElement as KtElement) ?: ""
 
         myHighlightedText.ending.addText("  ($packageName)", getPackageNameAttributes())
@@ -121,6 +123,7 @@ class KotlinCallHierarchyNodeDescriptor(
     }
 
     companion object {
+        @NlsSafe
         private fun renderElement(element: PsiElement?): String? {
             when (element) {
                 is KtFile -> {

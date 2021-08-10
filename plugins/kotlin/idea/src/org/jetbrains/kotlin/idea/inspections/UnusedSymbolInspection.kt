@@ -28,6 +28,7 @@ import com.intellij.psi.search.searches.MethodReferencesSearch
 import com.intellij.psi.search.searches.ReferencesSearch
 import com.intellij.refactoring.safeDelete.SafeDeleteHandler
 import com.intellij.util.Processor
+import org.jetbrains.annotations.Nls
 import org.jetbrains.kotlin.asJava.LightClassUtil
 import org.jetbrains.kotlin.asJava.classes.KtLightClass
 import org.jetbrains.kotlin.asJava.toLightClass
@@ -39,6 +40,7 @@ import org.jetbrains.kotlin.idea.caches.project.implementingDescriptors
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.caches.resolve.findModuleDescriptor
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToDescriptorIfAny
+import org.jetbrains.kotlin.idea.completion.KotlinIdeaCompletionBundle
 import org.jetbrains.kotlin.idea.core.isInheritable
 import org.jetbrains.kotlin.idea.core.script.configuration.DefaultScriptingSupport
 import org.jetbrains.kotlin.idea.core.toDescriptor
@@ -234,7 +236,7 @@ class UnusedSymbolInspection : AbstractKotlinInspection() {
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean, session: LocalInspectionToolSession): PsiElementVisitor {
         return namedDeclarationVisitor(fun(declaration) {
             ProgressManager.checkCanceled()
-            val message = declaration.describe()?.let { "$it is never used" } ?: return
+            val message = declaration.describe()?.let { KotlinIdeaCompletionBundle.message("inspection.message.never.used", it) } ?: return
 
             if (!ProjectRootsUtil.isInProjectSource(declaration)) return
 
@@ -601,6 +603,7 @@ class UnusedSymbolInspection : AbstractKotlinInspection() {
 }
 
 class SafeDeleteFix(declaration: KtDeclaration) : LocalQuickFix {
+    @Nls
     private val name: String =
         if (declaration is KtConstructor<*>) KotlinBundle.message("safe.delete.constructor")
         else QuickFixBundle.message("safe.delete.text", declaration.name)

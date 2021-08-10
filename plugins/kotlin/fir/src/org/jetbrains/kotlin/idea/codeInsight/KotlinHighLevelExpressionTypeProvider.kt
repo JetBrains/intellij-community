@@ -5,7 +5,9 @@
 
 package org.jetbrains.kotlin.idea.codeInsight
 
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.text.StringUtil
+import org.jetbrains.kotlin.idea.KotlinBundle
 import org.jetbrains.kotlin.idea.frontend.api.analyseInModalWindow
 import org.jetbrains.kotlin.psi.KtExpression
 
@@ -15,9 +17,10 @@ class KotlinHighLevelExpressionTypeProvider : KotlinExpressionTypeProvider() {
     }
 
     override fun getInformationHint(element: KtExpression): String = analyseInModalWindow(element, "Getting expression type") {
+        @NlsSafe
         val rendered = element.getKtType().render()
         StringUtil.escapeXmlEntities(rendered)
     }
 
-    override fun getErrorHint(): String = "No expression found"
+    override fun getErrorHint(): String = KotlinBundle.message("hint.text.no.expression.found")
 }

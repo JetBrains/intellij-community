@@ -41,7 +41,6 @@ import org.jetbrains.kotlin.tools.projectWizard.wizard.ui.asHtml
 import org.jetbrains.kotlin.tools.projectWizard.wizard.ui.firstStep.FirstWizardStepComponent
 import org.jetbrains.kotlin.tools.projectWizard.wizard.ui.runWithProgressBar
 import org.jetbrains.kotlin.tools.projectWizard.wizard.ui.secondStep.SecondStepWizardComponent
-import java.io.File
 import javax.swing.JButton
 import javax.swing.JComponent
 import com.intellij.openapi.module.Module as IdeaModule
@@ -194,7 +193,7 @@ abstract class WizardStep(protected val wizard: IdeWizard, private val phase: Ge
         }
 
     protected open fun handleErrors(error: ValidationResult.ValidationError) {
-        throw ConfigurationException(error.asHtml(), "Validation Error")
+        throw ConfigurationException(error.asHtml(), KotlinNewProjectWizardUIBundle.message("dialog.title.validation.error"))
     }
 
     companion object {
@@ -275,7 +274,7 @@ class ModuleNewWizardSecondStep(
     }
 
     override fun getPreferredFocusedComponent(): JComponent? {
-        wizardContext.getNextButton()?.text = "Finish"
+        wizardContext.getNextButton()?.text = KotlinNewProjectWizardUIBundle.message("finish.button.text")
         return super.getPreferredFocusedComponent()
     }
 

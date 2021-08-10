@@ -10,6 +10,7 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
+import org.jetbrains.annotations.Nls
 import org.jetbrains.kotlin.idea.frontend.api.KtAnalysisSession
 import org.jetbrains.kotlin.idea.frontend.api.analyzeWithReadAction
 import org.jetbrains.kotlin.idea.frontend.api.computation.ApplicableComputation
@@ -63,7 +64,7 @@ abstract class AbstractHighLevelApiBasedInspection<ELEMENT : KtElement, DATA : A
 
     abstract fun applyTo(element: ELEMENT, data: DATA, project: Project = element.project, editor: Editor? = null)
 
-    private inner class LocalFix(val text: String) : LocalQuickFix {
+    private inner class LocalFix(@Nls val text: String) : LocalQuickFix {
         override fun startInWriteAction() = false
 
         override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
