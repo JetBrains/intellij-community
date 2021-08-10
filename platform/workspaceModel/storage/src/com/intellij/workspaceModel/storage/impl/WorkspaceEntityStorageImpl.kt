@@ -263,7 +263,6 @@ internal class WorkspaceEntityStorageBuilderImpl(
     try {
       lockWrite()
       replaceWith as AbstractEntityStorage
-      applyDiffProtection(replaceWith, "replaceBySource")
       ReplaceBySourceAsGraph.replaceBySourceAsGraph(this, replaceWith, sourceFilter)
     }
     finally {
