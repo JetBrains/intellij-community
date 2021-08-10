@@ -27,7 +27,7 @@ import org.jetbrains.kotlin.psi.psiUtil.*
 import org.jetbrains.kotlin.psi.typeRefHelpers.setReceiverTypeReference
 import java.lang.Integer.min
 
-class KotlinReplaceHandler(private val project: Project) : StructuralReplaceHandler() {
+class KotlinStructuralReplaceHandler(private val project: Project) : StructuralReplaceHandler() {
     override fun replace(info: ReplacementInfo, options: ReplaceOptions) {
         val searchTemplate = StructuralSearchUtil.getPresentableElement(
             PatternCompiler.compilePattern(project, options.matchOptions, true, true).let { it.targetNode ?: it.nodes.current() }
