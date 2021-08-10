@@ -1103,8 +1103,8 @@ public abstract class ExtensionPointImpl<@NotNull T> implements ExtensionPoint<T
         checkCanceled.run();
       }
       catch (ProcessCanceledException e) {
-        if (!isInsideClassInitializer(
-          e.getStackTrace())) { // otherwise ExceptionInInitializerError happens and the class is screwed forever
+        // otherwise ExceptionInInitializerError happens and the class is screwed forever
+        if (!isInsideClassInitializer(e.getStackTrace())) {
           throw e;
         }
       }
