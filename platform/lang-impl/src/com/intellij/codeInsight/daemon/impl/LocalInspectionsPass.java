@@ -205,7 +205,7 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
     List<Divider.DividedElements> allDivided = new ArrayList<>();
     Divider.divideInsideAndOutsideAllRoots(myFile, myRestrictRange, myPriorityRange, SHOULD_INSPECT_FILTER, new CommonProcessors.CollectProcessor<>(allDivided));
     List<PsiElement> inside = ContainerUtil.concat((List<List<PsiElement>>)ContainerUtil.map(allDivided, d -> d.inside));
-    TextRange finalPriorityRange = allDivided.get(0).priorityRange; // might be different from myPriorityRange because DividedElements can cache not exact but containing ranges
+    TextRange finalPriorityRange = allDivided.isEmpty() ? myPriorityRange : allDivided.get(0).priorityRange; // might be different from myPriorityRange because DividedElements can cache not exact but containing ranges
     for (int i = 1; i < allDivided.size(); i++) {
       Divider.DividedElements dividedElements = allDivided.get(i);
       finalPriorityRange = finalPriorityRange.union(dividedElements.priorityRange);
