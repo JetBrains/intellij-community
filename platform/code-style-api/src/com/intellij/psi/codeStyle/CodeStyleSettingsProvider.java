@@ -3,8 +3,8 @@ package com.intellij.psi.codeStyle;
 
 import com.intellij.lang.IdeLanguageCustomization;
 import com.intellij.lang.Language;
-import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.util.NlsContexts;
 import org.jetbrains.annotations.Nls;

@@ -9,8 +9,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import static com.intellij.application.options.codeStyle.properties.CodeStylePropertiesUtil.*;
-
 public class VisualGuidesAccessor extends CodeStylePropertyAccessor<List<Integer>> implements CodeStyleValueList {
   private final CodeStyleSettings mySettings;
   @Nullable private final Language myLanguage;
