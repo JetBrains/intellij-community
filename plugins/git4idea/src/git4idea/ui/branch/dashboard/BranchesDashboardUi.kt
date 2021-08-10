@@ -63,6 +63,7 @@ import git4idea.ui.branch.dashboard.BranchesDashboardActions.ShowBranchDiffActio
 import git4idea.ui.branch.dashboard.BranchesDashboardActions.ShowMyBranchesAction
 import git4idea.ui.branch.dashboard.BranchesDashboardActions.ToggleFavoriteAction
 import git4idea.ui.branch.dashboard.BranchesDashboardActions.UpdateSelectedBranchAction
+import org.jetbrains.annotations.ApiStatus
 import java.awt.Component
 import java.awt.datatransfer.DataFlavor
 import java.awt.event.ActionEvent
@@ -354,17 +355,20 @@ internal class BranchesVcsLogUi(id: String, logData: VcsLogData, colorManager: V
   override fun getMainComponent() = branchesUi.getMainComponent()
 }
 
-internal val SHOW_GIT_BRANCHES_LOG_PROPERTY =
+@ApiStatus.Internal
+val SHOW_GIT_BRANCHES_LOG_PROPERTY =
   object : VcsLogProjectTabsProperties.CustomBooleanTabProperty("Show.Git.Branches") {
     override fun defaultValue(logId: String) = logId == MAIN_LOG_ID
   }
 
-internal val CHANGE_LOG_FILTER_ON_BRANCH_SELECTION_PROPERTY =
+@ApiStatus.Internal
+val CHANGE_LOG_FILTER_ON_BRANCH_SELECTION_PROPERTY =
   object : VcsLogApplicationSettings.CustomBooleanProperty("Change.Log.Filter.on.Branch.Selection") {
     override fun defaultValue() = false
   }
 
-internal val NAVIGATE_LOG_TO_BRANCH_ON_BRANCH_SELECTION_PROPERTY =
+@ApiStatus.Internal
+val NAVIGATE_LOG_TO_BRANCH_ON_BRANCH_SELECTION_PROPERTY =
   object : VcsLogApplicationSettings.CustomBooleanProperty("Navigate.Log.To.Branch.on.Branch.Selection") {
     override fun defaultValue() = false
   }
