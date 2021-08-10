@@ -1310,22 +1310,7 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
       return;
     }
     if (url.startsWith("open")) {
-      PsiFile containingFile = psiElement.getContainingFile();
-      OrderEntry libraryEntry = null;
-      if (containingFile != null) {
-        VirtualFile virtualFile = containingFile.getVirtualFile();
-        libraryEntry = LibraryUtil.findLibraryEntry(virtualFile, myProject);
-      }
-      else if (psiElement instanceof PsiDirectoryContainer) {
-        PsiDirectory[] directories = ((PsiDirectoryContainer)psiElement).getDirectories();
-        for (PsiDirectory directory : directories) {
-          VirtualFile virtualFile = directory.getVirtualFile();
-          libraryEntry = LibraryUtil.findLibraryEntry(virtualFile, myProject);
-          if (libraryEntry != null) {
-            break;
-          }
-        }
-      }
+      OrderEntry libraryEntry = libraryEntry(myProject, psiElement);
       if (libraryEntry != null) {
         ProjectSettingsService.getInstance(myProject).openLibraryOrSdkSettings(libraryEntry);
       }
@@ -1386,6 +1371,32 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
     }
 
     component.setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
+  }
+
+  @Internal
+  public static @Nullable OrderEntry libraryEntry(@NotNull Project project, @NotNull PsiElement psiElement) {
+    PsiFile containingFile = psiElement.getContainingFile();
+    if (containingFile != null) {
+      return libraryEntry(project, containingFile);
+    }
+    else if (psiElement instanceof PsiDirectoryContainer) {
+      PsiDirectory[] directories = ((PsiDirectoryContainer)psiElement).getDirectories();
+      for (PsiDirectory directory : directories) {
+        OrderEntry libraryEntry = libraryEntry(project, directory);
+        if (libraryEntry != null) {
+          return libraryEntry;
+        }
+      }
+      return null;
+    }
+    else {
+      return null;
+    }
+  }
+
+  private static @Nullable OrderEntry libraryEntry(@NotNull Project project, @NotNull PsiFileSystemItem directory) {
+    VirtualFile virtualFile = directory.getVirtualFile();
+    return LibraryUtil.findLibraryEntry(virtualFile, project);
   }
 
   protected ActionCallback cancelAndFetchDocInfoByLink(@NotNull DocumentationComponent component, @NotNull DocumentationCollector provider) {
