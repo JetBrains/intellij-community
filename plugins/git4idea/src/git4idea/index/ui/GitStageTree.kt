@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.index.ui
 
 import com.intellij.ide.dnd.DnDActionInfo
@@ -37,7 +37,6 @@ import git4idea.status.GitStagingAreaHolder
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.annotations.PropertyKey
-import java.awt.Color
 import javax.swing.JComponent
 import javax.swing.tree.DefaultTreeModel
 
@@ -268,10 +267,6 @@ abstract class GitStageTree(project: Project,
       if (conflict == null) {
         super.appendParentPath(renderer, parentPath)
       }
-    }
-
-    override fun getBackgroundColor(project: Project): Color? {
-      return getBackgroundColorFor(project, getUserObject().filePath)
     }
   }
 
