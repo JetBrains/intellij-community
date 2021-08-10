@@ -11,8 +11,7 @@ import com.intellij.codeInspection.deadCode.UnusedDeclarationInspection
 import com.intellij.codeInspection.ex.EntryPointsManager
 import com.intellij.codeInspection.ex.EntryPointsManagerBase
 import com.intellij.codeInspection.ex.EntryPointsManagerImpl
-import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiClass
@@ -45,8 +44,8 @@ import org.jetbrains.kotlin.idea.core.script.configuration.DefaultScriptingSuppo
 import org.jetbrains.kotlin.idea.core.toDescriptor
 import org.jetbrains.kotlin.idea.findUsages.KotlinFindUsagesHandlerFactory
 import org.jetbrains.kotlin.idea.findUsages.handlers.KotlinFindClassUsagesHandler
-import org.jetbrains.kotlin.idea.intentions.isReferenceToBuiltInEnumFunction
 import org.jetbrains.kotlin.idea.intentions.isFinalizeMethod
+import org.jetbrains.kotlin.idea.intentions.isReferenceToBuiltInEnumFunction
 import org.jetbrains.kotlin.idea.isMainFunction
 import org.jetbrains.kotlin.idea.project.languageVersionSettings
 import org.jetbrains.kotlin.idea.quickfix.RemoveUnusedFunctionParameterFix
@@ -566,13 +565,11 @@ class UnusedSymbolInspection : AbstractKotlinInspection() {
                 commonModuleDescriptor.hasActualsFor(descriptor)
     }
 
-    override fun createOptionsPanel(): JComponent? {
-        val panel = JPanel(GridBagLayout())
-        panel.add(
+    override fun createOptionsPanel(): JComponent = JPanel(GridBagLayout()).apply {
+        add(
             EntryPointsManagerImpl.createConfigureAnnotationsButton(),
             GridBagConstraints(0, 0, 1, 1, 1.0, 1.0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE, Insets(0, 0, 0, 0), 0, 0)
         )
-        return panel
     }
 
     private fun createQuickFixes(declaration: KtNamedDeclaration): List<LocalQuickFix> {
@@ -594,7 +591,7 @@ class UnusedSymbolInspection : AbstractKotlinInspection() {
 
             val intentionAction = createAddToDependencyInjectionAnnotationsFix(declaration.project, fqName)
 
-            list.add(IntentionWrapper(intentionAction, declaration.containingFile))
+            list.add(IntentionWrapper(intentionAction))
         }
 
         return list
@@ -620,10 +617,10 @@ class SafeDeleteFix(declaration: KtDeclaration) : LocalQuickFix {
         if (declaration is KtParameter && declaration.parent is KtParameterList && declaration.parent?.parent is KtFunction) {
             RemoveUnusedFunctionParameterFix(declaration).invoke(project, declaration.findExistingEditor(), declaration.containingKtFile)
         } else {
-            ApplicationManager.getApplication().invokeLater(
-                { safeDelete(project, declaration) },
-                ModalityState.NON_MODAL
-            )
+            val declarationPointer = declaration.createSmartPointer()
+            invokeLater {
+                declarationPointer.element?.let { safeDelete(project, it) }
+            }
         }
     }
 }
