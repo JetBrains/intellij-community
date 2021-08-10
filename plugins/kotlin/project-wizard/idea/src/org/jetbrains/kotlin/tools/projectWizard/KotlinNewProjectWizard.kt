@@ -24,15 +24,16 @@ class KotlinNewProjectWizard : NewProjectWizard<KotlinSettings> {
   override var settingsFactory = { KotlinSettings() }
 
   override fun settingsList(settings: KotlinSettings): List<LabelAndComponent> {
+      val buildSystems = settings.buildSystems.value
       var component: JComponent = JBLabel()
       panel {
           row {
-              component = buttonSelector(settings.buildSystems.value, settings.buildSystemProperty) { it.name }.component
+              component = buttonSelector(buildSystems, settings.buildSystemProperty) { it.name }.component
           }
       }
 
       settings.propertyGraph.afterPropagation {
-          settings.buildSystems.value.forEach { it.advancedSettings().apply { isVisible = false } }
+          buildSystems.forEach { it.advancedSettings().apply { isVisible = false } }
           settings.buildSystemProperty.get().advancedSettings().apply { isVisible = true }
       }
 
@@ -40,12 +41,15 @@ class KotlinNewProjectWizard : NewProjectWizard<KotlinSettings> {
           .apply { minimumSize = Dimension(0, 0) }
           .also { combo -> combo.addItemListener(ItemListener { settings.sdk = combo.selectedJdk }) }
 
-      settings.buildSystemProperty.set(settings.buildSystems.value.first())
+      // These are IDE-plugin based build-systems, i.e. Gradle and Maven
+      if (buildSystems.isNotEmpty()) {
+          settings.buildSystemProperty.set(buildSystems.first())
+      }
 
       return listOf(
           LabelAndComponent(JBLabel(JavaUiBundle.message("label.project.wizard.new.project.build.system")), component),
           LabelAndComponent(JBLabel(JavaUiBundle.message("label.project.wizard.new.project.jdk")), sdkCombo)
-      ).plus(settings.buildSystems.value.map { LabelAndComponent(component = it.advancedSettings()) })
+      ).plus(buildSystems.map { LabelAndComponent(component = it.advancedSettings()) })
   }
 
   override fun setupProject(project: Project, settings: KotlinSettings, context: WizardContext) {
