@@ -6,18 +6,22 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.observable.operations.ParallelOperationTrace.Listener
 
 
-private fun ParallelOperationTrace.subscribe(ttl: Int, listener: () -> Unit, wrap: (() -> Unit) -> Listener) =
-  subscribe(ttl, listener, wrap, this::subscribe)
+private fun ParallelOperationTrace.subscribe(
+  ttl: Int,
+  listener: () -> Unit,
+  wrap: (() -> Unit) -> Listener,
+  parentDisposable: Disposable
+) = subscribe(ttl, listener, wrap, this::subscribe, parentDisposable)
 
-fun ParallelOperationTrace.onceBeforeOperation(listener: () -> Unit) =
-  beforeOperation(ttl = 1, listener)
+fun ParallelOperationTrace.onceBeforeOperation(listener: () -> Unit, parentDisposable: Disposable) =
+  beforeOperation(ttl = 1, listener, parentDisposable)
 
-fun ParallelOperationTrace.beforeOperation(ttl: Int, listener: () -> Unit) =
-  subscribe(ttl, listener) {
+fun ParallelOperationTrace.beforeOperation(ttl: Int, listener: () -> Unit, parentDisposable: Disposable) =
+  subscribe(ttl, listener, {
     object : Listener {
       override fun onOperationStart() = it()
     }
-  }
+  }, parentDisposable)
 
 fun ParallelOperationTrace.beforeOperation(listener: () -> Unit) =
   subscribe(object : Listener {
@@ -29,15 +33,15 @@ fun ParallelOperationTrace.beforeOperation(listener: () -> Unit, parentDisposabl
     override fun onOperationStart() = listener()
   }, parentDisposable)
 
-fun ParallelOperationTrace.onceAfterOperation(listener: () -> Unit) =
-  afterOperation(ttl = 1, listener)
+fun ParallelOperationTrace.onceAfterOperation(listener: () -> Unit, parentDisposable: Disposable) =
+  afterOperation(ttl = 1, listener, parentDisposable)
 
-fun ParallelOperationTrace.afterOperation(ttl: Int, listener: () -> Unit) =
-  subscribe(ttl, listener) {
+fun ParallelOperationTrace.afterOperation(ttl: Int, listener: () -> Unit, parentDisposable: Disposable) =
+  subscribe(ttl, listener, {
     object : Listener {
       override fun onOperationFinish() = it()
     }
-  }
+  }, parentDisposable)
 
 fun ParallelOperationTrace.afterOperation(listener: () -> Unit) =
   subscribe(object : Listener {

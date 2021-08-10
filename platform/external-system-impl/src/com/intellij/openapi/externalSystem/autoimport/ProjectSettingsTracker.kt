@@ -200,9 +200,10 @@ class ProjectSettingsTracker(
   private inner class ProjectSettingsListener : FilesChangesListener {
     override fun onFileChange(path: String, modificationStamp: Long, modificationType: ModificationType) {
       logModificationAsDebug(path, modificationStamp, modificationType)
-      val disposable = applyChangesOperation.onceAfterOperation {
+      val disposable = Disposer.newDisposable(parentDisposable, "Postponed mark dirty subscription")
+      applyChangesOperation.onceAfterOperation({
         status.markDirty(currentTime(), modificationType)
-      }
+      }, disposable)
       if (applyChangesOperation.isOperationCompleted()) {
         Disposer.dispose(disposable)
         status.markModified(currentTime(), modificationType)

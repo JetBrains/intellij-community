@@ -512,7 +512,7 @@ abstract class AutoImportTestCase : ExternalSystemTestCase() {
     }
   }
 
-  fun mockProjectAware(projectId: ExternalSystemProjectId) = MockProjectAware(projectId, myProject)
+  fun mockProjectAware(projectId: ExternalSystemProjectId) = MockProjectAware(projectId, myProject, testDisposable)
 
   protected inner class SimpleModificationTestBench(
     projectAware: MockProjectAware,

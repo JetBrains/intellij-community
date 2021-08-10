@@ -19,7 +19,8 @@ import kotlin.concurrent.thread
 
 class MockProjectAware(
   override val projectId: ExternalSystemProjectId,
-  private val project: Project
+  private val project: Project,
+  private val parentDisposable: Disposable
 ) : ExternalSystemProjectAware {
 
   val subscribeCounter = AtomicInteger(0)
@@ -63,7 +64,7 @@ class MockProjectAware(
       }
       CANCEL -> {
         val task = once { doRefreshProject(context) }
-        refresh.onceAfterOperation { task.run() }
+        refresh.onceAfterOperation({ task.run() }, parentDisposable)
         if (refresh.isOperationCompleted()) task.run()
       }
       IGNORE -> {
@@ -105,7 +106,7 @@ class MockProjectAware(
       object : Listener {
         override fun beforeProjectRefresh() = it()
       }
-    }, eventDispatcher::addListener)
+    }, eventDispatcher::addListener, parentDisposable)
   }
 
   fun onceDuringRefresh(action: (ExternalSystemProjectReloadContext) -> Unit) {
@@ -117,7 +118,7 @@ class MockProjectAware(
       object : Listener {
         override fun insideProjectRefresh(context: ExternalSystemProjectReloadContext) = it(context)
       }
-    }, eventDispatcher::addListener)
+    }, eventDispatcher::addListener, parentDisposable)
   }
 
   fun onceAfterRefresh(action: (ExternalSystemRefreshStatus) -> Unit) {
@@ -129,7 +130,7 @@ class MockProjectAware(
       object : Listener {
         override fun afterProjectRefresh(status: ExternalSystemRefreshStatus) = it(status)
       }
-    }, eventDispatcher::addListener)
+    }, eventDispatcher::addListener, parentDisposable)
   }
 
   interface Listener : ExternalSystemProjectRefreshListener, EventListener {

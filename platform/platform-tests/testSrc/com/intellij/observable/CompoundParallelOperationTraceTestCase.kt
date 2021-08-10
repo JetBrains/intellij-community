@@ -1,11 +1,25 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.observable
 
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.observable.operations.CompoundParallelOperationTrace
 import com.intellij.openapi.observable.operations.ParallelOperationTrace
+import com.intellij.openapi.util.Disposer
 import junit.framework.TestCase
 
 abstract class CompoundParallelOperationTraceTestCase : TestCase() {
+
+  protected lateinit var testDisposable: Disposable
+
+  override fun setUp() {
+    super.setUp()
+    testDisposable = Disposer.newDisposable()
+  }
+
+  override fun tearDown() {
+    Disposer.dispose(testDisposable)
+    super.tearDown()
+  }
 
   protected fun <R> generate(times: Int, action: (Int) -> R): Iterable<R> {
     return (0 until times).map(action)
