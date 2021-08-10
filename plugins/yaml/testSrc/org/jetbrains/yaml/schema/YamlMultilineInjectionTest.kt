@@ -228,6 +228,41 @@ class YamlMultilineInjectionTest : BasePlatformTestCase() {
                 
     """.trimIndent())
   }
+  
+  
+  fun testNewLineInPlainTextInjectedXMLinNested() {
+    myFixture.configureByText("test.yaml", """
+      long:
+        long:
+          nest:
+            #language=XML
+            abc:
+              <xml1>
+                  <xml2>
+                      <xml3><caret></xml3>
+                  </xml2>
+              </xml1>
+        
+    """.trimIndent())
+
+    myInjectionFixture.assertInjectedLangAtCaret("XML")
+    myFixture.performEditorAction(IdeActions.ACTION_EDITOR_ENTER)
+    myFixture.checkResult("""
+      long:
+        long:
+          nest:
+            #language=XML
+            abc:
+              <xml1>
+                  <xml2>
+                      <xml3>
+                          
+                      </xml3>
+                  </xml2>
+              </xml1>
+        
+    """.trimIndent())
+  }
 
   fun testNewLineInInjectedXMLinNestedAndUndoInMultithreading() {
     // reuse testNewLineInInjectedXMLinNested fixture
