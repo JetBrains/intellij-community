@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package training.ui.views
 
+import com.intellij.ide.plugins.newui.VerticalLayout
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.ui.JBColor
@@ -31,7 +32,7 @@ class LearningItems(private val project: Project) : JPanel() {
 
   init {
     name = "learningItems"
-    layout = BoxLayout(this, BoxLayout.Y_AXIS)
+    layout = VerticalLayout(0, UISettings.instance.let { it.panelWidth - (it.westInset + it.eastInset) })
     isOpaque = false
     isFocusable = false
   }
@@ -42,10 +43,10 @@ class LearningItems(private val project: Project) : JPanel() {
     removeAll()
     for (module in modules) {
       if (module.lessons.isEmpty()) continue
-      add(createModuleItem(module))
+      add(createModuleItem(module), VerticalLayout.FILL_HORIZONTAL)
       if (expanded.contains(module)) {
         for (lesson in module.lessons) {
-          add(createLessonItem(lesson))
+          add(createLessonItem(lesson), VerticalLayout.FILL_HORIZONTAL)
         }
       }
     }
