@@ -180,7 +180,11 @@ open class StartupManagerImpl(private val project: Project) : StartupManagerEx()
     else {
       ForkJoinPool.commonPool().execute {
         if (!project.isDisposed) {
-          BackgroundTaskUtil.runUnderDisposeAwareIndicator(project) { runPostStartupActivities() }
+          try {
+            BackgroundTaskUtil.runUnderDisposeAwareIndicator(project) { runPostStartupActivities() }
+          }
+          catch (ignore: ProcessCanceledException) {
+          }
         }
       }
       if (app.isUnitTestMode) {
