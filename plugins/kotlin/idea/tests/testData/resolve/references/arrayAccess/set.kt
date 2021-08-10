@@ -3,5 +3,5 @@ fun a () {
     list<caret>[0] = 1
 }
 
-// REF: (in kotlin.collections.MutableList).set(Int, E)
+// REF: (in kotlin.collections.MutableList).set(kotlin.Int, E)
 
