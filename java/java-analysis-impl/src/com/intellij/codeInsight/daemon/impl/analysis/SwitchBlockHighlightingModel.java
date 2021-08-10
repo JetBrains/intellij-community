@@ -648,7 +648,7 @@ public class SwitchBlockHighlightingModel {
                                    boolean inclusiveTotalAndDefault) {
       if (inclusiveTotalAndDefault) {
         PsiElement elementCoversType = findTotalPatternForType(elements, mySelectorType);
-        PsiElement defaultElement = findDefaultElement();
+        PsiElement defaultElement = SwitchUtils.findDefaultElement(myBlock);
         if (defaultElement != null && elementCoversType != null) {
           results.add(createError(defaultElement, JavaErrorBundle.message("switch.total.pattern.and.default.exist")));
           results.add(createError(elementCoversType, JavaErrorBundle.message("switch.total.pattern.and.default.exist")));
@@ -732,27 +732,6 @@ public class SwitchBlockHighlightingModel {
     }
 
     @Nullable
-    private PsiElement findDefaultElement() {
-      PsiCodeBlock body = myBlock.getBody();
-      if (body == null) return null;
-      for (PsiStatement statement : body.getStatements()) {
-        if (!(statement instanceof PsiSwitchLabelStatementBase)) continue;
-        PsiSwitchLabelStatementBase switchLabel = (PsiSwitchLabelStatementBase)statement;
-        if (switchLabel.isDefaultCase()) {
-          return switchLabel;
-        }
-        PsiCaseLabelElementList labelElementList = switchLabel.getCaseLabelElementList();
-        if (labelElementList == null) continue;
-        for (PsiCaseLabelElement element : labelElementList.getElements()) {
-          if (element instanceof PsiDefaultCaseLabelElement) {
-            return element;
-          }
-        }
-      }
-      return null;
-    }
-
-    @Nullable
     private static PsiElement findTotalPatternForType(@NotNull List<PsiCaseLabelElement> labelElements, @NotNull PsiType type) {
       return ContainerUtil.find(labelElements, element ->
         element instanceof PsiPattern && JavaPsiPatternUtil.isTotalForType(((PsiPattern)element), type));
@@ -831,7 +810,6 @@ public class SwitchBlockHighlightingModel {
       COMPLETE_WITH_TOTAL,
       COMPLETE_WITHOUT_TOTAL
     }
-
   }
 }
 
