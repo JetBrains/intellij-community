@@ -9,6 +9,7 @@ import com.intellij.javaee.UriUtil;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.Language;
 import com.intellij.lang.html.HTMLLanguage;
+import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.lang.xhtml.XHTMLLanguage;
 import com.intellij.lang.xml.XMLLanguage;
 import com.intellij.openapi.application.ApplicationManager;
@@ -17,6 +18,8 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.StandardFileSystems;
@@ -1247,6 +1250,23 @@ public final class XmlUtil {
       }
     }
     return (XmlComment)curElement;
+  }
+
+  public static boolean hasInjectionShredBoundaryAt(XmlAttribute attribute, int offset) {
+    InjectedLanguageManager manager = InjectedLanguageManager.getInstance(attribute.getProject());
+    PsiElement host = manager.getInjectionHost(attribute);
+    if (host == null) return false;
+    Ref<Boolean> result = new Ref<>(false);
+    manager.enumerate(host, (injectedPsi, places) -> {
+      if (ContainerUtil.find(places, place -> {
+        TextRange range = place.getRange();
+        return (range.getStartOffset() <= offset && offset <= range.getStartOffset() + place.getPrefix().length())
+               || (range.getEndOffset() - place.getSuffix().length() <= offset && offset <= range.getEndOffset());
+      }) != null) {
+        result.set(true);
+      }
+    });
+    return result.get();
   }
 
   public interface DuplicationInfoProvider<T extends PsiElement> {
