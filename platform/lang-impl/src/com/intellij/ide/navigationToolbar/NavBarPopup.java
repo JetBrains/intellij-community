@@ -69,7 +69,7 @@ public class NavBarPopup extends LightweightHint implements Disposable{
         int idx = getList().locationToIndex(e.getPoint());
         if (idx != -1) {
           Object value = getList().getModel().getElementAt(idx);
-          myPanel.navigateInsideBar(sourceItemIndex, value, e.isControlDown());
+          myPanel.navigateInsideBar(sourceItemIndex, value, SystemInfo.isMac ? e.isMetaDown() : e.isControlDown());
         }
       }
     });
