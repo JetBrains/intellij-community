@@ -43,6 +43,9 @@ public final class FileNameCache {
       final int idx = name.indexOf('/', 2);
       start = idx == -1 ? 2 : idx + 1;
     }
+    else if (name.charAt(0) == '/') {
+      start = 1;
+    }
     if (name.endsWith(URLUtil.SCHEME_SEPARATOR)) {
       end -= URLUtil.SCHEME_SEPARATOR.length();
     }
