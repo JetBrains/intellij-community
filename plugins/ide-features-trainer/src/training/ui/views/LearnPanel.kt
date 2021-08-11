@@ -91,8 +91,8 @@ internal class LearnPanel(val learnToolWindow: LearnToolWindow) : JPanel() {
     lessonMessagePane.repaint()
     lessonMessagePane.preferredSize = Dimension(width, lessonMessagePane.preferredSize.height)
 
-    revalidate()
-    repaint()
+    lessonPanel.revalidate()
+    lessonPanel.repaint()
   }
 
   private fun initFooterPanel(lesson: Lesson) {
