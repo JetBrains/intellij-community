@@ -167,6 +167,13 @@ The Kotlin FIR plugin provides language support in IntelliJ IDEA and Android Stu
                     serviceInterface="org.jetbrains.kotlin.idea.api.ResolveAllowanceService"/>
     <codeInsight.implementMethod language="kotlin" implementationClass="org.jetbrains.kotlin.idea.core.overrideImplement.KtImplementMembersHandler"/>
     <codeInsight.overrideMethod language="kotlin" implementationClass="org.jetbrains.kotlin.idea.core.overrideImplement.KtOverrideMembersHandler"/>
+
+    <codeInsight.parameterInfo language="kotlin"
+                               implementationClass="org.jetbrains.kotlin.idea.parameterInfo.KotlinHighLevelFunctionParameterInfoHandler"/>
+    <codeInsight.parameterInfo language="kotlin"
+                               implementationClass="org.jetbrains.kotlin.idea.parameterInfo.KotlinHighLevelLambdaParameterInfoHandler"/>
+    <codeInsight.parameterInfo language="kotlin"
+                               implementationClass="org.jetbrains.kotlin.idea.parameterInfo.KotlinHighLevelArrayAccessParameterInfoHandler"/>
   </extensions>
 
   <!--  scripts  -->
