@@ -5,7 +5,6 @@ import com.intellij.execution.process.impl.ProcessListUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
-import com.pty4j.windows.WinPtyProcess;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -23,8 +22,8 @@ public final class OSProcessUtil {
   public static boolean killProcessTree(@NotNull Process process) {
     if (SystemInfo.isWindows) {
       try {
-        if (process instanceof WinPtyProcess) {
-          int pid = ((WinPtyProcess) process).getChildProcessId();
+        Integer pid = ProcessService.getInstance().winPtyChildProcessId(process);
+        if (pid != null) {
           if (pid == -1) return true;
           boolean res = WinProcessManager.kill(pid, true);
           process.destroy();
@@ -38,7 +37,7 @@ public final class OSProcessUtil {
             logSkippedActionWithTerminatedProcess(process, "killProcessTree", null);
             return true;
           }
-          createWinProcess(process).killRecursively();
+          ProcessService.getInstance().killWinProcessRecursively(process);
           return true;
         }
       }
@@ -133,15 +132,6 @@ public final class OSProcessUtil {
   @Deprecated
   public static int getProcessID(@NotNull Process process, Boolean disableWinp) {
     return (int)process.pid();
-  }
-
-  @SuppressWarnings("deprecation")
-  @NotNull
-  static WinProcess createWinProcess(@NotNull Process process) {
-    if (process instanceof WinPtyProcess) {
-      return new WinProcess(((WinPtyProcess)process).getPid());
-    }
-    return new WinProcess(process);
   }
 
   @NotNull

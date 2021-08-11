@@ -80,6 +80,7 @@ final class PlatformModules {
     "intellij.platform.lvcs.impl",
     "intellij.platform.vfs.impl",
     "intellij.platform.ide.impl",
+    "intellij.platform.ide.util.io.impl",
     "intellij.platform.projectModel.impl",
     "intellij.platform.macro",
     "intellij.platform.execution.impl",
