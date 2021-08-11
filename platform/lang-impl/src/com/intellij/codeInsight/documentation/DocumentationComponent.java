@@ -64,7 +64,6 @@ import javax.swing.plaf.TextUI;
 import javax.swing.text.View;
 import javax.swing.text.html.HTML;
 import java.awt.*;
-import java.awt.event.MouseEvent;
 import java.lang.ref.Reference;
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
@@ -215,28 +214,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
     toolbarActions.addAction(new MyShowSettingsAction()).setAsSecondary(true);
     toolbarActions.addAction(new ShowToolbarAction()).setAsSecondary(true);
     toolbarActions.addAction(new RestoreDefaultSizeAction()).setAsSecondary(true);
-    myToolBar = new ActionToolbarImpl(ActionPlaces.JAVADOC_TOOLBAR, toolbarActions, true) {
-      Point initialClick;
-
-      @Override
-      protected void processMouseEvent(MouseEvent e) {
-        if (e.getID() == MouseEvent.MOUSE_PRESSED && myHint != null) {
-          initialClick = e.getPoint();
-        }
-        super.processMouseEvent(e);
-      }
-
-      @Override
-      protected void processMouseMotionEvent(MouseEvent e) {
-        if (e.getID() == MouseEvent.MOUSE_DRAGGED && myHint != null && initialClick != null) {
-          Point location = myHint.getLocationOnScreen();
-          myHint.setLocation(new Point(location.x + e.getX() - initialClick.x, location.y + e.getY() - initialClick.y));
-          e.consume();
-          return;
-        }
-        super.processMouseMotionEvent(e);
-      }
-    };
+    myToolBar = new ActionToolbarImpl(ActionPlaces.JAVADOC_TOOLBAR, toolbarActions, true);
     myToolBar.setSecondaryActionsIcon(AllIcons.Actions.More, true);
     myToolBar.setTargetComponent(this);
 
@@ -439,6 +417,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
 
   public void setHint(JBPopup hint) {
     myHint = (AbstractPopup)hint;
+    PopupDragListener.dragPopupByComponent(hint, myControlPanel);
     myEditorPane.setHint(hint);
   }
 
