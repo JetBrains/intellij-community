@@ -93,7 +93,14 @@ class ProjectSettingsComponent(ideWizard: IdeWizard) : DynamicComponent(ideWizar
                 buildSystemAdditionalSettingsComponent.component(growX)
             }.largeGapAfter()
             row {
-                cell { comment(KotlinNewProjectWizardUIBundle.message("feedback.link.tooltip.text")).constraints(pushY) }
+                cell {
+                    comment(
+                        KotlinNewProjectWizardUIBundle.message(
+                            "feedback.link.tooltip.text",
+                            "https://youtrack.jetbrains.com/newIssue?project=KTIJ&Type=Feature&Subsystems=IDE.Wizards"
+                        )
+                    ).constraints(pushY)
+                }
             }
         }.addBorder(JBUI.Borders.emptyRight(UIConstants.PADDING))
     }
