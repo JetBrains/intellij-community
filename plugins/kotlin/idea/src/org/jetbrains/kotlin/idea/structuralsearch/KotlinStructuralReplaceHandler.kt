@@ -7,6 +7,7 @@ import com.intellij.psi.PsiComment
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiErrorElement
 import com.intellij.psi.PsiWhiteSpace
+import com.intellij.psi.impl.source.codeStyle.IndentHelper
 import com.intellij.psi.util.elementType
 import com.intellij.structuralsearch.StructuralReplaceHandler
 import com.intellij.structuralsearch.StructuralSearchUtil
@@ -26,13 +27,11 @@ import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.*
 import org.jetbrains.kotlin.psi.typeRefHelpers.setReceiverTypeReference
-import java.lang.Integer.min
 
 class KotlinStructuralReplaceHandler(private val project: Project) : StructuralReplaceHandler() {
     override fun replace(info: ReplacementInfo, options: ReplaceOptions) {
-        val searchTemplate =
-            StructuralSearchUtil.getPresentableElement(PatternCompiler.compilePattern(project, options.matchOptions, true, true)
-                                                           .let { it.targetNode ?: it.nodes.current() })
+        val searchTemplate = StructuralSearchUtil.getPresentableElement(
+            PatternCompiler.compilePattern(project, options.matchOptions, true, true).let { it.targetNode ?: it.nodes.current() })
         val fileType = options.matchOptions.fileType ?: return
         val replaceTemplates = MatcherImplUtil.createTreeFromText(
             info.replacement.fixPattern(), PatternTreeContext.Block, fileType, project
@@ -160,11 +159,7 @@ class KotlinStructuralReplaceHandler(private val project: Project) : StructuralR
     }
 
     private fun PsiElement.fixWhiteSpace(match: PsiElement) {
-        var indentationLength = Int.MAX_VALUE
-        match.collectDescendantsOfType<PsiWhiteSpace> { it.text.contains("\n") }.forEach {
-            indentationLength = min(indentationLength, it.text.length)
-        }
-        if (indentationLength > 1) indentationLength-- // exclude /n
+        val indentationLength = IndentHelper.getInstance().getIndent(match.containingFile, match.node, true)
         collectDescendantsOfType<PsiWhiteSpace> { it.text.contains("\n") }.forEach {
             it.replace(KtPsiFactory(this).createWhiteSpace("\n${" ".repeat(indentationLength + it.text.length - 1)}"))
         }
