@@ -1,7 +1,6 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.largeFilesEditor.editor;
 
-import com.intellij.codeHighlighting.BackgroundEditorHighlighter;
 import com.intellij.largeFilesEditor.PlatformActionsReplacer;
 import com.intellij.largeFilesEditor.encoding.LargeFileEditorAccess;
 import com.intellij.largeFilesEditor.file.LargeFileManager;
@@ -147,25 +146,11 @@ public class LargeFileEditorImpl extends UserDataHolderBase implements LargeFile
   }
 
   @Override
-  public void selectNotify() {
-  }
-
-  @Override
-  public void deselectNotify() {
-  }
-
-  @Override
   public void addPropertyChangeListener(@NotNull PropertyChangeListener listener) {
   }
 
   @Override
   public void removePropertyChangeListener(@NotNull PropertyChangeListener listener) {
-  }
-
-  @Nullable
-  @Override
-  public BackgroundEditorHighlighter getBackgroundHighlighter() {
-    return null;
   }
 
   @Nullable

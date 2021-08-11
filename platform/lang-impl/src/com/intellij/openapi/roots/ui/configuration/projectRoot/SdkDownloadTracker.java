@@ -11,7 +11,7 @@ import com.intellij.openapi.diagnostic.ControlFlowException;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.*;
 import com.intellij.openapi.progress.util.ProgressIndicatorBase;
-import com.intellij.openapi.progress.util.ProgressIndicatorListenerAdapter;
+import com.intellij.openapi.progress.util.ProgressIndicatorListener;
 import com.intellij.openapi.progress.util.RelayUiToDelegateIndicator;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.projectRoots.ProjectJdkTable;
@@ -340,7 +340,7 @@ public class SdkDownloadTracker {
         public void run(@NotNull ProgressIndicator indicator) {
           boolean failed = false;
           try {
-            new ProgressIndicatorListenerAdapter() {
+            new ProgressIndicatorListener() {
               @Override
               public void cancelled() {
                 myProgressIndicator.cancel();

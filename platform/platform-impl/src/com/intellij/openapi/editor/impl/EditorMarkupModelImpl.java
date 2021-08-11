@@ -1819,9 +1819,6 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
     public void paintBorder(Graphics g, JComponent component, int state) {}
 
     @Override
-    public void paintLookBorder(@NotNull Graphics g, @NotNull Rectangle rect, @NotNull Color color) {}
-
-    @Override
     public void paintBorder(Graphics g, JComponent component, Color color) {}
 
     @Override

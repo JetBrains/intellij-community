@@ -630,11 +630,6 @@ public abstract class TextFieldWithPopupHandlerUI extends BasicTextFieldUI imple
     }
 
     @Override
-    public Runnable getActionOnClick() {
-      return null;
-    }
-
-    @Override
     public String getTooltip() {
       String prefix = null;
       if (UIUtil.getClientProperty(getComponent(), INPLACE_HISTORY) != null) prefix = IdeBundle.message("tooltip.recent.search");

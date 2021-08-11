@@ -42,6 +42,7 @@ public abstract class BackgroundUpdaterTask extends BackgroundUpdaterTaskBase<Ps
     return super.updateComponent(element, comparator);
   }
 
+  @SuppressWarnings("RedundantMethodOverride")
   @Override
   public boolean updateComponent(@NotNull PsiElement element) {
     //Ensures that method with signature `updateComponent(PsiElement)` is present in bytecode,

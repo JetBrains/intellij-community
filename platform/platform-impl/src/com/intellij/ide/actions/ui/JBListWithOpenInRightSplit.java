@@ -131,11 +131,6 @@ public class JBListWithOpenInRightSplit<T> extends JBList<T> {
 
 
   @Override
-  public void repaint(long tm, int x, int y, int width, int height) {
-    super.repaint(tm, x, y, width, height);
-  }
-
-  @Override
   public void paint(Graphics g) {
     super.paint(g);
 

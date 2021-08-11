@@ -5,7 +5,6 @@ import com.intellij.ide.HelpTooltipManager;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.util.NlsContexts;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.StatusBarWidget;
@@ -15,8 +14,6 @@ import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.popup.AbstractPopup;
 import com.intellij.ui.popup.PopupState;
 import com.intellij.util.Consumer;
-import com.intellij.util.ui.JBFont;
-import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -83,11 +80,6 @@ public interface StatusBarWidgetWrapper {
           return popup.getContent().getPreferredSize();
         }
       }.installOn(this, true);
-    }
-
-    @Override
-    public Font getFont() {
-      return SystemInfo.isMac ? JBUI.Fonts.label(11) : JBFont.label();
     }
 
     @Override

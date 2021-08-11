@@ -111,11 +111,6 @@ public final class InternalDecoratorImpl extends InternalDecorator implements Qu
   }
 
   @Override
-  public void setBounds(int x, int y, int width, int height) {
-    super.setBounds(x, y, width, height);
-  }
-
-  @Override
   public String toString() {
     return toolWindow.getId();
   }

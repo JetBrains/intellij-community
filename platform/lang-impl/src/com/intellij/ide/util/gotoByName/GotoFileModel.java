@@ -147,11 +147,6 @@ public class GotoFileModel extends FilteringGotoByModel<FileTypeRef> implements 
   }
 
   @Override
-  public boolean sameNamesForProjectAndLibraries() {
-    return false;
-  }
-
-  @Override
   @Nullable
   public String getFullName(@NotNull final Object element) {
     return element instanceof PsiFileSystemItem ? getFullName(((PsiFileSystemItem)element).getVirtualFile()) : getElementName(element);

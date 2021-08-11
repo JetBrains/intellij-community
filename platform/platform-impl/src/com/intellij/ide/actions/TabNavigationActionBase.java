@@ -167,11 +167,6 @@ abstract class TabNavigationActionBase extends AnAction implements DumbAware {
         getTemplatePresentation().setDescription(ActionsBundle.messagePointer("action.GoToTab.description", navigationType.ordinal() + 1));
       }
     }
-
-    @Override
-    public void update(@NotNull AnActionEvent event) {
-      super.update(event);
-    }
   }
 
   public static final class GoToTab1Action extends GoToTabAction {

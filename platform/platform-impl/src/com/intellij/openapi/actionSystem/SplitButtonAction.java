@@ -42,9 +42,6 @@ public class SplitButtonAction extends ActionGroup implements CustomComponentAct
     setPopup(true);
   }
 
-  @Override
-  public void actionPerformed(@NotNull AnActionEvent e) {}
-
   public @NotNull ActionGroup getActionGroup() {
     return myActionGroup;
   }
