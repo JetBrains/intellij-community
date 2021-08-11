@@ -485,6 +485,27 @@ public class FileTypesTest extends HeavyPlatformTestCase {
     myFileTypeManager.getRemovedMappingTracker().clear();
   }
 
+  public void testAddHashBangToReassignedTypeMustSurviveRestart() throws IOException, JDOMException {
+    FileTypeManagerImpl.FileTypeWithDescriptor ftd = myFileTypeManager.getRegisteredFileTypeWithDescriptors().stream()
+      .filter(f -> !(f.fileType instanceof AbstractFileType))
+      .findFirst()
+      .get();
+
+    String hashBang = "xxx";
+    @Language("XML")
+    String xml = "<blahblah version='" + FileTypeManagerImpl.VERSION + "'>\n" +
+                 "   <extensionMap>\n" +
+                 "     <hashBang value=\"" + hashBang + "\" type=\"" + ftd.getName() + "\" />\n"+
+                 "   </extensionMap>\n" +
+                 "</blahblah>";
+    Element element = JDOMUtil.load(xml);
+
+    myFileTypeManager.getRegisteredFileTypes(); // instantiate pending file types
+    assertEmpty(reInitFileTypeManagerComponent(element));
+
+    assertEquals(ftd, myFileTypeManager.myPatternsTable.findAssociatedFileTypeByHashBang("#!" + hashBang+"\n"));
+  }
+
   public void testReassignedPredefinedFileType() {
     FileType perlType = myFileTypeManager.getFileTypeByFileName("foo.pl");
     assertEquals("Perl", perlType.getName());

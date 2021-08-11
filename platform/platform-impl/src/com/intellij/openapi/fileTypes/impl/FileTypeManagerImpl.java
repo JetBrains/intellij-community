@@ -73,6 +73,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
 
   private final FileTypeAssocTable<FileType> myInitialAssociations = new FileTypeAssocTable<>();
   private final Map<FileNameMatcher, String> myUnresolvedMappings = new HashMap<>();
+  private final Map<String, String> myUnresolvedHashBangs = new HashMap<>(); // hashbang string -> file type
   private final RemovedMappingTracker myRemovedMappingTracker = new RemovedMappingTracker();
   private final ConflictingFileTypeMappingTracker myConflictingMappingTracker = new ConflictingFileTypeMappingTracker(myRemovedMappingTracker);
   private final Map<String, FileTypeBean> myPendingFileTypes = new LinkedHashMap<>();
@@ -585,6 +586,11 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
         tryToResolveMapping(entry.getValue(), entry.getKey());
       }
     }
+    if (!myUnresolvedHashBangs.isEmpty()) {
+      Map<String, String> hashBangs = new HashMap<>(myUnresolvedHashBangs);
+      myUnresolvedHashBangs.clear();
+      registerHashBangs(hashBangs, false);
+    }
 
     boolean isAtLeastOneStandardFileTypeHasBeenRead = false;
     for (FileTypeWithDescriptor ftd : mySchemeManager.loadSchemes()) {
@@ -1080,14 +1086,8 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
       }
     }
 
-    for (Map.Entry<String, FileTypeWithDescriptor> entry : readHashBangs(e).entrySet()) {
-      String hashBang = entry.getKey();
-      FileTypeWithDescriptor ftd = entry.getValue();
-      myPatternsTable.addHashBangPattern(hashBang, ftd);
-      if (isAddToInit) {
-        myInitialAssociations.addHashBangPattern(hashBang, ftd.fileType);
-      }
-    }
+    Map<String, String> hashBangs = readHashBangs(e);
+    registerHashBangs(hashBangs, isAddToInit);
 
     for (RemovedMappingTracker.RemovedMapping mapping : myRemovedMappingTracker.getRemovedMappings()) {
       FileTypeWithDescriptor ftd = getFileTypeWithDescriptorByName(mapping.getFileTypeName());
@@ -1097,16 +1097,33 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
     }
   }
 
+  private void registerHashBangs(@NotNull Map<String, String> hashBangs, boolean isAddToInit) {
+    for (Map.Entry<String, String> entry : hashBangs.entrySet()) {
+      String hashBang = entry.getKey();
+      String typeName = entry.getValue();
+      FileTypeWithDescriptor ftd = getFileTypeWithDescriptorByName(typeName);
+      if (ftd == null) {
+        myUnresolvedHashBangs.put(hashBang, typeName);
+      }
+      else {
+        myPatternsTable.addHashBangPattern(hashBang, ftd);
+        if (isAddToInit) {
+          myInitialAssociations.addHashBangPattern(hashBang, ftd.fileType);
+        }
+      }
+    }
+  }
+
   @NotNull
-  private Map<String, FileTypeWithDescriptor> readHashBangs(@NotNull Element e) {
+  private static Map<String, String> readHashBangs(@NotNull Element e) {
     List<Element> children = e.getChildren("hashBang");
-    Map<String, FileTypeWithDescriptor> result = CollectionFactory.createSmallMemoryFootprintMap(children.size());
+    Map<String, String> result = new HashMap<>();
     for (Element hashBangTag : children) {
       String typeName = hashBangTag.getAttributeValue("type");
+      if (typeName == null) continue;
       String hashBangPattern = hashBangTag.getAttributeValue("value");
-      FileTypeWithDescriptor ftd = typeName == null ? null : getFileTypeWithDescriptorByName(typeName);
-      if (hashBangPattern == null || ftd == null) continue;
-      result.put(hashBangPattern, ftd);
+      if (hashBangPattern == null) continue;
+      result.put(hashBangPattern, typeName);
     }
     return result;
   }
@@ -1181,6 +1198,16 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
         }
       }
     }
+    if (!myUnresolvedHashBangs.isEmpty()) {
+      List<Map.Entry<String, String>> entries = new ArrayList<>(myUnresolvedHashBangs.entrySet());
+      entries.sort(Map.Entry.comparingByKey());
+
+      for (Map.Entry<String, String> entry : entries) {
+        String pattern = entry.getKey();
+        String typeName = entry.getValue();
+        writeHashBang(extensionMap, pattern, typeName);
+      }
+    }
 
     if (!extensionMap.getChildren().isEmpty()) {
       state.addContent(extensionMap);
@@ -1211,16 +1238,22 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
     hashBangPatterns.sort(Comparator.naturalOrder());
     for (String hashBangPattern : hashBangPatterns) {
       if (!readOnlyHashBangs.contains(hashBangPattern)) {
-        Element hashBangTag = new Element("hashBang");
-        hashBangTag.setAttribute("value", hashBangPattern);
-        hashBangTag.setAttribute("type", type.getName());
-        extensionMap.addContent(hashBangTag);
+        writeHashBang(extensionMap, hashBangPattern, type.getName());
       }
     }
     List<FileNameMatcher> removedMappings = myRemovedMappingTracker.getMappingsForFileType(type.getName());
     // do not store removed mappings which are going to be stored anyway via RemovedMappingTracker.save()
     defaultAssociations.removeIf(matcher -> removedMappings.contains(matcher));
     myRemovedMappingTracker.saveRemovedMappingsForFileType(extensionMap, type.getName(), defaultAssociations, specifyTypeName);
+  }
+
+  private static void writeHashBang(@NotNull Element extensionMap,
+                                    @NotNull String hashBangPattern,
+                                    @NonNls @NotNull String typeName) {
+    Element hashBangTag = new Element("hashBang");
+    hashBangTag.setAttribute("value", hashBangPattern);
+    hashBangTag.setAttribute("type", typeName);
+    extensionMap.addContent(hashBangTag);
   }
 
   private FileTypeWithDescriptor getFileTypeWithDescriptorByName(@NotNull String name) {
