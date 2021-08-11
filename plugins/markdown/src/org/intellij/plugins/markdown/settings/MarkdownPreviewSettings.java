@@ -43,6 +43,10 @@ public final class MarkdownPreviewSettings {
 
   @NotNull
   public TextEditorWithPreview.Layout getSplitEditorLayout() {
+    //noinspection ConstantConditions
+    if (mySplitEditorLayout == null) {
+      mySplitEditorLayout = TextEditorWithPreview.Layout.SHOW_EDITOR_AND_PREVIEW;
+    }
     return mySplitEditorLayout;
   }
 
