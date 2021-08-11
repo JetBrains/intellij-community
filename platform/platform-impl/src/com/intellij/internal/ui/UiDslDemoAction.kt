@@ -3,9 +3,12 @@ package com.intellij.internal.ui
 
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.project.DumbAwareAction
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
+import com.intellij.openapi.util.Disposer
 import com.intellij.ui.components.JBTabbedPane
 import com.intellij.ui.dsl.RowLayout
+import com.intellij.ui.dsl.gridLayout.HorizontalAlign
 import com.intellij.ui.dsl.panel
 import java.awt.Dimension
 import javax.swing.JComponent
@@ -17,25 +20,61 @@ import javax.swing.border.Border
 class UiDslDemoAction : DumbAwareAction("Show UI DSL Demo") {
 
   override fun actionPerformed(e: AnActionEvent) {
-    object : DialogWrapper(e.project, null, true, IdeModalityType.IDE, false) {
-      init {
-        title = "UI DSL Demo"
-        init()
-      }
+    UiDslDemoDialog(e.project).show()
+  }
+}
 
-      override fun createContentPaneBorder(): Border? {
-        return null
-      }
+private class UiDslDemoDialog(project: Project?) : DialogWrapper(project, null, true, IdeModalityType.IDE, false) {
 
-      override fun createCenterPanel(): JComponent {
-        val result = JBTabbedPane()
-        result.minimumSize = Dimension(300, 200)
-        result.preferredSize = Dimension(800, 600)
-        result.addTab("Comments", JScrollPane(createCommentsPanel()))
+  init {
+    title = "UI DSL Demo"
+    init()
+  }
 
-        return result
+  override fun createContentPaneBorder(): Border? {
+    return null
+  }
+
+  override fun createCenterPanel(): JComponent {
+    val result = JBTabbedPane()
+    result.minimumSize = Dimension(300, 200)
+    result.preferredSize = Dimension(800, 600)
+    result.addTab("Text Fields", createTextFields())
+    result.addTab("Comments", JScrollPane(createCommentsPanel()))
+
+    return result
+  }
+
+  fun createTextFields(): JPanel {
+    val result = panel {
+      row("Text field 1:") {
+        textField(columns = 10)
+          .comment("columns = 10")
       }
-    }.show()
+      row("Text field 2:") {
+        textField()
+          .horizontalAlign(HorizontalAlign.FILL)
+          .comment("horizontalAlign(HorizontalAlign.FILL)")
+      }
+      row("Int text field 1:") {
+        intTextField(columns = 10)
+          .comment("columns = 10")
+      }
+      row("Int text field 2:") {
+        intTextField(range = 0..1000)
+          .comment("range = 0..1000")
+      }
+      row("Int text field 2:") {
+        intTextField(range = 0..1000, keyboardStep = 100)
+          .comment("range = 0..1000, keyboardStep = 100")
+      }
+    }
+
+    val disposable = Disposer.newDisposable()
+    result.registerValidators(disposable)
+    Disposer.register(myDisposable, disposable)
+
+    return result
   }
 
   fun createCommentsPanel(): JPanel {

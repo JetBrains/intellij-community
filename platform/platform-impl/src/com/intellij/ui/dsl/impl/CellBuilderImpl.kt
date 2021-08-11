@@ -1,6 +1,9 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.dsl.impl
 
+import com.intellij.openapi.observable.properties.GraphProperty
+import com.intellij.openapi.ui.TextFieldWithBrowseButton
+import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.ui.dsl.CellBuilder
 import com.intellij.ui.dsl.gridLayout.HorizontalAlign
@@ -13,9 +16,13 @@ import javax.swing.JComponent
 @ApiStatus.Experimental
 internal class CellBuilderImpl<T : JComponent>(
   private val dialogPanelConfig: DialogPanelConfig,
-  val component: T,
+  component: T,
   val viewComponent: JComponent = component) : CellBuilderBaseImpl<CellBuilder<T>>(dialogPanelConfig), CellBuilder<T> {
 
+  override var component: T = component
+    private set
+
+  private var property: GraphProperty<*>? = null
   private var applyIfEnabled = false
 
   override fun horizontalAlign(horizontalAlign: HorizontalAlign): CellBuilder<T> {
@@ -53,15 +60,21 @@ internal class CellBuilderImpl<T : JComponent>(
     return this
   }
 
+  override fun visibleIf(predicate: ComponentPredicate): CellBuilder<T> {
+    viewComponent.isVisible = predicate()
+    predicate.addListener { viewComponent.isVisible = it }
+    return this
+  }
+
   override fun applyIfEnabled(): CellBuilder<T> {
     applyIfEnabled = true
     return this
   }
 
-  override fun <V> bind(componentGet: (T) -> V, componentSet: (T, V) -> Unit, modelBinding: PropertyBinding<V>): CellBuilder<T> {
-    onApply { if (shouldSaveOnApply()) modelBinding.set(componentGet(component)) }
-    onReset { componentSet(component, modelBinding.get()) }
-    onIsModified { shouldSaveOnApply() && componentGet(component) != modelBinding.get() }
+  override fun <V> bind(componentGet: (T) -> V, componentSet: (T, V) -> Unit, binding: PropertyBinding<V>): CellBuilder<T> {
+    onApply { if (shouldSaveOnApply()) binding.set(componentGet(component)) }
+    onReset { componentSet(component, binding.get()) }
+    onIsModified { shouldSaveOnApply() && componentGet(component) != binding.get() }
     return this
   }
 
@@ -69,18 +82,33 @@ internal class CellBuilderImpl<T : JComponent>(
     return !(applyIfEnabled && !viewComponent.isEnabled)
   }
 
+  fun onValidationOnInput(callback: ValidationInfoBuilder.(T) -> ValidationInfo?): CellBuilderImpl<T> {
+    val origin = component.origin
+    dialogPanelConfig.componentValidateCallbacks[origin] = { callback(ValidationInfoBuilder(origin), component) }
+    property?.let { dialogPanelConfig.customValidationRequestors.getOrPut(origin, { SmartList() }).add(it::afterPropagation) }
+    return this
+  }
+
   private fun onApply(callback: () -> Unit): CellBuilder<T> {
-    dialogPanelConfig.applyCallbacks.getOrPut(component) { SmartList() }.add(callback)
+    dialogPanelConfig.applyCallbacks.register(component, callback)
     return this
   }
 
   private fun onReset(callback: () -> Unit): CellBuilder<T> {
-    dialogPanelConfig.resetCallbacks.getOrPut(component) { SmartList() }.add(callback)
+    dialogPanelConfig.resetCallbacks.register(component, callback)
     return this
   }
 
   private fun onIsModified(callback: () -> Boolean): CellBuilder<T> {
-    dialogPanelConfig.isModifiedCallbacks.getOrPut(component) { SmartList() }.add(callback)
+    dialogPanelConfig.isModifiedCallbacks.register(component, callback)
     return this
   }
 }
+
+private val JComponent.origin: JComponent
+  get() {
+    return when (this) {
+      is TextFieldWithBrowseButton -> textField
+      else -> this
+    }
+  }

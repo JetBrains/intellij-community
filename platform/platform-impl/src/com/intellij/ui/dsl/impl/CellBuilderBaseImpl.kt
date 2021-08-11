@@ -14,20 +14,20 @@ import javax.swing.JComponent
 // todo sealed
 internal open class CellBuilderBaseImpl<T : CellBuilderBase<T>>(private val dialogPanelConfig: DialogPanelConfig) : CellBuilderBase<T> {
 
-  override var horizontalAlign = HorizontalAlign.LEFT
-    protected set
+  var horizontalAlign = HorizontalAlign.LEFT
+    private set
 
-  override var verticalAlign = VerticalAlign.CENTER
-    protected set
+  var verticalAlign = VerticalAlign.CENTER
+    private set
 
-  override var resizableColumn = false
-    protected set
+  var resizableColumn = false
+    private set
 
-  override var rightGap = RIGHT_GAP_UNASSIGNED
-    protected set
+  var rightGap = RIGHT_GAP_UNASSIGNED
+    private set
 
-  override var comment: JComponent? = null
-    protected set
+  var comment: JComponent? = null
+    private set
 
   override fun horizontalAlign(horizontalAlign: HorizontalAlign): CellBuilderBase<T> {
     this.horizontalAlign = horizontalAlign

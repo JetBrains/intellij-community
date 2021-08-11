@@ -29,9 +29,9 @@ private fun initPanel(dialogPanelConfig: DialogPanelConfig, panel: DialogPanel) 
   /* todo
   panel.preferredFocusedComponent = builder.builder.preferredFocusedComponent
   panel.validateCallbacks = builder.builder.validateCallbacks
-  panel.componentValidateCallbacks = builder.builder.componentValidateCallbacks
-  panel.customValidationRequestors = builder.builder.customValidationRequestors
   */
+  panel.componentValidateCallbacks = dialogPanelConfig.componentValidateCallbacks
+  panel.customValidationRequestors = dialogPanelConfig.customValidationRequestors
   panel.applyCallbacks = dialogPanelConfig.applyCallbacks
   panel.resetCallbacks = dialogPanelConfig.resetCallbacks
   panel.isModifiedCallbacks = dialogPanelConfig.isModifiedCallbacks

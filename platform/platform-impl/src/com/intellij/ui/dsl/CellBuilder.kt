@@ -9,10 +9,13 @@ import java.awt.event.ActionEvent
 import java.awt.event.ActionListener
 import javax.swing.AbstractButton
 import javax.swing.JComponent
+import javax.swing.text.JTextComponent
 import kotlin.reflect.KMutableProperty0
 
+internal const val DSL_INT_TEXT_RANGE_PROPERTY = "dsl.intText.range"
+
 @ApiStatus.Experimental
-interface CellBuilder<T : JComponent> : CellBuilderBase<CellBuilder<T>> {
+interface CellBuilder<out T : JComponent> : CellBuilderBase<CellBuilder<T>> {
 
   override fun horizontalAlign(horizontalAlign: HorizontalAlign): CellBuilder<T>
 
@@ -24,30 +27,66 @@ interface CellBuilder<T : JComponent> : CellBuilderBase<CellBuilder<T>> {
 
   override fun rightLabelGap(): CellBuilder<T>
 
+  val component: T
+
   fun applyToComponent(task: T.() -> Unit): CellBuilder<T>
 
   fun enabled(isEnabled: Boolean): CellBuilder<T>
+
+  fun visibleIf(predicate: ComponentPredicate): CellBuilder<T>
 
   /**
    * If this method is called, the value of the component will be stored to the backing property only if the component is enabled
    */
   fun applyIfEnabled(): CellBuilder<T>
 
-  fun <V> bind(componentGet: (T) -> V, componentSet: (T, V) -> Unit, modelBinding: PropertyBinding<V>): CellBuilder<T>
+  fun <V> bind(componentGet: (T) -> V, componentSet: (T, V) -> Unit, binding: PropertyBinding<V>): CellBuilder<T>
 }
 
-fun <T : AbstractButton> CellBuilder<T>.bind(modelBinding: PropertyBinding<Boolean>): CellBuilder<T> {
-  return bind(AbstractButton::isSelected, AbstractButton::setSelected, modelBinding)
+fun <T : AbstractButton> CellBuilder<T>.bindSelected(binding: PropertyBinding<Boolean>): CellBuilder<T> {
+  return bind(AbstractButton::isSelected, AbstractButton::setSelected, binding)
 }
 
-fun <T : AbstractButton> CellBuilder<T>.bind(prop: KMutableProperty0<Boolean>): CellBuilder<T> {
-  return bind(prop.toBinding())
+fun <T : AbstractButton> CellBuilder<T>.bindSelected(prop: KMutableProperty0<Boolean>): CellBuilder<T> {
+  return bindSelected(prop.toBinding())
 }
 
-fun <T : AbstractButton> CellBuilder<T>.bind(getter: () -> Boolean, setter: (Boolean) -> Unit): CellBuilder<T> {
-  return bind(PropertyBinding(getter, setter))
+fun <T : AbstractButton> CellBuilder<T>.bindSelected(getter: () -> Boolean, setter: (Boolean) -> Unit): CellBuilder<T> {
+  return bindSelected(PropertyBinding(getter, setter))
 }
 
 fun <T : AbstractButton> CellBuilder<T>.actionListener(actionListener: (event: ActionEvent, component: T) -> Unit): CellBuilder<T> {
-  return applyToComponent { addActionListener(ActionListener { actionListener(it, this) }) }
+  component.addActionListener(ActionListener { actionListener(it, component) })
+  return this
+}
+
+fun <T : JTextComponent> CellBuilder<T>.bindText(binding: PropertyBinding<String>): CellBuilder<T> {
+  component.text = binding.get()
+  return bind(JTextComponent::getText, JTextComponent::setText, binding)
+}
+
+fun <T : JTextComponent> CellBuilder<T>.bindText(prop: KMutableProperty0<String>): CellBuilder<T> {
+  return bindText(prop.toBinding())
+}
+
+fun <T : JTextComponent> CellBuilder<T>.bindText(getter: () -> String, setter: (String) -> Unit): CellBuilder<T> {
+  return bindText(PropertyBinding(getter, setter))
+}
+
+fun <T : JTextComponent> CellBuilder<T>.bindIntText(binding: PropertyBinding<Int>): CellBuilder<T> {
+  val range = component.getClientProperty(DSL_INT_TEXT_RANGE_PROPERTY) as? IntRange
+  return bindText({ binding.get().toString() },
+                  { value ->
+                    value.toIntOrNull()?.let { intValue ->
+                      binding.set(range?.let { intValue.coerceIn(it.first, it.last) } ?: intValue)
+                    }
+                  })
+}
+
+fun <T : JTextComponent> CellBuilder<T>.bindIntText(prop: KMutableProperty0<Int>): CellBuilder<T> {
+  return bindIntText(prop.toBinding())
+}
+
+fun <T : JTextComponent> CellBuilder<T>.bindIntText(getter: () -> Int, setter: (Int) -> Unit): CellBuilder<T> {
+  return bindIntText(PropertyBinding(getter, setter))
 }

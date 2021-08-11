@@ -15,13 +15,7 @@ private annotation class CellBuilderMarker
 
 @ApiStatus.Experimental
 @CellBuilderMarker
-interface CellBuilderBase<T : CellBuilderBase<T>> {
-
-  val horizontalAlign: HorizontalAlign
-  val verticalAlign: VerticalAlign
-  val resizableColumn: Boolean
-  val rightGap: Int
-  val comment: JComponent?
+interface CellBuilderBase<out T : CellBuilderBase<T>> {
 
   fun horizontalAlign(horizontalAlign: HorizontalAlign): CellBuilderBase<T>
 
