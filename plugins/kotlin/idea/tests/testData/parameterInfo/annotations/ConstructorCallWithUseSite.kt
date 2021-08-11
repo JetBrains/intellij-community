@@ -1,4 +1,3 @@
-// IGNORE_FIR
 // WITH_STDLIB
 
 annotation class Fancy
