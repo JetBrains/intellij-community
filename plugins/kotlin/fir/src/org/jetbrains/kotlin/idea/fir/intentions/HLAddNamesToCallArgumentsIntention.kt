@@ -8,7 +8,6 @@ import org.jetbrains.kotlin.idea.fir.api.applicator.HLApplicatorInputProvider
 import org.jetbrains.kotlin.idea.fir.api.applicator.applicabilityRanges
 import org.jetbrains.kotlin.idea.fir.api.applicator.inputProvider
 import org.jetbrains.kotlin.idea.fir.applicators.AddArgumentNamesApplicators
-import org.jetbrains.kotlin.idea.frontend.api.calls.KtCallWithArguments
 import org.jetbrains.kotlin.idea.frontend.api.calls.getSingleCandidateSymbolOrNull
 import org.jetbrains.kotlin.idea.util.textRangeIn
 import org.jetbrains.kotlin.psi.*
@@ -31,7 +30,7 @@ class HLAddNamesToCallArgumentsIntention :
     }
 
     override val inputProvider: HLApplicatorInputProvider<KtCallElement, Input> = inputProvider { element ->
-        val resolvedCall = element.resolveCall() as? KtCallWithArguments ?: return@inputProvider null
+        val resolvedCall = element.resolveCall() ?: return@inputProvider null
 
         if (resolvedCall.targetFunction.getSingleCandidateSymbolOrNull()?.hasStableParameterNames != true) {
             return@inputProvider null
