@@ -18,7 +18,8 @@
     <fx14.version>14.0.2.1</fx14.version>
     <fx15.version>15.0.1</fx15.version>
     <fx16.version>16</fx16.version>
-    <fx17.version>17-ea+11</fx17.version>
+    <fx17.version>17-ea+16</fx17.version>
+    <fx18.version>18-ea+1</fx18.version>
   </properties>
 
   <dependencyManagement>
@@ -37,6 +38,11 @@
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-compiler-plugin</artifactId>
         <version>3.8.1</version>
+      </dependency>
+      <dependency>
+        <groupId>org.beryx</groupId>
+        <artifactId>badass-jlink-plugin</artifactId>
+        <version>2.24.1</version>
       </dependency>
 
       <dependency>
