@@ -85,7 +85,7 @@ abstract class LineStatusTrackerBase<R : Range>(
   }
 
   @RequiresEdt
-  protected open fun setBaseRevision(vcsContent: CharSequence, beforeUnfreeze: (() -> Unit)?) {
+  protected open fun setBaseRevisionContent(vcsContent: CharSequence, beforeUnfreeze: (() -> Unit)?) {
     ApplicationManager.getApplication().assertIsDispatchThread()
     if (isReleased) return
 

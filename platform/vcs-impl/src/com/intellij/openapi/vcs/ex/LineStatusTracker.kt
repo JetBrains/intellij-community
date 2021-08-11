@@ -90,8 +90,8 @@ abstract class LocalLineStatusTrackerImpl<R : Range>(
   @RequiresEdt
   abstract fun setBaseRevision(vcsContent: CharSequence)
 
-  override fun setBaseRevision(vcsContent: CharSequence, beforeUnfreeze: (() -> Unit)?) {
-    super.setBaseRevision(vcsContent, beforeUnfreeze)
+  override fun setBaseRevisionContent(vcsContent: CharSequence, beforeUnfreeze: (() -> Unit)?) {
+    super.setBaseRevisionContent(vcsContent, beforeUnfreeze)
 
     if (blocks.isEmpty() && isOperational()) {
       saveDocumentWhenUnchanged(project, document)
