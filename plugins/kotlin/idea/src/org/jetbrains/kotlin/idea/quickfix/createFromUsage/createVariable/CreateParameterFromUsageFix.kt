@@ -22,7 +22,7 @@ import java.lang.ref.WeakReference
 
 class CreateParameterFromUsageFix<E : KtElement>(
     originalExpression: E,
-    private val dataProvider: () -> CreateParameterData<E>?
+    private val dataProvider: (E) -> CreateParameterData<E>?
 ) : CreateFromUsageFixBase<E>(originalExpression) {
     private var parameterInfoReference: WeakReference<KotlinParameterInfo>? = null
 
@@ -67,7 +67,7 @@ class CreateParameterFromUsageFix<E : KtElement>(
         runChangeSignature(project, editor, parameterInfo.callableDescriptor, config, originalExpression, text)
     }
 
-    private fun parameterData() = dataProvider()
+    private fun parameterData() = element?.let { dataProvider(it) }
 
     override fun invoke(project: Project, editor: Editor?, file: KtFile) {
         val onComplete = parameterData()?.onComplete
@@ -89,9 +89,9 @@ class CreateParameterFromUsageFix<E : KtElement>(
     companion object {
         fun <E : KtElement> createFixForPrimaryConstructorPropertyParameter(
             element: E,
-            callableInfosFactory: () -> List<CallableInfo>?
-        ): CreateParameterFromUsageFix<E> = CreateParameterFromUsageFix(element, dataProvider = fun(): CreateParameterData<E>? {
-            val info = callableInfosFactory.invoke()?.singleOrNull().safeAs<PropertyInfo>() ?: return null
+            callableInfosFactory: (E) -> List<CallableInfo>?
+        ): CreateParameterFromUsageFix<E> = CreateParameterFromUsageFix(element, dataProvider = fun(element): CreateParameterData<E>? {
+            val info = callableInfosFactory.invoke(element)?.singleOrNull().safeAs<PropertyInfo>() ?: return null
 
             val builder = CallableBuilderConfiguration(listOf(info), element).createBuilder()
             val receiverTypeCandidate = builder.computeTypeCandidates(info.receiverTypeInfo).firstOrNull()

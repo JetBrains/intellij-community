@@ -32,7 +32,7 @@ abstract class CreateCallableMemberFromUsageFactory<E : KtElement>(
     override fun createFixes(
         originalElementPointer: SmartPsiElementPointer<E>,
         diagnostic: Diagnostic,
-        quickFixDataFactory: () -> List<CallableInfo>?
+        quickFixDataFactory: (E) -> List<CallableInfo>?
     ): List<QuickFixWithDelegateFactory> {
         val fixes = ArrayList<QuickFixWithDelegateFactory>(3)
 
@@ -46,8 +46,8 @@ abstract class CreateCallableMemberFromUsageFactory<E : KtElement>(
 
         if (extensionsSupported) {
             newCallableQuickFix(originalElementPointer, IntentionActionPriority.LOW) { element ->
-                CreateExtensionCallableFromUsageFix(element) {
-                    quickFixDataFactory()?.takeUnless { callableInfos ->
+                CreateExtensionCallableFromUsageFix(element) { e ->
+                    quickFixDataFactory(e)?.takeUnless { callableInfos ->
                         callableInfos.any { it.isAbstract }
                     }
                 }
