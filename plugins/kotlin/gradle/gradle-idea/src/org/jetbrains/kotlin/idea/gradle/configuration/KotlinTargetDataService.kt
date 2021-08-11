@@ -48,7 +48,7 @@ class KotlinTargetDataService : AbstractProjectDataService<KotlinTargetData, Voi
                 for (moduleId in targetData.moduleIds) {
                     val compilationModuleDataNode = nodeToImport.parent?.findChildModuleById(moduleId) ?: continue
                     val compilationData = compilationModuleDataNode.data
-                    val kotlinSourceSet = compilationModuleDataNode.kotlinSourceSet ?: continue
+                    val kotlinSourceSet = compilationModuleDataNode.kotlinSourceSetData?.sourceSetInfo ?: continue
                     if (kotlinSourceSet.isTestModule) continue
                     val moduleToPackage = modelsProvider.findIdeModule(compilationData) ?: continue
                     it.rootElement.addOrFindChild(ProductionModuleOutputPackagingElement(project, moduleToPackage.createPointer()))

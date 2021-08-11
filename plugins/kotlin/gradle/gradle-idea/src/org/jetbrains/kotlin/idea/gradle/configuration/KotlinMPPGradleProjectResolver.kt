@@ -336,7 +336,7 @@ open class KotlinMPPGradleProjectResolver : AbstractProjectResolverExtension() {
                 for (compilation in target.compilations) {
                     val moduleId = getKotlinModuleId(gradleModule, compilation, resolverCtx)
                     val existingSourceSetDataNode = sourceSetMap[moduleId]?.first
-                    if (existingSourceSetDataNode?.kotlinSourceSet != null) continue
+                    if (existingSourceSetDataNode?.kotlinSourceSetData?.sourceSetInfo != null) continue
 
                     compilationIds += moduleId
 
@@ -396,7 +396,7 @@ open class KotlinMPPGradleProjectResolver : AbstractProjectResolverExtension() {
 
                     val compilationDataNode =
                         (existingSourceSetDataNode ?: mainModuleNode.createChild(GradleSourceSetData.KEY, compilationData)).also {
-                            it.kotlinSourceSet = kotlinSourceSet
+                            it.addChild(DataNode(KotlinSourceSetData.KEY, KotlinSourceSetData(kotlinSourceSet), it))
                         }
                     if (existingSourceSetDataNode == null) {
                         sourceSetMap[moduleId] = Pair(compilationDataNode, createExternalSourceSet(compilation, compilationData, mppModel))
@@ -413,7 +413,7 @@ open class KotlinMPPGradleProjectResolver : AbstractProjectResolverExtension() {
                 if (platform == KotlinPlatform.COMMON && ignoreCommonSourceSets) continue
                 val moduleId = getKotlinModuleId(gradleModule, sourceSet, resolverCtx)
                 val existingSourceSetDataNode = sourceSetMap[moduleId]?.first
-                if (existingSourceSetDataNode?.kotlinSourceSet != null) continue
+                if (existingSourceSetDataNode?.kotlinSourceSetData != null) continue
 
                 val moduleExternalName = getExternalModuleName(gradleModule, sourceSet)
                 val moduleInternalName = getInternalModuleName(gradleModule, externalProject, sourceSet, resolverCtx)
@@ -465,7 +465,7 @@ open class KotlinMPPGradleProjectResolver : AbstractProjectResolverExtension() {
 
                 val sourceSetDataNode =
                     (existingSourceSetDataNode ?: mainModuleNode.createChild(GradleSourceSetData.KEY, sourceSetData)).also {
-                        it.kotlinSourceSet = kotlinSourceSet
+                        it.addChild(DataNode(KotlinSourceSetData.KEY, KotlinSourceSetData(kotlinSourceSet), it))
                     }
                 if (existingSourceSetDataNode == null) {
                     sourceSetMap[moduleId] = Pair(sourceSetDataNode, createExternalSourceSet(sourceSet, sourceSetData, mppModel))
@@ -641,7 +641,7 @@ open class KotlinMPPGradleProjectResolver : AbstractProjectResolverExtension() {
         ) {
             val sourceSetsMap = HashMap<String, DataNode<GradleSourceSetData>>()
             for (dataNode in ExternalSystemApiUtil.findAll(ideModule, GradleSourceSetData.KEY)) {
-                if (dataNode.kotlinSourceSet != null) {
+                if (dataNode.kotlinSourceSetData?.sourceSetInfo != null) {
                     sourceSetsMap[dataNode.data.id] = dataNode
                 }
             }

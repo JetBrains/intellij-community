@@ -9,7 +9,7 @@ import org.jetbrains.kotlin.idea.gradle.configuration.KotlinMPPGradleProjectReso
 import org.jetbrains.kotlin.idea.gradle.configuration.KotlinMPPGradleProjectResolver.Companion.CompilationWithDependencies
 import org.jetbrains.kotlin.idea.gradle.configuration.klib.KotlinNativeLibraryNameUtil
 import org.jetbrains.kotlin.idea.gradle.configuration.kotlinAndroidSourceSets
-import org.jetbrains.kotlin.idea.gradle.configuration.kotlinSourceSet
+import org.jetbrains.kotlin.idea.gradle.configuration.kotlinSourceSetData
 import org.jetbrains.kotlin.idea.gradle.configuration.utils.createSourceSetVisibilityGraph
 import org.jetbrains.kotlin.idea.gradle.configuration.utils.fullName
 import org.jetbrains.kotlin.idea.gradle.configuration.utils.getKotlinModuleId
@@ -212,7 +212,7 @@ private fun KotlinMPPGradleProjectResolver.Companion.populateSourceSetInfos(
             (it.kotlinModule as? KotlinCompilation)?.declaredSourceSets?.contains(sourceSet) ?: false
         } ?: emptyList()
     } else {
-        listOfNotNull(fromDataNode.kotlinSourceSet)
+        listOfNotNull(fromDataNode.kotlinSourceSetData?.sourceSetInfo)
     }
     for (sourceSetInfo in sourceSetInfos) {
         if (sourceSetInfo.kotlinModule is KotlinCompilation) {

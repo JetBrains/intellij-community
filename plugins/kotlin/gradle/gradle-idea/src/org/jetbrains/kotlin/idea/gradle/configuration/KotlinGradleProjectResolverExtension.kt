@@ -295,12 +295,11 @@ class KotlinGradleProjectResolverExtension : AbstractProjectResolverExtension() 
             val dependentSourceSets = dependentModule.getSourceSetsMap()
             val implementedSourceSetMaps = implementedModules.map { it.getSourceSetsMap() }
             for ((sourceSetName, dependentSourceSet) in dependentSourceSets) {
-                dependentSourceSet.kotlinGradleSourceSetData.implementedModuleNames.addAll(
+                dependentSourceSet.kotlinGradleSourceSetData.implementedModuleNames =
                     implementedSourceSetMaps.mapNotNull { it[sourceSetName]?.data?.internalName }
-                )
             }
         } else {
-            dependentModule.kotlinGradleSourceSetData.implementedModuleNames.addAll(implementedModules.map { it.data.internalName })
+            dependentModule.kotlinGradleSourceSetData.implementedModuleNames = implementedModules.map { it.data.internalName }
         }
     }
 

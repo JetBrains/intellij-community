@@ -51,7 +51,7 @@ class KotlinSourceSetDataService : AbstractProjectDataService<GradleSourceSetDat
         val platforms = HashSet<KotlinPlatform>()
 
         for (nodeToImport in toImport) {
-            nodeToImport.kotlinSourceSet?.also {
+            nodeToImport.kotlinSourceSetData?.sourceSetInfo?.also {
                 platforms += it.actualPlatforms.platforms
             }
 
@@ -77,7 +77,7 @@ class KotlinSourceSetDataService : AbstractProjectDataService<GradleSourceSetDat
                 ProjectKeys.MODULE
             ) ?: continue
             val sourceSetData = nodeToImport.data
-            val kotlinSourceSet = nodeToImport.kotlinSourceSet ?: continue
+            val kotlinSourceSet = nodeToImport.kotlinSourceSetData?.sourceSetInfo ?: continue
             val ideModule = modelsProvider.findIdeModule(sourceSetData) ?: continue
             val platform = kotlinSourceSet.actualPlatforms
             val rootModel = modelsProvider.getModifiableRootModel(ideModule)

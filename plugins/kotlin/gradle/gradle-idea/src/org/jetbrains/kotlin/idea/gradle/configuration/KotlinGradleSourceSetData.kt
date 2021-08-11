@@ -28,7 +28,7 @@ class KotlinGradleSourceSetData : AbstractExternalEntityData(GradleConstants.SYS
     var isHmpp: Boolean = false
     var platformPluginId: String? = null
     lateinit var kotlinNativeHome: String
-    val implementedModuleNames: MutableCollection<String> = hashSetOf()
+    lateinit var implementedModuleNames: List<String>
     val dependenciesCache: MutableMap<DataNode<ProjectData>, Collection<DataNode<out ModuleData>>> = mutableMapOf()
     val pureKotlinSourceFolders: MutableCollection<String> = hashSetOf()
 

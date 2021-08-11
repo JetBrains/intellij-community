@@ -8,7 +8,7 @@ import org.gradle.tooling.model.idea.IdeaModule
 import org.jetbrains.kotlin.gradle.KotlinCompilation
 import org.jetbrains.kotlin.gradle.KotlinMPPGradleModel
 import org.jetbrains.kotlin.idea.gradle.configuration.KotlinMPPGradleProjectResolver
-import org.jetbrains.kotlin.idea.gradle.configuration.kotlinSourceSet
+import org.jetbrains.kotlin.idea.gradle.configuration.kotlinSourceSetData
 import org.jetbrains.kotlin.idea.gradle.configuration.utils.getKotlinModuleId
 import org.jetbrains.plugins.gradle.model.data.GradleSourceSetData
 import org.jetbrains.plugins.gradle.service.project.ProjectResolverContext
@@ -22,7 +22,7 @@ internal fun KotlinMPPGradleProjectResolver.Companion.getCompilations(
 
     val sourceSetsMap = HashMap<String, DataNode<GradleSourceSetData>>()
     for (dataNode in ExternalSystemApiUtil.findAll(ideModule, GradleSourceSetData.KEY)) {
-        if (dataNode.kotlinSourceSet != null) {
+        if (dataNode.kotlinSourceSetData?.sourceSetInfo != null) {
             sourceSetsMap[dataNode.data.id] = dataNode
         }
     }

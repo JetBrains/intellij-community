@@ -18,16 +18,24 @@ import org.jetbrains.kotlin.gradle.*
 import org.jetbrains.kotlin.idea.util.CopyableDataNodeUserDataProperty
 import org.jetbrains.plugins.gradle.util.GradleConstants
 import java.io.File
-import java.io.Serializable
 import com.intellij.openapi.externalSystem.model.Key as ExternalKey
 
+@Deprecated(
+    "This UserData property is deprecated and will be removed soon",
+    ReplaceWith("kotlinSourceSetData?.sourceSetInfo"),
+    DeprecationLevel.ERROR
+)
 var DataNode<out ModuleData>.kotlinSourceSet: KotlinSourceSetInfo?
         by CopyableDataNodeUserDataProperty(Key.create("KOTLIN_SOURCE_SET"))
 
-val DataNode<out ModuleData>.kotlinAndroidSourceSets: List<KotlinSourceSetInfo>?
-        get() = ExternalSystemApiUtil.getChildren(this, KotlinAndroidSourceSetData.KEY).firstOrNull()?.data?.sourceSetInfos
+val DataNode<out ModuleData>.kotlinSourceSetData: KotlinSourceSetData?
+    get() = ExternalSystemApiUtil.getChildren(this, KotlinSourceSetData.KEY).firstOrNull()?.data
 
-class KotlinSourceSetInfo @PropertyMapping("kotlinModule") constructor(val kotlinModule: KotlinModule) : Serializable {
+val DataNode<out ModuleData>.kotlinAndroidSourceSets: List<KotlinSourceSetInfo>?
+    get() = ExternalSystemApiUtil.getChildren(this, KotlinAndroidSourceSetData.KEY).firstOrNull()?.data?.sourceSetInfos
+
+class KotlinSourceSetInfo @PropertyMapping("kotlinModule") constructor(val kotlinModule: KotlinModule) :
+    AbstractExternalEntityData(GradleConstants.SYSTEM_ID) {
     var moduleId: String? = null
     var gradleModuleId: String = ""
 
@@ -50,7 +58,15 @@ class KotlinSourceSetInfo @PropertyMapping("kotlinModule") constructor(val kotli
     var externalSystemRunTasks: Collection<ExternalSystemRunTask> = emptyList()
 }
 
-class KotlinAndroidSourceSetData @PropertyMapping("sourceSetInfos") constructor(val sourceSetInfos: List<KotlinSourceSetInfo>
+class KotlinSourceSetData @PropertyMapping("sourceSetInfo") constructor(val sourceSetInfo: KotlinSourceSetInfo) :
+    AbstractExternalEntityData(GradleConstants.SYSTEM_ID) {
+    companion object {
+        val KEY = ExternalKey.create(KotlinSourceSetData::class.java, KotlinTargetData.KEY.processingWeight + 1)
+    }
+}
+
+class KotlinAndroidSourceSetData @PropertyMapping("sourceSetInfos") constructor(
+    val sourceSetInfos: List<KotlinSourceSetInfo>
 ) : AbstractExternalEntityData(GradleConstants.SYSTEM_ID) {
     companion object {
         val KEY = ExternalKey.create(KotlinAndroidSourceSetData::class.java, KotlinTargetData.KEY.processingWeight + 1)

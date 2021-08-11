@@ -14,14 +14,14 @@ import com.intellij.openapi.roots.ModuleOrderEntry
 import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.vfs.VfsUtil
 import org.jetbrains.kotlin.idea.gradle.configuration.KotlinTargetData
-import org.jetbrains.kotlin.idea.gradle.configuration.kotlinSourceSet
+import org.jetbrains.kotlin.idea.gradle.configuration.kotlinSourceSetData
 import org.jetbrains.plugins.gradle.model.data.GradleSourceSetData
 
 class KotlinJavaMPPSourceSetDataService : AbstractProjectDataService<GradleSourceSetData, Void>() {
     override fun getTargetDataKey() = GradleSourceSetData.KEY
 
     private fun isTestModuleById(id: String, toImport: Collection<DataNode<GradleSourceSetData>>): Boolean =
-        toImport.firstOrNull { it.data.internalName == id }?.kotlinSourceSet?.isTestModule ?: false
+        toImport.firstOrNull { it.data.internalName == id }?.kotlinSourceSetData?.sourceSetInfo?.isTestModule ?: false
 
     override fun postProcess(
         toImport: MutableCollection<out DataNode<GradleSourceSetData>>,
@@ -30,13 +30,14 @@ class KotlinJavaMPPSourceSetDataService : AbstractProjectDataService<GradleSourc
         modelsProvider: IdeModifiableModelsProvider
     ) {
         val testKotlinModules =
-            toImport.filter { it.kotlinSourceSet?.isTestModule ?: false }.map { modelsProvider.findIdeModule(it.data) }.toSet()
+            toImport.filter { it.kotlinSourceSetData?.sourceSetInfo?.isTestModule ?: false }.map { modelsProvider.findIdeModule(it.data) }
+                .toSet()
         val projectNode = toImport.firstOrNull()?.let { ExternalSystemApiUtil.findParent(it, ProjectKeys.PROJECT) } ?: return
         val targetsByUrl = ExternalSystemApiUtil
             .findAllRecursively(projectNode, KotlinTargetData.KEY)
             .groupBy { targetNode -> targetNode.data.archiveFile?.let { VfsUtil.getUrlForLibraryRoot(it) } }
         for (nodeToImport in toImport) {
-            if (nodeToImport.kotlinSourceSet != null) continue
+            if (nodeToImport.kotlinSourceSetData?.sourceSetInfo != null) continue
             val isTestSourceSet = nodeToImport.data.id.endsWith(":test")
             val moduleData = nodeToImport.data
             val module = modelsProvider.findIdeModule(moduleData) ?: continue
@@ -59,14 +60,14 @@ class KotlinJavaMPPSourceSetDataService : AbstractProjectDataService<GradleSourc
                     .filter { it.data.id in targetNode.data.moduleIds }
                 for (compilationNode in compilationNodes) {
                     val compilationModule = modelsProvider.findIdeModule(compilationNode.data) ?: continue
-                    val compilationInfo = compilationNode.kotlinSourceSet ?: continue
+                    val compilationInfo = compilationNode.kotlinSourceSetData?.sourceSetInfo ?: continue
                     if (!isTestSourceSet && compilationInfo.isTestModule) continue
                     val compilationRootModel = modelsProvider.getModifiableRootModel(compilationModule)
                     addModuleDependencyIfNeeded(
                         rootModel,
                         compilationModule,
                         isTestSourceSet,
-                        compilationNode.kotlinSourceSet?.isTestModule ?: false
+                        compilationNode.kotlinSourceSetData?.sourceSetInfo?.isTestModule ?: false
                     )
                     compilationRootModel.getModuleDependencies(isTestSourceSet).forEach { transitiveDependee ->
                         addModuleDependencyIfNeeded(
