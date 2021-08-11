@@ -17,7 +17,7 @@ sealed class DirectoryContentSpecImpl : DirectoryContentSpec {
   abstract override fun mergeWith(other: DirectoryContentSpec): DirectoryContentSpecImpl
 }
 
-abstract class DirectorySpecBase : DirectoryContentSpecImpl() {
+sealed class DirectorySpecBase : DirectoryContentSpecImpl() {
   protected val children: LinkedHashMap<String, DirectoryContentSpecImpl> = LinkedHashMap()
 
   fun addChild(name: String, spec: DirectoryContentSpecImpl) {
@@ -52,7 +52,6 @@ abstract class DirectorySpecBase : DirectoryContentSpecImpl() {
     val result = when (other) {
       is DirectorySpec -> DirectorySpec()
       is ZipSpec -> ZipSpec()
-      else -> error(other)
     }
     result.children.putAll(children)
     for ((name, child) in other.children) {
@@ -143,12 +142,12 @@ private fun appendToString(spec: DirectorySpecBase, result: MutableList<String>,
     }
 }
 
-internal fun assertContentUnderFileMatches(file: File,
+internal fun assertContentUnderFileMatches(file: Path,
                                            spec: DirectoryContentSpecImpl,
                                            fileTextMatcher: FileTextMatcher,
                                            filePathFilter: (String) -> Boolean) {
   if (spec is DirectorySpecBase) {
-    val actualSpec = createSpecByPath(file.toPath())
+    val actualSpec = createSpecByPath(file)
     if (actualSpec is DirectorySpecBase) {
       assertEquals(spec.toString(filePathFilter), actualSpec.toString(filePathFilter))
     }
@@ -156,7 +155,7 @@ internal fun assertContentUnderFileMatches(file: File,
   assertDirectoryContentMatches(file, spec, ".", fileTextMatcher, filePathFilter)
 }
 
-private fun assertDirectoryContentMatches(file: File,
+private fun assertDirectoryContentMatches(file: Path,
                                           spec: DirectoryContentSpecImpl,
                                           relativePath: String,
                                           fileTextMatcher: FileTextMatcher,
@@ -167,16 +166,16 @@ private fun assertDirectoryContentMatches(file: File,
       assertDirectoryMatches(file, spec, relativePath, fileTextMatcher, filePathFilter)
     }
     is ZipSpec -> {
-      assertTrue("$file is not a file", file.isFile)
-      val dirForExtracted = FileUtil.createTempDirectory("extracted-${file.name}", null, false)
+      assertTrue("$file is not a file", file.isFile())
+      val dirForExtracted = FileUtil.createTempDirectory("extracted-${file.name}", null, false).toPath()
       ZipUtil.extract(file, dirForExtracted, null)
       assertDirectoryMatches(dirForExtracted, spec, relativePath, fileTextMatcher, filePathFilter)
       FileUtil.delete(dirForExtracted)
     }
     is FileSpec -> {
-      assertTrue("$file is not a file", file.isFile)
+      assertTrue("$file is not a file", file.isFile())
       if (spec.content != null) {
-        val actualBytes = FileUtil.loadFileBytes(file)
+        val actualBytes = file.readBytes()
         if (!Arrays.equals(actualBytes, spec.content)) {
           val actualString = actualBytes.convertToText()
           val expectedString = spec.content.convertToText()
@@ -205,22 +204,24 @@ private fun ByteArray.convertToText(): String? {
   return String(this, charset)
 }
 
-private fun assertDirectoryMatches(file: File,
+private fun assertDirectoryMatches(file: Path,
                                    spec: DirectorySpecBase,
                                    relativePath: String,
                                    fileTextMatcher: FileTextMatcher,
                                    filePathFilter: (String) -> Boolean) {
-  assertTrue("$file is not a directory", file.isDirectory)
+  assertTrue("$file is not a directory", file.isDirectory())
   fun childNameFilter(name: String) = filePathFilter("$relativePath/$name")
-  val actualChildrenNames = file.listFiles()!!.filter { it.isDirectory || childNameFilter(it.name) }
-    .map { it.name }.sortedWith(String.CASE_INSENSITIVE_ORDER)
+  val actualChildrenNames = file.directoryStreamIfExists { children ->
+    children.filter { it.isDirectory() || childNameFilter(it.name) }
+      .map { it.name }.sortedWith(String.CASE_INSENSITIVE_ORDER)
+  } ?: emptyList()
   val children = spec.getChildren()
   val expectedChildrenNames = children.entries.filter { it.value is DirectorySpec || childNameFilter(it.key) }
     .map { it.key }.sortedWith(String.CASE_INSENSITIVE_ORDER)
   assertEquals("Directory content mismatch${if (relativePath != "") " at $relativePath" else ""}:",
                expectedChildrenNames.joinToString("\n"), actualChildrenNames.joinToString("\n"))
   for (child in actualChildrenNames) {
-    assertDirectoryContentMatches(File(file, child), children.get(child)!!, "$relativePath/$child", fileTextMatcher, filePathFilter)
+    assertDirectoryContentMatches(file.resolve(child), children.getValue(child), "$relativePath/$child", fileTextMatcher, filePathFilter)
   }
 }
 

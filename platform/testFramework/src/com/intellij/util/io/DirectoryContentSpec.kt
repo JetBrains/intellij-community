@@ -90,7 +90,7 @@ interface DirectoryContentSpec {
 @JvmOverloads
 fun File.assertMatches(spec: DirectoryContentSpec, fileTextMatcher: FileTextMatcher = FileTextMatcher.exact(),
                        filePathFilter: (String) -> Boolean = { true }) {
-  assertContentUnderFileMatches(this, spec as DirectoryContentSpecImpl, fileTextMatcher, filePathFilter)
+  assertContentUnderFileMatches(toPath(), spec as DirectoryContentSpecImpl, fileTextMatcher, filePathFilter)
 }
 
 /**
@@ -100,18 +100,21 @@ fun File.assertMatches(spec: DirectoryContentSpec, fileTextMatcher: FileTextMatc
 @JvmOverloads
 fun Path.assertMatches(spec: DirectoryContentSpec, fileTextMatcher: FileTextMatcher = FileTextMatcher.exact(),
                        filePathFilter: (String) -> Boolean = { true }) {
-  assertContentUnderFileMatches(toFile(), spec as DirectoryContentSpecImpl, fileTextMatcher, filePathFilter)
+  assertContentUnderFileMatches(this, spec as DirectoryContentSpecImpl, fileTextMatcher, filePathFilter)
 }
 
 interface FileTextMatcher {
   companion object {
     @JvmStatic
     fun ignoreBlankLines(): FileTextMatcher = FileTextMatchers.ignoreBlankLines
+
     @JvmStatic
     fun exact(): FileTextMatcher = FileTextMatchers.exact
+
     @JvmStatic
     fun ignoreXmlFormatting(): FileTextMatcher = FileTextMatchers.ignoreXmlFormatting
   }
+
   fun matches(actualText: String, expectedText: String): Boolean
 }
 
