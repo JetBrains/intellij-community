@@ -16,14 +16,17 @@ class IndexableFilesBeneathExcludedDirectoryTest : IndexableFilesBaseTest() {
 
   @Test
   fun `excluded files must not be indexed`() {
+    lateinit var excludedJava: FileSpec
+
     projectModelRule.createJavaModule("moduleName") {
       content("contentRoot") {
         excluded("excluded") {
-          file("ExcludedFile.java", "class ExcludedFile {}")
+          excludedJava = file("ExcludedFile.java", "class ExcludedFile {}")
         }
       }
     }
     assertIndexableFiles()
+    assertHasNoIndexes(excludedJava.file)
   }
 
   @Test
