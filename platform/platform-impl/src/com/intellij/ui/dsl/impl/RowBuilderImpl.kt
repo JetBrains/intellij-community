@@ -5,25 +5,23 @@ import com.intellij.BundleBase
 import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.impl.ActionButton
+import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.panel.ComponentPanelBuilder
 import com.intellij.openapi.util.NlsContexts
+import com.intellij.ui.SimpleListCellRenderer
 import com.intellij.ui.UIBundle
 import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.components.JBTextField
 import com.intellij.ui.components.Label
+import com.intellij.ui.dsl.*
 import com.intellij.ui.dsl.DSL_INT_TEXT_RANGE_PROPERTY
-import com.intellij.ui.dsl.PanelBuilder
-import com.intellij.ui.dsl.RowBuilder
-import com.intellij.ui.dsl.RowLayout
 import com.intellij.util.MathUtil
 import org.jetbrains.annotations.ApiStatus
 import java.awt.Dimension
 import java.awt.event.ActionEvent
 import java.awt.event.KeyAdapter
 import java.awt.event.KeyEvent
-import javax.swing.JButton
-import javax.swing.JComponent
-import javax.swing.JLabel
+import javax.swing.*
 
 @ApiStatus.Experimental
 internal class RowBuilderImpl(private val dialogPanelConfig: DialogPanelConfig, val label: JLabel? = null) : RowBuilder {
@@ -32,6 +30,9 @@ internal class RowBuilderImpl(private val dialogPanelConfig: DialogPanelConfig, 
     private set
 
   var comment: JComponent? = null
+    private set
+
+  var topGap: TopGap? = null
     private set
 
   val cells: List<CellBuilderBaseImpl<*>>
@@ -59,6 +60,11 @@ internal class RowBuilderImpl(private val dialogPanelConfig: DialogPanelConfig, 
     return result
   }
 
+  override fun gap(topGap: TopGap): RowBuilder {
+    this.topGap = topGap
+    return this
+  }
+
   override fun panel(init: PanelBuilder.() -> Unit): PanelBuilder {
     val result = PanelBuilderImpl(dialogPanelConfig)
     result.init()
@@ -77,18 +83,16 @@ internal class RowBuilderImpl(private val dialogPanelConfig: DialogPanelConfig, 
   }
 
   override fun actionButton(action: AnAction, dimension: Dimension): CellBuilderImpl<ActionButton> {
-    val result = ActionButton(action, action.templatePresentation, ActionPlaces.UNKNOWN, dimension)
-    return cell(result)
+    val component = ActionButton(action, action.templatePresentation, ActionPlaces.UNKNOWN, dimension)
+    return cell(component)
   }
 
   override fun label(text: String): CellBuilderImpl<JLabel> {
-    val result = Label(text)
-    return cell(result)
+    return cell(Label(text))
   }
 
   override fun textField(columns: Int): CellBuilderImpl<JBTextField> {
-    val result = JBTextField(columns)
-    return cell(result)
+    return cell(JBTextField(columns))
   }
 
   override fun intTextField(columns: Int, range: IntRange?, keyboardStep: Int?): CellBuilderImpl<JBTextField> {
@@ -126,5 +130,11 @@ internal class RowBuilderImpl(private val dialogPanelConfig: DialogPanelConfig, 
       })
     }
     return result
+  }
+
+  override fun <T> comboBox(model: ComboBoxModel<T>, renderer: ListCellRenderer<T?>?): CellBuilder<ComboBox<T>> {
+    val component = ComboBox(model)
+    component.renderer = renderer ?: SimpleListCellRenderer.create("") { it.toString() }
+    return cell(component)
   }
 }

@@ -4,6 +4,7 @@ package com.intellij.ui.dsl
 import com.intellij.openapi.actionSystem.ActionToolbar
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.impl.ActionButton
+import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.panel.ComponentPanelBuilder
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.ui.components.JBCheckBox
@@ -11,10 +12,7 @@ import com.intellij.ui.components.JBTextField
 import org.jetbrains.annotations.ApiStatus
 import java.awt.Dimension
 import java.awt.event.ActionEvent
-import javax.swing.JButton
-import javax.swing.JCheckBox
-import javax.swing.JComponent
-import javax.swing.JLabel
+import javax.swing.*
 
 /**
  * Determines relation between row grid and parent's grid
@@ -40,6 +38,10 @@ enum class RowLayout {
   PARENT_GRID
 }
 
+enum class TopGap {
+  GROUP
+}
+
 @DslMarker
 private annotation class RowBuilderMarker
 
@@ -58,6 +60,8 @@ interface RowBuilder {
 
   fun <T : JComponent> cell(component: T): CellBuilder<T>
 
+  fun gap(topGap: TopGap): RowBuilder
+
   /**
    * Creates subpanel inside cell of the row
    */
@@ -74,5 +78,7 @@ interface RowBuilder {
   fun textField(columns: Int = 0): CellBuilder<JBTextField>
 
   fun intTextField(columns: Int = 0, range: IntRange? = null, keyboardStep: Int? = null): CellBuilder<JBTextField>
+
+  fun <T> comboBox(model: ComboBoxModel<T>, renderer: ListCellRenderer<T?>? = null): CellBuilder<ComboBox<T>>
 
 }

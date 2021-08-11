@@ -6,6 +6,7 @@ import com.intellij.openapi.ui.TextFieldWithBrowseButton
 import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.ui.dsl.CellBuilder
+import com.intellij.ui.dsl.RightGap
 import com.intellij.ui.dsl.gridLayout.HorizontalAlign
 import com.intellij.ui.dsl.gridLayout.VerticalAlign
 import com.intellij.ui.layout.*
@@ -45,8 +46,8 @@ internal class CellBuilderImpl<T : JComponent>(
     return this
   }
 
-  override fun rightLabelGap(): CellBuilder<T> {
-    super.rightLabelGap()
+  override fun gap(rightGap: RightGap): CellBuilder<T> {
+    super.gap(rightGap)
     return this
   }
 

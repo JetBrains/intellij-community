@@ -7,10 +7,7 @@ import com.intellij.openapi.ui.OnePixelDivider
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.ui.SeparatorComponent
 import com.intellij.ui.TitledSeparator
-import com.intellij.ui.dsl.PanelBuilder
-import com.intellij.ui.dsl.RIGHT_GAP_UNASSIGNED
-import com.intellij.ui.dsl.RowBuilder
-import com.intellij.ui.dsl.RowLayout
+import com.intellij.ui.dsl.*
 import com.intellij.ui.dsl.gridLayout.Gaps
 import com.intellij.ui.dsl.gridLayout.HorizontalAlign
 import com.intellij.ui.dsl.gridLayout.JBGrid
@@ -28,7 +25,14 @@ internal class PanelBuilderImpl(private val dialogPanelConfig: DialogPanelConfig
   companion object {
     private val LOG = Logger.getInstance(PanelBuilderImpl::class.java)
 
-    private val DEFAULT_VERTICAL_GAP_COMPONENTS = setOf(JTextComponent::class, AbstractButton::class, JSpinner::class, JLabel::class)
+    private val DEFAULT_VERTICAL_GAP_COMPONENTS = setOf(
+      AbstractButton::class,
+      JComboBox::class,
+      JLabel::class,
+      JSpinner::class,
+      JTextComponent::class,
+      TitledSeparator::class
+    )
   }
 
   private val rows = mutableListOf<RowBuilderImpl>()
@@ -40,12 +44,8 @@ internal class PanelBuilderImpl(private val dialogPanelConfig: DialogPanelConfig
     return result
   }
 
-  override fun panelRow(title: String?, independent: Boolean, init: PanelBuilder.() -> Unit): RowBuilder {
-    val component = if (title == null)
-      SeparatorComponent(0, OnePixelDivider.BACKGROUND, null)
-    else
-      TitledSeparator(title)
-
+  override fun group(title: String?, independent: Boolean, init: PanelBuilder.() -> Unit): RowBuilder {
+    val component = createSeparator(title)
     if (independent) {
       return row {
         val panel = panel {
@@ -56,7 +56,7 @@ internal class PanelBuilderImpl(private val dialogPanelConfig: DialogPanelConfig
         }
 
         panel.init()
-      }
+      }.gap(TopGap.GROUP)
     }
 
     // todo
@@ -83,8 +83,8 @@ internal class PanelBuilderImpl(private val dialogPanelConfig: DialogPanelConfig
     return this
   }
 
-  override fun rightLabelGap(): PanelBuilder {
-    super.rightLabelGap()
+  override fun gap(rightGap: RightGap): PanelBuilder {
+    super.gap(rightGap)
     return this
   }
 
@@ -92,10 +92,16 @@ internal class PanelBuilderImpl(private val dialogPanelConfig: DialogPanelConfig
     val maxColumnsCount = getMaxColumnsCount()
     val rowsGridBuilder = RowsGridBuilder(panel, grid = grid)
 
-    for (row in rows) {
+    for ((index, row) in rows.withIndex()) {
       if (row.cells.isEmpty()) {
         LOG.warn("Row should not be empty")
         continue
+      }
+
+      row.topGap?.let {
+        if (index > 0) {
+          rowsGridBuilder.addBeforeDistance(rowGapDistance(it))
+        }
       }
 
       when (row.rowLayout) {
@@ -196,7 +202,6 @@ internal class PanelBuilderImpl(private val dialogPanelConfig: DialogPanelConfig
 
         cell.build(panel, subGrid)
       }
-      else -> throw IllegalArgumentException()
     }
   }
 
@@ -223,17 +228,19 @@ internal class PanelBuilderImpl(private val dialogPanelConfig: DialogPanelConfig
   private fun getRightGap(cell: CellBuilderBaseImpl<*>, lastCell: Boolean, rowLabel: Boolean): Int {
     val rightGap = cell.rightGap
     if (lastCell) {
-      if (rightGap != RIGHT_GAP_UNASSIGNED) {
+      if (rightGap != null) {
         LOG.warn("Right gap is set for last cell and will be ignored: rightGap = $rightGap")
       }
       return 0
     }
 
-    if (rightGap != RIGHT_GAP_UNASSIGNED) {
-      return rightGap
+    if (rightGap != null) {
+      return when(rightGap) {
+        RightGap.SMALL -> dialogPanelConfig.spacing.horizontalSmallGap
+      }
     }
 
-    return if (rowLabel) dialogPanelConfig.spacing.horizontalLabelGap else dialogPanelConfig.spacing.horizontalDefaultGap
+    return if (rowLabel) dialogPanelConfig.spacing.horizontalSmallGap else dialogPanelConfig.spacing.horizontalDefaultGap
   }
 
 
@@ -265,5 +272,21 @@ internal class PanelBuilderImpl(private val dialogPanelConfig: DialogPanelConfig
 
   private fun getCommentedCellIndex(cells: List<CellBuilderBaseImpl<*>>): Int {
     return cells.indexOfFirst { it.comment != null }
+  }
+
+  private fun rowGapDistance(topGap: TopGap): Int {
+    return when(topGap) {
+      TopGap.GROUP -> dialogPanelConfig.spacing.verticalGroupTopGap
+    }
+  }
+
+  private fun createSeparator(@NlsContexts.BorderTitle title: String?): JComponent {
+    if (title == null) {
+      return SeparatorComponent(0, OnePixelDivider.BACKGROUND, null)
+    }
+
+    val result = TitledSeparator(title)
+    result.border = null
+    return result
   }
 }

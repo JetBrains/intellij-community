@@ -19,5 +19,5 @@ interface PanelBuilderBase {
   /**
    * Adds panel with a title and some space before the panel
    */
-  fun panelRow(@NlsContexts.BorderTitle title: String? = null, independent: Boolean = true, init: PanelBuilder.() -> Unit): RowBuilder
+  fun group(@NlsContexts.BorderTitle title: String? = null, independent: Boolean = true, init: PanelBuilder.() -> Unit): RowBuilder
 }

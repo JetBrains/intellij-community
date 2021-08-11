@@ -4,15 +4,14 @@ package com.intellij.ui.dsl.impl
 import com.intellij.openapi.ui.panel.ComponentPanelBuilder
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.ui.dsl.CellBuilderBase
-import com.intellij.ui.dsl.RIGHT_GAP_UNASSIGNED
+import com.intellij.ui.dsl.RightGap
 import com.intellij.ui.dsl.gridLayout.HorizontalAlign
 import com.intellij.ui.dsl.gridLayout.VerticalAlign
 import org.jetbrains.annotations.ApiStatus
 import javax.swing.JComponent
 
 @ApiStatus.Experimental
-// todo sealed
-internal open class CellBuilderBaseImpl<T : CellBuilderBase<T>>(private val dialogPanelConfig: DialogPanelConfig) : CellBuilderBase<T> {
+internal sealed class CellBuilderBaseImpl<T : CellBuilderBase<T>>(private val dialogPanelConfig: DialogPanelConfig) : CellBuilderBase<T> {
 
   var horizontalAlign = HorizontalAlign.LEFT
     private set
@@ -23,7 +22,7 @@ internal open class CellBuilderBaseImpl<T : CellBuilderBase<T>>(private val dial
   var resizableColumn = false
     private set
 
-  var rightGap = RIGHT_GAP_UNASSIGNED
+  var rightGap: RightGap? = null
     private set
 
   var comment: JComponent? = null
@@ -49,8 +48,8 @@ internal open class CellBuilderBaseImpl<T : CellBuilderBase<T>>(private val dial
     return this
   }
 
-  override fun rightLabelGap(): CellBuilderBase<T> {
-    rightGap = dialogPanelConfig.spacing.horizontalLabelGap
+  override fun gap(rightGap: RightGap): CellBuilderBase<T> {
+    this.rightGap = rightGap
     return this
   }
 }

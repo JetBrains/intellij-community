@@ -6,9 +6,13 @@ import com.intellij.openapi.util.NlsContexts
 import com.intellij.ui.dsl.gridLayout.HorizontalAlign
 import com.intellij.ui.dsl.gridLayout.VerticalAlign
 import org.jetbrains.annotations.ApiStatus
-import javax.swing.JComponent
 
-const val RIGHT_GAP_UNASSIGNED = -1
+enum class RightGap {
+  /**
+   * See [SpacingConfiguration.horizontalSmallGap]
+   */
+  SMALL
+}
 
 @DslMarker
 private annotation class CellBuilderMarker
@@ -32,10 +36,10 @@ interface CellBuilderBase<out T : CellBuilderBase<T>> {
               maxLineLength: Int = ComponentPanelBuilder.MAX_COMMENT_WIDTH): CellBuilderBase<T>
 
   /**
-   * Separates next cell in current row with [SpacingConfiguration.horizontalLabelGap]. This gap is set automatically
-   * by [PanelBuilderBase.row] methods and should be used only in rare cases.
+   * Separates next cell in current row with [rightGap]. [RightGap.SMALL] gap is set after row label automatically
+   * by [PanelBuilderBase.row] methods.
    * Should not be used for last cell in a row
    */
-  fun rightLabelGap(): CellBuilderBase<T>
+  fun gap(rightGap: RightGap): CellBuilderBase<T>
 
 }

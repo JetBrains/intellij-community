@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.dsl
 
+import com.intellij.openapi.ui.ComboBox
 import com.intellij.ui.dsl.gridLayout.HorizontalAlign
 import com.intellij.ui.dsl.gridLayout.VerticalAlign
 import com.intellij.ui.layout.*
@@ -25,7 +26,7 @@ interface CellBuilder<out T : JComponent> : CellBuilderBase<CellBuilder<T>> {
 
   override fun comment(comment: String, maxLineLength: Int): CellBuilder<T>
 
-  override fun rightLabelGap(): CellBuilder<T>
+  override fun gap(rightGap: RightGap): CellBuilder<T>
 
   val component: T
 
@@ -89,4 +90,21 @@ fun <T : JTextComponent> CellBuilder<T>.bindIntText(prop: KMutableProperty0<Int>
 
 fun <T : JTextComponent> CellBuilder<T>.bindIntText(getter: () -> Int, setter: (Int) -> Unit): CellBuilder<T> {
   return bindIntText(PropertyBinding(getter, setter))
+}
+
+fun <T> CellBuilder<ComboBox<T>>.bindItem(binding: PropertyBinding<T?>): CellBuilder<ComboBox<T>> {
+  component.selectedItem = binding.get()
+  return bind({ component -> component.selectedItem as T? },
+              { component, value -> component.setSelectedItem(value) },
+              binding)
+}
+
+/* todo
+fun <T> CellBuilder<ComboBox<T>>.bindItem(prop: KMutableProperty0<T>): CellBuilder<ComboBox<T>> {
+  return bindItem(prop.toBinding().toNullable())
+}
+*/
+
+fun <T> CellBuilder<ComboBox<T>>.bindItem(getter: () -> T?, setter: (T?) -> Unit): CellBuilder<ComboBox<T>> {
+  return bindItem(PropertyBinding(getter, setter))
 }

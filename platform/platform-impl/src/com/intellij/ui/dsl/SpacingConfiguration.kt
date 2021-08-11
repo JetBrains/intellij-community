@@ -7,9 +7,9 @@ import org.jetbrains.annotations.ApiStatus
 interface SpacingConfiguration {
 
   /**
-   * Horizontal gap between label and related component
+   * Small horizontal gap, used between label and related component for example
    */
-  val horizontalLabelGap: Int
+  val horizontalSmallGap: Int
 
   /**
    * Default horizontal gap between components in one row
@@ -30,5 +30,10 @@ interface SpacingConfiguration {
    * Vertical gap after comment
    */
   val verticalCommentBottomGap: Int
+
+  /**
+   * Vertical gap before group
+   */
+  val verticalGroupTopGap: Int
 
 }

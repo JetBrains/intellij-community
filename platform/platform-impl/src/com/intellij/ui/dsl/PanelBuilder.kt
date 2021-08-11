@@ -16,6 +16,6 @@ interface PanelBuilder : PanelBuilderBase, CellBuilderBase<PanelBuilder> {
 
   override fun comment(comment: String, maxLineLength: Int): PanelBuilder
 
-  override fun rightLabelGap(): PanelBuilder
+  override fun gap(rightGap: RightGap): PanelBuilder
 
 }

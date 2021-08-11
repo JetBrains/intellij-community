@@ -38,18 +38,15 @@ class RowsGridBuilder(private val panel: JComponent, grid: JBGrid? = null) {
       throw JBGridException("Invalid parameter: distance = $distance")
     }
 
-    // Update rowsDistance
-    if (y != GRID_EMPTY && distance > 0) {
-      val rowsDistance = grid.rowsDistance.toMutableList()
-      while (rowsDistance.size <= y) {
-        rowsDistance.add(0)
-      }
-      rowsDistance[y] = distance
-      grid.rowsDistance = rowsDistance
-    }
-
     x = 0
     y++
+
+    // Update rowsDistance
+    if (y != GRID_EMPTY && distance > 0) {
+      val rowsDistance = enlargeRowsDistance()
+      rowsDistance[y - 1] = distance
+    }
+
 
     if (resizable) {
       val resizableRows = grid.resizableRows.toMutableSet()
@@ -80,6 +77,14 @@ class RowsGridBuilder(private val panel: JComponent, grid: JBGrid? = null) {
     return skip(width)
   }
 
+  /**
+   * Adds distance before current row. Cannot be used for the first row
+   */
+  fun addBeforeDistance(distance: Int) {
+    val rowsDistance = enlargeRowsDistance()
+    rowsDistance[y - 1] += distance
+  }
+
   fun subGrid(width: Int = 1,
               horizontalAlign: HorizontalAlign = HorizontalAlign.LEFT,
               verticalAlign: VerticalAlign = VerticalAlign.TOP,
@@ -106,6 +111,15 @@ class RowsGridBuilder(private val panel: JComponent, grid: JBGrid? = null) {
     x += count
     columnsCount = max(columnsCount, x)
     return this
+  }
+
+  private fun enlargeRowsDistance(): MutableList<Int> {
+    val result = grid.rowsDistance.toMutableList()
+    while (result.size <= y) {
+      result.add(0)
+    }
+    grid.rowsDistance = result
+    return result
   }
 
   private fun addResizableColumn() {
