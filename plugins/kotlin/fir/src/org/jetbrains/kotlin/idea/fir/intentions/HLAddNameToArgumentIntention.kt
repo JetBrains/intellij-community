@@ -9,7 +9,7 @@ import org.jetbrains.kotlin.idea.fir.api.applicator.HLApplicatorInputProvider
 import org.jetbrains.kotlin.idea.fir.api.applicator.inputProvider
 import org.jetbrains.kotlin.idea.fir.applicators.AddArgumentNamesApplicators
 import org.jetbrains.kotlin.idea.fir.applicators.ApplicabilityRanges
-import org.jetbrains.kotlin.idea.frontend.api.calls.KtCallWithArguments
+import org.jetbrains.kotlin.idea.frontend.api.calls.KtCall
 import org.jetbrains.kotlin.idea.frontend.api.calls.getSingleCandidateSymbolOrNull
 import org.jetbrains.kotlin.idea.project.languageVersionSettings
 import org.jetbrains.kotlin.name.Name
@@ -27,7 +27,7 @@ class HLAddNameToArgumentIntention :
         if (shouldBeLastUnnamed && element != argumentList.arguments.last { !it.isNamed() }) return@inputProvider null
 
         val callElement = argumentList.parent as? KtCallElement ?: return@inputProvider null
-        val resolvedCall = callElement.resolveCall() as? KtCallWithArguments ?: return@inputProvider null
+        val resolvedCall = callElement.resolveCall() ?: return@inputProvider null
 
         if (resolvedCall.targetFunction.getSingleCandidateSymbolOrNull()?.hasStableParameterNames != true) {
             return@inputProvider null
@@ -40,7 +40,7 @@ class HLAddNameToArgumentIntention :
             element is KtContainerNode || super.skipProcessingFurtherElementsAfter(element)
 
     companion object {
-        fun getArgumentNameIfCanBeUsedForCalls(argument: KtValueArgument, resolvedCall: KtCallWithArguments): Name? {
+        fun getArgumentNameIfCanBeUsedForCalls(argument: KtValueArgument, resolvedCall: KtCall): Name? {
             val valueParameterSymbol = resolvedCall.argumentMapping[argument] ?: return null
             if (valueParameterSymbol.isVararg) {
                 if (argument.languageVersionSettings.supportsFeature(LanguageFeature.ProhibitAssigningSingleElementsToVarargsInNamedForm) &&
