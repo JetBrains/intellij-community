@@ -34,7 +34,7 @@ inline fun zipFile(content: DirectoryContentBuilder.() -> Unit): DirectoryConten
  * from testData directory.
  */
 fun directoryContentOf(dir: Path): DirectoryContentSpec {
-  return createSpecByDirectory(dir)
+  return DirectorySpec().also { fillSpecFromDirectory(it, dir) }
 }
 
 abstract class DirectoryContentBuilder {
@@ -90,7 +90,7 @@ interface DirectoryContentSpec {
 @JvmOverloads
 fun File.assertMatches(spec: DirectoryContentSpec, fileTextMatcher: FileTextMatcher = FileTextMatcher.exact(),
                        filePathFilter: (String) -> Boolean = { true }) {
-  assertDirectoryContentMatches(this, spec as DirectoryContentSpecImpl, ".", fileTextMatcher, filePathFilter)
+  assertContentUnderFileMatches(this, spec as DirectoryContentSpecImpl, fileTextMatcher, filePathFilter)
 }
 
 /**
@@ -100,7 +100,7 @@ fun File.assertMatches(spec: DirectoryContentSpec, fileTextMatcher: FileTextMatc
 @JvmOverloads
 fun Path.assertMatches(spec: DirectoryContentSpec, fileTextMatcher: FileTextMatcher = FileTextMatcher.exact(),
                        filePathFilter: (String) -> Boolean = { true }) {
-  assertDirectoryContentMatches(toFile(), spec as DirectoryContentSpecImpl, ".", fileTextMatcher, filePathFilter)
+  assertContentUnderFileMatches(toFile(), spec as DirectoryContentSpecImpl, fileTextMatcher, filePathFilter)
 }
 
 interface FileTextMatcher {
