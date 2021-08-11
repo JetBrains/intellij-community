@@ -7,12 +7,15 @@ import org.jetbrains.kotlin.idea.test.JUnit3RunnerWithInners
 import org.jetbrains.kotlin.test.TestMetadata
 import org.jetbrains.uast.*
 import org.jetbrains.kotlin.idea.fir.uast.env.kotlin.AbstractFirUastTest
+import org.jetbrains.kotlin.test.KotlinRoot
 import org.jetbrains.uast.test.common.kotlin.UastResolveApiTestBase
 import org.junit.runner.RunWith
 
 @RunWith(JUnit3RunnerWithInners::class)
-class FirUastResolveApiTest : AbstractFirUastTest() {
+open class FirUastResolveApiTest : AbstractFirUastTest() {
     override val isFirUastPlugin: Boolean = true
+
+    override val basePath = KotlinRoot.DIR_PATH.resolve("uast")
 
     override fun check(filePath: String, file: UFile) {
         // Bogus
@@ -21,7 +24,7 @@ class FirUastResolveApiTest : AbstractFirUastTest() {
     @TestMetadata("plugins/uast-kotlin-fir/testData/declaration")
     @TestDataPath("\$PROJECT_ROOT")
     @RunWith(JUnit3RunnerWithInners::class)
-    class Declaration : AbstractFirUastTest(), UastResolveApiTestBase {
+    class Declaration : FirUastResolveApiTest(), UastResolveApiTestBase {
         override val isFirUastPlugin: Boolean = true
 
         override fun check(filePath: String, file: UFile) {
@@ -30,12 +33,12 @@ class FirUastResolveApiTest : AbstractFirUastTest() {
 
         @TestMetadata("doWhile.kt")
         fun testDoWhile() {
-            doCheck("../uast-kotlin-fir/testData/declaration/doWhile.kt", ::checkCallbackForDoWhile)
+            doCheck("uast-kotlin-fir/testData/declaration/doWhile.kt", ::checkCallbackForDoWhile)
         }
 
         @TestMetadata("if.kt")
         fun testIf() {
-            doCheck("../uast-kotlin-fir/testData/declaration/if.kt", ::checkCallbackForIf)
+            doCheck("uast-kotlin-fir/testData/declaration/if.kt", ::checkCallbackForIf)
         }
 
         // TODO: once call is supported, test labeledExpression.kt for labeled this and super
@@ -44,7 +47,7 @@ class FirUastResolveApiTest : AbstractFirUastTest() {
     @TestMetadata("../uast-kotlin/testData")
     @TestDataPath("\$PROJECT_ROOT")
     @RunWith(JUnit3RunnerWithInners::class)
-    class Legacy : AbstractFirUastTest(), UastResolveApiTestBase {
+    class Legacy : FirUastResolveApiTest(), UastResolveApiTestBase {
         override val isFirUastPlugin: Boolean = true
 
         override fun check(filePath: String, file: UFile) {
@@ -53,17 +56,16 @@ class FirUastResolveApiTest : AbstractFirUastTest() {
 
         @TestMetadata("MethodReference.kt")
         fun testMethodReference() {
-            doCheck("../uast-kotlin/testData/MethodReference.kt", ::checkCallbackForMethodReference)
+            doCheck("uast-kotlin/testData/MethodReference.kt", ::checkCallbackForMethodReference)
         }
 
         @TestMetadata("Imports.kt")
         fun testImports() {
-            doCheck("../uast-kotlin/testData/Imports.kt", ::checkCallbackForImports)
+            doCheck("uast-kotlin/testData/Imports.kt", ::checkCallbackForImports)
         }
 
-        @TestMetadata("ReceiverFun.kt")
         fun testReceiverFun() {
-            doCheck("../uast-kotlin/testData/ReceiverFun.kt", ::checkCallbackForReceiverFun)
+            doCheck("uast-kotlin/testData/ReceiverFun.kt", ::checkCallbackForReceiverFun)
         }
     }
 }
