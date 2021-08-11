@@ -34,6 +34,8 @@ public class JavaCompletionTestSuite extends TestSuite {
     myTestCaseLoader.fillTestCases("", TestAll.getClassRoots());
     for (Class<?> aClass : myTestCaseLoader.getClasses()) {
       if (!aClass.getSimpleName().contains("Completion")) continue;
+      // JavaCompletionFeaturesTest does not depend on indices
+      if (JavaCompletionFeaturesTest.class.equals(aClass)) continue;
       if (TestIndexingModeSupporter.class.isAssignableFrom(aClass)) {
         //noinspection unchecked
         Class<? extends TestIndexingModeSupporter> testCaseClass = (Class<? extends TestIndexingModeSupporter>)aClass;
