@@ -56,8 +56,7 @@ public class MarkdownHighlightingAnnotator implements Annotator {
 
     final TextAttributesKey[] tokenHighlights = SYNTAX_HIGHLIGHTER.getTokenHighlights(type);
 
-    if (tokenHighlights.length > 0 && !MarkdownHighlighterColors.TEXT_ATTR_KEY.equals(tokenHighlights[0])
-        && !tokenHighlights[0].getExternalName().equals("MARKDOWN_LIST_ITEM")) {
+    if (tokenHighlights.length > 0 && !MarkdownHighlighterColors.TEXT_ATTR_KEY.equals(tokenHighlights[0])) {
       holder.newSilentAnnotation(HighlightSeverity.INFORMATION).textAttributes(tokenHighlights[0]).create();
     }
   }
