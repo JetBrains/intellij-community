@@ -1,5 +1,4 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-@file:Suppress("DEPRECATION_ERROR")
 
 package org.jetbrains.kotlin.idea.gradle.configuration
 
@@ -200,7 +199,7 @@ class KotlinGradleLibraryDataService : AbstractProjectDataService<LibraryData, V
 }
 
 fun detectPlatformKindByPlugin(moduleNode: DataNode<ModuleData>): IdePlatformKind<*>? {
-    val pluginId = moduleNode.platformPluginId
+    val pluginId = moduleNode.kotlinGradleSourceSetData.platformPluginId
     return IdePlatformKind.ALL_KINDS.firstOrNull { it.tooling.gradlePluginId == pluginId }
 }
 
@@ -211,7 +210,7 @@ fun detectPlatformKindByPlugin(moduleNode: DataNode<ModuleData>): IdePlatformKin
     level = DeprecationLevel.ERROR
 )
 fun detectPlatformByPlugin(moduleNode: DataNode<ModuleData>): TargetPlatformKind<*>? {
-    return when (moduleNode.platformPluginId) {
+    return when (moduleNode.kotlinGradleSourceSetData.platformPluginId) {
         "kotlin-platform-jvm" -> TargetPlatformKind.Jvm[JvmTarget.DEFAULT]
         "kotlin-platform-js" -> TargetPlatformKind.JavaScript
         "kotlin-platform-common" -> TargetPlatformKind.Common
@@ -245,9 +244,10 @@ fun configureFacetByGradleModule(
     sourceSetName: String? = sourceSetNode?.data?.id?.let { it.substring(it.lastIndexOf(':') + 1) }
 ): KotlinFacet? {
     if (moduleNode.kotlinSourceSet != null) return null // Suppress in the presence of new MPP model
-    if (!moduleNode.isResolved) return null
+    val kotlinGradleSourceSetData = moduleNode.kotlinGradleSourceSetData
+    if (!kotlinGradleSourceSetData.isResolved) return null
 
-    if (!moduleNode.hasKotlinPlugin) {
+    if (!kotlinGradleSourceSetData.hasKotlinPlugin) {
         val facetModel = modelsProvider.getModifiableFacetModel(ideModule)
         val facet = facetModel.getFacetByType(KotlinFacetType.TYPE_ID)
         if (facet != null) {
@@ -272,18 +272,18 @@ fun configureFacetByGradleModule(
     )
 
     if (sourceSetNode == null) {
-        ideModule.compilerArgumentsBySourceSet = moduleNode.compilerArgumentsBySourceSet
+        ideModule.compilerArgumentsBySourceSet = kotlinGradleSourceSetData.compilerArgumentsBySourceSet
         ideModule.sourceSetName = sourceSetName
     }
     ideModule.hasExternalSdkConfiguration = sourceSetNode?.data?.sdkName != null
 
-    val argsInfo = moduleNode.compilerArgumentsBySourceSet?.get(sourceSetName ?: "main")
+    val argsInfo = kotlinGradleSourceSetData.compilerArgumentsBySourceSet?.get(sourceSetName ?: "main")
     if (argsInfo != null) {
         configureFacetByCompilerArguments(kotlinFacet, argsInfo, modelsProvider)
     }
 
     with(kotlinFacet.configuration.settings) {
-        implementedModuleNames = (sourceSetNode ?: moduleNode).implementedModuleNames
+        implementedModuleNames = (sourceSetNode ?: moduleNode).kotlinGradleSourceSetData.implementedModuleNames.toList()
         productionOutputPath = getExplicitOutputPath(moduleNode, platformKind, "main")
         testOutputPath = getExplicitOutputPath(moduleNode, platformKind, "test")
     }
@@ -312,12 +312,13 @@ private fun getExplicitOutputPath(moduleNode: DataNode<ModuleData>, platformKind
         return null
     }
 
-    val k2jsArgumentList = moduleNode.compilerArgumentsBySourceSet?.get(sourceSet)?.currentArguments ?: return null
+    val k2jsArgumentList =
+        moduleNode.kotlinGradleSourceSetData.compilerArgumentsBySourceSet?.get(sourceSet)?.currentArguments ?: return null
     return K2JSCompilerArguments().apply { parseCommandLineArguments(k2jsArgumentList, this) }.outputFile
 }
 
 private fun getAdditionalVisibleModuleNames(moduleNode: DataNode<ModuleData>, sourceSetName: String): Set<String> {
-    return moduleNode.additionalVisibleSourceSets[sourceSetName].orEmpty()
+    return moduleNode.kotlinGradleSourceSetData.additionalVisibleSourceSets[sourceSetName].orEmpty()
         .mapNotNull { additionalVisibleSourceSetName ->
             moduleNode.children.map { it.data }
                 .filterIsInstance<GradleSourceSetData>().find { otherGradleSourceSetData ->

@@ -479,9 +479,12 @@ open class KotlinMPPGradleProjectResolver : AbstractProjectResolverExtension() {
                 }
             }
 
-            mainModuleNode.kotlinNativeHome = mppModel.kotlinNativeHome
-            mainModuleNode.coroutines = mppModel.extraFeatures.coroutinesState
-            mainModuleNode.isHmpp = mppModel.extraFeatures.isHMPPEnabled
+            with(mainModuleNode.kotlinGradleSourceSetData) {
+                kotlinNativeHome = mppModel.kotlinNativeHome
+                coroutines = mppModel.extraFeatures.coroutinesState
+                isHmpp = mppModel.extraFeatures.isHMPPEnabled
+            }
+
             //TODO improve passing version of used multiplatform
         }
 
@@ -575,11 +578,7 @@ open class KotlinMPPGradleProjectResolver : AbstractProjectResolverExtension() {
                 .flatMap { it.kotlinTaskProperties.pureKotlinSourceFolders ?: emptyList() }
                 .map { it.absolutePath }
 
-            ideModule.pureKotlinSourceFolders =
-                if (ideModule.pureKotlinSourceFolders.isEmpty())
-                    mppModelPureKotlinSourceFolders
-                else
-                    mppModelPureKotlinSourceFolders + ideModule.pureKotlinSourceFolders
+            ideModule.kotlinGradleSourceSetData.pureKotlinSourceFolders.addAll(mppModelPureKotlinSourceFolders)
         }
 
         internal data class CompilationWithDependencies(

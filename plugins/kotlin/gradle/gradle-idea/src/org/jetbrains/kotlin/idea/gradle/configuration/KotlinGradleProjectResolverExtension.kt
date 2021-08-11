@@ -28,41 +28,59 @@ import org.jetbrains.plugins.gradle.model.data.GradleSourceSetData
 import org.jetbrains.plugins.gradle.service.project.AbstractProjectResolverExtension
 import org.jetbrains.plugins.gradle.service.project.GradleProjectResolver
 import org.jetbrains.plugins.gradle.service.project.GradleProjectResolverUtil
+import org.jetbrains.plugins.gradle.service.project.ProjectResolverContext
 import java.io.File
 import java.util.*
-import kotlin.collections.HashMap
 
-var DataNode<ModuleData>.isResolved
+@Deprecated("Use KotlinGradleSourceSetData#isResolved instead", level = DeprecationLevel.ERROR)
+var DataNode<out ModuleData>.isResolved
         by NotNullableCopyableDataNodeUserDataProperty(Key.create<Boolean>("IS_RESOLVED"), false)
-var DataNode<ModuleData>.hasKotlinPlugin
+
+@Deprecated("Use KotlinGradleSourceSetData#hasKotlinPlugin instead", level = DeprecationLevel.ERROR)
+var DataNode<out ModuleData>.hasKotlinPlugin
         by NotNullableCopyableDataNodeUserDataProperty(Key.create<Boolean>("HAS_KOTLIN_PLUGIN"), false)
-var DataNode<ModuleData>.compilerArgumentsBySourceSet
+
+@Deprecated("Use KotlinGradleSourceSetData#compilerArgumentsBySourceSet instead", level = DeprecationLevel.ERROR)
+var DataNode<out ModuleData>.compilerArgumentsBySourceSet
         by CopyableDataNodeUserDataProperty(Key.create<CompilerArgumentsBySourceSet>("CURRENT_COMPILER_ARGUMENTS"))
-var DataNode<ModuleData>.additionalVisibleSourceSets
+
+@Deprecated("Use KotlinGradleSourceSetData#additionalVisibleSourceSets instead", level = DeprecationLevel.ERROR)
+var DataNode<out ModuleData>.additionalVisibleSourceSets
         by CopyableDataNodeUserDataProperty(Key.create<AdditionalVisibleSourceSetsBySourceSet>("ADDITIONAL_VISIBLE_SOURCE_SETS"))
-var DataNode<ModuleData>.coroutines
+
+@Deprecated("Use KotlinGradleSourceSetData#coroutines instead", level = DeprecationLevel.ERROR)
+var DataNode<out ModuleData>.coroutines
         by CopyableDataNodeUserDataProperty(Key.create<String>("KOTLIN_COROUTINES"))
+
+@Deprecated("Use KotlinGradleSourceSetData#isHmpp instead", level = DeprecationLevel.ERROR)
 var DataNode<out ModuleData>.isHmpp
         by NotNullableCopyableDataNodeUserDataProperty(Key.create<Boolean>("IS_HMPP_MODULE"), false)
-var DataNode<ModuleData>.platformPluginId
+
+@Deprecated("Use KotlinGradleSourceSetData#platformPluginId instead", level = DeprecationLevel.ERROR)
+var DataNode<out ModuleData>.platformPluginId
         by CopyableDataNodeUserDataProperty(Key.create<String>("PLATFORM_PLUGIN_ID"))
-var DataNode<ModuleData>.kotlinNativeHome
+
+@Deprecated("Use KotlinGradleSourceSetData#kotlinNativeHome instead", level = DeprecationLevel.ERROR)
+var DataNode<out ModuleData>.kotlinNativeHome
         by CopyableDataNodeUserDataProperty(Key.create<String>("KOTLIN_NATIVE_HOME"))
+
+@Deprecated("Use KotlinGradleSourceSetData#implementedModuleNames instead", level = DeprecationLevel.ERROR)
 var DataNode<out ModuleData>.implementedModuleNames
         by NotNullableCopyableDataNodeUserDataProperty(Key.create<List<String>>("IMPLEMENTED_MODULE_NAME"), emptyList())
 
+@Deprecated("Use KotlinGradleSourceSetData#dependenciesCache instead", level = DeprecationLevel.ERROR)
 // Project is usually the same during all import, thus keeping Map Project->Dependencies makes model a bit more complicated but allows to avoid future problems
 var DataNode<out ModuleData>.dependenciesCache
         by DataNodeUserDataProperty(
             Key.create<MutableMap<DataNode<ProjectData>, Collection<DataNode<out ModuleData>>>>("MODULE_DEPENDENCIES_CACHE")
         )
+
+@Deprecated("Use KotlinGradleSourceSetData#implementedModuleNames instead", level = DeprecationLevel.ERROR)
 var DataNode<out ModuleData>.pureKotlinSourceFolders
         by NotNullableCopyableDataNodeUserDataProperty(Key.create<List<String>>("PURE_KOTLIN_SOURCE_FOLDER"), emptyList())
 
-
 class KotlinGradleProjectResolverExtension : AbstractProjectResolverExtension() {
     val isAndroidProjectKey = Key.findKeyByName("IS_ANDROID_PROJECT_KEY")
-    private val LOG = Logger.getInstance(PsiPrecedences::class.java)
 
     override fun getToolingExtensionsClasses(): Set<Class<out Any>> {
         return setOf(KotlinGradleModelBuilder::class.java, Unit::class.java)
@@ -77,6 +95,50 @@ class KotlinGradleProjectResolverExtension : AbstractProjectResolverExtension() 
         val isAndroidPluginRequestingKotlinGradleModel =
             isAndroidPluginRequestingKotlinGradleModelKey != null && resolverCtx.getUserData(isAndroidPluginRequestingKotlinGradleModelKey) != null
         return AndroidAwareGradleModelProvider(KotlinGradleModel::class.java, isAndroidPluginRequestingKotlinGradleModel)
+    }
+
+    override fun createModule(gradleModule: IdeaModule, projectDataNode: DataNode<ProjectData>): DataNode<ModuleData>? {
+        return super.createModule(gradleModule, projectDataNode)?.also {
+            initializeModuleData(gradleModule, it, projectDataNode, resolverCtx)
+        }
+    }
+
+    private fun initializeModuleData(
+        gradleModule: IdeaModule,
+        mainModuleNode: DataNode<ModuleData>,
+        projectDataNode: DataNode<ProjectData>,
+        resolverCtx: ProjectResolverContext
+    ) {
+        LOG.logDebugIfEnabled("Start initialize data for Gradle module: [$gradleModule], Ide module: [$mainModuleNode], Ide project: [$projectDataNode]")
+
+        val mppModel = resolverCtx.getMppModel(gradleModule)
+        val project = resolverCtx.externalSystemTaskId.findProject()
+        if (mppModel != null) {
+            mppModel.targets.forEach { target ->
+                KotlinIDEGradleActionsFUSCollector.logImport(
+                    project,
+                    "MPP.${target.platform.id + (target.presetName?.let { ".$it" } ?: "")}")
+            }
+            return
+        }
+
+        val gradleModel = resolverCtx.getExtraProject(gradleModule, KotlinGradleModel::class.java) ?: return
+
+        if (gradleModel.hasKotlinPlugin) {
+            KotlinIDEGradleActionsFUSCollector.logImport(project, gradleModel.kotlinTarget ?: "unknown")
+        }
+
+        with(mainModuleNode.kotlinGradleSourceSetData) {
+            isResolved = true
+            hasKotlinPlugin = gradleModel.hasKotlinPlugin
+            compilerArgumentsBySourceSet = gradleModel.compilerArgumentsBySourceSet.deepCopy()
+            additionalVisibleSourceSets = gradleModel.additionalVisibleSourceSets
+            coroutines = gradleModel.coroutines
+            platformPluginId = gradleModel.platformPluginId
+            pureKotlinSourceFolders.addAll(
+                gradleModel.kotlinTaskProperties.flatMap { it.value.pureKotlinSourceFolders ?: emptyList() }.map { it.absolutePath }
+            )
+        }
     }
 
     private fun useModulePerSourceSet(): Boolean {
@@ -100,7 +162,7 @@ class KotlinGradleProjectResolverExtension : AbstractProjectResolverExtension() 
         .singleOrNull()
 
     private fun DataNode<out ModuleData>.getDependencies(ideProject: DataNode<ProjectData>): Collection<DataNode<out ModuleData>> {
-        val cache = dependenciesCache ?: HashMap()
+        val cache = kotlinGradleSourceSetData.dependenciesCache
         if (cache.containsKey(ideProject)) {
             return cache[ideProject]!!
         }
@@ -128,7 +190,6 @@ class KotlinGradleProjectResolverExtension : AbstractProjectResolverExtension() 
             }
         }
         cache[ideProject] = result
-        dependenciesCache = cache
         return result
     }
 
@@ -200,17 +261,9 @@ class KotlinGradleProjectResolverExtension : AbstractProjectResolverExtension() 
         ideModule: DataNode<ModuleData>,
         ideProject: DataNode<ProjectData>
     ) {
-        if (LOG.isDebugEnabled) {
-            LOG.debug("Start populate module dependencies. Gradle module: [$gradleModule], Ide module: [$ideModule], Ide project: [$ideProject]")
-        }
+        LOG.logDebugIfEnabled("Start populate module dependencies. Gradle module: [$gradleModule], Ide module: [$ideModule], Ide project: [$ideProject]")
         val mppModel = resolverCtx.getMppModel(gradleModule)
-        val project = resolverCtx.externalSystemTaskId.findProject()
         if (mppModel != null) {
-            mppModel.targets.forEach { target ->
-                KotlinIDEGradleActionsFUSCollector.logImport(
-                    project,
-                    "MPP.${target.platform.id + (target.presetName?.let { ".$it" } ?: "")}")
-            }
             return super.populateModuleDependencies(gradleModule, ideModule, ideProject)
         }
 
@@ -223,26 +276,12 @@ class KotlinGradleProjectResolverExtension : AbstractProjectResolverExtension() 
         }
 
         addTransitiveDependenciesOnImplementedModules(gradleModule, ideModule, ideProject)
-
-        ideModule.isResolved = true
-        ideModule.hasKotlinPlugin = gradleModel.hasKotlinPlugin
-        ideModule.compilerArgumentsBySourceSet = gradleModel.compilerArgumentsBySourceSet.deepCopy()
-        ideModule.additionalVisibleSourceSets = gradleModel.additionalVisibleSourceSets
-        ideModule.coroutines = gradleModel.coroutines
-        ideModule.platformPluginId = gradleModel.platformPluginId
-
-        if (gradleModel.hasKotlinPlugin) {
-            KotlinIDEGradleActionsFUSCollector.logImport(project, gradleModel.kotlinTarget ?: "unknown")
-        }
-
         addImplementedModuleNames(gradleModule, ideModule, ideProject, gradleModel)
 
         if (useModulePerSourceSet()) {
             super.populateModuleDependencies(gradleModule, ideModule, ideProject)
         }
-        if (LOG.isDebugEnabled) {
-            LOG.debug("Finish populating module dependencies. Gradle module: [$gradleModule], Ide module: [$ideModule], Ide project: [$ideProject]")
-        }
+        LOG.logDebugIfEnabled("Finish populating module dependencies. Gradle module: [$gradleModule], Ide module: [$ideModule], Ide project: [$ideProject]")
     }
 
     private fun addImplementedModuleNames(
@@ -256,26 +295,15 @@ class KotlinGradleProjectResolverExtension : AbstractProjectResolverExtension() 
             val dependentSourceSets = dependentModule.getSourceSetsMap()
             val implementedSourceSetMaps = implementedModules.map { it.getSourceSetsMap() }
             for ((sourceSetName, dependentSourceSet) in dependentSourceSets) {
-                dependentSourceSet.implementedModuleNames = implementedSourceSetMaps.mapNotNull { it[sourceSetName]?.data?.internalName }
+                dependentSourceSet.kotlinGradleSourceSetData.implementedModuleNames.addAll(
+                    implementedSourceSetMaps.mapNotNull { it[sourceSetName]?.data?.internalName }
+                )
             }
         } else {
-            dependentModule.implementedModuleNames = implementedModules.map { it.data.internalName }
+            dependentModule.kotlinGradleSourceSetData.implementedModuleNames.addAll(implementedModules.map { it.data.internalName })
         }
     }
 
-    private fun DataNode<ModuleData>.getSourceSetsMap() =
-        ExternalSystemApiUtil.getChildren(this, GradleSourceSetData.KEY).associateBy { it.sourceSetName }
-
-    private val DataNode<out ModuleData>.sourceSetName
-        get() = (data as? GradleSourceSetData)?.id?.substringAfterLast(':')
-
-    private fun addDependency(ideModule: DataNode<out ModuleData>, targetModule: DataNode<out ModuleData>) {
-        val moduleDependencyData = ModuleDependencyData(ideModule.data, targetModule.data)
-        moduleDependencyData.scope = DependencyScope.COMPILE
-        moduleDependencyData.isExported = false
-        moduleDependencyData.isProductionOnTestDependency = targetModule.sourceSetName == "test"
-        ideModule.createChild(ProjectKeys.MODULE_DEPENDENCY, moduleDependencyData)
-    }
 
     private fun findModuleById(ideProject: DataNode<ProjectData>, gradleModule: IdeaModule, moduleId: String): DataNode<ModuleData>? {
         val isCompositeProject = resolverCtx.models.ideaProject != gradleModule.project
@@ -294,13 +322,6 @@ class KotlinGradleProjectResolverExtension : AbstractProjectResolverExtension() 
         val moduleNamePrefix = GradleProjectResolverUtil.getModuleId(resolverCtx, gradleModule)
         resolverCtx.getExtraProject(gradleModule, KotlinGradleModel::class.java)?.let { gradleModel ->
             KotlinGradleFUSLogger.populateGradleUserDir(gradleModel.gradleUserHome)
-            val gradleModelPureKotlinSourceFolders =
-                gradleModel.kotlinTaskProperties.flatMap { it.value.pureKotlinSourceFolders ?: emptyList() }.map { it.absolutePath }
-            ideModule.pureKotlinSourceFolders =
-                if (ideModule.pureKotlinSourceFolders.isEmpty())
-                    gradleModelPureKotlinSourceFolders
-                else
-                    gradleModelPureKotlinSourceFolders + ideModule.pureKotlinSourceFolders
 
             val gradleSourceSets = ideModule.children.filter { it.data is GradleSourceSetData } as Collection<DataNode<GradleSourceSetData>>
             for (gradleSourceSetNode in gradleSourceSets) {
@@ -328,6 +349,28 @@ class KotlinGradleProjectResolverExtension : AbstractProjectResolverExtension() 
                     }
                 }
             }
+        }
+    }
+
+    companion object {
+        private val LOG = Logger.getInstance(PsiPrecedences::class.java)
+
+        private fun Logger.logDebugIfEnabled(message: String) {
+            if (isDebugEnabled) debug(message)
+        }
+
+        private fun DataNode<ModuleData>.getSourceSetsMap() =
+            ExternalSystemApiUtil.getChildren(this, GradleSourceSetData.KEY).associateBy { it.sourceSetName }
+
+        private val DataNode<out ModuleData>.sourceSetName
+            get() = (data as? GradleSourceSetData)?.id?.substringAfterLast(':')
+
+        private fun addDependency(ideModule: DataNode<out ModuleData>, targetModule: DataNode<out ModuleData>) {
+            val moduleDependencyData = ModuleDependencyData(ideModule.data, targetModule.data)
+            moduleDependencyData.scope = DependencyScope.COMPILE
+            moduleDependencyData.isExported = false
+            moduleDependencyData.isProductionOnTestDependency = targetModule.sourceSetName == "test"
+            ideModule.createChild(ProjectKeys.MODULE_DEPENDENCY, moduleDependencyData)
         }
     }
 }

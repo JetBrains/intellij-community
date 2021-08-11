@@ -18,7 +18,10 @@ import com.intellij.openapi.roots.ExportableOrderEntry
 import com.intellij.openapi.roots.ModifiableRootModel
 import com.intellij.openapi.util.io.FileUtil
 import org.jetbrains.kotlin.cli.common.arguments.K2JSCompilerArguments
-import org.jetbrains.kotlin.config.*
+import org.jetbrains.kotlin.config.JvmTarget
+import org.jetbrains.kotlin.config.KotlinModuleKind
+import org.jetbrains.kotlin.config.SourceKotlinRootType
+import org.jetbrains.kotlin.config.TestSourceKotlinRootType
 import org.jetbrains.kotlin.gradle.KotlinCompilation
 import org.jetbrains.kotlin.gradle.KotlinModule
 import org.jetbrains.kotlin.gradle.KotlinPlatform
@@ -171,7 +174,7 @@ class KotlinSourceSetDataService : AbstractProjectDataService<GradleSourceSetDat
 
             val platformKinds = kotlinSourceSet.actualPlatforms.platforms //TODO(auskov): fix calculation of jvm target
                 .map { IdePlatformKindTooling.getTooling(it).kind }
-                .flatMap { it.toSimplePlatforms(moduleData, mainModuleNode.isHmpp, projectPlatforms) }
+                .flatMap { it.toSimplePlatforms(moduleData, mainModuleNode.kotlinGradleSourceSetData.isHmpp, projectPlatforms) }
                 .distinct()
                 .toSet()
 
@@ -182,12 +185,13 @@ class KotlinSourceSetDataService : AbstractProjectDataService<GradleSourceSetDat
             // because this DataService was separated from KotlinGradleSourceSetDataService for MPP projects only
             val id = if (compilerArguments?.multiPlatform == true) GradleConstants.SYSTEM_ID.id else null
             val kotlinFacet = ideModule.getOrCreateFacet(modelsProvider, false, id)
+            val kotlinGradleSourceSetData = mainModuleNode.kotlinGradleSourceSetData
             kotlinFacet.configureFacet(
                 compilerVersion = compilerVersion,
                 platform = platform,
                 modelsProvider = modelsProvider,
-                hmppEnabled = mainModuleNode.isHmpp,
-                pureKotlinSourceFolders = mainModuleNode.pureKotlinSourceFolders,
+                hmppEnabled = kotlinGradleSourceSetData.isHmpp,
+                pureKotlinSourceFolders = kotlinGradleSourceSetData.pureKotlinSourceFolders.toList(),
                 dependsOnList = kotlinSourceSet.dependsOn,
                 additionalVisibleModuleNames = kotlinSourceSet.additionalVisible
             )
@@ -228,7 +232,7 @@ class KotlinSourceSetDataService : AbstractProjectDataService<GradleSourceSetDat
                     testOutputPath = null
                 }
 
-                this.pureKotlinSourceFolders = mainModuleNode.pureKotlinSourceFolders
+                this.pureKotlinSourceFolders = kotlinGradleSourceSetData.pureKotlinSourceFolders.toList()
             }
 
             return kotlinFacet
