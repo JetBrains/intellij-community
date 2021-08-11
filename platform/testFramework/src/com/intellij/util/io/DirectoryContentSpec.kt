@@ -6,6 +6,7 @@ package com.intellij.util.io
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.io.impl.*
+import org.junit.rules.ErrorCollector
 import java.io.File
 import java.nio.file.Path
 
@@ -89,21 +90,23 @@ interface DirectoryContentSpec {
 /**
  * Checks that contents of the given directory matches [spec].
  * @param filePathFilter determines which relative paths should be checked
+ * @param errorCollector will be used to report all errors at once if provided, otherwise only the first error will be reported
  */
 @JvmOverloads
 fun File.assertMatches(spec: DirectoryContentSpec, fileTextMatcher: FileTextMatcher = FileTextMatcher.exact(),
-                       filePathFilter: (String) -> Boolean = { true }) {
-  assertContentUnderFileMatches(toPath(), spec as DirectoryContentSpecImpl, fileTextMatcher, filePathFilter)
+                       filePathFilter: (String) -> Boolean = { true }, errorCollector: ErrorCollector? = null) {
+  assertContentUnderFileMatches(toPath(), spec as DirectoryContentSpecImpl, fileTextMatcher, filePathFilter, errorCollector)
 }
 
 /**
  * Checks that contents of the given directory matches [spec].
  * @param filePathFilter determines which relative paths should be checked
+ * @param errorCollector will be used to report all errors at once if provided, otherwise only the first error will be reported
  */
 @JvmOverloads
 fun Path.assertMatches(spec: DirectoryContentSpec, fileTextMatcher: FileTextMatcher = FileTextMatcher.exact(),
-                       filePathFilter: (String) -> Boolean = { true }) {
-  assertContentUnderFileMatches(this, spec as DirectoryContentSpecImpl, fileTextMatcher, filePathFilter)
+                       filePathFilter: (String) -> Boolean = { true }, errorCollector: ErrorCollector? = null) {
+  assertContentUnderFileMatches(this, spec as DirectoryContentSpecImpl, fileTextMatcher, filePathFilter, errorCollector)
 }
 
 interface FileTextMatcher {
