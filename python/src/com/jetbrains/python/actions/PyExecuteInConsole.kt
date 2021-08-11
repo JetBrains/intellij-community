@@ -62,7 +62,7 @@ object PyExecuteInConsole {
     val executeCustomizer = PyExecuteConsoleCustomizer.instance
     when (executeCustomizer.getCustomDescriptorType(virtualFile)) {
       DescriptorType.NEW -> {
-        return Pair(null, createNewConsoleListener(project, executeCustomizer, virtualFile))
+        return Pair(null, createNewConsoleListener(project, virtualFile))
       }
       DescriptorType.EXISTING -> {
         val console = executeCustomizer.getExistingDescriptor(virtualFile)
@@ -70,7 +70,7 @@ object PyExecuteInConsole {
           return Pair(console, null)
         }
         else {
-          return Pair(null, createNewConsoleListener(project, executeCustomizer, virtualFile))
+          return Pair(null, createNewConsoleListener(project, virtualFile))
         }
       }
       DescriptorType.STARTING -> {
@@ -85,12 +85,11 @@ object PyExecuteInConsole {
     }
   }
 
-  private fun createNewConsoleListener(project: Project, executeCustomizer: PyExecuteConsoleCustomizer,
-                                       virtualFile: VirtualFile): PydevConsoleRunner.ConsoleListener {
+  fun createNewConsoleListener(project: Project, virtualFile: VirtualFile): PydevConsoleRunner.ConsoleListener {
     return PydevConsoleRunner.ConsoleListener { consoleView ->
       val consoles = getAllRunningConsoles(project)
       val newDescriptor = consoles.find { it.executionConsole === consoleView }
-      executeCustomizer.updateDescriptor(virtualFile, DescriptorType.EXISTING, newDescriptor)
+      PyExecuteConsoleCustomizer.instance.updateDescriptor(virtualFile, DescriptorType.EXISTING, newDescriptor)
     }
   }
 
@@ -132,17 +131,17 @@ object PyExecuteInConsole {
                                       config: PythonRunConfiguration?,
                                       listener: PydevConsoleRunner.ConsoleListener?) {
     val consoleRunnerFactory = PythonConsoleRunnerFactory.getInstance()
-    val runner = if (runFileText == null || config == null) {
-      consoleRunnerFactory.createConsoleRunner(project, null)
+    var runner: PydevConsoleRunner
+    if (runFileText == null || config == null) {
+      runner = consoleRunnerFactory.createConsoleRunner(project, null)
     }
     else {
-      consoleRunnerFactory.createConsoleRunnerWithFile(project, null, runFileText, config)
-    }
-    val toolWindow = PythonConsoleToolWindow.getInstance(project)
-    runner.addConsoleListener { consoleView ->
-      if (consoleView is PyCodeExecutor) {
-        (consoleView as PyCodeExecutor).executeCode(runFileText, null)
-        toolWindow?.toolWindow?.show(null)
+      runner = consoleRunnerFactory.createConsoleRunnerWithFile(project, null, runFileText, config)
+      runner.addConsoleListener { consoleView ->
+        if (consoleView is PyCodeExecutor) {
+          (consoleView as PyCodeExecutor).executeCode(runFileText, null)
+          PythonConsoleToolWindow.getInstance(project)?.toolWindow?.show(null)
+        }
       }
     }
     if (listener != null) {
