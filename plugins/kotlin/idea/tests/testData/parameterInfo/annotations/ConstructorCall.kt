@@ -1,4 +1,3 @@
-// IGNORE_FIR
 annotation class Fancy
 
 class Foo(@Fancy foo: Int)
