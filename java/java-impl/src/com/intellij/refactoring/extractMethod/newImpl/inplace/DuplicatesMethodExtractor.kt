@@ -74,7 +74,8 @@ class DuplicatesMethodExtractor: InplaceExtractMethodProvider {
     //TODO check same data output
     //TODO check same flow output (+ same return values)
 
-    val changes = duplicates.flatMap { it.changedExpressions.map(ChangedExpression::pattern) }.toSet()
+    val terminalExpressions: Set<PsiExpression> = options.inputParameters.flatMap { parameter -> parameter.references }.toSet()
+    val changes = duplicates.flatMap { it.changedExpressions.map(ChangedExpression::pattern) }.toSet() + terminalExpressions
     fun isEquivalent(pattern: PsiElement, candidate: PsiElement) = pattern !in changes && finder.isEquivalent(pattern, candidate)
     duplicates = duplicates.mapNotNull { finder.createDuplicate(it.pattern, it.candidate, ::isEquivalent) }
 

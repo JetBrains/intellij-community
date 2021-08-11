@@ -119,6 +119,10 @@ class ExtractMethodAndDuplicatesInplaceTest: LightJavaCodeInsightTestCase() {
     doTest()
   }
 
+  fun testArrayFoldingWithDuplicate(){
+    doTest()
+  }
+
   fun testRefactoringListener(){
     templateTest {
       configureByFile("$BASE_PATH/${getTestName(false)}.java")
