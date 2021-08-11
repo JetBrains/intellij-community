@@ -103,7 +103,7 @@ internal class GitVcsPanel(private val project: Project) :
   private val currentUpdateInfoFilterProperties = MyLogProperties(project.service<GitUpdateProjectInfoLogProperties>())
 
   private val pathSelector: VcsExecutablePathSelector by lazy {
-    VcsExecutablePathSelector(GitVcs.NAME, disposable!!, object : VcsExecutablePathSelector.ExecutableHandler {
+    VcsExecutablePathSelector(GitVcs.DISPLAY_NAME.get(), disposable!!, object : VcsExecutablePathSelector.ExecutableHandler {
       override fun patchExecutable(executable: String): String? {
         return GitExecutableDetector.patchExecutablePath(executable)
       }

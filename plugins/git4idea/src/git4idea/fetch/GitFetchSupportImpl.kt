@@ -10,6 +10,7 @@ import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.util.BackgroundTaskUtil
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.HtmlBuilder
 import com.intellij.openapi.util.text.HtmlChunk
@@ -243,7 +244,7 @@ internal class GitFetchSupportImpl(private val project: Project) : GitFetchSuppo
 
     fun totallySuccessful() = results.values.all { it.success() }
 
-    fun error(): String? {
+    fun error(): @Nls String {
       val errorMessage = multiRemoteMessage(true)
       for ((remote, result) in results) {
         if (result.error != null) errorMessage.append(remote, result.error)
@@ -251,7 +252,7 @@ internal class GitFetchSupportImpl(private val project: Project) : GitFetchSuppo
       return errorMessage.asString()
     }
 
-    fun prunedRefs(): String {
+    fun prunedRefs(): @NlsSafe String {
       val prunedRefs = multiRemoteMessage(false)
       for ((remote, result) in results) {
         if (result.prunedRefs.isNotEmpty()) prunedRefs.append(remote, result.prunedRefs.joinToString("\n"))
@@ -312,7 +313,7 @@ internal class GitFetchSupportImpl(private val project: Project) : GitFetchSuppo
       val failed = results.filterValues { !it.totallySuccessful() }
 
       for ((repo, result) in failed) {
-        if (result.error() != null) errorMessage.append(repo.root, result.error()!!)
+        errorMessage.append(repo.root, result.error())
       }
       for ((repo, result) in results) {
         prunedRefs.append(repo.root, result.prunedRefs())
