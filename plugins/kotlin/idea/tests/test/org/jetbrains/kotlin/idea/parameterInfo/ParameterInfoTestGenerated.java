@@ -73,6 +73,16 @@ public abstract class ParameterInfoTestGenerated extends AbstractParameterInfoTe
         public void testSimple() throws Exception {
             runTest("testData/parameterInfo/arrayAccess/Simple.kt");
         }
+
+        @TestMetadata("UpdateOnTypingGet.kt")
+        public void testUpdateOnTypingGet() throws Exception {
+            runTest("testData/parameterInfo/arrayAccess/UpdateOnTypingGet.kt");
+        }
+
+        @TestMetadata("UpdateOnTypingSet.kt")
+        public void testUpdateOnTypingSet() throws Exception {
+            runTest("testData/parameterInfo/arrayAccess/UpdateOnTypingSet.kt");
+        }
     }
 
     @RunWith(JUnit3RunnerWithInners.class)

@@ -76,6 +76,16 @@ public class FirParameterInfoTestGenerated extends AbstractFirParameterInfoTest 
         public void testSimple() throws Exception {
             runTest("../idea/tests/testData/parameterInfo/arrayAccess/Simple.kt");
         }
+
+        @TestMetadata("UpdateOnTypingGet.kt")
+        public void testUpdateOnTypingGet() throws Exception {
+            runTest("../idea/tests/testData/parameterInfo/arrayAccess/UpdateOnTypingGet.kt");
+        }
+
+        @TestMetadata("UpdateOnTypingSet.kt")
+        public void testUpdateOnTypingSet() throws Exception {
+            runTest("../idea/tests/testData/parameterInfo/arrayAccess/UpdateOnTypingSet.kt");
+        }
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
