@@ -2,9 +2,9 @@
 
 package org.jetbrains.kotlin.idea.fir.uast
 
+import org.jetbrains.kotlin.test.KotlinRoot
 import org.jetbrains.uast.UFile
 import org.jetbrains.uast.test.common.kotlin.LegacyUastIdentifiersTestBase
-import java.nio.file.Paths
 import kotlin.io.path.ExperimentalPathApi
 import kotlin.io.path.absolute
 
@@ -23,7 +23,7 @@ abstract class AbstractFirLegacyUastIdentifiersTest : AbstractFirUastIdentifiers
         "uast-kotlin/testData/ReceiverFun.kt",
         // TODO: remaining property accessor conversion in KotlinUSimpleReferenceExpression
         "uast-kotlin/testData/PropertyInitializer.kt",
-    ).mapTo(mutableSetOf()) { Paths.get("..").resolve(it).absolute().normalize().toString() }
+    ).mapTo(mutableSetOf()) { KotlinRoot.DIR_PATH.resolve("uast").resolve(it).absolute().normalize().toString() }
 
     override fun isExpectedToFail(filePath: String): Boolean {
         return filePath in whitelist
