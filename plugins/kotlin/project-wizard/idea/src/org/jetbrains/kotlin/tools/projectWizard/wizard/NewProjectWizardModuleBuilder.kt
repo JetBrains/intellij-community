@@ -16,6 +16,7 @@ import com.intellij.openapi.projectRoots.ex.JavaSdkUtil
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.NlsContexts
 import com.intellij.util.SystemProperties
 import org.jetbrains.kotlin.idea.framework.KotlinTemplatesFactory
 import org.jetbrains.kotlin.idea.projectWizard.WizardStatsService
@@ -56,14 +57,16 @@ class NewProjectWizardModuleBuilder : EmptyModuleBuilder() {
     override fun isOpenProjectSettingsAfter(): Boolean = false
     override fun canCreateModule(): Boolean = false
     override fun getPresentableName(): String = moduleType.name
-    override fun getDescription(): String? = moduleType.description
-    override fun getGroupName(): String? = moduleType.name
+    override fun getDescription(): String = moduleType.description
+    override fun getGroupName(): String = moduleType.name
     override fun isTemplateBased(): Boolean = false
 
     companion object {
         const val MODULE_BUILDER_ID = "kotlin.newProjectWizard.builder"
         private val projectNameValidator = StringValidators.shouldBeValidIdentifier("Project name", setOf('-', '_'))
-        private const val INVALID_PROJECT_NAME_MESSAGE = "Invalid project name"
+        private val INVALID_PROJECT_NAME_MESSAGE
+            @NlsContexts.DialogTitle
+            get() = KotlinNewProjectWizardUIBundle.message("dialog.title.invalid.project.name")
     }
 
     override fun isAvailable(): Boolean = isCreatingNewProject()

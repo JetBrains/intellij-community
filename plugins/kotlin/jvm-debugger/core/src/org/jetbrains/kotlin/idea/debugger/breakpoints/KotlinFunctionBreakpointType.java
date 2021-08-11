@@ -92,7 +92,9 @@ public class KotlinFunctionBreakpointType
             buffer.append(breakpoint.getProperties().myMethodName);
         }
 
-        return buffer.toString();
+        @SuppressWarnings("HardCodedStringLiteral")
+        String s = buffer.toString();
+        return s;
     }
 
     @Nullable

@@ -12,7 +12,6 @@ import com.intellij.notification.NotificationGroup
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.colors.EditorColors
-import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.editor.event.DocumentListener
 import com.intellij.openapi.ide.CopyPasteManager
 import com.intellij.openapi.project.DumbAware
@@ -187,6 +186,7 @@ class CoroutineDumpPanel(
 
     private inner class CoroutineListCellRenderer : ColoredListCellRenderer<Any>() {
 
+        @Suppress("HardCodedStringLiteral")
         override fun customizeCellRenderer(list: JList<*>, value: Any, index: Int, selected: Boolean, hasFocus: Boolean) {
             val infoData = value as CoroutineInfoData
             val state = infoData.key

@@ -9,8 +9,10 @@ import com.intellij.openapi.editor.RangeMarker
 import com.intellij.openapi.progress.*
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Computable
+import com.intellij.openapi.util.NlsContexts
 import com.intellij.psi.*
 import com.intellij.psi.impl.source.DummyHolder
+import org.jetbrains.annotations.Nls
 import org.jetbrains.kotlin.idea.KotlinLanguage
 import org.jetbrains.kotlin.idea.core.util.range
 import org.jetbrains.kotlin.idea.util.application.runReadAction
@@ -295,9 +297,14 @@ class OldWithProgressProcessor(private val progress: ProgressIndicator?, private
         val DEFAULT = OldWithProgressProcessor(null, null)
     }
 
-    private val progressText = KotlinJ2KBundle.message("text.converting.java.to.kotlin")
+    private val progressText
+        @Suppress("DialogTitleCapitalization")
+        @NlsContexts.ProgressText
+        get() = KotlinJ2KBundle.message("text.converting.java.to.kotlin")
     private val fileCount = files?.size ?: 0
-    private val fileCountText = fileCount.toString() + " " + if (fileCount > 1) "files" else "file"
+    private val fileCountText
+        @Nls
+        get() = KotlinJ2KBundle.message("text.files.count.0", fileCount, if (fileCount == 1) 1 else 2)
     private var fraction = 0.0
     private var pass = 1
 

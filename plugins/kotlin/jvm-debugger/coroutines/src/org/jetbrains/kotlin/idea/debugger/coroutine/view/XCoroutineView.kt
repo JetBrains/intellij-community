@@ -70,7 +70,7 @@ class XCoroutineView(val project: Project, val session: XDebugSession) :
         selectedNodeListener?.installOn()
     }
 
-    private fun createToolbar(): ActionToolbarImpl? {
+    private fun createToolbar(): ActionToolbarImpl {
         val framesGroup = DefaultActionGroup()
         val actionsManager = CommonActionsManager.getInstance()
         framesGroup

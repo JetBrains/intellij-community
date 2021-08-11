@@ -65,6 +65,7 @@ class CoroutineDumpAction : AnAction() {
         consoleView.allowHeavyFilters()
         val panel = CoroutineDumpPanel(project, consoleView, toolbarActions, coroutines)
 
+        @Suppress("HardCodedStringLiteral")
         val id = "DumpKt " + DateFormatUtil.formatTimeWithSeconds(System.currentTimeMillis())
         val content = ui.createContent(id, panel, id, null, null).apply {
             putUserData(RunnerContentUi.LIGHTWEIGHT_CONTENT_MARKER, true)
@@ -78,10 +79,8 @@ class CoroutineDumpAction : AnAction() {
 
     override fun update(e: AnActionEvent) {
         val presentation = e.presentation
-        val project = e.project
-        if (project == null) {
-            presentation.isEnabled = false
-            presentation.isVisible = false
+        val project = e.project ?: run {
+            presentation.isEnabledAndVisible = false
             return
         }
         // cannot be called when no SuspendContext

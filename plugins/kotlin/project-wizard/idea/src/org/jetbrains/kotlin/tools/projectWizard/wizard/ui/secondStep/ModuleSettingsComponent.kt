@@ -102,7 +102,7 @@ private class ModuleNameComponent(context: Context, private val module: Module) 
                 textField.disable(KotlinNewProjectWizardUIBundle.message("module.settings.name.same.as.project"))
             }
             module.configurator == CommonTargetConfigurator -> {
-                textField.disable(ModuleType.common.name + " " + KotlinNewProjectWizardUIBundle.message("module.settings.name.can.not.be.modified"))
+                textField.disable(KotlinNewProjectWizardUIBundle.message("module.settings.name.0.can.not.be.modified", ModuleType.common.name))
             }
         }
     }

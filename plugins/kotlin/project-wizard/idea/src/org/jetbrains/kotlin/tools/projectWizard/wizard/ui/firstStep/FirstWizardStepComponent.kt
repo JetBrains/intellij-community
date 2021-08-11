@@ -12,11 +12,13 @@ import com.intellij.openapi.roots.ui.configuration.JdkComboBox
 import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectSdksModel
 import com.intellij.openapi.util.Condition
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.NlsContexts
 import com.intellij.ui.JBColor
 import com.intellij.ui.TitledSeparator
 import com.intellij.ui.layout.*
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.components.BorderLayoutPanel
+import org.jetbrains.annotations.Nls
 import org.jetbrains.kotlin.idea.projectWizard.WizardStatsService
 import org.jetbrains.kotlin.tools.projectWizard.core.Context
 import org.jetbrains.kotlin.tools.projectWizard.core.entity.settings.SettingReference
@@ -152,7 +154,7 @@ class BuildSystemAdditionalSettingsComponent(
         section.updateTitleAndComponent(state.sectionTitle, state.component)
     }
 
-    private enum class State(val sectionTitle: String) {
+    private enum class State(@Nls val sectionTitle: String) {
         POM(KotlinNewProjectWizardUIBundle.message("additional.buildsystem.settings.artifact.coordinates")),
         JPS(KotlinNewProjectWizardUIBundle.message("additional.buildsystem.settings.kotlin.runtime"))
     }
@@ -239,13 +241,13 @@ private class JdkComponent(ideWizard: IdeWizard) : TitledComponent(ideWizard.con
     }
 
     override val title: String = KotlinNewProjectWizardUIBundle.message("additional.buildsystem.settings.project.jdk")
-    override val tooltipText: String? = KotlinNewProjectWizardUIBundle.message("additional.buildsystem.settings.project.jdk.desc")
+    override val tooltipText: String = KotlinNewProjectWizardUIBundle.message("additional.buildsystem.settings.project.jdk.desc")
     override val component: JComponent = jdkComboBox
 }
 
 private class KotlinRuntimeComponentComponent(ideWizard: IdeWizard) : TitledComponent(ideWizard.context) {
     override val title: String = KotlinNewProjectWizardUIBundle.message("additional.buildsystem.settings.kotlin.runtime")
-    override val tooltipText: String? = KotlinNewProjectWizardUIBundle.message("additional.buildsystem.settings.kotlin.runtime.desc")
+    override val tooltipText: String = KotlinNewProjectWizardUIBundle.message("additional.buildsystem.settings.kotlin.runtime.desc")
     override val component: JComponent = ideWizard.jpsData.libraryOptionsPanel.simplePanel
 
     init {
@@ -254,7 +256,7 @@ private class KotlinRuntimeComponentComponent(ideWizard: IdeWizard) : TitledComp
 }
 
 @Suppress("SpellCheckingInspection")
-private class HideableSection(text: String, private var component: JComponent) : BorderLayoutPanel() {
+private class HideableSection(@NlsContexts.Separator text: String, private var component: JComponent) : BorderLayoutPanel() {
     private val titledSeparator = TitledSeparator(text)
     private val contentPanel = borderPanel {
         addBorder(JBUI.Borders.emptyLeft(20))
@@ -271,7 +273,7 @@ private class HideableSection(text: String, private var component: JComponent) :
         })
     }
 
-    fun updateTitleAndComponent(newTitle: String, newComponent: JComponent) {
+    fun updateTitleAndComponent(@NlsContexts.Separator newTitle: String, newComponent: JComponent) {
         titledSeparator.text = newTitle
         updateComponent(newComponent)
     }

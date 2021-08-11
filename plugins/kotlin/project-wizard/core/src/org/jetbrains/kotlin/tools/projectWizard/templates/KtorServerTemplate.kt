@@ -54,7 +54,7 @@ object KtorServerTemplate : Template() {
     }
 
     override fun Reader.createRunConfigurations(module: ModuleIR): List<WizardRunConfiguration> = buildList {
-        +WizardGradleRunConfiguration("Run", "run", emptyList())
+        +WizardGradleRunConfiguration(KotlinNewProjectWizardBundle.message("configuration.name.run"), "run", emptyList())
     }
 
     override fun Reader.getFileTemplates(module: ModuleIR): List<FileTemplateDescriptorWithPath> = listOf(

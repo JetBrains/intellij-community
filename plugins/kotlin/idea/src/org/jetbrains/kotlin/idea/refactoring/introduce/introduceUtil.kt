@@ -29,10 +29,10 @@ fun showErrorHintByKey(project: Project, editor: Editor, messageKey: String, @Nl
 }
 
 fun selectElementsWithTargetSibling(
-    operationName: String,
+    @NlsContexts.DialogTitle operationName: String,
     editor: Editor,
     file: KtFile,
-    title: String,
+    @NlsContexts.DialogTitle title: String,
     elementKinds: Collection<CodeInsightUtils.ElementKind>,
     elementValidator: (List<PsiElement>) -> String?,
     getContainers: (elements: List<PsiElement>, commonParent: PsiElement) -> List<PsiElement>,
