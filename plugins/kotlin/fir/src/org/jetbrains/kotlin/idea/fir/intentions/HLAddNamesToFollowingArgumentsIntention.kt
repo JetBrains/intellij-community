@@ -4,13 +4,11 @@ package org.jetbrains.kotlin.idea.fir.intentions
 import com.intellij.codeInsight.intention.LowPriorityAction
 import org.jetbrains.kotlin.idea.KotlinBundle
 import org.jetbrains.kotlin.idea.api.applicator.applicator
-import org.jetbrains.kotlin.idea.api.applicator.with
 import org.jetbrains.kotlin.idea.fir.api.AbstractHLIntention
 import org.jetbrains.kotlin.idea.fir.api.applicator.HLApplicatorInputProvider
 import org.jetbrains.kotlin.idea.fir.api.applicator.inputProvider
 import org.jetbrains.kotlin.idea.fir.applicators.AddArgumentNamesApplicators
 import org.jetbrains.kotlin.idea.fir.applicators.ApplicabilityRanges
-import org.jetbrains.kotlin.idea.frontend.api.calls.KtCallWithArguments
 import org.jetbrains.kotlin.idea.frontend.api.calls.getSingleCandidateSymbolOrNull
 import org.jetbrains.kotlin.psi.KtCallElement
 import org.jetbrains.kotlin.psi.KtLambdaArgument
@@ -27,7 +25,7 @@ class HLAddNamesToFollowingArgumentsIntention :
         val argumentList = element.parent as? KtValueArgumentList ?: return@inputProvider null
 
         val callElement = argumentList.parent as? KtCallElement ?: return@inputProvider null
-        val resolvedCall = callElement.resolveCall() as? KtCallWithArguments ?: return@inputProvider null
+        val resolvedCall = callElement.resolveCall() ?: return@inputProvider null
 
         if (resolvedCall.targetFunction.getSingleCandidateSymbolOrNull()?.hasStableParameterNames != true) {
             return@inputProvider null
