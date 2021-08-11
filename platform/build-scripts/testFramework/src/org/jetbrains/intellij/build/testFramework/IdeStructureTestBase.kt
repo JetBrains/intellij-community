@@ -21,6 +21,7 @@ abstract class IdeStructureTestBase {
 
   protected abstract fun createProductProperties(homePath: String): ProductProperties
   protected abstract fun createBuildTools(): ProprietaryBuildTools
+  protected abstract val missingModulesException: Set<String>
 
   private fun createBuildContext(): BuildContext {
     val homePath = PathManager.getHomePathFor(javaClass)!!
@@ -51,6 +52,8 @@ abstract class IdeStructureTestBase {
   fun moduleClosureValidation() {
     val buildContext = createBuildContext()
     val jarBuilder = DistributionJARsBuilder(buildContext, emptySet())
+    val exceptions = missingModulesException
+    val activeExceptions = mutableSetOf<String>()
 
     val module2Jar = jarBuilder.platform.moduleJars.entrySet().flatMap { it.value.map { e -> e to it.key } }.toMap()
     for (kv in module2Jar.entries.sortedBy { it.key }) {
@@ -61,12 +64,20 @@ abstract class IdeStructureTestBase {
           if (dependencyExtension.scope.isIncludedIn(JpsJavaClasspathKind.PRODUCTION_RUNTIME)) {
             val moduleDependency = dependency.module!!
             if (!module2Jar.containsKey(moduleDependency.name)) {
-              val message = "missing: ${moduleDependency.name} referenced from ${module.name} scope ${dependencyExtension.scope}"
-              errorCollector.addError(IllegalStateException(message))
+              if (exceptions.contains(moduleDependency.name)) {
+                activeExceptions.add(moduleDependency.name)
+              } else {
+                val message = "${buildContext.productProperties.productCode} (${javaClass.simpleName}): missing module from the product layout '${moduleDependency.name}' referenced from '${module.name}' scope ${dependencyExtension.scope}"
+                errorCollector.addError(IllegalStateException(message))
+              }
             }
           }
         }
       }
+    }
+
+    for (moduleName in exceptions.minus(activeExceptions)) {
+      errorCollector.addError(IllegalStateException("${buildContext.productProperties.productCode} (${javaClass.simpleName}): module '$moduleName' is mentioned in ${::missingModulesException.name}, but it was not used. Please remove it from the list"))
     }
   }
 }
