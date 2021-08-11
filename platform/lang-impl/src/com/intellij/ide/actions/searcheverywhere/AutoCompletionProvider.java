@@ -2,8 +2,13 @@
 package com.intellij.ide.actions.searcheverywhere;
 
 import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.ui.SimpleColoredComponent;
+import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.EmptyIcon;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -84,11 +89,52 @@ final class AutoCompletionProvider {
     }
   }
 
-  private static class CommandRenderer implements ListCellRenderer<AutoCompletionCommand> {
+  private static class CommandRenderer extends SimpleColoredComponent implements ListCellRenderer<AutoCompletionCommand> {
+
+    protected boolean mySelected;
+    protected Color myForeground;
+    protected Color mySelectionForeground;
+
     @Override
     public Component getListCellRendererComponent(JList<? extends AutoCompletionCommand> list,
                                                   AutoCompletionCommand value, int index, boolean isSelected, boolean cellHasFocus) {
-      return new JLabel(value.getPresentationString());
+
+      clear();
+      getIpad().left = getIpad().right = UIUtil.isUnderWin10LookAndFeel() ? 0 : JBUIScale.scale(UIUtil.getListCellHPadding());
+
+      setPaintFocusBorder(false);
+      setFocusBorderAroundIcon(true);
+      setFont(list.getFont());
+      setIcon(EmptyIcon.ICON_16);
+
+      mySelected = isSelected;
+      myForeground = isEnabled() ? list.getForeground() : UIUtil.getLabelDisabledForeground();
+      mySelectionForeground = list.getSelectionForeground();
+
+      if (UIUtil.isUnderWin10LookAndFeel()) {
+        setBackground(isSelected ? list.getSelectionBackground() : list.getBackground());
+      }
+      else {
+        setBackground(isSelected ? list.getSelectionBackground() : null);
+      }
+
+      SimpleTextAttributes baseStyle = new SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN,  list.getForeground());
+      appendHTML(value.getPresentationString(), baseStyle);
+
+      return this;
+    }
+
+    @Override
+    public final void append(@NotNull String fragment, @NotNull SimpleTextAttributes attributes, boolean isMainText) {
+      if (mySelected) {
+        super.append(fragment, new SimpleTextAttributes(attributes.getStyle(), mySelectionForeground), isMainText);
+      }
+      else if (attributes.getFgColor() == null) {
+        super.append(fragment, attributes.derive(-1, myForeground, null, null), isMainText);
+      }
+      else {
+        super.append(fragment, attributes, isMainText);
+      }
     }
   }
 
