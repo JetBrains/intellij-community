@@ -3,6 +3,7 @@ package com.intellij.util.io.impl
 
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.CharsetToolkit
+import com.intellij.rt.execution.junit.FileComparisonFailure
 import com.intellij.util.io.*
 import org.junit.Assert.*
 import java.io.File
@@ -14,10 +15,16 @@ import kotlin.io.path.extension
 import kotlin.io.path.name
 
 sealed class DirectoryContentSpecImpl : DirectoryContentSpec {
+  /**
+   * Path to the original file from which this spec was built. Will be used in 'Comparison Failure' dialog to apply changes to that file.
+   */
+  abstract val originalFile: Path?
+
   abstract override fun mergeWith(other: DirectoryContentSpec): DirectoryContentSpecImpl
 }
 
-sealed class DirectorySpecBase : DirectoryContentSpecImpl() {
+sealed class DirectorySpecBase(override val originalFile: Path?) : DirectoryContentSpecImpl() {
+
   protected val children: LinkedHashMap<String, DirectoryContentSpecImpl> = LinkedHashMap()
 
   fun addChild(name: String, spec: DirectoryContentSpecImpl) {
@@ -62,7 +69,7 @@ sealed class DirectorySpecBase : DirectoryContentSpecImpl() {
   }
 }
 
-class DirectorySpec : DirectorySpecBase() {
+class DirectorySpec(originalFile: Path? = null) : DirectorySpecBase(originalFile) {
   override fun generate(target: File) {
     if (!FileUtil.createDirectory(target)) {
       throw IOException("Cannot create directory $target")
@@ -71,7 +78,7 @@ class DirectorySpec : DirectorySpecBase() {
   }
 }
 
-class ZipSpec : DirectorySpecBase() {
+class ZipSpec : DirectorySpecBase(null) {
   override fun generate(target: File) {
     val contentDir = FileUtil.createTempDirectory("zip-content", null, false)
     try {
@@ -91,7 +98,7 @@ class ZipSpec : DirectorySpecBase() {
   }
 }
 
-class FileSpec(val content: ByteArray?) : DirectoryContentSpecImpl() {
+class FileSpec(val content: ByteArray?, override val originalFile: Path? = null) : DirectoryContentSpecImpl() {
   override fun generate(target: File) {
     FileUtil.writeToFile(target, content ?: ByteArray(0))
   }
@@ -147,7 +154,7 @@ internal fun assertContentUnderFileMatches(file: Path,
                                            fileTextMatcher: FileTextMatcher,
                                            filePathFilter: (String) -> Boolean) {
   if (spec is DirectorySpecBase) {
-    val actualSpec = createSpecByPath(file)
+    val actualSpec = createSpecByPath(file, file)
     if (actualSpec is DirectorySpecBase) {
       assertEquals(spec.toString(filePathFilter), actualSpec.toString(filePathFilter))
     }
@@ -182,7 +189,7 @@ private fun assertDirectoryContentMatches(file: Path,
           val place = if (relativePath != ".") " at $relativePath" else ""
           if (actualString != null && expectedString != null) {
             if (!fileTextMatcher.matches(actualString, expectedString)) {
-              assertEquals("File content mismatch$place:", expectedString, actualString)
+              throw FileComparisonFailure("File content mismatch$place:", expectedString, actualString, spec.originalFile?.toFile()?.absolutePath)
             }
           }
           else {
@@ -225,22 +232,22 @@ private fun assertDirectoryMatches(file: Path,
   }
 }
 
-internal fun fillSpecFromDirectory(spec: DirectorySpecBase, dir: Path) {
+internal fun fillSpecFromDirectory(spec: DirectorySpecBase, dir: Path, originalDir: Path?) {
   dir.directoryStreamIfExists { children ->
     children.forEach {
-      spec.addChild(it.fileName.toString(), createSpecByPath(it))
+      spec.addChild(it.fileName.toString(), createSpecByPath(it, originalDir?.resolve(it.fileName)))
     }
   }
 }
 
-private fun createSpecByPath(path: Path): DirectoryContentSpecImpl {
+private fun createSpecByPath(path: Path, originalFile: Path?): DirectoryContentSpecImpl {
   if (path.isDirectory()) {
-    return DirectorySpec().also { fillSpecFromDirectory(it, path) }
+    return DirectorySpec(originalFile).also { fillSpecFromDirectory(it, path, originalFile) }
   }
   if (path.extension in setOf("zip", "jar")) {
     val dirForExtracted = FileUtil.createTempDirectory("extracted-${path.name}", null, false).toPath()
     ZipUtil.extract(path, dirForExtracted, null)
-    return ZipSpec().also { fillSpecFromDirectory(it, dirForExtracted) }
+    return ZipSpec().also { fillSpecFromDirectory(it, dirForExtracted, null) }
   }
-  return FileSpec(Files.readAllBytes(path))
+  return FileSpec(Files.readAllBytes(path), originalFile)
 }

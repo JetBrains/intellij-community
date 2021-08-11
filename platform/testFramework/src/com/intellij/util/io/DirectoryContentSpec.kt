@@ -32,9 +32,12 @@ inline fun zipFile(content: DirectoryContentBuilder.() -> Unit): DirectoryConten
 /**
  * Builds [DirectoryContentSpec] structure by an existing directory. Can be used to check that generated directory matched expected data
  * from testData directory.
+ * @param originalDir point to an original directory located in the project sources from which [dir] was built; will be used to allow fixing
+ * the original files directly from 'Comparison Failure' dialog
  */
-fun directoryContentOf(dir: Path): DirectoryContentSpec {
-  return DirectorySpec().also { fillSpecFromDirectory(it, dir) }
+@JvmOverloads
+fun directoryContentOf(dir: Path, originalDir: Path = dir): DirectoryContentSpec {
+  return DirectorySpec().also { fillSpecFromDirectory(it, dir, originalDir) }
 }
 
 abstract class DirectoryContentBuilder {
