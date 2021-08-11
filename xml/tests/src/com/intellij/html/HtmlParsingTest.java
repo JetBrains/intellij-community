@@ -108,4 +108,10 @@ public class HtmlParsingTest extends XmlParsingTest {
                "</div>\n");
   }
 
+  public void testScriptWithinScript() throws Exception {
+    doTestHtml("<script>\n" +
+               "    document.write(\"<script>alert('foo')</script\\>\")\n" +
+               "</script>");
+  }
+
 }
