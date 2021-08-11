@@ -33,10 +33,11 @@ interface FirKotlinUastResolveProviderService : BaseKotlinUastResolveProviderSer
     override fun convertValueArguments(ktCallElement: KtCallElement, parent: UElement): List<UNamedExpression>? {
         analyseForUast(ktCallElement) {
             val argumentMapping = ktCallElement.resolveCall()?.argumentMapping ?: return null
-            return argumentMapping.entries.map {
-                val name = it.value.name.asString()
-                // TODO: it.key.isSpread() ?
-                KotlinUNamedExpression.create(name, it.key, parent)
+            return ktCallElement.valueArguments.map {
+                val parameter = argumentMapping[it.getArgumentExpression()]
+                val name = parameter?.name?.asString()
+                // TODO: parameter.isSpread() ?
+                KotlinUNamedExpression.create(name, it, parent)
             }
         }
     }
