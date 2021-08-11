@@ -75,16 +75,28 @@ class TempDirectory : ExternalResource() {
   /**
    * Creates a new directory with a random name under the root temp directory.
    */
-  fun newDirectory(): File = newDirectory("dir" + myNextDirNameSuffix.incrementAndGet())
+  fun newDirectory(): File = newDirectoryPath().toFile()
+
+  /**
+   * Creates a new directory with a random name under the root temp directory.
+   */
+  fun newDirectoryPath(): Path = newDirectoryPath("dir" + myNextDirNameSuffix.incrementAndGet())
 
   /**
    * Creates a new directory at the given path relative to the root temp directory. Throws an exception if such a directory already exists.
    */
   fun newDirectory(relativePath: String): File {
+    return newDirectoryPath(relativePath).toFile()
+  }
+
+  /**
+   * Creates a new directory at the given path relative to the root temp directory. Throws an exception if such a directory already exists.
+   */
+  fun newDirectoryPath(relativePath: String): Path {
     val dir = rootPath.resolve(relativePath)
     require(!Files.exists(dir)) { "Already exists: $dir" }
     makeDirectories(dir)
-    return dir.toFile()
+    return dir
   }
 
   /**
