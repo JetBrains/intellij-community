@@ -78,7 +78,7 @@ public interface LibraryTable {
   }
 
   interface Listener extends EventListener {
-    @RequiresWriteLock
+    @RequiresWriteLock(generateAssertion = false)
     default void afterLibraryAdded(@NotNull Library newLibrary) {
     }
 
