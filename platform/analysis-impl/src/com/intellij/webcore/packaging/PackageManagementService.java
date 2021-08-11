@@ -72,7 +72,6 @@ public abstract class PackageManagementService {
    * and may initiate network connections. May return cached data.
    *
    * @return the list of all packages in all repositories
-   * @throws IOException
    */
   public abstract List<RepoPackage> getAllPackages() throws IOException;
 
@@ -81,7 +80,6 @@ public abstract class PackageManagementService {
    * and may initiate network connections. May not return cached data.
    *
    * @return the list of all packages in all repositories
-   * @throws IOException
    */
   public abstract List<RepoPackage> reloadAllPackages() throws IOException;
 
@@ -140,7 +138,6 @@ public abstract class PackageManagementService {
   /**
    * @deprecated Please use {@link #getInstalledPackagesList()} instead.
    */
-  @SuppressWarnings("DeprecatedIsStillUsed")
   @Deprecated(since = "2020.2", forRemoval = true)
   public Collection<InstalledPackage> getInstalledPackages() throws IOException {
     throw new AbstractMethodError("The method is deprecated. Please use `getInstalledPackagesList`.");
