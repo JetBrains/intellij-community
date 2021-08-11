@@ -22,40 +22,41 @@ class JavaDuplicatesFinder(pattern: List<PsiElement>, private val terminalNodes:
   }
 
   fun findDuplicates(scope: PsiElement): List<Duplicate> {
-    val ignoredElements = pattern.toSet()
+    val ignoredElements = HashSet<PsiElement>(pattern)
+
     val duplicates = mutableListOf<Duplicate>()
 
     val patternExpression = pattern.singleOrNull() as? PsiExpression
-    if (patternExpression != null) {
-      val expressionVisitor = object : JavaRecursiveElementWalkingVisitor(){
+    val visitor = if (patternExpression != null) {
+      object : JavaRecursiveElementWalkingVisitor(){
         override fun visitExpression(expression: PsiExpression) {
           if (expression in ignoredElements) return
           val duplicate = createDuplicate(childrenOf(patternExpression), childrenOf(expression))
-          if (duplicate != null && ! isOvercomplicated(duplicate)) {
+          if (duplicate != null) {
             duplicates += duplicate.copy(pattern = listOf(patternExpression), candidate = listOf(expression))
           } else {
             super.visitExpression(expression)
           }
         }
       }
-      scope.accept(expressionVisitor)
     } else {
-      val visitor = object: JavaRecursiveElementWalkingVisitor() {
+      object: JavaRecursiveElementWalkingVisitor() {
         override fun visitStatement(statement: PsiStatement) {
           if (statement in ignoredElements) return
           val siblings = siblingsOf(statement).take(pattern.size).toList()
           val duplicate = createDuplicate(pattern, siblings)
-          if (duplicate != null && ! isOvercomplicated(duplicate)) {
+          if (duplicate != null) {
             duplicates += duplicate
+            ignoredElements += duplicate.candidate
           } else {
             super.visitStatement(statement)
           }
         }
       }
-      scope.accept(visitor)
     }
+    scope.accept(visitor)
 
-    return duplicates
+    return duplicates.filterNot(::isOvercomplicated)
   }
 
   private fun isNoise(it: PsiElement) = it is PsiWhiteSpace || it is PsiComment || it is PsiEmptyStatement
