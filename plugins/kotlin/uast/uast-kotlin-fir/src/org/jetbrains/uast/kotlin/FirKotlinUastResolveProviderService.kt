@@ -6,7 +6,6 @@ import com.intellij.psi.*
 import org.jetbrains.kotlin.idea.frontend.api.KtTypeArgumentWithVariance
 import org.jetbrains.kotlin.idea.frontend.api.analyseForUast
 import org.jetbrains.kotlin.idea.frontend.api.calls.KtAnnotationCall
-import org.jetbrains.kotlin.idea.frontend.api.calls.KtCallWithArguments
 import org.jetbrains.kotlin.idea.frontend.api.symbols.KtConstructorSymbol
 import org.jetbrains.kotlin.idea.frontend.api.symbols.markers.KtNamedSymbol
 import org.jetbrains.kotlin.idea.frontend.api.types.*
@@ -33,7 +32,7 @@ interface FirKotlinUastResolveProviderService : BaseKotlinUastResolveProviderSer
 
     override fun convertValueArguments(ktCallElement: KtCallElement, parent: UElement): List<UNamedExpression>? {
         analyseForUast(ktCallElement) {
-            val argumentMapping = (ktCallElement.resolveCall() as? KtCallWithArguments)?.argumentMapping ?: return null
+            val argumentMapping = ktCallElement.resolveCall()?.argumentMapping ?: return null
             return argumentMapping.entries.map {
                 val name = it.value.name.asString()
                 // TODO: it.key.isSpread() ?
