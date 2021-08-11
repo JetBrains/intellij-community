@@ -2,7 +2,9 @@
 package com.intellij.xdebugger.impl.frame;
 
 import com.intellij.CommonBundle;
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.CommonActionsManager;
+import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl;
 import com.intellij.openapi.application.ApplicationManager;
@@ -10,6 +12,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComboBox;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
@@ -23,6 +26,7 @@ import com.intellij.util.EditSourceOnDoubleClickHandler;
 import com.intellij.util.concurrency.EdtExecutorService;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.components.BorderLayoutPanel;
 import com.intellij.util.ui.table.ComponentsListFocusTraversalPolicy;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XDebuggerBundle;
@@ -206,11 +210,14 @@ public final class XFramesView extends XDebugView {
     if (Registry.is("debugger.new.tool.window.layout", false) && myMainPanel.getLayout() instanceof BorderLayout) {
       String prev = getShortcutText(IdeActions.ACTION_PREVIOUS_OCCURENCE);
       String next = getShortcutText(IdeActions.ACTION_NEXT_OCCURENCE);
-      if (prev != null && next != null) {
+      String propKey = "XFramesView.AdPanel.SwitchFrames.enabled";
+      if (PropertiesComponent.getInstance().getBoolean(propKey, true) && prev != null && next != null) {
         String message = XDebuggerBundle.message("debugger.switch.frames.from.anywhere.hint", prev, next);
-        JBLabel hint = new JBLabel(message, UIUtil.ComponentStyle.SMALL);
-        hint.setBorder(JBUI.Borders.empty(3, 8));
-        hint.setForeground(UIUtil.getContextHelpForeground());
+        var hint = new MyAdPanel(message, p -> {
+          myMainPanel.remove(p);
+          myMainPanel.revalidate();
+          PropertiesComponent.getInstance().setValue(propKey, false, true);
+        });
         myMainPanel.add(hint, BorderLayout.SOUTH);
       }
     }
@@ -632,6 +639,34 @@ public final class XFramesView extends XDebugView {
         model.add((Object)null);
       }
       return selectCurrentFrame();
+    }
+  }
+
+  private static class MyAdPanel extends BorderLayoutPanel {
+
+    MyAdPanel(@NotNull @NlsContexts.Label String message, @NotNull Consumer<MyAdPanel> closeListener) {
+      var label = new JBLabel(message, UIUtil.ComponentStyle.SMALL);
+      label.setForeground(UIUtil.getContextHelpForeground());
+      label.setToolTipText(message);
+      var closeButton = new JButton();
+      closeButton.setText(null);
+      closeButton.setOpaque(false);
+      closeButton.setBorder(null);
+      closeButton.setBorderPainted(false);
+      closeButton.setContentAreaFilled(false);
+      closeButton.setIcon(AllIcons.Actions.Close);
+      closeButton.setRolloverIcon(AllIcons.Actions.CloseDarkGrey);
+      closeButton.setToolTipText(CommonBundle.getCloseButtonText());
+      closeButton.addActionListener(e -> {
+        closeListener.accept(this);
+      });
+      var dim = new Dimension(AllIcons.Actions.Close.getIconHeight(), AllIcons.Actions.Close.getIconWidth());
+      closeButton.setPreferredSize(dim);
+
+      addToCenter(label);
+      addToRight(closeButton);
+
+      setBorder(JBUI.Borders.empty(3, 8, 3, 4));
     }
   }
 }
