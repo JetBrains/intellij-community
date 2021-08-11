@@ -1,4 +1,3 @@
-// IGNORE_FIR
 interface I
 
 fun I.foo(p: Int): Boolean = true

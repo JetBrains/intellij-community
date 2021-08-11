@@ -1,4 +1,3 @@
-// IGNORE_FIR
 class A(val a: Int) {
     constructor(val b: String) : this(b.toInt())
 }
