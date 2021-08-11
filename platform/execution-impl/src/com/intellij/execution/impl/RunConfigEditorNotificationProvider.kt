@@ -24,7 +24,8 @@ class RunConfigEditorNotificationProvider : EditorNotifications.Provider<EditorN
 
     val panel = EditorNotificationPanel(fileEditor)
     panel.text = ExecutionBundle.message("manual.editing.of.config.file.not.recommended")
-    panel.createActionLabel(ExecutionBundle.message("open.run.debug.dialog")) {
+    @Suppress("DialogTitleCapitalization") val message = ExecutionBundle.message("open.run.debug.dialog")
+    panel.createActionLabel(message) {
       val oldSelectedConfig = runManager.selectedConfiguration
 
       runManager.selectConfigurationStoredInFile(file)
