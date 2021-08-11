@@ -6,13 +6,10 @@
 package org.jetbrains.kotlin.idea.frontend.api
 
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.components.service
-import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.Task
 import org.jetbrains.kotlin.idea.util.application.runReadAction
 import org.jetbrains.kotlin.psi.KtElement
-import org.jetbrains.kotlin.utils.PrintingLogger
 
 @RequiresOptIn("To use analysis session, consider using analyze/analyzeWithReadAction/analyseInModalWindow methods")
 annotation class InvalidWayOfUsingAnalysisSession
@@ -29,7 +26,7 @@ abstract class KtAnalysisSessionProvider {
 
 @InvalidWayOfUsingAnalysisSession
 fun getAnalysisSessionFor(contextElement: KtElement): KtAnalysisSession =
-    contextElement.project.service<KtAnalysisSessionProvider>().getAnalysisSessionFor(contextElement)
+    contextElement.project.getService(KtAnalysisSessionProvider::class.java).getAnalysisSessionFor(contextElement)
 
 /**
  * Execute given [action] in [KtAnalysisSession] context
