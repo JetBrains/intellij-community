@@ -9,6 +9,7 @@ import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.OpenFileDescriptor
 import com.intellij.openapi.fileEditor.TextEditor
@@ -37,6 +38,7 @@ import training.lang.LangSupport
 import training.learn.course.KLesson
 import training.learn.course.Lesson
 import training.learn.course.LessonType
+import training.learn.exceptons.LessonPreparationException
 import training.learn.lesson.LessonManager
 import training.project.ProjectUtils
 import training.statistic.StatisticBase
@@ -141,12 +143,21 @@ internal object OpenLessonActivities {
   }
 
   private fun prepareAndOpenLesson(project: Project, lessonToOpen: Lesson, withCleanup: Boolean = true) {
-    runBackgroundableTask(LearnBundle.message("learn.project.initializing.process"), project = project) {
-      if (withCleanup) {
-        LangManager.getInstance().getLangSupport()?.cleanupBeforeLessons(project)
+    runBackgroundableTask(LearnBundle.message("learn.project.initializing.process"), project = project) l@{
+      try {
+        if (withCleanup) {
+          LangManager.getInstance().getLangSupport()?.cleanupBeforeLessons(project)
+        }
+        lessonToOpen.prepare(project)
       }
-      lessonToOpen.prepare(project)
-
+      catch (e: LessonPreparationException) {
+        thisLogger().warn("Error occurred when preparing the lesson ${lessonToOpen.id}", e)
+        return@l
+      }
+      catch (t: Throwable) {
+        thisLogger().error("Error occurred when preparing the lesson ${lessonToOpen.id}", t)
+        return@l
+      }
       invokeLater {
         openLessonForPreparedProject(project, lessonToOpen)
       }
