@@ -1,16 +1,11 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.featureStatistics;
 
-import com.intellij.internal.statistic.eventLog.EventLogListenersManager;
-import com.intellij.internal.statistic.eventLog.EventLogSystemLogger;
-import com.intellij.internal.statistic.eventLog.LogEvent;
-import com.intellij.internal.statistic.eventLog.StatisticsEventLogListener;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.startup.StartupActivity;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.Pair;
+import com.intellij.util.Function;
 import org.jdom.Element;
 import org.jdom.JDOMException;
 import org.jetbrains.annotations.NonNls;
@@ -21,12 +16,12 @@ import org.jetbrains.annotations.TestOnly;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.*;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 public final class ProductivityFeaturesRegistryImpl extends ProductivityFeaturesRegistry {
   private static final Logger LOG = Logger.getInstance(ProductivityFeaturesRegistry.class);
   private final Map<String, FeatureDescriptor> myFeatures = new HashMap<>();
-  private final Map<String, Map<String, List<LogEventDetector>>> myLogEventDetectors = new HashMap<>();
+  private final List<FeatureUsageEvent.Action> myActionEvents = new ArrayList<>();
+  private final List<FeatureUsageEvent.Intention> myIntentionEvents = new ArrayList<>();
   private final Map<String, GroupDescriptor> myGroups = new HashMap<>();
   private final List<Pair<String, ApplicabilityFilter>> myApplicabilityFilters = new ArrayList<>();
 
@@ -114,7 +109,7 @@ public final class ProductivityFeaturesRegistryImpl extends ProductivityFeatures
             featureDescriptor.copyStatistics(featureLoadedStatistics);
           }
           myFeatures.put(featureDescriptor.getId(), featureDescriptor);
-          addLogEventDetectors(featureDescriptor);
+          addUsageEvents(featureDescriptor);
         }
       }
       final ApplicabilityFilter[] applicabilityFilters = provider.getApplicabilityFilters();
@@ -145,13 +140,9 @@ public final class ProductivityFeaturesRegistryImpl extends ProductivityFeatures
     }
   }
 
-  private void addLogEventDetectors(FeatureDescriptor featureDescriptor) {
-    var featureDetectors = featureDescriptor.getLogEventDetectors();
-    for (LogEventDetector detector : featureDetectors) {
-      var event2detectors = myLogEventDetectors.computeIfAbsent(detector.groupId(), s -> new HashMap<>());
-      var detectors = event2detectors.computeIfAbsent(detector.eventId(), s -> new ArrayList<>());
-      detectors.add(detector);
-    }
+  private void addUsageEvents(FeatureDescriptor featureDescriptor) {
+    myActionEvents.addAll(featureDescriptor.getActionEvents());
+    myIntentionEvents.addAll(featureDescriptor.getIntentionEvents());
   }
 
   private void readGroup(Element groupElement) {
@@ -168,25 +159,18 @@ public final class ProductivityFeaturesRegistryImpl extends ProductivityFeatures
       if (!TODO_HTML_MARKER.equals(featureDescriptor.getTipFileName())) {
         myFeatures.put(featureDescriptor.getId(), featureDescriptor);
       }
-      addLogEventDetectors(featureDescriptor);
+      addUsageEvents(featureDescriptor);
     }
   }
 
-  private @Nullable FeatureDescriptor getFeatureDescriptorByLogEvent(@NotNull String groupId,
-                                                                     @NotNull String eventId,
-                                                                     @NotNull Map<String, Object> eventData) {
+  private @Nullable <T extends FeatureUsageEvent> FeatureDescriptor findFeatureByEvent(List<T> events, Function<T, Boolean> eventChecker) {
     lazyLoadFromPluginsFeaturesProviders();
-    var event2detectors = myLogEventDetectors.get(groupId);
-    if (event2detectors != null) {
-      var detectors = event2detectors.get(eventId);
-      if (detectors != null) {
-        var detector = detectors.stream().filter(d -> d.succeed(eventData)).findFirst();
-        if (detector.isPresent()) {
-          return getFeatureDescriptorEx(detector.get().featureId());
-        }
-      }
-    }
-    return null;
+    return events
+      .stream()
+      .filter(e -> eventChecker.fun(e))
+      .findFirst()
+      .map(e -> getFeatureDescriptorEx(e.featureId()))
+      .orElse(null);
   }
 
   @Override
@@ -228,6 +212,16 @@ public final class ProductivityFeaturesRegistryImpl extends ProductivityFeatures
   }
 
   @Override
+  public @Nullable FeatureDescriptor findFeatureByAction(@NotNull String actionId) {
+    return findFeatureByEvent(myActionEvents, action -> actionId.equals(action.getActionId()));
+  }
+
+  @Override
+  public @Nullable FeatureDescriptor findFeatureByIntention(@NotNull Class<?> intentionClass) {
+    return findFeatureByEvent(myIntentionEvents, intention -> intentionClass.getName().equals(intention.getIntentionClassName()));
+  }
+
+  @Override
   @NonNls
   public String toString() {
     return super.toString() + "; myAdditionalFeaturesLoaded=" + myAdditionalFeaturesLoaded;
@@ -240,48 +234,5 @@ public final class ProductivityFeaturesRegistryImpl extends ProductivityFeatures
     myApplicabilityFilters.clear();
     myGroups.clear();
     reloadFromXml();
-  }
-
-  public static class EventLogSubscribeActivity implements StartupActivity.DumbAware {
-    private static final AtomicBoolean isSubscribed = new AtomicBoolean(false);
-
-    @Override
-    public void runActivity(@NotNull Project project) {
-      if (ApplicationManager.getApplication().isUnitTestMode()) return;
-      ProductivityFeaturesRegistry registry = ProductivityFeaturesRegistry.getInstance();
-      if (registry instanceof ProductivityFeaturesRegistryImpl) {
-        var registryImpl = (ProductivityFeaturesRegistryImpl)registry;
-        FeatureUsageTracker usageTracker = FeatureUsageTracker.getInstance();
-        if (usageTracker != null && !isSubscribed.getAndSet(true)) {
-          ApplicationManager.getApplication().getService(EventLogListenersManager.class)
-            .subscribe(new EventLogListener(registryImpl, usageTracker), EventLogSystemLogger.DEFAULT_RECORDER);
-        }
-      }
-      else {
-        LOG.warn("No ProductivityFeaturesRegistry implementation. Features from Event Log won't be recorded");
-      }
-    }
-
-    private static class EventLogListener implements StatisticsEventLogListener {
-      private final ProductivityFeaturesRegistryImpl myFeaturesRegistry;
-      private final FeatureUsageTracker myUsageTracker;
-
-      private EventLogListener(ProductivityFeaturesRegistryImpl featuresRegistry, FeatureUsageTracker usageTracker) {
-        myFeaturesRegistry = featuresRegistry;
-        myUsageTracker = usageTracker;
-      }
-
-      @Override
-      public void onLogEvent(@NotNull LogEvent validatedEvent,
-                             @Nullable String rawEventId,
-                             @Nullable Map<String, ?> rawData) {
-        FeatureDescriptor feature = myFeaturesRegistry.getFeatureDescriptorByLogEvent(validatedEvent.getGroup().getId(),
-                                                                                      validatedEvent.getEvent().getId(),
-                                                                                      validatedEvent.getEvent().getData());
-        if (feature != null) {
-          myUsageTracker.triggerFeatureUsed(feature.getId());
-        }
-      }
-    }
   }
 }
