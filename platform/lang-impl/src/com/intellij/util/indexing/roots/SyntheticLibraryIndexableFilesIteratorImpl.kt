@@ -44,4 +44,8 @@ internal class SyntheticLibraryIndexableFilesIteratorImpl(private val syntheticL
     val roots = runReadAction { syntheticLibrary.allRoots }
     return IndexableFilesIterationMethods.iterateRoots(project, roots, fileIterator, fileFilter)
   }
+
+  override fun getRootUrls(): Set<String> {
+    return syntheticLibrary.allRoots.map { it.url }.toSet()
+  }
 }

@@ -11,6 +11,8 @@ import org.jetbrains.annotations.Debug;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Set;
+
 /**
  * Provides a named file set to be indexed for a single project structure entity (module, library, SDK, etc.)
  * Allows the indexing infrastructure to prioritize indexing by some predicate.
@@ -64,4 +66,6 @@ public interface IndexableFilesIterator {
   boolean iterateFiles(@NotNull Project project,
                        @NotNull ContentIterator fileIterator,
                        @NotNull VirtualFileFilter fileFilter);
+
+  @NotNull Set<String> getRootUrls();
 }

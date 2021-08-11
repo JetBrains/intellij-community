@@ -457,6 +457,7 @@
           <synonym text="Restart"/>
         </action>
         <action id="RestartIde" class="com.intellij.ide.actions.RestartIdeAction"/>
+        <action id="CallSaul" class="com.intellij.ide.actions.cache.CallSaulAction" internal="true"/>
         <separator/>
         <group id="ExportImportGroup" popup="true">
           <action id="ImportSettings" class="com.intellij.configurationStore.ImportSettingsAction"/>

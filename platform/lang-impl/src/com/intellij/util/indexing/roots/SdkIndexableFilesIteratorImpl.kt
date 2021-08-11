@@ -39,4 +39,9 @@ class SdkIndexableFilesIteratorImpl(private val sdk: Sdk) : IndexableFilesIterat
     }
     return IndexableFilesIterationMethods.iterateRoots(project, roots, fileIterator, fileFilter)
   }
+
+  override fun getRootUrls(): Set<String> {
+    val rootProvider = sdk.rootProvider
+    return (rootProvider.getUrls(OrderRootType.SOURCES) + rootProvider.getUrls(OrderRootType.CLASSES)).toSet()
+  }
 }

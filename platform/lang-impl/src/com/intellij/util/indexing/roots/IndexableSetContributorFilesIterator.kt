@@ -50,4 +50,8 @@ internal class IndexableSetContributorFilesIterator(private val indexableSetCont
     return IndexableFilesIterationMethods.iterateRoots(project, allRoots, fileIterator, fileFilter, excludeNonProjectRoots = false)
   }
 
+  override fun getRootUrls(): Set<String> {
+    return indexableSetContributor.additionalRootsToIndex.map { it.url }.toSet()
+  }
+
 }

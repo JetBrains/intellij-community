@@ -47,4 +47,9 @@ class LibraryIndexableFilesIteratorImpl(private val library: Library) : LibraryI
     }
     return IndexableFilesIterationMethods.iterateRoots(project, roots, fileIterator, fileFilter)
   }
+
+  override fun getRootUrls(): Set<String> {
+    val rootProvider = library.rootProvider
+    return (rootProvider.getUrls(OrderRootType.SOURCES) + rootProvider.getUrls(OrderRootType.CLASSES)).toSet()
+  }
 }

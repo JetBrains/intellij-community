@@ -3,10 +3,8 @@ package com.intellij.ide.actions;
 
 import com.intellij.codeInsight.actions.VcsFacade;
 import com.intellij.ide.IdeBundle;
-import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -20,11 +18,12 @@ import com.intellij.openapi.wm.WindowManager;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-final class SynchronizeCurrentFileAction extends DumbAwareAction {
+public final class SynchronizeCurrentFileAction extends DumbAwareAction {
   @Override
   public void update(@NotNull AnActionEvent e) {
     e.getPresentation().setEnabledAndVisible(e.getProject() != null && getSupportedFiles(e).findAny().isPresent());
@@ -35,6 +34,10 @@ final class SynchronizeCurrentFileAction extends DumbAwareAction {
     Project project = e.getProject();
     if (project == null) return;
     List<VirtualFile> files = getSupportedFiles(e).collect(Collectors.toList());
+    synchronizeFiles(files, project);
+  }
+
+  public static void synchronizeFiles(Collection<VirtualFile> files, Project project) {
     if (files.isEmpty()) return;
 
     for (VirtualFile file : files) {
@@ -53,7 +56,7 @@ final class SynchronizeCurrentFileAction extends DumbAwareAction {
     RefreshQueue.getInstance().refresh(true, true, () -> postRefresh(project, files), files);
   }
 
-  private static void postRefresh(@NotNull Project project, @NotNull List<VirtualFile> files) {
+  private static void postRefresh(@NotNull Project project, @NotNull Collection<VirtualFile> files) {
     List<VirtualFile> localFiles = ContainerUtil.filter(files, f -> f.isInLocalFileSystem());
     if (!localFiles.isEmpty()) {
       VcsFacade.getInstance().markFilesDirty(project, localFiles);

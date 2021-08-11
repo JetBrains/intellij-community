@@ -5,6 +5,7 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleType
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.rootManager
 import com.intellij.openapi.roots.ContentIterator
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.impl.ModuleFileIndexImpl
@@ -73,4 +74,6 @@ internal class ModuleIndexableFilesIteratorImpl(private val module: Module,
     }
     return true
   }
+
+  override fun getRootUrls(): Set<String> = module.rootManager.contentRootUrls.toSet()
 }

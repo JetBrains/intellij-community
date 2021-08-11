@@ -28,4 +28,8 @@ class ProjectIndexableFilesIteratorImpl(private val fileOrDir: VirtualFile) : Pr
     fileIterator: ContentIterator,
     fileFilter: VirtualFileFilter
   ): Boolean = ProjectFileIndex.getInstance(project).iterateContentUnderDirectory(fileOrDir, fileIterator, fileFilter)
+
+  override fun getRootUrls(): Set<String> {
+    throw UnsupportedOperationException()
+  }
 }
