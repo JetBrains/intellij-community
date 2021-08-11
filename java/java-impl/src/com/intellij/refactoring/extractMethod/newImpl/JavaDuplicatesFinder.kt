@@ -9,13 +9,17 @@ data class ChangedExpression(val pattern: PsiExpression, val candidate: PsiExpre
 
 data class Duplicate(val pattern: List<PsiElement>, val candidate: List<PsiElement>, val changedExpressions: List<ChangedExpression>)
 
-class JavaDuplicatesFinder(pattern: List<PsiElement>) {
+class JavaDuplicatesFinder(pattern: List<PsiElement>, private val terminalNodes: Set<PsiElement> = emptySet()) {
 
   companion object {
     fun textRangeOf(range: List<PsiElement>) = TextRange(range.first().textRange.startOffset, range.last().textRange.endOffset)
   }
 
   private val pattern: List<PsiElement> = pattern.filterNot(::isNoise)
+
+  fun withTerminalNodes(terminalNodes: Set<PsiElement>): JavaDuplicatesFinder {
+    return JavaDuplicatesFinder(pattern, this.terminalNodes + terminalNodes)
+  }
 
   fun findDuplicates(scope: PsiElement): List<Duplicate> {
     val ignoredElements = pattern.toSet()
@@ -73,11 +77,9 @@ class JavaDuplicatesFinder(pattern: List<PsiElement>) {
       ?.copy(pattern = listOf(pattern), candidate = listOf(candidate))
   }
 
-  fun createDuplicate(pattern: List<PsiElement>,
-                      candidate: List<PsiElement>,
-                      equivalenceComparator: (PsiElement, PsiElement) -> Boolean = ::isEquivalent): Duplicate? {
+  fun createDuplicate(pattern: List<PsiElement>, candidate: List<PsiElement>): Duplicate? {
     val changedExpressions = ArrayList<ChangedExpression>()
-    if (!traverseAndCollectChanges(pattern, candidate, changedExpressions, equivalenceComparator)) return null
+    if (!traverseAndCollectChanges(pattern, candidate, changedExpressions)) return null
     return removeInternalReferences(Duplicate(pattern, candidate, changedExpressions))
   }
 
@@ -99,11 +101,12 @@ class JavaDuplicatesFinder(pattern: List<PsiElement>) {
 
   fun traverseAndCollectChanges(pattern: List<PsiElement>,
                                 candidate: List<PsiElement>,
-                                changedExpressions: MutableList<ChangedExpression>,
-                                equivalenceComparator: (PsiElement, PsiElement) -> Boolean): Boolean {
+                                changedExpressions: MutableList<ChangedExpression>): Boolean {
     if (candidate.size != pattern.size) return false
     val notEqualElements = pattern.zip(candidate).filterNot { (pattern, candidate) ->
-      equivalenceComparator(pattern, candidate) && traverseAndCollectChanges(childrenOf(pattern), childrenOf(candidate), changedExpressions, equivalenceComparator)
+      pattern !in terminalNodes &&
+      isEquivalent(pattern, candidate) &&
+      traverseAndCollectChanges(childrenOf(pattern), childrenOf(candidate), changedExpressions)
     }
     if (notEqualElements.any { (pattern, candidate) -> ! canBeReplaced(pattern, candidate) }) return false
     changedExpressions += notEqualElements.map { (pattern, candidate) -> ChangedExpression(pattern as PsiExpression, candidate as PsiExpression) }
