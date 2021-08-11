@@ -50,8 +50,6 @@
           <element id="extracted-dir" path="$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-scripting-compiler-impl/1.5.10-release-941/kotlin-scripting-compiler-impl-1.5.10-release-941.jar" path-in-jar="/" />
           <element id="extracted-dir" path="$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-gradle-statistics-for-ide/1.5.10-release-941/kotlin-gradle-statistics-for-ide-1.5.10-release-941.jar" path-in-jar="/" />
           <element id="module-output" name="kotlin.plugin" />
-          <element id="module-output" name="kotlin.common" />
-          <element id="module-output" name="kotlin.jps-common" />
           <element id="module-output" name="kotlin.core" />
           <element id="module-output" name="kotlin.idea" />
           <element id="module-output" name="kotlin.fir.frontend-independent" />
@@ -117,6 +115,12 @@
           <element id="module-output" name="kotlin.uast.uast-kotlin" />
           <element id="module-output" name="kotlin.uast.uast-kotlin-idea" />
           <element id="module-output" name="kotlin.i18n" />
+        </element>
+        <element id="archive" name="kotlin-jps-common.jar">
+          <element id="module-output" name="kotlin.jps-common" />
+        </element>
+        <element id="archive" name="kotlin-common.jar">
+          <element id="module-output" name="kotlin.common" />
         </element>
       </element>
     </root>
