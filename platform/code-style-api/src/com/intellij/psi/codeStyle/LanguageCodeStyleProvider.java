@@ -22,13 +22,4 @@ public interface LanguageCodeStyleProvider extends CustomCodeStyleSettingsFactor
   DocCommentSettings getDocCommentSettings(@NotNull CodeStyleSettings rootSettings);
 
   Set<String> getSupportedFields();
-
-  /**
-   * Return true if formatter for this language uses {@link CommonCodeStyleSettings#KEEP_LINE_BREAKS} flag
-   * for custom line breaks processing
-   */
-  @ApiStatus.Experimental
-  default boolean usesCommonKeepLineBreaks() {
-    return false;
-  }
 }
