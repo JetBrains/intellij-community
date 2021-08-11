@@ -16,7 +16,6 @@
 package com.intellij.vcsUtil;
 
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.SelectionModel;
 import com.intellij.openapi.util.NlsActions.ActionText;
 import com.intellij.openapi.util.NlsContexts.DialogTitle;
 import com.intellij.openapi.util.TextRange;
@@ -29,11 +28,6 @@ public class VcsSelection {
   private final int mySelectionEndLineNumber;
   private final @ActionText String myActionName;
   private final @DialogTitle String myDialogTitle;
-
-  public VcsSelection(@NotNull Document document, SelectionModel selectionModel) {
-    this(document, new TextRange(selectionModel.getSelectionStart(), selectionModel.getSelectionEnd()),
-         VcsBundle.message("action.name.show.history.for.selection"));
-  }
 
   public VcsSelection(@NotNull Document document, TextRange textRange, String actionName) {
     myDocument = document;
