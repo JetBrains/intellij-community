@@ -41,7 +41,7 @@ class HLAddNameToArgumentIntention :
 
     companion object {
         fun getArgumentNameIfCanBeUsedForCalls(argument: KtValueArgument, resolvedCall: KtCall): Name? {
-            val valueParameterSymbol = resolvedCall.argumentMapping[argument] ?: return null
+            val valueParameterSymbol = resolvedCall.argumentMapping[argument.getArgumentExpression()] ?: return null
             if (valueParameterSymbol.isVararg) {
                 if (argument.languageVersionSettings.supportsFeature(LanguageFeature.ProhibitAssigningSingleElementsToVarargsInNamedForm) &&
                     !argument.isSpread
