@@ -56,8 +56,8 @@ public class XmlEncodingReferenceProvider extends PsiReferenceProvider {
   }
 
   public static PsiReference[] extractFromContentAttribute(final XmlAttributeValue value) {
-    boolean hasNonStandardTokens = ContainerUtil.find(
-      value.getChildren(), ch -> !ATTRIBUTE_VALUE_STD_TOKENS.contains(ch.getNode().getElementType())) != null;
+    boolean hasNonStandardTokens =
+      ContainerUtil.exists(value.getChildren(), ch -> !ATTRIBUTE_VALUE_STD_TOKENS.contains(ch.getNode().getElementType()));
     if (hasNonStandardTokens) return PsiReference.EMPTY_ARRAY;
     String text = value.getValue();
     int start = text.indexOf(CHARSET_PREFIX);
