@@ -189,11 +189,11 @@ public class EnterHandler extends BaseEnterHandler {
 
     String commentText = comment.getText();
     final boolean docComment = isDocComment(comment, commenter);
-    final String expectedCommentEnd = docComment ? commenter.getDocumentationCommentSuffix():commenter.getBlockCommentSuffix();
+    final String expectedCommentEnd = docComment ? commenter.getDocumentationCommentSuffix() : commenter.getBlockCommentSuffix();
     if (expectedCommentEnd != null && !commentText.endsWith(expectedCommentEnd)) return false;
 
     final PsiFile containingFile = comment.getContainingFile();
-    final Language language = containingFile.getLanguage();
+    final Language language = comment.getLanguage();
     ParserDefinition parserDefinition = LanguageParserDefinitions.INSTANCE.forLanguage(language);
     if (parserDefinition == null) {
       return true;
@@ -212,6 +212,7 @@ public class EnterHandler extends BaseEnterHandler {
       }
 
       if (javaLikeQuoteHandler != null &&
+          expectedCommentEnd != null &&
           javaLikeQuoteHandler.getStringTokenTypes() != null &&
           javaLikeQuoteHandler.getStringTokenTypes().contains(tokenType)) {
         String text = commentText.substring(lexer.getTokenStart(), lexer.getTokenEnd());
@@ -220,7 +221,7 @@ public class EnterHandler extends BaseEnterHandler {
         if (text.endsWith(expectedCommentEnd) &&
             endOffset < containingFile.getTextLength() &&
             containingFile.getText().charAt(endOffset) == '\n') {
-          return true;
+          return commentPrefix == null || !text.contains(commentPrefix);
         }
       }
       if (tokenType == commenter.getDocumentationCommentTokenType() || tokenType == commenter.getBlockCommentTokenType()) {
