@@ -135,9 +135,9 @@ class ModuleEntity(
 
   companion object {
     val contentRootDelegate = OneToMany<ModuleEntity, ContentRootEntity>(ContentRootEntity::class.java, false)
-    val moduleImlDelegate = OneToOneParent.Nullable<ModuleEntity, ModuleCustomImlDataEntity>(ModuleCustomImlDataEntity::class.java)
-    val moduleGroupDelegate = OneToOneParent.Nullable<ModuleEntity, ModuleGroupPathEntity>(ModuleGroupPathEntity::class.java)
-    val javaSettingsDelegate = OneToOneParent.Nullable<ModuleEntity, JavaModuleSettingsEntity>(JavaModuleSettingsEntity::class.java)
+    val moduleImlDelegate = OneToOneParent.Nullable<ModuleEntity, ModuleCustomImlDataEntity>(ModuleCustomImlDataEntity::class.java, false)
+    val moduleGroupDelegate = OneToOneParent.Nullable<ModuleEntity, ModuleGroupPathEntity>(ModuleGroupPathEntity::class.java, false)
+    val javaSettingsDelegate = OneToOneParent.Nullable<ModuleEntity, JavaModuleSettingsEntity>(JavaModuleSettingsEntity::class.java, false)
   }
 }
 
