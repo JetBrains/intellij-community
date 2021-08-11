@@ -61,6 +61,7 @@ class AlertMessagesManager : MacMessages() {
                                      helpId: String?): Int {
     val dialog = AlertDialog(null, window, message, title, arrayOf(yesText, cancelText, noText), 0, -1, getIcon(icon), doNotAskOption,
                              helpId)
+    AppIcon.getInstance().requestAttention(null, true)
     dialog.show()
     val exitCode = when (dialog.exitCode) {
       0 -> Messages.YES
@@ -115,6 +116,7 @@ class AlertMessagesManager : MacMessages() {
                         helpId: String?): Int {
     val dialog = AlertDialog(project, parentComponent, message, title, options, defaultOptionIndex, focusedOptionIndex, getIcon(icon),
                              doNotAskOption, helpId)
+    AppIcon.getInstance().requestAttention(project, true)
     dialog.show()
     return dialog.exitCode
   }
