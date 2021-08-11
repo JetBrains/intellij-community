@@ -16,6 +16,7 @@ import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.diff.DiffColors
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.editor.RangeMarker
 import com.intellij.openapi.editor.event.DocumentEvent
 import com.intellij.openapi.editor.event.DocumentListener
 import com.intellij.openapi.editor.ex.util.EditorUtil
@@ -29,11 +30,10 @@ import com.intellij.openapi.ui.popup.Balloon
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.psi.PsiIdentifier
-import com.intellij.psi.PsiMethod
-import com.intellij.psi.PsiMethodCallExpression
-import com.intellij.psi.SmartPsiElementPointer
+import com.intellij.psi.*
+import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.refactoring.rename.inplace.TemplateInlayUtil
+import com.intellij.refactoring.suggested.range
 import com.intellij.ui.GotItTooltip
 import com.intellij.util.SmartList
 import java.awt.Point
@@ -201,8 +201,8 @@ object InplaceExtractUtils {
 
   fun createCodePreview(editor: Editor,
                         extractedRange: TextRange?,
-                        method: SmartPsiElementPointer<PsiMethod>,
-                        call: SmartPsiElementPointer<PsiMethodCallExpression>): EditorCodePreview {
+                        getMethod: () -> PsiMethod?,
+                        getCall: () -> PsiMethodCallExpression?): EditorCodePreview {
     val preview = EditorCodePreview.create(editor)
     val project = editor.project ?: return preview
     val document = editor.document
@@ -210,15 +210,27 @@ object InplaceExtractUtils {
 
     if (extractedRange != null) {
       val callLines = findLines(document, extractedRange)
-      preview.addPreview(callLines) { navigateToFileOffset(project, file, getNameIdentifier(call.element)?.textRange?.endOffset) }
+      preview.addPreview(callLines) { navigateToFileOffset(project, file, getNameIdentifier(getCall())?.textRange?.endOffset) }
     }
-    val methodRange = method.element?.textRange
+    val methodRange = getMethod()?.textRange
     if (methodRange != null) {
       val methodLines = findLines(document, methodRange).trimToLength(4)
-      preview.addPreview(methodLines) { navigateToFileOffset(project, file, method.element?.nameIdentifier?.textRange?.endOffset) }
+      preview.addPreview(methodLines) { navigateToFileOffset(project, file, getMethod()?.nameIdentifier?.textRange?.endOffset) }
     }
 
     return preview
+  }
+
+  inline fun <reified T: PsiElement> findElementAt(file: PsiFile, range: RangeMarker?): T? {
+    val offset = range?.range?.startOffset ?: return null
+    return PsiTreeUtil.findElementOfClassAtOffset(file, offset, T::class.java, false)
+  }
+
+  fun createGreedyRangeMarker(document: Document, range: TextRange): RangeMarker {
+    return document.createRangeMarker(range).apply {
+      isGreedyToLeft = true
+      isGreedyToRight = true
+    }
   }
 
   private fun IntRange.trimToLength(maxLength: Int) = first until first + minOf(maxLength, last - first + 1)
