@@ -1386,7 +1386,7 @@ public class MavenUtil {
   }
 
   public static VirtualFile getConfigFile(MavenProject mavenProject, String fileRelativePath) {
-    VirtualFile baseDir = VfsUtil.findFileByIoFile(getBaseDir(mavenProject.getDirectoryFile()), false);
+    VirtualFile baseDir = getVFileBaseDir(mavenProject.getDirectoryFile());
     if (baseDir != null) {
       return baseDir.findFileByRelativePath(fileRelativePath);
     }
