@@ -19,12 +19,16 @@ import com.intellij.util.indexing.UnindexedFilesUpdater
 import java.util.concurrent.Callable
 import java.util.concurrent.ConcurrentMap
 
+internal enum class FileAddStatus {
+  ADDED, PRESENT, SKIPPED
+}
+
 internal sealed class ProjectIndexableFilesFilterHolder {
   abstract fun getProjectIndexableFiles(project: Project): IdFilter?
 
-  abstract fun addFileId(fileId: Int, projects: () -> Set<Project>)
+  abstract fun addFileId(fileId: Int, projects: () -> Set<Project>): FileAddStatus
 
-  abstract fun addFileId(fileId: Int, project: Project): Boolean
+  abstract fun addFileId(fileId: Int, project: Project): FileAddStatus
 
   abstract fun entireProjectUpdateStarted(project: Project)
 
@@ -67,16 +71,20 @@ internal class IncrementalProjectIndexableFilesFilterHolder : ProjectIndexableFi
     myProjectFilters[project]?.resetPreviousFileIds()
   }
 
-  override fun addFileId(fileId: Int, projects: () -> Set<Project>) {
+  override fun addFileId(fileId: Int, projects: () -> Set<Project>): FileAddStatus {
     val matchedProjects by lazy(LazyThreadSafetyMode.NONE) { projects() }
-    for ((p, filter) in myProjectFilters) {
+    val statuses = myProjectFilters.map { (p, filter) ->
       filter.ensureFileIdPresent(fileId) {
         matchedProjects.contains(p)
       }
     }
+
+    if (statuses.all { it == FileAddStatus.SKIPPED }) return FileAddStatus.SKIPPED
+    if (statuses.any { it == FileAddStatus.ADDED }) return FileAddStatus.ADDED
+    return FileAddStatus.PRESENT
   }
 
-  override fun addFileId(fileId: Int, project: Project): Boolean {
+  override fun addFileId(fileId: Int, project: Project): FileAddStatus {
     return myProjectFilters.get(project)!!.ensureFileIdPresent(fileId) { true }
   }
 

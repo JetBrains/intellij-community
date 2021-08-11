@@ -65,6 +65,7 @@ import com.intellij.util.indexing.impl.MapReduceIndexMappingException;
 import com.intellij.util.indexing.impl.storage.DefaultIndexStorageLayout;
 import com.intellij.util.indexing.impl.storage.TransientFileContentIndex;
 import com.intellij.util.indexing.impl.storage.VfsAwareMapReduceIndex;
+import com.intellij.util.indexing.projectFilter.FileAddStatus;
 import com.intellij.util.indexing.projectFilter.IncrementalProjectIndexableFilesFilterHolder;
 import com.intellij.util.indexing.projectFilter.ProjectIndexableFilesFilterHolder;
 import com.intellij.util.indexing.roots.IndexableFilesContributor;
@@ -1734,7 +1735,6 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
     IndexingFlag.cleanProcessedFlagRecursively(file);
 
     List<ID<?, ?>> nontrivialFileIndexedStates = IndexingStamp.getNontrivialFileIndexedStates(fileId);
-    Collection<ID<?, ?>> fileIndexedStatesToUpdate = ContainerUtil.intersection(nontrivialFileIndexedStates, myRegisteredIndexes.getRequiringContentIndices());
 
     // transient index value can depend on disk value because former is diff to latter
     // it doesn't matter content hanged or not: indices might depend on file name too
@@ -1758,6 +1758,11 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
   public void scheduleFileForIndexing(int fileId, @NotNull VirtualFile file, boolean contentChange) {
     final List<IndexableFilesFilter> filters = IndexableFilesFilter.EP_NAME.getExtensionList();
     if (!filters.isEmpty() && !ContainerUtil.exists(filters, e -> e.shouldIndex(file))) return;
+
+    if (myIndexableFilesFilterHolder.addFileId(fileId, () -> getContainingProjects(file)) == FileAddStatus.SKIPPED) {
+      doInvalidateIndicesForFile(fileId, file);
+      return;
+    }
 
     List<ID<?, ?>> nontrivialFileIndexedStates = IndexingStamp.getNontrivialFileIndexedStates(fileId);
 
