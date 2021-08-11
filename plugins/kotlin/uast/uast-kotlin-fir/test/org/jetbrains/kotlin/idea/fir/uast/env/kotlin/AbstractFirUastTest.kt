@@ -22,6 +22,7 @@ import org.jetbrains.uast.kotlin.FirKotlinUastResolveProviderService
 import org.jetbrains.uast.kotlin.internal.FirCliKotlinUastResolveProviderService
 import org.jetbrains.uast.test.common.kotlin.UastPluginSelection
 import java.io.File
+import java.nio.file.Path
 import java.nio.file.Paths
 
 abstract class AbstractFirUastTest : KotlinLightCodeInsightFixtureTestCase(), UastPluginSelection {
@@ -33,6 +34,8 @@ abstract class AbstractFirUastTest : KotlinLightCodeInsightFixtureTestCase(), Ua
                 return IGNORE_FIR_DIRECTIVE in KotlinTestUtils.parseDirectives(this)
             }
     }
+
+    protected open val basePath: Path? = null
 
     private fun registerExtensionPointAndServiceIfNeeded() {
         val area = Extensions.getRootArea()
@@ -81,7 +84,7 @@ abstract class AbstractFirUastTest : KotlinLightCodeInsightFixtureTestCase(), Ua
 
     protected fun doCheck(filePath: String, checkCallback: (String, UFile) -> Unit = { _filePath, file -> check(_filePath, file) }) {
         check(UastLanguagePlugin.getInstances().count { it.language == KotlinLanguage.INSTANCE } == 1)
-        val normalizedFile = Paths.get(filePath).normalize()
+        val normalizedFile = Paths.get(filePath).let { basePath?.resolve(it) ?: it}.normalize()
         val virtualFile = getVirtualFile(normalizedFile.toString())
 
         val testName = normalizedFile.fileName.toString().removeSuffix(".kt")
