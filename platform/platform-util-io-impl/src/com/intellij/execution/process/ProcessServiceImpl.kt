@@ -36,6 +36,10 @@ class ProcessServiceImpl: ProcessService {
     return createWinProcess(process).sendCtrlC()
   }
 
+  override fun sendWinProcessCtrlC(pid: Int): Boolean {
+    return createWinProcess(pid).sendCtrlC()
+  }
+
   override fun killWinProcessRecursively(process: Process) {
     createWinProcess(process).killRecursively();
   }
@@ -57,5 +61,11 @@ class ProcessServiceImpl: ProcessService {
       WinProcess(process.pid)
     }
     else WinProcess(process)
+  }
+
+  private fun createWinProcess(pid: Int) = WinProcess(pid)
+
+  override fun killWinProcess(pid: Int) {
+    createWinProcess(pid).kill();
   }
 }

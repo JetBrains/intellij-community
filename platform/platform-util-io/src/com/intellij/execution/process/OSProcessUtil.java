@@ -8,8 +8,6 @@ import com.intellij.openapi.util.registry.Registry;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jvnet.winp.WinProcess;
-import org.jvnet.winp.WinpException;
 
 public final class OSProcessUtil {
   private static final Logger LOG = Logger.getInstance(OSProcessUtil.class);
@@ -60,7 +58,7 @@ public final class OSProcessUtil {
       try {
         if (!Registry.is("disable.winp", false)) {
           try {
-            createWinProcess(pid).kill();
+            ProcessService.getInstance().killWinProcess(pid);
             return;
           }
           catch (Throwable e) {
@@ -96,9 +94,9 @@ public final class OSProcessUtil {
           // there is no need to check return value: `sendCtrlC` either returns
           // true or throws exception.
           //noinspection ResultOfMethodCallIgnored
-          createWinProcess(pid).sendCtrlC();
+          ProcessService.getInstance().sendWinProcessCtrlC(pid);
         }
-        catch (WinpException e) {
+        catch (Exception e) {
           throw new UnsupportedOperationException("Failed to terminate process", e);
         }
       }
@@ -132,11 +130,6 @@ public final class OSProcessUtil {
   @Deprecated
   public static int getProcessID(@NotNull Process process, Boolean disableWinp) {
     return (int)process.pid();
-  }
-
-  @NotNull
-  private static WinProcess createWinProcess(int pid) {
-    return new WinProcess(pid);
   }
 
   public static int getCurrentProcessId() {

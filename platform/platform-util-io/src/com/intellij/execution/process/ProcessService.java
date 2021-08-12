@@ -18,6 +18,8 @@ public interface ProcessService {
 
   boolean sendWinProcessCtrlC(Process process);
 
+  boolean sendWinProcessCtrlC(int pid);
+
   void killWinProcessRecursively(Process process);
 
   boolean isWinPty(Process process);
@@ -27,4 +29,6 @@ public interface ProcessService {
   static ProcessService getInstance() {
     return ApplicationManager.getApplication().getService(ProcessService.class);
   }
+
+  void killWinProcess(int pid);
 }
