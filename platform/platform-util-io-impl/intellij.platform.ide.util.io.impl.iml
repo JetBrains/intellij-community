@@ -10,7 +10,7 @@
     <orderEntry type="library" name="kotlin-stdlib-jdk8" level="project" />
     <orderEntry type="module" module-name="intellij.platform.core" />
     <orderEntry type="module" module-name="intellij.platform.util.base" />
-    <orderEntry type="module" module-name="intellij.platform.ide.util.io" exported=""/>
+    <orderEntry type="module" module-name="intellij.platform.ide.util.io" exported="" />
     <orderEntry type="library" name="pty4j" level="project" />
     <orderEntry type="library" name="winp" level="project" />
   </component>
