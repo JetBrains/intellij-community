@@ -60,6 +60,17 @@ internal class RowBuilderImpl(private val dialogPanelConfig: DialogPanelConfig, 
     return result
   }
 
+  override fun visible(isVisible: Boolean): RowBuilder {
+    _cells.forEach {
+      when (it) {
+        is CellBuilderImpl<*> -> it.visibleFromParent(isVisible)
+        is PanelBuilderImpl -> it.visible(isVisible)
+      }
+    }
+    comment?.let { it.isVisible = isVisible }
+    return this
+  }
+
   override fun gap(topGap: TopGap): RowBuilder {
     this.topGap = topGap
     return this

@@ -26,53 +26,83 @@ internal class CellBuilderImpl<T : JComponent>(
   private var property: GraphProperty<*>? = null
   private var applyIfEnabled = false
 
-  override fun horizontalAlign(horizontalAlign: HorizontalAlign): CellBuilder<T> {
+  /**
+   * Not null if parent is hidden and the cell should not be visible. While parent is hidden
+   * value contains visibility of the cell, which will be restored when parent becomes visible
+   */
+  private var parentHiddenComponentVisible: Boolean? = null
+
+  override fun horizontalAlign(horizontalAlign: HorizontalAlign): CellBuilderImpl<T> {
     super.horizontalAlign(horizontalAlign)
     return this
   }
 
-  override fun verticalAlign(verticalAlign: VerticalAlign): CellBuilder<T> {
+  override fun verticalAlign(verticalAlign: VerticalAlign): CellBuilderImpl<T> {
     super.verticalAlign(verticalAlign)
     return this
   }
 
-  override fun resizableColumn(): CellBuilder<T> {
+  override fun resizableColumn(): CellBuilderImpl<T> {
     super.resizableColumn()
     return this
   }
 
-  override fun comment(@NlsContexts.DetailedDescription comment: String, maxLineLength: Int): CellBuilder<T> {
+  override fun comment(@NlsContexts.DetailedDescription comment: String, maxLineLength: Int): CellBuilderImpl<T> {
     super.comment(comment, maxLineLength)
     return this
   }
 
-  override fun gap(rightGap: RightGap): CellBuilder<T> {
+  override fun gap(rightGap: RightGap): CellBuilderImpl<T> {
     super.gap(rightGap)
     return this
   }
 
-  override fun applyToComponent(task: T.() -> Unit): CellBuilder<T> {
+  override fun applyToComponent(task: T.() -> Unit): CellBuilderImpl<T> {
     component.task()
     return this
   }
 
-  override fun enabled(isEnabled: Boolean): CellBuilder<T> {
+  override fun enabled(isEnabled: Boolean): CellBuilderImpl<T> {
     viewComponent.isEnabled = isEnabled
     return this
   }
 
-  override fun visibleIf(predicate: ComponentPredicate): CellBuilder<T> {
-    viewComponent.isVisible = predicate()
-    predicate.addListener { viewComponent.isVisible = it }
+  fun visibleFromParent(isVisible: Boolean) {
+    if (isVisible) {
+      parentHiddenComponentVisible?.let {
+        doVisible(it)
+        parentHiddenComponentVisible = null
+      }
+    }
+    else {
+      if (parentHiddenComponentVisible == null) {
+        parentHiddenComponentVisible = viewComponent.isVisible
+        doVisible(false)
+      }
+    }
+  }
+
+  override fun visible(isVisible: Boolean): CellBuilderImpl<T> {
+    if (parentHiddenComponentVisible == null) {
+      doVisible(isVisible)
+    } else {
+      parentHiddenComponentVisible = isVisible
+    }
     return this
   }
 
-  override fun applyIfEnabled(): CellBuilder<T> {
+  override fun visibleIf(predicate: ComponentPredicate): CellBuilderImpl<T> {
+    visible(predicate())
+    predicate.addListener { visible(it) }
+    return this
+  }
+
+  override fun applyIfEnabled(): CellBuilderImpl<T> {
     applyIfEnabled = true
     return this
   }
 
-  override fun <V> bind(componentGet: (T) -> V, componentSet: (T, V) -> Unit, binding: PropertyBinding<V>): CellBuilder<T> {
+  override fun <V> bind(componentGet: (T) -> V, componentSet: (T, V) -> Unit, binding: PropertyBinding<V>): CellBuilderImpl<T> {
     onApply { if (shouldSaveOnApply()) binding.set(componentGet(component)) }
     onReset { componentSet(component, binding.get()) }
     onIsModified { shouldSaveOnApply() && componentGet(component) != binding.get() }
@@ -90,19 +120,24 @@ internal class CellBuilderImpl<T : JComponent>(
     return this
   }
 
-  private fun onApply(callback: () -> Unit): CellBuilder<T> {
+  private fun onApply(callback: () -> Unit): CellBuilderImpl<T> {
     dialogPanelConfig.applyCallbacks.register(component, callback)
     return this
   }
 
-  private fun onReset(callback: () -> Unit): CellBuilder<T> {
+  private fun onReset(callback: () -> Unit): CellBuilderImpl<T> {
     dialogPanelConfig.resetCallbacks.register(component, callback)
     return this
   }
 
-  private fun onIsModified(callback: () -> Boolean): CellBuilder<T> {
+  private fun onIsModified(callback: () -> Boolean): CellBuilderImpl<T> {
     dialogPanelConfig.isModifiedCallbacks.register(component, callback)
     return this
+  }
+
+  private fun doVisible(isVisible: Boolean) {
+    viewComponent.isVisible = isVisible
+    comment?.let { it.isVisible = isVisible }
   }
 }
 

@@ -63,6 +63,11 @@ internal class PanelBuilderImpl(private val dialogPanelConfig: DialogPanelConfig
     return RowBuilderImpl(dialogPanelConfig)
   }
 
+  override fun visible(isVisible: Boolean): PanelBuilder {
+    rows.forEach { it.visible(isVisible) }
+    return this
+  }
+
   override fun horizontalAlign(horizontalAlign: HorizontalAlign): PanelBuilder {
     super.horizontalAlign(horizontalAlign)
     return this
@@ -235,7 +240,7 @@ internal class PanelBuilderImpl(private val dialogPanelConfig: DialogPanelConfig
     }
 
     if (rightGap != null) {
-      return when(rightGap) {
+      return when (rightGap) {
         RightGap.SMALL -> dialogPanelConfig.spacing.horizontalSmallGap
       }
     }
@@ -275,7 +280,7 @@ internal class PanelBuilderImpl(private val dialogPanelConfig: DialogPanelConfig
   }
 
   private fun rowGapDistance(topGap: TopGap): Int {
-    return when(topGap) {
+    return when (topGap) {
       TopGap.GROUP -> dialogPanelConfig.spacing.verticalGroupTopGap
     }
   }

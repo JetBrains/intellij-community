@@ -39,6 +39,9 @@ enum class RowLayout {
 }
 
 enum class TopGap {
+  /**
+   * See [SpacingConfiguration.verticalGroupTopGap]
+   */
   GROUP
 }
 
@@ -59,6 +62,12 @@ interface RowBuilder {
               maxLineLength: Int = ComponentPanelBuilder.MAX_COMMENT_WIDTH): RowBuilder
 
   fun <T : JComponent> cell(component: T): CellBuilder<T>
+
+  /**
+   * Sets visibility for all components inside row including comment [RowBuilder.comment].
+   * See also [CellBuilder.visible] description
+   */
+  fun visible(isVisible: Boolean): RowBuilder
 
   fun gap(topGap: TopGap): RowBuilder
 

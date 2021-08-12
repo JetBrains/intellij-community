@@ -21,6 +21,8 @@ private annotation class CellBuilderMarker
 @CellBuilderMarker
 interface CellBuilderBase<out T : CellBuilderBase<T>> {
 
+  fun visible(isVisible: Boolean): CellBuilderBase<T>
+
   fun horizontalAlign(horizontalAlign: HorizontalAlign): CellBuilderBase<T>
 
   fun verticalAlign(verticalAlign: VerticalAlign): CellBuilderBase<T>

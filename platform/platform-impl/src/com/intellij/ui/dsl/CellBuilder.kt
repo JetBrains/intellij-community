@@ -34,6 +34,12 @@ interface CellBuilder<out T : JComponent> : CellBuilderBase<CellBuilder<T>> {
 
   fun enabled(isEnabled: Boolean): CellBuilder<T>
 
+  /**
+   * Sets visibility for all components inside cell including comment [CellBuilder.comment]. If parent row is invisible
+   * than the cell keeps invisibility until the row becomes visible
+   */
+  override fun visible(isVisible: Boolean): CellBuilder<T>
+
   fun visibleIf(predicate: ComponentPredicate): CellBuilder<T>
 
   /**

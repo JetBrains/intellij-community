@@ -8,6 +8,8 @@ import org.jetbrains.annotations.ApiStatus
 @ApiStatus.Experimental
 interface PanelBuilder : PanelBuilderBase, CellBuilderBase<PanelBuilder> {
 
+  override fun visible(isVisible: Boolean): PanelBuilder
+
   override fun horizontalAlign(horizontalAlign: HorizontalAlign): PanelBuilder
 
   override fun verticalAlign(verticalAlign: VerticalAlign): PanelBuilder
