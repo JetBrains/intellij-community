@@ -1,3 +1,4 @@
+// FIR_COMPARISON
 class TestKotlin
 
 val test = Test<caret>

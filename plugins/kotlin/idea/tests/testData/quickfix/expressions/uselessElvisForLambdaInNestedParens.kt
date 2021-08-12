@@ -2,3 +2,5 @@
 fun test() {
     ((({ "" } <caret>?: null)))
 }
+
+/* IGNORE_FIR */
