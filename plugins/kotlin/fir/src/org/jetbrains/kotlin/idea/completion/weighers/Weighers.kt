@@ -14,11 +14,12 @@ import org.jetbrains.kotlin.idea.frontend.api.types.KtType
 internal object Weighers {
     fun KtAnalysisSession.applyWeighsToLookupElement(lookupElement: LookupElement, symbol: KtSymbol, expectedType: KtType?) {
         with(ExpectedTypeWeigher) { addWeight(lookupElement, symbol, expectedType) }
+        with(DeprecatedWeigher) { addWeight(lookupElement, symbol) }
     }
 
     fun addWeighersToCompletionSorter(sorter: CompletionSorter): CompletionSorter =
         sorter
-            .weighBefore(PlatformWeighersIds.STATS, ExpectedTypeWeigher.Weigher)
+            .weighBefore(PlatformWeighersIds.STATS, ExpectedTypeWeigher.Weigher, DeprecatedWeigher.Weigher)
             .weighBefore(ExpectedTypeWeigher.WEIGHER_ID, CompletionContributorGroupWeigher.Weigher)
 
     private object PlatformWeighersIds {
