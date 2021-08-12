@@ -9,6 +9,7 @@ import com.intellij.lang.ant.dom.AntDomProject;
 import com.intellij.lang.ant.dom.AntDomTarget;
 import com.intellij.lang.documentation.DocumentationProvider;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.*;
 import com.intellij.pom.PomTarget;
@@ -43,7 +44,7 @@ public class AntDomDocumentationProvider implements DocumentationProvider {
     if (mainDoc == null && additionalDoc == null) {
       return null;
     }
-    final StringBuilder builder = new StringBuilder();
+    @NlsSafe final StringBuilder builder = new StringBuilder();
     if (additionalDoc != null) {
       builder.append(additionalDoc);
     }
@@ -58,7 +59,7 @@ public class AntDomDocumentationProvider implements DocumentationProvider {
     final VirtualFile helpFile = getHelpFile(elem);
     if (helpFile != null) {
       try {
-        return VfsUtil.loadText(helpFile);
+        return VfsUtilCore.loadText(helpFile);
       }
       catch (IOException ignored) {
       }
@@ -196,7 +197,8 @@ public class AntDomDocumentationProvider implements DocumentationProvider {
                 builder.append(" [").append(fileName).append("]");
               }
             }
-            return builder.append(" ").append(description).toString();
+            @NlsSafe final String result = builder.append(" ").append(description).toString();
+            return result;
           }
         }
       }
@@ -221,7 +223,8 @@ public class AntDomDocumentationProvider implements DocumentationProvider {
               builder.append("Data structure ");
             }
             builder.append(elemName);
-            return builder.toString();
+            @NlsSafe final String result = builder.toString();
+            return result;
           }
         }
       }
