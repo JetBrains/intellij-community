@@ -476,13 +476,14 @@ public class SwitchBlockHighlightingModel {
       if (labelElement instanceof PsiDefaultCaseLabelElement) {
         elements.putValue(myDefaultValue, labelElement);
       }
-      else if (labelElement instanceof PsiReferenceExpression) {
-        String enumConstName = evaluateEnumConstantName((PsiReferenceExpression)labelElement);
-        if (enumConstName != null) {
-          elements.putValue(enumConstName, labelElement);
-        }
-      }
       else if (labelElement instanceof PsiExpression) {
+        if (labelElement instanceof PsiReferenceExpression) {
+          String enumConstName = evaluateEnumConstantName((PsiReferenceExpression)labelElement);
+          if (enumConstName != null) {
+            elements.putValue(enumConstName, labelElement);
+            return;
+          }
+        }
         elements.putValue(evaluateConstant(labelElement), labelElement);
       }
     }

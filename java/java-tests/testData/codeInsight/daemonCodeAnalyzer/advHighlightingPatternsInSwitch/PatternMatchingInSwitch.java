@@ -215,7 +215,20 @@ class Main {
     };
   }
 
+  private static final int constant = 1;
   void duplicateLabels(Integer i) {
+    String str;
+    switch (i) {
+      case <error descr="Duplicate label '1'">1</error>:
+        break;
+      case <error descr="Duplicate label '1'">Main.constant</error>:
+        break;
+    }
+    str = switch (i) {
+      case <error descr="Duplicate label '1'">1</error> -> "";
+      case <error descr="Duplicate label '1'">constant</error> -> "";
+    };
+
     // A switch label may not use more than one default label
     switch (i) {
       case 1, <error descr="Duplicate default label">default</error>:
@@ -224,7 +237,6 @@ class Main {
       <error descr="Duplicate default label">default</error>:
         System.out.println("s");
     }
-    String str;
     str = switch (i) {
       case 1, <error descr="Duplicate default label">default</error> -> "s1";
       <error descr="Duplicate default label">default</error> -> "s";
