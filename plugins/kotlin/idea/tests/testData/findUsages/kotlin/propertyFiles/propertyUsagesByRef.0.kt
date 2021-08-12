@@ -1,3 +1,4 @@
+// FIR_COMPARISON
 // PSI_ELEMENT: com.intellij.lang.properties.psi.Property
 // FIND_BY_REF
 import org.jetbrains.annotations.PropertyKey

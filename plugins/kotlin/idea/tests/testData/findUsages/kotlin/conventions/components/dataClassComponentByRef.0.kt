@@ -1,3 +1,4 @@
+// FIR_COMPARISON
 // PSI_ELEMENT: org.jetbrains.kotlin.psi.KtParameter
 // OPTIONS: usages
 // FIND_BY_REF
