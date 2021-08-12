@@ -212,7 +212,7 @@ class GitQuickStartLesson : GitLesson("Git.QuickStart", GitLessonsBundle.message
       stateCheck {
         val lineEndOffset = editor.document.getLineEndOffset(line)
         val color = editor.document.charsSequence.subSequence(startOffset, lineEndOffset).removeSuffix("]").trim()
-        !textToHighlight.startsWith(color) && color.length >= 3
+        !textToHighlight.startsWith(color) && color.length >= 3 && !ChangeListManager.getInstance(project).allChanges.isEmpty()
       }
       proposeRestore {
         val caretOffset = editor.caretModel.offset
