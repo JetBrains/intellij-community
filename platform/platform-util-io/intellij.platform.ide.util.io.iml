@@ -17,6 +17,5 @@
     <orderEntry type="library" name="fastutil-min" level="project" />
     <orderEntry type="library" name="netty-buffer" level="project" />
     <orderEntry type="module" module-name="intellij.platform.util.base" />
-    <orderEntry type="library" name="proxy-vole" level="project" />
   </component>
 </module>

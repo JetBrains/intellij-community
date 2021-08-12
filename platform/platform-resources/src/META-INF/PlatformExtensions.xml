@@ -416,6 +416,9 @@
     <applicationService serviceInterface="com.intellij.execution.process.ProcessService"
                         serviceImplementation="com.intellij.execution.process.ProcessServiceImpl" />
 
+    <applicationService serviceInterface="com.intellij.util.io.NetworkService"
+                        serviceImplementation="com.intellij.util.io.NetworkServiceImpl" />
+
     <applicationService serviceImplementation="com.intellij.ide.CommandLineWaitingManager" />
 
     <applicationService serviceImplementation="com.intellij.ide.CommandLineCustomHandler$StartupService" preload="true" />
