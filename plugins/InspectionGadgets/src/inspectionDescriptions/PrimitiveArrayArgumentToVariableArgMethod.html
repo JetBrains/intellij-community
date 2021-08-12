@@ -6,16 +6,12 @@ Such a primitive-array argument may be confusing, as it will be wrapped as a sin
 element being boxed, as might be expected.
 <!-- tooltip end -->
 <p><b>Example:</b></p>
-<pre>
-  <code>
+<pre><code>
   String.format("%s", new int[]{1, 2, 3});
-  </code>
-</pre>
+</code></pre>
 <p>After the quick-fix is applied:</p>
-<pre>
-  <code>
+<pre><code>
   String.format("%s", (Object) new int[]{1, 2, 3});
-  </code>
-</pre>
+</code></pre>
 </body>
 </html>

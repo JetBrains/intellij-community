@@ -1,6 +1,6 @@
 <html>
 <body>
-Reports the non-constant string concatenations that are used as arguments to <code>SLF4J</code> and <code>Log4j 2</code> logging methods.
+Reports non-constant string concatenations that are used as arguments to <b>SLF4J</b> and <b>Log4j 2</b> logging methods.
 Non-constant concatenations are evaluated at runtime even when the logging message is not logged; this can negatively impact performance.
 It is recommended to use a parameterized log message instead, which will not be evaluated when logging is disabled.
 <p><b>Example:</b></p>
@@ -20,7 +20,7 @@ It is recommended to use a parameterized log message instead, which will not be 
     <b>private static final</b> Logger LOG = LoggerFactory.getLogger(Vital.class);
 
     <b>public void</b> saveTheWorld(<b>int</b> i, String s, <b>boolean</b> b) {
-		  LOG.info("saveTheWorld({}, {}, {})", i, s, b);
+      LOG.info("saveTheWorld({}, {}, {})", i, s, b);
       // todo
     }
   }
