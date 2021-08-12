@@ -13,7 +13,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.awt.event.FocusEvent;
+import java.awt.event.WindowEvent;
 
 @ApiStatus.Internal
 public final class PopupImplUtil {
@@ -25,9 +25,11 @@ public final class PopupImplUtil {
     boolean[] insideOnChosen = { true };
     //noinspection resource
     AccessToken token = ProhibitAWTEvents.startFiltered("Popup.handleSelect", e -> {
-      if (!(e instanceof FocusEvent) || ((FocusEvent)e).isTemporary()) return null;
-      Throwable throwable = new Throwable("Focus events are prohibited inside Popup.handleSelect; got " + e +
-                                          "Please put the handler into BaseStep.doFinalStep or PopupStep.getFinalRunnable.");
+      if (!(e instanceof WindowEvent && e.getID() == WindowEvent.WINDOW_ACTIVATED && ((WindowEvent)e).getWindow() instanceof JDialog)) {
+        return null;
+      }
+      Throwable throwable = new Throwable("Showing dialogs in PopupStep.onChosen can result in focus issues. " +
+                                          "Please put the handler into BaseStep.doFinalStep or PopupStep.getFinalRunnable.\n  " + e);
       // give the secondary event loop in `actionSystem.impl.Utils.expandActionGroupImpl`
       // a chance to quit in case the focus event is created right inside `dispatchEvents` code
       ApplicationManager.getApplication().invokeLater(() -> {
