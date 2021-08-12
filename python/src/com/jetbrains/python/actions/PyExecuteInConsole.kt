@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.actions
 
+import com.intellij.codeInsight.hint.HintManager
 import com.intellij.execution.ui.RunContentDescriptor
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.impl.EditorImpl
@@ -10,6 +11,7 @@ import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.openapi.wm.ToolWindowId
 import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.xdebugger.XDebuggerManager
+import com.jetbrains.python.PyBundle
 import com.jetbrains.python.console.*
 import com.jetbrains.python.run.PythonRunConfiguration
 
@@ -26,6 +28,7 @@ object PyExecuteInConsole {
     var isDebug = false
     var newConsoleListener: PydevConsoleRunner.ConsoleListener? = null
     val virtualFile = (editor as? EditorImpl)?.virtualFile
+    if (!checkIfAvailableAndShowHint(editor)) return
     if (canUseExistingConsole) {
       if (virtualFile != null && PyExecuteConsoleCustomizer.instance.isCustomDescriptorSupported(virtualFile)) {
         val (descriptor, listener) = getCustomDescriptor(project, editor)
@@ -55,6 +58,16 @@ object PyExecuteInConsole {
         startNewConsoleInstance(project, virtualFile, commandText, config, newConsoleListener)
       }
     }
+  }
+
+  fun checkIfAvailableAndShowHint(editor: Editor?): Boolean {
+    val virtualFile = (editor as? EditorImpl)?.virtualFile
+    if (editor != null && virtualFile != null && PyExecuteConsoleCustomizer.instance.getCustomDescriptorType(virtualFile) ==
+        DescriptorType.NON_INTERACTIVE) {
+      HintManager.getInstance().showErrorHint(editor, PyBundle.message("python.console.toolbar.action.available.non.interactive"))
+      return false
+    }
+    return true
   }
 
   private fun getCustomDescriptor(project: Project, editor: Editor?): Pair<RunContentDescriptor?, PydevConsoleRunner.ConsoleListener?> {
