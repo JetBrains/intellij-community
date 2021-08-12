@@ -29,6 +29,7 @@ import org.jetbrains.annotations.*;
 import javax.swing.*;
 import java.util.Collections;
 import java.util.List;
+import java.util.Locale;
 import java.util.Objects;
 import java.util.function.Function;
 
@@ -221,8 +222,7 @@ public class RedundantStringOperationInspection extends AbstractBaseJavaLocalIns
       //case: "foo".equals(s.toLowerCase())
       if (equalTo instanceof PsiMethodCallExpression) {
         PsiMethodCallExpression equalsToCallExpression = (PsiMethodCallExpression)equalTo;
-        if (isChangeCaseCall(equalsToCallExpression) &&
-            PsiUtil.isConstantExpression(call.getMethodExpression().getQualifierExpression())) {
+        if (isChangeCaseCall(equalsToCallExpression, call.getMethodExpression().getQualifierExpression())) {
           PsiElement anchor = equalsToCallExpression.getMethodExpression().getReferenceNameElement();
           if (anchor == null) {
             return null;
@@ -236,25 +236,20 @@ public class RedundantStringOperationInspection extends AbstractBaseJavaLocalIns
       PsiExpression receiver = qualifierCall.getMethodExpression().getQualifierExpression();
       if (receiver == null) return null;
 
-      //cases:
-      //- text1.toLowerCase().equals("test2")
-      //- text1.toLowerCase().equals(text2.toLowerCase())
-      if (isChangeCaseCall(qualifierCall)) {
-        PsiElement anchor = qualifierCall.getMethodExpression().getReferenceNameElement();
-        if (anchor == null) {
-          return null;
-        }
+      PsiElement anchor = qualifierCall.getMethodExpression().getReferenceNameElement();
+      if (anchor == null) {
+        return null;
+      }
+      if (isChangeCaseCall(qualifierCall, equalTo)) {
         //case: text1.toLowerCase().equals("test2")
-        if (PsiUtil.isConstantExpression(equalTo)) {
-          return createChangeCaseProblem(qualifierCall, anchor, RemoveRedundantChangeCaseFix.PlaceCaseEqualType.LEFT);
-        }
+        return createChangeCaseProblem(qualifierCall, anchor, RemoveRedundantChangeCaseFix.PlaceCaseEqualType.LEFT);
+      }
 
-        //case: text1.toLowerCase().equals(text2.toLowerCase())
-        if (equalTo instanceof PsiMethodCallExpression) {
-          PsiMethodCallExpression secondCall = (PsiMethodCallExpression)equalTo;
-          if (isEqualChangeCaseCall(qualifierCall, secondCall)) {
-            return createChangeCaseProblem(secondCall, anchor, RemoveRedundantChangeCaseFix.PlaceCaseEqualType.BOTH);
-          }
+      //case: text1.toLowerCase().equals(text2.toLowerCase())
+      if (equalTo instanceof PsiMethodCallExpression) {
+        PsiMethodCallExpression secondCall = (PsiMethodCallExpression)equalTo;
+        if (isEqualChangeCaseCall(qualifierCall, secondCall)) {
+          return createChangeCaseProblem(secondCall, anchor, RemoveRedundantChangeCaseFix.PlaceCaseEqualType.BOTH);
         }
       }
 
@@ -277,8 +272,16 @@ public class RedundantStringOperationInspection extends AbstractBaseJavaLocalIns
     }
 
 
-    private static boolean isChangeCaseCall(@NotNull PsiMethodCallExpression qualifierCall) {
-      return CHANGE_CASE.test(qualifierCall);
+    private static boolean isChangeCaseCall(@NotNull PsiMethodCallExpression qualifierCall,
+                                            @Nullable PsiExpression constant) {
+      if (constant == null) return false;
+      if (!CHANGE_CASE.test(qualifierCall)) return false;
+      String constValue = tryCast(ExpressionUtils.computeConstantExpression(constant), String.class);
+      if (constValue == null) return false;
+      // Do not suggest incorrect fix for "HELLO".equals(s.toLowerCase())
+      String methodName = qualifierCall.getMethodExpression().getReferenceName();
+      String normalized = "toUpperCase".equals(methodName) ? constValue.toUpperCase(Locale.ROOT) : constValue.toLowerCase(Locale.ROOT);
+      return constValue.equals(normalized);
     }
 
     private static boolean isEqualChangeCaseCall(@NotNull PsiMethodCallExpression qualifierCall,
