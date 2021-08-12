@@ -108,6 +108,8 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.regex.Pattern;
 
+import static com.intellij.lang.documentation.DocumentationMarkup.*;
+
 public class DocumentationManager extends DockablePopupManager<DocumentationComponent> {
   public static final String JAVADOC_LOCATION_AND_SIZE = "javadoc.popup";
   public static final String NEW_JAVADOC_LOCATION_AND_SIZE = "javadoc.popup.new";
@@ -1675,16 +1677,16 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
                       type == ArchiveFileType.INSTANCE ? "Archive" :
                       type.getName();
     String languageName = type.isBinary() ? "" : psiFile.getLanguage().getDisplayName();
-    return (withUrl ? DocumentationMarkup.DEFINITION_START +
+    return (withUrl ? DEFINITION_START +
                       file.getPresentableUrl() +
-                      DocumentationMarkup.DEFINITION_END +
-                      DocumentationMarkup.CONTENT_START : "") +
+                      DEFINITION_END +
+                      CONTENT_START : "") +
            getVcsStatus(psiFile.getProject(), file) +
            getScope(psiFile.getProject(), file) +
            "<p><span class='grayed'>Size:</span> " + StringUtil.formatFileSize(attr.size()) +
            "<p><span class='grayed'>Type:</span> " + typeName + (type.isBinary() || typeName.equals(languageName) ? "" : " (" + languageName + ")") +
            "<p><span class='grayed'>Modified:</span> " + DateFormatUtil.formatDateTime(attr.lastModifiedTime().toMillis()) +
-           "<p><span class='grayed'>Created:</span> " + DateFormatUtil.formatDateTime(attr.creationTime().toMillis()) + (withUrl ? DocumentationMarkup.CONTENT_END : "");
+           "<p><span class='grayed'>Created:</span> " + DateFormatUtil.formatDateTime(attr.creationTime().toMillis()) + (withUrl ? CONTENT_END : "");
   }
 
   private static String getScope(Project project, VirtualFile file) {
@@ -1736,28 +1738,28 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
   ) {
     text = StringUtil.replaceIgnoreCase(text, "</html>", "");
     text = StringUtil.replaceIgnoreCase(text, "</body>", "");
-    text = StringUtil.replaceIgnoreCase(text, DocumentationMarkup.SECTIONS_START + DocumentationMarkup.SECTIONS_END, "");
-    text = StringUtil.replaceIgnoreCase(text, DocumentationMarkup.SECTIONS_START + "<p>" + DocumentationMarkup.SECTIONS_END, "");
-    boolean hasContent = text.contains(DocumentationMarkup.CONTENT_START);
+    text = StringUtil.replaceIgnoreCase(text, SECTIONS_START + SECTIONS_END, "");
+    text = StringUtil.replaceIgnoreCase(text, SECTIONS_START + "<p>" + SECTIONS_END, "");
+    boolean hasContent = text.contains(CONTENT_START);
     if (!hasContent) {
-      if (!text.contains(DocumentationMarkup.DEFINITION_START)) {
+      if (!text.contains(DEFINITION_START)) {
         int bodyStart = findContentStart(text);
         if (bodyStart > 0) {
           text = text.substring(0, bodyStart) +
-                 DocumentationMarkup.CONTENT_START +
+                 CONTENT_START +
                  text.substring(bodyStart) +
-                 DocumentationMarkup.CONTENT_END;
+                 CONTENT_END;
         }
         else {
-          text = DocumentationMarkup.CONTENT_START + text + DocumentationMarkup.CONTENT_END;
+          text = CONTENT_START + text + CONTENT_END;
         }
         hasContent = true;
       }
-      else if (!text.contains(DocumentationMarkup.SECTIONS_START)) {
-        text = StringUtil.replaceIgnoreCase(text, DocumentationMarkup.DEFINITION_START, "<div class='definition-only'><pre>");
+      else if (!text.contains(SECTIONS_START)) {
+        text = StringUtil.replaceIgnoreCase(text, DEFINITION_START, "<div class='definition-only'><pre>");
       }
     }
-    if (!text.contains(DocumentationMarkup.DEFINITION_START)) {
+    if (!text.contains(DEFINITION_START)) {
       text = text.replace("class='content'", "class='content-only'");
     }
     String location = getLocationText(element);
