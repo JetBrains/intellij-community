@@ -13,7 +13,7 @@ import java.util.List;
 
 public final class WSLCommandLineOptions {
 
-  static final @NlsSafe String DEFAULT_SHELL = "/bin/sh";
+  public static final @NlsSafe String DEFAULT_SHELL = "/bin/sh";
 
   private boolean myLaunchWithWslExe = true;
   private boolean myExecuteCommandInShell = true;
