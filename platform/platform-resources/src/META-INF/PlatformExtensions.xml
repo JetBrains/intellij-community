@@ -739,7 +739,7 @@
     <statistics.counterUsagesCollector implementationClass="com.intellij.ide.TipsOfTheDayUsagesCollector"/>
     <statistics.counterUsagesCollector groupId="gutter.icon.click" version="2"/>
     <statistics.counterUsagesCollector groupId="inspection.widget" version="2"/>
-
+    <statistics.counterUsagesCollector implementationClass="com.intellij.ide.actions.cache.CacheRecoveryUsageCollector"/>.
     <statistics.counterUsagesCollector groupId="new.project.wizard" version="3"/>
 
     <statistics.counterUsagesCollector groupId="vfs" version="2"/>

@@ -24,7 +24,11 @@ internal class CacheRecoveryActionGroup: ComputableActionGroup() {
   private fun RecoveryAction.toAnAction(): AnAction {
     val recoveryAction = this
     return object: DumbAwareAction(recoveryAction.presentableName) {
-      override fun actionPerformed(e: AnActionEvent) = recoveryAction.perform(e.project)
+      override fun actionPerformed(e: AnActionEvent) {
+        val project = e.project
+        CacheRecoveryUsageCollector.recordRecoveryPerformedEvent(recoveryAction, false, project)
+        recoveryAction.perform(project)
+      }
 
       override fun update(e: AnActionEvent) {
         e.presentation.isEnabledAndVisible = recoveryAction.canBeApplied(e.project)

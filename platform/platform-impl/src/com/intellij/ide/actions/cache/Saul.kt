@@ -57,6 +57,7 @@ private class RecoveryWorker(val actions: Collection<RecoveryAction>, private va
   fun perform(recoveryAction: RecoveryAction) {
     object : Task.Backgroundable(project, IdeBundle.message("recovery.progress.title", recoveryAction.presentableName)) {
       override fun run(indicator: ProgressIndicator) {
+        CacheRecoveryUsageCollector.recordRecoveryPerformedEvent(recoveryAction, true, project)
         recoveryAction.perform(project)
         if (actionSeq.hasNext()) {
           askUserToContinue()
