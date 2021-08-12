@@ -6,6 +6,7 @@ import com.intellij.codeInsight.completion.CompletionParameters
 import com.intellij.codeInsight.completion.PrefixMatcher
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.openapi.project.Project
+import org.jetbrains.kotlin.descriptors.DeprecationLevelValue
 import org.jetbrains.kotlin.idea.completion.LookupElementSink
 import org.jetbrains.kotlin.idea.completion.context.FirBasicCompletionContext
 import org.jetbrains.kotlin.idea.completion.context.FirRawPositionCompletionContext
@@ -61,6 +62,8 @@ internal abstract class FirCompletionContributorBase<C : FirRawPositionCompletio
 
     protected fun KtAnalysisSession.addSymbolToCompletion(expectedType: KtType?, symbol: KtSymbol) {
         if (symbol !is KtNamedSymbol) return
+        // Don't offer any hidden deprecated items.
+        if (symbol.deprecationStatus?.level == DeprecationLevelValue.HIDDEN) return
         with(lookupElementFactory) {
             createLookupElement(symbol)
                 .let(sink::addElement)
@@ -72,6 +75,8 @@ internal abstract class FirCompletionContributorBase<C : FirRawPositionCompletio
         importingStrategy: ImportStrategy = detectImportStrategy(symbol)
     ) {
         if (symbol !is KtNamedSymbol) return
+        // Don't offer any deprecated items that could leads to compile errors.
+        if (symbol.deprecationStatus?.level == DeprecationLevelValue.HIDDEN) return
         val lookup = with(lookupElementFactory) {
             when (symbol) {
                 is KtClassLikeSymbol -> createLookupElementForClassLikeSymbol(symbol, importingStrategy)
@@ -87,6 +92,8 @@ internal abstract class FirCompletionContributorBase<C : FirRawPositionCompletio
         options: CallableInsertionOptions,
     ) {
         if (symbol !is KtNamedSymbol) return
+        // Don't offer any deprecated items that could leads to compile errors.
+        if (symbol.deprecationStatus?.level == DeprecationLevelValue.HIDDEN) return
         val lookup = with(lookupElementFactory) {
             createCallableLookupElement(symbol, options)
         }
