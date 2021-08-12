@@ -561,14 +561,18 @@ public abstract class AbstractProjectViewPane implements DataProvider, Disposabl
     return ContainerUtil.filterIsInstance(getSelectedValues(selectedUserObjects), aClass);
   }
 
-  public final @Nullable Object @NotNull [] getSelectedValues(@Nullable Object @NotNull [] selectedUserObjects) {
-    List<Object> result = new ArrayList<>(selectedUserObjects.length);
+  public final @NotNull Object @NotNull [] getSelectedValues(@Nullable Object @NotNull [] selectedUserObjects) {
+    List<@NotNull Object> result = new ArrayList<>(selectedUserObjects.length);
     for (Object userObject : selectedUserObjects) {
       Object valueFromNode = getValueFromNode(userObject);
       if (valueFromNode instanceof Object[]) {
-        Collections.addAll(result, (Object[])valueFromNode);
+        for (Object value : (Object[])valueFromNode) {
+          if (value != null) {
+            result.add(value);
+          }
+        }
       }
-      else {
+      else if (valueFromNode != null) {
         result.add(valueFromNode);
       }
     }
