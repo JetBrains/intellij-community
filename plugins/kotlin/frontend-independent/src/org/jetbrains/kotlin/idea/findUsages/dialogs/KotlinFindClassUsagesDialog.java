@@ -138,7 +138,6 @@ public class KotlinFindClassUsagesDialog extends FindClassUsagesDialog {
             return null;
         }
 
-        //noinspection ConstantConditions
         return klass instanceof KtClassOrObject
                ? (KtClassOrObject) klass
                : klass.getUserData(ORIGINAL_CLASS);

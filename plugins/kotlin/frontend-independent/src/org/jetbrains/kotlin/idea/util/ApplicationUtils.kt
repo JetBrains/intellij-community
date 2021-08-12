@@ -9,6 +9,7 @@ import com.intellij.openapi.progress.impl.CancellationCheck
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Condition
+import com.intellij.openapi.util.NlsContexts
 
 fun <T> runReadAction(action: () -> T): T {
     return ApplicationManager.getApplication().runReadAction<T>(action)
@@ -27,15 +28,15 @@ fun <T> runWriteActionInEdt(action: () -> T): T {
 }
 
 
-fun Project.executeWriteCommand(name: String, command: () -> Unit) {
+fun Project.executeWriteCommand(@NlsContexts.Command name: String, command: () -> Unit) {
     CommandProcessor.getInstance().executeCommand(this, { runWriteAction(command) }, name, null)
 }
 
-fun <T> Project.executeWriteCommand(name: String, groupId: Any? = null, command: () -> T): T {
+fun <T> Project.executeWriteCommand(@NlsContexts.Command name: String, groupId: Any? = null, command: () -> T): T {
     return executeCommand<T>(name, groupId) { runWriteAction(command) }
 }
 
-fun <T> Project.executeCommand(name: String, groupId: Any? = null, command: () -> T): T {
+fun <T> Project.executeCommand(@NlsContexts.Command name: String, groupId: Any? = null, command: () -> T): T {
     @Suppress("UNCHECKED_CAST") var result: T = null as T
     CommandProcessor.getInstance().executeCommand(this, { result = command() }, name, groupId)
     @Suppress("USELESS_CAST")

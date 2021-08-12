@@ -8,6 +8,7 @@ package org.jetbrains.kotlin.idea.frontend.api
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.Task
+import com.intellij.openapi.util.NlsContexts
 import org.jetbrains.kotlin.idea.util.application.runReadAction
 import org.jetbrains.kotlin.psi.KtElement
 
@@ -73,7 +74,7 @@ inline fun <R> analyzeWithReadAction(
  */
 inline fun <R> analyseInModalWindow(
     contextElement: KtElement,
-    windowTitle: String,
+    @NlsContexts.DialogTitle windowTitle: String,
     crossinline action: KtAnalysisSession.() -> R
 ): R {
     ApplicationManager.getApplication().assertIsDispatchThread()

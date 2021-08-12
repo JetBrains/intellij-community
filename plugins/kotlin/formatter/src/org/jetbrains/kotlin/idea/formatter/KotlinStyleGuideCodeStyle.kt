@@ -7,7 +7,7 @@ import com.intellij.psi.codeStyle.CommonCodeStyleSettings
 import org.jetbrains.kotlin.idea.KotlinLanguage
 import org.jetbrains.kotlin.idea.core.formatter.KotlinCodeStyleSettings
 
-class KotlinStyleGuideCodeStyle : KotlinPredefinedCodeStyle("Kotlin style guide", KotlinLanguage.INSTANCE) {
+class KotlinStyleGuideCodeStyle : KotlinPredefinedCodeStyle(KotlinStyleBundle.message("list.item.kotlin.style.guide"), KotlinLanguage.INSTANCE) {
     override val codeStyleId: String = CODE_STYLE_ID
 
     override fun apply(settings: CodeStyleSettings) {
