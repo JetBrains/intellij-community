@@ -25,13 +25,14 @@ disableDependencyVerification()
 
 dependencies {
     implementation(toolsJarApi())
-    jpsLikeJarDependency("org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.6.255-SNAPSHOT", JpsDepScope.COMPILE)
-    jpsLikeJarDependency("org.jetbrains.kotlin:kotlin-reflect:1.6.255-SNAPSHOT", JpsDepScope.TEST)
+    jpsLikeJarDependency(kotlinStdlib(), JpsDepScope.COMPILE)
+    jpsLikeJarDependency(project(":kotlin-stdlib-jdk7"), JpsDepScope.COMPILE)
+    jpsLikeJarDependency(project(":kotlin-reflect"), JpsDepScope.TEST)
     jpsLikeJarDependency("junit:junit:4.12", JpsDepScope.TEST)
     jpsLikeJarDependency(project(":prepare:ide-plugin-dependencies:kotlin-compiler-for-ide"), JpsDepScope.TEST)
     jpsLikeJarDependency(project(":prepare:ide-plugin-dependencies:kotlin-compiler-tests-for-ide"), JpsDepScope.TEST)
     jpsLikeJarDependency(project(":kotlin-scripting-compiler"), JpsDepScope.TEST)
-    jpsLikeJarDependency("org.jetbrains.kotlin:kotlin-script-runtime:1.6.255-SNAPSHOT", JpsDepScope.TEST)
+    jpsLikeJarDependency(project(":kotlin-script-runtime"), JpsDepScope.TEST)
     jpsLikeJarDependency(project(":kotlin-script-util"), JpsDepScope.TEST)
     jpsLikeModuleDependency(":kotlin-ide.kotlin.common", JpsDepScope.TEST)
     jpsLikeModuleDependency(":kotlin-ide.kotlin.core", JpsDepScope.TEST)
@@ -49,7 +50,8 @@ dependencies {
     jpsLikeJarDependency(intellijDep(forIde = true), JpsDepScope.TEST, { includeJars("util") }) // 'intellij.platform.vcs.impl' dependency
     jpsLikeJarDependency("org.jetbrains:annotations:20.1.0", JpsDepScope.TEST) // 'intellij.platform.vcs.impl' dependency
     jpsLikeJarDependency("com.jgoodies:forms:1.1-preview", JpsDepScope.TEST) // 'intellij.platform.vcs.impl' dependency
-    jpsLikeJarDependency("org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.6.255-SNAPSHOT", JpsDepScope.TEST) // 'intellij.platform.vcs.impl' dependency
+    jpsLikeJarDependency(kotlinStdlib(), JpsDepScope.TEST) // 'intellij.platform.vcs.impl' dependency
+    jpsLikeJarDependency(project(":kotlin-stdlib-jdk7"), JpsDepScope.TEST) // 'intellij.platform.vcs.impl' dependency
     jpsLikeJarDependency(intellijPluginDep("java", forIde = true), JpsDepScope.TEST) // 'intellij.java.psi' dependency
 }
 

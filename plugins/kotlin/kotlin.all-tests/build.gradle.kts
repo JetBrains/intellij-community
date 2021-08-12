@@ -25,6 +25,7 @@ disableDependencyVerification()
 
 dependencies {
     implementation(toolsJarApi())
+    jpsLikeModuleDependency(":kotlin-ide.kotlin.resources-fe10", JpsDepScope.COMPILE)
     jpsLikeModuleDependency(":kotlin-ide.kotlin.common", JpsDepScope.COMPILE)
     jpsLikeModuleDependency(":kotlin-ide.kotlin.compiler-plugins.allopen.common", JpsDepScope.COMPILE)
     jpsLikeModuleDependency(":kotlin-ide.kotlin.compiler-plugins.allopen.gradle", JpsDepScope.COMPILE)
@@ -48,7 +49,6 @@ dependencies {
     jpsLikeModuleDependency(":kotlin-ide.kotlin.compiler-plugins.lombok", JpsDepScope.COMPILE)
     jpsLikeModuleDependency(":kotlin-ide.kotlin.core", JpsDepScope.COMPILE)
     jpsLikeModuleDependency(":kotlin-ide.kotlin.formatter", JpsDepScope.COMPILE)
-    jpsLikeModuleDependency(":kotlin-ide.kotlin.generators", JpsDepScope.COMPILE)
     jpsLikeModuleDependency(":kotlin-ide.kotlin.git", JpsDepScope.COMPILE)
     jpsLikeModuleDependency(":kotlin-ide.kotlin.gradle.gradle-idea", JpsDepScope.COMPILE)
     jpsLikeModuleDependency(":kotlin-ide.kotlin.gradle.gradle-native", JpsDepScope.COMPILE)
@@ -86,7 +86,6 @@ dependencies {
     jpsLikeModuleDependency(":kotlin-ide.kotlin.performance-tests", JpsDepScope.COMPILE)
     jpsLikeModuleDependency(":kotlin-ide.kotlin.fir.frontend-independent", JpsDepScope.COMPILE)
     jpsLikeModuleDependency(":kotlin-ide.kotlin.line-indent-provider", JpsDepScope.COMPILE)
-    jpsLikeModuleDependency(":kotlin-ide.kotlin.resources-fe10", JpsDepScope.TEST)
     jpsLikeModuleDependency(":kotlin-ide.kotlin.compiler-plugins.parcelize.common", JpsDepScope.COMPILE)
     jpsLikeModuleDependency(":kotlin-ide.kotlin.compiler-plugins.parcelize.gradle", JpsDepScope.COMPILE)
     jpsLikeModuleDependency(":kotlin-ide.kotlin.compiler-plugins.parcelize.tests", JpsDepScope.COMPILE)

@@ -25,7 +25,8 @@ disableDependencyVerification()
 
 dependencies {
     implementation(toolsJarApi())
-    jpsLikeJarDependency("org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.6.255-SNAPSHOT", JpsDepScope.COMPILE)
+    jpsLikeJarDependency(kotlinStdlib(), JpsDepScope.COMPILE)
+    jpsLikeJarDependency(project(":kotlin-stdlib-jdk7"), JpsDepScope.COMPILE)
     jpsLikeJarDependency("org.jetbrains.kotlinx:kotlinx-coroutines-jdk8:1.5.0", JpsDepScope.COMPILE)
     jpsLikeJarDependency("io.javaslang:javaslang:2.0.6", JpsDepScope.COMPILE)
     jpsLikeJarDependency("com.jetbrains.rd:rd-core:0.212.307", JpsDepScope.COMPILE, { isTransitive = false })
@@ -41,7 +42,7 @@ dependencies {
     jpsLikeJarDependency(project(":kotlin-scripting-compiler"), JpsDepScope.COMPILE)
     jpsLikeJarDependency(project(":kotlin-scripting-compiler-impl"), JpsDepScope.COMPILE, exported = true)
     jpsLikeJarDependency(project(":kotlin-scripting-jvm"), JpsDepScope.COMPILE)
-    jpsLikeJarDependency("org.jetbrains.kotlin:kotlin-script-runtime:1.6.255-SNAPSHOT", JpsDepScope.COMPILE)
+    jpsLikeJarDependency(project(":kotlin-script-runtime"), JpsDepScope.COMPILE)
     jpsLikeModuleDependency(":kotlin-ide.kotlin.common", JpsDepScope.COMPILE)
     jpsLikeModuleDependency(":kotlin-ide.kotlin.fir.frontend-independent", JpsDepScope.COMPILE)
     jpsLikeModuleDependency(":kotlin-ide.kotlin.jps-common", JpsDepScope.COMPILE)

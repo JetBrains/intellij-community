@@ -25,7 +25,8 @@ disableDependencyVerification()
 
 dependencies {
     implementation(toolsJarApi())
-    jpsLikeJarDependency("org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.6.255-SNAPSHOT", JpsDepScope.COMPILE)
+    jpsLikeJarDependency(kotlinStdlib(), JpsDepScope.COMPILE)
+    jpsLikeJarDependency(project(":kotlin-stdlib-jdk7"), JpsDepScope.COMPILE)
     jpsLikeJarDependency("org.jetbrains.intellij.deps:log4j:1.2.17.2", JpsDepScope.COMPILE)
     jpsLikeJarDependency("org.jetbrains.intellij.deps:asm-all:9.1", JpsDepScope.COMPILE, { isTransitive = false })
     jpsLikeJarDependency(project(":prepare:ide-plugin-dependencies:kotlin-compiler-for-ide"), JpsDepScope.COMPILE)

@@ -53,7 +53,8 @@ dependencies {
     jpsLikeJarDependency(intellijDep(forIde = true), JpsDepScope.TEST, { includeJars("testFramework.core") }) // 'intellij.java.testFramework' dependency
     jpsLikeJarDependency("org.jetbrains:jetCheck:0.2.2", JpsDepScope.TEST, { isTransitive = false }) // 'intellij.java.testFramework' dependency
     jpsLikeJarDependency("com.jgoodies:forms:1.1-preview", JpsDepScope.TEST) // 'intellij.java.testFramework' dependency
-    jpsLikeJarDependency("org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.6.255-SNAPSHOT", JpsDepScope.TEST) // 'intellij.java.testFramework' dependency
+    jpsLikeJarDependency(kotlinStdlib(), JpsDepScope.TEST) // 'intellij.java.testFramework' dependency
+    jpsLikeJarDependency(project(":kotlin-stdlib-jdk7"), JpsDepScope.TEST) // 'intellij.java.testFramework' dependency
     jpsLikeJarDependency("org.codehaus.groovy:groovy:2.5.14", JpsDepScope.TEST, { isTransitive = false }) // 'intellij.java.testFramework' dependency
     jpsLikeJarDependency("org.assertj:assertj-core:3.19.0", JpsDepScope.TEST)
     jpsLikeJarDependency("io.github.classgraph:classgraph:4.8.87", JpsDepScope.TEST)

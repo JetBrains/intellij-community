@@ -30,8 +30,9 @@ dependencies {
     jpsLikeJarDependency(intellijDep(forIde = true), JpsDepScope.TEST, { includeJars("intellij-core-analysis-deprecated") }) // 'intellij.platform.core' dependency
     jpsLikeJarDependency(intellijDep(forIde = true), JpsDepScope.TEST, { includeJars("util") }) // 'intellij.platform.core' dependency
     jpsLikeJarDependency("org.jetbrains:annotations:20.1.0", JpsDepScope.TEST) // 'intellij.platform.core' dependency
-    jpsLikeJarDependency("org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.6.255-SNAPSHOT", JpsDepScope.TEST)
-    jpsLikeJarDependency("org.jetbrains.kotlin:kotlin-reflect:1.6.255-SNAPSHOT", JpsDepScope.TEST)
+    jpsLikeJarDependency(kotlinStdlib(), JpsDepScope.TEST)
+    jpsLikeJarDependency(project(":kotlin-stdlib-jdk7"), JpsDepScope.TEST)
+    jpsLikeJarDependency(project(":kotlin-reflect"), JpsDepScope.TEST)
     jpsLikeJarDependency("com.google.guava:guava:30.1-jre", JpsDepScope.TEST)
     jpsLikeJarDependency("org.jetbrains.intellij.deps:trove4j:1.0.20200330", JpsDepScope.TEST)
     jpsLikeJarDependency("org.jetbrains.kotlin:kotlin-test:1.4.32", JpsDepScope.TEST)

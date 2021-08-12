@@ -33,7 +33,8 @@ dependencies {
     jpsLikeJarDependency(intellijDep(forIde = true), JpsDepScope.COMPILE, { includeJars("forms_rt") }, exported = true) // 'intellij.java' dependency
     jpsLikeJarDependency("org.jetbrains:annotations:20.1.0", JpsDepScope.COMPILE, exported = true) // 'intellij.java' dependency
     jpsLikeJarDependency("com.jgoodies:forms:1.1-preview", JpsDepScope.COMPILE, exported = true) // 'intellij.java' dependency
-    jpsLikeJarDependency("org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.6.255-SNAPSHOT", JpsDepScope.COMPILE, exported = true) // 'intellij.java' dependency
+    jpsLikeJarDependency(kotlinStdlib(), JpsDepScope.COMPILE, exported = true) // 'intellij.java' dependency
+    jpsLikeJarDependency(project(":kotlin-stdlib-jdk7"), JpsDepScope.COMPILE, exported = true) // 'intellij.java' dependency
     jpsLikeJarDependency(intellijPluginDep("maven", forIde = true), JpsDepScope.COMPILE, exported = true) // 'intellij.maven.server' dependency
     jpsLikeJarDependency(files(intellijCommunityDir.resolve("plugins/maven/maven-server-api/lib/lucene-core-2.4.1.jar").canonicalPath), JpsDepScope.COMPILE, exported = true) // 'intellij.maven.server' dependency
     jpsLikeJarDependency(intellijPluginDep("maven-model", forIde = true), JpsDepScope.COMPILE, exported = true) // 'intellij.maven.server' dependency
@@ -47,7 +48,8 @@ dependencies {
     jpsLikeJarDependency("org.jetbrains.intellij.deps:jdom:2.0.6", JpsDepScope.COMPILE) // 'intellij.platform.ide.impl' dependency
     jpsLikeJarDependency("org.jetbrains:annotations:20.1.0", JpsDepScope.COMPILE) // 'intellij.platform.ide.impl' dependency
     jpsLikeJarDependency("com.jgoodies:forms:1.1-preview", JpsDepScope.COMPILE) // 'intellij.platform.ide.impl' dependency
-    jpsLikeJarDependency("org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.6.255-SNAPSHOT", JpsDepScope.COMPILE) // 'intellij.platform.ide.impl' dependency
+    jpsLikeJarDependency(kotlinStdlib(), JpsDepScope.COMPILE) // 'intellij.platform.ide.impl' dependency
+    jpsLikeJarDependency(project(":kotlin-stdlib-jdk7"), JpsDepScope.COMPILE) // 'intellij.platform.ide.impl' dependency
     jpsLikeJarDependency("org.jetbrains.intellij.deps:asm-all:9.1", JpsDepScope.COMPILE, { isTransitive = false }) // 'intellij.java.impl' dependency
     jpsLikeJarDependency(intellijPluginDep("java", forIde = true), JpsDepScope.COMPILE) // 'intellij.java.impl' dependency
     jpsLikeJarDependency("org.apache.velocity:velocity:1.7", JpsDepScope.COMPILE) // 'intellij.java.impl' dependency
@@ -82,7 +84,8 @@ dependencies {
     jpsLikeJarDependency("org.jetbrains:jetCheck:0.2.2", JpsDepScope.TEST, { isTransitive = false }) // 'intellij.java.testFramework' dependency
     jpsLikeJarDependency("org.jetbrains:annotations:20.1.0", JpsDepScope.TEST) // 'intellij.java.testFramework' dependency
     jpsLikeJarDependency("com.jgoodies:forms:1.1-preview", JpsDepScope.TEST) // 'intellij.java.testFramework' dependency
-    jpsLikeJarDependency("org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.6.255-SNAPSHOT", JpsDepScope.TEST) // 'intellij.java.testFramework' dependency
+    jpsLikeJarDependency(kotlinStdlib(), JpsDepScope.TEST) // 'intellij.java.testFramework' dependency
+    jpsLikeJarDependency(project(":kotlin-stdlib-jdk7"), JpsDepScope.TEST) // 'intellij.java.testFramework' dependency
     jpsLikeJarDependency("org.codehaus.groovy:groovy:2.5.14", JpsDepScope.TEST, { isTransitive = false }) // 'intellij.java.testFramework' dependency
     jpsLikeJarDependency("org.codehaus.groovy:groovy:2.5.14", JpsDepScope.COMPILE, { isTransitive = false }) // 'intellij.groovy' dependency
     jpsLikeJarDependency("com.google.guava:guava:30.1-jre", JpsDepScope.COMPILE)

@@ -25,8 +25,9 @@ disableDependencyVerification()
 
 dependencies {
     implementation(toolsJarApi())
-    jpsLikeJarDependency("org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.6.255-SNAPSHOT", JpsDepScope.COMPILE)
-    jpsLikeJarDependency("org.jetbrains.kotlin:kotlin-reflect:1.6.255-SNAPSHOT", JpsDepScope.COMPILE)
+    jpsLikeJarDependency(kotlinStdlib(), JpsDepScope.COMPILE)
+    jpsLikeJarDependency(project(":kotlin-stdlib-jdk7"), JpsDepScope.COMPILE)
+    jpsLikeJarDependency(project(":kotlin-reflect"), JpsDepScope.COMPILE)
     jpsLikeJarDependency("org.jetbrains.kotlinx:kotlinx-collections-immutable-jvm:0.3.1", JpsDepScope.COMPILE)
     jpsLikeJarDependency("org.apache.velocity:velocity:1.7", JpsDepScope.COMPILE)
     jpsLikeJarDependency("junit:junit:4.12", JpsDepScope.TEST)

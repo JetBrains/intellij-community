@@ -34,14 +34,16 @@ dependencies {
     jpsLikeJarDependency(intellijDep(forIde = true), JpsDepScope.COMPILE, { includeJars("util") }, exported = true) // 'intellij.platform.lang' dependency
     jpsLikeJarDependency("org.jetbrains:annotations:20.1.0", JpsDepScope.COMPILE, exported = true) // 'intellij.platform.lang' dependency
     jpsLikeJarDependency("com.jgoodies:forms:1.1-preview", JpsDepScope.COMPILE, exported = true) // 'intellij.platform.lang' dependency
-    jpsLikeJarDependency("org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.6.255-SNAPSHOT", JpsDepScope.COMPILE, exported = true) // 'intellij.platform.lang' dependency
+    jpsLikeJarDependency(kotlinStdlib(), JpsDepScope.COMPILE, exported = true) // 'intellij.platform.lang' dependency
+    jpsLikeJarDependency(project(":kotlin-stdlib-jdk7"), JpsDepScope.COMPILE, exported = true) // 'intellij.platform.lang' dependency
     jpsLikeJarDependency(intellijDep(forIde = true), JpsDepScope.COMPILE, { includeJars("platform-api") }) // 'intellij.platform.vcs' dependency
     jpsLikeJarDependency(intellijDep(forIde = true), JpsDepScope.COMPILE, { includeJars("forms_rt") }) // 'intellij.platform.vcs' dependency
     jpsLikeJarDependency(intellijCoreDep(), JpsDepScope.COMPILE) // 'intellij.platform.vcs' dependency
     jpsLikeJarDependency(intellijDep(forIde = true), JpsDepScope.COMPILE, { includeJars("util") }) // 'intellij.platform.vcs' dependency
     jpsLikeJarDependency("org.jetbrains:annotations:20.1.0", JpsDepScope.COMPILE) // 'intellij.platform.vcs' dependency
     jpsLikeJarDependency("com.jgoodies:forms:1.1-preview", JpsDepScope.COMPILE) // 'intellij.platform.vcs' dependency
-    jpsLikeJarDependency("org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.6.255-SNAPSHOT", JpsDepScope.COMPILE) // 'intellij.platform.vcs' dependency
+    jpsLikeJarDependency(kotlinStdlib(), JpsDepScope.COMPILE) // 'intellij.platform.vcs' dependency
+    jpsLikeJarDependency(project(":kotlin-stdlib-jdk7"), JpsDepScope.COMPILE) // 'intellij.platform.vcs' dependency
     jpsLikeJarDependency("oro:oro:2.0.8", JpsDepScope.COMPILE)
     jpsLikeJarDependency("junit:junit:4.12", JpsDepScope.TEST)
     jpsLikeJarDependency(intellijDep(forIde = true), JpsDepScope.COMPILE, { includeJars("jps-model") }, exported = true) // 'intellij.platform.ide.impl' dependency
@@ -68,7 +70,8 @@ dependencies {
     jpsLikeJarDependency("org.jetbrains:jetCheck:0.2.2", JpsDepScope.TEST, { isTransitive = false }) // 'intellij.platform.testFramework' dependency
     jpsLikeJarDependency("org.jetbrains:annotations:20.1.0", JpsDepScope.TEST) // 'intellij.platform.testFramework' dependency
     jpsLikeJarDependency("com.jgoodies:forms:1.1-preview", JpsDepScope.TEST) // 'intellij.platform.testFramework' dependency
-    jpsLikeJarDependency("org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.6.255-SNAPSHOT", JpsDepScope.TEST) // 'intellij.platform.testFramework' dependency
+    jpsLikeJarDependency(kotlinStdlib(), JpsDepScope.TEST) // 'intellij.platform.testFramework' dependency
+    jpsLikeJarDependency(project(":kotlin-stdlib-jdk7"), JpsDepScope.TEST) // 'intellij.platform.testFramework' dependency
     jpsLikeJarDependency(files(intellijCommunityDir.resolve("lib/dev/jmock-2.5.1.jar").canonicalPath), JpsDepScope.TEST)
     jpsLikeJarDependency(files(intellijCommunityDir.resolve("lib/dev/jmock-junit4-2.5.1.jar").canonicalPath), JpsDepScope.TEST)
     jpsLikeJarDependency(files(intellijCommunityDir.resolve("lib/dev/jmock-legacy-2.5.1.jar").canonicalPath), JpsDepScope.TEST)

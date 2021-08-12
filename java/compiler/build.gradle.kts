@@ -46,7 +46,8 @@ dependencies {
     jpsLikeJarDependency("org.jetbrains:jetCheck:0.2.2", JpsDepScope.COMPILE, { isTransitive = false }) // 'intellij.java.testFramework' dependency
     jpsLikeJarDependency("org.jetbrains:annotations:20.1.0", JpsDepScope.COMPILE) // 'intellij.java.testFramework' dependency
     jpsLikeJarDependency("com.jgoodies:forms:1.1-preview", JpsDepScope.COMPILE) // 'intellij.java.testFramework' dependency
-    jpsLikeJarDependency("org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.6.255-SNAPSHOT", JpsDepScope.COMPILE) // 'intellij.java.testFramework' dependency
+    jpsLikeJarDependency(kotlinStdlib(), JpsDepScope.COMPILE) // 'intellij.java.testFramework' dependency
+    jpsLikeJarDependency(project(":kotlin-stdlib-jdk7"), JpsDepScope.COMPILE) // 'intellij.java.testFramework' dependency
     jpsLikeJarDependency("org.codehaus.groovy:groovy:2.5.14", JpsDepScope.COMPILE, { isTransitive = false }) // 'intellij.java.testFramework' dependency
     jpsLikeJarDependency("junit:junit:4.12", JpsDepScope.TEST)
     jpsLikeJarDependency(intellijDep(forIde = true), JpsDepScope.TEST, { includeJars("jps-model") }) // 'intellij.platform.jps.model.impl' dependency

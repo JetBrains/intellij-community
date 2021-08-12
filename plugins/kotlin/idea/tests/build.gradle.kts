@@ -30,7 +30,8 @@ dependencies {
     jpsLikeJarDependency(intellijDep(forIde = true), JpsDepScope.TEST, { includeJars("intellij-core-analysis-deprecated") }) // 'intellij.platform.core' dependency
     jpsLikeJarDependency(intellijDep(forIde = true), JpsDepScope.TEST, { includeJars("util") }) // 'intellij.platform.core' dependency
     jpsLikeJarDependency("org.jetbrains:annotations:20.1.0", JpsDepScope.TEST) // 'intellij.platform.core' dependency
-    jpsLikeJarDependency("org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.6.255-SNAPSHOT", JpsDepScope.COMPILE)
+    jpsLikeJarDependency(kotlinStdlib(), JpsDepScope.COMPILE)
+    jpsLikeJarDependency(project(":kotlin-stdlib-jdk7"), JpsDepScope.COMPILE)
     jpsLikeJarDependency("io.javaslang:javaslang:2.0.6", JpsDepScope.TEST)
     jpsLikeJarDependency("org.jetbrains.kotlin:kotlin-test:1.4.32", JpsDepScope.TEST)
     jpsLikeJarDependency(project(":prepare:ide-plugin-dependencies:android-extensions-compiler-plugin-for-ide"), JpsDepScope.TEST)
@@ -53,7 +54,7 @@ dependencies {
     jpsLikeModuleDependency(":kotlin-ide.kotlin.fir.frontend-independent", JpsDepScope.TEST)
     jpsLikeModuleDependency(":kotlin-ide.kotlin.fir.frontend-independent.tests", JpsDepScope.TEST)
     jpsLikeJarDependency(project(":prepare:ide-plugin-dependencies:sam-with-receiver-compiler-plugin-for-ide"), JpsDepScope.TEST)
-    jpsLikeJarDependency("org.jetbrains.kotlin:kotlin-reflect:1.6.255-SNAPSHOT", JpsDepScope.TEST)
+    jpsLikeJarDependency(project(":kotlin-reflect"), JpsDepScope.TEST)
     jpsLikeJarDependency(project(":kotlin-scripting-compiler"), JpsDepScope.TEST)
     jpsLikeJarDependency(project(":kotlin-scripting-common"), JpsDepScope.TEST)
     jpsLikeJarDependency(project(":kotlin-scripting-jvm"), JpsDepScope.TEST)
@@ -76,7 +77,8 @@ dependencies {
     jpsLikeJarDependency("org.codehaus.groovy:groovy:2.4.17", JpsDepScope.TEST) // 'intellij.gradle.common' dependency
     jpsLikeJarDependency(intellijDep(forIde = true), JpsDepScope.TEST, { includeJars("jps-model") }) // 'intellij.platform.duplicates.analysis' dependency
     jpsLikeJarDependency("org.jetbrains.intellij.deps:jdom:2.0.6", JpsDepScope.TEST) // 'intellij.platform.duplicates.analysis' dependency
-    jpsLikeJarDependency("org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.6.255-SNAPSHOT", JpsDepScope.TEST) // 'intellij.platform.duplicates.analysis' dependency
+    jpsLikeJarDependency(kotlinStdlib(), JpsDepScope.TEST) // 'intellij.platform.duplicates.analysis' dependency
+    jpsLikeJarDependency(project(":kotlin-stdlib-jdk7"), JpsDepScope.TEST) // 'intellij.platform.duplicates.analysis' dependency
     jpsLikeModuleDependency(":kotlin-ide.kotlin.uast.uast-kotlin", JpsDepScope.TEST)
     jpsLikeModuleDependency(":kotlin-ide.kotlin.formatter", JpsDepScope.TEST)
     jpsLikeModuleDependency(":kotlin-ide.kotlin.jps-common", JpsDepScope.TEST)
@@ -103,7 +105,7 @@ dependencies {
     jpsLikeJarDependency(intellijDep(forIde = true), JpsDepScope.TEST, { includeJars("idea_rt") }) // 'intellij.grazie.tests' dependency
     jpsLikeJarDependency(intellijDep(forIde = true), JpsDepScope.TEST, { includeJars("testFramework.core") }) // 'intellij.grazie.tests' dependency
     jpsLikeJarDependency("org.jetbrains:jetCheck:0.2.2", JpsDepScope.TEST, { isTransitive = false }) // 'intellij.grazie.tests' dependency
-    jpsLikeJarDependency("org.jetbrains.kotlin:kotlin-script-runtime:1.6.255-SNAPSHOT", JpsDepScope.COMPILE)
+    jpsLikeJarDependency(project(":kotlin-script-runtime"), JpsDepScope.COMPILE)
     jpsLikeJarDependency(intellijDep(forIde = true), JpsDepScope.COMPILE, { includeJars("intellij-core-analysis-deprecated") }) // 'intellij.platform.codeStyle.impl' dependency
 }
 

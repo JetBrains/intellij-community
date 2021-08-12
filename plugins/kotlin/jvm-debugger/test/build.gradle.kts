@@ -25,8 +25,9 @@ disableDependencyVerification()
 
 dependencies {
     implementation(toolsJarApi())
-    jpsLikeJarDependency("org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.6.255-SNAPSHOT", JpsDepScope.COMPILE)
-    jpsLikeJarDependency("org.jetbrains.kotlin:kotlin-reflect:1.6.255-SNAPSHOT", JpsDepScope.COMPILE)
+    jpsLikeJarDependency(kotlinStdlib(), JpsDepScope.COMPILE)
+    jpsLikeJarDependency(project(":kotlin-stdlib-jdk7"), JpsDepScope.COMPILE)
+    jpsLikeJarDependency(project(":kotlin-reflect"), JpsDepScope.COMPILE)
     jpsLikeJarDependency("org.jetbrains.kotlin:kotlin-test:1.4.32", JpsDepScope.TEST)
     jpsLikeJarDependency("org.jetbrains.intellij.deps:asm-all:9.1", JpsDepScope.TEST, { isTransitive = false })
     jpsLikeJarDependency("com.google.guava:guava:30.1-jre", JpsDepScope.TEST)
@@ -57,7 +58,8 @@ dependencies {
     jpsLikeJarDependency(intellijCoreDep(), JpsDepScope.TEST) // 'intellij.java.debugger.impl' dependency
     jpsLikeJarDependency(intellijDep(forIde = true), JpsDepScope.TEST, { includeJars("util") }) // 'intellij.java.debugger.impl' dependency
     jpsLikeJarDependency("com.jgoodies:forms:1.1-preview", JpsDepScope.TEST) // 'intellij.java.debugger.impl' dependency
-    jpsLikeJarDependency("org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.6.255-SNAPSHOT", JpsDepScope.TEST) // 'intellij.java.debugger.impl' dependency
+    jpsLikeJarDependency(kotlinStdlib(), JpsDepScope.TEST) // 'intellij.java.debugger.impl' dependency
+    jpsLikeJarDependency(project(":kotlin-stdlib-jdk7"), JpsDepScope.TEST) // 'intellij.java.debugger.impl' dependency
     jpsLikeJarDependency(intellijPluginDep("stream-debugger", forIde = true), JpsDepScope.TEST) // 'intellij.java.debugger.streams' dependency
     jpsLikeJarDependency("org.slf4j:slf4j-log4j12:1.7.25", JpsDepScope.TEST) // 'intellij.java.aetherDependencyResolver' dependency
     jpsLikeJarDependency("commons-logging:commons-logging:1.2", JpsDepScope.TEST) // 'intellij.java.aetherDependencyResolver' dependency

@@ -25,7 +25,8 @@ disableDependencyVerification()
 
 dependencies {
     implementation(toolsJarApi())
-    jpsLikeJarDependency("org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.6.255-SNAPSHOT", JpsDepScope.COMPILE)
+    jpsLikeJarDependency(kotlinStdlib(), JpsDepScope.COMPILE)
+    jpsLikeJarDependency(project(":kotlin-stdlib-jdk7"), JpsDepScope.COMPILE)
     jpsLikeJarDependency("com.google.guava:guava:30.1-jre", JpsDepScope.COMPILE)
     jpsLikeJarDependency("org.swinglabs:swingx-core:1.6.2-2", JpsDepScope.COMPILE)
     jpsLikeJarDependency("org.jetbrains.intellij.deps:jdom:2.0.6", JpsDepScope.COMPILE)
@@ -74,8 +75,6 @@ dependencies {
     jpsLikeJarDependency(intellijPluginDep("properties", forIde = true), JpsDepScope.COMPILE) // 'intellij.java.i18n' dependency
     jpsLikeJarDependency(intellijPluginDep("junit", forIde = true), JpsDepScope.COMPILE) // 'intellij.junit' dependency
     jpsLikeJarDependency("org.jetbrains.teamcity:serviceMessages:2019.1.4", JpsDepScope.COMPILE, { isTransitive = false }) // 'intellij.junit' dependency
-    jpsLikeJarDependency(intellijPluginDep("testng", forIde = true), JpsDepScope.COMPILE) // 'intellij.testng' dependency
-    jpsLikeJarDependency(intellijDep(forIde = true), JpsDepScope.COMPILE, { includeJars("intellij-xml") }) // 'intellij.xml.psi.impl' dependency
     jpsLikeModuleDependency(":kotlin-ide.kotlin.jvm-run-configurations", JpsDepScope.COMPILE, exported = true)
 }
 

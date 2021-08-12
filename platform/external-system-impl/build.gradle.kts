@@ -50,10 +50,11 @@ dependencies {
     jpsLikeJarDependency("org.jetbrains:jetCheck:0.2.2", JpsDepScope.TEST, { isTransitive = false }) // 'intellij.java.testFramework' dependency
     jpsLikeJarDependency("org.jetbrains:annotations:20.1.0", JpsDepScope.TEST) // 'intellij.java.testFramework' dependency
     jpsLikeJarDependency("com.jgoodies:forms:1.1-preview", JpsDepScope.TEST) // 'intellij.java.testFramework' dependency
-    jpsLikeJarDependency("org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.6.255-SNAPSHOT", JpsDepScope.TEST) // 'intellij.java.testFramework' dependency
+    jpsLikeJarDependency(kotlinStdlib(), JpsDepScope.TEST) // 'intellij.java.testFramework' dependency
+    jpsLikeJarDependency(project(":kotlin-stdlib-jdk7"), JpsDepScope.TEST) // 'intellij.java.testFramework' dependency
     jpsLikeJarDependency("org.codehaus.groovy:groovy:2.5.14", JpsDepScope.TEST, { isTransitive = false }) // 'intellij.java.testFramework' dependency
     jpsLikeModuleDependency(":kotlin-ide.intellij.java.compiler.tests", JpsDepScope.TEST) // 'intellij.java.compiler.tests' dependency
-    jpsLikeJarDependency("org.jetbrains.kotlin:kotlin-reflect:1.6.255-SNAPSHOT", JpsDepScope.COMPILE)
+    jpsLikeJarDependency(project(":kotlin-reflect"), JpsDepScope.COMPILE)
     jpsLikeJarDependency("org.mockito:mockito-core:3.3.3", JpsDepScope.TEST)
     jpsLikeModuleDependency(":kotlin-ide.intellij.platform.lang.tests", JpsDepScope.TEST, exported = true) // 'intellij.platform.lang.tests' dependency
     jpsLikeJarDependency(intellijDep(forIde = true), JpsDepScope.TEST, { includeJars("intellij-core-analysis-deprecated") }, exported = true) // 'intellij.platform.lang.tests' dependency
@@ -65,7 +66,8 @@ dependencies {
     jpsLikeJarDependency("org.jetbrains.intellij.deps:jdom:2.0.6", JpsDepScope.TEST, exported = true) // 'intellij.platform.lang.tests' dependency
     jpsLikeJarDependency("org.jetbrains:annotations:20.1.0", JpsDepScope.TEST, exported = true) // 'intellij.platform.lang.tests' dependency
     jpsLikeJarDependency("com.jgoodies:forms:1.1-preview", JpsDepScope.TEST, exported = true) // 'intellij.platform.lang.tests' dependency
-    jpsLikeJarDependency("org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.6.255-SNAPSHOT", JpsDepScope.TEST, exported = true) // 'intellij.platform.lang.tests' dependency
+    jpsLikeJarDependency(kotlinStdlib(), JpsDepScope.TEST, exported = true) // 'intellij.platform.lang.tests' dependency
+    jpsLikeJarDependency(project(":kotlin-stdlib-jdk7"), JpsDepScope.TEST, exported = true) // 'intellij.platform.lang.tests' dependency
     jpsLikeJarDependency("org.jetbrains.kotlinx:kotlinx-coroutines-jdk8:1.5.0", JpsDepScope.TEST)
 }
 
