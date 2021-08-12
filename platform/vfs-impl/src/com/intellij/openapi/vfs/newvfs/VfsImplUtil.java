@@ -271,7 +271,7 @@ public final class VfsImplUtil {
   private static @Nullable InvalidationState invalidate(@Nullable InvalidationState state, @NotNull String path) {
     Pair<ArchiveFileSystem, ArchiveHandler> handlerPair = ourHandlerCache.remove(path);
     if (handlerPair != null) {
-      handlerPair.second.dispose();
+      handlerPair.second.clearCaches();
 
       forEachDirectoryComponent(path, containingDirectoryPath -> {
         Set<String> handlers = ourDominatorsMap.get(containingDirectoryPath);
@@ -408,7 +408,7 @@ public final class VfsImplUtil {
           Runnable runnable = () -> {
             Pair<ArchiveFileSystem, ArchiveHandler> pair = ourHandlerCache.remove(jarPath);
             if (pair != null) {
-              pair.second.dispose();
+              pair.second.clearCaches();
               synchronized (ourLock) {
                 forEachDirectoryComponent(jarPath, containingDirectoryPath -> {
                   Set<String> handlers = ourDominatorsMap.get(containingDirectoryPath);

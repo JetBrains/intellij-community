@@ -25,6 +25,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.BiFunction;
 
+/**
+ * Use {@link TempCopyArchiveHandler} if you'd like to extract archive to a temporary file
+ * and use it to read attributes and content.
+ */
 public abstract class ArchiveHandler {
   public static final long DEFAULT_LENGTH = 0L;
   public static final long DEFAULT_TIMESTAMP = -1L;
@@ -147,10 +151,6 @@ public abstract class ArchiveHandler {
       }
     }
     return result;
-  }
-
-  public void dispose() {
-    clearCaches();
   }
 
   @ApiStatus.OverrideOnly
