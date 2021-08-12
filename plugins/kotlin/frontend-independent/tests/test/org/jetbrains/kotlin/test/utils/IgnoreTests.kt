@@ -126,15 +126,10 @@ object IgnoreTests {
             true -> "passes"
         }
 
-        val directiveIsOutdated = when {
-            !testPasses && directive is EnableOrDisableTestDirective.Enable -> true
-            testPasses && directive is EnableOrDisableTestDirective.Disable -> true
-            else -> false
-        }
-
-        val directiveIsMissing = !directiveIsOutdated
-
-        if (directiveIsMissing && INSERT_DIRECTIVE_AUTOMATICALLY) {
+        if (INSERT_DIRECTIVE_AUTOMATICALLY &&
+            (directive is EnableOrDisableTestDirective.Enable && testPasses ||
+                    directive is EnableOrDisableTestDirective.Disable && !testPasses)
+        ) {
             testFile.insertDirectivesToFileAndAdditionalFile(directive, additionalFiles, directivePosition)
             val filesWithDirectiveAdded = buildList {
                 add(testFile.fileName.toString())
@@ -145,11 +140,9 @@ object IgnoreTests {
             )
         }
 
-        if (directiveIsOutdated) {
-            throw AssertionError(
-                "Looks like the test $verb, please ${directive.fixDirectiveMessage} the ${testFile.fileName}"
-            )
-        }
+        throw AssertionError(
+            "Looks like the test $verb, please ${directive.fixDirectiveMessage} the ${testFile.fileName}"
+        )
     }
 
     private fun computeAdditionalFilesByExtensions(mainTestFile: Path, additionalFilesExtensions: List<String>): List<Path> {
