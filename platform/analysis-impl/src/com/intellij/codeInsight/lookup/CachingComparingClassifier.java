@@ -15,13 +15,27 @@ import java.util.List;
 import java.util.Map;
 
 /**
-* @author peter
-*/
+ * @author peter
+ */
 public class CachingComparingClassifier extends ComparingClassifier<LookupElement> {
+  /**
+   * Cached weights.
+   */
   private final Map<LookupElement, Comparable> myWeights = new IdentityHashMap<>();
   private final LookupElementWeigher myWeigher;
+  /**
+   * The weight of the first element. This state is only for optimization purpose.
+   */
   private Ref<Comparable> myFirstWeight;
+  /**
+   * Whether this classifier actually contributes to changing the ordering of entries. For example, if all entries are considered "equal"
+   * by this classifier, then {@link #myPrimitive} is true. Note that this flag is only for optimization purpose.
+   */
   private boolean myPrimitive = true;
+  /**
+   * ID tracking how many times the prefix has changed. This is used to invalidate {@link #myWeights} if user changes the prefix during
+   * completion.
+   */
   private int myPrefixChanges = -1;
 
   public CachingComparingClassifier(Classifier<LookupElement> next, LookupElementWeigher weigher) {

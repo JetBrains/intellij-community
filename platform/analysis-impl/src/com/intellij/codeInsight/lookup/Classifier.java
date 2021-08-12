@@ -24,6 +24,14 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 
 /**
+ * A classifier defines a way to order entries. It can have a following classifier, which is used to break ties for elements that are
+ * considered "equal" by this classifier. In other words, a classifier, along with its following classifiers, defines a way to
+ * lexicographically sort entries.
+ *
+ * A classifier is usually associated with a {@link LookupElementWeigher} (See {@link CachingComparingClassifier}). The weigher defines
+ * how this classifier orders entries.
+ *
+ * @param <T> type of an entry
  * @author peter
  */
 public abstract class Classifier<T> {
@@ -41,6 +49,9 @@ public abstract class Classifier<T> {
     }
   }
 
+  /**
+   * Returns a new iterable that has the input source elements sorted in some desirable manner.
+   */
   @NotNull
   public abstract Iterable<T> classify(@NotNull Iterable<? extends T> source, @NotNull ProcessingContext context);
 
@@ -52,6 +63,9 @@ public abstract class Classifier<T> {
   @NotNull
   public abstract List<Pair<T, Object>> getSortingWeights(@NotNull Iterable<? extends T> items, @NotNull ProcessingContext context);
 
+  /**
+   * Gets the following classifier.
+   */
   @Nullable
   public final Classifier<T> getNext() {
     return myNext;

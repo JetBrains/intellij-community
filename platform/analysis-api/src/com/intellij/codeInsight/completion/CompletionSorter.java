@@ -22,10 +22,19 @@ import org.jetbrains.annotations.NotNull;
  * @author peter
  */
 public abstract class CompletionSorter {
+  /**
+   * Adds a weigher before an already registered weigher. See {@link #weigh(LookupElementWeigher)}
+   */
   public abstract CompletionSorter weighBefore(@NotNull String beforeId, LookupElementWeigher... weighers);
 
+  /**
+   * Adds a weigher after an already registered weigher. See {@link #weigh(LookupElementWeigher)}
+   */
   public abstract CompletionSorter weighAfter(@NotNull String afterId, LookupElementWeigher... weighers);
 
+  /**
+   * Adds a weigher and return a new {@link CompletionSorter} with this new weigher added. The existing sorter is not changed.
+   */
   public abstract CompletionSorter weigh(LookupElementWeigher weigher);
 
   public static CompletionSorter emptySorter() {
