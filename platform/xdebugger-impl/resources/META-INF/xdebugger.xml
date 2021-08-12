@@ -1,6 +1,6 @@
 <idea-plugin>
   <applicationListeners>
-    <listener topic="com.intellij.execution.ExecutionListener"
+    <listener topic="com.intellij.openapi.project.ProjectManagerListener"
               class="com.intellij.xdebugger.impl.ui.DebuggerFocusManager"
               os="windows"
               activeInHeadlessMode="false"/>
