@@ -766,6 +766,40 @@ class YamlMultilineInjectionTest : BasePlatformTestCase() {
         Y: 12
     """.trimIndent())
   }
+  
+  fun testFEinPlainText() {
+    myFixture.configureByText("test.yaml", """
+        myyaml:
+          #language=XML
+          xml:
+            <xml>
+                <caret><aaa></aaa>
+            </xml>
+    """.trimIndent())
+
+    myInjectionFixture.assertInjectedLangAtCaret("XML")
+    val fe = myInjectionFixture.openInFragmentEditor()
+    fe.type(" ")
+    PsiDocumentManager.getInstance(project).commitAllDocuments()
+    myFixture.checkResult("""
+      myyaml:
+        #language=XML
+        xml:
+          <xml>
+               <aaa></aaa>
+          </xml>
+    """.trimIndent())  
+    fe.type(" ")
+    PsiDocumentManager.getInstance(project).commitAllDocuments()
+    myFixture.checkResult("""
+      myyaml:
+        #language=XML
+        xml:
+          <xml>
+                <aaa></aaa>
+          </xml>
+    """.trimIndent())
+  }
 
   fun testSplitHtmlFromEmpty() {
     myFixture.configureByText("test.yaml", """

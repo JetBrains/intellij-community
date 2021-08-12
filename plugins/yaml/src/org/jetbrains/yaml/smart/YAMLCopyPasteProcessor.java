@@ -82,7 +82,7 @@ public class YAMLCopyPasteProcessor implements CopyPastePreProcessor {
 
     if (element != null) {
       if (PsiUtilCore.getElementType(element) == YAMLTokenTypes.SCALAR_LIST ||
-          element.getParent() instanceof YAMLScalarList) {
+          PsiUtilCore.getElementType(element.getParent()) == YAMLElementTypes.SCALAR_LIST_VALUE) {
         return false;
       }
       TokenSet ends = TokenSet.create(YAMLTokenTypes.EOL, YAMLTokenTypes.SCALAR_EOL, YAMLTokenTypes.COMMENT);
