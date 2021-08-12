@@ -137,7 +137,7 @@ abstract class AbstractGradleBuildScriptBuilder<BSB : GradleBuildScriptBuilder<B
         assignIfNotNull("mainModule", mainModule)
         assignIfNotNull("mainClass", mainClass)
         assignIfNotNull("executableDir", executableDir)
-        assignIfNotNull("applicationDefaultJvmArgs", defaultJvmArgs?.toTypedArray()?.let(::list))
+        assignIfNotNull("applicationDefaultJvmArgs", defaultJvmArgs?.toTypedArray()?.let { list(*it) })
       }
     }
   }
