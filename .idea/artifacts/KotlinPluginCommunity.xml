@@ -227,6 +227,9 @@
         <element id="archive" name="uast-kotlin-idea-base.jar">
           <element id="module-output" name="kotlin.uast.uast-kotlin-idea-base" />
         </element>
+        <element id="archive" name="kotlin-jvm-run-configurations.jar">
+          <element id="module-output" name="kotlin.jvm-run-configurations" />
+        </element>
       </element>
       <element id="directory" name="kotlinc">
         <element id="extracted-dir" path="$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-dist-for-ide/1.6.255-SNAPSHOT/kotlin-dist-for-ide-1.6.255-SNAPSHOT.jar" path-in-jar="/" />
