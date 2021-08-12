@@ -21,6 +21,7 @@ import com.intellij.openapi.fileEditor.ex.IdeDocumentHistory;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindowManager;
@@ -30,6 +31,7 @@ import com.intellij.util.net.ssl.CertificateManager;
 import com.intellij.util.proxy.CommonProxy;
 import com.intellij.util.ui.SwingHelper;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.net.ssl.SSLContext;
@@ -72,7 +74,7 @@ public class IdeUiServiceImpl extends IdeUiService {
   }
 
   @Override
-  public void systemNotify(String title, String text) {
+  public void systemNotify(@NlsContexts.SystemNotificationTitle String title, @NlsContexts.SystemNotificationText String text) {
     SystemNotifications.getInstance().notify("SessionLogger", title, StringUtil.stripHtml(text, true));
   }
 
@@ -108,7 +110,7 @@ public class IdeUiServiceImpl extends IdeUiService {
   public void notifyByBalloon(Project project,
                               String toolWindowId,
                               MessageType messageType,
-                              String title, String fullMessage, String description,
+                              @Nls String title, @Nls String fullMessage, @Nls String description,
                               Icon icon, HyperlinkListener listener) {
     ToolWindowManager toolWindowManager = ToolWindowManager.getInstance(project);
     if (toolWindowManager.canShowNotification(toolWindowId)) {

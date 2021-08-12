@@ -9,8 +9,10 @@ import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileEditor.UnlockOption;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.net.ssl.SSLContext;
@@ -45,7 +47,7 @@ public class IdeUiService {
 
   }
 
-  public void systemNotify(String title, String text) {
+  public void systemNotify(@NlsContexts.SystemNotificationTitle String title, @NlsContexts.SystemNotificationText String text) {
 
   }
 
@@ -72,7 +74,7 @@ public class IdeUiService {
   public void notifyByBalloon(Project project,
                               String toolWindowId,
                               MessageType messageType,
-                              String title, String fullMessage, String description,
+                              @Nls String title, @Nls String fullMessage, @Nls String description,
                               Icon icon,
                               HyperlinkListener listener) {
 
