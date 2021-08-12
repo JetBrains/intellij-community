@@ -176,7 +176,8 @@ public class KillableProcessHandler extends OSProcessHandler implements Killable
             OSProcessUtil.logSkippedActionWithTerminatedProcess(myProcess, "destroy", getCommandLine());
             return true;
           }
-          if (e.getMessage().contains(".exe terminated with exit code 6,")) {
+          String message = e.getMessage();
+          if (message != null && message.contains(".exe terminated with exit code 6,")) {
             // https://github.com/kohsuke/winp/blob/ec4ac6a988f6e3909c57db0abc4b02ff1b1d2e05/native/sendctrlc/main.cpp#L18
             // WinP uses AttachConsole(pid) which might fail if the specified process does not have a console.
             // In this case the error code returned is ERROR_INVALID_HANDLE (6).
