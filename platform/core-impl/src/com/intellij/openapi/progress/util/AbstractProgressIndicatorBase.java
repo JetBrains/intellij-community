@@ -296,6 +296,10 @@ public class AbstractProgressIndicatorBase extends UserDataHolderBase implements
     // avoid race with popState()
     synchronized (getLock()) {
       myIndeterminate = indeterminate;
+
+      if (indeterminate && getFraction() != 0) {
+        myFraction = 0;
+      }
     }
   }
 
