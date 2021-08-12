@@ -80,7 +80,7 @@ public final class WSLCommandLineOptions {
     return this;
   }
 
-  boolean isExecuteCommandInDefaultShell() {
+  public boolean isExecuteCommandInDefaultShell() {
     return myExecuteCommandInDefaultShell;
   }
 
