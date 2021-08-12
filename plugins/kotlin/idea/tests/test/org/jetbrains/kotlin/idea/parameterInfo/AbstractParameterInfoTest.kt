@@ -52,9 +52,9 @@ abstract class AbstractParameterInfoTest : KotlinLightCodeInsightFixtureTestCase
                         name != mainFile.name &&
                         name.substringAfterLast(".") in setOf("java", "kt")
             }!!
-            .forEach { myFixture.configureByFile(it.absolutePath.substringAfter(myFixture.testDataPath)) }
+            .forEach { myFixture.configureByFile(it.canonicalPath) }
 
-        myFixture.configureByFile(File(fileName).absolutePath.substringAfter(myFixture.testDataPath))
+        myFixture.configureByFile(File(fileName).canonicalPath)
 
         val file = myFixture.file as KtFile
 
