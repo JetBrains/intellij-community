@@ -4,13 +4,13 @@ Reports possible escapes of <code>this</code> during the object initialization. 
 or an object of assignment in a constructor or initializer. Such escapes may result in subtle bugs, as the object is now available in the
 context where it is not guaranteed to be initialized.
 <p><b>Example:</b></p>
-<pre>
+<pre><code>
   class Foo {
     {
       System.out.println(this);
     }
   }
-</pre>
+</code></pre>
 <!-- tooltip end -->
 </body>
 </html>

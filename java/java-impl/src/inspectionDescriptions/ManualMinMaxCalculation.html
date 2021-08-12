@@ -3,17 +3,17 @@
 Reports cases where the minimum or the maximum of two numbers can be calculated using
 a <code>Math.max()</code> or <code>Math.min()</code> call instead of doing it manually.
 <p>Example:</p>
-<pre>
+<pre><code>
   public int min(int a, int b) {
     return b &lt; a ? b : a;
   }
-</pre>
+</code></pre>
 <p>After the quick-fix is applied:</p>
-<pre>
+<pre><code>
   public int min(int a, int b) {
     return Math.min(a, b);
   }
-</pre>
+</code></pre>
 <!-- tooltip end -->
 <p>
   Use the <b>Disable for float and double</b> option to disable this inspection for <code>double</code> and <code>float</code>.

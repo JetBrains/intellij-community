@@ -9,18 +9,18 @@ This inspection only reports when the suggested replacement does not result in s
 performance drawback on modern JVMs. In many cases, <code>String</code> concatenation may perform better.
 </p>
 <p><b>Example:</b></p>
-<pre>
+<pre><code>
   StringBuilder result = new StringBuilder();
   result.append("i = ");
   result.append(i);
   result.append(";");
   return result.toString();
-</pre>
+</code></pre>
 <p>After the quick-fix is applied:</p>
-<pre>
+<pre><code>
   String result = "i = " + i + ";";
   return result;
-</pre>
+</code></pre>
 <!-- tooltip end -->
 </body>
 </html>

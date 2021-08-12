@@ -5,9 +5,9 @@ Reports redundant calls to unmodifiable collection wrappers within the
 <p>If the argument that is passed to an unmodifiable
   collection wrapper is already immutable, such a wrapping becomes redundant.</p>
 <p>Example:</p>
-<pre>
+<pre><code>
   Collections.unmodifiableList(Collections.singletonList("abc"));
-</pre>
+</code></pre>
 <p>In order to detect the methods that return unmodifiable collections, the
 inspection uses the <code>org.jetbrains.annotations.Unmodifiable</code>
 and <code>org.jetbrains.annotations.UnmodifiableView</code> annotations.

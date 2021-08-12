@@ -5,22 +5,22 @@ or <code>do</code> statements that
 can only exit by throwing an exception. While such statements may be correct, they
 often happen due to coding errors.
 <p>Example:</p>
-<pre>
+<pre><code>
   for (;;) {
   }
-</pre>
+</code></pre>
 <!-- tooltip end -->
 <p>
 Use the <b>Ignore when placed in Thread.run</b> option to ignore the
   infinite loop statements inside <code>Thread.run</code>.
 It may be useful for the daemon threads.
 <p>Example:</p>
-<pre>
+<pre><code>
   new Thread(() -&gt; {
     while (true) {
     }
   }).start();
-</pre>
+</code></pre>
 <p>
 </body>
 </html>

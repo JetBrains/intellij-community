@@ -3,20 +3,20 @@
 Reports module declarations, classes, fields, or methods that have the <code>@deprecated</code>
 Javadoc tag but do not have the <code>@java.lang.Deprecated</code> annotation.
 <p><b>Example:</b></p>
-<pre>
+<pre><code>
   /**
    * @deprecated use {@code example()} instead
    */
   void sample(){ }
-</pre>
+</code></pre>
 <p>After the quick-fix is applied:</p>
-<pre>
+<pre><code>
   /**
    * @deprecated use {@code example()} instead
    */
   @Deprecated
   void sample(){ }
-</pre>
+</code></pre>
 <!-- tooltip end -->
 <p>This inspection works only if the language level of the project or module is 5 or higher.</p>
 <p>

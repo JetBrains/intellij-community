@@ -3,13 +3,13 @@
 Reports concatenation with string literals that consist of one character.
 <p>These literals may be replaced with equivalent character literals, gaining some performance enhancement.</p>
 <p><b>Example:</b></p>
-<pre>
+<pre><code>
   String hello = hell + "o";
-</pre>
+</code></pre>
 <p>After the quick-fix is applied:</p>
-<pre>
+<pre><code>
   String hello = hell + 'o';
-</pre>
+</code></pre>
 <!-- tooltip end -->
 <p>
 

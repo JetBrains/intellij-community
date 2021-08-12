@@ -10,7 +10,7 @@ The quick-fix wraps the non-array branch in an array to prevent the compiler fro
 </p>
 <!-- tooltip end -->
 <p><b>Example:</b></p>
-<pre>
+<pre><code>
     static void bar(boolean flag) {
         Object[] a = {1, 2};
         Object b = "hello";
@@ -18,10 +18,10 @@ The quick-fix wraps the non-array branch in an array to prevent the compiler fro
     }
     static void foo(Object... obj) {
     }
-</pre>
+</code></pre>
 
 <p>After the quick-fix: </p>
-<pre>
+<pre><code>
     static void bar(boolean flag) {
         Object[] a = {1, 2};
         Object b = "hello";
@@ -29,7 +29,7 @@ The quick-fix wraps the non-array branch in an array to prevent the compiler fro
     }
     static void foo(Object... obj) {
     }
-</pre>
+</code></pre>
 
 <p><small>New in 2020.3</small></p>
 </body>

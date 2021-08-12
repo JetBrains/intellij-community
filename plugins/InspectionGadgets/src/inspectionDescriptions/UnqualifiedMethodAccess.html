@@ -2,7 +2,7 @@
 <body>
 Reports calls to non-<code>static</code> methods on the same instance that are not qualified with <code>this</code>.
 <p><b>Example:</b></p>
-<pre>
+<pre><code>
   class Foo {
     void bar() {}
 
@@ -10,9 +10,9 @@ Reports calls to non-<code>static</code> methods on the same instance that are n
       bar();
     }
   }
-</pre>
+</code></pre>
 <p>After the quick-fix is applied:</p>
-<pre>
+<pre><code>
   class Foo {
     void bar() {}
 
@@ -20,7 +20,7 @@ Reports calls to non-<code>static</code> methods on the same instance that are n
       this.bar();
     }
   }
-</pre>
+</code></pre>
 <!-- tooltip end -->
 </body>
 </html>

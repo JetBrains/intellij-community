@@ -6,7 +6,7 @@ Reports field access operations that are not qualified with <code>this</code> or
   variable or parameter access.
 </p>
 <p><b>Example:</b></p>
-<pre>
+<pre><code>
   class Foo {
     int foo;
 
@@ -14,9 +14,9 @@ Reports field access operations that are not qualified with <code>this</code> or
       foo += 1;
     }
   }
-</pre>
+</code></pre>
 <p>After the quick-fix is applied:</p>
-<pre>
+<pre><code>
   class Foo {
     int foo;
 
@@ -24,7 +24,7 @@ Reports field access operations that are not qualified with <code>this</code> or
       this.foo += 1;
     }
   }
-</pre>
+</code></pre>
 <!-- tooltip end -->
 </body>
 </html>

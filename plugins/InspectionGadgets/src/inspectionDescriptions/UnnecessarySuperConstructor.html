@@ -3,20 +3,20 @@
 Reports calls to no-arg superclass constructors during object construction.
 <p>Such calls are unnecessary and may be removed.</p>
 <p><b>Example:</b></p>
-<pre>
+<pre><code>
   class Foo {
     Foo() {
       super();
     }
   }
-</pre>
+</code></pre>
 <p>After the quick-fix is applied:</p>
-<pre>
+<pre><code>
   class Foo {
     Foo() {
     }
   }
-</pre>
+</code></pre>
 <!-- tooltip end -->
 </body>
 </html>

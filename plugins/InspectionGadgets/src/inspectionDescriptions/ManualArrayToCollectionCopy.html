@@ -7,20 +7,20 @@ Reports code that uses a loop to copy the contents of an array into a collection
 <p>
 <p>Only loops without additional statements inside are reported.</p>
 <p><b>Example:</b></p>
-<pre>
+<pre><code>
   void addAll(List&lt;String&gt; list, String[] arr) {
     for (int i = 0; i &lt; arr.length; i++) {
       String s = arr[i];
       list.add(s);
     }
   }
-</pre>
+</code></pre>
 <p>After the quick-fix is applied:</p>
-<pre>
+<pre><code>
   void addAll(List&lt;String&gt; list, String[] arr) {
     Collections.addAll(list, arr);
   }
-</pre>
+</code></pre>
 <!-- tooltip end -->
 <p>
 

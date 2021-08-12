@@ -10,12 +10,12 @@ Reports suspicious calls to <code>System.arraycopy()</code>.
 <li>the ranges always intersect when the source and destination are the same array
 </ul>
 <p><b>Example:</b></p>
-<pre>
+<pre><code>
   void foo() {
     int[] src = new int[] { 1, 2, 3, 4 };
     System.arraycopy(src, 0, src, 1, 2); // warning: Copying to the same array with intersecting ranges
   }
-</pre>
+</code></pre>
 <!-- tooltip end -->
 <p>
 
