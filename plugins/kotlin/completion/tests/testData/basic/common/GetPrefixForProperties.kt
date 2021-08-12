@@ -1,3 +1,4 @@
+// FIR_COMPARISON
 class C : Thread() {
     val property1: Int = 0
     var property2: Int = 0

@@ -23,6 +23,7 @@ import org.jetbrains.kotlin.idea.frontend.api.types.KtType
 import org.jetbrains.kotlin.load.java.JvmAbi
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.KtExpression
+import org.jetbrains.kotlin.utils.addIfNotNull
 
 internal open class FirCallableCompletionContributor(
     basicContext: FirBasicCompletionContext,
@@ -161,8 +162,20 @@ internal open class FirCallableCompletionContributor(
         val nonExtensionMembers = collectNonExtensions(possibleReceiverScope, visibilityChecker)
         val extensionNonMembers = collectSuitableExtensions(implicitScopes, extensionChecker, visibilityChecker)
 
-        nonExtensionMembers
-            .forEach { addCallableSymbolToCompletion(expectedType, it, getOptions(it)) }
+        val syntheticPropertyOrigins = mutableSetOf<KtFunctionSymbol>()
+        nonExtensionMembers.toList()
+            .onEach {
+                if (it is KtSyntheticJavaPropertySymbol) {
+                    syntheticPropertyOrigins.add(it.javaGetterSymbol)
+                    syntheticPropertyOrigins.addIfNotNull(it.javaSetterSymbol)
+                }
+            }
+            .forEach {
+                if (it !in syntheticPropertyOrigins) {
+                    // For basic completion, FE1.0 skips Java functions that are mapped to Kotlin properties.
+                    addCallableSymbolToCompletion(expectedType, it, getOptions(it))
+                }
+            }
 
         extensionNonMembers.forEach { (symbol, applicability) ->
             getExtensionOptions(symbol, applicability)?.let { addCallableSymbolToCompletion(expectedType, symbol, it) }
