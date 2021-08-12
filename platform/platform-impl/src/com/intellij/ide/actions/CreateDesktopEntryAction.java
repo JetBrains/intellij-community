@@ -26,6 +26,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.AppUIUtil;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.Restarter;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -162,7 +163,7 @@ public final class CreateDesktopEntryAction extends DumbAwareAction {
     }
   }
 
-  private static void exec(GeneralCommandLine command, @Nullable String prompt) throws IOException, ExecutionException {
+  private static void exec(GeneralCommandLine command, @Nls @Nullable String prompt) throws IOException, ExecutionException {
     command.setRedirectErrorStream(true);
     ProcessOutput result = prompt != null ? ExecUtil.sudoAndGetOutput(command, prompt) : ExecUtil.execAndGetOutput(command);
     int exitCode = result.getExitCode();
