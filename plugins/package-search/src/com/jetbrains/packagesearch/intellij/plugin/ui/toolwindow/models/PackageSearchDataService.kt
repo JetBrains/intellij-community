@@ -123,6 +123,10 @@ internal class PackageSearchDataService(
     }
         .replayOnSignals(replayFromErrorChannel.receiveAsFlow(), project.moduleChangesSignalFlow)
         .map { modules -> project.moduleTransformers.flatMapTransform(project, modules) }
+        .catch {
+            logError("PackageSearchDataService#projectModulesStateFlow", it) { "Error while elaborating latest project modules" }
+            emit(emptyList())
+        }
         .flowOn(Dispatchers.ReadActions)
         .stateIn(this, SharingStarted.Eagerly, emptyList())
 
