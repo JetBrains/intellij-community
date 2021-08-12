@@ -17,12 +17,40 @@ interface JBGrid {
   var resizableRows: Set<Int>
 
   /**
-   * Distances after columns with correspondent index
+   * Gaps around columns. Used only when column is visible
    */
-  var columnsDistance: List<Int>
+  var columnsGaps: List<ColumnGaps>
 
   /**
-   * Distances after rows with correspondent index
+   * Gaps around rows. Used only when row is visible
    */
-  var rowsDistance: List<Int>
+  var rowsGaps: List<RowGaps>
+}
+
+data class ColumnGaps(val left: Int = 0, val right: Int = 0) {
+  companion object {
+    val EMPTY = ColumnGaps()
+  }
+
+  init {
+    checkNonNegative(::left)
+    checkNonNegative(::right)
+  }
+
+  val width: Int
+    get() = left + right
+}
+
+data class RowGaps(val top: Int = 0, val bottom: Int = 0) {
+  companion object {
+    val EMPTY = RowGaps()
+  }
+
+  init {
+    checkNonNegative(::top)
+    checkNonNegative(::bottom)
+  }
+
+  val height: Int
+    get() = top + bottom
 }

@@ -7,11 +7,13 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.util.Disposer
 import com.intellij.ui.components.JBTabbedPane
+import com.intellij.ui.dsl.CellBuilder
 import com.intellij.ui.dsl.RowLayout
 import com.intellij.ui.dsl.gridLayout.HorizontalAlign
 import com.intellij.ui.dsl.panel
 import java.awt.Dimension
 import javax.swing.JComponent
+import javax.swing.JLabel
 import javax.swing.JPanel
 import javax.swing.JScrollPane
 import javax.swing.border.Border
@@ -24,6 +26,7 @@ class UiDslDemoAction : DumbAwareAction("Show UI DSL Demo") {
   }
 }
 
+@Suppress("DialogTitleCapitalization")
 private class UiDslDemoDialog(project: Project?) : DialogWrapper(project, null, true, IdeModalityType.IDE, false) {
 
   init {
@@ -41,6 +44,7 @@ private class UiDslDemoDialog(project: Project?) : DialogWrapper(project, null, 
     result.preferredSize = Dimension(800, 600)
     result.addTab("Text Fields", createTextFields())
     result.addTab("Comments", JScrollPane(createCommentsPanel()))
+    result.addTab("Groups", createGroupsPanel())
 
     return result
   }
@@ -77,6 +81,44 @@ private class UiDslDemoDialog(project: Project?) : DialogWrapper(project, null, 
     return result
   }
 
+  fun createGroupsPanel(): JPanel {
+    return panel {
+      lateinit var group1Label: CellBuilder<JLabel>
+      val group1 = group(title = "Group1 title") {
+        row {
+          group1Label = label("Group1 label1")
+        }
+        row {
+          label("Group1 line 2")
+        }
+      }
+      val group2 = group(title = "Group2 title") {
+        row {
+          label("Group2 content")
+        }
+      }
+      row {
+        checkBox("Group1 visibility")
+          .applyToComponent {
+            isSelected = true
+            addChangeListener { group1.visible(this.isSelected) }
+          }
+        checkBox("Group1 label1 visibility")
+          .applyToComponent {
+            isSelected = true
+            addChangeListener { group1Label.visible(this.isSelected) }
+          }
+      }
+      row {
+        checkBox("Group2 visibility")
+          .applyToComponent {
+            isSelected = true
+            addChangeListener { group2.visible(this.isSelected) }
+          }
+      }
+    }
+  }
+
   fun createCommentsPanel(): JPanel {
     return panel {
       for (rowLayout in RowLayout.values()) {
@@ -89,15 +131,15 @@ private class UiDslDemoDialog(project: Project?) : DialogWrapper(project, null, 
         row("${rowLayout.name} long:") {
           checkBox("Checkbox1")
           checkBox("Long Checkbox2")
-            .comment("<html>LABEL_ALIGNED: Checkbox2 comment is aligned with checkbox1 (cell[1]), hard to fix, rare usecase<br>" +
+            .comment("<html>LABEL_ALIGNED: Checkbox2 comment is aligned with checkbox1 (cell[1]), hard to fix, rare use case<br>" +
                      "OTHERWISE: Checkbox2 comment is aligned with checkbox2")
           button("button") { }
         }.layout(rowLayout)
-        row("${rowLayout.name}") {
+        row(rowLayout.name) {
           checkBox("Checkbox1")
           checkBox("Long Checkbox2")
           button("button") { }
-            .comment("<html>LABEL_ALIGNED: Button comment is aligned with checkbox1 (cell[1]), hard to fix, rare usecase<br>" +
+            .comment("<html>LABEL_ALIGNED: Button comment is aligned with checkbox1 (cell[1]), hard to fix, rare use case<br>" +
                      "OTHERWISE: Button comment is aligned with button")
         }.layout(rowLayout)
         row {

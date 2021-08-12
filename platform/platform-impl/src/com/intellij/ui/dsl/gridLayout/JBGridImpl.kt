@@ -12,8 +12,11 @@ internal class JBGridImpl : JBGrid {
   override var resizableColumns = emptySet<Int>()
   override var resizableRows = emptySet<Int>()
 
-  override var columnsDistance = emptyList<Int>()
-  override var rowsDistance = emptyList<Int>()
+  override var columnsGaps = emptyList<ColumnGaps>()
+  override var rowsGaps = emptyList<RowGaps>()
+
+  val visible: Boolean
+    get() = cells.any { it.visible }
 
   private val layoutData = JBLayoutData()
   private val cells = mutableListOf<JBCell>()
@@ -69,15 +72,15 @@ internal class JBGridImpl : JBGrid {
       val nextRow = constraints.y + constraints.height
       val visualWidth = columnsCoord[nextColumn] - visualX - layoutCellData.gapWidth
       val visualHeight = rowsCoord[nextRow] - visualY - layoutCellData.gapHeight
-      visualX += rect.x + constraints.gaps.left
-      visualY += rect.y + constraints.gaps.top
+      visualX += rect.x + constraints.gaps.left + layoutCellData.columnGaps.left
+      visualY += rect.y + constraints.gaps.top + layoutCellData.rowGaps.top
 
       when (cell) {
         is JBComponentCell -> {
           layoutComponent(cell.component, layoutCellData, visualX, visualY, visualWidth, visualHeight)
         }
         is JBGridCell -> {
-          (cell.content as JBGridImpl).layout(Rectangle(visualX, visualY, visualWidth, visualHeight))
+          cell.content.layout(Rectangle(visualX, visualY, visualWidth, visualHeight))
         }
       }
     }
@@ -107,10 +110,11 @@ internal class JBGridImpl : JBGrid {
           }
         }
         is JBGridCell -> {
-          // todo visibility, visibleColumns and visibleRows
-          val grid = cell.content as JBGridImpl
-          grid.calculateLayoutData()
-          visibleCellsData.add(LayoutCellData(cell, grid.layoutData.preferredSize))
+          val grid = cell.content
+          if (grid.visible) {
+            grid.calculateLayoutData()
+            visibleCellsData.add(LayoutCellData(cell, grid.layoutData.preferredSize))
+          }
         }
       }
     }
@@ -119,22 +123,16 @@ internal class JBGridImpl : JBGrid {
   }
 
   private fun calculateLayoutDataStep2() {
-    fun isAfterColumnDistance(column: Int): Boolean {
-      return column < columnsDistance.size &&
-             column + 1 < layoutData.dimension.width // No distance after last column
-    }
-
-    fun isAfterRowDistance(row: Int): Boolean {
-      return row < rowsDistance.size
-             && row + 1 < layoutData.dimension.height // No distance after last row
-    }
-
     layoutData.visibleCellsData.forEach { layoutCellData ->
       with(layoutCellData.cell.constraints) {
-        val rightColumn = x + width - 1
-        val bottomRow = y + height - 1
-        layoutCellData.rightDistance = if (isAfterColumnDistance(rightColumn)) columnsDistance[rightColumn] else 0
-        layoutCellData.bottomDistance = if (isAfterRowDistance(bottomRow)) rowsDistance[bottomRow] else 0
+        layoutCellData.columnGaps = ColumnGaps(
+          left = columnsGaps.getOrNull(x)?.left ?: 0,
+          right = columnsGaps.getOrNull(x + width - 1)?.right ?: 0
+        )
+        layoutCellData.rowGaps = RowGaps(
+          top = rowsGaps.getOrNull(y)?.top ?: 0,
+          bottom = rowsGaps.getOrNull(y + height - 1)?.bottom ?: 0,
+        )
 
         layoutData.columnsSizeCalculator.addConstraint(x, width, layoutCellData.cellWidth)
         layoutData.rowsSizeCalculator.addConstraint(y, height, layoutCellData.cellHeight)
@@ -227,13 +225,14 @@ private class JBLayoutData {
 }
 
 private data class LayoutCellData(val cell: JBCell, val preferredSize: Dimension,
-                                  var rightDistance: Int = 0, var bottomDistance: Int = 0) {
+                                  var columnGaps: ColumnGaps = ColumnGaps.EMPTY,
+                                  var rowGaps: RowGaps = RowGaps.EMPTY) {
 
   val gapWidth: Int
-    get() = cell.constraints.gaps.width + rightDistance
+    get() = cell.constraints.gaps.width + columnGaps.width
 
   val gapHeight: Int
-    get() = cell.constraints.gaps.height + bottomDistance
+    get() = cell.constraints.gaps.height + rowGaps.height
 
   val cellWidth: Int
     get() = preferredSize.width + gapWidth - cell.constraints.visualPaddings.width
@@ -242,8 +241,16 @@ private data class LayoutCellData(val cell: JBCell, val preferredSize: Dimension
     get() = preferredSize.height + gapHeight - cell.constraints.visualPaddings.height
 }
 
-private sealed class JBCell constructor(val constraints: JBConstraints)
+private sealed class JBCell(val constraints: JBConstraints) {
+  abstract val visible: Boolean
+}
 
-private class JBComponentCell(constraints: JBConstraints, val component: JComponent) : JBCell(constraints)
+private class JBComponentCell(constraints: JBConstraints, val component: JComponent) : JBCell(constraints) {
+  override val visible: Boolean
+    get() = component.isVisible
+}
 
-private class JBGridCell(constraints: JBConstraints, val content: JBGrid) : JBCell(constraints)
+private class JBGridCell(constraints: JBConstraints, val content: JBGridImpl) : JBCell(constraints) {
+  override val visible: Boolean
+    get() = content.visible
+}

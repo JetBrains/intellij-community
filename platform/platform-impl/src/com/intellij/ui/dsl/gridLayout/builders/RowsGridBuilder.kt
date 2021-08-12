@@ -22,31 +22,21 @@ class RowsGridBuilder(private val panel: JComponent, grid: JBGrid? = null) {
     private set
   var resizableColumns: Set<Int> by this.grid::resizableColumns
 
-  fun columnsDistance(value: List<Int>): RowsGridBuilder {
-    grid.columnsDistance = value
+  fun columnsGaps(value: List<ColumnGaps>): RowsGridBuilder {
+    grid.columnsGaps = value
     return this
   }
 
   /**
    * Starts new row. Can be omitted for the first and last rows
    *
-   * @param distance distance between previous row and new one. Not used for the first row
    * @param resizable true if new row is resizable
    */
-  fun row(distance: Int = 0, resizable: Boolean = false): RowsGridBuilder {
-    if (distance < 0) {
-      throw JBGridException("Invalid parameter: distance = $distance")
-    }
-
+  fun row(rowGaps: RowGaps = RowGaps.EMPTY, resizable: Boolean = false): RowsGridBuilder {
     x = 0
     y++
 
-    // Update rowsDistance
-    if (y != GRID_EMPTY && distance > 0) {
-      val rowsDistance = enlargeRowsDistance()
-      rowsDistance[y - 1] = distance
-    }
-
+    setRowGaps(rowGaps)
 
     if (resizable) {
       val resizableRows = grid.resizableRows.toMutableSet()
@@ -77,14 +67,6 @@ class RowsGridBuilder(private val panel: JComponent, grid: JBGrid? = null) {
     return skip(width)
   }
 
-  /**
-   * Adds distance before current row. Cannot be used for the first row
-   */
-  fun addBeforeDistance(distance: Int) {
-    val rowsDistance = enlargeRowsDistance()
-    rowsDistance[y - 1] += distance
-  }
-
   fun subGrid(width: Int = 1,
               horizontalAlign: HorizontalAlign = HorizontalAlign.LEFT,
               verticalAlign: VerticalAlign = VerticalAlign.TOP,
@@ -113,13 +95,17 @@ class RowsGridBuilder(private val panel: JComponent, grid: JBGrid? = null) {
     return this
   }
 
-  private fun enlargeRowsDistance(): MutableList<Int> {
-    val result = grid.rowsDistance.toMutableList()
-    while (result.size <= y) {
-      result.add(0)
+  fun setRowGaps(rowGaps: RowGaps) {
+    if (rowGaps == RowGaps.EMPTY) {
+      return
     }
-    grid.rowsDistance = result
-    return result
+
+    val rowsGaps = grid.rowsGaps.toMutableList()
+    while (rowsGaps.size <= y) {
+      rowsGaps.add(RowGaps.EMPTY)
+    }
+    rowsGaps[y] = rowGaps
+    grid.rowsGaps = rowsGaps
   }
 
   private fun addResizableColumn() {

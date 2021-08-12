@@ -197,17 +197,18 @@ class JBGridLayoutTest {
   }
 
   @Test
-  fun testDistances() {
+  fun testRowColumnGaps() {
     val layout = JBGridLayout()
     val panel = JPanel(layout)
     val labels = mutableListOf<List<JLabel>>()
-    val builder = RowsGridBuilder(panel)
-      .columnsDistance(listOf(10, 20, 30, 40)) // 40 shouldn't be used by layout
     val columnsCount = 4
     val rowsCount = 5
-    var sumRowsDistance = 0
+    val columnGaps = (0 until columnsCount).map { ColumnGaps(it * 20, it * 20 + 10) }
+    val builder = RowsGridBuilder(panel)
+      .columnsGaps(columnGaps)
+    var rowsGapsSum = 0
 
-    for (y in 1..rowsCount) {
+    for (y in 0 until rowsCount) {
       val row = mutableListOf<JLabel>()
       for (x in 1..columnsCount) {
         val label = label()
@@ -216,35 +217,32 @@ class JBGridLayoutTest {
       }
       labels.add(row)
 
-      val distance = y * 15
-      builder.row(distance)
-      if (y != rowsCount) {
-        sumRowsDistance += distance
-      }
+      val rowGaps = RowGaps(y * 15, y * 15 + 5)
+      builder.row(rowGaps)
+      rowsGapsSum += rowGaps.height
     }
 
-    assertEquals(Dimension(columnsCount * PREFERRED_WIDTH + 60, rowsCount * PREFERRED_HEIGHT + sumRowsDistance),
-                 panel.preferredSize)
+    var preferredWidth = columnsCount * PREFERRED_WIDTH + columnGaps.sumOf { it.width }
+    var preferredHeight = rowsCount * PREFERRED_HEIGHT + rowsGapsSum
+    assertEquals(Dimension(preferredWidth, preferredHeight), panel.preferredSize)
 
     // Hide whole column 1
     for (y in 0 until rowsCount) {
       labels[y][1].isVisible = false
-      var preferredWidth = columnsCount * PREFERRED_WIDTH + 60
       if (y == rowsCount - 1) {
-        preferredWidth -= PREFERRED_WIDTH + 20
+        preferredWidth -= PREFERRED_WIDTH + columnGaps[1].width
       }
-      assertEquals(Dimension(preferredWidth, rowsCount * PREFERRED_HEIGHT + sumRowsDistance), panel.preferredSize)
+      assertEquals(Dimension(preferredWidth, preferredHeight), panel.preferredSize)
     }
 
     // Hide whole row 2
     for (x in 0 until columnsCount) {
       labels[2][x].isVisible = false
-      var preferredHeight = rowsCount * PREFERRED_HEIGHT + sumRowsDistance
       if (x == columnsCount - 1) {
-        preferredHeight -= PREFERRED_HEIGHT + 45
+        preferredHeight -= PREFERRED_HEIGHT + 2 * 30 + 5
       }
 
-      assertEquals(Dimension((columnsCount - 1) * PREFERRED_WIDTH + 40, preferredHeight), panel.preferredSize)
+      assertEquals(Dimension(preferredWidth, preferredHeight), panel.preferredSize)
     }
   }
 

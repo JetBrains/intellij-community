@@ -14,7 +14,6 @@ import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.components.JBTextField
 import com.intellij.ui.components.Label
 import com.intellij.ui.dsl.*
-import com.intellij.ui.dsl.DSL_INT_TEXT_RANGE_PROPERTY
 import com.intellij.util.MathUtil
 import org.jetbrains.annotations.ApiStatus
 import java.awt.Dimension
@@ -24,7 +23,9 @@ import java.awt.event.KeyEvent
 import javax.swing.*
 
 @ApiStatus.Experimental
-internal class RowBuilderImpl(private val dialogPanelConfig: DialogPanelConfig, val label: JLabel? = null) : RowBuilder {
+internal class RowBuilderImpl(private val dialogPanelConfig: DialogPanelConfig,
+                              private val indentCount: Int,
+                              val label: JLabel? = null) : RowBuilder {
 
   var rowLayout = if (label == null) RowLayout.INDEPENDENT else RowLayout.LABEL_ALIGNED
     private set
@@ -44,12 +45,12 @@ internal class RowBuilderImpl(private val dialogPanelConfig: DialogPanelConfig, 
     label?.let { cell(it) }
   }
 
-  override fun layout(rowLayout: RowLayout): RowBuilder {
+  override fun layout(rowLayout: RowLayout): RowBuilderImpl {
     this.rowLayout = rowLayout
     return this
   }
 
-  override fun comment(comment: String, maxLineLength: Int): RowBuilder {
+  override fun comment(comment: String, maxLineLength: Int): RowBuilderImpl {
     this.comment = ComponentPanelBuilder.createCommentComponent(comment, true, maxLineLength, true)
     return this
   }
@@ -60,7 +61,7 @@ internal class RowBuilderImpl(private val dialogPanelConfig: DialogPanelConfig, 
     return result
   }
 
-  override fun visible(isVisible: Boolean): RowBuilder {
+  override fun visible(isVisible: Boolean): RowBuilderImpl {
     _cells.forEach {
       when (it) {
         is CellBuilderImpl<*> -> it.visibleFromParent(isVisible)
@@ -71,12 +72,12 @@ internal class RowBuilderImpl(private val dialogPanelConfig: DialogPanelConfig, 
     return this
   }
 
-  override fun gap(topGap: TopGap): RowBuilder {
+  override fun gap(topGap: TopGap): RowBuilderImpl {
     this.topGap = topGap
     return this
   }
 
-  override fun panel(init: PanelBuilder.() -> Unit): PanelBuilder {
+  override fun panel(init: PanelBuilder.() -> Unit): PanelBuilderImpl {
     val result = PanelBuilderImpl(dialogPanelConfig)
     result.init()
     _cells.add(result)
@@ -147,5 +148,9 @@ internal class RowBuilderImpl(private val dialogPanelConfig: DialogPanelConfig, 
     val component = ComboBox(model)
     component.renderer = renderer ?: SimpleListCellRenderer.create("") { it.toString() }
     return cell(component)
+  }
+
+  fun getIndent(): Int {
+    return indentCount * dialogPanelConfig.spacing.horizontalIndent
   }
 }

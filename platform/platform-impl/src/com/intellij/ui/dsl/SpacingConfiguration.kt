@@ -22,6 +22,11 @@ interface SpacingConfiguration {
   val horizontalIndent: Int
 
   /**
+   * The horizontal left indent for toggle button comment
+   */
+  val horizontalToggleButtonIndent: Int
+
+  /**
    * Top and bottom gaps for components like CheckBox, JTextField etc
    */
   val verticalComponentGap: Int

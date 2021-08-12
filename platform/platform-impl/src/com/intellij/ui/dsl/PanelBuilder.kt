@@ -20,4 +20,5 @@ interface PanelBuilder : PanelBuilderBase, CellBuilderBase<PanelBuilder> {
 
   override fun gap(rightGap: RightGap): PanelBuilder
 
+  fun indent(init: PanelBuilder.() -> Unit): PanelBuilder
 }

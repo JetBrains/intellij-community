@@ -43,7 +43,7 @@ class JBGridLayoutTestAction : DumbAwareAction("Show JBGridLayout Test") {
         result.addTab("SubGrid", createSubGridPanel())
         result.addTab("JointCells", createJointCellsPanel())
         result.addTab("Gaps", createGapsPanel())
-        result.addTab("Col/row distance", createColRowDistancePanel())
+        result.addTab("Col/row gaps", createColRowGapsPanel())
         result.addTab("VisualPaddings", createVisualPaddingsPanel())
 
         return result
@@ -109,13 +109,13 @@ class JBGridLayoutTestAction : DumbAwareAction("Show JBGridLayout Test") {
     return createTabPanel("Every second cell has own Gaps", panel)
   }
 
-  fun createColRowDistancePanel(): JPanel {
+  fun createColRowGapsPanel(): JPanel {
     val layoutManager = JBGridLayout()
     val grid = layoutManager.rootGrid
     grid.resizableColumns = (0..4).toSet()
     grid.resizableRows = (0..3).toSet()
-    grid.columnsDistance = listOf(20, 40, 60, 80, 100) // last should be ignored by layout
-    grid.rowsDistance = listOf(20, 40, 60, 80)
+    grid.columnsGaps = (0..4).map { ColumnGaps(it * 20, it * 20 + 10) }
+    grid.rowsGaps = (0..3).map { RowGaps(it * 5 + 5, it * 5 + 15) }
     val panel = JPanel(layoutManager)
 
     fillGridByCompoundLabels(panel, grid)
@@ -318,11 +318,11 @@ class JBGridLayoutTestAction : DumbAwareAction("Show JBGridLayout Test") {
     if (grid.resizableRows.isNotEmpty()) {
       result.add("resizableRows = ${grid.resizableRows.joinToString()}")
     }
-    if (grid.columnsDistance.isNotEmpty()) {
-      result.add("columnsDistance = ${grid.columnsDistance.joinToString()}")
+    if (grid.columnsGaps.isNotEmpty()) {
+      result.add("<br>columnsGaps = ${grid.columnsGaps.joinToString()}")
     }
-    if (grid.rowsDistance.isNotEmpty()) {
-      result.add("rowsDistance = ${grid.rowsDistance.joinToString()}")
+    if (grid.rowsGaps.isNotEmpty()) {
+      result.add("<br>rowsGaps = ${grid.rowsGaps.joinToString()}")
     }
     return result.joinToString()
   }
@@ -346,7 +346,7 @@ class JBGridLayoutTestAction : DumbAwareAction("Show JBGridLayout Test") {
     val label = JLabel("<html>$title<br>${gridToHtmlString((content.layout as JBGridLayout).rootGrid)}")
     label.background = Color.LIGHT_GRAY
     label.isOpaque = true
-    result.add(label, JBConstraints(rootGrid, 0, 0, width = 2, horizontalAlign = HorizontalAlign.FILL, gaps = Gaps(10)))
+    result.add(label, JBConstraints(rootGrid, 0, 0, width = 2, horizontalAlign = HorizontalAlign.FILL))
     result.add(
       content, JBConstraints(
       rootGrid, 0, 1, verticalAlign = VerticalAlign.FILL,
@@ -359,8 +359,7 @@ class JBGridLayoutTestAction : DumbAwareAction("Show JBGridLayout Test") {
         rootGrid,
         1,
         1,
-        verticalAlign = VerticalAlign.FILL,
-        gaps = Gaps(10)
+        verticalAlign = VerticalAlign.FILL
       )
     )
     createControls(result, content, controlGrid)

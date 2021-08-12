@@ -14,7 +14,7 @@ class JBColumnsSizeCalculator {
 
   /**
    * [size] is a width constraint for columns with correspondent [x] and [width].
-   * It includes gaps, visualPaddings, right column distances (except last columns)
+   * It includes gaps, visualPaddings, column gaps
    */
   fun addConstraint(x: Int, width: Int, size: Int) {
     val key = ColumnInfo(x, width)

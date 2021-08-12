@@ -13,7 +13,7 @@ remove first/last gaps
 */
 
 @ApiStatus.Experimental
-fun panel(init: PanelBuilderBase.() -> Unit): DialogPanel { // Dialog panel content supports only PanelBuilderBase, no CellBuilderBase
+fun panel(init: PanelBuilderBase.() -> Unit): DialogPanel { // Dialog panel content supports only PanelBuilderBase, not CellBuilderBase
   val dialogPanelConfig = DialogPanelConfig()
   val builder = PanelBuilderImpl(dialogPanelConfig)
   builder.init()
