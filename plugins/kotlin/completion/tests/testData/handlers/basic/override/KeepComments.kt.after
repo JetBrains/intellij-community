@@ -1,3 +1,4 @@
+// FIR_COMPARISON
 abstract class Foo {
     abstract fun foo()
 }
