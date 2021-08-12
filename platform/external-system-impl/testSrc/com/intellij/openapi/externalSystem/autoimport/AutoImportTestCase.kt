@@ -39,6 +39,8 @@ import java.io.IOException
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicInteger
 
+
+@Suppress("unused", "MemberVisibilityCanBePrivate")
 abstract class AutoImportTestCase : ExternalSystemTestCase() {
   override fun getTestsTempDir() = "tmp${System.currentTimeMillis()}"
 
@@ -253,6 +255,7 @@ abstract class AutoImportTestCase : ExternalSystemTestCase() {
     projectTracker.isAsyncChangesProcessing = true
   }
 
+  @Suppress("SameParameterValue")
   protected fun setAutoReloadDelay(delay: Int) {
     projectTracker.setAutoReloadDelay(delay)
   }
@@ -345,7 +348,7 @@ abstract class AutoImportTestCase : ExternalSystemTestCase() {
     simpleTest("settings.groovy", "") {
       assertState(
         refresh = 1,
-        settingsAccess = 2,
+        settingsAccess = 1,
         notified = false,
         subscribe = 2,
         unsubscribe = 0,
@@ -450,10 +453,18 @@ abstract class AutoImportTestCase : ExternalSystemTestCase() {
 
     fun onceDuringRefresh(action: (ExternalSystemProjectReloadContext) -> Unit) = projectAware.onceDuringRefresh(action)
     fun duringRefresh(times: Int, action: (ExternalSystemProjectReloadContext) -> Unit) = projectAware.duringRefresh(times, action)
+    fun duringRefresh(action: (ExternalSystemProjectReloadContext) -> Unit, parentDisposable: Disposable) =
+      projectAware.duringRefresh(action, parentDisposable)
+
     fun onceAfterRefresh(action: (ExternalSystemRefreshStatus) -> Unit) = projectAware.onceAfterRefresh(action)
     fun afterRefresh(times: Int, action: (ExternalSystemRefreshStatus) -> Unit) = projectAware.afterRefresh(times, action)
+    fun afterRefresh(action: (ExternalSystemRefreshStatus) -> Unit, parentDisposable: Disposable) =
+      projectAware.afterRefresh(action, parentDisposable)
+
     fun onceBeforeRefresh(action: () -> Unit) = projectAware.onceBeforeRefresh(action)
     fun beforeRefresh(times: Int, action: () -> Unit) = projectAware.beforeRefresh(times, action)
+    fun beforeRefresh(action: () -> Unit, parentDisposable: Disposable) =
+      projectAware.beforeRefresh(action, parentDisposable)
 
     fun setRefreshStatus(status: ExternalSystemRefreshStatus) = projectAware.refreshStatus.set(status)
 
@@ -497,11 +508,9 @@ abstract class AutoImportTestCase : ExternalSystemTestCase() {
       Disposer.newDisposable(testDisposable, "waitForProjectRefresh").use { parentDisposable ->
         val promise = AsyncPromise<ExternalSystemRefreshStatus>()
         val uncompletedRefreshes = AtomicInteger(expectedRefreshes)
-        projectAware.subscribe(object : ExternalSystemProjectRefreshListener {
-          override fun afterProjectRefresh(status: ExternalSystemRefreshStatus) {
-            if (uncompletedRefreshes.decrementAndGet() == 0) {
-              promise.setResult(status)
-            }
+        afterRefresh({ status ->
+          if (uncompletedRefreshes.decrementAndGet() == 0) {
+            promise.setResult(status)
           }
         }, parentDisposable)
         action()

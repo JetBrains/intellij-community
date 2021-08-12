@@ -46,14 +46,9 @@ class ProjectStatus(private val debugName: String? = null) {
   }
 
   fun update(event: ProjectEvent): ProjectState {
-    if (LOG.isDebugEnabled) {
-      val debugPrefix = if (debugName == null) "" else "$debugName: "
-      val eventName = event::class.simpleName
-      val state = state.get()
-      val stateName = state::class.java.simpleName
-      LOG.debug("${debugPrefix}Event $eventName is happened at ${event.stamp}. Current state $stateName is changed at ${state.stamp}")
-    }
+    val oldState = AtomicReference<ProjectState>()
     val newState = state.updateAndGet { currentState ->
+      oldState.set(currentState)
       when (currentState) {
         is Synchronized -> when (event) {
           is Synchronize -> event.withFuture(currentState, ::Synchronized)
@@ -92,14 +87,15 @@ class ProjectStatus(private val debugName: String? = null) {
         }
       }
     }
+    debug(newState, oldState.get(), event)
+    return newState
+  }
+
+  private fun debug(newState: ProjectState, oldState: ProjectState, event: ProjectEvent) {
     if (LOG.isDebugEnabled) {
       val debugPrefix = if (debugName == null) "" else "$debugName: "
-      val eventName = event::class.simpleName
-      val state = state.get()
-      val stateName = state::class.java.simpleName
-      LOG.debug("${debugPrefix}State is $stateName at ${state.stamp} after event $eventName that happen at ${event.stamp}.")
+      LOG.debug("${debugPrefix}$oldState -> $newState by $event")
     }
-    return newState
   }
 
   private fun ProjectEvent.withFuture(state: ProjectState, action: (Long) -> ProjectState): ProjectState {
@@ -125,27 +121,23 @@ class ProjectStatus(private val debugName: String? = null) {
     }
   }
 
-  sealed class ProjectEvent(val stamp: Long) {
-    class Synchronize(stamp: Long) : ProjectEvent(stamp)
+  sealed class ProjectEvent {
+    abstract val stamp: Long
 
-    class Invalidate(stamp: Long, val type: ModificationType) : ProjectEvent(stamp)
-
-    class Modify(stamp: Long, val type: ModificationType) : ProjectEvent(stamp)
-
-    class Revert(stamp: Long) : ProjectEvent(stamp)
-
-    class Break(stamp: Long) : ProjectEvent(stamp)
+    data class Synchronize(override val stamp: Long) : ProjectEvent()
+    data class Invalidate(override val stamp: Long, val type: ModificationType) : ProjectEvent()
+    data class Modify(override val stamp: Long, val type: ModificationType) : ProjectEvent()
+    data class Revert(override val stamp: Long) : ProjectEvent()
+    data class Break(override val stamp: Long) : ProjectEvent()
   }
 
-  sealed class ProjectState(val stamp: Long) {
-    class Synchronized(stamp: Long) : ProjectState(stamp)
+  sealed class ProjectState {
+    abstract val stamp: Long
 
-    class Dirty(stamp: Long, val type: ModificationType) : ProjectState(stamp)
-
-    class Modified(stamp: Long, val type: ModificationType) : ProjectState(stamp)
-
-    class Reverted(stamp: Long) : ProjectState(stamp)
-
-    class Broken(stamp: Long) : ProjectState(stamp)
+    data class Synchronized(override val stamp: Long) : ProjectState()
+    data class Dirty(override val stamp: Long, val type: ModificationType) : ProjectState()
+    data class Modified(override val stamp: Long, val type: ModificationType) : ProjectState()
+    data class Reverted(override val stamp: Long) : ProjectState()
+    data class Broken(override val stamp: Long) : ProjectState()
   }
 }

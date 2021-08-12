@@ -107,3 +107,45 @@ fun <L, A1, A2> subscribe(
     listener(a1, a2)
   }, disposable)
 }, parentDisposable)
+
+/**
+ * Subscribes listener without arguments.
+ * Unsubscribes when [parentDisposable] is disposed or [ttl] is out.
+ *
+ * @see subscribe(Int, (A1) -> Unit, ((A1) -> Unit) -> L, (L, Disposable) -> Unit, Disposable)
+ */
+@JvmName("subscribe0")
+fun subscribe(
+  ttl: Int,
+  listener: () -> Unit,
+  subscribe: (() -> Unit, Disposable) -> Unit,
+  parentDisposable: Disposable
+) = subscribe(ttl, listener, { it }, subscribe, parentDisposable)
+
+/**
+ * Subscribes listener with one argument.
+ * Unsubscribes when [parentDisposable] is disposed or [ttl] is out.
+ *
+ * @see subscribe(Int, (A1) -> Unit, ((A1) -> Unit) -> L, (L, Disposable) -> Unit, Disposable)
+ */
+@JvmName("subscribe1")
+fun <A1> subscribe(
+  ttl: Int,
+  listener: (A1) -> Unit,
+  subscribe: ((A1) -> Unit, Disposable) -> Unit,
+  parentDisposable: Disposable
+) = subscribe(ttl, listener, { it }, subscribe, parentDisposable)
+
+/**
+ * Subscribes listener with two arguments.
+ * Unsubscribes when [parentDisposable] is disposed or [ttl] is out.
+ *
+ * @see subscribe(Int, (A1) -> Unit, ((A1) -> Unit) -> L, (L, Disposable) -> Unit, Disposable)
+ */
+@JvmName("subscribe2")
+fun <A1, A2> subscribe(
+  ttl: Int,
+  listener: (A1, A2) -> Unit,
+  subscribe: ((A1, A2) -> Unit, Disposable) -> Unit,
+  parentDisposable: Disposable
+) = subscribe(ttl, listener, { it }, subscribe, parentDisposable)
