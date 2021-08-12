@@ -1,17 +1,18 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.dom;
 
 import com.intellij.lang.documentation.DocumentationProvider;
 import com.intellij.psi.PsiElement;
+import org.jetbrains.annotations.Nls;
 
 public class MavenPluginModelDocumentationProvider implements DocumentationProvider {
   @Override
-  public String getQuickNavigateInfo(PsiElement element, PsiElement originalElement) {
+  public @Nls String getQuickNavigateInfo(PsiElement element, PsiElement originalElement) {
     return getDocForMavenPluginParameter(element, false);
   }
 
   @Override
-  public String generateDoc(PsiElement element, PsiElement originalElement) {
+  public @Nls String generateDoc(PsiElement element, PsiElement originalElement) {
     return getDocForMavenPluginParameter(element, true);
   }
 

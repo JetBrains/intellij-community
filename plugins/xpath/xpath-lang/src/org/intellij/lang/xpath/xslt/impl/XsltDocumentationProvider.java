@@ -36,6 +36,7 @@ import org.jdom.JDOMException;
 import org.jdom.input.SAXBuilder;
 import org.jdom.transform.JDOMSource;
 import org.jdom.xpath.XPath;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -96,7 +97,7 @@ public class XsltDocumentationProvider implements DocumentationProvider {
 
     @Override
     @Nullable
-    public String generateDoc(PsiElement psiElement, PsiElement psiElement1) {
+    public @Nls String generateDoc(PsiElement psiElement, PsiElement psiElement1) {
         if (psiElement instanceof DocElement) {
             final DocElement element = (DocElement)psiElement;
             return getDocumentation(element.getName(), element.getCategory());

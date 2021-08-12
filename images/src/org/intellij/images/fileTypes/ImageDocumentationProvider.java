@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.intellij.images.fileTypes;
 
 import com.intellij.lang.documentation.AbstractDocumentationProvider;
@@ -10,6 +10,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFileSystemItem;
 import org.intellij.images.index.ImageInfoIndex;
 import org.intellij.images.util.ImageInfo;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.Nullable;
 
 import java.net.URI;
@@ -22,7 +23,7 @@ public class ImageDocumentationProvider extends AbstractDocumentationProvider {
   private static final int MAX_IMAGE_SIZE = 300;
 
   @Override
-  public String generateDoc(PsiElement element, @Nullable PsiElement originalElement) {
+  public @Nls String generateDoc(PsiElement element, @Nullable PsiElement originalElement) {
     final Ref<String> result = Ref.create();
 
     if (element instanceof PsiFileSystemItem && !((PsiFileSystemItem)element).isDirectory()) {

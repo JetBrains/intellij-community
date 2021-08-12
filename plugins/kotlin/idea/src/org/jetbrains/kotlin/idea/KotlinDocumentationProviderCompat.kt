@@ -4,9 +4,9 @@ package org.jetbrains.kotlin.idea
 
 import com.intellij.codeInsight.javadoc.JavaDocExternalFilter
 import com.intellij.psi.PsiDocCommentBase
-import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.util.PsiTreeUtil
+import org.jetbrains.annotations.Nls
 import org.jetbrains.kotlin.kdoc.psi.api.KDoc
 import org.jetbrains.kotlin.psi.KtDeclaration
 import org.jetbrains.kotlin.psi.KtFile
@@ -24,6 +24,7 @@ class KotlinDocumentationProvider : KotlinDocumentationProviderCompatBase() {
         }
     }
 
+    @Nls
     override fun generateRenderedDoc(comment: PsiDocCommentBase): String? {
         val docComment = comment as? KDoc ?: return null
 

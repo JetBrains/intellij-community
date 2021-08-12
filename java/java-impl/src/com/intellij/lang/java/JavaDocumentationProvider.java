@@ -76,7 +76,7 @@ public class JavaDocumentationProvider implements CodeDocumentationProvider, Ext
   public static final String PACKAGE_SUMMARY_FILE = "package-summary.html";
 
   @Override
-  public String getQuickNavigateInfo(PsiElement element, PsiElement originalElement) {
+  public @Nls String getQuickNavigateInfo(PsiElement element, PsiElement originalElement) {
     return QuickDocUtil.inferLinkFromFullDocumentation(this, element, originalElement,
                                                        getQuickNavigationInfoInner(element, originalElement));
   }
@@ -508,7 +508,7 @@ public class JavaDocumentationProvider implements CodeDocumentationProvider, Ext
   }
 
   @Override
-  public String generateDoc(PsiElement element, PsiElement originalElement) {
+  public @Nls String generateDoc(PsiElement element, PsiElement originalElement) {
     // for new Class(<caret>) or methodCall(<caret>) proceed from method call or new expression
     // same for new Cl<caret>ass() or method<caret>Call()
     if (element instanceof PsiExpressionList ||
@@ -576,7 +576,7 @@ public class JavaDocumentationProvider implements CodeDocumentationProvider, Ext
   }
 
   @Override
-  public @Nullable String generateHoverDoc(@NotNull PsiElement element, @Nullable PsiElement originalElement) {
+  public @Nls @Nullable String generateHoverDoc(@NotNull PsiElement element, @Nullable PsiElement originalElement) {
     if (originalElement != null && PsiTreeUtil.isAncestor(element, originalElement, false)) {
       return null;
     }
@@ -584,7 +584,7 @@ public class JavaDocumentationProvider implements CodeDocumentationProvider, Ext
   }
 
   @Override
-  public @Nullable String generateRenderedDoc(@NotNull PsiDocCommentBase comment) {
+  public @Nls @Nullable String generateRenderedDoc(@NotNull PsiDocCommentBase comment) {
     PsiElement target = comment.getOwner();
     if (target == null) target = comment;
     JavaDocInfoGenerator generator = JavaDocInfoGeneratorFactory.create(target.getProject(), target);
@@ -890,7 +890,7 @@ public class JavaDocumentationProvider implements CodeDocumentationProvider, Ext
   }
 
   @Override
-  public String fetchExternalDocumentation(Project project, PsiElement element, List<String> docUrls, boolean onHover) {
+  public @Nls String fetchExternalDocumentation(Project project, PsiElement element, List<String> docUrls, boolean onHover) {
     return fetchExternalJavadoc(element, project, docUrls);
   }
 

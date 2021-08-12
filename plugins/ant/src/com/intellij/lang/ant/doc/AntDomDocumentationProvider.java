@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.lang.ant.doc;
 
 import com.intellij.lang.ant.AntFilesProvider;
@@ -21,6 +21,7 @@ import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomTarget;
 import com.intellij.util.xml.reflect.DomChildrenDescription;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
@@ -36,7 +37,7 @@ public class AntDomDocumentationProvider implements DocumentationProvider {
   private static final Logger LOG = Logger.getInstance(AntDomDocumentationProvider.class);
 
   @Override
-  public String generateDoc(PsiElement element, PsiElement originalElement) {
+  public @Nls String generateDoc(PsiElement element, PsiElement originalElement) {
     final String mainDoc = getMainDocumentation(originalElement);
     final String additionalDoc = getAdditionalDocumentation(originalElement);
     if (mainDoc == null && additionalDoc == null) {
@@ -172,7 +173,7 @@ public class AntDomDocumentationProvider implements DocumentationProvider {
 
   @Override
   @Nullable
-  public String getQuickNavigateInfo(PsiElement element, PsiElement originalElement) {  // todo!
+  public @Nls String getQuickNavigateInfo(PsiElement element, PsiElement originalElement) {  // todo!
     if (element instanceof PomTargetPsiElement) {
       final PomTarget pomTarget = ((PomTargetPsiElement)element).getTarget();
       if (pomTarget instanceof DomTarget) {

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.yaml.schema;
 
 import com.intellij.lang.documentation.DocumentationProvider;
@@ -8,19 +8,20 @@ import com.intellij.psi.PsiFile;
 import com.jetbrains.jsonSchema.ide.JsonSchemaService;
 import com.jetbrains.jsonSchema.impl.JsonSchemaDocumentationProvider;
 import com.jetbrains.jsonSchema.impl.JsonSchemaObject;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class YamlJsonSchemaDocumentationProvider implements DocumentationProvider {
   @Nullable
   @Override
-  public String getQuickNavigateInfo(PsiElement element, PsiElement originalElement) {
+  public @Nls String getQuickNavigateInfo(PsiElement element, PsiElement originalElement) {
     return findSchemaAndGenerateDoc(element, true);
   }
 
   @Nullable
   @Override
-  public String generateDoc(PsiElement element, @Nullable PsiElement originalElement) {
+  public @Nls String generateDoc(PsiElement element, @Nullable PsiElement originalElement) {
     return findSchemaAndGenerateDoc(element, false);
   }
 

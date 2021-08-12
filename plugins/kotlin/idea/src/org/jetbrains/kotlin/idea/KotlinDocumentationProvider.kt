@@ -12,6 +12,7 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.editor.Editor
 import com.intellij.psi.*
 import com.intellij.psi.impl.compiled.ClsMethodImpl
+import org.jetbrains.annotations.Nls
 import org.jetbrains.kotlin.asJava.LightClassUtil
 import org.jetbrains.kotlin.asJava.elements.KtLightDeclaration
 import org.jetbrains.kotlin.descriptors.*
@@ -126,10 +127,12 @@ open class KotlinDocumentationProviderCompatBase : AbstractDocumentationProvider
         return if (contextElement.isModifier()) contextElement else null
     }
 
+    @Nls
     override fun getQuickNavigateInfo(element: PsiElement?, originalElement: PsiElement?): String? {
         return if (element == null) null else getText(element, originalElement, true)
     }
 
+    @Nls
     override fun generateDoc(element: PsiElement, originalElement: PsiElement?): String? {
         return getText(element, originalElement, false)
     }

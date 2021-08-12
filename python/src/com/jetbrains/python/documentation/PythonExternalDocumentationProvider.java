@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.documentation;
 
 import com.google.common.base.Suppliers;
@@ -22,6 +22,7 @@ import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.psi.PyFile;
 import com.jetbrains.python.psi.resolve.QualifiedNameFinder;
 import com.jetbrains.python.pyi.PyiFile;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jsoup.HttpStatusException;
 import org.jsoup.Jsoup;
@@ -38,7 +39,7 @@ public class PythonExternalDocumentationProvider extends PythonDocumentationProv
   private static final Logger LOG = Logger.getInstance(PythonExternalDocumentationProvider.class);
 
   @Override
-  public String fetchExternalDocumentation(Project project, PsiElement element, List<String> docUrls, boolean onHover) {
+  public @Nls String fetchExternalDocumentation(Project project, PsiElement element, List<String> docUrls, boolean onHover) {
     PsiNamedElement namedElement = ApplicationManager.getApplication().runReadAction((Computable<PsiNamedElement>)() -> {
       PsiElement moduleAnchor = element instanceof PsiDirectory ? element : element.getContainingFile();
       final Module module = ModuleUtilCore.findModuleForPsiElement(moduleAnchor);

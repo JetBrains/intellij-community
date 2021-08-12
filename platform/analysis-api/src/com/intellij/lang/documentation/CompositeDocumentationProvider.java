@@ -111,7 +111,7 @@ public final class CompositeDocumentationProvider implements DocumentationProvid
   }
 
   @Override
-  public String getQuickNavigateInfo(PsiElement element, PsiElement originalElement) {
+  public @Nls String getQuickNavigateInfo(PsiElement element, PsiElement originalElement) {
     for (DocumentationProvider provider : getAllProviders()) {
       String result = provider.getQuickNavigateInfo(element, originalElement);
       if (result != null) {
@@ -135,7 +135,7 @@ public final class CompositeDocumentationProvider implements DocumentationProvid
   }
 
   @Override
-  public String generateDoc(PsiElement element, PsiElement originalElement) {
+  public @Nls String generateDoc(PsiElement element, PsiElement originalElement) {
     for (DocumentationProvider provider : getAllProviders()) {
       String result = provider.generateDoc(element, originalElement);
       if (result != null) {
@@ -159,7 +159,7 @@ public final class CompositeDocumentationProvider implements DocumentationProvid
   }
 
   @Override
-  public @Nullable String generateRenderedDoc(@NotNull PsiDocCommentBase comment) {
+  public @Nls @Nullable String generateRenderedDoc(@NotNull PsiDocCommentBase comment) {
     for (DocumentationProvider provider : getAllProviders()) {
       String result = provider.generateRenderedDoc(comment);
       if (result != null) {

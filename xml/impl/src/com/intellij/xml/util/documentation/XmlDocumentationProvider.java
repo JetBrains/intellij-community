@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.xml.util.documentation;
 
 import com.intellij.lang.Language;
@@ -22,6 +22,7 @@ import com.intellij.util.Processor;
 import com.intellij.xml.*;
 import com.intellij.xml.impl.schema.*;
 import com.intellij.xml.util.XmlUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -43,7 +44,7 @@ public class XmlDocumentationProvider implements DocumentationProvider {
 
   @Override
   @Nullable
-  public String getQuickNavigateInfo(PsiElement element, PsiElement originalElement) {
+  public @Nls String getQuickNavigateInfo(PsiElement element, PsiElement originalElement) {
     if (element instanceof SchemaPrefix) {
       return ((SchemaPrefix)element).getQuickNavigateInfo();
     }
@@ -76,7 +77,7 @@ public class XmlDocumentationProvider implements DocumentationProvider {
   }
 
   @Override
-  public String generateDoc(PsiElement element, final PsiElement originalElement) {
+  public @Nls String generateDoc(PsiElement element, final PsiElement originalElement) {
     if (element instanceof XmlElementDecl) {
       PsiElement curElement = XmlUtil.findPreviousComment(element);
 

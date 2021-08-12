@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.dom;
 
 import com.intellij.lang.documentation.DocumentationProvider;
@@ -13,6 +13,7 @@ import com.intellij.psi.impl.FakePsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.usageView.UsageViewTypeLocation;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.dom.references.MavenPsiElementWrapper;
@@ -24,7 +25,7 @@ import java.util.List;
 
 public class MavenModelDocumentationProvider implements DocumentationProvider, ElementDescriptionProvider {
   @Override
-  public String getQuickNavigateInfo(PsiElement element, PsiElement originalElement) {
+  public @Nls String getQuickNavigateInfo(PsiElement element, PsiElement originalElement) {
     return getDoc(element, false);
   }
 
@@ -41,7 +42,7 @@ public class MavenModelDocumentationProvider implements DocumentationProvider, E
   }
 
   @Override
-  public String generateDoc(PsiElement element, PsiElement originalElement) {
+  public @Nls String generateDoc(PsiElement element, PsiElement originalElement) {
     return getDoc(element, true);
   }
 

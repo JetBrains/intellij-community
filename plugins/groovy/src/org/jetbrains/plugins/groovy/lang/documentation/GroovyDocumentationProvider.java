@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.documentation;
 
 import com.intellij.codeInsight.CodeInsightBundle;
@@ -14,7 +14,6 @@ import com.intellij.lang.documentation.CompositeDocumentationProvider;
 import com.intellij.lang.documentation.ExternalDocumentationProvider;
 import com.intellij.lang.java.JavaDocumentationProvider;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
@@ -22,6 +21,7 @@ import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.psi.util.PsiFormatUtilBase;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -75,7 +75,7 @@ public class GroovyDocumentationProvider implements CodeDocumentationProvider, E
 
   @Override
   @Nullable
-  public String getQuickNavigateInfo(PsiElement element, PsiElement originalElement) {
+  public @Nls String getQuickNavigateInfo(PsiElement element, PsiElement originalElement) {
     if (element instanceof GrVariable || element instanceof GrImplicitVariable) {
       StringBuilder buffer = new StringBuilder();
       PsiVariable variable = (PsiVariable)element;
@@ -277,7 +277,7 @@ public class GroovyDocumentationProvider implements CodeDocumentationProvider, E
 
   @Override
   @Nullable
-  public String generateDoc(PsiElement element, PsiElement originalElement) {
+  public @Nls String generateDoc(PsiElement element, PsiElement originalElement) {
     if (element instanceof GdslNamedParameter) {
       GdslNamedParameter parameter = (GdslNamedParameter)element;
       String result = "<pre><b>" + parameter.getName() + "</b>";
@@ -380,7 +380,7 @@ public class GroovyDocumentationProvider implements CodeDocumentationProvider, E
   }
 
   @Override
-  public String fetchExternalDocumentation(final Project project, PsiElement element, final List<String> docUrls, boolean onHover) {
+  public @Nls String fetchExternalDocumentation(final Project project, PsiElement element, final List<String> docUrls, boolean onHover) {
     return JavaDocumentationProvider.fetchExternalJavadoc(element, project, docUrls);
   }
 
@@ -540,7 +540,7 @@ public class GroovyDocumentationProvider implements CodeDocumentationProvider, E
   }
 
   @Override
-  public @Nullable @NlsSafe String generateRenderedDoc(@NotNull PsiDocCommentBase comment) {
+  public @Nls @Nullable String generateRenderedDoc(@NotNull PsiDocCommentBase comment) {
     PsiElement owner = comment.getOwner();
     String html = new GroovyDocInfoGenerator(owner == null ? comment : owner).generateRenderedDocInfo();
     return JavaDocExternalFilter.filterInternalDocInfo(html);
