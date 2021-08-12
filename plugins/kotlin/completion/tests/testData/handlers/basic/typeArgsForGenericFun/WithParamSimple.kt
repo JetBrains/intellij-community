@@ -1,3 +1,4 @@
+// FIR_COMPARISON
 fun <T> create(param: List<T>): List<T> = param
 
 // T - inferrable from 'param'

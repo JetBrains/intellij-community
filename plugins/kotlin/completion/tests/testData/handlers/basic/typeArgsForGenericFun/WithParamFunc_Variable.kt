@@ -1,3 +1,4 @@
+// FIR_COMPARISON
 import java.util.Comparator
 import java.util.function.ToIntFunction
 

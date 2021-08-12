@@ -1,3 +1,4 @@
+// FIR_COMPARISON
 fun Int.chain(): Int = this
 fun test() {
     val chain = 3001.chain().minus(<caret>)

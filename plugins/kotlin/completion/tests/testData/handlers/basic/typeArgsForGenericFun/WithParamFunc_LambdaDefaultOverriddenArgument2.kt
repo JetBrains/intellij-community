@@ -1,3 +1,4 @@
+// FIR_COMPARISON
 import java.util.Comparator
 
 fun <U, V> createComparator(unused: U, keyExtractor: (V) -> String = { it.toString() }): Comparator<V> = TODO()
