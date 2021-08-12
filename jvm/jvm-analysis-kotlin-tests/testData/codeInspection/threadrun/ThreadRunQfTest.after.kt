@@ -1,7 +1,7 @@
 import java.lang.Runnable
 import java.lang.Thread
 
-class ThreadRunTest {
+class ThreadRunQfTest {
     fun doTest() {
         val runnable = object : Runnable {
             override fun run() {}

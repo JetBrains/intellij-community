@@ -2,7 +2,6 @@ package com.intellij.codeInspection.tests.java
 
 import com.intellij.codeInspection.tests.ThreadRunInspectionTestBase
 import com.intellij.jvm.analysis.JavaJvmAnalysisTestUtil
-import com.intellij.testFramework.InspectionTestUtil
 import com.intellij.testFramework.TestDataPath
 
 private const val inspectionPath = "/codeInspection/threadrun"
@@ -13,12 +12,9 @@ class JavaThreadRunInspectionTest : ThreadRunInspectionTestBase() {
 
   override val fileExt: String = "java"
 
-  override fun setUp() {
-    inspection = InspectionTestUtil.instantiateTool(inspection?.javaClass) // Load inspection config to load suppressId
-    super.setUp()
-  }
-
   fun `test highlighting`() = testHighlighting("ThreadRunTest")
+
+  fun `test no highlighting super`() = testHighlighting("ThreadRunSuperTest")
 
   fun `test quickfix`() = testQuickFixAll("ThreadRunQfTest")
 }

@@ -7,6 +7,7 @@ import com.siyeh.InspectionGadgetsBundle
 import com.siyeh.ig.callMatcher.CallMatcher
 import org.jetbrains.uast.UCallExpression
 import org.jetbrains.uast.UCallableReferenceExpression
+import org.jetbrains.uast.USuperExpression
 import org.jetbrains.uast.visitor.AbstractUastNonRecursiveVisitor
 
 class ThreadRunInspection : AbstractBaseUastLocalInspectionTool() {
@@ -23,6 +24,7 @@ class ThreadRunInspection : AbstractBaseUastLocalInspectionTool() {
   inner class ThreadRunVisitor(private val holder: ProblemsHolder) : AbstractUastNonRecursiveVisitor() {
     override fun visitCallExpression(node: UCallExpression): Boolean {
       if (!THREAD_RUN.uCallMatches(node)) return true
+      if (node.receiver is USuperExpression) return true
       val toHighlight = node.methodIdentifier?.sourcePsi ?: return true
       val message = InspectionGadgetsBundle.message("thread.run.problem.descriptor")
       holder.registerProblem(toHighlight, message, ProblemHighlightType.GENERIC_ERROR_OR_WARNING, ReplaceMethodCallFix("start"))

@@ -2,7 +2,6 @@ package com.intellij.codeInspection
 
 import com.intellij.codeInspection.tests.ThreadRunInspectionTestBase
 import com.intellij.jvm.analysis.KotlinJvmAnalysisTestUtil
-import com.intellij.testFramework.InspectionTestUtil
 import com.intellij.testFramework.TestDataPath
 
 private const val inspectionPath = "/codeInspection/threadrun"
@@ -13,12 +12,9 @@ class KotlinThreadRunInspectionTest : ThreadRunInspectionTestBase() {
 
   override val fileExt: String = "kt"
 
-  override fun setUp() {
-    inspection = InspectionTestUtil.instantiateTool(inspection.javaClass) // Load inspection config
-    super.setUp()
-  }
-
   fun `test highlighting`() = testHighlighting("ThreadRunTest")
+
+  fun `test no highlighting super`() = testHighlighting("ThreadRunSuperTest")
 
   fun `test quickfix`() = testQuickFixAll("ThreadRunQfTest")
 }
