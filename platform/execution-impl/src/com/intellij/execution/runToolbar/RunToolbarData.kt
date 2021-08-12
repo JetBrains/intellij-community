@@ -32,8 +32,10 @@ fun AnActionEvent.isOpened(): Boolean {
 }
 
 fun AnActionEvent.isItRunToolbarMainSlot(): Boolean {
-  return runToolbarData()?.let {
-    it is MainSlotData
+  return this.project?.let { project ->
+    runToolbarData()?.let {
+      it == RunToolbarSlotManager.getInstance(project).mainSlotData
+    } ?: false
   } ?: false
 }
 

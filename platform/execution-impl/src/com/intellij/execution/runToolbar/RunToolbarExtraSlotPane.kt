@@ -20,9 +20,9 @@ import javax.swing.JPanel
 import javax.swing.SwingUtilities
 import kotlin.math.absoluteValue
 
-class RunToolbarExtraSlotPane(val project: Project, val cancel: () -> Unit) {
+class RunToolbarExtraSlotPane(val project: Project, val baseWidth: () -> Int?, val cancel: () -> Unit) {
   private val manager = RunToolbarSlotManager.getInstance(project)
-  val slotPane = JPanel(VerticalLayout(JBUI.scale(2))).apply {
+  val slotPane = JPanel(VerticalLayout(JBUI.scale(3))).apply {
     isOpaque = false
     border = JBUI.Borders.empty()
   }
@@ -48,14 +48,11 @@ class RunToolbarExtraSlotPane(val project: Project, val cancel: () -> Unit) {
     }
   }
 
+  val details = JLabel(LangBundle.message("run.toolbar.add.slot.details"))
   private val pane = object : JPanel(VerticalLayout(JBUI.scale(2))) {
     override fun addNotify() {
       manager.addListener(managerListener)
-      if (manager.slotsCount() == 0) {
-        manager.addNewSlot()
-      } else {
-        build()
-      }
+      build()
       super.addNotify()
       SwingUtilities.invokeLater {
         pack()
@@ -67,21 +64,34 @@ class RunToolbarExtraSlotPane(val project: Project, val cancel: () -> Unit) {
       super.removeNotify()
     }
   }.apply {
-    border = JBUI.Borders.empty(3, 0, 3, 3)
+    border = JBUI.Borders.empty(3, 0, 0, 3)
     add(slotPane)
 
-    add(JPanel(MigLayout("ins 0, novisualpadding", "[min!]push")).apply {
+    val bottomPane = JPanel(MigLayout("ins 0, novisualpadding, gap 0, wrap 2, hidemode 3")).apply {
       isOpaque = false
-      border = JBUI.Borders.empty(2, 1, 0, 5)
+      border = JBUI.Borders.empty(5, 0, 7, 5)
 
-      this.add(HyperlinkLabel(LangBundle.message("run.toolbar.add.slot")).apply {
+      add(JLabel(AllIcons.Toolbar.AddSlot).apply {
+        val d = preferredSize
+        d.width = FixWidthSegmentedActionToolbarComponent.ARROW_WIDTH
+        preferredSize = d
+
+        addMouseListener(object : MouseAdapter() {
+          override fun mouseClicked(e: MouseEvent) {
+            manager.addNewSlot()
+          }
+        })
+      })
+      add(HyperlinkLabel(LangBundle.message("run.toolbar.add.slot")).apply {
         addHyperlinkListener {
           manager.addNewSlot()
         }
-
-        icon = AllIcons.Toolbar.AddSlot
+        border = JBUI.Borders.empty()
       })
-    })
+
+      //add(details, "skip")
+    }
+    add(bottomPane)
   }
 
   internal fun getView(): JComponent = pane

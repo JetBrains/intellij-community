@@ -21,7 +21,7 @@
 
     <group id="RunToolbarMainActionsGroup" popup="false">
       <action class="com.intellij.execution.runToolbar.RunToolbarMainSlotActive"/>
-      <action id="RunToolbarShowHidePopupAction" class="com.intellij.execution.runToolbar.RunToolbarShowHidePopupAction" icon="com.intellij.icons.AllIcons.Toolbar.AddSlot"/>
+      <action id="RunToolbarShowHidePopupAction" class="com.intellij.execution.runToolbar.RunToolbarShowHidePopupAction" icon="AllIcons.Toolbar.Expand"/>
       <action id="RunToolbarMainSlotInfoAction" class="com.intellij.execution.runToolbar.RunToolbarMainSlotInfoAction"/>
       <reference id="RunToolbarRunConfigurationsAction"/>
       <reference id="RunToolbarRerunAction"/>

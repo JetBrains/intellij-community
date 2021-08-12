@@ -4,12 +4,10 @@ package com.intellij.execution.runToolbar
 import com.intellij.CommonBundle
 import com.intellij.execution.ExecutionBundle
 import com.intellij.execution.Executor
-import com.intellij.execution.RunManager
 import com.intellij.execution.RunnerAndConfigurationSettings
 import com.intellij.execution.impl.ExecutionManagerImpl
 import com.intellij.execution.runners.ExecutionEnvironment
 import com.intellij.lang.LangBundle
-import com.intellij.openapi.actionSystem.DataKey
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
@@ -74,7 +72,7 @@ class RunToolbarSlotManager(val project: Project) {
       listeners.forEach { if(value) it.enabled() else it.disabled()  }
     }
 
-  internal val mainSlotData = MainSlotData()
+  internal val mainSlotData = SlotDate()
 
   val activeProcesses = ActiveProcesses()
   private val dataIds = mutableListOf<String>()
@@ -84,15 +82,15 @@ class RunToolbarSlotManager(val project: Project) {
   init {
     ApplicationManager.getApplication().invokeLater {
       slotsData[mainSlotData.id] = mainSlotData
-    }
 
-    addListener(RunToolbarShortcutHelper(project))
+      addListener(RunToolbarShortcutHelper(project))
 
-    runToolbarSettings.getRunConfigurations().forEachIndexed { index, entry ->
-      if(index == 0) {
-        mainSlotData.configuration = entry
-      } else {
-        addNewSlot().configuration = entry
+      runToolbarSettings.getRunConfigurations().forEachIndexed { index, entry ->
+        if(index == 0) {
+          mainSlotData.configuration = entry
+        } else {
+          addNewSlot().configuration = entry
+        }
       }
     }
   }
@@ -260,12 +258,6 @@ internal open class SlotDate(override val id: String = UUID.randomUUID().toStrin
       }
     }
   override val waitingForProcess: MutableSet<String> = mutableSetOf()
-}
-
-internal class MainSlotData(override val id: String = UUID.randomUUID().toString()) : SlotDate(id) {
-  companion object{
-    var RUN_TOOLBAR_IS_EXTRA_SLOTS_OPENED: DataKey<() -> Boolean> = DataKey.create("RUN_TOOLBAR_IS_EXTRA_SLOTS_OPENED")
-  }
 }
 
 internal interface SlotListener {
