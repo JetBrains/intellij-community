@@ -1564,8 +1564,7 @@
     <action class="com.intellij.internal.DumpRunDebugActionStateAction" internal="true" text="Dump State of Run/Debug Combobox"/>
 
     <action id="SwitchFileBasedIndexStorageAction"
-            class="com.intellij.util.indexing.impl.storage.SwitchFileBasedIndexStorageAction"
-            text="Switch File-Based Index Storage"/>
+            class="com.intellij.util.indexing.impl.storage.SwitchFileBasedIndexStorageAction"/>
 
     <action id="ClickLink" class="com.intellij.codeInsight.navigation.actions.ClickLinkAction"
             use-shortcut-of="GotoDeclaration" />
