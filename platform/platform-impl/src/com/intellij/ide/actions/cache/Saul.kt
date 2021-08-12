@@ -6,21 +6,38 @@ import com.intellij.notification.Notification
 import com.intellij.notification.NotificationGroupManager
 import com.intellij.notification.NotificationListener
 import com.intellij.notification.NotificationType
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.components.Service
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.Task
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.ModificationTracker
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import javax.swing.event.HyperlinkEvent
 
+@Service
 internal class Saul {
   companion object {
     @JvmStatic
     private val RECOVERY_ACTION_EP_NAME = ExtensionPointName.create<RecoveryAction>("com.intellij.recoveryAction")
   }
 
-  private val sortedActions = RECOVERY_ACTION_EP_NAME.extensionList.sortedByDescending { it.performanceRate }
+  @Volatile
+  private var recoveryActionModificationCounter = 0L
+
+  init {
+    val listener: () -> Unit = {
+      recoveryActionModificationCounter++
+    }
+    RECOVERY_ACTION_EP_NAME.addChangeListener(listener, ApplicationManager.getApplication())
+  }
+
+  val sortedActions: List<RecoveryAction>
+    get() = RECOVERY_ACTION_EP_NAME.extensionList.sortedByDescending { it.performanceRate }
+
+  val modificationRecoveryActionTracker = ModificationTracker { recoveryActionModificationCounter }
 
   fun sortThingsOut(project: Project?) = RecoveryWorker(sortedActions, project).start()
 }
@@ -72,7 +89,7 @@ private class RecoveryWorker(val actions: Collection<RecoveryAction>, private va
 interface RecoveryAction {
   val performanceRate: Int
 
-  val presentableName: @Nls(capitalization = Nls.Capitalization.Sentence) String
+  val presentableName: @Nls(capitalization = Nls.Capitalization.Title) String
 
   val actionKey: String
 

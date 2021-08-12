@@ -12,7 +12,7 @@ import org.jetbrains.annotations.Nls
 internal class RefreshIndexableFilesAction : RecoveryAction {
   override val performanceRate: Int
     get() = 9999
-  override val presentableName: @Nls(capitalization = Nls.Capitalization.Sentence) String
+  override val presentableName: @Nls(capitalization = Nls.Capitalization.Title) String
     get() = LangBundle.message("refresh.indexable.files.recovery.action.name")
   override val actionKey: String
     get() = "refresh"

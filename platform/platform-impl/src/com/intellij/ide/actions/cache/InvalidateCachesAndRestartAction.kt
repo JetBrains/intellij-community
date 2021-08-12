@@ -10,7 +10,7 @@ import org.jetbrains.annotations.Nls
 internal class InvalidateCachesAndRestartAction : RecoveryAction {
   override val performanceRate: Int
     get() = 1
-  override val presentableName: String @Nls(capitalization = Nls.Capitalization.Sentence)
+  override val presentableName: String @Nls(capitalization = Nls.Capitalization.Title)
     get() = IdeBundle.message("invalidate.all.caches.recovery.action.name")
   override val actionKey: String
     get() = "hammer"

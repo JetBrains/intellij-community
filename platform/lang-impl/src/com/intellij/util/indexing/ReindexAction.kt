@@ -1,5 +1,4 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.indexing
 
 import com.intellij.ide.actions.cache.RecoveryAction
@@ -12,7 +11,7 @@ import org.jetbrains.annotations.Nls
 internal class ReindexAction : RecoveryAction {
   override val performanceRate: Int
     get() = 1000
-  override val presentableName: @Nls(capitalization = Nls.Capitalization.Sentence) String
+  override val presentableName: @Nls(capitalization = Nls.Capitalization.Title) String
     get() = LangBundle.message("reindex.project.recovery.action.name")
   override val actionKey: String
     get() = "reindex"
