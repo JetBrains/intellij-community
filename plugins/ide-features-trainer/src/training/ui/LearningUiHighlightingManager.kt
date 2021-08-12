@@ -14,6 +14,7 @@ import javax.swing.JTree
 import javax.swing.SwingUtilities
 import javax.swing.tree.TreePath
 import kotlin.math.absoluteValue
+import kotlin.math.max
 import kotlin.math.min
 
 private const val pulsationSize = 20
@@ -38,9 +39,14 @@ object LearningUiHighlightingManager {
                          options: HighlightingOptions = HighlightingOptions(),
                          index: () -> Int?) {
     highlightPartOfComponent(list, options) l@{
-      val i = index()
-      if (i == null || i < 0 && list.visibleRowCount <= i) null
-      else list.getCellBounds(i, i)
+      val i = index() ?: return@l null
+      val itemRect = list.getCellBounds(i, i)
+      val listRect = list.visibleRect
+      // return null if item rect is not intersecting with list visible rect
+      if (itemRect.y >= listRect.y + listRect.height || itemRect.y + itemRect.height <= listRect.y) return@l null
+      val adjustedY = max(itemRect.y, listRect.y)
+      val adjustedHeight = min(itemRect.height, min(itemRect.y + itemRect.height - listRect.y, listRect.y + listRect.height - itemRect.y))
+      Rectangle(itemRect.x, adjustedY, itemRect.width, adjustedHeight)
     }
   }
 
