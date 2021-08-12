@@ -8,7 +8,10 @@ import com.intellij.terminal.JBTerminalWidget;
 import com.jediterm.pty.PtyProcessTtyConnector;
 import com.jediterm.terminal.HyperlinkStyle;
 import com.jediterm.terminal.TtyConnector;
+import com.jediterm.terminal.model.TerminalTypeAheadSettings;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.concurrent.TimeUnit;
 
 public class JBTerminalSystemSettingsProvider extends JBTerminalSystemSettingsProviderBase {
   @Override
@@ -75,5 +78,12 @@ public class JBTerminalSystemSettingsProvider extends JBTerminalSystemSettingsPr
   @Override
   public boolean altSendsEscape() {
     return !SystemInfo.isMac || TerminalOptionsProvider.getInstance().getUseOptionAsMetaKey();
+  }
+
+  @Override
+  public @NotNull TerminalTypeAheadSettings getTypeAheadSettings() {
+    TerminalOptionsProvider optionsProvider = TerminalOptionsProvider.getInstance();
+    long latencyThreshold = TimeUnit.MILLISECONDS.toNanos(optionsProvider.getTypeAheadLatencyThreshold());
+    return new TerminalTypeAheadSettings(optionsProvider.isTypeAheadEnabled(), latencyThreshold);
   }
 }

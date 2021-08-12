@@ -22,6 +22,7 @@ import com.intellij.ui.*;
 import com.intellij.ui.components.ActionLink;
 import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.components.JBTextField;
+import com.intellij.ui.components.fields.IntegerField;
 import com.intellij.uiDesigner.core.GridConstraints;
 import com.intellij.uiDesigner.core.GridLayoutManager;
 import com.intellij.util.EnvironmentUtil;
@@ -67,6 +68,8 @@ public class TerminalSettingsPanel {
   private ActionLink myConfigureTerminalKeybindingsActionLink;
   private ComboBox<TerminalUiSettingsManager.CursorShape> myCursorShape;
   private JBCheckBox myUseOptionAsMetaKey;
+  private JBCheckBox myIsTypeAheadEnabled;
+  private IntegerField myTypeAheadLatencyThreshold;
 
   private TerminalOptionsProvider myOptionsProvider;
   private TerminalProjectOptionsProvider myProjectOptionsProvider;
@@ -164,7 +167,9 @@ public class TerminalSettingsPanel {
            || (myUseOptionAsMetaKey.isSelected() != myOptionsProvider.getUseOptionAsMetaKey())
            || myConfigurables.stream().anyMatch(c -> c.isModified())
            || !Comparing.equal(myEnvVarField.getData(), myProjectOptionsProvider.getEnvData())
-           || myCursorShape.getItem() != myOptionsProvider.getCursorShape();
+           || myCursorShape.getItem() != myOptionsProvider.getCursorShape()
+           || myIsTypeAheadEnabled.isSelected() != myOptionsProvider.isTypeAheadEnabled()
+           || myTypeAheadLatencyThreshold.getValue() != myOptionsProvider.getTypeAheadLatencyThreshold();
   }
 
   public void apply() {
@@ -180,6 +185,8 @@ public class TerminalSettingsPanel {
     myOptionsProvider.setShellIntegration(myShellIntegration.isSelected());
     myOptionsProvider.setHighlightHyperlinks(myHighlightHyperlinks.isSelected());
     myOptionsProvider.setUseOptionAsMetaKey(myUseOptionAsMetaKey.isSelected());
+    myOptionsProvider.setTypeAheadEnabled(myIsTypeAheadEnabled.isSelected());
+    myOptionsProvider.setTypeAheadLatencyThreshold(myTypeAheadLatencyThreshold.getValue());
     myConfigurables.forEach(c -> {
       try {
         c.apply();
@@ -205,6 +212,8 @@ public class TerminalSettingsPanel {
     myShellIntegration.setSelected(myOptionsProvider.shellIntegration());
     myHighlightHyperlinks.setSelected(myOptionsProvider.highlightHyperlinks());
     myUseOptionAsMetaKey.setSelected(myOptionsProvider.getUseOptionAsMetaKey());
+    myIsTypeAheadEnabled.setSelected(myOptionsProvider.isTypeAheadEnabled());
+    myTypeAheadLatencyThreshold.setValue(myOptionsProvider.getTypeAheadLatencyThreshold());
     myConfigurables.forEach(c -> c.reset());
     myEnvVarField.setData(myProjectOptionsProvider.getEnvData());
     myCursorShape.setItem(myOptionsProvider.getCursorShape());
