@@ -100,7 +100,11 @@ final class LinuxDistributionBuilder extends OsSpecificDistributionBuilder {
     }
 
     buildContext.ant.copy(todir: distBinDir.toString()) {
-      fileset(dir: "$buildContext.paths.communityHome/platform/build-scripts/resources/linux/scripts")
+      fileset(dir: "$buildContext.paths.communityHome/platform/build-scripts/resources/linux/scripts") {
+        if (!buildContext.productProperties.productLayout.bundledPluginModules.contains("intellij.remoteDevServer")) {
+          exclude(name: "remote-dev-server.sh")
+        }
+      }
 
       filterset(begintoken: "__", endtoken: "__") {
         filter(token: "product_full", value: fullName)
