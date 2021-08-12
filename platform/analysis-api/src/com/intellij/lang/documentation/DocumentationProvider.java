@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.lang.documentation;
 
 import com.intellij.codeInsight.documentation.DocumentationManagerProtocol;
@@ -6,7 +6,6 @@ import com.intellij.codeInsight.documentation.DocumentationManagerUtil;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiDocCommentBase;
 import com.intellij.psi.PsiElement;
@@ -14,6 +13,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -56,7 +56,7 @@ public interface DocumentationProvider {
    * HTML markup. If HTML special characters need to be shown in popup, they should be properly escaped.
    */
   @Nullable
-  default String getQuickNavigateInfo(PsiElement element, PsiElement originalElement) {
+  default @Nls String getQuickNavigateInfo(PsiElement element, PsiElement originalElement) {
     return null;
   }
 
@@ -101,7 +101,7 @@ public interface DocumentationProvider {
    * for the given element
    */
   @Nullable
-  default @NlsSafe String generateDoc(PsiElement element, @Nullable PsiElement originalElement) {
+  default @Nls String generateDoc(PsiElement element, @Nullable PsiElement originalElement) {
     return null;
   }
 
@@ -112,7 +112,7 @@ public interface DocumentationProvider {
    * {@link #generateDoc(PsiElement, PsiElement)} will be used to fetch corresponding content.
    */
   @Nullable
-  default String generateHoverDoc(@NotNull PsiElement element, @Nullable PsiElement originalElement) {
+  default @Nls String generateHoverDoc(@NotNull PsiElement element, @Nullable PsiElement originalElement) {
     return generateDoc(element, originalElement);
   }
 
@@ -121,7 +121,7 @@ public interface DocumentationProvider {
    */
   @Deprecated
   @ApiStatus.ScheduledForRemoval(inVersion = "2021.2")
-  default @Nullable @NlsSafe String generateRenderedDoc(@NotNull PsiElement element) {
+  default @Nls @Nullable String generateRenderedDoc(@NotNull PsiElement element) {
     return null;
   }
 
@@ -131,7 +131,7 @@ public interface DocumentationProvider {
    * @see #collectDocComments(PsiFile, Consumer)
    */
   @ApiStatus.Experimental
-  default @Nullable @NlsSafe String generateRenderedDoc(@NotNull PsiDocCommentBase comment) {
+  default @Nls @Nullable String generateRenderedDoc(@NotNull PsiDocCommentBase comment) {
     PsiElement target = comment.getOwner();
     return generateRenderedDoc(target == null ? comment : target);
   }

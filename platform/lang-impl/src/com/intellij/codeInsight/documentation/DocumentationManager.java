@@ -15,7 +15,6 @@ import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.actions.BaseNavigateToSourceAction;
 import com.intellij.ide.actions.WindowAction;
 import com.intellij.ide.actions.searcheverywhere.PSIPresentationBgRendererWrapper;
-import com.intellij.ide.highlighter.ArchiveFileType;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.ide.util.gotoByName.ChooseByNameBase;
 import com.intellij.ide.util.gotoByName.QuickSearchComponent;
@@ -33,8 +32,6 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.extensions.ExtensionPointListener;
 import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.fileTypes.PlainTextFileType;
-import com.intellij.openapi.fileTypes.UnknownFileType;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.ModuleType;
@@ -1081,7 +1078,7 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
       }
       component.startWait();
 
-      final String text;
+      final @Nls String text;
       final DocumentationProvider provider;
       try {
         if (precalculatedDocumentation != null) {
@@ -1111,7 +1108,7 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
 
       LOG.debug("Documentation fetched successfully:\n", text);
 
-      final String decoratedText = ReadAction.compute(() -> {
+      final @Nls String decoratedText = ReadAction.compute(() -> {
         if (text == null) {
           return decorate(element, CodeInsightBundle.message("no.documentation.found"), null, provider);
         }
@@ -1334,7 +1331,7 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
             String ref = externalHandler.extractRefFromLink(url);
             cancelAndFetchDocInfoByLink(component, new DocumentationCollector(psiElement, url, ref, p, false) {
               @Override
-              public String getDocumentation() {
+              public @Nls String getDocumentation() {
                 return externalHandler.fetchExternalDocumentation(url, psiElement);
               }
             });
@@ -1350,7 +1347,7 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
       if (!processed) {
         cancelAndFetchDocInfoByLink(component, new DocumentationCollector(psiElement, url, null, provider, false) {
           @Override
-          public String getDocumentation() {
+          public @Nls String getDocumentation() {
             if (BrowserUtil.isAbsoluteURL(url)) {
               BrowserUtil.browse(url);
               return "";
@@ -1573,7 +1570,7 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
     }
 
     @Nullable
-    abstract String getDocumentation() throws Exception;
+    abstract @Nls String getDocumentation() throws Exception;
   }
 
   private static class MyCollector extends DocumentationCollector {
@@ -1615,7 +1612,7 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
 
     @Override
     @Nullable
-    public String getDocumentation() {
+    public @Nls String getDocumentation() {
       PsiElement element = getElement(true);
       if (element == null) {
         return null;
@@ -1645,74 +1642,106 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
         }
       }
 
-      return ReadAction.nonBlocking(() -> {
-        if (!element.isValid()) return null;
-        SmartPsiElementPointer<?> originalPointer = element.getUserData(ORIGINAL_ELEMENT_KEY);
-        PsiElement originalPsi = originalPointer != null ? originalPointer.getElement() : null;
-        String doc = onHover ? provider.generateHoverDoc(element, originalPsi) : provider.generateDoc(element, originalPsi);
-        if (element instanceof PsiFile) {
-          String fileDoc = generateFileDoc((PsiFile)element, doc == null);
-          if (fileDoc != null) {
-            doc = doc == null ? fileDoc : doc + fileDoc;
-          }
+      //noinspection HardCodedStringLiteral T should be inferred to `@Nls String`
+      return ReadAction.nonBlocking(() -> doGetDocumentation(element)).executeSynchronously();
+    }
+
+    @Nullable
+    private @Nls String doGetDocumentation(@NotNull PsiElement element) {
+      if (!element.isValid()) return null;
+      SmartPsiElementPointer<?> originalPointer = element.getUserData(ORIGINAL_ELEMENT_KEY);
+      PsiElement originalPsi = originalPointer != null ? originalPointer.getElement() : null;
+      @Nls String doc = onHover ? provider.generateHoverDoc(element, originalPsi)
+                                : provider.generateDoc(element, originalPsi);
+      if (element instanceof PsiFile) {
+        @Nls String fileDoc = generateFileDoc((PsiFile)element, doc == null);
+        if (fileDoc != null) {
+          return doc == null ? fileDoc : doc + fileDoc;
         }
-        return doc;
-      }).executeSynchronously();
+      }
+      return doc;
     }
   }
 
-  @Nullable
-  private static String generateFileDoc(@NotNull PsiFile psiFile, boolean withUrl) {
+  private static @Nls @Nullable String generateFileDoc(@NotNull PsiFile psiFile, boolean withUrl) {
     VirtualFile file = PsiUtilCore.getVirtualFile(psiFile);
     File ioFile = file == null || !file.isInLocalFileSystem() ? null : VfsUtilCore.virtualToIoFile(file);
     BasicFileAttributes attr = null;
     try {
       attr = ioFile == null ? null : Files.readAttributes(Paths.get(ioFile.toURI()), BasicFileAttributes.class);
     }
-    catch (Exception ignored) { }
+    catch (Exception ignored) {
+    }
     if (attr == null) return null;
     FileType type = file.getFileType();
-    String typeName = type == UnknownFileType.INSTANCE ? "Unknown" :
-                      type == PlainTextFileType.INSTANCE ? "Text" :
-                      type == ArchiveFileType.INSTANCE ? "Archive" :
-                      type.getName();
-    String languageName = type.isBinary() ? "" : psiFile.getLanguage().getDisplayName();
-    return (withUrl ? DEFINITION_START +
-                      file.getPresentableUrl() +
-                      DEFINITION_END +
-                      CONTENT_START : "") +
-           getVcsStatus(psiFile.getProject(), file) +
-           getScope(psiFile.getProject(), file) +
-           "<p><span class='grayed'>Size:</span> " + StringUtil.formatFileSize(attr.size()) +
-           "<p><span class='grayed'>Type:</span> " + typeName + (type.isBinary() || typeName.equals(languageName) ? "" : " (" + languageName + ")") +
-           "<p><span class='grayed'>Modified:</span> " + DateFormatUtil.formatDateTime(attr.lastModifiedTime().toMillis()) +
-           "<p><span class='grayed'>Created:</span> " + DateFormatUtil.formatDateTime(attr.creationTime().toMillis()) + (withUrl ? CONTENT_END : "");
+    @Nls String typeName = type.getDisplayName();
+    @Nls String languageName = type.isBinary() ? "" : psiFile.getLanguage().getDisplayName();
+    var content = List.of(
+      getVcsStatus(psiFile.getProject(), file),
+      getScope(psiFile.getProject(), file),
+      HtmlChunk.p().children(
+        GRAYED_ELEMENT.addText(CodeInsightBundle.message("documentation.file.size.label")),
+        HtmlChunk.text(StringUtil.formatFileSize(attr.size()))
+      ),
+      HtmlChunk.p().children(
+        GRAYED_ELEMENT.addText(CodeInsightBundle.message("documentation.file.type.label")),
+        HtmlChunk.text(typeName + (type.isBinary() || typeName.equals(languageName) ? "" : " (" + languageName + ")"))
+      ),
+      HtmlChunk.p().children(
+        GRAYED_ELEMENT.addText(CodeInsightBundle.message("documentation.file.modification.datetime.label")),
+        HtmlChunk.text(DateFormatUtil.formatDateTime(attr.lastModifiedTime().toMillis()))
+      ),
+      HtmlChunk.p().children(
+        GRAYED_ELEMENT.addText(CodeInsightBundle.message("documentation.file.creation.datetime.label")),
+        HtmlChunk.text(DateFormatUtil.formatDateTime(attr.creationTime().toMillis()))
+      )
+    );
+    var result = !withUrl
+                 ? content
+                 : List.of(
+                   DEFINITION_ELEMENT.children(HtmlChunk.tag("pre").addText(file.getPresentableUrl())),
+                   CONTENT_ELEMENT.children(content)
+                 );
+    @Nls StringBuilder sb = new StringBuilder();
+    for (HtmlChunk chunk : result) {
+      chunk.appendTo(sb);
+    }
+    return sb.toString();
   }
 
-  private static String getScope(Project project, VirtualFile file) {
+  private static @Nls @NotNull HtmlChunk getScope(@NotNull Project project, @NotNull VirtualFile file) {
     FileColorManagerImpl colorManager = (FileColorManagerImpl)FileColorManager.getInstance(project);
     Color color = colorManager.getRendererBackground(file);
-    if (color == null) return "";
+    if (color == null) {
+      return HtmlChunk.empty();
+    }
     for (NamedScopesHolder holder : NamedScopesHolder.getAllNamedScopeHolders(project)) {
       for (NamedScope scope : holder.getScopes()) {
         PackageSet packageSet = scope.getValue();
         String name = scope.getScopeId();
         if (packageSet instanceof PackageSetBase && ((PackageSetBase)packageSet).contains(file, project, holder) &&
             colorManager.getScopeColor(name) == color) {
-          return "<p><span class='grayed'>Scope:</span> <span bgcolor='" + ColorUtil.toHex(color) + "'>" + scope.getPresentableName() + "</span>";
+          return HtmlChunk.p().children(
+            GRAYED_ELEMENT.addText(CodeInsightBundle.message("documentation.file.scope.label")),
+            HtmlChunk.span().attr("bgcolor", ColorUtil.toHex(color)).addText(scope.getPresentableName())
+          );
         }
       }
     }
-    return "";
+    return HtmlChunk.empty();
   }
 
-  @NotNull
-  private static String getVcsStatus(Project project, VirtualFile file) {
+  private static @NotNull HtmlChunk getVcsStatus(@NotNull Project project, @NotNull VirtualFile file) {
     FileStatus status = FileStatusManager.getInstance(project).getStatus(file);
+    if (status == FileStatus.NOT_CHANGED || status == FileStatus.SUPPRESSED) {
+      return HtmlChunk.empty();
+    }
+    HtmlChunk vcsText = HtmlChunk.text(status.getText());
     Color color = status.getColor();
-    String colorAttr = color == null ? "" : "color='" + ColorUtil.toHex(color) + "'";
-    if (status == FileStatus.NOT_CHANGED || status == FileStatus.SUPPRESSED) return "";
-    return "<p><span class='grayed'>VCS Status:</span> <span" + colorAttr + ">" + status.getText() + "</span>";
+    return HtmlChunk.p().children(
+      GRAYED_ELEMENT.addText(CodeInsightBundle.message("documentation.file.vcs.status.label")),
+      color == null ? vcsText : vcsText.wrapWith(HtmlChunk.span().attr("color", ColorUtil.toHex(color)))
+    );
   }
 
   private Optional<QuickSearchComponent> findQuickSearchComponent() {
@@ -1730,15 +1759,16 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
   @RequiresReadLock
   @RequiresBackgroundThread
   @Contract(pure = true)
-  public final String decorate(
+  public final @Nls String decorate(
     @Nullable PsiElement element,
-    @NotNull String text,
-    @Nullable String externalUrl,
+    @Nls @NotNull String text,
+    @NlsSafe @Nullable String externalUrl,
     @Nullable DocumentationProvider provider
   ) {
     text = StringUtil.replaceIgnoreCase(text, "</html>", "");
     text = StringUtil.replaceIgnoreCase(text, "</body>", "");
     text = StringUtil.replaceIgnoreCase(text, SECTIONS_START + SECTIONS_END, "");
+    //noinspection HardCodedStringLiteral
     text = StringUtil.replaceIgnoreCase(text, SECTIONS_START + "<p>" + SECTIONS_END, "");
     boolean hasContent = text.contains(CONTENT_START);
     if (!hasContent) {
@@ -1756,6 +1786,7 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
         hasContent = true;
       }
       else if (!text.contains(SECTIONS_START)) {
+        //noinspection HardCodedStringLiteral
         text = StringUtil.replaceIgnoreCase(text, DEFINITION_START, "<div class='definition-only'><pre>");
       }
     }
@@ -1764,6 +1795,7 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
     }
     String location = getLocationText(element);
     if (location != null) {
+      //noinspection HardCodedStringLiteral
       text = text + getBottom(hasContent) + location + "</div>";
     }
     String links = getExternalText(element, externalUrl, provider);
@@ -1778,7 +1810,7 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
 
   private @Nls @Nullable String getExternalText(
     @Nullable PsiElement element,
-    @Nullable String externalUrl,
+    @NlsSafe @Nullable String externalUrl,
     @Nullable DocumentationProvider provider
   ) {
     if (element == null || provider == null) return null;
@@ -1820,7 +1852,7 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
       .child(HtmlChunk.tag("icon").attr("src", "AllIcons.Ide.External_link_arrow")).toString();
   }
 
-  private static @Nls String getLink(@Nls String title, String url) {
+  private static @Nls String getLink(@Nls String title, @NlsSafe String url) {
     String hostname = getHostname(url);
     if (hostname == null) {
       return null;
