@@ -8,7 +8,6 @@ import com.intellij.codeInsight.hint.HintManagerImpl;
 import com.intellij.codeInsight.hint.ParameterInfoControllerBase;
 import com.intellij.codeInsight.lookup.Lookup;
 import com.intellij.codeInsight.lookup.LookupElement;
-import com.intellij.codeInsight.lookup.LookupEx;
 import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.codeWithMe.ClientId;
 import com.intellij.ide.BrowserUtil;
@@ -118,7 +117,7 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
   private static final String SHOW_DOCUMENTATION_IN_TOOL_WINDOW = "ShowDocumentationInToolWindow";
   private static final String DOCUMENTATION_AUTO_UPDATE_ENABLED = "DocumentationAutoUpdateEnabled";
 
-  private static final Class[] ACTION_CLASSES_TO_IGNORE = {
+  private static final Class<?>[] ACTION_CLASSES_TO_IGNORE = {
     HintManagerImpl.ActionToIgnore.class,
     ScrollingUtil.ScrollingAction.class,
     SwingActionDelegate.class,
@@ -359,7 +358,7 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
 
   @Override
   protected void setToolwindowDefaultState(@NotNull ToolWindow toolWindow) {
-    Rectangle rectangle = WindowManager.getInstance().getIdeFrame(myProject).suggestChildFrameBounds();
+    Rectangle rectangle = Objects.requireNonNull(WindowManager.getInstance().getIdeFrame(myProject)).suggestChildFrameBounds();
     toolWindow.setDefaultState(ToolWindowAnchor.RIGHT, ToolWindowType.DOCKED, new Rectangle(rectangle.width / 4, rectangle.height));
     toolWindow.setType(ToolWindowType.DOCKED, null);
     toolWindow.setSplitMode(true, null);
@@ -802,7 +801,7 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
       .setMovable(true)
       .setFocusable(true)
       .setRequestFocus(requestFocus)
-      .setCancelOnClickOutside(!hasLookup) // otherwise selecting lookup items by mouse would close the doc
+      .setCancelOnClickOutside(!hasLookup) // otherwise, selecting lookup items by mouse would close the doc
       .setModalContext(false)
       .setCancelCallback(() -> {
         if (MenuSelectionManager.defaultManager().getSelectedPath().length > 0) {
@@ -877,20 +876,12 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
 
   @Nullable
   private PsiElement findTargetElementFromContext(@NotNull Editor editor, @Nullable PsiFile file, @Nullable PsiElement originalElement) {
-    PsiElement list = ParameterInfoControllerBase.findArgumentList(file, editor.getCaretModel().getOffset(), -1);
-    PsiElement expressionList = null;
-    if (list != null) {
-      LookupEx lookup = LookupManager.getInstance(myProject).getActiveLookup();
-      if (lookup != null) {
-        expressionList = null; // take completion variants for documentation then
-      }
-      else {
-        expressionList = list;
-      }
-    }
     PsiElement element = assertSameProject(findTargetElement(editor, file));
-    if (element == null && expressionList != null) {
-      element = expressionList;
+    if (element == null) {
+      PsiElement list = ParameterInfoControllerBase.findArgumentList(file, editor.getCaretModel().getOffset(), -1);
+      if (list != null && LookupManager.getInstance(myProject).getActiveLookup() == null) {
+        element = list;
+      }
     }
     if (element == null && file == null) return null; //file == null for text field editor
 
@@ -1212,7 +1203,7 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
 
   @Nullable
   public static PsiElement getOriginalElement(PsiElement element) {
-    SmartPsiElementPointer originalElementPointer = element != null ? element.getUserData(ORIGINAL_ELEMENT_KEY) : null;
+    SmartPsiElementPointer<?> originalElementPointer = element != null ? element.getUserData(ORIGINAL_ELEMENT_KEY) : null;
     return originalElementPointer != null ? originalElementPointer.getElement() : null;
   }
 
@@ -1633,7 +1624,7 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
       if (provider instanceof ExternalDocumentationProvider) {
         List<String> urls = ReadAction.nonBlocking(
           () -> {
-            SmartPsiElementPointer originalElementPtr = element.getUserData(ORIGINAL_ELEMENT_KEY);
+            SmartPsiElementPointer<?> originalElementPtr = element.getUserData(ORIGINAL_ELEMENT_KEY);
             PsiElement originalElement = originalElementPtr != null ? originalElementPtr.getElement() : null;
             return provider.getUrlFor(element, originalElement);
           }
