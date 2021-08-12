@@ -12,7 +12,7 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.StreamUtil;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.io.CountingGZIPInputStream;
-import com.intellij.util.io.NetworkService;
+import com.intellij.util.io.IoService;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -208,7 +208,7 @@ public final class NetUtils {
   }
 
   static ProxySelector getProxySelector(@Nullable String pacUrlForUse) {
-    return NetworkService.getInstance().getProxySelector(pacUrlForUse);
+    return IoService.getInstance().getProxySelector(pacUrlForUse);
   }
 
   public enum ValidHostInfo {

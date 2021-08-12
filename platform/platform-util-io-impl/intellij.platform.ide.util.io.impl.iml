@@ -14,5 +14,6 @@
     <orderEntry type="library" name="pty4j" level="project" />
     <orderEntry type="library" name="winp" level="project" />
     <orderEntry type="library" name="proxy-vole" level="project" />
+    <orderEntry type="library" name="jna" level="project" />
   </component>
 </module>

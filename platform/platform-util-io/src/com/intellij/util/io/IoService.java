@@ -5,10 +5,12 @@ import com.intellij.openapi.application.ApplicationManager;
 
 import java.net.ProxySelector;
 
-public interface NetworkService {
+public interface IoService {
   ProxySelector getProxySelector(String pacUrlForUse);
 
-  static NetworkService getInstance() {
-    return ApplicationManager.getApplication().getService(NetworkService.class);
+  PowerStatus getPowerStatus();
+
+  static IoService getInstance() {
+    return ApplicationManager.getApplication().getService(IoService.class);
   }
 }

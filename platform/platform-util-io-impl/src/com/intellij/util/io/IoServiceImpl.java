@@ -8,7 +8,7 @@ import com.github.markusbernhardt.proxy.selector.pac.UrlPacScriptSource;
 
 import java.net.ProxySelector;
 
-public class NetworkServiceImpl implements NetworkService {
+public class IoServiceImpl implements IoService {
   @Override
   public ProxySelector getProxySelector(String pacUrlForUse) {
     ProxySelector newProxySelector;
@@ -22,5 +22,10 @@ public class NetworkServiceImpl implements NetworkService {
       newProxySelector = new PacProxySelector(new UrlPacScriptSource(pacUrlForUse));
     }
     return newProxySelector;
+  }
+
+  @Override
+  public PowerStatus getPowerStatus() {
+    return PowerService.Companion.getService().status();
   }
 }

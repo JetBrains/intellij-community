@@ -416,8 +416,8 @@
     <applicationService serviceInterface="com.intellij.execution.process.ProcessService"
                         serviceImplementation="com.intellij.execution.process.ProcessServiceImpl" />
 
-    <applicationService serviceInterface="com.intellij.util.io.NetworkService"
-                        serviceImplementation="com.intellij.util.io.NetworkServiceImpl" />
+    <applicationService serviceInterface="com.intellij.util.io.IoService"
+                        serviceImplementation="com.intellij.util.io.IoServiceImpl" />
 
     <applicationService serviceImplementation="com.intellij.ide.CommandLineWaitingManager" />
 
