@@ -1,12 +1,14 @@
 <html>
 <body>
-<p>Reports classes, methods, or fields in the specified inspection scope that are not used or unreachable from entry points.</p>
+Reports classes, methods, or fields in the specified inspection scope that are not used or unreachable from entry points.
 <p> An entry point can be the main method, tests, classes mentioned outside the specified scope, classes accessible from
   <code>module-info.java</code>, and so on. You can also configure custom entry points by using name patterns or annotations.
 <p><b>Example:</b></p>
-<pre><code>public class Department {
-   private Organization myOrganization;
-}</code></pre>
+<pre><code>
+  public class Department {
+    private Organization myOrganization;
+  }
+</code></pre>
 <p>In this example, <code>Department</code> explicitly references <code>Organization</code> but if <code>Department</code> class itself is unused, then inspection will report both classes. </p>
 <p>
   The inspection also reports parameters that are not used by their methods and all method implementations and overriders, as well as local
