@@ -1365,4 +1365,9 @@ public class PyTypeCheckerInspectionTest extends PyInspectionTestCase {
                          "b: Foo = <warning descr=\"Expected type 'Foo', got 'dict[str, str]' instead\">{'foo': 'baz'}</warning>")
     );
   }
+
+  // PY-50074
+  public void testLiteralAgainstTypeVarWithoutBound() {
+    runWithLanguageLevel(LanguageLevel.getLatest(), this::doTest);
+  }
 }
