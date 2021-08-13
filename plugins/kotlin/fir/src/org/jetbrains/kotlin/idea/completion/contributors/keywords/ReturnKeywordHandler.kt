@@ -5,8 +5,10 @@ package org.jetbrains.kotlin.idea.completion.contributors.keywords
 import com.intellij.codeInsight.completion.CompletionParameters
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.Key
 import org.jetbrains.kotlin.idea.completion.createKeywordElement
 import org.jetbrains.kotlin.idea.completion.createKeywordElementWithSpace
+import org.jetbrains.kotlin.idea.completion.isLikelyInPositionForReturn
 import org.jetbrains.kotlin.idea.completion.keywords.CompletionKeywordHandler
 import org.jetbrains.kotlin.idea.completion.labelNameToTail
 import org.jetbrains.kotlin.idea.frontend.api.KtAnalysisSession
@@ -45,7 +47,12 @@ internal object ReturnKeywordHandler : CompletionKeywordHandler<KtAnalysisSessio
                 }
             } else {
                 if (parent.hasBlockBody()) {
-                    addAllReturnVariants(result, returnType, label = null)
+                    addAllReturnVariants(
+                        result,
+                        returnType,
+                        label = null,
+                        isLikelyInPositionForReturn(expression, parent, returnType.isUnit)
+                    )
                 }
                 break
             }
@@ -54,15 +61,24 @@ internal object ReturnKeywordHandler : CompletionKeywordHandler<KtAnalysisSessio
         return result
     }
 
-    private fun KtAnalysisSession.addAllReturnVariants(result: MutableList<LookupElement>, returnType: KtType, label: Name?) {
+    private fun KtAnalysisSession.addAllReturnVariants(
+        result: MutableList<LookupElement>,
+        returnType: KtType,
+        label: Name?,
+        isLikelyInPositionForReturn: Boolean = false
+    ) {
         val isUnit = returnType.isUnit
-        result.add(createKeywordElementWithSpace("return", tail = label?.labelNameToTail().orEmpty(), addSpaceAfter = !isUnit))
+        result.add(createKeywordElementWithSpace("return", tail = label?.labelNameToTail().orEmpty(), addSpaceAfter = !isUnit).also {
+            it.isReturnAtHighlyLikelyPosition = isLikelyInPositionForReturn
+        })
         getExpressionsToReturnByType(returnType).mapTo(result) { returnTarget ->
-            if (label != null || returnTarget.addToLookupElementTail) {
+            val lookupElement = if (label != null || returnTarget.addToLookupElementTail) {
                 createKeywordElement("return", tail = "${label.labelNameToTail()} ${returnTarget.expressionText}")
             } else {
                 createKeywordElement("return ${returnTarget.expressionText}")
             }
+            lookupElement.isReturnAtHighlyLikelyPosition = isLikelyInPositionForReturn
+            lookupElement
         }
     }
 
@@ -95,6 +111,11 @@ internal object ReturnKeywordHandler : CompletionKeywordHandler<KtAnalysisSessio
         val callee = call?.calleeExpression as? KtReferenceExpression ?: return false
         return (callee.mainReference.resolveToSymbol() as? KtFunctionSymbol)?.isInline == true
     }
+
+    var LookupElement.isReturnAtHighlyLikelyPosition: Boolean by NotNullableUserDataProperty(
+        Key("KOTLIN_IS_RETURN_AT_HIGHLY_LIKELY_POSITION"),
+        false
+    )
 }
 
 private data class ExpressionTarget(
