@@ -1,5 +1,6 @@
 {
   "version": 2,
+  "seed": 42,
   "groups": [
     {
       "number": 7,
