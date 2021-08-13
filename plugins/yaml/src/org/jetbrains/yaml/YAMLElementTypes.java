@@ -30,11 +30,13 @@ public interface YAMLElementTypes {
     YAMLTokenTypes.SCALAR_TEXT
   );
 
-  TokenSet SCALAR_ITEMS = TokenSet.orSet(BLOCK_SCALAR_ITEMS, TokenSet.create(
+  TokenSet TEXT_SCALAR_ITEMS = TokenSet.create(
     YAMLTokenTypes.SCALAR_STRING,
     YAMLTokenTypes.SCALAR_DSTRING,
     YAMLTokenTypes.TEXT
-  ));
+  );
+  
+  TokenSet SCALAR_ITEMS = TokenSet.orSet(BLOCK_SCALAR_ITEMS, TEXT_SCALAR_ITEMS);
 
   TokenSet SCALAR_VALUES = TokenSet.orSet(SCALAR_ITEMS, TokenSet.create(
     SCALAR_LIST_VALUE
