@@ -10,10 +10,12 @@ import com.intellij.util.io.directoryStreamIfExists
 import com.intellij.util.io.exists
 import com.intellij.util.io.readText
 import com.intellij.util.io.write
+import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Files
 import kotlin.io.path.deleteExisting
 
-internal object CorruptionMarker {
+@ApiStatus.Internal
+object CorruptionMarker {
   private const val CORRUPTION_MARKER_NAME = "corruption.marker"
   private const val MARKED_AS_DIRTY_REASON = "Indexes marked as dirty (IDE is expected to be work)"
   private const val FORCE_REBUILD_REASON = "Indexes were forcibly marked as corrupted"
