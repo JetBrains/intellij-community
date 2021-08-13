@@ -766,7 +766,7 @@
   <action id="XDebugger.AttachToProcess">
     <keyboard-shortcut first-keystroke="control alt F5"/>
   </action>
-  <action id="Debugger.EditTypeSource">
+  <action id="XDebugger.JumpToTypeSource">
     <keyboard-shortcut first-keystroke="shift F4"/>
   </action>
     <action id="ToggleBookmark">

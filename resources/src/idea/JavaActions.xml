@@ -481,7 +481,6 @@
       </action>
       <action id="Debugger.EditFrameSource" class="com.intellij.debugger.actions.EditFrameSourceAction" use-shortcut-of="EditSource"/>
       <action id="Debugger.EditNodeSource" class="com.intellij.debugger.actions.EditSourceAction"/>
-      <action id="Debugger.EditTypeSource" class="com.intellij.debugger.actions.JumpToObjectAction"/>
       <reference ref="Debugger.PopFrame"/>
       <action id="Debugger.ViewAsGroup" class="com.intellij.debugger.actions.ViewAsGroup">
         <add-to-group group-id="XDebugger.ValueGroup" anchor="last"/>

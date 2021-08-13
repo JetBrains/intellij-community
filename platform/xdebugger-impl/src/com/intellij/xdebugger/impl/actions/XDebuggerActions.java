@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.xdebugger.impl.actions;
 
 import org.jetbrains.annotations.NonNls;
@@ -17,7 +17,6 @@ public interface XDebuggerActions {
 
   @NonNls String RUN_TO_CURSOR = "RunToCursor";
   @NonNls String FORCE_RUN_TO_CURSOR = "ForceRunToCursor";
-  @NonNls String EDIT_TYPE_SOURCE = "Debugger.EditTypeSource";
 
   @NonNls String SHOW_EXECUTION_POINT = "ShowExecutionPoint";
   @NonNls String JUMP_TO_SOURCE = "XDebugger.JumpToSource";
