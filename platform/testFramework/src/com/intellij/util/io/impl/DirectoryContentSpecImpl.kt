@@ -155,15 +155,19 @@ internal fun assertContentUnderFileMatches(file: Path,
                                            spec: DirectoryContentSpecImpl,
                                            fileTextMatcher: FileTextMatcher,
                                            filePathFilter: (String) -> Boolean,
-                                           errorCollector: ErrorCollector?) {
+                                           errorCollector: ErrorCollector?,
+                                           expectedDataIsInSpec: Boolean) {
   if (spec is DirectorySpecBase) {
     val actualSpec = createSpecByPath(file, file)
     if (actualSpec is DirectorySpecBase) {
-      assertEquals(spec.toString(filePathFilter), actualSpec.toString(filePathFilter))
+      val specString = spec.toString(filePathFilter)
+      val dirString = actualSpec.toString(filePathFilter)
+      val (expected, actual) = if (expectedDataIsInSpec) specString to dirString else dirString to specString
+      assertEquals(expected, actual)
     }
   }
   val errorReporter = if (errorCollector != null) errorCollector::addError else { error: Throwable -> throw error }
-  assertDirectoryContentMatches(file, spec, ".", fileTextMatcher, filePathFilter, errorReporter)
+  assertDirectoryContentMatches(file, spec, ".", fileTextMatcher, filePathFilter, errorReporter, expectedDataIsInSpec)
 }
 
 typealias ErrorReporter = (Throwable) -> Unit
@@ -179,31 +183,34 @@ private fun assertDirectoryContentMatches(file: Path,
                                           relativePath: String,
                                           fileTextMatcher: FileTextMatcher,
                                           filePathFilter: (String) -> Boolean,
-                                          errorReporter: ErrorReporter) {
+                                          errorReporter: ErrorReporter,
+                                          expectedDataIsInSpec: Boolean) {
   errorReporter.assertTrue("$file doesn't exist", file.exists())
   when (spec) {
     is DirectorySpec -> {
-      assertDirectoryMatches(file, spec, relativePath, fileTextMatcher, filePathFilter, errorReporter)
+      assertDirectoryMatches(file, spec, relativePath, fileTextMatcher, filePathFilter, errorReporter, expectedDataIsInSpec)
     }
     is ZipSpec -> {
       errorReporter.assertTrue("$file is not a file", file.isFile())
       val dirForExtracted = FileUtil.createTempDirectory("extracted-${file.name}", null, false).toPath()
       ZipUtil.extract(file, dirForExtracted, null)
-      assertDirectoryMatches(dirForExtracted, spec, relativePath, fileTextMatcher, filePathFilter, errorReporter)
+      assertDirectoryMatches(dirForExtracted, spec, relativePath, fileTextMatcher, filePathFilter, errorReporter, expectedDataIsInSpec)
       FileUtil.delete(dirForExtracted)
     }
     is FileSpec -> {
       errorReporter.assertTrue("$file is not a file", file.isFile())
       if (spec.content != null) {
-        val actualBytes = file.readBytes()
-        if (!Arrays.equals(actualBytes, spec.content)) {
-          val actualString = actualBytes.convertToText()
-          val expectedString = spec.content.convertToText()
+        val fileBytes = file.readBytes()
+        if (!Arrays.equals(fileBytes, spec.content)) {
+          val fileString = fileBytes.convertToText()
+          val specString = spec.content.convertToText()
           val place = if (relativePath != ".") " at $relativePath" else ""
-          if (actualString != null && expectedString != null) {
-            if (!fileTextMatcher.matches(actualString, expectedString)) {
-              val filePath = spec.originalFile?.toFile()?.absolutePath
-              errorReporter(FileComparisonFailure("File content mismatch$place:", expectedString, actualString, filePath))
+          if (fileString != null && specString != null) {
+            if (!fileTextMatcher.matches(fileString, specString)) {
+              val specFilePath = spec.originalFile?.toFile()?.absolutePath
+              val (expected, actual) = if (expectedDataIsInSpec) specString to fileString else fileString to specString
+              val (expectedPath, actualPath) = if (expectedDataIsInSpec) specFilePath to null else null to specFilePath
+              errorReporter(FileComparisonFailure("File content mismatch$place:", expected, actual, expectedPath, actualPath))
             }
           }
           else {
@@ -230,24 +237,27 @@ private fun assertDirectoryMatches(file: Path,
                                    relativePath: String,
                                    fileTextMatcher: FileTextMatcher,
                                    filePathFilter: (String) -> Boolean,
-                                   errorReporter: ErrorReporter) {
+                                   errorReporter: ErrorReporter,
+                                   expectedDataIsInSpec: Boolean) {
   errorReporter.assertTrue("$file is not a directory", file.isDirectory())
   fun childNameFilter(name: String) = filePathFilter("$relativePath/$name")
-  val actualChildrenNames = file.directoryStreamIfExists { children ->
+  val childrenNamesInDir = file.directoryStreamIfExists { children ->
     children.filter { it.isDirectory() || childNameFilter(it.name) }
       .map { it.name }.sortedWith(String.CASE_INSENSITIVE_ORDER)
   } ?: emptyList()
   val children = spec.getChildren()
-  val expectedChildrenNames = children.entries.filter { it.value is DirectorySpec || childNameFilter(it.key) }
+  val childrenNamesInSpec = children.entries.filter { it.value is DirectorySpec || childNameFilter(it.key) }
     .map { it.key }.sortedWith(String.CASE_INSENSITIVE_ORDER)
-  val expectedString = expectedChildrenNames.joinToString("\n")
-  val actualString = actualChildrenNames.joinToString("\n")
-  if (expectedString != actualString) {
+  val specString = childrenNamesInSpec.joinToString("\n")
+  val dirString = childrenNamesInDir.joinToString("\n")
+  if (specString != dirString) {
+    val (expected, actual) = if (expectedDataIsInSpec) specString to dirString else dirString to specString
     errorReporter(ComparisonFailure("Directory content mismatch${if (relativePath != "") " at $relativePath" else ""}:",
-                                    expectedString, actualString))
+                                    expected, actual))
   }
-  for (child in actualChildrenNames) {
-    assertDirectoryContentMatches(file.resolve(child), children.getValue(child), "$relativePath/$child", fileTextMatcher, filePathFilter, errorReporter)
+  for (child in childrenNamesInDir) {
+    assertDirectoryContentMatches(file.resolve(child), children.getValue(child), "$relativePath/$child", fileTextMatcher, filePathFilter,
+      errorReporter, expectedDataIsInSpec)
   }
 }
 

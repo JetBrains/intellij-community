@@ -95,7 +95,8 @@ interface DirectoryContentSpec {
 @JvmOverloads
 fun File.assertMatches(spec: DirectoryContentSpec, fileTextMatcher: FileTextMatcher = FileTextMatcher.exact(),
                        filePathFilter: (String) -> Boolean = { true }, errorCollector: ErrorCollector? = null) {
-  assertContentUnderFileMatches(toPath(), spec as DirectoryContentSpecImpl, fileTextMatcher, filePathFilter, errorCollector)
+  assertContentUnderFileMatches(toPath(), spec as DirectoryContentSpecImpl, fileTextMatcher, filePathFilter, errorCollector,
+    expectedDataIsInSpec = true)
 }
 
 /**
@@ -106,7 +107,19 @@ fun File.assertMatches(spec: DirectoryContentSpec, fileTextMatcher: FileTextMatc
 @JvmOverloads
 fun Path.assertMatches(spec: DirectoryContentSpec, fileTextMatcher: FileTextMatcher = FileTextMatcher.exact(),
                        filePathFilter: (String) -> Boolean = { true }, errorCollector: ErrorCollector? = null) {
-  assertContentUnderFileMatches(this, spec as DirectoryContentSpecImpl, fileTextMatcher, filePathFilter, errorCollector)
+  assertContentUnderFileMatches(this, spec as DirectoryContentSpecImpl, fileTextMatcher, filePathFilter, errorCollector,
+    expectedDataIsInSpec = true)
+}
+
+/**
+ * Checks that contents of [path] matches this spec. The same as [Path.assertMatches], but in case of comparison failure the data
+ * from the spec will be shown as actual, and the data from the file will be shown as expected.
+ */
+@JvmOverloads
+fun DirectoryContentSpec.assertIsMatchedBy(path: Path, fileTextMatcher: FileTextMatcher = FileTextMatcher.exact(),
+                       filePathFilter: (String) -> Boolean = { true }, errorCollector: ErrorCollector? = null) {
+  assertContentUnderFileMatches(path, this as DirectoryContentSpecImpl, fileTextMatcher, filePathFilter, errorCollector,
+    expectedDataIsInSpec = false)
 }
 
 interface FileTextMatcher {
