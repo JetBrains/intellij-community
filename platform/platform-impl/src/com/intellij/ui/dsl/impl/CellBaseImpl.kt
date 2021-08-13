@@ -3,7 +3,7 @@ package com.intellij.ui.dsl.impl
 
 import com.intellij.openapi.ui.panel.ComponentPanelBuilder
 import com.intellij.openapi.util.NlsContexts
-import com.intellij.ui.dsl.CellBuilderBase
+import com.intellij.ui.dsl.CellBase
 import com.intellij.ui.dsl.RightGap
 import com.intellij.ui.dsl.gridLayout.HorizontalAlign
 import com.intellij.ui.dsl.gridLayout.VerticalAlign
@@ -11,7 +11,7 @@ import org.jetbrains.annotations.ApiStatus
 import javax.swing.JComponent
 
 @ApiStatus.Experimental
-internal sealed class CellBuilderBaseImpl<T : CellBuilderBase<T>>(private val dialogPanelConfig: DialogPanelConfig) : CellBuilderBase<T> {
+internal sealed class CellBaseImpl<T : CellBase<T>>(private val dialogPanelConfig: DialogPanelConfig) : CellBase<T> {
 
   var horizontalAlign = HorizontalAlign.LEFT
     private set
@@ -28,27 +28,27 @@ internal sealed class CellBuilderBaseImpl<T : CellBuilderBase<T>>(private val di
   var comment: JComponent? = null
     private set
 
-  override fun horizontalAlign(horizontalAlign: HorizontalAlign): CellBuilderBase<T> {
+  override fun horizontalAlign(horizontalAlign: HorizontalAlign): CellBase<T> {
     this.horizontalAlign = horizontalAlign
     return this
   }
 
-  override fun verticalAlign(verticalAlign: VerticalAlign): CellBuilderBase<T> {
+  override fun verticalAlign(verticalAlign: VerticalAlign): CellBase<T> {
     this.verticalAlign = verticalAlign
     return this
   }
 
-  override fun resizableColumn(): CellBuilderBase<T> {
+  override fun resizableColumn(): CellBase<T> {
     this.resizableColumn = true
     return this
   }
 
-  override fun comment(@NlsContexts.DetailedDescription comment: String, maxLineLength: Int): CellBuilderBase<T> {
+  override fun comment(@NlsContexts.DetailedDescription comment: String, maxLineLength: Int): CellBase<T> {
     this.comment = ComponentPanelBuilder.createCommentComponent(comment, true, maxLineLength, true)
     return this
   }
 
-  override fun gap(rightGap: RightGap): CellBuilderBase<T> {
+  override fun gap(rightGap: RightGap): CellBase<T> {
     this.rightGap = rightGap
     return this
   }

@@ -16,71 +16,71 @@ import kotlin.reflect.KMutableProperty0
 internal const val DSL_INT_TEXT_RANGE_PROPERTY = "dsl.intText.range"
 
 @ApiStatus.Experimental
-interface CellBuilder<out T : JComponent> : CellBuilderBase<CellBuilder<T>> {
+interface Cell<out T : JComponent> : CellBase<Cell<T>> {
 
-  override fun horizontalAlign(horizontalAlign: HorizontalAlign): CellBuilder<T>
+  override fun horizontalAlign(horizontalAlign: HorizontalAlign): Cell<T>
 
-  override fun verticalAlign(verticalAlign: VerticalAlign): CellBuilder<T>
+  override fun verticalAlign(verticalAlign: VerticalAlign): Cell<T>
 
-  override fun resizableColumn(): CellBuilder<T>
+  override fun resizableColumn(): Cell<T>
 
-  override fun comment(comment: String, maxLineLength: Int): CellBuilder<T>
+  override fun comment(comment: String, maxLineLength: Int): Cell<T>
 
-  override fun gap(rightGap: RightGap): CellBuilder<T>
+  override fun gap(rightGap: RightGap): Cell<T>
 
   val component: T
 
-  fun applyToComponent(task: T.() -> Unit): CellBuilder<T>
+  fun applyToComponent(task: T.() -> Unit): Cell<T>
 
-  fun enabled(isEnabled: Boolean): CellBuilder<T>
+  fun enabled(isEnabled: Boolean): Cell<T>
 
   /**
-   * Sets visibility for all components inside cell including comment [CellBuilder.comment]. If parent row is invisible
+   * Sets visibility for all components inside cell including comment [Cell.comment]. If parent row is invisible
    * than the cell keeps invisibility until the row becomes visible
    */
-  override fun visible(isVisible: Boolean): CellBuilder<T>
+  override fun visible(isVisible: Boolean): Cell<T>
 
-  fun visibleIf(predicate: ComponentPredicate): CellBuilder<T>
+  fun visibleIf(predicate: ComponentPredicate): Cell<T>
 
   /**
    * If this method is called, the value of the component will be stored to the backing property only if the component is enabled
    */
-  fun applyIfEnabled(): CellBuilder<T>
+  fun applyIfEnabled(): Cell<T>
 
-  fun <V> bind(componentGet: (T) -> V, componentSet: (T, V) -> Unit, binding: PropertyBinding<V>): CellBuilder<T>
+  fun <V> bind(componentGet: (T) -> V, componentSet: (T, V) -> Unit, binding: PropertyBinding<V>): Cell<T>
 }
 
-fun <T : AbstractButton> CellBuilder<T>.bindSelected(binding: PropertyBinding<Boolean>): CellBuilder<T> {
+fun <T : AbstractButton> Cell<T>.bindSelected(binding: PropertyBinding<Boolean>): Cell<T> {
   return bind(AbstractButton::isSelected, AbstractButton::setSelected, binding)
 }
 
-fun <T : AbstractButton> CellBuilder<T>.bindSelected(prop: KMutableProperty0<Boolean>): CellBuilder<T> {
+fun <T : AbstractButton> Cell<T>.bindSelected(prop: KMutableProperty0<Boolean>): Cell<T> {
   return bindSelected(prop.toBinding())
 }
 
-fun <T : AbstractButton> CellBuilder<T>.bindSelected(getter: () -> Boolean, setter: (Boolean) -> Unit): CellBuilder<T> {
+fun <T : AbstractButton> Cell<T>.bindSelected(getter: () -> Boolean, setter: (Boolean) -> Unit): Cell<T> {
   return bindSelected(PropertyBinding(getter, setter))
 }
 
-fun <T : AbstractButton> CellBuilder<T>.actionListener(actionListener: (event: ActionEvent, component: T) -> Unit): CellBuilder<T> {
+fun <T : AbstractButton> Cell<T>.actionListener(actionListener: (event: ActionEvent, component: T) -> Unit): Cell<T> {
   component.addActionListener(ActionListener { actionListener(it, component) })
   return this
 }
 
-fun <T : JTextComponent> CellBuilder<T>.bindText(binding: PropertyBinding<String>): CellBuilder<T> {
+fun <T : JTextComponent> Cell<T>.bindText(binding: PropertyBinding<String>): Cell<T> {
   component.text = binding.get()
   return bind(JTextComponent::getText, JTextComponent::setText, binding)
 }
 
-fun <T : JTextComponent> CellBuilder<T>.bindText(prop: KMutableProperty0<String>): CellBuilder<T> {
+fun <T : JTextComponent> Cell<T>.bindText(prop: KMutableProperty0<String>): Cell<T> {
   return bindText(prop.toBinding())
 }
 
-fun <T : JTextComponent> CellBuilder<T>.bindText(getter: () -> String, setter: (String) -> Unit): CellBuilder<T> {
+fun <T : JTextComponent> Cell<T>.bindText(getter: () -> String, setter: (String) -> Unit): Cell<T> {
   return bindText(PropertyBinding(getter, setter))
 }
 
-fun <T : JTextComponent> CellBuilder<T>.bindIntText(binding: PropertyBinding<Int>): CellBuilder<T> {
+fun <T : JTextComponent> Cell<T>.bindIntText(binding: PropertyBinding<Int>): Cell<T> {
   val range = component.getClientProperty(DSL_INT_TEXT_RANGE_PROPERTY) as? IntRange
   return bindText({ binding.get().toString() },
                   { value ->
@@ -90,15 +90,15 @@ fun <T : JTextComponent> CellBuilder<T>.bindIntText(binding: PropertyBinding<Int
                   })
 }
 
-fun <T : JTextComponent> CellBuilder<T>.bindIntText(prop: KMutableProperty0<Int>): CellBuilder<T> {
+fun <T : JTextComponent> Cell<T>.bindIntText(prop: KMutableProperty0<Int>): Cell<T> {
   return bindIntText(prop.toBinding())
 }
 
-fun <T : JTextComponent> CellBuilder<T>.bindIntText(getter: () -> Int, setter: (Int) -> Unit): CellBuilder<T> {
+fun <T : JTextComponent> Cell<T>.bindIntText(getter: () -> Int, setter: (Int) -> Unit): Cell<T> {
   return bindIntText(PropertyBinding(getter, setter))
 }
 
-fun <T> CellBuilder<ComboBox<T>>.bindItem(binding: PropertyBinding<T?>): CellBuilder<ComboBox<T>> {
+fun <T> Cell<ComboBox<T>>.bindItem(binding: PropertyBinding<T?>): Cell<ComboBox<T>> {
   component.selectedItem = binding.get()
   return bind({ component -> component.selectedItem as T? },
               { component, value -> component.setSelectedItem(value) },
@@ -111,6 +111,6 @@ fun <T> CellBuilder<ComboBox<T>>.bindItem(prop: KMutableProperty0<T>): CellBuild
 }
 */
 
-fun <T> CellBuilder<ComboBox<T>>.bindItem(getter: () -> T?, setter: (T?) -> Unit): CellBuilder<ComboBox<T>> {
+fun <T> Cell<ComboBox<T>>.bindItem(getter: () -> T?, setter: (T?) -> Unit): Cell<ComboBox<T>> {
   return bindItem(PropertyBinding(getter, setter))
 }

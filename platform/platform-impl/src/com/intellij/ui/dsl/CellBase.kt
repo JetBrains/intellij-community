@@ -17,31 +17,34 @@ enum class RightGap {
 @DslMarker
 private annotation class CellBuilderMarker
 
+/**
+ * Common API for cells
+ */
 @ApiStatus.Experimental
 @CellBuilderMarker
-interface CellBuilderBase<out T : CellBuilderBase<T>> {
+interface CellBase<out T : CellBase<T>> {
 
-  fun visible(isVisible: Boolean): CellBuilderBase<T>
+  fun visible(isVisible: Boolean): CellBase<T>
 
-  fun horizontalAlign(horizontalAlign: HorizontalAlign): CellBuilderBase<T>
+  fun horizontalAlign(horizontalAlign: HorizontalAlign): CellBase<T>
 
-  fun verticalAlign(verticalAlign: VerticalAlign): CellBuilderBase<T>
+  fun verticalAlign(verticalAlign: VerticalAlign): CellBase<T>
 
   /**
    * Marks column of the cell as resizable: the column occupies all extra space in panel and changes size together with panel.
    * It's possible to have several resizable columns, which means extra space is shared between them.
    * There is no need to set resizable for cells from one column: it has no effect
    */
-  fun resizableColumn(): CellBuilderBase<T>
+  fun resizableColumn(): CellBase<T>
 
   fun comment(@NlsContexts.DetailedDescription comment: String,
-              maxLineLength: Int = ComponentPanelBuilder.MAX_COMMENT_WIDTH): CellBuilderBase<T>
+              maxLineLength: Int = ComponentPanelBuilder.MAX_COMMENT_WIDTH): CellBase<T>
 
   /**
    * Separates next cell in current row with [rightGap]. [RightGap.SMALL] gap is set after row label automatically
-   * by [PanelBuilderBase.row] methods.
+   * by [RootPanel.row] methods.
    * Should not be used for last cell in a row
    */
-  fun gap(rightGap: RightGap): CellBuilderBase<T>
+  fun gap(rightGap: RightGap): CellBase<T>
 
 }

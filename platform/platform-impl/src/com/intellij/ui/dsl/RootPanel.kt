@@ -11,16 +11,16 @@ import javax.swing.JLabel
  * Root panel, does not provide cell related methods
  */
 @ApiStatus.Experimental
-interface PanelBuilderBase {
+interface RootPanel {
 
-  fun row(@Nls label: String, init: RowBuilder.() -> Unit): RowBuilder {
+  fun row(@Nls label: String, init: Row.() -> Unit): Row {
     return row(Label(label), init)
   }
 
-  fun row(label: JLabel? = null, init: RowBuilder.() -> Unit): RowBuilder
+  fun row(label: JLabel? = null, init: Row.() -> Unit): Row
 
   /**
    * Adds panel with a title and some space before the panel
    */
-  fun group(@NlsContexts.BorderTitle title: String? = null, independent: Boolean = true, init: PanelBuilder.() -> Unit): RowBuilder
+  fun group(@NlsContexts.BorderTitle title: String? = null, independent: Boolean = true, init: Panel.() -> Unit): Row
 }

@@ -7,7 +7,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.util.Disposer
 import com.intellij.ui.components.JBTabbedPane
-import com.intellij.ui.dsl.CellBuilder
+import com.intellij.ui.dsl.Cell
 import com.intellij.ui.dsl.RowLayout
 import com.intellij.ui.dsl.gridLayout.HorizontalAlign
 import com.intellij.ui.dsl.panel
@@ -83,7 +83,7 @@ private class UiDslDemoDialog(project: Project?) : DialogWrapper(project, null, 
 
   fun createGroupsPanel(): JPanel {
     return panel {
-      lateinit var group1Label: CellBuilder<JLabel>
+      lateinit var group1Label: Cell<JLabel>
       val group1 = group(title = "Group1 title") {
         row {
           group1Label = label("Group1 label1")

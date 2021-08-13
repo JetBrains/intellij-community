@@ -16,11 +16,11 @@ import javax.swing.text.JTextComponent
 import kotlin.math.min
 
 @ApiStatus.Experimental
-internal class PanelBuilderImpl(private val dialogPanelConfig: DialogPanelConfig) : CellBuilderBaseImpl<PanelBuilder>(
-  dialogPanelConfig), PanelBuilder {
+internal class PanelImpl(private val dialogPanelConfig: DialogPanelConfig) : CellBaseImpl<Panel>(
+  dialogPanelConfig), Panel {
 
   companion object {
-    private val LOG = Logger.getInstance(PanelBuilderImpl::class.java)
+    private val LOG = Logger.getInstance(PanelImpl::class.java)
 
     private val DEFAULT_VERTICAL_GAP_COMPONENTS = setOf(
       AbstractButton::class,
@@ -37,16 +37,16 @@ internal class PanelBuilderImpl(private val dialogPanelConfig: DialogPanelConfig
    */
   private var indentCount = 0
 
-  private val rows = mutableListOf<RowBuilderImpl>()
+  private val rows = mutableListOf<RowImpl>()
 
-  override fun row(label: JLabel?, init: RowBuilder.() -> Unit): RowBuilderImpl {
-    val result = RowBuilderImpl(dialogPanelConfig, indentCount, label)
+  override fun row(label: JLabel?, init: Row.() -> Unit): RowImpl {
+    val result = RowImpl(dialogPanelConfig, indentCount, label)
     result.init()
     rows.add(result)
     return result
   }
 
-  override fun group(title: String?, independent: Boolean, init: PanelBuilder.() -> Unit): RowBuilder {
+  override fun group(title: String?, independent: Boolean, init: Panel.() -> Unit): Row {
     val component = createSeparator(title)
     if (independent) {
       return row {
@@ -65,35 +65,35 @@ internal class PanelBuilderImpl(private val dialogPanelConfig: DialogPanelConfig
     }
 
     // todo
-    return RowBuilderImpl(dialogPanelConfig, indentCount)
+    return RowImpl(dialogPanelConfig, indentCount)
   }
 
-  override fun visible(isVisible: Boolean): PanelBuilderImpl {
+  override fun visible(isVisible: Boolean): PanelImpl {
     rows.forEach { it.visible(isVisible) }
     return this
   }
 
-  override fun horizontalAlign(horizontalAlign: HorizontalAlign): PanelBuilderImpl {
+  override fun horizontalAlign(horizontalAlign: HorizontalAlign): PanelImpl {
     super.horizontalAlign(horizontalAlign)
     return this
   }
 
-  override fun verticalAlign(verticalAlign: VerticalAlign): PanelBuilderImpl {
+  override fun verticalAlign(verticalAlign: VerticalAlign): PanelImpl {
     super.verticalAlign(verticalAlign)
     return this
   }
 
-  override fun resizableColumn(): PanelBuilderImpl {
+  override fun resizableColumn(): PanelImpl {
     super.resizableColumn()
     return this
   }
 
-  override fun comment(@NlsContexts.DetailedDescription comment: String, maxLineLength: Int): PanelBuilderImpl {
+  override fun comment(@NlsContexts.DetailedDescription comment: String, maxLineLength: Int): PanelImpl {
     super.comment(comment, maxLineLength)
     return this
   }
 
-  override fun gap(rightGap: RightGap): PanelBuilderImpl {
+  override fun gap(rightGap: RightGap): PanelImpl {
     super.gap(rightGap)
     return this
   }
@@ -172,7 +172,7 @@ internal class PanelBuilderImpl(private val dialogPanelConfig: DialogPanelConfig
     setLastColumnResizable(rowsGridBuilder)
   }
 
-  override fun indent(init: PanelBuilder.() -> Unit): PanelBuilder {
+  override fun indent(init: Panel.() -> Unit): Panel {
     indentCount++
     this.init()
     indentCount--
@@ -185,7 +185,7 @@ internal class PanelBuilderImpl(private val dialogPanelConfig: DialogPanelConfig
     }
   }
 
-  private fun buildRow(cells: List<CellBuilderBaseImpl<*>>,
+  private fun buildRow(cells: List<CellBaseImpl<*>>,
                        firstCellLabel: Boolean,
                        firstCellIndent: Int,
                        maxColumnsCount: Int,
@@ -199,12 +199,12 @@ internal class PanelBuilderImpl(private val dialogPanelConfig: DialogPanelConfig
     }
   }
 
-  private fun buildCell(cell: CellBuilderBaseImpl<*>, rowLabel: Boolean, leftGap: Int, lastCell: Boolean, width: Int,
+  private fun buildCell(cell: CellBaseImpl<*>, rowLabel: Boolean, leftGap: Int, lastCell: Boolean, width: Int,
                         panel: DialogPanel, builder: RowsGridBuilder) {
     val rightGap = getRightGap(cell, lastCell, rowLabel)
 
     when (cell) {
-      is CellBuilderImpl<*> -> {
+      is CellImpl<*> -> {
         val insets = cell.component.insets
         val visualPaddings = Gaps(top = insets.top, left = insets.left, bottom = insets.bottom, right = insets.right)
         val verticalGap = getDefaultVerticalGap(cell.component)
@@ -213,7 +213,7 @@ internal class PanelBuilderImpl(private val dialogPanelConfig: DialogPanelConfig
                      resizableColumn = cell.resizableColumn,
                      gaps = gaps, visualPaddings = visualPaddings)
       }
-      is PanelBuilderImpl -> {
+      is PanelImpl -> {
         // todo visualPaddings
         val gaps = Gaps(left = leftGap, right = rightGap)
         val subGrid = builder.subGrid(width = width, horizontalAlign = cell.horizontalAlign, verticalAlign = cell.verticalAlign,
@@ -244,7 +244,7 @@ internal class PanelBuilderImpl(private val dialogPanelConfig: DialogPanelConfig
     }
   }
 
-  private fun getRightGap(cell: CellBuilderBaseImpl<*>, lastCell: Boolean, rowLabel: Boolean): Int {
+  private fun getRightGap(cell: CellBaseImpl<*>, lastCell: Boolean, rowLabel: Boolean): Int {
     val rightGap = cell.rightGap
     if (lastCell) {
       if (rightGap != null) {
@@ -266,7 +266,7 @@ internal class PanelBuilderImpl(private val dialogPanelConfig: DialogPanelConfig
   /**
    * Appends comment (currently one comment for a row is supported, can be fixed later)
    */
-  private fun buildCommentRow(cells: List<CellBuilderBaseImpl<*>>,
+  private fun buildCommentRow(cells: List<CellBaseImpl<*>>,
                               firstCellIndent: Int,
                               maxColumnsCount: Int,
                               builder: RowsGridBuilder) {
@@ -285,14 +285,14 @@ internal class PanelBuilderImpl(private val dialogPanelConfig: DialogPanelConfig
     return
   }
 
-  private fun getAdditionalHorizontalIndent(cell: CellBuilderBaseImpl<*>): Int {
-    return if (cell is CellBuilderImpl<*> && cell.viewComponent is JToggleButton)
+  private fun getAdditionalHorizontalIndent(cell: CellBaseImpl<*>): Int {
+    return if (cell is CellImpl<*> && cell.viewComponent is JToggleButton)
       dialogPanelConfig.spacing.horizontalToggleButtonIndent
     else
       0
   }
 
-  private fun getCommentedCellIndex(cells: List<CellBuilderBaseImpl<*>>): Int {
+  private fun getCommentedCellIndex(cells: List<CellBaseImpl<*>>): Int {
     return cells.indexOfFirst { it.comment != null }
   }
 

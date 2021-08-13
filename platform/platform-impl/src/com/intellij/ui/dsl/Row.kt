@@ -50,44 +50,44 @@ private annotation class RowBuilderMarker
 
 @ApiStatus.Experimental
 @RowBuilderMarker
-interface RowBuilder {
+interface Row {
 
   /**
    * Layout of the row.
    * Default value is [RowLayout.LABEL_ALIGNED] when label is provided for the row, [RowLayout.INDEPENDENT] otherwise
    */
-  fun layout(rowLayout: RowLayout): RowBuilder
+  fun layout(rowLayout: RowLayout): Row
 
   fun comment(@NlsContexts.DetailedDescription comment: String,
-              maxLineLength: Int = ComponentPanelBuilder.MAX_COMMENT_WIDTH): RowBuilder
+              maxLineLength: Int = ComponentPanelBuilder.MAX_COMMENT_WIDTH): Row
 
-  fun <T : JComponent> cell(component: T): CellBuilder<T>
+  fun <T : JComponent> cell(component: T): Cell<T>
 
   /**
-   * Sets visibility for all components inside row including comment [RowBuilder.comment].
-   * See also [CellBuilder.visible] description
+   * Sets visibility for all components inside row including comment [Row.comment].
+   * See also [Cell.visible] description
    */
-  fun visible(isVisible: Boolean): RowBuilder
+  fun visible(isVisible: Boolean): Row
 
-  fun gap(topGap: TopGap): RowBuilder
+  fun gap(topGap: TopGap): Row
 
   /**
    * Creates subpanel inside cell of the row
    */
-  fun panel(init: PanelBuilder.() -> Unit): PanelBuilder
+  fun panel(init: Panel.() -> Unit): Panel
 
-  fun checkBox(@NlsContexts.Checkbox text: String): CellBuilder<JBCheckBox>
+  fun checkBox(@NlsContexts.Checkbox text: String): Cell<JBCheckBox>
 
-  fun button(@NlsContexts.Button text: String, actionListener: (event: ActionEvent) -> Unit): CellBuilder<JButton>
+  fun button(@NlsContexts.Button text: String, actionListener: (event: ActionEvent) -> Unit): Cell<JButton>
 
-  fun actionButton(action: AnAction, dimension: Dimension = ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE): CellBuilder<ActionButton>
+  fun actionButton(action: AnAction, dimension: Dimension = ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE): Cell<ActionButton>
 
-  fun label(@NlsContexts.Label text: String): CellBuilder<JLabel>
+  fun label(@NlsContexts.Label text: String): Cell<JLabel>
 
-  fun textField(columns: Int = 0): CellBuilder<JBTextField>
+  fun textField(columns: Int = 0): Cell<JBTextField>
 
-  fun intTextField(columns: Int = 0, range: IntRange? = null, keyboardStep: Int? = null): CellBuilder<JBTextField>
+  fun intTextField(columns: Int = 0, range: IntRange? = null, keyboardStep: Int? = null): Cell<JBTextField>
 
-  fun <T> comboBox(model: ComboBoxModel<T>, renderer: ListCellRenderer<T?>? = null): CellBuilder<ComboBox<T>>
+  fun <T> comboBox(model: ComboBoxModel<T>, renderer: ListCellRenderer<T?>? = null): Cell<ComboBox<T>>
 
 }

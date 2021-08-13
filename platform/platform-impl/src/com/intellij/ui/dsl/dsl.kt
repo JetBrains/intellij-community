@@ -4,7 +4,7 @@ package com.intellij.ui.dsl
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.ui.dsl.gridLayout.JBGridLayout
 import com.intellij.ui.dsl.impl.DialogPanelConfig
-import com.intellij.ui.dsl.impl.PanelBuilderImpl
+import com.intellij.ui.dsl.impl.PanelImpl
 import org.jetbrains.annotations.ApiStatus
 
 /*
@@ -13,22 +13,22 @@ remove first/last gaps
 */
 
 @ApiStatus.Experimental
-fun panel(init: PanelBuilderBase.() -> Unit): DialogPanel { // Dialog panel content supports only PanelBuilderBase, not CellBuilderBase
+fun panel(init: RootPanel.() -> Unit): DialogPanel {
   val dialogPanelConfig = DialogPanelConfig()
-  val builder = PanelBuilderImpl(dialogPanelConfig)
-  builder.init()
+  val panel = PanelImpl(dialogPanelConfig)
+  panel.init()
 
   val layout = JBGridLayout()
   val result = DialogPanel(layout = layout)
-  builder.build(result, layout.rootGrid)
+  panel.build(result, layout.rootGrid)
   initPanel(dialogPanelConfig, result)
   return result
 }
 
 private fun initPanel(dialogPanelConfig: DialogPanelConfig, panel: DialogPanel) {
   /* todo
-  panel.preferredFocusedComponent = builder.builder.preferredFocusedComponent
-  panel.validateCallbacks = builder.builder.validateCallbacks
+  panel.preferredFocusedComponent = dialogPanelConfig.preferredFocusedComponent
+  panel.validateCallbacks = dialogPanelConfig.validateCallbacks
   */
   panel.componentValidateCallbacks = dialogPanelConfig.componentValidateCallbacks
   panel.customValidationRequestors = dialogPanelConfig.customValidationRequestors

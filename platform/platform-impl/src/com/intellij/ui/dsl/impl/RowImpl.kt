@@ -23,9 +23,9 @@ import java.awt.event.KeyEvent
 import javax.swing.*
 
 @ApiStatus.Experimental
-internal class RowBuilderImpl(private val dialogPanelConfig: DialogPanelConfig,
-                              private val indentCount: Int,
-                              val label: JLabel? = null) : RowBuilder {
+internal class RowImpl(private val dialogPanelConfig: DialogPanelConfig,
+                       private val indentCount: Int,
+                       val label: JLabel? = null) : Row {
 
   var rowLayout = if (label == null) RowLayout.INDEPENDENT else RowLayout.LABEL_ALIGNED
     private set
@@ -36,78 +36,78 @@ internal class RowBuilderImpl(private val dialogPanelConfig: DialogPanelConfig,
   var topGap: TopGap? = null
     private set
 
-  val cells: List<CellBuilderBaseImpl<*>>
+  val cells: List<CellBaseImpl<*>>
     get() = _cells
 
-  private val _cells = mutableListOf<CellBuilderBaseImpl<*>>()
+  private val _cells = mutableListOf<CellBaseImpl<*>>()
 
   init {
     label?.let { cell(it) }
   }
 
-  override fun layout(rowLayout: RowLayout): RowBuilderImpl {
+  override fun layout(rowLayout: RowLayout): RowImpl {
     this.rowLayout = rowLayout
     return this
   }
 
-  override fun comment(comment: String, maxLineLength: Int): RowBuilderImpl {
+  override fun comment(comment: String, maxLineLength: Int): RowImpl {
     this.comment = ComponentPanelBuilder.createCommentComponent(comment, true, maxLineLength, true)
     return this
   }
 
-  override fun <T : JComponent> cell(component: T): CellBuilderImpl<T> {
-    val result = CellBuilderImpl(dialogPanelConfig, component)
+  override fun <T : JComponent> cell(component: T): CellImpl<T> {
+    val result = CellImpl(dialogPanelConfig, component)
     _cells.add(result)
     return result
   }
 
-  override fun visible(isVisible: Boolean): RowBuilderImpl {
+  override fun visible(isVisible: Boolean): RowImpl {
     _cells.forEach {
       when (it) {
-        is CellBuilderImpl<*> -> it.visibleFromParent(isVisible)
-        is PanelBuilderImpl -> it.visible(isVisible)
+        is CellImpl<*> -> it.visibleFromParent(isVisible)
+        is PanelImpl -> it.visible(isVisible)
       }
     }
     comment?.let { it.isVisible = isVisible }
     return this
   }
 
-  override fun gap(topGap: TopGap): RowBuilderImpl {
+  override fun gap(topGap: TopGap): RowImpl {
     this.topGap = topGap
     return this
   }
 
-  override fun panel(init: PanelBuilder.() -> Unit): PanelBuilderImpl {
-    val result = PanelBuilderImpl(dialogPanelConfig)
+  override fun panel(init: Panel.() -> Unit): PanelImpl {
+    val result = PanelImpl(dialogPanelConfig)
     result.init()
     _cells.add(result)
     return result
   }
 
-  override fun checkBox(@NlsContexts.Checkbox text: String): CellBuilderImpl<JBCheckBox> {
+  override fun checkBox(@NlsContexts.Checkbox text: String): CellImpl<JBCheckBox> {
     return cell(JBCheckBox(text))
   }
 
-  override fun button(@NlsContexts.Button text: String, actionListener: (event: ActionEvent) -> Unit): CellBuilderImpl<JButton> {
+  override fun button(@NlsContexts.Button text: String, actionListener: (event: ActionEvent) -> Unit): CellImpl<JButton> {
     val button = JButton(BundleBase.replaceMnemonicAmpersand(text))
     button.addActionListener(actionListener)
     return cell(button)
   }
 
-  override fun actionButton(action: AnAction, dimension: Dimension): CellBuilderImpl<ActionButton> {
+  override fun actionButton(action: AnAction, dimension: Dimension): CellImpl<ActionButton> {
     val component = ActionButton(action, action.templatePresentation, ActionPlaces.UNKNOWN, dimension)
     return cell(component)
   }
 
-  override fun label(text: String): CellBuilderImpl<JLabel> {
+  override fun label(text: String): CellImpl<JLabel> {
     return cell(Label(text))
   }
 
-  override fun textField(columns: Int): CellBuilderImpl<JBTextField> {
+  override fun textField(columns: Int): CellImpl<JBTextField> {
     return cell(JBTextField(columns))
   }
 
-  override fun intTextField(columns: Int, range: IntRange?, keyboardStep: Int?): CellBuilderImpl<JBTextField> {
+  override fun intTextField(columns: Int, range: IntRange?, keyboardStep: Int?): CellImpl<JBTextField> {
     val result = textField(columns)
       .onValidationOnInput {
         val value = it.text.toIntOrNull()
@@ -144,7 +144,7 @@ internal class RowBuilderImpl(private val dialogPanelConfig: DialogPanelConfig,
     return result
   }
 
-  override fun <T> comboBox(model: ComboBoxModel<T>, renderer: ListCellRenderer<T?>?): CellBuilder<ComboBox<T>> {
+  override fun <T> comboBox(model: ComboBoxModel<T>, renderer: ListCellRenderer<T?>?): Cell<ComboBox<T>> {
     val component = ComboBox(model)
     component.renderer = renderer ?: SimpleListCellRenderer.create("") { it.toString() }
     return cell(component)
