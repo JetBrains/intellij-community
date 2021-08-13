@@ -144,17 +144,16 @@ object PyExecuteInConsole {
                                       config: PythonRunConfiguration?,
                                       listener: PydevConsoleRunner.ConsoleListener?) {
     val consoleRunnerFactory = PythonConsoleRunnerFactory.getInstance()
-    var runner: PydevConsoleRunner
-    if (runFileText == null || config == null) {
-      runner = consoleRunnerFactory.createConsoleRunner(project, null)
+    val runner = if (runFileText == null || config == null) {
+      consoleRunnerFactory.createConsoleRunner(project, null)
     }
     else {
-      runner = consoleRunnerFactory.createConsoleRunnerWithFile(project, null, runFileText, config)
-      runner.addConsoleListener { consoleView ->
-        if (consoleView is PyCodeExecutor) {
-          (consoleView as PyCodeExecutor).executeCode(runFileText, null)
-          PythonConsoleToolWindow.getInstance(project)?.toolWindow?.show(null)
-        }
+      consoleRunnerFactory.createConsoleRunnerWithFile(project, null, runFileText, config)
+    }
+    runner.addConsoleListener { consoleView ->
+      if (consoleView is PyCodeExecutor) {
+        (consoleView as PyCodeExecutor).executeCode(runFileText, null)
+        PythonConsoleToolWindow.getInstance(project)?.toolWindow?.show(null)
       }
     }
     if (listener != null) {
