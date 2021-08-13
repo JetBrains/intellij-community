@@ -333,7 +333,7 @@ object KotlinIntroduceVariableHandler : RefactoringActionHandler {
         KtPsiUtil.isAssignment(it) && (it as KtBinaryExpression).left == this
     }
 
-    private fun KtExpression.findOccurrences(occurrenceContainer: PsiElement): List<KtExpression> =
+    fun KtExpression.findOccurrences(occurrenceContainer: PsiElement): List<KtExpression> =
         toRange().match(occurrenceContainer, KotlinPsiUnifier.DEFAULT).mapNotNull {
             val candidate = it.range.elements.first()
 
@@ -782,12 +782,12 @@ object KotlinIntroduceVariableHandler : RefactoringActionHandler {
         }
     }
 
-    fun getContainersForExpression(expression: KtExpression): List<KtElement> {
+    fun getContainersForExpression(expression: KtExpression): List<Pair<KtElement, KtElement>> {
         val physicalExpression = expression.substringContextOrThis
 
         val resolutionFacade = physicalExpression.getResolutionFacade()
         val bindingContext = resolutionFacade.analyze(physicalExpression, BodyResolveMode.FULL)
-        return expression.getCandidateContainers(resolutionFacade, bindingContext).map { it.first }
+        return expression.getCandidateContainers(resolutionFacade, bindingContext)
     }
 
     override fun invoke(project: Project, editor: Editor, file: PsiFile, dataContext: DataContext) {
