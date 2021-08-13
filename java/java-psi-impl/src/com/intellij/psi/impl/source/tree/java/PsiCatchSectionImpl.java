@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl.source.tree.java;
 
 import com.intellij.codeInsight.ExceptionUtil;
@@ -16,6 +16,7 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.*;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.NullableFunction;
+import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -112,7 +113,10 @@ public class PsiCatchSectionImpl extends CompositePsiElement implements PsiCatch
       });
       if (uncaughtTypes.isEmpty()) return Collections.emptyList();  // unreachable catch section
       // ... and T is assignable to Ej ...
-      List<PsiType> types = new ArrayList<>();
+      List<PsiType> types = new SmartList<>();
+      final List<PsiType> disjunctions = (declaredType instanceof PsiDisjunctionType)
+                                         ? ((PsiDisjunctionType)declaredType).getDisjunctions()
+                                         : Collections.emptyList();
       for (PsiType type : uncaughtTypes) {
         if (declaredType.isAssignableFrom(type) ||
             // JLS 11.2.3 "Exception Checking":
@@ -123,9 +127,16 @@ public class PsiCatchSectionImpl extends CompositePsiElement implements PsiCatch
             ExceptionUtil.isGeneralExceptionType(declaredType) && type instanceof PsiClassType && ExceptionUtil.isUncheckedException((PsiClassType)type)) {
           types.add(type);
         }
+        else {
+          for (PsiType disjunction : disjunctions) {
+            if (type.isAssignableFrom(disjunction)) {
+              types.add(disjunction);
+            }
+          }
+        }
       }
       // ... the throw statement throws precisely the set of exception types T.
-      if (!types.isEmpty()) return types;
+      if (!types.isEmpty()) return Collections.unmodifiableList(types);
     }
 
     return Collections.singletonList(declaredType);
