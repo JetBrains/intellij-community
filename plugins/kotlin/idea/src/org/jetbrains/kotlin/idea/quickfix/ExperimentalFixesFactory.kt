@@ -26,7 +26,9 @@ import org.jetbrains.kotlin.psi.psiUtil.createSmartPointer
 import org.jetbrains.kotlin.psi.psiUtil.getParentOfTypesAndPredicate
 import org.jetbrains.kotlin.resolve.AnnotationChecker
 import org.jetbrains.kotlin.resolve.checkers.OptInNames
+import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.descriptorUtil.module
+import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 
 object ExperimentalFixesFactory : KotlinIntentionActionsFactory() {
     override fun doCreateActions(diagnostic: Diagnostic): List<IntentionAction> {
@@ -104,6 +106,15 @@ object ExperimentalFixesFactory : KotlinIntentionActionsFactory() {
             )
         }
 
+        // Add the file-level annotation `@file:OptIn(...)` fix
+        result.add(
+            AddFileAnnotationFix(
+                containingFile,
+                moduleDescriptor.OPT_IN_FQ_NAME,
+                annotationFqName,
+                findFileAnnotation(containingFile, moduleDescriptor.OPT_IN_FQ_NAME)?.createSmartPointer()
+            )
+        )
         return result
     }
 
@@ -111,6 +122,13 @@ object ExperimentalFixesFactory : KotlinIntentionActionsFactory() {
         get() = OptInNames.OPT_IN_FQ_NAME.takeIf { fqNameIsExisting(it) }
             ?: OptInNames.OLD_USE_EXPERIMENTAL_FQ_NAME
 
+    // Find the existing file-level annotation of the specified class if it exists
+    private fun findFileAnnotation(file: KtFile, annotationFqName: FqName): KtAnnotationEntry? {
+        val context = file.analyze(BodyResolveMode.PARTIAL)
+        return file.fileAnnotationList?.annotationEntries?.firstOrNull { entry ->
+            context.get(BindingContext.ANNOTATION, entry)?.fqName == annotationFqName
+        }
+    }
 
     fun ModuleDescriptor.fqNameIsExisting(fqName: FqName): Boolean = resolveClassByFqName(fqName, NoLookupLocation.FROM_IDE) != null
 
