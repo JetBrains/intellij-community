@@ -6,7 +6,7 @@ import com.intellij.ProjectTopics;
 import com.intellij.ReviseWhenPortedToJDK;
 import com.intellij.debugger.*;
 import com.intellij.debugger.actions.DebuggerAction;
-import com.intellij.debugger.actions.DebuggerActions;
+import com.intellij.debugger.actions.PopFrameAction;
 import com.intellij.debugger.engine.evaluation.*;
 import com.intellij.debugger.engine.events.DebuggerCommandImpl;
 import com.intellij.debugger.engine.events.DebuggerContextCommandImpl;
@@ -2004,7 +2004,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
 
       if (myStackFrame.isBottom()) {
         DebuggerInvocationUtil.swingInvokeLater(myProject, () -> Messages.showMessageDialog(myProject, JavaDebuggerBundle
-          .message("error.pop.bottom.stackframe"), ActionsBundle.actionText(DebuggerActions.POP_FRAME), Messages.getErrorIcon()));
+          .message("error.pop.bottom.stackframe"), ActionsBundle.actionText(PopFrameAction.ACTION_NAME), Messages.getErrorIcon()));
         return;
       }
 
@@ -2015,7 +2015,8 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
       catch (final EvaluateException e) {
         DebuggerInvocationUtil.swingInvokeLater(myProject,
                                                 () -> Messages.showMessageDialog(myProject, JavaDebuggerBundle
-                                                  .message("error.pop.stackframe", e.getLocalizedMessage()), ActionsBundle.actionText(DebuggerActions.POP_FRAME), Messages.getErrorIcon()));
+                                                  .message("error.pop.stackframe", e.getLocalizedMessage()), ActionsBundle.actionText(
+                                                  PopFrameAction.ACTION_NAME), Messages.getErrorIcon()));
         LOG.info(e);
       }
     }

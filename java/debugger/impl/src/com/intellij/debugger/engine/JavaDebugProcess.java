@@ -1,8 +1,7 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.engine;
 
 import com.intellij.debugger.JavaDebuggerBundle;
-import com.intellij.debugger.actions.DebuggerActions;
 import com.intellij.debugger.actions.JvmSmartStepIntoActionHandler;
 import com.intellij.debugger.engine.dfaassist.DfaAssist;
 import com.intellij.debugger.engine.evaluation.EvaluationContext;
@@ -413,7 +412,7 @@ public class JavaDebugProcess extends XDebugProcess {
                                         @NotNull DefaultActionGroup settings) {
     Constraints beforeRunner = new Constraints(Anchor.BEFORE, "Runner.Layout");
     leftToolbar.add(Separator.getInstance(), beforeRunner);
-    leftToolbar.add(ActionManager.getInstance().getAction(DebuggerActions.DUMP_THREADS), beforeRunner);
+    leftToolbar.add(ActionManager.getInstance().getAction("DumpThreads"), beforeRunner);
     leftToolbar.add(Separator.getInstance(), beforeRunner);
 
     Constraints beforeSort = new Constraints(Anchor.BEFORE, "XDebugger.ToggleSortValues");

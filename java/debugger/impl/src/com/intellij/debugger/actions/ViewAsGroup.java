@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.actions;
 
 import com.intellij.debugger.engine.DebugProcessImpl;
@@ -101,7 +101,7 @@ public class ViewAsGroup extends ActionGroup implements DumbAware {
 
       List<AnAction> children = new ArrayList<>();
       AnAction[] viewAsActions =
-        ((DefaultActionGroup)ActionManager.getInstance().getAction(DebuggerActions.REPRESENTATION_LIST)).getChildren(null);
+        ((DefaultActionGroup)ActionManager.getInstance().getAction("Debugger.Representation")).getChildren(null);
       for (AnAction viewAsAction : viewAsActions) {
         if (viewAsAction instanceof AutoRendererAction) {
           if (renderers.size() > 1) {

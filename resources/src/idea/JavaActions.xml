@@ -623,54 +623,6 @@
       <add-to-group group-id="MethodHierarchyPopupMenu" anchor="first"/>
     </group>
 
-    <group id="Debugger.FramePanelPopup">
-      <reference ref="Debugger.AdjustArrayRange"/>
-      <reference ref="Debugger.MarkObject"/>
-      <reference ref="Debugger.EditNodeSource"/>
-      <reference ref="Debugger.EditTypeSource"/>
-      <separator/>
-      <reference ref="Debugger.ViewAsGroup"/>
-      <separator/>
-      <reference ref="Debugger.AddToWatch"/>
-      <separator/>
-      <reference ref="ToggleFieldBreakpoint"/>
-      <separator/>
-      <reference ref="Debugger.ViewText"/>
-      <reference ref="Debugger.CustomizeContextView"/>
-    </group>
-
-    <group id="Debugger.EvaluationDialogPopup">
-      <reference ref="Debugger.AdjustArrayRange"/>
-      <reference ref="Debugger.MarkObject"/>
-      <reference ref="Debugger.EditNodeSource"/>
-      <reference ref="Debugger.EditTypeSource"/>
-      <separator/>
-      <reference ref="Debugger.ViewAsGroup"/>
-      <separator/>
-      <reference ref="Debugger.AddToWatch"/>
-      <separator/>
-      <reference ref="ToggleFieldBreakpoint"/>
-      <separator/>
-      <reference ref="Debugger.ViewText"/>
-      <reference ref="Debugger.CustomizeContextView"/>
-    </group>
-
-    <group id="Debugger.InspectPanelPopup">
-      <reference ref="Debugger.AdjustArrayRange"/>
-      <reference ref="Debugger.MarkObject"/>
-      <reference ref="Debugger.EditNodeSource"/>
-      <reference ref="Debugger.EditTypeSource"/>
-      <separator/>
-      <reference ref="Debugger.AddToWatch"/>
-      <separator/>
-      <reference ref="Debugger.ViewAsGroup"/>
-      <separator/>
-      <reference ref="ToggleFieldBreakpoint"/>
-      <separator/>
-      <reference ref="Debugger.ViewText"/>
-      <reference ref="Debugger.CustomizeContextView"/>
-    </group>
-
     <group id="Debugger.ThreadsPanelPopup">
       <reference ref="Debugger.ResumeThread"/>
       <reference ref="Debugger.FreezeThread"/>
@@ -681,23 +633,6 @@
       <reference ref="Debugger.AddSteppingFilter"/>
       <separator/>
       <reference ref="Debugger.CustomizeThreadsView"/>
-    </group>
-
-    <group id="Debugger.WatchesPanelPopup">
-      <separator/>
-      <reference ref="Debugger.AdjustArrayRange"/>
-      <reference ref="Debugger.MarkObject"/>
-      <reference ref="Debugger.EditNodeSource"/>
-      <reference ref="Debugger.EditTypeSource"/>
-      <separator/>
-      <reference ref="Debugger.ViewAsGroup"/>
-      <separator/>
-      <reference ref="Debugger.AddToWatch"/>
-      <separator/>
-      <reference ref="ToggleFieldBreakpoint"/>
-      <separator/>
-      <reference ref="Debugger.ViewText"/>
-      <reference ref="Debugger.CustomizeContextView"/>
     </group>
 
     <action id="FileChooser.GotoJDK" class="com.intellij.openapi.projectRoots.JdkPopupAction" >

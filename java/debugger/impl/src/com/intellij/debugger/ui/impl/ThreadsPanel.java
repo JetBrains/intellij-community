@@ -1,8 +1,7 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.ui.impl;
 
 import com.intellij.debugger.actions.DebuggerAction;
-import com.intellij.debugger.actions.DebuggerActions;
 import com.intellij.debugger.actions.GotoFrameSourceAction;
 import com.intellij.debugger.engine.DebugProcessImpl;
 import com.intellij.debugger.engine.events.DebuggerCommandImpl;
@@ -31,6 +30,7 @@ import java.util.Enumeration;
 import java.util.NoSuchElementException;
 
 public class ThreadsPanel extends DebuggerTreePanel{
+  @NonNls private static final String POPUP_ACTION_NAME = "Debugger.ThreadsPanelPopup";
   @NonNls private static final String HELP_ID = "debugging.debugThreads";
   private final Alarm myUpdateLabelsAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
   private static final int LABELS_UPDATE_DELAY_MS = 200;
@@ -38,7 +38,7 @@ public class ThreadsPanel extends DebuggerTreePanel{
   public ThreadsPanel(Project project, final DebuggerStateManager stateManager) {
     super(project, stateManager);
 
-    final Disposable disposable = DebuggerAction.installEditAction(getThreadsTree(), DebuggerActions.EDIT_FRAME_SOURCE);
+    final Disposable disposable = DebuggerAction.installEditAction(getThreadsTree(), "Debugger.EditFrameSource");
     registerDisposable(disposable);
 
     getThreadsTree().addKeyListener(new KeyAdapter() {
@@ -150,8 +150,8 @@ public class ThreadsPanel extends DebuggerTreePanel{
 
   @Override
   protected ActionPopupMenu createPopupMenu() {
-    DefaultActionGroup group = (DefaultActionGroup)ActionManager.getInstance().getAction(DebuggerActions.THREADS_PANEL_POPUP);
-    return ActionManager.getInstance().createActionPopupMenu(DebuggerActions.THREADS_PANEL_POPUP, group);
+    DefaultActionGroup group = (DefaultActionGroup)ActionManager.getInstance().getAction(POPUP_ACTION_NAME);
+    return ActionManager.getInstance().createActionPopupMenu(POPUP_ACTION_NAME, group);
   }
 
   @Override

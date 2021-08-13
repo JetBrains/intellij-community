@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 /*
  * Class DebuggerAction
@@ -97,10 +97,7 @@ public abstract class DebuggerAction extends AnAction {
   }
 
   public static boolean isContextView(AnActionEvent e) {
-    return DebuggerActions.EVALUATION_DIALOG_POPUP.equals(e.getPlace()) ||
-           DebuggerActions.FRAME_PANEL_POPUP.equals(e.getPlace()) ||
-           DebuggerActions.WATCH_PANEL_POPUP.equals(e.getPlace()) ||
-           DebuggerActions.INSPECT_PANEL_POPUP.equals(e.getPlace());
+    return false;
   }
 
   public static Disposable installEditAction(final JTree tree, String actionName) {
