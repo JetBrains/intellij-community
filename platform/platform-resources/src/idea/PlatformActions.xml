@@ -79,6 +79,9 @@
       <action id="Table-scrollDownChangeSelection" class="com.intellij.ui.TableActions$PageDown" use-shortcut-of="EditorPageDown"/>
       <action id="Table-scrollDownExtendSelection" class="com.intellij.ui.TableActions$ShiftPageDown"
               use-shortcut-of="EditorPageDownWithSelection"/>
+      <action id="Table-startEditing" icon="AllIcons.Actions.Edit" class="com.intellij.ide.actions.table.StartEditingAction">
+        <keyboard-shortcut keymap="$default" first-keystroke="F2"/>
+      </action>
       <add-to-group group-id="Other.KeymapGroup"/>
     </group>
 
@@ -108,6 +111,9 @@
               use-shortcut-of="EditorPageDownWithSelection"/>
       <action id="Tree-selectNextSibling" class="com.intellij.ui.TreeActions$NextSibling"/>
       <action id="Tree-selectPreviousSibling" class="com.intellij.ui.TreeActions$PreviousSibling"/>
+      <action id="Tree-startEditing" icon="AllIcons.Actions.Edit" class="com.intellij.ide.actions.tree.StartEditingAction">
+        <keyboard-shortcut keymap="$default" first-keystroke="F2"/>
+      </action>
       <add-to-group group-id="Other.KeymapGroup"/>
     </group>
 
