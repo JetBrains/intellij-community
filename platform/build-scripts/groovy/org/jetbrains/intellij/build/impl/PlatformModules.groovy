@@ -38,6 +38,7 @@ final class PlatformModules {
     "intellij.platform.lvcs",
     "intellij.platform.ide",
     "intellij.platform.ide.core",
+    "intellij.platform.ide.util.io",
     "intellij.platform.projectModel",
     "intellij.platform.remote.core",
     "intellij.platform.remoteServers.agent.rt",
@@ -163,7 +164,7 @@ final class PlatformModules {
       addModule("intellij.platform.util.xmlDom", UTIL_JAR)
       addModule("intellij.platform.util.ui", UTIL_JAR)
       addModule("intellij.platform.util.ex", UTIL_JAR)
-      addModule("intellij.platform.ide.util.io", UTIL_JAR)
+      addModule("intellij.platform.ide.util.netty", UTIL_JAR)
       addModule("intellij.platform.extensions", UTIL_JAR)
 
       withoutModuleLibrary("intellij.platform.credentialStore", "dbus-java")

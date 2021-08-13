@@ -104,5 +104,6 @@
     <orderEntry type="module" module-name="intellij.platform.ide.core.impl" exported="" />
     <orderEntry type="library" scope="RUNTIME" name="netty-handler-proxy" level="project" />
     <orderEntry type="library" scope="RUNTIME" name="rhino" level="project" />
+    <orderEntry type="module" module-name="intellij.platform.ide.util.netty" />
   </component>
 </module>

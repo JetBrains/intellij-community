@@ -61,6 +61,7 @@
     <orderEntry type="library" name="fastutil-min" level="project" />
     <orderEntry type="module" module-name="intellij.properties.psi.impl" />
     <orderEntry type="module" module-name="intellij.platform.ide.util.io" />
+    <orderEntry type="module" module-name="intellij.platform.ide.util.netty" />
     <orderEntry type="library" name="CGLIB" level="project" />
   </component>
 </module>
