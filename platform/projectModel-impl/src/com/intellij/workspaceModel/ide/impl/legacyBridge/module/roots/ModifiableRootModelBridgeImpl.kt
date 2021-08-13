@@ -60,8 +60,17 @@ internal class ModifiableRootModelBridgeImpl(
   private var savedModuleEntity: ModuleEntity
 
   init {
-    savedModuleEntity = entityStorageOnDiff.current.resolve(module.moduleEntityId)
+    savedModuleEntity = getModuleEntity(entityStorageOnDiff.current, module)
                         ?: error("Cannot find module entity for ${module.moduleEntityId}. Bridge: '$moduleBridge'. Store: $diff")
+  }
+
+  private fun getModuleEntity(current: WorkspaceEntityStorage, myModuleBridge: ModuleBridge): ModuleEntity? {
+    // Try to get entity by module id
+    // In some cases this won't work. These cases can happen during maven or gradle import where we provide a general builder.
+    //   The case: we rename the module. Since the changes not yet committed, the module will remain with the old persistentId. After that
+    //   we try to get modifiableRootModel. In general case it would work fine because the builder will be based on main store, but
+    //   in case of gradle/maven import we take the builder that was used for renaming. So, the old name cannot be found in the new store.
+    return current.resolve(myModuleBridge.moduleEntityId) ?: current.findModuleEntity(myModuleBridge)
   }
 
   override fun getModificationCount(): Long = diff.modificationCount
@@ -80,7 +89,7 @@ internal class ModifiableRootModelBridgeImpl(
 
   internal val moduleEntity: ModuleEntity
     get() {
-      val actualModuleEntity = entityStorageOnDiff.current.resolve(module.moduleEntityId) ?: return savedModuleEntity
+      val actualModuleEntity = getModuleEntity(entityStorageOnDiff.current, module) ?: return savedModuleEntity
       savedModuleEntity = actualModuleEntity
       return actualModuleEntity
     }
@@ -616,7 +625,7 @@ internal class ModifiableRootModelBridgeImpl(
 
   private val modelValue = CachedValue { storage ->
     RootModelBridgeImpl(
-      moduleEntity = storage.findModuleEntity(moduleBridge),
+      moduleEntity = getModuleEntity(storage, moduleBridge),
       storage = entityStorageOnDiff,
       itemUpdater = null,
       rootModel = this,

@@ -64,4 +64,25 @@ class ModifiableRootModelBridgeTest {
       moduleModifiableModel.dispose()
     }
   }
+
+  @Test(expected = Test.None::class)
+  fun `get modifiable models of renamed module`() {
+    runWriteActionAndWait {
+      val moduleModifiableModel = ModuleManager.getInstance(projectModel.project).modifiableModel
+      val newModule = moduleModifiableModel.newModule(projectModel.projectRootDir.resolve("myModule/myModule.iml"),
+                                                      EmptyModuleType.EMPTY_MODULE) as ModuleBridge
+      moduleModifiableModel.commit()
+
+      val builder = WorkspaceModel.getInstance(projectModel.project).entityStorage.current.toBuilder()
+
+      val anotherModifiableModel = (ModuleManager.getInstance(projectModel.project) as ModuleManagerBridgeImpl).getModifiableModel(builder)
+      anotherModifiableModel.renameModule(newModule, "newName")
+
+      val moduleRootManager = ModuleRootManager.getInstance(newModule) as ModuleRootComponentBridge
+
+      // Assert no exceptions
+      val model = moduleRootManager.getModifiableModel(builder, RootConfigurationAccessor.DEFAULT_INSTANCE)
+      anotherModifiableModel.dispose()
+    }
+  }
 }
