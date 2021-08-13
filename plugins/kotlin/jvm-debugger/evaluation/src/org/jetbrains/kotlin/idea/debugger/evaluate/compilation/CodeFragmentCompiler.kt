@@ -8,16 +8,21 @@ import com.intellij.psi.search.GlobalSearchScope
 import org.jetbrains.kotlin.analyzer.moduleInfo
 import com.intellij.openapi.util.Key
 import org.jetbrains.kotlin.backend.common.output.OutputFile
+import org.jetbrains.kotlin.backend.common.phaser.PhaseConfig
+import org.jetbrains.kotlin.backend.jvm.*
+import org.jetbrains.kotlin.backend.jvm.serialization.JvmIdSignatureDescriptor
 import org.jetbrains.kotlin.codegen.*
 import org.jetbrains.kotlin.codegen.CodeFragmentCodegen.Companion.getSharedTypeIfApplicable
 import org.jetbrains.kotlin.codegen.state.GenerationState
 import org.jetbrains.kotlin.codegen.state.KotlinTypeMapper
 import org.jetbrains.kotlin.config.CompilerConfiguration
+import org.jetbrains.kotlin.config.JVMConfigurationKeys
 import org.jetbrains.kotlin.config.languageVersionSettings
 import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.descriptors.annotations.Annotations
 import org.jetbrains.kotlin.descriptors.impl.*
 import org.jetbrains.kotlin.idea.FrontendInternals
+import org.jetbrains.kotlin.idea.MainFunctionDetector
 import org.jetbrains.kotlin.idea.caches.project.ModuleSourceInfo
 import org.jetbrains.kotlin.idea.debugger.evaluate.EvaluationStatus
 import org.jetbrains.kotlin.idea.debugger.evaluate.ExecutionContext
@@ -28,9 +33,14 @@ import org.jetbrains.kotlin.idea.debugger.evaluate.compilation.CompiledDataDescr
 import org.jetbrains.kotlin.idea.debugger.evaluate.getResolutionFacadeForCodeFragment
 import org.jetbrains.kotlin.idea.project.languageVersionSettings
 import org.jetbrains.kotlin.incremental.components.LookupLocation
+import org.jetbrains.kotlin.ir.backend.jvm.serialization.JvmDescriptorMangler
+import org.jetbrains.kotlin.ir.declarations.impl.IrFactoryImpl
+import org.jetbrains.kotlin.load.kotlin.toSourceElement
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi2ir.generators.fragments.EvaluatorFragmentInfo
+import org.jetbrains.kotlin.psi2ir.generators.fragments.FragmentCompilerSymbolTableDecorator
 import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.lazy.ResolveSession
 import org.jetbrains.kotlin.resolve.lazy.data.KtClassOrObjectInfo
@@ -42,6 +52,8 @@ import org.jetbrains.kotlin.resolve.scopes.DescriptorKindFilter
 import org.jetbrains.kotlin.resolve.scopes.MemberScope
 import org.jetbrains.kotlin.resolve.scopes.MemberScopeImpl
 import org.jetbrains.kotlin.resolve.source.KotlinSourceElement
+import org.jetbrains.kotlin.resolve.source.PsiSourceFile
+import org.jetbrains.kotlin.serialization.deserialization.descriptors.DeserializedContainerSource
 import org.jetbrains.kotlin.storage.LockBasedStorageManager
 import org.jetbrains.kotlin.types.KotlinType
 import org.jetbrains.kotlin.types.SimpleType
@@ -98,19 +110,16 @@ class CodeFragmentCompiler(private val executionContext: ExecutionContext, priva
         val defaultReturnType = moduleDescriptor.builtIns.unitType
         val returnType = getReturnType(codeFragment, bindingContext, defaultReturnType)
 
-        val compilerConfiguration = CompilerConfiguration()
-        compilerConfiguration.languageVersionSettings = codeFragment.languageVersionSettings
+        val fragmentCompilerBackend = executionContext.debugProcess.getUserData(KOTLIN_EVALUATOR_FRAGMENT_COMPILER_BACKEND)
 
-        val generationState = GenerationState.Builder(
-            project, ClassBuilderFactories.BINARIES, moduleDescriptorWrapper,
-            bindingContext, filesToCompile, compilerConfiguration
-        ).apply {
-            val fragmentCompilerBackend = executionContext.debugProcess.getUserData(KOTLIN_EVALUATOR_FRAGMENT_COMPILER_BACKEND)
+        val compilerConfiguration = CompilerConfiguration().apply {
+            languageVersionSettings = codeFragment.languageVersionSettings
+
+            // TODO: Do not understand the implications of this, but enforced by assertions in JvmIrCodegen
             if (fragmentCompilerBackend == FragmentCompilerBackend.JVM_IR) {
-                codegenFactory(TODO("Not implemented yet: EE-IR Fragment Compiler"))
+                put(JVMConfigurationKeys.DO_NOT_CLEAR_BINDING_CONTEXT, true)
             }
-            generateDeclaredClassFilter(GeneratedClassFilterForCodeFragment(codeFragment))
-        }.build()
+        }
 
         val parameterInfo = CodeFragmentParameterAnalyzer(executionContext, codeFragment, bindingContext, status).analyze()
         val (classDescriptor, methodDescriptor) = createDescriptorsForCodeFragment(
@@ -120,6 +129,46 @@ class CodeFragmentCompiler(private val executionContext: ExecutionContext, priva
 
         val codegenInfo = CodeFragmentCodegenInfo(classDescriptor, methodDescriptor, parameterInfo.parameters)
         CodeFragmentCodegen.setCodeFragmentInfo(codeFragment, codegenInfo)
+
+        val generationState = GenerationState.Builder(
+            project, ClassBuilderFactories.BINARIES, moduleDescriptorWrapper,
+            bindingContext, filesToCompile, compilerConfiguration
+        ).apply {
+            if (fragmentCompilerBackend == FragmentCompilerBackend.JVM_IR) {
+                val mangler = JvmDescriptorMangler(MainFunctionDetector(bindingContext, compilerConfiguration.languageVersionSettings))
+                val evaluatorFragmentInfo = EvaluatorFragmentInfo(
+                        codegenInfo.classDescriptor,
+                        codegenInfo.methodDescriptor,
+                        codegenInfo.parameters.map { it.targetDescriptor }
+                )
+
+                codegenFactory(JvmIrCodegenFactory(
+                    configuration = compilerConfiguration,
+                    phaseConfig = PhaseConfig(jvmPhases),
+                    externalMangler = mangler,
+                    externalSymbolTable = FragmentCompilerSymbolTableDecorator(
+                        JvmIdSignatureDescriptor(mangler),
+                        IrFactoryImpl,
+                        evaluatorFragmentInfo,
+                        JvmNameProvider,
+                    ),
+                    jvmGeneratorExtensions = object : JvmGeneratorExtensionsImpl(compilerConfiguration) {
+                        // Top-level declarations in the project being debugged is served to the compiler as
+                        // PSI, not as class files. PSI2IR generate these as "external declarations" and
+                        // here we provide a shim from the PSI structures serving the names of facade classes
+                        // for top level declarations (as the facade classes do not exist in the PSI but are
+                        // created and _named_ during compilation).
+                        override fun getContainerSource(descriptor: DeclarationDescriptor): DeserializedContainerSource? {
+                            val psiSourceFile =
+                                descriptor.toSourceElement.containingFile as? PsiSourceFile ?: return super.getContainerSource(descriptor)
+                            return FacadeClassSourceShimForFragmentCompilation(psiSourceFile)
+                        }
+                    },
+                    evaluatorFragmentInfoForPsi2Ir = evaluatorFragmentInfo
+                ))
+            }
+            generateDeclaredClassFilter(GeneratedClassFilterForCodeFragment(codeFragment))
+        }.build()
 
         try {
             KotlinCodegenFacade.compileCorrectFiles(generationState)
@@ -323,6 +372,12 @@ private class EvaluatorModuleDescriptor(
         override fun getTypeAliasDeclarations(name: Name) = emptyList<KtTypeAlias>()
         override fun getDestructuringDeclarationsEntries(name: Name) = emptyList<KtDestructuringDeclarationEntry>()
         override fun getScriptDeclarations(name: Name) = emptyList<KtScriptInfo>()
+    }
+
+    // NOTE: Without this override, psi2ir complains when introducing new symbol for
+    // when creating an IrFileImpl in `createEmptyIrFile`.
+    override fun getOriginal(): DeclarationDescriptor {
+        return this
     }
 
     val packageFragmentForEvaluator = LazyPackageDescriptor(this, FqName.ROOT, resolveSession, declarationProvider)
