@@ -27,7 +27,9 @@ import javax.swing.ListSelectionModel
 
 object AccountsPanelFactory {
 
-  fun <A : Account, Cred, R> create(model: AccountsListModel<A, Cred>, listCellRendererFactory: () -> R): JComponent
+  fun <A : Account, Cred, R> create(model: AccountsListModel<A, Cred>,
+                                    addDefaultAccButton: Boolean,
+                                    listCellRendererFactory: () -> R): JComponent
     where R : ListCellRenderer<A>, R : JComponent {
 
     val accountsListModel = model.accountsListModel
@@ -58,12 +60,14 @@ object AccountsPanelFactory {
       accountsList.setPaintBusy(it)
     }
 
-    return ToolbarDecorator.createDecorator(accountsList)
+    val toolbar = ToolbarDecorator.createDecorator(accountsList)
       .disableUpDownActions()
       .setAddAction { model.addAccount(accountsList, it.preferredPopupPoint) }
       .setAddIcon(LayeredIcon.ADD_WITH_DROPDOWN)
-      .addExtraAction(object : ToolbarDecorator.ElementActionButton(CollaborationToolsBundle.message("accounts.set.default"),
-                                                                    AllIcons.Actions.Checked) {
+
+    if (addDefaultAccButton) {
+      toolbar.addExtraAction(object : ToolbarDecorator.ElementActionButton(CollaborationToolsBundle.message("accounts.set.default"),
+                                                                           AllIcons.Actions.Checked) {
         override fun actionPerformed(e: AnActionEvent) {
           val selected = accountsList.selectedValue
           if (selected == model.defaultAccount) return
@@ -74,7 +78,9 @@ object AccountsPanelFactory {
           isEnabled = isEnabled && model.defaultAccount != accountsList.selectedValue
         }
       })
-      .createPanel()
+    }
+
+    return toolbar.createPanel()
   }
 
   fun <A : Account, Cred> Row.accountsPanel(accountManager: AccountManager<A, Cred>,
@@ -82,6 +88,7 @@ object AccountsPanelFactory {
                                             accountsModel: AccountsListModel<A, Cred>,
                                             detailsProvider: AccountsDetailsProvider<A, *>,
                                             disposable: Disposable,
+                                            addDefaultAccButton: Boolean,
                                             defaultAvatarIcon: Icon = EmptyIcon.ICON_16): CellBuilder<JComponent> {
 
     accountsModel.addCredentialsChangeListener(detailsProvider::reset)
@@ -118,7 +125,7 @@ object AccountsPanelFactory {
       }
     })
 
-    return create(accountsModel) {
+    return create(accountsModel, addDefaultAccButton) {
       SimpleAccountsListCellRenderer(accountsModel, detailsProvider, defaultAvatarIcon)
     }(grow, push)
       .onIsModified(::isModified)

@@ -138,7 +138,7 @@ internal object GoogleAccountsUtils {
 
     return panel {
       row {
-        accountsPanel(accountManager, defaultAccountHolder, accountsListModel, detailsProvider, disposable)
+        accountsPanel(accountManager, defaultAccountHolder, accountsListModel, detailsProvider, disposable, false)
       }
     }
   }
