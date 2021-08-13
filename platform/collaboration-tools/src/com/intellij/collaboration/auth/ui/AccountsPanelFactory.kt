@@ -29,6 +29,7 @@ object AccountsPanelFactory {
 
   fun <A : Account, Cred, R> create(model: AccountsListModel<A, Cred>,
                                     addDefaultAccButton: Boolean,
+                                    needAddBtnWithDropdown: Boolean,
                                     listCellRendererFactory: () -> R): JComponent
     where R : ListCellRenderer<A>, R : JComponent {
 
@@ -60,10 +61,12 @@ object AccountsPanelFactory {
       accountsList.setPaintBusy(it)
     }
 
+    val addIcon: Icon = if (needAddBtnWithDropdown) LayeredIcon.ADD_WITH_DROPDOWN else AllIcons.General.Add
+
     val toolbar = ToolbarDecorator.createDecorator(accountsList)
       .disableUpDownActions()
       .setAddAction { model.addAccount(accountsList, it.preferredPopupPoint) }
-      .setAddIcon(LayeredIcon.ADD_WITH_DROPDOWN)
+      .setAddIcon(addIcon)
 
     if (addDefaultAccButton) {
       toolbar.addExtraAction(object : ToolbarDecorator.ElementActionButton(CollaborationToolsBundle.message("accounts.set.default"),
@@ -89,6 +92,7 @@ object AccountsPanelFactory {
                                             detailsProvider: AccountsDetailsProvider<A, *>,
                                             disposable: Disposable,
                                             addDefaultAccButton: Boolean,
+                                            needAddBtnWithDropdown: Boolean,
                                             defaultAvatarIcon: Icon = EmptyIcon.ICON_16): CellBuilder<JComponent> {
 
     accountsModel.addCredentialsChangeListener(detailsProvider::reset)
@@ -125,7 +129,7 @@ object AccountsPanelFactory {
       }
     })
 
-    return create(accountsModel, addDefaultAccButton) {
+    return create(accountsModel, addDefaultAccButton, needAddBtnWithDropdown) {
       SimpleAccountsListCellRenderer(accountsModel, detailsProvider, defaultAvatarIcon)
     }(grow, push)
       .onIsModified(::isModified)
