@@ -627,19 +627,24 @@
       <reference ref="SettingsEntryPoint"/>
     </group>
 
+    <action id="SmallSpacer" class="com.intellij.ide.navigationToolbar.experimental.SmallSpacerAction"/>
+    <action id="BigSpacer" class="com.intellij.ide.navigationToolbar.experimental.BigSpacerAction"/>
 
     <group id="NewToolbarActions">
       <group id="LeftToolbarSideGroup" class="com.intellij.ide.navigationToolbar.experimental.LeftToolbarGroup">
         <reference id="Back"/>
         <reference id="Forward"/>
-        <separator/>
+        <reference id="BigSpacer"/>
         <action id="SegmentedVcsControlAction" class="com.intellij.execution.segmentedVcsWidget.SegmentedVcsControlAction"/>
+        <reference id="SmallSpacer"/>
         <action id="SegmentedSearchEverywhereAction" class="com.intellij.ide.navigationToolbar.experimental.SegmentedSearchEverywhereAction"/>
       </group>
       <group id="CenterToolbarSideGroup" class="com.intellij.ide.navigationToolbar.experimental.CenterToolbarGroup">
       </group>
       <group id="RightToolbarSideGroup" class="com.intellij.ide.navigationToolbar.experimental.RightToolbarGroup">
+        <reference id="BigSpacer"/>
         <reference id="RunToolbarWidgetAction"/>
+        <reference id="SmallSpacer"/>
         <reference id="SettingsEntryPoint"/>
       </group>
     </group>
