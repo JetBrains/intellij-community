@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.documentation.mdn
 
 import com.fasterxml.jackson.databind.DeserializationFeature
@@ -7,6 +7,7 @@ import com.fasterxml.jackson.module.kotlin.readValue
 import com.github.benmanes.caffeine.cache.Caffeine
 import com.github.benmanes.caffeine.cache.LoadingCache
 import com.intellij.lang.documentation.DocumentationMarkup
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.text.StringUtil.capitalize
 import com.intellij.openapi.util.text.StringUtil.toLowerCase
 import com.intellij.psi.PsiElement
@@ -64,7 +65,7 @@ fun getHtmlMdnDocumentation(element: PsiElement, context: XmlTag?): MdnSymbolDoc
       PsiTreeUtil.getParentOfType(element, XmlAttribute::class.java, false)?.let { attr ->
         symbolName = attr.localName
         getAttributeDocumentation(getHtmlApiNamespace(attr.namespace, attr, toLowerCase(symbolName)),
-                                  attr.parent.localName, toLowerCase(symbolName))
+          attr.parent.localName, toLowerCase(symbolName))
       }
     }
     else -> {
@@ -170,10 +171,10 @@ interface MdnSymbolDocumentation {
   val sections: Map<String, String>
   val footnote: String?
 
-  fun getDocumentation(withDefinition: Boolean): String
+  fun getDocumentation(withDefinition: Boolean): @NlsSafe String
 
   fun getDocumentation(withDefinition: Boolean,
-                       additionalSectionsContent: Consumer<java.lang.StringBuilder>?): String
+                       additionalSectionsContent: Consumer<java.lang.StringBuilder>?): @NlsSafe String
 
 }
 
@@ -454,7 +455,7 @@ private fun <T : MdnDocumentation> loadDocumentation(namespace: MdnApiNamespace,
 
 private fun buildDoc(doc: MdnSymbolDocumentation,
                      withDefinition: Boolean,
-                     additionalSectionsContent: Consumer<java.lang.StringBuilder>?): String {
+                     additionalSectionsContent: Consumer<java.lang.StringBuilder>?): @NlsSafe String {
   val buf = StringBuilder()
   if (withDefinition)
     buf.append(DocumentationMarkup.DEFINITION_START)
