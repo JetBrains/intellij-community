@@ -42,7 +42,7 @@ internal class GoogleAccountsListModel(private val project: Project)
   override fun editAccount(parentComponent: JComponent, account: GoogleAccount) {
     AcquireUserInfoTask(parentComponent) { userCred, userInfo ->
       newCredentials[account] = userCred
-      account.name = userInfo.name
+      account.name = userInfo.email
       notifyCredentialsChanged(account)
     }.queue()
   }

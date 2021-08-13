@@ -23,7 +23,7 @@ import java.util.concurrent.CompletableFuture
 internal class GoogleUserInfoService {
 
   companion object {
-    private val USER_INFO_URL: Url get() = Urls.newFromEncoded("https://www.googleapis.com/oauth2/v1/userinfo")
+    private val USER_INFO_URL: Url get() = Urls.newFromEncoded("https://www.googleapis.com/oauth2/v2/userinfo")
   }
 
   @RequiresEdt

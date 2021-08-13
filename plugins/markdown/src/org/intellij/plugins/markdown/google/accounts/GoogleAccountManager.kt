@@ -17,7 +17,7 @@ import org.intellij.plugins.markdown.google.utils.GoogleAccountsUtils.jacksonMap
 @Service
 internal class GoogleAccountManager : AccountManagerBase<GoogleAccount, GoogleCredentials>(SERVICE_DISPLAY_NAME) {
   companion object {
-    fun createAccount(userInfo: GoogleUserInfo) = GoogleAccount(userInfo.id, userInfo.name)
+    fun createAccount(userInfo: GoogleUserInfo) = GoogleAccount(userInfo.id, userInfo.email)
 
     const val SERVICE_DISPLAY_NAME: String = "Google Accounts"
   }

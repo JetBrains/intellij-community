@@ -46,7 +46,8 @@ internal class GoogleOAuthRequest(googleAppCred: GoogleAccountsUtils.GoogleAppCr
     private val scope
       get() = listOf(
         "https://www.googleapis.com/auth/drive.readonly",
-        "https://www.googleapis.com/auth/userinfo.profile"
+        "https://www.googleapis.com/auth/userinfo.profile",
+        "https://www.googleapis.com/auth/userinfo.email"
       ).joinToString(" ")
 
     private const val responseType = "code" // For installed applications the parameter value is code
