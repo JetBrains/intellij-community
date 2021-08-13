@@ -24,7 +24,6 @@ import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.psi.stubs.StubElementTypeHolderEP
 import com.intellij.serviceContainer.ComponentManagerImpl
-import com.intellij.util.SystemProperties
 import com.intellij.util.getErrorsAsString
 import io.github.classgraph.AnnotationEnumValue
 import io.github.classgraph.ClassGraph
@@ -72,8 +71,8 @@ private class CreateAllServicesAndExtensionsAction : AnAction("Create All Servic
 private class CreateAllServicesAndExtensionsActivity : AppLifecycleListener {
 
   init {
-    if (!ApplicationManager.getApplication().isInternal
-        || !SystemProperties.`is`("ide.plugins.create.all.services.and.extensions")) {
+    if (!ApplicationManager.getApplication().isInternal ||
+        !java.lang.Boolean.getBoolean("ide.plugins.create.all.services.and.extensions")) {
       throw ExtensionNotApplicableException.INSTANCE
     }
   }

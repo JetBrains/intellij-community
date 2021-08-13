@@ -1,10 +1,9 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.diagnostic;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.AnimatedIcon.Blinking;
-import com.intellij.util.SystemProperties;
 
 import javax.swing.*;
 import java.awt.*;
@@ -15,7 +14,7 @@ final class IdeErrorsIcon extends JLabel {
   private final boolean myEnableBlink;
 
   IdeErrorsIcon(boolean enableBlink) {
-    myEnableBlink = enableBlink && !SystemProperties.is("fatal.error.icon.disable.blinking");
+    myEnableBlink = enableBlink && !Boolean.getBoolean("fatal.error.icon.disable.blinking");
   }
 
   void setState(MessagePool.State state) {

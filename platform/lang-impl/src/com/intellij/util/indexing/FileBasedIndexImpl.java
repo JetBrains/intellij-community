@@ -1992,7 +1992,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
     }
   }
 
-  public static final boolean DO_TRACE_STUB_INDEX_UPDATE = SystemProperties.getBooleanProperty("idea.trace.stub.index.update", false);
+  public static final boolean DO_TRACE_STUB_INDEX_UPDATE = Boolean.getBoolean("idea.trace.stub.index.update");
 
   @ApiStatus.Internal
   static <K, V> int getIndexExtensionVersion(@NotNull FileBasedIndexExtension<K, V> extension) {

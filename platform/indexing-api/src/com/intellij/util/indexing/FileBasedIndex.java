@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.indexing;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -335,11 +335,11 @@ public abstract class FileBasedIndex {
   public static boolean isIndexAccessDuringDumbModeEnabled() {
     return !ourDisableIndexAccessDuringDumbMode;
   }
-  private static final boolean ourDisableIndexAccessDuringDumbMode = SystemProperties.getBooleanProperty("idea.disable.index.access.during.dumb.mode", false);
+  private static final boolean ourDisableIndexAccessDuringDumbMode = Boolean.getBoolean("idea.disable.index.access.during.dumb.mode");
 
   @ApiStatus.Internal
-  public static final boolean USE_IN_MEMORY_INDEX = SystemProperties.is("idea.use.in.memory.file.based.index");
+  public static final boolean USE_IN_MEMORY_INDEX = Boolean.getBoolean("idea.use.in.memory.file.based.index");
 
   @ApiStatus.Internal
-  public static final boolean IGNORE_PLAIN_TEXT_FILES = SystemProperties.is("idea.ignore.plain.text.indexing");
+  public static final boolean IGNORE_PLAIN_TEXT_FILES = Boolean.getBoolean("idea.ignore.plain.text.indexing");
 }

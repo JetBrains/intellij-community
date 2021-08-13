@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 @file:JvmName("TrustedProjects")
 @file:ApiStatus.Experimental
 
@@ -148,7 +148,7 @@ fun isProjectImplicitlyTrusted(projectDir: Path?): Boolean {
 
 private fun isTrustedCheckDisabled() = ApplicationManager.getApplication().isUnitTestMode ||
                                        ApplicationManager.getApplication().isHeadlessEnvironment ||
-                                       SystemProperties.`is`("idea.is.integration.test")
+                                       java.lang.Boolean.getBoolean("idea.is.integration.test")
 
 private sealed class TrustedCheckResult {
   object Trusted : TrustedCheckResult()

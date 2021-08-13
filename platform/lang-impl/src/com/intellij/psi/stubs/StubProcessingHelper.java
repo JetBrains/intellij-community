@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.stubs;
 
 import com.intellij.openapi.application.AppUIExecutor;
@@ -8,7 +8,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileWithId;
 import com.intellij.psi.PsiElement;
-import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.FileBasedIndex;
 import com.intellij.util.indexing.StorageException;
@@ -22,7 +21,7 @@ import java.util.Map;
 import java.util.Set;
 
 public final class StubProcessingHelper extends StubProcessingHelperBase {
-  private static final boolean SKIP_INDEX_REPAIR_ON_ERROR = SystemProperties.is("skip.index.repair");
+  private static final boolean SKIP_INDEX_REPAIR_ON_ERROR = Boolean.getBoolean("skip.index.repair");
   static final boolean REPORT_SENSITIVE_DATA_ON_ERROR =
     ApplicationManager.getApplication().isUnitTestMode() || ApplicationManager.getApplication().isInternal();
 
