@@ -1258,11 +1258,11 @@ public final class XmlUtil {
     if (host == null) return false;
     Ref<Boolean> result = new Ref<>(false);
     manager.enumerate(host, (injectedPsi, places) -> {
-      if (ContainerUtil.find(places, place -> {
+      if (ContainerUtil.exists(places, place -> {
         TextRange range = place.getRange();
         return (range.getStartOffset() <= offset && offset <= range.getStartOffset() + place.getPrefix().length())
                || (range.getEndOffset() - place.getSuffix().length() <= offset && offset <= range.getEndOffset());
-      }) != null) {
+      })) {
         result.set(true);
       }
     });
