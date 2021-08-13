@@ -156,6 +156,15 @@ public abstract class HtmlChunk {
     }
 
     /**
+     * @param className name of style class
+     * @return a new element that is like this element but has the specified class name
+     */
+    @Contract(pure = true)
+    public @NotNull Element setClass(@NonNls String className) {
+      return attr("class", className);
+    }
+
+    /**
      * @param text text to add to the list of children (should not be escaped)
      * @return a new element that is like this element but has an extra text child
      */

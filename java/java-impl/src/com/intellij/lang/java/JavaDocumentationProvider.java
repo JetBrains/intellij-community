@@ -663,6 +663,7 @@ public class JavaDocumentationProvider implements CodeDocumentationProvider, Ext
     return JavaDocExternalFilter.filterInternalDocInfo(generator.generateDocInfo(docURLs));
   }
 
+  @Nls
   private String getMethodCandidateInfo(PsiMethodCallExpression expr) {
     final PsiResolveHelper rh = JavaPsiFacade.getInstance(expr.getProject()).getResolveHelper();
     final CandidateInfo[] candidates = rh.getReferencedMethodCandidates(expr, true);
@@ -940,11 +941,11 @@ public class JavaDocumentationProvider implements CodeDocumentationProvider, Ext
     return (PsiJavaDocumentedElement)element;
   }
 
-  public static String fetchExternalJavadoc(PsiElement element, Project project, List<String> docURLs) {
+  public static @NlsSafe String fetchExternalJavadoc(PsiElement element, Project project, List<String> docURLs) {
     return fetchExternalJavadoc(element, docURLs, new JavaDocExternalFilter(project));
   }
 
-  public static String fetchExternalJavadoc(PsiElement element, List<String> docURLs, @NotNull JavaDocExternalFilter docFilter) {
+  public static @NlsSafe String fetchExternalJavadoc(PsiElement element, List<String> docURLs, @NotNull JavaDocExternalFilter docFilter) {
     if (docURLs != null) {
       for (String docURL : docURLs) {
         try {

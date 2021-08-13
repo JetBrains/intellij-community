@@ -22,9 +22,10 @@ public interface DocumentationMarkup {
   @NlsSafe String GRAYED_END = "</span>";
 
   HtmlChunk.Element SECTION_CONTENT_CELL = HtmlChunk.tag("td").attr("valign", "top");
-  HtmlChunk.Element SECTION_HEADER_CELL = HtmlChunk.tag("td").attr("valign", "top").attr("class", "section");
-  HtmlChunk.Element SECTIONS_TABLE = HtmlChunk.tag("table").attr("class", "sections");
-  HtmlChunk.Element CONTENT_ELEMENT = HtmlChunk.div().attr("class", "content");
-  HtmlChunk.Element DEFINITION_ELEMENT = HtmlChunk.div().attr("class", "definition");
-  HtmlChunk.Element GRAYED_ELEMENT = HtmlChunk.span().attr("class", "grayed");
+  HtmlChunk.Element SECTION_HEADER_CELL = HtmlChunk.tag("td").attr("valign", "top").setClass("section");
+  HtmlChunk.Element SECTIONS_TABLE = HtmlChunk.tag("table").setClass("sections");
+  HtmlChunk.Element CONTENT_ELEMENT = HtmlChunk.div().setClass("content");
+  HtmlChunk.Element DEFINITION_ELEMENT = HtmlChunk.div().setClass("definition");
+  HtmlChunk.Element GRAYED_ELEMENT = HtmlChunk.span().setClass("grayed");
+  HtmlChunk.Element CENTERED_ELEMENT = HtmlChunk.p().setClass("centered");
 }
