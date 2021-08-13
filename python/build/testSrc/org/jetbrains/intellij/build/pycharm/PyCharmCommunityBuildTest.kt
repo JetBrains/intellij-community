@@ -4,10 +4,12 @@ package org.jetbrains.intellij.build.pycharm
 import com.intellij.openapi.application.PathManager
 import org.jetbrains.intellij.build.ProprietaryBuildTools
 import org.jetbrains.intellij.build.testFramework.runTestBuild
+import org.junit.Ignore
 import org.junit.Test
 
 class PyCharmCommunityBuildTest {
   @Test
+  @Ignore
   fun testBuild() {
     val homePath = PathManager.getHomePathFor(javaClass)!!
     runTestBuild(homePath, PyCharmCommunityProperties(homePath), ProprietaryBuildTools.DUMMY)
