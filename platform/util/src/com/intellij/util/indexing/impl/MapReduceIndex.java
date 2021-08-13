@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.indexing.impl;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -52,26 +38,7 @@ public abstract class MapReduceIndex<Key,Value, Input> implements InvertedIndex<
   private final ReadWriteLock myLock;
   private final boolean myUseIntForwardIndex;
   private volatile boolean myDisposed;
-
-  private final LowMemoryWatcher myLowMemoryFlusher = LowMemoryWatcher.register(new Runnable() {
-    @Override
-    public void run() {
-      try {
-        myLock.readLock().lock();
-        try {
-          myStorage.clearCaches();
-        }
-        finally {
-          myLock.readLock().unlock();
-        }
-
-        flush();
-      }
-      catch (Throwable e) {
-        requestRebuild(e);
-      }
-    }
-  });
+  private final LowMemoryWatcher myLowMemoryFlusher;
 
   protected MapReduceIndex(@NotNull IndexExtension<Key, Value, Input> extension,
                            @NotNull IndexStorageLayout<Key, Value> indexStorageLayout,
@@ -112,6 +79,24 @@ public abstract class MapReduceIndex<Key,Value, Input> implements InvertedIndex<
                    "Invalid index configuration for " + myIndexId);
     myLock = lock == null ? new ReentrantReadWriteLock() : lock;
     myValueSerializationChecker = IndexDebugProperties.DEBUG ? new ValueSerializationChecker<>(extension, getSerializationProblemReporter()) : null;
+    myLowMemoryFlusher = LowMemoryWatcher.register(() -> clearCaches());
+  }
+
+  private void clearCaches() {
+    try {
+      myLock.readLock().lock();
+      try {
+        myStorage.clearCaches();
+      }
+      finally {
+        myLock.readLock().unlock();
+      }
+
+      flush();
+    }
+    catch (Throwable e) {
+      requestRebuild(e);
+    }
   }
 
   protected @NotNull ValueSerializationProblemReporter getSerializationProblemReporter() {
@@ -430,4 +415,3 @@ public abstract class MapReduceIndex<Key,Value, Input> implements InvertedIndex<
     }
   }
 }
-
