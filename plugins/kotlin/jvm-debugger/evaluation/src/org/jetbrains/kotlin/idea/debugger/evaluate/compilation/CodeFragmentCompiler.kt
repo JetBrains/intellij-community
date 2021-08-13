@@ -8,9 +8,10 @@ import com.intellij.openapi.util.Key
 import com.intellij.psi.search.GlobalSearchScope
 import org.jetbrains.kotlin.analyzer.moduleInfo
 import org.jetbrains.kotlin.backend.common.output.OutputFile
-import org.jetbrains.kotlin.backend.common.phaser.*
+import org.jetbrains.kotlin.backend.common.phaser.then
 import org.jetbrains.kotlin.backend.jvm.*
 import org.jetbrains.kotlin.backend.jvm.lower.reflectiveAccessLowering
+import org.jetbrains.kotlin.backend.jvm.lower.fragmentSharedVariablesLowering
 import org.jetbrains.kotlin.backend.jvm.serialization.JvmIdSignatureDescriptor
 import org.jetbrains.kotlin.codegen.*
 import org.jetbrains.kotlin.codegen.CodeFragmentCodegen.Companion.getSharedTypeIfApplicable
@@ -46,6 +47,7 @@ import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi2ir.generators.fragments.EvaluatorFragmentInfo
+import org.jetbrains.kotlin.psi2ir.generators.fragments.EvaluatorFragmentParameterInfo
 import org.jetbrains.kotlin.psi2ir.generators.fragments.FragmentCompilerSymbolTableDecorator
 import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.lazy.ResolveSession
@@ -142,24 +144,15 @@ class CodeFragmentCompiler(private val executionContext: ExecutionContext, priva
         ).apply {
             if (fragmentCompilerBackend == FragmentCompilerBackend.JVM_IR) {
                 val mangler = JvmDescriptorMangler(MainFunctionDetector(bindingContext, compilerConfiguration.languageVersionSettings))
-                val evaluatorFragmentInfo = EvaluatorFragmentInfo(
+                val evaluatorFragmentInfo = EvaluatorFragmentInfo.createWithFragmentParameterInfo(
                     codegenInfo.classDescriptor,
                     codegenInfo.methodDescriptor,
-                    codegenInfo.parameters.map { it.targetDescriptor }
-                )
-                val phaseConfig = PhaseConfig(
-                    NamedCompilerPhase(
-                        name = "IrFragmentCompiler",
-                        description = "IR Backend for Debugger Evaluator",
-                        nlevels = 1,
-                        actions = setOf(defaultDumper, validationAction),
-                        lower = reflectiveAccessLowering then jvmPhases
-                    )
+                    codegenInfo.parameters.map { EvaluatorFragmentParameterInfo(it.targetDescriptor, it.isLValue) }
                 )
                 codegenFactory(
                     JvmIrCodegenFactory(
                         configuration = compilerConfiguration,
-                        phaseConfig = phaseConfig,
+                        phaseConfig = null,
                         externalMangler = mangler,
                         externalSymbolTable = FragmentCompilerSymbolTableDecorator(
                             JvmIdSignatureDescriptor(mangler),
@@ -167,7 +160,7 @@ class CodeFragmentCompiler(private val executionContext: ExecutionContext, priva
                             evaluatorFragmentInfo,
                             NameProvider.DEFAULT,
                         ),
-                        prefixPhases = reflectiveAccessLowering,
+                        prefixPhases = fragmentSharedVariablesLowering then reflectiveAccessLowering,
                         jvmGeneratorExtensions = object : JvmGeneratorExtensionsImpl(compilerConfiguration) {
                             // Top-level declarations in the project being debugged is served to the compiler as
                             // PSI, not as class files. PSI2IR generate these as "external declarations" and
