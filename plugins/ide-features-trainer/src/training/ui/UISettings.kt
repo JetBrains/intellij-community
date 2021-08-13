@@ -64,6 +64,9 @@ internal class UISettings {
   val futureTaskNumberColor: Color = activeTaskNumberColor.addAlpha(transparencyInactiveFactor)
   val tooltipTaskNumberColor: Color = JBColor.namedColor("Lesson.Tooltip.stepNumberForeground", 0x6CA6ED, 0x6A9DDE)
 
+  val newContentBackgroundColor: Color = JBColor.namedColor("Lesson.Badge.newLessonBackground", 0x62B543, 0x499C54)
+  val newContentForegroundColor: Color = JBColor.namedColor("Lesson.Badge.newLessonForeground", 0xFFFFFF, 0xFEFEFE)
+
   //BORDERS
   val emptyBorder: Border
     get() = EmptyBorder(northInset, westInset, southInset, eastInset)

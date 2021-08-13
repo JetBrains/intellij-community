@@ -456,7 +456,9 @@
       "Tooltip.spanBackground": "#1AEBFF",
       "Tooltip.spanForeground": "#000000",
       "Tooltip.foreground": "#FFFFFF",
-      "Tooltip.stepNumberForeground": "#FFFFFF"
+      "Tooltip.stepNumberForeground": "#FFFFFF",
+      "Badge.newLessonBackground": "#00E61F",
+      "Badge.newLessonForeground": "#000000"
     },
 
     "WelcomeScreen": {
