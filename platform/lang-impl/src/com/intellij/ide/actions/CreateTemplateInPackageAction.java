@@ -54,6 +54,7 @@ import java.util.function.Supplier;
  * @author peter
  */
 public abstract class CreateTemplateInPackageAction<T extends PsiElement> extends CreateFromTemplateAction<T> {
+  @Nullable
   private final Set<? extends JpsModuleSourceRootType<?>> mySourceRootTypes;
 
   protected CreateTemplateInPackageAction(String text, String description, Icon icon,
@@ -62,7 +63,7 @@ public abstract class CreateTemplateInPackageAction<T extends PsiElement> extend
   }
 
   protected CreateTemplateInPackageAction(@NotNull Supplier<String> dynamicText, @NotNull Supplier<String> dynamicDescription, Icon icon,
-                                          final Set<? extends JpsModuleSourceRootType<?>> rootTypes) {
+                                          final @Nullable Set<? extends JpsModuleSourceRootType<?>> rootTypes) {
     super(dynamicText, dynamicDescription, icon);
     mySourceRootTypes = rootTypes;
   }
@@ -96,7 +97,7 @@ public abstract class CreateTemplateInPackageAction<T extends PsiElement> extend
   @Override
   protected @Nullable PsiDirectory adjustDirectory(@NotNull PsiDirectory directory) {
     ProjectFileIndex index = ProjectRootManager.getInstance(directory.getProject()).getFileIndex();
-    if (!index.isUnderSourceRootOfType(directory.getVirtualFile(), mySourceRootTypes)) {
+    if (mySourceRootTypes != null && !index.isUnderSourceRootOfType(directory.getVirtualFile(), mySourceRootTypes)) {
       Module module = ModuleUtilCore.findModuleForPsiElement(directory);
       if (module == null) return null;
       ModifiableRootModel modifiableModel = ModuleRootManager.getInstance(module).getModifiableModel();
