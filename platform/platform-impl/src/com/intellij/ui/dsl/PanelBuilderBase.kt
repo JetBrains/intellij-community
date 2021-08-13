@@ -7,6 +7,9 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import javax.swing.JLabel
 
+/**
+ * Root panel, does not provide cell related methods
+ */
 @ApiStatus.Experimental
 interface PanelBuilderBase {
 
