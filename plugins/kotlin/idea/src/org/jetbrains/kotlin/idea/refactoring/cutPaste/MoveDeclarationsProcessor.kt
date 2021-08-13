@@ -5,6 +5,7 @@ package org.jetbrains.kotlin.idea.refactoring.cutPaste
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.RangeMarker
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.psi.PsiDocumentManager
@@ -85,7 +86,7 @@ class MoveDeclarationsProcessor(
     fun performRefactoring() {
         psiDocumentManager.commitAllDocuments()
 
-        val commandName = KotlinBundle.message("action.usage.update.text")
+        val commandName = KotlinBundle.message("action.usage.update.command")
         val commandGroupId = Any() // we need to group both commands for undo
 
         // temporary revert imports to the state before they have been changed
@@ -166,7 +167,7 @@ class MoveDeclarationsProcessor(
     private data class ImportsSubstitution(val originalImportsText: String, val tempImportsText: String, val startOffset: Int)
 
     private fun insertStubDeclarations(
-        commandName: String,
+        @NlsContexts.Command commandName: String,
         commandGroupId: Any?,
         values: List<String>
     ): Pair<RangeMarker, List<KtNamedDeclaration>> {

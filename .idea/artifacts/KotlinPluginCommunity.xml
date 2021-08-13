@@ -27,7 +27,6 @@
             <element id="module-output" name="kotlin.jps-plugin" />
             <element id="module-output" name="kotlin.jps-common" />
             <element id="extracted-dir" path="$MAVEN_REPOSITORY$/org/jetbrains/kotlin/compiler-components-for-jps/1.5.10-release-941/compiler-components-for-jps-1.5.10-release-941.jar" path-in-jar="/" />
-            <element id="module-output" name="intellij.platform.core" />
           </element>
         </element>
         <element id="archive" name="kotlin-compiler-plugins-allopen.jar">

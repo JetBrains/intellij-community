@@ -3,6 +3,7 @@
 package org.jetbrains.kotlin.idea.util
 
 import com.intellij.openapi.module.Module
+import com.intellij.openapi.util.NlsContexts
 import org.jetbrains.kotlin.analyzer.ModuleInfo
 import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.idea.caches.project.ModuleSourceInfo
@@ -157,7 +158,7 @@ fun KtDeclaration.collectAllExpectAndActualDeclaration(withSelf: Boolean = true)
 }.let { if (withSelf) it + this else it }
 
 fun KtDeclaration.runCommandOnAllExpectAndActualDeclaration(
-    command: String = "",
+    @NlsContexts.Command command: String = "",
     writeAction: Boolean = false,
     withSelf: Boolean = true,
     f: (KtDeclaration) -> Unit
