@@ -1,45 +1,50 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.options.advanced
 
- import com.intellij.icons.AllIcons
- import com.intellij.ide.ui.search.SearchUtil
- import com.intellij.ide.ui.search.SearchableOptionsRegistrar
- import com.intellij.internal.statistic.collectors.fus.ui.SettingsCounterUsagesCollector
- import com.intellij.openapi.actionSystem.AnActionEvent
- import com.intellij.openapi.application.ApplicationBundle
- import com.intellij.openapi.options.SearchableConfigurable
- import com.intellij.openapi.options.UiDslConfigurable
- import com.intellij.openapi.project.DumbAwareAction
- import com.intellij.openapi.ui.panel.ComponentPanelBuilder
- import com.intellij.openapi.util.NlsSafe
- import com.intellij.ui.CollectionComboBoxModel
- import com.intellij.ui.ColorUtil
- import com.intellij.ui.DocumentAdapter
- import com.intellij.ui.SearchTextField
- import com.intellij.ui.layout.*
- import com.intellij.util.Alarm
- import com.intellij.util.ui.JBUI
- import com.intellij.util.ui.UIUtil
- import java.awt.Dimension
- import javax.swing.*
- import javax.swing.event.DocumentEvent
+import com.intellij.icons.AllIcons
+import com.intellij.ide.ui.search.SearchUtil
+import com.intellij.ide.ui.search.SearchableOptionsRegistrar
+import com.intellij.internal.statistic.collectors.fus.ui.SettingsCounterUsagesCollector
+import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.application.ApplicationBundle
+import com.intellij.openapi.options.DslConfigurableBase
+import com.intellij.openapi.options.SearchableConfigurable
+import com.intellij.openapi.project.DumbAwareAction
+import com.intellij.openapi.ui.DialogPanel
+import com.intellij.openapi.util.NlsSafe
+import com.intellij.ui.CollectionComboBoxModel
+import com.intellij.ui.ColorUtil
+import com.intellij.ui.DocumentAdapter
+import com.intellij.ui.SearchTextField
+import com.intellij.ui.dsl.*
+import com.intellij.ui.dsl.Cell
+import com.intellij.ui.dsl.Row
+import com.intellij.ui.dsl.gridLayout.HorizontalAlign
+import com.intellij.ui.dsl.gridLayout.VerticalAlign
+import com.intellij.ui.dsl.panel
+import com.intellij.ui.layout.*
+import com.intellij.util.Alarm
+import com.intellij.util.ui.JBUI
+import com.intellij.util.ui.UIUtil
+import java.awt.Dimension
+import javax.swing.AbstractButton
+import javax.swing.JComponent
+import javax.swing.JLabel
+import javax.swing.event.DocumentEvent
 
-class AdvancedSettingsConfigurable : UiDslConfigurable.Simple(), SearchableConfigurable {
+class AdvancedSettingsConfigurable : DslConfigurableBase(), SearchableConfigurable {
 
-  private class SettingsGroup(val panel: JPanel,
+  private class SettingsGroup(val groupRow: Row,
                               val title: String,
                               val settingsRows: Collection<SettingsRow>)
 
   private class SettingsRow(val row: Row,
-                            val commentRow: Row?,
                             val component: JComponent,
                             val id: String,
                             val text: String,
                             val isDefaultPredicate: ComponentPredicate) {
     fun setVisible(visible: Boolean) {
-      row.visible = visible
-      row.subRowsVisible = visible
-      commentRow?.visible = visible
+      row.visible(visible)
     }
   }
 
@@ -60,23 +65,26 @@ class AdvancedSettingsConfigurable : UiDslConfigurable.Simple(), SearchableConfi
     })
   }
 
-  override fun RowBuilder.createComponentRow() {
-    fullRow {
-      searchField(CCFlags.growX)
-      checkBox(ApplicationBundle.message("checkbox.advanced.settings.modified")) { _, component ->
-        onlyShowModified = component.isSelected
-        updateSearch()
-      }
-    }
+  override fun createPanel(): DialogPanel {
+    return panel {
+      row {
+        cell(searchField)
+          .horizontalAlign(HorizontalAlign.FILL)
+          .resizableColumn()
+        checkBox(ApplicationBundle.message("checkbox.advanced.settings.modified"))
+          .actionListener { _, component ->
+            onlyShowModified = component.isSelected
+            updateSearch()
+          }
+      }.layout(RowLayout.INDEPENDENT)
 
-    val groupedExtensions = AdvancedSettingBean.EP_NAME.extensions.groupBy {
-      it.group() ?: ApplicationBundle.message("group.advanced.settings.other")
-    }.toSortedMap()
+      val groupedExtensions = AdvancedSettingBean.EP_NAME.extensions.groupBy {
+        it.group() ?: ApplicationBundle.message("group.advanced.settings.other")
+      }.toSortedMap()
 
-    for ((group, extensions) in groupedExtensions) {
-      val settingsRows = mutableListOf<SettingsRow>()
-      val groupPanel = nestedPanel {
-        titledRow(group) {
+      for ((group, extensions) in groupedExtensions) {
+        val settingsRows = mutableListOf<SettingsRow>()
+        val groupRow = group(title = group) {
           for (extension in extensions) {
             val label = if (extension.type() == AdvancedSettingType.Bool)
               null
@@ -84,70 +92,59 @@ class AdvancedSettingsConfigurable : UiDslConfigurable.Simple(), SearchableConfi
               JLabel(extension.title() + ":")
             lateinit var advancedSetting: AdvancedSettingControl
             val settingRow = row(label) {
-              cell(isFullWidth = true) {
-                advancedSetting = control(extension)
-                extension.trailingLabel()?.takeIf { it.isNotEmpty() }?.let { label(it) }
-
-                val resetAction = object : DumbAwareAction(ApplicationBundle.message("button.advanced.settings.reset"), null, AllIcons.Diff.Revert) {
-                  override fun actionPerformed(e: AnActionEvent) {
-                    advancedSetting.reset()
-                  }
-                }
-                val minSize = AllIcons.Diff.Revert.iconHeight + 4 // Add space for border
-                actionButton(resetAction, Dimension(minSize, minSize))
-                  .visibleIf(advancedSetting.isDefault.not())
-
-                label("").constraints(pushX)
+              advancedSetting = control(extension)
+              extension.trailingLabel()?.takeIf { it.isNotEmpty() }?.let {
+                label(it)
+                  .gap(RightGap.SMALL)
               }
-            }
 
-            var commentRow: Row? = null
+              val resetAction = object : DumbAwareAction(ApplicationBundle.message("button.advanced.settings.reset"), null, AllIcons.Diff.Revert) {
+                override fun actionPerformed(e: AnActionEvent) {
+                  advancedSetting.reset()
+                }
+              }
+              val minSize = AllIcons.Diff.Revert.iconHeight + 4 // Add space for border
+              actionButton(resetAction, Dimension(minSize, minSize))
+                .visibleIf(advancedSetting.isDefault.not())
+            }
             extension.description()?.let {
               if (label == null) {
                 advancedSetting.cellBuilder.comment(it)
-              }
-              else {
-                commentRow = row {
-                  comment(it, ComponentPanelBuilder.MAX_COMMENT_WIDTH)
-                }
+              } else {
+                settingRow.comment(it)
               }
             }
 
             val row = SettingsRow(
-              settingRow, commentRow, label ?: advancedSetting.cellBuilder.component, extension.id,
+              settingRow, label ?: advancedSetting.cellBuilder.component, extension.id,
               label?.text ?: extension.title(),
               advancedSetting.isDefault
             )
             settingsRows.add(row)
-
           }
         }
-      }.component
-      settingsGroups.add(SettingsGroup(groupPanel, group, settingsRows))
-    }
 
-    nothingFoundRow = row {
-      label(ApplicationBundle.message("search.advanced.settings.nothing.found"))
-        .constraints(CCFlags.growX, CCFlags.growY)
-        .also {
-          it.component.foreground = UIUtil.getInactiveTextColor()
-          it.component.horizontalAlignment = SwingConstants.CENTER
-        }
-    }.also {
-      it.visible = false
+        settingsGroups.add(SettingsGroup(groupRow, group, settingsRows))
+      }
+
+      nothingFoundRow = row {
+        label(ApplicationBundle.message("search.advanced.settings.nothing.found"))
+          .horizontalAlign(HorizontalAlign.CENTER)
+          .verticalAlign(VerticalAlign.CENTER)
+          .applyToComponent {
+            foreground = UIUtil.getInactiveTextColor()
+          }
+      }.visible(false)
     }
   }
 
-  data class AdvancedSettingControl(val cellBuilder: CellBuilder<JComponent>, val isDefault: ComponentPredicate, val reset: () -> Unit)
+  data class AdvancedSettingControl(val cellBuilder: Cell<JComponent>, val isDefault: ComponentPredicate, val reset: () -> Unit)
 
-  private fun InnerCell.control(extension: AdvancedSettingBean): AdvancedSettingControl {
-    return when (extension.type()) {
+  private fun Row.control(extension: AdvancedSettingBean): AdvancedSettingControl {
+    val result = when (extension.type()) {
       AdvancedSettingType.Bool -> {
-        val cb = checkBox(
-          extension.title(),
-          { AdvancedSettings.getBoolean(extension.id) },
-          { AdvancedSettings.setBoolean(extension.id, it) }
-        )
+        val cb = checkBox(extension.title())
+          .bindSelected({ AdvancedSettings.getBoolean(extension.id) }, { AdvancedSettings.setBoolean(extension.id, it) })
         AdvancedSettingControl(
           cb,
           if (extension.defaultValueObject == true) cb.component.selected else cb.component.selected.not()
@@ -155,11 +152,8 @@ class AdvancedSettingsConfigurable : UiDslConfigurable.Simple(), SearchableConfi
       }
 
       AdvancedSettingType.Int -> {
-        val textField = intTextField(
-          { AdvancedSettings.getInt(extension.id) },
-          { AdvancedSettings.setInt(extension.id, it) },
-          columns = 10
-        )
+        val textField = intTextField(columns = 10)
+          .bindIntText({ AdvancedSettings.getInt(extension.id) }, { AdvancedSettings.setInt(extension.id, it) })
         AdvancedSettingControl(
           textField,
           textField.component.enteredTextSatisfies { it == extension.defaultValueObject.toString() }
@@ -167,11 +161,8 @@ class AdvancedSettingsConfigurable : UiDslConfigurable.Simple(), SearchableConfi
       }
 
       AdvancedSettingType.String -> {
-        val textField = textField(
-          { AdvancedSettings.getString(extension.id) },
-          { AdvancedSettings.setString(extension.id, it) },
-          columns = 30
-        )
+        val textField = textField(columns = 30)
+          .bindText({ AdvancedSettings.getString(extension.id) }, { AdvancedSettings.setString(extension.id, it) })
         AdvancedSettingControl(
           textField,
           textField.component.enteredTextSatisfies { it == extension.defaultValueObject }
@@ -180,17 +171,20 @@ class AdvancedSettingsConfigurable : UiDslConfigurable.Simple(), SearchableConfi
 
       AdvancedSettingType.Enum -> {
         val comboBoxModel = CollectionComboBoxModel(extension.enumKlass!!.enumConstants.toList())
-        val cb = comboBox(
-          comboBoxModel,
-          { AdvancedSettings.getEnum(extension.id, extension.enumKlass!!) },
-          { AdvancedSettings.setEnum(extension.id, it as Enum<*>) }
-        )
+        val cb = comboBox(comboBoxModel)
+          .bindItem(
+            { AdvancedSettings.getEnum(extension.id, extension.enumKlass!!) },
+            { AdvancedSettings.setEnum(extension.id, it as Enum<*>) }
+          )
         AdvancedSettingControl(
           cb,
           cb.component.selectedValueIs(extension.defaultValueObject as Enum<*>)
         ) { cb.component.selectedItem = extension.defaultValueObject }
       }
     }
+
+    result.cellBuilder.gap(RightGap.SMALL)
+    return result
   }
 
   private fun updateSearch() {
@@ -200,13 +194,13 @@ class AdvancedSettingsConfigurable : UiDslConfigurable.Simple(), SearchableConfi
   private fun applyFilter(searchText: String?, onlyShowModified: Boolean) {
     if (searchText.isNullOrBlank() && !onlyShowModified) {
       for (groupPanel in settingsGroups) {
-        groupPanel.panel.isVisible = true
+        groupPanel.groupRow.visible(true)
         for (settingsRow in groupPanel.settingsRows) {
           settingsRow.setVisible(true)
           updateMatchText(settingsRow.component, settingsRow.text, null)
         }
       }
-      nothingFoundRow.visible = false
+      nothingFoundRow.visible(false)
       return
     }
 
@@ -216,6 +210,7 @@ class AdvancedSettingsConfigurable : UiDslConfigurable.Simple(), SearchableConfi
     var matchCount = 0
 
     for (settingsGroup in settingsGroups) {
+      settingsGroup.groupRow.visible(true)
       var groupVisible = false
       if (!onlyShowModified && isMatch(filterWords, settingsGroup.title)) {
         matchCount++
@@ -241,10 +236,12 @@ class AdvancedSettingsConfigurable : UiDslConfigurable.Simple(), SearchableConfi
         }
       }
 
-      settingsGroup.panel.isVisible = groupVisible
+      if (!groupVisible) {
+        settingsGroup.groupRow.visible(false)
+      }
     }
 
-    nothingFoundRow.visible = matchCount == 0
+    nothingFoundRow.visible(matchCount == 0)
     SettingsCounterUsagesCollector.ADVANDED_SETTINGS_SEARCH.log(matchCount, searchText?.length ?: 0, onlyShowModified)
   }
 
