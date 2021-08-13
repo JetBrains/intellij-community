@@ -13,6 +13,7 @@ import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import org.intellij.plugins.markdown.MarkdownBundle
+import org.intellij.plugins.markdown.google.GoogleAuthorizedUserException
 import org.intellij.plugins.markdown.google.accounts.data.GoogleAccount
 import org.intellij.plugins.markdown.google.accounts.data.GoogleUserDetailed
 import org.intellij.plugins.markdown.google.accounts.data.GoogleUserInfo
@@ -54,6 +55,7 @@ internal class GoogleAccountsDetailsProvider(
       loadDetails(account, userInfo, indicator)
     }.exceptionally {
       when(it.cause) {
+        is GoogleAuthorizedUserException -> unauthenticatedUser()
         is UnrecognizedPropertyException -> {
           LOG.error(it.localizedMessage)
           failedToLoadInfo()
@@ -87,4 +89,7 @@ internal class GoogleAccountsDetailsProvider(
 
   private fun failedToLoadInfo() =
     DetailsLoadingResult<GoogleUserDetailed>(null, null, MarkdownBundle.message("markdown.google.accounts.failed.load.user"), true)
+
+  private fun unauthenticatedUser() =
+    DetailsLoadingResult<GoogleUserDetailed>(null, null, MarkdownBundle.message("markdown.google.accounts.user.unauthenticated.error"), true)
 }

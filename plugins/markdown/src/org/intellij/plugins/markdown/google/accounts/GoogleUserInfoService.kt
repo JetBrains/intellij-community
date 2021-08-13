@@ -10,6 +10,7 @@ import com.intellij.util.Url
 import com.intellij.util.Urls
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresEdt
+import org.intellij.plugins.markdown.google.GoogleAuthorizedUserException
 import org.intellij.plugins.markdown.google.accounts.data.GoogleUserInfo
 import org.intellij.plugins.markdown.google.utils.GoogleAccountsUtils
 import java.net.URI
@@ -39,7 +40,10 @@ internal class GoogleUserInfoService {
           throw RuntimeException("Couldn't get user data")
         }
         else {
-          throw RuntimeException(responseTree.get("error").get("status").asText())
+          when (responseTree.get("error").get("code").asInt()) {
+            401 -> throw GoogleAuthorizedUserException()
+            else -> throw RuntimeException(responseTree.get("error").get("status").asText())
+          }
         }
       }
     }

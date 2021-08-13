@@ -2,22 +2,15 @@
 package org.intellij.plugins.markdown.fileActions.utils
 
 import com.google.api.client.auth.oauth2.Credential
-import com.google.api.client.googleapis.json.GoogleJsonResponseException
-import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.progress.ProgressManager
+import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.ThrowableComputable
-import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import org.intellij.plugins.markdown.MarkdownBundle
-import org.intellij.plugins.markdown.MarkdownNotifier
 import org.intellij.plugins.markdown.fileActions.importFrom.docx.MarkdownImportDocxDialog
 import org.intellij.plugins.markdown.fileActions.importFrom.googleDocs.GoogleDocsFileLoader
 import java.io.File
 
 object GoogleDocsImportUtils {
-  private val LOG = logger<GoogleDocsImportUtils>()
   private const val docsUrlPrefix = "https://docs.google.com/document/d/"
   private const val docsUrlSuffix = "/edit"
 
@@ -29,42 +22,12 @@ object GoogleDocsImportUtils {
 
   @RequiresEdt
   fun importGoogleDoc(project: Project, credential: Credential, docsId: String, suggestedFilePath: String = project.basePath!!) {
-    var loadedFile: VirtualFile? = null
+    val loadedFile = service<GoogleDocsFileLoader>().loadFileFromGoogleDisk(project, credential, docsId) ?: return
 
-    try {
-      loadedFile = ProgressManager.getInstance().runProcessWithProgressSynchronously(ThrowableComputable {
-        GoogleDocsFileLoader().loadFile(credential, docsId)
-      }, MarkdownBundle.message("markdown.google.load.file.progress.title"), true, project)
+    val importTaskTitle = MarkdownBundle.message("markdown.google.docs.import.task.title")
+    val importDialogTitle = MarkdownBundle.message("markdown.google.docs.import.dialog.title")
+    val fullFilePath = File(suggestedFilePath, loadedFile.name).path
 
-      val importTaskTitle = MarkdownBundle.message("markdown.google.docs.import.task.title")
-      val importDialogTitle = MarkdownBundle.message("markdown.google.docs.import.dialog.title")
-      val fullFilePath = File(suggestedFilePath, loadedFile.name).path
-
-      MarkdownImportDocxDialog(loadedFile, importTaskTitle, importDialogTitle, project, fullFilePath).show()
-    }
-    catch (e: GoogleJsonResponseException) {
-      if (e.statusCode == 404) handleNotFoundError(project)
-      else LOG.error(e.localizedMessage)
-    }
-    finally {
-      ApplicationManager.getApplication().runWriteAction {
-        if (loadedFile != null && loadedFile.exists()) {
-          loadedFile.delete(this)
-        }
-      }
-    }
-  }
-
-  private fun handleNotFoundError(project: Project) {
-    MarkdownNotifier.showErrorNotification(
-      project,
-      msg = MarkdownBundle.message("markdown.google.file.download.error.msg"),
-      title = MarkdownBundle.message("markdown.google.file.download.error.title")
-    )
-
-    LOG.error(
-      MarkdownBundle.message("markdown.google.file.download.error.title"),
-      MarkdownBundle.message("markdown.google.file.download.error.msg")
-    )
+    MarkdownImportDocxDialog(loadedFile, importTaskTitle, importDialogTitle, project, fullFilePath).show()
   }
 }
