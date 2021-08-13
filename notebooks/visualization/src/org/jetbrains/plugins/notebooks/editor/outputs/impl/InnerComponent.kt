@@ -111,7 +111,7 @@ internal class InnerComponent(private val editor: EditorImpl) : JPanel() {
       }
     }
 
-  private var JComponent.layoutConstraints: Constraint? by SwingClientProperty()
+  private var JComponent.layoutConstraints: Constraint? by SwingClientProperty("layoutConstraints")
 
   companion object {
     private val LOG = logger<InnerComponent>()

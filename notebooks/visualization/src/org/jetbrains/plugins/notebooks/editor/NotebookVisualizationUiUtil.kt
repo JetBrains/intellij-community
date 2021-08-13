@@ -134,11 +134,17 @@ fun MutableList<IntRange>.mergeAndJoinIntersections(other: List<IntRange>) {
   }
 }
 
-class SwingClientProperty<T, R: T?> {
+class SwingClientProperty<T, R: T?>(name: String) {
+  class Name(private val name: String) {
+    override fun toString(): String = "Name($name)"
+  }
+
+  private val name = Name(name)
+
   operator fun getValue(thisRef: JComponent, property: KProperty<*>): R =
-    @Suppress("UNCHECKED_CAST") (thisRef.getClientProperty(property) as R)
+    @Suppress("UNCHECKED_CAST") (thisRef.getClientProperty(name) as R)
 
   operator fun setValue(thisRef: JComponent, property: KProperty<*>, value: R) {
-    thisRef.putClientProperty(property, value)
+    thisRef.putClientProperty(name, value)
   }
 }

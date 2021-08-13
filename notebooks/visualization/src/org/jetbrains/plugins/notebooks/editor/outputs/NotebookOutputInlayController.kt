@@ -305,4 +305,4 @@ private fun <A, B> Iterator<A>.zip(other: Iterator<B>): Iterator<Pair<A, B>> = o
   override fun next(): Pair<A, B> = this@zip.next() to other.next()
 }
 
-private var JComponent.outputComponentFactory: NotebookOutputComponentFactory<*, *>? by SwingClientProperty()
+private var JComponent.outputComponentFactory: NotebookOutputComponentFactory<*, *>? by SwingClientProperty("outputComponentFactory")
