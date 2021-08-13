@@ -36,10 +36,41 @@ internal class SettingsSyncSettings : SimplePersistentStateComponent<SettingsSyn
     }
   }
 
+  fun isSubcategoryEnabled(category: ComponentCategory, subcategoryId : String): Boolean {
+    val disabled = state.disabledSubcategories[category]
+    return disabled == null || !disabled.contains(subcategoryId)
+  }
+
+  fun setSubcategoryEnabled(category: ComponentCategory, subcategoryId: String, isEnabled : Boolean) {
+    val disabledList = state.disabledSubcategories[category]
+    if (isEnabled) {
+      if (disabledList != null) {
+        disabledList.remove(subcategoryId)
+        if (disabledList.isEmpty()) {
+          state.disabledSubcategories.remove(category)
+        }
+      }
+    }
+    else {
+      if (disabledList == null) {
+        val newList = ArrayList<String>()
+        newList.add(subcategoryId)
+        state.disabledSubcategories.put(category, newList)
+      }
+      else {
+        if (!disabledList.contains(subcategoryId)) {
+          disabledList.add(subcategoryId)
+          Collections.sort(disabledList)
+        }
+      }
+    }
+  }
+
   class SettingsSyncSettingsState : BaseState() {
     var syncEnabled by property(false)
 
     var disabledCategories by list<ComponentCategory>()
+    var disabledSubcategories by map<ComponentCategory,ArrayList<String>>()
   }
 
   interface Listener : EventListener {

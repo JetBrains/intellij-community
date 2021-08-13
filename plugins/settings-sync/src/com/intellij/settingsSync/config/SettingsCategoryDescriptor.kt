@@ -5,9 +5,11 @@ import com.intellij.openapi.components.ComponentCategory.*
 import com.intellij.settingsSync.SettingsSyncBundle.message
 import com.intellij.settingsSync.SettingsSyncSettings
 import org.jetbrains.annotations.Nls
+import java.util.*
 
 internal class SettingsCategoryDescriptor(
-  private val category : ComponentCategory
+  private val category : ComponentCategory,
+  val secondaryGroup: SettingsSyncSubcategoryGroup? = null
 ) {
 
   companion object {
@@ -15,7 +17,7 @@ internal class SettingsCategoryDescriptor(
       SettingsCategoryDescriptor(UI),
       SettingsCategoryDescriptor(KEYMAP),
       SettingsCategoryDescriptor(CODE),
-      SettingsCategoryDescriptor(PLUGINS),
+      SettingsCategoryDescriptor(PLUGINS, SettingsSyncPluginsGroup()),
       SettingsCategoryDescriptor(TOOLS),
       SettingsCategoryDescriptor(SYSTEM),
     )
@@ -29,13 +31,32 @@ internal class SettingsCategoryDescriptor(
 
   fun reset() {
     isSynchronized = SettingsSyncSettings.getInstance().isCategoryEnabled(category)
+    if (secondaryGroup != null) {
+      secondaryGroup.getDescriptors().forEach {
+        it.isSelected = isSynchronized && SettingsSyncSettings.getInstance().isSubcategoryEnabled(category, it.id)
+      }
+    }
   }
 
   fun apply() {
+    if (secondaryGroup != null) {
+      secondaryGroup.getDescriptors().forEach {
+        // !isSynchronized not store disabled states individually
+        SettingsSyncSettings.getInstance().setSubcategoryEnabled(category, it.id, !isSynchronized || it.isSelected)
+      }
+    }
     SettingsSyncSettings.getInstance().setCategoryEnabled(category, isSynchronized)
   }
 
-  fun isModified() : Boolean = isSynchronized != SettingsSyncSettings.getInstance().isCategoryEnabled(category)
+  fun isModified() : Boolean {
+    if (isSynchronized != SettingsSyncSettings.getInstance().isCategoryEnabled(category)) return true
+    if (secondaryGroup != null && isSynchronized) {
+      secondaryGroup.getDescriptors().forEach {
+        if (it.isSelected != SettingsSyncSettings.getInstance().isSubcategoryEnabled(category, it.id)) return true
+      }
+    }
+    return false
+  }
 
 
   val name: @Nls String
@@ -50,6 +71,6 @@ internal class SettingsCategoryDescriptor(
 
   private val categoryKey: String
     get() {
-      return "settings.category." + category.name.toLowerCase()
+      return "settings.category." + category.name.lowercase(Locale.getDefault())
     }
 }
