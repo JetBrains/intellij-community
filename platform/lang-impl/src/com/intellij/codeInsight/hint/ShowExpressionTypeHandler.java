@@ -28,11 +28,13 @@ import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
 import com.intellij.util.ui.accessibility.AccessibleContextUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
 import java.util.*;
+import java.util.concurrent.Callable;
 import java.util.function.Function;
 
 public class ShowExpressionTypeHandler implements CodeInsightActionHandler {
@@ -92,12 +94,12 @@ public class ShowExpressionTypeHandler implements CodeInsightActionHandler {
     }
   }
 
-  private void displayHint(@NotNull PsiElement expression, @NotNull Function<PsiElement, String> hintGetter,
+  private void displayHint(@NotNull PsiElement expression, @NotNull Function<PsiElement, @Nls String> hintGetter,
                            @NotNull DisplayedTypeInfo typeInfo) {
-    ReadAction.nonBlocking(() -> hintGetter.apply(expression))
+    Callable<@Nls String> getHintAction = () -> hintGetter.apply(expression);
+    ReadAction.nonBlocking(getHintAction)
       .finishOnUiThread(ModalityState.any(), hint -> {
         HintManager.getInstance().setRequestFocusForNextHint(myRequestFocus);
-        // noinspection HardCodedStringLiteral
         typeInfo.showHint(hint);
       })
       .submit(AppExecutorUtil.getAppExecutorService());
