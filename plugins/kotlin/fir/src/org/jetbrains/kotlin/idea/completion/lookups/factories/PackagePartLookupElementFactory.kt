@@ -27,7 +27,7 @@ internal class PackagePartLookupElementFactory {
 }
 
 
-private data class PackagePartLookupObject(
+internal data class PackagePartLookupObject(
     override val shortName: Name,
 ) : KotlinLookupObject
 
