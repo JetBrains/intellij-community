@@ -60,6 +60,6 @@ public class ImageDocumentationProvider extends AbstractDocumentationProvider {
       }
     }
 
-    return "";
+    return null;
   }
 }
