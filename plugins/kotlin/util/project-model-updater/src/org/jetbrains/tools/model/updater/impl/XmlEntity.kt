@@ -47,10 +47,10 @@ class XmlTag(
         ).joinToString(" ")
         return if (children.any { it is XmlTag && !it.isEmpty() }) {
             """
-        |<$tagNameWithAttrs>
-        |  ${children.joinToString("\n") { it.generateXml() }}
-        |</$tagName>
-      """.trimMarginWithInterpolations()
+                |<$tagNameWithAttrs>
+                |  ${children.joinToString("\n") { it.generateXml() }}
+                |</$tagName>
+            """.trimMarginWithInterpolations()
         } else {
             "<$tagNameWithAttrs />"
         }
