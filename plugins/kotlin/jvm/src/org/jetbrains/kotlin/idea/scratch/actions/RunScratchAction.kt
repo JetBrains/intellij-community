@@ -11,7 +11,6 @@ import com.intellij.task.ProjectTaskManager
 import org.jetbrains.kotlin.idea.KotlinJvmBundle
 import org.jetbrains.kotlin.idea.scratch.ScratchFile
 import org.jetbrains.kotlin.idea.scratch.SequentialScratchExecutor
-import org.jetbrains.kotlin.idea.scratch.getScratchFileFromSelectedEditor
 import org.jetbrains.kotlin.idea.scratch.printDebugMessage
 import org.jetbrains.kotlin.idea.scratch.LOG as log
 
@@ -27,8 +26,7 @@ class RunScratchAction : ScratchAction(
     }
 
     override fun actionPerformed(e: AnActionEvent) {
-        val project = e.project ?: return
-        val scratchFile = getScratchFileFromSelectedEditor(project) ?: return
+        val scratchFile = e.currentScratchFile ?: return
 
         doAction(scratchFile, false)
     }
@@ -90,8 +88,7 @@ class RunScratchAction : ScratchAction(
             e.presentation.text = KotlinJvmBundle.message("other.scratch.file.execution.is.in.progress")
         }
 
-        val project = e.project ?: return
-        val scratchFile = getScratchFileFromSelectedEditor(project) ?: return
+        val scratchFile = e.currentScratchFile ?: return
 
         e.presentation.isVisible = !ScratchCompilationSupport.isInProgress(scratchFile)
     }

@@ -34,11 +34,6 @@ fun getScratchEditorForSelectedFile(fileManager: FileEditorManager, virtualFile:
     return editor.findScratchFileEditorWithPreview()
 }
 
-fun getScratchFileFromSelectedEditor(project: Project): ScratchFile? {
-    val editor = FileEditorManager.getInstance(project).selectedTextEditor ?: return null
-    return TextEditorProvider.getInstance().getTextEditor(editor).getScratchFile()
-}
-
 fun TextEditor.getScratchFile(): ScratchFile? {
     return findScratchFileEditorWithPreview()?.scratchFile
 }
