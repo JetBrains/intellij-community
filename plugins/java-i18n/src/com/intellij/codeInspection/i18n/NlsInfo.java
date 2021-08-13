@@ -90,25 +90,50 @@ public abstract class NlsInfo implements RestrictionInfo {
    */
   static @NotNull NlsInfo forExpression(@NotNull UExpression expression, boolean allowStringModifications) {
     expression = StringFlowUtil.goUp(expression, allowStringModifications, NlsInfoFactory.INSTANCE);
+    NlsInfo target = fromEqualityCheck(expression, allowStringModifications);
+    if (target != NlsUnspecified.UNKNOWN) return target;
+    AnnotationContext context = AnnotationContext.fromExpression(expression);
+    return fromAnnotationContext(expression.getUastParent(), context);
+  }
+
+  @NotNull
+  private static NlsInfo fromEqualityCheck(@NotNull UExpression expression, boolean allowStringModifications) {
     UElement parent = UastUtils.skipParenthesizedExprUp(expression.getUastParent());
     if (parent instanceof UCallExpression) {
       String name = ((UCallExpression)parent).getMethodName();
-      if (name != null && (name.equals("equals") || (allowStringModifications && name.equals("startsWith") || name.equals("endsWith") ||
-                                                     name.equals("equalsIgnoreCase") || name.equals("contains")))) {
+      if (name != null && (name.equals("equals") ||
+                           (allowStringModifications && name.equals("startsWith") || name.equals("endsWith") ||
+                            name.equals("equalsIgnoreCase") || name.equals("contains")))) {
         var qualifiedCall = ObjectUtils.tryCast(parent.getUastParent(), UQualifiedReferenceExpression.class);
         if (qualifiedCall != null && parent.equals(qualifiedCall.getSelector())) {
-          UExpression receiver = qualifiedCall.getReceiver();
-          if (receiver instanceof UReferenceExpression && TypeUtils.isJavaLangString(receiver.getExpressionType())) {
-            PsiElement target = ((UReferenceExpression)receiver).resolve();
-            if (target instanceof PsiVariable) {
-              return factory().fromModifierListOwner((PsiVariable)target);
-            }
-          }
+          return fromVariableReference(qualifiedCall.getReceiver());
         }
       }
     }
-    AnnotationContext context = AnnotationContext.fromExpression(expression);
-    return fromAnnotationContext(expression.getUastParent(), context);
+    if (parent instanceof UBinaryExpression) {
+      UastBinaryOperator operator = ((UBinaryExpression)parent).getOperator();
+      if (operator == UastBinaryOperator.EQUALS || operator == UastBinaryOperator.NOT_EQUALS) {
+        UExpression left = ((UBinaryExpression)parent).getLeftOperand();
+        UExpression right = ((UBinaryExpression)parent).getRightOperand();
+        if (AnnotationContext.expressionsAreEquivalent(left, expression)) {
+          return fromVariableReference(right);
+        }
+        if (AnnotationContext.expressionsAreEquivalent(right, expression)) {
+          return fromVariableReference(left);
+        }
+      }
+    }
+    return NlsUnspecified.UNKNOWN;
+  }
+
+  private static @NotNull NlsInfo fromVariableReference(UExpression receiver) {
+    if (receiver instanceof UReferenceExpression && TypeUtils.isJavaLangString(receiver.getExpressionType())) {
+      PsiElement target = ((UReferenceExpression)receiver).resolve();
+      if (target instanceof PsiVariable) {
+        return factory().fromModifierListOwner((PsiVariable)target);
+      }
+    }
+    return NlsUnspecified.UNKNOWN;
   }
 
   public static @NotNull NlsInfo forType(@NotNull PsiType type) {

@@ -554,10 +554,12 @@ class KtI18NInspectionTest : LightJavaCodeInsightFixtureTestCase() {
     val inspection = I18nInspection()
     inspection.setIgnoreForAllButNls(true)
     myFixture.enableInspections(inspection)
+    myFixture.addClass("package kotlin;public class String {public boolean startsWith(String string);}")
     myFixture.configureByText("Foo.kt", """
         import org.jetbrains.annotations.*
-        fun test(@Nls x : <warning descr="[PLATFORM_CLASS_MAPPED_TO_KOTLIN] This class shouldn't be used in Kotlin. Use kotlin.String instead.">java.lang.String</warning>) {
+        fun test(@Nls x : String) {
             if (x.startsWith(<warning descr="Hardcoded string literal: \"Hello\"">"Hello"</warning>)) {}
+            if (x == <warning descr="Hardcoded string literal: \"Hello\"">"Hello"</warning>) {}
         }
     """.trimIndent())
     myFixture.testHighlighting()
