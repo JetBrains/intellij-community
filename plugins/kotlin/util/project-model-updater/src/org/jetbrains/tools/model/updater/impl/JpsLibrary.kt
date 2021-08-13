@@ -31,16 +31,16 @@ data class JpsLibrary(
         }
         val typeXml = " type=\"repository\"".takeIf { kind is Kind.Maven } ?: ""
         return """
-      |<component name="libraryTable">
-      |  <library name="$name"$typeXml>
-      |    ${propertiesXml.generateXml()}
-      |    ${annotationsXml.generateXml()}
-      |    ${classesXml.generateXml()}
-      |    <JAVADOC />
-      |    ${sourcesXml.generateXml()}
-      |  </library>
-      |</component>
-    """.trimMarginWithInterpolations().lines().filter { it.isNotBlank() }.joinToString("\n")
+            |<component name="libraryTable">
+            |  <library name="$name"$typeXml>
+            |    ${propertiesXml.generateXml()}
+            |    ${annotationsXml.generateXml()}
+            |    ${classesXml.generateXml()}
+            |    <JAVADOC />
+            |    ${sourcesXml.generateXml()}
+            |  </library>
+            |</component>
+        """.trimMarginWithInterpolations().lines().filter { it.isNotBlank() }.joinToString("\n")
     }
 
     sealed class Kind {
