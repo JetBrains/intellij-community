@@ -598,6 +598,7 @@ public class ShelvedChangesViewManager implements Disposable {
     }
 
     @NotNull
+    @Nls
     private static String constructDeleteSuccessfullyMessage(int fileNum, int listNum, @Nullable ShelvedChangeList first) {
       String filesMessage = fileNum != 0 ? VcsBundle.message("shelve.delete.files.successful.message", fileNum) : "";
       String changelistsMessage = listNum != 0 ? VcsBundle

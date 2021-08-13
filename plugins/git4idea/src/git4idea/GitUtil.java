@@ -75,7 +75,7 @@ import static com.intellij.openapi.vcs.changes.ChangesUtil.CASE_SENSITIVE_FILE_P
  * Git utility/helper methods
  */
 public final class GitUtil {
-  public static final String DOT_GIT = ".git";
+  public static final @NonNls String DOT_GIT = ".git";
 
   /**
    * This comment char overrides the standard '#' and any other potentially defined by user via {@code core.commentChar}.

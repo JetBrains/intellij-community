@@ -383,16 +383,19 @@ class GitDeleteBranchOperation extends GitBranchOperation {
   }
 
   @NotNull
+  @Nls
   static String getRestore() {
     return GitBundle.message("action.NotificationAction.GitDeleteBranchOperation.text.restore");
   }
 
   @NotNull
+  @Nls
   static String getViewCommits() {
     return GitBundle.message("action.NotificationAction.GitDeleteBranchOperation.text.view.commits");
   }
 
   @NotNull
+  @Nls
   static String getDeleteTrackedBranch() {
     return GitBundle.message("action.NotificationAction.GitDeleteBranchOperation.text.delete.tracked.branch");
   }

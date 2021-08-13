@@ -233,7 +233,7 @@ class GithubShareAction : DumbAwareAction(GithubBundle.messagePointer("share.act
                                                  root: VirtualFile,
                                                  repository: GitRepository,
                                                  indicator: ProgressIndicator,
-                                                 @NlsSafe name: String,
+                                                 name: @NlsSafe String,
                                                  url: String): Boolean {
           // check if there is no commits
           if (!repository.isFresh) {
