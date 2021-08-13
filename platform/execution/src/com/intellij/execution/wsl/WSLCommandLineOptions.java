@@ -93,7 +93,7 @@ public final class WSLCommandLineOptions {
    */
   @SuppressWarnings("SameParameterValue")
   @ApiStatus.Experimental
-  @NotNull WSLCommandLineOptions setExecuteCommandInDefaultShell(boolean executeCommandInDefaultShell) {
+  public @NotNull WSLCommandLineOptions setExecuteCommandInDefaultShell(boolean executeCommandInDefaultShell) {
     myExecuteCommandInDefaultShell = executeCommandInDefaultShell;
     return this;
   }
