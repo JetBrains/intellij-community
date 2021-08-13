@@ -451,10 +451,12 @@
     "Lesson": {
       "shortcutBackground": "#333638",
       "stepNumberForeground": "#FEFEFE",
-      "Tooltip.background": "#0E62CF",
-      "Tooltip.spanBackground": "#0250B0",
-      "Tooltip.foreground": "#F5F5F5",
-      "Tooltip.stepNumberForeground": "#6A9DDE"
+      "Tooltip.background": "#000080",
+      "Tooltip.borderColor": "#FFFFFF",
+      "Tooltip.spanBackground": "#1AEBFF",
+      "Tooltip.spanForeground": "#000000",
+      "Tooltip.foreground": "#FFFFFF",
+      "Tooltip.stepNumberForeground": "#FFFFFF"
     },
 
     "WelcomeScreen": {

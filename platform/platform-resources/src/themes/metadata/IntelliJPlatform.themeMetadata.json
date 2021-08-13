@@ -1262,8 +1262,18 @@
       "since": "2021.2"
     },
     {
+      "key": "Lesson.Tooltip.borderColor",
+      "description": "Border color for tooltips used in lessons",
+      "since": "2021.2"
+    },
+    {
       "key": "Lesson.Tooltip.spanBackground",
       "description": "Background for buttons and shortcuts used in lesson tooltips",
+      "since": "2021.2"
+    },
+    {
+      "key": "Lesson.Tooltip.spanForeground",
+      "description": "Foreground for buttons and shortcuts used in lesson tooltips",
       "since": "2021.2"
     },
     {
