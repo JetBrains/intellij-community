@@ -1256,6 +1256,16 @@
       "since": "2021.2"
     },
     {
+      "key": "Lesson.Badge.newLessonBackground",
+      "description": "Background for badge near new modules/lessons",
+      "since": "2021.2"
+    },
+    {
+      "key": "Lesson.Badge.newLessonForeground",
+      "description": "Foreground for badge near new modules/lessons",
+      "since": "2021.2"
+    },
+    {
       "key": "ProblemsView.projectAnalysisButtonBackground",
       "description": "Background for Project-Wide analysis button when enabled",
       "since": "2021.2"
