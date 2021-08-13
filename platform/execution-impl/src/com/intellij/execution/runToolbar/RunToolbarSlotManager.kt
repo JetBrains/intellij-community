@@ -81,6 +81,8 @@ class RunToolbarSlotManager(val project: Project) {
 
   init {
     ApplicationManager.getApplication().invokeLater {
+      if(project.isDisposed) return@invokeLater
+
       slotsData[mainSlotData.id] = mainSlotData
 
       addListener(RunToolbarShortcutHelper(project))
