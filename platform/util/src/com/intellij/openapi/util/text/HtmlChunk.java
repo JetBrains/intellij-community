@@ -136,6 +136,11 @@ public abstract class HtmlChunk {
       return new Element(myTagName, myAttributes.with(name, value), myChildren);
     }
 
+    /**
+     * @param name attribute name
+     * @param value attribute value
+     * @return a new element that is like this element but has the specified attribute added or replaced
+     */
     @Contract(pure = true)
     public @NotNull Element attr(@NonNls String name, int value) {
       return new Element(myTagName, myAttributes.with(name, Integer.toString(value)), myChildren);
