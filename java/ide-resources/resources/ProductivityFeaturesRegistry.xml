@@ -28,8 +28,9 @@
         tip-file="SearchEverywhere.html"
         first-show="1"
         successive-show="1"
-        min-usage-count="1"
-        />
+        min-usage-count="1">
+      <track-action id="SearchEverywhere"/>
+    </feature>
     <feature
       id="navigation.popup.camelprefix"
       tip-file="CamelPrefixesInNavigationPopups.html"
@@ -459,8 +460,9 @@
       tip-file="RecentChanges.html"
       first-show="5"
       successive-show="5"
-      min-usage-count="1"
-      />
+      min-usage-count="1">
+      <track-action id="RecentChanges"/>
+    </feature>
     <feature
       id="ui.horizontal.scrolling"
       tip-file="HorizontalScrolling.html"
@@ -482,7 +484,9 @@
       tip-file="GoToAction.html"
       first-show="7"
       successive-show="3"
-      min-usage-count="1"/>
+      min-usage-count="1">
+      <track-action id="GotoAction"/>
+    </feature>
     <feature id="find.recent.search"
       tip-file="RecentSearch.html"
       first-show="10"
@@ -506,13 +510,17 @@
       tip-file="CreatePropertyTag.html"
       first-show="6"
       successive-show="10"
-      min-usage-count="1"/>
+      min-usage-count="1">
+      <track-intention class-name="com.intellij.lang.ant.quickfix.AntCreatePropertyFix"/>
+    </feature>
     <feature
       id="ant.quickfix.CreateTarget"
       tip-file="CreateTargetTag.html"
       first-show="6"
       successive-show="10"
-      min-usage-count="1"/>
+      min-usage-count="1">
+      <track-intention class-name="com.intellij.lang.ant.quickfix.AntCreateTargetFix"/>
+    </feature>
   </group>
   <group id="diff">
     <feature
