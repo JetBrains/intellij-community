@@ -77,6 +77,10 @@ class UnclearPrecedenceOfBinaryExpressionInspectionTest : KotlinLightCodeInsight
         "fun foo() = (1 + 2)..4"
     )
 
+    fun `test braces inside braces`() = doTest(
+        "fun foo() = ((1 + <caret>2))..4"
+    )
+
     fun `test infixFun elvis`() = doTest(
         "fun foo(a: Int?) = <warning>a ?: 1 <caret>xor 2</warning>",
         "fun foo(a: Int?) = a ?: (1 xor 2)"
