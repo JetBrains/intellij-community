@@ -555,6 +555,11 @@ public abstract class QuickFixMultiFileTestGenerated extends AbstractQuickFixMul
             runTest("testData/quickfix/autoImports/noneApplicableFromInstanceButExtension.before.Main.kt");
         }
 
+        @TestMetadata("noneApplicableOperator.before.Main.kt")
+        public void testNoneApplicableOperator() throws Exception {
+            runTest("testData/quickfix/autoImports/noneApplicableOperator.before.Main.kt");
+        }
+
         @TestMetadata("notExcludedClass.before.Main.kt")
         public void testNotExcludedClass() throws Exception {
             runTest("testData/quickfix/autoImports/notExcludedClass.before.Main.kt");
