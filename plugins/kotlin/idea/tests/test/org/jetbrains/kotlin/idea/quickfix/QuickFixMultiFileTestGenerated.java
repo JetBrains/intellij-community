@@ -555,11 +555,6 @@ public abstract class QuickFixMultiFileTestGenerated extends AbstractQuickFixMul
             runTest("testData/quickfix/autoImports/noneApplicableFromInstanceButExtension.before.Main.kt");
         }
 
-        @TestMetadata("noneApplicableOperator.before.Main.kt")
-        public void testNoneApplicableOperator() throws Exception {
-            runTest("testData/quickfix/autoImports/noneApplicableOperator.before.Main.kt");
-        }
-
         @TestMetadata("notExcludedClass.before.Main.kt")
         public void testNotExcludedClass() throws Exception {
             runTest("testData/quickfix/autoImports/notExcludedClass.before.Main.kt");
@@ -703,6 +698,11 @@ public abstract class QuickFixMultiFileTestGenerated extends AbstractQuickFixMul
             @TestMetadata("extensionImplicitReceiver.test")
             public void testExtensionImplicitReceiver() throws Exception {
                 runTest("testData/quickfix/autoImports/mismatchingArgs/extensionImplicitReceiver.test");
+            }
+
+            @TestMetadata("extensionOperator.before.Main.kt")
+            public void testExtensionOperator() throws Exception {
+                runTest("testData/quickfix/autoImports/mismatchingArgs/extensionOperator.before.Main.kt");
             }
 
             @TestMetadata("extensionWrongReceiver.test")

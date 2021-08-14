@@ -17,6 +17,8 @@ import com.intellij.psi.PsiErrorElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiModifier
 import com.intellij.psi.util.PsiModificationTracker
+import com.intellij.psi.util.elementType
+import org.jetbrains.kotlin.KtNodeTypes
 import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.diagnostics.Diagnostic
 import org.jetbrains.kotlin.diagnostics.DiagnosticFactory
@@ -59,6 +61,7 @@ import org.jetbrains.kotlin.resolve.scopes.utils.collectFunctions
 import org.jetbrains.kotlin.types.KotlinType
 import org.jetbrains.kotlin.types.typeUtil.isSubtypeOf
 import org.jetbrains.kotlin.util.OperatorNameConventions
+import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 /**
  * Check possibility and perform fix for unresolved references.
@@ -593,15 +596,14 @@ internal class ImportForMismatchingArgumentsFix(
 
     override fun elementsToCheckDiagnostics(): Collection<PsiElement> {
         val element = element ?: return emptyList()
-        val callExpression = element.parent as? KtCallExpression ?: return emptyList()
-        return callExpression.valueArguments +
-                callExpression.valueArguments.mapNotNull { it.getArgumentExpression() } +
-                callExpression.valueArguments.mapNotNull { it.getArgumentName()?.referenceExpression } +
-                listOfNotNull(
-                    callExpression.valueArgumentList,
-                    callExpression.referenceExpression(),
-                    callExpression.typeArgumentList
-                )
+        return when (val parent = element.parent) {
+            is KtCallExpression -> parent.valueArguments +
+                    parent.valueArguments.mapNotNull { it.getArgumentExpression() } +
+                    parent.valueArguments.mapNotNull { it.getArgumentName()?.referenceExpression } +
+                    listOfNotNull(parent.valueArgumentList, parent.referenceExpression(), parent.typeArgumentList)
+            is KtBinaryExpression -> listOf(element)
+            else -> emptyList()
+        }
     }
 
     override fun fillCandidates(
@@ -665,9 +667,10 @@ internal class ImportForMismatchingArgumentsFix(
 
     companion object MyFactory : Factory() {
         override fun createImportAction(diagnostic: Diagnostic): ImportForMismatchingArgumentsFix? {
-            //TODO: not only KtCallExpression
-            val callExpression = diagnostic.psiElement.getStrictParentOfType<KtCallExpression>() ?: return null
-            val nameExpression = callExpression.calleeExpression as? KtNameReferenceExpression ?: return null
+            val element = diagnostic.psiElement
+            val nameExpression = element.takeIf { it.elementType == KtNodeTypes.OPERATION_REFERENCE }.safeAs<KtSimpleNameExpression>()
+                ?: element.getStrictParentOfType<KtCallExpression>()?.calleeExpression?.safeAs<KtNameReferenceExpression>()
+                ?: return null
             return ImportForMismatchingArgumentsFix(nameExpression)
         }
     }
