@@ -9,6 +9,7 @@ import org.jetbrains.kotlin.idea.completion.context.FirNameReferencePositionCont
 import org.jetbrains.kotlin.idea.completion.contributors.helpers.insertSymbolAndInvokeCompletion
 import org.jetbrains.kotlin.idea.completion.lookups.CallableInsertionOptions
 import org.jetbrains.kotlin.idea.completion.lookups.CallableInsertionStrategy
+import org.jetbrains.kotlin.idea.completion.lookups.detectImportStrategy
 import org.jetbrains.kotlin.idea.fir.HLIndexHelper
 import org.jetbrains.kotlin.idea.frontend.api.KtAnalysisSession
 import org.jetbrains.kotlin.idea.frontend.api.components.KtExtensionApplicabilityResult
@@ -16,12 +17,12 @@ import org.jetbrains.kotlin.idea.frontend.api.components.KtScopeContext
 import org.jetbrains.kotlin.idea.frontend.api.scopes.KtCompositeScope
 import org.jetbrains.kotlin.idea.frontend.api.scopes.KtScope
 import org.jetbrains.kotlin.idea.frontend.api.symbols.*
-import org.jetbrains.kotlin.idea.frontend.api.types.KtClassType
-import org.jetbrains.kotlin.idea.frontend.api.types.KtNonErrorClassType
 import org.jetbrains.kotlin.idea.frontend.api.types.KtFunctionalType
+import org.jetbrains.kotlin.idea.frontend.api.types.KtNonErrorClassType
 import org.jetbrains.kotlin.idea.frontend.api.types.KtType
+import org.jetbrains.kotlin.load.java.JvmAbi
+import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.KtExpression
-import org.jetbrains.kotlin.idea.completion.lookups.detectImportStrategy
 
 internal open class FirCallableCompletionContributor(
     basicContext: FirBasicCompletionContext,
@@ -187,11 +188,20 @@ internal open class FirCallableCompletionContributor(
             .filter { with(extensionChecker) { isApplicable(it).isApplicable } }
     }
 
-    private fun KtAnalysisSession.collectNonExtensions(scope: KtScope, visibilityChecker: CompletionVisibilityChecker) =
-        scope.getCallableSymbols(scopeNameFilter)
+    private fun KtAnalysisSession.collectNonExtensions(
+        scope: KtScope,
+        visibilityChecker: CompletionVisibilityChecker
+    ): Sequence<KtCallableSymbol> {
+        return scope.getCallableSymbols { name ->
+            listOfNotNull(name, name.toJavaGetterName(), name.toJavaSetterName()).any(scopeNameFilter)
+        }
             .filterNot { it.isExtension }
             .filter { filter(it) }
             .filter { with(visibilityChecker) { isVisible(it) } }
+    }
+
+    private fun Name.toJavaGetterName(): Name? = identifierOrNullIfSpecial?.let { Name.identifier(JvmAbi.getterName(it)) }
+    private fun Name.toJavaSetterName(): Name? = identifierOrNullIfSpecial?.let { Name.identifier(JvmAbi.setterName(it)) }
 
     private fun KtAnalysisSession.collectSuitableExtensions(
         scope: KtCompositeScope,

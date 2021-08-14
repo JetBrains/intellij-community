@@ -14,6 +14,7 @@ import org.jetbrains.kotlin.idea.completion.lookups.TailTextProvider.insertLambd
 import org.jetbrains.kotlin.idea.core.withRootPrefixIfNeeded
 import org.jetbrains.kotlin.idea.frontend.api.KtAnalysisSession
 import org.jetbrains.kotlin.idea.frontend.api.components.KtTypeRendererOptions
+import org.jetbrains.kotlin.idea.frontend.api.symbols.KtPropertySymbol
 import org.jetbrains.kotlin.idea.frontend.api.symbols.KtSyntheticJavaPropertySymbol
 import org.jetbrains.kotlin.idea.frontend.api.symbols.KtVariableLikeSymbol
 import org.jetbrains.kotlin.idea.frontend.api.types.KtFunctionalType
@@ -27,7 +28,7 @@ internal class VariableLookupElementFactory {
         options: CallableInsertionOptions,
     ): LookupElementBuilder {
         val rendered = renderVariable(symbol)
-        val builder = when (options.insertionStrategy) {
+        var builder = when (options.insertionStrategy) {
             CallableInsertionStrategy.AsCall -> {
                 val functionalType = symbol.annotatedType.type as KtFunctionalType
                 val lookupObject = FunctionCallLookupObject(
@@ -58,6 +59,11 @@ internal class VariableLookupElementFactory {
                 )
                     .withInsertHandler(VariableInsertionHandler)
             }
+        }
+
+        if (symbol is KtPropertySymbol) {
+            builder = builder.withLookupString(symbol.javaGetterName.asString())
+            symbol.javaSetterName?.let { builder = builder.withLookupString(it.asString()) }
         }
 
         return withSymbolInfo(symbol, builder)
