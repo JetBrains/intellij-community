@@ -47,7 +47,7 @@ public class EditorSettingsExternalizable implements PersistentStateComponent<Ed
     public String LINE_SEPARATOR;
     public String USE_SOFT_WRAPS;
     public String SOFT_WRAP_FILE_MASKS;
-    public boolean USE_CUSTOM_SOFT_WRAP_INDENT = false;
+    public boolean USE_CUSTOM_SOFT_WRAP_INDENT = true;
     public int CUSTOM_SOFT_WRAP_INDENT = 0;
     public boolean IS_VIRTUAL_SPACE = false;
     public boolean IS_CARET_INSIDE_TABS;
