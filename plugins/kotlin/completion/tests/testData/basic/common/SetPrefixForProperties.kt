@@ -1,3 +1,4 @@
+// FIR_COMPARISON
 class C {
     val property1: Int = 0
     var property2: Int = 0
