@@ -6,12 +6,14 @@ import com.intellij.ui.dsl.SpacingConfiguration
 import com.intellij.util.SmartList
 import com.intellij.util.ui.JBUI
 import org.jetbrains.annotations.ApiStatus
+import javax.swing.ButtonGroup
 import javax.swing.JComponent
 
 @ApiStatus.Experimental
 internal class DialogPanelConfig {
 
   val spacing = createIntelliJSpacingConfiguration()
+  val context = Context()
 
   var componentValidateCallbacks: MutableMap<JComponent, () -> ValidationInfo?> = linkedMapOf()
   var customValidationRequestors: MutableMap<JComponent, MutableList<(() -> Unit) -> Unit>> = linkedMapOf()
@@ -36,5 +38,22 @@ private fun createIntelliJSpacingConfiguration(): SpacingConfiguration {
     override val verticalComponentGap = JBUI.scale(6)
     override val verticalCommentBottomGap = JBUI.scale(6)
     override val verticalGroupTopGap = JBUI.scale(20)
+  }
+}
+
+class Context {
+
+  private val buttonGroupsStack: MutableList<ButtonGroup> = mutableListOf()
+
+  fun addButtonGroup(buttonGroup: ButtonGroup) {
+    buttonGroupsStack.add(buttonGroup)
+  }
+
+  fun getButtonGroup(): ButtonGroup? {
+    return buttonGroupsStack.lastOrNull()
+  }
+
+  fun removeLastButtonGroup() {
+    buttonGroupsStack.removeLast()
   }
 }

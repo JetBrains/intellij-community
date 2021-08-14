@@ -5,15 +5,20 @@ import com.intellij.BundleBase
 import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.impl.ActionButton
+import com.intellij.openapi.fileChooser.FileChooserDescriptor
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.ComboBox
+import com.intellij.openapi.ui.TextFieldWithBrowseButton
 import com.intellij.openapi.ui.panel.ComponentPanelBuilder
 import com.intellij.openapi.util.NlsContexts
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.SimpleListCellRenderer
 import com.intellij.ui.UIBundle
-import com.intellij.ui.components.JBCheckBox
-import com.intellij.ui.components.JBTextField
-import com.intellij.ui.components.Label
+import com.intellij.ui.components.*
 import com.intellij.ui.dsl.*
+import com.intellij.ui.dsl.Cell
+import com.intellij.ui.dsl.Row
+import com.intellij.ui.layout.*
 import com.intellij.util.MathUtil
 import org.jetbrains.annotations.ApiStatus
 import java.awt.Dimension
@@ -24,7 +29,7 @@ import javax.swing.*
 
 @ApiStatus.Experimental
 internal class RowImpl(private val dialogPanelConfig: DialogPanelConfig,
-                       private val indentCount: Int,
+                       panelContext: PanelContext,
                        val label: JLabel? = null) : Row {
 
   var rowLayout = if (label == null) RowLayout.INDEPENDENT else RowLayout.LABEL_ALIGNED
@@ -40,6 +45,7 @@ internal class RowImpl(private val dialogPanelConfig: DialogPanelConfig,
     get() = _cells
 
   private val _cells = mutableListOf<CellBaseImpl<*>>()
+  private val indentCount = panelContext.indentCount
 
   init {
     label?.let { cell(it) }
@@ -58,7 +64,29 @@ internal class RowImpl(private val dialogPanelConfig: DialogPanelConfig,
   override fun <T : JComponent> cell(component: T): CellImpl<T> {
     val result = CellImpl(dialogPanelConfig, component)
     _cells.add(result)
+
+    if (component is JRadioButton) {
+      dialogPanelConfig.context.getButtonGroup()?.add(component)
+    }
+
     return result
+  }
+
+  override fun enabled(isEnabled: Boolean): RowImpl {
+    _cells.forEach {
+      when (it) {
+        is CellImpl<*> -> it.enabledFromParent(isEnabled)
+        is PanelImpl -> it.enabled(isEnabled)
+      }
+    }
+    comment?.let { it.isEnabled = isEnabled }
+    return this
+  }
+
+  override fun enabledIf(predicate: ComponentPredicate): RowImpl {
+    enabled(predicate())
+    predicate.addListener { enabled(it) }
+    return this
   }
 
   override fun visible(isVisible: Boolean): RowImpl {
@@ -84,8 +112,22 @@ internal class RowImpl(private val dialogPanelConfig: DialogPanelConfig,
     return result
   }
 
+  override fun buttonGroup(init: Row.() -> Unit) {
+    dialogPanelConfig.context.addButtonGroup(ButtonGroup())
+    try {
+      init()
+    }
+    finally {
+      dialogPanelConfig.context.removeLastButtonGroup()
+    }
+  }
+
   override fun checkBox(@NlsContexts.Checkbox text: String): CellImpl<JBCheckBox> {
     return cell(JBCheckBox(text))
+  }
+
+  override fun radioButton(text: String): Cell<JBRadioButton> {
+    return cell(JBRadioButton(text))
   }
 
   override fun button(@NlsContexts.Button text: String, actionListener: (event: ActionEvent) -> Unit): CellImpl<JButton> {
@@ -103,12 +145,24 @@ internal class RowImpl(private val dialogPanelConfig: DialogPanelConfig,
     return cell(Label(text))
   }
 
-  override fun textField(columns: Int): CellImpl<JBTextField> {
-    return cell(JBTextField(columns))
+  override fun browserLink(text: String, url: String): Cell<BrowserLink> {
+    return cell(BrowserLink(text, url))
   }
 
-  override fun intTextField(columns: Int, range: IntRange?, keyboardStep: Int?): CellImpl<JBTextField> {
-    val result = textField(columns)
+  override fun textField(): CellImpl<JBTextField> {
+    return cell(JBTextField())
+  }
+
+  override fun textFieldWithBrowseButton(browseDialogTitle: String?,
+                                         project: Project?,
+                                         fileChooserDescriptor: FileChooserDescriptor,
+                                         fileChosen: ((chosenFile: VirtualFile) -> String)?): Cell<TextFieldWithBrowseButton> {
+    val result = textFieldWithBrowseButton(project, browseDialogTitle, fileChooserDescriptor, fileChosen)
+    return cell(result)
+  }
+
+  override fun intTextField(range: IntRange?, keyboardStep: Int?): CellImpl<JBTextField> {
+    val result = textField()
       .onValidationOnInput {
         val value = it.text.toIntOrNull()
         when {

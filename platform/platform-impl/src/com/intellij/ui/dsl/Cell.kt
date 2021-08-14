@@ -10,8 +10,11 @@ import java.awt.event.ActionEvent
 import java.awt.event.ActionListener
 import javax.swing.AbstractButton
 import javax.swing.JComponent
+import javax.swing.JTextField
 import javax.swing.text.JTextComponent
 import kotlin.reflect.KMutableProperty0
+
+const val COLUMNS_LARGE = 25
 
 internal const val DSL_INT_TEXT_RANGE_PROPERTY = "dsl.intText.range"
 
@@ -32,12 +35,10 @@ interface Cell<out T : JComponent> : CellBase<Cell<T>> {
 
   fun applyToComponent(task: T.() -> Unit): Cell<T>
 
-  fun enabled(isEnabled: Boolean): Cell<T>
+  override fun enabled(isEnabled: Boolean): Cell<T>
 
-  /**
-   * Sets visibility for all components inside cell including comment [Cell.comment]. If parent row is invisible
-   * than the cell keeps invisibility until the row becomes visible
-   */
+  fun enableIf(predicate: ComponentPredicate): Cell<T>
+
   override fun visible(isVisible: Boolean): Cell<T>
 
   fun visibleIf(predicate: ComponentPredicate): Cell<T>
@@ -48,9 +49,16 @@ interface Cell<out T : JComponent> : CellBase<Cell<T>> {
   fun applyIfEnabled(): Cell<T>
 
   fun <V> bind(componentGet: (T) -> V, componentSet: (T, V) -> Unit, binding: PropertyBinding<V>): Cell<T>
+
+  fun onApply(callback: () -> Unit): Cell<T>
+
+  fun onReset(callback: () -> Unit): Cell<T>
+
+  fun onIsModified(callback: () -> Boolean): Cell<T>
 }
 
 fun <T : AbstractButton> Cell<T>.bindSelected(binding: PropertyBinding<Boolean>): Cell<T> {
+  component.isSelected = binding.get()
   return bind(AbstractButton::isSelected, AbstractButton::setSelected, binding)
 }
 
@@ -66,6 +74,9 @@ fun <T : AbstractButton> Cell<T>.actionListener(actionListener: (event: ActionEv
   component.addActionListener(ActionListener { actionListener(it, component) })
   return this
 }
+
+val Cell<AbstractButton>.selected
+  get() = component.selected
 
 fun <T : JTextComponent> Cell<T>.bindText(binding: PropertyBinding<String>): Cell<T> {
   component.text = binding.get()
@@ -83,11 +94,11 @@ fun <T : JTextComponent> Cell<T>.bindText(getter: () -> String, setter: (String)
 fun <T : JTextComponent> Cell<T>.bindIntText(binding: PropertyBinding<Int>): Cell<T> {
   val range = component.getClientProperty(DSL_INT_TEXT_RANGE_PROPERTY) as? IntRange
   return bindText({ binding.get().toString() },
-                  { value ->
-                    value.toIntOrNull()?.let { intValue ->
-                      binding.set(range?.let { intValue.coerceIn(it.first, it.last) } ?: intValue)
-                    }
-                  })
+    { value ->
+      value.toIntOrNull()?.let { intValue ->
+        binding.set(range?.let { intValue.coerceIn(it.first, it.last) } ?: intValue)
+      }
+    })
 }
 
 fun <T : JTextComponent> Cell<T>.bindIntText(prop: KMutableProperty0<Int>): Cell<T> {
@@ -98,11 +109,16 @@ fun <T : JTextComponent> Cell<T>.bindIntText(getter: () -> Int, setter: (Int) ->
   return bindIntText(PropertyBinding(getter, setter))
 }
 
+fun <T : JTextField> Cell<T>.columns(columns: Int): Cell<T> {
+  component.columns = columns
+  return this
+}
+
 fun <T> Cell<ComboBox<T>>.bindItem(binding: PropertyBinding<T?>): Cell<ComboBox<T>> {
   component.selectedItem = binding.get()
   return bind({ component -> component.selectedItem as T? },
-              { component, value -> component.setSelectedItem(value) },
-              binding)
+    { component, value -> component.setSelectedItem(value) },
+    binding)
 }
 
 /* todo

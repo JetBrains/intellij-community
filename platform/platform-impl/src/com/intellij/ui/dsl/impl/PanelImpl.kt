@@ -35,12 +35,17 @@ internal class PanelImpl(private val dialogPanelConfig: DialogPanelConfig) : Cel
   /**
    * Number of [SpacingConfiguration.horizontalIndent] indents before each row in the panel
    */
-  private var indentCount = 0
+  private var panelContext = PanelContext()
 
   private val rows = mutableListOf<RowImpl>()
 
+  override fun enabled(isEnabled: Boolean): PanelImpl {
+    rows.forEach { it.enabled(isEnabled) }
+    return this
+  }
+
   override fun row(label: JLabel?, init: Row.() -> Unit): RowImpl {
-    val result = RowImpl(dialogPanelConfig, indentCount, label)
+    val result = RowImpl(dialogPanelConfig, panelContext, label)
     result.init()
     rows.add(result)
     return result
@@ -65,7 +70,7 @@ internal class PanelImpl(private val dialogPanelConfig: DialogPanelConfig) : Cel
     }
 
     // todo
-    return RowImpl(dialogPanelConfig, indentCount)
+    return RowImpl(dialogPanelConfig, panelContext)
   }
 
   override fun visible(isVisible: Boolean): PanelImpl {
@@ -117,7 +122,7 @@ internal class PanelImpl(private val dialogPanelConfig: DialogPanelConfig) : Cel
       when (row.rowLayout) {
         RowLayout.INDEPENDENT -> {
           val subGrid = rowsGridBuilder.subGrid(width = maxColumnsCount, horizontalAlign = HorizontalAlign.FILL,
-                                                verticalAlign = VerticalAlign.FILL, gaps = Gaps(left = row.getIndent()))
+            verticalAlign = VerticalAlign.FILL, gaps = Gaps(left = row.getIndent()))
           val subGridBuilder = RowsGridBuilder(panel, subGrid)
           val cells = row.cells
           buildRow(cells, row.label != null, 0, cells.size, panel, subGridBuilder)
@@ -133,7 +138,7 @@ internal class PanelImpl(private val dialogPanelConfig: DialogPanelConfig) : Cel
 
           if (row.cells.size > 1) {
             val subGrid = rowsGridBuilder.subGrid(width = maxColumnsCount - 1, horizontalAlign = HorizontalAlign.FILL,
-                                                  verticalAlign = VerticalAlign.FILL)
+              verticalAlign = VerticalAlign.FILL)
             val subGridBuilder = RowsGridBuilder(panel, subGrid)
             val cells = row.cells.subList(1, row.cells.size)
             buildRow(cells, false, 0, cells.size, panel, subGridBuilder)
@@ -173,9 +178,13 @@ internal class PanelImpl(private val dialogPanelConfig: DialogPanelConfig) : Cel
   }
 
   override fun indent(init: Panel.() -> Unit): Panel {
-    indentCount++
-    this.init()
-    indentCount--
+    panelContext.indentCount++
+    try {
+      this.init()
+    }
+    finally {
+      panelContext.indentCount--
+    }
     return this
   }
 
@@ -210,14 +219,14 @@ internal class PanelImpl(private val dialogPanelConfig: DialogPanelConfig) : Cel
         val verticalGap = getDefaultVerticalGap(cell.component)
         val gaps = Gaps(top = verticalGap, left = leftGap, bottom = verticalGap, right = rightGap)
         builder.cell(cell.component, width = width, horizontalAlign = cell.horizontalAlign, verticalAlign = cell.verticalAlign,
-                     resizableColumn = cell.resizableColumn,
-                     gaps = gaps, visualPaddings = visualPaddings)
+          resizableColumn = cell.resizableColumn,
+          gaps = gaps, visualPaddings = visualPaddings)
       }
       is PanelImpl -> {
         // todo visualPaddings
         val gaps = Gaps(left = leftGap, right = rightGap)
         val subGrid = builder.subGrid(width = width, horizontalAlign = cell.horizontalAlign, verticalAlign = cell.verticalAlign,
-                                      gaps = gaps)
+          gaps = gaps)
 
         cell.build(panel, subGrid)
       }
@@ -312,3 +321,9 @@ internal class PanelImpl(private val dialogPanelConfig: DialogPanelConfig) : Cel
     return result
   }
 }
+
+class PanelContext(
+  /**
+   * Number of [SpacingConfiguration.horizontalIndent] indents before each row in the panel
+   */
+  var indentCount: Int = 0)

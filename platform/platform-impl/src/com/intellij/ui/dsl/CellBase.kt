@@ -15,16 +15,24 @@ enum class RightGap {
 }
 
 @DslMarker
-private annotation class CellBuilderMarker
+private annotation class CellBaseMarker
 
 /**
  * Common API for cells
  */
 @ApiStatus.Experimental
-@CellBuilderMarker
+@CellBaseMarker
 interface CellBase<out T : CellBase<T>> {
 
+  /**
+   * Sets visibility for all components inside cell. Invisible state for all components is kept until the cell becomes visible again
+   */
   fun visible(isVisible: Boolean): CellBase<T>
+
+  /**
+   * Sets enabled state for all components inside cell. Disabled state for all components is kept until the cell becomes enabled again
+   */
+  fun enabled(isEnabled: Boolean): CellBase<T>
 
   fun horizontalAlign(horizontalAlign: HorizontalAlign): CellBase<T>
 

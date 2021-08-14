@@ -9,6 +9,7 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.ui.components.JBTabbedPane
 import com.intellij.ui.dsl.Cell
 import com.intellij.ui.dsl.RowLayout
+import com.intellij.ui.dsl.columns
 import com.intellij.ui.dsl.gridLayout.HorizontalAlign
 import com.intellij.ui.dsl.panel
 import java.awt.Dimension
@@ -52,7 +53,8 @@ private class UiDslDemoDialog(project: Project?) : DialogWrapper(project, null, 
   fun createTextFields(): JPanel {
     val result = panel {
       row("Text field 1:") {
-        textField(columns = 10)
+        textField()
+          .columns(10)
           .comment("columns = 10")
       }
       row("Text field 2:") {
@@ -61,7 +63,8 @@ private class UiDslDemoDialog(project: Project?) : DialogWrapper(project, null, 
           .comment("horizontalAlign(HorizontalAlign.FILL)")
       }
       row("Int text field 1:") {
-        intTextField(columns = 10)
+        intTextField()
+          .columns(10)
           .comment("columns = 10")
       }
       row("Int text field 2:") {

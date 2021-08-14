@@ -7,10 +7,14 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import javax.swing.JLabel
 
+@DslMarker
+private annotation class RootPanelMarker
+
 /**
  * Root panel, does not provide cell related methods
  */
 @ApiStatus.Experimental
+@RootPanelMarker
 interface RootPanel {
 
   fun row(@Nls label: String, init: Row.() -> Unit): Row {

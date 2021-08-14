@@ -4,15 +4,24 @@ package com.intellij.ui.dsl
 import com.intellij.openapi.actionSystem.ActionToolbar
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.impl.ActionButton
+import com.intellij.openapi.fileChooser.FileChooserDescriptor
+import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.ComboBox
+import com.intellij.openapi.ui.TextFieldWithBrowseButton
 import com.intellij.openapi.ui.panel.ComponentPanelBuilder
 import com.intellij.openapi.util.NlsContexts
+import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.ui.components.BrowserLink
 import com.intellij.ui.components.JBCheckBox
+import com.intellij.ui.components.JBRadioButton
 import com.intellij.ui.components.JBTextField
+import com.intellij.ui.layout.*
 import org.jetbrains.annotations.ApiStatus
 import java.awt.Dimension
 import java.awt.event.ActionEvent
 import javax.swing.*
+import kotlin.reflect.KMutableProperty0
 
 /**
  * Determines relation between row grid and parent's grid
@@ -46,10 +55,10 @@ enum class TopGap {
 }
 
 @DslMarker
-private annotation class RowBuilderMarker
+private annotation class RowMarker
 
 @ApiStatus.Experimental
-@RowBuilderMarker
+@RowMarker
 interface Row {
 
   /**
@@ -65,9 +74,17 @@ interface Row {
 
   /**
    * Sets visibility for all components inside row including comment [Row.comment].
-   * See also [Cell.visible] description
+   * See also [CellBase.visible] description
    */
   fun visible(isVisible: Boolean): Row
+
+  /**
+   * Sets enabled state for all components inside row including comment [Row.comment].
+   * See also [CellBase.enabled] description
+   */
+  fun enabled(isEnabled: Boolean): Row
+
+  fun enabledIf(predicate: ComponentPredicate): Row
 
   fun gap(topGap: TopGap): Row
 
@@ -76,7 +93,11 @@ interface Row {
    */
   fun panel(init: Panel.() -> Unit): Panel
 
+  fun buttonGroup(init: Row.() -> Unit)
+
   fun checkBox(@NlsContexts.Checkbox text: String): Cell<JBCheckBox>
+
+  fun radioButton(@NlsContexts.RadioButton text: String): Cell<JBRadioButton>
 
   fun button(@NlsContexts.Button text: String, actionListener: (event: ActionEvent) -> Unit): Cell<JButton>
 
@@ -84,10 +105,44 @@ interface Row {
 
   fun label(@NlsContexts.Label text: String): Cell<JLabel>
 
-  fun textField(columns: Int = 0): Cell<JBTextField>
+  fun browserLink(@NlsContexts.LinkLabel text: String, url: String): Cell<BrowserLink>
 
-  fun intTextField(columns: Int = 0, range: IntRange? = null, keyboardStep: Int? = null): Cell<JBTextField>
+  fun textField(): Cell<JBTextField>
+
+  fun textFieldWithBrowseButton(@NlsContexts.DialogTitle browseDialogTitle: String? = null,
+                                project: Project? = null,
+                                fileChooserDescriptor: FileChooserDescriptor = FileChooserDescriptorFactory.createSingleFileNoJarsDescriptor(),
+                                fileChosen: ((chosenFile: VirtualFile) -> String)? = null): Cell<TextFieldWithBrowseButton>
+
+  fun intTextField(range: IntRange? = null, keyboardStep: Int? = null): Cell<JBTextField>
 
   fun <T> comboBox(model: ComboBoxModel<T>, renderer: ListCellRenderer<T?>? = null): Cell<ComboBox<T>>
+}
 
+class ButtonGroupRow<T>(private val binding: PropertyBinding<T>, row: Row) : Row by row {
+
+  fun radioButton(@NlsContexts.RadioButton text: String, value: T): Cell<JBRadioButton> {
+    val result = radioButton(text)
+    val component = result.component
+    result.onApply { if (component.isSelected) binding.set(value) }
+    result.onReset { component.isSelected = binding.get() == value }
+    result.onIsModified { component.isSelected != (binding.get() == value) }
+    return result
+  }
+}
+
+inline fun <reified T : Any> Row.buttonGroup(noinline getter: () -> T,
+                                             noinline setter: (T) -> Unit,
+                                             crossinline init: ButtonGroupRow<T>.() -> Unit) {
+  buttonGroup(PropertyBinding(getter, setter), init)
+}
+
+inline fun <reified T : Any> Row.buttonGroup(prop: KMutableProperty0<T>, crossinline init: ButtonGroupRow<T>.() -> Unit) {
+  buttonGroup(prop.toBinding(), init)
+}
+
+inline fun <reified T : Any> Row.buttonGroup(binding: PropertyBinding<T>, crossinline init: ButtonGroupRow<T>.() -> Unit) {
+  buttonGroup {
+    ButtonGroupRow(binding, this).init()
+  }
 }

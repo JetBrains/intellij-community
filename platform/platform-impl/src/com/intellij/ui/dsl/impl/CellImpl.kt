@@ -30,7 +30,13 @@ internal class CellImpl<T : JComponent>(
    * Not null if parent is hidden and the cell should not be visible. While parent is hidden
    * value contains visibility of the cell, which will be restored when parent becomes visible
    */
-  private var parentHiddenComponentVisible: Boolean? = null
+  private var parentManagedComponentVisible: Boolean? = null
+
+  /**
+   * Not null if parent is disabled and the cell should not be enabled. While parent is disabled
+   * value contains enable state of the cell, which will be restored when parent becomes enabled
+   */
+  private var parentManagedComponentEnabled: Boolean? = null
 
   override fun horizontalAlign(horizontalAlign: HorizontalAlign): CellImpl<T> {
     super.horizontalAlign(horizontalAlign)
@@ -62,32 +68,58 @@ internal class CellImpl<T : JComponent>(
     return this
   }
 
+  fun enabledFromParent(isEnabled: Boolean) {
+    if (isEnabled) {
+      parentManagedComponentEnabled?.let {
+        doEnabled(it)
+        parentManagedComponentEnabled = null
+      }
+    }
+    else {
+      if (parentManagedComponentEnabled == null) {
+        parentManagedComponentEnabled = viewComponent.isEnabled
+        doEnabled(false)
+      }
+    }
+  }
+
   override fun enabled(isEnabled: Boolean): CellImpl<T> {
-    viewComponent.isEnabled = isEnabled
+    if (parentManagedComponentEnabled == null) {
+      doEnabled(isEnabled)
+    }
+    else {
+      parentManagedComponentEnabled = isEnabled
+    }
+    return this
+  }
+
+  override fun enableIf(predicate: ComponentPredicate): Cell<T> {
+    viewComponent.isEnabled = predicate()
+    predicate.addListener { viewComponent.isEnabled = it }
     return this
   }
 
   fun visibleFromParent(isVisible: Boolean) {
     if (isVisible) {
-      parentHiddenComponentVisible?.let {
+      parentManagedComponentVisible?.let {
         doVisible(it)
-        parentHiddenComponentVisible = null
+        parentManagedComponentVisible = null
       }
     }
     else {
-      if (parentHiddenComponentVisible == null) {
-        parentHiddenComponentVisible = viewComponent.isVisible
+      if (parentManagedComponentVisible == null) {
+        parentManagedComponentVisible = viewComponent.isVisible
         doVisible(false)
       }
     }
   }
 
   override fun visible(isVisible: Boolean): CellImpl<T> {
-    if (parentHiddenComponentVisible == null) {
+    if (parentManagedComponentVisible == null) {
       doVisible(isVisible)
     }
     else {
-      parentHiddenComponentVisible = isVisible
+      parentManagedComponentVisible = isVisible
     }
     return this
   }
@@ -110,6 +142,21 @@ internal class CellImpl<T : JComponent>(
     return this
   }
 
+  override fun onApply(callback: () -> Unit): CellImpl<T> {
+    dialogPanelConfig.applyCallbacks.register(component, callback)
+    return this
+  }
+
+  override fun onReset(callback: () -> Unit): CellImpl<T> {
+    dialogPanelConfig.resetCallbacks.register(component, callback)
+    return this
+  }
+
+  override fun onIsModified(callback: () -> Boolean): CellImpl<T> {
+    dialogPanelConfig.isModifiedCallbacks.register(component, callback)
+    return this
+  }
+
   private fun shouldSaveOnApply(): Boolean {
     return !(applyIfEnabled && !viewComponent.isEnabled)
   }
@@ -121,24 +168,14 @@ internal class CellImpl<T : JComponent>(
     return this
   }
 
-  private fun onApply(callback: () -> Unit): CellImpl<T> {
-    dialogPanelConfig.applyCallbacks.register(component, callback)
-    return this
-  }
-
-  private fun onReset(callback: () -> Unit): CellImpl<T> {
-    dialogPanelConfig.resetCallbacks.register(component, callback)
-    return this
-  }
-
-  private fun onIsModified(callback: () -> Boolean): CellImpl<T> {
-    dialogPanelConfig.isModifiedCallbacks.register(component, callback)
-    return this
-  }
-
   private fun doVisible(isVisible: Boolean) {
     viewComponent.isVisible = isVisible
     comment?.let { it.isVisible = isVisible }
+  }
+
+  private fun doEnabled(isEnabled: Boolean) {
+    viewComponent.isEnabled = isEnabled
+    comment?.let { it.isEnabled = isEnabled }
   }
 }
 
