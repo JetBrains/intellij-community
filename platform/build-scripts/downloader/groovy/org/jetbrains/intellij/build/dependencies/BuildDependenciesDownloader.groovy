@@ -57,7 +57,9 @@ class BuildDependenciesDownloader {
   }
 
   private static Path getProjectLocalDownloadCache(Path communityRoot) {
-    return communityRoot.resolve("build").resolve("download")
+    Path projectLocalDownloadCache = communityRoot.resolve("build").resolve("download")
+    Files.createDirectories(projectLocalDownloadCache)
+    return projectLocalDownloadCache
   }
 
   private static Path getDownloadCachePath(Path communityRoot) {
