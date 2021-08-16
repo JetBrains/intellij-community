@@ -7,7 +7,6 @@ import com.intellij.lang.LanguageUtil;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.EditorSettings;
-import com.intellij.openapi.editor.HighlighterColors;
 import com.intellij.openapi.editor.SelectionModel;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
@@ -146,17 +145,6 @@ public abstract class EditorTextFieldCellRenderer implements TableCellRenderer, 
       if (!UIUtil.isAncestor(this, myEditor.getContentComponent())) {
         throw new AssertionError("Editor component is not added in `addEditorToSelf`");
       }
-    }
-
-    public void setForcedForeground(@Nullable Color color) {
-      EditorColorsScheme scheme = myEditor.getColorsScheme();
-      if (color == null) {
-        scheme.setAttributes(HighlighterColors.TEXT, null);
-        return;
-      }
-      TextAttributes ownTextColors = scheme.getAttributes(HighlighterColors.TEXT).clone();
-      ownTextColors.setForegroundColor(color);
-      scheme.setAttributes(HighlighterColors.TEXT, ownTextColors);
     }
 
     public EditorEx getEditor() {

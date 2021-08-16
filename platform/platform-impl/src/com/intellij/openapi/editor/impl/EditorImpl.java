@@ -26,7 +26,10 @@ import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.actionSystem.*;
 import com.intellij.openapi.editor.actions.CopyAction;
 import com.intellij.openapi.editor.colors.*;
-import com.intellij.openapi.editor.colors.impl.*;
+import com.intellij.openapi.editor.colors.impl.AbstractColorsScheme;
+import com.intellij.openapi.editor.colors.impl.DelegateColorScheme;
+import com.intellij.openapi.editor.colors.impl.EditorFontCacheImpl;
+import com.intellij.openapi.editor.colors.impl.FontPreferencesImpl;
 import com.intellij.openapi.editor.event.*;
 import com.intellij.openapi.editor.ex.*;
 import com.intellij.openapi.editor.ex.util.EditorScrollingPositionKeeper;
@@ -50,7 +53,6 @@ import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Queryable;
 import com.intellij.openapi.util.*;
-import com.intellij.ui.ExperimentalUI;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -4474,20 +4476,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     }
 
     @Override
-    public @NotNull Color getDefaultForeground() {
-      if (myOwnAttributes.containsKey(HighlighterColors.TEXT)) {
-        Color c = myOwnAttributes.get(HighlighterColors.TEXT).getForegroundColor();
-        if (c == null) {
-          return super.getDefaultForeground();
-        }
-        return myOwnAttributes.get(HighlighterColors.TEXT).getForegroundColor();
-      }
-      else {
-        return super.getDefaultForeground();
-      }
-    }
-
-    @Override
     public TextAttributes getAttributes(TextAttributesKey key) {
       if (myOwnAttributes.containsKey(key)) return myOwnAttributes.get(key);
       return getDelegate().getAttributes(key);
@@ -4495,12 +4483,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
     @Override
     public void setAttributes(@NotNull TextAttributesKey key, TextAttributes attributes) {
-      if (attributes != null) {
-        myOwnAttributes.put(key, attributes);
-      }
-      else {
-        myOwnAttributes.remove(key);
-      }
+      myOwnAttributes.put(key, attributes);
     }
 
     @Nullable
