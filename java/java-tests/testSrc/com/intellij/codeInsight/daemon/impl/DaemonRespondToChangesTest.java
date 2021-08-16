@@ -3019,5 +3019,17 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
       }
     }
   }
+
+  public void testPutArgumentsOnSeparateLinesIntentionMustNotRemoveErrorHighlighting() {
+    configureByText(JavaFileType.INSTANCE, "class X{ static void foo(String s1, String s2, String s3) { foo(\"1\", 1.2, \"2\"<caret>); }}");
+    assertEquals(1, highlightErrors().size());
+
+    List<IntentionAction> fixes = LightQuickFixTestCase.getAvailableActions(getEditor(), getFile());
+    IntentionAction intention = assertContainsOneOf(fixes, "Put arguments on separate lines");
+    assertNotNull(intention);
+
+    WriteCommandAction.runWriteCommandAction(getProject(), () -> intention.invoke(getProject(), getEditor(), getFile()));
+    assertEquals(1, highlightErrors().size());
+  }
 }
 
