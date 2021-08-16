@@ -11,11 +11,11 @@ import org.jetbrains.kotlin.descriptors.CallableDescriptor
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.search.usagesSearch.descriptor
 import org.jetbrains.kotlin.idea.util.application.runReadAction
+import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.calls.callUtil.getResolvedCall
 import org.jetbrains.kotlin.resolve.calls.callUtil.getType
-import org.jetbrains.kotlin.resolve.calls.checkers.COROUTINE_CONTEXT_1_3_FQ_NAME
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 
 internal class KotlinSuspendFunctionWrapper(
@@ -24,11 +24,12 @@ internal class KotlinSuspendFunctionWrapper(
     val psiContext: PsiElement?,
     isCoroutineScopeAvailable: Boolean
 ) : KotlinExpressionWrapper {
-    private val coroutineContextKeyword =
-        if (isCoroutineScopeAvailable)
-            COROUTINE_CONTEXT_1_3_FQ_NAME.shortName().asString()
-        else
-            COROUTINE_CONTEXT_1_3_FQ_NAME.asString()
+    //todo
+    private val coroutineContextKeyword = Name.identifier("FIXME")
+        //if (isCoroutineScopeAvailable)
+        //    COROUTINE_CONTEXT_1_3_FQ_NAME.shortName().asString()
+        //else
+        //    COROUTINE_CONTEXT_1_3_FQ_NAME.asString()
 
     override fun createWrappedExpressionText(expressionText: String): String {
         checkIfKotlinxCoroutinesIsAvailable()

@@ -10,9 +10,7 @@ import com.intellij.debugger.impl.DebuggerUtilsAsync
 import com.intellij.debugger.jdi.StackFrameProxyImpl
 import com.intellij.psi.PsiElement
 import com.sun.jdi.*
-import org.jetbrains.kotlin.codegen.coroutines.DO_RESUME_METHOD_NAME
 import org.jetbrains.kotlin.codegen.coroutines.INVOKE_SUSPEND_METHOD_NAME
-import org.jetbrains.kotlin.codegen.coroutines.continuationAsmTypes
 import org.jetbrains.kotlin.codegen.inline.KOTLIN_STRATA_NAME
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.core.KotlinFileTypeFactoryUtils
@@ -181,12 +179,13 @@ fun isInSuspendMethod(location: Location): Boolean {
     val method = location.method()
     val signature = method.signature()
 
-    for (continuationAsmType in continuationAsmTypes()) {
-        if (signature.contains(continuationAsmType.toString()) ||
-            (method.name() == DO_RESUME_METHOD_NAME && signature == DO_RESUME_SIGNATURE) ||
-            (method.name() == INVOKE_SUSPEND_METHOD_NAME && signature == INVOKE_SUSPEND_SIGNATURE)
-        ) return true
-    }
+    //todo
+    //for (continuationAsmType in continuationAsmTypes()) {
+    //    if (signature.contains(continuationAsmType.toString()) ||
+    //        (method.name() == DO_RESUME_METHOD_NAME && signature == DO_RESUME_SIGNATURE) ||
+    //        (method.name() == INVOKE_SUSPEND_METHOD_NAME && signature == INVOKE_SUSPEND_SIGNATURE)
+    //    ) return true
+    //}
     return false
 }
 

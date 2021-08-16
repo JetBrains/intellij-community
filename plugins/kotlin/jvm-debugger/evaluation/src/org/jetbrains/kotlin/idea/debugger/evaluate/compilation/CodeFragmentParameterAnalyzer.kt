@@ -22,7 +22,6 @@ import org.jetbrains.kotlin.psi.psiUtil.isAncestor
 import org.jetbrains.kotlin.psi.psiUtil.isDotSelector
 import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.calls.callUtil.getResolvedCall
-import org.jetbrains.kotlin.resolve.calls.checkers.COROUTINE_CONTEXT_1_3_FQ_NAME
 import org.jetbrains.kotlin.resolve.calls.model.ResolvedCall
 import org.jetbrains.kotlin.resolve.calls.model.VariableAsFunctionResolvedCall
 import org.jetbrains.kotlin.resolve.descriptorUtil.builtIns
@@ -338,7 +337,8 @@ class CodeFragmentParameterAnalyzer(
     }
 
     private fun processCoroutineContextCall(target: DeclarationDescriptor): Smart? {
-        if (target is PropertyDescriptor && target.fqNameSafe == COROUTINE_CONTEXT_1_3_FQ_NAME) {
+        //todo fixme
+        if (target is PropertyDescriptor /*&& target.fqNameSafe == COROUTINE_CONTEXT_1_3_FQ_NAME*/) {
             return parameters.getOrPut(target) {
                 Smart(Dumb(Kind.COROUTINE_CONTEXT, ""), target.type, target)
             }
