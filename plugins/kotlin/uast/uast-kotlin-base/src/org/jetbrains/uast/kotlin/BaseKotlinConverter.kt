@@ -552,4 +552,18 @@ interface BaseKotlinConverter {
     fun convertOrNull(expression: KtExpression?, parent: UElement?): UExpression? {
         return if (expression != null) convertExpression(expression, parent, DEFAULT_EXPRESSION_TYPES_LIST) else null
     }
+
+    fun KtPsiFactory.createAnalyzableExpression(text: String, context: PsiElement): KtExpression =
+        createAnalyzableProperty("val x = $text", context).initializer ?: error("Failed to create expression from text: '$text'")
+
+    fun KtPsiFactory.createAnalyzableProperty(text: String, context: PsiElement): KtProperty =
+        createAnalyzableDeclaration(text, context)
+
+    fun <TDeclaration : KtDeclaration> KtPsiFactory.createAnalyzableDeclaration(text: String, context: PsiElement): TDeclaration {
+        val file = createAnalyzableFile("dummy.kt", text, context)
+        val declarations = file.declarations
+        assert(declarations.size == 1) { "${declarations.size} declarations in $text" }
+        @Suppress("UNCHECKED_CAST")
+        return declarations.first() as TDeclaration
+    }
 }

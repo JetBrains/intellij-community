@@ -101,7 +101,7 @@ UFile (package = org.jetbrains.uast.kotlin) [package org.jetbrains.uast.kotlin..
                     ULocalVariable (name = x) [var x: kotlin.jvm.functions.Function0<? extends kotlin.Unit> = { ...}]
                         ULambdaExpression [{ ...}] : PsiType:Function0<? extends Unit>
                             UBlockExpression [{...}] : PsiType:Unit
-                                UDeclarationsExpression [@org.jetbrains.annotations.NotNull var vardbcd0724: java.util.List<? extends java.lang.Integer> = listOf(1, 2)]
+                                UDeclarationsExpression [@org.jetbrains.annotations.NotNull var vardbcd0724: java.util.List<? extends java.lang.Integer> = listOf(1, 2)...@org.jetbrains.annotations.NotNull var b: int = vardbcd0724.<anonymous class>()]
                                     ULocalVariable (name = vardbcd0724) [@org.jetbrains.annotations.NotNull var vardbcd0724: java.util.List<? extends java.lang.Integer> = listOf(1, 2)]
                                         UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]
                                         UCallExpression (kind = UastCallKind(name='method_call'), argCount = 2)) [listOf(1, 2)] : PsiType:List<? extends Integer>
@@ -109,6 +109,20 @@ UFile (package = org.jetbrains.uast.kotlin) [package org.jetbrains.uast.kotlin..
                                             USimpleNameReferenceExpression (identifier = listOf, resolvesTo = null) [listOf] : PsiType:List<? extends Integer>
                                             ULiteralExpression (value = 1) [1] : PsiType:int
                                             ULiteralExpression (value = 2) [2] : PsiType:int
+                                    ULocalVariable (name = a) [@org.jetbrains.annotations.NotNull var a: int = vardbcd0724.<anonymous class>()]
+                                        UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]
+                                        UQualifiedReferenceExpression [vardbcd0724.<anonymous class>()] : PsiType:NonExistentClass
+                                            USimpleNameReferenceExpression (identifier = vardbcd0724) [vardbcd0724] : PsiType:NonExistentClass
+                                            UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) [<anonymous class>()] : PsiType:NonExistentClass
+                                                UIdentifier (Identifier (component1)) [UIdentifier (Identifier (component1))]
+                                                USimpleNameReferenceExpression (identifier = <anonymous class>, resolvesTo = null) [<anonymous class>] : PsiType:NonExistentClass
+                                    ULocalVariable (name = b) [@org.jetbrains.annotations.NotNull var b: int = vardbcd0724.<anonymous class>()]
+                                        UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]
+                                        UQualifiedReferenceExpression [vardbcd0724.<anonymous class>()] : PsiType:NonExistentClass
+                                            USimpleNameReferenceExpression (identifier = vardbcd0724) [vardbcd0724] : PsiType:NonExistentClass
+                                            UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) [<anonymous class>()] : PsiType:NonExistentClass
+                                                UIdentifier (Identifier (component2)) [UIdentifier (Identifier (component2))]
+                                                USimpleNameReferenceExpression (identifier = <anonymous class>, resolvesTo = null) [<anonymous class>] : PsiType:NonExistentClass
                 UDeclarationsExpression [var y: kotlin.jvm.functions.Function0<? extends kotlin.Unit> = { ...}]
                     ULocalVariable (name = y) [var y: kotlin.jvm.functions.Function0<? extends kotlin.Unit> = { ...}]
                         ULambdaExpression [{ ...}] : PsiType:Function0<? extends List<? extends Integer>>

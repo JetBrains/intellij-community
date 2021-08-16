@@ -109,6 +109,20 @@ UFile (package = org.jetbrains.uast.kotlin)
                                             USimpleNameReferenceExpression (identifier = listOf, resolvesTo = null)
                                             ULiteralExpression (value = 1)
                                             ULiteralExpression (value = 2)
+                                    ULocalVariable (name = a)
+                                        UAnnotation (fqName = org.jetbrains.annotations.NotNull)
+                                        UQualifiedReferenceExpression
+                                            USimpleNameReferenceExpression (identifier = vardbcd0724)
+                                            UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0))
+                                                UIdentifier (Identifier (component1))
+                                                USimpleNameReferenceExpression (identifier = <anonymous class>, resolvesTo = null)
+                                    ULocalVariable (name = b)
+                                        UAnnotation (fqName = org.jetbrains.annotations.NotNull)
+                                        UQualifiedReferenceExpression
+                                            USimpleNameReferenceExpression (identifier = vardbcd0724)
+                                            UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0))
+                                                UIdentifier (Identifier (component2))
+                                                USimpleNameReferenceExpression (identifier = <anonymous class>, resolvesTo = null)
                 UDeclarationsExpression
                     ULocalVariable (name = y)
                         ULambdaExpression
