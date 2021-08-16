@@ -1,9 +1,6 @@
 package org.jetbrains.tools.model.updater
 
-import org.jetbrains.tools.model.updater.impl.Args
-import org.jetbrains.tools.model.updater.impl.JpsPath
-import org.jetbrains.tools.model.updater.impl.KotlincArtifactsMode
-import org.jetbrains.tools.model.updater.impl.escapeForRegex
+import org.jetbrains.tools.model.updater.impl.*
 import java.io.File
 import java.util.*
 
@@ -29,12 +26,19 @@ private fun generateProjectModelFiles(dotIdea: File, args: Args, isCommunity: Bo
     val libraries = dotIdea.resolve("libraries")
     libraries.listFiles()!!.filter { it.startsWith("kotlinc_") }.forEach { it.delete() }
     generateKotlincLibraries(args.kotlincArtifactsMode, args.kotlincVersion, isCommunity).forEach {
-        val libXmlName = it.name.replace(".", "_").replace("-", "_") + ".xml"
+        val libXmlName = it.name.jpsEntityNameToFilename() + ".xml"
         libraries.resolve(libXmlName).writeText(it.generateXml())
     }
+
+    generateRunConfigurations(dotIdea, args.kotlincArtifactsMode, args.kotlincVersion)
 }
 
 private fun patchProjectModelFiles(dotIdea: File, args: Args, isCommunity: Boolean) {
+    patchKotlincLibs(args, isCommunity, dotIdea)
+    patchRunConfigurations(dotIdea, args.kotlincArtifactsMode)
+}
+
+private fun patchKotlincLibs(args: Args, isCommunity: Boolean, dotIdea: File) {
     val kotlincMvnLibs = generateKotlincLibraries(KotlincArtifactsMode.MAVEN, args.kotlincVersion, isCommunity)
 
     val artifactIds = kotlincMvnLibs.flatMap { lib -> lib.classes.map { (it.jpsPath as JpsPath.MavenRepository).mavenId.artifactId } }
