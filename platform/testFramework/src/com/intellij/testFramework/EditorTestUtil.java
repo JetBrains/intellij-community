@@ -247,7 +247,13 @@ public final class EditorTestUtil {
 
   @TestOnly
   public static boolean configureSoftWraps(Editor editor, int visibleWidthInPixels, int visibleHeightInPixels, int charWidthInPixels) {
+    return configureSoftWraps(editor, visibleWidthInPixels, visibleHeightInPixels, charWidthInPixels, false);
+  }
+
+  @TestOnly
+  public static boolean configureSoftWraps(Editor editor, int visibleWidthInPixels, int visibleHeightInPixels, int charWidthInPixels, boolean useCustomSoftWrapIndent) {
     editor.getSettings().setUseSoftWraps(true);
+    editor.getSettings().setUseCustomSoftWrapIndent(useCustomSoftWrapIndent);
     SoftWrapModelImpl model = (SoftWrapModelImpl)editor.getSoftWrapModel();
     model.setSoftWrapPainter(new SoftWrapPainter() {
       @Override
