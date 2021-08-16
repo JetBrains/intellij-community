@@ -38,7 +38,7 @@ fun getJsMdnDocumentation(namespace: MdnApiNamespace, qualifiedName: String): Md
       it.endsWith("Constructor") -> "$it.$it"
       else -> it
     }
-  }.lowercase(Locale.US).let { webApiIndex[it] ?: it }
+  }.toLowerCase(Locale.US).let { webApiIndex[it] ?: it }
   val jsNamespace = qualifiedName.takeWhile { it != '.' }
   if (jsNamespace.endsWith("EventMap")) {
     getDomEventDocumentation(qualifiedName.substring(jsNamespace.length + 1))?.let { return it }
@@ -392,8 +392,8 @@ enum class MdnCssSymbolKind {
     override fun getDocumentationMap(documentation: MdnCssDocumentation): Map<String, MdnRawSymbolDocumentation> = documentation.properties
     override fun getSymbolDoc(documentation: MdnCssDocumentation, name: String): MdnSymbolDocumentation? {
       if (name.startsWith("@")) {
-        val atRule = name.takeWhile { it != '.' }.substring(1).lowercase(Locale.US)
-        val propertyName = name.takeLastWhile { it != '.' }.lowercase(Locale.US)
+        val atRule = name.takeWhile { it != '.' }.substring(1).toLowerCase(Locale.US)
+        val propertyName = name.takeLastWhile { it != '.' }.toLowerCase(Locale.US)
         documentation.atRules[atRule]?.properties?.get(propertyName)?.let {
           return MdnSymbolDocumentationAdapter(name, documentation, it)
         }
@@ -427,7 +427,7 @@ enum class MdnCssSymbolKind {
   protected abstract fun decorateName(name: String): String
 
   open fun getSymbolDoc(documentation: MdnCssDocumentation, name: String): MdnSymbolDocumentation? =
-    getDocumentationMap(documentation)[name.lowercase(Locale.US)]?.let {
+    getDocumentationMap(documentation)[name.toLowerCase(Locale.US)]?.let {
       MdnSymbolDocumentationAdapter(decorateName(name), documentation, it)
     }
 }
@@ -459,7 +459,7 @@ private class CompatibilityMapDeserializer : JsonDeserializer<CompatibilityMap>(
 }
 
 private fun getWebApiFragment(name: String): Char =
-  webApiFragmentStarts.findLast { it <= name[0].lowercaseChar() }!!
+  webApiFragmentStarts.findLast { it <= name[0].toLowerCase() }!!
 
 private const val MDN_DOCS_URL_PREFIX = "\$MDN_URL\$"
 
@@ -483,9 +483,9 @@ fun getHtmlApiNamespace(namespace: String?, element: PsiElement?, symbolName: St
     namespace == HtmlUtil.SVG_NAMESPACE -> MdnApiNamespace.Svg
     namespace == HtmlUtil.MATH_ML_NAMESPACE -> MdnApiNamespace.MathML
     else -> PsiTreeUtil.findFirstParent(element, false) { parent ->
-      parent is XmlTag && parent.localName.lowercase(Locale.US).let { it == "svg" || it == "math" }
+      parent is XmlTag && parent.localName.toLowerCase(Locale.US).let { it == "svg" || it == "math" }
     }?.castSafelyTo<XmlTag>()?.let {
-      when (it.name.lowercase(Locale.US)) {
+      when (it.name.toLowerCase(Locale.US)) {
         "svg" -> MdnApiNamespace.Svg
         "math" -> MdnApiNamespace.MathML
         else -> null
@@ -570,5 +570,5 @@ private fun getUnprefixedName(name: String): String? {
 private val UPPER_CASE = Regex("(?=\\p{Upper})")
 
 private fun String.toKebabCase() =
-  this.split(UPPER_CASE).joinToString("-") { it.lowercase(Locale.US) }
+  this.split(UPPER_CASE).joinToString("-") { it.toLowerCase(Locale.US) }
 
