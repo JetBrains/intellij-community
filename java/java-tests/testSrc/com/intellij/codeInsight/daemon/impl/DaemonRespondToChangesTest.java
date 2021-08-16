@@ -63,6 +63,7 @@ import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import com.intellij.openapi.editor.markup.HighlighterTargetArea;
 import com.intellij.openapi.editor.markup.MarkupModel;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.fileEditor.TextEditor;
@@ -142,6 +143,10 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
   @Override
   protected void tearDown() throws Exception {
     try {
+      if (myEditor != null) {
+        Document document = myEditor.getDocument();
+        FileDocumentManager.getInstance().reloadFromDisk(document);
+      }
       Project project = getProject();
       if (project != null) {
         doPostponedFormatting(project);

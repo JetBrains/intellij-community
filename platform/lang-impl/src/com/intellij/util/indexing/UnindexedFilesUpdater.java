@@ -401,7 +401,7 @@ public final class UnindexedFilesUpdater extends DumbModeTask {
 
       List<FilePropertyPusher<?>> pushers;
       Object[] moduleValues;
-      if (origin instanceof ModuleRootOrigin) {
+      if (origin instanceof ModuleRootOrigin && !((ModuleRootOrigin)origin).getModule().isDisposed()) {
         pushers = FilePropertyPusher.EP_NAME.getExtensionList();
         moduleValues = ReadAction.compute(() -> getModuleImmediateValues(pushers, (ModuleRootOrigin)origin));
       }

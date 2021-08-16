@@ -11,7 +11,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileFilter
 import com.intellij.util.indexing.IndexingBundle
 import com.intellij.util.indexing.roots.kind.LibraryOrigin
-import com.intellij.util.indexing.roots.kind.LibraryOriginImpl
+import com.intellij.util.indexing.roots.origin.LibraryOriginImpl
 
 class LibraryIndexableFilesIteratorImpl(private val library: Library) : LibraryIndexableFilesIterator {
   override fun getDebugName() = "Library ${library.presentableName}"
@@ -27,7 +27,7 @@ class LibraryIndexableFilesIteratorImpl(private val library: Library) : LibraryI
   }
 
   override fun getOrigin(): LibraryOrigin {
-    return LibraryOriginImpl(library)
+    return LibraryOriginImpl(library, getRoots())
   }
 
   override fun iterateFiles(
@@ -35,17 +35,18 @@ class LibraryIndexableFilesIteratorImpl(private val library: Library) : LibraryI
     fileIterator: ContentIterator,
     fileFilter: VirtualFileFilter
   ): Boolean {
-    @Suppress("DuplicatedCode")
-    val roots = runReadAction {
-      if (Disposer.isDisposed(library)) {
-        listOf<VirtualFile>()
-      }
-      else {
-        val rootProvider = library.rootProvider
-        rootProvider.getFiles(OrderRootType.SOURCES).toList() + rootProvider.getFiles(OrderRootType.CLASSES)
-      }
-    }
+    val roots = getRoots()
     return IndexableFilesIterationMethods.iterateRoots(project, roots, fileIterator, fileFilter)
+  }
+
+  private fun getRoots() = runReadAction {
+    if (Disposer.isDisposed(library)) {
+      listOf<VirtualFile>()
+    }
+    else {
+      val rootProvider = library.rootProvider
+      rootProvider.getFiles(OrderRootType.SOURCES).toList() + rootProvider.getFiles(OrderRootType.CLASSES)
+    }
   }
 
   override fun getRootUrls(): Set<String> {
