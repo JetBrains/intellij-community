@@ -7640,6 +7640,16 @@ public abstract class QuickFixTestGenerated extends AbstractQuickFixTest {
             runTest("testData/quickfix/experimental/propertyInConstructor.kt");
         }
 
+        @TestMetadata("propertyInConstructorAddOptInToClass.kt")
+        public void testPropertyInConstructorAddOptInToClass() throws Exception {
+            runTest("testData/quickfix/experimental/propertyInConstructorAddOptInToClass.kt");
+        }
+
+        @TestMetadata("propertyInConstructorAddOptInToConstructor.kt")
+        public void testPropertyInConstructorAddOptInToConstructor() throws Exception {
+            runTest("testData/quickfix/experimental/propertyInConstructorAddOptInToConstructor.kt");
+        }
+
         @TestMetadata("switchOn.kt")
         public void testSwitchOn() throws Exception {
             runTest("testData/quickfix/experimental/switchOn.kt");
