@@ -2,6 +2,7 @@
 package com.intellij.ide.ui.customization;
 
 import com.intellij.icons.AllIcons;
+import com.intellij.ide.IdeBundle;
 import com.intellij.ide.ui.experimental.toolbar.ExperimentalToolbarSettings;
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.ActionManager;
@@ -173,10 +174,8 @@ public final class CustomActionsSchema implements PersistentStateComponent<Eleme
   public boolean isModified(CustomActionsSchema schema) {
     List<ActionUrl> storedActions = schema.getActions();
     if (ApplicationManager.getApplication().isUnitTestMode() && !storedActions.isEmpty()) {
-      //noinspection UseOfSystemOutOrSystemErr
-      System.err.println("stored: " + storedActions.toString());
-      //noinspection UseOfSystemOutOrSystemErr
-      System.err.println("actual: " + getActions().toString());
+      LOG.error(IdeBundle.message("custom.action.stored", storedActions));
+      LOG.error(IdeBundle.message("custom.action.actual", getActions()));
     }
     if (storedActions.size() != getActions().size()) {
       return true;
@@ -219,8 +218,7 @@ public final class CustomActionsSchema implements PersistentStateComponent<Eleme
     }
 
     if (ApplicationManager.getApplication().isUnitTestMode()) {
-      //noinspection UseOfSystemOutOrSystemErr
-      System.err.println("read custom actions: " + myActions.toString());
+      LOG.error(IdeBundle.message("custom.option.testmode", myActions.toString()));
     }
 
     for (Element action : element.getChildren(ELEMENT_ACTION)) {
