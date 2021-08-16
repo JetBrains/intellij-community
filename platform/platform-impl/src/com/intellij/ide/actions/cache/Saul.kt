@@ -109,3 +109,8 @@ interface RecoveryAction {
 interface CacheInconsistencyProblem {
   val message: String
 }
+
+class ExceptionalCompletionProblem(private val e: Throwable): CacheInconsistencyProblem {
+  override val message: String
+    get() = """Exception: ${e.javaClass} with message ${e.message}"""
+}
