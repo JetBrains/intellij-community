@@ -6,6 +6,7 @@ import com.intellij.ide.actions.cache.RecoveryAction
 import com.intellij.lang.LangBundle
 import com.intellij.openapi.application.invokeAndWaitIfNeeded
 import com.intellij.openapi.project.DumbService
+import com.intellij.openapi.project.DumbUtilImpl
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import org.jetbrains.annotations.Nls
@@ -29,15 +30,7 @@ internal class ReindexAction : RecoveryAction {
         tumbler.turnOn(reason = "Reindex recovery action")
       }
     }
-
-    if (project != null) {
-      DumbService.getInstance(project).waitForSmartMode()
-    }
-    else {
-      for (openProject in ProjectManager.getInstance().openProjects) {
-        DumbService.getInstance(openProject).waitForSmartMode()
-      }
-    }
+    DumbUtilImpl.waitForSmartMode(project)
 
     return emptyList()
   }
