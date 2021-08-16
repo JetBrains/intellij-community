@@ -28,7 +28,7 @@ internal class RefreshIndexableFilesAction : RecoveryAction {
         files.add(file)
       }
     }
-    SynchronizeCurrentFileAction.synchronizeFiles(files, project)
+    SynchronizeCurrentFileAction.synchronizeFiles(files, project, false)
     return emptyList()
   }
 
