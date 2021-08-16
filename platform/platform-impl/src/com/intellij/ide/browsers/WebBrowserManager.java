@@ -45,6 +45,9 @@ public final class WebBrowserManager extends SimpleModificationTracker implement
     PREDEFINED_EDGE_ID
   };
 
+  public static final ReloadMode BROWSER_RELOAD_MODE_DEFAULT = ReloadMode.RELOAD_ON_SAVE;
+  public static final ReloadMode PREVIEW_RELOAD_MODE_DEFAULT = ReloadMode.RELOAD_ON_SAVE;
+
   @NotNull
   private static String getEdgeExecutionPath() {
     if (SystemInfo.isWindows) {
@@ -82,8 +85,8 @@ public final class WebBrowserManager extends SimpleModificationTracker implement
   private boolean myShowBrowserHover = true;
   private boolean myShowBrowserHoverXml = false;
   DefaultBrowserPolicy defaultBrowserPolicy = DefaultBrowserPolicy.SYSTEM;
-  ReloadMode webServerReloadMode = ReloadMode.RELOAD_ON_SAVE;
-  ReloadMode webPreviewReloadMode = ReloadMode.RELOAD_ON_SAVE;
+  ReloadMode webServerReloadMode = BROWSER_RELOAD_MODE_DEFAULT;
+  ReloadMode webPreviewReloadMode = PREVIEW_RELOAD_MODE_DEFAULT;
 
   public WebBrowserManager() {
     browsers = new ArrayList<>(getPredefinedBrowsers());

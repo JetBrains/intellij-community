@@ -3,7 +3,10 @@ package com.intellij.ide.browsers.actions;
 
 import com.intellij.CommonBundle;
 import com.intellij.ide.IdeBundle;
+import com.intellij.ide.browsers.ReloadMode;
+import com.intellij.ide.browsers.WebBrowserManager;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorLocation;
@@ -56,6 +59,16 @@ public class WebPreviewFileEditor extends UserDataHolderBase implements FileEdit
     ApplicationManager.getApplication().invokeLater(() -> {
       GotItTooltip gotItTooltip = new GotItTooltip(WEB_PREVIEW_RELOAD_TOOLTIP_ID, BuiltInServerBundle.message("reload.on.save.preview.got.it.content"), this);
       if (!gotItTooltip.canShow()) return;
+
+      if (WebBrowserManager.PREVIEW_RELOAD_MODE_DEFAULT != ReloadMode.RELOAD_ON_SAVE) {
+        Logger.getInstance(WebPreviewFileEditor.class).error(
+          "Default value for " + BuiltInServerBundle.message("reload.on.save.preview.got.it.title") + " has changed, tooltip is outdated.");
+        return;
+      }
+      if (WebBrowserManager.getInstance().getWebPreviewReloadMode() != ReloadMode.RELOAD_ON_SAVE) {
+        // changed before gotIt was shown
+        return;
+      }
 
       gotItTooltip
         .withHeader(BuiltInServerBundle.message("reload.on.save.preview.got.it.title"))
