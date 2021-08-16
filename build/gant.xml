@@ -48,6 +48,7 @@
       <resolver:remoterepo id="intellij-dependencies" url="https://cache-redirector.jetbrains.com/intellij-dependencies"/>
       <resolver:remoterepo id="jcenter" url="https://cache-redirector.jetbrains.com/jcenter.bintray.com"/>
       <resolver:remoterepo id="kotlin-ide-plugin-dependencies" url="https://cache-redirector.jetbrains.com/maven.pkg.jetbrains.space/kotlin/p/kotlin/kotlin-ide-plugin-dependencies"/>
+      <resolver:remoterepo id="teamcity-repository" url="https://cache-redirector.jetbrains.com/download.jetbrains.com/teamcity-repository"/>
     </resolver:remoterepos>
 
     <resolver:resolve failOnMissingAttachments="true">
