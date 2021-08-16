@@ -6,18 +6,12 @@ import com.intellij.uast.UastHintedVisitorAdapter
 import com.siyeh.InspectionGadgetsBundle
 import com.siyeh.ig.callMatcher.CallMatcher
 import org.jetbrains.uast.UCallExpression
-import org.jetbrains.uast.UCallableReferenceExpression
 import org.jetbrains.uast.USuperExpression
 import org.jetbrains.uast.visitor.AbstractUastNonRecursiveVisitor
 
 class ThreadRunInspection : AbstractBaseUastLocalInspectionTool() {
-  override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor =
-    UastHintedVisitorAdapter.create(
-      holder.file.language,
-      ThreadRunVisitor(holder),
-      arrayOf(UCallExpression::class.java, UCallableReferenceExpression::class.java),
-      true
-    )
+  override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor = UastHintedVisitorAdapter.create(
+    holder.file.language, ThreadRunVisitor(holder), arrayOf(UCallExpression::class.java), true)
 
   override fun getID(): String = "CallToThreadRun"
 
