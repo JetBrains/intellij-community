@@ -16,6 +16,10 @@
     <extensionPoint name="searchEverywhereElementFeaturesProvider"
                     interface="com.intellij.ide.actions.searcheverywhere.ml.features.SearchEverywhereElementFeaturesProvider"
                     dynamic="true"/>
+
+    <extensionPoint name="elementKeyForIdProvider"
+                    interface="com.intellij.ide.actions.searcheverywhere.ml.id.ElementKeyForIdProvider"
+                    dynamic="true"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij.searcheverywhere.ml">
@@ -23,6 +27,9 @@
       implementation="com.intellij.ide.actions.searcheverywhere.ml.features.SearchEverywhereFileFeaturesProvider"/>
     <searchEverywhereElementFeaturesProvider
       implementation="com.intellij.ide.actions.searcheverywhere.ml.features.SearchEverywhereActionFeaturesProvider"/>
+
+    <elementKeyForIdProvider implementation="com.intellij.ide.actions.searcheverywhere.ml.id.ActionKeyProvider" />
+    <elementKeyForIdProvider implementation="com.intellij.ide.actions.searcheverywhere.ml.id.FileKeyProvider" />
   </extensions>
 
   <applicationListeners>

@@ -4,11 +4,9 @@ package com.intellij.ide.actions.searcheverywhere.ml
 import com.intellij.ide.actions.searcheverywhere.*
 import com.intellij.ide.actions.searcheverywhere.ml.features.SearchEverywhereContextFeaturesProvider
 import com.intellij.ide.actions.searcheverywhere.ml.features.SearchEverywhereElementFeaturesProvider
+import com.intellij.ide.actions.searcheverywhere.ml.id.SearchEverywhereMlItemIdProvider
 import com.intellij.ide.util.gotoByName.GotoActionModel
 import com.intellij.openapi.project.Project
-import com.intellij.psi.PsiFileSystemItem
-import com.intellij.util.containers.ContainerUtil
-import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicReference
 
 internal class SearchEverywhereMLSearchSession(project: Project?, private val sessionId: Int) {
@@ -100,30 +98,6 @@ internal class SearchEverywhereMLSearchSession(project: Project?, private val se
   private fun isFilesTab(tabId: String) = FileSearchEverywhereContributor::class.java.simpleName == tabId
 
   private fun isActionsTab(tabId: String) = ActionSearchEverywhereContributor::class.java.simpleName == tabId
-}
-
-class SearchEverywhereMlItemIdProvider {
-  private var idCounter = AtomicInteger(1)
-  private val itemToId = ContainerUtil.createWeakMap<Any, Int>()
-
-  @Synchronized
-  fun getId(element: Any): Int {
-    val key = when (element) {
-      is GotoActionModel.MatchedValue -> getActionKey(element)
-      is PSIPresentationBgRendererWrapper.PsiItemWithPresentation -> (element.item as PsiFileSystemItem).virtualFile
-      is PsiFileSystemItem -> element.virtualFile
-      else -> throw IllegalArgumentException("Illegal argument type ${element.javaClass.name}")
-    }
-    return itemToId.computeIfAbsent(key) { idCounter.getAndIncrement() }
-  }
-
-  private fun getActionKey(element: GotoActionModel.MatchedValue): Any {
-    if (element.value is GotoActionModel.ActionWrapper) {
-      return (element.value as GotoActionModel.ActionWrapper).action
-    } else {
-      return element.value
-    }
-  }
 }
 
 internal class SearchEverywhereMLContextInfo(project: Project?) {

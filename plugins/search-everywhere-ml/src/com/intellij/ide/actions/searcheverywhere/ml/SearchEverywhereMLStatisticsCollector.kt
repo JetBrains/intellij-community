@@ -4,6 +4,7 @@ package com.intellij.ide.actions.searcheverywhere.ml
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereFoundElementInfo
 import com.intellij.ide.actions.searcheverywhere.ml.SearchEverywhereMlSessionService.Companion.RECORDER_CODE
 import com.intellij.ide.actions.searcheverywhere.ml.features.SearchEverywhereElementFeaturesProvider
+import com.intellij.ide.actions.searcheverywhere.ml.id.SearchEverywhereMlItemIdProvider
 import com.intellij.ide.util.gotoByName.GotoActionModel
 import com.intellij.internal.statistic.eventLog.EventLogGroup
 import com.intellij.internal.statistic.eventLog.StatisticsEventLogProviderUtil
@@ -84,7 +85,7 @@ internal class SearchEverywhereMLStatisticsCollector {
         data[SELECTED_ELEMENTS_DATA_KEY] = selectedElements.map {
           if (it < elements.size) {
             val element = elements[it].element
-            if (SearchEverywhereElementFeaturesProvider.isElementSupported(element)) {
+            if (elementIdProvider.isElementSupported(element)) {
               return@map elementIdProvider.getId(element)
             }
           }
