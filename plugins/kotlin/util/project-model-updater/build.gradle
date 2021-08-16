@@ -12,6 +12,7 @@ repositories {
 
 dependencies {
     implementation "org.jetbrains.kotlin:kotlin-stdlib"
+    implementation "org.jetbrains.kotlin:kotlin-reflect"
     implementation "org.jdom:jdom2:2.0.6"
 }
 
