@@ -39,7 +39,7 @@ internal class MarkdownExportDialog(
     val provider = supportedExportProviders.find { it == selectedFileType } ?: return
     val outputFile = "$selectedFileUrl.${provider.formatDescription.extension}"
 
-    provider.exportFile(project, targetFile, outputFile)
+    provider.exportFile(project, file, outputFile)
   }
 
   override fun getFileNameIfExist(dir: String, fileNameWithoutExtension: String): String? {
@@ -74,7 +74,7 @@ internal class MarkdownExportDialog(
   }
 
   private fun findFirstValidProvider(): MarkdownExportProvider? =
-    supportedExportProviders.find { it.validate(project, targetFile) == null }
+    supportedExportProviders.find { it.validate(project, file) == null }
 
   private fun JComponent.visible(predicate: ComponentPredicate) {
     isVisible = predicate()
@@ -83,7 +83,7 @@ internal class MarkdownExportDialog(
 
   private fun ValidationInfoBuilder.validateFileType(combobox: ComboBox<MarkdownExportProvider>): ValidationInfo? {
     val provider = combobox.item
-    val errorMessage = provider.validate(project, targetFile)
+    val errorMessage = provider.validate(project, file)
     return errorMessage?.let(::error)
   }
 
@@ -99,7 +99,7 @@ internal class MarkdownExportDialog(
         return
       }
       text = value.formatDescription.formatName
-      val errorMessage = value.validate(project, targetFile)
+      val errorMessage = value.validate(project, file)
       if (errorMessage != null) {
         isEnabled = false
         toolTipText = errorMessage

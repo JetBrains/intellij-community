@@ -9,9 +9,12 @@ import com.intellij.openapi.fileChooser.impl.FileChooserUtil
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.*
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.psi.PsiDirectory
 import com.intellij.psi.PsiManager
 import com.intellij.refactoring.RefactoringBundle
+import com.intellij.refactoring.SkipOverwriteChoice
 import com.intellij.ui.EditorTextField
 import com.intellij.ui.RecentsManager
 import com.intellij.ui.TextFieldWithHistoryWithBrowseButton
@@ -30,7 +33,7 @@ import javax.swing.JPanel
 abstract class MarkdownFileActionsBaseDialog(
   protected val project: Project,
   protected val suggestedFilePath: String,
-  protected val targetFile: VirtualFile,
+  protected val file: VirtualFile,
 ) : DialogWrapper(project, true) {
   private val fileNameField = EditorTextField()
   private val targetDirectoryField = TextFieldWithHistoryWithBrowseButton()
@@ -68,15 +71,31 @@ abstract class MarkdownFileActionsBaseDialog(
 
   override fun doOKAction() {
     val fileName = fileNameField.text.trim()
-    val targetDir = targetDirectoryField.childComponent.text
-    val fileUrl = FileUtil.join(targetDir, fileName)
-    val srcDirectory = PsiManager.getInstance(project).findFile(targetFile)!!.containingDirectory
+    val targetDirPath = targetDirectoryField.childComponent.text
+    val fileUrl = FileUtil.join(targetDirPath, fileName)
+    val srcDirectory = PsiManager.getInstance(project).findFile(file)!!.containingDirectory
+
+    val existedFileName = getFileNameIfExist(targetDirPath, fileName)
+    if (existedFileName != null) {
+      val psiTargetDir = getPsiTargetDirectory(targetDirPath) ?: return
+      val userChoice = SkipOverwriteChoice.askUser(psiTargetDir, fileName, title, false)
+
+      if (userChoice == SkipOverwriteChoice.OVERWRITE) {
+        val pathname = FileUtil.join(targetDirPath, existedFileName)
+        val existedFilePath = File(pathname).toPath()
+        val virtualFile = VfsUtil.findFile(existedFilePath, true)!!
+        ApplicationManager.getApplication().runWriteAction {
+          PsiManager.getInstance(project).findFile(virtualFile)!!.delete()
+        }
+
+        writeFile(fileUrl, targetDirPath)
+      }
+    } else {
+      writeFile(fileUrl, targetDirPath)
+    }
 
     FileChooserUtil.setLastOpenedFile(project, srcDirectory.virtualFile.toNioPath())
-    createDirIfNotExist(targetDir)
-    RecentsManager.getInstance(project).registerRecentEntry(RECENT_KEYS, targetDir)
-
-    doAction(fileUrl)
+    RecentsManager.getInstance(project).registerRecentEntry(RECENT_KEYS, targetDirPath)
     super.doOKAction()
   }
 
@@ -141,18 +160,25 @@ abstract class MarkdownFileActionsBaseDialog(
   }
 
   private fun ValidationInfoBuilder.validateFileName(field: EditorTextField): ValidationInfo? {
-    val dir = targetDirectoryField.childComponent.text
     val fileName = field.text
-    val existedFileName = getFileNameIfExist(dir, fileName)
 
     return when {
       field.isNull || fileName.isEmpty() -> error(RefactoringBundle.message("no.new.name.specified"))
       !PathUtilRt.isValidFileName(fileName, false) -> error(RefactoringBundle.message("name.is.not.a.valid.file.name"))
-      !dir.isNullOrEmpty() && !existedFileName.isNullOrEmpty() -> {
-        error(MarkdownBundle.message("markdown.import.export.dialog.file.exist.error", existedFileName))
-      }
       else -> null
     }
+  }
+
+  private fun getPsiTargetDirectory(pathname: String): PsiDirectory? {
+    val dirPath = File(pathname).toPath()
+    val vfDirectory = VfsUtil.findFile(dirPath, true)
+
+    return vfDirectory?.let { PsiManager.getInstance(project).findDirectory(it) }
+  }
+
+  private fun writeFile(fileUrl: String, targetDirPath: String) {
+    createDirIfNotExist(targetDirPath)
+    doAction(fileUrl)
   }
 
   companion object {
