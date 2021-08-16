@@ -75,7 +75,7 @@ public class BasicCompletionHandlerTestGenerated extends AbstractBasicCompletion
 
     @TestMetadata("ExtensionPropertyFromSameFile.kt")
     public void testExtensionPropertyFromSameFile() throws Exception {
-        runTest("idea/idea-completion/testData/handlers/basic/ExtensionPropertyFromSameFile.kt");
+        runTest("testData/handlers/basic/ExtensionPropertyFromSameFile.kt");
     }
 
     @TestMetadata("ExtensionReceiverTypeArg.kt")
@@ -150,7 +150,7 @@ public class BasicCompletionHandlerTestGenerated extends AbstractBasicCompletion
 
     @TestMetadata("LocalFunction.kt")
     public void testLocalFunction() throws Exception {
-        runTest("idea/idea-completion/testData/handlers/basic/LocalFunction.kt");
+        runTest("testData/handlers/basic/LocalFunction.kt");
     }
 
     @TestMetadata("NestedTypeArg.kt")
@@ -454,7 +454,7 @@ public class BasicCompletionHandlerTestGenerated extends AbstractBasicCompletion
 
         @TestMetadata("InsertFunctionLiteralForLocalFunction.kt")
         public void testInsertFunctionLiteralForLocalFunction() throws Exception {
-            runTest("idea/idea-completion/testData/handlers/basic/highOrderFunctions/InsertFunctionLiteralForLocalFunction.kt");
+            runTest("testData/handlers/basic/highOrderFunctions/InsertFunctionLiteralForLocalFunction.kt");
         }
 
         @TestMetadata("InsertFunctionWithSingleParameterWithBrace.kt")

@@ -116,6 +116,11 @@ public abstract class FindUsagesFirTestGenerated extends AbstractFindUsagesFirTe
                 runTest("../idea/tests/testData/findUsages/kotlin/conventions/invokeInObject.0.kt");
             }
 
+            @TestMetadata("invokeInheritance.0.kt")
+            public void testInvokeInheritance() throws Exception {
+                runTest("../idea/tests/testData/findUsages/kotlin/conventions/invokeInheritance.0.kt");
+            }
+
             @TestMetadata("invokeWithVarArg.0.kt")
             public void testInvokeWithVarArg() throws Exception {
                 runTest("../idea/tests/testData/findUsages/kotlin/conventions/invokeWithVarArg.0.kt");

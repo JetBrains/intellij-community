@@ -168,6 +168,11 @@ public class FE1LegacyUastIdentifiersTestGenerated extends AbstractFE1LegacyUast
         runTest("testData/InnerNonFixedTypeVariable.kt");
     }
 
+    @TestMetadata("LambdaParameters.kt")
+    public void testLambdaParameters() throws Exception {
+        runTest("testData/LambdaParameters.kt");
+    }
+
     @TestMetadata("LambdaReturn.kt")
     public void testLambdaReturn() throws Exception {
         runTest("testData/LambdaReturn.kt");
@@ -341,6 +346,11 @@ public class FE1LegacyUastIdentifiersTestGenerated extends AbstractFE1LegacyUast
     @TestMetadata("TryCatch.kt")
     public void testTryCatch() throws Exception {
         runTest("testData/TryCatch.kt");
+    }
+
+    @TestMetadata("TypeAliasConstructorReference.kt")
+    public void testTypeAliasConstructorReference() throws Exception {
+        runTest("testData/TypeAliasConstructorReference.kt");
     }
 
     @TestMetadata("TypeAliasExpansionWithOtherAliasInArgument.kt")
