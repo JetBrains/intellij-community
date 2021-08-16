@@ -55,8 +55,20 @@ internal object FirKotlinConverter : BaseKotlinConverter {
                             expression,
                             declarationsExpression
                         )
-                        // TODO: fill declarations with assignments
-                        declarations = listOf(tempAssignment)
+                        val destructuringAssignments = expression.entries.mapIndexed { i, entry ->
+                            val psiFactory = KtPsiFactory(expression.project)
+                            val initializer = psiFactory.createAnalyzableExpression(
+                                "${tempAssignment.name}.component${i + 1}()",
+                                expression.containingFile
+                            )
+                            initializer.destructuringDeclarationInitializer = true
+                            KotlinULocalVariable(
+                                UastKotlinPsiVariable.create(entry, tempAssignment.javaPsi, declarationsExpression, initializer),
+                                entry,
+                                declarationsExpression
+                            )
+                        }
+                        declarations = listOf(tempAssignment) + destructuringAssignments
                     }
                 }
 
