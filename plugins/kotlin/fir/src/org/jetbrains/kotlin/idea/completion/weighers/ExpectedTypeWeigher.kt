@@ -17,8 +17,8 @@ import org.jetbrains.kotlin.psi.UserDataProperty
 
 internal object ExpectedTypeWeigher {
     object Weigher : LookupElementWeigher(WEIGHER_ID) {
-        override fun weigh(element: LookupElement): Comparable<*>? =
-            element.matchesExpectedType
+        override fun weigh(element: LookupElement): MatchesExpectedType =
+            element.matchesExpectedType ?: MatchesExpectedType.NON_TYPABLE
     }
 
     fun KtAnalysisSession.addWeight(lookupElement: LookupElement, symbol: KtSymbol, expectedType: KtType?) {
