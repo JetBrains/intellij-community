@@ -206,9 +206,9 @@ class JBGridLayoutTest {
     val columnGaps = (0 until columnsCount).map { ColumnGaps(it * 20, it * 20 + 10) }
     val builder = RowsGridBuilder(panel)
       .columnsGaps(columnGaps)
-    var rowsGapsSum = 0
 
     for (y in 0 until rowsCount) {
+      builder.row(RowGaps(y * 15, y * 15 + 5))
       val row = mutableListOf<JLabel>()
       for (x in 1..columnsCount) {
         val label = label()
@@ -216,14 +216,10 @@ class JBGridLayoutTest {
         row.add(label)
       }
       labels.add(row)
-
-      val rowGaps = RowGaps(y * 15, y * 15 + 5)
-      builder.row(rowGaps)
-      rowsGapsSum += rowGaps.height
     }
 
     var preferredWidth = columnsCount * PREFERRED_WIDTH + columnGaps.sumOf { it.width }
-    var preferredHeight = rowsCount * PREFERRED_HEIGHT + rowsGapsSum
+    var preferredHeight = rowsCount * PREFERRED_HEIGHT + layout.rootGrid.rowsGaps.sumOf { it.height }
     assertEquals(Dimension(preferredWidth, preferredHeight), panel.preferredSize)
 
     // Hide whole column 1
@@ -239,7 +235,7 @@ class JBGridLayoutTest {
     for (x in 0 until columnsCount) {
       labels[2][x].isVisible = false
       if (x == columnsCount - 1) {
-        preferredHeight -= PREFERRED_HEIGHT + 2 * 30 + 5
+        preferredHeight -= PREFERRED_HEIGHT + layout.rootGrid.rowsGaps[2].height
       }
 
       assertEquals(Dimension(preferredWidth, preferredHeight), panel.preferredSize)
