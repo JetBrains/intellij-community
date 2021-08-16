@@ -41,7 +41,7 @@ public class ConvertToBasicLatinInspection extends AbstractBaseJavaLocalInspecti
         if (IOUtil.isAscii(element.getText())) return;
         // "Basic Latin" is a proper noun
         //noinspection DialogTitleCapitalization
-        holder.registerProblem(element, JavaI18nBundle.message("inspection.convert.to.basic.latin"), new ConvertToBasicLatinFix());
+        holder.registerProblem(element, JavaI18nBundle.message("inspection.non.basic.latin.character.display.name"), new ConvertToBasicLatinFix());
       }
 
       @Override
@@ -193,7 +193,7 @@ public class ConvertToBasicLatinInspection extends AbstractBaseJavaLocalInspecti
     @NotNull
     @Override
     public String getFamilyName() {
-      return JavaI18nBundle.message("inspection.convert.to.basic.latin");
+      return JavaI18nBundle.message("inspection.non.basic.latin.character.quickfix");
     }
 
     @Override
