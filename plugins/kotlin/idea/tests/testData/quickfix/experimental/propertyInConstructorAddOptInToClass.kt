@@ -1,7 +1,7 @@
-// "Propagate '@PropertyTypeMarker' annotation to constructor" "true"
+// "Opt-in for 'PropertyTypeMarker::class' on containing class 'PropertyTypeContainer'" "true"
 // COMPILER_ARGUMENTS: -Xopt-in=kotlin.RequiresOptIn
-// WITH_STDLIB
-// ACTION: Propagate '@PropertyTypeMarker' annotation to containing class 'PropertyTypeContainer'
+// WITH_RUNTIME
+// ACTION: Opt-in for 'PropertyTypeMarker::class' on the constructor
 
 @RequiresOptIn
 annotation class PropertyTypeMarker

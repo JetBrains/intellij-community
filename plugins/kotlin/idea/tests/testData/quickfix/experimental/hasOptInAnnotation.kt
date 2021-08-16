@@ -1,4 +1,4 @@
-// "Add '@OptIn(B::class)' annotation to 'root'" "true"
+// "Opt-in for 'B::class' on 'root'" "true"
 // WITH_STDLIB
 @RequiresOptIn
 annotation class A
