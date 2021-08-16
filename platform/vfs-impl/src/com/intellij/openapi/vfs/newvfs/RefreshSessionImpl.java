@@ -29,7 +29,7 @@ import java.util.*;
 import java.util.concurrent.atomic.AtomicLong;
 
 final class RefreshSessionImpl extends RefreshSession {
-  private static final Logger LOG = Logger.getInstance(RefreshSession.class);
+  @SuppressWarnings("LoggerInitializedWithForeignClass") private static final Logger LOG = Logger.getInstance(RefreshSession.class);
 
   private static final int RETRY_LIMIT = SystemProperties.getIntProperty("refresh.session.retry.limit", 3);
   private static final long DURATION_REPORT_THRESHOLD_MS =
@@ -190,7 +190,7 @@ final class RefreshSessionImpl extends RefreshSession {
     }
   }
 
-  void fireEvents(@NotNull List<? extends CompoundVFileEvent> events, @NotNull List<? extends AsyncFileListener.ChangeApplier> appliers, boolean asyncEventProcessing) {
+  void fireEvents(@NotNull List<CompoundVFileEvent> events, @NotNull List<AsyncFileListener.ChangeApplier> appliers, boolean asyncProcessing) {
     try {
       ApplicationEx app = (ApplicationEx)ApplicationManager.getApplication();
       if ((myFinishRunnable != null || !events.isEmpty()) && !app.isDisposed()) {
@@ -202,7 +202,7 @@ final class RefreshSessionImpl extends RefreshSession {
             ((ProgressIndicatorWithDelayedPresentation) indicator).setDelayInMillis(progressThresholdMillis);
             long start = System.currentTimeMillis();
 
-            fireEventsInWriteAction(events, appliers, asyncEventProcessing);
+            fireEventsInWriteAction(events, appliers, asyncProcessing);
 
             long elapsed = System.currentTimeMillis() - start;
             if (elapsed > progressThresholdMillis) {
@@ -218,13 +218,12 @@ final class RefreshSessionImpl extends RefreshSession {
     }
   }
 
-  private void fireEventsInWriteAction(@NotNull List<? extends CompoundVFileEvent> events,
-                                       @NotNull List<? extends AsyncFileListener.ChangeApplier> appliers, boolean asyncEventProcessing) {
+  private void fireEventsInWriteAction(List<CompoundVFileEvent> events, List<AsyncFileListener.ChangeApplier> appliers, boolean asyncProcessing) {
     final VirtualFileManagerEx manager = (VirtualFileManagerEx)VirtualFileManager.getInstance();
 
     manager.fireBeforeRefreshStart(myIsAsync);
     try {
-      AsyncEventSupport.processEventsFromRefresh(events, appliers, asyncEventProcessing);
+      AsyncEventSupport.processEventsFromRefresh(events, appliers, asyncProcessing);
     }
     catch (AssertionError e) {
       if (FileStatusMap.CHANGES_NOT_ALLOWED_DURING_HIGHLIGHTING.equals(e.getMessage())) {
@@ -248,13 +247,11 @@ final class RefreshSessionImpl extends RefreshSession {
     mySemaphore.waitFor();
   }
 
-  @NotNull
-  ModalityState getModality() {
+  @NotNull ModalityState getModality() {
     return myModality;
   }
 
-  @NotNull
-  List<? extends VFileEvent> getEvents() {
+  @NotNull List<VFileEvent> getEvents() {
     return new ArrayList<>(new LinkedHashSet<>(myEvents));
   }
 
