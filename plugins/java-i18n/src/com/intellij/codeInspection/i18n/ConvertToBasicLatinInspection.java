@@ -41,7 +41,7 @@ public class ConvertToBasicLatinInspection extends AbstractBaseJavaLocalInspecti
         if (IOUtil.isAscii(element.getText())) return;
         // "Basic Latin" is a proper noun
         //noinspection DialogTitleCapitalization
-        holder.registerProblem(element, JavaI18nBundle.message("inspection.convert.to.basic.latin"), new MyLocalQuickFix());
+        holder.registerProblem(element, JavaI18nBundle.message("inspection.convert.to.basic.latin"), new ConvertToBasicLatinFix());
       }
 
       @Override
@@ -188,7 +188,7 @@ public class ConvertToBasicLatinInspection extends AbstractBaseJavaLocalInspecti
   private static class CommentHandler extends DocCommentHandler {
   }
 
-  private static class MyLocalQuickFix implements LocalQuickFix {
+  private static class ConvertToBasicLatinFix implements LocalQuickFix {
     @Nls
     @NotNull
     @Override
