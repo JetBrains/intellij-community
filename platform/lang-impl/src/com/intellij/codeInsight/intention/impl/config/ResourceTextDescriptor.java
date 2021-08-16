@@ -42,24 +42,15 @@ final class ResourceTextDescriptor implements TextDescriptor {
   @NotNull
   @Override
   public String getText() throws IOException {
-    if (!myResourcePath.endsWith(BeforeAfterActionMetaData.DESCRIPTION_FILE_NAME)
-    && !myResourcePath.endsWith(IntentionDescriptionPanel.AFTER_TEMPLATE)
-    && !myResourcePath.endsWith(IntentionDescriptionPanel.BEFORE_TEMPLATE)) return loadDefaultText(); //NON-NLS
-
-    InputStream languageStream = getLanguageStream();
-    if (languageStream == null) return loadDefaultText(); //NON-NLS
-
-    try {
-      return ResourceUtil.loadText(languageStream); //NON-NLS
+    InputStream languageStream = !myResourcePath.endsWith(BeforeAfterActionMetaData.DESCRIPTION_FILE_NAME) ? null : getLanguageStream();
+    if (languageStream != null) {
+      try {
+        return ResourceUtil.loadText(languageStream); //NON-NLS
+      }
+      catch (IOException e) {
+        LOG.error("Cannot find localized resource: " + myResourcePath, e);
+      }
     }
-    catch (IOException e) {
-      LOG.error("Cannot find localized resource: " + myResourcePath, e);
-      return loadDefaultText(); //NON-NLS
-    }
-  }
-
-  @NotNull
-  private String loadDefaultText() throws IOException {
     InputStream stream = myLoader.getResourceAsStream(myResourcePath);
     if (stream == null) {
       throw new IOException("Resource not found: " + myResourcePath);
