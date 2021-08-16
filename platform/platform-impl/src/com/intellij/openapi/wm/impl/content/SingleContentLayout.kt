@@ -10,8 +10,10 @@ import com.intellij.openapi.actionSystem.ex.CustomComponentAction
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.ui.JBPopupMenu
+import com.intellij.openapi.ui.popup.JBPopupFactory
+import com.intellij.openapi.ui.popup.PopupStep
+import com.intellij.openapi.ui.popup.util.BaseListPopupStep
 import com.intellij.openapi.util.*
-import com.intellij.openapi.util.text.StringUtil
 import com.intellij.ui.MouseDragHelper
 import com.intellij.ui.PopupHandler
 import com.intellij.ui.awt.RelativePoint
@@ -22,8 +24,10 @@ import com.intellij.ui.content.Content
 import com.intellij.ui.content.ContentManager
 import com.intellij.ui.tabs.*
 import com.intellij.ui.tabs.impl.JBTabsImpl
+import com.intellij.ui.tabs.impl.MorePopupAware
 import com.intellij.ui.tabs.impl.TabLabel
 import com.intellij.util.containers.ContainerUtil
+import com.intellij.util.ui.AbstractLayoutManager
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import java.awt.*
@@ -51,7 +55,7 @@ internal class SingleContentLayout(
   private var isSingleContentView: Boolean = false
 
   private var tabAdapter: TabAdapter? = null
-  private val toolbars = mutableMapOf<ActionToolbarPosition, ActionToolbar>()
+  private val toolbars = mutableMapOf<ToolbarType, ActionToolbar>()
   private var wrapper: JComponent? = null
 
   override fun update() {
@@ -96,7 +100,7 @@ internal class SingleContentLayout(
     }
     assert(toolbars.isEmpty())
     supplier.getToolbarActions()?.let { mainActionGroup ->
-      toolbars[ActionToolbarPosition.LEFT] = createToolbar(
+      toolbars[ToolbarType.MAIN] = createToolbar(
         "MainSingleContentToolbar",
         mainActionGroup,
         content.component
@@ -104,14 +108,13 @@ internal class SingleContentLayout(
     }
 
     let {
-
       val contentActions = DefaultActionGroup()
       contentActions.add(CloseCurrentContentAction())
       contentActions.add(Separator.create())
       contentActions.addAll(supplier.getContentActions())
       contentActions.add(MyInvisibleAction())
 
-      toolbars[ActionToolbarPosition.RIGHT] = createToolbar(
+      toolbars[ToolbarType.CLOSE_GROUP] = createToolbar(
         "CloseSingleContentGroup",
         contentActions,
         content.component
@@ -135,7 +138,7 @@ internal class SingleContentLayout(
     }
 
     isSingleContentView = true
-    supplier.init(toolbars[ActionToolbarPosition.LEFT], toolbars[ActionToolbarPosition.RIGHT])
+    supplier.init(toolbars[ToolbarType.MAIN], toolbars[ToolbarType.CLOSE_GROUP])
     supplier.customize(wrapper)
   }
 
@@ -192,9 +195,8 @@ internal class SingleContentLayout(
 
       val labelWidth = myIdLabel.x + myIdLabel.preferredSize.width
       var tabsWidth = tabAdapter?.preferredSize?.width ?: 0
-      var mainToolbarWidth = toolbars[ActionToolbarPosition.LEFT]?.component?.preferredSize?.width ?: 0
-      var wrapperWidth = wrapper?.preferredSize?.width ?: 0
-      val contentToolbarWidth = toolbars[ActionToolbarPosition.RIGHT]?.component?.preferredSize?.width ?: 0
+      var mainToolbarWidth = toolbars[ToolbarType.MAIN]?.component?.preferredSize?.width ?: 0
+      val contentToolbarWidth = toolbars[ToolbarType.CLOSE_GROUP]?.component?.preferredSize?.width ?: 0
 
       val fixedWidth = labelWidth + mainToolbarWidth + contentToolbarWidth
       val freeWidth = component.bounds.width - fixedWidth
@@ -204,7 +206,7 @@ internal class SingleContentLayout(
       }
 
       tabsWidth = maxOf(0, minOf(freeWidth, tabsWidth))
-      wrapperWidth = maxOf(0, freeWidth - tabsWidth)
+      val wrapperWidth = maxOf(0, freeWidth - tabsWidth)
 
       var x = labelWidth
 
@@ -213,7 +215,7 @@ internal class SingleContentLayout(
         x += tabsWidth
       }
 
-      toolbars[ActionToolbarPosition.LEFT]?.component?.apply {
+      toolbars[ToolbarType.MAIN]?.component?.apply {
         bounds = Rectangle(x, 0, mainToolbarWidth, component.height)
         x += mainToolbarWidth
       }
@@ -223,7 +225,7 @@ internal class SingleContentLayout(
         x += wrapperWidth
       }
 
-      toolbars[ActionToolbarPosition.RIGHT]?.component?.apply {
+      toolbars[ToolbarType.CLOSE_GROUP]?.component?.apply {
         bounds = Rectangle(x, 0, contentToolbarWidth, component.height)
         x += contentToolbarWidth
       }
@@ -256,9 +258,16 @@ internal class SingleContentLayout(
     val jbTabs: JBTabs,
     val tabPainter: JBTabPainter,
     val twcui: ToolWindowContentUi
-  ) : NonOpaquePanel(HorizontalLayout(0)), TabsListener, PropertyChangeListener, Disposable {
+  ) : NonOpaquePanel(),
+      TabsListener,
+      PropertyChangeListener,
+      DataProvider,
+      MorePopupAware,
+      Disposable
+  {
 
-    val labels = mutableListOf<MyContentTabLabel>()
+    private val labels = mutableListOf<MyContentTabLabel>()
+    private val popupToolbar: JComponent
 
     val popupHandler = object : PopupHandler() {
       override fun invokePopup(comp: Component, x: Int, y: Int) = showPopup(comp, x, y)
@@ -295,6 +304,19 @@ internal class SingleContentLayout(
       }, this)
 
       jbTabs.component.addContainerListener(containerListener)
+
+      val tabList = ActionManager.getInstance().getAction("TabList")
+      val tabListGroup = DefaultActionGroup(tabList, Separator.create(), MyInvisibleAction())
+      popupToolbar = createToolbar("TabAdapterGroup", tabListGroup, this).apply {
+        setReservePlaceAutoPopupIcon(false)
+        layoutPolicy = ActionToolbar.NOWRAP_LAYOUT_POLICY
+      }.component
+
+      layout = HorizontalTabLayoutWithHiddenControl {
+        labels.find { it.content.info == jbTabs.selectedInfo }
+      }
+
+      add(popupToolbar, HorizontalTabLayoutWithHiddenControl.CONTROL)
     }
 
     private fun retrieveInfo(label: MyContentTabLabel): TabInfo {
@@ -311,6 +333,7 @@ internal class SingleContentLayout(
       }
       updateSingleContentView(currentContent, currentSupplier)
       updateLabels(labels)
+      revalidate()
     }
 
     fun updateTabs() {
@@ -422,6 +445,38 @@ internal class SingleContentLayout(
         return super.getContent() as FakeContent
       }
     }
+
+    override fun getData(dataId: String): Any? {
+      if (MorePopupAware.KEY.`is`(dataId)) {
+        return this
+      }
+      return null
+    }
+
+    override fun canShowMorePopup(): Boolean {
+      return true
+    }
+
+    override fun showMorePopup() {
+      val contentToShow = labels
+        .filter { it.bounds.width <= 0 }
+        .map(MyContentTabLabel::getContent)
+
+      val step = object : BaseListPopupStep<FakeContent>(null, contentToShow) {
+        override fun onChosen(selectedValue: FakeContent, finalChoice: Boolean): PopupStep<*>? {
+          jbTabs.select(selectedValue.info, true)
+          return FINAL_CHOICE
+        }
+
+        override fun getIconFor(value: FakeContent) = value.icon
+
+        override fun getTextFor(value: FakeContent) = value.displayName
+      }
+
+      JBPopupFactory.getInstance()
+        .createListPopup(step)
+        .show(RelativePoint.getSouthWestOf(popupToolbar))
+    }
   }
 
   private inner class CloseCurrentContentAction : DumbAwareAction(CommonBundle.messagePointer("action.close"), AllIcons.Actions.Cancel) {
@@ -469,6 +524,15 @@ internal class SingleContentLayout(
       return null
     }
 
+    override fun getIcon(): Icon? {
+      return info.icon
+    }
+
+    @NlsSafe
+    override fun getDisplayName(): String {
+      return info.text
+    }
+
     override fun <T : Any?> getUserData(key: Key<T>): T? {
       error("An operation is not supported")
     }
@@ -505,15 +569,7 @@ internal class SingleContentLayout(
       error("An operation is not supported")
     }
 
-    override fun getIcon(): Icon? {
-      error("An operation is not supported")
-    }
-
     override fun setDisplayName(displayName: String?) {
-      error("An operation is not supported")
-    }
-
-    override fun getDisplayName(): String? {
       error("An operation is not supported")
     }
 
@@ -646,6 +702,93 @@ internal class SingleContentLayout(
     }
   }
 
+  private class HorizontalTabLayoutWithHiddenControl(
+    val selected: () -> JComponent?
+  ) : AbstractLayoutManager() {
+
+    private var control: Component? = null
+
+    override fun addLayoutComponent(comp: Component?, constraints: Any?) {
+      if (constraints == CONTROL) {
+        assert(control == null) { "Cannot add a second control component" }
+        control = comp
+      }
+      super.addLayoutComponent(comp, constraints)
+    }
+
+    override fun removeLayoutComponent(comp: Component?) {
+      if (control === comp) {
+        control = null
+      }
+      super.removeLayoutComponent(comp)
+    }
+
+    override fun preferredLayoutSize(parent: Container): Dimension {
+      return parent.components.asSequence()
+        .filterNot { it === control }
+        .map { it.preferredSize }
+        .reduce { acc, size ->
+          acc.width += size.width
+          acc.height = maxOf(acc.height, size.height, parent.height)
+          acc
+        }
+    }
+
+    override fun layoutContainer(parent: Container) {
+      var eachX = 0
+      val canFitAllComponents = parent.preferredSize.width <= parent.bounds.width
+      if (canFitAllComponents) {
+        parent.components.asSequence()
+          .filterNot { it === control }
+          .forEach {
+            val dim = it.preferredSize
+            it.bounds = Rectangle(eachX, 0, dim.width, parent.height)
+            eachX += dim.width
+          }
+        control?.bounds = Rectangle(0, 0, 0, 0)
+      }
+      else {
+        // copy of [TabContentLayout#layout]
+        val toLayout = parent.components.toMutableList()
+        val toRemove = mutableListOf<Component>()
+        var requiredWidth = toLayout.sumOf { it.preferredSize.width }
+        val selected = selected()
+        val toFitWidth = parent.bounds.width - (control?.preferredSize?.width ?: 0)
+        while (true) {
+          if (requiredWidth <= toFitWidth) break
+          if (toLayout.size <= 1) break
+
+          if (toLayout.first() != selected) {
+            requiredWidth -= toLayout.first().preferredSize.width + 1
+            toRemove += toLayout.first()
+            toLayout.removeFirst()
+          }
+          else if (toLayout.last() != selected) {
+            requiredWidth -= toLayout.last().preferredSize.width + 1
+            toRemove += toLayout.last()
+            toLayout.removeLast()
+          }
+          else {
+            break
+          }
+        }
+        toLayout.forEach {
+          val prefSize = it.preferredSize
+          it.bounds = Rectangle(eachX, 0, minOf(prefSize.width, toFitWidth), parent.height)
+          eachX += prefSize.width
+        }
+        toRemove.forEach {
+          it.bounds = Rectangle(0, 0, 0, 0)
+        }
+        control?.let { it.bounds = Rectangle(Point(toFitWidth, 0), it.preferredSize) }
+      }
+    }
+
+    companion object {
+      const val CONTROL = "ControlComponent"
+    }
+  }
+
   /**
    * Workaround action to prevent [Separator] disappearing when [SingleContentSupplier.getContentActions] is empty.
    */
@@ -682,5 +825,9 @@ internal class SingleContentLayout(
     override fun mouseDragged(e: MouseEvent) = redispatch(e)
 
     override fun mouseMoved(e: MouseEvent) = redispatch(e)
+  }
+
+  private enum class ToolbarType {
+    MAIN, CLOSE_GROUP
   }
 }
