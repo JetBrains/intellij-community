@@ -685,9 +685,6 @@ public final class IdeKeyEventDispatcher {
       if (e.getID() == KeyEvent.KEY_PRESSED) {
         myIgnoreNextKeyTypedEvent = true;
       }
-      if (dumbModeWarningListener != null) {
-        dumbModeWarningListener.actionCanceledBecauseOfDumbMode();
-      }
       IdeEventQueue.getInstance().flushDelayedKeyEvents();
       String message = getActionUnavailableMessage(wouldBeEnabledIfNotDumb);
       showDumbModeBalloonLaterIfNobodyConsumesEvent(project, message, retryRunnable, __ -> e.isConsumed());
@@ -732,12 +729,6 @@ public final class IdeKeyEventDispatcher {
   public static @NotNull @Nls String getUnavailableMessage(@NotNull @Nls String action, boolean plural) {
     return plural ? IdeBundle.message("dumb.balloon.0.are.not.available.while.indexing", action) :
            IdeBundle.message("dumb.balloon.0.is.not.available.while.indexing", action);
-  }
-
-  private static DumbModeWarningListener dumbModeWarningListener;
-
-  public static void addDumbModeWarningListener (DumbModeWarningListener listener) {
-    dumbModeWarningListener = listener;
   }
 
   /**
