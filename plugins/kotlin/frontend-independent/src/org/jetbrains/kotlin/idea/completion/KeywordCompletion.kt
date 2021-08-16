@@ -23,6 +23,7 @@ import org.jetbrains.kotlin.config.LanguageVersionSettings
 import org.jetbrains.kotlin.config.LanguageVersionSettingsImpl
 import org.jetbrains.kotlin.descriptors.annotations.KotlinTarget
 import org.jetbrains.kotlin.descriptors.annotations.KotlinTarget.*
+import org.jetbrains.kotlin.fir.analysis.checkers.FirModifier
 import org.jetbrains.kotlin.idea.completion.handlers.WithTailInsertHandler
 import org.jetbrains.kotlin.idea.completion.handlers.createKeywordConstructLookupElement
 import org.jetbrains.kotlin.lexer.KtKeywordToken
@@ -32,7 +33,7 @@ import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.*
 import org.jetbrains.kotlin.renderer.render
-import org.jetbrains.kotlin.resolve.ModifierCheckerCore
+import org.jetbrains.kotlin.resolve.*
 import org.jetbrains.kotlin.utils.addToStdlib.firstIsInstanceOrNull
 
 /**
@@ -504,7 +505,7 @@ class KeywordCompletion(private val languageVersionSettingProvider: LanguageVers
 
                         else -> listOf()
                     }
-                    val modifierTargets = ModifierCheckerCore.possibleTargetMap[keywordTokenType]?.intersect(possibleTargets)
+                    val modifierTargets = possibleTargetMap[getKeywordType(keywordTokenType)]?.intersect(possibleTargets)
                     if (modifierTargets != null && possibleTargets.isNotEmpty() &&
                         modifierTargets.none {
                             isModifierTargetSupportedAtLanguageLevel(keywordTokenType, it, languageVersionSettings)
@@ -528,7 +529,7 @@ class KeywordCompletion(private val languageVersionSettingProvider: LanguageVers
                         else -> return keywordTokenType != CONST_KEYWORD
                     }
 
-                    if (!ModifierCheckerCore.isPossibleParentTarget(keywordTokenType, parentTarget, languageVersionSettings)) return false
+                    if (!isPossibleParentTarget(keywordTokenType, parentTarget, languageVersionSettings)) return false
 
                     if (keywordTokenType == CONST_KEYWORD) {
                         return when (parentTarget) {
@@ -665,4 +666,63 @@ class KeywordCompletion(private val languageVersionSettingProvider: LanguageVers
             else -> it.parent
         }
     }
+
+    private fun isPossibleParentTarget(
+        modifier: KtModifierKeywordToken,
+        parentTarget: KotlinTarget,
+        languageVersionSettings: LanguageVersionSettings
+    ): Boolean {
+        val keywordType = getKeywordType(modifier)
+        deprecatedParentTargetMap[keywordType]?.let {
+            if (parentTarget in it) return false
+        }
+
+        possibleParentTargetPredicateMap[keywordType]?.let {
+            return it.isAllowed(parentTarget, languageVersionSettings)
+        }
+
+        return true
+    }
+
+    fun getKeywordType(token: KtModifierKeywordToken): KeywordType {
+        return ktKeywordToKeywordTypeMap.getValue(token)
+    }
+
+    //todo reuse version from org.jetbrains.kotlin.fir.analysis.checkers
+    private val ktKeywordToKeywordTypeMap: Map<KtKeywordToken, KeywordType> = mapOf(
+        INNER_KEYWORD to KeywordType.Inner,
+        OVERRIDE_KEYWORD to KeywordType.Override,
+        PUBLIC_KEYWORD to KeywordType.Public,
+        PROTECTED_KEYWORD to KeywordType.Protected,
+        INTERNAL_KEYWORD to KeywordType.Internal,
+        PRIVATE_KEYWORD to KeywordType.Private,
+        COMPANION_KEYWORD to KeywordType.Companion,
+        FINAL_KEYWORD to KeywordType.Final,
+        VARARG_KEYWORD to KeywordType.Vararg,
+        ENUM_KEYWORD to KeywordType.Enum,
+        ABSTRACT_KEYWORD to KeywordType.Abstract,
+        OPEN_KEYWORD to KeywordType.Open,
+        SEALED_KEYWORD to KeywordType.Sealed,
+        IN_KEYWORD to KeywordType.In,
+        OUT_KEYWORD to KeywordType.Out,
+        REIFIED_KEYWORD to KeywordType.Reified,
+        LATEINIT_KEYWORD to KeywordType.Lateinit,
+        DATA_KEYWORD to KeywordType.Data,
+        INLINE_KEYWORD to KeywordType.Inline,
+        NOINLINE_KEYWORD to KeywordType.Noinline,
+        TAILREC_KEYWORD to KeywordType.Tailrec,
+        SUSPEND_KEYWORD to KeywordType.Suspend,
+        EXTERNAL_KEYWORD to KeywordType.External,
+        ANNOTATION_KEYWORD to KeywordType.Annotation,
+        CROSSINLINE_KEYWORD to KeywordType.Crossinline,
+        CONST_KEYWORD to KeywordType.Const,
+        OPERATOR_KEYWORD to KeywordType.Operator,
+        INFIX_KEYWORD to KeywordType.Infix,
+        HEADER_KEYWORD to KeywordType.Header,
+        IMPL_KEYWORD to KeywordType.Impl,
+        EXPECT_KEYWORD to KeywordType.Expect,
+        ACTUAL_KEYWORD to KeywordType.Actual,
+        FUN_KEYWORD to KeywordType.Fun,
+        VALUE_KEYWORD to KeywordType.Value
+    )
 }
