@@ -727,11 +727,11 @@ internal class SingleContentLayout(
       return parent.components.asSequence()
         .filterNot { it === control }
         .map { it.preferredSize }
-        .reduce { acc, size ->
+        .reduceOrNull { acc, size ->
           acc.width += size.width
           acc.height = maxOf(acc.height, size.height, parent.height)
           acc
-        }
+        } ?: Dimension()
     }
 
     override fun layoutContainer(parent: Container) {
