@@ -48,6 +48,7 @@ class KotlinConfigurationCheckerService(val project: Project) {
                 val ktModules = getModulesWithKotlinFiles(project)
                 indicator.isIndeterminate = false
                 for ((idx, module) in ktModules.withIndex()) {
+                    indicator.checkCanceled()
                     if (project.isDisposed) return
                     indicator.fraction = 1.0 * idx / ktModules.size
                     runReadAction {
