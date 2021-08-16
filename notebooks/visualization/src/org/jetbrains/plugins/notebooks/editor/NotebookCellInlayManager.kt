@@ -9,6 +9,7 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.editor.EditorKind
 import com.intellij.openapi.editor.Inlay
 import com.intellij.openapi.editor.colors.EditorColorsListener
 import com.intellij.openapi.editor.colors.EditorColorsManager
@@ -375,7 +376,8 @@ private object NotebookCellHighlighterRenderer : CustomHighlighterRenderer {
 
       g.color = editor.colorsScheme.defaultBackground
       g.clipBounds.run {
-        g.fillRect(x, y, width, height)
+        val fillX = if (editor.editorKind == EditorKind.DIFF && editor.isMirrored) x + 20 else x
+        g.fillRect(fillX, y, width, height)
       }
     }
   }

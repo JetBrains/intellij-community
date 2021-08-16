@@ -1,5 +1,6 @@
 package org.jetbrains.plugins.notebooks.editor
 
+import com.intellij.openapi.editor.EditorKind
 import com.intellij.openapi.editor.colors.EditorColors
 import com.intellij.openapi.editor.impl.EditorImpl
 import java.awt.Graphics
@@ -28,6 +29,7 @@ class CellBackgroundGutterController : NotebookCellGutterController {
       }
     }
     else {
+      if (editor.editorKind == EditorKind.DIFF) return
       paintCaretRow(editor, g, interval.lines)
       appearance.getCellStripeColor(editor, interval)?.let {
         appearance.paintCellStripe(g, r, it, top, height)

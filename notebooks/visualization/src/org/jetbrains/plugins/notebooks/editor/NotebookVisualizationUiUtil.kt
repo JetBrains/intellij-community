@@ -2,6 +2,7 @@ package org.jetbrains.plugins.notebooks.editor
 
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.editor.EditorKind
 import com.intellij.openapi.editor.event.DocumentListener
 import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.util.TextRange
@@ -56,8 +57,11 @@ inline fun paintNotebookCellBackgroundGutter(
   val stripeHover = appearance.getCellStripeHoverColor(editor, interval)
   val borderWidth = appearance.getLeftBorderWidth()
   g.color = appearance.getCodeCellBackground(editor.colorsScheme)
-  g.fillRect(r.width - borderWidth, top, borderWidth, height)
+  if (editor.editorKind != EditorKind.DIFF) {
+    g.fillRect(r.width - borderWidth, top, borderWidth, height)
+  }
   actionBetweenBackgroundAndStripe()
+  if (editor.editorKind == EditorKind.DIFF) return
   if (stripe != null) {
     appearance.paintCellStripe(g, r, stripe, top, height)
   }
