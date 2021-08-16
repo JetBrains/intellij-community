@@ -69,7 +69,8 @@ class CoroutineNonBlockingContextChecker : NonBlockingContextChecker {
             val type = parameterForArgument.returnType ?: return false
 
             val hasRestrictSuspensionAnnotation = if (type.isBuiltinFunctionalType) {
-                type.getReceiverTypeFromFunctionType()?.isRestrictsSuspensionReceiver(getLanguageVersionSettings(element))
+
+                type.getReceiverTypeFromFunctionType()?.isRestrictsSuspensionReceiver(/* TODO is this correct?*/)
             } else null
 
             return hasRestrictSuspensionAnnotation != true && type.isSuspendFunctionType
