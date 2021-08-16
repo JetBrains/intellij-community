@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.runToolbar
 
+import com.intellij.execution.RunManager
 import com.intellij.execution.RunnerAndConfigurationSettings
 import com.intellij.execution.executors.ExecutorGroup
 import com.intellij.execution.runners.ExecutionEnvironment
@@ -15,6 +16,7 @@ interface RunToolbarData {
   companion object {
     var RUN_TOOLBAR_DATA_KEY: DataKey<RunToolbarData> = DataKey.create("RUN_TOOLBAR_DATA_KEY")
     var RUN_TOOLBAR_POPUP_STATE_KEY: DataKey<Boolean> = DataKey.create("RUN_TOOLBAR_POPUP_STATE_KEY")
+    var RUN_TOOLBAR_MAIN_STATE: DataKey<RunToolbarMainSlotState> = DataKey.create("RUN_TOOLBAR_MAIN_STATE")
   }
 
   val id: String
@@ -27,18 +29,6 @@ internal fun AnActionEvent.runToolbarData(): RunToolbarData? {
   return this.dataContext.getData(RunToolbarData.RUN_TOOLBAR_DATA_KEY)
 }
 
-fun AnActionEvent.isOpened(): Boolean {
-  return this.dataContext.getData(RunToolbarData.RUN_TOOLBAR_POPUP_STATE_KEY) == true
-}
-
-fun AnActionEvent.isItRunToolbarMainSlot(): Boolean {
-  return this.project?.let { project ->
-    runToolbarData()?.let {
-      it == RunToolbarSlotManager.getInstance(project).mainSlotData
-    } ?: false
-  } ?: false
-}
-
 internal fun AnActionEvent.isActiveProcess(): Boolean {
   return this.environment() != null
 }
@@ -49,6 +39,11 @@ internal fun AnActionEvent.addWaitingForAProcess(executorId: String) {
 
 internal fun AnActionEvent.setConfiguration(value: RunnerAndConfigurationSettings?) {
   runToolbarData()?.configuration = value
+  this.project?.let {
+    if(value != null) {
+      RunManager.getInstance(it).selectedConfiguration = value
+    }
+  }
 }
 
 internal fun AnActionEvent.configuration(): RunnerAndConfigurationSettings? {

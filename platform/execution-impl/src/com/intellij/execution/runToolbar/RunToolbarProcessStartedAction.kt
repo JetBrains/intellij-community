@@ -54,17 +54,14 @@ class RunToolbarProcessStartedAction : ComboBoxAction(), RTRunConfiguration {
 
   }
 
+  override fun checkMainSlotVisibility(state: RunToolbarMainSlotState): Boolean {
+    return state == RunToolbarMainSlotState.PROCESS
+  }
+
   override fun update(e: AnActionEvent) {
     super.update(e)
     updatePresentation(e)
-    e.presentation.isEnabledAndVisible =  e.presentation.isEnabledAndVisible && shouldBeShown(e)
    }
-
-  private fun shouldBeShown(e: AnActionEvent): Boolean {
-    return if(e.isItRunToolbarMainSlot()) e.project?.let {
-      RunToolbarSlotManager.getInstance(it).getState().isSingleMain() || (e.isOpened() && e.isActiveProcess())
-    } ?: false else true
-  }
 
   override fun createComboBoxButton(presentation: Presentation): ComboBoxButton {
     return object : ComboBoxButton(presentation) {

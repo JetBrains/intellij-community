@@ -21,12 +21,12 @@ class RunToolbarStopAction : AnAction(AllIcons.Actions.Suspend), DumbAware, RTBa
 
   override fun setShortcutSet(shortcutSet: ShortcutSet) {}
 
+  override fun checkMainSlotVisibility(state: RunToolbarMainSlotState): Boolean {
+    return state == RunToolbarMainSlotState.PROCESS
+  }
+
   override fun update(e: AnActionEvent) {
     e.presentation.isEnabledAndVisible = e.environment()?.let {
-      if(e.isItRunToolbarMainSlot()
-         && !RunToolbarSlotManager.getInstance(it.project).getState().isSingleProcess()
-         && !e.isOpened()
-      ) return@let false
 
       e.presentation.icon = e.environment()?.getRunToolbarProcess()?.getStopIcon() ?: templatePresentation.icon
       it.contentToReuse?.let {

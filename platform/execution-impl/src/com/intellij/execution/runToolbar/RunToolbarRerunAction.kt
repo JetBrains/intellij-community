@@ -12,17 +12,18 @@ import com.intellij.openapi.project.DumbAware
 open class RunToolbarRerunAction : FakeRerunAction(), RTBarAction, DumbAware {
   override fun getRightSideType(): RTBarAction.Type = RTBarAction.Type.RIGHT_FLEXIBLE
 
-  override fun update(event: AnActionEvent) {
-    super.update(event)
-    event.presentation.text = ExecutionBundle.message("run.dashboard.rerun.action.name")
-    event.presentation.isEnabledAndVisible =
-      event.presentation.isEnabled
-      && event.presentation.isVisible
-      && getDescriptor(event) != null
-      && event.presentation.isVisible
-      && if(event.isItRunToolbarMainSlot() && !event.isOpened()) event.project?.let {
-        RunToolbarSlotManager.getInstance(it).getState().isSingleMain()
-      } ?: false else true
+  override fun checkMainSlotVisibility(state: RunToolbarMainSlotState): Boolean {
+    return state == RunToolbarMainSlotState.PROCESS
+  }
+
+  override fun update(e: AnActionEvent) {
+    super.update(e)
+    e.presentation.text = ExecutionBundle.message("run.dashboard.rerun.action.name")
+    e.presentation.isEnabledAndVisible =
+      e.presentation.isEnabled
+      && e.presentation.isVisible
+      && getDescriptor(e) != null
+      && e.presentation.isVisible
   }
 
   override fun setShortcutSet(shortcutSet: ShortcutSet) {}

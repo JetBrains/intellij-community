@@ -2,10 +2,7 @@
 package com.intellij.execution.runToolbar
 
 import com.intellij.icons.AllIcons
-import com.intellij.openapi.actionSystem.ActionToolbar
-import com.intellij.openapi.actionSystem.AnAction
-import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.actionSystem.Presentation
+import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction
 import com.intellij.openapi.actionSystem.impl.ActionButton
 import com.intellij.openapi.project.DumbAware
@@ -14,18 +11,17 @@ import java.awt.Point
 import javax.swing.JComponent
 
 
-class RunToolbarShowHidePopupAction : AnAction(), CustomComponentAction, DumbAware {
+class RunToolbarShowHidePopupAction : AnAction(), CustomComponentAction, DumbAware, RTBarAction {
 
   override fun actionPerformed(e: AnActionEvent) {
 
   }
 
+  override fun checkMainSlotVisibility(state: RunToolbarMainSlotState): Boolean {
+    return state == RunToolbarMainSlotState.CONFIGURATION
+  }
+
   override fun update(e: AnActionEvent) {
-    e.presentation.isEnabledAndVisible = e.project?.let { project ->
-      val manager = RunToolbarSlotManager.getInstance(project)
-      val state = manager.getState()
-      !state.isActive() || (e.environment() == null && e.isOpened())
-    } ?: false
     e.arrowData()?.let {
       e.presentation.text = it.second
       e.presentation.icon = it.first
@@ -56,7 +52,9 @@ class RunToolbarShowHidePopupAction : AnAction(), CustomComponentAction, DumbAwa
     }
 
     override fun actionPerformed(event: AnActionEvent) {
-      listeners.forEach { it.actionPerformedHandler() }
+      val list = mutableListOf<PopupControllerComponentListener>()
+      list.addAll(listeners)
+      list.forEach { it.actionPerformedHandler() }
     }
 
     private val listeners = mutableListOf<PopupControllerComponentListener>()

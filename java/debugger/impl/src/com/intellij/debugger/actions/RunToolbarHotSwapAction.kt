@@ -6,7 +6,9 @@ import com.intellij.debugger.impl.DebuggerSession
 import com.intellij.debugger.settings.DebuggerSettings
 import com.intellij.debugger.ui.HotSwapUI
 import com.intellij.debugger.ui.HotSwapUIImpl
-import com.intellij.execution.runToolbar.*
+import com.intellij.execution.runToolbar.RTBarAction
+import com.intellij.execution.runToolbar.RunToolbarMainSlotState
+import com.intellij.execution.runToolbar.environment
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.ShortcutSet
@@ -26,6 +28,10 @@ class RunToolbarHotSwapAction : AnAction(), RTBarAction {
     }
   }
 
+  override fun checkMainSlotVisibility(state: RunToolbarMainSlotState): Boolean {
+    return state == RunToolbarMainSlotState.PROCESS
+  }
+
   override fun setShortcutSet(shortcutSet: ShortcutSet) {}
 
   private fun getSession(e: AnActionEvent): DebuggerSession? {
@@ -42,18 +48,10 @@ class RunToolbarHotSwapAction : AnAction(), RTBarAction {
   }
 
   override fun update(e: AnActionEvent) {
-    val project = e.project
-    if (project == null) {
-      e.presentation.isEnabledAndVisible = false
-      return
-    }
-
     val session = getSession(e)
     e.presentation.isEnabledAndVisible =
-      (if(e.isItRunToolbarMainSlot()) RunToolbarSlotManager.getInstance(project).getState().isSingleProcess() || e.isOpened() else true)
-      && session != null
+      session != null
       && HotSwapUIImpl.canHotSwap(session)
       && Registry.`is`("ide.new.navbar.hotswap", false)
-
   }
 }

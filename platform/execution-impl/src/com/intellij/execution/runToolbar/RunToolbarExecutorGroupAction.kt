@@ -4,25 +4,21 @@ package com.intellij.execution.runToolbar
 import com.intellij.execution.Executor
 import com.intellij.execution.ExecutorRegistryImpl
 import com.intellij.execution.executors.ExecutorGroup
-import com.intellij.openapi.actionSystem.AnAction
-import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.actionSystem.ShortcutSet
-import com.intellij.openapi.actionSystem.SplitButtonAction
+import com.intellij.openapi.actionSystem.*
 import java.util.function.Function
 
 internal class RunToolbarExecutorGroupAction(private val group: RunToolbarExecutorGroup) : SplitButtonAction(group), ExecutorRunToolbarAction {
   override val process: RunToolbarProcess
     get() = group.process
 
+  override fun checkMainSlotVisibility(state: RunToolbarMainSlotState): Boolean {
+    return state == RunToolbarMainSlotState.CONFIGURATION
+  }
+
   override fun update(e: AnActionEvent) {
     super.update(e)
 
-    e.presentation.isVisible = e.project?.let {
-      !e.isActiveProcess() && e.presentation.isVisible && if(e.isItRunToolbarMainSlot()) e.project?.let {
-        !RunToolbarSlotManager.getInstance(it).getState().isActive()
-      } ?: false else true
-
-    } ?: false
+    e.presentation.isVisible = !e.isActiveProcess() && e.presentation.isVisible
   }
 
   override fun setShortcutSet(shortcutSet: ShortcutSet) {}
@@ -40,15 +36,13 @@ internal class RunToolbarExecutorGroup(executorGroup: ExecutorGroup<*>,
 
   override fun setShortcutSet(shortcutSet: ShortcutSet) {}
 
+  override fun checkMainSlotVisibility(state: RunToolbarMainSlotState): Boolean {
+   return state == RunToolbarMainSlotState.CONFIGURATION
+  }
+
   override fun update(e: AnActionEvent) {
     super.update(e)
 
-    e.presentation.isVisible = e.project?.let {
-      !e.isActiveProcess() && e.presentation.isVisible && if(e.isItRunToolbarMainSlot()) e.project?.let {
-        !RunToolbarSlotManager.getInstance(it).getState().isActive()
-      } ?: false else true
-
-    } ?: false
-
+    e.presentation.isVisible = !e.isActiveProcess()
   }
 }

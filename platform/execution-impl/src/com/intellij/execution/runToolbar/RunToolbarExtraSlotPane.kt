@@ -78,13 +78,13 @@ class RunToolbarExtraSlotPane(val project: Project, val baseWidth: () -> Int?, v
 
         addMouseListener(object : MouseAdapter() {
           override fun mouseClicked(e: MouseEvent) {
-            manager.addNewSlot()
+            manager.addAndSaveSlot()
           }
         })
       })
       add(HyperlinkLabel(LangBundle.message("run.toolbar.add.slot")).apply {
         addHyperlinkListener {
-          manager.addNewSlot()
+          manager.addAndSaveSlot()
         }
         border = JBUI.Borders.empty()
       })

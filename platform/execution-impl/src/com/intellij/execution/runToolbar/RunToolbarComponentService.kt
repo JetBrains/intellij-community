@@ -4,6 +4,7 @@ package com.intellij.execution.runToolbar
 import com.intellij.application.subscribe
 import com.intellij.execution.ExecutionListener
 import com.intellij.execution.ExecutionManager
+import com.intellij.execution.RunnerAndConfigurationSettings
 import com.intellij.execution.process.ProcessHandler
 import com.intellij.execution.runners.ExecutionEnvironment
 import com.intellij.openapi.application.ApplicationManager
@@ -13,6 +14,8 @@ class RunToolbarComponentService(val project: Project) {
   private val extraSlots = RunToolbarSlotManager.getInstance(project)
 
   private val executions: MutableMap<Long, ExecutionEnvironment> = mutableMapOf()
+
+  private val runToolbarSettings = RunToolbarSettings.getInstance(project)
 
   init {
     if (RunToolbarProcess.isAvailable()) {
@@ -36,9 +39,15 @@ class RunToolbarComponentService(val project: Project) {
 
       extraSlots.addListener(object : ActiveListener {
         override fun enabled() {
+          extraSlots.loadData(runToolbarSettings.getRunConfigurations())
+
           executions.forEach{
             extraSlots.processStarted(it.value)
           }
+        }
+
+        override fun saveSettings(list: MutableList<RunnerAndConfigurationSettings>) {
+          runToolbarSettings.setRunConfigurations(list)
         }
       })
     }
