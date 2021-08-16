@@ -26,6 +26,7 @@ public class YamlJsonSchemaDocumentationProvider implements DocumentationProvide
   }
 
   @Nullable
+  @Nls
   private static String findSchemaAndGenerateDoc(PsiElement element, final boolean preferShort) {
     final JsonSchemaService jsonSchemaService = JsonSchemaService.Impl.get(element.getProject());
     PsiFile containingFile = element.getContainingFile();

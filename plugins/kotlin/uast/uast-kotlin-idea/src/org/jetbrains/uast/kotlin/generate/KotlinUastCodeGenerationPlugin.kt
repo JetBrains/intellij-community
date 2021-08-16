@@ -150,12 +150,16 @@ class KotlinUastElementFactory(project: Project) : UastElementFactory {
         return KotlinStringULiteralExpression(psiFactory.createExpression(StringUtil.wrapWithDoubleQuote(text)), null)
     }
 
+    override fun createLongLiteralExpression(long: Long, context: PsiElement?): ULiteralExpression? {
+        return psiFactory.createExpression(long.toString() + "L").toUElementOfType()
+    }
+
     override fun createNullLiteral(context: PsiElement?): ULiteralExpression {
-        return psiFactory.createExpression("null").toUElementOfType<ULiteralExpression>()!!
+        return psiFactory.createExpression("null").toUElementOfType()!!
     }
 
     /*override*/ fun createIntLiteral(value: Int, context: PsiElement?): ULiteralExpression {
-        return psiFactory.createExpression(value.toString()).toUElementOfType<ULiteralExpression>()!!
+        return psiFactory.createExpression(value.toString()).toUElementOfType()!!
     }
 
     private fun KtExpression.ensureBlockExpressionBraces(): KtExpression {
