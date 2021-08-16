@@ -5,7 +5,9 @@ import com.intellij.ide.actions.cache.CacheInconsistencyProblem
 import com.intellij.ide.actions.cache.RecoveryAction
 import com.intellij.lang.LangBundle
 import com.intellij.openapi.application.invokeAndWaitIfNeeded
+import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.ProjectManager
 import org.jetbrains.annotations.Nls
 
 internal class ReindexAction : RecoveryAction {
@@ -16,16 +18,28 @@ internal class ReindexAction : RecoveryAction {
   override val actionKey: String
     get() = "reindex"
 
-  override fun perform(project: Project?): List<CacheInconsistencyProblem> = invokeAndWaitIfNeeded {
-    val tumbler = FileBasedIndexTumbler()
-    tumbler.turnOff()
-    try {
-      CorruptionMarker.requestInvalidation()
+  override fun perform(project: Project?): List<CacheInconsistencyProblem> {
+    invokeAndWaitIfNeeded {
+      val tumbler = FileBasedIndexTumbler()
+      tumbler.turnOff()
+      try {
+        CorruptionMarker.requestInvalidation()
+      }
+      finally {
+        tumbler.turnOn(reason = "Reindex recovery action")
+      }
     }
-    finally {
-      tumbler.turnOn(reason = "Reindex recovery action")
+
+    if (project != null) {
+      DumbService.getInstance(project).waitForSmartMode()
     }
-    emptyList()
+    else {
+      for (openProject in ProjectManager.getInstance().openProjects) {
+        DumbService.getInstance(openProject).waitForSmartMode()
+      }
+    }
+
+    return emptyList()
   }
 
   override fun canBeApplied(project: Project?): Boolean = true
