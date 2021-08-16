@@ -5,6 +5,7 @@ import com.google.common.net.HttpHeaders
 import com.intellij.CommonBundle
 import com.intellij.concurrency.JobScheduler
 import com.intellij.ide.browsers.ReloadMode
+import com.intellij.ide.browsers.WebBrowserManager
 import com.intellij.ide.browsers.actions.WebPreviewFileEditor
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
@@ -189,6 +190,16 @@ class WebServerPageConnectionService {
   private fun showGotItTooltip(modifiedFiles: List<VirtualFile>) {
     val gotItTooltip = GotItTooltip(SERVER_RELOAD_TOOLTIP_ID, BuiltInServerBundle.message("reload.on.save.got.it.content"), myServer!!)
     if (!gotItTooltip.canShow() || WebPreviewFileEditor.isPreviewOpened()) return
+
+    if (WebBrowserManager.BROWSER_RELOAD_MODE_DEFAULT !== ReloadMode.RELOAD_ON_SAVE) {
+      Logger.getInstance(WebServerPageConnectionService::class.java).error(
+        "Default value for " + BuiltInServerBundle.message("reload.on.save.got.it.title") + " has changed, tooltip is outdated.")
+      return
+    }
+    if (WebBrowserManager.getInstance().webServerReloadMode !== ReloadMode.RELOAD_ON_SAVE) {
+      // changed before gotIt was shown
+      return
+    }
 
     gotItTooltip
       .withHeader(BuiltInServerBundle.message("reload.on.save.got.it.title"))
