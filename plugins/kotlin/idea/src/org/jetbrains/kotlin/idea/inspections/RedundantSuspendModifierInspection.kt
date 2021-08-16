@@ -9,6 +9,7 @@ import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.psi.PsiElementVisitor
 import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.descriptors.Modality
+import org.jetbrains.kotlin.diagnostics.Errors
 import org.jetbrains.kotlin.idea.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.analyzeWithContent
 import org.jetbrains.kotlin.idea.highlighter.hasSuspendCalls
@@ -38,6 +39,8 @@ class RedundantSuspendModifierInspection : AbstractKotlinInspection() {
 
             if (function.hasSuspendCalls(context)) return
 
+            if (hasAnyUnresolvedCalls(context)) return
+
             holder.registerProblem(
                 suspendModifier,
                 KotlinBundle.message("redundant.suspend.modifier"),
@@ -48,6 +51,12 @@ class RedundantSuspendModifierInspection : AbstractKotlinInspection() {
                 )
             )
         })
+    }
+
+    private fun hasAnyUnresolvedCalls(context: BindingContext): Boolean {
+        return context.diagnostics.any {
+            it.factory == Errors.UNRESOLVED_REFERENCE
+        }
     }
 
     private fun KtNamedFunction.hasSuspendCalls(context: BindingContext): Boolean {
