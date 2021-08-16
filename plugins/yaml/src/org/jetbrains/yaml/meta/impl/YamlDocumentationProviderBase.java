@@ -4,6 +4,7 @@ package org.jetbrains.yaml.meta.impl;
 import com.intellij.lang.documentation.DocumentationProvider;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
@@ -76,6 +77,7 @@ public abstract class YamlDocumentationProviderBase implements DocumentationProv
    * If the field isn't given, only the documentation for the type should be returned.
    */
   @Nullable
+  @NlsSafe
   protected abstract String getDocumentation(@NotNull Project project, @NotNull YamlMetaType type, @Nullable Field field);
 
   @Nullable
@@ -218,6 +220,7 @@ public abstract class YamlDocumentationProviderBase implements DocumentationProv
     }
 
     @Nullable
+    @NlsSafe
     public String getDocumentation() {
       return YamlDocumentationProviderBase.this.getDocumentation(myProject, myType, myField);
     }
