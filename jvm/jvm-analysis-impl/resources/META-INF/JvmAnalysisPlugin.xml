@@ -69,6 +69,11 @@
                      groupBundle="messages.JvmAnalysisBundle" bundle="messages.JvmAnalysisBundle"
                      groupKey="jvm.inspections.group.name" key="jvm.inspections.thread.run.display.name"
                      implementationClass="com.intellij.codeInspection.ThreadRunInspection"/>
+    <localInspection language="UAST" enabledByDefault="false" level="WARNING" suppressId="serial" alternativeId="serial"
+                     shortName="SerializableHasSerialVersionUIDField"
+                     groupBundle="messages.JvmAnalysisBundle" bundle="messages.JvmAnalysisBundle"
+                     groupKey="jvm.inspections.group.name" key="jvm.inspections.serializable.class.without.serialversionuid.display.name"
+                     implementationClass="com.intellij.codeInspection.SerializableHasSerialVersionUidFieldInspection"/>
     <notificationGroup id="UAST" displayType="BALLOON"/>
   </extensions>
   <extensions defaultExtensionNs="com.intellij.codeInsight">
