@@ -9,6 +9,7 @@ import org.jetbrains.kotlin.idea.completion.context.FirNameReferencePositionCont
 import org.jetbrains.kotlin.idea.completion.contributors.helpers.insertSymbolAndInvokeCompletion
 import org.jetbrains.kotlin.idea.completion.lookups.CallableInsertionOptions
 import org.jetbrains.kotlin.idea.completion.lookups.CallableInsertionStrategy
+import org.jetbrains.kotlin.idea.completion.lookups.ImportStrategy
 import org.jetbrains.kotlin.idea.completion.lookups.detectImportStrategy
 import org.jetbrains.kotlin.idea.fir.HLIndexHelper
 import org.jetbrains.kotlin.idea.frontend.api.KtAnalysisSession
@@ -125,6 +126,15 @@ internal open class FirCallableCompletionContributor(
         val symbol = explicitReceiver.reference()?.resolveToSymbol()
         when {
             symbol is KtPackageSymbol -> collectDotCompletionForPackageReceiver(symbol, expectedType, visibilityChecker)
+            symbol is KtNamedClassOrObjectSymbol && symbol.classKind == KtClassKind.ENUM_CLASS -> {
+                collectNonExtensions(symbol.getStaticMemberScope(), visibilityChecker).forEach { memberSymbol ->
+                    addCallableSymbolToCompletion(
+                        expectedType,
+                        memberSymbol,
+                        CallableInsertionOptions(ImportStrategy.DoNothing, getInsertionStrategy(memberSymbol))
+                    )
+                }
+            }
             symbol is KtNamedClassOrObjectSymbol && !symbol.classKind.isObject && symbol.companionObject == null -> {
                 // symbol cannot be used as callable receiver
             }
