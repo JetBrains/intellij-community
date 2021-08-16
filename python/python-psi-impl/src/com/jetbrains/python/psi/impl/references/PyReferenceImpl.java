@@ -308,9 +308,6 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
           if (typeEvalContext.maySwitchToAST(resolved) && isInnerComprehension(realContext, resolved)) {
             continue;
           }
-          if (skipClassForwardReferences(referenceOwner, resolved)) {
-            continue;
-          }
           if (definer == null) {
             resultList.poke(resolved, getRate(resolved, typeEvalContext));
           }
@@ -337,10 +334,6 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
                                                    @Nullable ScopeOwner resolvedOwner,
                                                    @Nullable PsiElement realContext) {
     return PyDefUseUtil.getLatestDefs(resolvedOwner, referencedName, realContext, false, true);
-  }
-
-  private boolean skipClassForwardReferences(@Nullable ScopeOwner referenceOwner, @NotNull PsiElement resolved) {
-    return resolved == referenceOwner && referenceOwner instanceof PyClass && !PyiUtil.isInsideStubAnnotation(myElement);
   }
 
   private boolean allInOwnScopeComprehensions(@NotNull Collection<PsiElement> elements) {
