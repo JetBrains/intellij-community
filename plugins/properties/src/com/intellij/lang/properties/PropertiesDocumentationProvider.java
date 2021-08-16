@@ -8,6 +8,8 @@ package com.intellij.lang.properties;
 import com.intellij.lang.documentation.AbstractDocumentationProvider;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.markup.TextAttributes;
+import com.intellij.openapi.util.NlsSafe;
+import com.intellij.openapi.util.text.HtmlBuilder;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -30,18 +32,20 @@ public class PropertiesDocumentationProvider extends AbstractDocumentationProvid
     return null;
   }
 
-  private static String getLocationString(PsiElement element) {
+  private static @NlsSafe String getLocationString(PsiElement element) {
     PsiFile file = element.getContainingFile();
     return file != null ? " [" + file.getName() + "]" : "";
   }
 
   @NotNull
-  private static String renderPropertyValue(IProperty prop) {
-    String raw = prop.getValue();
-    if (raw == null) {
-      return "<i>empty</i>";
-    }
-    return StringUtil.escapeXmlEntities(raw);
+  private static @NlsSafe String renderPropertyValue(IProperty prop) {
+    @NlsSafe final String raw = prop.getValue();
+    if (raw != null) return StringUtil.escapeXmlEntities(raw);
+
+    return new HtmlBuilder()
+      .append(PropertiesBundle.message("i18n.message.empty"))
+      .wrapWith("i")
+      .toString();
   }
 
   @Override
