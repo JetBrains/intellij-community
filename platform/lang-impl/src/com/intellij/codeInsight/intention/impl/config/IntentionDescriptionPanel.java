@@ -45,8 +45,8 @@ public class IntentionDescriptionPanel {
   private JPanel myDescriptionPanel;
   private final List<IntentionUsagePanel> myBeforeUsagePanels = new ArrayList<>();
   private final List<IntentionUsagePanel> myAfterUsagePanels = new ArrayList<>();
-  @NonNls private static final String BEFORE_TEMPLATE = "before.java.template";
-  @NonNls private static final String AFTER_TEMPLATE = "after.java.template";
+  @NonNls static final String BEFORE_TEMPLATE = "before.java.template";
+  @NonNls static final String AFTER_TEMPLATE = "after.java.template";
 
   public IntentionDescriptionPanel() {
     myBeforePanel.setBorder(IdeBorderFactory.createTitledBorder(CodeInsightBundle.message("border.title.before"), false, JBUI.insetsTop(8)).setShowLine(false));
