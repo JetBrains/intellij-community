@@ -306,27 +306,25 @@ class WebServerPageConnectionService {
 
     @Synchronized
     fun pageRequested(uri: String, file: VirtualFile, reloadMode: ReloadMode): Int {
-      if (myRequestedPages.isEmpty) {
-        if (myFileListenerDisposable == null) {
-          val disposable = Disposer.newDisposable(ApplicationManager.getApplication(), "RequestedPagesState.myFileListenerDisposable")
-          VirtualFileManager.getInstance().addAsyncFileListener(WebServerFileContentListener(), disposable)
-          myFileListenerDisposable = disposable
-        }
-        else {
-          LOGGER.error("Listener already added")
-        }
-        if (reloadMode == ReloadMode.RELOAD_ON_CHANGE && myDocumentListenerDisposable == null) {
-          val disposable = Disposer.newDisposable(ApplicationManager.getApplication(), "RequestedPagesState.myDocumentListenerDisposable")
-          EditorFactory.getInstance().eventMulticaster.addDocumentListener(object : DocumentListener {
-            override fun documentChanged(event: DocumentEvent) {
-              val virtualFile = FileDocumentManager.getInstance().getFile(event.document)
-              if (isTrackedFile(virtualFile)) {
-                FileDocumentManager.getInstance().saveDocument(event.document)
-              }
+      LOGGER.assertTrue(myRequestedPages.isEmpty == (myFileListenerDisposable == null),
+        "isEmpty: ${myRequestedPages.isEmpty}, disposable is null: ${myFileListenerDisposable == null}")
+
+      if (myFileListenerDisposable == null) {
+        val disposable = Disposer.newDisposable(ApplicationManager.getApplication(), "RequestedPagesState.myFileListenerDisposable")
+        VirtualFileManager.getInstance().addAsyncFileListener(WebServerFileContentListener(), disposable)
+        myFileListenerDisposable = disposable
+      }
+      if (reloadMode == ReloadMode.RELOAD_ON_CHANGE && myDocumentListenerDisposable == null) {
+        val disposable = Disposer.newDisposable(ApplicationManager.getApplication(), "RequestedPagesState.myDocumentListenerDisposable")
+        EditorFactory.getInstance().eventMulticaster.addDocumentListener(object : DocumentListener {
+          override fun documentChanged(event: DocumentEvent) {
+            val virtualFile = FileDocumentManager.getInstance().getFile(event.document)
+            if (isTrackedFile(virtualFile)) {
+              FileDocumentManager.getInstance().saveDocument(event.document)
             }
-          }, disposable)
-          myDocumentListenerDisposable = disposable
-        }
+          }
+        }, disposable)
+        myDocumentListenerDisposable = disposable
       }
       val clientId = ++myLastClientId
       LOGGER.debug("Page is requested for $uri, clientId = $clientId")
