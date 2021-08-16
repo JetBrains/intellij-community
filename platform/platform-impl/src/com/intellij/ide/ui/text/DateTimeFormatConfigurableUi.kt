@@ -6,49 +6,51 @@ import com.intellij.ide.ui.LafManager
 import com.intellij.openapi.options.ConfigurableUi
 import com.intellij.openapi.options.ConfigurationException
 import com.intellij.openapi.ui.DialogPanel
-import com.intellij.ui.layout.*
+import com.intellij.ui.components.JBCheckBox
+import com.intellij.ui.dsl.*
 import com.intellij.util.text.DateTimeFormatManager
 import com.intellij.util.text.JBDateFormat
-import javax.swing.JCheckBox
 import javax.swing.JComponent
-import javax.swing.JTextField
 
 /**
  * @author Konstantin Bulenkov
  */
 class DateTimeFormatConfigurableUi(settings: DateTimeFormatManager) : ConfigurableUi<DateTimeFormatManager> {
   private val ui: DialogPanel
-  private lateinit var usePrettyFormatting: JCheckBox
-  private lateinit var overrideSystemDateFormatting: JCheckBox
-  private lateinit var use24HourTime: JCheckBox
-  private lateinit var pattern: JTextField
 
   init {
     ui = panel {
+      lateinit var overrideSystemDateFormatting: Cell<JBCheckBox>
+
       row {
-        overrideSystemDateFormatting = checkBox(IdeBundle.message("date.format.override.system.date.and.time.format"),
-                                                { settings.isOverrideSystemDateFormat },
-                                                { settings.isOverrideSystemDateFormat = it }).component
+        overrideSystemDateFormatting = checkBox(IdeBundle.message("date.format.override.system.date.and.time.format"))
+          .bindSelected(
+            { settings.isOverrideSystemDateFormat },
+            { settings.isOverrideSystemDateFormat = it })
+      }
+
+      indent {
         row(IdeBundle.message("date.format.date.format")) {
-          cell {
-            pattern = textField({ settings.dateFormatPattern },
-                                { settings.dateFormatPattern = it },
-                                16).component
-            browserLink(IdeBundle.message("date.format.date.patterns"), "https://docs.oracle.com/javase/7/docs/api/java/text/SimpleDateFormat.html")
-          }
-        }.enableIf(overrideSystemDateFormatting.selected)
+          textField()
+            .bindText({ settings.dateFormatPattern },
+              { settings.dateFormatPattern = it })
+            .columns(16)
+          browserLink(IdeBundle.message("date.format.date.patterns"), "https://docs.oracle.com/javase/7/docs/api/java/text/SimpleDateFormat.html")
+        }.enabledIf(overrideSystemDateFormatting.selected)
 
         row {
-          use24HourTime = checkBox(IdeBundle.message("date.format.24.hours"), { settings.isUse24HourTime },
-                                   { settings.isUse24HourTime = it }).component
-        }.enableIf(overrideSystemDateFormatting.selected)
-
+          checkBox(IdeBundle.message("date.format.24.hours"))
+            .bindSelected({ settings.isUse24HourTime },
+              { settings.isUse24HourTime = it })
+        }.enabledIf(overrideSystemDateFormatting.selected)
       }
+
       row {
-        usePrettyFormatting = checkBox(IdeBundle.message("date.format.pretty"),
-                                       { settings.isPrettyFormattingAllowed },
-                                       { settings.isPrettyFormattingAllowed = it })
-          .comment(IdeBundle.message("date.format.relative")).component
+        checkBox(IdeBundle.message("date.format.pretty"))
+          .bindSelected(
+            { settings.isPrettyFormattingAllowed },
+            { settings.isPrettyFormattingAllowed = it })
+          .comment(IdeBundle.message("date.format.relative"))
       }
     }
   }

@@ -12,8 +12,11 @@ todo
 remove first/last gaps
 */
 
+/**
+ * Root panel that provided by [init] does not support [CellBase] methods now. May be added later but seems not needed now
+ */
 @ApiStatus.Experimental
-fun panel(init: RootPanel.() -> Unit): DialogPanel {
+fun panel(init: Panel.() -> Unit): DialogPanel {
   val dialogPanelConfig = DialogPanelConfig()
   val panel = PanelImpl(dialogPanelConfig)
   panel.init()

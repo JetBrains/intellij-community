@@ -50,7 +50,7 @@ interface CellBase<out T : CellBase<T>> {
 
   /**
    * Separates next cell in current row with [rightGap]. [RightGap.SMALL] gap is set after row label automatically
-   * by [RootPanel.row] methods.
+   * by [Panel.row] methods.
    * Should not be used for last cell in a row
    */
   fun gap(rightGap: RightGap): CellBase<T>

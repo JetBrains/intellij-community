@@ -7,6 +7,7 @@ import com.intellij.openapi.ui.OnePixelDivider
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.ui.SeparatorComponent
 import com.intellij.ui.TitledSeparator
+import com.intellij.ui.components.Label
 import com.intellij.ui.dsl.*
 import com.intellij.ui.dsl.gridLayout.*
 import com.intellij.ui.dsl.gridLayout.builders.RowsGridBuilder
@@ -42,6 +43,10 @@ internal class PanelImpl(private val dialogPanelConfig: DialogPanelConfig) : Cel
   override fun enabled(isEnabled: Boolean): PanelImpl {
     rows.forEach { it.enabled(isEnabled) }
     return this
+  }
+
+  override fun row(label: String, init: Row.() -> Unit): Row {
+    return row(Label(label), init)
   }
 
   override fun row(label: JLabel?, init: Row.() -> Unit): RowImpl {
@@ -177,7 +182,7 @@ internal class PanelImpl(private val dialogPanelConfig: DialogPanelConfig) : Cel
     setLastColumnResizable(rowsGridBuilder)
   }
 
-  override fun indent(init: Panel.() -> Unit): Panel {
+  override fun indent(init: Panel.() -> Unit) {
     panelContext.indentCount++
     try {
       this.init()
@@ -185,7 +190,6 @@ internal class PanelImpl(private val dialogPanelConfig: DialogPanelConfig) : Cel
     finally {
       panelContext.indentCount--
     }
-    return this
   }
 
   private fun setLastColumnResizable(builder: RowsGridBuilder) {
