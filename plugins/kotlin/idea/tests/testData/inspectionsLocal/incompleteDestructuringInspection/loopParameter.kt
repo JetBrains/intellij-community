@@ -1,8 +1,7 @@
 data class Person(
     val name: String,
     val hobbies: List<String>,
-    val age: Int,
-    val isFemale: Boolean
+    val age: Int
 )
 
 fun test(persons: List<Person>) {
