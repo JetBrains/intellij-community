@@ -42,7 +42,9 @@ final class ResourceTextDescriptor implements TextDescriptor {
   @NotNull
   @Override
   public String getText() throws IOException {
-    if (!myResourcePath.endsWith(BeforeAfterActionMetaData.DESCRIPTION_FILE_NAME)) return loadDefaultText(); //NON-NLS
+    if (!myResourcePath.endsWith(BeforeAfterActionMetaData.DESCRIPTION_FILE_NAME)
+    && !myResourcePath.endsWith(IntentionDescriptionPanel.AFTER_TEMPLATE)
+    && !myResourcePath.endsWith(IntentionDescriptionPanel.BEFORE_TEMPLATE)) return loadDefaultText(); //NON-NLS
 
     InputStream languageStream = getLanguageStream();
     if (languageStream == null) return loadDefaultText(); //NON-NLS
