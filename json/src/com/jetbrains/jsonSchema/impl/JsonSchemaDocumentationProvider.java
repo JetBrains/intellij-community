@@ -7,6 +7,7 @@ import com.intellij.json.psi.JsonObject;
 import com.intellij.json.psi.JsonProperty;
 import com.intellij.lang.documentation.DocumentationMarkup;
 import com.intellij.lang.documentation.DocumentationProvider;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -45,6 +46,7 @@ public class JsonSchemaDocumentationProvider implements DocumentationProvider {
   }
 
   @Nullable
+  @Nls
   public static String findSchemaAndGenerateDoc(PsiElement element,
                                                 @Nullable PsiElement originalElement,
                                                 final boolean preferShort,
@@ -77,6 +79,7 @@ public class JsonSchemaDocumentationProvider implements DocumentationProvider {
   }
 
   @Nullable
+  @Nls
   public static String generateDoc(@NotNull final PsiElement element,
                                    @NotNull final JsonSchemaObject rootSchema,
                                    final boolean preferShort,
@@ -133,6 +136,7 @@ public class JsonSchemaDocumentationProvider implements DocumentationProvider {
   }
 
   @Nullable
+  @NlsSafe
   private static String appendNameTypeAndApi(@NotNull JsonPointerPosition position,
                                              @NotNull String apiInfo,
                                              @NotNull List<JsonSchemaType> possibleTypes,
