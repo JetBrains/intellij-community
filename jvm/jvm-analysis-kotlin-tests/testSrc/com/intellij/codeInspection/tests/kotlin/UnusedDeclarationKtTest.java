@@ -1,4 +1,4 @@
-package com.intellij.codeInspection;
+package com.intellij.codeInspection.tests.kotlin;
 
 import com.intellij.java.codeInspection.AbstractUnusedDeclarationTest;
 import com.intellij.java.codeInspection.UnusedDeclarationTest;

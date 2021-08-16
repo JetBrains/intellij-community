@@ -1,4 +1,4 @@
-package com.intellij.codeInspection
+package com.intellij.codeInspection.tests.kotlin
 
 import com.intellij.codeInspection.tests.DependencyInspectionTestBase
 import com.intellij.packageDependencies.DependencyRule

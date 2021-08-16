@@ -1,5 +1,6 @@
-package com.intellij.codeInspection
+package com.intellij.codeInspection.tests.kotlin
 
+import com.intellij.codeInspection.NonExtendableApiUsageInspection
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.roots.ContentEntry
 import com.intellij.openapi.roots.ModifiableRootModel
@@ -10,27 +11,27 @@ import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 import com.intellij.util.PathUtil
 import org.jetbrains.annotations.ApiStatus
 
-@TestDataPath("/testData/codeInspection/overrideOnly")
-class OverrideOnlyInspectionTest : LightJavaCodeInsightFixtureTestCase() {
+@TestDataPath("/testData/codeInspection/nonExtendableApiUsage")
+class NonExtendableApiUsageInspectionTest : LightJavaCodeInsightFixtureTestCase() {
 
-  private val projectDescriptor = object : LightJavaCodeInsightFixtureTestCase.ProjectDescriptor(LanguageLevel.HIGHEST) {
+  private val projectDescriptor = object : ProjectDescriptor(LanguageLevel.HIGHEST) {
     override fun configureModule(module: Module, model: ModifiableRootModel, contentEntry: ContentEntry) {
       super.configureModule(module, model, contentEntry)
-      PsiTestUtil.addProjectLibrary(model, "annotations", listOf(PathUtil.getJarPathForClass(ApiStatus.OverrideOnly::class.java)))
+      PsiTestUtil.addProjectLibrary(model, "annotations", listOf(PathUtil.getJarPathForClass(ApiStatus.NonExtendable::class.java)))
       PsiTestUtil.addProjectLibrary(model, "library", listOf(testDataPath))
     }
   }
 
-  private var inspection = OverrideOnlyInspection()
+  private var inspection = NonExtendableApiUsageInspection()
 
-  override fun getProjectDescriptor() = projectDescriptor
-
-  override fun getBasePath() = "/jvm/jvm-analysis-kotlin-tests/testData/codeInspection/overrideOnly"
+  override fun getBasePath() = "/jvm/jvm-analysis-kotlin-tests/testData/codeInspection/nonExtendableApiUsage"
 
   override fun setUp() {
     super.setUp()
     myFixture.enableInspections(inspection)
   }
+
+  override fun getProjectDescriptor() = projectDescriptor
 
   override fun tearDown() {
     try {
@@ -40,13 +41,13 @@ class OverrideOnlyInspectionTest : LightJavaCodeInsightFixtureTestCase() {
     }
   }
 
-  fun `test java invocations`() {
-    myFixture.testHighlighting("plugin/JavaCode.java")
+  fun `test java extensions`() {
+    myFixture.testHighlighting("plugin/javaExtensions.java")
   }
 
-  fun `test kotlin invocations`() {
+  fun `test kotlin extensions`() {
     myFixture.allowTreeAccessForAllFiles()
-    myFixture.testHighlighting("plugin/KotlinCode.kt")
+    myFixture.testHighlighting("plugin/kotlinExtensions.kt")
   }
 
 }

@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.codeInspection
+package com.intellij.codeInspection.tests.kotlin
 
+import com.intellij.codeInspection.InspectionProfileEntry
 import com.intellij.execution.junit.codeInsight.JUnit5MalformedParameterizedInspection
 import com.intellij.execution.junit.codeInsight.JUnit5TestFrameworkSetupUtil
 import com.intellij.jvm.analysis.KotlinJvmAnalysisTestUtil

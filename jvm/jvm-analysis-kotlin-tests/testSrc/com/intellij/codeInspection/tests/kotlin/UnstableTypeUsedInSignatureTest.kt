@@ -1,5 +1,6 @@
-package com.intellij.codeInspection
+package com.intellij.codeInspection.tests.kotlin
 
+import com.intellij.codeInspection.UnstableTypeUsedInSignatureInspection
 import com.intellij.jvm.analysis.KotlinJvmAnalysisTestUtil
 import com.intellij.openapi.application.PathManager
 import com.intellij.testFramework.TestDataPath
@@ -9,7 +10,7 @@ import com.intellij.util.PathUtil
 import org.jetbrains.annotations.ApiStatus
 import java.io.File
 
-@TestDataPath("\$CONTENT_ROOT/testData/codeInspection/unstableTypeUsedInSignature")
+@TestDataPath("/testData/codeInspection/unstableTypeUsedInSignature")
 class UnstableTypeUsedInSignatureTest : JavaCodeInsightFixtureTestCase() {
 
   override fun getBasePath() = KotlinJvmAnalysisTestUtil.TEST_DATA_PROJECT_RELATIVE_BASE_PATH + "/codeInspection/unstableTypeUsedInSignature"

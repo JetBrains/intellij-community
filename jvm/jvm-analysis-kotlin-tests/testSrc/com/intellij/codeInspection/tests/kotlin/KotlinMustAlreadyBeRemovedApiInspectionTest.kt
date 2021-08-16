@@ -1,4 +1,4 @@
-package com.intellij.codeInspection
+package com.intellij.codeInspection.tests.kotlin
 
 import com.intellij.codeInspection.tests.MustAlreadyBeRemovedApiInspectionTestBase
 import com.intellij.jvm.analysis.KotlinJvmAnalysisTestUtil
