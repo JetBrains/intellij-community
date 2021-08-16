@@ -18,7 +18,6 @@ import com.intellij.psi.xml.XmlFile
 import com.intellij.psi.xml.XmlTag
 import com.intellij.util.xml.DomUtil
 import com.intellij.util.xml.GenericDomValue
-import org.jetbrains.annotations.NotNull
 import org.jetbrains.idea.maven.dom.MavenDomElement
 import org.jetbrains.idea.maven.dom.MavenDomUtil
 import org.jetbrains.idea.maven.dom.converters.MavenDependencyCompletionUtil
@@ -334,7 +333,7 @@ class MavenDependencyModificator(private val myProject: Project) : ExternalDepen
     }
   }
 
-  private fun saveFile(psiFile: @NotNull XmlFile) {
+  private fun saveFile(psiFile: XmlFile) {
     val document = myDocumentManager.getDocument(psiFile) ?: throw IllegalStateException(MavenProjectBundle.message(
       "maven.model.error", psiFile))
     myDocumentManager.doPostponedOperationsAndUnblockDocument(document)
@@ -369,7 +368,7 @@ class MavenDependencyModificator(private val myProject: Project) : ExternalDepen
     return scope
   }
 
-  override fun declaredDependencies(module: @NotNull Module): List<DeclaredDependency>? {
+  override fun declaredDependencies(module: Module): List<DeclaredDependency>? {
     val project = MavenProjectsManager.getInstance(module.project).findProject(module) ?: return emptyList()
 
     return ReadAction.compute<List<DeclaredDependency>, Throwable> {
