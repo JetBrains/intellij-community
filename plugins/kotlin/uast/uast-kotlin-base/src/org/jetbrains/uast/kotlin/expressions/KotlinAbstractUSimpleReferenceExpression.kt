@@ -2,14 +2,18 @@
 
 package org.jetbrains.uast.kotlin
 
+import com.intellij.openapi.util.Key
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiNamedElement
 import org.jetbrains.kotlin.psi.KtSimpleNameExpression
+import org.jetbrains.kotlin.psi.UserDataProperty
 import org.jetbrains.uast.UElement
 import org.jetbrains.uast.USimpleNameReferenceExpression
 import org.jetbrains.uast.internal.acceptList
 import org.jetbrains.uast.toUElement
 import org.jetbrains.uast.visitor.UastVisitor
+
+var PsiElement.destructuringDeclarationInitializer: Boolean? by UserDataProperty(Key.create("kotlin.uast.destructuringDeclarationInitializer"))
 
 abstract class KotlinAbstractUSimpleReferenceExpression(
     override val sourcePsi: KtSimpleNameExpression,

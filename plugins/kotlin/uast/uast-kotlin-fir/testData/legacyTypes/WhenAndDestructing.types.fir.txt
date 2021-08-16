@@ -25,10 +25,24 @@ UFile (package = ) [public final class WhenAndDestructingKt {...]
                             UExpressionList (when_entry) [{...]
                         USwitchClauseExpressionWithBody [ -> {...]
                             UExpressionList (when_entry) [{...]
-                                UDeclarationsExpression [@null var var837f2350: java.util.List<? extends java.lang.String> = arr]
+                                UDeclarationsExpression [@null var var837f2350: java.util.List<? extends java.lang.String> = arr...@null var statementFilter: java.lang.String = var837f2350.<anonymous class>()]
                                     ULocalVariable (name = var837f2350) [@null var var837f2350: java.util.List<? extends java.lang.String> = arr]
                                         UAnnotation (fqName = null) [@null]
                                         USimpleNameReferenceExpression (identifier = arr) [arr] : PsiType:List<? extends String>
+                                    ULocalVariable (name = bindingContext) [@null var bindingContext: java.lang.String = var837f2350.<anonymous class>()]
+                                        UAnnotation (fqName = null) [@null]
+                                        UQualifiedReferenceExpression [var837f2350.<anonymous class>()] : PsiType:NonExistentClass
+                                            USimpleNameReferenceExpression (identifier = var837f2350) [var837f2350] : PsiType:NonExistentClass
+                                            UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) [<anonymous class>()] : PsiType:NonExistentClass
+                                                UIdentifier (Identifier (component1)) [UIdentifier (Identifier (component1))]
+                                                USimpleNameReferenceExpression (identifier = <anonymous class>, resolvesTo = null) [<anonymous class>] : PsiType:NonExistentClass
+                                    ULocalVariable (name = statementFilter) [@null var statementFilter: java.lang.String = var837f2350.<anonymous class>()]
+                                        UAnnotation (fqName = null) [@null]
+                                        UQualifiedReferenceExpression [var837f2350.<anonymous class>()] : PsiType:NonExistentClass
+                                            USimpleNameReferenceExpression (identifier = var837f2350) [var837f2350] : PsiType:NonExistentClass
+                                            UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) [<anonymous class>()] : PsiType:NonExistentClass
+                                                UIdentifier (Identifier (component2)) [UIdentifier (Identifier (component2))]
+                                                USimpleNameReferenceExpression (identifier = <anonymous class>, resolvesTo = null) [<anonymous class>] : PsiType:NonExistentClass
                                 UYieldExpression [yield return bindingContext]
                                     UReturnExpression [return bindingContext] : PsiType:Void
                                         USimpleNameReferenceExpression (identifier = bindingContext) [bindingContext] : PsiType:String

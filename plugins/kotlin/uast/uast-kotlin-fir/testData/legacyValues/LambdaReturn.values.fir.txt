@@ -111,7 +111,7 @@ UFile (package = org.jetbrains.uast.kotlin) [package org.jetbrains.uast.kotlin..
                     ULocalVariable (name = x) [var x: kotlin.jvm.functions.Function0<? extends kotlin.Unit> = { ...}]
                         ULambdaExpression [{ ...}] = Undetermined
                             UBlockExpression [{...}] = Undetermined
-                                UDeclarationsExpression [@org.jetbrains.annotations.NotNull var vardbcd0724: java.util.List<? extends java.lang.Integer> = listOf(1, 2)] = Nothing
+                                UDeclarationsExpression [@org.jetbrains.annotations.NotNull var vardbcd0724: java.util.List<? extends java.lang.Integer> = listOf(1, 2)...@org.jetbrains.annotations.NotNull var b: int = vardbcd0724.<anonymous class>()] = Nothing
                                     ULocalVariable (name = vardbcd0724) [@org.jetbrains.annotations.NotNull var vardbcd0724: java.util.List<? extends java.lang.Integer> = listOf(1, 2)]
                                         UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]
                                         UCallExpression (kind = UastCallKind(name='method_call'), argCount = 2)) [listOf(1, 2)] = external listOf(1, 2)((long)1, (long)2)
@@ -119,6 +119,20 @@ UFile (package = org.jetbrains.uast.kotlin) [package org.jetbrains.uast.kotlin..
                                             USimpleNameReferenceExpression (identifier = listOf, resolvesTo = null) [listOf] = external listOf(1, 2)((long)1, (long)2)
                                             ULiteralExpression (value = 1) [1] = (long)1
                                             ULiteralExpression (value = 2) [2] = (long)2
+                                    ULocalVariable (name = a) [@org.jetbrains.annotations.NotNull var a: int = vardbcd0724.<anonymous class>()]
+                                        UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]
+                                        UQualifiedReferenceExpression [vardbcd0724.<anonymous class>()] = external <anonymous class>()()
+                                            USimpleNameReferenceExpression (identifier = vardbcd0724) [vardbcd0724] = external vardbcd0724()
+                                            UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) [<anonymous class>()] = external <anonymous class>()()
+                                                UIdentifier (Identifier (component1)) [UIdentifier (Identifier (component1))]
+                                                USimpleNameReferenceExpression (identifier = <anonymous class>, resolvesTo = null) [<anonymous class>] = external <anonymous class>()()
+                                    ULocalVariable (name = b) [@org.jetbrains.annotations.NotNull var b: int = vardbcd0724.<anonymous class>()]
+                                        UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]
+                                        UQualifiedReferenceExpression [vardbcd0724.<anonymous class>()] = external <anonymous class>()()
+                                            USimpleNameReferenceExpression (identifier = vardbcd0724) [vardbcd0724] = external vardbcd0724()
+                                            UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) [<anonymous class>()] = external <anonymous class>()()
+                                                UIdentifier (Identifier (component2)) [UIdentifier (Identifier (component2))]
+                                                USimpleNameReferenceExpression (identifier = <anonymous class>, resolvesTo = null) [<anonymous class>] = external <anonymous class>()()
                 UDeclarationsExpression [var y: kotlin.jvm.functions.Function0<? extends kotlin.Unit> = { ...}] = Nothing
                     ULocalVariable (name = y) [var y: kotlin.jvm.functions.Function0<? extends kotlin.Unit> = { ...}]
                         ULambdaExpression [{ ...}] = Undetermined
