@@ -1,9 +1,9 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.indexing
 
+import com.intellij.ide.actions.cache.CacheInconsistencyProblem
 import com.intellij.ide.actions.cache.RecoveryAction
 import com.intellij.lang.LangBundle
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.invokeAndWaitIfNeeded
 import com.intellij.openapi.project.Project
 import org.jetbrains.annotations.Nls
@@ -16,7 +16,7 @@ internal class ReindexAction : RecoveryAction {
   override val actionKey: String
     get() = "reindex"
 
-  override fun perform(project: Project?) = invokeAndWaitIfNeeded {
+  override fun perform(project: Project?): List<CacheInconsistencyProblem> = invokeAndWaitIfNeeded {
     val tumbler = FileBasedIndexTumbler()
     tumbler.turnOff()
     try {
@@ -25,6 +25,7 @@ internal class ReindexAction : RecoveryAction {
     finally {
       tumbler.turnOn(reason = "Reindex recovery action")
     }
+    emptyList()
   }
 
   override fun canBeApplied(project: Project?): Boolean = true

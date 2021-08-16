@@ -2,6 +2,7 @@
 package com.intellij.util.indexing
 
 import com.intellij.ide.actions.SynchronizeCurrentFileAction
+import com.intellij.ide.actions.cache.CacheInconsistencyProblem
 import com.intellij.ide.actions.cache.RecoveryAction
 import com.intellij.lang.LangBundle
 import com.intellij.openapi.project.Project
@@ -17,7 +18,7 @@ internal class RefreshIndexableFilesAction : RecoveryAction {
   override val actionKey: String
     get() = "refresh"
 
-  override fun perform(project: Project?) {
+  override fun perform(project: Project?): List<CacheInconsistencyProblem> {
     val fileBasedIndex = FileBasedIndex.getInstance() as FileBasedIndexImpl
     val rootUrls = fileBasedIndex.getOrderedIndexableFilesProviders(project!!).flatMap { it.rootUrls }
     val files = arrayListOf<VirtualFile>()
@@ -28,6 +29,7 @@ internal class RefreshIndexableFilesAction : RecoveryAction {
       }
     }
     SynchronizeCurrentFileAction.synchronizeFiles(files, project)
+    return emptyList()
   }
 
   override fun canBeApplied(project: Project?): Boolean = project != null
