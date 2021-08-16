@@ -26,9 +26,11 @@ fun main(args: Array<String>) {
 }
 
 private fun generateProjectModelFiles(dotIdea: File, args: Args, isCommunity: Boolean) {
+    val libraries = dotIdea.resolve("libraries")
+    libraries.listFiles()!!.filter { it.startsWith("kotlinc_") }.forEach { it.delete() }
     generateKotlincLibraries(args.kotlincArtifactsMode, args.kotlincVersion, isCommunity).forEach {
         val libXmlName = it.name.replace(".", "_").replace("-", "_") + ".xml"
-        dotIdea.resolve("libraries").resolve(libXmlName).writeText(it.generateXml())
+        libraries.resolve(libXmlName).writeText(it.generateXml())
     }
 }
 
