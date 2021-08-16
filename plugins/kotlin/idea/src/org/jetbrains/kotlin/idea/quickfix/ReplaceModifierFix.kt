@@ -16,17 +16,18 @@ import org.jetbrains.kotlin.psi.psiUtil.getParentOfType
 
 class ReplaceModifierFix(
     element: KtModifierListOwner,
-    private val replacement: KtModifierKeywordToken
+    private val replacement: String
 ) : KotlinQuickFixAction<KtModifierListOwner>(element), CleanupFix {
 
-    private val text = KotlinBundle.message("replace.with.0", replacement.value)
+    private val text = KotlinBundle.message("replace.with.0", replacement)
 
     override fun getText() = text
 
     override fun getFamilyName() = KotlinBundle.message("replace.modifier")
 
     override fun invoke(project: Project, editor: Editor?, file: KtFile) {
-        element?.addModifier(replacement)
+        //todo fixme
+        //element?.addModifier()
     }
 
     companion object : KotlinSingleIntentionActionFactory() {
