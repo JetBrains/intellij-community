@@ -11,14 +11,13 @@ import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.renderer.DescriptorRenderer
 import org.jetbrains.kotlin.resolve.calls.util.getCall
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
-import org.jetbrains.kotlin.types.KotlinType
-import org.jetbrains.kotlin.types.Variance
 import org.jetbrains.kotlin.types.typeUtil.TypeNullability
 import org.jetbrains.kotlin.types.typeUtil.isAnyOrNullableAny
 import org.jetbrains.kotlin.types.typeUtil.nullability
 
 class KotlinClassConstructorInfoHandler : KotlinTypeArgumentInfoHandlerBase<ClassConstructorDescriptor>() {
-    override fun fetchTypeParameters(descriptor: ClassConstructorDescriptor): List<TypeParameterDescriptor> = descriptor.typeParameters
+    override fun fetchTypeParameters(parameterOwner: ClassConstructorDescriptor): List<TypeParameterDescriptor> =
+        parameterOwner.typeParameters
 
     override fun findParameterOwners(argumentList: KtTypeArgumentList): Collection<ClassConstructorDescriptor>? {
         val userType = argumentList.parent as? KtUserType ?: return null
@@ -31,7 +30,7 @@ class KotlinClassConstructorInfoHandler : KotlinTypeArgumentInfoHandlerBase<Clas
 }
 
 class KotlinClassTypeArgumentInfoHandler : KotlinTypeArgumentInfoHandlerBase<ClassDescriptor>() {
-    override fun fetchTypeParameters(descriptor: ClassDescriptor) = descriptor.typeConstructor.parameters
+    override fun fetchTypeParameters(parameterOwner: ClassDescriptor) = parameterOwner.typeConstructor.parameters
 
     override fun findParameterOwners(argumentList: KtTypeArgumentList): Collection<ClassDescriptor>? {
         val userType = argumentList.parent as? KtUserType ?: return null
@@ -43,7 +42,7 @@ class KotlinClassTypeArgumentInfoHandler : KotlinTypeArgumentInfoHandlerBase<Cla
 }
 
 class KotlinFunctionTypeArgumentInfoHandler : KotlinTypeArgumentInfoHandlerBase<FunctionDescriptor>() {
-    override fun fetchTypeParameters(descriptor: FunctionDescriptor) = descriptor.typeParameters
+    override fun fetchTypeParameters(parameterOwner: FunctionDescriptor) = parameterOwner.typeParameters
 
     override fun findParameterOwners(argumentList: KtTypeArgumentList): Collection<FunctionDescriptor>? {
         val callElement = argumentList.parent as? KtCallElement ?: return null
@@ -52,25 +51,32 @@ class KotlinFunctionTypeArgumentInfoHandler : KotlinTypeArgumentInfoHandlerBase<
         val candidates = call.resolveCandidates(bindingContext, callElement.getResolutionFacade())
         return candidates
             .map { it.resultingDescriptor }
-            .distinctBy { buildPresentation(it.typeParameters, -1).first }
+            .distinctBy { buildPresentation(fetchCandidateInfo(it), -1).first }
     }
 
     override fun getArgumentListAllowedParentClasses() = setOf(KtCallElement::class.java)
 }
 
-abstract class KotlinTypeArgumentInfoHandlerBase<TParameterOwner : Any> :
-    AbstractKotlinTypeArgumentInfoHandler<TParameterOwner, TypeParameterDescriptor, KotlinType>() {
+abstract class KotlinTypeArgumentInfoHandlerBase<TParameterOwner : Any> : AbstractKotlinTypeArgumentInfoHandler() {
+    protected abstract fun findParameterOwners(argumentList: KtTypeArgumentList): Collection<TParameterOwner>?
+    protected abstract fun fetchTypeParameters(parameterOwner: TParameterOwner): List<TypeParameterDescriptor>
 
-    override fun TypeParameterDescriptor.isReified(): Boolean = isReified
-
-    override fun TypeParameterDescriptor.variance(): String = when (variance) {
-        Variance.INVARIANT -> ""
-        Variance.IN_VARIANCE -> "in"
-        Variance.OUT_VARIANCE -> "out"
+    override fun fetchCandidateInfos(argumentList: KtTypeArgumentList): List<CandidateInfo>? {
+        val parameterOwners = findParameterOwners(argumentList) ?: return null
+        return parameterOwners.map { fetchCandidateInfo(it) }
     }
 
-    override fun TypeParameterDescriptor.name(): String = name.asString()
-    override fun TypeParameterDescriptor.upperBounds(): List<KotlinType> = upperBounds
-    override fun KotlinType.isNullableAnyOrFlexibleAny(): Boolean = isAnyOrNullableAny() && nullability() != TypeNullability.NOT_NULL
-    override fun KotlinType.renderType(): String = DescriptorRenderer.SHORT_NAMES_IN_TYPES.renderType(this)
+    protected fun fetchCandidateInfo(parameterOwner: TParameterOwner): CandidateInfo {
+        val parameters = fetchTypeParameters(parameterOwner)
+        return CandidateInfo(parameters.map(::fetchTypeParameterInfo))
+    }
+
+    private fun fetchTypeParameterInfo(parameter: TypeParameterDescriptor): TypeParameterInfo {
+        val upperBounds = parameter.upperBounds.map {
+            val isNullableAnyOrFlexibleAny = it.isAnyOrNullableAny() && it.nullability() != TypeNullability.NOT_NULL
+            val renderedType = DescriptorRenderer.SHORT_NAMES_IN_TYPES.renderType(it)
+            UpperBoundInfo(isNullableAnyOrFlexibleAny, renderedType)
+        }
+        return TypeParameterInfo(parameter.name.asString(), parameter.isReified, parameter.variance, upperBounds)
+    }
 }
