@@ -147,7 +147,9 @@ public class SimpleDuplicatesFinder {
     if (patternParent == null || candidateParent == null) return false;
     if (pattern.getUserData(PARAMETER) != null && patternParent.getClass() == candidateParent.getClass()) {
       if (myOutputVariables.contains(pattern.getText())) {
-        match.changeOutput(candidate.getText());
+        if(match.getChangedOutput() == null) {
+          match.changeOutput(candidate.getText());
+        }
       }
       return changeParameter(pattern.getText(), candidate.getText(), match);
     }
@@ -179,7 +181,7 @@ public class SimpleDuplicatesFinder {
   }
 
   private static boolean changeParameter(@NotNull String from, @NotNull String to, @NotNull SimpleMatch match) {
-    if (match.getChangedParameters().containsKey(from) && !match.getChangedParameters().get(from).equals(to)) {
+    if (match.getChangedParameters().containsKey(from) && !match.getChangedParameters().get(from).equals(to) && !from.equals(to)) {
       return false;
     }
     match.changeParameter(from, to);
