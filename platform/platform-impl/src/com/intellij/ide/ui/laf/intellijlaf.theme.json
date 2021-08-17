@@ -25,7 +25,7 @@
     "grey18": "#fafafa",
     "white":  "#ffffff",
 
-    "foreground": "#000000",
+    "foreground": "black",
     "infoPanelForeground": "#808080",
     "infoInputForeground": "#999999",
     "disabledForeground": "#8C8C8C",
@@ -72,7 +72,7 @@
       "separatorForeground": "infoInputForeground",
 
       "textBackground": "#cccccc",
-      "textForeground": "#000000"
+      "textForeground": "foreground"
     },
 
     "ActionButton": {
@@ -96,14 +96,12 @@
 
     "BookmarkMnemonicAssigned": {
       "background": "#F7C777",
-      "borderColor": "#F7C777",
-      "foreground": "#000000"
+      "borderColor": "#F7C777"
     },
 
     "BookmarkMnemonicAvailable": {
       "background": "#FFFFFF",
-      "borderColor": "#C4C4C4",
-      "foreground": "#000000"
+      "borderColor": "#C4C4C4"
     },
 
     "BigSpinner.background": "panel",
@@ -153,8 +151,7 @@
       "AccessDisabled.accessDot": "#DB5860",
       "AccessEnabled.accessDot":"#59A869",
       "AccessEnabled.dropdownBorder": "#E4E4E4",
-      "AccessEnabled.pillBackground": "#E4E4E4",
-      "Avatar.foreground": "#1D1D1D"
+      "AccessEnabled.pillBackground": "#E4E4E4"
     },
 
     "ComboBox": {
@@ -176,7 +173,6 @@
     "ComboBoxButton.background": "#FFFFFF",
 
     "CompletionPopup": {
-      "foreground": "#000000",
       "matchForeground": "#2470b3",
       "selectionBackground": "#c5dffc",
       "selectionInactiveBackground": "#e0e0e0",
@@ -226,7 +222,7 @@
       "inactiveColoredTabBackground":  "#00000011",
       "inactiveUnderlineColor": "#9ca7b8",
       "underlineColor":  "#4083c9",
-      "underlinedTabForeground": "#000000"
+      "underlinedTabForeground": "foreground"
     },
 
     "DragAndDrop": {
@@ -258,7 +254,7 @@
       "inactiveMaskColor": "#26262633",
       "inactiveUnderlineColor": "#9ca7b8",
       "underlineColor": "#4083c9",
-      "underlinedTabForeground": "#000000"
+      "underlinedTabForeground": "foreground"
     },
 
     "FileColor": {
@@ -282,7 +278,6 @@
     "GotItTooltip": {
       "background": "#f7f7f7",
       "borderColor": "#adadad",
-      "foreground": "#000000",
       "linkForeground": "linkForeground",
       "shortcutForeground": "#787878"
     },
@@ -321,10 +316,8 @@
       "disabledForeground": "#777777",
       "disabledText": "#999999",
       "errorForeground": "#C7222D",
-      "foreground": "#000000",
       "infoForeground": "infoPanelForeground",
       "selectedDisabledForeground": "#777777",
-      "selectedForeground": "#000000",
       "UI": "com.intellij.ide.ui.laf.darcula.ui.DarculaLabelUI"
     },
 
@@ -374,8 +367,7 @@
 
     "BookmarkMnemonicIcon": {
       "background": "#FEF7EC",
-      "borderColor": "#F4AF3D",
-      "foreground": "#000000"
+      "borderColor": "#F4AF3D"
     },
 
     "NavBar.borderColor": "#cdcdcd",
@@ -392,7 +384,6 @@
       "errorBackground": "#f5e6e7",
       "errorBorderColor": "#e0a8a9",
       "errorForeground": "foreground",
-      "foreground": "foreground",
 
       "MoreButton": {
         "background": "#E3E3E3",
@@ -417,7 +408,7 @@
     "OptionButtonUI": "com.intellij.ide.ui.laf.darcula.ui.DarculaOptionButtonUI",
 
     "OptionPane": {
-      "messageForeground": "#000000",
+      "messageForeground": "foreground",
       "errorIcon":{
         "os.windows": "AllIcons.General.ErrorDialog",
         "os.linux": "AllIcons.General.ErrorDialog"
@@ -445,9 +436,8 @@
       "background": "#f7f7f7",
       "borderColor": "#e0e0e0",
       "currentOverloadBackground": "#e0e0e0",
-      "currentParameterForeground": "#1d1d1d",
+      "currentParameterForeground": "foreground",
       "disabledForeground": "#8c8c8c",
-      "foreground": "foreground",
       "infoForeground": "#787878",
       "lineSeparatorColor": "#e0e0e0"
     },
@@ -607,8 +597,7 @@
       "SearchField.background": "#ffffff",
       "SearchField.borderColor": "#bdbdbd",
       "SearchField.infoForeground": "#808080",
-      "Tab.selectedBackground": "#dedede",
-      "Tab.selectedForeground": "#000000"
+      "Tab.selectedBackground": "#dedede"
     },
 
     "SearchField.errorBackground": "#ffcccc",
@@ -676,7 +665,7 @@
       "hoverColor": "#d9d9d9",
       "labelShift": 0,
       "light": {
-        "os.windows": "#444444"
+        "os.windows": "black"
       },
       "selectHighlight": {
         "os.windows": "#d2d2d2"
@@ -715,7 +704,7 @@
       "hoverBackground": "#edf5fc",
       "hoverInactiveBackground": "#f5f5f5",
       "lightSelectionBackground": "#edf6fe",
-      "lightSelectionForeground": "#000000",
+      "lightSelectionForeground": "foreground",
       "lightSelectionInactiveBackground": "#f5f5f5",
       "rowHeight": 20,
       "stripeColor": "#f2f5f9"
@@ -741,19 +730,20 @@
     },
 
     "TextField": {
-      "background": "#ffffff",
       "border": "com.intellij.ide.ui.laf.darcula.ui.DarculaTextBorder",
+      "UI": "com.intellij.ide.ui.laf.darcula.ui.DarculaTextFieldUI",
+
+      "background": "#ffffff",
       "darcula.error.active": {
         "os.windows": "#f57d7d"
       },
       "darcula.error.inactive": {
         "os.windows": "#eecaca"
       },
-      "disabledBackground": "#f2f2f2",
-      "UI": "com.intellij.ide.ui.laf.darcula.ui.DarculaTextFieldUI"
+      "disabledBackground": "#f2f2f2"
     },
 
-    "TitledBorder.titleColor": "#000000",
+    "TitledBorder.titleColor": "black",
 
     "TitlePane": {
       "background": "panel",
@@ -796,8 +786,7 @@
     "ToolWindow": {
       "Button": {
         "hoverBackground": "#55555528",
-        "selectedBackground": "#55555555",
-        "selectedForeground": "#000000"
+        "selectedBackground": "#55555555"
       },
 
       "Header": {
@@ -818,31 +807,31 @@
         "hoverInactiveBackground": "#00000019",
         "inactiveUnderlineColor": "#9ca7b8",
         "underlineColor": "#4083c9",
-        "underlinedTabForeground": "#000000",
-        "underlinedTabInactiveForeground": "#000000"
+        "underlinedTabForeground": "foreground",
+        "underlinedTabInactiveForeground": "foreground"
       }
     },
 
     "Tree": {
-      "background": "#ffffff",
       "border": "0,4,0,0",
       "collapsedIcon": "/com/intellij/ide/ui/laf/icons/intellij/treeCollapsed.svg",
       "collapsedSelectedIcon": "/com/intellij/ide/ui/laf/icons/intellij/treeCollapsedSelected.svg",
       "expandedIcon": "/com/intellij/ide/ui/laf/icons/intellij/treeExpanded.svg",
       "expandedSelectedIcon": "/com/intellij/ide/ui/laf/icons/intellij/treeExpandedSelected.svg",
-      "hash": "#E6E6E6",
       "leftChildIndent": 7,
       "paintLines": false,
       "rightChildIndent": 11,
       "rowHeight": 20,
-      "selectionBorderColor": "#3875d6",
-      "textBackground": "#ffffff",
       "UI": "com.intellij.ui.tree.ui.DefaultTreeUI",
 
+      "background": "#ffffff",
       "errorForeground": "#ff0000",
+      "hash": "#E6E6E6",
       "hoverBackground": "#edf5fc",
       "hoverInactiveBackground": "#f5f5f5",
-      "modifiedItemForeground": "#005ad9"
+      "modifiedItemForeground": "#005ad9",
+      "selectionBorderColor": "#3875d6",
+      "textBackground": "#ffffff"
     },
 
     "ValidationTooltip": {
@@ -876,16 +865,15 @@
       "HgLog.tagIconColor": "#7a7a7a",
       "HgLog.tipIconColor": "#ffd100",
 
-      "RefLabel.backgroundBase": "#000000",
-      "RefLabel.foreground": "#000000"
+      "RefLabel.backgroundBase": "black"
     },
 
     "control": "#e0e0e0",
     "grayFilter": "33,-35,100",
-    "infoText": "#000000",
+    "infoText": "foreground",
     "text.grayFilter": "20,0,100",
-    "text": "#000000",
-    "textText": "#000000",
+    "text": "foreground",
+    "textText": "foreground",
     "window": "#f2f2f2",
 
     "WelcomeScreen": {
