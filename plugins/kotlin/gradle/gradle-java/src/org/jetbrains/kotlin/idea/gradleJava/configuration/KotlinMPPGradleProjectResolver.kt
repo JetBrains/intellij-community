@@ -109,6 +109,9 @@ open class KotlinMPPGradleProjectResolver : AbstractProjectResolverExtension() {
                 nativeDebugAdvertised = true
                 suggestNativeDebug(resolverCtx.projectPath)
             }
+            if(mppModel.targets.any { it.platform == KotlinPlatform.JS }) {
+                suggestKotlinJsInspectionPackPlugin(resolverCtx.projectPath)
+            }
             if (!resolverCtx.isResolveModulePerSourceSet && !PlatformVersion.isAndroidStudio() && !PlatformUtils.isMobileIde() &&
                 !PlatformUtils.isAppCode()
             ) {
