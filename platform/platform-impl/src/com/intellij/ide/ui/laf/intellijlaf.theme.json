@@ -786,7 +786,7 @@
         "borderColor": "#d1d1d1"
       },
 
-      "HeaderCloseButton.background": "grey05",
+      "HeaderCloseButton.background": "grey07",
       "HeaderTab": {
         "selectedBackground": "#D0D4D8",
         "selectedInactiveBackground": "#D9D9D9",
