@@ -546,6 +546,7 @@ public abstract class UsefulTestCase extends TestCase {
   }
 
   protected @NotNull ThrowableRunnable<Throwable> wrapTestRunnable(@NotNull ThrowableRunnable<Throwable> testRunnable) {
+    var testDescription = Description.createTestDescription(getClass(), getName());
     return () -> {
       boolean success = false;
       TestLoggerFactory.onTestStarted();
@@ -558,7 +559,7 @@ public abstract class UsefulTestCase extends TestCase {
         throw e;
       }
       finally {
-        TestLoggerFactory.onTestFinished(success);
+        TestLoggerFactory.onTestFinished(success, testDescription);
       }
     };
   }

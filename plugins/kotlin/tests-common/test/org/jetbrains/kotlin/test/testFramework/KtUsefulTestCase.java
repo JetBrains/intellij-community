@@ -9,7 +9,6 @@ import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
-import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
@@ -53,6 +52,7 @@ import org.jetbrains.kotlin.types.AbstractTypeChecker;
 import org.jetbrains.kotlin.types.FlexibleTypeImpl;
 import org.junit.Assert;
 import org.junit.ComparisonFailure;
+import org.junit.runner.Description;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -353,25 +353,24 @@ public abstract class KtUsefulTestCase extends TestCase {
     @Override
     protected void runTest() throws Throwable {
         final Throwable[] throwables = new Throwable[1];
-
+        var testDescription = Description.createTestDescription(getClass(), getName());
         Runnable runnable = () -> {
             try {
                 TestLoggerFactory.onTestStarted();
                 super.runTest();
-                TestLoggerFactory.onTestFinished(true);
-            }
-            catch (InvocationTargetException e) {
-                TestLoggerFactory.onTestFinished(false);
+                TestLoggerFactory.onTestFinished(true, testDescription);
+            } catch (InvocationTargetException e) {
+                TestLoggerFactory.onTestFinished(false, testDescription);
                 e.fillInStackTrace();
                 throwables[0] = e.getTargetException();
             }
             catch (IllegalAccessException e) {
-                TestLoggerFactory.onTestFinished(false);
+                TestLoggerFactory.onTestFinished(false, testDescription);
                 e.fillInStackTrace();
                 throwables[0] = e;
             }
             catch (Throwable e) {
-                TestLoggerFactory.onTestFinished(false);
+                TestLoggerFactory.onTestFinished(false, testDescription);
                 throwables[0] = e;
             }
         };
