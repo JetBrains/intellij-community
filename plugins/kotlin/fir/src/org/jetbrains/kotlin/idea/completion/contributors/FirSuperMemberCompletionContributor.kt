@@ -15,6 +15,8 @@ import org.jetbrains.kotlin.idea.completion.contributors.helpers.collectNonExten
 import org.jetbrains.kotlin.idea.completion.lookups.CallableInsertionOptions
 import org.jetbrains.kotlin.idea.completion.lookups.CallableInsertionStrategy
 import org.jetbrains.kotlin.idea.completion.lookups.detectImportStrategy
+import org.jetbrains.kotlin.idea.completion.weighers.WeighingContext
+import org.jetbrains.kotlin.idea.completion.weighers.WeighingContext.Companion.createWeighingContext
 import org.jetbrains.kotlin.psi.KtNamedFunction
 import org.jetbrains.kotlin.psi.KtSuperExpression
 
@@ -28,13 +30,14 @@ internal class FirSuperMemberCompletionContributor(
         val visibilityChecker = CompletionVisibilityChecker.create(basicContext, positionContext)
         val possibleReceiverScope = superReceiver.getKtType()?.getTypeScope() ?: return
         val nonExtensionMembers = collectNonExtensions(possibleReceiverScope, visibilityChecker, scopeNameFilter)
-        collectDelegateCallToSuperMember(superReceiver, nonExtensionMembers, expectedType)
+        val weighingContext = createWeighingContext(expectedType)
+        collectDelegateCallToSuperMember(weighingContext, superReceiver, nonExtensionMembers)
     }
 
     private fun KtAnalysisSession.collectDelegateCallToSuperMember(
+        context: WeighingContext,
         superReceiver: KtSuperExpression,
         nonExtensionMembers: Sequence<KtCallableSymbol>,
-        expectedType: KtType?
     ) {
         // A map that contains all containing functions as values, each of which is indexed by symbols it overrides. For example, consider
         // the following code
@@ -80,7 +83,7 @@ internal class FirSuperMemberCompletionContributor(
             }
             if (args.size < matchedContainingFunction.valueParameters.size) continue
             addCallableSymbolToCompletion(
-                expectedType,
+                context,
                 callableSymbol,
                 CallableInsertionOptions(
                     detectImportStrategy(callableSymbol),
