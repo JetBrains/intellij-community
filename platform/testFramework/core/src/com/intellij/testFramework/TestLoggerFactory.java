@@ -8,6 +8,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.LineTokenizer;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.SystemProperties;
 import org.apache.log4j.Level;
 import org.apache.log4j.LogManager;
 import org.apache.log4j.xml.DOMConfigurator;
@@ -31,10 +32,12 @@ import static com.intellij.openapi.application.PathManager.PROPERTY_LOG_PATH;
 
 @SuppressWarnings({"CallToPrintStackTrace", "UseOfSystemOutOrSystemErr"})
 public final class TestLoggerFactory implements Logger.Factory {
-  // If property is set to ANYTHING, saves full test log to a separate file, instead of flushing it in the stdout (buildlog on TC)
+  /**
+   * If property is {@code true}, saves full test log to a separate file, instead of flushing it in the stdout (buildlog on TC)
+   */
   private static final String SPLIT_TEST_LOGS_KEY = "idea.split.test.logs";
   private static final String SPLIT_LOGS_SUBDIR = "splitTestLogs";
-  private static boolean SPLIT_TEST_LOGS = System.getProperty(SPLIT_TEST_LOGS_KEY) != null;
+  private static boolean SPLIT_TEST_LOGS = SystemProperties.getBooleanProperty(SPLIT_TEST_LOGS_KEY, false);
   private static final String SYSTEM_MACRO = "$SYSTEM_DIR$";
   private static final String APPLICATION_MACRO = "$APPLICATION_DIR$";
   private static final String LOG_DIR_MACRO = "$LOG_DIR$";
