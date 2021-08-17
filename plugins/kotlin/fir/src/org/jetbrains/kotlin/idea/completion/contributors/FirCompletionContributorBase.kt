@@ -16,6 +16,7 @@ import org.jetbrains.kotlin.idea.completion.lookups.detectImportStrategy
 import org.jetbrains.kotlin.idea.completion.lookups.factories.KotlinFirLookupElementFactory
 import org.jetbrains.kotlin.idea.completion.priority
 import org.jetbrains.kotlin.idea.completion.weighers.Weighers
+import org.jetbrains.kotlin.idea.completion.weighers.WeighingContext
 import org.jetbrains.kotlin.idea.fir.HLIndexHelper
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.scopes.KtScopeNameFilter
@@ -89,7 +90,7 @@ internal abstract class FirCompletionContributorBase<C : FirRawPositionCompletio
     }
 
     protected fun KtAnalysisSession.addCallableSymbolToCompletion(
-        expectedType: KtType?,
+        context: WeighingContext,
         symbol: KtCallableSymbol,
         options: CallableInsertionOptions,
         priority: ItemPriority? = null
@@ -101,7 +102,7 @@ internal abstract class FirCompletionContributorBase<C : FirRawPositionCompletio
             createCallableLookupElement(symbol, options)
         }
         priority?.let { lookup.priority = it }
-        applyWeighers(lookup, symbol, expectedType)
+        applyWeighers(context, lookup, symbol)
         sink.addElement(lookup)
     }
 
@@ -111,11 +112,11 @@ internal abstract class FirCompletionContributorBase<C : FirRawPositionCompletio
     }
 
     private fun KtAnalysisSession.applyWeighers(
+        context: WeighingContext,
         lookupElement: LookupElement,
         symbol: KtSymbol,
-        expectedType: KtType?
     ): LookupElement = lookupElement.apply {
-        with(Weighers) { applyWeighsToLookupElement(lookupElement, symbol, expectedType) }
+        with(Weighers) { applyWeighsToLookupElement(context, lookupElement, symbol) }
     }
 }
 
