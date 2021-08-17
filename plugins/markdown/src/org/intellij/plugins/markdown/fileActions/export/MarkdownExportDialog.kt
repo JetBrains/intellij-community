@@ -33,6 +33,7 @@ internal class MarkdownExportDialog(
   init {
     title = MarkdownBundle.message("markdown.export.from.docx.dialog.title")
     setOKButtonText(MarkdownBundle.message("markdown.export.dialog.ok.button"))
+    okAction.isEnabled = selectedFileType.validate(project, targetFile).isNullOrEmpty()
   }
 
   override fun doAction(selectedFileUrl: String) {
@@ -50,7 +51,10 @@ internal class MarkdownExportDialog(
   override fun LayoutBuilder.createFileTypeField() = row {
     val model = DefaultComboBoxModel(supportedExportProviders.toTypedArray())
     val fileTypeProperty = PropertyGraph().graphProperty { selectedFileType }
-    fileTypeProperty.afterChange { selectedFileType = it }
+    fileTypeProperty.afterChange {
+      selectedFileType = it
+      okAction.isEnabled = it.validate(project, file).isNullOrEmpty()
+    }
 
     selectedFileType = findFirstValidProvider() ?: supportedExportProviders.first()
     label(MarkdownBundle.message("markdown.export.dialog.filetype.label"))
