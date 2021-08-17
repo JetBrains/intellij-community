@@ -714,4 +714,29 @@ public class JavaEnterActionTest extends AbstractEnterActionTestCase {
         );
       });
   }
+
+  public void testIdea205888() {
+    doTextTest(
+      "java",
+
+      "class Test {\n" +
+      "    void foo() {\n" +
+      "        boolean value = true;\n" +
+      "        if (value)\n" +
+      "            if (value)\n" +
+      "                value = false;<caret>\n" +
+      "    }\n" +
+      "}",
+
+      "class Test {\n" +
+      "    void foo() {\n" +
+      "        boolean value = true;\n" +
+      "        if (value)\n" +
+      "            if (value)\n" +
+      "                value = false;\n" +
+      "        <caret>\n" +
+      "    }\n" +
+      "}"
+    );
+  }
 }
