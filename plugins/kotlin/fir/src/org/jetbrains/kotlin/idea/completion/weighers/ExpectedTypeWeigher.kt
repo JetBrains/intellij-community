@@ -18,8 +18,8 @@ internal object ExpectedTypeWeigher {
             element.matchesExpectedType ?: MatchesExpectedType.NON_TYPABLE
     }
 
-    fun KtAnalysisSession.addWeight(lookupElement: LookupElement, symbol: KtSymbol, expectedType: KtType?) {
-        lookupElement.matchesExpectedType = matchesExpectedType(symbol, expectedType)
+    fun KtAnalysisSession.addWeight(context: WeighingContext, lookupElement: LookupElement, symbol: KtSymbol) {
+        lookupElement.matchesExpectedType = matchesExpectedType(symbol, context.expectedType)
     }
 
     private fun KtAnalysisSession.matchesExpectedType(
