@@ -47,7 +47,6 @@ import java.util.function.Function;
  * @author Konstantin Bulenkov
  */
 public class DarculaLaf extends BasicLookAndFeel implements UserDataHolder {
-  private static final Object SYSTEM = new Object();
   public static final @NlsSafe String NAME = "Darcula";
   private static final @NlsSafe String DESCRIPTION = "IntelliJ Dark Look and Feel";
   private LookAndFeel base;
@@ -276,11 +275,11 @@ public class DarculaLaf extends BasicLookAndFeel implements UserDataHolder {
     return baseDefaults.getColor(key);
   }
 
+  /**
+   * @deprecated Use {@link UITheme#parseValue(String, String, ClassLoader)}
+   */
+  @Deprecated
   protected Object parseValue(String key, @NotNull String value) {
-    if ("system".equals(value)) {
-      return SYSTEM;
-    }
-
     return UITheme.parseValue(key, value, getClass().getClassLoader());
   }
 
