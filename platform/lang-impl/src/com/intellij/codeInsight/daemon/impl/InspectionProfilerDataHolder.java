@@ -2,6 +2,9 @@
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeInspection.InspectionProfile;
+import com.intellij.ide.plugins.DynamicPluginListener;
+import com.intellij.ide.plugins.IdeaPluginDescriptor;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.Service;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -25,8 +28,9 @@ import java.util.*;
 
 @ApiStatus.Experimental
 @Service(Service.Level.PROJECT)
-final class InspectionProfileDataHolder {
-  private static final Logger LOG = Logger.getInstance(InspectionProfileDataHolder.class);
+// stores CPU profiler data for inspections run session
+final class InspectionProfilerDataHolder {
+  private static final Logger LOG = Logger.getInstance(InspectionProfilerDataHolder.class);
   private static class InspectionFileData {
     private final @NotNull Latencies @NotNull [/*3*/] latencies; // ERROR,WARNING,OTHER
     private final Map<String, PsiElement> favoriteElement; // tool id -> PsiElement which produced some diagnostics during last run
@@ -37,15 +41,14 @@ final class InspectionProfileDataHolder {
     }
   }
 
-  //private static final Key<InspectionProfileDataHolder> KEY = Key.create("InspectionProfileData");
   // store all data locally to be able to clear fast
   private final Map<PsiFile, InspectionFileData> data = Collections.synchronizedMap(new FixedHashMap<>(10));
 
-  static InspectionProfileDataHolder getInstance(@NotNull Project project) {
-    return project.getService(InspectionProfileDataHolder.class);
+  static InspectionProfilerDataHolder getInstance(@NotNull Project project) {
+    return project.getService(InspectionProfilerDataHolder.class);
   }
 
-  private InspectionProfileDataHolder(Project project) {
+  private InspectionProfilerDataHolder(Project project) {
     MessageBusConnection connection = project.getMessageBus().connect();
     connection.subscribe(ProfileChangeAdapter.TOPIC, new ProfileChangeAdapter() {
       @Override
@@ -71,6 +74,17 @@ final class InspectionProfileDataHolder {
 
       @Override
       public void projectClosing(@NotNull Project project) {
+        clearProfileData();
+      }
+    });
+    ApplicationManager.getApplication().getMessageBus().connect().subscribe(DynamicPluginListener.TOPIC, new DynamicPluginListener() {
+      @Override
+      public void beforePluginUnload(@NotNull IdeaPluginDescriptor pluginDescriptor, boolean isUpdate) {
+        clearProfileData();
+      }
+
+      @Override
+      public void pluginUnloaded(@NotNull IdeaPluginDescriptor pluginDescriptor, boolean isUpdate) {
         clearProfileData();
       }
     });

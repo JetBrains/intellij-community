@@ -226,7 +226,7 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
     boolean isWholeFileInspectionsPass = !toolWrappers.isEmpty() && toolWrappers.get(0).getTool().runForWholeFile();
     if (isOnTheFly && !isWholeFileInspectionsPass) {
       // do not save stats for batch process, there could be too many files
-      InspectionProfileDataHolder.getInstance(myProject).saveStats(getFile(), init, System.nanoTime() - start);
+      InspectionProfilerDataHolder.getInstance(myProject).saveStats(getFile(), init, System.nanoTime() - start);
     }
     reportStatsToQodana(isOnTheFly, init);
     inspectInjectedPsi(outside, isOnTheFly, progress, iManager, false, toolWrappers, alreadyVisitedInjected);
@@ -309,9 +309,9 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
     PsiFile file = session.getFile();
     List<InspectionContext> init = ContainerUtil.mapNotNull(wrappers, wrapper -> createContext(wrapper, iManager, isOnTheFly, indicator, session));
 
-    if (Registry.is("inspection.sort")) {
+    if (isInspectionSortByLatencyEnabled()) {
       //sort init according to the priorities saved earlier to run in order
-      InspectionProfileDataHolder profileData = InspectionProfileDataHolder.getInstance(myProject);
+      InspectionProfilerDataHolder profileData = InspectionProfilerDataHolder.getInstance(myProject);
       profileData.sort(getFile(), init);
       profileData.retrieveFavoriteElements(getFile(), init);
 
@@ -441,7 +441,7 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
     for (InspectionContext context : init) {
       context.problemsSizeAfterInsideElementsProcessed = context.holder.getResultCount();
     }
-    if (Registry.is("inspection.sort")) {
+    if (isInspectionSortByLatencyEnabled()) {
       processInOrder(init, outside, false, finalPriorityRange, getFile(), TOMB_STONE, indicator, context -> {
         InspectionProblemsHolder holder = context.holder;
         holder.finishTimeStamp = System.nanoTime();
@@ -476,6 +476,10 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
         throw new ProcessCanceledException();
       }
     }
+  }
+
+  private static boolean isInspectionSortByLatencyEnabled() {
+    return Registry.is("inspection.sort") && System.getProperty("no.inspection.sort") == null;
   }
 
   private @NotNull Set<PsiFile> inspectInjectedPsi(@NotNull List<? extends PsiElement> elements,
