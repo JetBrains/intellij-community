@@ -1,0 +1,3 @@
+package test
+
+fun usage(p: dependency.Dep): dependency.Dep = p

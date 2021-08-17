@@ -259,6 +259,79 @@ public abstract class JsOptimizeImportsTestGenerated extends AbstractJsOptimizeI
         }
 
         @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("testData/editor/optimizeImports/common/basic")
+        public static class Basic extends AbstractJsOptimizeImportsTest {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("UnusedClass.kt")
+            public void testUnusedClass() throws Exception {
+                runTest("testData/editor/optimizeImports/common/basic/UnusedClass.kt");
+            }
+
+            @TestMetadata("UnusedExtensionFunction.kt")
+            public void testUnusedExtensionFunction() throws Exception {
+                runTest("testData/editor/optimizeImports/common/basic/UnusedExtensionFunction.kt");
+            }
+
+            @TestMetadata("UnusedExtensionProperty.kt")
+            public void testUnusedExtensionProperty() throws Exception {
+                runTest("testData/editor/optimizeImports/common/basic/UnusedExtensionProperty.kt");
+            }
+
+            @TestMetadata("UnusedFunction.kt")
+            public void testUnusedFunction() throws Exception {
+                runTest("testData/editor/optimizeImports/common/basic/UnusedFunction.kt");
+            }
+
+            @TestMetadata("UnusedProperty.kt")
+            public void testUnusedProperty() throws Exception {
+                runTest("testData/editor/optimizeImports/common/basic/UnusedProperty.kt");
+            }
+
+            @TestMetadata("UsedClass.kt")
+            public void testUsedClass() throws Exception {
+                runTest("testData/editor/optimizeImports/common/basic/UsedClass.kt");
+            }
+
+            @TestMetadata("UsedConstructor.kt")
+            public void testUsedConstructor() throws Exception {
+                runTest("testData/editor/optimizeImports/common/basic/UsedConstructor.kt");
+            }
+
+            @TestMetadata("UsedExtensionFunction.kt")
+            public void testUsedExtensionFunction() throws Exception {
+                runTest("testData/editor/optimizeImports/common/basic/UsedExtensionFunction.kt");
+            }
+
+            @TestMetadata("UsedExtensionFunctionImplicitReceiver.kt")
+            public void testUsedExtensionFunctionImplicitReceiver() throws Exception {
+                runTest("testData/editor/optimizeImports/common/basic/UsedExtensionFunctionImplicitReceiver.kt");
+            }
+
+            @TestMetadata("UsedExtensionProperty.kt")
+            public void testUsedExtensionProperty() throws Exception {
+                runTest("testData/editor/optimizeImports/common/basic/UsedExtensionProperty.kt");
+            }
+
+            @TestMetadata("UsedFunction.kt")
+            public void testUsedFunction() throws Exception {
+                runTest("testData/editor/optimizeImports/common/basic/UsedFunction.kt");
+            }
+
+            @TestMetadata("UsedFunctionReference.kt")
+            public void testUsedFunctionReference() throws Exception {
+                runTest("testData/editor/optimizeImports/common/basic/UsedFunctionReference.kt");
+            }
+
+            @TestMetadata("UsedProperty.kt")
+            public void testUsedProperty() throws Exception {
+                runTest("testData/editor/optimizeImports/common/basic/UsedProperty.kt");
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/editor/optimizeImports/common/kt21515")
         public static class Kt21515 extends AbstractJsOptimizeImportsTest {
             private void runTest(String testDataFilePath) throws Exception {
