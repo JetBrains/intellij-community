@@ -10,6 +10,7 @@ import com.intellij.ui.TitledSeparator
 import com.intellij.ui.components.Label
 import com.intellij.ui.dsl.*
 import com.intellij.ui.dsl.Row
+import com.intellij.ui.dsl.SpacingConfiguration
 import com.intellij.ui.dsl.gridLayout.*
 import com.intellij.ui.dsl.gridLayout.builders.RowsGridBuilder
 import com.intellij.ui.layout.*
@@ -324,6 +325,7 @@ internal class PanelImpl(private val dialogPanelConfig: DialogPanelConfig) : Cel
   private fun getRowTopGap(topGap: TopGap): Int {
     return when (topGap) {
       TopGap.GROUP -> dialogPanelConfig.spacing.verticalGroupTopGap
+      TopGap.SMALL -> dialogPanelConfig.spacing.verticalSmallTopGap
     }
   }
 

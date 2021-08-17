@@ -41,4 +41,9 @@ interface SpacingConfiguration {
    */
   val verticalGroupTopGap: Int
 
+  /**
+   * Vertical small gap between unrelated settings
+   */
+  val verticalSmallTopGap: Int
+
 }

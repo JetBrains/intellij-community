@@ -21,7 +21,6 @@ import org.jetbrains.annotations.ApiStatus
 import java.awt.Dimension
 import java.awt.event.ActionEvent
 import javax.swing.*
-import kotlin.reflect.KMutableProperty0
 
 /**
  * Determines relation between row grid and parent's grid
@@ -51,7 +50,12 @@ enum class TopGap {
   /**
    * See [SpacingConfiguration.verticalGroupTopGap]
    */
-  GROUP
+  GROUP,
+
+  /**
+   * See [SpacingConfiguration.verticalSmallTopGap]
+   */
+  SMALL
 }
 
 @ApiStatus.Experimental

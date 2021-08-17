@@ -6,7 +6,6 @@ import com.intellij.ui.dsl.SpacingConfiguration
 import com.intellij.util.SmartList
 import com.intellij.util.ui.JBUI
 import org.jetbrains.annotations.ApiStatus
-import javax.swing.ButtonGroup
 import javax.swing.JComponent
 
 @ApiStatus.Experimental
@@ -38,6 +37,7 @@ private fun createIntelliJSpacingConfiguration(): SpacingConfiguration {
     override val verticalComponentGap = JBUI.scale(6)
     override val verticalCommentBottomGap = JBUI.scale(6)
     override val verticalGroupTopGap = JBUI.scale(20)
+    override val verticalSmallTopGap = JBUI.scale(8)
   }
 }
 
