@@ -1,3 +1,4 @@
+// PROBLEM: none
 // WITH_RUNTIME
 enum class B() {
     ;

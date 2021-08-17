@@ -10057,14 +10057,19 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
             runTest("testData/inspectionsLocal/removeRedundantQualifierName/enumEntry.kt");
         }
 
-        @TestMetadata("enumInEnum.kt")
-        public void testEnumInEnum() throws Exception {
-            runTest("testData/inspectionsLocal/removeRedundantQualifierName/enumInEnum.kt");
+        @TestMetadata("enumInEnumWithPackageNames.kt")
+        public void testEnumInEnumWithPackageNames() throws Exception {
+            runTest("testData/inspectionsLocal/removeRedundantQualifierName/enumInEnumWithPackageNames.kt");
         }
 
-        @TestMetadata("enumInEnum2.kt")
-        public void testEnumInEnum2() throws Exception {
-            runTest("testData/inspectionsLocal/removeRedundantQualifierName/enumInEnum2.kt");
+        @TestMetadata("enumInEnumWithPackageNames2.kt")
+        public void testEnumInEnumWithPackageNames2() throws Exception {
+            runTest("testData/inspectionsLocal/removeRedundantQualifierName/enumInEnumWithPackageNames2.kt");
+        }
+
+        @TestMetadata("enumInEnumWithPackageNames3.kt")
+        public void testEnumInEnumWithPackageNames3() throws Exception {
+            runTest("testData/inspectionsLocal/removeRedundantQualifierName/enumInEnumWithPackageNames3.kt");
         }
 
         @TestMetadata("expression.kt")
@@ -10230,6 +10235,21 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
         @TestMetadata("notApplicableEnumInEnum2.kt")
         public void testNotApplicableEnumInEnum2() throws Exception {
             runTest("testData/inspectionsLocal/removeRedundantQualifierName/notApplicableEnumInEnum2.kt");
+        }
+
+        @TestMetadata("notApplicableEnumInEnum3.kt")
+        public void testNotApplicableEnumInEnum3() throws Exception {
+            runTest("testData/inspectionsLocal/removeRedundantQualifierName/notApplicableEnumInEnum3.kt");
+        }
+
+        @TestMetadata("notApplicableEnumInEnum4.kt")
+        public void testNotApplicableEnumInEnum4() throws Exception {
+            runTest("testData/inspectionsLocal/removeRedundantQualifierName/notApplicableEnumInEnum4.kt");
+        }
+
+        @TestMetadata("notApplicableEnumInEnum5.kt")
+        public void testNotApplicableEnumInEnum5() throws Exception {
+            runTest("testData/inspectionsLocal/removeRedundantQualifierName/notApplicableEnumInEnum5.kt");
         }
 
         @TestMetadata("notApplicableEnumValueOf.kt")
