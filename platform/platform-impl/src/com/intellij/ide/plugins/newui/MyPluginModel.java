@@ -738,7 +738,6 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginE
 
       myInstalledPanel.addToGroup(myDownloaded, descriptor);
       myDownloaded.titleWithEnabled(this);
-      myInstalledPanel.setSelection(myDownloaded.ui.plugins.get(myDownloaded.descriptors.indexOf(descriptor)));
       myInstalledPanel.doLayout();
     }
   }

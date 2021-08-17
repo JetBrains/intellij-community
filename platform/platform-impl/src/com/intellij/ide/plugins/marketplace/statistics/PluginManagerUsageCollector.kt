@@ -3,9 +3,11 @@ package com.intellij.ide.plugins.marketplace.statistics
 
 import com.intellij.ide.plugins.IdeaPluginDescriptor
 import com.intellij.ide.plugins.PluginEnableDisableAction
+import com.intellij.ide.plugins.enums.PluginsGroupType
 import com.intellij.ide.plugins.marketplace.statistics.enums.InstallationSourceEnum
 import com.intellij.ide.plugins.marketplace.statistics.enums.DialogAcceptanceResultEnum
 import com.intellij.ide.plugins.marketplace.statistics.enums.SignatureVerificationResult
+import com.intellij.ide.plugins.newui.PluginsGroup
 import com.intellij.internal.statistic.eventLog.EventLogGroup
 import com.intellij.internal.statistic.eventLog.FeatureUsageData
 import com.intellij.internal.statistic.eventLog.events.*
@@ -22,29 +24,36 @@ class PluginManagerUsageCollector : CounterUsagesCollector() {
 
   companion object {
     private val EVENT_GROUP = EventLogGroup("plugin.manager", 1)
+    private val PLUGINS_GROUP_TYPE = EventFields.Enum<PluginsGroupType>("group")
     private val ENABLE_DISABLE_ACTION = EventFields.Enum<PluginEnableDisableAction>("states") { it.name }
     private val ACCEPTANCE_RESULT = EventFields.Enum<DialogAcceptanceResultEnum>("acceptance_result")
     private val PLUGIN_SOURCE = EventFields.Enum<InstallationSourceEnum>("source")
     private val PREVIOUS_VERSION = PluginVersionEventField("previous_version")
     private val SIGNATURE_CHECK_RESULT = EventFields.Enum<SignatureVerificationResult>("signature_check_result")
 
+    private val PLUGIN_CARD_OPENED = EVENT_GROUP.registerEvent(
+      "plugin.search.card.opened", EventFields.PluginInfo, PLUGINS_GROUP_TYPE, EventFields.Int("index")
+    )
     private val THIRD_PARTY_ACCEPTANCE_CHECK = EVENT_GROUP.registerEvent("plugin.install.third.party.check", ACCEPTANCE_RESULT)
     private val PLUGIN_SIGNATURE_WARNING = EVENT_GROUP.registerEvent(
-      "plugin.signature.warning.shown",
-      EventFields.PluginInfo,
-      ACCEPTANCE_RESULT
+      "plugin.signature.warning.shown", EventFields.PluginInfo, ACCEPTANCE_RESULT
     )
-    private val PLUGIN_SIGNATURE_CHECK_RESULT = EVENT_GROUP.registerEvent("plugin.signature.check.result",
-      EventFields.PluginInfo,
-      SIGNATURE_CHECK_RESULT
+    private val PLUGIN_SIGNATURE_CHECK_RESULT = EVENT_GROUP.registerEvent(
+      "plugin.signature.check.result", EventFields.PluginInfo, SIGNATURE_CHECK_RESULT
     )
-    private val PLUGIN_STATE_CHANGED = EVENT_GROUP.registerEvent("plugin.state.changed", EventFields.PluginInfo, ENABLE_DISABLE_ACTION
+    private val PLUGIN_STATE_CHANGED = EVENT_GROUP.registerEvent(
+      "plugin.state.changed", EventFields.PluginInfo, ENABLE_DISABLE_ACTION
     )
     private val PLUGIN_INSTALLATION_STARTED = EVENT_GROUP.registerEvent(
       "plugin.installation.started", PLUGIN_SOURCE, EventFields.PluginInfo, PREVIOUS_VERSION
     )
     private val PLUGIN_INSTALLATION_FINISHED = EVENT_GROUP.registerEvent("plugin.installation.finished", EventFields.PluginInfo)
     private val PLUGIN_REMOVED = EVENT_GROUP.registerEvent("plugin.was.removed", EventFields.PluginInfo)
+
+    @JvmStatic
+    fun pluginCardOpened(descriptor: IdeaPluginDescriptor, group: PluginsGroup?) = group?.let {
+      PLUGIN_CARD_OPENED.log(getPluginInfoByDescriptor(descriptor), it.type, it.getPluginIndex(descriptor.pluginId))
+    }
 
     @JvmStatic
     fun thirdPartyAcceptanceCheck(result: DialogAcceptanceResultEnum) = THIRD_PARTY_ACCEPTANCE_CHECK.getIfInitializedOrNull()?.log(result)

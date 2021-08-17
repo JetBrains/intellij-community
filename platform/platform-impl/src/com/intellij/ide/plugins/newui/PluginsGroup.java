@@ -4,6 +4,8 @@ package com.intellij.ide.plugins.newui;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.plugins.PluginManagerCore;
+import com.intellij.ide.plugins.enums.PluginsGroupType;
+import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.components.labels.LinkLabel;
 import com.intellij.util.containers.ContainerUtil;
@@ -26,10 +28,12 @@ public class PluginsGroup {
   public final List<IdeaPluginDescriptor> descriptors = new ArrayList<>();
   public UIPluginGroup ui;
   public Runnable clearCallback;
+  public PluginsGroupType type;
 
-  public PluginsGroup(@NotNull @Nls String title) {
+  public PluginsGroup(@NotNull @Nls String title, @NotNull PluginsGroupType type) {
     myTitlePrefix = title;
     this.title = title;
+    this.type = type;
   }
 
   public void clear() {
@@ -71,6 +75,15 @@ public class PluginsGroup {
   public void titleWithCount(int enabled) {
     title = IdeBundle.message("plugins.configurable.title.with.count", myTitlePrefix, enabled, descriptors.size());
     updateTitle();
+  }
+
+  public int getPluginIndex(@NotNull PluginId pluginId) {
+    for (int i = 0; i < descriptors.size(); i++) {
+      if (descriptors.get(i).getPluginId().equals(pluginId)) {
+        return i;
+      }
+    }
+    return -1;
   }
 
   protected void updateTitle() {
