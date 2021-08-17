@@ -132,7 +132,7 @@ fun KtType.toKotlinType(context: FE10BindingContext, annotations: Annotations = 
 
     val ktTypeArguments = this.safeAs<KtNonErrorClassType>()?.typeArguments ?: emptyList()
 
-    val markedAsNullable = this.safeAs<KtTypeWithNullability>()?.nullability == KtTypeNullability.NULLABLE
+    val markedAsNullable = this.nullability == KtTypeNullability.NULLABLE
 
     return KotlinTypeFactory.simpleTypeWithNonTrivialMemberScope(
         annotations, typeConstructor, ktTypeArguments.map { it.toTypeProjection(context) }, markedAsNullable,
