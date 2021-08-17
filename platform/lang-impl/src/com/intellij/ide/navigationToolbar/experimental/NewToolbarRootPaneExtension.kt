@@ -4,7 +4,6 @@ package com.intellij.ide.navigationToolbar.experimental
 import com.intellij.ide.ui.ToolbarSettings
 import com.intellij.ide.ui.UISettings
 import com.intellij.ide.ui.UISettings.Companion.instance
-import com.intellij.ide.ui.UISettingsListener
 import com.intellij.ide.ui.customization.CustomActionsSchema
 import com.intellij.ide.ui.experimental.toolbar.ExperimentalToolbarSettings
 import com.intellij.openapi.Disposable
@@ -19,6 +18,7 @@ import com.intellij.openapi.util.registry.RegistryValue
 import com.intellij.openapi.util.registry.RegistryValueListener
 import com.intellij.openapi.wm.IdeRootPaneNorthExtension
 import com.intellij.util.ui.JBSwingUtilities
+import com.intellij.util.ui.JBUI
 import org.jetbrains.annotations.NotNull
 import java.awt.BorderLayout
 import java.awt.Graphics
@@ -37,10 +37,10 @@ class NewToolbarRootPaneExtension(val myProject: Project) : IdeRootPaneNorthExte
 
   private val myPanelWrapper = JPanel(BorderLayout())
   private val myPanel: JPanel = object : JPanel(
-    NewToolbarBorderLayout()){
+    NewToolbarBorderLayout()) {
     init {
       isOpaque = true
-      border = BorderFactory.createEmptyBorder()
+      border = BorderFactory.createEmptyBorder(0, JBUI.scale(4), 0, JBUI.scale(4))
     }
 
     override fun getComponentGraphics(graphics: Graphics?): Graphics {
@@ -59,11 +59,11 @@ class NewToolbarRootPaneExtension(val myProject: Project) : IdeRootPaneNorthExte
     Registry.get(navBarKey).addListener(registryListener, this)
   }
 
-  private fun addGroupComponent(panel: JPanel, layoutConstrains: String , vararg children: AnAction) {
+  private fun addGroupComponent(panel: JPanel, layoutConstrains: String, vararg children: AnAction) {
     for (c in children) {
       val toolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.RUN_TOOLBAR,
-                                                                        if (c is ActionGroup) c else DefaultActionGroup(c),
-                                                                        true) as ActionToolbarImpl
+        if (c is ActionGroup) c else DefaultActionGroup(c),
+        true) as ActionToolbarImpl
       toolbar.targetComponent = panel
       toolbar.layoutPolicy = NOWRAP_LAYOUT_POLICY
       panel.add(toolbar, layoutConstrains)
@@ -74,14 +74,14 @@ class NewToolbarRootPaneExtension(val myProject: Project) : IdeRootPaneNorthExte
     return NEW_TOOLBAR_KEY
   }
 
-  private fun clearAndRefill(){
+  private fun clearAndRefill() {
     myPanelWrapper.removeAll()
     myPanel.removeAll()
 
     fillToolbar()
   }
 
-  private fun fillToolbar(){
+  private fun fillToolbar() {
     val toolbarSettingsService = ToolbarSettings.Companion.getInstance()
     if (toolbarSettingsService is ExperimentalToolbarSettings) {
       val visibleAndEnabled = toolbarSettingsService.showNewToolbar && !instance.presentationMode
