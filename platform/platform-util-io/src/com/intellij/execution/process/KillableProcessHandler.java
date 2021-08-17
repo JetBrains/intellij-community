@@ -7,6 +7,7 @@ import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.util.PathUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -103,7 +104,7 @@ public class KillableProcessHandler extends OSProcessHandler implements Killable
   private boolean canKillProcessSoftly() {
     if (processCanBeKilledByOS(myProcess)) {
       if (SystemInfo.isWindows) {
-        return myMediatedProcess || myShouldKillProcessSoftlyWithWinP;
+        return myMediatedProcess || canTerminateGracefullyWithWinP();
       }
       else if (SystemInfo.isUnix) {
         // 'kill -SIGINT <pid>' will be executed
@@ -152,10 +153,38 @@ public class KillableProcessHandler extends OSProcessHandler implements Killable
    * This is an experimental API which will be removed in future releases once stabilized.
    * Please do not use this API.
    * @param shouldKillProcessSoftlyWithWinP true to use
+   * @deprecated graceful termination with WinP is enabled by default, please don't use this method
    */
   @ApiStatus.Experimental
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
   public void setShouldKillProcessSoftlyWithWinP(boolean shouldKillProcessSoftlyWithWinP) {
     myShouldKillProcessSoftlyWithWinP = shouldKillProcessSoftlyWithWinP;
+  }
+
+  private boolean canTerminateGracefullyWithWinP() {
+    return myShouldKillProcessSoftlyWithWinP && SystemInfo.isWin10OrNewer && !isWslProcess();
+  }
+
+  /**
+   * Checks if the process is WSL.
+   * WinP's graceful termination doesn't work for Linux processes started inside WSL, like
+   * "wsl.exe -d Ubuntu-20.04 --exec <linux command>", because WinP's `org.jvnet.winp.WinProcess.sendCtrlC`
+   * uses `GenerateConsoleCtrlEvent` under the hood and `GenerateConsoleCtrlEvent` doesn't terminate Linux
+   * processes running in WSL. Instead, it terminates wsl.exe process only.
+   * See <a href="https://github.com/microsoft/WSL/issues/7301">WSL issue #7301</a> for the details.
+   */
+  private boolean isWslProcess() {
+    ProcessHandle.Info info = myProcess.info();
+    String command = info.command().orElse(null);
+    boolean wsl = command != null && PathUtil.getFileName(command).equals("wsl.exe");
+    if (wsl) {
+      LOG.info("Skipping WinP graceful termination for " + command + " due to incorrect work with WSL processes");
+    }
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("WSL process: " + wsl  + ", executable: " + command + ", info: " + info);
+    }
+    return wsl;
   }
 
   protected boolean destroyProcessGracefully() {
@@ -163,7 +192,7 @@ public class KillableProcessHandler extends OSProcessHandler implements Killable
       if (myMediatedProcess) {
         return RunnerMediator.destroyProcess(myProcess, true);
       }
-      if (myShouldKillProcessSoftlyWithWinP && !Registry.is("disable.winp")) {
+      if (canTerminateGracefullyWithWinP() && !Registry.is("disable.winp")) {
         try {
           if (!myProcess.isAlive()) {
             OSProcessUtil.logSkippedActionWithTerminatedProcess(myProcess, "destroy", getCommandLine());
