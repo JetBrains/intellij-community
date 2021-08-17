@@ -15,12 +15,12 @@ import org.jetbrains.kotlin.psi.psiUtil.allChildren
 import org.jetbrains.kotlin.psi.psiUtil.getParentOfType
 import org.jetbrains.kotlin.psi.psiUtil.parents
 import org.jetbrains.kotlin.psi.psiUtil.startOffset
+import org.jetbrains.kotlin.types.Variance
 
-abstract class AbstractKotlinTypeArgumentInfoHandler<TParameterOwner : Any, TParameter : Any, UpperBound : Any> :
-    ParameterInfoHandlerWithTabActionSupport<KtTypeArgumentList, TParameterOwner, KtTypeProjection> {
+abstract class AbstractKotlinTypeArgumentInfoHandler :
+    ParameterInfoHandlerWithTabActionSupport<KtTypeArgumentList, AbstractKotlinTypeArgumentInfoHandler.CandidateInfo, KtTypeProjection> {
 
-    protected abstract fun fetchTypeParameters(descriptor: TParameterOwner): List<TParameter>
-    protected abstract fun findParameterOwners(argumentList: KtTypeArgumentList): Collection<TParameterOwner>?
+    protected abstract fun fetchCandidateInfos(argumentList: KtTypeArgumentList): List<CandidateInfo>?
 
     override fun getActualParameterDelimiterType(): KtSingleValueToken = KtTokens.COMMA
     override fun getActualParametersRBraceType(): KtSingleValueToken = KtTokens.GT
@@ -36,6 +36,17 @@ abstract class AbstractKotlinTypeArgumentInfoHandler<TParameterOwner : Any, TPar
         context.showHint(element, element.textRange.startOffset, this)
     }
 
+    override fun findElementForParameterInfo(context: CreateParameterInfoContext): KtTypeArgumentList? {
+        val file = context.file as? KtFile ?: return null
+
+        val token = file.findElementAt(context.offset) ?: return null
+        val argumentList = token.getParentOfType<KtTypeArgumentList>(true) ?: return null
+
+        context.itemsToShow = fetchCandidateInfos(argumentList)?.toTypedArray() ?: return null
+
+        return argumentList
+    }
+
     override fun findElementForUpdatingParameterInfo(context: UpdateParameterInfoContext): KtTypeArgumentList? {
         val element = context.file.findElementAt(context.offset) ?: return null
         val argumentList = element.getParentOfType<KtTypeArgumentList>(true) ?: return null
@@ -46,18 +57,6 @@ abstract class AbstractKotlinTypeArgumentInfoHandler<TParameterOwner : Any, TPar
             context.setCurrentParameter(index)
             context.highlightedParameter = element
         }
-        return argumentList
-    }
-
-    override fun findElementForParameterInfo(context: CreateParameterInfoContext): KtTypeArgumentList? {
-        val file = context.file as? KtFile ?: return null
-
-        val token = file.findElementAt(context.offset) ?: return null
-        val argumentList = token.getParentOfType<KtTypeArgumentList>(true) ?: return null
-
-        val parameterOwners = findParameterOwners(argumentList) ?: return null
-
-        context.itemsToShow = parameterOwners.toTypedArray<Any>()
         return argumentList
     }
 
@@ -73,20 +72,18 @@ abstract class AbstractKotlinTypeArgumentInfoHandler<TParameterOwner : Any, TPar
         context.setCurrentParameter(parameterIndex)
     }
 
-    override fun updateUI(itemToShow: TParameterOwner, context: ParameterInfoUIContext) {
+    override fun updateUI(itemToShow: CandidateInfo, context: ParameterInfoUIContext) {
         if (!updateUIOrFail(itemToShow, context)) {
             context.isUIComponentEnabled = false
             return
         }
     }
 
-    private fun updateUIOrFail(itemToShow: TParameterOwner, context: ParameterInfoUIContext): Boolean {
+    private fun updateUIOrFail(itemToShow: CandidateInfo, context: ParameterInfoUIContext): Boolean {
         val currentIndex = context.currentParameterIndex
         if (currentIndex < 0) return false // by some strange reason we are invoked with currentParameterIndex == -1 during initialization
 
-        val parameters = fetchTypeParameters(itemToShow)
-
-        val (text, currentParameterStart, currentParameterEnd) = buildPresentation(parameters, currentIndex)
+        val (text, currentParameterStart, currentParameterEnd) = buildPresentation(itemToShow, currentIndex)
 
         context.setupUIComponentPresentation(
             text, currentParameterStart, currentParameterEnd,
@@ -97,15 +94,8 @@ abstract class AbstractKotlinTypeArgumentInfoHandler<TParameterOwner : Any, TPar
         return true
     }
 
-    abstract fun TParameter.isReified(): Boolean
-    abstract fun TParameter.variance(): String
-    abstract fun TParameter.name(): String
-    abstract fun TParameter.upperBounds(): List<UpperBound>
-    abstract fun UpperBound.isNullableAnyOrFlexibleAny(): Boolean
-    abstract fun UpperBound.renderType(): String
-
     protected fun buildPresentation(
-        parameters: List<TParameter>,
+        candidateInfo: CandidateInfo,
         currentIndex: Int
     ): Triple<String, Int, Int> {
         var currentParameterStart = -1
@@ -113,26 +103,26 @@ abstract class AbstractKotlinTypeArgumentInfoHandler<TParameterOwner : Any, TPar
 
         val text = buildString {
             var needWhere = false
-            for ((index, parameter) in parameters.withIndex()) {
+            for ((index, parameter) in candidateInfo.typeParameters.withIndex()) {
                 if (index > 0) append(", ")
 
                 if (index == currentIndex) {
                     currentParameterStart = length
                 }
 
-                if (parameter.isReified()) {
+                if (parameter.isReified) {
                     append("reified ")
                 }
 
-                parameter.variance().let { if (it.isNotEmpty()) append("$it ") }
+                parameter.variance.let { if (it.label.isNotEmpty()) append("$it ") }
 
-                append(parameter.name())
+                append(parameter.name)
 
-                val upperBounds = parameter.upperBounds()
+                val upperBounds = parameter.upperBounds
                 if (upperBounds.size == 1) {
                     val upperBound = upperBounds.single()
-                    if (!upperBound.isNullableAnyOrFlexibleAny()) { // skip Any? or Any!
-                        append(" : ").append(upperBound.renderType())
+                    if (!upperBound.isNullableAnyOrFlexibleAny) { // skip Any? or Any!
+                        append(" : ").append(upperBound.renderedType)
                     }
                 } else if (upperBounds.size > 1) {
                     needWhere = true
@@ -147,15 +137,15 @@ abstract class AbstractKotlinTypeArgumentInfoHandler<TParameterOwner : Any, TPar
                 append(" where ")
 
                 var needComma = false
-                for (parameter in parameters) {
-                    val upperBounds = parameter.upperBounds()
+                for (parameter in candidateInfo.typeParameters) {
+                    val upperBounds = parameter.upperBounds
                     if (upperBounds.size > 1) {
                         for (upperBound in upperBounds) {
                             if (needComma) append(", ")
                             needComma = true
-                            append(parameter.name())
+                            append(parameter.name)
                             append(" : ")
-                            append(upperBound.renderType())
+                            append(upperBound.renderedType)
                         }
                     }
                 }
@@ -163,4 +153,18 @@ abstract class AbstractKotlinTypeArgumentInfoHandler<TParameterOwner : Any, TPar
         }
         return Triple(text, currentParameterStart, currentParameterEnd)
     }
+
+    data class UpperBoundInfo(
+        val isNullableAnyOrFlexibleAny: Boolean,
+        val renderedType: String
+    )
+
+    data class TypeParameterInfo(
+        val name: String,
+        val isReified: Boolean,
+        val variance: Variance,
+        val upperBounds: List<UpperBoundInfo>
+    )
+
+    data class CandidateInfo(val typeParameters: List<TypeParameterInfo>)
 }
