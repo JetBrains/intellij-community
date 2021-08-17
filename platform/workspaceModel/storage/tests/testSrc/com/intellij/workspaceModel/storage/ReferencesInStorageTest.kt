@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.workspaceModel.storage
 
+import com.intellij.testFramework.UsefulTestCase
 import com.intellij.testFramework.UsefulTestCase.assertEmpty
 import com.intellij.testFramework.UsefulTestCase.assertInstanceOf
 import com.intellij.workspaceModel.storage.entities.*
@@ -639,5 +640,40 @@ class ReferencesInStorageTest {
     val deserializer = EntityStorageSerializerImpl(TestEntityTypesResolver(), VirtualFileUrlManagerImpl())
     val deserialized = (deserializer.deserializeCache(ByteArrayInputStream(byteArray)) as? WorkspaceEntityStorageBuilderImpl)?.toStorage()
     deserialized!!.assertConsistency()
+  }
+
+  @Test
+  fun `replace one to one connection with adding already existing child`() {
+    val builder = createEmptyBuilder()
+    val parentEntity = builder.addOoParentWithPidEntity()
+    builder.addOoChildForParentWithPidEntity(parentEntity)
+
+    val anotherBuilder = createBuilderFrom(builder)
+    anotherBuilder.addOoChildForParentWithPidEntity(parentEntity, childProperty = "MyProperty")
+
+    // Modify initial builder
+    builder.addOoChildForParentWithPidEntity(parentEntity)
+
+    builder.addDiff(anotherBuilder)
+
+    builder.assertConsistency()
+
+    assertEquals("MyProperty", builder.entities(OoParentWithPidEntity::class.java).single().childOne!!.childProperty)
+  }
+
+  @Test
+  fun `pull one to one connection into another builder`() {
+    val builder = createEmptyBuilder()
+
+    val anotherBuilder = createBuilderFrom(builder)
+    val parentEntity = anotherBuilder.addOoParentEntity()
+    anotherBuilder.addOoChildWithNullableParentEntity(parentEntity)
+
+    builder.addDiff(anotherBuilder)
+
+    builder.assertConsistency()
+
+    UsefulTestCase.assertNotEmpty(builder.entities(OoParentEntity::class.java).toList())
+    UsefulTestCase.assertNotEmpty(builder.entities(OoChildWithNullableParentEntity::class.java).toList())
   }
 }

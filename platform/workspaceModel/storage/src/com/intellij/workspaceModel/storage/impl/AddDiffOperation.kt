@@ -139,6 +139,15 @@ internal class AddDiffOperation(val target: WorkspaceEntityStorageBuilderImpl, v
         }
       }
       if (targetParentId != null) {
+
+        // For one-to-one connections it's necessary to remove the obsolete children to avoid "entity leaks" and the state of broken store
+        if (connectionId.connectionType == ConnectionId.ConnectionType.ONE_TO_ONE || connectionId.connectionType == ConnectionId.ConnectionType.ABSTRACT_ONE_TO_ONE) {
+          val obsoleteChild = target.extractOneToOneChild<WorkspaceEntityBase>(connectionId, targetParentId.id)
+          if (obsoleteChild != null && obsoleteChild.id != targetEntityId.id) {
+            target.removeEntity(obsoleteChild)
+          }
+        }
+
         target.refs.updateParentOfChild(connectionId, targetEntityId.id.asChild(), targetParentId.id.asParent())
       }
     }
