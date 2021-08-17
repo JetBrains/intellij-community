@@ -21,6 +21,8 @@ import org.jetbrains.kotlin.idea.completion.lookups.CallableInsertionOptions
 import org.jetbrains.kotlin.idea.completion.lookups.CallableInsertionStrategy
 import org.jetbrains.kotlin.idea.completion.lookups.ImportStrategy
 import org.jetbrains.kotlin.idea.completion.lookups.detectImportStrategy
+import org.jetbrains.kotlin.idea.completion.weighers.WeighingContext
+import org.jetbrains.kotlin.idea.completion.weighers.WeighingContext.Companion.createWeighingContext
 import org.jetbrains.kotlin.idea.fir.HLIndexHelper
 import org.jetbrains.kotlin.psi.KtExpression
 import org.jetbrains.kotlin.utils.addIfNotNull
@@ -69,26 +71,27 @@ internal open class FirCallableCompletionContributor(
         }
 
         val receiver = explicitReceiver
+        val weighingContext = createWeighingContext(expectedType)
 
         when {
             receiver != null -> {
                 collectDotCompletion(
                     scopesContext.scopes,
                     receiver,
-                    expectedType,
+                    weighingContext,
                     extensionChecker,
                     visibilityChecker,
                 )
             }
 
-            else -> completeWithoutReceiver(scopesContext, expectedType, extensionChecker, visibilityChecker)
+            else -> completeWithoutReceiver(scopesContext, weighingContext, extensionChecker, visibilityChecker)
         }
     }
 
 
     private fun KtAnalysisSession.completeWithoutReceiver(
         implicitScopesContext: KtScopeContext,
-        expectedType: KtType?,
+        context: WeighingContext,
         extensionChecker: ExtensionApplicabilityChecker,
         visibilityChecker: CompletionVisibilityChecker,
     ) {
@@ -98,9 +101,9 @@ internal open class FirCallableCompletionContributor(
         val availableNonExtensions = collectNonExtensions(implicitScopes, visibilityChecker, scopeNameFilter) { filter(it) }
         val extensionsWhichCanBeCalled = collectSuitableExtensions(implicitScopes, extensionChecker, visibilityChecker)
 
-        availableNonExtensions.forEach { addCallableSymbolToCompletion(expectedType, it, getOptions(it)) }
+        availableNonExtensions.forEach { addCallableSymbolToCompletion(context, it, getOptions(it)) }
         extensionsWhichCanBeCalled.forEach { (symbol, applicable) ->
-            getExtensionOptions(symbol, applicable)?.let { addCallableSymbolToCompletion(expectedType, symbol, it) }
+            getExtensionOptions(symbol, applicable)?.let { addCallableSymbolToCompletion(context, symbol, it) }
         }
 
         if (shouldCompleteTopLevelCallablesFromIndex) {
@@ -108,27 +111,27 @@ internal open class FirCallableCompletionContributor(
             topLevelCallables.asSequence()
                 .map { it.getSymbol() as KtCallableSymbol }
                 .filter { with(visibilityChecker) { isVisible(it) } }
-                .forEach { addCallableSymbolToCompletion(expectedType, it, getOptions(it)) }
+                .forEach { addCallableSymbolToCompletion(context, it, getOptions(it)) }
         }
 
         collectTopLevelExtensionsFromIndices(implicitReceiversTypes, extensionChecker, visibilityChecker)
-            .forEach { addCallableSymbolToCompletion(expectedType, it, getOptions(it)) }
+            .forEach { addCallableSymbolToCompletion(context, it, getOptions(it)) }
     }
 
     protected open fun KtAnalysisSession.collectDotCompletion(
         implicitScopes: KtScope,
         explicitReceiver: KtExpression,
-        expectedType: KtType?,
+        context: WeighingContext,
         extensionChecker: ExtensionApplicabilityChecker,
         visibilityChecker: CompletionVisibilityChecker,
     ) {
         val symbol = explicitReceiver.reference()?.resolveToSymbol()
         when {
-            symbol is KtPackageSymbol -> collectDotCompletionForPackageReceiver(symbol, expectedType, visibilityChecker)
+            symbol is KtPackageSymbol -> collectDotCompletionForPackageReceiver(symbol, context, visibilityChecker)
             symbol is KtNamedClassOrObjectSymbol && symbol.classKind == KtClassKind.ENUM_CLASS -> {
                 collectNonExtensions(symbol.getStaticMemberScope(), visibilityChecker, scopeNameFilter).forEach { memberSymbol ->
                     addCallableSymbolToCompletion(
-                        expectedType,
+                        context,
                         memberSymbol,
                         CallableInsertionOptions(ImportStrategy.DoNothing, getInsertionStrategy(memberSymbol))
                     )
@@ -138,14 +141,14 @@ internal open class FirCallableCompletionContributor(
                 // symbol cannot be used as callable receiver
             }
             else -> {
-                collectDotCompletionForCallableReceiver(implicitScopes, explicitReceiver, expectedType, extensionChecker, visibilityChecker)
+                collectDotCompletionForCallableReceiver(implicitScopes, explicitReceiver, context, extensionChecker, visibilityChecker)
             }
         }
     }
 
     private fun KtAnalysisSession.collectDotCompletionForPackageReceiver(
         packageSymbol: KtPackageSymbol,
-        expectedType: KtType?,
+        context: WeighingContext,
         visibilityChecker: CompletionVisibilityChecker
     ) {
         packageSymbol.getPackageScope()
@@ -154,14 +157,14 @@ internal open class FirCallableCompletionContributor(
             .filter { with(visibilityChecker) { isVisible(it) } }
             .filter { filter(it) }
             .forEach { callable ->
-                addCallableSymbolToCompletion(expectedType, callable, getOptions(callable))
+                addCallableSymbolToCompletion(context, callable, getOptions(callable))
             }
     }
 
     protected fun KtAnalysisSession.collectDotCompletionForCallableReceiver(
         implicitScopes: KtScope,
         explicitReceiver: KtExpression,
-        expectedType: KtType?,
+        context: WeighingContext,
         extensionChecker: ExtensionApplicabilityChecker,
         visibilityChecker: CompletionVisibilityChecker,
     ) {
@@ -182,17 +185,17 @@ internal open class FirCallableCompletionContributor(
             .forEach {
                 if (it !in syntheticPropertyOrigins) {
                     // For basic completion, FE1.0 skips Java functions that are mapped to Kotlin properties.
-                    addCallableSymbolToCompletion(expectedType, it, getOptions(it))
+                    addCallableSymbolToCompletion(context, it, getOptions(it))
                 }
             }
 
         extensionNonMembers.forEach { (symbol, applicability) ->
-            getExtensionOptions(symbol, applicability)?.let { addCallableSymbolToCompletion(expectedType, symbol, it) }
+            getExtensionOptions(symbol, applicability)?.let { addCallableSymbolToCompletion(context, symbol, it) }
         }
 
         collectTopLevelExtensionsFromIndices(listOf(typeOfPossibleReceiver), extensionChecker, visibilityChecker)
             .filter { filter(it) }
-            .forEach { addCallableSymbolToCompletion(expectedType, it, getOptions(it)) }
+            .forEach { addCallableSymbolToCompletion(context, it, getOptions(it)) }
     }
 
     private fun KtAnalysisSession.collectTopLevelExtensionsFromIndices(
@@ -250,7 +253,7 @@ internal class FirCallableReferenceCompletionContributor(
     override fun KtAnalysisSession.collectDotCompletion(
         implicitScopes: KtScope,
         explicitReceiver: KtExpression,
-        expectedType: KtType?,
+        context: WeighingContext,
         extensionChecker: ExtensionApplicabilityChecker,
         visibilityChecker: CompletionVisibilityChecker
     ) {
@@ -261,12 +264,12 @@ internal class FirCallableReferenceCompletionContributor(
                     .getCallableSymbols(scopeNameFilter)
                     .filter { with(visibilityChecker) { isVisible(it) } }
                     .forEach { symbol ->
-                        addCallableSymbolToCompletion(expectedType = null, symbol, getOptions(symbol))
+                        addCallableSymbolToCompletion(context.withoutExpectedType(), symbol, getOptions(symbol))
                     }
 
             }
             else -> {
-                collectDotCompletionForCallableReceiver(implicitScopes, explicitReceiver, expectedType, extensionChecker, visibilityChecker)
+                collectDotCompletionForCallableReceiver(implicitScopes, explicitReceiver, context, extensionChecker, visibilityChecker)
             }
         }
     }
