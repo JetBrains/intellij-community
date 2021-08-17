@@ -4,8 +4,8 @@ package com.jetbrains.python.sdk.skeletons
 import com.intellij.execution.process.CapturingProcessHandler
 import com.intellij.execution.process.ProcessOutput
 import com.intellij.execution.target.TargetEnvironment
-import com.intellij.execution.target.TargetEnvironmentAwareRunProfileState.TargetProgressIndicator
-import com.intellij.execution.target.local.LocalTargetEnvironmentFactory
+import com.intellij.execution.target.TargetProgressIndicator
+import com.intellij.execution.target.local.LocalTargetEnvironmentRequest
 import com.intellij.execution.target.value.getTargetDownloadPath
 import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.progress.ProgressIndicator
@@ -21,10 +21,10 @@ import java.nio.file.Paths
 
 class PyTargetsSkeletonGenerator(skeletonPath: String?, pySdk: Sdk, currentFolder: String?)
   : PySkeletonGenerator(skeletonPath, pySdk, currentFolder) {
-  private val myTargetEnvFactory = checkNotNull(PythonInterpreterTargetEnvironmentFactory.findTargetEnvironmentFactory(sdk = mySdk))
+  private val myTargetEnvRequest = checkNotNull(PythonInterpreterTargetEnvironmentFactory.findTargetEnvironmentRequest(sdk = mySdk))
   private val myFoundBinaries: MutableSet<String> = HashSet()
 
-  private fun isLocalTarget() = myTargetEnvFactory is LocalTargetEnvironmentFactory
+  private fun isLocalTarget() = myTargetEnvRequest is LocalTargetEnvironmentRequest
 
   override fun commandBuilder(): Builder {
     val builder = TargetedBuilder()
@@ -39,13 +39,12 @@ class PyTargetsSkeletonGenerator(skeletonPath: String?, pySdk: Sdk, currentFolde
     override fun runProcess(): ProcessOutput = doRunProcess(listener = null)
 
     private fun doRunProcess(listener: LineWiseProcessOutputListener?): ProcessOutput {
-      val request = myTargetEnvFactory.createRequest()
       val generatorScriptExecution = prepareHelperScriptExecution(helperPackage = PythonHelper.GENERATOR3,
-                                                                  targetEnvironmentRequest = request)
+        targetEnvironmentRequest = myTargetEnvRequest)
       generatorScriptExecution.addParameter("-d")
       val skeletonsDownloadRoot = TargetEnvironment.DownloadRoot(localRootPath = Paths.get(mySkeletonsPath),
-                                                                 targetRootPath = TargetEnvironment.TargetPath.Temporary())
-      request.downloadVolumes += skeletonsDownloadRoot
+        targetRootPath = TargetEnvironment.TargetPath.Temporary())
+      myTargetEnvRequest.downloadVolumes += skeletonsDownloadRoot
       generatorScriptExecution.addParameter(skeletonsDownloadRoot.getTargetDownloadPath())
       if (myAssemblyRefs.isNotEmpty()) {
         generatorScriptExecution.addParameter("-c")
@@ -55,7 +54,7 @@ class PyTargetsSkeletonGenerator(skeletonPath: String?, pySdk: Sdk, currentFolde
       if (myExtraSysPath.isNotEmpty()) {
         generatorScriptExecution.addParameter("-s")
         // TODO [targets-api] are these paths come from target or from the local machine?
-        val pathSeparatorOnTarget = myTargetEnvFactory.targetPlatform.platform.pathSeparator
+        val pathSeparatorOnTarget = myTargetEnvRequest.targetPlatform.platform.pathSeparator
         generatorScriptExecution.addParameter(myExtraSysPath.joinToString(separator = pathSeparatorOnTarget.toString()))
       }
       for (extraArg in myExtraArgs) {
@@ -68,7 +67,7 @@ class PyTargetsSkeletonGenerator(skeletonPath: String?, pySdk: Sdk, currentFolde
           generatorScriptExecution.addParameter(myTargetModulePath)
         }
       }
-      val targetEnvironment = myTargetEnvFactory.prepareRemoteEnvironment(request, TargetProgressIndicator.EMPTY)
+      val targetEnvironment = myTargetEnvRequest.prepareEnvironment(TargetProgressIndicator.EMPTY)
       val targetedCommandLine = generatorScriptExecution.buildTargetedCommandLine(targetEnvironment, mySdk, emptyList())
       val process = targetEnvironment.createProcess(targetedCommandLine, EmptyProgressIndicator())
       val commandPresentation = targetedCommandLine.getCommandPresentation(targetEnvironment)
