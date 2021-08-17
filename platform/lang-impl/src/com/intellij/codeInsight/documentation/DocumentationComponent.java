@@ -51,7 +51,6 @@ import com.intellij.util.MathUtil;
 import com.intellij.util.containers.Stack;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.JBDimension;
-import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.accessibility.ScreenReader;
 import org.jetbrains.annotations.Nls;
@@ -566,30 +565,30 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
   }
 
   private void setHintSize() {
-    Dimension hintSize;
-    if (!myManuallyResized && myHint.getDimensionServiceKey() == null) {
-      hintSize = getOptimalSize();
-    }
-    else {
-      if (myManuallyResized) {
-        hintSize = myHint.getSize();
-        JBInsets.removeFrom(hintSize, myHint.getContent().getInsets());
-      }
-      else {
-        hintSize = DimensionService.getInstance().getSize(DocumentationManager.NEW_JAVADOC_LOCATION_AND_SIZE, myManager.myProject);
-      }
-      if (hintSize == null) {
-        hintSize = new Dimension(MIN_DEFAULT);
-      }
-      else {
-        hintSize.width = Math.max(hintSize.width, MIN_DEFAULT.width);
-        hintSize.height = Math.max(hintSize.height, MIN_DEFAULT.height);
-      }
-    }
+    Dimension hintSize = myManuallyResized ? ensureMinimum(myHint.getContentSize())
+                                           : getDefaultHintSize();
     myHint.setSize(hintSize);
   }
 
-  public Dimension getOptimalSize() {
+  private @NotNull Dimension getDefaultHintSize() {
+    if (myHint.getDimensionServiceKey() == null) {
+      return getOptimalSize();
+    }
+    Dimension storedSize = DimensionService.getInstance().getSize(DocumentationManager.NEW_JAVADOC_LOCATION_AND_SIZE, myManager.myProject);
+    if (storedSize != null) {
+      return ensureMinimum(storedSize);
+    }
+    return new Dimension(MIN_DEFAULT);
+  }
+
+  private static @NotNull Dimension ensureMinimum(@NotNull Dimension hintSize) {
+    return new Dimension(
+      Math.max(hintSize.width, MIN_DEFAULT.width),
+      Math.max(hintSize.height, MIN_DEFAULT.height)
+    );
+  }
+
+  private @NotNull Dimension getOptimalSize() {
     int width = getPreferredWidth();
     int height = getPreferredHeight(width);
     return new Dimension(width, height);
