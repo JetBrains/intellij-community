@@ -20,7 +20,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
-import java.util.function.Function;
+import java.util.function.Predicate;
 
 public final class ModuleRootModificationUtil {
   public static void addContentRoot(@NotNull Module module, @NotNull String path) {
@@ -137,10 +137,10 @@ public final class ModuleRootModificationUtil {
     });
   }
 
-  public static void modifyModel(@NotNull Module module, @NotNull Function<? super ModifiableRootModel, Boolean> modifier) {
+  public static void modifyModel(@NotNull Module module, @NotNull Predicate<? super ModifiableRootModel> modifier) {
     ModifiableRootModel model = ReadAction.compute(() -> ModuleRootManager.getInstance(module).getModifiableModel());
     try {
-      if (modifier.apply(model)) {
+      if (modifier.test(model)) {
         ApplicationManager.getApplication().invokeAndWait(() -> {
           if (!module.isDisposed()) {
             WriteAction.run(model::commit);
@@ -155,21 +155,21 @@ public final class ModuleRootModificationUtil {
     }
   }
 
-  public static void batchUpdateModels(@NotNull Collection<Module> modules, @NotNull Function<? super ModifiableRootModel, Boolean> modifier) {
+  public static void batchUpdateModels(@NotNull Collection<Module> modules, @NotNull Predicate<? super ModifiableRootModel> modifier) {
     MultiMap<Project, Module> modulesByProject = ContainerUtil.groupBy(modules, Module::getProject);
     for (Map.Entry<Project, Collection<Module>> entry : modulesByProject.entrySet()) {
       batchUpdateModels(entry.getKey(), entry.getValue(), modifier);
     }
   }
 
-  private static void batchUpdateModels(@NotNull Project project, @NotNull Collection<Module> modules, @NotNull Function<? super ModifiableRootModel, Boolean> modifier) {
+  private static void batchUpdateModels(@NotNull Project project, @NotNull Collection<Module> modules, @NotNull Predicate<? super ModifiableRootModel> modifier) {
     Collection<ModifiableRootModel> modifiableModels = ReadAction.compute(() -> {
       return ContainerUtil.map(modules, module -> ModuleRootManager.getInstance(module).getModifiableModel());
     });
     Collection<ModifiableRootModel> toCommit = new HashSet<>();
     try {
       for (ModifiableRootModel model : modifiableModels) {
-        if (modifier.apply(model)) {
+        if (modifier.test(model)) {
           toCommit.add(model);
         }
       }
