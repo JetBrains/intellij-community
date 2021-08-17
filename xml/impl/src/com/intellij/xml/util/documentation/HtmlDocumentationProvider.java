@@ -138,6 +138,7 @@ public class HtmlDocumentationProvider implements DocumentationProvider {
     return result;
   }
 
+  @Nls
   private String generateDocFromStyleOrScript(PsiElement element, PsiElement originalElement) {
     DocumentationProvider styleProvider = getStyleProvider();
     if (styleProvider != null) {
@@ -180,6 +181,7 @@ public class HtmlDocumentationProvider implements DocumentationProvider {
     return attributeDescriptor;
   }
 
+  @Nls
   private String generateDocForHtml(PsiElement element, PsiElement originalElement) {
     MdnSymbolDocumentation documentation = getDocumentation(element, originalElement);
     if (documentation != null) {

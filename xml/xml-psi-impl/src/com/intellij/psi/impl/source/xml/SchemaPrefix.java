@@ -15,6 +15,7 @@
  */
 package com.intellij.psi.impl.source.xml;
 
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.ElementManipulators;
 import com.intellij.psi.PsiElement;
@@ -99,6 +100,7 @@ public class SchemaPrefix extends RenameableFakePsiElement {
     return another instanceof SchemaPrefix && ((SchemaPrefix)another).getDeclaration() == getDeclaration();
   }
 
+  @NlsSafe
   public String getQuickNavigateInfo() {
     String ns = getNamespace();
     StringBuilder builder = new StringBuilder().append(getTypeName()).append(" \"").append(getName()).append("\"");
