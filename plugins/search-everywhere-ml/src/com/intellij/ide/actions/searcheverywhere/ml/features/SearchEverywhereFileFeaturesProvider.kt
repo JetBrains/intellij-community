@@ -12,6 +12,7 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.impl.EditorHistoryManager
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.psi.PsiFileSystemItem
 import com.intellij.util.Time.*
@@ -182,7 +183,7 @@ internal class SearchEverywhereFileFeaturesProvider : SearchEverywhereElementFea
     val project = item.project
     val openedFile = FileEditorManager.getInstance(project).selectedEditor?.file ?: return false
 
-    val fileIndex = ProjectRootManager.getInstance(project).fileIndex
+    val fileIndex = ReadAction.compute<ProjectFileIndex, Nothing> { ProjectRootManager.getInstance(project).fileIndex }
     val openedFileModule = fileIndex.getModuleForFile(openedFile) ?: return false
     val itemModule = fileIndex.getModuleForFile(item.virtualFile) ?: return false
 
