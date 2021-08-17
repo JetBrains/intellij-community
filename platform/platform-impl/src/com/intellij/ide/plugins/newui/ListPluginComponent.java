@@ -56,6 +56,7 @@ public class ListPluginComponent extends JPanel {
   private final boolean myMarketplace;
   private final boolean myIsAllowed;
   private @NotNull IdeaPluginDescriptor myPlugin;
+  private @NotNull PluginsGroup myGroup;
   private boolean myOnlyUpdateMode;
   public IdeaPluginDescriptor myUpdateDescriptor;
 
@@ -83,9 +84,11 @@ public class ListPluginComponent extends JPanel {
 
   public ListPluginComponent(@NotNull MyPluginModel pluginModel,
                              @NotNull IdeaPluginDescriptor plugin,
+                             @NotNull PluginsGroup group,
                              @NotNull LinkListener<Object> searchListener,
                              boolean marketplace) {
     myPlugin = plugin;
+    myGroup = group;
     myPluginModel = pluginModel;
     mySearchListener = searchListener;
     myMarketplace = marketplace;
@@ -124,6 +127,8 @@ public class ListPluginComponent extends JPanel {
     }
     updateColors(EventHandler.SelectionType.NONE);
   }
+
+  @NotNull PluginsGroup getGroup() { return myGroup; }
 
   @NotNull EventHandler.SelectionType getSelection() {
     return mySelection;

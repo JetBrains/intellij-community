@@ -6,6 +6,7 @@ import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.plugins.PluginManagerConfigurable;
 import com.intellij.ide.plugins.PluginManagerMain;
 import com.intellij.ide.plugins.PluginNode;
+import com.intellij.ide.plugins.enums.PluginsGroupType;
 import com.intellij.ide.plugins.newui.*;
 import com.intellij.notification.NotificationType;
 import com.intellij.openapi.application.ApplicationManager;
@@ -50,7 +51,7 @@ final class PluginUpdateDialog extends DialogWrapper {
   private final boolean myPlatformUpdate;
   private final MyPluginModel myPluginModel;
   private final PluginsGroupComponent myPluginsPanel;
-  private final PluginsGroup myGroup = new PluginsGroup("");
+  private final PluginsGroup myGroup = new PluginsGroup("", PluginsGroupType.UPDATE);
   private final PluginDetailsPageComponent myDetailsPage;
   private final JLabel myTotalLabel = new JLabel();
   private final ActionLink myIgnoreAction;
@@ -109,8 +110,8 @@ final class PluginUpdateDialog extends DialogWrapper {
 
     myPluginsPanel = new PluginsGroupComponent(eventHandler) {
       @Override
-      protected @NotNull ListPluginComponent createListComponent(@NotNull IdeaPluginDescriptor descriptor) {
-        @SuppressWarnings("unchecked") ListPluginComponent component = new ListPluginComponent(myPluginModel, descriptor, LinkListener.NULL, true);
+      protected @NotNull ListPluginComponent createListComponent(@NotNull IdeaPluginDescriptor descriptor, @NotNull PluginsGroup group) {
+        @SuppressWarnings("unchecked") ListPluginComponent component = new ListPluginComponent(myPluginModel, descriptor, group, LinkListener.NULL, true);
         component.setOnlyUpdateMode();
         component.getChooseUpdateButton().addActionListener(e -> updateButtons());
         return component;
