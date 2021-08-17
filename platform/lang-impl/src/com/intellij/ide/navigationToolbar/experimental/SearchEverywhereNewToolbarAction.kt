@@ -148,6 +148,5 @@ class SearchEverywhereNewToolbarAction : SearchEverywhereAction(), AnActionListe
         }
       }
     }
-    action.update(event)
   }
 }
