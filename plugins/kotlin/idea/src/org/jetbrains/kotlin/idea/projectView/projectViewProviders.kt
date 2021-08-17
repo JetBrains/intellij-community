@@ -55,13 +55,10 @@ class KotlinExpandNodeProjectViewProvider : TreeStructureProvider, DumbAware {
         is KtLightClass -> kotlinOrigin?.containingFile as? KtFile
         else -> null
     }
-
-    override fun getData(selected: Collection<AbstractTreeNode<*>>, dataName: String): Any? = null
 }
 
 
 class KotlinSelectInProjectViewProvider(private val project: Project) : SelectableTreeStructureProvider, DumbAware {
-    override fun getData(selected: Collection<AbstractTreeNode<*>>, dataName: String): Any? = null
 
     override fun modify(
         parent: AbstractTreeNode<*>,
