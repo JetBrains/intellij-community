@@ -158,7 +158,7 @@
       "ArrowButton": {
         "background": "#fafafa",
         "disabledIconColor": "#ABABAB",
-        "iconColor": "#666666",
+        "iconColor": "grey01",
         "nonEditableBackground": "#ffffff"
       },
       "background": "#FFFFFF",
@@ -387,7 +387,7 @@
 
       "MoreButton": {
         "background": "#E3E3E3",
-        "foreground": "#666666",
+        "foreground": "grey01",
         "innerBorderColor": "#DBDBDB"
       },
 
@@ -619,7 +619,7 @@
       "buttonBorderColor": "#A6A6A6",
       "buttonColor": "#FFFFFF",
       "trackColor": "#C7C7C7",
-      "tickColor": "#666666",
+      "tickColor": "grey01",
       "UI": "com.intellij.ide.ui.laf.darcula.ui.DarculaSliderUI"
     },
 
@@ -750,7 +750,7 @@
       "Button.hoverBackground": "#00000019",
       "inactiveBackground": "panel",
       "inactiveInfoForeground": "#a6a6a6",
-      "infoForeground": "#616161"
+      "infoForeground": "grey01"
     },
 
     "ToggleButton": {
@@ -852,9 +852,9 @@
 
       "GitLog.headIconColor": "#ffd100",
       "GitLog.localBranchIconColor": "#3cb45c",
-      "GitLog.otherIconColor": "#7a7a7a",
+      "GitLog.otherIconColor": "grey01",
       "GitLog.remoteBranchIconColor": "#9f79b5",
-      "GitLog.tagIconColor": "#7a7a7a",
+      "GitLog.tagIconColor": "grey01",
 
       "HgLog.bookmarkIconColor": "#9f79b5",
       "HgLog.branchIconColor": "#3cb45c",
@@ -862,7 +862,7 @@
       "HgLog.headIconColor": "#8a2d6b",
       "HgLog.localTagIconColor": "#009090",
       "HgLog.mqTagIconColor": "#002f90",
-      "HgLog.tagIconColor": "#7a7a7a",
+      "HgLog.tagIconColor": "grey01",
       "HgLog.tipIconColor": "#ffd100",
 
       "RefLabel.backgroundBase": "black"
