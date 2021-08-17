@@ -70,7 +70,6 @@ class RemoveRedundantQualifierNameInspection : AbstractKotlinInspection(), Clean
                 }
 
                 if (receiverReference?.safeAs<KtClass>()?.isEnum() == true
-                    && expressionForAnalyze.getParentOfTypesAndPredicate(true, KtClass::class.java) { it.isEnum() } != receiverReference
                     && (expressionForAnalyze.isReferenceToBuiltInEnumFunction() || expressionForAnalyze.isCompanionObjectReference())
                 ) return
 

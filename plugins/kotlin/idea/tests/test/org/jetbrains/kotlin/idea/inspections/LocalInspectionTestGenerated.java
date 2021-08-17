@@ -10409,6 +10409,11 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
             runTest("testData/inspectionsLocal/removeRedundantQualifierName/enumInEnum2.kt");
         }
 
+        @TestMetadata("enumInEnum3.kt")
+        public void testEnumInEnum3() throws Exception {
+            runTest("testData/inspectionsLocal/removeRedundantQualifierName/enumInEnum3.kt");
+        }
+
         @TestMetadata("expression.kt")
         public void testExpression() throws Exception {
             runTest("testData/inspectionsLocal/removeRedundantQualifierName/expression.kt");
