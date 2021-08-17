@@ -77,7 +77,7 @@
       "focusedBorderColor": "#62b8de",
       "hoverBackground": "#dfdfdf",
       "hoverBorderColor": "#dfdfdf",
-      "hoverSeparatorColor": "#b3b3b3",
+      "hoverSeparatorColor": "grey06",
       "pressedBackground": "#cfcfcf",
       "pressedBorderColor": "#cfcfcf"
     },
@@ -334,7 +334,7 @@
 
     "MemoryIndicator": {
       "allocatedBackground": "#d7d7d7",
-      "usedBackground": "#b9b9b9"
+      "usedBackground": "grey06"
     },
 
     "Menu": {
@@ -607,7 +607,7 @@
     "SidePanel.background": "#E6EBF0",
 
     "Slider": {
-      "buttonBorderColor": "#A6A6A6",
+      "buttonBorderColor": "grey06",
       "buttonColor": "#FFFFFF",
       "trackColor": "#C7C7C7",
       "tickColor": "grey01",
@@ -786,7 +786,7 @@
         "borderColor": "#d1d1d1"
       },
 
-      "HeaderCloseButton.background": "#B9B9B9",
+      "HeaderCloseButton.background": "grey05",
       "HeaderTab": {
         "selectedBackground": "#D0D4D8",
         "selectedInactiveBackground": "#D9D9D9",
