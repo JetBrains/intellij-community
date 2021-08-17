@@ -14,6 +14,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
@@ -87,7 +88,7 @@ public class PythonExternalDocumentationProvider extends PythonDocumentationProv
             continue;
           }
 
-          Function<Document, String> quickDocExtractor = documentationLinkProvider.quickDocExtractor(namedElement);
+          Function<Document, @Nls String> quickDocExtractor = documentationLinkProvider.quickDocExtractor(namedElement);
 
           if (quickDocExtractor != null) {
             final Document document = documentSupplier.get();
