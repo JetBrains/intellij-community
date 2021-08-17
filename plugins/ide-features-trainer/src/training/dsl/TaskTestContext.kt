@@ -15,10 +15,7 @@ import org.fest.swing.driver.BasicJListCellReader
 import org.fest.swing.driver.ComponentDriver
 import org.fest.swing.exception.ComponentLookupException
 import org.fest.swing.exception.WaitTimedOutError
-import org.fest.swing.fixture.AbstractComponentFixture
-import org.fest.swing.fixture.ContainerFixture
-import org.fest.swing.fixture.JButtonFixture
-import org.fest.swing.fixture.JListFixture
+import org.fest.swing.fixture.*
 import org.fest.swing.timing.Condition
 import org.fest.swing.timing.Pause
 import org.fest.swing.timing.Timeout
@@ -29,10 +26,7 @@ import java.awt.Component
 import java.awt.Container
 import java.util.*
 import java.util.concurrent.TimeUnit
-import javax.swing.JButton
-import javax.swing.JDialog
-import javax.swing.JLabel
-import javax.swing.JList
+import javax.swing.*
 
 @LearningDsl
 class TaskTestContext(rt: TaskRuntimeContext) : TaskRuntimeContext(rt) {
@@ -99,6 +93,12 @@ class TaskTestContext(rt: TaskRuntimeContext) : TaskRuntimeContext(rt) {
       it.isShowing && it.isEnabled && actionName == it.action.templatePresentation.text
     }
     return ActionButtonFixture(robot(), actionButton)
+  }
+
+  fun <C : Container> ContainerFixture<C>.jMenuItem(timeout: Timeout = defaultTimeout,
+                                                    finderFunction: (JMenuItem) -> Boolean): JMenuItemFixture {
+    val item = findComponentWithTimeout(timeout) { item: JMenuItem -> finderFunction(item) }
+    return JMenuItemFixture(robot(), item)
   }
 
   // Modified copy-paste
