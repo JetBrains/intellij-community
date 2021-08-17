@@ -2,9 +2,9 @@
 
 package org.jetbrains.kotlin.idea.compilerPlugin.samWithReceiver.maven
 
-import org.jetbrains.kotlin.idea.artifacts.KotlinArtifacts
+import org.jetbrains.kotlin.idea.maven.compilerPlugin.annotationBased.AbstractMavenImportHandler
 import org.jetbrains.kotlin.idea.compilerPlugin.AnnotationBasedCompilerPluginSetup.PluginOption
-import org.jetbrains.kotlin.idea.maven.compilerPlugin.AbstractMavenImportHandler
+import org.jetbrains.kotlin.idea.artifacts.KotlinArtifacts
 import org.jetbrains.kotlin.samWithReceiver.SamWithReceiverCommandLineProcessor
 
 class SamWithReceiverMavenProjectImportHandler : AbstractMavenImportHandler() {

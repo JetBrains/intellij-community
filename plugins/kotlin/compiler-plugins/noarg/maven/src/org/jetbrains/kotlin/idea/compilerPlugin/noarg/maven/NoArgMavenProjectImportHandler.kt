@@ -2,7 +2,7 @@
 
 package org.jetbrains.kotlin.idea.compilerPlugin.noarg.maven
 
-import org.jetbrains.kotlin.idea.maven.compilerPlugin.AbstractMavenImportHandler
+import org.jetbrains.kotlin.idea.maven.compilerPlugin.annotationBased.AbstractMavenImportHandler
 import org.jetbrains.kotlin.idea.compilerPlugin.AnnotationBasedCompilerPluginSetup.PluginOption
 import org.jetbrains.kotlin.idea.artifacts.KotlinArtifacts
 import org.jetbrains.kotlin.noarg.NoArgCommandLineProcessor

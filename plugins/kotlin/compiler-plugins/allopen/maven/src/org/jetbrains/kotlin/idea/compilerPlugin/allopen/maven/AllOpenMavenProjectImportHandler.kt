@@ -3,7 +3,7 @@
 package org.jetbrains.kotlin.idea.compilerPlugin.allopen.maven
 
 import org.jetbrains.kotlin.allopen.AllOpenCommandLineProcessor
-import org.jetbrains.kotlin.idea.maven.compilerPlugin.AbstractMavenImportHandler
+import org.jetbrains.kotlin.idea.maven.compilerPlugin.annotationBased.AbstractMavenImportHandler
 import org.jetbrains.kotlin.idea.compilerPlugin.AnnotationBasedCompilerPluginSetup.PluginOption
 import org.jetbrains.kotlin.idea.artifacts.KotlinArtifacts
 

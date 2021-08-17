@@ -2,7 +2,7 @@
 
 package org.jetbrains.kotlin.idea.compilerPlugin.kotlinxSerialization.maven
 
-import org.jetbrains.kotlin.idea.maven.compilerPlugin.AbstractMavenImportHandler
+import org.jetbrains.kotlin.idea.maven.compilerPlugin.annotationBased.AbstractMavenImportHandler
 import org.jetbrains.kotlin.idea.compilerPlugin.AnnotationBasedCompilerPluginSetup
 import org.jetbrains.kotlin.idea.compilerPlugin.kotlinxSerialization.KotlinSerializationImportHandler
 import java.io.File
