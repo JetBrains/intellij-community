@@ -298,13 +298,13 @@ public class JavaDocCompletionContributor extends CompletionContributor implemen
         PsiParameter param1 = getDocTagParam(element);
         if (param1 != null && param1 != param &&
             Objects.equals(param1.getName(), param.getName()) && Comparing.equal(param1.getType(), param.getType())) {
-          String text = "";
+          StringBuilder sb = new StringBuilder();
           for (PsiElement psiElement : ((PsiDocTag)element).getDataElements()) {
             if (psiElement != ((PsiDocTag)element).getValueElement()) {
-              text += psiElement.getText();
+              sb.append(psiElement.getText());
             }
           }
-          text = text.trim();
+          String text = sb.toString().trim();
           if (text.contains(" ")) {
             descriptions.add(text);
           }
@@ -436,13 +436,13 @@ public class JavaDocCompletionContributor extends CompletionContributor implemen
           caretModel.moveToOffset(offset + 2);
         }
         else if (name.equals(LINK_TAG)) {
-          EditorModificationUtil.insertStringAtCaret(editor, " }");
+          EditorModificationUtilEx.insertStringAtCaret(editor, " }");
           caretModel.moveToOffset(offset + 1);
           editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
           editor.getSelectionModel().removeSelection();
         }
         else {
-          EditorModificationUtil.insertStringAtCaret(editor, "}");
+          EditorModificationUtilEx.insertStringAtCaret(editor, "}");
           caretModel.moveToOffset(offset + 1);
         }
       }
