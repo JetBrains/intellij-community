@@ -267,7 +267,6 @@ public abstract class EditorTextFieldCellRenderer implements TableCellRenderer, 
     private final StringBuilder myDocumentTextBuilder = new StringBuilder();
     private boolean myAppendEllipsis;
     private final char myReturnSymbol;
-    private final boolean myTextMode;
     private boolean myForceSingleLine;
 
     private Dimension myPreferredSize;
@@ -280,7 +279,15 @@ public abstract class EditorTextFieldCellRenderer implements TableCellRenderer, 
     }
 
     public AbbreviatingRendererComponent(Project project, @Nullable Language language, boolean inheritFontFromLaF, boolean appendEllipsis) {
-      this(project, language, inheritFontFromLaF, appendEllipsis, false, false);
+      this(project, language, inheritFontFromLaF, appendEllipsis, false);
+    }
+
+    public AbbreviatingRendererComponent(Project project,
+                                         @Nullable Language language,
+                                         boolean inheritFontFromLaF,
+                                         boolean appendEllipsis,
+                                         boolean forceSingleLine) {
+      this(project, language, inheritFontFromLaF, appendEllipsis, forceSingleLine, RETURN_SYMBOL);
     }
 
     public AbbreviatingRendererComponent(Project project,
@@ -288,22 +295,11 @@ public abstract class EditorTextFieldCellRenderer implements TableCellRenderer, 
                                          boolean inheritFontFromLaF,
                                          boolean appendEllipsis,
                                          boolean forceSingleLine,
-                                         boolean textMode) {
-      this(project, language, inheritFontFromLaF, appendEllipsis, forceSingleLine, textMode, RETURN_SYMBOL);
-    }
-
-    public AbbreviatingRendererComponent(Project project,
-                                         @Nullable Language language,
-                                         boolean inheritFontFromLaF,
-                                         boolean appendEllipsis,
-                                         boolean forceSingleLine,
-                                         boolean textMode,
                                          char returnSymbol) {
       super(project, language, inheritFontFromLaF);
       myAppendEllipsis = appendEllipsis;
       myReturnSymbol = returnSymbol;
       myForceSingleLine = forceSingleLine;
-      myTextMode = textMode;
     }
 
     @Override
@@ -350,7 +346,6 @@ public abstract class EditorTextFieldCellRenderer implements TableCellRenderer, 
           preferredHeight += insets.top + insets.bottom;
           preferredWidth += insets.left + insets.right;
         }
-        if (myTextMode) preferredWidth = 0;
 
         myPreferredSize = new Dimension(preferredWidth, preferredHeight);
       }
