@@ -988,6 +988,10 @@ class GitBranchWorkerTest : GitPlatformTest() {
       throw UnsupportedOperationException()
     }
 
+    override fun notifyError(title: String, message: String) {
+      throw UnsupportedOperationException("$title\n$message")
+    }
+
     override fun notifyErrorWithRollbackProposal(title: String, message: String, rollbackProposal: String): Boolean {
       throw UnsupportedOperationException("$title\n$message\n$rollbackProposal")
     }

@@ -49,7 +49,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 
 import static com.intellij.util.ObjectUtils.chooseNotNull;
-import static git4idea.GitNotificationIdsHolder.BRANCH_OPERATION_ERROR;
 import static git4idea.GitNotificationIdsHolder.BRANCH_OPERATION_SUCCESS;
 import static git4idea.GitUtil.getRepositoryManager;
 import static java.util.stream.Collectors.toList;
@@ -193,7 +192,7 @@ abstract class GitBranchOperation {
       showFatalErrorDialogWithRollback(title, message);
     }
     else {
-      showFatalNotification(title, message);
+      notifyError(title, message);
     }
   }
 
@@ -209,14 +208,9 @@ abstract class GitBranchOperation {
     }
   }
 
-  protected final void showFatalNotification(@NotNull @NlsContexts.NotificationTitle String title,
-                                             @NotNull @NlsContexts.NotificationContent String message) {
-    notifyError(title, message);
-  }
-
   protected final void notifyError(@NotNull @NlsContexts.NotificationTitle String title,
                                    @NotNull @NlsContexts.NotificationContent String message) {
-    VcsNotifier.getInstance(myProject).notifyError(BRANCH_OPERATION_ERROR, title, message);
+    myUiHandler.notifyError(title, message);
   }
 
   protected final @NotNull ProgressIndicator getIndicator() {
