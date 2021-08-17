@@ -26,14 +26,16 @@ import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileTypes.PlainTextLanguage;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.IPopupChooserBuilder;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.injection.Injectable;
@@ -132,12 +134,11 @@ public class InjectLanguageAction implements IntentionAction, LowPriorityAction 
                      @NotNull PsiFile file) throws IncorrectOperationException {
     SmartPsiElementPointer<PsiFile> filePointer = SmartPointerManager.getInstance(project).createSmartPsiElementPointer(file);
     doChooseLanguageToInject(editor, injectable -> {
-      ReadAction.run(() -> {
-        if (project.isDisposed()) return;
-        PsiFile psiFile = filePointer.getElement();
-        if (psiFile == null || editor.isDisposed()) return;
+      if (project.isDisposed() || editor.isDisposed()) return false;
+      final PsiFile psiFile = filePointer.getElement();
+      if (psiFile != null) {
         invokeImpl(project, editor, psiFile, injectable);
-      });
+      }
       return false;
     });
   }
