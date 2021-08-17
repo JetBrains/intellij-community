@@ -28,7 +28,7 @@
     "foreground": "black",
     "infoPanelForeground": "grey02",
     "infoInputForeground": "#999999",
-    "disabledForeground": "#8C8C8C",
+    "disabledForeground": "grey03",
     "selectionForeground": "#FFFFFF",
     "linkForeground": "#2470B3",
 
@@ -127,7 +127,6 @@
         "startBorderColor": "#487EB8"
       },
       "disabledBorderColor": "#cfcfcf",
-      "disabledText": "#999999",
       "endBackground": "#ffffff",
       "endBorderColor": "componentBorder",
       "focusedBorderColor": "#87afda",
@@ -163,7 +162,6 @@
       },
       "background": "#FFFFFF",
       "disabledBackground": "#f2f2f2",
-      "disabledForeground": "#b1b1b1",
       "modifiedItemForeground": "#005ad9",
       "nonEditableBackground": "#ffffff",
       "padding": "1,6,1,6",
@@ -313,8 +311,6 @@
     },
 
     "Label": {
-      "disabledForeground": "#777777",
-      "disabledText": "#999999",
       "errorForeground": "#C7222D",
       "infoForeground": "infoPanelForeground",
       "selectedDisabledForeground": "#777777",
@@ -450,7 +446,6 @@
 
     "Plugins": {
       "background": "#FFFFFF",
-      "disabledForeground": "#B1B1B1",
       "eapTagBackground": "#F2D2CF",
       "hoverBackground": "#EDF6FE",
       "lightSelectionBackground": "#EDF6FE",
@@ -655,7 +650,6 @@
       "darkShadow": {
         "os.windows": "#cccccc"
       },
-      "disabledForeground": "#999999",
       "disabledUnderlineColor": "#ababab",
       "focusColor": "#dae4ed",
       "highlight": {
@@ -696,7 +690,6 @@
       "background": "#ffffff",
       "cellNoFocusBorder": "2,3,2,3",
       "descendingSortIcon": "AllIcons.General.ArrowDown",
-      "disabledForeground": "#8c8c8c",
       "focusCellHighlightBorder": "com.intellij.ide.ui.laf.darcula.DarculaTableSelectedCellHighlightBorder",
       "focusSelectedCellHighlightBorder": "com.intellij.ide.ui.laf.darcula.DarculaTableSelectedCellHighlightBorder",
       "gridColor": "#F7F7F7",
@@ -713,7 +706,6 @@
       "background": "#ffffff",
       "bottomSeparatorColor": "#e5e5e5",
       "cellBorder": "com.intellij.ide.ui.laf.darcula.DarculaTableHeaderBorder",
-      "disabledForeground": "#8c8c8c",
       "height": {
         "os.default": 25,
         "os.linux": 28
@@ -759,7 +751,7 @@
       "borderColor": "#c0c0c0",
       "buttonColor": "#c0c0c0",
       "offBackground": "#f2f2f2",
-      "offForeground": "#8c8c8c",
+      "offForeground": "grey03",
       "onBackground": "#4a9249",
       "onForeground": "#ffffff"
     },
