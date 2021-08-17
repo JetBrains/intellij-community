@@ -2,6 +2,7 @@
 
 package org.jetbrains.kotlin.tools.projectWizard.wizard
 
+import com.intellij.testFramework.PlatformTestUtil
 import org.jetbrains.kotlin.tools.projectWizard.cli.BuildSystem
 import org.jetbrains.plugins.gradle.settings.DistributionType
 import org.junit.Test
@@ -32,6 +33,10 @@ class ScriptHighlightingGradleDistributionTypeTest : AbstractProjectTemplateNewW
         prepareGradleBuildSystem(tempDirectory, distributionType)
 
         runWizard(directory, BuildSystem.GRADLE_KOTLIN_DSL, tempDirectory)
+
+        // we need code inside invokeLater in org.jetbrains.kotlin.idea.core.script.ucache.ScriptClassRootsUpdater.notifyRootsChanged
+        // to be executed
+        PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue()
 
         checkScriptConfigurationsIfAny()
     }

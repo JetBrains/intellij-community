@@ -30,6 +30,7 @@ import org.junit.Test
 import java.lang.annotation.Annotation
 import java.lang.reflect.Method
 import java.lang.reflect.Modifier
+import java.nio.charset.Charset
 import java.nio.file.Files
 import java.nio.file.Paths
 import java.util.function.Predicate
@@ -459,7 +460,7 @@ class TestingTasksImpl extends TestingTasks {
             }
           }
           catch (Throwable e) {
-            e.printStackTrace()
+            context.messages.error("Failed to process $qName", e)
           }
         })
     }
@@ -477,8 +478,6 @@ class TestingTasksImpl extends TestingTasks {
                                String suiteName,
                                String methodName) {
     List<String> args = new ArrayList<>()
-    String jvmExecutablePath = options.customJrePath != null ? "$options.customJrePath" : context.paths.jdkHome
-    args.add(jvmExecutablePath + "/bin/java")
     args.add("-classpath")
     List<String> classpath = new ArrayList<>(bootstrapClasspath)
     if (!isBootstrapSuiteDefault() || isRunningInBatchMode()) {
@@ -500,7 +499,9 @@ class TestingTasksImpl extends TestingTasks {
     if (methodName != null) {
       args.add(methodName)
     }
-    def builder = new ProcessBuilder(args)
+    File argFile = CommandLineWrapperUtil.createArgumentFile(args, Charset.defaultCharset())
+    def builder = new ProcessBuilder((options.customJrePath != null ? "$options.customJrePath" : context.paths.jdkHome) + "/bin/java", 
+                                     '@' + argFile.getAbsolutePath())
     builder.environment().putAll(envVariables)
     final Process exec = builder.start()
     new Thread(createInputReader(exec.getErrorStream(), System.err), "Read forked error output").start()

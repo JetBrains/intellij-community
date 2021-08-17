@@ -133,7 +133,7 @@ public final class PluginLogo {
         String fileName = file.getFileName().toString();
         Path darkFile = file.getParent().resolve(fileName.substring(0, fileName.length() - 4) + "_dark.svg");
         try (InputStream stream = Files.newInputStream(darkFile)) {
-          return HiDPIPluginLogoIcon.loadSVG(darkFile.toUri().toURL(), stream, width, height);
+          return HiDPIPluginLogoIcon.loadSVG(toURL(darkFile), stream, width, height);
         }
         catch (NoSuchFileException ignore) {
         }
@@ -361,12 +361,20 @@ public final class PluginLogo {
   @Nullable
   private static PluginLogoIconProvider tryLoadIcon(@NotNull ZipFile zipFile, boolean light) {
     ZipEntry iconEntry = zipFile.getEntry(getIconFileName(light));
-    return iconEntry == null ? null : loadFileIcon(toURL(new File(zipFile.getName())), () -> zipFile.getInputStream(iconEntry));
+    return iconEntry == null ? null : loadFileIcon(toURL(zipFile), () -> zipFile.getInputStream(iconEntry));
   }
 
-  static @Nullable URL toURL(@NotNull File file) {
+  static @Nullable URL toURL(@NotNull Object file) {
     try {
-      return file.toURI().toURL();
+      if (file instanceof File) {
+        return ((File)file).toURI().toURL();
+      }
+      if (file instanceof Path) {
+        return ((Path)file).toUri().toURL();
+      }
+      if (file instanceof ZipFile) {
+        return new File(((ZipFile)file).getName()).toURI().toURL();
+      }
     }
     catch (MalformedURLException e) {
       LOG.warn(e);

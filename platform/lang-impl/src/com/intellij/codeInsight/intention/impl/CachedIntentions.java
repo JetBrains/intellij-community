@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.intention.impl;
 
 import com.intellij.codeInsight.daemon.impl.GutterIntentionAction;
@@ -327,7 +327,11 @@ public final class CachedIntentions {
   public List<IntentionActionWithTextCaching> getAllActions() {
     List<IntentionActionWithTextCaching> result = new ArrayList<>(myErrorFixes);
     result.addAll(myInspectionFixes);
-    result.addAll(myIntentions);
+    for (IntentionActionWithTextCaching intention : myIntentions) {
+      if (!myErrorFixes.contains(intention)) {
+        result.add(intention);
+      }
+    }
     result.addAll(myGutters);
     result.addAll(myNotifications);
     result = DumbService.getInstance(myProject).filterByDumbAwareness(result);

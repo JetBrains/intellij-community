@@ -34,10 +34,10 @@ public final class SynchronizeCurrentFileAction extends DumbAwareAction {
     Project project = e.getProject();
     if (project == null) return;
     List<VirtualFile> files = getSupportedFiles(e).collect(Collectors.toList());
-    synchronizeFiles(files, project);
+    synchronizeFiles(files, project, true);
   }
 
-  public static void synchronizeFiles(Collection<VirtualFile> files, Project project) {
+  public static void synchronizeFiles(Collection<VirtualFile> files, Project project, boolean async) {
     if (files.isEmpty()) return;
 
     for (VirtualFile file : files) {
@@ -53,7 +53,7 @@ public final class SynchronizeCurrentFileAction extends DumbAwareAction {
       }
     }
 
-    RefreshQueue.getInstance().refresh(true, true, () -> postRefresh(project, files), files);
+    RefreshQueue.getInstance().refresh(async, true, () -> postRefresh(project, files), files);
   }
 
   private static void postRefresh(@NotNull Project project, @NotNull Collection<VirtualFile> files) {

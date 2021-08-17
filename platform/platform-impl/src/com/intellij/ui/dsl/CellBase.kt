@@ -21,7 +21,7 @@ private annotation class CellBaseMarker
  * Common API for cells
  */
 @ApiStatus.Experimental
-@CellBaseMarker
+@LayoutDslMarker
 interface CellBase<out T : CellBase<T>> {
 
   /**

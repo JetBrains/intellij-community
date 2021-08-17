@@ -4,9 +4,11 @@ package com.intellij.ui.dsl
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.ui.dsl.gridLayout.HorizontalAlign
 import com.intellij.ui.dsl.gridLayout.VerticalAlign
+import com.intellij.ui.layout.*
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import javax.swing.JLabel
+import kotlin.reflect.KMutableProperty0
 
 @ApiStatus.Experimental
 interface Panel : CellBase<Panel> {
@@ -34,4 +36,22 @@ interface Panel : CellBase<Panel> {
    */
   fun group(@NlsContexts.BorderTitle title: String? = null, independent: Boolean = true, init: Panel.() -> Unit): Row
 
+  fun <T> buttonGroup(binding: PropertyBinding<T>, type: Class<T>, init: Panel.() -> Unit)
+
+}
+
+inline fun <reified T : Any> Panel.buttonGroup(noinline getter: () -> T,
+                                               noinline setter: (T) -> Unit,
+                                               crossinline init: Panel.() -> Unit) {
+  buttonGroup(PropertyBinding(getter, setter), init)
+}
+
+inline fun <reified T : Any> Panel.buttonGroup(prop: KMutableProperty0<T>, crossinline init: Panel.() -> Unit) {
+  buttonGroup(prop.toBinding(), init)
+}
+
+inline fun <reified T : Any> Panel.buttonGroup(binding: PropertyBinding<T>, crossinline init: Panel.() -> Unit) {
+  buttonGroup(binding, T::class.javaPrimitiveType ?: T::class.java) {
+    init()
+  }
 }

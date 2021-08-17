@@ -64,7 +64,7 @@ final class ScratchImplUtil {
     FileType currType = currLanguage == null ? item.fileType : ObjectUtils.notNull(currLanguage.getAssociatedFileType(), item.fileType);
     if (prevType == currType) return;
 
-    String nameWithoutExtension = getNameWithoutExtension(file, prevType, fileTypeManager);
+    String nameWithoutExtension = getNameWithoutExtension(file, fileTypeManager);
 
     VirtualFile parent = file.getParent();
     String newName = parent != null ? VfsUtil.getNextAvailableName(parent, nameWithoutExtension, item.fileExtension) :
@@ -73,14 +73,18 @@ final class ScratchImplUtil {
   }
 
   private static @NotNull String getNameWithoutExtension(@NotNull VirtualFile file,
-                                                         @Nullable FileType fileType,
+                                                         @NotNull FileTypeManager fileTypeManager) {
+    return getNameWithoutExtension(file.getName(), file.isCaseSensitive(), fileTypeManager);
+  }
+
+  private static @NotNull String getNameWithoutExtension(@NotNull String fileName,
+                                                         boolean caseSensitive,
                                                          @NotNull FileTypeManager fileTypeManager) {
     // support multipart extensions like *.blade.php
-    String fileName = file.getName();
     String extension = StringUtil.notNullize(PathUtilRt.getFileExtension(fileName));
     if (extension.isEmpty()) return fileName;
-    if (fileType != null) {
-      boolean caseSensitive = file.isCaseSensitive();
+    FileType fileType = fileTypeManager.getFileTypeByFileName(fileName);
+    if (fileType != FileTypes.UNKNOWN) {
       extension = getFileTypeExtensions(fileType, false, fileTypeManager)
         .reduce(extension, (val, o) -> val.length() < o.length() && hasExtension(fileName, o, caseSensitive) ? o : val);
     }
@@ -140,13 +144,27 @@ final class ScratchImplUtil {
     return result;
   }
 
-  static @NotNull String getNextAvailableName(@NotNull VirtualFile dir, @NotNull String fileName, @NotNull String extension) {
+  static @Nullable VirtualFile findFileIgnoreExtension(@NotNull VirtualFile dir, @NotNull String fileNameAndExt) {
+    FileTypeManager fileTypeManager = FileTypeManager.getInstance();
+    String fileName = getNameWithoutExtension(fileNameAndExt, dir.isCaseSensitive(), fileTypeManager);
+    for (VirtualFile child : dir.getChildren()) {
+      if (child.isDirectory()) continue;
+      String childName = getNameWithoutExtension(child, fileTypeManager);
+      if (!StringUtil.equalsIgnoreCase(childName, fileName)) continue;
+      return child;
+    }
+    return null;
+  }
+
+  static @NotNull String getNextAvailableName(@NotNull VirtualFile dir, @NotNull String fileNameAndExt) {
     FileTypeManager fileTypeManager = FileTypeManager.getInstance();
     TIntHashSet existing = new TIntHashSet();
+    String fileName = getNameWithoutExtension(fileNameAndExt, dir.isCaseSensitive(), fileTypeManager);
     int fileNameLen = fileName.length();
+    String fileExt = fileNameAndExt.length() > fileNameLen + 1 ? fileNameAndExt.substring(fileNameLen + 1) : "";
     for (VirtualFile child : dir.getChildren()) {
-      FileType fileType = fileTypeManager.getFileTypeByFileName(child.getNameSequence());
-      String childName = getNameWithoutExtension(child, fileType, fileTypeManager);
+      if (child.isDirectory()) continue;
+      String childName = getNameWithoutExtension(child, fileTypeManager);
       if (!StringUtil.startsWithIgnoreCase(childName, fileName)) continue;
       if (childName.length() == fileNameLen) {
         existing.add(0);
@@ -160,7 +178,7 @@ final class ScratchImplUtil {
     int num = 0;
     while (existing.contains(num)) num++;
 
-    return PathUtil.makeFileName(num == 0 ? fileName : fileName + "_" + num, extension);
+    return PathUtil.makeFileName(num == 0 ? fileName : fileName + "_" + num, fileExt);
   }
 
   static void changeLanguageWithUndo(@NotNull Project project,

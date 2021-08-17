@@ -10,7 +10,7 @@ import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.vfs.VirtualFileFilter
 import com.intellij.util.indexing.IndexingBundle
 import com.intellij.util.indexing.roots.kind.IndexableSetOrigin
-import com.intellij.util.indexing.roots.kind.SdkOriginImpl
+import com.intellij.util.indexing.roots.origin.SdkOriginImpl
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal

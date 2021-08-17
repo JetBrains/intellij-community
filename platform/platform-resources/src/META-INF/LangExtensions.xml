@@ -89,6 +89,9 @@
     <startupActivity id="dumbServiceStartup" implementation="com.intellij.openapi.project.DumbServiceStartupActivity" order="last"/>
     <startupActivity id="vfsStartup" implementation="com.intellij.psi.impl.file.impl.PsiVFSListener$MyStartUpActivity" order="first, after performanceReporter"/>
 
+    <applicationService serviceInterface="com.intellij.util.indexing.EntityIndexingService"
+                        serviceImplementation="com.intellij.util.indexing.EntityIndexingServiceImpl"/>
+
     <applicationService serviceImplementation="com.intellij.packageDependencies.DependencyUISettings"/>
 
     <applicationService serviceImplementation="com.intellij.refactoring.rename.RenameHandlerRegistry"/>
@@ -1401,6 +1404,15 @@
     <indexableFilesContributor implementation="com.intellij.util.indexing.roots.AdditionalFilesContributor" order="last" id="aditionalFiles"/>
     <indexableFilesContributor implementation="com.intellij.util.indexing.roots.AdditionalLibraryRootsContributor" order="last, after aditionalFiles"/>
     <psi.treeChangePreprocessor implementation="com.intellij.util.indexing.events.FileBasedIndexTreeChangePreprocessor"/>
+
+    <indexableEntityProvider implementation="com.intellij.util.indexing.roots.LibraryIndexableEntityProvider"/>
+    <indexableEntityProvider implementation="com.intellij.util.indexing.roots.ContentRootIndexableEntityProvider"/>
+    <indexableEntityProvider implementation="com.intellij.util.indexing.roots.SourceRootIndexableEntityProvider"/>
+    <indexableEntityProvider implementation="com.intellij.util.indexing.roots.ModuleDependencyEntitiesIndexableEntityProvider"/>
+    <indexableEntityProvider implementation="com.intellij.util.indexing.roots.ModuleCustomImlDataFilesIndexableEntityProvider"/>
+    <indexableEntityProvider implementation="com.intellij.util.indexing.roots.JavaSourceRootIndexableEntityProvider"/>
+    <indexableEntityProvider implementation="com.intellij.util.indexing.roots.JavaResourceRootIndexableEntityProvider"/>
+    <indexableEntityProvider implementation="com.intellij.util.indexing.roots.JavaModuleSettingsIndexableEntityProvider"/>
 
     <fileSetDescriptorFactory implementation="com.intellij.application.options.codeStyle.excludedFiles.NamedScopeDescriptor$Factory"/>
     <fileSetDescriptorFactory implementation="com.intellij.application.options.codeStyle.excludedFiles.GlobPatternDescriptor$Factory"/>

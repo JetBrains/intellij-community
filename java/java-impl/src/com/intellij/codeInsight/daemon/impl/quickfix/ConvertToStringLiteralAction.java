@@ -7,7 +7,6 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.source.tree.java.PsiLiteralExpressionImpl;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
@@ -28,14 +27,7 @@ public class ConvertToStringLiteralAction implements IntentionActionWithFixAllOp
   @Override
   public boolean isAvailable(@NotNull final Project project, final Editor editor, final PsiFile file) {
     final PsiElement element = file.findElementAt(editor.getCaretModel().getOffset());
-    if (PsiUtil.isJavaToken(element, JavaTokenType.CHARACTER_LITERAL)) {
-      StringBuilder chars = new StringBuilder();
-      String text = element.getText();
-      return text.length() > 1 &&
-             PsiLiteralExpressionImpl.parseStringCharacters(text.substring(1, text.length() - 1), chars, null) && 
-             chars.length() == 1;
-    }
-    return false;
+    return PsiUtil.isJavaToken(element, JavaTokenType.CHARACTER_LITERAL);
   }
 
   @Override

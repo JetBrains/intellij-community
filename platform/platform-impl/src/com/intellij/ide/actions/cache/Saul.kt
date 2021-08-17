@@ -8,6 +8,7 @@ import com.intellij.notification.NotificationListener
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.Service
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.Task
@@ -43,6 +44,10 @@ internal class Saul {
 }
 
 private class RecoveryWorker(val actions: Collection<RecoveryAction>, private val project: Project?) {
+  companion object {
+    val LOG = logger<RecoveryWorker>()
+  }
+
   private val actionSeq: Iterator<RecoveryAction> = actions
     .iterator()
     .asSequence()
@@ -58,7 +63,9 @@ private class RecoveryWorker(val actions: Collection<RecoveryAction>, private va
     object : Task.Backgroundable(project, IdeBundle.message("recovery.progress.title", recoveryAction.presentableName)) {
       override fun run(indicator: ProgressIndicator) {
         CacheRecoveryUsageCollector.recordRecoveryPerformedEvent(recoveryAction, true, project)
-        recoveryAction.perform(project)
+        for (problem in recoveryAction.perform(project)) {
+          LOG.error("${recoveryAction.actionKey} found and fixed a problem: ${problem.message}")
+        }
         if (actionSeq.hasNext()) {
           askUserToContinue()
         }
@@ -94,8 +101,16 @@ interface RecoveryAction {
 
   val actionKey: String
 
-  fun perform(project: Project?)
+  fun perform(project: Project?): List<CacheInconsistencyProblem>
 
   fun canBeApplied(project: Project?): Boolean
 }
 
+interface CacheInconsistencyProblem {
+  val message: String
+}
+
+class ExceptionalCompletionProblem(private val e: Throwable): CacheInconsistencyProblem {
+  override val message: String
+    get() = """Exception: ${e.javaClass} with message ${e.message}"""
+}

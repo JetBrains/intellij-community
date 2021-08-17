@@ -51,8 +51,8 @@ internal class NotificationErrorNotifier(val project: Project) : ErrorNotifier {
     ProgressManager.getInstance().progressIndicator?.text = text
   }
 
-  override fun showMessage(@NlsContexts.NotificationContent text: String) {
-    VcsNotifier.getInstance(project).notifyInfo(null, "", text)
+  override fun showMessage(@NlsContexts.NotificationContent message: String) {
+    VcsNotifier.getInstance(project).notifyInfo(null, "", message)
   }
 
   override fun hideProgress() {

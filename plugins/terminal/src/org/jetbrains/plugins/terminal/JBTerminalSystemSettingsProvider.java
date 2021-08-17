@@ -83,7 +83,10 @@ public class JBTerminalSystemSettingsProvider extends JBTerminalSystemSettingsPr
   @Override
   public @NotNull TerminalTypeAheadSettings getTypeAheadSettings() {
     TerminalOptionsProvider optionsProvider = TerminalOptionsProvider.getInstance();
-    long latencyThreshold = TimeUnit.MILLISECONDS.toNanos(optionsProvider.getTypeAheadLatencyThreshold());
-    return new TerminalTypeAheadSettings(optionsProvider.isTypeAheadEnabled(), latencyThreshold);
+    return new TerminalTypeAheadSettings(
+      optionsProvider.isTypeAheadEnabled(),
+      TimeUnit.MILLISECONDS.toNanos(optionsProvider.getTypeAheadLatencyThreshold()),
+      TerminalTypeAheadSettings.DEFAULT.getTypeAheadStyle()
+    );
   }
 }

@@ -9,8 +9,10 @@ import com.intellij.ui.SeparatorComponent
 import com.intellij.ui.TitledSeparator
 import com.intellij.ui.components.Label
 import com.intellij.ui.dsl.*
+import com.intellij.ui.dsl.Row
 import com.intellij.ui.dsl.gridLayout.*
 import com.intellij.ui.dsl.gridLayout.builders.RowsGridBuilder
+import com.intellij.ui.layout.*
 import org.jetbrains.annotations.ApiStatus
 import javax.swing.*
 import javax.swing.text.JTextComponent
@@ -76,6 +78,16 @@ internal class PanelImpl(private val dialogPanelConfig: DialogPanelConfig) : Cel
 
     // todo
     return RowImpl(dialogPanelConfig, panelContext)
+  }
+
+  override fun <T> buttonGroup(binding: PropertyBinding<T>, type: Class<T>, init: Panel.() -> Unit) {
+    dialogPanelConfig.context.addButtonGroup(BindButtonGroup(binding, type))
+    try {
+      this.init()
+    }
+    finally {
+      dialogPanelConfig.context.removeLastButtonGroup()
+    }
   }
 
   override fun visible(isVisible: Boolean): PanelImpl {
@@ -326,7 +338,7 @@ internal class PanelImpl(private val dialogPanelConfig: DialogPanelConfig) : Cel
   }
 }
 
-class PanelContext(
+internal class PanelContext(
   /**
    * Number of [SpacingConfiguration.horizontalIndent] indents before each row in the panel
    */

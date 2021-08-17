@@ -12,6 +12,9 @@ todo
 remove first/last gaps
 */
 
+@DslMarker
+internal annotation class LayoutDslMarker
+
 /**
  * Root panel that provided by [init] does not support [CellBase] methods now. May be added later but seems not needed now
  */

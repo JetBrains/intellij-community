@@ -37,10 +37,7 @@ import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.indexing.FileBasedIndex;
-import com.intellij.util.indexing.FileBasedIndexImpl;
-import com.intellij.util.indexing.FileBasedIndexProjectHandler;
-import com.intellij.util.indexing.UnindexedFilesUpdater;
+import com.intellij.util.indexing.*;
 import com.intellij.util.indexing.roots.AdditionalLibraryRootsContributor;
 import com.intellij.util.indexing.roots.IndexableFilesIterator;
 import com.intellij.util.messages.MessageBusConnection;
@@ -226,7 +223,8 @@ public class ProjectRootManagerComponent extends ProjectRootManagerImpl implemen
   }
 
   @Override
-  protected void fireRootsChangedEvent(boolean fileTypes, @Nullable ProjectRootManagerImpl.RootsChangeType changeType) {
+  protected void fireRootsChangedEvent(boolean fileTypes,
+                                       @Nullable List<RootsChangeIndexingInfo> indexingInfos) {
     isFiringEvent = true;
     try {
       myProject.getMessageBus().syncPublisher(ProjectTopics.PROJECT_ROOTS).rootsChanged(new ModuleRootEventImpl(myProject, fileTypes));
@@ -235,7 +233,7 @@ public class ProjectRootManagerComponent extends ProjectRootManagerImpl implemen
       isFiringEvent = false;
     }
 
-    synchronizeRoots(changeType);
+    synchronizeRoots(indexingInfos);
     addRootsToWatch();
   }
 
@@ -320,11 +318,12 @@ public class ProjectRootManagerComponent extends ProjectRootManagerImpl implemen
     }
   }
 
-  private void synchronizeRoots(@Nullable ProjectRootManagerImpl.RootsChangeType changeType) {
+  private void synchronizeRoots(@Nullable List<RootsChangeIndexingInfo> indexingInfos) {
     if (!myStartupActivityPerformed) return;
 
-    if (changeType == RootsChangeType.ROOTS_REMOVED) {
-      logRootChanges("Project roots of " + myProject.getName() + " were removed");
+    if (indexingInfos != null) {
+      logRootChanges("Project roots of " + myProject.getName() + " would be partially reindexed");
+      EntityIndexingService.getInstance().indexChanges(myProject, indexingInfos);
       return;
     }
 
@@ -401,27 +400,19 @@ public class ProjectRootManagerComponent extends ProjectRootManagerImpl implemen
 
   private final VirtualFilePointerListener myRootsChangedListener = new VirtualFilePointerListener() {
     @NotNull
-    private ProjectRootManagerImpl.RootsChangeType getPointersChanges(VirtualFilePointer @NotNull [] pointers) {
-      RootsChangeType result = null;
+    private RootsChangeIndexingInfo getPointersChanges(VirtualFilePointer @NotNull [] pointers) {
+      RootsChangeIndexingInfo result = null;
       for (VirtualFilePointer pointer : pointers) {
         if (pointer.isValid()) {
-          if (result == null) {
-            result = RootsChangeType.ROOTS_ADDED;
-          }
-          else if (result != RootsChangeType.ROOTS_ADDED) {
-            return RootsChangeType.GENERIC;
-          }
+          return RootsChangeIndexingInfo.TOTAL_REINDEX;
         }
         else {
           if (result == null) {
-            result = RootsChangeType.ROOTS_REMOVED;
-          }
-          else if (result != RootsChangeType.ROOTS_REMOVED) {
-            return RootsChangeType.GENERIC;
+            result = RootsChangeIndexingInfo.NO_INDEXING_NEEDED;
           }
         }
       }
-      return ObjectUtils.notNull(result, RootsChangeType.GENERIC);
+      return ObjectUtils.notNull(result, RootsChangeIndexingInfo.TOTAL_REINDEX);
     }
 
     @Override
@@ -444,14 +435,14 @@ public class ProjectRootManagerComponent extends ProjectRootManagerImpl implemen
 
     @Override
     public void validityChanged(VirtualFilePointer @NotNull [] pointers) {
-      RootsChangeType changeType = getPointersChanges(pointers);
+      RootsChangeIndexingInfo changeInfo = getPointersChanges(pointers);
 
       if (myProject.isDisposed()) {
         return;
       }
 
       if (isInsideWriteAction()) {
-        myRootsChanged.rootsChanged(changeType);
+        myRootsChanged.rootsChanged(changeInfo);
       }
       else {
         clearScopesCaches();

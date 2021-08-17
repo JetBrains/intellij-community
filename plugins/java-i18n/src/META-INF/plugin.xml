@@ -67,7 +67,7 @@
                      level="WARNING"
                      implementationClass="com.intellij.codeInspection.SuspiciousLocalesLanguagesInspection"
                      key="inspection.suspicious.locales.languages.display.name" bundle="messages.JavaI18nBundle"/>
-    <localInspection groupPath="Java" language="JAVA" shortName="ConvertToBasicLatin" bundle="messages.JavaI18nBundle" key="inspection.convert.to.basic.latin"
+    <localInspection groupPath="Java" language="JAVA" shortName="ConvertToBasicLatin" bundle="messages.JavaI18nBundle" key="inspection.non.basic.latin.character.display.name"
                      groupKey="group.names.internationalization.issues" groupBundle="messages.InspectionsBundle"
                      enabledByDefault="true" level="INFORMATION"
                      implementationClass="com.intellij.codeInspection.i18n.ConvertToBasicLatinInspection" />

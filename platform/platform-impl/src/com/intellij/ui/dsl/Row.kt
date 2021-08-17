@@ -54,11 +54,8 @@ enum class TopGap {
   GROUP
 }
 
-@DslMarker
-private annotation class RowMarker
-
 @ApiStatus.Experimental
-@RowMarker
+@LayoutDslMarker
 interface Row {
 
   /**
@@ -93,15 +90,17 @@ interface Row {
    */
   fun panel(init: Panel.() -> Unit): Panel
 
-  fun buttonGroup(init: Row.() -> Unit)
-
   fun checkBox(@NlsContexts.Checkbox text: String): Cell<JBCheckBox>
 
   fun radioButton(@NlsContexts.RadioButton text: String): Cell<JBRadioButton>
 
+  fun radioButton(@NlsContexts.RadioButton text: String, value: Any): Cell<JBRadioButton>
+
   fun button(@NlsContexts.Button text: String, actionListener: (event: ActionEvent) -> Unit): Cell<JButton>
 
   fun actionButton(action: AnAction, dimension: Dimension = ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE): Cell<ActionButton>
+
+  fun gearButton(vararg actions: AnAction): Cell<JComponent>
 
   fun label(@NlsContexts.Label text: String): Cell<JLabel>
 
@@ -117,32 +116,4 @@ interface Row {
   fun intTextField(range: IntRange? = null, keyboardStep: Int? = null): Cell<JBTextField>
 
   fun <T> comboBox(model: ComboBoxModel<T>, renderer: ListCellRenderer<T?>? = null): Cell<ComboBox<T>>
-}
-
-class ButtonGroupRow<T>(private val binding: PropertyBinding<T>, row: Row) : Row by row {
-
-  fun radioButton(@NlsContexts.RadioButton text: String, value: T): Cell<JBRadioButton> {
-    val result = radioButton(text)
-    val component = result.component
-    result.onApply { if (component.isSelected) binding.set(value) }
-    result.onReset { component.isSelected = binding.get() == value }
-    result.onIsModified { component.isSelected != (binding.get() == value) }
-    return result
-  }
-}
-
-inline fun <reified T : Any> Row.buttonGroup(noinline getter: () -> T,
-                                             noinline setter: (T) -> Unit,
-                                             crossinline init: ButtonGroupRow<T>.() -> Unit) {
-  buttonGroup(PropertyBinding(getter, setter), init)
-}
-
-inline fun <reified T : Any> Row.buttonGroup(prop: KMutableProperty0<T>, crossinline init: ButtonGroupRow<T>.() -> Unit) {
-  buttonGroup(prop.toBinding(), init)
-}
-
-inline fun <reified T : Any> Row.buttonGroup(binding: PropertyBinding<T>, crossinline init: ButtonGroupRow<T>.() -> Unit) {
-  buttonGroup {
-    ButtonGroupRow(binding, this).init()
-  }
 }

@@ -60,7 +60,7 @@ class NewProjectStep : NewModuleStep<NewProjectStepSettings>() {
                 component(lc.component)
               }
             }
-            is JustComponent -> row { component(lc.component) }
+            is JustComponent -> row { lc.component(CCFlags.growX) }
           }
             .onGlobalApply { if (lc.component is DialogPanel) lc.component.apply() }
             .apply { visible = false }

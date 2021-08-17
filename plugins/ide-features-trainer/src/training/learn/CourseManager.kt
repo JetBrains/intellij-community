@@ -117,10 +117,6 @@ class CourseManager internal constructor() : Disposable {
     return lessonsForModules.firstOrNull { it.id == lessonId }
   }
 
-  fun findLessonByName(lessonName: String): Lesson? {
-    return lessonsForModules.firstOrNull { it.name.equals(lessonName, ignoreCase = true) }
-  }
-
   fun findCommonModules(commonCourseId: String): Collection<IftModule> {
     if (commonCourses.isEmpty) reloadCommonModules()
     return commonCourses[commonCourseId]

@@ -8247,6 +8247,16 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
                 runTest("testData/intentions/convertToScope/convertToRun/methodChainWithThisParameter.kt");
             }
 
+            @TestMetadata("nestedClass.kt")
+            public void testNestedClass() throws Exception {
+                runTest("testData/intentions/convertToScope/convertToRun/nestedClass.kt");
+            }
+
+            @TestMetadata("nestedObject.kt")
+            public void testNestedObject() throws Exception {
+                runTest("testData/intentions/convertToScope/convertToRun/nestedObject.kt");
+            }
+
             @TestMetadata("normal.kt")
             public void testNormal() throws Exception {
                 runTest("testData/intentions/convertToScope/convertToRun/normal.kt");
@@ -8368,6 +8378,16 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
             @TestMetadata("methodChainWithThisParameter.kt")
             public void testMethodChainWithThisParameter() throws Exception {
                 runTest("testData/intentions/convertToScope/convertToWith/methodChainWithThisParameter.kt");
+            }
+
+            @TestMetadata("nestedClass.kt")
+            public void testNestedClass() throws Exception {
+                runTest("testData/intentions/convertToScope/convertToWith/nestedClass.kt");
+            }
+
+            @TestMetadata("nestedObject.kt")
+            public void testNestedObject() throws Exception {
+                runTest("testData/intentions/convertToScope/convertToWith/nestedObject.kt");
             }
 
             @TestMetadata("normal.kt")

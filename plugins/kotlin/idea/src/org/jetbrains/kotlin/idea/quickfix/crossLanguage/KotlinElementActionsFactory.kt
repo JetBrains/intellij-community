@@ -33,6 +33,7 @@ import org.jetbrains.kotlin.idea.quickfix.AddModifierFix
 import org.jetbrains.kotlin.idea.quickfix.RemoveModifierFix
 import org.jetbrains.kotlin.idea.quickfix.createFromUsage.callableBuilder.*
 import org.jetbrains.kotlin.idea.resolve.ResolutionFacade
+import org.jetbrains.kotlin.idea.util.ProjectRootsUtil
 import org.jetbrains.kotlin.idea.util.resolveToKotlinType
 import org.jetbrains.kotlin.incremental.components.NoLookupLocation
 import org.jetbrains.kotlin.lexer.KtTokens
@@ -45,6 +46,7 @@ import org.jetbrains.kotlin.resolve.annotations.JVM_STATIC_ANNOTATION_FQ_NAME
 import org.jetbrains.kotlin.resolve.descriptorUtil.module
 import org.jetbrains.kotlin.types.Variance
 import org.jetbrains.kotlin.types.typeUtil.supertypes
+import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 class KotlinElementActionsFactory : JvmElementActionsFactory() {
     companion object {
@@ -154,7 +156,8 @@ class KotlinElementActionsFactory : JvmElementActionsFactory() {
     }
 
     override fun createChangeModifierActions(target: JvmModifiersOwner, request: ChangeModifierRequest): List<IntentionAction> {
-        val kModifierOwner = target.toKtElement<KtModifierListOwner>() ?: return emptyList()
+        val kModifierOwner =
+            target.toKtElement<KtModifierListOwner>()?.takeIf { ProjectRootsUtil.isInProjectSource(it) } ?: return emptyList()
 
         val modifier = request.modifier
         val shouldPresent = request.shouldBePresent()
@@ -177,7 +180,8 @@ class KotlinElementActionsFactory : JvmElementActionsFactory() {
     }
 
     override fun createAddConstructorActions(targetClass: JvmClass, request: CreateConstructorRequest): List<IntentionAction> {
-        val targetKtClass = targetClass.toKtClassOrFile() as? KtClass ?: return emptyList()
+        val targetKtClass =
+            targetClass.toKtClassOrFile().safeAs<KtClass>()?.takeIf { ProjectRootsUtil.isInProjectSource(it) } ?: return emptyList()
         val modifierBuilder = ModifierBuilder(targetKtClass).apply { addJvmModifiers(request.modifiers) }
         if (!modifierBuilder.isValid) return emptyList()
 
@@ -255,7 +259,7 @@ class KotlinElementActionsFactory : JvmElementActionsFactory() {
     }
 
     override fun createAddFieldActions(targetClass: JvmClass, request: CreateFieldRequest): List<IntentionAction> {
-        val targetContainer = targetClass.toKtClassOrFile() ?: return emptyList()
+        val targetContainer = targetClass.toKtClassOrFile()?.takeIf { ProjectRootsUtil.isInProjectSource(it) } ?: return emptyList()
 
         val writable = JvmModifier.FINAL !in request.modifiers
 
@@ -277,7 +281,7 @@ class KotlinElementActionsFactory : JvmElementActionsFactory() {
     }
 
     override fun createAddMethodActions(targetClass: JvmClass, request: CreateMethodRequest): List<IntentionAction> {
-        val targetContainer = targetClass.toKtClassOrFile() ?: return emptyList()
+        val targetContainer = targetClass.toKtClassOrFile()?.takeIf { ProjectRootsUtil.isInProjectSource(it) } ?: return emptyList()
 
         val modifierBuilder = ModifierBuilder(targetContainer).apply { addJvmModifiers(request.modifiers) }
         if (!modifierBuilder.isValid) return emptyList()
@@ -306,12 +310,12 @@ class KotlinElementActionsFactory : JvmElementActionsFactory() {
             nameAndKind.second == PropertyKind.SETTER,
             targetClass.name
         )
-
     }
 
     override fun createAddAnnotationActions(target: JvmModifiersOwner, request: AnnotationRequest): List<IntentionAction> {
-        val declaration = (target as? KtLightElement<*, *>)?.kotlinOrigin as? KtModifierListOwner ?: return emptyList()
-        if (declaration.language != KotlinLanguage.INSTANCE) return emptyList()
+        val declaration = target.safeAs<KtLightElement<*, *>>()?.kotlinOrigin.safeAs<KtModifierListOwner>()?.takeIf {
+            it.language == KotlinLanguage.INSTANCE && ProjectRootsUtil.isInProjectSource(it)
+        }  ?: return emptyList()
         val annotationUseSiteTarget = when (target) {
             is JvmField -> AnnotationUseSiteTarget.FIELD
             is JvmMethod -> when {
@@ -340,7 +344,6 @@ class KotlinElementActionsFactory : JvmElementActionsFactory() {
         override fun getFamilyName(): String = QuickFixBundle.message("create.annotation.family")
 
         override fun isAvailable(project: Project, editor: Editor?, file: PsiFile?): Boolean = pointer.element != null
-
 
         override fun invoke(project: Project, editor: Editor?, file: PsiFile?) {
             val target = pointer.element ?: return

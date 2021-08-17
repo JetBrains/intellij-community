@@ -8,7 +8,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileFilter
 import com.intellij.util.indexing.IndexingBundle
 import com.intellij.util.indexing.roots.kind.ProjectFileOrDirOrigin
-import com.intellij.util.indexing.roots.kind.ProjectFileOrDirOriginImpl
+import com.intellij.util.indexing.roots.origin.ProjectFileOrDirOriginImpl
 
 class ProjectIndexableFilesIteratorImpl(private val fileOrDir: VirtualFile) : ProjectIndexableFilesIterator {
   override fun getDebugName(): String = "Files under `${fileOrDir.path}`"

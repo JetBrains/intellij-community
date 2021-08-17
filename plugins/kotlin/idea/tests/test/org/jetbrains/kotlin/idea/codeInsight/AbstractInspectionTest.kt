@@ -19,6 +19,7 @@ import org.jetbrains.kotlin.idea.versions.kotlinCompilerVersionShort
 import org.jetbrains.kotlin.test.InTextDirectivesUtils
 import org.jetbrains.kotlin.test.KotlinTestUtils
 import org.jetbrains.plugins.groovy.GroovyFileType
+import org.junit.runner.Description
 import java.io.File
 
 abstract class AbstractInspectionTest : KotlinLightCodeInsightFixtureTestCase() {
@@ -32,7 +33,7 @@ abstract class AbstractInspectionTest : KotlinLightCodeInsightFixtureTestCase() 
             EntryPointsManagerBase.getInstance(project).ADDITIONAL_ANNOTATIONS.add(ENTRY_POINT_ANNOTATION)
             runWriteAction { FileTypeManager.getInstance().associateExtension(GroovyFileType.GROOVY_FILE_TYPE, "gradle") }
         } catch (e: Throwable) {
-            TestLoggerFactory.onTestFinished(false)
+            TestLoggerFactory.onTestFinished(false, Description.createTestDescription(javaClass, name))
             throw e
         }
     }

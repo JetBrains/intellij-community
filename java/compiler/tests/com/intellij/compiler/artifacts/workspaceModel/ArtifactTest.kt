@@ -498,6 +498,25 @@ class ArtifactTest : ArtifactsTestCase() {
     Unit
   }
 
+  fun `test invalid artifact`() = runWriteAction {
+    assumeTrue(WorkspaceModel.enabledForArtifacts)
+
+    val workspaceModel = WorkspaceModel.getInstance(project)
+    workspaceModel.updateProjectModel {
+      val customElement = it.addCustomPackagingElementEntity("Custom-element", "<CustomPackagingElementState>\n" +
+                                                                               "  <option name=\"data\" value=\"Name-2\" />\n" +
+                                                                               "</CustomPackagingElementState>", emptyList(), MySource)
+      val rootElement = it.addArtifactRootElementEntity(listOf(customElement), MySource)
+      it.addArtifactEntity("MyArtifact", PlainArtifactType.ID, false, null, rootElement, MySource)
+    }
+
+    val newArtifact = ArtifactManager.getInstance(project).allArtifactsIncludingInvalid.single() as InvalidArtifact
+
+    // Assert empty and assert no exceptions
+    // Invalid artifact always has only one root element without children
+    assertEmpty(newArtifact.rootElement.children)
+  }
+
   private inline fun <T> runWithRegisteredExtension(extension: T, extensionPoint: ExtensionPointName<T>, action: () -> Unit) {
     val disposable = Disposer.newDisposable()
     registerExtension(extension, extensionPoint, disposable)
