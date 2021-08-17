@@ -34,7 +34,6 @@
     "border": "#D1D1D1",
     "componentBorder": "#C4C4C4",
     "lightBorder": "#d9d9d9",
-    "windowsPopupBorder": "#adadad",
 
     "panel": "#F2F2F2"
   },
@@ -155,7 +154,7 @@
     "ComboBox": {
       "ArrowButton": {
         "background": "#fafafa",
-        "disabledIconColor": "#ABABAB",
+        "disabledIconColor": "grey05",
         "iconColor": "grey01",
         "nonEditableBackground": "#ffffff"
       },
@@ -274,7 +273,7 @@
 
     "GotItTooltip": {
       "background": "#f7f7f7",
-      "borderColor": "#adadad",
+      "borderColor": "grey05",
       "linkForeground": "linkForeground",
       "shortcutForeground": "infoPanelForeground"
     },
@@ -490,8 +489,8 @@
         "borderColor": "#f7f7f7"
       },
 
-      "borderColor": "windowsPopupBorder",
-      "inactiveBorderColor": "#aaaaaa",
+      "borderColor": "grey05",
+      "inactiveBorderColor": "grey05",
       "separatorColor": "lightBorder"
     },
 
@@ -647,7 +646,7 @@
       "darkShadow": {
         "os.windows": "#cccccc"
       },
-      "disabledUnderlineColor": "#ababab",
+      "disabledUnderlineColor": "grey05",
       "focusColor": "#dae4ed",
       "highlight": {
         "os.windows": "#cccccc"
@@ -760,7 +759,7 @@
 
       "Actions.background": "#ebebeb",
       "Actions.infoForeground": "#99a4ad",
-      "borderColor": "#adadad",
+      "borderColor": "grey05",
       "infoForeground": "infoPanelForeground",
       "separatorColor": "#d1d1d1",
       "shortcutForeground": "infoPanelForeground",
