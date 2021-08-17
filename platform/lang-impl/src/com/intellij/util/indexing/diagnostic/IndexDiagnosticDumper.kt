@@ -14,15 +14,13 @@ import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.getProjectCachePath
+import com.intellij.openapi.util.io.FileUtil
 import com.intellij.util.SystemProperties
 import com.intellij.util.concurrency.NonUrgentExecutor
 import com.intellij.util.indexing.diagnostic.dto.*
 import com.intellij.util.indexing.diagnostic.presentation.createAggregateHtml
 import com.intellij.util.indexing.diagnostic.presentation.generateHtml
-import com.intellij.util.io.createDirectories
-import com.intellij.util.io.delete
-import com.intellij.util.io.exists
-import com.intellij.util.io.write
+import com.intellij.util.io.*
 import org.jetbrains.annotations.TestOnly
 import java.nio.file.Files
 import java.nio.file.Path
@@ -70,6 +68,14 @@ class IndexDiagnosticDumper : Disposable {
 
     fun readJsonIndexDiagnostic(file: Path): JsonIndexDiagnostic =
       jacksonMapper.readValue(file.toFile(), JsonIndexDiagnostic::class.java)
+
+    fun clearDiagnostic() {
+      if (indexingDiagnosticDir.exists()) {
+        indexingDiagnosticDir.directoryStreamIfExists { dirStream ->
+          dirStream.forEach { FileUtil.deleteWithRenaming(it) }
+        }
+      }
+    }
 
     val indexingDiagnosticDir: Path by lazy {
       val logPath = PathManager.getLogPath()
