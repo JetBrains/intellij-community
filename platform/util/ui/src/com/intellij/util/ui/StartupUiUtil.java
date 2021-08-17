@@ -36,7 +36,7 @@ import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.util.Locale;
 import java.util.Map;
-import java.util.function.Function;
+import java.util.function.IntUnaryOperator;
 
 public final class StartupUiUtil {
   private static volatile StyleSheet ourDefaultHtmlKitCss;
@@ -252,23 +252,23 @@ public final class StartupUiUtil {
       }
     }
     final double _scale = scale;
-    Function<Integer, Integer> size = size1 -> (int)Math.round(size1 * _scale);
+    IntUnaryOperator size = size1 -> (int)Math.round(size1 * _scale);
     try {
       if (op != null && image instanceof BufferedImage) {
         image = op.filter((BufferedImage)image, null);
       }
       if (invG != null && hasDstSize) {
-        dw = size.apply(dw);
-        dh = size.apply(dh);
+        dw = size.applyAsInt(dw);
+        dh = size.applyAsInt(dh);
       }
       if (srcBounds != null) {
-        int sx = size.apply(srcBounds.x);
-        int sy = size.apply(srcBounds.y);
-        int sw = srcBounds.width >= 0 ? size.apply(srcBounds.width) : size.apply(userWidth) - sx;
-        int sh = srcBounds.height >= 0 ? size.apply(srcBounds.height) : size.apply(userHeight) - sy;
+        int sx = size.applyAsInt(srcBounds.x);
+        int sy = size.applyAsInt(srcBounds.y);
+        int sw = srcBounds.width >= 0 ? size.applyAsInt(srcBounds.width) : size.applyAsInt(userWidth) - sx;
+        int sh = srcBounds.height >= 0 ? size.applyAsInt(srcBounds.height) : size.applyAsInt(userHeight) - sy;
         if (!hasDstSize) {
-          dw = size.apply(userWidth);
-          dh = size.apply(userHeight);
+          dw = size.applyAsInt(userWidth);
+          dh = size.applyAsInt(userHeight);
         }
         g.drawImage(image,
                     dx, dy, dx + dw, dy + dh,

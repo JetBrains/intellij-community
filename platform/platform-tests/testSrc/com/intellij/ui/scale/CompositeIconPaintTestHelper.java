@@ -14,7 +14,7 @@ import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.net.MalformedURLException;
-import java.util.function.BiFunction;
+import java.util.function.IntBinaryOperator;
 
 import static com.intellij.ui.scale.ScaleType.*;
 import static com.intellij.ui.scale.TestScaleHelper.*;
@@ -29,12 +29,12 @@ public abstract class CompositeIconPaintTestHelper {
   protected void test() {
     overrideJreHiDPIEnabled(true);
 
-    BiFunction<Integer, Integer, Integer> bit2scale = (mask, bit) -> ((mask >> bit) & 0x1) + 1;
+    IntBinaryOperator bit2scale = (mask, bit) -> ((mask >> bit) & 0x1) + 1;
 
     for (int mask=0; mask<7; mask++) {
-      int iconScale = bit2scale.apply(mask, 2);
-      int usrScale = bit2scale.apply(mask, 1);
-      int sysScale = bit2scale.apply(mask, 0);
+      int iconScale = bit2scale.applyAsInt(mask, 2);
+      int usrScale = bit2scale.applyAsInt(mask, 1);
+      int sysScale = bit2scale.applyAsInt(mask, 0);
       assert iconScale * usrScale * sysScale <= 4;
       test(ScaleContext.create(SYS_SCALE.of(sysScale), USR_SCALE.of(usrScale), OBJ_SCALE.of(iconScale)));
     }
