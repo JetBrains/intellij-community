@@ -27,7 +27,6 @@
 
     "foreground": "black",
     "infoPanelForeground": "grey02",
-    "infoInputForeground": "#999999",
     "disabledForeground": "grey03",
     "selectionForeground": "#FFFFFF",
     "linkForeground": "#2470B3",
@@ -69,7 +68,7 @@
       "selectionInactiveForeground": "foreground",
 
       "separatorColor": "border",
-      "separatorForeground": "infoInputForeground",
+      "separatorForeground": "grey04",
 
       "textBackground": "#cccccc",
       "textForeground": "foreground"
@@ -186,7 +185,7 @@
       "focusedBorderColor": "#87AFDA",
       "inactiveErrorFocusColor": "#ebbcbc",
       "inactiveWarningFocusColor": "#ffd385",
-      "infoForeground": "infoInputForeground",
+      "infoForeground": "grey04",
       "warningFocusColor": "#e2a53a",
       "hoverIconColor": "#7F8B91e5",
       "iconColor": "#7f8b917f"
@@ -205,9 +204,9 @@
 
     "Debugger.Variables": {
       "changedValueForeground": "#0000ff",
-      "collectingDataForeground": "#c0c0c0",
+      "collectingDataForeground": "grey04",
       "errorMessageForeground":  "#ff0000",
-      "evaluatingExpressionForeground": "#c0c0c0",
+      "evaluatingExpressionForeground": "#grey04",
       "exceptionForeground":  "#ff0000",
       "modifyingValueForeground": "#0000ff",
       "valueForeground":  "#800000"
@@ -493,8 +492,7 @@
 
       "borderColor": "windowsPopupBorder",
       "inactiveBorderColor": "#aaaaaa",
-      "separatorColor": "lightBorder",
-      "separatorForeground": "#999999"
+      "separatorColor": "lightBorder"
     },
 
     "PopupMenu": {
@@ -588,7 +586,6 @@
       "Advertiser.foreground": "infoPanelForeground",
       "Header.background": "#f2f2f2",
       "List.separatorColor": "#dcdcdc",
-      "List.separatorForeground": "#777777",
       "SearchField.background": "#ffffff",
       "SearchField.borderColor": "#bdbdbd",
       "SearchField.infoForeground": "infoPanelForeground",
@@ -669,7 +666,7 @@
       "selectedLabelShift": 0,
       "selectedTabPadInsets": "0,0,0,0",
       "shadow": {
-        "os.windows": "#989898"
+        "os.windows": "grey04"
       },
       "tabAreaInsets": "0,0,0,0",
       "tabFillStyle": "underline",
@@ -740,7 +737,7 @@
       "background": "panel",
       "Button.hoverBackground": "#00000019",
       "inactiveBackground": "panel",
-      "inactiveInfoForeground": "#a6a6a6",
+      "inactiveInfoForeground": "grey04",
       "infoForeground": "grey01"
     },
 
