@@ -3,6 +3,7 @@
 package com.intellij.ui.plaf.beg;
 
 import com.intellij.ide.ui.UISettings;
+import com.intellij.ide.ui.laf.intellij.IdeaPopupMenuUI;
 import com.intellij.internal.statistic.collectors.fus.actions.persistence.MainMenuCollector;
 import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.AnAction;
@@ -79,6 +80,10 @@ public final class BegMenuItemUI extends BasicMenuItemUI {
     }
 
     selectionBackground = UIUtil.getListSelectionBackground(true);
+
+    if (IdeaPopupMenuUI.isPartOfPopupMenu(menuItem)) {
+      arrowIcon = null;
+    }
   }
 
   private static boolean isSelected(JMenuItem item) {
@@ -352,7 +357,7 @@ public final class BegMenuItemUI extends BasicMenuItemUI {
 
     // Position the Accelerator text rect
 
-    acceleratorRect.x += viewRect.width - arrowIconRect.width - menuItemGap - acceleratorRect.width;
+    acceleratorRect.x += viewRect.width - arrowIconRect.width - (arrowIconRect.width > 0 ? menuItemGap : 0) - acceleratorRect.width;
     acceleratorRect.y = (viewRect.y + viewRect.height / 2) - acceleratorRect.height / 2;
 
     // Position the Check and Arrow Icons

@@ -117,7 +117,7 @@ public final class ActionMenu extends JBMenu {
   }
 
   private void init() {
-    boolean macSystemMenu = SystemInfo.isMacSystemMenu && myPlace.equals(ActionPlaces.MAIN_MENU);
+    boolean macSystemMenu = SystemInfo.isMacSystemMenu && isMainMenuPlace();
 
     myStubItem = macSystemMenu ? null : new StubItem();
     addStubItem();
@@ -128,6 +128,10 @@ public final class ActionMenu extends JBMenu {
     getModel().addChangeListener(menuListener);
 
     updateFromPresentation(myMnemonicEnabled);
+  }
+
+  public boolean isMainMenuPlace() {
+    return myPlace.equals(ActionPlaces.MAIN_MENU);
   }
 
   public void updateFromPresentation(boolean enableMnemonics) {
@@ -259,7 +263,7 @@ public final class ActionMenu extends JBMenu {
         addStubItem();
       };
 
-      if (SystemInfo.isMacSystemMenu && myPlace.equals(ActionPlaces.MAIN_MENU)) {
+      if (SystemInfo.isMacSystemMenu && isMainMenuPlace()) {
         // Menu items may contain mnemonic, and they can affect key-event dispatching (when Alt pressed)
         // To avoid influence of mnemonic it's necessary to clear items when menu was hidden.
         // When user selects item of system menu (under macOS) AppKit generates such sequence: CloseParentMenu -> PerformItemAction
@@ -301,7 +305,7 @@ public final class ActionMenu extends JBMenu {
   }
 
   public void clearItems() {
-    if (SystemInfo.isMacSystemMenu && myPlace.equals(ActionPlaces.MAIN_MENU)) {
+    if (SystemInfo.isMacSystemMenu && isMainMenuPlace()) {
       for (Component menuComponent : getMenuComponents()) {
         if (menuComponent instanceof ActionMenu) {
           ((ActionMenu)menuComponent).clearItems();

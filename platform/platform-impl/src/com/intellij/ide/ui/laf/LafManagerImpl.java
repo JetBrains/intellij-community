@@ -17,6 +17,7 @@ import com.intellij.ide.ui.*;
 import com.intellij.ide.ui.laf.darcula.DarculaInstaller;
 import com.intellij.ide.ui.laf.darcula.DarculaLaf;
 import com.intellij.ide.ui.laf.darcula.DarculaLookAndFeelInfo;
+import com.intellij.ide.ui.laf.intellij.IdeaPopupMenuUI;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
@@ -34,6 +35,7 @@ import com.intellij.openapi.editor.colors.impl.EditorColorsManagerImpl;
 import com.intellij.openapi.extensions.ExtensionPointListener;
 import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.ui.JBPopupMenu;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
@@ -1207,6 +1209,10 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
             DialogWrapper.cleanupWindowListeners(window);
           }
         });
+        if (contents instanceof JBPopupMenu && IdeaPopupMenuUI.isRoundBorder()) {
+          window.setBackground(Gray.TRANSPARENT);
+          window.setOpacity(1);
+        }
       }
       return popup;
     }
