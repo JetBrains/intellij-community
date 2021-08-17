@@ -10,13 +10,25 @@ import org.jetbrains.annotations.NotNull;
 import java.util.List;
 
 /**
- * @author Vladislav.Soroka
+ * Provides build output parsers for external system task.
+ *
+ * @see BuildOutputParser
+ * @see com.intellij.openapi.externalSystem.model.task.ExternalSystemTask
  */
 public interface ExternalSystemOutputParserProvider {
   ExtensionPointName<ExternalSystemOutputParserProvider> EP_NAME =
     ExtensionPointName.create("com.intellij.externalSystemOutputParserProvider");
 
+  /**
+   * External system id is needed to find applicable parsers provider for external system task.
+   */
   ProjectSystemId getExternalSystemId();
 
+  /**
+   * Creates build output parsers.
+   *
+   * @param taskId is id of build task that output should be patched by these parsers.
+   * @return parsers for messages from text and build events.
+   */
   List<BuildOutputParser> getBuildOutputParsers(@NotNull ExternalSystemTaskId taskId);
 }

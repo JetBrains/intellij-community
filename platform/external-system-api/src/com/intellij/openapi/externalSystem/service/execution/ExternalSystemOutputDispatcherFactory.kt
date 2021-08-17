@@ -5,8 +5,29 @@ import com.intellij.build.BuildProgressListener
 import com.intellij.build.output.BuildOutputParser
 import com.intellij.openapi.externalSystem.model.ProjectSystemId
 
+/**
+ * Factory of [ExternalSystemOutputMessageDispatcher]s for external system task.
+ *
+ * @see ExternalSystemOutputMessageDispatcher
+ * @see com.intellij.openapi.externalSystem.model.task.ExternalSystemTask
+ */
 interface ExternalSystemOutputDispatcherFactory {
+  /**
+   * External system id is needed to find applicable factory for external system task.
+   */
   val externalSystemId: ProjectSystemId
+
+  /**
+   * Creates output dispatcher for current build with [buildId].
+   *
+   * @param buildProgressListener is main console progress listener.
+   * @param appendOutputToMainConsole is flag for output dispatcher.
+   * Dispatcher should transfer message events into [buildProgressListener], if this argument is true.
+   * @param parsers are parsers for messages from text and build events.
+   *
+   * @see BuildProgressListener
+   * @see BuildOutputParser
+   */
   fun create(buildId: Any,
              buildProgressListener: BuildProgressListener,
              appendOutputToMainConsole: Boolean,

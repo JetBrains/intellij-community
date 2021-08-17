@@ -5,8 +5,12 @@ import com.intellij.build.events.BuildEvent;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * @author Vladislav.Soroka
+ * Build progress listener of build process.
+ * Needed to filter, convert and transfer build evens between different build progress and output models.
  */
 public interface BuildProgressListener {
+  /**
+   * This method is called when build {@code event} happens in listening build progress model with {@code buildId}.
+   */
   void onEvent(@NotNull Object buildId, @NotNull BuildEvent event);
 }
