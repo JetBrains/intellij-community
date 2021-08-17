@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes.ui;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -6,6 +6,7 @@ import com.intellij.openapi.extensions.PluginAware;
 import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.extensions.ProjectExtensionPointName;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsContexts.TabTitle;
 import com.intellij.util.NotNullFunction;
 import com.intellij.util.xmlb.annotations.Attribute;
 import org.jetbrains.annotations.NotNull;
@@ -83,6 +84,11 @@ public final class ChangesViewContentEP implements PluginAware {
     this.displayNameSupplierClassName = displayNameSupplierClassName;
   }
 
+  public @TabTitle @Nullable String getDisplayName(@NotNull Project project) {
+    Supplier<String> supplier = newDisplayNameSupplierInstance(project);
+    return supplier != null ? supplier.get() : null; //NON-NLS
+  }
+
   public boolean isInCommitToolWindow() {
     return isInCommitToolWindow;
   }
@@ -131,7 +137,7 @@ public final class ChangesViewContentEP implements PluginAware {
     return (ChangesViewContentProvider.Preloader)newClassInstance(project, preloaderClassName);
   }
 
-  public @Nullable Supplier<String> newDisplayNameSupplierInstance(@NotNull Project project) {
+  private @Nullable Supplier<String> newDisplayNameSupplierInstance(@NotNull Project project) {
     if (displayNameSupplierClassName == null) {
       return null;
     }

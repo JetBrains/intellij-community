@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes.ui
 
 import com.intellij.openapi.application.invokeLater
@@ -116,11 +116,11 @@ abstract class VcsToolWindowFactory : ToolWindowFactory, DumbAware {
   }
 
   private fun createExtensionContent(project: Project, extension: ChangesViewContentEP): Content {
-    val displayName: String = extension.newDisplayNameSupplierInstance(project)?.get() ?: extension.tabName
+    val displayName = extension.getDisplayName(project) ?: extension.tabName
 
     return ContentFactory.SERVICE.getInstance().createContent(JPanel(null), displayName, false).apply {
       isCloseable = false
-      tabName = extension.tabName
+      tabName = extension.tabName //NON-NLS overridden by displayName above
       putUserData(CHANGES_VIEW_EXTENSION, extension)
       putUserData(CONTENT_PROVIDER_SUPPLIER_KEY) { extension.getInstance(project) }
       putUserData(IS_IN_COMMIT_TOOLWINDOW_KEY, extension.isInCommitToolWindow)
