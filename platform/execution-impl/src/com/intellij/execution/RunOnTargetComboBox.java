@@ -259,9 +259,9 @@ public class RunOnTargetComboBox extends ComboBox<RunOnTargetComboBox.Item> {
      * We cannot use the size of the model explicitly in {@code customizeCellRenderer(...)} method to determine whether there are
      * "Saved targets" items because the model also contains "New Target" section with the corresponding items.
      */
-    private final BooleanSupplier myHasSavedTargetsSupplier;
+    @NotNull private final BooleanSupplier myHasSavedTargetsSupplier;
 
-    private MyRenderer(BooleanSupplier hasSavedTargetsSupplier) {
+    private MyRenderer(@NotNull BooleanSupplier hasSavedTargetsSupplier) {
       myHasSavedTargetsSupplier = hasSavedTargetsSupplier;
     }
 

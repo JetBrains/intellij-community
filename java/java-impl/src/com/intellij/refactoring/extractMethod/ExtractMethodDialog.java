@@ -98,7 +98,7 @@ public class ExtractMethodDialog extends RefactoringDialog implements AbstractEx
                              PsiType returnType, PsiTypeParameterList typeParameterList, PsiType[] exceptions,
                              boolean isStatic, boolean canBeStatic, boolean canBeChainedConstructor,
                              @NlsContexts.DialogTitle String title, String helpId, @Nullable Nullability nullability, PsiElement[] elementsToExtract,
-                             IntSupplier duplicatesCountSupplier) {
+                             @Nullable IntSupplier duplicatesCountSupplier) {
     super(project, true);
     myTargetClass = targetClass;
     myReturnType = returnType;

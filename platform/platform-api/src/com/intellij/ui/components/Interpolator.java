@@ -37,7 +37,7 @@ public class Interpolator {
    * @param input  a getter of the value
    * @param output a setter of the value
    */
-  public Interpolator(IntSupplier input, @NotNull Consumer<? super Integer> output) {
+  public Interpolator(@NotNull IntSupplier input, @NotNull Consumer<? super Integer> output) {
     myInput = input;
     myOutput = output;
   }

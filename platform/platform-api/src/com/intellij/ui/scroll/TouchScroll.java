@@ -23,17 +23,17 @@ import static java.lang.Math.max;
 public final class TouchScroll {
   private final InertialAnimator horizontal = new InertialAnimator(), vertical = new InertialAnimator();
   private final FlingManager horizontalFling = new FlingManager(), verticalFling = new FlingManager();
-  private final BooleanSupplier myScrollEnabled;
+  private final @NotNull BooleanSupplier myScrollEnabled;
 
   public static TouchScroll create() {
     return create(() -> true);
   }
 
-  public static TouchScroll create(BooleanSupplier isScrollEnabled) {
+  public static TouchScroll create(@NotNull BooleanSupplier isScrollEnabled) {
     return new TouchScroll(isScrollEnabled);
   }
 
-  private TouchScroll(BooleanSupplier isEnabledChecker) {
+  private TouchScroll(@NotNull BooleanSupplier isEnabledChecker) {
     myScrollEnabled = Objects.requireNonNull(isEnabledChecker);
   }
 
