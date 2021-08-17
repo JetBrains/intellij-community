@@ -51,7 +51,6 @@ import com.intellij.util.MathUtil;
 import com.intellij.util.containers.Stack;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.JBDimension;
-import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.accessibility.ScreenReader;
 import org.jetbrains.annotations.Nls;
@@ -60,9 +59,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.plaf.TextUI;
-import javax.swing.text.View;
-import javax.swing.text.html.HTML;
 import java.awt.*;
 import java.lang.ref.Reference;
 import java.lang.ref.WeakReference;
@@ -566,30 +562,30 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
   }
 
   private void setHintSize() {
-    Dimension hintSize;
-    if (!myManuallyResized && myHint.getDimensionServiceKey() == null) {
-      hintSize = getOptimalSize();
-    }
-    else {
-      if (myManuallyResized) {
-        hintSize = myHint.getSize();
-        JBInsets.removeFrom(hintSize, myHint.getContent().getInsets());
-      }
-      else {
-        hintSize = DimensionService.getInstance().getSize(DocumentationManager.NEW_JAVADOC_LOCATION_AND_SIZE, myManager.myProject);
-      }
-      if (hintSize == null) {
-        hintSize = new Dimension(MIN_DEFAULT);
-      }
-      else {
-        hintSize.width = Math.max(hintSize.width, MIN_DEFAULT.width);
-        hintSize.height = Math.max(hintSize.height, MIN_DEFAULT.height);
-      }
-    }
+    Dimension hintSize = myManuallyResized ? ensureMinimum(myHint.getContentSize())
+                                           : getDefaultHintSize();
     myHint.setSize(hintSize);
   }
 
-  public Dimension getOptimalSize() {
+  private @NotNull Dimension getDefaultHintSize() {
+    if (myHint.getDimensionServiceKey() == null) {
+      return getOptimalSize();
+    }
+    Dimension storedSize = DimensionService.getInstance().getSize(DocumentationManager.NEW_JAVADOC_LOCATION_AND_SIZE, myManager.myProject);
+    if (storedSize != null) {
+      return ensureMinimum(storedSize);
+    }
+    return new Dimension(MIN_DEFAULT);
+  }
+
+  private static @NotNull Dimension ensureMinimum(@NotNull Dimension hintSize) {
+    return new Dimension(
+      Math.max(hintSize.width, MIN_DEFAULT.width),
+      Math.max(hintSize.height, MIN_DEFAULT.height)
+    );
+  }
+
+  private @NotNull Dimension getOptimalSize() {
     int width = getPreferredWidth();
     int height = getPreferredHeight(width);
     return new Dimension(width, height);
@@ -600,13 +596,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
     int minWidth = JBUIScale.scale(300);
     int maxWidth = getPopupAnchor() != null ? JBUIScale.scale(435) : JBUIScale.scale(MAX_DEFAULT.width);
 
-    int width = definitionPreferredWidth();
-    if (width < 0) { // no definition found
-      width = myEditorPane.getPreferredSize().width;
-    }
-    else {
-      width = Math.max(width, myEditorPane.getMinimumSize().width);
-    }
+    int width = myEditorPane.getPreferredWidth();
     Insets insets = getInsets();
     return MathUtil.clamp(width, minWidth, maxWidth) + insets.left + insets.right;
   }
@@ -657,45 +647,6 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
       myHint.setDimensionServiceKey(DocumentationManager.NEW_JAVADOC_LOCATION_AND_SIZE);
       myHint.storeDimensionSize();
     }
-  }
-
-  private int definitionPreferredWidth() {
-    TextUI ui = myEditorPane.getUI();
-    View view = ui.getRootView(myEditorPane);
-    View definition = findDefinition(view);
-
-    if (definition == null) {
-      return -1;
-    }
-    int defaultPreferredSize = (int)definition.getPreferredSpan(View.X_AXIS);
-
-    // Heuristics to calculate popup width based on the amount of the content.
-    // The proportions are set for 4 chars/1px in range between 200 and 1000 chars.
-    // 200 chars and less is 300px, 1000 chars and more is 500px.
-    // These values were calculated based on experiments with varied content and manual resizing to comfortable width.
-    int textLength = definition.getDocument().getLength();
-    final int contentLengthPreferredSize;
-    if (textLength < 200) {
-      contentLengthPreferredSize = JBUIScale.scale(300);
-    }
-    else if (textLength > 200 && textLength < 1000) {
-      contentLengthPreferredSize = JBUIScale.scale(300) + JBUIScale.scale(1) * (textLength - 200) * (500 - 300) / (1000 - 200);
-    }
-    else {
-      contentLengthPreferredSize = JBUIScale.scale(500);
-    }
-    return Math.max(contentLengthPreferredSize, defaultPreferredSize);
-  }
-
-  private static View findDefinition(View view) {
-    if ("definition".equals(view.getElement().getAttributes().getAttribute(HTML.Attribute.CLASS))) {
-      return view;
-    }
-    for (int i = 0; i < view.getViewCount(); i++) {
-      View definition = findDefinition(view.getView(i));
-      if (definition != null) return definition;
-    }
-    return null;
   }
 
   private void goBack() {

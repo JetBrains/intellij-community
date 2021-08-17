@@ -1554,11 +1554,15 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer {
     return !key.startsWith(WindowStateService.USE_APPLICATION_WIDE_STORE_KEY_PREFIX) ? myProject : null;
   }
 
+  public final @NotNull Dimension getContentSize() {
+    Dimension size = myContent.getSize();
+    JBInsets.removeFrom(size, myContent.getInsets());
+    return size;
+  }
+
   public void storeDimensionSize() {
     if (myDimensionServiceKey != null) {
-      Dimension size = myContent.getSize();
-      JBInsets.removeFrom(size, myContent.getInsets());
-      getWindowStateService(getProjectDependingOnKey(myDimensionServiceKey)).putSize(myDimensionServiceKey, size);
+      getWindowStateService(getProjectDependingOnKey(myDimensionServiceKey)).putSize(myDimensionServiceKey, getContentSize());
     }
   }
 

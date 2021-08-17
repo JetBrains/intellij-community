@@ -971,9 +971,9 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
 
   private static final class RestartAction extends AnAction {
     private final PydevConsoleRunnerImpl myConsoleRunner;
-    private final String myInitTitle;
+    private final @NlsContexts.TabTitle String myInitTitle;
 
-    private RestartAction(PydevConsoleRunnerImpl runner, String initTitle) {
+    private RestartAction(PydevConsoleRunnerImpl runner, @NlsContexts.TabTitle String initTitle) {
       ActionUtil.copyFrom(this, IdeActions.ACTION_RERUN);
       getTemplatePresentation().setIcon(AllIcons.Actions.Restart);
       myConsoleRunner = runner;
@@ -1005,12 +1005,12 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
   }
 
   @Override
-  public void reRun(boolean requestEditorFocus, String title) {
+  public void reRun(boolean requestEditorFocus, @NlsContexts.TabTitle String title) {
     setConsoleTitle(title);
     run(requestEditorFocus);
   }
 
-  private void stopAndRerunConsole(Boolean rerun, @NotNull @Nls String message, @Nullable String displayName) {
+  private void stopAndRerunConsole(Boolean rerun, @NotNull @Nls String message, @Nullable @NlsContexts.TabTitle String displayName) {
     new Task.Backgroundable(myProject, message, true) {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {

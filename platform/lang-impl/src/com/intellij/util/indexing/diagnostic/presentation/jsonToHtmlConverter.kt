@@ -109,6 +109,7 @@ fun createAggregateHtml(
                 th("Download speed")
                 th("Status")
                 th("ID")
+                th("Generation time")
               }
             }
             tbody {
@@ -126,6 +127,7 @@ fun createAggregateHtml(
                     " FB: ${it.fbMatch.presentablePercentages()}, Stub: ${it.stubMatch.presentablePercentages()}"
                   } ?: " Incompatible"))
                   td(event.chunkUniqueId)
+                  td(event.generationTime?.presentableLocalDateTime() ?: "unknown")
                 }
               }
             }
