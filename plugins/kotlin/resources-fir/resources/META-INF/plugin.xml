@@ -338,6 +338,8 @@ The Kotlin FIR plugin provides language support in IntelliJ IDEA and Android Stu
               extensions="kotlin_module"/>
 
     <java.shortNamesCache implementation="org.jetbrains.kotlin.idea.caches.KotlinShortNamesCache"/>
+
+    <lang.importOptimizer language="kotlin" implementationClass="org.jetbrains.kotlin.idea.imports.KotlinFirImportOptimizer"/>
   </extensions>
 
   <extensions defaultExtensionNs="com.intellij">
