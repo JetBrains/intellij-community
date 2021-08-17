@@ -16,27 +16,19 @@ The Kotlin plugin provides language support in IntelliJ IDEA and Android Studio.
   <vendor url="https://www.jetbrains.com">JetBrains</vendor>
 
   <change-notes><![CDATA[
-	  <h3>1.5.30-RC</h3>
-      <ul>
-      <li>Kotlin/JVM: instantiation of annotation classes.</li>
-	    <li>Kotlin/Native: deprecating linkage with DLLs without import libraries for MinGW targets.</li>
-	    <li>Kotlin/JS: IR backend in Beta.</li>
-	    <li>Gradle: Java toolchain support and changes in Kotlin daemon configuration for JVM.</li>
-	    <li>Standard library: improvements to `Regex` and `Duration` APIs.</li>
-      </ul>
-      Learn more in the <a href="https://github.com/JetBrains/kotlin/releases/tag/v1.5.30-RC">changelog</a> and <a href="https://blog.jetbrains.com/kotlin/2021/08/kotlin-1-5-30-rc-released/?utm_source=ide&utm_medium=change-notes&utm_campaign=1-5-30-eap">this blog post</a>.
-      <br><br>
-	  <h3>1.5.30-M1</h3>
-	  Released: <b>July 20, 2021</b>
+	  <h3>1.5.30</h3>
     <ul>
-      <li>Kotlin/Native: support for Apple silicon, improved Kotlin DSL for Cocoapods Gradle plugin, optimized access to object declarations with `const val`s only, and debugger improvements.</li>
-      <li>Kotlin Multiplatform: sharing custom `cinterop` libraries between platforms, new default publishing setup for Android artifacts, and XCFrameworks support.</li>
-      <li>Kotlin/JS: source maps generation for the IR compiler backend.</li>
-      <li>Swift/Objective-C interop: experimental interoperability with Swift 5.5 async/await, improved singleton mapping.</li>
-      <li>Passing by value for more C structs using C interop.</li>
-      <li>Compiler improvements: requiring opt-in on implicit usages of experimental APIs, changes in using opt-in requirement annotations with different targets.</li>
+      <li>Kotlin/JVM: instantiation of annotation classes and improvements to how nullability annotations are handled.</li>
+      <li>Kotlin/Native: support for Apple silicon, Kotlin DSL improvements for the Cocoapods Gradle plugin, deprecation of linkage with DLLs without import libraries for MinGW targets, optimized access to object declarations with `const val`s only, and debugger improvements.</li>
+      <li>Swift/Objective-C interop: experimental interoperability with Swift 5.5 async/await and improved singleton mapping.</li>
+      <li>C interop: passing by value for more C structs.</li>
+      <li>Kotlin Multiplatform: the ability to share custom `cinterop` libraries between platforms, XCFrameworks support, and a new default publishing setup for Android artifacts.</li>
+      <li>Kotlin/JS: IR backend in Beta and source map generation for it.</li>
+      <li>Gradle: Java toolchain support and changes to Kotlin daemon JVM argument configuration.</li>
+      <li>Standard library: improvements to the `Regex` and `Duration` APIs.</li>
+      <li>Compiler improvements: changes to the opt-in requirement mechanism, improvements to type inference on recursive generic types, and the elimination of builder inference restrictions.</li>
     </ul>
-    Learn more in the <a href="https://github.com/JetBrains/kotlin/releases/tag/v1.5.30-M1">changelog</a> and <a href="https://blog.jetbrains.com/kotlin/2021/07/kotlin-1-5-30-m1-released/?utm_source=ide&utm_medium=change-notes&utm_campaign=1-5-30-eap">this blog post</a>.
+    Learn more in the <a href="https://github.com/JetBrains/kotlin/releases/tag/v1.5.30">changelog</a> and <a href="https://blog.jetbrains.com/kotlin/2021/08/kotlin-1-5-30-released/?utm_source=ide&utm_medium=change-notes&utm_campaign=1-5-30-release">this blog post</a>.
     <br><br>
     <h3>1.5.21</h3>
     A bug fix release for Kotlin 1.5.20. Learn more in the <a href="https://github.com/JetBrains/kotlin/releases/tag/v1.5.21">changelog</a>.
