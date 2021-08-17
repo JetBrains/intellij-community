@@ -26,7 +26,7 @@
     "white":  "#ffffff",
 
     "foreground": "black",
-    "infoPanelForeground": "#808080",
+    "infoPanelForeground": "grey02",
     "infoInputForeground": "#999999",
     "disabledForeground": "#8C8C8C",
     "selectionForeground": "#FFFFFF",
@@ -230,12 +230,12 @@
       "rowBackground": "#2675BF26",
       "areaBackground": "#3d7dcc33",
       "areaBorderColor": "#8ab2de",
-      "areaForeground": "#787878"
+      "areaForeground": "infoPanelForeground"
     },
 
     "Editor": {
       "background": "#cccccc",
-      "foreground": "#737373",
+      "foreground": "infoPanelForeground",
       "shortcutForeground": "#4274A6"
     },
 
@@ -279,14 +279,14 @@
       "background": "#f7f7f7",
       "borderColor": "#adadad",
       "linkForeground": "linkForeground",
-      "shortcutForeground": "#787878"
+      "shortcutForeground": "infoPanelForeground"
     },
 
     "Group.separatorColor": "#cdcdcd",
     "Group.disabledSeparatorColor": "#cdcdcd",
 
     "GutterTooltip": {
-      "infoForeground": "#787878",
+      "infoForeground": "infoPanelForeground",
       "lineSeparatorColor": "#e0e0e0"
     },
 
@@ -345,7 +345,7 @@
 
     "Menu": {
       "border": "com.intellij.ide.ui.laf.darcula.ui.DarculaMenuItemBorder",
-      "borderColor": "#cdcdcd",
+      "borderColor": "lightBorder",
       "maxGutterIconWidth": 18,
       "opaque": true,
       "separatorColor": "#cdcdcd"
@@ -360,7 +360,7 @@
 
     "MenuItem": {
       "acceleratorDelimiter": "-",
-      "acceleratorForeground": "#808080",
+      "acceleratorForeground": "grey02",
       "border": "com.intellij.ide.ui.laf.darcula.ui.DarculaMenuItemBorder",
       "maxGutterIconWidth": 18
     },
@@ -438,7 +438,7 @@
       "currentOverloadBackground": "#e0e0e0",
       "currentParameterForeground": "foreground",
       "disabledForeground": "#8c8c8c",
-      "infoForeground": "#787878",
+      "infoForeground": "infoPanelForeground",
       "lineSeparatorColor": "#e0e0e0"
     },
 
@@ -456,7 +456,7 @@
       "lightSelectionBackground": "#EDF6FE",
       "paidTagBackground": "#D8EDF8",
       "tagBackground": "#EAEAEC",
-      "tagForeground": "#787878",
+      "tagForeground": "infoPanelForeground",
       "trialTagBackground": "#DBE8DD",
 
       "Button": {
@@ -475,7 +475,7 @@
       "SearchField.borderColor": "#C5C5C5",
 
       "SectionHeader.background": "#F7F7F7",
-      "SectionHeader.foreground": "#787878"
+      "SectionHeader.foreground": "infoPanelForeground"
 
     },
 
@@ -596,7 +596,7 @@
       "List.separatorForeground": "#777777",
       "SearchField.background": "#ffffff",
       "SearchField.borderColor": "#bdbdbd",
-      "SearchField.infoForeground": "#808080",
+      "SearchField.infoForeground": "infoPanelForeground",
       "Tab.selectedBackground": "#dedede"
     },
 
@@ -625,9 +625,8 @@
 
     "SpeedSearch": {
       "background": "#ffffff",
-      "borderColor": "#808080",
-      "errorForeground": "#ff0000",
-      "foreground": "#000000"
+      "borderColor": "grey02",
+      "errorForeground": "#ff0000"
     },
 
     "Spinner": {
@@ -773,9 +772,9 @@
       "Actions.background": "#ebebeb",
       "Actions.infoForeground": "#99a4ad",
       "borderColor": "#adadad",
-      "infoForeground": "#808080",
+      "infoForeground": "infoPanelForeground",
       "separatorColor": "#d1d1d1",
-      "shortcutForeground": "#787878",
+      "shortcutForeground": "infoPanelForeground",
 
       "paintBorder": {
         "os.linux": true,
@@ -848,7 +847,7 @@
 
       "Log.Commit.currentBranchBackground": "#e4faff",
       "Log.Commit.hoveredBackground": "#c3d2e366",
-      "Log.Commit.unmatchedForeground": "#808080",
+      "Log.Commit.unmatchedForeground": "grey02",
 
       "GitLog.headIconColor": "#ffd100",
       "GitLog.localBranchIconColor": "#3cb45c",
