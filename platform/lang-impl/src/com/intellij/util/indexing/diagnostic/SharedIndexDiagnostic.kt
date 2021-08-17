@@ -70,7 +70,8 @@ object SharedIndexDiagnostic {
     finishType: String,
     downloadTimeNano: Long,
     packedSizeBytes: Long,
-    unpackedSizeBytes: Long
+    unpackedSizeBytes: Long,
+    generationTime: ZonedDateTime?
   ) {
     val downloadTime = JsonDuration(downloadTimeNano)
     val event = JsonSharedIndexDiagnosticEvent.Downloaded(
@@ -81,7 +82,8 @@ object SharedIndexDiagnostic {
       downloadTime = downloadTime,
       packedSize = JsonFileSize(packedSizeBytes),
       unpackedSize = JsonFileSize(unpackedSizeBytes),
-      downloadSpeed = JsonProcessingSpeed(packedSizeBytes, downloadTimeNano)
+      downloadSpeed = JsonProcessingSpeed(packedSizeBytes, downloadTimeNano),
+      generationTime = generationTime?.let { JsonDateTime(it) }
     )
     if (project != null) {
       appendEvent(project, event)
@@ -131,7 +133,8 @@ sealed class JsonSharedIndexDiagnosticEvent {
     val downloadTime: JsonDuration = JsonDuration(),
     val packedSize: JsonFileSize = JsonFileSize(),
     val unpackedSize: JsonFileSize = JsonFileSize(),
-    val downloadSpeed: JsonProcessingSpeed = JsonProcessingSpeed()
+    val downloadSpeed: JsonProcessingSpeed = JsonProcessingSpeed(),
+    val generationTime: JsonDateTime?
   ) : JsonSharedIndexDiagnosticEvent()
 
   sealed class Attached : JsonSharedIndexDiagnosticEvent() {
