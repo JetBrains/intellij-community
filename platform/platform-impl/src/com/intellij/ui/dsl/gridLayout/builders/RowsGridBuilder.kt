@@ -73,9 +73,7 @@ class RowsGridBuilder(private val panel: JComponent, grid: JBGrid? = null) {
               resizableColumn: Boolean = false,
               gaps: Gaps = Gaps.EMPTY,
               visualPaddings: Gaps = Gaps.EMPTY): JBGrid {
-    if (y == GRID_EMPTY) {
-      y = 0
-    }
+    startFirstRow()
     if (resizableColumn) {
       addResizableColumn()
     }
@@ -96,6 +94,7 @@ class RowsGridBuilder(private val panel: JComponent, grid: JBGrid? = null) {
   }
 
   fun setRowGaps(rowGaps: RowGaps) {
+    startFirstRow()
     if (rowGaps == RowGaps.EMPTY) {
       return
     }
@@ -112,5 +111,11 @@ class RowsGridBuilder(private val panel: JComponent, grid: JBGrid? = null) {
     val resizableColumns = grid.resizableColumns.toMutableSet()
     resizableColumns.add(x)
     grid.resizableColumns = resizableColumns
+  }
+
+  private fun startFirstRow() {
+    if (y == GRID_EMPTY) {
+      y = 0
+    }
   }
 }

@@ -48,12 +48,12 @@ enum class RowLayout {
 
 enum class TopGap {
   /**
-   * See [SpacingConfiguration.verticalGroupTopGap]
+   * See [SpacingConfiguration.groupTopGap]
    */
   GROUP,
 
   /**
-   * See [SpacingConfiguration.verticalSmallTopGap]
+   * See [SpacingConfiguration.verticalSmallGap]
    */
   SMALL
 }

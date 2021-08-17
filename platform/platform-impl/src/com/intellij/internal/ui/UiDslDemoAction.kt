@@ -4,15 +4,16 @@ package com.intellij.internal.ui
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.util.Disposer
+import com.intellij.ui.CollectionComboBoxModel
 import com.intellij.ui.components.JBTabbedPane
-import com.intellij.ui.dsl.Cell
-import com.intellij.ui.dsl.RowLayout
-import com.intellij.ui.dsl.columns
+import com.intellij.ui.dsl.*
 import com.intellij.ui.dsl.gridLayout.HorizontalAlign
-import com.intellij.ui.dsl.panel
+import java.awt.BorderLayout
 import java.awt.Dimension
+import java.awt.event.ItemEvent
 import javax.swing.JComponent
 import javax.swing.JLabel
 import javax.swing.JPanel
@@ -123,43 +124,93 @@ private class UiDslDemoDialog(project: Project?) : DialogWrapper(project, null, 
   }
 
   fun createCommentsPanel(): JPanel {
+    var type = CommentComponentType.CHECKBOX
+    val placeholder = JPanel(BorderLayout())
+
+    fun applyType() {
+      val builder = CommentPanelBuilder(type)
+      placeholder.removeAll()
+      placeholder.add(builder.build(), BorderLayout.CENTER)
+    }
+
+    val result: DialogPanel = panel {
+      row("Component type") {
+        comboBox(CollectionComboBoxModel(CommentComponentType.values().asList()))
+          .applyToComponent {
+            addItemListener {
+              if (it.stateChange == ItemEvent.SELECTED) {
+                type = it?.item as? CommentComponentType ?: CommentComponentType.CHECKBOX
+                applyType()
+                placeholder.revalidate()
+              }
+            }
+          }
+      }
+      row {
+        cell(placeholder)
+      }
+    }
+
+    applyType()
+    return result
+  }
+}
+
+@Suppress("DialogTitleCapitalization")
+private class CommentPanelBuilder(val type: CommentComponentType) {
+
+  fun build(): DialogPanel {
     return panel {
       for (rowLayout in RowLayout.values()) {
         row("${rowLayout.name}:") {
-          checkBox("Long Checkbox1")
-            .comment("Checkbox1 comment is aligned with checkbox1")
-          checkBox("Checkbox2")
+          customComponent("Long Component1")
+            .comment("Component1 comment is aligned with Component1")
+          customComponent("Component2")
           button("button") { }
         }.layout(rowLayout)
         row("${rowLayout.name} long:") {
-          checkBox("Checkbox1")
-          checkBox("Long Checkbox2")
-            .comment("<html>LABEL_ALIGNED: Checkbox2 comment is aligned with checkbox1 (cell[1]), hard to fix, rare use case<br>" +
-                     "OTHERWISE: Checkbox2 comment is aligned with checkbox2")
+          customComponent("Component1")
+          customComponent("Long Component2")
+            .comment("<html>LABEL_ALIGNED: Component2 comment is aligned with Component1 (cell[1]), hard to fix, rare use case<br>" +
+                     "OTHERWISE: Component2 comment is aligned with Component2")
           button("button") { }
         }.layout(rowLayout)
         row(rowLayout.name) {
-          checkBox("Checkbox1")
-          checkBox("Long Checkbox2")
+          customComponent("Component1")
+          customComponent("Long Component2")
           button("button") { }
-            .comment("<html>LABEL_ALIGNED: Button comment is aligned with checkbox1 (cell[1]), hard to fix, rare use case<br>" +
+            .comment("<html>LABEL_ALIGNED: Button comment is aligned with Component1 (cell[1]), hard to fix, rare use case<br>" +
                      "OTHERWISE: Button comment is aligned with button")
         }.layout(rowLayout)
         row {
-          checkBox("${rowLayout.name} Checkbox:")
-            .comment("Checkbox comment is aligned with checkbox")
-          checkBox("Checkbox1")
-          checkBox("Long Checkbox2")
+          customComponent("${rowLayout.name} Component:")
+            .comment("Component comment is aligned with Component")
+          customComponent("Component1")
+          customComponent("Long Component2")
           button("button") { }
         }.layout(rowLayout)
         row {
-          checkBox("${rowLayout.name} Checkbox:")
-          checkBox("Checkbox1")
-            .comment("Checkbox1 comment is aligned with checkbox1")
-          checkBox("Long Checkbox2")
+          customComponent("${rowLayout.name} Component:")
+          customComponent("Component1")
+            .comment("Component1 comment is aligned with Component1")
+          customComponent("Long Component2")
           button("button") { }
         }.layout(rowLayout)
       }
     }
   }
+
+  private fun Row.customComponent(text: String): Cell<JComponent> {
+    return when (type) {
+      CommentComponentType.CHECKBOX -> checkBox(text)
+      CommentComponentType.TEXT_FIELD -> textField().applyToComponent { setText(text) }
+      CommentComponentType.TEXT_FIELD_WITH_BROWSE_BUTTON -> textFieldWithBrowseButton().applyToComponent { setText(text) }
+    }
+  }
+}
+
+private enum class CommentComponentType {
+  CHECKBOX,
+  TEXT_FIELD,
+  TEXT_FIELD_WITH_BROWSE_BUTTON
 }

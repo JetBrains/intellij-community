@@ -25,6 +25,9 @@ interface Panel : CellBase<Panel> {
 
   override fun gap(rightGap: RightGap): Panel
 
+  /**
+   * Adds standard left indent
+   */
   fun indent(init: Panel.() -> Unit)
 
   fun row(@Nls label: String, init: Row.() -> Unit): Row
@@ -32,26 +35,34 @@ interface Panel : CellBase<Panel> {
   fun row(label: JLabel? = null, init: Row.() -> Unit): Row
 
   /**
-   * Adds panel with a title and some space before the panel
+   * Adds panel with a title and some space before the panel. Grouped radio buttons and checkboxes should use [Panel.buttonGroup]
+   * method, which uses different title gaps
    */
   fun group(@NlsContexts.BorderTitle title: String? = null, independent: Boolean = true, init: Panel.() -> Unit): Row
 
-  fun <T> buttonGroup(binding: PropertyBinding<T>, type: Class<T>, init: Panel.() -> Unit)
+  /**
+   * Unions [Row.radioButton] in one group. Must be also used for [Row.checkBox] if they are grouped with some title.
+   * Note that [Panel.group] provides different gaps around the title
+   */
+  fun <T> buttonGroup(binding: PropertyBinding<T>, type: Class<T>, @NlsContexts.BorderTitle title: String? = null, init: Panel.() -> Unit)
 
 }
 
 inline fun <reified T : Any> Panel.buttonGroup(noinline getter: () -> T,
                                                noinline setter: (T) -> Unit,
+                                               @NlsContexts.BorderTitle title: String? = null,
                                                crossinline init: Panel.() -> Unit) {
-  buttonGroup(PropertyBinding(getter, setter), init)
+  buttonGroup(PropertyBinding(getter, setter), title, init)
 }
 
-inline fun <reified T : Any> Panel.buttonGroup(prop: KMutableProperty0<T>, crossinline init: Panel.() -> Unit) {
-  buttonGroup(prop.toBinding(), init)
+inline fun <reified T : Any> Panel.buttonGroup(prop: KMutableProperty0<T>, @NlsContexts.BorderTitle title: String? = null,
+                                               crossinline init: Panel.() -> Unit) {
+  buttonGroup(prop.toBinding(), title, init)
 }
 
-inline fun <reified T : Any> Panel.buttonGroup(binding: PropertyBinding<T>, crossinline init: Panel.() -> Unit) {
-  buttonGroup(binding, T::class.javaPrimitiveType ?: T::class.java) {
+inline fun <reified T : Any> Panel.buttonGroup(binding: PropertyBinding<T>, @NlsContexts.BorderTitle title: String? = null,
+                                               crossinline init: Panel.() -> Unit) {
+  buttonGroup(binding, T::class.javaPrimitiveType ?: T::class.java, title) {
     init()
   }
 }

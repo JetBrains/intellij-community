@@ -2,7 +2,6 @@
 package com.intellij.ui.dsl.impl
 
 import com.intellij.openapi.observable.properties.GraphProperty
-import com.intellij.openapi.ui.TextFieldWithBrowseButton
 import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.ui.dsl.Cell
@@ -161,7 +160,7 @@ internal class CellImpl<T : JComponent>(
     return !(applyIfEnabled && !viewComponent.isEnabled)
   }
 
-  fun onValidationOnInput(callback: ValidationInfoBuilder.(T) -> ValidationInfo?): CellImpl<T> {
+  fun validationOnInput(callback: ValidationInfoBuilder.(T) -> ValidationInfo?): CellImpl<T> {
     val origin = component.origin
     dialogPanelConfig.componentValidateCallbacks[origin] = { callback(ValidationInfoBuilder(origin), component) }
     property?.let { dialogPanelConfig.customValidationRequestors.getOrPut(origin, { SmartList() }).add(it::afterPropagation) }
@@ -178,11 +177,3 @@ internal class CellImpl<T : JComponent>(
     comment?.let { it.isEnabled = isEnabled }
   }
 }
-
-private val JComponent.origin: JComponent
-  get() {
-    return when (this) {
-      is TextFieldWithBrowseButton -> textField
-      else -> this
-    }
-  }
