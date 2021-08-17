@@ -12,6 +12,7 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.impl.EditorHistoryManager
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.psi.PsiFileSystemItem
 import com.intellij.util.Time.*
 
@@ -24,6 +25,7 @@ internal class SearchEverywhereFileFeaturesProvider : SearchEverywhereElementFea
     internal const val RECENT_INDEX_DATA_KEY = "recentFilesIndex"
     internal const val PREDICTION_SCORE_DATA_KEY = "predictionScore"
     internal const val PRIORITY_DATA_KEY = "priority"
+    internal const val IS_SAME_MODULE = "isSameModule"
 
     internal const val FILETYPE_USAGE_RATIO_DATA_KEY = "fileTypeUsageRatio"
     internal const val TIME_SINCE_LAST_FILETYPE_USAGE = "timeSinceLastFileTypeUsage"
@@ -105,6 +107,7 @@ internal class SearchEverywhereFileFeaturesProvider : SearchEverywhereElementFea
     data[FILETYPE_DATA_KEY] = item.virtualFile.fileType.name
     data[RECENT_INDEX_DATA_KEY] = getRecentFilesIndex(item)
     data[PREDICTION_SCORE_DATA_KEY] = getPredictionScore(item)
+    data[IS_SAME_MODULE] = isSameModuleAsOpenedFile(item)
     data.putAll(getModificationTimeStats(item, currentTime))
 
     if (fileTypeStats != null) {
@@ -173,5 +176,16 @@ internal class SearchEverywhereFileFeaturesProvider : SearchEverywhereElementFea
     val historyManagerWrapper = FileHistoryManagerWrapper.getInstance(item.project)
     val probability = historyManagerWrapper.calcNextFileProbability(item.virtualFile)
     return roundDouble(probability)
+  }
+
+  private fun isSameModuleAsOpenedFile(item: PsiFileSystemItem): Boolean {
+    val project = item.project
+    val openedFile = FileEditorManager.getInstance(project).selectedEditor?.file ?: return false
+
+    val fileIndex = ProjectRootManager.getInstance(project).fileIndex
+    val openedFileModule = fileIndex.getModuleForFile(openedFile) ?: return false
+    val itemModule = fileIndex.getModuleForFile(item.virtualFile) ?: return false
+
+    return openedFileModule == itemModule
   }
 }

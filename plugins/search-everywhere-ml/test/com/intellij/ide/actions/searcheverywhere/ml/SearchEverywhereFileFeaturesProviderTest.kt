@@ -9,6 +9,7 @@ import com.intellij.ide.actions.searcheverywhere.ml.features.SearchEverywhereFil
 import com.intellij.ide.actions.searcheverywhere.ml.features.SearchEverywhereFileFeaturesProvider.Companion.FILETYPE_USED_IN_LAST_MONTH_DATA_KEY
 import com.intellij.ide.actions.searcheverywhere.ml.features.SearchEverywhereFileFeaturesProvider.Companion.IS_DIRECTORY_DATA_KEY
 import com.intellij.ide.actions.searcheverywhere.ml.features.SearchEverywhereFileFeaturesProvider.Companion.IS_FAVORITE_DATA_KEY
+import com.intellij.ide.actions.searcheverywhere.ml.features.SearchEverywhereFileFeaturesProvider.Companion.IS_SAME_MODULE
 import com.intellij.ide.actions.searcheverywhere.ml.features.SearchEverywhereFileFeaturesProvider.Companion.PRIORITY_DATA_KEY
 import com.intellij.ide.actions.searcheverywhere.ml.features.SearchEverywhereFileFeaturesProvider.Companion.RECENT_INDEX_DATA_KEY
 import com.intellij.ide.actions.searcheverywhere.ml.features.SearchEverywhereFileFeaturesProvider.Companion.TIME_SINCE_LAST_FILETYPE_USAGE
@@ -27,17 +28,27 @@ import com.intellij.mock.MockVirtualFile
 import com.intellij.openapi.components.service
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.impl.EditorHistoryManager
+import com.intellij.openapi.module.Module
+import com.intellij.openapi.roots.ModuleRootModificationUtil
+import com.intellij.openapi.vfs.VfsUtilCore
+import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.psi.PsiFileSystemItem
+import com.intellij.psi.PsiManager
+import com.intellij.psi.util.PsiUtil
 import com.intellij.util.Time
+import java.io.File
+import java.nio.charset.StandardCharsets
 import java.time.LocalDateTime
 import java.time.ZoneId
 
 
 internal class SearchEverywhereFileFeaturesProviderTest
-  : FeaturesProviderTestCase<SearchEverywhereFileFeaturesProvider>(SearchEverywhereFileFeaturesProvider::class.java) {
+  : HeavyFeaturesProviderTestCase<SearchEverywhereFileFeaturesProvider>(SearchEverywhereFileFeaturesProvider::class.java) {
 
   private val testFile: PsiFileSystemItem by lazy {
-    getFileFromTestData("file.java")
+    val file = createTempVirtualFile("testFile.java", null, "", StandardCharsets.UTF_8)
+    PsiUtil.getPsiFile(project, file)
   }
 
   private val mockedFileStatsProvider
@@ -344,6 +355,29 @@ internal class SearchEverywhereFileFeaturesProviderTest
       .isEqualTo(expectedValues)
   }
 
+  fun testFileInDifferentModule() {
+    val (_, moduleAFiles) = createModuleWithJavaFiles("testModuleA", 1)
+    val (_, moduleBFiles) = createModuleWithJavaFiles("testModuleB", 1)
+
+    FileEditorManager.getInstance(project).openFile(moduleAFiles.first(), true)
+
+    val psiFile = PsiUtil.getPsiFile(project, moduleBFiles.first())
+    checkThatFeature(IS_SAME_MODULE)
+      .ofElement(psiFile)
+      .isEqualTo(false)
+  }
+
+  fun testFileInTheSameModule() {
+    val (_, files) = createModuleWithJavaFiles("testModule", 2)
+
+    FileEditorManager.getInstance(project).openFile(files.first(), true)
+
+    val psiFile = PsiUtil.getPsiFile(project, files.last())
+    checkThatFeature(IS_SAME_MODULE)
+      .ofElement(psiFile)
+      .isEqualTo(true)
+  }
+
   private fun createFileWithModTimestamp(modificationTimestamp: Long): PsiFileSystemItem {
     val mockVirtualFile = object : MockVirtualFile("file.java") {
       override fun getTimeStamp(): Long {
@@ -354,29 +388,39 @@ internal class SearchEverywhereFileFeaturesProviderTest
     return MockPsiFile(mockVirtualFile, psiManager)
   }
 
-  private fun prepareForRecentIndexTest(): List<PsiFileSystemItem> {
+  private fun prepareForRecentIndexTest(numberOfFiles: Int = 3): List<PsiFileSystemItem> {
     closeAllOpenedFiles()
     EditorHistoryManager.getInstance(project).removeAllFiles()
-    return openAllFilesFromRecentFilesTestDir()
+
+    val editor = FileEditorManager.getInstance(project)
+    return (1..numberOfFiles).map {
+      val file = createTempVirtualFile("file$it.java", null, "", StandardCharsets.UTF_8)
+      MockPsiFile(file, PsiManager.getInstance(project))
+    }.onEach { file -> editor.openFile(file.virtualFile, true) }
+  }
+
+  private fun createModuleWithJavaFiles(moduleName: String, numberOfFiles: Int): Pair<Module, List<VirtualFile>> {
+    val moduleDir = createTempDir(moduleName)
+    val module = createModuleAt(moduleName, project, moduleType, moduleDir.toPath())
+    val srcDir = File(moduleDir, "src").apply { mkdir() }
+    val srcUrl = VfsUtilCore.pathToUrl(srcDir.toPath().toString())
+
+    val createdFiles = (1..numberOfFiles).map {
+      val file = File(srcDir, "file$it.java").apply { createNewFile() }
+      VirtualFileManager.getInstance().refreshAndFindFileByNioPath(file.toPath())!!
+    }.toList()
+
+    ModuleRootModificationUtil.updateModel(module) { model ->
+      val contentEntry = model.addContentEntry(srcUrl)
+      contentEntry.addSourceFolder(srcUrl, false)
+    }
+
+    return Pair(module, createdFiles)
   }
 
   private fun closeAllOpenedFiles() {
     val editor = FileEditorManager.getInstance(project)
     editor.openFiles.forEach { editor.closeFile(it) }
-  }
-
-  /**
-   * Opens all files in testData/recentFilesTest
-   * @return List of the opened files in the order they were opened
-   */
-  private fun openAllFilesFromRecentFilesTestDir(): List<PsiFileSystemItem> {
-    val files = getDirectoryFromTestData("recentFilesTest").files.toList()
-
-    files.forEach {
-      FileEditorManager.getInstance(project).openFile(it.virtualFile, true)
-    }
-
-    return files
   }
 
   override fun tearDown() {

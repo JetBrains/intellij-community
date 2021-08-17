@@ -2,37 +2,17 @@ package com.intellij.ide.actions.searcheverywhere.ml
 
 import com.intellij.ide.actions.searcheverywhere.ml.FeaturesProviderTestCase.AssertionElementSelector.AssertionSpecifier
 import com.intellij.ide.actions.searcheverywhere.ml.features.SearchEverywhereElementFeaturesProvider
-import com.intellij.openapi.application.PluginPathManager
-import com.intellij.openapi.vfs.LocalFileSystem
-import com.intellij.psi.PsiDirectory
-import com.intellij.psi.PsiFile
-import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
+import com.intellij.openapi.project.Project
+import junit.framework.TestCase.assertEquals
+import junit.framework.TestCase.fail
 
-internal abstract class FeaturesProviderTestCase<T : SearchEverywhereElementFeaturesProvider>(private val providerClass: Class<T>)
-  : LightJavaCodeInsightFixtureTestCase() {
-  protected val provider: SearchEverywhereElementFeaturesProvider by lazy {
-    SearchEverywhereElementFeaturesProvider.EP_NAME.findExtensionOrFail(providerClass)
-  }
+internal interface FeaturesProviderTestCase {
+  val provider: SearchEverywhereElementFeaturesProvider
+  val testProject: Project
 
-  override fun getTestDataPath(): String {
-    return PluginPathManager.getPluginHomePath("search-everywhere-ml").plus("/testData")
-  }
+  fun checkThatFeature(feature: String) = AssertionElementSelector(this, feature)
 
-  protected fun getFileFromTestData(name: String): PsiFile {
-    val vf = getFileFromPath(name)
-    return psiManager.findFile(vf)!!
-  }
-
-  protected fun getDirectoryFromTestData(name: String): PsiDirectory {
-    val vf = getFileFromPath(name)
-    return psiManager.findDirectory(vf)!!
-  }
-
-  private fun getFileFromPath(name: String) = LocalFileSystem.getInstance().findFileByPath("$testDataPath/$name")!!
-
-  fun checkThatFeature(feature: String) = AssertionElementSelector(feature)
-
-  fun checkThatFeatures() = AssertionElementSelector(null)
+  fun checkThatFeatures() = AssertionElementSelector(this, null)
 
   /**
    * The [AssertionElementSelector] and its inner classes allow for writing concise
@@ -50,7 +30,7 @@ internal abstract class FeaturesProviderTestCase<T : SearchEverywhereElementFeat
    *   - [AssertionSpecifier.withQueryLength]
    *   - [AssertionSpecifier.withPriority]
    */
-  inner class AssertionElementSelector(private val feature: String?) {
+  class AssertionElementSelector(private val testCase: FeaturesProviderTestCase, private val feature: String?) {
     fun <E : Any> ofElement(element: E) = AssertionSpecifier(element)
 
     inner class AssertionSpecifier<E : Any>(private val element: E) {
@@ -58,7 +38,7 @@ internal abstract class FeaturesProviderTestCase<T : SearchEverywhereElementFeat
       private var currentTime = 0L
       private var queryLength = 0
       private var elementPriority = 0
-      private val cache = provider.getDataToCache(project)
+      private val cache = testCase.provider.getDataToCache(testCase.testProject)
 
       /**
        * Specifies the current time / session start time that will be passed when obtaining the features,
@@ -100,10 +80,11 @@ internal abstract class FeaturesProviderTestCase<T : SearchEverywhereElementFeat
       fun changes(from: Any?, to: Any?) = ChangeOperation(from, to)
 
       private fun assert(expectedValue: Any?) {
-        features = provider.getElementFeatures(element, currentTime, queryLength, elementPriority, cache)
+        features = testCase.provider.getElementFeatures(element, currentTime, queryLength, elementPriority, cache)
 
         if (features.isEmpty()) {
-          fail("The provider ${providerClass.simpleName} has returned empty map of features. Maybe element type is incorrect?")
+          val providerClass = testCase.provider::class.java.simpleName
+          fail("The provider $providerClass has returned empty map of features. Maybe element type is incorrect?")
           return
         }
 
