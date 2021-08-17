@@ -9,9 +9,9 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.event.MouseWheelEvent;
 import java.util.Objects;
+import java.util.function.BooleanSupplier;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
-import java.util.function.Supplier;
 
 import static com.intellij.ui.scroll.MouseWheelSmoothScroll.*;
 import static com.intellij.ui.scroll.SmoothScrollUtil.*;
@@ -23,23 +23,23 @@ import static java.lang.Math.max;
 public final class TouchScroll {
   private final InertialAnimator horizontal = new InertialAnimator(), vertical = new InertialAnimator();
   private final FlingManager horizontalFling = new FlingManager(), verticalFling = new FlingManager();
-  private final @NotNull Supplier<Boolean> myScrollEnabled;
+  private final BooleanSupplier myScrollEnabled;
 
   public static TouchScroll create() {
     return create(() -> true);
   }
 
-  public static TouchScroll create(@NotNull Supplier<Boolean> isScrollEnabled) {
+  public static TouchScroll create(BooleanSupplier isScrollEnabled) {
     return new TouchScroll(isScrollEnabled);
   }
 
-  private TouchScroll(@NotNull Supplier<Boolean> isEnabledChecker) {
+  private TouchScroll(BooleanSupplier isEnabledChecker) {
     myScrollEnabled = Objects.requireNonNull(isEnabledChecker);
   }
 
 
   public void processMouseWheelEvent(@NotNull MouseWheelEvent e, @Nullable Consumer<? super MouseWheelEvent> alternative) {
-    JScrollBar bar = !myScrollEnabled.get() ? null : getEventScrollBar(e);
+    JScrollBar bar = !myScrollEnabled.getAsBoolean() ? null : getEventScrollBar(e);
     if (bar == null) {
       if (alternative != null) alternative.accept(e);
       return;

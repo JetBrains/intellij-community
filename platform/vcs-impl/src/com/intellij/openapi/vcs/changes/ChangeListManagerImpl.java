@@ -72,7 +72,7 @@ import java.io.File;
 import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.*;
-import java.util.function.Supplier;
+import java.util.function.BooleanSupplier;
 
 import static com.intellij.openapi.progress.util.ProgressIndicatorUtils.awaitWithCheckCanceled;
 import static com.intellij.openapi.vcs.ProjectLevelVcsManager.VCS_CONFIGURATION_CHANGED;
@@ -594,7 +594,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Persis
                              @NotNull ProgressIndicator indicator) {
     final ChangeListUpdater updater = dataHolder.getChangeListUpdater();
     // do actual requests about file statuses
-    Supplier<Boolean> disposedGetter = () -> myProject.isDisposed() || myUpdater.isStopped();
+    BooleanSupplier disposedGetter = () -> myProject.isDisposed() || myUpdater.isStopped();
     final UpdatingChangeListBuilder builder = new UpdatingChangeListBuilder(updater,
                                                                             dataHolder.getComposite(), disposedGetter);
 

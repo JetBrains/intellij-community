@@ -62,8 +62,8 @@ import java.awt.event.InputEvent;
 import java.awt.event.MouseEvent;
 import java.util.List;
 import java.util.*;
+import java.util.function.BooleanSupplier;
 import java.util.function.Function;
-import java.util.function.Supplier;
 
 public class SettingsTreeView extends JComponent implements Accessible, Disposable, OptionsEditorColleague {
   private static final int ICON_GAP = 5;
@@ -197,9 +197,9 @@ public class SettingsTreeView extends JComponent implements Accessible, Disposab
 
     private final class MyIcon implements Icon {
       private final Boolean expanded;
-      private final Supplier<Boolean> selected;
+      private final BooleanSupplier selected;
 
-      private MyIcon(@Nullable Boolean expanded, Supplier<Boolean> selected) {
+      private MyIcon(@Nullable Boolean expanded, BooleanSupplier selected) {
         this.expanded = expanded;
         this.selected = selected;
       }
@@ -216,7 +216,7 @@ public class SettingsTreeView extends JComponent implements Accessible, Disposab
 
       @Override
       public void paintIcon(Component c, Graphics g, int x, int y) {
-        if (expanded != null) control.paint(c, g, x, y, getIconWidth(), getIconHeight(), expanded, selected.get());
+        if (expanded != null) control.paint(c, g, x, y, getIconWidth(), getIconHeight(), expanded, selected.getAsBoolean());
       }
     }
   }

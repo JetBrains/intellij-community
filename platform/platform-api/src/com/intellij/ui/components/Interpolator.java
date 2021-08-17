@@ -10,7 +10,7 @@ import java.util.ArrayDeque;
 import java.util.Deque;
 import java.util.Objects;
 import java.util.function.Consumer;
-import java.util.function.Supplier;
+import java.util.function.IntSupplier;
 
 /**
  * A simple interpolator that relies on Swing {@link Timer}.
@@ -22,7 +22,7 @@ public class Interpolator {
   private static final int PERIOD = 7; // ms
   private static final long TIMEOUT = 500_000000L; // ns
 
-  private final Supplier<Integer> myInput;
+  private final IntSupplier myInput;
   private final Consumer<? super Integer> myOutput;
 
   private final Timer myTimer = new Timer(PERIOD, new TimerListener());
@@ -37,7 +37,7 @@ public class Interpolator {
    * @param input  a getter of the value
    * @param output a setter of the value
    */
-  public Interpolator(@NotNull Supplier<Integer> input, @NotNull Consumer<? super Integer> output) {
+  public Interpolator(IntSupplier input, @NotNull Consumer<? super Integer> output) {
     myInput = input;
     myOutput = output;
   }
@@ -61,7 +61,7 @@ public class Interpolator {
     long elapsed = (moment - myPreviousEventMoment);
 
     if (mySegments.isEmpty()) {
-      mySegments.add(new Line(new Position(moment, myInput.get()),
+      mySegments.add(new Line(new Position(moment, myInput.getAsInt()),
                               new Position(moment + delay * 1000000L, value)));
     }
     else {
@@ -83,7 +83,7 @@ public class Interpolator {
    * @return the ultimate target value or the current value if there's no target
    */
   public int getTarget() {
-    return mySegments.isEmpty() ? myInput.get() : mySegments.getLast().getEnd().getValue();
+    return mySegments.isEmpty() ? myInput.getAsInt() : mySegments.getLast().getEnd().getValue();
   }
 
   private class TimerListener implements ActionListener {
@@ -103,7 +103,7 @@ public class Interpolator {
 
         Integer v = segment.getValueAt(moment);
 
-        if (v != null && !Objects.equals(v, myInput.get())) {
+        if (v != null && !Objects.equals(v, myInput.getAsInt())) {
           setValue(v);
         }
 

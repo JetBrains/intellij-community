@@ -9,7 +9,7 @@ import com.intellij.util.Alarm;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.function.Supplier;
+import java.util.function.BooleanSupplier;
 
 @SomeQueue
 public final class ControlledCycle {
@@ -22,7 +22,7 @@ public final class ControlledCycle {
   private final AtomicBoolean myActive;
 
   public ControlledCycle(@NotNull Project project,
-                         final Supplier<Boolean> callback,
+                         final BooleanSupplier callback,
                          @NotNull final String name,
                          final int refreshInterval) {
     myRefreshInterval = refreshInterval;
@@ -34,7 +34,7 @@ public final class ControlledCycle {
       public void run() {
         if (!myActive.get() || project.isDisposed()) return;
         try {
-          shouldBeContinued = callback.get();
+          shouldBeContinued = callback.getAsBoolean();
         }
         catch (ProcessCanceledException e) {
           return;

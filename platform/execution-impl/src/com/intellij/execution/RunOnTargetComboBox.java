@@ -23,7 +23,7 @@ import java.awt.*;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
-import java.util.function.Supplier;
+import java.util.function.BooleanSupplier;
 
 public class RunOnTargetComboBox extends ComboBox<RunOnTargetComboBox.Item> {
   public static final Logger LOGGER = Logger.getInstance(RunOnTargetComboBox.class);
@@ -259,9 +259,9 @@ public class RunOnTargetComboBox extends ComboBox<RunOnTargetComboBox.Item> {
      * We cannot use the size of the model explicitly in {@code customizeCellRenderer(...)} method to determine whether there are
      * "Saved targets" items because the model also contains "New Target" section with the corresponding items.
      */
-    @NotNull private final Supplier<Boolean> myHasSavedTargetsSupplier;
+    private final BooleanSupplier myHasSavedTargetsSupplier;
 
-    private MyRenderer(@NotNull Supplier<Boolean> hasSavedTargetsSupplier) {
+    private MyRenderer(BooleanSupplier hasSavedTargetsSupplier) {
       myHasSavedTargetsSupplier = hasSavedTargetsSupplier;
     }
 
@@ -281,7 +281,7 @@ public class RunOnTargetComboBox extends ComboBox<RunOnTargetComboBox.Item> {
 
     @Override
     protected void customizeCellRenderer(@NotNull JList<? extends Item> list, Item value, int index, boolean selected, boolean hasFocus) {
-      if (value == null && !myHasSavedTargetsSupplier.get()) {
+      if (value == null && !myHasSavedTargetsSupplier.getAsBoolean()) {
         /* `value` is expected to be `null` here */
         append(ExecutionBundle.message("local.machine"));
         setIcon(AllIcons.Nodes.HomeFolder);

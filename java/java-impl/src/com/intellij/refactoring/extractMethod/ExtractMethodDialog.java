@@ -52,7 +52,7 @@ import java.awt.event.FocusAdapter;
 import java.awt.event.FocusEvent;
 import java.util.List;
 import java.util.*;
-import java.util.function.Supplier;
+import java.util.function.IntSupplier;
 
 /**
  * @author Konstantin Bulenkov
@@ -89,7 +89,7 @@ public class ExtractMethodDialog extends RefactoringDialog implements AbstractEx
   public JPanel myParamTable;
   private VariableData[] myInputVariables;
   private TypeSelector mySelector;
-  private final Supplier<Integer> myDuplicatesCountSupplier;
+  private final IntSupplier myDuplicatesCountSupplier;
   private boolean isReturnVisible = false;
 
   private Map<PsiVariable, ParameterInfo> myInitialParameterInfos;
@@ -98,7 +98,7 @@ public class ExtractMethodDialog extends RefactoringDialog implements AbstractEx
                              PsiType returnType, PsiTypeParameterList typeParameterList, PsiType[] exceptions,
                              boolean isStatic, boolean canBeStatic, boolean canBeChainedConstructor,
                              @NlsContexts.DialogTitle String title, String helpId, @Nullable Nullability nullability, PsiElement[] elementsToExtract,
-                             @Nullable Supplier<Integer> duplicatesCountSupplier) {
+                             IntSupplier duplicatesCountSupplier) {
     super(project, true);
     myTargetClass = targetClass;
     myReturnType = returnType;
@@ -484,7 +484,7 @@ public class ExtractMethodDialog extends RefactoringDialog implements AbstractEx
         new Task.Backgroundable(myProject, JavaRefactoringBundle.message("refactoring.extract.method.dialog.duplicates.progress")) {
           @Override
           public void run(@NotNull ProgressIndicator indicator) {
-            int count = ReadAction.compute(myDuplicatesCountSupplier::get);
+            int count = ReadAction.compute(myDuplicatesCountSupplier::getAsInt);
             ApplicationManager.getApplication().invokeLater(
               () -> {
                 if (count != 0) {
