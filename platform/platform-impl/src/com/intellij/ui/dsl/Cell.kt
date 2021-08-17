@@ -14,7 +14,7 @@ import javax.swing.JTextField
 import javax.swing.text.JTextComponent
 import kotlin.reflect.KMutableProperty0
 
-const val COLUMNS_LARGE = 25
+const val COLUMNS_MEDIUM = 25
 
 internal const val DSL_INT_TEXT_RANGE_PROPERTY = "dsl.intText.range"
 

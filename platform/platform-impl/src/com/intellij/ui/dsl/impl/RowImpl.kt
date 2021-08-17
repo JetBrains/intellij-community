@@ -2,22 +2,26 @@
 package com.intellij.ui.dsl.impl
 
 import com.intellij.BundleBase
-import com.intellij.openapi.actionSystem.ActionPlaces
-import com.intellij.openapi.actionSystem.AnAction
+import com.intellij.icons.AllIcons
+import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.impl.ActionButton
 import com.intellij.openapi.fileChooser.FileChooserDescriptor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.TextFieldWithBrowseButton
 import com.intellij.openapi.ui.panel.ComponentPanelBuilder
+import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.ui.ClickListener
+import com.intellij.ui.LayeredIcon
 import com.intellij.ui.SimpleListCellRenderer
 import com.intellij.ui.UIBundle
 import com.intellij.ui.components.*
 import com.intellij.ui.dsl.*
 import com.intellij.ui.dsl.Cell
 import com.intellij.ui.dsl.Row
+import com.intellij.ui.dsl.gridLayout.UiDslException
 import com.intellij.ui.layout.*
 import com.intellij.util.MathUtil
 import org.jetbrains.annotations.ApiStatus
@@ -25,6 +29,7 @@ import java.awt.Dimension
 import java.awt.event.ActionEvent
 import java.awt.event.KeyAdapter
 import java.awt.event.KeyEvent
+import java.awt.event.MouseEvent
 import javax.swing.*
 
 @ApiStatus.Experimental
@@ -112,22 +117,28 @@ internal class RowImpl(private val dialogPanelConfig: DialogPanelConfig,
     return result
   }
 
-  override fun buttonGroup(init: Row.() -> Unit) {
-    dialogPanelConfig.context.addButtonGroup(ButtonGroup())
-    try {
-      init()
-    }
-    finally {
-      dialogPanelConfig.context.removeLastButtonGroup()
-    }
-  }
-
   override fun checkBox(@NlsContexts.Checkbox text: String): CellImpl<JBCheckBox> {
     return cell(JBCheckBox(text))
   }
 
   override fun radioButton(text: String): Cell<JBRadioButton> {
     return cell(JBRadioButton(text))
+  }
+
+  override fun radioButton(text: String, value: Any): Cell<JBRadioButton> {
+    val group = dialogPanelConfig.context.getButtonGroup() ?: throw UiDslException(
+      "Button group must be defined before using radio button with value")
+    val valueType = value::class.javaPrimitiveType ?: value::class.java
+    if (valueType != group.type) {
+      throw UiDslException("Value $value is incompatible with button group binding class ${group.type.simpleName}")
+    }
+    val binding = group.binding
+    val result = radioButton(text)
+    val component = result.component
+    result.onApply { if (component.isSelected) group.set(value) }
+    result.onReset { component.isSelected = binding.get() == value }
+    result.onIsModified { component.isSelected != (binding.get() == value) }
+    return result
   }
 
   override fun button(@NlsContexts.Button text: String, actionListener: (event: ActionEvent) -> Unit): CellImpl<JButton> {
@@ -139,6 +150,27 @@ internal class RowImpl(private val dialogPanelConfig: DialogPanelConfig,
   override fun actionButton(action: AnAction, dimension: Dimension): CellImpl<ActionButton> {
     val component = ActionButton(action, action.templatePresentation, ActionPlaces.UNKNOWN, dimension)
     return cell(component)
+  }
+
+  override fun gearButton(vararg actions: AnAction): CellImpl<JComponent> {
+    val label = JLabel(LayeredIcon.GEAR_WITH_DROPDOWN)
+    label.disabledIcon = AllIcons.General.GearPlain
+    object : ClickListener() {
+      override fun onClick(e: MouseEvent, clickCount: Int): Boolean {
+        if (!label.isEnabled) return true
+        JBPopupFactory.getInstance()
+          .createActionGroupPopup(null, DefaultActionGroup(*actions), DataContext { dataId ->
+            when (dataId) {
+              PlatformDataKeys.CONTEXT_COMPONENT.name -> label
+              else -> null
+            }
+          }, true, null, 10)
+          .showUnderneathOf(label)
+        return true
+      }
+    }.installOn(label)
+
+    return cell(label)
   }
 
   override fun label(text: String): CellImpl<JLabel> {

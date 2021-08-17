@@ -65,7 +65,7 @@ class JBColumnsSizeCalculator {
         removeFirstColumn(remainedSizes, sizesFirstColumn, sizesWithoutFirstColumn, 0)
 
         if (!sizesFirstColumn.isEmpty()) {
-          throw JBGridException()
+          throw UiDslException()
         }
         remainedSizes = sizesWithoutFirstColumn
         result[i + 1] = result[i]
@@ -73,10 +73,10 @@ class JBColumnsSizeCalculator {
     }
 
     if (remainedSizes.isNotEmpty()) {
-      throw JBGridException()
+      throw UiDslException()
     }
     if (remainedResizableColumns.isNotEmpty()) {
-      throw JBGridException()
+      throw UiDslException()
     }
 
     resizeCoords(result, resizableColumns.filter { visibleColumns.contains(it) }.toSet(), width)

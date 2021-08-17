@@ -23,7 +23,7 @@ internal class JBGridImpl : JBGrid {
 
   fun register(component: JComponent, constraints: JBConstraints) {
     if (!isEmpty(constraints)) {
-      throw JBGridException("Some cells are occupied already: $constraints")
+      throw UiDslException("Some cells are occupied already: $constraints")
     }
 
     cells.add(JBComponentCell(constraints, component))
@@ -31,7 +31,7 @@ internal class JBGridImpl : JBGrid {
 
   fun registerSubGrid(constraints: JBConstraints): JBGrid {
     if (!isEmpty(constraints)) {
-      throw JBGridException("Some cells are occupied already: $constraints")
+      throw UiDslException("Some cells are occupied already: $constraints")
     }
 
     val result = JBGridImpl()
@@ -48,7 +48,7 @@ internal class JBGridImpl : JBGrid {
       }
     }
 
-    throw JBGridException("Component has not been registered: $component")
+    throw UiDslException("Component has not been registered: $component")
   }
 
   fun getPreferredSize(): Dimension {

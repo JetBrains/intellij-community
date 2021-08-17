@@ -41,15 +41,15 @@ private fun createIntelliJSpacingConfiguration(): SpacingConfiguration {
   }
 }
 
-class Context {
+internal class Context {
 
-  private val buttonGroupsStack: MutableList<ButtonGroup> = mutableListOf()
+  private val buttonGroupsStack: MutableList<BindButtonGroup<*>> = mutableListOf()
 
-  fun addButtonGroup(buttonGroup: ButtonGroup) {
+  fun addButtonGroup(buttonGroup: BindButtonGroup<*>) {
     buttonGroupsStack.add(buttonGroup)
   }
 
-  fun getButtonGroup(): ButtonGroup? {
+  fun getButtonGroup(): BindButtonGroup<*>? {
     return buttonGroupsStack.lastOrNull()
   }
 

@@ -7,13 +7,13 @@ import javax.swing.JComponent
 import kotlin.reflect.KProperty0
 
 @ApiStatus.Experimental
-class JBGridException(message: String = "Internal error", cause: Throwable? = null) : RuntimeException(message, cause)
+class UiDslException(message: String = "Internal error", cause: Throwable? = null) : RuntimeException(message, cause)
 
 fun checkNonNegative(property: KProperty0<Int>) {
   val value = property.getter()
 
   if (value < 0) {
-    throw JBGridException("Value cannot be negative: ${property.name} = $value")
+    throw UiDslException("Value cannot be negative: ${property.name} = $value")
   }
 }
 
@@ -21,7 +21,7 @@ fun checkPositive(property: KProperty0<Int>) {
   val value = property.getter()
 
   if (value <= 0) {
-    throw JBGridException("Value must be positive: ${property.name} = $value")
+    throw UiDslException("Value must be positive: ${property.name} = $value")
   }
 }
 
@@ -29,13 +29,13 @@ fun checkRange(property: KProperty0<Int>, min: Int, max: Int) {
   val value = property.getter()
 
   if (value < min || value > max) {
-    throw JBGridException("Value must be in range $min..$max: ${property.name} = $value")
+    throw UiDslException("Value must be in range $min..$max: ${property.name} = $value")
   }
 }
 
 fun checkComponent(component: Component?): JComponent {
   if (component !is JComponent) {
-    throw JBGridException("Only JComponents are supported: $component")
+    throw UiDslException("Only JComponents are supported: $component")
   }
 
   return component
@@ -43,7 +43,7 @@ fun checkComponent(component: Component?): JComponent {
 
 fun checkConstraints(constraints: Any?): JBConstraints {
   if (constraints !is JBConstraints) {
-    throw JBGridException("Invalid constraints: $constraints")
+    throw UiDslException("Invalid constraints: $constraints")
   }
 
   return constraints
