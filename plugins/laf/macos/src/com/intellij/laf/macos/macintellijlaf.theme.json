@@ -5,7 +5,7 @@
 
   "ui": {
     "*": {
-      "selectionBackground": "#2961DA",
+      "_comment": "All *.selectionBackground colors are redefined to native ones in MacIntelliJLaf.kt",
       "selectionBackgroundInactive": "#D8D8D8",
       "selectionForeground": "#ffffff",
       "selectionForegroundInactive": "#000000",

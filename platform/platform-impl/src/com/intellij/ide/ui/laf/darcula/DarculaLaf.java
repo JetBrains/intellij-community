@@ -56,6 +56,7 @@ public class DarculaLaf extends BasicLookAndFeel implements UserDataHolder {
   protected Disposable myDisposable;
   private final UserDataHolderBase myUserData = new UserDataHolderBase();
   private static boolean myAltPressed;
+  protected final UIDefaults baseDefaults = new UIDefaults();
 
   public DarculaLaf(@NotNull LookAndFeel base) {
     this.base = base;
@@ -110,6 +111,7 @@ public class DarculaLaf extends BasicLookAndFeel implements UserDataHolder {
     try {
       UIDefaults metalDefaults = new MetalLookAndFeel().getDefaults();
       UIDefaults defaults = base.getDefaults();
+      baseDefaults.putAll(defaults);
 
       if (SystemInfoRt.isLinux && Arrays.asList("CN", "JP", "KR", "TW").contains(Locale.getDefault().getCountry())) {
         defaults.keySet().stream().
@@ -268,6 +270,10 @@ public class DarculaLaf extends BasicLookAndFeel implements UserDataHolder {
     catch (IOException e) {
       log(e);
     }
+  }
+
+  public Color getBaseColor(String key) {
+    return baseDefaults.getColor(key);
   }
 
   protected Object parseValue(String key, @NotNull String value) {
