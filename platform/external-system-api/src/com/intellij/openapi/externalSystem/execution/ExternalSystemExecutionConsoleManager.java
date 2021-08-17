@@ -16,49 +16,53 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author Vladislav.Soroka
- */
-public interface ExternalSystemExecutionConsoleManager<
-  ExternalSystemExecutionConsole extends ExecutionConsole,
-  ExternalSystemProcessHandler extends ProcessHandler> {
-  ExtensionPointName<ExternalSystemExecutionConsoleManager> EP_NAME
+public interface ExternalSystemExecutionConsoleManager<EC extends ExecutionConsole, PH extends ProcessHandler> {
+  ExtensionPointName<ExternalSystemExecutionConsoleManager<?, ?>> EP_NAME
     = ExtensionPointName.create("com.intellij.externalSystemExecutionConsoleManager");
 
-  @NotNull
-  ProjectSystemId getExternalSystemId();
+  @NotNull ProjectSystemId getExternalSystemId();
 
-  @Nullable
-  default ExternalSystemExecutionConsole attachExecutionConsole(@NotNull Project project,
-                                                                @NotNull ExternalSystemTask task,
-                                                                @Nullable ExecutionEnvironment env,
-                                                                @Nullable ExternalSystemProcessHandler processHandler) {return null;}
+  default @Nullable EC attachExecutionConsole(
+    @NotNull Project project,
+    @NotNull ExternalSystemTask task,
+    @Nullable ExecutionEnvironment env,
+    @Nullable PH processHandler
+  ) { return null; }
 
-  void onOutput(@NotNull ExternalSystemExecutionConsole executionConsole,
-                @NotNull ExternalSystemProcessHandler processHandler,
-                @NotNull String text,
-                @NotNull Key processOutputType);
+  void onOutput(
+    @NotNull EC executionConsole,
+    @NotNull PH processHandler,
+    @NotNull String text,
+    @NotNull Key processOutputType
+  );
 
-  default void onStatusChange(@NotNull ExternalSystemExecutionConsole executionConsole,
-                              @NotNull ExternalSystemTaskNotificationEvent event) { }
+  default void onStatusChange(
+    @NotNull EC executionConsole,
+    @NotNull ExternalSystemTaskNotificationEvent event
+  ) { }
 
   boolean isApplicableFor(@NotNull ExternalSystemTask task);
 
-  AnAction[] getRestartActions(@NotNull ExternalSystemExecutionConsole consoleView);
+  AnAction[] getRestartActions(@NotNull EC consoleView);
 
   @ApiStatus.Experimental
-  default Filter[] getCustomExecutionFilters(@NotNull Project project,
-                                             @NotNull ExternalSystemTask task,
-                                             @Nullable ExecutionEnvironment env) { return Filter.EMPTY_ARRAY; }
+  default Filter[] getCustomExecutionFilters(
+    @NotNull Project project,
+    @NotNull ExternalSystemTask task,
+    @Nullable ExecutionEnvironment env
+  ) { return Filter.EMPTY_ARRAY; }
 
   @ApiStatus.Experimental
-  default AnAction[] getCustomActions(@NotNull Project project,
-                                      @NotNull ExternalSystemTask task,
-                                      @Nullable ExecutionEnvironment env) { return AnAction.EMPTY_ARRAY; }
+  default AnAction[] getCustomActions(
+    @NotNull Project project,
+    @NotNull ExternalSystemTask task,
+    @Nullable ExecutionEnvironment env
+  ) { return AnAction.EMPTY_ARRAY; }
 
   @ApiStatus.Experimental
-  default AnAction[] getCustomContextActions(@NotNull Project project,
-                                             @NotNull ExternalSystemTask task,
-                                             @Nullable ExecutionEnvironment env) { return AnAction.EMPTY_ARRAY; }
-
+  default AnAction[] getCustomContextActions(
+    @NotNull Project project,
+    @NotNull ExternalSystemTask task,
+    @Nullable ExecutionEnvironment env
+  ) { return AnAction.EMPTY_ARRAY; }
 }
