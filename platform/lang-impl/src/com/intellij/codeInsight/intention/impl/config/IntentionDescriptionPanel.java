@@ -45,8 +45,8 @@ public class IntentionDescriptionPanel {
   private JPanel myDescriptionPanel;
   private final List<IntentionUsagePanel> myBeforeUsagePanels = new ArrayList<>();
   private final List<IntentionUsagePanel> myAfterUsagePanels = new ArrayList<>();
-  @NonNls static final String BEFORE_TEMPLATE = "before.java.template";
-  @NonNls static final String AFTER_TEMPLATE = "after.java.template";
+  @NonNls private static final String BEFORE_TEMPLATE = "before.java.template";
+  @NonNls private static final String AFTER_TEMPLATE = "after.java.template";
 
   public IntentionDescriptionPanel() {
     myBeforePanel.setBorder(IdeBorderFactory.createTitledBorder(CodeInsightBundle.message("border.title.before"), false, JBUI.insetsTop(8)).setShowLine(false));
@@ -120,10 +120,9 @@ public class IntentionDescriptionPanel {
       readHTML(toHTML(CodeInsightBundle.message("intention.settings.category.text", intentionCategory)));
       setupPoweredByPanel(null);
 
-      String pathForPackage = getClass().getPackage().getName().replace('.', '/');
-      TextDescriptor beforeTemplate = new ResourceTextDescriptor(getClass().getClassLoader(), pathForPackage + "/" + BEFORE_TEMPLATE);
+      TextDescriptor beforeTemplate = new PlainTextDescriptor(CodeInsightBundle.message("templates.intention.settings.category.before"), BEFORE_TEMPLATE);
       showUsages(myBeforePanel, myBeforeUsagePanels, new TextDescriptor[]{beforeTemplate});
-      TextDescriptor afterTemplate = new ResourceTextDescriptor(getClass().getClassLoader(), pathForPackage + "/" + AFTER_TEMPLATE);
+      TextDescriptor afterTemplate = new PlainTextDescriptor(CodeInsightBundle.message("templates.intention.settings.category.after"), AFTER_TEMPLATE);
       showUsages(myAfterPanel, myAfterUsagePanels, new TextDescriptor[]{afterTemplate});
 
       SwingUtilities.invokeLater(() -> myPanel.revalidate());
