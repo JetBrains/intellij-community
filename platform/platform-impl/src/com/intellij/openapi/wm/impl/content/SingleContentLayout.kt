@@ -128,8 +128,11 @@ internal class SingleContentLayout(
 
     wrapper = NonOpaquePanel(HorizontalLayout(0)).also {
       MyRedispatchMouseEventListener { e ->
-        myUi.tabComponent.parent?.let { westPanel ->
-          westPanel.dispatchEvent(SwingUtilities.convertMouseEvent(e.component, e, westPanel))
+        // extra actions are registered in ToolWindowContentUi#initMouseListeners
+        if (SwingUtilities.isLeftMouseButton(e)) {
+          myUi.tabComponent.parent?.let { westPanel ->
+            westPanel.dispatchEvent(SwingUtilities.convertMouseEvent(e.component, e, westPanel))
+          }
         }
       }.installOn(it)
       MouseDragHelper.setComponentDraggable(it, true)
