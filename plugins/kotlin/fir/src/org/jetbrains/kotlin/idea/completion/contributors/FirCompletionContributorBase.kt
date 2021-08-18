@@ -6,6 +6,12 @@ import com.intellij.codeInsight.completion.CompletionParameters
 import com.intellij.codeInsight.completion.PrefixMatcher
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.openapi.project.Project
+import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
+import org.jetbrains.kotlin.analysis.api.scopes.KtScopeNameFilter
+import org.jetbrains.kotlin.analysis.api.symbols.*
+import org.jetbrains.kotlin.analysis.api.symbols.markers.KtNamedSymbol
+import org.jetbrains.kotlin.analysis.api.types.KtSubstitutor
+import org.jetbrains.kotlin.analysis.api.types.KtType
 import org.jetbrains.kotlin.idea.completion.ItemPriority
 import org.jetbrains.kotlin.idea.completion.LookupElementSink
 import org.jetbrains.kotlin.idea.completion.context.FirBasicCompletionContext
@@ -18,11 +24,6 @@ import org.jetbrains.kotlin.idea.completion.priority
 import org.jetbrains.kotlin.idea.completion.weighers.Weighers
 import org.jetbrains.kotlin.idea.completion.weighers.WeighingContext
 import org.jetbrains.kotlin.idea.fir.HLIndexHelper
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
-import org.jetbrains.kotlin.analysis.api.scopes.KtScopeNameFilter
-import org.jetbrains.kotlin.analysis.api.symbols.*
-import org.jetbrains.kotlin.analysis.api.symbols.markers.KtNamedSymbol
-import org.jetbrains.kotlin.analysis.api.types.KtType
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.platform.TargetPlatform
 import org.jetbrains.kotlin.psi.KtDotQualifiedExpression
@@ -93,7 +94,8 @@ internal abstract class FirCompletionContributorBase<C : FirRawPositionCompletio
         context: WeighingContext,
         symbol: KtCallableSymbol,
         options: CallableInsertionOptions,
-        priority: ItemPriority? = null
+        substitutor: KtSubstitutor = KtSubstitutor.Empty(token),
+        priority: ItemPriority? = null,
     ) {
         if (symbol !is KtNamedSymbol) return
         // Don't offer any deprecated items that could leads to compile errors.
@@ -102,7 +104,7 @@ internal abstract class FirCompletionContributorBase<C : FirRawPositionCompletio
             createCallableLookupElement(symbol, options)
         }
         priority?.let { lookup.priority = it }
-        applyWeighers(context, lookup, symbol)
+        applyWeighers(context, lookup, symbol, substitutor)
         sink.addElement(lookup)
     }
 
@@ -115,8 +117,9 @@ internal abstract class FirCompletionContributorBase<C : FirRawPositionCompletio
         context: WeighingContext,
         lookupElement: LookupElement,
         symbol: KtSymbol,
+        substitutor: KtSubstitutor,
     ): LookupElement = lookupElement.apply {
-        with(Weighers) { applyWeighsToLookupElement(context, lookupElement, symbol) }
+        with(Weighers) { applyWeighsToLookupElement(context, lookupElement, symbol, substitutor) }
     }
 }
 

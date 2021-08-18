@@ -71,7 +71,7 @@ internal open class FirCallableCompletionContributor(
         }
 
         val receiver = explicitReceiver
-        val weighingContext = createWeighingContext(expectedType)
+        val weighingContext = createWeighingContext(receiver, expectedType, scopesContext.implicitReceivers)
 
         when {
             receiver != null -> {
@@ -102,8 +102,10 @@ internal open class FirCallableCompletionContributor(
         val extensionsWhichCanBeCalled = collectSuitableExtensions(implicitScopes, extensionChecker, visibilityChecker)
 
         availableNonExtensions.forEach { addCallableSymbolToCompletion(context, it, getOptions(it)) }
-        extensionsWhichCanBeCalled.forEach { (symbol, applicable) ->
-            getExtensionOptions(symbol, applicable)?.let { addCallableSymbolToCompletion(context, symbol, it) }
+        extensionsWhichCanBeCalled.forEach { (symbol, applicabilityResult) ->
+            getExtensionOptions(symbol, applicabilityResult)?.let {
+                addCallableSymbolToCompletion(context, symbol, it, applicabilityResult.substitutor)
+            }
         }
 
         if (shouldCompleteTopLevelCallablesFromIndex) {
@@ -189,8 +191,10 @@ internal open class FirCallableCompletionContributor(
                 }
             }
 
-        extensionNonMembers.forEach { (symbol, applicability) ->
-            getExtensionOptions(symbol, applicability)?.let { addCallableSymbolToCompletion(context, symbol, it) }
+        extensionNonMembers.forEach { (symbol, applicabilityResult) ->
+            getExtensionOptions(symbol, applicabilityResult)?.let {
+                addCallableSymbolToCompletion(context, symbol, it, applicabilityResult.substitutor)
+            }
         }
 
         collectTopLevelExtensionsFromIndices(listOf(typeOfPossibleReceiver), extensionChecker, visibilityChecker)
