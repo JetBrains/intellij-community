@@ -42,6 +42,7 @@ class ExtractSelector {
       singleElement is PsiCodeBlock -> alignCodeBlock(singleElement)
       singleElement is PsiExpression -> listOfNotNull(alignExpression(singleElement))
       singleElement is PsiSwitchLabeledRuleStatement -> listOfNotNull(singleElement.body)
+      singleElement is PsiExpressionStatement -> listOf(alignExpressionStatement(singleElement))
       else -> elements
     }
     return when {
@@ -50,6 +51,13 @@ class ExtractSelector {
       alignedElements.first() !== elements.first() || alignedElements.last() !== elements.last() -> alignElements(alignedElements)
       else -> alignedElements
     }
+  }
+
+  private fun alignExpressionStatement(statement: PsiExpressionStatement): PsiElement {
+    val switchRule = statement.parent as? PsiSwitchLabeledRuleStatement
+    val switchExpression = PsiTreeUtil.getParentOfType(switchRule, PsiSwitchExpression::class.java)
+    if (switchExpression != null) return statement.expression
+    return statement
   }
 
   private fun isControlFlowStatement(statement: PsiStatement?): Boolean {
