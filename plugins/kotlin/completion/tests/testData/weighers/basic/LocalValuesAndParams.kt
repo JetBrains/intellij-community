@@ -1,3 +1,4 @@
+// FIR_COMPARISON
 val initGlobal = 12
 
 fun test(initParam : Int) {

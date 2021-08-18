@@ -7,34 +7,59 @@ import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.openapi.project.Project
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.ValidityTokenOwner
+import org.jetbrains.kotlin.analysis.api.components.KtImplicitReceiver
 import org.jetbrains.kotlin.analysis.api.symbols.KtSymbol
 import org.jetbrains.kotlin.analysis.api.tokens.ValidityToken
+import org.jetbrains.kotlin.analysis.api.types.KtSubstitutor
 import org.jetbrains.kotlin.analysis.api.types.KtType
 import org.jetbrains.kotlin.analysis.api.withValidityAssertion
+import org.jetbrains.kotlin.psi.KtExpression
 
 internal class WeighingContext private constructor(
     override val token: ValidityToken,
+    val explicitReceiver: KtExpression?,
     private val myExpectedType: KtType?,
+    private val myImplicitReceivers: List<KtImplicitReceiver>,
 ) : ValidityTokenOwner {
     val expectedType: KtType?
         get() = withValidityAssertion {
             myExpectedType
         }
 
-    fun withoutExpectedType(): WeighingContext = withValidityAssertion { WeighingContext(token, null) }
+    /** All implicit receivers in the current resolution context. The receiver declared in the inner most scope appears first. */
+    val implicitReceiver: List<KtImplicitReceiver>
+        get() = withValidityAssertion {
+            return myImplicitReceivers
+        }
+
+    fun withoutExpectedType(): WeighingContext =
+        withValidityAssertion {
+            WeighingContext(token, explicitReceiver, null, myImplicitReceivers)
+        }
 
     companion object {
-        fun KtAnalysisSession.createWeighingContext(expectedType: KtType?) = WeighingContext(token, expectedType)
-        fun KtAnalysisSession.empty(project: Project) = WeighingContext(token, null)
+        fun KtAnalysisSession.createWeighingContext(
+            receiver: KtExpression?,
+            expectedType: KtType?,
+            implicitReceivers: List<KtImplicitReceiver>,
+        ) = WeighingContext(token, receiver, expectedType, implicitReceivers)
+
+        fun KtAnalysisSession.empty() = WeighingContext(token, null, null, emptyList())
     }
 }
 
 internal object Weighers {
-    fun KtAnalysisSession.applyWeighsToLookupElement(context: WeighingContext, lookupElement: LookupElement, symbol: KtSymbol) {
+    fun KtAnalysisSession.applyWeighsToLookupElement(
+        context: WeighingContext,
+        lookupElement: LookupElement,
+        symbol: KtSymbol,
+        substitutor: KtSubstitutor = KtSubstitutor.Empty(token)
+    ) {
         with(ExpectedTypeWeigher) { addWeight(context, lookupElement, symbol) }
         with(DeprecatedWeigher) { addWeight(lookupElement, symbol) }
         with(PreferGetSetMethodsToPropertyWeigher) { addWeight(lookupElement, symbol) }
         with(KindWeigher) { addWeight(lookupElement, symbol) }
+        with(CallableWeigher) { addWeight(context, lookupElement, symbol, substitutor) }
     }
 
     fun addWeighersToCompletionSorter(sorter: CompletionSorter): CompletionSorter =
@@ -45,6 +70,7 @@ internal object Weighers {
                 DeprecatedWeigher.Weigher,
                 PreferGetSetMethodsToPropertyWeigher.Weigher,
                 KindWeigher.Weigher,
+                CallableWeigher.Weigher,
             )
             .weighBefore(
                 PlatformWeighersIds.STATS,
