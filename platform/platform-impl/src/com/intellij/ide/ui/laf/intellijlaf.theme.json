@@ -60,10 +60,11 @@
 
       "selectedForeground": "foreground",
       "selectionBackground": "#2675BF",
-      "selectionBackgroundInactive": "#D5D5D5",
+      "selectionBackgroundInactive": "grey10",
+      "selectionInactiveBackground": "grey10",
+
       "selectionForeground": "#ffffff",
       "selectionForegroundInactive": "foreground",
-      "selectionInactiveBackground": "#D5D5D5",
       "selectionInactiveForeground": "foreground",
 
       "separatorColor": "border",
@@ -332,7 +333,7 @@
     },
 
     "MemoryIndicator": {
-      "allocatedBackground": "#d7d7d7",
+      "allocatedBackground": "grey10",
       "usedBackground": "grey06"
     },
 
