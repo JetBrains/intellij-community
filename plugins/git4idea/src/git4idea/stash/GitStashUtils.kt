@@ -32,7 +32,6 @@ import git4idea.GitNotificationIdsHolder.Companion.STASH_LOCAL_CHANGES_DETECTED
 import git4idea.GitNotificationIdsHolder.Companion.UNSTASH_FAILED
 import git4idea.GitUtil
 import git4idea.changes.GitChangeUtils
-import git4idea.changes.GitCommittedChangeList
 import git4idea.commands.*
 import git4idea.config.GitConfigUtil
 import git4idea.history.GitCommitRequirements
@@ -112,7 +111,9 @@ object GitStashOperations {
     val emptyChangeList = CommittedChangeListImpl(stash.stash, stash.message, "", -1, Date(0), emptyList())
     val dialog = ChangeListViewerDialog(project, emptyChangeList, null)
     dialog.loadChangesInBackground {
-      ChangeListViewerDialog.ChangelistData(loadStashedChanges(project, stash.root, stash.hash, compareWithLocal), null)
+      val changes = GitChangeUtils.getRevisionChanges(project, GitUtil.getRootForFile(project, stash.root), stash.hash.asString(),
+                                                      true, compareWithLocal, false)
+      ChangeListViewerDialog.ChangelistData(changes, null)
     }
     dialog.title = GitBundle.message("unstash.view.dialog.title", stash.stash)
     dialog.show()
@@ -120,9 +121,18 @@ object GitStashOperations {
 
   @RequiresBackgroundThread
   @Throws(VcsException::class)
-  fun loadStashedChanges(project: Project, root: VirtualFile, hash: Hash, compareWithLocal: Boolean): GitCommittedChangeList {
-    return GitChangeUtils.getRevisionChanges(project, GitUtil.getRootForFile(project, root), hash.asString(),
-                                             true, compareWithLocal, false)
+  fun loadStashChanges(project: Project,
+                       root: VirtualFile,
+                       hash: Hash,
+                       parentHashes: List<Hash>): Pair<Collection<Change>, List<GitCommit>> {
+    val stashCommits = mutableListOf<GitCommit>()
+    GitLogUtil.readFullDetailsForHashes(project, root, listOf(hash.asString()) + parentHashes.map { it.asString() },
+                                        GitCommitRequirements(true, // untracked changes commit has no parents
+                                                              diffInMergeCommits = DIFF_TO_PARENTS),
+                                        Consumer { stashCommits.add(it) })
+    if (stashCommits.isEmpty()) throw VcsException(GitBundle.message("stash.load.changes.error", root.name, hash.asString()))
+    return Pair(stashCommits.first().getChanges(0), // returning changes to the branch head
+                stashCommits.subList(1, stashCommits.size))
   }
 
   @JvmStatic
@@ -272,7 +282,7 @@ fun loadStashStack(project: Project, root: VirtualFile, consumer: Consumer<Stash
 
 @Throws(VcsException::class)
 fun loadStashStack(project: Project, root: VirtualFile): List<StashInfo> {
-  val options = arrayOf(GitLogOption.HASH, GitLogOption.SHORT_REF_LOG_SELECTOR, GitLogOption.SUBJECT)
+  val options = arrayOf(GitLogOption.HASH, GitLogOption.PARENTS, GitLogOption.SHORT_REF_LOG_SELECTOR, GitLogOption.SUBJECT)
   val charset = Charset.forName(GitConfigUtil.getLogEncoding(project, root))
 
   val h = GitLineHandler(project, root, GitCommand.STASH.readLockingCommand())
@@ -285,17 +295,24 @@ fun loadStashStack(project: Project, root: VirtualFile): List<StashInfo> {
   val result = mutableListOf<StashInfo>()
   for (line in output.output) {
     val parts = line.split(':', limit = options.size + 1) // subject is usually prefixed by "WIP on <branch>:"
-    when {
-      parts.size < options.size -> {
-        logger<GitUtil>().error("Can't parse stash record: ${line}")
-      }
-      parts.size == options.size -> {
-        result.add(StashInfo(root, HashImpl.build(parts[0]), parts[1], null, parts[2].trim()))
-      }
-      else -> {
-        result.add(StashInfo(root, HashImpl.build(parts[0]), parts[1], parts[2].trim(), parts[3].trim()))
-      }
+    if (parts.size < options.size) {
+      logger<GitUtil>().error("Can't parse stash record: ${line}")
+      continue
     }
+
+    val parents = parts[1].split(" ")
+    if (parents.isEmpty()) {
+      logger<GitUtil>().error("Can't parse stash record parents: ${line}")
+      continue
+    }
+
+    val hash = HashImpl.build(parts[0])
+    val parentHashes = parents.subList(1, parents.size).map { HashImpl.build(it) }
+    val stash = parts[2]
+    val branch = if (parts.size == options.size) null else parts[3].trim()
+    val message = parts.last().trim()
+
+    result.add(StashInfo(root, hash, parentHashes, stash, branch, message))
   }
   return result
 }

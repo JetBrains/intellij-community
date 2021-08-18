@@ -44,8 +44,8 @@ class GitStashChangesBrowser(project: Project) : SimpleChangesBrowser(project, f
       if (currentStash != stash) return@Runnable
 
       when (val stashData = currentChangesFuture?.get()) {
-        is GitStashCache.StashData.ChangeList -> {
-          setData(stashData.changeList.changes)
+        is GitStashCache.StashData.Changes -> {
+          setData(stashData.changes)
         }
         is GitStashCache.StashData.Error -> {
           setEmpty { statusText -> statusText.setText(stashData.error.localizedMessage, SimpleTextAttributes.ERROR_ATTRIBUTES) }
