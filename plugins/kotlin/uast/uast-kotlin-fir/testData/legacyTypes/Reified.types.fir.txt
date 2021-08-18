@@ -21,7 +21,7 @@ UFile (package = test.pkg) [package test.pkg...]
                         USimpleNameReferenceExpression (identifier = <anonymous class>, resolvesTo = null) [<anonymous class>] : PsiType:NonExistentClass
                         UQualifiedReferenceExpression [java.lang.String.java] : PsiType:Class<String>
                             UClassLiteralExpression [java.lang.String] : PsiType:KClass<String>
-                            USimpleNameReferenceExpression (identifier = java) [java] : PsiType:Class<String>
+                            USimpleNameReferenceExpression (identifier = java) [java] : PsiType:Class<T>
     UClass (name = Context) [public final class Context {...}]
         UMethod (name = Context) [public fun Context() = UastEmptyExpression]
         UMethod (name = ownSystemService1) [fun ownSystemService1() : error.NonExistentClass {...}]
@@ -41,4 +41,4 @@ UFile (package = test.pkg) [package test.pkg...]
                         USimpleNameReferenceExpression (identifier = <anonymous class>, resolvesTo = null) [<anonymous class>] : PsiType:NonExistentClass
                         UQualifiedReferenceExpression [java.lang.String.java] : PsiType:Class<String>
                             UClassLiteralExpression [java.lang.String] : PsiType:KClass<String>
-                            USimpleNameReferenceExpression (identifier = java) [java] : PsiType:Class<String>
+                            USimpleNameReferenceExpression (identifier = java) [java] : PsiType:Class<T>

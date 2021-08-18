@@ -2,22 +2,22 @@ UFile (package = ) [import java.util.stream.Stream...]
     UImportStatement (isOnDemand = false) [import java.util.stream.Stream]
     UClass (name = LambdasKt) [public final class LambdasKt {...}]
         UMethod (name = foo) [public static final fun foo() : void {...}]
-            UBlockExpression [{...}] : PsiType:NonExistentClass
-                UQualifiedReferenceExpression [Stream.empty().filter({ var it: <ErrorType> ->...})] : PsiType:NonExistentClass
+            UBlockExpression [{...}] : PsiType:Stream<String>
+                UQualifiedReferenceExpression [Stream.empty().filter({ var it: <ErrorType> ->...})] : PsiType:Stream<String>
                     UQualifiedReferenceExpression [Stream.empty()] : PsiType:Stream<String>
                         USimpleNameReferenceExpression (identifier = Stream) [Stream] : PsiType:Unit
                         UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) [empty()] : PsiType:Stream<String>
                             UIdentifier (Identifier (empty)) [UIdentifier (Identifier (empty))]
                             USimpleNameReferenceExpression (identifier = empty, resolvesTo = null) [empty] : PsiType:Stream<String>
-                    UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1)) [filter({ var it: <ErrorType> ->...})] : PsiType:NonExistentClass
+                    UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1)) [filter({ var it: <ErrorType> ->...})] : PsiType:Stream<String>
                         UIdentifier (Identifier (filter)) [UIdentifier (Identifier (filter))]
-                        USimpleNameReferenceExpression (identifier = filter, resolvesTo = null) [filter] : PsiType:NonExistentClass
+                        USimpleNameReferenceExpression (identifier = filter, resolvesTo = null) [filter] : PsiType:Stream<String>
                         ULambdaExpression [{ var it: <ErrorType> ->...}] : PsiType:Function1<? super String, ? extends Boolean>
                             UParameter (name = it) [var it: <ErrorType>]
                             UBlockExpression [{...}] : PsiType:boolean
                                 UReturnExpression [return it.isEmpty()]
                                     UQualifiedReferenceExpression [it.isEmpty()] : PsiType:boolean
-                                        USimpleNameReferenceExpression (identifier = it) [it] : PsiType:NonExistentClass
+                                        USimpleNameReferenceExpression (identifier = it) [it] : PsiType:String
                                         UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) [isEmpty()] : PsiType:boolean
                                             UIdentifier (Identifier (isEmpty)) [UIdentifier (Identifier (isEmpty))]
                                             USimpleNameReferenceExpression (identifier = isEmpty, resolvesTo = null) [isEmpty] : PsiType:boolean
