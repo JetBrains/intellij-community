@@ -6,6 +6,7 @@ import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInspection.sourceToSink.SourceToSinkFlowInspection;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.command.WriteCommandAction;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.JavaPsiFacadeEx;
@@ -21,7 +22,9 @@ import org.jetbrains.jetCheck.PropertyChecker;
 
 import java.util.List;
 import java.util.Objects;
+import java.util.function.Function;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
 public class SourceToSinkPropertyInspectionTest extends LightJavaCodeInsightFixtureTestCase {
@@ -77,16 +80,16 @@ public class SourceToSinkPropertyInspectionTest extends LightJavaCodeInsightFixt
 
   private void doTestSinkToSourceFlowIsReported(ImperativeCommand.Environment env) {
     JavaPsiFacadeEx facade = myFixture.getJavaFacade();
-    PsiClass psiClass = Objects.requireNonNull(facade.findClass("com.jetbrains.A", GlobalSearchScope.allScope(getProject())));
+    Project project = getProject();
+    PsiClass psiClass = Objects.requireNonNull(facade.findClass("com.jetbrains.A", GlobalSearchScope.allScope(project)));
     myFixture.openFileInEditor(psiClass.getContainingFile().getVirtualFile());
-    Variable variable = Variable.generate(env);
-    PsiClass aClass = WriteCommandAction.runWriteCommandAction(getProject(),
-                                                               (Computable<PsiClass>)() -> recreateClass(facade.getElementFactory(), 
-                                                                                                         psiClass));
+    MethodBody methodBody = MethodBody.generate(env);
+    PsiClass aClass = WriteCommandAction.runWriteCommandAction(project, 
+                                                               (Computable<PsiClass>)() -> recreateClass(facade.getElementFactory(), psiClass));
     JavaContext javaContext = JavaContext.create(aClass, facade);
-    WriteCommandAction.runWriteCommandAction(getProject(), () -> variable.add(javaContext));
+    WriteCommandAction.runWriteCommandAction(project, () -> methodBody.add(javaContext));
     env.logMessage("A class:\n" + aClass.getText());
-    TaintState taintState = variable.taintState();
+    TaintState taintState = methodBody.taintState();
     List<HighlightInfo> infos = myFixture.doHighlighting(HighlightSeverity.WARNING);
     if (taintState == TaintState.SAFE) {
       assertEmpty(infos);
@@ -96,8 +99,9 @@ public class SourceToSinkPropertyInspectionTest extends LightJavaCodeInsightFixt
       PsiElement sinkArgument = javaContext.getSinkCallArgument();
       HighlightInfo info = infos.get(0);
       assertEquals(sinkArgument.getTextRange().getStartOffset(), info.getActualStartOffset());
-      String description = JvmAnalysisBundle.message(taintState == TaintState.TAINTED ? "jvm.inspections.source.unsafe.to.sink.flow.description"
-                                                                                      : "jvm.inspections.source.unknown.to.sink.flow.description");
+      String description = JvmAnalysisBundle.message(taintState == TaintState.TAINTED ?
+                                                     "jvm.inspections.source.to.sink.flow.passed.unsafe" :
+                                                     "jvm.inspections.source.to.sink.flow.passed.unknown");
       assertEquals(description, info.getDescription());
     }
   }
@@ -107,17 +111,63 @@ public class SourceToSinkPropertyInspectionTest extends LightJavaCodeInsightFixt
     return (PsiClass)psiClass.replace(recreated.getInnerClasses()[0]);
   }
 
+  private enum TaintState {
+    SAFE("safe") {
+      @Override
+      @NotNull
+      TaintState join(@NotNull TaintState other) {
+        return other;
+      }
+    },
+    UNKNOWN("foo") {
+      @Override
+      @NotNull
+      TaintState join(@NotNull TaintState other) {
+        return other == SAFE ? this : other;
+      }
+    },
+    TAINTED("source") {
+      @Override
+      @NotNull
+      TaintState join(@NotNull TaintState other) {
+        return this;
+      }
+    };
+
+    private final String myMethodName;
+
+    TaintState(@NotNull String methodName) {
+      myMethodName = methodName;
+    }
+
+    abstract @NotNull TaintState join(@NotNull TaintState other);
+
+    public @NotNull String methodName() {
+      return myMethodName;
+    }
+  }
+
   private interface Statement {
 
-    void add(JavaContext javaContext);
+    void add(@NotNull JavaContext javaContext);
 
-    TaintState taintState();
+    @NotNull TaintState taintState();
   }
 
   private interface Expression {
-    String getText();
+    List<Function<ImperativeCommand.Environment, Expression>> TYPES = List.of(LiteralExpression::generate,
+                                                                              CallExpression::generate,
+                                                                              TernaryExpression::generate,
+                                                                              ParenthesizedExpression::generate);
+    
+    @NotNull String getText();
 
-    TaintState taintState();
+    @NotNull TaintState taintState();
+
+    static @NotNull Expression generate(@NotNull ImperativeCommand.Environment env) {
+      Function<ImperativeCommand.Environment, Expression> ctor = env.generateValue(Generator.sampledFrom(Expression.TYPES), null);
+      return ctor.apply(env);
+    }
   }
 
   private static class JavaContext {
@@ -126,7 +176,7 @@ public class SourceToSinkPropertyInspectionTest extends LightJavaCodeInsightFixt
     private final PsiElementFactory myFactory;
     private PsiElement mySinkCallArgument;
 
-    private JavaContext(PsiMethod method, PsiElementFactory factory) {
+    private JavaContext(@NotNull PsiMethod method, @NotNull PsiElementFactory factory) {
       myMethod = method;
       myFactory = factory;
     }
@@ -136,21 +186,21 @@ public class SourceToSinkPropertyInspectionTest extends LightJavaCodeInsightFixt
       return (PsiStatement)myMethod.getBody().add(statement);
     }
 
-    public void declareField(@NotNull String declarationText) {
-      declarationText = "private String s = " + declarationText;
+    public void declareField(@NotNull String varName, @NotNull String declarationText) {
+      declarationText = String.format("private String %s = %s", varName, declarationText);
       PsiField field = myFactory.createFieldFromText(declarationText, null);
       PsiClass containingClass = myMethod.getContainingClass();
       PsiElement lBrace = containingClass.getLBrace();
       containingClass.addAfter(field, lBrace);
     }
 
-    public void declareLocalVariable(@NotNull String declarationText) {
-      declarationText = "String s = " + declarationText;
+    public void declareLocalVariable(@NotNull String varName, @NotNull String declarationText) {
+      declarationText = String.format("String %s = %s", varName, declarationText);
       addStatement(declarationText);
     }
 
-    public void callSink() {
-      PsiStatement statement = addStatement("sink(s);");
+    public void callSink(@NotNull String varName) {
+      PsiStatement statement = addStatement(String.format("sink(%s);", varName));
       PsiMethodCallExpression call = PsiTreeUtil.findChildOfType(statement, PsiMethodCallExpression.class);
       mySinkCallArgument = call.getArgumentList().getExpressions()[0];
     }
@@ -159,7 +209,7 @@ public class SourceToSinkPropertyInspectionTest extends LightJavaCodeInsightFixt
       return mySinkCallArgument;
     }
 
-    private static @NotNull JavaContext create(PsiClass psiClass, JavaPsiFacade facade) {
+    private static @NotNull JavaContext create(@NotNull PsiClass psiClass, @NotNull JavaPsiFacade facade) {
       PsiMethod callSinkMethod = psiClass.getMethods()[0];
       return new JavaContext(callSinkMethod, facade.getElementFactory());
     }
@@ -176,35 +226,69 @@ public class SourceToSinkPropertyInspectionTest extends LightJavaCodeInsightFixt
     }
 
     @Override
-    public String getText() {
+    public @NotNull String getText() {
       return (myIsExternal ? "OtherClass." : "") + myCallType.methodName() + "()";
     }
 
     @Override
-    public TaintState taintState() {
+    public @NotNull TaintState taintState() {
       return myCallType;
     }
 
-    private static CallExpression generate(ImperativeCommand.Environment env) {
+    private static @NotNull CallExpression generate(@NotNull ImperativeCommand.Environment env) {
       boolean isExternal = env.generateValue(Generator.booleans(), null);
       TaintState callType = env.generateValue(Generator.sampledFrom(TaintState.values()), null);
       return new CallExpression(isExternal, callType);
     }
   }
 
-  private enum TaintState {
-    SAFE("safe"),
-    UNKNOWN("foo"),
-    TAINTED("source");
+  private static class TernaryExpression implements Expression {
 
-    private final String myMethodName;
+    private final Expression myLhs;
+    private final Expression myRhs;
 
-    TaintState(String methodName) {
-      myMethodName = methodName;
+    private TernaryExpression(@NotNull Expression lhs, @NotNull Expression rhs) {
+      myLhs = lhs;
+      myRhs = rhs;
     }
 
-    public String methodName() {
-      return myMethodName;
+    @Override
+    public @NotNull String getText() {
+      return String.format("((1 == 1) ? %s : %s)", myLhs.getText(), myRhs.getText());
+    }
+
+    @Override
+    public @NotNull TaintState taintState() {
+      return myLhs.taintState().join(myRhs.taintState());
+    }
+
+    private static @NotNull TernaryExpression generate(@NotNull ImperativeCommand.Environment env) {
+      Expression lhs = Expression.generate(env);
+      Expression rhs = Expression.generate(env);
+      return new TernaryExpression(lhs, rhs);
+    }
+  }
+
+  private static class ParenthesizedExpression implements Expression {
+
+    private final Expression myExpression;
+
+    private ParenthesizedExpression(@NotNull Expression expression) {
+      myExpression = expression;
+    }
+
+    @Override
+    public @NotNull String getText() {
+      return String.format("(%s)", myExpression.getText());
+    }
+
+    @Override
+    public @NotNull TaintState taintState() {
+      return myExpression.taintState();
+    }
+
+    private static @NotNull ParenthesizedExpression generate(@NotNull ImperativeCommand.Environment env) {
+      return new ParenthesizedExpression(Expression.generate(env));
     }
   }
 
@@ -217,18 +301,59 @@ public class SourceToSinkPropertyInspectionTest extends LightJavaCodeInsightFixt
     }
 
     @Override
-    public String getText() {
+    public @NotNull String getText() {
       return myNullInitializer ? "null" : "\"safe\"";
     }
 
     @Override
-    public TaintState taintState() {
+    public @NotNull TaintState taintState() {
       return TaintState.SAFE;
     }
 
-    private static LiteralExpression generate(ImperativeCommand.Environment env) {
+    private static @NotNull LiteralExpression generate(@NotNull ImperativeCommand.Environment env) {
       boolean nullInitializer = env.generateValue(Generator.booleans(), null);
       return new LiteralExpression(nullInitializer);
+    }
+  }
+
+  private static class MethodBody implements Statement {
+
+    private final List<Variable> myVariables;
+
+    private MethodBody(@NotNull List<Variable> variables) {
+      this.myVariables = variables;
+    }
+
+    @Override
+    public void add(@NotNull JavaContext javaContext) {
+      for (int i = 0; i < myVariables.size(); i++) {
+        Variable variable = myVariables.get(i);
+        variable.add(javaContext);
+        if (i > 0) {
+          javaContext.addStatement(String.format("s%d = s%d;", i, i - 1));
+        }
+      }
+      javaContext.callSink("s" + (myVariables.size() - 1));
+    }
+
+    @Override
+    public @NotNull TaintState taintState() {
+      TaintState taintState = TaintState.SAFE;
+      for (Variable variable : myVariables) {
+        if (variable.isField()) {
+          taintState = TaintState.UNKNOWN;
+        }
+        else {
+          taintState = taintState.join(variable.taintState());
+        }
+      }
+      return taintState;
+    }
+
+    private static @NotNull MethodBody generate(@NotNull ImperativeCommand.Environment env) {
+      int nVars = env.generateValue(Generator.integers(1, 3), null);
+      List<Variable> vars = IntStream.range(0, nVars).mapToObj(i -> Variable.generate("s" + i, env)).collect(Collectors.toList());
+      return new MethodBody(vars);
     }
   }
 
@@ -236,21 +361,20 @@ public class SourceToSinkPropertyInspectionTest extends LightJavaCodeInsightFixt
     private final Declaration myDeclaration;
     private final List<Assignment> myAssignments;
 
-    private Variable(Declaration declaration, List<Assignment> assignments) {
+    private Variable(@NotNull Declaration declaration, @NotNull List<Assignment> assignments) {
       myDeclaration = declaration;
       myAssignments = assignments;
     }
 
     @Override
-    public void add(JavaContext javaContext) {
+    public void add(@NotNull JavaContext javaContext) {
       myDeclaration.add(javaContext);
       myAssignments.forEach(a -> a.add(javaContext));
-      javaContext.callSink();
     }
 
     @Override
-    public TaintState taintState() {
-      if (myDeclaration.myVarType == Declaration.VarType.FIELD) return TaintState.UNKNOWN;
+    public @NotNull TaintState taintState() {
+      if (isField()) return TaintState.UNKNOWN;
       TaintState taintState = myDeclaration.taintState();
       if (taintState == TaintState.TAINTED) return taintState;
       for (Assignment assignment : myAssignments) {
@@ -261,45 +385,50 @@ public class SourceToSinkPropertyInspectionTest extends LightJavaCodeInsightFixt
       return taintState;
     }
 
+    public boolean isField() {
+      return myDeclaration.myVarType == Declaration.VarType.FIELD;
+    }
 
-    private static Variable generate(ImperativeCommand.Environment env) {
-      Declaration declaration = Declaration.generate(env);
+    private static @NotNull Variable generate(@NotNull String name, @NotNull ImperativeCommand.Environment env) {
+      Declaration declaration = Declaration.generate(name, env);
       int nAssignments = env.generateValue(Generator.integers(0, 3), null);
-      List<Assignment> assignments = Stream.generate(() -> Assignment.generate(env)).limit(nAssignments).collect(Collectors.toList());
+      List<Assignment> assignments = Stream.generate(() -> Assignment.generate(name, env)).limit(nAssignments).collect(Collectors.toList());
       return new Variable(declaration, assignments);
     }
   }
 
   private static class Declaration implements Statement {
 
+    private final String myVarName;
     private final VarType myVarType;
     private final Expression myExpression;
 
-    private Declaration(@NotNull VarType type, @NotNull Expression expression) {
+    private Declaration(@NotNull String varName, @NotNull VarType type, @NotNull Expression expression) {
+      myVarName = varName;
       myVarType = type;
       myExpression = expression;
     }
 
     @Override
-    public void add(JavaContext javaContext) {
+    public void add(@NotNull JavaContext javaContext) {
       if (myVarType == VarType.LOCAL_VAR) {
-        javaContext.declareLocalVariable(myExpression.getText() + ";");
+        javaContext.declareLocalVariable(myVarName, myExpression.getText() + ";");
       }
       else {
-        javaContext.declareField(myExpression.getText() + ";");
+        javaContext.declareField(myVarName, myExpression.getText() + ";");
       }
     }
 
     @Override
-    public TaintState taintState() {
+    public @NotNull TaintState taintState() {
       return myExpression.taintState();
     }
 
-    public static Declaration generate(ImperativeCommand.Environment env) {
+    public static @NotNull Declaration generate(@NotNull String varName, @NotNull ImperativeCommand.Environment env) {
       VarType varType = env.generateValue(Generator.sampledFrom(VarType.values()), null);
       boolean isCallExpression = env.generateValue(Generator.booleans(), null);
       Expression expression = isCallExpression ? CallExpression.generate(env) : LiteralExpression.generate(env);
-      return new Declaration(varType, expression);
+      return new Declaration(varName, varType, expression);
     }
 
     private enum VarType {
@@ -310,26 +439,26 @@ public class SourceToSinkPropertyInspectionTest extends LightJavaCodeInsightFixt
 
   private static class Assignment implements Statement {
 
+    private final String myVarName;
     private final Expression myExpression;
 
-    private Assignment(Expression expression) {
+    private Assignment(@NotNull String varName, @NotNull Expression expression) {
+      myVarName = varName;
       myExpression = expression;
     }
 
     @Override
-    public void add(JavaContext javaContext) {
-      javaContext.addStatement("s =" + myExpression.getText() + ";");
+    public void add(@NotNull JavaContext javaContext) {
+      javaContext.addStatement(String.format("%s = %s;", myVarName, myExpression.getText()));
     }
 
     @Override
-    public TaintState taintState() {
+    public @NotNull TaintState taintState() {
       return myExpression.taintState();
     }
 
-    public static Assignment generate(ImperativeCommand.Environment env) {
-      boolean isCallExpression = env.generateValue(Generator.booleans(), null);
-      Expression expression = isCallExpression ? CallExpression.generate(env) : LiteralExpression.generate(env);
-      return new Assignment(expression);
+    public static @NotNull Assignment generate(@NotNull String varName, @NotNull ImperativeCommand.Environment env) {
+      return new Assignment(varName, Expression.generate(env));
     }
   }
 }

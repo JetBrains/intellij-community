@@ -42,4 +42,9 @@ class KotlinSourceToSinkFlowTest: LightJavaCodeInsightFixtureTestCase() {
   fun testSimple() {
     myFixture.testHighlighting("Simple.kt")
   }
+
+  fun testLocalInference() {
+    myFixture.testHighlighting("LocalInference.kt")
+  }
+
 }

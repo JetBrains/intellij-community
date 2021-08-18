@@ -55,7 +55,7 @@ class Simple {
   }
 
   fun unsafeReturn(): @Untainted String? {
-    return source()
+    return <warning descr="Unsafe string is returned from safe method">source()</warning>
   }
 
   fun unsafeConcat() {

@@ -1,41 +1,103 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.sourceToSink;
 
-import com.intellij.codeInspection.restriction.StringFlowUtil;
 import com.intellij.psi.*;
 import com.intellij.util.ObjectUtils;
+import com.siyeh.ig.psiutils.ExpressionUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.uast.*;
 import org.jetbrains.uast.visitor.AbstractUastVisitor;
 
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
+import java.util.stream.Stream;
 
 class TaintAnalyzer {
 
-  static @Nullable TaintValue getTaintValue(@Nullable UExpression expression) {
-    if (expression == null) return null;
-    return analyze(expression, new HashSet<>());
+  private final Set<UElement> myVisited = new HashSet<>();
+  private final List<PsiModifierListOwner> myNonMarkedElements = new ArrayList<>();
+
+  @NotNull TaintValue analyze(@NotNull UExpression expression) {
+    if (myVisited.contains(expression)) return TaintValue.UNTAINTED;
+    UResolvable uResolvable = ObjectUtils.tryCast(expression, UResolvable.class);
+    // ignore possible plus operator overload in kotlin
+    if (uResolvable == null || isPlus(expression)) return TaintValue.UNTAINTED;
+    return analyseResolvableExpression(uResolvable);
   }
 
-  private static @Nullable TaintValue analyze(@NotNull UExpression expression, @NotNull Set<UElement> current) {
-    if (current.contains(expression)) return null;
-    if (expression instanceof UCallExpression) {
-      UExpression returnValue = StringFlowUtil.getReturnValue((UCallExpression)expression);
-      if (expression.equals(returnValue)) return null;
-      if (returnValue != null && current.add(returnValue)) {
-        TaintValue taintValue = analyze(returnValue, current);
-        current.remove(returnValue);
-        if (taintValue != TaintValue.UNKNOWN) return taintValue;
-      }
+  private @NotNull TaintValue analyseResolvableExpression(@NotNull UResolvable uResolvable) {
+    PsiElement target = uResolvable.resolve();
+    TaintValue taintValue = fromAnnotation(uResolvable, target);
+    if (taintValue != TaintValue.UNKNOWN) return taintValue;
+    taintValue = fromLocalVar(target);
+    if (taintValue != null) return taintValue;
+    if (!(target instanceof PsiModifierListOwner)) return TaintValue.UNTAINTED;
+    myNonMarkedElements.add((PsiModifierListOwner)target);
+    return TaintValue.UNKNOWN;
+  }
+
+  private @Nullable TaintValue fromLocalVar(@Nullable PsiElement target) {
+    PsiLocalVariable variable = ObjectUtils.tryCast(target, PsiLocalVariable.class);
+    if (variable == null) return null;
+    ULocalVariable uVariable = UastContextKt.toUElement(variable, ULocalVariable.class);
+    if (uVariable == null) return null;
+    UBlockExpression codeBlock = UastUtils.getParentOfType(uVariable, UBlockExpression.class);
+    if (codeBlock == null) return TaintValue.UNKNOWN;
+    if (!myVisited.add(uVariable)) return TaintValue.UNTAINTED;
+    UExpression uInitializer = uVariable.getUastInitializer();
+    TaintValue taintValue = fromExpression(uInitializer, true);
+    if (taintValue == TaintValue.TAINTED) return taintValue;
+    VariableAnalyzer taintValueVisitor = new VariableAnalyzer(variable, taintValue);
+    codeBlock.accept(taintValueVisitor);
+    return taintValueVisitor.myTaintValue;
+  }
+
+  private @NotNull TaintValue fromExpression(@Nullable UExpression uExpression, boolean goDeep) {
+    if (uExpression == null) return TaintValue.UNTAINTED;
+    uExpression = UastUtils.skipParenthesizedExprDown(uExpression);
+    if (uExpression == null || uExpression instanceof ULiteralExpression) return TaintValue.UNTAINTED;
+    if (uExpression instanceof UResolvable) return analyze(uExpression);
+    UPolyadicExpression uConcatenation = getConcatenation(uExpression);
+    if (uConcatenation != null) return joinState(uConcatenation.getOperands().stream(), true);
+    if (!goDeep) return TaintValue.UNTAINTED;
+    PsiExpression javaPsi = ObjectUtils.tryCast(uExpression.getJavaPsi(), PsiExpression.class);
+    if (javaPsi == null) return TaintValue.UNTAINTED;
+    Stream<UExpression> expressions = ExpressionUtils.nonStructuralChildren(javaPsi)
+      .map(e -> UastContextKt.toUElement(e, UExpression.class));
+    return joinState(expressions, false);
+  }
+
+  private @NotNull TaintValue joinState(@NotNull Stream<UExpression> expressions, boolean goDeep) {
+    return expressions.reduce(TaintValue.UNTAINTED,
+                              (acc, e) -> acc == TaintValue.TAINTED ? acc : acc.join(fromExpression(e, goDeep)),
+                              TaintValue::join);
+  }
+
+  List<PsiModifierListOwner> getNonMarkedElements() {
+    return myNonMarkedElements;
+  }
+
+  private static @NotNull TaintValue fromAnnotation(@NotNull UResolvable uResolvable, @Nullable PsiElement target) {
+    if (target instanceof PsiClass) return TaintValue.UNTAINTED;
+    if (target instanceof PsiModifierListOwner) {
+      PsiModifierListOwner owner = (PsiModifierListOwner)target;
+      TaintValue taintValue = TaintValueFactory.INSTANCE.fromModifierListOwner(owner);
+      if (taintValue == TaintValue.UNKNOWN) taintValue = TaintValueFactory.of(owner);
+      if (taintValue != TaintValue.UNKNOWN) return taintValue;
     }
-    if (expression instanceof UResolvable) {
-      // ignore possible plus operator overload in kotlin
-      if (isPlus(expression)) return TaintValue.UNTAINTED;
-      return analyseResolvableExpression((UResolvable)expression, current);
-    }
-    return null;
+    PsiType type = ((UExpression)uResolvable).getExpressionType();
+    if (type == null) return TaintValue.UNKNOWN;
+    return TaintValueFactory.INSTANCE.fromAnnotationOwner(type);
+  }
+
+  private static @Nullable UPolyadicExpression getConcatenation(UExpression uExpression) {
+    UPolyadicExpression uPolyadic = ObjectUtils.tryCast(uExpression, UPolyadicExpression.class);
+    if (uPolyadic == null) return null;
+    UastBinaryOperator uOperator = uPolyadic.getOperator();
+    return uOperator == UastBinaryOperator.PLUS || uOperator == UastBinaryOperator.PLUS_ASSIGN ? uPolyadic : null;
   }
 
   private static boolean isPlus(@NotNull UExpression expression) {
@@ -43,67 +105,13 @@ class TaintAnalyzer {
     return sourcePsi != null && UastBinaryOperator.PLUS.getText().equals(sourcePsi.getText());
   }
 
-  private static @Nullable TaintValue analyseResolvableExpression(@NotNull UResolvable ref, @NotNull Set<UElement> current) {
-    PsiElement target = ref.resolve();
-    if (target instanceof PsiClass) return null;
-    TaintValue taintValue;
-    if (target instanceof PsiModifierListOwner) {
-      PsiModifierListOwner owner = (PsiModifierListOwner)target;
-      taintValue = TaintValueFactory.INSTANCE.fromModifierListOwner(owner);
-      if (taintValue == TaintValue.UNKNOWN) taintValue = TaintValueFactory.of(owner);
-      if (taintValue != TaintValue.UNKNOWN) return taintValue;
-    }
-    PsiType type = ((UExpression)ref).getExpressionType();
-    if (type != null) {
-      taintValue = TaintValueFactory.INSTANCE.fromAnnotationOwner(type);
-      if (taintValue != TaintValue.UNKNOWN) return taintValue;
-    }
-    if (target instanceof PsiLocalVariable) {
-      ULocalVariable uLocalVariable = UastContextKt.toUElementOfExpectedTypes(target, ULocalVariable.class);
-      if (uLocalVariable == null) return null;
-      if (!current.add(uLocalVariable)) return null;
-      taintValue = getTaintValue((PsiLocalVariable)target, uLocalVariable, current);
-      current.remove(uLocalVariable);
-      return taintValue;
-    }
-    return TaintValue.UNKNOWN;
-  }
-
-  private static @Nullable TaintValue getTaintValue(@NotNull PsiLocalVariable target,
-                                                    @NotNull ULocalVariable localVariable,
-                                                    @NotNull Set<UElement> current) {
-    UBlockExpression codeBlock = UastUtils.getParentOfType(localVariable, UBlockExpression.class);
-    if (codeBlock == null) return null;
-    UExpression initializer = localVariable.getUastInitializer();
-    TaintValue taintValue = getTaintValue(initializer, current);
-    if (taintValue == TaintValue.TAINTED) return taintValue;
-    MyTaintValueVisitor taintValueVisitor = new MyTaintValueVisitor(target, current, taintValue);
-    codeBlock.accept(taintValueVisitor);
-    return taintValueVisitor.myTaintValue;
-  }
-
-  private static @Nullable TaintValue getTaintValue(@Nullable UExpression uExpression, @NotNull Set<UElement> current) {
-    if (uExpression == null) return TaintValue.UNTAINTED;
-    uExpression = UastUtils.skipParenthesizedExprDown(uExpression);
-    ULiteralExpression literal = ObjectUtils.tryCast(uExpression, ULiteralExpression.class);
-    if (literal != null) return TaintValue.UNTAINTED;
-    if (uExpression instanceof UCallExpression || uExpression instanceof UReferenceExpression) {
-      return analyze(uExpression, current);
-    }
-    return null;
-  }
-
-  private static class MyTaintValueVisitor extends AbstractUastVisitor {
+  private class VariableAnalyzer extends AbstractUastVisitor {
 
     private final PsiLocalVariable myVariable;
-    private final Set<UElement> myCurrent;
     private TaintValue myTaintValue;
 
-    private MyTaintValueVisitor(@NotNull PsiLocalVariable variable,
-                                @NotNull Set<UElement> current,
-                                @Nullable TaintValue taintValue) {
+    private VariableAnalyzer(@NotNull PsiLocalVariable variable, @Nullable TaintValue taintValue) {
       myVariable = variable;
-      myCurrent = current;
       myTaintValue = taintValue;
     }
 
@@ -111,20 +119,22 @@ class TaintAnalyzer {
     public boolean visitBlockExpression(@NotNull UBlockExpression node) {
       for (UExpression expression : node.getExpressions()) {
         expression.accept(this);
+        if (myTaintValue == TaintValue.TAINTED) return true;
       }
-      return super.visitBlockExpression(node);
+      return true;
     }
 
     @Override
     public boolean visitBinaryExpression(@NotNull UBinaryExpression node) {
-      if (myTaintValue == TaintValue.TAINTED) return super.visitExpression(node);
       UastBinaryOperator operator = node.getOperator();
-      if (operator != UastBinaryOperator.ASSIGN && operator != UastBinaryOperator.PLUS_ASSIGN) return super.visitBinaryExpression(node);
+      if (operator != UastBinaryOperator.ASSIGN && operator != UastBinaryOperator.PLUS_ASSIGN) {
+        return super.visitBinaryExpression(node);
+      }
       UReferenceExpression lhs = ObjectUtils.tryCast(node.getLeftOperand(), UReferenceExpression.class);
       if (lhs == null || !myVariable.equals(lhs.resolve())) return super.visitBinaryExpression(node);
       UExpression rhs = node.getRightOperand();
-      TaintValue taintValue = getTaintValue(rhs, myCurrent);
-      if (taintValue != TaintValue.UNTAINTED) myTaintValue = taintValue;
+      TaintValue taintValue = fromExpression(rhs, true);
+      myTaintValue = myTaintValue.join(taintValue);
       return super.visitBinaryExpression(node);
     }
   }
