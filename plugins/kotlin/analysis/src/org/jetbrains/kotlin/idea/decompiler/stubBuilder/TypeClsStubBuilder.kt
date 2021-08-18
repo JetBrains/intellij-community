@@ -198,7 +198,8 @@ class TypeClsStubBuilder(private val c: ClsStubBuilderContext) {
                     val classId = c.nameResolver.getClassId(parameterType.className)
                     val fqName = classId.asSingleFqName()
                     assert(
-                        fqName == StandardNames.CONTINUATION_INTERFACE_FQ_NAME
+                        fqName == FqName("kotlin.coroutines.Continuation") ||
+                                fqName == FqName("kotlin.coroutines.experimental.Continuation")
                     ) {
                         "Last parameter type of suspend function must be Continuation, but it is $fqName"
                     }
