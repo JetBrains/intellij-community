@@ -558,6 +558,10 @@ public abstract class UsefulTestCase extends TestCase {
         success = true;
         throw e;
       }
+      catch (Throwable t) {
+        TestLoggerFactory.logTestFailure(t);
+        throw t;
+      }
       finally {
         TestLoggerFactory.onTestFinished(success, testDescription);
       }
