@@ -7,9 +7,9 @@ UFile (package = ) [public final class LambdaParametersKt {...]
                     USimpleNameReferenceExpression (identifier = buildString, resolvesTo = null) [buildString] : PsiType:String
                     ULambdaExpression [{ ...}] : PsiType:Function1<? super StringBuilder, ? extends Unit>
                         UBlockExpression [{...}] : PsiType:Unit
-                            UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1)) [append("a")] : PsiType:NonExistentClass
+                            UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1)) [append("a")] : PsiType:StringBuilder
                                 UIdentifier (Identifier (append)) [UIdentifier (Identifier (append))]
-                                USimpleNameReferenceExpression (identifier = append, resolvesTo = null) [append] : PsiType:NonExistentClass
+                                USimpleNameReferenceExpression (identifier = append, resolvesTo = null) [append] : PsiType:StringBuilder
                                 ULiteralExpression (value = "a") ["a"] : PsiType:String
         UMethod (name = itParameter) [public static final fun itParameter() : void {...}]
             UBlockExpression [{...}] : PsiType:int
