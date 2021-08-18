@@ -13,78 +13,33 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package git4idea.ui;
+package git4idea.ui
 
-import com.intellij.openapi.util.NlsSafe;
-import com.intellij.openapi.util.text.HtmlBuilder;
-import com.intellij.openapi.util.text.HtmlChunk;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.vcs.log.Hash;
-import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.openapi.util.NlsSafe
+import com.intellij.openapi.util.text.HtmlBuilder
+import com.intellij.openapi.util.text.HtmlChunk
+import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.vcs.log.Hash
+import org.jetbrains.annotations.Nls
 
 /**
  * Information about one stash.
+ *
+ * @param stash stash codename (e.g. stash@{1})
  */
-public class StashInfo {
-  private final @NotNull VirtualFile myRoot;
-  private final @NotNull Hash myHash;
-  private final @NotNull String myStash; // stash codename (stash@{1})
-  private final @Nullable String myBranch;
-  private final @NotNull String myMessage;
-  private final @Nls String myText; // The formatted text representation
+class StashInfo(val root: VirtualFile, val hash: Hash,
+                val stash: @NlsSafe String, val branch: @NlsSafe String?, val message: @NlsSafe @Nls String) {
+  val text: @Nls String // The formatted text representation
 
-  public StashInfo(@NotNull VirtualFile root, @NotNull Hash hash, @NotNull @NlsSafe String stash, @Nullable @NlsSafe String branch, @NlsSafe @Nls String message) {
-    myRoot = root;
-    myHash = hash;
-    myStash = stash;
-    myBranch = branch;
-    myMessage = message;
-
-    HtmlBuilder sb = new HtmlBuilder();
-    sb.append(HtmlChunk.text(stash).wrapWith("tt").bold()).append(": ");
+  init {
+    val sb = HtmlBuilder()
+    sb.append(HtmlChunk.text(stash).wrapWith("tt").bold()).append(": ")
     if (branch != null) {
-      sb.append(HtmlChunk.text(branch).italic()).append(": ");
+      sb.append(HtmlChunk.text(branch).italic()).append(": ")
     }
-    sb.append(message);
-    myText = sb.wrapWithHtmlBody().toString();
+    sb.append(message)
+    text = sb.wrapWithHtmlBody().toString()
   }
 
-  @NotNull
-  public VirtualFile getRoot() {
-    return myRoot;
-  }
-
-  @NotNull
-  public Hash getHash() {
-    return myHash;
-  }
-
-  @Override
-  public String toString() {
-    return myText;
-  }
-
-  @NlsSafe
-  @NotNull
-  public String getStash() {
-    return myStash;
-  }
-
-  @Nullable
-  public String getBranch() {
-    return myBranch;
-  }
-
-  @NlsSafe
-  @NotNull
-  public String getMessage() {
-    return myMessage;
-  }
-
-  @Nls
-  public String getText() {
-    return myText;
-  }
+  override fun toString() = text
 }
