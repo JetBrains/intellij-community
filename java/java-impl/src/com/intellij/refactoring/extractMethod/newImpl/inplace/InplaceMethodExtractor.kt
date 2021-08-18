@@ -200,7 +200,6 @@ class InplaceMethodExtractor(private val editor: Editor,
       val extractedMethod = method ?: return
       InplaceExtractMethodCollector.executed.log(context.methodName != methodName)
       installGotItTooltips()
-      PsiDocumentManager.getInstance(myProject).commitAllDocuments()
       MethodExtractor.sendRefactoringDoneEvent(extractedMethod)
       extractor.postprocess(editor, extractedMethod)
     }
