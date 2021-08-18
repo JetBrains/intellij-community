@@ -674,14 +674,19 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
       }
     }
     else if (fileType == null || fileType == DetectedByContentFileType.INSTANCE) {
-      // should run detectors for 'DetectedByContentFileType' type and if failed, return text
-      FileType detected = myDetectionService.getOrDetectFromContent(file, content);
+      FileType detected = detectFileTypeByFile(file, content);
       if (detected == UnknownFileType.INSTANCE && fileType == DetectedByContentFileType.INSTANCE) {
         return DetectedByContentFileType.INSTANCE;
       }
       return detected;
     }
     return ObjectUtils.notNull(fileType, UnknownFileType.INSTANCE);
+  }
+
+  @NotNull
+  protected FileType detectFileTypeByFile(@NotNull VirtualFile file, byte @Nullable [] content) {
+    // should run detectors for 'DetectedByContentFileType' type and if failed, return text
+    return myDetectionService.getOrDetectFromContent(file, content);
   }
 
   @Override
