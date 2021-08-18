@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.indexing
 
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
@@ -8,13 +8,12 @@ import com.intellij.idea.TestFor
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.project.getProjectCachePath
 import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase
+import com.intellij.util.SystemProperties
 import com.intellij.util.indexing.diagnostic.IndexDiagnosticDumper
 import com.intellij.util.indexing.diagnostic.dto.*
 import com.intellij.util.indexing.diagnostic.dump.paths.PortableFilePath
 import org.junit.Assert
 import java.nio.file.Files
-import java.nio.file.Path
-import java.nio.file.Paths
 import java.time.ZonedDateTime
 import kotlin.streams.toList
 
@@ -22,26 +21,19 @@ import kotlin.streams.toList
  * Tests for [IndexDiagnosticDumper].
  */
 class IndexDiagnosticTest : JavaCodeInsightFixtureTestCase() {
-
-  private var previousLogDir: Path? = null
+  private var previousLogDir: String? = null
 
   override fun setUp() {
-    previousLogDir = System.getProperty(PathManager.PROPERTY_LOG_PATH)?.let { Paths.get(it) }
-    val tempLogDir = createTempDir().toPath()
-    System.setProperty(PathManager.PROPERTY_LOG_PATH, tempLogDir.toAbsolutePath().toString())
+    previousLogDir = System.setProperty(PathManager.PROPERTY_LOG_PATH, createTempDir().path)
     IndexDiagnosticDumper.shouldDumpInUnitTestMode = true
     super.setUp()
   }
 
   override fun tearDown() {
+    @Suppress("LocalVariableName") val _previousLogDir = previousLogDir
     super.tearDown()
     IndexDiagnosticDumper.shouldDumpInUnitTestMode = false
-    if (previousLogDir == null) {
-      System.clearProperty(PathManager.PROPERTY_LOG_PATH)
-    }
-    else {
-      System.setProperty(PathManager.PROPERTY_LOG_PATH, previousLogDir!!.toAbsolutePath().toString())
-    }
+    SystemProperties.setProperty(PathManager.PROPERTY_LOG_PATH, _previousLogDir)
   }
 
   @TestFor(issues = ["IDEA-252012"])

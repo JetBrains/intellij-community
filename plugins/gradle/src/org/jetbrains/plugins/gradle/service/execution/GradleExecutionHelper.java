@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.gradle.service.execution;
 
 import com.intellij.execution.configurations.GeneralCommandLine;
@@ -19,7 +19,6 @@ import com.intellij.openapi.externalSystem.util.OutputWrapper;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Couple;
-import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.io.StreamUtil;
@@ -147,15 +146,11 @@ public class GradleExecutionHelper {
     Map<String, String> oldValues = new HashMap<>();
     try {
       if (!PlatformUtils.isFleetBackend() && Registry.is("gradle.tooling.adjust.user.dir", true)) {
-        keyToMask.forEach((key,newVal) -> {
-          final String oldVal = System.getProperty(key);
+        keyToMask.forEach((key, newVal) -> {
+          String oldVal = System.getProperty(key);
           oldValues.put(key, oldVal);
           if (oldVal != null) {
-            if (newVal != null) {
-              System.setProperty(key, newVal);
-            } else {
-              System.clearProperty(key);
-            }
+            SystemProperties.setProperty(key, newVal);
           }
         });
       }
@@ -163,7 +158,7 @@ public class GradleExecutionHelper {
     }
     finally {
       // restore original properties
-      oldValues.forEach((k,v) -> {
+      oldValues.forEach((k, v) -> {
         if (v != null) {
           System.setProperty(k, v);
         }

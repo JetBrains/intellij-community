@@ -3,6 +3,7 @@ package com.intellij.util;
 
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * Utility wrappers for accessing system properties.
@@ -54,6 +55,13 @@ public final class SystemProperties {
   public static boolean getBooleanProperty(@NotNull String key, boolean defaultValue) {
     String value = System.getProperty(key);
     return value != null ? Boolean.parseBoolean(value) : defaultValue;
+  }
+
+  /**
+   * Sets (or clears, when the {@code value} is {@code null}) the given property, and returns a previous value.
+   */
+  public static @Nullable String setProperty(@NotNull String key, @Nullable String value) {
+    return value != null ? System.setProperty(key, value) : System.clearProperty(key);
   }
 
   //<editor-fold desc="Deprecated stuff.">
