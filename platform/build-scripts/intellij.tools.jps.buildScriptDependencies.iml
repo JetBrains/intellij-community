@@ -44,5 +44,6 @@
     <orderEntry type="module" module-name="intellij.devkit.jps" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.platform.buildScripts.downloader" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.space.java.jps" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.platform.util.zip" scope="RUNTIME" />
   </component>
 </module>
