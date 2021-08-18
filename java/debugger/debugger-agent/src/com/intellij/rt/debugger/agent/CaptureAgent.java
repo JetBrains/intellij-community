@@ -11,7 +11,7 @@ import java.net.URI;
 import java.security.ProtectionDomain;
 import java.util.*;
 
-@SuppressWarnings({"UseOfSystemOutOrSystemErr", "CallToPrintStackTrace"})
+@SuppressWarnings({"UseOfSystemOutOrSystemErr", "CallToPrintStackTrace", "rawtypes"})
 public final class CaptureAgent {
   private static Instrumentation ourInstrumentation;
   private static final Set<Class> mySkipped = new HashSet<Class>();
@@ -88,15 +88,16 @@ public final class CaptureAgent {
     Properties properties = new Properties();
     File file;
     try {
-      FileReader reader = null;
+      InputStream stream = null;
       try {
         file = new File(new URI(uri));
-        reader = new FileReader(file);
-        properties.load(reader);
+        stream = new FileInputStream(file);
+        // use ISO 8859-1 character encoding
+        properties.load(stream);
       }
       finally {
-        if (reader != null) {
-          reader.close();
+        if (stream != null) {
+          stream.close();
         }
       }
     }
