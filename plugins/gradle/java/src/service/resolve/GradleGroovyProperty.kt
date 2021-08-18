@@ -9,6 +9,8 @@ import com.intellij.psi.OriginInfoAwareElement
 import com.intellij.psi.PsiElement
 import com.intellij.util.lazyPub
 import org.jetbrains.plugins.gradle.settings.GradleExtensionsSettings.GradleProp
+import org.jetbrains.plugins.gradle.util.GradleBundle
+import org.jetbrains.plugins.gradle.util.GradleDocumentationBundle
 import org.jetbrains.plugins.groovy.dsl.holders.NonCodeMembersHolder
 import org.jetbrains.plugins.groovy.lang.resolve.api.LazyTypeProperty
 import javax.swing.Icon
@@ -44,7 +46,7 @@ class GradleGroovyProperty(
     }
     result.append("</PRE>")
     if (hasInitializer) {
-      result.append("<br><b>Initial value has been got during last import</b>")
+      result.append("<br><b>" + GradleDocumentationBundle.message("gradle.documentation.groovy.initial.value.got.during.last.import") + "</b>")
     }
     result.toString()
   }
@@ -57,5 +59,5 @@ class GradleGroovyProperty(
     return super.getUserData(key)
   }
 
-  override fun toString(): String = "Gradle Property: $name"
+  override fun toString(): String = GradleDocumentationBundle.message("gradle.documentation.groovy.gradle.property", name)
 }

@@ -2,6 +2,7 @@
 package org.jetbrains.plugins.groovy.dsl
 
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.psi.CommonClassNames
 import com.intellij.psi.PsiElement
 import com.intellij.util.containers.ContainerUtil.immutableCopy
@@ -27,7 +28,7 @@ data class MethodDescriptor(
   val containingClass: String?,
   val isStatic: Boolean,
   val bindsTo: PsiElement?,
-  val doc: String?,
+  val doc: @NlsSafe String?,
   val docUrl: String?,
 ) : Descriptor()
 

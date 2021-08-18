@@ -3,6 +3,7 @@ package org.jetbrains.plugins.gradle.documentation;
 
 import com.intellij.codeInsight.javadoc.JavaDocUtil;
 import com.intellij.lang.documentation.DocumentationProvider;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
@@ -65,7 +66,7 @@ public class GradleDocumentationProvider implements DocumentationProvider {
   }
 
   @Nullable
-  private static String findDoc(@Nullable PsiElement element, Object argValue) {
+  private static @NlsSafe String findDoc(@Nullable PsiElement element, Object argValue) {
     String result = null;
     if (element instanceof GrLiteral) {
       GrLiteral grLiteral = (GrLiteral)element;
