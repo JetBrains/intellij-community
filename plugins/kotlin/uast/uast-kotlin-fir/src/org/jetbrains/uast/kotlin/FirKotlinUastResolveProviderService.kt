@@ -7,6 +7,7 @@ import org.jetbrains.kotlin.idea.frontend.api.KtTypeArgumentWithVariance
 import org.jetbrains.kotlin.idea.frontend.api.analyseForUast
 import org.jetbrains.kotlin.idea.frontend.api.calls.KtAnnotationCall
 import org.jetbrains.kotlin.idea.frontend.api.symbols.KtConstructorSymbol
+import org.jetbrains.kotlin.idea.frontend.api.symbols.KtSamConstructorSymbol
 import org.jetbrains.kotlin.idea.frontend.api.symbols.markers.KtNamedSymbol
 import org.jetbrains.kotlin.idea.frontend.api.types.*
 import org.jetbrains.kotlin.idea.references.mainReference
@@ -184,8 +185,10 @@ interface FirKotlinUastResolveProviderService : BaseKotlinUastResolveProviderSer
         analyseForUast(ktCallElement) {
             val resolvedFunctionLikeSymbol = ktCallElement.resolveCall()?.targetFunction?.candidates?.singleOrNull() ?: return null
             return when (resolvedFunctionLikeSymbol) {
-                is KtConstructorSymbol -> toPsiClass(resolvedFunctionLikeSymbol.annotatedType.type, ktCallElement)
-                // TODO: SAM constructor
+                is KtConstructorSymbol,
+                is KtSamConstructorSymbol -> {
+                    toPsiClass(resolvedFunctionLikeSymbol.annotatedType.type, ktCallElement)
+                }
                 else -> null
             }
         }

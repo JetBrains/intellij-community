@@ -20,7 +20,7 @@ UFile (package = ) [import java.lang.Thread...]
                     USimpleNameReferenceExpression (identifier = lang) [lang] : PsiType:Unit
                 UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1)) [Runnable({ ...})] : PsiType:Runnable
                     UIdentifier (Identifier (Runnable)) [UIdentifier (Identifier (Runnable))]
-                    USimpleNameReferenceExpression (identifier = Runnable, resolvesTo = null) [Runnable] : PsiType:Runnable
+                    USimpleNameReferenceExpression (identifier = Runnable, resolvesTo = PsiClass: Runnable) [Runnable] : PsiType:Runnable
                     ULambdaExpression [{ ...}] : PsiType:Function0<? extends Unit>
                         UBlockExpression [{...}] : PsiType:Unit
         UMethod (name = getNotSam) [public static final fun getNotSam() : kotlin.jvm.functions.Function0<? extends kotlin.Unit> = UastEmptyExpression]
@@ -79,7 +79,7 @@ UFile (package = ) [import java.lang.Thread...]
                             USimpleNameReferenceExpression (identifier = <init>, resolvesTo = PsiClass: Thread) [<init>] : PsiType:Thread
                             UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1)) [Runnable({ ...})] : PsiType:Runnable
                                 UIdentifier (Identifier (Runnable)) [UIdentifier (Identifier (Runnable))]
-                                USimpleNameReferenceExpression (identifier = Runnable, resolvesTo = null) [Runnable] : PsiType:Runnable
+                                USimpleNameReferenceExpression (identifier = Runnable, resolvesTo = PsiClass: Runnable) [Runnable] : PsiType:Runnable
                                 ULambdaExpression [{ ...}] : PsiType:Function0<? extends Unit>
                                     UBlockExpression [{...}] : PsiType:Unit
                                         UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1)) [println("hello2")] : PsiType:Unit
@@ -93,7 +93,7 @@ UFile (package = ) [import java.lang.Thread...]
                     USimpleNameReferenceExpression (identifier = ambiguousSamAcceptor, resolvesTo = null) [ambiguousSamAcceptor] : PsiType:String
                     UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1)) [Supplier({ ...})] : PsiType:Supplier<String>
                         UIdentifier (Identifier (Supplier)) [UIdentifier (Identifier (Supplier))]
-                        USimpleNameReferenceExpression (identifier = Supplier, resolvesTo = null) [Supplier] : PsiType:Supplier<String>
+                        USimpleNameReferenceExpression (identifier = Supplier, resolvesTo = PsiClass: Supplier) [Supplier] : PsiType:Supplier<String>
                         ULambdaExpression [{ ...}] : PsiType:Function0<? extends String>
                             UBlockExpression [{...}] : PsiType:String
                                 UReturnExpression [return "Supplier"]
@@ -103,7 +103,7 @@ UFile (package = ) [import java.lang.Thread...]
                     USimpleNameReferenceExpression (identifier = ambiguousSamAcceptor, resolvesTo = null) [ambiguousSamAcceptor] : PsiType:String
                     UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1)) [Callable({ ...})] : PsiType:Callable<String>
                         UIdentifier (Identifier (Callable)) [UIdentifier (Identifier (Callable))]
-                        USimpleNameReferenceExpression (identifier = Callable, resolvesTo = null) [Callable] : PsiType:Callable<String>
+                        USimpleNameReferenceExpression (identifier = Callable, resolvesTo = PsiClass: Callable) [Callable] : PsiType:Callable<String>
                         ULambdaExpression [{ ...}] : PsiType:Function0<? extends String>
                             UBlockExpression [{...}] : PsiType:String
                                 UReturnExpression [return "Callable"]
