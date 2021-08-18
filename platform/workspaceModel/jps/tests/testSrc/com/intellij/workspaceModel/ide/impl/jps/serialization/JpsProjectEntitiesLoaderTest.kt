@@ -200,7 +200,7 @@ class JpsProjectEntitiesLoaderTest : HeavyPlatformTestCase() {
     val module = assertOneElement(storage.entities(ModuleEntity::class.java).toList())
     val sourceRoot = assertOneElement(module.sourceRoots.toList())
     assertEquals("erlang-include", sourceRoot.rootType)
-    assertEquals("<sourceFolder />", sourceRoot.asCustomSourceRoot()?.propertiesXmlTag)
+    assertNull(sourceRoot.asCustomSourceRoot())
   }
 
   fun `test load facets`() {
