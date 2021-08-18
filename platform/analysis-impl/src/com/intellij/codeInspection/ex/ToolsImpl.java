@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.ex;
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
@@ -20,7 +20,10 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
 
 public final class ToolsImpl implements Tools {
   @NonNls static final String ENABLED_BY_DEFAULT_ATTRIBUTE = "enabled_by_default";
@@ -45,7 +48,7 @@ public final class ToolsImpl implements Tools {
   }
 
   @NotNull
-  ScopeToolState prependTool(@NotNull NamedScope scope,
+  public ScopeToolState prependTool(@NotNull NamedScope scope,
                              @NotNull InspectionToolWrapper toolWrapper,
                              boolean enabled,
                              @NotNull HighlightDisplayLevel level) {
