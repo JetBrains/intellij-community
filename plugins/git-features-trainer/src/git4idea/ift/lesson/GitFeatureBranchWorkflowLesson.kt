@@ -20,6 +20,7 @@ import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.openapi.wm.impl.status.TextPanel
 import com.intellij.ui.EngravedLabel
 import com.intellij.ui.components.BasicOptionButtonUI
+import com.intellij.ui.popup.PopupFactoryImpl
 import git4idea.commands.Git
 import git4idea.commands.GitCommand
 import git4idea.commands.GitLineHandler
@@ -115,7 +116,9 @@ class GitFeatureBranchWorkflowLesson : GitLesson("Git.BasicWorkflow", GitLessons
       }
       val checkoutItemText = GitBundle.message("branches.checkout")
       text(GitLessonsBundle.message("git.feature.branch.checkout.branch", strong(main), strong(checkoutItemText)))
-      highlightListItemAndRehighlight { item -> item.toString() == checkoutItemText }
+      highlightListItemAndRehighlight { item ->
+        (item as? PopupFactoryImpl.ActionItem)?.action is GitBranchPopupActions.LocalBranchActions.CheckoutAction
+      }
       stateCheck { repository.currentBranchName == main }
       restoreState(firstShowBranchesTaskId, delayMillis = defaultRestoreDelay) {
         val newBranchName = repository.currentBranchName
