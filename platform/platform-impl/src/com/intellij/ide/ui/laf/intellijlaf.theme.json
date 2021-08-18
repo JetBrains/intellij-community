@@ -33,7 +33,7 @@
 
     "border": "#grey09",
     "componentBorder": "grey08",
-    "lightBorder": "#d9d9d9",
+    "lightBorder": "grey11",
 
     "panel": "#F2F2F2"
   },
@@ -148,8 +148,8 @@
     "CodeWithMe": {
       "AccessDisabled.accessDot": "#DB5860",
       "AccessEnabled.accessDot":"#59A869",
-      "AccessEnabled.dropdownBorder": "#E4E4E4",
-      "AccessEnabled.pillBackground": "#E4E4E4"
+      "AccessEnabled.dropdownBorder": "grey11",
+      "AccessEnabled.pillBackground": "grey11"
     },
 
     "ComboBox": {
@@ -342,7 +342,7 @@
       "borderColor": "lightBorder",
       "maxGutterIconWidth": 18,
       "opaque": true,
-      "separatorColor": "#cdcdcd"
+      "separatorColor": "lightBorder"
     },
 
     "MenuBar": {
@@ -382,7 +382,7 @@
       "MoreButton": {
         "background": "#E3E3E3",
         "foreground": "grey01",
-        "innerBorderColor": "#DBDBDB"
+        "innerBorderColor": "lightBorder"
       },
 
       "ToolWindow": {
@@ -584,7 +584,7 @@
       "Advertiser.background": "#f2f2f2",
       "Advertiser.foreground": "infoPanelForeground",
       "Header.background": "#f2f2f2",
-      "List.separatorColor": "border",
+      "List.separatorColor": "lightBorder",
       "SearchField.background": "#ffffff",
       "SearchField.borderColor": "componentBorder",
       "SearchField.infoForeground": "infoPanelForeground",
@@ -650,7 +650,7 @@
       "highlight": {
         "os.windows": "grey09"
       },
-      "hoverColor": "#d9d9d9",
+      "hoverColor": "grey11",
       "labelShift": 0,
       "light": {
         "os.windows": "black"
@@ -699,13 +699,13 @@
 
     "TableHeader": {
       "background": "#ffffff",
-      "bottomSeparatorColor": "#e5e5e5",
+      "bottomSeparatorColor": "lightBorder",
       "cellBorder": "com.intellij.ide.ui.laf.darcula.DarculaTableHeaderBorder",
       "height": {
         "os.default": 25,
         "os.linux": 28
       },
-      "separatorColor": "#e5e5e5",
+      "separatorColor": "lightBorder",
       "UI": "com.intellij.ide.ui.laf.darcula.DarculaTableHeaderUI"
     },
 
