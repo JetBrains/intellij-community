@@ -1,4 +1,3 @@
-// IGNORE_FIR
 // Possible parameter info, for index, lambda and arguments.
 // Test is flaky without the fix. In IDEA there's a blinking without the fix with different popups.
 

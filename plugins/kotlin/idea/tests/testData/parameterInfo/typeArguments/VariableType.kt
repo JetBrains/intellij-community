@@ -1,4 +1,3 @@
-// IGNORE_FIR
 open class A<T, V>
 
 val v: A<String, <caret>>
