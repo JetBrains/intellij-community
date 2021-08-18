@@ -4,6 +4,7 @@ package com.intellij.ui.dsl.impl
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.ui.OnePixelDivider
+import com.intellij.openapi.ui.TextFieldWithBrowseButton
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.ui.SeparatorComponent
 import com.intellij.ui.TitledSeparator
@@ -34,6 +35,7 @@ internal class PanelImpl(private val dialogPanelConfig: DialogPanelConfig) : Cel
       JLabel::class,
       JSpinner::class,
       JTextComponent::class,
+      TextFieldWithBrowseButton::class,
       TitledSeparator::class
     )
   }

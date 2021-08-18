@@ -236,6 +236,7 @@ class PasswordSafeConfigurableUi(private val settings: PasswordSafeSettings) : C
               usePgpKey = checkBox(usePgpKeyText())
                 .bindSelected({ !pgpListModel.isEmpty && settings.state.pgpKeyId != null },
                   { if (!it) settings.state.pgpKeyId = null })
+                .gap(RightGap.SMALL)
                 .component
 
               pgpKeyCombo = comboBox<PgpKey>(pgpListModel, renderer = listCellRenderer { value, _, _ -> setText("${value.userId} (${value.keyId})") }).
