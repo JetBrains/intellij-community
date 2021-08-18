@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.util.text;
 
 import com.intellij.openapi.util.NlsSafe;
@@ -450,14 +450,26 @@ public abstract class HtmlChunk {
 
   /**
    * Creates an element that represents a simple HTML link.
-   * 
+   *
    * @param target link target (HREF)
    * @param text link text
    * @return the Element that represents a link
    */
   @Contract(pure = true)
   public static @NotNull Element link(@NotNull @NonNls String target, @NotNull @Nls String text) {
-    return new Element("a", UnmodifiableHashMap.<String, String>empty().with("href", target), Collections.singletonList(text(text)));
+    return link(target, text(text));
+  }
+
+  /**
+   * Creates an element that represents an HTML link.
+   * 
+   * @param target link target (HREF)
+   * @param text link text chunk
+   * @return the Element that represents a link
+   */
+  @Contract(pure = true)
+  public static @NotNull Element link(@NotNull @NonNls String target, @NotNull HtmlChunk text) {
+    return new Element("a", UnmodifiableHashMap.<String, String>empty().with("href", target), Collections.singletonList(text));
   }
 
   /**
