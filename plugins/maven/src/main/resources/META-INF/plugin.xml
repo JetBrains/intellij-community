@@ -307,6 +307,7 @@
 
     <dependencyCollector kind="java" implementation="org.jetbrains.idea.maven.project.MavenDependencyCollector"/>
     <newProjectWizard.buildSystem.java implementation="org.jetbrains.idea.maven.wizards.MavenJavaBuildSystemType"/>
+    <commandLineInspectionProjectConfigurator implementation="org.jetbrains.idea.maven.MavenCommandLineInspectionProjectConfigurator"/>
   </extensions>
 
   <extensions defaultExtensionNs="com.intellij.properties">
