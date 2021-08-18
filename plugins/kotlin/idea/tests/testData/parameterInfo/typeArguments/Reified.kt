@@ -1,4 +1,3 @@
-// IGNORE_FIR
 inline fun <reified T> foo(p: T) {}
 
 fun bar() {
