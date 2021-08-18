@@ -69,8 +69,8 @@ UFile (package = ) [public final class TypeReferencesKt {...]
                                                     USimpleNameReferenceExpression (identifier = toString, resolvesTo = null) [toString] = external toString()()
                 UDeclarationsExpression [var lls: java.util.List<? extends java.util.List<? extends java.lang.String>>] = Undetermined
                     ULocalVariable (name = lls) [var lls: java.util.List<? extends java.util.List<? extends java.lang.String>>]
-                UDeclarationsExpression [var llsAliased: java.util.List] = Undetermined
-                    ULocalVariable (name = llsAliased) [var llsAliased: java.util.List]
+                UDeclarationsExpression [var llsAliased: java.util.List<? extends java.util.List<? extends java.lang.String>>] = Undetermined
+                    ULocalVariable (name = llsAliased) [var llsAliased: java.util.List<? extends java.util.List<? extends java.lang.String>>]
                 UDeclarationsExpression [var llt: java.util.List<? extends java.util.List<? extends T>>] = Undetermined
                     ULocalVariable (name = llt) [var llt: java.util.List<? extends java.util.List<? extends T>>]
                 UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1)) [parameterizedFoo(emptyList())] = external parameterizedFoo(emptyList())(external emptyList()())

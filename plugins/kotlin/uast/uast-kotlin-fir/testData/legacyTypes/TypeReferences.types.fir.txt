@@ -60,8 +60,8 @@ UFile (package = ) [public final class TypeReferencesKt {...]
                                                     USimpleNameReferenceExpression (identifier = toString, resolvesTo = null) [toString] : PsiType:String
                 UDeclarationsExpression [var lls: java.util.List<? extends java.util.List<? extends java.lang.String>>]
                     ULocalVariable (name = lls) [var lls: java.util.List<? extends java.util.List<? extends java.lang.String>>]
-                UDeclarationsExpression [var llsAliased: java.util.List]
-                    ULocalVariable (name = llsAliased) [var llsAliased: java.util.List]
+                UDeclarationsExpression [var llsAliased: java.util.List<? extends java.util.List<? extends java.lang.String>>]
+                    ULocalVariable (name = llsAliased) [var llsAliased: java.util.List<? extends java.util.List<? extends java.lang.String>>]
                 UDeclarationsExpression [var llt: java.util.List<? extends java.util.List<? extends T>>]
                     ULocalVariable (name = llt) [var llt: java.util.List<? extends java.util.List<? extends T>>]
                 UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1)) [parameterizedFoo(emptyList())] : PsiType:Unit
