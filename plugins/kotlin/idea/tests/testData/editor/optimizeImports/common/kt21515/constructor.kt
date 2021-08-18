@@ -1,3 +1,4 @@
+// FIR_COMPARISON
 package foo
 
 import foo.Constructors.Base.Companion.FromBaseCompanion
