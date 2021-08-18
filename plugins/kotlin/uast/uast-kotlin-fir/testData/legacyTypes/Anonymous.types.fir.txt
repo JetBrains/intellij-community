@@ -20,7 +20,7 @@ UFile (package = ) [import java.io.Closeable...]
                     ULocalVariable (name = runnable2) [var runnable2: java.lang.Runnable = Runnable({ ...})]
                         UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1)) [Runnable({ ...})] : PsiType:Runnable
                             UIdentifier (Identifier (Runnable)) [UIdentifier (Identifier (Runnable))]
-                            USimpleNameReferenceExpression (identifier = Runnable, resolvesTo = null) [Runnable] : PsiType:Runnable
+                            USimpleNameReferenceExpression (identifier = Runnable, resolvesTo = PsiClass: Runnable) [Runnable] : PsiType:Runnable
                             ULambdaExpression [{ ...}] : PsiType:Function0<? extends Unit>
                                 UBlockExpression [{...}] : PsiType:Unit
                                     UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) [println()] : PsiType:Unit

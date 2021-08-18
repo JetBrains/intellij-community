@@ -20,7 +20,7 @@ UFile (package = )
                     USimpleNameReferenceExpression (identifier = lang)
                 UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1))
                     UIdentifier (Identifier (Runnable))
-                    USimpleNameReferenceExpression (identifier = Runnable, resolvesTo = null)
+                    USimpleNameReferenceExpression (identifier = Runnable, resolvesTo = PsiClass: Runnable)
                     ULambdaExpression
                         UBlockExpression
         UMethod (name = getNotSam)
@@ -79,7 +79,7 @@ UFile (package = )
                             USimpleNameReferenceExpression (identifier = <init>, resolvesTo = PsiClass: Thread)
                             UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1))
                                 UIdentifier (Identifier (Runnable))
-                                USimpleNameReferenceExpression (identifier = Runnable, resolvesTo = null)
+                                USimpleNameReferenceExpression (identifier = Runnable, resolvesTo = PsiClass: Runnable)
                                 ULambdaExpression
                                     UBlockExpression
                                         UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1))
@@ -93,7 +93,7 @@ UFile (package = )
                     USimpleNameReferenceExpression (identifier = ambiguousSamAcceptor, resolvesTo = null)
                     UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1))
                         UIdentifier (Identifier (Supplier))
-                        USimpleNameReferenceExpression (identifier = Supplier, resolvesTo = null)
+                        USimpleNameReferenceExpression (identifier = Supplier, resolvesTo = PsiClass: Supplier)
                         ULambdaExpression
                             UBlockExpression
                                 UReturnExpression
@@ -103,7 +103,7 @@ UFile (package = )
                     USimpleNameReferenceExpression (identifier = ambiguousSamAcceptor, resolvesTo = null)
                     UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1))
                         UIdentifier (Identifier (Callable))
-                        USimpleNameReferenceExpression (identifier = Callable, resolvesTo = null)
+                        USimpleNameReferenceExpression (identifier = Callable, resolvesTo = PsiClass: Callable)
                         ULambdaExpression
                             UBlockExpression
                                 UReturnExpression

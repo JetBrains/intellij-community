@@ -24,7 +24,7 @@ UFile (package = ) [import java.lang.Thread...]
 
 })(Undetermined)
                     UIdentifier (Identifier (Runnable)) [UIdentifier (Identifier (Runnable))]
-                    USimpleNameReferenceExpression (identifier = Runnable, resolvesTo = null) [Runnable] = external Runnable({
+                    USimpleNameReferenceExpression (identifier = Runnable, resolvesTo = PsiClass: Runnable) [Runnable] = external Runnable({
 
 })(Undetermined)
                     ULambdaExpression [{ ...}] = Undetermined
@@ -103,7 +103,7 @@ UFile (package = ) [import java.lang.Thread...]
     println("hello2")
 })(Undetermined)
                                 UIdentifier (Identifier (Runnable)) [UIdentifier (Identifier (Runnable))]
-                                USimpleNameReferenceExpression (identifier = Runnable, resolvesTo = null) [Runnable] = external Runnable({
+                                USimpleNameReferenceExpression (identifier = Runnable, resolvesTo = PsiClass: Runnable) [Runnable] = external Runnable({
     println("hello2")
 })(Undetermined)
                                 ULambdaExpression [{ ...}] = Undetermined
@@ -133,7 +133,7 @@ UFile (package = ) [import java.lang.Thread...]
     return "Supplier"
 })(Undetermined)
                         UIdentifier (Identifier (Supplier)) [UIdentifier (Identifier (Supplier))]
-                        USimpleNameReferenceExpression (identifier = Supplier, resolvesTo = null) [Supplier] = external Supplier({
+                        USimpleNameReferenceExpression (identifier = Supplier, resolvesTo = PsiClass: Supplier) [Supplier] = external Supplier({
     return "Supplier"
 })(Undetermined)
                         ULambdaExpression [{ ...}] = Undetermined
@@ -155,7 +155,7 @@ UFile (package = ) [import java.lang.Thread...]
     return "Callable"
 })(Undetermined)
                         UIdentifier (Identifier (Callable)) [UIdentifier (Identifier (Callable))]
-                        USimpleNameReferenceExpression (identifier = Callable, resolvesTo = null) [Callable] = external Callable({
+                        USimpleNameReferenceExpression (identifier = Callable, resolvesTo = PsiClass: Callable) [Callable] = external Callable({
     return "Callable"
 })(Undetermined)
                         ULambdaExpression [{ ...}] = Undetermined
