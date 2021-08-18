@@ -104,8 +104,8 @@ import java.util.List;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.function.*;
 import java.util.function.Function;
+import java.util.function.*;
 import java.util.jar.JarFile;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -1103,18 +1103,25 @@ public final class PlatformTestUtil {
     return Pair.create(executionEnvironment, refRunContentDescriptor.get());
   }
 
+  public static void waitWithEventsDispatching(@NotNull String errorMessage, @NotNull BooleanSupplier condition, int timeoutInSeconds) {
+    waitWithEventsDispatching(() -> errorMessage, condition, timeoutInSeconds);
+  }
+
   /**
    * Wait and dispatch events during timeout
-   * @param errorMessage The error message if timeout happens
-   * @param condition Check whether finished
-   * @param timeoutInSeconds timeout in seconds
+   *
+   * @param errorMessageSupplier The error message supplier if timeout happens
+   * @param condition            Check whether finished
+   * @param timeoutInSeconds     timeout in seconds
    */
-  public static void waitWithEventsDispatching(@NotNull String errorMessage, @NotNull BooleanSupplier condition, int timeoutInSeconds) {
+  public static void waitWithEventsDispatching(@NotNull Supplier<String> errorMessageSupplier,
+                                               @NotNull BooleanSupplier condition,
+                                               int timeoutInSeconds) {
     long start = System.currentTimeMillis();
     while (true) {
       try {
         if (System.currentTimeMillis() - start > timeoutInSeconds * 1000L) {
-          fail(errorMessage);
+          fail(errorMessageSupplier.get());
         }
         if (condition.getAsBoolean()) {
           break;
