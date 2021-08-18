@@ -31,7 +31,7 @@
     "selectionForeground": "#FFFFFF",
     "linkForeground": "#2470B3",
 
-    "border": "#D1D1D1",
+    "border": "#grey09",
     "componentBorder": "grey08",
     "lightBorder": "#d9d9d9",
 
@@ -78,8 +78,8 @@
       "hoverBackground": "#dfdfdf",
       "hoverBorderColor": "#dfdfdf",
       "hoverSeparatorColor": "grey06",
-      "pressedBackground": "#cfcfcf",
-      "pressedBorderColor": "#cfcfcf"
+      "pressedBackground": "grey09",
+      "pressedBorderColor": "grey09"
     },
 
     "ActionsList": {
@@ -124,7 +124,7 @@
         "startBackground": "#528CC7",
         "startBorderColor": "#487EB8"
       },
-      "disabledBorderColor": "#cfcfcf",
+      "disabledBorderColor": "border",
       "endBackground": "#ffffff",
       "endBorderColor": "componentBorder",
       "focusedBorderColor": "#87afda",
@@ -177,7 +177,7 @@
 
     "Component": {
       "borderColor": "componentBorder",
-      "disabledBorderColor": "#cfcfcf",
+      "disabledBorderColor": "border",
       "errorFocusColor": "#e53e4d",
       "focusColor": "#97c3f3",
       "focusWidth": 2,
@@ -230,7 +230,7 @@
     },
 
     "Editor": {
-      "background": "#cccccc",
+      "background": "grey09",
       "foreground": "infoPanelForeground",
       "shortcutForeground": "#4274A6"
     },
@@ -278,8 +278,7 @@
       "shortcutForeground": "infoPanelForeground"
     },
 
-    "Group.separatorColor": "#cdcdcd",
-    "Group.disabledSeparatorColor": "#cdcdcd",
+    "Group.disabledSeparatorColor": "border",
 
     "GutterTooltip": {
       "infoForeground": "infoPanelForeground",
@@ -348,7 +347,7 @@
     "MenuBar": {
       "border": "com.intellij.ide.ui.laf.darcula.ui.DarculaMenuBarBorder",
       "borderColor": "lightBorder",
-      "disabledBackground": "#cccccc",
+      "disabledBackground": "border",
       "UI": "javax.swing.plaf.basic.BasicMenuBarUI"
     },
 
@@ -364,7 +363,7 @@
       "borderColor": "#F4AF3D"
     },
 
-    "NavBar.borderColor": "#cdcdcd",
+    "NavBar.borderColor": "border",
 
     "NewClass": {
       "Panel.background": "#f2f2f2",
@@ -584,7 +583,7 @@
       "Advertiser.background": "#f2f2f2",
       "Advertiser.foreground": "infoPanelForeground",
       "Header.background": "#f2f2f2",
-      "List.separatorColor": "#dcdcdc",
+      "List.separatorColor": "border",
       "SearchField.background": "#ffffff",
       "SearchField.borderColor": "componentBorder",
       "SearchField.infoForeground": "infoPanelForeground",
@@ -599,7 +598,6 @@
     "SearchOption.selectedBackground": "#DAE4ED",
 
     "Separator": {
-      "separatorColor": "#cdcdcd",
       "UI": "com.intellij.ide.ui.laf.darcula.ui.DarculaSeparatorUI"
     },
 
@@ -644,12 +642,12 @@
         "os.windows": "3,1,1,1"
       },
       "darkShadow": {
-        "os.windows": "#cccccc"
+        "os.windows": "grey09"
       },
       "disabledUnderlineColor": "grey05",
       "focusColor": "#dae4ed",
       "highlight": {
-        "os.windows": "#cccccc"
+        "os.windows": "grey09"
       },
       "hoverColor": "#d9d9d9",
       "labelShift": 0,
@@ -657,7 +655,7 @@
         "os.windows": "black"
       },
       "selectHighlight": {
-        "os.windows": "#d2d2d2"
+        "os.windows": "grey09"
       },
       "selected": {
         "os.windows": "#A2BAE0"
@@ -761,7 +759,6 @@
       "Actions.infoForeground": "#99a4ad",
       "borderColor": "grey05",
       "infoForeground": "infoPanelForeground",
-      "separatorColor": "#d1d1d1",
       "shortcutForeground": "infoPanelForeground",
 
       "paintBorder": {
@@ -782,8 +779,7 @@
           "os.default": -1,
           "os.windows": 0
         },
-        "inactiveBackground": "panel",
-        "borderColor": "#d1d1d1"
+        "inactiveBackground": "panel"
       },
 
       "HeaderCloseButton.background": "grey07",
@@ -867,7 +863,6 @@
       "Details.background": "#FFFFFF",
       "Projects.actions.selectionBackground": "#3587E5",
       "Projects.actions.background": "#DCEDFE",
-      "separatorColor": "#d1d1d1",
       "SidePanel.background": "#f2f2f2"
     },
 
