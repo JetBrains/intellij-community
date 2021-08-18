@@ -23,7 +23,8 @@ public class SwitchEvaluator implements Evaluator {
 
   @Override
   public Object evaluate(EvaluationContextImpl context) throws EvaluateException {
-    Object switchValue = UnBoxingEvaluator.unbox(myExpressionEvaluator.evaluate(context), context);
+    Object switchValue = myExpressionEvaluator.evaluate(context);
+    Object unboxedSwitchValue = switchValue != null ? UnBoxingEvaluator.unbox(switchValue, context) : null;
     Object res = null;
     try {
       boolean caseFound = false;
@@ -34,7 +35,7 @@ public class SwitchEvaluator implements Evaluator {
         else {
           Evaluator e = DisableGC.unwrap(evaluator);
           if (e instanceof SwitchCaseEvaluator) {
-            res = ((SwitchCaseEvaluator)e).match(switchValue, context);
+            res = ((SwitchCaseEvaluator)e).match(unboxedSwitchValue, context);
             if (Boolean.TRUE.equals(res)) {
               caseFound = true;
             }
@@ -70,7 +71,9 @@ public class SwitchEvaluator implements Evaluator {
         return true;
       }
       for (Evaluator evaluator : myEvaluators) {
-        if (resultsEquals(value, UnBoxingEvaluator.unbox(evaluator.evaluate(context), context))) {
+        Object labelValue = evaluator.evaluate(context);
+        Object unboxedLabelValue = labelValue != null ? UnBoxingEvaluator.unbox(labelValue, context) : null;
+        if (resultsEquals(value, unboxedLabelValue)) {
           return true;
         }
       }
@@ -78,6 +81,9 @@ public class SwitchEvaluator implements Evaluator {
     }
 
     static boolean resultsEquals(Object val1, Object val2) {
+      if (val1 == null || val2 == null) {
+        return val1 == val2;
+      }
       if (val1 instanceof StringReference && val2 instanceof StringReference) {
         return ((StringReference)val1).value().equals(((StringReference)val2).value());
       }
