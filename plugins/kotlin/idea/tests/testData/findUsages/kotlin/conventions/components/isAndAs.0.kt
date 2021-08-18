@@ -1,4 +1,3 @@
-// FIR_COMPARISON
 // PSI_ELEMENT: org.jetbrains.kotlin.psi.KtParameter
 // OPTIONS: usages
 
@@ -17,3 +16,4 @@ fun y(o: Any) {
 }
 // DISABLE-ERRORS
 // FIR_IGNORE
+// FIR_COMPARISON_WITH_DISABLED_COMPONENTS

@@ -1,4 +1,3 @@
-// FIR_COMPARISON
 // PSI_ELEMENT: org.jetbrains.kotlin.psi.KtProperty
 // CHECK_SUPER_METHODS_YES_NO_DIALOG: no
 // OPTIONS: usages
@@ -30,3 +29,4 @@ fun test() {
 
 // DISABLE-ERRORS
 // FIR_IGNORE
+// FIR_COMPARISON
