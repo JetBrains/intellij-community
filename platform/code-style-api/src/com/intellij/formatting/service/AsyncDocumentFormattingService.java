@@ -28,11 +28,11 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 
 /**
- * Extend this class if there is a long lasting formatting operation which may block EDT. The actual formatting code is placed then
+ * Extend this class if there is a long-lasting formatting operation which may block EDT. The actual formatting code is placed then
  * in {@link FormattingTask#run()} method which may be slow.
  * <p>
  * If another {@code formatDocument()} call is made for the same document, the previous request is cancelled. On success, if
- * {@code cancel()} returns {@code true}, another request replaces the previous one. Otherwise the newer request is rejected.
+ * {@code cancel()} returns {@code true}, another request replaces the previous one. Otherwise, the newer request is rejected.
  * <p>
  * Before the actual formatting starts, {@link #createFormattingTask(AsyncFormattingRequest)} method is called. It should be fast enough not to
  * block EDT. If it succeeds (doesn't return null), further formatting is started using the created runnable on a separate thread.
@@ -274,8 +274,8 @@ public abstract class AsyncDocumentFormattingService extends AbstractDocumentFor
     boolean cancel();
 
     /**
-     * @return True if the task must be run under progress (a progress indicator is created automatically). Otherwise the task is
-     * responsible of visualizing the progress by itself, it is just started on a background thread.
+     * @return True if the task must be run under progress (a progress indicator is created automatically). Otherwise, the task is
+     * responsible for visualizing the progress by itself, it is just started on a background thread.
      */
     default boolean isRunUnderProgress() {
       return false;
