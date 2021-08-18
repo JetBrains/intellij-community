@@ -24,6 +24,8 @@ import git4idea.config.GitConfigUtil
 import git4idea.history.GitCommitRequirements
 import git4idea.history.GitCommitRequirements.DiffInMergeCommits.DIFF_TO_PARENTS
 import git4idea.history.GitCommitRequirements.DiffRenameLimit.NO_RENAMES
+import git4idea.history.GitLogParser
+import git4idea.history.GitLogParser.GitLogOption
 import git4idea.history.GitLogUtil
 import git4idea.i18n.GitBundle
 import git4idea.merge.GitConflictResolver
@@ -110,23 +112,24 @@ fun loadStashStack(project: Project, root: VirtualFile, consumer: Consumer<Stash
 
 @Throws(VcsException::class)
 fun loadStashStack(project: Project, root: VirtualFile): List<StashInfo> {
+  val options = arrayOf(GitLogOption.HASH, GitLogOption.SHORT_REF_LOG_SELECTOR, GitLogOption.SUBJECT)
   val charset = Charset.forName(GitConfigUtil.getLogEncoding(project, root))
 
   val h = GitLineHandler(project, root, GitCommand.STASH.readLockingCommand())
   h.setSilent(true)
-  h.addParameters("list", "--pretty=format:%H:%gd:%s")
+  h.addParameters("list", "--pretty=format:" + GitLogParser.makeFormatFromOptions(options, ":"))
   h.charset = charset
   val output = Git.getInstance().runCommand(h)
   output.throwOnError()
 
   val result = mutableListOf<StashInfo>()
   for (line in output.output) {
-    val parts = line.split(':', limit = 4)
+    val parts = line.split(':', limit = options.size + 1) // subject is usually prefixed by "WIP on <branch>:"
     when {
-      parts.size < 3 -> {
+      parts.size < options.size -> {
         logger<GitUtil>().error("Can't parse stash record: ${line}")
       }
-      parts.size == 3 -> {
+      parts.size == options.size -> {
         result.add(StashInfo(root, HashImpl.build(parts[0]), parts[1], null, parts[2].trim()))
       }
       else -> {
