@@ -41,6 +41,7 @@ class ExtractSelector {
       singleElement is PsiBlockStatement -> if (singleElement.codeBlock.firstBodyElement != null) listOf(singleElement) else emptyList()
       singleElement is PsiCodeBlock -> alignCodeBlock(singleElement)
       singleElement is PsiExpression -> listOfNotNull(alignExpression(singleElement))
+      singleElement is PsiSwitchLabeledRuleStatement -> listOfNotNull(singleElement.body)
       else -> elements
     }
     return when {
@@ -86,11 +87,8 @@ class ExtractSelector {
     val filteredStatements = statements
       .dropWhile { it is PsiSwitchLabelStatement || it is PsiWhiteSpace }
       .dropLastWhile { it is PsiSwitchLabelStatement || it is PsiWhiteSpace }
-    return if (filteredStatements.any { it is PsiSwitchLabelStatement }) {
-      emptyList()
-    } else {
-      filteredStatements
-    }
+    if (filteredStatements.any { it is PsiSwitchLabelStatement || it is PsiSwitchLabeledRuleStatement }) return emptyList()
+    return filteredStatements
   }
 
   private fun isInsideAnnotation(expression: PsiExpression): Boolean {
