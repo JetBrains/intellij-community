@@ -64,6 +64,7 @@ public abstract class AsyncDocumentFormattingService extends AbstractDocumentFor
     FormattingTask formattingTask = createFormattingTask(formattingRequest);
     if (formattingTask != null) {
       formattingRequest.setTask(formattingTask);
+      myPendingRequests.add(formattingRequest);
       if (ApplicationManager.getApplication().isHeadlessEnvironment()) {
         runAsyncFormat(formattingRequest, null);
       }
@@ -88,7 +89,6 @@ public abstract class AsyncDocumentFormattingService extends AbstractDocumentFor
   }
 
   private void runAsyncFormat(@NotNull FormattingRequestImpl formattingRequest, @Nullable ProgressIndicator indicator) {
-    myPendingRequests.add(formattingRequest);
     try {
       formattingRequest.runTask(indicator);
     }
