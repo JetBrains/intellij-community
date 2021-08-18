@@ -8,14 +8,13 @@ import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.PsiUtil
 import com.intellij.psi.util.TypeConversionUtil
 import com.intellij.refactoring.extractMethod.newImpl.ExtractMethodHelper.createDeclaration
-import com.intellij.refactoring.extractMethod.newImpl.ExtractMethodHelper.findTopmostParenthesis
+import com.intellij.refactoring.extractMethod.newImpl.ExtractMethodHelper.getReturnedExpression
 import com.intellij.refactoring.extractMethod.newImpl.structures.DataOutput
 import com.intellij.refactoring.extractMethod.newImpl.structures.DataOutput.*
 import com.intellij.refactoring.extractMethod.newImpl.structures.FlowOutput
 import com.intellij.refactoring.extractMethod.newImpl.structures.FlowOutput.*
 import com.intellij.refactoring.extractMethod.newImpl.structures.InputParameter
-
-data class PsiReplace(val source: PsiElement, val target: PsiElement)
+import com.intellij.refactoring.util.RefactoringUtil
 
 class BodyBuilder(private val factory: PsiElementFactory) {
 
@@ -23,19 +22,21 @@ class BodyBuilder(private val factory: PsiElementFactory) {
 
   private fun statementOf(statement: String) = factory.createStatementFromText(statement, null)
 
-  private fun findDefaultFlowSubstitution(flowOutput: FlowOutput, dataOutput: DataOutput): String? {
+  private fun findSubstitutionForExitStatement(flowOutput: FlowOutput, dataOutput: DataOutput, statement: PsiStatement): String {
+    val returnExpression = getReturnedExpression(statement)?.text ?: "null"
     return when (flowOutput) {
       is ConditionalFlow -> when (dataOutput) {
         is VariableOutput -> "return null;"
         ArtificialBooleanOutput -> "return true;"
-        is ExpressionOutput -> "return null;"
-        is EmptyOutput -> null
+        is ExpressionOutput -> "return $returnExpression;"
+        is EmptyOutput -> throw IllegalStateException()
       }
       is UnconditionalFlow -> when (dataOutput) {
         is VariableOutput, is EmptyOutput -> "return;"
-        is ExpressionOutput, ArtificialBooleanOutput -> null
+        is ExpressionOutput -> "return $returnExpression;"
+        ArtificialBooleanOutput -> throw IllegalStateException()
       }
-      is EmptyFlow -> null
+      is EmptyFlow -> throw IllegalStateException()
     }
   }
 
@@ -48,17 +49,17 @@ class BodyBuilder(private val factory: PsiElementFactory) {
       .forEach { expression -> AddTypeCastFix.addTypeCast(expression.project, expression, castType) }
   }
 
-  private fun findExitReplacements(flowOutput: FlowOutput, dataOutput: DataOutput): List<PsiReplace> {
-    val flowReplacement = findDefaultFlowSubstitution(flowOutput, dataOutput) ?: return emptyList()
-    return flowOutput.statements
-      .filterNot { statement -> dataOutput is ExpressionOutput && statement is PsiReturnStatement && statement.returnValue != null }
-      .map { statement -> PsiReplace(statement, statementOf(flowReplacement)) }
+  private fun replaceExitStatements(flowOutput: FlowOutput, dataOutput: DataOutput) {
+    flowOutput.statements.forEach { statement ->
+      val replacement = findSubstitutionForExitStatement(flowOutput, dataOutput, statement)
+      statement.replace(statementOf(replacement))
+    }
   }
 
-  private fun createInputReplacements(inputGroup: InputParameter): List<PsiReplace> {
-    return inputGroup.references
-      .map { referenceExpression -> findTopmostParenthesis(referenceExpression) }
-      .map { normalizedExpression -> PsiReplace(normalizedExpression, expressionOf(inputGroup.name)) }
+  private fun replaceParameterExpressions(parameter: InputParameter) {
+    parameter.references
+      .map { parameterExpression -> RefactoringUtil.outermostParenthesizedExpression(parameterExpression) }
+      .forEach { normalizedExpression -> normalizedExpression.replace(expressionOf(parameter.name)) }
   }
 
   private fun findDefaultReturn(dataOutput: DataOutput, flowOutput: FlowOutput): String? {
@@ -130,8 +131,8 @@ class BodyBuilder(private val factory: PsiElementFactory) {
       val wrappedParameters = parameterMarkers.entries.map { (parameter, markers) ->
         parameter.copy(references = releaseMarkers(wrappedExpression, markers))
       }
-      val wrappedFlowOutput = UnconditionalFlow(listOf(wrappedStatement), true)
-      val wrappedDataOutput = dataOutput.copy(returnExpressions = listOf(wrappedExpression))
+      val wrappedFlowOutput = if (needsReturnStatement) UnconditionalFlow(listOf(wrappedStatement), true) else EmptyFlow
+      val wrappedDataOutput = if (needsReturnStatement) dataOutput.copy(returnExpressions = listOf(wrappedExpression)) else EmptyOutput()
       return build(listOf(wrappedStatement), wrappedFlowOutput, wrappedDataOutput, wrappedParameters, disabledParameters, missedDeclarations)
     }
 
@@ -158,11 +159,9 @@ class BodyBuilder(private val factory: PsiElementFactory) {
     val inCopyInputGroups = parameterMarkers.entries.map { (parameter, marks) ->
       parameter.copy(references = releaseMarkers(block, marks))
     }
-    val exitSubstitution = findExitReplacements(inCopyFlowOutput, dataOutput)
-    val inputReplacements = inCopyInputGroups.map { createInputReplacements(it) }.flatten()
     val requiredDeclarations = missedDeclarations.map { createDeclaration(it) }
-
-    (inputReplacements + exitSubstitution).forEach { (source, target) -> source.replace(target) }
+    inCopyInputGroups.forEach { replaceParameterExpressions(it) }
+    replaceExitStatements(inCopyFlowOutput, dataOutput)
 
     castNumericReturns(block, dataOutput.type)
 
