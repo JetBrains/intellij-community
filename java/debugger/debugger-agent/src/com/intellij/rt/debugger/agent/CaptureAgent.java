@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.rt.debugger.agent;
 
 import org.jetbrains.capture.org.objectweb.asm.*;
@@ -10,11 +10,9 @@ import java.lang.instrument.UnmodifiableClassException;
 import java.net.URI;
 import java.security.ProtectionDomain;
 import java.util.*;
-import java.util.jar.JarFile;
 
 @SuppressWarnings({"UseOfSystemOutOrSystemErr", "CallToPrintStackTrace"})
 public final class CaptureAgent {
-  public static final String AGENT_STORAGE_JAR = "debugger-agent-storage.jar";
   private static Instrumentation ourInstrumentation;
   private static final Set<Class> mySkipped = new HashSet<Class>();
 
@@ -30,8 +28,6 @@ public final class CaptureAgent {
 
     ourInstrumentation = instrumentation;
     try {
-      appendStorageJar(instrumentation);
-
       readSettings(args);
 
       // remember already loaded and not instrumented classes to skip them during retransform
@@ -72,52 +68,6 @@ public final class CaptureAgent {
       System.err.println("Critical error in IDEA Async Stack Traces instrumenting agent. Agent is now disabled. Please report to IDEA support:");
       e.printStackTrace();
     }
-  }
-
-  @SuppressWarnings("SSBasedInspection")
-  private static void appendStorageJar(Instrumentation instrumentation) throws IOException {
-    File storageJar = null;
-
-    // do not extract if storage jar is available nearby
-    try {
-      storageJar = new File(new File(CaptureAgent.class.getProtectionDomain().getCodeSource().getLocation().toURI()).getParentFile(),
-                            AGENT_STORAGE_JAR);
-    }
-    catch (Exception e) {
-      try {
-        String path = "/" + CaptureAgent.class.getName().replace('.', '/') + ".class";
-        String classResource = CaptureAgent.class.getResource(path).getFile();
-        if (classResource.startsWith("file:")) {
-          storageJar = new File(new File(classResource.substring(5, classResource.length() - path.length() - 1)).getParentFile(),
-                                AGENT_STORAGE_JAR);
-        }
-      } catch (Exception ignored) {
-      }
-    }
-
-    if (storageJar == null || !storageJar.exists()) {
-      InputStream inputStream = CaptureAgent.class.getResourceAsStream("/" + AGENT_STORAGE_JAR);
-      try {
-        storageJar = File.createTempFile("debugger-agent-storage", ".jar");
-        storageJar.deleteOnExit();
-        OutputStream outStream = new FileOutputStream(storageJar);
-        try {
-          byte[] buffer = new byte[10 * 1024];
-          int bytesRead;
-          while ((bytesRead = inputStream.read(buffer)) != -1) {
-            outStream.write(buffer, 0, bytesRead);
-          }
-        }
-        finally {
-          outStream.close();
-        }
-      }
-      finally {
-        inputStream.close();
-      }
-    }
-
-    instrumentation.appendToBootstrapClassLoaderSearch(new JarFile(storageJar));
   }
 
   private static void setupJboss() {
