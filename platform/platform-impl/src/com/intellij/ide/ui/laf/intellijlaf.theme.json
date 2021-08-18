@@ -448,7 +448,7 @@
       "hoverBackground": "#EDF6FE",
       "lightSelectionBackground": "#EDF6FE",
       "paidTagBackground": "#D8EDF8",
-      "tagBackground": "#EAEAEC",
+      "tagBackground": "grey14",
       "tagForeground": "infoPanelForeground",
       "trialTagBackground": "#DBE8DD",
 
@@ -481,7 +481,7 @@
 
       "Header": {
         "activeBackground": "grey13",
-        "inactiveBackground": "#ededed"
+        "inactiveBackground": "grey14"
       },
 
       "Toolbar": {
@@ -756,7 +756,7 @@
     "ToolTip": {
       "background": "#f7f7f7",
 
-      "Actions.background": "#ebebeb",
+      "Actions.background": "grey14",
       "Actions.infoForeground": "#99a4ad",
       "borderColor": "grey05",
       "infoForeground": "infoPanelForeground",
