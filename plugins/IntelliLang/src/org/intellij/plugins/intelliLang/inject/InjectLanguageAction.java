@@ -134,7 +134,6 @@ public class InjectLanguageAction implements IntentionAction, LowPriorityAction 
                      @NotNull PsiFile file) throws IncorrectOperationException {
     SmartPsiElementPointer<PsiFile> filePointer = SmartPointerManager.getInstance(project).createSmartPsiElementPointer(file);
     doChooseLanguageToInject(editor, injectable -> {
-      if (project.isDisposed() || editor.isDisposed()) return false;
       final PsiFile psiFile = filePointer.getElement();
       if (psiFile != null) {
         invokeImpl(project, editor, psiFile, injectable);
