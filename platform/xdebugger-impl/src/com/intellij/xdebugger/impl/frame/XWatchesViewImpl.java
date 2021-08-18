@@ -1,10 +1,12 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.xdebugger.impl.frame;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.dnd.DnDEvent;
 import com.intellij.ide.dnd.DnDManager;
 import com.intellij.ide.dnd.DnDNativeTarget;
+import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.CompositeDisposable;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
@@ -132,7 +134,22 @@ public class XWatchesViewImpl extends XVariablesView implements DnDNativeTarget,
         new XDebuggerExpressionComboBox(tree.getProject(), tree.getEditorsProvider(), "evaluateInVariables", null, false, true) {
           @Override
           protected ComboBox<XExpression> createComboBox(CollectionComboBoxModel<XExpression> model, int width) {
-            return new XDebuggerEmbeddedComboBox<>(model, width);
+            AnAction addToWatchesAction =
+              new AnAction(ActionsBundle.actionText(XDebuggerActions.ADD_TO_WATCH), null, AllIcons.Debugger.Watch) {
+                @Override
+                public void actionPerformed(@NotNull AnActionEvent e) {
+                  myEvaluateComboBox.saveTextInHistory();
+                  addWatchExpression(myEvaluateComboBox.getExpression(), -1, false);
+                }
+              };
+            ActionToolbarImpl toolbar = (ActionToolbarImpl)ActionManager.getInstance()
+              .createActionToolbar("DebuggerVariablesEvaluate", new DefaultActionGroup(addToWatchesAction), true);
+            toolbar.setOpaque(false);
+            toolbar.setReservePlaceAutoPopupIcon(false);
+            toolbar.setTargetComponent(tree);
+            XDebuggerEmbeddedComboBox<XExpression> comboBox = new XDebuggerEmbeddedComboBox<>(model, width);
+            comboBox.setExtension(toolbar);
+            return comboBox;
           }
 
           @Override
