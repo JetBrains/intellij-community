@@ -60,17 +60,11 @@ private class RecoveryWorker(val actions: Collection<RecoveryAction>, private va
   }
 
   fun perform(recoveryAction: RecoveryAction) {
-    object : Task.Backgroundable(project, IdeBundle.message("recovery.progress.title", recoveryAction.presentableName)) {
-      override fun run(indicator: ProgressIndicator) {
-        CacheRecoveryUsageCollector.recordRecoveryPerformedEvent(recoveryAction, true, project)
-        for (problem in recoveryAction.perform(project)) {
-          LOG.error("${recoveryAction.actionKey} found and fixed a problem: ${problem.message}")
-        }
-        if (actionSeq.hasNext()) {
-          askUserToContinue()
-        }
+    recoveryAction.performUnderProgress(project, true) {
+      if (actionSeq.hasNext()) {
+        askUserToContinue()
       }
-    }.queue()
+    }
   }
 
   private fun askUserToContinue() {
@@ -91,6 +85,19 @@ private class RecoveryWorker(val actions: Collection<RecoveryAction>, private va
       })
       .notify(null)
   }
+}
+
+internal fun RecoveryAction.performUnderProgress(project: Project?, fromGuide: Boolean, onComplete: () -> Unit = {}) {
+  val recoveryAction = this
+  object : Task.Backgroundable(project, IdeBundle.message("recovery.progress.title", recoveryAction.presentableName)) {
+    override fun run(indicator: ProgressIndicator) {
+      CacheRecoveryUsageCollector.recordRecoveryPerformedEvent(recoveryAction, fromGuide, project)
+      for (problem in recoveryAction.perform(project)) {
+        RecoveryWorker.LOG.error("${recoveryAction.actionKey} found and fixed a problem: ${problem.message}")
+      }
+      onComplete()
+    }
+  }.queue()
 }
 
 @ApiStatus.Internal
