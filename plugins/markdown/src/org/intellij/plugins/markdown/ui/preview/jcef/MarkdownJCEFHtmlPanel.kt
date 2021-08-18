@@ -114,10 +114,10 @@ class MarkdownJCEFHtmlPanel : JCEFHtmlPanel(isOffScreenRendering(), null, getCla
     scrollListeners.remove(listener)
   }
 
-  override fun scrollToMarkdownSrcOffset(offset: Int) {
+  override fun scrollToMarkdownSrcOffset(offset: Int, smooth: Boolean) {
     cefBrowser.executeJavaScript(
       // language=JavaScript
-      "if (window.scrollController) { window.scrollController.scrollTo($offset); }",
+      "if (window.scrollController) { window.scrollController.scrollTo($offset, $smooth); }",
       null,
       0
     )

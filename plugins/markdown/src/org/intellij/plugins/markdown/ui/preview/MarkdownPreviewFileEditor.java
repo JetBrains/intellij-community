@@ -147,7 +147,7 @@ public class MarkdownPreviewFileEditor extends UserDataHolderBase implements Fil
       myLastScrollRequest = () -> {
         if (myPanel != null) {
           myLastScrollOffset = offset;
-          myPanel.scrollToMarkdownSrcOffset(myLastScrollOffset);
+          myPanel.scrollToMarkdownSrcOffset(myLastScrollOffset, true);
           synchronized (REQUESTS_LOCK) {
             myLastScrollRequest = null;
           }
