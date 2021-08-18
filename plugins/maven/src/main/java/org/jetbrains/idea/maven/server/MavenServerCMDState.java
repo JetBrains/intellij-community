@@ -20,7 +20,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.util.PathUtil;
 import gnu.trove.TIntHashSet;
-import org.apache.lucene.search.Query;
+import org.apache.lucene.search.CachingSpanFilter;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -185,7 +185,7 @@ public class MavenServerCMDState extends CommandLineState {
     classPath.add(PathUtil.getJarPathForClass(Element.class));//JDOM
     classPath.add(PathUtil.getJarPathForClass(TIntHashSet.class));//Trove
 
-    String element = PathManager.getJarPathForClass(Query.class);
+    String element = PathManager.getJarPathForClass(CachingSpanFilter.class);
     if (element != null) {
       (classPath).add(element);
     }
