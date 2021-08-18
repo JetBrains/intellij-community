@@ -76,8 +76,8 @@
 
     "ActionButton": {
       "focusedBorderColor": "#62b8de",
-      "hoverBackground": "#dfdfdf",
-      "hoverBorderColor": "#dfdfdf",
+      "hoverBackground": "grey12",
+      "hoverBorderColor": "grey12",
       "hoverSeparatorColor": "grey06",
       "pressedBackground": "grey09",
       "pressedBorderColor": "grey09"
@@ -172,7 +172,7 @@
     "CompletionPopup": {
       "matchForeground": "#2470b3",
       "selectionBackground": "#c5dffc",
-      "selectionInactiveBackground": "#e0e0e0",
+      "selectionInactiveBackground": "grey12",
       "nonFocusedState": true
     },
 
@@ -283,7 +283,7 @@
 
     "GutterTooltip": {
       "infoForeground": "infoPanelForeground",
-      "lineSeparatorColor": "#e0e0e0"
+      "lineSeparatorColor": "grey12"
     },
 
     "HelpTooltip": {
@@ -428,12 +428,12 @@
 
     "ParameterInfo": {
       "background": "#f7f7f7",
-      "borderColor": "#e0e0e0",
-      "currentOverloadBackground": "#e0e0e0",
+      "borderColor": "grey12",
+      "currentOverloadBackground": "grey12",
       "currentParameterForeground": "foreground",
       "disabledForeground": "#8c8c8c",
       "infoForeground": "infoPanelForeground",
-      "lineSeparatorColor": "#e0e0e0"
+      "lineSeparatorColor": "grey12"
     },
 
     "PasswordField": {
@@ -588,7 +588,7 @@
       "SearchField.background": "#ffffff",
       "SearchField.borderColor": "componentBorder",
       "SearchField.infoForeground": "infoPanelForeground",
-      "Tab.selectedBackground": "#dedede"
+      "Tab.selectedBackground": "grey12"
     },
 
     "SearchField.errorBackground": "#ffcccc",
@@ -634,7 +634,7 @@
     "StatusBar": {
       "LightEditBackground": "#e3eefc",
       "borderColor": "border",
-      "hoverBackground": "#dfdfdf"
+      "hoverBackground": "grey12"
     },
 
     "TabbedPane": {
@@ -852,7 +852,7 @@
       "RefLabel.backgroundBase": "black"
     },
 
-    "control": "#e0e0e0",
+    "control": "grey12",
     "grayFilter": "33,-35,100",
     "infoText": "foreground",
     "text.grayFilter": "20,0,100",
