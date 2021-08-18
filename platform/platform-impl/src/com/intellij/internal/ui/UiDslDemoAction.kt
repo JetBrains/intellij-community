@@ -15,7 +15,6 @@ import java.awt.BorderLayout
 import java.awt.Dimension
 import java.awt.event.ItemEvent
 import javax.swing.JComponent
-import javax.swing.JLabel
 import javax.swing.JPanel
 import javax.swing.JScrollPane
 import javax.swing.border.Border
@@ -87,38 +86,71 @@ private class UiDslDemoDialog(project: Project?) : DialogWrapper(project, null, 
 
   fun createGroupsPanel(): JPanel {
     return panel {
-      lateinit var group1Label: Cell<JLabel>
-      val group1 = group(title = "Group1 title") {
+      lateinit var group1: Panel
+      lateinit var group1Row: Row
+      lateinit var group2: RowsRange
+      group(title = "Group at top") {
         row {
-          group1Label = label("Group1 label1")
+          checkBox("Group1 visibility")
+            .applyToComponent {
+              isSelected = true
+              addItemListener { group1.visible(this.isSelected) }
+            }
+        }
+        indent {
+          row {
+            checkBox("Group1 label1 visibility")
+              .applyToComponent {
+                isSelected = true
+                addItemListener { group1Row.visible(this.isSelected) }
+              }
+
+          }
         }
         row {
-          label("Group1 line 2")
+          checkBox("Group2 visibility")
+            .applyToComponent {
+              isSelected = true
+              addItemListener { group2.visible(this.isSelected) }
+            }
         }
       }
-      val group2 = group(title = "Group2 title") {
+
+      row("A very very long label") {
+        textField()
+      }
+
+      group1 = group(title = "Group1 title") {
+        group1Row = row("label1") {
+          textField()
+        }
+        row("label2 long") {
+          textField()
+        }
+      }
+      group2 = groupRowsRange(title = "Group RowsRange title") {
+        row("label1") {
+          textField()
+        }
+        row("label2 long") {
+          textField()
+        }
+      }
+      group {
         row {
-          label("Group2 content")
+          label("Group without title")
         }
       }
-      row {
-        checkBox("Group1 visibility")
-          .applyToComponent {
-            isSelected = true
-            addChangeListener { group1.visible(this.isSelected) }
-          }
-        checkBox("Group1 label1 visibility")
-          .applyToComponent {
-            isSelected = true
-            addChangeListener { group1Label.visible(this.isSelected) }
-          }
-      }
-      row {
-        checkBox("Group2 visibility")
-          .applyToComponent {
-            isSelected = true
-            addChangeListener { group2.visible(this.isSelected) }
-          }
+      panel {
+        row {
+          label("Panel")
+        }
+        row("label1") {
+          textField()
+        }
+        row("label2 long") {
+          textField()
+        }
       }
     }
   }

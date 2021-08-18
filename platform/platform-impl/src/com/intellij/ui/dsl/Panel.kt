@@ -15,6 +15,10 @@ interface Panel : CellBase<Panel> {
 
   override fun visible(isVisible: Boolean): Panel
 
+  override fun enabled(isEnabled: Boolean): Panel
+
+  fun enabledIf(predicate: ComponentPredicate): Panel
+
   override fun horizontalAlign(horizontalAlign: HorizontalAlign): Panel
 
   override fun verticalAlign(verticalAlign: VerticalAlign): Panel
@@ -35,10 +39,25 @@ interface Panel : CellBase<Panel> {
   fun row(label: JLabel? = null, init: Row.() -> Unit): Row
 
   /**
-   * Adds panel with a title and some space before the panel. Grouped radio buttons and checkboxes should use [Panel.buttonGroup]
+   * Creates sub-panel that occupies whole width and uses own grid inside
+   */
+  fun panel(init: Panel.() -> Unit): Panel
+
+  /**
+   * See [RowsRange]
+   */
+  fun rowsRange(init: Panel.() -> Unit): RowsRange
+
+  /**
+   * Adds panel with a title and some space before the group. Grouped radio buttons and checkboxes should use [Panel.buttonGroup]
    * method, which uses different title gaps
    */
-  fun group(@NlsContexts.BorderTitle title: String? = null, independent: Boolean = true, init: Panel.() -> Unit): Row
+  fun group(@NlsContexts.BorderTitle title: String? = null, init: Panel.() -> Unit): Panel
+
+  /**
+   * See [RowsRange]
+   */
+  fun groupRowsRange(@NlsContexts.BorderTitle title: String? = null, init: Panel.() -> Unit): RowsRange
 
   /**
    * Unions [Row.radioButton] in one group. Must be also used for [Row.checkBox] if they are grouped with some title.

@@ -92,7 +92,7 @@ internal class CellImpl<T : JComponent>(
     return this
   }
 
-  override fun enableIf(predicate: ComponentPredicate): Cell<T> {
+  override fun enabledIf(predicate: ComponentPredicate): Cell<T> {
     viewComponent.isEnabled = predicate()
     predicate.addListener { viewComponent.isEnabled = it }
     return this

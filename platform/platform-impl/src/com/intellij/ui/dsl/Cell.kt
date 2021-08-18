@@ -37,7 +37,7 @@ interface Cell<out T : JComponent> : CellBase<Cell<T>> {
 
   override fun enabled(isEnabled: Boolean): Cell<T>
 
-  fun enableIf(predicate: ComponentPredicate): Cell<T>
+  fun enabledIf(predicate: ComponentPredicate): Cell<T>
 
   override fun visible(isVisible: Boolean): Cell<T>
 
@@ -112,21 +112,4 @@ fun <T : JTextComponent> Cell<T>.bindIntText(getter: () -> Int, setter: (Int) ->
 fun <T : JTextField> Cell<T>.columns(columns: Int): Cell<T> {
   component.columns = columns
   return this
-}
-
-fun <T> Cell<ComboBox<T>>.bindItem(binding: PropertyBinding<T?>): Cell<ComboBox<T>> {
-  component.selectedItem = binding.get()
-  return bind({ component -> component.selectedItem as T? },
-    { component, value -> component.setSelectedItem(value) },
-    binding)
-}
-
-/* todo
-fun <T> CellBuilder<ComboBox<T>>.bindItem(prop: KMutableProperty0<T>): CellBuilder<ComboBox<T>> {
-  return bindItem(prop.toBinding().toNullable())
-}
-*/
-
-fun <T> Cell<ComboBox<T>>.bindItem(getter: () -> T?, setter: (T?) -> Unit): Cell<ComboBox<T>> {
-  return bindItem(PropertyBinding(getter, setter))
 }

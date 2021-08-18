@@ -84,6 +84,10 @@ internal class RowImpl(private val dialogPanelConfig: DialogPanelConfig,
     return result
   }
 
+  fun cell(cell: CellBaseImpl<*>) {
+    _cells.add(cell)
+  }
+
   override fun enabled(isEnabled: Boolean): RowImpl {
     _cells.forEach {
       when (it) {

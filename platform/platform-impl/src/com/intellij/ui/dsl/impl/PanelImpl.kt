@@ -46,11 +46,23 @@ internal class PanelImpl(private val dialogPanelConfig: DialogPanelConfig) : Cel
   private val rows = mutableListOf<RowImpl>()
 
   override fun enabled(isEnabled: Boolean): PanelImpl {
-    rows.forEach { it.enabled(isEnabled) }
+    return enabled(isEnabled, rows.indices)
+  }
+
+  fun enabled(isEnabled: Boolean, range: IntRange): PanelImpl {
+    for (i in range) {
+      rows[i].enabled(isEnabled)
+    }
     return this
   }
 
-  override fun row(label: String, init: Row.() -> Unit): Row {
+  override fun enabledIf(predicate: ComponentPredicate): PanelImpl {
+    enabled(predicate())
+    predicate.addListener { enabled(it) }
+    return this
+  }
+
+  override fun row(label: String, init: Row.() -> Unit): RowImpl {
     return row(Label(label), init)
   }
 
@@ -61,26 +73,42 @@ internal class PanelImpl(private val dialogPanelConfig: DialogPanelConfig) : Cel
     return result
   }
 
-  override fun group(title: String?, independent: Boolean, init: Panel.() -> Unit): Row {
+  override fun panel(init: Panel.() -> Unit): PanelImpl {
+    val result = PanelImpl(dialogPanelConfig)
+    result.init()
+    row { }.cell(result)
+    return result
+  }
+
+  override fun rowsRange(init: Panel.() -> Unit): RowsRangeImpl {
+    val result = RowsRangeImpl(this, rows.size)
+    this.init()
+    result.endIndex = rows.size - 1
+    return result
+  }
+
+  override fun group(title: String?, init: Panel.() -> Unit): PanelImpl {
     val component = createSeparator(title)
-    if (independent) {
-      return row {
-        val panel = panel {
-          row {
-            cell(component)
-              .horizontalAlign(HorizontalAlign.FILL)
-          }
-        }
-
-        panel.indent {
-          init()
-        }
-
+    val result = panel {
+      row {
+        cell(component)
+          .horizontalAlign(HorizontalAlign.FILL)
       }.gap(TopGap.GROUP)
     }
+    result.indent(init)
+    return result
+  }
 
-    // todo
-    return RowImpl(dialogPanelConfig, panelContext)
+  override fun groupRowsRange(title: String?, init: Panel.() -> Unit): RowsRangeImpl {
+    val result = RowsRangeImpl(this, rows.size)
+    val component = createSeparator(title)
+    row {
+      cell(component)
+        .horizontalAlign(HorizontalAlign.FILL)
+    }.gap(TopGap.GROUP)
+    indent(init)
+    result.endIndex = rows.size - 1
+    return result
   }
 
   override fun <T> buttonGroup(binding: PropertyBinding<T>, type: Class<T>, title: String?, init: Panel.() -> Unit) {
@@ -92,9 +120,7 @@ internal class PanelImpl(private val dialogPanelConfig: DialogPanelConfig) : Cel
             .applyToComponent { putClientProperty(DSL_LABEL_NO_BOTTOM_GAP_PROPERTY, true) }
         }.gap(BottomGap.BUTTON_GROUP_HEADER)
       }
-      indent {
-        init()
-      }
+      indent(init)
     }
     finally {
       dialogPanelConfig.context.removeLastButtonGroup()
@@ -102,7 +128,13 @@ internal class PanelImpl(private val dialogPanelConfig: DialogPanelConfig) : Cel
   }
 
   override fun visible(isVisible: Boolean): PanelImpl {
-    rows.forEach { it.visible(isVisible) }
+    return visible(isVisible, rows.indices)
+  }
+
+  fun visible(isVisible: Boolean, range: IntRange): PanelImpl {
+    for (i in range) {
+      rows[i].visible(isVisible)
+    }
     return this
   }
 
@@ -135,13 +167,12 @@ internal class PanelImpl(private val dialogPanelConfig: DialogPanelConfig) : Cel
     val maxColumnsCount = getMaxColumnsCount()
     val rowsGridBuilder = RowsGridBuilder(panel, grid = grid)
 
-    for ((index, row) in rows.withIndex()) {
-      if (row.cells.isEmpty()) {
-        LOG.warn("Row should not be empty")
+    for (row in rows) {
+      if (!checkRow(row)) {
         continue
       }
 
-      rowsGridBuilder.setRowGaps(getRowGaps(row, index > 0))
+      rowsGridBuilder.setRowGaps(getRowGaps(row))
 
       when (row.rowLayout) {
         RowLayout.INDEPENDENT -> {
@@ -215,6 +246,15 @@ internal class PanelImpl(private val dialogPanelConfig: DialogPanelConfig) : Cel
     if (builder.resizableColumns.isEmpty() && builder.columnsCount > 0) {
       builder.resizableColumns = setOf(builder.columnsCount - 1)
     }
+  }
+
+  private fun checkRow(row: RowImpl): Boolean {
+    if (row.cells.isEmpty()) {
+      LOG.warn("Row should not be empty")
+      return false
+    }
+
+    return true
   }
 
   private fun buildRow(cells: List<CellBaseImpl<*>>,
@@ -336,16 +376,12 @@ internal class PanelImpl(private val dialogPanelConfig: DialogPanelConfig) : Cel
     return cells.indexOfFirst { it.comment != null }
   }
 
-  private fun getRowGaps(row: RowImpl, first: Boolean): RowGaps {
-    val top = if (first) {
-      0
+  private fun getRowGaps(row: RowImpl): RowGaps {
+    val top = when (row.topGap) {
+      TopGap.GROUP -> dialogPanelConfig.spacing.groupTopGap
+      TopGap.SMALL -> dialogPanelConfig.spacing.verticalSmallGap
+      null -> 0
     }
-    else
-      when (row.topGap) {
-        TopGap.GROUP -> dialogPanelConfig.spacing.groupTopGap
-        TopGap.SMALL -> dialogPanelConfig.spacing.verticalSmallGap
-        null -> 0
-      }
 
     val bottom = when (row.bottomGap) {
       BottomGap.BUTTON_GROUP_HEADER -> dialogPanelConfig.spacing.buttonGroupHeaderBottomGap
@@ -366,8 +402,9 @@ internal class PanelImpl(private val dialogPanelConfig: DialogPanelConfig) : Cel
   }
 }
 
-internal class PanelContext(
+internal class PanelContext {
   /**
    * Number of [SpacingConfiguration.horizontalIndent] indents before each row in the panel
    */
-  var indentCount: Int = 0)
+  var indentCount: Int = 0
+}
