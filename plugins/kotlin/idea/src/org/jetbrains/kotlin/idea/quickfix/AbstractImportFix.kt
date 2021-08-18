@@ -17,6 +17,7 @@ import com.intellij.psi.PsiErrorElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiModifier
 import com.intellij.psi.util.PsiModificationTracker
+import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.diagnostics.Diagnostic
 import org.jetbrains.kotlin.diagnostics.DiagnosticFactory
@@ -43,6 +44,7 @@ import org.jetbrains.kotlin.idea.util.*
 import org.jetbrains.kotlin.incremental.components.NoLookupLocation
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
+import org.jetbrains.kotlin.name.parentOrNull
 import org.jetbrains.kotlin.platform.jvm.isJvm
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.KtPsiUtil.isSelectorInQualified
@@ -280,8 +282,19 @@ internal abstract class OrdinaryImportFixBase<T : KtExpression>(expression: T, f
             ) { it == name }
         )
 
-        return result
+        val importedFqNamesAsAlias = getImportedFqNamesAsAlias(element)
+        return result.filterNot {
+            val importableFqName = it.importableFqName
+            importableFqName?.parentOrNull() in StandardNames.BUILT_INS_PACKAGE_FQ_NAMES && importableFqName !in importedFqNamesAsAlias
+        }
     }
+
+    private fun getImportedFqNamesAsAlias(element: KtElement?) =
+        element?.containingKtFile
+            ?.importDirectives
+            ?.filter { it.alias != null }
+            ?.mapNotNull { it.importedFqName }
+            ?: emptyList()
 }
 
 // This is required to be abstract to reduce bunch file size
