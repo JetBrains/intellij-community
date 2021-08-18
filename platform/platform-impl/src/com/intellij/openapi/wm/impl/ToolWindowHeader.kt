@@ -85,13 +85,13 @@ abstract class ToolWindowHeader internal constructor(
     @Suppress("LeakingThis")
     add(component)
 
-    westPanel.addMouseListener(
-      object : PopupHandler() {
-        override fun invokePopup(comp: Component, x: Int, y: Int) {
-          contentUi.showContextMenu(comp, x, y, toolWindow.popupGroup, contentUi.contentManager.selectedContent)
-        }
-      }
-    )
+    //westPanel.addMouseListener(
+    //  object : PopupHandler() {
+    //    override fun invokePopup(comp: Component, x: Int, y: Int) {
+    //      contentUi.showContextMenu(comp, x, y, toolWindow.popupGroup, contentUi.contentManager.selectedContent)
+    //    }
+    //  }
+    //)
     westPanel.addMouseListener(
       object : MouseAdapter() {
         override fun mouseClicked(e: MouseEvent) {
