@@ -6,7 +6,6 @@ import com.intellij.psi.util.parentsOfType
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.symbols.KtCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtFunctionSymbol
-import org.jetbrains.kotlin.analysis.api.types.KtType
 import org.jetbrains.kotlin.idea.completion.ItemPriority
 import org.jetbrains.kotlin.idea.completion.checkers.CompletionVisibilityChecker
 import org.jetbrains.kotlin.idea.completion.context.FirBasicCompletionContext
@@ -30,7 +29,11 @@ internal class FirSuperMemberCompletionContributor(
         val visibilityChecker = CompletionVisibilityChecker.create(basicContext, positionContext)
         val possibleReceiverScope = superReceiver.getKtType()?.getTypeScope() ?: return
         val nonExtensionMembers = collectNonExtensions(possibleReceiverScope, visibilityChecker, scopeNameFilter)
-        val weighingContext = createWeighingContext(expectedType)
+        val weighingContext = createWeighingContext(
+            superReceiver,
+            expectedType,
+            emptyList() // Implicit receivers do not match for this completion contributor.
+        )
         collectDelegateCallToSuperMember(weighingContext, superReceiver, nonExtensionMembers)
     }
 
@@ -89,7 +92,7 @@ internal class FirSuperMemberCompletionContributor(
                     detectImportStrategy(callableSymbol),
                     CallableInsertionStrategy.WithCallArgs(args)
                 ),
-                ItemPriority.SUPER_METHOD_WITH_ARGUMENTS
+                priority = ItemPriority.SUPER_METHOD_WITH_ARGUMENTS
             )
         }
     }
