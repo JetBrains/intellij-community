@@ -34,12 +34,14 @@ private fun generateProjectModelFiles(dotIdea: File, args: Args, isCommunity: Bo
 }
 
 private fun patchProjectModelFiles(dotIdea: File, args: Args, isCommunity: Boolean) {
-    patchGitignore(dotIdea, args.kotlincArtifactsMode)
+    patchGitignore(dotIdea, args.kotlincArtifactsMode, isCommunity)
     patchKotlincLibs(args, isCommunity, dotIdea)
-    patchRunConfigurations(dotIdea, args.kotlincArtifactsMode)
 }
 
-private fun patchGitignore(dotIdea: File, kotlincArtifactsMode: KotlincArtifactsMode) {
+private fun patchGitignore(dotIdea: File, kotlincArtifactsMode: KotlincArtifactsMode, isCommunity: Boolean) {
+    if (!isCommunity) {
+        return
+    }
     val gitignore = dotIdea.resolve("..").resolve(".gitignore")
     val ignoreRule = "**/build"
     val normalizedContent = gitignore.readLines().filter { it != ignoreRule }.joinToString("\n")
