@@ -182,7 +182,7 @@ import org.jetbrains.kotlin.tools.projectWizard.wizard.AbstractProjectTemplateNe
 import org.jetbrains.kotlin.tools.projectWizard.wizard.AbstractYamlNewWizardProjectImportTest
 import org.jetbrains.kotlin.idea.compilerPlugin.kotlinxSerialization.AbstractSerializationPluginIdeDiagnosticTest
 import org.jetbrains.kotlin.idea.compilerPlugin.kotlinxSerialization.AbstractSerializationQuickFixTest
-import org.jetbrains.uast.test.kotlin.*
+import org.jetbrains.kotlin.idea.fir.imports.AbstractFirJvmOptimizeImportsTest
 import org.jetbrains.uast.test.comparasion.*
 
 fun main(@Suppress("UNUSED_PARAMETER") args: Array<String>) {
@@ -1092,6 +1092,11 @@ private fun assembleWorkspace(): TWorkspace = workspace {
                 "parameterInfo", pattern = Patterns.forRegex("^([\\w\\-_]+)\\.kt$"), isRecursive = true,
                 excludedDirectories = listOf("withLib1/sharedLib", "withLib2/sharedLib", "withLib3/sharedLib")
             )
+        }
+
+        testClass<AbstractFirJvmOptimizeImportsTest> {
+            model("editor/optimizeImports/jvm", pattern = KT_WITHOUT_DOTS)
+            model("editor/optimizeImports/common", pattern = KT_WITHOUT_DOTS)
         }
     }
 
