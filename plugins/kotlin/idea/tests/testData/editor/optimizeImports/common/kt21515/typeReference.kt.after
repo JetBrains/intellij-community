@@ -1,3 +1,4 @@
+// FIR_COMPARISON
 package foo
 
 import foo.TypeReference.Base.Companion.FromBaseCompanion

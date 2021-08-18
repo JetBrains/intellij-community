@@ -19,14 +19,14 @@ import java.io.File
 abstract class AbstractImportsTest : KotlinLightCodeInsightFixtureTestCase() {
     override fun getProjectDescriptor(): LightProjectDescriptor = KotlinWithJdkAndRuntimeLightProjectDescriptor.INSTANCE
 
-    protected fun doTest(unused: String) {
+    protected open fun doTest(unused: String) {
         val testPath = testPath()
         configureCodeStyleAndRun(project) {
             val fixture = myFixture
             val dependencySuffixes = listOf(".dependency.kt", ".dependency.java", ".dependency1.kt", ".dependency2.kt")
             for (suffix in dependencySuffixes) {
                 val dependencyPath = fileName().replace(".kt", suffix)
-                if (File(testDataPath, dependencyPath).exists()) {
+                if (File(testDataDirectory, dependencyPath).exists()) {
                     fixture.configureByFile(dependencyPath)
                 }
             }
