@@ -1,5 +1,5 @@
 from io import TextIOWrapper
-from typing import Any, Optional, Tuple
+from typing import Any, Tuple
 
 PY2: bool
 PY3: bool
@@ -18,7 +18,7 @@ def tobytes(s: str) -> bytes: ...
 
 exec_: Any
 
-def reraise(tp: Any, value: BaseException, tb: Optional[str] = ...) -> None: ...
+def reraise(tp: Any, value: BaseException, tb: str | None = ...) -> None: ...
 
 MAXINT: int
 HAS_IPV6: bool

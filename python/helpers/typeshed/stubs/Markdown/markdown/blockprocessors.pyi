@@ -17,7 +17,7 @@ class BlockProcessor:
 class ListIndentProcessor(BlockProcessor):
     ITEM_TYPES: Any
     LIST_TYPES: Any
-    INDENT_RE: Pattern
+    INDENT_RE: Pattern[str]
     def __init__(self, *args) -> None: ...
     def create_item(self, parent, block) -> None: ...
     def get_level(self, parent, block): ...
@@ -25,7 +25,7 @@ class ListIndentProcessor(BlockProcessor):
 class CodeBlockProcessor(BlockProcessor): ...
 
 class BlockQuoteProcessor(BlockProcessor):
-    RE: Pattern
+    RE: Pattern[str]
     def clean(self, line): ...
 
 class OListProcessor(BlockProcessor):
@@ -33,26 +33,26 @@ class OListProcessor(BlockProcessor):
     STARTSWITH: str = ...
     LAZY_OL: bool = ...
     SIBLING_TAGS: Any
-    RE: Pattern
-    CHILD_RE: Pattern
-    INDENT_RE: Pattern
+    RE: Pattern[str]
+    CHILD_RE: Pattern[str]
+    INDENT_RE: Pattern[str]
     def __init__(self, parser) -> None: ...
     def get_items(self, block): ...
 
 class UListProcessor(OListProcessor):
     TAG: str = ...
-    RE: Pattern
+    RE: Pattern[str]
     def __init__(self, parser) -> None: ...
 
 class HashHeaderProcessor(BlockProcessor):
-    RE: Pattern
+    RE: Pattern[str]
 
 class SetextHeaderProcessor(BlockProcessor):
-    RE: Pattern
+    RE: Pattern[str]
 
 class HRProcessor(BlockProcessor):
     RE: str = ...
-    SEARCH_RE: Pattern
+    SEARCH_RE: Pattern[str]
     match: Any
 
 class EmptyBlockProcessor(BlockProcessor): ...

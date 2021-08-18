@@ -1,5 +1,3 @@
-from typing import Optional
-
 from paramiko.message import Message
 from paramiko.ssh_gss import _SSH_GSSAuth
 from paramiko.transport import Transport
@@ -28,7 +26,7 @@ class KexGSSGroup1:
     NAME: str
     transport: Transport
     kexgss: _SSH_GSSAuth
-    gss_host: Optional[str]
+    gss_host: str | None
     x: int
     e: int
     f: int
@@ -48,13 +46,13 @@ class KexGSSGex:
     preferred_bits: int
     transport: Transport
     kexgss: _SSH_GSSAuth
-    gss_host: Optional[str]
-    p: Optional[int]
-    q: Optional[int]
-    g: Optional[int]
-    x: Optional[int]
-    e: Optional[int]
-    f: Optional[int]
+    gss_host: str | None
+    p: int | None
+    q: int | None
+    g: int | None
+    x: int | None
+    e: int | None
+    f: int | None
     old_style: bool
     def __init__(self, transport: Transport) -> None: ...
     def start_kex(self) -> None: ...

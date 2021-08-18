@@ -1,9 +1,9 @@
-from typing import Any, Pattern
+from typing import Pattern
 
 from markdown.extensions import Extension
 from markdown.treeprocessors import Treeprocessor
 
-ATTR_RE: Pattern
+ATTR_RE: Pattern[str]
 
 class LegacyAttrs(Treeprocessor):
     def handleAttributes(self, el, txt): ...

@@ -195,7 +195,7 @@ val blacklist = sequenceOf(
   "xmlrpclib",
   "xxlimited", // not available in runtime
   "PyYAML"
-).mapTo(hashSetOf()) { it.toLowerCase() }
+).mapTo(hashSetOf()) { it.lowercase() }
 
 println("Cleaning")
 cleanTopLevelPackages(bundled, blacklist)
@@ -235,7 +235,7 @@ fun cleanTopLevelPackages(typeshed: Path, blackList: Set<String>) {
     .flatMap { sequenceOf(it.resolve("stdlib"), it.resolve("stdlib/@python2"), it.resolve("stubs")) }
     .flatMap { Files.newDirectoryStream(it).asSequence() }
     .filter {
-      val name = it.nameWithoutExtension().toLowerCase()
+      val name = it.nameWithoutExtension().lowercase()
 
       if (name in blackList) {
         true

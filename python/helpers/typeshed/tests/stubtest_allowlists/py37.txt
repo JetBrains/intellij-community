@@ -1,0 +1,77 @@
+_collections_abc.AsyncGenerator.ag_await
+_collections_abc.AsyncGenerator.ag_code
+_collections_abc.AsyncGenerator.ag_frame
+_collections_abc.AsyncGenerator.ag_running
+asyncio.compat  # Removed in 3.7
+asyncio.Future.__init__  # Usually initialized from c object
+asyncio.Future._callbacks  # Usually initialized from c object
+asyncio.exceptions  # Added in Python 3.8
+asyncio.futures.Future.__init__  # Usually initialized from c object
+asyncio.futures.Future._callbacks  # Usually initialized from c object
+asyncio.staggered  # Added in Python 3.8
+asyncio.threads  # Added in Python 3.9
+asyncio.trsock  # Added in Python 3.8
+builtins.dict.get
+builtins.str.maketrans
+cmath.log
+collections.AsyncGenerator.ag_await
+collections.AsyncGenerator.ag_code
+collections.AsyncGenerator.ag_frame
+collections.AsyncGenerator.ag_running
+collections.Callable
+collections.UserString.maketrans
+collections.abc.AsyncGenerator.ag_await
+collections.abc.AsyncGenerator.ag_code
+collections.abc.AsyncGenerator.ag_frame
+collections.abc.AsyncGenerator.ag_running
+contextvars.Context.__init__  # Default C __init__ signature is wrong
+contextvars.ContextVar.get
+dataclasses.field
+enum.Enum._generate_next_value_
+fractions.Fraction.__new__  # overload is too complicated for stubtest to resolve
+hmac.HMAC.__init__
+http.server.SimpleHTTPRequestHandler.__init__  # *args is expanded
+importlib.metadata  # Added in 3.8
+ipaddress._BaseNetwork.__init__
+json.loads
+multiprocessing.shared_memory
+os.utime
+pyexpat.XMLParserType.ExternalEntityParserCreate  # C signature is wrong - function gets only positional args
+queue.SimpleQueue.__init__  # Default C __init__ signature is wrong
+random.Random.randrange  # missing undocumented arg _int
+random.randrange  # missing undocumented arg _int
+sched.Event.__doc__  # __slots__ is overridden
+ssl.PROTOCOL_SSLv3  # Depends on ssl compilation
+ssl.RAND_egd  # Depends on openssl compilation
+types.ClassMethodDescriptorType.__get__
+types.MethodDescriptorType.__get__
+types.WrapperDescriptorType.__get__
+typing.NamedTuple._asdict
+typing.NamedTuple._make
+typing.NamedTuple._replace
+typing._SpecialForm.__init__
+typing._SpecialForm.__new__
+typing.runtime_checkable
+unittest.async_case  # Added in Python 3.8
+uuid.UUID.int
+uuid.UUID.is_safe
+uuid.getnode  # undocumented, unused parameter getters that was later removed
+xml.etree.ElementTree.TreeBuilder.start  # Discrepancy between Python and C modules, fixed in bpo-39495
+xml.etree.cElementTree.TreeBuilder.start  # bpo-39495
+xml.parsers.expat.XMLParserType.ExternalEntityParserCreate  # C signature is wrong - function gets only positional args
+# These enums derive from (int, IntEnum) or (str, Enum). See comment in py3_common.txt
+pstats.SortKey.__new__
+tkinter.EventType.__new__
+
+builtins.memoryview.__iter__  # C type that implements __getitem__
+builtins.memoryview.cast  # inspect.signature is incorrect about shape being kw-only
+collections.Coroutine.cr_await
+collections.Coroutine.cr_code
+collections.Coroutine.cr_frame
+collections.Coroutine.cr_running
+collections.Generator.gi_code
+collections.Generator.gi_frame
+collections.Generator.gi_running
+collections.Generator.gi_yieldfrom
+collections.Mapping.get  # Adding None to the Union messed up mypy
+collections.Sequence.index  # Supporting None in end is not mandatory

@@ -1,5 +1,5 @@
 from datetime import date, datetime, timedelta
-from typing import Optional, SupportsFloat, TypeVar, Union, overload
+from typing import SupportsFloat, TypeVar, overload
 
 from ._common import weekday
 
@@ -25,37 +25,37 @@ class relativedelta(object):
     minutes: int
     seconds: int
     microseconds: int
-    year: Optional[int]
-    month: Optional[int]
-    weekday: Optional[_weekday]
-    day: Optional[int]
-    hour: Optional[int]
-    minute: Optional[int]
-    second: Optional[int]
-    microsecond: Optional[int]
+    year: int | None
+    month: int | None
+    weekday: _weekday | None
+    day: int | None
+    hour: int | None
+    minute: int | None
+    second: int | None
+    microsecond: int | None
     def __init__(
         self,
-        dt1: Optional[date] = ...,
-        dt2: Optional[date] = ...,
-        years: Optional[int] = ...,
-        months: Optional[int] = ...,
-        days: Optional[int] = ...,
-        leapdays: Optional[int] = ...,
-        weeks: Optional[int] = ...,
-        hours: Optional[int] = ...,
-        minutes: Optional[int] = ...,
-        seconds: Optional[int] = ...,
-        microseconds: Optional[int] = ...,
-        year: Optional[int] = ...,
-        month: Optional[int] = ...,
-        day: Optional[int] = ...,
-        weekday: Optional[Union[int, _weekday]] = ...,
-        yearday: Optional[int] = ...,
-        nlyearday: Optional[int] = ...,
-        hour: Optional[int] = ...,
-        minute: Optional[int] = ...,
-        second: Optional[int] = ...,
-        microsecond: Optional[int] = ...,
+        dt1: date | None = ...,
+        dt2: date | None = ...,
+        years: int | None = ...,
+        months: int | None = ...,
+        days: int | None = ...,
+        leapdays: int | None = ...,
+        weeks: int | None = ...,
+        hours: int | None = ...,
+        minutes: int | None = ...,
+        seconds: int | None = ...,
+        microseconds: int | None = ...,
+        year: int | None = ...,
+        month: int | None = ...,
+        day: int | None = ...,
+        weekday: int | _weekday | None = ...,
+        yearday: int | None = ...,
+        nlyearday: int | None = ...,
+        hour: int | None = ...,
+        minute: int | None = ...,
+        second: int | None = ...,
+        microsecond: int | None = ...,
     ) -> None: ...
     @property
     def weeks(self) -> int: ...

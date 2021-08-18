@@ -1,4 +1,4 @@
-from typing import Any, Pattern
+from typing import Any
 
 from markdown.extensions import Extension
 from markdown.inlinepatterns import HtmlInlineProcessor

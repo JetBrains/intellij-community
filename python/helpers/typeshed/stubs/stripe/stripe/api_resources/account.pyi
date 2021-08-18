@@ -1,0 +1,23 @@
+from typing import Any
+
+from stripe import oauth as oauth
+from stripe.api_resources.abstract import (
+    CreateableAPIResource as CreateableAPIResource,
+    DeletableAPIResource as DeletableAPIResource,
+    ListableAPIResource as ListableAPIResource,
+    UpdateableAPIResource as UpdateableAPIResource,
+    custom_method as custom_method,
+    nested_resource_class_methods as nested_resource_class_methods,
+)
+
+class Account(CreateableAPIResource, DeletableAPIResource, ListableAPIResource):
+    OBJECT_NAME: str
+    def reject(self, idempotency_key: Any | None = ..., **params): ...
+    @classmethod
+    def retrieve(cls, id: Any | None = ..., api_key: Any | None = ..., **params): ...
+    @classmethod
+    def modify(cls, id: Any | None = ..., **params): ...
+    def instance_url(self): ...
+    def persons(self, **params): ...
+    def deauthorize(self, **params): ...
+    def serialize(self, previous): ...

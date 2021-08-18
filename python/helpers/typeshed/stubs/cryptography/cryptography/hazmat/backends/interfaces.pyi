@@ -1,5 +1,5 @@
 from abc import ABCMeta, abstractmethod
-from typing import Any, Optional, Union
+from typing import Any
 
 from cryptography.hazmat.primitives.asymmetric.dh import (
     DHParameterNumbers,
@@ -60,13 +60,13 @@ class DERSerializationBackend(metaclass=ABCMeta):
     @abstractmethod
     def load_der_parameters(self, data: bytes) -> Any: ...
     @abstractmethod
-    def load_der_private_key(self, data: bytes, password: Optional[bytes]) -> Any: ...
+    def load_der_private_key(self, data: bytes, password: bytes | None) -> Any: ...
     @abstractmethod
     def load_der_public_key(self, data: bytes) -> Any: ...
 
 class DHBackend(metaclass=ABCMeta):
     @abstractmethod
-    def dh_parameters_supported(self, p: int, g: int, q: Optional[int]) -> bool: ...
+    def dh_parameters_supported(self, p: int, g: int, q: int | None) -> bool: ...
     @abstractmethod
     def dh_x942_serialization_supported(self) -> bool: ...
     @abstractmethod
@@ -140,7 +140,7 @@ class PEMSerializationBackend(metaclass=ABCMeta):
     @abstractmethod
     def load_pem_parameters(self, data: bytes) -> Any: ...
     @abstractmethod
-    def load_pem_private_key(self, data: bytes, password: Optional[bytes]) -> Any: ...
+    def load_pem_private_key(self, data: bytes, password: bytes | None) -> Any: ...
     @abstractmethod
     def load_pem_public_key(self, data: bytes) -> Any: ...
 
@@ -165,21 +165,21 @@ class X509Backend(metaclass=ABCMeta):
     def create_x509_certificate(
         self,
         builder: CertificateBuilder,
-        private_key: Union[DSAPrivateKey, EllipticCurvePrivateKey, RSAPrivateKey],
+        private_key: DSAPrivateKey | EllipticCurvePrivateKey | RSAPrivateKey,
         algorithm: HashAlgorithm,
     ) -> Certificate: ...
     @abstractmethod
     def create_x509_crl(
         self,
         builder: CertificateRevocationListBuilder,
-        private_key: Union[DSAPrivateKey, EllipticCurvePrivateKey, RSAPrivateKey],
+        private_key: DSAPrivateKey | EllipticCurvePrivateKey | RSAPrivateKey,
         algorithm: HashAlgorithm,
     ) -> CertificateRevocationList: ...
     @abstractmethod
     def create_x509_csr(
         self,
         builder: CertificateSigningRequestBuilder,
-        private_key: Union[DSAPrivateKey, EllipticCurvePrivateKey, RSAPrivateKey],
+        private_key: DSAPrivateKey | EllipticCurvePrivateKey | RSAPrivateKey,
         algorithm: HashAlgorithm,
     ) -> CertificateSigningRequest: ...
     @abstractmethod

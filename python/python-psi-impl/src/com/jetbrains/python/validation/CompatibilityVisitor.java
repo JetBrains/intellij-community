@@ -12,7 +12,10 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiErrorElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -28,10 +31,8 @@ import com.jetbrains.python.codeInsight.imports.AddImportHelper;
 import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider;
 import com.jetbrains.python.inspections.quickfix.*;
 import com.jetbrains.python.psi.*;
-import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
-import com.jetbrains.python.psi.types.PyClassType;
 import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.PyUnionType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
@@ -751,7 +752,7 @@ public abstract class CompatibilityVisitor extends PyAnnotator {
         final PyClass containingClass = ((PyFunction)resolved).getContainingClass();
         if (containingClass == null) return;
         final String classQualifiedName = containingClass.getQualifiedName();
-        if (!PyNames.TYPE.equals(classQualifiedName) && !"types.Union".equals(classQualifiedName)) return;
+        if (!PyNames.TYPE.equals(classQualifiedName) && !"types.UnionType".equals(classQualifiedName)) return;
       }
     }
 

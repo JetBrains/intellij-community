@@ -1,0 +1,113 @@
+_ast.ImportFrom.level
+_collections_abc.AsyncGenerator.ag_await
+_collections_abc.AsyncGenerator.ag_code
+_collections_abc.AsyncGenerator.ag_frame
+_collections_abc.AsyncGenerator.ag_running
+_collections_abc.ItemsView.__reversed__
+_collections_abc.KeysView.__reversed__
+_collections_abc.ValuesView.__reversed__
+_dummy_thread
+ast.Bytes.__new__
+ast.Ellipsis.__new__
+ast.ExtSlice.__new__
+ast.ImportFrom.level
+ast.Index.__new__
+ast.NameConstant.__new__
+ast.Num.__new__
+ast.Str.__new__
+asyncio.compat  # module removed in 3.7
+asyncio.Future.__init__  # Usually initialized from c object
+asyncio.Future._callbacks  # Usually initialized from c object
+asyncio.futures.Future.__init__  # Usually initialized from c object
+asyncio.futures.Future._callbacks  # Usually initialized from c object
+builtins.dict.get
+collections.AsyncGenerator.ag_await
+collections.AsyncGenerator.ag_code
+collections.AsyncGenerator.ag_frame
+collections.AsyncGenerator.ag_running
+collections.Callable
+collections.ItemsView.__reversed__
+collections.KeysView.__reversed__
+collections.ValuesView.__reversed__
+collections.abc.AsyncGenerator.ag_await
+collections.abc.AsyncGenerator.ag_code
+collections.abc.AsyncGenerator.ag_frame
+collections.abc.AsyncGenerator.ag_running
+collections.abc.ItemsView.__reversed__
+collections.abc.KeysView.__reversed__
+collections.abc.ValuesView.__reversed__
+contextvars.Context.__init__  # Default C __init__ signature is wrong
+dataclasses.field
+dummy_threading
+enum.Enum._generate_next_value_
+fractions.Fraction.__new__  # overload is too complicated for stubtest to resolve
+ftplib.FTP.__init__
+ftplib.FTP_TLS.__init__
+functools.partialmethod.__get__
+functools.singledispatchmethod.__call__
+gettext.install
+gettext.translation
+hmac.new  # Stub is a white lie; see comments in the stub
+http.server.SimpleHTTPRequestHandler.__init__  # *args is expanded
+importlib.abc.Traversable.__init__  # Inherits __init__ from typing.Protocol
+ipaddress.IPv4Interface.hostmask
+ipaddress.IPv6Interface.hostmask
+ipaddress._BaseNetwork.broadcast_address
+ipaddress._BaseNetwork.hostmask
+multiprocessing.spawn._main
+pickle.Pickler.reducer_override  # implemented in C pickler
+# platform.uname_result's processor field is now dynamically made to exist
+platform.uname_result.__new__
+platform.uname_result._fields
+platform.uname_result.processor
+queue.SimpleQueue.__init__  # Default C __init__ signature is wrong
+sched.Event.__doc__  # __slots__ is overridden
+smtplib.LMTP.__init__
+ssl.PROTOCOL_SSLv3  # Depends on ssl compilation
+ssl.RAND_egd  # Depends on openssl compilation
+symtable.SymbolTable.has_exec
+sys.UnraisableHookArgs  # Not exported from sys
+types.ClassMethodDescriptorType.__get__
+types.CodeType.replace
+types.GenericAlias.__getattr__
+types.MethodDescriptorType.__get__
+types.WrapperDescriptorType.__get__
+typing.ForwardRef._evaluate
+typing.SupportsAbs.__init__
+typing.SupportsBytes.__init__
+typing.SupportsComplex.__init__
+typing.SupportsFloat.__init__
+typing.SupportsIndex.__init__
+typing.SupportsInt.__init__
+typing.SupportsRound.__init__
+typing._SpecialForm.__init__
+typing._TypedDict.__delitem__
+typing._TypedDict.__ior__
+typing._TypedDict.__or__
+typing._TypedDict.copy
+typing._TypedDict.items
+typing._TypedDict.keys
+typing._TypedDict.pop
+typing._TypedDict.setdefault
+typing._TypedDict.update
+typing._TypedDict.values
+weakref.WeakValueDictionary.update
+xml.etree.ElementTree.XMLParser.__init__  # Defined in C so has general signature
+xml.etree.cElementTree.XMLParser.__init__  # Defined in C so has general signature
+
+# These enums derive from (int, IntEnum) or (str, Enum). See comment in py3_common.txt
+pstats.SortKey.__new__
+tkinter.EventType.__new__
+
+builtins.memoryview.__iter__  # C type that implements __getitem__
+builtins.memoryview.cast  # inspect.signature is incorrect about shape being kw-only
+collections.Coroutine.cr_await
+collections.Coroutine.cr_code
+collections.Coroutine.cr_frame
+collections.Coroutine.cr_running
+collections.Generator.gi_code
+collections.Generator.gi_frame
+collections.Generator.gi_running
+collections.Generator.gi_yieldfrom
+collections.Mapping.get  # Adding None to the Union messed up mypy
+collections.Sequence.index  # Supporting None in end is not mandatory

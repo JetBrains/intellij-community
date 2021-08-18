@@ -45,6 +45,7 @@ object PyTypeShed {
     "contextvars" to (LanguageLevel.PYTHON37 to null),
     "formatter" to (LanguageLevel.PYTHON27 to LanguageLevel.PYTHON39),
     "graphlib" to (LanguageLevel.PYTHON39 to null),
+    "importlib.metadata" to (LanguageLevel.PYTHON38 to null),  // likely it is ignored now
     "importlib.resources" to (LanguageLevel.PYTHON37 to null),  // likely it is ignored now
     "macpath" to (LanguageLevel.PYTHON27 to LanguageLevel.PYTHON37),
     "parser" to (LanguageLevel.PYTHON27 to LanguageLevel.PYTHON39),

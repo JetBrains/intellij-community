@@ -174,7 +174,6 @@ public final class PyNames {
   public static final String DUNDER_AWAIT = "__await__";
   public static final String SIZEOF = "__sizeof__";
   public static final String INIT_SUBCLASS = "__init_subclass__";
-  public static final String FSPATH = "__fspath__";
   public static final String COMPLEX = "__complex__";
   public static final String FLOAT = "__float__";
   public static final String INT = "__int__";

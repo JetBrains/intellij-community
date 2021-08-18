@@ -1,6 +1,7 @@
+from collections.abc import Awaitable, Callable, Iterator, Sequence
 from datetime import date, datetime, timedelta
 from numbers import Real
-from typing import Any, Awaitable, Callable, Iterator, Optional, Sequence, Type, TypeVar, Union, overload
+from typing import Any, Type, TypeVar, Union, overload
 
 _T = TypeVar("_T")
 _Freezable = Union[str, datetime, date, timedelta]
@@ -12,20 +13,20 @@ class TickingDateTimeFactory(object):
 class FrozenDateTimeFactory(object):
     def __init__(self, time_to_freeze: datetime) -> None: ...
     def __call__(self) -> datetime: ...
-    def tick(self, delta: Union[float, Real, timedelta] = ...) -> None: ...
-    def move_to(self, target_datetime: Optional[_Freezable]) -> None: ...
+    def tick(self, delta: float | Real | timedelta = ...) -> None: ...
+    def move_to(self, target_datetime: _Freezable | None) -> None: ...
 
 class StepTickTimeFactory(object):
     def __init__(self, time_to_freeze: datetime, step_width: float) -> None: ...
     def __call__(self) -> datetime: ...
-    def tick(self, delta: Optional[timedelta] = ...) -> None: ...
+    def tick(self, delta: timedelta | None = ...) -> None: ...
     def update_step_width(self, step_width: float) -> None: ...
-    def move_to(self, target_datetime: Optional[_Freezable]) -> None: ...
+    def move_to(self, target_datetime: _Freezable | None) -> None: ...
 
 class _freeze_time:
     def __init__(
         self,
-        time_to_freeze_str: Optional[_Freezable],
+        time_to_freeze_str: _Freezable | None,
         tz_offset: float,
         ignore: Sequence[str],
         tick: bool,
@@ -47,10 +48,10 @@ class _freeze_time:
     def decorate_callable(self, func: Callable[..., _T]) -> Callable[..., _T]: ...
 
 def freeze_time(
-    time_to_freeze: Optional[Union[_Freezable, Callable[..., _Freezable], Iterator[_Freezable]]] = ...,
-    tz_offset: Optional[float] = ...,
-    ignore: Optional[Sequence[str]] = ...,
-    tick: Optional[bool] = ...,
-    as_arg: Optional[bool] = ...,
-    auto_tick_seconds: Optional[float] = ...,
+    time_to_freeze: _Freezable | Callable[..., _Freezable] | Iterator[_Freezable] | None = ...,
+    tz_offset: float | None = ...,
+    ignore: Sequence[str] | None = ...,
+    tick: bool | None = ...,
+    as_arg: bool | None = ...,
+    auto_tick_seconds: float | None = ...,
 ) -> _freeze_time: ...

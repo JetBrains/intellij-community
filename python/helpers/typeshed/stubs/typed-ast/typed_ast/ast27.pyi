@@ -1,5 +1,5 @@
 import typing
-from typing import Any, Iterator, Optional, Union
+from typing import Any, Iterator
 
 class NodeVisitor:
     def visit(self, node: AST) -> Any: ...
@@ -8,15 +8,15 @@ class NodeVisitor:
 class NodeTransformer(NodeVisitor):
     def generic_visit(self, node: AST) -> None: ...
 
-def parse(source: Union[str, bytes], filename: Union[str, bytes] = ..., mode: str = ...) -> AST: ...
+def parse(source: str | bytes, filename: str | bytes = ..., mode: str = ...) -> AST: ...
 def copy_location(new_node: AST, old_node: AST) -> AST: ...
 def dump(node: AST, annotate_fields: bool = ..., include_attributes: bool = ...) -> str: ...
 def fix_missing_locations(node: AST) -> AST: ...
-def get_docstring(node: AST, clean: bool = ...) -> Optional[bytes]: ...
+def get_docstring(node: AST, clean: bool = ...) -> bytes | None: ...
 def increment_lineno(node: AST, n: int = ...) -> AST: ...
 def iter_child_nodes(node: AST) -> Iterator[AST]: ...
 def iter_fields(node: AST) -> Iterator[typing.Tuple[str, Any]]: ...
-def literal_eval(node_or_string: Union[str, AST]) -> Any: ...
+def literal_eval(node_or_string: str | AST) -> Any: ...
 def walk(node: AST) -> Iterator[AST]: ...
 
 PyCF_ONLY_AST: int
@@ -33,21 +33,21 @@ class AST:
 class mod(AST): ...
 
 class Module(mod):
-    body: typing.List[stmt]
-    type_ignores: typing.List[TypeIgnore]
+    body: list[stmt]
+    type_ignores: list[TypeIgnore]
 
 class Interactive(mod):
-    body: typing.List[stmt]
+    body: list[stmt]
 
 class Expression(mod):
     body: expr
 
 class FunctionType(mod):
-    argtypes: typing.List[expr]
+    argtypes: list[expr]
     returns: expr
 
 class Suite(mod):
-    body: typing.List[stmt]
+    body: list[stmt]
 
 class stmt(AST):
     lineno: int
@@ -56,26 +56,26 @@ class stmt(AST):
 class FunctionDef(stmt):
     name: identifier
     args: arguments
-    body: typing.List[stmt]
-    decorator_list: typing.List[expr]
-    type_comment: Optional[str]
+    body: list[stmt]
+    decorator_list: list[expr]
+    type_comment: str | None
 
 class ClassDef(stmt):
     name: identifier
-    bases: typing.List[expr]
-    body: typing.List[stmt]
-    decorator_list: typing.List[expr]
+    bases: list[expr]
+    body: list[stmt]
+    decorator_list: list[expr]
 
 class Return(stmt):
-    value: Optional[expr]
+    value: expr | None
 
 class Delete(stmt):
-    targets: typing.List[expr]
+    targets: list[expr]
 
 class Assign(stmt):
-    targets: typing.List[expr]
+    targets: list[expr]
     value: expr
-    type_comment: Optional[str]
+    type_comment: str | None
 
 class AugAssign(stmt):
     target: expr
@@ -83,66 +83,66 @@ class AugAssign(stmt):
     value: expr
 
 class Print(stmt):
-    dest: Optional[expr]
-    values: typing.List[expr]
+    dest: expr | None
+    values: list[expr]
     nl: bool
 
 class For(stmt):
     target: expr
     iter: expr
-    body: typing.List[stmt]
-    orelse: typing.List[stmt]
-    type_comment: Optional[str]
+    body: list[stmt]
+    orelse: list[stmt]
+    type_comment: str | None
 
 class While(stmt):
     test: expr
-    body: typing.List[stmt]
-    orelse: typing.List[stmt]
+    body: list[stmt]
+    orelse: list[stmt]
 
 class If(stmt):
     test: expr
-    body: typing.List[stmt]
-    orelse: typing.List[stmt]
+    body: list[stmt]
+    orelse: list[stmt]
 
 class With(stmt):
     context_expr: expr
-    optional_vars: Optional[expr]
-    body: typing.List[stmt]
-    type_comment: Optional[str]
+    optional_vars: expr | None
+    body: list[stmt]
+    type_comment: str | None
 
 class Raise(stmt):
-    type: Optional[expr]
-    inst: Optional[expr]
-    tback: Optional[expr]
+    type: expr | None
+    inst: expr | None
+    tback: expr | None
 
 class TryExcept(stmt):
-    body: typing.List[stmt]
-    handlers: typing.List[ExceptHandler]
-    orelse: typing.List[stmt]
+    body: list[stmt]
+    handlers: list[ExceptHandler]
+    orelse: list[stmt]
 
 class TryFinally(stmt):
-    body: typing.List[stmt]
-    finalbody: typing.List[stmt]
+    body: list[stmt]
+    finalbody: list[stmt]
 
 class Assert(stmt):
     test: expr
-    msg: Optional[expr]
+    msg: expr | None
 
 class Import(stmt):
-    names: typing.List[alias]
+    names: list[alias]
 
 class ImportFrom(stmt):
-    module: Optional[identifier]
-    names: typing.List[alias]
-    level: Optional[int]
+    module: identifier | None
+    names: list[alias]
+    level: int | None
 
 class Exec(stmt):
     body: expr
-    globals: Optional[expr]
-    locals: Optional[expr]
+    globals: expr | None
+    locals: expr | None
 
 class Global(stmt):
-    names: typing.List[identifier]
+    names: list[identifier]
 
 class Expr(stmt):
     value: expr
@@ -155,12 +155,12 @@ class slice(AST): ...
 _slice = slice  # this lets us type the variable named 'slice' below
 
 class Slice(slice):
-    lower: Optional[expr]
-    upper: Optional[expr]
-    step: Optional[expr]
+    lower: expr | None
+    upper: expr | None
+    step: expr | None
 
 class ExtSlice(slice):
-    dims: typing.List[slice]
+    dims: list[slice]
 
 class Index(slice):
     value: expr
@@ -173,7 +173,7 @@ class expr(AST):
 
 class BoolOp(expr):
     op: boolop
-    values: typing.List[expr]
+    values: list[expr]
 
 class BinOp(expr):
     left: expr
@@ -194,52 +194,52 @@ class IfExp(expr):
     orelse: expr
 
 class Dict(expr):
-    keys: typing.List[expr]
-    values: typing.List[expr]
+    keys: list[expr]
+    values: list[expr]
 
 class Set(expr):
-    elts: typing.List[expr]
+    elts: list[expr]
 
 class ListComp(expr):
     elt: expr
-    generators: typing.List[comprehension]
+    generators: list[comprehension]
 
 class SetComp(expr):
     elt: expr
-    generators: typing.List[comprehension]
+    generators: list[comprehension]
 
 class DictComp(expr):
     key: expr
     value: expr
-    generators: typing.List[comprehension]
+    generators: list[comprehension]
 
 class GeneratorExp(expr):
     elt: expr
-    generators: typing.List[comprehension]
+    generators: list[comprehension]
 
 class Yield(expr):
-    value: Optional[expr]
+    value: expr | None
 
 class Compare(expr):
     left: expr
-    ops: typing.List[cmpop]
-    comparators: typing.List[expr]
+    ops: list[cmpop]
+    comparators: list[expr]
 
 class Call(expr):
     func: expr
-    args: typing.List[expr]
-    keywords: typing.List[keyword]
-    starargs: Optional[expr]
-    kwargs: Optional[expr]
+    args: list[expr]
+    keywords: list[keyword]
+    starargs: expr | None
+    kwargs: expr | None
 
 class Repr(expr):
     value: expr
 
 class Num(expr):
-    n: Union[int, float, complex]
+    n: int | float | complex
 
 class Str(expr):
-    s: Union[str, bytes]
+    s: str | bytes
     kind: str
 
 class Attribute(expr):
@@ -257,11 +257,11 @@ class Name(expr):
     ctx: expr_context
 
 class List(expr):
-    elts: typing.List[expr]
+    elts: list[expr]
     ctx: expr_context
 
 class Tuple(expr):
-    elts: typing.List[expr]
+    elts: list[expr]
     ctx: expr_context
 
 class expr_context(AST): ...
@@ -307,21 +307,21 @@ class NotIn(cmpop): ...
 class comprehension(AST):
     target: expr
     iter: expr
-    ifs: typing.List[expr]
+    ifs: list[expr]
 
 class ExceptHandler(AST):
-    type: Optional[expr]
-    name: Optional[expr]
-    body: typing.List[stmt]
+    type: expr | None
+    name: expr | None
+    body: list[stmt]
     lineno: int
     col_offset: int
 
 class arguments(AST):
-    args: typing.List[expr]
-    vararg: Optional[identifier]
-    kwarg: Optional[identifier]
-    defaults: typing.List[expr]
-    type_comments: typing.List[Optional[str]]
+    args: list[expr]
+    vararg: identifier | None
+    kwarg: identifier | None
+    defaults: list[expr]
+    type_comments: list[str | None]
 
 class keyword(AST):
     arg: identifier
@@ -329,7 +329,7 @@ class keyword(AST):
 
 class alias(AST):
     name: identifier
-    asname: Optional[identifier]
+    asname: identifier | None
 
 class TypeIgnore(AST):
     lineno: int

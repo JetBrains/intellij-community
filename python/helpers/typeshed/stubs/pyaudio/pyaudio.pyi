@@ -86,13 +86,13 @@ class Stream:
         format: int,
         input: bool = ...,
         output: bool = ...,
-        input_device_index: Optional[int] = ...,
-        output_device_index: Optional[int] = ...,
+        input_device_index: int | None = ...,
+        output_device_index: int | None = ...,
         frames_per_buffer: int = ...,
         start: bool = ...,
-        input_host_api_specific_stream_info: Optional[PaMacCoreStreamInfo] = ...,
-        output_host_api_specific_stream_info: Optional[PaMacCoreStreamInfo] = ...,
-        stream_callback: Optional[_StreamCallback] = ...,
+        input_host_api_specific_stream_info: PaMacCoreStreamInfo | None = ...,
+        output_host_api_specific_stream_info: PaMacCoreStreamInfo | None = ...,
+        stream_callback: _StreamCallback | None = ...,
     ) -> None: ...
     def close(self) -> None: ...
     def get_cpu_load(self) -> float: ...
@@ -106,7 +106,7 @@ class Stream:
     def read(self, num_frames: int, exception_on_overflow: bool = ...) -> bytes: ...
     def start_stream(self) -> None: ...
     def stop_stream(self) -> None: ...
-    def write(self, frames: bytes, num_frames: Optional[int] = ..., exception_on_underflow: bool = ...) -> None: ...
+    def write(self, frames: bytes, num_frames: int | None = ..., exception_on_underflow: bool = ...) -> None: ...
 
 class PyAudio:
     def __init__(self) -> None: ...
@@ -125,12 +125,12 @@ class PyAudio:
     def is_format_supported(
         self,
         rate: int,
-        input_device: Optional[int] = ...,
-        input_channels: Optional[int] = ...,
-        input_format: Optional[int] = ...,
-        output_device: Optional[int] = ...,
-        output_channels: Optional[int] = ...,
-        output_format: Optional[int] = ...,
+        input_device: int | None = ...,
+        input_channels: int | None = ...,
+        input_format: int | None = ...,
+        output_device: int | None = ...,
+        output_channels: int | None = ...,
+        output_format: int | None = ...,
     ) -> bool: ...
     def open(
         self,
@@ -139,13 +139,13 @@ class PyAudio:
         format: int,
         input: bool = ...,
         output: bool = ...,
-        input_device_index: Optional[int] = ...,
-        output_device_index: Optional[int] = ...,
+        input_device_index: int | None = ...,
+        output_device_index: int | None = ...,
         frames_per_buffer: int = ...,
         start: bool = ...,
-        input_host_api_specific_stream_info: Optional[PaMacCoreStreamInfo] = ...,
-        output_host_api_specific_stream_info: Optional[PaMacCoreStreamInfo] = ...,
-        stream_callback: Optional[_StreamCallback] = ...,
+        input_host_api_specific_stream_info: PaMacCoreStreamInfo | None = ...,
+        output_host_api_specific_stream_info: PaMacCoreStreamInfo | None = ...,
+        stream_callback: _StreamCallback | None = ...,
     ) -> Stream: ...
     def terminate(self) -> None: ...
 
@@ -161,6 +161,6 @@ class PaMacCoreStreamInfo:
     paMacCorePro: Final[int] = ...
     paMacCoreMinimizeCPUButPlayNice: Final[int] = ...
     paMacCoreMinimizeCPU: Final[int] = ...
-    def __init__(self, flags: Optional[int] = ..., channel_map: Optional[_ChannelMap] = ...) -> None: ...
+    def __init__(self, flags: int | None = ..., channel_map: _ChannelMap | None = ...) -> None: ...
     def get_flags(self) -> int: ...
-    def get_channel_map(self) -> Optional[_ChannelMap]: ...
+    def get_channel_map(self) -> _ChannelMap | None: ...

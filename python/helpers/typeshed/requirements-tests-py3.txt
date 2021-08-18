@@ -1,10 +1,8 @@
-# Use the current mypy version until a version that supports modular
-# typeshed is released on PyPI.
-git+https://github.com/python/mypy.git@master
-typed-ast>=1.0.4
-black==21.4b1
-flake8==3.8.4
-flake8-bugbear==20.1.4
+mypy==0.910
+typed-ast==1.4.3
+black==21.7b0
+flake8==3.9.2
+flake8-bugbear==21.4.3
 flake8-pyi==20.10.0
-isort==5.5.3
-pytype>=2021.5.11
+isort==5.9.3
+pytype==2021.08.11
