@@ -1,4 +1,3 @@
-// IGNORE_FIR
 open class Parameterized<A, C: Cloneable, R: Runnable>
 
 class AC

@@ -1,4 +1,3 @@
-// IGNORE_FIR
 open class Base<out T, in V>
 
 val v = Base<<caret>>
