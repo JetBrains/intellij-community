@@ -1712,6 +1712,11 @@ public abstract class QuickFixTestGenerated extends AbstractQuickFixTest {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
 
+        @TestMetadata("builtInFunction.kt")
+        public void testBuiltInFunction() throws Exception {
+            runTest("testData/quickfix/autoImports/builtInFunction.kt");
+        }
+
         @TestMetadata("checkNoStackOverflowInImportInnerClassInCurrentFile.kt")
         public void testCheckNoStackOverflowInImportInnerClassInCurrentFile() throws Exception {
             runTest("testData/quickfix/autoImports/checkNoStackOverflowInImportInnerClassInCurrentFile.kt");
