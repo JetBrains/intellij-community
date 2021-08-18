@@ -7,8 +7,14 @@ import com.intellij.openapi.util.KeyedExtensionCollector
 import java.util.concurrent.ConcurrentSkipListSet
 import javax.swing.Icon
 
+/**
+ * Provides external system specific icons for actions and other common external system UI elements that should be visually identified.
+ */
 interface ExternalSystemIconProvider {
 
+  /**
+   * Icon for auto-reload action in editor floating toolbar (ExternalSystem.ProjectRefreshAction).
+   */
   val reloadIcon: Icon
 
   companion object {
