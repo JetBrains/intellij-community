@@ -32,7 +32,7 @@
     "linkForeground": "#2470B3",
 
     "border": "#D1D1D1",
-    "componentBorder": "#C4C4C4",
+    "componentBorder": "grey08",
     "lightBorder": "#d9d9d9",
 
     "panel": "#F2F2F2"
@@ -465,7 +465,7 @@
       },
 
       "SearchField.background": "#FFFFFF",
-      "SearchField.borderColor": "#C5C5C5",
+      "SearchField.borderColor": "componentBorder",
 
       "SectionHeader.background": "#F7F7F7",
       "SectionHeader.foreground": "infoPanelForeground"
@@ -522,7 +522,7 @@
       "passedColor": "#34b171",
       "passedEndColor": "#7ee8a5",
       "progressColor": "#1E82E6",
-      "trackColor": "#D1D1D1",
+      "trackColor": "grey08",
       "UI": "com.intellij.ide.ui.laf.darcula.ui.DarculaProgressBarUI"
     },
 
@@ -586,7 +586,7 @@
       "Header.background": "#f2f2f2",
       "List.separatorColor": "#dcdcdc",
       "SearchField.background": "#ffffff",
-      "SearchField.borderColor": "#bdbdbd",
+      "SearchField.borderColor": "componentBorder",
       "SearchField.infoForeground": "infoPanelForeground",
       "Tab.selectedBackground": "#dedede"
     },
@@ -609,7 +609,7 @@
     "Slider": {
       "buttonBorderColor": "grey06",
       "buttonColor": "#FFFFFF",
-      "trackColor": "#C7C7C7",
+      "trackColor": "grey08",
       "tickColor": "grey01",
       "UI": "com.intellij.ide.ui.laf.darcula.ui.DarculaSliderUI"
     },
@@ -639,7 +639,7 @@
     },
 
     "TabbedPane": {
-      "contentAreaColor": "#bfbfbf",
+      "contentAreaColor": "grey08",
       "contentBorderInsets": {
         "os.windows": "3,1,1,1"
       },
@@ -744,8 +744,8 @@
       "border": "com.intellij.ide.ui.laf.darcula.ui.DarculaButtonPainter",
       "UI": "com.intellij.ide.ui.laf.darcula.ui.DarculaButtonUI",
 
-      "borderColor": "#c0c0c0",
-      "buttonColor": "#c0c0c0",
+      "borderColor": "grey08",
+      "buttonColor": "grey08",
       "offBackground": "#f2f2f2",
       "offForeground": "grey03",
       "onBackground": "#4a9249",
