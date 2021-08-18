@@ -1,3 +1,4 @@
+// FIR_COMPARISON
 package p2
 
 import p1.Foo
