@@ -211,6 +211,12 @@ public final class TestLoggerFactory implements Logger.Factory {
     onTestFinished(success, description.getDisplayName());
   }
 
+  public static void logTestFailure(@NotNull Throwable t) {
+    if (shouldSplitTestLogs()) {
+      log(Level.ERROR.toString(), "Test framework", "Test failed", t);
+    }
+  }
+
   /**
    * Invoke this method instead of {@link #onTestFinished(boolean)} to support separate logs saving
    *
@@ -256,6 +262,7 @@ public final class TestLoggerFactory implements Logger.Factory {
 
       @Override
       protected void failed(Throwable e, Description description) {
+        logTestFailure(e);
         onTestFinished(false, description);
       }
 

@@ -33,6 +33,7 @@ abstract class AbstractInspectionTest : KotlinLightCodeInsightFixtureTestCase() 
             EntryPointsManagerBase.getInstance(project).ADDITIONAL_ANNOTATIONS.add(ENTRY_POINT_ANNOTATION)
             runWriteAction { FileTypeManager.getInstance().associateExtension(GroovyFileType.GROOVY_FILE_TYPE, "gradle") }
         } catch (e: Throwable) {
+            TestLoggerFactory.logTestFailure(e)
             TestLoggerFactory.onTestFinished(false, Description.createTestDescription(javaClass, name))
             throw e
         }
