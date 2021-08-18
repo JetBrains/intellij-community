@@ -71,16 +71,6 @@ internal class SearchEverywhereFileFeaturesProviderTest
     }
   }
 
-  fun testGetDataToCache() {
-    val expected = mockedFileStatsProvider
-      .setStats("XML", FileTypeUsageSummary(1, lastMinute))
-      .setStats("Python", FileTypeUsageSummary(3, lastDay))
-      .getFileTypeStats()
-
-    val actual = provider.getDataToCache(project)
-    assertEquals(expected, actual)
-  }
-
   fun testIsDirectory() {
     val directory = MockPsiDirectory(project, project)
 

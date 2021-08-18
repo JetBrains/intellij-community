@@ -14,6 +14,7 @@ import com.intellij.openapi.fileEditor.impl.EditorHistoryManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.openapi.roots.ProjectRootManager
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiFileSystemItem
 import com.intellij.util.Time.*
 
@@ -47,7 +48,8 @@ internal class SearchEverywhereFileFeaturesProvider : SearchEverywhereElementFea
       return null
     }
 
-    return deepCopyFileTypeStats(project)
+    val openedFile = FileEditorManager.getInstance(project).selectedEditor?.file
+    return Cache(deepCopyFileTypeStats(project), openedFile)
   }
 
   /**
@@ -84,15 +86,14 @@ internal class SearchEverywhereFileFeaturesProvider : SearchEverywhereElementFea
       else -> return emptyMap()
     }
 
-    @Suppress("UNCHECKED_CAST")
-    val fileTypeStats = cache as? Map<String, FileTypeUsageSummary>
+    val fileTypeStats = cache as Cache
     return getFeatures(item, currentTime, elementPriority, fileTypeStats)
   }
 
   private fun getFeatures(item: PsiFileSystemItem,
                           currentTime: Long,
                           elementPriority: Int,
-                          fileTypeStats: Map<String, FileTypeUsageSummary>?): Map<String, Any> {
+                          cache: Cache): Map<String, Any> {
     val data = hashMapOf<String, Any>(
       IS_FAVORITE_DATA_KEY to isFavorite(item),
       IS_DIRECTORY_DATA_KEY to item.isDirectory,
@@ -108,12 +109,10 @@ internal class SearchEverywhereFileFeaturesProvider : SearchEverywhereElementFea
     data[FILETYPE_DATA_KEY] = item.virtualFile.fileType.name
     data[RECENT_INDEX_DATA_KEY] = getRecentFilesIndex(item)
     data[PREDICTION_SCORE_DATA_KEY] = getPredictionScore(item)
-    data[IS_SAME_MODULE] = isSameModuleAsOpenedFile(item)
-    data.putAll(getModificationTimeStats(item, currentTime))
+    data[IS_SAME_MODULE] = isSameModuleAsOpenedFile(item, cache.openedFile)
 
-    if (fileTypeStats != null) {
-      data.putAll(getFileTypeStats(item, currentTime, fileTypeStats))
-    }
+    data.putAll(getModificationTimeStats(item, currentTime))
+    data.putAll(getFileTypeStats(item, currentTime, cache.fileTypeStats))
 
     return data
   }
@@ -179,9 +178,12 @@ internal class SearchEverywhereFileFeaturesProvider : SearchEverywhereElementFea
     return roundDouble(probability)
   }
 
-  private fun isSameModuleAsOpenedFile(item: PsiFileSystemItem): Boolean {
+  private fun isSameModuleAsOpenedFile(item: PsiFileSystemItem, openedFile: VirtualFile?): Boolean {
+    if (openedFile == null) {
+      return false
+    }
+
     val project = item.project
-    val openedFile = FileEditorManager.getInstance(project).selectedEditor?.file ?: return false
 
     val fileIndex = ReadAction.compute<ProjectFileIndex, Nothing> { ProjectRootManager.getInstance(project).fileIndex }
     val openedFileModule = fileIndex.getModuleForFile(openedFile) ?: return false
@@ -189,4 +191,6 @@ internal class SearchEverywhereFileFeaturesProvider : SearchEverywhereElementFea
 
     return openedFileModule == itemModule
   }
+
+  private data class Cache(val fileTypeStats: Map<String, FileTypeUsageSummary>, val openedFile: VirtualFile?)
 }
