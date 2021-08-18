@@ -92,17 +92,14 @@ public class JavaFindUsagesHandler extends FindUsagesHandler {
       }
     }
 
-    final PsiClass aClass = ReadAction.compute(method::getContainingClass);
-    if (aClass != null) {
-      FunctionalExpressionSearch.search(aClass).forEach(element -> {
-        if (element instanceof PsiLambdaExpression) {
-          PsiParameter[] parameters = ((PsiLambdaExpression)element).getParameterList().getParameters();
-          if (idx < parameters.length) {
-            elementsToSearch.add(parameters[idx]);
-          }
+    FunctionalExpressionSearch.search(method).forEach(element -> {
+      if (element instanceof PsiLambdaExpression) {
+        PsiParameter[] parameters = ((PsiLambdaExpression)element).getParameterList().getParameters();
+        if (idx < parameters.length) {
+          elementsToSearch.add(parameters[idx]);
         }
-      });
-    }
+      }
+    });
 
     return PsiUtilCore.toPsiElementArray(elementsToSearch);
   }
@@ -122,7 +119,7 @@ public class JavaFindUsagesHandler extends FindUsagesHandler {
 
           ProgressManager pm = ProgressManager.getInstance();
           boolean hasOverriden = pm.runProcessWithProgressSynchronously(() ->
-              OverridingMethodsSearch.search(method).findFirst() != null || FunctionalExpressionSearch.search(aClass).findFirst() != null,
+              OverridingMethodsSearch.search(method).findFirst() != null || FunctionalExpressionSearch.search(method).findFirst() != null,
             JavaBundle.message("progress.title.detect.overridden.methods"), true, getProject()) == Boolean.TRUE;
 
           if (hasOverriden && myFactory.getFindVariableOptions().isSearchInOverridingMethods) {
