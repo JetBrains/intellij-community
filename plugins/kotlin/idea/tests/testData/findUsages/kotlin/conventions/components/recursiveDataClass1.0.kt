@@ -8,4 +8,3 @@ fun f(a: A) {
         a?.a ?: return
 }
 
-// FIR_COMPARISON
