@@ -287,36 +287,41 @@ public class Py3TypeCheckerInspectionTest extends PyInspectionTestCase {
 
   // PY-26354
   public void testInitializingAttrs() {
-    doTestByText("import attr\n" +
-                 "import typing\n" +
-                 "\n" +
-                 "@attr.s\n" +
-                 "class Weak1:\n" +
-                 "    x = attr.ib()\n" +
-                 "    y = attr.ib(default=0)\n" +
-                 "    z = attr.ib(default=attr.Factory(list))\n" +
-                 "    \n" +
-                 "Weak1(1, \"str\", 2)\n" +
-                 "\n" +
-                 "\n" +
-                 "@attr.s\n" +
-                 "class Weak2:\n" +
-                 "    x = attr.ib()\n" +
-                 "    \n" +
-                 "    @x.default\n" +
-                 "    def __init_x__(self):\n" +
-                 "        return 1\n" +
-                 "    \n" +
-                 "Weak2(\"str\")\n" +
-                 "\n" +
-                 "\n" +
-                 "@attr.s\n" +
-                 "class Strong:\n" +
-                 "    x = attr.ib(type=int)\n" +
-                 "    y = attr.ib(default=0, type=int)\n" +
-                 "    z = attr.ib(default=attr.Factory(list), type=typing.List[int])\n" +
-                 "    \n" +
-                 "Strong(1, <warning descr=\"Expected type 'int', got 'str' instead\">\"str\"</warning>, <warning descr=\"Expected type 'list[int]', got 'list[str]' instead\">[\"str\"]</warning>)");
+    runWithAdditionalClassEntryInSdkRoots(
+      "packages",
+      () -> doTestByText(
+        "import attr\n" +
+        "import typing\n" +
+        "\n" +
+        "@attr.s\n" +
+        "class Weak1:\n" +
+        "    x = attr.ib()\n" +
+        "    y = attr.ib(default=0)\n" +
+        "    z = attr.ib(default=attr.Factory(list))\n" +
+        "    \n" +
+        "Weak1(1, \"str\", 2)\n" +
+        "\n" +
+        "\n" +
+        "@attr.s\n" +
+        "class Weak2:\n" +
+        "    x = attr.ib()\n" +
+        "    \n" +
+        "    @x.default\n" +
+        "    def __init_x__(self):\n" +
+        "        return 1\n" +
+        "    \n" +
+        "Weak2(\"str\")\n" +
+        "\n" +
+        "\n" +
+        "@attr.s\n" +
+        "class Strong:\n" +
+        "    x = attr.ib(type=int)\n" +
+        "    y = attr.ib(default=0, type=int)\n" +
+        "    z = attr.ib(default=attr.Factory(list), type=typing.List[int])\n" +
+        "    \n" +
+        "Strong(1, <warning descr=\"Expected type 'int', got 'str' instead\">\"str\"</warning>, <warning descr=\"Expected type 'list[int]', got 'list[str]' instead\">[\"str\"]</warning>)"
+      )
+    );
   }
 
   // PY-28957
