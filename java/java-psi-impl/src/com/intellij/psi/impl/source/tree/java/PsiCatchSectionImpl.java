@@ -25,6 +25,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * @author ven
@@ -113,32 +114,35 @@ public class PsiCatchSectionImpl extends CompositePsiElement implements PsiCatch
       });
       if (uncaughtTypes.isEmpty()) return Collections.emptyList();  // unreachable catch section
       // ... and T is assignable to Ej ...
-      List<PsiType> types = new SmartList<>();
-      final List<PsiType> disjunctions = (declaredType instanceof PsiDisjunctionType)
-                                         ? ((PsiDisjunctionType)declaredType).getDisjunctions()
-                                         : Collections.emptyList();
-      for (PsiType type : uncaughtTypes) {
-        if (declaredType.isAssignableFrom(type) ||
-            // JLS 11.2.3 "Exception Checking":
-            // "It is a compile-time error if a catch clause can catch checked exception class E1 and it is not the case
-            // that the try block corresponding to the catch clause can throw a checked exception class that is
-            // a subclass or superclass of E1, unless E1 is Exception or a superclass of Exception."
-            // So here unchecked exception can sneak through Exception or Throwable catch type only.
-            ExceptionUtil.isGeneralExceptionType(declaredType) && type instanceof PsiClassType && ExceptionUtil.isUncheckedException((PsiClassType)type)) {
-          types.add(type);
-        }
-        else {
-          for (PsiType disjunction : disjunctions) {
-            if (type.isAssignableFrom(disjunction)) {
-              types.add(disjunction);
-            }
-          }
-        }
+      if (declaredType instanceof PsiDisjunctionType) {
+        return Collections.unmodifiableList(((PsiDisjunctionType)declaredType).getDisjunctions()
+                                              .stream()
+                                              .flatMap(disjunction -> computePreciseCatchTypes(disjunction, uncaughtTypes).stream())
+                                              .collect(Collectors.toCollection(() -> new ArrayList<>())));
       }
-      // ... the throw statement throws precisely the set of exception types T.
-      if (!types.isEmpty()) return Collections.unmodifiableList(types);
+      else {
+        return computePreciseCatchTypes(declaredType, uncaughtTypes);
+      }
     }
 
+    return Collections.singletonList(declaredType);
+  }
+
+  private static List<PsiType> computePreciseCatchTypes(PsiType declaredType, List<PsiType> uncaughtTypes) {
+    List<PsiType> types = new SmartList<>();
+    for (PsiType type : uncaughtTypes) {
+      if (declaredType.isAssignableFrom(type) ||
+          // JLS 11.2.3 "Exception Checking":
+          // "It is a compile-time error if a catch clause can catch checked exception class E1 and it is not the case
+          // that the try block corresponding to the catch clause can throw a checked exception class that is
+          // a subclass or superclass of E1, unless E1 is Exception or a superclass of Exception."
+          // So here unchecked exception can sneak through Exception or Throwable catch type only.
+          ExceptionUtil.isGeneralExceptionType(declaredType) && type instanceof PsiClassType && ExceptionUtil.isUncheckedException((PsiClassType)type)) {
+        types.add(type);
+      }
+    }
+    // ... the throw statement throws precisely the set of exception types T.
+    if (!types.isEmpty()) return Collections.unmodifiableList(types);
     return Collections.singletonList(declaredType);
   }
 
