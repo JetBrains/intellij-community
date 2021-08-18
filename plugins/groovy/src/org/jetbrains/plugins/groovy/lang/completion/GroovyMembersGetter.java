@@ -52,6 +52,7 @@ class GroovyMembersGetter extends MembersGetter {
 
   @Override
   protected LookupElement createMethodElement(PsiMethod method) {
+    if (method.isConstructor()) return null; // TODO support suggesting constructors
     PsiSubstitutor substitutor = SmartCompletionDecorator.calculateMethodReturnTypeSubstitutor(method, myExpectedType);
     PsiType type = substitutor.substitute(method.getReturnType());
     if (!isSuitableType(type)) {
