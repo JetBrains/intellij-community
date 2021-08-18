@@ -76,7 +76,7 @@ class DuplicatesMethodExtractor: InplaceExtractMethodProvider {
 
     val parameterExpressions = options.inputParameters.flatMap { parameter -> parameter.references }
     val changedExpressions = duplicates.flatMap { it.changedExpressions.map(ChangedExpression::pattern) }
-    val duplicatesFinder = finder.withTerminalNodes((parameterExpressions + changedExpressions).toSet())
+    val duplicatesFinder = finder.withPredefinedChanges((parameterExpressions + changedExpressions).toSet())
 
     duplicates = duplicates.mapNotNull { duplicatesFinder.createDuplicate(it.pattern, it.candidate) }
 

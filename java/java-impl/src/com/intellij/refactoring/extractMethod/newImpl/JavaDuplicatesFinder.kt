@@ -9,7 +9,7 @@ data class ChangedExpression(val pattern: PsiExpression, val candidate: PsiExpre
 
 data class Duplicate(val pattern: List<PsiElement>, val candidate: List<PsiElement>, val changedExpressions: List<ChangedExpression>)
 
-class JavaDuplicatesFinder(pattern: List<PsiElement>, private val terminalNodes: Set<PsiElement> = emptySet()) {
+class JavaDuplicatesFinder(pattern: List<PsiElement>, private val predefinedChanges: Set<PsiExpression> = emptySet()) {
 
   companion object {
     fun textRangeOf(range: List<PsiElement>) = TextRange(range.first().textRange.startOffset, range.last().textRange.endOffset)
@@ -17,8 +17,8 @@ class JavaDuplicatesFinder(pattern: List<PsiElement>, private val terminalNodes:
 
   private val pattern: List<PsiElement> = pattern.filterNot(::isNoise)
 
-  fun withTerminalNodes(terminalNodes: Set<PsiElement>): JavaDuplicatesFinder {
-    return JavaDuplicatesFinder(pattern, this.terminalNodes + terminalNodes)
+  fun withPredefinedChanges(predefinedChanges: Set<PsiExpression>): JavaDuplicatesFinder {
+    return JavaDuplicatesFinder(pattern, this.predefinedChanges + predefinedChanges)
   }
 
   fun findDuplicates(scope: PsiElement): List<Duplicate> {
@@ -105,7 +105,7 @@ class JavaDuplicatesFinder(pattern: List<PsiElement>, private val terminalNodes:
                                 changedExpressions: MutableList<ChangedExpression>): Boolean {
     if (candidate.size != pattern.size) return false
     val notEqualElements = pattern.zip(candidate).filterNot { (pattern, candidate) ->
-      pattern !in terminalNodes &&
+      pattern !in predefinedChanges &&
       isEquivalent(pattern, candidate) &&
       traverseAndCollectChanges(childrenOf(pattern), childrenOf(candidate), changedExpressions)
     }
