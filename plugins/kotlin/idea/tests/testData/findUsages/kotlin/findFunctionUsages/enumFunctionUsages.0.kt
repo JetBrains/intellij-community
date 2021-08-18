@@ -1,4 +1,3 @@
-// FIR_COMPARISON
 // PSI_ELEMENT: org.jetbrains.kotlin.psi.KtNamedFunction
 // OPTIONS: usages
 enum class E {
@@ -26,3 +25,4 @@ enum class E {
 }
 
 // FIR_IGNORE
+// FIR_COMPARISON
