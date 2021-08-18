@@ -76,3 +76,6 @@ fun Credentials?.isFulfilled() = this != null && userName != null && !password.i
 fun Credentials?.hasOnlyUserName() = this != null && userName != null && password.isNullOrEmpty()
 
 fun Credentials?.isEmpty() = this == null || (userName == null && password.isNullOrEmpty())
+
+val ACCESS_TO_KEY_CHAIN_DENIED = Credentials(null, null as OneTimeString?)
+val CANNOT_UNLOCK_KEYCHAIN = Credentials(null, null as OneTimeString?)
