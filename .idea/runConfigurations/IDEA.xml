@@ -20,7 +20,6 @@
     <ConfigurationWrapper RunnerId="Profile " />
     <ConfigurationWrapper RunnerId="Run" />
     <method v="2">
-      <option name="RunConfigurationTask" enabled="true" run_configuration_name="Publish compiler-for-ide jars" run_configuration_type="GradleRunConfiguration" />
       <option name="Make" enabled="true" />
       <option name="BuildArtifacts" enabled="true">
         <artifact name="debugger-agent" />
