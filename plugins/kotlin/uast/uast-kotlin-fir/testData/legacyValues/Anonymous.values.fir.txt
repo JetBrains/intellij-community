@@ -22,7 +22,7 @@ UFile (package = ) [import java.io.Closeable...]
     println()
 })(Undetermined)
                             UIdentifier (Identifier (Runnable)) [UIdentifier (Identifier (Runnable))]
-                            USimpleNameReferenceExpression (identifier = Runnable, resolvesTo = null) [Runnable] = external Runnable({
+                            USimpleNameReferenceExpression (identifier = Runnable, resolvesTo = PsiClass: Runnable) [Runnable] = external Runnable({
     println()
 })(Undetermined)
                             ULambdaExpression [{ ...}] = Undetermined
