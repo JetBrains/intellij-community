@@ -955,8 +955,8 @@ abstract class IntervalTreeImpl<T> extends RedBlackTree<T> implements IntervalTr
   @Override
   public boolean removeInterval(@NotNull T interval) {
     if (!((RangeMarkerEx)interval).isValid()) return false;
+    l.writeLock().lock();
     try {
-      l.writeLock().lock();
       incModCount();
 
       if (!((RangeMarkerEx)interval).isValid()) return false;
@@ -970,12 +970,10 @@ abstract class IntervalTreeImpl<T> extends RedBlackTree<T> implements IntervalTr
       beforeRemove(interval, "Explicit Dispose");
 
       node.removeInterval(interval);
-      setNode(interval, null);
-
-      checkMax(true);
       return true;
     }
     finally {
+      setNode(interval, null);
       l.writeLock().unlock();
     }
   }
