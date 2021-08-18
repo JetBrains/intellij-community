@@ -546,7 +546,6 @@ public final class Utils extends DataContextUtils {
     Utils.ProcessCanceledWithReasonException lastCancellation = null;
     int retries = Math.max(1, Registry.intValue("actionSystem.update.actions.max.retries", 20));
     for (int i = 0; i < retries; i++) {
-      if (expire.getAsBoolean()) return;
       try {
         runnable.run();
         return;
@@ -562,6 +561,7 @@ public final class Utils extends DataContextUtils {
       catch (Throwable ex) {
         ExceptionUtil.rethrow(ex);
       }
+      if (expire.getAsBoolean()) return;
     }
     if (retries > 1) {
       LOG.warn("Maximum number of retries to show a menu reached (" + retries + "): " + lastCancellation.reason);
