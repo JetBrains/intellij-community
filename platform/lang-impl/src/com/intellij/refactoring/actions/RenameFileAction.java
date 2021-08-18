@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.actions;
 
 import com.intellij.openapi.actionSystem.*;
@@ -8,6 +8,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.refactoring.rename.PsiElementRenameHandler;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Arrays;
 import java.util.Objects;
 
 /**
@@ -30,11 +31,16 @@ public class RenameFileAction extends AnAction {
     PsiFile file = e.getData(CommonDataKeys.PSI_FILE);
     Presentation presentation = e.getPresentation();
     String place = e.getPlace();
+    ActionManager actionManager = ActionManager.getInstance();
     boolean enabled =
       file != null && file.isWritable()
       && Objects.nonNull(file.getVirtualFile()) && !(file.getVirtualFile().getFileSystem().isReadOnly())
       && (enabledInProjectView(file) || !ActionPlaces.PROJECT_VIEW_POPUP.equals(place))
-      && place != ActionPlaces.EDITOR_POPUP && e.getData(CommonDataKeys.PROJECT) != null;
+      && place != ActionPlaces.EDITOR_POPUP && e.getData(CommonDataKeys.PROJECT) != null
+      && !(ActionPlaces.isShortcutPlace(place) &&
+           e.getData(CommonDataKeys.EDITOR) != null &&
+           Arrays.equals(Objects.requireNonNull(actionManager.getAction(IdeActions.ACTION_RENAME)).getShortcutSet().getShortcuts(),
+                         getShortcutSet().getShortcuts()));
     presentation.setEnabledAndVisible(enabled);
   }
 
