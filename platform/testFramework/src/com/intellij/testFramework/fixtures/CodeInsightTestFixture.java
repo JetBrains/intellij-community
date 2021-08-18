@@ -698,6 +698,16 @@ public interface CodeInsightTestFixture extends IdeaProjectTestFixture {
   List<Object> getGotoClassResults(@NotNull String pattern, boolean searchEverywhere, @Nullable PsiElement contextForSorting);
 
   /**
+   * Get elements found by the Goto Symbol action called with the given pattern
+   * @param pattern           a pattern to search for elements
+   * @param searchEverywhere  indicates whether "include non-project classes" checkbox is selected
+   * @param contextForSorting a PsiElement used for "proximity sorting" of the results. The sorting will be disabled if null given.
+   * @return a list of the results (likely PsiElements) found for the given pattern
+   */
+  @NotNull
+  List<Object> getGotoSymbolResults(@NotNull String pattern, boolean searchEverywhere, @Nullable PsiElement contextForSorting);
+  
+  /**
    * Get breadcrumbs to be generated for the current cursor position in the loaded file
    * @return a list of the breadcrumbs in the order from the topmost element crumb to the deepest
    */

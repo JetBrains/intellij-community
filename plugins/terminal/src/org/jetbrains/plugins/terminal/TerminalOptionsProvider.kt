@@ -71,8 +71,6 @@ class TerminalOptionsProvider : PersistentStateComponent<TerminalOptionsProvider
     var myShellIntegration: Boolean = true
     var myHighlightHyperlinks: Boolean = true
     var useOptionAsMetaKey: Boolean = false
-    var myIsTypeAheadEnabled: Boolean = true
-    var myTypeAheadLatencyThreshold: Int = 100
   }
 
   fun setCloseSessionOnLogout(closeSessionOnLogout: Boolean) {
@@ -128,14 +126,6 @@ class TerminalOptionsProvider : PersistentStateComponent<TerminalOptionsProvider
     }
 
   var useOptionAsMetaKey: Boolean by myState::useOptionAsMetaKey
-  var isTypeAheadEnabled: Boolean by myState::myIsTypeAheadEnabled
-
-  var typeAheadLatencyThreshold: Int
-    get() = myState.myTypeAheadLatencyThreshold
-    set(latencyThreshold) {
-      myState.myTypeAheadLatencyThreshold = latencyThreshold
-    }
-
 
   var cursorShape: TerminalUiSettingsManager.CursorShape
     get() = service<TerminalUiSettingsManager>().cursorShape

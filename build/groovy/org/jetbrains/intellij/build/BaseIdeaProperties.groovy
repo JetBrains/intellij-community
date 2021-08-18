@@ -100,7 +100,6 @@ abstract class BaseIdeaProperties extends JetBrainsProductProperties {
     "plugins/java/lib/jshell-frontend.jar"                      : "9",
     "plugins/java/lib/sa-jdwp"                                  : "",  // ignored
     "plugins/java/lib/rt/debugger-agent.jar"                    : "1.6",
-    "plugins/java/lib/rt/debugger-agent-storage.jar"            : "1.6",
     "plugins/Groovy/lib/groovy-rt.jar"                          : "1.6",
     "plugins/Groovy/lib/groovy-constants-rt.jar"                : "1.6",
     "plugins/coverage/lib/coverage_rt.jar"                      : "1.6",

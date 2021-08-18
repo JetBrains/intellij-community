@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.ui.laf.darcula.ui;
 
+import com.intellij.ide.ui.laf.intellij.IdeaPopupMenuUI;
 import com.intellij.ui.Gray;
 import com.intellij.ui.JBColor;
 import com.intellij.util.ui.JBInsets;
@@ -20,6 +21,10 @@ public class DarculaPopupMenuBorder extends AbstractBorder implements UIResource
 
   @Override
   public void paintBorder(Component c, Graphics g, int x, int y, int width, int height) {
+    if (IdeaPopupMenuUI.isUnderPopup(c)) {
+      return;
+    }
+
     Graphics2D g2 = (Graphics2D)g.create();
     try {
       g2.setColor(JBColor.namedColor("Menu.borderColor", new JBColor(Gray.xCD, Gray.x51)));

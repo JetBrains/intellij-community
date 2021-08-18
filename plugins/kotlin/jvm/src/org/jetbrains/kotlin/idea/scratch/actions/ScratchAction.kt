@@ -4,8 +4,8 @@ package org.jetbrains.kotlin.idea.scratch.actions
 
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.actionSystem.CommonDataKeys
-import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider
+import com.intellij.openapi.actionSystem.PlatformCoreDataKeys
+import com.intellij.openapi.fileEditor.TextEditor
 import org.jetbrains.annotations.Nls
 import org.jetbrains.kotlin.idea.scratch.ScratchFile
 import org.jetbrains.kotlin.idea.scratch.ui.KtScratchFileEditorWithPreview
@@ -23,7 +23,8 @@ abstract class ScratchAction(@Nls message: String, icon: Icon) : AnAction(messag
         get() = currentScratchEditor?.scratchFile
 
     protected val AnActionEvent.currentScratchEditor: KtScratchFileEditorWithPreview?
-        get() = getData(CommonDataKeys.EDITOR)
-            ?.let { TextEditorProvider.getInstance().getTextEditor(it) }
-            ?.findScratchFileEditorWithPreview()
+        get() {
+            val textEditor = getData(PlatformCoreDataKeys.FILE_EDITOR) as? TextEditor
+            return textEditor?.findScratchFileEditorWithPreview()
+        }
 }

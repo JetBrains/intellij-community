@@ -24,8 +24,15 @@ internal object ReplaceBySourceAsGraph {
    *        has a reference to an entity that doesn't exist in current builder.
    *  - Restore references between matched entities.
    */
-  internal fun replaceBySourceAsGraph(thisBuilder: WorkspaceEntityStorageBuilderImpl,
-                                      replaceWith: WorkspaceEntityStorage, sourceFilter: (EntitySource) -> Boolean) {
+  internal fun replaceBySourceAsGraph(
+    thisBuilder: WorkspaceEntityStorageBuilderImpl,
+    replaceWith: WorkspaceEntityStorage,
+    sourceFilter: (EntitySource) -> Boolean,
+
+    // This is a super ultra dirty hack to make one test reproducible
+    // This should definitely NOT be used or moved to other implementations
+    reverseEntities: Boolean = false,
+  ) {
     replaceWith as AbstractEntityStorage
 
     if (LOG.isTraceEnabled) {
@@ -101,7 +108,8 @@ internal object ReplaceBySourceAsGraph {
     for (replaceWithEntitySource in replaceWith.indexes.entitySourceIndex.entries().filter { sourceFilter(it) }) {
       val entityDataList = replaceWith.indexes.entitySourceIndex
                              .getIdsByEntry(replaceWithEntitySource)
-                             ?.map { replaceWith.entityDataByIdOrDie(it) to it.notThis() } ?: continue
+                             ?.mapTo(ArrayList()) { replaceWith.entityDataByIdOrDie(it) to it.notThis() } ?: continue
+      if (reverseEntities) entityDataList.reverse()
       for ((matchedEntityData, matchedEntityId) in entityDataList) {
         replaceWithMatchedEntities.put(matchedEntityData.identificator(replaceWith), matchedEntityId)
 
@@ -428,6 +436,10 @@ internal object ReplaceBySourceAsGraph {
         val suggestedNewChildEntityId = replacingChildrenOneToOneConnections[connectionId] ?: return@mapNotNull null
         val suggestedNewChildEntityData = replaceWith.entityDataByIdOrDie(suggestedNewChildEntityId.id)
         if (sourceFilter(suggestedNewChildEntityData.entitySource)) {
+
+          // This entity was already moved to the new store
+          if (entityId.id.asThis() in replaceMap) return@mapNotNull null
+
           val childEntityData = entityDataByIdOrDie(entityId.id)
           removeEntity(entityId.id) { it != localEntityId.id && !replaceMap.containsKey(it.asThis()) }
           return@mapNotNull childEntityData

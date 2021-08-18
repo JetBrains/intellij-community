@@ -51,7 +51,7 @@ class DateTimeFormatConfigurableUi(settings: DateTimeFormatManager) : Configurab
             { settings.isPrettyFormattingAllowed },
             { settings.isPrettyFormattingAllowed = it })
           .comment(IdeBundle.message("date.format.relative"))
-      }
+      }.gap(TopGap.SMALL)
     }
   }
 

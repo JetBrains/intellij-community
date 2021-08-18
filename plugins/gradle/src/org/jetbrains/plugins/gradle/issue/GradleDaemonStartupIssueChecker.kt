@@ -97,7 +97,7 @@ class GradleDaemonStartupIssueChecker : GradleIssueChecker {
     if (location == null) return false
 
     if (failureCause == "startup failed:") {
-      val locationLine: @Nls String = message.substringAfter("> startup failed:", "").nullize()?.trimStart()?.substringBefore("\n") ?: return false
+      @Suppress("HardCodedStringLiteral") val locationLine: @Nls String = message.substringAfter("> startup failed:", "").nullize()?.trimStart()?.substringBefore("\n") ?: return false
       val failedStartupReason: @Nls String  = locationLine.substringAfter("'${location.file.path}': ${location.startLine + 1}: ", "") //NON-NLS
                                   .nullize()?.substringBeforeLast(" @ ") ?: return false //NON-NLS
       val locationPart = locationLine.substringAfterLast(" @ ")

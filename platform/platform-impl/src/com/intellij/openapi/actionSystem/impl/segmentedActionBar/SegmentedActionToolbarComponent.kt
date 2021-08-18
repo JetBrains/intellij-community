@@ -1,7 +1,10 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.actionSystem.impl.segmentedActionBar
 
-import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.actionSystem.ActionGroup
+import com.intellij.openapi.actionSystem.AnAction
+import com.intellij.openapi.actionSystem.Presentation
+import com.intellij.openapi.actionSystem.RightAlignedToolbarAction
 import com.intellij.openapi.actionSystem.ex.ActionButtonLook
 import com.intellij.openapi.actionSystem.ex.ComboBoxAction
 import com.intellij.openapi.actionSystem.ex.ComboBoxAction.ComboBoxButton
@@ -44,6 +47,7 @@ open class SegmentedActionToolbarComponent(place: String, group: ActionGroup, va
   }
 
   private var isActive = false
+  private var visibleActions: MutableList<out AnAction>? = null
 
   private val segmentedButtonLook = object : ActionButtonLook() {
     override fun paintBorder(g: Graphics, c: JComponent, state: Int) {
@@ -133,7 +137,7 @@ open class SegmentedActionToolbarComponent(place: String, group: ActionGroup, va
     }
   }
 
-  private fun isSuitableAction(it: AnAction): Boolean {
+  protected open fun isSuitableAction(action: AnAction): Boolean {
     return true
   }
 
@@ -169,7 +173,22 @@ open class SegmentedActionToolbarComponent(place: String, group: ActionGroup, va
     component.putClientProperty(CONTROL_BAR_PROPERTY, property)
   }
 
+  protected fun forceUpdate() {
+    visibleActions?.let {
+
+      update(true, it)
+
+      revalidate()
+      repaint()
+    }
+  }
+
   override fun actionsUpdated(forced: Boolean, newVisibleActions: MutableList<out AnAction>) {
+    visibleActions = newVisibleActions
+    update(forced, newVisibleActions)
+  }
+
+  private fun update(forced: Boolean, newVisibleActions: MutableList<out AnAction>) {
     val filtered = newVisibleActions.filter { isSuitableAction(it) }
     isActive = filtered.size > 1
     super.actionsUpdated(forced, if (isActive) filtered else newVisibleActions)

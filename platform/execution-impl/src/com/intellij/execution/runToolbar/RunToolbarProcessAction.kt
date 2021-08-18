@@ -32,19 +32,13 @@ open class RunToolbarProcessAction(override val process: RunToolbarProcess, val 
     }
   }
 
+  override fun checkMainSlotVisibility(state: RunToolbarMainSlotState): Boolean {
+    return state == RunToolbarMainSlotState.CONFIGURATION
+  }
+
   override fun update(e: AnActionEvent) {
     e.presentation.text = executor.actionName
-    e.presentation.isVisible = e.project?.let {
-      e.presentation.isVisible && if (e.isItRunToolbarMainSlot()) {
-        val slotManager = RunToolbarSlotManager.getInstance(it)
-        (e.isOpened() && !e.isActiveProcess() || !slotManager.getState().isActive())
-      }
-      else !e.isActiveProcess()
-    } ?: false
-
-    e.presentation.isEnabled = e.project?.let {
-      canRun(e)
-    } ?: false
+    e.presentation.isVisible = !e.isActiveProcess()
   }
 
   override fun getSelectedConfiguration(e: AnActionEvent): RunnerAndConfigurationSettings? {

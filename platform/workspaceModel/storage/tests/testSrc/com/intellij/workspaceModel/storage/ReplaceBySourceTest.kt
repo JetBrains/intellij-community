@@ -4,6 +4,7 @@ package com.intellij.workspaceModel.storage
 import com.intellij.testFramework.UsefulTestCase.assertEmpty
 import com.intellij.testFramework.UsefulTestCase.assertOneElement
 import com.intellij.workspaceModel.storage.entities.*
+import com.intellij.workspaceModel.storage.impl.ReplaceBySourceAsGraph
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityStorageBuilderImpl
 import com.intellij.workspaceModel.storage.impl.assertConsistency
 import com.intellij.workspaceModel.storage.impl.exceptions.ReplaceBySourceException
@@ -558,6 +559,49 @@ class ReplaceBySourceTest {
 
     val primaryChild = builder.entities(NamedChildEntity::class.java).find { it.childProperty == "PrimaryChild" }!!
     assertEquals("PrimaryParent", primaryChild.parent.name)
+  }
+
+  @Test
+  @Ignore("Well, this case is explicetely not supported yet")
+  fun `replace oneToOne connection with partial move`() {
+    val parentEntity = builder.addOoParentEntity()
+    builder.addOoChildEntity(parentEntity)
+
+    val replacement = createEmptyBuilder()
+    val anotherParent = replacement.addOoParentEntity(source = AnotherSource)
+    replacement.addOoChildEntity(anotherParent)
+
+    builder.replaceBySource({ it is MySource }, replacement)
+
+    builder.assertConsistency()
+  }
+
+  @Test
+  fun `replace oneToOne connection with partial move and pid`() {
+    val parentEntity = builder.addOoParentWithPidEntity(source = AnotherSource)
+    builder.addOoChildForParentWithPidEntity(parentEntity, source = MySource)
+
+    val replacement = createEmptyBuilder()
+    val anotherParent = replacement.addOoParentWithPidEntity(source = MySource)
+    replacement.addOoChildForParentWithPidEntity(anotherParent, source = MySource)
+
+    builder.replaceBySource({ it is MySource }, replacement)
+
+    builder.assertConsistency()
+  }
+
+  @Test
+  fun `replace oneToOne connection with partial move and pid directly via replacer`() {
+    val parentEntity = builder.addOoParentWithPidEntity(source = AnotherSource)
+    builder.addOoChildForParentWithPidEntity(parentEntity, source = MySource)
+
+    val replacement = createEmptyBuilder()
+    val anotherParent = replacement.addOoParentWithPidEntity(source = MySource)
+    replacement.addOoChildForParentWithPidEntity(anotherParent, source = MySource)
+
+    ReplaceBySourceAsGraph.replaceBySourceAsGraph(builder, replacement, {it is MySource}, true)
+
+    builder.assertConsistency()
   }
 
   private fun resetChanges() {

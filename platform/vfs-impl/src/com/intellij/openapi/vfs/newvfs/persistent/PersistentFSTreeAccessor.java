@@ -77,7 +77,7 @@ final class PersistentFSTreeAccessor {
         ChildInfo child = new ChildInfoImpl(id, nameId, null, null, null);
         result.add(child);
       }
-      return new ListResult(result);
+      return new ListResult(result, parentId);
     }
   }
 

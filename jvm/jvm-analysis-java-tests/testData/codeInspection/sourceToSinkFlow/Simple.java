@@ -1,8 +1,5 @@
 package org.checkerframework.checker.tainting.qual;
 
-import java.lang.annotation.ElementType;
-import java.lang.annotation.Target;
-
 public class Simple {
   
   void simple() {
@@ -60,7 +57,7 @@ public class Simple {
   }
   
   @Untainted String unsafeReturn() {
-    return <warning descr="Unsafe string is passed to safe method">source()</warning>;
+    return <warning descr="Unsafe string is returned from safe method">source()</warning>;
   }
   
   void sourceToSafeString() {
@@ -80,6 +77,17 @@ public class Simple {
     sink(b ? <warning descr="Unsafe string is passed to safe method">s</warning> : null);
   }
   
+  void fieldFromGetter() {
+    String s = getField();
+    sink(<warning descr="Unknown string is passed to safe method">s</warning>);
+  }
+
+  private final String field = foo();
+
+  public String getField() {
+    return field;
+  }
+
   String callSource() {
     return source();
   }

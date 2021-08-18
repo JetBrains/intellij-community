@@ -21,7 +21,7 @@ import java.awt.event.MouseEvent
 import java.beans.PropertyChangeEvent
 import javax.swing.*
 
-class RunToolbarMainSlotActive : SegmentedCustomAction() {
+class RunToolbarMainSlotActive : SegmentedCustomAction(), RTBarAction {
   companion object {
      val ARROW_DATA = Key<Pair<Icon, @NlsActions.ActionText String>?>("ARROW_DATA")
   }
@@ -30,12 +30,12 @@ class RunToolbarMainSlotActive : SegmentedCustomAction() {
 
   }
 
+  override fun checkMainSlotVisibility(state: RunToolbarMainSlotState): Boolean {
+    return state == RunToolbarMainSlotState.PROCESS
+  }
+
   override fun update(e: AnActionEvent) {
     updatePresentation(e)
-    e.presentation.isEnabledAndVisible = e.presentation.isEnabledAndVisible && e.project?.let { project ->
-      val manager = RunToolbarSlotManager.getInstance(project)
-      manager.getState().isSingleMain() || e.isOpened()
-    } ?: false
 
     val a = JPanel()
     MigLayout("ins 0, fill, gap 0", "[200]")
@@ -100,7 +100,9 @@ private class RunToolbarMainSlotActive(presentation: Presentation) : SegmentedCu
     }
 
   private fun doClick() {
-    listeners.forEach { it.actionPerformedHandler() }
+    val list = mutableListOf<PopupControllerComponentListener>()
+    list.addAll(listeners)
+    list.forEach { it.actionPerformedHandler() }
   }
 
   private fun doShiftClick() {

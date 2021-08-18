@@ -39,6 +39,7 @@ import com.intellij.find.usages.impl.AllSearchOptions;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.actions.searcheverywhere.ClassSearchEverywhereContributor;
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereContributor;
+import com.intellij.ide.actions.searcheverywhere.SymbolSearchEverywhereContributor;
 import com.intellij.ide.structureView.StructureViewBuilder;
 import com.intellij.ide.structureView.newStructureView.StructureViewComponent;
 import com.intellij.ide.util.scopeChooser.ScopeDescriptor;
@@ -1974,7 +1975,17 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   @NotNull
   @Override
   public List<Object> getGotoClassResults(@NotNull String pattern, boolean searchEverywhere, @Nullable PsiElement contextForSorting) {
-    SearchEverywhereContributor<Object> contributor = createMockContributor(searchEverywhere);
+    SearchEverywhereContributor<Object> contributor = createMockClassSearchEverywhereContributor(searchEverywhere);
+    final ArrayList<Object> results = new ArrayList<>();
+    contributor.fetchElements(pattern, new MockProgressIndicator(), new CommonProcessors.CollectProcessor<>(results));
+    return results;
+  }
+
+  @Override
+  public @NotNull List<Object> getGotoSymbolResults(@NotNull String pattern,
+                                                    boolean searchEverywhere,
+                                                    @Nullable PsiElement contextForSorting) {
+    SearchEverywhereContributor<Object> contributor = createMockSymbolSearchEverywhereContributor(searchEverywhere);
     final ArrayList<Object> results = new ArrayList<>();
     contributor.fetchElements(pattern, new MockProgressIndicator(), new CommonProcessors.CollectProcessor<>(results));
     return results;
@@ -1986,10 +1997,20 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     return myEditorTestFixture.getBreadcrumbsAtCaret();
   }
 
-  private SearchEverywhereContributor<Object> createMockContributor(boolean everywhere) {
+  private SearchEverywhereContributor<Object> createMockClassSearchEverywhereContributor(boolean everywhere) {
     DataContext dataContext = SimpleDataContext.getProjectContext(getProject());
     AnActionEvent event = AnActionEvent.createFromDataContext(ActionPlaces.UNKNOWN, null, dataContext);
     ClassSearchEverywhereContributor contributor = new ClassSearchEverywhereContributor(event) {{
+      myScopeDescriptor = new ScopeDescriptor(FindSymbolParameters.searchScopeFor(myProject, everywhere));
+    }};
+    Disposer.register(getProjectDisposable(), contributor);
+    return contributor;
+  }
+
+  private SearchEverywhereContributor<Object> createMockSymbolSearchEverywhereContributor(boolean everywhere) {
+    DataContext dataContext = SimpleDataContext.getProjectContext(getProject());
+    AnActionEvent event = AnActionEvent.createFromDataContext(ActionPlaces.UNKNOWN, null, dataContext);
+    SymbolSearchEverywhereContributor contributor = new SymbolSearchEverywhereContributor(event) {{
       myScopeDescriptor = new ScopeDescriptor(FindSymbolParameters.searchScopeFor(myProject, everywhere));
     }};
     Disposer.register(getProjectDisposable(), contributor);

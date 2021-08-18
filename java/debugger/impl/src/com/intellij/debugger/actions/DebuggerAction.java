@@ -118,22 +118,6 @@ public abstract class DebuggerAction extends AnAction {
     return disposable;
   }
 
-  public static boolean isFirstStart(final AnActionEvent event) {
-    //noinspection HardCodedStringLiteral
-    String key = "initalized";
-    if(event.getPresentation().getClientProperty(key) != null) return false;
-
-    event.getPresentation().putClientProperty(key, key);
-    return true;
-  }
-
-  public static void enableAction(final AnActionEvent event, final boolean enable) {
-    SwingUtilities.invokeLater(() -> {
-      event.getPresentation().setEnabled(enable);
-      event.getPresentation().setVisible(true);
-    });
-  }
-
   public static void refreshViews(final AnActionEvent e) {
     refreshViews(getSession(e));
   }

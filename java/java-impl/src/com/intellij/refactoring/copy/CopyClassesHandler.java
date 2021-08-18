@@ -330,31 +330,23 @@ public class CopyClassesHandler extends CopyHandlerDelegateBase {
     return doCopyClasses(fileToClasses, null, copyClassName, targetDirectory, project);
   }
 
-  private static PsiDirectory getOrCreateRelativeDirectory(@NotNull PsiDirectory directory, @Nullable String relativePath) {
-    if (StringUtil.isNotEmpty(relativePath)) {
-      return WriteAction.compute(() -> buildRelativeDir(directory, relativePath).findOrCreateTargetDirectory());
-    } else {
-      return directory;
-    }
-  }
-
   private static List<PsiFile> checkExistingFiles(@NotNull Collection<PsiFile> files, @NotNull PsiDirectory directory,
                                                   @Nullable Map<PsiFile, String> relativePaths, @Nullable String className){
     SkipOverwriteChoice choice = SkipOverwriteChoice.OVERWRITE;
     List<PsiFile> filesToProcess = new ArrayList<>();
     for (PsiFile file : files) {
       final String relativePath = relativePaths != null ? relativePaths.get(file) : null;
-      final PsiDirectory targetDirectory = relativePath != null ? buildRelativeDir(directory, relativePath).getTargetDirectory() : directory;
+      final PsiDirectory targetDirectory = buildRelativeDir(directory, relativePath).getTargetDirectory();
       final String fileName = getNewFileName(file, className);
-      final boolean isExistingFile = targetDirectory != null && targetDirectory.findFile(fileName) != null;
-      if (isExistingFile) {
+      final PsiFile existingFile = targetDirectory != null ? targetDirectory.findFile(fileName) : null;
+      if (existingFile != null) {
         if (choice != SkipOverwriteChoice.SKIP_ALL && choice != SkipOverwriteChoice.OVERWRITE_ALL) {
           String message = ExecutionBundle.message("copy.classes.command.name");
           choice = SkipOverwriteChoice.askUser(targetDirectory, fileName, message, files.size() > 1);
         }
       }
-      if (!isExistingFile || choice == SkipOverwriteChoice.OVERWRITE || choice == SkipOverwriteChoice.OVERWRITE_ALL) {
-        filesToProcess.add(file);
+      if (existingFile == null || choice == SkipOverwriteChoice.OVERWRITE || choice == SkipOverwriteChoice.OVERWRITE_ALL) {
+        if (existingFile != file) filesToProcess.add(file);
       }
     }
     return filesToProcess;
@@ -405,7 +397,9 @@ public class CopyClassesHandler extends CopyHandlerDelegateBase {
         }
         final PsiClass[] sources = fileToClasses.get(psiFile);
         final String relativePath = fileToRelativePath != null ? fileToRelativePath.get(psiFile) : null;
-        final PsiDirectoryImpl directory = (PsiDirectoryImpl)getOrCreateRelativeDirectory(targetDirectory, relativePath);
+        final PsiDirectoryImpl directory = WriteAction.compute(() ->
+          (PsiDirectoryImpl) buildRelativeDir(targetDirectory, relativePath).findOrCreateTargetDirectory()
+        );
         Ref<PsiFile> createdFileReference = new Ref<>();
         directory.executeWithUpdatingAddedFilesDisabled(() -> createdFileReference.set(copy(directory, psiFile, copyClassName)));
         final PsiFile createdFile = createdFileReference.get();
@@ -511,7 +505,8 @@ public class CopyClassesHandler extends CopyHandlerDelegateBase {
 
   @NotNull
   private static MoveDirectoryWithClassesProcessor.TargetDirectoryWrapper buildRelativeDir(final @NotNull PsiDirectory directory,
-                                                                                           final @NotNull String relativePath) {
+                                                                                           final @Nullable String relativePath) {
+    if (StringUtil.isEmpty(relativePath)) return new MoveDirectoryWithClassesProcessor.TargetDirectoryWrapper(directory);
     MoveDirectoryWithClassesProcessor.TargetDirectoryWrapper current = null;
     for (String pathElement : relativePath.split("/")) {
       if (current == null) {

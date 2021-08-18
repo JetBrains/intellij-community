@@ -32,6 +32,10 @@ import java.awt.event.KeyEvent
 import java.awt.event.MouseEvent
 import javax.swing.*
 
+internal enum class BottomGap {
+  BUTTON_GROUP_HEADER
+}
+
 @ApiStatus.Experimental
 internal class RowImpl(private val dialogPanelConfig: DialogPanelConfig,
                        panelContext: PanelContext,
@@ -44,6 +48,9 @@ internal class RowImpl(private val dialogPanelConfig: DialogPanelConfig,
     private set
 
   var topGap: TopGap? = null
+    private set
+
+  var bottomGap: BottomGap? = null
     private set
 
   val cells: List<CellBaseImpl<*>>
@@ -107,6 +114,11 @@ internal class RowImpl(private val dialogPanelConfig: DialogPanelConfig,
 
   override fun gap(topGap: TopGap): RowImpl {
     this.topGap = topGap
+    return this
+  }
+
+  fun gap(bottomGap: BottomGap): RowImpl {
+    this.bottomGap = bottomGap
     return this
   }
 
@@ -195,7 +207,7 @@ internal class RowImpl(private val dialogPanelConfig: DialogPanelConfig,
 
   override fun intTextField(range: IntRange?, keyboardStep: Int?): CellImpl<JBTextField> {
     val result = textField()
-      .onValidationOnInput {
+      .validationOnInput {
         val value = it.text.toIntOrNull()
         when {
           value == null -> error(UIBundle.message("please.enter.a.number"))

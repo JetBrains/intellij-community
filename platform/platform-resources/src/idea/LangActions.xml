@@ -629,6 +629,7 @@
 
     <action id="SmallSpacer" class="com.intellij.ide.navigationToolbar.experimental.SmallSpacerAction"/>
     <action id="BigSpacer" class="com.intellij.ide.navigationToolbar.experimental.BigSpacerAction"/>
+    <action id="TinySpacer" class="com.intellij.ide.navigationToolbar.experimental.TinySpacerAction"/>
 
     <group id="NewToolbarActions">
       <group id="LeftToolbarSideGroup" class="com.intellij.ide.navigationToolbar.experimental.LeftToolbarGroup">

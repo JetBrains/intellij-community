@@ -31,15 +31,18 @@ class RunToolbarMainSlotInfoAction : SegmentedCustomAction(), RTRunConfiguration
 
   }
 
+  override fun checkMainSlotVisibility(state: RunToolbarMainSlotState): Boolean {
+    return state == RunToolbarMainSlotState.INFO
+  }
+
   override fun update(e: AnActionEvent) {
     e.presentation.isVisible = e.project?.let { project ->
       val manager = RunToolbarSlotManager.getInstance(project)
-      val state = manager.getState()
-      if(!e.isItRunToolbarMainSlot() || !state.isActive() || e.isOpened() || state.isSingleMain())  return@let false
+
 
       val activeProcesses = manager.activeProcesses
 
-      manager.getMainOrFirstActiveProcess()?.let{
+      manager.getMainOrFirstActiveProcess()?.let {
         e.presentation.putClientProperty(PROP_ACTIVE_PROCESS_COLOR, it.pillColor)
       }
 
@@ -99,7 +102,9 @@ class RunToolbarMainSlotInfoAction : SegmentedCustomAction(), RTRunConfiguration
     }
 
     private fun doClick() {
-      listeners.forEach { it.actionPerformedHandler() }
+      val list = mutableListOf<PopupControllerComponentListener>()
+      list.addAll(listeners)
+      list.forEach { it.actionPerformedHandler() }
     }
 
     private fun doShiftClick() {

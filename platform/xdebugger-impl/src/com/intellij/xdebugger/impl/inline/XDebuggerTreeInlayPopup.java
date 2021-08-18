@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.xdebugger.impl.inline;
 
 import com.intellij.ide.DataManager;
@@ -45,6 +45,7 @@ import com.intellij.xdebugger.impl.evaluate.quick.common.DebuggerTreeCreator;
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTree;
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTreeListener;
 import com.intellij.xdebugger.impl.ui.tree.actions.XDebuggerTreeActionBase;
+import com.intellij.xdebugger.impl.ui.tree.nodes.RestorableStateNode;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XDebuggerTreeNode;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueContainerNode;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl;
@@ -322,6 +323,11 @@ public class XDebuggerTreeInlayPopup<D> {
           canShrink.set(false);
         }
       }
+
+      @Override
+      public void nodeLoaded(@NotNull RestorableStateNode node, @NotNull String name) {
+        updateDebugPopupBounds(tree, myToolbar, myPopup, false);
+      }
     });
     updateDebugPopupBounds(tree, myToolbar, myPopup, canShrink.get());
   }
@@ -348,9 +354,11 @@ public class XDebuggerTreeInlayPopup<D> {
       targetBounds.height = Math.max(targetBounds.height, popupWindow.getHeight());
     }
     ScreenUtil.cropRectangleToFitTheScreen(targetBounds);
-    popupWindow.setBounds(targetBounds);
-    popupWindow.validate();
-    popupWindow.repaint();
+    if (targetBounds.width != popupWindow.getWidth() || targetBounds.height != popupWindow.getHeight()) {
+      popupWindow.setBounds(targetBounds);
+      popupWindow.validate();
+      popupWindow.repaint();
+    }
   }
 
   private static class ActionWrapper extends AnAction implements CustomComponentAction {

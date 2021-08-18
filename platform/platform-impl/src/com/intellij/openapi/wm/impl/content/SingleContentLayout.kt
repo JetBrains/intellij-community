@@ -198,14 +198,15 @@ internal class SingleContentLayout(
       var mainToolbarWidth = toolbars[ToolbarType.MAIN]?.component?.preferredSize?.width ?: 0
       val contentToolbarWidth = toolbars[ToolbarType.CLOSE_GROUP]?.component?.preferredSize?.width ?: 0
 
+      val minTabWidth = tabAdapter?.minimumSize?.width ?: 0
       val fixedWidth = labelWidth + mainToolbarWidth + contentToolbarWidth
       val freeWidth = component.bounds.width - fixedWidth
 
-      if (freeWidth < 0) {
-        mainToolbarWidth += freeWidth
+      if (freeWidth < minTabWidth) {
+        mainToolbarWidth += freeWidth - minTabWidth
       }
 
-      tabsWidth = maxOf(0, minOf(freeWidth, tabsWidth))
+      tabsWidth = maxOf(minTabWidth, minOf(freeWidth, tabsWidth))
       val wrapperWidth = maxOf(0, freeWidth - tabsWidth)
 
       var x = labelWidth
@@ -268,12 +269,10 @@ internal class SingleContentLayout(
 
     private val labels = mutableListOf<MyContentTabLabel>()
     private val popupToolbar: JComponent
-
-    val popupHandler = object : PopupHandler() {
+    private val popupHandler = object : PopupHandler() {
       override fun invokePopup(comp: Component, x: Int, y: Int) = showPopup(comp, x, y)
     }
-
-    val closeHandler = object : MouseAdapter() {
+    private val closeHandler = object : MouseAdapter() {
       override fun mouseReleased(e: MouseEvent) {
         if (UIUtil.isCloseClick(e, MouseEvent.MOUSE_RELEASED)) {
           val tabLabel = e.component as? MyContentTabLabel
@@ -284,7 +283,7 @@ internal class SingleContentLayout(
       }
     }
 
-    val containerListener = object : ContainerListener {
+    private val containerListener = object : ContainerListener {
       override fun componentAdded(e: ContainerEvent) = update(e)
       override fun componentRemoved(e: ContainerEvent) = update(e)
       private fun update(e: ContainerEvent) {
@@ -365,6 +364,14 @@ internal class SingleContentLayout(
         retrieveInfo(it).changeSupport.removePropertyChangeListener(this)
       }
       jbTabs.component.removeContainerListener(containerListener)
+    }
+
+    override fun getMinimumSize(): Dimension {
+      if (isMinimumSizeSet) {
+        return super.getMinimumSize()
+      }
+      val minWidth = if (labels.isEmpty()) 0 else popupToolbar.preferredSize.width
+      return Dimension(minWidth, 0)
     }
 
     fun copyValues(from: TabInfo, to: ContentLabel) {
@@ -727,20 +734,20 @@ internal class SingleContentLayout(
       return parent.components.asSequence()
         .filterNot { it === control }
         .map { it.preferredSize }
-        .reduceOrNull { acc, size ->
-          acc.width += size.width
-          acc.height = maxOf(acc.height, size.height, parent.height)
-          acc
-        } ?: Dimension()
+        .fold(Dimension()) { acc, size ->
+          acc.apply {
+            width += size.width
+            height = maxOf(acc.height, size.height, parent.height)
+          }
+        }
     }
 
     override fun layoutContainer(parent: Container) {
       var eachX = 0
       val canFitAllComponents = parent.preferredSize.width <= parent.bounds.width
+      val children = parent.components.asSequence().filterNot { it === control }
       if (canFitAllComponents) {
-        parent.components.asSequence()
-          .filterNot { it === control }
-          .forEach {
+          children.forEach {
             val dim = it.preferredSize
             it.bounds = Rectangle(eachX, 0, dim.width, parent.height)
             eachX += dim.width
@@ -749,7 +756,7 @@ internal class SingleContentLayout(
       }
       else {
         // copy of [TabContentLayout#layout]
-        val toLayout = parent.components.toMutableList()
+        val toLayout = children.toMutableList()
         val toRemove = mutableListOf<Component>()
         var requiredWidth = toLayout.sumOf { it.preferredSize.width }
         val selected = selected()

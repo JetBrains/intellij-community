@@ -10,6 +10,7 @@ import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.HtmlBuilder;
+import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -24,8 +25,7 @@ import java.awt.*;
 
 public class PropertiesDocumentationProvider extends AbstractDocumentationProvider {
   @Override
-  @Nullable
-  public @Nls String getQuickNavigateInfo(PsiElement element, PsiElement originalElement) {
+  public @Nullable @Nls String getQuickNavigateInfo(PsiElement element, PsiElement originalElement) {
     if (element instanceof IProperty) {
       return "\"" + renderPropertyValue((IProperty)element) + "\"" + getLocationString(element);
     }
@@ -37,15 +37,13 @@ public class PropertiesDocumentationProvider extends AbstractDocumentationProvid
     return file != null ? " [" + file.getName() + "]" : "";
   }
 
-  @NotNull
-  private static @NlsSafe String renderPropertyValue(IProperty prop) {
-    @NlsSafe final String raw = prop.getValue();
-    if (raw != null) return StringUtil.escapeXmlEntities(raw);
+  private static @NotNull HtmlChunk renderPropertyValue(IProperty prop) {
+    final String raw = prop.getValue();
+    if (raw != null) return HtmlChunk.text(raw);
 
     return new HtmlBuilder()
       .append(PropertiesBundle.message("i18n.message.empty"))
-      .wrapWith("i")
-      .toString();
+      .wrapWith("i");
   }
 
   @Override

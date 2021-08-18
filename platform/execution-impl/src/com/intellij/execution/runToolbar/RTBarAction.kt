@@ -10,6 +10,8 @@ interface RTBarAction {
   }
 
   fun getRightSideType(): Type = Type.STABLE
+
+  fun checkMainSlotVisibility(state: RunToolbarMainSlotState): Boolean
 }
 
 interface RTRunConfiguration : RTBarAction {

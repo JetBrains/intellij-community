@@ -34,11 +34,21 @@ interface SpacingConfiguration {
   /**
    * Vertical gap after comment
    */
-  val verticalCommentBottomGap: Int
+  val commentBottomGap: Int
 
   /**
    * Vertical gap before group
    */
-  val verticalGroupTopGap: Int
+  val groupTopGap: Int
+
+  /**
+   * Vertical small gap between unrelated settings
+   */
+  val verticalSmallGap: Int
+
+  /**
+   * Vertical gap after button group header
+   */
+  val buttonGroupHeaderBottomGap: Int
 
 }

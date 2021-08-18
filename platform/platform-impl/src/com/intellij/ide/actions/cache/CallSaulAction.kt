@@ -2,7 +2,6 @@
 package com.intellij.ide.actions.cache
 
 import com.intellij.openapi.actionSystem.*
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.psi.util.CachedValueProvider
@@ -27,7 +26,7 @@ internal class CacheRecoveryActionGroup: ComputableActionGroup() {
       override fun actionPerformed(e: AnActionEvent) {
         val project = e.project
         CacheRecoveryUsageCollector.recordRecoveryPerformedEvent(recoveryAction, false, project)
-        recoveryAction.perform(project)
+        recoveryAction.performUnderProgress(project, false)
       }
 
       override fun update(e: AnActionEvent) {

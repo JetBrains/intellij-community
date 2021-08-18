@@ -33,6 +33,7 @@ import org.jetbrains.concurrency.Promises;
 
 import java.util.*;
 
+// todo disable in guest (no file types)
 public class FileTypeUsagesCollector extends ProjectUsagesCollector {
   private static final String DEFAULT_ID = "third.party";
 

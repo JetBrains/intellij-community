@@ -488,7 +488,7 @@ public final class DebuggerUtilsAsync {
     }
   }
 
-  private static <T> void completeFuture(T res, Throwable ex, CompletableFuture<T> future) {
+  public static <T> void completeFuture(T res, Throwable ex, CompletableFuture<T> future) {
     if (ex != null) {
       future.completeExceptionally(ex);
     }

@@ -360,16 +360,19 @@ public abstract class KtUsefulTestCase extends TestCase {
                 super.runTest();
                 TestLoggerFactory.onTestFinished(true, testDescription);
             } catch (InvocationTargetException e) {
+                TestLoggerFactory.logTestFailure(e);
                 TestLoggerFactory.onTestFinished(false, testDescription);
                 e.fillInStackTrace();
                 throwables[0] = e.getTargetException();
             }
             catch (IllegalAccessException e) {
+                TestLoggerFactory.logTestFailure(e);
                 TestLoggerFactory.onTestFinished(false, testDescription);
                 e.fillInStackTrace();
                 throwables[0] = e;
             }
             catch (Throwable e) {
+                TestLoggerFactory.logTestFailure(e);
                 TestLoggerFactory.onTestFinished(false, testDescription);
                 throwables[0] = e;
             }

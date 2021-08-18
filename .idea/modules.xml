@@ -554,7 +554,6 @@
       <module fileurl="file://$PROJECT_DIR$/plugins/coverage/coverage_rt/intellij.java.coverage.rt.iml" filepath="$PROJECT_DIR$/plugins/coverage/coverage_rt/intellij.java.coverage.rt.iml" />
       <module fileurl="file://$PROJECT_DIR$/java/debugger/openapi/intellij.java.debugger.iml" filepath="$PROJECT_DIR$/java/debugger/openapi/intellij.java.debugger.iml" />
       <module fileurl="file://$PROJECT_DIR$/java/debugger/debugger-agent/intellij.java.debugger.agent.iml" filepath="$PROJECT_DIR$/java/debugger/debugger-agent/intellij.java.debugger.agent.iml" />
-      <module fileurl="file://$PROJECT_DIR$/java/debugger/debugger-agent-storage/intellij.java.debugger.agent.storage.iml" filepath="$PROJECT_DIR$/java/debugger/debugger-agent-storage/intellij.java.debugger.agent.storage.iml" />
       <module fileurl="file://$PROJECT_DIR$/java/debugger/impl/intellij.java.debugger.impl.iml" filepath="$PROJECT_DIR$/java/debugger/impl/intellij.java.debugger.impl.iml" />
       <module fileurl="file://$PROJECT_DIR$/java/debugger/memory-agent/intellij.java.debugger.memory.agent.iml" filepath="$PROJECT_DIR$/java/debugger/memory-agent/intellij.java.debugger.memory.agent.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/stream-debugger/intellij.java.debugger.streams.iml" filepath="$PROJECT_DIR$/plugins/stream-debugger/intellij.java.debugger.streams.iml" />

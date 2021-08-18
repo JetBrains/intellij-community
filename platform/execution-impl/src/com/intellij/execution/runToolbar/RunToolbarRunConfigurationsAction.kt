@@ -28,14 +28,14 @@ class RunToolbarRunConfigurationsAction : RunConfigurationsComboBoxAction(), RTR
     }
   }
 
+  override fun checkMainSlotVisibility(state: RunToolbarMainSlotState): Boolean {
+    return state == RunToolbarMainSlotState.CONFIGURATION
+  }
+
   override fun update(e: AnActionEvent) {
     super.update(e)
     e.presentation.isVisible = e.project?.let {
-      !e.isActiveProcess() && e.presentation.isVisible && if (e.isItRunToolbarMainSlot()) {
-        val slotManager = RunToolbarSlotManager.getInstance(it)
-        (e.isOpened() && !e.isActiveProcess() || !slotManager.getState().isActive())
-      } else true
-
+      !e.isActiveProcess() && e.presentation.isVisible
     } ?: false
   }
 
@@ -79,6 +79,7 @@ class RunToolbarRunConfigurationsAction : RunConfigurationsComboBoxAction(), RTR
     override fun actionPerformed(e: AnActionEvent) {
       e.project?.let {
         e.setConfiguration(configuration)
+        RunToolbarSlotManager.getInstance(it).saveData()
         updatePresentation(ExecutionTargetManager.getActiveTarget(project),
                            configuration,
                            project,

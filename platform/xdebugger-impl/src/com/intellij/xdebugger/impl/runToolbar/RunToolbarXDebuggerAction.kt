@@ -2,9 +2,7 @@
 package com.intellij.xdebugger.impl.runToolbar
 
 import com.intellij.execution.runToolbar.RTBarAction
-import com.intellij.execution.runToolbar.RunToolbarSlotManager
-import com.intellij.execution.runToolbar.isItRunToolbarMainSlot
-import com.intellij.execution.runToolbar.isOpened
+import com.intellij.execution.runToolbar.RunToolbarMainSlotState
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.ShortcutSet
@@ -15,13 +13,17 @@ import com.intellij.xdebugger.impl.actions.handlers.RunToolbarPauseActionHandler
 import com.intellij.xdebugger.impl.actions.handlers.RunToolbarResumeActionHandler
 
 abstract class RunToolbarXDebuggerAction : XDebuggerActionBase(true), RTBarAction {
+  override fun checkMainSlotVisibility(state: RunToolbarMainSlotState): Boolean {
+    return state == RunToolbarMainSlotState.PROCESS
+  }
+
   override fun getRightSideType(): RTBarAction.Type = RTBarAction.Type.RIGHT_FLEXIBLE
 
-  override fun update(event: AnActionEvent) {
-    super.update(event)
-    event.presentation.isEnabledAndVisible = event.presentation.isEnabled && event.presentation.isVisible && if(event.isItRunToolbarMainSlot() && !event.isOpened()) event.project?.let {
-      RunToolbarSlotManager.getInstance(it).getState().isSingleMain()
-    } ?: false else true
+  override fun update(e: AnActionEvent) {
+    super.update(e)
+    e.presentation.isEnabledAndVisible =
+      e.presentation.isEnabled
+      && e.presentation.isVisible
   }
 
   override fun setShortcutSet(shortcutSet: ShortcutSet) {}

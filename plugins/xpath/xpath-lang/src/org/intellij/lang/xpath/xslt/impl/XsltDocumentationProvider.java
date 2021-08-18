@@ -17,6 +17,7 @@ package org.intellij.lang.xpath.xslt.impl;
 
 import com.intellij.lang.documentation.DocumentationProvider;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.light.LightElement;
@@ -129,7 +130,8 @@ public class XsltDocumentationProvider implements DocumentationProvider {
 
     private static final Pattern check = Pattern.compile("x:found=\"(true|false)\"");
 
-    @Nullable
+  @NlsSafe
+  @Nullable
     private String getDocumentation(String name, String type) {
         try {
             final Transformer transformer = getTemplate().newTransformer();

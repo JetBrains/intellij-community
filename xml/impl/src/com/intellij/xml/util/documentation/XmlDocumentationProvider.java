@@ -7,6 +7,7 @@ import com.intellij.lang.documentation.DocumentationUtil;
 import com.intellij.lang.xhtml.XHTMLLanguage;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
@@ -190,42 +191,7 @@ public class XmlDocumentationProvider implements DocumentationProvider {
     return enumerationTag.get();
   }
 
-  static String generateHtmlAdditionalDocTemplate(@NotNull PsiElement element) {
-    StringBuilder buf = new StringBuilder();
-    final PsiFile containingFile = element.getContainingFile();
-    if (containingFile != null) {
-      final XmlTag tag = PsiTreeUtil.getParentOfType(element, XmlTag.class, false);
-      boolean append;
-      if (tag instanceof HtmlTag) {
-        append = true;
-      }
-      else {
-        final FileViewProvider provider = containingFile.getViewProvider();
-        Language language;
-        if (provider instanceof TemplateLanguageFileViewProvider) {
-          language = ((TemplateLanguageFileViewProvider)provider).getTemplateDataLanguage();
-        }
-        else {
-          language = provider.getBaseLanguage();
-        }
-
-        append = language == XHTMLLanguage.INSTANCE;
-      }
-
-      if (tag != null) {
-        EntityDescriptor descriptor = HtmlDescriptorsTable.getTagDescriptor(tag.getName());
-        if (descriptor != null && append) {
-          buf.append("<br>");
-          buf.append(XmlBundle.message("html.quickdoc.additional.template",
-                                       descriptor.getHelpRef(),
-                                       BASE_SITEPOINT_URL + tag.getName()));
-        }
-      }
-    }
-
-    return buf.toString();
-  }
-
+  @NlsSafe
   public String findDocRightAfterElement(final PsiElement parent, final String referenceName) {
     // Check for comment right after the xml attlist decl
     PsiElement uncleElement = parent.getNextSibling();
@@ -236,11 +202,29 @@ public class XmlDocumentationProvider implements DocumentationProvider {
     return null;
   }
 
+  @NlsSafe
   private String formatDocFromComment(final PsiElement curElement, final String name) {
     String text = curElement.getText();
     text = text.substring("<!--".length(),text.length()-"-->".length()).trim();
     text = escapeDocumentationTextText(text);
     return generateDoc(text, name,null, null);
+  }
+
+  @NlsSafe
+  protected String generateDoc(String str, String name, String typeName, String version) {
+    if (str == null) return null;
+    StringBuilder buf = new StringBuilder(str.length() + 20);
+
+    DocumentationUtil.formatEntityName(typeName == null ? XmlBundle.message("xml.javadoc.tag.name.message"):typeName,name,buf);
+
+    final String indent = "  ";
+    final StringBuilder builder = buf.append(XmlBundle.message("xml.javadoc.description.message")).append(indent).
+        append(HtmlDocumentationProvider.NBSP).append(str);
+    if (version != null) {
+      builder.append(HtmlDocumentationProvider.BR).append(XmlBundle.message("xml.javadoc.version.message")).append(indent)
+          .append(HtmlDocumentationProvider.NBSP).append(version);
+    }
+    return builder.toString();
   }
 
   private static XmlTag getComplexOrSimpleTypeDefinition(PsiElement element, PsiElement originalElement) {
@@ -286,20 +270,41 @@ public class XmlDocumentationProvider implements DocumentationProvider {
     return null;
   }
 
-  protected String generateDoc(String str, String name, String typeName, String version) {
-    if (str == null) return null;
-    StringBuilder buf = new StringBuilder(str.length() + 20);
+  @NlsSafe
+  static String generateHtmlAdditionalDocTemplate(@NotNull PsiElement element) {
+    StringBuilder buf = new StringBuilder();
+    final PsiFile containingFile = element.getContainingFile();
+    if (containingFile != null) {
+      final XmlTag tag = PsiTreeUtil.getParentOfType(element, XmlTag.class, false);
+      boolean append;
+      if (tag instanceof HtmlTag) {
+        append = true;
+      }
+      else {
+        final FileViewProvider provider = containingFile.getViewProvider();
+        Language language;
+        if (provider instanceof TemplateLanguageFileViewProvider) {
+          language = ((TemplateLanguageFileViewProvider)provider).getTemplateDataLanguage();
+        }
+        else {
+          language = provider.getBaseLanguage();
+        }
 
-    DocumentationUtil.formatEntityName(typeName == null ? XmlBundle.message("xml.javadoc.tag.name.message"):typeName,name,buf);
+        append = language == XHTMLLanguage.INSTANCE;
+      }
 
-    final String indent = "  ";
-    final StringBuilder builder = buf.append(XmlBundle.message("xml.javadoc.description.message")).append(indent).
-        append(HtmlDocumentationProvider.NBSP).append(str);
-    if (version != null) {
-      builder.append(HtmlDocumentationProvider.BR).append(XmlBundle.message("xml.javadoc.version.message")).append(indent)
-          .append(HtmlDocumentationProvider.NBSP).append(version);
+      if (tag != null) {
+        EntityDescriptor descriptor = HtmlDescriptorsTable.getTagDescriptor(tag.getName());
+        if (descriptor != null && append) {
+          buf.append("<br>");
+          buf.append(XmlBundle.message("html.quickdoc.additional.template",
+                                       descriptor.getHelpRef(),
+                                       BASE_SITEPOINT_URL + tag.getName()));
+        }
+      }
     }
-    return builder.toString();
+
+    return buf.toString();
   }
 
   @Override

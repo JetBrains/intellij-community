@@ -83,6 +83,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Predicate;
 
 import static com.intellij.ide.projectView.impl.ProjectViewUtilKt.*;
+import static com.intellij.openapi.actionSystem.PlatformCoreDataKeys.SLOW_DATA_PROVIDERS;
 
 public abstract class AbstractProjectViewPane implements DataProvider, Disposable, BusyObject {
   private static final Logger LOG = Logger.getInstance(AbstractProjectViewPane.class);
@@ -382,6 +383,17 @@ public abstract class AbstractProjectViewPane implements DataProvider, Disposabl
 
   @Override
   public Object getData(@NotNull String dataId) {
+    Object[] selectedUserObjects = getSelectedUserObjects();
+
+    if (SLOW_DATA_PROVIDERS.is(dataId)) {
+      return slowProviders(selectedUserObjects);
+    }
+
+    Object treeStructureData = getFromTreeStructure(selectedUserObjects, dataId);
+    if (treeStructureData != null) {
+      return treeStructureData;
+    }
+
     if (PlatformDataKeys.TREE_EXPANDER.is(dataId)) return getTreeExpander();
 
     if (CommonDataKeys.NAVIGATABLE_ARRAY.is(dataId)) {
@@ -446,9 +458,28 @@ public abstract class AbstractProjectViewPane implements DataProvider, Disposabl
     return PsiUtilCore.toPsiElementArray(result);
   }
 
+  @SuppressWarnings("unchecked")
+  private @Nullable Iterable<DataProvider> slowProviders(@Nullable Object @NotNull [] selectedUserObjects) {
+    Iterable<DataProvider> structureProviders = (Iterable<DataProvider>)getFromTreeStructure(
+      selectedUserObjects, SLOW_DATA_PROVIDERS.getName()
+    );
+    DataProvider selectionProvider = selectionProvider(selectedUserObjects);
+    if (structureProviders != null && selectionProvider != null) {
+      return ContainerUtil.nullize(ContainerUtil.flattenIterables(List.of(structureProviders, List.of(selectionProvider))));
+    }
+    else if (structureProviders != null) {
+      return structureProviders;
+    }
+    else if (selectionProvider != null) {
+      return List.of(selectionProvider);
+    }
+    else {
+      return null;
+    }
+  }
+
   @RequiresEdt
-  public final @Nullable DataProvider selectionProvider() {
-    Object[] selectedUserObjects = getSelectedUserObjects();
+  private @Nullable DataProvider selectionProvider(@Nullable Object @NotNull [] selectedUserObjects) {
     if (selectedUserObjects.length == 0) {
       return null;
     }
@@ -463,10 +494,6 @@ public abstract class AbstractProjectViewPane implements DataProvider, Disposabl
     @Nullable Object @Nullable [] singleSelectedPathUserObjects,
     @NotNull String dataId
   ) {
-    Object treeStructureData = getFromTreeStructure(selectedUserObjects, dataId);
-    if (treeStructureData != null) {
-      return treeStructureData;
-    }
     if (CommonDataKeys.PSI_ELEMENT.is(dataId)) {
       final PsiElement[] elements = getPsiElements(selectedUserObjects);
       return elements.length == 1 ? elements[0] : null;

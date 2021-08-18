@@ -10,6 +10,7 @@ import com.intellij.ui.TitledSeparator
 import com.intellij.ui.components.Label
 import com.intellij.ui.dsl.*
 import com.intellij.ui.dsl.Row
+import com.intellij.ui.dsl.SpacingConfiguration
 import com.intellij.ui.dsl.gridLayout.*
 import com.intellij.ui.dsl.gridLayout.builders.RowsGridBuilder
 import com.intellij.ui.layout.*
@@ -17,6 +18,8 @@ import org.jetbrains.annotations.ApiStatus
 import javax.swing.*
 import javax.swing.text.JTextComponent
 import kotlin.math.min
+
+private const val DSL_LABEL_NO_BOTTOM_GAP_PROPERTY = "dsl.label.no.bottom.gap"
 
 @ApiStatus.Experimental
 internal class PanelImpl(private val dialogPanelConfig: DialogPanelConfig) : CellBaseImpl<Panel>(
@@ -80,10 +83,18 @@ internal class PanelImpl(private val dialogPanelConfig: DialogPanelConfig) : Cel
     return RowImpl(dialogPanelConfig, panelContext)
   }
 
-  override fun <T> buttonGroup(binding: PropertyBinding<T>, type: Class<T>, init: Panel.() -> Unit) {
+  override fun <T> buttonGroup(binding: PropertyBinding<T>, type: Class<T>, title: String?, init: Panel.() -> Unit) {
     dialogPanelConfig.context.addButtonGroup(BindButtonGroup(binding, type))
     try {
-      this.init()
+      if (title != null) {
+        row {
+          label(title)
+            .applyToComponent { putClientProperty(DSL_LABEL_NO_BOTTOM_GAP_PROPERTY, true) }
+        }.gap(BottomGap.BUTTON_GROUP_HEADER)
+      }
+      indent {
+        init()
+      }
     }
     finally {
       dialogPanelConfig.context.removeLastButtonGroup()
@@ -130,11 +141,7 @@ internal class PanelImpl(private val dialogPanelConfig: DialogPanelConfig) : Cel
         continue
       }
 
-      row.topGap?.let {
-        if (index > 0) {
-          rowsGridBuilder.setRowGaps(RowGaps(top = getRowTopGap(it)))
-        }
-      }
+      rowsGridBuilder.setRowGaps(getRowGaps(row, index > 0))
 
       when (row.rowLayout) {
         RowLayout.INDEPENDENT -> {
@@ -185,7 +192,7 @@ internal class PanelImpl(private val dialogPanelConfig: DialogPanelConfig) : Cel
       }
 
       row.comment?.let {
-        val gaps = Gaps(left = row.getIndent(), bottom = dialogPanelConfig.spacing.verticalCommentBottomGap)
+        val gaps = Gaps(left = row.getIndent(), bottom = dialogPanelConfig.spacing.commentBottomGap)
         rowsGridBuilder.cell(it, maxColumnsCount, gaps = gaps)
         rowsGridBuilder.row()
       }
@@ -230,10 +237,9 @@ internal class PanelImpl(private val dialogPanelConfig: DialogPanelConfig) : Cel
 
     when (cell) {
       is CellImpl<*> -> {
-        val insets = cell.component.insets
+        val insets = cell.component.origin.insets
         val visualPaddings = Gaps(top = insets.top, left = insets.left, bottom = insets.bottom, right = insets.right)
-        val verticalGap = getDefaultVerticalGap(cell.component)
-        val gaps = Gaps(top = verticalGap, left = leftGap, bottom = verticalGap, right = rightGap)
+        val gaps = getComponentGaps(leftGap, rightGap, cell.component)
         builder.cell(cell.component, width = width, horizontalAlign = cell.horizontalAlign, verticalAlign = cell.verticalAlign,
           resizableColumn = cell.resizableColumn,
           gaps = gaps, visualPaddings = visualPaddings)
@@ -247,6 +253,15 @@ internal class PanelImpl(private val dialogPanelConfig: DialogPanelConfig) : Cel
         cell.build(panel, subGrid)
       }
     }
+  }
+
+  private fun getComponentGaps(left: Int, right: Int, component: JComponent): Gaps {
+    val top = getDefaultVerticalGap(component)
+    var bottom = top
+    if (component is JLabel && component.getClientProperty(DSL_LABEL_NO_BOTTOM_GAP_PROPERTY) == true) {
+      bottom = 0
+    }
+    return Gaps(top = top, left = left, bottom = bottom, right = right)
   }
 
   /**
@@ -303,7 +318,7 @@ internal class PanelImpl(private val dialogPanelConfig: DialogPanelConfig) : Cel
     val cell = cells[commentedCellIndex]
     val leftIndent = getAdditionalHorizontalIndent(cell) +
                      if (commentedCellIndex == 0) firstCellIndent else 0
-    val gaps = Gaps(left = leftIndent, bottom = dialogPanelConfig.spacing.verticalCommentBottomGap)
+    val gaps = Gaps(left = leftIndent, bottom = dialogPanelConfig.spacing.commentBottomGap)
     builder.skip(commentedCellIndex)
     builder.cell(cell.comment!!, maxColumnsCount - commentedCellIndex, gaps = gaps)
     builder.row()
@@ -321,10 +336,23 @@ internal class PanelImpl(private val dialogPanelConfig: DialogPanelConfig) : Cel
     return cells.indexOfFirst { it.comment != null }
   }
 
-  private fun getRowTopGap(topGap: TopGap): Int {
-    return when (topGap) {
-      TopGap.GROUP -> dialogPanelConfig.spacing.verticalGroupTopGap
+  private fun getRowGaps(row: RowImpl, first: Boolean): RowGaps {
+    val top = if (first) {
+      0
     }
+    else
+      when (row.topGap) {
+        TopGap.GROUP -> dialogPanelConfig.spacing.groupTopGap
+        TopGap.SMALL -> dialogPanelConfig.spacing.verticalSmallGap
+        null -> 0
+      }
+
+    val bottom = when (row.bottomGap) {
+      BottomGap.BUTTON_GROUP_HEADER -> dialogPanelConfig.spacing.buttonGroupHeaderBottomGap
+      null -> 0
+    }
+
+    return if (top > 0 || bottom > 0) RowGaps(top = top, bottom = bottom) else RowGaps.EMPTY
   }
 
   private fun createSeparator(@NlsContexts.BorderTitle title: String?): JComponent {

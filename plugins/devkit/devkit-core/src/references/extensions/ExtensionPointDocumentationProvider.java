@@ -143,7 +143,7 @@ public class ExtensionPointDocumentationProvider implements DocumentationProvide
   private static HtmlChunk createLink(String refText, @Nls String label) {
     HtmlChunk text = HtmlChunk.text(label).wrapWith("code");
     String link = DocumentationManagerProtocol.PSI_ELEMENT_PROTOCOL + refText;
-    return HtmlChunk.tag("a").attr("href", link).child(text);
+    return HtmlChunk.link(link, text);
   }
 
   private static HtmlChunk generateClassDoc(@NotNull PsiElement element) {

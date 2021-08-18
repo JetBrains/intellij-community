@@ -2,51 +2,67 @@
 package com.intellij.codeInspection.sourceToSink;
 
 import com.intellij.codeInspection.UntaintedAnnotationProvider;
+import com.intellij.codeInspection.restriction.AnnotationContext;
 import com.intellij.codeInspection.restriction.RestrictionInfo;
+import com.intellij.psi.PsiMethod;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.Set;
 
 enum TaintValue implements RestrictionInfo {
-  UNTAINTED(UntaintedAnnotationProvider.DEFAULT_UNTAINTED_ANNOTATION, RestrictionInfoKind.KNOWN, null) {
+  UNTAINTED(UntaintedAnnotationProvider.DEFAULT_UNTAINTED_ANNOTATION, RestrictionInfoKind.KNOWN) {
     @Override
     @NotNull
-    public TaintValue join(@NotNull TaintValue other) {
+    TaintValue join(@NotNull TaintValue other) {
       return other;
     }
-  },
-  TAINTED(UntaintedAnnotationProvider.DEFAULT_TAINTED_ANNOTATION, RestrictionInfoKind.KNOWN,
-          "jvm.inspections.source.unsafe.to.sink.flow.description") {
+
     @Override
-    @NotNull
-    public TaintValue join(@NotNull TaintValue other) {
-      return this;
+    String getErrorMessage(@NotNull AnnotationContext context) {
+      return null;
     }
   },
-  UNKNOWN(UntaintedAnnotationProvider.DEFAULT_POLY_TAINTED_ANNOTATION, RestrictionInfoKind.UNKNOWN,
-          "jvm.inspections.source.unknown.to.sink.flow.description") {
+  TAINTED(UntaintedAnnotationProvider.DEFAULT_TAINTED_ANNOTATION, RestrictionInfoKind.KNOWN) {
     @Override
     @NotNull
-    public TaintValue join(@NotNull TaintValue other) {
+    TaintValue join(@NotNull TaintValue other) {
+      return this;
+    }
+
+    @Override
+    String getErrorMessage(@NotNull AnnotationContext context) {
+      return context.getOwner() instanceof PsiMethod ?
+             "jvm.inspections.source.to.sink.flow.returned.unsafe" :
+             "jvm.inspections.source.to.sink.flow.passed.unsafe";
+    }
+  },
+  UNKNOWN(UntaintedAnnotationProvider.DEFAULT_POLY_TAINTED_ANNOTATION, RestrictionInfoKind.UNKNOWN) {
+    @Override
+    @NotNull
+    TaintValue join(@NotNull TaintValue other) {
       return other == TAINTED ? other : this;
+    }
+
+    @Override
+    String getErrorMessage(@NotNull AnnotationContext context) {
+      return context.getOwner() instanceof PsiMethod ?
+             "jvm.inspections.source.to.sink.flow.returned.unknown" :
+             "jvm.inspections.source.to.sink.flow.passed.unknown";
     }
   };
 
-  public static final Set<String> NAMES = ContainerUtil.map2Set(values(), v -> v.getAnnotationName());
+  static final Set<String> NAMES = ContainerUtil.map2Set(values(), v -> v.getAnnotationName());
 
   private final String myName;
   private final RestrictionInfoKind myKind;
-  private final String myErrorMessage;
 
-  TaintValue(@NotNull String name, @NotNull RestrictionInfoKind kind, @Nullable String errorMessage) {
+  TaintValue(@NotNull String name, @NotNull RestrictionInfoKind kind) {
     this.myName = name;
     this.myKind = kind;
-    this.myErrorMessage = errorMessage;
   }
 
-  public abstract @NotNull TaintValue join(@NotNull TaintValue other);
+  abstract @NotNull TaintValue join(@NotNull TaintValue other);
 
   @NotNull String getAnnotationName() {
     return myName;
@@ -57,7 +73,5 @@ enum TaintValue implements RestrictionInfo {
     return myKind;
   }
 
-  String getErrorMessage() {
-    return myErrorMessage;
-  }
+  abstract String getErrorMessage(@NotNull AnnotationContext context);
 }

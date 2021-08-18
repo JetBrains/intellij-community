@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.*;
@@ -109,7 +109,7 @@ public final class JavaCompletionUtil {
     List<SmartPsiElementPointer<PsiMethod>> pointers = item.getUserData(ALL_METHODS_ATTRIBUTE);
     if (pointers == null) return null;
 
-    return ContainerUtil.mapNotNull(pointers, pointer -> pointer.getElement());
+    return ContainerUtil.mapNotNull(pointers, SmartPsiElementPointer::getElement);
   }
 
   public static String[] completeVariableNameForRefactoring(JavaCodeStyleManager codeStyleManager, @Nullable final PsiType varType,
@@ -453,7 +453,7 @@ public final class JavaCompletionUtil {
   }
 
   private static PsiTypeLookupItem findQualifierCast(@NotNull LookupElement item,
-                                                     @NotNull List<? extends PsiTypeLookupItem> castTypeItems,
+                                                     @NotNull List<PsiTypeLookupItem> castTypeItems,
                                                      @Nullable PsiType plainQualifier, JavaCompletionProcessor processor, Set<? extends PsiType> expectedTypes) {
     return ContainerUtil.find(castTypeItems, c -> shouldCast(item, c, plainQualifier, processor, expectedTypes));
   }
@@ -497,10 +497,7 @@ public final class JavaCompletionUtil {
     if (object instanceof PsiEnumConstant) {
       return findConstantsUsedInSwitch(place).contains(CompletionUtil.getOriginalOrSelf((PsiEnumConstant)object));
     }
-    if (object instanceof PsiClass && ReferenceListWeigher.INSTANCE.getApplicability((PsiClass)object, place) == inapplicable) {
-      return true;
-    }
-    return false;
+    return object instanceof PsiClass && ReferenceListWeigher.INSTANCE.getApplicability((PsiClass)object, place) == inapplicable;
   }
 
   @Contract("null, _, _ -> false")
@@ -509,9 +506,8 @@ public final class JavaCompletionUtil {
 
     if (qualifierType instanceof PsiArrayType) { //length and clone()
       PsiFile file = ((PsiMember)object).getContainingFile();
-      if (file == null || file.getVirtualFile() == null) { //yes, they're a bit dummy
-        return true;
-      }
+      //yes, they're a bit dummy
+      return file == null || file.getVirtualFile() == null;
     }
     else if (qualifierType instanceof PsiClassType) {
       PsiClass qualifierClass = ((PsiClassType)qualifierType).resolve();
@@ -579,7 +575,7 @@ public final class JavaCompletionUtil {
     if (psiClass == null || psiClass.isEnum() || psiClass.isAnnotationType()) return false;
 
     PsiMethod[] methods = psiClass.getConstructors();
-    return methods.length == 0 || Arrays.stream(methods).anyMatch(constructor -> isConstructorCompletable(constructor, place));
+    return methods.length == 0 || ContainerUtil.exists(methods, constructor -> isConstructorCompletable(constructor, place));
   }
 
   private static boolean isConstructorCompletable(@NotNull PsiMethod constructor, @NotNull PsiElement place) {
@@ -897,9 +893,7 @@ public final class JavaCompletionUtil {
       PsiClass topLevel = PsiUtil.getTopLevelClass(psiClass);
       if (topLevel != null) {
         String fqName = topLevel.getQualifiedName();
-        if (fqName != null && StringUtil.isEmpty(StringUtil.getPackageName(fqName))) {
-          return false;
-        }
+        return fqName == null || !StringUtil.isEmpty(StringUtil.getPackageName(fqName));
       }
     }
 
@@ -936,10 +930,10 @@ public final class JavaCompletionUtil {
 
   private static int getTabOutOffset(@NotNull final InsertionContext context, final int offset) {
     final PsiCall call = PsiTreeUtil.findElementOfClassAtOffset(context.getFile(), offset, PsiCall.class, false);
-    if (call != null && call.getArgumentList() != null) {
-      return call.getArgumentList().getTextRange().getEndOffset() - 1;
-    }
-    return offset + 2;
+    final int result = offset + 2;
+    if (call == null || call.getArgumentList() == null) return result;
+
+    return Math.max(call.getArgumentList().getTextRange().getEndOffset() - 1, result);
   }
 
   public static FakePsiElement createContextWithXxxVariable(@NotNull PsiElement place, @NotNull PsiType varType) {
@@ -949,7 +943,7 @@ public final class JavaCompletionUtil {
                                          @NotNull ResolveState state,
                                          PsiElement lastParent,
                                          @NotNull PsiElement place) {
-        return processor.execute(new LightVariableBuilder("xxx", varType, place), ResolveState.initial());
+        return processor.execute(new LightVariableBuilder<>("xxx", varType, place), ResolveState.initial());
       }
 
       @Override
