@@ -13,4 +13,4 @@ fun main() {
     c.attribute = "test"
 }
 
-// IGNORE_FIR KT-44939
+// IGNORE_FIR: KT-44939
