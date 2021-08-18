@@ -21,7 +21,7 @@ UFile (package = ) [public final class PropertyReferencesKt {...]
                     ULiteralExpression (value = 1) [1] = (long)1
                 UBinaryExpression (operator = +=) [a.mutableProp += x] = Undetermined
                     UQualifiedReferenceExpression [a.mutableProp] = external mutableProp()
-                        USimpleNameReferenceExpression (identifier = a) [a] = external a()
+                        USimpleNameReferenceExpression (identifier = a) [a] = (var a = external <init>(17)((long)17))
                         USimpleNameReferenceExpression (identifier = mutableProp) [mutableProp] = external mutableProp()
                     USimpleNameReferenceExpression (identifier = x) [x] = (var x = Undetermined)
                 UPrefixExpression (operator = ++) [++a.mutableProp] = Undetermined

@@ -3,7 +3,7 @@ public final class LocalDeclarationsKt {
         public static final class Local {
             public fun Local() = UastEmptyExpression
         }
-        var bar: kotlin.jvm.functions.Function0<? extends Local> = fun () {
+        var bar: kotlin.jvm.functions.Function0<? extends java.lang.Object> = fun () {
                 return <init>()
         }
         var baz: kotlin.jvm.functions.Function0<? extends kotlin.Unit> = fun () {
