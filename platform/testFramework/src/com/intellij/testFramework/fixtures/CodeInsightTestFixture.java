@@ -232,6 +232,7 @@ public interface CodeInsightTestFixture extends IdeaProjectTestFixture {
    */
   void enableInspections(InspectionProfileEntry @NotNull ... inspections);
 
+  @SuppressWarnings("unchecked")
   void enableInspections(Class<? extends LocalInspectionTool> @NotNull ... inspections);
 
   void enableInspections(@NotNull Collection<Class<? extends LocalInspectionTool>> inspections);

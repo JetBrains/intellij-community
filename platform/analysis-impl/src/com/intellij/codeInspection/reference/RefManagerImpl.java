@@ -75,8 +75,8 @@ public class RefManagerImpl extends RefManager {
   private final List<RefGraphAnnotator> myGraphAnnotators = ContainerUtil.createConcurrentList();
   private GlobalInspectionContext myContext;
 
-  private final Map<Key, RefManagerExtension> myExtensions = new HashMap<>();
-  private final Map<Language, RefManagerExtension> myLanguageExtensions = new HashMap<>();
+  private final Map<Key<?>, RefManagerExtension<?>> myExtensions = new HashMap<>();
+  private final Map<Language, RefManagerExtension<?>> myLanguageExtensions = new HashMap<>();
   private final Interner<String> myNameInterner = Interner.createStringInterner();
 
   public RefManagerImpl(@NotNull Project project, @Nullable AnalysisScope scope, @NotNull GlobalInspectionContext context) {
@@ -119,7 +119,7 @@ public class RefManagerImpl extends RefManager {
     for (RefModule refModule : myModules.values()) {
       if (myScope.containsModule(refModule.getModule())) refModule.accept(visitor);
     }
-    for (RefManagerExtension extension : myExtensions.values()) {
+    for (RefManagerExtension<?> extension : myExtensions.values()) {
       extension.iterate(visitor);
     }
   }
@@ -133,7 +133,7 @@ public class RefManagerImpl extends RefManager {
     myContext = null;
 
     myGraphAnnotators.clear();
-    for (RefManagerExtension extension : myExtensions.values()) {
+    for (RefManagerExtension<?> extension : myExtensions.values()) {
       extension.cleanup();
     }
     myExtensions.clear();
@@ -215,7 +215,7 @@ public class RefManagerImpl extends RefManager {
 
   @Override
   public @Nullable String getType(final @NotNull RefEntity ref) {
-    for (RefManagerExtension extension : myExtensions.values()) {
+    for (RefManagerExtension<?> extension : myExtensions.values()) {
       final String type = extension.getType(ref);
       if (type != null) return type;
     }
@@ -236,7 +236,7 @@ public class RefManagerImpl extends RefManager {
 
   @Override
   public @NotNull RefEntity getRefinedElement(@NotNull RefEntity ref) {
-    for (RefManagerExtension extension : myExtensions.values()) {
+    for (RefManagerExtension<?> extension : myExtensions.values()) {
       ref = extension.getRefinedElement(ref);
     }
     return ref;
@@ -256,7 +256,7 @@ public class RefManagerImpl extends RefManager {
     }
     else if (refEntity instanceof RefElement) {
       final RefElement refElement = (RefElement)refEntity;
-      final SmartPsiElementPointer pointer = refElement.getPointer();
+      final SmartPsiElementPointer<?> pointer = refElement.getPointer();
       PsiFile psiFile = pointer.getContainingFile();
       if (psiFile == null) return null;
 
@@ -290,7 +290,7 @@ public class RefManagerImpl extends RefManager {
       appendModule(problem, refModule);
     }
 
-    for (RefManagerExtension extension : myExtensions.values()) {
+    for (RefManagerExtension<?> extension : myExtensions.values()) {
       extension.export(refEntity, problem);
     }
 
@@ -300,7 +300,7 @@ public class RefManagerImpl extends RefManager {
 
   @Override
   public @Nullable String getGroupName(final @NotNull RefElement entity) {
-    for (RefManagerExtension extension : myExtensions.values()) {
+    for (RefManagerExtension<?> extension : myExtensions.values()) {
       final String groupName = extension.getGroupName(entity);
       if (groupName != null) return groupName;
     }
@@ -333,7 +333,7 @@ public class RefManagerImpl extends RefManager {
         scope.accept(myProjectIterator);
       }
 
-      LOG.info("Total duration of processing project usages:" + (System.currentTimeMillis() - before));
+      LOG.info("Total duration of processing project usages:" + (System.currentTimeMillis() - before)+"ms");
     }
   }
 
@@ -402,7 +402,7 @@ public class RefManagerImpl extends RefManager {
   @Override
   public @Nullable PsiNamedElement getContainerElement(@NotNull PsiElement element) {
     Language language = element.getLanguage();
-    RefManagerExtension extension = myLanguageExtensions.get(language);
+    RefManagerExtension<?> extension = myLanguageExtensions.get(language);
     if (extension == null) return null;
     return extension.getElementContainer(element);
   }
@@ -411,9 +411,9 @@ public class RefManagerImpl extends RefManager {
     myUnprocessedFiles.add(virtualFile);
   }
 
-  void removeReference(@NotNull RefElement refElem) {
+  private void removeReference(@NotNull RefElement refElem) {
     final PsiElement element = refElem.getPsiElement();
-    final RefManagerExtension extension = element != null ? getExtension(element.getLanguage()) : null;
+    final RefManagerExtension<?> extension = element != null ? getExtension(element.getLanguage()) : null;
     if (extension != null) {
       extension.removeReference(refElem);
     }
@@ -447,7 +447,7 @@ public class RefManagerImpl extends RefManager {
     @Override
     public void visitElement(@NotNull PsiElement element) {
       ProgressManager.checkCanceled();
-      final RefManagerExtension extension = getExtension(element.getLanguage());
+      final RefManagerExtension<?> extension = getExtension(element.getLanguage());
       if (extension != null) {
         extension.visitElement(element);
       }
@@ -551,7 +551,7 @@ public class RefManagerImpl extends RefManager {
     return getFromRefTableOrCache(
       elem,
       () -> ReadAction.compute(() -> {
-        final RefManagerExtension extension = getExtension(elem.getLanguage());
+        final RefManagerExtension<?> extension = getExtension(elem.getLanguage());
         if (extension != null) {
           final RefElement refElement = extension.createRefElement(elem);
           if (refElement != null) return (RefElementImpl)refElement;
@@ -566,20 +566,20 @@ public class RefManagerImpl extends RefManager {
       }),
       element -> ReadAction.run(() -> {
         element.initialize();
-        for (RefManagerExtension each : myExtensions.values()) {
+        for (RefManagerExtension<?> each : myExtensions.values()) {
           each.onEntityInitialized(element, elem);
         }
         fireNodeInitialized(element);
       }));
   }
 
-  private RefManagerExtension getExtension(final Language language) {
+  private RefManagerExtension<?> getExtension(final Language language) {
     return myLanguageExtensions.get(language);
   }
 
   @Override
   public @Nullable RefEntity getReference(final String type, final String fqName) {
-    for (RefManagerExtension extension : myExtensions.values()) {
+    for (RefManagerExtension<?> extension : myExtensions.values()) {
       final RefEntity refEntity = extension.getReference(type, fqName);
       if (refEntity != null) return refEntity;
     }
@@ -613,7 +613,7 @@ public class RefManagerImpl extends RefManager {
 
     PsiAnchor psiAnchor = createAnchor(element);
     //noinspection unchecked
-    T result = (T)(myRefTable.get(psiAnchor));
+    T result = (T)myRefTable.get(psiAnchor);
 
     if (result != null) return result;
 
@@ -662,7 +662,7 @@ public class RefManagerImpl extends RefManager {
     if (containingFile == null) {
       return false;
     }
-    for (RefManagerExtension extension : myExtensions.values()) {
+    for (RefManagerExtension<?> extension : myExtensions.values()) {
       if (!extension.belongsToScope(psiElement)) return false;
     }
     final Boolean inProject = ReadAction.compute(() -> psiElement.getManager().isInProject(psiElement));
