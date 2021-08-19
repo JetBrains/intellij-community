@@ -6,7 +6,7 @@ import org.jetbrains.annotations.NonNls
 
 class AnonymousParallelOperationTrace private constructor(
   private val delegate: CompoundParallelOperationTrace<Nothing?>
-) : ParallelOperationTrace by delegate {
+) : ObservableOperationTrace by delegate {
   constructor(@NonNls debugName: String? = null) : this(CompoundParallelOperationTrace<Nothing?>(debugName))
 
   fun startTask() = delegate.startTask(null)

@@ -3,7 +3,7 @@ package com.intellij.observable
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.observable.operations.CompoundParallelOperationTrace
-import com.intellij.openapi.observable.operations.ParallelOperationTrace
+import com.intellij.openapi.observable.operations.ObservableOperationTrace
 import com.intellij.openapi.util.Disposer
 import junit.framework.TestCase
 
@@ -48,7 +48,7 @@ abstract class CompoundParallelOperationTraceTestCase : TestCase() {
 
     inner class MockCompoundParallelOperationTrace<Id>(
       private val delegate: CompoundParallelOperationTrace<Id>
-    ): ParallelOperationTrace by delegate {
+    ): ObservableOperationTrace by delegate {
       fun startTask(taskId: Id) {
         assertEquals(mustBeComplete, delegate.isOperationCompleted())
         delegate.startTask(taskId)
