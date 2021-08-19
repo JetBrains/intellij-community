@@ -55,11 +55,16 @@ internal class MutableExternalEntityMappingImpl<T> private constructor(
 
   internal fun add(id: EntityId, data: T) {
     startWrite()
-    LOG.trace {
-      "Adding to external index: $id -> $data. Data hash: ${data.hashCode()}"
-    }
     index[id] = data
     indexLog.add(IndexLogRecord.Add(id, data))
+    LOG.trace {
+      try {
+        "Adding to external index: $id -> $data. Data hash: ${data.hashCode()}"
+      }
+      catch (e: Throwable) {
+        "Adding to external index. $id, cannot get data info. ${e.message}"
+      }
+    }
   }
 
   override fun addIfAbsent(entity: WorkspaceEntity, data: T): Boolean {
