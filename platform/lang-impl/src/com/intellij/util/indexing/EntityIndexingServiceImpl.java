@@ -77,7 +77,7 @@ class EntityIndexingServiceImpl implements EntityIndexingService {
           sb.append(iterator);
         }
       }
-      LOG.info(sb.toString());
+      LOG.debug(sb.toString());
       DumbService.getInstance(project).queueTask(new UnindexedFilesUpdater(project, iterators, "Reindex on accumulated partial changes"));
     }
   }
