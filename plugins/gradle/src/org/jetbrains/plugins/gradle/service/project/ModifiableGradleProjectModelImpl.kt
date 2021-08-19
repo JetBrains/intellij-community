@@ -12,7 +12,7 @@ import org.jetbrains.plugins.gradle.util.GradleConstants
 class ModifiableGradleProjectModelImpl(private val projectName: String, private val projectPath: String) : ModifiableGradleProjectModel {
   private val projectModels = lazy { mutableMapOf<Key<Any>, MutableList<Any>>() }
 
-  override fun <T> addProjectData(key: Key<T>, data: T): ModifiableGradleProjectModel {
+  override fun <T : Any> addProjectData(key: Key<T>, data: T): ModifiableGradleProjectModel {
     @Suppress("UNCHECKED_CAST")
     projectModels.value.computeIfAbsent(key as Key<Any>) { mutableListOf() }.add(data as Any)
     return this

@@ -33,7 +33,7 @@ abstract class GitCompareBranchesLogProperties(project: Project) :
     commonState = state
   }
 
-  override fun <T> get(property: VcsLogUiProperty<T>): T =
+  override fun <T : Any> get(property: VcsLogUiProperty<T>): T =
     if (CommonUiProperties.SHOW_DIFF_PREVIEW == property) {
       @Suppress("UNCHECKED_CAST")
       state.SHOW_DIFF_PREVIEW as T
@@ -42,7 +42,7 @@ abstract class GitCompareBranchesLogProperties(project: Project) :
       super.get(property)
     }
 
-  override fun <T> set(property: VcsLogUiProperty<T>, value: T) {
+  override fun <T : Any> set(property: VcsLogUiProperty<T>, value: T) {
     if (CommonUiProperties.SHOW_DIFF_PREVIEW == property) {
       state.SHOW_DIFF_PREVIEW = (value as Boolean)
       onPropertyChanged(property)
