@@ -20,11 +20,15 @@ fun <T> runWriteAction(action: () -> T): T {
 }
 
 fun <T> runWriteActionInEdt(action: () -> T): T {
-    var result: T? = null
-    ApplicationManager.getApplication().invokeLater {
-        result = ApplicationManager.getApplication().runWriteAction<T>(action)
+    return if (isDispatchThread()) {
+        runWriteAction(action)
+    } else {
+        var result: T? = null
+        ApplicationManager.getApplication().invokeLater {
+            result = runWriteAction(action)
+        }
+        result!!
     }
-    return result!!
 }
 
 
@@ -55,6 +59,8 @@ inline fun invokeLater(expired: Condition<*>, crossinline action: () -> Unit) =
     ApplicationManager.getApplication().invokeLater({ action() }, expired)
 
 inline fun isUnitTestMode(): Boolean = ApplicationManager.getApplication().isUnitTestMode
+
+inline fun isDispatchThread(): Boolean = ApplicationManager.getApplication().isDispatchThread
 
 inline fun isApplicationInternalMode(): Boolean = ApplicationManager.getApplication().isInternal
 

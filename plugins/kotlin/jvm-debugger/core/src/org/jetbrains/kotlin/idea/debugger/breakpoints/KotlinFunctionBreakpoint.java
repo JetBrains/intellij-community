@@ -73,6 +73,9 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.BiConsumer;
 import java.util.stream.Stream;
 
+import static org.jetbrains.kotlin.idea.util.application.ApplicationUtilsKt.isDispatchThread;
+import static org.jetbrains.kotlin.idea.util.application.ApplicationUtilsKt.isUnitTestMode;
+
 // This class is copied from com.intellij.debugger.ui.breakpoints.MethodBreakpoint.
 // Changed parts are marked with '// MODIFICATION: ' comments.
 // This should be deleted when IDEA opens the method breakpoint API (presumably in 193).
@@ -145,7 +148,7 @@ public class KotlinFunctionBreakpoint extends BreakpointWithHighlighter<JavaMeth
         };
 
         ProgressManager progressManager = ProgressManager.getInstance();
-        if (ApplicationManager.getApplication().isDispatchThread() && !ApplicationManager.getApplication().isUnitTestMode()) {
+        if (isDispatchThread() && !isUnitTestMode()) {
             progressManager.runProcessWithProgressAsynchronously(task, new BackgroundableProcessIndicator(task));
         } else {
             EmptyProgressIndicator progressIndicator = new EmptyProgressIndicator();
