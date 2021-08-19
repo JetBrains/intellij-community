@@ -323,7 +323,7 @@
     "List": {
       "background": "#ffffff",
       "hoverBackground": "#EDF5FC",
-      "hoverInactiveBackground": "#F5F5F5",
+      "hoverInactiveBackground": "grey16",
       "focusCellHighlightBorder": "1,1,1,1",
       "rowHeight": 20,
       "UI": "com.intellij.ui.components.WideSelectionListUI"
@@ -416,9 +416,7 @@
       }
     },
 
-    "Panel": {
-      "mouseShortcutBackground": "#F5F5F5"
-    },
+    "Panel.mouseShortcutBackground": "grey16",
 
     "ParameterInfo": {
       "background": "#f7f7f7",
@@ -535,7 +533,7 @@
     },
 
     "ScrollBar": {
-      "background": "#F5F5F5",
+      "background": "grey16",
       "hoverThumbBorderColor": "#59595947",
       "hoverThumbColor": "#73737347",
       "hoverTrackColor": "#80808000",
@@ -679,10 +677,10 @@
       "focusSelectedCellHighlightBorder": "com.intellij.ide.ui.laf.darcula.DarculaTableSelectedCellHighlightBorder",
       "gridColor": "#F7F7F7",
       "hoverBackground": "#edf5fc",
-      "hoverInactiveBackground": "#f5f5f5",
+      "hoverInactiveBackground": "grey16",
       "lightSelectionBackground": "#edf6fe",
       "lightSelectionForeground": "foreground",
-      "lightSelectionInactiveBackground": "#f5f5f5",
+      "lightSelectionInactiveBackground": "grey16",
       "rowHeight": 20,
       "stripeColor": "#f2f5f9"
     },
@@ -801,7 +799,7 @@
       "errorForeground": "#ff0000",
       "hash": "#grey13",
       "hoverBackground": "#edf5fc",
-      "hoverInactiveBackground": "#f5f5f5",
+      "hoverInactiveBackground": "grey16",
       "modifiedItemForeground": "#005ad9",
       "selectionBorderColor": "#3875d6",
       "textBackground": "#ffffff"
