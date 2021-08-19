@@ -61,8 +61,7 @@ object GitStashOperations {
   fun dropStashWithConfirmation(project: Project, parentComponent: Component?, stash: StashInfo): Boolean {
     val dialogBuilder = MessageDialogBuilder.yesNo(GitBundle.message("git.unstash.drop.confirmation.title", stash.stash),
                                                    GitBundle.message("git.unstash.drop.confirmation.message", stash.stash,
-                                                                     stash.message)).icon(
-      Messages.getQuestionIcon())
+                                                                     stash.message)).icon(Messages.getQuestionIcon())
     val confirmed = if (parentComponent != null) dialogBuilder.ask(parentComponent) else dialogBuilder.ask(project)
     if (!confirmed) return false
 
@@ -86,8 +85,7 @@ object GitStashOperations {
   @JvmStatic
   fun clearStashesWithConfirmation(project: Project, root: VirtualFile, parentComponent: Component?): Boolean {
     val dialogBuilder = MessageDialogBuilder.yesNo(GitBundle.message("git.unstash.clear.confirmation.title"),
-                                                   GitBundle.message("git.unstash.clear.confirmation.message")).icon(
-      Messages.getWarningIcon())
+                                                   GitBundle.message("git.unstash.clear.confirmation.message")).icon(Messages.getWarningIcon())
     val confirmed = if (parentComponent != null) dialogBuilder.ask(parentComponent) else dialogBuilder.ask(project)
     if (!confirmed) return false
 
@@ -212,16 +210,13 @@ object GitStashOperations {
   }
 }
 
-private class UnstashConflictResolver(project: Project,
-                                      private val stashInfo: StashInfo) :
+private class UnstashConflictResolver(project: Project, private val stashInfo: StashInfo) :
   GitConflictResolver(project, setOf(stashInfo.root), makeParams(project, stashInfo)) {
 
   override fun notifyUnresolvedRemain() {
     VcsNotifier.getInstance(myProject).notifyImportantWarning(GitNotificationIdsHolder.UNSTASH_UNRESOLVED_CONFLICTS,
-                                                              GitBundle.message(
-                                                                "unstash.dialog.unresolved.conflict.warning.notification.title"),
-                                                              GitBundle.message(
-                                                                "unstash.dialog.unresolved.conflict.warning.notification.message")
+                                                              GitBundle.message("unstash.dialog.unresolved.conflict.warning.notification.title"),
+                                                              GitBundle.message("unstash.dialog.unresolved.conflict.warning.notification.message")
     ) { _, event ->
       if (event.eventType == HyperlinkEvent.EventType.ACTIVATED) {
         if (event.description == "resolve") {
@@ -244,10 +239,8 @@ private class UnstashConflictResolver(project: Project,
 private class UnstashMergeDialogCustomizer(private val stashInfo: StashInfo) : MergeDialogCustomizer() {
   override fun getMultipleFileMergeDescription(files: MutableCollection<VirtualFile>): String {
     return XmlStringUtil.wrapInHtml(
-      GitBundle.message(
-        "unstash.conflict.dialog.description.label.text",
-        XmlStringUtil.wrapInHtmlTag("${stashInfo.stash}\"${stashInfo.message}\"", "code")
-      )
+      GitBundle.message("unstash.conflict.dialog.description.label.text",
+                        XmlStringUtil.wrapInHtmlTag("${stashInfo.stash}\"${stashInfo.message}\"", "code"))
     )
   }
 
