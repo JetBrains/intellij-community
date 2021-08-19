@@ -17,7 +17,7 @@ import org.junit.runner.RunWith;
 @TestRoot("fir")
 @TestDataPath("$CONTENT_ROOT")
 @RunWith(JUnit3RunnerWithInners.class)
-public class FirJvmOptimizeImportsTestGenerated extends AbstractFirJvmOptimizeImportsTest {
+public abstract class FirJvmOptimizeImportsTestGenerated extends AbstractFirJvmOptimizeImportsTest {
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../idea/tests/testData/editor/optimizeImports/jvm")
     public static class Jvm extends AbstractFirJvmOptimizeImportsTest {
@@ -518,6 +518,11 @@ public class FirJvmOptimizeImportsTestGenerated extends AbstractFirJvmOptimizeIm
                 runTest("../idea/tests/testData/editor/optimizeImports/common/basic/UnusedProperty.kt");
             }
 
+            @TestMetadata("UnusedStarImport.kt")
+            public void testUnusedStarImport() throws Exception {
+                runTest("../idea/tests/testData/editor/optimizeImports/common/basic/UnusedStarImport.kt");
+            }
+
             @TestMetadata("UsedClass.kt")
             public void testUsedClass() throws Exception {
                 runTest("../idea/tests/testData/editor/optimizeImports/common/basic/UsedClass.kt");
@@ -556,6 +561,11 @@ public class FirJvmOptimizeImportsTestGenerated extends AbstractFirJvmOptimizeIm
             @TestMetadata("UsedProperty.kt")
             public void testUsedProperty() throws Exception {
                 runTest("../idea/tests/testData/editor/optimizeImports/common/basic/UsedProperty.kt");
+            }
+
+            @TestMetadata("UsedStarImport.kt")
+            public void testUsedStarImport() throws Exception {
+                runTest("../idea/tests/testData/editor/optimizeImports/common/basic/UsedStarImport.kt");
             }
         }
 
