@@ -27,26 +27,25 @@ class ShowUsagesSettings : PersistentStateComponent<ShowUsageViewSettings> {
   }
 }
 
-@Suppress("UNUSED_PARAMETER")
 class ShowUsageViewSettings : UsageViewSettings(false, false, false, false, false) {
 
   override var isGroupByUsageType: Boolean
     get() = false
-    set(value) {}
+    set(_) {}
 
   override var isGroupByModule: Boolean
     get() = false
-    set(value) {}
+    set(_) {}
 
   override var isGroupByPackage: Boolean
     get() = false
-    set(value) {}
+    set(_) {}
 
   override var isGroupByDirectoryStructure: Boolean
     get() = false
-    set(value) {}
+    set(_) {}
 
   override var isGroupByScope: Boolean
     get() = false
-    set(value) {}
+    set(_) {}
 }
