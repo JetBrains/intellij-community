@@ -444,7 +444,7 @@ public class SoftWrapApplianceOnDocumentModificationTest extends AbstractEditorT
       "    public String s = \"this is a long string literal that is expected to be soft-wrapped into multiple visual lines\";\n" +
       "}";
     
-    init(30, text);
+    init(30, text, false);
     getEditor().getCaretModel().moveToOffset(text.indexOf("}") - 1);
 
     checkSoftWraps(41, 66, 89, 116);
@@ -463,13 +463,25 @@ public class SoftWrapApplianceOnDocumentModificationTest extends AbstractEditorT
     assertEquals(new VisualPosition(1, 4), caretModel.getVisualPosition());
   }
 
+  public void testCustomWrap() {
+    String text =
+      "class Test {\n" +
+      "    public String s = \"this is a long string literal that is expected to be soft-wrapped into multiple visual lines\";\n" +
+      "}";
+
+    init(30, text, true);
+    getEditor().getCaretModel().moveToOffset(text.indexOf("}") - 1);
+
+    checkSoftWraps(41, 65, 89, 107);
+  }
+
   public void testEndProcessing() {
     String text =
       "class Test {\n" +
       "    public String s = \"this is a long string literal that is expected to be soft-wrapped into multiple visual lines\";   \n" +
       "}";
 
-    init(30, text);
+    init(30, text, false);
     getEditor().getCaretModel().moveToOffset(text.indexOf("\n") + 1);
 
     checkSoftWraps(41, 66, 89, 116);
@@ -1039,9 +1051,14 @@ public class SoftWrapApplianceOnDocumentModificationTest extends AbstractEditorT
 
     assertEquals(new LogicalPosition(2, 0), getEditor().visualToLogicalPosition(new VisualPosition(2, 1)));
   }
-  
+
+  private static final int DEFAULT_SYMBOL_WIDTH_PX = 10;
   private void init(final int visibleWidthInColumns, @NotNull String fileText) {
     init(visibleWidthInColumns, 10, fileText);
+  }
+
+  private void init(final int visibleWidthInColumns, @NotNull String fileText, boolean useCustomSoftWrapIndent) {
+    init(visibleWidthInColumns * DEFAULT_SYMBOL_WIDTH_PX, fileText, TestFileType.TEXT, DEFAULT_SYMBOL_WIDTH_PX, useCustomSoftWrapIndent);
   }
 
   private void init(final int visibleWidthInColumns, final int symbolWidthInPixels, @NotNull String fileText) {
@@ -1051,10 +1068,14 @@ public class SoftWrapApplianceOnDocumentModificationTest extends AbstractEditorT
   private void init(final int visibleWidth, @NotNull String fileText, int symbolWidth) {
     init(visibleWidth, fileText, TestFileType.TEXT, symbolWidth);
   }
-  
+
   private void init(final int visibleWidth, @NotNull String fileText, @NotNull TestFileType fileType, final int symbolWidth) {
+    init(visibleWidth, fileText, fileType, symbolWidth, true);
+  }
+
+  private void init(final int visibleWidth, @NotNull String fileText, @NotNull TestFileType fileType, final int symbolWidth, boolean useCustomSoftWrapIndent) {
     init(fileText, fileType);
-    EditorTestUtil.configureSoftWraps(getEditor(), visibleWidth, symbolWidth);
+    EditorTestUtil.configureSoftWraps(getEditor(), visibleWidth, 1000, symbolWidth, useCustomSoftWrapIndent);
   }
 
   private void checkSoftWraps(int... startOffsets) {

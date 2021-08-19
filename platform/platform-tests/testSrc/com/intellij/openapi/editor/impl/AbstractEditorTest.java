@@ -189,8 +189,12 @@ public abstract class AbstractEditorTest extends LightPlatformCodeInsightTestCas
     assertEquals(state, Arrays.toString(getEditor().getFoldingModel().getAllFoldRegions()));
   }
 
-  protected void configureSoftWraps(int charCountToWrapAt) {
-    EditorTestUtil.configureSoftWraps(getEditor(), charCountToWrapAt);
+  protected final void configureSoftWraps(int charCountToWrapAt) {
+    configureSoftWraps(charCountToWrapAt, true);
+  }
+
+  protected void configureSoftWraps(int charCountToWrapAt, boolean useCustomSoftWrapIndent) {
+    EditorTestUtil.configureSoftWraps(getEditor(), charCountToWrapAt, useCustomSoftWrapIndent);
   }
 
   public Inlay addInlay(int offset) {

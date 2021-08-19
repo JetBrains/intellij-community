@@ -165,7 +165,7 @@ public class EditorPaintingTest extends EditorPaintingTestCase {
 
   public void testIndentGuideOverBlockInlayWithSoftWraps() throws Exception {
     initText("  a\n    b c");
-    configureSoftWraps(5);
+    configureSoftWraps(5, false);
     runIndentsPass();
     addBlockInlay(0);
     checkResult();
