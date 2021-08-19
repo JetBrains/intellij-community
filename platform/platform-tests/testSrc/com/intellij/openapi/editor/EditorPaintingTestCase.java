@@ -107,10 +107,10 @@ public abstract class EditorPaintingTestCase extends AbstractEditorTest {
   }
 
   @Override
-  protected void configureSoftWraps(int charCountToWrapAt) {
+  protected void configureSoftWraps(int charCountToWrapAt, boolean useCustomSoftWrapIndent) {
     int charWidthInPixels = BitmapFont.CHAR_WIDTH;
     // we're adding 1 to charCountToWrapAt, to account for wrap character width, and 1 to overall width to overcome wrapping logic subtleties
-    EditorTestUtil.configureSoftWraps(getEditor(), (charCountToWrapAt + 1) * charWidthInPixels + 1, charWidthInPixels);
+    EditorTestUtil.configureSoftWraps(getEditor(), (charCountToWrapAt + 1) * charWidthInPixels + 1, 1000, charWidthInPixels, useCustomSoftWrapIndent);
     ((SoftWrapModelImpl)getEditor().getSoftWrapModel()).setSoftWrapPainter(new SoftWrapPainter() {
       @Override
       public int paint(@NotNull Graphics g, @NotNull SoftWrapDrawingType drawingType, int x, int y, int lineHeight) {
