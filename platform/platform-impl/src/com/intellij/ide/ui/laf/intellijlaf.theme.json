@@ -270,7 +270,7 @@
     },
 
     "GotItTooltip": {
-      "background": "#f7f7f7",
+      "background": "grey17",
       "borderColor": "grey05",
       "linkForeground": "linkForeground",
       "shortcutForeground": "infoPanelForeground"
@@ -419,7 +419,7 @@
     "Panel.mouseShortcutBackground": "grey16",
 
     "ParameterInfo": {
-      "background": "#f7f7f7",
+      "background": "grey17",
       "borderColor": "grey12",
       "currentOverloadBackground": "grey12",
       "currentParameterForeground": "foreground",
@@ -459,7 +459,7 @@
       "SearchField.background": "#FFFFFF",
       "SearchField.borderColor": "componentBorder",
 
-      "SectionHeader.background": "#F7F7F7",
+      "SectionHeader.background": "grey17",
       "SectionHeader.foreground": "infoPanelForeground"
 
     },
@@ -476,8 +476,8 @@
       },
 
       "Toolbar": {
-        "background": "#f7f7f7",
-        "borderColor": "#f7f7f7"
+        "background": "grey17",
+        "borderColor": "grey17"
       },
 
       "borderColor": "grey05",
@@ -675,7 +675,7 @@
       "descendingSortIcon": "AllIcons.General.ArrowDown",
       "focusCellHighlightBorder": "com.intellij.ide.ui.laf.darcula.DarculaTableSelectedCellHighlightBorder",
       "focusSelectedCellHighlightBorder": "com.intellij.ide.ui.laf.darcula.DarculaTableSelectedCellHighlightBorder",
-      "gridColor": "#F7F7F7",
+      "gridColor": "grey17",
       "hoverBackground": "#edf5fc",
       "hoverInactiveBackground": "grey16",
       "lightSelectionBackground": "#edf6fe",
@@ -741,7 +741,7 @@
     "Toolbar.Floating.background": "#EDEDED",
 
     "ToolTip": {
-      "background": "#f7f7f7",
+      "background": "grey17",
 
       "Actions.background": "grey14",
       "Actions.infoForeground": "#99a4ad",
