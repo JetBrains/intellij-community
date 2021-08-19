@@ -48,8 +48,8 @@ public abstract class MembersGetter {
   private static final Map<String, List<String>> COMMON_INHERITORS =
     Map.of("java.util.Collection", List.of("java.util.List", "java.util.Set"),
            "java.util.List", List.of("java.util.ArrayList"),
-           "java.util.Set", List.of("java.util.HashSet", "java.util."),
-           "java.util.Map", List.of("java.util.HashMap"));
+           "java.util.Set", List.of("java.util.HashSet", "java.util.TreeSet"),
+           "java.util.Map", List.of("java.util.HashMap", "java.util.TreeMap"));
 
   public static final Key<Boolean> EXPECTED_TYPE_MEMBER = Key.create("EXPECTED_TYPE_MEMBER");
   private final Set<PsiMember> myImportedStatically = new HashSet<>();
