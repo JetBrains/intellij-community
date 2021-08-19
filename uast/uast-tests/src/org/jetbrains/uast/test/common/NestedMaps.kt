@@ -45,7 +45,7 @@ fun <K1, K2, K3, V> mutableMap3Of(vararg pairs: Pair<K1, Map2<K2, K3, V>>): Muta
 fun <K1, K2, K3, V> Map3<K1, K2, K3, V>.toMutableMap3(): MutableMap3<K1, K2, K3, V> =
   buildLinkedHashMapOf(toList()) { it.toMutableMap2() }
 
-fun <KE, K : Iterable<KE>, V> Map<K, V>.foldKeysByLevel(
+fun <KE, K : Iterable<KE>, V : Any> Map<K, V>.foldKeysByLevel(
   level: Int,
   keyBuilder: (List<KE>) -> K,
   keyFolder: (List<KE>) -> Iterable<KE>?
