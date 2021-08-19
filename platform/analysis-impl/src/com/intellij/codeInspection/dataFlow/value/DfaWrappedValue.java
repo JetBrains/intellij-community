@@ -48,6 +48,11 @@ public final class DfaWrappedValue extends DfaValue {
     return factory.getWrapperFactory().createWrapper(myType, myDerivedVariableDescriptor, myWrappedValue.bindToFactory(factory));
   }
 
+  @Override
+  public boolean dependsOn(DfaVariableValue other) {
+    return myWrappedValue.dependsOn(other);
+  }
+
   @NotNull
   @Override
   public DfType getDfType() {

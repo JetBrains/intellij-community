@@ -65,6 +65,8 @@ public class StreamChainInliner implements CallInliner {
           instanceCall(JAVA_UTIL_STREAM_BASE_STREAM, "reduce").parameterCount(1),
           instanceCall(JAVA_UTIL_STREAM_BASE_STREAM, "findFirst", "findAny").parameterCount(0));
   private static final CallMatcher MIN_MAX_TERMINAL = instanceCall(JAVA_UTIL_STREAM_BASE_STREAM, "min", "max").parameterCount(1);
+  private static final CallMatcher TWO_ARG_REDUCE =
+    instanceCall(JAVA_UTIL_STREAM_STREAM, "reduce").parameterTypes("T", "java.util.function.BinaryOperator");
   private static final CallMatcher COLLECT_TERMINAL =
     instanceCall(JAVA_UTIL_STREAM_STREAM, "collect").parameterTypes("java.util.stream.Collector");
   private static final CallMatcher COLLECT3_TERMINAL =
@@ -139,7 +141,8 @@ public class StreamChainInliner implements CallInliner {
     .register(OPTIONAL_TERMINAL, call -> new OptionalTerminalStep(call))
     .register(TO_ARRAY_TERMINAL, call -> new ToArrayStep(call))
     .register(COLLECT3_TERMINAL, call -> new Collect3TerminalStep(call))
-    .register(COLLECT_TERMINAL, call -> createTerminalFromCollector(call));
+    .register(COLLECT_TERMINAL, call -> createTerminalFromCollector(call))
+    .register(TWO_ARG_REDUCE, call -> new TwoArgReduceStep(call));
 
   private static final Step NULL_TERMINAL_STEP = new Step(null, null, null) {
     @Override
@@ -322,6 +325,27 @@ public class StreamChainInliner implements CallInliner {
     @Override
     void iteration(CFGBuilder builder) {
       builder.pop().assignAndPop(myResult, myResultRange);
+    }
+  }
+
+  static class TwoArgReduceStep extends TerminalStep {
+    private final PsiExpression myInitialValue;
+
+    TwoArgReduceStep(@NotNull PsiMethodCallExpression call) {
+      super(call, call.getArgumentList().getExpressions()[1]);
+      myInitialValue = call.getArgumentList().getExpressions()[0];
+    }
+
+    @Override
+    void iteration(CFGBuilder builder) {
+      builder.push(myResult).invokeFunction(2, myFunction)
+        .assignTo(myResult).pop();
+    }
+
+    @Override
+    protected void pushInitialValue(CFGBuilder builder) {
+      builder.pushExpression(myInitialValue)
+        .boxUnbox(myInitialValue, myCall.getType());
     }
   }
 
