@@ -67,7 +67,9 @@ public class SwitchEvaluator implements Evaluator {
     }
 
     Object match(Object value, EvaluationContextImpl context) throws EvaluateException {
-      if (myDefaultCase) {
+      // According to JEP 406, to maintain backward compatibility with the old
+      // semantics of switch, the default label does not match a null selector.
+      if (myDefaultCase && value != null) {
         return true;
       }
       for (Evaluator evaluator : myEvaluators) {
