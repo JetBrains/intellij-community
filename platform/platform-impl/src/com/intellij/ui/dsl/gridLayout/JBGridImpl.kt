@@ -39,16 +39,24 @@ internal class JBGridImpl : JBGrid {
     return result
   }
 
-  fun unregister(component: JComponent) {
+  fun unregister(component: JComponent): Boolean {
     val iterator = cells.iterator()
     for (cell in iterator) {
-      if ((cell as? JBComponentCell)?.component == component) {
-        iterator.remove()
-        return
+      when (cell) {
+        is JBComponentCell -> {
+          if (cell.component == component) {
+            iterator.remove()
+            return true
+          }
+        }
+        is JBGridCell -> {
+          if (cell.content.unregister(component)) {
+            return true
+          }
+        }
       }
     }
-
-    throw UiDslException("Component has not been registered: $component")
+    return false
   }
 
   fun getPreferredSize(): Dimension {

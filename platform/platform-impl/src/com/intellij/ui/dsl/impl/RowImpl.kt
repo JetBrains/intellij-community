@@ -4,6 +4,7 @@ package com.intellij.ui.dsl.impl
 import com.intellij.BundleBase
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.actionSystem.impl.ActionButton
 import com.intellij.openapi.fileChooser.FileChooserDescriptor
 import com.intellij.openapi.project.Project
@@ -13,10 +14,7 @@ import com.intellij.openapi.ui.panel.ComponentPanelBuilder
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.ui.ClickListener
-import com.intellij.ui.LayeredIcon
-import com.intellij.ui.SimpleListCellRenderer
-import com.intellij.ui.UIBundle
+import com.intellij.ui.*
 import com.intellij.ui.components.*
 import com.intellij.ui.dsl.*
 import com.intellij.ui.dsl.Cell
@@ -24,12 +22,10 @@ import com.intellij.ui.dsl.Row
 import com.intellij.ui.dsl.gridLayout.UiDslException
 import com.intellij.ui.layout.*
 import com.intellij.util.MathUtil
+import com.intellij.util.ui.UIUtil
 import org.jetbrains.annotations.ApiStatus
 import java.awt.Dimension
-import java.awt.event.ActionEvent
-import java.awt.event.KeyAdapter
-import java.awt.event.KeyEvent
-import java.awt.event.MouseEvent
+import java.awt.event.*
 import javax.swing.*
 
 internal enum class BottomGap {
@@ -163,6 +159,14 @@ internal class RowImpl(private val dialogPanelConfig: DialogPanelConfig,
     return cell(button)
   }
 
+  override fun button(text: String, actionPlace: String, action: AnAction): CellImpl<JButton> {
+    lateinit var result: CellImpl<JButton>
+    result = button(text) {
+      ActionUtil.invokeAction(action, result.component, actionPlace, null, null)
+    }
+    return result
+  }
+
   override fun actionButton(action: AnAction, dimension: Dimension): CellImpl<ActionButton> {
     val component = ActionButton(action, action.templatePresentation, ActionPlaces.UNKNOWN, dimension)
     return cell(component)
@@ -189,12 +193,39 @@ internal class RowImpl(private val dialogPanelConfig: DialogPanelConfig,
     return cell(label)
   }
 
+  override fun actionLink(text: String, action: ActionListener): Cell<ActionLink> {
+    return cell(ActionLink(text, action))
+  }
+
+  override fun slider(min: Int, max: Int, minorTickSpacing: Int, majorTickSpacing: Int): Cell<JSlider> {
+    val slider = JSlider()
+    UIUtil.setSliderIsFilled(slider, true)
+    slider.paintLabels = true
+    slider.paintTicks = true
+    slider.paintTrack = true
+    slider.minimum = min
+    slider.maximum = max
+    slider.minorTickSpacing = minorTickSpacing
+    slider.majorTickSpacing = majorTickSpacing
+    return cell(slider)
+  }
+
   override fun label(text: String): CellImpl<JLabel> {
     return cell(Label(text))
   }
 
+  override fun commentNoWrap(text: String): Cell<JLabel> {
+    return cell(ComponentPanelBuilder.createNonWrappingCommentComponent(text))
+  }
+
   override fun browserLink(text: String, url: String): Cell<BrowserLink> {
     return cell(BrowserLink(text, url))
+  }
+
+  override fun contextHelp(description: String, title: String?): Cell<JLabel> {
+    val result = if (title == null) ContextHelpLabel.create(description)
+    else ContextHelpLabel.create(title, description)
+    return cell(result)
   }
 
   override fun textField(): CellImpl<JBTextField> {
@@ -248,6 +279,12 @@ internal class RowImpl(private val dialogPanelConfig: DialogPanelConfig,
 
   override fun <T> comboBox(model: ComboBoxModel<T>, renderer: ListCellRenderer<T?>?): Cell<ComboBox<T>> {
     val component = ComboBox(model)
+    component.renderer = renderer ?: SimpleListCellRenderer.create("") { it.toString() }
+    return cell(component)
+  }
+
+  override fun <T> comboBox(items: Array<T>, renderer: ListCellRenderer<T?>?): Cell<ComboBox<T>> {
+    val component = ComboBox(items)
     component.renderer = renderer ?: SimpleListCellRenderer.create("") { it.toString() }
     return cell(component)
   }

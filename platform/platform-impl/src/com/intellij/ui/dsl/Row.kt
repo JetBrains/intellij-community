@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.dsl
 
+import com.intellij.ide.TooltipTitle
 import com.intellij.openapi.actionSystem.ActionToolbar
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.impl.ActionButton
@@ -12,14 +13,14 @@ import com.intellij.openapi.ui.TextFieldWithBrowseButton
 import com.intellij.openapi.ui.panel.ComponentPanelBuilder
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.ui.components.BrowserLink
-import com.intellij.ui.components.JBCheckBox
-import com.intellij.ui.components.JBRadioButton
-import com.intellij.ui.components.JBTextField
+import com.intellij.ui.components.*
 import com.intellij.ui.layout.*
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.Nls
+import org.jetbrains.annotations.NonNls
 import java.awt.Dimension
 import java.awt.event.ActionEvent
+import java.awt.event.ActionListener
 import javax.swing.*
 
 /**
@@ -68,6 +69,9 @@ interface Row {
    */
   fun layout(rowLayout: RowLayout): Row
 
+  /**
+   * Adds comment after the row. Visibility and enabled state of the row affects row comment as well
+   */
   fun comment(@NlsContexts.DetailedDescription comment: String,
               maxLineLength: Int = ComponentPanelBuilder.MAX_COMMENT_WIDTH): Row
 
@@ -102,13 +106,23 @@ interface Row {
 
   fun button(@NlsContexts.Button text: String, actionListener: (event: ActionEvent) -> Unit): Cell<JButton>
 
+  fun button(@NlsContexts.Button text: String, @NonNls actionPlace: String, action: AnAction): Cell<JButton>
+
   fun actionButton(action: AnAction, dimension: Dimension = ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE): Cell<ActionButton>
 
   fun gearButton(vararg actions: AnAction): Cell<JComponent>
 
+  fun actionLink(@Nls text: String, action: ActionListener): Cell<ActionLink>
+
+  fun slider(min: Int, max: Int, minorTickSpacing: Int, majorTickSpacing: Int): Cell<JSlider>
+
   fun label(@NlsContexts.Label text: String): Cell<JLabel>
 
+  fun commentNoWrap(@NlsContexts.DetailedDescription text: String): Cell<JLabel>
+
   fun browserLink(@NlsContexts.LinkLabel text: String, url: String): Cell<BrowserLink>
+
+  fun contextHelp(@NlsContexts.Tooltip description: String, @TooltipTitle title: String? = null): Cell<JLabel>
 
   fun textField(): Cell<JBTextField>
 
@@ -120,4 +134,6 @@ interface Row {
   fun intTextField(range: IntRange? = null, keyboardStep: Int? = null): Cell<JBTextField>
 
   fun <T> comboBox(model: ComboBoxModel<T>, renderer: ListCellRenderer<T?>? = null): Cell<ComboBox<T>>
+
+  fun <T> comboBox(items: Array<T>, renderer: ListCellRenderer<T?>? = null): Cell<ComboBox<T>>
 }

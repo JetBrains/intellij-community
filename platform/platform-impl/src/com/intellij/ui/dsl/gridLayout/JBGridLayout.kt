@@ -27,7 +27,9 @@ class JBGridLayout : LayoutManager2 {
   }
 
   override fun removeLayoutComponent(comp: Component?) {
-    _rootGrid.unregister(checkComponent(comp))
+    if (!_rootGrid.unregister(checkComponent(comp))) {
+      throw UiDslException("Component has not been registered: $comp")
+    }
   }
 
   override fun preferredLayoutSize(parent: Container?): Dimension {

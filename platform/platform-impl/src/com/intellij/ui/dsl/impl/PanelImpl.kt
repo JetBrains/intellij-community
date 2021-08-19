@@ -155,7 +155,7 @@ internal class PanelImpl(private val dialogPanelConfig: DialogPanelConfig) : Cel
     return this
   }
 
-  override fun comment(@NlsContexts.DetailedDescription comment: String, maxLineLength: Int): PanelImpl {
+  override fun comment(comment: String?, maxLineLength: Int): PanelImpl {
     super.comment(comment, maxLineLength)
     return this
   }

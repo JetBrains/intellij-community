@@ -52,7 +52,7 @@ internal class CellImpl<T : JComponent>(
     return this
   }
 
-  override fun comment(@NlsContexts.DetailedDescription comment: String, maxLineLength: Int): CellImpl<T> {
+  override fun comment(@NlsContexts.DetailedDescription comment: String?, maxLineLength: Int): CellImpl<T> {
     super.comment(comment, maxLineLength)
     return this
   }
@@ -134,10 +134,25 @@ internal class CellImpl<T : JComponent>(
     return this
   }
 
+  override fun accessibleName(name: String): CellImpl<T> {
+    component.accessibleContext.accessibleName = name
+    return this
+  }
+
+  override fun accessibleDescription(description: String): CellImpl<T> {
+    component.accessibleContext.accessibleDescription = description
+    return this
+  }
+
   override fun <V> bind(componentGet: (T) -> V, componentSet: (T, V) -> Unit, binding: PropertyBinding<V>): CellImpl<T> {
     onApply { if (shouldSaveOnApply()) binding.set(componentGet(component)) }
     onReset { componentSet(component, binding.get()) }
     onIsModified { shouldSaveOnApply() && componentGet(component) != binding.get() }
+    return this
+  }
+
+  override fun graphProperty(property: GraphProperty<*>): CellImpl<T> {
+    this.property = property
     return this
   }
 

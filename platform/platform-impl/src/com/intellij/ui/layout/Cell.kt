@@ -671,7 +671,7 @@ abstract class Cell : BaseBuilder {
   }
 }
 
-private fun JBCheckBox.bind(property: GraphProperty<Boolean>) {
+internal fun JBCheckBox.bind(property: GraphProperty<Boolean>) {
   val mutex = AtomicBoolean()
   property.afterChange {
     mutex.lockOrSkip {

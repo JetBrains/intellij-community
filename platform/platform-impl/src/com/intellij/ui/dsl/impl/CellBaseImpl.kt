@@ -43,8 +43,8 @@ internal sealed class CellBaseImpl<T : CellBase<T>>(private val dialogPanelConfi
     return this
   }
 
-  override fun comment(@NlsContexts.DetailedDescription comment: String, maxLineLength: Int): CellBase<T> {
-    this.comment = ComponentPanelBuilder.createCommentComponent(comment, true, maxLineLength, true)
+  override fun comment(@NlsContexts.DetailedDescription comment: String?, maxLineLength: Int): CellBase<T> {
+    this.comment = if (comment == null) null else ComponentPanelBuilder.createCommentComponent(comment, true, maxLineLength, true)
     return this
   }
 

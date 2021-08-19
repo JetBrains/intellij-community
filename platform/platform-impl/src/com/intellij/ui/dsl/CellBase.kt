@@ -45,7 +45,7 @@ interface CellBase<out T : CellBase<T>> {
    */
   fun resizableColumn(): CellBase<T>
 
-  fun comment(@NlsContexts.DetailedDescription comment: String,
+  fun comment(@NlsContexts.DetailedDescription comment: String?,
               maxLineLength: Int = ComponentPanelBuilder.MAX_COMMENT_WIDTH): CellBase<T>
 
   /**
