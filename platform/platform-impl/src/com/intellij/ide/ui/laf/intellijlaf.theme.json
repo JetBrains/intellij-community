@@ -100,8 +100,8 @@
     },
 
     "BookmarkMnemonicAvailable": {
-      "background": "#FFFFFF",
-      "borderColor": "#C4C4C4"
+      "background": "white",
+      "borderColor": "componentBorder"
     },
 
     "BookmarkIcon.background": "#F7C777",
@@ -309,7 +309,7 @@
     "Label": {
       "errorForeground": "#C7222D",
       "infoForeground": "infoPanelForeground",
-      "selectedDisabledForeground": "#777777",
+      "selectedDisabledForeground": "disabledForeground",
       "UI": "com.intellij.ide.ui.laf.darcula.ui.DarculaLabelUI"
     },
 
@@ -424,7 +424,6 @@
       "borderColor": "grey12",
       "currentOverloadBackground": "grey12",
       "currentParameterForeground": "foreground",
-      "disabledForeground": "#8c8c8c",
       "infoForeground": "infoPanelForeground",
       "lineSeparatorColor": "grey12"
     },
@@ -521,7 +520,7 @@
     "RadioButton": {
       "border": "com.intellij.ide.ui.laf.darcula.ui.DarculaRadioButtonBorder",
       "borderInsets": "2,2,2,0",
-      "darcula.selectionDisabledColor": "#aaaaaa",
+      "darcula.selectionDisabledColor": "#grey03",
       "darcula.selectionDisabledShadowColor": "#00000020",
       "darcula.selectionEnabledColor": "white",
       "darcula.selectionEnabledShadowColor": "#00000040",
@@ -738,7 +737,7 @@
       "onForeground": "white"
     },
 
-    "Toolbar.Floating.background": "#EDEDED",
+    "Toolbar.Floating.background": "grey14",
 
     "ToolTip": {
       "background": "grey17",
@@ -773,7 +772,7 @@
       "HeaderCloseButton.background": "grey07",
       "HeaderTab": {
         "selectedBackground": "#D0D4D8",
-        "selectedInactiveBackground": "#D9D9D9",
+        "selectedInactiveBackground": "grey11",
         "hoverBackground": "#00000019",
         "hoverInactiveBackground": "#00000019",
         "inactiveUnderlineColor": "#9ca7b8",
