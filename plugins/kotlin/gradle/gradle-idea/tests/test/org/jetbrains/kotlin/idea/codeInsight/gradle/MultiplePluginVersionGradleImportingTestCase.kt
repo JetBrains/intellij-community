@@ -124,8 +124,6 @@ abstract class MultiplePluginVersionGradleImportingTestCase : KotlinGradleImport
         repositories.addUrl("https://cache-redirector.jetbrains.com/dl.google.com.android.maven2/")
         repositories.addUrl("https://cache-redirector.jetbrains.com/plugins.gradle.org/m2/")
         repositories.addUrl("https://cache-redirector.jetbrains.com/maven.pkg.jetbrains.space/kotlin/p/kotlin/dev")
-        repositories.addUrl("https://cache-redirector.jetbrains.com/dl.bintray.com/kotlin/kotlin-dev")
-        repositories.addUrl("https://cache-redirector.jetbrains.com/dl.bintray.com/kotlin/kotlinx")
 
         if (!gradleVersionMatches("7.0+")) {
             repositories.addUrl("https://cache-redirector.jetbrains.com/jcenter/")
