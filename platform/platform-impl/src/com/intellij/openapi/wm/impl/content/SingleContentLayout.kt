@@ -3,6 +3,8 @@ package com.intellij.openapi.wm.impl.content
 
 import com.intellij.CommonBundle
 import com.intellij.icons.AllIcons
+import com.intellij.ide.IdeBundle
+import com.intellij.ide.actions.PinActiveTabAction
 import com.intellij.ide.impl.DataManagerImpl
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.*
@@ -14,6 +16,7 @@ import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.ui.popup.PopupStep
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep
 import com.intellij.openapi.util.*
+import com.intellij.openapi.wm.ex.ToolWindowEx
 import com.intellij.ui.MouseDragHelper
 import com.intellij.ui.PopupHandler
 import com.intellij.ui.awt.RelativePoint
@@ -26,6 +29,7 @@ import com.intellij.ui.tabs.*
 import com.intellij.ui.tabs.impl.JBTabsImpl
 import com.intellij.ui.tabs.impl.MorePopupAware
 import com.intellij.ui.tabs.impl.TabLabel
+import com.intellij.util.castSafelyTo
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.ui.AbstractLayoutManager
 import com.intellij.util.ui.JBUI
@@ -90,6 +94,27 @@ internal class SingleContentLayout(
     }
     else if (isSingleContentView) {
       resetSingleContentView()
+    }
+
+    val toolwindow = myUi.getWindow().castSafelyTo<ToolWindowEx>()
+    if (toolwindow != null) {
+      val group = toolwindow.decoration?.actionGroup
+      if (isSingleContentView) {
+        // install extra actions
+        if (group !is ExtendedTitleActionsGroup) {
+          toolwindow.setAdditionalGearActions(ExtendedTitleActionsGroup(
+            group,
+            PinActiveTabAction(),
+            Separator.create()
+          ))
+        }
+      }
+      else {
+        // restore user's group
+        if (group is ExtendedTitleActionsGroup) {
+          toolwindow.setAdditionalGearActions(group.originActions)
+        }
+      }
     }
   }
 
@@ -489,13 +514,41 @@ internal class SingleContentLayout(
     }
   }
 
+  private class ExtendedTitleActionsGroup(
+    val originActions: ActionGroup?,
+    vararg extendedActions: AnAction
+    ) : DefaultActionGroup() {
+      init {
+        extendedActions.forEach(::add)
+        originActions?.let(::addAll)
+      }
+  }
+
   private inner class CloseCurrentContentAction : DumbAwareAction(CommonBundle.messagePointer("action.close"), AllIcons.Actions.Cancel) {
     override fun actionPerformed(e: AnActionEvent) {
-      getSingleContentOrNull()?.let { it.manager?.removeContent(it, true) }
+      val content = getSingleContentOrNull()
+      if (content != null && content.isPinned) {
+        content.isPinned = false
+      }
+      else {
+        content?.let { it.manager?.removeContent(it, true) }
+      }
     }
 
     override fun update(e: AnActionEvent) {
       e.presentation.isEnabledAndVisible = getSingleContentOrNull()?.isCloseable == true
+      if (isPinned()) {
+        e.presentation.icon = AllIcons.General.Pin_tab
+        e.presentation.text = IdeBundle.message("action.unpin.tab")
+      }
+      else {
+        e.presentation.icon = AllIcons.Actions.Cancel
+        e.presentation.text = CommonBundle.message("action.close")
+      }
+    }
+
+    private fun isPinned(): Boolean {
+      return getSingleContentOrNull()?.isPinned == true
     }
   }
 

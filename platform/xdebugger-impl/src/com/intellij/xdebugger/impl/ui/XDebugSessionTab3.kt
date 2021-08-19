@@ -149,11 +149,7 @@ class XDebugSessionTab3(
 
     myUi.options.setTopLeftToolbar(toolbar, ActionPlaces.DEBUGGER_TOOLBAR)
 
-    mySingleContentSupplier = object : RunTabSupplier(toolbar) {
-      override fun getContentActions(): List<AnAction> {
-        return super.getContentActions() + PinToolwindowTabAction.getPinAction()
-      }
-    }
+    mySingleContentSupplier = RunTabSupplier(toolbar)
   }
 
   override fun getSupplier(): SingleContentSupplier? = mySingleContentSupplier
