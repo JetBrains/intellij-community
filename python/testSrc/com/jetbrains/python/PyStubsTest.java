@@ -895,7 +895,6 @@ public class PyStubsTest extends PyTestCase {
   // PY-27398
   public void testDataclassField() {
     final PyFile file1 = getTestFile("dataclassField/a.py");
-    final PyFile file2 = getTestFile("dataclassField/dataclasses.py");
     final PyFile file3 = getTestFile("dataclassField/b.py");
 
     final DataclassFieldChecker checker = new DataclassFieldChecker(file1.findTopLevelClass("A"));
@@ -910,7 +909,6 @@ public class PyStubsTest extends PyTestCase {
     checker.check("i", false, false, true);
 
     assertNotParsed(file1);
-    assertNotParsed(file2);
     assertNotParsed(file3);
   }
 

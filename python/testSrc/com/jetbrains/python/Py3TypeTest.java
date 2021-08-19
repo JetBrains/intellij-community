@@ -849,34 +849,32 @@ public class Py3TypeTest extends PyTestCase {
 
   // PY-27398
   public void testDataclassPostInitParameter() {
-    doMultiFileTest("int",
-                    "from dataclasses import dataclass, InitVar\n" +
-                    "@dataclass\n" +
-                    "class Foo:\n" +
-                    "    i: int\n" +
-                    "    j: int\n" +
-                    "    d: InitVar[int]\n" +
-                    "    def __post_init__(self, d):\n" +
-                    "        expr = d");
+    doTest("int",
+           "from dataclasses import dataclass, InitVar\n" +
+           "@dataclass\n" +
+           "class Foo:\n" +
+           "    i: int\n" +
+           "    j: int\n" +
+           "    d: InitVar[int]\n" +
+           "    def __post_init__(self, d):\n" +
+           "        expr = d");
   }
 
   // PY-27398
   public void testDataclassPostInitParameterNoInit() {
-    doMultiFileTest("Any",
-                    "from dataclasses import dataclass, InitVar\n" +
-                    "@dataclass(init=False)\n" +
-                    "class Foo:\n" +
-                    "    i: int\n" +
-                    "    j: int\n" +
-                    "    d: InitVar[int]\n" +
-                    "    def __post_init__(self, d):\n" +
-                    "        expr = d");
+    doTest("Any",
+           "from dataclasses import dataclass, InitVar\n" +
+           "@dataclass(init=False)\n" +
+           "class Foo:\n" +
+           "    i: int\n" +
+           "    j: int\n" +
+           "    d: InitVar[int]\n" +
+           "    def __post_init__(self, d):\n" +
+           "        expr = d");
   }
 
   // PY-28506
   public void testDataclassPostInitInheritedParameter() {
-    myFixture.copyDirectoryToProject(TEST_DIRECTORY + "DataclassPostInitParameter", "");
-
     // both are dataclasses with enabled `init`
     doTest("int",
            "from dataclasses import dataclass, InitVar\n" +
@@ -895,8 +893,6 @@ public class Py3TypeTest extends PyTestCase {
 
   // PY-28506
   public void testDataclassPostInitInheritedParameter2() {
-    myFixture.copyDirectoryToProject(TEST_DIRECTORY + "DataclassPostInitParameter", "");
-
     // both are dataclasses, base with enabled `init`
     doTest("Any",
            "from dataclasses import dataclass, InitVar\n" +
@@ -915,8 +911,6 @@ public class Py3TypeTest extends PyTestCase {
 
   // PY-28506
   public void testDataclassPostInitInheritedParameter3() {
-    myFixture.copyDirectoryToProject(TEST_DIRECTORY + "DataclassPostInitParameter", "");
-
     // both are dataclasses, derived with enabled `init`
     doTest("int",
            "from dataclasses import dataclass, InitVar\n" +
@@ -935,8 +929,6 @@ public class Py3TypeTest extends PyTestCase {
 
   // PY-28506
   public void testDataclassPostInitInheritedParameter4() {
-    myFixture.copyDirectoryToProject(TEST_DIRECTORY + "DataclassPostInitParameter", "");
-
     // both are dataclasses with disabled `init`
     doTest("Any",
            "from dataclasses import dataclass, InitVar\n" +
@@ -955,8 +947,6 @@ public class Py3TypeTest extends PyTestCase {
 
   // PY-28506
   public void testMixedDataclassPostInitInheritedParameter() {
-    myFixture.copyDirectoryToProject(TEST_DIRECTORY + "DataclassPostInitParameter", "");
-
     doTest("Any",
            "from dataclasses import dataclass, InitVar\n" +
            "\n" +

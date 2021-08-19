@@ -19,7 +19,6 @@ import com.jetbrains.python.psi.impl.ParamHelper
 import com.jetbrains.python.psi.impl.PyCallExpressionHelper
 import com.jetbrains.python.psi.impl.PyEvaluator
 import com.jetbrains.python.psi.impl.stubs.PyDataclassFieldStubImpl
-import com.jetbrains.python.psi.resolve.PyResolveContext
 import com.jetbrains.python.psi.stubs.PyDataclassFieldStub
 import com.jetbrains.python.psi.types.*
 import one.util.streamex.StreamEx
@@ -180,30 +179,27 @@ class PyDataclassInspection : PyInspection() {
     }
 
     override fun visitPyCallExpression(node: PyCallExpression) {
-      super.visitPyCallExpression(node)
+      val callees = node.multiResolveCallee(resolveContext)
+      val calleeQName = callees.mapNotNullTo(mutableSetOf()) { it.callable?.qualifiedName }.singleOrNull()
 
-      val resolveContext = PyResolveContext.defaultContext(myTypeEvalContext)
-      val callableType = node.multiResolveCallee(resolveContext).singleOrNull()
-      val callee = callableType?.callable
-      val calleeQName = callee?.qualifiedName
-
-      if (callableType != null && callee != null) {
+      if (calleeQName != null) {
         val dataclassType = when {
           DATACLASSES_HELPERS.contains(calleeQName) -> PyDataclassParameters.PredefinedType.STD
           ATTRS_HELPERS.contains(calleeQName) -> PyDataclassParameters.PredefinedType.ATTRS
           else -> return
         }
 
+        val callableType = callees.first()
         val mapping = PyCallExpressionHelper.mapArguments(node, callableType, myTypeEvalContext)
 
-        val dataclassParameter = callee.getParameters(myTypeEvalContext).firstOrNull()
+        val dataclassParameter = callableType.getParameters(myTypeEvalContext)?.firstOrNull()
         val dataclassArgument = mapping.mappedParameters.entries.firstOrNull { it.value == dataclassParameter }?.key
 
         if (dataclassType.asPredefinedType == PyDataclassParameters.PredefinedType.STD) {
-          processHelperDataclassArgument(dataclassArgument, calleeQName!!)
+          processHelperDataclassArgument(dataclassArgument, calleeQName)
         }
         else if (dataclassType.asPredefinedType == PyDataclassParameters.PredefinedType.ATTRS) {
-          processHelperAttrsArgument(dataclassArgument, calleeQName!!)
+          processHelperAttrsArgument(dataclassArgument, calleeQName)
         }
       }
     }
