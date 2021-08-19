@@ -1,7 +1,10 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.mac;
 
-import com.apple.eawt.*;
+import com.apple.eawt.Application;
+import com.apple.eawt.FullScreenAdapter;
+import com.apple.eawt.FullScreenListener;
+import com.apple.eawt.FullScreenUtilities;
 import com.apple.eawt.event.FullScreenEvent;
 import com.intellij.ide.ActiveWindowsWatcher;
 import com.intellij.openapi.Disposable;
@@ -16,7 +19,6 @@ import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.concurrency.AsyncPromise;
 import org.jetbrains.concurrency.Promise;
-import org.jetbrains.concurrency.Promises;
 
 import javax.swing.*;
 import java.awt.*;
@@ -24,42 +26,14 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.lang.reflect.Method;
 import java.util.EventListener;
-import java.util.LinkedList;
-import java.util.Queue;
 
 public final class MacMainFrameDecorator extends IdeFrameDecorator {
   private interface FSListener extends FullScreenListener, EventListener {}
   private static class FSAdapter extends FullScreenAdapter implements FSListener {}
 
-  private static class FullScreenQueue {
-    private final Queue<Runnable> myQueue = new LinkedList<>();
-    private boolean myWaitingForAppKit = false;
-
-    synchronized void runOrEnqueue(Runnable runnable) {
-      if (myWaitingForAppKit) {
-        myQueue.add(runnable);
-      }
-      else {
-        ApplicationManager.getApplication().invokeLater(runnable);
-        myWaitingForAppKit = true;
-      }
-    }
-
-    synchronized void runFromQueue() {
-      if (!myQueue.isEmpty()) {
-        myQueue.remove().run();
-        myWaitingForAppKit = true;
-      }
-      else {
-        myWaitingForAppKit = false;
-      }
-    }
-  }
-
   private void enterFullScreen() {
     myInFullScreen = true;
     storeFullScreenStateIfNeeded();
-    myFullScreenQueue.runFromQueue();
 
     myTabsHandler.enterFullScreen();
   }
@@ -72,7 +46,6 @@ public final class MacMainFrameDecorator extends IdeFrameDecorator {
     if (rootPane != null) {
       rootPane.putClientProperty(FULL_SCREEN, null);
     }
-    myFullScreenQueue.runFromQueue();
 
     myTabsHandler.exitFullScreen();
   }
@@ -85,31 +58,19 @@ public final class MacMainFrameDecorator extends IdeFrameDecorator {
   public static final String FULL_SCREEN = "Idea.Is.In.FullScreen.Mode.Now";
 
   private static Method toggleFullScreenMethod;
-  private static Method enterFullScreenMethod;
-  private static Method leaveFullScreenMethod;
 
   static {
     try {
       //noinspection SpellCheckingInspection
       Class.forName("com.apple.eawt.FullScreenUtilities");
-      try {
-        //noinspection JavaReflectionMemberAccess
-        enterFullScreenMethod = Application.class.getMethod("requestEnterFullScreen", Window.class);
-        //noinspection JavaReflectionMemberAccess
-        leaveFullScreenMethod = Application.class.getMethod("requestLeaveFullScreen", Window.class);
-      }
-      catch (NoSuchMethodException e) {
-        // temporary solution for the old runtime
-        //noinspection JavaReflectionMemberAccess
-        toggleFullScreenMethod = Application.class.getMethod("requestToggleFullScreen", Window.class);
-      }
+
+      toggleFullScreenMethod = Application.class.getMethod("requestToggleFullScreen", Window.class);
     }
     catch (Exception e) {
-      Logger.getInstance(MacMainFrameDecorator.class).debug(e);
+      Logger.getInstance(MacMainFrameDecorator.class).warn(e);
     }
   }
 
-  private final FullScreenQueue myFullScreenQueue = new FullScreenQueue();
   private final EventDispatcher<FSListener> myDispatcher = EventDispatcher.create(FSListener.class);
   private final MacWinTabsHandler myTabsHandler;
   private boolean myInFullScreen;
@@ -119,7 +80,7 @@ public final class MacMainFrameDecorator extends IdeFrameDecorator {
 
     myTabsHandler = new MacWinTabsHandler(frame, parentDisposable);
 
-    if (leaveFullScreenMethod != null || toggleFullScreenMethod != null) {
+    if (toggleFullScreenMethod != null) {
       FullScreenUtilities.setWindowCanFullScreen(frame, true);
 
       // Native full screen listener can be set only once
@@ -217,36 +178,37 @@ public final class MacMainFrameDecorator extends IdeFrameDecorator {
 
   @Override
   public @NotNull Promise<Boolean> toggleFullScreen(boolean state) {
-    if (myInFullScreen == state) {
-      return Promises.resolvedPromise(state);
-    }
-
     AsyncPromise<Boolean> promise = new AsyncPromise<>();
-    myDispatcher.addListener(new FSAdapter() {
-      @Override
-      public void windowExitedFullScreen(FullScreenEvent event) {
-        promise.setResult(false);
-        myDispatcher.removeListener(this);
+    // We delay the execution using 'invokeLater' to account for the case when window might be made visible in the same EDT event.
+    // macOS can auto-open that window in full-screen mode, but we won't find this out till the notification arrives.
+    // That notification comes as a priority event, so such an 'invokeLater' is enough to fix the problem.
+    // Note, that subsequent invocations of current method in the same or close enough EDT events isn't supported well, but
+    // such usage scenarios are not known at the moment.
+    ApplicationManager.getApplication().invokeLater(() -> {
+      if (myInFullScreen == state) {
+        promise.setResult(state);
       }
+      else if (toggleFullScreenMethod == null) {
+        promise.setResult(null);
+      }
+      else {
+        myDispatcher.addListener(new FSAdapter() {
+          @Override
+          public void windowExitedFullScreen(FullScreenEvent event) {
+            promise.setResult(false);
+            myDispatcher.removeListener(this);
+          }
 
-      @Override
-      public void windowEnteredFullScreen(FullScreenEvent event) {
-        promise.setResult(true);
-        myDispatcher.removeListener(this);
+          @Override
+          public void windowEnteredFullScreen(FullScreenEvent event) {
+            promise.setResult(true);
+            myDispatcher.removeListener(this);
+          }
+        });
+
+        invokeAppMethod(toggleFullScreenMethod);
       }
     });
-
-    // temporary solution for the old runtime
-    if (toggleFullScreenMethod != null) {
-      myFullScreenQueue.runOrEnqueue(() -> invokeAppMethod(toggleFullScreenMethod));
-    }
-    else if (state) {
-      myFullScreenQueue.runOrEnqueue(() -> invokeAppMethod(enterFullScreenMethod));
-    }
-    else {
-      myFullScreenQueue.runOrEnqueue(() -> invokeAppMethod(leaveFullScreenMethod));
-    }
-
     return promise;
   }
 
