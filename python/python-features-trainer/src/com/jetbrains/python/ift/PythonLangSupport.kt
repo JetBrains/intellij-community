@@ -38,7 +38,7 @@ import javax.swing.JLabel
 import kotlin.math.max
 
 class PythonLangSupport : AbstractLangSupport() {
-  override val defaultProjectName = "PyCharmLearningProject"
+  override val contentRootDirectoryName = "PyCharmLearningProject"
 
   override val primaryLanguage = "Python"
 
@@ -71,13 +71,13 @@ class PythonLangSupport : AbstractLangSupport() {
     }
   }
 
-  override fun installAndOpenLearningProject(projectPath: Path,
+  override fun installAndOpenLearningProject(contentRoot: Path,
                                              projectToClose: Project?,
                                              postInitCallback: (learnProject: Project) -> Unit) {
     // if we open project with isProjectCreatedFromWizard flag as true, PythonSdkConfigurator will not run and configure our sdks
     // and we will configure it individually without any race conditions
     val openProjectTask = OpenProjectTask(projectToClose = projectToClose, isProjectCreatedWithWizard = true)
-    ProjectUtils.simpleInstallAndOpenLearningProject(projectPath, this, openProjectTask, postInitCallback)
+    ProjectUtils.simpleInstallAndOpenLearningProject(contentRoot, this, openProjectTask, postInitCallback)
   }
 
   override fun getSdkForProject(project: Project, selectedSdk: Sdk?): Sdk? {
