@@ -159,9 +159,11 @@ object GitStashOperations {
       for ((root, hash) in rootAndRevisions) {
         val handler = handlerProvider(root)
 
+        val indexConflictDetector = GitSimpleEventDetector(GitSimpleEventDetector.Event.INDEX_CONFLICT_ON_UNSTASH)
         val conflictDetector = GitSimpleEventDetector(GitSimpleEventDetector.Event.MERGE_CONFLICT_ON_UNSTASH)
         val untrackedFilesDetector = GitUntrackedFilesOverwrittenByOperationDetector(root)
         val localChangesDetector = GitLocalChangesWouldBeOverwrittenDetector(root, GitLocalChangesWouldBeOverwrittenDetector.Operation.MERGE)
+        handler.addLineListener(indexConflictDetector)
         handler.addLineListener(conflictDetector)
         handler.addLineListener(untrackedFilesDetector)
         handler.addLineListener(localChangesDetector)
@@ -171,22 +173,27 @@ object GitStashOperations {
         if (hash != null) refreshUnstashedChanges(project, hash, root)
         GitRepositoryManager.getInstance(project).getRepositoryForFileQuick(root)?.repositoryFiles?.refreshIndexFile()
 
-        if (conflictDetector.hasHappened()) {
-          val conflictsResolved = conflictResolver.merge()
-          if (!conflictsResolved) return false
+        if (indexConflictDetector.hasHappened()) {
+          // index conflicts could only be resolved manually
+          VcsNotifier.getInstance(project).notifyError(UNSTASH_FAILED, GitBundle.message("notification.title.unstash.failed.index.conflict"),
+                                                       result.errorOutputAsHtmlString, true)
+          return false
         }
-        else if (untrackedFilesDetector.wasMessageDetected()) {
+        if (conflictDetector.hasHappened()) {
+          return conflictResolver.merge()
+        }
+        if (untrackedFilesDetector.wasMessageDetected()) {
           GitUntrackedFilesHelper.notifyUntrackedFilesOverwrittenBy(project, root, untrackedFilesDetector.relativeFilePaths,
                                                                     GitBundle.message("unstash.operation.name"), null)
           return false
         }
-        else if (localChangesDetector.wasMessageDetected()) {
+        if (localChangesDetector.wasMessageDetected()) {
           LocalChangesWouldBeOverwrittenHelper.showErrorNotification(project, STASH_LOCAL_CHANGES_DETECTED, root,
                                                                      GitBundle.message("unstash.operation.name"),
                                                                      localChangesDetector.relativeFilePaths)
           return false
         }
-        else if (!result.success()) {
+        if (!result.success()) {
           VcsNotifier.getInstance(project).notifyError(UNSTASH_FAILED, GitBundle.message("notification.title.unstash.failed"),
                                                        result.errorOutputAsHtmlString, true)
           return false
