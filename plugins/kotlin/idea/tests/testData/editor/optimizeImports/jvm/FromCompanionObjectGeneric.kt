@@ -1,3 +1,4 @@
+// FIR_COMPARISON
 import A.Companion.run
 
 open class Action<T> {

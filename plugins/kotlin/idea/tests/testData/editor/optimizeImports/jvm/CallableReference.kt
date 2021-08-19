@@ -1,4 +1,3 @@
-// FIR_COMPARISON
 import javax.swing.SwingUtilities.invokeLater
 
 fun test() {

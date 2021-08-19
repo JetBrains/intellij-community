@@ -1,4 +1,3 @@
-// FIR_COMPARISON
 import Java.field;
 import Java.method;
 
