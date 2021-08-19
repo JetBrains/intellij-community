@@ -22,6 +22,10 @@ import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.keymap.impl.keyGestures.KeyboardGestureProcessor;
 import com.intellij.openapi.keymap.impl.ui.ShortcutTextField;
+import com.intellij.openapi.progress.EmptyProgressIndicator;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.util.PotemkinOverlayProgress;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
@@ -591,44 +595,46 @@ public final class IdeKeyEventDispatcher {
     Project project = CommonDataKeys.PROJECT.getData(wrappedContext);
     boolean dumb = project != null && DumbService.getInstance(project).isDumb();
 
-    Trinity<AnAction, AnActionEvent, Long> chosen, chosenAdjusted;
     List<AnAction> wouldBeEnabledIfNotDumb = ContainerUtil.createLockFreeCopyOnWriteList();
-    boolean hasSecondStroke;
-
-    try (AccessToken ignore = startInputEventProcessingActivity(project)) {
+    ProgressIndicator indicator = Registry.is("actionSystem.update.actions.cancelable.beforeActionPerformedUpdate") ?
+                                  new PotemkinOverlayProgress(PlatformDataKeys.CONTEXT_COMPONENT.getData(wrappedContext)) :
+                                  new EmptyProgressIndicator();
+    Pair<Trinity<AnAction, AnActionEvent, Long>, Boolean> chosenPair = ProgressManager.getInstance().runProcess(() -> {
       Map<Presentation, AnActionEvent> events = new ConcurrentHashMap<>();
-      chosen = Utils.runUpdateSessionForInputEvent(
+      Trinity<AnAction, AnActionEvent, Long> chosen = Utils.runUpdateSessionForInputEvent(
         e, wrappedContext, place, processor, presentationFactory,
         event -> events.put(event.getPresentation(), event),
         session -> Utils.tryInReadAction(
           () -> rearrangeByPromoters(actions, Utils.freezeDataContext(wrappedContext, null))) ?
                    doUpdateActionsInner(actions, dumb, wouldBeEnabledIfNotDumb, session, events::get) : null);
+      if (chosen == null) return null;
 
-      hasSecondStroke = chosen != null && myContext.getSecondStrokeActions().contains(chosen.first);
-      if (chosen != null && !hasSecondStroke) {
+      if (!myContext.getSecondStrokeActions().contains(chosen.first)) {
         AnActionEvent actionEvent = chosen.second.withDataContext(wrappedContext); // use not frozen data context
         if (Registry.is("actionSystem.update.actions.call.beforeActionPerformedUpdate.once") &&
             !ActionUtil.lastUpdateAndCheckDumb(chosen.first, actionEvent, false)) {
           LOG.warn("Action '" + actionEvent.getPresentation().getText() + "' (" + chosen.first.getClass() + ") " +
                    "has become disabled in `beforeActionPerformedUpdate` right after successful `update`");
-          chosenAdjusted = null;
           logTimeMillis(chosen.third, chosen.first);
         }
         else {
-          chosenAdjusted = Trinity.create(chosen.first, actionEvent, chosen.third);
+          return Pair.create(Trinity.create(chosen.first, actionEvent, chosen.third), true);
         }
       }
-      else {
-        chosenAdjusted = null;
-      }
-    }
-    if (e.getID() == KeyEvent.KEY_PRESSED && !hasSecondStroke && (chosenAdjusted != null || !wouldBeEnabledIfNotDumb.isEmpty())) {
+      return Pair.create(chosen, false);
+    }, indicator);
+
+    Trinity<AnAction, AnActionEvent, Long> chosen = chosenPair != null ? chosenPair.first : null;
+    boolean doPerform = chosen != null && chosenPair.second;
+    boolean hasSecondStroke = chosen != null && myContext.getSecondStrokeActions().contains(chosen.first);
+
+    if (e.getID() == KeyEvent.KEY_PRESSED && !hasSecondStroke && (chosen != null || !wouldBeEnabledIfNotDumb.isEmpty())) {
       myIgnoreNextKeyTypedEvent = true;
     }
 
-    if (chosenAdjusted != null) {
-      doPerformActionInner(e, processor, context, chosenAdjusted.first, chosenAdjusted.second);
-      logTimeMillis(chosenAdjusted.third, chosenAdjusted.first);
+    if (doPerform) {
+      doPerformActionInner(e, processor, context, chosen.first, chosen.second);
+      logTimeMillis(chosen.third, chosen.first);
     }
     else if (hasSecondStroke) {
       waitSecondStroke(chosen.first, chosen.second.getPresentation());
@@ -645,10 +651,6 @@ public final class IdeKeyEventDispatcher {
       }, __ -> e.isConsumed());
     }
     return chosen != null;
-  }
-
-  private static AccessToken startInputEventProcessingActivity(@Nullable Project project) {
-    return AccessToken.EMPTY_ACCESS_TOKEN; // TODO a hidden potemkin-like progress
   }
 
   @Nullable
