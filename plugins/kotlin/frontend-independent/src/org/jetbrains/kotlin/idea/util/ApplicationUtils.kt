@@ -5,13 +5,11 @@ package org.jetbrains.kotlin.idea.util.application
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.command.CommandProcessor
 import com.intellij.openapi.components.ComponentManager
-import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.impl.CancellationCheck
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Condition
 import com.intellij.openapi.util.NlsContexts
-import com.intellij.openapi.util.ThrowableComputable
 
 fun <T> runReadAction(action: () -> T): T {
     return ApplicationManager.getApplication().runReadAction<T>(action)
@@ -68,13 +66,4 @@ inline fun <reified T : Any> ComponentManager.getServiceSafe(): T =
 fun <T> Project.runReadActionInSmartMode(action: () -> T): T {
     if (ApplicationManager.getApplication().isReadAccessAllowed) return action()
     return DumbService.getInstance(this).runReadActionInSmartMode<T>(action)
-}
-
-fun <T> executeInBackgroundWithProgress(@NlsContexts.ProgressTitle title: String, block: () -> T): T {
-    assert(!ApplicationManager.getApplication().isWriteAccessAllowed) {
-        "Rescheduling computation into the background is impossible under the write lock"
-    }
-    return ProgressManager.getInstance().runProcessWithProgressSynchronously(
-        ThrowableComputable { block() }, title, true, null
-    )
 }

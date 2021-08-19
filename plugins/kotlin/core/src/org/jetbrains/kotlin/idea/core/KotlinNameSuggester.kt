@@ -2,14 +2,9 @@
 
 package org.jetbrains.kotlin.idea.core
 
-import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.runReadAction
-import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.util.text.StringUtil
 import org.jetbrains.kotlin.builtins.KotlinBuiltIns
 import org.jetbrains.kotlin.builtins.isFunctionType
-import org.jetbrains.kotlin.idea.core.util.KotlinIdeaCoreBundle
-import org.jetbrains.kotlin.idea.util.application.executeInBackgroundWithProgress
 import org.jetbrains.kotlin.lexer.KotlinLexer
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.FqName
@@ -53,23 +48,15 @@ object KotlinNameSuggester {
     }
 
     fun suggestNamesByType(type: KotlinType, validator: (String) -> Boolean, defaultName: String? = null): List<String> {
-        val blockToExecute = {
-            ArrayList<String>().apply {
-                addNamesByType(type, validator)
-                if (isEmpty()) {
-                    ProgressManager.checkCanceled()
-                    addName(defaultName, validator)
-                }
-            }
+        val result = ArrayList<String>()
+
+        result.addNamesByType(type, validator)
+
+        if (result.isEmpty()) {
+            result.addName(defaultName, validator)
         }
 
-        return if (ApplicationManager.getApplication().isDispatchThread) {
-            executeInBackgroundWithProgress(
-                KotlinIdeaCoreBundle.message("progress.title.calculating.names"),
-                runReadAction { blockToExecute })
-        } else {
-            blockToExecute()
-        }
+        return result
     }
 
     fun suggestNamesByExpressionOnly(
