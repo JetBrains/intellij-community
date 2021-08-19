@@ -35,7 +35,7 @@
     "componentBorder": "grey08",
     "lightBorder": "grey11",
 
-    "panel": "#F2F2F2"
+    "panel": "grey15"
   },
 
 
@@ -44,7 +44,7 @@
       "acceleratorForeground": "foreground",
       "acceleratorSelectionForeground": "selectionForeground",
 
-      "background": "#f2f2f2",
+      "background": "panel",
       "caretForeground": "foreground",
 
       "disabledForeground": "disabledForeground",
@@ -103,7 +103,6 @@
       "borderColor": "#C4C4C4"
     },
 
-    "BigSpinner.background": "panel",
     "BookmarkIcon.background": "#F7C777",
 
     "Borders": {
@@ -160,7 +159,7 @@
         "nonEditableBackground": "#ffffff"
       },
       "background": "#FFFFFF",
-      "disabledBackground": "#f2f2f2",
+      "disabledBackground": "panel",
       "modifiedItemForeground": "#005ad9",
       "nonEditableBackground": "#ffffff",
       "padding": "1,6,1,6",
@@ -213,7 +212,6 @@
     },
 
     "DefaultTabs": {
-      "background": "panel",
       "borderColor":  "border",
       "hoverBackground": "#00000019",
       "inactiveColoredTabBackground":  "#00000011",
@@ -244,7 +242,6 @@
     "EditorTabs": {
       "tabInsets": "0,8,0,8",
       "underlinedTabBackground": "#ffffff",
-      "background": "panel",
       "borderColor": "border",
       "hoverBackground": "#00000019",
       "inactiveColoredFileBackground": "#00000011",
@@ -367,14 +364,12 @@
     "NavBar.borderColor": "border",
 
     "NewClass": {
-      "Panel.background": "#f2f2f2",
       "SearchField.background": "#ffffff",
       "separatorWidth": 10
     },
 
     "Notification": {
       "borderColor": "border",
-      "background": "panel",
       "errorBackground": "#f5e6e7",
       "errorBorderColor": "#e0a8a9",
       "errorForeground": "foreground",
@@ -422,7 +417,6 @@
     },
 
     "Panel": {
-      "background": "panel",
       "mouseShortcutBackground": "#F5F5F5"
     },
 
@@ -474,7 +468,6 @@
 
     "Popup": {
       "Advertiser": {
-        "background": "#f2f2f2",
         "borderColor": "border",
         "foreground": "infoPanelForeground"
       },
@@ -501,7 +494,7 @@
       "borderCornerRadiusY": 16,
       "leftBorderWith": 10,
       "rightBorderWith": 0,
-      "translucentBackground": "#f2f2f2",
+      "translucentBackground": "panel",
       "UI": "com.intellij.ide.ui.laf.intellij.IdeaPopupMenuUI"
     },
 
@@ -581,9 +574,7 @@
     },
 
     "SearchEverywhere": {
-      "Advertiser.background": "#f2f2f2",
       "Advertiser.foreground": "infoPanelForeground",
-      "Header.background": "#f2f2f2",
       "List.separatorColor": "lightBorder",
       "SearchField.background": "#ffffff",
       "SearchField.borderColor": "componentBorder",
@@ -621,15 +612,14 @@
 
     "Spinner": {
       "arrowButtonInsets": "1,1,1,1",
-      "background": "#f2f2f2",
       "border": "com.intellij.ide.ui.laf.darcula.ui.DarculaSpinnerBorder",
-      "darcula.disabledButtonColor": "#f2f2f2",
+      "darcula.disabledButtonColor": "panel",
       "darcula.enabledButtonColor": "#6e9bd5",
       "editorBorderPainted": false,
       "UI": "com.intellij.ide.ui.laf.darcula.ui.DarculaSpinnerUI"
     },
 
-    "SplitPane.highlight": "#f2f2f2",
+    "SplitPane.highlight": "panel",
 
     "StatusBar": {
       "LightEditBackground": "#e3eefc",
@@ -726,13 +716,12 @@
       "darcula.error.inactive": {
         "os.windows": "#eecaca"
       },
-      "disabledBackground": "#f2f2f2"
+      "disabledBackground": "panel"
     },
 
     "TitledBorder.titleColor": "black",
 
     "TitlePane": {
-      "background": "panel",
       "Button.hoverBackground": "#00000019",
       "inactiveBackground": "panel",
       "inactiveInfoForeground": "grey04",
@@ -745,7 +734,7 @@
 
       "borderColor": "grey08",
       "buttonColor": "grey08",
-      "offBackground": "#f2f2f2",
+      "offBackground": "panel",
       "offForeground": "grey03",
       "onBackground": "#4a9249",
       "onForeground": "#ffffff"
@@ -858,13 +847,12 @@
     "text.grayFilter": "20,0,100",
     "text": "foreground",
     "textText": "foreground",
-    "window": "#f2f2f2",
+    "window": "panel",
 
     "WelcomeScreen": {
       "Details.background": "#FFFFFF",
       "Projects.actions.selectionBackground": "#3587E5",
-      "Projects.actions.background": "#DCEDFE",
-      "SidePanel.background": "#f2f2f2"
+      "Projects.actions.background": "#DCEDFE"
     },
 
     "Tag": {
