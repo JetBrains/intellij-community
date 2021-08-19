@@ -21,6 +21,7 @@ import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.update.UiNotifyConnector;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
@@ -64,7 +65,7 @@ public abstract class AbstractStepWithProgress<Result> extends ModuleWizardStep 
 
   protected abstract Result calculate();
 
-  protected abstract void onFinished(Result result, boolean canceled);
+  protected abstract void onFinished(@Nullable Result result, boolean canceled);
 
   private JPanel createProgressPanel() {
     final JPanel progressPanel = new JPanel(new GridBagLayout());
