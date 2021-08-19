@@ -12,7 +12,7 @@ class KotlinMissingDeprecatedAnnotationOnScheduledForRemovalApiInspectionTest
 {
   override fun getBasePath() = KotlinJvmAnalysisTestUtil.TEST_DATA_PROJECT_RELATIVE_BASE_PATH + inspectionPath
 
-  override val fileExt: String = "kt"
-
-  fun `test missing @Deprecated on @ScheduledForRemoval APIs`() = testHighlighting("missingDeprecatedAnnotations")
+  fun `test missing @Deprecated on @ScheduledForRemoval APIs`() {
+    myFixture.testHighlighting("missingDeprecatedAnnotations.kt")
+  }
 }

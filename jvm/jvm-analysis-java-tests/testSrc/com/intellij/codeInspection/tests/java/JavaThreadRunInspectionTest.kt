@@ -10,11 +10,15 @@ private const val inspectionPath = "/codeInspection/threadrun"
 class JavaThreadRunInspectionTest : ThreadRunInspectionTestBase() {
   override fun getBasePath() = JavaJvmAnalysisTestUtil.TEST_DATA_PROJECT_RELATIVE_BASE_PATH + inspectionPath
 
-  override val fileExt: String = "java"
+  fun `test highlighting`() {
+    myFixture.testHighlighting("ThreadRunTest.java")
+  }
 
-  fun `test highlighting`() = testHighlighting("ThreadRunTest")
+  fun `test no highlighting super`() {
+    myFixture.testHighlighting("ThreadRunSuperTest.java")
+  }
 
-  fun `test no highlighting super`() = testHighlighting("ThreadRunSuperTest")
-
-  fun `test quickfix`() = testQuickFixAll("ThreadRunQfTest")
+  fun `test quickfix`() {
+    myFixture.testQuickFixAll("ThreadRunQfTest.java")
+  }
 }

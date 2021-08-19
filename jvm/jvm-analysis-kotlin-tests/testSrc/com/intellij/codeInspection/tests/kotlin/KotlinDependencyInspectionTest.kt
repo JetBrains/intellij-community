@@ -7,11 +7,14 @@ import com.intellij.psi.search.scope.packageSet.NamedScope
 import com.intellij.psi.search.scope.packageSet.PackageSetFactory
 
 class KotlinDependencyInspectionTest : DependencyInspectionTestBase() {
-  override val fileExt: String = "kt"
-
   override fun setUp() {
     super.setUp()
-    myFixture.addFileToProject("$clientFileNameImport.kt", """
+    myFixture.addFileToProject(apiFileName, """
+      package com.jetbrains.test.api
+      
+      class Foo()
+    """.trimIndent())
+    myFixture.addFileToProject(clientFileNameImport, """
       package com.jetbrains.test.client
       
       import <error descr="$errorMessage">com.jetbrains.test.api.Foo</error>
@@ -20,36 +23,35 @@ class KotlinDependencyInspectionTest : DependencyInspectionTestBase() {
         <error descr="$errorMessage">Foo()</error>
       }
     """.trimIndent())
-    myFixture.addFileToProject("$clientFileNameFq.kt", """
+    myFixture.addFileToProject(clientFileNameFq, """
       package com.jetbrains.test.client
       
       fun main() {
         <error descr="$errorMessage">com.jetbrains.test.api.Foo()</error>
       }
     """.trimIndent())
-    myFixture.addFileToProject("$apiFileName.kt", """
-      package com.jetbrains.test.api
-      
-      class Foo()
-    """.trimIndent())
-    val importFileScope = NamedScope(clientFileName, PackageSetFactory.getInstance().compile("file:$clientFileNameImport.kt"))
-    val fqFileScope = NamedScope(clientFileName, PackageSetFactory.getInstance().compile("file:$clientFileNameFq.kt"))
-    val libraryScope = NamedScope(apiFileName, PackageSetFactory.getInstance().compile("file:$apiFileName.kt"))
+    val importFileScope = NamedScope(clientFileName, PackageSetFactory.getInstance().compile("file:$clientFileNameImport"))
+    val fqFileScope = NamedScope(clientFileName, PackageSetFactory.getInstance().compile("file:$clientFileNameFq"))
+    val libraryScope = NamedScope(apiFileName, PackageSetFactory.getInstance().compile("file:$apiFileName"))
     DependencyValidationManager.getInstance(project).apply {
       addRule(DependencyRule(importFileScope, libraryScope, true))
       addRule(DependencyRule(fqFileScope, libraryScope, true))
     }
   }
 
-  fun `test illegal imported dependency`() = testHighlighting(clientFileNameImport)
+  fun `test illegal imported dependency`() {
+    myFixture.testHighlighting(clientFileNameImport)
+  }
 
-  fun `test illegal fully qualified dependency`() = testHighlighting(clientFileNameFq)
+  fun `test illegal fully qualified dependency`() {
+    myFixture.testHighlighting(clientFileNameFq)
+  }
 
   companion object {
     const val clientFileName: String = "ClientFile"
-    const val clientFileNameImport: String = "${clientFileName}Import"
-    const val clientFileNameFq: String = "${clientFileName}Fq"
-    const val apiFileName: String = "ApiFile"
+    const val clientFileNameImport: String = "ClientFileImport.kt"
+    const val clientFileNameFq: String = "ClientFileFq.kt"
+    const val apiFileName: String = "ApiFile.kt"
     const val errorMessage = "Dependency rule 'Deny usages of scope '$apiFileName' in scope '$clientFileName'.' is violated"
   }
 }

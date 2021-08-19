@@ -10,11 +10,15 @@ private const val inspectionPath = "/codeInspection/threadrun"
 class KotlinThreadRunInspectionTest : ThreadRunInspectionTestBase() {
   override fun getBasePath() = KotlinJvmAnalysisTestUtil.TEST_DATA_PROJECT_RELATIVE_BASE_PATH + inspectionPath
 
-  override val fileExt: String = "kt"
+  fun `test highlighting`() {
+    myFixture.testHighlighting("ThreadRunTest.kt")
+  }
 
-  fun `test highlighting`() = testHighlighting("ThreadRunTest")
+  fun `test no highlighting super`() {
+    myFixture.testHighlighting("ThreadRunSuperTest.kt")
+  }
 
-  fun `test no highlighting super`() = testHighlighting("ThreadRunSuperTest")
-
-  fun `test quickfix`() = testQuickFixAll("ThreadRunQfTest")
+  fun `test quickfix`() {
+    myFixture.testQuickFixAll("ThreadRunQfTest.kt")
+  }
 }

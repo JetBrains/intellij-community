@@ -10,10 +10,9 @@ private const val inspectionPath = "/codeInspection/serializablehasserialversion
 class KotlinSerializableHasSerialVersionUidFieldInspectionTest : SerializableHasSerialVersionUidFieldInspectionTestBase() {
   override fun getBasePath() = KotlinJvmAnalysisTestUtil.TEST_DATA_PROJECT_RELATIVE_BASE_PATH + inspectionPath
 
-  override val fileExt: String = "kt"
+  fun `test highlighting`() {
+    myFixture.testHighlighting("SerializableHasSerialVersionUidField.kt")
+  }
 
-  fun `test highlighting`() = testHighlighting("SerializableHasSerialVersionUidField")
-
-  // TODO enable when quickfix for Kotlin is enabled
-  //fun `test quickfix`() = testQuickFix("SerializableHasSerialVersionUidFieldQf", "Add 'serialVersionUID' field")
+  //fun `test quickfix`() { myFixture.testQuickFix("SerializableHasSerialVersionUidFieldQf.kt", "Add 'serialVersionUID' field") }
 }

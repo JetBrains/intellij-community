@@ -11,22 +11,35 @@ private const val inspectionPath = "/codeInspection/junit5assertionsconverter"
 class KotlinJUnit5AssertionsConverterInspectionTest : JUnit5AssertionsConverterInspectionTestBase() {
   override fun getBasePath() = KotlinJvmAnalysisTestUtil.TEST_DATA_PROJECT_RELATIVE_BASE_PATH + inspectionPath
 
-  override val fileExt: String = "kt"
+  fun `test AssertArrayEquals`() {
+    myFixture.testQuickFixAll("AssertArrayEquals.kt")
+  }
 
-  fun `test AssertArrayEquals`() = testQuickFixAll("AssertArrayEquals")
+  fun `test AssertArrayEquals message`() {
+    myFixture.testQuickFixAll("AssertArrayEqualsMessage.kt")
+  }
 
-  fun `test AssertArrayEquals message`() = testQuickFixAll("AssertArrayEqualsMessage")
+  fun `test AssertEquals`() {
+    myFixture.testQuickFixAll("AssertEquals.kt")
+  }
 
-  fun `test AssertEquals`() = testQuickFixAll("AssertEquals")
+  fun `test AssertNotEqualsWithDelta`() {
+    myFixture.testQuickFixUnavailableAll("AssertNotEqualsWithDelta.kt")
+  }
 
-  fun `test AssertNotEqualsWithDelta`() = testQuickFixUnavailableAll("AssertNotEqualsWithDelta")
+  fun `test AssertThat`() {
+    myFixture.testQuickFixAll("AssertThat.kt")
+  }
 
-  fun `test AssertThat`() = testQuickFixAll("AssertThat")
+  fun `test AssertTrue`() {
+    myFixture.testQuickFixAll("AssertTrue.kt")
+  }
 
-  fun `test AssertTrue`() = testQuickFixAll("AssertTrue")
+  fun `test AssertTrue method reference`() {
+    myFixture.testQuickFixAll("AssertTrueMethodRef.kt")
+  }
 
-  fun `test AssertTrue method reference`() =
-    testQuickFixAll("AssertTrueMethodRef")
-
-  fun `test AssumeTrue`() = testQuickFixAll("AssumeTrue")
+  fun `test AssumeTrue`() {
+    myFixture.testQuickFixAll("AssumeTrue.kt")
+  }
 }

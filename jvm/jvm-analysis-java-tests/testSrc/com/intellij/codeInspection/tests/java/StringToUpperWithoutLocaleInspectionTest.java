@@ -3,15 +3,9 @@ package com.intellij.codeInspection.tests.java;
 import com.intellij.codeInspection.tests.StringToUpperWithoutLocaleInspectionTestBase;
 import com.intellij.jvm.analysis.JavaJvmAnalysisTestUtil;
 import com.intellij.testFramework.TestDataPath;
-import org.jetbrains.annotations.NotNull;
 
 @TestDataPath("$CONTENT_ROOT/testData/codeInspection/toUpperWithoutLocale")
 public class StringToUpperWithoutLocaleInspectionTest extends StringToUpperWithoutLocaleInspectionTestBase {
-  @NotNull
-  @Override
-  public String getFileExt() {
-    return "java";
-  }
 
   @Override
   protected String getBasePath() {
@@ -19,7 +13,7 @@ public class StringToUpperWithoutLocaleInspectionTest extends StringToUpperWitho
   }
 
   public void testSimpleCases() {
-    testHighlighting("SimpleCases");
+    myFixture.testHighlighting("SimpleCases.java");
     //TODO test after quickfix once it's implemented
   }
 

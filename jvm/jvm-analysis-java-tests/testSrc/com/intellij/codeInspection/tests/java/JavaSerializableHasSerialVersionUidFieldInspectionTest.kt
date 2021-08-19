@@ -10,9 +10,11 @@ private const val inspectionPath = "/codeInspection/serializablehasserialversion
 class JavaSerializableHasSerialVersionUidFieldInspectionTest : SerializableHasSerialVersionUidFieldInspectionTestBase() {
   override fun getBasePath() = JavaJvmAnalysisTestUtil.TEST_DATA_PROJECT_RELATIVE_BASE_PATH + inspectionPath
 
-  override val fileExt: String = "java"
+  fun `test highlighting`() {
+    myFixture.testHighlighting("SerializableHasSerialVersionUidField.java")
+  }
 
-  fun `test highlighting`() = testHighlighting("SerializableHasSerialVersionUidField")
-
-  fun `test quickfix`() = testQuickFix("SerializableHasSerialVersionUidFieldQf", "Add 'serialVersionUID' field")
+  fun `test quickfix`() {
+    myFixture.testQuickFix("SerializableHasSerialVersionUidFieldQf.java", "Add 'serialVersionUID' field")
+  }
 }

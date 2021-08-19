@@ -11,11 +11,15 @@ private const val inspectionPath = "/codeInspection/junit5converter"
 class KotlinJUnit5ConverterInspectionTest : JUnit5ConverterInspectionTestBase() {
   override fun getBasePath() = KotlinJvmAnalysisTestUtil.TEST_DATA_PROJECT_RELATIVE_BASE_PATH + inspectionPath
 
-  override val fileExt: String = "kt"
+  fun `test qualified conversion`() {
+    myFixture.testQuickFixAll("Qualified.kt")
+  }
 
-  fun `test qualified conversion`() = testQuickFixAll("Qualified")
+  fun `test unqualified conversion`() {
+    myFixture.testQuickFixAll("UnQualified.kt")
+  }
 
-  fun `test unqualified conversion`() = testQuickFixAll("UnQualified")
-
-  fun `test expected on test annotation`() = testQuickFixUnavailableAll("ExpectedOnTestAnnotation")
+  fun `test expected on test annotation`() {
+    myFixture.testQuickFixUnavailableAll("ExpectedOnTestAnnotation.kt")
+  }
 }

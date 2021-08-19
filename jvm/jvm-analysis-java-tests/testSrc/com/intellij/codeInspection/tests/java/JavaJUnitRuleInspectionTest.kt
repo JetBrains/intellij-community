@@ -10,9 +10,10 @@ private const val inspectionPath = "/codeInspection/junitrule"
 class JavaJUnitRuleInspectionTest : JUnitRuleInspectionTestBase() {
   override fun getBasePath() = JavaJvmAnalysisTestUtil.TEST_DATA_PROJECT_RELATIVE_BASE_PATH + inspectionPath
 
-  override val fileExt: String = "java"
 
-  fun `test @Rule highlighting`() = testHighlighting("RuleTest")
+  fun `test @Rule highlighting`() {
+    myFixture.testHighlighting("RuleTest.java")
+  }
 
   fun `test @Rule quickFixes`() {
     val quickfixes = myFixture.getAllQuickFixes("RuleQfTest.java")
@@ -20,7 +21,9 @@ class JavaJUnitRuleInspectionTest : JUnitRuleInspectionTestBase() {
     myFixture.checkResultByFile("RuleQfTest.after.java")
   }
 
-  fun `test @ClassRule highlighting`() = testHighlighting("ClassRuleTest")
+  fun `test @ClassRule highlighting`() {
+    myFixture.testHighlighting("ClassRuleTest.java")
+  }
 
   fun `test @ClassRule quickFixes`() {
     val quickfixes = myFixture.getAllQuickFixes("ClassRuleQfTest.java")
