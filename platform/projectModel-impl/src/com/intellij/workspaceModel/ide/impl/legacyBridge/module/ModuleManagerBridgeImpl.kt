@@ -328,17 +328,23 @@ abstract class ModuleManagerBridgeImpl(private val project: Project) : ModuleMan
     private val LOG = logger<ModuleManagerBridgeImpl>()
     private const val MODULE_BRIDGE_MAPPING_ID = "intellij.modules.bridge"
 
+    @JvmStatic
     fun getInstance(project: Project): ModuleManagerBridgeImpl {
       return ModuleManager.getInstance(project) as ModuleManagerBridgeImpl
     }
 
+    @JvmStatic
     val WorkspaceEntityStorage.moduleMap: ExternalEntityMapping<ModuleBridge>
       get() = getExternalMapping(MODULE_BRIDGE_MAPPING_ID)
+
+    @JvmStatic
     val WorkspaceEntityStorageDiffBuilder.mutableModuleMap: MutableExternalEntityMapping<ModuleBridge>
       get() = getMutableExternalMapping(MODULE_BRIDGE_MAPPING_ID)
 
+    @JvmStatic
     fun WorkspaceEntityStorage.findModuleEntity(module: ModuleBridge) = moduleMap.getEntities(module).firstOrNull() as ModuleEntity?
 
+    @JvmStatic
     fun WorkspaceEntityStorage.findModuleByEntity(entity: ModuleEntity): ModuleBridge? = moduleMap.getDataByEntity(entity)
 
     internal fun getModuleGroupPath(module: Module, entityStorage: VersionedEntityStorage): Array<String>? {
