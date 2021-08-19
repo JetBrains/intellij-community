@@ -4,6 +4,7 @@ package com.intellij.codeInspection.sourceToSink;
 import com.intellij.psi.*;
 import com.intellij.util.ObjectUtils;
 import com.siyeh.ig.psiutils.ExpressionUtils;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.uast.*;
@@ -61,19 +62,16 @@ class TaintAnalyzer {
     if (uExpression == null || uExpression instanceof ULiteralExpression) return TaintValue.UNTAINTED;
     if (uExpression instanceof UResolvable) return analyze(uExpression);
     UPolyadicExpression uConcatenation = getConcatenation(uExpression);
-    if (uConcatenation != null) return joinState(uConcatenation.getOperands().stream(), true);
+    if (uConcatenation != null) return joining(StreamEx.of(uConcatenation.getOperands()), true);
     if (!goDeep) return TaintValue.UNTAINTED;
     PsiExpression javaPsi = ObjectUtils.tryCast(uExpression.getJavaPsi(), PsiExpression.class);
     if (javaPsi == null) return TaintValue.UNTAINTED;
-    Stream<UExpression> expressions = ExpressionUtils.nonStructuralChildren(javaPsi)
-      .map(e -> UastContextKt.toUElement(e, UExpression.class));
-    return joinState(expressions, false);
+    Stream<UExpression> expressions = ExpressionUtils.nonStructuralChildren(javaPsi).map(e -> UastContextKt.toUElement(e, UExpression.class));
+    return joining(expressions, false);
   }
 
-  private @NotNull TaintValue joinState(@NotNull Stream<UExpression> expressions, boolean goDeep) {
-    return expressions.reduce(TaintValue.UNTAINTED,
-                              (acc, e) -> acc == TaintValue.TAINTED ? acc : acc.join(fromExpression(e, goDeep)),
-                              TaintValue::join);
+  private @NotNull TaintValue joining(@NotNull Stream<UExpression> expressions, boolean goDeep) {
+    return expressions.map(e -> fromExpression(e, goDeep)).collect(TaintValue.joining());
   }
 
   List<PsiModifierListOwner> getNonMarkedElements() {

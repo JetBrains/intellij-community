@@ -6,9 +6,11 @@ import com.intellij.codeInspection.restriction.AnnotationContext;
 import com.intellij.codeInspection.restriction.RestrictionInfo;
 import com.intellij.psi.PsiMethod;
 import com.intellij.util.containers.ContainerUtil;
+import one.util.streamex.MoreCollectors;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Set;
+import java.util.stream.Collector;
 
 enum TaintValue implements RestrictionInfo {
   UNTAINTED(UntaintedAnnotationProvider.DEFAULT_UNTAINTED_ANNOTATION, RestrictionInfoKind.KNOWN) {
@@ -66,6 +68,10 @@ enum TaintValue implements RestrictionInfo {
 
   @NotNull String getAnnotationName() {
     return myName;
+  }
+
+  public static @NotNull Collector<TaintValue, ?, TaintValue> joining() {
+    return MoreCollectors.reducingWithZero(TAINTED, UNTAINTED, TaintValue::join);
   }
 
   @Override
