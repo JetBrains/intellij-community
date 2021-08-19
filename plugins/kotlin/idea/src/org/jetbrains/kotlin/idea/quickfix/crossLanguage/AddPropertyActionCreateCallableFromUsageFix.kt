@@ -9,8 +9,8 @@ import org.jetbrains.kotlin.idea.quickfix.createFromUsage.callableBuilder.TypeIn
 import org.jetbrains.kotlin.idea.util.resolveToKotlinType
 import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtModifierList
-import org.jetbrains.kotlin.types.Variance
 import org.jetbrains.kotlin.psi.psiUtil.createSmartPointer
+import org.jetbrains.kotlin.types.Variance
 
 class AddPropertyActionCreateCallableFromUsageFix(
     targetContainer: KtElement,
@@ -22,6 +22,7 @@ class AddPropertyActionCreateCallableFromUsageFix(
     classOrFileName: String?
 ) : AbstractPropertyActionCreateCallableFromUsageFix(targetContainer, classOrFileName) {
     private val modifierListPointer = modifierList.createSmartPointer()
+
     init {
         init()
     }
@@ -41,7 +42,7 @@ class AddPropertyActionCreateCallableFromUsageFix(
                 setterRequired,
                 listOf(targetContainer),
                 modifierList = modifierList,
-                withInitializer = true,
+                initializer = null,
                 isLateinitPreferred = isLateinitPreferred
             )
             propertyInfo

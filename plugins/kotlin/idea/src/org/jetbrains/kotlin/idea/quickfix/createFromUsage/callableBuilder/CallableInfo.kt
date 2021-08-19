@@ -278,7 +278,7 @@ class PropertyInfo(
     val isLateinitPreferred: Boolean = false,
     isForCompanion: Boolean = false,
     modifierList: KtModifierList? = null,
-    val withInitializer: Boolean = false
+    val initializer: KtExpression? = null
 ) : CallableInfo(name, receiverTypeInfo, returnTypeInfo, possibleContainers, typeParameterInfos, isForCompanion, modifierList) {
     override val kind: CallableKind get() = CallableKind.PROPERTY
     override val parameterInfos: List<ParameterInfo> get() = Collections.emptyList()
@@ -304,6 +304,6 @@ class PropertyInfo(
         isLateinitPreferred,
         isForCompanion,
         modifierList,
-        withInitializer
+        initializer
     )
 }

@@ -11,6 +11,7 @@ import org.jetbrains.kotlin.idea.quickfix.crossLanguage.KotlinElementActionsFact
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.load.java.JvmAbi
 import org.jetbrains.kotlin.psi.KtElement
+import org.jetbrains.kotlin.psi.KtExpression
 
 class AddFieldActionCreateCallableFromUsageFix(
     targetContainer: KtElement,
@@ -28,6 +29,7 @@ class AddFieldActionCreateCallableFromUsageFix(
             val resolutionFacade = targetContainer.getResolutionFacade()
             val typeInfo = request.fieldType.toKotlinTypeInfo(resolutionFacade)
             val writable = JvmModifier.FINAL !in request.modifiers
+            val initializer = if (!lateinit && request.initializer is KtExpression) request.initializer as KtExpression else null
             PropertyInfo(
                 request.fieldName,
                 TypeInfo.Empty,
@@ -45,7 +47,7 @@ class AddFieldActionCreateCallableFromUsageFix(
                     if (!request.modifiers.contains(JvmModifier.PRIVATE) && !lateinit)
                         addAnnotation(JvmAbi.JVM_FIELD_ANNOTATION_FQ_NAME)
                 }.modifierList,
-                withInitializer = !lateinit
+                initializer = initializer
             )
         }
 }

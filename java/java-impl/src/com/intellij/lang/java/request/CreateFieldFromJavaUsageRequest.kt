@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.lang.java.request
 
 import com.intellij.codeInsight.daemon.impl.quickfix.CreateFromUsageBaseFix.getTargetSubstitutor
@@ -34,4 +34,6 @@ internal class CreateFieldFromJavaUsageRequest(
   override fun getTargetSubstitutor() = PsiJvmSubstitutor(reference.project, getTargetSubstitutor(reference))
 
   override fun isConstant(): Boolean = isConstant
+
+  override fun getInitializer(): PsiElement? = null
 }

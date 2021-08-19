@@ -1008,13 +1008,8 @@ class CallableBuilder(val config: CallableBuilderConfiguration) {
                             if (newDeclaration is KtProperty) {
                                 newDeclaration.getter?.let { setupDeclarationBody(it) }
 
-                                if (newDeclaration.getter == null
-                                    && newDeclaration.initializer == null
-                                    && callableInfo is PropertyInfo
-                                    && callableInfo.withInitializer
-                                    && !callableInfo.isLateinitPreferred
-                                ) {
-                                    newDeclaration.initializer = KtPsiFactory(newDeclaration).createExpression("TODO(\"initialize me\")")
+                                if (callableInfo is PropertyInfo) {
+                                    newDeclaration.initializer = callableInfo.initializer
                                 }
                             }
 
