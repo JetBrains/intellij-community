@@ -237,6 +237,7 @@ public class XDebuggerTreeInlayPopup<D> {
     myPopup = JBPopupFactory.getInstance().createComponentPopupBuilder(popupContent, tree)
       .setRequestFocus(true)
       .setResizable(true)
+      .setModalContext(false)
       .setMovable(true)
       .setDimensionServiceKey(mySession.getProject(), DIMENSION_SERVICE_KEY, false)
       .setMayBeParent(true)
