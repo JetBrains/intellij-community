@@ -1,4 +1,3 @@
-// FIR_COMPARISON
 package test
 
 import test.MyEnum.ONE
