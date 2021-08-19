@@ -19,6 +19,6 @@ class KotlinThreadRunInspectionTest : ThreadRunInspectionTestBase() {
   }
 
   fun `test quickfix`() {
-    myFixture.testQuickFixAll("ThreadRunQfTest.kt")
+    myFixture.testQuickFix("ThreadRunQfTest.kt")
   }
 }

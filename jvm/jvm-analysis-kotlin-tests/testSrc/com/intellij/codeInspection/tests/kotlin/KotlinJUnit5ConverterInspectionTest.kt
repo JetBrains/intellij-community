@@ -12,14 +12,14 @@ class KotlinJUnit5ConverterInspectionTest : JUnit5ConverterInspectionTestBase() 
   override fun getBasePath() = KotlinJvmAnalysisTestUtil.TEST_DATA_PROJECT_RELATIVE_BASE_PATH + inspectionPath
 
   fun `test qualified conversion`() {
-    myFixture.testQuickFixAll("Qualified.kt")
+    myFixture.testQuickFix("Qualified.kt")
   }
 
   fun `test unqualified conversion`() {
-    myFixture.testQuickFixAll("UnQualified.kt")
+    myFixture.testQuickFix("UnQualified.kt")
   }
 
   fun `test expected on test annotation`() {
-    myFixture.testQuickFixUnavailableAll("ExpectedOnTestAnnotation.kt")
+    myFixture.testQuickFixUnavailable("ExpectedOnTestAnnotation.kt")
   }
 }

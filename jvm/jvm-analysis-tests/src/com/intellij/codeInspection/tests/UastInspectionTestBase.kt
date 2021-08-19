@@ -27,26 +27,56 @@ abstract class UastInspectionTestBase : JavaCodeInsightFixtureTestCase() {
     moduleBuilder.addJdk(IdeaTestUtil.getMockJdk18Path().path)
   }
 
-  protected fun JavaCodeInsightTestFixture.testQuickFix(file: String, hint: String) {
+  enum class ULanguage(val ext: String) { JAVA(".java"), KOTLIN(".kt") }
+
+  protected fun JavaCodeInsightTestFixture.testHighlighting(lang: ULanguage, text: String) {
+    configureByText("UnderTest${lang.ext}", text)
+    checkHighlighting()
+  }
+
+
+  protected fun JavaCodeInsightTestFixture.testQuickFix(
+    lang: ULanguage,
+    before: String,
+    after: String,
+    hint: String = InspectionsBundle.message(
+      "fix.all.inspection.problems.in.file", InspectionTestUtil.instantiateTool(inspection.javaClass).displayName
+    )
+  ) {
+    configureByText("UnderTest${lang.ext}", before)
+    runQuickFix(hint)
+    checkResult(after)
+  }
+
+  protected fun JavaCodeInsightTestFixture.testQuickFix(file: String, hint: String = InspectionsBundle.message(
+    "fix.all.inspection.problems.in.file", InspectionTestUtil.instantiateTool(inspection.javaClass).displayName
+  )) {
     configureByFile(file)
-    val action = getAvailableIntention(hint) ?: throw AssertionError("Quickfix '$hint' is not available.")
-    launchAction(action)
+    runQuickFix(hint)
     checkResultByFile(file.replace(".", ".after."))
   }
 
-  protected fun JavaCodeInsightTestFixture.testQuickFixAll(file: String) {
-    val inspection = InspectionTestUtil.instantiateTool(inspection.javaClass) ?: error("No inspection to test.")
-    testQuickFix(file, InspectionsBundle.message("fix.all.inspection.problems.in.file", inspection.displayName))
+  private fun JavaCodeInsightTestFixture.runQuickFix(hint: String) {
+    val action = getAvailableIntention(hint) ?: throw AssertionError("Quickfix '$hint' is not available.")
+    launchAction(action)
   }
 
-  protected fun JavaCodeInsightTestFixture.testQuickFixUnavailable(file: String, hint: String) {
-    configureByFile(file)
+  protected fun JavaCodeInsightTestFixture.testQuickFixUnavailable(
+    lang: ULanguage,
+    text: String,
+    hint: String = InspectionsBundle.message(
+      "fix.all.inspection.problems.in.file", InspectionTestUtil.instantiateTool(inspection.javaClass).displayName
+    )
+  ) {
+    configureByText("UnderTest${lang.ext}", text)
     assertEmpty("Quickfix '$hint' is available but should not.", myFixture.filterAvailableIntentions(hint))
   }
 
-  protected fun JavaCodeInsightTestFixture.testQuickFixUnavailableAll(file: String) {
-    val inspection = InspectionTestUtil.instantiateTool(inspection.javaClass) ?: error("No inspection to test.")
-    testQuickFixUnavailable(file, InspectionsBundle.message("fix.all.inspection.problems.in.file", inspection.displayName))
+  protected fun JavaCodeInsightTestFixture.testQuickFixUnavailable(file: String, hint: String = InspectionsBundle.message(
+    "fix.all.inspection.problems.in.file", InspectionTestUtil.instantiateTool(inspection.javaClass).displayName
+  )) {
+    configureByFile(file)
+    assertEmpty("Quickfix '$hint' is available but should not.", myFixture.filterAvailableIntentions(hint))
   }
 
   override fun tearDown() {

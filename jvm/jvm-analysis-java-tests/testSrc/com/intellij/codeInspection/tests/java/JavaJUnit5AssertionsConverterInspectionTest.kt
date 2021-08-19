@@ -12,34 +12,34 @@ class JavaJUnit5AssertionsConverterInspectionTest : JUnit5AssertionsConverterIns
   override fun getBasePath() = JavaJvmAnalysisTestUtil.TEST_DATA_PROJECT_RELATIVE_BASE_PATH + inspectionPath
 
   fun `test AssertArrayEquals`() {
-    myFixture.testQuickFixAll("AssertArrayEquals.java")
+    myFixture.testQuickFix("AssertArrayEquals.java")
   }
 
   fun `test AssertArrayEquals message`() {
-    myFixture.testQuickFixAll("AssertArrayEqualsMessage.java")
+    myFixture.testQuickFix("AssertArrayEqualsMessage.java")
   }
 
   fun `test AssertEquals`() {
-    myFixture.testQuickFixAll("AssertEquals.java")
+    myFixture.testQuickFix("AssertEquals.java")
   }
 
   fun `test AssertNotEqualsWithDelta`() {
-    myFixture.testQuickFixUnavailableAll("AssertNotEqualsWithDelta.java")
+    myFixture.testQuickFixUnavailable("AssertNotEqualsWithDelta.java")
   }
 
   fun `test AssertThat`() {
-    myFixture.testQuickFixAll("AssertThat.java")
+    myFixture.testQuickFix("AssertThat.java")
   }
 
   fun `test AssertTrue`() {
-    myFixture.testQuickFixAll("AssertTrue.java")
+    myFixture.testQuickFix("AssertTrue.java")
   }
 
   fun `test AssertTrue method reference`() {
-    myFixture.testQuickFixAll("AssertTrueMethodRef.java")
+    myFixture.testQuickFix("AssertTrueMethodRef.java")
   }
 
   fun `test AssumeTrue`() {
-    myFixture.testQuickFixAll("AssumeTrue.java")
+    myFixture.testQuickFix("AssumeTrue.java")
   }
 }

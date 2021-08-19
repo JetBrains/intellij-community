@@ -19,6 +19,6 @@ class JavaThreadRunInspectionTest : ThreadRunInspectionTestBase() {
   }
 
   fun `test quickfix`() {
-    myFixture.testQuickFixAll("ThreadRunQfTest.java")
+    myFixture.testQuickFix("ThreadRunQfTest.java")
   }
 }

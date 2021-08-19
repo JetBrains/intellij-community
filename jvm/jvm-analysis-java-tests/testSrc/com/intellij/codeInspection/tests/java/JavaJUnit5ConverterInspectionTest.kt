@@ -12,14 +12,14 @@ class JavaJUnit5ConverterInspectionTest : JUnit5ConverterInspectionTestBase() {
   override fun getBasePath() = JavaJvmAnalysisTestUtil.TEST_DATA_PROJECT_RELATIVE_BASE_PATH + inspectionPath
 
   fun `test qualified conversion`() {
-    myFixture.testQuickFixAll("Qualified.java")
+    myFixture.testQuickFix("Qualified.java")
   }
 
   fun `test unqualified conversion`() {
-    myFixture.testQuickFixAll("UnQualified.java")
+    myFixture.testQuickFix("UnQualified.java")
   }
 
   fun `test expected on test annotation`() {
-    myFixture.testQuickFixUnavailableAll("ExpectedOnTestAnnotation.java")
+    myFixture.testQuickFixUnavailable("ExpectedOnTestAnnotation.java")
   }
 }

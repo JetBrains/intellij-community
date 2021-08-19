@@ -11,6 +11,9 @@ class KotlinSerializableHasSerialVersionUidFieldInspectionTest : SerializableHas
   override fun getBasePath() = KotlinJvmAnalysisTestUtil.TEST_DATA_PROJECT_RELATIVE_BASE_PATH + inspectionPath
 
   fun `test highlighting`() {
+    myFixture.addFileToProject("SerializableHasSerialVersionUidField.kt", """
+      
+    """.trimIndent())
     myFixture.testHighlighting("SerializableHasSerialVersionUidField.kt")
   }
 
