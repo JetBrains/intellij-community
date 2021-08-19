@@ -470,8 +470,6 @@ public class SoftWrapApplianceOnDocumentModificationTest extends AbstractEditorT
       "}";
 
     init(30, text, true);
-    getEditor().getCaretModel().moveToOffset(text.indexOf("}") - 1);
-
     checkSoftWraps(41, 65, 89, 107);
   }
 
