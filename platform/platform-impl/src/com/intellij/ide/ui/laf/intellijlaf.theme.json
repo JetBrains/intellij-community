@@ -28,14 +28,15 @@
     "foreground": "black",
     "infoPanelForeground": "grey02",
     "disabledForeground": "grey03",
-    "selectionForeground": "#FFFFFF",
+    "selectionForeground": "white",
     "linkForeground": "#2470B3",
 
     "border": "grey09",
     "componentBorder": "grey08",
     "lightBorder": "grey11",
 
-    "panel": "grey15"
+    "panel": "grey15",
+    "contentBackground": "white"
   },
 
 
@@ -53,7 +54,7 @@
       "foreground": "foreground",
 
 
-      "inactiveBackground": "#ffffff",
+      "inactiveBackground": "white",
       "inactiveForeground": "disabledForeground",
 
       "modifiedItemForeground": "#005ad9",
@@ -63,14 +64,14 @@
       "selectionBackgroundInactive": "grey10",
       "selectionInactiveBackground": "grey10",
 
-      "selectionForeground": "#ffffff",
+      "selectionForeground": "selectionForeground",
       "selectionForegroundInactive": "foreground",
       "selectionInactiveForeground": "foreground",
 
       "separatorColor": "border",
       "separatorForeground": "grey04",
 
-      "textBackground": "#cccccc",
+      "textBackground": "contentBackground",
       "textForeground": "foreground"
     },
 
@@ -113,25 +114,25 @@
     "Button": {
       "arc": 6,
       "border": "com.intellij.ide.ui.laf.darcula.ui.DarculaButtonPainter",
-      "darcula.disabledText.shadow": "#ffffff",
+      "darcula.disabledText.shadow": "white",
 
       "default": {
         "endBackground": "#4989CC",
         "endBorderColor": "#346DAD",
         "focusedBorderColor": "#A9C9F5",
-        "foreground": "selectionForeground",
+        "foreground": "white",
         "shadowColor": "#A6A6A600",
         "startBackground": "#528CC7",
         "startBorderColor": "#487EB8"
       },
       "disabledBorderColor": "border",
-      "endBackground": "#ffffff",
+      "endBackground": "white",
       "endBorderColor": "componentBorder",
       "focusedBorderColor": "#87afda",
       "paintShadow": true,
       "shadowColor": "#A6A6A600",
       "shadowWidth": 1,
-      "startBackground": "#ffffff",
+      "startBackground": "white",
       "startBorderColor": "componentBorder",
       "UI": "com.intellij.ide.ui.laf.darcula.ui.DarculaButtonUI"
     },
@@ -156,17 +157,17 @@
         "background": "grey18",
         "disabledIconColor": "grey05",
         "iconColor": "grey01",
-        "nonEditableBackground": "#ffffff"
+        "nonEditableBackground": "white"
       },
-      "background": "#FFFFFF",
+      "background": "contentBackground",
       "disabledBackground": "panel",
       "modifiedItemForeground": "#005ad9",
-      "nonEditableBackground": "#ffffff",
+      "nonEditableBackground": "white",
       "padding": "1,6,1,6",
       "UI": "com.intellij.ide.ui.laf.darcula.ui.DarculaComboBoxUI"
     },
 
-    "ComboBoxButton.background": "#FFFFFF",
+    "ComboBoxButton.background": "contentBackground",
 
     "CompletionPopup": {
       "matchForeground": "#2470b3",
@@ -192,13 +193,13 @@
 
     "Counter": {
       "background": "#9aa7b0cc",
-      "foreground": "#FFFFFF"
+      "foreground": "white"
     },
 
     "BookmarkMnemonicCurrent": {
       "background": "#389FD6",
       "borderColor": "#389FD6",
-      "foreground": "#FFFFFF"
+      "foreground": "white"
     },
 
     "Debugger.Variables": {
@@ -235,13 +236,13 @@
     },
 
     "EditorPane": {
-      "background": "#ffffff",
+      "background": "contentBackground",
       "UI": "com.intellij.ide.ui.laf.darcula.ui.DarculaEditorPaneUI"
     },
 
     "EditorTabs": {
       "tabInsets": "0,8,0,8",
-      "underlinedTabBackground": "#ffffff",
+      "underlinedTabBackground": "white",
       "borderColor": "border",
       "hoverBackground": "#00000019",
       "inactiveColoredFileBackground": "#00000011",
@@ -264,7 +265,7 @@
     "Focus.color": "#ff0000",
 
     "FormattedTextField": {
-      "background": "#ffffff",
+      "background": "contentBackground",
       "border": "com.intellij.ide.ui.laf.darcula.ui.DarculaTextBorder",
       "UI": "com.intellij.ide.ui.laf.darcula.ui.DarculaTextFieldUI"
     },
@@ -321,7 +322,7 @@
     },
 
     "List": {
-      "background": "#ffffff",
+      "background": "contentBackground",
       "hoverBackground": "#EDF5FC",
       "hoverInactiveBackground": "grey16",
       "focusCellHighlightBorder": "1,1,1,1",
@@ -364,7 +365,7 @@
     "NavBar.borderColor": "border",
 
     "NewClass": {
-      "SearchField.background": "#ffffff",
+      "SearchField.background": "contentBackground",
       "separatorWidth": 10
     },
 
@@ -429,13 +430,13 @@
     },
 
     "PasswordField": {
-      "background": "#ffffff",
+      "background": "contentBackground",
       "border": "com.intellij.ide.ui.laf.darcula.ui.DarculaTextBorder",
       "UI": "com.intellij.ide.ui.laf.darcula.ui.DarculaPasswordFieldUI"
     },
 
     "Plugins": {
-      "background": "#FFFFFF",
+      "background": "contentBackground",
       "eapTagBackground": "#F2D2CF",
       "hoverBackground": "#EDF6FE",
       "lightSelectionBackground": "#EDF6FE",
@@ -445,18 +446,18 @@
       "trialTagBackground": "#DBE8DD",
 
       "Button": {
-        "installBackground": "#FFFFFF",
+        "installBackground": "white",
         "installBorderColor": "#5D9B47",
         "installFillBackground": "#5D9B47",
-        "installFillForeground": "#FFFFFF",
+        "installFillForeground": "white",
         "installFocusedBackground": "#E1F6DA",
         "installForeground": "#5D9B47",
         "updateBackground": "#1D73BF",
         "updateBorderColor": "#1D73BF",
-        "updateForeground": "#FFFFFF"
+        "updateForeground": "white"
       },
 
-      "SearchField.background": "#FFFFFF",
+      "SearchField.background": "contentBackground",
       "SearchField.borderColor": "componentBorder",
 
       "SectionHeader.background": "grey17",
@@ -522,7 +523,7 @@
       "borderInsets": "2,2,2,0",
       "darcula.selectionDisabledColor": "#aaaaaa",
       "darcula.selectionDisabledShadowColor": "#00000020",
-      "darcula.selectionEnabledColor": "#ffffff",
+      "darcula.selectionEnabledColor": "white",
       "darcula.selectionEnabledShadowColor": "#00000040",
       "iconTextGap": 3,
       "UI": "com.intellij.ide.ui.laf.darcula.ui.DarculaRadioButtonUI"
@@ -574,7 +575,7 @@
     "SearchEverywhere": {
       "Advertiser.foreground": "infoPanelForeground",
       "List.separatorColor": "lightBorder",
-      "SearchField.background": "#ffffff",
+      "SearchField.background": "contentBackground",
       "SearchField.borderColor": "componentBorder",
       "SearchField.infoForeground": "infoPanelForeground",
       "Tab.selectedBackground": "grey12"
@@ -596,14 +597,14 @@
 
     "Slider": {
       "buttonBorderColor": "grey06",
-      "buttonColor": "#FFFFFF",
+      "buttonColor": "white",
       "trackColor": "grey08",
       "tickColor": "grey01",
       "UI": "com.intellij.ide.ui.laf.darcula.ui.DarculaSliderUI"
     },
 
     "SpeedSearch": {
-      "background": "#ffffff",
+      "background": "contentBackground",
       "borderColor": "grey02",
       "errorForeground": "#ff0000"
     },
@@ -668,9 +669,9 @@
     },
 
     "Table": {
-      "alternativeRowBackground": "#FFFFFF",
+      "alternativeRowBackground": "contentBackground",
       "ascendingSortIcon": "AllIcons.General.ArrowUp",
-      "background": "#ffffff",
+      "background": "contentBackground",
       "cellNoFocusBorder": "2,3,2,3",
       "descendingSortIcon": "AllIcons.General.ArrowDown",
       "focusCellHighlightBorder": "com.intellij.ide.ui.laf.darcula.DarculaTableSelectedCellHighlightBorder",
@@ -686,7 +687,7 @@
     },
 
     "TableHeader": {
-      "background": "#ffffff",
+      "background": "contentBackground",
       "bottomSeparatorColor": "lightBorder",
       "cellBorder": "com.intellij.ide.ui.laf.darcula.DarculaTableHeaderBorder",
       "height": {
@@ -698,8 +699,7 @@
     },
 
     "TextArea": {
-      "background": "#ffffff",
-      "selectionForeground": "#ffffff",
+      "background": "contentBackground",
       "UI": "com.intellij.ide.ui.laf.darcula.ui.DarculaTextAreaUI"
     },
 
@@ -707,7 +707,7 @@
       "border": "com.intellij.ide.ui.laf.darcula.ui.DarculaTextBorder",
       "UI": "com.intellij.ide.ui.laf.darcula.ui.DarculaTextFieldUI",
 
-      "background": "#ffffff",
+      "background": "contentBackground",
       "darcula.error.active": {
         "os.windows": "#f57d7d"
       },
@@ -735,7 +735,7 @@
       "offBackground": "panel",
       "offForeground": "grey03",
       "onBackground": "#4a9249",
-      "onForeground": "#ffffff"
+      "onForeground": "white"
     },
 
     "Toolbar.Floating.background": "#EDEDED",
@@ -795,14 +795,14 @@
       "rowHeight": 20,
       "UI": "com.intellij.ui.tree.ui.DefaultTreeUI",
 
-      "background": "#ffffff",
+      "background": "contentBackground",
       "errorForeground": "#ff0000",
       "hash": "#grey13",
       "hoverBackground": "#edf5fc",
       "hoverInactiveBackground": "grey16",
       "modifiedItemForeground": "#005ad9",
       "selectionBorderColor": "#3875d6",
-      "textBackground": "#ffffff"
+      "textBackground": "contentBackground"
     },
 
     "ValidationTooltip": {
@@ -848,7 +848,7 @@
     "window": "panel",
 
     "WelcomeScreen": {
-      "Details.background": "#FFFFFF",
+      "Details.background": "white",
       "Projects.actions.selectionBackground": "#3587E5",
       "Projects.actions.background": "#DCEDFE"
     },
