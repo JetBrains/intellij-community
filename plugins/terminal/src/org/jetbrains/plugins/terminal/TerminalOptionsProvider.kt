@@ -118,14 +118,18 @@ class TerminalOptionsProvider : PersistentStateComponent<TerminalOptionsProvider
   fun setEnvData(envData: EnvironmentVariablesData) {
   }
 
-  // replace with property delegate when Kotlin 1.4 arrives (KT-8658)
+  // Or replace with `var shellPath: String? by myState::myShellPath`, but `myState` must be `val` in this case
   var shellPath: String?
     get() = myState.myShellPath
     set(value) {
       myState.myShellPath = value
     }
 
-  var useOptionAsMetaKey: Boolean by myState::useOptionAsMetaKey
+  var useOptionAsMetaKey: Boolean
+    get() = myState.useOptionAsMetaKey
+    set(value) {
+      myState.useOptionAsMetaKey = value
+    }
 
   var cursorShape: TerminalUiSettingsManager.CursorShape
     get() = service<TerminalUiSettingsManager>().cursorShape
