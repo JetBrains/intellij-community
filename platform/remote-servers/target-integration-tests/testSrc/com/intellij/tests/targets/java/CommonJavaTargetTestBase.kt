@@ -263,7 +263,7 @@ abstract class CommonJavaTargetTestBase(protected val executionMode: ExecutionMo
         override fun isApplicableFor(configuration: RunConfigurationBase<*>): Boolean = true
 
         override fun <T : RunConfigurationBase<*>?> updateJavaParameters(
-          configuration: T,
+          configuration: T & Any,
           params: JavaParameters,
           runnerSettings: RunnerSettings?
         ) {

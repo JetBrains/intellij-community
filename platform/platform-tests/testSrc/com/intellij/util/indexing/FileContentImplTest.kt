@@ -82,7 +82,7 @@ class FileContentImplTest : HeavyPlatformTestCase() {
       CharsetToolkit.UTF_32LE_CHARSET,
       CharsetToolkit.UTF_32BE_CHARSET
     )) {
-      val bom = CharsetToolkit.getPossibleBom(charset)
+      val bom = CharsetToolkit.getPossibleBom(charset)!!
       val bytes = ArrayUtil.mergeArrays(bom, text.toByteArray (charset))
       val fileContent = createFileContent(bytes)
       assertFalse(fileContent.fileType.isBinary)

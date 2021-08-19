@@ -45,7 +45,7 @@ abstract class RunConfigurationJavaExtensionManagerTestCase : ExecutionTestCase(
 
   protected class UnApplicableConfigurationExtension : RunConfigurationExtension() {
     override fun isApplicableFor(configuration: RunConfigurationBase<*>): Boolean = false
-    override fun <T : RunConfigurationBase<*>?> updateJavaParameters(configuration: T,
+    override fun <T : RunConfigurationBase<*>?> updateJavaParameters(configuration: T & Any,
                                                                      params: JavaParameters,
                                                                      runnerSettings: RunnerSettings?) {
       fail("Should not be here")

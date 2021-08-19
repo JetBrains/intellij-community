@@ -350,7 +350,7 @@ class FileHistoryFilterer(private val logData: VcsLogData, private val logId: St
   }
 }
 
-private fun <K : Any?, V : Any?> MultiMap<K, V>.union(map: MultiMap<K, V>): MultiMap<K, V> {
+private fun <K : Any, V : Any?> MultiMap<K, V>.union(map: MultiMap<K, V>): MultiMap<K, V> {
   if (isEmpty) {
     return map
   }

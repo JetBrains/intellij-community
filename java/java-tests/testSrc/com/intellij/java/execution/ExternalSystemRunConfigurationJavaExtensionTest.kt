@@ -60,9 +60,9 @@ class ExternalSystemRunConfigurationJavaExtensionTest : RunConfigurationJavaExte
 
     class CantUpdateJavaParametersExtension : RunConfigurationExtension() {
       override fun isApplicableFor(configuration: RunConfigurationBase<*>): Boolean = true
-      override fun <T : RunConfigurationBase<*>?> updateJavaParameters(configuration: T,
-                                                                       params: JavaParameters,
-                                                                       runnerSettings: RunnerSettings?) {
+      override fun <T : RunConfigurationBase<*>> updateJavaParameters(configuration: T,
+                                                                      params: JavaParameters,
+                                                                      runnerSettings: RunnerSettings?) {
         throw FakeExecutionException()
       }
 
