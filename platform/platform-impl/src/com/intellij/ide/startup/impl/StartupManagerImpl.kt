@@ -11,6 +11,7 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.ReadAction
+import com.intellij.openapi.diagnostic.ControlFlowException
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.ExtensionPointListener
@@ -279,10 +280,8 @@ open class StartupManagerImpl(private val project: Project) : StartupManagerEx()
     try {
       runStartupActivity(activity)
     }
-    catch (e: ProcessCanceledException) {
-      throw e
-    }
     catch (e: Throwable) {
+      if (e is ControlFlowException) throw e
       LOG.error(e)
     }
     finally {

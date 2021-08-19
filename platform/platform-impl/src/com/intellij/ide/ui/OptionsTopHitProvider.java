@@ -10,6 +10,7 @@ import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PreloadingActivity;
+import com.intellij.openapi.diagnostic.ControlFlowException;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionNotApplicableException;
 import com.intellij.openapi.extensions.ExtensionPointName;
@@ -201,10 +202,8 @@ public abstract class OptionsTopHitProvider implements OptionsSearchTopHitProvid
           try {
             getCachedOptions(provider, project, pluginDescriptor);
           }
-          catch (ProcessCanceledException e) {
-            throw e;
-          }
           catch (Exception e) {
+            if (e instanceof ControlFlowException) throw e;
             Logger.getInstance(OptionsTopHitProvider.class).error(e);
           }
         });
