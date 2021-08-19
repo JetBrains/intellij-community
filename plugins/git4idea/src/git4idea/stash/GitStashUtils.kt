@@ -43,6 +43,7 @@ import git4idea.history.GitLogParser.GitLogOption
 import git4idea.history.GitLogUtil
 import git4idea.i18n.GitBundle
 import git4idea.merge.GitConflictResolver
+import git4idea.repo.GitRepositoryManager
 import git4idea.ui.StashInfo
 import git4idea.util.GitUIUtil
 import git4idea.util.GitUntrackedFilesHelper
@@ -168,6 +169,7 @@ object GitStashOperations {
         val result = Git.getInstance().runCommand { handler }
 
         if (hash != null) refreshUnstashedChanges(project, hash, root)
+        GitRepositoryManager.getInstance(project).getRepositoryForFileQuick(root)?.repositoryFiles?.refreshIndexFile()
 
         if (conflictDetector.hasHappened()) {
           val conflictsResolved = conflictResolver.merge()
