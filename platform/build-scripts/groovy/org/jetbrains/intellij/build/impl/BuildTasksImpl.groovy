@@ -686,7 +686,7 @@ idea.fatal.error.notification=disabled
     Files.createDirectories(destProjectorLibDir)
 
     def libNamesToCopy = new ArrayList<String>()
-    libNamesToCopy.addAll("projector-server", "kotlinx-serialization-protobuf", "Java-WebSocket", "projector-common", "projector-common-jvm", "projector-util-logging-jvm")
+    libNamesToCopy.addAll("projector-server", "projector-server-core", "kotlinx-serialization-protobuf", "Java-WebSocket", "projector-common", "projector-common-jvm", "projector-util-logging-jvm")
 
     ArrayList<File> projectorLibsToCopy = new ArrayList<>()
     ArrayList<String> failedLibs = new ArrayList<>()
