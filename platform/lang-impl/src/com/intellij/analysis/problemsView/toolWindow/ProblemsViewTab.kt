@@ -5,7 +5,8 @@ import org.jetbrains.annotations.NonNls
 
 interface ProblemsViewTab {
 
-  fun getName(count: Int): @NlsContexts.TabTitle String
+  @NlsContexts.TabTitle
+  fun getName(count: Int): String
 
   @NonNls
   fun getTabId(): String
