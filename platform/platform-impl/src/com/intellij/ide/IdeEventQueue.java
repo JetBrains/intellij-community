@@ -702,10 +702,6 @@ public final class IdeEventQueue extends EventQueue {
 
     myEventCount++;
 
-    if (e instanceof WindowEvent) {
-      processAppActivationEvent((WindowEvent)e);
-    }
-
     myKeyboardBusy = e instanceof KeyEvent || myKeyboardEventsPosted.get() > myKeyboardEventsDispatched.get();
 
     if (e instanceof KeyEvent) {
@@ -730,6 +726,10 @@ public final class IdeEventQueue extends EventQueue {
         myKeyEventDispatcher.setState(KeyState.STATE_INIT);
       }
       return;
+    }
+
+    if (e instanceof WindowEvent) {
+      processAppActivationEvent((WindowEvent)e);
     }
 
     if (dispatchByCustomDispatchers(e)) {
