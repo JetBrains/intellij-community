@@ -31,7 +31,7 @@
     "selectionForeground": "#FFFFFF",
     "linkForeground": "#2470B3",
 
-    "border": "#grey09",
+    "border": "grey09",
     "componentBorder": "grey08",
     "lightBorder": "grey11",
 
