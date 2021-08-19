@@ -3,7 +3,9 @@ package com.intellij.ui.dsl.impl
 
 import com.intellij.ui.dsl.RowsRange
 import com.intellij.ui.layout.*
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 internal class RowsRangeImpl(val panel: PanelImpl, val startIndex: Int) : RowsRange {
 
   var endIndex = 0

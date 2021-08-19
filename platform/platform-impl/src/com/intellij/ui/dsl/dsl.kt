@@ -4,6 +4,7 @@ package com.intellij.ui.dsl
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.ui.dsl.gridLayout.JBGridLayout
 import com.intellij.ui.dsl.impl.DialogPanelConfig
+import com.intellij.ui.dsl.impl.PanelBuilder
 import com.intellij.ui.dsl.impl.PanelImpl
 import org.jetbrains.annotations.ApiStatus
 
@@ -26,7 +27,8 @@ fun panel(init: Panel.() -> Unit): DialogPanel {
 
   val layout = JBGridLayout()
   val result = DialogPanel(layout = layout)
-  panel.build(result, layout.rootGrid)
+  val builder = PanelBuilder(panel.rows, dialogPanelConfig, result, layout.rootGrid)
+  builder.build()
   initPanel(dialogPanelConfig, result)
   return result
 }

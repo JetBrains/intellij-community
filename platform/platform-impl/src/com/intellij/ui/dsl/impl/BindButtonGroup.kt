@@ -2,8 +2,10 @@
 package com.intellij.ui.dsl.impl
 
 import com.intellij.ui.layout.*
+import org.jetbrains.annotations.ApiStatus
 import javax.swing.ButtonGroup
 
+@ApiStatus.Internal
 internal class BindButtonGroup<T>(val binding: PropertyBinding<T>, val type: Class<T>) : ButtonGroup() {
 
   fun set(value: Any) {

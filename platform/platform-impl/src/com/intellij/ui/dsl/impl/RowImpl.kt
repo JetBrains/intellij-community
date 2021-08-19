@@ -32,7 +32,7 @@ internal enum class BottomGap {
   BUTTON_GROUP_HEADER
 }
 
-@ApiStatus.Experimental
+@ApiStatus.Internal
 internal class RowImpl(private val dialogPanelConfig: DialogPanelConfig,
                        panelContext: PanelContext,
                        val label: JLabel? = null) : Row {

@@ -10,8 +10,8 @@ import com.intellij.ui.dsl.gridLayout.VerticalAlign
 import org.jetbrains.annotations.ApiStatus
 import javax.swing.JComponent
 
-@ApiStatus.Experimental
-internal sealed class CellBaseImpl<T : CellBase<T>>(private val dialogPanelConfig: DialogPanelConfig) : CellBase<T> {
+@ApiStatus.Internal
+internal sealed class CellBaseImpl<T : CellBase<T>> : CellBase<T> {
 
   var horizontalAlign = HorizontalAlign.LEFT
     private set

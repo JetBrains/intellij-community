@@ -8,7 +8,7 @@ import com.intellij.util.ui.JBUI
 import org.jetbrains.annotations.ApiStatus
 import javax.swing.JComponent
 
-@ApiStatus.Experimental
+@ApiStatus.Internal
 internal class DialogPanelConfig {
 
   val spacing = createIntelliJSpacingConfiguration()

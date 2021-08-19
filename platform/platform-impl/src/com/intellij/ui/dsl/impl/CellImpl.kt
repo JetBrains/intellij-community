@@ -13,11 +13,11 @@ import com.intellij.util.SmartList
 import org.jetbrains.annotations.ApiStatus
 import javax.swing.JComponent
 
-@ApiStatus.Experimental
+@ApiStatus.Internal
 internal class CellImpl<T : JComponent>(
   private val dialogPanelConfig: DialogPanelConfig,
   component: T,
-  val viewComponent: JComponent = component) : CellBaseImpl<Cell<T>>(dialogPanelConfig), Cell<T> {
+  val viewComponent: JComponent = component) : CellBaseImpl<Cell<T>>(), Cell<T> {
 
   override var component: T = component
     private set
