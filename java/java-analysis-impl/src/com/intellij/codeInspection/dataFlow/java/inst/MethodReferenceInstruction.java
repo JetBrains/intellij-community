@@ -104,8 +104,9 @@ public class MethodReferenceInstruction extends ExpressionPushingInstruction {
       else {
         int idx = i - ((isStatic || instanceBound) ? 0 : 1);
         if (idx >= arguments.length) break;
-        if (!(parameters[idx].getType() instanceof PsiEllipsisType)) {
-          arguments[idx] = value;
+        PsiType parameterType = parameters[idx].getType();
+        if (!(parameterType instanceof PsiEllipsisType)) {
+          arguments[idx] = DfaUtil.boxUnbox(value, parameterType);
         }
       }
     }
