@@ -62,8 +62,6 @@ val STATISTICS_INFO_CONTEXT_KEY = Key<String>("STATISTICS_INFO_CONTEXT_KEY")
 
 val NOT_IMPORTED_KEY = Key<Unit>("NOT_IMPORTED_KEY")
 
-fun LookupElement.suppressAutoInsertion() = AutoCompletionPolicy.NEVER_AUTOCOMPLETE.applyPolicy(this)
-
 fun LookupElement.withReceiverCast(): LookupElement = LookupElementDecorator.withDelegateInsertHandler(this) { context, element ->
     element.handleInsert(context)
     CastReceiverInsertHandler.postHandleInsert(context, element)

@@ -2,6 +2,7 @@
 
 package org.jetbrains.kotlin.idea.completion
 
+import com.intellij.codeInsight.lookup.AutoCompletionPolicy
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupElementBuilder
 import com.intellij.psi.PsiElement
@@ -150,6 +151,7 @@ private tailrec fun findReturnExpression(expression: PsiElement?): KtReturnExpre
     }
 
 var LookupElement.priority by UserDataProperty(Key<ItemPriority>("ITEM_PRIORITY_KEY"))
+fun LookupElement.suppressAutoInsertion() = AutoCompletionPolicy.NEVER_AUTOCOMPLETE.applyPolicy(this)
 
 fun referenceScope(declaration: KtNamedDeclaration): KtElement? = when (val parent = declaration.parent) {
     is KtParameterList -> parent.parent as KtElement
