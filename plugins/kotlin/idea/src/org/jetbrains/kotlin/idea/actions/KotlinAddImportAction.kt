@@ -25,9 +25,9 @@ import org.jetbrains.kotlin.idea.KotlinBundle
 import org.jetbrains.kotlin.idea.KotlinDescriptorIconProvider
 import org.jetbrains.kotlin.idea.caches.resolve.resolveImportReference
 import org.jetbrains.kotlin.idea.codeInsight.DescriptorToSourceUtilsIde
+import org.jetbrains.kotlin.idea.completion.ImportableFqNameClassifier
 import org.jetbrains.kotlin.idea.completion.KotlinStatisticsInfo
 import org.jetbrains.kotlin.idea.completion.isDeprecatedAtCallSite
-import org.jetbrains.kotlin.idea.core.ImportableFqNameClassifier
 import org.jetbrains.kotlin.idea.core.util.runSynchronouslyWithProgress
 import org.jetbrains.kotlin.idea.imports.importableFqName
 import org.jetbrains.kotlin.idea.project.languageVersionSettings
@@ -47,6 +47,7 @@ import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtSimpleNameExpression
 import org.jetbrains.kotlin.psi.psiUtil.endOffset
 import org.jetbrains.kotlin.psi.psiUtil.startOffset
+import org.jetbrains.kotlin.resolve.ImportPath
 import java.awt.BorderLayout
 import javax.swing.Icon
 import javax.swing.JPanel
@@ -291,7 +292,9 @@ internal interface ComparablePriority : Comparable<ComparablePriority>
 internal data class VariantWithPriority(val variant: AutoImportVariant, val priority: ComparablePriority)
 
 private class Prioritizer(private val file: KtFile, private val compareNames: Boolean = true) {
-    private val classifier = ImportableFqNameClassifier(file)
+    private val classifier = ImportableFqNameClassifier(file){
+        ImportInsertHelper.getInstance(file.project).isImportedWithDefault(ImportPath(it, false), file)
+    }
     private val statsManager = StatisticsManager.getInstance()
     private val proximityLocation = ProximityLocation(file, file.module)
 

@@ -1,15 +1,15 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+/*
+ * Copyright 2010-2021 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
+ */
 
-package org.jetbrains.kotlin.idea.core
+package org.jetbrains.kotlin.idea.completion
 
 import org.jetbrains.kotlin.idea.refactoring.fqName.isJavaClassNotToBeUsedInKotlin
-import org.jetbrains.kotlin.idea.util.ImportInsertHelper
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.KtFile
-import org.jetbrains.kotlin.resolve.ImportPath
-import java.util.*
 
-class ImportableFqNameClassifier(private val file: KtFile) {
+class ImportableFqNameClassifier(private val file: KtFile, private val isImportedByDefault: (FqName) -> Boolean) {
     private val preciseImports = HashSet<FqName>()
     private val preciseImportPackages = HashSet<FqName>()
     private val allUnderImports = HashSet<FqName>()
@@ -43,8 +43,6 @@ class ImportableFqNameClassifier(private val file: KtFile) {
     }
 
     fun classify(fqName: FqName, isPackage: Boolean): Classification {
-        val importPath = ImportPath(fqName, false)
-
         if (isPackage) {
             return when {
                 isImportedWithPreciseImport(fqName) -> Classification.preciseImport
@@ -58,7 +56,7 @@ class ImportableFqNameClassifier(private val file: KtFile) {
 
             fqName.parent() == file.packageFqName -> Classification.fromCurrentPackage
 
-            ImportInsertHelper.getInstance(file.project).isImportedWithDefault(importPath, file) -> Classification.defaultImport
+            isImportedByDefault(fqName) -> Classification.defaultImport
 
             isImportedWithPreciseImport(fqName) -> Classification.preciseImport
 

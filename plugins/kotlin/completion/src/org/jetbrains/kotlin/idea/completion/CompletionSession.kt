@@ -31,6 +31,7 @@ import org.jetbrains.kotlin.platform.isMultiPlatform
 import org.jetbrains.kotlin.platform.jvm.isJvm
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.resolve.BindingContext
+import org.jetbrains.kotlin.resolve.ImportPath
 import org.jetbrains.kotlin.resolve.descriptorUtil.module
 import org.jetbrains.kotlin.resolve.scopes.DescriptorKindFilter
 import org.jetbrains.kotlin.resolve.scopes.receivers.ExpressionReceiver
@@ -248,7 +249,9 @@ abstract class CompletionSession(
 
     protected abstract val expectedInfos: Collection<ExpectedInfo>
 
-    protected val importableFqNameClassifier = ImportableFqNameClassifier(file)
+    protected val importableFqNameClassifier = ImportableFqNameClassifier(file) {
+        ImportInsertHelper.getInstance(file.project).isImportedWithDefault(ImportPath(it, false), file)
+    }
 
     @Suppress("InvalidBundleOrProperty") //workaround to avoid false-positive: KTIJ-19892
     protected open fun createSorter(): CompletionSorter {
