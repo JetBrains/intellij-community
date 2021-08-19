@@ -3,6 +3,7 @@ package org.jetbrains.plugins.notebooks.editor
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.EditorKind
+import com.intellij.openapi.editor.LogicalPosition
 import com.intellij.openapi.editor.event.DocumentListener
 import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.util.TextRange
@@ -136,6 +137,12 @@ fun MutableList<IntRange>.mergeAndJoinIntersections(other: List<IntRange>) {
       }
     }
   }
+}
+
+fun isLineVisible(editor: EditorImpl, line: Int): Boolean {
+  val lineY = editor.logicalPositionToXY(LogicalPosition(line, 0)).y
+  val viewArea = editor.scrollingModel.visibleAreaOnScrollingFinished
+  return viewArea.y <= lineY && lineY <= viewArea.y + viewArea.height
 }
 
 class SwingClientProperty<T, R: T?>(name: String) {
