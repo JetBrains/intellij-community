@@ -153,7 +153,7 @@
 
     "ComboBox": {
       "ArrowButton": {
-        "background": "#fafafa",
+        "background": "grey18",
         "disabledIconColor": "grey05",
         "iconColor": "grey01",
         "nonEditableBackground": "#ffffff"
