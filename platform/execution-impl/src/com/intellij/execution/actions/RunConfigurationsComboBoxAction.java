@@ -157,6 +157,10 @@ public class RunConfigurationsComboBoxAction extends ComboBoxAction implements D
     );
   }
 
+  protected Boolean addEditRunConfigurationItem() {
+    return true;
+  }
+
   @Override
   @NotNull
   protected DefaultActionGroup createPopupActionGroup(final JComponent button) {
@@ -165,8 +169,9 @@ public class RunConfigurationsComboBoxAction extends ComboBoxAction implements D
     if (project == null) {
       return allActionsGroup;
     }
-
-    allActionsGroup.add(ActionManager.getInstance().getAction(IdeActions.ACTION_EDIT_RUN_CONFIGURATIONS));
+    if(addEditRunConfigurationItem()) {
+      allActionsGroup.add(ActionManager.getInstance().getAction(IdeActions.ACTION_EDIT_RUN_CONFIGURATIONS));
+    }
     allActionsGroup.add(new SaveTemporaryAction());
     allActionsGroup.addSeparator();
 

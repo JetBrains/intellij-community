@@ -4,9 +4,7 @@ package com.intellij.execution.runToolbar
 import com.intellij.execution.Executor
 import com.intellij.execution.RunManagerEx
 import com.intellij.execution.runners.ExecutionEnvironment
-import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.actionSystem.DefaultActionGroup
-import com.intellij.openapi.actionSystem.Presentation
+import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ex.ComboBoxAction
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.wm.ToolWindowManager
@@ -77,6 +75,16 @@ class RunToolbarProcessStartedAction : ComboBoxAction(), RTRunConfiguration {
             it.show()
           }
         }
+      }
+
+
+      override fun doRightClick() {
+        RunToolbarRunConfigurationsAction.doRightClick(dataContext)
+      }
+
+      override fun doShiftClick() {
+        dataContext.editConfiguration()
+        doClick()
       }
 
       override fun isArrowVisible(presentation: Presentation): Boolean {

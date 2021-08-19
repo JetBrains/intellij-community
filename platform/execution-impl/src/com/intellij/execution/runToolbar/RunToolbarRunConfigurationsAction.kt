@@ -3,18 +3,37 @@ package com.intellij.execution.runToolbar
 
 import com.intellij.execution.*
 import com.intellij.execution.actions.RunConfigurationsComboBoxAction
-import com.intellij.openapi.actionSystem.AnAction
-import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.actionSystem.Presentation
+import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.ui.JBUI
 import java.awt.Dimension
 import java.awt.Insets
 import javax.swing.JComponent
+import javax.swing.SwingUtilities
 
 class RunToolbarRunConfigurationsAction : RunConfigurationsComboBoxAction(), RTRunConfiguration {
+ companion object {
+
+   fun doRightClick(dataContext: DataContext) {
+     ActionManager.getInstance().getAction("RunToolbarSlotContextMenuGroup")?.let {
+       if(it is ActionGroup) {
+         SwingUtilities.invokeLater {
+           val popup = JBPopupFactory.getInstance().createActionGroupPopup(
+             null, it, dataContext, false, false, false, null, 5, null)
+
+           popup.showInBestPositionFor(dataContext)
+         }
+       }
+     }
+   }
+ }
+
+  override fun addEditRunConfigurationItem(): Boolean {
+    return false
+  }
 
   override fun createFinalAction(configuration: RunnerAndConfigurationSettings, project: Project): AnAction {
     return RunToolbarSelectConfigAction(configuration, project)
@@ -41,6 +60,8 @@ class RunToolbarRunConfigurationsAction : RunConfigurationsComboBoxAction(), RTR
 
   override fun createCustomComponent(presentation: Presentation, place: String): JComponent {
     return object : RunConfigurationsComboBoxButton(presentation) {
+
+
       override fun getPreferredSize(): Dimension? {
         val d = super.getPreferredSize()
         d.width = FixWidthSegmentedActionToolbarComponent.RUN_CONFIG_WIDTH
@@ -55,6 +76,14 @@ class RunToolbarRunConfigurationsAction : RunConfigurationsComboBoxAction(), RTR
         return JBUI.insets(0, 8, 0, 8)
       }
 
+      override fun doRightClick() {
+        doRightClick(dataContext)
+      }
+
+      override fun doShiftClick() {
+        dataContext.editConfiguration()
+        doClick()
+      }
     }
   }
 

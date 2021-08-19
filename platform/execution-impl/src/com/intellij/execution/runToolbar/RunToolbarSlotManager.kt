@@ -63,6 +63,10 @@ class RunToolbarSlotManager(val project: Project) {
       return this == SINGLE_MAIN
     }
 
+    fun isSinglePlain(): Boolean {
+      return this == SINGLE_PLAIN
+    }
+
     fun isMultipleProcesses(): Boolean {
       return this == MULTIPLE || this == MULTIPLE_WITH_MAIN
     }
@@ -101,7 +105,7 @@ class RunToolbarSlotManager(val project: Project) {
     slotListeners.forEach { it.rebuildPopup() }
   }
 
-  internal val mainSlotData = SlotDate()
+  internal var mainSlotData = SlotDate()
 
   val activeProcesses = ActiveProcesses()
   private val dataIds = mutableListOf<String>()
@@ -218,6 +222,19 @@ class RunToolbarSlotManager(val project: Project) {
     } else null
   }
 
+  internal fun moveToTop(id: String) {
+    if(mainSlotData.id == id) return
+
+    slotsData[id]?.let { newMain ->
+      val oldMain = mainSlotData
+      mainSlotData = newMain
+      dataIds.remove(id)
+      dataIds.add(0, oldMain.id)
+    }
+
+    updateState()
+  }
+
   internal fun removeSlot(id: String) {
     val index = dataIds.indexOf(id)
 
@@ -268,6 +285,7 @@ class RunToolbarSlotManager(val project: Project) {
 }
 
 class ActiveProcesses {
+  internal var activeSlots = mutableListOf<SlotDate>()
   val processes = mutableMapOf<RunToolbarProcess, MutableList<ExecutionEnvironment>>()
   private var activeCount = 0
 
@@ -291,7 +309,9 @@ class ActiveProcesses {
 
   internal fun updateActiveProcesses(slotsData: MutableMap<String, SlotDate>) {
     processes.clear()
-    slotsData.values.mapNotNull { it.environment }.forEach{ environment ->
+    val list = slotsData.values.filter{it.environment != null}.toMutableList()
+    activeSlots = list
+    list.mapNotNull { it.environment }.forEach{ environment ->
       environment.getRunToolbarProcess()?.let {
         processes.computeIfAbsent(it, Function { mutableListOf() }).add(environment)
       }

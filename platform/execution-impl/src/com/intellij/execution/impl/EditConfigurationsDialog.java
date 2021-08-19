@@ -17,11 +17,19 @@ public class EditConfigurationsDialog extends SingleConfigurableEditor implement
   protected Executor myExecutor;
 
   public EditConfigurationsDialog(@NotNull Project project) {
-    this(project, null);
+    this(project, RunConfigurableKt.createRunConfigurationConfigurable(project), null);
+  }
+
+  public EditConfigurationsDialog(@NotNull Project project, RunConfigurable configurable) {
+    this(project, configurable, null);
   }
 
   public EditConfigurationsDialog(@NotNull Project project, @Nullable ConfigurationFactory factory) {
-    super(project, RunConfigurableKt.createRunConfigurationConfigurable(project), "#com.intellij.execution.impl.EditConfigurationsDialog", IdeModalityType.IDE);
+    this(project, RunConfigurableKt.createRunConfigurationConfigurable(project), factory);
+  }
+
+  public EditConfigurationsDialog(@NotNull Project project, RunConfigurable runConfigurable, @Nullable ConfigurationFactory factory) {
+    super(project, runConfigurable, "#com.intellij.execution.impl.EditConfigurationsDialog", IdeModalityType.IDE);
 
     ((RunConfigurable)getConfigurable()).setRunDialog(this);
     setTitle(ExecutionBundle.message("run.debug.dialog.title"));

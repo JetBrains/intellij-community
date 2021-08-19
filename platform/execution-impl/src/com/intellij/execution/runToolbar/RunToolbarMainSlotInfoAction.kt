@@ -2,6 +2,7 @@
 package com.intellij.execution.runToolbar
 
 import com.intellij.icons.AllIcons
+import com.intellij.openapi.actionSystem.ActionToolbar
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.Presentation
 import com.intellij.openapi.actionSystem.impl.segmentedActionBar.SegmentedCustomAction
@@ -97,8 +98,15 @@ class RunToolbarMainSlotInfoAction : SegmentedCustomAction(), RTRunConfiguration
               doClick()
             }
           }
+          else if (SwingUtilities.isRightMouseButton(e)) {
+            doRightClick()
+          }
         }
       })
+    }
+
+    fun doRightClick() {
+      RunToolbarRunConfigurationsAction.doRightClick(ActionToolbar.getDataContextFor(this))
     }
 
     private fun doClick() {

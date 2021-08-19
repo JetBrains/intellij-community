@@ -162,13 +162,17 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
       addMouseListener(new MouseAdapter() {
         @Override
         public void mousePressed(final MouseEvent e) {
-          if (SwingUtilities.isLeftMouseButton(e) && performClickOnMousePress()) {
-            e.consume();
-            if (e.isShiftDown()) {
-              doShiftClick();
-            }
-            else {
-              doClick();
+          if (performClickOnMousePress()) {
+            if (SwingUtilities.isLeftMouseButton(e)) {
+              e.consume();
+              if (e.isShiftDown()) {
+                doShiftClick();
+              }
+              else {
+                doClick();
+              }
+            } else if(SwingUtilities.isRightMouseButton(e)){
+              doRightClick();
             }
           }
         }
@@ -397,6 +401,8 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
     protected void doShiftClick() {
       doClick();
     }
+
+    protected void doRightClick() {};
   }
 
   protected Condition<AnAction> getPreselectCondition() { return null; }

@@ -4,6 +4,7 @@ package com.intellij.execution.runToolbar
 import com.intellij.execution.runToolbar.RunToolbarProcessStartedAction.Companion.PROP_ACTIVE_ENVIRONMENT
 import com.intellij.execution.runToolbar.RunToolbarProcessStartedAction.Companion.updatePresentation
 import com.intellij.icons.AllIcons
+import com.intellij.openapi.actionSystem.ActionToolbar
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.Presentation
 import com.intellij.openapi.actionSystem.impl.segmentedActionBar.SegmentedCustomAction
@@ -95,9 +96,16 @@ private class RunToolbarMainSlotActive(presentation: Presentation) : SegmentedCu
               doClick()
             }
           }
+          else if (SwingUtilities.isRightMouseButton(e)) {
+            doRightClick()
+          }
         }
       })
     }
+
+  fun doRightClick() {
+    RunToolbarRunConfigurationsAction.doRightClick(ActionToolbar.getDataContextFor(this))
+  }
 
   private fun doClick() {
     val list = mutableListOf<PopupControllerComponentListener>()
@@ -106,6 +114,7 @@ private class RunToolbarMainSlotActive(presentation: Presentation) : SegmentedCu
   }
 
   private fun doShiftClick() {
+    ActionToolbar.getDataContextFor(this).editConfiguration()
   }
 
   private val listeners = mutableListOf<PopupControllerComponentListener>()
