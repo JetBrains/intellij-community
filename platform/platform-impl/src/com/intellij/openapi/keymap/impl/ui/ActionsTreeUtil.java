@@ -694,6 +694,7 @@ public final class ActionsTreeUtil {
     return KeyMapBundle.message("main.toolbar.title");
   }
 
+  @Nls
   public static String getExperimentalToolbar(){
     return KeyMapBundle.message("experimental.toolbar.title");
   }

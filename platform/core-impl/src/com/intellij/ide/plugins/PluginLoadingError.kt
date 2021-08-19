@@ -7,16 +7,17 @@ import org.jetbrains.annotations.NonNls
 import java.util.function.Supplier
 
 class PluginLoadingError internal constructor(val plugin: IdeaPluginDescriptor,
-                                              private val detailedMessageSupplier: Supplier<String>?,
-                                              private val shortMessageSupplier: Supplier<String>,
+                                              private val detailedMessageSupplier: Supplier<@NlsContexts.DetailedDescription String>?,
+                                              private val shortMessageSupplier: Supplier<@NlsContexts.Label String>,
                                               val isNotifyUser: Boolean,
                                               @JvmField val disabledDependency: PluginId? = null) {
   internal constructor(plugin: IdeaPluginDescriptor,
-                       detailedMessageSupplier: Supplier<String>?,
-                       shortMessageSupplier: Supplier<String>) : this(plugin = plugin,
-                                                                      detailedMessageSupplier = detailedMessageSupplier,
-                                                                      shortMessageSupplier = shortMessageSupplier,
-                                                                      isNotifyUser = true)
+                       detailedMessageSupplier: Supplier<@NlsContexts.DetailedDescription String>?,
+                       shortMessageSupplier: Supplier<@NlsContexts.Label String>) :
+    this(plugin = plugin,
+      detailedMessageSupplier = detailedMessageSupplier,
+      shortMessageSupplier = shortMessageSupplier,
+      isNotifyUser = true)
 
   @get:NlsContexts.DetailedDescription
   val detailedMessage: String
