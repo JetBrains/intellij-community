@@ -17,7 +17,6 @@ import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.idea.KotlinIcons
 import org.jetbrains.kotlin.idea.completion.handlers.CastReceiverInsertHandler
 import org.jetbrains.kotlin.idea.completion.smart.isProbableKeyword
-import org.jetbrains.kotlin.idea.core.ImportableFqNameClassifier
 import org.jetbrains.kotlin.idea.core.ShortenReferences
 import org.jetbrains.kotlin.idea.imports.importableFqName
 import org.jetbrains.kotlin.idea.resolve.ResolutionFacade
@@ -63,8 +62,6 @@ fun LookupElement.assignPriority(priority: ItemPriority): LookupElement {
 val STATISTICS_INFO_CONTEXT_KEY = Key<String>("STATISTICS_INFO_CONTEXT_KEY")
 
 val NOT_IMPORTED_KEY = Key<Unit>("NOT_IMPORTED_KEY")
-
-fun LookupElement.suppressAutoInsertion() = AutoCompletionPolicy.NEVER_AUTOCOMPLETE.applyPolicy(this)
 
 fun LookupElement.withReceiverCast(): LookupElement {
     return object : LookupElementDecorator<LookupElement>(this) {
