@@ -563,6 +563,7 @@ class CallableBuilder(val config: CallableBuilderConfiguration) {
                     }
                     CallableKind.PROPERTY -> {
                         val isVar = (callableInfo as PropertyInfo).writable
+                        val const = if (callableInfo.isConst) "const " else ""
                         val valVar = if (isVar) "var" else "val"
                         val accessors = if (isExtension && !isExpectClassMember) {
                             buildString {
@@ -572,7 +573,7 @@ class CallableBuilder(val config: CallableBuilderConfiguration) {
                                 }
                             }
                         } else ""
-                        psiFactory.createProperty("$modifiers$valVar<> $header$accessors")
+                        psiFactory.createProperty("$modifiers$const$valVar<> $header$accessors")
                     }
                 }
 

@@ -28,7 +28,7 @@ class AddFieldActionCreateCallableFromUsageFix(
             val targetContainer = element ?: return@run null
             val resolutionFacade = targetContainer.getResolutionFacade()
             val typeInfo = request.fieldType.toKotlinTypeInfo(resolutionFacade)
-            val writable = JvmModifier.FINAL !in request.modifiers
+            val writable = JvmModifier.FINAL !in request.modifiers && !request.isConstant
             val initializer = if (!lateinit && request.initializer is KtExpression) request.initializer as KtExpression else null
             PropertyInfo(
                 request.fieldName,
@@ -37,6 +37,7 @@ class AddFieldActionCreateCallableFromUsageFix(
                 writable,
                 listOf(targetContainer),
                 isLateinitPreferred = false, // Dont set it to `lateinit` because it works via templates that brings issues in batch field adding
+                isConst = request.isConstant,
                 isForCompanion = JvmModifier.STATIC in request.modifiers,
                 modifierList = KotlinElementActionsFactory.ModifierBuilder(targetContainer, allowJvmStatic = false).apply {
                     addJvmModifiers(request.modifiers)
