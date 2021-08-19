@@ -12,12 +12,14 @@ import com.intellij.openapi.editor.event.EditorMouseEvent
 import com.intellij.openapi.editor.event.EditorMouseListener
 import com.intellij.openapi.editor.event.EditorMouseMotionListener
 import com.intellij.ui.LightweightHint
+import org.jetbrains.annotations.ApiStatus
 import java.awt.Point
 import java.awt.event.KeyAdapter
 import java.awt.event.KeyEvent
 import kotlin.properties.Delegates
 
-internal class FloatingToolbar(val editor: Editor) : Disposable {
+@ApiStatus.Internal
+class FloatingToolbar(val editor: Editor, private val actionGroupId: String) : Disposable {
   companion object {
     private const val verticalGap = 2
   }
@@ -44,7 +46,7 @@ internal class FloatingToolbar(val editor: Editor) : Disposable {
   fun showIfHidden() {
     if (hint != null) return
 
-    val leftGroup = ActionManager.getInstance().getAction("Markdown.Toolbar.Floating") as ActionGroup
+    val leftGroup = ActionManager.getInstance().getAction(actionGroupId) as ActionGroup
     val toolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.EDITOR_TOOLBAR, leftGroup, true)
     toolbar.setTargetComponent(editor.contentComponent)
     toolbar.setReservePlaceAutoPopupIcon(false)
