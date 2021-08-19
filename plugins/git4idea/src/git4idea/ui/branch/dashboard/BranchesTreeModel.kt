@@ -7,6 +7,7 @@ import com.intellij.dvcs.branch.GroupingKey.GROUPING_BY_DIRECTORY
 import com.intellij.dvcs.branch.GroupingKey.GROUPING_BY_REPOSITORY
 import com.intellij.openapi.actionSystem.DataKey
 import com.intellij.openapi.components.service
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.util.ThreeState
 import git4idea.branch.GitBranchType
 import git4idea.i18n.GitBundle.message
@@ -24,7 +25,7 @@ internal val GIT_BRANCH_FILTERS = DataKey.create<List<String>>("GitBranchFilterK
 
 internal data class RemoteInfo(val remoteName: String, val repository: GitRepository?)
 
-internal data class BranchInfo(val branchName: String,
+internal data class BranchInfo(val branchName: @NlsSafe String,
                                val isLocal: Boolean,
                                val isCurrent: Boolean,
                                var isFavorite: Boolean,
@@ -51,7 +52,7 @@ internal enum class IncomingOutgoing {
 internal data class BranchNodeDescriptor(val type: NodeType,
                                          val branchInfo: BranchInfo? = null,
                                          val repository: GitRepository? = null,
-                                         val displayName: String? = resolveDisplayName(branchInfo, repository),
+                                         val displayName: @Nls String? = resolveDisplayName(branchInfo, repository),
                                          val parent: BranchNodeDescriptor? = null) {
   override fun toString(): String {
     val suffix = branchInfo?.branchName ?: displayName
@@ -75,13 +76,13 @@ internal enum class NodeType {
 internal class BranchTreeNode(nodeDescriptor: BranchNodeDescriptor) : DefaultMutableTreeNode(nodeDescriptor) {
 
   fun getTextRepresentation(): @Nls String {
-    val nodeDescriptor = userObject as? BranchNodeDescriptor ?: return super.toString()
+    val nodeDescriptor = userObject as? BranchNodeDescriptor ?: return super.toString() //NON-NLS
     return when (nodeDescriptor.type) {
       NodeType.LOCAL_ROOT -> message("group.Git.Local.Branch.title")
       NodeType.REMOTE_ROOT -> message("group.Git.Remote.Branch.title")
       NodeType.HEAD_NODE -> message("group.Git.HEAD.Branch.Filter.title")
       NodeType.GROUP_REPOSITORY_NODE -> " ${nodeDescriptor.getDisplayText()}"
-      else -> nodeDescriptor.getDisplayText() ?: super.toString()
+      else -> nodeDescriptor.getDisplayText() ?: super.toString() //NON-NLS
     }
   }
 
