@@ -57,13 +57,13 @@ class MethodExtractor {
     }
     try {
       if (!CommonRefactoringUtil.checkReadOnlyStatus(file.project, file)) return
-      val statements = ExtractSelector().suggestElementsToExtract(file, range)
-      if (statements.isEmpty()) {
+      val elements = ExtractSelector().suggestElementsToExtract(file, range)
+      if (elements.isEmpty()) {
         throw ExtractException(RefactoringBundle.message("selected.block.should.represent.a.set.of.statements.or.an.expression"), file)
       }
       val prepareOptionsTask = object : Task.WithResult<ExtractOptions, ExtractException>(project, JavaRefactoringBundle.message("dialog.title.prepare.extract.options"), false) {
         override fun compute(indicator: ProgressIndicator): ExtractOptions {
-          return ReadAction.compute<ExtractOptions, ExtractException> { findExtractOptions(statements) }
+          return ReadAction.compute<ExtractOptions, ExtractException> { findExtractOptions(elements) }
         }
       }
       val extractOptions = ProgressManager.getInstance().run(prepareOptionsTask)
@@ -80,8 +80,7 @@ class MethodExtractor {
           doInplaceExtract(editor, extractor, parameters.copy(methodName = methodName), popupSettings, suggestedNames)
         }
         else {
-          val elements = ExtractSelector().suggestElementsToExtract(parameters.targetClass.containingFile, parameters.range)
-          extractor.extractInDialog(parameters.targetClass, elements, parameters.methodName, parameters.static)
+          extractor.extractInDialog(targetClass, elements, "", options.isStatic)
         }
       }
     }
