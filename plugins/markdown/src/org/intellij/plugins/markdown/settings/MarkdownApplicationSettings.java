@@ -1,7 +1,6 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.intellij.plugins.markdown.settings;
 
-import com.intellij.ide.ui.LafManagerListener;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
@@ -17,24 +16,15 @@ import org.jetbrains.annotations.Nullable;
 import java.util.HashMap;
 import java.util.Map;
 
-@State(
-  name = "MarkdownApplicationSettings",
-  storages = @Storage("markdown.xml")
-)
+/**
+ * @deprecated Use {@link MarkdownSettings} instead.
+ */
+@Deprecated
+@State(name = "MarkdownApplicationSettings", storages = @Storage("markdown.xml"))
 public final class MarkdownApplicationSettings implements PersistentStateComponent<MarkdownApplicationSettings.State>,
                                                           MarkdownCssSettings.Holder,
                                                           MarkdownPreviewSettings.Holder {
-
   private State myState = new State();
-
-  public MarkdownApplicationSettings() {
-    MarkdownLAFListener lafListener = new MarkdownLAFListener();
-    ApplicationManager.getApplication().getMessageBus().connect().subscribe(LafManagerListener.TOPIC, lafListener);
-    // Let's init proper CSS scheme
-    ApplicationManager.getApplication().invokeLater(() -> {
-      MarkdownLAFListener.reinit();
-    });
-  }
 
   @NotNull
   public static MarkdownApplicationSettings getInstance() {
@@ -101,6 +91,14 @@ public final class MarkdownApplicationSettings implements PersistentStateCompone
     return myState.myHideErrors;
   }
 
+  public void setEnhancedEditingEnabled(boolean value) {
+    myState.myEnhancedEditingEnabled = value;
+  }
+
+  public boolean isEnhancedEditingEnabled() {
+    return myState.myEnhancedEditingEnabled;
+  }
+
   public boolean isExtensionsEnabled(String extensionId) {
     Boolean value = myState.myEnabledExtensions.get(extensionId);
     return value != null ? value : false;
@@ -119,6 +117,7 @@ public final class MarkdownApplicationSettings implements PersistentStateCompone
     myState.myEnabledExtensions = state;
   }
 
+  @Deprecated
   public static final class State {
     @Property(surroundWithTag = false)
     @NotNull
@@ -134,12 +133,15 @@ public final class MarkdownApplicationSettings implements PersistentStateCompone
     @Attribute("HideErrors")
     private boolean myHideErrors = false;
 
+    private boolean myEnhancedEditingEnabled = true;
+
     @NotNull
     @XMap
     @Tag("enabledExtensions")
     private Map<String, Boolean> myEnabledExtensions = new HashMap<>();
   }
 
+  @Deprecated
   public interface SettingsChangedListener {
     Topic<SettingsChangedListener> TOPIC = Topic.create("MarkdownApplicationSettingsChanged", SettingsChangedListener.class);
 
@@ -148,6 +150,7 @@ public final class MarkdownApplicationSettings implements PersistentStateCompone
     default void settingsChanged(@NotNull MarkdownApplicationSettings settings) { }
   }
 
+  @Deprecated
   public interface FontChangedListener {
     Topic<FontChangedListener> TOPIC = Topic.create("FontChangedListener", FontChangedListener.class);
 

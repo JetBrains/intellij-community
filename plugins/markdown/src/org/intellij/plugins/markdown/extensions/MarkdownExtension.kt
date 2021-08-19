@@ -2,6 +2,9 @@
 package org.intellij.plugins.markdown.extensions
 
 import com.intellij.openapi.extensions.ExtensionPointName
+import com.intellij.openapi.project.ProjectManager
+import com.intellij.openapi.project.currentOrDefaultProject
+import org.intellij.plugins.markdown.settings.MarkdownSettings
 
 /**
  * Base for any markdown extensions. Implementors of this interface should be
@@ -16,5 +19,8 @@ interface MarkdownExtension {
     @JvmStatic
     val all: Set<MarkdownExtension>
       get() = EP_NAME.extensions.toSet()
+
+    internal val currentProjectSettings
+      get() = MarkdownSettings.getInstance(currentOrDefaultProject(ProjectManager.getInstance().openProjects.firstOrNull()))
   }
 }

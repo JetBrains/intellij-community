@@ -88,20 +88,16 @@ Includes the following features:</p>
     <applicationService serviceImplementation="org.intellij.plugins.markdown.google.authorization.GoogleOAuthService"/>
     <filePasteProvider implementation="org.intellij.plugins.markdown.fileActions.importFrom.googleDocs.GoogleDocsImportPasteProvider"/>
 
-    <applicationService serviceImplementation="org.intellij.plugins.markdown.settings.pandoc.PandocApplicationSettings"/>
-    <applicationConfigurable id="Settings.Pandoc"
-                             bundle="messages.MarkdownBundle"
-                             groupId="tools"
-                             key="markdown.settings.pandoc.name"
-                             instance="org.intellij.plugins.markdown.settings.pandoc.PandocSettingsConfigurable"/>
+    <projectService serviceImplementation="org.intellij.plugins.markdown.settings.MarkdownSettings"/>
+    <projectService serviceImplementation="org.intellij.plugins.markdown.settings.pandoc.PandocSettings"/>
 
-    <applicationConfigurable id="Settings.Markdown"
-                             bundle="messages.MarkdownBundle"
-                             groupId="language"
-                             nonDefaultProject="true"
-                             key="markdown.settings.name"
-                             instance="org.intellij.plugins.markdown.settings.MarkdownSettingsConfigurable">
-    </applicationConfigurable>
+    <projectConfigurable id="Settings.Markdown"
+                         bundle="messages.MarkdownBundle"
+                         groupId="language"
+                         nonDefaultProject="false"
+                         key="markdown.settings.name"
+                         instance="org.intellij.plugins.markdown.settings.MarkdownSettingsConfigurable"/>
+
     <applicationService serviceImplementation="org.intellij.plugins.markdown.settings.MarkdownApplicationSettings"/>
     <applicationService serviceImplementation="org.intellij.plugins.markdown.ui.preview.html.MarkdownCodeFencePluginCache"/>
     <applicationService serviceImplementation="org.intellij.plugins.markdown.fileActions.export.MarkdownHtmlExportSettings"/>
@@ -198,9 +194,14 @@ Includes the following features:</p>
   </extensions>
 
   <applicationListeners>
-    <listener topic="org.intellij.plugins.markdown.settings.MarkdownApplicationSettings$SettingsChangedListener"
-              class="org.intellij.plugins.markdown.injection.MarkdownCodeFenceErrorHighlightingIntention$SettingsListener"/>
+    <listener topic="com.intellij.ide.ui.LafManagerListener"
+              class="org.intellij.plugins.markdown.settings.MarkdownLafListener"/>
   </applicationListeners>
+
+  <projectListeners>
+    <listener topic="org.intellij.plugins.markdown.settings.MarkdownSettings$ChangeListener"
+              class="org.intellij.plugins.markdown.injection.MarkdownCodeFenceErrorHighlightingIntention$CodeAnalyzerRestartListener"/>
+  </projectListeners>
 
   <extensions defaultExtensionNs="org.intellij.markdown">
     <html.panel.provider implementation="org.intellij.plugins.markdown.ui.preview.jcef.JCEFHtmlPanelProvider" />

@@ -6,10 +6,11 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.actionSystem.Presentation
 import com.intellij.openapi.actionSystem.ex.ComboBoxAction
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.fileEditor.TextEditorWithPreview
 import com.intellij.openapi.observable.properties.GraphPropertyImpl.Companion.graphProperty
 import com.intellij.openapi.observable.properties.PropertyGraph
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.currentOrDefaultProject
 import com.intellij.ui.ComboboxSpeedSearch
 import com.intellij.ui.layout.*
 import com.intellij.util.ui.FontInfo
@@ -21,22 +22,18 @@ import org.jetbrains.annotations.NotNull
 import javax.swing.DefaultComboBoxModel
 import javax.swing.JComponent
 
-class MarkdownFontSettingsAction() : ComboBoxAction() {
-
-  private val applicationSettings get() = MarkdownApplicationSettings.getInstance()
-  private val markdownCssSettings get() = MarkdownApplicationSettings.getInstance().markdownCssSettings
-  private val propertyGraph = PropertyGraph()
-  private val fontSizeProperty = propertyGraph.graphProperty { markdownCssSettings.fontSize }
-  private val fontFamilyProperty = propertyGraph.graphProperty { markdownCssSettings.fontFamily }
-
-  init{
-    fontSizeProperty.afterChange { newFontSize -> updateFontSettings(newFontSize, markdownCssSettings.fontFamily) }
-    fontFamilyProperty.afterChange { newFontFamily -> updateFontSettings(markdownCssSettings.fontSize, newFontFamily) }
-  }
+class MarkdownFontSettingsAction : ComboBoxAction() {
+  private var lastProject: Project? = null
 
   override fun createPopupActionGroup(button: JComponent?) = DefaultActionGroup()
 
   override fun createCustomComponent(presentation: Presentation, place: String): JComponent {
+    val settings = MarkdownSettings.getInstance(currentOrDefaultProject(lastProject))
+    val propertyGraph = PropertyGraph()
+    val fontSizeProperty = propertyGraph.graphProperty { settings.fontSize }
+    val fontFamilyProperty = propertyGraph.graphProperty { settings.fontFamily }
+    fontSizeProperty.afterChange { newFontSize -> updateFontSettings(settings, newFontSize, settings.fontFamily) }
+    fontFamilyProperty.afterChange { newFontFamily -> updateFontSettings(settings, settings.fontSize, newFontFamily) }
     return panel(LCFlags.noGrid) {
       row(MarkdownBundle.message("markdown.preview.settings.font.family"), true) {
         cell {
@@ -54,7 +51,7 @@ class MarkdownFontSettingsAction() : ComboBoxAction() {
           val fontSizes = UIUtil.getStandardFontSizes().map { Integer.valueOf(it) }.toSortedSet()
           fontSizes.add(fontSizeProperty.get())
           val model = DefaultComboBoxModel(fontSizes.toTypedArray())
-          comboBox(model, fontSizeProperty).applyToComponent {
+          comboBox(model, property = fontSizeProperty).applyToComponent {
             isEditable = true
             putClientProperty(DarculaUIUtil.COMPACT_PROPERTY, true)
             font = JBUI.Fonts.smallFont()
@@ -64,22 +61,18 @@ class MarkdownFontSettingsAction() : ComboBoxAction() {
     }
   }
 
-  private fun updateFontSettings(currentFontSize: @NotNull Int,
-                                 newFontFamily: @NotNull String) {
-    applicationSettings.markdownCssSettings = createMarkdownCssSettingsWithFont(currentFontSize, newFontFamily)
-    ApplicationManager.getApplication().messageBus.syncPublisher(MarkdownApplicationSettings.FontChangedListener.TOPIC).fontChanged()
+  private fun updateFontSettings(settings: MarkdownSettings, currentFontSize: @NotNull Int, newFontFamily: String?) {
+    settings.update {
+      it.fontSize = currentFontSize
+      it.fontFamily = newFontFamily
+    }
   }
 
-  private fun createMarkdownCssSettingsWithFont(newFontSize: @NotNull Int, newFontFamily: @NotNull String) = MarkdownCssSettings(
-    markdownCssSettings.isCustomStylesheetEnabled,
-    markdownCssSettings.customStylesheetPath,
-    markdownCssSettings.isTextEnabled,
-    markdownCssSettings.customStylesheetText,
-    newFontSize,
-    newFontFamily)
-
   override fun update(event: AnActionEvent) {
-    val isCustomCssEnabled = markdownCssSettings.isTextEnabled && markdownCssSettings.customStylesheetText.isNotEmpty()
+    val project = event.project
+    lastProject = project
+    val settings = MarkdownSettings.getInstance(currentOrDefaultProject(project))
+    val isCustomCssEnabled = settings.useCustomStylesheetText && settings.customStylesheetText != null
     val editor = MarkdownActionUtil.findSplitEditor(event)
     event.presentation.isEnabledAndVisible = editor?.layout in allowedLayouts && !isCustomCssEnabled
   }
