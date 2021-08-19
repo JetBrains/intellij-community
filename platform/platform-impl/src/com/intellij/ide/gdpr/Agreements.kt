@@ -8,6 +8,8 @@ import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.application.impl.ApplicationInfoImpl
 import com.intellij.openapi.options.ShowSettingsUtil
 import com.intellij.openapi.ui.DialogWrapper
+import com.intellij.openapi.util.text.HtmlBuilder
+import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.ui.AppUIUtil
 import java.util.*
 import kotlin.system.exitProcess
@@ -69,7 +71,7 @@ private fun applyUserAgreement(ui: AgreementUi, agreement: EndUserAgreement.Docu
 
 private fun applyDataSharing(ui: AgreementUi, bundle: ResourceBundle): AgreementUi {
   val dataSharingConsent = ConsentOptions.getInstance().getConsents(ConsentOptions.condUsageStatsConsent()).first[0]
-  ui.setText(prepareConsentsHtmlText(dataSharingConsent, bundle))
+  ui.setContent(prepareConsentsHtml(dataSharingConsent, bundle))
     .setTitle(bundle.getString("dataSharing.dialog.title"))
     .clearBottomPanel()
     .focusToText()
@@ -84,16 +86,19 @@ private fun applyDataSharing(ui: AgreementUi, bundle: ResourceBundle): Agreement
   return ui
 }
 
-private fun prepareConsentsHtmlText(consent: Consent, bundle: ResourceBundle): String {
-  val allProductHint = if (!ConsentOptions.getInstance().isEAP) "<p><hint>${
-    bundle.getString("dataSharing.applyToAll.hint")
-  }</hint></p>".replace("{0}", ApplicationInfoImpl.getShadowInstance().shortCompanyName)
-  else ""
-  val preferencesHint = "<p><hint>${
-    bundle.getString("dataSharing.revoke.hint").replace("{0}", ShowSettingsUtil.getSettingsMenuName())
-  }</hint></p>"
-  return ("<html><body> <h1>${bundle.getString("dataSharing.consents.title")}</h1>"
-          + "<p>" + consent.text.replace("\n", "</p><p>") + "</p>" +
-          allProductHint + preferencesHint +
-          "</body></html>")
+private fun prepareConsentsHtml(consent: Consent, bundle: ResourceBundle): HtmlChunk {
+  val allProductChunk = if (!ConsentOptions.getInstance().isEAP) {
+    val hint = bundle.getString("dataSharing.applyToAll.hint").replace("{0}", ApplicationInfoImpl.getShadowInstance().shortCompanyName)
+    HtmlChunk.text(hint).wrapWith("hint").wrapWith("p")
+  }
+  else HtmlChunk.empty()
+  val preferencesHint = bundle.getString("dataSharing.revoke.hint").replace("{0}", ShowSettingsUtil.getSettingsMenuName())
+  val preferencesChunk = HtmlChunk.text(preferencesHint).wrapWith("hint").wrapWith("p")
+  val title = HtmlChunk.text(bundle.getString("dataSharing.consents.title")).wrapWith("h1")
+  return HtmlBuilder()
+    .append(title)
+    .append(HtmlChunk.p().addText(consent.text))
+    .append(allProductChunk)
+    .append(preferencesChunk)
+    .wrapWithHtmlBody()
 }
