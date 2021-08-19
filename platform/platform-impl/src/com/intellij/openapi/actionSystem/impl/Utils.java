@@ -8,6 +8,7 @@ import com.intellij.ide.impl.DataContextUtils;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.diagnostic.Logger;
@@ -16,6 +17,7 @@ import com.intellij.openapi.keymap.impl.ActionProcessor;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
 import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Ref;
@@ -477,9 +479,15 @@ public final class Utils extends DataContextUtils {
             }
           };
           boolean inReadAction = Registry.is("actionSystem.update.actions.call.beforeActionPerformedUpdate.once");
+          ApplicationEx applicationEx = ApplicationManagerEx.getApplicationEx();
+          EmptyProgressIndicator indicator = new EmptyProgressIndicator();
+          promise.onError(__ -> indicator.cancel());
           ProgressManager.getInstance().computePrioritized(() -> {
             ProgressManager.getInstance().executeProcessUnderProgress(!inReadAction ? runnable : () ->
-              ApplicationManagerEx.getApplicationEx().tryRunReadAction(runnable), new EmptyProgressIndicator());
+              ProgressIndicatorUtils.runActionAndCancelBeforeWrite(
+                applicationEx,
+                () -> ActionUpdater.cancelPromise(promise, "nested write-action requested"),
+                () -> applicationEx.tryRunReadAction(runnable)), indicator);
             return ref.get();
           });
           queue.offer(ActionUpdater.getActionUpdater(sessionRef.get())::applyPresentationChanges);
