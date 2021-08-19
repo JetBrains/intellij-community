@@ -6941,6 +6941,16 @@ public abstract class QuickFixTestGenerated extends AbstractQuickFixTest {
                 runTest("testData/quickfix/deprecatedSymbolUsage/typeArguments/noImplicitTypeArgImportRuntime.kt");
             }
 
+            @TestMetadata("noImplicitTypeArgInClassWithTypeParam.kt")
+            public void testNoImplicitTypeArgInClassWithTypeParam() throws Exception {
+                runTest("testData/quickfix/deprecatedSymbolUsage/typeArguments/noImplicitTypeArgInClassWithTypeParam.kt");
+            }
+
+            @TestMetadata("noImplicitTypeArgInFunWithTypeParam.kt")
+            public void testNoImplicitTypeArgInFunWithTypeParam() throws Exception {
+                runTest("testData/quickfix/deprecatedSymbolUsage/typeArguments/noImplicitTypeArgInFunWithTypeParam.kt");
+            }
+
             @TestMetadata("nonEmptyVarargRuntime.kt")
             public void testNonEmptyVarargRuntime() throws Exception {
                 runTest("testData/quickfix/deprecatedSymbolUsage/typeArguments/nonEmptyVarargRuntime.kt");
