@@ -14,5 +14,7 @@ class KotlinSerializableHasSerialVersionUidFieldInspectionTest : SerializableHas
     myFixture.testHighlighting("SerializableHasSerialVersionUidField.kt")
   }
 
-  //fun `test quickfix`() { myFixture.testQuickFix("SerializableHasSerialVersionUidFieldQf.kt", "Add 'serialVersionUID' field") }
+  fun `test quickfix`() {
+    myFixture.testQuickFix("SerializableHasSerialVersionUidFieldQf.kt", "Add 'serialVersionUID' field")
+  }
 }
