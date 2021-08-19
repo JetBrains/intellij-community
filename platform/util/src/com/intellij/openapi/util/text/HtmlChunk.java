@@ -473,12 +473,15 @@ public abstract class HtmlChunk {
   }
 
   /**
-   * Creates an html entity (e.g. `&ndash;`)
+   * Creates an HTML entity (e.g. `&ndash;`)
    * @param htmlEntity entity
    * @return the HtmlChunk that represents the html entity
    */
   @Contract(pure = true)
   public static @NotNull HtmlChunk htmlEntity(@NotNull @NlsSafe String htmlEntity) {
+    if (!htmlEntity.startsWith("&") && !htmlEntity.endsWith(";")) {
+      throw new IllegalArgumentException("Not an entity: " + htmlEntity);
+    }
     return raw(htmlEntity);
   }
 
