@@ -290,6 +290,11 @@ public abstract class JsOptimizeImportsTestGenerated extends AbstractJsOptimizeI
                 runTest("testData/editor/optimizeImports/common/basic/UnusedProperty.kt");
             }
 
+            @TestMetadata("UnusedStarImport.kt")
+            public void testUnusedStarImport() throws Exception {
+                runTest("testData/editor/optimizeImports/common/basic/UnusedStarImport.kt");
+            }
+
             @TestMetadata("UsedClass.kt")
             public void testUsedClass() throws Exception {
                 runTest("testData/editor/optimizeImports/common/basic/UsedClass.kt");
@@ -328,6 +333,11 @@ public abstract class JsOptimizeImportsTestGenerated extends AbstractJsOptimizeI
             @TestMetadata("UsedProperty.kt")
             public void testUsedProperty() throws Exception {
                 runTest("testData/editor/optimizeImports/common/basic/UsedProperty.kt");
+            }
+
+            @TestMetadata("UsedStarImport.kt")
+            public void testUsedStarImport() throws Exception {
+                runTest("testData/editor/optimizeImports/common/basic/UsedStarImport.kt");
             }
         }
 
