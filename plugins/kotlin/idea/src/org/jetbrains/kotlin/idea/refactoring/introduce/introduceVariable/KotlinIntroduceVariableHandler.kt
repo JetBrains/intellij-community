@@ -9,10 +9,12 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.command.impl.FinishMarkAction
 import com.intellij.openapi.command.impl.StartMarkAction
 import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.TextRange
+import com.intellij.openapi.util.ThrowableComputable
 import com.intellij.psi.*
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.refactoring.HelpID
@@ -37,6 +39,7 @@ import org.jetbrains.kotlin.idea.resolve.ResolutionFacade
 import org.jetbrains.kotlin.idea.util.IdeDescriptorRenderers
 import org.jetbrains.kotlin.idea.util.application.executeCommand
 import org.jetbrains.kotlin.idea.util.application.executeWriteCommand
+import org.jetbrains.kotlin.idea.util.application.runReadAction
 import org.jetbrains.kotlin.idea.util.application.runWriteAction
 import org.jetbrains.kotlin.idea.util.getResolutionScope
 import org.jetbrains.kotlin.idea.util.psi.patternMatching.KotlinPsiUnifier
@@ -495,7 +498,11 @@ object KotlinIntroduceVariableHandler : RefactoringActionHandler {
 
         val bindingTrace = ObservableBindingTrace(BindingTraceContext())
         val typeNoExpectedType = substringInfo?.type
-            ?: physicalExpression.computeTypeInfoInContext(scope, physicalExpression, bindingTrace, dataFlowInfo).type
+            ?: ProgressManager.getInstance().runProcessWithProgressSynchronously(ThrowableComputable {
+                runReadAction {
+                    physicalExpression.computeTypeInfoInContext(scope, physicalExpression, bindingTrace, dataFlowInfo).type
+                }
+            }, KotlinBundle.message("progress.title.calculating.type"), true, project)
         val noTypeInference = expressionType != null
                 && typeNoExpectedType != null
                 && !TypeCheckerImpl(project).equalTypes(expressionType, typeNoExpectedType)
