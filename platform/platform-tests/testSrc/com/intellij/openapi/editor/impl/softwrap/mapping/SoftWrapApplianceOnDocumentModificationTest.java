@@ -1058,7 +1058,7 @@ public class SoftWrapApplianceOnDocumentModificationTest extends AbstractEditorT
   }
 
   private void checkSoftWraps(int... startOffsets) {
-    assertArrayEquals(getSoftWrapModel().getRegisteredSoftWraps().stream().mapToInt(s -> s.getStart()).toArray(), startOffsets);
+    assertArrayEquals(startOffsets, getSoftWrapModel().getRegisteredSoftWraps().stream().mapToInt(s -> s.getStart()).toArray());
   }
   
   private SoftWrapModelImpl getSoftWrapModel() {
