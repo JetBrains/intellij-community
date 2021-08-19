@@ -362,7 +362,7 @@ public abstract class FileBasedIndexEx extends FileBasedIndex {
     return set != null && processVirtualFiles(set, filter, processor);
   }
 
-  private boolean processFilesContainingAllKeysInPhysicalFiles(@NotNull Collection<AllKeysQuery<?, ?>> queries,
+  private boolean processFilesContainingAllKeysInPhysicalFiles(@NotNull Collection<? extends AllKeysQuery<?, ?>> queries,
                                                                @NotNull GlobalSearchScope filter,
                                                                Processor<? super VirtualFile> processor,
                                                                IdFilter filesSet) {
@@ -404,7 +404,7 @@ public abstract class FileBasedIndexEx extends FileBasedIndex {
   }
 
   @Override
-  public boolean processFilesContainingAllKeys(@NotNull Collection<AllKeysQuery<?, ?>> queries,
+  public boolean processFilesContainingAllKeys(@NotNull Collection<? extends AllKeysQuery<?, ?>> queries,
                                                @NotNull GlobalSearchScope filter,
                                                @NotNull Processor<? super VirtualFile> processor) {
     Project project = filter.getProject();

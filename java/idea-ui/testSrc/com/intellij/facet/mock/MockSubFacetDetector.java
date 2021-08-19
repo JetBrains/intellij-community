@@ -35,8 +35,8 @@ public final class MockSubFacetDetector extends FacetBasedFrameworkDetector<Face
 
   @NotNull
   @Override
-  public List<Pair<MockFacetConfiguration, Collection<VirtualFile>>> createConfigurations(@NotNull Collection<VirtualFile> files,
-                                                                                          @NotNull Collection<MockFacetConfiguration> existentFacetConfigurations) {
+  public List<Pair<MockFacetConfiguration, Collection<VirtualFile>>> createConfigurations(@NotNull Collection<? extends VirtualFile> files,
+                                                                                          @NotNull Collection<? extends MockFacetConfiguration> existentFacetConfigurations) {
     return MockFacetDetector.doDetect(files, existentFacetConfigurations);
   }
 
@@ -49,7 +49,7 @@ public final class MockSubFacetDetector extends FacetBasedFrameworkDetector<Face
   @Override
   public boolean isSuitableUnderlyingFacetConfiguration(FacetConfiguration underlying,
                                                         MockFacetConfiguration configuration,
-                                                        Set<VirtualFile> files) {
+                                                        Set<? extends VirtualFile> files) {
     return underlying instanceof MockFacetConfiguration && ("sub-" + ((MockFacetConfiguration)underlying).getData()).equals(configuration.getData());
   }
 

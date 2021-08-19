@@ -166,7 +166,7 @@ public class GrChangeSignatureUsageProcessor implements ChangeSignatureUsageProc
   }
 
   @Override
-  public void registerConflictResolvers(List<ResolveSnapshotProvider.ResolveSnapshot> snapshots,
+  public void registerConflictResolvers(List<? super ResolveSnapshotProvider.ResolveSnapshot> snapshots,
                                         @NotNull ResolveSnapshotProvider resolveSnapshotProvider,
                                         UsageInfo[] usages, ChangeInfo changeInfo) {
   }

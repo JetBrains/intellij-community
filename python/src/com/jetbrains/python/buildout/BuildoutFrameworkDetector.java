@@ -59,7 +59,7 @@ public class BuildoutFrameworkDetector extends FacetBasedFrameworkDetector<Build
 
   @Nullable
   @Override
-  protected BuildoutFacetConfiguration createConfiguration(Collection<VirtualFile> files) {
+  protected BuildoutFacetConfiguration createConfiguration(Collection<? extends VirtualFile> files) {
     VirtualFile source = ContainerUtil.getFirstItem(files);
     LOG.info("Detecting Buildout facet for " + source.getPath());
     final VirtualFile baseDir = source.getParent();

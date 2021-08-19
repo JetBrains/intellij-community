@@ -27,7 +27,7 @@ class EntityIndexingServiceImpl implements EntityIndexingService {
   private static final Logger LOG = Logger.getInstance(EntityIndexingServiceImpl.class);
 
   @Override
-  public void indexChanges(@NotNull Project project, @NotNull List<RootsChangeIndexingInfo> changes) {
+  public void indexChanges(@NotNull Project project, @NotNull List<? extends RootsChangeIndexingInfo> changes) {
     if (!(FileBasedIndex.getInstance() instanceof FileBasedIndexImpl)) return;
     if (Registry.is("indexing.full.rescan.on.workspace.model.changes")) {
       DumbService.getInstance(project).queueTask(new UnindexedFilesUpdater(project, "Reindex due to registry setting"));
@@ -130,7 +130,7 @@ class EntityIndexingServiceImpl implements EntityIndexingService {
     return iterators;
   }
 
-  private static @NotNull List<IndexableFilesIterator> mergeIterators(List<IndexableFilesIterator> iterators) {
+  private static @NotNull List<IndexableFilesIterator> mergeIterators(List<? extends IndexableFilesIterator> iterators) {
     List<IndexableFilesIterator> result = new ArrayList<>(iterators.size());
     Collection<ModuleIndexableFilesIteratorImpl> rootIterators = new ArrayList<>();
     Set<IndexableSetOrigin> origins = new HashSet<>();

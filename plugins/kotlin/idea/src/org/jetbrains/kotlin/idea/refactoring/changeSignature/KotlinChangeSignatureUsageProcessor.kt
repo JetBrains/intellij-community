@@ -1209,7 +1209,7 @@ class KotlinChangeSignatureUsageProcessor : ChangeSignatureUsageProcessor {
     override fun setupDefaultValues(changeInfo: ChangeInfo, refUsages: Ref<Array<UsageInfo>>, project: Project) = true
 
     override fun registerConflictResolvers(
-        snapshots: List<ResolveSnapshotProvider.ResolveSnapshot>,
+        snapshots: MutableList<in ResolveSnapshotProvider.ResolveSnapshot>,
         resolveSnapshotProvider: ResolveSnapshotProvider,
         usages: Array<UsageInfo>, changeInfo: ChangeInfo
     ) {
