@@ -3,6 +3,7 @@ package com.intellij.debugger.engine.evaluation.expression;
 
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
+import com.sun.jdi.BooleanValue;
 import com.sun.jdi.StringReference;
 import com.sun.jdi.Value;
 import org.jetbrains.annotations.Nullable;
@@ -73,6 +74,9 @@ public class SwitchEvaluator implements Evaluator {
         return true;
       }
       for (Evaluator evaluator : myEvaluators) {
+        if (evaluator instanceof PatternLabelEvaluator) {
+          return ((BooleanValue)evaluator.evaluate(context)).booleanValue();
+        }
         Object labelValue = evaluator.evaluate(context);
         Object unboxedLabelValue = labelValue != null ? UnBoxingEvaluator.unbox(labelValue, context) : null;
         if (resultsEquals(value, unboxedLabelValue)) {
