@@ -14,6 +14,7 @@ import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.ide.CopyPasteManager;
+import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.EmptyRunnable;
@@ -33,6 +34,7 @@ import com.intellij.xdebugger.XExpression;
 import com.intellij.xdebugger.frame.XStackFrame;
 import com.intellij.xdebugger.impl.XDebugSessionImpl;
 import com.intellij.xdebugger.impl.XDebuggerManagerImpl;
+import com.intellij.xdebugger.impl.XDebuggerUtilImpl;
 import com.intellij.xdebugger.impl.XDebuggerWatchesManager;
 import com.intellij.xdebugger.impl.actions.XDebuggerActions;
 import com.intellij.xdebugger.impl.breakpoints.XExpressionImpl;
@@ -135,11 +137,16 @@ public class XWatchesViewImpl extends XVariablesView implements DnDNativeTarget,
           @Override
           protected ComboBox<XExpression> createComboBox(CollectionComboBoxModel<XExpression> model, int width) {
             AnAction addToWatchesAction =
-              new AnAction(ActionsBundle.actionText(XDebuggerActions.ADD_TO_WATCH), null, AllIcons.Debugger.Watch) {
+              new DumbAwareAction(ActionsBundle.actionText(XDebuggerActions.ADD_TO_WATCH), null, AllIcons.Debugger.Watch) {
                 @Override
                 public void actionPerformed(@NotNull AnActionEvent e) {
                   myEvaluateComboBox.saveTextInHistory();
-                  addWatchExpression(myEvaluateComboBox.getExpression(), -1, false);
+                  addWatchExpression(getExpression(), -1, false);
+                }
+
+                @Override
+                public void update(@NotNull AnActionEvent e) {
+                  e.getPresentation().setEnabled(!XDebuggerUtilImpl.isEmptyExpression(getExpression()));
                 }
               };
             ActionToolbarImpl toolbar = (ActionToolbarImpl)ActionManager.getInstance()
@@ -164,9 +171,12 @@ public class XWatchesViewImpl extends XVariablesView implements DnDNativeTarget,
       editorComponent.getActionMap().put("enterStroke", new AbstractAction() {
         @Override
         public void actionPerformed(ActionEvent e) {
-          myEvaluateComboBox.saveTextInHistory();
-          XDebugSession session = getSession(getTree());
-          myRootNode.addResultNode(session != null ? session.getCurrentStackFrame() : null, myEvaluateComboBox.getExpression());
+          XExpression expression = myEvaluateComboBox.getExpression();
+          if (!XDebuggerUtilImpl.isEmptyExpression(expression)) {
+            myEvaluateComboBox.saveTextInHistory();
+            XDebugSession session = getSession(getTree());
+            myRootNode.addResultNode(session != null ? session.getCurrentStackFrame() : null, expression);
+          }
         }
       });
       JComponent component = myEvaluateComboBox.getComponent();
