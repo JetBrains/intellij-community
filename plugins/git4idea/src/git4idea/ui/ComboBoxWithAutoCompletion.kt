@@ -27,8 +27,8 @@ import javax.swing.JLabel
 import javax.swing.event.ListDataEvent
 import javax.swing.event.ListDataListener
 
-class ComboBoxWithAutoCompletion<E>(model: ComboBoxModel<E>,
-                                    private val project: Project) : ComboBox<E>(model) {
+class ComboBoxWithAutoCompletion<E : Any>(model: ComboBoxModel<E>,
+                                          private val project: Project) : ComboBox<E>(model) {
 
   private val autoPopupController = AutoPopupController.getInstance(project)
 
