@@ -316,13 +316,14 @@ internal object OpenLessonActivities {
         invokeLater {
           openReadme(project)
           hideOtherViews(project)
-          showLearnPanel(project)
+          val anchor = LangManager.getInstance().getLangSupport()?.getToolWindowAnchor() ?: ToolWindowAnchor.LEFT
+          showLearnPanel(project, anchor)
           CourseManager.instance.unfoldModuleOnInit = null
           // Try to fix PyCharm double startup indexing :(
           val openWhenSmart = {
-            showLearnPanel(project)
+            showLearnPanel(project, anchor)
             DumbService.getInstance(project).runWhenSmart {
-              showLearnPanel(project)
+              showLearnPanel(project, anchor)
             }
           }
           Alarm().addRequest(openWhenSmart, 500)
@@ -331,7 +332,7 @@ internal object OpenLessonActivities {
     }
   }
 
-  private fun showLearnPanel(project: Project, preferredAnchor: ToolWindowAnchor = ToolWindowAnchor.LEFT): Boolean {
+  private fun showLearnPanel(project: Project, preferredAnchor: ToolWindowAnchor): Boolean {
     val learn = learningToolWindow(project) ?: return false
     if (learn.anchor != preferredAnchor && learn.type == ToolWindowType.DOCKED) {
       learn.setAnchor(preferredAnchor, null)
