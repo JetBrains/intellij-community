@@ -251,8 +251,9 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextEx {
     }
     if (getProject().isDisposed()) return;
 
-    InspectionResultsView newView = myView == null ? new InspectionResultsView(this, new InspectionRVContentProviderImpl()) : null;
-    if (!(myView == null ? newView : myView).hasProblems()) {
+    InspectionResultsView oldView = myView;
+    InspectionResultsView newView = oldView == null ? new InspectionResultsView(this, new InspectionRVContentProviderImpl()) : null;
+    if (!(oldView == null ? newView : oldView).hasProblems()) {
       int totalFiles = getStdJobDescriptors().BUILD_GRAPH.getTotalAmount(); // do not use invalidated scope
 
       var notification = NOTIFICATION_GROUP.createNotification(InspectionsBundle.message("inspection.no.problems.message",
@@ -391,8 +392,8 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextEx {
         }
         catch (ProcessCanceledException e) {
           progressIndicator.checkCanceled();
-          // PCE may be thrown from inside wrapper when write action started
-          // go on with the write and then resume processing the rest of the queue
+          // PCE may be thrown from inside wrapper when write action started.
+          // Go on with the write and then resume processing the rest of the queue.
           assert isOfflineInspections || !ApplicationManager.getApplication().isReadAccessAllowed()
             : "Must be outside read action. PCE=\n" + ExceptionUtil.getThrowableText(e);
           assert isOfflineInspections || !ApplicationManager.getApplication().isDispatchThread()
