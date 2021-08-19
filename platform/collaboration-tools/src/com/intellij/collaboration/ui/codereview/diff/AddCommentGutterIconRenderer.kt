@@ -13,6 +13,7 @@ import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.util.text.HtmlChunk.html
 import com.intellij.util.ui.EmptyIcon
 import org.jetbrains.annotations.Nls
+import java.util.*
 import javax.swing.Icon
 
 abstract class AddCommentGutterIconRenderer : GutterIconRenderer(), DumbAware, Disposable {
@@ -51,7 +52,7 @@ abstract class AddCommentGutterIconRenderer : GutterIconRenderer(), DumbAware, D
   }
 
   override fun hashCode(): Int {
-    var result = super.hashCode()
+    var result = Objects.hashCode(this)
     result = 31 * result + line
     return result
   }
