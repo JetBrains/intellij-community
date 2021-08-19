@@ -60,6 +60,7 @@ internal object Weighers {
         with(PreferGetSetMethodsToPropertyWeigher) { addWeight(lookupElement, symbol) }
         with(KindWeigher) { addWeight(lookupElement, symbol) }
         with(CallableWeigher) { addWeight(context, lookupElement, symbol, substitutor) }
+        with(VariableOrFunctionWeigher) { addWeight(lookupElement, symbol) }
     }
 
     fun addWeighersToCompletionSorter(sorter: CompletionSorter): CompletionSorter =
@@ -68,15 +69,12 @@ internal object Weighers {
                 PlatformWeighersIds.STATS,
                 ExpectedTypeWeigher.Weigher,
                 DeprecatedWeigher.Weigher,
+                PriorityWeigher.Weigher,
                 PreferGetSetMethodsToPropertyWeigher.Weigher,
                 KindWeigher.Weigher,
                 CallableWeigher.Weigher,
             )
-            .weighBefore(
-                PlatformWeighersIds.STATS,
-                PriorityWeigher.Weigher,
-                ExpectedTypeWeigher.Weigher
-            )
+            .weighAfter(PlatformWeighersIds.STATS, VariableOrFunctionWeigher.Weigher)
             .weighBefore(ExpectedTypeWeigher.WEIGHER_ID, CompletionContributorGroupWeigher.Weigher)
 
     private object PlatformWeighersIds {
