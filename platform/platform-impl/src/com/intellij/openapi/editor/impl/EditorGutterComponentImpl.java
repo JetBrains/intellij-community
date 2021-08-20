@@ -1477,43 +1477,14 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
       }
       return;
     }
-    if (!SystemInfo.isMac && Registry.is("ide.editor.alternative.folding.icons.painting")) {
-      GraphicsConfig config = GraphicsUtil.setupAAPainting(g);
-      g.setStroke(new BasicStroke((float)getStrokeWidth(), BasicStroke.CAP_SQUARE, BasicStroke.JOIN_ROUND));
 
-      int ix1 = (int)Math.round(x1);
-      int ix2 = (int)Math.round(x2);
-      int[] xPoints = {ix1, ix1, ix2, ix2, (int)Math.round(centerX)};
-      int iy1 = (int)Math.round(y + baseHeight);
-      int iy2 = (int)Math.round(y);
-      int[] yPoints = {iy1, iy2, iy2, iy1, (int)Math.round(y + height + (height < 0 ? 1 : 0))};
-      //xPoints[4] -= 1;
+    g.setColor(myEditor.getBackgroundColor());
+    LinePainter2D.fillPolygon(g, dxPoints, dyPoints, 5, StrokeType.CENTERED_CAPS_SQUARE, sw, RenderingHints.VALUE_ANTIALIAS_ON);
 
-      if (xPoints[4] - xPoints[0] != xPoints[3] - xPoints[4]) {
-        xPoints[0] += (xPoints[4] - xPoints[0]) - (xPoints[3] - xPoints[4]);
-        xPoints[1] = xPoints[0];
-      }
+    g.setColor(getOutlineColor(active));
+    LinePainter2D.paintPolygon(g, dxPoints, dyPoints, 5, StrokeType.CENTERED_CAPS_SQUARE, sw, RenderingHints.VALUE_ANTIALIAS_ON);
 
-      g.setColor(myEditor.getBackgroundColor());
-      g.fillPolygon(xPoints, yPoints, 5);
-
-      g.setColor(getOutlineColor(active));
-      g.drawPolygon(xPoints, yPoints, 5);
-
-      int w = xPoints[3] - xPoints[0];
-      int off = (int)Math.round(getSquareInnerOffset(w));
-      int minusY = (int)Math.round(centerY);
-      g.drawLine(xPoints[0] + off, minusY, xPoints[3] - off, minusY);
-      config.restore();
-    } else {
-      g.setColor(myEditor.getBackgroundColor());
-      LinePainter2D.fillPolygon(g, dxPoints, dyPoints, 5, StrokeType.CENTERED_CAPS_SQUARE, sw, RenderingHints.VALUE_ANTIALIAS_ON);
-
-      g.setColor(getOutlineColor(active));
-      LinePainter2D.paintPolygon(g, dxPoints, dyPoints, 5, StrokeType.CENTERED_CAPS_SQUARE, sw, RenderingHints.VALUE_ANTIALIAS_ON);
-
-      drawLine(g, false, centerX, centerY, width, sw);
-    }
+    drawLine(g, false, centerX, centerY, width, sw);
   }
 
   private void drawLine(Graphics2D g, boolean vertical, double centerX, double centerY, double width, double strokeWidth) {
