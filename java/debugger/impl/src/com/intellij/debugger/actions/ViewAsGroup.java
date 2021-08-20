@@ -90,57 +90,55 @@ public class ViewAsGroup extends ActionGroup implements DumbAware, UpdateInBackg
 
   @Override
   public AnAction @NotNull [] getChildren(@Nullable final AnActionEvent e) {
-    if (e != null) {
-      DebuggerContextImpl debuggerContext = DebuggerAction.getDebuggerContext(e.getDataContext());
-      DebugProcessImpl process = debuggerContext.getDebugProcess();
-      if (process == null) {
-        return AnAction.EMPTY_ARRAY;
-      }
+    if (e == null) {
+      return EMPTY_ARRAY;
+    }
+    DebuggerContextImpl debuggerContext = DebuggerAction.getDebuggerContext(e.getDataContext());
+    DebugProcessImpl process = debuggerContext.getDebugProcess();
+    if (process == null) {
+      return EMPTY_ARRAY;
+    }
 
-      List<JavaValue> values = getSelectedValues(e);
-      if (!values.isEmpty()) {
-        CompletableFuture<AnAction[]> future = new CompletableFuture<>();
-        boolean scheduled = process.getManagerThread().schedule(new DebuggerContextCommandImpl(debuggerContext) {
-          @Override
-          public void threadAction(@NotNull SuspendContextImpl suspendContext) {
-            getApplicableRenderers(values, e.getProject())
-              .thenApply(rs -> {
-                if (ContainerUtil.isEmpty(rs)) {
-                  return AnAction.EMPTY_ARRAY;
-                }
-                List<AnAction> children = new ArrayList<>();
-                AnAction[] viewAsActions =
-                  ((DefaultActionGroup)ActionManager.getInstance().getAction("Debugger.Representation")).getChildren(null);
-                for (AnAction viewAsAction : viewAsActions) {
-                  if (viewAsAction instanceof AutoRendererAction) {
-                    if (rs.size() > 1) {
-                      viewAsAction.getTemplatePresentation().setVisible(true);
-                      children.add(viewAsAction);
-                    }
-                  }
-                  else {
-                    children.add(viewAsAction);
-                  }
-                }
-
-                if (!children.isEmpty()) {
-                  children.add(Separator.getInstance());
-                }
-                children.addAll(ContainerUtil.map(rs, RendererAction::new));
-
-                return children.toArray(AnAction.EMPTY_ARRAY);
-              })
-              .whenComplete((actions, throwable) -> DebuggerUtilsAsync.completeFuture(actions, throwable, future));
-          }
-
-          @Override
-          protected void commandCancelled() {
-            future.cancel(false);
-          }
-        });
-        if (scheduled) {
-          return ProgressIndicatorUtils.awaitWithCheckCanceled(future);
+    List<JavaValue> values = getSelectedValues(e);
+    if (!values.isEmpty()) {
+      CompletableFuture<List<NodeRenderer>> future = new CompletableFuture<>();
+      boolean scheduled = process.getManagerThread().schedule(new DebuggerContextCommandImpl(debuggerContext) {
+        @Override
+        public void threadAction(@NotNull SuspendContextImpl suspendContext) {
+          getApplicableRenderers(values, e.getProject())
+            .whenComplete((renderers, throwable) -> DebuggerUtilsAsync.completeFuture(renderers, throwable, future));
         }
+
+        @Override
+        protected void commandCancelled() {
+          future.cancel(false);
+        }
+      });
+      if (scheduled) {
+        List<NodeRenderer> rs = ProgressIndicatorUtils.awaitWithCheckCanceled(future);
+        if (ContainerUtil.isEmpty(rs)) {
+          return EMPTY_ARRAY;
+        }
+        List<AnAction> children = new ArrayList<>();
+        AnAction[] viewAsActions =
+          ((DefaultActionGroup)ActionManager.getInstance().getAction("Debugger.Representation")).getChildren(null);
+        for (AnAction viewAsAction : viewAsActions) {
+          if (viewAsAction instanceof AutoRendererAction) {
+            if (rs.size() > 1) {
+              children.add(viewAsAction);
+            }
+          }
+          else {
+            children.add(viewAsAction);
+          }
+        }
+
+        if (!children.isEmpty()) {
+          children.add(Separator.getInstance());
+        }
+        children.addAll(ContainerUtil.map(rs, RendererAction::new));
+
+        return children.toArray(EMPTY_ARRAY);
       }
     }
     return EMPTY_ARRAY;
