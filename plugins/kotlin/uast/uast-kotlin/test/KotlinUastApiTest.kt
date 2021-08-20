@@ -6,9 +6,9 @@ import com.intellij.testFramework.RunAll
 import com.intellij.testFramework.UsefulTestCase
 import com.intellij.util.ThrowableRunnable
 import org.jetbrains.kotlin.asJava.toLightAnnotation
+import org.jetbrains.kotlin.idea.test.testFramework.KtUsefulTestCase
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getParentOfType
-import org.jetbrains.kotlin.idea.test.testFramework.KtUsefulTestCase
 import org.jetbrains.kotlin.utils.addToStdlib.assertedCast
 import org.jetbrains.kotlin.utils.addToStdlib.cast
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
@@ -368,8 +368,8 @@ class KotlinUastApiTest : AbstractKotlinUastTest() {
 
     @Test
     fun testNestedAnnotation() = doTest("AnnotationComplex") { _, file ->
-        file.findElementByTextFromPsi<UElement>("@AnnotationArray(value = Annotation(\"sv1\", \"sv2\"))")
-            .findElementByTextFromPsi<UElement>("Annotation(\"sv1\", \"sv2\")")
+        file.findElementByTextFromPsi<UElement>("@AnnotationArray(value = Annotation(\"sv1\", \"sv2\"))", strict = true)
+            .findElementByTextFromPsi<UElement>("Annotation(\"sv1\", \"sv2\")", strict = true)
             .sourcePsiElement
             .let { referenceExpression ->
                 val convertedUAnnotation = referenceExpression
@@ -568,7 +568,7 @@ class KotlinUastApiTest : AbstractKotlinUastTest() {
     @Test
     fun testLocalDeclarationCall() {
         doTest("LocalDeclarations") { _, file ->
-            val localFunction = file.findElementByTextFromPsi<UElement>("bar() == Local()").
+            val localFunction = file.findElementByTextFromPsi<UElement>("bar() == Local()", strict = true).
                 findElementByText<UCallExpression>("bar()")
             assertEquals(
                 "UIdentifier (Identifier (bar))",
@@ -595,7 +595,7 @@ class KotlinUastApiTest : AbstractKotlinUastTest() {
     @Test
     fun testLocalConstructorCall() {
         doTest("LocalDeclarations") { _, file ->
-            val localFunction = file.findElementByTextFromPsi<UElement>("bar() == Local()").
+            val localFunction = file.findElementByTextFromPsi<UElement>("bar() == Local()", strict = true).
                 findElementByText<UCallExpression>("Local()")
             assertEquals(
                 "UIdentifier (Identifier (Local))",

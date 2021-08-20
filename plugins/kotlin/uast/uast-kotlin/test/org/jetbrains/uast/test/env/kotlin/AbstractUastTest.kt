@@ -5,10 +5,7 @@ package org.jetbrains.uast.test.env.kotlin
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.psi.psiUtil.parentsWithSelf
-import org.jetbrains.uast.UElement
-import org.jetbrains.uast.UFile
-import org.jetbrains.uast.UastFacade
-import org.jetbrains.uast.toUElementOfType
+import org.jetbrains.uast.*
 import org.jetbrains.uast.visitor.UastVisitor
 import kotlin.test.fail
 
@@ -53,25 +50,13 @@ inline fun <reified T : UElement> UElement.findElementByTextFromPsi(refText: Str
 inline fun <reified T : UElement> PsiElement.findUElementByTextFromPsi(refText: String, strict: Boolean = false): T {
     val elementAtStart = this.findElementAt(this.text.indexOf(refText))
         ?: throw AssertionError("requested text '$refText' was not found in $this")
-    val uElementContainingText = uElementContainingText<T>(elementAtStart, strict, refText)
+    val uElementContainingText = elementAtStart.parentsWithSelf.let {
+        if (strict) it.dropWhile { !it.text.contains(refText) } else it
+    }.mapNotNull { it.toUElementOfType<T>() }.firstOrNull()
+        ?: throw AssertionError("requested text '$refText' not found as '${T::class.java.canonicalName}' in $this")
     if (strict && uElementContainingText.psi != null && uElementContainingText.psi?.text != refText) {
         throw AssertionError("requested text '$refText' found as '${uElementContainingText.psi?.text}' in $uElementContainingText")
     }
     return uElementContainingText;
-}
-
-inline fun <reified T : UElement> PsiElement.uElementContainingText(
-    elementAtStart: PsiElement,
-    strict: Boolean,
-    refText: String
-): T {
-    for (element in elementAtStart.parentsWithSelf) {
-        if (strict && element.text.contains(refText)) continue
-        val uastElement = element.toUElementOfType<T>()
-        if (uastElement != null) {
-            return uastElement
-        }
-    }
-    throw AssertionError("requested text '$refText' not found as '${T::class.java.canonicalName}' in $this")
 }
 
