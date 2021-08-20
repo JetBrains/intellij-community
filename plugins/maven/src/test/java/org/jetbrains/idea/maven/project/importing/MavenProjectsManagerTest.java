@@ -117,11 +117,11 @@ public class MavenProjectsManagerTest extends MavenMultiVersionImportingTestCase
 
     runWriteAction(() -> p2.rename(this, "foo.bar"));
     configConfirmationForYesAnswer();
-    scheduleProjectImportAndWait();
+    scheduleProjectImportAndWaitWithoutCheckFloatingBar();
     assertEquals(1, myProjectsTree.getRootProjects().size());
 
     runWriteAction(() -> p2.rename(this, "pom.xml"));
-    scheduleProjectImportAndWait();
+    scheduleProjectImportAndWaitWithoutCheckFloatingBar();
     assertEquals(2, myProjectsTree.getRootProjects().size());
   }
 
@@ -145,11 +145,11 @@ public class MavenProjectsManagerTest extends MavenMultiVersionImportingTestCase
 
     runWriteAction(() -> p2.move(this, newDir));
     configConfirmationForYesAnswer();
-    scheduleProjectImportAndWait();
+    scheduleProjectImportAndWaitWithoutCheckFloatingBar();
     assertEquals(1, myProjectsTree.getRootProjects().size());
 
     runWriteAction(() -> p2.move(this, oldDir));
-    scheduleProjectImportAndWait();
+    scheduleProjectImportAndWaitWithoutCheckFloatingBar();
     assertEquals(2, myProjectsTree.getRootProjects().size());
   }
 
@@ -179,12 +179,12 @@ public class MavenProjectsManagerTest extends MavenMultiVersionImportingTestCase
       assertEquals(1, myProjectsTree.getModules(myProjectsTree.getRootProjects().get(0)).size());
 
       m.move(this, newDir);
-      scheduleProjectImportAndWait();
+      scheduleProjectImportAndWaitWithoutCheckFloatingBar();
 
       assertEquals(1, myProjectsTree.getModules(myProjectsTree.getRootProjects().get(0)).size());
 
       m.move(this, oldDir);
-      scheduleProjectImportAndWait();
+      scheduleProjectImportAndWaitWithoutCheckFloatingBar();
 
       assertEquals(1, myProjectsTree.getModules(myProjectsTree.getRootProjects().get(0)).size());
 
@@ -192,7 +192,7 @@ public class MavenProjectsManagerTest extends MavenMultiVersionImportingTestCase
     });
 
     configConfirmationForYesAnswer();
-    scheduleProjectImportAndWait();
+    scheduleProjectImportAndWaitWithoutCheckFloatingBar();
 
     assertEquals(0, myProjectsTree.getModules(myProjectsTree.getRootProjects().get(0)).size());
   }
@@ -1230,5 +1230,16 @@ public class MavenProjectsManagerTest extends MavenMultiVersionImportingTestCase
     ExternalSystemProjectTracker.getInstance(myProject).scheduleProjectRefresh();
     resolveDependenciesAndImport();
     assertFalse(hasProjectsToBeImported()); // otherwise project settings was modified while importing
+  }
+
+  /**
+   * temporary solution. since The maven deletes files during the import process (renaming the file).
+   * And therefore the floating bar is always displayed.
+   * Because there is no information who deleted the import file or the other user action
+   * problem in MavenProjectsAware#collectSettingsFiles() / yieldAll(projectsTree.projectsFiles.map { it.path })
+   */
+  private void scheduleProjectImportAndWaitWithoutCheckFloatingBar() {
+    ExternalSystemProjectTracker.getInstance(myProject).scheduleProjectRefresh();
+    resolveDependenciesAndImport();
   }
 }
