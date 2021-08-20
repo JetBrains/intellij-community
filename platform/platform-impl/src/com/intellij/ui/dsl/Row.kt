@@ -78,6 +78,13 @@ interface Row {
   fun <T : JComponent> cell(component: T): Cell<T>
 
   /**
+   * Adds an empty cell in the grid
+   */
+  fun cell()
+
+  fun placeholder(): Placeholder
+
+  /**
    * Sets visibility for all components inside row including comment [Row.comment].
    * See also [CellBase.visible] description
    */

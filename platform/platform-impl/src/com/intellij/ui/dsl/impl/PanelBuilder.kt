@@ -116,7 +116,7 @@ internal class PanelBuilder(val rows: List<RowImpl>, val dialogPanelConfig: Dial
     return true
   }
 
-  private fun buildRow(cells: List<CellBaseImpl<*>>,
+  private fun buildRow(cells: List<CellBaseImpl<*>?>,
                        firstCellLabel: Boolean,
                        firstCellIndent: Int,
                        maxColumnsCount: Int,
@@ -130,7 +130,7 @@ internal class PanelBuilder(val rows: List<RowImpl>, val dialogPanelConfig: Dial
     }
   }
 
-  private fun buildCell(cell: CellBaseImpl<*>, rowLabel: Boolean, leftGap: Int, lastCell: Boolean, width: Int,
+  private fun buildCell(cell: CellBaseImpl<*>?, rowLabel: Boolean, leftGap: Int, lastCell: Boolean, width: Int,
                         panel: DialogPanel, builder: RowsGridBuilder) {
     val rightGap = getRightGap(cell, lastCell, rowLabel)
 
@@ -151,6 +151,9 @@ internal class PanelBuilder(val rows: List<RowImpl>, val dialogPanelConfig: Dial
 
         val subBuilder = PanelBuilder(cell.rows, dialogPanelConfig, panel, subGrid)
         subBuilder.build()
+      }
+      null -> {
+        builder.skip(1)
       }
     }
   }
@@ -184,7 +187,11 @@ internal class PanelBuilder(val rows: List<RowImpl>, val dialogPanelConfig: Dial
     }
   }
 
-  private fun getRightGap(cell: CellBaseImpl<*>, lastCell: Boolean, rowLabel: Boolean): Int {
+  private fun getRightGap(cell: CellBaseImpl<*>?, lastCell: Boolean, rowLabel: Boolean): Int {
+    if (cell == null) {
+      return 0
+    }
+
     val rightGap = cell.rightGap
     if (lastCell) {
       if (rightGap != null) {
@@ -196,6 +203,7 @@ internal class PanelBuilder(val rows: List<RowImpl>, val dialogPanelConfig: Dial
     if (rightGap != null) {
       return when (rightGap) {
         RightGap.SMALL -> dialogPanelConfig.spacing.horizontalSmallGap
+        RightGap.COLUMNS -> dialogPanelConfig.spacing.horizontalColumnsGap
       }
     }
 
@@ -206,7 +214,7 @@ internal class PanelBuilder(val rows: List<RowImpl>, val dialogPanelConfig: Dial
   /**
    * Appends comment (currently one comment for a row is supported, can be fixed later)
    */
-  private fun buildCommentRow(cells: List<CellBaseImpl<*>>,
+  private fun buildCommentRow(cells: List<CellBaseImpl<*>?>,
                               firstCellIndent: Int,
                               maxColumnsCount: Int,
                               builder: RowsGridBuilder) {
@@ -220,20 +228,20 @@ internal class PanelBuilder(val rows: List<RowImpl>, val dialogPanelConfig: Dial
                      if (commentedCellIndex == 0) firstCellIndent else 0
     val gaps = Gaps(left = leftIndent, bottom = dialogPanelConfig.spacing.commentBottomGap)
     builder.skip(commentedCellIndex)
-    builder.cell(cell.comment!!, maxColumnsCount - commentedCellIndex, gaps = gaps)
+    builder.cell(cell!!.comment!!, maxColumnsCount - commentedCellIndex, gaps = gaps)
     builder.row()
     return
   }
 
-  private fun getAdditionalHorizontalIndent(cell: CellBaseImpl<*>): Int {
+  private fun getAdditionalHorizontalIndent(cell: CellBaseImpl<*>?): Int {
     return if (cell is CellImpl<*> && cell.viewComponent is JToggleButton)
       dialogPanelConfig.spacing.horizontalToggleButtonIndent
     else
       0
   }
 
-  private fun getCommentedCellIndex(cells: List<CellBaseImpl<*>>): Int {
-    return cells.indexOfFirst { it.comment != null }
+  private fun getCommentedCellIndex(cells: List<CellBaseImpl<*>?>): Int {
+    return cells.indexOfFirst { it?.comment != null }
   }
 
   private fun getRowGaps(row: RowImpl): RowGaps {

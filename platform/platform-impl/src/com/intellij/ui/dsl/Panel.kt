@@ -39,6 +39,11 @@ interface Panel : CellBase<Panel> {
   fun row(label: JLabel? = null, init: Row.() -> Unit): Row
 
   /**
+   * Adds specified columns in a row
+   */
+  fun twoColumnRow(column1: (Row.() -> Unit)?, column2: (Row.() -> Unit)? = null): Row
+
+  /**
    * Creates sub-panel that occupies whole width and uses own grid inside
    */
   fun panel(init: Panel.() -> Unit): Panel

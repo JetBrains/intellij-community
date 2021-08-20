@@ -17,6 +17,11 @@ interface SpacingConfiguration {
   val horizontalDefaultGap: Int
 
   /**
+   * Horizontal gap between two columns of components
+   */
+  val horizontalColumnsGap: Int
+
+  /**
    * The horizontal left indent of one level
    */
   val horizontalIndent: Int

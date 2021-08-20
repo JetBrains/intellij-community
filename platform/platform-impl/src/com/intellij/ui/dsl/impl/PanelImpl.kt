@@ -10,6 +10,7 @@ import com.intellij.ui.dsl.*
 import com.intellij.ui.dsl.Row
 import com.intellij.ui.dsl.SpacingConfiguration
 import com.intellij.ui.dsl.gridLayout.HorizontalAlign
+import com.intellij.ui.dsl.gridLayout.UiDslException
 import com.intellij.ui.dsl.gridLayout.VerticalAlign
 import com.intellij.ui.layout.*
 import org.jetbrains.annotations.ApiStatus
@@ -22,9 +23,6 @@ internal class PanelImpl(private val dialogPanelConfig: DialogPanelConfig) : Cel
   val rows: List<RowImpl>
     get() = _rows
 
-  /**
-   * Number of [SpacingConfiguration.horizontalIndent] indents before each row in the panel
-   */
   private var panelContext = PanelContext()
 
   private val _rows = mutableListOf<RowImpl>()
@@ -55,6 +53,35 @@ internal class PanelImpl(private val dialogPanelConfig: DialogPanelConfig) : Cel
     result.init()
     _rows.add(result)
     return result
+  }
+
+  override fun twoColumnRow(column1: (Row.() -> Unit)?, column2: (Row.() -> Unit)?): Row {
+    if (column1 == null && column2 == null) {
+      throw UiDslException("Both columns cannot be null")
+    }
+
+    return row {
+      panel {
+        row {
+          if (column1 == null) {
+            cell()
+          }
+          else {
+            column1()
+          }
+        }
+      }.gap(RightGap.COLUMNS)
+      panel {
+        row {
+          if (column2 == null) {
+            cell()
+          }
+          else {
+            column2()
+          }
+        }
+      }
+    }.layout(RowLayout.PARENT_GRID)
   }
 
   override fun panel(init: Panel.() -> Unit): PanelImpl {
@@ -148,12 +175,13 @@ internal class PanelImpl(private val dialogPanelConfig: DialogPanelConfig) : Cel
   }
 
   override fun indent(init: Panel.() -> Unit) {
-    panelContext.indentCount++
+    val prevPanelContext = panelContext
+    panelContext = panelContext.copy(indentCount = prevPanelContext.indentCount + 1)
     try {
       this.init()
     }
     finally {
-      panelContext.indentCount--
+      panelContext = prevPanelContext
     }
   }
 
@@ -168,9 +196,9 @@ internal class PanelImpl(private val dialogPanelConfig: DialogPanelConfig) : Cel
   }
 }
 
-internal class PanelContext {
+internal data class PanelContext(
   /**
    * Number of [SpacingConfiguration.horizontalIndent] indents before each row in the panel
    */
-  var indentCount: Int = 0
-}
+  val indentCount: Int = 0
+)

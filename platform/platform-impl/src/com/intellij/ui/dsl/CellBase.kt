@@ -11,7 +11,12 @@ enum class RightGap {
   /**
    * See [SpacingConfiguration.horizontalSmallGap]
    */
-  SMALL
+  SMALL,
+
+  /**
+   * See [SpacingConfiguration.horizontalColumnsGap]
+   */
+  COLUMNS
 }
 
 @DslMarker

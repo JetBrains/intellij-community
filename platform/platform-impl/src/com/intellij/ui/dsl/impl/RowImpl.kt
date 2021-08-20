@@ -34,7 +34,7 @@ internal enum class BottomGap {
 
 @ApiStatus.Internal
 internal class RowImpl(private val dialogPanelConfig: DialogPanelConfig,
-                       panelContext: PanelContext,
+                       private val panelContext: PanelContext,
                        val label: JLabel? = null) : Row {
 
   var rowLayout = if (label == null) RowLayout.INDEPENDENT else RowLayout.LABEL_ALIGNED
@@ -49,11 +49,10 @@ internal class RowImpl(private val dialogPanelConfig: DialogPanelConfig,
   var bottomGap: BottomGap? = null
     private set
 
-  val cells: List<CellBaseImpl<*>>
+  val cells: List<CellBaseImpl<*>?>
     get() = _cells
 
-  private val _cells = mutableListOf<CellBaseImpl<*>>()
-  private val indentCount = panelContext.indentCount
+  private val _cells = mutableListOf<CellBaseImpl<*>?>()
 
   init {
     label?.let { cell(it) }
@@ -80,8 +79,16 @@ internal class RowImpl(private val dialogPanelConfig: DialogPanelConfig,
     return result
   }
 
+  override fun cell() {
+    _cells.add(null)
+  }
+
   fun cell(cell: CellBaseImpl<*>) {
     _cells.add(cell)
+  }
+
+  override fun placeholder(): Placeholder {
+    TODO("Not yet implemented")
   }
 
   override fun enabled(isEnabled: Boolean): RowImpl {
@@ -179,7 +186,7 @@ internal class RowImpl(private val dialogPanelConfig: DialogPanelConfig,
       override fun onClick(e: MouseEvent, clickCount: Int): Boolean {
         if (!label.isEnabled) return true
         JBPopupFactory.getInstance()
-          .createActionGroupPopup(null, DefaultActionGroup(*actions), DataContext { dataId ->
+          .createActionGroupPopup(null, DefaultActionGroup(*actions), { dataId ->
             when (dataId) {
               PlatformDataKeys.CONTEXT_COMPONENT.name -> label
               else -> null
@@ -255,10 +262,9 @@ internal class RowImpl(private val dialogPanelConfig: DialogPanelConfig,
     keyboardStep?.let {
       result.component.addKeyListener(object : KeyAdapter() {
         override fun keyPressed(e: KeyEvent?) {
-          val increment: Int
-          when (e?.keyCode) {
-            KeyEvent.VK_UP -> increment = keyboardStep
-            KeyEvent.VK_DOWN -> increment = -keyboardStep
+          val increment: Int = when (e?.keyCode) {
+            KeyEvent.VK_UP -> keyboardStep
+            KeyEvent.VK_DOWN -> -keyboardStep
             else -> return
           }
 
@@ -290,6 +296,6 @@ internal class RowImpl(private val dialogPanelConfig: DialogPanelConfig,
   }
 
   fun getIndent(): Int {
-    return indentCount * dialogPanelConfig.spacing.horizontalIndent
+    return panelContext.indentCount * dialogPanelConfig.spacing.horizontalIndent
   }
 }
