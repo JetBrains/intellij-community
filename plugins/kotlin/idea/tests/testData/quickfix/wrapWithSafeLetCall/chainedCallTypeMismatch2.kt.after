@@ -7,5 +7,3 @@ fun Int.foo(x: Int) = this + x
 val arg: Int? = 42
 
 val res: Int = arg?.let { 24.hashCode().foo(it) } + 1
-
-/* IGNORE_FIR */
