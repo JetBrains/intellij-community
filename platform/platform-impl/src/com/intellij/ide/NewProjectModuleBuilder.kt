@@ -3,20 +3,15 @@ package com.intellij.ide
 
 import com.intellij.ide.util.projectWizard.WizardContext
 import com.intellij.openapi.module.ModuleType
-import com.intellij.openapi.project.Project
 import com.intellij.ui.UIBundle
 import javax.swing.Icon
 
 class NewProjectModuleBuilder : NewWizardModuleBuilder<NewProjectStepSettings>() {
-  override val step: NewProjectStep = NewProjectStep()
+  override fun createStep(context: WizardContext) = NewProjectStep(context)
 
   override fun getModuleType(): ModuleType<*> = NewProjectModuleType.INSTANCE
   override fun getGroupName(): String = DEFAULT_GROUP
   override fun getNodeIcon(): Icon? = null
-
-  override fun setupProject(project: Project, context: WizardContext) {
-    step.wizards.find { it.language == step.settings.languageProperty.get() }?.setupProject(project, context)
-  }
 
   override fun getPresentableName() = UIBundle.message("list.item.new.project")
 

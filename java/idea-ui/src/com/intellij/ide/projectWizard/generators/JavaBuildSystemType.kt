@@ -3,24 +3,27 @@ package com.intellij.ide.projectWizard.generators
 
 import com.intellij.ide.highlighter.ModuleFileType
 import com.intellij.ide.util.projectWizard.JavaModuleBuilder
+import com.intellij.ide.util.projectWizard.WizardContext
 import com.intellij.ide.wizard.BuildSystemType
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogPanel
+import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.ui.UIBundle
 import com.intellij.ui.layout.*
 import java.nio.file.Paths
 
-abstract class JavaBuildSystemType<P>(override val name: String) : BuildSystemType<JavaSettings, P> {
+abstract class JavaBuildSystemType<P>(override val name: String) : BuildSystemType<P> {
   companion object {
     var EP_NAME = ExtensionPointName<JavaBuildSystemType<*>>("com.intellij.newProjectWizard.buildSystem.java")
   }
 }
 
 class IntelliJJavaBuildSystemType : JavaBuildSystemType<IntelliJBuildSystemSettings>("IntelliJ") {
-  override var settingsFactory = { IntelliJBuildSystemSettings() }
+  override val settingsKey = IntelliJBuildSystemSettings.KEY
+  override fun createSettings() = IntelliJBuildSystemSettings()
 
   override fun advancedSettings(settings: IntelliJBuildSystemSettings): DialogPanel =
     panel {
@@ -51,7 +54,9 @@ class IntelliJJavaBuildSystemType : JavaBuildSystemType<IntelliJBuildSystemSetti
       }.largeGapAfter()
     }
 
-  override fun setupProject(project: Project, languageSettings: JavaSettings, settings: IntelliJBuildSystemSettings) {
+  override fun setupProject(project: Project, settings: IntelliJBuildSystemSettings, context: WizardContext) {
+    val languageSettings = JavaSettings.KEY.get(context)
+
     val builder = JavaModuleBuilder()
     val moduleFile = Paths.get(settings.moduleFileLocation, settings.moduleName + ModuleFileType.DOT_DEFAULT_EXTENSION)
 
@@ -68,4 +73,8 @@ class IntelliJBuildSystemSettings {
   var moduleName: String = ""
   var contentRoot: String = ""
   var moduleFileLocation: String = ""
+
+  companion object {
+    val KEY = Key.create<IntelliJBuildSystemSettings>(IntelliJBuildSystemSettings::class.java.name)
+  }
 }

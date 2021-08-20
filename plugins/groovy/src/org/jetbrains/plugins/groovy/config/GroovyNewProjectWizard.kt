@@ -25,6 +25,7 @@ import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectSdksModel
 import com.intellij.openapi.ui.ComponentWithBrowseButton.BrowseFolderActionListener
 import com.intellij.openapi.ui.TextComponentAccessor
 import com.intellij.openapi.ui.TextFieldWithBrowseButton
+import com.intellij.openapi.util.Key
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.ui.SimpleListCellRenderer
 import com.intellij.ui.components.JBLabel
@@ -42,9 +43,11 @@ import javax.swing.SwingUtilities
 
 class GroovyNewProjectWizard : NewProjectWizard<GroovyModuleSettings> {
   override val language: String = "Groovy"
-  override var settingsFactory = { GroovyModuleSettings() }
 
-  override fun settingsList(settings: GroovyModuleSettings): List<SettingsComponent> {
+  override val settingsKey = GroovyModuleSettings.KEY
+  override fun createSettings() = GroovyModuleSettings()
+
+  override fun settingsList(settings: GroovyModuleSettings, context: WizardContext): List<SettingsComponent> {
     val sdkCombo = JdkComboBox(null, ProjectSdksModel().also { it.syncSdks() }, { it is JavaSdkType }, null, null, null)
       .apply { minimumSize = Dimension(0, 0) }
       .also { combo -> combo.addItemListener { settings.javaSdk = combo.selectedJdk } }
@@ -189,4 +192,8 @@ class GroovyModuleSettings {
   var useLocalLibrary: Boolean = false
   var mavenVersion: FrameworkLibraryVersion? = null
   var sdkPath: String = ""
+
+  companion object {
+    val KEY = Key.create<GroovyModuleSettings>(GroovyModuleSettings::class.java.name)
+  }
 }

@@ -2,29 +2,40 @@
 package com.intellij.ide
 
 import com.intellij.ide.util.projectWizard.WizardContext
+import com.intellij.ide.wizard.WizardSettingsFactory
+import com.intellij.ide.wizard.WizardSettingsProvider
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.project.Project
 import javax.swing.JComponent
 import javax.swing.JLabel
 
-interface NewProjectWizard<T> {
+interface NewProjectWizard<S> : WizardSettingsFactory<S> {
   val language: String
-  var settingsFactory: () -> T
 
   fun enabled(): Boolean = true
-  fun settingsList(settings: T): List<SettingsComponent> = emptyList()
-  fun setupProject(project: Project, settings: T, context: WizardContext) { }
+  fun settingsList(settings: S, context: WizardContext): List<SettingsComponent>
+  fun setupProject(project: Project, settings: S, context: WizardContext)
 
   companion object {
-    var EP_WIZARD = ExtensionPointName<NewProjectWizard<*>>("com.intellij.newProjectWizard")
+    val EP_WIZARD = ExtensionPointName<NewProjectWizard<*>>("com.intellij.newProjectWizard")
   }
 }
 
-class NewProjectWizardWithSettings<T>(wizard: NewProjectWizard<T>) : NewProjectWizard<T> by wizard {
-  var settings : T = settingsFactory.invoke()
+class NewProjectWizardWithSettings<S>(
+  private val wizard: NewProjectWizard<S>
+) : NewProjectWizard<S> by wizard, WizardSettingsProvider<S> {
 
-  fun settingsList() = settingsList(settings)
-  fun setupProject(project: Project, context: WizardContext) = setupProject(project, settings, context)
+  override val settings by lazy(::createSettings)
+
+  fun settingsList(context: WizardContext): List<SettingsComponent> {
+    settingsKey.set(context, settings)
+    return settingsList(settings, context)
+  }
+
+  fun setupProject(project: Project, context: WizardContext) {
+    settingsKey.set(context, settings)
+    setupProject(project, settings, context)
+  }
 }
 
 

@@ -2,8 +2,13 @@
 package com.intellij.ide
 
 import com.intellij.ide.util.projectWizard.ModuleWizardStep
+import com.intellij.ide.util.projectWizard.WizardContext
+import com.intellij.ide.wizard.WizardSettingsFactory
+import com.intellij.ide.wizard.WizardSettingsProvider
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogPanel
+import com.intellij.openapi.util.Key
 import com.intellij.ui.UIBundle
 import com.intellij.ui.layout.*
 import com.intellij.util.SystemProperties
@@ -11,11 +16,12 @@ import java.nio.file.Files
 import java.nio.file.Paths
 import javax.swing.JComponent
 
-abstract class NewModuleStep<T> : ModuleWizardStep() {
-  abstract val panel: JComponent
-  abstract var settings: T
+abstract class NewModuleStep<S> : ModuleWizardStep(), WizardSettingsFactory<S> {
+  val baseSettings = BaseNewProjectSettings(SystemProperties.getUserHome())
 
-  var baseSettings = BaseNewProjectSettings(SystemProperties.getUserHome())
+  abstract val panel: JComponent
+
+  abstract fun setupProject(project: Project, settings: S, context: WizardContext)
 
   final override fun updateDataModel() {
     if (panel is DialogPanel) (panel as DialogPanel).apply()
@@ -64,8 +70,22 @@ abstract class NewModuleStep<T> : ModuleWizardStep() {
   }
 }
 
+abstract class NewModuleStepWithSettings<S> : NewModuleStep<S>(), WizardSettingsProvider<S> {
+  override val settings by lazy(::createSettings)
+
+  fun setupProject(project: Project, context: WizardContext) {
+    BaseNewProjectSettings.KEY.set(context, baseSettings)
+    settingsKey.set(context, settings)
+    setupProject(project, settings, context)
+  }
+}
+
 class BaseNewProjectSettings(initPath: String) {
   var path: String = initPath
   var name: String = NewModuleStep.findNonExistingFileName(initPath, "untitled", "")
   var git: Boolean = false
+
+  companion object {
+    val KEY = Key.create<BaseNewProjectSettings>(BaseNewProjectSettings::class.java.name)
+  }
 }

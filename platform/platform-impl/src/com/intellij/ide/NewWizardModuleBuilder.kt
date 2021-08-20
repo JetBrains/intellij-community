@@ -3,6 +3,7 @@ package com.intellij.ide
 
 import com.intellij.ide.impl.OpenProjectTask
 import com.intellij.ide.util.projectWizard.ModuleBuilder
+import com.intellij.ide.util.projectWizard.ModuleWizardStep
 import com.intellij.ide.util.projectWizard.WizardContext
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.diagnostic.logger
@@ -11,15 +12,18 @@ import com.intellij.openapi.project.ex.ProjectManagerEx
 import org.jetbrains.annotations.Nullable
 import java.io.File
 
-private val LOG = logger<NewWizardModuleBuilder<*>>()
 abstract class NewWizardModuleBuilder<T> : ModuleBuilder() {
-  abstract val step: NewModuleStep<T>
+  private var step: NewModuleStepWithSettings<T>? = null
 
-  abstract fun setupProject(project: Project, context: WizardContext)
+  abstract fun createStep(context: WizardContext): NewModuleStepWithSettings<T>
+
+  final override fun getCustomOptionsStep(context: WizardContext, parentDisposable: Disposable): ModuleWizardStep {
+    return createStep(context).also { step = it }
+  }
 
   fun createProject(context: WizardContext): @Nullable Project? {
-    val name = step.baseSettings.name
-    val path = step.baseSettings.path
+    val name = step!!.baseSettings.name
+    val path = step!!.baseSettings.path
 
     val toPath = File(path, name).toPath()
     val project = ProjectManagerEx.getInstanceEx().newProject(toPath, OpenProjectTask())
@@ -28,14 +32,18 @@ abstract class NewWizardModuleBuilder<T> : ModuleBuilder() {
       return null
     }
 
-    setupProject(project, context)
+    step!!.setupProject(project, context)
     return project
   }
 
-  final override fun getCustomOptionsStep(context: WizardContext, parentDisposable: Disposable?) = step
+  override fun cleanup() {
+    step = null
+  }
 
   companion object {
     const val DEFAULT_GROUP = "Default"
     const val GENERATORS = "Generators"
+
+    private val LOG = logger<NewWizardModuleBuilder<*>>()
   }
 }

@@ -2,16 +2,19 @@
 package org.jetbrains.idea.maven.wizards
 
 import com.intellij.ide.projectWizard.generators.JavaBuildSystemType
-import com.intellij.ide.projectWizard.generators.JavaSettings
+import com.intellij.ide.util.projectWizard.WizardContext
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogPanel
+import com.intellij.openapi.util.Key
 import com.intellij.ui.layout.*
 
 class MavenJavaBuildSystemType : JavaBuildSystemType<MavenJavaBuildSystemSettings>("Maven") {
-  override var settingsFactory = { MavenJavaBuildSystemSettings() }
+  override val settingsKey = MavenJavaBuildSystemSettings.KEY
 
-  override fun setupProject(project: Project, languageSettings: JavaSettings, settings: MavenJavaBuildSystemSettings) {
+  override fun createSettings() = MavenJavaBuildSystemSettings()
+
+  override fun setupProject(project: Project, settings: MavenJavaBuildSystemSettings, context: WizardContext) {
     TODO("Not yet implemented")
   }
 
@@ -49,4 +52,8 @@ class MavenJavaBuildSystemSettings {
   var groupId: String = ""
   var artifactId: String = ""
   var version: String = ""
+
+  companion object {
+    val KEY = Key.create<MavenJavaBuildSystemSettings>(MavenJavaBuildSystemSettings::class.java.name)
+  }
 }

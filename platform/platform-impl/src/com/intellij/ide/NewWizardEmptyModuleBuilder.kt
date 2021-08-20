@@ -2,17 +2,12 @@
 package com.intellij.ide
 
 import com.intellij.ide.util.projectWizard.WizardContext
-import com.intellij.openapi.project.Project
 import javax.swing.Icon
 
 class NewWizardEmptyModuleBuilder : NewWizardModuleBuilder<EmptySettings>() {
-  override val step = EmptyModuleStep()
+  override fun createStep(context: WizardContext) = EmptyModuleStep()
 
   override fun getModuleType() = NewWizardEmptyModuleType.INSTANCE
   override fun getGroupName() = DEFAULT_GROUP
   override fun getNodeIcon(): Icon? = null
-
-  override fun setupProject(project: Project, context: WizardContext) {
-    step.settings
-  }
 }

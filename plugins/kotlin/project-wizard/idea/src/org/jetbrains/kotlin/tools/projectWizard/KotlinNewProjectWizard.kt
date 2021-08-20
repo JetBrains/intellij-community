@@ -11,6 +11,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.ui.configuration.JdkComboBox
 import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectSdksModel
+import com.intellij.openapi.util.Key
 import com.intellij.ui.components.JBLabel
 import com.intellij.ui.layout.*
 import java.awt.Dimension
@@ -18,11 +19,13 @@ import java.awt.event.ItemListener
 import javax.swing.JComponent
 
 class KotlinNewProjectWizard : NewProjectWizard<KotlinSettings> {
-  override val language: String = "Kotlin"
-  override var settingsFactory = { KotlinSettings() }
+    override val language: String = "Kotlin"
 
-  override fun settingsList(settings: KotlinSettings): List<SettingsComponent> {
-      val buildSystems = settings.buildSystems.value
+    override val settingsKey = KotlinSettings.KEY
+    override fun createSettings() = KotlinSettings()
+
+    override fun settingsList(settings: KotlinSettings, context: WizardContext): List<SettingsComponent> {
+        val buildSystems = settings.buildSystems.value
 
       var component: JComponent = JBLabel()
       panel {
@@ -52,7 +55,7 @@ class KotlinNewProjectWizard : NewProjectWizard<KotlinSettings> {
   }
 
   override fun setupProject(project: Project, settings: KotlinSettings, context: WizardContext) {
-    settings.buildSystemProperty.get().setupProject(project, settings)
+    settings.buildSystemProperty.get().setupProject(project, context)
   }
 }
 
@@ -66,7 +69,11 @@ class KotlinSettings {
     val buildSystemProperty: GraphProperty<KotlinBuildSystemWithSettings<*>> = propertyGraph.graphProperty {
         buildSystems.value.first()
     }
+
+    companion object {
+        val KEY = Key.create<KotlinSettings>(KotlinSettings::class.java.name)
+    }
 }
 
 open class KotlinBuildSystemWithSettings<P>(val buildSystemType: KotlinBuildSystemType<P>) :
-    BuildSystemWithSettings<KotlinSettings, P>(buildSystemType)
+    BuildSystemWithSettings<P>(buildSystemType)

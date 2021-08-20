@@ -4,7 +4,7 @@ package org.jetbrains.kotlin.tools.projectWizard
 import com.intellij.ide.wizard.BuildSystemType
 import com.intellij.openapi.extensions.ExtensionPointName
 
-abstract class KotlinBuildSystemType<P>(override val name: String) : BuildSystemType<KotlinSettings, P> {
+abstract class KotlinBuildSystemType<P>(override val name: String) : BuildSystemType<P> {
   companion object{
     var EP_NAME = ExtensionPointName<KotlinBuildSystemType<*>>("com.intellij.newProjectWizard.buildSystem.kotlin")
   }

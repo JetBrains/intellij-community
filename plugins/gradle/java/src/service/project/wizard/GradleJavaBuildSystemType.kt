@@ -3,20 +3,22 @@ package org.jetbrains.plugins.gradle.service.project.wizard
 
 import com.intellij.ide.projectWizard.generators.JavaBuildSystemType
 import com.intellij.ide.projectWizard.generators.JavaBuildSystemWithSettings
-import com.intellij.ide.projectWizard.generators.JavaSettings
+import com.intellij.ide.util.projectWizard.WizardContext
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 import com.intellij.openapi.observable.properties.GraphProperty
 import com.intellij.openapi.observable.properties.GraphPropertyImpl.Companion.graphProperty
 import com.intellij.openapi.observable.properties.PropertyGraph
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogPanel
+import com.intellij.openapi.util.Key
 import com.intellij.ui.layout.*
 import org.jetbrains.plugins.gradle.util.GradleBundle
 
 class GradleJavaBuildSystemType : JavaBuildSystemType<GradleJavaBuildSystemSettings>("Gradle") {
-  override var settingsFactory = { GradleJavaBuildSystemSettings() }
+  override val settingsKey = GradleJavaBuildSystemSettings.KEY
+  override fun createSettings() = GradleJavaBuildSystemSettings()
 
-  override fun setupProject(project: Project, languageSettings: JavaSettings, settings: GradleJavaBuildSystemSettings) {
+  override fun setupProject(project: Project, settings: GradleJavaBuildSystemSettings, context: WizardContext) {
     TODO("Not yet implemented")
   }
 
@@ -55,4 +57,8 @@ class GradleJavaBuildSystemSettings {
   var groupId: String = ""
   var artifactId: String = ""
   var version: String = ""
+
+  companion object {
+    val KEY = Key.create<GradleJavaBuildSystemSettings>(GradleJavaBuildSystemSettings::class.java.name)
+  }
 }

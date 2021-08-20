@@ -2,11 +2,14 @@
 package com.intellij.ide
 
 import com.intellij.ide.NewProjectWizard.Companion.EP_WIZARD
+import com.intellij.ide.util.projectWizard.WizardContext
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 import com.intellij.openapi.observable.properties.GraphProperty
 import com.intellij.openapi.observable.properties.GraphPropertyImpl.Companion.graphProperty
 import com.intellij.openapi.observable.properties.PropertyGraph
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogPanel
+import com.intellij.openapi.util.Key
 import com.intellij.ui.UIBundle
 import com.intellij.ui.layout.*
 import com.intellij.util.containers.map2Array
@@ -16,16 +19,18 @@ import java.lang.Integer.max
 import javax.swing.DefaultComboBoxModel
 import javax.swing.JLabel
 
-class NewProjectStep : NewModuleStep<NewProjectStepSettings>() {
+class NewProjectStep(context: WizardContext) : NewModuleStepWithSettings<NewProjectStepSettings>() {
+  override val settingsKey = NewProjectStepSettings.KEY
+  override fun createSettings() = NewProjectStepSettings(languages.first())
+
   private val settingsMap = mutableMapOf<String, List<SettingsComponent>>()
   private val rows = mutableMapOf<String, List<Row>>()
 
   val wizards: List<NewProjectWizardWithSettings<out Any?>> = EP_WIZARD.extensions.filter { it.enabled() }
     .map { NewProjectWizardWithSettings(it) }
-    .onEach { settingsMap[it.language] = it.settingsList() }
+    .onEach { settingsMap[it.language] = it.settingsList(context) }
 
   private var languages = wizards.map { it.language }
-  override var settings = NewProjectStepSettings(languages.first())
 
   init {
     settings.languageProperty.afterPropagation {
@@ -79,9 +84,17 @@ class NewProjectStep : NewModuleStep<NewProjectStepSettings>() {
 
     settings.languageProperty.set(languages.first())
   }.withBorder(JBUI.Borders.empty(10, 10))
+
+  override fun setupProject(project: Project, settings: NewProjectStepSettings, context: WizardContext) {
+    wizards.find { it.language == settings.languageProperty.get() }?.setupProject(project, context)
+  }
 }
 
 class NewProjectStepSettings(val initialLanguage: String) {
   val propertyGraph: PropertyGraph = PropertyGraph()
   val languageProperty: GraphProperty<String> = propertyGraph.graphProperty { initialLanguage }
+
+  companion object {
+    val KEY = Key.create<NewProjectStepSettings>(NewProjectStepSettings::class.java.name)
+  }
 }

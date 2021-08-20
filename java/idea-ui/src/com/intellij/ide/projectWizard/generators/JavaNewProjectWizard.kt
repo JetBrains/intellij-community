@@ -16,6 +16,7 @@ import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.roots.ui.configuration.JdkComboBox
 import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectSdksModel
+import com.intellij.openapi.util.Key
 import com.intellij.ui.components.JBLabel
 import com.intellij.ui.layout.*
 import java.awt.Dimension
@@ -24,9 +25,11 @@ import javax.swing.JComponent
 
 class JavaNewProjectWizard : NewProjectWizard<JavaSettings> {
   override val language: String = "Java"
-  override var settingsFactory = { JavaSettings() }
 
-  override fun settingsList(settings: JavaSettings): List<SettingsComponent> {
+  override val settingsKey = JavaSettings.KEY
+  override fun createSettings() = JavaSettings()
+
+  override fun settingsList(settings: JavaSettings, context: WizardContext): List<SettingsComponent> {
     var component: JComponent = JBLabel()
     panel {
       row {
@@ -58,7 +61,7 @@ class JavaNewProjectWizard : NewProjectWizard<JavaSettings> {
   }
 
   override fun setupProject(project: Project, settings: JavaSettings, context: WizardContext) {
-    settings.buildSystemProperty.get().setupProject(project, settings)
+    settings.buildSystemProperty.get().setupProject(project, context)
 
     settings.sdk?.let { sdk ->
       val table = ProjectJdkTable.getInstance()
@@ -71,7 +74,7 @@ class JavaNewProjectWizard : NewProjectWizard<JavaSettings> {
 }
 
 open class JavaBuildSystemWithSettings<P>(val buildSystemType: JavaBuildSystemType<P>) :
-  BuildSystemWithSettings<JavaSettings, P>(buildSystemType)
+  BuildSystemWithSettings<P>(buildSystemType)
 
 class JavaSettings {
   var sdk: Sdk? = null
@@ -84,5 +87,9 @@ class JavaSettings {
 
   val buildSystemProperty: GraphProperty<JavaBuildSystemWithSettings<*>> = propertyGraph.graphProperty {
     buildSystemButtons.value.first()
+  }
+
+  companion object {
+    val KEY = Key.create<JavaSettings>(JavaSettings::class.java.name)
   }
 }
