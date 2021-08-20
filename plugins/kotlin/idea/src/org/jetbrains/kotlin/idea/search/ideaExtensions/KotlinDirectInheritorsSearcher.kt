@@ -14,7 +14,6 @@ import org.jetbrains.kotlin.idea.search.fileScope
 import org.jetbrains.kotlin.idea.stubindex.KotlinSourceFilterScope
 import org.jetbrains.kotlin.idea.stubindex.KotlinSuperClassIndex
 import org.jetbrains.kotlin.idea.stubindex.KotlinTypeAliasByExpansionShortNameIndex
-import org.jetbrains.kotlin.idea.util.application.runReadAction
 
 open class KotlinDirectInheritorsSearcher : QueryExecutorBase<PsiClass, DirectClassInheritorsSearch.SearchParameters>(true) {
     override fun processQuery(queryParameters: DirectClassInheritorsSearch.SearchParameters, consumer: Processor<in PsiClass>) {
@@ -44,16 +43,13 @@ open class KotlinDirectInheritorsSearcher : QueryExecutorBase<PsiClass, DirectCl
 
         searchForTypeAliasesRecursively(name)
 
-        runReadAction {
-            val noLibrarySourceScope = KotlinSourceFilterScope.projectSourceAndClassFiles(scope, baseClass.project)
-
-            names.forEach { name ->
-                KotlinSuperClassIndex.getInstance()
-                    .get(name, baseClass.project, noLibrarySourceScope).asSequence()
-                    .mapNotNull { candidate -> candidate.toLightClassWithBuiltinMapping() ?: KtFakeLightClass(candidate) }
-                    .filter { candidate -> candidate.isInheritor(baseClass, false) }
-                    .forEach { candidate -> consumer.process(candidate) }
-            }
+        val noLibrarySourceScope = KotlinSourceFilterScope.projectSourceAndClassFiles(scope, baseClass.project)
+        names.forEach { name ->
+            KotlinSuperClassIndex.getInstance()
+                .get(name, baseClass.project, noLibrarySourceScope).asSequence()
+                .mapNotNull { candidate -> candidate.toLightClassWithBuiltinMapping() ?: KtFakeLightClass(candidate) }
+                .filter { candidate -> candidate.isInheritor(baseClass, false) }
+                .forEach { candidate -> consumer.process(candidate) }
         }
     }
 }
