@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.codeInsight;
 
 import com.intellij.codeInsight.AutoPopupController;
@@ -15,12 +15,14 @@ import com.intellij.openapi.application.impl.NonBlockingReadActionImpl;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.testFramework.fixtures.EditorHintFixture;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NotNull;
 
+import java.util.Arrays;
 import java.util.NoSuchElementException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.locks.LockSupport;
-import java.util.stream.Stream;
+import java.util.stream.Collectors;
 
 public abstract class AbstractParameterInfoTestCase extends LightFixtureCompletionTestCase {
   private EditorHintFixture myHintFixture;
@@ -82,13 +84,27 @@ public abstract class AbstractParameterInfoTestCase extends LightFixtureCompleti
   }
 
   private void selectItem(LookupElement[] elements, String partOfItemText) {
-    LookupElement element = Stream.of(elements).filter(e -> {
-      LookupElementPresentation p = new LookupElementPresentation();
-      e.renderElement(p);
-      return (p.getItemText() + p.getTailText()).contains(partOfItemText);
-    }).findAny().orElseThrow(NoSuchElementException::new);
+    final LookupElement element = findLookupElementWithName(elements, partOfItemText);
     selectItem(element);
   }
+
+  protected static @NotNull LookupElement findLookupElementWithName(final LookupElement @NotNull [] lookupItems, @NotNull final String elementName) {
+    for (LookupElement element : lookupItems) {
+      final LookupElementPresentation p = new LookupElementPresentation();
+      element.renderElement(p);
+      final String elementText = p.getItemText() + p.getTailText();
+      if (elementText.contains(elementName)) {
+        return element;
+      }
+    }
+
+    final String allLookupElements = Arrays.stream(lookupItems)
+      .map(LookupElement::getLookupString)
+      .collect(Collectors.joining(", "));
+
+    throw new NoSuchElementException("Unable to find a lookup element by '" + elementName + "' among [" + allLookupElements + "]");
+  }
+
 
   private void waitForParameterInfoUpdate() throws TimeoutException {
     ParameterInfoControllerBase.waitForDelayedActions(getEditor(), 1, TimeUnit.MINUTES);

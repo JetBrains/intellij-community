@@ -929,11 +929,28 @@ public final class JavaCompletionUtil {
   }
 
   private static int getTabOutOffset(@NotNull final InsertionContext context, final int offset) {
-    final PsiCall call = PsiTreeUtil.findElementOfClassAtOffset(context.getFile(), offset, PsiCall.class, false);
     final int result = offset + 2;
+
+    final PsiCall call = PsiTreeUtil.findElementOfClassAtOffset(context.getFile(), offset, PsiCall.class, false);
     if (call == null || call.getArgumentList() == null) return result;
 
-    return Math.max(call.getArgumentList().getTextRange().getEndOffset() - 1, result);
+    final int argumentListEnd = call.getArgumentList().getTextRange().getEndOffset();
+
+    if (argumentListEnd <= result && isAnonymous(call)) return offset + 1;
+
+    return argumentListEnd - 1;
+  }
+
+  private static boolean isAnonymous(@NotNull PsiCall call) {
+    if (!(call instanceof PsiNewExpression)) {
+      return false;
+    }
+    final PsiNewExpression newExpression = (PsiNewExpression)call;
+
+    final PsiImmediateClassType targetType = ObjectUtils.tryCast(newExpression.getType(), PsiImmediateClassType.class);
+    if (targetType == null) return false;
+
+    return targetType.resolve() instanceof PsiAnonymousClass;
   }
 
   public static FakePsiElement createContextWithXxxVariable(@NotNull PsiElement place, @NotNull PsiType varType) {
