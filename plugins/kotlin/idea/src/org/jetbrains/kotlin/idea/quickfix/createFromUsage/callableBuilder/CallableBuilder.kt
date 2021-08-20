@@ -1009,7 +1009,7 @@ class CallableBuilder(val config: CallableBuilderConfiguration) {
                             if (newDeclaration is KtProperty) {
                                 newDeclaration.getter?.let { setupDeclarationBody(it) }
 
-                                if (callableInfo is PropertyInfo) {
+                                if (callableInfo is PropertyInfo && callableInfo.initializer != null) {
                                     newDeclaration.initializer = callableInfo.initializer
                                 }
                             }

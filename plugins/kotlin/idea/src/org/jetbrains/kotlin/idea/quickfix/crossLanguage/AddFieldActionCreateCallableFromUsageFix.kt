@@ -12,6 +12,7 @@ import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.load.java.JvmAbi
 import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtExpression
+import org.jetbrains.kotlin.psi.KtPsiFactory
 
 class AddFieldActionCreateCallableFromUsageFix(
     targetContainer: KtElement,
@@ -29,7 +30,11 @@ class AddFieldActionCreateCallableFromUsageFix(
             val resolutionFacade = targetContainer.getResolutionFacade()
             val typeInfo = request.fieldType.toKotlinTypeInfo(resolutionFacade)
             val writable = JvmModifier.FINAL !in request.modifiers && !request.isConstant
-            val initializer = if (!lateinit && request.initializer is KtExpression) request.initializer as KtExpression else null
+            val initializer = if (request.initializer is KtExpression) {
+                request.initializer as KtExpression
+            } else if (!lateinit) {
+                KtPsiFactory(targetContainer).createExpression("TODO(\"initialize me\")")
+            } else null
             PropertyInfo(
                 request.fieldName,
                 TypeInfo.Empty,

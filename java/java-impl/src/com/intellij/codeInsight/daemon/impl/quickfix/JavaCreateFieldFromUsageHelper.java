@@ -40,6 +40,13 @@ public class JavaCreateFieldFromUsageHelper extends CreateFieldFromUsageHelper {
       field.getTypeElement(), (ExpectedTypeInfo[])expectedTypes, context, targetClass
     );
 
+    if (createConstantField && !field.hasInitializer()) {
+      field.setInitializer(factory.createExpressionFromText("0", null));
+      builder.replaceElement(field.getInitializer(), new EmptyExpression());
+      PsiIdentifier identifier = field.getNameIdentifier();
+      builder.setEndVariableAfter(identifier);
+    }
+
     field = CodeInsightUtilCore.forcePsiPostprocessAndRestoreElement(field);
 
     editor.getCaretModel().moveToOffset(field.getTextRange().getStartOffset());

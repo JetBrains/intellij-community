@@ -4,6 +4,7 @@ package org.jetbrains.plugins.groovy.annotator.intentions;
 import com.intellij.codeInsight.CodeInsightUtilCore;
 import com.intellij.codeInsight.ExpectedTypeInfo;
 import com.intellij.codeInsight.daemon.impl.quickfix.CreateFieldFromUsageHelper;
+import com.intellij.codeInsight.daemon.impl.quickfix.EmptyExpression;
 import com.intellij.codeInsight.daemon.impl.quickfix.GuessTypeParameters;
 import com.intellij.codeInsight.template.Template;
 import com.intellij.codeInsight.template.TemplateBuilderImpl;
@@ -17,6 +18,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclaration;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
 import org.jetbrains.plugins.groovy.lang.psi.expectedTypes.TypeConstraint;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GroovyScriptClass;
@@ -52,6 +54,14 @@ public class GroovyCreateFieldFromUsageHelper extends CreateFieldFromUsageHelper
     else if (expectedTypes instanceof ExpectedTypeInfo[]) {
       new GuessTypeParameters(project, factory, builder, substitutor)
         .setupTypeElement(field.getTypeElement(), (ExpectedTypeInfo[])expectedTypes, context, targetClass);
+    }
+
+    GrExpression initializer = field.getInitializerGroovy();
+
+    if (createConstantField && initializer != null) {
+      builder.replaceElement(initializer, new EmptyExpression());
+      PsiElement identifier = field.getNameIdentifierGroovy();
+      builder.setEndVariableAfter(identifier);
     }
 
     fieldDecl = CodeInsightUtilCore.forcePsiPostprocessAndRestoreElement(fieldDecl);
