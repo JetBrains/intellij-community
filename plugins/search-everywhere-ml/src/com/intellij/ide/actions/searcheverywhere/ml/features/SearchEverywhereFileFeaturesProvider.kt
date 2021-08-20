@@ -28,6 +28,7 @@ internal class SearchEverywhereFileFeaturesProvider : SearchEverywhereElementFea
     internal const val PREDICTION_SCORE_DATA_KEY = "predictionScore"
     internal const val PRIORITY_DATA_KEY = "priority"
     internal const val IS_SAME_MODULE = "isSameModule"
+    internal const val PACKAGE_DISTANCE = "packageDistance"
 
     internal const val FILETYPE_USAGE_RATIO_DATA_KEY = "fileTypeUsageRatio"
     internal const val TIME_SINCE_LAST_FILETYPE_USAGE = "timeSinceLastFileTypeUsage"
@@ -110,6 +111,7 @@ internal class SearchEverywhereFileFeaturesProvider : SearchEverywhereElementFea
     data[RECENT_INDEX_DATA_KEY] = getRecentFilesIndex(item)
     data[PREDICTION_SCORE_DATA_KEY] = getPredictionScore(item)
     data[IS_SAME_MODULE] = isSameModuleAsOpenedFile(item, cache.openedFile)
+    data[PACKAGE_DISTANCE] = calculatePackageDistance(item, cache.openedFile)
 
     data.putAll(getModificationTimeStats(item, currentTime))
     data.putAll(getFileTypeStats(item, currentTime, cache.fileTypeStats))
@@ -190,6 +192,55 @@ internal class SearchEverywhereFileFeaturesProvider : SearchEverywhereElementFea
     val itemModule = fileIndex.getModuleForFile(item.virtualFile) ?: return false
 
     return openedFileModule == itemModule
+  }
+
+  /**
+   * Calculates the package distance of the found [item] relative to the [openedFile].
+   *
+   * The distance can be considered the number of steps/changes to reach the other package,
+   * for instance the distance to a parent or a child of a package is equal to 1,
+   * and the distance from package a.b.c.d to package a.b.x.y is equal to 4.
+   */
+  private fun calculatePackageDistance(item: PsiFileSystemItem, openedFile: VirtualFile?): Int {
+    if (openedFile == null) {
+      return -1
+    }
+
+    val project = item.project
+
+    val fileIndex = ReadAction.compute<ProjectFileIndex, Nothing> { ProjectRootManager.getInstance(project).fileIndex }
+
+    val openedFilePackage = fileIndex.getPackageNameByDirectory(openedFile.parent)?.split('.')
+    val foundFilePackage = fileIndex.getPackageNameByDirectory(item.virtualFile.parent)?.split('.')
+
+    if (openedFilePackage == null || foundFilePackage == null) {
+      return -1
+    }
+
+    var distance = 0
+    for ((index, value) in openedFilePackage.withIndex()) {
+      if (foundFilePackage.size == index) {
+        // found file package is a parent of the opened file's package
+        distance = openedFilePackage.size - foundFilePackage.size
+        break
+      }
+
+      if (foundFilePackage[index] == value) {
+        // As long as these are the same, the distance remains 0
+        continue
+      }
+      else {
+        distance = (foundFilePackage.size - index) + (openedFilePackage.size - index)
+        break
+      }
+    }
+
+    // Check if the found file package is a child of the opened file package
+    if (distance == 0 && foundFilePackage.size > openedFilePackage.size) {
+      distance = foundFilePackage.size - openedFilePackage.size
+    }
+
+    return distance
   }
 
   private data class Cache(val fileTypeStats: Map<String, FileTypeUsageSummary>, val openedFile: VirtualFile?)
