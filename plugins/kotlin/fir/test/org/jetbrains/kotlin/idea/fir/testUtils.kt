@@ -2,24 +2,21 @@
 
 package org.jetbrains.kotlin.idea.fir
 
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.testFramework.LightPlatformTestCase
 import org.jetbrains.kotlin.idea.caches.project.LibraryModificationTracker
-import org.jetbrains.kotlin.idea.fir.low.level.api.api.KotlinOutOfBlockModificationTrackerFactory
+import org.jetbrains.kotlin.analysis.providers.KotlinModificationTrackerFactory
 import org.jetbrains.kotlin.idea.frontend.api.InvalidWayOfUsingAnalysisSession
 import org.jetbrains.kotlin.idea.frontend.api.KtAnalysisSessionProvider
-import org.jetbrains.kotlin.idea.frontend.api.analyse
 import org.jetbrains.kotlin.idea.util.application.runWriteAction
-import org.jetbrains.kotlin.psi.KtElement
 import java.io.File
 
 @OptIn(InvalidWayOfUsingAnalysisSession::class)
 fun Project.invalidateCaches() {
     LibraryModificationTracker.getInstance(this).incModificationCount()
-    service<KotlinOutOfBlockModificationTrackerFactory>().incrementModificationsCount()
+    service<KotlinModificationTrackerFactory>().incrementModificationsCount()
     service<KtAnalysisSessionProvider>().clearCaches()
 }
 
