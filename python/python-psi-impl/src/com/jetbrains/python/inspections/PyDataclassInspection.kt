@@ -411,6 +411,22 @@ class PyDataclassInspection : PyInspection() {
       if (field.annotationValue == null) return
 
       val value = field.findAssignedValue()
+
+      if (value is PyCallExpression) {
+        val fieldWithDefaultFactory = value
+          .multiResolveCallee(resolveContext)
+          .filter { it.callable?.qualifiedName == "dataclasses.field" }
+          .any {
+            PyCallExpressionHelper.mapArguments(value, it, myTypeEvalContext).mappedParameters.values.any { p ->
+              p.name == "default_factory"
+            }
+          }
+
+        if (fieldWithDefaultFactory) {
+          return
+        }
+      }
+
       if (PyUtil.isForbiddenMutableDefault(value, myTypeEvalContext)) {
         registerProblem(value,
                         PyPsiBundle.message("INSP.dataclasses.mutable.attribute.default.not.allowed.use.default.factory", value?.text),
