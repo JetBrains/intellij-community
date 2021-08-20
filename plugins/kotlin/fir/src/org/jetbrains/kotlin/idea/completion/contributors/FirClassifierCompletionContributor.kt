@@ -2,18 +2,20 @@
 
 package org.jetbrains.kotlin.idea.completion.contributors
 
+import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
+import org.jetbrains.kotlin.analysis.api.symbols.*
+import org.jetbrains.kotlin.analysis.api.types.KtNonErrorClassType
 import org.jetbrains.kotlin.idea.completion.checkers.CompletionVisibilityChecker
 import org.jetbrains.kotlin.idea.completion.context.FirBasicCompletionContext
 import org.jetbrains.kotlin.idea.completion.context.FirNameReferencePositionContext
-import org.jetbrains.kotlin.idea.completion.contributors.helpers.getStaticScope
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
-import org.jetbrains.kotlin.analysis.api.symbols.*
-import org.jetbrains.kotlin.analysis.api.types.KtClassType
-import org.jetbrains.kotlin.psi.KtExpression
 import org.jetbrains.kotlin.idea.completion.contributors.helpers.FirClassifierProvider.getAvailableClassifiersCurrentScope
+import org.jetbrains.kotlin.idea.completion.contributors.helpers.FirClassifierProvider.getAvailableClassifiersFromIndex
+import org.jetbrains.kotlin.idea.completion.contributors.helpers.getStaticScope
 import org.jetbrains.kotlin.idea.completion.lookups.ImportStrategy
 import org.jetbrains.kotlin.idea.completion.lookups.detectImportStrategy
-import org.jetbrains.kotlin.analysis.api.types.KtNonErrorClassType
+import org.jetbrains.kotlin.idea.completion.weighers.WeighingContext
+import org.jetbrains.kotlin.idea.completion.weighers.WeighingContext.Companion.createWeighingContext
+import org.jetbrains.kotlin.psi.KtExpression
 
 internal open class FirClassifierCompletionContributor(
     basicContext: FirBasicCompletionContext,
@@ -27,20 +29,22 @@ internal open class FirClassifierCompletionContributor(
 
     override fun KtAnalysisSession.complete(positionContext: FirNameReferencePositionContext) {
         val visibilityChecker = CompletionVisibilityChecker.create(basicContext, positionContext)
+        val weighingContext = createWeighingContext(null, null, emptyList(), basicContext.fakeKtFile)
 
         when (val receiver = positionContext.explicitReceiver) {
             null -> {
-                completeWithoutReceiver(positionContext, visibilityChecker)
+                completeWithoutReceiver(positionContext, visibilityChecker, weighingContext)
             }
             else -> {
-                completeWithReceiver(receiver, visibilityChecker)
+                completeWithReceiver(receiver, visibilityChecker, weighingContext)
             }
         }
     }
 
     private fun KtAnalysisSession.completeWithReceiver(
         receiver: KtExpression,
-        visibilityChecker: CompletionVisibilityChecker
+        visibilityChecker: CompletionVisibilityChecker,
+        context: WeighingContext
     ) {
         val reference = receiver.reference() ?: return
         val scope = getStaticScope(reference) ?: return
@@ -48,23 +52,35 @@ internal open class FirClassifierCompletionContributor(
             .getClassifierSymbols(scopeNameFilter)
             .filter { filterClassifiers(it) }
             .filter { with(visibilityChecker) { isVisible(it) } }
-            .forEach { addClassifierSymbolToCompletion(it, ImportStrategy.DoNothing) }
+            .forEach { addClassifierSymbolToCompletion(it, context, ImportStrategy.DoNothing) }
     }
 
     private fun KtAnalysisSession.completeWithoutReceiver(
         positionContext: FirNameReferencePositionContext,
-        visibilityChecker: CompletionVisibilityChecker
+        visibilityChecker: CompletionVisibilityChecker,
+        context: WeighingContext
     ) {
+        val availableFromScope = mutableSetOf<KtClassifierSymbol>()
         getAvailableClassifiersCurrentScope(
             originalKtFile,
             positionContext.nameExpression,
             scopeNameFilter,
-            indexHelper,
             visibilityChecker
         )
             .filter { filterClassifiers(it) }
             .forEach { classifierSymbol ->
-                addClassifierSymbolToCompletion(classifierSymbol, getImportingStrategy(classifierSymbol))
+                availableFromScope += classifierSymbol
+                addClassifierSymbolToCompletion(classifierSymbol, context, ImportStrategy.DoNothing)
+            }
+
+        getAvailableClassifiersFromIndex(
+            indexHelper,
+            scopeNameFilter,
+            visibilityChecker
+        )
+            .filter { it !in availableFromScope && filterClassifiers(it) }
+            .forEach { classifierSymbol ->
+                addClassifierSymbolToCompletion(classifierSymbol, context, getImportingStrategy(classifierSymbol))
             }
     }
 }

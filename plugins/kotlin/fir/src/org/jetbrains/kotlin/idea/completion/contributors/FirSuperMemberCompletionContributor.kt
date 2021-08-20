@@ -32,7 +32,8 @@ internal class FirSuperMemberCompletionContributor(
         val weighingContext = createWeighingContext(
             superReceiver,
             expectedType,
-            emptyList() // Implicit receivers do not match for this completion contributor.
+            emptyList(), // Implicit receivers do not match for this completion contributor.
+            fakeKtFile
         )
         collectDelegateCallToSuperMember(weighingContext, superReceiver, nonExtensionMembers)
     }

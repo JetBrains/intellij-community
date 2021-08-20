@@ -71,7 +71,7 @@ internal open class FirCallableCompletionContributor(
         }
 
         val receiver = explicitReceiver
-        val weighingContext = createWeighingContext(receiver, expectedType, scopesContext.implicitReceivers)
+        val weighingContext = createWeighingContext(receiver, expectedType, scopesContext.implicitReceivers, basicContext.fakeKtFile)
 
         when {
             receiver != null -> {
