@@ -22,6 +22,7 @@ import org.jetbrains.kotlin.psi.KtNameReferenceExpression
 import org.jetbrains.kotlin.psi.KtNamedFunction
 import org.jetbrains.kotlin.psi.namedFunctionVisitor
 import org.jetbrains.kotlin.psi.psiUtil.anyDescendantOfType
+import org.jetbrains.kotlin.psi.psiUtil.isAncestor
 import org.jetbrains.kotlin.resolve.BindingContext
 
 class RedundantSuspendModifierInspection : AbstractKotlinInspection() {
@@ -39,7 +40,7 @@ class RedundantSuspendModifierInspection : AbstractKotlinInspection() {
 
             if (function.hasSuspendCalls(context)) return
 
-            if (hasAnyUnresolvedCalls(context)) return
+            if (function.hasAnyUnresolvedCalls(context)) return
 
             holder.registerProblem(
                 suspendModifier,
@@ -53,9 +54,9 @@ class RedundantSuspendModifierInspection : AbstractKotlinInspection() {
         })
     }
 
-    private fun hasAnyUnresolvedCalls(context: BindingContext): Boolean {
+    private fun KtNamedFunction.hasAnyUnresolvedCalls(context: BindingContext): Boolean {
         return context.diagnostics.any {
-            it.factory == Errors.UNRESOLVED_REFERENCE
+            it.factory == Errors.UNRESOLVED_REFERENCE && this.isAncestor(it.psiElement)
         }
     }
 
