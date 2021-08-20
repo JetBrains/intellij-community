@@ -21,9 +21,11 @@ import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.idea.completion.contributors.helpers.FirClassifierProvider.getAvailableClassifiersCurrentScope
-import org.jetbrains.kotlin.idea.completion.contributors.helpers.insertSymbol
+import org.jetbrains.kotlin.idea.completion.contributors.helpers.FirClassifierProvider.getAvailableClassifiersFromIndex
 import org.jetbrains.kotlin.idea.completion.contributors.helpers.addTypeArguments
 import org.jetbrains.kotlin.idea.completion.contributors.helpers.createStarTypeArgumentsList
+import org.jetbrains.kotlin.idea.completion.contributors.helpers.insertSymbol
+import org.jetbrains.kotlin.idea.completion.createKeywordElement
 import org.jetbrains.kotlin.idea.completion.lookups.KotlinLookupObject
 import org.jetbrains.kotlin.idea.completion.lookups.shortenReferencesForFirCompletion
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KtNamedSymbol
@@ -33,6 +35,7 @@ import org.jetbrains.kotlin.miniStdLib.letIf
 import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
+import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.renderer.render
 
 internal class FirWhenWithSubjectConditionContributor(
@@ -87,9 +90,11 @@ internal class FirWhenWithSubjectConditionContributor(
         visibilityChecker: CompletionVisibilityChecker,
         isSingleCondition: Boolean,
     ) {
-        getAvailableClassifiersCurrentScope(originalKtFile, whenCondition, scopeNameFilter, indexHelper, visibilityChecker)
+        val availableFromScope = mutableSetOf<KtClassifierSymbol>()
+        getAvailableClassifiersCurrentScope(originalKtFile, whenCondition, scopeNameFilter, visibilityChecker)
             .forEach { classifier ->
                 if (classifier !is KtNamedSymbol) return@forEach
+                availableFromScope += classifier
 
                 addLookupElement(
                     classifier.name.asString(),
@@ -97,6 +102,20 @@ internal class FirWhenWithSubjectConditionContributor(
                     (classifier as? KtNamedClassOrObjectSymbol)?.classIdIfNonLocal?.asSingleFqName(),
                     isPrefixNeeded(classifier),
                     isSingleCondition,
+                )
+            }
+
+        getAvailableClassifiersFromIndex(indexHelper, scopeNameFilter, visibilityChecker)
+            .forEach { classifier ->
+                if (classifier !is KtNamedSymbol || classifier in availableFromScope) return@forEach
+
+                addLookupElement(
+                    classifier.name.asString(),
+                    classifier,
+                    (classifier as? KtNamedClassOrObjectSymbol)?.classIdIfNonLocal?.asSingleFqName(),
+                    isPrefixNeeded(classifier),
+                    isSingleCondition,
+                    availableWithoutImport = false,
                 )
             }
     }
@@ -215,7 +234,8 @@ internal class FirWhenWithSubjectConditionContributor(
         symbol: KtNamedSymbol,
         fqName: FqName?,
         isPrefixNeeded: Boolean,
-        isSingleCondition: Boolean
+        isSingleCondition: Boolean,
+        availableWithoutImport: Boolean = true,
     ) {
         val typeArgumentsCount = (symbol as? KtSymbolWithTypeParameters)?.typeParameters?.size ?: 0
         val lookupObject = WhenConditionLookupObject(symbol.name, fqName, isPrefixNeeded, isSingleCondition, typeArgumentsCount)
@@ -226,6 +246,7 @@ internal class FirWhenWithSubjectConditionContributor(
             .withInsertHandler(WhenConditionInsertionHandler)
             .withTailText(createStarTypeArgumentsList(typeArgumentsCount), /*grayed*/true)
             .letIf(isSingleCondition) { it.appendTailText(" -> ",  /*grayed*/true) }
+            .also { it.availableWithoutImport = availableWithoutImport }
             .let(sink::addElement)
     }
 }
