@@ -402,7 +402,7 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
       doClick();
     }
 
-    protected void doRightClick() {};
+    protected void doRightClick() {}
   }
 
   protected Condition<AnAction> getPreselectCondition() { return null; }
