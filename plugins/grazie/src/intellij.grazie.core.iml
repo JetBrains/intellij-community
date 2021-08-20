@@ -286,5 +286,6 @@
       </library>
     </orderEntry>
     <orderEntry type="library" name="StreamEx" level="project" />
+    <orderEntry type="library" name="kotlinx-serialization-core" level="project" />
   </component>
 </module>
