@@ -6,6 +6,7 @@ import com.intellij.codeInsight.completion.CompletionParameters
 import com.intellij.codeInsight.completion.PrefixMatcher
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.Key
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.scopes.KtScopeNameFilter
 import org.jetbrains.kotlin.analysis.api.symbols.*
@@ -29,6 +30,7 @@ import org.jetbrains.kotlin.platform.TargetPlatform
 import org.jetbrains.kotlin.psi.KtDotQualifiedExpression
 import org.jetbrains.kotlin.psi.KtExpression
 import org.jetbrains.kotlin.psi.KtFile
+import org.jetbrains.kotlin.psi.NotNullableUserDataProperty
 import org.jetbrains.kotlin.resolve.deprecation.DeprecationLevelValue
 
 internal class FirCompletionContributorOptions(
@@ -57,7 +59,6 @@ internal abstract class FirCompletionContributorBase<C : FirRawPositionCompletio
     protected val indexHelper: HLIndexHelper get() = basicContext.indexHelper
     protected val lookupElementFactory: KotlinFirLookupElementFactory get() = basicContext.lookupElementFactory
     protected val visibleScope = basicContext.visibleScope
-    private val emptyCtx = WeighingContext.empty(project)
 
 
     protected val scopeNameFilter: KtScopeNameFilter =
@@ -77,7 +78,8 @@ internal abstract class FirCompletionContributorBase<C : FirRawPositionCompletio
 
     protected fun KtAnalysisSession.addClassifierSymbolToCompletion(
         symbol: KtClassifierSymbol,
-        importingStrategy: ImportStrategy = detectImportStrategy(symbol)
+        context: WeighingContext,
+        importingStrategy: ImportStrategy = detectImportStrategy(symbol),
     ) {
         if (symbol !is KtNamedSymbol) return
         // Don't offer any deprecated items that could leads to compile errors.
@@ -88,7 +90,8 @@ internal abstract class FirCompletionContributorBase<C : FirRawPositionCompletio
                 is KtTypeParameterSymbol -> createLookupElement(symbol)
             }
         } ?: return
-        applyWeighers(emptyCtx, lookup, symbol, KtSubstitutor.Empty(token))
+        lookup.availableWithoutImport = importingStrategy == ImportStrategy.DoNothing
+        applyWeighers(context, lookup, symbol, KtSubstitutor.Empty(token))
         sink.addElement(lookup)
     }
 
@@ -124,6 +127,8 @@ internal abstract class FirCompletionContributorBase<C : FirRawPositionCompletio
         with(Weighers) { applyWeighsToLookupElement(context, lookupElement, symbol, substitutor) }
     }
 }
+
+internal var LookupElement.availableWithoutImport: Boolean by NotNullableUserDataProperty(Key("KOTLIN_AVAILABLE_FROM_CURRENT_SCOPE"), true)
 
 internal fun <C : FirRawPositionCompletionContext> KtAnalysisSession.complete(
     contextContributor: FirCompletionContributorBase<C>,
