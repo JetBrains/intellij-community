@@ -768,7 +768,7 @@ public final class ActionsTree {
       }
       g.translate(0, -bounds.y + 1);
     }
-    if (Registry.is("actionSystem.enableAbbreviations") && abbreviations != null && abbreviations.size() > 0) {
+    if (abbreviations != null && abbreviations.size() > 0) {
       for (String abbreviation : abbreviations) {
         totalWidth += metrics.stringWidth(abbreviation);
         totalWidth += 10;

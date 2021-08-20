@@ -24,7 +24,6 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.HtmlBuilder;
 import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.openapi.util.text.StringUtil;
@@ -624,7 +623,7 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable, Confi
       group.add(new AddMouseShortcutAction(actionId, restrictions, selectedKeymap));
     }
 
-    if (Registry.is("actionSystem.enableAbbreviations") && restrictions.allowAbbreviation) {
+    if (restrictions.allowAbbreviation) {
       group.add(new AddAbbreviationAction(actionId));
     }
 
@@ -634,11 +633,10 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable, Confi
       group.add(new RemoveShortcutAction(shortcut, selectedKeymap, actionId));
     }
 
-    if (Registry.is("actionSystem.enableAbbreviations")) {
-      for (final String abbreviation : AbbreviationManager.getInstance().getAbbreviations(actionId)) {
-        group.addAction(new RemoveAbbreviationAction(abbreviation, actionId));
-      }
+    for (final String abbreviation : AbbreviationManager.getInstance().getAbbreviations(actionId)) {
+      group.addAction(new RemoveAbbreviationAction(abbreviation, actionId));
     }
+
     if (myManager.canResetActionInKeymap(selectedKeymap, actionId)) {
       group.add(new Separator());
       group.add(new ResetShortcutsAction(selectedKeymap, actionId));
