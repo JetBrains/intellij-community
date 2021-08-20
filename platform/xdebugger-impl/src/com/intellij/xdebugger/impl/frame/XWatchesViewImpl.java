@@ -18,6 +18,7 @@ import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.EmptyRunnable;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.*;
 import com.intellij.ui.border.CustomLineBorder;
@@ -38,6 +39,7 @@ import com.intellij.xdebugger.impl.XDebuggerUtilImpl;
 import com.intellij.xdebugger.impl.XDebuggerWatchesManager;
 import com.intellij.xdebugger.impl.actions.XDebuggerActions;
 import com.intellij.xdebugger.impl.breakpoints.XExpressionImpl;
+import com.intellij.xdebugger.impl.evaluate.XDebuggerEvaluationDialog;
 import com.intellij.xdebugger.impl.inline.InlineWatch;
 import com.intellij.xdebugger.impl.inline.InlineWatchNode;
 import com.intellij.xdebugger.impl.inline.InlineWatchesRootNode;
@@ -132,6 +134,7 @@ public class XWatchesViewImpl extends XVariablesView implements DnDNativeTarget,
   JComponent createTopPanel() {
     if (Registry.is("debugger.new.tool.window.layout")) {
       XDebuggerTree tree = getTree();
+      Ref<AnAction> addToWatchesActionRef = new Ref<>();
       myEvaluateComboBox =
         new XDebuggerExpressionComboBox(tree.getProject(), tree.getEditorsProvider(), "evaluateInVariables", null, false, true) {
           @Override
@@ -151,6 +154,7 @@ public class XWatchesViewImpl extends XVariablesView implements DnDNativeTarget,
               };
             ActionToolbarImpl toolbar = (ActionToolbarImpl)ActionManager.getInstance()
               .createActionToolbar("DebuggerVariablesEvaluate", new DefaultActionGroup(addToWatchesAction), true);
+            addToWatchesActionRef.set(addToWatchesAction);
             toolbar.setOpaque(false);
             toolbar.setReservePlaceAutoPopupIcon(false);
             toolbar.setTargetComponent(tree);
@@ -179,6 +183,8 @@ public class XWatchesViewImpl extends XVariablesView implements DnDNativeTarget,
           }
         }
       });
+      addToWatchesActionRef.get()
+        .registerCustomShortcutSet(new CustomShortcutSet(XDebuggerEvaluationDialog.ADD_WATCH_KEYSTROKE), editorComponent);
       JComponent component = myEvaluateComboBox.getComponent();
       //component.setBackground(tree.getBackground());
       component.setBorder(JBUI.Borders.customLine(JBColor.border(), 0, 0, 1, 0));
