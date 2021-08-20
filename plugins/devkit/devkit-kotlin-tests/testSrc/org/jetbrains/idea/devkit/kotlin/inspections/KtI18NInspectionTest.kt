@@ -570,4 +570,27 @@ class KtI18NInspectionTest : LightJavaCodeInsightFixtureTestCase() {
     myFixture.testHighlighting()
   }
 
+  fun testTypeUseAnnotation() {
+    val inspection = I18nInspection()
+    inspection.setIgnoreForAllButNls(true)
+    inspection.setReportUnannotatedReferences(true)
+    myFixture.enableInspections(inspection)
+    myFixture.addClass("package kotlin;public class String {public boolean startsWith(String string);}")
+    myFixture.addClass("import org.jetbrains.annotations.*;\n" +
+                       "import java.lang.annotation.*;\n" +
+                       "@Nls(capitalization = Nls.Capitalization.Sentence)\n" +
+                       "@Target({ElementType.TYPE_USE, ElementType.PARAMETER, ElementType.METHOD})\n" +
+                       "public @interface Label { }")
+    configureKt("""
+        import org.jetbrains.annotations.*
+
+        fun getString(): @Label String {return <warning descr="Hardcoded string literal: \"str\"">"str"</warning>}
+        @Nls
+        fun test(): String {
+            return getString()
+        }
+    """.trimIndent())
+    myFixture.testHighlighting()
+  }
+
 }
