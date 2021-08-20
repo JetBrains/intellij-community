@@ -20,8 +20,6 @@ import org.jetbrains.kotlin.idea.caches.project.ModuleSourceInfo
 import org.jetbrains.kotlin.idea.caches.project.SdkInfo
 import org.jetbrains.kotlin.idea.caches.project.getModuleInfo
 import org.jetbrains.kotlin.idea.caches.resolve.IDEPackagePartProvider
-import org.jetbrains.kotlin.idea.fir.low.level.api.DeclarationProvider
-import org.jetbrains.kotlin.idea.fir.low.level.api.KtPackageProvider
 import org.jetbrains.kotlin.idea.fir.low.level.api.api.FirModuleResolveStateConfigurator
 import org.jetbrains.kotlin.idea.project.languageVersionSettings
 import org.jetbrains.kotlin.load.kotlin.PackagePartProvider
