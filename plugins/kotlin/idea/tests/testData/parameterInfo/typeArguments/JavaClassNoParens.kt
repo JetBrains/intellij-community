@@ -3,7 +3,7 @@
 import java.util.*
 
 fun foo() {
-    ArrayList<<caret>>()
+    ArrayList<<caret>>
 }
 
 //Text: (<highlight>E</highlight>), Disabled: false, Strikeout: false, Green: false
