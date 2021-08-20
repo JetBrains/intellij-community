@@ -68,6 +68,9 @@ class PyTargetsRemoteSourcesRefresher(val mySdk: Sdk) {
       LOG.debug(output.stdout)
     }
 
+    // XXX Make it automatic
+    environment.downloadVolumes.values.forEach { it.download(".", indicator) }
+
     val stateFile: StateFile
     try {
       Files.newBufferedReader(localRemoteSourcesRoot / METADATA_FILE).use {
