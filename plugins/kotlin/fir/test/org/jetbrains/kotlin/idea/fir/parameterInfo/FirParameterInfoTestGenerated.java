@@ -395,9 +395,19 @@ public abstract class FirParameterInfoTestGenerated extends AbstractFirParameter
             runTest("../idea/tests/testData/parameterInfo/typeArguments/BaseClass.kt");
         }
 
+        @TestMetadata("BaseClassNoParens.kt")
+        public void testBaseClassNoParens() throws Exception {
+            runTest("../idea/tests/testData/parameterInfo/typeArguments/BaseClassNoParens.kt");
+        }
+
         @TestMetadata("ConflictingWithArgument.kt")
         public void testConflictingWithArgument() throws Exception {
             runTest("../idea/tests/testData/parameterInfo/typeArguments/ConflictingWithArgument.kt");
+        }
+
+        @TestMetadata("ConflictingWithArgumentNoParens.kt")
+        public void testConflictingWithArgumentNoParens() throws Exception {
+            runTest("../idea/tests/testData/parameterInfo/typeArguments/ConflictingWithArgumentNoParens.kt");
         }
 
         @TestMetadata("Constraints.kt")
@@ -410,9 +420,19 @@ public abstract class FirParameterInfoTestGenerated extends AbstractFirParameter
             runTest("../idea/tests/testData/parameterInfo/typeArguments/ConstructorCall.kt");
         }
 
+        @TestMetadata("ConstructorCallNoParens.kt")
+        public void testConstructorCallNoParens() throws Exception {
+            runTest("../idea/tests/testData/parameterInfo/typeArguments/ConstructorCallNoParens.kt");
+        }
+
         @TestMetadata("FunctionCall.kt")
         public void testFunctionCall() throws Exception {
             runTest("../idea/tests/testData/parameterInfo/typeArguments/FunctionCall.kt");
+        }
+
+        @TestMetadata("FunctionCallNoParens.kt")
+        public void testFunctionCallNoParens() throws Exception {
+            runTest("../idea/tests/testData/parameterInfo/typeArguments/FunctionCallNoParens.kt");
         }
 
         @TestMetadata("JavaClass.kt")
@@ -420,9 +440,19 @@ public abstract class FirParameterInfoTestGenerated extends AbstractFirParameter
             runTest("../idea/tests/testData/parameterInfo/typeArguments/JavaClass.kt");
         }
 
+        @TestMetadata("JavaClassNoParens.kt")
+        public void testJavaClassNoParens() throws Exception {
+            runTest("../idea/tests/testData/parameterInfo/typeArguments/JavaClassNoParens.kt");
+        }
+
         @TestMetadata("Overloads.kt")
         public void testOverloads() throws Exception {
             runTest("../idea/tests/testData/parameterInfo/typeArguments/Overloads.kt");
+        }
+
+        @TestMetadata("OverloadsNoParens.kt")
+        public void testOverloadsNoParens() throws Exception {
+            runTest("../idea/tests/testData/parameterInfo/typeArguments/OverloadsNoParens.kt");
         }
 
         @TestMetadata("ParameterizedClassConstructor.kt")
@@ -430,9 +460,19 @@ public abstract class FirParameterInfoTestGenerated extends AbstractFirParameter
             runTest("../idea/tests/testData/parameterInfo/typeArguments/ParameterizedClassConstructor.kt");
         }
 
+        @TestMetadata("ParameterizedClassConstructorNoParens.kt")
+        public void testParameterizedClassConstructorNoParens() throws Exception {
+            runTest("../idea/tests/testData/parameterInfo/typeArguments/ParameterizedClassConstructorNoParens.kt");
+        }
+
         @TestMetadata("Reified.kt")
         public void testReified() throws Exception {
             runTest("../idea/tests/testData/parameterInfo/typeArguments/Reified.kt");
+        }
+
+        @TestMetadata("ReifiedNoParens.kt")
+        public void testReifiedNoParens() throws Exception {
+            runTest("../idea/tests/testData/parameterInfo/typeArguments/ReifiedNoParens.kt");
         }
 
         @TestMetadata("VariableType.kt")
