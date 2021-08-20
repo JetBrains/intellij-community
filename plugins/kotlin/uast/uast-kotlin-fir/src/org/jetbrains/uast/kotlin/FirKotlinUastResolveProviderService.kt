@@ -286,8 +286,13 @@ interface FirKotlinUastResolveProviderService : BaseKotlinUastResolveProviderSer
     }
 
     override fun getFunctionalInterfaceType(uLambdaExpression: KotlinULambdaExpression): PsiType? {
-        // TODO("Not yet implemented")
-        return null
+        val sourcePsi = uLambdaExpression.sourcePsi
+        analyseForUast(sourcePsi) {
+            return sourcePsi.getExpectedType()
+                ?.takeIf { it !is KtClassErrorType && it.isFunctionalInterfaceType }
+                ?.lowerBoundIfFlexible()
+                ?.asPsiType(sourcePsi, TypeMappingMode.DEFAULT_UAST)
+        }
     }
 
     override fun nullability(psiElement: PsiElement): TypeNullability? {

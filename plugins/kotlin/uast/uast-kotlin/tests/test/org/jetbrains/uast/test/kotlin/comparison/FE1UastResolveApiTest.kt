@@ -22,7 +22,7 @@ class FE1UastResolveApiTest : AbstractFE1UastTest() {
     @TestDataPath("/")
     @RunWith(JUnit3RunnerWithInners::class)
     class Declaration : AbstractFE1UastTest(), UastResolveApiTestBase {
-        override var testDataDir = KotlinRoot.DIR.resolve("uast/uast-kotlin-fir/testData/declaration")
+        override var testDataDir: File = KotlinRoot.DIR.resolve("uast/uast-kotlin-fir/testData/declaration")
 
         override val isFirUastPlugin: Boolean = false
 
@@ -44,7 +44,7 @@ class FE1UastResolveApiTest : AbstractFE1UastTest() {
     @TestMetadata("uast-kotlin/tests/testData")
     @TestDataPath("/")
     class Legacy : AbstractFE1UastTest(), UastResolveApiTestBase {
-        override var testDataDir = KotlinRoot.DIR.resolve("uast/uast-kotlin/tests/testData")
+        override var testDataDir: File = KotlinRoot.DIR.resolve("uast/uast-kotlin/tests/testData")
 
         override val isFirUastPlugin: Boolean = false
 
