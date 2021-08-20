@@ -12,7 +12,6 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.Messages
-import java.util.*
 import java.util.function.Function
 import javax.swing.SwingUtilities
 
@@ -123,6 +122,16 @@ class RunToolbarSlotManager(val project: Project) {
 
   private val slotsData = mutableMapOf<String, SlotDate>()
 
+
+  private fun traceState() {
+    val separator = " "
+    val ids = dataIds.indices.mapNotNull { "${it+1}: ${slotsData[dataIds[it]]}" }.joinToString(", ")
+    LOG.info("state: $state" +
+             "${separator}== slots: 0: ${mainSlotData}, $ids" +
+             "${separator}== slotData: ${slotsData.values}")
+  }
+
+
   init {
     SwingUtilities.invokeLater {
       if(project.isDisposed) return@invokeLater
@@ -145,6 +154,8 @@ class RunToolbarSlotManager(val project: Project) {
     set(value) {
       if (value == field) return
       field = value
+      LOG.info("state updated $value")
+      traceState()
       stateListeners.forEach { it.stateChanged(value) }
     }
 
@@ -184,6 +195,7 @@ class RunToolbarSlotManager(val project: Project) {
 
     slot.environment = env
     slot.waitingForProcess.clear()
+    LOG.info("process started: $env (${env.executionId}) ")
 
     activeProcesses.updateActiveProcesses(slotsData)
     updateState()
@@ -191,7 +203,7 @@ class RunToolbarSlotManager(val project: Project) {
 
   fun processStopped(executionId: Long) {
     slotsData.values.firstOrNull { it.environment?.executionId == executionId }?.environment = null
-
+    LOG.info("process stopped: $executionId ")
     activeProcesses.updateActiveProcesses(slotsData)
     updateState()
   }
@@ -333,7 +345,10 @@ class ActiveProcesses {
   }
 }
 
-internal open class SlotDate(override val id: String = UUID.randomUUID().toString()) : RunToolbarData {
+internal open class SlotDate(override val id: String = "slt${index++}") : RunToolbarData {
+  companion object {
+    var index = 0
+  }
   override var configuration: RunnerAndConfigurationSettings? =  null
   override var environment: ExecutionEnvironment? = null
     set(value) {
@@ -348,6 +363,10 @@ internal open class SlotDate(override val id: String = UUID.randomUUID().toStrin
   internal fun clear() {
     environment = null
     waitingForProcess.clear()
+  }
+
+  override fun toString(): String {
+    return "($id-${environment?.let{"$it(${it.executor.actionName} ${it.executionId})"} ?: configuration?.configuration?.name ?: "configuration null"})"
   }
 }
 

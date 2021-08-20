@@ -7,6 +7,7 @@ import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.DataProvider
 import com.intellij.openapi.actionSystem.Presentation
+import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.wm.IdeFrame
@@ -17,6 +18,7 @@ import javax.swing.SwingUtilities
 class RunToolbarMainWidgetComponent(val presentation: Presentation, place: String, group: ActionGroup) :
   FixWidthSegmentedActionToolbarComponent(place, group) {
   companion object {
+    private val LOG = Logger.getInstance(RunToolbarMainWidgetComponent::class.java)
     private var counter: MutableMap<Project, Int> = mutableMapOf()
   }
 
@@ -75,6 +77,12 @@ class RunToolbarMainWidgetComponent(val presentation: Presentation, place: Strin
 
       value
     }
+    LOG.info("main state updated: $state")
+  }
+
+  private fun traceState() {
+    LOG.info("state: $state" +
+             "\n")
   }
 
   internal var isOpened = false
