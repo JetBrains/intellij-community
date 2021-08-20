@@ -93,9 +93,11 @@ class MethodExtractor {
 
   fun getDefaultInplaceExtractor(options: ExtractOptions): InplaceExtractMethodProvider {
     if (Registry.`is`("java.refactoring.extractMethod.newDuplicatesExtractor")) return DuplicatesMethodExtractor()
-    val enabled = Registry.`is`("java.refactoring.extractMethod.newImplementation")
-    val possible = ExtractMethodHandler.canUseNewImpl(options.project, options.anchor.containingFile, options.elements.toTypedArray())
-    return if (enabled && possible) DefaultMethodExtractor() else LegacyMethodExtractor()
+    return if (ExtractMethodHandler.canUseNewImpl(options.project, options.anchor.containingFile, options.elements.toTypedArray())) {
+      DefaultMethodExtractor()
+    } else {
+      LegacyMethodExtractor()
+    }
   }
 
   fun suggestSafeMethodNames(options: ExtractOptions): List<String> {

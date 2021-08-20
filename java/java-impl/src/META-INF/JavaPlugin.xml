@@ -766,9 +766,6 @@
     <java.elementFinder implementation="com.intellij.debugger.impl.AlternativeJreClassFinder" order="last"/>
     <additionalLibraryRootsProvider implementation="com.intellij.execution.AlternativeSdkRootsProvider"/>
     <jdkUpdateCheckContributor implementation="com.intellij.execution.AlternativeSdkRootsProviderForJdkUpdate"/>
-    <registryKey key="java.refactoring.extractMethod.newImplementation"
-                 defaultValue="true"
-                 description="Enable experimental extract method implementation"/>
     <registryKey key="java.refactoring.extractMethod.newDuplicatesExtractor"
                  defaultValue="false"
                  description="Enable experimental extract duplicates implementation"/>
