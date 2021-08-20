@@ -4,12 +4,12 @@ package org.jetbrains.kotlin.idea.fir.uast
 
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
-import org.jetbrains.kotlin.idea.fir.low.level.api.api.KotlinOutOfBlockModificationTrackerFactory
+import org.jetbrains.kotlin.analysis.providers.KotlinModificationTrackerFactory
 import org.jetbrains.kotlin.idea.frontend.api.InvalidWayOfUsingAnalysisSession
 import org.jetbrains.kotlin.idea.frontend.api.KtAnalysisSessionProvider
 
 @OptIn(InvalidWayOfUsingAnalysisSession::class)
 internal fun Project.invalidateAllCachesForUastTests() {
-    service<KotlinOutOfBlockModificationTrackerFactory>().incrementModificationsCount()
+    service<KotlinModificationTrackerFactory>().incrementModificationsCount()
     service<KtAnalysisSessionProvider>().clearCaches()
 }
