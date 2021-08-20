@@ -7,14 +7,16 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.stubs.StringStubIndexExtension
-import com.intellij.psi.stubs.StubIndex
-import com.intellij.psi.stubs.StubIndexKey
+import org.jetbrains.kotlin.analysis.project.structure.allDirectDependencies
+import org.jetbrains.kotlin.analysis.project.structure.getKtModule
 import org.jetbrains.kotlin.idea.stubindex.*
 import org.jetbrains.kotlin.name.CallableId
 import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtCallableDeclaration
+import org.jetbrains.kotlin.psi.KtClassOrObject
+import org.jetbrains.kotlin.psi.KtNamedDeclaration
 
 /*
 * Move to another module
@@ -106,5 +108,11 @@ class HLIndexHelper(val project: Project, private val scope: GlobalSearchScope) 
             asSingleFqName().asStringForIndexes()
 
         private fun getShortName(fqName: String) = Name.identifier(fqName.substringAfterLast('.'))
+
+        @OptIn(ExperimentalStdlibApi::class)
+        fun createForPosition(position: PsiElement): HLIndexHelper {
+            val allScopes = position.getKtModule().allDirectDependencies().mapTo(mutableSetOf()) { it.contentScope }
+            return HLIndexHelper(position.project, GlobalSearchScope.union(allScopes))
+        }
     }
 }
