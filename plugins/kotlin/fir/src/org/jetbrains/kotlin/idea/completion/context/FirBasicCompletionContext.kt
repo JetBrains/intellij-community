@@ -52,9 +52,8 @@ internal class FirBasicCompletionContext(
             )
         }
 
-        private fun createIndexHelper(parameters: CompletionParameters) = HLIndexHelper(
-            parameters.position.project,
-            parameters.position.getModuleInfo().contentScope()
-        )
+        private fun createIndexHelper(parameters: CompletionParameters): HLIndexHelper {
+            return HLIndexHelper.createForPosition(parameters.position)
+        }
     }
 }
