@@ -7,6 +7,7 @@ import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupElementBuilder
 import com.intellij.codeInsight.lookup.LookupElementDecorator
 import com.intellij.psi.PsiElement
+import com.intellij.openapi.util.Key
 import org.jetbrains.kotlin.idea.completion.handlers.WithTailInsertHandler
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.Name
@@ -73,6 +74,16 @@ fun createKeywordElementWithSpace(
 
 fun Name?.labelNameToTail(): String = if (this != null) "@" + render() else ""
 
+enum class ItemPriority {
+    SUPER_METHOD_WITH_ARGUMENTS,
+    FROM_UNRESOLVED_NAME_SUGGESTION,
+    GET_OPERATOR,
+    DEFAULT,
+    IMPLEMENT,
+    OVERRIDE,
+    STATIC_MEMBER_FROM_IMPORTS,
+    STATIC_MEMBER
+}
 
 /**
  *  Checks whether user likely expects completion at the given position to offer a return statement.
@@ -140,3 +151,4 @@ private tailrec fun findReturnExpression(expression: PsiElement?): KtReturnExpre
         else -> null
     }
 
+var LookupElement.priority by UserDataProperty(Key<ItemPriority>("ITEM_PRIORITY_KEY"))
