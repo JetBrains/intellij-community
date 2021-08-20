@@ -7,6 +7,6 @@ import com.intellij.workspaceModel.storage.impl.url.VirtualFileUrlManagerImpl
 
 class IdeVirtualFileUrlManagerImpl : VirtualFileUrlManagerImpl() {
   override fun createVirtualFileUrl(id: Int, manager: VirtualFileUrlManagerImpl, protocol: String?): VirtualFileUrlImpl {
-    return VirtualFileUrlBridge(id, manager, protocol != StandardFileSystems.JAR_PROTOCOL)
+    return VirtualFileUrlBridge(id, manager, protocol == StandardFileSystems.JAR_PROTOCOL)
   }
 }

@@ -11,6 +11,7 @@ import it.unimi.dsi.fastutil.Hash.Strategy
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap
 import it.unimi.dsi.fastutil.ints.IntArrayList
 import it.unimi.dsi.fastutil.objects.ObjectOpenCustomHashSet
+import org.jetbrains.annotations.ApiStatus
 
 open class VirtualFileUrlManagerImpl : VirtualFileUrlManager {
   private val idGenerator = IntIdGenerator()
@@ -75,6 +76,9 @@ open class VirtualFileUrlManagerImpl : VirtualFileUrlManager {
   protected open fun createVirtualFileUrl(id: Int, manager: VirtualFileUrlManagerImpl, protocol: String?): VirtualFileUrl {
     return VirtualFileUrlImpl(id, manager)
   }
+
+  @ApiStatus.Internal
+  fun getCachedVirtualFileUrls(): List<VirtualFileUrl> = id2NodeMapping.values.mapNotNull { it.getCachedVirtualFileUrl() }
 
   internal fun add(path: String, protocol: String? = null, parentNode: FilePathNode? = null): VirtualFileUrl {
     val segments = splitNames(path)
@@ -271,6 +275,8 @@ open class VirtualFileUrlManagerImpl : VirtualFileUrlManager {
       virtualFileUrl = url
       return url
     }
+
+    fun getCachedVirtualFileUrl(): VirtualFileUrl? = virtualFileUrl
 
     fun isEmpty() = children == null || children!!.isEmpty()
 
