@@ -275,7 +275,8 @@ internal open class JpsArtifactEntitiesSerializer(override val fileUrl: VirtualF
     artifactState.isBuildOnMake = artifact.includeInProjectBuild
     artifactState.outputPath = JpsPathUtil.urlToPath(artifact.outputUrl?.url)
     val customProperties = artifact.customProperties.filter { it.entitySource == artifact.entitySource }
-    artifactState.propertiesList = customProperties.mapTo(ArrayList()) {
+    artifactState.propertiesList = customProperties.mapNotNullTo(ArrayList()) {
+      if (it.propertiesXmlTag == null) return@mapNotNullTo null
       ArtifactPropertiesState().apply {
         id = it.providerType
         options = it.propertiesXmlTag?.let { JDOMUtil.load(it) }
