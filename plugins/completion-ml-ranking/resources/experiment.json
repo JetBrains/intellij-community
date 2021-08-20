@@ -49,12 +49,12 @@
     {
       "id": "java",
       "experimentBucketsCount": 16,
-      "includeGroups": [ 7, 13, 11, 12, 8, 14 ]
+      "includeGroups": [ 7, 8, 11, 12, 13, 14 ]
     },
     {
       "id": "python",
       "experimentBucketsCount": 8,
-      "includeGroups": [ 7, 13, 11, 12, 8 ]
+      "includeGroups": [ 7, 8, 11, 12, 13]
     },
     {
       "id": "kotlin",
@@ -89,7 +89,7 @@
     {
       "id": "rust",
       "experimentBucketsCount": 4,
-      "includeGroups": [ 7, 12, 13, 8]
+      "includeGroups": [ 7, 8, 12, 13]
     },
     {
       "id": "dart",
@@ -99,7 +99,7 @@
     {
       "id": "swift",
       "experimentBucketsCount": 4,
-      "includeGroups": [ 7, 12, 13, 8]
+      "includeGroups": [ 7, 8, 12, 13]
     },
     {
       "id": "mysql",
