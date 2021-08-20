@@ -73,7 +73,9 @@ class PyTargetsSkeletonGenerator(skeletonPath: String?, pySdk: Sdk, currentFolde
       val commandPresentation = targetedCommandLine.getCommandPresentation(targetEnvironment)
       val capturingProcessHandler = CapturingProcessHandler(process, targetedCommandLine.charset, commandPresentation)
       listener?.let { capturingProcessHandler.addProcessListener(LineWiseProcessOutputListener.Adapter(it)) }
-      return capturingProcessHandler.runProcess()
+      val result = capturingProcessHandler.runProcess()
+      targetEnvironment.downloadVolumes.values.forEach { it.download(".", EmptyProgressIndicator()) }
+      return result
     }
   }
 
