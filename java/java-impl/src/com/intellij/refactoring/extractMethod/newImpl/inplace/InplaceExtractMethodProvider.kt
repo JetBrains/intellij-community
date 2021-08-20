@@ -2,7 +2,6 @@
 package com.intellij.refactoring.extractMethod.newImpl.inplace
 
 import com.intellij.openapi.editor.Editor
-import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiMethod
@@ -13,5 +12,3 @@ interface InplaceExtractMethodProvider {
   fun extractInDialog(targetClass: PsiClass, elements: List<PsiElement>, methodName: String, makeStatic: Boolean)
   fun postprocess(editor: Editor, method: PsiMethod){}
 }
-
-data class ExtractParameters(val targetClass: PsiClass, val range: TextRange, val methodName: String, val annotate: Boolean, val static: Boolean)

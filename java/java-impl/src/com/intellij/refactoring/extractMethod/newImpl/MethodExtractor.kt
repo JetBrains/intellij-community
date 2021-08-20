@@ -69,15 +69,16 @@ class MethodExtractor {
       val extractOptions = ProgressManager.getInstance().run(prepareOptionsTask)
       selectTargetClass(extractOptions) { options ->
         val targetClass = options.anchor.containingClass ?: throw IllegalStateException("Failed to find target class")
-        val annotate = PropertiesComponent.getInstance(options.project).getBoolean(ExtractMethodDialog.EXTRACT_METHOD_GENERATE_ANNOTATIONS, false)
-        val parameters = ExtractParameters(targetClass, range, "", annotate, options.isStatic)
         val extractor = getDefaultInplaceExtractor(options)
         if (EditorSettingsExternalizable.getInstance().isVariableInplaceRenameEnabled) {
           val popupSettings = createInplaceSettingsPopup(options)
           val guessedNames = suggestSafeMethodNames(options)
           val methodName = guessedNames.first()
           val suggestedNames = guessedNames.takeIf { it.size > 1 }.orEmpty()
-          doInplaceExtract(editor, extractor, parameters.copy(methodName = methodName), popupSettings, suggestedNames)
+          executeRefactoringCommand(project) {
+            InplaceMethodExtractor(editor, range, targetClass, extractor, popupSettings, methodName)
+              .performInplaceRefactoring(LinkedHashSet(suggestedNames))
+          }
         }
         else {
           extractor.extractInDialog(targetClass, elements, "", options.isStatic)
@@ -130,13 +131,6 @@ class MethodExtractor {
       makeStaticDefault = if (showStatic) false else null,
       staticPassFields = makeStaticAndPassFields
     )
-  }
-
-  fun doInplaceExtract(editor: Editor, extractor: InplaceExtractMethodProvider, parameters: ExtractParameters, settingsPanel: ExtractMethodPopupProvider, suggestedNames: List<String>) {
-    executeRefactoringCommand(parameters.targetClass.project) {
-      InplaceMethodExtractor(editor, parameters, extractor, settingsPanel)
-        .performInplaceRefactoring(LinkedHashSet(suggestedNames))
-    }
   }
 
   fun doDialogExtract(options: ExtractOptions){

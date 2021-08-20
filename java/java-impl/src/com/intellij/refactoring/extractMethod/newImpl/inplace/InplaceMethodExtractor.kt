@@ -39,10 +39,12 @@ import com.intellij.refactoring.util.CommonRefactoringUtil
 import org.jetbrains.annotations.Nls
 
 class InplaceMethodExtractor(private val editor: Editor,
-                             private val context: ExtractParameters,
+                             private val range: TextRange,
+                             private val targetClass: PsiClass,
                              private val extractor: InplaceExtractMethodProvider,
-                             private val popupProvider: ExtractMethodPopupProvider)
-  : InplaceRefactoring(editor, null, context.targetClass.project) {
+                             private val popupProvider: ExtractMethodPopupProvider,
+                             private val initialMethodName: String)
+  : InplaceRefactoring(editor, null, targetClass.project) {
 
   companion object {
     private val INPLACE_METHOD_EXTRACTOR = Key<InplaceMethodExtractor>("InplaceMethodExtractor")
@@ -66,7 +68,7 @@ class InplaceMethodExtractor(private val editor: Editor,
 
   private val textToRevert: String = editor.document.text
 
-  private val file: PsiFile = context.targetClass.containingFile
+  private val file: PsiFile = targetClass.containingFile
 
   private var methodIdentifierRange: RangeMarker? = null
 
@@ -83,9 +85,9 @@ class InplaceMethodExtractor(private val editor: Editor,
   fun prepareCodeForTemplate() {
     val document = editor.document
 
-    val extractedRange = createGreedyRangeMarker(document, context.range)
+    val extractedRange = createGreedyRangeMarker(document, range)
 
-    val (method, callExpression) = extractMethod(extractor, context)
+    val (method, callExpression) = extractMethod(extractor, targetClass, range, initialMethodName, popupProvider.makeStatic ?: false)
 
     val methodIdentifier = method.nameIdentifier ?: throw IllegalStateException()
     val callIdentifier = getNameIdentifier(callExpression) ?: throw IllegalStateException()
@@ -102,14 +104,18 @@ class InplaceMethodExtractor(private val editor: Editor,
     Disposer.register(disposable, codePreview)
   }
 
-  fun extractMethod(extractor: InplaceExtractMethodProvider, parameters: ExtractParameters): Pair<PsiMethod, PsiMethodCallExpression> {
-    val project = parameters.targetClass.project
-    val file = parameters.targetClass.containingFile
+  fun extractMethod(extractor: InplaceExtractMethodProvider,
+                    targetClass: PsiClass,
+                    range: TextRange,
+                    methodName: String,
+                    makeStatic: Boolean): Pair<PsiMethod, PsiMethodCallExpression> {
+    val project = targetClass.project
+    val file = targetClass.containingFile
     val document = PsiDocumentManager.getInstance(project).getDocument(file) ?: throw IllegalStateException()
 
-    val elements = ExtractSelector().suggestElementsToExtract(parameters.targetClass.containingFile, parameters.range)
+    val elements = ExtractSelector().suggestElementsToExtract(file, range)
     MethodExtractor.sendRefactoringStartedEvent(elements.toTypedArray())
-    val (method, call) = extractor.extract(parameters.targetClass, elements, parameters.methodName, parameters.static)
+    val (method, call) = extractor.extract(targetClass, elements, methodName, makeStatic)
     val methodPointer = SmartPointerManager.createPointer(method)
     val callPointer = SmartPointerManager.createPointer(call)
     val manager = PsiDocumentManager.getInstance(project)
@@ -151,7 +157,7 @@ class InplaceMethodExtractor(private val editor: Editor,
   }
 
   override fun checkLocalScope(): PsiElement {
-    return context.targetClass
+    return targetClass
   }
 
   override fun revertState() {
@@ -173,7 +179,13 @@ class InplaceMethodExtractor(private val editor: Editor,
     Disposer.register(templateState, disposable)
     super.afterTemplateStart()
     addTemplateFinishedListener(templateState, ::afterTemplateFinished)
-    popupProvider.setChangeListener { restartInplace(getEditedTemplateText(templateState)) }
+    popupProvider.setChangeListener {
+      val shouldAnnotate = popupProvider.annotate
+      if (shouldAnnotate != null) {
+        PropertiesComponent.getInstance(myProject).setValue(ExtractMethodDialog.EXTRACT_METHOD_GENERATE_ANNOTATIONS, shouldAnnotate, true)
+      }
+      restartInplace(getEditedTemplateText(templateState))
+    }
     popupProvider.setShowDialogAction { actionEvent -> restartInDialog(actionEvent == null) }
     addInlaySettingsElement(templateState, popupProvider)
   }
@@ -198,7 +210,7 @@ class InplaceMethodExtractor(private val editor: Editor,
       }
     } else {
       val extractedMethod = method ?: return
-      InplaceExtractMethodCollector.executed.log(context.methodName != methodName)
+      InplaceExtractMethodCollector.executed.log(initialMethodName != methodName)
       installGotItTooltips()
       MethodExtractor.sendRefactoringDoneEvent(extractedMethod)
       extractor.postprocess(editor, extractedMethod)
@@ -217,32 +229,15 @@ class InplaceMethodExtractor(private val editor: Editor,
 
   fun restartInDialog(isLinkUsed: Boolean = false) {
     InplaceExtractMethodCollector.openExtractDialog.log(myProject, isLinkUsed)
-    val updatedContext = context.update(method?.name ?: context.methodName, popupProvider.annotate, popupProvider.makeStatic)
     performCleanup()
-    val elements = ExtractSelector().suggestElementsToExtract(updatedContext.targetClass.containingFile, updatedContext.range)
-    extractor.extractInDialog(updatedContext.targetClass, elements, updatedContext.methodName, updatedContext.static)
-  }
-
-  private fun ExtractParameters.update(methodName: String, annotate: Boolean?, static: Boolean?): ExtractParameters {
-    if (annotate != null) {
-      PropertiesComponent.getInstance(myProject).setValue(ExtractMethodDialog.EXTRACT_METHOD_GENERATE_ANNOTATIONS, annotate, true)
-    }
-
-    var context = this.copy(methodName = methodName)
-    if (annotate != null) {
-      context = context.copy(annotate = annotate)
-    }
-    if (static != null) {
-      context = context.copy(static = static)
-    }
-    return context
+    val elements = ExtractSelector().suggestElementsToExtract(targetClass.containingFile, range)
+    extractor.extractInDialog(targetClass, elements, method?.name ?: "", popupProvider.makeStatic ?: false)
   }
 
   private fun restartInplace(methodName: String?) {
-    val updatedContext = context.update(context.methodName, popupProvider.annotate, popupProvider.makeStatic)
     performCleanup()
     WriteCommandAction.runWriteCommandAction(myProject) {
-      val inplaceExtractor = InplaceMethodExtractor(editor, updatedContext, extractor, popupProvider)
+      val inplaceExtractor = InplaceMethodExtractor(editor, range, targetClass, extractor, popupProvider, initialMethodName)
       inplaceExtractor.performInplaceRefactoring(linkedSetOf())
       if (methodName != null) {
         inplaceExtractor.setMethodName(methodName)
