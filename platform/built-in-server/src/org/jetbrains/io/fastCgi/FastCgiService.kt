@@ -126,7 +126,7 @@ abstract class FastCgiService(project: Project) : SingleConnectionNetService(pro
       return
     }
 
-    val extraSuffix = WebServerPageConnectionService.instance.fileRequested(client.request, client.pathInfo::getOrResolveVirtualFile)
+    val extraSuffix = WebServerPageConnectionService.instance.fileRequested(client.request, false, client.pathInfo::getOrResolveVirtualFile)
     val bufferWithExtraSuffix =
       if (extraSuffix == null) buffer
       else {
