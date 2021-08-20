@@ -17,6 +17,7 @@ import org.intellij.plugins.markdown.editor.lists.ListUtils.getListItemAtLine
 import org.intellij.plugins.markdown.editor.lists.ListUtils.getListItemAtLineSafely
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownFile
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownListItemImpl
+import org.intellij.plugins.markdown.settings.MarkdownSettings
 
 /**
  * This handler does two things for a caret inside the indent of some line in a list:
@@ -32,7 +33,11 @@ internal class MarkdownListIndentBackspaceHandlerDelegate : BackspaceHandlerDele
     deletedRange = null
     listItem = null
     moveCaret = false
-    if (file !is MarkdownFile || !c.isWhitespace()) return
+
+    if (file !is MarkdownFile || !c.isWhitespace()
+        || !MarkdownSettings.getInstance(file.project).isEnhancedEditingEnabled) {
+      return
+    }
 
     val document = editor.document
     PsiDocumentManager.getInstance(file.project).commitDocument(document)

@@ -14,6 +14,7 @@ import org.intellij.plugins.markdown.editor.lists.ListUtils.getLineIndentRange
 import org.intellij.plugins.markdown.lang.MarkdownTokenTypeSets
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownFile
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownListImpl
+import org.intellij.plugins.markdown.settings.MarkdownSettings
 
 /**
  * This handler renumbers the current list when you hit Enter after the number of some list item.
@@ -21,7 +22,10 @@ import org.intellij.plugins.markdown.lang.psi.impl.MarkdownListImpl
 internal class MarkdownListItemCreatingTypedHandlerDelegate : TypedHandlerDelegate() {
 
   override fun charTyped(c: Char, project: Project, editor: Editor, file: PsiFile): Result {
-    if (file !is MarkdownFile || c != ' ') return Result.CONTINUE
+    if (file !is MarkdownFile || c != ' '
+        || !MarkdownSettings.getInstance(project).isEnhancedEditingEnabled) {
+      return Result.CONTINUE
+    }
 
     val document = editor.document
     PsiDocumentManager.getInstance(project).commitDocument(document)
