@@ -15,7 +15,6 @@ import com.intellij.project.isDirectoryBased
 import com.intellij.ui.DocumentAdapter
 import com.intellij.ui.layout.*
 import com.intellij.util.ui.JBUI
-import javax.swing.JLabel
 import javax.swing.JPanel
 import javax.swing.JTextField
 import javax.swing.event.DocumentEvent
@@ -23,7 +22,7 @@ import javax.swing.event.DocumentEvent
 internal class ProjectConfigurableUi(private val myProjectConfigurable: ProjectConfigurable,
                                      private val myProject: Project) {
 
-  private val myProjectName: JTextField = JTextField(40)
+  private val myProjectName: JTextField = JTextField(28)
   private lateinit var myProjectJdkConfigurable: ProjectJdkConfigurable
   private lateinit var myLanguageLevelCombo: LanguageLevelCombo
   private lateinit var myProjectCompilerOutput: TextFieldWithBrowseButton
@@ -40,7 +39,7 @@ internal class ProjectConfigurableUi(private val myProjectConfigurable: ProjectC
       }
     }
     myProjectCompilerOutput = TextFieldWithBrowseButton().apply {
-      this.textField.document.addDocumentListener(object : DocumentAdapter() {
+      textField.document.addDocumentListener(object : DocumentAdapter() {
         override fun textChanged(e: DocumentEvent) {
           if (myProjectConfigurable.isFrozen) return
           LanguageLevelProjectExtensionImpl.getInstanceImpl(myProject).currentLevel = myLanguageLevelCombo.selectedLevel
@@ -62,27 +61,41 @@ internal class ProjectConfigurableUi(private val myProjectConfigurable: ProjectC
     myPanel = panel {
 
       if (myProject.isDirectoryBased) {
-        row {
-          label(JavaUiBundle.message("project.structure.title"), bold = true).comment(JavaUiBundle.message("project.structure.comment"), 120)
+        blockRow {
+          nestedPanel {
+            row {
+              label(JavaUiBundle.message("project.structure.title"), bold = true).comment(JavaUiBundle.message("project.structure.comment"),
+                120)
+            }
+          }
         }
 
-        row(JavaUiBundle.message("project.structure.name")) {
-          myProjectName()
+        nestedPanel {
+          blockRow {
+            cell {
+              label(JavaUiBundle.message("project.structure.name"))
+              myProjectName()
+            }
+          }
         }
       }
 
-      titledRow(JavaUiBundle.message("project.structure.sdks")) {
-        row(JavaUiBundle.message("project.structure.java.sdk")) {
-          myProjectJdkConfigurable.createComponent()()
+      nestedPanel {
+        titledRow(JavaUiBundle.message("project.structure.sdks")) {
+          row(JavaUiBundle.message("project.structure.java.sdk")) {
+            myProjectJdkConfigurable.createComponent()()
+          }
         }
       }
 
-      titledRow(JavaUiBundle.message("project.structure.java")) {
-        row(JavaUiBundle.message("module.module.language.level")) {
-          myLanguageLevelCombo()
-        }
-        row(JavaUiBundle.message("project.structure.compiler.output")) {
-          myProjectCompilerOutput().comment(JavaUiBundle.message("project.structure.compiler.output.comment"), 84)
+      nestedPanel {
+        titledRow(JavaUiBundle.message("project.structure.java")) {
+          row(JavaUiBundle.message("module.module.language.level")) {
+            myLanguageLevelCombo()
+          }
+          row(JavaUiBundle.message("project.structure.compiler.output")) {
+            myProjectCompilerOutput().comment(JavaUiBundle.message("project.structure.compiler.output.comment"), 84)
+          }
         }
       }
     }
