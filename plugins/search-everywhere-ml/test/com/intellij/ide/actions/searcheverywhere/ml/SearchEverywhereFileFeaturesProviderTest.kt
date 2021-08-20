@@ -9,11 +9,11 @@ import com.intellij.ide.actions.searcheverywhere.ml.features.SearchEverywhereFil
 import com.intellij.ide.actions.searcheverywhere.ml.features.SearchEverywhereFileFeaturesProvider.Companion.FILETYPE_USED_IN_LAST_MONTH_DATA_KEY
 import com.intellij.ide.actions.searcheverywhere.ml.features.SearchEverywhereFileFeaturesProvider.Companion.IS_DIRECTORY_DATA_KEY
 import com.intellij.ide.actions.searcheverywhere.ml.features.SearchEverywhereFileFeaturesProvider.Companion.IS_FAVORITE_DATA_KEY
-import com.intellij.ide.actions.searcheverywhere.ml.features.SearchEverywhereFileFeaturesProvider.Companion.IS_SAME_MODULE
-import com.intellij.ide.actions.searcheverywhere.ml.features.SearchEverywhereFileFeaturesProvider.Companion.PACKAGE_DISTANCE
+import com.intellij.ide.actions.searcheverywhere.ml.features.SearchEverywhereFileFeaturesProvider.Companion.IS_SAME_MODULE_DATA_KEY
+import com.intellij.ide.actions.searcheverywhere.ml.features.SearchEverywhereFileFeaturesProvider.Companion.PACKAGE_DISTANCE_DATA_KEY
 import com.intellij.ide.actions.searcheverywhere.ml.features.SearchEverywhereFileFeaturesProvider.Companion.PRIORITY_DATA_KEY
 import com.intellij.ide.actions.searcheverywhere.ml.features.SearchEverywhereFileFeaturesProvider.Companion.RECENT_INDEX_DATA_KEY
-import com.intellij.ide.actions.searcheverywhere.ml.features.SearchEverywhereFileFeaturesProvider.Companion.TIME_SINCE_LAST_FILETYPE_USAGE
+import com.intellij.ide.actions.searcheverywhere.ml.features.SearchEverywhereFileFeaturesProvider.Companion.TIME_SINCE_LAST_FILETYPE_USAGE_DATA_KEY
 import com.intellij.ide.actions.searcheverywhere.ml.features.SearchEverywhereFileFeaturesProvider.Companion.TIME_SINCE_LAST_MODIFICATION_DATA_KEY
 import com.intellij.ide.actions.searcheverywhere.ml.features.SearchEverywhereFileFeaturesProvider.Companion.WAS_MODIFIED_IN_LAST_DAY_DATA_KEY
 import com.intellij.ide.actions.searcheverywhere.ml.features.SearchEverywhereFileFeaturesProvider.Companion.WAS_MODIFIED_IN_LAST_HOUR_DATA_KEY
@@ -164,7 +164,7 @@ internal class SearchEverywhereFileFeaturesProviderTest
 
     val expectedValues = mapOf(
       FILETYPE_USAGE_RATIO_DATA_KEY to 1.0,
-      TIME_SINCE_LAST_FILETYPE_USAGE to currentTime - lastMinute,
+      TIME_SINCE_LAST_FILETYPE_USAGE_DATA_KEY to currentTime - lastMinute,
 
       FILETYPE_USED_IN_LAST_MINUTE_DATA_KEY to true,
       FILETYPE_USED_IN_LAST_HOUR_DATA_KEY to true,
@@ -183,7 +183,7 @@ internal class SearchEverywhereFileFeaturesProviderTest
 
     val expectedValues = mapOf(
       FILETYPE_USAGE_RATIO_DATA_KEY to 1.0,
-      TIME_SINCE_LAST_FILETYPE_USAGE to currentTime - lastHour,
+      TIME_SINCE_LAST_FILETYPE_USAGE_DATA_KEY to currentTime - lastHour,
 
       FILETYPE_USED_IN_LAST_MINUTE_DATA_KEY to false,
       FILETYPE_USED_IN_LAST_HOUR_DATA_KEY to true,
@@ -202,7 +202,7 @@ internal class SearchEverywhereFileFeaturesProviderTest
 
     val expectedValues = mapOf(
       FILETYPE_USAGE_RATIO_DATA_KEY to 1.0,
-      TIME_SINCE_LAST_FILETYPE_USAGE to currentTime - lastDay,
+      TIME_SINCE_LAST_FILETYPE_USAGE_DATA_KEY to currentTime - lastDay,
 
       FILETYPE_USED_IN_LAST_MINUTE_DATA_KEY to false,
       FILETYPE_USED_IN_LAST_HOUR_DATA_KEY to false,
@@ -221,7 +221,7 @@ internal class SearchEverywhereFileFeaturesProviderTest
 
     val expectedValues = mapOf(
       FILETYPE_USAGE_RATIO_DATA_KEY to 1.0,
-      TIME_SINCE_LAST_FILETYPE_USAGE to currentTime - lastMonth,
+      TIME_SINCE_LAST_FILETYPE_USAGE_DATA_KEY to currentTime - lastMonth,
 
       FILETYPE_USED_IN_LAST_MINUTE_DATA_KEY to false,
       FILETYPE_USED_IN_LAST_HOUR_DATA_KEY to false,
@@ -240,7 +240,7 @@ internal class SearchEverywhereFileFeaturesProviderTest
 
     val expectedValues = mapOf(
       FILETYPE_USAGE_RATIO_DATA_KEY to 0.0,
-      TIME_SINCE_LAST_FILETYPE_USAGE to Long.MAX_VALUE,
+      TIME_SINCE_LAST_FILETYPE_USAGE_DATA_KEY to Long.MAX_VALUE,
 
       FILETYPE_USED_IN_LAST_MINUTE_DATA_KEY to false,
       FILETYPE_USED_IN_LAST_HOUR_DATA_KEY to false,
@@ -352,7 +352,7 @@ internal class SearchEverywhereFileFeaturesProviderTest
     FileEditorManager.getInstance(project).openFile(moduleAFiles.first(), true)
 
     val psiFile = PsiUtil.getPsiFile(project, moduleBFiles.first())
-    checkThatFeature(IS_SAME_MODULE)
+    checkThatFeature(IS_SAME_MODULE_DATA_KEY)
       .ofElement(psiFile)
       .isEqualTo(false)
   }
@@ -363,7 +363,7 @@ internal class SearchEverywhereFileFeaturesProviderTest
     FileEditorManager.getInstance(project).openFile(files.first(), true)
 
     val psiFile = PsiUtil.getPsiFile(project, files.last())
-    checkThatFeature(IS_SAME_MODULE)
+    checkThatFeature(IS_SAME_MODULE_DATA_KEY)
       .ofElement(psiFile)
       .isEqualTo(true)
   }
@@ -377,7 +377,7 @@ internal class SearchEverywhereFileFeaturesProviderTest
     FileEditorManager.getInstance(project).openFile(openedFile, true)
 
     val psiFile = PsiUtil.getPsiFile(project, foundFile)
-    checkThatFeature(PACKAGE_DISTANCE)
+    checkThatFeature(PACKAGE_DISTANCE_DATA_KEY)
       .ofElement(psiFile)
       .isEqualTo(0)
   }
@@ -392,7 +392,7 @@ internal class SearchEverywhereFileFeaturesProviderTest
     FileEditorManager.getInstance(project).openFile(openedFile, true)
 
     val psiFile = PsiUtil.getPsiFile(project, foundFile)
-    checkThatFeature(PACKAGE_DISTANCE)
+    checkThatFeature(PACKAGE_DISTANCE_DATA_KEY)
       .ofElement(psiFile)
       .isEqualTo(1)
   }
@@ -407,7 +407,7 @@ internal class SearchEverywhereFileFeaturesProviderTest
     FileEditorManager.getInstance(project).openFile(openedFile, true)
 
     val psiFile = PsiUtil.getPsiFile(project, foundFile)
-    checkThatFeature(PACKAGE_DISTANCE)
+    checkThatFeature(PACKAGE_DISTANCE_DATA_KEY)
       .ofElement(psiFile)
       .isEqualTo(1)
   }
@@ -422,7 +422,7 @@ internal class SearchEverywhereFileFeaturesProviderTest
     FileEditorManager.getInstance(project).openFile(openedFile, true)
 
     val psiFile = PsiUtil.getPsiFile(project, foundFile)
-    checkThatFeature(PACKAGE_DISTANCE)
+    checkThatFeature(PACKAGE_DISTANCE_DATA_KEY)
       .ofElement(psiFile)
       .isEqualTo(3)
   }
@@ -437,7 +437,7 @@ internal class SearchEverywhereFileFeaturesProviderTest
     FileEditorManager.getInstance(project).openFile(openedFile, true)
 
     val psiFile = PsiUtil.getPsiFile(project, foundFile)
-    checkThatFeature(PACKAGE_DISTANCE)
+    checkThatFeature(PACKAGE_DISTANCE_DATA_KEY)
       .ofElement(psiFile)
       .isEqualTo(4)
   }
@@ -452,7 +452,7 @@ internal class SearchEverywhereFileFeaturesProviderTest
     FileEditorManager.getInstance(project).openFile(openedFile, true)
 
     val psiFile = PsiUtil.getPsiFile(project, foundFile)
-    checkThatFeature(PACKAGE_DISTANCE)
+    checkThatFeature(PACKAGE_DISTANCE_DATA_KEY)
       .ofElement(psiFile)
       .isEqualTo(6)
   }

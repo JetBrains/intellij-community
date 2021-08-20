@@ -27,11 +27,11 @@ internal class SearchEverywhereFileFeaturesProvider : SearchEverywhereElementFea
     internal const val RECENT_INDEX_DATA_KEY = "recentFilesIndex"
     internal const val PREDICTION_SCORE_DATA_KEY = "predictionScore"
     internal const val PRIORITY_DATA_KEY = "priority"
-    internal const val IS_SAME_MODULE = "isSameModule"
-    internal const val PACKAGE_DISTANCE = "packageDistance"
+    internal const val IS_SAME_MODULE_DATA_KEY = "isSameModule"
+    internal const val PACKAGE_DISTANCE_DATA_KEY = "packageDistance"
 
     internal const val FILETYPE_USAGE_RATIO_DATA_KEY = "fileTypeUsageRatio"
-    internal const val TIME_SINCE_LAST_FILETYPE_USAGE = "timeSinceLastFileTypeUsage"
+    internal const val TIME_SINCE_LAST_FILETYPE_USAGE_DATA_KEY = "timeSinceLastFileTypeUsage"
     internal const val FILETYPE_USED_IN_LAST_MINUTE_DATA_KEY = "fileTypeUsedInLastMinute"
     internal const val FILETYPE_USED_IN_LAST_HOUR_DATA_KEY = "fileTypeUsedInLastHour"
     internal const val FILETYPE_USED_IN_LAST_DAY_DATA_KEY = "fileTypeUsedInLastDay"
@@ -110,8 +110,8 @@ internal class SearchEverywhereFileFeaturesProvider : SearchEverywhereElementFea
     data[FILETYPE_DATA_KEY] = item.virtualFile.fileType.name
     data[RECENT_INDEX_DATA_KEY] = getRecentFilesIndex(item)
     data[PREDICTION_SCORE_DATA_KEY] = getPredictionScore(item)
-    data[IS_SAME_MODULE] = isSameModuleAsOpenedFile(item, cache.openedFile)
-    data[PACKAGE_DISTANCE] = calculatePackageDistance(item, cache.openedFile)
+    data[IS_SAME_MODULE_DATA_KEY] = isSameModuleAsOpenedFile(item, cache.openedFile)
+    data[PACKAGE_DISTANCE_DATA_KEY] = calculatePackageDistance(item, cache.openedFile)
 
     data.putAll(getModificationTimeStats(item, currentTime))
     data.putAll(getFileTypeStats(item, currentTime, cache.fileTypeStats))
@@ -166,7 +166,7 @@ internal class SearchEverywhereFileFeaturesProvider : SearchEverywhereElementFea
     return hashMapOf(
       FILETYPE_USAGE_RATIO_DATA_KEY to usageRatio,
 
-      TIME_SINCE_LAST_FILETYPE_USAGE to timeSinceLastUsage,
+      TIME_SINCE_LAST_FILETYPE_USAGE_DATA_KEY to timeSinceLastUsage,
       FILETYPE_USED_IN_LAST_MINUTE_DATA_KEY to (timeSinceLastUsage <= MINUTE),
       FILETYPE_USED_IN_LAST_HOUR_DATA_KEY to (timeSinceLastUsage <= HOUR),
       FILETYPE_USED_IN_LAST_DAY_DATA_KEY to (timeSinceLastUsage <= DAY),
