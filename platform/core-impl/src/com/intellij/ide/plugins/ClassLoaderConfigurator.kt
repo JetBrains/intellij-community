@@ -107,7 +107,7 @@ class ClassLoaderConfigurator(
       var files = module.jarFiles
       if (files == null) {
         if (!module.isUseIdeaClassLoader) {
-          log.error("jarFiles is not set for $module")
+          //log.error("jarFiles is not set for $module") TODO: this check breaks Code Server usages
         }
         files = Collections.emptyList()!!
       }
