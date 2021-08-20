@@ -2967,6 +2967,11 @@ public abstract class HighLevelJvmBasicCompletionTestGenerated extends AbstractH
             runTest("../completion/tests/testData/basic/java/AutoForceCompletion.kt");
         }
 
+        @TestMetadata("ClassFromDependency.kt")
+        public void testClassFromDependency() throws Exception {
+            runTest("../completion/tests/testData/basic/java/ClassFromDependency.kt");
+        }
+
         @TestMetadata("CompletionForExcludedWhenInternalUse.kt")
         public void testCompletionForExcludedWhenInternalUse() throws Exception {
             runTest("../completion/tests/testData/basic/java/CompletionForExcludedWhenInternalUse.kt");
