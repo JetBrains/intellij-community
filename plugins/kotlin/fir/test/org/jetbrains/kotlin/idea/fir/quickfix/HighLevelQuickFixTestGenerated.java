@@ -710,7 +710,7 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
             runTest("../idea/tests/testData/quickfix/expressions/uselessElvisForLambdaInNecessaryNestedParens.kt");
         }
 
-        @TestMetadata("uselessElvisForLambdaInNestedParens.kt")
+        @TestMetadata("uselessElvisForHighLevelQuickFixTestGenerated.Expressions.testUselessElvisForLambdaInNestedParensLambdaInNestedParens.kt")
         public void testUselessElvisForLambdaInNestedParens() throws Exception {
             runTest("../idea/tests/testData/quickfix/expressions/uselessElvisForLambdaInNestedParens.kt");
         }

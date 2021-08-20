@@ -8,3 +8,5 @@ fun f(a: A) {
         a?.a ?: return
 }
 
+// FIR_COMPARISON
+// FIR_COMPARISON_WITH_DISABLED_COMPONENTS
