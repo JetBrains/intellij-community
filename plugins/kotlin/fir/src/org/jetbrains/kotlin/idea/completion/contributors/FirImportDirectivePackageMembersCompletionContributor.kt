@@ -8,9 +8,9 @@ import org.jetbrains.kotlin.idea.completion.context.FirBasicCompletionContext
 import org.jetbrains.kotlin.idea.completion.context.FirImportDirectivePositionContext
 import org.jetbrains.kotlin.idea.completion.contributors.helpers.getStaticScope
 import org.jetbrains.kotlin.idea.completion.lookups.CallableInsertionOptions
-import org.jetbrains.kotlin.idea.completion.lookups.ImportStrategy
 import org.jetbrains.kotlin.idea.completion.lookups.CallableInsertionStrategy
-import org.jetbrains.kotlin.idea.completion.weighers.WeighingContext
+import org.jetbrains.kotlin.idea.completion.lookups.ImportStrategy
+import org.jetbrains.kotlin.idea.completion.weighers.WeighingContext.Companion.createEmptyWeighingContext
 
 internal class FirImportDirectivePackageMembersCompletionContributor(
     basicContext: FirBasicCompletionContext,
@@ -20,16 +20,17 @@ internal class FirImportDirectivePackageMembersCompletionContributor(
         val reference = positionContext.explicitReceiver?.reference() ?: return
         val scope = getStaticScope(reference) ?: return
         val visibilityChecker = CompletionVisibilityChecker.create(basicContext, positionContext)
+        val weighingContext = createEmptyWeighingContext(basicContext.fakeKtFile)
 
         scope.getClassifierSymbols(scopeNameFilter)
             .filter { with(visibilityChecker) { isVisible(it) } }
-            .forEach { addClassifierSymbolToCompletion(it,  ImportStrategy.DoNothing) }
+            .forEach { addClassifierSymbolToCompletion(it, weighingContext, ImportStrategy.DoNothing) }
 
         scope.getCallableSymbols(scopeNameFilter)
             .filter { with(visibilityChecker) { isVisible(it) } }
             .forEach {
                 addCallableSymbolToCompletion(
-                    WeighingContext.empty(basicContext.project),
+                    createEmptyWeighingContext(basicContext.fakeKtFile),
                     it,
                     CallableInsertionOptions(ImportStrategy.DoNothing, CallableInsertionStrategy.AsIdentifier)
                 )
