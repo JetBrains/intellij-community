@@ -25,16 +25,18 @@ disableDependencyVerification()
 
 dependencies {
     implementation(toolsJarApi())
-    jpsLikeJarDependency(kotlinStdlib(), JpsDepScope.COMPILE)
-    jpsLikeJarDependency(project(":kotlin-stdlib-jdk7"), JpsDepScope.COMPILE)
-    jpsLikeJarDependency(project(":kotlin-reflect"), JpsDepScope.TEST)
+    jpsLikeJarDependency(files(intellijCommunityDir.resolve("build/repo/org/jetbrains/kotlin/kotlin-stdlib-jdk8/1.6.255/kotlin-stdlib-jdk8-1.6.255.jar").canonicalPath), JpsDepScope.COMPILE)
+    jpsLikeJarDependency(files(intellijCommunityDir.resolve("build/repo/org/jetbrains/kotlin/kotlin-stdlib/1.6.255/kotlin-stdlib-1.6.255.jar").canonicalPath), JpsDepScope.COMPILE)
+    jpsLikeJarDependency(files(intellijCommunityDir.resolve("build/repo/org/jetbrains/kotlin/kotlin-stdlib-common/1.6.255/kotlin-stdlib-common-1.6.255.jar").canonicalPath), JpsDepScope.COMPILE)
+    jpsLikeJarDependency(files(intellijCommunityDir.resolve("build/repo/org/jetbrains/kotlin/kotlin-stdlib-jdk7/1.6.255/kotlin-stdlib-jdk7-1.6.255.jar").canonicalPath), JpsDepScope.COMPILE)
+    jpsLikeJarDependency(files(intellijCommunityDir.resolve("build/repo/org/jetbrains/kotlin/kotlin-reflect/1.6.255/kotlin-reflect-1.6.255.jar").canonicalPath), JpsDepScope.TEST)
     jpsLikeJarDependency("org.jetbrains.kotlin:kotlin-test:1.4.32", JpsDepScope.TEST)
     jpsLikeJarDependency("org.jetbrains.intellij.deps:log4j:1.2.17.2", JpsDepScope.COMPILE)
     jpsLikeJarDependency("com.google.guava:guava:30.1-jre", JpsDepScope.TEST)
-    jpsLikeJarDependency(project(":prepare:ide-plugin-dependencies:kotlin-compiler-for-ide"), JpsDepScope.COMPILE)
-    jpsLikeJarDependency(project(":prepare:ide-plugin-dependencies:compiler-components-for-jps"), JpsDepScope.COMPILE)
-    jpsLikeJarDependency(project(":prepare:ide-plugin-dependencies:kotlin-build-common-tests-for-ide"), JpsDepScope.TEST)
-    jpsLikeJarDependency(project(":prepare:ide-plugin-dependencies:incremental-compilation-impl-tests-for-ide"), JpsDepScope.TEST)
+    jpsLikeJarDependency(files(intellijCommunityDir.resolve("build/repo/org/jetbrains/kotlin/kotlin-compiler-for-ide/1.6.255/kotlin-compiler-for-ide-1.6.255.jar").canonicalPath), JpsDepScope.COMPILE)
+    jpsLikeJarDependency(files(intellijCommunityDir.resolve("build/repo/org/jetbrains/kotlin/compiler-components-for-jps/1.6.255/compiler-components-for-jps-1.6.255.jar").canonicalPath), JpsDepScope.COMPILE)
+    jpsLikeJarDependency(files(intellijCommunityDir.resolve("build/repo/org/jetbrains/kotlin/kotlin-build-common-tests-for-ide/1.6.255/kotlin-build-common-tests-for-ide-1.6.255.jar").canonicalPath), JpsDepScope.TEST)
+    jpsLikeJarDependency(files(intellijCommunityDir.resolve("build/repo/org/jetbrains/kotlin/incremental-compilation-impl-tests-for-ide/1.6.255/incremental-compilation-impl-tests-for-ide-1.6.255.jar").canonicalPath), JpsDepScope.TEST)
     jpsLikeModuleDependency(":kotlin-ide.kotlin.jps-common", JpsDepScope.COMPILE)
     jpsLikeModuleDependency(":kotlin-ide.kotlin.common", JpsDepScope.COMPILE)
     jpsLikeModuleDependency(":kotlin-ide.kotlin.tests-common", JpsDepScope.TEST)
@@ -55,8 +57,10 @@ dependencies {
     jpsLikeJarDependency("org.jetbrains:jetCheck:0.2.2", JpsDepScope.TEST, { isTransitive = false }) // 'intellij.platform.jps.model.tests' dependency
     jpsLikeJarDependency("org.jetbrains:annotations:20.1.0", JpsDepScope.TEST) // 'intellij.platform.jps.model.tests' dependency
     jpsLikeJarDependency("com.jgoodies:forms:1.1-preview", JpsDepScope.TEST) // 'intellij.platform.jps.model.tests' dependency
-    jpsLikeJarDependency(kotlinStdlib(), JpsDepScope.TEST) // 'intellij.platform.jps.model.tests' dependency
-    jpsLikeJarDependency(project(":kotlin-stdlib-jdk7"), JpsDepScope.TEST) // 'intellij.platform.jps.model.tests' dependency
+    jpsLikeJarDependency(files(intellijCommunityDir.resolve("build/repo/org/jetbrains/kotlin/kotlin-stdlib-jdk8/1.6.255/kotlin-stdlib-jdk8-1.6.255.jar").canonicalPath), JpsDepScope.TEST) // 'intellij.platform.jps.model.tests' dependency
+    jpsLikeJarDependency(files(intellijCommunityDir.resolve("build/repo/org/jetbrains/kotlin/kotlin-stdlib/1.6.255/kotlin-stdlib-1.6.255.jar").canonicalPath), JpsDepScope.TEST) // 'intellij.platform.jps.model.tests' dependency
+    jpsLikeJarDependency(files(intellijCommunityDir.resolve("build/repo/org/jetbrains/kotlin/kotlin-stdlib-common/1.6.255/kotlin-stdlib-common-1.6.255.jar").canonicalPath), JpsDepScope.TEST) // 'intellij.platform.jps.model.tests' dependency
+    jpsLikeJarDependency(files(intellijCommunityDir.resolve("build/repo/org/jetbrains/kotlin/kotlin-stdlib-jdk7/1.6.255/kotlin-stdlib-jdk7-1.6.255.jar").canonicalPath), JpsDepScope.TEST) // 'intellij.platform.jps.model.tests' dependency
     jpsLikeJarDependency("org.codehaus.groovy:groovy:2.5.14", JpsDepScope.TEST, { isTransitive = false }) // 'intellij.platform.jps.model.tests' dependency
     jpsLikeJarDependency(intellijDep(forIde = true), JpsDepScope.COMPILE, { includeJars("platform-api") }) // 'intellij.platform.core' dependency
     jpsLikeJarDependency(intellijCoreDep(), JpsDepScope.COMPILE) // 'intellij.platform.core' dependency
@@ -70,7 +74,7 @@ dependencies {
     jpsLikeJarDependency("org.jetbrains.intellij.deps:jdom:2.0.6", JpsDepScope.COMPILE) // 'intellij.platform.jps.model.serialization' dependency
     jpsLikeJarDependency(intellijPluginDep("devkit", forIde = true), JpsDepScope.TEST) // 'intellij.devkit.jps' dependency
     jpsLikeJarDependency("org.jetbrains.intellij.deps.fastutil:intellij-deps-fastutil:8.5.4-9", JpsDepScope.COMPILE, { isTransitive = false })
-    jpsLikeJarDependency(project(":prepare:ide-plugin-dependencies:kotlin-compiler-cli-for-ide"), JpsDepScope.TEST)
+    jpsLikeJarDependency(files(intellijCommunityDir.resolve("build/repo/org/jetbrains/kotlin/kotlin-compiler-cli-for-ide/1.6.255/kotlin-compiler-cli-for-ide-1.6.255.jar").canonicalPath), JpsDepScope.TEST)
     jpsLikeModuleDependency(":kotlin-ide.kotlin.resources-fe10", JpsDepScope.TEST)
 }
 

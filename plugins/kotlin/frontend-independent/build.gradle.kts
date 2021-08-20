@@ -25,9 +25,11 @@ disableDependencyVerification()
 
 dependencies {
     implementation(toolsJarApi())
-    jpsLikeJarDependency(kotlinStdlib(), JpsDepScope.COMPILE)
-    jpsLikeJarDependency(project(":kotlin-stdlib-jdk7"), JpsDepScope.COMPILE)
-    jpsLikeJarDependency(project(":prepare:ide-plugin-dependencies:kotlin-compiler-for-ide"), JpsDepScope.COMPILE)
+    jpsLikeJarDependency(files(intellijCommunityDir.resolve("build/repo/org/jetbrains/kotlin/kotlin-stdlib-jdk8/1.6.255/kotlin-stdlib-jdk8-1.6.255.jar").canonicalPath), JpsDepScope.COMPILE)
+    jpsLikeJarDependency(files(intellijCommunityDir.resolve("build/repo/org/jetbrains/kotlin/kotlin-stdlib/1.6.255/kotlin-stdlib-1.6.255.jar").canonicalPath), JpsDepScope.COMPILE)
+    jpsLikeJarDependency(files(intellijCommunityDir.resolve("build/repo/org/jetbrains/kotlin/kotlin-stdlib-common/1.6.255/kotlin-stdlib-common-1.6.255.jar").canonicalPath), JpsDepScope.COMPILE)
+    jpsLikeJarDependency(files(intellijCommunityDir.resolve("build/repo/org/jetbrains/kotlin/kotlin-stdlib-jdk7/1.6.255/kotlin-stdlib-jdk7-1.6.255.jar").canonicalPath), JpsDepScope.COMPILE)
+    jpsLikeJarDependency(files(intellijCommunityDir.resolve("build/repo/org/jetbrains/kotlin/kotlin-compiler-for-ide/1.6.255/kotlin-compiler-for-ide-1.6.255.jar").canonicalPath), JpsDepScope.COMPILE)
     jpsLikeJarDependency("com.google.guava:guava:30.1-jre", JpsDepScope.COMPILE)
     jpsLikeJarDependency(intellijDep(forIde = true), JpsDepScope.COMPILE, { includeJars("platform-api") }) // 'intellij.platform.lang' dependency
     jpsLikeJarDependency(intellijDep(forIde = true), JpsDepScope.COMPILE, { includeJars("intellij-core-analysis-deprecated") }) // 'intellij.platform.lang' dependency
@@ -41,7 +43,7 @@ dependencies {
     jpsLikeJarDependency("org.jetbrains.intellij.deps:asm-all:9.1", JpsDepScope.COMPILE, { isTransitive = false }) // 'intellij.java.analysis.impl' dependency
     jpsLikeJarDependency(intellijPluginDep("java", forIde = true), JpsDepScope.COMPILE) // 'intellij.java.analysis.impl' dependency
     jpsLikeJarDependency("org.apache.velocity:velocity:1.7", JpsDepScope.COMPILE) // 'intellij.java.impl' dependency
-    jpsLikeJarDependency(project(":kotlin-reflect"), JpsDepScope.COMPILE)
+    jpsLikeJarDependency(files(intellijCommunityDir.resolve("build/repo/org/jetbrains/kotlin/kotlin-reflect/1.6.255/kotlin-reflect-1.6.255.jar").canonicalPath), JpsDepScope.COMPILE)
 }
 
 configurations.all {

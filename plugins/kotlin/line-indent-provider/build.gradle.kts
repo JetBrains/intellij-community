@@ -25,9 +25,11 @@ disableDependencyVerification()
 
 dependencies {
     implementation(toolsJarApi())
-    jpsLikeJarDependency(kotlinStdlib(), JpsDepScope.COMPILE)
-    jpsLikeJarDependency(project(":kotlin-stdlib-jdk7"), JpsDepScope.COMPILE)
-    jpsLikeJarDependency(project(":prepare:ide-plugin-dependencies:kotlin-compiler-for-ide"), JpsDepScope.COMPILE)
+    jpsLikeJarDependency(files(intellijCommunityDir.resolve("build/repo/org/jetbrains/kotlin/kotlin-stdlib-jdk8/1.6.255/kotlin-stdlib-jdk8-1.6.255.jar").canonicalPath), JpsDepScope.COMPILE)
+    jpsLikeJarDependency(files(intellijCommunityDir.resolve("build/repo/org/jetbrains/kotlin/kotlin-stdlib/1.6.255/kotlin-stdlib-1.6.255.jar").canonicalPath), JpsDepScope.COMPILE)
+    jpsLikeJarDependency(files(intellijCommunityDir.resolve("build/repo/org/jetbrains/kotlin/kotlin-stdlib-common/1.6.255/kotlin-stdlib-common-1.6.255.jar").canonicalPath), JpsDepScope.COMPILE)
+    jpsLikeJarDependency(files(intellijCommunityDir.resolve("build/repo/org/jetbrains/kotlin/kotlin-stdlib-jdk7/1.6.255/kotlin-stdlib-jdk7-1.6.255.jar").canonicalPath), JpsDepScope.COMPILE)
+    jpsLikeJarDependency(files(intellijCommunityDir.resolve("build/repo/org/jetbrains/kotlin/kotlin-compiler-for-ide/1.6.255/kotlin-compiler-for-ide-1.6.255.jar").canonicalPath), JpsDepScope.COMPILE)
     jpsLikeJarDependency("org.apache.velocity:velocity:1.7", JpsDepScope.COMPILE, exported = true) // 'intellij.platform.lang.impl' dependency
     jpsLikeJarDependency(intellijDep(forIde = true), JpsDepScope.COMPILE, { includeJars("intellij-core-analysis-deprecated") }, exported = true) // 'intellij.platform.lang.impl' dependency
     jpsLikeJarDependency(intellijDep(forIde = true), JpsDepScope.COMPILE, { includeJars("platform-api") }, exported = true) // 'intellij.platform.lang.impl' dependency
@@ -38,8 +40,10 @@ dependencies {
     jpsLikeJarDependency("org.jetbrains.intellij.deps:jdom:2.0.6", JpsDepScope.COMPILE, exported = true) // 'intellij.platform.lang.impl' dependency
     jpsLikeJarDependency("org.jetbrains:annotations:20.1.0", JpsDepScope.COMPILE, exported = true) // 'intellij.platform.lang.impl' dependency
     jpsLikeJarDependency("com.jgoodies:forms:1.1-preview", JpsDepScope.COMPILE, exported = true) // 'intellij.platform.lang.impl' dependency
-    jpsLikeJarDependency(kotlinStdlib(), JpsDepScope.COMPILE, exported = true) // 'intellij.platform.lang.impl' dependency
-    jpsLikeJarDependency(project(":kotlin-stdlib-jdk7"), JpsDepScope.COMPILE, exported = true) // 'intellij.platform.lang.impl' dependency
+    jpsLikeJarDependency(files(intellijCommunityDir.resolve("build/repo/org/jetbrains/kotlin/kotlin-stdlib-jdk8/1.6.255/kotlin-stdlib-jdk8-1.6.255.jar").canonicalPath), JpsDepScope.COMPILE, exported = true) // 'intellij.platform.lang.impl' dependency
+    jpsLikeJarDependency(files(intellijCommunityDir.resolve("build/repo/org/jetbrains/kotlin/kotlin-stdlib/1.6.255/kotlin-stdlib-1.6.255.jar").canonicalPath), JpsDepScope.COMPILE, exported = true) // 'intellij.platform.lang.impl' dependency
+    jpsLikeJarDependency(files(intellijCommunityDir.resolve("build/repo/org/jetbrains/kotlin/kotlin-stdlib-common/1.6.255/kotlin-stdlib-common-1.6.255.jar").canonicalPath), JpsDepScope.COMPILE, exported = true) // 'intellij.platform.lang.impl' dependency
+    jpsLikeJarDependency(files(intellijCommunityDir.resolve("build/repo/org/jetbrains/kotlin/kotlin-stdlib-jdk7/1.6.255/kotlin-stdlib-jdk7-1.6.255.jar").canonicalPath), JpsDepScope.COMPILE, exported = true) // 'intellij.platform.lang.impl' dependency
 }
 
 configurations.all {

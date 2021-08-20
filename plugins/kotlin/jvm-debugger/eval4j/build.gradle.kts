@@ -25,11 +25,13 @@ disableDependencyVerification()
 
 dependencies {
     implementation(toolsJarApi())
-    jpsLikeJarDependency(kotlinStdlib(), JpsDepScope.COMPILE)
-    jpsLikeJarDependency(project(":kotlin-stdlib-jdk7"), JpsDepScope.COMPILE)
+    jpsLikeJarDependency(files(intellijCommunityDir.resolve("build/repo/org/jetbrains/kotlin/kotlin-stdlib-jdk8/1.6.255/kotlin-stdlib-jdk8-1.6.255.jar").canonicalPath), JpsDepScope.COMPILE)
+    jpsLikeJarDependency(files(intellijCommunityDir.resolve("build/repo/org/jetbrains/kotlin/kotlin-stdlib/1.6.255/kotlin-stdlib-1.6.255.jar").canonicalPath), JpsDepScope.COMPILE)
+    jpsLikeJarDependency(files(intellijCommunityDir.resolve("build/repo/org/jetbrains/kotlin/kotlin-stdlib-common/1.6.255/kotlin-stdlib-common-1.6.255.jar").canonicalPath), JpsDepScope.COMPILE)
+    jpsLikeJarDependency(files(intellijCommunityDir.resolve("build/repo/org/jetbrains/kotlin/kotlin-stdlib-jdk7/1.6.255/kotlin-stdlib-jdk7-1.6.255.jar").canonicalPath), JpsDepScope.COMPILE)
     jpsLikeJarDependency("org.jetbrains.intellij.deps:asm-all:9.1", JpsDepScope.COMPILE, { isTransitive = false })
     jpsLikeJarDependency("junit:junit:4.12", JpsDepScope.TEST)
-    jpsLikeJarDependency(project(":prepare:ide-plugin-dependencies:kotlin-compiler-for-ide"), JpsDepScope.COMPILE)
+    jpsLikeJarDependency(files(intellijCommunityDir.resolve("build/repo/org/jetbrains/kotlin/kotlin-compiler-for-ide/1.6.255/kotlin-compiler-for-ide-1.6.255.jar").canonicalPath), JpsDepScope.COMPILE)
     jpsLikeJarDependency(intellijDep(forIde = true), JpsDepScope.COMPILE, { includeJars("util") }) // 'intellij.platform.util' dependency
     jpsLikeJarDependency(intellijCoreDep(), JpsDepScope.COMPILE) // 'intellij.platform.util' dependency
     jpsLikeJarDependency(intellijDep(forIde = true), JpsDepScope.COMPILE, { includeJars("intellij-core-analysis-deprecated") }) // 'intellij.platform.util' dependency

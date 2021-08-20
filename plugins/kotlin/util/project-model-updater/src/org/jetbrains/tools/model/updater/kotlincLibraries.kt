@@ -11,6 +11,7 @@ fun generateKotlincLibraries(kotlincArtifactsMode: KotlincArtifactsMode, version
         kotlincForIdeWithStandardNaming("kotlinc.high-level-api-fir-tests", version),
         kotlincForIdeWithStandardNaming("kotlinc.high-level-api-fir", version),
         kotlincForIdeWithStandardNaming("kotlinc.high-level-api", version),
+        kotlincForIdeWithStandardNaming("kotlinc.analysis-api-providers", version),
         kotlincForIdeWithStandardNaming("kotlinc.incremental-compilation-impl-tests", version),
         kotlincForIdeWithStandardNaming("kotlinc.kotlin-build-common-tests", version),
         kotlincForIdeWithStandardNaming("kotlinc.kotlin-compiler-cli", version),

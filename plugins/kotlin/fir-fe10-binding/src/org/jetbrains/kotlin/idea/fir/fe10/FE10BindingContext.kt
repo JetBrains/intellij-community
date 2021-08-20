@@ -3,6 +3,7 @@
 package org.jetbrains.kotlin.idea.fir.fe10
 
 import com.intellij.openapi.project.Project
+import org.jetbrains.kotlin.analysis.providers.createProjectWideOutOfBlockModificationTracker
 import org.jetbrains.kotlin.builtins.DefaultBuiltIns
 import org.jetbrains.kotlin.builtins.KotlinBuiltIns
 import org.jetbrains.kotlin.descriptors.*
@@ -11,7 +12,6 @@ import org.jetbrains.kotlin.fir.FirElement
 import org.jetbrains.kotlin.idea.caches.project.IdeaModuleInfo
 import org.jetbrains.kotlin.idea.caches.project.getModuleInfo
 import org.jetbrains.kotlin.idea.fir.fe10.*
-import org.jetbrains.kotlin.idea.fir.low.level.api.api.createProjectWideOutOfBlockModificationTracker
 import org.jetbrains.kotlin.idea.fir.low.level.api.api.getResolveState
 import org.jetbrains.kotlin.idea.frontend.api.*
 import org.jetbrains.kotlin.idea.frontend.api.fir.utils.EntityWasGarbageCollectedException
