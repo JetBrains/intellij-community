@@ -17,7 +17,6 @@ internal object FirClassifierProvider {
         originalKtFile: KtFile,
         position: KtElement,
         scopeNameFilter: KtScopeNameFilter,
-        indexHelper: HLIndexHelper,
         visibilityChecker: CompletionVisibilityChecker
     ): Sequence<KtClassifierSymbol> = sequence {
         yieldAll(
@@ -25,7 +24,13 @@ internal object FirClassifierProvider {
                 .getClassifierSymbols(scopeNameFilter)
                 .filter { with(visibilityChecker) { isVisible(it) } }
         )
+    }
 
+    fun KtAnalysisSession.getAvailableClassifiersFromIndex(
+        indexHelper: HLIndexHelper,
+        scopeNameFilter: KtScopeNameFilter,
+        visibilityChecker: CompletionVisibilityChecker
+    ): Sequence<KtClassifierSymbol> = sequence {
         yieldAll(
             indexHelper.getKotlinClasses(scopeNameFilter, psiFilter = { it !is KtEnumEntry }).asSequence()
                 .map { it.getSymbol() as KtClassifierSymbol }
