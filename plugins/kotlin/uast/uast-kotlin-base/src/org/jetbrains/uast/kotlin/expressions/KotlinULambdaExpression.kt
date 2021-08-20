@@ -3,14 +3,9 @@
 package org.jetbrains.uast.kotlin
 
 import com.intellij.psi.PsiType
-import org.jetbrains.kotlin.backend.common.descriptors.explicitParameters
-import org.jetbrains.kotlin.descriptors.CallableDescriptor
-import org.jetbrains.kotlin.descriptors.ParameterDescriptor
-import org.jetbrains.kotlin.descriptors.SimpleFunctionDescriptor
 import org.jetbrains.kotlin.psi.KtBlockExpression
 import org.jetbrains.kotlin.psi.KtLambdaExpression
 import org.jetbrains.uast.*
-import org.jetbrains.uast.kotlin.*
 import org.jetbrains.uast.kotlin.psi.UastKotlinPsiParameter
 
 class KotlinULambdaExpression(

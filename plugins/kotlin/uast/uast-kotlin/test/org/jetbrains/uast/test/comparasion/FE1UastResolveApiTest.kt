@@ -4,12 +4,12 @@ package org.jetbrains.uast.test.comparasion
 
 import com.intellij.testFramework.TestDataPath
 import org.jetbrains.kotlin.idea.test.JUnit3RunnerWithInners
+import org.jetbrains.kotlin.test.KotlinRoot
 import org.jetbrains.kotlin.test.TestMetadata
 import org.jetbrains.uast.UFile
 import org.jetbrains.uast.test.common.kotlin.UastResolveApiTestBase
 import org.jetbrains.uast.test.kotlin.org.jetbrains.uast.test.env.kotlin.AbstractFE1UastTest
 import org.junit.runner.RunWith
-import java.io.File
 
 @RunWith(JUnit3RunnerWithInners::class)
 class FE1UastResolveApiTest : AbstractFE1UastTest() {
@@ -21,7 +21,7 @@ class FE1UastResolveApiTest : AbstractFE1UastTest() {
     @TestDataPath("/")
     @RunWith(JUnit3RunnerWithInners::class)
     class Declaration : AbstractFE1UastTest(), UastResolveApiTestBase {
-        override var testDataDir = File("../uast-kotlin-fir/testData/declaration")
+        override var testDataDir = KotlinRoot.DIR_PATH.resolve("uast/uast-kotlin-fir/testData/declaration").toFile()
 
         override val isFirUastPlugin: Boolean = false
 
@@ -43,7 +43,7 @@ class FE1UastResolveApiTest : AbstractFE1UastTest() {
     @TestMetadata("uast-kotlin/testData")
     @TestDataPath("/")
     class Legacy : AbstractFE1UastTest(), UastResolveApiTestBase {
-        override var testDataDir = File("../uast-kotlin/testData").normalize()
+        override var testDataDir = KotlinRoot.DIR_PATH.resolve("uast/uast-kotlin/testData").toFile()
 
         override val isFirUastPlugin: Boolean = false
 

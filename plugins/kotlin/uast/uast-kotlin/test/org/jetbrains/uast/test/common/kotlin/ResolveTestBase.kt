@@ -5,7 +5,6 @@ package org.jetbrains.uast.test.common.kotlin
 import com.intellij.psi.PsiNamedElement
 import org.jetbrains.uast.UFile
 import org.jetbrains.uast.UResolvable
-import org.jetbrains.uast.test.env.kotlin.findElementByText
 import org.junit.Assert.assertEquals
 
 interface ResolveTestBase {
