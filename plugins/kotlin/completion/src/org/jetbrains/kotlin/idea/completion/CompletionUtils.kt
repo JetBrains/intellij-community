@@ -27,10 +27,7 @@ import org.jetbrains.kotlin.idea.util.getImplicitReceiversWithInstanceToExpressi
 import org.jetbrains.kotlin.idea.util.getResolutionScope
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.*
-import org.jetbrains.kotlin.psi.psiUtil.endOffset
-import org.jetbrains.kotlin.psi.psiUtil.findLabelAndCall
-import org.jetbrains.kotlin.psi.psiUtil.parentsWithSelf
-import org.jetbrains.kotlin.psi.psiUtil.startOffset
+import org.jetbrains.kotlin.psi.psiUtil.*
 import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.DescriptorUtils
 import org.jetbrains.kotlin.resolve.inline.InlineUtil
@@ -56,22 +53,10 @@ tailrec fun <T : Any> LookupElement.getUserDataDeep(key: Key<T>): T? {
     }
 }
 
-enum class ItemPriority {
-    SUPER_METHOD_WITH_ARGUMENTS,
-    FROM_UNRESOLVED_NAME_SUGGESTION,
-    GET_OPERATOR,
-    DEFAULT,
-    IMPLEMENT,
-    OVERRIDE,
-    STATIC_MEMBER_FROM_IMPORTS,
-    STATIC_MEMBER
-}
-
-val ITEM_PRIORITY_KEY = Key<ItemPriority>("ITEM_PRIORITY_KEY")
 var LookupElement.isDslMember: Boolean? by UserDataProperty(Key.create("DSL_LOOKUP_ITEM"))
 
 fun LookupElement.assignPriority(priority: ItemPriority): LookupElement {
-    putUserData(ITEM_PRIORITY_KEY, priority)
+    this.priority = priority
     return this
 }
 
