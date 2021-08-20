@@ -17,6 +17,7 @@ import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.Task
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
+import com.intellij.openapi.util.ThrowableComputable
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.wm.WindowManager
 import com.intellij.psi.*
@@ -61,34 +62,48 @@ class MethodExtractor {
       if (elements.isEmpty()) {
         throw ExtractException(RefactoringBundle.message("selected.block.should.represent.a.set.of.statements.or.an.expression"), file)
       }
-      val prepareOptionsTask = object : Task.WithResult<ExtractOptions, ExtractException>(project, JavaRefactoringBundle.message("dialog.title.prepare.extract.options"), false) {
-        override fun compute(indicator: ProgressIndicator): ExtractOptions {
-          return ReadAction.compute<ExtractOptions, ExtractException> { findExtractOptions(elements) }
-        }
-      }
-      val extractOptions = ProgressManager.getInstance().run(prepareOptionsTask)
+      val extractOptions = computeWithAnalyzeProgress<ExtractOptions, ExtractException>(project) { findExtractOptions(elements) }
       selectTargetClass(extractOptions) { options ->
-        val targetClass = options.anchor.containingClass ?: throw IllegalStateException("Failed to find target class")
-        val extractor = getDefaultInplaceExtractor(options)
-        if (EditorSettingsExternalizable.getInstance().isVariableInplaceRenameEnabled) {
-          val popupSettings = createInplaceSettingsPopup(options)
-          val guessedNames = suggestSafeMethodNames(options)
-          val methodName = guessedNames.first()
-          val suggestedNames = guessedNames.takeIf { it.size > 1 }.orEmpty()
-          executeRefactoringCommand(project) {
-            InplaceMethodExtractor(editor, range, targetClass, extractor, popupSettings, methodName)
-              .performInplaceRefactoring(LinkedHashSet(suggestedNames))
-          }
-        }
-        else {
-          extractor.extractInDialog(targetClass, elements, "", options.isStatic)
-        }
+        val prepareExtractAction = computeWithAnalyzeProgress<Runnable, Exception>(project) { prepareExtractAction(editor, range, options) }
+        prepareExtractAction.run()
       }
     }
     catch (e: ExtractException) {
       val message = JavaRefactoringBundle.message("extract.method.error.prefix") + " " + (e.message ?: "")
       CommonRefactoringUtil.showErrorHint(project, editor, message, ExtractMethodHandler.getRefactoringName(), HelpID.EXTRACT_METHOD)
       showError(editor, e.problems)
+    }
+  }
+
+  private fun <T, E: Exception> computeWithAnalyzeProgress(project: Project, throwableComputable: ThrowableComputable<T, E>): T {
+    return ProgressManager.getInstance().run(object : Task.WithResult<T, E>(project,
+      JavaRefactoringBundle.message("dialog.title.analyze.code.fragment.to.extract"), false) {
+      override fun compute(indicator: ProgressIndicator): T {
+        return ReadAction.compute(throwableComputable)
+      }
+    })
+  }
+
+  private fun prepareExtractAction(editor: Editor, range: TextRange, options: ExtractOptions): Runnable {
+    val project = options.project
+    val targetClass = options.anchor.containingClass ?: throw IllegalStateException("Failed to find target class")
+    val extractor = getDefaultInplaceExtractor(options)
+    if (EditorSettingsExternalizable.getInstance().isVariableInplaceRenameEnabled) {
+      val popupSettings = createInplaceSettingsPopup(options)
+      val guessedNames = suggestSafeMethodNames(options)
+      val methodName = guessedNames.first()
+      val suggestedNames = guessedNames.takeIf { it.size > 1 }.orEmpty()
+      return Runnable {
+        executeRefactoringCommand(project) {
+          val inplaceExtractor = InplaceMethodExtractor(editor, range, targetClass, extractor, popupSettings, methodName)
+          inplaceExtractor.performInplaceRefactoring(LinkedHashSet(suggestedNames))
+        }
+      }
+    }
+    else {
+      return Runnable {
+        extractor.extractInDialog(targetClass, options.elements, "", options.isStatic)
+      }
     }
   }
 
