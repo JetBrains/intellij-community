@@ -30,6 +30,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.util.ArrayFactory;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.ThreeState;
 import com.intellij.util.containers.ContainerUtil;
 import org.jdom.Element;
 import org.jdom.Verifier;
@@ -70,7 +71,7 @@ public class DefaultInspectionToolResultExporter implements InspectionToolResult
   protected final SynchronizedBidiMultiMap<RefEntity, CommonProblemDescriptor> mySuppressedElements = createBidiMap();
   protected final SynchronizedBidiMultiMap<RefEntity, CommonProblemDescriptor> myResolvedElements = createBidiMap();
 
-  protected final Map<String, Set<RefEntity>> myContents = Collections.synchronizedMap(new HashMap<>(1)); // keys can be null
+  private Map<String, Set<RefEntity>> myContents = null;
 
   public DefaultInspectionToolResultExporter(@NotNull InspectionToolWrapper toolWrapper, @NotNull GlobalInspectionContextEx context) {
     myToolWrapper = toolWrapper;
@@ -366,7 +367,7 @@ public class DefaultInspectionToolResultExporter implements InspectionToolResult
 
   @Override
   public synchronized void updateContent() {
-    myContents.clear();
+    clearContents();
     updateProblemElements();
   }
 
@@ -396,9 +397,21 @@ public class DefaultInspectionToolResultExporter implements InspectionToolResult
     return false;
   }
 
-  protected void registerContentEntry(RefEntity element, String packageName) {
+  protected synchronized void clearContents() {
+    if (myContents == null) {
+      myContents = new HashMap<>(1);
+    }
+    else {
+      myContents.clear();
+    }
+  }
+
+  protected synchronized void registerContentEntry(RefEntity element, String packageName) {
     GlobalReportedProblemFilter globalReportedProblemFilter = myContext.getGlobalReportedProblemFilter();
     if (globalReportedProblemFilter == null || globalReportedProblemFilter.shouldReportProblem(element, getToolWrapper().getShortName())) {
+      if (myContents == null) {
+        myContents = new HashMap<>(1);
+      }
       Set<RefEntity> content = myContents.computeIfAbsent(packageName, k -> new HashSet<>());
       content.add(element);
     }
@@ -509,15 +522,20 @@ public class DefaultInspectionToolResultExporter implements InspectionToolResult
     return myResolvedElements.getOrDefault(entity, CommonProblemDescriptor.EMPTY_ARRAY);
   }
 
+  /**
+   * @return {@link ThreeState#UNSURE}, if the content has never been updated,
+   * {@link ThreeState#YES}, if some problems were found, otherwise {@link ThreeState#NO}
+   */
+  @NotNull
   @Override
-  public synchronized boolean hasReportedProblems() {
-    return !myContents.isEmpty();
+  public synchronized ThreeState hasReportedProblems() {
+    if (myContents == null) return ThreeState.UNSURE;
+    return myContents.isEmpty() ? ThreeState.NO : ThreeState.YES;
   }
 
   @NotNull
   @Override
-  public Map<String, Set<RefEntity>> getContent() {
-    return myContents;
+  public synchronized Map<String, Set<RefEntity>> getContent() {
+    return Collections.synchronizedMap(myContents == null ? new HashMap<>(1) : myContents);
   }
-
 }
