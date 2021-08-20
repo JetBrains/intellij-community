@@ -17,7 +17,10 @@ import com.jetbrains.python.run.buildTargetedCommandLine
 import com.jetbrains.python.run.prepareHelperScriptExecution
 import com.jetbrains.python.sdk.InvalidSdkException
 import com.jetbrains.python.sdk.skeleton.PySkeletonHeader
+import java.nio.file.Files
+import java.nio.file.NoSuchFileException
 import java.nio.file.Paths
+import kotlin.io.path.div
 
 class PyTargetsSkeletonGenerator(skeletonPath: String?, pySdk: Sdk, currentFolder: String?)
   : PySkeletonGenerator(skeletonPath, pySdk, currentFolder) {
@@ -68,11 +71,27 @@ class PyTargetsSkeletonGenerator(skeletonPath: String?, pySdk: Sdk, currentFolde
         }
       }
       val targetEnvironment = myTargetEnvRequest.prepareEnvironment(TargetProgressIndicator.EMPTY)
+      var skeletonsStateJson: String? = null
+      if (!isLocalTarget()) {
+        try {
+          skeletonsStateJson = Files.readString(Paths.get(skeletonsPath) / STATE_MARKER_FILE)
+          generatorScriptExecution.addParameter("--state-file-policy")
+          generatorScriptExecution.addParameter("readwrite")
+        }
+        catch (e: NoSuchFileException) {
+          generatorScriptExecution.addParameter("--state-file-policy")
+          generatorScriptExecution.addParameter("write")
+        }
+      }
+
       val targetedCommandLine = generatorScriptExecution.buildTargetedCommandLine(targetEnvironment, mySdk, emptyList())
       val process = targetEnvironment.createProcess(targetedCommandLine, EmptyProgressIndicator())
       val commandPresentation = targetedCommandLine.getCommandPresentation(targetEnvironment)
       val capturingProcessHandler = CapturingProcessHandler(process, targetedCommandLine.charset, commandPresentation)
       listener?.let { capturingProcessHandler.addProcessListener(LineWiseProcessOutputListener.Adapter(it)) }
+      if (skeletonsStateJson != null) {
+        sendLineToProcessInput(capturingProcessHandler, skeletonsStateJson)
+      }
       val result = capturingProcessHandler.runProcess()
       targetEnvironment.downloadVolumes.values.forEach { it.download(".", EmptyProgressIndicator()) }
       return result
