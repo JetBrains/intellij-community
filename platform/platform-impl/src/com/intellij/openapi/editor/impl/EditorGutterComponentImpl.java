@@ -1518,7 +1518,7 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
     g.setColor(getOutlineColor(active));
     RectanglePainter2D.DRAW.paint(g, rect, null, StrokeType.CENTERED, sw, RenderingHints.VALUE_ANTIALIAS_OFF);
 
-    if (!SystemInfo.isMac && Registry.is("ide.editor.alternative.folding.icons.painting")) {
+    if (!SystemInfo.isMac) {
       double dx1 = rect.getX();
       double dx2 = dx1 + rect.getWidth() - 1;
       int x1 = (int)Math.round(dx1);
