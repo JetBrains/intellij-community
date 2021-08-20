@@ -3,7 +3,9 @@ package com.intellij.ui.dsl.impl
 
 import com.intellij.openapi.observable.properties.GraphProperty
 import com.intellij.openapi.ui.ValidationInfo
+import com.intellij.openapi.ui.panel.ComponentPanelBuilder
 import com.intellij.openapi.util.NlsContexts
+import com.intellij.ui.components.Label
 import com.intellij.ui.dsl.Cell
 import com.intellij.ui.dsl.RightGap
 import com.intellij.ui.dsl.gridLayout.HorizontalAlign
@@ -12,6 +14,7 @@ import com.intellij.ui.layout.*
 import com.intellij.util.SmartList
 import org.jetbrains.annotations.ApiStatus
 import javax.swing.JComponent
+import javax.swing.JLabel
 
 @ApiStatus.Internal
 internal class CellImpl<T : JComponent>(
@@ -20,6 +23,12 @@ internal class CellImpl<T : JComponent>(
   val viewComponent: JComponent = component) : CellBaseImpl<Cell<T>>(), Cell<T> {
 
   override var component: T = component
+    private set
+
+  var comment: JComponent? = null
+    private set
+
+  var label: JLabel? = null
     private set
 
   private var property: GraphProperty<*>? = null
@@ -49,11 +58,6 @@ internal class CellImpl<T : JComponent>(
 
   override fun resizableColumn(): CellImpl<T> {
     super.resizableColumn()
-    return this
-  }
-
-  override fun comment(@NlsContexts.DetailedDescription comment: String?, maxLineLength: Int): CellImpl<T> {
-    super.comment(comment, maxLineLength)
     return this
   }
 
@@ -129,6 +133,16 @@ internal class CellImpl<T : JComponent>(
     return this
   }
 
+  override fun comment(@NlsContexts.DetailedDescription comment: String?, maxLineLength: Int): CellImpl<T> {
+    this.comment = if (comment == null) null else ComponentPanelBuilder.createCommentComponent(comment, true, maxLineLength, true)
+    return this
+  }
+
+  override fun label(label: String): CellImpl<T> {
+    this.label = Label(label)
+    return this
+  }
+
   override fun applyIfEnabled(): CellImpl<T> {
     applyIfEnabled = true
     return this
@@ -185,10 +199,12 @@ internal class CellImpl<T : JComponent>(
   private fun doVisible(isVisible: Boolean) {
     viewComponent.isVisible = isVisible
     comment?.let { it.isVisible = isVisible }
+    label?.let { it.isVisible = isVisible }
   }
 
   private fun doEnabled(isEnabled: Boolean) {
     viewComponent.isEnabled = isEnabled
     comment?.let { it.isEnabled = isEnabled }
+    label?.let { it.isEnabled = isEnabled }
   }
 }

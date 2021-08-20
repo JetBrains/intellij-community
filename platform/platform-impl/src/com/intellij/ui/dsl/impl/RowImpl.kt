@@ -3,7 +3,10 @@ package com.intellij.ui.dsl.impl
 
 import com.intellij.BundleBase
 import com.intellij.icons.AllIcons
-import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.actionSystem.ActionPlaces
+import com.intellij.openapi.actionSystem.AnAction
+import com.intellij.openapi.actionSystem.DefaultActionGroup
+import com.intellij.openapi.actionSystem.PlatformDataKeys
 import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.actionSystem.impl.ActionButton
 import com.intellij.openapi.fileChooser.FileChooserDescriptor
@@ -49,10 +52,7 @@ internal class RowImpl(private val dialogPanelConfig: DialogPanelConfig,
   var bottomGap: BottomGap? = null
     private set
 
-  val cells: List<CellBaseImpl<*>?>
-    get() = _cells
-
-  private val _cells = mutableListOf<CellBaseImpl<*>?>()
+  val cells = mutableListOf<CellBaseImpl<*>?>()
 
   init {
     label?.let { cell(it) }
@@ -70,7 +70,7 @@ internal class RowImpl(private val dialogPanelConfig: DialogPanelConfig,
 
   override fun <T : JComponent> cell(component: T): CellImpl<T> {
     val result = CellImpl(dialogPanelConfig, component)
-    _cells.add(result)
+    cells.add(result)
 
     if (component is JRadioButton) {
       dialogPanelConfig.context.getButtonGroup()?.add(component)
@@ -80,11 +80,11 @@ internal class RowImpl(private val dialogPanelConfig: DialogPanelConfig,
   }
 
   override fun cell() {
-    _cells.add(null)
+    cells.add(null)
   }
 
   fun cell(cell: CellBaseImpl<*>) {
-    _cells.add(cell)
+    cells.add(cell)
   }
 
   override fun placeholder(): Placeholder {
@@ -92,7 +92,7 @@ internal class RowImpl(private val dialogPanelConfig: DialogPanelConfig,
   }
 
   override fun enabled(isEnabled: Boolean): RowImpl {
-    _cells.forEach {
+    cells.forEach {
       when (it) {
         is CellImpl<*> -> it.enabledFromParent(isEnabled)
         is PanelImpl -> it.enabled(isEnabled)
@@ -109,7 +109,7 @@ internal class RowImpl(private val dialogPanelConfig: DialogPanelConfig,
   }
 
   override fun visible(isVisible: Boolean): RowImpl {
-    _cells.forEach {
+    cells.forEach {
       when (it) {
         is CellImpl<*> -> it.visibleFromParent(isVisible)
         is PanelImpl -> it.visible(isVisible)
@@ -132,7 +132,7 @@ internal class RowImpl(private val dialogPanelConfig: DialogPanelConfig,
   override fun panel(init: Panel.() -> Unit): PanelImpl {
     val result = PanelImpl(dialogPanelConfig)
     result.init()
-    _cells.add(result)
+    cells.add(result)
     return result
   }
 

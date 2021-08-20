@@ -5,6 +5,7 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.ui.TextFieldWithBrowseButton
 import com.intellij.ui.TitledSeparator
+import com.intellij.ui.dsl.Cell
 import com.intellij.ui.dsl.RightGap
 import com.intellij.ui.dsl.RowLayout
 import com.intellij.ui.dsl.TopGap
@@ -33,6 +34,8 @@ internal class PanelBuilder(val rows: List<RowImpl>, val dialogPanelConfig: Dial
   }
 
   fun build() {
+    preprocess()
+
     val maxColumnsCount = getMaxColumnsCount()
     val rowsGridBuilder = RowsGridBuilder(panel, grid = grid)
 
@@ -99,6 +102,29 @@ internal class PanelBuilder(val rows: List<RowImpl>, val dialogPanelConfig: Dial
     }
 
     setLastColumnResizable(rowsGridBuilder)
+  }
+
+  /**
+   * Preprocesses rows/cells and adds necessary rows/cells
+   * 1. Labels, see [Cell.label]
+   */
+  private fun preprocess() {
+    for (row in rows) {
+      var i = 0
+      while (i < row.cells.size) {
+        val cell = row.cells[i]
+        if (cell is CellImpl<*>) {
+          cell.label?.let {
+            val labelCell = CellImpl(dialogPanelConfig, it)
+              .gap(RightGap.SMALL)
+            row.cells.add(i, labelCell)
+            i++
+          }
+        }
+
+        i++
+      }
+    }
   }
 
   private fun setLastColumnResizable(builder: RowsGridBuilder) {
@@ -228,7 +254,7 @@ internal class PanelBuilder(val rows: List<RowImpl>, val dialogPanelConfig: Dial
                      if (commentedCellIndex == 0) firstCellIndent else 0
     val gaps = Gaps(left = leftIndent, bottom = dialogPanelConfig.spacing.commentBottomGap)
     builder.skip(commentedCellIndex)
-    builder.cell(cell!!.comment!!, maxColumnsCount - commentedCellIndex, gaps = gaps)
+    builder.cell((cell as? CellImpl<*>)!!.comment!!, maxColumnsCount - commentedCellIndex, gaps = gaps)
     builder.row()
     return
   }
@@ -241,7 +267,7 @@ internal class PanelBuilder(val rows: List<RowImpl>, val dialogPanelConfig: Dial
   }
 
   private fun getCommentedCellIndex(cells: List<CellBaseImpl<*>?>): Int {
-    return cells.indexOfFirst { it?.comment != null }
+    return cells.indexOfFirst { (it as? CellImpl<*>)?.comment != null }
   }
 
   private fun getRowGaps(row: RowImpl): RowGaps {

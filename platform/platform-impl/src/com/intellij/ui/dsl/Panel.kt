@@ -25,8 +25,6 @@ interface Panel : CellBase<Panel> {
 
   override fun resizableColumn(): Panel
 
-  override fun comment(comment: String?, maxLineLength: Int): Panel
-
   override fun gap(rightGap: RightGap): Panel
 
   /**

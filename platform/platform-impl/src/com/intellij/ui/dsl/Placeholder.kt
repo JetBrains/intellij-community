@@ -22,8 +22,6 @@ interface Placeholder : CellBase<Placeholder> {
 
   override fun resizableColumn(): Placeholder
 
-  override fun comment(comment: String?, maxLineLength: Int): Placeholder
-
   override fun gap(rightGap: RightGap): Placeholder
 
 }

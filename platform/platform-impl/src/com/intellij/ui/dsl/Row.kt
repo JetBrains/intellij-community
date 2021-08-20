@@ -123,6 +123,10 @@ interface Row {
 
   fun slider(min: Int, max: Int, minorTickSpacing: Int, majorTickSpacing: Int): Cell<JSlider>
 
+  /**
+   * Adds a label. For label that relates to joined control [Panel.row] and [Cell.label] must be used,
+   * because they set correct gap between label and component and set [JLabel.labelFor] property
+   */
   fun label(@NlsContexts.Label text: String): Cell<JLabel>
 
   fun commentNoWrap(@NlsContexts.DetailedDescription text: String): Cell<JLabel>

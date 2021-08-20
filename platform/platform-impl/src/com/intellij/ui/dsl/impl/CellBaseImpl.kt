@@ -25,9 +25,6 @@ internal sealed class CellBaseImpl<T : CellBase<T>> : CellBase<T> {
   var rightGap: RightGap? = null
     private set
 
-  var comment: JComponent? = null
-    private set
-
   override fun horizontalAlign(horizontalAlign: HorizontalAlign): CellBase<T> {
     this.horizontalAlign = horizontalAlign
     return this
@@ -40,11 +37,6 @@ internal sealed class CellBaseImpl<T : CellBase<T>> : CellBase<T> {
 
   override fun resizableColumn(): CellBase<T> {
     this.resizableColumn = true
-    return this
-  }
-
-  override fun comment(@NlsContexts.DetailedDescription comment: String?, maxLineLength: Int): CellBase<T> {
-    this.comment = if (comment == null) null else ComponentPanelBuilder.createCommentComponent(comment, true, maxLineLength, true)
     return this
   }
 

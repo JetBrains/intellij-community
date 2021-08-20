@@ -14,11 +14,20 @@ import com.intellij.ui.dsl.gridLayout.UiDslException
 import com.intellij.ui.dsl.gridLayout.VerticalAlign
 import com.intellij.ui.layout.*
 import org.jetbrains.annotations.ApiStatus
-import javax.swing.JComponent
-import javax.swing.JLabel
+import javax.swing.*
+import javax.swing.text.JTextComponent
 
 @ApiStatus.Internal
 internal class PanelImpl(private val dialogPanelConfig: DialogPanelConfig) : CellBaseImpl<Panel>(), Panel {
+
+  private companion object {
+    private val LABELED_COMPONENTS = listOf(
+      JComboBox::class,
+      JSlider::class,
+      JSpinner::class,
+      JTextComponent::class
+    )
+  }
 
   val rows: List<RowImpl>
     get() = _rows
@@ -52,6 +61,11 @@ internal class PanelImpl(private val dialogPanelConfig: DialogPanelConfig) : Cel
     val result = RowImpl(dialogPanelConfig, panelContext, label)
     result.init()
     _rows.add(result)
+
+    if (label != null && result.cells.size > 1) {
+      labelCell(label, result.cells[1])
+    }
+
     return result
   }
 
@@ -164,11 +178,6 @@ internal class PanelImpl(private val dialogPanelConfig: DialogPanelConfig) : Cel
     return this
   }
 
-  override fun comment(comment: String?, maxLineLength: Int): PanelImpl {
-    super.comment(comment, maxLineLength)
-    return this
-  }
-
   override fun gap(rightGap: RightGap): PanelImpl {
     super.gap(rightGap)
     return this
@@ -193,6 +202,15 @@ internal class PanelImpl(private val dialogPanelConfig: DialogPanelConfig) : Cel
     val result = TitledSeparator(title)
     result.border = null
     return result
+  }
+
+  private fun labelCell(label: JLabel, cell: CellBaseImpl<*>?) {
+    if (cell is CellImpl<*>) {
+      val component = cell.component
+      if (LABELED_COMPONENTS.any { clazz -> clazz.isInstance(component) }) {
+        label.labelFor = component
+      }
+    }
   }
 }
 
