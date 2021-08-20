@@ -4,7 +4,6 @@ package com.intellij.openapi.progress.util;
 import com.intellij.ide.nls.NlsMessages;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.MouseShortcut;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.progress.StandardProgressIndicator;
 import com.intellij.openapi.util.Disposer;
@@ -12,6 +11,7 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.wm.IdeGlassPane;
 import com.intellij.ui.JBColor;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.ui.EDT;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -37,7 +37,7 @@ public final class PotemkinOverlayProgress extends AbstractProgressIndicatorBase
   private boolean myShowing;
 
   public PotemkinOverlayProgress(@Nullable Component component) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    EDT.assertIsEdt();
     myComponent = component;
     myEventStealer = PotemkinProgress.startStealingInputEvents(this::dispatchInputEvent, this);
   }
@@ -63,6 +63,7 @@ public final class PotemkinOverlayProgress extends AbstractProgressIndicatorBase
 
   @Override
   public void interact() {
+    if (!EDT.isCurrentThreadEdt()) return;
     long now = System.currentTimeMillis();
     if (now == myLastInteraction) return;
     myLastInteraction = now;
@@ -106,7 +107,7 @@ public final class PotemkinOverlayProgress extends AbstractProgressIndicatorBase
     FontMetrics fm = graphics.getFontMetrics();
     SwingUtilities.layoutCompoundLabel(fm, text, null, 0, 0, 0, 0, viewR, iconR, textR, 0);
     graphics.translate(textR.x, textR.y);
-    graphics.setColor(JBColor.lightGray);
+    graphics.setColor(JBColor.GRAY);
     int border = 10;
     graphics.fillRoundRect(-border, -border, textR.width + 2 * border, textR.height + 2 * border, border, border);
     graphics.setColor(JBColor.WHITE);
