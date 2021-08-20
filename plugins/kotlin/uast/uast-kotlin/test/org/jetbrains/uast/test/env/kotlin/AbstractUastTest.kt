@@ -6,7 +6,6 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.psi.psiUtil.parentsWithSelf
 import org.jetbrains.uast.*
-import org.jetbrains.uast.visitor.UastVisitor
 import kotlin.test.fail
 
 abstract class AbstractUastTest : AbstractTestWithCoreEnvironment() {
@@ -21,28 +20,6 @@ abstract class AbstractUastTest : AbstractTestWithCoreEnvironment() {
         checkCallback(testName, uFile as UFile)
     }
 }
-
-fun <T> UElement.findElementByText(refText: String, cls: Class<T>): T {
-    val matchingElements = mutableListOf<T>()
-    accept(object : UastVisitor {
-        override fun visitElement(node: UElement): Boolean {
-            if (cls.isInstance(node) && node.psi?.text == refText) {
-                matchingElements.add(node as T)
-            }
-            return false
-        }
-    })
-
-    if (matchingElements.isEmpty()) {
-        throw IllegalArgumentException("Reference '$refText' not found")
-    }
-    if (matchingElements.size != 1) {
-        throw IllegalArgumentException("Reference '$refText' is ambiguous")
-    }
-    return matchingElements.single()
-}
-
-inline fun <reified T : Any> UElement.findElementByText(refText: String): T = findElementByText(refText, T::class.java)
 
 inline fun <reified T : UElement> UElement.findElementByTextFromPsi(refText: String, strict: Boolean = false): T =
     (this.psi ?: fail("no psi for $this")).findUElementByTextFromPsi(refText, strict)
@@ -59,4 +36,3 @@ inline fun <reified T : UElement> PsiElement.findUElementByTextFromPsi(refText: 
     }
     return uElementContainingText;
 }
-
