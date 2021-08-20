@@ -27,7 +27,7 @@ import org.jetbrains.kotlin.resolve.findOriginalTopMostOverriddenDescriptors
 import org.jetbrains.kotlin.types.typeUtil.isNothing
 
 object PriorityWeigher : LookupElementWeigher("kotlin.priority") {
-    override fun weigh(element: LookupElement, context: WeighingContext) = element.getUserData(ITEM_PRIORITY_KEY) ?: ItemPriority.DEFAULT
+    override fun weigh(element: LookupElement, context: WeighingContext) = element.priority ?: ItemPriority.DEFAULT
 }
 
 object PreferDslMembers : LookupElementWeigher("kotlin.preferDsl") {
@@ -61,7 +61,7 @@ class NotImportedWeigher(private val classifier: ImportableFqNameClassifier) : L
 class NotImportedStaticMemberWeigher(private val classifier: ImportableFqNameClassifier) :
     LookupElementWeigher("kotlin.notImportedMember") {
     override fun weigh(element: LookupElement): Comparable<*>? {
-        if (element.getUserData(ITEM_PRIORITY_KEY) != ItemPriority.STATIC_MEMBER) return null
+        if (element.priority != ItemPriority.STATIC_MEMBER) return null
         val fqName = (element.`object` as DeclarationLookupObject).importableFqName ?: return null
         return classifier.classify(fqName.parent(), false)
     }
