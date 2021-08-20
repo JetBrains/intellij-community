@@ -23,7 +23,7 @@
       <action id="RunToolbarMainSlotActive" class="com.intellij.execution.runToolbar.RunToolbarMainSlotActive"/>
       <action id="RunToolbarShowHidePopupAction" class="com.intellij.execution.runToolbar.RunToolbarShowHidePopupAction" icon="AllIcons.Toolbar.Expand"/>
       <action id="RunToolbarMainSlotInfoAction" class="com.intellij.execution.runToolbar.RunToolbarMainSlotInfoAction"/>
-      <reference id="RunToolbarRunConfigurationsAction"/>
+      <action id="RunToolbarMainRunConfigurationsAction" class="com.intellij.execution.runToolbar.RunToolbarMainRunConfigurationsAction"/>
       <reference id="RunToolbarRerunAction"/>
       <reference id="RunToolbarAdditionalProcessActions"/>
       <group id="RunToolbarProcessMainActionGroup"/>

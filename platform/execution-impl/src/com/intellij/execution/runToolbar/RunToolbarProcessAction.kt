@@ -39,6 +39,12 @@ open class RunToolbarProcessAction(override val process: RunToolbarProcess, val 
   override fun update(e: AnActionEvent) {
     e.presentation.text = executor.actionName
     e.presentation.isVisible = !e.isActiveProcess()
+
+    if (!RunToolbarProcess.experimentalUpdating()) {
+      e.mainState()?.let {
+        e.presentation.isVisible = e.presentation.isVisible && checkMainSlotVisibility(it)
+      }
+    }
   }
 
   override fun getSelectedConfiguration(e: AnActionEvent): RunnerAndConfigurationSettings? {

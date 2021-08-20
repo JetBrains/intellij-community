@@ -6,9 +6,7 @@ import com.intellij.debugger.impl.DebuggerSession
 import com.intellij.debugger.settings.DebuggerSettings
 import com.intellij.debugger.ui.HotSwapUI
 import com.intellij.debugger.ui.HotSwapUIImpl
-import com.intellij.execution.runToolbar.RTBarAction
-import com.intellij.execution.runToolbar.RunToolbarMainSlotState
-import com.intellij.execution.runToolbar.environment
+import com.intellij.execution.runToolbar.*
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.ShortcutSet
@@ -53,5 +51,11 @@ class RunToolbarHotSwapAction : AnAction(), RTBarAction {
       session != null
       && HotSwapUIImpl.canHotSwap(session)
       && Registry.`is`("ide.new.navbar.hotswap", false)
+
+    if (!RunToolbarProcess.experimentalUpdating()) {
+      e.mainState()?.let {
+        e.presentation.isEnabledAndVisible = e.presentation.isEnabledAndVisible && checkMainSlotVisibility(it)
+      }
+    }
   }
 }

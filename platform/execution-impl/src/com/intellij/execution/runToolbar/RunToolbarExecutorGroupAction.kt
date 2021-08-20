@@ -19,6 +19,12 @@ internal class RunToolbarExecutorGroupAction(private val group: RunToolbarExecut
     super.update(e)
 
     e.presentation.isVisible = !e.isActiveProcess() && e.presentation.isVisible
+
+    if (!RunToolbarProcess.experimentalUpdating()) {
+      e.mainState()?.let {
+        e.presentation.isVisible = e.presentation.isVisible && checkMainSlotVisibility(it)
+      }
+    }
   }
 
   override fun setShortcutSet(shortcutSet: ShortcutSet) {}
@@ -44,5 +50,11 @@ internal class RunToolbarExecutorGroup(executorGroup: ExecutorGroup<*>,
     super.update(e)
 
     e.presentation.isVisible = !e.isActiveProcess()
+
+    if (!RunToolbarProcess.experimentalUpdating()) {
+      e.mainState()?.let {
+        e.presentation.isVisible = e.presentation.isVisible && checkMainSlotVisibility(it)
+      }
+    }
   }
 }

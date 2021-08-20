@@ -3,6 +3,7 @@ package com.intellij.execution.runToolbar
 
 import com.intellij.ide.ui.experimental.toolbar.ExperimentalToolbarSettings
 import com.intellij.openapi.extensions.ExtensionPointName
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.ui.JBColor
 import org.jetbrains.annotations.Nls
 import javax.swing.Icon
@@ -21,6 +22,11 @@ interface RunToolbarProcess {
       return ExperimentalToolbarSettings.newToolbarEnabled
     }
 
+    @JvmStatic
+    fun experimentalUpdating(): Boolean {
+      return Registry.`is`("ide.new.navbar.experimentalUpdating", true)
+    }
+
     val EP_NAME: ExtensionPointName<RunToolbarProcess> = ExtensionPointName("com.intellij.runToolbarProcess")
 
     @JvmStatic
@@ -30,8 +36,6 @@ interface RunToolbarProcess {
     fun getProcessesByExecutorId(executorId: String): List<RunToolbarProcess> {
       return getProcesses().filter { it.executorId == executorId }.toList()
     }
-
-
   }
 
   val ID: String

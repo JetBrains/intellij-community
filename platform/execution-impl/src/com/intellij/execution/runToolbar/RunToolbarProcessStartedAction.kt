@@ -59,7 +59,13 @@ class RunToolbarProcessStartedAction : ComboBoxAction(), RTRunConfiguration {
   override fun update(e: AnActionEvent) {
     super.update(e)
     updatePresentation(e)
-   }
+
+    if (!RunToolbarProcess.experimentalUpdating()) {
+      e.mainState()?.let {
+        e.presentation.isEnabledAndVisible = e.presentation.isEnabledAndVisible && checkMainSlotVisibility(it)
+      }
+    }
+  }
 
   override fun createComboBoxButton(presentation: Presentation): ComboBoxButton {
     return object : ComboBoxButton(presentation) {

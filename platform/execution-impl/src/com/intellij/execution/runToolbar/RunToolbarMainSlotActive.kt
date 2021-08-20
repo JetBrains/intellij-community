@@ -38,10 +38,15 @@ class RunToolbarMainSlotActive : SegmentedCustomAction(), RTBarAction {
   override fun update(e: AnActionEvent) {
     updatePresentation(e)
 
+    if (!RunToolbarProcess.experimentalUpdating()) {
+      e.mainState()?.let {
+        e.presentation.isEnabledAndVisible = e.presentation.isEnabledAndVisible && checkMainSlotVisibility(it)
+      }
+    }
+
     val a = JPanel()
     MigLayout("ins 0, fill, gap 0", "[200]")
     a.add(JLabel(), "pushx")
-
 
     e.presentation.putClientProperty(ARROW_DATA, e.arrowData())
   }

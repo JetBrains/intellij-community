@@ -83,7 +83,10 @@ class RunToolbarMainWidgetComponent(val presentation: Presentation, place: Strin
 
       field = value
       updateState()
-      forceUpdate()
+
+      if (RunToolbarProcess.experimentalUpdating()) {
+        forceUpdate()
+      }
     }
 
   override fun isSuitableAction(action: AnAction): Boolean {

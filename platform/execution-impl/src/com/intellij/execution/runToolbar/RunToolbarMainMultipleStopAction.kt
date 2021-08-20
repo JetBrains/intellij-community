@@ -19,6 +19,12 @@ class RunToolbarMainMultipleStopAction : StopAction(), RTBarAction {
   override fun update(e: AnActionEvent) {
     super.update(e)
     e.presentation.isEnabledAndVisible = e.presentation.isEnabled && e.presentation.isVisible
+
+    if (!RunToolbarProcess.experimentalUpdating()) {
+      e.mainState()?.let {
+        e.presentation.isEnabledAndVisible = e.presentation.isEnabledAndVisible && checkMainSlotVisibility(it)
+      }
+    }
   }
 
   override fun setShortcutSet(shortcutSet: ShortcutSet) {}

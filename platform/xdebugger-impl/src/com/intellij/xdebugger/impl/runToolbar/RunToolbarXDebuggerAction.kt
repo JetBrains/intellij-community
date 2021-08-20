@@ -3,6 +3,8 @@ package com.intellij.xdebugger.impl.runToolbar
 
 import com.intellij.execution.runToolbar.RTBarAction
 import com.intellij.execution.runToolbar.RunToolbarMainSlotState
+import com.intellij.execution.runToolbar.RunToolbarProcess
+import com.intellij.execution.runToolbar.mainState
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.ShortcutSet
@@ -24,6 +26,12 @@ abstract class RunToolbarXDebuggerAction : XDebuggerActionBase(true), RTBarActio
     e.presentation.isEnabledAndVisible =
       e.presentation.isEnabled
       && e.presentation.isVisible
+
+    if (!RunToolbarProcess.experimentalUpdating()) {
+      e.mainState()?.let {
+        e.presentation.isEnabledAndVisible = e.presentation.isEnabledAndVisible && checkMainSlotVisibility(it)
+      }
+    }
   }
 
   override fun setShortcutSet(shortcutSet: ShortcutSet) {}

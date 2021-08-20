@@ -54,6 +54,12 @@ class RunToolbarMainSlotInfoAction : SegmentedCustomAction(), RTRunConfiguration
         true
       } ?: false
     } ?: false
+
+    if (!RunToolbarProcess.experimentalUpdating()) {
+      e.mainState()?.let {
+        e.presentation.isVisible = e.presentation.isVisible && checkMainSlotVisibility(it)
+      }
+    }
   }
 
 

@@ -24,6 +24,12 @@ open class RunToolbarRerunAction : FakeRerunAction(), RTBarAction, DumbAware {
       && e.presentation.isVisible
       && getDescriptor(e) != null
       && e.presentation.isVisible
+
+    if (!RunToolbarProcess.experimentalUpdating()) {
+      e.mainState()?.let {
+        e.presentation.isEnabledAndVisible = e.presentation.isEnabledAndVisible && checkMainSlotVisibility(it)
+      }
+    }
   }
 
   override fun setShortcutSet(shortcutSet: ShortcutSet) {}

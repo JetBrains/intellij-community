@@ -26,6 +26,12 @@ class RunToolbarShowHidePopupAction : AnAction(), CustomComponentAction, DumbAwa
       e.presentation.text = it.second
       e.presentation.icon = it.first
     }
+
+    if (!RunToolbarProcess.experimentalUpdating()) {
+      e.mainState()?.let {
+        e.presentation.isEnabledAndVisible = e.presentation.isEnabledAndVisible && checkMainSlotVisibility(it)
+      }
+    }
   }
 
   override fun createCustomComponent(presentation: Presentation, place: String): JComponent {

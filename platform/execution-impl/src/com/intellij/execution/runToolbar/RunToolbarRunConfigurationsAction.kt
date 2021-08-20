@@ -14,7 +14,7 @@ import java.awt.Insets
 import javax.swing.JComponent
 import javax.swing.SwingUtilities
 
-class RunToolbarRunConfigurationsAction : RunConfigurationsComboBoxAction(), RTRunConfiguration {
+open class RunToolbarRunConfigurationsAction : RunConfigurationsComboBoxAction(), RTRunConfiguration {
  companion object {
 
    fun doRightClick(dataContext: DataContext) {
@@ -48,7 +48,7 @@ class RunToolbarRunConfigurationsAction : RunConfigurationsComboBoxAction(), RTR
   }
 
   override fun checkMainSlotVisibility(state: RunToolbarMainSlotState): Boolean {
-    return state == RunToolbarMainSlotState.CONFIGURATION
+    return false
   }
 
   override fun update(e: AnActionEvent) {
@@ -56,6 +56,12 @@ class RunToolbarRunConfigurationsAction : RunConfigurationsComboBoxAction(), RTR
     e.presentation.isVisible = e.project?.let {
       !e.isActiveProcess() && e.presentation.isVisible
     } ?: false
+
+    if (!RunToolbarProcess.experimentalUpdating()) {
+      e.mainState()?.let {
+        e.presentation.isVisible = e.presentation.isVisible && checkMainSlotVisibility(it)
+      }
+    }
   }
 
   override fun createCustomComponent(presentation: Presentation, place: String): JComponent {

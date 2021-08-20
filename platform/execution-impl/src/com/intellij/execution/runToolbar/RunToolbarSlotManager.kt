@@ -8,8 +8,8 @@ import com.intellij.execution.RunnerAndConfigurationSettings
 import com.intellij.execution.impl.ExecutionManagerImpl
 import com.intellij.execution.runners.ExecutionEnvironment
 import com.intellij.lang.LangBundle
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.service
+import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.Messages
 import java.util.*
@@ -18,8 +18,11 @@ import javax.swing.SwingUtilities
 
 class RunToolbarSlotManager(val project: Project) {
   companion object {
+    private val LOG = Logger.getInstance(RunToolbarSlotManager::class.java)
     fun getInstance(project: Project): RunToolbarSlotManager = project.service()
   }
+
+  private val runToolbarSettings = RunToolbarSettings.getInstance(project)
 
   private val slotListeners = mutableListOf<SlotListener>()
   internal fun addListener(listener: SlotListener) {
@@ -87,12 +90,21 @@ class RunToolbarSlotManager(val project: Project) {
       field = value
 
       if(value) {
-        clear()
+        val runConfigurations = runToolbarSettings.getRunConfigurations()
+        runConfigurations.forEachIndexed { index, entry ->
+          if(index == 0) {
+            mainSlotData.configuration = entry
+          } else {
+            addSlot().configuration = entry
+          }
+        }
         listeners.forEach { it.enabled() }
       } else {
         listeners.forEach { it.disabled()  }
         clear()
       }
+
+      slotListeners.forEach { it.rebuildPopup() }
     }
 
   private fun clear() {
@@ -102,7 +114,6 @@ class RunToolbarSlotManager(val project: Project) {
     slotsData[mainSlotData.id] = mainSlotData
 
     activeProcesses.clear()
-    slotListeners.forEach { it.rebuildPopup() }
   }
 
   internal var mainSlotData = SlotDate()
@@ -113,14 +124,14 @@ class RunToolbarSlotManager(val project: Project) {
   private val slotsData = mutableMapOf<String, SlotDate>()
 
   init {
-    ApplicationManager.getApplication().invokeLater {
+    SwingUtilities.invokeLater {
       if(project.isDisposed) return@invokeLater
+
+      slotsData[mainSlotData.id] = mainSlotData
 
       addListener(RunToolbarShortcutHelper(project))
     }
   }
-
-
 
   internal fun getMainOrFirstActiveProcess(): RunToolbarProcess? {
     return mainSlotData.environment?.getRunToolbarProcess() ?: activeProcesses.processes.keys.firstOrNull()
@@ -157,15 +168,6 @@ class RunToolbarSlotManager(val project: Project) {
     return state
   }
 
-  fun loadData(list: List<RunnerAndConfigurationSettings>) {
-    list.forEachIndexed { index, entry ->
-      if(index == 0) {
-        mainSlotData.configuration = entry
-      } else {
-        addSlot().configuration = entry
-      }
-    }
-  }
 
   fun processStarted(env: ExecutionEnvironment) {
     val appropriateSettings = slotsData.values.map { it }.filter { it.configuration == env.runnerAndConfigurationSettings }
@@ -233,6 +235,7 @@ class RunToolbarSlotManager(val project: Project) {
     }
 
     updateState()
+    saveData()
   }
 
   internal fun removeSlot(id: String) {
@@ -280,7 +283,11 @@ class RunToolbarSlotManager(val project: Project) {
   }
 
   fun saveData() {
-    listeners.forEach { it.saveSettings(slotsData.mapNotNull { it.value.configuration }.toMutableList()) }
+    val list = mutableListOf<String>()
+    list.add(mainSlotData.id)
+    list.addAll(dataIds)
+
+    runToolbarSettings.setRunConfigurations( list.mapNotNull{ slotsData[it]?.configuration }.toMutableList())
   }
 }
 
@@ -353,7 +360,6 @@ internal interface SlotListener {
 internal interface ActiveListener {
   fun enabled()
   fun disabled() {}
-  fun saveSettings(list : MutableList<RunnerAndConfigurationSettings>) {}
 }
 
 internal interface StateListener {
