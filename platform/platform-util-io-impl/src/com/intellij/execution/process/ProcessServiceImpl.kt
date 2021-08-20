@@ -11,7 +11,7 @@ import java.io.File
 
 class ProcessServiceImpl: ProcessService {
   override fun startPtyProcess(command: Array<String>,
-                               directory: String,
+                               directory: String?,
                                env: MutableMap<String, String>,
                                options: PtyCommandLineOptions,
                                app: Application?,
