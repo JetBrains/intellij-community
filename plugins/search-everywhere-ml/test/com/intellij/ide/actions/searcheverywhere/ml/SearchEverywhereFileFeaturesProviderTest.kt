@@ -368,6 +368,34 @@ internal class SearchEverywhereFileFeaturesProviderTest
       .isEqualTo(true)
   }
 
+  fun `test if same module is reported for directories`() {
+    val moduleFiles = createModuleWithJavaFiles("testModuleA", 1)
+    val foundDirectory = File(moduleFiles.first().parent.path, "foundDir").apply { mkdir() }
+    val vfFoundDirectory = VirtualFileManager.getInstance().refreshAndFindFileByNioPath(foundDirectory.toPath())!!
+
+    FileEditorManager.getInstance(project).openFile(moduleFiles.first(), true)
+
+    val psiFile = PsiManager.getInstance(project).findDirectory(vfFoundDirectory)!!
+    checkThatFeature(IS_SAME_MODULE_DATA_KEY)
+      .ofElement(psiFile)
+      .isEqualTo(true)
+
+  }
+
+  fun `test package distance is reported for directories`() {
+    val srcDir = createModuleWithSrcDir("packageTestModule")
+    val packageDir = createPackageDirectory(srcDir, "a.b.c")
+    val openedFile = createVirtualFileInPackage(packageDir, "fileB.java")
+    val foundDirectory = createVirtualFileInPackage(packageDir, "foundDirectory")
+
+    FileEditorManager.getInstance(project).openFile(openedFile, true)
+
+    val psiFile = PsiManager.getInstance(project).findDirectory(foundDirectory)!!
+    checkThatFeature(PACKAGE_DISTANCE_DATA_KEY)
+      .ofElement(psiFile)
+      .isEqualTo(1) // The found directory is considered a subpackage, hence the distance should be 1
+  }
+
   fun `test package distance is 0 when same package`() {
     val srcDir = createModuleWithSrcDir("packageTestModule")
     val packageDir = createPackageDirectory(srcDir, "a.b.c.d")
@@ -518,7 +546,9 @@ internal class SearchEverywhereFileFeaturesProviderTest
   }
 
   private fun createVirtualFileInPackage(packageDir: File, filename: String): VirtualFile {
-    val newFile = File(packageDir, filename).apply { createNewFile() }
+    fun isFile() = filename.contains('.')
+
+    val newFile = File(packageDir, filename).also { if (isFile()) it.createNewFile() else it.mkdir() }
     return VirtualFileManager.getInstance().refreshAndFindFileByNioPath(newFile.toPath())!!
   }
 

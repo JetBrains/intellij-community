@@ -99,6 +99,8 @@ internal class SearchEverywhereFileFeaturesProvider : SearchEverywhereElementFea
       IS_FAVORITE_DATA_KEY to isFavorite(item),
       IS_DIRECTORY_DATA_KEY to item.isDirectory,
       PRIORITY_DATA_KEY to elementPriority,
+      IS_SAME_MODULE_DATA_KEY to isSameModuleAsOpenedFile(item, cache.openedFile),
+      PACKAGE_DISTANCE_DATA_KEY to calculatePackageDistance(item, cache.openedFile),
     )
 
     if (item.isDirectory) {
@@ -110,8 +112,6 @@ internal class SearchEverywhereFileFeaturesProvider : SearchEverywhereElementFea
     data[FILETYPE_DATA_KEY] = item.virtualFile.fileType.name
     data[RECENT_INDEX_DATA_KEY] = getRecentFilesIndex(item)
     data[PREDICTION_SCORE_DATA_KEY] = getPredictionScore(item)
-    data[IS_SAME_MODULE_DATA_KEY] = isSameModuleAsOpenedFile(item, cache.openedFile)
-    data[PACKAGE_DISTANCE_DATA_KEY] = calculatePackageDistance(item, cache.openedFile)
 
     data.putAll(getModificationTimeStats(item, currentTime))
     data.putAll(getFileTypeStats(item, currentTime, cache.fileTypeStats))
@@ -211,7 +211,8 @@ internal class SearchEverywhereFileFeaturesProvider : SearchEverywhereElementFea
     val fileIndex = ReadAction.compute<ProjectFileIndex, Nothing> { ProjectRootManager.getInstance(project).fileIndex }
 
     val openedFilePackage = fileIndex.getPackageNameByDirectory(openedFile.parent)?.split('.')
-    val foundFilePackage = fileIndex.getPackageNameByDirectory(item.virtualFile.parent)?.split('.')
+    val foundFileDirectory = if (item.isDirectory) item.virtualFile else item.virtualFile.parent
+    val foundFilePackage = fileIndex.getPackageNameByDirectory(foundFileDirectory)?.split('.')
 
     if (openedFilePackage == null || foundFilePackage == null) {
       return -1
