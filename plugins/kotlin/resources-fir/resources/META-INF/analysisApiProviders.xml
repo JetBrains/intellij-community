@@ -10,6 +10,9 @@
     <projectService serviceInterface="org.jetbrains.kotlin.analysis.providers.KotlinPackageProviderFactory"
                     serviceImplementation="org.jetbrains.kotlin.analysis.providers.ide.KotlinIdePackageProviderFactory"/>
 
+    <projectService serviceInterface="org.jetbrains.kotlin.analysis.providers.KotlinModuleInfoProvider"
+                    serviceImplementation="org.jetbrains.kotlin.analysis.providers.ide.KotlinIdeModuleInfoProvider"/>
+
     <projectService serviceImplementation="org.jetbrains.kotlin.analysis.providers.ide.trackers.KotlinFirModificationTrackerService"/>
 
 

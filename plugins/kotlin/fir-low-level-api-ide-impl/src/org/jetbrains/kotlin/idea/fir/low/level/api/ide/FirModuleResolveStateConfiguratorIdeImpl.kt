@@ -92,9 +92,6 @@ class FirModuleResolveStateConfiguratorIdeImpl(private val project: Project) : F
         return SealedClassInheritorsProviderIdeImpl()
     }
 
-    override fun getModuleInfoFor(element: KtElement): ModuleInfo {
-        return element.getModuleInfo()
-    }
 
     override fun configureSourceSession(session: FirSession) {
     }
