@@ -112,6 +112,13 @@ abstract class MultiplePluginVersionGradleImportingTestCase : KotlinGradleImport
         }
     }
 
+    fun androidProperties(): Map<String, String> {
+        return mapOf(
+            "compile_sdk_version" to "30",
+            "build_tools_version" to "28.0.3"
+        )
+    }
+
     private fun repositories(useKts: Boolean): String {
         val repositories = mutableListOf<String>()
 
@@ -133,6 +140,9 @@ abstract class MultiplePluginVersionGradleImportingTestCase : KotlinGradleImport
 
     override fun configureByFiles(properties: Map<String, String>?): List<VirtualFile> {
         val unitedProperties = HashMap(properties ?: emptyMap())
+
+        unitedProperties.putAll(androidProperties())
+
         unitedProperties["kotlin_plugin_version"] = kotlinPluginVersionString
 
         unitedProperties["kotlin_plugin_repositories"] = repositories(false)
