@@ -216,6 +216,11 @@
         <element id="archive" name="fir-fe10-binding.jar">
           <element id="module-output" name="kotlin.fir.fir-fe10-binding" />
         </element>
+        <element id="archive" name="analysis-api-providers-ide-impl.jar">
+          <element id="module-output" name="kotlin.fir.analysis-api-providers-ide-impl" />
+        </element>
+        <element id="library" level="project" name="kotlinc.analysis-api-providers" />
+        <element id="library" level="project" name="kotlinc.symbol-light-classes" />
       </element>
       <element id="directory" name="kotlinc">
         <element id="extracted-dir" path="$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-dist-for-ide/1.4.30-dev-local-2/kotlin-dist-for-ide-1.4.30-dev-local-2.jar" path-in-jar="/" />
