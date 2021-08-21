@@ -2,9 +2,17 @@
 package com.intellij.ui.dsl.impl
 
 import com.intellij.openapi.ui.TextFieldWithBrowseButton
-import javax.swing.JComponent
+import javax.swing.*
+import javax.swing.text.JTextComponent
 
 internal const val DSL_LABEL_NO_BOTTOM_GAP_PROPERTY = "dsl.label.no.bottom.gap"
+
+private val LABELED_COMPONENTS = listOf(
+  JComboBox::class,
+  JSlider::class,
+  JSpinner::class,
+  JTextComponent::class
+)
 
 internal val JComponent.origin: JComponent
   get() {
@@ -13,3 +21,12 @@ internal val JComponent.origin: JComponent
       else -> this
     }
   }
+
+internal fun labelCell(label: JLabel, cell: CellBaseImpl<*>?) {
+  if (cell is CellImpl<*>) {
+    val component = cell.component
+    if (LABELED_COMPONENTS.any { clazz -> clazz.isInstance(component) }) {
+      label.labelFor = component
+    }
+  }
+}

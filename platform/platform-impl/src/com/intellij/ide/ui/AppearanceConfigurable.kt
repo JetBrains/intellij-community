@@ -27,19 +27,18 @@ import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.wm.ex.WindowManagerEx
 import com.intellij.openapi.wm.impl.IdeFrameDecorator
-import com.intellij.ui.ContextHelpLabel
 import com.intellij.ui.FontComboBox
 import com.intellij.ui.SimpleListCellRenderer
 import com.intellij.ui.UIBundle
-import com.intellij.ui.components.ActionLink
 import com.intellij.ui.components.JBCheckBox
-import com.intellij.ui.components.Label
+import com.intellij.ui.dsl.*
+import com.intellij.ui.dsl.Cell
+import com.intellij.ui.dsl.Row
+import com.intellij.ui.dsl.panel
 import com.intellij.ui.layout.*
 import com.intellij.util.ui.GraphicsUtil
 import com.intellij.util.ui.JBFont
-import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
-import java.awt.Font
 import java.awt.RenderingHints
 import java.awt.Window
 import javax.swing.DefaultComboBoxModel
@@ -101,56 +100,59 @@ internal class AppearanceConfigurable : BoundSearchableConfigurable(message("tit
     syncThemeProperty.afterChange ({ lafManager.autodetect = it }, disposable!!)
 
     return panel {
-      blockRow {
-        fullRow {
-          label(message("combobox.look.and.feel"))
-          val theme = comboBox(lafManager.lafComboBoxModel, lafProperty, lafManager.lookAndFeelCellRenderer).
-            accessibleName(message("combobox.look.and.feel"))
+      row(message("combobox.look.and.feel")) {
+        val theme = comboBox(lafManager.lafComboBoxModel, lafManager.lookAndFeelCellRenderer)
+          .bindItem(lafProperty)
+          .accessibleName(message("combobox.look.and.feel"))
 
-          val syncCheckBox = checkBox(message("preferred.theme.autodetect.selector"),
-                                      syncThemeProperty).withLargeLeftGap().
-                          apply { component.isVisible = lafManager.autodetectSupported }
+        val syncCheckBox = checkBox(message("preferred.theme.autodetect.selector"))
+          .bindSelected(syncThemeProperty)
+          .visible(lafManager.autodetectSupported)
+          .gap(RightGap.SMALL)
 
-          theme.enableIf(syncCheckBox.selected.not())
-          component(lafManager.settingsToolbar).visibleIf(syncCheckBox.selected).withLeftGap()
-        }.largeGapAfter()
-        fullRow {
-          val overrideLaF = checkBox(cdOverrideLaFFont)
-            .shouldUpdateLaF()
-          component(FontComboBox())
-            .withBinding(
-              { it.fontName },
-              { it, value -> it.fontName = value },
-              PropertyBinding({ if (settings.overrideLafFonts) settings.fontFace else JBFont.label().family },
-                              { settings.fontFace = it })
-            )
-            .shouldUpdateLaF()
-            .enableIf(overrideLaF.selected)
-            .accessibleName(cdOverrideLaFFont.name)
-          component(Label(message("label.font.size")))
-          .withLargeLeftGap()
-            .enableIf(overrideLaF.selected)
-          fontSizeComboBox({ if (settings.overrideLafFonts) settings.fontSize else JBFont.label().size },
-                           { settings.fontSize = it },
-                           settings.fontSize)
-            .shouldUpdateLaF()
-            .enableIf(overrideLaF.selected)
-            .accessibleName(message("label.font.size"))
-        }
-      }
-      titledRow(message("title.accessibility")) {
-        fullRow {
+        theme.enabledIf(syncCheckBox.selected.not())
+        cell(lafManager.settingsToolbar)
+          .visibleIf(syncCheckBox.selected)
+      }.layout(RowLayout.INDEPENDENT)
+
+      row {
+        val overrideLaF = checkBox(cdOverrideLaFFont)
+          .shouldUpdateLaF()
+          .gap(RightGap.SMALL)
+        cell(FontComboBox())
+          .bind(
+            { it.fontName },
+            { it, value -> it.fontName = value },
+            PropertyBinding({ if (settings.overrideLafFonts) settings.fontFace else JBFont.label().family },
+              { settings.fontFace = it })
+          )
+          .shouldUpdateLaF()
+          .enabledIf(overrideLaF.selected)
+          .accessibleName(cdOverrideLaFFont.name)
+
+        fontSizeComboBox({ if (settings.overrideLafFonts) settings.fontSize else JBFont.label().size },
+          { settings.fontSize = it },
+          settings.fontSize)
+          .label(message("label.font.size"))
+          .shouldUpdateLaF()
+          .enabledIf(overrideLaF.selected)
+          .accessibleName(message("label.font.size"))
+      }.gap(TopGap.SMALL)
+
+      group(message("title.accessibility")) {
+        row {
           val isOverridden = GeneralSettings.isSupportScreenReadersOverridden()
-          checkBox(message("checkbox.support.screen.readers"),
-                   generalSettings::isSupportScreenReaders, generalSettings::setSupportScreenReaders,
-                   comment = if (isOverridden) message("option.is.overridden.by.jvm.property", GeneralSettings.SUPPORT_SCREEN_READERS)
-                   else null)
+          checkBox(message("checkbox.support.screen.readers"))
+            .bindSelected(generalSettings::isSupportScreenReaders, generalSettings::setSupportScreenReaders)
+            .comment(if (isOverridden) message("option.is.overridden.by.jvm.property", GeneralSettings.SUPPORT_SCREEN_READERS) else null)
             .enabled(!isOverridden)
 
           commentNoWrap(message("support.screen.readers.comment"))
-            .withLargeLeftGap()
         }
-        fullRow { checkBox(cdUseContrastToolbars) }
+
+        row {
+          checkBox(cdUseContrastToolbars)
+        }
 
         val supportedValues = ColorBlindness.values().filter { ColorBlindnessSupport.get(it) != null }
         if (supportedValues.isNotEmpty()) {
@@ -163,59 +165,60 @@ internal class AppearanceConfigurable : BoundSearchableConfigurable(message("tit
             })
           }
 
-          fullRow {
+          row {
             if (supportedValues.size == 1) {
-              component(JBCheckBox(UIBundle.message("color.blindness.checkbox.text")))
+              checkBox(UIBundle.message("color.blindness.checkbox.text"))
                 .comment(UIBundle.message("color.blindness.checkbox.comment"))
-                .withBinding({ if (it.isSelected) supportedValues.first() else null },
-                             { it, value -> it.isSelected = value != null },
-                             modelBinding)
+                .bind({ if (it.isSelected) supportedValues.first() else null },
+                  { it, value -> it.isSelected = value != null },
+                  modelBinding)
                 .onApply(onApply)
             }
             else {
-              val enableColorBlindness = component(JBCheckBox(UIBundle.message("color.blindness.combobox.text")))
+              val enableColorBlindness = checkBox(UIBundle.message("color.blindness.combobox.text"))
                 .applyToComponent { isSelected = modelBinding.get() != null }
-              component(ComboBox(supportedValues.toTypedArray()))
-                .enableIf(enableColorBlindness.selected)
+              comboBox(supportedValues.toTypedArray())
+                .enabledIf(enableColorBlindness.selected)
                 .applyToComponent { renderer = SimpleListCellRenderer.create<ColorBlindness>("") { PlatformEditorBundle.message(it.key) } }
                 .comment(UIBundle.message("color.blindness.combobox.comment"))
-                .withBinding({ if (enableColorBlindness.component.isSelected) it.selectedItem as? ColorBlindness else null },
-                             { it, value -> it.selectedItem = value ?: supportedValues.first() },
-                             modelBinding)
+                .bind({ if (enableColorBlindness.component.isSelected) it.selectedItem as? ColorBlindness else null },
+                  { it, value -> it.selectedItem = value ?: supportedValues.first() },
+                  modelBinding)
                 .onApply(onApply)
                 .accessibleName(UIBundle.message("color.blindness.checkbox.text"))
             }
 
-            component(ActionLink(UIBundle.message("color.blindness.link.to.help"))
-                      { HelpManager.getInstance().invokeHelp("Colorblind_Settings") })
-              .withLargeLeftGap()
+            actionLink(UIBundle.message("color.blindness.link.to.help"),
+              { HelpManager.getInstance().invokeHelp("Colorblind_Settings") })
           }
         }
       }
-      @Suppress("MoveLambdaOutsideParentheses") // this suggestion is wrong, see KT-40969
-      titledRow(message("group.ui.options")) {
-        val leftColumnControls = sequence<InnerCell.() -> Unit> {
+
+      groupRowsRange (message("group.ui.options")) {
+        val leftColumnControls = sequence<Row.() -> Unit> {
           yield({ checkBox(cdShowTreeIndents) })
           yield({ checkBox(cdUseCompactTreeIndents) })
           yield({ checkBox(cdEnableMenuMnemonics) })
           yield({ checkBox(cdEnableControlsMnemonics) })
         }
-        val rightColumnControls = sequence<InnerCell.() -> Unit> {
+        val rightColumnControls = sequence<Row.() -> Unit> {
           yield({
-                  checkBox(cdSmoothScrolling)
-                  ContextHelpLabel.create(message("checkbox.smooth.scrolling.description"))()
-                })
+            checkBox(cdSmoothScrolling)
+              .gap(RightGap.SMALL)
+            contextHelp(message("checkbox.smooth.scrolling.description"))
+          })
           yield({ checkBox(cdDnDWithAlt) })
           if (IdeFrameDecorator.isCustomDecorationAvailable()) {
             yield({
-                    val overridden = UISettings.isMergeMainMenuWithWindowTitleOverridden
-                    checkBox(cdMergeMainMenuWithWindowTitle).enabled(!overridden)
-                    if (overridden) {
-                      ContextHelpLabel.create(
-                        message("option.is.overridden.by.jvm.property", UISettings.MERGE_MAIN_MENU_WITH_WINDOW_TITLE_PROPERTY))()
-                    }
-                    commentNoWrap(message("checkbox.merge.main.menu.with.window.title.comment")).withLargeLeftGap()
-                  })
+              val overridden = UISettings.isMergeMainMenuWithWindowTitleOverridden
+              checkBox(cdMergeMainMenuWithWindowTitle)
+                .enabled(!overridden)
+                .gap(RightGap.SMALL)
+              if (overridden) {
+                contextHelp(message("option.is.overridden.by.jvm.property", UISettings.MERGE_MAIN_MENU_WITH_WINDOW_TITLE_PROPERTY))
+              }
+              commentNoWrap(message("checkbox.merge.main.menu.with.window.title.comment"))
+            })
           }
           yield({ checkBox(cdFullPathsInTitleBar) })
           yield({ checkBox(cdShowMenuIcons) })
@@ -228,58 +231,61 @@ internal class AppearanceConfigurable : BoundSearchableConfigurable(message("tit
         while (leftIt.hasNext() || rightIt.hasNext()) {
           when {
             leftIt.hasNext() && rightIt.hasNext() -> twoColumnRow(leftIt.next(), rightIt.next())
-            leftIt.hasNext() -> twoColumnRow(leftIt.next()) { placeholder() }
-            rightIt.hasNext() -> twoColumnRow(rightIt.next()) { placeholder() } // move from right to left
+            leftIt.hasNext() -> twoColumnRow(leftIt.next())
+            rightIt.hasNext() -> twoColumnRow(rightIt.next()) // move from right to left
           }
         }
+
         val backgroundImageAction = ActionManager.getInstance().getAction("Images.SetBackgroundImage")
         if (backgroundImageAction != null) {
-          fullRow {
-            buttonFromAction(message("background.image.button"), ActionPlaces.UNKNOWN, backgroundImageAction)
-              .applyToComponent { isEnabled = ProjectManager.getInstance().openProjects.isNotEmpty() }
+          row {
+            button(message("background.image.button"), ActionPlaces.UNKNOWN, backgroundImageAction)
+              .enabled(ProjectManager.getInstance().openProjects.isNotEmpty())
           }
         }
       }
+
       if (Registry.`is`("ide.transparency.mode.for.windows") &&
           WindowManagerEx.getInstanceEx().isAlphaModeSupported) {
         val settingsState = settings.state
-        titledRow(message("group.transparency")) {
-          lateinit var checkbox: CellBuilder<JBCheckBox>
-          fullRow { checkbox = checkBox(cdUseTransparentMode) }
-          fullRow {
-            label(message("label.transparency.delay.ms"))
-            intTextField(settingsState::alphaModeDelay, columns = 4)
-          }.enableIf(checkbox.selected)
-          fullRow {
-            label(message("label.transparency.ratio"))
+        group (message("group.transparency")) {
+          lateinit var checkbox: Cell<JBCheckBox>
+          row {
+            checkbox = checkBox(cdUseTransparentMode)
+          }
+          row(message("label.transparency.delay.ms")) {
+            intTextField()
+              .bindIntText(settingsState::alphaModeDelay)
+              .columns(4)
+          }.enabledIf(checkbox.selected)
+          row(message("label.transparency.ratio")) {
             slider(0, 100, 10, 50)
-              .labelTable {
-                put(0, JLabel("0%"))
-                put(50, JLabel("50%"))
-                put(100, JLabel("100%"))
-              }
-              .withValueBinding(
+              .labelTable(mapOf(
+                0 to JLabel("0%"),
+                50 to JLabel("50%"),
+                100 to JLabel("100%")))
+              .bindValue(
                 PropertyBinding(
                   { (settingsState.alphaModeRatio * 100f).toInt() },
                   { settingsState.alphaModeRatio = it / 100f }
-                )
-              )
-              .applyToComponent {
-                addChangeListener { toolTipText = "${value}%" }
-              }
-          }.enableIf(checkbox.selected)
+                ))
+              .showValueHint()
+          }.enabledIf(checkbox.selected)
+            .layout(RowLayout.INDEPENDENT)
         }
       }
-      titledRow(message("group.antialiasing.mode")) {
+
+      groupRowsRange(message("group.antialiasing.mode")) {
         twoColumnRow(
           {
-            label(message("label.text.antialiasing.scope.ide"))
             val ideAAOptions =
               if (!AntialiasingType.canUseSubpixelAAForIDE())
                 arrayOf(AntialiasingType.GREYSCALE, AntialiasingType.OFF)
               else
                 AntialiasingType.values()
-            comboBox(DefaultComboBoxModel(ideAAOptions), settings::ideAAType, renderer = AAListCellRenderer(false))
+            comboBox(DefaultComboBoxModel(ideAAOptions), renderer = AAListCellRenderer(false))
+              .label(message("label.text.antialiasing.scope.ide"))
+              .bindItem(settings::ideAAType)
               .shouldUpdateLaF()
               .accessibleName(message("label.text.antialiasing.scope.ide"))
               .onApply {
@@ -291,19 +297,21 @@ internal class AppearanceConfigurable : BoundSearchableConfigurable(message("tit
               }
           },
           {
-            label(message("label.text.antialiasing.scope.editor"))
             val editorAAOptions =
               if (!AntialiasingType.canUseSubpixelAAForEditor())
                 arrayOf(AntialiasingType.GREYSCALE, AntialiasingType.OFF)
               else
                 AntialiasingType.values()
-            comboBox(DefaultComboBoxModel(editorAAOptions), settings::editorAAType, renderer = AAListCellRenderer(true))
+            comboBox(DefaultComboBoxModel(editorAAOptions), renderer = AAListCellRenderer(true))
+              .label(message("label.text.antialiasing.scope.editor"))
+              .bindItem(settings::editorAAType)
               .shouldUpdateLaF()
               .accessibleName(message("label.text.antialiasing.scope.editor"))
           }
         )
       }
-      titledRow(message("group.window.options")) {
+
+      groupRowsRange(message("group.window.options")) {
         twoColumnRow(
           { checkBox(cdShowToolWindowBars) },
           { checkBox(cdShowToolWindowNumbers) }
@@ -312,17 +320,19 @@ internal class AppearanceConfigurable : BoundSearchableConfigurable(message("tit
           { checkBox(cdLeftToolWindowLayout) },
           { checkBox(cdRightToolWindowLayout) }
         )
-        row {
-          checkBox(cdWidescreenToolWindowLayout)
-          ContextHelpLabel.create(message("checkbox.widescreen.tool.window.layout.description"))()
-        }
+        twoColumnRow(
+          {
+            checkBox(cdWidescreenToolWindowLayout)
+              .gap(RightGap.SMALL)
+            contextHelp(message("checkbox.widescreen.tool.window.layout.description"))
+          })
       }
-      titledRow(message("group.presentation.mode")) {
-        fullRow {
-          label(message("presentation.mode.fon.size"))
+
+      group(message("group.presentation.mode")) {
+        row(message("presentation.mode.fon.size")) {
           fontSizeComboBox({ settings.presentationModeFontSize },
-                           { settings.presentationModeFontSize = it },
-                           settings.presentationModeFontSize)
+            { settings.presentationModeFontSize = it },
+            settings.presentationModeFontSize)
             .shouldUpdateLaF()
         }
       }
@@ -344,35 +354,24 @@ internal class AppearanceConfigurable : BoundSearchableConfigurable(message("tit
     }
   }
 
-  private fun <T : JComponent> CellBuilder<T>.shouldUpdateLaF(): CellBuilder<T> = onApply { shouldUpdateLaF = true }
+  private fun <T : JComponent> Cell<T>.shouldUpdateLaF(): Cell<T> = onApply { shouldUpdateLaF = true }
 }
 
-fun Cell.fontSizeComboBox(getter: () -> Int, setter: (Int) -> Unit, defaultValue: Int): CellBuilder<ComboBox<String>> {
+fun Row.fontSizeComboBox(getter: () -> Int, setter: (Int) -> Unit, defaultValue: Int): Cell<ComboBox<String>> {
   val model = DefaultComboBoxModel(UIUtil.getStandardFontSizes())
   val modelBinding: PropertyBinding<String?> = PropertyBinding({ getter().toString() }, { setter(getIntValue(it, defaultValue)) })
-  return component(ComboBox(model))
+  return comboBox(model)
     .accessibleName(message("presentation.mode.fon.size"))
     .applyToComponent {
       isEditable = true
       renderer = SimpleListCellRenderer.create("") { it.toString() }
       selectedItem = modelBinding.get()
     }
-    .withBinding(
+    .bind(
       { component -> component.editor.item as String? },
       { component, value -> component.setSelectedItem(value) },
       modelBinding
     )
-}
-
-private fun RowBuilder.twoColumnRow(column1: InnerCell.() -> Unit, column2: InnerCell.() -> Unit): Row = row {
-  cell {
-    column1()
-  }
-  placeholder().withLeftGap(JBUI.scale(60))
-  cell {
-    column2()
-  }
-  placeholder().constraints(growX, pushX)
 }
 
 private fun getIntValue(text: String?, defaultValue: Int): Int {

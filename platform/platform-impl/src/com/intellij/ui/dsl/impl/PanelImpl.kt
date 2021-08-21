@@ -14,20 +14,11 @@ import com.intellij.ui.dsl.gridLayout.UiDslException
 import com.intellij.ui.dsl.gridLayout.VerticalAlign
 import com.intellij.ui.layout.*
 import org.jetbrains.annotations.ApiStatus
-import javax.swing.*
-import javax.swing.text.JTextComponent
+import javax.swing.JComponent
+import javax.swing.JLabel
 
 @ApiStatus.Internal
 internal class PanelImpl(private val dialogPanelConfig: DialogPanelConfig) : CellBaseImpl<Panel>(), Panel {
-
-  private companion object {
-    private val LABELED_COMPONENTS = listOf(
-      JComboBox::class,
-      JSlider::class,
-      JSpinner::class,
-      JTextComponent::class
-    )
-  }
 
   val rows: List<RowImpl>
     get() = _rows
@@ -202,15 +193,6 @@ internal class PanelImpl(private val dialogPanelConfig: DialogPanelConfig) : Cel
     val result = TitledSeparator(title)
     result.border = null
     return result
-  }
-
-  private fun labelCell(label: JLabel, cell: CellBaseImpl<*>?) {
-    if (cell is CellImpl<*>) {
-      val component = cell.component
-      if (LABELED_COMPONENTS.any { clazz -> clazz.isInstance(component) }) {
-        label.labelFor = component
-      }
-    }
   }
 }
 
