@@ -150,7 +150,7 @@ class ContentTabLabel extends ContentLabel {
       setBorder(null);
     }
 
-    updateTextAndIcon(myContent, isSelected());
+    updateTextAndIcon(myContent, isSelected(), false);
   }
 
   @Override
