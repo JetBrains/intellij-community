@@ -8,6 +8,7 @@ import com.intellij.util.ui.JBUI;
 import net.miginfocom.swing.MigLayout;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -16,17 +17,18 @@ import java.awt.event.ItemEvent;
 
 public class InspectionOptionsPanel extends JPanel {
 
+  @Nullable
   private final OptionAccessor myOptionAccessor;
 
   public InspectionOptionsPanel() {
     this((OptionAccessor)null);
   }
 
-  public InspectionOptionsPanel(InspectionProfileEntry owner) {
+  public InspectionOptionsPanel(@NotNull InspectionProfileEntry owner) {
     this(new OptionAccessor.Default(owner));
   }
 
-  public InspectionOptionsPanel(OptionAccessor optionAccessor) {
+  public InspectionOptionsPanel(@Nullable OptionAccessor optionAccessor) {
     super(new MigLayout("fillx, ins 0"));
     myOptionAccessor = optionAccessor;
   }
