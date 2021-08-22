@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.navigation.impl
 
 import com.intellij.codeInsight.navigation.CtrlMouseInfo
@@ -9,6 +9,7 @@ import com.intellij.codeInsight.navigation.actions.TypeDeclarationProvider
 import com.intellij.codeInsight.navigation.impl.GTTDActionResult.MultipleTargets
 import com.intellij.codeInsight.navigation.impl.GTTDActionResult.SingleTarget
 import com.intellij.model.Symbol
+import com.intellij.model.psi.PsiSymbolDeclaration
 import com.intellij.model.psi.PsiSymbolReference
 import com.intellij.model.psi.PsiSymbolService
 import com.intellij.model.psi.impl.EvaluatorReference
@@ -68,7 +69,7 @@ internal class GTTDActionData(
     val typeSymbols = typeSymbols().take(2).toList()
     return when (typeSymbols.size) {
       0 -> null
-      1 -> SingleSymbolCtrlMouseInfo(typeSymbols.single(), targetData.elementAtOffset(), targetData.highlightRanges())
+      1 -> SingleSymbolCtrlMouseInfo(typeSymbols.single(), targetData.elementAtOffset(), targetData.highlightRanges(), false)
       else -> MultipleTargetElementsInfo(targetData.highlightRanges())
     }
   }
@@ -87,15 +88,18 @@ private fun TargetData.typeSymbols(editor: Editor, offset: Int): Sequence<Symbol
 
 private fun TargetData.Declared.typeSymbols(editor: Editor, offset: Int): Sequence<Symbol> = sequence {
   val psiSymbolService = PsiSymbolService.getInstance()
-  val psi = psiSymbolService.extractElementFromSymbol(declaration.symbol)
-  if (psi != null) {
-    for (typeElement in typeElements(editor, offset, psi)) {
-      yield(psiSymbolService.asSymbol(typeElement))
+  for (declaration: PsiSymbolDeclaration in declarations) {
+    val target = declaration.symbol
+    val psi = psiSymbolService.extractElementFromSymbol(target)
+    if (psi != null) {
+      for (typeElement in typeElements(editor, offset, psi)) {
+        yield(psiSymbolService.asSymbol(typeElement))
+      }
     }
-  }
-  else {
-    for (typeProvider in SymbolTypeProvider.EP_NAME.extensions) {
-      yieldAll(typeProvider.getSymbolTypes(declaration.symbol))
+    else {
+      for (typeProvider in SymbolTypeProvider.EP_NAME.extensions) {
+        yieldAll(typeProvider.getSymbolTypes(target))
+      }
     }
   }
 }
