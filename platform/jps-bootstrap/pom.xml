@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file. -->
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+
+  <groupId>org.jetbrains.jps-bootstrap</groupId>
+  <artifactId>jps-bootstrap</artifactId>
+  <version>1.0.0</version>
+
+  <properties>
+    <maven.compiler.release>11</maven.compiler.release>
+    <bootstrap.intellij.version>213.2547</bootstrap.intellij.version>
+    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+  </properties>
+
+  <dependencies>
+    <dependency>
+      <groupId>com.jetbrains.intellij.platform</groupId>
+      <artifactId>jps-model</artifactId>
+      <version>${bootstrap.intellij.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>com.jetbrains.intellij.platform</groupId>
+      <artifactId>jps-model-impl</artifactId>
+      <version>${bootstrap.intellij.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>com.jetbrains.intellij.platform</groupId>
+      <artifactId>jps-model-serialization</artifactId>
+      <version>${bootstrap.intellij.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>com.jetbrains.intellij.tools</groupId>
+      <artifactId>jps-build-standalone</artifactId>
+      <version>${bootstrap.intellij.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>com.jetbrains.intellij.groovy</groupId>
+      <artifactId>groovy-jps</artifactId>
+      <version>${bootstrap.intellij.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>com.jetbrains.intellij.groovy</groupId>
+      <artifactId>groovy-rt</artifactId>
+      <version>${bootstrap.intellij.version}</version>
+    </dependency>
+  </dependencies>
+
+  <build>
+    <plugins>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-compiler-plugin</artifactId>
+        <version>3.8.0</version>
+      </plugin>
+    </plugins>
+  </build>
+
+  <repositories>
+    <repository>
+      <id>intellij-dependencies</id>
+      <url>https://cache-redirector.jetbrains.com/intellij-dependencies</url>
+    </repository>
+    <repository>
+      <id>kotlin-ide-plugin-dependencies</id>
+      <url>https://cache-redirector.jetbrains.com/maven.pkg.jetbrains.space/kotlin/p/kotlin/kotlin-ide-plugin-dependencies</url>
+    </repository>
+  </repositories>
+
+</project>
