@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.actionMacro;
 
 import com.intellij.icons.AllIcons;
@@ -99,7 +99,7 @@ public final class ActionMacroManager implements PersistentStateComponent<Elemen
       }
     });
 
-    myKeyProcessor = new MyKeyPostpocessor();
+    myKeyProcessor = new KeyPostProcessor();
     IdeEventQueue.getInstance().addPostprocessor(myKeyProcessor, null);
   }
 
@@ -496,7 +496,7 @@ public final class ActionMacroManager implements PersistentStateComponent<Elemen
     }
   }
 
-  private final class MyKeyPostpocessor implements IdeEventQueue.EventDispatcher {
+  private final class KeyPostProcessor implements IdeEventQueue.EventDispatcher {
     @Override
     public boolean dispatch(@NotNull AWTEvent e) {
       if (isRecording() && e instanceof KeyEvent) {
