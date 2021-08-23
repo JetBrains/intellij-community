@@ -22,7 +22,7 @@ import org.jetbrains.annotations.NotNull
 import javax.swing.DefaultComboBoxModel
 import javax.swing.JComponent
 
-class MarkdownFontSettingsAction : ComboBoxAction() {
+internal class MarkdownFontSettingsAction : ComboBoxAction() {
   private var lastProject: Project? = null
 
   override fun createPopupActionGroup(button: JComponent?) = DefaultActionGroup()
