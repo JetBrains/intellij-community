@@ -2,4 +2,3 @@
 <caret>abstract enum class A() {
 }
 
-/* IGNORE_FIR */
