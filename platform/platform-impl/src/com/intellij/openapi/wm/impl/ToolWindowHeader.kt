@@ -10,11 +10,11 @@ import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.DumbAwareAction
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.wm.ToolWindowType
 import com.intellij.openapi.wm.impl.content.ToolWindowContentUi
 import com.intellij.ui.DoubleClickListener
 import com.intellij.ui.MouseDragHelper
-import com.intellij.ui.PopupHandler
 import com.intellij.ui.UIBundle
 import com.intellij.ui.layout.migLayout.*
 import com.intellij.ui.layout.migLayout.patched.*
@@ -82,6 +82,7 @@ abstract class ToolWindowHeader internal constructor(
     val component = toolbar.component
     component.border = JBUI.Borders.empty(2, 0)
     component.isOpaque = false
+    component.isVisible = !Registry.`is`("ide.experimental.ui")
     @Suppress("LeakingThis")
     add(component)
 
