@@ -22,6 +22,8 @@ class RunToolbarMainWidgetComponent(val presentation: Presentation, place: Strin
     private var counter: MutableMap<Project, Int> = mutableMapOf()
   }
 
+  override fun logNeeded(): Boolean = true
+
   private var project: Project? = null
     set(value) {
       if(field == value) return
@@ -77,12 +79,7 @@ class RunToolbarMainWidgetComponent(val presentation: Presentation, place: Strin
 
       value
     }
-    LOG.info("main state updated: $state")
-  }
-
-  private fun traceState() {
-    LOG.info("state: $state" +
-             "\n")
+    LOG.info("MAIN SLOT state updated: $state")
   }
 
   internal var isOpened = false
@@ -90,6 +87,7 @@ class RunToolbarMainWidgetComponent(val presentation: Presentation, place: Strin
       if(field == value) return
 
       field = value
+      LOG.info("MAIN SLOT isOpened: $isOpened")
       updateState()
 
       if (RunToolbarProcess.experimentalUpdating()) {

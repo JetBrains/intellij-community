@@ -127,9 +127,9 @@ class RunToolbarSlotManager(val project: Project) {
   private fun traceState() {
     val separator = " "
     val ids = dataIds.indices.mapNotNull { "${it+1}: ${slotsData[dataIds[it]]}" }.joinToString(", ")
-    LOG.info("state: $state" +
+    LOG.info("SLOT MANAGER state: $state" +
              "${separator}== slots: 0: ${mainSlotData}, $ids" +
-             "${separator}== slotData: ${slotsData.values}")
+             "${separator}== slotsData: ${slotsData.values}")
   }
 
 
@@ -161,7 +161,7 @@ class RunToolbarSlotManager(val project: Project) {
     set(value) {
       if (value == field) return
       field = value
-      LOG.info("state updated $value")
+      LOG.info("SLOT MANAGER STATE updated $value")
       traceState()
       stateListeners.forEach { it.stateChanged(value) }
     }
@@ -202,7 +202,7 @@ class RunToolbarSlotManager(val project: Project) {
 
     slot.environment = env
     slot.waitingForProcess.clear()
-    LOG.info("process started: $env (${env.executionId}) ")
+    LOG.info("SLOT MANAGER process started: $env (${env.executionId}) ")
 
     activeProcesses.updateActiveProcesses(slotsData)
     updateState()
@@ -210,7 +210,7 @@ class RunToolbarSlotManager(val project: Project) {
 
   fun processStopped(executionId: Long) {
     slotsData.values.firstOrNull { it.environment?.executionId == executionId }?.environment = null
-    LOG.info("process stopped: $executionId ")
+    LOG.info("SLOT MANAGER process stopped: $executionId ")
     activeProcesses.updateActiveProcesses(slotsData)
     updateState()
   }

@@ -11,6 +11,7 @@ import com.intellij.openapi.actionSystem.ex.ComboBoxAction.ComboBoxButton
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction
 import com.intellij.openapi.actionSystem.impl.ActionButton
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl
+import com.intellij.openapi.diagnostic.Logger
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import java.awt.*
@@ -27,6 +28,8 @@ open class SegmentedActionToolbarComponent(place: String, group: ActionGroup, va
     internal const val CONTROL_BAR_SINGLE = "CONTROL_BAR_PROPERTY_SINGLE"
 
     const val RUN_TOOLBAR_COMPONENT_ACTION = "RUN_TOOLBAR_COMPONENT_ACTION"
+
+    private val LOG = Logger.getInstance(SegmentedActionToolbarComponent::class.java)
 
     internal val painter = SegmentedBarPainter()
 
@@ -173,9 +176,11 @@ open class SegmentedActionToolbarComponent(place: String, group: ActionGroup, va
     component.putClientProperty(CONTROL_BAR_PROPERTY, property)
   }
 
-  protected fun forceUpdate() {
-    visibleActions?.let {
+  protected open fun logNeeded() = false
 
+  protected fun forceUpdate() {
+    if(logNeeded()) LOG.info("MAIN SLOT forceUpdate allActions: $visibleActions")
+    visibleActions?.let {
       update(true, it)
 
       revalidate()
@@ -190,6 +195,7 @@ open class SegmentedActionToolbarComponent(place: String, group: ActionGroup, va
 
   private fun update(forced: Boolean, newVisibleActions: MutableList<out AnAction>) {
     val filtered = newVisibleActions.filter { isSuitableAction(it) }
+    if(logNeeded()) LOG.info("MAIN SLOT filtered actions: $filtered")
     isActive = filtered.size > 1
     super.actionsUpdated(forced, if (isActive) filtered else newVisibleActions)
   }
