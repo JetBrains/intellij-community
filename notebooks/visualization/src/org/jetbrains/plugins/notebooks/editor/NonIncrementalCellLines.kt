@@ -124,8 +124,17 @@ private fun getAffectedCells(intervals: List<NotebookCellLines.Interval>,
     if (document.getLineEndOffset(line) == textRange.startOffset) line + 1 else line
   }
 
-  val endLine = document.getLineNumber(textRange.endOffset).let { line ->
-    if (document.getLineStartOffset(line) == textRange.endOffset) line - 1 else line
+  val endLine = run {
+    val line = document.getLineNumber(textRange.endOffset)
+    val isAtStartOfLine = document.getLineStartOffset(line) == textRange.endOffset
+    // for example: "CELL2" => "cell1\nCELL2"
+    // CELL2 wasn't modified, but textRange.endOffset = 6 and getLineNumber(6) == 1.
+    // so line number should be decreased by 1
+    val isAtTheDocumentEnd = document.textLength == textRange.endOffset
+    // RMarkdown may contain empty md cell after last \n symbol.
+    // for example, "```{r}\ncode\n```\n" has code cell at lines 0..2 and empty markdown cell at line 3
+    // empty cell has text length==0 and should be marked as affected cell - it begins and ends at textRange.endOffset
+    if (isAtStartOfLine && !isAtTheDocumentEnd) line - 1 else line
   }
 
   return intervals.dropWhile {
