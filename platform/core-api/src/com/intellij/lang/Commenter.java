@@ -19,7 +19,7 @@ public interface Commenter {
    * does not support line comments. If the language supports several prefixes for line comments,
    * only one of them (the most recommended to use) is returned. Use {@link #getLineCommentPrefixes()}
    * to get all supported line comment prefixes.
-   * 
+   *
    * @return the line comment text, or null.
    */
   @Nullable
@@ -66,4 +66,15 @@ public interface Commenter {
    */
   @Nullable
   String getCommentedBlockCommentSuffix();
+
+  /**
+   * Some indentation-based languages require the block comment prefix and suffix to be placed at the
+   * start of the line. This method allows to specify that the selection must be extended to match
+   * only full lines. This way prefix and suffix will be inserted at the beginning and at the end of the line
+   *
+   * @return whether the selection should be extended to match only full lines
+   */
+  default boolean blockCommentRequiresFullLineSelection() {
+    return false;
+  }
 }
