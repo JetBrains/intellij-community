@@ -9,6 +9,7 @@ import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.util.Key
+import com.intellij.openapi.util.io.FileUtil
 import com.intellij.ui.UIBundle
 import com.intellij.ui.layout.*
 import com.intellij.util.SystemProperties
@@ -84,6 +85,9 @@ class BaseNewProjectSettings(initPath: String) {
   var path: String = initPath
   var name: String = NewModuleStep.findNonExistingFileName(initPath, "untitled", "")
   var git: Boolean = false
+
+  val projectPath: String
+    get() = FileUtil.toCanonicalPath(FileUtil.join(path, name))
 
   companion object {
     val KEY = Key.create<BaseNewProjectSettings>(BaseNewProjectSettings::class.java.name)

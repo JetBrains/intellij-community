@@ -9,8 +9,7 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ex.ProjectManagerEx
-import org.jetbrains.annotations.Nullable
-import java.io.File
+import java.nio.file.Path
 
 abstract class NewWizardModuleBuilder<T> : ModuleBuilder() {
   private var step: NewModuleStepWithSettings<T>? = null
@@ -21,18 +20,19 @@ abstract class NewWizardModuleBuilder<T> : ModuleBuilder() {
     return createStep(context).also { step = it }
   }
 
-  fun createProject(context: WizardContext): @Nullable Project? {
-    val name = step!!.baseSettings.name
-    val path = step!!.baseSettings.path
+  fun createProject(context: WizardContext): Project? {
+    val settings = step!!.baseSettings
+    val projectName = settings.name
+    val projectPath = Path.of(settings.projectPath)
 
-    val toPath = File(path, name).toPath()
-    val project = ProjectManagerEx.getInstanceEx().newProject(toPath, OpenProjectTask())
+    val project = ProjectManagerEx.getInstanceEx().newProject(projectPath, OpenProjectTask.newProject().withProjectName(projectName))
     if (project == null) {
-      LOG.error("Cannot create project by path: $toPath")
+      LOG.error("Cannot create project by path: $projectPath")
       return null
     }
 
     step!!.setupProject(project, context)
+
     return project
   }
 
