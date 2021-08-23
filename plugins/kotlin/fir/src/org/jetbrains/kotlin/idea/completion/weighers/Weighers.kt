@@ -25,6 +25,11 @@ internal object Weighers {
                 PreferGetSetMethodsToPropertyWeigher.Weigher,
                 KindWeigher.Weigher,
             )
+            .weighBefore(
+                PlatformWeighersIds.STATS,
+                PriorityWeigher.Weigher,
+                ExpectedTypeWeigher.Weigher
+            )
             .weighBefore(ExpectedTypeWeigher.WEIGHER_ID, CompletionContributorGroupWeigher.Weigher)
 
     private object PlatformWeighersIds {
