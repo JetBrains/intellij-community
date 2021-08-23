@@ -8,7 +8,7 @@ import com.intellij.openapi.ui.DialogPanel
 interface BuildSystemType<S> : WizardSettingsFactory<S> {
   val name: String
 
-  fun advancedSettings(settings: S): DialogPanel
+  fun advancedSettings(settings: S, context: WizardContext): DialogPanel
   fun setupProject(project: Project, settings: S, context: WizardContext)
 }
 
@@ -17,12 +17,13 @@ open class BuildSystemWithSettings<S>(
 ) : BuildSystemType<S> by buildSystemType, WizardSettingsProvider<S> {
 
   override val settings by lazy(::createSettings)
-  private val advancedSettings by lazy { advancedSettings(settings) }
 
-  fun advancedSettings() = advancedSettings
+  fun advancedSettings(context: WizardContext): DialogPanel {
+    settingsKey.set(context, settings)
+    return advancedSettings(settings, context)
+  }
 
   fun setupProject(project: Project, context: WizardContext) {
-    advancedSettings().apply()
     settingsKey.set(context, settings)
     setupProject(project, settings, context)
   }

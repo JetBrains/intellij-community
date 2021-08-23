@@ -18,7 +18,7 @@ class GradleKotlinBuildSystemType : KotlinBuildSystemType<GradleKotlinBuildSyste
         TODO("Not yet implemented")
     }
 
-    override fun advancedSettings(settings: GradleKotlinBuildSystemSettings): DialogPanel =
+    override fun advancedSettings(settings: GradleKotlinBuildSystemSettings, context: WizardContext): DialogPanel =
         panel {
             hideableRow(GradleBundle.message("label.project.wizard.new.project.advanced.settings.title")) {
                 row {

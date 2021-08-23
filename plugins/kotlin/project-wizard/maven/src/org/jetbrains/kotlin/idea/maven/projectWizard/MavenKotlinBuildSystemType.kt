@@ -20,7 +20,7 @@ class MavenKotlinBuildSystemType : KotlinBuildSystemType<MavenKotlinBuildSystemS
         TODO("Not yet implemented")
     }
 
-    override fun advancedSettings(settings: MavenKotlinBuildSystemSettings): DialogPanel =
+    override fun advancedSettings(settings: MavenKotlinBuildSystemSettings, context: WizardContext): DialogPanel =
         panel {
             hideableRow(MavenWizardBundle.message("label.project.wizard.new.project.advanced.settings.title")) {
                 row {

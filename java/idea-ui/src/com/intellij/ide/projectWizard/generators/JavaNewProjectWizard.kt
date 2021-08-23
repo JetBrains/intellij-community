@@ -4,8 +4,8 @@ package com.intellij.ide.projectWizard.generators
 import com.intellij.ide.*
 import com.intellij.ide.util.projectWizard.WizardContext
 import com.intellij.ide.wizard.BuildSystemWithSettings
+import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.application.runWriteAction
-import com.intellij.openapi.observable.properties.GraphProperty
 import com.intellij.openapi.observable.properties.GraphPropertyImpl.Companion.graphProperty
 import com.intellij.openapi.observable.properties.PropertyGraph
 import com.intellij.openapi.project.Project
@@ -30,38 +30,47 @@ class JavaNewProjectWizard : NewProjectWizard<JavaSettings> {
   override fun createSettings() = JavaSettings()
 
   override fun settingsList(settings: JavaSettings, context: WizardContext): List<SettingsComponent> {
-    var component: JComponent = JBLabel()
-    panel {
-      row {
-        component = buttonSelector(settings.buildSystemButtons.value, settings.buildSystemProperty) { it.name }.component
-      }.largeGapAfter()
-    }
+    val buildSystemsSettings = JavaBuildSystemType.EP_NAME.extensionList
+      .map { JavaBuildSystemWithSettings(it) }
+      .map { JavaBuildSystemSettingsComponent(it, it.advancedSettings(context)) }
+    val buildSystemsActions = buildSystemsSettings
+      .map { ButtonSelectorAction(it, settings.buildSystemProperty, it.settings.name) }
+    val buildSystemsActionGroup = DefaultActionGroup(buildSystemsActions)
+    val buildSystemsToolbar = ButtonSelectorToolbar("ButtonSelector", buildSystemsActionGroup, true)
+    buildSystemsToolbar.targetComponent = null
+    val buildSystemsButtons = buildSystemsToolbar.component
 
     settings.propertyGraph.afterPropagation {
-      settings.buildSystemButtons.value.forEach { it.advancedSettings().apply { isVisible = false } }
-      settings.buildSystemProperty.get().advancedSettings().apply { isVisible = true }
+      buildSystemsSettings.forEach { it.component.isVisible = false }
+      settings.buildSystem.component.isVisible = true
+    }
+    settings.buildSystem = buildSystemsSettings.first()
+
+    // These are IDE-plugin based build-systems, i.e. Gradle and Maven
+    if (buildSystemsSettings.isNotEmpty()) {
+      settings.buildSystem = buildSystemsSettings.first()
     }
 
     val sdkModel = ProjectSdksModel().also { it.syncSdks() }
     val sdkCombo = JdkComboBox(null, sdkModel, { it is JavaSdkType }, null, null, null)
       .apply { minimumSize = Dimension(0, 0) }
+      .also { combo -> combo.addItemListener(ItemListener { settings.sdk = combo.selectedJdk }) }
       .also { combo ->
-        combo.addItemListener(ItemListener { settings.sdk = combo.selectedJdk })
-        val sdk = ProjectRootManager.getInstance(ProjectManager.getInstance().defaultProject).projectSdk
-        if (sdk != null && sdk.sdkType is JavaSdkType) {
-          combo.selectedJdk = sdk
+        val defaultProject = ProjectManager.getInstance().defaultProject
+        val defaultProjectSdk = ProjectRootManager.getInstance(defaultProject).projectSdk
+        if (defaultProjectSdk != null && defaultProjectSdk.sdkType is JavaSdkType) {
+          combo.selectedJdk = defaultProjectSdk
         }
       }
-    settings.buildSystemProperty.set(settings.buildSystemButtons.value.first())
 
     return listOf(
-      LabelAndComponent(JBLabel(JavaUiBundle.message("label.project.wizard.new.project.build.system")), component),
+      LabelAndComponent(JBLabel(JavaUiBundle.message("label.project.wizard.new.project.build.system")), buildSystemsButtons),
       LabelAndComponent(JBLabel(JavaUiBundle.message("label.project.wizard.new.project.jdk")), sdkCombo)
-    ).plus(settings.buildSystemButtons.value.map { JustComponent(it.advancedSettings()) })
+    ).plus(buildSystemsSettings.map { JustComponent(it.component) })
   }
 
   override fun setupProject(project: Project, settings: JavaSettings, context: WizardContext) {
-    settings.buildSystemProperty.get().setupProject(project, context)
+    settings.buildSystem.settings.setupProject(project, context)
 
     settings.sdk?.let { sdk ->
       val table = ProjectJdkTable.getInstance()
@@ -73,21 +82,23 @@ class JavaNewProjectWizard : NewProjectWizard<JavaSettings> {
   }
 }
 
-open class JavaBuildSystemWithSettings<P>(val buildSystemType: JavaBuildSystemType<P>) :
-  BuildSystemWithSettings<P>(buildSystemType)
+open class JavaBuildSystemWithSettings<S>(val buildSystemType: JavaBuildSystemType<S>) :
+  BuildSystemWithSettings<S>(buildSystemType)
+
+class JavaBuildSystemSettingsComponent<S>(
+  val settings: JavaBuildSystemWithSettings<S>,
+  val component: JComponent
+)
 
 class JavaSettings {
-  var sdk: Sdk? = null
   val propertyGraph: PropertyGraph = PropertyGraph()
-  val buildSystemButtons: Lazy<List<JavaBuildSystemWithSettings<out Any?>>> = lazy {
-    JavaBuildSystemType.EP_NAME.extensionList.map {
-      JavaBuildSystemWithSettings(it)
-    }
+
+  val buildSystemProperty = propertyGraph.graphProperty<JavaBuildSystemSettingsComponent<*>> {
+    throw UninitializedPropertyAccessException()
   }
 
-  val buildSystemProperty: GraphProperty<JavaBuildSystemWithSettings<*>> = propertyGraph.graphProperty {
-    buildSystemButtons.value.first()
-  }
+  var sdk: Sdk? = null
+  var buildSystem by buildSystemProperty
 
   companion object {
     val KEY = Key.create<JavaSettings>(JavaSettings::class.java.name)

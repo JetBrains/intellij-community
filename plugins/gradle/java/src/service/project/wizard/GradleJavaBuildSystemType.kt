@@ -58,7 +58,7 @@ class GradleJavaBuildSystemType : JavaBuildSystemType<GradleJavaBuildSystemSetti
     return suggestGradleVersion(javaVersion)
   }
 
-  override fun advancedSettings(settings: GradleJavaBuildSystemSettings) = panel {
+  override fun advancedSettings(settings: GradleJavaBuildSystemSettings, context: WizardContext) = panel {
     hideableRow(GradleBundle.message("label.project.wizard.new.project.advanced.settings.title")) {
       row(GradleBundle.message("label.project.wizard.new.project.group.id")) {
         textField(settings::groupId)

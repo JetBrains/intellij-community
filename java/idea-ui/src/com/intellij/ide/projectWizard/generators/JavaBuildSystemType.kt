@@ -25,7 +25,7 @@ class IntelliJJavaBuildSystemType : JavaBuildSystemType<IntelliJBuildSystemSetti
   override val settingsKey = IntelliJBuildSystemSettings.KEY
   override fun createSettings() = IntelliJBuildSystemSettings()
 
-  override fun advancedSettings(settings: IntelliJBuildSystemSettings): DialogPanel =
+  override fun advancedSettings(settings: IntelliJBuildSystemSettings, context: WizardContext): DialogPanel =
     panel {
       hideableRow(UIBundle.message("label.project.wizard.new.project.advanced.settings")) {
         row {
