@@ -13,12 +13,14 @@ import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.xml.XmlFile
 import com.intellij.psi.xml.XmlTag
 import com.intellij.util.xml.DomUtil
 import com.intellij.util.xml.GenericDomValue
 import org.jetbrains.idea.maven.dom.MavenDomElement
+import org.jetbrains.idea.maven.dom.MavenDomProjectProcessorUtils
 import org.jetbrains.idea.maven.dom.MavenDomUtil
 import org.jetbrains.idea.maven.dom.converters.MavenDependencyCompletionUtil
 import org.jetbrains.idea.maven.dom.model.MavenDomDependency
@@ -197,12 +199,12 @@ class MavenDependencyModificator(private val myProject: Project) : ExternalDepen
     } ?: return
 
     updateValueIfNeeded(model = model, domDependency = domDependency, domValue = domDependency.version,
-                        managedDomValue = managedDependency.version, newValue = newMavenId.version,
-                        siblingsBeforeTag = elementsBeforeDependencyVersion)
+      managedDomValue = managedDependency.version, newValue = newMavenId.version,
+      siblingsBeforeTag = elementsBeforeDependencyVersion)
 
     updateValueIfNeeded(model = model, domDependency = domDependency, domValue = domDependency.scope,
-                        managedDomValue = managedDependency.scope, newValue = newScope,
-                        siblingsBeforeTag = elementsBeforeDependencyScope)
+      managedDomValue = managedDependency.scope, newValue = newScope,
+      siblingsBeforeTag = elementsBeforeDependencyScope)
   }
 
   private fun updateValueIfNeeded(model: MavenDomProjectModel,
@@ -370,20 +372,32 @@ class MavenDependencyModificator(private val myProject: Project) : ExternalDepen
 
   override fun declaredDependencies(module: Module): List<DeclaredDependency>? {
     val project = MavenProjectsManager.getInstance(module.project).findProject(module) ?: return emptyList()
+    return declaredDependencies(project.file) ?: throw IllegalStateException(MavenProjectBundle.message("maven.model.error", module.name))
+  }
 
-    return ReadAction.compute<List<DeclaredDependency>, Throwable> {
-      val model = MavenDomUtil.getMavenDomProjectModel(myProject, project.file)
-                  ?: throw IllegalStateException(MavenProjectBundle.message("maven.model.error", module.name))
+  //for faster tesing
+  internal fun declaredDependencies(file: VirtualFile): List<DeclaredDependency>? {
+    return ReadAction.compute<List<DeclaredDependency>?, Throwable> {
+      val model = MavenDomUtil.getMavenDomProjectModel(myProject, file) ?: return@compute null
       model.dependencies.dependencies.map { mavenDomDependency ->
         DeclaredDependency(
           groupId = mavenDomDependency.groupId.stringValue,
           artifactId = mavenDomDependency.artifactId.stringValue,
-          version = mavenDomDependency.version.stringValue,
+          version = retrieveDependencyVersion(myProject, mavenDomDependency),
           configuration = mavenDomDependency.scope.stringValue,
           dataContext = DataContext { if (CommonDataKeys.PSI_ELEMENT.`is`(it)) mavenDomDependency.xmlElement else null }
         )
       }
     }
+  }
+
+  private fun retrieveDependencyVersion(project: Project, dependency: MavenDomDependency): String? {
+    val directVersion = dependency.version.stringValue
+    if (directVersion != null) return directVersion
+
+    val managingDependency = MavenDomProjectProcessorUtils.searchManagingDependency(dependency, project)
+    return managingDependency?.version?.stringValue
+
   }
 
   override fun declaredRepositories(module: Module): List<UnifiedDependencyRepository> {
