@@ -85,8 +85,8 @@ public class MarkdownPlantUMLTest extends BasePlatformTestCase {
 
     VirtualFile mdVFile = myFixture.getFile("plantuml/" + getTestName(true) + ".md");
     try {
-      assertTrue(MarkdownUtil.generateMarkdownHtml(mdVFile, VfsUtilCore.loadText(mdVFile), getProject()).contains(
-        MarkdownUtil.md5(mdVFile.getPath(), MarkdownCodeFencePluginCache.MARKDOWN_FILE_PATH_KEY)));
+      assertTrue(MarkdownUtil.INSTANCE.generateMarkdownHtml(mdVFile, VfsUtilCore.loadText(mdVFile), getProject()).contains(
+        MarkdownUtil.INSTANCE.md5(mdVFile.getPath(), MarkdownCodeFencePluginCache.MARKDOWN_FILE_PATH_KEY)));
     }
     catch (IOException e) {
       e.printStackTrace();

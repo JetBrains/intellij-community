@@ -92,7 +92,7 @@ public final class MarkdownCodeFencePluginCache implements Disposable {
   }
 
   private static boolean isCachedSourceFile(@NotNull File sourceFileDir, @NotNull VirtualFile sourceFile) {
-    return sourceFileDir.getName().equals(MarkdownUtil.md5(sourceFile.getPath(), MARKDOWN_FILE_PATH_KEY));
+    return sourceFileDir.getName().equals(MarkdownUtil.INSTANCE.md5(sourceFile.getPath(), MARKDOWN_FILE_PATH_KEY));
   }
 
   public void registerCacheProvider(@NotNull MarkdownCodeFencePluginCacheCollector cacheCollector) {

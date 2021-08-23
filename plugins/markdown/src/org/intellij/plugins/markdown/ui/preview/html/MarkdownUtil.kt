@@ -16,7 +16,6 @@ import java.math.BigInteger
 import java.util.*
 
 object MarkdownUtil {
-  @JvmStatic
   fun md5(buffer: String?, @NonNls key: String): String {
     val md5 = DigestUtil.md5()
     Objects.requireNonNull(md5).update(buffer?.toByteArray(Charsets.UTF_8))
@@ -25,7 +24,6 @@ object MarkdownUtil {
     return bi.abs().toString(16)
   }
 
-  @JvmStatic
   fun generateMarkdownHtml(file: VirtualFile, text: String, project: Project?): String {
     val parent = file.parent
     val baseUri = if (parent != null) File(parent.path).toURI() else null
