@@ -10,6 +10,8 @@ internal interface FeaturesProviderTestCase {
   val provider: SearchEverywhereElementFeaturesProvider
   val testProject: Project
 
+  fun roundDouble(value: Double) = provider.roundDouble(value)
+
   fun checkThatFeature(feature: String) = AssertionElementSelector(this, feature)
 
   fun checkThatFeatures() = AssertionElementSelector(this, null)

@@ -29,6 +29,7 @@ internal class SearchEverywhereFileFeaturesProvider : SearchEverywhereElementFea
     internal const val PRIORITY_DATA_KEY = "priority"
     internal const val IS_SAME_MODULE_DATA_KEY = "isSameModule"
     internal const val PACKAGE_DISTANCE_DATA_KEY = "packageDistance"
+    internal const val PACKAGE_DISTANCE_NORMALIZED_DATA_KEY = "packageDistanceNorm"
 
     internal const val FILETYPE_USAGE_RATIO_DATA_KEY = "fileTypeUsageRatio"
     internal const val TIME_SINCE_LAST_FILETYPE_USAGE_DATA_KEY = "timeSinceLastFileTypeUsage"
@@ -101,8 +102,12 @@ internal class SearchEverywhereFileFeaturesProvider : SearchEverywhereElementFea
       PRIORITY_DATA_KEY to elementPriority,
     )
 
+    calculatePackageDistance(item, cache.openedFile)?.let {
+      data[PACKAGE_DISTANCE_DATA_KEY] = it.first
+      data[PACKAGE_DISTANCE_NORMALIZED_DATA_KEY] = it.second
+    }
+
     data.putIfValueNotNull(IS_SAME_MODULE_DATA_KEY, isSameModuleAsOpenedFile(item, cache.openedFile))
-    data.putIfValueNotNull(PACKAGE_DISTANCE_DATA_KEY, calculatePackageDistance(item, cache.openedFile))
 
     if (item.isDirectory) {
       // Rest of the features are only applicable to files, not directories
@@ -206,8 +211,10 @@ internal class SearchEverywhereFileFeaturesProvider : SearchEverywhereElementFea
    * The distance can be considered the number of steps/changes to reach the other package,
    * for instance the distance to a parent or a child of a package is equal to 1,
    * and the distance from package a.b.c.d to package a.b.x.y is equal to 4.
+   *
+   * @return Pair of distance and normalized distance, or null if it could not be calculated.
    */
-  private fun calculatePackageDistance(item: PsiFileSystemItem, openedFile: VirtualFile?): Int? {
+  private fun calculatePackageDistance(item: PsiFileSystemItem, openedFile: VirtualFile?): Pair<Int, Double>? {
     if (openedFile == null) {
       return null
     }
@@ -237,7 +244,9 @@ internal class SearchEverywhereFileFeaturesProvider : SearchEverywhereElementFea
       common++
     }
 
-    return maxDistance - 2 * common
+    val distance = maxDistance - 2 * common
+    val normalizedDistance = roundDouble(if (distance != 0) (distance.toDouble() / maxDistance) else 0.0)
+    return Pair(distance, normalizedDistance)
   }
 
   private data class Cache(val fileTypeStats: Map<String, FileTypeUsageSummary>, val openedFile: VirtualFile?)

@@ -11,6 +11,7 @@ import com.intellij.ide.actions.searcheverywhere.ml.features.SearchEverywhereFil
 import com.intellij.ide.actions.searcheverywhere.ml.features.SearchEverywhereFileFeaturesProvider.Companion.IS_FAVORITE_DATA_KEY
 import com.intellij.ide.actions.searcheverywhere.ml.features.SearchEverywhereFileFeaturesProvider.Companion.IS_SAME_MODULE_DATA_KEY
 import com.intellij.ide.actions.searcheverywhere.ml.features.SearchEverywhereFileFeaturesProvider.Companion.PACKAGE_DISTANCE_DATA_KEY
+import com.intellij.ide.actions.searcheverywhere.ml.features.SearchEverywhereFileFeaturesProvider.Companion.PACKAGE_DISTANCE_NORMALIZED_DATA_KEY
 import com.intellij.ide.actions.searcheverywhere.ml.features.SearchEverywhereFileFeaturesProvider.Companion.PRIORITY_DATA_KEY
 import com.intellij.ide.actions.searcheverywhere.ml.features.SearchEverywhereFileFeaturesProvider.Companion.RECENT_INDEX_DATA_KEY
 import com.intellij.ide.actions.searcheverywhere.ml.features.SearchEverywhereFileFeaturesProvider.Companion.TIME_SINCE_LAST_FILETYPE_USAGE_DATA_KEY
@@ -390,10 +391,15 @@ internal class SearchEverywhereFileFeaturesProviderTest
 
     FileEditorManager.getInstance(project).openFile(openedFile, true)
 
+    val expected = mapOf(
+      PACKAGE_DISTANCE_DATA_KEY to 1,  // The found directory is considered a subpackage, hence the distance should be 1
+      PACKAGE_DISTANCE_NORMALIZED_DATA_KEY to roundDouble(1 / (3 + 4).toDouble()),
+    )
+
     val psiFile = PsiManager.getInstance(project).findDirectory(foundDirectory)!!
-    checkThatFeature(PACKAGE_DISTANCE_DATA_KEY)
+    checkThatFeatures()
       .ofElement(psiFile)
-      .isEqualTo(1) // The found directory is considered a subpackage, hence the distance should be 1
+      .isEqualTo(expected)
   }
 
   fun `test package distance is 0 when same package`() {
@@ -404,10 +410,15 @@ internal class SearchEverywhereFileFeaturesProviderTest
 
     FileEditorManager.getInstance(project).openFile(openedFile, true)
 
+    val expected = mapOf(
+      PACKAGE_DISTANCE_DATA_KEY to 0,
+      PACKAGE_DISTANCE_NORMALIZED_DATA_KEY to 0.0,
+    )
+
     val psiFile = PsiUtil.getPsiFile(project, foundFile)
-    checkThatFeature(PACKAGE_DISTANCE_DATA_KEY)
+    checkThatFeatures()
       .ofElement(psiFile)
-      .isEqualTo(0)
+      .isEqualTo(expected)
   }
 
   fun `test package distance is 1 when in child package`() {
@@ -419,10 +430,15 @@ internal class SearchEverywhereFileFeaturesProviderTest
 
     FileEditorManager.getInstance(project).openFile(openedFile, true)
 
+    val expected = mapOf(
+      PACKAGE_DISTANCE_DATA_KEY to 1,
+      PACKAGE_DISTANCE_NORMALIZED_DATA_KEY to roundDouble(1 / (4 + 5).toDouble()),
+    )
+
     val psiFile = PsiUtil.getPsiFile(project, foundFile)
-    checkThatFeature(PACKAGE_DISTANCE_DATA_KEY)
+    checkThatFeatures()
       .ofElement(psiFile)
-      .isEqualTo(1)
+      .isEqualTo(expected)
   }
 
   fun `test package distance is 1 when in parent package`() {
@@ -434,10 +450,15 @@ internal class SearchEverywhereFileFeaturesProviderTest
 
     FileEditorManager.getInstance(project).openFile(openedFile, true)
 
+    val expected = mapOf(
+      PACKAGE_DISTANCE_DATA_KEY to 1,
+      PACKAGE_DISTANCE_NORMALIZED_DATA_KEY to roundDouble(1 / (4 + 3).toDouble()),
+    )
+
     val psiFile = PsiUtil.getPsiFile(project, foundFile)
-    checkThatFeature(PACKAGE_DISTANCE_DATA_KEY)
+    checkThatFeatures()
       .ofElement(psiFile)
-      .isEqualTo(1)
+      .isEqualTo(expected)
   }
 
   fun `test package distance on a parent of different group`() {
@@ -449,10 +470,15 @@ internal class SearchEverywhereFileFeaturesProviderTest
 
     FileEditorManager.getInstance(project).openFile(openedFile, true)
 
+    val expected = mapOf(
+      PACKAGE_DISTANCE_DATA_KEY to 3,
+      PACKAGE_DISTANCE_NORMALIZED_DATA_KEY to roundDouble(3 / (4 + 3).toDouble()),
+    )
+
     val psiFile = PsiUtil.getPsiFile(project, foundFile)
-    checkThatFeature(PACKAGE_DISTANCE_DATA_KEY)
+    checkThatFeatures()
       .ofElement(psiFile)
-      .isEqualTo(3)
+      .isEqualTo(expected)
   }
 
   fun `test package distance on a child of different group`() {
@@ -464,10 +490,15 @@ internal class SearchEverywhereFileFeaturesProviderTest
 
     FileEditorManager.getInstance(project).openFile(openedFile, true)
 
+    val expected = mapOf(
+      PACKAGE_DISTANCE_DATA_KEY to 4,
+      PACKAGE_DISTANCE_NORMALIZED_DATA_KEY to roundDouble(4 / (4 + 4).toDouble())
+    )
+
     val psiFile = PsiUtil.getPsiFile(project, foundFile)
-    checkThatFeature(PACKAGE_DISTANCE_DATA_KEY)
+    checkThatFeatures()
       .ofElement(psiFile)
-      .isEqualTo(4)
+      .isEqualTo(expected)
   }
 
   fun `test package distance when root is different`() {
@@ -479,10 +510,15 @@ internal class SearchEverywhereFileFeaturesProviderTest
 
     FileEditorManager.getInstance(project).openFile(openedFile, true)
 
+    val expected = mapOf(
+      PACKAGE_DISTANCE_DATA_KEY to 6,
+      PACKAGE_DISTANCE_NORMALIZED_DATA_KEY to roundDouble(6 / (4 + 2).toDouble()),
+    )
+
     val psiFile = PsiUtil.getPsiFile(project, foundFile)
-    checkThatFeature(PACKAGE_DISTANCE_DATA_KEY)
+    checkThatFeatures()
       .ofElement(psiFile)
-      .isEqualTo(6)
+      .isEqualTo(expected)
   }
 
   private fun createFileWithModTimestamp(modificationTimestamp: Long): PsiFileSystemItem {

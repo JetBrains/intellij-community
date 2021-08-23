@@ -42,7 +42,7 @@ abstract class SearchEverywhereElementFeaturesProvider {
     return value
   }
 
-  protected fun roundDouble(value: Double): Double {
+  internal fun roundDouble(value: Double): Double {
     if (!value.isFinite()) return -1.0
     return round(value * 100000) / 100000
   }
