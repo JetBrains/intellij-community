@@ -421,9 +421,19 @@ public abstract class FirJvmOptimizeImportsTestGenerated extends AbstractFirJvmO
             runTest("../idea/tests/testData/editor/optimizeImports/common/MembersInScope.kt");
         }
 
+        @TestMetadata("NestedClassConstructorReferenceThroughTopLevelClass.kt")
+        public void testNestedClassConstructorReferenceThroughTopLevelClass() throws Exception {
+            runTest("../idea/tests/testData/editor/optimizeImports/common/NestedClassConstructorReferenceThroughTopLevelClass.kt");
+        }
+
         @TestMetadata("NestedClassReferenceOutsideClassBody.kt")
         public void testNestedClassReferenceOutsideClassBody() throws Exception {
             runTest("../idea/tests/testData/editor/optimizeImports/common/NestedClassReferenceOutsideClassBody.kt");
+        }
+
+        @TestMetadata("NestedClassReferenceThroughTopLevelClass.kt")
+        public void testNestedClassReferenceThroughTopLevelClass() throws Exception {
+            runTest("../idea/tests/testData/editor/optimizeImports/common/NestedClassReferenceThroughTopLevelClass.kt");
         }
 
         @TestMetadata("Overloads.kt")
