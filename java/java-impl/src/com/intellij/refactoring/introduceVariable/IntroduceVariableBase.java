@@ -910,7 +910,11 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
       Pass<PsiElement> callback = new Pass<>() {
         @Override
         public void pass(final PsiElement container) {
-          myInplaceIntroducer = new JavaVariableInplaceIntroducer(project, settings, container, editor, expr,
+          PsiElement anchor = container instanceof PsiLambdaExpression ? getAnchor(container) : container;
+          if (checkAnchorStatement(project, editor, anchor) == null) {
+            return;
+          }
+          myInplaceIntroducer = new JavaVariableInplaceIntroducer(project, settings, anchor, editor, expr,
                                                                   cantChangeFinalModifier, selectedOccurrences, typeSelectorManager,
                                                                   getRefactoringName());
           if (!myInplaceIntroducer.startInplaceIntroduceTemplate()) {
