@@ -28,12 +28,11 @@ import com.intellij.util.MathUtil
 import com.intellij.util.ui.UIUtil
 import org.jetbrains.annotations.ApiStatus
 import java.awt.Dimension
-import java.awt.event.*
+import java.awt.event.ActionEvent
+import java.awt.event.KeyAdapter
+import java.awt.event.KeyEvent
+import java.awt.event.MouseEvent
 import javax.swing.*
-
-internal enum class BottomGap {
-  BUTTON_GROUP_HEADER
-}
 
 @ApiStatus.Internal
 internal class RowImpl(private val dialogPanelConfig: DialogPanelConfig,
@@ -49,8 +48,12 @@ internal class RowImpl(private val dialogPanelConfig: DialogPanelConfig,
   var topGap: TopGap? = null
     private set
 
+  var internalTopGap: Int = 0
+
   var bottomGap: BottomGap? = null
     private set
+
+  var internalBottomGap: Int = 0
 
   val cells = mutableListOf<CellBaseImpl<*>?>()
 
@@ -119,12 +122,12 @@ internal class RowImpl(private val dialogPanelConfig: DialogPanelConfig,
     return this
   }
 
-  override fun gap(topGap: TopGap): RowImpl {
+  override fun topGap(topGap: TopGap): RowImpl {
     this.topGap = topGap
     return this
   }
 
-  fun gap(bottomGap: BottomGap): RowImpl {
+  override fun bottomGap(bottomGap: BottomGap): RowImpl {
     this.bottomGap = bottomGap
     return this
   }
@@ -200,10 +203,6 @@ internal class RowImpl(private val dialogPanelConfig: DialogPanelConfig,
     return cell(label)
   }
 
-  override fun actionLink(text: String, action: ActionListener): Cell<ActionLink> {
-    return cell(ActionLink(text, action))
-  }
-
   override fun slider(min: Int, max: Int, minorTickSpacing: Int, majorTickSpacing: Int): Cell<JSlider> {
     val slider = JSlider()
     UIUtil.setSliderIsFilled(slider, true)
@@ -221,15 +220,23 @@ internal class RowImpl(private val dialogPanelConfig: DialogPanelConfig,
     return cell(Label(text))
   }
 
-  override fun commentNoWrap(text: String): Cell<JLabel> {
+  override fun commentNoWrap(text: String): CellImpl<JLabel> {
     return cell(ComponentPanelBuilder.createNonWrappingCommentComponent(text))
   }
 
-  override fun browserLink(text: String, url: String): Cell<BrowserLink> {
+  override fun link(text: String, action: () -> Unit): CellImpl<ActionLink> {
+    return cell(ActionLink(text) { action() })
+  }
+
+  override fun browserLink(text: String, url: String): CellImpl<BrowserLink> {
     return cell(BrowserLink(text, url))
   }
 
-  override fun contextHelp(description: String, title: String?): Cell<JLabel> {
+  override fun icon(icon: Icon): CellImpl<JLabel> {
+    return cell(JBLabel(icon))
+  }
+
+  override fun contextHelp(description: String, title: String?): CellImpl<JLabel> {
     val result = if (title == null) ContextHelpLabel.create(description)
     else ContextHelpLabel.create(title, description)
     return cell(result)

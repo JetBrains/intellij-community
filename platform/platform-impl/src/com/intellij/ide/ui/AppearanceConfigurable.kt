@@ -137,7 +137,7 @@ internal class AppearanceConfigurable : BoundSearchableConfigurable(message("tit
           .shouldUpdateLaF()
           .enabledIf(overrideLaF.selected)
           .accessibleName(message("label.font.size"))
-      }.gap(TopGap.SMALL)
+      }.topGap(TopGap.SMALL)
 
       group(message("title.accessibility")) {
         row {
@@ -188,7 +188,7 @@ internal class AppearanceConfigurable : BoundSearchableConfigurable(message("tit
                 .accessibleName(UIBundle.message("color.blindness.checkbox.text"))
             }
 
-            actionLink(UIBundle.message("color.blindness.link.to.help"),
+            link(UIBundle.message("color.blindness.link.to.help"),
               { HelpManager.getInstance().invokeHelp("Colorblind_Settings") })
           }
         }

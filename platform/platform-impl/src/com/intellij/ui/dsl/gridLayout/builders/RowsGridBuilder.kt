@@ -84,6 +84,15 @@ class RowsGridBuilder(private val panel: JComponent, grid: JBGrid? = null) {
     return layout.addLayoutSubGrid(constraints)
   }
 
+  fun subGridBuilder(width: Int = 1,
+                     horizontalAlign: HorizontalAlign = HorizontalAlign.LEFT,
+                     verticalAlign: VerticalAlign = VerticalAlign.TOP,
+                     resizableColumn: Boolean = false,
+                     gaps: Gaps = Gaps.EMPTY,
+                     visualPaddings: Gaps = Gaps.EMPTY): RowsGridBuilder {
+    return RowsGridBuilder(panel, subGrid(width, horizontalAlign, verticalAlign, resizableColumn, gaps, visualPaddings))
+  }
+
   /**
    * Skips [count] cells in current row
    */

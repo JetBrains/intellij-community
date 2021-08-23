@@ -16,11 +16,9 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.components.*
 import com.intellij.ui.layout.*
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls
 import java.awt.Dimension
 import java.awt.event.ActionEvent
-import java.awt.event.ActionListener
 import javax.swing.*
 
 /**
@@ -49,10 +47,12 @@ enum class RowLayout {
 
 enum class TopGap {
   /**
-   * See [SpacingConfiguration.groupTopGap]
+   * See [SpacingConfiguration.verticalSmallGap]
    */
-  GROUP,
+  SMALL
+}
 
+enum class BottomGap {
   /**
    * See [SpacingConfiguration.verticalSmallGap]
    */
@@ -98,7 +98,9 @@ interface Row {
 
   fun enabledIf(predicate: ComponentPredicate): Row
 
-  fun gap(topGap: TopGap): Row
+  fun topGap(topGap: TopGap): Row
+
+  fun bottomGap(bottomGap: BottomGap): Row
 
   /**
    * Creates subpanel inside cell of the row
@@ -119,8 +121,6 @@ interface Row {
 
   fun gearButton(vararg actions: AnAction): Cell<JComponent>
 
-  fun actionLink(@Nls text: String, action: ActionListener): Cell<ActionLink>
-
   fun slider(min: Int, max: Int, minorTickSpacing: Int, majorTickSpacing: Int): Cell<JSlider>
 
   /**
@@ -131,7 +131,11 @@ interface Row {
 
   fun commentNoWrap(@NlsContexts.DetailedDescription text: String): Cell<JLabel>
 
+  fun link(@NlsContexts.LinkLabel text: String, action: () -> Unit): Cell<ActionLink>
+
   fun browserLink(@NlsContexts.LinkLabel text: String, url: String): Cell<BrowserLink>
+
+  fun icon(icon: Icon): Cell<JLabel>
 
   fun contextHelp(@NlsContexts.Tooltip description: String, @TooltipTitle title: String? = null): Cell<JLabel>
 

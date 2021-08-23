@@ -52,10 +52,12 @@ interface Panel : CellBase<Panel> {
   fun rowsRange(init: Panel.() -> Unit): RowsRange
 
   /**
-   * Adds panel with a title and some space before the group. Grouped radio buttons and checkboxes should use [Panel.buttonGroup]
+   * Adds panel with a title and some vertical space before the group. Grouped radio buttons and checkboxes should use [Panel.buttonGroup]
    * method, which uses different title gaps
+   *
+   * @param indent true left indent is needed
    */
-  fun group(@NlsContexts.BorderTitle title: String? = null, init: Panel.() -> Unit): Panel
+  fun group(@NlsContexts.BorderTitle title: String? = null, indent: Boolean = true, init: Panel.() -> Unit): Panel
 
   /**
    * See [RowsRange]

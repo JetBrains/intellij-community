@@ -103,25 +103,33 @@ internal class PanelImpl(private val dialogPanelConfig: DialogPanelConfig) : Cel
     return result
   }
 
-  override fun group(title: String?, init: Panel.() -> Unit): PanelImpl {
+  override fun group(title: String?, indent: Boolean, init: Panel.() -> Unit): PanelImpl {
     val component = createSeparator(title)
+    val groupTopGap = dialogPanelConfig.spacing.groupTopGap
     val result = panel {
-      row {
+      val row = row {
         cell(component)
           .horizontalAlign(HorizontalAlign.FILL)
-      }.gap(TopGap.GROUP)
+      } as RowImpl
+      row.internalTopGap = groupTopGap
     }
-    result.indent(init)
+
+    if (indent) {
+      result.indent(init)
+    } else {
+      result.init()
+    }
     return result
   }
 
   override fun groupRowsRange(title: String?, init: Panel.() -> Unit): RowsRangeImpl {
     val result = RowsRangeImpl(this, _rows.size)
     val component = createSeparator(title)
-    row {
+    val row = row {
       cell(component)
         .horizontalAlign(HorizontalAlign.FILL)
-    }.gap(TopGap.GROUP)
+    }
+    row.internalTopGap = dialogPanelConfig.spacing.groupTopGap
     indent(init)
     result.endIndex = _rows.size - 1
     return result
@@ -131,10 +139,11 @@ internal class PanelImpl(private val dialogPanelConfig: DialogPanelConfig) : Cel
     dialogPanelConfig.context.addButtonGroup(BindButtonGroup(binding, type))
     try {
       if (title != null) {
-        row {
+        val row = row {
           label(title)
             .applyToComponent { putClientProperty(DSL_LABEL_NO_BOTTOM_GAP_PROPERTY, true) }
-        }.gap(BottomGap.BUTTON_GROUP_HEADER)
+        }
+        row.internalBottomGap = dialogPanelConfig.spacing.buttonGroupHeaderBottomGap
       }
       indent(init)
     }

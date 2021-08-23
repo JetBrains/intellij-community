@@ -4,11 +4,9 @@ package com.intellij.ui.dsl.impl
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.ui.TextFieldWithBrowseButton
+import com.intellij.ui.SeparatorComponent
 import com.intellij.ui.TitledSeparator
-import com.intellij.ui.dsl.Cell
-import com.intellij.ui.dsl.RightGap
-import com.intellij.ui.dsl.RowLayout
-import com.intellij.ui.dsl.TopGap
+import com.intellij.ui.dsl.*
 import com.intellij.ui.dsl.gridLayout.*
 import com.intellij.ui.dsl.gridLayout.builders.RowsGridBuilder
 import org.jetbrains.annotations.ApiStatus
@@ -28,6 +26,7 @@ internal class PanelBuilder(val rows: List<RowImpl>, val dialogPanelConfig: Dial
       JLabel::class,
       JSpinner::class,
       JTextComponent::class,
+      SeparatorComponent::class,
       TextFieldWithBrowseButton::class,
       TitledSeparator::class
     )
@@ -48,9 +47,8 @@ internal class PanelBuilder(val rows: List<RowImpl>, val dialogPanelConfig: Dial
 
       when (row.rowLayout) {
         RowLayout.INDEPENDENT -> {
-          val subGrid = rowsGridBuilder.subGrid(width = maxColumnsCount, horizontalAlign = HorizontalAlign.FILL,
+          val subGridBuilder = rowsGridBuilder.subGridBuilder(width = maxColumnsCount, horizontalAlign = HorizontalAlign.FILL,
             verticalAlign = VerticalAlign.FILL, gaps = Gaps(left = row.getIndent()))
-          val subGridBuilder = RowsGridBuilder(panel, subGrid)
           val cells = row.cells
           buildRow(cells, row.label != null, 0, cells.size, panel, subGridBuilder)
           subGridBuilder.row()
@@ -64,9 +62,8 @@ internal class PanelBuilder(val rows: List<RowImpl>, val dialogPanelConfig: Dial
           buildCell(row.cells[0], true, row.getIndent(), row.cells.size == 1, 1, panel, rowsGridBuilder)
 
           if (row.cells.size > 1) {
-            val subGrid = rowsGridBuilder.subGrid(width = maxColumnsCount - 1, horizontalAlign = HorizontalAlign.FILL,
+            val subGridBuilder = rowsGridBuilder.subGridBuilder(width = maxColumnsCount - 1, horizontalAlign = HorizontalAlign.FILL,
               verticalAlign = VerticalAlign.FILL)
-            val subGridBuilder = RowsGridBuilder(panel, subGrid)
             val cells = row.cells.subList(1, row.cells.size)
             buildRow(cells, false, 0, cells.size, panel, subGridBuilder)
             setLastColumnResizable(subGridBuilder)
@@ -273,14 +270,13 @@ internal class PanelBuilder(val rows: List<RowImpl>, val dialogPanelConfig: Dial
 
   private fun getRowGaps(row: RowImpl): RowGaps {
     val top = when (row.topGap) {
-      TopGap.GROUP -> dialogPanelConfig.spacing.groupTopGap
       TopGap.SMALL -> dialogPanelConfig.spacing.verticalSmallGap
-      null -> 0
+      null -> row.internalTopGap
     }
 
     val bottom = when (row.bottomGap) {
-      BottomGap.BUTTON_GROUP_HEADER -> dialogPanelConfig.spacing.buttonGroupHeaderBottomGap
-      null -> 0
+      BottomGap.SMALL -> dialogPanelConfig.spacing.verticalSmallGap
+      null -> row.internalBottomGap
     }
 
     return if (top > 0 || bottom > 0) RowGaps(top = top, bottom = bottom) else RowGaps.EMPTY
