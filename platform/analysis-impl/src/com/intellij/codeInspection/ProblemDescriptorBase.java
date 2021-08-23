@@ -94,7 +94,7 @@ public class ProblemDescriptorBase extends CommonProblemDescriptorImpl implement
     myCreationTrace = onTheFly ? null : ThrowableInterner.intern(new Throwable());
   }
 
-  private static LocalQuickFix[] filterFixes(LocalQuickFix[] fixes, boolean onTheFly) {
+  private static LocalQuickFix @Nullable [] filterFixes(LocalQuickFix @Nullable [] fixes, boolean onTheFly) {
     if (onTheFly || fixes == null) return fixes;
     return Stream.of(fixes).filter(fix -> fix != null && fix.availableInBatchMode()).toArray(LocalQuickFix[]::new);
   }
@@ -110,7 +110,7 @@ public class ProblemDescriptorBase extends CommonProblemDescriptorImpl implement
            : startElement.getTextRange();
   }
 
-  protected void assertPhysical(PsiElement element) {
+  protected void assertPhysical(@NotNull PsiElement element) {
     if (!element.isPhysical()) {
       LOG.error("Non-physical PsiElement. Physical element is required to be able to anchor the problem in the source tree: " +
                 element + "; parent: " + element.getParent() +"; file: " + element.getContainingFile());

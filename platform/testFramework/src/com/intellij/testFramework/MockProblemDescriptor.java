@@ -21,6 +21,6 @@ public class MockProblemDescriptor extends ProblemDescriptorImpl {
   }
 
   @Override
-  protected void assertPhysical(final PsiElement startElement) {
+  protected void assertPhysical(final @NotNull PsiElement startElement) {
   }
 }
