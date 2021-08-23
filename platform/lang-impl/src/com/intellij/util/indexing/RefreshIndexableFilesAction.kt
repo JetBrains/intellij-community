@@ -10,7 +10,6 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.use
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
-import com.intellij.openapi.vfs.VirtualFileManagerListener
 import com.intellij.openapi.vfs.newvfs.BulkFileListener
 import com.intellij.openapi.vfs.newvfs.ManagingFS
 import com.intellij.openapi.vfs.newvfs.RefreshQueue
@@ -26,14 +25,14 @@ internal class RefreshIndexableFilesAction : RecoveryAction {
   override val actionKey: String
     get() = "refresh"
 
-  override fun perform(project: Project?): List<CacheInconsistencyProblem> {
+  override fun performSync(project: Project): List<CacheInconsistencyProblem> {
     //refresh files to be sure all changes processed before writing event log
     val localRoots = ManagingFS.getInstance().localRoots
     RefreshQueue.getInstance().refresh(false, true, null, *localRoots)
 
     val eventLog = EventLog()
     Disposer.newDisposable().use { actionDisposable ->
-      project!!.messageBus.connect(actionDisposable).subscribe(VirtualFileManager.VFS_CHANGES, eventLog)
+      project.messageBus.connect(actionDisposable).subscribe(VirtualFileManager.VFS_CHANGES, eventLog)
 
       val fileBasedIndex = FileBasedIndex.getInstance() as FileBasedIndexImpl
       val rootUrls = fileBasedIndex.getOrderedIndexableFilesProviders(project).flatMap { it.rootUrls }
@@ -48,8 +47,6 @@ internal class RefreshIndexableFilesAction : RecoveryAction {
     }
     return eventLog.loggedEvents.map { it.toCacheInconsistencyProblem() }
   }
-
-  override fun canBeApplied(project: Project?): Boolean = project != null
 
   private class EventLog : BulkFileListener {
     val loggedEvents: MutableList<Event> = mutableListOf()
