@@ -1,3 +1,4 @@
+// FIR_IDENTICAL
 // From KT-1648
 interface A {
     val method:() -> Unit?
