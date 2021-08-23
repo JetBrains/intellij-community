@@ -3,10 +3,7 @@ package com.intellij.openapi.wm.impl.welcomeScreen;
 
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.impl.ProjectUtil;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.DefaultActionGroup;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.NlsSafe;
 import org.jetbrains.annotations.NotNull;
@@ -44,7 +41,7 @@ public class OpenAlienProjectAction extends AnAction {
     }
     JBPopupFactory.getInstance()
       .createActionGroupPopup(IdeBundle.message("popup.title.open.project"), actionGroup, e.getDataContext(), JBPopupFactory.ActionSelectionAid.SPEEDSEARCH,
-                              false).showUnderneathOf(Objects.requireNonNull(e.getData(PlatformDataKeys.CONTEXT_COMPONENT)));
+                              false).showUnderneathOf(Objects.requireNonNull(e.getData(PlatformCoreDataKeys.CONTEXT_COMPONENT)));
   }
 
   protected void projectOpened() {}
