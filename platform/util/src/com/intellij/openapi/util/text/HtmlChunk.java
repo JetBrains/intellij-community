@@ -513,6 +513,17 @@ public abstract class HtmlChunk {
   }
 
   /**
+   * @return the HtmlChunk that represents the fragment chunk
+   */
+  @Contract(pure = true)
+  public static @NotNull HtmlChunk fragment(@NotNull HtmlChunk @NotNull ... chunks) {
+    if (chunks.length == 0) {
+      return empty();
+    }
+    return Arrays.stream(chunks).collect(toFragment());
+  }
+
+  /**
    * @return the collector that collects a stream of HtmlChunks to the fragment chunk.
    */
   @Contract(pure = true)
