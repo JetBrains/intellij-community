@@ -30,4 +30,25 @@ class KotlinSerializableHasSerialVersionUidFieldInspectionTest : SerializableHas
       }
     """.trimIndent(), "Add 'serialVersionUID' field")
   }
+
+  fun `test quickfix companion exists`() {
+    myFixture.testQuickFix(ULanguage.KOTLIN, """
+      import java.io.Serializable
+      
+      class Fo<caret>o : Serializable {
+          companion object {
+              val bar =  0
+          }
+      }
+    """.trimIndent(), """
+      import java.io.Serializable
+      
+      class Foo : Serializable {
+          companion object {
+              private const val serialVersionUID: Long = -7315889077010185135L
+              val bar =  0
+          }
+      }
+    """.trimIndent(), "Add 'serialVersionUID' field")
+  }
 }
