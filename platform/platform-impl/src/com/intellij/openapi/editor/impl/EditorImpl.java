@@ -143,7 +143,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   private static final boolean HONOR_CAMEL_HUMPS_ON_TRIPLE_CLICK =
     Boolean.parseBoolean(System.getProperty("idea.honor.camel.humps.on.triple.click"));
   private static final Key<BufferedImage> BUFFER = Key.create("buffer");
-  static final Key<Boolean> INITIALIZED = Key.create("editor.is.fully.initialized");
+  private static final Key<Boolean> INITIALIZED = Key.create("editor.is.fully.initialized");
   @NotNull private final DocumentEx myDocument;
 
   private final JPanel myPanel;
@@ -265,7 +265,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   @Nullable private Color myForcedBackground;
   @Nullable private Dimension myPreferredSize;
 
-  private final Alarm myMouseSelectionStateAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
+  private final Alarm myMouseSelectionStateAlarm = new Alarm();
   private Runnable myMouseSelectionStateResetRunnable;
 
   private boolean myEmbeddedIntoDialogWrapper;
@@ -1525,9 +1525,9 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
    * This method is used to scale editors elements such as gutter icons, folding elements, and others
    */
   public float getScale() {
-    if (!Registry.is("editor.scale.gutter.icons")) return 1f;
+    if (!Registry.is("editor.scale.gutter.icons")) return 1.0f;
     float normLineHeight = getLineHeight() / myScheme.getLineSpacing(); // normalized, as for 1.0f line spacing
-    return normLineHeight / JBUIScale.scale(16f);
+    return normLineHeight / JBUIScale.scale(16.0f);
   }
 
   public int findNearestDirectionBoundary(int offset, boolean lookForward) {
@@ -3780,7 +3780,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
           if (composedTextIndex < text.getEndIndex()) {
             createComposedString(composedTextIndex, text);
 
-            runUndoTransparent(() -> EditorModificationUtil.insertStringAtCaret(EditorImpl.this, composedText, false, false));
+            runUndoTransparent(() -> EditorModificationUtilEx.insertStringAtCaret(EditorImpl.this, composedText, false, false));
 
             composedTextRange = ProperTextRange.from(getCaretModel().getOffset(), composedText.length());
           }

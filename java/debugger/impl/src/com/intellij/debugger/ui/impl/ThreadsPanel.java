@@ -32,7 +32,7 @@ import java.util.NoSuchElementException;
 public class ThreadsPanel extends DebuggerTreePanel{
   @NonNls private static final String POPUP_ACTION_NAME = "Debugger.ThreadsPanelPopup";
   @NonNls private static final String HELP_ID = "debugging.debugThreads";
-  private final Alarm myUpdateLabelsAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
+  private final Alarm myUpdateLabelsAlarm = new Alarm();
   private static final int LABELS_UPDATE_DELAY_MS = 200;
 
   public ThreadsPanel(Project project, final DebuggerStateManager stateManager) {

@@ -52,7 +52,7 @@ class AdvancedSettingsConfigurable : DslConfigurableBase(), SearchableConfigurab
   private lateinit var nothingFoundRow: Row
   private var onlyShowModified = false
 
-  private val searchAlarm = Alarm(Alarm.ThreadToUse.SWING_THREAD)
+  private val searchAlarm = Alarm()
 
   private val searchField = SearchTextField().apply {
     textEditor.emptyText.text = ApplicationBundle.message("search.advanced.settings")
