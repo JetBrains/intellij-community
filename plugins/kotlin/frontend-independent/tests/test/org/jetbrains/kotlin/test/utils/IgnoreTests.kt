@@ -11,6 +11,7 @@ import java.io.File
 import java.nio.file.Files
 import java.nio.file.Path
 import kotlin.io.path.useLines
+import kotlin.io.path.writeLines
 
 object IgnoreTests {
     private const val INSERT_DIRECTIVE_AUTOMATICALLY = false // TODO use environment variable instead
@@ -127,17 +128,22 @@ object IgnoreTests {
             true -> "passes"
         }
 
-        if (INSERT_DIRECTIVE_AUTOMATICALLY &&
-            (directive is EnableOrDisableTestDirective.Enable && testPasses ||
-                    directive is EnableOrDisableTestDirective.Disable && !testPasses)
-        ) {
-            testFile.insertDirectivesToFileAndAdditionalFile(directive, additionalFiles, directivePosition)
-            val filesWithDirectiveAdded = buildList {
+        if (INSERT_DIRECTIVE_AUTOMATICALLY) {
+            when (directive) {
+                is EnableOrDisableTestDirective.Disable -> {
+                    testFile.removeDirectivesFromFileAndAdditionalFiles(directive, additionalFiles)
+                }
+                is EnableOrDisableTestDirective.Enable -> {
+                    testFile.insertDirectivesToFileAndAdditionalFile(directive, additionalFiles, directivePosition)
+                }
+            }
+
+            val modifiedFiles = buildList {
                 add(testFile.fileName.toString())
                 addAll(additionalFiles)
             }
             throw AssertionError(
-                "Looks like the test $verb, ${directive.directiveText} was added to the ${filesWithDirectiveAdded.joinToString()}"
+                "Looks like the test was ${directive.fixDirectiveMessage}(e)d to the ${modifiedFiles.joinToString()}"
             )
         }
 
@@ -157,6 +163,14 @@ object IgnoreTests {
     ) {
         insertDirective(directive, directivePosition)
         additionalFiles.forEach { it.insertDirective(directive, directivePosition) }
+    }
+
+    private fun Path.removeDirectivesFromFileAndAdditionalFiles(
+        directive: EnableOrDisableTestDirective,
+        additionalFiles: List<Path>,
+    ) {
+        removeDirective(directive)
+        additionalFiles.forEach { it.removeDirective(directive) }
     }
 
     private fun Path.getSiblingFile(extension: String): Path? {
@@ -188,7 +202,10 @@ object IgnoreTests {
     }
 
     private fun containsDirective(file: Path, directive: EnableOrDisableTestDirective): Boolean =
-        file.useLines { lines -> lines.any { it.substringBefore(':').trim() == directive.directiveText.trim() } }
+        file.useLines { lines -> lines.any { it.isLineWithDirective(directive) } }
+
+    private fun String.isLineWithDirective(directive: EnableOrDisableTestDirective): Boolean =
+        substringBefore(':').trim() == directive.directiveText.trim()
 
     private fun Path.insertDirective(directive: EnableOrDisableTestDirective, directivePosition: DirectivePosition) {
         toFile().apply {
@@ -198,6 +215,14 @@ object IgnoreTests {
                 DirectivePosition.LAST_LINE_IN_FILE -> "$originalText\n${directive.directiveText}"
             }
             writeText(textWithDirective)
+        }
+    }
+
+
+    private fun Path.removeDirective(directive: EnableOrDisableTestDirective) {
+        toFile().apply {
+            val lines = useLines { it.toList() }
+            writeLines(lines.filterNot { it.isLineWithDirective(directive) })
         }
     }
 
