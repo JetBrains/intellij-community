@@ -7,30 +7,6 @@ import com.intellij.openapi.util.Disposer
 import java.util.concurrent.atomic.AtomicInteger
 
 /**
- * Subscribed listener will be automatically unsubscribed when [ttl] is out.
- * This is maximum common code for subscription with TTL.
- * Subscribe functions cannot be generalized, because listener function can have arguments.
- *
- * @param ttl is number of listener calls which should be passed to unsubscribe listener
- * @param subscribe is subscribing function that should prepend lambda argument into listener function
- * and subscribe patched listener with provided disposable into your event system.
- * @param parentDisposable is subscription disposable.
- * This uses for early unsubscription when listener is called less than ttl times.
- *
- * @see com.intellij.openapi.observable.operations.subscribe(Int, () -> Unit, (() -> Unit, Disposable) -> Unit, Disposable)
- */
-private fun subscribe(ttl: Int, subscribe: (() -> Unit, Disposable) -> Unit, parentDisposable: Disposable) {
-  require(ttl > 0)
-  val disposable = Disposer.newDisposable(parentDisposable, "TTL subscription")
-  val ttlCounter = AtomicInteger(ttl)
-  subscribe({
-    if (ttlCounter.decrementAndGet() == 0) {
-      Disposer.dispose(disposable)
-    }
-  }, disposable)
-}
-
-/**
  * Subscribes listener without arguments.
  * Unsubscribes when [parentDisposable] is disposed or [ttl] is out.
  *
@@ -39,7 +15,7 @@ private fun subscribe(ttl: Int, subscribe: (() -> Unit, Disposable) -> Unit, par
  * @param subscribe subscribes patched listener with provided disposable into your event system.
  * @param parentDisposable is subscription disposable.
  *
- * @see com.intellij.openapi.observable.operations.subscribe(Int, (() -> Unit, Disposable) -> Unit, Disposable)
+ * @see TTLCounter
  */
 @JvmName("subscribe0")
 fun subscribe(
@@ -47,18 +23,19 @@ fun subscribe(
   listener: () -> Unit,
   subscribe: (() -> Unit, Disposable) -> Unit,
   parentDisposable: Disposable
-) = subscribe(ttl, { prependListener, disposable ->
+) {
+  val ttlCounter = TTLCounter(ttl, parentDisposable)
   subscribe({
-    prependListener()
+    ttlCounter.update()
     listener()
-  }, disposable)
-}, parentDisposable)
+  }, ttlCounter)
+}
 
 /**
  * Subscribes listener with one argument.
  * Unsubscribes when [parentDisposable] is disposed or [ttl] is out.
  *
- * @see com.intellij.openapi.observable.operations.subscribe(Int, () -> Unit, (() -> Unit, Disposable) -> Unit, Disposable)
+ * @see TTLCounter
  */
 @JvmName("subscribe1")
 fun <A1> subscribe(
@@ -66,18 +43,19 @@ fun <A1> subscribe(
   listener: (A1) -> Unit,
   subscribe: ((A1) -> Unit, Disposable) -> Unit,
   parentDisposable: Disposable
-) = subscribe(ttl, { prependListener, disposable ->
+) {
+  val ttlCounter = TTLCounter(ttl, parentDisposable)
   subscribe({ a1 ->
-    prependListener()
+    ttlCounter.update()
     listener(a1)
-  }, disposable)
-}, parentDisposable)
+  }, ttlCounter)
+}
 
 /**
  * Subscribes listener with two arguments.
  * Unsubscribes when [parentDisposable] is disposed or [ttl] is out.
  *
- * @see com.intellij.openapi.observable.operations.subscribe(Int, () -> Unit, (() -> Unit, Disposable) -> Unit, Disposable)
+ * @see TTLCounter
  */
 @JvmName("subscribe2")
 fun <A1, A2> subscribe(
@@ -85,10 +63,38 @@ fun <A1, A2> subscribe(
   listener: (A1, A2) -> Unit,
   subscribe: ((A1, A2) -> Unit, Disposable) -> Unit,
   parentDisposable: Disposable
-) = subscribe(ttl, { prependListener, disposable ->
+) {
+  val ttlCounter = TTLCounter(ttl, parentDisposable)
   subscribe({ a1, a2 ->
-    prependListener()
+    ttlCounter.update()
     listener(a1, a2)
-  }, disposable)
-}, parentDisposable)
+  }, ttlCounter)
+}
 
+/**
+ *  Disposable that will dispose itself after TTL number of calls to [update].
+ *
+ *  Is used to subscribe a listener to be executed at most ttl times.
+ *
+ * @param ttl is the number of calls before disposal
+ * @param parentDisposable original subscription disposable.
+ * This is used for early dispose when patched listener is called less than ttl times.
+ *
+ * @see com.intellij.openapi.observable.operations.subscribe(Int, () -> Unit, (() -> Unit, Disposable) -> Unit, Disposable)
+ */
+private class TTLCounter(ttl: Int, parentDisposable: Disposable) : Disposable {
+  private val ttlCounter = AtomicInteger(ttl)
+
+  fun update() {
+    if (ttlCounter.decrementAndGet() == 0) {
+      Disposer.dispose(this)
+    }
+  }
+
+  override fun dispose() {}
+
+  init {
+    require(ttl > 0)
+    Disposer.register(parentDisposable, this)
+  }
+}
