@@ -3,11 +3,8 @@ package com.intellij.codeInspection
 
 import com.intellij.analysis.JvmAnalysisBundle
 import com.intellij.lang.jvm.JvmModifier
-import com.intellij.lang.jvm.actions.CreateFieldRequest
-import com.intellij.lang.jvm.actions.ExpectedType
 import com.intellij.lang.jvm.actions.createAddFieldActions
-import com.intellij.lang.jvm.actions.expectedTypes
-import com.intellij.lang.jvm.types.JvmSubstitutor
+import com.intellij.lang.jvm.actions.fieldRequest
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.TextEditor
 import com.intellij.openapi.project.Project
@@ -49,30 +46,18 @@ class SerializableHasSerialVersionUidFieldInspection : USerializableInspectionBa
       val containingFile = psiClass.containingFile ?: return
       val uFactory = uClass.getUastElementFactory(project) ?: return
       val serialUid = SerialVersionUIDBuilder.computeDefaultSUID(psiClass)
-      val initializer = uFactory.createLongConstantExpression(serialUid, null)?.sourcePsi ?: return
-      val action = createAddFieldActions(psiClass,
-        SerialVersionUIDFieldInfo(HardcodedMethodConstants.SERIAL_VERSION_UID, initializer, project)).firstOrNull() ?: return
+      val initializer =  uFactory.createLongConstantExpression(serialUid, null)?.sourcePsi ?: return
+      val action = createAddFieldActions(psiClass, fieldRequest(
+        name = HardcodedMethodConstants.SERIAL_VERSION_UID,
+        substitutor = PsiJvmSubstitutor(project, PsiSubstitutor.EMPTY),
+        type = PsiType.LONG,
+        initializer = initializer,
+        modifiers = listOf(JvmModifier.PRIVATE, JvmModifier.STATIC),
+        isConstant = true
+      )).first()
       val vFile = containingFile.virtualFile ?: return
       val editor = (FileEditorManager.getInstance(project).getSelectedEditor(vFile) as? TextEditor)?.editor ?: return
       action.invoke(project, editor, containingFile)
     }
-  }
-
-  private class SerialVersionUIDFieldInfo(private val name: String,
-                                          private val initializer: PsiElement,
-                                          private val project: Project) : CreateFieldRequest {
-    override fun getTargetSubstitutor(): JvmSubstitutor = PsiJvmSubstitutor(project, PsiSubstitutor.EMPTY)
-
-    override fun getInitializer(): PsiElement = initializer
-
-    override fun getModifiers(): Collection<JvmModifier> = listOf(JvmModifier.PRIVATE, JvmModifier.STATIC)
-
-    override fun isConstant(): Boolean = true
-
-    override fun getFieldType(): List<ExpectedType> = expectedTypes(PsiType.LONG)
-
-    override fun getFieldName(): String = name
-
-    override fun isValid(): Boolean = true
   }
 }
