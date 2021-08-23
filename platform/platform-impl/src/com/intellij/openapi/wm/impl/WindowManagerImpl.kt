@@ -13,6 +13,7 @@ import com.intellij.openapi.components.Storage
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.impl.createNewProjectFrame
+import com.intellij.openapi.util.Computable
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.wm.*
@@ -58,6 +59,8 @@ class WindowManagerImpl : WindowManagerEx(), PersistentStateComponentWithModific
   private val projectToFrame: MutableMap<Project?, ProjectFrameHelper> = HashMap()
 
   internal val defaultFrameInfoHelper = FrameInfoHelper()
+
+  private var frameReuseEnabled = false
 
   private val frameStateListener = object : ComponentAdapter() {
     override fun componentMoved(e: ComponentEvent) {
@@ -353,7 +356,7 @@ class WindowManagerImpl : WindowManagerEx(), PersistentStateComponentWithModific
     val project = frameHelper.project!!
     frameHelper.frameReleased()
     projectToFrame.remove(project)
-    if (projectToFrame.isEmpty() && project !is LightEditCompatible) {
+    if (frameReuseEnabled && !projectToFrame.containsKey(null) && project !is LightEditCompatible) {
       projectToFrame.put(null, frameHelper)
     }
     else {
@@ -366,6 +369,17 @@ class WindowManagerImpl : WindowManagerEx(), PersistentStateComponentWithModific
       removeAndGetRootFrame()?.let {
         Disposer.dispose(it)
       }
+    }
+  }
+
+  fun <T> runWithFrameReuseEnabled(task: Computable<T>): T {
+    val savedValue = frameReuseEnabled
+    frameReuseEnabled = true
+    try {
+      return task.compute()
+    }
+    finally {
+      frameReuseEnabled = savedValue
     }
   }
 

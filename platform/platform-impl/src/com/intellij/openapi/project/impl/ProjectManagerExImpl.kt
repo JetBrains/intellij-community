@@ -37,6 +37,8 @@ import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.wm.IdeFocusManager
+import com.intellij.openapi.wm.WindowManager
+import com.intellij.openapi.wm.impl.WindowManagerImpl
 import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeFrame
 import com.intellij.platform.PlatformProjectOpenProcessor
 import com.intellij.project.ProjectStoreOwner
@@ -314,7 +316,7 @@ open class ProjectManagerExImpl : ProjectManagerImpl() {
           return@task
         }
         else if (exitCode == GeneralSettings.OPEN_PROJECT_SAME_WINDOW) {
-          if (!closeAndDispose(projectToClose)) {
+          if (!closeAndDisposeKeepingFrame(projectToClose)) {
             result = true
             return@task
           }
@@ -341,7 +343,7 @@ open class ProjectManagerExImpl : ProjectManagerImpl() {
         val projectNameValue = projectName ?: projectDir?.fileName?.toString() ?: projectDir?.toString()
         val exitCode = ProjectUtil.confirmOpenNewProject(false, projectNameValue)
         if (exitCode == GeneralSettings.OPEN_PROJECT_SAME_WINDOW) {
-          if (!closeAndDispose(projectToClose)) {
+          if (!closeAndDisposeKeepingFrame(projectToClose)) {
             result = true
             return@task
           }
@@ -357,6 +359,9 @@ open class ProjectManagerExImpl : ProjectManagerImpl() {
     }
     return result
   }
+
+  private fun closeAndDisposeKeepingFrame(project: Project) =
+    (WindowManager.getInstance() as WindowManagerImpl).runWithFrameReuseEnabled { closeAndDispose(project) }
 }
 
 @NlsSafe
