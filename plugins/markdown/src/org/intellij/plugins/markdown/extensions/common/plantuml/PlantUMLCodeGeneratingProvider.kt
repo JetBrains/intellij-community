@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.intellij.plugins.markdown.extensions.common.plantuml
 
 import com.intellij.openapi.diagnostic.Logger
@@ -16,8 +16,7 @@ import java.net.URLClassLoader
 
 internal class PlantUMLCodeGeneratingProvider(collector: MarkdownCodeFencePluginCacheCollector? = null)
   : MarkdownCodeFenceCacheableProvider(collector), MarkdownExtensionWithExternalFiles {
-  override val downloadLink: String =
-    Registry.stringValue("markdown.plantuml.download.link")
+  override val downloadLink: String = Registry.stringValue("markdown.plantuml.download.link")
 
   override val downloadFilename: String = "plantuml.jar"
 

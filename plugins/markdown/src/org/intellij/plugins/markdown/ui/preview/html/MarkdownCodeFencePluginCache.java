@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.intellij.plugins.markdown.ui.preview.html;
 
 import com.intellij.openapi.Disposable;
@@ -12,6 +12,7 @@ import com.intellij.openapi.vfs.VirtualFileEvent;
 import com.intellij.openapi.vfs.VirtualFileListener;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.util.Alarm;
+import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.containers.ContainerUtil;
 import org.intellij.plugins.markdown.extensions.MarkdownCodeFenceCacheableProvider;
 import org.intellij.plugins.markdown.extensions.MarkdownCodeFencePluginGeneratingProvider;
@@ -20,15 +21,11 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
-import static com.intellij.util.ArrayUtilRt.EMPTY_FILE_ARRAY;
-
-public class MarkdownCodeFencePluginCache implements Disposable {
+public final class MarkdownCodeFencePluginCache implements Disposable {
   @NotNull public static final String MARKDOWN_FILE_PATH_KEY = "markdown-md5-file-path";
 
   @NotNull private final Alarm myAlarm = new Alarm(this);
@@ -56,7 +53,7 @@ public class MarkdownCodeFencePluginCache implements Disposable {
   }
 
   private static List<File> getPluginSystemPaths() {
-    return MarkdownCodeFencePluginGeneratingProvider.getAll().stream()
+    return MarkdownCodeFencePluginGeneratingProvider.Companion.getAll().stream()
       .filter(MarkdownCodeFenceCacheableProvider.class::isInstance)
       .map(MarkdownCodeFenceCacheableProvider.class::cast)
       .map(provider -> provider.getCacheRootPath().toFile())
@@ -91,11 +88,11 @@ public class MarkdownCodeFencePluginCache implements Disposable {
 
   private static File @NotNull [] getChildren(@NotNull File directory) {
     File[] files = directory.listFiles();
-    return files != null ? files : EMPTY_FILE_ARRAY;
+    return files != null ? files : ArrayUtilRt.EMPTY_FILE_ARRAY;
   }
 
   private static boolean isCachedSourceFile(@NotNull File sourceFileDir, @NotNull VirtualFile sourceFile) {
-    return sourceFileDir.getName().equals(MarkdownUtil.INSTANCE.md5(sourceFile.getPath(), MARKDOWN_FILE_PATH_KEY));
+    return sourceFileDir.getName().equals(MarkdownUtil.md5(sourceFile.getPath(), MARKDOWN_FILE_PATH_KEY));
   }
 
   public void registerCacheProvider(@NotNull MarkdownCodeFencePluginCacheCollector cacheCollector) {
