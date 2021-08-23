@@ -20,7 +20,6 @@ import com.intellij.util.Alarm;
 import com.intellij.util.containers.ContainerUtil;
 import org.intellij.plugins.markdown.MarkdownBundle;
 import org.intellij.plugins.markdown.settings.MarkdownSettings;
-import org.intellij.plugins.markdown.settings.MarkdownSettingsState;
 import org.intellij.plugins.markdown.ui.preview.html.MarkdownUtil;
 import org.intellij.plugins.markdown.ui.split.SplitFileEditor;
 import org.jetbrains.annotations.NotNull;
