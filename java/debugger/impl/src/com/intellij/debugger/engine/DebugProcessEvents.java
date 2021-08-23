@@ -594,6 +594,9 @@ public class DebugProcessEvents extends DebugProcessImpl {
           requestHit = considerRequestHit[0];
           resumePreferred = !requestHit;
         }
+        catch (Exception e) { // catch everything here to be able vote
+          LOG.error(e);
+        }
         finally {
           if (start > 0) {
             OverheadTimings.add(DebugProcessEvents.this, (OverheadProducer)requestor,
