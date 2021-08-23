@@ -7,10 +7,11 @@ import org.intellij.plugins.markdown.extensions.MarkdownCodeFenceDownloadLineMar
 import org.intellij.plugins.markdown.extensions.MarkdownExtension
 import org.intellij.plugins.markdown.extensions.MarkdownExtensionWithExternalFiles
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownCodeFenceImpl
+import java.util.*
 
 internal class MermaidCodeFenceDownloadLineMarkerProvider: MarkdownCodeFenceDownloadLineMarkerProvider() {
   override fun shouldProcessElement(element: PsiElement): Boolean {
-    return (element as? MarkdownCodeFenceImpl)?.fenceLanguage == MermaidLanguage.INSTANCE.displayName.toLowerCase()
+    return (element as? MarkdownCodeFenceImpl)?.fenceLanguage == MermaidLanguage.INSTANCE.displayName.lowercase(Locale.getDefault())
   }
 
   override fun getExtension(): MarkdownExtensionWithExternalFiles? {

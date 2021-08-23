@@ -7,10 +7,11 @@ import org.intellij.plugins.markdown.extensions.MarkdownCodeFenceDownloadLineMar
 import org.intellij.plugins.markdown.extensions.MarkdownExtension
 import org.intellij.plugins.markdown.extensions.MarkdownExtensionWithExternalFiles
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownCodeFenceImpl
+import java.util.*
 
 internal class PlantUMLCodeFenceDownloadLineMarkerProvider : MarkdownCodeFenceDownloadLineMarkerProvider() {
   override fun shouldProcessElement(element: PsiElement): Boolean {
-    return (element as? MarkdownCodeFenceImpl)?.fenceLanguage == PlantUMLLanguage.INSTANCE.displayName.toLowerCase()
+    return (element as? MarkdownCodeFenceImpl)?.fenceLanguage == PlantUMLLanguage.INSTANCE.displayName.lowercase(Locale.getDefault())
   }
 
   override fun getExtension(): MarkdownExtensionWithExternalFiles? {
