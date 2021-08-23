@@ -431,14 +431,14 @@ public final class IdeEventQueue extends EventQueue {
       Class<? extends Runnable> runnableClass = runnable != null ? runnable.getClass() : Runnable.class;
       Runnable processEventRunnable = () -> {
         ProgressManager progressManager = null;
-        try {
-          Application app = ApplicationManager.getApplication();
-          if (app != null && !app.isDisposed()) {
+        Application app = ApplicationManager.getApplication();
+        if (app != null && !app.isDisposed()) {
+          try {
             progressManager = ProgressManager.getInstance();
           }
-        }
-        catch (RuntimeException ex) {
-          LOG.warn("beware of a zombie app", ex);
+          catch (RuntimeException ex) {
+            LOG.warn("app services aren't yet initialized", ex);
+          }
         }
 
         try (AccessToken ignored = startActivity(finalE1)) {
