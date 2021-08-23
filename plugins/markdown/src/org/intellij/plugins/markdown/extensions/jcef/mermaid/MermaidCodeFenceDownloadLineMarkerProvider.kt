@@ -22,6 +22,7 @@ internal class MermaidCodeFenceDownloadLineMarkerProvider: MarkdownCodeFenceDown
     get() = name
 
   override fun getName(): String {
+    @Suppress("DialogTitleCapitalization")
     return MarkdownBundle.message("markdown.extensions.mermaid.download.line.marker.text")
   }
 }

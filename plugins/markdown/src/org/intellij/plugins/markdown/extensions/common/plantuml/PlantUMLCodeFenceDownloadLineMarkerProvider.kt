@@ -22,6 +22,7 @@ internal class PlantUMLCodeFenceDownloadLineMarkerProvider : MarkdownCodeFenceDo
     get() = name
 
   override fun getName(): String {
+    @Suppress("DialogTitleCapitalization")
     return MarkdownBundle.message("markdown.extensions.plantuml.download.line.marker.text")
   }
 }
