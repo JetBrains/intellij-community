@@ -3,4 +3,3 @@ class A() {
     <caret>fun foo() {}
 }
 
-/* IGNORE_FIR */

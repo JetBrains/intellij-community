@@ -4,4 +4,3 @@ class A() {
     @Deprecated("") // wd
     constructor(i: Int): this()
 }
-/* IGNORE_FIR */
