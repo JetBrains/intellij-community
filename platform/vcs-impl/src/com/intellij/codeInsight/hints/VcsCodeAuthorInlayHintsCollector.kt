@@ -68,7 +68,7 @@ internal class VcsCodeAuthorInlayHintsCollector(
   }
 
   private fun InlayPresentation.withUserIcon(): InlayPresentation =
-    factory.seq(factory.smallScaledIcon(AllIcons.Vcs.CommitNode), this)
+    factory.seq(factory.smallScaledIcon(AllIcons.Vcs.Author), this)
 
   private fun InlayPresentation.shiftTo(offset: Int, editor: Editor): InlayPresentation {
     val document = editor.document
