@@ -239,6 +239,13 @@ public interface InlayModel {
   List<Inlay<?>> getAfterLineEndElementsForLogicalLine(int logicalLine);
 
   /**
+   * Tells whether there exists at least one after-line-end element currently.
+   */
+  default boolean hasAfterLineEndElements() {
+    return !getAfterLineEndElementsInRange(0, Integer.MAX_VALUE).isEmpty();
+  }
+
+  /**
    * When text is inserted at inline element's offset, resulting element's position is determined by its
    * {@link InlayProperties#relatesToPrecedingText(boolean)} property. But to enable natural editing experience around inline elements
    * (so that typed text appears at caret visual position), caret position is also taken into account at document insertion.
