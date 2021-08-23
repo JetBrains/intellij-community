@@ -12,6 +12,7 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.Messages
+import com.intellij.openapi.util.Disposer
 import java.util.function.Function
 import javax.swing.SwingUtilities
 
@@ -139,6 +140,12 @@ class RunToolbarSlotManager(val project: Project) {
       slotsData[mainSlotData.id] = mainSlotData
 
       addListener(RunToolbarShortcutHelper(project))
+
+      Disposer.register(project, {
+        listeners.clear()
+        stateListeners.clear()
+        slotListeners.clear()
+      })
     }
   }
 

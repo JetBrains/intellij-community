@@ -48,9 +48,12 @@ class RunToolbarExtraSlotPane(val project: Project, val baseWidth: () -> Int?, v
     }
   }
 
+  init {
+    manager.addListener(this)
+  }
+
   override fun enabled() {
     manager.addListener(managerListener)
-
   }
 
   override fun disabled() {
@@ -66,8 +69,8 @@ class RunToolbarExtraSlotPane(val project: Project, val baseWidth: () -> Int?, v
   private val pane = object : JPanel(VerticalLayout(JBUI.scale(2))) {
     override fun addNotify() {
       build()
-      super.addNotify()
       added = true
+      super.addNotify()
       SwingUtilities.invokeLater {
         pack()
       }
