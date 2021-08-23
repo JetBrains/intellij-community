@@ -157,9 +157,8 @@ enum class HintType(@Nls private val showDesc: String, defaultEnabled: Boolean) 
                 }
                 else -> return emptyList()
             }
-            val leftOffset = if (operation == "kotlin.ranges.downTo") leftExp.startOffset else leftExp.endOffset
             return listOf(
-                InlayInfo(text = leftText, offset = leftOffset),
+                InlayInfo(text = leftText, offset = leftExp.endOffset),
                 InlayInfo(text = rightText, offset = rightExp.startOffset)
             )
         }

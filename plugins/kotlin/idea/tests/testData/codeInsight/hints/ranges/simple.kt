@@ -3,7 +3,7 @@ val range = 0<# ≤ #>..<# ≤ #>10
 fun foo() {
     for (index in 0<# ≤ #> .. <# ≤ #>100) {}
     for (index in 0<# ≤ #> until <# < #>100) {}
-    for (index in <# ≥ #>100 downTo <# ≥ #>0) {}
+    for (index in 100<# ≥ #> downTo <# ≥ #>0) {}
     for (i in 0 until 0<# ≤ #>..<# ≤ #>5 ) {}
     for (i in 1<# ≤ #> until <# < #>10 step 2) {}
     for (index in someVeryVeryLongLongLongLongFunctionName(0)<# ≤ #> .. <# ≤ #>someVeryVeryLongLongLongLongFunctionName(100)) {}
