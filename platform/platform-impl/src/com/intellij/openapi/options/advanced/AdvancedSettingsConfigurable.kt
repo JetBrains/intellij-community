@@ -111,7 +111,7 @@ class AdvancedSettingsConfigurable : DslConfigurableBase(), SearchableConfigurab
               if (label == null) {
                 advancedSetting.cellBuilder.comment(it)
               } else {
-                settingRow.comment(it)
+                settingRow.rowComment(it)
               }
             }
 

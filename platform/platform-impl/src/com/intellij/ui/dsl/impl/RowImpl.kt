@@ -42,7 +42,7 @@ internal class RowImpl(private val dialogPanelConfig: DialogPanelConfig,
   var rowLayout = if (label == null) RowLayout.INDEPENDENT else RowLayout.LABEL_ALIGNED
     private set
 
-  var comment: JComponent? = null
+  var rowComment: JComponent? = null
     private set
 
   var topGap: TopGap? = null
@@ -66,8 +66,8 @@ internal class RowImpl(private val dialogPanelConfig: DialogPanelConfig,
     return this
   }
 
-  override fun comment(comment: String, maxLineLength: Int): RowImpl {
-    this.comment = ComponentPanelBuilder.createCommentComponent(comment, true, maxLineLength, true)
+  override fun rowComment(comment: String, maxLineLength: Int): RowImpl {
+    this.rowComment = ComponentPanelBuilder.createCommentComponent(comment, true, maxLineLength, true)
     return this
   }
 
@@ -101,7 +101,7 @@ internal class RowImpl(private val dialogPanelConfig: DialogPanelConfig,
         is PanelImpl -> it.enabled(isEnabled)
       }
     }
-    comment?.let { it.isEnabled = isEnabled }
+    rowComment?.let { it.isEnabled = isEnabled }
     return this
   }
 
@@ -118,7 +118,7 @@ internal class RowImpl(private val dialogPanelConfig: DialogPanelConfig,
         is PanelImpl -> it.visible(isVisible)
       }
     }
-    comment?.let { it.isVisible = isVisible }
+    rowComment?.let { it.isVisible = isVisible }
     return this
   }
 
@@ -218,6 +218,10 @@ internal class RowImpl(private val dialogPanelConfig: DialogPanelConfig,
 
   override fun label(text: String): CellImpl<JLabel> {
     return cell(Label(text))
+  }
+
+  override fun comment(text: String, maxLineLength: Int): CellImpl<JLabel> {
+    return cell(ComponentPanelBuilder.createCommentComponent(text, true, maxLineLength, true))
   }
 
   override fun commentNoWrap(text: String): CellImpl<JLabel> {

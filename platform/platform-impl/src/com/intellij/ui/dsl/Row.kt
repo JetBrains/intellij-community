@@ -72,8 +72,8 @@ interface Row {
   /**
    * Adds comment after the row. Visibility and enabled state of the row affects row comment as well
    */
-  fun comment(@NlsContexts.DetailedDescription comment: String,
-              maxLineLength: Int = ComponentPanelBuilder.MAX_COMMENT_WIDTH): Row
+  fun rowComment(@NlsContexts.DetailedDescription comment: String,
+                 maxLineLength: Int = ComponentPanelBuilder.MAX_COMMENT_WIDTH): Row
 
   fun <T : JComponent> cell(component: T): Cell<T>
 
@@ -98,8 +98,16 @@ interface Row {
 
   fun enabledIf(predicate: ComponentPredicate): Row
 
+  /**
+   * Adds gap before current row. It is visible together with the row.
+   * Note: top gap should not be set with bottom gap of previous row simultaneously
+   */
   fun topGap(topGap: TopGap): Row
 
+  /**
+   * Adds gap after current row. It is visible together with the row.
+   * Note: bottom gap should not be set with top gap of next row simultaneously
+   */
   fun bottomGap(bottomGap: BottomGap): Row
 
   /**
@@ -128,6 +136,8 @@ interface Row {
    * because they set correct gap between label and component and set [JLabel.labelFor] property
    */
   fun label(@NlsContexts.Label text: String): Cell<JLabel>
+
+  fun comment(@NlsContexts.DetailedDescription text: String, maxLineLength: Int = -1): Cell<JLabel>
 
   fun commentNoWrap(@NlsContexts.DetailedDescription text: String): Cell<JLabel>
 

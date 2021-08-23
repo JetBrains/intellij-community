@@ -70,6 +70,12 @@ interface Panel : CellBase<Panel> {
    */
   fun <T> buttonGroup(binding: PropertyBinding<T>, type: Class<T>, @NlsContexts.BorderTitle title: String? = null, init: Panel.() -> Unit)
 
+  fun onApply(callback: () -> Unit): Panel
+
+  fun onReset(callback: () -> Unit): Panel
+
+  fun onIsModified(callback: () -> Boolean): Panel
+
 }
 
 inline fun <reified T : Any> Panel.buttonGroup(noinline getter: () -> T,

@@ -14,22 +14,27 @@ import javax.swing.*
 import javax.swing.text.JTextComponent
 import kotlin.math.min
 
+/**
+ * Throws exception instead of logging warning. Useful while forms building to avoid layout mistakes
+ */
+private const val FAIL_ON_WARN = true
+
+private val DEFAULT_VERTICAL_GAP_COMPONENTS = setOf(
+  AbstractButton::class,
+  JComboBox::class,
+  JLabel::class,
+  JSpinner::class,
+  JTextComponent::class,
+  SeparatorComponent::class,
+  TextFieldWithBrowseButton::class,
+  TitledSeparator::class
+)
+
 @ApiStatus.Internal
 internal class PanelBuilder(val rows: List<RowImpl>, val dialogPanelConfig: DialogPanelConfig, val panel: DialogPanel, val grid: JBGrid) {
 
   private companion object {
     private val LOG = Logger.getInstance(PanelImpl::class.java)
-
-    private val DEFAULT_VERTICAL_GAP_COMPONENTS = setOf(
-      AbstractButton::class,
-      JComboBox::class,
-      JLabel::class,
-      JSpinner::class,
-      JTextComponent::class,
-      SeparatorComponent::class,
-      TextFieldWithBrowseButton::class,
-      TitledSeparator::class
-    )
   }
 
   fun build() {
@@ -91,7 +96,7 @@ internal class PanelBuilder(val rows: List<RowImpl>, val dialogPanelConfig: Dial
         }
       }
 
-      row.comment?.let {
+      row.rowComment?.let {
         val gaps = Gaps(left = row.getIndent(), bottom = dialogPanelConfig.spacing.commentBottomGap)
         rowsGridBuilder.cell(it, maxColumnsCount, gaps = gaps)
         rowsGridBuilder.row()
@@ -99,6 +104,7 @@ internal class PanelBuilder(val rows: List<RowImpl>, val dialogPanelConfig: Dial
     }
 
     setLastColumnResizable(rowsGridBuilder)
+    checkNoDoubleRowGaps(grid)
   }
 
   /**
@@ -115,7 +121,12 @@ internal class PanelBuilder(val rows: List<RowImpl>, val dialogPanelConfig: Dial
             val labelCell = CellImpl(dialogPanelConfig, it)
               .gap(RightGap.SMALL)
             row.cells.add(i, labelCell)
-            labelCell(it, cell)
+
+            if (isAllowedLabel(cell)) {
+              labelCell(it, cell)
+            } else {
+              warn("Unsupported labeled component: ${cell.component.javaClass.simpleName}")
+            }
             i++
           }
         }
@@ -133,11 +144,20 @@ internal class PanelBuilder(val rows: List<RowImpl>, val dialogPanelConfig: Dial
 
   private fun checkRow(row: RowImpl): Boolean {
     if (row.cells.isEmpty()) {
-      LOG.warn("Row should not be empty")
+      warn("Row should not be empty")
       return false
     }
 
     return true
+  }
+
+  private fun checkNoDoubleRowGaps(grid: JBGrid) {
+    val gaps = grid.rowsGaps
+    for (i in gaps.indices) {
+      if (i > 0 && gaps[i - 1].bottom > 0 && gaps[i].top > 0) {
+        warn("There is double gap between two near rows")
+      }
+    }
   }
 
   private fun buildRow(cells: List<CellBaseImpl<*>?>,
@@ -150,6 +170,12 @@ internal class PanelBuilder(val rows: List<RowImpl>, val dialogPanelConfig: Dial
       val lastCell = cellIndex == cells.size - 1
       val width = if (lastCell) maxColumnsCount - cellIndex else 1
       val leftGap = if (cellIndex == 0) firstCellIndent else 0
+      val label = (cell as? CellImpl<*>)?.component as? JLabel
+      if (label != null && cell.rightGap == RightGap.SMALL && cellIndex < cells.size - 1 &&
+          isAllowedLabel(cells[cellIndex + 1]) && (cells[cellIndex + 1] as? CellImpl<*>)?.label == null) {
+        warn("Panel.row(label) or Cell.label should be used for labeled components, label = ${label.text}")
+      }
+
       buildCell(cell, firstCellLabel && cellIndex == 0, leftGap, lastCell, width, panel, builder)
     }
   }
@@ -219,7 +245,7 @@ internal class PanelBuilder(val rows: List<RowImpl>, val dialogPanelConfig: Dial
     val rightGap = cell.rightGap
     if (lastCell) {
       if (rightGap != null) {
-        LOG.warn("Right gap is set for last cell and will be ignored: rightGap = $rightGap")
+        warn("Right gap is set for last cell and will be ignored: rightGap = $rightGap")
       }
       return 0
     }
@@ -280,5 +306,14 @@ internal class PanelBuilder(val rows: List<RowImpl>, val dialogPanelConfig: Dial
     }
 
     return if (top > 0 || bottom > 0) RowGaps(top = top, bottom = bottom) else RowGaps.EMPTY
+  }
+
+  private fun warn(message: String) {
+    if (FAIL_ON_WARN) {
+      throw UiDslException(message)
+    }
+    else {
+      LOG.warn(message)
+    }
   }
 }

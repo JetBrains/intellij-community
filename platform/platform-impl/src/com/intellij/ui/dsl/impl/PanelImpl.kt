@@ -152,6 +152,21 @@ internal class PanelImpl(private val dialogPanelConfig: DialogPanelConfig) : Cel
     }
   }
 
+  override fun onApply(callback: () -> Unit): PanelImpl {
+    dialogPanelConfig.applyCallbacks.register(null, callback)
+    return this
+  }
+
+  override fun onReset(callback: () -> Unit): PanelImpl {
+    dialogPanelConfig.resetCallbacks.register(null, callback)
+    return this
+  }
+
+  override fun onIsModified(callback: () -> Boolean): PanelImpl {
+    dialogPanelConfig.isModifiedCallbacks.register(null, callback)
+    return this
+  }
+
   override fun visible(isVisible: Boolean): PanelImpl {
     return visible(isVisible, _rows.indices)
   }

@@ -147,7 +147,7 @@ internal class AppearanceConfigurable : BoundSearchableConfigurable(message("tit
             .comment(if (isOverridden) message("option.is.overridden.by.jvm.property", GeneralSettings.SUPPORT_SCREEN_READERS) else null)
             .enabled(!isOverridden)
 
-          commentNoWrap(message("support.screen.readers.comment"))
+          comment(message("support.screen.readers.comment"))
         }
 
         row {
@@ -217,7 +217,7 @@ internal class AppearanceConfigurable : BoundSearchableConfigurable(message("tit
               if (overridden) {
                 contextHelp(message("option.is.overridden.by.jvm.property", UISettings.MERGE_MAIN_MENU_WITH_WINDOW_TITLE_PROPERTY))
               }
-              commentNoWrap(message("checkbox.merge.main.menu.with.window.title.comment"))
+              comment(message("checkbox.merge.main.menu.with.window.title.comment"))
             })
           }
           yield({ checkBox(cdFullPathsInTitleBar) })

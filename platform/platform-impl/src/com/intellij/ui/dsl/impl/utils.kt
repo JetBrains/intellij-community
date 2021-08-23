@@ -7,7 +7,10 @@ import javax.swing.text.JTextComponent
 
 internal const val DSL_LABEL_NO_BOTTOM_GAP_PROPERTY = "dsl.label.no.bottom.gap"
 
-private val LABELED_COMPONENTS = listOf(
+/**
+ * Components that can have assigned labels
+ */
+private val ALLOWED_LABEL_COMPONENTS = listOf(
   JComboBox::class,
   JSlider::class,
   JSpinner::class,
@@ -22,11 +25,12 @@ internal val JComponent.origin: JComponent
     }
   }
 
+internal fun isAllowedLabel(cell: CellBaseImpl<*>?): Boolean {
+  return cell is CellImpl<*> && ALLOWED_LABEL_COMPONENTS.any { clazz -> clazz.isInstance(cell.component) }
+}
+
 internal fun labelCell(label: JLabel, cell: CellBaseImpl<*>?) {
-  if (cell is CellImpl<*>) {
-    val component = cell.component
-    if (LABELED_COMPONENTS.any { clazz -> clazz.isInstance(component) }) {
-      label.labelFor = component
-    }
+  if (isAllowedLabel(cell)) {
+    label.labelFor = (cell as CellImpl<*>).component
   }
 }
