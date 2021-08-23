@@ -218,14 +218,14 @@ public class JavaDocumentationProvider implements CodeDocumentationProvider, Ext
   public static void writeImplements(PsiClass aClass, StringBuilder buffer, PsiClassType[] refs) {
     if (refs.length > 0) {
       newLine(buffer);
-      buffer.append("implements ");
+      buffer.append("implements "); // <- Groovy keyword
       writeTypeRefs(aClass, buffer, refs);
     }
   }
 
   public static void writeExtends(PsiClass aClass, StringBuilder buffer, PsiClassType[] refs) {
     if (refs.length > 0 || !aClass.isInterface() && !CommonClassNames.JAVA_LANG_OBJECT.equals(aClass.getQualifiedName())) {
-      buffer.append(" extends ");
+      buffer.append(" extends "); // <- Groovy keyword
       if (refs.length == 0) {
         buffer.append("Object");
       }
@@ -258,7 +258,7 @@ public class JavaDocumentationProvider implements CodeDocumentationProvider, Ext
         PsiClassType[] refs = p.getExtendsList().getReferencedTypes();
 
         if (refs.length > 0) {
-          buffer.append(" extends ");
+          buffer.append(" extends "); // <- Groovy keyword
 
           for (int j = 0; j < refs.length; j++) {
             JavaDocInfoGenerator.generateType(buffer, refs[j], typeParameterOwner, false, true);
@@ -653,13 +653,13 @@ public class JavaDocumentationProvider implements CodeDocumentationProvider, Ext
   }
 
   @Nullable
-  public static String generateExternalJavadoc(@NotNull final PsiElement element, @NotNull JavaDocInfoGenerator generator) {
+  public static @Nls String generateExternalJavadoc(@NotNull final PsiElement element, @NotNull JavaDocInfoGenerator generator) {
     final List<String> docURLs = getExternalJavaDocUrl(element);
     return generateExternalJavadoc(generator, docURLs);
   }
 
   @Nullable
-  private static String generateExternalJavadoc(@NotNull JavaDocInfoGenerator generator, @Nullable List<String> docURLs) {
+  private static @Nls String generateExternalJavadoc(@NotNull JavaDocInfoGenerator generator, @Nullable List<String> docURLs) {
     return JavaDocExternalFilter.filterInternalDocInfo(generator.generateDocInfo(docURLs));
   }
 

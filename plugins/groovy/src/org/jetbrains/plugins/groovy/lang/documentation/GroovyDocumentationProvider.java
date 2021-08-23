@@ -15,6 +15,7 @@ import com.intellij.lang.documentation.ExternalDocumentationProvider;
 import com.intellij.lang.java.JavaDocumentationProvider;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiFormatUtil;
@@ -25,6 +26,7 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.dsl.GdslNamedParameter;
 import org.jetbrains.plugins.groovy.dsl.holders.NonCodeMembersHolder;
 import org.jetbrains.plugins.groovy.extensions.NamedArgumentDescriptor;
@@ -77,7 +79,7 @@ public class GroovyDocumentationProvider implements CodeDocumentationProvider, E
   @Nullable
   public @Nls String getQuickNavigateInfo(PsiElement element, PsiElement originalElement) {
     if (element instanceof GrVariable || element instanceof GrImplicitVariable) {
-      StringBuilder buffer = new StringBuilder();
+      @Nls StringBuilder buffer = new StringBuilder();
       PsiVariable variable = (PsiVariable)element;
 
       if (originalElement instanceof GrVariableDeclaration && ((GrVariableDeclaration)originalElement).getVariables().length > 1) {
@@ -92,10 +94,10 @@ public class GroovyDocumentationProvider implements CodeDocumentationProvider, E
       return buffer.toString();
     }
     else if (element instanceof PsiMethod) {
-      StringBuilder buffer = new StringBuilder();
+      @Nls StringBuilder buffer = new StringBuilder();
       PsiMethod method = (PsiMethod)element;
       if (method instanceof GrGdkMethod) {
-        buffer.append("[GDK] ");
+        buffer.append("[").append(GroovyBundle.message("documentation.gdk.label")).append("] ");
       }
       else {
         PsiClass hisClass = method.getContainingClass();
@@ -148,7 +150,7 @@ public class GroovyDocumentationProvider implements CodeDocumentationProvider, E
     return null;
   }
 
-  private static void generateVariableInfo(PsiElement originalElement, StringBuilder buffer, PsiVariable variable) {
+  private static void generateVariableInfo(PsiElement originalElement, @Nls StringBuilder buffer, PsiVariable variable) {
     if (variable instanceof PsiField) {
       final PsiClass parentClass = ((PsiField)variable).getContainingClass();
       if (parentClass != null) {
@@ -178,7 +180,7 @@ public class GroovyDocumentationProvider implements CodeDocumentationProvider, E
     }
   }
 
-  private static void appendInferredType(PsiElement originalElement, GrVariable variable, StringBuilder buffer) {
+  private static void appendInferredType(PsiElement originalElement, GrVariable variable, @Nls StringBuilder buffer) {
     PsiType inferredType = null;
     if (PsiImplUtil.isWhiteSpaceOrNls(originalElement)) {
       originalElement = PsiTreeUtil.prevLeaf(originalElement);
@@ -197,15 +199,15 @@ public class GroovyDocumentationProvider implements CodeDocumentationProvider, E
     }
 
     if (inferredType != null) {
-      buffer.append("[inferred type] ");
+      buffer.append("[").append(GroovyBundle.message("documentation.inferred.type.label")).append("]").append(" ");
       appendTypeString(buffer, inferredType, originalElement);
     }
     else {
-      buffer.append("[cannot infer type]");
+      buffer.append("[").append(GroovyBundle.message("documentation.cannot.infer.type.label")).append("]");
     }
   }
 
-  private static void generateModifiers(StringBuilder buffer, PsiModifierListOwner element) {
+  private static void generateModifiers(@Nls StringBuilder buffer, PsiModifierListOwner element) {
     String modifiers = PsiFormatUtil.formatModifiers(element, PsiFormatUtilBase.JAVADOC_MODIFIERS_ONLY);
     if (!modifiers.isEmpty()) {
       buffer.append(modifiers);
@@ -217,8 +219,8 @@ public class GroovyDocumentationProvider implements CodeDocumentationProvider, E
     buffer.append(LINE_SEPARATOR);
   }
 
-  private static String generateClassInfo(PsiClass aClass) {
-    StringBuilder buffer = new StringBuilder();
+  private static @Nls @NotNull String generateClassInfo(@NotNull PsiClass aClass) {
+    @Nls StringBuilder buffer = new StringBuilder();
     GroovyFile file = (GroovyFile)aClass.getContainingFile();
 
     String packageName = file.getPackageName();
@@ -226,8 +228,13 @@ public class GroovyDocumentationProvider implements CodeDocumentationProvider, E
       buffer.append(packageName).append("\n");
     }
 
-    final String classString =
-      aClass.isInterface() ? "interface" : aClass instanceof PsiTypeParameter ? "type parameter" : aClass.isEnum() ? "enum" : "class";
+    final String classString = aClass.isInterface()
+                               ? GroovyBundle.message("groovy.term.interface")
+                               : aClass instanceof PsiTypeParameter
+                                 ? GroovyBundle.message("groovy.term.type.parameter")
+                                 : aClass.isEnum()
+                                   ? GroovyBundle.message("groovy.term.enum")
+                                   : GroovyBundle.message("groovy.term.class");
     buffer.append(classString).append(" ").append(aClass.getName());
 
     JavaDocumentationProvider.generateTypeParameters(aClass, buffer);
@@ -238,7 +245,7 @@ public class GroovyDocumentationProvider implements CodeDocumentationProvider, E
     return buffer.toString();
   }
 
-  public static void appendTypeString(@NotNull StringBuilder buffer, @Nullable PsiType type, PsiElement context) {
+  public static void appendTypeString(@Nls @NotNull StringBuilder buffer, @Nullable PsiType type, PsiElement context) {
     if (type instanceof GrTraitType) {
       generateTraitType(buffer, ((GrTraitType)type), context);
     }
@@ -252,7 +259,7 @@ public class GroovyDocumentationProvider implements CodeDocumentationProvider, E
 
   private static void generateTraitType(@NotNull StringBuilder buffer, @NotNull GrTraitType type, PsiElement context) {
     appendTypeString(buffer, type.getExprType(), context);
-    buffer.append(" as ");
+    buffer.append(" as "); // <- Groovy keyword
     for (PsiType traitType : type.getTraitTypes()) {
       appendTypeString(buffer, traitType, context);
       buffer.append(", ");
@@ -279,16 +286,31 @@ public class GroovyDocumentationProvider implements CodeDocumentationProvider, E
   @Nullable
   public @Nls String generateDoc(PsiElement element, PsiElement originalElement) {
     if (element instanceof GdslNamedParameter) {
-      GdslNamedParameter parameter = (GdslNamedParameter)element;
-      String result = "<pre><b>" + parameter.getName() + "</b>";
-      if (parameter.myParameterTypeText != null) {
-        result += ": " + parameter.myParameterTypeText;
+      String name = ((GdslNamedParameter)element).getName();
+      if (name == null) {
+        return null;
       }
-      result += "</pre>";
-      if (parameter.docString != null) {
-        result += "<p>" + parameter.docString;
+      HtmlChunk nameAndType;
+      String parameterTypeText = ((GdslNamedParameter)element).myParameterTypeText;
+      if (parameterTypeText != null) {
+        nameAndType = HtmlChunk.fragment(
+          HtmlChunk.text(name + ":").wrapWith("b"),
+          HtmlChunk.text(" "),
+          HtmlChunk.text(parameterTypeText)
+        );
       }
-      return result;
+      else {
+        nameAndType = HtmlChunk.text(name).wrapWith("b");
+      }
+      HtmlChunk pre = nameAndType.wrapWith("pre");
+      String docString = ((GdslNamedParameter)element).docString;
+      if (docString == null) {
+        return pre.toString();
+      }
+      return HtmlChunk.fragment(
+        pre,
+        HtmlChunk.text(docString).wrapWith("p")
+      ).toString();
     }
 
     if (element instanceof GrReferenceExpression) {
@@ -306,7 +328,7 @@ public class GroovyDocumentationProvider implements CodeDocumentationProvider, E
         standard != null) {
       final String truncated = StringUtil.trimEnd(standard, BODY_HTML);
 
-      StringBuilder buffer = new StringBuilder(truncated);
+      @Nls StringBuilder buffer = new StringBuilder(truncated);
       buffer.append("<p>");
       if (originalElement != null) {
         appendInferredType(originalElement, (GrVariable)element, buffer);
@@ -325,7 +347,7 @@ public class GroovyDocumentationProvider implements CodeDocumentationProvider, E
     if (gdslDoc != null) {
       if (standard != null) {
         String truncated = StringUtil.trimEnd(standard, BODY_HTML);
-        String appended = truncated + "<p>" + gdslDoc;
+        String appended = truncated + "<p>" + gdslDoc; //NON-NLS
         if (truncated.equals(standard)) {
           return appended;
         }
@@ -337,8 +359,7 @@ public class GroovyDocumentationProvider implements CodeDocumentationProvider, E
     return standard;
   }
 
-  @Nullable
-  protected static String generateExternalJavaDoc(@NotNull PsiElement element) {
+  protected static @Nls @Nullable String generateExternalJavaDoc(@NotNull PsiElement element) {
     JavaDocInfoGenerator generator = new GroovyDocInfoGenerator(element);
     return JavaDocumentationProvider.generateExternalJavadoc(element, generator);
   }
@@ -398,7 +419,7 @@ public class GroovyDocumentationProvider implements CodeDocumentationProvider, E
   public void promptToConfigureDocumentation(PsiElement element) {
   }
 
-  private static String getMethodCandidateInfo(GrReferenceExpression expr) {
+  private static @Nls String getMethodCandidateInfo(GrReferenceExpression expr) {
     final GroovyResolveResult[] candidates = expr.multiResolve(false);
     final String text = expr.getText();
     if (candidates.length > 0) {
