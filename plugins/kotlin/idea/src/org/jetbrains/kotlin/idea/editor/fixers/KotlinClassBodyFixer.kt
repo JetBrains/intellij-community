@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.editor.fixers
 
 import com.intellij.lang.SmartEnterProcessorWithFixers
 import com.intellij.openapi.editor.Editor
+import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.idea.caches.resolve.allowResolveInDispatchThread
 import org.jetbrains.kotlin.idea.editor.KotlinSmartEnterHandler
@@ -32,8 +33,9 @@ class KotlinClassBodyFixer : SmartEnterProcessorWithFixers.Fixer<KotlinSmartEnte
         val notInitializedSuperType = allowResolveInDispatchThread {
             psiElement.superTypeListEntries.firstOrNull {
                 if (it is KtSuperTypeCallEntry) return@firstOrNull false
-                (it.typeAsUserType?.referenceExpression?.mainReference?.resolve() as? KtClass)?.isInterface() != true
-            }            
+                val resolved = it.typeAsUserType?.referenceExpression?.mainReference?.resolve()
+                (resolved as? KtClass)?.isInterface() == false || (resolved as? PsiClass)?.isInterface == false
+            }
         }
         if (notInitializedSuperType != null) {
             editor.document.insertString(notInitializedSuperType.endOffset, "()")
