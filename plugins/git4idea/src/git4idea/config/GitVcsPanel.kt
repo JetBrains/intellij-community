@@ -342,6 +342,9 @@ internal class GitVcsPanel(private val project: Project) :
       row {
         checkBox(cdAutoUpdateOnPush(project))
       }
+      if (AbstractCommonUpdateAction.showsCustomNotification(listOf(GitVcs.getInstance(project)))) {
+        updateProjectInfoFilter()
+      }
     }
 
     if (project.isDefault || GitRepositoryManager.getInstance(project).moreThanOneRoot()) {
@@ -353,21 +356,10 @@ internal class GitVcsPanel(private val project: Project) :
     }
     branchUpdateInfoRow()
     row {
-      val previewPushOnCommitAndPush = checkBox(cdShowCommitAndPushDialog(project))
-      row {
-        checkBox(cdHidePushDialogForNonProtectedBranches(project))
-          .enableIf(previewPushOnCommitAndPush.selected)
-      }
-    }
-    row {
       checkBox(cdOverrideCredentialHelper)
     }
     for (configurable in configurables) {
       appendDslConfigurableRow(configurable)
-    }
-
-    if (AbstractCommonUpdateAction.showsCustomNotification(listOf(GitVcs.getInstance(project)))) {
-      updateProjectInfoFilter()
     }
   }
 
