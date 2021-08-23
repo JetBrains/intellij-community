@@ -2,4 +2,3 @@
 <caret>open enum class A() {
 }
 
-/* IGNORE_FIR */

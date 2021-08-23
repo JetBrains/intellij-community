@@ -1,3 +1,2 @@
 // "Remove 'final' modifier" "true"
 <caret>interface A {}
-/* IGNORE_FIR */
