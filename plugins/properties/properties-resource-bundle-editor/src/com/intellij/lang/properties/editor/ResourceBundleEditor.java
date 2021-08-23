@@ -89,8 +89,6 @@ import java.util.List;
 import java.util.*;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Future;
 
 public final class ResourceBundleEditor extends UserDataHolderBase implements DocumentsEditor {
   private static final Logger LOG = Logger.getInstance(ResourceBundleEditor.class);
@@ -719,13 +717,11 @@ public final class ResourceBundleEditor extends UserDataHolderBase implements Do
   @Contract(pure = true)
   private static @Nullable List<IProperty> getPropertiesByName(@NotNull PropertiesFile file, @NotNull String name) {
     final Callable<List<IProperty>> findProperties = () -> file.findPropertiesByKey(name);
-    final Future<List<IProperty>> future = ApplicationManager.getApplication()
-      .executeOnPooledThread(ReadAction.nonBlocking(findProperties)::executeSynchronously);
-
     try {
-      return ApplicationUtil.runWithCheckCanceled(future, new EmptyProgressIndicator());
+      return ApplicationUtil.runWithCheckCanceled(ReadAction.nonBlocking(findProperties)::executeSynchronously,
+                                                  new EmptyProgressIndicator());
     }
-    catch (ExecutionException ignored) {
+    catch (Exception e) {
       return null;
     }
   }
