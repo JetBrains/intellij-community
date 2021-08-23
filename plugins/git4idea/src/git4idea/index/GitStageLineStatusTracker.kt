@@ -31,6 +31,7 @@ import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.VerticalSeparatorComponent
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vcs.ex.*
 import com.intellij.openapi.vcs.ex.Range
@@ -141,7 +142,7 @@ class GitStageLineStatusTracker(
   }
 
   @RequiresEdt
-  private fun updateDocument(side: ThreeSide, commandName: String?, task: (Document) -> Unit): Boolean {
+  private fun updateDocument(side: ThreeSide, commandName: @NlsContexts.Command String?, task: (Document) -> Unit): Boolean {
     val affectedDocument = side.selectNotNull(vcsDocument, stagedDocument, document)
     return LineStatusTrackerBase.updateDocument(project, affectedDocument, commandName, task)
   }

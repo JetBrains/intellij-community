@@ -161,7 +161,7 @@ internal class NodeDescriptorsModel(private val localRootNodeDescriptor: BranchN
     var curParent = parent
 
     while (iter.hasNext()) {
-      val branchNamePart = iter.next()
+      @NlsSafe val branchNamePart = iter.next()
       val groupNode = iter.hasNext()
       val nodeType = if (groupNode) NodeType.GROUP_NODE else NodeType.BRANCH
       val branchInfo = if (nodeType == NodeType.BRANCH) branch else null
