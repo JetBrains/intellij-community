@@ -2,8 +2,11 @@
 
 package org.jetbrains.kotlin.idea.codeInsight.hints
 
+import com.intellij.codeInsight.hints.ChangeListener
 import com.intellij.codeInsight.hints.ImmediateConfigurable
+import com.intellij.ui.layout.*
 import org.jetbrains.kotlin.idea.KotlinBundle
+import javax.swing.JComponent
 
 @Suppress("UnstableApiUsage")
 class KotlinLambdasHintsProvider : KotlinAbstractHintsProvider<KotlinLambdasHintsProvider.Settings>() {
@@ -25,7 +28,25 @@ class KotlinLambdasHintsProvider : KotlinAbstractHintsProvider<KotlinLambdasHint
     }
 
     override fun createConfigurable(settings: Settings): ImmediateConfigurable {
-        return createLambdaHintsImmediateConfigurable(settings)
+        return object : ImmediateConfigurable {
+            override fun createComponent(listener: ChangeListener): JComponent = panel {}
+
+            override val mainCheckboxText: String = KotlinBundle.message("hints.settings.common.items")
+
+            override val cases: List<ImmediateConfigurable.Case>
+                get() = listOf(
+                    ImmediateConfigurable.Case(
+                        KotlinBundle.message("hints.settings.lambda.return"),
+                        "hints.lambda.return",
+                        settings::returnExpressions
+                    ),
+                    ImmediateConfigurable.Case(
+                        KotlinBundle.message("hints.settings.lambda.receivers.parameters"),
+                        "hints.lambda.receivers.parameters",
+                        settings::implicitReceiversAndParams
+                    )
+                )
+        }
     }
 
     override fun createSettings(): Settings = Settings()

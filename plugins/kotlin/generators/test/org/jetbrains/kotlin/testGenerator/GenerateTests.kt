@@ -25,6 +25,7 @@ import org.jetbrains.kotlin.idea.codeInsight.generate.AbstractGenerateHashCodeAn
 import org.jetbrains.kotlin.idea.codeInsight.generate.AbstractGenerateTestSupportMethodActionTest
 import org.jetbrains.kotlin.idea.codeInsight.generate.AbstractGenerateToStringActionTest
 import org.jetbrains.kotlin.idea.codeInsight.hints.AbstractKotlinLambdasHintsProvider
+import org.jetbrains.kotlin.idea.codeInsight.hints.AbstractKotlinRangeHintsProvider
 import org.jetbrains.kotlin.idea.codeInsight.moveUpDown.AbstractMoveLeftRightTest
 import org.jetbrains.kotlin.idea.codeInsight.moveUpDown.AbstractMoveStatementTest
 import org.jetbrains.kotlin.idea.codeInsight.postfix.AbstractPostfixTemplateProviderTest
@@ -896,6 +897,9 @@ private fun assembleWorkspace(): TWorkspace = workspace {
 
         testClass<AbstractKotlinLambdasHintsProvider> {
             model("codeInsight/hints/lambda")
+        }
+        testClass<AbstractKotlinRangeHintsProvider> {
+            model("codeInsight/hints/ranges")
         }
 
         testClass<AbstractKotlinCodeVisionProviderTest> {

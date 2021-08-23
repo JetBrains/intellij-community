@@ -6,10 +6,9 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.utils.inlays.InlayHintsProviderTestCase
 import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescriptor
-import org.jetbrains.kotlin.test.InTextDirectivesUtils
 import java.io.File
 
-abstract class AbstractKotlinLambdasHintsProvider :
+abstract class AbstractKotlinRangeHintsProvider :
     InlayHintsProviderTestCase() { // Abstract- prefix is just a convention for GenerateTests
 
     override fun getProjectDescriptor(): LightProjectDescriptor {
@@ -21,24 +20,11 @@ abstract class AbstractKotlinLambdasHintsProvider :
     }
 
     private fun assertThatActualHintsMatch(fileName: String) {
-        with(KotlinLambdasHintsProvider()) {
+        with(KotlinRangesHintsProvider()) {
             val fileContents = FileUtil.loadFile(File(fileName), true)
             val settings = createSettings()
-            with(settings) {
-                when (InTextDirectivesUtils.findStringWithPrefixes(fileContents, "// MODE: ")) {
-                    "return" -> set(returns = true)
-                    "receivers_params" -> set(receiversAndParams = true)
-                    "return-&-receivers_params" -> set(returns = true, receiversAndParams = true)
-                    else -> set()
-                }
-            }
-
-            testProvider("KotlinLambdasHintsProvider.kt", fileContents, this, settings)
+            testProvider("KotlinRangesHintsProvider.kt", fileContents, this, settings)
         }
     }
 
-    private fun KotlinLambdasHintsProvider.Settings.set(returns: Boolean = false, receiversAndParams: Boolean = false) {
-        this.returnExpressions = returns
-        this.implicitReceiversAndParams = receiversAndParams
-    }
 }

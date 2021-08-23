@@ -25,22 +25,21 @@ abstract class KotlinAbstractHintsProvider<T : Any> : InlayHintsProvider<T> {
     override fun getCollectorFor(file: PsiFile, editor: Editor, settings: T, sink: InlayHintsSink): InlayHintsCollector? {
         return object : FactoryInlayHintsCollector(editor) {
             override fun collect(element: PsiElement, editor: Editor, sink: InlayHintsSink): Boolean {
-                val resolved = HintType.resolve(element) ?: return true
-                if (!isElementSupported(resolved, settings)) return true
-
+                val resolved = HintType.resolve(element).takeIf { it.isNotEmpty() } ?: return true
                 val f = factory
-                resolved.provideHintDetails(element)
-                        .map {
-                            PresentationAndSettings(
-                                getInlayPresentationForInlayInfoDetails(it, f, editor.project ?: element.project, this@KotlinAbstractHintsProvider),
-                                it.inlayInfo.offset,
-                                it.inlayInfo.relatesToPrecedingText
+                val project = editor.project ?: element.project
+                resolved.forEach { hintType ->
+                    if (isElementSupported(hintType, settings)) {
+                        hintType.provideHintDetails(element).forEach { details ->
+                            val p = PresentationAndSettings(
+                                getInlayPresentationForInlayInfoDetails(details, f, project, this@KotlinAbstractHintsProvider),
+                                details.inlayInfo.offset,
+                                details.inlayInfo.relatesToPrecedingText
                             )
-                        }
-                        .forEach { p ->
                             sink.addInlineElement(p.offset, p.relatesToPrecedingText, p.presentation, hintsArePlacedAtTheEndOfLine)
                         }
-
+                    }
+                }
                 return true
             }
         }
