@@ -4,6 +4,7 @@ package com.intellij.ui.dsl
 import com.intellij.openapi.observable.properties.GraphProperty
 import com.intellij.openapi.ui.panel.ComponentPanelBuilder
 import com.intellij.openapi.util.NlsContexts
+import com.intellij.ui.dsl.gridLayout.Gaps
 import com.intellij.ui.dsl.gridLayout.HorizontalAlign
 import com.intellij.ui.dsl.gridLayout.VerticalAlign
 import com.intellij.ui.layout.*
@@ -38,6 +39,8 @@ interface Cell<out T : JComponent> : CellBase<Cell<T>> {
 
   fun visibleIf(predicate: ComponentPredicate): Cell<T>
 
+  fun bold(): Cell<T>
+
   /**
    * Adds comment under the cell. Visibility and enabled state of the cell affects comment as well.
    * Only one comment for a row is supported now
@@ -68,4 +71,10 @@ interface Cell<out T : JComponent> : CellBase<Cell<T>> {
   fun onReset(callback: () -> Unit): Cell<T>
 
   fun onIsModified(callback: () -> Boolean): Cell<T>
+
+  /**
+   * Overrides all gaps around cell by [customGaps]. Should be used for very specific cases
+   */
+  fun customize(customGaps: Gaps): Cell<T>
+
 }

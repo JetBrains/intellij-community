@@ -2,6 +2,7 @@
 package com.intellij.ui.dsl
 
 import com.intellij.openapi.util.NlsContexts
+import com.intellij.ui.dsl.gridLayout.Gaps
 import com.intellij.ui.dsl.gridLayout.HorizontalAlign
 import com.intellij.ui.dsl.gridLayout.VerticalAlign
 import com.intellij.ui.layout.*
@@ -76,6 +77,10 @@ interface Panel : CellBase<Panel> {
 
   fun onIsModified(callback: () -> Boolean): Panel
 
+  /**
+   * Overrides default spacing configuration and gaps around the panel. Should be used for very specific cases
+   */
+  fun customize(spacingConfiguration: SpacingConfiguration? = null, customGaps: Gaps? = null): Panel
 }
 
 inline fun <reified T : Any> Panel.buttonGroup(noinline getter: () -> T,

@@ -14,24 +14,16 @@ import com.intellij.openapi.application.ex.ApplicationInfoEx
 import com.intellij.openapi.options.BoundConfigurable
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.ui.Messages
-import com.intellij.openapi.ui.ex.MultiLineLabel
 import com.intellij.openapi.updateSettings.UpdateStrategyCustomization
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.ui.CollectionComboBoxModel
-import com.intellij.ui.components.BrowserLink
-import com.intellij.ui.components.JBLabel
 import com.intellij.ui.dsl.*
 import com.intellij.ui.dsl.gridLayout.Gaps
-import com.intellij.ui.dsl.gridLayout.JBGridLayout
-import com.intellij.ui.dsl.gridLayout.RowGaps
 import com.intellij.ui.dsl.gridLayout.VerticalAlign
-import com.intellij.ui.dsl.gridLayout.builders.RowsGridBuilder
 import com.intellij.util.text.DateFormatUtil
-import com.intellij.util.ui.JBFont
 import com.intellij.util.ui.JBUI
 import javax.swing.JComponent
 import javax.swing.JLabel
-import javax.swing.JPanel
 
 private const val TOOLBOX_URL =
   "https://www.jetbrains.com/toolbox-app/?utm_source=product&utm_medium=link&utm_campaign=toolbox_app_in_IDE_updatewindow&utm_content=we_recommend"
@@ -122,25 +114,26 @@ class UpdateSettingsConfigurable @JvmOverloads constructor (private val checkNow
       }
 
       if (!(manager == ExternalUpdateManager.TOOLBOX || Registry.`is`("ide.hide.toolbox.promo"))) {
-        val panel = JPanel(JBGridLayout())
-        val builder = RowsGridBuilder(panel).subGridBuilder(gaps = Gaps(top = JBUI.scale(6)))
-        builder.cell(JBLabel(PluginLogo.reloadIcon(AllIcons.Nodes.Toolbox, 40, 40, null)),
-          verticalAlign = VerticalAlign.TOP,
-          gaps = Gaps(right = JBUI.scale(10)))
-        val font = JBFont.label().asBold()
-        builder.subGridBuilder()
-          .cell(JBLabel(IdeBundle.message("updates.settings.recommend.toolbox.first.part") + " ")
-            .withFont(font))
-          .cell(BrowserLink(ExternalUpdateManager.TOOLBOX.toolName, TOOLBOX_URL)
-            .withFont(font))
-          .row(rowGaps = RowGaps(top = JBUI.scale(3)))
-          .cell(MultiLineLabel(IdeBundle.message("updates.settings.recommend.toolbox.multiline.description")),
-            width = 2)
-
         group(indent = false) {
-          row {
-            cell(panel)
-          }
+          panel {
+            row {
+              icon(PluginLogo.reloadIcon(AllIcons.Nodes.Toolbox, 40, 40, null))
+                .verticalAlign(VerticalAlign.TOP)
+                .customize(customGaps = Gaps(right = JBUI.scale(10)))
+              panel {
+                row {
+                  label(IdeBundle.message("updates.settings.recommend.toolbox.first.part") + " ")
+                    .bold()
+                  browserLink(ExternalUpdateManager.TOOLBOX.toolName, TOOLBOX_URL)
+                    .bold()
+                }
+                row {
+                  label(IdeBundle.message("updates.settings.recommend.toolbox.multiline.description"))
+                    .customize(customGaps = Gaps(top = JBUI.scale(3)))
+                }
+              }
+            }
+          }.customize(spacingConfiguration = SpacingConfiguration.EMPTY, customGaps = Gaps(top = JBUI.scale(6)))
         }
       }
 

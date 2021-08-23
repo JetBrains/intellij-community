@@ -9,6 +9,7 @@ import com.intellij.ui.components.Label
 import com.intellij.ui.dsl.*
 import com.intellij.ui.dsl.Row
 import com.intellij.ui.dsl.SpacingConfiguration
+import com.intellij.ui.dsl.gridLayout.Gaps
 import com.intellij.ui.dsl.gridLayout.HorizontalAlign
 import com.intellij.ui.dsl.gridLayout.UiDslException
 import com.intellij.ui.dsl.gridLayout.VerticalAlign
@@ -22,6 +23,12 @@ internal class PanelImpl(private val dialogPanelConfig: DialogPanelConfig) : Cel
 
   val rows: List<RowImpl>
     get() = _rows
+
+  var spacingConfiguration: SpacingConfiguration? = null
+    private set
+
+  var customGaps: Gaps? = null
+    private set
 
   private var panelContext = PanelContext()
 
@@ -164,6 +171,12 @@ internal class PanelImpl(private val dialogPanelConfig: DialogPanelConfig) : Cel
 
   override fun onIsModified(callback: () -> Boolean): PanelImpl {
     dialogPanelConfig.isModifiedCallbacks.register(null, callback)
+    return this
+  }
+
+  override fun customize(spacingConfiguration: SpacingConfiguration?, customGaps: Gaps?): Panel {
+    this.spacingConfiguration = spacingConfiguration
+    this.customGaps = customGaps
     return this
   }
 

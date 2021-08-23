@@ -11,7 +11,7 @@ import javax.swing.JComponent
 @ApiStatus.Internal
 internal class DialogPanelConfig {
 
-  val spacing = createIntelliJSpacingConfiguration()
+  var spacing = createIntelliJSpacingConfiguration()
   val context = Context()
 
   var componentValidateCallbacks: MutableMap<JComponent, () -> ValidationInfo?> = linkedMapOf()

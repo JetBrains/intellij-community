@@ -8,11 +8,6 @@ import com.intellij.ui.dsl.impl.PanelBuilder
 import com.intellij.ui.dsl.impl.PanelImpl
 import org.jetbrains.annotations.ApiStatus
 
-/*
-todo
-remove first/last gaps
-*/
-
 @DslMarker
 internal annotation class LayoutDslMarker
 

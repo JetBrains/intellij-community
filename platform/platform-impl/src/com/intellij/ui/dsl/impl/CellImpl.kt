@@ -8,11 +8,13 @@ import com.intellij.openapi.util.NlsContexts
 import com.intellij.ui.components.Label
 import com.intellij.ui.dsl.Cell
 import com.intellij.ui.dsl.RightGap
+import com.intellij.ui.dsl.gridLayout.Gaps
 import com.intellij.ui.dsl.gridLayout.HorizontalAlign
 import com.intellij.ui.dsl.gridLayout.VerticalAlign
 import com.intellij.ui.layout.*
 import com.intellij.util.SmartList
 import org.jetbrains.annotations.ApiStatus
+import java.awt.Font
 import javax.swing.JComponent
 import javax.swing.JLabel
 
@@ -29,6 +31,9 @@ internal class CellImpl<T : JComponent>(
     private set
 
   var label: JLabel? = null
+    private set
+
+  var customGaps: Gaps? = null
     private set
 
   private var property: GraphProperty<*>? = null
@@ -133,6 +138,11 @@ internal class CellImpl<T : JComponent>(
     return this
   }
 
+  override fun bold(): CellImpl<T> {
+    component.font = component.font.deriveFont(Font.BOLD)
+    return this
+  }
+
   override fun comment(@NlsContexts.DetailedDescription comment: String?, maxLineLength: Int): CellImpl<T> {
     this.comment = if (comment == null) null else ComponentPanelBuilder.createCommentComponent(comment, true, maxLineLength, true)
     return this
@@ -182,6 +192,11 @@ internal class CellImpl<T : JComponent>(
 
   override fun onIsModified(callback: () -> Boolean): CellImpl<T> {
     dialogPanelConfig.isModifiedCallbacks.register(component, callback)
+    return this
+  }
+
+  override fun customize(customGaps: Gaps): CellImpl<T> {
+    this.customGaps = customGaps
     return this
   }
 

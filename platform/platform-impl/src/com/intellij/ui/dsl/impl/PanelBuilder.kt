@@ -17,7 +17,7 @@ import kotlin.math.min
 /**
  * Throws exception instead of logging warning. Useful while forms building to avoid layout mistakes
  */
-private const val FAIL_ON_WARN = true
+private const val FAIL_ON_WARN = false
 
 private val DEFAULT_VERTICAL_GAP_COMPONENTS = setOf(
   AbstractButton::class,
@@ -34,7 +34,7 @@ private val DEFAULT_VERTICAL_GAP_COMPONENTS = setOf(
 internal class PanelBuilder(val rows: List<RowImpl>, val dialogPanelConfig: DialogPanelConfig, val panel: DialogPanel, val grid: JBGrid) {
 
   private companion object {
-    private val LOG = Logger.getInstance(PanelImpl::class.java)
+    private val LOG = Logger.getInstance(PanelBuilder::class.java)
   }
 
   fun build() {
@@ -188,19 +188,28 @@ internal class PanelBuilder(val rows: List<RowImpl>, val dialogPanelConfig: Dial
       is CellImpl<*> -> {
         val insets = cell.component.origin.insets
         val visualPaddings = Gaps(top = insets.top, left = insets.left, bottom = insets.bottom, right = insets.right)
-        val gaps = getComponentGaps(leftGap, rightGap, cell.component)
+        val gaps = cell.customGaps ?: getComponentGaps(leftGap, rightGap, cell.component)
         builder.cell(cell.component, width = width, horizontalAlign = cell.horizontalAlign, verticalAlign = cell.verticalAlign,
           resizableColumn = cell.resizableColumn,
           gaps = gaps, visualPaddings = visualPaddings)
       }
       is PanelImpl -> {
         // todo visualPaddings
-        val gaps = Gaps(left = leftGap, right = rightGap)
+        val gaps = cell.customGaps ?: Gaps(left = leftGap, right = rightGap)
         val subGrid = builder.subGrid(width = width, horizontalAlign = cell.horizontalAlign, verticalAlign = cell.verticalAlign,
           gaps = gaps)
 
-        val subBuilder = PanelBuilder(cell.rows, dialogPanelConfig, panel, subGrid)
-        subBuilder.build()
+        val spacingConfiguration = dialogPanelConfig.spacing
+        cell.spacingConfiguration?.let {
+          dialogPanelConfig.spacing = it
+        }
+        try {
+          val subBuilder = PanelBuilder(cell.rows, dialogPanelConfig, panel, subGrid)
+          subBuilder.build()
+        }
+        finally {
+          dialogPanelConfig.spacing = spacingConfiguration
+        }
       }
       null -> {
         builder.skip(1)

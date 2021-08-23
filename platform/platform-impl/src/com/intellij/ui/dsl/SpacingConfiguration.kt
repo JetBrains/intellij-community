@@ -6,6 +6,21 @@ import org.jetbrains.annotations.ApiStatus
 @ApiStatus.Experimental
 interface SpacingConfiguration {
 
+  companion object {
+    val EMPTY = object : SpacingConfiguration {
+      override val horizontalSmallGap = 0
+      override val horizontalDefaultGap = 0
+      override val horizontalColumnsGap = 0
+      override val horizontalIndent = 0
+      override val horizontalToggleButtonIndent = 0
+      override val verticalComponentGap = 0
+      override val commentBottomGap = 0
+      override val groupTopGap = 0
+      override val verticalSmallGap = 0
+      override val buttonGroupHeaderBottomGap = 0
+    }
+  }
+
   /**
    * Small horizontal gap, used between label and related component for example
    */
