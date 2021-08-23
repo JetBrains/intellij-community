@@ -55,9 +55,10 @@ public class DarculaPopupMenuBorder extends AbstractBorder implements UIResource
     if (isComboPopup(c)) {
       return JBInsets.create(1, 2).asUIResource();
     }
-    else {
+    if (IdeaPopupMenuUI.isUnderPopup(c)) {
       return JBUI.insets("PopupMenu.borderInsets", DEFAULT_INSETS).asUIResource();
     }
+    return DEFAULT_INSETS.asUIResource();
   }
 
   protected static boolean isComboPopup(Component c) {

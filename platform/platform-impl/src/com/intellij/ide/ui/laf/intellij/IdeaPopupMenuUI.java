@@ -85,6 +85,27 @@ public class IdeaPopupMenuUI extends BasicPopupMenuUI {
   }
 
   public static boolean isRoundBorder() {
-    return SystemInfo.isMacOSBigSur && Registry.is("popup.menu.roundBorder.enabled", false);
+    return Registry.is("popup.menu.roundBorder.enabled", false);
+  }
+
+  public static boolean hideEmptyIcon(Component c) {
+    if (Registry.is("menu.hide.empty.icon", false)) {
+      Container parent = c.getParent();
+      if (parent instanceof JPopupMenu) {
+        int count = parent.getComponentCount();
+        for (int i = 0; i < count; i++) {
+          Component item = parent.getComponent(i);
+          if (item instanceof JMenuItem) {
+            JMenuItem menuItem = (JMenuItem)item;
+            Icon icon = menuItem.isEnabled() ? menuItem.getIcon() : menuItem.getDisabledIcon();
+            if (icon != null) {
+              return false;
+            }
+          }
+        }
+      }
+      return true;
+    }
+    return Registry.is("menu.element.hide.empty.icon", false);
   }
 }
