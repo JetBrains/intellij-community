@@ -10,7 +10,7 @@ import org.jetbrains.kotlin.idea.KotlinBundle
 
 class ShowInlayHintsSettings : AnAction(KotlinBundle.message("action.hints.settings.text")) {
     override fun actionPerformed(e: AnActionEvent) {
-        val file = CommonDataKeys.PSI_FILE.getData(e.dataContext) ?: return
+        val file = e.getData(CommonDataKeys.PSI_FILE) ?: return
         val fileLanguage = file.language
         InlayHintsConfigurable.showSettingsDialogForLanguage(
             file.project,

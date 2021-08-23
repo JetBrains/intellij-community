@@ -2,6 +2,7 @@
 package org.jetbrains.kotlin.idea.codeInsight.hints
 
 import com.intellij.codeInsight.hints.InlayInfo
+import com.intellij.codeInsight.hints.SettingsKey
 import com.intellij.codeInsight.hints.chain.AbstractCallChainHintsProvider
 import com.intellij.codeInsight.hints.presentation.InlayPresentation
 import com.intellij.codeInsight.hints.presentation.PresentationFactory
@@ -71,6 +72,8 @@ class KotlinCallChainHintsProvider : AbstractCallChainHintsProvider<KtQualifiedE
     override fun KtQualifiedExpression.getReceiver(): PsiElement {
         return receiverExpression
     }
+
+    override val key: SettingsKey<Settings> = SettingsKey("kotlin.call.chains.hints")
 
     override fun KtQualifiedExpression.getParentDotQualifiedExpression(): KtQualifiedExpression? {
         var expr: PsiElement? = parent

@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.codeInsight.hints
 
 import com.intellij.codeInsight.hints.ChangeListener
 import com.intellij.codeInsight.hints.ImmediateConfigurable
+import com.intellij.codeInsight.hints.SettingsKey
 import com.intellij.ui.layout.*
 import org.jetbrains.kotlin.idea.KotlinBundle
 import javax.swing.JComponent
@@ -16,6 +17,7 @@ class KotlinLambdasHintsProvider : KotlinAbstractHintsProvider<KotlinLambdasHint
         var implicitReceiversAndParams: Boolean = true,
     )
 
+    override val key: SettingsKey<Settings> = SettingsKey("kotlin.lambdas.hints")
     override val name: String = KotlinBundle.message("hints.settings.lambdas")
     override val hintsArePlacedAtTheEndOfLine = true
 

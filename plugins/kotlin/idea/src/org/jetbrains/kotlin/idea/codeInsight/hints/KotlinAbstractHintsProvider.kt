@@ -16,7 +16,7 @@ import org.jetbrains.kotlin.idea.KotlinLanguage
 @Suppress("UnstableApiUsage")
 abstract class KotlinAbstractHintsProvider<T : Any> : InlayHintsProvider<T> {
 
-    override val key: SettingsKey<T> = SettingsKey(this::class.simpleName!!)
+    //override val key: SettingsKey<T> = SettingsKey(this::class.simpleName!!)
     override val previewText: String? = ""
     open val hintsArePlacedAtTheEndOfLine = false
 

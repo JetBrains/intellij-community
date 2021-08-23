@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.codeInsight.hints
 
 import com.intellij.codeInsight.hints.ChangeListener
 import com.intellij.codeInsight.hints.ImmediateConfigurable
+import com.intellij.codeInsight.hints.SettingsKey
 import com.intellij.ui.layout.*
 import org.jetbrains.kotlin.idea.KotlinBundle
 import javax.swing.JComponent
@@ -18,6 +19,7 @@ class KotlinReferencesTypeHintsProvider : KotlinAbstractHintsProvider<KotlinRefe
         var parameterType: Boolean = false
     )
 
+    override val key: SettingsKey<Settings> = SettingsKey("kotlin.references.types.hints")
     override val name: String = KotlinBundle.message("hints.settings.types")
 
     override fun createConfigurable(settings: Settings): ImmediateConfigurable {

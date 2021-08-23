@@ -3,6 +3,7 @@ package org.jetbrains.kotlin.idea.codeInsight.hints
 
 import com.intellij.codeInsight.hints.ChangeListener
 import com.intellij.codeInsight.hints.ImmediateConfigurable
+import com.intellij.codeInsight.hints.SettingsKey
 import com.intellij.ui.layout.*
 import org.jetbrains.kotlin.idea.KotlinBundle
 import org.jetbrains.kotlin.psi.KtBinaryExpression
@@ -12,6 +13,7 @@ class KotlinRangesHintsProvider : KotlinAbstractHintsProvider<KotlinRangesHintsP
 
     object Settings
 
+    override val key: SettingsKey<Settings> = SettingsKey("kotlin.ranges.hints")
     override val name: String = KotlinBundle.message("hints.settings.ranges")
 
     override fun createSettings(): Settings = Settings
