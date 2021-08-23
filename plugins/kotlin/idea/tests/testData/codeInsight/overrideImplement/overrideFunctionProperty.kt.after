@@ -1,3 +1,4 @@
+// FIR_IDENTICAL
 open class A() {
     open val method : () -> Unit? = {println("hello")}
 }
