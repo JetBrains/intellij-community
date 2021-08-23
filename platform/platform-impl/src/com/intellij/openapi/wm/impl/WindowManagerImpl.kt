@@ -357,9 +357,6 @@ class WindowManagerImpl : WindowManagerEx(), PersistentStateComponentWithModific
       projectToFrame.put(null, frameHelper)
     }
     else {
-      frameHelper.statusBar?.let {
-        Disposer.dispose(it)
-      }
       Disposer.dispose(frameHelper)
     }
   }
