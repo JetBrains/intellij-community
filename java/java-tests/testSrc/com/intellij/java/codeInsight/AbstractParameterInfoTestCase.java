@@ -84,16 +84,16 @@ public abstract class AbstractParameterInfoTestCase extends LightFixtureCompleti
   }
 
   private void selectItem(LookupElement[] elements, String partOfItemText) {
-    final LookupElement element = findLookupElementWithName(elements, partOfItemText);
+    final LookupElement element = findLookupElementContainingText(elements, partOfItemText);
     selectItem(element);
   }
 
-  protected static @NotNull LookupElement findLookupElementWithName(final LookupElement @NotNull [] lookupItems, @NotNull final String elementName) {
+  protected static @NotNull LookupElement findLookupElementContainingText(final LookupElement @NotNull [] lookupItems, @NotNull final String lookupString) {
     for (LookupElement element : lookupItems) {
       final LookupElementPresentation p = new LookupElementPresentation();
       element.renderElement(p);
       final String elementText = p.getItemText() + p.getTailText();
-      if (elementText.contains(elementName)) {
+      if (elementText.contains(lookupString)) {
         return element;
       }
     }
@@ -102,7 +102,7 @@ public abstract class AbstractParameterInfoTestCase extends LightFixtureCompleti
       .map(LookupElement::getLookupString)
       .collect(Collectors.joining(", "));
 
-    throw new NoSuchElementException("Unable to find a lookup element by '" + elementName + "' among [" + allLookupElements + "]");
+    throw new NoSuchElementException("Unable to find a lookup element by '" + lookupString + "' among [" + allLookupElements + "]");
   }
 
 

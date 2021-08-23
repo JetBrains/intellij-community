@@ -160,7 +160,7 @@ public class EditorTabOutTest extends AbstractParameterInfoTestCase {
                   "}");
 
     final LookupElement[] elements = myFixture.completeBasic();
-    final LookupElement element = findLookupElementWithName(elements, "ABC");
+    final LookupElement element = findLookupElementContainingText(elements, "ABC");
 
     final LookupImpl lookup = getLookup();
     lookup.finishLookup('<', element);
