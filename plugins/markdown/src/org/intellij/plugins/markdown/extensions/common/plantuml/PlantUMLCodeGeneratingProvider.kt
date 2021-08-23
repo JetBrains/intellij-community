@@ -36,11 +36,11 @@ internal class PlantUMLCodeGeneratingProvider(collector: MarkdownCodeFencePlugin
 
   override fun onLAFChanged() {}
 
-  override val displayName: String =
-    MarkdownBundle.message("markdown.extensions.plantuml.display.name")
+  override val displayName: String
+    get() = MarkdownBundle.message("markdown.extensions.plantuml.display.name")
 
-  override val description: String =
-    MarkdownBundle.message("markdown.extensions.plantuml.description")
+  override val description: String
+    get() = MarkdownBundle.message("markdown.extensions.plantuml.description")
 
   override val id: String = "PlantUMLLanguageExtension"
 
