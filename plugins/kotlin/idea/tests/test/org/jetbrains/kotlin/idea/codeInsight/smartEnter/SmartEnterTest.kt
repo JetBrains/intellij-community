@@ -1475,60 +1475,60 @@ class SmartEnterTest : KotlinLightCodeInsightFixtureTestCase() {
     )
 
     fun testClassBodyHasNotInitializedJavaInterfaceSuperType() = doFileTest(
-        """
-            class A : I<caret>
-        """,
-        """
-            class A : I {
-                <caret>
-            }
-        """,
-        """
-            interface I {}
-        """
+        before = """
+                    class A : I<caret>
+                """,
+        after = """
+                    class A : I {
+                        <caret>
+                    }
+                """,
+        javaFile = """
+                    interface I {}
+                """
     )
 
     fun testClassBodyHasNotInitializedJavaClassSuperType() = doFileTest(
-        """
-            class A : C<caret>
-        """,
-        """
-            class A : C() {
-                <caret>
-            }
-        """,
-        """
-            class C {}
-        """
+        before = """
+                    class A : C<caret>
+                """,
+        after = """
+                    class A : C() {
+                        <caret>
+                    }
+                """,
+        javaFile = """
+                    class C {}
+                """
     )
 
     fun testClassBodyHasNotInitializedAbstractJavaClassSuperType() = doFileTest(
-        """
-            class A : C<caret>
-        """,
-        """
-            class A : C() {
-                <caret>
-            }
-        """,
-        """
-            abstract class C {}
-        """
+        before = """
+                    class A : C<caret>
+                """,
+        after = """
+                    class A : C() {
+                        <caret>
+                    }
+                """,
+        javaFile = """
+                    abstract class C {}
+                """
     )
 
     fun testClassBodyHasNotInitializedJavaInterfaceAndClassSuperType() = doFileTest(
-        """
-            class A : C, I<caret>
-        """,
-        """
-            class A : C(), I {
-                <caret>
-            }
-        """,
-        """
-            interface I {}
-            class C {}
-        """
+        before = """
+                    class A : C, I<caret>
+                """,
+        after = """
+                    class A : C(), I {
+                        <caret>
+                    }
+                """,
+        javaFile = """
+                    interface I {}
+                    class C {}
+                """
     )
 
     fun testEmptyLine() = doFileTest(

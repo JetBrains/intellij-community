@@ -14,6 +14,7 @@ import org.jetbrains.kotlin.psi.KtClassOrObject
 import org.jetbrains.kotlin.psi.KtSuperTypeCallEntry
 import org.jetbrains.kotlin.psi.psiUtil.endOffset
 import org.jetbrains.kotlin.psi.psiUtil.getPrevSiblingIgnoringWhitespaceAndComments
+import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 class KotlinClassBodyFixer : SmartEnterProcessorWithFixers.Fixer<KotlinSmartEnterHandler>() {
     override fun apply(editor: Editor, processor: KotlinSmartEnterHandler, psiElement: PsiElement) {
@@ -34,7 +35,7 @@ class KotlinClassBodyFixer : SmartEnterProcessorWithFixers.Fixer<KotlinSmartEnte
             psiElement.superTypeListEntries.firstOrNull {
                 if (it is KtSuperTypeCallEntry) return@firstOrNull false
                 val resolved = it.typeAsUserType?.referenceExpression?.mainReference?.resolve()
-                (resolved as? KtClass)?.isInterface() == false || (resolved as? PsiClass)?.isInterface == false
+                resolved.safeAs<KtClass>()?.isInterface() == false || resolved.safeAs<PsiClass>()?.isInterface == false
             }
         }
         if (notInitializedSuperType != null) {
