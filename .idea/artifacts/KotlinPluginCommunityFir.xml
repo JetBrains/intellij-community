@@ -213,6 +213,9 @@
         <element id="archive" name="uast-kotlin-idea-base.jar">
           <element id="module-output" name="kotlin.uast.uast-kotlin-idea-base" />
         </element>
+        <element id="archive" name="fir-fe10-binding.jar">
+          <element id="module-output" name="kotlin.fir.fir-fe10-binding" />
+        </element>
       </element>
       <element id="directory" name="kotlinc">
         <element id="extracted-dir" path="$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-dist-for-ide/1.4.30-dev-local-2/kotlin-dist-for-ide-1.4.30-dev-local-2.jar" path-in-jar="/" />
