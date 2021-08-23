@@ -163,16 +163,25 @@ public class DefaultInspectionToolResultExporter implements InspectionToolResult
   }
 
   public void exportResults(final CommonProblemDescriptor @NotNull [] descriptors,
-                               @NotNull RefEntity refEntity,
-                               @NotNull Consumer<? super Element> problemSink) {
-    exportResults(descriptors, refEntity, problemSink, (problem) -> false);
+                            @NotNull RefEntity refEntity,
+                            @NotNull Consumer<? super Element> problemSink) {
+    exportResults(descriptors, refEntity, problemSink, __ -> false);
   }
 
   protected void exportResults(final CommonProblemDescriptor @NotNull [] descriptors,
                                @NotNull RefEntity refEntity,
                                @NotNull Consumer<? super Element> problemSink,
                                @NotNull Predicate<? super CommonProblemDescriptor> isDescriptorExcluded) {
-    for (CommonProblemDescriptor descriptor : descriptors) {
+    CommonProblemDescriptor[] sorted = descriptors.clone();
+    Arrays.sort(sorted, (desc1, desc2)-> {
+      VirtualFile file1 = desc1 instanceof ProblemDescriptorBase ? ((ProblemDescriptorBase)desc1).getContainingFile() : null;
+      VirtualFile file2 = desc2 instanceof ProblemDescriptorBase ? ((ProblemDescriptorBase)desc2).getContainingFile() : null;
+      if (file1 != null && file1.equals(file2)) {
+        return CommonProblemDescriptor.DESCRIPTOR_COMPARATOR.compare(desc1, desc2);
+      }
+      return file1 == null || file2 == null ? 0 : file1.getPath().compareTo(file2.getPath());
+    });
+    for (CommonProblemDescriptor descriptor : sorted) {
       if (isDescriptorExcluded.test(descriptor)) continue;
       int line = descriptor instanceof ProblemDescriptor ? ((ProblemDescriptor)descriptor).getLineNumber() : -1;
       Element element = null;
@@ -461,7 +470,7 @@ public class DefaultInspectionToolResultExporter implements InspectionToolResult
 
   private static void checkFromSameFile(RefEntity element, CommonProblemDescriptor[] descriptors) {
     if (!(element instanceof RefElement)) return;
-    SmartPsiElementPointer pointer = ((RefElement)element).getPointer();
+    SmartPsiElementPointer<?> pointer = ((RefElement)element).getPointer();
     if (pointer == null) return;
     VirtualFile entityFile = ensureNotInjectedFile(pointer.getVirtualFile());
     if (entityFile == null) return;
