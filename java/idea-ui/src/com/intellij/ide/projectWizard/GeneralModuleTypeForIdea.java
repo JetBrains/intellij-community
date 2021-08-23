@@ -22,7 +22,9 @@ public class GeneralModuleTypeForIdea extends GeneralModuleType {
       @Override
       public @NotNull ModuleWizardStep getCustomOptionsStep(WizardContext context,
                                                             Disposable parentDisposable) {
-        return new ProjectSettingsStep(context);
+        ProjectSettingsStep step = new ProjectSettingsStep(context);
+        step.getExpertPlaceholder().removeAll();
+        return step;
       }
     };
   }
