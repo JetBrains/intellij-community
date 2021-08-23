@@ -361,31 +361,38 @@ public class EditorMouseHoverPopupManager implements Disposable {
 
     HighlightInfo info = null;
     if (!Registry.is("ide.disable.editor.tooltips")) {
-      DaemonCodeAnalyzerImpl daemonCodeAnalyzer = (DaemonCodeAnalyzerImpl) DaemonCodeAnalyzer.getInstance(project);
+      DaemonCodeAnalyzerImpl daemonCodeAnalyzer = (DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(project);
       boolean highestPriorityOnly = !Registry.is("ide.tooltip.showAllSeverities");
       info = daemonCodeAnalyzer
         .findHighlightsByOffset(editor.getDocument(), offset, false, highestPriorityOnly, HighlightSeverity.INFORMATION);
     }
 
     PsiElement elementForQuickDoc = findElementForQuickDoc(editor, offset, project);
-    return info == null && elementForQuickDoc == null ? null : new Context(startTimestamp, offset, info, elementForQuickDoc);
+    return info == null && elementForQuickDoc == null
+           ? null
+           : new Context(startTimestamp, offset, info, elementForQuickDoc);
   }
 
-  @Nullable
-  protected PsiElement findElementForQuickDoc(Editor editor, int offset, Project project) {
-    PsiElement result = null;
-    if (EditorSettingsExternalizable.getInstance().isShowQuickDocOnMouseOverElement()) {
-      PsiFile psiFile = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
-      if (psiFile != null) {
-        result = InjectedLanguageManager.getInstance(project).findInjectedElementAt(psiFile, offset);
-        if (result == null) result = psiFile.findElementAt(offset);
-        if (result instanceof PsiWhiteSpace || result instanceof PsiPlainText) {
-          result = null;
-        }
-      }
+  protected static @Nullable PsiElement findElementForQuickDoc(@NotNull Editor editor, int offset, @NotNull Project project) {
+    if (!EditorSettingsExternalizable.getInstance().isShowQuickDocOnMouseOverElement()) {
+      return null;
     }
-
+    PsiFile psiFile = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
+    if (psiFile == null) {
+      return null;
+    }
+    PsiElement result = findElementForQuickDoc(project, psiFile, offset);
+    if (result instanceof PsiWhiteSpace || result instanceof PsiPlainText) {
+      return null;
+    }
     return result;
+  }
+
+  private static @Nullable PsiElement findElementForQuickDoc(@NotNull Project project, @NotNull PsiFile psiFile, int offset) {
+    PsiElement injected = InjectedLanguageManager.getInstance(project).findInjectedElementAt(psiFile, offset);
+    return injected != null
+           ? injected
+           : psiFile.findElementAt(offset);
   }
 
   protected void cancelProcessingAndCloseHint() {
