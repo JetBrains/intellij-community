@@ -70,15 +70,17 @@ class JavaNewProjectWizard : NewProjectWizard<JavaSettings> {
   }
 
   override fun setupProject(project: Project, settings: JavaSettings, context: WizardContext) {
-    settings.buildSystem.settings.setupProject(project, context)
-
     settings.sdk?.let { sdk ->
       val table = ProjectJdkTable.getInstance()
       runWriteAction {
-        if (table.findJdk(sdk.name) == null) table.addJdk(sdk)
-        ProjectRootManager.getInstance(project).projectSdk = sdk
+        if (table.findJdk(sdk.name) == null) {
+          table.addJdk(sdk)
+        }
       }
     }
+
+    context.projectJdk = settings.sdk
+    settings.buildSystem.settings.setupProject(project, context)
   }
 }
 

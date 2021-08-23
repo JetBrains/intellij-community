@@ -5,12 +5,10 @@ import com.intellij.ide.*
 import com.intellij.ide.util.projectWizard.WizardContext
 import com.intellij.ide.wizard.BuildSystemWithSettings
 import com.intellij.openapi.actionSystem.DefaultActionGroup
-import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.observable.properties.GraphPropertyImpl.Companion.graphProperty
 import com.intellij.openapi.observable.properties.PropertyGraph
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
-import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.roots.ui.configuration.JdkComboBox
@@ -64,15 +62,8 @@ class KotlinNewProjectWizard : NewProjectWizard<KotlinSettings> {
     }
 
     override fun setupProject(project: Project, settings: KotlinSettings, context: WizardContext) {
+        context.projectJdk = settings.sdk
         settings.buildSystem.settings.setupProject(project, context)
-
-        settings.sdk?.let { sdk ->
-            val table = ProjectJdkTable.getInstance()
-            runWriteAction {
-                if (table.findJdk(sdk.name) == null) table.addJdk(sdk)
-                ProjectRootManager.getInstance(project).projectSdk = sdk
-            }
-        }
     }
 }
 

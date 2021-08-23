@@ -31,6 +31,8 @@ abstract class NewWizardModuleBuilder<T> : ModuleBuilder() {
       return null
     }
 
+    context.projectName = projectName
+    context.setProjectFileDirectory(projectPath, false)
     step!!.setupProject(project, context)
 
     return project
