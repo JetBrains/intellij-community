@@ -28,7 +28,7 @@ class KtVariableDescriptor(val variable: KtCallableDeclaration) : VariableDescri
         if (variable is KtParameter && variable.isMutable) return false
         if (variable !is KtProperty || !variable.isVar) return true
         if (!variable.isLocal) return false
-        return getVariablesChangedInLambdas(variable.parent).contains(variable)
+        return !getVariablesChangedInLambdas(variable.parent).contains(variable)
     }
 
     private fun getVariablesChangedInLambdas(parent: PsiElement): Set<KtProperty> =
@@ -38,7 +38,7 @@ class KtVariableDescriptor(val variable: KtCallableDeclaration) : VariableDescri
                 if (e is KtSimpleNameExpression && e.readWriteAccess(false).isWrite) {
                     val target = e.mainReference.resolve()
                     if (target is KtProperty && target.isLocal && PsiTreeUtil.isAncestor(parent, target, true)) {
-                        val parentLambda = PsiTreeUtil.getParentOfType(parent, KtLambdaExpression::class.java)
+                        val parentLambda = PsiTreeUtil.getParentOfType(e, KtLambdaExpression::class.java)
                         if (parentLambda != null && PsiTreeUtil.isAncestor(parent, parentLambda, true)) {
                             result.add(target)
                         }
@@ -52,11 +52,6 @@ class KtVariableDescriptor(val variable: KtCallableDeclaration) : VariableDescri
     override fun isStable(): Boolean = stable
 
     override fun getDfType(qualifier: DfaVariableValue?): DfType = variable.type().toDfType(variable)
-
-    override fun createValue(factory: DfaValueFactory, qualifier: DfaValue?): DfaValue {
-        assert(qualifier == null) { "Local variable descriptor should not be qualified, got qualifier '$qualifier'" }
-        return factory.varFactory.createVariableValue(this)
-    }
 
     override fun equals(other: Any?): Boolean = other is KtVariableDescriptor && other.variable == variable
 
