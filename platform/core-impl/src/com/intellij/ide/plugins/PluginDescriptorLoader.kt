@@ -402,7 +402,10 @@ private fun loadBundledDescriptorsAndDescriptorsFromDir(context: DescriptorListL
   val platformPrefix = PlatformUtils.getPlatformPrefix()
   // should be the only plugin in lib (only for Ultimate and WebStorm for now)
   val isInDevServerMode = java.lang.Boolean.getBoolean("idea.use.dev.build.server")
-  val pathResolver = ClassPathXmlPathResolver(classLoader, isRunningFromSources = isRunningFromSources && !isInDevServerMode)
+  val pathResolver = ClassPathXmlPathResolver(
+    classLoader = classLoader,
+    isRunningFromSources = (isRunningFromSources && !isInDevServerMode) || platformPrefix == "CodeServer",
+  )
   if ((platformPrefix == PlatformUtils.IDEA_PREFIX || platformPrefix == PlatformUtils.WEB_PREFIX) &&
       (isInDevServerMode || (!isUnitTestMode && !isRunningFromSources))) {
     val dataLoader = object : DataLoader {
