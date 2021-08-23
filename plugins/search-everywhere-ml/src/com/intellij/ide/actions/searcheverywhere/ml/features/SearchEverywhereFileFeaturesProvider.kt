@@ -11,8 +11,8 @@ import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.components.service
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.impl.EditorHistoryManager
+import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiFileSystemItem
@@ -187,9 +187,14 @@ internal class SearchEverywhereFileFeaturesProvider : SearchEverywhereElementFea
 
     val project = item.project
 
-    val fileIndex = ReadAction.compute<ProjectFileIndex, Nothing> { ProjectRootManager.getInstance(project).fileIndex }
-    val openedFileModule = fileIndex.getModuleForFile(openedFile) ?: return false
-    val itemModule = fileIndex.getModuleForFile(item.virtualFile) ?: return false
+    val (openedFileModule, itemModule) = ReadAction.compute<Pair<Module?, Module?>, Nothing> {
+      val fileIndex = ProjectRootManager.getInstance(project).fileIndex
+      Pair(fileIndex.getModuleForFile(openedFile), fileIndex.getModuleForFile(item.virtualFile))
+    }
+
+    if (openedFileModule == null || itemModule == null) {
+      return false
+    }
 
     return openedFileModule == itemModule
   }
@@ -208,11 +213,13 @@ internal class SearchEverywhereFileFeaturesProvider : SearchEverywhereElementFea
 
     val project = item.project
 
-    val fileIndex = ReadAction.compute<ProjectFileIndex, Nothing> { ProjectRootManager.getInstance(project).fileIndex }
+    val (openedFilePackage, foundFilePackage) = ReadAction.compute<Pair<List<String>?, List<String>?>, Nothing> {
+      val fileIndex = ProjectRootManager.getInstance(project).fileIndex
+      val foundFileDirectory = if (item.isDirectory) item.virtualFile else item.virtualFile.parent
 
-    val openedFilePackage = fileIndex.getPackageNameByDirectory(openedFile.parent)?.split('.')
-    val foundFileDirectory = if (item.isDirectory) item.virtualFile else item.virtualFile.parent
-    val foundFilePackage = fileIndex.getPackageNameByDirectory(foundFileDirectory)?.split('.')
+      Pair(fileIndex.getPackageNameByDirectory(openedFile.parent)?.split('.'),
+           fileIndex.getPackageNameByDirectory(foundFileDirectory)?.split('.'))
+    }
 
     if (openedFilePackage == null || foundFilePackage == null) {
       return -1
