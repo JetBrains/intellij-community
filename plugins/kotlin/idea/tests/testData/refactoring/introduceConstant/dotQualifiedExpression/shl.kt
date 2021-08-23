@@ -2,5 +2,5 @@
 val a = 1
 
 fun foo(): Int {
-    return<selection>1.shl(1)</selection>
+    return <selection>1.shl(1)</selection>
 }

@@ -2,7 +2,7 @@
 val a = 1
 
 fun foo(): Int {
-    return<selection>1+getNumber()</selection>
+    return <selection>1+getNumber()</selection>
 }
 
 fun getNumber(): Int {

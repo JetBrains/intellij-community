@@ -2,6 +2,6 @@
 val a = 1
 
 fun foo(): Int {
-    val x = "1" + "1"
-    return<selection>1+1</selection>
+    val x = "1"+"1"
+    return <selection>1+1</selection>
 }

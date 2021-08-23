@@ -3,5 +3,5 @@
 val a = 1
 
 fun foo(): Byte {
-    return<selection>1.toByte()</selection>
+    return <selection>1.toByte()</selection>
 }

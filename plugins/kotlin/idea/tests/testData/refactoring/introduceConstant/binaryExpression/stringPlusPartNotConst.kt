@@ -2,7 +2,7 @@
 val a = 1
 
 fun foo(): String {
-    return<selection>"1"+getString()</selection>
+    return <selection>"1"+getString()</selection>
 }
 
 fun getString(): String {

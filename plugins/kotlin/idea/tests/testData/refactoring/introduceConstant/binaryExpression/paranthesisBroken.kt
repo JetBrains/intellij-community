@@ -2,5 +2,5 @@
 val a = 1
 
 fun foo(): Int {
-    return (1 + < selection >1)*2</selection>
+    return (1+<selection>1)*2</selection>
 }

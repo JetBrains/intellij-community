@@ -2,6 +2,6 @@
 val i = 1
 
 fun foo(): Int {
-    return<selection>2</selection>
+    return <selection>2</selection>
 }
 
