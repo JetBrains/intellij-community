@@ -13,6 +13,7 @@ import com.intellij.psi.codeStyle.NameUtil
 import com.intellij.refactoring.RefactoringActionHandler
 import org.jetbrains.annotations.Nls
 import org.jetbrains.kotlin.idea.KotlinBundle
+import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.core.util.CodeInsightUtils
 import org.jetbrains.kotlin.idea.refactoring.getExtractionContainers
 import org.jetbrains.kotlin.idea.refactoring.introduce.extractionEngine.*
@@ -22,11 +23,10 @@ import org.jetbrains.kotlin.idea.refactoring.introduce.showErrorHint
 import org.jetbrains.kotlin.idea.refactoring.introduce.showErrorHintByKey
 import org.jetbrains.kotlin.idea.refactoring.introduce.validateExpressionElements
 import org.jetbrains.kotlin.idea.util.psi.patternMatching.toRange
-import org.jetbrains.kotlin.psi.KtBlockExpression
-import org.jetbrains.kotlin.psi.KtFile
-import org.jetbrains.kotlin.psi.KtProperty
-import org.jetbrains.kotlin.psi.KtStringTemplateExpression
+import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.plainContent
+import org.jetbrains.kotlin.resolve.constants.evaluate.ConstantExpressionEvaluator
+import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 class KotlinIntroduceConstantHandler(
@@ -104,17 +104,6 @@ class KotlinIntroduceConstantHandler(
         }
     }
 
-    private fun validateElements(elements: List<PsiElement>): String? {
-        val errorMessage = validateExpressionElements(elements)
-        return when {
-            errorMessage != null -> errorMessage
-            elements.any { it.isNotConst() } -> KotlinBundle.message(
-                "error.text.can.t.introduce.constant.for.this.expression.because.not.constant"
-            )
-            else -> null
-        }
-    }
-
     private fun getNameSuggestions(property: KtProperty): List<String> {
         val initializerValue = property.initializer.safeAs<KtStringTemplateExpression>()?.plainContent
         val identifierValue = property.identifyingElement?.text
@@ -146,6 +135,33 @@ class KotlinIntroduceConstantHandler(
             },
             continuation
         )
+    }
+
+    private fun validateElements(elements: List<PsiElement>): String? {
+        val errorMessage = validateExpressionElements(elements)
+        return when {
+            errorMessage != null -> errorMessage
+            elements.any {
+                // unchecked cast always succeeds because only expressions are selected in selectElements
+                (it as KtExpression).isNotConst()
+            } -> KotlinBundle.message(
+                "error.text.can.t.introduce.constant.for.this.expression.because.not.constant"
+            )
+            else -> null
+        }
+    }
+
+    private fun KtExpression.isNotConst(): Boolean {
+        when (this) {
+            // Handle these two expressions separately because in case of selecting part of a string
+            // a temp file will be created in which the analysis fails
+            is KtConstantExpression -> return false
+            is KtStringTemplateExpression -> return this.hasInterpolation()
+            else -> {
+                val constInfo = ConstantExpressionEvaluator.getConstant(this, analyze(BodyResolveMode.PARTIAL))
+                return constInfo == null || constInfo.usesNonConstValAsConstant || constInfo.usesVariableAsConstant
+            }
+        }
     }
 
     override fun invoke(project: Project, elements: Array<out PsiElement>, dataContext: DataContext?) {

@@ -3790,6 +3790,16 @@ public abstract class ExtractionTestGenerated extends AbstractExtractionTest {
                 runTest("testData/refactoring/introduceConstant/binaryExpression/integerUnaryPlus.kt");
             }
 
+            @TestMetadata("paranthesis.kt")
+            public void testParanthesis() throws Exception {
+                runTest("testData/refactoring/introduceConstant/binaryExpression/paranthesis.kt");
+            }
+
+            @TestMetadata("paranthesisBroken.kt")
+            public void testParanthesisBroken() throws Exception {
+                runTest("testData/refactoring/introduceConstant/binaryExpression/paranthesisBroken.kt");
+            }
+
             @TestMetadata("stringCompareTo.kt")
             public void testStringCompareTo() throws Exception {
                 runTest("testData/refactoring/introduceConstant/binaryExpression/stringCompareTo.kt");
@@ -3813,6 +3823,64 @@ public abstract class ExtractionTestGenerated extends AbstractExtractionTest {
             @TestMetadata("stringPlusPartNotConst.kt")
             public void testStringPlusPartNotConst() throws Exception {
                 runTest("testData/refactoring/introduceConstant/binaryExpression/stringPlusPartNotConst.kt");
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("testData/refactoring/introduceConstant/dotQualifiedExpression")
+        public static class DotQualifiedExpression extends AbstractExtractionTest {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doIntroduceConstantTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("and.kt")
+            public void testAnd() throws Exception {
+                runTest("testData/refactoring/introduceConstant/dotQualifiedExpression/and.kt");
+            }
+
+            @TestMetadata("inv.kt")
+            public void testInv() throws Exception {
+                runTest("testData/refactoring/introduceConstant/dotQualifiedExpression/inv.kt");
+            }
+
+            @TestMetadata("or.kt")
+            public void testOr() throws Exception {
+                runTest("testData/refactoring/introduceConstant/dotQualifiedExpression/or.kt");
+            }
+
+            @TestMetadata("plus.kt")
+            public void testPlus() throws Exception {
+                runTest("testData/refactoring/introduceConstant/dotQualifiedExpression/plus.kt");
+            }
+
+            @TestMetadata("shl.kt")
+            public void testShl() throws Exception {
+                runTest("testData/refactoring/introduceConstant/dotQualifiedExpression/shl.kt");
+            }
+
+            @TestMetadata("shr.kt")
+            public void testShr() throws Exception {
+                runTest("testData/refactoring/introduceConstant/dotQualifiedExpression/shr.kt");
+            }
+
+            @TestMetadata("toByte.kt")
+            public void testToByte() throws Exception {
+                runTest("testData/refactoring/introduceConstant/dotQualifiedExpression/toByte.kt");
+            }
+
+            @TestMetadata("toFloat.kt")
+            public void testToFloat() throws Exception {
+                runTest("testData/refactoring/introduceConstant/dotQualifiedExpression/toFloat.kt");
+            }
+
+            @TestMetadata("ushr.kt")
+            public void testUshr() throws Exception {
+                runTest("testData/refactoring/introduceConstant/dotQualifiedExpression/ushr.kt");
+            }
+
+            @TestMetadata("xor.kt")
+            public void testXor() throws Exception {
+                runTest("testData/refactoring/introduceConstant/dotQualifiedExpression/xor.kt");
             }
         }
 

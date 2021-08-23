@@ -1,9 +1,6 @@
 // EXTRACTION_TARGET: property with initializer
 val a = 1
 
-private const val i = 1 + 1
-
 fun foo(): Int {
-    val x = "1"+"1"
-    return i
+    return<selection>1.inv(1)</selection>
 }
