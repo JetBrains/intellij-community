@@ -5,10 +5,7 @@ import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.components.ComponentCategory
-import com.intellij.openapi.components.PersistentStateComponent
-import com.intellij.openapi.components.RoamingType
-import com.intellij.openapi.components.State
+import com.intellij.openapi.components.*
 import com.intellij.openapi.extensions.PluginDescriptor
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.serviceContainer.ComponentManagerImpl
@@ -89,12 +86,15 @@ class ListPersistentStateComponentsAction : AnAction() {
           var roamingType: String? = null
           state.storages.forEach {
             if (!it.deprecated) {
+              val storageRoamingType =
+                if (it.value == StoragePathMacros.NON_ROAMABLE_FILE) "DISABLED"
+                else it.roamingType.toString()
               if (roamingType == null) {
-                roamingType = it.roamingType.toString()
+                roamingType = storageRoamingType
               }
               else {
-                if (roamingType != it.roamingType.toString()) {
-                  roamingType = "Mixed"
+                if (roamingType != storageRoamingType) {
+                  roamingType = "MIXED"
                 }
               }
             }
