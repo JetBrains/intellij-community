@@ -98,7 +98,7 @@ open class ProjectManagerExImpl : ProjectManagerImpl() {
 
         // this null assertion is required to overcome bug in new version of KT compiler: KT-40034
         @Suppress("UNNECESSARY_NOT_NULL_ASSERTION")
-        if (checkExistingProjectOnOpen(projectToClose!!, options.callback, projectStoreBaseDir, options.projectName, this)) {
+        if (checkExistingProjectOnOpen(projectToClose!!, options.callback, projectStoreBaseDir, options.projectName)) {
           return CompletableFuture.completedFuture(null)
         }
       }
@@ -294,6 +294,69 @@ open class ProjectManagerExImpl : ProjectManagerImpl() {
   }
 
   protected open fun isRunStartUpActivitiesEnabled(project: Project): Boolean = true
+
+  private fun checkExistingProjectOnOpen(projectToClose: Project,
+                                         callback: ProjectOpenedCallback?,
+                                         projectDir: Path?,
+                                         projectName: String?): Boolean {
+    val settings = GeneralSettings.getInstance()
+    val isValidProject = projectDir != null && ProjectUtil.isValidProjectPath(projectDir)
+    var result = false
+
+    // modality per thread, it means that we cannot use invokeLater, because after getting result from EDT, we MUST continue execution
+    // in ORIGINAL thread
+    ApplicationManager.getApplication().invokeAndWait task@{
+      if (projectDir != null && ProjectAttachProcessor.canAttachToProject() &&
+          (!isValidProject || settings.confirmOpenNewProject == GeneralSettings.OPEN_PROJECT_ASK)) {
+        val exitCode = ProjectUtil.confirmOpenOrAttachProject()
+        if (exitCode == -1) {
+          result = true
+          return@task
+        }
+        else if (exitCode == GeneralSettings.OPEN_PROJECT_SAME_WINDOW) {
+          if (!closeAndDispose(projectToClose)) {
+            result = true
+            return@task
+          }
+        }
+        else if (exitCode == GeneralSettings.OPEN_PROJECT_SAME_WINDOW_ATTACH) {
+          if (PlatformProjectOpenProcessor.attachToProject(projectToClose, projectDir, callback)) {
+            result = true
+            return@task
+          }
+        }
+        // process all pending events that can interrupt focus flow
+        // todo this can be removed after taming the focus beast
+        IdeEventQueue.getInstance().flushQueue()
+      }
+      else {
+        val mode = GeneralSettings.getInstance().confirmOpenNewProject
+        if (mode == GeneralSettings.OPEN_PROJECT_SAME_WINDOW_ATTACH) {
+          if (projectDir != null && PlatformProjectOpenProcessor.attachToProject(projectToClose, projectDir, callback)) {
+            result = true
+            return@task
+          }
+        }
+
+        val projectNameValue = projectName ?: projectDir?.fileName?.toString() ?: projectDir?.toString()
+        val exitCode = ProjectUtil.confirmOpenNewProject(false, projectNameValue)
+        if (exitCode == GeneralSettings.OPEN_PROJECT_SAME_WINDOW) {
+          if (!closeAndDispose(projectToClose)) {
+            result = true
+            return@task
+          }
+        }
+        else if (exitCode != GeneralSettings.OPEN_PROJECT_NEW_WINDOW) {
+          // not in a new window
+          result = true
+          return@task
+        }
+      }
+
+      result = false
+    }
+    return result
+  }
 }
 
 @NlsSafe
@@ -306,70 +369,6 @@ private fun message(e: Throwable): String {
   message = e.toString()
   val causeMessage = message(e.cause ?: return message)
   return "$message (cause: $causeMessage)"
-}
-
-private fun checkExistingProjectOnOpen(projectToClose: Project,
-                                       callback: ProjectOpenedCallback?,
-                                       projectDir: Path?,
-                                       projectName: String?,
-                                       projectManager: ProjectManagerExImpl): Boolean {
-  val settings = GeneralSettings.getInstance()
-  val isValidProject = projectDir != null && ProjectUtil.isValidProjectPath(projectDir)
-  var result = false
-
-  // modality per thread, it means that we cannot use invokeLater, because after getting result from EDT, we MUST continue execution
-  // in ORIGINAL thread
-  ApplicationManager.getApplication().invokeAndWait task@{
-    if (projectDir != null && ProjectAttachProcessor.canAttachToProject() &&
-        (!isValidProject || settings.confirmOpenNewProject == GeneralSettings.OPEN_PROJECT_ASK)) {
-      val exitCode = ProjectUtil.confirmOpenOrAttachProject()
-      if (exitCode == -1) {
-        result = true
-        return@task
-      }
-      else if (exitCode == GeneralSettings.OPEN_PROJECT_SAME_WINDOW) {
-        if (!projectManager.closeAndDispose(projectToClose)) {
-          result = true
-          return@task
-        }
-      }
-      else if (exitCode == GeneralSettings.OPEN_PROJECT_SAME_WINDOW_ATTACH) {
-        if (PlatformProjectOpenProcessor.attachToProject(projectToClose, projectDir, callback)) {
-          result = true
-          return@task
-        }
-      }
-      // process all pending events that can interrupt focus flow
-      // todo this can be removed after taming the focus beast
-      IdeEventQueue.getInstance().flushQueue()
-    }
-    else {
-      val mode = GeneralSettings.getInstance().confirmOpenNewProject
-      if (mode == GeneralSettings.OPEN_PROJECT_SAME_WINDOW_ATTACH) {
-        if (projectDir != null && PlatformProjectOpenProcessor.attachToProject(projectToClose, projectDir, callback)) {
-          result = true
-          return@task
-        }
-      }
-
-      val projectNameValue = projectName ?: projectDir?.fileName?.toString() ?: projectDir?.toString()
-      val exitCode = ProjectUtil.confirmOpenNewProject(false, projectNameValue)
-      if (exitCode == GeneralSettings.OPEN_PROJECT_SAME_WINDOW) {
-        if (!projectManager.closeAndDispose(projectToClose)) {
-          result = true
-          return@task
-        }
-      }
-      else if (exitCode != GeneralSettings.OPEN_PROJECT_NEW_WINDOW) {
-        // not in a new window
-        result = true
-        return@task
-      }
-    }
-
-    result = false
-  }
-  return result
 }
 
 private fun openProject(project: Project, indicator: ProgressIndicator?, runStartUpActivities: Boolean): CompletableFuture<*> {
