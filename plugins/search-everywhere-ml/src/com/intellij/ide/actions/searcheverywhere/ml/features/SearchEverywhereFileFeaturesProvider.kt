@@ -226,30 +226,18 @@ internal class SearchEverywhereFileFeaturesProvider : SearchEverywhereElementFea
       return null
     }
 
-    var distance = 0
+    val maxDistance = openedFilePackage.size + foundFilePackage.size
+    var common = 0
     for ((index, value) in openedFilePackage.withIndex()) {
-      if (foundFilePackage.size == index) {
-        // found file package is a parent of the opened file's package
-        distance = openedFilePackage.size - foundFilePackage.size
+      if (foundFilePackage.size == index || foundFilePackage[index] != value) {
+        // Stop counting if the found file package is a parent or it no longer matches the opened file package
         break
       }
 
-      if (foundFilePackage[index] == value) {
-        // As long as these are the same, the distance remains 0
-        continue
-      }
-      else {
-        distance = (foundFilePackage.size - index) + (openedFilePackage.size - index)
-        break
-      }
+      common++
     }
 
-    // Check if the found file package is a child of the opened file package
-    if (distance == 0 && foundFilePackage.size > openedFilePackage.size) {
-      distance = foundFilePackage.size - openedFilePackage.size
-    }
-
-    return distance
+    return maxDistance - 2 * common
   }
 
   private data class Cache(val fileTypeStats: Map<String, FileTypeUsageSummary>, val openedFile: VirtualFile?)
