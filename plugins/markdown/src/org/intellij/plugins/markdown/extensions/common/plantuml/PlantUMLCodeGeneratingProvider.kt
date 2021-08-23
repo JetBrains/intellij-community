@@ -16,7 +16,8 @@ import java.net.URLClassLoader
 
 internal class PlantUMLCodeGeneratingProvider(collector: MarkdownCodeFencePluginCacheCollector? = null)
   : MarkdownCodeFenceCacheableProvider(collector), MarkdownExtensionWithExternalFiles {
-  override val downloadLink: String = Registry.stringValue("markdown.plantuml.download.link")
+  override val downloadLink: String
+    get() = Registry.stringValue("markdown.plantuml.download.link")
 
   override val downloadFilename: String = "plantuml.jar"
 
