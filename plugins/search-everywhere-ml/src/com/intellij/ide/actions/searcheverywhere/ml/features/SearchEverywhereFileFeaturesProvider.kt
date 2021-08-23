@@ -99,9 +99,10 @@ internal class SearchEverywhereFileFeaturesProvider : SearchEverywhereElementFea
       IS_FAVORITE_DATA_KEY to isFavorite(item),
       IS_DIRECTORY_DATA_KEY to item.isDirectory,
       PRIORITY_DATA_KEY to elementPriority,
-      IS_SAME_MODULE_DATA_KEY to isSameModuleAsOpenedFile(item, cache.openedFile),
-      PACKAGE_DISTANCE_DATA_KEY to calculatePackageDistance(item, cache.openedFile),
     )
+
+    data.putIfValueNotNull(IS_SAME_MODULE_DATA_KEY, isSameModuleAsOpenedFile(item, cache.openedFile))
+    data.putIfValueNotNull(PACKAGE_DISTANCE_DATA_KEY, calculatePackageDistance(item, cache.openedFile))
 
     if (item.isDirectory) {
       // Rest of the features are only applicable to files, not directories
@@ -180,9 +181,9 @@ internal class SearchEverywhereFileFeaturesProvider : SearchEverywhereElementFea
     return roundDouble(probability)
   }
 
-  private fun isSameModuleAsOpenedFile(item: PsiFileSystemItem, openedFile: VirtualFile?): Boolean {
+  private fun isSameModuleAsOpenedFile(item: PsiFileSystemItem, openedFile: VirtualFile?): Boolean? {
     if (openedFile == null) {
-      return false
+      return null
     }
 
     val project = item.project
@@ -193,7 +194,7 @@ internal class SearchEverywhereFileFeaturesProvider : SearchEverywhereElementFea
     }
 
     if (openedFileModule == null || itemModule == null) {
-      return false
+      return null
     }
 
     return openedFileModule == itemModule
@@ -206,9 +207,9 @@ internal class SearchEverywhereFileFeaturesProvider : SearchEverywhereElementFea
    * for instance the distance to a parent or a child of a package is equal to 1,
    * and the distance from package a.b.c.d to package a.b.x.y is equal to 4.
    */
-  private fun calculatePackageDistance(item: PsiFileSystemItem, openedFile: VirtualFile?): Int {
+  private fun calculatePackageDistance(item: PsiFileSystemItem, openedFile: VirtualFile?): Int? {
     if (openedFile == null) {
-      return -1
+      return null
     }
 
     val project = item.project
@@ -222,7 +223,7 @@ internal class SearchEverywhereFileFeaturesProvider : SearchEverywhereElementFea
     }
 
     if (openedFilePackage == null || foundFilePackage == null) {
-      return -1
+      return null
     }
 
     var distance = 0
@@ -252,4 +253,13 @@ internal class SearchEverywhereFileFeaturesProvider : SearchEverywhereElementFea
   }
 
   private data class Cache(val fileTypeStats: Map<String, FileTypeUsageSummary>, val openedFile: VirtualFile?)
+}
+
+/**
+ * Associates the specified key with the value, only if the value is not null.
+ */
+private fun <K, V> MutableMap<K, V>.putIfValueNotNull(key: K, value: V?) {
+  value?.let {
+    this[key] = it
+  }
 }
