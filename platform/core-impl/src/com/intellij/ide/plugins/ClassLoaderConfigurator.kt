@@ -88,15 +88,7 @@ class ClassLoaderConfigurator(
     var dependencies = pluginSet.moduleToDirectDependencies.get(module) ?: EMPTY_DESCRIPTOR_ARRAY
     if (dependencies.size > 1) {
       dependencies = dependencies.clone()
-      // java sort is stable, so, it is safe to not use topological comparator here
-      Arrays.sort(dependencies, kotlin.Comparator { o1, o2 ->
-        // parent plugin must be after content module because otherwise will be an assert about requesting class from the main classloader
-        @Suppress("UsePluginIdEquals")
-        if (o1.pluginId === o2.pluginId) {
-          return@Comparator (if (o1.moduleName == null) 1 else 0) - (if (o2.moduleName == null) 1 else 0)
-        }
-        return@Comparator 0
-      })
+      sortDependenciesInPlace(dependencies)
     }
     if (isMain) {
       if (module.useCoreClassLoader || module.pluginId == PluginManagerCore.CORE_ID) {
@@ -431,4 +423,14 @@ private fun configureUsingIdeaClassloader(classPath: List<Path>, descriptor: Ide
   catch (e: Throwable) {
     throw IllegalStateException("An unexpected core classloader: $loader", e)
   }
+}
+
+fun sortDependenciesInPlace(dependencies: Array<IdeaPluginDescriptorImpl>) {
+  fun getWeight(module: IdeaPluginDescriptorImpl) = if (module.moduleName == null) 1 else 0
+
+  // java sort is stable, so, it is safe to not use topological comparator here
+  Arrays.sort(dependencies, kotlin.Comparator { o1, o2 ->
+    // parent plugin must be after content module because otherwise will be an assert about requesting class from the main classloader
+    getWeight(o1) - getWeight(o2)
+  })
 }

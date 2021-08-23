@@ -4,6 +4,7 @@ package com.intellij.ide.plugins
 
 import com.intellij.ide.plugins.cl.PluginAwareClassLoader
 import com.intellij.ide.plugins.cl.PluginClassLoader
+import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.util.BuildNumber
 import com.intellij.testFramework.assertions.Assertions.assertThat
 import com.intellij.testFramework.assertions.Assertions.assertThatThrownBy
@@ -23,6 +24,20 @@ internal class ClassLoaderConfiguratorTest {
   @Rule @JvmField val name = TestName()
 
   @Rule @JvmField val inMemoryFs = InMemoryFsRule()
+
+  @Test
+  fun `plugin must be after child`() {
+    val pluginId = PluginId.getId("org.jetbrains.kotlin")
+    val emptyPath = Path.of("")
+    val plugins = arrayOf(
+      IdeaPluginDescriptorImpl(RawPluginDescriptor(), emptyPath, isBundled = false, id = pluginId, moduleName = null),
+      IdeaPluginDescriptorImpl(RawPluginDescriptor(), emptyPath, isBundled = false, id = PluginId.getId("org.jetbrains.plugins.gradle"), moduleName = null),
+      IdeaPluginDescriptorImpl(RawPluginDescriptor(), emptyPath, isBundled = false, id = pluginId, moduleName = "kotlin.gradle.gradle-java"),
+      IdeaPluginDescriptorImpl(RawPluginDescriptor(), emptyPath, isBundled = false, id = pluginId, moduleName = "kotlin.compiler-plugins.annotation-based-compiler-support.gradle"),
+    )
+    sortDependenciesInPlace(plugins)
+    assertThat(plugins.last().moduleName).isNull()
+  }
 
   @Test
   fun packageForOptionalMustBeSpecified() {
