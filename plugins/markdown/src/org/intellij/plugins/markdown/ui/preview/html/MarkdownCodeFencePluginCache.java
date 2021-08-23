@@ -8,9 +8,10 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileEvent;
-import com.intellij.openapi.vfs.VirtualFileListener;
 import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.openapi.vfs.newvfs.BulkFileListener;
+import com.intellij.openapi.vfs.newvfs.events.VFileDeleteEvent;
+import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
 import com.intellij.util.Alarm;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.containers.ContainerUtil;
@@ -42,14 +43,21 @@ public final class MarkdownCodeFencePluginCache implements Disposable {
       scheduleClearCache();
     }
 
-    VirtualFileManager.getInstance().addVirtualFileListener(new VirtualFileListener() {
+    final var listener = new BulkFileListener() {
       @Override
-      public void fileDeleted(@NotNull VirtualFileEvent event) {
-        if (FileTypeRegistry.getInstance().isFileOfType(event.getFile(), MarkdownFileType.INSTANCE)) {
-          myAdditionalCacheToDelete.addAll(processSourceFileToDelete(event.getFile(), ContainerUtil.emptyList()));
+      public void after(@NotNull List<? extends @NotNull VFileEvent> events) {
+        final var fileTypeRegistry = FileTypeRegistry.getInstance();
+        for (final var event: events) {
+          if (event instanceof VFileDeleteEvent) {
+            final var file = event.getFile();
+            if (file != null && fileTypeRegistry.isFileOfType(file, MarkdownFileType.INSTANCE)) {
+              myAdditionalCacheToDelete.addAll(processSourceFileToDelete(file, ContainerUtil.emptyList()));
+            }
+          }
         }
       }
-    }, this);
+    };
+    ApplicationManager.getApplication().getMessageBus().connect(this).subscribe(VirtualFileManager.VFS_CHANGES, listener);
   }
 
   private static List<File> getPluginSystemPaths() {
