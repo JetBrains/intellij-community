@@ -340,6 +340,9 @@ public class MethodReferenceResolver implements ResolveCache.PolyVariantContextR
               return null;
             }
           }
+        } else if (hasReceiver && varargs &&
+                   isCorrectAssignment(parameterTypes, functionalInterfaceParamTypes, interfaceMethod, true, conflict, 1)) {
+          return false;
         }
         return true;
       }
