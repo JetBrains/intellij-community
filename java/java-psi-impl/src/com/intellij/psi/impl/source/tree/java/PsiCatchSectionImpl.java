@@ -131,7 +131,10 @@ public class PsiCatchSectionImpl extends CompositePsiElement implements PsiCatch
   private static List<PsiType> computePreciseCatchTypes(PsiType declaredType, List<PsiType> uncaughtTypes) {
     List<PsiType> types = new SmartList<>();
     for (PsiType type : uncaughtTypes) {
-      if (declaredType.isAssignableFrom(type) ||
+      if (type.isAssignableFrom(declaredType)) {
+        types.add(declaredType);
+      }
+      else if (declaredType.isAssignableFrom(type) ||
           // JLS 11.2.3 "Exception Checking":
           // "It is a compile-time error if a catch clause can catch checked exception class E1 and it is not the case
           // that the try block corresponding to the catch clause can throw a checked exception class that is
@@ -142,8 +145,7 @@ public class PsiCatchSectionImpl extends CompositePsiElement implements PsiCatch
       }
     }
     // ... the throw statement throws precisely the set of exception types T.
-    if (!types.isEmpty()) return Collections.unmodifiableList(types);
-    return Collections.singletonList(declaredType);
+    return types;
   }
 
   private static Collection<PsiClassType> getThrownTypes(@NotNull PsiTryStatement statement) {

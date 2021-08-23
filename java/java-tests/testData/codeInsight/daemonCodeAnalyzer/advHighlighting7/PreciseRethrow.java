@@ -277,4 +277,22 @@ class C {
     }
     catch (E ignored) {}
   }
+
+  private void m17() throws InterruptedException, java.io.FileNotFoundException {
+    try {
+      Thread.sleep(1);
+      throw new java.io.FileNotFoundException();
+    } catch (InterruptedException | java.io.IOException ex) {
+      throw ex;
+    }
+  }
+
+  private void m18() throws InterruptedException {
+    try {
+      Thread.sleep(1L);
+      // no IOException thrown
+    } catch (<error descr="Exception 'java.io.IOException' is never thrown in the corresponding try block">java.io.IOException ex</error>) {
+      throw ex;
+    }
+  }
 }
