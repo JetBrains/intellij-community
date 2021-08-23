@@ -158,7 +158,7 @@ class TextContentImpl implements TextContent {
 
   @Override
   public @NotNull PsiElement findPsiElementAt(int textOffset) {
-    return Objects.requireNonNull(containingFile().findElementAt(textOffsetToFile(textOffset)));
+    return Objects.requireNonNull(getContainingFile().findElementAt(textOffsetToFile(textOffset)));
   }
 
   @Override
@@ -169,7 +169,8 @@ class TextContentImpl implements TextContent {
       .toList();
   }
 
-  private PsiFile containingFile() {
+  @Override
+  public @NotNull PsiFile getContainingFile() {
     for (TokenInfo token : tokens) {
       if (token instanceof PsiToken) {
         return ((PsiToken) token).psi.getContainingFile();

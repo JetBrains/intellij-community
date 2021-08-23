@@ -102,10 +102,10 @@ abstract class GradleJdkResolutionTestCase : ExternalSystemJdkUtilTestCase() {
     val testJdk = TestSdkGenerator.createNextSdk(javaVersionString)
     withRegisteredSdk(testJdk, isProjectSdk = true) {
       val actualGradleVersion = suggestGradleVersion(project)
-      assertEquals("Suggested incorrect grade version for $testJdk", gradleVersion, actualGradleVersion)
+      assertEquals("Suggested incorrect Gradle version for $testJdk", gradleVersion, actualGradleVersion)
       if (actualGradleVersion == null) return@withRegisteredSdk
       val isSupported = isSupported(actualGradleVersion, javaVersionString)
-      assertTrue("Suggested incompatible gradle version $actualGradleVersion for $testJdk", isSupported)
+      assertTrue("Suggested incompatible Gradle version $actualGradleVersion for $testJdk", isSupported)
     }
   }
 

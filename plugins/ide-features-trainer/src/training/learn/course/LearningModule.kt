@@ -11,7 +11,7 @@ class LearningModule(@Nls name: String,
                      primaryLanguage: LangSupport,
                      moduleType: LessonType,
                      private val sampleFileName: String? = null,
-                     initLessons: () -> List<KLesson>): IftModule(name, description, primaryLanguage, moduleType, initLessons) {
+                     initLessons: () -> List<KLesson>) : IftModule(name, description, primaryLanguage, moduleType, initLessons) {
 
   override val sanitizedName: String
     get() = sampleFileName ?: error("Module $name for ${primaryLanguage?.primaryLanguage} does not define its default name for samples.")

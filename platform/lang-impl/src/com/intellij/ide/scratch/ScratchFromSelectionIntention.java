@@ -3,7 +3,6 @@ package com.intellij.ide.scratch;
 
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.lang.LangBundle;
-import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
@@ -39,10 +38,6 @@ public final class ScratchFromSelectionIntention implements IntentionAction {
     if (editor == null || EditorUtil.getSelectionInAnyMode(editor).isEmpty()) return;
     ScratchFileCreationHelper.Context context = ScratchFileActions.createContext(
       project, file, editor, ((EditorEx)editor).getDataContext());
-    if (context.language != null) {
-      ScratchFileCreationHelper helper = ScratchFileCreationHelper.EXTENSION.forLanguage(context.language);
-      helper.prepareText(project, context, DataContext.EMPTY_CONTEXT);
-    }
     doCreateNewScratch(project, context);
   }
 

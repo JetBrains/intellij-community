@@ -47,6 +47,29 @@ public class Iterators {
     return acc;
   }
 
+  public interface Provider<T> {
+    T get();
+  }
+  
+  public static <T> Iterable<T> lazy(final Provider<? extends Iterable<T>> provider) {
+    return new Iterable<T>() {
+      private Iterable<T> myDelegate = null;
+      @NotNull
+      @Override
+      public Iterator<T> iterator() {
+        return getDelegate().iterator();
+      }
+
+      private Iterable<T> getDelegate() {
+        Iterable<T> delegate = myDelegate;
+        if (delegate == null) {
+          myDelegate = delegate = provider.get();
+        }
+        return delegate;
+      }
+    };
+  }
+
   @SuppressWarnings("unchecked")
   public static <T> Iterable<T> flat(final Iterable<? extends T> first, final Iterable<? extends T> second) {
     if (isEmptyCollection(first)) {

@@ -4,8 +4,10 @@ package com.intellij.java.codeInspection;
 import com.intellij.codeInsight.daemon.quickFix.LightQuickFixParameterizedTestCase;
 import com.intellij.codeInspection.EnhancedSwitchMigrationInspection;
 import com.intellij.codeInspection.LocalInspectionTool;
-import com.intellij.pom.java.LanguageLevel;
+import com.intellij.testFramework.LightProjectDescriptor;
 import org.jetbrains.annotations.NotNull;
+
+import static com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase.JAVA_17;
 
 public class EnhancedSwitchMigrationInspectionTest extends LightQuickFixParameterizedTestCase {
   @Override
@@ -21,7 +23,7 @@ public class EnhancedSwitchMigrationInspectionTest extends LightQuickFixParamete
   }
 
   @Override
-  protected LanguageLevel getLanguageLevel() {
-    return LanguageLevel.JDK_14;
+  protected @NotNull LightProjectDescriptor getProjectDescriptor() {
+    return JAVA_17;
   }
 }

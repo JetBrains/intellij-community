@@ -852,6 +852,51 @@ public class PyEditingTest extends PyTestCase {
     doTypingTest('\n');
   }
 
+  // PY-49080
+  public void testNoBackslashOnEnterInGroupPattern() {
+    doTypingTest('\n');
+  }
+
+  // PY-49080
+  public void testNoBackslashOnEnterInClassPattern() {
+    doTypingTest('\n');
+  }
+
+  // PY-49080
+  public void testNoBackslashOnEnterInSequencePattern() {
+    doTypingTest('\n');
+  }
+
+  // PY-49080
+  public void testNoBackslashOnEnterInMappingPattern() {
+    doTypingTest('\n');
+  }
+
+  // PY-49080
+  public void testNoBackslashOnEnterInStringLiteralInsideGroupPattern() {
+    doTypingTest('\n');
+  }
+
+  // PY-49080
+  public void testNoBackslashOnEnterInStringLiteralInsideClassPattern() {
+    doTypingTest('\n');
+  }
+
+  // PY-49080
+  public void testNoBackslashOnEnterInStringLiteralInsideSequencePattern() {
+    doTypingTest('\n');
+  }
+
+  // PY-49080
+  public void testNoBackslashOnEnterInStringLiteralInsideMappingPattern() {
+    doTypingTest('\n');
+  }
+
+  // PY-49080
+  public void testBackslashOnEnterInTopLevelStringLiteralPattern() {
+    doTypingTest('\n');
+  }
+
   @NotNull
   private PyCodeStyleSettings getPythonCodeStyleSettings() {
     return getCodeStyleSettings().getCustomSettings(PyCodeStyleSettings.class);

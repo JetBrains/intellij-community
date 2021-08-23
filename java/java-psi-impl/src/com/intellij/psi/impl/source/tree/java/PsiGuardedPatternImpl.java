@@ -4,6 +4,7 @@ package com.intellij.psi.impl.source.tree.java;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.Constants;
 import com.intellij.psi.impl.source.tree.CompositePsiElement;
+import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -39,5 +40,17 @@ public class PsiGuardedPatternImpl extends CompositePsiElement implements PsiGua
   public @Nullable PsiExpression getGuardingExpression() {
     return PsiTreeUtil.getChildOfType(this, PsiExpression.class);
   }
-}
 
+  @Override
+  public boolean processDeclarations(@NotNull PsiScopeProcessor processor,
+                                     @NotNull ResolveState state,
+                                     PsiElement lastParent,
+                                     @NotNull PsiElement place) {
+    final PsiPrimaryPattern patternVariable = getPrimaryPattern();
+    if (!patternVariable.processDeclarations(processor, state, null, place)) return false;
+
+    final PsiExpression expression = getGuardingExpression();
+    if (expression == null) return true;
+    return expression.processDeclarations(processor, state, lastParent, place);
+  }
+}

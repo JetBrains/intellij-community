@@ -206,177 +206,212 @@
 
     <intentionAction>
       <className>com.jetbrains.python.codeInsight.intentions.PyConvertMethodToPropertyIntention</className>
-      <category>Python</category>
+      <bundleName>messages.PyPsiBundle</bundleName>
+      <categoryKey>INTN.category.python</categoryKey>
     </intentionAction>
 
     <intentionAction>
       <className>com.jetbrains.python.codeInsight.intentions.ImportToImportFromIntention</className>
-      <category>Python</category>
+      <bundleName>messages.PyPsiBundle</bundleName>
+      <categoryKey>INTN.category.python</categoryKey>
     </intentionAction>
 
     <intentionAction>
       <className>com.jetbrains.python.codeInsight.intentions.PyConvertStaticMethodToFunctionIntention</className>
-      <category>Python</category>
+      <bundleName>messages.PyPsiBundle</bundleName>
+      <categoryKey>INTN.category.python</categoryKey>
     </intentionAction>
 
     <intentionAction>
       <className>com.jetbrains.python.codeInsight.intentions.SpecifyTypeInDocstringIntention</className>
-      <category>Python</category>
+      <bundleName>messages.PyPsiBundle</bundleName>
+      <categoryKey>INTN.category.python</categoryKey>
     </intentionAction>
 
     <intentionAction>
       <className>com.jetbrains.python.codeInsight.intentions.SpecifyTypeInPy3AnnotationsIntention</className>
-      <category>Python</category>
+      <bundleName>messages.PyPsiBundle</bundleName>
+      <categoryKey>INTN.category.python</categoryKey>
     </intentionAction>
 
     <intentionAction>
       <className>com.jetbrains.python.codeInsight.intentions.PyAnnotateTypesIntention</className>
-      <category>Python</category>
+      <bundleName>messages.PyPsiBundle</bundleName>
+      <categoryKey>INTN.category.python</categoryKey>
     </intentionAction>
 
     <intentionAction>
       <className>com.jetbrains.python.codeInsight.intentions.TypeAssertionIntention</className>
-      <category>Python</category>
+      <bundleName>messages.PyPsiBundle</bundleName>
+      <categoryKey>INTN.category.python</categoryKey>
     </intentionAction>
 
     <intentionAction>
       <className>com.jetbrains.python.codeInsight.intentions.ImportFromToImportIntention</className>
-      <category>Python</category>
+      <bundleName>messages.PyPsiBundle</bundleName>
+      <categoryKey>INTN.category.python</categoryKey>
     </intentionAction>
 
     <intentionAction>
       <className>com.jetbrains.python.codeInsight.intentions.PyAbsoluteToRelativeImportIntention</className>
-      <category>Python</category>
+      <bundleName>messages.PyPsiBundle</bundleName>
+      <categoryKey>INTN.category.python</categoryKey>
     </intentionAction>
 
     <intentionAction>
       <className>com.jetbrains.python.codeInsight.intentions.PyRelativeToAbsoluteImportIntention</className>
-      <category>Python</category>
+      <bundleName>messages.PyPsiBundle</bundleName>
+      <categoryKey>INTN.category.python</categoryKey>
     </intentionAction>
 
     <intentionAction>
       <className>com.jetbrains.python.codeInsight.intentions.ImportToggleAliasIntention</className>
-      <category>Python</category>
+      <bundleName>messages.PyPsiBundle</bundleName>
+      <categoryKey>INTN.category.python</categoryKey>
     </intentionAction>
 
     <intentionAction>
       <className>com.jetbrains.python.codeInsight.intentions.PySplitIfIntention</className>
-      <category>Python</category>
+      <bundleName>messages.PyPsiBundle</bundleName>
+      <categoryKey>INTN.category.python</categoryKey>
     </intentionAction>
 
     <intentionAction>
       <className>com.jetbrains.python.codeInsight.intentions.PyNegateComparisonIntention</className>
-      <category>Python</category>
+      <bundleName>messages.PyPsiBundle</bundleName>
+      <categoryKey>INTN.category.python</categoryKey>
     </intentionAction>
 
     <intentionAction>
       <className>com.jetbrains.python.codeInsight.intentions.PyStringConcatenationToFormatIntention</className>
-      <category>Python</category>
+      <bundleName>messages.PyPsiBundle</bundleName>
+      <categoryKey>INTN.category.python</categoryKey>
     </intentionAction>
 
     <intentionAction>
       <className>com.jetbrains.python.codeInsight.intentions.ConvertFormatOperatorToMethodIntention</className>
-      <category>Python</category>
+      <bundleName>messages.PyPsiBundle</bundleName>
+      <categoryKey>INTN.category.python</categoryKey>
     </intentionAction>
 
     <intentionAction>
       <className>com.jetbrains.python.codeInsight.intentions.PyFlipComparisonIntention</className>
-      <category>Python</category>
+      <bundleName>messages.PyPsiBundle</bundleName>
+      <categoryKey>INTN.category.python</categoryKey>
     </intentionAction>
 
     <intentionAction>
       <className>com.jetbrains.python.codeInsight.intentions.PyDemorganIntention</className>
-      <category>Python</category>
+      <bundleName>messages.PyPsiBundle</bundleName>
+      <categoryKey>INTN.category.python</categoryKey>
     </intentionAction>
 
     <intentionAction>
       <className>com.jetbrains.python.codeInsight.intentions.ReplaceListComprehensionWithForIntention</className>
-      <category>Python</category>
+      <bundleName>messages.PyPsiBundle</bundleName>
+      <categoryKey>INTN.category.python</categoryKey>
     </intentionAction>
 
     <intentionAction>
       <className>com.jetbrains.python.codeInsight.intentions.PyJoinIfIntention</className>
-      <category>Python</category>
+      <bundleName>messages.PyPsiBundle</bundleName>
+      <categoryKey>INTN.category.python</categoryKey>
     </intentionAction>
 
     <intentionAction>
       <className>com.jetbrains.python.codeInsight.intentions.PyDictConstructorToLiteralFormIntention</className>
-      <category>Python</category>
+      <bundleName>messages.PyPsiBundle</bundleName>
+      <categoryKey>INTN.category.python</categoryKey>
     </intentionAction>
 
     <intentionAction>
       <className>com.jetbrains.python.codeInsight.intentions.PyDictLiteralFormToConstructorIntention</className>
-      <category>Python</category>
+      <bundleName>messages.PyPsiBundle</bundleName>
+      <categoryKey>INTN.category.python</categoryKey>
     </intentionAction>
 
     <intentionAction>
       <className>com.jetbrains.python.codeInsight.intentions.PyQuotedStringIntention</className>
-      <category>Python</category>
+      <bundleName>messages.PyPsiBundle</bundleName>
+      <categoryKey>INTN.category.python</categoryKey>
     </intentionAction>
 
     <intentionAction>
       <className>com.jetbrains.python.codeInsight.intentions.PyConvertLambdaToFunctionIntention</className>
-      <category>Python</category>
+      <bundleName>messages.PyPsiBundle</bundleName>
+      <categoryKey>INTN.category.python</categoryKey>
     </intentionAction>
 
     <intentionAction>
       <className>com.jetbrains.python.codeInsight.intentions.ConvertVariadicParamIntention</className>
-      <category>Python</category>
+      <bundleName>messages.PyPsiBundle</bundleName>
+      <categoryKey>INTN.category.python</categoryKey>
     </intentionAction>
 
     <intentionAction>
       <className>com.jetbrains.python.codeInsight.intentions.PyConvertTripleQuotedStringIntention</className>
-      <category>Python</category>
+      <bundleName>messages.PyPsiBundle</bundleName>
+      <categoryKey>INTN.category.python</categoryKey>
     </intentionAction>
 
     <intentionAction>
       <className>com.jetbrains.python.codeInsight.intentions.PyConvertLiteralToTupleIntention</className>
-      <category>Python</category>
+      <bundleName>messages.PyPsiBundle</bundleName>
+      <categoryKey>INTN.category.python</categoryKey>
     </intentionAction>
 
     <intentionAction>
       <className>com.jetbrains.python.codeInsight.intentions.PyConvertLiteralToListIntention</className>
-      <category>Python</category>
+      <bundleName>messages.PyPsiBundle</bundleName>
+      <categoryKey>INTN.category.python</categoryKey>
     </intentionAction>
 
     <intentionAction>
       <className>com.jetbrains.python.codeInsight.intentions.PyConvertLiteralToSetIntention</className>
-      <category>Python</category>
+      <bundleName>messages.PyPsiBundle</bundleName>
+      <categoryKey>INTN.category.python</categoryKey>
     </intentionAction>
 
     <intentionAction>
       <className>com.jetbrains.python.codeInsight.intentions.PyTransformConditionalExpressionIntention</className>
-      <category>Python</category>
+      <bundleName>messages.PyPsiBundle</bundleName>
+      <categoryKey>INTN.category.python</categoryKey>
     </intentionAction>
 
     <intentionAction>
       <className>com.jetbrains.python.codeInsight.intentions.PyGenerateDocstringIntention</className>
-      <category>Python</category>
+      <bundleName>messages.PyPsiBundle</bundleName>
+      <categoryKey>INTN.category.python</categoryKey>
     </intentionAction>
 
     <intentionAction>
       <className>com.jetbrains.python.codeInsight.intentions.PyYieldFromIntention</className>
-      <category>Python</category>
+      <bundleName>messages.PyPsiBundle</bundleName>
+      <categoryKey>INTN.category.python</categoryKey>
     </intentionAction>
 
     <intentionAction>
       <className>com.jetbrains.python.codeInsight.intentions.convertToFString.PyConvertToFStringIntention</className>
-      <category>Python</category>
+      <bundleName>messages.PyPsiBundle</bundleName>
+      <categoryKey>INTN.category.python</categoryKey>
     </intentionAction>
 
     <intentionAction>
       <className>com.jetbrains.python.codeInsight.intentions.PyConvertTypeCommentToVariableAnnotationIntention</className>
-      <category>Python</category>
+      <bundleName>messages.PyPsiBundle</bundleName>
+      <categoryKey>INTN.category.python</categoryKey>
     </intentionAction>
 
     <intentionAction>
       <className>com.jetbrains.python.codeInsight.intentions.PyAnnotateVariableTypeIntention</className>
-      <category>Python</category>
+      <bundleName>messages.PyPsiBundle</bundleName>
+      <categoryKey>INTN.category.python</categoryKey>
     </intentionAction>
 
     <intentionAction>
       <className>com.jetbrains.python.codeInsight.intentions.PyInvertIfConditionIntention</className>
-      <category>Python</category>
+      <bundleName>messages.PyPsiBundle</bundleName>
+      <categoryKey>INTN.category.python</categoryKey>
     </intentionAction>
     
     <registryKey defaultValue="false"

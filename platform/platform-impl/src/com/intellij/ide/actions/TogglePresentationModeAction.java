@@ -135,7 +135,7 @@ public final class TogglePresentationModeAction extends AnAction implements Dumb
         Object v = ourSavedValues.get(key);
         if (v instanceof Font) {
           Font font = (Font)v;
-          defaults.put(key, new FontUIResource(font.getName(), font.getStyle(), JBUIScale.scale(font.getSize())));
+          defaults.put(key, new FontUIResource(font.deriveFont(JBUIScale.scale(font.getSize2D()))));
         }
         else if (v instanceof Integer) {
           defaults.put(key, JBUIScale.scale(((Integer)v).intValue()));

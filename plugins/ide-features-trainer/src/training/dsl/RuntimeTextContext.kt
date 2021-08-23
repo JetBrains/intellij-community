@@ -4,4 +4,5 @@ package training.dsl
 @LearningDsl
 class RuntimeTextContext(base: TaskRuntimeContext) : TaskRuntimeContext(base) {
   var removeAfterDone: Boolean = false
+  var textProperties: TaskTextProperties? = null
 }

@@ -33,8 +33,6 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.awt.event.FocusEvent;
-import java.awt.event.FocusListener;
 import java.util.List;
 
 /**
@@ -67,17 +65,6 @@ public class BuildoutConfigurable implements Configurable, NonDefaultProjectConf
         updateFacetEnabled(enabled);
       }
     });
-    mySettingsPanel.addFocusListener(
-      new FocusListener() {
-        @Override
-        public void focusGained(FocusEvent focusEvent) {
-          switchNoticeText();
-        }
-
-        @Override
-        public void focusLost(FocusEvent focusEvent) { }
-      }
-    );
   }
 
   private void updateFacetEnabled(boolean enabled) {
@@ -98,7 +85,6 @@ public class BuildoutConfigurable implements Configurable, NonDefaultProjectConf
 
   @Override
   public JComponent createComponent() {
-    switchNoticeText();
     return myMainPanel;
   }
 
@@ -160,7 +146,6 @@ public class BuildoutConfigurable implements Configurable, NonDefaultProjectConf
     }
     else {
       myEnabledCheckbox.setEnabled(true);
-      switchNoticeText();
       final BuildoutFacet instance = BuildoutFacet.getInstance(myModule);
       if (instance != null) {
         boolean selected = ! StringUtil.isEmptyOrSpaces(instance.getConfiguration().getScriptName());
@@ -173,9 +158,5 @@ public class BuildoutConfigurable implements Configurable, NonDefaultProjectConf
         mySettingsPanel.setEnabled(false);
       }
     }
-  }
-
-  private void switchNoticeText() {
-    mySettingsPanel.showNoticeText(/*DjangoFacet.getInstance(myModule) != null*/ false);
   }
 }

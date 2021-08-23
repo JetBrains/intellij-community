@@ -15,7 +15,6 @@ import com.intellij.testFramework.*
 import com.intellij.util.io.systemIndependentPath
 import com.intellij.util.io.write
 import com.intellij.util.ref.GCWatcher
-import com.intellij.workspaceModel.ide.impl.legacyBridge.LegacyBridgeProjectLifecycleListener
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Fail.fail
 import org.junit.ClassRule
@@ -75,17 +74,11 @@ class EditorHistoryManagerTest {
   }
 
   private fun useRealFileEditorManager() {
-    val extensionsList = listOf(
-      object : ProjectServiceContainerCustomizer {
-        override fun serviceRegistered(project: Project) {
-          project.registerComponentImplementation(FileEditorManager::class.java, PsiAwareFileEditorManagerImpl::class.java, false)
-        }
-      },
-
-      // This extension point is necessary for workspace model initialization
-      LegacyBridgeProjectLifecycleListener()
-    )
-    ProjectServiceContainerCustomizer.getEp().maskAll(extensionsList, disposable.disposable, false)
+    ProjectServiceContainerCustomizer.getEp().maskAll(listOf(object : ProjectServiceContainerCustomizer {
+      override fun serviceRegistered(project: Project) {
+        project.registerComponentImplementation(FileEditorManager::class.java, PsiAwareFileEditorManagerImpl::class.java, false)
+      }
+    }), disposable.disposable, false)
   }
 }
 

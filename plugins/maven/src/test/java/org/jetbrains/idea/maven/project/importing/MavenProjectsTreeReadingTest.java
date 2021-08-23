@@ -2111,7 +2111,6 @@ public class MavenProjectsTreeReadingTest extends MavenProjectsTreeTestCase {
     finally {
       embeddersManager.releaseInTests();
     }
-
     assertUnorderedElementsAreEqual(project.getActivatedProfilesIds().getEnabledProfiles(),
                                     "projectProfileXml",
                                     "projectProfile",

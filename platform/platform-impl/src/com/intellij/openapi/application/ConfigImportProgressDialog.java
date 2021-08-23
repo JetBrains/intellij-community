@@ -1,8 +1,9 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.application;
 
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.progress.util.AbstractProgressIndicatorBase;
+import com.intellij.util.ui.GridBag;
 import com.intellij.util.ui.JBUI;
 
 import javax.swing.*;
@@ -17,14 +18,14 @@ public class ConfigImportProgressDialog extends JDialog {
   public ConfigImportProgressDialog() {
     super((Frame)null, IdeBundle.message("dialog.title.migrating.plugins"), true);
     JPanel panel = new JPanel();
-    panel.setLayout(new BoxLayout(panel, BoxLayout.PAGE_AXIS));
-    panel.add(new JLabel(IdeBundle.message("progress.text.migrating.plugins")));
-    panel.add(myProgressTextLabel);
-    myProgressBar.setAlignmentX(Component.CENTER_ALIGNMENT);
-    panel.add(myProgressBar);
+    GridBag gridBag = new GridBag();
+    panel.setLayout(new GridBagLayout());
+    panel.add(new JLabel(IdeBundle.message("progress.text.migrating.plugins")), gridBag.nextLine().anchor(GridBagConstraints.WEST));
+    panel.add(myProgressTextLabel, gridBag.nextLine().insetBottom(20));
+    myProgressBar.setPreferredSize(new Dimension(JBUI.scale(500), myProgressBar.getPreferredSize().height));
+    panel.add(myProgressBar, gridBag.nextLine().fillCell().insetBottom(20));
     JButton cancelButton = new JButton(IdeBundle.message("button.cancel.without.mnemonic"));
-    cancelButton.setAlignmentX(Component.CENTER_ALIGNMENT);
-    panel.add(cancelButton);
+    panel.add(cancelButton, gridBag.nextLine());
     panel.setBorder(JBUI.Borders.empty(10, 20));
     cancelButton.addActionListener((e) -> {
       myCanceled = true;
@@ -61,7 +62,10 @@ public class ConfigImportProgressDialog extends JDialog {
     }
   }
 
+  @SuppressWarnings("HardCodedStringLiteral")
   public static void main(String[] args) {
-    new ConfigImportProgressDialog().setVisible(true);
+    ConfigImportProgressDialog dialog = new ConfigImportProgressDialog();
+    dialog.getIndicator().setText2("Downloading plugin 'Scala'");
+    dialog.setVisible(true);
   }
 }

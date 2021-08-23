@@ -2,7 +2,9 @@
 package com.siyeh.ig.migration;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
+import com.intellij.testFramework.LightProjectDescriptor;
 import com.siyeh.ig.LightJavaInspectionTestCase;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class IfCanBeSwitchInspectionTest extends LightJavaInspectionTestCase {
@@ -11,15 +13,37 @@ public class IfCanBeSwitchInspectionTest extends LightJavaInspectionTestCase {
     doTest();
   }
 
+  public void testPatternIfCanBeSwitch() {
+    doTest();
+  }
+
+  public void testNullUnsafe(){ doUnsafeNullTest(); }
+
+  @NotNull IfCanBeSwitchInspection myInspection = new IfCanBeSwitchInspection();
+
+  @Override
+  protected @NotNull LightProjectDescriptor getProjectDescriptor() {
+    return JAVA_17;
+  }
+
   @Nullable
   @Override
   protected InspectionProfileEntry getInspection() {
-    final IfCanBeSwitchInspection inspection = new IfCanBeSwitchInspection();
-    inspection.suggestIntSwitches = true;
-    inspection.suggestEnumSwitches = true;
-    inspection.minimumBranches = 2;
-    inspection.setOnlySuggestNullSafe(true);
-    return inspection;
+    myInspection.suggestIntSwitches = true;
+    myInspection.suggestEnumSwitches = true;
+    myInspection.minimumBranches = 2;
+    myInspection.setOnlySuggestNullSafe(true);
+    return myInspection;
+  }
+
+  private void doUnsafeNullTest(){
+    boolean suggestOnlyNullSafe = myInspection.suggestEnumSwitches;
+    try {
+      myInspection.setOnlySuggestNullSafe(false);
+      doTest();
+    } finally {
+      myInspection.setOnlySuggestNullSafe(suggestOnlyNullSafe);
+    }
   }
 
   @Override

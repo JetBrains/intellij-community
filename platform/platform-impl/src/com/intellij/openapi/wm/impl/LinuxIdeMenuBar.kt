@@ -46,7 +46,7 @@ internal class LinuxIdeMenuBar : IdeMenuBar() {
       val globalMenuLinux = GlobalMenuLinux.create(frame) ?: return
       globalMenu = globalMenuLinux
       Disposer.register(myDisposable, globalMenuLinux)
-      updateMenuActions(true)
+      updateMenuActionsLazily(true)
     }
   }
 

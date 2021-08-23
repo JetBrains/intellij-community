@@ -17,10 +17,7 @@ internal class SearchEverywhereMLSearchSession(project: Project?, private val se
   private val sessionStartTime: Long = System.currentTimeMillis()
 
   // context features are calculated once per Search Everywhere session
-  private val cachedContextInfo: SearchEverywhereMLContextInfo by lazy {
-    val featuresProvider = SearchEverywhereContextFeaturesProvider()
-    return@lazy SearchEverywhereMLContextInfo(featuresProvider.getContextFeatures(project))
-  }
+  private val cachedContextInfo: SearchEverywhereMLContextInfo = SearchEverywhereMLContextInfo(project)
 
   // search state is updated on each typing, tab or setting change
   // element features & ML score are also re-calculated on each typing because some of them might change, e.g. matching degree
@@ -98,5 +95,12 @@ class SearchEverywhereMlItemIdProvider {
   fun getId(element: GotoActionModel.MatchedValue): Int {
     val key = if (element.value is GotoActionModel.ActionWrapper) element.value.action else element.value
     return itemToId.computeIfAbsent(key) { idCounter.getAndIncrement() }
+  }
+}
+
+internal class SearchEverywhereMLContextInfo(project: Project?) {
+  val features: Map<String, Any> by lazy {
+    val featuresProvider = SearchEverywhereContextFeaturesProvider()
+    return@lazy featuresProvider.getContextFeatures(project)
   }
 }

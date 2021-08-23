@@ -70,7 +70,7 @@ class TerminalOptionsProvider : PersistentStateComponent<TerminalOptionsProvider
     var myOverrideIdeShortcuts: Boolean = true
     var myShellIntegration: Boolean = true
     var myHighlightHyperlinks: Boolean = true
-    var useOptionAsMetaKey: Boolean = true
+    var useOptionAsMetaKey: Boolean = false
   }
 
   fun setCloseSessionOnLogout(closeSessionOnLogout: Boolean) {

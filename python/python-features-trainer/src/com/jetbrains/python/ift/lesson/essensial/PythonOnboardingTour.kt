@@ -6,6 +6,7 @@ import com.intellij.execution.ExecutionBundle
 import com.intellij.execution.RunManager
 import com.intellij.execution.ui.layout.impl.JBRunnerTabs
 import com.intellij.icons.AllIcons
+import com.intellij.ide.DataManager
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereManagerImpl
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereUI
 import com.intellij.ide.util.gotoByName.GotoActionModel
@@ -13,6 +14,8 @@ import com.intellij.idea.ActionsBundle
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.AnAction
+import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.actionSystem.ex.ComboBoxAction
 import com.intellij.openapi.actionSystem.impl.ActionButton
 import com.intellij.openapi.actionSystem.impl.ActionMenuItem
@@ -158,6 +161,7 @@ class PythonOnboardingTour :
     restorePopupPosition(project, SearchEverywhereManagerImpl.LOCATION_SETTINGS_KEY, backupPopupLocation)
     backupPopupLocation = null
     if (!lessonPassed) return
+    val dataContextPromise = DataManager.getInstance().dataContextFromFocusAsync
     invokeLater {
       val result = MessageDialogBuilder.yesNoCancel(PythonLessonsBundle.message("python.onboarding.finish.title"),
                                                     PythonLessonsBundle.message("python.onboarding.finish.text",
@@ -171,7 +175,12 @@ class PythonOnboardingTour :
         Messages.YES -> invokeLater {
           LessonManager.instance.stopLesson()
           val closeAction = ActionManager.getInstance().getAction("CloseProject") ?: error("No close project action found")
-          invokeActionForFocusContext(closeAction)
+          dataContextPromise.onSuccess { context ->
+            invokeLater {
+              val event = AnActionEvent.createFromAnAction(closeAction, null, ActionPlaces.LEARN_TOOLWINDOW, context)
+              ActionUtil.performActionDumbAwareWithCallbacks(closeAction, event)
+            }
+          }
         }
         Messages.NO -> invokeLater {
           LearningUiManager.resetModulesView()
@@ -298,7 +307,7 @@ class PythonOnboardingTour :
     task {
 
       triggerByPartOfComponent(highlightInside = true, usePulsation = true) { ui: ActionToolbarImpl ->
-        ui.takeIf { (ui.place == ActionPlaces.NAVIGATION_BAR_TOOLBAR || ui.place == ActionPlaces.MAIN_TOOLBAR) }?.let { toolbar ->
+        ui.takeIf { (ui.place == ActionPlaces.NAVIGATION_BAR_TOOLBAR || ui.place == ActionPlaces.MAIN_TOOLBAR) }?.let {
           val configurations = ui.components.find { it is JPanel && it.components.any { b -> b is ComboBoxAction.ComboBoxButton } }
           val stop = ui.components.find { it is ActionButton && it.action == ActionManager.getInstance().getAction("Stop") }
           if (configurations != null && stop != null) {
@@ -307,7 +316,8 @@ class PythonOnboardingTour :
             val width = stop.x + stop.width - x
             val height = stop.y + stop.height - y
             Rectangle(x, y, width, height)
-          } else null
+          }
+          else null
         }
       }
     }
@@ -450,11 +460,9 @@ class PythonOnboardingTour :
   }
 
   private fun TaskContext.proposeRestoreForInvalidText(needToType: String) {
-    var wasEmpty = false
     proposeRestore {
       checkExpectedStateOfEditor(previous.sample) {
-        if (it.isEmpty()) wasEmpty = true
-        wasEmpty && needToType.contains(it.replace(" ", ""))
+        needToType.contains(it.replace(" ", ""))
       }
     }
   }
@@ -498,7 +506,7 @@ class PythonOnboardingTour :
       restoreByUi(delayMillis = defaultRestoreDelay)
     }
 
-    fun returnTypeMessage(project: Project)=
+    fun returnTypeMessage(project: Project) =
       if (PythonLessonsUtil.isPython3Installed(project)) PyPsiBundle.message("INTN.specify.return.type.in.annotation")
       else PyPsiBundle.message("INTN.specify.return.type.in.docstring")
 
@@ -611,6 +619,7 @@ class PythonOnboardingTour :
       restoreState(restoreId = openLearnTaskId) {
         learningToolWindow(project)?.isVisible?.not() ?: true
       }
+      restoreIfModified(sample)
       proceedLink()
     }
     prepareRuntimeTask {

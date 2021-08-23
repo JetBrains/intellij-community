@@ -56,5 +56,3 @@ internal class SearchEverywhereMlSearchState(
 }
 
 internal data class SearchEverywhereMLItemInfo(val id: Int, val contributorId: String, val features: Map<String, Any>)
-
-internal data class SearchEverywhereMLContextInfo(val features: Map<String, Any>)

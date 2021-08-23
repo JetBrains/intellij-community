@@ -27,6 +27,11 @@ public class TextExtractionTest extends BasePlatformTestCase {
     assertEquals(prefix + "list [item".length(), extracted.textOffsetToFile("list item".length()));
   }
 
+  public void testMarkdownImage() {
+    TextContent extracted = extractText("a.md", "[Before ![AltText](http://www.google.com.au/images/nav_logo7.png) after](http://google.com.au/)", 3);
+    assertEquals("Before  after", extracted.toString());
+  }
+
   public void testMarkdownInlineCode() {
     TextContent extracted = extractText("a.md", "you can use a number of predefined fields (e.g. `EventFields.InputEvent`)", 0);
     assertEquals("you can use a number of predefined fields (e.g. |)", TextContentTest.unknownOffsets(extracted));

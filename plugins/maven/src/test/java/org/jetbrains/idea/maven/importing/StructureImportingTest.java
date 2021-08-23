@@ -17,7 +17,6 @@ package org.jetbrains.idea.maven.importing;
 
 import com.intellij.compiler.CompilerConfiguration;
 import com.intellij.compiler.impl.javaCompiler.javac.JavacConfiguration;
-import com.intellij.idea.Bombed;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.module.LanguageLevelUtil;
 import com.intellij.openapi.module.Module;
@@ -30,7 +29,8 @@ import org.jetbrains.idea.maven.project.MavenProject;
 import org.junit.Test;
 
 import java.io.File;
-import java.util.Calendar;
+import java.io.IOException;
+import java.util.Collections;
 import java.util.List;
 
 public class StructureImportingTest extends MavenMultiVersionImportingTestCase {
@@ -1139,7 +1139,6 @@ public class StructureImportingTest extends MavenMultiVersionImportingTestCase {
     assertModules("project", "m");
   }
 
-  @Bombed(user = "Vladislav.Soroka", year = 2020, month = Calendar.APRIL, day = 1, description = "temporary disabled")
   @Test
   public void testFileProfileActivationInParentPom() throws Exception {
     createProjectPom("<groupId>test</groupId>" +
@@ -1289,5 +1288,111 @@ public class StructureImportingTest extends MavenMultiVersionImportingTestCase {
                   "<version>1</version>");
 
     assertNotNull(myProjectRoot.findChild("foo"));
+  }
+
+  @Test
+  public void  testErrorImportArtifactVersionCannotBeEmpty() {
+    assumeVersionMoreThan("3.0.5");
+    createProjectPom("<groupId>test</groupId>\n" +
+                     "  <artifactId>parent</artifactId>\n" +
+                     "  <packaging>pom</packaging>\n" +
+                     "  <version>1</version>\n" +
+                     "  <modules>\n" +
+                     "   <module>m1</module>\n" +
+                     "  </modules>\n" +
+                     "  <properties>\n" +
+                     "   <junit.group.id>junit</junit.group.id>\n" +
+                     "   <junit.artifact.id>junit</junit.artifact.id>\n" +
+                     "  </properties>\n" +
+                     "  <profiles>\n" +
+                     "    <profile>\n" +
+                     "      <id>profile-test</id>\n" +
+                     "      <dependencies>\n" +
+                     "        <dependency>\n" +
+                     "          <groupId>${junit.group.id}</groupId>\n" +
+                     "          <artifactId>${junit.artifact.id}</artifactId>\n" +
+                     "        </dependency>\n" +
+                     "      </dependencies>\n" +
+                     "    </profile>\n" +
+                     "  </profiles>\n" +
+                     "  \n" +
+                     "  <dependencyManagement>\n" +
+                     "    <dependencies>\n" +
+                     "      <dependency>\n" +
+                     "        <groupId>junit</groupId>\n" +
+                     "        <artifactId>junit</artifactId>\n" +
+                     "        <version>4.0</version> \n" +
+                     "      </dependency>\n" +
+                     "    </dependencies>\n" +
+                     "  </dependencyManagement>");
+
+    createModulePom("m1", "<parent>\n" +
+                          "<groupId>test</groupId>\n" +
+                          "<artifactId>parent</artifactId>\n" +
+                          "<version>1</version>\t\n" +
+                          "</parent>\n" +
+                          "<artifactId>m1</artifactId>\t\n" +
+                          "<dependencies>\n" +
+                          "  <dependency>\n" +
+                          "    <groupId>junit</groupId>\n" +
+                          "    <artifactId>junit</artifactId>\n" +
+                          "  </dependency>\n" +
+                          "</dependencies>");
+
+    doImportProjects(Collections.singletonList(myProjectPom), false, "profile-test");
+  }
+
+  @Test
+  public void testProjectWithActiveProfilesFromSettingsXml() throws IOException {
+    updateSettingsXml("<activeProfiles>\n" +
+                      "  <activeProfile>one</activeProfile>\n" +
+                      "</activeProfiles>");
+
+    createProjectPom("<groupId>test</groupId>" +
+                     "<artifactId>${projectName}</artifactId>" +
+                     "<version>1</version>" +
+
+                     "<profiles>" +
+                     "  <profile>" +
+                     "    <id>one</id>" +
+                     "    <properties>" +
+                     "      <projectName>project-one</projectName>" +
+                     "    </properties>" +
+                     "  </profile>" +
+                     "</profiles>");
+
+    importProject();
+    assertModules("project-one");
+  }
+
+  @Test
+  public void testProjectWithActiveProfilesAndInnactiveFromSettingsXml() throws IOException {
+    updateSettingsXml("<activeProfiles>\n" +
+                      "  <activeProfile>one</activeProfile>\n" +
+                      "  <activeProfile>two</activeProfile>\n" +
+                      "</activeProfiles>");
+
+    createProjectPom("<groupId>test</groupId>" +
+                     "<artifactId>${projectName}</artifactId>" +
+                     "<version>1</version>" +
+
+                     "<profiles>" +
+                     "  <profile>" +
+                     "    <id>one</id>" +
+                     "    <properties>" +
+                     "      <projectName>project-one</projectName>" +
+                     "    </properties>" +
+                     "  </profile>" +
+                     "  <profile>" +
+                     "    <id>two</id>" +
+                     "    <properties>" +
+                     "      <projectName>project-two</projectName>" +
+                     "    </properties>" +
+                     "  </profile>" +
+                     "</profiles>");
+
+    List<String> disabledProfiles = Collections.singletonList("one");
+    doImportProjects(Collections.singletonList(myProjectPom), true, disabledProfiles);
+    assertModules("project-two");
   }
 }

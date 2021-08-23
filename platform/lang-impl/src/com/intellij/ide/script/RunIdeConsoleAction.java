@@ -6,6 +6,8 @@ import com.intellij.execution.Executor;
 import com.intellij.execution.executors.DefaultRunExecutor;
 import com.intellij.execution.filters.TextConsoleBuilderFactory;
 import com.intellij.execution.impl.ConsoleViewImpl;
+import com.intellij.execution.process.AnsiEscapeDecoder;
+import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.execution.ui.ConsoleView;
 import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.execution.ui.RunContentDescriptor;
@@ -117,7 +119,7 @@ public final class RunIdeConsoleAction extends DumbAwareAction {
       .showInBestPositionFor(e.getDataContext());
   }
 
-  private void runConsole(@NotNull Project project, @NotNull IdeScriptEngineManager.EngineInfo info) {
+  private static void runConsole(@NotNull Project project, @NotNull IdeScriptEngineManager.EngineInfo info) {
     List<String> extensions = info.fileExtensions;
     try {
       String pathName = PathUtil.makeFileName(DEFAULT_FILE_NAME, ContainerUtil.getFirstItem(extensions));
@@ -347,17 +349,19 @@ public final class RunIdeConsoleAction extends DumbAwareAction {
     }
 
     WeakReference<RunContentDescriptor> ref = new WeakReference<>(descriptor);
-    engine.setStdOut(new ConsoleWriter(ref, ConsoleViewContentType.NORMAL_OUTPUT));
-    engine.setStdErr(new ConsoleWriter(ref, ConsoleViewContentType.ERROR_OUTPUT));
+    engine.setStdOut(new ConsoleWriter(ref, ProcessOutputTypes.STDOUT));
+    engine.setStdErr(new ConsoleWriter(ref, ProcessOutputTypes.STDERR));
   }
 
   private static final class ConsoleWriter extends Writer {
     private final WeakReference<RunContentDescriptor> myDescriptor;
-    private final ConsoleViewContentType myOutputType;
+    private final Key<?> myOutputType;
+    private final AnsiEscapeDecoder myAnsiEscapeDecoder;
 
-    private ConsoleWriter(@NotNull WeakReference<RunContentDescriptor> descriptor, @NotNull ConsoleViewContentType outputType) {
+    private ConsoleWriter(@NotNull WeakReference<RunContentDescriptor> descriptor, Key<?> outputType) {
       myDescriptor = descriptor;
       myOutputType = outputType;
+      myAnsiEscapeDecoder = new AnsiEscapeDecoder();
     }
 
     @Nullable
@@ -369,11 +373,15 @@ public final class RunIdeConsoleAction extends DumbAwareAction {
     public void write(char[] cbuf, int off, int len) throws IOException {
       RunContentDescriptor descriptor = myDescriptor.get();
       ConsoleViewImpl console = ObjectUtils.tryCast(descriptor != null ? descriptor.getExecutionConsole() : null, ConsoleViewImpl.class);
+      String text = new String(cbuf, off, len);
       if (console == null) {
-        //TODO ignore ?
-        throw new IOException("The console is not available.");
+        LOG.info(myOutputType + ": " + text);
       }
-      console.print(new String(cbuf, off, len), myOutputType);
+      else {
+        myAnsiEscapeDecoder.escapeText(text, myOutputType, (s, attr) -> {
+          console.print(s, ConsoleViewContentType.getConsoleViewType(attr));
+        });
+      }
     }
 
     @Override

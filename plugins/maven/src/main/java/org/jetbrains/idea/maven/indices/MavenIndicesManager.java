@@ -39,7 +39,10 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.*;
-import java.util.concurrent.*;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 public final class MavenIndicesManager implements Disposable {
@@ -57,15 +60,15 @@ public final class MavenIndicesManager implements Disposable {
 
   private final AtomicBoolean myInitStarted = new AtomicBoolean(false);
 
-  private class IndexKeeper implements @NotNull Disposable {
-    private final MavenIndexerWrapper myIndexer;
-    private final MavenIndices myIndices;
-    private final List<MavenArchetype> myUserArchetypes;
-    private final MavenServerDownloadListener myDownloadListener;
+  private class IndexKeeper implements Disposable {
+    private final @NotNull MavenIndexerWrapper myIndexer;
+    private final @NotNull MavenIndices myIndices;
+    private final @NotNull List<MavenArchetype> myUserArchetypes;
+    private final @NotNull MavenServerDownloadListener myDownloadListener;
 
-    private IndexKeeper(MavenIndexerWrapper indexer,
-                        MavenIndices indices,
-                        List<MavenArchetype> archetypes, MavenServerDownloadListener downloadListener) {
+    private IndexKeeper(@NotNull MavenIndexerWrapper indexer,
+                        @NotNull MavenIndices indices,
+                        @NotNull List<MavenArchetype> archetypes, MavenServerDownloadListener downloadListener) {
       myIndexer = indexer;
       myIndices = indices;
       myUserArchetypes = archetypes;
@@ -133,9 +136,11 @@ public final class MavenIndicesManager implements Disposable {
     myUpdatingQueue.clear();
   }
 
+  @NotNull
   private MavenIndices getIndicesObject() {
-    IndexKeeper indexKeeper = ensureInitialized();
-    return indexKeeper.myIndices;
+    return ReadAction.nonBlocking(() -> {
+      return ensureInitialized().myIndices;
+    }).executeSynchronously();
   }
 
   @NotNull
@@ -212,14 +217,16 @@ public final class MavenIndicesManager implements Disposable {
 
   public MavenIndex ensureRemoteIndexExist(@NotNull Pair<String, String> remoteIndexIdAndUrl) {
     try {
-      MavenIndices indicesObjectCache = ReadAction.compute(() -> {
+      MavenIndices indicesObjectCache = ReadAction.nonBlocking(() -> {
         if (myProject.isDisposed()) {
           return null;
         }
         else {
           return getIndicesObject();
         }
-      });
+      }).executeSynchronously();
+
+
       if (indicesObjectCache == null) return null;
       return indicesObjectCache.add(remoteIndexIdAndUrl.first, remoteIndexIdAndUrl.second, MavenSearchIndex.Kind.REMOTE);
     }
@@ -271,7 +278,6 @@ public final class MavenIndicesManager implements Disposable {
     String repositoryPath = getRepositoryUrl(artifactFile, relativePath);
 
     MavenIndices indices = getIndicesObject();
-    if (indices == null) return;
     MavenIndex index = indices.find(repositoryPath, MavenSearchIndex.Kind.LOCAL);
     if (index != null) {
       index.addArtifact(artifactFile);
@@ -279,10 +285,12 @@ public final class MavenIndicesManager implements Disposable {
   }
 
   public void fixArtifactIndex(File artifactFile, File localRepository) {
-    MavenIndex index = getIndicesObject().find(localRepository.getPath(), MavenSearchIndex.Kind.LOCAL);
-    if (index != null) {
-      myIndexFixer.fixIndex(artifactFile, index);
-    }
+    ApplicationManager.getApplication().executeOnPooledThread(() -> {
+      MavenIndex index = getIndicesObject().find(localRepository.getPath(), MavenSearchIndex.Kind.LOCAL);
+      if (index != null) {
+        myIndexFixer.fixIndex(artifactFile, index);
+      }
+    });
   }
 
   private static String getRepositoryUrl(File artifactFile, String name) {

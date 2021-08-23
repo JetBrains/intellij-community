@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.ui.laf.darcula;
 
 import com.intellij.diagnostic.LoadingState;
@@ -38,7 +38,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
-import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.net.URL;
@@ -130,9 +129,6 @@ public class DarculaLaf extends BasicLookAndFeel implements UserDataHolder {
       defaults.remove("Spinner.arrowButtonBorder");
       defaults.put("Spinner.arrowButtonSize", JBUI.size(16, 5).asUIResource());
       MetalLookAndFeel.setCurrentTheme(createMetalTheme());
-      if (SystemInfoRt.isLinux && JBUIScale.isUsrHiDPI()) {
-        applySystemFonts(defaults);
-      }
       if (SystemInfoRt.isMac) {
         defaults.put("RootPane.defaultButtonWindowKeyBindings", new Object[]{
           "ENTER", "press",
@@ -150,26 +146,6 @@ public class DarculaLaf extends BasicLookAndFeel implements UserDataHolder {
       log(e);
     }
     return super.getDefaults();
-  }
-
-  private static void applySystemFonts(UIDefaults defaults) {
-    try {
-      String fqn = StartupUiUtil.getSystemLookAndFeelClassName();
-      Constructor<?> constructor = Class.forName(fqn).getDeclaredConstructor();
-      constructor.setAccessible(true);
-      Object systemLookAndFeel = constructor.newInstance();
-      final Method superMethod = BasicLookAndFeel.class.getDeclaredMethod("getDefaults");
-      superMethod.setAccessible(true);
-      Map<Object, Object> systemDefaults = (UIDefaults)superMethod.invoke(systemLookAndFeel);
-      for (Map.Entry<Object, Object> entry : systemDefaults.entrySet()) {
-        if (entry.getValue() instanceof Font) {
-          defaults.put(entry.getKey(), entry.getValue());
-        }
-      }
-    }
-    catch (Exception e) {
-      log(e);
-    }
   }
 
   protected DefaultMetalTheme createMetalTheme() {
@@ -438,9 +414,33 @@ public class DarculaLaf extends BasicLookAndFeel implements UserDataHolder {
       Class<?> aClass = DarculaLaf.class.getClassLoader().loadClass(UIManager.getSystemLookAndFeelClassName());
       return (BasicLookAndFeel)MethodHandles.lookup().findConstructor(aClass, MethodType.methodType(void.class)).invoke();
     }
-    else {
-      return new IdeaLaf();
+
+    Map<Object, Object> fontDefaults = new HashMap<>();
+
+    if (SystemInfoRt.isLinux) {
+      // Normally, GTK LaF is considered "system" when (1) a GNOME session is active, and (2) GTK library is available.
+      // Here, we weaken the requirements to only (2) and force GTK LaF installation to let it detect the system fonts
+      // and scale them based on Xft.dpi value.
+      try {
+        @SuppressWarnings("SpellCheckingInspection") String name = "com.sun.java.swing.plaf.gtk.GTKLookAndFeel";
+        Class<?> aClass = DarculaLaf.class.getClassLoader().loadClass(name);
+        LookAndFeel gtk = (LookAndFeel)MethodHandles.lookup().findConstructor(aClass, MethodType.methodType(void.class)).invoke();
+        if (gtk.isSupportedLookAndFeel()) {  // GTK is available
+          gtk.initialize();  // on JBR 11, overrides `SunGraphicsEnvironment#uiScaleEnabled` (sets `#uiScaleEnabled_overridden` to `false`)
+          UIDefaults gtkDefaults = gtk.getDefaults();
+          for (Object key : gtkDefaults.keySet()) {
+            if (key.toString().endsWith(".font")) {
+              fontDefaults.put(key, gtkDefaults.get(key));  // `UIDefaults#get` unwraps lazy values
+            }
+          }
+        }
+      }
+      catch (Exception e) {
+        Logger.getInstance(DarculaLaf.class).debug(e);
+      }
     }
+
+    return new IdeaLaf(fontDefaults.isEmpty() ? null : fontDefaults);
   }
 
   @ApiStatus.Internal

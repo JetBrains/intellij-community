@@ -5,16 +5,14 @@ import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.notification.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.extensions.PluginDescriptor;
-import com.intellij.openapi.fileTypes.FileNameMatcher;
-import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.fileTypes.FileTypeManager;
-import com.intellij.openapi.fileTypes.FileTypesBundle;
+import com.intellij.openapi.fileTypes.*;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.options.ex.ConfigurableWrapper;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -60,14 +58,19 @@ class ConflictingFileTypeMappingTracker {
     final @NotNull @Nls String explanation;
     final boolean approved;
 
-    private ResolveConflictResult(@NotNull FileTypeManagerImpl.FileTypeWithDescriptor resolved,
-                                  @NotNull @Nls String notification,
-                                  @NotNull @Nls String explanation,
-                                  boolean approved) {
+    ResolveConflictResult(@NotNull FileTypeManagerImpl.FileTypeWithDescriptor resolved,
+                          @NotNull @Nls String notification,
+                          @NotNull @Nls String explanation,
+                          boolean approved) {
       this.resolved = resolved;
       this.notification = notification;
       this.explanation = explanation;
       this.approved = approved;
+    }
+
+    @Override
+    public String toString() {
+      return "ResolveConflictResult: resolved="+resolved+"; explanation='"+explanation+"'; notification='" + notification+"'; approved="+approved;
     }
   }
 
@@ -98,6 +101,22 @@ class ConflictingFileTypeMappingTracker {
       String message = FileTypesBundle.message("notification.content.file.type.reassigned.plugin", matcher.getPresentableString(), oldPluginName, newFileType.getDisplayName(), newPlugin.getName());
       return new ResolveConflictResult(newFtd, message, explanation, approved);
     }
+    if (oldFileType == NativeFileType.INSTANCE) {
+      // somebody overridden NativeFileType extension with their own type, which is always good
+      String message = FileTypesBundle.message("notification.content.file.pattern.was.reassigned.to", matcher.getPresentableString(), newFileType.getDisplayName());
+      return new ResolveConflictResult(newFtd, message, explanation, true);
+    }
+    
+    // if both bundled, should win the bundle from other vendor as more specific
+    // see the case "Image" plugin vs "Adobe Photoshop" from Android
+    boolean isOldJetBrains = PluginManagerCore.isVendorJetBrains(StringUtil.notNullize(oldPlugin.getVendor()));
+    boolean isNewJetBrains = PluginManagerCore.isVendorJetBrains(StringUtil.notNullize(newPlugin.getVendor()));
+    if (isOldJetBrains != isNewJetBrains) {
+      FileTypeManagerImpl.FileTypeWithDescriptor result = isOldJetBrains ? newFtd : oldFtd;
+      String message = FileTypesBundle.message("notification.content.file.pattern.was.reassigned.to", matcher.getPresentableString(), result.fileType.getDisplayName());
+      return new ResolveConflictResult(result, message, explanation, true);
+    }
+
     /* ? wild guess: two bundled file types */
     String message = FileTypesBundle.message("notification.content.file.pattern.was.reassigned.to", matcher.getPresentableString(), oldFileType.getDisplayName());
     // prefer old file type to avoid notification about file type reassignments twice

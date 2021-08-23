@@ -27,4 +27,9 @@ internal sealed class ApiResult<T : Any> {
     inline fun onSuccess(action: (T) -> Unit) = apply {
         if (this is Success<T>) action(result)
     }
+
+    fun getOrNull(): T? = when (this) {
+        is Failure -> null
+        is Success -> result
+    }
 }

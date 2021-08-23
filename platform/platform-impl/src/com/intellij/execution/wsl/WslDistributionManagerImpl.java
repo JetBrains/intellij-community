@@ -60,6 +60,7 @@ public final class WslDistributionManagerImpl extends WslDistributionManager {
 
     GeneralCommandLine commandLine = new GeneralCommandLine(wslExe.toString(), "-l", "-v").withCharset(StandardCharsets.UTF_16LE);
 
+    long startNano = System.nanoTime();
     ProcessOutput output;
     try {
       output = ExecUtil.execAndGetOutput(commandLine, WSLDistribution.DEFAULT_TIMEOUT);
@@ -69,12 +70,16 @@ public final class WslDistributionManagerImpl extends WslDistributionManager {
     }
     // Windows Subsystem for Linux has no installed distributions
     if (output.getExitCode() != 0 && output.getStdout().endsWith("https://aka.ms/wslstore")) {
+      LOG.info("Windows Subsystem for Linux has no installed distributions");
       return Collections.emptyList();
     }
     if (output.isTimeout() || output.getExitCode() != 0 || !output.getStderr().isEmpty()) {
       throw new IOException("Failed to run " + commandLine.getCommandLineString() + ": " + output);
     }
-    return parseWslVerboseListOutput(output.getStdoutLines());
+    List<WslDistributionAndVersion> versions = parseWslVerboseListOutput(output.getStdoutLines());
+    LOG.info("Fetched WSL distributions: " + versions +
+             " (\"" + commandLine.getCommandLineString() + "\" done in " + TimeoutUtil.getDurationMillis(startNano) + " ms)");
+    return versions;
   }
 
   /**

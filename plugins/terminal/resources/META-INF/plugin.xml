@@ -42,11 +42,9 @@
       <add-to-group group-id="ToolWindowContextMenu" anchor="last"/>
     </action>
     <action id="Terminal.MoveToolWindowTabLeft" class="org.jetbrains.plugins.terminal.action.MoveTerminalToolWindowTabLeftAction">
-      <keyboard-shortcut first-keystroke="control alt shift LEFT" keymap="$default"/>
       <add-to-group group-id="ToolWindowContextMenu" anchor="last"/>
     </action>
     <action id="Terminal.MoveToolWindowTabRight" class="org.jetbrains.plugins.terminal.action.MoveTerminalToolWindowTabRightAction">
-      <keyboard-shortcut first-keystroke="control alt shift RIGHT" keymap="$default"/>
       <add-to-group group-id="ToolWindowContextMenu" anchor="last"/>
     </action>
     <action id="Terminal.SwitchFocusToEditor" class="org.jetbrains.plugins.terminal.action.TerminalSwitchFocusToEditorAction">

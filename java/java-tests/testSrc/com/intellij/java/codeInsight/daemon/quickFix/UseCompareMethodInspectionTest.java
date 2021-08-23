@@ -18,7 +18,10 @@ package com.intellij.java.codeInsight.daemon.quickFix;
 import com.intellij.codeInsight.daemon.quickFix.LightQuickFixParameterizedTestCase;
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.UseCompareMethodInspection;
+import com.intellij.testFramework.LightProjectDescriptor;
 import org.jetbrains.annotations.NotNull;
+
+import static com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase.JAVA_8;
 
 
 public class UseCompareMethodInspectionTest extends LightQuickFixParameterizedTestCase {
@@ -27,6 +30,11 @@ public class UseCompareMethodInspectionTest extends LightQuickFixParameterizedTe
     return new LocalInspectionTool[]{
       new UseCompareMethodInspection(),
     };
+  }
+
+  @Override
+  protected @NotNull LightProjectDescriptor getProjectDescriptor() {
+    return JAVA_8;
   }
 
   @Override

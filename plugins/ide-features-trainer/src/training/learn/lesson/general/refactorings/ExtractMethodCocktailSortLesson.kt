@@ -36,7 +36,7 @@ class ExtractMethodCocktailSortLesson(private val sample: LessonSample)
       task {
         text(LessonsBundle.message("extract.method.start.refactoring", strong(okButtonText)))
 
-        // Wait until the first dialog will gone but we st
+        // Wait until the first dialog will be gone but we st
         stateCheck {
           val ui = previous.ui ?: return@stateCheck false
           !ui.isShowing && insideRefactoring()

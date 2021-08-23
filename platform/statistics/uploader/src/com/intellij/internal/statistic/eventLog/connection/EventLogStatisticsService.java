@@ -27,8 +27,6 @@ import static com.intellij.internal.statistic.StatisticsStringUtil.isEmpty;
 @ApiStatus.Internal
 public class EventLogStatisticsService implements StatisticsService {
 
-  private static final int MAX_FILES_TO_SEND = 5;
-
   private final DeviceConfiguration myDeviceConfiguration;
   private final EventLogSettingsService mySettingsService;
   private final EventLogRecorderConfig myRecorderConfiguration;
@@ -107,9 +105,7 @@ public class EventLogStatisticsService implements StatisticsService {
 
       decorator.onLogsLoaded(logs.size());
       final List<File> toRemove = new ArrayList<>(logs.size());
-      int size = Math.min(MAX_FILES_TO_SEND, logs.size());
-      for (int i = 0; i < size; i++) {
-        EventLogFile logFile = logs.get(i);
+      for (EventLogFile logFile : logs) {
         File file = logFile.getFile();
         EventLogBuildType type = logFile.getType(defaultBuildType);
         LogEventFilter filter = settings.getEventFilter(baseFilter, type);
@@ -221,7 +217,7 @@ public class EventLogStatisticsService implements StatisticsService {
   @NotNull
   protected static List<EventLogFile> getLogFiles(@NotNull EventLogRecorderConfig provider, @NotNull DataCollectorDebugLogger logger) {
     try {
-      return provider.getLogFilesProvider().getLogFiles();
+      return provider.getFilesToSendProvider().getFilesToSend();
     }
     catch (Exception e) {
       final String message = e.getMessage();

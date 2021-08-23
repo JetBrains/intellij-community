@@ -31,6 +31,8 @@ import org.jetbrains.plugins.gradle.tooling.util.*;
 import java.io.File;
 import java.io.FilenameFilter;
 import java.io.IOException;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -817,6 +819,28 @@ public class DeprecatedDependencyResolver implements DependencyResolver {
 
   public static boolean isProjectDependencyArtifact(ResolvedArtifact artifact) {
     return isDependencySubstitutionsSupported && artifact.getId().getComponentIdentifier() instanceof ProjectComponentIdentifier;
+  }
+
+  @Nullable
+   static Object invokeMethod(@NotNull Object obj, @NotNull String methodName, Object... args) {
+    try {
+      Method method = obj.getClass().getMethod(methodName);
+      method.setAccessible(true);
+      return method.invoke(obj, args);
+    }
+    catch (NoSuchMethodException e) {
+      return null;
+    }
+    catch (InvocationTargetException e) {
+      Throwable targetException = e.getTargetException();
+      if (targetException instanceof RuntimeException) {
+        throw (RuntimeException) targetException;
+      }
+      throw new RuntimeException(e);
+    }
+    catch (IllegalAccessException e) {
+      throw new RuntimeException(e);
+    }
   }
 
   private static MyModuleIdentifier toMyModuleIdentifier(ModuleVersionIdentifier id) {

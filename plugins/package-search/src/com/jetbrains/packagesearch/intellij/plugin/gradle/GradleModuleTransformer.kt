@@ -43,37 +43,108 @@ class GradleModuleTransformer : ModuleTransformer {
         }
     }
 
-    override fun transformModules(project: Project, nativeModules: List<Module>): List<ProjectModule> {
-        return nativeModules.mapNotNull { nativeModule ->
-            val externalRootProject = findExternalProjectOrNull(project, nativeModule) ?: return@mapNotNull null
-            val buildFile = externalRootProject.buildFile ?: return@mapNotNull null
-            val buildVirtualFile = LocalFileSystem.getInstance().findFileByPath(buildFile.absolutePath) ?: return@mapNotNull null
-            val buildSystemType =
-                if (runReadAction { PsiManager.getInstance(project).findFile(buildVirtualFile) }?.language?.displayName?.lowercase()
-                        ?.contains("kotlin") == true) {
-                    BuildSystemType.GRADLE_KOTLIN
-                } else {
-                    BuildSystemType.GRADLE_GROOVY
-                }
-            ProjectModule(
-                name = externalRootProject.name,
-                nativeModule = nativeModule,
-                parent = null,
-                buildFile = buildVirtualFile,
-                buildSystemType = buildSystemType,
-                moduleType = GradleProjectModuleType,
-                navigatableDependency = createNavigatableDependencyCallback(project, buildVirtualFile)
-            )
-        }.flatMap { getAllSubmodules(project, it) }
+    override fun transformModules(project: Project, nativeModules: List<Module>): List<ProjectModule> =
+        nativeModules.filter { it.isNotGradleSourceSetModule() }
+            .mapNotNull { nativeModule ->
+                val externalProject = findExternalProjectOrNull(project, nativeModule, recursiveSearch = false)
+                    ?: return@mapNotNull null
+                val buildFile = externalProject.buildFile ?: return@mapNotNull null
+                val buildVirtualFile = LocalFileSystem.getInstance().findFileByPath(buildFile.absolutePath) ?: return@mapNotNull null
+                val buildSystemType =
+                    if (isKotlinDsl(project, buildVirtualFile)) {
+                        BuildSystemType.GRADLE_KOTLIN
+                    } else {
+                        BuildSystemType.GRADLE_GROOVY
+                    }
+                ProjectModule(
+                    name = externalProject.name,
+                    nativeModule = nativeModule,
+                    parent = null,
+                    buildFile = buildVirtualFile,
+                    buildSystemType = buildSystemType,
+                    moduleType = GradleProjectModuleType,
+                    navigatableDependency = createNavigatableDependencyCallback(project, buildVirtualFile)
+                )
+            }
+            .flatMap { getAllSubmodules(project, it) }
             .distinctBy { it.buildFile }
+
+    private fun isKotlinDsl(
+        project: Project,
+        buildVirtualFile: VirtualFile
+    ) =
+        runReadAction { PsiManager.getInstance(project).findFile(buildVirtualFile) }
+            ?.language
+            ?.displayName
+            ?.contains("kotlin", ignoreCase = true) == true
+
+    private fun Module.isNotGradleSourceSetModule(): Boolean {
+        if (!ExternalSystemApiUtil.isExternalSystemAwareModule(GradleConstants.SYSTEM_ID, this)) return false
+        return ExternalSystemApiUtil.getExternalModuleType(this) != GradleConstants.GRADLE_SOURCE_SET_MODULE_TYPE_KEY
     }
 
     private fun getAllSubmodules(project: Project, rootModule: ProjectModule): List<ProjectModule> {
-        val externalRootProject = findExternalProjectOrNull(project, rootModule.nativeModule) ?: return emptyList()
+        val externalRootProject = findExternalProjectOrNull(project, rootModule.nativeModule)
+            ?: return emptyList()
 
         val modules = mutableListOf(rootModule)
         externalRootProject.addChildrenToListRecursive(modules, rootModule, project)
         return modules
+    }
+
+    private fun findExternalProjectOrNull(
+        project: Project,
+        module: Module,
+        recursiveSearch: Boolean = true
+    ): ExternalProject? {
+        if (!ExternalSystemApiUtil.isExternalSystemAwareModule(GradleConstants.SYSTEM_ID, module)) {
+            return null
+        }
+
+        val externalProjectId = ExternalSystemApiUtil.getExternalProjectId(module)
+        if (externalProjectId == null) {
+            logDebug(this::class.qualifiedName) {
+                "Module has no external project ID, project=${project.projectFilePath}, module=${module.moduleFilePath}"
+            }
+            return null
+        }
+
+        val rootProjectPath = ExternalSystemApiUtil.getExternalRootProjectPath(module)
+        if (rootProjectPath == null) {
+            logDebug(this::class.qualifiedName) {
+                "Root external project was not yet imported, project=${project.projectFilePath}, module=${module.moduleFilePath}"
+            }
+            return null
+        }
+
+        val externalProjectDataCache = ExternalProjectDataCache.getInstance(project)
+        val externalProject = externalProjectDataCache.getRootExternalProject(rootProjectPath)
+        if (externalProject == null) {
+            logDebug(this::class.qualifiedName) {
+                "External project is not yet cached, project=${project.projectFilePath}, module=${module.moduleFilePath}"
+            }
+            return null
+        }
+        return externalProject.findProjectWithId(externalProjectId, recursiveSearch)
+    }
+
+    private fun ExternalProject.findProjectWithId(
+        externalProjectId: String,
+        recursiveSearch: Boolean
+    ): ExternalProject? {
+        if (externalProjectId == this.id) return this
+
+        if (!recursiveSearch) return null
+
+        val childExternalProjects = childProjects.values
+        if (childExternalProjects.isEmpty()) return null
+
+        for (childExternalProject in childExternalProjects) {
+            if (childExternalProject.id == externalProjectId) return childExternalProject
+            val recursiveExternalProject = childExternalProject.findProjectWithId(externalProjectId, recursiveSearch)
+            if (recursiveExternalProject != null) return recursiveExternalProject
+        }
+        return null
     }
 
     private fun ExternalProject.addChildrenToListRecursive(
@@ -102,27 +173,6 @@ class GradleModuleTransformer : ModuleTransformer {
             modules += projectModule
             externalProject.addChildrenToListRecursive(modules, projectModule, project)
         }
-    }
-
-    private fun findExternalProjectOrNull(project: Project, module: Module): ExternalProject? {
-        if (!ExternalSystemApiUtil.isExternalSystemAwareModule(GradleConstants.SYSTEM_ID, module)) {
-            return null
-        }
-
-        val rootProjectPath = ExternalSystemApiUtil.getExternalRootProjectPath(module)
-        if (rootProjectPath == null) {
-            logDebug(this::class.qualifiedName) { "Root external project was not yet imported, project=${project.projectFilePath}, module=${module.moduleFilePath}" }
-            return null
-        }
-
-        val externalProjectDataCache = ExternalProjectDataCache.getInstance(project)
-        val externalProject = externalProjectDataCache.getRootExternalProject(rootProjectPath)
-        if (externalProject == null) {
-            logDebug(this::class.qualifiedName) { "External project is not yet cached, project=${project.projectFilePath}, module=${module.moduleFilePath}" }
-            return null
-        }
-
-        return externalProject
     }
 
     private fun createNavigatableDependencyCallback(project: Project, file: VirtualFile) =

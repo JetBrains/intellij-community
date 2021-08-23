@@ -7,7 +7,6 @@
           <option name="additionalArguments" value="-version -Xstrict-java-nullability-assertions -Xjvm-default=enable" />
         </compilerSettings>
         <compilerArguments>
-          <option name="jvmTarget" value="1.8" />
           <option name="languageVersion" value="1.4" />
           <option name="apiVersion" value="1.4" />
           <option name="pluginOptions">
@@ -48,5 +47,6 @@
     <orderEntry type="module" module-name="intellij.platform.bootstrap" scope="TEST" />
     <orderEntry type="library" name="fastutil-min" level="project" />
     <orderEntry type="module" module-name="intellij.platform.util.rt" />
+    <orderEntry type="library" name="ASM" level="project" />
   </component>
 </module>

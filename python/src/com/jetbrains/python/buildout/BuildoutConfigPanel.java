@@ -45,7 +45,6 @@ import java.util.List;
 public class BuildoutConfigPanel extends JPanel {
   private ComboboxWithBrowseButton myScript;
   private JPanel myPanel;
-  private JTextArea myNoticeTextArea;
   private JPanel myErrorPanel;
   private final Module myModule;
   private boolean myFacetEnabled = true;
@@ -129,10 +128,6 @@ public class BuildoutConfigPanel extends JPanel {
 
   public BuildoutFacetConfiguration getConfiguration() {
     return myConfiguration;
-  }
-
-  public void showNoticeText(boolean show) {
-    myNoticeTextArea.setVisible(show);
   }
 
   @NotNull

@@ -121,10 +121,24 @@ public final class ActionUtil {
     action.applyTextOverride(e);
 
     try {
-      ThrowableRunnable<RuntimeException> runnable =
-        beforeActionPerformed
-        ? () -> action.beforeActionPerformedUpdate(e)
-        : () -> action.update(e);
+      ThrowableRunnable<RuntimeException> runnable = () -> {
+        e.setInjectedContext(action.isInInjectedContext());
+        if (beforeActionPerformed) {
+          action.beforeActionPerformedUpdate(e);
+        }
+        else {
+          action.update(e);
+        }
+        if (!e.getPresentation().isEnabled() && e.isInInjectedContext()) {
+          e.setInjectedContext(false);
+          if (beforeActionPerformed) {
+            action.beforeActionPerformedUpdate(e);
+          }
+          else {
+            action.update(e);
+          }
+        }
+      };
       boolean isLikeUpdate = !beforeActionPerformed && Registry.is("actionSystem.update.actions.async");
       try (AccessToken ignore = SlowOperations.allowSlowOperations(isLikeUpdate ? SlowOperations.ACTION_UPDATE : SlowOperations.ACTION_PERFORM)) {
         runnable.run();

@@ -14,7 +14,7 @@ import com.intellij.workspaceModel.ide.WorkspaceModel
 import com.intellij.workspaceModel.ide.WorkspaceModelChangeListener
 import com.intellij.workspaceModel.ide.WorkspaceModelTopics
 import com.intellij.workspaceModel.ide.impl.VirtualFileUrlBridge
-import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleManagerBridgeUtil.Companion.findModuleEntity
+import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleManagerBridgeImpl.Companion.findModuleEntity
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleBridge
 import com.intellij.workspaceModel.storage.*
 import com.intellij.workspaceModel.storage.bridgeEntities.*
@@ -50,7 +50,7 @@ internal class ModuleBridgeImpl(
     }
   }
 
-  fun rename(newName: String, newModuleFileUrl: VirtualFileUrl?, notifyStorage: Boolean) {
+  override fun rename(newName: String, newModuleFileUrl: VirtualFileUrl?, notifyStorage: Boolean) {
     myImlFilePointer = newModuleFileUrl as VirtualFileUrlBridge
     rename(newName, notifyStorage)
   }
@@ -71,11 +71,11 @@ internal class ModuleBridgeImpl(
                        listenerCallbacks = listenerCallbacks)
   }
 
-  fun callCreateComponents() {
+  override fun callCreateComponents() {
     createComponents(null)
   }
 
-  fun registerComponents(corePlugin: IdeaPluginDescriptor?,
+  override fun registerComponents(corePlugin: IdeaPluginDescriptor?,
                          plugins: List<IdeaPluginDescriptorImpl>,
                          precomputedExtensionModel: PrecomputedExtensionModel?,
                          app: Application?,
@@ -139,11 +139,13 @@ internal class ModuleBridgeImpl(
       }
     }
     else {
-      WriteAction.runAndWait<RuntimeException> {
-        WorkspaceModel.getInstance(project).updateProjectModel { builder ->
-          val entity = builder.findModuleEntity(this)
-          if (entity != null) {
-            updateOptionInEntity(builder, entity)
+      if (getOptionValue(key) != value) {
+        WriteAction.runAndWait<RuntimeException> {
+          WorkspaceModel.getInstance(project).updateProjectModel { builder ->
+            val entity = builder.findModuleEntity(this)
+            if (entity != null) {
+              updateOptionInEntity(builder, entity)
+            }
           }
         }
       }

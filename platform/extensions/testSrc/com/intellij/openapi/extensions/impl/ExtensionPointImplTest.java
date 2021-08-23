@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.extensions.impl;
 
 import com.intellij.diagnostic.ActivityCategory;
@@ -434,6 +434,7 @@ public class ExtensionPointImplTest {
 
     @Override
     public @NotNull RuntimeException createError(@NotNull @NonNls String message,
+                                                 @Nullable Throwable error,
                                                  @NotNull PluginId pluginId,
                                                  @Nullable Map<String, String> attachments) {
       return new RuntimeException(message);

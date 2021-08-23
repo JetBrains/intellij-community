@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.siyeh.ipp.switchbranches;
 
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightingFeature;
@@ -90,7 +90,7 @@ public class CreateMissingSwitchBranchesAction extends PsiElementBaseIntentionAc
         return range.stream().mapToObj(c -> Value.fromConstant(TypeConversionUtil.computeCastTo(c, type))).collect(Collectors.toList());
       }
       Set<Object> values = dfr.getExpressionValues(expression);
-      if (!values.isEmpty() && values.size() <= MAX_NUMBER_OF_BRANCHES && values.stream().allMatch(v -> v instanceof String)) {
+      if (!values.isEmpty() && values.size() <= MAX_NUMBER_OF_BRANCHES && ContainerUtil.and(values, v -> v instanceof String)) {
         return values.stream().map(Value::fromConstant).sorted(Comparator.comparing(v -> (String)v.myValue)).collect(Collectors.toList());
       }
     }
@@ -140,13 +140,14 @@ public class CreateMissingSwitchBranchesAction extends PsiElementBaseIntentionAc
 
   @NotNull
   private static Set<Object> getLabelConstants(@NotNull PsiSwitchLabelStatementBase label) {
-    final PsiExpressionList list = label.getCaseValues();
+    final PsiCaseLabelElementList list = label.getCaseLabelElementList();
     if (list == null) {
       return Collections.emptySet();
     }
     Set<Object> constants = new HashSet<>();
-    for (PsiExpression value : list.getExpressions()) {
-      Object constant = ExpressionUtils.computeConstantExpression(value);
+    for (PsiCaseLabelElement caseLabelElement : list.getElements()) {
+      PsiExpression expression = ObjectUtils.tryCast(caseLabelElement, PsiExpression.class);
+      Object constant = ExpressionUtils.computeConstantExpression(expression);
       if (constant instanceof Byte || constant instanceof Short) {
         constants.add(((Number)constant).intValue());
       }

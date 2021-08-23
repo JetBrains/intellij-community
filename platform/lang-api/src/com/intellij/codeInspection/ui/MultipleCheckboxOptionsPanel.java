@@ -47,6 +47,6 @@ public class MultipleCheckboxOptionsPanel extends InspectionOptionsPanel {
     }
 
     public void addComponent(JComponent component) {
-        add(component);
+        add(component, "span, wrap, grow");
     }
 }

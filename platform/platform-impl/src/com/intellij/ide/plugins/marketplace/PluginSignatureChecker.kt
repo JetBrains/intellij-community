@@ -47,7 +47,7 @@ internal object PluginSignatureChecker {
 
   @JvmStatic
   fun verify(descriptor: IdeaPluginDescriptor, pluginFile: File, showAcceptDialog: Boolean = true): Boolean {
-    val certificates = PluginCertificateStore.customTrustManager.certificates.orEmpty()
+    val certificates = PluginCertificateStore.customTrustManager.certificates.orEmpty() + PluginCertificateStore.managedTrustedCertificates
     return if (showAcceptDialog) {
       isSignedInWithAcceptDialog(descriptor, pluginFile, certificates)
     }

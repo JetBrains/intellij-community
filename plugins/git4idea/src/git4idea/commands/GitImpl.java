@@ -41,6 +41,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
+import java.nio.charset.StandardCharsets;
 import java.util.*;
 
 import static git4idea.GitUtil.COMMENT_CHAR;
@@ -873,6 +874,7 @@ public class GitImpl extends GitImplBase {
     try {
       GitExecutable gitExecutable = GitExecutableManager.getInstance().getExecutable(project);
       GeneralCommandLine command = gitExecutable.createBundledCommandLine(project, args);
+      command.setCharset(StandardCharsets.UTF_8);
 
       StringBuilder output = new StringBuilder();
       OSProcessHandler handler = new OSProcessHandler(command);

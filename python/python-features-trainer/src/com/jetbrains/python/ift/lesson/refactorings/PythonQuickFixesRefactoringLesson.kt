@@ -7,6 +7,7 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.impl.EditorComponentImpl
 import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.refactoring.RefactoringBundle
+import com.intellij.ui.components.JBList
 import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.table.JBTableRow
 import com.jetbrains.python.PyBundle
@@ -38,8 +39,8 @@ class PythonQuickFixesRefactoringLesson
 
     task {
       text(PythonLessonsBundle.message("python.quick.fix.refactoring.type.new.argument", code("foo"), code("y"), code(", y")))
-      triggerByListItemAndHighlight(highlightBorder = false, highlightInside = false) { item ->
-        item.toString().contains("string=y") && checkEditor(editor)
+      triggerByUiComponentAndHighlight(highlightBorder = false, highlightInside = false) { _: JBList<*> ->
+        checkEditor(editor)
       }
       proposeMyRestore()
       test { type(", y") }
@@ -77,7 +78,7 @@ class PythonQuickFixesRefactoringLesson
     }
     task {
       text(PythonLessonsBundle.message("python.quick.fix.refactoring.choose.change.signature",
-                                 strong(PyBundle.message("QFIX.NAME.change.signature"))))
+                                       strong(PyBundle.message("QFIX.NAME.change.signature"))))
 
       triggerByPartOfComponent { table: JTable ->
         val model = table.model
@@ -95,7 +96,7 @@ class PythonQuickFixesRefactoringLesson
     }
     task {
       text(PythonLessonsBundle.message("python.quick.fix.refactoring.select.new.parameter",
-                                 action("EditorTab"), LessonUtil.rawEnter()))
+                                       action("EditorTab"), LessonUtil.rawEnter()))
 
       val selector = { collection: Collection<EditorComponentImpl> ->
         collection.takeIf { it.size > 2 }?.maxByOrNull { it.locationOnScreen.x }
@@ -114,7 +115,7 @@ class PythonQuickFixesRefactoringLesson
     }
     task {
       text(PythonLessonsBundle.message("python.quick.fix.refactoring.set.default.value",
-                                 action("EditorTab")))
+                                       action("EditorTab")))
       restoreByUi()
       stateCheck {
         (previous.ui as? EditorComponentImpl)?.text == "0"
@@ -135,7 +136,7 @@ class PythonQuickFixesRefactoringLesson
         beforeRefactoring = editor.document.text
       }
       text(PythonLessonsBundle.message("python.quick.fix.refactoring.finish.refactoring",
-                                 LessonUtil.rawCtrlEnter(), strong(RefactoringBundle.message("refactor.button").dropMnemonic())))
+                                       LessonUtil.rawCtrlEnter(), strong(RefactoringBundle.message("refactor.button").dropMnemonic())))
 
       stateCheck {
         val b = editor.document.text != beforeRefactoring

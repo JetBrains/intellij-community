@@ -50,6 +50,16 @@ public class PluginException extends RuntimeException implements ExceptionWithAt
     this.attachments = attachments;
   }
 
+  public PluginException(@NotNull @NonNls String message, 
+                         @Nullable Throwable cause,
+                         @Nullable PluginId pluginId, 
+                         @NotNull List<Attachment> attachments) {
+    super(message, cause);
+
+    myPluginId = pluginId;
+    this.attachments = attachments;
+  }
+
   public final @Nullable PluginId getPluginId() {
     return myPluginId;
   }

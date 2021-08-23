@@ -8,6 +8,8 @@ class CommitSupportTest : BasePlatformTestCase() {
     myFixture.configureByText("a.txt", """
       
       This is <caret><warning descr="EN_A_VS_AN">a</warning> error.
+      
+      This reverts commit abcdef00.
     """.trimIndent())
 
     val commitMessage = CommitMessage(project)
@@ -19,6 +21,6 @@ class CommitSupportTest : BasePlatformTestCase() {
     myFixture.findSingleIntention("Wrong article")
     myFixture.findSingleIntention("an")
     myFixture.findSingleIntention("Add exception 'a error'")
-    myFixture.findSingleIntention("Disable 'Use of 'a' vs. 'an'' rule")
+    myFixture.findSingleIntention("Rule settings 'Use of 'a' vs. 'an''...")
   }
 }

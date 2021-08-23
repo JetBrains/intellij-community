@@ -33,6 +33,8 @@ final class BuildHelper {
   final MethodHandle reorderJars
   MethodHandle mergeJars
 
+  final MethodHandle setAppInfo
+
   private final MethodHandle copyDirHandle
 
   private BuildHelper(UrlClassLoader helperClassLoader) {
@@ -69,15 +71,17 @@ final class BuildHelper {
                                                                 path, string, bool, logger))
 
     reorderJars = lookup.findStatic(helperClassLoader.loadClass("org.jetbrains.intellij.build.tasks.ReorderJarsKt"),
-                                                     "reorderJars",
-                                                     MethodType.methodType(voidClass,
-                                                                           path, path, iterable, path,
-                                                                           string, path,
-                                                                           logger))
+                                    "reorderJars",
+                                    MethodType.methodType(voidClass,
+                                                          path, path, iterable, path,
+                                                          string, path,
+                                                          logger))
     mergeJars = lookup.findStatic(helperClassLoader.loadClass("org.jetbrains.intellij.build.tasks.MergeJarsKt"),
-                                                     "mergeJars",
-                                                     MethodType.methodType(voidClass, path, List.class as Class<?>))
-  }
+                                  "mergeJars",
+                                  MethodType.methodType(voidClass, path, List.class as Class<?>))
+    setAppInfo = lookup.findStatic(helperClassLoader.loadClass("org.jetbrains.intellij.build.tasks.AsmKt"), "injectAppInfo",
+                                   MethodType.methodType(voidClass, path, path, string))
+  }  
 
   static void copyDir(Path fromDir, Path targetDir, BuildContext buildContext) {
     getInstance(buildContext).copyDirHandle.invokeWithArguments(fromDir, targetDir)

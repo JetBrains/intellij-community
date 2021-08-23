@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.plugins.newui;
 
 import com.intellij.ide.IdeBundle;
@@ -15,12 +15,12 @@ import org.jetbrains.annotations.Nullable;
  * @author Alexander Lobas
  */
 @SuppressWarnings({"AssignmentToStaticFieldFromInstanceMethod", "FieldAccessedSynchronizedAndUnsynchronized"})
-public class InstallPluginInfo {
-  public final BgProgressIndicator indicator = new BgProgressIndicator();
-  private final IdeaPluginDescriptor myDescriptor;
-  private MyPluginModel myPluginModel;
+final class InstallPluginInfo {
+
+  public final @NotNull BgProgressIndicator indicator;
+  private final @NotNull IdeaPluginDescriptor myDescriptor;
+  private @Nullable MyPluginModel myPluginModel;
   public final boolean install;
-  public final IdeaPluginDescriptor updateDescriptor;
   private TaskInfo myStatusBarTaskInfo;
   private boolean myClosed;
   private static boolean myShowRestart;
@@ -30,12 +30,12 @@ public class InstallPluginInfo {
    */
   private IdeaPluginDescriptorImpl myInstalledDescriptor;
 
-  public InstallPluginInfo(@NotNull IdeaPluginDescriptor descriptor,
-                           IdeaPluginDescriptor updateDescriptor,
-                           @NotNull MyPluginModel pluginModel,
-                           boolean install) {
+  InstallPluginInfo(@NotNull BgProgressIndicator indicator,
+                    @NotNull IdeaPluginDescriptor descriptor,
+                    @NotNull MyPluginModel pluginModel,
+                    boolean install) {
+    this.indicator = indicator;
     myDescriptor = descriptor;
-    this.updateDescriptor = updateDescriptor;
     myPluginModel = pluginModel;
     this.install = install;
   }
@@ -44,9 +44,9 @@ public class InstallPluginInfo {
     myPluginModel = null;
     indicator.removeStateDelegates();
     if (statusBar != null) {
-      String title = install
-                     ? IdeBundle.message("dialog.title.installing.plugin", myDescriptor.getName())
-                     : IdeBundle.message("dialog.title.updating.plugin", myDescriptor.getName());
+      String title = install ?
+                     IdeBundle.message("dialog.title.installing.plugin", myDescriptor.getName()) :
+                     IdeBundle.message("dialog.title.updating.plugin", myDescriptor.getName());
       statusBar.addProgress(indicator, myStatusBarTaskInfo = OneLineProgressIndicator.task(title));
     }
   }

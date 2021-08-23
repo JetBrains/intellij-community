@@ -30,7 +30,10 @@ import java.awt.Component
 import java.util.concurrent.CompletableFuture
 import kotlin.math.max
 
-internal class LessonExecutor(val lesson: KLesson, val project: Project, initialEditor: Editor?, val predefinedFile: VirtualFile?) : Disposable {
+internal class LessonExecutor(val lesson: KLesson,
+                              val project: Project,
+                              initialEditor: Editor?,
+                              val predefinedFile: VirtualFile?) : Disposable {
   private data class TaskInfo(val content: () -> Unit,
                               var restoreIndex: Int,
                               var taskProperties: TaskProperties?,
@@ -44,7 +47,7 @@ internal class LessonExecutor(val lesson: KLesson, val project: Project, initial
                               val removeAfterDoneMessages: MutableList<Int> = mutableListOf())
 
   var predefinedEditor: Editor? by WeakReferenceDelegator(initialEditor)
-  private set
+    private set
 
   private val selectedEditor: Editor?
     get() {
@@ -176,10 +179,32 @@ internal class LessonExecutor(val lesson: KLesson, val project: Project, initial
     }
   }
 
+  inline fun invokeInBackground(crossinline runnable: () -> Unit) {
+    ApplicationManager.getApplication().executeOnPooledThread {
+      try {
+        runnable()
+      }
+      catch (e: Throwable) {
+        thisLogger().error(getLessonInfoString(), e)
+      }
+    }
+  }
+
+  inline fun taskInvokeLater(modalityState: ModalityState? = null, crossinline runnable: () -> Unit) {
+    invokeLater(modalityState) {
+      try {
+        runnable()
+      }
+      catch (e: Throwable) {
+        thisLogger().error(getLessonInfoString(), e)
+      }
+    }
+  }
+
   private fun processNextTask(taskIndex: Int) {
     // ModalityState.current() or without argument - cannot be used: dialog steps can stop to work.
     // Good example: track of rename refactoring
-    invokeLater(ModalityState.any()) {
+    taskInvokeLater(ModalityState.any()) {
       disposeRecorders()
       continuePreviousHighlighting.set(false)
       continuePreviousHighlighting = Ref(true)
@@ -247,10 +272,7 @@ internal class LessonExecutor(val lesson: KLesson, val project: Project, initial
 
   private fun rehighlightPreviousComponent() {
     val taskInfo = taskActions[currentTaskIndex]
-    val function = taskInfo.rehighlightComponent
-    if (function == null) {
-      return
-    }
+    val function = taskInfo.rehighlightComponent ?: return
     val condition = continuePreviousHighlighting
     ApplicationManager.getApplication().executeOnPooledThread {
       var ui = taskInfo.userVisibleInfo?.ui
@@ -309,7 +331,7 @@ internal class LessonExecutor(val lesson: KLesson, val project: Project, initial
       }
       val restoreFunction = shouldRestore() ?: return
       val restoreIfNeeded = {
-        invokeLater(ModalityState.any()) {
+        taskInvokeLater(ModalityState.any()) {
           if (canBeRestored(taskContext)) {
             restoreFunction()
           }
@@ -385,7 +407,7 @@ internal class LessonExecutor(val lesson: KLesson, val project: Project, initial
     }
   }
 
-  fun text(@Language("HTML") text: String, removeAfterDone: Boolean = false) {
+  fun text(@Language("HTML") text: String, removeAfterDone: Boolean = false, textProperties: TaskTextProperties? = null) {
     val taskInfo = taskActions[currentTaskIndex]
 
     if (removeAfterDone) taskInfo.removeAfterDoneMessages.add(LessonManager.instance.messagesNumber())
@@ -403,9 +425,9 @@ internal class LessonExecutor(val lesson: KLesson, val project: Project, initial
       }
     }
     // A little bit hacky here: visual index should be shown only for the first paragraph.
-    // But is is passed here for all paragraphs.
+    // But it is passed here for all paragraphs.
     // But... LessonMessagePane will draw number only for the first active paragraph :)
-    LessonManager.instance.addMessage(text, !hasDetection, taskInfo.taskVisualIndex)
+    LessonManager.instance.addMessage(text, !hasDetection, taskInfo.taskVisualIndex, useInternalParagraphStyle = removeAfterDone, textProperties = textProperties)
   }
 
   private fun addAllInactiveMessages() {
@@ -418,4 +440,6 @@ internal class LessonExecutor(val lesson: KLesson, val project: Project, initial
       }
     }
   }
+
+  fun getLessonInfoString() = """lesson ID = ${lesson.id}, language ID = ${lesson.languageId}, taskId = $currentTaskIndex"""
 }

@@ -5,6 +5,7 @@
 
   <content>
     <module name="ExtensionsDependencies-content"/>
+    <module name="ExtensionsDependencies-content/subDescriptor"/>
   </content>
 
   <dependencies>

@@ -6,6 +6,7 @@ import com.intellij.openapi.actionSystem.ActionToolbar
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.Presentation
 import com.intellij.openapi.actionSystem.impl.ActionButton
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.ide.CopyPasteManager
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.ui.JBPopupMenu
@@ -21,11 +22,12 @@ import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.PackageM
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.PackageScope
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.PackageVersion
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.RepositoryModel
-import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.SelectedPackageModel
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.TargetModules
+import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.UiPackageModel
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.operations.PackageSearchOperation
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.operations.PackageSearchOperationFactory
 import com.jetbrains.packagesearch.intellij.plugin.ui.util.AbstractLayoutManager2
+import com.jetbrains.packagesearch.intellij.plugin.ui.util.Displayable
 import com.jetbrains.packagesearch.intellij.plugin.ui.util.HtmlEditorPane
 import com.jetbrains.packagesearch.intellij.plugin.ui.util.MenuAction
 import com.jetbrains.packagesearch.intellij.plugin.ui.util.ScaledPixels
@@ -41,7 +43,10 @@ import com.jetbrains.packagesearch.intellij.plugin.ui.util.showUnderneath
 import com.jetbrains.packagesearch.intellij.plugin.ui.util.top
 import com.jetbrains.packagesearch.intellij.plugin.ui.util.vertical
 import com.jetbrains.packagesearch.intellij.plugin.ui.util.verticalCenter
+import com.jetbrains.packagesearch.intellij.plugin.util.AppUI
 import com.jetbrains.packagesearch.intellij.plugin.util.nullIfBlank
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import org.apache.commons.lang3.StringUtils
 import java.awt.BorderLayout
 import java.awt.Component
@@ -53,13 +58,15 @@ import java.awt.event.KeyEvent
 import javax.swing.JComponent
 import javax.swing.JPanel
 import javax.swing.text.JTextComponent
+import javax.swing.text.html.HTMLEditorKit
+import javax.swing.text.html.parser.ParserDelegator
 
 private val minPopupMenuWidth = 175.scaled()
 
 internal class PackageDetailsHeaderPanel(
     private val operationFactory: PackageSearchOperationFactory,
     private val operationExecutor: OperationExecutor
-) : JPanel() {
+) : JPanel(), Displayable<PackageDetailsHeaderPanel.ViewModel> {
 
     private val repoWarningBanner = InfoBannerPanel().apply {
         isVisible = false
@@ -81,25 +88,25 @@ internal class PackageDetailsHeaderPanel(
 
     private var primaryOperations: List<PackageSearchOperation<*>> = emptyList()
 
+    private val removeMenuAction = MenuAction().apply {
+        add(object : DumbAwareAction(PackageSearchBundle.message("packagesearch.ui.toolwindow.actions.remove.text")) {
+
+            init {
+                minimumSize = Dimension(minPopupMenuWidth, 0)
+            }
+
+            override fun actionPerformed(e: AnActionEvent) {
+                onRemoveClicked()
+            }
+        })
+    }
+
     private val overflowButton = run {
-        val menuAction = MenuAction().apply {
-            add(object : DumbAwareAction(PackageSearchBundle.message("packagesearch.ui.toolwindow.actions.remove.text")) {
-
-                init {
-                    minimumSize = Dimension(minPopupMenuWidth, 0)
-                }
-
-                override fun actionPerformed(e: AnActionEvent) {
-                    onRemoveClicked()
-                }
-            })
-        }
-
         val presentation = Presentation()
         presentation.icon = AllIcons.Actions.More
         presentation.putClientProperty(ActionButton.HIDE_DROPDOWN_ICON, true)
 
-        ActionButton(menuAction, presentation, "PackageSearchPackageDetailsHeader", ActionToolbar.NAVBAR_MINIMUM_BUTTON_SIZE)
+        ActionButton(removeMenuAction, presentation, "PackageSearchPackageDetailsHeader", ActionToolbar.NAVBAR_MINIMUM_BUTTON_SIZE)
     }
 
     private var removeOperations: List<PackageSearchOperation<*>> = emptyList()
@@ -143,42 +150,47 @@ internal class PackageDetailsHeaderPanel(
         identifierLabel.onRightClick { if (identifierLabel.isVisible) copyMenu.showUnderneath(identifierLabel) }
     }
 
-    fun display(
-        selectedPackageModel: SelectedPackageModel<*>,
-        knownRepositoriesInTargetModules: KnownRepositories.InTargetModules,
-        allKnownRepositories: KnownRepositories.All,
-        targetModules: TargetModules,
-        onlyStable: Boolean
-    ) {
-        val packageModel = selectedPackageModel.packageModel
+    internal data class ViewModel(
+        val selectedPackageModel: UiPackageModel<*>,
+        val knownRepositoriesInTargetModules: KnownRepositories.InTargetModules,
+        val allKnownRepositories: KnownRepositories.All,
+        val targetModules: TargetModules,
+        val onlyStable: Boolean
+    )
+
+    override suspend fun display(viewModel: ViewModel) = withContext(Dispatchers.AppUI) {
+        val packageModel = viewModel.selectedPackageModel.packageModel
 
         val name = packageModel.remoteInfo?.name
-        if (name != null && name != packageModel.identifier) {
-            @Suppress("HardCodedStringLiteral") // Name comes from the API
+        val rawIdentifier = packageModel.identifier.rawValue
+        if (name != null && name != rawIdentifier) {
+            @Suppress("HardCodedStringLiteral") // The name comes from the API
             nameLabel.setBody(
                 listOf(
                     HtmlChunk.span("font-size: ${16.scaledFontSize()};")
                         .addRaw("<b>" + StringUtils.normalizeSpace(packageModel.remoteInfo.name) + "</b>")
                 )
             )
-            identifierLabel.setBodyText(packageModel.identifier)
+            identifierLabel.setBodyText(rawIdentifier)
             identifierLabel.isVisible = true
         } else {
-            nameLabel.setBodyText(packageModel.identifier)
+            nameLabel.setBodyText(rawIdentifier)
             identifierLabel.text = null
             identifierLabel.isVisible = false
         }
 
-        val selectedVersion = selectedPackageModel.selectedVersion
-        val selectedScope = selectedPackageModel.selectedScope
-        val repoToInstall = knownRepositoriesInTargetModules.repositoryToAddWhenInstallingOrUpgrading(
+        val selectedVersion = viewModel.selectedPackageModel.selectedVersion
+        val selectedScope = viewModel.selectedPackageModel.selectedScope
+        val repoToInstall = viewModel.knownRepositoriesInTargetModules.repositoryToAddWhenInstallingOrUpgrading(
             packageModel,
             selectedVersion,
-            allKnownRepositories
+            viewModel.allKnownRepositories
         )
 
         updateRepoWarningBanner(repoToInstall)
-        updateOperations(packageModel, selectedVersion, selectedScope, targetModules, onlyStable, repoToInstall)
+        updateOperations(packageModel, selectedVersion, selectedScope, viewModel.targetModules, viewModel.onlyStable, repoToInstall)
+
+        overflowButton.componentPopupMenu?.isVisible = false
     }
 
     private fun updateRepoWarningBanner(repoToInstall: RepositoryModel?) {
@@ -280,12 +292,18 @@ internal class PackageDetailsHeaderPanel(
     }
 
     private fun onPrimaryActionClicked() {
-        require(primaryOperations.isNotEmpty()) { "No operations to perform, status mismatch" }
+        if (primaryOperations.isEmpty()) {
+            logger<PackageDetailsHeaderPanel>().error("No primary action operations to perform, status mismatch")
+            return
+        }
         operationExecutor.executeOperations(primaryOperations)
     }
 
     private fun onRemoveClicked() {
-        require(removeOperations.isNotEmpty()) { "No remove operations to perform, status mismatch" }
+        if (removeOperations.isEmpty()) {
+            logger<PackageDetailsHeaderPanel>().error("No remove operations to perform, status mismatch")
+            return
+        }
         operationExecutor.executeOperations(removeOperations)
     }
 
@@ -294,7 +312,20 @@ internal class PackageDetailsHeaderPanel(
             ?: return
 
         CopyPasteManager.getInstance()
-            .setContents(StringSelection(text))
+            .setContents(StringSelection(text.stripHtml()))
+    }
+
+    private fun String.stripHtml(): String {
+        val stringBuilder = StringBuilder()
+
+        val parserDelegator = ParserDelegator()
+        val parserCallback: HTMLEditorKit.ParserCallback = object : HTMLEditorKit.ParserCallback() {
+            override fun handleText(data: CharArray, pos: Int) {
+                stringBuilder.append(data)
+            }
+        }
+        parserDelegator.parse(this.reader(), parserCallback, true)
+        return stringBuilder.toString()
     }
 }
 

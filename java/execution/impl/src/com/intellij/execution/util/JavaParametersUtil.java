@@ -6,10 +6,7 @@ import com.intellij.execution.CantRunException;
 import com.intellij.execution.CommonJavaRunConfigurationParameters;
 import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.JavaExecutionUtil;
-import com.intellij.execution.configurations.JavaParameters;
-import com.intellij.execution.configurations.RunConfigurationModule;
-import com.intellij.execution.configurations.RuntimeConfigurationWarning;
-import com.intellij.execution.configurations.SimpleJavaParameters;
+import com.intellij.execution.configurations.*;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
@@ -22,22 +19,20 @@ import com.intellij.openapi.roots.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiJavaModule;
+import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiImplUtil;
+import com.intellij.psi.impl.java.stubs.index.JavaModuleNameIndex;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.PathUtil;
 import com.intellij.util.PathsList;
+import com.intellij.util.containers.ContainerUtil;
 import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.lang.reflect.Field;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Set;
+import java.util.*;
 import java.util.function.Predicate;
 
 public final class JavaParametersUtil {
@@ -198,23 +193,85 @@ public final class JavaParametersUtil {
     };
   }
 
-  public static void putDependenciesOnModulePath(PathsList modulePath,
-                                                 PathsList classPath,
-                                                 PsiJavaModule module) {
-    Set<PsiJavaModule> allRequires = JavaModuleGraphUtil.getAllDependencies(module);
-    allRequires.add(module);    //put production output on the module path as well
-    JarFileSystem jarFS = JarFileSystem.getInstance();
-    ProjectFileIndex fileIndex = ProjectFileIndex.getInstance(module.getProject());
+  public static void putDependenciesOnModulePath(JavaParameters javaParameters,
+                                                 PsiJavaModule module,
+                                                 boolean includeTests) {
+    Project project = module.getProject();
+    
 
-    allRequires.stream()
+    Set<PsiJavaModule> explicitModules = new LinkedHashSet<>();
+    explicitModules.add(module);
+    collectExplicitlyAddedModules(project, javaParameters, explicitModules);
+
+    Set<PsiJavaModule> forModulePath = new HashSet<>(explicitModules);
+    for (PsiJavaModule explicitModule : explicitModules) {
+      forModulePath.addAll(JavaModuleGraphUtil.getAllDependencies(explicitModule));
+    }
+    
+    if (!includeTests) {
+      putProvidersOnModulePath(project, explicitModules, forModulePath);
+    }
+
+    JarFileSystem jarFS = JarFileSystem.getInstance();
+    ProjectFileIndex fileIndex = ProjectFileIndex.getInstance(project);
+
+    PathsList classPath = javaParameters.getClassPath();
+    PathsList modulePath = javaParameters.getModulePath();
+
+    forModulePath.stream()
       .filter(javaModule -> !PsiJavaModule.JAVA_BASE.equals(javaModule.getName()))
       .map(javaModule -> getClasspathEntry(javaModule, fileIndex, jarFS))
       .filter(Objects::nonNull)
       .forEach(file -> putOnModulePath(modulePath, classPath, file));
-    
+
     VirtualFile productionOutput = getClasspathEntry(module, fileIndex, jarFS);
     if (productionOutput != null) {
       putOnModulePath(modulePath, classPath, productionOutput);
+    }
+  }
+
+  private static void collectExplicitlyAddedModules(Project project,
+                                                    JavaParameters javaParameters,
+                                                    Set<PsiJavaModule> explicitModules) {
+    ParametersList parametersList = javaParameters.getVMParametersList();
+    List<String> parameters = parametersList.getParameters();
+    int additionalModulesIdx = parameters.indexOf("--add-modules") + 1;
+    String addedModules =
+      additionalModulesIdx > 0 && additionalModulesIdx < parameters.size() ? parameters.get(additionalModulesIdx) : null;
+    if (addedModules != null) {
+      JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(project);
+      for (String additionalModule : addedModules.split(",")) {
+        ContainerUtil.addIfNotNull(explicitModules, psiFacade.findModule(additionalModule.trim(), GlobalSearchScope.allScope(project)));
+      }
+    }
+  }
+
+  private static void putProvidersOnModulePath(Project project, Set<PsiJavaModule> explicitModules, Set<PsiJavaModule> forModulePath) {
+    Set<String> interfaces = new HashSet<>();
+    for (PsiJavaModule explicitModule : explicitModules) {
+      for (PsiUsesStatement use : explicitModule.getUses()) {
+        PsiClassType useClassType = use.getClassType();
+        if (useClassType != null) {
+          interfaces.add(useClassType.getCanonicalText());
+        }
+      }
+    }
+
+    if (interfaces.isEmpty()) return;
+
+    JavaModuleNameIndex index = JavaModuleNameIndex.getInstance();
+    for (String key : index.getAllKeys(project)) {
+      nextModule: 
+      for (PsiJavaModule aModule : index.get(key, project, GlobalSearchScope.allScope(project))) {
+        if (forModulePath.contains(aModule)) continue;
+        for (PsiProvidesStatement provide : aModule.getProvides()) {
+          PsiClassType provideInterfaceType = provide.getInterfaceType();
+          if (provideInterfaceType != null && interfaces.contains(provideInterfaceType.getCanonicalText())) {
+            forModulePath.add(aModule);
+            continue nextModule;
+          }
+        }
+      }
     }
   }
 
@@ -238,7 +295,7 @@ public final class JavaParametersUtil {
 
     CompilerModuleExtension moduleExtension = CompilerModuleExtension.getInstance(moduleDependency);
     if (moduleExtension != null) {
-      return fileIndex.isInTestSourceContent(moduleFile) ? moduleExtension.getCompilerOutputPathForTests() 
+      return fileIndex.isInTestSourceContent(moduleFile) ? moduleExtension.getCompilerOutputPathForTests()
                                                          : moduleExtension.getCompilerOutputPath();
     }
     return null;

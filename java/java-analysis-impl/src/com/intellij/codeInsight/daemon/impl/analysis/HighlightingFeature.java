@@ -98,7 +98,8 @@ public enum HighlightingFeature {
     }
   },
   INNER_STATICS(LanguageLevel.JDK_16, "feature.inner.statics"),
-  PATTERN_MATCHING_FOR_SWITCH(LanguageLevel.JDK_17_PREVIEW, "pattern.matching.for.switch");
+  PATTERNS_IN_SWITCH(LanguageLevel.JDK_17_PREVIEW, "feature.patterns.in.switch"),
+  GUARDED_AND_PARENTHESIZED_PATTERNS(LanguageLevel.JDK_17_PREVIEW, "feature.guarded.and.parenthesised.patterns");
 
   public static final @NonNls String JDK_INTERNAL_PREVIEW_FEATURE = "jdk.internal.PreviewFeature";
   public static final @NonNls String JDK_INTERNAL_JAVAC_PREVIEW_FEATURE = "jdk.internal.javac.PreviewFeature";

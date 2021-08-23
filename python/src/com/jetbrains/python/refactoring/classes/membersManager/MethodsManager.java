@@ -19,6 +19,7 @@ import com.jetbrains.python.psi.impl.PyFunctionBuilder;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import com.jetbrains.python.refactoring.PyPsiRefactoringUtil;
 import com.jetbrains.python.refactoring.classes.PyClassRefactoringUtil;
+import com.jetbrains.python.refactoring.classes.PyDependenciesComparator;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -94,7 +95,9 @@ class MethodsManager extends MembersManager<PyFunction> {
       for (final PyClass destClass : to) {
         final PyFunctionBuilder functionBuilder = PyFunctionBuilder.copySignature(function, DECORATORS_MAY_BE_COPIED_TO_ABSTRACT);
         functionBuilder.decorate(PyNames.ABSTRACTMETHOD);
-        PyClassRefactoringUtil.addMethods(destClass, false, functionBuilder.buildFunction());
+        PyFunction abstractMethod = functionBuilder.buildFunction();
+        PyDependenciesComparator.copyDependencyInfo(function, abstractMethod);
+        PyClassRefactoringUtil.addMethods(destClass, false, abstractMethod);
         classesToAddMetaAbc.add(destClass);
       }
     }

@@ -98,6 +98,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
     boolean isTestMode = ApplicationManager.getApplication().isUnitTestMode();
     for (ActionToolbarImpl toolbar : new ArrayList<>(ourToolbars)) {
       CancellablePromise<List<AnAction>> promise = toolbar.myLastUpdate;
+      toolbar.myLastUpdate = null;
       if (promise != null) promise.cancel();
       toolbar.myVisibleActions.clear();
       Image image = !isTestMode && toolbar.isShowing() ? paintToImage(toolbar) : null;
@@ -243,17 +244,8 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
     }
 
     CancellablePromise<List<AnAction>> lastUpdate = myLastUpdate;
-    if (lastUpdate != null) {
-      lastUpdate.cancel();
-      if (ApplicationManager.getApplication().isUnitTestMode()) {
-        try {
-          lastUpdate.blockingGet(1, TimeUnit.DAYS);
-        }
-        catch (Exception e) {
-          throw new RuntimeException(e);
-        }
-      }
-    }
+    myLastUpdate = null;
+    if (lastUpdate != null) lastUpdate.cancel();
   }
 
   @Override
@@ -1141,19 +1133,24 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
     ActionUpdater updater = new ActionUpdater(LaterInvocator.isInModalContext(), myPresentationFactory,
                                               dataContext, myPlace, false, true);
     if (Utils.isAsyncDataContext(dataContext)) {
-      if (myLastUpdate != null) myLastUpdate.cancel();
+      CancellablePromise<List<AnAction>> lastUpdate = myLastUpdate;
+      myLastUpdate = null;
+      if (lastUpdate != null) lastUpdate.cancel();
 
       updateActionsImplFastTrack(updater);
 
       boolean forcedActual = forced || myForcedUpdateRequested;
-      myLastUpdate = updater.expandActionGroupAsync(myActionGroup, myHideDisabled);
-      myLastUpdate.onSuccess(actions -> actionsUpdated(forcedActual, actions))
+      CancellablePromise<List<AnAction>> promise = myLastUpdate = updater.expandActionGroupAsync(myActionGroup, myHideDisabled);
+      promise
+        .onSuccess(actions -> {
+          if (myLastUpdate == promise) myLastUpdate = null;
+          actionsUpdated(forcedActual, actions);
+        })
         .onError(ex -> {
           if (!(ex instanceof ControlFlowException || ex instanceof CancellationException)) {
             LOG.error(ex);
           }
-        })
-        .onProcessed(__ -> myLastUpdate = null);
+        });
     }
     else {
       boolean forcedActual = forced || myForcedUpdateRequested;

@@ -17,14 +17,14 @@ import com.intellij.ui.components.panels.HorizontalLayout
 import com.intellij.ui.components.panels.Wrapper
 import com.intellij.ui.mac.MacMessages
 import com.intellij.ui.mac.TouchbarDataKeys
-import com.intellij.util.ui.JBFont
-import com.intellij.util.ui.JBUI
-import com.intellij.util.ui.UIUtil
+import com.intellij.ui.scale.JBUIScale
+import com.intellij.util.ui.*
 import com.intellij.util.ui.UIUtil.JBWordWrapHtmlEditorKit
 import org.jetbrains.annotations.Nls
 import java.awt.*
 import java.awt.event.ActionEvent
 import java.awt.event.MouseEvent
+import java.awt.geom.RoundRectangle2D
 import javax.accessibility.AccessibleContext
 import javax.swing.*
 import javax.swing.border.Border
@@ -165,9 +165,29 @@ private class AlertDialog(project: Project?,
     setDoNotAskOption(doNotAskOption)
 
     if (myIsTitleComponent && !SystemInfoRt.isMac) {
-      myCloseButton = InplaceButton(IconButton(null, AllIcons.Ide.Notification.Close, AllIcons.Ide.Notification.CloseHover, null)) {
+      myCloseButton = object : InplaceButton(IconButton(null, AllIcons.Windows.CloseActive, null, null), {
         doCancelAction()
+      }) {
+        override fun paintHover(g: Graphics) {
+          val g2 = g.create() as Graphics2D
+
+          try {
+            g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON)
+            g2.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL, RenderingHints.VALUE_STROKE_NORMALIZE)
+            g2.color = JBUI.CurrentTheme.ActionButton.hoverBorder()
+
+            val rect = Rectangle(size)
+            JBInsets.removeFrom(rect, insets)
+
+            val arc = JBUIScale.scale(JBUI.getInt("Button.arc", 6).toFloat())
+            g2.fill(RoundRectangle2D.Float(rect.x.toFloat(), rect.y.toFloat(), rect.width.toFloat(), rect.height.toFloat(), arc, arc))
+          }
+          finally {
+            g2.dispose()
+          }
+        }
       }
+      myCloseButton.preferredSize = JBDimension(22, 22)
     }
     else {
       myCloseButton = null
@@ -299,7 +319,7 @@ private class AlertDialog(project: Project?,
       super.layoutContainer(target)
 
       if (myCloseButton != null) {
-        val offset = JBUI.scale(20)
+        val offset = JBUI.scale(24)
         val size = myCloseButton.preferredSize
         myCloseButton.setBounds(target.width - offset, offset - size.height, size.width, size.height)
       }
@@ -333,7 +353,7 @@ private class AlertDialog(project: Project?,
 
     if (myIsTitleComponent && !StringUtil.isEmpty(myTitle)) {
       val titleComponent = createTextComponent(JTextPane(), UIUtil.removeMnemonic(myTitle!!))
-      titleComponent.font = JBFont.h3().asBold()
+      titleComponent.font = JBFont.h4()
       myTitleComponent = titleComponent
       textPanel.add(titleComponent, BorderLayout.NORTH)
     }
@@ -351,7 +371,7 @@ private class AlertDialog(project: Project?,
         }
       }, myMessage!!.replace("(\r\n|\n)".toRegex(), "<br/>"))
 
-      messageComponent.font = JBFont.medium()
+      messageComponent.font = JBFont.regular()
       myMessageComponent = messageComponent
 
       val lines = myMessage.length / 100
@@ -378,7 +398,7 @@ private class AlertDialog(project: Project?,
       myButtonsPanel.border = JBUI.Borders.emptyTop(14 - buttonInsets.top) // +8 from textPanel layout vGap
     }
     else {
-      myCheckBoxDoNotShowDialog.font = JBFont.medium()
+      myCheckBoxDoNotShowDialog.font = JBFont.regular()
       val wrapper = Wrapper(myCheckBoxDoNotShowDialog)
       // vertical gap 12 between text message and check box
       wrapper.border = JBUI.Borders.emptyTop(4) // +8 from textPanel layout vGap
@@ -395,7 +415,11 @@ private class AlertDialog(project: Project?,
     }
 
     if (SystemInfoRt.isMac) {
+      val buttonMap = buttonMap
+      buttonMap.clear()
+
       for ((index, button) in myButtons.withIndex()) {
+        buttonMap[button.action] = button
         button.putClientProperty(TouchbarDataKeys.DIALOG_BUTTON_DESCRIPTOR_KEY, null)
         val descriptor = TouchbarDataKeys.putDialogButtonDescriptor(button, index + 1, true)
         if (button.action.getValue(DEFAULT_ACTION) != null) {
@@ -466,9 +490,9 @@ private class AlertDialog(project: Project?,
     val size = button.preferredSize
     val insets = button.insets
 
-    val width100 = JBUI.scale(100) + insets.left + insets.right
-    if (size.width < width100) {
-      size.width = width100
+    val width = JBUI.scale(72) + insets.left + insets.right
+    if (size.width < width) {
+      size.width = width
     }
     else {
       val diffWidth = JBUI.scale(20) - UIUtil.getButtonTextHorizontalOffset(button, size, null)
@@ -477,9 +501,9 @@ private class AlertDialog(project: Project?,
       }
     }
 
-    val height28 = JBUI.scale(28) + insets.top + insets.bottom
-    if (size.height < height28) {
-      size.height = height28
+    val height = JBUI.scale(24) + insets.top + insets.bottom
+    if (size.height < height) {
+      size.height = height
     }
 
     button.preferredSize = size
@@ -497,16 +521,24 @@ private class AlertDialog(project: Project?,
   override fun createDoNotAskCheckbox(): JComponent? = null
 
   override fun getPreferredFocusedComponent(): JComponent? {
-    val focusedComponent = super.getPreferredFocusedComponent()
-    if (SystemInfoRt.isMac && focusedComponent == null) {
-      if (myCheckBoxDoNotShowDialog != null && myCheckBoxDoNotShowDialog.isVisible) {
-        return myCheckBoxDoNotShowDialog
-      }
-      if (myButtons.isNotEmpty()) {
-        return myButtons[0]
+    if (!SystemInfoRt.isMac) {
+      return null
+    }
+    if (myPreferredFocusedComponent != null) {
+      return myPreferredFocusedComponent
+    }
+    val size = myButtons.size
+    if (size > 0) {
+      val buttons = if (SystemInfoRt.isMac) ArrayList<JButton>(myButtons).also { it.reverse() } else myButtons
+      val cancelButton = Messages.getCancelButton()
+
+      for ((index, button) in buttons.withIndex()) {
+        if (index != myDefaultOptionIndex && (size < 3 || cancelButton != button.text)) {
+          return button
+        }
       }
     }
-    return focusedComponent
+    return null
   }
 
   override fun doCancelAction() = close(-1)

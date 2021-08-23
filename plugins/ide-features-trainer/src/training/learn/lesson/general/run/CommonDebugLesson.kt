@@ -11,7 +11,6 @@ import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.DataProvider
-import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.editor.LogicalPosition
@@ -60,6 +59,7 @@ abstract class CommonDebugLesson(id: String) : KLesson(id, LessonsBundle.message
 
   protected val afterFixText: String by lazy { sample.text.replaceFirst("[0]", "[1]") }
 
+  protected var sessionPaused: Boolean = false
   protected var mayBeStopped: Boolean = false
   private var debugSession: XDebugSession? by WeakReferenceDelegator()
 
@@ -158,10 +158,14 @@ abstract class CommonDebugLesson(id: String) : KLesson(id, LessonsBundle.message
             (debugSession as XDebugSessionImpl).setWatchExpressions(emptyList())
             debugSession.addSessionListener(object : XDebugSessionListener {
               override fun sessionPaused() {
-                invokeLater { completeStep() }
+                taskInvokeLater { completeStep() }
               }
             }, lessonDisposable)
             debugSession.addSessionListener(object : XDebugSessionListener {
+              override fun sessionPaused() {
+                sessionPaused = true
+              }
+
               override fun sessionStopped() {
                 val activeToolWindow = LearningUiManager.activeToolWindow
                 if (activeToolWindow != null && !mayBeStopped && LessonManager.instance.currentLesson == this@CommonDebugLesson) {
@@ -289,7 +293,7 @@ abstract class CommonDebugLesson(id: String) : KLesson(id, LessonsBundle.message
       }
       test {
         invokeActionViaShortcut("ESCAPE")
-        invokeLater {
+        taskInvokeLater {
           WriteCommandAction.runWriteCommandAction(project) {
             val offset = sample.text.indexOf("[0]")
             editor.selectionModel.removeSelection()
@@ -332,8 +336,8 @@ abstract class CommonDebugLesson(id: String) : KLesson(id, LessonsBundle.message
     val position = sample.getPosition(3)
     caret(position)
 
-    highlightButtonById("RunToCursor")
     highlightLineNumberByOffset(position.startOffset)
+    highlightButtonById("RunToCursor", clearHighlights = false)
 
     actionTask("RunToCursor") {
       proposeRestore {

@@ -17,7 +17,7 @@ import com.intellij.testFramework.ApplicationRule
 import com.intellij.testFramework.DisposableRule
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.TemporaryDirectory
-import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleManagerComponentBridge
+import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleManagerBridgeImpl
 import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder
 import com.intellij.workspaceModel.storage.bridgeEntities.ModuleDependencyItem
 import com.intellij.workspaceModel.storage.bridgeEntities.ModuleEntity
@@ -88,7 +88,7 @@ class WorkspaceModelPerformanceTest(private val modulesCount: Int) {
     val moduleManager = ModuleManager.getInstance(project)
 
     when (moduleManager) {
-      is ModuleManagerComponentBridge -> "Legacy bridge model enabled: $moduleManager"
+      is ModuleManagerBridgeImpl -> "Legacy bridge model enabled: $moduleManager"
       else -> "Unknown model enabled: $moduleManager"
     }.also { println(it) }
 

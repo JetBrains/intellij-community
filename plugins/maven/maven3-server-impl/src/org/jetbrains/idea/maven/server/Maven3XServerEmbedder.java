@@ -612,7 +612,7 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
       customizeComponents(token);
 
       ArtifactFactory artifactFactory = getComponent(ArtifactFactory.class);
-      if(artifactFactory instanceof CustomMaven3ArtifactFactory) {
+      if (artifactFactory instanceof CustomMaven3ArtifactFactory) {
         ((CustomMaven3ArtifactFactory)artifactFactory).customize();
       }
 
@@ -639,7 +639,7 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
   public void customizeComponents(MavenToken token) throws RemoteException {
     MavenServerUtil.checkToken(token);
     // replace some plexus components
-    if(VersionComparatorUtil.compare("3.7.0-SNAPSHOT", getMavenVersion()) < 0) {
+    if (VersionComparatorUtil.compare("3.7.0-SNAPSHOT", getMavenVersion()) < 0) {
       myContainer.addComponent(getComponent(ArtifactFactory.class, "ide"), ArtifactFactory.ROLE);
     }
     myContainer.addComponent(getComponent(ArtifactResolver.class, "ide"), ArtifactResolver.ROLE);
@@ -789,7 +789,7 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
             }
             else {
               final DependencyResolutionResult dependencyResolutionResult = resolveDependencies(project, repositorySession);
-              boolean addUnresolved = System.getProperty("idea.maven.no.use.dependency.graph")==null;
+              boolean addUnresolved = System.getProperty("idea.maven.no.use.dependency.graph") == null;
               Set<Artifact> artifacts = resolveArtifacts(dependencyResolutionResult, addUnresolved);
               project.setArtifacts(artifacts);
               executionResults.add(new MavenExecutionResult(project, dependencyResolutionResult, exceptions, modelProblems));
@@ -1025,9 +1025,7 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
       }
       result.setUserProperties(userProperties);
 
-      if (activeProfiles != null) {
-        result.setActiveProfiles(activeProfiles);
-      }
+      result.setActiveProfiles(collectActiveProfiles(result.getActiveProfiles(), activeProfiles, inactiveProfiles));
       if (inactiveProfiles != null) {
         result.setInactiveProfiles(inactiveProfiles);
       }
@@ -1056,6 +1054,25 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
     }
   }
 
+  private static List<String> collectActiveProfiles(@Nullable List<String> defaultActiveProfiles,
+                                                    @Nullable List<String> explicitActiveProfiles,
+                                                    @Nullable List<String> explicitInactiveProfiles) {
+    if (defaultActiveProfiles == null || defaultActiveProfiles.isEmpty()) {
+      return explicitActiveProfiles != null ? explicitActiveProfiles : Collections.<String>emptyList();
+    }
+
+    Set<String> result = new HashSet<String>(defaultActiveProfiles);
+    if (explicitInactiveProfiles != null && !explicitInactiveProfiles.isEmpty()) {
+      result.removeAll(explicitInactiveProfiles);
+    }
+
+    if (explicitActiveProfiles != null) {
+      result.addAll(explicitActiveProfiles);
+    }
+
+    return new ArrayList<String>(result);
+  }
+
   @NotNull
   private File getMultimoduleProjectDir(@Nullable File file) {
     File mavenMultiModuleProjectDirectory;
@@ -1064,7 +1081,6 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
     }
     else {
       mavenMultiModuleProjectDirectory = MavenServerUtil.findMavenBasedir(file);
-
     }
     return mavenMultiModuleProjectDirectory;
   }

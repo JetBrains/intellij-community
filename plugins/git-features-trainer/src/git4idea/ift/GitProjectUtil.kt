@@ -4,6 +4,7 @@ package git4idea.ift
 import com.intellij.openapi.application.invokeAndWaitIfNeeded
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.vcs.ProjectLevelVcsManager
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import git4idea.actions.GitInit
@@ -21,6 +22,8 @@ object GitProjectUtil {
     val learningProjectRoot = refreshAndGetProjectRoot(project)
     val gitProjectRoot = invokeAndWaitIfNeeded {
       runWriteAction {
+        ProjectLevelVcsManager.getInstance(project).directoryMappings = mutableListOf()
+
         learningProjectRoot.findChild("git")?.apply {
           findChild(".git")?.delete(this)
         } ?: learningProjectRoot.createChildDirectory(this, "git")

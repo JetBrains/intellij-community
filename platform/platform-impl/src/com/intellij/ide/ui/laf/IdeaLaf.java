@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.ui.laf;
 
 import com.intellij.icons.AllIcons;
@@ -7,6 +7,7 @@ import com.intellij.ui.TableActions;
 import com.intellij.ui.plaf.beg.*;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ui.StartupUiUtil;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.border.Border;
@@ -21,14 +22,25 @@ import java.util.Map;
 public final class IdeaLaf extends MetalLookAndFeel {
   public static final ColorUIResource TOOLTIP_BACKGROUND_COLOR = new ColorUIResource(255, 255, 231);
 
+  private final Map<Object, Object> myCustomFontDefaults;
+
+  public IdeaLaf(@Nullable Map<Object, Object> customFontDefaults) {
+    myCustomFontDefaults = customFontDefaults;
+  }
+
   @Override
   public void initComponentDefaults(UIDefaults defaults) {
     super.initComponentDefaults(defaults);
     StartupUiUtil.initInputMapDefaults(defaults);
     initIdeaDefaults(defaults);
 
-    Map.Entry<String, Integer> systemFont = JBUIScale.getSystemFontData(() -> defaults);
-    StartupUiUtil.initFontDefaults(defaults, StartupUiUtil.getFontWithFallback(systemFont.getKey(), Font.PLAIN, systemFont.getValue()));
+    if (myCustomFontDefaults != null) {
+      defaults.putAll(myCustomFontDefaults);
+    }
+    else {
+      Map.Entry<String, Integer> systemFont = JBUIScale.getSystemFontData(() -> defaults);
+      StartupUiUtil.initFontDefaults(defaults, StartupUiUtil.getFontWithFallback(systemFont.getKey(), Font.PLAIN, systemFont.getValue()));
+    }
   }
 
   @SuppressWarnings("HardCodedStringLiteral")

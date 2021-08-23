@@ -164,8 +164,13 @@ public class GradleProjectTaskRunner extends ProjectTaskRunner {
     List<Module> modulesOfFiles = addModulesBuildTasks(taskMap.get(ModuleFilesBuildTask.class), buildTasksMap, initScripts);
     addArtifactsBuildTasks(taskMap.get(ProjectModelBuildTask.class), cleanTasksMap, buildTasksMap);
 
-    // TODO send a message if nothing to build
     Set<String> rootPaths = buildTasksMap.keySet();
+    if (rootPaths.isEmpty()) {
+      LOG.warn("Nothing will be run for: " + Arrays.toString(tasks));
+      resultPromise.setResult(TaskRunnerResults.SUCCESS);
+      return resultPromise;
+    }
+
     AtomicInteger successCounter = new AtomicInteger();
     AtomicInteger errorCounter = new AtomicInteger();
 
@@ -210,14 +215,23 @@ public class GradleProjectTaskRunner extends ProjectTaskRunner {
           }
           resultPromise.setResult(errors > 0 ? TaskRunnerResults.FAILURE : TaskRunnerResults.SUCCESS);
         }
+        else {
+          if (successes + errors > rootPaths.size()) {
+            LOG.error("Unexpected callback!");
+          }
+        }
       }
     };
 
     String gradleVmOptions = GradleSettings.getInstance(project).getGradleVmOptions();
     for (String rootProjectPath : rootPaths) {
       Collection<String> buildTasks = buildTasksMap.get(rootProjectPath);
-      if (buildTasks.isEmpty()) continue;
       Collection<String> cleanTasks = cleanTasksMap.get(rootProjectPath);
+      if (buildTasks.isEmpty() && cleanTasks.isEmpty()) {
+        taskCallback.onSuccess();
+        LOG.warn("Nothing will be run for: " + Arrays.toString(tasks) + " at '" + rootProjectPath + "'");
+        continue;
+      }
 
       ExternalSystemTaskExecutionSettings settings = new ExternalSystemTaskExecutionSettings();
 
@@ -233,7 +247,6 @@ public class GradleProjectTaskRunner extends ProjectTaskRunner {
       settings.setExecutionName(executionName);
       settings.setExternalProjectPath(rootProjectPath);
       settings.setTaskNames(ContainerUtil.collect(ContainerUtil.concat(cleanTasks, buildTasks).iterator()));
-      //settings.setScriptParameters(scriptParameters);
       settings.setVmOptions(gradleVmOptions);
       settings.setExternalSystemIdString(GradleConstants.SYSTEM_ID.getId());
 

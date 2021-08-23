@@ -9,6 +9,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiTypesUtil;
 import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.ControlFlowUtils;
+import com.siyeh.ig.psiutils.SwitchUtils;
 import gnu.trove.TIntArrayList;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Nls;
@@ -187,12 +188,12 @@ public class EnhancedSwitchBackwardMigrationInspection extends AbstractBaseJavaL
         CommentTracker ct = new CommentTracker();
         branchTrackers.add(ct);
         String generate = generateBranch(rule, ct, switchCopy);
-        PsiExpressionList values = rule.getCaseValues();
-        int caseCount = values == null ? 1 : values.getExpressionCount();
+        PsiCaseLabelElementList labelElementList = rule.getCaseLabelElementList();
+        int caseCount = labelElementList == null ? 1 : labelElementList.getElementCount();
         caseCounts.add(caseCount);
         joiner.add(generate);
         mainCommentTracker.markUnchanged(rule);
-        addDefaultBranch &= !rule.isDefaultCase();
+        addDefaultBranch &= !SwitchUtils.isDefaultLabel(rule);
       }
       if (addDefaultBranch) {
         joiner.add("default:throw new java.lang.IllegalArgumentException();");
@@ -228,17 +229,17 @@ public class EnhancedSwitchBackwardMigrationInspection extends AbstractBaseJavaL
         .select(PsiYieldStatement.class)
         .filter(statement -> statement.getExpression() != null && statement.findEnclosingExpression() == switchBlock)
         .forEach(statement -> handleYieldInside(statement, ct));
-      PsiExpressionList caseValues = rule.getCaseValues();
+      PsiCaseLabelElementList labelElementList = rule.getCaseLabelElementList();
       String caseExpressionsText;
-      if (caseValues == null || caseValues.isEmpty()) {
-        if (rule.isDefaultCase()) {
+      if (labelElementList == null || labelElementList.getElementCount() == 0) {
+        if (SwitchUtils.isDefaultLabel(rule)) {
           caseExpressionsText = "default:";
         } else {
           caseExpressionsText = "case:";
         }
       } else {
-        PsiExpression[] expressions = caseValues.getExpressions();
-        caseExpressionsText = StreamEx.of(expressions).map(e -> "case " + ct.text(e) + ":").joining("\n");
+        PsiCaseLabelElement[] labelElements = labelElementList.getElements();
+        caseExpressionsText = StreamEx.of(labelElements).map(e -> "case " + ct.text(e) + ":").joining("\n");
       }
       PsiStatement body = rule.getBody();
       String finalBody;

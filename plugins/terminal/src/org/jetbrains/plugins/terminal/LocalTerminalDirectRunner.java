@@ -58,7 +58,7 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
   private static final String ZSH_NAME = "zsh";
   private static final String FISH_NAME = "fish";
 
-  private final Charset myDefaultCharset;
+  protected final Charset myDefaultCharset;
 
   public LocalTerminalDirectRunner(Project project) {
     super(project);

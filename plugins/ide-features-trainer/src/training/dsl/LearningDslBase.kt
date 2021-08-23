@@ -14,12 +14,12 @@ interface LearningDslBase {
   }
 
   /** Highlight as code inside lesson step message */
-  fun code(sourceSample: String): String  {
+  fun code(sourceSample: String): String {
     return " <code>${StringUtil.escapeXmlEntities(sourceSample).replaceSpacesWithNonBreakSpace()}</code> "
   }
 
   /** Highlight some [text] */
-  fun strong(text: String): String  {
+  fun strong(text: String): String {
     return "<strong>${StringUtil.escapeXmlEntities(text)}</strong>"
   }
 

@@ -4,6 +4,8 @@ import ai.grazie.nlp.tokenizer.sentence.SRXSentenceTokenizer
 import com.intellij.grazie.text.TextContent.TextDomain.COMMENTS
 import com.intellij.grazie.text.TextContent.TextDomain.DOCUMENTATION
 import com.intellij.grazie.utils.Text
+import com.intellij.grazie.utils.Text.looksLikeCode
+import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiFile
 import com.intellij.psi.search.PsiTodoSearchHelper
 
@@ -13,7 +15,7 @@ internal class CommentProblemFilter : ProblemFilter() {
     val text = problem.text
     val domain = text.domain
     if (domain == COMMENTS || domain == DOCUMENTATION) {
-      if (isTodoComment(text.commonParent.containingFile, text)) {
+      if (isTodoComment(text.containingFile, text)) {
         return true
       }
       if (problem.rule.globalId.endsWith("DOUBLE_PUNCTUATION") && (isNumberRange(problem, text) || isPathPart(problem, text))) {
@@ -29,6 +31,9 @@ internal class CommentProblemFilter : ProblemFilter() {
     }
 
     if (domain == COMMENTS) {
+      if (textAround(text, problem.highlightRange).looksLikeCode()) {
+        return true
+      }
       if (problem.fitsGroup(RuleGroup(RuleGroup.UNDECORATED_SENTENCE_SEPARATION))) {
         return true
       }
@@ -37,6 +42,10 @@ internal class CommentProblemFilter : ProblemFilter() {
       }
     }
     return false
+  }
+
+  private fun textAround(text: CharSequence, range: TextRange): CharSequence {
+    return text.subSequence((range.startOffset - 20).coerceAtLeast(0), (range.endOffset + 20).coerceAtMost(text.length))
   }
 
   private fun isInFirstSentence(problem: TextProblem) =

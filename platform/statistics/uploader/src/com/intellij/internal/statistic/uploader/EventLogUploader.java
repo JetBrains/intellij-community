@@ -80,7 +80,7 @@ public final class EventLogUploader {
     logger.info("{url:" + appInfo.getTemplateUrl() + ", product:" + appInfo.getProductCode() +
                 ", userAgent:" + connectionSettings.getUserAgent() +
                 ", internal:" + appInfo.isInternal() + ", isTest:" + appInfo.isTest() + "}");
-    String logs = recorder.getLogFilesProvider().getLogFiles().stream().
+    String logs = recorder.getFilesToSendProvider().getFilesToSend().stream().
       map(file -> file.getFile().getAbsolutePath()).collect(Collectors.joining(File.pathSeparator));
 
     logger.info("{recorder:" + recorder.getRecorderId() + ", files:" + logs + "}");

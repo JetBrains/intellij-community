@@ -27,9 +27,16 @@ class PythonDebugLesson : CommonDebugLesson("python.debug.workflow") {
     actionTask("Rerun") {
       before {
         mayBeStopped = true
+        sessionPaused = false
       }
       proposeModificationRestore(afterFixText)
       PythonLessonsBundle.message("python.debug.workflow.rerun", icon(AllIcons.Actions.Restart), action(it))
+    }
+
+    task {
+      stateCheck {
+        sessionPaused
+      }
     }
   }
 

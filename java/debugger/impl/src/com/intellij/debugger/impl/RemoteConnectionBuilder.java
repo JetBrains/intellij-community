@@ -1,11 +1,10 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.impl;
 
 import com.intellij.debugger.JavaDebuggerBundle;
 import com.intellij.debugger.engine.AsyncStacksUtils;
 import com.intellij.debugger.engine.DebugProcessImpl;
 import com.intellij.debugger.engine.DebuggerUtils;
-import com.intellij.debugger.memory.agent.MemoryAgentUtil;
 import com.intellij.debugger.settings.CaptureSettingsProvider;
 import com.intellij.debugger.settings.DebuggerSettings;
 import com.intellij.execution.ExecutionException;
@@ -48,7 +47,6 @@ public class RemoteConnectionBuilder {
   private final String myAddress;
   private boolean myCheckValidity;
   private boolean myAsyncAgent;
-  private boolean myMemoryAgent;
   private boolean myQuiet;
   private boolean mySuspend = true;
   private Project myProject;
@@ -71,11 +69,6 @@ public class RemoteConnectionBuilder {
 
   public RemoteConnectionBuilder project(Project project) {
     myProject = project;
-    return this;
-  }
-
-  public RemoteConnectionBuilder memoryAgent(boolean useAgent) {
-    myMemoryAgent = useAgent;
     return this;
   }
 
@@ -133,10 +126,6 @@ public class RemoteConnectionBuilder {
 
       if (myAsyncAgent) {
         addDebuggerAgent(parameters, myProject);
-      }
-
-      if (myMemoryAgent) {
-        MemoryAgentUtil.addMemoryAgent(parameters, myProject);
       }
 
       final Sdk jdk = parameters.getJdk();

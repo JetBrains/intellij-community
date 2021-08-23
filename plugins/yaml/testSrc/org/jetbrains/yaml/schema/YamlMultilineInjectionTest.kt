@@ -110,7 +110,7 @@ class YamlMultilineInjectionTest : BasePlatformTestCase() {
     myInjectionFixture.assertInjectedLangAtCaret("XML")
     myFixture.performEditorAction(IdeActions.ACTION_EDITOR_BACKSPACE)
     PsiDocumentManager.getInstance(project).commitDocument(myFixture.getDocument(myFixture.file))
-    myInjectionFixture.assertInjectedContent("<html>\n</html>")
+    myInjectionFixture.assertInjectedContent("<html>\n\n</html>")
     myFixture.checkResult("""
       long:
         long:
@@ -140,7 +140,35 @@ class YamlMultilineInjectionTest : BasePlatformTestCase() {
       |  root:
       |  """.trimMargin())
   }
-  
+
+  fun testInjectedJsonComma() {
+    myFixture.configureByText("test.yaml", """
+      long:
+        long:
+          nest:
+            #language=JSON
+            abc: |
+              {
+                "jkey": 1<caret>
+              }
+    """.trimIndent())
+
+    myInjectionFixture.assertInjectedLangAtCaret("JSON")
+    myFixture.performEditorAction(IdeActions.ACTION_EDITOR_ENTER)
+    myFixture.checkResult("""
+      long:
+        long:
+          nest:
+            #language=JSON
+            abc: |
+              {
+                "jkey": 1,
+              
+              }
+    """.trimIndent())
+    myInjectionFixture.assertInjectedContent("{\n  \"jkey\": 1,\n\n}")
+  }
+
   fun testYamlToYamlInjection2() {
     myFixture.configureByText("test.yaml", """
         myyaml: |
@@ -427,6 +455,40 @@ class YamlMultilineInjectionTest : BasePlatformTestCase() {
           
         Y: 12
     """.trimIndent())
+  }
+  
+  fun testYamlToYamlQuotedMultiline() {
+    myFixture.configureByText("test.yaml", """
+        myyaml: "abc: \<caret>
+                "
+    """.trimIndent())
+
+    myInjectionFixture.assertInjectedContent("abc: \\\n")
+    myFixture.performEditorAction(IdeActions.ACTION_EDITOR_ENTER)
+    myFixture.checkResult("""
+      myyaml: "abc: \
+
+              "
+    """.trimIndent())
+    myInjectionFixture.assertInjectedContent("abc: \\\n\n")
+  }
+  
+  fun testYamlToYamlQuotedMultilineDoubleEscape() {
+    myFixture.configureByText("test.yaml", """
+      myyaml: "abc: \
+                    \<caret>
+      "
+    """.trimIndent())
+
+    myInjectionFixture.assertInjectedContent("abc: \\\n\\\n")
+    myFixture.performEditorAction(IdeActions.ACTION_EDITOR_ENTER)
+    myFixture.checkResult("""
+      myyaml: "abc: \
+                    \
+      
+      "
+    """.trimIndent())
+    myInjectionFixture.assertInjectedContent("abc: \\\n\\\n\n")
   }
   
 

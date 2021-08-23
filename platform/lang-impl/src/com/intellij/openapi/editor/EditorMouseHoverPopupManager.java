@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.editor;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
@@ -128,8 +128,7 @@ public class EditorMouseHoverPopupManager implements Disposable {
       }
     }, this);
     IdeEventQueue.getInstance().addDispatcher(event -> {
-      int eventID = event.getID();
-      if (eventID == KeyEvent.KEY_PRESSED || eventID == KeyEvent.KEY_TYPED) {
+      if (event.getID() == KeyEvent.KEY_PRESSED) {
         cancelCurrentProcessing();
       }
       return false;
@@ -552,6 +551,14 @@ public class EditorMouseHoverPopupManager implements Disposable {
               if (quickDocMessage != null && quickDocMessage.length() > MAX_QUICK_DOC_CHARACTERS) {
                 quickDocMessage = quickDocMessage.substring(0, MAX_QUICK_DOC_CHARACTERS);
               }
+              if (quickDocMessage != null) {
+                var finalTargetElement = targetElement;
+                var finalQuickDocMessage = quickDocMessage;
+                var finalProvider = provider;
+                quickDocMessage = ReadAction.compute(
+                  () -> documentationManager.decorate(finalTargetElement, finalQuickDocMessage, null, finalProvider)
+                );
+              }
             }
           }
         }
@@ -597,7 +604,6 @@ public class EditorMouseHoverPopupManager implements Disposable {
     private final @Nls String quickDocMessage;
     private final WeakReference<PsiElement> quickDocElement;
     private final DocumentationProvider docProvider;
-
 
     public Info(HighlightInfo highlightInfo,
                  TooltipAction tooltipAction,
