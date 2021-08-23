@@ -534,6 +534,9 @@ public abstract class AbstractWizard<T extends Step> extends DialogWrapper {
     }
 
     myPreviousButton.setEnabled(!firstStep);
+    if (Experiments.getInstance().isFeatureEnabled("new.project.wizard")) {
+      myPreviousButton.setVisible(!firstStep);
+    }
   }
 
   private static boolean isNewWizard() {
