@@ -37,6 +37,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.ToggleAction;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
@@ -71,6 +72,7 @@ import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentFactory;
 import com.intellij.ui.content.ContentManager;
 import com.intellij.util.*;
+import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -253,26 +255,36 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextEx {
 
     InspectionResultsView oldView = myView;
     InspectionResultsView newView = oldView == null ? new InspectionResultsView(this, new InspectionRVContentProviderImpl()) : null;
-    if (!(oldView == null ? newView : oldView).hasProblems()) {
-      int totalFiles = getStdJobDescriptors().BUILD_GRAPH.getTotalAmount(); // do not use invalidated scope
+    ReadAction
+      .nonBlocking(() -> (oldView == null ? newView : oldView).hasProblems())
+      .finishOnUiThread(ModalityState.any(), hasProblems -> {
+        if (!hasProblems) {
+          showNoProblemsNotification(scope, newView);
+        }
+        else if (newView != null && !newView.isDisposed() && getCurrentScope() != null) {
+          addView(newView);
+          newView.update();
+        }
+        if (myView != null) {
+          myView.setUpdating(false);
+        }
+      })
+      .expireWith(getProject())
+      .submit(AppExecutorUtil.getAppExecutorService());
+  }
 
-      var notification = NOTIFICATION_GROUP.createNotification(InspectionsBundle.message("inspection.no.problems.message",
-                                                                                               totalFiles,
-                                                                                               scope.getShortenName()), MessageType.INFO);
-      if (!scope.isIncludeTestSource()) addRepeatWithTestsAction(scope, notification, () -> doInspections(scope));
-      notification.notify(getProject());
+  private void showNoProblemsNotification(@NotNull AnalysisScope scope, InspectionResultsView newView) {
+    int totalFiles = getStdJobDescriptors().BUILD_GRAPH.getTotalAmount(); // do not use invalidated scope
 
-      close(true);
-      if (newView != null) {
-        Disposer.dispose(newView);
-      }
-    }
-    else if (newView != null && !newView.isDisposed() && getCurrentScope() != null) {
-      addView(newView);
-      newView.update();
-    }
-    if (myView != null) {
-      myView.setUpdating(false);
+    var notification = NOTIFICATION_GROUP.createNotification(InspectionsBundle.message("inspection.no.problems.message",
+                                                                                       totalFiles,
+                                                                                       scope.getShortenName()), MessageType.INFO);
+    if (!scope.isIncludeTestSource()) addRepeatWithTestsAction(scope, notification, () -> doInspections(scope));
+    notification.notify(getProject());
+
+    close(true);
+    if (newView != null) {
+      Disposer.dispose(newView);
     }
   }
 
