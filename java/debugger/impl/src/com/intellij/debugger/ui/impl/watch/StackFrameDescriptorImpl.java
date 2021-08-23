@@ -1,11 +1,15 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.ui.impl.watch;
 
 import com.intellij.debugger.SourcePosition;
-import com.intellij.debugger.engine.*;
+import com.intellij.debugger.engine.ContextUtil;
+import com.intellij.debugger.engine.DebugProcess;
+import com.intellij.debugger.engine.DebuggerManagerThreadImpl;
+import com.intellij.debugger.engine.DebuggerUtils;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
+import com.intellij.debugger.impl.DebuggerUtilsImpl;
 import com.intellij.debugger.jdi.StackFrameProxyImpl;
 import com.intellij.debugger.settings.ThreadsViewSettings;
 import com.intellij.debugger.ui.breakpoints.BreakpointIntentionAction;
@@ -16,8 +20,6 @@ import com.intellij.openapi.util.NlsSafe;
 import com.intellij.psi.PsiFile;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ui.EmptyIcon;
-import com.intellij.xdebugger.XDebugSession;
-import com.intellij.xdebugger.impl.XDebugSessionImpl;
 import com.intellij.xdebugger.impl.frame.XValueMarkers;
 import com.intellij.xdebugger.impl.ui.tree.ValueMarkup;
 import com.sun.jdi.*;
@@ -107,17 +109,8 @@ public class StackFrameDescriptorImpl extends NodeDescriptorImpl implements Stac
   }
 
   private Map<?, ValueMarkup> getValueMarkers() {
-    DebugProcess process = myFrame.getVirtualMachine().getDebugProcess();
-    if (process instanceof DebugProcessImpl) {
-      XDebugSession session = ((DebugProcessImpl)process).getSession().getXDebugSession();
-      if (session instanceof XDebugSessionImpl) {
-        XValueMarkers<?, ?> markers = ((XDebugSessionImpl)session).getValueMarkers();
-        if (markers != null) {
-          return markers.getAllMarkers();
-        }
-      }
-    }
-    return Collections.emptyMap();
+    XValueMarkers<?, ?> markers = DebuggerUtilsImpl.getValueMarkers(myFrame.getVirtualMachine().getDebugProcess());
+    return markers != null ? markers.getAllMarkers() : Collections.emptyMap();
   }
 
   @Override

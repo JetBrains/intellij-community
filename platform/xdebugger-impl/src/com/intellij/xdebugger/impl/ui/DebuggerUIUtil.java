@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.xdebugger.impl.ui;
 
 import com.intellij.codeInsight.hint.HintUtil;
@@ -387,20 +387,7 @@ public final class DebuggerUIUtil {
   }
 
   /**
-   * Checks if value has evaluation expression ready, or calculation is pending
-   */
-  public static boolean hasEvaluationExpression(@NotNull XValueNodeImpl value) {
-    Promise<XExpression> promise = value.calculateEvaluationExpression();
-    try {
-      return promise.getState() == Promise.State.PENDING || promise.blockingGet(0) != null;
-    }
-    catch (ExecutionException | TimeoutException e) {
-      return true;
-    }
-  }
-
-  /**
-   * @deprecated use {@link #hasEvaluationExpression(XValueNodeImpl)}
+   * @deprecated avoid, {@link XValue#calculateEvaluationExpression()} may produce side effects
    */
   @Deprecated
   public static boolean hasEvaluationExpression(@NotNull XValue value) {
