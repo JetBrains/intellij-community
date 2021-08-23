@@ -2,7 +2,6 @@
 package org.jetbrains.kotlin.idea.inspections.dfa
 
 import com.intellij.codeInspection.dataFlow.types.DfType
-import com.intellij.codeInspection.dataFlow.value.DfaValue
 import com.intellij.codeInspection.dataFlow.value.DfaValueFactory
 import com.intellij.codeInspection.dataFlow.value.DfaVariableValue
 import com.intellij.codeInspection.dataFlow.value.VariableDescriptor
@@ -28,18 +27,18 @@ class KtVariableDescriptor(val variable: KtCallableDeclaration) : VariableDescri
         if (variable is KtParameter && variable.isMutable) return false
         if (variable !is KtProperty || !variable.isVar) return true
         if (!variable.isLocal) return false
-        return !getVariablesChangedInLambdas(variable.parent).contains(variable)
+        return !getVariablesChangedInNestedFunctions(variable.parent).contains(variable)
     }
 
-    private fun getVariablesChangedInLambdas(parent: PsiElement): Set<KtProperty> =
+    private fun getVariablesChangedInNestedFunctions(parent: PsiElement): Set<KtProperty> =
         CachedValuesManager.getProjectPsiDependentCache(parent) { scope ->
             val result = hashSetOf<KtProperty>()
             PsiTreeUtil.processElements(scope) { e ->
                 if (e is KtSimpleNameExpression && e.readWriteAccess(false).isWrite) {
                     val target = e.mainReference.resolve()
                     if (target is KtProperty && target.isLocal && PsiTreeUtil.isAncestor(parent, target, true)) {
-                        val parentLambda = PsiTreeUtil.getParentOfType(e, KtLambdaExpression::class.java)
-                        if (parentLambda != null && PsiTreeUtil.isAncestor(parent, parentLambda, true)) {
+                        val parentScope = PsiTreeUtil.getParentOfType(e, KtFunction::class.java)
+                        if (parentScope != null && PsiTreeUtil.isAncestor(parent, parentScope, true)) {
                             result.add(target)
                         }
                     }

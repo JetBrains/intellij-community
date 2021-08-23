@@ -104,7 +104,9 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
             is KtCallableReferenceExpression -> processCallableReference(expr)
             is KtTryExpression -> processTryExpression(expr)
             is KtDestructuringDeclaration -> processDestructuringDeclaration(expr)
-            // KtObjectLiteralExpression, KtNamedFunction, KtClass
+            is KtObjectLiteralExpression -> processObjectLiteral(expr)
+            is KtNamedFunction -> pushUnknown()
+            is KtClass -> pushUnknown()
             else -> {
                 // unsupported construct
                 if (LOG.isDebugEnabled) {
@@ -117,6 +119,17 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
             }
         }
         flow.finishElement(expr)
+    }
+
+    private fun processObjectLiteral(expr: KtObjectLiteralExpression) {
+        for (superTypeListEntry in expr.objectDeclaration.superTypeListEntries) {
+            if (superTypeListEntry is KtSuperTypeCallEntry) {
+                // super-constructor call: may be impure
+                addInstruction(FlushFieldsInstruction())
+            }
+        }
+        val dfType = expr.getKotlinType().toDfType(expr)
+        addInstruction(PushValueInstruction(dfType, KotlinExpressionAnchor(expr)))
     }
 
     private fun processDestructuringDeclaration(expr: KtDestructuringDeclaration) {

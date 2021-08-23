@@ -25,14 +25,13 @@ import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.project.builtIns
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.FqNameUnsafe
-import org.jetbrains.kotlin.psi.KtConstantExpression
-import org.jetbrains.kotlin.psi.KtElement
-import org.jetbrains.kotlin.psi.KtExpression
-import org.jetbrains.kotlin.psi.KtOperationReferenceExpression
+import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.resolve.bindingContextUtil.getAbbreviatedTypeOrType
 import org.jetbrains.kotlin.resolve.constants.*
 import org.jetbrains.kotlin.resolve.constants.evaluate.ConstantExpressionEvaluator
 import org.jetbrains.kotlin.resolve.descriptorUtil.fqNameUnsafe
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
+import org.jetbrains.kotlin.resolve.source.KotlinSourceElement
 import org.jetbrains.kotlin.types.KotlinType
 import org.jetbrains.kotlin.types.isNullabilityFlexible
 import org.jetbrains.kotlin.types.typeUtil.makeNotNullable
@@ -78,6 +77,23 @@ private fun KotlinType.toDfTypeNotNullable(context: KtElement): DfType {
                 TypeConstraints.instanceOf(toPsiType(context) ?: return DfType.TOP).asDfType().meet(DfTypes.NOT_NULL_OBJECT)
             FqNames.any -> DfTypes.NOT_NULL_OBJECT
             else -> {
+                if (fqNameUnsafe.shortNameOrSpecial().isSpecial) {
+                    val source = descriptor.source
+                    if (source is KotlinSourceElement) {
+                        val psi = source.psi
+                        if (psi is KtObjectDeclaration) {
+                            var objectConstraint = TypeConstraints.EXACTLY_OBJECT.instanceOf().asDfType().meet(DfTypes.NOT_NULL_OBJECT)
+                            for (entry in psi.superTypeListEntries) {
+                                val ref = entry.typeReference
+                                if (ref != null) {
+                                    val kotlinType = ref.getAbbreviatedTypeOrType(ref.analyze(BodyResolveMode.FULL))
+                                    objectConstraint = objectConstraint.meet(kotlinType?.toDfTypeNotNullable(context) ?: DfType.TOP)
+                                }
+                            }
+                            return objectConstraint
+                        }
+                    }
+                }
                 val typeConstraint = when (val typeFqName = correctFqName(fqNameUnsafe)) {
                     "kotlin.ByteArray" -> TypeConstraints.exact(PsiType.BYTE.createArrayType())
                     "kotlin.IntArray" -> TypeConstraints.exact(PsiType.INT.createArrayType())

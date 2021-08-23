@@ -4696,6 +4696,11 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
             runTest("testData/inspectionsLocal/dfa/basicForLoop.kt");
         }
 
+        @TestMetadata("basicFun.kt")
+        public void testBasicFun() throws Exception {
+            runTest("testData/inspectionsLocal/dfa/basicFun.kt");
+        }
+
         @TestMetadata("basicIn.kt")
         public void testBasicIn() throws Exception {
             runTest("testData/inspectionsLocal/dfa/basicIn.kt");
@@ -4734,6 +4739,11 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
         @TestMetadata("basicIsNullable.kt")
         public void testBasicIsNullable() throws Exception {
             runTest("testData/inspectionsLocal/dfa/basicIsNullable.kt");
+        }
+
+        @TestMetadata("basicObject.kt")
+        public void testBasicObject() throws Exception {
+            runTest("testData/inspectionsLocal/dfa/basicObject.kt");
         }
 
         @TestMetadata("basicProperty.kt")
