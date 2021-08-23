@@ -14,7 +14,6 @@ import com.intellij.debugger.engine.evaluation.*;
 import com.intellij.debugger.engine.evaluation.expression.ExpressionEvaluator;
 import com.intellij.debugger.engine.evaluation.expression.UnBoxingEvaluator;
 import com.intellij.debugger.engine.requests.RequestManagerImpl;
-import com.intellij.debugger.jdi.GeneratedLocation;
 import com.intellij.debugger.jdi.JvmtiError;
 import com.intellij.debugger.jdi.VirtualMachineProxyImpl;
 import com.intellij.debugger.requests.Requestor;
@@ -885,12 +884,8 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
     if (type != null) {
       res.append(type.name()).append('.');
     }
-    res.append(getLocationMethodName(location));
+    res.append(location.method().name());
     return res.toString();
-  }
-
-  public static String getLocationMethodName(@NotNull Location location) {
-    return location instanceof GeneratedLocation ? ((GeneratedLocation)location).methodName() : location.method().name();
   }
 
   private static PsiElement getNextElement(PsiElement element) {
