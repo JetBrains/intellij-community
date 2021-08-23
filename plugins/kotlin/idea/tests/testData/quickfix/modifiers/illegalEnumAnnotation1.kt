@@ -2,4 +2,3 @@
 <caret>enum interface A {
 }
 
-/* IGNORE_FIR */
