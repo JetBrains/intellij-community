@@ -2,6 +2,7 @@
 package com.intellij.ide.projectView.impl
 
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.components.ComponentCategory
 import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.components.State
 import com.intellij.openapi.components.Storage
@@ -10,7 +11,7 @@ import com.intellij.util.xmlb.XmlSerializerUtil
 /**
  * @author Konstantin Bulenkov
  */
-@State(name = "ProjectViewSharedSettings", storages = [(Storage(value = "projectView.xml"))])
+@State(name = "ProjectViewSharedSettings", storages = [(Storage(value = "projectView.xml"))], category = ComponentCategory.UI)
 class ProjectViewSharedSettings : PersistentStateComponent<ProjectViewSharedSettings> {
   var flattenPackages: Boolean = false
   var showMembers: Boolean = false
