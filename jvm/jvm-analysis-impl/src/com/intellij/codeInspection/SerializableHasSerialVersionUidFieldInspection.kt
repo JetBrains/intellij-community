@@ -52,7 +52,8 @@ class SerializableHasSerialVersionUidFieldInspection : USerializableInspectionBa
       val initializer = uFactory.createLongConstantExpression(serialUid, null)?.sourcePsi ?: return
       val action = createAddFieldActions(psiClass,
         SerialVersionUIDFieldInfo(HardcodedMethodConstants.SERIAL_VERSION_UID, initializer, project)).firstOrNull() ?: return
-      val editor = (FileEditorManager.getInstance(project).getSelectedEditor(containingFile.virtualFile) as? TextEditor)?.editor ?: return
+      val vFile = containingFile.virtualFile ?: return
+      val editor = (FileEditorManager.getInstance(project).getSelectedEditor(vFile) as? TextEditor)?.editor ?: return
       action.invoke(project, editor, containingFile)
     }
   }
