@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 /*
  * Class DebuggerTree
@@ -22,7 +22,7 @@ import com.intellij.debugger.jdi.*;
 import com.intellij.debugger.settings.NodeRendererSettings;
 import com.intellij.debugger.settings.ThreadsViewSettings;
 import com.intellij.debugger.ui.breakpoints.Breakpoint;
-import com.intellij.debugger.ui.impl.DebuggerTreeBase;
+import com.intellij.debugger.ui.impl.DebuggerTreeRenderer;
 import com.intellij.debugger.ui.impl.tree.TreeBuilder;
 import com.intellij.debugger.ui.impl.tree.TreeBuilderNode;
 import com.intellij.debugger.ui.tree.DebuggerTreeNode;
@@ -30,6 +30,8 @@ import com.intellij.debugger.ui.tree.NodeDescriptor;
 import com.intellij.debugger.ui.tree.render.ArrayRenderer;
 import com.intellij.debugger.ui.tree.render.ChildrenBuilder;
 import com.intellij.debugger.ui.tree.render.ClassRenderer;
+import com.intellij.ide.dnd.aware.DnDAwareTree;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.DataKey;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.application.ApplicationManager;
@@ -42,6 +44,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.SpeedSearchComparator;
 import com.intellij.ui.TreeSpeedSearch;
+import com.intellij.util.ui.tree.TreeUtil;
 import com.intellij.xdebugger.frame.XDebuggerTreeNodeHyperlink;
 import com.intellij.xdebugger.frame.XValueChildrenList;
 import com.intellij.xdebugger.settings.XDebuggerSettingsManager;
@@ -52,17 +55,15 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.event.TreeModelEvent;
-import javax.swing.event.TreeModelListener;
+import javax.swing.tree.TreeModel;
 import javax.swing.tree.TreePath;
 import java.awt.*;
-import java.awt.event.MouseEvent;
 import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.LinkedList;
 import java.util.List;
 
-public abstract class DebuggerTree extends DebuggerTreeBase implements DataProvider {
+public abstract class DebuggerTree extends DnDAwareTree implements DataProvider, Disposable {
   private static final Logger LOG = Logger.getInstance(DebuggerTree.class);
   protected static final Key<Rectangle> VISIBLE_RECT = Key.create("VISIBLE_RECT");
 
@@ -73,9 +74,18 @@ public abstract class DebuggerTree extends DebuggerTreeBase implements DataProvi
   private DebuggerContextImpl myDebuggerContext = DebuggerContextImpl.EMPTY_CONTEXT;
 
   private DebuggerTreeNodeImpl myEditedNode;
+  private final Project myProject;
 
   public DebuggerTree(Project project) {
-    super(null, project);
+    super((TreeModel)null);
+
+    myProject = project;
+    setRootVisible(false);
+    setShowsRootHandles(true);
+    setCellRenderer(new DebuggerTreeRenderer());
+    updateUI();
+    TreeUtil.installActions(this);
+
     setScrollsOnExpand(false);
     myNodeManager = createNodeManager(project);
 
@@ -95,27 +105,6 @@ public abstract class DebuggerTree extends DebuggerTreeBase implements DataProvi
       }
     };
     model.setRoot(getNodeFactory().getDefaultNode());
-    model.addTreeModelListener(new TreeModelListener() {
-      @Override
-      public void treeNodesChanged(TreeModelEvent event) {
-        hideTooltip();
-      }
-
-      @Override
-      public void treeNodesInserted(TreeModelEvent event) {
-        hideTooltip();
-      }
-
-      @Override
-      public void treeNodesRemoved(TreeModelEvent event) {
-        hideTooltip();
-      }
-
-      @Override
-      public void treeStructureChanged(TreeModelEvent event) {
-        hideTooltip();
-      }
-    });
 
     setModel(model);
 
@@ -127,11 +116,14 @@ public abstract class DebuggerTree extends DebuggerTreeBase implements DataProvi
     return new NodeManagerImpl(project, this);
   }
 
+  public Project getProject() {
+    return myProject;
+  }
+
   @Override
   public void dispose() {
     myNodeManager.dispose();
     myDebuggerContext = DebuggerContextImpl.EMPTY_CONTEXT;
-    super.dispose();
   }
 
   protected boolean isExpandable(DebuggerTreeNodeImpl node) {
@@ -334,7 +326,6 @@ public abstract class DebuggerTree extends DebuggerTreeBase implements DataProvi
 
   public void onEditorShown(DebuggerTreeNodeImpl node) {
     myEditedNode = node;
-    hideTooltip();
   }
 
   public void onEditorHidden(DebuggerTreeNodeImpl node) {
@@ -342,11 +333,6 @@ public abstract class DebuggerTree extends DebuggerTreeBase implements DataProvi
       assert myEditedNode == node;
       myEditedNode = null;
     }
-  }
-
-  @Override
-  public JComponent createToolTip(MouseEvent e) {
-    return myEditedNode != null ? null : super.createToolTip(e);
   }
 
   public DebuggerContextImpl getDebuggerContext() {
@@ -707,9 +693,5 @@ public abstract class DebuggerTree extends DebuggerTreeBase implements DataProvi
         myNode.childrenChanged(scrollToVisible);
       });
     }
-  }
-
-  public void hideTooltip() {
-    myTipManager.hideTooltip();
   }
 }

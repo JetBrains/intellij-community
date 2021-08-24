@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.ui.impl.watch;
 
 import com.intellij.debugger.JavaDebuggerBundle;
@@ -153,7 +153,11 @@ public abstract class NodeDescriptorImpl implements NodeDescriptor {
     displayAs(oldDescriptor);
   }
 
+  /**
+   * @deprecated use {@link com.intellij.xdebugger.impl.frame.XValueMarkers}
+   */
   @Nullable
+  @Deprecated
   public static Map<ObjectReference, ValueMarkup> getMarkupMap(final DebugProcess process) {
     if (process == null) {
       return null;
