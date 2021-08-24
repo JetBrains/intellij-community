@@ -786,32 +786,27 @@ public final class IdeKeyEventDispatcher {
     }
   }
 
-  private static boolean rearrangeByPromoters(List<AnAction> actions, DataContext context) {
+  private static boolean rearrangeByPromoters(@NotNull List<AnAction> actions, @NotNull DataContext context) {
     List<AnAction> readOnlyActions = Collections.unmodifiableList(actions);
-    for (ActionPromoter promoter : getPromoters(actions)) {
+    List<ActionPromoter> promoters = ContainerUtil.concat(
+      ActionPromoter.EP_NAME.getExtensionList(), ContainerUtil.filterIsInstance(actions, ActionPromoter.class));
+    for (ActionPromoter promoter : promoters) {
       try {
         List<AnAction> promoted = promoter.promote(readOnlyActions, context);
-        if (promoted == null || promoted.isEmpty()) continue;
-
-        actions.removeAll(promoted);
-        actions.addAll(0, promoted);
+        if (promoted != null && !promoted.isEmpty()) {
+          actions.removeAll(promoted);
+          actions.addAll(0, promoted);
+        }
+        List<AnAction> suppressed = promoter.suppress(readOnlyActions, context);
+        if (suppressed != null && !suppressed.isEmpty()) {
+          actions.removeAll(suppressed);
+        }
       }
       catch (Exception e) {
         LOG.error(e);
       }
     }
     return true;
-  }
-
-  @NotNull
-  private static List<ActionPromoter> getPromoters(@NotNull List<? extends AnAction> candidates) {
-    List<ActionPromoter> promoters = new ArrayList<>(Arrays.asList(ActionPromoter.EP_NAME.getExtensions()));
-    for (AnAction action : candidates) {
-      if (action instanceof ActionPromoter) {
-        promoters.add((ActionPromoter)action);
-      }
-    }
-    return promoters;
   }
 
   private void addActionsFromActiveKeymap(@NotNull Shortcut shortcut) {
