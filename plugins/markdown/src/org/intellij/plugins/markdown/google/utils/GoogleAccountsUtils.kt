@@ -126,7 +126,6 @@ internal object GoogleAccountsUtils {
                                disposable: Disposable,
                                accountsListModel: GoogleAccountsListModel,
                                accountManager: GoogleAccountManager): DialogPanel {
-    val defaultAccountHolder = project.service<GoogleProjectDefaultAccountHolder>()
     val oAuthService = service<GoogleOAuthService>()
     val userInfoService = service<GoogleUserInfoService>()
 
@@ -138,7 +137,7 @@ internal object GoogleAccountsUtils {
 
     return panel {
       row {
-        accountsPanel(accountManager, defaultAccountHolder, accountsListModel, detailsProvider, disposable, false, false)
+        accountsPanel(accountManager, accountsListModel, detailsProvider, disposable, false)
       }
     }
   }

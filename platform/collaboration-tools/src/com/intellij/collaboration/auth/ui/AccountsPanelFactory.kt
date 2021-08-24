@@ -28,7 +28,6 @@ import javax.swing.ListSelectionModel
 object AccountsPanelFactory {
 
   fun <A : Account, Cred, R> create(model: AccountsListModel<A, Cred>,
-                                    addDefaultAccButton: Boolean,
                                     needAddBtnWithDropdown: Boolean,
                                     listCellRendererFactory: () -> R): JComponent
     where R : ListCellRenderer<A>, R : JComponent {
@@ -68,9 +67,8 @@ object AccountsPanelFactory {
       .setAddAction { model.addAccount(accountsList, it.preferredPopupPoint) }
       .setAddIcon(addIcon)
 
-    if (addDefaultAccButton) {
-      toolbar.addExtraAction(object : ToolbarDecorator.ElementActionButton(CollaborationToolsBundle.message("accounts.set.default"),
-                                                                           AllIcons.Actions.Checked) {
+    if (model is AccountsListModel.WithDefault) {
+      toolbar.addExtraAction(object : ToolbarDecorator.ElementActionButton(CollaborationToolsBundle.message("accounts.set.default"), AllIcons.Actions.Checked) {
         override fun actionPerformed(e: AnActionEvent) {
           val selected = accountsList.selectedValue
           if (selected == model.defaultAccount) return
@@ -87,11 +85,55 @@ object AccountsPanelFactory {
   }
 
   fun <A : Account, Cred> Row.accountsPanel(accountManager: AccountManager<A, Cred>,
-                                            defaultAccountHolder: PersistentDefaultAccountHolder<A>,
                                             accountsModel: AccountsListModel<A, Cred>,
                                             detailsProvider: AccountsDetailsProvider<A, *>,
                                             disposable: Disposable,
-                                            addDefaultAccButton: Boolean,
+                                            needAddBtnWithDropdown: Boolean,
+                                            defaultAvatarIcon: Icon = EmptyIcon.ICON_16): CellBuilder<JComponent> {
+
+    accountsModel.addCredentialsChangeListener(detailsProvider::reset)
+    detailsProvider.loadingStateModel.addListener {
+      accountsModel.busyStateModel.value = it
+    }
+
+    fun isModified() = accountsModel.newCredentials.isNotEmpty()
+                       || accountsModel.accounts != accountManager.accounts
+
+    fun reset() {
+      accountsModel.accounts = accountManager.accounts
+      accountsModel.clearNewCredentials()
+      detailsProvider.resetAll()
+    }
+
+    fun apply() {
+      val newTokensMap = mutableMapOf<A, Cred?>()
+      newTokensMap.putAll(accountsModel.newCredentials)
+      for (account in accountsModel.accounts) {
+        newTokensMap.putIfAbsent(account, null)
+      }
+      accountManager.updateAccounts(newTokensMap)
+      accountsModel.clearNewCredentials()
+    }
+
+    accountManager.addListener(disposable, object : AccountsListener<A> {
+      override fun onAccountCredentialsChanged(account: A) {
+        if (!isModified()) reset()
+      }
+    })
+
+    return create(accountsModel, needAddBtnWithDropdown) {
+      SimpleAccountsListCellRenderer(accountsModel, detailsProvider, defaultAvatarIcon)
+    }(grow, push)
+      .onIsModified(::isModified)
+      .onReset(::reset)
+      .onApply(::apply)
+  }
+
+  fun <A : Account, Cred> Row.accountsPanel(accountManager: AccountManager<A, Cred>,
+                                            defaultAccountHolder: PersistentDefaultAccountHolder<A>,
+                                            accountsModel: AccountsListModel.WithDefault<A, Cred>,
+                                            detailsProvider: AccountsDetailsProvider<A, *>,
+                                            disposable: Disposable,
                                             needAddBtnWithDropdown: Boolean,
                                             defaultAvatarIcon: Icon = EmptyIcon.ICON_16): CellBuilder<JComponent> {
 
@@ -129,7 +171,7 @@ object AccountsPanelFactory {
       }
     })
 
-    return create(accountsModel, addDefaultAccButton, needAddBtnWithDropdown) {
+    return create(accountsModel, needAddBtnWithDropdown) {
       SimpleAccountsListCellRenderer(accountsModel, detailsProvider, defaultAvatarIcon)
     }(grow, push)
       .onIsModified(::isModified)

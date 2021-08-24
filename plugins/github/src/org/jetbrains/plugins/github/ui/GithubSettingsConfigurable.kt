@@ -35,7 +35,7 @@ internal class GithubSettingsConfigurable internal constructor(private val proje
 
     return panel {
       row {
-        accountsPanel(accountManager, defaultAccountHolder, accountsModel, detailsProvider, disposable!!, true, true,
+        accountsPanel(accountManager, defaultAccountHolder, accountsModel, detailsProvider, disposable!!, true,
                       GithubIcons.DefaultAvatar)
           .also {
             DataManager.registerDataProvider(it.component) { key ->
