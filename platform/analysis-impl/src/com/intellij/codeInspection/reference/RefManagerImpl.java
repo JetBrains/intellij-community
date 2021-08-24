@@ -29,7 +29,10 @@ import com.intellij.openapi.util.NullableFactory;
 import com.intellij.openapi.util.Segment;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.*;
+import com.intellij.openapi.vfs.VfsUtilCore;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.openapi.vfs.VirtualFileWithId;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.light.LightElement;
 import com.intellij.psi.util.PsiUtilCore;
@@ -383,7 +386,14 @@ public class RefManagerImpl extends RefManager {
     ReadAction.run(() -> ContainerUtil.quickSort(list, (o1, o2) -> {
       VirtualFile v1 = ((RefElementImpl)o1).getVirtualFile();
       VirtualFile v2 = ((RefElementImpl)o2).getVirtualFile();
-      return (v1 != null ? v1.hashCode() : 0) - (v2 != null ? v2.hashCode() : 0);
+      if (!Objects.equals(v1, v2)) {
+        return (v1==null?"":v1.getPath()).compareTo(v2==null?"":v2.getPath());
+      }
+      SmartPsiElementPointer<?> p1 = o1.getPointer();
+      SmartPsiElementPointer<?> p2 = o2.getPointer();
+      Segment r1 = p1 == null ? null : p1.getRange();
+      Segment r2 = p2 == null ? null : p2.getRange();
+      return r1 == null || r2 == null ? 0 : Segment.BY_START_OFFSET_THEN_END_OFFSET.compare(r1, r2);
     }));
     myCachedSortedRefs = answer = Collections.unmodifiableList(answer);
     return answer;
