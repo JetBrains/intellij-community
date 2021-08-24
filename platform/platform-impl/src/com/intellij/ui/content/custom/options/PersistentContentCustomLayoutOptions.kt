@@ -1,0 +1,49 @@
+package com.intellij.ui.content.custom.options
+
+import com.intellij.ide.util.PropertiesComponent
+import com.intellij.openapi.util.NlsSafe
+import com.intellij.ui.content.Content
+
+abstract class PersistentContentCustomLayoutOptions(private val content: Content, private val selectedOptionKey: String) : CustomContentLayoutOptions {
+
+  override fun select(option: CustomContentLayoutOption) {
+    option as? PersistentContentCustomLayoutOption ?: throw IllegalStateException("Option is not a ${PersistentContentCustomLayoutOption::class.java.name}")
+    doSelect(option)
+    saveOption(option.getOptionKey())
+  }
+
+  override fun isSelected(option: CustomContentLayoutOption): Boolean = option.isSelected
+
+  override fun restore() {
+    val defaultOption = getDefaultOption()
+    if (!defaultOption.isSelected) {
+      select(defaultOption)
+    }
+  }
+
+  fun isContentVisible(): Boolean {
+    return content.isValid && (content.manager?.getIndexOfContent(content) ?: -1) != -1
+  }
+  fun getCurrentOption() = getPersistentOptions().first { it.getOptionKey() == getCurrentOptionKey() }
+
+  protected abstract fun doSelect(option: CustomContentLayoutOption)
+
+  protected abstract fun getDefaultOptionKey(): String
+  private fun getCurrentOptionKey() = PropertiesComponent.getInstance().getValue(selectedOptionKey) ?: getDefaultOptionKey()
+
+  private fun getDefaultOption() = getPersistentOptions().first { it.getOptionKey() == getDefaultOptionKey() }
+
+  private fun saveOption(optionKey: @NlsSafe String) {
+    PropertiesComponent.getInstance().setValue(selectedOptionKey, optionKey)
+  }
+
+  private fun getPersistentOptions() = availableOptions.filterIsInstance<PersistentContentCustomLayoutOption>()
+}
+
+abstract class PersistentContentCustomLayoutOption(private val options: PersistentContentCustomLayoutOptions) : CustomContentLayoutOption {
+  abstract override fun isSelected(): Boolean
+
+  override fun select() = options.select(this)
+
+  abstract fun getOptionKey(): @NlsSafe String
+}

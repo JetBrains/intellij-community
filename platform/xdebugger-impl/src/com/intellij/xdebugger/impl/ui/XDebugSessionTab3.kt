@@ -14,18 +14,18 @@ import com.intellij.idea.ActionsBundle
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.impl.MoreActionGroup
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.wm.ToolWindowAnchor
 import com.intellij.openapi.wm.impl.InternalDecoratorImpl
 import com.intellij.openapi.wm.impl.content.SingleContentSupplier
 import com.intellij.ui.OnePixelSplitter
+import com.intellij.ui.content.custom.options.CustomContentLayoutOptions
 import com.intellij.ui.content.tabs.PinToolwindowTabAction
 import com.intellij.util.ui.UIUtil
 import com.intellij.xdebugger.XDebuggerBundle
 import com.intellij.xdebugger.impl.XDebugSessionImpl
 import com.intellij.xdebugger.impl.actions.XDebuggerActions
-import com.intellij.xdebugger.impl.frame.XFramesView
-import com.intellij.xdebugger.impl.frame.XVariablesView
-import com.intellij.xdebugger.impl.frame.XWatchesViewImpl
+import com.intellij.xdebugger.impl.frame.*
 import java.awt.Dimension
 import javax.swing.Icon
 
@@ -55,7 +55,7 @@ class XDebugSessionTab3(
       }
     }
   }
-  private val xThreadsFramesView = XFramesView(myProject)
+  private var xThreadsFramesView : XDebugView = XFramesView(myProject)
 
   private var variables: XVariablesView? = null
 
@@ -92,16 +92,21 @@ class XDebugSessionTab3(
 
   override fun initDebuggerTab(session: XDebugSessionImpl) {
     val framesView = xThreadsFramesView
-    registerView(DebuggerContentInfo.FRAME_CONTENT, framesView)
-
-    splitter.firstComponent = xThreadsFramesView.mainPanel.apply {
-      minimumSize = Dimension(20, 0)
-    }
+    registerThreadsView(session, framesView)
     addVariablesAndWatches(session)
 
     val name = debuggerContentId
-    val content = myUi.createContent(name, splitter, XDebuggerBundle.message("xdebugger.threads.vars.tab.title"), null, framesView.defaultFocusedComponent).apply {
+    val content = myUi.createContent(name, splitter, XDebuggerBundle.message("xdebugger.threads.vars.tab.title"), null, framesView.mainComponent).apply {
       isCloseable = false
+    }
+
+    if (Registry.`is`("debugger.new.debug.tool.window.view")) {
+      val customLayoutOptions = XDebugFramesAndThreadsLayoutOptions(session, content, this)
+      content.putUserData(CustomContentLayoutOptions.KEY, customLayoutOptions)
+      val currentOption = customLayoutOptions.getCurrentOption()
+      if (!currentOption.isSelected) {
+        customLayoutOptions.select(currentOption)
+      }
     }
 
     myUi.addContent(content, 0, PlaceInGrid.center, false)
@@ -152,6 +157,9 @@ class XDebugSessionTab3(
     mySingleContentSupplier = RunTabSupplier(toolbar)
   }
 
+  val threadFramesView: XDebugView
+    get() = xThreadsFramesView
+
   override fun getSupplier(): SingleContentSupplier? = mySingleContentSupplier
 
   override fun registerAdditionalActions(leftToolbar: DefaultActionGroup, topLeftToolbar: DefaultActionGroup, settings: DefaultActionGroup) {
@@ -195,6 +203,24 @@ class XDebugSessionTab3(
                              ?.let {
                                it.anchor == ToolWindowAnchor.LEFT || it.anchor == ToolWindowAnchor.RIGHT
                              } ?: false
+  }
+
+  internal fun registerThreadsView(session: XDebugSessionImpl, view: XDebugView) {
+    val isChanged = xThreadsFramesView != view
+
+    xThreadsFramesView = view
+    unregisterView(DebuggerContentInfo.FRAME_CONTENT)
+    registerView(DebuggerContentInfo.FRAME_CONTENT, view)
+
+    splitter.firstComponent = view.mainComponent.apply {
+      minimumSize = Dimension(20, 0)
+    }
+
+    if (isChanged) {
+      attachViewToSession(session, view)
+      view.processSessionEvent(XDebugView.SessionEvent.SETTINGS_CHANGED, session)
+    }
+    UIUtil.removeScrollBorder(splitter)
   }
 
   override fun dispose() {

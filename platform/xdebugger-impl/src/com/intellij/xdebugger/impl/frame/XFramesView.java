@@ -475,6 +475,11 @@ public final class XFramesView extends XDebugView {
     return myMainPanel;
   }
 
+  @Override
+  public JComponent getMainComponent() {
+    return getMainPanel();
+  }
+
   private void processFrameSelection(XDebugSession session, boolean force) {
     mySelectedFrameIndex = myFramesList.getSelectedIndex();
     myExecutionStacksWithSelection.put(mySelectedStack, mySelectedFrameIndex);

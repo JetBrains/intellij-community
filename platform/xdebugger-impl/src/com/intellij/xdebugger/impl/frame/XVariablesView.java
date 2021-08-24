@@ -54,6 +54,11 @@ public class XVariablesView extends XVariablesViewBase implements DataProvider {
     return myComponent;
   }
 
+  @Override
+  public JComponent getMainComponent() {
+    return getPanel();
+  }
+
   JComponent createTopPanel() {
     return null;
   }

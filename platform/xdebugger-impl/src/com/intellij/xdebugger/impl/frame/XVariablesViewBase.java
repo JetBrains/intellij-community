@@ -71,6 +71,11 @@ public abstract class XVariablesViewBase extends XDebugView {
     return myTreePanel.getTree();
   }
 
+  @Override
+  public JComponent getMainComponent() {
+    return myTreePanel.getTree();
+  }
+
   protected void buildTreeAndRestoreState(@NotNull final XStackFrame stackFrame) {
     XSourcePosition position = stackFrame.getSourcePosition();
     XDebuggerTree tree = getTree();

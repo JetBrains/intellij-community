@@ -189,7 +189,7 @@ class XDebugSessionTab2(
     registerView(DebuggerContentInfo.FRAME_CONTENT, framesView)
 
     framesView.setThreadsVisible(threadsIsVisible)
-    splitter.firstComponent = xThreadsFramesView.mainPanel
+    splitter.firstComponent = xThreadsFramesView.mainComponent
     addVariablesAndWatches(session)
 
     val name = debuggerContentId

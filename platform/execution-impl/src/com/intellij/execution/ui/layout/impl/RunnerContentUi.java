@@ -6,9 +6,7 @@ import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.execution.ui.RunContentManager;
 import com.intellij.execution.ui.RunnerLayoutUi;
 import com.intellij.execution.ui.layout.*;
-import com.intellij.execution.ui.layout.actions.CloseViewAction;
-import com.intellij.execution.ui.layout.actions.MinimizeViewAction;
-import com.intellij.execution.ui.layout.actions.RestoreViewAction;
+import com.intellij.execution.ui.layout.actions.*;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.actions.CloseAction;
@@ -41,6 +39,7 @@ import com.intellij.ui.components.TwoSideComponent;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.ui.content.*;
+import com.intellij.ui.content.custom.options.CustomContentLayoutOptions;
 import com.intellij.ui.docking.DockContainer;
 import com.intellij.ui.docking.DockManager;
 import com.intellij.ui.docking.DockableContent;
@@ -836,12 +835,18 @@ public final class RunnerContentUi implements ContentUI, Disposable, CellTransfo
         if (myMinimizeActionEnabled) {
           AnAction[] actions = myViewActions.getChildren(null);
           for (AnAction action : actions) {
-            if (action instanceof RestoreViewAction && ((RestoreViewAction)action).getContent() == event.getContent()) return;
+            if (action instanceof ViewLayoutModificationAction && ((ViewLayoutModificationAction)action).getContent() == event.getContent()) return;
           }
-          myViewActions.addAction(new RestoreViewAction(RunnerContentUi.this, event.getContent())).setAsSecondary(true);
+
+          CustomContentLayoutOptions layoutOptions = event.getContent().getUserData(CustomContentLayoutOptions.KEY);
+          AnAction viewAction = layoutOptions != null && layoutOptions.getAvailableOptions().length > 0 ?
+                                new ViewLayoutModeActionGroup(RunnerContentUi.this, event.getContent()) :
+                                new RestoreViewAction(RunnerContentUi.this, event.getContent());
+          myViewActions.addAction(viewAction).setAsSecondary(true);
+
           List<AnAction> toAdd = new ArrayList<>();
           for (AnAction anAction : myViewActions.getChildren(null)) {
-            if (!(anAction instanceof RestoreViewAction)) {
+            if (!(anAction instanceof ViewLayoutModificationAction)) {
               myViewActions.remove(anAction);
               toAdd.add(anAction);
             }
@@ -871,7 +876,7 @@ public final class RunnerContentUi implements ContentUI, Disposable, CellTransfo
           if (Disposer.isDisposed(content)) {
             AnAction[] actions = myViewActions.getChildren(null);
             for (AnAction action : actions) {
-              if (action instanceof RestoreViewAction && ((RestoreViewAction)action).getContent() == content) {
+              if (action instanceof ViewLayoutModificationAction && ((ViewLayoutModificationAction)action).getContent() == content) {
                 myViewActions.remove(action);
                 break;
               }
@@ -1344,8 +1349,8 @@ public final class RunnerContentUi implements ContentUI, Disposable, CellTransfo
       Collections.addAll(contents, child.myManager.getContents());
     }
     for (AnAction action : myViewActions.getChildren(null)) {
-      if (!(action instanceof RestoreViewAction)) continue;
-      contents.add(((RestoreViewAction)action).getContent());
+      if (!(action instanceof ViewLayoutModificationAction)) continue;
+      contents.add(((ViewLayoutModificationAction)action).getContent());
     }
     Content[] all = contents.toArray(new Content[0]);
     Arrays.sort(all, Comparator.comparingInt(content -> getStateFor(content).getTab().getDefaultIndex()));
@@ -1364,6 +1369,10 @@ public final class RunnerContentUi implements ContentUI, Disposable, CellTransfo
     myLayoutSettings.resetToDefault();
     for (Content each : all) {
       myManager.addContent(each);
+      CustomContentLayoutOptions customLayoutOptions = each.getUserData(CustomContentLayoutOptions.KEY);
+      if (customLayoutOptions != null) {
+        customLayoutOptions.restore();
+      }
     }
 
     updateTabsUI(true);
@@ -1407,7 +1416,7 @@ public final class RunnerContentUi implements ContentUI, Disposable, CellTransfo
   private void updateRestoreLayoutActionVisibility() {
     List<AnAction> specialActions = new ArrayList<>();
     for (AnAction action : myViewActions.getChildren(null)) {
-      if (!(action instanceof RestoreViewAction)) specialActions.add(action);
+      if (!(action instanceof ViewLayoutModificationAction)) specialActions.add(action);
     }
     if (myMinimizeActionEnabled) {
       if (specialActions.isEmpty()) {
@@ -1470,9 +1479,9 @@ public final class RunnerContentUi implements ContentUI, Disposable, CellTransfo
 
   private @Nullable Content findMinimizedContent(@NotNull String key) {
     for (AnAction action : myViewActions.getChildren(null)) {
-      if (!(action instanceof RestoreViewAction)) continue;
+      if (!(action instanceof ViewLayoutModificationAction)) continue;
 
-      Content content = ((RestoreViewAction)action).getContent();
+      Content content = ((ViewLayoutModificationAction)action).getContent();
       if (key.equals(content.getUserData(ViewImpl.ID))) {
         return content;
       }
