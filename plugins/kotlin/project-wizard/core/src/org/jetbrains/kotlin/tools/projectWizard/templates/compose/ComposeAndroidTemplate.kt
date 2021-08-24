@@ -8,6 +8,7 @@ import org.jetbrains.kotlin.tools.projectWizard.KotlinNewProjectWizardBundle
 import org.jetbrains.kotlin.tools.projectWizard.Versions
 import org.jetbrains.kotlin.tools.projectWizard.core.*
 import org.jetbrains.kotlin.tools.projectWizard.ir.buildsystem.*
+import org.jetbrains.kotlin.tools.projectWizard.ir.buildsystem.gradle.AndroidConfigIR
 import org.jetbrains.kotlin.tools.projectWizard.ir.buildsystem.gradle.irsList
 import org.jetbrains.kotlin.tools.projectWizard.library.MavenArtifact
 import org.jetbrains.kotlin.tools.projectWizard.moduleConfigurators.AndroidModuleConfigurator
@@ -50,10 +51,20 @@ class ComposeAndroidTemplate : Template() {
         +Dependencies.ACTIVITY_COMPOSE
     }
 
-    override fun Reader.updateBuildFileIRs(irs: List<BuildSystemIR>): List<BuildSystemIR> = irs.filterNot {
-        it.safeAs<GradleOnlyPluginByNameIR>()?.pluginId == AndroidModuleConfigurator.DEPENDENCIES.KOTLIN_ANDROID_EXTENSIONS_NAME
+    override fun Reader.updateBuildFileIRs(irs: List<BuildSystemIR>): List<BuildSystemIR> {
+        val androidIR = irs.firstNotNullOfOrNull { ir-> ir.takeIf { ir is AndroidConfigIR } }
+        if (androidIR != null && androidIR is AndroidConfigIR) {
+            androidIR.androidSdkVersion = "30"
+        }
+        return irs.filterNot {
+            it.safeAs<GradleOnlyPluginByNameIR>()?.pluginId == AndroidModuleConfigurator.DEPENDENCIES.KOTLIN_ANDROID_EXTENSIONS_NAME
+        }
     }
 
+
+    override fun Writer.getRequiredLibraries(module: ModuleIR): List<DependencyIR> = buildList {
+        +Dependencies.ACTIVITY_COMPOSE
+    }
 
     override fun Reader.updateModuleIR(module: ModuleIR): ModuleIR {
         val irs = module.irs.filterNot { ir ->
