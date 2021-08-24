@@ -3,6 +3,7 @@ package com.intellij.ide.browsers;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.PersistentStateComponent;
+import com.intellij.openapi.components.RoamingType;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.diagnostic.Logger;
@@ -20,7 +21,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-@State(name = "WebBrowsersConfiguration", storages = @Storage("web-browsers.xml"))
+@State(name = "WebBrowsersConfiguration", storages = @Storage(value = "web-browsers.xml", roamingType = RoamingType.DISABLED))
 public final class WebBrowserManager extends SimpleModificationTracker implements PersistentStateComponent<Element> {
   private static final Logger LOG = Logger.getInstance(WebBrowserManager.class);
 
