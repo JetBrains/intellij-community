@@ -70,17 +70,17 @@ class KotlinUSimpleReferenceExpression(
 
     class KotlinAccessorCallExpression(
         override val sourcePsi: KtSimpleNameExpression,
-        override val uastParent: KotlinUSimpleReferenceExpression,
+        givenParent: KotlinUSimpleReferenceExpression,
         private val resolvedCall: ResolvedCall<*>,
         private val accessorDescriptor: DeclarationDescriptor,
         val setterValue: KtExpression?
-    ) : UCallExpressionEx, DelegatedMultiResolve {
-        override val methodName: String?
+    ) : KotlinAbstractUExpression(givenParent), UCallExpression, DelegatedMultiResolve {
+        override val methodName: String
             get() = accessorDescriptor.name.asString()
 
         override val receiver: UExpression?
             get() {
-                val containingElement = uastParent.uastParent
+                val containingElement = uastParent?.uastParent
                 return if (containingElement is UQualifiedReferenceExpression && containingElement.selector == this)
                     containingElement.receiver
                 else
@@ -88,7 +88,7 @@ class KotlinUSimpleReferenceExpression(
             }
 
         override val javaPsi: PsiElement? get() = null
-        override val psi: PsiElement? get() = sourcePsi
+        override val psi: PsiElement get() = sourcePsi
 
         override val uAnnotations: List<UAnnotation>
             get() = emptyList()
@@ -98,7 +98,9 @@ class KotlinUSimpleReferenceExpression(
             type.toPsiType(this, sourcePsi, boxed = true)
         }
 
-        override val methodIdentifier: UIdentifier? by lazy { KotlinUIdentifier(sourcePsi.getReferencedNameElement(), this) }
+        override val methodIdentifier: UIdentifier? by lz {
+            KotlinUIdentifier(sourcePsi.getReferencedNameElement(), this)
+        }
 
         override val classReference: UReferenceExpression?
             get() = null
@@ -108,7 +110,7 @@ class KotlinUSimpleReferenceExpression(
 
         override val valueArguments by lz {
             if (setterValue != null)
-                listOf(KotlinConverter.convertOrEmpty(setterValue, this))
+                listOf(baseResolveProviderService.baseKotlinConverter.convertOrEmpty(setterValue, this))
             else
                 emptyList()
         }
@@ -130,6 +132,22 @@ class KotlinUSimpleReferenceExpression(
             get() = UastCallKind.METHOD_CALL
 
         override fun resolve(): PsiMethod? = resolveToPsiMethod(sourcePsi, accessorDescriptor)
+
+        override fun equals(other: Any?): Boolean {
+            if (other !is KotlinAccessorCallExpression) {
+                return false
+            }
+            if (this.sourcePsi != other.sourcePsi) {
+                return false
+            }
+            return this.setterValue == other.setterValue
+        }
+
+        override fun hashCode(): Int {
+            // NB: sourcePsi is shared with the parent reference expression, so using super.hashCode from abstract expression,
+            // which uses the same sourcePsi, will result in a hash collision.
+            return sourcePsi.hashCode() * 31 + (setterValue?.hashCode() ?: 0)
+        }
     }
 
 }
