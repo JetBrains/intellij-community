@@ -173,7 +173,7 @@ public final class ServiceViewManagerImpl implements ServiceViewManager, Persist
         ToolWindow toolWindow = toolWindowManager.registerToolWindow(RegisterToolWindowTask.lazyAndClosable(toolWindowId, new ServiceViewToolWindowFactory(), AllIcons.Toolwindows.ToolWindowServices));
         if (toolWindowId != getToolWindowId()) {
           @NlsSafe String title = toolWindowId;
-          toolWindow.setStripeTitle(toolWindowId);
+          toolWindow.setStripeTitle(title);
         }
         if (active) {
           myActiveToolWindowIds.add(toolWindowId);
