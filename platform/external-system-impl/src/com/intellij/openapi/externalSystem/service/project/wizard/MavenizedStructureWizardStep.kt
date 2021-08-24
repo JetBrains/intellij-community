@@ -3,7 +3,7 @@ package com.intellij.openapi.externalSystem.service.project.wizard
 
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.impl.ProjectUtil
-import com.intellij.ide.util.projectWizard.ModuleNameGenerator
+import com.intellij.ide.util.installNameGenerators
 import com.intellij.ide.util.projectWizard.ModuleWizardStep
 import com.intellij.ide.util.projectWizard.WizardContext
 import com.intellij.openapi.application.ApplicationManager
@@ -88,13 +88,7 @@ abstract class MavenizedStructureWizardStep<Data : Any>(val context: WizardConte
           .withValidationOnInput { validateName() }
           .constraints(pushX)
           .focused()
-
-        for (nameGenerator in ModuleNameGenerator.EP_NAME.extensionList) {
-          val nameGeneratorUi = nameGenerator.getUi(getBuilderId()) { entityNameProperty.set(it) }
-          if (nameGeneratorUi != null) {
-            component(nameGeneratorUi)
-          }
-        }
+        installNameGenerators(getBuilderId(), entityNameProperty)
       }
       row(ExternalSystemBundle.message("external.system.mavenized.structure.wizard.location.label")) {
         val fileChooserDescriptor = createSingleLocalFileDescriptor().withFileFilter { it.isDirectory }

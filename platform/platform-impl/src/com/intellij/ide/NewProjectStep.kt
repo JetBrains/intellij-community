@@ -2,6 +2,7 @@
 package com.intellij.ide
 
 import com.intellij.ide.NewProjectWizard.Companion.EP_WIZARD
+import com.intellij.ide.util.installNameGenerators
 import com.intellij.ide.util.projectWizard.WizardContext
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 import com.intellij.openapi.observable.properties.GraphProperty
@@ -43,12 +44,15 @@ class NewProjectStep(context: WizardContext) : NewModuleStepWithSettings<NewProj
     lateinit var label: CellBuilder<JLabel>
     row {
       label = label(UIBundle.message("label.project.wizard.new.project.name"))
-      textField(baseSettings::name)
+      textField(baseSettings.nameProperty)
+        .constraints(pushX)
+        .focused()
+      installNameGenerators(getBuilderId(), baseSettings.nameProperty)
     }.largeGapAfter()
 
     row(UIBundle.message("label.project.wizard.new.project.location")) {
-      textFieldWithBrowseButton(baseSettings::path, UIBundle.message("dialog.title.project.name"), /*context.project*/null,
-                                FileChooserDescriptorFactory.createSingleFolderDescriptor())
+      textFieldWithBrowseButton(baseSettings.pathProperty, UIBundle.message("dialog.title.project.name"), context.project,
+        FileChooserDescriptorFactory.createSingleFolderDescriptor())
     }.largeGapAfter()
 
     gitCheckbox()

@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide
 
+import com.intellij.ide.util.installNameGenerators
 import com.intellij.ide.util.projectWizard.ModuleWizardStep
 import com.intellij.ide.util.projectWizard.WizardContext
 import com.intellij.ide.wizard.WizardSettingsFactory
@@ -28,12 +29,23 @@ abstract class NewModuleStep<S>(private val context: WizardContext) : ModuleWiza
   fun LayoutBuilder.nameAndPath() {
     row(UIBundle.message("label.project.wizard.new.project.name")) {
       textField(baseSettings.nameProperty)
+        .constraints(pushX)
+        .focused()
+      installNameGenerators(getBuilderId(), baseSettings.nameProperty)
     }.largeGapAfter()
 
     row(UIBundle.message("label.project.wizard.new.project.location")) {
       textFieldWithBrowseButton(baseSettings.pathProperty, UIBundle.message("dialog.title.project.name"), context.project,
         FileChooserDescriptorFactory.createSingleFolderDescriptor())
     }.largeGapAfter()
+  }
+
+  protected fun getBuilderId(): String? {
+    val projectBuilder = context.projectBuilder
+    if (projectBuilder is NewWizardModuleBuilder<*>) {
+      return projectBuilder.builderId
+    }
+    return null
   }
 
   fun LayoutBuilder.gitCheckbox() {
