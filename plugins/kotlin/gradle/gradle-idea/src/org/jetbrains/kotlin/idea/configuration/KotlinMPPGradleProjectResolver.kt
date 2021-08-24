@@ -804,7 +804,7 @@ open class KotlinMPPGradleProjectResolver : AbstractProjectResolverExtension() {
                         val arg = "-XXLanguage:+$it"
                         ManualLanguageFeatureSetting(feature, LanguageFeature.State.ENABLED, arg)
                     }
-                    it.useExperimental = languageSettings.experimentalAnnotationsInUse.toTypedArray()
+                    it.optIn = languageSettings.optInAnnotationsInUse.toTypedArray()
                     it.pluginOptions = languageSettings.compilerPluginArguments
                     it.pluginClasspaths = languageSettings.compilerPluginClasspath.map(File::getPath).toTypedArray()
                     it.freeArgs = languageSettings.freeCompilerArgs.toMutableList()
