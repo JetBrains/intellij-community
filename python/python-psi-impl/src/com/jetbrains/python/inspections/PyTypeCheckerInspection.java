@@ -219,7 +219,7 @@ public class PyTypeCheckerInspection extends PyInspection {
       final List<AnalyzeArgumentResult> result = new ArrayList<>();
 
       final var receiver = callSite.getReceiver(callableType.getCallable());
-      final var substitutions = PyTypeChecker.unifyReceiver(receiver, myTypeEvalContext);
+      final var substitutions = PyTypeChecker.unifyReceiverWithParamSpecs(receiver, myTypeEvalContext);
       final var mappedParameters = mapping.getMappedParameters();
       final var regularMappedParameters = getRegularMappedParameters(mappedParameters);
 

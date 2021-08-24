@@ -67,7 +67,7 @@ public class PyCallableTypeImpl implements PyCallableType {
                                         @NotNull Collection<PyCallableParameter> allParameters,
                                         @Nullable PyExpression receiver,
                                         @NotNull TypeEvalContext context) {
-    final var substitutions = PyTypeChecker.unifyGenericCall(receiver, actualParameters, context);
+    final var substitutions = PyTypeChecker.unifyGenericCallWithParamSpecs(receiver, actualParameters, context);
     final var substitutionsWithUnresolvedReturnGenerics =
       PyTypeChecker.getSubstitutionsWithUnresolvedReturnGenerics(allParameters, type, substitutions, context);
     return PyTypeChecker.substitute(type, substitutionsWithUnresolvedReturnGenerics, context);

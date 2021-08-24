@@ -1209,7 +1209,7 @@ public final class PyCallExpressionHelper {
     }
     allMappedParameters.putAll(mappedExplicitParameters);
 
-    return PyTypeChecker.unifyGenericCall(receiver, allMappedParameters, context) == null;
+    return PyTypeChecker.unifyGenericCallWithParamSpecs(receiver, allMappedParameters, context) == null;
   }
 
   private static class ArgumentMappingResults {
