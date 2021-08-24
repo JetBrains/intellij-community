@@ -87,7 +87,9 @@ class ListPersistentStateComponentsAction : AnAction() {
           state.storages.forEach {
             if (!it.deprecated) {
               val storageRoamingType =
-                if (it.value == StoragePathMacros.NON_ROAMABLE_FILE || it.value == StoragePathMacros.CACHE_FILE) "DISABLED"
+                if (it.value == StoragePathMacros.NON_ROAMABLE_FILE ||
+                    it.value == StoragePathMacros.CACHE_FILE ||
+                    it.value == StoragePathMacros.WORKSPACE_FILE) "DISABLED"
                 else it.roamingType.toString()
               if (roamingType == null) {
                 roamingType = storageRoamingType
