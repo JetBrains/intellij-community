@@ -16,6 +16,9 @@
         <entry key="kotlinc.sam-with-receiver-compiler-plugin" value="kotlin.util.compiler-classpath" />
         <entry key="kotlinc.high-level-api-fir" value="kotlin.util.compiler-classpath" />
         <entry key="kotlinc.high-level-api" value="kotlin.util.compiler-classpath" />
+        <entry key="kotlinc.low-level-api-fir" value="kotlin.util.compiler-classpath" />
+        <entry key="kotlinc.analysis-api-providers" value="kotlin.util.compiler-classpath" />
+        <entry key="kotlinc.symbol-light-classes" value="kotlin.util.compiler-classpath" />
       </map>
     </option>
   </component>
