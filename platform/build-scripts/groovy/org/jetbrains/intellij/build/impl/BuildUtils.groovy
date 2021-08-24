@@ -185,7 +185,14 @@ final class BuildUtils {
 
   static List<File> getPluginJars(String pluginPath) {
     File libFile = new File(pluginPath, "lib")
-    return libFile.list { _, name -> FileUtil.extensionEquals(name, "jar") }.collect { jarName ->
+    if (!libFile.exists()) {
+      throw new FileNotFoundException("$libFile")
+    }
+    def list = libFile.list { _, name -> FileUtil.extensionEquals(name, "jar") }
+    if (libFile == null) {
+      throw new IllegalStateException("Cannot list $libFile")
+    }
+    return list.collect { jarName ->
       new File(libFile, jarName)
     }
   }
