@@ -30,7 +30,6 @@ public class MissingMethodBodyFixer implements Fixer {
   public void apply(Editor editor, JavaSmartEnterProcessor processor, PsiElement psiElement) throws IncorrectOperationException {
     if (!(psiElement instanceof PsiMethod)) return;
     PsiMethod method = (PsiMethod) psiElement;
-    final PsiClass containingClass = method.getContainingClass();
     if (!shouldHaveBody(method)) return;
 
     final PsiCodeBlock body = method.getBody();
@@ -43,7 +42,7 @@ public class MissingMethodBodyFixer implements Fixer {
         if (statements.length > 0) {
           if (statements[0] instanceof PsiDeclarationStatement) {
             if (PsiTreeUtil.getDeepestLast(statements[0]) instanceof PsiErrorElement) {
-              if (Objects.requireNonNull(containingClass).getRBrace() == null) {
+              if (Objects.requireNonNull(method.getContainingClass()).getRBrace() == null) {
                 doc.insertString(body.getTextRange().getStartOffset() + 1, "\n}");
               }
             }
