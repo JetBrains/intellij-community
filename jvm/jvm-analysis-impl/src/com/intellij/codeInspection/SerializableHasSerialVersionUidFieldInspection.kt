@@ -19,7 +19,7 @@ import org.jetbrains.uast.generate.getUastElementFactory
 import org.jetbrains.uast.getUastParentOfType
 import org.jetbrains.uast.sourcePsiElement
 
-class SerializableHasSerialVersionUidFieldInspection : USerializableInspectionBase() {
+class SerializableHasSerialVersionUidFieldInspection : USerializableInspectionBase(UClass::class.java) {
   override fun getID(): String = "serial"
 
   override fun checkClass(aClass: UClass, manager: InspectionManager, isOnTheFly: Boolean): Array<ProblemDescriptor> {
