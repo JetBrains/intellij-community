@@ -49,4 +49,7 @@ internal class FirCompletionContributorFactory(private val basicContext: FirBasi
 
     fun superEntryContributor(priority: Int) =
         FirSuperEntryContributor(basicContext, priority)
+
+    fun declarationFromUnresolvedNameContributor(priority: Int) =
+        FirDeclarationFromUnresolvedNameContributor(basicContext, priority)
 }
