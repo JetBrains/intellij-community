@@ -4756,6 +4756,11 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
             runTest("testData/inspectionsLocal/dfa/basicRange.kt");
         }
 
+        @TestMetadata("basicRedundantIs.kt")
+        public void testBasicRedundantIs() throws Exception {
+            runTest("testData/inspectionsLocal/dfa/basicRedundantIs.kt");
+        }
+
         @TestMetadata("basicThis.kt")
         public void testBasicThis() throws Exception {
             runTest("testData/inspectionsLocal/dfa/basicThis.kt");
@@ -5039,6 +5044,11 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
         @TestMetadata("stringTemplateSimple.kt")
         public void testStringTemplateSimple() throws Exception {
             runTest("testData/inspectionsLocal/dfa/stringTemplateSimple.kt");
+        }
+
+        @TestMetadata("suppressByCompilerWarning.kt")
+        public void testSuppressByCompilerWarning() throws Exception {
+            runTest("testData/inspectionsLocal/dfa/suppressByCompilerWarning.kt");
         }
 
         @TestMetadata("unaryMinus.kt")

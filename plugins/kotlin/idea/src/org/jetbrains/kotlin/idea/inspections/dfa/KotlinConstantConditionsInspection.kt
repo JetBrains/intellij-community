@@ -17,7 +17,9 @@ import com.intellij.codeInspection.dataFlow.value.DfaValue
 import com.intellij.codeInspection.dataFlow.value.DfaValueFactory
 import com.intellij.psi.PsiElementVisitor
 import com.intellij.util.ThreeState
+import org.jetbrains.kotlin.caches.resolve.KotlinCacheService
 import org.jetbrains.kotlin.diagnostics.Errors
+import org.jetbrains.kotlin.diagnostics.Severity
 import org.jetbrains.kotlin.idea.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.inspections.AbstractKotlinInspection
@@ -141,13 +143,10 @@ class KotlinConstantConditionsInspection : AbstractKotlinInspection() {
                 return true
             }
         }
-        val context = expression.analyze(BodyResolveMode.FULL)
-        if (context.diagnostics.forElement(expression)
-                .any { it.factory == Errors.SENSELESS_COMPARISON || it.factory == Errors.USELESS_IS_CHECK }
-        ) {
+        if (isCompilationWarning(expression)) {
             return true
         }
-        return expression.isUsedAsStatement(context)
+        return expression.isUsedAsStatement(expression.analyze(BodyResolveMode.FULL))
     }
 
     /**
@@ -300,14 +299,27 @@ class KotlinConstantConditionsInspection : AbstractKotlinInspection() {
                     }
                     is KotlinCastProblem -> {
                         val anchor = (problem.cast as? KtBinaryExpressionWithTypeRHS)?.operationReference ?: problem.cast
-                        val context = anchor.analyze(BodyResolveMode.FULL)
-                        if (!context.diagnostics.forElement(anchor).any { it.factory == Errors.CAST_NEVER_SUCCEEDS }) {
+                        if (!isCompilationWarning(anchor)) {
                             holder.registerProblem(anchor, KotlinBundle.message("inspection.message.cast.will.always.fail"))
                         }
                     }
                 }
             }
         }
+    }
+
+    private fun isCompilationWarning(anchor: KtExpression): Boolean
+    {
+        val context = anchor.analyze(BodyResolveMode.FULL)
+        if (context.diagnostics.forElement(anchor).any
+            { it.factory == Errors.CAST_NEVER_SUCCEEDS || it.factory == Errors.SENSELESS_COMPARISON || it.factory == Errors.USELESS_IS_CHECK }
+        ) {
+            return true
+        }
+        val suppressionCache = KotlinCacheService.getInstance(anchor.project).getSuppressionCache()
+        return suppressionCache.isSuppressed(anchor, "CAST_NEVER_SUCCEEDS", Severity.WARNING) ||
+                suppressionCache.isSuppressed(anchor, "SENSELESS_COMPARISON", Severity.WARNING) ||
+                suppressionCache.isSuppressed(anchor, "USELESS_IS_CHECK", Severity.WARNING)
     }
 
     private fun shouldSuppressWhenCondition(
