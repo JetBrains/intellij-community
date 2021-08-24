@@ -9,9 +9,11 @@ import com.intellij.openapi.observable.properties.PropertyGraph
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.ui.UIBundle
 import com.intellij.ui.layout.*
+import com.intellij.util.containers.map2Array
 import com.intellij.util.ui.JBUI
 import java.awt.Dimension
 import java.lang.Integer.max
+import javax.swing.DefaultComboBoxModel
 import javax.swing.JLabel
 
 class NewProjectStep : NewModuleStep<NewProjectStepSettings>() {
@@ -46,7 +48,11 @@ class NewProjectStep : NewModuleStep<NewProjectStepSettings>() {
 
     gitCheckbox()
     row(UIBundle.message("label.project.wizard.new.project.language")) {
-      buttonSelector(languages, settings.languageProperty) { it }
+      if (languages.size > 4) {
+        comboBox(DefaultComboBoxModel(languages.map2Array { it }), settings.languageProperty)
+      } else {
+        buttonSelector(languages, settings.languageProperty) { it }
+      }
     }.largeGapAfter()
 
     var maxWidth = label.component.preferredSize.width
