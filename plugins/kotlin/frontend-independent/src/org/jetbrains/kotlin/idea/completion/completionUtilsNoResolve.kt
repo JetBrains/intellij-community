@@ -14,6 +14,7 @@ import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getNonStrictParentOfType
 import org.jetbrains.kotlin.psi.psiUtil.isAncestor
+import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
 import org.jetbrains.kotlin.psi.psiUtil.parentsWithSelf
 import org.jetbrains.kotlin.renderer.render
 
@@ -152,3 +153,19 @@ private tailrec fun findReturnExpression(expression: PsiElement?): KtReturnExpre
     }
 
 var LookupElement.priority by UserDataProperty(Key<ItemPriority>("ITEM_PRIORITY_KEY"))
+
+fun referenceScope(declaration: KtNamedDeclaration): KtElement? = when (val parent = declaration.parent) {
+    is KtParameterList -> parent.parent as KtElement
+    is KtClassBody -> {
+        val classOrObject = parent.parent as KtClassOrObject
+        if (classOrObject is KtObjectDeclaration && classOrObject.isCompanion()) {
+            classOrObject.containingClassOrObject
+        } else {
+            classOrObject
+        }
+    }
+
+    is KtFile -> parent
+    is KtBlockExpression -> parent
+    else -> null
+}

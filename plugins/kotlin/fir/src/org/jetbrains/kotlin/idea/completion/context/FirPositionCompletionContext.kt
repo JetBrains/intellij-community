@@ -22,6 +22,10 @@ internal class FirClassifierNamePositionContext(
     val classLikeDeclaration: KtClassLikeDeclaration,
 ) : FirRawPositionCompletionContext()
 
+internal class FirValueParameterPositionContext(
+    override val position: PsiElement,
+    val ktParameter: KtParameter,
+) : FirRawPositionCompletionContext()
 
 internal class FirIncorrectPositionContext(
     override val position: PsiElement
@@ -124,6 +128,9 @@ internal object FirPositionCompletionContextDetector {
         return when {
             parent is KtClassLikeDeclaration && parent.nameIdentifier == position -> {
                 FirClassifierNamePositionContext(position, parent)
+            }
+            parent is KtParameter -> {
+                FirValueParameterPositionContext(position, parent)
             }
             else -> null
         }
@@ -256,6 +263,7 @@ internal object FirPositionCompletionContextDetector {
             is FirPackageDirectivePositionContext,
             is FirTypeConstraintNameInWhereClausePositionContext,
             is FirIncorrectPositionContext,
+            is FirValueParameterPositionContext,
             is FirClassifierNamePositionContext -> {
                 analyse(basicContext.originalKtFile, action)
             }
