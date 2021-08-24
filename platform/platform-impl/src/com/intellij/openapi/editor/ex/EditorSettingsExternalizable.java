@@ -118,7 +118,10 @@ public class EditorSettingsExternalizable implements PersistentStateComponent<Ed
     }
   }
 
-  @State(name = "OsSpecificEditorSettings", storages = @Storage(value = "editor.os-specific.xml", roamingType = RoamingType.PER_OS))
+  @State(
+    name = "OsSpecificEditorSettings",
+    storages = @Storage(value = "editor.os-specific.xml", roamingType = RoamingType.PER_OS),
+    category = ComponentCategory.CODE)
   public static final class OsSpecificState implements PersistentStateComponent<OsSpecificState> {
     public CaretStopOptions CARET_STOP_OPTIONS = new CaretStopOptions();
 
