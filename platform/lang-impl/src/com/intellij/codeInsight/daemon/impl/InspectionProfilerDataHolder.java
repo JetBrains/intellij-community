@@ -31,6 +31,7 @@ import java.util.*;
 // stores CPU profiler data for inspections run session
 final class InspectionProfilerDataHolder {
   private static final Logger LOG = Logger.getInstance(InspectionProfilerDataHolder.class);
+
   private static class InspectionFileData {
     private final @NotNull Latencies @NotNull [/*3*/] latencies; // ERROR,WARNING,OTHER
     private final Map<String, PsiElement> favoriteElement; // tool id -> PsiElement which produced some diagnostics during last run
@@ -147,7 +148,7 @@ final class InspectionProfilerDataHolder {
       String s1 = latencies[1].topSmallestLatenciesStat("WARNING");
       String s2 = latencies[2].topSmallestLatenciesStat("INFO");
       LOG.trace(String.format("Sort inspections: %b; total tools: %4d; total highlighting time: %4dms; in %s:",
-                              Registry.is("inspection.sort"), contexts.size(),
+                              isInspectionSortByLatencyEnabled(), contexts.size(),
                               totalHighlightingNanos / 1_000_000, file.getName()) +
                               StringUtil.notNullize(s0)+
                               StringUtil.notNullize(s1)+
@@ -199,5 +200,9 @@ final class InspectionProfilerDataHolder {
         context.myFavoriteElement = element;
       }
     }
+  }
+
+  static boolean isInspectionSortByLatencyEnabled() {
+    return Registry.is("inspection.sort") && System.getProperty("no.inspection.sort") == null;
   }
 }

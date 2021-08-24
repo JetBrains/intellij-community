@@ -44,7 +44,6 @@ import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.profile.codeInspection.ProjectInspectionProfileManager;
 import com.intellij.psi.*;
@@ -309,7 +308,7 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
     PsiFile file = session.getFile();
     List<InspectionContext> init = ContainerUtil.mapNotNull(wrappers, wrapper -> createContext(wrapper, iManager, isOnTheFly, indicator, session));
 
-    if (isInspectionSortByLatencyEnabled()) {
+    if (InspectionProfilerDataHolder.isInspectionSortByLatencyEnabled()) {
       //sort init according to the priorities saved earlier to run in order
       InspectionProfilerDataHolder profileData = InspectionProfilerDataHolder.getInstance(myProject);
       profileData.sort(getFile(), init);
@@ -441,7 +440,7 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
     for (InspectionContext context : init) {
       context.problemsSizeAfterInsideElementsProcessed = context.holder.getResultCount();
     }
-    if (isInspectionSortByLatencyEnabled()) {
+    if (InspectionProfilerDataHolder.isInspectionSortByLatencyEnabled()) {
       processInOrder(init, outside, false, finalPriorityRange, getFile(), TOMB_STONE, indicator, context -> {
         InspectionProblemsHolder holder = context.holder;
         holder.finishTimeStamp = System.nanoTime();
@@ -476,10 +475,6 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
         throw new ProcessCanceledException();
       }
     }
-  }
-
-  private static boolean isInspectionSortByLatencyEnabled() {
-    return Registry.is("inspection.sort") && System.getProperty("no.inspection.sort") == null;
   }
 
   private @NotNull Set<PsiFile> inspectInjectedPsi(@NotNull List<? extends PsiElement> elements,
