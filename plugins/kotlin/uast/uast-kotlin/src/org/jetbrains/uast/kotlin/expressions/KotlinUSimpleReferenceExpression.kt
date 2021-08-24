@@ -5,6 +5,7 @@ package org.jetbrains.uast.kotlin
 import com.intellij.psi.*
 import org.jetbrains.kotlin.descriptors.CallableDescriptor
 import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
+import org.jetbrains.kotlin.idea.references.readWriteAccess
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.resolve.calls.callUtil.getResolvedCall
@@ -34,7 +35,7 @@ class KotlinUSimpleReferenceExpression(
     private fun visitAccessorCalls(visitor: UastVisitor) {
         // Visit Kotlin get-set synthetic Java property calls as function calls
         val bindingContext = sourcePsi.analyze()
-        val access = sourcePsi.readWriteAccess()
+        val access = sourcePsi.readWriteAccess(useResolveForReadWrite = false)
         val resolvedCall = sourcePsi.getResolvedCall(bindingContext)
         val resultingDescriptor = resolvedCall?.resultingDescriptor as? SyntheticJavaPropertyDescriptor
         if (resultingDescriptor != null) {
