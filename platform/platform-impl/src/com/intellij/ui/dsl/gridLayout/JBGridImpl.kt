@@ -101,51 +101,53 @@ internal class JBGridImpl : JBGrid {
     layoutData.columnsSizeCalculator.reset()
     layoutData.rowsSizeCalculator.reset()
 
-    calculateLayoutDataStep1()
-    calculateLayoutDataStep2()
+    calculateLayoutDataStep()
   }
 
-  private fun calculateLayoutDataStep1() {
+  private fun calculateLayoutDataStep() {
     layoutData.dimension = getDimension()
     val visibleCellsData = mutableListOf<LayoutCellData>()
 
-    cells.forEach { cell ->
+    for (cell in cells) {
+      var preferredSize: Dimension
+
       when (cell) {
         is JBComponentCell -> {
           val component = cell.component
-          if (component.isVisible) {
-            visibleCellsData.add(LayoutCellData(cell, component.preferredSize))
+          if (!component.isVisible) {
+            continue
           }
+          preferredSize = component.preferredSize
         }
+
         is JBGridCell -> {
           val grid = cell.content
-          if (grid.visible) {
-            grid.calculateLayoutData()
-            visibleCellsData.add(LayoutCellData(cell, grid.layoutData.preferredSize))
+          if (!grid.visible) {
+            continue
           }
+          grid.calculateLayoutData()
+          preferredSize = grid.layoutData.preferredSize
         }
       }
+
+      val layoutCellData: LayoutCellData
+      with(cell.constraints) {
+        layoutCellData = LayoutCellData(cell = cell, preferredSize = preferredSize,
+          columnGaps = ColumnGaps(
+            left = columnsGaps.getOrNull(x)?.left ?: 0,
+            right = columnsGaps.getOrNull(x + width - 1)?.right ?: 0),
+          rowGaps = RowGaps(
+            top = rowsGaps.getOrNull(y)?.top ?: 0,
+            bottom = rowsGaps.getOrNull(y + height - 1)?.bottom ?: 0)
+        )
+      }
+
+      visibleCellsData.add(layoutCellData)
+      layoutData.columnsSizeCalculator.addConstraint(cell.constraints.x, cell.constraints.width, layoutCellData.cellWidth)
+      layoutData.rowsSizeCalculator.addConstraint(cell.constraints.y, cell.constraints.height, layoutCellData.cellHeight)
     }
 
     layoutData.visibleCellsData = visibleCellsData
-  }
-
-  private fun calculateLayoutDataStep2() {
-    layoutData.visibleCellsData.forEach { layoutCellData ->
-      with(layoutCellData.cell.constraints) {
-        layoutCellData.columnGaps = ColumnGaps(
-          left = columnsGaps.getOrNull(x)?.left ?: 0,
-          right = columnsGaps.getOrNull(x + width - 1)?.right ?: 0
-        )
-        layoutCellData.rowGaps = RowGaps(
-          top = rowsGaps.getOrNull(y)?.top ?: 0,
-          bottom = rowsGaps.getOrNull(y + height - 1)?.bottom ?: 0,
-        )
-
-        layoutData.columnsSizeCalculator.addConstraint(x, width, layoutCellData.cellWidth)
-        layoutData.rowsSizeCalculator.addConstraint(y, height, layoutCellData.cellHeight)
-      }
-    }
   }
 
   /**
@@ -188,9 +190,6 @@ internal class JBGridImpl : JBGrid {
     )
   }
 
-  /**
-   * Maximum indexes of occupied cells including hidden components
-   */
   private fun getDimension(): Dimension {
     var width = 0
     var height = 0
@@ -222,6 +221,9 @@ internal class JBGridImpl : JBGrid {
  */
 private class JBLayoutData {
 
+  /**
+   * Maximum indexes of occupied cells including hidden components
+   */
   var dimension = Dimension()
   var visibleCellsData = emptyList<LayoutCellData>()
   val columnsSizeCalculator = JBColumnsSizeCalculator()
@@ -233,8 +235,7 @@ private class JBLayoutData {
 }
 
 private data class LayoutCellData(val cell: JBCell, val preferredSize: Dimension,
-                                  var columnGaps: ColumnGaps = ColumnGaps.EMPTY,
-                                  var rowGaps: RowGaps = RowGaps.EMPTY) {
+                                  val columnGaps: ColumnGaps, val rowGaps: RowGaps) {
 
   val gapWidth: Int
     get() = cell.constraints.gaps.width + columnGaps.width
