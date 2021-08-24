@@ -1,7 +1,6 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.ui;
 
-import com.intellij.debugger.actions.JavaMarkObjectActionHandler;
 import com.intellij.debugger.ui.breakpoints.Breakpoint;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.editor.Document;
@@ -12,7 +11,6 @@ import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.xdebugger.breakpoints.ui.XBreakpointGroupingRule;
 import com.intellij.xdebugger.impl.DebuggerSupport;
-import com.intellij.xdebugger.impl.actions.MarkObjectActionHandler;
 import com.intellij.xdebugger.impl.breakpoints.ui.BreakpointItem;
 import com.intellij.xdebugger.impl.breakpoints.ui.BreakpointPanelProvider;
 import org.jetbrains.annotations.ApiStatus;
@@ -24,18 +22,11 @@ import static com.intellij.openapi.project.ProjectCoreUtil.theOnlyOpenProject;
 
 public class JavaDebuggerSupport extends DebuggerSupport {
   private final JavaBreakpointPanelProvider myBreakpointPanelProvider = new JavaBreakpointPanelProvider();
-  private final JavaMarkObjectActionHandler myMarkObjectActionHandler = new JavaMarkObjectActionHandler();
 
   @Override
   @NotNull
   public BreakpointPanelProvider<?> getBreakpointPanelProvider() {
     return myBreakpointPanelProvider;
-  }
-
-  @NotNull
-  @Override
-  public MarkObjectActionHandler getMarkObjectHandler() {
-    return myMarkObjectActionHandler;
   }
 
   private static class JavaBreakpointPanelProvider extends BreakpointPanelProvider<Breakpoint> {
