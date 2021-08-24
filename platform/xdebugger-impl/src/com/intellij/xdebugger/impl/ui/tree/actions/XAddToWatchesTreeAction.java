@@ -4,7 +4,6 @@ package com.intellij.xdebugger.impl.ui.tree.actions;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.Project;
 import com.intellij.xdebugger.XDebugSession;
-import com.intellij.xdebugger.XDebuggerManager;
 import com.intellij.xdebugger.impl.XDebugSessionImpl;
 import com.intellij.xdebugger.impl.frame.XWatchesView;
 import com.intellij.xdebugger.impl.ui.DebuggerUIUtil;
@@ -46,7 +45,7 @@ public class XAddToWatchesTreeAction extends XDebuggerTreeActionBase {
     XWatchesView view = e.getData(XWatchesView.DATA_KEY);
     Project project = e.getProject();
     if (view == null && project != null) {
-      XDebugSession session = XDebuggerManager.getInstance(project).getCurrentSession();
+      XDebugSession session = DebuggerUIUtil.getSession(e);
       if (session != null) {
         XDebugSessionTab tab = ((XDebugSessionImpl)session).getSessionTab();
         if (tab != null) {

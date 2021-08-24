@@ -483,19 +483,30 @@ public final class DebuggerUIUtil {
     return event.getData(XDebugSessionTab.TAB_KEY) == null;
   }
 
+  @Nullable
   public static XDebugSessionData getSessionData(AnActionEvent e) {
     XDebugSessionData data = e.getData(XDebugSessionData.DATA_KEY);
     if (data == null) {
-      Project project = e.getProject();
-      if (project != null) {
-        XDebugSession session = XDebuggerManager.getInstance(project).getCurrentSession();
-        if (session != null) {
-          data = ((XDebugSessionImpl)session).getSessionData();
-        }
+      XDebugSession session = getSession(e);
+      if (session != null) {
+        data = ((XDebugSessionImpl)session).getSessionData();
       }
     }
     return data;
   }
+
+  @Nullable
+  public static XDebugSession getSession(@NotNull AnActionEvent e) {
+    XDebugSession session = e.getData(XDebugSession.DATA_KEY);
+    if (session == null) {
+      Project project = e.getProject();
+      if (project != null) {
+        session = XDebuggerManager.getInstance(project).getCurrentSession();
+      }
+    }
+    return session;
+  }
+
 
   public static void repaintCurrentEditor(Project project) {
     Editor editor = FileEditorManager.getInstance(project).getSelectedTextEditor();

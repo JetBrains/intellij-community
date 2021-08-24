@@ -50,6 +50,7 @@ import com.intellij.xdebugger.frame.XSuspendContext;
 import com.intellij.xdebugger.frame.XValueMarkerProvider;
 import com.intellij.xdebugger.impl.XDebugSessionImpl;
 import com.intellij.xdebugger.impl.XDebuggerUtilImpl;
+import com.intellij.xdebugger.impl.ui.DebuggerUIUtil;
 import com.intellij.xdebugger.memory.component.InstancesTracker;
 import com.intellij.xdebugger.memory.component.MemoryViewManager;
 import com.intellij.xdebugger.stepping.XSmartStepIntoHandler;
@@ -455,7 +456,7 @@ public class JavaDebugProcess extends XDebugProcess {
     public void update(@NotNull final AnActionEvent e) {
       super.update(e);
       final Presentation presentation = e.getPresentation();
-      DebugProcessImpl process = getCurrentDebugProcess(e.getProject());
+      DebugProcessImpl process = getCurrentDebugProcess(e);
       if (process == null || process.canGetMethodReturnValue()) {
         presentation.setEnabled(true);
         presentation.setText(myText);
@@ -474,11 +475,23 @@ public class JavaDebugProcess extends XDebugProcess {
     @Override
     public void setSelected(@NotNull AnActionEvent e, boolean watch) {
       DebuggerSettings.getInstance().WATCH_RETURN_VALUES = watch;
-      DebugProcessImpl process = getCurrentDebugProcess(e.getProject());
+      DebugProcessImpl process = getCurrentDebugProcess(e);
       if (process != null) {
         process.setWatchMethodReturnValuesEnabled(watch);
       }
     }
+  }
+
+  @Nullable
+  public static DebugProcessImpl getCurrentDebugProcess(@NotNull AnActionEvent e) {
+    XDebugSession session = DebuggerUIUtil.getSession(e);
+    if (session != null) {
+      XDebugProcess process = session.getDebugProcess();
+      if (process instanceof JavaDebugProcess) {
+        return ((JavaDebugProcess)process).getDebuggerSession().getProcess();
+      }
+    }
+    return null;
   }
 
   @Nullable

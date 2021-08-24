@@ -9,7 +9,6 @@ import com.intellij.openapi.actionSystem.ex.CustomComponentAction;
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.keymap.KeymapUtil;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.JBPopupListener;
@@ -42,6 +41,7 @@ import com.intellij.xdebugger.impl.XDebuggerWatchesManager;
 import com.intellij.xdebugger.impl.actions.XDebuggerActions;
 import com.intellij.xdebugger.impl.evaluate.quick.XDebuggerTreeCreator;
 import com.intellij.xdebugger.impl.evaluate.quick.common.DebuggerTreeCreator;
+import com.intellij.xdebugger.impl.ui.DebuggerUIUtil;
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTree;
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTreeListener;
 import com.intellij.xdebugger.impl.ui.tree.actions.XDebuggerTreeActionBase;
@@ -186,13 +186,7 @@ public class XDebuggerTreeInlayPopup<D> {
     public void actionPerformed(@NotNull AnActionEvent e) {
       InlineWatchNodeImpl watch = (InlineWatchNodeImpl)myValueNode;
       XDebuggerWatchesManager watchesManager = ((XDebuggerManagerImpl)XDebuggerManager.getInstance(mySession.getProject())).getWatchesManager();
-      XDebugSession session = e.getData(XDebugSession.DATA_KEY);
-      if (session == null) {
-        Project project = e.getProject();
-        if (project != null) {
-          session = XDebuggerManager.getInstance(project).getCurrentSession();
-        }
-      }
+      XDebugSession session = DebuggerUIUtil.getSession(e);
       if (session != null) {
         myPopup.cancel();
         watchesManager.inlineWatchesRemoved(Collections.singletonList(watch.getWatch()), null);
