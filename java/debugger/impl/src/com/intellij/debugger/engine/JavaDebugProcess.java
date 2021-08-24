@@ -29,7 +29,6 @@ import com.intellij.execution.ui.layout.PlaceInGrid;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.extensions.ExtensionPointListener;
 import com.intellij.openapi.extensions.PluginDescriptor;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.NlsActions;
 import com.intellij.openapi.util.Pair;
@@ -489,20 +488,6 @@ public class JavaDebugProcess extends XDebugProcess {
       XDebugProcess process = session.getDebugProcess();
       if (process instanceof JavaDebugProcess) {
         return ((JavaDebugProcess)process).getDebuggerSession().getProcess();
-      }
-    }
-    return null;
-  }
-
-  @Nullable
-  public static DebugProcessImpl getCurrentDebugProcess(@Nullable Project project) {
-    if (project != null) {
-      XDebugSession session = XDebuggerManager.getInstance(project).getCurrentSession();
-      if (session != null) {
-        XDebugProcess process = session.getDebugProcess();
-        if (process instanceof JavaDebugProcess) {
-          return ((JavaDebugProcess)process).getDebuggerSession().getProcess();
-        }
       }
     }
     return null;
