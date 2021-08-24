@@ -380,7 +380,9 @@ internal class LessonExecutor(val lesson: KLesson,
 
   private fun stepHasBeenCompleted(taskContext: TaskContextImpl, taskInfo: TaskInfo) {
     ApplicationManager.getApplication().assertIsDispatchThread()
-    if (!isTaskCompleted(taskContext)) return
+    // do not process the next step if step is not fully completed
+    // or lesson has been stopped during task completion (dialogs in Recent Files and Restore removed code lessons)
+    if (!isTaskCompleted(taskContext) || hasBeenStopped) return
 
     clearRestore()
     LessonManager.instance.passExercise()
