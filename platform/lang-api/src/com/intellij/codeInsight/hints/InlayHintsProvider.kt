@@ -4,11 +4,15 @@ package com.intellij.codeInsight.hints
 import com.intellij.lang.Language
 import com.intellij.lang.LanguageExtension
 import com.intellij.lang.LanguageExtensionPoint
+import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.extensions.ExtensionPointName
+import com.intellij.openapi.fileTypes.FileType
 import com.intellij.openapi.options.UnnamedConfigurable
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.psi.PsiFile
+import com.intellij.psi.PsiFileFactory
 import com.intellij.util.xmlb.annotations.Property
 import org.jetbrains.annotations.Nls
 import javax.swing.JComponent
@@ -85,6 +89,12 @@ interface InlayHintsProvider<T : Any> {
    * Checks whether the language is accepted by the provider.
    */
   fun isLanguageSupported(language: Language): Boolean = true
+
+  @JvmDefault
+  fun createFile(project: Project, fileType: FileType, document: Document): PsiFile {
+    val factory = PsiFileFactory.getInstance(project)
+    return factory.createFileFromText("dummy", fileType, document.text)
+  }
 
   val isVisibleInSettings: Boolean
     get() = true

@@ -6,8 +6,11 @@ import com.intellij.codeInsight.hints.SettingsKey
 import com.intellij.codeInsight.hints.chain.AbstractCallChainHintsProvider
 import com.intellij.codeInsight.hints.presentation.InlayPresentation
 import com.intellij.codeInsight.hints.presentation.PresentationFactory
+import com.intellij.openapi.editor.Document
+import com.intellij.openapi.fileTypes.FileType
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiFile
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.parameterInfo.HintsTypeRenderer
 import org.jetbrains.kotlin.psi.*
@@ -32,14 +35,10 @@ class KotlinCallChainHintsProvider : AbstractCallChainHintsProvider<KtQualifiedE
                     ?.map { "item: ${'$'}it" }
                     ?.forEach { println(it) }
             }
-
-            inline fun IntRange.filter(predicate: (Int) -> Boolean): List<Int> = TODO()
-            inline fun <T, R> Iterable<T>.map(transform: (T) -> R): List<R> = TODO()
-            inline fun <T> T.takeIf(predicate: (T) -> Boolean): T? = TODO()
-            inline fun <T> Iterable<T>.all(predicate: (T) -> Boolean): Boolean = TODO()
-            inline fun <T> Iterable<T>.forEach(action: (T) -> Unit): Unit = TODO()
-            inline fun println(message: Any?) = TODO()
         """.trimIndent()
+
+    override fun createFile(project: Project, fileType: FileType, document: Document): PsiFile =
+        KotlinAbstractHintsProvider.createKtFile(project, document, fileType)
 
     override fun KotlinType.getInlayPresentation(
         expression: PsiElement,

@@ -3,9 +3,13 @@ package com.intellij.codeInsight.hints.settings
 
 import com.intellij.codeInsight.hints.ChangeListener
 import com.intellij.codeInsight.hints.ImmediateConfigurable
+import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.fileTypes.FileType
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.psi.PsiFile
+import com.intellij.psi.PsiFileFactory
 import org.jetbrains.annotations.Nls
 import javax.swing.JComponent
 
@@ -34,6 +38,11 @@ abstract class InlayProviderSettingsModel(var isEnabled: Boolean, val id: String
    * Invariant: if previewText == null, this method is not invoked
    */
   abstract fun collectAndApply(editor: Editor, file: PsiFile)
+
+  open fun createFile(project: Project, fileType: FileType, document:Document): PsiFile {
+    val factory = PsiFileFactory.getInstance(project)
+    return factory.createFileFromText("dummy", fileType, document.text)
+  }
 
   /**
    * Text of hints preview. If null, won't be shown.

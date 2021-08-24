@@ -34,16 +34,13 @@ class KotlinRangesHintsProvider : KotlinAbstractHintsProvider<KotlinRangesHintsP
     }
 
     override val previewText: String = """
-        val range = 0..10
-
-        fun someFun() {    
-            for (index in 0 until 10) {
-                println(index)
-            }
+        fun someFun() {
+            val range = 0..10
+            for (i in 0..5) {}
+            for (i in 5 until index) {}
+            for (i in 5 downTo 0) {}
         }
     """.trimIndent()
-
-
 }
 
 internal fun KtBinaryExpression.isRangeExpression(): Boolean =
