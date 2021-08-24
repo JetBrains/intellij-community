@@ -92,23 +92,8 @@ class Stats(
 
     fun <SV, TV> perfTest(
         testName: String,
-        warmUpIterations: Int = 5,
-        iterations: Int = 20,
-        fastIterations: Boolean = false,
-        setUp: (TestData<SV, TV>) -> Unit = { },
-        test: (TestData<SV, TV>) -> Unit,
-        tearDown: (TestData<SV, TV>) -> Unit = { },
-        checkStability: Boolean = true,
-        stopAtException: Boolean = false,
-    ) {
-        val warmPhaseData = PhaseData(
-            iterations = warmUpIterations,
-            testName = testName,
-            fastIterations = fastIterations,
-            setUp = setUp,
-            test = test,
-            tearDown = tearDown
-        )
+        perfTest: PerfTest<SV, TV>
+    ) = with(perfTest) {
         val mainPhaseData = PhaseData(
             iterations = iterations,
             testName = testName,
@@ -120,7 +105,17 @@ class Stats(
         val block = {
             val metricChildren = mutableListOf<Metric>()
             try {
-                warmUpPhase(warmPhaseData, metricChildren, stopAtException)
+                if (warmUpIterations > 0) {
+                    val warmPhaseData = PhaseData(
+                        iterations = warmUpIterations,
+                        testName = testName,
+                        fastIterations = fastIterations,
+                        setUp = setUp,
+                        test = test,
+                        tearDown = tearDown
+                    )
+                    warmUpPhase(warmPhaseData, metricChildren, stopAtException)
+                }
                 val statInfoArray = mainPhase(mainPhaseData, metricChildren, stopAtException)
 
                 if (!mainPhaseData.fastIterations) assertEquals(iterations, statInfoArray.size)
