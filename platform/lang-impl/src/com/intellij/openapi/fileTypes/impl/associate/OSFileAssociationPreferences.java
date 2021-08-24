@@ -1,9 +1,10 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.fileTypes.impl.associate;
 
-import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.components.PersistentStateComponent;
+import com.intellij.openapi.components.RoamingType;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.diagnostic.Logger;
@@ -20,7 +21,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
-@State(name = "OSFileAssociationPreferences", storages =  @Storage("osFileIdePreferences.xml"))
+@State(name = "OSFileAssociationPreferences", storages =  @Storage(value = "osFileIdePreferences.xml", roamingType = RoamingType.DISABLED))
 public final class OSFileAssociationPreferences implements PersistentStateComponent<OSFileAssociationPreferences> {
   private final static Logger LOG = Logger.getInstance(OSFileAssociationPreferences.class);
 
