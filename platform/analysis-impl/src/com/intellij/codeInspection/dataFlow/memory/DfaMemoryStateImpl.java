@@ -79,7 +79,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
   @Override
   public @NotNull DfaMemoryStateImpl createClosureState() {
     DfaMemoryStateImpl copy = createCopy();
-    copy.flushFields();
+    copy.flushFields(new QualifierStatusMap(null, true));
     copy.emptyStack();
     for (DfaValue value : getFactory().getValues().toArray(new DfaValue[0])) {
       if (value instanceof DfaVariableValue) {
@@ -1289,25 +1289,25 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
 
   @Override
   public void flushFieldsQualifiedBy(@NotNull Set<DfaValue> qualifiers) {
-    flushFields(new QualifierStatusMap(qualifiers));
+    flushFields(new QualifierStatusMap(qualifiers, false));
   }
 
   @Override
   public void flushFields() {
-    flushFields(new QualifierStatusMap(null));
+    flushFields(new QualifierStatusMap(null, false));
   }
 
   public void flushFields(@NotNull DfaMemoryStateImpl.QualifierStatusMap qualifierStatusMap) {
     Set<DfaVariableValue> vars = new LinkedHashSet<>();
     for (DfaVariableValue value : myVariableTypes.keySet()) {
-      if (value.isFlushableByCalls() && qualifierStatusMap.shouldFlush(value.getQualifier(), value.containsCalls())) {
+      if (qualifierStatusMap.shouldFlush(value)) {
         vars.add(value);
       }
     }
     for (EqClass aClass : myEqClasses) {
       if (aClass != null) {
         for (DfaVariableValue value : aClass) {
-          if (value.isFlushableByCalls() && qualifierStatusMap.shouldFlush(value.getQualifier(), value.containsCalls())) {
+          if (qualifierStatusMap.shouldFlush(value)) {
             vars.add(value);
           }
         }
@@ -1610,9 +1610,16 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
   private final class QualifierStatusMap {
     private final Int2ObjectMap<QualifierStatus> myMap = new Int2ObjectOpenHashMap<>();
     private final @Nullable Set<DfaValue> myQualifiersToFlush;
+    private final boolean myClosure;
 
-    private QualifierStatusMap(@Nullable Set<DfaValue> qualifiersToFlush) {
+    private QualifierStatusMap(@Nullable Set<DfaValue> qualifiersToFlush, boolean closure) {
       myQualifiersToFlush = qualifiersToFlush;
+      myClosure = closure;
+    }
+
+    boolean shouldFlush(DfaVariableValue value) {
+      return (myClosure ? value.canBeCapturedInClosure() : value.isFlushableByCalls()) &&
+             shouldFlush(value.getQualifier(), value.containsCalls());
     }
 
     boolean shouldFlush(@Nullable DfaValue qualifier, boolean hasCall) {
@@ -1622,7 +1629,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
         status = calculate(qualifier);
         if (status != QualifierStatus.SHOULD_FLUSH_ALWAYS && qualifier instanceof DfaVariableValue) {
           DfaVariableValue qualifierVar = (DfaVariableValue)qualifier;
-          if (qualifierVar.isFlushableByCalls()) {
+          if (myClosure ? qualifierVar.canBeCapturedInClosure() : qualifierVar.isFlushableByCalls()) {
             DfaVariableValue qualifierQualifier = qualifierVar.getQualifier();
             if (shouldFlush(qualifierQualifier, qualifierVar.containsCalls())) {
               status = QualifierStatus.SHOULD_FLUSH_ALWAYS;

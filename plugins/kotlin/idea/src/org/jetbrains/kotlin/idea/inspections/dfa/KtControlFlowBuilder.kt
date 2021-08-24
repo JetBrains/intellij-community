@@ -50,12 +50,6 @@ import java.util.concurrent.atomic.AtomicInteger
 /*
 fleet.backend.debugger.BackendDebuggerApi.DebuggerState#toDebuggerExecutionStacks (avoid boolean literal initializers?)
 
-Value changed after lambda:
-org.jetbrains.plugins.github.pullrequest.action.GHPRReviewSubmitAction#actionPerformed
-com.intellij.codeInsight.hints.presentation.PresentationFactory#collapsible
-com.android.tools.idea.run.util.ProcessHandlerLaunchStatusTest#testTerminationConditions
-com.android.tools.profilers.ProfilerActionTest#actionEnableStatusCanBeChangedDynamically
-
 com.jetbrains.cidr.lang.hmap.OCHeaderMaps#writeToChannel (to investigate)
  */
 class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpression) {

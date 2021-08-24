@@ -50,6 +50,11 @@ class KtVariableDescriptor(val variable: KtCallableDeclaration) : VariableDescri
 
     override fun isStable(): Boolean = stable
 
+    override fun canBeCapturedInClosure(): Boolean {
+        if (variable is KtParameter && variable.isMutable) return false
+        return variable !is KtProperty || !variable.isVar
+    }
+
     override fun getDfType(qualifier: DfaVariableValue?): DfType = variable.type().toDfType(variable)
 
     override fun equals(other: Any?): Boolean = other is KtVariableDescriptor && other.variable == variable

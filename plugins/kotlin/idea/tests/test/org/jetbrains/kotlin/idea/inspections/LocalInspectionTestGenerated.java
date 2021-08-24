@@ -4896,6 +4896,11 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
             runTest("testData/inspectionsLocal/dfa/kotlinClassRef.kt");
         }
 
+        @TestMetadata("lambdaCapturesMutableLocal.kt")
+        public void testLambdaCapturesMutableLocal() throws Exception {
+            runTest("testData/inspectionsLocal/dfa/lambdaCapturesMutableLocal.kt");
+        }
+
         @TestMetadata("listAccess.kt")
         public void testListAccess() throws Exception {
             runTest("testData/inspectionsLocal/dfa/listAccess.kt");

@@ -170,6 +170,13 @@ public final class DfaVariableValue extends DfaValue {
     return !myDescriptor.isStable() || (myQualifier != null && myQualifier.isFlushableByCalls());
   }
 
+  /**
+   * @return true if variable can be captured in closure
+   */
+  public boolean canBeCapturedInClosure() {
+    return !myDescriptor.canBeCapturedInClosure() || (myQualifier != null && myQualifier.canBeCapturedInClosure());
+  }
+
   public boolean containsCalls() {
     return myDescriptor.isCall() || myQualifier != null && myQualifier.containsCalls();
   }
