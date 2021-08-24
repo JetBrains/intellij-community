@@ -192,7 +192,7 @@ class KotlinMPPGradleModelBuilder : ModelBuilderService {
         val getApiVersion = languageSettingsClass.getMethodOrNull("getApiVersion") ?: return null
         val getProgressiveMode = languageSettingsClass.getMethodOrNull("getProgressiveMode") ?: return null
         val getEnabledLanguageFeatures = languageSettingsClass.getMethodOrNull("getEnabledLanguageFeatures") ?: return null
-        val getExperimentalAnnotationsInUse = languageSettingsClass.getMethodOrNull("getExperimentalAnnotationsInUse")
+        val getOptInAnnotationsInUse = languageSettingsClass.getMethodOrNull("getOptInAnnotationsInUse")
         val getCompilerPluginArguments = languageSettingsClass.getMethodOrNull("getCompilerPluginArguments")
         val getCompilerPluginClasspath = languageSettingsClass.getMethodOrNull("getCompilerPluginClasspath")
         val getFreeCompilerArgs = languageSettingsClass.getMethodOrNull("getFreeCompilerArgs")
@@ -202,7 +202,7 @@ class KotlinMPPGradleModelBuilder : ModelBuilderService {
             getApiVersion(gradleLanguageSettings) as? String,
             getProgressiveMode(gradleLanguageSettings) as? Boolean ?: false,
             getEnabledLanguageFeatures(gradleLanguageSettings) as? Set<String> ?: emptySet(),
-            getExperimentalAnnotationsInUse?.invoke(gradleLanguageSettings) as? Set<String> ?: emptySet(),
+            getOptInAnnotationsInUse?.invoke(gradleLanguageSettings) as? Set<String> ?: emptySet(),
             (getCompilerPluginArguments?.invoke(gradleLanguageSettings) as? List<String> ?: emptyList()).toTypedArray(),
             (getCompilerPluginClasspath?.invoke(gradleLanguageSettings) as? FileCollection)?.files ?: emptySet(),
             (getFreeCompilerArgs?.invoke(gradleLanguageSettings) as? List<String>).orEmpty().toTypedArray()
