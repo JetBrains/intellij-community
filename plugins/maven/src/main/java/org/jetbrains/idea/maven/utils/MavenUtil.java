@@ -57,7 +57,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.VersionComparatorUtil;
 import com.intellij.util.xml.NanoXmlBuilder;
 import com.intellij.util.xml.NanoXmlUtil;
-import org.apache.lucene.search.CachingSpanFilter;
+import org.apache.lucene.search.Query;
 import org.jdom.Element;
 import org.jdom.JDOMException;
 import org.jdom.Namespace;
@@ -1454,7 +1454,7 @@ public class MavenUtil {
   }
 
   public static File getMavenPluginParentFile() {
-    File luceneLib = new File(PathUtil.getJarPathForClass(CachingSpanFilter.class));
+    File luceneLib = new File(PathUtil.getJarPathForClass(Query.class));
     return luceneLib.getParentFile().getParentFile();
   }
 
