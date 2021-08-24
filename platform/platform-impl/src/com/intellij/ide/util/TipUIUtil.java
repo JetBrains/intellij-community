@@ -27,7 +27,6 @@ import com.intellij.ui.TextAccessor;
 import com.intellij.ui.paint.PaintUtil.RoundingMode;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.ui.scale.ScaleContext;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.ResourceUtil;
 import com.intellij.util.SVGLoader;
 import com.intellij.util.io.IOUtil;
@@ -56,6 +55,7 @@ import java.io.InputStream;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
+import java.util.List;
 import java.util.*;
 
 import static com.intellij.DynamicBundle.findLanguageBundle;
@@ -86,7 +86,6 @@ public final class TipUIUtil {
     if (feature == null) {
       return null;
     }
-
     String tipFileName = feature.getTipFileName();
     if (tipFileName == null) {
       LOG.warn("No Tip of the day for feature " + feature.getId());
@@ -115,46 +114,62 @@ public final class TipUIUtil {
 
   private static @NlsSafe String getTipText(@Nullable TipAndTrickBean tip, Component component) {
     if (tip == null) return IdeBundle.message("no.tip.of.the.day");
+    final String cssFile = StartupUiUtil.isUnderDarcula()
+                           ? "css/tips_darcula.css" : "css/tips.css";
     try {
       StringBuilder text = new StringBuilder();
-      String cssText;
+      String cssText = null;
       File tipFile = new File(tip.fileName);
       if (tipFile.isAbsolute() && tipFile.exists()) {
         text.append(FileUtil.loadFile(tipFile, StandardCharsets.UTF_8));
         updateImages(text, null, tipFile.getParentFile().getAbsolutePath(), component);
-        cssText = FileUtil.loadFile(new File(tipFile.getParentFile(), StartupUiUtil.isUnderDarcula()
-                                                                      ? "css/tips_darcula.css" : "css/tips.css"));
+        cssText = FileUtil.loadFile(new File(tipFile.getParentFile(), cssFile));
       }
       else {
-        PluginDescriptor pluginDescriptor = tip.getPluginDescriptor();
-        ClassLoader tipLoader = pluginDescriptor == null ? TipUIUtil.class.getClassLoader() :
-                                ObjectUtils.notNull(pluginDescriptor.getPluginClassLoader(), TipUIUtil.class.getClassLoader());
+        final ClassLoader fallbackLoader = TipUIUtil.class.getClassLoader();
+        final PluginDescriptor pluginDescriptor = tip.getPluginDescriptor();
+        final DynamicBundle.LanguageBundleEP langBundle = findLanguageBundle();
 
-        DynamicBundle.LanguageBundleEP langBundle = findLanguageBundle();
+        //I know of ternary operators, but in cases like this they're harder to comprehend and debug than this.
+        ClassLoader tipLoader = null;
+
         if (langBundle != null) {
-          tipLoader = langBundle.pluginDescriptor.getPluginClassLoader();
+          final PluginDescriptor langBundleLoader = langBundle.pluginDescriptor;
+          if (langBundleLoader != null) tipLoader = langBundleLoader.getPluginClassLoader();
         }
 
-        String ideCode = ApplicationInfoEx.getInstanceEx().getApiVersionAsNumber().getProductCode().toLowerCase(Locale.ROOT);
-        String tipsPath = "/tips/" + (langBundle != null ? ideCode + "/" : "");
-        InputStream tipStream = ResourceUtil.getResourceAsStream(tipLoader, tipsPath, tip.fileName);
+        if (tipLoader == null && pluginDescriptor.getPluginClassLoader() != null) {
+          tipLoader = pluginDescriptor.getPluginClassLoader();
+        }
 
-        boolean isMisc = false;
-        if (tipStream == null) {
-          tipStream = ResourceUtil.getResourceAsStream(tipLoader, "/tips/" + MISC_PATH + "/", tip.fileName);
-          if (tipStream == null) {
-            return getCantReadText(tip);
+        if (tipLoader == null) tipLoader = fallbackLoader;
+
+        final String ideCode = ApplicationInfoEx.getInstanceEx().getApiVersionAsNumber().getProductCode().toLowerCase(Locale.ROOT);
+
+        //So primary loader is determined. Now we're constructing retrievers that use a pair of path/loader to try to get the tips.
+        final List<TipRetriever> retrievers = new ArrayList<>();
+
+        retrievers.add(new TipRetriever(tipLoader, "tips", ideCode));
+        retrievers.add(new TipRetriever(tipLoader, "tips", "misc"));
+        retrievers.add(new TipRetriever(fallbackLoader, "tips", ""));
+
+        String tipContent = null;
+
+        for (final TipRetriever retriever : retrievers) {
+          tipContent = retriever.getTipContent(tip.fileName);
+          if (tipContent != null) {
+            //So one of retrievers finds a tip. Since they're processed in order from first to last,
+            //it will look in i18n first, then fallback to english version
+            text.append(tipContent);
+
+            //Here and onwards we'll use path properties from successful tip retriever to get images and css
+            updateImages(text, retriever.myLoader, "", component);
+            final InputStream cssResourceStream = ResourceUtil.getResourceAsStream(retriever.myLoader, retriever.myPath, cssFile);
+            cssText = cssResourceStream != null ? ResourceUtil.loadText(cssResourceStream) : "";
           }
-          isMisc = true;
         }
-        text.append(ResourceUtil.loadText(tipStream));
-        String path = langBundle != null ? isMisc ? MISC_PATH : ideCode : "";
-        updateImages(text, tipLoader, path, component);
-
-        String cssPath = "/tips/" + (langBundle != null ? (isMisc ? MISC_PATH : ideCode) + "/" : "");
-        InputStream cssResourceStream = ResourceUtil.getResourceAsStream(tipLoader, cssPath, StartupUiUtil.isUnderDarcula()
-                                                                                             ? "css/tips_darcula.css" : "css/tips.css");
-        cssText = cssResourceStream != null ? ResourceUtil.loadText(cssResourceStream) : "";
+        //All retrievers have failed, return error.
+        if (tipContent == null) return getCantReadText(tip);
       }
 
       updateShortcuts(text);
@@ -165,13 +180,12 @@ public final class TipUIUtil {
       replaced = replaced.replace("&minorVersion;", minor);
       replaced = replaced.replace("&majorMinorVersion;", major + ("0".equals(minor) ? "" : ("." + minor)));
       replaced = replaced.replace("&settingsPath;", CommonBundle.settingsActionPath());
-      String inlinedCSS = cssText + "\nbody {background-color:#" + ColorUtil.toHex(UIUtil.getTextFieldBackground())+ ";overflow:hidden;}";
+      String inlinedCSS = cssText + "\nbody {background-color:#" + ColorUtil.toHex(UIUtil.getTextFieldBackground()) + ";overflow:hidden;}";
       return replaced.replaceFirst("<link.*\\.css\">", "<style type=\"text/css\">\n" + inlinedCSS + "\n</style>");
     }
     catch (IOException e) {
       return getCantReadText(tip);
     }
-
   }
 
   public static void openTipInBrowser(@Nullable TipAndTrickBean tip, TipUIUtil.Browser browser) {
@@ -292,7 +306,7 @@ public final class TipUIUtil {
 
   private static void updateShortcuts(StringBuilder text) {
     int lastIndex = 0;
-    while(true) {
+    while (true) {
       lastIndex = text.indexOf(SHORTCUT_ENTITY, lastIndex);
       if (lastIndex < 0) return;
       final int actionIdStart = lastIndex + SHORTCUT_ENTITY.length();
@@ -345,10 +359,39 @@ public final class TipUIUtil {
 
   public interface Browser extends TextAccessor {
     void load(String url) throws IOException;
+
     JComponent getComponent();
 
     @Override
     void setText(@Nls String text);
+  }
+
+  private static class TipRetriever {
+
+    private final ClassLoader myLoader;
+    private final String myPath;
+    private final String mySubPath;
+
+    private TipRetriever(ClassLoader loader, String path, String subPath) {
+      myLoader = loader;
+      myPath = path;
+      mySubPath = subPath;
+    }
+
+    @Nullable
+    String getTipContent(final @Nullable String tipName) {
+      if (tipName != null) {
+        final InputStream tipStream =
+          ResourceUtil.getResourceAsStream(myLoader, String.format("/%s/%s", myPath, mySubPath.length() > 0 ? mySubPath + "/" : ""),
+                                           tipName);
+        try {
+          return tipStream == null ? null : ResourceUtil.loadText(tipStream);
+        }
+        catch (IOException ignored) {
+        }
+      }
+      return null;
+    }
   }
 
   private static class SwingBrowser extends JEditorPane implements Browser {
@@ -367,6 +410,7 @@ public final class TipUIUtil {
       );
       HTMLEditorKit kit = new JBHtmlEditorKit(false) {
         private final ViewFactory myFactory = createViewFactory();
+
         //SVG support
         private ViewFactory createViewFactory() {
           return new HTMLEditorKit.HTMLFactory() {
@@ -383,6 +427,7 @@ public final class TipUIUtil {
                     if (cache == null) {
                       elem.getDocument().putProperty("imageCache", cache = new Dictionary() {
                         private final HashMap myMap = new HashMap();
+
                         @Override
                         public int size() {
                           return myMap.size();
@@ -390,7 +435,7 @@ public final class TipUIUtil {
 
                         @Override
                         public boolean isEmpty() {
-                          return size() ==0;
+                          return size() == 0;
                         }
 
                         @Override
@@ -423,7 +468,7 @@ public final class TipUIUtil {
                             ? SVGLoader.load(url, JBUI.isPixHiDPI((Component)null) ? 2f : 1f)
                             : Toolkit.getDefaultToolkit().createImage(url);
                     cache.put(url, image);
-                    if (src.endsWith(".svg"))
+                    if (src.endsWith(".svg")) {
                       return new ImageView(elem) {
                         @Override
                         public Image getImage() {
@@ -462,6 +507,7 @@ public final class TipUIUtil {
                           return (axis == View.X_AXIS ? image.getWidth(null) : image.getHeight(null)) / JBUIScale.sysScale();
                         }
                       };
+                    }
                   }
                   catch (IOException e) {
                     //ignore
@@ -488,13 +534,13 @@ public final class TipUIUtil {
     @Override
     public void setText(String t) {
       super.setText(t);
-      if (t != null && t.length()>0) {
+      if (t != null && t.length() > 0) {
         setCaretPosition(0);
       }
     }
 
     @Override
-    public void load(String url) throws IOException{
+    public void load(String url) throws IOException {
       @NlsSafe String text = IOUtil.readString(new DataInputStream(new URL(url).openStream()));
       setText(text);
     }
