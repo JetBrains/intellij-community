@@ -4866,6 +4866,16 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
             runTest("testData/inspectionsLocal/dfa/elvisSimple.kt");
         }
 
+        @TestMetadata("forDestructuring.kt")
+        public void testForDestructuring() throws Exception {
+            runTest("testData/inspectionsLocal/dfa/forDestructuring.kt");
+        }
+
+        @TestMetadata("forDestructuring2.kt")
+        public void testForDestructuring2() throws Exception {
+            runTest("testData/inspectionsLocal/dfa/forDestructuring2.kt");
+        }
+
         @TestMetadata("inLongUntil.kt")
         public void testInLongUntil() throws Exception {
             runTest("testData/inspectionsLocal/dfa/inLongUntil.kt");

@@ -47,6 +47,21 @@ import org.jetbrains.kotlin.types.typeUtil.*
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicInteger
 
+/*
+fleet.backend.debugger.BackendDebuggerApi.DebuggerState#toDebuggerExecutionStacks (avoid boolean literal initializers?)
+
+For-destructuring:
+org.jetbrains.plugins.github.pullrequest.data.GHPRMutableLinearFileHistory#getPatches
+com.jetbrains.swift.refactoring.rename.swiftName.OCSwiftNameElementHolder.Companion#fromAttributeParameters
+
+Value changed after lambda:
+org.jetbrains.plugins.github.pullrequest.action.GHPRReviewSubmitAction#actionPerformed
+com.intellij.codeInsight.hints.presentation.PresentationFactory#collapsible
+com.android.tools.idea.run.util.ProcessHandlerLaunchStatusTest#testTerminationConditions
+com.android.tools.profilers.ProfilerActionTest#actionEnableStatusCanBeChangedDynamically
+
+com.jetbrains.cidr.lang.hmap.OCHeaderMaps#writeToChannel (to investigate)
+ */
 class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpression) {
     private val flow = ControlFlow(factory, context)
     private var broken: Boolean = false
@@ -592,16 +607,22 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
     private fun processForExpression(expr: KtForExpression) {
         val parameter = expr.loopParameter
         if (parameter == null) {
-            // TODO: support destructuring declarations
             broken = true
             return
         }
+        val destructuringDeclaration = parameter.destructuringDeclaration
         val parameterVar = factory.varFactory.createVariableValue(KtVariableDescriptor(parameter))
         val parameterType = parameter.type()
         val pushLoopCondition = processForRange(expr, parameterVar, parameterType)
         val startOffset = ControlFlow.FixedOffset(flow.instructionCount)
         val endOffset = DeferredOffset()
-        addInstruction(FlushVariableInstruction(parameterVar))
+        if (destructuringDeclaration != null) {
+            for (entry in destructuringDeclaration.entries) {
+                addInstruction(FlushVariableInstruction(factory.varFactory.createVariableValue(KtVariableDescriptor(entry))))
+            }
+        } else {
+            addInstruction(FlushVariableInstruction(parameterVar))
+        }
         pushLoopCondition()
         addInstruction(ConditionalGotoInstruction(endOffset, DfTypes.FALSE))
         processExpression(expr.body)
