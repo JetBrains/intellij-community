@@ -3,29 +3,30 @@ package com.intellij.lang.jvm.actions
 
 import com.intellij.lang.jvm.JvmModifier
 import com.intellij.lang.jvm.types.JvmSubstitutor
-import com.intellij.lang.jvm.types.JvmType
 import com.intellij.psi.PsiElement
-import com.intellij.psi.PsiType
 
-fun fieldRequest(
-  name: String,
-  substitutor: JvmSubstitutor,
-  type: JvmType = PsiType.VOID,
-  initializer: PsiElement? = null,
-  modifiers: Collection<JvmModifier> = emptyList(),
-  isConstant: Boolean = false
-) = object : CreateFieldRequest {
+class SimpleFieldRequest(
+  private val fieldName: String,
+  private val modifiers: Collection<JvmModifier>,
+  private val fieldType: ExpectedTypes,
+  private val targetSubstitutor: JvmSubstitutor,
+  private val initializer: PsiElement? = null,
+  private val isConstant: Boolean,
+) : CreateFieldRequest {
   override fun isValid(): Boolean = true
-
-  override fun getFieldName(): String = name
-
-  override fun getFieldType(): List<ExpectedType> = expectedTypes(type)
-
-  override fun getTargetSubstitutor(): JvmSubstitutor = substitutor
-
+  override fun getFieldName() = fieldName
+  override fun getModifiers() = modifiers
+  override fun getFieldType() = fieldType
+  override fun getTargetSubstitutor() = targetSubstitutor
   override fun getInitializer(): PsiElement? = initializer
-
-  override fun getModifiers(): Collection<JvmModifier> = modifiers
-
   override fun isConstant(): Boolean = isConstant
 }
+
+fun fieldRequest(
+  fieldName: String,
+  modifiers: Collection<JvmModifier>,
+  fieldType: ExpectedTypes,
+  targetSubstitutor: JvmSubstitutor,
+  initializer: PsiElement?,
+  isConstant: Boolean,
+) = SimpleFieldRequest(fieldName, modifiers, fieldType, targetSubstitutor, initializer, isConstant)

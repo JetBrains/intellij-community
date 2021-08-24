@@ -4,6 +4,7 @@ package com.intellij.codeInspection
 import com.intellij.analysis.JvmAnalysisBundle
 import com.intellij.lang.jvm.JvmModifier
 import com.intellij.lang.jvm.actions.createAddFieldActions
+import com.intellij.lang.jvm.actions.expectedTypes
 import com.intellij.lang.jvm.actions.fieldRequest
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.TextEditor
@@ -48,11 +49,11 @@ class SerializableHasSerialVersionUidFieldInspection : USerializableInspectionBa
       val serialUid = SerialVersionUIDBuilder.computeDefaultSUID(psiClass)
       val initializer =  uFactory.createLongConstantExpression(serialUid, null)?.sourcePsi ?: return
       val action = createAddFieldActions(psiClass, fieldRequest(
-        name = HardcodedMethodConstants.SERIAL_VERSION_UID,
-        substitutor = PsiJvmSubstitutor(project, PsiSubstitutor.EMPTY),
-        type = PsiType.LONG,
-        initializer = initializer,
+        fieldName = HardcodedMethodConstants.SERIAL_VERSION_UID,
         modifiers = listOf(JvmModifier.PRIVATE, JvmModifier.STATIC),
+        fieldType = expectedTypes(PsiType.LONG),
+        targetSubstitutor = PsiJvmSubstitutor(project, PsiSubstitutor.EMPTY),
+        initializer = initializer,
         isConstant = true
       )).first()
       val vFile = containingFile.virtualFile ?: return
