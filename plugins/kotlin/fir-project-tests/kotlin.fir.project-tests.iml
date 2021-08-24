@@ -1,10 +1,23 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <module type="JAVA_MODULE" version="4">
+  <component name="FacetManager">
+    <facet type="kotlin-language" name="Kotlin">
+      <configuration version="3" platform="JVM 1.8" allPlatforms="JVM [1.8]" useProjectSettings="false">
+        <compilerSettings>
+          <option name="additionalArguments" value="-version -Xstrict-java-nullability-assertions -Xjvm-default=enable -Xskip-prerelease-check" />
+        </compilerSettings>
+        <compilerArguments>
+          <option name="languageVersion" value="1.4" />
+          <option name="apiVersion" value="1.4" />
+        </compilerArguments>
+      </configuration>
+    </facet>
+  </component>
   <component name="NewModuleRootManager" inherit-compiler-output="true">
     <exclude-output />
-    <content url="file://$MODULE_DIR$">
-      <sourceFolder url="file://$MODULE_DIR$/test" isTestSource="true" />
-      <sourceFolder url="file://$MODULE_DIR$/resources" type="java-resource" />
+    <content url="file://$MODULE_DIR$/../fir-project-tests">
+      <sourceFolder url="file://$MODULE_DIR$/../fir-project-tests/resources" type="java-resource" />
+      <sourceFolder url="file://$MODULE_DIR$/../fir-project-tests/test" isTestSource="true" />
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
@@ -14,13 +27,11 @@
     <orderEntry type="library" scope="TEST" name="kotlinc.kotlin-compiler" level="project" />
     <orderEntry type="library" scope="TEST" name="kotlinc.kotlin-compiler-tests" level="project" />
     <orderEntry type="library" scope="TEST" name="kotlinc.kotlin-scripting-compiler" level="project" />
-    <orderEntry type="module" module-name="kotlin.plugin" scope="TEST" />
+    <orderEntry type="module" module-name="kotlin.resources-fir" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.common" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.core" scope="TEST" />
-    <orderEntry type="module" module-name="kotlin.project-model" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.fir.frontend-independent" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.gradle.gradle-tooling" scope="TEST" />
-    <orderEntry type="module" module-name="kotlin.compiler-plugins.lombok.gradle" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.idea" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.idea.tests" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.line-indent-provider" scope="TEST" />
@@ -31,15 +42,19 @@
     <orderEntry type="module" module-name="kotlin.jvm" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.tests-common" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.test-framework" scope="TEST" />
-    <orderEntry type="module" module-name="kotlin.refIndex" scope="TEST" />
-    <orderEntry type="module" module-name="kotlin.compiler-plugins.allopen.common" scope="TEST" />
-    <orderEntry type="module" module-name="kotlin.compiler-plugins.allopen.gradle" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.analysis.impl" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.vcs.impl" scope="TEST" />
     <orderEntry type="module" module-name="intellij.gradle.common" scope="TEST" />
-    <orderEntry type="library" scope="TEST" name="jackson-databind" level="project" />
-    <orderEntry type="library" scope="TEST" name="jackson" level="project" />
-    <orderEntry type="library" scope="TEST" name="jackson-module-kotlin" level="project" />
-    <orderEntry type="library" scope="TEST" name="okhttp" level="project" />
+    <orderEntry type="module" module-name="kotlin.performance-tests" scope="TEST" />
+    <orderEntry type="module" module-name="kotlin.compiler-plugins.noarg.common" scope="TEST" />
+    <orderEntry type="module" module-name="kotlin.compiler-plugins.noarg.gradle" scope="TEST" />
+    <orderEntry type="module" module-name="kotlin.compiler-plugins.kotlinx-serialization.common" scope="TEST" />
+    <orderEntry type="module" module-name="kotlin.compiler-plugins.kotlinx-serialization.gradle" scope="TEST" />
+    <orderEntry type="module" module-name="kotlin.compiler-plugins.lombok" scope="TEST" />
+    <orderEntry type="library" scope="TEST" name="kotlinc.analysis-api-providers" level="project" />
+    <orderEntry type="module" module-name="kotlin.compiler-plugins.sam-with-receiver.common" scope="TEST" />
+    <orderEntry type="module" module-name="kotlin.compiler-plugins.sam-with-receiver.gradle" scope="TEST" />
+    <orderEntry type="module" module-name="kotlin.fir.analysis-api-providers-ide-impl" scope="TEST" />
+    <orderEntry type="module" module-name="kotlin.fir" scope="TEST" />
   </component>
 </module>
