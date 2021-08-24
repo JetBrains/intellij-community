@@ -9,11 +9,14 @@ class IdeaCommunityBuildTest {
   @Test
   fun testBuild() {
     val homePath = PathManager.getHomePathFor(javaClass)!!
+    val communityHomePath = "$homePath/community"
     runTestBuild(
-      homePath = homePath,
-      productProperties = IdeaCommunityProperties(homePath),
-      buildTools = ProprietaryBuildTools.DUMMY,
-      communityHomePath = homePath,
-    )
+      homePath = communityHomePath, communityHomePath = communityHomePath,
+      productProperties = IdeaCommunityProperties(communityHomePath),
+      buildTools = ProprietaryBuildTools.DUMMY
+    ) {
+      it.projectClassesOutputDirectory = System.getProperty(BuildOptions.PROJECT_CLASSES_OUTPUT_DIRECTORY_PROPERTY)
+                                         ?: "$homePath/out/classes"
+    }
   }
 }
