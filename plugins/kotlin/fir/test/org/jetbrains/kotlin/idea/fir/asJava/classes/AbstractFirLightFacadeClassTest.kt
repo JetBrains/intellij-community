@@ -27,7 +27,7 @@ abstract class AbstractFirLightFacadeClassTest : AbstractUltraLightFacadeClassTe
         val classFabric = KotlinAsJavaSupport.getInstance(project)
 
         val renderedResult = executeOnPooledThreadInReadAction {
-            val lightClasses = facades.flatMap {
+            val lightClasses = facades.sorted().flatMap {
                 classFabric.getFacadeClasses(FqName(it), scope)
             }.filterIsInstance<KtLightClass>()
             UltraLightChecker.renderLightClasses(testDataPath, lightClasses)
