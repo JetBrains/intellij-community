@@ -71,7 +71,7 @@ dependencies {
     jpsLikeModuleDependency(":kotlin-ide.kotlin.compiler-plugins.parcelize.common", JpsDepScope.RUNTIME)
     jpsLikeJarDependency(intellijDep(forIde = true), JpsDepScope.TEST, { includeJars("structuralsearch") }) // 'intellij.platform.structuralSearch' dependency
     jpsLikeJarDependency(intellijPluginDep("gradle", forIde = true), JpsDepScope.TEST) // 'intellij.gradle.common' dependency
-    jpsLikeJarDependency("org.jetbrains.intellij.deps:gradle-api:6.8", JpsDepScope.TEST) // 'intellij.gradle.common' dependency
+    jpsLikeJarDependency("org.jetbrains.intellij.deps:gradle-api:7.1", JpsDepScope.TEST) // 'intellij.gradle.common' dependency
     jpsLikeJarDependency("org.slf4j:slf4j-log4j12:1.7.25", JpsDepScope.TEST) // 'intellij.gradle.common' dependency
     jpsLikeJarDependency(intellijDep(forIde = true), JpsDepScope.TEST, { includeJars("external-system-rt") }) // 'intellij.gradle.common' dependency
     jpsLikeJarDependency("org.jetbrains.teamcity:serviceMessages:2019.1.4", JpsDepScope.TEST, { isTransitive = false }) // 'intellij.gradle.common' dependency
@@ -102,6 +102,7 @@ dependencies {
     jpsLikeJarDependency(intellijPluginDep("junit", forIde = true), JpsDepScope.TEST) // 'intellij.junit' dependency
     jpsLikeJarDependency("org.codehaus.groovy:groovy:2.5.14", JpsDepScope.TEST, { isTransitive = false }) // 'intellij.groovy.psi' dependency
     jpsLikeJarDependency(intellijPluginDep("properties", forIde = true), JpsDepScope.TEST) // 'intellij.properties.psi' dependency
+    jpsLikeJarDependency(intellijPluginDep("grazie", forIde = true), JpsDepScope.TEST) // 'intellij.grazie.tests' dependency
     jpsLikeJarDependency(intellijDep(forIde = true), JpsDepScope.TEST, { includeJars("testFramework-java") }) // 'intellij.grazie.tests' dependency
     jpsLikeJarDependency(intellijDep(forIde = true), JpsDepScope.TEST, { includeJars("testFramework") }) // 'intellij.grazie.tests' dependency
     jpsLikeJarDependency("junit:junit:4.12", JpsDepScope.TEST) // 'intellij.grazie.tests' dependency
