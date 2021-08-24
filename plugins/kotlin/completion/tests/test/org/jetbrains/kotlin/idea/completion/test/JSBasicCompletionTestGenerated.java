@@ -1534,6 +1534,16 @@ public abstract class JSBasicCompletionTestGenerated extends AbstractJSBasicComp
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
 
+            @TestMetadata("ExtensionFunction.kt")
+            public void testExtensionFunction() throws Exception {
+                runTest("testData/basic/common/fromUnresolvedNames/ExtensionFunction.kt");
+            }
+
+            @TestMetadata("ExtensionProperty.kt")
+            public void testExtensionProperty() throws Exception {
+                runTest("testData/basic/common/fromUnresolvedNames/ExtensionProperty.kt");
+            }
+
             @TestMetadata("FunctionInCompanionObject.kt")
             public void testFunctionInCompanionObject() throws Exception {
                 runTest("testData/basic/common/fromUnresolvedNames/FunctionInCompanionObject.kt");
@@ -1549,9 +1559,19 @@ public abstract class JSBasicCompletionTestGenerated extends AbstractJSBasicComp
                 runTest("testData/basic/common/fromUnresolvedNames/MemberFunction.kt");
             }
 
+            @TestMetadata("MemberFunction2.kt")
+            public void testMemberFunction2() throws Exception {
+                runTest("testData/basic/common/fromUnresolvedNames/MemberFunction2.kt");
+            }
+
             @TestMetadata("MemberProperty.kt")
             public void testMemberProperty() throws Exception {
                 runTest("testData/basic/common/fromUnresolvedNames/MemberProperty.kt");
+            }
+
+            @TestMetadata("MemberProperty2.kt")
+            public void testMemberProperty2() throws Exception {
+                runTest("testData/basic/common/fromUnresolvedNames/MemberProperty2.kt");
             }
 
             @TestMetadata("NotForExtensionFunction.kt")

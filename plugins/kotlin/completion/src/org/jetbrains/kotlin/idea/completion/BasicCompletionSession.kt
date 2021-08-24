@@ -777,22 +777,6 @@ class BasicCompletionSession(
         }
     }
 
-    private fun referenceScope(declaration: KtNamedDeclaration): KtElement? = when (val parent = declaration.parent) {
-        is KtParameterList -> parent.parent as KtElement
-        is KtClassBody -> {
-            val classOrObject = parent.parent as KtClassOrObject
-            if (classOrObject is KtObjectDeclaration && classOrObject.isCompanion()) {
-                classOrObject.containingClassOrObject
-            } else {
-                classOrObject
-            }
-        }
-
-        is KtFile -> parent
-        is KtBlockExpression -> parent
-        else -> null
-    }
-
     private fun addClassesFromIndex(kindFilter: (ClassKind) -> Boolean, prefixMatcher: PrefixMatcher) {
         val classifierDescriptorCollector = { descriptor: ClassifierDescriptorWithTypeParameters ->
             collector.addElement(basicLookupElementFactory.createLookupElement(descriptor), notImported = true)
