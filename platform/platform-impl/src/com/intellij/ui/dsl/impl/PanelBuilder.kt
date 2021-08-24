@@ -199,7 +199,7 @@ internal class PanelBuilder(val rows: List<RowImpl>, val dialogPanelConfig: Dial
         val subGrid = builder.subGrid(width = width, horizontalAlign = cell.horizontalAlign, verticalAlign = cell.verticalAlign,
           gaps = gaps)
 
-        val spacingConfiguration = dialogPanelConfig.spacing
+        val prevSpacingConfiguration = dialogPanelConfig.spacing
         cell.spacingConfiguration?.let {
           dialogPanelConfig.spacing = it
         }
@@ -208,7 +208,7 @@ internal class PanelBuilder(val rows: List<RowImpl>, val dialogPanelConfig: Dial
           subBuilder.build()
         }
         finally {
-          dialogPanelConfig.spacing = spacingConfiguration
+          dialogPanelConfig.spacing = prevSpacingConfiguration
         }
       }
       null -> {
@@ -304,6 +304,10 @@ internal class PanelBuilder(val rows: List<RowImpl>, val dialogPanelConfig: Dial
   }
 
   private fun getRowGaps(row: RowImpl): RowGaps {
+    row.customRowGaps?.let {
+      return it
+    }
+
     val top = when (row.topGap) {
       TopGap.SMALL -> dialogPanelConfig.spacing.verticalSmallGap
       null -> row.internalTopGap

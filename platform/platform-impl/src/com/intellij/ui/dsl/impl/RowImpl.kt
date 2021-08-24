@@ -22,6 +22,7 @@ import com.intellij.ui.components.*
 import com.intellij.ui.dsl.*
 import com.intellij.ui.dsl.Cell
 import com.intellij.ui.dsl.Row
+import com.intellij.ui.dsl.gridLayout.RowGaps
 import com.intellij.ui.dsl.gridLayout.UiDslException
 import com.intellij.ui.layout.*
 import com.intellij.util.MathUtil
@@ -54,6 +55,9 @@ internal class RowImpl(private val dialogPanelConfig: DialogPanelConfig,
     private set
 
   var internalBottomGap: Int = 0
+
+  var customRowGaps: RowGaps? = null
+    private set
 
   val cells = mutableListOf<CellBaseImpl<*>?>()
 
@@ -304,6 +308,11 @@ internal class RowImpl(private val dialogPanelConfig: DialogPanelConfig,
     val component = ComboBox(items)
     component.renderer = renderer ?: SimpleListCellRenderer.create("") { it.toString() }
     return cell(component)
+  }
+
+  override fun customize(customRowGaps: RowGaps): Row {
+    this.customRowGaps = customRowGaps
+    return this
   }
 
   fun getIndent(): Int {

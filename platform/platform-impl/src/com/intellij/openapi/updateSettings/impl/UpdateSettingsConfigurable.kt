@@ -19,6 +19,7 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.ui.CollectionComboBoxModel
 import com.intellij.ui.dsl.*
 import com.intellij.ui.dsl.gridLayout.Gaps
+import com.intellij.ui.dsl.gridLayout.RowGaps
 import com.intellij.ui.dsl.gridLayout.VerticalAlign
 import com.intellij.util.text.DateFormatUtil
 import com.intellij.util.ui.JBUI
@@ -115,7 +116,7 @@ class UpdateSettingsConfigurable @JvmOverloads constructor (private val checkNow
 
       if (!(manager == ExternalUpdateManager.TOOLBOX || Registry.`is`("ide.hide.toolbox.promo"))) {
         group(indent = false) {
-          panel {
+          customizeSpacingConfiguration(SpacingConfiguration.EMPTY) {
             row {
               icon(PluginLogo.reloadIcon(AllIcons.Nodes.Toolbox, 40, 40, null))
                 .verticalAlign(VerticalAlign.TOP)
@@ -129,11 +130,10 @@ class UpdateSettingsConfigurable @JvmOverloads constructor (private val checkNow
                 }
                 row {
                   label(IdeBundle.message("updates.settings.recommend.toolbox.multiline.description"))
-                    .customize(customGaps = Gaps(top = JBUI.scale(3)))
-                }
+                }.customize(customRowGaps = RowGaps(top = JBUI.scale(3)))
               }
-            }
-          }.customize(spacingConfiguration = SpacingConfiguration.EMPTY, customGaps = Gaps(top = JBUI.scale(6)))
+            }.customize(customRowGaps = RowGaps(top = JBUI.scale(12)))
+          }
         }
       }
 

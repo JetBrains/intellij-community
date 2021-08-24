@@ -174,8 +174,19 @@ internal class PanelImpl(private val dialogPanelConfig: DialogPanelConfig) : Cel
     return this
   }
 
-  override fun customize(spacingConfiguration: SpacingConfiguration?, customGaps: Gaps?): Panel {
+  override fun customizeSpacingConfiguration(spacingConfiguration: SpacingConfiguration, init: Panel.() -> Unit) {
+    val prevSpacingConfiguration = dialogPanelConfig.spacing
+    dialogPanelConfig.spacing = spacingConfiguration
     this.spacingConfiguration = spacingConfiguration
+    try {
+      this.init()
+    }
+    finally {
+      dialogPanelConfig.spacing = prevSpacingConfiguration
+    }
+  }
+
+  override fun customize(customGaps: Gaps): Panel {
     this.customGaps = customGaps
     return this
   }

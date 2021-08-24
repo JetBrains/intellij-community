@@ -53,14 +53,15 @@ interface Panel : CellBase<Panel> {
   fun rowsRange(init: Panel.() -> Unit): RowsRange
 
   /**
-   * Adds panel with a title and some vertical space before the group. Grouped radio buttons and checkboxes should use [Panel.buttonGroup]
-   * method, which uses different title gaps
+   * Adds panel with independent grid, title and some vertical space before the group.
+   * Grouped radio buttons and checkboxes should use [Panel.buttonGroup] method, which uses different title gaps
    *
    * @param indent true left indent is needed
    */
   fun group(@NlsContexts.BorderTitle title: String? = null, indent: Boolean = true, init: Panel.() -> Unit): Panel
 
   /**
+   * Similar to [Panel.group] but uses the same grid as parent.
    * See [RowsRange]
    */
   fun groupRowsRange(@NlsContexts.BorderTitle title: String? = null, init: Panel.() -> Unit): RowsRange
@@ -78,9 +79,14 @@ interface Panel : CellBase<Panel> {
   fun onIsModified(callback: () -> Boolean): Panel
 
   /**
-   * Overrides default spacing configuration and gaps around the panel. Should be used for very specific cases
+   * Overrides default spacing configuration. Should be used for very specific cases
    */
-  fun customize(spacingConfiguration: SpacingConfiguration? = null, customGaps: Gaps? = null): Panel
+  fun customizeSpacingConfiguration(spacingConfiguration: SpacingConfiguration, init: Panel.() -> Unit)
+
+  /**
+   * Overrides all gaps around panel by [customGaps]. Should be used for very specific cases
+   */
+  fun customize(customGaps: Gaps): Panel
 }
 
 inline fun <reified T : Any> Panel.buttonGroup(noinline getter: () -> T,
