@@ -7,7 +7,7 @@ import com.intellij.execution.actions.ConfigurationContext;
 import com.intellij.execution.junit2.PsiMemberParameterizedLocation;
 import com.intellij.execution.junit2.info.MethodLocation;
 import com.intellij.ide.util.PsiClassListCellRenderer;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.compiler.JavaCompilerBundle;
 import com.intellij.openapi.editor.Document;
@@ -82,7 +82,7 @@ public class InheritorChooser {
         return true;
       }
       if (classes.isEmpty()) return false;
-      final FileEditor fileEditor = PlatformDataKeys.FILE_EDITOR.getData(context.getDataContext());
+      final FileEditor fileEditor = PlatformCoreDataKeys.FILE_EDITOR.getData(context.getDataContext());
       if (fileEditor instanceof TextEditor) {
         final Document document = ((TextEditor)fileEditor).getEditor().getDocument();
         final PsiFile containingFile = PsiDocumentManager.getInstance(context.getProject()).getPsiFile(document);

@@ -25,6 +25,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.LangDataKeys;
+import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
 import com.intellij.openapi.compiler.CompilerMessage;
 import com.intellij.openapi.compiler.CompilerMessageCategory;
 import com.intellij.openapi.module.Module;
@@ -216,7 +217,7 @@ public class ConfigurationsTest extends BaseConfigurationTestCase {
     PsiDirectory psiDirectory = PsiManager.getInstance(myProject).findDirectory(root);
     context.put(LangDataKeys.PSI_ELEMENT_ARRAY, new PsiElement[] {psiDirectory});
     context.put(CommonDataKeys.PROJECT, myProject);
-    context.put(LangDataKeys.MODULE, module1);
+    context.put(PlatformCoreDataKeys.MODULE, module1);
     assertFalse(new AllInPackageConfigurationProducer().isConfigurationFromContext(allInProjectConfiguration, ConfigurationContext.getFromContext(context, ActionPlaces.UNKNOWN)));
   }
 

@@ -502,7 +502,7 @@ public abstract class AbstractProjectViewPane implements DataProvider, Disposabl
       PsiElement[] elements = getPsiElements(selectedUserObjects);
       return elements.length > 0 ? elements : null;
     }
-    if (PlatformDataKeys.PROJECT_CONTEXT.is(dataId)) {
+    if (PlatformCoreDataKeys.PROJECT_CONTEXT.is(dataId)) {
       Object selected = getSingleNodeElement(selectedUserObjects);
       return selected instanceof Project ? selected : null;
     }

@@ -132,7 +132,7 @@ public class PinActiveTabAction extends DumbAwareAction {
     ToolWindow window = e.getData(PlatformDataKeys.TOOL_WINDOW);
     if (window == null) return null;
 
-    Component component = e.getData(PlatformDataKeys.CONTEXT_COMPONENT);
+    Component component = e.getData(PlatformCoreDataKeys.CONTEXT_COMPONENT);
     Content result = ObjectUtils.doIfNotNull(ComponentUtil.getParentOfType(BaseLabel.class, component), BaseLabel::getContent);
     if (result == null) {
       result = ObjectUtils.doIfNotNull(window.getContentManager(), ContentManager::getSelectedContent);

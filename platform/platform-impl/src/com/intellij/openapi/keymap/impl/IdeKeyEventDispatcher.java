@@ -597,7 +597,7 @@ public final class IdeKeyEventDispatcher {
 
     List<AnAction> wouldBeEnabledIfNotDumb = ContainerUtil.createLockFreeCopyOnWriteList();
     ProgressIndicator indicator = Registry.is("actionSystem.update.actions.cancelable.beforeActionPerformedUpdate") ?
-                                  new PotemkinOverlayProgress(PlatformDataKeys.CONTEXT_COMPONENT.getData(wrappedContext)) :
+                                  new PotemkinOverlayProgress(PlatformCoreDataKeys.CONTEXT_COMPONENT.getData(wrappedContext)) :
                                   new EmptyProgressIndicator();
     Pair<Trinity<AnAction, AnActionEvent, Long>, Boolean> chosenPair = ProgressManager.getInstance().runProcess(() -> {
       Map<Presentation, AnActionEvent> events = new ConcurrentHashMap<>();

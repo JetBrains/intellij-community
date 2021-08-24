@@ -26,7 +26,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import static com.intellij.openapi.actionSystem.CommonDataKeys.*;
-import static com.intellij.openapi.actionSystem.PlatformDataKeys.PROJECT_FILE_DIRECTORY;
+import static com.intellij.openapi.actionSystem.PlatformCoreDataKeys.PROJECT_FILE_DIRECTORY;
 
 /**
 * @author Konstantin Bulenkov

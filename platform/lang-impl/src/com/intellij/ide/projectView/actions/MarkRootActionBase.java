@@ -4,7 +4,7 @@ package com.intellij.ide.projectView.actions;
 import com.intellij.ide.projectView.impl.ProjectRootsUtil;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.actionSystem.LangDataKeys;
+import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.DumbAwareAction;
@@ -137,7 +137,7 @@ public abstract class MarkRootActionBase extends DumbAwareAction {
   @Nullable
   static Module getModule(@NotNull AnActionEvent e, VirtualFile @Nullable [] files) {
     if (files == null) return null;
-    Module module = e.getData(LangDataKeys.MODULE);
+    Module module = e.getData(PlatformCoreDataKeys.MODULE);
     if (module == null) {
       module = findParentModule(e.getProject(), files);
     }

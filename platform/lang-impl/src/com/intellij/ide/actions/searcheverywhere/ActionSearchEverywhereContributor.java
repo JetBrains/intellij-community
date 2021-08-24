@@ -251,7 +251,7 @@ public class ActionSearchEverywhereContributor implements WeightedSearchEverywhe
     public SearchEverywhereContributor<GotoActionModel.MatchedValue> createContributor(@NotNull AnActionEvent initEvent) {
       return new ActionSearchEverywhereContributor(
         initEvent.getProject(),
-        initEvent.getData(PlatformDataKeys.CONTEXT_COMPONENT),
+        initEvent.getData(PlatformCoreDataKeys.CONTEXT_COMPONENT),
         initEvent.getData(CommonDataKeys.EDITOR));
     }
 

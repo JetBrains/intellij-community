@@ -18,7 +18,7 @@ import com.intellij.diff.tools.util.DiffSplitter;
 import com.intellij.diff.tools.util.SyncScrollSupport;
 import com.intellij.diff.tools.util.side.TwosideTextDiffViewer;
 import com.intellij.diff.util.*;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
 import com.intellij.openapi.editor.EditorSettings;
 import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.editor.event.DocumentEvent;
@@ -316,7 +316,7 @@ public final class SvnPropertiesDiffViewer extends TwosideTextDiffViewer {
   @Nullable
   @Override
   public Object getData(@NotNull @NonNls String dataId) {
-    if (PlatformDataKeys.HELP_ID.is(dataId)) return HELP_ID;
+    if (PlatformCoreDataKeys.HELP_ID.is(dataId)) return HELP_ID;
     return super.getData(dataId);
   }
 

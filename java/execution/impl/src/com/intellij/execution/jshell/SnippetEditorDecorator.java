@@ -151,7 +151,7 @@ public final class SnippetEditorDecorator extends EditorNotifications.Provider<S
 
   @Nullable
   public static ConfigurationPane getJShellConfiguration(DataContext context) {
-    return getJShellConfiguration(PlatformDataKeys.FILE_EDITOR.getData(context));
+    return getJShellConfiguration(PlatformCoreDataKeys.FILE_EDITOR.getData(context));
   }
 
   @Nullable

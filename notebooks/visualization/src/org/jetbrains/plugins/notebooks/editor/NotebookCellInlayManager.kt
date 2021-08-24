@@ -4,6 +4,7 @@ import com.intellij.ide.DataManager
 import com.intellij.ide.ui.LafManagerListener
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.DataProvider
+import com.intellij.openapi.actionSystem.PlatformCoreDataKeys
 import com.intellij.openapi.actionSystem.PlatformDataKeys
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.logger
@@ -251,7 +252,7 @@ class NotebookCellInlayManager private constructor(val editor: EditorImpl) {
         DataProvider { key ->
           when (key) {
             NOTEBOOK_CELL_LINES_INTERVAL_DATA_KEY.name -> interval
-            PlatformDataKeys.CONTEXT_COMPONENT.name -> component
+            PlatformCoreDataKeys.CONTEXT_COMPONENT.name -> component
             PlatformDataKeys.EDITOR.name -> editor
             else -> null
           }

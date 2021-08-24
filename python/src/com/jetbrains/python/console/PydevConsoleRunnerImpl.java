@@ -59,7 +59,10 @@ import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.SideBorder;
 import com.intellij.ui.content.Content;
-import com.intellij.util.*;
+import com.intellij.util.ArrayUtilRt;
+import com.intellij.util.ModalityUiUtil;
+import com.intellij.util.PathMappingSettings;
+import com.intellij.util.TimeoutUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.execution.ParametersListUtil;
 import com.intellij.util.net.NetUtils;
@@ -1128,7 +1131,7 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
       final Project project = e.getData(CommonDataKeys.PROJECT);
       if (project != null) {
         PydevConsoleRunner runner =
-          PythonConsoleRunnerFactory.getInstance().createConsoleRunner(project, e.getData(LangDataKeys.MODULE));
+          PythonConsoleRunnerFactory.getInstance().createConsoleRunner(project, e.getData(PlatformCoreDataKeys.MODULE));
         runner.run(true);
       }
     }

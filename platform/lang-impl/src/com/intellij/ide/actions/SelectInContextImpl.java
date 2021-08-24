@@ -12,7 +12,7 @@ import com.intellij.ide.structureView.StructureViewBuilder;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.*;
@@ -48,7 +48,7 @@ public final class SelectInContextImpl extends FileSelectInContext {
   @Nullable
   public static SelectInContext createContext(AnActionEvent event) {
     Project project = event.getProject();
-    FileEditor editor = event.getData(PlatformDataKeys.FILE_EDITOR);
+    FileEditor editor = event.getData(PlatformCoreDataKeys.FILE_EDITOR);
     VirtualFile virtualFile = event.getData(CommonDataKeys.VIRTUAL_FILE);
 
     SelectInContext result = createEditorContext(project, editor, virtualFile);
@@ -180,9 +180,8 @@ public final class SelectInContextImpl extends FileSelectInContext {
       return (JComponent)source;
     }
     else {
-      Component component = event.getData(PlatformDataKeys.CONTEXT_COMPONENT);
+      Component component = event.getData(PlatformCoreDataKeys.CONTEXT_COMPONENT);
       return component instanceof JComponent ? (JComponent)component : null;
     }
   }
 }
-

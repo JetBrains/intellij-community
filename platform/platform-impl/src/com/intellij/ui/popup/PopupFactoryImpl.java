@@ -240,7 +240,7 @@ public class PopupFactoryImpl extends JBPopupFactory {
       super(CommonDataKeys.PROJECT.getData(dataContext), aParent, step, null);
       setMaxRowCount(maxRowCount);
       myDisposeCallback = disposeCallback;
-      myComponent = PlatformDataKeys.CONTEXT_COMPONENT.getData(dataContext);
+      myComponent = PlatformCoreDataKeys.CONTEXT_COMPONENT.getData(dataContext);
 
       registerAction("handleActionToggle1", KeyEvent.VK_SPACE, 0, new AbstractAction() {
         @Override
@@ -268,7 +268,7 @@ public class PopupFactoryImpl extends JBPopupFactory {
                                                         @Nullable String actionPlace,
                                                         @Nullable PresentationFactory presentationFactory,
                                                         boolean autoSelection) {
-      final Component component = PlatformDataKeys.CONTEXT_COMPONENT.getData(dataContext);
+      final Component component = PlatformCoreDataKeys.CONTEXT_COMPONENT.getData(dataContext);
       LOG.assertTrue(component != null, "dataContext has no component for new ListPopupStep");
 
       List<ActionItem> items = ActionPopupStep.createActionItems(
@@ -449,7 +449,7 @@ public class PopupFactoryImpl extends JBPopupFactory {
   @NotNull
   @Override
   public RelativePoint guessBestPopupLocation(@NotNull DataContext dataContext) {
-    Component component = PlatformDataKeys.CONTEXT_COMPONENT.getData(dataContext);
+    Component component = PlatformCoreDataKeys.CONTEXT_COMPONENT.getData(dataContext);
     JComponent focusOwner = component instanceof JComponent ? (JComponent)component : null;
 
     if (focusOwner == null) {

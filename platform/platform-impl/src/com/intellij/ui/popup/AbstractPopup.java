@@ -10,10 +10,7 @@ import com.intellij.ide.ui.PopupLocator;
 import com.intellij.ide.ui.ScreenAreaConsumer;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.MnemonicHelper;
-import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.DataProvider;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl;
 import com.intellij.openapi.actionSystem.impl.AutoPopupSupportingListener;
 import com.intellij.openapi.application.ApplicationManager;
@@ -565,7 +562,7 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer {
       }
     }
     RelativePoint location;
-    Component contextComponent = dataContext.getData(PlatformDataKeys.CONTEXT_COMPONENT);
+    Component contextComponent = dataContext.getData(PlatformCoreDataKeys.CONTEXT_COMPONENT);
     if (contextComponent == myComponent) {
       location = new RelativePoint(myComponent, new Point());
     }

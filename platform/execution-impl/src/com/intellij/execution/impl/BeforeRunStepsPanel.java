@@ -288,7 +288,7 @@ public final class BeforeRunStepsPanel extends JPanel {
     }
     DataContext dataContext = SimpleDataContext.builder()
       .add(CommonDataKeys.PROJECT, myRunConfiguration.getProject())
-      .add(PlatformDataKeys.CONTEXT_COMPONENT, myPanel)
+      .add(PlatformCoreDataKeys.CONTEXT_COMPONENT, myPanel)
       .build();
     ListPopup popup = JBPopupFactory.getInstance().createActionGroupPopup(ExecutionBundle.message("add.new.before.run.task.name"), actionGroup,
                                                                           dataContext, false, false, false, null,

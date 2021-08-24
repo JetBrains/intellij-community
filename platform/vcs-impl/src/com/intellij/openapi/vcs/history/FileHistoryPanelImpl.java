@@ -486,7 +486,7 @@ public final class FileHistoryPanelImpl extends JPanel implements DataProvider, 
     else if (VcsInternalDataKeys.FILE_HISTORY_REFRESHER.is(dataId)) {
       return myRefresherI;
     }
-    else if (PlatformDataKeys.HELP_ID.is(dataId)) {
+    else if (PlatformCoreDataKeys.HELP_ID.is(dataId)) {
       return myHelpId;
     }
     return null;

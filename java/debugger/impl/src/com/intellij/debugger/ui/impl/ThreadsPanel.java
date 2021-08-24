@@ -13,7 +13,10 @@ import com.intellij.debugger.ui.impl.watch.DebuggerTree;
 import com.intellij.debugger.ui.impl.watch.DebuggerTreeNodeImpl;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.ActionPopupMenu;
+import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
@@ -156,7 +159,7 @@ public class ThreadsPanel extends DebuggerTreePanel{
 
   @Override
   public Object getData(@NotNull String dataId) {
-    if (PlatformDataKeys.HELP_ID.is(dataId)) {
+    if (PlatformCoreDataKeys.HELP_ID.is(dataId)) {
       return HELP_ID;
     }
     return super.getData(dataId);

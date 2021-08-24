@@ -6,7 +6,7 @@ import com.intellij.icons.AllIcons
 import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.DefaultActionGroup
-import com.intellij.openapi.actionSystem.PlatformDataKeys
+import com.intellij.openapi.actionSystem.PlatformCoreDataKeys
 import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.actionSystem.impl.ActionButton
 import com.intellij.openapi.fileChooser.FileChooserDescriptor
@@ -195,7 +195,7 @@ internal class RowImpl(private val dialogPanelConfig: DialogPanelConfig,
         JBPopupFactory.getInstance()
           .createActionGroupPopup(null, DefaultActionGroup(*actions), { dataId ->
             when (dataId) {
-              PlatformDataKeys.CONTEXT_COMPONENT.name -> label
+              PlatformCoreDataKeys.CONTEXT_COMPONENT.name -> label
               else -> null
             }
           }, true, null, 10)

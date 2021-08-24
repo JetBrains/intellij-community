@@ -2,6 +2,7 @@ package org.jetbrains.plugins.notebooks.editor
 
 import com.intellij.ide.IdeEventQueue
 import com.intellij.openapi.actionSystem.DataContext
+import com.intellij.openapi.actionSystem.PlatformCoreDataKeys
 import com.intellij.openapi.actionSystem.PlatformDataKeys
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.ex.EditorGutterComponentEx
@@ -28,14 +29,14 @@ inline fun getOffsetInEditorWithComponents(
 ): Pair<Editor, Int>? =
   // If the focused component is the editor, it's assumed that the current cell is the cell under the caret.
   dataContext
-    .getData(PlatformDataKeys.CONTEXT_COMPONENT)
+    .getData(PlatformCoreDataKeys.CONTEXT_COMPONENT)
     ?.castSafelyTo<EditorComponentImpl>()
     ?.editor
     ?.getOffsetFromCaret(editorFilter)
 
   // Otherwise, some component inside an editor can be focused. In that case it's assumed that the current cell is the cell closest
   // to the focused component.
-  ?: getOffsetInEditorByComponentHierarchy(dataContext.getData(PlatformDataKeys.CONTEXT_COMPONENT), editorFilter)
+  ?: getOffsetInEditorByComponentHierarchy(dataContext.getData(PlatformCoreDataKeys.CONTEXT_COMPONENT), editorFilter)
 
   // If the focused component is out of the notebook editor, there still can be other editors inside the required one.
   // If some of such editor is treated as the current editor, the current cell is the cell closest to the current editor.
@@ -85,7 +86,7 @@ internal inline fun getOffsetFromGutter(
   crossinline editorFilter: (Editor) -> Boolean,
 ): Pair<Editor, Int>? {
   val gutter =
-    dataContext.getData(PlatformDataKeys.CONTEXT_COMPONENT) as? EditorGutterComponentEx
+    dataContext.getData(PlatformCoreDataKeys.CONTEXT_COMPONENT) as? EditorGutterComponentEx
     ?: return null
   val editor =
     dataContext.getData(PlatformDataKeys.EDITOR)?.takeIf(editorFilter)

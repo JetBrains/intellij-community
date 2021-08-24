@@ -16,7 +16,7 @@
 package com.intellij.ui.tree;
 
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
 import com.intellij.openapi.ide.SmartSelectProvider;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -86,7 +86,7 @@ public class TreeSmartSelectProvider implements SmartSelectProvider<JTree> {
   @Nullable
   @Override
   public JTree getSource(DataContext context) {
-    Component component = PlatformDataKeys.CONTEXT_COMPONENT.getData(context);
+    Component component = PlatformCoreDataKeys.CONTEXT_COMPONENT.getData(context);
     JTree tree = component instanceof JTree ? (JTree)component : null;
     return tree == null || SINGLE_TREE_SELECTION == tree.getSelectionModel().getSelectionMode() ? null : tree;
   }

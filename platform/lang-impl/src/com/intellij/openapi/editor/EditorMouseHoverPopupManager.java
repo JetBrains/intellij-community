@@ -22,7 +22,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
 import com.intellij.openapi.actionSystem.ex.AnActionListener;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
@@ -948,7 +948,7 @@ public class EditorMouseHoverPopupManager implements Disposable {
       }
       AbstractPopup currentHint = getInstance().getCurrentHint();
       if (currentHint != null) {
-        Component contextComponent = event.getData(PlatformDataKeys.CONTEXT_COMPONENT);
+        Component contextComponent = event.getData(PlatformCoreDataKeys.CONTEXT_COMPONENT);
         JBPopup contextPopup = PopupUtil.getPopupContainerFor(contextComponent);
         if (contextPopup == currentHint) {
           return;

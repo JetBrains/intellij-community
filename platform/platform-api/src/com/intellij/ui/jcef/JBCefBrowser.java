@@ -3,7 +3,7 @@ package com.intellij.ui.jcef;
 
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.LightEditActionFactory;
 import com.intellij.openapi.util.Pair;
@@ -102,7 +102,7 @@ public class JBCefBrowser extends JBCefBrowserBase {
       return Pair.create(
         shortcut,
         LightEditActionFactory.create(event -> {
-          Component component = event.getData(PlatformDataKeys.CONTEXT_COMPONENT);
+          Component component = event.getData(PlatformCoreDataKeys.CONTEXT_COMPONENT);
           if (component == null) return;
           Component parentComponent = component.getParent();
           if (!(parentComponent instanceof JComponent)) return;

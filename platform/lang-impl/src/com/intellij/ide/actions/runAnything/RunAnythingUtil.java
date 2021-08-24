@@ -6,7 +6,7 @@ import com.intellij.ide.actions.runAnything.activity.RunAnythingProvider;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.KeyboardShortcut;
-import com.intellij.openapi.actionSystem.LangDataKeys;
+import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.module.Module;
@@ -94,7 +94,7 @@ public final class RunAnythingUtil {
   public static void executeMatched(@NotNull DataContext dataContext, @NotNull String pattern) {
     List<String> commands = RunAnythingCache.getInstance(fetchProject(dataContext)).getState().getCommands();
 
-    Module module = LangDataKeys.MODULE.getData(dataContext);
+    Module module = PlatformCoreDataKeys.MODULE.getData(dataContext);
     if (module == null) {
       LOG.info("RunAnything: module hasn't been found, command will be executed in context of 'null' module.");
     }

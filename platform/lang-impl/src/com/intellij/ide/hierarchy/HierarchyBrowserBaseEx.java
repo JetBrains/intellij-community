@@ -543,7 +543,7 @@ public abstract class HierarchyBrowserBaseEx extends HierarchyBrowserBase implem
     if (HIERARCHY_BROWSER.is(dataId)) {
       return this;
     }
-    if (PlatformDataKeys.HELP_ID.is(dataId)) {
+    if (PlatformCoreDataKeys.HELP_ID.is(dataId)) {
       return HELP_ID;
     }
     return super.getData(dataId);

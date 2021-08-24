@@ -64,7 +64,7 @@ public final class Utils extends DataContextUtils {
   }
 
   public static @NotNull DataContext wrapToAsyncDataContext(@NotNull DataContext dataContext) {
-    Component component = dataContext.getData(PlatformDataKeys.CONTEXT_COMPONENT);
+    Component component = dataContext.getData(PlatformCoreDataKeys.CONTEXT_COMPONENT);
     if (dataContext instanceof EdtDataContext) {
       return new PreCachedDataContext(component);
     }

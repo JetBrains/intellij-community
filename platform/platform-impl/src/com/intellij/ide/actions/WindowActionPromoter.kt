@@ -4,7 +4,7 @@ package com.intellij.ide.actions
 import com.intellij.openapi.actionSystem.ActionPromoter
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.DataContext
-import com.intellij.openapi.actionSystem.PlatformDataKeys
+import com.intellij.openapi.actionSystem.PlatformCoreDataKeys
 import com.intellij.openapi.editor.actionSystem.EditorAction
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.ui.ExpandableActions
@@ -14,7 +14,7 @@ import javax.swing.JFrame
 
 class WindowActionPromoter: ActionPromoter {
   override fun promote(actions: MutableList<out AnAction>, context: DataContext): MutableList<AnAction> {
-    val window = UIUtil.getWindow(context.getData(PlatformDataKeys.CONTEXT_COMPONENT))
+    val window = UIUtil.getWindow(context.getData(PlatformCoreDataKeys.CONTEXT_COMPONENT))
     if (window != null && window !is JFrame
         && !JBPopupFactory.getInstance().isPopupActive
         && actions.any { it is WindowAction }) {

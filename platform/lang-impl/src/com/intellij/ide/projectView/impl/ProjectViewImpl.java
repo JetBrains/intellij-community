@@ -1266,7 +1266,7 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
         if (paneSpecificData != null) return paneSpecificData;
       }
 
-      if (LangDataKeys.MODULE.is(dataId)) {
+      if (PlatformCoreDataKeys.MODULE.is(dataId)) {
         VirtualFile[] virtualFiles = (VirtualFile[])getData(CommonDataKeys.VIRTUAL_FILE_ARRAY.getName());
         if (virtualFiles == null || virtualFiles.length <= 1) return null;
         final Set<Module> modules = new HashSet<>();
@@ -1287,7 +1287,7 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
       if (LangDataKeys.IDE_VIEW.is(dataId)) {
         return myIdeView;
       }
-      if (PlatformDataKeys.HELP_ID.is(dataId)) {
+      if (PlatformCoreDataKeys.HELP_ID.is(dataId)) {
         return HelpID.PROJECT_VIEWS;
       }
       if (QuickActionProvider.KEY.is(dataId)) {

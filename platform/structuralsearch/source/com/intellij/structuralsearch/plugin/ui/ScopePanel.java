@@ -149,7 +149,7 @@ public class ScopePanel extends JPanel {
       boolean moduleFound = false;
       boolean directoryFound = false;
       boolean namedScopeFound = false;
-      final Module module = LangDataKeys.MODULE.getData(context);
+      final Module module = PlatformCoreDataKeys.MODULE.getData(context);
       if (module != null) {
         moduleFound = true;
         myModulesComboBox.setSelectedModule(module);

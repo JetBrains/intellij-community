@@ -1,6 +1,7 @@
 package org.jetbrains.plugins.notebooks.editor.outputs.impl
 
 import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.PlatformCoreDataKeys
 import com.intellij.openapi.actionSystem.PlatformDataKeys
 import com.intellij.openapi.actionSystem.ToggleAction
 import com.intellij.openapi.editor.Editor
@@ -72,7 +73,7 @@ internal class NotebookOutputCollapseSingleInCellAction private constructor() : 
   }
 
   private fun getExpectedComponent(e: AnActionEvent): CollapsingComponent? =
-    e.getData(PlatformDataKeys.CONTEXT_COMPONENT)
+    e.getData(PlatformCoreDataKeys.CONTEXT_COMPONENT)
       ?.castSafelyTo<CollapsingComponent>()
       ?.let { expectedComponent ->
         getCollapsingComponents(e)?.singleOrNull { it === expectedComponent }

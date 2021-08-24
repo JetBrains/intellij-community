@@ -57,7 +57,7 @@ import java.util.stream.Collectors;
 
 import static com.intellij.ide.actions.QuickChangeColorSchemeAction.changeLafIfNecessary;
 import static com.intellij.openapi.actionSystem.CommonDataKeys.PROJECT;
-import static com.intellij.openapi.actionSystem.PlatformDataKeys.CONTEXT_COMPONENT;
+import static com.intellij.openapi.actionSystem.PlatformCoreDataKeys.CONTEXT_COMPONENT;
 
 public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract
   implements EditorOptionsProvider, SchemesModel<EditorColorsScheme>, Configurable.WithEpDependencies {

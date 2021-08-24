@@ -12,6 +12,7 @@ import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.LangDataKeys;
+import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
@@ -52,7 +53,7 @@ public class PsiPackageFavoriteNodeProvider extends FavoriteNodeProvider {
           if (directories.length > 0) {
             final VirtualFile firstDir = directories[0].getVirtualFile();
             final boolean isLibraryRoot = ProjectRootsUtil.isLibraryRoot(firstDir, project);
-            final PackageElement packageElement = new PackageElement(LangDataKeys.MODULE.getData(context), psiPackage, isLibraryRoot);
+            final PackageElement packageElement = new PackageElement(PlatformCoreDataKeys.MODULE.getData(context), psiPackage, isLibraryRoot);
             result.add(new PackageElementNode(project, packageElement, viewSettings));
           }
         }

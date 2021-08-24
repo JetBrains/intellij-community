@@ -7,7 +7,7 @@ import com.intellij.ide.scratch.ScratchesSearchScope;
 import com.intellij.lang.LangBundle;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.LangDataKeys;
+import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
@@ -126,7 +126,7 @@ public class PredefinedSearchScopeProviderImpl extends PredefinedSearchScopeProv
         if (!PlatformUtils.isCidr() && !PlatformUtils.isRider()) { // TODO: have an API to disable module scopes.
           Module module = ModuleUtilCore.findModuleForPsiElement(dataContextElement);
           if (module == null) {
-            module = LangDataKeys.MODULE.getData(dataContext);
+            module = PlatformCoreDataKeys.MODULE.getData(dataContext);
           }
           if (module != null && !ModuleType.isInternal(module)) {
             result.add(module.getModuleScope());

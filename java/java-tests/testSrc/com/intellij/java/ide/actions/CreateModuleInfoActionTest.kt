@@ -8,6 +8,7 @@ import com.intellij.java.testFramework.fixtures.MultiModuleJava9ProjectDescripto
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.LangDataKeys
+import com.intellij.openapi.actionSystem.PlatformCoreDataKeys
 import com.intellij.psi.PsiDirectory
 import com.intellij.psi.PsiJavaModule
 import com.intellij.psi.PsiManager
@@ -17,7 +18,7 @@ import com.intellij.testFramework.PlatformTestUtil
 class CreateModuleInfoActionTest : LightJava9ModulesCodeInsightFixtureTestCase() {
   fun test() {
     val dir = PsiManager.getInstance(project).findDirectory(MAIN.root()!!)!!
-    val ctx = MapDataContext(mapOf(LangDataKeys.IDE_VIEW to TestIdeView(dir), LangDataKeys.MODULE to module))
+    val ctx = MapDataContext(mapOf(LangDataKeys.IDE_VIEW to TestIdeView(dir), PlatformCoreDataKeys.MODULE to module))
     val event = AnActionEvent.createFromDataContext("", null, ctx)
     ActionManager.getInstance().getAction("NewModuleInfo")!!.actionPerformed(event)
 

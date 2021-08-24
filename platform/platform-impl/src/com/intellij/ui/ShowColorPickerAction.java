@@ -4,7 +4,7 @@ package com.intellij.ui;
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
 import com.intellij.openapi.project.DumbAwareAction;
 import org.jetbrains.annotations.NotNull;
 
@@ -29,7 +29,7 @@ public class ShowColorPickerAction extends DumbAwareAction {
 
   @Override
   public void update(@NotNull AnActionEvent e) {
-    Component component = e.getData(PlatformDataKeys.CONTEXT_COMPONENT);
+    Component component = e.getData(PlatformCoreDataKeys.CONTEXT_COMPONENT);
     if (component == null || !(SwingUtilities.getWindowAncestor(component) instanceof Frame)) {
       e.getPresentation().setEnabledAndVisible(false);
       return;

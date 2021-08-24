@@ -57,7 +57,7 @@ public abstract class ResizeToolWindowAction extends AnAction implements DumbAwa
     if (project == null
         || e.getData(CommonDataKeys.HOST_EDITOR) != null
         || e.getData(CommonDataKeys.EDITOR) != null
-        || ComponentUtil.getParentOfType(InternalDecoratorImpl.class, e.getData(PlatformDataKeys.CONTEXT_COMPONENT)) == null) {
+        || ComponentUtil.getParentOfType(InternalDecoratorImpl.class, e.getData(PlatformCoreDataKeys.CONTEXT_COMPONENT)) == null) {
       setDisabled(e);
       return;
     }

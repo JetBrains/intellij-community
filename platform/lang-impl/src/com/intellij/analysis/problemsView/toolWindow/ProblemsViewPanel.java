@@ -231,7 +231,7 @@ public class ProblemsViewPanel extends OnePixelSplitter implements Disposable, D
   public @Nullable Object getData(@NotNull String dataId) {
     if (CommonDataKeys.PROJECT.is(dataId)) return getProject();
     if (PlatformDataKeys.TREE_EXPANDER.is(dataId)) return getTreeExpander();
-    if (PlatformDataKeys.FILE_EDITOR.is(dataId)) {
+    if (PlatformCoreDataKeys.FILE_EDITOR.is(dataId)) {
       // this code allows to perform Editor's Undo action from the Problems View
       Editor editor = getPreview();
       if (editor != null) return TextEditorProvider.getInstance().getTextEditor(editor);

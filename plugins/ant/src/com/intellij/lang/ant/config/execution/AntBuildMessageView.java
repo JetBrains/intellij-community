@@ -465,7 +465,7 @@ public final class AntBuildMessageView extends JPanel implements DataProvider, O
     if (data != null) {
       return data;
     }
-    if (PlatformDataKeys.HELP_ID.is(dataId)) {
+    if (PlatformCoreDataKeys.HELP_ID.is(dataId)) {
       return HelpID.ANT;
     }
     if (PlatformDataKeys.TREE_EXPANDER.is(dataId)) {

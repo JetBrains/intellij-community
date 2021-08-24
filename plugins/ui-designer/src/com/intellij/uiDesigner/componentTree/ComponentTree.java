@@ -243,11 +243,11 @@ public final class ComponentTree extends Tree implements DataProvider {
       return elements.size() == 0 ? null : elements.toArray(LwInspectionSuppression.EMPTY_ARRAY);
     }
 
-    if (PlatformDataKeys.HELP_ID.is(dataId)) {
+    if (PlatformCoreDataKeys.HELP_ID.is(dataId)) {
       return ourHelpID;
     }
 
-    if (PlatformDataKeys.FILE_EDITOR.is(dataId)) {
+    if (PlatformCoreDataKeys.FILE_EDITOR.is(dataId)) {
       return myFormEditor;
     }
 
@@ -256,7 +256,7 @@ public final class ComponentTree extends Tree implements DataProvider {
       return null;
     }
 
-    if (PlatformDataKeys.SLOW_DATA_PROVIDERS.is(dataId)) {
+    if (PlatformCoreDataKeys.SLOW_DATA_PROVIDERS.is(dataId)) {
       return Collections.<DataProvider>singletonList(realDataId -> getSlowData(selectedComponent, realDataId));
     }
     return null;

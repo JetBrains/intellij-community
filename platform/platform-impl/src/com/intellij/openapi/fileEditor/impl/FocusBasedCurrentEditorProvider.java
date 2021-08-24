@@ -3,7 +3,7 @@ package com.intellij.openapi.fileEditor.impl;
 
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
 import com.intellij.openapi.fileEditor.FileEditor;
 
 public class FocusBasedCurrentEditorProvider implements CurrentEditorProvider {
@@ -12,6 +12,6 @@ public class FocusBasedCurrentEditorProvider implements CurrentEditorProvider {
     DataManager dataManager = DataManager.getInstanceIfCreated();
     if (dataManager == null) return null;
     @SuppressWarnings("deprecation") DataContext context = dataManager.getDataContext();
-    return PlatformDataKeys.FILE_EDITOR.getData(context);
+    return PlatformCoreDataKeys.FILE_EDITOR.getData(context);
   }
 }

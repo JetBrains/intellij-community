@@ -53,7 +53,7 @@ class NewPropertyAction extends AnAction {
     }
     ResourceBundleEditor resourceBundleEditor;
     final DataContext context = e.getDataContext();
-    FileEditor fileEditor = PlatformDataKeys.FILE_EDITOR.getData(context);
+    FileEditor fileEditor = PlatformCoreDataKeys.FILE_EDITOR.getData(context);
     if (fileEditor instanceof ResourceBundleEditor) {
       resourceBundleEditor = (ResourceBundleEditor)fileEditor;
     } else {
@@ -164,7 +164,7 @@ class NewPropertyAction extends AnAction {
   @Override
   public void update(@NotNull AnActionEvent e) {
     if (!myEnabledForce) {
-      final FileEditor editor = e.getData(PlatformDataKeys.FILE_EDITOR);
+      final FileEditor editor = e.getData(PlatformCoreDataKeys.FILE_EDITOR);
       e.getPresentation().setEnabledAndVisible(editor instanceof ResourceBundleEditor);
     }
   }

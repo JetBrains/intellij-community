@@ -1984,7 +1984,7 @@ public class UsageViewImpl implements UsageViewEx {
       else if (USAGE_VIEW_KEY.is(dataId)) {
         return UsageViewImpl.this;
       }
-      else if (PlatformDataKeys.HELP_ID.is(dataId)) {
+      else if (PlatformCoreDataKeys.HELP_ID.is(dataId)) {
         return HELP_ID;
       }
       else if (PlatformDataKeys.COPY_PROVIDER.is(dataId)) {
@@ -2013,9 +2013,9 @@ public class UsageViewImpl implements UsageViewEx {
       }
       else {
         DataProvider selectedProvider = ObjectUtils.tryCast(TreeUtil.getUserObject(getSelectedNode()), DataProvider.class);
-        if (PlatformDataKeys.SLOW_DATA_PROVIDERS.is(dataId)) {
+        if (PlatformCoreDataKeys.SLOW_DATA_PROVIDERS.is(dataId)) {
           List<TreeNode> selectedNodes = allSelectedNodes();
-          Iterable<DataProvider> slowProviders = selectedProvider == null ? null : PlatformDataKeys.SLOW_DATA_PROVIDERS.getData(selectedProvider);
+          Iterable<DataProvider> slowProviders = selectedProvider == null ? null : PlatformCoreDataKeys.SLOW_DATA_PROVIDERS.getData(selectedProvider);
           slowProviders = ObjectUtils.notNull(slowProviders, Collections.emptyList());
           slowProviders = ContainerUtil.concat(Collections.singletonList(id -> getSlowData(id, selectedNodes)), slowProviders);
           return slowProviders;
