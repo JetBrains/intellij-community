@@ -5,13 +5,9 @@ package org.jetbrains.kotlin.idea.completion.contributors
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.openapi.module.Module
 import com.intellij.psi.PsiElement
-import org.jetbrains.kotlin.idea.completion.*
+import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
+import org.jetbrains.kotlin.idea.completion.KeywordCompletion
 import org.jetbrains.kotlin.idea.completion.context.*
-import org.jetbrains.kotlin.idea.completion.context.FirBasicCompletionContext
-import org.jetbrains.kotlin.idea.completion.context.FirNameReferencePositionContext
-import org.jetbrains.kotlin.idea.completion.context.FirRawPositionCompletionContext
-import org.jetbrains.kotlin.idea.completion.context.FirTypeConstraintNameInWhereClausePositionContext
-import org.jetbrains.kotlin.idea.completion.context.FirUnknownPositionContext
 import org.jetbrains.kotlin.idea.completion.contributors.keywords.OverrideKeywordHandler
 import org.jetbrains.kotlin.idea.completion.contributors.keywords.ReturnKeywordHandler
 import org.jetbrains.kotlin.idea.completion.contributors.keywords.SuperKeywordHandler
@@ -20,10 +16,11 @@ import org.jetbrains.kotlin.idea.completion.keywords.CompletionKeywordHandlerPro
 import org.jetbrains.kotlin.idea.completion.keywords.CompletionKeywordHandlers
 import org.jetbrains.kotlin.idea.completion.keywords.DefaultCompletionKeywordHandlerProvider
 import org.jetbrains.kotlin.idea.completion.keywords.createLookups
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.idea.project.languageVersionSettings
 import org.jetbrains.kotlin.platform.jvm.isJvm
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtExpression
+import org.jetbrains.kotlin.psi.KtExpressionWithLabel
+import org.jetbrains.kotlin.psi.KtLabelReferenceExpression
 
 internal class FirKeywordCompletionContributor(basicContext: FirBasicCompletionContext, priority: Int) :
     FirCompletionContributorBase<FirRawPositionCompletionContext>(basicContext, priority) {
@@ -46,7 +43,7 @@ internal class FirKeywordCompletionContributor(basicContext: FirBasicCompletionC
             is FirTypeConstraintNameInWhereClausePositionContext, is FirIncorrectPositionContext, is FirClassifierNamePositionContext -> {
                 error("keyword completion should not be called for ${positionContext::class.simpleName}")
             }
-            is FirUnknownPositionContext -> null
+            is FirValueParameterPositionContext, is FirUnknownPositionContext -> null
         }
         completeWithResolve(expression ?: positionContext.position, expression)
     }
