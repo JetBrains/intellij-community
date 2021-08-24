@@ -113,6 +113,7 @@ internal fun compressDir(startDir: Path, archiver: ZipArchiver, excludes: List<P
   val tempList = ArrayList<Path>()
   while (true) {
     val dir = dirCandidates.pollFirst() ?: break
+    if (!Files.exists(dir)) break
     tempList.clear()
     Files.newDirectoryStream(dir).use {
       if (excludes == null) {
