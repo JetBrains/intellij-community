@@ -122,7 +122,11 @@ interface KotlinLanguageSettings : Serializable {
     val apiVersion: String?
     val isProgressiveMode: Boolean
     val enabledLanguageFeatures: Set<String>
+
+    @Deprecated("Unsupported and will be removed in next major releases", replaceWith = ReplaceWith("optInAnnotationsInUse"))
     val experimentalAnnotationsInUse: Set<String>
+        get() = optInAnnotationsInUse
+    val optInAnnotationsInUse: Set<String>
     val compilerPluginArguments: Array<String>
     val compilerPluginClasspath: Set<File>
     val freeCompilerArgs: Array<String>
