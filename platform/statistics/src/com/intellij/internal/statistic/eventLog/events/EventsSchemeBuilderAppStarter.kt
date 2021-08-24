@@ -16,9 +16,22 @@ class EventsSchemeBuilderAppStarter : ApplicationStarter {
   override fun getCommandName(): String = "buildEventsScheme"
 
   override fun main(args: List<String>) {
-    val outputFile = args.getOrNull(1)
-    val pluginsFile = args.getOrNull(2)
-    val pluginId = args.getOrNull(3)
+    var outputFile: String? = null
+    var pluginsFile: String? = null
+    var pluginId: String? = null
+
+    for (arg in args) {
+      if (arg.startsWith(outputFileParameter)) {
+        outputFile = arg.substringAfter(outputFileParameter)
+      }
+      else if (arg.startsWith(pluginsFileParameter)) {
+        pluginsFile = arg.substringAfter(pluginsFileParameter)
+      }
+      else if (arg.startsWith(pluginIdParameter)) {
+        pluginId = arg.substringAfter(pluginIdParameter)
+      }
+    }
+
     val eventsScheme = EventsSchemeBuilder.EventsScheme(System.getenv("INSTALLER_LAST_COMMIT_HASH"),
       System.getenv("IDEA_BUILD_NUMBER"),
       EventsSchemeBuilder.buildEventsScheme(pluginId))
@@ -52,6 +65,12 @@ class EventsSchemeBuilderAppStarter : ApplicationStarter {
       println("Enabled plugins:")
       println(text)
     }
+  }
+
+  companion object {
+    private const val outputFileParameter = "--outputFile="
+    private const val pluginsFileParameter = "--pluginsFile="
+    private const val pluginIdParameter = "--pluginId="
   }
 
   object FieldDataTypeSerializer : JsonSerializer<EventsSchemeBuilder.FieldDataType> {
