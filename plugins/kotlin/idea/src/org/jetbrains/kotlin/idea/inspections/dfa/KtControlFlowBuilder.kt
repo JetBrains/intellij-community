@@ -50,10 +50,6 @@ import java.util.concurrent.atomic.AtomicInteger
 /*
 fleet.backend.debugger.BackendDebuggerApi.DebuggerState#toDebuggerExecutionStacks (avoid boolean literal initializers?)
 
-For-destructuring:
-org.jetbrains.plugins.github.pullrequest.data.GHPRMutableLinearFileHistory#getPatches
-com.jetbrains.swift.refactoring.rename.swiftName.OCSwiftNameElementHolder.Companion#fromAttributeParameters
-
 Value changed after lambda:
 org.jetbrains.plugins.github.pullrequest.action.GHPRReviewSubmitAction#actionPerformed
 com.intellij.codeInsight.hints.presentation.PresentationFactory#collapsible
@@ -70,13 +66,6 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
 
     fun buildFlow(): ControlFlow? {
         processExpression(context)
-        if (LOG.isDebugEnabled) {
-            val total = totalCount.incrementAndGet()
-            val success = if (!broken) successCount.incrementAndGet() else successCount.get()
-            if (total % 100 == 0) {
-                LOG.info("Analyzed: "+success+" of "+total + " ("+success*100/total + "%)")
-            }
-        }
         if (broken) return null
         addInstruction(PopInstruction()) // return value
         flow.finish()
@@ -1212,8 +1201,6 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
     companion object {
         private val LOG = logger<KtControlFlowBuilder>()
         private val ASSIGNMENT_TOKENS = TokenSet.create(KtTokens.EQ, KtTokens.PLUSEQ, KtTokens.MINUSEQ, KtTokens.MULTEQ, KtTokens.DIVEQ, KtTokens.PERCEQ)
-        private val totalCount = AtomicInteger()
-        private val successCount = AtomicInteger()
         private val unsupported = ConcurrentHashMap.newKeySet<String>()
     }
 }
