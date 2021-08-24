@@ -237,8 +237,10 @@ class BuildOptions {
   static final String PREBUILT_KOTLIN_PLUGIN_PATH = "intellij.build.kotlin.plugin.path"
   String prebuiltKotlinPluginPath = System.getProperty(PREBUILT_KOTLIN_PLUGIN_PATH)
 
+  static final String TARGET_OS = "intellij.build.target.os"
+
   BuildOptions() {
-    targetOS = System.getProperty("intellij.build.target.os")
+    targetOS = System.getProperty(TARGET_OS)
     if (targetOS == OS_CURRENT) {
       targetOS = SystemInfo.isWindows ? OS_WINDOWS :
                  SystemInfo.isMac ? OS_MAC :
