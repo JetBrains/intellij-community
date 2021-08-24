@@ -5,15 +5,15 @@ import com.intellij.execution.target.value.TargetValue
 import org.gradle.initialization.BuildCancellationToken
 import org.gradle.internal.classpath.ClassPath
 import org.gradle.internal.logging.progress.ProgressLoggerFactory
+import org.gradle.tooling.internal.consumer.ConnectionParameters
 import org.gradle.tooling.internal.consumer.Distribution
 import org.gradle.tooling.internal.protocol.InternalBuildProgressListener
-import java.io.File
 
 internal class TargetGradleDistribution(distribution: Distribution,
                                         val gradleHome: TargetValue<String>? = null) : Distribution by distribution {
   override fun getToolingImplementationClasspath(progressLoggerFactory: ProgressLoggerFactory?,
                                                  progressListener: InternalBuildProgressListener?,
-                                                 userHomeDir: File?,
+                                                 parameters: ConnectionParameters?,
                                                  cancellationToken: BuildCancellationToken?): ClassPath {
     throw IllegalStateException("Target Gradle distribution should not be resolved on host environment.")
   }

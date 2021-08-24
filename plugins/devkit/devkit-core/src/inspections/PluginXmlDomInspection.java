@@ -276,7 +276,7 @@ public final class PluginXmlDomInspection extends DevKitPluginXmlInspectionBase 
 
     final IdeaPlugin ideaPlugin = element.getParentOfType(IdeaPlugin.class, false);
     assert ideaPlugin != null;
-    return PluginManagerCore.VENDOR_JETBRAINS.equals(ideaPlugin.getVendor().getValue());
+    return PluginManagerCore.isDevelopedByJetBrains(ideaPlugin.getVendor().getValue());
   }
 
   private static void annotatePsiClassValue(GenericDomValue domValue, DomElementAnnotationHolder holder) {
@@ -502,7 +502,7 @@ public final class PluginXmlDomInspection extends DevKitPluginXmlInspectionBase 
                            new AddMissingMainTag(DevKitBundle.message("inspections.plugin.xml.vendor.specify.jetbrains"),
                                                  vendor, PluginManagerCore.VENDOR_JETBRAINS));
     }
-    else if (!PluginManagerCore.VENDOR_JETBRAINS.equals(vendor.getValue())) {
+    else if (!PluginManagerCore.isVendorJetBrains(vendor.getValue())) {
       holder.createProblem(vendor, DevKitBundle.message("inspections.plugin.xml.plugin.should.have.jetbrains.vendor"));
     }
     else {

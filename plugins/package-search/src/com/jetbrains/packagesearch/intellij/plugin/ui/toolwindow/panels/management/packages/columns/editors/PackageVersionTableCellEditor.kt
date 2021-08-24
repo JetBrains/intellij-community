@@ -1,11 +1,10 @@
 package com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.panels.management.packages.columns.editors
 
-import com.intellij.ui.components.editors.JBComboBoxTableCellEditorComponent
 import com.intellij.ui.table.JBTable
 import com.intellij.util.ui.AbstractTableCellEditor
 import com.jetbrains.packagesearch.intellij.plugin.ui.components.ComboBoxTableCellEditorComponent
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.PackageVersion
-import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.panels.management.packages.columns.VersionViewModel
+import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.UiPackageModel
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.panels.management.packages.columns.colors
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.panels.management.packages.columns.renderers.PopupMenuListItemCellRenderer
 import java.awt.Component
@@ -13,7 +12,7 @@ import javax.swing.JTable
 
 internal class PackageVersionTableCellEditor : AbstractTableCellEditor() {
 
-    private val comboBox = JBComboBoxTableCellEditorComponent()
+    private var lastEditor: ComboBoxTableCellEditorComponent<*>? = null
 
     private var onlyStable = false
 
@@ -21,30 +20,33 @@ internal class PackageVersionTableCellEditor : AbstractTableCellEditor() {
         this.onlyStable = onlyStable
     }
 
-    override fun getCellEditorValue(): Any? = comboBox.editorValue
+    override fun getCellEditorValue(): Any? = lastEditor?.value
 
     override fun getTableCellEditorComponent(table: JTable, value: Any, isSelected: Boolean, row: Int, column: Int): Component {
-        val viewModel = value as VersionViewModel<*>
+        val viewModel = value as UiPackageModel<*>
 
         val versionViewModels = when (viewModel) {
-            is VersionViewModel.InstalledPackage ->
+            is UiPackageModel.Installed ->
                 viewModel.packageModel.getAvailableVersions(onlyStable)
                     .map { viewModel.copy(selectedVersion = it) }
-            is VersionViewModel.InstallablePackage ->
+            is UiPackageModel.SearchResult ->
                 viewModel.packageModel.getAvailableVersions(onlyStable)
                     .map { viewModel.copy(selectedVersion = it) }
         }
 
-        return createComboBoxEditor(table, versionViewModels, viewModel.selectedVersion).apply {
+        val editor = createComboBoxEditor(table, versionViewModels, viewModel.selectedVersion).apply {
             table.colors.applyTo(this, isSelected = true)
             setCell(row, column)
         }
+
+        lastEditor = editor
+        return editor
     }
 
     @Suppress("DuplicatedCode")
     private fun createComboBoxEditor(
         table: JTable,
-        versionViewModels: List<VersionViewModel<*>>,
+        versionViewModels: List<UiPackageModel<*>>,
         selectedVersion: PackageVersion
     ): ComboBoxTableCellEditorComponent<*> {
         require(table is JBTable) { "The packages list table is expected to be a JBTable, but was a ${table::class.qualifiedName}" }

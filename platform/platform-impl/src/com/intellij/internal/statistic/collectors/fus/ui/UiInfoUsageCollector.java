@@ -41,7 +41,7 @@ final class UiInfoUsageCollector extends ApplicationUsagesCollector {
 
   @Override
   public int getVersion() {
-    return 9;
+    return 10;
   }
 
   @NotNull
@@ -146,7 +146,7 @@ final class UiInfoUsageCollector extends ApplicationUsagesCollector {
       try {
         SwingUtilities.invokeAndWait(() -> {
           DisplayMode dm = GraphicsEnvironment.getLocalGraphicsEnvironment().getDefaultScreenDevice().getDisplayMode();
-          isScaleMode.set(JdkEx.getDisplayModeEx().isDefault(dm));
+          isScaleMode.set(dm != null && JdkEx.getDisplayModeEx().isDefault(dm));
         });
       }
       catch (InvocationTargetException e) {

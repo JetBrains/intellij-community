@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.codeInsight.navigation;
 
 import com.intellij.JavaTestUtil;
@@ -6,12 +6,16 @@ import com.intellij.codeInsight.TargetElementUtil;
 import com.intellij.codeInsight.navigation.actions.GotoDeclarationAction;
 import com.intellij.openapi.editor.ScrollType;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.testFramework.LightJavaCodeInsightTestCase;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Iterator;
+
+import static com.intellij.testFramework.assertions.Assertions.assertThat;
 
 public class GotoDeclarationTest extends LightJavaCodeInsightTestCase {
   @NotNull
@@ -43,15 +47,13 @@ public class GotoDeclarationTest extends LightJavaCodeInsightTestCase {
   }
 
   public void testGotoDirectory() {
-    String name = getTestName(false);
-    configureByFile("/codeInsight/gotoDeclaration/" + name + ".java");
+    configure();
     PsiDirectory element = (PsiDirectory)GotoDeclarationAction.findTargetElement(getProject(), getEditor(), getEditor().getCaretModel().getOffset());
     assertEquals("java.lang", JavaDirectoryService.getInstance().getPackage(element).getQualifiedName());
   }
 
   private void doTestMultipleConstructors() {
-    String name = getTestName(false);
-    configureByFile("/codeInsight/gotoDeclaration/" + name + ".java");
+    configure();
     final int offset = getEditor().getCaretModel().getOffset();
     final PsiElement[] elements =
       GotoDeclarationAction.findAllTargetElements(getProject(), getEditor(), offset);
@@ -73,8 +75,7 @@ public class GotoDeclarationTest extends LightJavaCodeInsightTestCase {
   }
 
   public void testMultipleConstructorsButArrayCreation() {
-    String name = getTestName(false);
-    configureByFile("/codeInsight/gotoDeclaration/" + name + ".java");
+    configure();
     final int offset = getEditor().getCaretModel().getOffset();
     final PsiReference reference = getFile().findReferenceAt(offset);
     assertNotNull(reference);
@@ -117,5 +118,57 @@ public class GotoDeclarationTest extends LightJavaCodeInsightTestCase {
     configureFromFileText("A.java", "class A {{ String[] arr; arr<caret>");
     PsiElement element = GotoDeclarationAction.findTargetElement(getProject(), getEditor(), getEditor().getCaretModel().getOffset());
     assertNotNull("Unexpected null", element);
+  }
+
+  public void testPatternMatchingGuardInSwitchExpression() {
+    doTestPatternMatchingGuard();
+  }
+
+  public void testPatternMatchingGuardInSwitchStatement() {
+    doTestPatternMatchingGuard();
+  }
+
+  public void testPatternMatchingWithParensAroundReference() {
+    doTestPatternMatchingGuard();
+  }
+
+
+  public void testReferenceFieldInPatternMatchingInSwitchStatement() {
+    doTestPatternMatchingGuard();
+  }
+
+  public void testCaseNullDefaultAfterPatternMatching() {
+    configure();
+    final PsiElement patternVariable = PsiTreeUtil.findChildOfType(getFile(), PsiPatternVariable.class);
+    final PsiElement element = GotoDeclarationAction.findTargetElement(getProject(), getEditor(), getEditor().getCaretModel().getOffset());
+    assertThat(element).isEqualTo(patternVariable);
+  }
+
+  public void testGuardWithInstanceOfPatternMatchingInIf() {
+    doTestGoToPatternVariable();
+  }
+
+  public void testGuardWithInstanceOfPatternMatchingInSwitch() {
+    doTestGoToPatternVariable();
+  }
+
+  private void doTestPatternMatchingGuard() {
+    configure();
+    final PsiField field = PsiTreeUtil.findChildOfType(getFile(), PsiField.class);
+    final PsiElement element = GotoDeclarationAction.findTargetElement(getProject(), getEditor(), getEditor().getCaretModel().getOffset());
+    assertThat(element).isEqualTo(field);
+  }
+
+  private void doTestGoToPatternVariable() {
+    configure();
+    final Iterator<PsiPatternVariable> iterator = PsiTreeUtil.findChildrenOfType(getFile(), PsiPatternVariable.class).iterator();
+    iterator.next();
+    final PsiElement element = GotoDeclarationAction.findTargetElement(getProject(), getEditor(), getEditor().getCaretModel().getOffset());
+    assertThat(element).isEqualTo(iterator.next());
+  }
+
+  private void configure() {
+    String name = getTestName(false);
+    configureByFile("/codeInsight/gotoDeclaration/" + name + ".java");
   }
 }

@@ -6,6 +6,7 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.xdebugger.frame.*;
@@ -555,12 +556,18 @@ public class PyDebugValue extends XNamedValue {
 
   @Override
   public void computeSourcePosition(@NotNull XNavigatable navigatable) {
-    if (myParent == null) {
-      navigatable.setSourcePosition(myFrameAccessor.getSourcePositionForName(myName, null));
-    }
-    else {
-      navigatable.setSourcePosition(myFrameAccessor.getSourcePositionForName(myName, myParent.getDeclaringType()));
-    }
+    ApplicationManager.getApplication().executeOnPooledThread(
+      () -> ReadAction.run(
+        () -> {
+          if (myParent == null) {
+            navigatable.setSourcePosition(myFrameAccessor.getSourcePositionForName(myName, null));
+          }
+          else {
+            navigatable.setSourcePosition(myFrameAccessor.getSourcePositionForName(myName, myParent.getDeclaringType()));
+          }
+        }
+      )
+    );
   }
 
   @Override

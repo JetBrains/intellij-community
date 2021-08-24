@@ -36,7 +36,7 @@ public class SingleCheckboxOptionsPanel extends InspectionOptionsPanel {
         final SingleCheckboxChangeListener listener =
                 new SingleCheckboxChangeListener(owner, property, model);
         model.addChangeListener(listener);
-        add(checkBox);
+        add(checkBox, "span, wrap, grow");
     }
 
     private static boolean getPropertyValue(InspectionProfileEntry owner,

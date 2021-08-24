@@ -29,7 +29,7 @@ internal class ConfigureTextHtmlImageLineMarkerProvider : ConfigureImageLineMark
     val image = ImageUtils.createImageTagFromText(element) ?: return null
     return ConfigureImageDialog(
       image.project,
-      MarkdownBundle.message("markdown.configure.image.line.marker.configure.command.name"),
+      MarkdownBundle.message("markdown.configure.image.title.text"),
       path = obtainPathText(element),
       width = image.getAttributeValue("width"),
       height = image.getAttributeValue("height"),

@@ -1083,4 +1083,132 @@ public class PyFormatterTest extends PyTestCase {
   public void testIndentOfCommentsInsideMatchStatement() {
     doTest();
   }
+
+  // PY-49167
+  public void testNoSpacesInsideStarPatterns() {
+    doTest();
+  }
+
+  // PY-48009
+  public void testSpacesWithinBracketsInSequencePatterns() {
+    getCommonCodeStyleSettings().SPACE_WITHIN_BRACKETS = true;
+    doTest();
+  }
+
+  // PY-48009
+  public void testSpacesWithinBracesInMappingPatterns() {
+    getPythonCodeStyleSettings().SPACE_WITHIN_BRACES = true;
+    doTest();
+  }
+
+  // PY-48009
+  public void testSpacesWithinParenthesesInClassPatterns() {
+    getCommonCodeStyleSettings().SPACE_WITHIN_EMPTY_METHOD_CALL_PARENTHESES = true;
+    getCommonCodeStyleSettings().SPACE_WITHIN_METHOD_CALL_PARENTHESES = true;
+    doTest();
+  }
+
+  // PY-48009
+  public void testSpacesBeforeParenthesesInClassPatterns() {
+    getCommonCodeStyleSettings().SPACE_BEFORE_METHOD_CALL_PARENTHESES = true;
+    doTest();
+  }
+
+  // PY-48009
+  public void testSpacesBeforeAndAfterCommasInPatterns() {
+    getCommonCodeStyleSettings().SPACE_BEFORE_COMMA = true;
+    getCommonCodeStyleSettings().SPACE_AFTER_COMMA = false;
+    doTest();
+  }
+
+  // PY-48009
+  public void testSpacesBeforeAndAfterColonsInPatterns() {
+    getPythonCodeStyleSettings().SPACE_BEFORE_PY_COLON = true;
+    getPythonCodeStyleSettings().SPACE_AFTER_PY_COLON = false;
+    doTest();
+  }
+
+  // PY-48009
+  public void testItemAlignmentInSequencePatterns() {
+    doTest();
+  }
+
+  // PY-48009
+  public void testItemAlignmentInNestedSequencePatterns() {
+    doTest();
+  }
+
+  // PY-48009
+  public void testItemIndentInSequencePatterns() {
+    doTest();
+  }
+
+  // PY-48009
+  public void testHangingClosingBracketInSequencePatterns() {
+    getPythonCodeStyleSettings().HANG_CLOSING_BRACKETS = true;
+    doTest();
+  }
+  
+  // PY-48009
+  public void testItemAlignmentInMappingPatterns() {
+    doTest();
+  }
+  
+  // PY-48009
+  public void testItemIndentInMappingPatterns() {
+    doTest();
+  }
+  
+  // PY-48009
+  public void testHangingClosingBracketInMappingPatterns() {
+    getPythonCodeStyleSettings().HANG_CLOSING_BRACKETS = true;
+    doTest();
+  }
+
+  // PY-48009
+  public void testAttributeAlignmentInClassPatterns() {
+    doTest();
+  }
+
+  // PY-48009
+  public void testAttributeIndentInClassPatterns() {
+    doTest();
+  }
+
+  // PY-48009
+  public void testHangingClosingBracketInClassPatterns() {
+    getPythonCodeStyleSettings().HANG_CLOSING_BRACKETS = true;
+    doTest();
+  }
+
+  // PY-48009
+  public void testStringElementAlignmentInLiteralPatterns() {
+    doTest();
+  }
+
+  // PY-48009
+  public void testSpacesAroundAsKeywordInPatterns() {
+    doTest();
+  }
+
+  // PY-48009
+  public void testSpacesAfterMatchAndCaseKeywords() {
+    doTest();
+  }
+
+  // PY-48009
+  public void testAlternativesAlignmentInOrPatterns() {
+    doTest();
+  }
+
+  // PY-48009
+  public void testAlternativesAlignmentInOrPatternsInsideSequenceLikePattern() {
+    doTest();
+  }
+
+  // PY-48009
+  public void testSpacesAroundEqualSignsInKeywordPatterns() {
+    getPythonCodeStyleSettings().SPACE_AROUND_EQ_IN_KEYWORD_ARGUMENT = true;
+    doTest();
+  }
 }

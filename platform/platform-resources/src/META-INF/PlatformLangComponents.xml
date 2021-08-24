@@ -28,11 +28,6 @@
     <component>
       <implementation-class>com.intellij.workspaceModel.ide.impl.legacyBridge.watcher.VirtualFileUrlWatcher</implementation-class>
     </component>
-    <component>
-      <interface-class>com.intellij.openapi.module.impl.ExternalModuleListStorage</interface-class>
-      <implementation-class>com.intellij.openapi.module.impl.ExternalModuleListStorageImpl</implementation-class>
-      <loadForDefaultProject/>
-    </component>
 
     <component>
       <interface-class>com.intellij.openapi.fileEditor.FileEditorManager</interface-class>

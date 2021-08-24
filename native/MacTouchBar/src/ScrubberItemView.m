@@ -68,38 +68,42 @@ const int g_marginBorders = 10;
 }
 
 - (void)setLayoutConstraints {
-    self.imageView.translatesAutoresizingMaskIntoConstraints = NO;
-    self.textField.translatesAutoresizingMaskIntoConstraints = NO;
+    @try {
+        self.imageView.translatesAutoresizingMaskIntoConstraints = NO;
+        self.textField.translatesAutoresizingMaskIntoConstraints = NO;
 
-    NSTextField * targetTextField = self.textField;
-    NSImageView * targetImageView = self.imageView;
+        NSTextField * targetTextField = self.textField;
+        NSImageView * targetImageView = self.imageView;
 
-    NSDictionary * viewBindings = NSDictionaryOfVariableBindings(targetImageView, targetTextField);
-    NSString * formatString = [NSString stringWithFormat:@"H:|-%d-[targetImageView]-%d-[targetTextField]-%d-|", g_marginBorders, g_marginImgText, g_marginBorders];
-    NSArray * hConstraints = [NSLayoutConstraint constraintsWithVisualFormat:formatString
-        options:NSLayoutFormatDirectionLeadingToTrailing
-        metrics:nil
-        views:viewBindings];
+        NSDictionary * viewBindings = NSDictionaryOfVariableBindings(targetImageView, targetTextField);
+        NSString * formatString = [NSString stringWithFormat:@"H:|-%d-[targetImageView]-%d-[targetTextField]-%d-|", g_marginBorders, g_marginImgText, g_marginBorders];
+        NSArray * hConstraints = [NSLayoutConstraint constraintsWithVisualFormat:formatString
+            options:NSLayoutFormatDirectionLeadingToTrailing
+            metrics:nil
+            views:viewBindings];
 
-    formatString = @"V:|-0-[targetImageView]-0-|";
-    NSArray *vConstraints = [NSLayoutConstraint constraintsWithVisualFormat:formatString
-        options:NSLayoutFormatDirectionLeadingToTrailing
-        metrics:nil
-        views:viewBindings];
+        formatString = @"V:|-0-[targetImageView]-0-|";
+        NSArray *vConstraints = [NSLayoutConstraint constraintsWithVisualFormat:formatString
+            options:NSLayoutFormatDirectionLeadingToTrailing
+            metrics:nil
+            views:viewBindings];
 
-    NSLayoutConstraint *alignConstraint = [NSLayoutConstraint constraintWithItem:self.imageView
-        attribute:NSLayoutAttributeCenterY
-        relatedBy:NSLayoutRelationEqual
-        toItem:self.textField
-        attribute:NSLayoutAttributeCenterY
-        multiplier:1
-        constant:0];
+        NSLayoutConstraint *alignConstraint = [NSLayoutConstraint constraintWithItem:self.imageView
+            attribute:NSLayoutAttributeCenterY
+            relatedBy:NSLayoutRelationEqual
+            toItem:self.textField
+            attribute:NSLayoutAttributeCenterY
+            multiplier:1
+            constant:0];
 
-    NSMutableArray *constraints = [NSMutableArray arrayWithArray:hConstraints];
-    [constraints addObjectsFromArray:vConstraints];
-    [constraints addObject:alignConstraint];
+        NSMutableArray *constraints = [NSMutableArray arrayWithArray:hConstraints];
+        [constraints addObjectsFromArray:vConstraints];
+        [constraints addObject:alignConstraint];
 
-    [NSLayoutConstraint activateConstraints:constraints];
+        [NSLayoutConstraint activateConstraints:constraints];
+    } @catch (NSException *exception) {
+        NSLog(@"WARNING: suppressed exception from ScrubberItemView::setLayoutConstraints");
+    }
 }
 
 - (void)setImage:(NSImage *)img {

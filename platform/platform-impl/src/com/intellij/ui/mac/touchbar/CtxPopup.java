@@ -21,10 +21,10 @@ import java.util.List;
 import java.util.Map;
 
 class CtxPopup {
-  static private final boolean ENABLED = Boolean.getBoolean("touchbar.show.popups");
+  static private final boolean DISABLED = Boolean.getBoolean("touchbar.popups.disable");
 
   static @Nullable Disposable showPopupItems(@NotNull JBPopup popup, @NotNull JComponent popupComponent) {
-    if (!ENABLED || !(popup instanceof ListPopupImpl)) {
+    if (DISABLED || !(popup instanceof ListPopupImpl)) {
       return null;
     }
 

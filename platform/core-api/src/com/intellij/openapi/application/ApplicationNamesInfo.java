@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.application;
 
 import com.intellij.openapi.util.NlsSafe;
@@ -10,6 +10,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
@@ -29,7 +30,6 @@ public final class ApplicationNamesInfo {
   private static @NotNull XmlElement loadData() {
     String prefix = System.getProperty(PlatformUtils.PLATFORM_PREFIX_KEY, "");
 
-    String filePath;
     if (Boolean.getBoolean("idea.use.dev.build.server")) {
       String module = null;
       if (prefix.isEmpty() || prefix.equals(PlatformUtils.IDEA_PREFIX)) {
@@ -39,28 +39,24 @@ public final class ApplicationNamesInfo {
         module = "intellij.webstorm";
       }
 
-      if (module == null) {
-        filePath = null;
-      }
-      else {
-        filePath = PathManager.getHomePath() + "/out/classes/production/" + module + "/idea/" +
-                   (prefix.equals("idea") ? "" : prefix) + "ApplicationInfo.xml";
+      if (module != null) {
+        Path file = Paths.get(PathManager.getHomePath() + "/out/classes/production/" + module + "/idea/" +
+                              (prefix.equals("idea") ? "" : prefix) + "ApplicationInfo.xml");
+        try {
+          return XmlDomReader.readXmlAsModel(Files.newInputStream(file));
+        }
+        catch (NoSuchFileException ignore) {
+        }
+        catch (Exception e) {
+          throw new RuntimeException("Cannot load " + file, e);
+        }
       }
     }
     else {
-      filePath = PathManager.getBinPath() + "/appInfo.xml";
-    }
-
-    // production
-    if (filePath != null) {
-      Path file = Paths.get(filePath);
-      try {
-        return XmlDomReader.readXmlAsModel(Files.newInputStream(file));
-      }
-      catch (NoSuchFileException ignore) {
-      }
-      catch (Exception e) {
-        throw new RuntimeException("Cannot load " + file, e);
+      // production
+      String appInfoData = getAppInfoData();
+      if (!appInfoData.isEmpty()) {
+        return XmlDomReader.readXmlAsModel(appInfoData.getBytes(StandardCharsets.UTF_8));
       }
     }
 
@@ -77,6 +73,11 @@ public final class ApplicationNamesInfo {
     catch (Exception e) {
       throw new RuntimeException("Cannot load resource: " + resource, e);
     }
+  }
+
+  private static String getAppInfoData() {
+    // not easy to inject byte array using ASM - it is not constant value
+    return "";
   }
 
   @ApiStatus.Internal
@@ -127,7 +128,7 @@ public final class ApplicationNamesInfo {
   }
 
   /**
-   * Returns full product name ({@code "IntelliJ IDEA"} for IntelliJ IDEA, {@code "WebStorm"} for WebStorm, etc).
+   * Returns full product name ({@code "IntelliJ IDEA"} for IntelliJ IDEA, {@code "WebStorm"} for WebStorm, etc.).
    * Vendor prefix and edition are not included.
    */
   public @NlsSafe String getFullProductName() {
@@ -159,7 +160,7 @@ public final class ApplicationNamesInfo {
   }
 
   /**
-   * Returns a sentence-cased version of {@link #getProductName()} ({@code "Idea"} for IntelliJ IDEA, {@code "Webstorm"} for WebStorm, etc).
+   * Returns a sentence-cased version of {@link #getProductName()} ({@code "Idea"} for IntelliJ IDEA, {@code "Webstorm"} for WebStorm, etc.).
    * <strong>Kept for compatibility; use {@link #getFullProductName()} instead.</strong>
    */
   public String getLowercaseProductName() {
@@ -169,7 +170,7 @@ public final class ApplicationNamesInfo {
 
   /**
    * Returns the base name of the launcher file (*.exe, *.bat, *.sh) located in the product home's 'bin/' directory
-   * ({@code "idea"} for IntelliJ IDEA, {@code "webstorm"} for WebStorm etc).
+   * ({@code "idea"} for IntelliJ IDEA, {@code "webstorm"} for WebStorm etc.).
    */
   public String getScriptName() {
     return myScriptName;

@@ -169,7 +169,14 @@ public class PyBuiltinCache {
   public PyType createLiteralCollectionType(final PySequenceExpression sequence, final String name, @NotNull TypeEvalContext context) {
     final PyClass cls = getClass(name);
     if (cls != null) {
-      return new PyCollectionTypeImpl(cls, false, PyCollectionTypeUtil.INSTANCE.getTypeByModifications(sequence, context));
+      if (sequence instanceof PyDictLiteralExpression) {
+        final PyTypedDictType typedDictType = PyCollectionTypeUtil.INSTANCE.getTypedDictTypeWithModifications(sequence, context);
+        if (typedDictType != null) {
+          return typedDictType;
+        }
+      }
+      final List<PyType> literalCollectionType = PyCollectionTypeUtil.INSTANCE.getTypeByModifications(sequence, context);
+      return new PyCollectionTypeImpl(cls, false, literalCollectionType);
     }
     return null;
   }

@@ -193,6 +193,11 @@ public abstract class StatusText {
     return new Rectangle(x, y, size.width, size.height);
   }
 
+  public Point getPointBelow() {
+    final var textComponentBound = getTextComponentBound();
+    return new Point(textComponentBound.x, textComponentBound.y + textComponentBound.height);
+  }
+
   public final boolean isShowAboveCenter() {
     return myShowAboveCenter;
   }

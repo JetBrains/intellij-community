@@ -2,12 +2,16 @@
 package git4idea.ift.lesson
 
 import com.intellij.diff.tools.util.SimpleDiffPanel
+import com.intellij.ide.dnd.aware.DnDAwareTree
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.ui.popup.Balloon
 import com.intellij.openapi.vcs.changes.VcsEditorTabFilesManager
+import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.openapi.wm.ToolWindowId
 import com.intellij.openapi.wm.ToolWindowManager
-import com.intellij.ui.JBColor
 import com.intellij.ui.SearchTextField
 import com.intellij.util.ui.UIUtil
+import com.intellij.util.ui.tree.TreeUtil
 import com.intellij.vcs.log.VcsLogBundle
 import com.intellij.vcs.log.impl.VcsProjectLog
 import com.intellij.vcs.log.ui.filter.BranchFilterPopupComponent
@@ -22,17 +26,18 @@ import git4idea.ift.GitLessonsUtil.highlightLatestCommitsFromBranch
 import git4idea.ift.GitLessonsUtil.highlightSubsequentCommitsInGitLog
 import git4idea.ift.GitLessonsUtil.resetGitLogWindow
 import git4idea.ift.GitLessonsUtil.showWarningIfGitWindowClosed
+import git4idea.ui.branch.dashboard.CHANGE_LOG_FILTER_ON_BRANCH_SELECTION_PROPERTY
+import git4idea.ui.branch.dashboard.SHOW_GIT_BRANCHES_LOG_PROPERTY
 import training.dsl.*
 import training.ui.LearningUiHighlightingManager
-import java.awt.Component
-import java.awt.Graphics
-import java.awt.Graphics2D
-import javax.swing.Icon
+import java.awt.Rectangle
 
 class GitProjectHistoryLesson : GitLesson("Git.ProjectHistory", GitLessonsBundle.message("git.project.history.lesson.name")) {
   override val existedFile = "git/sphinx_cat.yml"
   private val branchName = "feature"
   private val textToFind = "sphinx"
+
+  private var showGitBranchesBackup: Boolean? = null
 
   override val testScriptProperties = TaskTestContext.TestScriptProperties(skipTesting = true)
 
@@ -49,33 +54,59 @@ class GitProjectHistoryLesson : GitLesson("Git.ProjectHistory", GitLessonsBundle
 
     resetGitLogWindow()
 
+    prepareRuntimeTask l@{
+      val property = SHOW_GIT_BRANCHES_LOG_PROPERTY
+      val logUiProperties = VcsProjectLog.getInstance(project).mainLogUi?.properties ?: return@l
+      showGitBranchesBackup = logUiProperties[property]
+      logUiProperties[property] = true
+    }
+
     task {
       highlightLatestCommitsFromBranch(branchName)
     }
 
     task {
-      text(GitLessonsBundle.message("git.project.history.commits.tree.explanation", icon(commitBackgroundColorIcon)))
+      text(GitLessonsBundle.message("git.project.history.commits.tree.explanation"))
       proceedLink()
     }
 
     task {
-      before {
-        LearningUiHighlightingManager.clearHighlights()
+      var selectionCleared = false
+      // todo: return highlighting of full tree node when IFT-234 will be resolved
+      triggerByPartOfComponent(highlightBorder = false) l@{ tree: DnDAwareTree ->
+        val path = TreeUtil.treePathTraverser(tree).find { it.getPathComponent(it.pathCount - 1).toString() == "HEAD_NODE" }
+                   ?: return@l null
+        val rect = tree.getPathBounds(path) ?: return@l null
+        Rectangle(rect.x, rect.y, rect.width, 0).also {
+          if (!selectionCleared) {
+            tree.clearSelection()
+            selectionCleared = true
+          }
+        }
       }
-      text(GitLessonsBundle.message("git.project.history.apply.branch.filter"))
-      triggerByFoundPathAndHighlight(highlightInside = true) { _, path ->
-        path.pathCount > 1 && path.getPathComponent(1).toString() == "HEAD_NODE"
-      }
+    }
+
+    task {
+      val logUiProperties = VcsProjectLog.getInstance(project).mainLogUi?.properties
+      val choice = if (logUiProperties == null || !logUiProperties[CHANGE_LOG_FILTER_ON_BRANCH_SELECTION_PROPERTY]) 1 else 0
+      text(GitLessonsBundle.message("git.project.history.apply.branch.filter", choice))
+      text(GitLessonsBundle.message("git.project.history.click.head.tooltip", choice),
+           LearningBalloonConfig(Balloon.Position.above, 250))
       triggerByUiComponentAndHighlight(false, false) { ui: BranchFilterPopupComponent ->
         ui.currentText?.contains("HEAD") == true
       }
       showWarningIfGitWindowClosed()
     }
 
+    task {
+      triggerByUiComponentAndHighlight { _: UserFilterPopupComponent -> true }
+    }
+
     val meFilterText = VcsLogBundle.message("vcs.log.user.filter.me")
     task {
       text(GitLessonsBundle.message("git.project.history.apply.user.filter"))
-      triggerByUiComponentAndHighlight { _: UserFilterPopupComponent -> true }
+      text(GitLessonsBundle.message("git.project.history.click.filter.tooltip"),
+           LearningBalloonConfig(Balloon.Position.above, 0))
       triggerByListItemAndHighlight { item ->
         item.toString().contains(meFilterText)
       }
@@ -93,7 +124,9 @@ class GitProjectHistoryLesson : GitLesson("Git.ProjectHistory", GitLessonsBundle
     task {
       text(GitLessonsBundle.message("git.project.history.apply.message.filter", code(textToFind), LessonUtil.rawEnter()))
       triggerByUiComponentAndHighlight { ui: SearchTextField ->
-        UIUtil.getParentOfType(MainFrame::class.java, ui) != null
+        (UIUtil.getParentOfType(MainFrame::class.java, ui) != null).also {
+          if (it) IdeFocusManager.getInstance(project).requestFocus(ui, true)
+        }
       }
       triggerByUiComponentAndHighlight(false, false) l@{ ui: VcsLogGraphTable ->
         val model = ui.model as? GraphTableModel ?: return@l false
@@ -144,18 +177,10 @@ class GitProjectHistoryLesson : GitLesson("Git.ProjectHistory", GitLessonsBundle
     text(GitLessonsBundle.message("git.project.history.invitation.to.commit.lesson"))
   }
 
-  private val commitBackgroundColorIcon = object: Icon {
-    override fun paintIcon(c: Component?, g: Graphics?, x: Int, y: Int) {
-      val g2d = g as Graphics2D
-      val oldColor = g2d.color
-      // todo Add real background colors. Now it is colors with hover.
-      g2d.color = JBColor(0xD0E2EE, 0x464A4D)
-      g2d.fillRect(x, y, iconWidth, iconHeight)
-      g2d.color = oldColor
+  override fun onLessonEnd(project: Project, lessonPassed: Boolean) {
+    if (showGitBranchesBackup != null) {
+      val logUiProperties = VcsProjectLog.getInstance(project).mainLogUi?.properties ?: error("Failed to get MainVcsLogUiProperties")
+      logUiProperties[SHOW_GIT_BRANCHES_LOG_PROPERTY] = showGitBranchesBackup!!
     }
-
-    override fun getIconWidth(): Int = 16
-
-    override fun getIconHeight(): Int = 16
   }
 }

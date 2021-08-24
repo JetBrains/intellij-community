@@ -24,17 +24,17 @@ import com.jetbrains.packagesearch.intellij.plugin.ui.updateAndRepaint
 import com.jetbrains.packagesearch.intellij.plugin.util.AppUI
 import com.jetbrains.packagesearch.intellij.plugin.util.FeatureFlags
 import com.jetbrains.packagesearch.intellij.plugin.util.addSelectionChangedListener
+import com.jetbrains.packagesearch.intellij.plugin.util.getPackageSearchModulesChangesFlow
 import com.jetbrains.packagesearch.intellij.plugin.util.lifecycleScope
 import com.jetbrains.packagesearch.intellij.plugin.util.logInfo
 import com.jetbrains.packagesearch.intellij.plugin.util.lookAndFeelFlow
-import com.jetbrains.packagesearch.intellij.plugin.util.map
 import com.jetbrains.packagesearch.intellij.plugin.util.onEach
 import com.jetbrains.packagesearch.intellij.plugin.util.packageSearchDataService
-import com.jetbrains.packagesearch.intellij.plugin.util.packageSearchModulesChangesFlow
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
@@ -56,24 +56,26 @@ class PackageSearchToolWindowFactory : ToolWindowFactory, DumbAware {
         }
     }
 
-    override fun isApplicable(project: Project) = runBlocking {
-        val isAvailable = project.packageSearchModulesChangesFlow.first().isNotEmpty()
+    override fun isApplicable(project: Project): Boolean {
+        val isAvailable = runBlocking { project.getPackageSearchModulesChangesFlow().first().isNotEmpty() }
 
-        if (!isAvailable) project.packageSearchModulesChangesFlow
+        if (!isAvailable) project.getPackageSearchModulesChangesFlow()
             .filter { it.isNotEmpty() }
             .take(1)
-            .map(Dispatchers.AppUI) {
+            .flowOn(Dispatchers.Default)
+            .map {
                 RegisterToolWindowTask.closable(
                     ToolWindowId,
                     PackageSearchBundle.messagePointer("toolwindow.stripe.Dependencies"),
                     PackageSearchIcons.ArtifactSmall
                 )
             }
-            .map(Dispatchers.AppUI) { toolWindowTask -> ToolWindowManager.getInstance(project).registerToolWindow(toolWindowTask) }
-            .onEach(Dispatchers.AppUI) { toolWindow -> initialize(toolWindow, project) }
+            .map { toolWindowTask -> ToolWindowManager.getInstance(project).registerToolWindow(toolWindowTask) }
+            .onEach { toolWindow -> initialize(toolWindow, project) }
+            .flowOn(Dispatchers.AppUI)
             .launchIn(project.lifecycleScope)
 
-        isAvailable
+        return isAvailable
     }
 
     override fun createToolWindowContent(project: Project, toolWindow: ToolWindow) = initialize(toolWindow, project)
@@ -99,15 +101,7 @@ class PackageSearchToolWindowFactory : ToolWindowFactory, DumbAware {
         contentManager.removeAllContents(true)
 
         val panels = buildList {
-            add(
-                PackageManagementPanel(
-                    rootDataModelProvider = project.packageSearchDataService,
-                    selectedPackageSetter = project.packageSearchDataService,
-                    targetModuleSetter = project.packageSearchDataService,
-                    searchClient = project.packageSearchDataService,
-                    operationExecutor = project.packageSearchDataService
-                )
-            )
+            add(PackageManagementPanel(project))
             if (FeatureFlags.showRepositoriesTab) {
                 add(RepositoryManagementPanel(rootDataModelProvider = project.packageSearchDataService))
             }
@@ -121,13 +115,13 @@ class PackageSearchToolWindowFactory : ToolWindowFactory, DumbAware {
 
         isAvailable = false
 
-        project.packageSearchModulesChangesFlow
+        project.getPackageSearchModulesChangesFlow()
             .map { it.isNotEmpty() }
             .onEach { logInfo("PackageSearchToolWindowFactory#packageSearchModulesChangesFlow") { "Setting toolWindow.isAvailable = $it" } }
             .onEach(Dispatchers.AppUI) { isAvailable = it }
             .launchIn(project.lifecycleScope)
 
-        combine(project.lookAndFeelFlow, project.packageSearchModulesChangesFlow.filter { it.isNotEmpty() }) { _, _ -> }
+        combine(project.lookAndFeelFlow, project.getPackageSearchModulesChangesFlow().filter { it.isNotEmpty() }) { _, _ -> }
             .onEach(Dispatchers.AppUI) { contentManager.component.updateAndRepaint() }
             .launchIn(project.lifecycleScope)
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.lang;
 
 import com.intellij.ReviseWhenPortedToJDK;
@@ -19,18 +19,26 @@ public abstract class Java11Shim {
     }
 
     @Override
-    public <E> Set<E> copyOf(Set<? extends E> collection) {
+    public <E> @NotNull Set<E> copyOf(Set<? extends E> collection) {
       return Collections.unmodifiableSet(collection);
     }
 
     @Override
-    public <E> List<E> copyOf(List<? extends E> collection) {
+    public <E> @NotNull List<E> copyOf(List<? extends E> collection) {
       return Collections.unmodifiableList(new ArrayList<>(collection));
+    }
+
+    @Override
+    public @NotNull <E> List<E> listOf(E[] collection) {
+      return Arrays.asList(collection);
     }
   };
 
   public abstract <@NotNull K, @NotNull V> Map<K, V> copyOf(Map<? extends K, ? extends V> map);
 
-  public abstract <@NotNull E> Set<E> copyOf(Set<? extends E> collection);
-  public abstract <@NotNull E> List<E> copyOf(List<? extends E> collection);
+  public abstract <@NotNull E> @NotNull Set<E> copyOf(Set<? extends E> collection);
+
+  public abstract <@NotNull E> @NotNull List<E> copyOf(List<? extends E> collection);
+
+  public abstract <@NotNull E> @NotNull List<E> listOf(E[] collection);
 }

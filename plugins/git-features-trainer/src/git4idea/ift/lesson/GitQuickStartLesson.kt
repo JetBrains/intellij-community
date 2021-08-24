@@ -5,6 +5,7 @@ import com.intellij.CommonBundle
 import com.intellij.dvcs.DvcsUtil
 import com.intellij.dvcs.ui.DvcsBundle
 import com.intellij.dvcs.ui.SelectChildTextFieldWithBrowseButton
+import com.intellij.ide.actions.searcheverywhere.SearchEverywhereManagerImpl
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereUI
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.editor.EditorModificationUtil
@@ -41,7 +42,10 @@ import training.dsl.*
 import training.dsl.LessonUtil.adjustPopupPosition
 import training.dsl.LessonUtil.sampleRestoreNotification
 import training.ui.LearningUiHighlightingManager
+import training.util.toNullableString
+import java.awt.Point
 import java.awt.Rectangle
+import java.awt.event.KeyEvent
 import javax.swing.JButton
 import javax.swing.JTree
 import javax.swing.tree.TreePath
@@ -51,6 +55,8 @@ class GitQuickStartLesson : GitLesson("Git.QuickStart", GitLessonsBundle.message
   private val fileToChange = existedFile.substringAfterLast('/')
   private val textToHighlight = "green"
 
+  private var backupSearchEverywhereLocation: Point? = null
+
   override val testScriptProperties = TaskTestContext.TestScriptProperties(skipTesting = true)
 
   override val lessonContent: LessonContext.() -> Unit = {
@@ -58,49 +64,61 @@ class GitQuickStartLesson : GitLesson("Git.QuickStart", GitLessonsBundle.message
 
     showWarningIfModalCommitEnabled()
 
+    task {
+      text(GitLessonsBundle.message("git.quick.start.introduction"))
+      proceedLink()
+    }
+
     lateinit var findActionTaskId: TaskContext.TaskId
-    task("GotoAction") {
+    task("SearchEverywhere") {
       findActionTaskId = taskId
-      text(GitLessonsBundle.message("git.quick.start.find.action",
-                                    strong(StringUtil.removeEllipsisSuffix(cloneActionText)), action(it), LessonUtil.actionName(it)))
+      text(GitLessonsBundle.message("git.quick.start.find.action", strong(StringUtil.removeEllipsisSuffix(cloneActionText)),
+                                    LessonUtil.rawKeyStroke(KeyEvent.VK_SHIFT), LessonUtil.actionName(it)))
       triggerByUiComponentAndHighlight(highlightInside = false) { ui: ExtendableTextField ->
         UIUtil.getParentOfType(SearchEverywhereUI::class.java, ui) != null
       }
     }
 
     task("Git.Clone") {
+      before {
+        if (backupSearchEverywhereLocation == null) {
+          backupSearchEverywhereLocation = adjustPopupPosition(SearchEverywhereManagerImpl.LOCATION_SETTINGS_KEY)
+        }
+      }
       text(GitLessonsBundle.message("git.quick.start.type.clone", code(StringUtil.removeEllipsisSuffix(cloneActionText))))
       triggerByListItemAndHighlight { item ->
-        item.toString().contains(cloneActionText)
+        item.toNullableString()?.contains(cloneActionText) == true
       }
       triggerStart(it)
       restoreByUi(delayMillis = defaultRestoreDelay)
     }
 
     task {
-      triggerByUiComponentAndHighlight(false, false) { _: SelectChildTextFieldWithBrowseButton -> true }
+      triggerByPartOfComponent(false, false) { ui: SelectChildTextFieldWithBrowseButton ->
+        val rect = ui.visibleRect
+        Rectangle(rect.x, rect.y, 59, rect.height)
+      }
     }
 
     task {
       before {
         adjustPopupPosition("") // Clone dialog is not saving the state now
       }
-      gotItStep(Balloon.Position.below, 300, GitLessonsBundle.message("git.quick.start.clone.dialog.got.it.1"))
+      gotItStep(Balloon.Position.below, 340, GitLessonsBundle.message("git.quick.start.clone.dialog.got.it.1"),
+                cornerToPointerDistance = 50)
       restoreByUi(findActionTaskId)
     }
 
     task {
       triggerByPartOfComponent(false) { ui: VcsCloneDialogExtensionList ->
-        if (ui.model.size > 3) {
-          val rect = ui.getCellBounds(2, 2)
-          Rectangle(rect.x, rect.y + rect.height / 2, rect.width, rect.height)  // middle of the third and fourth item
-        }
-        else ui.visibleRect
+        val size = ui.model.size
+        val rect = ui.getCellBounds(size - 1, size - 1)
+        Rectangle(rect.x, rect.y, 96, rect.height)
       }
     }
 
     task {
-      gotItStep(Balloon.Position.atRight, 400, GitLessonsBundle.message("git.quick.start.clone.dialog.got.it.2"))
+      gotItStep(Balloon.Position.below, 300, GitLessonsBundle.message("git.quick.start.clone.dialog.got.it.2"))
       restoreByUi(findActionTaskId)
     }
 
@@ -113,7 +131,7 @@ class GitQuickStartLesson : GitLesson("Git.QuickStart", GitLessonsBundle.message
 
     task {
       text(GitLessonsBundle.message("git.quick.start.close.clone.dialog", strong(cancelButtonText)),
-           LearningBalloonConfig(Balloon.Position.above, 400, true))
+           LearningBalloonConfig(Balloon.Position.above, 300, true))
       stateCheck { previous.ui?.isShowing != true }
     }
 
@@ -132,7 +150,7 @@ class GitQuickStartLesson : GitLesson("Git.QuickStart", GitLessonsBundle.message
     task("Git.Branches") {
       showBranchesTaskId = taskId
       text(GitLessonsBundle.message("git.quick.start.open.branches", action(it)))
-      text(GitLessonsBundle.message("git.feature.branch.open.branches.popup.balloon"), LearningBalloonConfig(Balloon.Position.above, 200))
+      text(GitLessonsBundle.message("git.feature.branch.open.branches.popup.balloon"), LearningBalloonConfig(Balloon.Position.above, 0))
       triggerByUiComponentAndHighlight(false, false) { ui: EngravedLabel ->
         val repository = GitRepositoryManager.getInstance(project).repositories.first()
         val branchesInRepoText = DvcsBundle.message("branch.popup.vcs.name.branches.in.repo", GitBundle.message("git4idea.vcs.name"),
@@ -194,7 +212,7 @@ class GitQuickStartLesson : GitLesson("Git.QuickStart", GitLessonsBundle.message
       stateCheck {
         val lineEndOffset = editor.document.getLineEndOffset(line)
         val color = editor.document.charsSequence.subSequence(startOffset, lineEndOffset).removeSuffix("]").trim()
-        !textToHighlight.startsWith(color) && color.length >= 3
+        !textToHighlight.startsWith(color) && color.length >= 3 && !ChangeListManager.getInstance(project).allChanges.isEmpty()
       }
       proposeRestore {
         val caretOffset = editor.caretModel.offset
@@ -228,7 +246,7 @@ class GitQuickStartLesson : GitLesson("Git.QuickStart", GitLessonsBundle.message
     }
 
     task {
-      gotItStep(Balloon.Position.atRight, 400, GitLessonsBundle.message("git.quick.start.commit.window.got.it"))
+      gotItStep(Balloon.Position.atRight, 0, GitLessonsBundle.message("git.quick.start.commit.window.got.it"))
     }
 
     task {
@@ -249,6 +267,8 @@ class GitQuickStartLesson : GitLesson("Git.QuickStart", GitLessonsBundle.message
 
     task {
       text(GitLessonsBundle.message("git.quick.start.perform.push", strong(pushButtonText)))
+      text(GitLessonsBundle.message("git.click.balloon", strong(pushButtonText)),
+           LearningBalloonConfig(Balloon.Position.above, 0, cornerToPointerDistance = 117))
       triggerOnNotification { notification ->
         notification.groupId == "Vcs Notifications" && notification.type == NotificationType.INFORMATION
       }
@@ -259,5 +279,10 @@ class GitQuickStartLesson : GitLesson("Git.QuickStart", GitLessonsBundle.message
   override fun prepare(project: Project) {
     super.prepare(project)
     GitProjectUtil.createRemoteProject("origin", project)
+  }
+
+  override fun onLessonEnd(project: Project, lessonPassed: Boolean) {
+    LessonUtil.restorePopupPosition(project, SearchEverywhereManagerImpl.LOCATION_SETTINGS_KEY, backupSearchEverywhereLocation)
+    backupSearchEverywhereLocation = null
   }
 }

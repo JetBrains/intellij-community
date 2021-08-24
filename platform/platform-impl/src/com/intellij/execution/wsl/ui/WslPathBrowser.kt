@@ -2,6 +2,7 @@ package com.intellij.execution.wsl.ui
 
 import com.intellij.execution.wsl.WSLDistribution
 import com.intellij.ide.IdeBundle
+import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 import com.intellij.openapi.fileChooser.ex.FileChooserDialogImpl
 import com.intellij.openapi.progress.ProgressIndicator
@@ -9,6 +10,7 @@ import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.Task
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.util.NlsContexts
+import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.TextAccessor
@@ -37,12 +39,18 @@ class WslPathBrowser(private val field: TextAccessor) {
   private fun getLocalPath(distro: WSLDistribution): VirtualFile? {
     val fs = LocalFileSystem.getInstance()
     var file: VirtualFile? = null
-    distro.getWindowsPath(field.text)?.let {
+    val text = field.text.trim()
+    val logger = Logger.getInstance(WslPathBrowser::class.java)
+    logger.warn("Opening $text in ${distro.uncRoot}${FileUtil.toSystemDependentName(FileUtil.normalize(text))}")
+    distro.getWindowsPath(text).let {
       var fileName = it
       while (file == null) {
         file = fs.findFileByPath(fileName)
         fileName = File(fileName).parent
       }
+    }
+    if (file == null) {
+      logger.warn("Failed to find file $text")
     }
     return file
   }

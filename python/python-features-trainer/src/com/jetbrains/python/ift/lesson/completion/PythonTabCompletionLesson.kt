@@ -32,7 +32,7 @@ class PythonTabCompletionLesson
         prepareSample(sample)
         task("CodeCompletion") {
           text(PythonLessonsBundle.message("python.tab.completion.start.completion",
-                                     code("current"), code("total"), action(it)))
+                                           code("current"), code("total"), action(it)))
           triggerByListItemAndHighlight(checkList = { ui -> isTotalItem(ui) })
           proposeRestoreMe()
           test { actions(it) }
@@ -56,8 +56,8 @@ class PythonTabCompletionLesson
         task {
           val result = LessonUtil.insertIntoSample(template, "total")
           text(PythonLessonsBundle.message("python.tab.completion.use.tab.completion",
-                                     action("EditorEnter"), code("total"), code("current"),
-                                     action("EditorTab")))
+                                           action("EditorEnter"), code("total"), code("current"),
+                                           action("EditorTab")))
 
           trigger("EditorChooseLookupItemReplace") {
             editor.document.text == result

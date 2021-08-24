@@ -13,6 +13,7 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -298,5 +299,14 @@ public final class FileTypeAssocTable<T> {
       +"myExactFileNameAnyCaseMappings="+myExactFileNameAnyCaseMappings+";\n"
       +"myMatchingMappings="+myMatchingMappings+";\n"
       +"myHashBangMap="+myHashBangMap+";";
+  }
+
+  @TestOnly
+  public void clear() {
+    myHashBangMap.clear();
+    myMatchingMappings.clear();
+    myExtensionMappings.clear();
+    myExactFileNameMappings.clear();
+    myExactFileNameAnyCaseMappings.clear();
   }
 }

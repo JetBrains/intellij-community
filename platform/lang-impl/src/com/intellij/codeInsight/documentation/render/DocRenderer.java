@@ -504,7 +504,7 @@ class DocRenderer implements EditorCustomElementRenderer, CustomFoldRegionRender
     if (linkColor == null) linkColor = getTextColor(colorsScheme);
     String linkColorHex = ColorUtil.toHex(linkColor);
     if (!Objects.equals(linkColorHex, ourCachedStyleSheetLinkColor)) {
-      String editorFontNamePlaceHolder = EditorCssFontResolver.EDITOR_FONT_NAME_PLACEHOLDER;
+      String editorFontNamePlaceHolder = EditorCssFontResolver.EDITOR_FONT_NAME_NO_LIGATURES_PLACEHOLDER;
       ourCachedStyleSheet = StartupUiUtil.createStyleSheet(
         "body {overflow-wrap: anywhere}" + // supported by JetBrains Runtime
         "code {font-family: \"" + editorFontNamePlaceHolder + "\"}" +

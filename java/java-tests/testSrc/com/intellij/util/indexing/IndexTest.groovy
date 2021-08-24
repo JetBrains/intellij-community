@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.indexing
 
 import com.intellij.find.ngrams.TrigramIndex
@@ -1490,7 +1490,7 @@ class IndexTest extends JavaCodeInsightFixtureTestCase {
     def file = ScratchRootType.getInstance().createScratchFile(project, "Foo.java", JavaLanguage.INSTANCE, "class Foo {}")
 
     def text = "<fileBasedIndex implementation=\"" + CountingFileBasedIndexExtension.class.getName() + "\"/>"
-    Disposer.register(testRootDisposable, loadExtensionWithText(text, CountingFileBasedIndexExtension.class.classLoader))
+    Disposer.register(testRootDisposable, loadExtensionWithText(text))
 
     FileBasedIndex.getInstance().getFileData(CountingFileBasedIndexExtension.INDEX_ID, file, project)
     assertTrue(CountingFileBasedIndexExtension.COUNTER.get() > 0)

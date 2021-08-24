@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.framework.detection;
 
 import com.intellij.facet.FacetTestCase;
@@ -21,11 +21,11 @@ public abstract class FrameworkDetectionTestCase extends FacetTestCase {
       //todo we can get rid of this ugly check by converting facet tests to JUnit4 and using test rules to enable facet detection
       Disposer.register(getTestRootDisposable(), DynamicPluginsTestUtil.loadExtensionWithText(
         "<framework.detector implementation=\"" + MockFacetDetector.class.getName() + "\"/>",
-        MockFacetDetector.class.getClassLoader()));
+        "com.intellij"));
 
       Disposer.register(getTestRootDisposable(), DynamicPluginsTestUtil.loadExtensionWithText(
         "<framework.detector implementation=\"" + MockSubFacetDetector.class.getName() + "\"/>",
-        MockSubFacetDetector.class.getClassLoader()));
+        "com.intellij"));
     }
     FrameworkDetectionManager.getInstance(myProject).doInitialize();
   }

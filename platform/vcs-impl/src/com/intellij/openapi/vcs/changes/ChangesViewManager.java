@@ -449,7 +449,7 @@ public class ChangesViewManager implements ChangesViewEx,
       if (myDisposed) return;
 
       boolean isEditorPreview = isEditorPreview(myProject);
-      boolean hasSplitterPreview = !isCommitToolWindowShown(myProject);
+      boolean hasSplitterPreview = !isCommitToolWindowShown(myProject) && !isOpenEditorDiffPreviewWithSingleClick.asBoolean();
 
       if (myEditorChangeProcessor != null) Disposer.dispose(myEditorChangeProcessor);
       if (mySplitterChangeProcessor != null) Disposer.dispose(mySplitterChangeProcessor);

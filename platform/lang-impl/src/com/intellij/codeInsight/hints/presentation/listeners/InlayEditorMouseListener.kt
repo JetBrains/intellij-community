@@ -1,10 +1,11 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.hints.presentation.listeners
 
 import com.intellij.codeInsight.hints.presentation.InputHandler
 import com.intellij.openapi.editor.event.EditorMouseEvent
 import com.intellij.openapi.editor.event.EditorMouseEventArea
 import com.intellij.openapi.editor.event.EditorMouseListener
+import com.intellij.util.SlowOperations
 import java.awt.Point
 
 /**
@@ -21,6 +22,8 @@ class InlayEditorMouseListener : EditorMouseListener {
     val bounds = inlay.bounds ?: return
     val inlayPoint = Point(bounds.x, bounds.y)
     val translated = Point(event.x - inlayPoint.x, event.y - inlayPoint.y)
-    renderer.mouseClicked(event, translated)
+    SlowOperations.allowSlowOperations<Exception> {
+      renderer.mouseClicked(event, translated)
+    }
   }
 }

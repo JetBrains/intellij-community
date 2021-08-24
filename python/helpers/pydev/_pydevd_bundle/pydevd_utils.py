@@ -46,8 +46,11 @@ def save_main_module(file, module_name):
         m = new_module('__main__')
 
     sys.modules['__main__'] = m
-    if hasattr(sys.modules[module_name], '__loader__'):
-        m.__loader__ = getattr(sys.modules[module_name], '__loader__')
+    orig_module = sys.modules[module_name]
+    for attr in ['__loader__', '__spec__']:
+        if hasattr(orig_module, attr):
+            orig_attr = getattr(orig_module, attr)
+            setattr(m, attr, orig_attr)
     m.__file__ = file
 
     return m

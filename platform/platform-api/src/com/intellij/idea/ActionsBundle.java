@@ -11,7 +11,7 @@ import org.jetbrains.annotations.PropertyKey;
 import java.util.function.Supplier;
 
 public final class ActionsBundle extends DynamicBundle {
-  @NonNls private static final String IDEA_ACTIONS_BUNDLE = "messages.ActionsBundle";
+  @NonNls public static final String IDEA_ACTIONS_BUNDLE = "messages.ActionsBundle";
 
   private static final ActionsBundle ourInstance = new ActionsBundle();
 

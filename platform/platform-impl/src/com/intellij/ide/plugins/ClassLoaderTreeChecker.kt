@@ -45,16 +45,15 @@ internal class ClassLoaderTreeChecker(private val unloadedMainDescriptor: IdeaPl
     }
 
     @Suppress("TestOnlyProblems")
-    val parents = classLoader._getParents() ?: return
-
+    val parents = classLoader._getParents()
     for (unloadedClassLoader in classLoaders) {
-      if (parents.contains(unloadedClassLoader)) {
+      if (parents.any { it.classLoader === unloadedClassLoader }) {
         LOG.error("$classLoader references via parents $unloadedClassLoader that must be unloaded")
       }
     }
 
     for (parent in parents) {
-      if (parent is PluginClassLoader && parent.pluginId == unloadedMainDescriptor.pluginId) {
+      if (parent.pluginId == unloadedMainDescriptor.pluginId) {
         LOG.error("$classLoader references via parents $parent that must be unloaded")
       }
     }

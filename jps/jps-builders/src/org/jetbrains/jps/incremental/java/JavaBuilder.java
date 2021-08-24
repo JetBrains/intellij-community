@@ -32,6 +32,7 @@ import org.jetbrains.jps.builders.impl.TargetOutputIndexImpl;
 import org.jetbrains.jps.builders.java.*;
 import org.jetbrains.jps.builders.logging.ProjectBuilderLogger;
 import org.jetbrains.jps.builders.storage.BuildDataCorruptedException;
+import org.jetbrains.jps.cmdline.ClasspathBootstrap;
 import org.jetbrains.jps.cmdline.ProjectDescriptor;
 import org.jetbrains.jps.incremental.*;
 import org.jetbrains.jps.incremental.messages.BuildMessage;
@@ -826,6 +827,10 @@ public final class JavaBuilder extends ModuleLevelBuilder {
     if (!JavacMain.TRACK_AP_GENERATED_DEPENDENCIES) {
       vmOptions.add("-D" + JavacMain.TRACK_AP_GENERATED_DEPENDENCIES_PROPERTY + "=" + JavacMain.TRACK_AP_GENERATED_DEPENDENCIES);
       notifyMessage(context, BuildMessage.Kind.WARNING, "build.message.incremental.annotation.processing.disabled.0", true, JavacMain.TRACK_AP_GENERATED_DEPENDENCIES_PROPERTY);
+    }
+    if (compilerSdkVersion > 15) {
+      // enable javac-related reflection tricks in JPS
+      ClasspathBootstrap.configureReflectionOpenPackages(p -> vmOptions.add(p));
     }
     final JpsProject project = context.getProjectDescriptor().getProject();
     final JpsJavaCompilerOptions compilerOptions = JpsJavaExtensionService.getInstance().getCompilerConfiguration(project).getCurrentCompilerOptions();

@@ -152,6 +152,30 @@ abstract class LibrariesFromLibraryTableInRootModelTestCase {
   }
 
   @Test
+  fun `add multiple dependencies at once`() {
+    val lib1 = createLibrary("lib1")
+    val lib2 = createLibrary("lib2")
+    val model = createModifiableModel(module)
+    model.addLibraryEntries(listOf(lib1, lib2), DependencyScope.RUNTIME, true)
+    fun checkEntry(entry: LibraryOrderEntry) {
+      assertThat(entry.isExported).isTrue
+      assertThat(entry.scope).isEqualTo(DependencyScope.RUNTIME)
+    }
+
+    val (entry1, entry2) = dropModuleSourceEntry(model, 2)
+    assertThat((entry1 as LibraryOrderEntry).library).isEqualTo(lib1)
+    checkEntry(entry1)
+    assertThat((entry2 as LibraryOrderEntry).library).isEqualTo(lib2)
+    checkEntry(entry2)
+    val (committedEntry1, committedEntry2) = dropModuleSourceEntry(commitModifiableRootModel(model), 2)
+    assertThat((committedEntry1 as LibraryOrderEntry).library).isEqualTo(lib1)
+    checkEntry(committedEntry1)
+    assertThat((committedEntry2 as LibraryOrderEntry).library).isEqualTo(lib2)
+    checkEntry(committedEntry2)
+  }
+
+
+  @Test
   fun `remove referenced library`() {
     val library = createLibrary("foo")
     run {

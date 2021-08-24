@@ -21,6 +21,7 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.wm.impl.IdeMenuBar;
 import com.intellij.ui.AnimatedIcon;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.ExceptionUtil;
@@ -85,7 +86,7 @@ public final class Utils {
   }
 
   public static boolean isAsyncDataContext(@NotNull DataContext dataContext) {
-    return dataContext instanceof PreCachedDataContext;
+    return dataContext instanceof AsyncDataContext;
   }
 
   @ApiStatus.Internal
@@ -123,7 +124,7 @@ public final class Utils {
                                                           @NotNull DataContext context,
                                                           @NotNull String place) {
     return expandActionGroupImpl(isInModalContext, group, presentationFactory, context,
-                                 place, ActionPlaces.isPopupPlace(place), null);
+                                 place, ActionPlaces.isPopupPlace(place), null, null);
 
   }
 
@@ -133,7 +134,8 @@ public final class Utils {
                                                                @NotNull DataContext context,
                                                                @NotNull String place,
                                                                boolean isContextMenu,
-                                                               @Nullable Runnable onProcessed) {
+                                                               @Nullable Runnable onProcessed,
+                                                               @Nullable JComponent sourceComponent) {
     boolean async = isAsyncDataContext(context);
     boolean asyncUI = async && Registry.is("actionSystem.update.actions.async.ui");
     BlockingQueue<Runnable> queue0 = async && !asyncUI ? new LinkedBlockingQueue<>() : null;
@@ -150,8 +152,8 @@ public final class Utils {
       IdeEventQueue queue = IdeEventQueue.getInstance();
       CancellablePromise<List<AnAction>> promise = updater.expandActionGroupAsync(group, group instanceof CompactActionGroup);
       if (onProcessed != null) promise.onProcessed(__ -> onProcessed.run());
-      try (AccessToken ignore = cancelOnUserActivityInside(promise)) {
-        list = runLoopAndWaitForFuture(promise, Collections.emptyList(), () -> {
+      try (AccessToken ignore = cancelOnUserActivityInside(promise, sourceComponent)) {
+        list = runLoopAndWaitForFuture(promise, Collections.emptyList(), true, () -> {
           if (queue0 != null) {
             Runnable runnable = queue0.poll(1, TimeUnit.MILLISECONDS);
             if (runnable != null) runnable.run();
@@ -184,12 +186,14 @@ public final class Utils {
     return list;
   }
 
-  private static @NotNull AccessToken cancelOnUserActivityInside(@NotNull CancellablePromise<List<AnAction>> promise) {
+  private static @NotNull AccessToken cancelOnUserActivityInside(@NotNull CancellablePromise<List<AnAction>> promise,
+                                                                 @Nullable JComponent sourceComponent) {
     return ProhibitAWTEvents.startFiltered("expandActionGroup", event -> {
       if (event instanceof FocusEvent && event.getID() == FocusEvent.FOCUS_LOST &&
           ((FocusEvent)event).getCause() == FocusEvent.Cause.ACTIVATION ||
           event instanceof KeyEvent && event.getID() == KeyEvent.KEY_PRESSED ||
-          event instanceof MouseEvent && event.getID() == MouseEvent.MOUSE_PRESSED) {
+          event instanceof MouseEvent && event.getID() == MouseEvent.MOUSE_PRESSED && UIUtil.getDeepestComponentAt(
+            ((MouseEvent)event).getComponent(), ((MouseEvent)event).getX(), ((MouseEvent)event).getY()) != sourceComponent ) {
         ActionUpdater.cancelPromise(promise, event);
       }
       return null;
@@ -206,9 +210,8 @@ public final class Utils {
     ActionUpdater fastUpdater = ActionUpdater.getActionUpdater(updater.asFastUpdateSession(missedKeys, queue::offer));
     try (AccessToken ignore = SlowOperations.allowSlowOperations(SlowOperations.FAST_TRACK)) {
       long start = System.currentTimeMillis();
-      ActionUpdater.cancelAllUpdates("fast-track requested");
       CancellablePromise<List<AnAction>> promise = fastUpdater.expandActionGroupAsync(group, hideDisabled);
-      return runLoopAndWaitForFuture(promise, null, () -> {
+      return runLoopAndWaitForFuture(promise, null, false, () -> {
         Runnable runnable = queue.poll(1, TimeUnit.MILLISECONDS);
         if (runnable != null) runnable.run();
         long elapsed = System.currentTimeMillis() - start;
@@ -228,8 +231,12 @@ public final class Utils {
                        boolean isWindowMenu,
                        boolean useDarkIcons,
                        @Nullable RelativePoint relativePoint) {
+    if (ApplicationManagerEx.getApplicationEx().isWriteActionInProgress()) {
+      throw new ProcessCanceledException();
+    }
     Runnable removeIcon = addLoadingIcon(relativePoint, context, place);
-    List<AnAction> list = expandActionGroupImpl(LaterInvocator.isInModalContext(), group, presentationFactory, context, place, true, removeIcon);
+    List<AnAction> list = expandActionGroupImpl(LaterInvocator.isInModalContext(), group, presentationFactory, context, place, true,
+                                                removeIcon, component);
     boolean checked = group instanceof CheckedActionGroup;
     fillMenuInner(component, list, checked, enableMnemonics, presentationFactory, context, place, isWindowMenu, useDarkIcons);
   }
@@ -239,7 +246,8 @@ public final class Utils {
     JComponent glassPane = rootPane == null ? null : (JComponent)rootPane.getGlassPane();
     if (glassPane == null || !isAsyncDataContext(context)) return EmptyRunnable.getInstance();
     Component comp = point.getOriginalComponent();
-    if (ActionPlaces.EDITOR_GUTTER_POPUP.equals(place) && comp instanceof EditorGutterComponentEx &&
+    if (comp instanceof ActionMenu && comp.getParent() instanceof IdeMenuBar ||
+        ActionPlaces.EDITOR_GUTTER_POPUP.equals(place) && comp instanceof EditorGutterComponentEx &&
         ((EditorGutterComponentEx)comp).getGutterRenderer(point.getOriginalPoint()) != null) {
       return EmptyRunnable.getInstance();
     }
@@ -480,7 +488,7 @@ public final class Utils {
           promise.setError(e);
         }
       });
-      result = runLoopAndWaitForFuture(promise, null, () -> {
+      result = runLoopAndWaitForFuture(promise, null, false, () -> {
         Runnable runnable = queue.poll(1, TimeUnit.MILLISECONDS);
         if (runnable != null) runnable.run();
       });
@@ -498,6 +506,7 @@ public final class Utils {
 
   private static <T> T runLoopAndWaitForFuture(@NotNull Future<? extends T> promise,
                                                @Nullable T defValue,
+                                               boolean rethrowCancellation,
                                                @NotNull ThrowableRunnable<?> pumpRunnable) {
     while (!promise.isDone()) {
       try {
@@ -515,6 +524,10 @@ public final class Utils {
       if (!(cause instanceof ProcessCanceledException)) {
         LOG.error(cause);
       }
+      else if (rethrowCancellation) {
+        cause.fillInStackTrace();
+        throw (ProcessCanceledException)cause;
+      }
     }
     return defValue;
   }
@@ -530,5 +543,40 @@ public final class Utils {
 
   public static boolean isFrozenDataContext(DataContext context) {
     return context instanceof PreCachedDataContext && ((PreCachedDataContext)context).isFrozenDataContext();
+  }
+
+  static void performWithRetries(@NotNull Runnable runnable, @NotNull BooleanSupplier expire) {
+    Utils.ProcessCanceledWithReasonException lastCancellation = null;
+    int retries = Math.max(1, Registry.intValue("actionSystem.update.actions.max.retries", 20));
+    for (int i = 0; i < retries; i++) {
+      try {
+        runnable.run();
+        return;
+      }
+      catch (Utils.ProcessCanceledWithReasonException ex) {
+        lastCancellation = ex;
+        String reasonStr = ex.reason instanceof String ? (String)ex.reason : "";
+        if (reasonStr.contains("write-action") || reasonStr.contains("fast-track")) {
+          continue;
+        }
+        throw ex;
+      }
+      catch (Throwable ex) {
+        ExceptionUtil.rethrow(ex);
+      }
+      if (expire.getAsBoolean()) return;
+    }
+    if (retries > 1) {
+      LOG.warn("Maximum number of retries to show a menu reached (" + retries + "): " + lastCancellation.reason);
+    }
+    throw Objects.requireNonNull(lastCancellation);
+  }
+
+  static class ProcessCanceledWithReasonException extends ProcessCanceledException {
+    final Object reason;
+
+    ProcessCanceledWithReasonException(Object reason) {
+      this.reason = reason;
+    }
   }
 }

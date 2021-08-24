@@ -96,7 +96,7 @@ public final class PluginInstaller {
                                                boolean isUpdate) {
     boolean uninstalledWithoutRestart = true;
     if (pluginDescriptor.isEnabled()) {
-      DynamicPlugins.UnloadPluginOptions options = new DynamicPlugins.UnloadPluginOptions()
+      DynamicPlugins.UnloadPluginOptions options = new DynamicPlugins.UnloadPluginOptions().withDisable(false)
         .withUpdate(isUpdate)
         .withWaitForClassloaderUnload(true);
 
@@ -275,7 +275,7 @@ public final class PluginInstaller {
                                                             InstallationSourceEnum.FROM_DISK,
                                                             installedPlugin != null ? installedPlugin.getVersion() : null);
 
-      if (Registry.is("marketplace.certificate.signature.check")) {
+      if (Registry.is("custom-repository.certificate.signature.check")) {
         if (!PluginSignatureChecker.verify(pluginDescriptor, file, true)) {
           return false;
         }

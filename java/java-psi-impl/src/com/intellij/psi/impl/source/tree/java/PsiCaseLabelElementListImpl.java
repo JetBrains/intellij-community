@@ -2,13 +2,15 @@
 package com.intellij.psi.impl.source.tree.java;
 
 import com.intellij.lang.ASTNode;
-import com.intellij.psi.JavaElementVisitor;
-import com.intellij.psi.PsiCaseLabelElement;
-import com.intellij.psi.PsiCaseLabelElementList;
-import com.intellij.psi.PsiElementVisitor;
+import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.*;
+import com.intellij.psi.scope.PsiScopeProcessor;
+import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.Arrays;
+import java.util.function.Predicate;
 
 public class PsiCaseLabelElementListImpl extends CompositePsiElement implements PsiCaseLabelElementList {
   private volatile PsiCaseLabelElement[] myElements;
@@ -84,5 +86,32 @@ public class PsiCaseLabelElementListImpl extends CompositePsiElement implements 
   @Override
   public String toString() {
     return "PsiCaseLabelElementList";
+  }
+
+  @Override
+  public boolean processDeclarations(@NotNull PsiScopeProcessor processor,
+                                     @NotNull ResolveState state,
+                                     PsiElement lastParent,
+                                     @NotNull PsiElement place) {
+    if (oneOfElements(place)) return true;
+
+    for (PsiCaseLabelElement label : getElements()) {
+      boolean shouldKeepGoing = label.processDeclarations(processor, state, null, place);
+      if (!shouldKeepGoing) return false;
+    }
+    return true;
+  }
+
+  private boolean oneOfElements(@NotNull PsiElement place) {
+    return Arrays.stream(getElements())
+      .map(PsiCaseLabelElementListImpl::skipParenthesis)
+      .anyMatch(Predicate.isEqual(place));
+  }
+
+  @Nullable
+  private static PsiCaseLabelElement skipParenthesis(PsiCaseLabelElement e) {
+    if (!(e instanceof PsiParenthesizedExpression)) return e;
+
+    return PsiUtil.skipParenthesizedExprDown((PsiParenthesizedExpression)e);
   }
 }

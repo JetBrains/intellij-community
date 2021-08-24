@@ -77,9 +77,12 @@
     <diff.impl.DiffToolSubstitutor implementation="com.intellij.openapi.vcs.changes.actions.diff.lst.LocalChangeListDiffTool$Unified"/>
 
     <diff.actions.ShowDiffAction.ExtensionProvider implementation="com.intellij.openapi.vcs.changes.shelf.DiffShelvedChangesActionProvider"/>
+    <diff.actions.ShowStandaloneDiffAction.ExtensionProvider implementation="com.intellij.openapi.vcs.changes.shelf.DiffShelvedChangesActionProvider"/>
     <diff.actions.ShowDiffAction.ExtensionProvider implementation="com.intellij.openapi.vcs.update.ShowUpdatedDiffActionProvider"/>
     <diff.actions.ShowDiffAction.ExtensionProvider implementation="com.intellij.openapi.vcs.history.actions.CompareRevisionsAction"/>
     <diff.actions.ShowDiffAction.ExtensionProvider implementation="com.intellij.openapi.vcs.changes.actions.diff.ShowDiffFromLocalChangesActionProvider"/>
+    <diff.actions.ShowStandaloneDiffAction.ExtensionProvider implementation="com.intellij.openapi.vcs.changes.actions.diff.ShowDiffFromLocalChangesActionProvider"/>
+    <diff.actions.ShowStandaloneDiffAction.ExtensionProvider implementation="com.intellij.openapi.vcs.changes.ui.ChangesBrowserBase$ShowStandaloneDiff"/>
     <diff.actions.ShowDiffAction.ExtensionProvider implementation="com.intellij.openapi.vcs.changes.ShowEditorDiffPreviewActionProvider" order="first"/>
     <diff.actions.ShowDiffAction.ExtensionProvider implementation="com.intellij.openapi.vcs.changes.actions.diff.ShowDiffAction" order="last"/>
 
@@ -186,8 +189,10 @@
     <checkinHandlerFactory implementation="com.intellij.openapi.vcs.checkin.CodeCleanupCheckinHandlerFactory" id="codeCleanup"/>
 
     <completion.preselectionBehaviourProvider implementation="com.intellij.openapi.vcs.CommitCompletionPreselectionBehaviourProvider"/>
-    <completion.contributor language="TEXT" implementationClass="com.intellij.openapi.vcs.CommitCompletionContributor" id="commitCompletion"
+    <completion.contributor language="TEXT" implementationClass="com.intellij.openapi.vcs.RecentMessagesCommitCompletionContributor" id="commitCompletion"
                             order="first, before liveTemplates"/>
+    <completion.contributor language="TEXT" implementationClass="com.intellij.openapi.vcs.ChangedFilesCommitCompletionContributor" 
+                            order="first, before liveTemplates, after commitCompletion"/>
     <completion.contributor language="TEXT" implementationClass="com.intellij.openapi.vcs.changes.ChangeListCompletionContributor"
                             order="first"/>
 
@@ -248,6 +253,7 @@
     <dateTimeFormatter id="vcs.annotate" name="VCS Annotate" />
     <dateTimeFormatter id="vcs.log" name="VCS Log" />
 
+    <statistics.counterUsagesCollector implementationClass="com.intellij.openapi.vcs.changes.actions.VcsStatisticsCollector"/>
     <statistics.applicationUsagesCollector implementation="com.intellij.openapi.vcs.statistics.VcsApplicationOptionsUsagesCollector"/>
 
     <openapi.vcs.ui.cloneDialog.VcsCloneDialogExtension

@@ -1,11 +1,9 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl.source.tree.java;
 
-import com.intellij.psi.JavaElementVisitor;
-import com.intellij.psi.PsiElementVisitor;
-import com.intellij.psi.PsiStatement;
-import com.intellij.psi.PsiSwitchLabeledRuleStatement;
+import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.JavaElementType;
+import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.tree.TokenSet;
 import org.jetbrains.annotations.NotNull;
 
@@ -35,5 +33,22 @@ public class PsiSwitchLabeledRuleStatementImpl extends PsiSwitchLabelStatementBa
   @Override
   public String toString() {
     return "PsiSwitchLabeledRule";
+  }
+
+  @Override
+  public boolean processDeclarations(@NotNull PsiScopeProcessor processor,
+                                     @NotNull ResolveState state,
+                                     PsiElement lastParent,
+                                     @NotNull PsiElement place) {
+    if (!super.processDeclarations(processor, state, lastParent, place)) return false;
+
+    // Do not resolve variables that don't come from the body of this {@link PsiSwitchLabeledRuleStatement}
+    if (lastParent == null) return true;
+    // Do not resolve references that come from the list of elements in this case rule
+    if (lastParent instanceof PsiCaseLabelElementList) return true;
+
+    final PsiCaseLabelElementList patternsInCaseLabel = getCaseLabelElementList();
+    if (patternsInCaseLabel == null) return true;
+    return patternsInCaseLabel.processDeclarations(processor, state, null, place);
   }
 }

@@ -403,7 +403,8 @@ class PyFinalInspection : PyInspection() {
     }
 
     private fun resolvesToFinal(expression: PyExpression?): Boolean {
-      return expression is PyReferenceExpression && eventuallyResolvesToFinal(expression, myTypeEvalContext)
+      return expression is PyReferenceExpression &&
+             resolveToQualifiedNames(expression, myTypeEvalContext).any { it == FINAL || it == FINAL_EXT }
     }
 
     private fun isTopLevelInAnnotationOrTypeComment(node: PyExpression): Boolean {

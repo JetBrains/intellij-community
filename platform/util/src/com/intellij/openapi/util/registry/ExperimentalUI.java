@@ -3,8 +3,6 @@ package com.intellij.openapi.util.registry;
 
 import org.jetbrains.annotations.ApiStatus;
 
-import static com.intellij.openapi.util.registry.Registry.is;
-
 /**
  * Temporary utility class for migration to the new UI.
  * Do not use this class for plugin development.
@@ -14,14 +12,14 @@ import static com.intellij.openapi.util.registry.Registry.is;
 @ApiStatus.Internal
 public final class ExperimentalUI {
   public static boolean isNewUI() {
-    return is("ide.experimental.ui");
+    return false;
   }
 
   public static boolean isNewToolWindowsStripes() {
-    return isNewUI() || is("ide.experimental.ui.toolwindow.stripes");
+    return false;
   }
 
   public static boolean isNewEditorTabs() {
-    return isNewUI() || is("ide.experimental.ui.editor.tabs");
+    return false;
   }
 }

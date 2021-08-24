@@ -382,4 +382,8 @@
     <keyboard-shortcut first-keystroke="alt ENTER"/>
   </action>
   <action id="GotoBookmark1"/>
+  <action id="ResizeToolWindowLeft"/>
+  <action id="ResizeToolWindowRight"/>
+  <action id="ResizeToolWindowUp"/>
+  <action id="ResizeToolWindowDown"/>
 </keymap>

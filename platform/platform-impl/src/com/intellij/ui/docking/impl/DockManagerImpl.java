@@ -34,6 +34,7 @@ import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.update.Activatable;
 import com.intellij.util.ui.update.UiNotifyConnector;
 import org.jdom.Element;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -46,6 +47,7 @@ import java.awt.event.WindowEvent;
 import java.awt.image.BufferedImage;
 import java.util.List;
 import java.util.*;
+import java.util.function.Predicate;
 
 @State(name = "DockManager", storages = @Storage(StoragePathMacros.PRODUCT_WORKSPACE_FILE))
 public final class DockManagerImpl extends DockManager implements PersistentStateComponent<Element> {
@@ -140,25 +142,31 @@ public final class DockManagerImpl extends DockManager implements PersistentStat
       return key;
     }
 
-    DockWindow window = containerToWindow.get(getContainerFor(owner));
+    DockWindow window = containerToWindow.get(getContainerFor(owner, dockContainer -> true));
     return window != null ? key + "#" + window.myId : key;
   }
 
   @Override
   public DockContainer getContainerFor(Component c) {
+    return getContainerFor(c, dockContainer -> true);
+  }
+
+  @Contract("null, _ -> null")
+  @Override
+  public @Nullable DockContainer getContainerFor(@Nullable Component c, @NotNull Predicate<DockContainer> filter) {
     if (c == null) {
       return null;
     }
 
     for (DockContainer eachContainer : getAllContainers()) {
-      if (SwingUtilities.isDescendingFrom(c, eachContainer.getContainerComponent())) {
+      if (SwingUtilities.isDescendingFrom(c, eachContainer.getContainerComponent()) && filter.test(eachContainer)) {
         return eachContainer;
       }
     }
 
     Component parent = UIUtil.findUltimateParent(c);
     for (DockContainer eachContainer : getAllContainers()) {
-      if (parent == UIUtil.findUltimateParent(eachContainer.getContainerComponent())) {
+      if (parent == UIUtil.findUltimateParent(eachContainer.getContainerComponent()) && filter.test(eachContainer)) {
         return eachContainer;
       }
     }

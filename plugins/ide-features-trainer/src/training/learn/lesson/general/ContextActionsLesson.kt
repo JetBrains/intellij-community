@@ -2,7 +2,6 @@
 package training.learn.lesson.general
 
 import com.intellij.codeInsight.intention.impl.ShowIntentionActionsHandler
-import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.editor.impl.EditorComponentImpl
 import training.dsl.*
 import training.dsl.LessonUtil.restoreIfModifiedOrMovedIncorrectly
@@ -32,7 +31,7 @@ abstract class ContextActionsLesson : KLesson("context.actions", LessonsBundle.m
         test {
           type(" ")
           invokeActionViaShortcut("BACK_SPACE")
-          invokeLater {
+          taskInvokeLater {
             step.complete(true)
           }
         }

@@ -474,6 +474,11 @@ public class Py3CompletionTest extends PyTestCase {
     assertContainsElements(myFixture.getLookupElementStrings(), "city");
   }
 
+  // PY-48665
+  public void testFStringLikeCompletionNotAvailableInLiteralPatterns() {
+    doNegativeTest();
+  }
+
   // PY-46056
   public void testImportCompletionHintForSameDirectoryModuleInOrdinaryPackage() {
     doTestVariantTailText("ordinaryPackage/sample.py", "logging", null);

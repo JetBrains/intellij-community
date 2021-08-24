@@ -32,6 +32,7 @@ class WebBrowserServiceImpl : WebBrowserService() {
         else {
           // it is client responsibility to set token
           request.isAppendAccessToken = false
+          request.reloadMode = ReloadMode.DISABLED
           return getProviders(request)
             .map { getUrls(it, request) }
             .filter(Collection<*>::isNotEmpty).findFirst().orElse(Collections.emptyList())

@@ -21,7 +21,9 @@ class JavaSurroundAndUnwrapLesson : SurroundAndUnwrapLesson() {
   override val lineShiftBeforeUnwrap = -2
 
   override val helpLinks: Map<String, String> = mapOf(
-    Pair(LessonsBundle.message("surround.and.unwrap.help.surround.code.fragments"), "https://www.jetbrains.com/help/idea/surrounding-blocks-of-code-with-language-constructs.html"),
-    Pair(JavaLessonsBundle.message("java.surround.and.unwrap.help.unwrapping.and.removing.statements"), "https://www.jetbrains.com/help/idea/working-with-source-code.html#editor_statement_select"),
+    Pair(LessonsBundle.message("surround.and.unwrap.help.surround.code.fragments"),
+         "https://www.jetbrains.com/help/idea/surrounding-blocks-of-code-with-language-constructs.html"),
+    Pair(JavaLessonsBundle.message("java.surround.and.unwrap.help.unwrapping.and.removing.statements"),
+         "https://www.jetbrains.com/help/idea/working-with-source-code.html#editor_statement_select"),
   )
 }

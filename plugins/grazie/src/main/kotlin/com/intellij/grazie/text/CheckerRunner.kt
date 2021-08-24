@@ -9,12 +9,15 @@ import com.intellij.codeInspection.ProblemDescriptorBase
 import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.grazie.ide.fus.GrazieFUSCounter
 import com.intellij.grazie.ide.inspection.grammar.quickfix.GrazieAddExceptionQuickFix
-import com.intellij.grazie.ide.inspection.grammar.quickfix.GrazieDisableRuleQuickFix
+import com.intellij.grazie.ide.inspection.grammar.quickfix.GrazieRuleSettingsAction
 import com.intellij.grazie.ide.inspection.grammar.quickfix.GrazieReplaceTypoQuickFix
 import com.intellij.grazie.ide.language.LanguageGrammarChecking
 import com.intellij.grazie.utils.toLinkedSet
 import com.intellij.lang.LanguageExtension
+import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
+import com.intellij.psi.PsiFile
 import com.intellij.psi.SmartPointerManager
 import com.intellij.psi.util.parents
 import com.intellij.refactoring.suggested.startOffset
@@ -118,7 +121,7 @@ internal class CheckerRunner(val text: TextContent) {
     sentences.find { problem.highlightRange.intersects(it.range.first, it.range.last + 1) }?.token
 
   fun toFixes(problem: TextProblem): Array<LocalQuickFix> {
-    val file = text.commonParent.containingFile
+    val file = text.containingFile
     val result = arrayListOf<LocalQuickFix>()
     val spm = SmartPointerManager.getInstance(file.project)
     val underline = fileHighlightRanges(problem).map { spm.createSmartPsiFileRangePointer(file, it) }
@@ -129,8 +132,13 @@ internal class CheckerRunner(val text: TextContent) {
       result.addAll(GrazieReplaceTypoQuickFix.getReplacementFixes(problem, underline, file))
     }
 
-    result.add(GrazieAddExceptionQuickFix(defaultSuppressionPattern(problem, findSentence(problem)), underline))
-    result.add(GrazieDisableRuleQuickFix(problem.rule.presentableName, problem.rule))
+    result.add(object : GrazieAddExceptionQuickFix(defaultSuppressionPattern(problem, findSentence(problem)), underline) {
+      override fun applyFix(project: Project, file: PsiFile, editor: Editor?) {
+        GrazieFUSCounter.quickFixInvoked(problem.rule, project, "add.exception")
+        super.applyFix(project, file, editor)
+      }
+    })
+    result.add(GrazieRuleSettingsAction(problem.rule.presentableName, problem.rule))
     return result.toTypedArray()
   }
 

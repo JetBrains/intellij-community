@@ -9,6 +9,7 @@ import com.intellij.grazie.jlanguage.Lang
 import com.intellij.grazie.jlanguage.LangTool
 import com.intellij.grazie.utils.LinkedSet
 import com.intellij.grazie.utils.toLinkedSet
+import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.util.ClassLoaderUtil
 import org.languagetool.JLanguageTool
 import org.languagetool.rules.spelling.SpellingCheckRule
@@ -20,6 +21,7 @@ object GrazieSpellchecker : GrazieStateLifecycle {
 
   private val filter by lazy { RuleFilter.withAllBuiltIn() }
   private fun filterCheckers(word: String): Set<SpellerTool> {
+    val checkers = this.checkers.value
     if (checkers.isEmpty()) return emptySet()
 
     val preferred = filter.filter(listOf(word)).preferred
@@ -45,11 +47,12 @@ object GrazieSpellchecker : GrazieStateLifecycle {
   }
 
   @Volatile
-  private var checkers: LinkedSet<SpellerTool> = LinkedSet()
+  private var checkers: Lazy<LinkedSet<SpellerTool>> = initCheckers()
 
-  override fun init(state: GrazieConfig.State) {
-    checkers = state.availableLanguages.filterNot { it.isEnglish() }.mapNotNull { lang ->
-      val tool = LangTool.getTool(lang, state)
+  private fun initCheckers() = lazy(LazyThreadSafetyMode.PUBLICATION) {
+    GrazieConfig.get().availableLanguages.filterNot { it.isEnglish() }.mapNotNull { lang ->
+      ProgressManager.checkCanceled()
+      val tool = LangTool.getTool(lang)
       tool.allSpellingCheckRules.firstOrNull()?.let {
         SpellerTool(tool, lang, it, MAX_SUGGESTIONS_COUNT)
       }
@@ -57,7 +60,8 @@ object GrazieSpellchecker : GrazieStateLifecycle {
   }
 
   override fun update(prevState: GrazieConfig.State, newState: GrazieConfig.State) {
-    init(newState)
+    checkers = initCheckers()
+    LangTool.runAsync { checkers.value }
   }
 
   private fun Throwable.isFromHunspellRuleInit(): Boolean {

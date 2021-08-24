@@ -1,7 +1,6 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.mac.touchbar;
 
-import com.intellij.ui.mac.foundation.Foundation;
 import com.intellij.ui.mac.foundation.ID;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -10,7 +9,8 @@ import org.jetbrains.annotations.Nullable;
 abstract class TBItem {
   private final @NotNull String myName;
   private @Nullable String myUid;
-  private @NotNull ID myNativePeer = ID.NIL; // java wrapper holds native object
+
+  @NotNull ID myNativePeer = ID.NIL; // java wrapper holds native object
 
   final @Nullable ItemListener myListener;
   boolean myIsVisible = true;
@@ -36,14 +36,11 @@ abstract class TBItem {
     return myNativePeer;
   }
 
-  @NotNull
-  ID getNativePeer() { return myNativePeer; }
-
   synchronized
   void releaseNativePeer() {
     if (myNativePeer == ID.NIL)
       return;
-    Foundation.invoke(myNativePeer, "release");
+    NST.releaseNativePeer(myNativePeer);
     myNativePeer = ID.NIL;
   }
 

@@ -88,7 +88,7 @@ public class ProblematicWhitespaceInspection extends LocalInspectionTool {
         return;
       }
       final CodeStyleSettings settings = CodeStyle.getSettings(file);
-      final CommonCodeStyleSettings.IndentOptions indentOptions = settings.getIndentOptions(fileType);
+      final CommonCodeStyleSettings.IndentOptions indentOptions = settings.getIndentOptionsByFile(file);
       final boolean useTabs = indentOptions.USE_TAB_CHARACTER;
       final boolean smartTabs = indentOptions.SMART_TABS;
       final Document document = PsiDocumentManager.getInstance(file.getProject()).getDocument(file);

@@ -50,9 +50,12 @@ public class ChangeSourceFileSetTest extends BaseCompilerTestCase {
   }
 
   public void testAddRemoveExcludedPattern() {
-    VirtualFile a = createFile("src/a/A.java", "package a; class A{}");
-    createFile("src/b/B.java", "package b; class B{}");
-    Module m = addModule("m", a.getParent().getParent());
+    VirtualFile a = createFile("root/src/a/A.java", "package a; class A{}");
+    createFile("root/src/b/B.java", "package b; class B{}");
+    Module m = addModule("m", null);
+    VirtualFile srcRoot = a.getParent().getParent();
+    PsiTestUtil.addContentRoot(m, srcRoot.getParent());
+    PsiTestUtil.addSourceRoot(m, srcRoot);
     make(m);
     assertModulesUpToDate();
     assertOutput(m, fs().dir("a").file("A.class").end().dir("b").file("B.class"));
@@ -83,7 +86,7 @@ public class ChangeSourceFileSetTest extends BaseCompilerTestCase {
       TestFileSystemBuilder all = fs().file("A.class").file("Ignored.class").dir("IgnoredDir").file("B.class").dir("p").file("C.class");
       assertOutput(m, all);
 
-      setIgnoredFiles(oldPatterns + "Ignored*;");
+      setIgnoredFiles(oldPatterns + ";Ignored*");
       make(m);
       assertOutput(m, fs().file("A.class"));
 

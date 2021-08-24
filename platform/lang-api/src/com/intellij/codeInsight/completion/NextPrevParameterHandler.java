@@ -33,6 +33,12 @@ public class NextPrevParameterHandler extends EditorWriteActionHandler.ForEachCa
     return findSuitableTraversalPolicy(editor, file) != null;
   }
 
+  public static boolean isEnabledForContext(DataContext context, Boolean next) {
+    Editor editor = CommonDataKeys.EDITOR.getData(context);
+    if (editor == null) return false;
+    return handleTab(editor, context, false, next);
+  }
+
   public static boolean hasSuitablePolicy(PsiFile file) {
     return findPolicyForFile(file) != null;
   }
@@ -57,12 +63,13 @@ public class NextPrevParameterHandler extends EditorWriteActionHandler.ForEachCa
   public void executeWriteAction(@NotNull Editor editor,
                                  @NotNull Caret caret,
                                  DataContext dataContext) {
-    if (editor.getCaretModel().getCaretCount() > 1 || !handleTab(editor, dataContext)) {
+    if (!handleTab(editor, dataContext, true, next)) {
       originalHandler.execute(editor, caret, dataContext);
     }
   }
 
-  protected boolean handleTab(@NotNull Editor editor, DataContext dataContext) {
+  private static boolean handleTab(@NotNull Editor editor, DataContext dataContext, boolean invoke, boolean next) {
+    if (editor.getCaretModel().getCaretCount() > 1) return false;
     KeymapManager keymapManager = KeymapManager.getInstance();
     if (keymapManager != null && ClientId.isCurrentlyUnderLocalId()) {
       Shortcut @NotNull []
@@ -76,7 +83,9 @@ public class NextPrevParameterHandler extends EditorWriteActionHandler.ForEachCa
     if (project == null || psiFile == null) return false;
     TemplateParameterTraversalPolicy policy = findSuitableTraversalPolicy(editor, psiFile);
     if (policy != null) {
-      policy.invoke(editor, psiFile, next);
+      if (invoke) {
+        policy.invoke(editor, psiFile, next);
+      }
       return true;
     }
     else {

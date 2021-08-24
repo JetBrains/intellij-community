@@ -20,7 +20,6 @@ import org.jetbrains.concurrency.CancellablePromise;
 
 import javax.swing.Timer;
 import java.util.*;
-import java.util.concurrent.Future;
 
 class ActionGroupTouchBar extends TouchBar {
   private static final boolean DISABLE_ASYNC_UPDATE = Boolean.getBoolean("touchbar.actions.disable.async.update");
@@ -40,8 +39,6 @@ class ActionGroupTouchBar extends TouchBar {
   private CancellablePromise<List<AnAction>> myLastUpdate;
   private long myLastUpdateNs = 0;
   private long myStartShowNs = 0;
-
-  private Future<?> myLastUpdateNativePeers;
 
   private final @NotNull Map<AnAction, TBItemAnActionButton> myActionButtonPool = new HashMap<>();
   private final @NotNull Map<Integer, TBItemGroup> myGroupPool = new HashMap<>();
@@ -370,6 +367,7 @@ class ActionGroupTouchBar extends TouchBar {
   @NotNull TBItemAnActionButton createActionButton(@NotNull AnAction action) {
     TBItemAnActionButton cached = myActionButtonPool.remove(action);
     if (cached != null) {
+      cached.setAnAction(action);
       return cached;
     }
 
@@ -377,8 +375,9 @@ class ActionGroupTouchBar extends TouchBar {
     for(Iterator<Map.Entry<AnAction, TBItemAnActionButton>> it = myActionButtonPool.entrySet().iterator(); it.hasNext(); ) {
       Map.Entry<AnAction, TBItemAnActionButton> entry = it.next();
       final TBItemAnActionButton butt = entry.getValue();
-      if (Objects.equals(entry.getKey().getTemplateText(), butt.getAnAction().getTemplateText())) {
+      if (Objects.equals(action.getTemplateText(), butt.getAnAction().getTemplateText())) {
         it.remove();
+        butt.setAnAction(action);
         return butt;
       }
     }

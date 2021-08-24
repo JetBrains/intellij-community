@@ -44,7 +44,7 @@ abstract class GradleInstallationManagerTestCase : LightIdeaTestCase() {
     val wrapperJar = FileUtil.join(wrapperHome, "gradle-wrapper.jar")
     val wrapperProperties = FileUtil.join(wrapperHome, "gradle-wrapper.properties")
     val gradleUserHome = StartParameter.DEFAULT_GRADLE_USER_HOME
-    val distributionPath = getLocalDistributionDir(gradleUserHome, wrapperConfiguration)
+    val distributionPath = getLocalDistributionDir(gradleUserHome, File(externalProjectPath), wrapperConfiguration)
     val gradleHome = FileUtil.join(distributionPath, "gradle-${version.version}")
     val gradleJarFile = FileUtil.join(gradleHome, "lib", "gradle-${version.version}.jar")
 
@@ -58,8 +58,8 @@ abstract class GradleInstallationManagerTestCase : LightIdeaTestCase() {
     return gradleHome
   }
 
-  private fun getLocalDistributionDir(gradleUserHome: File, wrapperConfiguration: WrapperConfiguration): String {
-    val pathAssembler = PathAssembler(gradleUserHome)
+  private fun getLocalDistributionDir(gradleUserHome: File, projectPath: File, wrapperConfiguration: WrapperConfiguration): String {
+    val pathAssembler = PathAssembler(gradleUserHome, projectPath)
     val localDistribution = pathAssembler.getDistribution(wrapperConfiguration)
     return localDistribution.distributionDir.path
   }

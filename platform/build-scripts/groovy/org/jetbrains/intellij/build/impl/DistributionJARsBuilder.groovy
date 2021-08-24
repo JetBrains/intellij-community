@@ -272,6 +272,7 @@ final class DistributionJARsBuilder {
     ProductModulesLayout productLayout = buildContext.productProperties.productLayout
     List<String> modulesToIndex = productLayout.mainModules + getModulesToCompile(buildContext) + modulesForPluginsToPublish
     modulesToIndex -= "intellij.clion.plugin" // TODO [AK] temporary solution to fix CLion build
+    modulesToIndex -= "intellij.ruby.lsp"
     Path targetDirectory = getSearchableOptionsDir(buildContext)
     buildContext.messages.progress("Building searchable options for ${modulesToIndex.size()} modules")
     buildContext.messages.debug("Searchable options are going to be built for the following modules: $modulesToIndex")
@@ -411,11 +412,6 @@ final class DistributionJARsBuilder {
 
     addSearchableOptions(layoutBuilder)
 
-    Path patchedAppInfoFile = buildContext.paths.tempDir.resolve("appInfo.xml")
-    Files.createDirectories(patchedAppInfoFile.parent)
-    Files.writeString(patchedAppInfoFile, patchedApplicationInfo)
-    buildContext.addDistFile(new Pair<Path, String>(patchedAppInfoFile, "bin"))
-
     if (buildContext.productProperties.reassignAltClickToMultipleCarets) {
       layoutBuilder.patchModuleOutput("intellij.platform.resources", createKeyMapWithAltClickReassignedToMultipleCarets())
     }
@@ -458,6 +454,17 @@ final class DistributionJARsBuilder {
   }
 
   void processLibDirectoryLayout(LayoutBuilder layoutBuilder, ProjectStructureMapping projectStructureMapping, boolean copyFiles) {
+    if (copyFiles) {
+      Path moduleOutDir = Path.of(buildContext.getModuleOutputPath(buildContext.findRequiredModule("intellij.platform.core")))
+      Path patchedClassFileRoot = buildContext.paths.tempDir.resolve("appInfoData")
+      Path classRelativeFile = Path.of("com/intellij/openapi/application/ApplicationNamesInfo.class")
+      BuildHelper.getInstance(buildContext).setAppInfo.invokeWithArguments(
+        moduleOutDir.resolve(classRelativeFile),
+        patchedClassFileRoot.resolve(classRelativeFile),
+        patchedApplicationInfo
+      )
+      layoutBuilder.patchModuleOutput("intellij.platform.core", patchedClassFileRoot)
+    }
     processLayout(layoutBuilder, platform, buildContext.paths.distAllDir, layoutBuilder.createLayoutSpec(projectStructureMapping, copyFiles),
                   platform.moduleJars,
                   Collections.<Pair<File, String>>emptyList())

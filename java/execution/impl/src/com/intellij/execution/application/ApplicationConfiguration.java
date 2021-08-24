@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.application;
 
 import com.intellij.diagnostic.logging.LogConfigurationPanel;
@@ -36,6 +36,7 @@ import com.intellij.util.PathUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import java.util.*;
 
@@ -395,6 +396,11 @@ public class ApplicationConfiguration extends JavaRunConfigurationBase
   public static class JavaApplicationCommandLineState<T extends ApplicationConfiguration> extends ApplicationCommandLineState<T> {
     public JavaApplicationCommandLineState(@NotNull final T configuration, final ExecutionEnvironment environment) {
       super(configuration, environment);
+    }
+    
+    @TestOnly
+    public JavaParameters createJavaParameters4Test() throws ExecutionException {
+      return createJavaParameters();
     }
 
     @Override

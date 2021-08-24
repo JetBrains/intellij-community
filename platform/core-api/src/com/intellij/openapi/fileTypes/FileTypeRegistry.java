@@ -40,7 +40,7 @@ public abstract class FileTypeRegistry {
    * @deprecated Use {@link #setInstanceSupplier(Supplier)}
    */
   @Deprecated
-  public static Getter<FileTypeRegistry> ourInstanceGetter;
+  public static Getter<FileTypeRegistry> ourInstanceGetter = ()->((ComponentManagerEx)ApplicationManager.getApplication()).getServiceByClassName("com.intellij.openapi.fileTypes.FileTypeManager");
 
   @ApiStatus.Internal
   public static void setInstanceSupplier(@NotNull Supplier<? extends FileTypeRegistry> supplier) {
@@ -64,10 +64,6 @@ public abstract class FileTypeRegistry {
   }
 
   public static FileTypeRegistry getInstance() {
-    if (ourInstanceGetter == null) {
-      // in tests FileTypeManager service maybe not preloaded, so, ourInstanceGetter is not set
-      return ((ComponentManagerEx)ApplicationManager.getApplication()).getServiceByClassName("com.intellij.openapi.fileTypes.FileTypeManager");
-    }
     return ourInstanceGetter.get();
   }
 

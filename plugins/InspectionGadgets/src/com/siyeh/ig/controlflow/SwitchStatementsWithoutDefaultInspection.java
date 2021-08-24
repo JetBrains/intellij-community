@@ -15,27 +15,31 @@
  */
 package com.siyeh.ig.controlflow;
 
+import com.intellij.codeInsight.daemon.impl.analysis.SwitchBlockHighlightingModel.PatternsInSwitchBlockHighlightingModel.CompletenessResult;
 import com.intellij.codeInspection.AbstractBaseJavaLocalInspectionTool;
 import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
-import com.intellij.psi.*;
-import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.JavaElementVisitor;
+import com.intellij.psi.PsiCodeBlock;
+import com.intellij.psi.PsiElementVisitor;
+import com.intellij.psi.PsiSwitchStatement;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.fixes.CreateDefaultBranchFix;
 import com.siyeh.ig.psiutils.SwitchUtils;
-import one.util.streamex.StreamEx;
 import org.intellij.lang.annotations.Pattern;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import java.util.List;
-import java.util.Set;
+
+import static com.intellij.codeInsight.daemon.impl.analysis.SwitchBlockHighlightingModel.PatternsInSwitchBlockHighlightingModel;
 
 public class SwitchStatementsWithoutDefaultInspection extends AbstractBaseJavaLocalInspectionTool {
 
+  /**
+   * This option covers not only enums, but sealed classes as well
+   */
   @SuppressWarnings("PublicField")
   public boolean m_ignoreFullyCoveredEnums = true;
 
@@ -66,33 +70,25 @@ public class SwitchStatementsWithoutDefaultInspection extends AbstractBaseJavaLo
         PsiCodeBlock body = statement.getBody();
         if (body == null || body.getRBrace() == null) return;
         boolean infoMode = false;
-        if (count == 0 || m_ignoreFullyCoveredEnums && switchStatementIsFullyCoveredEnum(statement)) {
+        if (count == 0) {
           if (!isOnTheFly) return;
           infoMode = true;
+        }
+        else {
+          CompletenessResult completenessResult = PatternsInSwitchBlockHighlightingModel.evaluateSwitchCompleteness(statement);
+          if (completenessResult == CompletenessResult.UNEVALUATED) return;
+          if (m_ignoreFullyCoveredEnums && completenessResult == CompletenessResult.COMPLETE) {
+            if (!isOnTheFly) return;
+            infoMode = true;
+          }
         }
         String message = InspectionGadgetsBundle.message("switch.statements.without.default.problem.descriptor");
         if (infoMode || (isOnTheFly && InspectionProjectProfileManager.isInformationLevel(getShortName(), statement))) {
           holder.registerProblem(statement, message, ProblemHighlightType.INFORMATION, new CreateDefaultBranchFix(statement, null));
-        } else {
+        }
+        else {
           holder.registerProblem(statement.getFirstChild(), message, new CreateDefaultBranchFix(statement, null));
         }
-      }
-
-      private boolean switchStatementIsFullyCoveredEnum(PsiSwitchStatement statement) {
-        final PsiExpression expression = statement.getExpression();
-        if (expression == null) {
-          return true; // don't warn on incomplete code
-        }
-        final PsiClass aClass = PsiUtil.resolveClassInClassTypeOnly(expression.getType());
-        if (aClass == null || !aClass.isEnum()) return false;
-        List<PsiSwitchLabelStatementBase> labels = PsiTreeUtil.getChildrenOfTypeAsList(statement.getBody(), PsiSwitchLabelStatementBase.class);
-        Set<PsiEnumConstant> constants = StreamEx.of(labels).flatCollection(SwitchUtils::findEnumConstants).toSet();
-        for (PsiField field : aClass.getFields()) {
-          if (field instanceof PsiEnumConstant && !constants.remove(field)) {
-            return false;
-          }
-        }
-        return true;
       }
     };
   }

@@ -13,7 +13,6 @@ import com.intellij.util.xmlb.annotations.Transient;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -111,7 +110,7 @@ public final class FileTypeBean implements PluginAware {
     myPluginDescriptor = pluginDescriptor;
   }
 
-  @Nullable
+  @NotNull
   public PluginId getPluginId() {
     return myPluginDescriptor.getPluginId();
   }

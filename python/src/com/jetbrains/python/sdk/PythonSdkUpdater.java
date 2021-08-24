@@ -28,9 +28,11 @@ import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.startup.StartupActivity;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.StandardFileSystems;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.PathMappingSettings;
@@ -38,6 +40,7 @@ import com.intellij.util.Processor;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.codeInsight.typing.PyTypeShed;
 import com.jetbrains.python.codeInsight.userSkeletons.PyUserSkeletonsUtil;
+import com.jetbrains.python.configuration.PyConfigurableInterpreterList;
 import com.jetbrains.python.packaging.PyPackageManager;
 import com.jetbrains.python.psi.PyUtil;
 import com.jetbrains.python.remote.PyRemoteSdkAdditionalDataBase;
@@ -52,6 +55,7 @@ import java.io.File;
 import java.time.Instant;
 import java.util.List;
 import java.util.*;
+import java.util.function.Function;
 
 /**
  * Refreshes all project's Python SDKs.
@@ -162,6 +166,9 @@ public class PythonSdkUpdater implements StartupActivity.Background {
       }
     }
 
+    /**
+     * May be invoked from any thread.
+     */
     private void generateSkeletons(@NotNull Sdk sdk, @NotNull ProgressIndicator indicator) {
       final String skeletonsPath = PythonSdkUtil.getSkeletonsPath(sdk);
       try {
@@ -169,7 +176,9 @@ public class PythonSdkUpdater implements StartupActivity.Background {
         LOG.info("Performing background update of skeletons for SDK " + sdkPresentableName);
         indicator.setText(PyBundle.message("python.sdk.updating.skeletons"));
         PySkeletonRefresher.refreshSkeletonsOfSdk(myProject, null, skeletonsPath, sdk);
-        updateRemoteSdkPaths(sdk, getProject());
+        if (PythonSdkUtil.isRemote(sdk)) {
+          updateSdkPaths(sdk, getRemoteSdkMappedPaths(sdk), getProject());
+        }
       }
       catch (UnsupportedPythonSdkTypeException e) {
         NOTIFICATION_GROUP
@@ -295,6 +304,19 @@ public class PythonSdkUpdater implements StartupActivity.Background {
     scheduleUpdate(sdk, project, new PyUpdateSdkRequestData());
   }
 
+  /**
+   * Does the same that {@link #scheduleUpdate(Sdk, Project)}, but simply omits the new update request if another one is in progress,
+   * while the former method will schedule the next update after processing the other update.
+   */
+  public static void ensureUpdateScheduled(@NotNull Sdk sdk, @NotNull Project project) {
+    final String key = PythonSdkType.getSdkKey(sdk);
+    synchronized (ourLock) {
+      if (ourUnderRefresh.contains(key) || ourToBeRefreshed.containsKey(key)) return;
+      ourUnderRefresh.add(key);
+    }
+    ProgressManager.getInstance().run(new PyUpdateSdkTask(project, key, new PyUpdateSdkRequestData()));
+  }
+
   private static void scheduleUpdate(@NotNull Sdk sdk, @NotNull Project project, @NotNull PyUpdateSdkRequestData requestData) {
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       LOG.info("Skipping background update for '" + sdk + "' in unit test mode");
@@ -341,10 +363,15 @@ public class PythonSdkUpdater implements StartupActivity.Background {
     }
   }
 
+  /**
+   * May be invoked from any thread. May freeze the current thread while evaluating python version and sys.path.
+   */
   private static void updateLocalSdkVersionAndPaths(@NotNull Sdk sdk, @Nullable Project project)
     throws InvalidSdkException {
     updateLocalSdkVersion(sdk);
-    updateLocalSdkPaths(sdk, project);
+    if (!PythonSdkUtil.isRemote(sdk)) {
+      updateSdkPaths(sdk, evaluateSysPath(sdk), project);
+    }
   }
 
   /**
@@ -365,32 +392,40 @@ public class PythonSdkUpdater implements StartupActivity.Background {
     }
   }
 
-  /**
-   * Updates the paths of a local SDK.
-   * <p>
-   * May be invoked from any thread. May freeze the current thread while evaluating sys.path.
-   */
-  private static void updateLocalSdkPaths(@NotNull Sdk sdk, @Nullable Project project)
-    throws InvalidSdkException {
-    if (!PythonSdkUtil.isRemote(sdk)) {
-      final boolean forceCommit = ensureBinarySkeletonsDirectoryExists(sdk);
-      final List<VirtualFile> localSdkPaths = getLocalSdkPaths(sdk, project);
-      commitSdkPathsIfChanged(sdk, localSdkPaths, forceCommit);
-    }
-  }
+  private static void updateSdkPaths(@NotNull Sdk sdk, @NotNull List<String> paths, @Nullable Project project) {
+    final var moduleRoots = getModuleRoots(project);
+    final var excludedPaths = getExcludedPaths(sdk);
+    final var sdkRoots = splitIntoLibraryAndSourceRoots(sdk, paths, moduleRoots, excludedPaths, it -> sdkPathToRoot(sdk, it));
+    final var userAddedRoots = splitIntoLibraryAndSourceRoots(sdk, getUserAddedPaths(sdk), moduleRoots, excludedPaths, Function.identity());
 
-  /**
-   * Updates the paths of a remote SDK.
-   * <p>
-   * Requires the skeletons refresh steps to be run before it in order to get remote paths mappings in the additional SDK data.
-   * <p>
-   * You may invoke it from any thread. Blocks until the commit is done in the AWT thread.
-   */
-  private static void updateRemoteSdkPaths(@NotNull Sdk sdk, @Nullable Project project) {
-    if (PythonSdkUtil.isRemote(sdk)) {
-      final boolean forceCommit = ensureBinarySkeletonsDirectoryExists(sdk);
-      final List<VirtualFile> remoteSdkPaths = getRemoteSdkPaths(sdk, project);
-      commitSdkPathsIfChanged(sdk, remoteSdkPaths, forceCommit);
+    final boolean forceCommit = ensureBinarySkeletonsDirectoryExists(sdk);
+    final List<VirtualFile> localSdkPaths = buildSdkPaths(sdk, sdkRoots.first, userAddedRoots.first);
+    commitSdkPathsIfChanged(sdk, localSdkPaths, forceCommit);
+
+    final var pathsToTransfer = new HashSet<VirtualFile>();
+    pathsToTransfer.addAll(sdkRoots.second);
+    pathsToTransfer.addAll(userAddedRoots.second);
+
+    /*
+    Don't run actions related to transferred roots on editable sdks since they can share data with original ones.
+
+    PyTransferredSdkRootsKt#transferRoots and PyTransferredSdkRootsKt#removeTransferredRoots skip sdks
+    that are not equal to module one (editable as well).
+
+    That's why roots changes were not applied but paths to transfer were successfully set.
+
+    When current method was executed for original sdk,
+    roots changes were not applied since there were no changes in paths to transfer (they were shared with editable copy).
+     */
+    if (PyConfigurableInterpreterList.getInstance(project).getModel().getProjectSdks().containsKey(sdk) &&
+        !pathsToTransfer.equals(PyTransferredSdkRootsKt.getPathsToTransfer(sdk))) {
+      if (project != null) {
+        PyTransferredSdkRootsKt.removeTransferredRootsFromModulesWithSdk(project, sdk);
+      }
+      PyTransferredSdkRootsKt.setPathsToTransfer(sdk, pathsToTransfer);
+      if (project != null) {
+        PyTransferredSdkRootsKt.transferRootsToModulesWithSdk(project, sdk);
+      }
     }
   }
 
@@ -404,30 +439,14 @@ public class PythonSdkUpdater implements StartupActivity.Background {
     return false;
   }
 
-  /**
-   * Returns all the paths for a local SDK.
-   */
   @NotNull
-  private static List<VirtualFile> getLocalSdkPaths(@NotNull Sdk sdk, @Nullable Project project) throws InvalidSdkException {
+  private static List<VirtualFile> buildSdkPaths(@NotNull Sdk sdk,
+                                                 @NotNull List<VirtualFile> sdkRoots,
+                                                 @NotNull List<VirtualFile> userAddedRoots) {
     return ImmutableList.<VirtualFile>builder()
-      .addAll(filterRootPaths(sdk, evaluateSysPath(sdk), project))
+      .addAll(sdkRoots)
       .addAll(getSkeletonsPaths(sdk))
-      .addAll(getUserAddedPaths(sdk))
-      .addAll(PyTypeShed.INSTANCE.findRootsForSdk(sdk))
-      .build();
-  }
-
-  /**
-   * Returns all the paths for a remote SDK.
-   * <p>
-   * Requires the skeletons refresh steps to be run before it in order to get remote paths mappings in the additional SDK data.
-   */
-  @NotNull
-  private static List<VirtualFile> getRemoteSdkPaths(@NotNull Sdk sdk, @Nullable Project project) {
-    return ImmutableList.<VirtualFile>builder()
-      .addAll(getRemoteSdkMappedPaths(sdk, project))
-      .addAll(getSkeletonsPaths(sdk))
-      .addAll(getUserAddedPaths(sdk))
+      .addAll(userAddedRoots)
       .addAll(PyTypeShed.INSTANCE.findRootsForSdk(sdk))
       .build();
   }
@@ -449,7 +468,7 @@ public class PythonSdkUpdater implements StartupActivity.Background {
    * Returns all the existing paths except those manually excluded by the user.
    */
   @NotNull
-  private static List<VirtualFile> getRemoteSdkMappedPaths(@NotNull Sdk sdk, @Nullable Project project) {
+  private static List<String> getRemoteSdkMappedPaths(@NotNull Sdk sdk) {
     final SdkAdditionalData additionalData = sdk.getSdkAdditionalData();
     if (additionalData instanceof PyRemoteSdkAdditionalDataBase) {
       final PyRemoteSdkAdditionalDataBase remoteSdkData = (PyRemoteSdkAdditionalDataBase)additionalData;
@@ -457,43 +476,81 @@ public class PythonSdkUpdater implements StartupActivity.Background {
       for (PathMappingSettings.PathMapping mapping : remoteSdkData.getPathMappings().getPathMappings()) {
         paths.add(mapping.getLocalRoot());
       }
-      return filterRootPaths(sdk, paths, project);
+      return paths;
     }
     return Collections.emptyList();
   }
 
-  /**
-   * Filters valid paths from an initial set of Python paths and returns them as virtual files.
-   */
-  @NotNull
-  public static List<VirtualFile> filterRootPaths(@NotNull Sdk sdk, @NotNull List<String> paths, @Nullable Project project) {
-    final PythonSdkAdditionalData pythonAdditionalData = PyUtil.as(sdk.getSdkAdditionalData(), PythonSdkAdditionalData.class);
-    final Collection<VirtualFile> excludedPaths = pythonAdditionalData != null ? pythonAdditionalData.getExcludedPathFiles() :
-                                                  Collections.emptyList();
-    final Set<VirtualFile> moduleRoots = new HashSet<>();
+  private static <T> @NotNull Pair<@NotNull List<VirtualFile>, @NotNull List<VirtualFile>> splitIntoLibraryAndSourceRoots(@NotNull Sdk sdk,
+                                                                                                                          @NotNull List<T> paths,
+                                                                                                                          @NotNull Set<VirtualFile> moduleRoots,
+                                                                                                                          @NotNull Collection<VirtualFile> excludedPaths,
+                                                                                                                          @NotNull Function<T, @Nullable VirtualFile> mapper) {
+    final List<VirtualFile> lib = new ArrayList<>();
+    final List<VirtualFile> source = new ArrayList<>();
+    for (T path : paths) {
+      final VirtualFile rootFile = mapper.apply(path);
+      if (rootFile != null && !excludedPaths.contains(rootFile)) {
+        if (isUnderModuleRootsButNotSdk(rootFile, moduleRoots, sdk)) {
+          source.add(rootFile);
+        }
+        else {
+          lib.add(rootFile);
+        }
+        continue;
+      }
+      LOG.info("Bogus sys.path entry " + path);
+    }
+    return Pair.createNonNull(lib, source);
+  }
+
+  private static @NotNull Set<VirtualFile> getModuleRoots(@Nullable Project project) {
     if (project != null) {
+      final Set<VirtualFile> moduleRoots = new HashSet<>();
       final Module[] modules = ModuleManager.getInstance(project).getModules();
       for (Module module : modules) {
         moduleRoots.addAll(PyUtil.getSourceRoots(module));
       }
+      return moduleRoots;
     }
-    final List<VirtualFile> results = new ArrayList<>();
-    // TODO: Refactor SDK so they can provide exclusions for root paths
-    final VirtualFile condaFolder = PythonSdkUtil.isConda(sdk) ? PythonSdkUtil.getCondaDirectory(sdk) : null;
-    for (String path : paths) {
-      if (path != null && !FileUtilRt.extensionEquals(path, "egg-info")) {
-        final VirtualFile virtualFile = StandardFileSystems.local().refreshAndFindFileByPath(path);
-        if (virtualFile != null && !virtualFile.equals(condaFolder)) {
-          final VirtualFile rootFile = PythonSdkType.getSdkRootVirtualFile(virtualFile);
-          if (!excludedPaths.contains(rootFile) && !moduleRoots.contains(rootFile)) {
-            results.add(rootFile);
-            continue;
-          }
-        }
+    return Collections.emptySet();
+  }
+
+  private static @NotNull Collection<VirtualFile> getExcludedPaths(@NotNull Sdk sdk) {
+    final PythonSdkAdditionalData pythonAdditionalData = PyUtil.as(sdk.getSdkAdditionalData(), PythonSdkAdditionalData.class);
+    return pythonAdditionalData != null ? pythonAdditionalData.getExcludedPathFiles() : Collections.emptyList();
+  }
+
+  private static @Nullable VirtualFile sdkPathToRoot(@NotNull Sdk sdk, @Nullable String path) {
+    if (path != null && !FileUtilRt.extensionEquals(path, "egg-info")) {
+      // TODO: Refactor SDK so they can provide exclusions for root paths
+      final VirtualFile condaFolder = PythonSdkUtil.isConda(sdk) ? PythonSdkUtil.getCondaDirectory(sdk) : null;
+
+      final VirtualFile virtualFile = StandardFileSystems.local().refreshAndFindFileByPath(path);
+      if (virtualFile != null && !virtualFile.equals(condaFolder)) {
+        return PythonSdkType.getSdkRootVirtualFile(virtualFile);
       }
-      LOG.info("Bogus sys.path entry " + path);
     }
-    return results;
+
+    return null;
+  }
+
+  private static boolean isUnderModuleRootsButNotSdk(@NotNull VirtualFile file, @NotNull Set<VirtualFile> moduleRoots, @NotNull Sdk sdk) {
+    if (VfsUtilCore.isUnder(file, moduleRoots)) {
+      final String binaryPath = sdk.getHomePath();
+      if (binaryPath == null) {
+        return true;
+      }
+
+      final File envRoot = PythonSdkUtil.getVirtualEnvRoot(binaryPath);
+      if (envRoot == null) {
+        return true;
+      }
+
+      return !VfsUtilCore.isAncestor(envRoot, VfsUtilCore.virtualToIoFile(file), false);
+    }
+
+    return false;
   }
 
   /**

@@ -17,7 +17,7 @@ internal class MarkdownConfigureImageIntention: PsiElementBaseIntentionAction() 
   override fun getFamilyName(): String = text
 
   override fun getText(): String {
-    return MarkdownBundle.message("markdown.configure.image.intention.name")
+    return MarkdownBundle.message("markdown.configure.image.text")
   }
 
   override fun invoke(project: Project, editor: Editor?, element: PsiElement) {

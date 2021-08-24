@@ -1,7 +1,10 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.editor.impl;
 
-import com.intellij.ide.*;
+import com.intellij.ide.CutProvider;
+import com.intellij.ide.DataManager;
+import com.intellij.ide.IdeEventQueue;
+import com.intellij.ide.PasteProvider;
 import com.intellij.ide.actions.UndoRedoAction;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.Disposable;
@@ -703,6 +706,11 @@ public class EditorComponentImpl extends JTextComponent implements Scrollable, D
     public boolean isLeaf() {
       return false;
     }
+  }
+
+  @Override
+  public String getSelectedText() {
+    return myEditor.getSelectionModel().getSelectedText(true);
   }
 
   @DirtyUI

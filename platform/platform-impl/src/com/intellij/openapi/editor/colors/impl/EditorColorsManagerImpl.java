@@ -196,6 +196,7 @@ public final class EditorColorsManagerImpl extends EditorColorsManager implement
       loadSchemesFromThemes();
       initEditableDefaultSchemesCopies();
       initEditableBundledSchemesCopies();
+      ApplicationManager.getApplication().getMessageBus().syncPublisher(EditorColorsManagerListener.TOPIC).schemesReloaded();
     }
   }
 

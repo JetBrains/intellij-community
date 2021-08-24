@@ -37,7 +37,7 @@ internal class ConfigureHtmlImageLineMarkerProvider : ConfigureImageLineMarkerPr
   override fun createDialog(element: HtmlTag): ConfigureImageDialog {
     return ConfigureImageDialog(
       element.project,
-      MarkdownBundle.message("markdown.configure.image.line.marker.configure.command.name"),
+      MarkdownBundle.message("markdown.configure.image.title.text"),
       path = obtainPathText(element),
       width = element.getAttributeValue("width"),
       height = element.getAttributeValue("height"),

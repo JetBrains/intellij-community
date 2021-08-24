@@ -9,6 +9,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.util.JavaPsiPatternUtil;
 import com.intellij.psi.util.JavaPsiRecordUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
@@ -932,19 +933,30 @@ final class ControlFlowAnalyzer extends JavaElementVisitor {
     PsiCodeBlock body = statement.getBody();
     if (body != null) {
       PsiStatement[] statements = body.getStatements();
-      PsiSwitchLabelStatementBase defaultLabel = null;
+      boolean needToCreateDefault = false;
+      PsiType exprType = expr == null ? null : expr.getType();
       for (PsiStatement aStatement : statements) {
         ProgressManager.checkCanceled();
-        if (aStatement instanceof PsiSwitchLabelStatementBase) {
-          if (((PsiSwitchLabelStatementBase)aStatement).isDefaultCase()) {
-            defaultLabel = (PsiSwitchLabelStatementBase)aStatement;
-          }
-          Instruction instruction = new ConditionalGoToInstruction(0, expr);
-          myCurrentFlow.addInstruction(instruction);
-          addElementOffsetLater(aStatement, true);
+        if (!(aStatement instanceof PsiSwitchLabelStatementBase)) continue;
+        PsiSwitchLabelStatementBase labelStatement = (PsiSwitchLabelStatementBase)aStatement;
+        if (labelStatement.isDefaultCase()) {
+          needToCreateDefault = true;
         }
+        PsiCaseLabelElementList labelElementList = labelStatement.getCaseLabelElementList();
+        if (labelElementList != null) {
+          for (PsiCaseLabelElement element : labelElementList.getElements()) {
+            if (element instanceof PsiDefaultCaseLabelElement ||
+                element instanceof PsiPattern && exprType != null && JavaPsiPatternUtil.isTotalForType(((PsiPattern)element), exprType)) {
+              needToCreateDefault = true;
+              break;
+            }
+          }
+        }
+        Instruction instruction = new ConditionalGoToInstruction(0, expr);
+        myCurrentFlow.addInstruction(instruction);
+        addElementOffsetLater(aStatement, true);
       }
-      if (defaultLabel == null) {
+      if (!needToCreateDefault) {
         Instruction instruction = new GoToInstruction(0);
         myCurrentFlow.addInstruction(instruction);
         addElementOffsetLater(body, false);

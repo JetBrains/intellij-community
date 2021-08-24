@@ -65,7 +65,7 @@ class GradleDependencyModificator(private val myProject: Project) : ExternalDepe
 
     if (artifactModel == null) {
       logger<GradleDependencyModificator>().warn("Unable to update dependency '$oldDescriptor': not found in module ${module.name}")
-       return
+      return
     }
 
     if (oldDescriptor.coordinates.groupId != newDescriptor.coordinates.groupId) {

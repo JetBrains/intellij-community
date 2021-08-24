@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.extensions.impl;
 
 import com.intellij.openapi.components.ComponentManager;
@@ -85,7 +85,8 @@ class XmlExtensionAdapter extends ExtensionComponentAdapter {
         throw e;
       }
       catch (Throwable e) {
-        throw componentManager.createError(e, pluginDescriptor.getPluginId());
+        throw componentManager.createError("Cannot create extension (class=" + getAssignableToClassName() + ")", e,
+                                           pluginDescriptor.getPluginId(), null);
       }
       finally {
         initializing = false;

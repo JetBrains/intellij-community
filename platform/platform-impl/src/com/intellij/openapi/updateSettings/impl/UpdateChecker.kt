@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.updateSettings.impl
 
 import com.intellij.execution.process.ProcessIOExecutorService
@@ -31,7 +31,9 @@ import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeFrame
 import com.intellij.reference.SoftReference
 import com.intellij.util.Urls
 import com.intellij.util.concurrency.AppExecutorUtil
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresEdt
+import com.intellij.util.concurrency.annotations.RequiresNoReadLock
 import com.intellij.util.containers.MultiMap
 import com.intellij.util.io.HttpRequests
 import com.intellij.util.io.URLUtil
@@ -245,14 +247,13 @@ object UpdateChecker {
   ): PlatformUpdates =
     try {
       indicator?.text = IdeBundle.message("updates.checking.platform")
-
-      loadProductData(indicator)?.let { product ->
-        if (product.disableMachineId) {
-          PropertiesComponent.getInstance().setValue(MACHINE_ID_DISABLED_PROPERTY, true)
-          UpdateRequestParameters.removeParameter(MACHINE_ID_PARAMETER)
-        }
-        UpdateStrategy(ApplicationInfo.getInstance().build, product, settings).checkForUpdates()
-      } ?: PlatformUpdates.Empty
+      val productData = loadProductData(indicator)
+      if (!settings.isPlatformUpdateEnabled || productData == null) {
+        PlatformUpdates.Empty
+      }
+      else {
+        UpdateStrategy(ApplicationInfo.getInstance().build, productData, settings).checkForUpdates()
+      }
     }
     catch (e: Exception) {
       LOG.infoWithDebug(e)
@@ -275,7 +276,15 @@ object UpdateChecker {
           url = UpdateRequestParameters.amendUpdateRequest(url)
         }
         LOG.debug { "loading ${url}" }
-        parseUpdateData(HttpRequests.request(url).connect { JDOMUtil.load(it.getReader(indicator)) })
+        HttpRequests.request(url)
+          .connect { JDOMUtil.load(it.getReader(indicator)) }
+          .let { parseUpdateData(it) }
+          ?.also {
+            if (it.disableMachineId) {
+              PropertiesComponent.getInstance().setValue(MACHINE_ID_DISABLED_PROPERTY, true)
+              UpdateRequestParameters.removeParameter(MACHINE_ID_PARAMETER)
+            }
+        }
       }
 
       productDataCache = SoftReference(result)
@@ -294,9 +303,11 @@ object UpdateChecker {
   @JvmStatic
   fun updateDescriptorsForInstalledPlugins(state: InstalledPluginsState) {
     if (ApplicationInfoEx.getInstanceEx().usesJetBrainsPluginRepository()) {
-      val updateable = collectUpdateablePlugins()
-      if (updateable.isNotEmpty()) {
-        findUpdatesInJetBrainsRepository(updateable, mutableMapOf(), mutableMapOf(), null, state, null)
+      ApplicationManager.getApplication().executeOnPooledThread {
+        val updateable = collectUpdateablePlugins()
+        if (updateable.isNotEmpty()) {
+          findUpdatesInJetBrainsRepository(updateable, mutableMapOf(), mutableMapOf(), null, state, null)
+        }
       }
     }
   }
@@ -305,6 +316,8 @@ object UpdateChecker {
    * When [buildNumber] is null, returns new versions of plugins compatible with the current IDE version,
    * otherwise, returns versions compatible with the specified build.
    */
+  @RequiresBackgroundThread
+  @RequiresNoReadLock
   @JvmOverloads
   @JvmStatic
   fun getInternalPluginUpdates(
@@ -408,6 +421,8 @@ object UpdateChecker {
     return updateable
   }
 
+  @RequiresBackgroundThread
+  @RequiresNoReadLock
   private fun findUpdatesInJetBrainsRepository(updateable: MutableMap<PluginId, IdeaPluginDescriptor?>,
                                                toUpdate: MutableMap<PluginId, PluginDownloader>,
                                                toUpdateDisabled: MutableMap<PluginId, PluginDownloader>,
@@ -586,9 +601,12 @@ object UpdateChecker {
         NoUpdatesDialog(showSettingsLink).show()
       }
       else if (userInitiated) {
-        val message = IdeBundle.message("updates.no.updates.notification")
-        showNotification(project, NotificationKind.PLUGINS,
-                         "no.updates.available", "", message)
+        if (UpdateSettings.getInstance().isPlatformUpdateEnabled) {
+          showNotification(project, NotificationKind.PLUGINS, "no.updates.available", "", IdeBundle.message("updates.no.updates.notification"))
+        }
+        else {
+          showNotification(project, NotificationKind.PLUGINS, "no.updates.available", "", IdeBundle.message("updates.no.plugin.updates.notification"))
+        }
       }
     }
   }

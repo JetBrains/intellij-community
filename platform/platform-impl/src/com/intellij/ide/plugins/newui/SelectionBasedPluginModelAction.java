@@ -3,10 +3,7 @@ package com.intellij.ide.plugins.newui;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
-import com.intellij.ide.plugins.IdeaPluginDescriptor;
-import com.intellij.ide.plugins.IdeaPluginDescriptorImpl;
-import com.intellij.ide.plugins.PluginEnableDisableAction;
-import com.intellij.ide.plugins.PluginEnabledState;
+import com.intellij.ide.plugins.*;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.project.DumbAwareAction;
@@ -77,7 +74,7 @@ abstract class SelectionBasedPluginModelAction<C extends JComponent, D extends I
                         boolean showShortcut,
                         @NotNull List<? extends C> selection,
                         @NotNull Function<? super C, ? extends IdeaPluginDescriptor> pluginDescriptor) {
-      super(action.toString(),
+      super(action.getPresentableText(),
             pluginModel,
             showShortcut,
             selection,
@@ -102,7 +99,7 @@ abstract class SelectionBasedPluginModelAction<C extends JComponent, D extends I
                           myAction == PluginEnableDisableAction.DISABLE_FOR_PROJECT) &&
                          exists(pluginIds, myPluginModel::isRequiredPluginForProject) ||
                          myAction.isPerProject() && (e.getProject() == null ||
-                                                     !isPerProjectEnabled() ||
+                                                     !PluginEnabler.isPerProjectEnabled() ||
                                                      exists(pluginIds, EnableDisableAction::isPluginExcluded) ||
                                                      exists(descriptors, myPluginModel::requiresRestart));
 
@@ -119,10 +116,6 @@ abstract class SelectionBasedPluginModelAction<C extends JComponent, D extends I
     public void actionPerformed(@NotNull AnActionEvent e) {
       myPluginModel.setEnabledState(getAllDescriptors(),
                                     myAction);
-    }
-
-    private static boolean isPerProjectEnabled() {
-      return Registry.is("ide.plugins.per.project", false);
     }
 
     private static boolean isPluginExcluded(@NotNull PluginId pluginId) {
@@ -149,7 +142,7 @@ abstract class SelectionBasedPluginModelAction<C extends JComponent, D extends I
                     @NotNull JComponent uiParent,
                     @NotNull List<? extends C> selection,
                     @NotNull Function<? super C, ? extends IdeaPluginDescriptor> pluginDescriptor) {
-      super(IdeBundle.message("plugins.configurable.uninstall.button"),
+      super(IdeBundle.message("plugins.configurable.uninstall"),
             pluginModel,
             showShortcut,
             selection,

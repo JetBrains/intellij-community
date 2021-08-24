@@ -38,7 +38,7 @@ class JavaLangSupport : AbstractLangSupport() {
 
   override val langCourseFeedback get() = getFeedbackLink(this, false)
 
-  override val readMeCreator= ReadMeCreator()
+  override val readMeCreator = ReadMeCreator()
 
   override fun installAndOpenLearningProject(projectPath: Path,
                                              projectToClose: Project?,
@@ -89,7 +89,7 @@ class JavaLangSupport : AbstractLangSupport() {
       .executeLookup()
   }
 
-  override fun getSdkForProject(project: Project): Sdk? {
+  override fun getSdkForProject(project: Project, selectedSdk: Sdk?): Sdk? {
     return null
   }
 

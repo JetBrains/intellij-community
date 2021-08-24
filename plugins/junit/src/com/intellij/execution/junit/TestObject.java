@@ -333,7 +333,7 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitCon
         if (isModularized) {
           //put engine and dependencies or api only (when engine is attached to the module path above) on the module path
           for (PsiJavaModule module : JavaModuleNameIndex.getInstance().get(moduleNameToMove, project, globalSearchScope)) {
-            JavaParametersUtil.putDependenciesOnModulePath(javaParameters.getModulePath(), javaParameters.getClassPath(), module);
+            JavaParametersUtil.putDependenciesOnModulePath(javaParameters, module, true);
           }
         }
       }
@@ -618,7 +618,9 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitCon
       if (testFramework instanceof JUnit3Framework) {
         return isClassConfiguration ? JUnitStarter.JUNIT4_PARAMETER : JUnitStarter.JUNIT3_PARAMETER;
       }
-      if (testFramework != null) return JUnitStarter.JUNIT4_PARAMETER;
+      if (testFramework instanceof JUnitTestFramework && !((JUnitTestFramework)testFramework).shouldRunSingleClassAsJUnit5(project, globalSearchScope)) {
+        return JUnitStarter.JUNIT4_PARAMETER;
+      }
     }
     return JUnitUtil.isJUnit5(globalSearchScope, project) || isCustomJUnit5(globalSearchScope) ? JUnitStarter.JUNIT5_PARAMETER : DEFAULT_RUNNER;
   }

@@ -10,24 +10,41 @@ import com.intellij.psi.PsiMethod;
 import com.intellij.testFramework.PlatformTestUtil;
 import org.jetbrains.idea.maven.aether.ArtifactRepositoryManager;
 import org.jetbrains.jps.model.library.JpsMavenRepositoryLibraryDescriptor;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
 
+import java.util.Arrays;
+import java.util.Collection;
+
+@RunWith(Parameterized.class)
 public class SpockIntegrationTest extends AbstractTestFrameworkCompilingIntegrationTest {
 
   @Override
   protected String getTestContentRoot() {
     return VfsUtilCore.pathToUrl(PlatformTestUtil.getCommunityPath() + "/plugins/junit5_rt_tests/testData/integration/spock");
   }
+  
+  @Parameterized.Parameters(name = "{0}")
+  public static Collection<Object[]> data() {
+    return Arrays.asList(new Object[] {"1.2-groovy-2.5"}, new Object[] {"2.0-groovy-2.5"});
+  }
+  
+  @Parameterized.Parameter
+  public String mySpockVersion;
+
 
   @Override
   protected void setupModule() throws Exception {
     super.setupModule();
     ArtifactRepositoryManager repoManager = getRepoManager();
     addMavenLibs(myModule, new JpsMavenRepositoryLibraryDescriptor("org.codehaus.groovy:groovy:2.5.4"), repoManager);
-    addMavenLibs(myModule, new JpsMavenRepositoryLibraryDescriptor("org.spockframework:spock-core:1.2-groovy-2.5"), repoManager);
+    addMavenLibs(myModule, new JpsMavenRepositoryLibraryDescriptor("org.spockframework:spock-core:" + mySpockVersion), repoManager);
     addMavenLibs(myModule, new JpsMavenRepositoryLibraryDescriptor("org.junit.jupiter", "junit-jupiter-api", "5.4.0"), repoManager);
     addMavenLibs(myModule, new JpsMavenRepositoryLibraryDescriptor("org.junit.platform", "junit-platform-engine", "1.4.0"), repoManager);
   }
 
+  @Test
   public void testRunClass() throws ExecutionException {
     PsiClass psiClass = findClass(myModule, "TestSpec");
     assertNotNull(psiClass);

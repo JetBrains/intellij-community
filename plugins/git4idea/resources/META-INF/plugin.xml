@@ -332,6 +332,7 @@
       <reference id="Git.Ignore.File"/>
       <separator/>
       <reference id="Diff.ShowDiff"/>
+      <reference ref="Diff.ShowStandaloneDiff"/>
       <reference id="Git.Stage.ThreeSideDiff"/>
       <reference ref="EditSource"/>
       <reference ref="ChangesView.CreatePatchFromChanges"/>
@@ -374,6 +375,7 @@
       <reference id="Git.Stash.Drop"/>
       <separator/>
       <reference id="Diff.ShowDiff"/>
+      <reference ref="Diff.ShowStandaloneDiff"/>
       <reference id="Vcs.ShowDiffWithLocal"/>
       <reference id="Vcs.ShowDiffWithLocal.Before"/>
     </group>
@@ -606,6 +608,7 @@
     <vcs.fileStatusProvider implementation="git4idea.index.vfs.GitIndexVirtualFileStatusProvider"/>
 
     <diff.actions.ShowDiffAction.ExtensionProvider implementation="git4idea.index.actions.GitStageDiffAction"/>
+    <diff.actions.ShowStandaloneDiffAction.ExtensionProvider implementation="git4idea.index.actions.GitStageDiffAction"/>
     <openapi.vcs.changes.actions.CreatePatchFromChangesAction.Dialog.ExtensionProvider
       implementation="git4idea.index.actions.GitStageCreatePatchActionProvider$Dialog"/>
     <openapi.vcs.changes.actions.CreatePatchFromChangesAction.Clipboard.ExtensionProvider
@@ -622,6 +625,7 @@
     <projectService serviceImplementation="git4idea.stash.GitStashCache"/>
     <postStartupActivity implementation="git4idea.stash.ui.GitStashStartupActivity"/>
     <diff.actions.ShowDiffAction.ExtensionProvider implementation="git4idea.stash.ui.GitShowDiffFromStashAction"/>
+    <diff.actions.ShowStandaloneDiffAction.ExtensionProvider implementation="git4idea.stash.ui.GitShowDiffFromStashAction"/>
 
     <vcs.consoleFolding implementation="git4idea.console.GitConsoleFolding"/>
     <console.folding implementation="git4idea.console.GitProgressOutputConsoleFolding"/>

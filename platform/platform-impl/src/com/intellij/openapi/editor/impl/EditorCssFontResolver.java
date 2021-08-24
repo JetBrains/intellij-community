@@ -14,6 +14,8 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.text.AttributeSet;
 import javax.swing.text.html.CSS;
 import java.awt.*;
+import java.awt.font.TextAttribute;
+import java.util.Map;
 
 /**
  * This class allows to use editor font in JEditorPane, by configuring its usage via CSS.
@@ -23,12 +25,20 @@ import java.awt.*;
  */
 public class EditorCssFontResolver implements JBHtmlEditorKit.FontResolver {
   /**
-   * Can be used as a {@code font-family} value in CSS to represent editor font.
+   * Can be used as a {@code font-family} value in CSS to represent editor font. The resolved font will have ligatures enabled,
+   * if ligatures are enabled in editor font settings currently.
    */
   public static final String EDITOR_FONT_NAME_PLACEHOLDER = "_EditorFont_";
 
+  /**
+   * Can be used as a {@code font-family} value in CSS to represent editor font. The resolved font won't have ligatures enabled
+   * regardless of current editor font settings.
+   */
+  public static final String EDITOR_FONT_NAME_NO_LIGATURES_PLACEHOLDER = "_EditorFontNoLigatures_";
+
   private static final EditorCssFontResolver GLOBAL_INSTANCE = new EditorCssFontResolver(null);
   private static final Key<EditorCssFontResolver> LOCAL_KEY = Key.create("EditorCssFontResolver");
+  private static final Map<TextAttribute, Integer> NO_LIGATURES_ATTRIBUTES = Map.of(TextAttribute.LIGATURES, 0);
 
   private final Editor myEditor;
 
@@ -58,11 +68,18 @@ public class EditorCssFontResolver implements JBHtmlEditorKit.FontResolver {
   @Override
   public @NotNull Font getFont(@NotNull Font defaultFont, @NotNull AttributeSet attributeSet) {
     Object fontFamily = attributeSet.getAttribute(CSS.Attribute.FONT_FAMILY);
-    if (fontFamily == null || !EDITOR_FONT_NAME_PLACEHOLDER.equals(fontFamily.toString())) {
+    if (fontFamily == null) {
+      return defaultFont;
+    }
+    String fontFamilyAsString = fontFamily.toString();
+    if (!EDITOR_FONT_NAME_PLACEHOLDER.equals(fontFamilyAsString) && !EDITOR_FONT_NAME_NO_LIGATURES_PLACEHOLDER.equals(fontFamilyAsString)) {
       return defaultFont;
     }
     EditorColorsScheme scheme = myEditor == null ? EditorColorsManager.getInstance().getGlobalScheme() : myEditor.getColorsScheme();
     Font font = scheme.getFont(EditorFontType.forJavaStyle(defaultFont.getStyle())).deriveFont(defaultFont.getSize2D());
+    if (EDITOR_FONT_NAME_NO_LIGATURES_PLACEHOLDER.equals(fontFamilyAsString)) {
+      font = font.deriveFont(NO_LIGATURES_ATTRIBUTES);
+    }
     return UIUtil.getFontWithFallback(font);
   }
 }
