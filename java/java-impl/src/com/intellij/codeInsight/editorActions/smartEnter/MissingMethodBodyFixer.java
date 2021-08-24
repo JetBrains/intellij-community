@@ -21,6 +21,8 @@ import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 
+import java.util.Objects;
+
 import static com.intellij.psi.PsiModifier.*;
 
 public class MissingMethodBodyFixer implements Fixer {
@@ -41,7 +43,7 @@ public class MissingMethodBodyFixer implements Fixer {
         if (statements.length > 0) {
           if (statements[0] instanceof PsiDeclarationStatement) {
             if (PsiTreeUtil.getDeepestLast(statements[0]) instanceof PsiErrorElement) {
-              if (containingClass.getRBrace() == null) {
+              if (Objects.requireNonNull(containingClass).getRBrace() == null) {
                 doc.insertString(body.getTextRange().getStartOffset() + 1, "\n}");
               }
             }
@@ -60,8 +62,8 @@ public class MissingMethodBodyFixer implements Fixer {
   static boolean shouldHaveBody(PsiMethod method) {
     PsiClass containingClass = method.getContainingClass();
     if (containingClass == null) return false;
-    if (method.hasModifierProperty(PRIVATE)) return true;
     if (method.hasModifierProperty(ABSTRACT) || method.hasModifierProperty(NATIVE)) return false;
+    if (method.hasModifierProperty(PRIVATE)) return true;
     if (containingClass.isInterface() && !method.hasModifierProperty(DEFAULT) && !method.hasModifierProperty(STATIC)) return false;
     return true;
   }
