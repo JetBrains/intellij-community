@@ -1,33 +1,33 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.spellchecker.grazie.dictionary
 
-import ai.grazie.spell.lists.WordList
+import com.intellij.grazie.speller.lists.TraversableWordList
 import com.intellij.spellchecker.dictionary.Dictionary
-import java.util.concurrent.ConcurrentHashMap
+import com.intellij.util.containers.CollectionFactory
 
 internal abstract class EditableWordListAdapter {
-  protected val dictionaries: ConcurrentHashMap<String, Dictionary> = ConcurrentHashMap()
-  protected val aggregator = EditableAggregatedWordList()
+  protected val dictionaries: MutableMap<String, Dictionary> = CollectionFactory.createSmallMemoryFootprintMap()
+  protected val traversable = EditableAggregatedWordList()
 
   val names: Set<String>
-    get() = aggregator.keys + dictionaries.keys
+    get() = traversable.keys + dictionaries.keys
 
   fun addDictionary(dictionary: Dictionary) {
-    dictionaries[dictionary.name] = dictionary
+    dictionaries.put(dictionary.name, dictionary)
   }
 
-  fun addList(name: String, list: WordList) {
-    aggregator.addList(name, list)
+  fun addList(name: String, list: TraversableWordList) {
+    traversable.addList(name, list)
   }
 
-  fun containsSource(name: String): Boolean = dictionaries.containsKey(name) || aggregator.containsList(name)
+  fun containsSource(name: String): Boolean = dictionaries.containsKey(name) || traversable.containsList(name)
   fun removeSource(name: String) {
     dictionaries.remove(name)
-    aggregator.removeList(name)
+    traversable.removeList(name)
   }
 
   fun reset() {
     dictionaries.clear()
-    aggregator.clear()
+    traversable.clear()
   }
 }

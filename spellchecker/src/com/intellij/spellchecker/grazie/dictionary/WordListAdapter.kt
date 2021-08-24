@@ -1,39 +1,34 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.spellchecker.grazie.dictionary
 
-import ai.grazie.spell.lists.WordList
-import ai.grazie.spell.utils.Distances
+import com.intellij.grazie.speller.lists.WordList
+import com.intellij.grazie.speller.utils.Distances
 
 internal class WordListAdapter : WordList, EditableWordListAdapter() {
-  fun isAlien(word: String): Boolean {
-    return dictionaries.values.all { it.contains(word) == null } && !aggregator.contains(word)
+  override fun contains(word: String): Boolean {
+    return dictionaries.values.any { it.contains(word) ?: false } || traversable.contains(word)
   }
 
-  override fun contains(word: String, caseSensitive: Boolean): Boolean {
-    val inDictionary = if (caseSensitive) {
-      dictionaries.values.any { it.contains(word) ?: false }
-    } else {
-      val lowered = word.lowercase()
-      // NOTE: dictionary may not contain lowercase form, but may contain any form in a different case
-      // current dictionary interface does not support caseSensitive
-      dictionaries.values.any { (it.contains(word) ?: false) || it.contains(lowered) ?: false }
-    }
-
-    return inDictionary || aggregator.contains(word, caseSensitive)
+  override fun isAlien(word: String): Boolean {
+    return dictionaries.values.all { it.contains(word) == null } && traversable.isAlien(word)
   }
 
-  override fun suggest(word: String): LinkedHashSet<String> {
-    val result = LinkedHashSet<String>()
+  override fun suggest(word: String, distance: Int): Sequence<String> = sequence {
     for (dictionary in dictionaries.values) {
+      val set = HashSet<String>()
       dictionary.consumeSuggestions(word) {
-        val distance = Distances.levenshtein.distance(word, it, SimpleWordList.MAX_LEVENSHTEIN_DISTANCE + 1)
-        if (distance <= SimpleWordList.MAX_LEVENSHTEIN_DISTANCE) {
-          result.add(it)
+        val cur = Distances.levenshtein.distance(word, it, distance + 1)
+        if (cur <= distance) {
+          set.add(it)
         }
       }
+      yieldAll(set)
     }
 
-    result.addAll(aggregator.suggest(word))
-    return result
+    yieldAll(traversable.suggest(word, distance))
+  }.distinct()
+
+  override fun prefix(prefix: String): Sequence<String> = sequence {
+    yieldAll(traversable.prefix(prefix))
   }
 }
