@@ -28,6 +28,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.SmartPsiElementPointer;
+import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.ArrayFactory;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.ThreeState;
@@ -176,7 +177,15 @@ public class DefaultInspectionToolResultExporter implements InspectionToolResult
       VirtualFile file1 = desc1 instanceof ProblemDescriptorBase ? ((ProblemDescriptorBase)desc1).getContainingFile() : null;
       VirtualFile file2 = desc2 instanceof ProblemDescriptorBase ? ((ProblemDescriptorBase)desc2).getContainingFile() : null;
       if (file1 != null && file1.equals(file2)) {
-        return CommonProblemDescriptor.DESCRIPTOR_COMPARATOR.compare(desc1, desc2);
+        int diff = Integer.compare(((ProblemDescriptor)desc1).getLineNumber(), ((ProblemDescriptor)desc2).getLineNumber());
+        if (diff != 0) {
+          return diff;
+        }
+        diff = PsiUtilCore.compareElementsByPosition(((ProblemDescriptor)desc1).getPsiElement(), ((ProblemDescriptor)desc2).getPsiElement());
+        if (diff != 0) {
+          return diff;
+        }
+        return desc1.getDescriptionTemplate().compareTo(desc2.getDescriptionTemplate());
       }
       return file1 == null || file2 == null ? 0 : file1.getPath().compareTo(file2.getPath());
     });
