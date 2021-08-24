@@ -264,22 +264,24 @@ public class RefManagerImpl extends RefManager {
       if (psiFile == null) return null;
 
       Element fileElement = new Element("file");
-      Element lineElement = new Element("line");
       final VirtualFile virtualFile = psiFile.getVirtualFile();
       LOG.assertTrue(virtualFile != null);
       fileElement.addContent(virtualFile.getUrl());
+      problem.addContent(fileElement);
 
+      int resultLine;
       if (actualLine == -1) {
         final Document document = PsiDocumentManager.getInstance(pointer.getProject()).getDocument(psiFile);
         LOG.assertTrue(document != null);
         final Segment range = pointer.getRange();
-        lineElement.addContent(String.valueOf(range != null ? document.getLineNumber(range.getStartOffset()) + 1 : -1));
+        resultLine = range == null ? -1 : document.getLineNumber(range.getStartOffset()) + 1;
       }
       else {
-        lineElement.addContent(String.valueOf(actualLine + 1));
+        resultLine = actualLine + 1;
       }
 
-      problem.addContent(fileElement);
+      Element lineElement = new Element("line");
+      lineElement.addContent(String.valueOf(resultLine));
       problem.addContent(lineElement);
 
       appendModule(problem, refElement.getModule());
