@@ -1,6 +1,7 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.proxy;
 
+import com.intellij.ide.IdeCoreBundle;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Comparing;
@@ -9,7 +10,6 @@ import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.Strings;
 import com.intellij.openapi.vfs.VfsUtil;
-import com.intellij.ui.UIBundle;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -98,7 +98,7 @@ public final class CommonProxy extends ProxySelector {
     String message = null;
     for (Map.Entry<String, String> entry : props.entrySet()) {
       if (!Strings.isEmptyOrSpaces(entry.getValue())) {
-        message = UIBundle.message("proxy.old.way.label", entry.getKey(), entry.getValue());
+        message = IdeCoreBundle.message("proxy.old.way.label", entry.getKey(), entry.getValue());
         break;
       }
     }
