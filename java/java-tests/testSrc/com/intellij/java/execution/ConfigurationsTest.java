@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.execution;
 
 import com.intellij.application.options.ModuleDescriptionsComboBox;
@@ -156,6 +156,23 @@ public class ConfigurationsTest extends BaseConfigurationTestCase {
     assertTrue(parameters.getProgramParametersList().getList().contains(testA.getQualifiedName()));
     assertEquals(JUnitStarter.class.getName(), parameters.getMainClass());
     assertEquals(myJdk.getHomeDirectory().getPresentableUrl(), parameters.getJdkPath());
+  }
+
+
+  public void testRunAllInPackageJUnit5() throws ExecutionException, IOException {
+    
+    VirtualFile module1Content = findFile("module7");
+    createModule(module1Content, true, "JUnit5");
+    Module module = getModule(3);
+    PsiPackage psiPackage = JavaPsiFacade.getInstance(myProject).findPackage("tests1");
+    JUnitConfiguration configuration = createConfiguration(psiPackage, module);
+    configuration.setSearchScope(TestSearchScope.SINGLE_MODULE);
+    JavaParameters parameters = checkCanRun(configuration);
+    List<String> lines = extractAllInPackageTests(parameters, psiPackage);
+    assertEquals(Arrays.asList("", //category
+                               "" //filters
+                 ), 
+                               lines);
   }
 
   public void testRunningAllInPackage() throws IOException, ExecutionException {

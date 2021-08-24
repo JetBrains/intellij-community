@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.execution;
 
 import com.intellij.execution.Location;
@@ -67,6 +67,12 @@ public abstract class BaseConfigurationTestCase extends JavaProjectTestCase {
   }
 
   protected void createModule(VirtualFile module1Content, boolean addSource) {
+    createModule(module1Content, addSource, "JUnit4");
+  }
+
+  protected void createModule(VirtualFile module1Content,
+                              boolean addSource,
+                              String junitLibName) {
     Module module = createEmptyModule();
     if (addSource) {
       PsiTestUtil.addSourceRoot(module, module1Content, true);
@@ -75,11 +81,13 @@ public abstract class BaseConfigurationTestCase extends JavaProjectTestCase {
       PsiTestUtil.addContentRoot(module, module1Content);
     }
 
-    IntelliJProjectConfiguration.LibraryRoots junit4Library = IntelliJProjectConfiguration.getProjectLibrary("JUnit4");
-    ModuleRootModificationUtil.addModuleLibrary(module, "JUnit4", junit4Library.getClassesUrls(), junit4Library.getSourcesUrls());
+    IntelliJProjectConfiguration.LibraryRoots junit4Library = IntelliJProjectConfiguration.getProjectLibrary(junitLibName);
+    ModuleRootModificationUtil.addModuleLibrary(module, junitLibName, junit4Library.getClassesUrls(), junit4Library.getSourcesUrls());
     ModuleRootModificationUtil.setModuleSdk(module, ModuleRootManager.getInstance(myModule).getSdk());
     GlobalSearchScope scope = GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(module);
-    assertNotNull(JavaPsiFacade.getInstance(getProject()).findClass(JUnitUtil.TEST_CASE_CLASS, scope));
+    if ("JUnit4".equals(junitLibName)) {
+      assertNotNull(JavaPsiFacade.getInstance(getProject()).findClass(JUnitUtil.TEST_CASE_CLASS, scope));
+    }
     Module missingModule = createTempModule();
     addDependency(module, missingModule);
     ModuleManager.getInstance(myProject).disposeModule(missingModule);
