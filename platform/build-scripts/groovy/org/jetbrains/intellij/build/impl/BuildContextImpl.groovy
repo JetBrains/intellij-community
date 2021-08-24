@@ -89,6 +89,7 @@ final class BuildContextImpl extends BuildContext {
       messages.error("System selector must not contain spaces: " + systemSelector)
     }
 
+    options.buildStepsToSkip.addAll(productProperties.incompatibleBuildSteps)
     messages.info("Build steps to be skipped: ${options.buildStepsToSkip.join(',')}")
   }
 
