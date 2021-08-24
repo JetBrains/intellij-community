@@ -528,7 +528,7 @@ public class UnusedDeclarationPresentation extends DefaultInspectionToolPresenta
 
   @Override
   @Nullable
-  public QuickFix findQuickFixes(@NotNull final CommonProblemDescriptor descriptor,
+  public QuickFix<?> findQuickFixes(@NotNull final CommonProblemDescriptor descriptor,
                                  RefEntity entity,
                                  String hint) {
     if (entity instanceof RefElement) {

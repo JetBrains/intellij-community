@@ -38,7 +38,7 @@ public interface InspectionToolResultExporter extends ProblemDescriptionsProcess
                      @NotNull Predicate<? super RefEntity> isEntityExcluded,
                      @NotNull Predicate<? super CommonProblemDescriptor> isProblemExcluded);
 
-  @NotNull InspectionToolWrapper getToolWrapper();
+  @NotNull InspectionToolWrapper<?,?> getToolWrapper();
 
   @NotNull
   SynchronizedBidiMultiMap<RefEntity, CommonProblemDescriptor> getProblemElements();

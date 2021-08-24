@@ -61,7 +61,7 @@ public class DefaultInspectionToolResultExporter implements InspectionToolResult
   public static final @NonNls String INSPECTION_RESULTS_HINT_ELEMENT = "hint";
   public static final @NonNls String INSPECTION_RESULTS_VALUE_ATTRIBUTE = "value";
   public static final @NonNls String INSPECTION_RESULTS_LANGUAGE = "language";
-  protected final @NotNull InspectionToolWrapper myToolWrapper;
+  protected final @NotNull InspectionToolWrapper<?,?> myToolWrapper;
   protected final @NotNull GlobalInspectionContextEx myContext;
 
   private final SynchronizedBidiMultiMap<RefEntity, CommonProblemDescriptor> myExcludedElements = createBidiMap();
@@ -71,19 +71,18 @@ public class DefaultInspectionToolResultExporter implements InspectionToolResult
   protected final SynchronizedBidiMultiMap<RefEntity, CommonProblemDescriptor> mySuppressedElements = createBidiMap();
   protected final SynchronizedBidiMultiMap<RefEntity, CommonProblemDescriptor> myResolvedElements = createBidiMap();
 
-  private Map<String, Set<RefEntity>> myContents = null;
+  private Map<String, Set<RefEntity>> myContents;
 
-  public DefaultInspectionToolResultExporter(@NotNull InspectionToolWrapper toolWrapper, @NotNull GlobalInspectionContextEx context) {
+  public DefaultInspectionToolResultExporter(@NotNull InspectionToolWrapper<?,?> toolWrapper, @NotNull GlobalInspectionContextEx context) {
     myToolWrapper = toolWrapper;
     myContext = context;
   }
 
   @Override
   @NotNull
-  public InspectionToolWrapper getToolWrapper() {
+  public InspectionToolWrapper<?,?> getToolWrapper() {
     return myToolWrapper;
   }
-
 
   @NotNull
   public RefManager getRefManager() {
@@ -134,9 +133,9 @@ public class DefaultInspectionToolResultExporter implements InspectionToolResult
   }
 
   @Override
-  public void exportResults(@NotNull final Consumer<? super Element> resultConsumer,
-                            @NotNull final Predicate<? super RefEntity> excludedEntities,
-                            @NotNull final Predicate<? super CommonProblemDescriptor> excludedDescriptors) {
+  public void exportResults(@NotNull Consumer<? super Element> resultConsumer,
+                            @NotNull Predicate<? super RefEntity> excludedEntities,
+                            @NotNull Predicate<? super CommonProblemDescriptor> excludedDescriptors) {
     getRefManager().iterate(new RefVisitor() {
       @Override
       public void visitElement(@NotNull RefEntity elem) {
@@ -162,13 +161,13 @@ public class DefaultInspectionToolResultExporter implements InspectionToolResult
     }
   }
 
-  public void exportResults(final CommonProblemDescriptor @NotNull [] descriptors,
+  public void exportResults(CommonProblemDescriptor @NotNull [] descriptors,
                             @NotNull RefEntity refEntity,
                             @NotNull Consumer<? super Element> problemSink) {
     exportResults(descriptors, refEntity, problemSink, __ -> false);
   }
 
-  protected void exportResults(final CommonProblemDescriptor @NotNull [] descriptors,
+  protected void exportResults(CommonProblemDescriptor @NotNull [] descriptors,
                                @NotNull RefEntity refEntity,
                                @NotNull Consumer<? super Element> problemSink,
                                @NotNull Predicate<? super CommonProblemDescriptor> isDescriptorExcluded) {
@@ -201,13 +200,13 @@ public class DefaultInspectionToolResultExporter implements InspectionToolResult
   }
 
   private void exportResult(@NotNull RefEntity refEntity, @NotNull CommonProblemDescriptor descriptor, @NotNull Element element) {
-    final PsiElement psiElement = descriptor instanceof ProblemDescriptor ? ((ProblemDescriptor)descriptor).getPsiElement() : null;
+    PsiElement psiElement = descriptor instanceof ProblemDescriptor ? ((ProblemDescriptor)descriptor).getPsiElement() : null;
     try {
       @NonNls Element problemClassElement = new Element(INSPECTION_RESULTS_PROBLEM_CLASS_ELEMENT);
       problemClassElement.setAttribute(INSPECTION_RESULTS_ID_ATTRIBUTE, myToolWrapper.getShortName());
       problemClassElement.addContent(sanitizeIllegalXmlChars(myToolWrapper.getDisplayName()));
 
-      final HighlightSeverity severity = InspectionToolResultExporter.getSeverity(refEntity, psiElement, this);
+      HighlightSeverity severity = InspectionToolResultExporter.getSeverity(refEntity, psiElement, this);
 
       SeverityRegistrar severityRegistrar = myContext.getCurrentProfile().getProfileManager().getSeverityRegistrar();
       HighlightInfoType type = descriptor instanceof ProblemDescriptor
@@ -220,12 +219,12 @@ public class DefaultInspectionToolResultExporter implements InspectionToolResult
 
       element.addContent(problemClassElement);
       if (myToolWrapper instanceof GlobalInspectionToolWrapper) {
-        final GlobalInspectionTool globalInspectionTool = ((GlobalInspectionToolWrapper)myToolWrapper).getTool();
-        final QuickFix[] fixes = descriptor.getFixes();
+        GlobalInspectionTool globalInspectionTool = ((GlobalInspectionToolWrapper)myToolWrapper).getTool();
+        QuickFix<?>[] fixes = descriptor.getFixes();
         if (fixes != null) {
           @NonNls Element hintsElement = new Element(INSPECTION_RESULTS_HINTS_ELEMENT);
-          for (QuickFix fix : fixes) {
-            final String hint = globalInspectionTool.getHint(fix);
+          for (QuickFix<?> fix : fixes) {
+            String hint = globalInspectionTool.getHint(fix);
             if (hint != null) {
               @NonNls Element hintElement = new Element(INSPECTION_RESULTS_HINT_ELEMENT);
               hintElement.setAttribute(INSPECTION_RESULTS_VALUE_ATTRIBUTE, sanitizeIllegalXmlChars(hint));
@@ -235,7 +234,7 @@ public class DefaultInspectionToolResultExporter implements InspectionToolResult
           element.addContent(hintsElement);
         }
       }
-      @NonNls final String template = descriptor.getDescriptionTemplate();
+      @NonNls String template = descriptor.getDescriptionTemplate();
       String highlightedText = ProblemDescriptorUtil.extractHighlightedText(descriptor, psiElement);
       @NonNls String problemText = StringUtil
         .replace(StringUtil.replace(template, "#ref", psiElement != null ? highlightedText : ""), " #loc ", " ");
@@ -301,11 +300,11 @@ public class DefaultInspectionToolResultExporter implements InspectionToolResult
   @Override
   public HighlightSeverity getSeverity(@NotNull RefElement element) {
     return ReadAction.nonBlocking(() -> {
-      final PsiElement psiElement = ((RefElement)element.getRefManager().getRefinedElement(element)).getPointer().getContainingFile();
+      PsiElement psiElement = ((RefElement)element.getRefManager().getRefinedElement(element)).getPointer().getContainingFile();
       if (psiElement != null) {
-        final GlobalInspectionContextBase context = getContext();
-        final String shortName = getSeverityDelegateName();
-        final Tools tools = context.getTools().get(shortName);
+        GlobalInspectionContextBase context = getContext();
+        String shortName = getSeverityDelegateName();
+        Tools tools = context.getTools().get(shortName);
         if (tools != null) {
           for (ScopeToolState state : tools.getTools()) {
             InspectionToolWrapper<?, ?> toolWrapper = state.getTool();
@@ -315,8 +314,8 @@ public class DefaultInspectionToolResultExporter implements InspectionToolResult
           }
         }
 
-        final InspectionProfile profile = InspectionProjectProfileManager.getInstance(context.getProject()).getCurrentProfile();
-        final HighlightDisplayLevel level = profile.getErrorLevel(HighlightDisplayKey.find(shortName), psiElement);
+        InspectionProfile profile = InspectionProjectProfileManager.getInstance(context.getProject()).getCurrentProfile();
+        HighlightDisplayLevel level = profile.getErrorLevel(HighlightDisplayKey.find(shortName), psiElement);
         return level.getSeverity();
       }
       return null;
@@ -381,7 +380,7 @@ public class DefaultInspectionToolResultExporter implements InspectionToolResult
   }
 
   protected void updateProblemElements() {
-    final Set<RefEntity> elements;
+    Set<RefEntity> elements;
     if (filterResolvedItems()) {
       // only non-excluded actual problems
       elements = getProblemElements().keys().stream().filter(entity -> !isExcluded(entity)).collect(Collectors.toSet());
@@ -434,7 +433,7 @@ public class DefaultInspectionToolResultExporter implements InspectionToolResult
   @Override
   public void addProblemElement(@Nullable RefEntity refElement,
                                 boolean filterSuppressed,
-                                final CommonProblemDescriptor @NotNull ... descriptors) {
+                                CommonProblemDescriptor @NotNull ... descriptors) {
     if (refElement == null || descriptors.length == 0) {
       return;
     }
@@ -459,7 +458,7 @@ public class DefaultInspectionToolResultExporter implements InspectionToolResult
     }
   }
 
-  public void addLocalInspectionProblem(@NotNull RefEntity refElement, final CommonProblemDescriptor @NotNull[] descriptors) {
+  public void addLocalInspectionProblem(@NotNull RefEntity refElement, CommonProblemDescriptor @NotNull[] descriptors) {
     try {
       writeOutput(descriptors, refElement);
     }
