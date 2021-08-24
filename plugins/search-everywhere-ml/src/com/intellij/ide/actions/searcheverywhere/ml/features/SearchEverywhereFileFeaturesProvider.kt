@@ -221,12 +221,23 @@ internal class SearchEverywhereFileFeaturesProvider : SearchEverywhereElementFea
 
     val project = item.project
 
-    val (openedFilePackage, foundFilePackage) = ReadAction.compute<Pair<List<String>?, List<String>?>, Nothing> {
+    val (openedFilePackage, foundFilePackage) = ReadAction.compute<Pair<String?, String?>, Nothing> {
       val fileIndex = ProjectRootManager.getInstance(project).fileIndex
       val foundFileDirectory = if (item.isDirectory) item.virtualFile else item.virtualFile.parent
 
-      Pair(fileIndex.getPackageNameByDirectory(openedFile.parent)?.split('.'),
-           fileIndex.getPackageNameByDirectory(foundFileDirectory)?.split('.'))
+      Pair(fileIndex.getPackageNameByDirectory(openedFile.parent),
+           fileIndex.getPackageNameByDirectory(foundFileDirectory))
+    }.run {
+      fun splitPackage(s: String?) = if (s == null) {
+        null
+      } else if (s.isBlank()) {
+        // In case the file is under a source root (src/testSrc/resource) and the package prefix is blank
+        emptyList()
+      } else {
+        s.split('.')
+      }
+
+      Pair(splitPackage(first), splitPackage(second))
     }
 
     if (openedFilePackage == null || foundFilePackage == null) {
@@ -245,18 +256,18 @@ internal class SearchEverywhereFileFeaturesProvider : SearchEverywhereElementFea
     }
 
     val distance = maxDistance - 2 * common
-    val normalizedDistance = roundDouble(if (distance != 0) (distance.toDouble() / maxDistance) else 0.0)
+    val normalizedDistance = roundDouble(if (maxDistance != 0) (distance.toDouble() / maxDistance) else 0.0)
     return Pair(distance, normalizedDistance)
   }
 
   private data class Cache(val fileTypeStats: Map<String, FileTypeUsageSummary>, val openedFile: VirtualFile?)
-}
 
-/**
- * Associates the specified key with the value, only if the value is not null.
- */
-private fun <K, V> MutableMap<K, V>.putIfValueNotNull(key: K, value: V?) {
-  value?.let {
-    this[key] = it
+  /**
+   * Associates the specified key with the value, only if the value is not null.
+   */
+  private fun <K, V> MutableMap<K, V>.putIfValueNotNull(key: K, value: V?) {
+    value?.let {
+      this[key] = it
+    }
   }
 }

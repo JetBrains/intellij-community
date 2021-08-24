@@ -521,6 +521,43 @@ internal class SearchEverywhereFileFeaturesProviderTest
       .isEqualTo(expected)
   }
 
+  fun `test package distance is 0 when files are not in packages`() {
+    val srcDir = createModuleWithSrcDir("packageTestModule")
+    val openedFile = createVirtualFileInPackage(srcDir, "fileA.java")
+    val foundFile = createVirtualFileInPackage(srcDir, "fileB.java")
+
+    FileEditorManager.getInstance(project).openFile(openedFile, true)
+
+    val expected = mapOf(
+      PACKAGE_DISTANCE_DATA_KEY to 0,
+      PACKAGE_DISTANCE_NORMALIZED_DATA_KEY to 0.0,
+    )
+
+    val psiFile = PsiUtil.getPsiFile(project, foundFile)
+    checkThatFeatures()
+      .ofElement(psiFile)
+      .isEqualTo(expected)
+  }
+
+  fun `test package distance when one file is not in a package`() {
+    val srcDir = createModuleWithSrcDir("packageTestModule")
+    val packageDir = createPackageDirectory(srcDir, "a.b.c.d")
+    val openedFile = createVirtualFileInPackage(packageDir, "fileA.java")
+    val foundFile = createVirtualFileInPackage(srcDir, "fileB.java")
+
+    FileEditorManager.getInstance(project).openFile(openedFile, true)
+
+    val expected = mapOf(
+      PACKAGE_DISTANCE_DATA_KEY to 4,
+      PACKAGE_DISTANCE_NORMALIZED_DATA_KEY to roundDouble(4 / (4 + 0).toDouble()),
+    )
+
+    val psiFile = PsiUtil.getPsiFile(project, foundFile)
+    checkThatFeatures()
+      .ofElement(psiFile)
+      .isEqualTo(expected)
+  }
+
   private fun createFileWithModTimestamp(modificationTimestamp: Long): PsiFileSystemItem {
     val mockVirtualFile = object : MockVirtualFile("file.java") {
       override fun getTimeStamp(): Long {
