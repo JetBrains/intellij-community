@@ -19,7 +19,7 @@ import java.lang.Integer.max
 import javax.swing.DefaultComboBoxModel
 import javax.swing.JLabel
 
-class NewProjectStep(context: WizardContext) : NewModuleStepWithSettings<NewProjectStepSettings>() {
+class NewProjectStep(context: WizardContext) : NewModuleStepWithSettings<NewProjectStepSettings>(context) {
   override val settingsKey = NewProjectStepSettings.KEY
   override fun createSettings() = NewProjectStepSettings(languages.first())
 

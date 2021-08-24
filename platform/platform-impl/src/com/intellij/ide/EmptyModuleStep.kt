@@ -8,7 +8,7 @@ import com.intellij.openapi.util.Key
 import com.intellij.ui.layout.*
 import com.intellij.util.ui.JBUI
 
-class EmptyModuleStep : NewModuleStepWithSettings<EmptySettings>() {
+class EmptyModuleStep(context: WizardContext) : NewModuleStepWithSettings<EmptySettings>(context) {
   override val settingsKey = EmptySettings.KEY
   override fun createSettings() = EmptySettings()
 

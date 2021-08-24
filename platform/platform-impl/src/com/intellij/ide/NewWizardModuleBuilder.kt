@@ -9,7 +9,6 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ex.ProjectManagerEx
-import java.nio.file.Path
 
 abstract class NewWizardModuleBuilder<T> : ModuleBuilder() {
   private var step: NewModuleStepWithSettings<T>? = null
@@ -23,7 +22,7 @@ abstract class NewWizardModuleBuilder<T> : ModuleBuilder() {
   fun createProject(context: WizardContext): Project? {
     val settings = step!!.baseSettings
     val projectName = settings.name
-    val projectPath = Path.of(settings.projectPath)
+    val projectPath = settings.projectPath
 
     val project = ProjectManagerEx.getInstanceEx().newProject(projectPath, OpenProjectTask.newProject().withProjectName(projectName))
     if (project == null) {

@@ -5,7 +5,7 @@ import com.intellij.ide.util.projectWizard.WizardContext
 import javax.swing.Icon
 
 class NewWizardEmptyModuleBuilder : NewWizardModuleBuilder<EmptySettings>() {
-  override fun createStep(context: WizardContext) = EmptyModuleStep()
+  override fun createStep(context: WizardContext) = EmptyModuleStep(context)
 
   override fun getModuleType() = NewWizardEmptyModuleType.INSTANCE
   override fun getGroupName() = DEFAULT_GROUP
