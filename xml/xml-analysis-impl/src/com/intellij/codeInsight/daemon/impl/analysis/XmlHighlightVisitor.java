@@ -284,7 +284,7 @@ public class XmlHighlightVisitor extends XmlElementVisitor implements HighlightV
 
     if (!(prevLeaf instanceof PsiWhiteSpace)
         && (!(tag instanceof HtmlTag)
-            || !XmlUtil.hasInjectionShredBoundaryAt(attribute, attribute.getTextOffset()))) {
+            || !XmlUtil.hasNonEditableInjectionFragmentAt(attribute, attribute.getTextOffset()))) {
       TextRange textRange = attribute.getTextRange();
       HighlightInfoType type = tag instanceof HtmlTag ? HighlightInfoType.WARNING : HighlightInfoType.ERROR;
       String description = XmlAnalysisBundle.message("xml.inspections.attribute.should.be.preceded.with.space");
