@@ -23,7 +23,8 @@ import org.jetbrains.kotlin.descriptors.annotations.AnnotationDescriptor
 import org.jetbrains.kotlin.descriptors.impl.TypeAliasConstructorDescriptor
 import org.jetbrains.kotlin.descriptors.synthetic.SyntheticMemberDescriptor
 import org.jetbrains.kotlin.idea.KotlinLanguage
-import org.jetbrains.kotlin.lexer.KtTokens
+import org.jetbrains.kotlin.idea.references.ReferenceAccess
+import org.jetbrains.kotlin.idea.references.readWriteAccess
 import org.jetbrains.kotlin.load.java.lazy.descriptors.LazyJavaPackageFragment
 import org.jetbrains.kotlin.load.java.sam.SamAdapterDescriptor
 import org.jetbrains.kotlin.load.kotlin.KotlinJvmBinaryPackageSourceElement
@@ -35,8 +36,6 @@ import org.jetbrains.kotlin.metadata.jvm.deserialization.JvmMemberSignature
 import org.jetbrains.kotlin.metadata.jvm.deserialization.JvmProtoBufUtil
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
-import org.jetbrains.kotlin.psi.psiUtil.getAssignmentByLHS
-import org.jetbrains.kotlin.psi.psiUtil.getQualifiedExpressionForSelectorOrThis
 import org.jetbrains.kotlin.psi.psiUtil.parents
 import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.DescriptorToSourceUtils
@@ -60,7 +59,6 @@ import org.jetbrains.kotlin.types.*
 import org.jetbrains.kotlin.types.typeUtil.builtIns
 import org.jetbrains.kotlin.types.typeUtil.contains
 import org.jetbrains.kotlin.types.typeUtil.isInterface
-import org.jetbrains.kotlin.utils.addToStdlib.constant
 import org.jetbrains.kotlin.utils.addToStdlib.firstIsInstanceOrNull
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 import org.jetbrains.uast.*
@@ -76,37 +74,6 @@ val kotlinUastPlugin: UastLanguagePlugin by lz {
 
 internal fun getContainingLightClass(original: KtDeclaration): KtLightClass? =
     (original.containingClassOrObject?.toLightClass() ?: original.containingKtFile.findFacadeClass())
-
-// mb merge with org.jetbrains.kotlin.idea.references.ReferenceAccess ?
-internal enum class ReferenceAccess(val isRead: Boolean, val isWrite: Boolean) {
-    READ(true, false), WRITE(false, true), READ_WRITE(true, true)
-}
-
-internal fun KtExpression.readWriteAccess(): ReferenceAccess {
-    var expression = getQualifiedExpressionForSelectorOrThis()
-    loop@ while (true) {
-        val parent = expression.parent
-        when (parent) {
-            is KtParenthesizedExpression, is KtAnnotatedExpression, is KtLabeledExpression -> expression = parent as KtExpression
-            else -> break@loop
-        }
-    }
-
-    val assignment = expression.getAssignmentByLHS()
-    if (assignment != null) {
-        return when (assignment.operationToken) {
-            KtTokens.EQ -> ReferenceAccess.WRITE
-            else -> ReferenceAccess.READ_WRITE
-        }
-    }
-
-    return if ((expression.parent as? KtUnaryExpression)?.operationToken
-        in constant { setOf(KtTokens.PLUSPLUS, KtTokens.MINUSMINUS) }
-    )
-        ReferenceAccess.READ_WRITE
-    else
-        ReferenceAccess.READ
-}
 
 internal fun KotlinType.toPsiType(source: UElement?, element: KtElement, boxed: Boolean): PsiType =
     toPsiType(source?.getParentOfType<UDeclaration>(false)?.javaPsi as? PsiModifierListOwner, element, boxed)
@@ -364,7 +331,7 @@ fun resolveToDeclarationImpl(sourcePsi: KtExpression, declarationDescriptor: Dec
         declarationDescriptor = declarationDescriptor.callableFromObject
     }
     if (declarationDescriptor is SyntheticJavaPropertyDescriptor) {
-        declarationDescriptor = when (sourcePsi.readWriteAccess()) {
+        declarationDescriptor = when (sourcePsi.readWriteAccess(useResolveForReadWrite = false)) {
             ReferenceAccess.WRITE, ReferenceAccess.READ_WRITE ->
                 declarationDescriptor.setMethod ?: declarationDescriptor.getMethod
             ReferenceAccess.READ -> declarationDescriptor.getMethod
@@ -395,7 +362,7 @@ fun resolveToDeclarationImpl(sourcePsi: KtExpression, declarationDescriptor: Dec
             ?.let { return it }
     }
 
-    resolveDeserialized(sourcePsi, declarationDescriptor, sourcePsi.readWriteAccess())?.let { return it }
+    resolveDeserialized(sourcePsi, declarationDescriptor, sourcePsi.readWriteAccess(useResolveForReadWrite = false))?.let { return it }
 
     return null
 }
@@ -544,7 +511,7 @@ private fun KotlinType.containsLocalTypes(): Boolean {
 }
 
 private fun PsiElement.getMaybeLightElement(sourcePsi: KtExpression? = null): PsiElement? {
-    if (this is KtProperty && sourcePsi?.readWriteAccess()?.isWrite == true) {
+    if (this is KtProperty && sourcePsi?.readWriteAccess(useResolveForReadWrite = false)?.isWrite == true) {
         with(getAccessorLightMethods()) {
             (setter ?: backingField)?.let { return it } // backingField is for val property assignments in init blocks
         }
