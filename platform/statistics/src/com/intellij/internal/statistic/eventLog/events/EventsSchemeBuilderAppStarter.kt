@@ -18,9 +18,10 @@ class EventsSchemeBuilderAppStarter : ApplicationStarter {
   override fun main(args: List<String>) {
     val outputFile = args.getOrNull(1)
     val pluginsFile = args.getOrNull(2)
+    val pluginId = args.getOrNull(3)
     val eventsScheme = EventsSchemeBuilder.EventsScheme(System.getenv("INSTALLER_LAST_COMMIT_HASH"),
       System.getenv("IDEA_BUILD_NUMBER"),
-      EventsSchemeBuilder.buildEventsScheme())
+      EventsSchemeBuilder.buildEventsScheme(pluginId))
     val text = GsonBuilder()
       .registerTypeAdapter(EventsSchemeBuilder.FieldDataType::class.java, FieldDataTypeSerializer)
       .setPrettyPrinting()
