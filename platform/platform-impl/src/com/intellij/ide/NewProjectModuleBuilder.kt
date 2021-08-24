@@ -6,7 +6,7 @@ import com.intellij.openapi.module.ModuleType
 import com.intellij.ui.UIBundle
 import javax.swing.Icon
 
-class NewProjectModuleBuilder : NewWizardModuleBuilder<NewProjectStepSettings>() {
+class NewProjectModuleBuilder : NewWizardModuleBuilder() {
   override fun createStep(context: WizardContext) = NewProjectStep(context)
 
   override fun getModuleType(): ModuleType<*> = NewProjectModuleType.INSTANCE

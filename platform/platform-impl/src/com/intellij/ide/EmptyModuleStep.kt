@@ -2,27 +2,5 @@
 package com.intellij.ide
 
 import com.intellij.ide.util.projectWizard.WizardContext
-import com.intellij.openapi.project.Project
-import com.intellij.openapi.ui.DialogPanel
-import com.intellij.openapi.util.Key
-import com.intellij.ui.layout.*
-import com.intellij.util.ui.JBUI
 
-class EmptyModuleStep(context: WizardContext) : NewModuleStepWithSettings<EmptySettings>(context) {
-  override val settingsKey = EmptySettings.KEY
-  override fun createSettings() = EmptySettings()
-
-  override var panel: DialogPanel = panel {
-    nameAndPath()
-    gitCheckbox()
-  }.withBorder(JBUI.Borders.empty(10, 10))
-
-  override fun setupProject(project: Project, settings: EmptySettings, context: WizardContext) {
-  }
-}
-
-class EmptySettings {
-  companion object {
-    val KEY = Key.create<EmptySettings>(EmptySettings::class.java.name)
-  }
-}
+class EmptyModuleStep(context: WizardContext) : NewModuleStep(context)

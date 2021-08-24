@@ -17,7 +17,7 @@ interface NewProjectWizard<S> : WizardSettingsFactory<S> {
   fun setupProject(project: Project, settings: S, context: WizardContext)
 
   companion object {
-    val EP_WIZARD = ExtensionPointName<NewProjectWizard<*>>("com.intellij.newProjectWizard")
+    val EP_NAME = ExtensionPointName<NewProjectWizard<*>>("com.intellij.newProjectWizard")
   }
 }
 
