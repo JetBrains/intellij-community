@@ -46,11 +46,6 @@ class JavaNewProjectWizard : NewProjectWizard<JavaSettings> {
     }
     settings.buildSystem = buildSystemsSettings.first()
 
-    // These are IDE-plugin based build-systems, i.e. Gradle and Maven
-    if (buildSystemsSettings.isNotEmpty()) {
-      settings.buildSystem = buildSystemsSettings.first()
-    }
-
     val sdkModel = ProjectSdksModel().also { it.syncSdks() }
     val sdkCombo = JdkComboBox(null, sdkModel, { it is JavaSdkType }, null, null, null)
       .apply { minimumSize = Dimension(0, 0) }
