@@ -721,11 +721,11 @@ public class PyTypeHintsInspectionTest extends PyInspectionTestCase {
                  "c: Callable[[int, str], str]\n" +
                  "\n" +
                  "d: Callable[<error descr=\"'Callable' must be used as 'Callable[[arg, ...], result]'\">...</error>]\n" +
-                 "e: Callable[<error descr=\"'Callable' first parameter must be parameter expression\">int</error>, str]\n" +
+                 "e: Callable[<error descr=\"'Callable' first parameter must be a parameter expression\">int</error>, str]\n" +
                  "f: Callable[<error descr=\"'Callable' must be used as 'Callable[[arg, ...], result]'\">int, str</error>, str]\n" +
-                 "g: Callable[<error descr=\"'Callable' first parameter must be parameter expression\">(int, str)</error>, str]\n" +
+                 "g: Callable[<error descr=\"'Callable' first parameter must be a parameter expression\">(int, str)</error>, str]\n" +
                  "h: Callable[<error descr=\"'Callable' must be used as 'Callable[[arg, ...], result]'\">int</error>]\n" +
-                 "h: Callable[<error descr=\"'Callable' first parameter must be parameter expression\">(int)</error>, str]\n" +
+                 "h: Callable[<error descr=\"'Callable' first parameter must be a parameter expression\">(int)</error>, str]\n" +
                  "\n" +
                  "A1: TypeAlias = Callable[<error descr=\"'Callable' must be used as 'Callable[[arg, ...], result]'\">int</error>]\n" +
                  "A2: TypeAlias = 'Callable[<error descr=\"'Callable' must be used as 'Callable[[arg, ...], result]'\">int</error>]'\n" +
