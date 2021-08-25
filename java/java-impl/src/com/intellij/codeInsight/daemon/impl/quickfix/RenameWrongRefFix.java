@@ -19,6 +19,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
+import com.intellij.openapi.util.Iconable;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.registry.Registry;
@@ -73,7 +74,7 @@ public class RenameWrongRefFix implements HintAction {
     return !CreateFromUsageUtils.isValidReference(myRefExpr, myUnresolvedOnly);
   }
 
-  private LookupElement @NotNull [] collectItems() {
+  private LookupElement @NotNull [] collectItems(boolean onTheFly) {
     Set<LookupElement> items = new LinkedHashSet<>();
     boolean qualified = myRefExpr.getQualifierExpression() != null;
 
@@ -83,6 +84,9 @@ public class RenameWrongRefFix implements HintAction {
         items.add(createLookupElement(var, v-> v.getName()));
       }
     } else {
+      if (onTheFly) {
+        return LookupElement.EMPTY_ARRAY;
+      }
       class MyScopeProcessor implements PsiScopeProcessor {
         final ArrayList<PsiElement> myResult = new ArrayList<>();
         final boolean myFilterMethods;
@@ -138,7 +142,7 @@ public class RenameWrongRefFix implements HintAction {
   public void invoke(@NotNull Project project, final Editor editor, PsiFile file) {
     PsiReferenceExpression[] refs = CreateFromUsageUtils.collectExpressions(myRefExpr, PsiMember.class, PsiFile.class);
     PsiElement element = PsiTreeUtil.getParentOfType(myRefExpr, PsiMember.class, PsiFile.class);
-    LookupElement[] items = collectItems();
+    LookupElement[] items = collectItems(false);
     ReferenceNameExpression refExpr = new ReferenceNameExpression(items, myRefExpr.getReferenceName());
 
     TemplateBuilderImpl builder = new TemplateBuilderImpl(element);
@@ -177,7 +181,7 @@ public class RenameWrongRefFix implements HintAction {
     if (!Registry.is("editor.show.popup.for.unresolved.references", false)) {
       return false;
     }
-    LookupElement[] items = collectItems();
+    LookupElement[] items = collectItems(true);
     if (items.length == 0) return false;
     String hintText = ShowAutoImportPass.getMessage(items.length > 1, items[0].getLookupString());
     TextRange textRange = myRefExpr.getTextRange();
@@ -215,6 +219,10 @@ public class RenameWrongRefFix implements HintAction {
             if (value instanceof LookupElement) {
               @NlsSafe String refSuggestion = ((LookupElement)value).getLookupString();
               setText(refSuggestion);
+              Object object = ((LookupElement)value).getObject();
+              if (object instanceof Iconable) {
+                setIcon(((Iconable)object).getIcon(0));
+              }
             }
             return component;
           }
