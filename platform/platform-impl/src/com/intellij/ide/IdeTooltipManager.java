@@ -61,7 +61,10 @@ public class IdeTooltipManager implements Disposable, AWTEventListener {
   private volatile Component myQueuedComponent;
   private volatile Component myProcessingComponent;
 
-  private BalloonImpl myCurrentTipUi;
+  private Balloon myBalloon;
+  private @Nullable BalloonImpl myBalloonImpl;
+  private @Nullable IdeTooltip.Ui myBalloonUi;
+
   private MouseEvent myCurrentEvent;
   private boolean myCurrentTipIsCentered;
 
@@ -130,8 +133,8 @@ public class IdeTooltipManager implements Disposable, AWTEventListener {
         if (myProcessingComponent == myCurrentComponent &&
             myCurrentTooltip != null &&
             !myCurrentTooltip.isHint() &&
-            myCurrentTipUi != null) {
-          myCurrentTipUi.setAnimationEnabled(false);
+            myBalloon != null) {
+          myBalloon.setAnimationEnabled(false);
           hideCurrent(null, null, null, null, false);
         }
         else if (myProcessingComponent == myCurrentComponent || myProcessingComponent == myQueuedComponent) {
@@ -140,7 +143,7 @@ public class IdeTooltipManager implements Disposable, AWTEventListener {
       }
       else if (me.getID() == MouseEvent.MOUSE_MOVED) {
         if (myProcessingComponent == myCurrentComponent || myProcessingComponent == myQueuedComponent) {
-          if (myCurrentTipUi != null && myCurrentTipUi.wasFadedIn()) {
+          if (myBalloon != null && myBalloon.wasFadedIn()) {
             maybeShowFor(myProcessingComponent, me);
           }
           else {
@@ -166,9 +169,9 @@ public class IdeTooltipManager implements Disposable, AWTEventListener {
         }
       }
       else if (me.getID() == MouseEvent.MOUSE_PRESSED) {
-        boolean clickOnTooltip = myCurrentTipUi != null &&
-                                 myCurrentTipUi == JBPopupFactory.getInstance().getParentBalloonFor(myProcessingComponent);
-        if (myProcessingComponent == myCurrentComponent || (clickOnTooltip && !myCurrentTipUi.isClickProcessor())) {
+        boolean clickOnTooltip = myBalloon != null &&
+                                 myBalloon == JBPopupFactory.getInstance().getParentBalloonFor(myProcessingComponent);
+        if (myProcessingComponent == myCurrentComponent || (clickOnTooltip && myBalloonImpl != null &&!myBalloonImpl.isClickProcessor())) {
           hideCurrent(me, null, null, null, !clickOnTooltip);
         }
       }
@@ -427,8 +430,8 @@ public class IdeTooltipManager implements Disposable, AWTEventListener {
       effectivePoint.y = toCenterY ? bounds.height / 2 : effectivePoint.y;
     }
 
-    if (myCurrentComponent == tooltip.getComponent() && myCurrentTipUi != null && !myCurrentTipUi.isDisposed()) {
-      myCurrentTipUi.show(new RelativePoint(tooltip.getComponent(), effectivePoint), tooltip.getPreferredPosition());
+    if (myCurrentComponent == tooltip.getComponent() && myBalloon != null && !myBalloon.isDisposed()) {
+      myBalloon.show(new RelativePoint(tooltip.getComponent(), effectivePoint), tooltip.getPreferredPosition());
       return;
     }
 
@@ -458,9 +461,13 @@ public class IdeTooltipManager implements Disposable, AWTEventListener {
     tooltip.getTipComponent().setFont(tooltip.getFont() != null ? tooltip.getFont() : getTextFont(true));
 
 
-    myCurrentTipUi = (BalloonImpl)builder.createBalloon();
-    myCurrentTipUi.setAnimationEnabled(animationEnabled);
-    tooltip.setUi(myCurrentTipUi);
+    myBalloon = builder.createBalloon();
+    myBalloon = myBalloon;
+    myBalloonImpl = myBalloon instanceof BalloonImpl ? (BalloonImpl)myBalloon : null;
+    myBalloonUi = myBalloon instanceof IdeTooltip.Ui ? (IdeTooltip.Ui)myBalloon : null;
+
+    myBalloon.setAnimationEnabled(animationEnabled);
+    tooltip.setUi(myBalloonUi);
     myCurrentComponent = tooltip.getComponent();
     myX = effectivePoint.x;
     myY = effectivePoint.y;
@@ -470,7 +477,7 @@ public class IdeTooltipManager implements Disposable, AWTEventListener {
     myQueuedComponent = null;
     myQueuedTooltip = null;
 
-    myLastDisposable = myCurrentTipUi;
+    myLastDisposable = myBalloon;
     Disposer.register(myLastDisposable, new Disposable() {
       @Override
       public void dispose() {
@@ -478,7 +485,7 @@ public class IdeTooltipManager implements Disposable, AWTEventListener {
       }
     });
 
-    myCurrentTipUi.show(new RelativePoint(tooltip.getComponent(), effectivePoint), tooltip.getPreferredPosition());
+    myBalloon.show(new RelativePoint(tooltip.getComponent(), effectivePoint), tooltip.getPreferredPosition());
     myAlarm.addRequest(() -> {
       if (myCurrentTooltip == tooltip && tooltip.canBeDismissedOnTimeout()) {
         hideCurrent(null, null, null);
@@ -542,12 +549,12 @@ public class IdeTooltipManager implements Disposable, AWTEventListener {
   }
 
   private boolean hideCurrent(@Nullable MouseEvent me, @Nullable AnAction action, @Nullable AnActionEvent event) {
-    return hideCurrent(me, null, action, event, myCurrentTipUi != null && myCurrentTipUi.isAnimationEnabled());
+    return hideCurrent(me, null, action, event, myBalloonImpl != null && myBalloonImpl.isAnimationEnabled());
   }
 
   private boolean hideCurrent(@Nullable MouseEvent me,
                               @Nullable IdeTooltip tooltipToShow) {
-    return hideCurrent(me, tooltipToShow, null, null, myCurrentTipUi != null && myCurrentTipUi.isAnimationEnabled());
+    return hideCurrent(me, tooltipToShow, null, null, myBalloonImpl != null && myBalloonImpl.isAnimationEnabled());
   }
 
   private boolean hideCurrent(@Nullable MouseEvent me, @Nullable IdeTooltip tooltipToShow, @Nullable AnAction action, @Nullable AnActionEvent event, final boolean animationEnabled) {
@@ -557,7 +564,8 @@ public class IdeTooltipManager implements Disposable, AWTEventListener {
     }
 
     if (myCurrentTooltip != null && me != null && myCurrentTooltip.isInside(new RelativePoint(me))) {
-      if (me.getButton() == MouseEvent.NOBUTTON || myCurrentTipUi == null || myCurrentTipUi.isBlockClicks()) {
+      if (me.getButton() == MouseEvent.NOBUTTON || myBalloon == null ||
+          myBalloonImpl != null && myBalloonImpl.isBlockClicks()) {
         return false;
       }
     }
@@ -568,9 +576,11 @@ public class IdeTooltipManager implements Disposable, AWTEventListener {
 
     if (myCurrentTooltip == null) return true;
 
-    if (myCurrentTipUi != null) {
+    if (myBalloon != null) {
       RelativePoint target = me != null ? new RelativePoint(me) : null;
-      boolean isInsideOrMovingForward = target != null && (myCurrentTipUi.isInside(target) || myCurrentTipUi.isMovingForward(target));
+      boolean isInsideOrMovingForward = target != null &&
+                                        (myBalloonUi != null && myBalloonUi.isInside(target) ||
+                                         myBalloonImpl != null && myBalloonImpl.isMovingForward(target));
       boolean canAutoHide = myCurrentTooltip.canAutohideOn(new TooltipEvent(me, isInsideOrMovingForward, action, event));
       boolean implicitMouseMove = me != null &&
                                   (me.getID() == MouseEvent.MOUSE_MOVED ||
@@ -610,9 +620,9 @@ public class IdeTooltipManager implements Disposable, AWTEventListener {
       myHelpTooltipManager.hideTooltip();
     }
 
-    if (myCurrentTipUi != null) {
-      myCurrentTipUi.setAnimationEnabled(animationEnabled);
-      myCurrentTipUi.hide();
+    if (myBalloon != null) {
+      myBalloon.setAnimationEnabled(animationEnabled);
+      myBalloon.hide();
       myCurrentTooltip.onHidden();
       myShowDelay = false;
       myAlarm.addRequest(() -> myShowDelay = true, RegistryManager.getInstance().intValue("ide.tooltip.reshowDelay"));
@@ -621,7 +631,11 @@ public class IdeTooltipManager implements Disposable, AWTEventListener {
     myHideHelpTooltip = false;
     myShowRequest = null;
     myCurrentTooltip = null;
-    myCurrentTipUi = null;
+
+    myBalloonImpl = null;
+    myBalloonUi = null;
+    myBalloon = null;
+
     myCurrentComponent = null;
     myQueuedComponent = null;
     myQueuedTooltip = null;
