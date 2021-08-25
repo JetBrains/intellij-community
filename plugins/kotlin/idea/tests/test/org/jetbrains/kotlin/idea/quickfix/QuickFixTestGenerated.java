@@ -1717,6 +1717,11 @@ public abstract class QuickFixTestGenerated extends AbstractQuickFixTest {
             runTest("testData/quickfix/autoImports/builtInFunction.kt");
         }
 
+        @TestMetadata("builtInFunctionAlreadyExists.kt")
+        public void testBuiltInFunctionAlreadyExists() throws Exception {
+            runTest("testData/quickfix/autoImports/builtInFunctionAlreadyExists.kt");
+        }
+
         @TestMetadata("checkNoStackOverflowInImportInnerClassInCurrentFile.kt")
         public void testCheckNoStackOverflowInImportInnerClassInCurrentFile() throws Exception {
             runTest("testData/quickfix/autoImports/checkNoStackOverflowInImportInnerClassInCurrentFile.kt");

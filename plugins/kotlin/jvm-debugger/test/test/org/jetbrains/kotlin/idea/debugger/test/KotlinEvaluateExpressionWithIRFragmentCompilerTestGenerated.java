@@ -868,6 +868,11 @@ public abstract class KotlinEvaluateExpressionWithIRFragmentCompilerTestGenerate
                 runTest("testData/evaluation/singleBreakpoint/frame/catchVariable.kt");
             }
 
+            @TestMetadata("companionObjectGettersAreNotShown.kt")
+            public void testCompanionObjectGettersAreNotShown() throws Exception {
+                runTest("testData/evaluation/singleBreakpoint/frame/companionObjectGettersAreNotShown.kt");
+            }
+
             @TestMetadata("coroutineContextFun.kt")
             public void testCoroutineContextFun() throws Exception {
                 runTest("testData/evaluation/singleBreakpoint/frame/coroutineContextFun.kt");
@@ -1016,6 +1021,11 @@ public abstract class KotlinEvaluateExpressionWithIRFragmentCompilerTestGenerate
             @TestMetadata("frameThis0This0.kt")
             public void testFrameThis0This0() throws Exception {
                 runTest("testData/evaluation/singleBreakpoint/frame/frameThis0This0.kt");
+            }
+
+            @TestMetadata("getterOfLateinitVariableIsNotShown.kt")
+            public void testGetterOfLateinitVariableIsNotShown() throws Exception {
+                runTest("testData/evaluation/singleBreakpoint/frame/getterOfLateinitVariableIsNotShown.kt");
             }
 
             @TestMetadata("gettersAreNotDuplicated.kt")

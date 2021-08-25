@@ -282,10 +282,11 @@ internal abstract class OrdinaryImportFixBase<T : KtExpression>(expression: T, f
             ) { it == name }
         )
 
-        val importedFqNames = element?.containingKtFile?.importDirectives?.mapNotNull { it.importedFqName }.orEmpty()
+        val importedFqNamesAsAlias =
+            element?.containingKtFile?.importDirectives?.filter { it.alias != null }?.mapNotNull { it.importedFqName }.orEmpty()
         return result.filterNot {
             val importableFqName = it.importableFqName
-            importableFqName?.parentOrNull() in StandardNames.BUILT_INS_PACKAGE_FQ_NAMES && importableFqName !in importedFqNames
+            importableFqName?.parentOrNull() in StandardNames.BUILT_INS_PACKAGE_FQ_NAMES && importableFqName !in importedFqNamesAsAlias
         }
     }
 }
