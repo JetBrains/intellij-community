@@ -90,7 +90,7 @@ internal class JavaFieldRenderer(
     }
 
     val initializer = request.initializer
-    if (initializer != null && initializer is PsiExpression) {
+    if (initializer is PsiExpression) {
       field.initializer = initializer
     }
 
