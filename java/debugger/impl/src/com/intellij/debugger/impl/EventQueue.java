@@ -1,7 +1,8 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.impl;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
@@ -136,7 +137,7 @@ public class EventQueue<E> {
   public boolean isEmpty() {
     myLock.lock();
     try {
-      return Arrays.stream(myEvents).allMatch(AbstractCollection::isEmpty);
+      return ContainerUtil.and(myEvents, AbstractCollection::isEmpty);
     }
     finally {
       myLock.unlock();
