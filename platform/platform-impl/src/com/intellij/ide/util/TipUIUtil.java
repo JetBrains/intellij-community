@@ -380,24 +380,24 @@ public final class TipUIUtil {
 
     @Nullable
     String getTipContent(final @Nullable String tipName) {
+      String result = null;
       if (tipName != null) {
         final String tipLocation = String.format("/%s/%s", myPath, mySubPath.length() > 0 ? mySubPath + "/" : "");
-
         InputStream tipStream =
           ResourceUtil.getResourceAsStream(myLoader, tipLocation, tipName);
-
         //Tip not found, but if its name starts with prefix, try without as a safety measure.
         if (tipStream == null && tipName.startsWith("neue-")) {
           tipStream = ResourceUtil.getResourceAsStream(myLoader, tipLocation, tipName.substring(5));
         }
-
-        try {
-          return tipStream == null ? null : ResourceUtil.loadText(tipStream);
-        }
-        catch (IOException ignored) {
+        if (tipStream != null) {
+          try {
+            result = ResourceUtil.loadText(tipStream);
+          }
+          catch (IOException ignored) {
+          }
         }
       }
-      return null;
+      return result;
     }
   }
 
