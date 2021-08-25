@@ -17,8 +17,8 @@ import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskType
-import com.intellij.openapi.progress.EmptyProgressIndicator
-import com.intellij.openapi.progress.ProgressIndicator
+import com.intellij.openapi.progress.TaskInfo
+import com.intellij.openapi.progress.impl.BackgroundableProcessIndicator
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.registry.Registry
@@ -49,7 +49,6 @@ class MavenSyncConsole(private val myProject: Project) {
   private var mySyncId = createTaskId()
   private var finished = false
   private var started = false
-  private var wrapperProgressIndicator: WrapperProgressIndicator? = null
   private var hasErrors = false
   private var hasUnresolved = false
   private val JAVADOC_AND_SOURCE_CLASSIFIERS = setOf("javadoc", "sources", "test-javadoc", "test-sources")
@@ -80,7 +79,6 @@ class MavenSyncConsole(private val myProject: Project) {
     finished = false
     hasErrors = false
     hasUnresolved = false
-    wrapperProgressIndicator = WrapperProgressIndicator()
     mySyncView = syncView
     shownIssues.clear()
     mySyncId = createTaskId()
@@ -179,33 +177,42 @@ class MavenSyncConsole(private val myProject: Project) {
   @Synchronized
   fun finishWrapperResolving(e: Throwable? = null) {
     if (e != null) {
-      addWarning(SyncBundle.message("maven.sync.wrapper.failure"), e.localizedMessage)
+      addBuildIssue(object : BuildIssue {
+        override val title: String = SyncBundle.message("maven.sync.wrapper.failure")
+        override val description: String = SyncBundle.message("maven.sync.wrapper.failure.description",
+          e.localizedMessage, OpenMavenSettingsQuickFix.ID)
+        override val quickFixes: List<BuildIssueQuickFix> = listOf(OpenMavenSettingsQuickFix())
+        override fun getNavigatable(project: Project): Navigatable? = null
+      }, MessageEvent.Kind.WARNING)
     }
     completeTask(mySyncId, SyncBundle.message("maven.sync.wrapper"), SuccessResultImpl())
   }
 
-  fun progressIndicatorForWrapper(): ProgressIndicator {
-    return wrapperProgressIndicator ?: EmptyProgressIndicator()
+  fun progressIndicatorForWrapper(project: Project, taskInfo: TaskInfo): BackgroundableProcessIndicator {
+    return WrapperProgressIndicator(project, taskInfo)
   }
 
-  inner class WrapperProgressIndicator : EmptyProgressIndicator() {
+  inner class WrapperProgressIndicator(project: Project, taskInfo: TaskInfo) : BackgroundableProcessIndicator(project, taskInfo) {
     var myFraction: Long = 0
+
     override fun setText(text: String) = doIfImportInProcess {
+      super.setText(text)
       addText(SyncBundle.message("maven.sync.wrapper"), text, true)
     }
 
     override fun setFraction(fraction: Double) = doIfImportInProcess {
+      super.setFraction(fraction)
       val newFraction = (fraction * 100).toLong()
       if (myFraction == newFraction) return@doIfImportInProcess
       myFraction = newFraction;
       mySyncView.onEvent(mySyncId,
-                         ProgressBuildEventImpl(SyncBundle.message("maven.sync.wrapper"), SyncBundle.message("maven.sync.wrapper"),
-                                                System.currentTimeMillis(),
-                                                SyncBundle.message("maven.sync.wrapper.dowloading"),
-                                                100,
-                                                myFraction,
-                                                "%"
-                         ))
+        ProgressBuildEventImpl(SyncBundle.message("maven.sync.wrapper"), SyncBundle.message("maven.sync.wrapper"),
+          System.currentTimeMillis(),
+          SyncBundle.message("maven.sync.wrapper.downloading.progress", myFraction, 100) ,
+          100,
+          myFraction,
+          "%"
+        ))
     }
   }
 
@@ -328,7 +335,7 @@ class MavenSyncConsole(private val myProject: Project) {
   }
 
   @Synchronized
-  private fun showBuildIssue(keyPrefix: String, dependency: String, quickFix: BuildIssueQuickFix,) = doIfImportInProcess {
+  private fun showBuildIssue(keyPrefix: String, dependency: String, quickFix: BuildIssueQuickFix) = doIfImportInProcess {
     hasErrors = true
     hasUnresolved = true
     val umbrellaString = SyncBundle.message("${keyPrefix}.resolve")
