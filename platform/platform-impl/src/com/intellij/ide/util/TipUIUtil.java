@@ -68,6 +68,15 @@ import static com.intellij.util.ui.UIUtil.drawImage;
 public final class TipUIUtil {
   private static final Logger LOG = Logger.getInstance(TipUIUtil.class);
   private static final String SHORTCUT_ENTITY = "&shortcut:";
+  private static final List<TipEntity> ENTITIES = List.of(
+
+    TipEntity.of("productName", ApplicationNamesInfo.getInstance().getFullProductName()),
+    TipEntity.of("majorVersion", ApplicationInfo.getInstance().getMajorVersion()),
+    TipEntity.of("minorVersion", ApplicationInfo.getInstance().getMinorVersion()),
+    TipEntity.of("majorMinorVersion", ApplicationInfo.getInstance().getMajorVersion() +
+                                      ("0".equals(ApplicationInfo.getInstance().getMinorVersion()) ? "" :
+                                       ("." + ApplicationInfo.getInstance().getMinorVersion()))),
+    TipEntity.of("settingsPath", CommonBundle.settingsActionPath()));
 
   private TipUIUtil() {
   }
@@ -173,14 +182,12 @@ public final class TipUIUtil {
       }
 
       updateShortcuts(text);
-      String replaced = text.toString().replace("&productName;", ApplicationNamesInfo.getInstance().getFullProductName());
-      String major = ApplicationInfo.getInstance().getMajorVersion();
-      replaced = replaced.replace("&majorVersion;", major);
-      String minor = ApplicationInfo.getInstance().getMinorVersion();
-      replaced = replaced.replace("&minorVersion;", minor);
-      replaced = replaced.replace("&majorMinorVersion;", major + ("0".equals(minor) ? "" : ("." + minor)));
-      replaced = replaced.replace("&settingsPath;", CommonBundle.settingsActionPath());
-      String inlinedCSS = cssText + "\nbody {background-color:#" + ColorUtil.toHex(UIUtil.getTextFieldBackground()) + ";overflow:hidden;}";
+      String replaced = text.toString();
+      //It's just cleaner expression here that we ca configure entities elsewhere and just replace them here in one loop.
+      for (final TipEntity entity : ENTITIES) {
+        replaced = entity.inline(replaced);
+      }
+      final String inlinedCSS = cssText + "\nbody {background-color:#" + ColorUtil.toHex(UIUtil.getTextFieldBackground()) + ";overflow:hidden;}";
       return replaced.replaceFirst("<link.*\\.css\">", "<style type=\"text/css\">\n" + inlinedCSS + "\n</style>");
     }
     catch (IOException e) {
@@ -364,6 +371,24 @@ public final class TipUIUtil {
 
     @Override
     void setText(@Nls String text);
+  }
+
+  private static class TipEntity {
+    private final String name;
+    private final String value;
+
+    private TipEntity(String name, String value) {
+      this.name = name;
+      this.value = value;
+    }
+
+    String inline(final String where) {
+      return where.replace(String.format("&%s;", name), value);
+    }
+
+    static TipEntity of(String name, String value) {
+      return new TipEntity(name, value);
+    }
   }
 
   private static class TipRetriever {
