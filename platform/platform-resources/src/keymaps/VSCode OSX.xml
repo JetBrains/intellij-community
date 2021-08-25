@@ -203,10 +203,13 @@
         <keyboard-shortcut first-keystroke="ctrl j" />
     </action>
     <action id="EditorLineEnd">
+        <keyboard-shortcut first-keystroke="END"/>
         <keyboard-shortcut first-keystroke="meta right" />
     </action>
     <action id="EditorLineStart">
+        <keyboard-shortcut first-keystroke="HOME"/>
         <keyboard-shortcut first-keystroke="meta left" />
+        <keyboard-shortcut first-keystroke="control A"/>
     </action>
     <action id="EditorMatchBrace">
         <keyboard-shortcut first-keystroke="shift meta back_slash" />
