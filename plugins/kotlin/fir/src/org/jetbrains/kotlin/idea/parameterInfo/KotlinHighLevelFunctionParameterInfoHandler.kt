@@ -115,7 +115,7 @@ abstract class KotlinHighLevelParameterInfoWithCallHandlerBase<TArgumentList : K
             }
 
             val candidates = resolvedCall?.targetFunction?.candidates ?: return null
-            context.itemsToShow = candidates.map { CandidateInfo(it.createPointer()) }.toTypedArray()
+            context.itemsToShow = candidates.map { CandidateInfo(it.createPointer(), it.deprecationStatus != null) }.toTypedArray()
 
             argumentList
         }
@@ -409,8 +409,7 @@ abstract class KotlinHighLevelParameterInfoWithCallHandlerBase<TArgumentList : K
         }
 
         val backgroundColor = if (isCallResolvedToCandidate) GREEN_BACKGROUND else context.defaultParameterColor
-        // TODO: Strikeout if deprecated. Deprecation status not currently in HL API
-        val strikeout = false
+        val strikeout = itemToShow.isDeprecated
 
         // Disabled when there are too many arguments.
         val allParametersUsed = usedParameterIndices.size == valueParameterCount
@@ -449,6 +448,7 @@ abstract class KotlinHighLevelParameterInfoWithCallHandlerBase<TArgumentList : K
 
     data class CandidateInfo(
         val candidate: KtSymbolPointer<KtFunctionLikeSymbol>,
+        val isDeprecated: Boolean,
         var callInfo: CallInfo? = null  // Populated in updateParameterInfo()
     )
 }
