@@ -84,7 +84,7 @@ public final class StartupUtil {
   private static final String IDEA_CLASS_BEFORE_APPLICATION_PROPERTY = "idea.class.before.app";
   // see `ApplicationImpl#USE_SEPARATE_WRITE_THREAD`
   private static final String USE_SEPARATE_WRITE_THREAD_PROPERTY = "idea.use.separate.write.thread";
-  private static final String PROJECTOR_LAUNCHER_CLASS_NAME = "org.jetbrains.projector.server.ProjectorLauncher";
+  private static final String PROJECTOR_LAUNCHER_CLASS_NAME = "org.jetbrains.projector.server.ProjectorLauncher$Starter";
 
   private static final String MAGIC_MAC_PATH = "/AppTranslocation/";
 
@@ -140,7 +140,7 @@ public final class StartupUtil {
       activity = activity.endAndStart("Cwm Host init");
       try {
         Class<?> projectorMainClass = StartupUtil.class.getClassLoader().loadClass(PROJECTOR_LAUNCHER_CLASS_NAME);
-        MethodHandles.lookup().findStatic(projectorMainClass, "runProjectorServer", MethodType.methodType(boolean.class)).invoke();
+        MethodHandles.privateLookupIn(projectorMainClass, MethodHandles.lookup()).findStatic(projectorMainClass, "runProjectorServer", MethodType.methodType(boolean.class)).invoke();
       } catch (RuntimeException e) {
         throw e;
       } catch (Throwable e) {
