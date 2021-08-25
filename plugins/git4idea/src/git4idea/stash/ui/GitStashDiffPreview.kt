@@ -2,27 +2,28 @@
 package git4idea.stash.ui
 
 import com.intellij.diff.FrameDiffTool
+import com.intellij.diff.chains.DiffRequestProducer
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vcs.changes.Change
 import com.intellij.openapi.vcs.changes.ChangeViewDiffRequestProcessor
+import com.intellij.openapi.vcs.changes.actions.diff.ChangeDiffRequestProducer
 import com.intellij.openapi.vcs.changes.actions.diff.SelectionAwareGoToChangePopupActionProvider
-import com.intellij.openapi.vcs.changes.ui.ChangesTree
-import com.intellij.openapi.vcs.changes.ui.PresentableChange
-import com.intellij.openapi.vcs.changes.ui.VcsTreeModelData
+import com.intellij.openapi.vcs.changes.ui.*
 import com.intellij.ui.IdeBorderFactory
 import com.intellij.ui.SideBorder
-import com.intellij.util.ui.tree.TreeUtil
 import com.intellij.vcs.log.runInEdtAsync
+import com.intellij.vcs.log.ui.frame.VcsLogChangesBrowser
 import git4idea.stash.ui.GitStashUi.Companion.GIT_STASH_UI_PLACE
+import one.util.streamex.StreamEx
 import java.beans.PropertyChangeListener
 import java.util.stream.Stream
 import javax.swing.JTree
 import kotlin.streams.toList
 
-class GitStashDiffPreview(project: Project, private val tree: ChangesTree, isInEditor: Boolean, parentDisposable: Disposable) :
+abstract class GitStashDiffPreview(project: Project, private val tree: ChangesTree, isInEditor: Boolean, parentDisposable: Disposable) :
   ChangeViewDiffRequestProcessor(project, GIT_STASH_UI_PLACE) {
 
   val toolbarWrapper get() = myToolbarWrapper
@@ -60,6 +61,8 @@ class GitStashDiffPreview(project: Project, private val tree: ChangesTree, isInE
     return MyGoToChangePopupProvider().createGoToChangeAction()
   }
 
+  protected abstract fun getTag(change: Change): ChangesBrowserNode.Tag?
+
   private inner class MyGoToChangePopupProvider : SelectionAwareGoToChangePopupActionProvider() {
     override fun getChanges(): List<PresentableChange> {
       return allChanges.toList()
@@ -75,13 +78,20 @@ class GitStashDiffPreview(project: Project, private val tree: ChangesTree, isInE
   }
 
   override fun selectChange(change: Wrapper) {
-    val node = TreeUtil.findNodeWithObject(tree.root, change.userObject) ?: return
-    TreeUtil.selectPath(tree, TreeUtil.getPathFromRoot(node), false)
+    VcsLogChangesBrowser.selectObjectWithTag(tree, change.userObject, change.tag)
   }
 
   override fun shouldAddToolbarBottomBorder(toolbarComponents: FrameDiffTool.ToolbarComponents): Boolean = false
 
   private fun wrap(treeModelData: VcsTreeModelData): Stream<Wrapper> {
-    return treeModelData.userObjectsStream(Change::class.java).map { ChangeWrapper(it) }
+    return StreamEx.of(treeModelData.nodesStream()).select(ChangesBrowserChangeNode::class.java).map {
+      MyChangeWrapper(it.userObject, getTag(it.userObject))
+    }
+  }
+
+  private class MyChangeWrapper(change: Change, tag: ChangesBrowserNode.Tag?) : ChangeWrapper(change, tag) {
+    override fun createProducer(project: Project?): DiffRequestProducer? {
+      return ChangeDiffRequestProducer.create(project, change, mapOf(Pair(ChangeDiffRequestProducer.TAG_KEY, tag)))
+    }
   }
 }

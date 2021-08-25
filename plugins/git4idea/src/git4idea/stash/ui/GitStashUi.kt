@@ -3,11 +3,11 @@ package git4idea.stash.ui
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ActionManager
+import com.intellij.openapi.actionSystem.DataKey
 import com.intellij.openapi.actionSystem.DataProvider
 import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
-import com.intellij.openapi.vcs.VcsDataKeys
 import com.intellij.openapi.vcs.changes.EditorTabDiffPreviewManager
 import com.intellij.openapi.vcs.changes.ui.ChangesTree
 import com.intellij.openapi.vcs.changes.ui.TreeActionsToolbarPanel
@@ -28,7 +28,7 @@ class GitStashUi(project: Project, isVertical: Boolean, isEditorDiffPreview: Boo
   JPanel(BorderLayout()), Disposable, DataProvider {
 
   private val tree: ChangesTree
-  private val changesBrowser: GitStashChangesBrowser
+  internal val changesBrowser: GitStashChangesBrowser
   private val treeChangesSplitter: TwoKeySplitter
   private val treeDiffSplitter: OnePixelSplitter
   private val toolbar: JComponent
@@ -101,13 +101,12 @@ class GitStashUi(project: Project, isVertical: Boolean, isEditorDiffPreview: Boo
 
   override fun getData(dataId: String): Any? {
     if (EditorTabDiffPreviewManager.EDITOR_TAB_DIFF_PREVIEW.`is`(dataId)) return changesBrowser.editorTabPreview
-    if (VcsDataKeys.CHANGES.`is`(dataId) || VcsDataKeys.SELECTED_CHANGES.`is`(dataId)) {
-      return changesBrowser.allChanges.toTypedArray()
-    }
+    if (GIT_STASH_UI.`is`(dataId)) return this
     return null
   }
 
   companion object {
     const val GIT_STASH_UI_PLACE = "GitStashUiPlace"
+    val GIT_STASH_UI = DataKey.create<GitStashUi>("GitStashUi")
   }
 }

@@ -430,16 +430,7 @@ public final class VcsLogChangesBrowser extends FilterableChangesBrowser {
   }
 
   public void selectChange(@NotNull Object userObject, @Nullable ChangesBrowserNode.Tag tag) {
-    DefaultMutableTreeNode root = myViewer.getRoot();
-    if (tag != null) {
-      DefaultMutableTreeNode tagNode = TreeUtil.findNodeWithObject(root, tag);
-      if (tagNode != null) {
-        root = tagNode;
-      }
-    }
-    DefaultMutableTreeNode node = TreeUtil.findNodeWithObject(root, userObject);
-    if (node == null) return;
-    TreeUtil.selectPath(myViewer, TreeUtil.getPathFromRoot(node), false);
+    selectObjectWithTag(myViewer, userObject, tag);
   }
 
   public @Nullable ChangesBrowserNode.Tag getTag(@NotNull Change change) {
@@ -483,6 +474,21 @@ public final class VcsLogChangesBrowser extends FilterableChangesBrowser {
       text += " " + StringUtil.shortenTextWithEllipsis(detail.getSubject(), 50, 0);
     }
     return text;
+  }
+
+  public static void selectObjectWithTag(@NotNull ChangesTree tree,
+                                         @NotNull Object userObject,
+                                         @Nullable ChangesBrowserNode.Tag tag) {
+    DefaultMutableTreeNode root = tree.getRoot();
+    if (tag != null) {
+      DefaultMutableTreeNode tagNode = TreeUtil.findNodeWithObject(root, tag);
+      if (tagNode != null) {
+        root = tagNode;
+      }
+    }
+    DefaultMutableTreeNode node = TreeUtil.findNodeWithObject(root, userObject);
+    if (node == null) return;
+    TreeUtil.selectPath(tree, TreeUtil.getPathFromRoot(node), false);
   }
 
   public interface Listener extends EventListener {

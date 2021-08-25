@@ -7,10 +7,13 @@ import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vcs.changes.Change
 import com.intellij.openapi.vcs.changes.DiffPreview
 import com.intellij.openapi.vcs.changes.EditorTabPreview
+import com.intellij.openapi.vcs.changes.actions.diff.ChangeDiffRequestProducer
+import com.intellij.openapi.vcs.changes.ui.ChangeDiffRequestChain
 import com.intellij.openapi.vcs.changes.ui.ChangesBrowserBase
 import com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode
 import com.intellij.openapi.vcs.changes.ui.TreeModelBuilder
@@ -22,6 +25,7 @@ import git4idea.GitCommit
 import git4idea.i18n.GitBundle
 import git4idea.stash.GitStashCache
 import git4idea.ui.StashInfo
+import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet
 import org.jetbrains.annotations.Nls
 import java.util.concurrent.CompletableFuture
 import javax.swing.tree.DefaultTreeModel
@@ -32,7 +36,7 @@ class GitStashChangesBrowser(project: Project, parentDisposable: Disposable) : C
   private var stashedChanges: Collection<Change> = emptyList()
   private var otherChanges: Map<ChangesBrowserNode.Tag, Set<Change>> = emptyMap()
 
-  val allChanges get() = stashedChanges
+  val changes get() = stashedChanges
 
   private var currentStash: StashInfo? = null
   private var currentChangesFuture: CompletableFuture<GitStashCache.StashData>? = null
@@ -103,7 +107,7 @@ class GitStashChangesBrowser(project: Project, parentDisposable: Disposable) : C
     stashedChanges = stash
     otherChanges = parents.associate { parent ->
       val tag = MyTag(StringUtil.capitalize(parent.subject.substringBefore(":")), parent.id)
-      Pair(tag, parent.changes.toSet())
+      Pair(tag, ReferenceOpenHashSet(parent.changes))
     }
     updateEmptyText(viewer.emptyText)
     viewer.rebuildTree()
@@ -113,9 +117,23 @@ class GitStashChangesBrowser(project: Project, parentDisposable: Disposable) : C
     return editorTabPreview
   }
 
+  override fun getDiffRequestProducer(userObject: Any): ChangeDiffRequestChain.Producer? {
+    if (userObject !is Change) return null
+
+    val context: MutableMap<Key<*>, Any> = mutableMapOf()
+    getTag(userObject)?.let { context[ChangeDiffRequestProducer.TAG_KEY] = it }
+    return ChangeDiffRequestProducer.create(myProject, userObject, context)
+  }
+
+  private fun getTag(change: Change): ChangesBrowserNode.Tag? {
+    return otherChanges.asSequence().firstOrNull { it.value.contains(change) }?.key
+  }
+
   fun setDiffPreviewInEditor(isInEditor: Boolean): GitStashDiffPreview {
     if (diffPreviewProcessor != null) Disposer.dispose(diffPreviewProcessor!!)
-    val newProcessor = GitStashDiffPreview(myProject, viewer, isInEditor, this)
+    val newProcessor = object: GitStashDiffPreview(myProject, viewer, isInEditor, this) {
+      override fun getTag(change: Change) = this@GitStashChangesBrowser.getTag(change)
+    }
     diffPreviewProcessor = newProcessor
 
     if (isInEditor) {
