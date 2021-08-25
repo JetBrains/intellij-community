@@ -141,9 +141,9 @@ public final class PlatformUtils {
     return is(GOIDE_PREFIX);
   }
 
-  public static boolean isCodeWithMeGuest() {
-    return is(CWM_GUEST_PREFIX);
-  }
+  public static boolean isCodeWithMeGuest() { return is(CWM_GUEST_PREFIX); }
+
+  public static boolean isGateway() { return is(GATEWAY_PREFIX); }
 
   public static boolean isCommunityEdition() {
     return isIdeaCommunity() || isPyCharmCommunity();
