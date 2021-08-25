@@ -36,7 +36,7 @@ import com.intellij.vcs.log.impl.MainVcsLogUiProperties;
 import com.intellij.vcs.log.impl.MergedChange;
 import com.intellij.vcs.log.impl.MergedChangeDiffRequestProvider;
 import com.intellij.vcs.log.impl.VcsLogUiProperties;
-import com.intellij.vcs.log.ui.VcsLogActionPlaces;
+import com.intellij.vcs.log.ui.VcsLogActionIds;
 import com.intellij.vcs.log.util.VcsLogUiUtil;
 import com.intellij.vcs.log.util.VcsLogUtil;
 import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet;
@@ -165,7 +165,7 @@ public final class VcsLogChangesBrowser extends FilterableChangesBrowser {
   protected List<AnAction> createPopupMenuActions() {
     return ContainerUtil.append(
       super.createPopupMenuActions(),
-      ActionManager.getInstance().getAction(VcsLogActionPlaces.CHANGES_BROWSER_POPUP_ACTION_GROUP)
+      ActionManager.getInstance().getAction(VcsLogActionIds.CHANGES_BROWSER_POPUP_ACTION_GROUP)
     );
   }
 

@@ -4,7 +4,7 @@ package com.intellij.vcs.log.ui;
 import org.jetbrains.annotations.NonNls;
 
 @NonNls
-public final class VcsLogActionPlaces {
+public final class VcsLogActionIds {
   // action groups
   public static final String POPUP_ACTION_GROUP = "Vcs.Log.ContextMenu";
   public static final String TOOLBAR_ACTION_GROUP = "Vcs.Log.Toolbar.Internal";
