@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.execution.junit2.configuration;
 
@@ -659,34 +659,21 @@ public class JUnitConfigurable<T extends JUnitConfiguration> extends SettingsEdi
                                : JUnitBundle.message("module.does.not.exists", moduleName, project.getName()),
           JUnitBundle.message("cannot.browse.test.inheritors.dialog.title")));
       }
-      final ClassFilter.ClassFilterWithScope classFilter;
-      try {
-        final JUnitConfiguration configurationCopy = new JUnitConfiguration(JUnitBundle.message("default.junit.configuration.name"), getProject());
-        myModuleSelector.applyTo(configurationCopy);
-        SourceScope sourceScope = SourceScope.modulesWithDependencies(configurationCopy.getModules());
-        GlobalSearchScope globalSearchScope = sourceScope.getGlobalSearchScope();
-        if (JUnitUtil.isJUnit5(globalSearchScope, getProject())) {
-          return new ClassFilter.ClassFilterWithScope() {
-            @Override
-            public GlobalSearchScope getScope() {
-              return globalSearchScope;
-            }
-
-            @Override
-            public boolean isAccepted(PsiClass aClass) {
-              return JUnitUtil.isTestClass(aClass,true, true);
-            }
-          };
+      final JUnitConfiguration configurationCopy = new JUnitConfiguration(JUnitBundle.message("default.junit.configuration.name"), getProject());
+      myModuleSelector.applyTo(configurationCopy);
+      SourceScope sourceScope = SourceScope.modulesWithDependencies(configurationCopy.getModules());
+      GlobalSearchScope globalSearchScope = sourceScope.getGlobalSearchScope();
+      return new ClassFilter.ClassFilterWithScope() {
+        @Override
+        public GlobalSearchScope getScope() {
+          return globalSearchScope;
         }
-        classFilter = TestClassFilter.create(sourceScope, configurationCopy.getConfigurationModule().getModule());
-      }
-      catch (JUnitUtil.NoJUnitException e) {
-        throw new NoFilterException(new MessagesEx.MessageInfo(
-          module.getProject(),
-          JUnitBundle.message("junit.not.found.in.module.error.message", module.getName()),
-          JUnitBundle.message("cannot.browse.test.inheritors.dialog.title")));
-      }
-      return classFilter;
+
+        @Override
+        public boolean isAccepted(PsiClass aClass) {
+          return JUnitUtil.isTestClass(aClass);
+        }
+      };
     }
   }
 
