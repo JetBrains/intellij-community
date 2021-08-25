@@ -66,6 +66,9 @@ UFile (package = ) [public final class ResolveKt {...]
                     UQualifiedReferenceExpression [date.time] : PsiType:Unit
                         USimpleNameReferenceExpression (identifier = date) [date] : PsiType:Date
                         USimpleNameReferenceExpression (identifier = time) [time] : PsiType:long
+                            UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1)) [setTime(1000)]
+                                UIdentifier (Identifier (time)) [UIdentifier (Identifier (time))]
+                                ULiteralExpression (value = 1000) [1000] : PsiType:long
                     ULiteralExpression (value = 1000) [1000] : PsiType:long
                 UQualifiedReferenceExpression [listOf("").last()] : PsiType:String
                     UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1)) [listOf("")] : PsiType:List<? extends String>
