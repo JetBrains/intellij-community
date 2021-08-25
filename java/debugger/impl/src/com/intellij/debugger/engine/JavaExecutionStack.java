@@ -314,7 +314,7 @@ public class JavaExecutionStack extends XExecutionStack {
           continue;
         }
         XStackFrame newFrame = stackFrame.createFrame(myDebugProcess);
-        if (showFrame(newFrame)) {
+        if (newFrame != null && showFrame(newFrame)) {
           StackFrameItem.setWithSeparator(newFrame, separator);
           addFrameIfNeeded(newFrame, false);
           separator = false;
