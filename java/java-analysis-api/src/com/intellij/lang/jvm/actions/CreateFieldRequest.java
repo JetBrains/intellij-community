@@ -44,5 +44,10 @@ public interface CreateFieldRequest extends ActionRequest {
   @NotNull
   Collection<JvmModifier> getModifiers();
 
+  /**
+   * Constant fields may be used in annotations and in other constant expressions.
+   *
+   * @return whether the field must be a compile-time constant
+   */
   boolean isConstant();
 }
