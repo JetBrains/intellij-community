@@ -20,17 +20,16 @@ import com.intellij.codeInspection.dataFlow.value.*
 import com.intellij.codeInspection.dataFlow.value.DfaControlTransferValue.TransferTarget
 import com.intellij.codeInspection.dataFlow.value.DfaControlTransferValue.Trap
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.psi.CommonClassNames
-import com.intellij.psi.PsiElement
-import com.intellij.psi.PsiPrimitiveType
-import com.intellij.psi.PsiType
+import com.intellij.psi.*
 import com.intellij.psi.tree.TokenSet
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.containers.FList
 import org.jetbrains.kotlin.KtNodeTypes
 import org.jetbrains.kotlin.builtins.KotlinBuiltIns
+import org.jetbrains.kotlin.descriptors.ConstructorDescriptor
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
+import org.jetbrains.kotlin.idea.caches.resolve.resolveToCall
 import org.jetbrains.kotlin.idea.inspections.dfa.KotlinAnchor.*
 import org.jetbrains.kotlin.idea.inspections.dfa.KotlinProblem.*
 import org.jetbrains.kotlin.idea.intentions.loopToCallChain.targetLoop
@@ -42,6 +41,7 @@ import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.bindingContextUtil.getAbbreviatedTypeOrType
 import org.jetbrains.kotlin.resolve.bindingContextUtil.getTargetFunction
+import org.jetbrains.kotlin.resolve.descriptorUtil.fqNameOrNull
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 import org.jetbrains.kotlin.types.KotlinType
 import org.jetbrains.kotlin.types.typeUtil.*
@@ -391,7 +391,6 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
     }
 
     private fun processCallExpression(expr: KtCallExpression) {
-        // TODO: recognize constructors, set the exact type for the result
         val args = expr.valueArgumentList?.arguments
         var argCount = 0
         if (args != null) {
@@ -417,12 +416,25 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
         if (args > 0) {
             addInstruction(if (args > 1) SpliceInstruction(args) else PopInstruction())
         }
-        addInstruction(PushValueInstruction(expr.getKotlinType().toDfType(expr), KotlinExpressionAnchor(expr)))
+        val dfType = getExpressionDfType(expr)
+        addInstruction(PushValueInstruction(dfType, KotlinExpressionAnchor(expr)))
         addInstruction(FlushFieldsInstruction())
         val transfer = trapTracker.maybeTransferValue(CommonClassNames.JAVA_LANG_THROWABLE)
         if (transfer != null) {
             addInstruction(EnsureInstruction(null, RelationType.EQ, DfType.TOP, transfer))
         }
+    }
+
+    private fun getExpressionDfType(expr: KtExpression): DfType {
+        val constructedClassName = (expr.resolveToCall()?.resultingDescriptor as? ConstructorDescriptor)?.constructedClass?.fqNameOrNull()
+        if (constructedClassName != null) {
+            // Set exact class type for constructor
+            val psiClass = JavaPsiFacade.getInstance(expr.project).findClass(constructedClassName.asString(), expr.resolveScope)
+            if (psiClass != null) {
+                return TypeConstraints.exactClass(psiClass).asDfType().meet(DfTypes.NOT_NULL_OBJECT)
+            }
+        }
+        return expr.getKotlinType().toDfType(expr)
     }
 
     private fun processQualifiedReferenceExpression(expr: KtQualifiedExpression) {

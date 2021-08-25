@@ -4841,6 +4841,11 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
             runTest("testData/inspectionsLocal/dfa/collectionFor.kt");
         }
 
+        @TestMetadata("constructorExact.kt")
+        public void testConstructorExact() throws Exception {
+            runTest("testData/inspectionsLocal/dfa/constructorExact.kt");
+        }
+
         @TestMetadata("constructorParameter.kt")
         public void testConstructorParameter() throws Exception {
             runTest("testData/inspectionsLocal/dfa/constructorParameter.kt");
