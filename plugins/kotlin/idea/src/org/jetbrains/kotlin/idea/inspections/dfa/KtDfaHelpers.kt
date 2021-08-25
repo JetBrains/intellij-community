@@ -20,8 +20,10 @@ import com.intellij.psi.tree.IElementType
 import org.jetbrains.kotlin.builtins.StandardNames.FqNames
 import org.jetbrains.kotlin.descriptors.ClassDescriptor
 import org.jetbrains.kotlin.descriptors.ClassifierDescriptor
+import org.jetbrains.kotlin.descriptors.FunctionDescriptor
 import org.jetbrains.kotlin.descriptors.TypeAliasDescriptor
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
+import org.jetbrains.kotlin.idea.caches.resolve.resolveToCall
 import org.jetbrains.kotlin.idea.project.builtIns
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.FqNameUnsafe
@@ -230,4 +232,16 @@ internal fun mathOpFromAssignmentToken(token: IElementType): LongRangeBinOp? = w
     KtTokens.DIVEQ -> LongRangeBinOp.DIV
     KtTokens.PERCEQ -> LongRangeBinOp.MOD
     else -> null
+}
+
+internal fun getInlineableLambda(expr: KtCallExpression): KtLambdaExpression? {
+    val lambdaArgument = expr.lambdaArguments.singleOrNull() ?: return null
+    val index = expr.valueArguments.indexOf(lambdaArgument)
+    assert(index >= 0)
+    val descriptor = expr.resolveToCall()?.resultingDescriptor as? FunctionDescriptor
+    if (descriptor == null || !descriptor.isInline) return null
+    val valueParameters = descriptor.valueParameters
+    if (valueParameters.size <= index) return null
+    if (valueParameters[index].isNoinline) return null
+    return lambdaArgument.getLambdaExpression()
 }

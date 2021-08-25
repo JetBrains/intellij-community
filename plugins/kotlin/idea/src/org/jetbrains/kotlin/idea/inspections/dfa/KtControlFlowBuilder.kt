@@ -402,26 +402,61 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
                 }
             }
         }
-        // TODO: inline cross-inline lambdas
-
-        for(lambdaArg in expr.lambdaArguments) {
-            processExpression(lambdaArg.getLambdaExpression())
-            argCount++
+        val lambda = getInlineableLambda(expr)
+        if (lambda != null) {
+            inlineLambda(lambda)
+        } else {
+            for(lambdaArg in expr.lambdaArguments) {
+                processExpression(lambdaArg.getLambdaExpression())
+                argCount++
+            }
         }
+
         addUnknownCall(expr, argCount)
         // TODO: support pure calls, some known methods, probably Java contracts, etc.
     }
 
-    private fun addUnknownCall(expr: KtExpression, args: Int) {
-        if (args > 0) {
-            addInstruction(if (args > 1) SpliceInstruction(args) else PopInstruction())
+    private fun inlineLambda(lambda: KtLambdaExpression) {
+        /*
+            We encode unknown call with inlineable lambda as
+            unknownCode()
+            while(condition1) {
+              if(condition2) {
+                lambda()
+              }
+              unknownCode()
+            }
+         */
+        addInstruction(FlushFieldsInstruction())
+        val offset = ControlFlow.FixedOffset(flow.instructionCount)
+        pushUnknown()
+        val endOffset = DeferredOffset()
+        addInstruction(ConditionalGotoInstruction(endOffset, DfTypes.TRUE))
+        for (parameter in lambda.valueParameters) {
+            flushParameter(parameter)
         }
+        processExpression(lambda.bodyExpression)
+        addInstruction(PopInstruction())
+        setOffset(endOffset)
+        addInstruction(FlushFieldsInstruction())
+        pushUnknown()
+        addInstruction(ConditionalGotoInstruction(offset, DfTypes.TRUE))
+    }
+
+    private fun addUnknownCall(expr: KtExpression, args: Int) {
+        pop(args)
         val dfType = getExpressionDfType(expr)
         addInstruction(PushValueInstruction(dfType, KotlinExpressionAnchor(expr)))
         addInstruction(FlushFieldsInstruction())
         val transfer = trapTracker.maybeTransferValue(CommonClassNames.JAVA_LANG_THROWABLE)
         if (transfer != null) {
             addInstruction(EnsureInstruction(null, RelationType.EQ, DfType.TOP, transfer))
+        }
+    }
+
+    private fun pop(count: Int) {
+        if (count > 0) {
+            addInstruction(if (count > 1) SpliceInstruction(count) else PopInstruction())
         }
     }
 
@@ -613,19 +648,12 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
             broken = true
             return
         }
-        val destructuringDeclaration = parameter.destructuringDeclaration
         val parameterVar = factory.varFactory.createVariableValue(KtVariableDescriptor(parameter))
         val parameterType = parameter.type()
         val pushLoopCondition = processForRange(expr, parameterVar, parameterType)
         val startOffset = ControlFlow.FixedOffset(flow.instructionCount)
         val endOffset = DeferredOffset()
-        if (destructuringDeclaration != null) {
-            for (entry in destructuringDeclaration.entries) {
-                addInstruction(FlushVariableInstruction(factory.varFactory.createVariableValue(KtVariableDescriptor(entry))))
-            }
-        } else {
-            addInstruction(FlushVariableInstruction(parameterVar))
-        }
+        flushParameter(parameter)
         pushLoopCondition()
         addInstruction(ConditionalGotoInstruction(endOffset, DfTypes.FALSE))
         processExpression(expr.body)
@@ -635,6 +663,17 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
         flow.finishElement(expr)
         pushUnknown()
         addInstruction(FinishElementInstruction(expr))
+    }
+
+    private fun flushParameter(parameter: KtParameter) {
+        val destructuringDeclaration = parameter.destructuringDeclaration
+        if (destructuringDeclaration != null) {
+            for (entry in destructuringDeclaration.entries) {
+                addInstruction(FlushVariableInstruction(factory.varFactory.createVariableValue(KtVariableDescriptor(entry))))
+            }
+        } else {
+            addInstruction(FlushVariableInstruction(factory.varFactory.createVariableValue(KtVariableDescriptor(parameter))))
+        }
     }
 
     private fun processForRange(expr: KtForExpression, parameterVar: DfaVariableValue, parameterType: KotlinType?): () -> Unit {
@@ -938,6 +977,7 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
         val left = expr.left
         val right = expr.right
         if (left is KtArrayAccessExpression) {
+            // TODO: compound-assignment for arrays
             processArrayAccess(left, right)
             return
         }

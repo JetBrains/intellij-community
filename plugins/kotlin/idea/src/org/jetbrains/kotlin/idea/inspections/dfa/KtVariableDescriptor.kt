@@ -37,7 +37,18 @@ class KtVariableDescriptor(val variable: KtCallableDeclaration) : VariableDescri
                 if (e is KtSimpleNameExpression && e.readWriteAccess(false).isWrite) {
                     val target = e.mainReference.resolve()
                     if (target is KtProperty && target.isLocal && PsiTreeUtil.isAncestor(parent, target, true)) {
-                        val parentScope = PsiTreeUtil.getParentOfType(e, KtFunction::class.java)
+                        var parentScope : KtFunction?
+                        var context = e
+                        while(true) {
+                            parentScope = PsiTreeUtil.getParentOfType(context, KtFunction::class.java)
+                            val maybeLambda = parentScope?.parent as? KtLambdaExpression
+                            val maybeCall = (maybeLambda?.parent as? KtLambdaArgument)?.parent as? KtCallExpression
+                            if (maybeCall != null && getInlineableLambda(maybeCall) == maybeLambda) {
+                                context = maybeCall
+                                continue
+                            }
+                            break
+                        }
                         if (parentScope != null && PsiTreeUtil.isAncestor(parent, parentScope, true)) {
                             result.add(target)
                         }
