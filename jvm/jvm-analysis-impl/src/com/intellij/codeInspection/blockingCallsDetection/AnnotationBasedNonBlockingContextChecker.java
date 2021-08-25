@@ -15,6 +15,8 @@ import org.jetbrains.uast.UastUtils;
 
 import java.util.List;
 
+import static com.intellij.codeInspection.blockingCallsDetection.BlockingMethodInNonBlockingContextInspection.DEFAULT_NONBLOCKING_ANNOTATIONS;
+
 public class AnnotationBasedNonBlockingContextChecker implements NonBlockingContextChecker {
 
   private final List<String> myNonBlockingAnnotations;
@@ -26,7 +28,7 @@ public class AnnotationBasedNonBlockingContextChecker implements NonBlockingCont
   @Override
   public boolean isApplicable(@NotNull PsiFile file) {
     return myNonBlockingAnnotations != null &&
-           StreamEx.of(BlockingMethodInNonBlockingContextInspection.DEFAULT_NONBLOCKING_ANNOTATION)
+           StreamEx.of(DEFAULT_NONBLOCKING_ANNOTATIONS)
              .append(myNonBlockingAnnotations)
              .anyMatch(annotation -> JavaPsiFacade.getInstance(file.getProject()).findClass(annotation, file.getResolveScope()) != null);
   }
