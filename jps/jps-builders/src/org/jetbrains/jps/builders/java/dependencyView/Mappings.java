@@ -10,7 +10,10 @@ import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FileCollectionFactory;
 import com.intellij.util.io.EnumeratorIntegerDescriptor;
-import gnu.trove.*;
+import gnu.trove.TIntHashSet;
+import gnu.trove.TIntIterator;
+import gnu.trove.TIntObjectProcedure;
+import gnu.trove.TIntProcedure;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.builders.storage.BuildDataCorruptedException;
@@ -131,18 +134,14 @@ public final class Mappings {
       myRemovedSuperClasses = myIsDelta ? new IntIntTransientMultiMaplet() : null;
       myAddedSuperClasses = myIsDelta ? new IntIntTransientMultiMaplet() : null;
 
-      final BuilderCollectionFactory<String> fileCollectionFactory = new BuilderCollectionFactory<String>() {
-        @Override
-        public Collection<String> create() {
-          return CollectionFactory.createFilePathSet(); // todo: do we really need set and not a list here?
-        }
-      };
+      final Supplier<Collection<String>> fileCollectionFactory = CollectionFactory::createFilePathSet; // todo: do we really need set and not a list here?
       if (myIsDelta) {
         myClassToSubclasses = new IntIntTransientMultiMaplet();
         myClassToClassDependency = new IntIntTransientMultiMaplet();
         myShortClassNameIndex = null;
-        myRelativeSourceFilePathToClasses = new ObjectObjectTransientMultiMaplet<>(FileCollectionFactory.FILE_PATH_HASH_STRATEGY,
-                                                                                   () -> new HashSet<>(5, DEFAULT_SET_LOAD_FACTOR));
+        myRelativeSourceFilePathToClasses = new ObjectObjectTransientMultiMaplet<>(
+          FileCollectionFactory.FILE_PATH_HASH_STRATEGY, () -> new HashSet<>(5, DEFAULT_SET_LOAD_FACTOR)
+        );
         myClassToRelativeSourceFilePath = new IntObjectTransientMultiMaplet<>(fileCollectionFactory);
       }
       else {

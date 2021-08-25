@@ -6,7 +6,7 @@ import org.intellij.plugins.markdown.lang.psi.impl.MarkdownFile
 
 internal class MarkdownActionPromoter: ActionPromoter {
   companion object {
-    private val promotedActions = setOf<String>(
+    private val promotedActions = setOf(
       "org.intellij.plugins.markdown.ui.actions.styling.ToggleBoldAction",
       "org.intellij.plugins.markdown.ui.actions.styling.ToggleItalicAction",
       "org.intellij.plugins.markdown.ui.actions.styling.ToggleStrikethroughAction",

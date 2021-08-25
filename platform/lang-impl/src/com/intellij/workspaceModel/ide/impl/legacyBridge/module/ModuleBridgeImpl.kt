@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.workspaceModel.ide.impl.legacyBridge.module
 
 import com.intellij.ide.plugins.IdeaPluginDescriptor
@@ -66,12 +66,12 @@ internal class ModuleBridgeImpl(
     super<ModuleImpl>.rename(newName, notifyStorage)
   }
 
-  override fun registerComponents(plugins: List<IdeaPluginDescriptorImpl>,
+  override fun registerComponents(modules: Sequence<IdeaPluginDescriptorImpl>,
                                   app: Application?,
                                   precomputedExtensionModel: PrecomputedExtensionModel?,
                                   listenerCallbacks: List<Runnable>?) {
-    registerComponents(corePlugin = plugins.find { it.pluginId == PluginManagerCore.CORE_ID },
-                       plugins = plugins,
+    registerComponents(corePlugin = modules.find { it.pluginId == PluginManagerCore.CORE_ID },
+                       modules = modules,
                        precomputedExtensionModel = precomputedExtensionModel,
                        app = app,
                        listenerCallbacks = listenerCallbacks)
@@ -82,15 +82,17 @@ internal class ModuleBridgeImpl(
   }
 
   override fun registerComponents(corePlugin: IdeaPluginDescriptor?,
-                         plugins: List<IdeaPluginDescriptorImpl>,
-                         precomputedExtensionModel: PrecomputedExtensionModel?,
-                         app: Application?,
-                         listenerCallbacks: List<Runnable>?) {
-    super.registerComponents(plugins = plugins,
+                                  modules: Sequence<IdeaPluginDescriptorImpl>,
+                                  precomputedExtensionModel: PrecomputedExtensionModel?,
+                                  app: Application?,
+                                  listenerCallbacks: List<Runnable>?) {
+    super.registerComponents(modules = modules,
                              app = app,
                              precomputedExtensionModel = precomputedExtensionModel,
                              listenerCallbacks = listenerCallbacks)
-    if (corePlugin == null) return
+    if (corePlugin == null) {
+      return
+    }
     unregisterComponent(DeprecatedModuleOptionManager::class.java)
 
     try {

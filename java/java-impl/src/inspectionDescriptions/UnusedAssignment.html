@@ -1,11 +1,11 @@
 <html>
 <body>
-Reports the cases in which a variable is redundant as its value is never used after its assignment.
-<p>If the variable is not used, it's better to remove it to shorten the code and avoid redundant allocations.</p>
+Reports assignment values that are not used after the assignment.
+If the assignment value is unused, it's better to remove the assignment to shorten the code and avoid redundant allocations.
 <p>The following cases are reported:</p>
 <ul>
-  <li>The variable never gets read after assignment.</li>
-  <li>The value is always overwritten with another assignment before the next variable is read.</li>
+  <li>The variable never gets read after the assignment.</li>
+  <li>The variable is always overwritten with a new value before it is read.</li>
   <li>The variable initializer is redundant (for one of the two reasons above).</li>
 </ul>
 <!-- tooltip end -->

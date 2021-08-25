@@ -6,6 +6,7 @@ package com.intellij.util.io
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.io.impl.*
+import org.junit.rules.ErrorCollector
 import java.io.File
 import java.nio.file.Path
 
@@ -32,9 +33,12 @@ inline fun zipFile(content: DirectoryContentBuilder.() -> Unit): DirectoryConten
 /**
  * Builds [DirectoryContentSpec] structure by an existing directory. Can be used to check that generated directory matched expected data
  * from testData directory.
+ * @param originalDir point to an original directory located in the project sources from which [dir] was built; will be used to allow fixing
+ * the original files directly from 'Comparison Failure' dialog
  */
-fun directoryContentOf(dir: Path): DirectoryContentSpec {
-  return createSpecByDirectory(dir)
+@JvmOverloads
+fun directoryContentOf(dir: Path, originalDir: Path = dir): DirectoryContentSpec {
+  return DirectorySpec().also { fillSpecFromDirectory(it, dir, originalDir) }
 }
 
 abstract class DirectoryContentBuilder {
@@ -86,32 +90,50 @@ interface DirectoryContentSpec {
 /**
  * Checks that contents of the given directory matches [spec].
  * @param filePathFilter determines which relative paths should be checked
+ * @param errorCollector will be used to report all errors at once if provided, otherwise only the first error will be reported
  */
 @JvmOverloads
 fun File.assertMatches(spec: DirectoryContentSpec, fileTextMatcher: FileTextMatcher = FileTextMatcher.exact(),
-                       filePathFilter: (String) -> Boolean = { true }) {
-  assertDirectoryContentMatches(this, spec as DirectoryContentSpecImpl, ".", fileTextMatcher, filePathFilter)
+                       filePathFilter: (String) -> Boolean = { true }, errorCollector: ErrorCollector? = null) {
+  assertContentUnderFileMatches(toPath(), spec as DirectoryContentSpecImpl, fileTextMatcher, filePathFilter, errorCollector,
+    expectedDataIsInSpec = true)
 }
 
 /**
  * Checks that contents of the given directory matches [spec].
  * @param filePathFilter determines which relative paths should be checked
+ * @param errorCollector will be used to report all errors at once if provided, otherwise only the first error will be reported
  */
 @JvmOverloads
 fun Path.assertMatches(spec: DirectoryContentSpec, fileTextMatcher: FileTextMatcher = FileTextMatcher.exact(),
-                       filePathFilter: (String) -> Boolean = { true }) {
-  assertDirectoryContentMatches(toFile(), spec as DirectoryContentSpecImpl, ".", fileTextMatcher, filePathFilter)
+                       filePathFilter: (String) -> Boolean = { true }, errorCollector: ErrorCollector? = null) {
+  assertContentUnderFileMatches(this, spec as DirectoryContentSpecImpl, fileTextMatcher, filePathFilter, errorCollector,
+    expectedDataIsInSpec = true)
+}
+
+/**
+ * Checks that contents of [path] matches this spec. The same as [Path.assertMatches], but in case of comparison failure the data
+ * from the spec will be shown as actual, and the data from the file will be shown as expected.
+ */
+@JvmOverloads
+fun DirectoryContentSpec.assertIsMatchedBy(path: Path, fileTextMatcher: FileTextMatcher = FileTextMatcher.exact(),
+                       filePathFilter: (String) -> Boolean = { true }, errorCollector: ErrorCollector? = null) {
+  assertContentUnderFileMatches(path, this as DirectoryContentSpecImpl, fileTextMatcher, filePathFilter, errorCollector,
+    expectedDataIsInSpec = false)
 }
 
 interface FileTextMatcher {
   companion object {
     @JvmStatic
     fun ignoreBlankLines(): FileTextMatcher = FileTextMatchers.ignoreBlankLines
+
     @JvmStatic
     fun exact(): FileTextMatcher = FileTextMatchers.exact
+
     @JvmStatic
     fun ignoreXmlFormatting(): FileTextMatcher = FileTextMatchers.ignoreXmlFormatting
   }
+
   fun matches(actualText: String, expectedText: String): Boolean
 }
 

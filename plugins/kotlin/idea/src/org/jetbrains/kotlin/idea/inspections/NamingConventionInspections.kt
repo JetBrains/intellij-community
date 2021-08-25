@@ -10,6 +10,7 @@ import com.intellij.codeInspection.reference.RefPackage
 import com.intellij.openapi.editor.event.DocumentEvent
 import com.intellij.openapi.editor.event.DocumentListener
 import com.intellij.openapi.ui.LabeledComponent
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.JavaPsiFacade
 import com.intellij.psi.PsiElement
@@ -105,9 +106,11 @@ class NamingConventionInspectionSettings(
         val nameIdentifier = element.nameIdentifier
         if (name != null && nameIdentifier != null && nameRegex?.matches(name) == false && additionalCheck()) {
             val message = getNameMismatchMessage(name)
+            @NlsSafe
+            val descriptionTemplate = "$entityName ${KotlinBundle.message("text.name")} <code>#ref</code> $message #loc"
             holder.registerProblem(
                 element.nameIdentifier!!,
-                "$entityName ${KotlinBundle.message("text.name")} <code>#ref</code> $message #loc",
+                descriptionTemplate,
                 RenameIdentifierFix()
             )
         }
@@ -342,6 +345,7 @@ private class PackageNameInspectionLocal(
     companion object {
         data class CheckResult(val errorMessage: String, val isForPart: Boolean)
 
+        @NlsSafe
         fun CheckResult.toProblemTemplateString(): String {
             return KotlinBundle.message("package.name") + if (isForPart) {
                 " <code>#ref</code> ${KotlinBundle.message("text.part")} $errorMessage #loc"
@@ -391,6 +395,7 @@ class PackageNameInspection : BaseGlobalInspection() {
         const val DEFAULT_PACKAGE_NAME_PATTERN = "[a-z_][a-zA-Z\\d_]*(\\.[a-z_][a-zA-Z\\d_]*)*"
         val PART_RULES = arrayOf(NO_BAD_CHARACTERS_OR_UNDERSCORE, NO_START_UPPER)
 
+        @NlsSafe
         private fun PackageNameInspectionLocal.Companion.CheckResult.toErrorMessage(qualifiedName: String): String {
             return KotlinBundle.message("package.name") + if (isForPart) {
                 " <code>$qualifiedName</code> ${KotlinBundle.message("text.part")} $errorMessage"

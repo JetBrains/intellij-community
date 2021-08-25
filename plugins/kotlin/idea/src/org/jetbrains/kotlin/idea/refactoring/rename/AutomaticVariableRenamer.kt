@@ -77,7 +77,7 @@ class AutomaticVariableRenamer(
 
     override fun getDialogTitle() = JavaRefactoringBundle.message("rename.variables.title")
 
-    override fun getDialogDescription() = JavaRefactoringBundle.message("rename.variables.with.the.following.names.to")
+    override fun getDialogDescription() = JavaRefactoringBundle.message("title.rename.variables.with.the.following.names.to")
 
     override fun entityName() = JavaRefactoringBundle.message("entity.name.variable")
 

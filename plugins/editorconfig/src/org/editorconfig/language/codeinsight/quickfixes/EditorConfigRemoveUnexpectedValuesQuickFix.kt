@@ -27,7 +27,7 @@ class EditorConfigRemoveUnexpectedValuesQuickFix : LocalQuickFix {
 
   private fun findClosestListElement(list: EditorConfigOptionValueList): EditorConfigOptionValueIdentifier? {
     val editor = FileEditorManager.getInstance(list.project).selectedTextEditor ?: return null
-    return list.optionValueIdentifierList.minBy { element: PsiElement ->
+    return list.optionValueIdentifierList.minByOrNull { element: PsiElement ->
       min(abs(element.textRange.startOffset - editor.caretModel.offset),
           abs(element.textRange.endOffset - editor.caretModel.offset))
     }

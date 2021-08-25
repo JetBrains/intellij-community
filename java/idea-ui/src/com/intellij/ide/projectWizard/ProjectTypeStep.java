@@ -129,7 +129,8 @@ public final class ProjectTypeStep extends ModuleWizardStep implements SettingsS
       listWithFilter.setMinimumSize(JBUI.size(40, -1));
       myProjectTypePanel.add(listWithFilter);
 
-      mySettingsPanel.setBorder(JBUI.Borders.customLine(JBColor.border(), 0, 0, 1, 0));
+      listWithFilter.setBorder(JBUI.Borders.customLine(JBColor.border(), 1, 0, 1, 1));
+      mySettingsPanel.setBorder(JBUI.Borders.customLine(JBColor.border(), 1, 0, 1, 0));
     } else {
       myProjectTypePanel.add(BorderLayout.CENTER, new JBScrollPane(myProjectTypeList));
     }

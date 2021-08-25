@@ -12,6 +12,7 @@ import com.intellij.psi.PsiReference
 import com.intellij.refactoring.move.MoveCallback
 import com.intellij.refactoring.move.MoveHandlerDelegate
 import com.intellij.refactoring.util.CommonRefactoringUtil
+import org.jetbrains.annotations.Nls
 import org.jetbrains.kotlin.idea.KotlinBundle
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.js.resolve.diagnostics.findPsi
@@ -26,9 +27,9 @@ private val refactoringIsDisabled: Boolean
     get() = !Registry.`is`(optionName) && !ApplicationManager.getApplication().isUnitTestMode
 
 class MoveKotlinMethodHandler : MoveHandlerDelegate() {
-    private fun showErrorHint(project: Project, dataContext: DataContext?, message: String) {
+    private fun showErrorHint(project: Project, dataContext: DataContext?, @Nls message: String) {
         val editor = dataContext?.let { CommonDataKeys.EDITOR.getData(it) }
-        CommonRefactoringUtil.showErrorHint(project, editor, message, KotlinBundle.message("text.move.method"), null)
+        CommonRefactoringUtil.showErrorHint(project, editor, message, KotlinBundle.message("title.move.method"), null)
     }
 
     private fun invokeMoveMethodRefactoring(
@@ -131,5 +132,5 @@ class MoveKotlinMethodHandler : MoveHandlerDelegate() {
         return collectDescendantsOfType<KtUserType>().any { userType -> userType.referenceExpression?.mainReference?.resolve() in typeParameters }
     }
 
-    override fun getActionName(elements: Array<out PsiElement>): String = "${KotlinBundle.message("text.move.method")}.."
+    override fun getActionName(elements: Array<out PsiElement>): String = KotlinBundle.message("action.move.method")
 }

@@ -310,4 +310,17 @@ public final class JavaParametersUtil {
     }
     return null;
   }
+
+  public static void applyModifications(JavaParameters parameters, List<ModuleBasedConfigurationOptions.ClasspathModification> modifications) {
+    for (ModuleBasedConfigurationOptions.ClasspathModification modification : modifications) {
+      if (modification.getPath() == null) continue;
+      if (modification.getExclude()) {
+        parameters.getClassPath().remove(modification.getPath());
+        parameters.getModulePath().remove(modification.getPath());
+      }
+      else {
+        parameters.getClassPath().addFirst(modification.getPath());
+      }
+    }
+  }
 }

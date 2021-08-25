@@ -9,11 +9,12 @@ import com.intellij.xdebugger.impl.actions.XDebuggerActions;
 public class XDebugTabCustomizableActionGroupProvider extends CustomizableActionGroupProvider {
   @Override
   public void registerGroups(CustomizableActionGroupRegistrar registrar) {
-    registrar.addCustomizableActionGroup(Registry.is("debugger.new.tool.window.layout", false)
-                                         ? XDebuggerActions.TOOL_WINDOW_TOP_TOOLBAR_3_GROUP
-                                         : XDebuggerActions.TOOL_WINDOW_TOP_TOOLBAR_GROUP,
-                                         XDebuggerBundle.message("debug.tool.window.top.toolbar"));
+    registrar.addCustomizableActionGroup(XDebuggerActions.TOOL_WINDOW_TOP_TOOLBAR_GROUP, XDebuggerBundle.message("debug.tool.window.top.toolbar"));
     registrar.addCustomizableActionGroup(XDebuggerActions.TOOL_WINDOW_LEFT_TOOLBAR_GROUP, XDebuggerBundle.message("debug.tool.window.left.toolbar"));
     registrar.addCustomizableActionGroup(XDebuggerActions.WATCHES_TREE_TOOLBAR_GROUP, XDebuggerBundle.message("debug.watches.toolbar"));
+    if (Registry.is("debugger.new.tool.window.layout", false)) {
+      registrar.addCustomizableActionGroup(XDebuggerActions.TOOL_WINDOW_TOP_TOOLBAR_3_GROUP, XDebuggerBundle.message("debug.tool.window.header.toolbar"));
+      registrar.addCustomizableActionGroup(XDebuggerActions.TOOL_WINDOW_TOP_TOOLBAR_3_EXTRA_GROUP, XDebuggerBundle.message("debug.tool.window.more.toolbar"));
+    }
   }
 }

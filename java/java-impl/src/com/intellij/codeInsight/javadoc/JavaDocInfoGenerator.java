@@ -21,6 +21,8 @@ import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.HtmlBuilder;
+import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -35,7 +37,7 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ObjectUtils;
-import com.intellij.xml.util.XmlStringUtil;
+import com.intellij.util.containers.ContainerUtil;
 import org.jdom.Element;
 import org.jdom.JDOMException;
 import org.jetbrains.annotations.Nls;
@@ -198,7 +200,7 @@ public class JavaDocInfoGenerator {
     };
   }
 
-  private String sanitizeHtml(StringBuilder buffer) {
+  private @Nls String sanitizeHtml(@Nls StringBuilder buffer) {
     String text = buffer.toString();
     if (text.isEmpty()) return null;
 
@@ -223,7 +225,7 @@ public class JavaDocInfoGenerator {
       }
       if (lastRef > 0) {  // don't copy text over if there are no matches
         result.append(text, lastRef, text.length());
-        text = result.toString();
+        text = result.toString(); //NON-NLS
       }
     }
 
@@ -232,7 +234,7 @@ public class JavaDocInfoGenerator {
       LOG.debug(text);
     }
 
-    text = StringUtil.replaceIgnoreCase(text, "<p/>", "<p></p>");
+    text = StringUtil.replaceIgnoreCase(text, "<p/>", "<p></p>"); //NON-NLS
     text = StringUtil.replace(text, "/>", ">");
     return text;
   }
@@ -387,9 +389,8 @@ public class JavaDocInfoGenerator {
     return buf.toString();
   }
 
-  @Nullable
-  public String generateDocInfo(List<String> docURLs) {
-    StringBuilder buffer = new StringBuilder();
+  public @Nls @Nullable String generateDocInfo(List<@NlsSafe String> docURLs) {
+    @Nls StringBuilder buffer = new StringBuilder();
 
     if (!generateDocInfoCore(buffer, true)) {
       return null;
@@ -400,22 +401,19 @@ public class JavaDocInfoGenerator {
         LOG.debug("Documentation for " + myElement + " was generated from source code, it wasn't found at following URLs: ", docURLs);
       }
       else {
-        buffer.append(DocumentationMarkup.CONTENT_START).append("<p class='centered'>");
-        buffer.append(DocumentationMarkup.GRAYED_START);
-        buffer.append("The following documentation url").append(docURLs.size() > 1 ? "s were" : " was").append(" checked:");
-        buffer.append(BR_TAG).append(NBSP);
-        buffer.append(StringUtil.join(docURLs, XmlStringUtil::escapeString, BR_TAG + NBSP));
-        buffer.append(DocumentationMarkup.GRAYED_END);
-        buffer.append(BR_TAG);
-        buffer.append("<a href=\"open://Project Settings\">Edit API docs paths</a>");
-        buffer.append("</p>").append(DocumentationMarkup.CONTENT_END);
+        HtmlChunk urlList = DocumentationMarkup.GRAYED_ELEMENT
+          .addText(JavaBundle.message("javadoc.documentation.url.checked", docURLs.size()))
+          .children(ContainerUtil.map(docURLs, url -> new HtmlBuilder().br().nbsp().append(url).toFragment()));
+        HtmlChunk settingsLink = HtmlChunk.link("open://Project Settings", JavaBundle.message("javadoc.edit.api.docs.paths"));
+        buffer.append(DocumentationMarkup.CONTENT_ELEMENT.child(
+          DocumentationMarkup.CENTERED_ELEMENT.children(urlList, HtmlChunk.br(), settingsLink)));
       }
     }
 
     return sanitizeHtml(buffer);
   }
 
-  public @Nullable String generateRenderedDocInfo() {
+  public @Nls @Nullable String generateRenderedDocInfo() {
     StringBuilder buffer = new StringBuilder();
 
     if (myElement instanceof PsiClass) {
@@ -698,7 +696,7 @@ public class JavaDocInfoGenerator {
     }
   }
 
-  // not a javadoc in fact..
+  // not a javadoc in fact.
   private void generateVariableJavaDoc(StringBuilder buffer, PsiVariable variable, boolean generatePrologue) {
     if (generatePrologue) generatePrologue(buffer);
 
@@ -1986,7 +1984,7 @@ public class JavaDocInfoGenerator {
         subst.append(GT);
         length ++;
         if (goodSubst) {
-          buffer.append(subst.toString());
+          buffer.append(subst);
         }
       }
 

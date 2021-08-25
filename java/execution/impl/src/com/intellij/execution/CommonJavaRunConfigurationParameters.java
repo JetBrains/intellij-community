@@ -4,7 +4,11 @@
 package com.intellij.execution;
 
 import com.intellij.execution.configurations.ConfigurationWithAlternativeJre;
+import com.intellij.execution.configurations.ModuleBasedConfigurationOptions;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.Collections;
+import java.util.List;
 
 public interface CommonJavaRunConfigurationParameters extends CommonProgramRunConfigurationParameters, ConfigurationWithAlternativeJre {
   void setVMParameters(@Nullable String value);
@@ -27,4 +31,11 @@ public interface CommonJavaRunConfigurationParameters extends CommonProgramRunCo
 
   @Nullable
   String getPackage();
+
+  default List<ModuleBasedConfigurationOptions.ClasspathModification> getClasspathModifications() {
+    return Collections.emptyList();
+  }
+
+  default void setClasspathModifications(List<ModuleBasedConfigurationOptions.ClasspathModification> modifications) {
+  }
 }

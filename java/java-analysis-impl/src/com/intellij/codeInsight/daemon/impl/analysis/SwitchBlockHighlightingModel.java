@@ -6,10 +6,6 @@ import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
 import com.intellij.codeInsight.daemon.impl.quickfix.QuickFixAction;
 import com.intellij.codeInsight.intention.QuickFixFactory;
-import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.codeInspection.LocalQuickFixAsIntentionAdapter;
-import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.codeInspection.ProblemDescriptorUtil;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.pom.java.LanguageLevel;
@@ -175,6 +171,7 @@ public class SwitchBlockHighlightingModel {
       }
       for (PsiCaseLabelElement labelElement : labelElementList.getElements()) {
         PsiExpression expr = ObjectUtils.tryCast(labelElement, PsiExpression.class);
+        // ignore patterns/case defaults. If they appear here, insufficient language level will be reported
         if (expr == null) continue;
         HighlightInfo result = HighlightUtil.checkAssignability(mySelectorType, expr.getType(), expr, expr);
         if (result != null) {
@@ -258,7 +255,7 @@ public class SwitchBlockHighlightingModel {
           HighlightInfo info = createError(element, description);
           PsiSwitchLabelStatementBase labelStatement = PsiTreeUtil.getParentOfType(element, PsiSwitchLabelStatementBase.class);
           if (labelStatement != null && labelStatement.isDefaultCase()) {
-            registerDeleteDefaultFix(myFile, info);
+            QuickFixAction.registerQuickFixAction(info, getFixFactory().createDeleteDefaultFix(myFile, info));
           }
           else {
             QuickFixAction.registerQuickFixAction(info, getFixFactory().createDeleteSwitchLabelFix((PsiCaseLabelElement)element));
@@ -267,14 +264,6 @@ public class SwitchBlockHighlightingModel {
         }
       }
     }
-  }
-
-  private static void registerDeleteDefaultFix(@NotNull PsiFile file, @Nullable HighlightInfo info) {
-    if (info == null) return;
-    ProblemDescriptor descriptor = ProblemDescriptorUtil.toProblemDescriptor(file, info);
-    if (descriptor == null) return;
-    LocalQuickFix fix = getFixFactory().createDeleteDefaultFix();
-    QuickFixAction.registerQuickFixAction(info, new LocalQuickFixAsIntentionAdapter(fix, descriptor));
   }
 
   boolean needToCheckCompleteness(@NotNull List<PsiCaseLabelElement> elements) {
@@ -487,13 +476,14 @@ public class SwitchBlockHighlightingModel {
       if (labelElement instanceof PsiDefaultCaseLabelElement) {
         elements.putValue(myDefaultValue, labelElement);
       }
-      else if (labelElement instanceof PsiReferenceExpression) {
-        String enumConstName = evaluateEnumConstantName((PsiReferenceExpression)labelElement);
-        if (enumConstName != null) {
-          elements.putValue(enumConstName, labelElement);
-        }
-      }
       else if (labelElement instanceof PsiExpression) {
+        if (labelElement instanceof PsiReferenceExpression) {
+          String enumConstName = evaluateEnumConstantName((PsiReferenceExpression)labelElement);
+          if (enumConstName != null) {
+            elements.putValue(enumConstName, labelElement);
+            return;
+          }
+        }
         elements.putValue(evaluateConstant(labelElement), labelElement);
       }
     }
@@ -709,8 +699,7 @@ public class SwitchBlockHighlightingModel {
         QuickFixAction.registerQuickFixAction(info, getFixFactory().createDeleteSwitchLabelFix((PsiCaseLabelElement)defaultElement));
         return;
       }
-      registerDeleteDefaultFix(myFile, info);
-      ProblemDescriptor descriptor = ProblemDescriptorUtil.toProblemDescriptor(myFile, info);
+      QuickFixAction.registerQuickFixAction(info, getFixFactory().createDeleteDefaultFix(myFile, info));
     }
 
     private void checkSealedClassCompleteness(@NotNull PsiClass selectorClass,

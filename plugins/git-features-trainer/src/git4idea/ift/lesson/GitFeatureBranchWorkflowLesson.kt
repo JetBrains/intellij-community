@@ -20,6 +20,7 @@ import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.openapi.wm.impl.status.TextPanel
 import com.intellij.ui.EngravedLabel
 import com.intellij.ui.components.BasicOptionButtonUI
+import com.intellij.ui.popup.PopupFactoryImpl
 import git4idea.commands.Git
 import git4idea.commands.GitCommand
 import git4idea.commands.GitLineHandler
@@ -48,26 +49,17 @@ class GitFeatureBranchWorkflowLesson : GitLesson("Git.BasicWorkflow", GitLessons
   private val branchName = "feature"
   private val main = "main"
 
-  private val firstFileName = "sphinx_cat.yml"
-  private val secondFileName = "puss_in_boots.yml"
+  private val fileToCommitName = "sphinx_cat.yml"
   private val committerName = "Johnny Catsville"
   private val committerEmail = "johnny.catsville@meow.com"
-  private val firstCommitMessage = "Add new fact about sphinx's behaviour"
-  private val secondCommitMessage = "Add fact about Puss in boots"
+  private val commitMessage = "Add new fact about sphinx's behaviour"
 
-  private val firstFileAddition = """
+  private val fileAddition = """
     |
     |    - steal:
     |        condition: food was left unattended
     |        action:
     |          - steal a piece of food and hide""".trimMargin()
-
-  private val secondFileAddition = """
-    |
-    |    - care_for_weapon:
-    |        condition: favourite sword become blunt
-    |        actions:
-    |          - sharpen the sword using the stone""".trimMargin()
 
   private lateinit var repository: GitRepository
 
@@ -124,7 +116,9 @@ class GitFeatureBranchWorkflowLesson : GitLesson("Git.BasicWorkflow", GitLessons
       }
       val checkoutItemText = GitBundle.message("branches.checkout")
       text(GitLessonsBundle.message("git.feature.branch.checkout.branch", strong(main), strong(checkoutItemText)))
-      highlightListItemAndRehighlight { item -> item.toString() == checkoutItemText }
+      highlightListItemAndRehighlight { item ->
+        (item as? PopupFactoryImpl.ActionItem)?.action is GitBranchPopupActions.LocalBranchActions.CheckoutAction
+      }
       stateCheck { repository.currentBranchName == main }
       restoreState(firstShowBranchesTaskId, delayMillis = defaultRestoreDelay) {
         val newBranchName = repository.currentBranchName
@@ -161,7 +155,7 @@ class GitFeatureBranchWorkflowLesson : GitLesson("Git.BasicWorkflow", GitLessons
     task("Git.Branches") {
       text(GitLessonsBundle.message("git.feature.branch.new.commits.explanation", strong(main)))
       illustration(illustration2)
-      highlightLatestCommitsFromBranch("$remoteName/$main", sequenceLength = 2)
+      highlightLatestCommitsFromBranch("$remoteName/$main")
       proceedLink(4)
     }
 
@@ -252,19 +246,11 @@ class GitFeatureBranchWorkflowLesson : GitLesson("Git.BasicWorkflow", GitLessons
   private fun modifyRemoteProject(remoteProjectRoot: File) {
     val files = mutableListOf<File>()
     FileUtil.processFilesRecursively(remoteProjectRoot, files::add)
-    val firstFile = files.find { it.name == firstFileName }
-    val secondFile = files.find { it.name == secondFileName }
-    if (firstFile != null && secondFile != null) {
-      gitChange(remoteProjectRoot, "user.name", committerName)
-      gitChange(remoteProjectRoot, "user.email", committerEmail)
-      createOneFileCommit(remoteProjectRoot, firstFile, firstCommitMessage) {
-        it.appendText(firstFileAddition)
-      }
-      createOneFileCommit(remoteProjectRoot, secondFile, secondCommitMessage) {
-        it.appendText(secondFileAddition)
-      }
-    }
-    else error("Failed to find files to modify in $remoteProjectRoot")
+    val fileToCommit = files.find { it.name == fileToCommitName }
+                       ?: error("Failed to find file $fileToCommitName to modify in $remoteProjectRoot")
+    gitChange(remoteProjectRoot, "user.name", committerName)
+    gitChange(remoteProjectRoot, "user.email", committerEmail)
+    createOneFileCommit(remoteProjectRoot, fileToCommit)
   }
 
   private fun gitChange(root: File, param: String, value: String) {
@@ -273,8 +259,8 @@ class GitFeatureBranchWorkflowLesson : GitLesson("Git.BasicWorkflow", GitLessons
     runGitCommandSynchronously(handler)
   }
 
-  private fun createOneFileCommit(root: File, editingFile: File, commitMessage: String, editFileContent: (File) -> Unit) {
-    editFileContent(editingFile)
+  private fun createOneFileCommit(root: File, fileToCommit: File) {
+    fileToCommit.appendText(fileAddition)
     val handler = GitLineHandler(null, root, GitCommand.COMMIT)
     handler.addParameters("-a")
     handler.addParameters("-m", commitMessage)

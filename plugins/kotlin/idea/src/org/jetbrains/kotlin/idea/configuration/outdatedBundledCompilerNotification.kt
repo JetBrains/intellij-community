@@ -7,7 +7,6 @@ import com.intellij.ide.util.PropertiesComponent
 import com.intellij.notification.Notification
 import com.intellij.notification.NotificationListener
 import com.intellij.notification.NotificationType
-import com.intellij.notification.Notifications
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.AnActionEvent
@@ -17,6 +16,7 @@ import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
 import com.intellij.util.text.VersionComparatorUtil
+import org.jetbrains.annotations.Nls
 import org.jetbrains.kotlin.config.KotlinCompilerVersion
 import org.jetbrains.kotlin.config.LanguageVersion
 import org.jetbrains.kotlin.idea.KotlinBundle
@@ -68,6 +68,7 @@ fun notifyOutdatedBundledCompilerIfNecessary(project: Project) {
 
 private var alreadyNotified = ConcurrentHashMap<String, String>()
 
+@Nls
 fun createOutdatedBundledCompilerMessage(project: Project, bundledCompilerVersion: String = KotlinCompilerVersion.VERSION): String? {
     val bundledCompilerMajorVersion = createKotlinVersion(bundledCompilerVersion) ?: return null
 

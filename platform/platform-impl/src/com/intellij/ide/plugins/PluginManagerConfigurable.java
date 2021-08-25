@@ -8,6 +8,7 @@ import com.intellij.ide.CopyProvider;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.plugins.certificates.PluginCertificateManager;
+import com.intellij.ide.plugins.enums.PluginsGroupType;
 import com.intellij.ide.plugins.marketplace.MarketplaceRequests;
 import com.intellij.ide.plugins.newui.*;
 import com.intellij.ide.plugins.org.PluginManagerFilters;
@@ -344,8 +345,8 @@ public final class PluginManagerConfigurable
         MultiSelectionEventHandler eventHandler = new MultiSelectionEventHandler();
         myMarketplacePanel = new PluginsGroupComponentWithProgress(eventHandler) {
           @Override
-          protected @NotNull ListPluginComponent createListComponent(@NotNull IdeaPluginDescriptor descriptor) {
-            return new ListPluginComponent(myPluginModel, descriptor, mySearchListener, true);
+          protected @NotNull ListPluginComponent createListComponent(@NotNull IdeaPluginDescriptor descriptor, @NotNull PluginsGroup group) {
+            return new ListPluginComponent(myPluginModel, descriptor, group, mySearchListener, true);
           }
         };
 
@@ -362,13 +363,34 @@ public final class PluginManagerConfigurable
             Map<String, List<PluginNode>> customRepositoriesMap = CustomPluginRepositoryService.getInstance()
               .getCustomRepositoryPluginMap();
             try {
-              addGroupViaLightDescriptor(groups, IdeBundle.message("plugins.configurable.featured"), "is_featured_search=true",
-                                         "/sortBy:featured");
-              addGroupViaLightDescriptor(groups, IdeBundle.message("plugins.configurable.new.and.updated"), "orderBy=update+date",
-                                         "/sortBy:updated");
-              addGroupViaLightDescriptor(groups, IdeBundle.message("plugins.configurable.top.downloads"), "orderBy=downloads",
-                                         "/sortBy:downloads");
-              addGroupViaLightDescriptor(groups, IdeBundle.message("plugins.configurable.top.rated"), "orderBy=rating", "/sortBy:rating");
+              addGroupViaLightDescriptor(
+                groups,
+                IdeBundle.message("plugins.configurable.featured"),
+                PluginsGroupType.FEATURED,
+                "is_featured_search=true",
+                "/sortBy:featured"
+              );
+              addGroupViaLightDescriptor(
+                groups,
+                IdeBundle.message("plugins.configurable.new.and.updated"),
+                PluginsGroupType.NEW_AND_UPDATED,
+                "orderBy=update+date",
+                "/sortBy:updated"
+              );
+              addGroupViaLightDescriptor(
+                groups,
+                IdeBundle.message("plugins.configurable.top.downloads"),
+                PluginsGroupType.TOP_DOWNLOADS,
+                "orderBy=downloads",
+                "/sortBy:downloads"
+              );
+              addGroupViaLightDescriptor(
+                groups,
+                IdeBundle.message("plugins.configurable.top.rated"),
+                PluginsGroupType.TOP_RATED,
+                "orderBy=rating",
+                "/sortBy:rating"
+              );
             }
             catch (IOException e) {
               LOG.info("Main plugin repository is not available ('" + e.getMessage() + "'). Please check your network settings.");
@@ -379,6 +401,7 @@ public final class PluginManagerConfigurable
               if (allDescriptors != null) {
                 addGroup(groups,
                          IdeBundle.message("plugins.configurable.repository.0", host),
+                         PluginsGroupType.CUSTOM_REPOSITORY,
                          "/repository:\"" + host + "\"",
                          allDescriptors,
                          group -> {
@@ -631,8 +654,8 @@ public final class PluginManagerConfigurable
 
         PluginsGroupComponentWithProgress panel = new PluginsGroupComponentWithProgress(eventHandler) {
           @Override
-          protected @NotNull ListPluginComponent createListComponent(@NotNull IdeaPluginDescriptor descriptor) {
-            return new ListPluginComponent(myPluginModel, descriptor, mySearchListener, true);
+          protected @NotNull ListPluginComponent createListComponent(@NotNull IdeaPluginDescriptor descriptor, @NotNull PluginsGroup group) {
+            return new ListPluginComponent(myPluginModel, descriptor, group, mySearchListener, true);
           }
         };
 
@@ -640,7 +663,7 @@ public final class PluginManagerConfigurable
         registerCopyProvider(panel);
 
         myMarketplaceSearchPanel =
-          new SearchResultPanel(marketplaceController, panel, 0, 0) {
+          new SearchResultPanel(marketplaceController, panel, true, 0, 0) {
             @Override
             protected void handleQuery(@NotNull String query, @NotNull PluginsGroup result) {
               try {
@@ -757,8 +780,8 @@ public final class PluginManagerConfigurable
         MultiSelectionEventHandler eventHandler = new MultiSelectionEventHandler();
         myInstalledPanel = new PluginsGroupComponent(eventHandler) {
           @Override
-          protected @NotNull ListPluginComponent createListComponent(@NotNull IdeaPluginDescriptor descriptor) {
-            return new ListPluginComponent(myPluginModel, descriptor, mySearchListener, false);
+          protected @NotNull ListPluginComponent createListComponent(@NotNull IdeaPluginDescriptor descriptor, @NotNull PluginsGroup group) {
+            return new ListPluginComponent(myPluginModel, descriptor, group, mySearchListener, false);
           }
         };
 
@@ -771,7 +794,7 @@ public final class PluginManagerConfigurable
         try {
           PluginLogo.startBatchMode();
 
-          PluginsGroup installing = new PluginsGroup(IdeBundle.message("plugins.configurable.installing"));
+          PluginsGroup installing = new PluginsGroup(IdeBundle.message("plugins.configurable.installing"), PluginsGroupType.INSTALLING);
           installing.descriptors.addAll(MyPluginModel.getInstallingPlugins());
           if (!installing.descriptors.isEmpty()) {
             installing.sortByName();
@@ -779,7 +802,7 @@ public final class PluginManagerConfigurable
             myInstalledPanel.addGroup(installing);
           }
 
-          PluginsGroup downloaded = new PluginsGroup(IdeBundle.message("plugins.configurable.downloaded"));
+          PluginsGroup downloaded = new PluginsGroup(IdeBundle.message("plugins.configurable.downloaded"), PluginsGroupType.INSTALLED);
           downloaded.descriptors.addAll(InstalledPluginsState.getInstance().getInstalledPlugins());
 
           Map<@NlsSafe String, List<IdeaPluginDescriptor>> bundledGroups = new HashMap<>();
@@ -838,7 +861,7 @@ public final class PluginManagerConfigurable
           List<PluginsGroup> groups = new ArrayList<>();
 
           for (Entry<@NlsSafe String, List<IdeaPluginDescriptor>> entry : bundledGroups.entrySet()) {
-            PluginsGroup group = new PluginsGroup(entry.getKey()) {
+            PluginsGroup group = new PluginsGroup(entry.getKey(), PluginsGroupType.INSTALLED) {
               @Override
               public void titleWithCount(int enabled) {
                 rightAction.setText(enabled == 0 ? IdeBundle.message("plugins.configurable.enable.all")
@@ -946,8 +969,8 @@ public final class PluginManagerConfigurable
 
         PluginsGroupComponent panel = new PluginsGroupComponent(eventHandler) {
           @Override
-          protected @NotNull ListPluginComponent createListComponent(@NotNull IdeaPluginDescriptor descriptor) {
-            return new ListPluginComponent(myPluginModel, descriptor, mySearchListener, false);
+          protected @NotNull ListPluginComponent createListComponent(@NotNull IdeaPluginDescriptor descriptor, @NotNull PluginsGroup group) {
+            return new ListPluginComponent(myPluginModel, descriptor, group, mySearchListener, false);
           }
         };
 
@@ -1000,7 +1023,7 @@ public final class PluginManagerConfigurable
           }
         };
 
-        myInstalledSearchPanel = new SearchResultPanel(installedController, panel, 0, 0) {
+        myInstalledSearchPanel = new SearchResultPanel(installedController, panel, false, 0, 0) {
           @Override
           protected void setEmptyText(@NotNull String query) {
             myPanel.getEmptyText().setText(IdeBundle.message("plugins.configurable.nothing.found"));
@@ -1537,10 +1560,11 @@ public final class PluginManagerConfigurable
 
   private void addGroup(@NotNull List<? super PluginsGroup> groups,
                         @NotNull @Nls String name,
+                        @NotNull PluginsGroupType type,
                         @NotNull String showAllQuery,
                         @NotNull List<PluginNode> customPlugins,
                         @NotNull Predicate<? super PluginsGroup> predicate) {
-    PluginsGroup group = new PluginsGroup(name);
+    PluginsGroup group = new PluginsGroup(name, type);
 
     int i = 0;
     for (Iterator<? extends IdeaPluginDescriptor> iterator = customPlugins.iterator();
@@ -1564,11 +1588,13 @@ public final class PluginManagerConfigurable
 
   private void addGroupViaLightDescriptor(@NotNull List<? super PluginsGroup> groups,
                                           @NotNull @Nls String name,
+                                          @NotNull PluginsGroupType type,
                                           @NotNull @NonNls String query,
                                           @NotNull @NonNls String showAllQuery) throws IOException {
     List<PluginNode> pluginNodes = MarketplaceRequests.getInstance().searchPlugins(query, ITEMS_PER_GROUP * 2);
     addGroup(groups,
              name,
+             type,
              showAllQuery,
              pluginNodes,
              __ -> pluginNodes.size() >= ITEMS_PER_GROUP);

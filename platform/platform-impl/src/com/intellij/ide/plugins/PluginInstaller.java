@@ -102,7 +102,7 @@ public final class PluginInstaller {
         .withWaitForClassloaderUnload(true);
 
       uninstalledWithoutRestart = parentComponent != null ?
-                                  DynamicPlugins.unloadPluginWithProgress(null, parentComponent, pluginDescriptor, options) :
+                                  DynamicPlugins.INSTANCE.unloadPluginWithProgress(null, parentComponent, pluginDescriptor, options) :
                                   DynamicPlugins.INSTANCE.unloadPlugin(pluginDescriptor, options);
     }
 

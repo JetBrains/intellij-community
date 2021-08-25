@@ -24,9 +24,22 @@ internal object ReplaceBySourceAsGraph {
    *        has a reference to an entity that doesn't exist in current builder.
    *  - Restore references between matched entities.
    */
-  internal fun replaceBySourceAsGraph(thisBuilder: WorkspaceEntityStorageBuilderImpl,
-                                      replaceWith: WorkspaceEntityStorage, sourceFilter: (EntitySource) -> Boolean) {
+  internal fun replaceBySourceAsGraph(
+    thisBuilder: WorkspaceEntityStorageBuilderImpl,
+    replaceWith: WorkspaceEntityStorage,
+    sourceFilter: (EntitySource) -> Boolean,
+
+    // This is a super ultra dirty hack to make one test reproducible
+    // This should definitely NOT be used or moved to other implementations
+    reverseEntities: Boolean = false,
+  ) {
     replaceWith as AbstractEntityStorage
+
+    if (LOG.isTraceEnabled) {
+      thisBuilder.assertConsistency()
+      replaceWith.assertConsistency()
+      LOG.trace("Before starting replaceBySource no consistency issues were found")
+    }
 
     val initialStore = if (ConsistencyCheckingMode.current != ConsistencyCheckingMode.DISABLED) thisBuilder.toStorage() else null
 
@@ -95,7 +108,8 @@ internal object ReplaceBySourceAsGraph {
     for (replaceWithEntitySource in replaceWith.indexes.entitySourceIndex.entries().filter { sourceFilter(it) }) {
       val entityDataList = replaceWith.indexes.entitySourceIndex
                              .getIdsByEntry(replaceWithEntitySource)
-                             ?.map { replaceWith.entityDataByIdOrDie(it) to it.notThis() } ?: continue
+                             ?.mapTo(ArrayList()) { replaceWith.entityDataByIdOrDie(it) to it.notThis() } ?: continue
+      if (reverseEntities) entityDataList.reverse()
       for ((matchedEntityData, matchedEntityId) in entityDataList) {
         replaceWithMatchedEntities.put(matchedEntityData.identificator(replaceWith), matchedEntityId)
 
@@ -191,7 +205,7 @@ internal object ReplaceBySourceAsGraph {
     for ((localEntity, entityId) in localMatchedEntities.values()) {
       val entityClass = ClassConversion.entityDataToEntity(localEntity.javaClass).toClassId()
       thisBuilder.entitiesByType.remove(localEntity.id, entityClass)
-      thisBuilder.indexes.removeFromIndices(entityId.id)
+      thisBuilder.indexes.entityRemoved(entityId.id)
       if (localEntity is SoftLinkable) thisBuilder.indexes.removeFromSoftLinksIndex(localEntity)
       thisBuilder.changeLog.addRemoveEvent(entityId.id)
     }
@@ -383,7 +397,7 @@ internal object ReplaceBySourceAsGraph {
     val clonedEntityId = matchedEntityId.id.copy(arrayId = clonedEntity.id)
     thisBuilder.entitiesByType.replaceById(clonedEntity, clonedEntityId.clazz)
 
-    thisBuilder.updatePersistentIdIndexes(clonedEntity.createEntity(thisBuilder), persistentIdBefore, clonedEntity)
+    thisBuilder.indexes.updatePersistentIdIndexes(thisBuilder, clonedEntity.createEntity(thisBuilder), persistentIdBefore, clonedEntity)
     thisBuilder.indexes.virtualFileIndex.updateIndex(matchedEntityId.id, clonedEntityId, replaceWith.indexes.virtualFileIndex)
     replaceWith.indexes.entitySourceIndex.getEntryById(matchedEntityId.id)
       ?.also { thisBuilder.indexes.entitySourceIndex.index(clonedEntityId, it) }
@@ -422,6 +436,10 @@ internal object ReplaceBySourceAsGraph {
         val suggestedNewChildEntityId = replacingChildrenOneToOneConnections[connectionId] ?: return@mapNotNull null
         val suggestedNewChildEntityData = replaceWith.entityDataByIdOrDie(suggestedNewChildEntityId.id)
         if (sourceFilter(suggestedNewChildEntityData.entitySource)) {
+
+          // This entity was already moved to the new store
+          if (entityId.id.asThis() in replaceMap) return@mapNotNull null
+
           val childEntityData = entityDataByIdOrDie(entityId.id)
           removeEntity(entityId.id) { it != localEntityId.id && !replaceMap.containsKey(it.asThis()) }
           return@mapNotNull childEntityData

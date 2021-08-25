@@ -2,6 +2,7 @@
 // COMPILER_ARGUMENTS: -Xopt-in=kotlin.RequiresOptIn
 // WITH_RUNTIME
 // ACTION: Add '@MyExperimentalAPI' annotation to 'foo'
+// ACTION: Add '@OptIn(MyExperimentalAPI::class)' annotation to containing file 'override.kt'
 // ACTION: Add '@OptIn(MyExperimentalAPI::class)' annotation to 'foo'
 // ACTION: Add '@OptIn(MyExperimentalAPI::class)' annotation to containing class 'Derived'
 // ACTION: Add '-Xopt-in=MyExperimentalAPI' to module light_idea_test_case compiler arguments

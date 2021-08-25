@@ -76,7 +76,7 @@ public class JavaDocumentationProvider implements CodeDocumentationProvider, Ext
   public static final String PACKAGE_SUMMARY_FILE = "package-summary.html";
 
   @Override
-  public String getQuickNavigateInfo(PsiElement element, PsiElement originalElement) {
+  public @Nls String getQuickNavigateInfo(PsiElement element, PsiElement originalElement) {
     return QuickDocUtil.inferLinkFromFullDocumentation(this, element, originalElement,
                                                        getQuickNavigationInfoInner(element, originalElement));
   }
@@ -218,14 +218,14 @@ public class JavaDocumentationProvider implements CodeDocumentationProvider, Ext
   public static void writeImplements(PsiClass aClass, StringBuilder buffer, PsiClassType[] refs) {
     if (refs.length > 0) {
       newLine(buffer);
-      buffer.append("implements ");
+      buffer.append("implements "); // <- Groovy keyword
       writeTypeRefs(aClass, buffer, refs);
     }
   }
 
   public static void writeExtends(PsiClass aClass, StringBuilder buffer, PsiClassType[] refs) {
     if (refs.length > 0 || !aClass.isInterface() && !CommonClassNames.JAVA_LANG_OBJECT.equals(aClass.getQualifiedName())) {
-      buffer.append(" extends ");
+      buffer.append(" extends "); // <- Groovy keyword
       if (refs.length == 0) {
         buffer.append("Object");
       }
@@ -258,7 +258,7 @@ public class JavaDocumentationProvider implements CodeDocumentationProvider, Ext
         PsiClassType[] refs = p.getExtendsList().getReferencedTypes();
 
         if (refs.length > 0) {
-          buffer.append(" extends ");
+          buffer.append(" extends "); // <- Groovy keyword
 
           for (int j = 0; j < refs.length; j++) {
             JavaDocInfoGenerator.generateType(buffer, refs[j], typeParameterOwner, false, true);
@@ -508,7 +508,7 @@ public class JavaDocumentationProvider implements CodeDocumentationProvider, Ext
   }
 
   @Override
-  public String generateDoc(PsiElement element, PsiElement originalElement) {
+  public @Nls String generateDoc(PsiElement element, PsiElement originalElement) {
     // for new Class(<caret>) or methodCall(<caret>) proceed from method call or new expression
     // same for new Cl<caret>ass() or method<caret>Call()
     if (element instanceof PsiExpressionList ||
@@ -576,7 +576,7 @@ public class JavaDocumentationProvider implements CodeDocumentationProvider, Ext
   }
 
   @Override
-  public @Nullable String generateHoverDoc(@NotNull PsiElement element, @Nullable PsiElement originalElement) {
+  public @Nls @Nullable String generateHoverDoc(@NotNull PsiElement element, @Nullable PsiElement originalElement) {
     if (originalElement != null && PsiTreeUtil.isAncestor(element, originalElement, false)) {
       return null;
     }
@@ -584,7 +584,7 @@ public class JavaDocumentationProvider implements CodeDocumentationProvider, Ext
   }
 
   @Override
-  public @Nullable String generateRenderedDoc(@NotNull PsiDocCommentBase comment) {
+  public @Nls @Nullable String generateRenderedDoc(@NotNull PsiDocCommentBase comment) {
     PsiElement target = comment.getOwner();
     if (target == null) target = comment;
     JavaDocInfoGenerator generator = JavaDocInfoGeneratorFactory.create(target.getProject(), target);
@@ -653,16 +653,17 @@ public class JavaDocumentationProvider implements CodeDocumentationProvider, Ext
   }
 
   @Nullable
-  public static String generateExternalJavadoc(@NotNull final PsiElement element, @NotNull JavaDocInfoGenerator generator) {
+  public static @Nls String generateExternalJavadoc(@NotNull final PsiElement element, @NotNull JavaDocInfoGenerator generator) {
     final List<String> docURLs = getExternalJavaDocUrl(element);
     return generateExternalJavadoc(generator, docURLs);
   }
 
   @Nullable
-  private static String generateExternalJavadoc(@NotNull JavaDocInfoGenerator generator, @Nullable List<String> docURLs) {
+  private static @Nls String generateExternalJavadoc(@NotNull JavaDocInfoGenerator generator, @Nullable List<String> docURLs) {
     return JavaDocExternalFilter.filterInternalDocInfo(generator.generateDocInfo(docURLs));
   }
 
+  @Nls
   private String getMethodCandidateInfo(PsiMethodCallExpression expr) {
     final PsiResolveHelper rh = JavaPsiFacade.getInstance(expr.getProject()).getResolveHelper();
     final CandidateInfo[] candidates = rh.getReferencedMethodCandidates(expr, true);
@@ -890,7 +891,7 @@ public class JavaDocumentationProvider implements CodeDocumentationProvider, Ext
   }
 
   @Override
-  public String fetchExternalDocumentation(Project project, PsiElement element, List<String> docUrls, boolean onHover) {
+  public @Nls String fetchExternalDocumentation(Project project, PsiElement element, List<String> docUrls, boolean onHover) {
     return fetchExternalJavadoc(element, project, docUrls);
   }
 
@@ -940,11 +941,11 @@ public class JavaDocumentationProvider implements CodeDocumentationProvider, Ext
     return (PsiJavaDocumentedElement)element;
   }
 
-  public static String fetchExternalJavadoc(PsiElement element, Project project, List<String> docURLs) {
+  public static @NlsSafe String fetchExternalJavadoc(PsiElement element, Project project, List<String> docURLs) {
     return fetchExternalJavadoc(element, docURLs, new JavaDocExternalFilter(project));
   }
 
-  public static String fetchExternalJavadoc(PsiElement element, List<String> docURLs, @NotNull JavaDocExternalFilter docFilter) {
+  public static @NlsSafe String fetchExternalJavadoc(PsiElement element, List<String> docURLs, @NotNull JavaDocExternalFilter docFilter) {
     if (docURLs != null) {
       for (String docURL : docURLs) {
         try {

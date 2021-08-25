@@ -4,6 +4,7 @@ package org.intellij.plugins.markdown.extensions
 import com.intellij.openapi.application.PathManager
 import org.jetbrains.annotations.TestOnly
 import java.io.File
+import java.util.*
 
 /**
  * Extensions which require additional files to work should implement
@@ -36,7 +37,7 @@ interface MarkdownExtensionWithExternalFiles : MarkdownConfigurableExtension {
    */
   // Apply lowercase because of macos case insensitive pathing
   val directoryName: String
-    get() = displayName.replace(' ', '_').toLowerCase()
+    get() = displayName.replace(' ', '_').lowercase(Locale.getDefault())
 
   /**
    * Full path to the extension directory.

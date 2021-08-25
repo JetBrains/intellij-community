@@ -15,6 +15,7 @@ import org.intellij.plugins.markdown.lang.MarkdownLanguage
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownBlockQuoteImpl
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownCodeFenceImpl
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownFile
+import org.intellij.plugins.markdown.settings.MarkdownSettings
 
 /**
  * This is a helper class for the [MarkdownListEnterHandlerDelegate] to provide correct indentation for new lines, created on Enter.
@@ -24,6 +25,9 @@ import org.intellij.plugins.markdown.lang.psi.impl.MarkdownFile
 internal class MarkdownListIndentProvider : FormatterBasedLineIndentProvider() {
 
   override fun getLineIndent(project: Project, editor: Editor, language: Language?, offset: Int): String? {
+    if (!MarkdownSettings.getInstance(project).isEnhancedEditingEnabled) {
+      return null
+    }
     val file = PsiEditorUtil.getPsiFile(editor) as? MarkdownFile ?: return null
     return doGetLineIndent(editor, file, offset) ?: super.getLineIndent(project, editor, language, offset)
   }

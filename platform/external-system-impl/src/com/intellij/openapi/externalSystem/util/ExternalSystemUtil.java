@@ -25,6 +25,7 @@ import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.impl.OpenUntrustedProjectChoice;
 import com.intellij.ide.impl.TrustedProjects;
+import com.intellij.ide.nls.NlsMessages;
 import com.intellij.internal.statistic.StructuredIdeActivity;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationGroup;
@@ -753,11 +754,10 @@ public final class ExternalSystemUtil {
 
 
   public static @NotNull @Nls String naturalJoinSystemIds(@NotNull Collection<ProjectSystemId> systemIds) {
-    List<String> projectTypeNames = new HashSet<>(systemIds).stream()
+    return new HashSet<>(systemIds).stream()
       .map(it -> it.getReadableName())
       .sorted(NaturalComparator.INSTANCE)
-      .collect(Collectors.toList());
-    return StringUtil.naturalJoin(projectTypeNames);
+      .collect(NlsMessages.joiningAnd());
   }
 
   public static boolean isNewProject(Project project) {

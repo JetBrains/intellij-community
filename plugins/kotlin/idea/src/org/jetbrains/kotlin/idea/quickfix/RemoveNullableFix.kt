@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.quickfix
 
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
+import org.jetbrains.annotations.Nls
 import org.jetbrains.kotlin.diagnostics.Diagnostic
 import org.jetbrains.kotlin.diagnostics.Errors
 import org.jetbrains.kotlin.idea.KotlinBundle
@@ -17,7 +18,7 @@ class RemoveNullableFix(
     element: KtNullableType,
     private val typeOfError: NullableKind
 ) : KotlinQuickFixAction<KtNullableType>(element) {
-    enum class NullableKind(val message: String) {
+    enum class NullableKind(@Nls val message: String) {
         REDUNDANT(KotlinBundle.message("remove.redundant")),
         SUPERTYPE(KotlinBundle.message("text.remove.question")),
         USELESS(KotlinBundle.message("remove.useless")),

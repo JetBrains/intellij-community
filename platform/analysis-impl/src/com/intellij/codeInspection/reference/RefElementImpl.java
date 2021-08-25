@@ -43,8 +43,7 @@ public abstract class RefElementImpl extends RefEntityImpl implements RefElement
   private static final int IS_ENTRY_MASK = 0x80;
   private static final int IS_PERMANENT_ENTRY_MASK = 0x100;
 
-
-  private final SmartPsiElementPointer myID;
+  private final SmartPsiElementPointer<?> myID;
 
   private List<RefElement> myOutReferences; // guarded by this
   private List<RefElement> myInReferences; // guarded by this
@@ -128,7 +127,7 @@ public abstract class RefElementImpl extends RefEntityImpl implements RefElement
   }
 
   @Override
-  public SmartPsiElementPointer getPointer() {
+  public SmartPsiElementPointer<?> getPointer() {
     return myID;
   }
 

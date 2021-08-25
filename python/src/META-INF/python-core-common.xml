@@ -287,6 +287,8 @@
     <applicationService serviceInterface="com.jetbrains.python.packaging.PyPackageManagers"
                         serviceImplementation="com.jetbrains.python.packaging.PyPackageManagersImpl"/>
     <applicationService serviceImplementation="com.jetbrains.python.codeInsight.typing.PyStubPackagesAdvertiserCache"/>
+    <applicationService serviceInterface="com.jetbrains.python.codeInsight.PyCustomMemberProvider"
+                        serviceImplementation="com.jetbrains.python.codeInsight.PyCustomMemberProviderImpl"/>
     <projectService serviceImplementation="com.jetbrains.python.codeInsight.typing.PyStubPackagesInstallingStatus"/>
 
     <qualifiedNameProvider implementation="com.jetbrains.python.actions.PyQualifiedNameProvider"/>
@@ -472,6 +474,9 @@
                     dynamic="true"/>
     <extensionPoint qualifiedName="com.jetbrains.python.debugger.numericContainerPopupCustomizer"
                     interface="com.jetbrains.python.debugger.pydev.tables.PyNumericContainerPopupCustomizer"
+                    dynamic="true"/>
+    <extensionPoint qualifiedName="com.jetbrains.python.console.pyConsoleOutputCustomizer"
+                    interface="com.jetbrains.python.console.PyConsoleOutputCustomizer"
                     dynamic="true"/>
 
     <!-- Experimental sdk EP, avoid using it -->
@@ -675,6 +680,7 @@
 
   <extensions defaultExtensionNs="com.jetbrains.python.console">
     <executeCustomizer implementation="com.jetbrains.python.console.PyExecuteConsoleCustomizerDefault"/>
+    <pyConsoleOutputCustomizer implementation="com.jetbrains.python.console.PyConsoleOutputCustomizerDefault"/>
   </extensions>
 
   <extensions defaultExtensionNs="com.jetbrains.python.debugger">

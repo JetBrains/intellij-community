@@ -8,6 +8,7 @@ import com.intellij.util.ui.JBUI;
 import net.miginfocom.swing.MigLayout;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -16,26 +17,28 @@ import java.awt.event.ItemEvent;
 
 public class InspectionOptionsPanel extends JPanel {
 
+  @Nullable
   private final OptionAccessor myOptionAccessor;
 
   public InspectionOptionsPanel() {
     this((OptionAccessor)null);
   }
 
-  public InspectionOptionsPanel(InspectionProfileEntry owner) {
+  public InspectionOptionsPanel(@NotNull InspectionProfileEntry owner) {
     this(new OptionAccessor.Default(owner));
   }
 
-  public InspectionOptionsPanel(OptionAccessor optionAccessor) {
+  public InspectionOptionsPanel(@Nullable OptionAccessor optionAccessor) {
     super(new MigLayout("fillx, ins 0"));
     myOptionAccessor = optionAccessor;
   }
 
-  public InspectionOptionsPanel(@NotNull InspectionProfileEntry owner,
-                                @NotNull @NlsContexts.Checkbox String label,
-                                @NonNls String property) {
-    this(owner);
-    addCheckbox(label, property);
+  public static InspectionOptionsPanel singleCheckBox(@NotNull InspectionProfileEntry owner,
+                                                      @NotNull @NlsContexts.Checkbox String label,
+                                                      @NonNls String property) {
+    var panel = new InspectionOptionsPanel(owner);
+    panel.addCheckbox(label, property);
+    return panel;
   }
 
   public void addRow(Component label, Component component) {

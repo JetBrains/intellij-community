@@ -13,6 +13,7 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.ui.LightweightHint
 import com.intellij.util.ArrayUtil
+import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.kotlin.idea.KotlinBundle
 import org.jetbrains.kotlin.idea.imports.KotlinImportOptimizer
@@ -63,7 +64,7 @@ object ReviewAddedImports {
 
     private fun showHint(
         editor: Editor,
-        info: String,
+        @Nls info: String,
         hyperlinkListener: HyperlinkListener
     ) {
         if (ApplicationManager.getApplication().isUnitTestMode) return
@@ -91,7 +92,7 @@ object ReviewAddedImports {
     ) {
         if (importsToRemove.isEmpty()) return
 
-        WriteCommandAction.runWriteCommandAction(project, KotlinBundle.message("revert.applied.imports"), null, Runnable {
+        WriteCommandAction.runWriteCommandAction(project, KotlinBundle.message("revert.applied.imports.command"), null, Runnable {
             val newImports = file.importDirectives.mapNotNull {
                 val importedFqName = it.importedFqName ?: return@mapNotNull null
                 if (importsToRemove.contains(importedFqName.asString())) return@mapNotNull null

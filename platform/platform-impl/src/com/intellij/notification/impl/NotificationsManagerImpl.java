@@ -74,6 +74,7 @@ public final class NotificationsManagerImpl extends NotificationsManager {
   public static final Color DEFAULT_TEXT_COLOR = new JBColor(Gray._0, Gray._191);
   public static final Color FILL_COLOR = JBColor.namedColor("Notification.background", new JBColor(Gray._242, new Color(0x4E5052)));
   public static final Color BORDER_COLOR = JBColor.namedColor("Notification.borderColor", new JBColor(0xCDB2B2B2, 0xCD565A5C));
+  public static final Object NOTIFICATION_BALLOON_FLAG = new Object();
 
   private static final Logger LOG = Logger.getInstance(NotificationsManagerImpl.class);
 
@@ -651,6 +652,8 @@ public final class NotificationsManagerImpl extends NotificationsManager {
     if (paneSize.width > maxWidth) {
       pane.setPreferredSize(new Dimension(maxWidth, paneSize.height + UIUtil.getScrollBarWidth()));
     }
+
+    content.putClientProperty(NOTIFICATION_BALLOON_FLAG, new Object());
 
     BalloonBuilder builder = JBPopupFactory.getInstance().createBalloonBuilder(content);
     builder.setFillColor(layoutData.fillColor)

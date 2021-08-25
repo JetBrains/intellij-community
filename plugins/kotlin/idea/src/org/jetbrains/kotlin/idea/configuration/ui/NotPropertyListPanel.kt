@@ -38,7 +38,7 @@ class NotPropertyListPanel(data: MutableList<FqNameUnsafe>) : AddEditRemovePanel
     override fun addItem(): FqNameUnsafe? {
         val result = Messages.showInputDialog(
             this, KotlinBundle.message("configuration.message.enter.fully.qualified.method.name"),
-            KotlinBundle.message("configuration.text.add.exclusion"),
+            KotlinBundle.message("configuration.title.add.exclusion"),
             Messages.getQuestionIcon(),
             "",
             NonEmptyInputValidator()

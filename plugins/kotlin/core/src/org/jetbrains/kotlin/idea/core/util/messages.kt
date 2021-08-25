@@ -5,11 +5,19 @@ package org.jetbrains.kotlin.idea.core.util
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.Messages
+import com.intellij.openapi.util.NlsContexts
 import org.jetbrains.annotations.TestOnly
 import java.util.concurrent.ConcurrentHashMap
 import javax.swing.Icon
 
-fun showYesNoCancelDialog(key: String, project: Project, message: String, title: String, icon: Icon, default: Int?): Int {
+fun showYesNoCancelDialog(
+    key: String,
+    project: Project,
+    @NlsContexts.DialogMessage message: String,
+    @NlsContexts.DialogTitle title: String,
+    icon: Icon,
+    default: Int?
+): Int {
     return if (!ApplicationManager.getApplication().isUnitTestMode) {
         Messages.showYesNoCancelDialog(project, message, title, icon)
     } else {

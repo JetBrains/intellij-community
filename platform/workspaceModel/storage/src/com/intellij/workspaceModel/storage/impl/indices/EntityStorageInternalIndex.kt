@@ -1,10 +1,11 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.workspaceModel.storage.impl.indices
 
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.thisLogger
+import com.intellij.openapi.diagnostic.trace
 import com.intellij.workspaceModel.storage.impl.EntityId
 import com.intellij.workspaceModel.storage.impl.containers.BidirectionalSetMap
-import com.intellij.workspaceModel.storage.impl.containers.copy
 import org.jetbrains.annotations.TestOnly
 
 open class EntityStorageInternalIndex<T> private constructor(
@@ -32,12 +33,14 @@ open class EntityStorageInternalIndex<T> private constructor(
     internal fun index(id: EntityId, entry: T? = null) {
       startWrite()
       if (entry == null) {
+        LOG.trace { "Removing $id from index" }
         index.remove(id)
         return
       }
+      LOG.trace { "Index $id to $entry" }
       index[id] = entry
       if (oneToOneAssociation) {
-        if (index.getKeysByValue(entry)?.size ?: 0 > 1) {
+        if ((index.getKeysByValue(entry)?.size ?: 0) > 1) {
           thisLogger().error("One to one association is violated. Id: $id, Entity: $entry. This id is already associated with ${index.getKeysByValue(entry)}")
         }
       }
@@ -71,6 +74,8 @@ open class EntityStorageInternalIndex<T> private constructor(
         if (other is MutableEntityStorageInternalIndex<T>) other.freezed = true
         return MutableEntityStorageInternalIndex(other.index, other.oneToOneAssociation)
       }
+
+      val LOG = logger<MutableEntityStorageInternalIndex<*>>()
     }
   }
 }

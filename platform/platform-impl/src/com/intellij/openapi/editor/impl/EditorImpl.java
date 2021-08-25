@@ -53,7 +53,6 @@ import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Queryable;
 import com.intellij.openapi.util.*;
-import com.intellij.openapi.util.registry.ExperimentalUI;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -122,6 +121,8 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.IntFunction;
 import java.util.function.Predicate;
 
+import static com.intellij.openapi.editor.ex.util.EditorUtil.isCaretInsideSelection;
+
 public final class EditorImpl extends UserDataHolderBase implements EditorEx, HighlighterClient, Queryable, Dumpable,
                                                                     CodeStyleSettingsListener, FocusListener {
   public static final int TEXT_ALIGNMENT_LEFT = 0;
@@ -142,7 +143,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   private static final boolean HONOR_CAMEL_HUMPS_ON_TRIPLE_CLICK =
     Boolean.parseBoolean(System.getProperty("idea.honor.camel.humps.on.triple.click"));
   private static final Key<BufferedImage> BUFFER = Key.create("buffer");
-  static final Key<Boolean> INITIALIZED = Key.create("editor.is.fully.initialized");
+  private static final Key<Boolean> INITIALIZED = Key.create("editor.is.fully.initialized");
   @NotNull private final DocumentEx myDocument;
 
   private final JPanel myPanel;
@@ -264,7 +265,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   @Nullable private Color myForcedBackground;
   @Nullable private Dimension myPreferredSize;
 
-  private final Alarm myMouseSelectionStateAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
+  private final Alarm myMouseSelectionStateAlarm = new Alarm();
   private Runnable myMouseSelectionStateResetRunnable;
 
   private boolean myEmbeddedIntoDialogWrapper;
@@ -1524,9 +1525,9 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
    * This method is used to scale editors elements such as gutter icons, folding elements, and others
    */
   public float getScale() {
-    if (!Registry.is("editor.scale.gutter.icons")) return 1f;
+    if (!Registry.is("editor.scale.gutter.icons")) return 1.0f;
     float normLineHeight = getLineHeight() / myScheme.getLineSpacing(); // normalized, as for 1.0f line spacing
-    return normLineHeight / JBUIScale.scale(16f);
+    return normLineHeight / JBUIScale.scale(16.0f);
   }
 
   public int findNearestDirectionBoundary(int offset, boolean lookForward) {
@@ -3229,7 +3230,10 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
     @Override
     public boolean isCopyVisible(@NotNull DataContext dataContext) {
-      return getSelectionModel().hasSelection(true);
+      Caret caret = dataContext.getData(CommonDataKeys.CARET);
+      return PlatformUtils.isDataGrip() && caret != null
+             ? isCaretInsideSelection(caret)
+             : getSelectionModel().hasSelection(true);
     }
 
     @Override
@@ -3244,7 +3248,11 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
     @Override
     public boolean isCutVisible(@NotNull DataContext dataContext) {
-      return isCutEnabled(dataContext) && getSelectionModel().hasSelection(true);
+      Caret caret = dataContext.getData(CommonDataKeys.CARET);
+      return isCutEnabled(dataContext) &&
+             (PlatformUtils.isDataGrip() && caret != null
+              ? isCaretInsideSelection(caret)
+              : getSelectionModel().hasSelection(true));
     }
 
     @Override
@@ -3772,7 +3780,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
           if (composedTextIndex < text.getEndIndex()) {
             createComposedString(composedTextIndex, text);
 
-            runUndoTransparent(() -> EditorModificationUtil.insertStringAtCaret(EditorImpl.this, composedText, false, false));
+            runUndoTransparent(() -> EditorModificationUtilEx.insertStringAtCaret(EditorImpl.this, composedText, false, false));
 
             composedTextRange = ProperTextRange.from(getCaretModel().getOffset(), composedText.length());
           }

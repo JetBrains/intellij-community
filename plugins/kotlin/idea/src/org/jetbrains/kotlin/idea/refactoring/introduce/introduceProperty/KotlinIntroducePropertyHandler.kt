@@ -10,6 +10,7 @@ import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.refactoring.RefactoringActionHandler
+import org.jetbrains.annotations.Nls
 import org.jetbrains.kotlin.idea.KotlinBundle
 import org.jetbrains.kotlin.idea.core.util.CodeInsightUtils
 import org.jetbrains.kotlin.idea.refactoring.getExtractionContainers
@@ -119,4 +120,6 @@ class KotlinIntroducePropertyHandler(
     }
 }
 
-val INTRODUCE_PROPERTY: String = KotlinBundle.message("introduce.property")
+val INTRODUCE_PROPERTY: String
+    @Nls
+    get() = KotlinBundle.message("introduce.property")

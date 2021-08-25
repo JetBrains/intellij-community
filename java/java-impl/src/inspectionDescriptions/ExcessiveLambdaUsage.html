@@ -4,13 +4,13 @@ Reports if a trivial lambda expression is used in cases in which there's an alte
 instead of a lambda.
 <p>This inspection helps simplify the code.</p>
 <p>Example:</p>
-<pre>
+<pre><code>
   Optional.orElseGet(() -> null)
-</pre>
+</code></pre>
 <p>After the quick-fix is applied:</p>
-<pre>
+<pre><code>
   Optional.orElse(null)
-</pre>
+</code></pre>
 <!-- tooltip end -->
 <p><small>New in 2017.1</small></p>
 </body>

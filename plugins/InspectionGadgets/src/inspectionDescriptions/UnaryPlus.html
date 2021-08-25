@@ -4,22 +4,26 @@ Reports usages of the <code>+</code> unary operator. The unary plus is usually a
 its presence might represent a coding error. For example, in a combination with the increment operator (like in <code>+++</code>)
 or with the equal operator (like in <code>=+</code>).
 <p><b>Example:</b></p>
-<pre>
-  <code>void unaryPlus(int i) {
+<pre><code>
+  void unaryPlus(int i) {
     int x = + +i;
-  }</code>
-</pre>
+  }
+</code></pre>
 <p>The following quick fixes are suggested:</p>
 <ul>
   <li><p>Remove <code>+</code> operators before the <code>i</code> variable:</p>
-    <pre><code>void unaryPlus(int i) {
+<pre><code>
+  void unaryPlus(int i) {
     int x = i;
-  }</code></pre>
+  }
+</code></pre>
   </li>
   <li><p>Replace <code>+</code> operators with the prefix increment operator:</p>
-    <pre><code>void unaryPlus(int i) {
+<pre><code>
+  void unaryPlus(int i) {
     int x = ++i;
-  }</code></pre>
+  }
+</code></pre>
   </li>
 </ul>
 <!-- tooltip end -->

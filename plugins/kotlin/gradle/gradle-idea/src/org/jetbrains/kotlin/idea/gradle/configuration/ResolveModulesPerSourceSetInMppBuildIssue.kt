@@ -11,16 +11,16 @@ import com.intellij.openapi.externalSystem.model.project.ProjectData
 import com.intellij.openapi.externalSystem.service.project.ExternalProjectRefreshCallback
 import com.intellij.openapi.externalSystem.util.ExternalSystemUtil
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.IntellijInternalApi
 import com.intellij.pom.Navigatable
 import org.jetbrains.kotlin.idea.KotlinBundle
-import org.jetbrains.kotlin.idea.KotlinPluginInternalApi
 import org.jetbrains.plugins.gradle.settings.GradleProjectSettings
 import org.jetbrains.plugins.gradle.settings.GradleSettings
 import org.jetbrains.plugins.gradle.util.GradleConstants
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.Future
 
-@KotlinPluginInternalApi
+@IntellijInternalApi
 class ResolveModulesPerSourceSetInMppBuildIssue(
     private val projectRefresher: ProjectRefresher = ReimportGradleProjectRefresher
 ) : BuildIssue {

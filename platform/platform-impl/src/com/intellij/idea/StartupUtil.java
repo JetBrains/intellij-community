@@ -980,13 +980,8 @@ public final class StartupUtil {
     }
 
     @Override
-    public <E> @NotNull List<E> copyOf(List<? extends E> collection) {
+    public <E> @NotNull List<E> copyOfCollection(Collection<? extends E> collection) {
       return List.copyOf(collection);
-    }
-
-    @Override
-    public @NotNull <E> List<E> listOf(E[] collection) {
-      return List.of(collection);
     }
   }
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.testFramework.rules
 
 import com.intellij.openapi.util.io.FileUtil
@@ -12,7 +12,6 @@ import com.intellij.testFramework.RunAll
 import com.intellij.testFramework.UsefulTestCase
 import com.intellij.testFramework.VfsTestUtil
 import com.intellij.util.io.zipFile
-import org.jetbrains.annotations.ApiStatus
 import org.junit.rules.ExternalResource
 import org.junit.runner.Description
 import org.junit.runners.model.Statement
@@ -65,27 +64,39 @@ class TempDirectory : ExternalResource() {
     myVirtualFileRoot = null
     myRoot = null
     myName = null
-    JarFileSystemImpl.cleanupForNextTest()
 
     RunAll(
+      { JarFileSystemImpl.cleanupForNextTest() },
       { if (vfsDir != null) VfsTestUtil.deleteFile(vfsDir) },
       { if (path != null) FileUtil.delete(path) }
     ).run()
   }
 
   /**
-   * Creates a new directory with random name under the root temp directory.
+   * Creates a new directory with a random name under the root temp directory.
    */
-  fun newDirectory(): File = newDirectory("dir" + myNextDirNameSuffix.incrementAndGet())
+  fun newDirectory(): File = newDirectoryPath().toFile()
+
+  /**
+   * Creates a new directory with a random name under the root temp directory.
+   */
+  fun newDirectoryPath(): Path = newDirectoryPath("dir" + myNextDirNameSuffix.incrementAndGet())
 
   /**
    * Creates a new directory at the given path relative to the root temp directory. Throws an exception if such a directory already exists.
    */
   fun newDirectory(relativePath: String): File {
+    return newDirectoryPath(relativePath).toFile()
+  }
+
+  /**
+   * Creates a new directory at the given path relative to the root temp directory. Throws an exception if such a directory already exists.
+   */
+  fun newDirectoryPath(relativePath: String): Path {
     val dir = rootPath.resolve(relativePath)
     require(!Files.exists(dir)) { "Already exists: $dir" }
     makeDirectories(dir)
-    return dir.toFile()
+    return dir
   }
 
   /**

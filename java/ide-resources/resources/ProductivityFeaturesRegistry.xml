@@ -6,7 +6,7 @@
       min-usage-count="3"
       first-show="1"
       successive-show="5">
-      <event-detector type="action" id="GotoClass"/>
+      <track-action id="GotoClass"/>
     </feature>
     <feature
       id="navigation.popup.file"
@@ -14,22 +14,23 @@
       min-usage-count="2"
       first-show="3"
       successive-show="5">
-      <event-detector type="action" id="GotoFile"/>
+      <track-action id="GotoFile"/>
     </feature>
     <feature
       id="navigation.popup.symbol"
       tip-file="GoToSymbol.html"
       first-show="5"
       successive-show="8">
-      <event-detector type="action" id="GotoSymbol"/>
+      <track-action id="GotoSymbol"/>
     </feature>
     <feature
         id="SearchEverywhere"
         tip-file="SearchEverywhere.html"
         first-show="1"
         successive-show="1"
-        min-usage-count="1"
-        />
+        min-usage-count="1">
+      <track-action id="SearchEverywhere"/>
+    </feature>
     <feature
       id="navigation.popup.camelprefix"
       tip-file="CamelPrefixesInNavigationPopups.html"
@@ -252,8 +253,8 @@
       min-usage-count="10"
       first-show="2"
       successive-show="4">
-      <event-detector type="action" id="EditorSelectWord"/>
-      <event-detector type="action" id="EditorUnSelectWord"/>
+      <track-action id="EditorSelectWord"/>
+      <track-action id="EditorUnSelectWord"/>
     </feature>
     <feature
       id="editor.delete.line"
@@ -275,9 +276,9 @@
       tip-file="ChangeSignatureAfterMovingParameters.html"/>
     <feature id="editing.convert.line.separators"
              tip-file="LineEndings.html">
-      <event-detector type="action" id="ConvertToMacLineSeparators"/>
-      <event-detector type="action" id="ConvertToWindowsLineSeparators"/>
-      <event-detector type="action" id="ConvertToUnixLineSeparators"/>
+      <track-action id="ConvertToMacLineSeparators"/>
+      <track-action id="ConvertToWindowsLineSeparators"/>
+      <track-action id="ConvertToUnixLineSeparators"/>
     </feature>
   </group>
 
@@ -459,8 +460,9 @@
       tip-file="RecentChanges.html"
       first-show="5"
       successive-show="5"
-      min-usage-count="1"
-      />
+      min-usage-count="1">
+      <track-action id="RecentChanges"/>
+    </feature>
     <feature
       id="ui.horizontal.scrolling"
       tip-file="HorizontalScrolling.html"
@@ -482,7 +484,9 @@
       tip-file="GoToAction.html"
       first-show="7"
       successive-show="3"
-      min-usage-count="1"/>
+      min-usage-count="1">
+      <track-action id="GotoAction"/>
+    </feature>
     <feature id="find.recent.search"
       tip-file="RecentSearch.html"
       first-show="10"
@@ -506,13 +510,17 @@
       tip-file="CreatePropertyTag.html"
       first-show="6"
       successive-show="10"
-      min-usage-count="1"/>
+      min-usage-count="1">
+      <track-intention class-name="com.intellij.lang.ant.quickfix.AntCreatePropertyFix"/>
+    </feature>
     <feature
       id="ant.quickfix.CreateTarget"
       tip-file="CreateTargetTag.html"
       first-show="6"
       successive-show="10"
-      min-usage-count="1"/>
+      min-usage-count="1">
+      <track-intention class-name="com.intellij.lang.ant.quickfix.AntCreateTargetFix"/>
+    </feature>
   </group>
   <group id="diff">
     <feature
@@ -532,7 +540,7 @@
   <group id="debugger">
     <feature id="debugger.breakpoint.edit"
              tip-file="BreakpointSpeedmenu.html">
-      <event-detector type="action" id="com.intellij.xdebugger.impl.actions.EditBreakpointAction$ContextAction"/>
+      <track-action id="com.intellij.xdebugger.impl.actions.EditBreakpointAction$ContextAction"/>
     </feature>
     <feature id="debugger.evaluate.expression"
              tip-file="EvaluateExpression.html"/>
@@ -542,7 +550,7 @@
     <feature id="intentions.check.regexp"
              tip-file="CheckRegExp.html"
              show-in-guide="false">
-      <event-detector type="intention" id="org.intellij.lang.regexp.intention.CheckRegExpIntentionAction"/>
+      <track-intention class-name="org.intellij.lang.regexp.intention.CheckRegExpIntentionAction"/>
     </feature>
   </group>
 </component>

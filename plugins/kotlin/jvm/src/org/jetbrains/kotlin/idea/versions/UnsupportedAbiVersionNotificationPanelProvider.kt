@@ -19,6 +19,7 @@ import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.ui.popup.PopupStep
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep
 import com.intellij.openapi.util.Key
+import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.Ref
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VfsUtilCore
@@ -27,6 +28,7 @@ import com.intellij.ui.EditorNotificationPanel
 import com.intellij.ui.EditorNotifications
 import com.intellij.ui.HyperlinkAdapter
 import com.intellij.ui.HyperlinkLabel
+import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NotNull
 import org.jetbrains.kotlin.idea.*
 import org.jetbrains.kotlin.idea.project.TargetPlatformDetector
@@ -147,7 +149,7 @@ class UnsupportedAbiVersionNotificationPanelProvider(private val project: Projec
         return answer
     }
 
-    private fun createShowPathsActionLabel(module: Module, answer: EditorNotificationPanel, labelText: String) {
+    private fun createShowPathsActionLabel(module: Module, answer: EditorNotificationPanel, @NlsContexts.LinkLabel labelText: String) {
         answer.createComponentActionLabel(labelText) { label ->
             val task = {
                 val badRoots = collectBadRoots(module)
@@ -258,7 +260,7 @@ class UnsupportedAbiVersionNotificationPanelProvider(private val project: Projec
     }
 
     private class LibraryRootsPopupModel(
-        title: String,
+        @NlsContexts.PopupTitle title: String,
         private val project: Project,
         roots: Collection<BinaryVersionedFile<BinaryVersion>>
     ) : BaseListPopupStep<BinaryVersionedFile<BinaryVersion>>(title, *roots.toTypedArray()) {
@@ -268,11 +270,10 @@ class UnsupportedAbiVersionNotificationPanelProvider(private val project: Projec
             return KotlinJvmBundle.message("0.1.expected.2", relativePath ?: root.file.path, root.version, root.supportedVersion)
         }
 
-        override fun getIconFor(aValue: BinaryVersionedFile<BinaryVersion>): Icon? {
-            if (aValue.file.isDirectory) {
-                return AllIcons.Nodes.Folder
-            }
-            return AllIcons.FileTypes.Archive
+        override fun getIconFor(aValue: BinaryVersionedFile<BinaryVersion>): Icon = if (aValue.file.isDirectory) {
+            AllIcons.Nodes.Folder
+        } else {
+            AllIcons.FileTypes.Archive
         }
 
         override fun onChosen(selectedValue: BinaryVersionedFile<BinaryVersion>, finalChoice: Boolean): PopupStep<*>? {
@@ -288,7 +289,7 @@ class UnsupportedAbiVersionNotificationPanelProvider(private val project: Projec
             myLabel.icon = AllIcons.General.Error
         }
 
-        fun createProgressAction(text: String, successLinkText: String, updater: (JLabel, HyperlinkLabel) -> Unit) {
+        fun createProgressAction(@Nls text: String, @Nls successLinkText: String, updater: (JLabel, HyperlinkLabel) -> Unit) {
             val label = JLabel(text)
             myLinksPanel.add(label)
 
@@ -340,7 +341,7 @@ class UnsupportedAbiVersionNotificationPanelProvider(private val project: Projec
     }
 }
 
-fun EditorNotificationPanel.createComponentActionLabel(labelText: String, callback: (HyperlinkLabel) -> Unit) {
+fun EditorNotificationPanel.createComponentActionLabel(@NlsContexts.LinkLabel labelText: String, callback: (HyperlinkLabel) -> Unit) {
     val label: Ref<HyperlinkLabel> = Ref.create()
     val action = Runnable {
         callback(label.get())

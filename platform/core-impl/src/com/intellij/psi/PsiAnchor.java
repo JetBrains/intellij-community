@@ -158,6 +158,26 @@ public abstract class PsiAnchor {
     return ((PsiFileImpl)psi.getContainingFile()).calcTreeElement().getStubbedSpine().getStubIndex(psi);
   }
 
+  /**
+   * Retrieves PSI element from anchor or throws {@link PsiInvalidElementAccessException} in case anchor has not survived.
+   */
+  @NotNull
+  public PsiElement retrieveOrThrow() {
+    PsiElement element = retrieve();
+    if (element == null) {
+      String msg;
+      if (this instanceof StubIndexReference) {
+        msg = ((StubIndexReference)this).diagnoseNull();
+      }
+      else {
+        msg = "Anchor hasn't survived: " + this;
+      }
+      throw new PsiInvalidElementAccessException(null, msg);
+    }
+
+    return element;
+  }
+
   private static final class TreeRangeReference extends PsiAnchor {
     private final VirtualFile myVirtualFile;
     private final Project myProject;

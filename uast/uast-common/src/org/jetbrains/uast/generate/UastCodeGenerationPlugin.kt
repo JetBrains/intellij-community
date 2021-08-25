@@ -84,6 +84,8 @@ interface UastElementFactory {
 
   fun createStringLiteralExpression(text: String, context: PsiElement?): ULiteralExpression?
 
+  fun createLongConstantExpression(long: Long, context: PsiElement?): UExpression?
+
   fun createNullLiteral(context: PsiElement?): ULiteralExpression?
 }
 

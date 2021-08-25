@@ -11,6 +11,7 @@ import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.ModuleListener
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.util.Function
 import com.intellij.util.ThreeState
 import com.jetbrains.packagesearch.intellij.plugin.extensibility.ModuleChangesSignalProvider
@@ -18,19 +19,11 @@ import com.jetbrains.packagesearch.intellij.plugin.extensibility.ModuleTransform
 import com.jetbrains.packagesearch.intellij.plugin.lifecycle.ProjectLifecycleHolderService
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.PackageSearchDataService
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.flow.distinctUntilChanged
-import kotlinx.coroutines.flow.flatMapConcat
-import kotlinx.coroutines.flow.flowOf
-import kotlinx.coroutines.flow.flowOn
-import kotlinx.coroutines.flow.launchIn
-import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.mapLatest
-import kotlinx.coroutines.flow.merge
-import kotlinx.coroutines.flow.onEach
 import kotlin.streams.toList
 
 internal val Project.packageSearchDataService
@@ -50,39 +43,29 @@ internal val Project.trustedProjectFlow: Flow<ThreeState>
     }.distinctUntilChanged()
 
 @Suppress("BlockingMethodInNonBlockingContext")
-internal fun Project.getNativeModulesChangesFlow(vararg replays: Flow<*>) = callbackFlow {
-    send(getNativeModules())
+internal val Project.nativeModulesChangesFlow
+    get() = callbackFlow {
+        send(getNativeModules())
 
-    merge(*replays).onEach { send(getNativeModules()) }.launchIn(this)
+        val connection = messageBus.simpleConnect()
+        connection.subscribe(
+            ProjectTopics.MODULES,
+            object : ModuleListener {
+                override fun moduleAdded(project: Project, module: Module) {
+                    trySend(getNativeModules())
+                }
 
-    val connection = messageBus.simpleConnect()
-    connection.subscribe(
-        ProjectTopics.MODULES,
-        object : ModuleListener {
-            override fun moduleAdded(project: Project, module: Module) {
-                trySend(getNativeModules())
+                override fun moduleRemoved(project: Project, module: Module) {
+                    trySend(getNativeModules())
+                }
+
+                override fun modulesRenamed(project: Project, modules: MutableList<out Module>, oldNameProvider: Function<in Module, String>) {
+                    trySend(getNativeModules())
+                }
             }
-
-            override fun moduleRemoved(project: Project, module: Module) {
-                trySend(getNativeModules())
-            }
-
-            override fun modulesRenamed(project: Project, modules: MutableList<out Module>, oldNameProvider: Function<in Module, String>) {
-                trySend(getNativeModules())
-            }
-        }
-    )
-    awaitClose { connection.disconnect() }
-}.mapLatest { it.toList() }
-
-internal fun Project.getPackageSearchModulesChangesFlow(vararg replayFlows: Flow<*>) = trustedProjectFlow.flatMapConcat { trustedState ->
-    when (trustedState) {
-        ThreeState.YES -> getNativeModulesChangesFlow(*replayFlows, moduleChangesSignalFlow)
-        else -> flowOf(emptyList())
-    }
-}
-    .map { modules -> moduleTransformers.flatMapTransform(this, modules) }
-    .flowOn(Dispatchers.ReadActions)
+        )
+        awaitClose { connection.disconnect() }
+    }.mapLatest { it.toList() }
 
 internal fun Project.getNativeModules(): Array<Module> = ModuleManager.getInstance(this).modules
 
@@ -111,3 +94,6 @@ internal val Project.lookAndFeelFlow
         )
         awaitClose { connection.disconnect() }
     }
+
+internal val Project.toolWindowManager
+    get() = service<ToolWindowManager>()

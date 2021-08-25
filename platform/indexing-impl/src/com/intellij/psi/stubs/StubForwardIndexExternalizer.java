@@ -1,8 +1,7 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.stubs;
 
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
-import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.HashingStrategy;
 import com.intellij.util.indexing.ID;
@@ -25,7 +24,7 @@ public abstract class StubForwardIndexExternalizer<StubKeySerializationState> im
   @ApiStatus.Internal
   public static final String USE_SHAREABLE_STUBS_PROP = "idea.uses.shareable.serialized.stubs";
   @ApiStatus.Internal
-  public static final boolean USE_SHAREABLE_STUBS = SystemProperties.is(USE_SHAREABLE_STUBS_PROP);
+  public static final boolean USE_SHAREABLE_STUBS = Boolean.getBoolean(USE_SHAREABLE_STUBS_PROP);
 
   @NotNull
   public static StubForwardIndexExternalizer<?> getIdeUsedExternalizer() {

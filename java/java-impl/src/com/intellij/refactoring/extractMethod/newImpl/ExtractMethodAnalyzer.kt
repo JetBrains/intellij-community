@@ -16,6 +16,7 @@ import com.intellij.psi.util.PsiUtil
 import com.intellij.psi.util.TypeConversionUtil
 import com.intellij.refactoring.extractMethod.newImpl.ExtractMethodHelper.findUsedTypeParameters
 import com.intellij.refactoring.extractMethod.newImpl.ExtractMethodHelper.getExpressionType
+import com.intellij.refactoring.extractMethod.newImpl.ExtractMethodHelper.getReturnedExpression
 import com.intellij.refactoring.extractMethod.newImpl.ExtractMethodHelper.guessName
 import com.intellij.refactoring.extractMethod.newImpl.ExtractMethodHelper.haveReferenceToScope
 import com.intellij.refactoring.extractMethod.newImpl.ExtractMethodHelper.inputParameterOf
@@ -156,9 +157,7 @@ private fun findCommonType(first: PsiType, second: PsiType, nullability: Nullabi
 }
 
 private fun findOutputFromReturn(returnStatements: List<PsiStatement>): ExpressionOutput? {
-  val returnExpressions = returnStatements
-    .mapNotNull { statement -> (statement as? PsiReturnStatement)?.returnValue }
-    .sortedBy { returnExpression -> returnExpression.startOffset }
+  val returnExpressions = returnStatements.mapNotNull(::getReturnedExpression).sortedBy { returnExpression -> returnExpression.startOffset }
 
   val context = returnExpressions.firstOrNull() ?: return null
   val manager = context.manager

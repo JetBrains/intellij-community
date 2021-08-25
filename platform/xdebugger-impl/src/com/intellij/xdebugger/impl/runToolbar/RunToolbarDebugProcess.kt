@@ -16,5 +16,5 @@ class RunToolbarDebugProcess : RunToolbarProcess {
 
   override val showInBar: Boolean = true
 
-  override val pillColor: JBColor =  JBColor.namedColor("RunToolbar.Debug.activeBackground", JBColor(0xFAD576, 0xFAD576))
+  override val pillColor: JBColor =  JBColor.namedColor("RunToolbar.Debug.activeBackground", JBColor(0xFAD576, 0x69541C))
 }

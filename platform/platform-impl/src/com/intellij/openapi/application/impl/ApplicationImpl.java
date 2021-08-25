@@ -48,13 +48,13 @@ import com.intellij.util.containers.Stack;
 import com.intellij.util.messages.Topic;
 import com.intellij.util.ui.EDT;
 import com.intellij.util.ui.EdtInvocationManager;
+import kotlin.sequences.Sequence;
 import org.jetbrains.annotations.*;
 import sun.awt.AWTAccessor;
 import sun.awt.AWTAutoShutdown;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.List;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
@@ -352,10 +352,13 @@ public class ApplicationImpl extends ClientAwareComponentManager implements Appl
 
   @Override
   public final void load() {
-    List<IdeaPluginDescriptorImpl> plugins = PluginManagerCore.getLoadedPlugins(null);
-    registerComponents(plugins, this, null, null);
+    PluginManagerCore.scheduleDescriptorLoading();
+    Sequence<IdeaPluginDescriptorImpl> modules =
+      PluginManagerCore.initPlugins(ApplicationImpl.class.getClassLoader()).join().getEnabledModules();
+
+    registerComponents(modules, this, null, null);
     ApplicationLoader.initConfigurationStore(this);
-    preloadServices(plugins, "", false).getSecond().join();
+    preloadServices(modules, "", false).getSecond().join();
     loadComponents(null);
     ForkJoinTask.invokeAll(ApplicationLoader.callAppInitialized(this));
   }
@@ -1022,6 +1025,7 @@ public class ApplicationImpl extends ClientAwareComponentManager implements Appl
       new Attachment("threadDump.txt", ThreadDumper.dumpThreadsToString()));
   }
 
+  @Override
   public void assertIsWriteThread() {
     if (isWriteThread()) return;
     if (ShutDownTracker.isShutdownHookRunning()) return;

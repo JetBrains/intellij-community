@@ -4,11 +4,11 @@ package org.jetbrains.kotlin.idea.gradle.configuration.klib
 
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.roots.DependencyScope
+import com.intellij.openapi.util.IntellijInternalApi
 import com.intellij.openapi.util.Key
 import org.gradle.tooling.model.idea.IdeaModule
 import org.jetbrains.kotlin.gradle.KotlinDependency
 import org.jetbrains.kotlin.gradle.KotlinMPPGradleModel
-import org.jetbrains.kotlin.idea.KotlinPluginInternalApi
 import org.jetbrains.kotlin.idea.gradle.configuration.buildClasspathData
 import org.jetbrains.kotlin.idea.gradle.configuration.mpp.KotlinDependenciesPreprocessor
 import org.jetbrains.kotlin.idea.gradle.KotlinGradleFacadeImpl
@@ -139,7 +139,7 @@ private sealed class DependencySubstitute {
 /**
  * Library Name formatted for the IDE.
  */
-@KotlinPluginInternalApi
+@IntellijInternalApi
 fun KlibInfo.ideName(kotlinVersion: String? = null): String = buildString {
     if (isFromNativeDistribution) {
         append(KotlinNativeLibraryNameUtil.KOTLIN_NATIVE_LIBRARY_PREFIX)

@@ -116,11 +116,6 @@ final class CommunityRepositoryModules {
       withModule("intellij.gradle.jps")
     },
     plugin("intellij.gradle.java.maven"),
-    plugin("intellij.platform.testGuiFramework") {
-      mainJarName = "testGuiFramework.jar"
-      withProjectLibrary("fest")
-      withProjectLibrary("fest-swing")
-    },
     plugin("intellij.junit") {
       mainJarName = "idea-junit.jar"
       withModule("intellij.junit.rt", "junit-rt.jar")
@@ -165,8 +160,6 @@ final class CommunityRepositoryModules {
       withResource("lib/bundles", "lib/bundles")
     },
     PythonCommunityPluginModules.pythonCommunityPluginLayout(),
-    // required for android plugin
-    plugin("intellij.android.androidCwm"),
     plugin("intellij.android.smali"),
     plugin("intellij.completionMlRanking"),
     plugin("intellij.completionMlRankingModels") {

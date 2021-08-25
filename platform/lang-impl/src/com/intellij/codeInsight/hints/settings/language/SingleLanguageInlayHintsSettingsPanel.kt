@@ -13,6 +13,8 @@ import com.intellij.ide.DataManager
 import com.intellij.lang.Language
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.editor.colors.EditorFontType
 import com.intellij.openapi.editor.event.DocumentEvent
 import com.intellij.openapi.editor.event.DocumentListener
@@ -23,7 +25,6 @@ import com.intellij.openapi.ide.CopyPasteManager
 import com.intellij.openapi.options.ex.Settings
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiDocumentManager
-import com.intellij.psi.PsiFileFactory
 import com.intellij.ui.ColoredListCellRenderer
 import com.intellij.ui.EditorTextField
 import com.intellij.ui.JBColor
@@ -32,10 +33,12 @@ import com.intellij.ui.components.ActionLink
 import com.intellij.ui.components.JBList
 import com.intellij.ui.components.JBScrollPane
 import com.intellij.ui.layout.*
+import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.ui.JBUI
 import java.awt.BorderLayout
 import java.awt.GridLayout
 import java.awt.datatransfer.StringSelection
+import java.util.concurrent.Callable
 import javax.swing.*
 import javax.swing.border.LineBorder
 
@@ -271,15 +274,20 @@ class SingleLanguageInlayHintsSettingsPanel(
 
   private fun updateHints() {
     if (myBottomPanel.isVisible) {
-      val document = myEditorTextField.document
-      val factory = PsiFileFactory.getInstance(myProject)
-      val fileType = myLanguage.associatedFileType ?: PlainTextFileType.INSTANCE
-      val psiFile = factory.createFileFromText("dummy", fileType, document.text)
-      ApplicationManager.getApplication().runWriteAction {
-        val editor = myEditorTextField.editor
-        if (editor != null) {
-          myCurrentProvider.collectAndApply(editor, psiFile)
-        }
+      myEditorTextField.editor?.let { editor ->
+        val model = myCurrentProvider
+        val document = myEditorTextField.document
+        val fileType = myLanguage.associatedFileType ?: PlainTextFileType.INSTANCE
+        ReadAction.nonBlocking(Callable {
+          model.createFile(myProject, fileType, document)
+        })
+          .inSmartMode(myProject)
+          .finishOnUiThread(ModalityState.defaultModalityState()) { psiFile ->
+            ApplicationManager.getApplication().runWriteAction {
+              myCurrentProvider.collectAndApply(editor, psiFile)
+            }
+          }
+          .submit(AppExecutorUtil.getAppExecutorService())
       }
     }
   }

@@ -90,7 +90,7 @@ public final class InfoAndProgressPanel extends JPanel implements CustomStatusBa
   private final Map<ProgressIndicatorEx, Set<MyInlineProgressIndicator>> myOriginalToInlines = new HashMap<>();
 
   private final MergingUpdateQueue myUpdateQueue;
-  private final Alarm myQueryAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
+  private final Alarm myQueryAlarm = new Alarm();
 
   private boolean myShouldClosePopupAndOnProcessFinish;
 

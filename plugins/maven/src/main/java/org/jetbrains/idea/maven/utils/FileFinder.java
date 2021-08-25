@@ -74,8 +74,6 @@ public final class FileFinder {
         originalPoms.add(file);
       }
     }
-
-
     return originalPoms.isEmpty() ? pomFiles : originalPoms;
   }
 }

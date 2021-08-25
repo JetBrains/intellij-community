@@ -4,7 +4,8 @@ package com.intellij.workspaceModel.storage.impl
 import com.google.common.collect.HashBiMap
 import com.google.common.collect.HashMultimap
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.workspaceModel.storage.WorkspaceEntity
+import com.intellij.openapi.diagnostic.trace
+import com.intellij.workspaceModel.storage.*
 import java.io.File
 
 internal class AddDiffOperation(val target: WorkspaceEntityStorageBuilderImpl, val diff: WorkspaceEntityStorageBuilderImpl) {
@@ -18,11 +19,19 @@ internal class AddDiffOperation(val target: WorkspaceEntityStorageBuilderImpl, v
   fun addDiff() {
     if (target === diff) LOG.error("Trying to apply diff to itself")
 
+    if (LOG.isTraceEnabled) {
+      target.assertConsistency()
+      diff.assertConsistency()
+      LOG.trace("Before starting addDiff no consistency issues were found")
+    }
+
     for ((_, change) in diffLog) {
       when (change) {
         is ChangeEntry.AddEntity<out WorkspaceEntity> -> {
           @Suppress("UNCHECKED_CAST")
           change as ChangeEntry.AddEntity<WorkspaceEntity>
+
+          LOG.trace { "addDiff: newEntity" }
 
           checkPersistentId(change.entityData, null)
 
@@ -55,6 +64,7 @@ internal class AddDiffOperation(val target: WorkspaceEntityStorageBuilderImpl, v
           target.changeLog.addAddEvent(targetEntityId.id, targetEntityData)
         }
         is ChangeEntry.RemoveEntity -> {
+          LOG.trace { "addDiff: remove entity. ${change.id}" }
           val sourceEntityId = change.id.asThis()
 
           // This sourceEntityId is definitely not presented in replaceMap as a key, so we can just remove this entity from target
@@ -62,19 +72,22 @@ internal class AddDiffOperation(val target: WorkspaceEntityStorageBuilderImpl, v
           //   So we should check if entity at this id was added in this transaction. If replaceMap has a value with this entity id
           //   this means that this entity was added in this transaction and there was a gup before and we should not remove anything.
           if (!replaceMap.containsValue(sourceEntityId)) {
-            target.indexes.removeFromIndices(sourceEntityId.id)
+            target.indexes.entityRemoved(sourceEntityId.id)
             if (target.entityDataById(sourceEntityId.id) != null) {
               target.removeEntity(sourceEntityId.id)
             }
           }
         }
         is ChangeEntry.ReplaceEntity<out WorkspaceEntity> -> {
+          LOG.trace { "addDiff: replace entity" }
           replaceOperation(change)
         }
         is ChangeEntry.ChangeEntitySource<out WorkspaceEntity> -> {
+          LOG.trace { "addDiff: change entity source" }
           replaceSourceOperation(change.newData)
         }
         is ChangeEntry.ReplaceAndChangeSource<out WorkspaceEntity> -> {
+          LOG.trace { "addDiff: replace and change source" }
           replaceOperation(change.dataChange)
           replaceSourceOperation(change.sourceChange.newData)
         }
@@ -126,6 +139,15 @@ internal class AddDiffOperation(val target: WorkspaceEntityStorageBuilderImpl, v
         }
       }
       if (targetParentId != null) {
+
+        // For one-to-one connections it's necessary to remove the obsolete children to avoid "entity leaks" and the state of broken store
+        if (connectionId.connectionType == ConnectionId.ConnectionType.ONE_TO_ONE || connectionId.connectionType == ConnectionId.ConnectionType.ABSTRACT_ONE_TO_ONE) {
+          val obsoleteChild = target.extractOneToOneChild<WorkspaceEntityBase>(connectionId, targetParentId.id)
+          if (obsoleteChild != null && obsoleteChild.id != targetEntityId.id) {
+            target.removeEntity(obsoleteChild)
+          }
+        }
+
         target.refs.updateParentOfChild(connectionId, targetEntityId.id.asChild(), targetParentId.id.asParent())
       }
     }
@@ -191,7 +213,7 @@ internal class AddDiffOperation(val target: WorkspaceEntityStorageBuilderImpl, v
     target.entitiesByType.replaceById(newTargetEntityData, sourceEntityId.id.clazz)
 
     // Restore soft references
-    target.updatePersistentIdIndexes(newTargetEntityData.createEntity(target), oldPersistentId, newTargetEntityData)
+    target.indexes.updatePersistentIdIndexes(target, newTargetEntityData.createEntity(target), oldPersistentId, newTargetEntityData)
 
 
     val addedChildrenMap = HashMultimap.create<ConnectionId, ChildEntityId>()
@@ -349,6 +371,7 @@ internal class AddDiffOperation(val target: WorkspaceEntityStorageBuilderImpl, v
         if (existingIdCheck) {
           // target persistent id exists already.
           val existingEntityData = target.entityDataByIdOrDie(existingIds)
+          LOG.debug("Removing existing entity... $existingIds")
           target.removeEntity(existingEntityData.createEntity(target))
           target.addDiffAndReport(
             """

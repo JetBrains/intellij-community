@@ -22,6 +22,7 @@ import org.junit.runners.Parameterized
 import java.io.File
 
 
+@Suppress("ACCIDENTAL_OVERRIDE")
 abstract class MultiplePluginVersionGradleImportingTestCase : KotlinGradleImportingTestCase() {
 
     sealed class KotlinVersionRequirement {
@@ -87,22 +88,27 @@ abstract class MultiplePluginVersionGradleImportingTestCase : KotlinGradleImport
     }
 
     companion object {
-        val masterKotlinPluginVersion: String = System.getenv("KOTLIN_GRADLE_PLUGIN_VERSION") ?: "1.5.255-SNAPSHOT"
+        val masterKotlinPluginVersion: String = System.getenv("KOTLIN_GRADLE_PLUGIN_VERSION") ?: "1.6.255-SNAPSHOT"
+        private val safePushParams: Collection<Array<Any>> = listOf(arrayOf("6.8.2", "master"))
 
         @JvmStatic
         @Suppress("ACCIDENTAL_OVERRIDE")
         @Parameterized.Parameters(name = "{index}: Gradle-{0}, KotlinGradlePlugin-{1}")
         fun data(): Collection<Array<Any>> {
-            return listOf(
-                arrayOf("4.9", "1.3.30"),
-                arrayOf("5.6.4", "1.3.72"),
-                arrayOf("6.7.1", "1.4.0"),
-                arrayOf("6.8.2", "1.4.32"),
-                arrayOf("7.0.2", "1.5.10"),
-                arrayOf("7.0.2", "1.5.20-RC-238"),
-                arrayOf("6.8.2", "master"),
-                arrayOf("7.0.2", "master")
-            )
+            if (IS_UNDER_SAFE_PUSH)
+                return safePushParams
+            else
+                return safePushParams.plus(
+                    listOf(
+                        arrayOf("4.9", "1.3.30"),
+                        arrayOf("5.6.4", "1.3.72"),
+                        arrayOf("6.7.1", "1.4.0"),
+                        arrayOf("6.8.2", "1.4.32"),
+                        arrayOf("7.0.2", "1.5.10"),
+                        arrayOf("7.0.2", "1.5.20-RC-238"),
+                        arrayOf("7.0.2", "master")
+                    )
+                )
         }
     }
 
@@ -118,8 +124,6 @@ abstract class MultiplePluginVersionGradleImportingTestCase : KotlinGradleImport
         repositories.addUrl("https://cache-redirector.jetbrains.com/dl.google.com.android.maven2/")
         repositories.addUrl("https://cache-redirector.jetbrains.com/plugins.gradle.org/m2/")
         repositories.addUrl("https://cache-redirector.jetbrains.com/maven.pkg.jetbrains.space/kotlin/p/kotlin/dev")
-        repositories.addUrl("https://cache-redirector.jetbrains.com/dl.bintray.com/kotlin/kotlin-dev")
-        repositories.addUrl("https://cache-redirector.jetbrains.com/dl.bintray.com/kotlin/kotlinx")
 
         if (!gradleVersionMatches("7.0+")) {
             repositories.addUrl("https://cache-redirector.jetbrains.com/jcenter/")

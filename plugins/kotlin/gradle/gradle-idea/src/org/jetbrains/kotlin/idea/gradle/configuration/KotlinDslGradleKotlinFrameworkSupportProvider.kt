@@ -11,6 +11,7 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.roots.ModifiableModelsProvider
 import com.intellij.openapi.roots.ModifiableRootModel
 import org.gradle.util.GradleVersion
+import org.jetbrains.annotations.Nls
 import org.jetbrains.kotlin.idea.KotlinIcons
 import org.jetbrains.kotlin.idea.configuration.*
 import org.jetbrains.kotlin.idea.gradle.KotlinIdeaGradleBundle
@@ -28,7 +29,7 @@ import javax.swing.Icon
 
 abstract class KotlinDslGradleKotlinFrameworkSupportProvider(
     val frameworkTypeId: String,
-    val displayName: String,
+    @Nls val displayName: String,
     val frameworkIcon: Icon
 ) : KotlinDslGradleFrameworkSupportProvider() {
     override fun getFrameworkType(): FrameworkTypeEx = object : FrameworkTypeEx(frameworkTypeId) {
@@ -162,7 +163,7 @@ class KotlinDslGradleKotlinJavaFrameworkSupportProvider :
 
 abstract class AbstractKotlinDslGradleKotlinJSFrameworkSupportProvider(
     frameworkTypeId: String,
-    displayName: String
+    @Nls displayName: String
 ) : KotlinDslGradleKotlinFrameworkSupportProvider(frameworkTypeId, displayName, KotlinIcons.JS) {
     abstract val jsSubTargetName: String
 

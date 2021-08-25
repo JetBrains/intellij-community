@@ -29,6 +29,7 @@ import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
@@ -170,6 +171,10 @@ public final class ServiceViewManagerImpl implements ServiceViewManager, Persist
       try {
         ToolWindowManager toolWindowManager = ToolWindowManager.getInstance(myProject);
         ToolWindow toolWindow = toolWindowManager.registerToolWindow(RegisterToolWindowTask.lazyAndClosable(toolWindowId, new ServiceViewToolWindowFactory(), AllIcons.Toolwindows.ToolWindowServices));
+        if (toolWindowId != getToolWindowId()) {
+          @NlsSafe String title = toolWindowId;
+          toolWindow.setStripeTitle(title);
+        }
         if (active) {
           myActiveToolWindowIds.add(toolWindowId);
         }
@@ -780,6 +785,7 @@ public final class ServiceViewManagerImpl implements ServiceViewManager, Persist
     ToolWindow toolWindow = ToolWindowManager.getInstance(myProject).getToolWindow(toolWindowId);
     if (!(toolWindow instanceof ToolWindowEx)) return false;
 
+    toolWindow.getContentManager(); // ensure decorator is initialized
     InternalDecorator decorator = ((ToolWindowEx)toolWindow).getDecorator();
     Boolean isShared = UIUtil.getClientProperty(decorator, InternalDecoratorImpl.SHARED_ACCESS_KEY);
     return isShared == Boolean.TRUE;

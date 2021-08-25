@@ -24,7 +24,7 @@
                          bundle="messages.PyBundle"
                          key="configurable.PyActiveSdkModuleConfigurable.python.interpreter.display.name"
                          instance="com.jetbrains.python.configuration.PyActiveSdkModuleConfigurable"
-                         groupWeight="5"/>
+                         groupWeight="5"/> <!-- id is used in InterpreterSettingsQuickFix.showPythonInterpreterSettings -->
     <projectConfigurable groupId="project"
                          id="com.jetbrains.python.configuration.PyDependenciesConfigurable"
                          bundle="messages.PyBundle"

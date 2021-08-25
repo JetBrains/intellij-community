@@ -25,6 +25,7 @@ import org.jetbrains.kotlin.idea.codeInsight.generate.AbstractGenerateHashCodeAn
 import org.jetbrains.kotlin.idea.codeInsight.generate.AbstractGenerateTestSupportMethodActionTest
 import org.jetbrains.kotlin.idea.codeInsight.generate.AbstractGenerateToStringActionTest
 import org.jetbrains.kotlin.idea.codeInsight.hints.AbstractKotlinLambdasHintsProvider
+import org.jetbrains.kotlin.idea.codeInsight.hints.AbstractKotlinRangeHintsProvider
 import org.jetbrains.kotlin.idea.codeInsight.moveUpDown.AbstractMoveLeftRightTest
 import org.jetbrains.kotlin.idea.codeInsight.moveUpDown.AbstractMoveStatementTest
 import org.jetbrains.kotlin.idea.codeInsight.postfix.AbstractPostfixTemplateProviderTest
@@ -67,6 +68,7 @@ import org.jetbrains.kotlin.idea.hierarchy.AbstractHierarchyTest
 import org.jetbrains.kotlin.idea.hierarchy.AbstractHierarchyWithLibTest
 import org.jetbrains.kotlin.idea.highlighter.*
 import org.jetbrains.kotlin.idea.imports.AbstractAutoImportTest
+import org.jetbrains.kotlin.idea.imports.AbstractFilteringAutoImportTest
 import org.jetbrains.kotlin.idea.imports.AbstractJsOptimizeImportsTest
 import org.jetbrains.kotlin.idea.imports.AbstractJvmOptimizeImportsTest
 import org.jetbrains.kotlin.idea.index.AbstractKotlinTypeAliasByExpansionShortNameIndexTest
@@ -781,6 +783,11 @@ private fun assembleWorkspace(): TWorkspace = workspace {
             model("editor/autoImport", testMethodName = "doTestWithoutAutoImport", testClassName = "WithoutAutoImport", pattern = DIRECTORY, isRecursive = false)
         }
 
+        testClass<AbstractFilteringAutoImportTest> {
+            model("editor/autoImportExtension", testMethodName = "doTest", testClassName="WithAutoImport", pattern = DIRECTORY, isRecursive = false)
+            model("editor/autoImportExtension", testMethodName = "doTestWithoutAutoImport", testClassName="WithoutAutoImport", pattern = DIRECTORY, isRecursive = false)
+        }
+
         testClass<AbstractJvmOptimizeImportsTest> {
             model("editor/optimizeImports/jvm", pattern = KT_OR_KTS_WITHOUT_DOTS)
             model("editor/optimizeImports/common", pattern = KT_WITHOUT_DOTS)
@@ -890,6 +897,9 @@ private fun assembleWorkspace(): TWorkspace = workspace {
 
         testClass<AbstractKotlinLambdasHintsProvider> {
             model("codeInsight/hints/lambda")
+        }
+        testClass<AbstractKotlinRangeHintsProvider> {
+            model("codeInsight/hints/ranges")
         }
 
         testClass<AbstractKotlinCodeVisionProviderTest> {

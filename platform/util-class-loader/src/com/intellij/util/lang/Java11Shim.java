@@ -24,13 +24,8 @@ public abstract class Java11Shim {
     }
 
     @Override
-    public <E> @NotNull List<E> copyOf(List<? extends E> collection) {
+    public <E> @NotNull List<E> copyOfCollection(Collection<? extends E> collection) {
       return Collections.unmodifiableList(new ArrayList<>(collection));
-    }
-
-    @Override
-    public @NotNull <E> List<E> listOf(E[] collection) {
-      return Arrays.asList(collection);
     }
   };
 
@@ -38,7 +33,5 @@ public abstract class Java11Shim {
 
   public abstract <@NotNull E> @NotNull Set<E> copyOf(Set<? extends E> collection);
 
-  public abstract <@NotNull E> @NotNull List<E> copyOf(List<? extends E> collection);
-
-  public abstract <@NotNull E> @NotNull List<E> listOf(E[] collection);
+  public abstract <@NotNull E> @NotNull List<E> copyOfCollection(Collection<? extends E> collection);
 }

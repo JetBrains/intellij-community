@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij;
 
 import com.intellij.concurrency.IdeaForkJoinWorkerThreadFactory;
@@ -388,17 +388,22 @@ public class TestAll implements Test {
 
   private static JUnit4TestAdapterCache getJUnit4TestAdapterCache() {
     if (ourUnit4TestAdapterCache == null) {
-      try {
-        //noinspection SpellCheckingInspection
-        ourUnit4TestAdapterCache = (JUnit4TestAdapterCache)
-          Class.forName("org.apache.tools.ant.taskdefs.optional.junit.CustomJUnit4TestAdapterCache")
-            .getMethod("getInstance")
-            .invoke(null);
-      }
-      catch (Exception e) {
-        System.out.println("Failed to create CustomJUnit4TestAdapterCache, the default JUnit4TestAdapterCache will be used" +
-                           " and ignored tests won't be properly reported: " + e);
+      if ("junit5".equals(System.getProperty("intellij.build.test.runner"))) {
         ourUnit4TestAdapterCache = JUnit4TestAdapterCache.getDefault();
+      }
+      else {
+        try {
+          //noinspection SpellCheckingInspection
+          ourUnit4TestAdapterCache = (JUnit4TestAdapterCache)
+            Class.forName("org.apache.tools.ant.taskdefs.optional.junit.CustomJUnit4TestAdapterCache")
+              .getMethod("getInstance")
+              .invoke(null);
+        }
+        catch (Exception e) {
+          System.out.println("Failed to create CustomJUnit4TestAdapterCache, the default JUnit4TestAdapterCache will be used" +
+                             " and ignored tests won't be properly reported: " + e);
+          ourUnit4TestAdapterCache = JUnit4TestAdapterCache.getDefault();
+        }
       }
     }
     return ourUnit4TestAdapterCache;

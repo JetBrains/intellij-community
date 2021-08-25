@@ -135,6 +135,12 @@
             <id>default-cli</id>
             <configuration>
               <mainClass>${context.rootPackage}/${context.rootPackage}.HelloApplication</mainClass>
+              <launcher>app</launcher>
+              <jlinkZipName>app</jlinkZipName>
+              <jlinkImageName>app</jlinkImageName>
+              <noManPages>true</noManPages>
+              <stripDebug>true</stripDebug>
+              <noHeaderFiles>true</noHeaderFiles>
             </configuration>
           </execution>
         </executions>

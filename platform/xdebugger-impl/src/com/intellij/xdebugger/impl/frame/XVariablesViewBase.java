@@ -185,7 +185,7 @@ public abstract class XVariablesViewBase extends XDebugView {
   private static class MySelectionListener implements SelectionListener {
     private static final Collection<String> SIDE_EFFECT_PRODUCERS = Arrays.asList("exec(", "++", "--", "=");
     private static final Set<String> IGNORED_TEXTS = new HashSet<>(Arrays.asList("", ";", "()"));
-    private static final Alarm ALARM = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
+    private static final Alarm ALARM = new Alarm();
     private static final int EVALUATION_DELAY_MILLIS = 100;
 
     private final Editor myEditor;

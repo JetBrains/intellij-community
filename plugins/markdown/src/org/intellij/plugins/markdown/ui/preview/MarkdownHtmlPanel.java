@@ -21,7 +21,7 @@ public interface MarkdownHtmlPanel extends Disposable {
 
   void reloadWithOffset(int offset);
 
-  void scrollToMarkdownSrcOffset(int offset);
+  void scrollToMarkdownSrcOffset(int offset, boolean smooth);
 
   interface ScrollListener extends EventListener {
     void onScroll(int offset);

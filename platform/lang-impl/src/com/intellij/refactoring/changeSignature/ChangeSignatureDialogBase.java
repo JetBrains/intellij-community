@@ -82,7 +82,7 @@ public abstract class ChangeSignatureDialogBase<ParamInfo extends ParameterInfo,
   protected final ParameterTableModel myParametersTableModel;
   protected final UpdateSignatureListener mySignatureUpdater = new UpdateSignatureListener();
   private MethodSignatureComponent mySignatureArea;
-  private final Alarm myUpdateSignatureAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
+  private final Alarm myUpdateSignatureAlarm = new Alarm();
 
   protected VisibilityPanelBase<Visibility> myVisibilityPanel;
 

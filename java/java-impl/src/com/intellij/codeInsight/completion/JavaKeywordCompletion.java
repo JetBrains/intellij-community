@@ -20,7 +20,6 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.filters.FilterPositionUtil;
 import com.intellij.psi.javadoc.PsiDocComment;
-import com.intellij.psi.search.searches.DirectClassInheritorsSearch;
 import com.intellij.psi.templateLanguages.OuterLanguageElement;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.InheritanceUtil;
@@ -29,11 +28,15 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
-import one.util.streamex.StreamEx;
+import com.siyeh.ig.psiutils.SealedUtils;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Locale;
+import java.util.Set;
 
 import static com.intellij.openapi.util.Conditions.notInstanceOf;
 import static com.intellij.patterns.PsiJavaPatterns.*;
@@ -216,7 +219,7 @@ public class JavaKeywordCompletion {
       addKeyword(new OverridableSpace(createKeyword(PsiKeyword.ASSERT), TailType.INSERT_SPACE));
     }
 
-    if (!psiElement().inside(PsiSwitchExpression.class).accepts(myPosition)) {
+    if (!psiElement().inside(PsiSwitchExpression.class).accepts(myPosition) || psiElement().inside(PsiLambdaExpression.class).accepts(myPosition)) {
       TailType returnTail = getReturnTail(myPosition);
       LookupElement ret = createKeyword(PsiKeyword.RETURN);
       if (returnTail != TailType.NONE) {
@@ -293,6 +296,12 @@ public class JavaKeywordCompletion {
 
   private void addCaseNullToSwitch() {
     if (!isInsideCaseLabel()) return;
+
+    final PsiSwitchBlock switchBlock = PsiTreeUtil.getParentOfType(myPosition, PsiSwitchBlock.class, false, PsiMember.class);
+    if (switchBlock == null) return;
+
+    final PsiType selectorType = getSelectorType(switchBlock);
+    if (selectorType instanceof PsiPrimitiveType) return;
 
     addKeyword(createKeyword(PsiKeyword.NULL));
   }
@@ -375,47 +384,39 @@ public class JavaKeywordCompletion {
     PsiSwitchBlock switchBlock = getSwitchFromLabelPosition(myPosition);
     if (switchBlock == null) return;
 
-    final PsiExpression selector = switchBlock.getExpression();
-    if (selector == null) return;
-
-    final PsiType selectorType = selector.getType();
+    final PsiType selectorType = getSelectorType(switchBlock);
     if (selectorType == null || selectorType instanceof PsiPrimitiveType) return;
 
     final TailType caseRuleTail = TailTypes.forSwitchLabel(switchBlock);
     addKeyword(createCaseRule(PsiKeyword.NULL, caseRuleTail));
     addKeyword(createCaseRule(PsiKeyword.DEFAULT, caseRuleTail));
 
-    addSealedHierarchyCases(selector, caseRuleTail);
+    addSealedHierarchyCases(selectorType);
   }
 
-  private void addSealedHierarchyCases(@Nullable PsiExpression expression, @NotNull TailType caseRuleTail) {
-    if (expression == null) return;
+  @Contract(pure = true)
+  private static @Nullable PsiType getSelectorType(@NotNull PsiSwitchBlock switchBlock) {
 
-    final PsiClass aClass = PsiUtil.resolveClassInClassTypeOnly(expression.getType());
-    if (aClass == null || aClass.isEnum()) return;
+    final PsiExpression selector = switchBlock.getExpression();
+    if (selector == null) return null;
 
-    if (!aClass.hasModifierProperty(PsiModifier.SEALED)) return;
+    return selector.getType();
+  }
 
-    final PsiReferenceList list = aClass.getPermitsList();
-    final StreamEx<String> inheritors = list != null ? getFromPermittedList(list) : getFromHierarchy(aClass);
+  private void addSealedHierarchyCases(@NotNull PsiType type) {
+    final PsiResolveHelper resolver = JavaPsiFacade.getInstance(myPosition.getProject()).getResolveHelper();
 
-    for (String inheritor : inheritors) {
-      final LookupElement rule = createCaseRule(inheritor, caseRuleTail);
-      addKeyword(rule);
+    final PsiClass aClass = resolver.resolveReferencedClass(type.getCanonicalText(), null);
+    if (aClass == null || aClass.isEnum() || !aClass.hasModifierProperty(PsiModifier.SEALED)) return;
+
+    for (PsiClass inheritor : SealedUtils.findSameFileInheritorsClasses(aClass)) {
+      final JavaPsiClassReferenceElement item = AllClassesGetter.createLookupItem(inheritor, AllClassesGetter.TRY_SHORTENING);
+      item.setForcedPresentableName("case " + inheritor.getName());
+      addKeyword(item);
     }
   }
 
-  private static @NotNull StreamEx<String> getFromHierarchy(@NotNull PsiClass aClass) {
-    final Collection<PsiClass> inheritors = DirectClassInheritorsSearch.search(aClass).findAll();
-    return StreamEx.of(inheritors).map(PsiNamedElement::getName);
-  }
-
-  private static @NotNull StreamEx<String> getFromPermittedList(@NotNull PsiReferenceList list) {
-    final PsiJavaCodeReferenceElement[] elements = list.getReferenceElements();
-    return StreamEx.of(elements).map(PsiQualifiedReference::getReferenceName);
-  }
-
-  private static @NotNull LookupElement createCaseRule(String caseRuleName, TailType tailType) {
+  private static @NotNull LookupElement createCaseRule(@NotNull String caseRuleName, TailType tailType) {
     final String prefix = "case ";
 
     final LookupElement lookupElement = LookupElementBuilder

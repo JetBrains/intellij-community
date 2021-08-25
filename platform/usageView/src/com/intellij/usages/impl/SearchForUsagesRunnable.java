@@ -356,9 +356,11 @@ final class SearchForUsagesRunnable implements Runnable {
     }
     TooManyUsagesStatus.createFor(indicator);
     AtomicBoolean showBalloon = new AtomicBoolean(true);
+    EdtScheduledExecutorService edtExecutorService = EdtScheduledExecutorService.getInstance();
 
-    EdtScheduledExecutorService.getInstance().schedule(() -> {
-      if (!myProject.isDisposed() && showBalloon.get()) {
+    edtExecutorService.schedule(() -> {
+      if (!myProject.isDisposed() && showBalloon.get() &&
+          ToolWindowManager.getInstance(myProject).getToolWindowBalloon(ToolWindowId.FIND) == null) { // Don't show balloon if there is another one
         notifyByFindBalloon(null, MessageType.WARNING,
                             Collections.singletonList(StringUtil.escapeXmlEntities(UsageViewManagerImpl.getProgressTitle(myPresentation))));
         findStartedBalloonShown.set(true);
@@ -401,15 +403,16 @@ final class SearchForUsagesRunnable implements Runnable {
     if (getUsageView(indicator, startSearchStamp) != null) {
       ApplicationManager.getApplication().invokeLater(() -> myUsageViewManager.showToolWindow(true), myProject.getDisposed());
     }
-    ApplicationManager.getApplication().invokeLater(() -> {
-      if (findStartedBalloonShown.get()) {
+
+    edtExecutorService.schedule(() -> {
+      if (!myProject.isDisposed() && findStartedBalloonShown.get()) {
         Balloon balloon = ToolWindowManager.getInstance(myProject).getToolWindowBalloon(ToolWindowId.FIND);
         if (balloon != null) {
           balloon.hide();
         }
       }
       showBalloon.set(false);
-    }, myProject.getDisposed());
+    }, ModalityState.NON_MODAL, 3000, TimeUnit.MILLISECONDS);
   }
 
   private void endSearchForUsages(@NotNull final AtomicBoolean findStartedBalloonShown) {

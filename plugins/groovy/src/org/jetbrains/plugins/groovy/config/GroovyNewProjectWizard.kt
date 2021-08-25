@@ -13,7 +13,7 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.fileChooser.FileChooserFactory
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.projectRoots.JavaSdk
+import com.intellij.openapi.projectRoots.JavaSdkType
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.ModifiableRootModel
 import com.intellij.openapi.roots.libraries.LibraryType
@@ -45,21 +45,16 @@ class GroovyNewProjectWizard : NewProjectWizard<GroovyModuleSettings> {
   override var settingsFactory = { GroovyModuleSettings() }
 
   override fun settingsList(settings: GroovyModuleSettings): List<SettingsComponent> {
-    val sdkCombo = JdkComboBox(null, ProjectSdksModel(), { it is JavaSdk }, null, null, null)
+    val sdkCombo = JdkComboBox(null, ProjectSdksModel().also { it.syncSdks() }, { it is JavaSdkType }, null, null, null)
       .apply { minimumSize = Dimension(0, 0) }
       .also { combo -> combo.addItemListener { settings.javaSdk = combo.selectedJdk } }
     lateinit var disposableComponent: Disposable
     val panel = panel {
       row {
-        val fromUrlCheckbox: JBRadioButton = createDownloadableLibraryPanel(settings)
-        val (fromFilesystemCheckbox, innerDisposableComponent) = createFileSystemLibraryPanel(settings)
-        disposableComponent = innerDisposableComponent
-
-        fromFilesystemCheckbox.addChangeListener {
-          if (fromFilesystemCheckbox.selected()) fromUrlCheckbox.isSelected = false
-        }
-        fromUrlCheckbox.addChangeListener {
-          if (fromUrlCheckbox.selected()) fromFilesystemCheckbox.isSelected = false
+        buttonGroup {
+          createDownloadableLibraryPanel(settings)
+          val innerDisposableComponent = createFileSystemLibraryPanel(settings)
+          disposableComponent = innerDisposableComponent
         }
       }
     }
@@ -74,10 +69,10 @@ class GroovyNewProjectWizard : NewProjectWizard<GroovyModuleSettings> {
                   JustComponent(panel))
   }
 
-  private fun Row.createDownloadableLibraryPanel(settings: GroovyModuleSettings): JBRadioButton {
+  private fun Row.createDownloadableLibraryPanel(settings: GroovyModuleSettings) {
     lateinit var checkbox: JBRadioButton
     twoColumnRow(
-      { checkbox = radioButton(GroovyBundle.message("radio.use.version.from.maven"), settings::useMavenLibrary).component },
+      { checkbox = radioButton(GroovyBundle.message("radio.use.version.from.maven"), settings::useMavenLibrary).component.apply { isSelected = true } },
       {
         val groovyLibraryType = LibraryType.EP_NAME.findExtensionOrFail(GroovyDownloadableLibraryType::class.java)
         val downloadableLibraryDescription = groovyLibraryType.libraryDescription
@@ -93,10 +88,9 @@ class GroovyNewProjectWizard : NewProjectWizard<GroovyModuleSettings> {
           })
         }.enableIf(checkbox.selected)
       })
-    return checkbox
   }
 
-  private fun Row.createFileSystemLibraryPanel(settings: GroovyModuleSettings): Pair<JBRadioButton, Disposable> {
+  private fun Row.createFileSystemLibraryPanel(settings: GroovyModuleSettings): Disposable {
     lateinit var checkbox: JBRadioButton
     lateinit var disposable: Disposable
     twoColumnRow(
@@ -128,7 +122,7 @@ class GroovyNewProjectWizard : NewProjectWizard<GroovyModuleSettings> {
         disposable = textWithBrowse.component
       }
     )
-    return checkbox to disposable
+    return disposable
   }
 
   override fun setupProject(project: Project, settings: GroovyModuleSettings, context: WizardContext) {

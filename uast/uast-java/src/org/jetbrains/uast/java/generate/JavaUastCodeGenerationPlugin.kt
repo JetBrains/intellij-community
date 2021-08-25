@@ -169,6 +169,14 @@ class JavaUastElementFactory(private val project: Project) : UastElementFactory 
     return JavaULiteralExpression(literalExpr, null)
   }
 
+  override fun createLongConstantExpression(long: Long, context: PsiElement?): UExpression? {
+    return when (val literalExpr = psiFactory.createExpressionFromText(long.toString() + "L", context)) {
+      is PsiLiteralExpressionImpl -> JavaULiteralExpression(literalExpr, null)
+      is PsiPrefixExpression -> JavaUPrefixExpression(literalExpr, null)
+      else -> null
+    }
+  }
+
   override fun createNullLiteral(context: PsiElement?): ULiteralExpression? {
     val literalExpr = psiFactory.createExpressionFromText("null", context)
     if (literalExpr !is PsiLiteralExpressionImpl) return null

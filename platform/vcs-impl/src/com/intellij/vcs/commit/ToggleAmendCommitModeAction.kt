@@ -9,7 +9,6 @@ import com.intellij.openapi.keymap.KeymapUtil.getFirstKeyboardShortcutText
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.vcs.VcsBundle.message
 import com.intellij.openapi.vcs.actions.getContextCommitWorkflowHandler
-import javax.swing.JCheckBox
 import javax.swing.JComponent
 
 class ToggleAmendCommitModeAction : CheckboxAction(), DumbAware {
@@ -34,7 +33,7 @@ class ToggleAmendCommitModeAction : CheckboxAction(), DumbAware {
   override fun createCustomComponent(presentation: Presentation, place: String): JComponent =
     super.createCustomComponent(presentation, place).also { installHelpTooltip(it) }
 
-  override fun updateCustomComponent(checkBox: JCheckBox, presentation: Presentation) {
+  override fun updateCustomComponent(checkBox: JComponent, presentation: Presentation) {
     presentation.text = message("checkbox.amend")
     presentation.description = null // prevents default tooltip on `checkBox`
 

@@ -6,10 +6,7 @@ import com.intellij.execution.configurations.ConfigurationFactory;
 import com.intellij.execution.configurations.ConfigurationType;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.executors.ExecutorGroup;
-import com.intellij.execution.target.TargetEnvironmentAwareRunProfile;
-import com.intellij.execution.target.TargetEnvironmentConfiguration;
-import com.intellij.execution.target.TargetEnvironmentConfigurations;
-import com.intellij.execution.target.TargetEnvironmentType;
+import com.intellij.execution.target.*;
 import com.intellij.internal.statistic.IdeActivityDefinition;
 import com.intellij.internal.statistic.StructuredIdeActivity;
 import com.intellij.internal.statistic.eventLog.EventLogGroup;
@@ -88,15 +85,28 @@ public final class RunConfigurationUsageTriggerCollector extends CounterUsagesCo
       ObjectEventData objectEventData = new ObjectEventData(additionalData);
       eventPairs.add(ADDITIONAL_FIELD.with(objectEventData));
     }
+    String targetTypeId = getTargetTypeId(project, runConfiguration);
+    if (targetTypeId != null) {
+      eventPairs.add(TARGET.with(targetTypeId));
+    }
+    return eventPairs;
+  }
+
+  private static @Nullable String getTargetTypeId(@NotNull Project project, @Nullable RunConfiguration runConfiguration) {
     if (runConfiguration instanceof TargetEnvironmentAwareRunProfile) {
       String assignedTargetName = ((TargetEnvironmentAwareRunProfile)runConfiguration).getDefaultTargetName();
       TargetEnvironmentConfiguration effectiveTargetConfiguration =
         TargetEnvironmentConfigurations.getEffectiveConfiguration(assignedTargetName, project);
       if (effectiveTargetConfiguration != null) {
-        eventPairs.add(TARGET.with(effectiveTargetConfiguration.getTypeId()));
+        return effectiveTargetConfiguration.getTypeId();
+      }
+    } else if (runConfiguration instanceof ImplicitTargetAwareRunProfile) {
+      TargetEnvironmentType<?> targetType = ((ImplicitTargetAwareRunProfile)runConfiguration).getTargetType();
+      if (targetType != null) {
+        return targetType.getId();
       }
     }
-    return eventPairs;
+    return null;
   }
 
   public static void logProcessFinished(@Nullable StructuredIdeActivity activity,

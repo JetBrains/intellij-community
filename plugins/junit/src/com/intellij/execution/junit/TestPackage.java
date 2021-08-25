@@ -182,8 +182,7 @@ public class TestPackage extends TestObject {
 
   @NotNull
   protected @NlsSafe String getPackageName(JUnitConfiguration.Data data) throws CantRunException {
-    PsiPackage aPackage = getPackage(data);
-    return aPackage != null ? aPackage.getQualifiedName() : "";
+    return data.getPackageName();
   }
 
   protected void collectClassesRecursively(TestClassFilter classFilter,

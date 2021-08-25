@@ -4,7 +4,7 @@ Reports <code>static</code> methods with a signature identical to a <code>static
 Such a method may look like an override when in fact it hides the method from the superclass because
 <code>static</code> methods in Java cannot be overridden.
 <p><b>Example:</b></p>
-<pre>
+<pre><code>
   class Parent {
     static void method(){}
   }
@@ -12,7 +12,7 @@ Such a method may look like an override when in fact it hides the method from th
   class Example extends Parent {
     static void method(){} //warning
   }
-</pre>
+</code></pre>
 <!-- tooltip end -->
 </body>
 </html>

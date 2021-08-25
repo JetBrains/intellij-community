@@ -1,8 +1,10 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+@file:Suppress("ReplaceGetOrSet")
 package com.intellij.ide.plugins
 
 import com.intellij.ide.plugins.cl.PluginAwareClassLoader
 import com.intellij.ide.plugins.cl.PluginClassLoader
+import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.util.BuildNumber
 import com.intellij.testFramework.assertions.Assertions.assertThat
 import com.intellij.testFramework.assertions.Assertions.assertThatThrownBy
@@ -22,6 +24,20 @@ internal class ClassLoaderConfiguratorTest {
   @Rule @JvmField val name = TestName()
 
   @Rule @JvmField val inMemoryFs = InMemoryFsRule()
+
+  @Test
+  fun `plugin must be after child`() {
+    val pluginId = PluginId.getId("org.jetbrains.kotlin")
+    val emptyPath = Path.of("")
+    val plugins = arrayOf(
+      IdeaPluginDescriptorImpl(RawPluginDescriptor(), emptyPath, isBundled = false, id = pluginId, moduleName = null),
+      IdeaPluginDescriptorImpl(RawPluginDescriptor(), emptyPath, isBundled = false, id = PluginId.getId("org.jetbrains.plugins.gradle"), moduleName = null),
+      IdeaPluginDescriptorImpl(RawPluginDescriptor(), emptyPath, isBundled = false, id = pluginId, moduleName = "kotlin.gradle.gradle-java"),
+      IdeaPluginDescriptorImpl(RawPluginDescriptor(), emptyPath, isBundled = false, id = pluginId, moduleName = "kotlin.compiler-plugins.annotation-based-compiler-support.gradle"),
+    )
+    sortDependenciesInPlace(plugins)
+    assertThat(plugins.last().moduleName).isNull()
+  }
 
   @Test
   fun packageForOptionalMustBeSpecified() {
@@ -80,11 +96,11 @@ internal class ClassLoaderConfiguratorTest {
 
     val plugins = loadDescriptors(rootDir).getEnabledPlugins()
     assertThat(plugins).hasSize(2)
-    val barPlugin = plugins[1]
-    assertThat(barPlugin.id.idString).isEqualTo("2-bar")
+    val barPlugin = plugins.get(1)
+    assertThat(barPlugin.pluginId.idString).isEqualTo("2-bar")
 
-    val classLoaderConfigurator = ClassLoaderConfigurator(PluginSet.createPluginSet(plugins, plugins))
-    plugins.forEach(classLoaderConfigurator::configure)
+    val classLoaderConfigurator = ClassLoaderConfigurator(PluginSetBuilder(plugins).computeEnabledModuleMap().createPluginSet())
+    classLoaderConfigurator.configure()
 
     assertThat((barPlugin.classLoader as PluginClassLoader)._getParents().map { it.descriptorPath })
       .containsExactly("com.example.sub.xml", null)
@@ -128,8 +144,8 @@ internal class ClassLoaderConfiguratorTest {
     val plugins = loadResult.getEnabledPlugins()
     assertThat(plugins).hasSize(2)
 
-    val classLoaderConfigurator = ClassLoaderConfigurator(PluginSet.createPluginSet(plugins, plugins))
-    plugins.forEach(classLoaderConfigurator::configure)
+    val classLoaderConfigurator = ClassLoaderConfigurator(PluginSetBuilder(plugins).computeEnabledModuleMap().createPluginSet())
+    classLoaderConfigurator.configure()
     return loadResult
   }
 }
@@ -142,7 +158,7 @@ private fun loadDescriptors(dir: Path): PluginLoadingResult {
   val paths = dir.directoryStreamIfExists { it.sorted() }!!
   context.use {
     for (file in paths) {
-      result.add(loadDescriptor(file, false, context) ?: continue, false)
+      result.add(loadDescriptor(file, context) ?: continue, false)
     }
   }
   result.finishLoading()

@@ -10,6 +10,7 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.NlsContexts
 import com.intellij.psi.ElementDescriptionUtil
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
@@ -51,6 +52,7 @@ import org.jetbrains.kotlin.resolve.scopes.utils.findClassifier
 import org.jetbrains.kotlin.utils.keysToMap
 
 object KotlinIntroduceTypeParameterHandler : RefactoringActionHandler {
+    @NlsContexts.DialogTitle
     @JvmField
     val REFACTORING_NAME = KotlinBundle.message("introduce.type.parameter")
 

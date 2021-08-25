@@ -9,6 +9,8 @@ import com.intellij.injected.editor.EditorWindow;
 import com.intellij.notification.NotificationGroupManager;
 import com.intellij.notification.NotificationType;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.actionSystem.ActionPlaces;
+import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
@@ -39,6 +41,7 @@ import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.DocumentUtil;
+import com.intellij.util.PlatformUtils;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.UIUtil;
 import org.intellij.lang.annotations.JdkConstants;
@@ -1172,6 +1175,20 @@ public final class EditorUtil {
       return true;
     }
     return false;
+  }
+
+  public static boolean isCaretInsideSelection(@Nullable Caret caret) {
+    return caret != null &&
+           caret.hasSelection() &&
+           caret.getOffset() >= caret.getSelectionStart() &&
+           caret.getOffset() <= caret.getSelectionEnd();
+  }
+
+  public static boolean contextMenuInvokedOutsideOfSelection(@NotNull AnActionEvent e) {
+    if (!PlatformUtils.isDataGrip() || e.getPlace() != ActionPlaces.EDITOR_POPUP) return false;
+    Editor editor = e.getData(CommonDataKeys.EDITOR);
+    return editor != null && editor.getSelectionModel().hasSelection() &&
+           !isCaretInsideSelection(e.getData(CommonDataKeys.CARET));
   }
 
   @NotNull

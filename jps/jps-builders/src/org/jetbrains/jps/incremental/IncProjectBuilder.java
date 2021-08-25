@@ -76,6 +76,8 @@ public final class IncProjectBuilder {
   // "classpath.index doesn't exist because deleted on module file change" vs "classpath.index doesn't exist because was not created"
   private static final String UNMODIFIED_MARK_FILE_NAME = ".unmodified";
 
+  private static final int FLUSH_INVOCATIONS_TO_SKIP = 10;
+
   //private static final boolean GENERATE_CLASSPATH_INDEX = Boolean.parseBoolean(System.getProperty(GlobalOptions.GENERATE_CLASSPATH_INDEX_OPTION, "false"));
   private static final boolean SYNC_DELETE = Boolean.parseBoolean(System.getProperty("jps.sync.delete", "false"));
   private static final GlobalContextKey<Set<BuildTarget<?>>> TARGET_WITH_CLEARED_OUTPUT = GlobalContextKey.create("_targets_with_cleared_output_");
@@ -849,14 +851,15 @@ public final class IncProjectBuilder {
       }
       else {
         // non-parallel build
-        ProjectDescriptor pd = context.getProjectDescriptor();
+        final ProjectDescriptor pd = context.getProjectDescriptor();
+        final Runnable flushCommand = Utils.asCountedRunnable(FLUSH_INVOCATIONS_TO_SKIP, () -> pd.dataManager.flush(true));
         for (BuildTargetChunk chunk : pd.getBuildTargetIndex().getSortedTargetChunks(context)) {
           try {
             buildChunkIfAffected(context, context.getScope(), chunk, buildProgress);
           }
           finally {
             pd.dataManager.closeSourceToOutputStorages(Collections.singleton(chunk));
-            pd.dataManager.flush(true);
+            flushCommand.run();
           }
         }
       }
@@ -923,12 +926,14 @@ public final class IncProjectBuilder {
     private final Object myQueueLock = new Object();
     private final CountDownLatch myTasksCountDown;
     private final List<BuildChunkTask> myTasks;
+    private final Runnable myFlushCommand;
 
     private BuildParallelizer(CompileContext context, BuildProgress buildProgress) {
       myContext = context;
       myBuildProgress = buildProgress;
       final ProjectDescriptor pd = myContext.getProjectDescriptor();
       final BuildTargetIndex targetIndex = pd.getBuildTargetIndex();
+      myFlushCommand = Utils.asCountedRunnable(FLUSH_INVOCATIONS_TO_SKIP, () -> pd.dataManager.flush(true));
 
       List<BuildTargetChunk> chunks = targetIndex.getSortedTargetChunks(myContext);
       myTasks = new ArrayList<>(chunks.size());
@@ -1064,7 +1069,7 @@ public final class IncProjectBuilder {
             }
             finally {
               myProjectDescriptor.dataManager.closeSourceToOutputStorages(Collections.singletonList(task.getChunk()));
-              myProjectDescriptor.dataManager.flush(true);
+              myFlushCommand.run();
             }
           }
           catch (Throwable e) {

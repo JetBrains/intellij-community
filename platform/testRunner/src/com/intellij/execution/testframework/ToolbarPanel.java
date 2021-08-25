@@ -5,6 +5,7 @@ package com.intellij.execution.testframework;
 import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.configurations.RunProfile;
+import com.intellij.execution.runners.PreferredPlace;
 import com.intellij.execution.runners.RunTab;
 import com.intellij.execution.testframework.actions.ScrollToTestSourceAction;
 import com.intellij.execution.testframework.actions.TestFrameworkActions;
@@ -54,7 +55,7 @@ public class ToolbarPanel extends JPanel implements OccurenceNavigator, Disposab
 
     boolean isNewLayout = Registry.is("debugger.new.tool.window.layout");
 
-    DefaultActionGroup sortGroup = !isNewLayout ? actionGroup : new DefaultActionGroup();
+    var sortGroup = !isNewLayout ? actionGroup : DefaultActionGroup.createPopupGroup(() -> ExecutionBundle.message("junit.runing.info.sort.group.name"));
     sortGroup.addAction(new DumbAwareToggleBooleanProperty(ExecutionBundle.message("junit.runing.info.sort.alphabetically.action.name"),
                                                              ExecutionBundle.message("junit.runing.info.sort.alphabetically.action.description"),
                                                              AllIcons.ObjectBrowser.Sorted,
@@ -64,7 +65,6 @@ public class ToolbarPanel extends JPanel implements OccurenceNavigator, Disposab
     sortGroup.addAction(sortByStatistics);
 
     if (isNewLayout) {
-      sortGroup.setPopup(true);
       sortGroup.getTemplatePresentation().setIcon(sortByStatistics.getTemplatePresentation().getIcon());
       actionGroup.add(sortGroup);
     } else {
@@ -95,8 +95,7 @@ public class ToolbarPanel extends JPanel implements OccurenceNavigator, Disposab
     final AnAction[] importActions = properties.createImportActions();
     if (importActions != null) {
       for (AnAction importAction : importActions) {
-        Boolean takeOutOf = importAction.getTemplatePresentation().getClientProperty(RunTab.TAKE_OUT_OF_MORE_GROUP);
-        if (Boolean.TRUE.equals(takeOutOf)) {
+        if (importAction.getTemplatePresentation().getClientProperty(RunTab.PREFERRED_PLACE) == PreferredPlace.TOOLBAR) {
           actionGroup.add(importAction);
         } else {
           moreGroup.add(importAction);

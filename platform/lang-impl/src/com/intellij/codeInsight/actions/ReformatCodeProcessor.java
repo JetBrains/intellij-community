@@ -7,7 +7,10 @@ import com.intellij.application.options.CodeStyle;
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.formatting.FormattingProgressTask;
 import com.intellij.formatting.KeptLineFeedsCollector;
+import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.lang.Language;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.SelectionModel;
@@ -15,11 +18,15 @@ import com.intellij.openapi.editor.ex.util.EditorScrollingPositionKeeper;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.ui.DoNotAskOption;
+import com.intellij.openapi.ui.MessageDialogBuilder;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.ChangedRangesInfo;
 import com.intellij.psi.codeStyle.CodeStyleManager;
+import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.SlowOperations;
 import com.intellij.util.containers.ContainerUtil;
@@ -104,22 +111,50 @@ public class ReformatCodeProcessor extends AbstractLayoutCodeProcessor {
   }
 
   @Override
+  protected boolean needsReadActionToPrepareTask() {
+    return false;
+  }
+
+  @Override
   @NotNull
   protected FutureTask<Boolean> prepareTask(@NotNull final PsiFile file, final boolean processChangedTextOnly)
     throws IncorrectOperationException
   {
+    PsiFile fileToProcess = ReadAction.compute(() -> ensureValid(file));
+    if (fileToProcess == null) return new FutureTask<>(() -> false);
+    boolean doNotKeepLineBreaks = confirmSecondReformat(file);
     return new FutureTask<>(() -> {
-      PsiFile fileToProcess = ensureValid(file);
-      if (fileToProcess == null) return false;
       Ref<Boolean> result = new Ref<>();
       CodeStyle.doWithTemporarySettings(myProject, CodeStyle.getSettings(fileToProcess), (settings) -> {
-        if (isDoNotKeepLineBreaks(file)) {
+        if (doNotKeepLineBreaks) {
           settings.getCommonSettings(fileToProcess.getLanguage()).KEEP_LINE_BREAKS = false;
         }
         result.set(doReformat(file, processChangedTextOnly));
       });
       return result.get() ;
     });
+  }
+
+  private boolean confirmSecondReformat(@NotNull PsiFile file) {
+    CodeStyleSettings defaultSettings = CodeStyle.getSettings(myProject);
+    Ref<Boolean> doNotKeepLineBreaks = Ref.create(isDoNotKeepLineBreaks(file));
+    String key = "second.reformat.confirmed";
+    if (doNotKeepLineBreaks.get() && !defaultSettings.ENABLE_SECOND_REFORMAT && !PropertiesComponent.getInstance().isValueSet(key)) {
+      ApplicationManager.getApplication().invokeAndWait(() -> {
+        doNotKeepLineBreaks.set(
+          MessageDialogBuilder.yesNo(CodeInsightBundle.message("second.reformat"),
+                                     CodeInsightBundle.message("do.you.want.to.remove.custom.line.breaks")).doNotAsk(new DoNotAskOption.Adapter() {
+            @Override
+            public void rememberChoice(boolean isSelected, int exitCode) {
+              if (isSelected) {
+                PropertiesComponent.getInstance().setValue(key,
+                                                           defaultSettings.ENABLE_SECOND_REFORMAT = exitCode == DialogWrapper.OK_EXIT_CODE);
+              }
+            }
+          }).ask(myProject));
+      });
+    }
+    return doNotKeepLineBreaks.get();
   }
 
   private boolean doReformat(@NotNull PsiFile fileToProcess, boolean processChangedTextOnly) {

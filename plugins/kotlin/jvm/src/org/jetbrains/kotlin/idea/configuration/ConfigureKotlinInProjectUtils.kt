@@ -34,6 +34,7 @@ import org.jetbrains.kotlin.idea.framework.JSLibraryKind
 import org.jetbrains.kotlin.idea.framework.effectiveKind
 import org.jetbrains.kotlin.idea.quickfix.KotlinAddRequiredModuleFix
 import org.jetbrains.kotlin.idea.util.*
+import org.jetbrains.kotlin.idea.util.application.isDispatchThread
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import org.jetbrains.kotlin.idea.util.application.runReadAction
 import org.jetbrains.kotlin.idea.util.projectStructure.allModules
@@ -121,7 +122,7 @@ fun isModuleConfigured(moduleSourceRootGroup: ModuleSourceRootGroup): Boolean {
  */
 @RequiresBackgroundThread
 fun getModulesWithKotlinFiles(project: Project): Collection<Module> {
-    if (!isUnitTestMode() && ApplicationManager.getApplication().isDispatchThread) {
+    if (!isUnitTestMode() && isDispatchThread()) {
         LOG.error("getModulesWithKotlinFiles could be a heavy operation and should not be call on AWT thread")
     }
 

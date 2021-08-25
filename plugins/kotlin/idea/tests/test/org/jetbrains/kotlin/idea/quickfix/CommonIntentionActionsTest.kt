@@ -704,6 +704,8 @@ class CommonIntentionActionsTest : LightPlatformCodeInsightFixtureTestCase() {
         override fun getFieldName(): String = name
 
         override fun isValid(): Boolean = true
+
+        override fun getInitializer(): PsiElement? = null
     }
 
 }

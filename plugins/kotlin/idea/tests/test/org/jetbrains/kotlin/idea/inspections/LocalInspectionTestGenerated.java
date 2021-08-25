@@ -2498,6 +2498,11 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
                 runTest("testData/inspectionsLocal/collections/uselessCallOnNotNull/NullOrEmpty.kt");
             }
 
+            @TestMetadata("NullOrEmptyAfterNullCheck.kt")
+            public void testNullOrEmptyAfterNullCheck() throws Exception {
+                runTest("testData/inspectionsLocal/collections/uselessCallOnNotNull/NullOrEmptyAfterNullCheck.kt");
+            }
+
             @TestMetadata("NullOrEmptyFake.kt")
             public void testNullOrEmptyFake() throws Exception {
                 runTest("testData/inspectionsLocal/collections/uselessCallOnNotNull/NullOrEmptyFake.kt");
@@ -2506,6 +2511,11 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
             @TestMetadata("NullOrEmptySafe.kt")
             public void testNullOrEmptySafe() throws Exception {
                 runTest("testData/inspectionsLocal/collections/uselessCallOnNotNull/NullOrEmptySafe.kt");
+            }
+
+            @TestMetadata("OrEmptyAfterNullCheck.kt")
+            public void testOrEmptyAfterNullCheck() throws Exception {
+                runTest("testData/inspectionsLocal/collections/uselessCallOnNotNull/OrEmptyAfterNullCheck.kt");
             }
 
             @TestMetadata("OrEmptyFake.kt")
@@ -4686,6 +4696,11 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
             runTest("testData/inspectionsLocal/dfa/basicForLoop.kt");
         }
 
+        @TestMetadata("basicFun.kt")
+        public void testBasicFun() throws Exception {
+            runTest("testData/inspectionsLocal/dfa/basicFun.kt");
+        }
+
         @TestMetadata("basicIn.kt")
         public void testBasicIn() throws Exception {
             runTest("testData/inspectionsLocal/dfa/basicIn.kt");
@@ -4726,6 +4741,11 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
             runTest("testData/inspectionsLocal/dfa/basicIsNullable.kt");
         }
 
+        @TestMetadata("basicObject.kt")
+        public void testBasicObject() throws Exception {
+            runTest("testData/inspectionsLocal/dfa/basicObject.kt");
+        }
+
         @TestMetadata("basicProperty.kt")
         public void testBasicProperty() throws Exception {
             runTest("testData/inspectionsLocal/dfa/basicProperty.kt");
@@ -4734,6 +4754,11 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
         @TestMetadata("basicRange.kt")
         public void testBasicRange() throws Exception {
             runTest("testData/inspectionsLocal/dfa/basicRange.kt");
+        }
+
+        @TestMetadata("basicRedundantIs.kt")
+        public void testBasicRedundantIs() throws Exception {
+            runTest("testData/inspectionsLocal/dfa/basicRedundantIs.kt");
         }
 
         @TestMetadata("basicThis.kt")
@@ -4846,6 +4871,16 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
             runTest("testData/inspectionsLocal/dfa/elvisSimple.kt");
         }
 
+        @TestMetadata("forDestructuring.kt")
+        public void testForDestructuring() throws Exception {
+            runTest("testData/inspectionsLocal/dfa/forDestructuring.kt");
+        }
+
+        @TestMetadata("forDestructuring2.kt")
+        public void testForDestructuring2() throws Exception {
+            runTest("testData/inspectionsLocal/dfa/forDestructuring2.kt");
+        }
+
         @TestMetadata("inLongUntil.kt")
         public void testInLongUntil() throws Exception {
             runTest("testData/inspectionsLocal/dfa/inLongUntil.kt");
@@ -4866,9 +4901,19 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
             runTest("testData/inspectionsLocal/dfa/kotlinClassRef.kt");
         }
 
+        @TestMetadata("lambdaCapturesMutableLocal.kt")
+        public void testLambdaCapturesMutableLocal() throws Exception {
+            runTest("testData/inspectionsLocal/dfa/lambdaCapturesMutableLocal.kt");
+        }
+
         @TestMetadata("listAccess.kt")
         public void testListAccess() throws Exception {
             runTest("testData/inspectionsLocal/dfa/listAccess.kt");
+        }
+
+        @TestMetadata("noWarningForConstant.kt")
+        public void testNoWarningForConstant() throws Exception {
+            runTest("testData/inspectionsLocal/dfa/noWarningForConstant.kt");
         }
 
         @TestMetadata("nullAsNullable.kt")
@@ -4999,6 +5044,11 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
         @TestMetadata("stringTemplateSimple.kt")
         public void testStringTemplateSimple() throws Exception {
             runTest("testData/inspectionsLocal/dfa/stringTemplateSimple.kt");
+        }
+
+        @TestMetadata("suppressByCompilerWarning.kt")
+        public void testSuppressByCompilerWarning() throws Exception {
+            runTest("testData/inspectionsLocal/dfa/suppressByCompilerWarning.kt");
         }
 
         @TestMetadata("unaryMinus.kt")
@@ -5132,6 +5182,11 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
 
+        @TestMetadata("char.kt")
+        public void testChar() throws Exception {
+            runTest("testData/inspectionsLocal/emptyRange/char.kt");
+        }
+
         @TestMetadata("downTo.kt")
         public void testDownTo() throws Exception {
             runTest("testData/inspectionsLocal/emptyRange/downTo.kt");
@@ -5145,6 +5200,26 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
         @TestMetadata("simple.kt")
         public void testSimple() throws Exception {
             runTest("testData/inspectionsLocal/emptyRange/simple.kt");
+        }
+
+        @TestMetadata("unsignedByte.kt")
+        public void testUnsignedByte() throws Exception {
+            runTest("testData/inspectionsLocal/emptyRange/unsignedByte.kt");
+        }
+
+        @TestMetadata("unsignedInt.kt")
+        public void testUnsignedInt() throws Exception {
+            runTest("testData/inspectionsLocal/emptyRange/unsignedInt.kt");
+        }
+
+        @TestMetadata("unsignedLong.kt")
+        public void testUnsignedLong() throws Exception {
+            runTest("testData/inspectionsLocal/emptyRange/unsignedLong.kt");
+        }
+
+        @TestMetadata("unsignedShort.kt")
+        public void testUnsignedShort() throws Exception {
+            runTest("testData/inspectionsLocal/emptyRange/unsignedShort.kt");
         }
 
         @TestMetadata("until.kt")
@@ -6945,6 +7020,66 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
             public static class Util extends AbstractLocalInspectionTest {
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+                }
+
+                @TestMetadata("inCompanionObject.kt")
+                public void testInCompanionObject() throws Exception {
+                    runTest("testData/inspectionsLocal/logging/loggerInitializedWithForeignClass/util/inCompanionObject.kt");
+                }
+
+                @TestMetadata("inCompanionObjectWithSelfClass.kt")
+                public void testInCompanionObjectWithSelfClass() throws Exception {
+                    runTest("testData/inspectionsLocal/logging/loggerInitializedWithForeignClass/util/inCompanionObjectWithSelfClass.kt");
+                }
+
+                @TestMetadata("inCompanionObjectWithSelfCompanion.kt")
+                public void testInCompanionObjectWithSelfCompanion() throws Exception {
+                    runTest("testData/inspectionsLocal/logging/loggerInitializedWithForeignClass/util/inCompanionObjectWithSelfCompanion.kt");
+                }
+
+                @TestMetadata("inNamedCompanionObject.kt")
+                public void testInNamedCompanionObject() throws Exception {
+                    runTest("testData/inspectionsLocal/logging/loggerInitializedWithForeignClass/util/inNamedCompanionObject.kt");
+                }
+
+                @TestMetadata("inNamedCompanionObjectWithSelfClass.kt")
+                public void testInNamedCompanionObjectWithSelfClass() throws Exception {
+                    runTest("testData/inspectionsLocal/logging/loggerInitializedWithForeignClass/util/inNamedCompanionObjectWithSelfClass.kt");
+                }
+
+                @TestMetadata("inNamedCompanionObjectWithSelfCompanion.kt")
+                public void testInNamedCompanionObjectWithSelfCompanion() throws Exception {
+                    runTest("testData/inspectionsLocal/logging/loggerInitializedWithForeignClass/util/inNamedCompanionObjectWithSelfCompanion.kt");
+                }
+
+                @TestMetadata("inNestedClass.kt")
+                public void testInNestedClass() throws Exception {
+                    runTest("testData/inspectionsLocal/logging/loggerInitializedWithForeignClass/util/inNestedClass.kt");
+                }
+
+                @TestMetadata("inNestedClassWithSelfClass.kt")
+                public void testInNestedClassWithSelfClass() throws Exception {
+                    runTest("testData/inspectionsLocal/logging/loggerInitializedWithForeignClass/util/inNestedClassWithSelfClass.kt");
+                }
+
+                @TestMetadata("inNestedObject.kt")
+                public void testInNestedObject() throws Exception {
+                    runTest("testData/inspectionsLocal/logging/loggerInitializedWithForeignClass/util/inNestedObject.kt");
+                }
+
+                @TestMetadata("inNestedObjectWithSelfObject.kt")
+                public void testInNestedObjectWithSelfObject() throws Exception {
+                    runTest("testData/inspectionsLocal/logging/loggerInitializedWithForeignClass/util/inNestedObjectWithSelfObject.kt");
+                }
+
+                @TestMetadata("inObject.kt")
+                public void testInObject() throws Exception {
+                    runTest("testData/inspectionsLocal/logging/loggerInitializedWithForeignClass/util/inObject.kt");
+                }
+
+                @TestMetadata("inObjectWithSelfObject.kt")
+                public void testInObjectWithSelfObject() throws Exception {
+                    runTest("testData/inspectionsLocal/logging/loggerInitializedWithForeignClass/util/inObjectWithSelfObject.kt");
                 }
 
                 @TestMetadata("simple.kt")
@@ -12230,6 +12365,21 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
             runTest("testData/inspectionsLocal/replaceManualRangeWithIndicesCalls/forNotTarget.kt");
         }
 
+        @TestMetadata("implicitReceiver.kt")
+        public void testImplicitReceiver() throws Exception {
+            runTest("testData/inspectionsLocal/replaceManualRangeWithIndicesCalls/implicitReceiver.kt");
+        }
+
+        @TestMetadata("implicitReceiverFor.kt")
+        public void testImplicitReceiverFor() throws Exception {
+            runTest("testData/inspectionsLocal/replaceManualRangeWithIndicesCalls/implicitReceiverFor.kt");
+        }
+
+        @TestMetadata("implicitReceiverUntil.kt")
+        public void testImplicitReceiverUntil() throws Exception {
+            runTest("testData/inspectionsLocal/replaceManualRangeWithIndicesCalls/implicitReceiverUntil.kt");
+        }
+
         @TestMetadata("indexInLvalue.kt")
         public void testIndexInLvalue() throws Exception {
             runTest("testData/inspectionsLocal/replaceManualRangeWithIndicesCalls/indexInLvalue.kt");
@@ -12253,6 +12403,11 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
         @TestMetadata("notUsedAsIndex.kt")
         public void testNotUsedAsIndex() throws Exception {
             runTest("testData/inspectionsLocal/replaceManualRangeWithIndicesCalls/notUsedAsIndex.kt");
+        }
+
+        @TestMetadata("rangeTo.kt")
+        public void testRangeTo() throws Exception {
+            runTest("testData/inspectionsLocal/replaceManualRangeWithIndicesCalls/rangeTo.kt");
         }
 
         @TestMetadata("simpleExpression.kt")

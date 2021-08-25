@@ -5,6 +5,7 @@ package org.jetbrains.kotlin.idea.gradle.scripting.importing
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.io.FileUtil.toSystemIndependentName
 import com.intellij.openapi.vfs.VfsUtil
 import org.gradle.tooling.model.kotlin.dsl.EditorReportSeverity
@@ -95,10 +96,11 @@ private fun KotlinDslScriptsModel.toListOfScriptModels(project: Project): List<K
                 val (filePath, _) = fromException
                 if (filePath != file.path) return@forEach
             }
+            @NlsSafe val delimiter = System.lineSeparator()
             messages.add(
                 KotlinDslScriptModel.Message(
                     KotlinDslScriptModel.Severity.ERROR,
-                    it.substringBefore(System.lineSeparator()),
+                    it.substringBefore(delimiter),
                     it,
                     fromException?.second
                 )

@@ -1011,7 +1011,7 @@ fun getSuperMethods(declaration: KtDeclaration, ignore: Collection<PsiElement>?)
 fun checkSuperMethodsWithPopup(
     declaration: KtNamedDeclaration,
     deepestSuperMethods: List<PsiElement>,
-    actionString: String,
+    actionStringPrefixKey: String,
     editor: Editor,
     action: (List<PsiElement>) -> Unit
 ) {
@@ -1028,30 +1028,30 @@ fun checkSuperMethodsWithPopup(
 
     if (ApplicationManager.getApplication().isUnitTestMode) return action(deepestSuperMethods)
 
-    val kind = when (declaration) {
-        is KtNamedFunction -> "function"
-        is KtProperty, is KtParameter -> "property"
+    val kindIndex = when (declaration) {
+        is KtNamedFunction -> 1 // "function"
+        is KtProperty, is KtParameter -> 2 // "property"
         else -> return
     }
 
     val unwrappedSupers = deepestSuperMethods.mapNotNull { it.namedUnwrappedElement }
     val hasJavaMethods = unwrappedSupers.any { it is PsiMethod }
     val hasKtMembers = unwrappedSupers.any { it is KtNamedDeclaration }
-    val superKind = when {
-        hasJavaMethods && hasKtMembers -> "member"
-        hasJavaMethods -> "method"
-        else -> kind
+    val superKindIndex = when {
+        hasJavaMethods && hasKtMembers -> 3 // "member"
+        hasJavaMethods -> 4 // "method"
+        else -> kindIndex
     }
 
-    val renameBase = actionString + " base $superKind" + (if (deepestSuperMethods.size > 1) "s" else "")
-    val renameCurrent = "$actionString only current $kind"
-    val title = buildString {
-        append(declaration.name)
-        append(if (isAbstract) " implements " else " overrides ")
-        append(ElementDescriptionUtil.getElementDescription(superMethod, UsageViewTypeLocation.INSTANCE))
-        append(" of ")
-        append(SymbolPresentationUtil.getSymbolPresentableText(superClass))
-    }
+    val renameBase = KotlinBundle.message("$actionStringPrefixKey.base.0", superKindIndex + (if (deepestSuperMethods.size > 1) 10 else 0))
+    val renameCurrent = KotlinBundle.message("$actionStringPrefixKey.only.current.0", kindIndex)
+    val title = KotlinBundle.message(
+        "$actionStringPrefixKey.declaration.title.0.implements.1.2.of.3",
+        declaration.name ?: "",
+        if (isAbstract) 1 else 2,
+        ElementDescriptionUtil.getElementDescription(superMethod, UsageViewTypeLocation.INSTANCE),
+        SymbolPresentationUtil.getSymbolPresentableText(superClass)
+    )
 
     JBPopupFactory.getInstance()
         .createPopupChooserBuilder(listOf(renameBase, renameCurrent))

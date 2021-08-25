@@ -10,7 +10,7 @@ import com.intellij.lang.Language;
 import com.intellij.lang.findUsages.DescriptiveNameUtil;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.lang.refactoring.InlineHandler;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.RangeMarker;
@@ -83,7 +83,7 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
   private Map<PsiField, PsiClassInitializer> myAddedClassInitializers;
   private PsiMethod myMethodCopy;
   @SuppressWarnings("LeakableMapKey") //short living refactoring
-  private Map<Language,InlineHandler.Inliner> myInliners;
+  private Map<Language, InlineHandler.Inliner> myInliners;
 
   public InlineMethodProcessor(@NotNull Project project,
                                @NotNull PsiMethod method,
@@ -222,47 +222,56 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
     final UsageInfo[] usagesIn = refUsages.get();
     final MultiMap<PsiElement, String> conflicts = new MultiMap<>();
 
-    if (!myInlineThisOnly) {
-      final PsiMethod[] superMethods = myMethod.findSuperMethods();
-      for (PsiMethod method : superMethods) {
-        String className = Objects.requireNonNull(method.getContainingClass()).getQualifiedName();
-        final String message = method.hasModifierProperty(PsiModifier.ABSTRACT) ?
-                               JavaRefactoringBundle.message("inlined.method.implements.method.from.0", className) :
-                               JavaRefactoringBundle.message("inlined.method.overrides.method.from.0", className);
-        conflicts.putValue(method, message);
-      }
+    if (!ProgressManager.getInstance().runProcessWithProgressSynchronously(
+      () -> ReadAction.run(() -> {
+        if (!myInlineThisOnly) {
+          final PsiMethod[] superMethods = myMethod.findSuperMethods();
+          for (PsiMethod method : superMethods) {
+            String className = Objects.requireNonNull(method.getContainingClass()).getQualifiedName();
+            final String message = method.hasModifierProperty(PsiModifier.ABSTRACT) ?
+                                   JavaRefactoringBundle.message("inlined.method.implements.method.from.0", className) :
+                                   JavaRefactoringBundle.message("inlined.method.overrides.method.from.0", className);
+            conflicts.putValue(method, message);
+          }
 
-      for (UsageInfo info : usagesIn) {
-        final PsiElement element = info.getElement();
-        if (element instanceof PsiDocMethodOrFieldRef && !PsiTreeUtil.isAncestor(myMethod, element, false)) {
-          conflicts.putValue(element, JavaRefactoringBundle.message("inline.method.used.in.javadoc"));
-        }
-        if (element instanceof PsiLiteralExpression &&
-            ContainerUtil.or(element.getReferences(), JavaLangClassMemberReference.class::isInstance)) {
-          conflicts.putValue(element, JavaRefactoringBundle.message("inline.method.used.in.reflection"));
-        }
-        if (element instanceof PsiMethodReferenceExpression) {
-          final PsiExpression qualifierExpression = ((PsiMethodReferenceExpression)element).getQualifierExpression();
-          if (qualifierExpression != null) {
-            final List<PsiElement> sideEffects = new ArrayList<>();
-            SideEffectChecker.checkSideEffects(qualifierExpression, sideEffects);
-            if (!sideEffects.isEmpty()) {
-              conflicts.putValue(element, JavaRefactoringBundle.message("inline.method.qualifier.usage.side.effect"));
+          for (UsageInfo info : usagesIn) {
+            final PsiElement element = info.getElement();
+            if (element instanceof PsiDocMethodOrFieldRef && !PsiTreeUtil.isAncestor(myMethod, element, false)) {
+              conflicts.putValue(element, JavaRefactoringBundle.message("inline.method.used.in.javadoc"));
+            }
+            if (element instanceof PsiLiteralExpression &&
+                ContainerUtil.or(element.getReferences(), JavaLangClassMemberReference.class::isInstance)) {
+              conflicts.putValue(element, JavaRefactoringBundle.message("inline.method.used.in.reflection"));
+            }
+            if (element instanceof PsiMethodReferenceExpression) {
+              final PsiExpression qualifierExpression = ((PsiMethodReferenceExpression)element).getQualifierExpression();
+              if (qualifierExpression != null) {
+                final List<PsiElement> sideEffects = new ArrayList<>();
+                SideEffectChecker.checkSideEffects(qualifierExpression, sideEffects);
+                if (!sideEffects.isEmpty()) {
+                  conflicts.putValue(element, JavaRefactoringBundle.message("inline.method.qualifier.usage.side.effect"));
+                }
+              }
+            }
+            if (element instanceof PsiReferenceExpression && myTransformerChooser.apply((PsiReference)element).isFallBackTransformer()) {
+              conflicts.putValue(element, JavaRefactoringBundle.message("inlined.method.will.be.transformed.to.single.return.form"));
+            }
+
+            final String errorMessage = checkUnableToInsertCodeBlock(myMethod.getBody(), element);
+            if (errorMessage != null) {
+              conflicts.putValue(element, errorMessage);
             }
           }
         }
-        if (element instanceof PsiReferenceExpression && myTransformerChooser.apply((PsiReference)element).isFallBackTransformer()) {
-          conflicts.putValue(element, JavaRefactoringBundle.message("inlined.method.will.be.transformed.to.single.return.form"));
+        else if (myReference != null && myTransformerChooser.apply(myReference).isFallBackTransformer()) {
+          conflicts.putValue(myReference.getElement(),
+                             JavaRefactoringBundle.message("inlined.method.will.be.transformed.to.single.return.form"));
         }
-
-        final String errorMessage = checkUnableToInsertCodeBlock(myMethod.getBody(), element);
-        if (errorMessage != null) {
-          conflicts.putValue(element, errorMessage);
-        }
-      }
-    }
-    else if (myReference != null && myTransformerChooser.apply(myReference).isFallBackTransformer()) {
-      conflicts.putValue(myReference.getElement(), JavaRefactoringBundle.message("inlined.method.will.be.transformed.to.single.return.form"));
+        addInaccessibleMemberConflicts(myMethod, usagesIn, new ReferencedElementsCollector(), conflicts);
+        addInaccessibleSuperCallsConflicts(usagesIn, conflicts);
+      }),
+      RefactoringBundle.message("detecting.possible.conflicts"), true, myProject)) {
+      return false;
     }
 
     myInliners = GenericInlineHandler.initInliners(myMethod, usagesIn, new InlineHandler.Settings() {
@@ -271,15 +280,6 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
         return myInlineThisOnly;
       }
     }, conflicts, JavaLanguage.INSTANCE);
-
-    if (!ProgressManager.getInstance().runProcessWithProgressSynchronously(
-      () -> ApplicationManager.getApplication().runReadAction(() ->
-                                                                addInaccessibleMemberConflicts(myMethod, usagesIn, new ReferencedElementsCollector(), conflicts)),
-      JavaRefactoringBundle.message("processing.usages"), true, myProject)) {
-      return false;
-    }
-
-    addInaccessibleSuperCallsConflicts(usagesIn, conflicts);
 
     return showConflicts(conflicts, usagesIn);
   }
@@ -291,7 +291,7 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
 
   private void addInaccessibleSuperCallsConflicts(final UsageInfo[] usagesIn, final MultiMap<PsiElement, String> conflicts) {
 
-    myMethod.accept(new JavaRecursiveElementWalkingVisitor(){
+    myMethod.accept(new JavaRecursiveElementWalkingVisitor() {
       @Override
       public void visitClass(PsiClass aClass) {}
 
@@ -476,7 +476,7 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
             else if (element instanceof PsiEnumConstant) {
               inlineConstructorCall((PsiEnumConstant) element);
             }
-            else if (!(element instanceof PsiDocMethodOrFieldRef)){
+            else if (!(element instanceof PsiDocMethodOrFieldRef)) {
               GenericInlineHandler.inlineReference(usage, myMethod, myInliners);
             }
           }
@@ -977,7 +977,6 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
           addMarkedElements(refsVector, newStatement);
           addedBracesVector.add(body);
           continue;
-
         }
       }
       else {

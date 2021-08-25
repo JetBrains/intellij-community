@@ -69,6 +69,10 @@ class EmptyRangeInspection : AbstractRangeInspection() {
     }
 
     private fun KtExpression.longValueOrNull(context: BindingContext): Long? {
-        return (constantValueOrNull(context)?.value as? Number)?.toLong()
+        return when (val constantValue = constantValueOrNull(context)?.value) {
+            is Number -> constantValue.toLong()
+            is Char -> constantValue.toLong()
+            else -> null
+        }
     }
 }

@@ -11,6 +11,8 @@ import org.jetbrains.kotlin.idea.quickfix.crossLanguage.KotlinElementActionsFact
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.load.java.JvmAbi
 import org.jetbrains.kotlin.psi.KtElement
+import org.jetbrains.kotlin.psi.KtExpression
+import org.jetbrains.kotlin.psi.KtPsiFactory
 
 class AddFieldActionCreateCallableFromUsageFix(
     targetContainer: KtElement,
@@ -27,7 +29,12 @@ class AddFieldActionCreateCallableFromUsageFix(
             val targetContainer = element ?: return@run null
             val resolutionFacade = targetContainer.getResolutionFacade()
             val typeInfo = request.fieldType.toKotlinTypeInfo(resolutionFacade)
-            val writable = JvmModifier.FINAL !in request.modifiers
+            val writable = JvmModifier.FINAL !in request.modifiers && !request.isConstant
+            val initializer = if (request.initializer is KtExpression) {
+                request.initializer as KtExpression
+            } else if (!lateinit) {
+                KtPsiFactory(targetContainer).createExpression("TODO(\"initialize me\")")
+            } else null
             PropertyInfo(
                 request.fieldName,
                 TypeInfo.Empty,
@@ -35,6 +42,7 @@ class AddFieldActionCreateCallableFromUsageFix(
                 writable,
                 listOf(targetContainer),
                 isLateinitPreferred = false, // Dont set it to `lateinit` because it works via templates that brings issues in batch field adding
+                isConst = request.isConstant,
                 isForCompanion = JvmModifier.STATIC in request.modifiers,
                 modifierList = KotlinElementActionsFactory.ModifierBuilder(targetContainer, allowJvmStatic = false).apply {
                     addJvmModifiers(request.modifiers)
@@ -45,7 +53,7 @@ class AddFieldActionCreateCallableFromUsageFix(
                     if (!request.modifiers.contains(JvmModifier.PRIVATE) && !lateinit)
                         addAnnotation(JvmAbi.JVM_FIELD_ANNOTATION_FQ_NAME)
                 }.modifierList,
-                withInitializer = !lateinit
+                initializer = initializer
             )
         }
 }

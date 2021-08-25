@@ -1,24 +1,19 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.lang.jvm.actions;
 
 import com.intellij.lang.jvm.JvmModifier;
 import com.intellij.lang.jvm.types.JvmSubstitutor;
+import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 import java.util.List;
 
 public interface CreateFieldRequest extends ActionRequest {
-
-  /**
-   * @return name of the field to be created
-   */
   @NotNull
   String getFieldName();
 
-  /**
-   * @return expected types of the field to be created
-   */
   @NotNull
   List<ExpectedType> getFieldType();
 
@@ -35,6 +30,10 @@ public interface CreateFieldRequest extends ActionRequest {
   @NotNull
   JvmSubstitutor getTargetSubstitutor();
 
+
+  @Nullable
+  PsiElement getInitializer();
+
   /**
    * Implementation are free to render any modifiers as long as they don't contradict with requested ones.
    * Example: if constant field is requested then it will be rendered
@@ -45,10 +44,5 @@ public interface CreateFieldRequest extends ActionRequest {
   @NotNull
   Collection<JvmModifier> getModifiers();
 
-  /**
-   * Constant fields may be used in annotations and in other constant expressions.
-   *
-   * @return whether the field must be a compile-time constant
-   */
   boolean isConstant();
 }

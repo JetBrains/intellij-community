@@ -49,6 +49,14 @@ import java.util.*;
  * @author Vladislav.Soroka
  */
 public final class ExternalSystemKeymapExtension implements KeymapExtension {
+
+  /**
+   * Provides keymap group for keymap configuration dialog.
+   * This group should contain actions to run external system tasks or other build system actions.
+   * <p>
+   * Note: infrastructure for actions list configuration should be implemented on plugin side,
+   * if that needed.
+   */
   @FunctionalInterface
   public interface ActionsProvider {
     ExtensionPointName<ActionsProvider> EP_NAME = ExtensionPointName.create("com.intellij.externalSystemKeymapProvider");

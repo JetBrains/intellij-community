@@ -76,7 +76,7 @@ public class ScheduledForRemovalElementsTest {
     // ---------------------------------
 
     @<error descr="'pkg.AnnotatedAnnotation' is scheduled for removal in version 123.456">AnnotatedAnnotation</error> class C1 {}
-    @<error descr="'pkg.AnnotatedAnnotation' is scheduled for removal in version 123.456">AnnotatedAnnotation</error>(<error descr="'nonAnnotatedAttributeInAnnotatedAnnotation' is declared in @interface 'pkg.AnnotatedAnnotation' scheduled for removal in version 123.456">nonAnnotatedAttributeInAnnotatedAnnotation</error> = "123") class C2 {}
+    @<error descr="'pkg.AnnotatedAnnotation' is scheduled for removal in version 123.456">AnnotatedAnnotation</error>(<error descr="'nonAnnotatedAttributeInAnnotatedAnnotation' is declared in annotation 'pkg.AnnotatedAnnotation' scheduled for removal in version 123.456">nonAnnotatedAttributeInAnnotatedAnnotation</error> = "123") class C2 {}
     @<error descr="'pkg.AnnotatedAnnotation' is scheduled for removal in version 123.456">AnnotatedAnnotation</error>(<error descr="'annotatedAttributeInAnnotatedAnnotation' is scheduled for removal in version 123.456">annotatedAttributeInAnnotatedAnnotation</error> = "123") class C3 {}
     @NonAnnotatedAnnotation class C4 {}
     @NonAnnotatedAnnotation(nonAnnotatedAttributeInNonAnnotatedAnnotation = "123") class C5 {}

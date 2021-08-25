@@ -20,7 +20,7 @@ internal class ClassLoaderTreeChecker(private val unloadedMainDescriptor: IdeaPl
     }
     @Suppress("TestOnlyProblems")
     for (it in pluginSet.getUnsortedEnabledModules()) {
-      checkThatClassloaderNotReferenced(it.requireDescriptor())
+      checkThatClassloaderNotReferenced(it)
     }
   }
 

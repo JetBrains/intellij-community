@@ -106,7 +106,7 @@ static&nbsp;void&nbsp;<b>docs</b>()\
 def aa = 1
 a<caret>a
 ''', '''\
-<div class='definition'><pre><a href="psi_element://java.lang.Object"><code>Object</code></a> <b>aa</b></pre></div><table class='sections'></table><p>[inferred type] <a href="psi_element://java.lang.Integer"><code>Integer</code></a>'''
+<div class='definition'><pre><a href="psi_element://java.lang.Object"><code>Object</code></a> <b>aa</b></pre></div><table class='sections'></table><p>[Inferred type] <a href="psi_element://java.lang.Integer"><code>Integer</code></a>'''
   }
 
   void 'test implicit closure parameter'() {
@@ -114,7 +114,7 @@ a<caret>a
 List<String> ss = []
 ss.collect { i<caret>t }
 ''', '''\
-<div class='definition'><pre><a href="psi_element://java.lang.Object"><code>Object</code></a> <b>it</b></pre></div><table class='sections'></table><p>[inferred type] <a href="psi_element://java.lang.String"><code>String</code></a>'''
+<div class='definition'><pre><a href="psi_element://java.lang.Object"><code>Object</code></a> <b>it</b></pre></div><table class='sections'></table><p>[Inferred type] <a href="psi_element://java.lang.String"><code>String</code></a>'''
   }
 
   void 'test code tag'() {

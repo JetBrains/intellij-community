@@ -53,7 +53,7 @@
     <orderEntry type="module" module-name="intellij.platform.codeStyle" />
     <orderEntry type="module" module-name="intellij.platform.codeStyle.impl" />
     <orderEntry type="library" name="caffeine" level="project" />
-    <orderEntry type="module" module-name="intellij.platform.ide.util.io" />
+    <orderEntry type="module" module-name="intellij.platform.ide.util.io.impl" />
     <orderEntry type="module-library">
       <library name="find-action-model" type="repository">
         <properties maven-id="org.jetbrains.intellij.deps.searchEverywhere.model:find-action-model:0.0.3" />

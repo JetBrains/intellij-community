@@ -186,6 +186,7 @@ private fun createKotlinSourceSetPair(
     intransitiveDependencies = emptyArray(),
     declaredDependsOnSourceSets = declaredDependsOnSourceSets,
     allDependsOnSourceSets = allDependsOnSourceSets,
+    additionalVisibleSourceSets = emptySet(),
     defaultActualPlatforms = KotlinPlatformContainerImpl().apply { pushPlatforms(platforms) },
     defaultIsTestModule = isTestModule
 )

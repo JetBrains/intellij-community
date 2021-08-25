@@ -12,14 +12,19 @@ import javax.swing.Icon
 class RunToolbarMainMultipleStopAction : StopAction(), RTBarAction {
   override fun getRightSideType(): RTBarAction.Type = RTBarAction.Type.RIGHT_STABLE
 
+  override fun checkMainSlotVisibility(state: RunToolbarMainSlotState): Boolean {
+    return state == RunToolbarMainSlotState.INFO
+  }
+
   override fun update(e: AnActionEvent) {
     super.update(e)
     e.presentation.isEnabledAndVisible = e.presentation.isEnabled && e.presentation.isVisible
-                                         && e.isItRunToolbarMainSlot()
-                                         && !e.isOpened() && e.project?.let {
-      val state = RunToolbarSlotManager.getInstance(it).getState()
-      state.isActive() && !state.isSingleMain()
-    } ?: false
+
+    if (!RunToolbarProcess.experimentalUpdating()) {
+      e.mainState()?.let {
+        e.presentation.isEnabledAndVisible = e.presentation.isEnabledAndVisible && checkMainSlotVisibility(it)
+      }
+    }
   }
 
   override fun setShortcutSet(shortcutSet: ShortcutSet) {}

@@ -12,6 +12,7 @@ import com.intellij.openapi.ui.popup.ListPopupStep
 import com.intellij.openapi.ui.popup.PopupStep
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep
 import com.intellij.util.PlatformIcons
+import org.jetbrains.annotations.Nls
 import org.jetbrains.kotlin.builtins.KotlinBuiltIns
 import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.diagnostics.Diagnostic
@@ -48,13 +49,8 @@ class AddFunctionToSupertypeFix private constructor(
         val targetClass: KtClass
     )
 
-    override fun getText(): String {
-        val single = functions.singleOrNull()
-        return if (single != null)
-            actionName(single)
-        else
-            KotlinBundle.message("fix.add.function.supertype.text")
-    }
+    override fun getText(): String =
+        functions.singleOrNull()?.let { actionName(it) } ?: KotlinBundle.message("fix.add.function.supertype.text")
 
     override fun getFamilyName() = KotlinBundle.message("fix.add.function.supertype.family")
 
@@ -100,12 +96,12 @@ class AddFunctionToSupertypeFix private constructor(
         }
     }
 
-    private fun actionName(functionData: FunctionData): String {
-        return KotlinBundle.message(
+    @Nls
+    private fun actionName(functionData: FunctionData): String =
+        KotlinBundle.message(
             "fix.add.function.supertype.add.to",
             functionData.signaturePreview, functionData.targetClass.name.toString()
         )
-    }
 
     companion object : KotlinSingleIntentionActionFactory() {
         override fun createAction(diagnostic: Diagnostic): IntentionAction? {

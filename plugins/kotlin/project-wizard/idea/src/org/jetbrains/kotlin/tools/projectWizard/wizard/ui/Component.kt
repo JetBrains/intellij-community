@@ -83,6 +83,7 @@ abstract class TitledComponent(context: Context) : DynamicComponent(context) {
     open val additionalComponentPadding: Int = 0
     open val maximumWidth: Int? = null
     abstract val title: String?
+    open val tooltipText: String? = null
     open fun shouldBeShow(): Boolean = true
 }
 

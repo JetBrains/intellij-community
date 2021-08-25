@@ -6,16 +6,20 @@ import com.intellij.codeInsight.hints.InlayInfo
 import com.intellij.codeInsight.hints.Option
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.psi.PsiElement
+import org.jetbrains.annotations.Nls
 import org.jetbrains.kotlin.idea.KotlinBundle
+import org.jetbrains.kotlin.idea.caches.resolve.resolveToCall
 import org.jetbrains.kotlin.idea.parameterInfo.*
 import org.jetbrains.kotlin.idea.quickfix.createFromUsage.callableBuilder.getReturnTypeReference
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.endOffset
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
+import org.jetbrains.kotlin.psi.psiUtil.startOffset
+import org.jetbrains.kotlin.resolve.descriptorUtil.fqNameSafe
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 @Suppress("UnstableApiUsage")
-enum class HintType(private val showDesc: String, defaultEnabled: Boolean) {
+enum class HintType(@Nls private val showDesc: String, defaultEnabled: Boolean) {
 
     PROPERTY_HINT(
         KotlinBundle.message("hints.settings.types.property"),
@@ -126,17 +130,46 @@ enum class HintType(private val showDesc: String, defaultEnabled: Boolean) {
             val callExpression = elem.parent as? KtCallExpression ?: return emptyList()
             return provideSuspendingCallHint(callExpression)?.let { listOf(it) } ?: emptyList()
         }
+    },
+
+    RANGES(
+        KotlinBundle.message("hints.settings.ranges"),
+        true
+    ) {
+        override fun isApplicable(elem: PsiElement): Boolean = elem is KtBinaryExpression && elem.isRangeExpression()
+
+        override fun provideHints(elem: PsiElement): List<InlayInfo> {
+            val binaryExpression = elem.safeAs<KtBinaryExpression>() ?: return emptyList()
+            val leftExp = binaryExpression.left ?: return emptyList()
+            val rightExp = binaryExpression.right ?: return emptyList()
+
+            val resolvedCall = binaryExpression.operationReference.resolveToCall()
+            val operation = resolvedCall?.candidateDescriptor?.fqNameSafe?.asString() ?: return emptyList()
+            val (leftText, rightText) = when (operation) {
+                "kotlin.Int.rangeTo" -> {
+                    KotlinBundle.message("hints.ranges.rangeTo.left") to KotlinBundle.message("hints.ranges.rangeTo.right")
+                }
+                "kotlin.ranges.downTo" -> {
+                    KotlinBundle.message("hints.ranges.downTo.left") to KotlinBundle.message("hints.ranges.downTo.right")
+                }
+                "kotlin.ranges.until" -> {
+                    KotlinBundle.message("hints.ranges.until.left") to KotlinBundle.message("hints.ranges.until.right")
+                }
+                else -> return emptyList()
+            }
+            return listOf(
+                InlayInfo(text = leftText, offset = leftExp.endOffset),
+                InlayInfo(text = rightText, offset = rightExp.startOffset)
+            )
+        }
     };
 
     companion object {
-        fun resolve(elem: PsiElement): HintType? {
-            val applicableTypes = values().filter { it.isApplicable(elem) }
-            return applicableTypes.firstOrNull()
-        }
+        fun resolve(elem: PsiElement): List<HintType> =
+            values().filter { it.isApplicable(elem) }
 
-        fun resolveToEnabled(elem: PsiElement?): HintType? {
-            return elem?.let { resolve(it) }?.takeIf { it.enabled }
-        }
+        fun resolveToEnabled(elem: PsiElement?): HintType? =
+            elem?.let { resolve(it) }?.firstOrNull { it.enabled }
     }
 
     abstract fun isApplicable(elem: PsiElement): Boolean
@@ -145,7 +178,7 @@ enum class HintType(private val showDesc: String, defaultEnabled: Boolean) {
         return provideHints(elem).map { InlayInfoDetails(it, listOf(TextInlayInfoDetail(it.text))) }
     }
 
-    val option = Option("SHOW_${this.name}", this.showDesc, defaultEnabled)
+    val option = Option("SHOW_${this.name}", { this.showDesc }, defaultEnabled)
     val enabled
         get() = option.get()
 }

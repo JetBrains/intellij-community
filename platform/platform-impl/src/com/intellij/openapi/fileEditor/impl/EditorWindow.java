@@ -1347,9 +1347,8 @@ public final class EditorWindow {
     if (composite == null) return false;
     //Don't check focus in unit test mode
     if (!ApplicationManager.getApplication().isUnitTestMode()) {
-      JComponent selectedEditorComponent = composite.getSelectedEditor().getComponent();
-      Component owner = IdeFocusManager.getInstance(myOwner.getManager().getProject()).getFocusTargetFor(selectedEditorComponent);
-      if (owner == null || !SwingUtilities.isDescendingFrom(owner, selectedEditorComponent)) return false;
+      Component owner = IdeFocusManager.getInstance(myOwner.getManager().getProject()).getFocusOwner();
+      if (owner == null || !SwingUtilities.isDescendingFrom(owner, composite.getSelectedEditor().getComponent())) return false;
     }
     return !myOwner.getManager().isChanged(composite);
   }

@@ -42,6 +42,11 @@ data class AndroidConfigIR(
                     assignmentOrCall("versionName") { +"1.0".quotified }
                 }
             }
+            nlIndented()
+            sectionCall("compileOptions", needIndent = true) {
+                assignmentOrCall("sourceCompatibility") { +"JavaVersion.VERSION_1_8" }; nlIndented()
+                assignmentOrCall("targetCompatibility") { +"JavaVersion.VERSION_1_8" }
+            }
             if (printBuildTypes) {
                 nlIndented()
                 sectionCall("buildTypes", needIndent = true) {

@@ -2,7 +2,9 @@ package com.intellij.codeInspection.tests
 
 import com.intellij.codeInspection.TestOnlyInspection
 
-abstract class TestOnlyInspectionTestBase : UastInspectionTestBase(inspection) {
+abstract class TestOnlyInspectionTestBase : UastInspectionTestBase() {
+  override val inspection = TestOnlyInspection()
+
   override fun setUp() {
     super.setUp()
     myFixture.addClass("""
@@ -26,9 +28,5 @@ abstract class TestOnlyInspectionTestBase : UastInspectionTestBase(inspection) {
       @Target({ElementType.METHOD, ElementType.CONSTRUCTOR, ElementType.FIELD, ElementType.TYPE})
       public @interface TestOnly { }
   """.trimIndent())
-  }
-
-  companion object {
-    private val inspection = TestOnlyInspection()
   }
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.util.text;
 
 import com.intellij.openapi.util.NlsSafe;
@@ -136,6 +136,11 @@ public abstract class HtmlChunk {
       return new Element(myTagName, myAttributes.with(name, value), myChildren);
     }
 
+    /**
+     * @param name attribute name
+     * @param value attribute value
+     * @return a new element that is like this element but has the specified attribute added or replaced
+     */
     @Contract(pure = true)
     public @NotNull Element attr(@NonNls String name, int value) {
       return new Element(myTagName, myAttributes.with(name, Integer.toString(value)), myChildren);
@@ -148,6 +153,15 @@ public abstract class HtmlChunk {
     @Contract(pure = true)
     public @NotNull Element style(@NonNls String style) {
       return attr("style", style);
+    }
+
+    /**
+     * @param className name of style class
+     * @return a new element that is like this element but has the specified class name
+     */
+    @Contract(pure = true)
+    public @NotNull Element setClass(@NonNls String className) {
+      return attr("class", className);
     }
 
     /**
@@ -436,23 +450,38 @@ public abstract class HtmlChunk {
 
   /**
    * Creates an element that represents a simple HTML link.
-   * 
+   *
    * @param target link target (HREF)
    * @param text link text
    * @return the Element that represents a link
    */
   @Contract(pure = true)
   public static @NotNull Element link(@NotNull @NonNls String target, @NotNull @Nls String text) {
-    return new Element("a", UnmodifiableHashMap.<String, String>empty().with("href", target), Collections.singletonList(text(text)));
+    return link(target, text(text));
   }
 
   /**
-   * Creates an html entity (e.g. `&ndash;`)
+   * Creates an element that represents an HTML link.
+   * 
+   * @param target link target (HREF)
+   * @param text link text chunk
+   * @return the Element that represents a link
+   */
+  @Contract(pure = true)
+  public static @NotNull Element link(@NotNull @NonNls String target, @NotNull HtmlChunk text) {
+    return new Element("a", UnmodifiableHashMap.<String, String>empty().with("href", target), Collections.singletonList(text));
+  }
+
+  /**
+   * Creates an HTML entity (e.g. `&ndash;`)
    * @param htmlEntity entity
    * @return the HtmlChunk that represents the html entity
    */
   @Contract(pure = true)
   public static @NotNull HtmlChunk htmlEntity(@NotNull @NlsSafe String htmlEntity) {
+    if (!htmlEntity.startsWith("&") && !htmlEntity.endsWith(";")) {
+      throw new IllegalArgumentException("Not an entity: " + htmlEntity);
+    }
     return raw(htmlEntity);
   }
 
@@ -481,6 +510,17 @@ public abstract class HtmlChunk {
     StringBuilder builder = new StringBuilder();
     appendTo(builder);
     return builder.toString();
+  }
+
+  /**
+   * @return the HtmlChunk that represents the fragment chunk
+   */
+  @Contract(pure = true)
+  public static @NotNull HtmlChunk fragment(@NotNull HtmlChunk @NotNull ... chunks) {
+    if (chunks.length == 0) {
+      return empty();
+    }
+    return Arrays.stream(chunks).collect(toFragment());
   }
 
   /**

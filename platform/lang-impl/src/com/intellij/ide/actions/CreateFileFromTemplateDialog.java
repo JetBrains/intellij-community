@@ -23,13 +23,12 @@ import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.util.Consumer;
 import com.intellij.util.PlatformIcons;
 import com.intellij.util.SlowOperations;
-import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import javax.swing.*;
+import java.awt.*;
 import java.util.*;
+import java.util.List;
 
 import static com.intellij.openapi.util.NlsContexts.DialogTitle;
 
@@ -181,6 +180,11 @@ public class CreateFileFromTemplateDialog extends DialogWrapper {
     }
 
     @Override
+    public Builder setDialogOwner(@Nullable Component owner) {
+      throw new UnsupportedOperationException("Dialog owner is supposed to be baked in CreateFileFromTemplateDialog passed via constructor");
+    }
+
+    @Override
     public <T extends PsiElement> T show(@NotNull String errorTitle, @Nullable String selectedTemplateName,
                                          @NotNull final FileCreator<T> creator) {
       final Ref<SmartPsiElementPointer<T>> created = Ref.create(null);
@@ -240,6 +244,7 @@ public class CreateFileFromTemplateDialog extends DialogWrapper {
     private final List<Trinity<String, Icon, String>> myTemplatesList = new ArrayList<>();
     private InputValidator myInputValidator;
     private final Map<String, InputValidator> myExtraValidators = new HashMap<>();
+    private @Nullable Component dialogOwner;
 
     private NonBlockingPopupBuilderImpl(@NotNull Project project) {myProject = project;}
 
@@ -268,6 +273,12 @@ public class CreateFileFromTemplateDialog extends DialogWrapper {
     @Override
     public Builder setValidator(InputValidator validator) {
       myInputValidator = validator;
+      return this;
+    }
+
+    @Override
+    public Builder setDialogOwner(@Nullable Component owner) {
+      dialogOwner = owner;
       return this;
     }
 
@@ -333,7 +344,10 @@ public class CreateFileFromTemplateDialog extends DialogWrapper {
       });
 
       Disposer.register(popup, contentPanel);
-      popup.showCenteredInCurrentWindow(myProject);
+      if (dialogOwner == null)
+        popup.showCenteredInCurrentWindow(myProject);
+      else
+        popup.showInCenterOf(dialogOwner);
     }
 
     @Nullable
@@ -353,6 +367,7 @@ public class CreateFileFromTemplateDialog extends DialogWrapper {
     Builder setTitle(@DialogTitle String title);
     Builder setValidator(InputValidator validator);
     Builder setDefaultText(String text);
+    Builder setDialogOwner(@Nullable Component owner);
 
     default Builder addKind(@NlsContexts.ListItem @NotNull String kind, @Nullable Icon icon, @NonNls @NotNull String templateName) {
       return addKind(kind, icon, templateName, null);

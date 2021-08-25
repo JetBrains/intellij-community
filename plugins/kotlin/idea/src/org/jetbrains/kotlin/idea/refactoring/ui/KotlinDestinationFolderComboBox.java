@@ -23,6 +23,7 @@ import com.intellij.refactoring.move.moveClassesOrPackages.AutocreatingSingleSou
 import com.intellij.refactoring.move.moveClassesOrPackages.MoveClassesOrPackagesUtil;
 import com.intellij.refactoring.move.moveClassesOrPackages.MultipleRootsMoveDestination;
 import com.intellij.ui.*;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.kotlin.idea.KotlinBundle;
 import org.jetbrains.kotlin.idea.roots.ProjectRootUtilsKt;
@@ -38,7 +39,8 @@ import static org.jetbrains.kotlin.idea.roots.ProjectRootUtilsKt.getKotlinAwareD
 
 // Based on com.intellij.refactoring.move.moveClassesOrPackages.DestinationFolderComboBox
 public abstract class KotlinDestinationFolderComboBox extends ComboboxWithBrowseButton {
-    private static final String LEAVE_IN_SAME_SOURCE_ROOT = KotlinBundle.message("leave.in.same.source.root");
+    @Nls
+    private final String LEAVE_IN_SAME_SOURCE_ROOT = KotlinBundle.message("leave.in.same.source.root");
     private static final DirectoryChooser.ItemWrapper NULL_WRAPPER = new DirectoryChooser.ItemWrapper(null, null);
     private PsiDirectory myInitialTargetDirectory;
     private List<VirtualFile> mySourceRoots;

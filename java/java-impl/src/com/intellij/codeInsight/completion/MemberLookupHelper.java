@@ -28,6 +28,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * @author peter
@@ -70,9 +71,17 @@ public class MemberLookupHelper {
     final String className = myContainingClass == null ? "???" : myContainingClass.getName();
 
     final String memberName = myMember.getName();
-    if (showClass && StringUtil.isNotEmpty(className)) {
+    boolean constructor = myMember instanceof PsiMethod && ((PsiMethod)myMember).isConstructor();
+    if (constructor) {
+      presentation.setItemText("new " + memberName);
+      if (myContainingClass != null && myContainingClass.getTypeParameters().length > 0) {
+        presentation.appendTailText("<>", false);
+      }
+    }
+    else if (showClass && StringUtil.isNotEmpty(className)) {
       presentation.setItemText(className + "." + memberName);
-    } else {
+    }
+    else {
       presentation.setItemText(memberName);
     }
 
@@ -87,26 +96,41 @@ public class MemberLookupHelper {
                             : "";
 
     presentation.appendTailText(params, false);
-    if (myShouldImport && StringUtil.isNotEmpty(className)) {
+    if (myShouldImport && !constructor && StringUtil.isNotEmpty(className)) {
       presentation.appendTailText(" in " + className + location, true);
     } else {
       presentation.appendTailText(location, true);
     }
 
-    PsiType declaredType = myMember instanceof PsiMethod ? ((PsiMethod)myMember).getReturnType() : ((PsiField)myMember).getType();
-    PsiType type = patchGetClass(substitutor.substitute(declaredType));
+    PsiType type = getDeclaredType(myMember, substitutor);
     if (type != null) {
-      presentation.setTypeText(substitutor.substitute(type).getPresentableText());
+      presentation.setTypeText(type.getPresentableText());
     }
   }
 
   @Nullable
-  private PsiType patchGetClass(@Nullable PsiType type) {
-    if (myMember instanceof PsiMethod && PsiTypesUtil.isGetClass((PsiMethod)myMember) && type instanceof PsiClassType) {
+  static PsiType getDeclaredType(PsiMember member, PsiSubstitutor substitutor) {
+    if (member instanceof PsiField) {
+      return substitutor.substitute(((PsiField)member).getType());
+    }
+    if (member instanceof PsiMethod) {
+      PsiMethod method = (PsiMethod)member;
+      if (method.isConstructor()) {
+        PsiClass aClass = Objects.requireNonNull(method.getContainingClass());
+        return JavaPsiFacade.getElementFactory(method.getProject()).createType(aClass, substitutor);
+      }
+      return patchGetClass(method, substitutor.substitute(method.getReturnType()));
+    }
+    return null;
+  }
+
+  @Nullable
+  private static PsiType patchGetClass(@NotNull PsiMethod method, @Nullable PsiType type) {
+    if (PsiTypesUtil.isGetClass(method) && type instanceof PsiClassType) {
       PsiType arg = ContainerUtil.getFirstItem(Arrays.asList(((PsiClassType)type).getParameters()));
       PsiType bound = arg instanceof PsiWildcardType ? TypeConversionUtil.erasure(((PsiWildcardType)arg).getExtendsBound()) : null;
       if (bound != null) {
-        return PsiTypesUtil.createJavaLangClassType(myMember, bound, false);
+        return PsiTypesUtil.createJavaLangClassType(method, bound, false);
       }
     }
     return type;

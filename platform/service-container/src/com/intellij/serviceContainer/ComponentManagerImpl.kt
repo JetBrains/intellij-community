@@ -213,20 +213,27 @@ abstract class ComponentManagerImpl @JvmOverloads constructor(
     indicator.fraction = getPercentageOfComponentsLoaded()
   }
 
-  @Internal
   fun getPercentageOfComponentsLoaded(): Double {
     return instantiatedComponentCount.toDouble() / componentConfigCount
   }
 
-  override fun getExtensionArea(): ExtensionsAreaImpl {
+  final override fun getExtensionArea(): ExtensionsAreaImpl {
     if (!isExtensionSupported) {
       error("Extensions aren't supported")
     }
     return _extensionArea
   }
 
+  // convenient method - use only in a not important code
+  fun registerComponents() {
+    registerComponents(modules = PluginManagerCore.getPluginSet().getEnabledModules(),
+                       app = getApplication(),
+                       precomputedExtensionModel = null,
+                       listenerCallbacks = null)
+  }
+
   @Internal
-  open fun registerComponents(plugins: List<IdeaPluginDescriptorImpl>,
+  open fun registerComponents(modules: Sequence<IdeaPluginDescriptorImpl>,
                               app: Application?,
                               precomputedExtensionModel: PrecomputedExtensionModel?,
                               listenerCallbacks: List<Runnable>?) {
@@ -242,20 +249,12 @@ abstract class ComponentManagerImpl @JvmOverloads constructor(
     // register services before registering extensions because plugins can access services in their
     // extensions which can be invoked right away if the plugin is loaded dynamically
     val extensionPoints = if (precomputedExtensionModel == null) HashMap(extensionArea.extensionPoints) else null
-    for (mainPlugin in plugins) {
+    for (rootModule in modules) {
+      executeRegisterTask(rootModule) { module ->
+        val containerDescriptor = getContainerDescriptor(module)
+        registerServices(containerDescriptor.services, module)
+        newComponentConfigCount += registerComponents(module, containerDescriptor, isHeadless)
 
-      executeRegisterTask(mainPlugin) { pluginDescriptor ->
-        val containerDescriptor = getContainerDescriptor(pluginDescriptor)
-        registerServices(containerDescriptor.services, pluginDescriptor)
-      }
-
-      executeRegisterTask(mainPlugin) { pluginDescriptor ->
-        val containerDescriptor = getContainerDescriptor(pluginDescriptor)
-        newComponentConfigCount += registerComponents(pluginDescriptor, containerDescriptor, isHeadless)
-      }
-
-      executeRegisterTask(mainPlugin) { pluginDescriptor ->
-        val containerDescriptor = getContainerDescriptor(pluginDescriptor)
         containerDescriptor.listeners?.let { listeners ->
           var m = map
           if (m == null) {
@@ -271,17 +270,14 @@ abstract class ComponentManagerImpl @JvmOverloads constructor(
               continue
             }
 
-            listener.pluginDescriptor = pluginDescriptor
+            listener.pluginDescriptor = module
             m.computeIfAbsent(listener.topicClassName) { ArrayList() }.add(listener)
           }
         }
-      }
 
-      if (extensionPoints != null) {
-        executeRegisterTask(mainPlugin) { pluginDescriptor ->
-          val containerDescriptor = getContainerDescriptor(pluginDescriptor)
+        if (extensionPoints != null) {
           containerDescriptor.extensionPoints?.let {
-            ExtensionsAreaImpl.createExtensionPoints(it, this, extensionPoints, pluginDescriptor)
+            ExtensionsAreaImpl.createExtensionPoints(it, this, extensionPoints, module)
           }
         }
       }
@@ -295,10 +291,9 @@ abstract class ComponentManagerImpl @JvmOverloads constructor(
       val immutableExtensionPoints = if (extensionPoints!!.isEmpty()) Collections.emptyMap() else java.util.Map.copyOf(extensionPoints)
       extensionArea.setPoints(immutableExtensionPoints)
 
-      for (mainPlugin in plugins) {
-        executeRegisterTask(mainPlugin) { pluginDescriptor ->
-          val containerDescriptor = getContainerDescriptor(pluginDescriptor)
-          pluginDescriptor.registerExtensions(immutableExtensionPoints, containerDescriptor, listenerCallbacks)
+      for (rootModule in modules) {
+        executeRegisterTask(rootModule) { module ->
+          module.registerExtensions(immutableExtensionPoints, getContainerDescriptor(module), listenerCallbacks)
         }
       }
     }
@@ -577,7 +572,16 @@ abstract class ComponentManagerImpl @JvmOverloads constructor(
   }
 
   @Suppress("UNCHECKED_CAST")
-  override fun <T : Any> getServiceIfCreated(serviceClass: Class<T>): T? = serviceInstanceHotCache.get(serviceClass) as T?
+  override fun <T : Any> getServiceIfCreated(serviceClass: Class<T>): T? {
+    var result = serviceInstanceHotCache.get(serviceClass) as T?
+    if (result == null) {
+      result = doGetService(serviceClass, createIfNeeded = false)
+      if (result != null) {
+        serviceInstanceHotCache.putIfAbsent(serviceClass, result)
+      }
+    }
+    return result
+  }
 
   protected open fun <T : Any> doGetService(serviceClass: Class<T>, createIfNeeded: Boolean): T? {
     val key = serviceClass.name
@@ -865,8 +869,7 @@ abstract class ComponentManagerImpl @JvmOverloads constructor(
         throw e
       }
 
-      val message = "Cannot create class ${aClass.name} (classloader=${aClass.classLoader})"
-      throw PluginException(message, e, pluginId)
+      throw PluginException("Cannot create class ${aClass.name} (classloader=${aClass.classLoader})", e, pluginId)
     }
   }
 
@@ -970,12 +973,12 @@ abstract class ComponentManagerImpl @JvmOverloads constructor(
   open fun activityNamePrefix(): String? = null
 
   @ApiStatus.Internal
-  open fun preloadServices(plugins: List<IdeaPluginDescriptorImpl>,
-                      activityPrefix: String,
-                      onlyIfAwait: Boolean = false): Pair<CompletableFuture<Void?>, CompletableFuture<Void?>> {
+  open fun preloadServices(modules: Sequence<IdeaPluginDescriptorImpl>,
+                           activityPrefix: String,
+                           onlyIfAwait: Boolean = false): Pair<CompletableFuture<Void?>, CompletableFuture<Void?>> {
     val asyncPreloadedServices = mutableListOf<ForkJoinTask<*>>()
     val syncPreloadedServices = mutableListOf<ForkJoinTask<*>>()
-    for (plugin in plugins) {
+    for (plugin in modules) {
       serviceLoop@ for (service in getContainerDescriptor(plugin).services) {
         if (!isServiceSuitable(service) || service.os != null && !isSuitableForOs(service.os)) {
           continue@serviceLoop
@@ -1460,4 +1463,10 @@ private class LightServiceComponentAdapter(private val initializedInstance: Any)
   override fun getComponentInstance(container: PicoContainer?) = initializedInstance
 
   override fun toString() = componentKey
+}
+
+private inline fun executeRegisterTask(mainPluginDescriptor: IdeaPluginDescriptorImpl,
+                                       crossinline task: (IdeaPluginDescriptorImpl) -> Unit) {
+  task(mainPluginDescriptor)
+  executeRegisterTaskForOldContent(mainPluginDescriptor, task)
 }

@@ -10,6 +10,7 @@ import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.testFramework.HeavyPlatformTestCase
 import com.intellij.testFramework.IdeaTestUtil
+import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.util.ThrowableRunnable
 import org.jetbrains.kotlin.diagnostics.Severity
 import org.jetbrains.kotlin.diagnostics.rendering.DefaultErrorMessages
@@ -68,6 +69,11 @@ abstract class AbstractNewWizardProjectImportTest : HeavyPlatformTestCase() {
 
     fun doTestGradleKts(directoryPath: String) {
         doTest(directoryPath, BuildSystem.GRADLE_KOTLIN_DSL)
+
+        // we need code inside invokeLater in org.jetbrains.kotlin.idea.core.script.ucache.ScriptClassRootsUpdater.notifyRootsChanged
+        // to be executed
+        PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue()
+
         checkScriptConfigurationsIfAny()
     }
 

@@ -3,6 +3,7 @@ package com.intellij.xdebugger.impl.ui
 
 import com.intellij.debugger.ui.DebuggerContentInfo
 import com.intellij.execution.runners.ExecutionEnvironment
+import com.intellij.execution.runners.PreferredPlace
 import com.intellij.execution.runners.RunTab
 import com.intellij.execution.ui.layout.LayoutAttractionPolicy
 import com.intellij.execution.ui.layout.PlaceInGrid
@@ -11,6 +12,7 @@ import com.intellij.icons.AllIcons
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.idea.ActionsBundle
 import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.actionSystem.impl.MoreActionGroup
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.wm.ToolWindowAnchor
 import com.intellij.openapi.wm.impl.InternalDecoratorImpl
@@ -25,10 +27,7 @@ import com.intellij.xdebugger.impl.frame.XFramesView
 import com.intellij.xdebugger.impl.frame.XVariablesView
 import com.intellij.xdebugger.impl.frame.XWatchesViewImpl
 import java.awt.Dimension
-import java.awt.event.ComponentAdapter
-import java.awt.event.ComponentEvent
 import javax.swing.Icon
-import javax.swing.JComponent
 
 class XDebugSessionTab3(
   session: XDebugSessionImpl,
@@ -78,7 +77,7 @@ class XDebugSessionTab3(
       variablesView = XVariablesView(session)
       registerView(DebuggerContentInfo.VARIABLES_CONTENT, variablesView)
       variables = variablesView
-      
+
       watchesView = XWatchesViewImpl(session, false, true, false)
       registerView(DebuggerContentInfo.WATCHES_CONTENT, watchesView)
       myWatchesView = watchesView
@@ -101,7 +100,7 @@ class XDebugSessionTab3(
     addVariablesAndWatches(session)
 
     val name = debuggerContentId
-    val content = myUi.createContent(name, splitter, XDebuggerBundle.message("xdebugger.debugger.tab.title"), null, framesView.defaultFocusedComponent).apply {
+    val content = myUi.createContent(name, splitter, XDebuggerBundle.message("xdebugger.threads.vars.tab.title"), null, framesView.defaultFocusedComponent).apply {
       isCloseable = false
     }
 
@@ -112,38 +111,45 @@ class XDebugSessionTab3(
 
   override fun initToolbars(session: XDebugSessionImpl) {
     (myUi as? RunnerLayoutUiImpl)?.setLeftToolbarVisible(false)
+
+    val gearActions = DefaultActionGroup().apply {
+      templatePresentation.text = ActionsBundle.message("group.XDebugger.settings.text")
+      templatePresentation.icon = AllIcons.General.Settings
+      isPopup = true
+      addAll(*myUi.options.settingsActionsList)
+      registerAdditionalActions(DefaultActionGroup(), DefaultActionGroup(), this)
+    }
+
     val toolbar = DefaultActionGroup()
     toolbar.addAll(getCustomizedActionGroup(XDebuggerActions.TOOL_WINDOW_TOP_TOOLBAR_3_GROUP))
 
+    val more = MoreActionGroup()
+    more.addAll(getCustomizedActionGroup(XDebuggerActions.TOOL_WINDOW_TOP_TOOLBAR_3_EXTRA_GROUP))
+    toolbar.add(more)
+    more.addSeparator()
+
     fun addWithConstraints(actions: List<AnAction>, constraints: Constraints) {
-      // reversed because it was like this in the original tab
-      actions.asReversed().asSequence()
-        .filterNot {
-          it.templatePresentation.getClientProperty(RunTab.HIDE_FROM_TOOLBAR) == true
-        }
+      actions.asSequence()
         .forEach {
-          toolbar.add(it, constraints)
+          if (it.templatePresentation.getClientProperty(RunTab.PREFERRED_PLACE) == PreferredPlace.MORE_GROUP) {
+            more.add(it)
+          } else {
+            toolbar.add(it, constraints)
+          }
         }
     }
 
-    addWithConstraints(session.restartActions, Constraints(Anchor.AFTER, IdeActions.ACTION_RERUN))
-    addWithConstraints(session.extraActions, Constraints(Anchor.AFTER, IdeActions.ACTION_STOP_PROGRAM))
+    // reversed because it was like this in the original tab
+    addWithConstraints(session.restartActions.asReversed(), Constraints(Anchor.AFTER, IdeActions.ACTION_RERUN))
+    addWithConstraints(session.extraActions.asReversed(), Constraints(Anchor.AFTER, IdeActions.ACTION_STOP_PROGRAM))
     addWithConstraints(session.extraStopActions, Constraints(Anchor.AFTER, IdeActions.ACTION_STOP_PROGRAM))
+
+    more.addSeparator()
+    more.add(gearActions)
 
     myUi.options.setTopLeftToolbar(toolbar, ActionPlaces.DEBUGGER_TOOLBAR)
 
-    mySingleContentSupplier = object : RunTabSupplier(toolbar) {
-      override fun getContentActions(): List<AnAction> {
-        if (mySession == null) return super.getContentActions() + PinToolwindowTabAction.getPinAction()
-        val settings = mutableListOf(PinToolwindowTabAction.getPinAction(), Separator.create())
-        settings.addAll(myUi.options.settingsActionsList)
-        return super.getContentActions() + DefaultActionGroup(ActionsBundle.messagePointer("group.XDebugger.settings.text"), settings).apply {
-          registerAdditionalActions(DefaultActionGroup(), DefaultActionGroup(), this)
-          isPopup = true
-          templatePresentation.icon = AllIcons.General.Settings
-        }
-      }
-    }
+    mySingleContentSupplier = RunTabSupplier(toolbar)
   }
 
   override fun getSupplier(): SingleContentSupplier? = mySingleContentSupplier

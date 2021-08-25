@@ -176,7 +176,7 @@ public class SingleConfigurableEditor extends DialogWrapper {
   }
 
   protected class ApplyAction extends AbstractAction {
-    private final Alarm myUpdateAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
+    private final Alarm myUpdateAlarm = new Alarm();
 
     public ApplyAction() {
       super(CommonBundle.getApplyButtonText());

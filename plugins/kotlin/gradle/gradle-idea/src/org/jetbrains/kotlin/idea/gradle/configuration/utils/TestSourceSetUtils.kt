@@ -1,7 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.kotlin.idea.gradle.configuration.utils
 
-import org.jetbrains.kotlin.idea.KotlinPluginInternalApi
+import com.intellij.openapi.util.IntellijInternalApi
 
 
 // TODO: Replace heuristic with proper import!
@@ -20,7 +20,7 @@ internal fun isProbablyProductionSourceSet(name: String): Boolean {
 }
 
 @UnsafeTestSourceSetHeuristicApi
-@KotlinPluginInternalApi
+@IntellijInternalApi
 fun predictedProductionSourceSetName(testSourceSetName: String): String {
     /*
     This implementation uses a lot of implicit knowledge and should be replaced.

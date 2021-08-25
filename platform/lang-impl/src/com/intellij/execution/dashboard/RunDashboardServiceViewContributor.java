@@ -181,7 +181,7 @@ public class RunDashboardServiceViewContributor
     Object object = event.getAttachedObject();
     if (!(object instanceof DataProvider)) return null;
 
-    Object data = ((DataProvider)object).getData(PlatformDataKeys.SELECTED_ITEMS.getName());
+    Object data = ((DataProvider)object).getData(PlatformCoreDataKeys.SELECTED_ITEMS.getName());
     if (!(data instanceof Object[])) return null;
 
     Object[] items = (Object[])data;

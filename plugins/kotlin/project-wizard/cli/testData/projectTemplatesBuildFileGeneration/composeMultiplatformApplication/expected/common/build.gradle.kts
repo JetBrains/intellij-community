@@ -2,17 +2,13 @@ import org.jetbrains.compose.compose
 
 plugins {
     kotlin("multiplatform")
-    id("org.jetbrains.compose") version "0.4.0"
+    id("org.jetbrains.compose") version "1.0.0-alpha3"
     id("com.android.library")
     id("kotlin-android-extensions")
 }
 
 group = "me.user"
 version = "1.0"
-
-repositories {
-    google()
-}
 
 kotlin {
     android()
@@ -45,7 +41,11 @@ kotlin {
                 implementation("junit:junit:4.13")
             }
         }
-        val desktopMain by getting
+        val desktopMain by getting {
+            dependencies {
+                api(compose.preview)
+            }
+        }
         val desktopTest by getting
     }
 }
@@ -56,5 +56,9 @@ android {
     defaultConfig {
         minSdkVersion(24)
         targetSdkVersion(29)
+    }
+    compileOptions {
+        sourceCompatibility = JavaVersion.VERSION_1_8
+        targetCompatibility = JavaVersion.VERSION_1_8
     }
 }

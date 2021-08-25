@@ -11,6 +11,7 @@ import com.intellij.openapi.actionSystem.KeyboardShortcut;
 import com.intellij.openapi.actionSystem.Shortcut;
 import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.ApplicationNamesInfo;
+import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.keymap.Keymap;
@@ -55,10 +56,7 @@ import java.io.InputStream;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
-import java.util.Collections;
-import java.util.Dictionary;
-import java.util.Enumeration;
-import java.util.HashMap;
+import java.util.*;
 
 import static com.intellij.DynamicBundle.findLanguageBundle;
 import static com.intellij.util.ui.UIUtil.drawImage;
@@ -70,6 +68,7 @@ import static com.intellij.util.ui.UIUtil.drawImage;
 public final class TipUIUtil {
   private static final Logger LOG = Logger.getInstance(TipUIUtil.class);
   private static final String SHORTCUT_ENTITY = "&shortcut:";
+  private static final String MISC_PATH = "misc";
 
   private TipUIUtil() {
   }
@@ -136,14 +135,25 @@ public final class TipUIUtil {
           tipLoader = langBundle.pluginDescriptor.getPluginClassLoader();
         }
 
-        InputStream tipStream = ResourceUtil.getResourceAsStream(tipLoader, "/tips/", tip.fileName);
+        String ideCode = ApplicationInfoEx.getInstanceEx().getApiVersionAsNumber().getProductCode().toLowerCase(Locale.ROOT);
+        String tipsPath = "/tips/" + (langBundle != null ? ideCode + "/" : "");
+        InputStream tipStream = ResourceUtil.getResourceAsStream(tipLoader, tipsPath, tip.fileName);
+
+        boolean isMisc = false;
         if (tipStream == null) {
-          return getCantReadText(tip);
+          tipStream = ResourceUtil.getResourceAsStream(tipLoader, "/tips/" + MISC_PATH + "/", tip.fileName);
+          if (tipStream == null) {
+            return getCantReadText(tip);
+          }
+          isMisc = true;
         }
         text.append(ResourceUtil.loadText(tipStream));
-        updateImages(text, tipLoader, "", component);
-        InputStream cssResourceStream = ResourceUtil.getResourceAsStream(tipLoader, "/tips/", StartupUiUtil.isUnderDarcula()
-                                                                                              ? "css/tips_darcula.css" : "css/tips.css");
+        String path = langBundle != null ? isMisc ? MISC_PATH : ideCode : "";
+        updateImages(text, tipLoader, path, component);
+
+        String cssPath = "/tips/" + (langBundle != null ? (isMisc ? MISC_PATH : ideCode) + "/" : "");
+        InputStream cssResourceStream = ResourceUtil.getResourceAsStream(tipLoader, cssPath, StartupUiUtil.isUnderDarcula()
+                                                                                             ? "css/tips_darcula.css" : "css/tips.css");
         cssText = cssResourceStream != null ? ResourceUtil.loadText(cssResourceStream) : "";
       }
 

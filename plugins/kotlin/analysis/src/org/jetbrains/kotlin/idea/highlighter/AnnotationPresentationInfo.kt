@@ -12,9 +12,11 @@ import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.openapi.editor.colors.CodeInsightColors
 import com.intellij.openapi.editor.colors.TextAttributesKey
+import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.TextRange
 import com.intellij.util.containers.MultiMap
 import com.intellij.xml.util.XmlStringUtil
+import org.jetbrains.annotations.Nls
 import org.jetbrains.kotlin.diagnostics.Diagnostic
 import org.jetbrains.kotlin.diagnostics.Severity
 import org.jetbrains.kotlin.diagnostics.rendering.DefaultErrorMessages
@@ -25,7 +27,7 @@ import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 
 class AnnotationPresentationInfo(
     val ranges: List<TextRange>,
-    val nonDefaultMessage: String? = null,
+    @Nls val nonDefaultMessage: String? = null,
     val highlightType: ProblemHighlightType? = null,
     val textAttributes: TextAttributesKey? = null
 ) {
@@ -97,11 +99,13 @@ class AnnotationPresentationInfo(
             .also(consumer)
     }
 
+    @NlsContexts.Tooltip
     private fun getMessage(diagnostic: Diagnostic): String {
         var message = IdeErrorMessages.render(diagnostic)
         if (isApplicationInternalMode() || isUnitTestMode()) {
             val factoryName = diagnostic.factory.name
             message = if (message.startsWith("<html>")) {
+                @Suppress("HardCodedStringLiteral")
                 "<html>[$factoryName] ${message.substring("<html>".length)}"
             } else {
                 "[$factoryName] $message"

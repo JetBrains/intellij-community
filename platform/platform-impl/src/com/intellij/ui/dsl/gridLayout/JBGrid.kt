@@ -17,12 +17,12 @@ interface JBGrid {
   var resizableRows: Set<Int>
 
   /**
-   * Distances after columns with correspondent index
+   * Gaps around columns. Used only when column is visible
    */
-  var columnsDistance: List<Int>
+  var columnsGaps: List<ColumnGaps>
 
   /**
-   * Distances after rows with correspondent index
+   * Gaps around rows. Used only when row is visible
    */
-  var rowsDistance: List<Int>
+  var rowsGaps: List<RowGaps>
 }

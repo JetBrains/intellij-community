@@ -12,7 +12,6 @@ import com.intellij.notification.NotificationType;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.fileTypes.PlainTextLikeFileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.InvalidDataException;
@@ -31,6 +30,7 @@ import com.intellij.structuralsearch.impl.matcher.compiler.PatternCompiler;
 import com.intellij.structuralsearch.impl.matcher.filters.LexicalNodesFilter;
 import com.intellij.structuralsearch.impl.matcher.iterators.SsrFilteringNodeIterator;
 import com.intellij.structuralsearch.impl.matcher.predicates.ScriptSupport;
+import com.intellij.structuralsearch.impl.matcher.strategies.MatchingStrategy;
 import com.intellij.structuralsearch.plugin.replace.ReplacementInfo;
 import com.intellij.structuralsearch.plugin.replace.impl.Replacer;
 import com.intellij.structuralsearch.plugin.replace.ui.ReplaceConfiguration;
@@ -425,13 +425,12 @@ public class SSBasedInspection extends LocalInspectionTool implements DynamicGro
     public void visitElement(@NotNull PsiElement element) {
       if (LexicalNodesFilter.getInstance().accepts(element)) return;
       for (Map.Entry<Configuration, Matcher> entry : myCompiledOptions.entrySet()) {
-        final Configuration configuration = entry.getKey();
-        LanguageFileType fileType = configuration.getMatchOptions().getFileType();
-        if (fileType == null || !element.getLanguage().isKindOf(fileType.getLanguage())) continue;
         final Matcher matcher = entry.getValue();
         if (matcher == null) continue;
+        MatchingStrategy strategy = matcher.getMatchContext().getPattern().getStrategy();
+        if (!strategy.continueMatching(element)) continue;
 
-        processElement(element, configuration, matcher);
+        processElement(element, entry.getKey(), matcher);
       }
     }
 

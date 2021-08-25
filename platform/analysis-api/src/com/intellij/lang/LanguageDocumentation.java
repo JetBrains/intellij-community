@@ -24,9 +24,9 @@ public final class LanguageDocumentation extends LanguageExtension<Documentation
 
   @Override
   protected DocumentationProvider findForLanguage(@NotNull Language language) {
-    final List<DocumentationProvider> providers = allForLanguage(language);
-    if (providers.size() < 2) {
-      return super.findForLanguage(language);
+    List<DocumentationProvider> providers = allForLanguage(language);
+    if (providers.isEmpty()) {
+      return null;
     }
     return CompositeDocumentationProvider.wrapProviders(providers);
   }

@@ -116,6 +116,7 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
   public static final @NonNls String CONSOLE_START_COMMAND = "import sys; print('Python %s on %s' % (sys.version, sys.platform))\n" +
                                                              "sys.path.extend([" + WORKING_DIR_AND_PYTHON_PATHS + "])\n";
   public static final @NonNls String STARTED_BY_RUNNER = "startedByRunner";
+  public static final @NonNls String INLINE_OUTPUT_SUPPORTED = "INLINE_OUTPUT_SUPPORTED";
   private static final Long WAIT_BEFORE_FORCED_CLOSE_MILLIS = 2000L;
   private static final Logger LOG = Logger.getInstance(PydevConsoleRunnerImpl.class);
   @SuppressWarnings("SpellCheckingInspection")
@@ -124,7 +125,6 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
   private final Project myProject;
   private final @NlsContexts.TabTitle String myTitle;
   @Nullable private final String myWorkingDir;
-  private final Consumer<? super String> myRerunAction;
   @Nullable private Sdk mySdk;
   private PydevConsoleCommunication myPydevConsoleCommunication;
   private PyConsoleProcessHandler myProcessHandler;
@@ -150,7 +150,7 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
                                 @Nullable final String workingDir,
                                 @NotNull Map<String, String> environmentVariables,
                                 @NotNull PyConsoleOptions.PyConsoleSettings settingsProvider,
-                                @NotNull Consumer<? super String> rerunAction, String... statementsToExecute) {
+                                String... statementsToExecute) {
     myProject = project;
     mySdk = sdk;
     myTitle = title;
@@ -159,7 +159,6 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
     myEnvironmentVariables = environmentVariables;
     myConsoleSettings = settingsProvider;
     myStatementsToExecute = statementsToExecute;
-    myRerunAction = rerunAction;
   }
 
   public PydevConsoleRunnerImpl(@NotNull final Project project,
@@ -168,9 +167,8 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
                                 @Nullable final String workingDir,
                                 @NotNull Map<String, String> environmentVariables,
                                 @NotNull PyConsoleOptions.PyConsoleSettings settingsProvider,
-                                @NotNull Consumer<? super String> rerunAction, String... statementsToExecute) {
-    this(project, sdk, consoleType, consoleType.getTitle(), workingDir, environmentVariables, settingsProvider, rerunAction,
-         statementsToExecute);
+                                String... statementsToExecute) {
+    this(project, sdk, consoleType, consoleType.getTitle(), workingDir, environmentVariables, settingsProvider, statementsToExecute);
   }
 
   public void setConsoleTitle(@NlsContexts.TabTitle String consoleTitle) {
@@ -410,7 +408,11 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
     PythonExecution pythonConsoleScriptExecution =
       PydevConsoleCli.createPythonConsoleScriptInClientMode(ideServerPort, targetEnvironmentRequest);
 
-    PythonCommandLineState.initEnvironment(myProject, pythonConsoleScriptExecution, runParams, targetEnvironmentRequest);
+    PyRemoteSdkAdditionalDataBase remoteSdkAdditionalData = getRemoteAdditionalData(mySdk);
+    if (remoteSdkAdditionalData != null) {
+      PyRemotePathMapper pathMapper = PydevConsoleRunner.getPathMapper(myProject, myConsoleSettings, remoteSdkAdditionalData);
+      PythonCommandLineState.initEnvironment(myProject, pythonConsoleScriptExecution, runParams, targetEnvironmentRequest, pathMapper);
+    }
 
     if (myWorkingDir != null) {
       Function<TargetEnvironment, String> targetWorkingDir =
@@ -708,6 +710,7 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
     UIUtil.invokeAndWaitIfNeeded((Runnable)() -> {
       // Init console view
       myConsoleView = createConsoleView(sdk);
+      myConsoleView.setRunner(this);
       myConsoleView.setBorder(new SideBorder(JBColor.border(), SideBorder.LEFT));
       myPydevConsoleCommunication.setConsoleView(myConsoleView);
       myProcessHandler = createProcessHandler(process, commandLineProcess.getCommandLine(), sdk);
@@ -827,7 +830,8 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
     }
   }
 
-  protected AnAction createRerunAction() {
+  @Override
+  public AnAction createRerunAction() {
     return new RestartAction(this, myConsoleInitTitle);
   }
 
@@ -958,7 +962,6 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
     for (ConsoleListener listener : myConsoleListeners) {
       listener.handleConsoleInitialized(consoleView);
     }
-    myConsoleListeners.clear();
   }
 
   @Override
@@ -969,9 +972,9 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
 
   private static final class RestartAction extends AnAction {
     private final PydevConsoleRunnerImpl myConsoleRunner;
-    private final String myInitTitle;
+    private final @NlsContexts.TabTitle String myInitTitle;
 
-    private RestartAction(PydevConsoleRunnerImpl runner, String initTitle) {
+    private RestartAction(PydevConsoleRunnerImpl runner, @NlsContexts.TabTitle String initTitle) {
       ActionUtil.copyFrom(this, IdeActions.ACTION_RERUN);
       getTemplatePresentation().setIcon(AllIcons.Actions.Restart);
       myConsoleRunner = runner;
@@ -1002,7 +1005,13 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
     return content.getDisplayName();
   }
 
-  private void stopAndRerunConsole(Boolean rerun, @NotNull @Nls String message, @Nullable String displayName) {
+  @Override
+  public void reRun(boolean requestEditorFocus, @NlsContexts.TabTitle String title) {
+    setConsoleTitle(title);
+    run(requestEditorFocus);
+  }
+
+  private void stopAndRerunConsole(Boolean rerun, @NotNull @Nls String message, @Nullable @NlsContexts.TabTitle String displayName) {
     new Task.Backgroundable(myProject, message, true) {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
@@ -1017,7 +1026,12 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
         }
 
         if (rerun) {
-          ModalityUiUtil.invokeLaterIfNeeded(ModalityState.defaultModalityState(), () -> myRerunAction.consume(displayName));
+          ModalityUiUtil.invokeLaterIfNeeded(ModalityState.defaultModalityState(), () -> {
+            PydevConsoleRunnerImpl.this.reRun(true, displayName);
+          });
+        }
+        else {
+          myConsoleListeners.clear();
         }
       }
     }.queue();
@@ -1206,6 +1220,9 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
       PyDebuggerSettings debuggerSettings = PyDebuggerSettings.getInstance();
       if (debuggerSettings.getValuesPolicy() != PyDebugValue.ValuesPolicy.SYNC) {
         myEnvironmentVariables.put(PyDebugValue.POLICY_ENV_VARS.get(debuggerSettings.getValuesPolicy()), "True");
+      }
+      if (PyConsoleOutputCustomizer.Companion.getInstance().isInlineOutputSupported()) {
+        myEnvironmentVariables.put(INLINE_OUTPUT_SUPPORTED, "True");
       }
     }
 

@@ -26,7 +26,7 @@ import org.jetbrains.kotlin.resolve.jvm.annotations.JVM_OVERLOADS_FQ_NAME
 
 class KotlinCompilerRefHelper : LanguageCompilerRefAdapter.ExternalLanguageHelper() {
     override fun getAffectedFileTypes(): Set<FileType> = setOf(KotlinFileType.INSTANCE)
-    override fun asCompilerRef(element: PsiElement, names: NameEnumerator): CompilerRef? = null
+    override fun asCompilerRef(element: PsiElement, names: NameEnumerator): CompilerRef? = asCompilerRefs(element, names)?.singleOrNull()
     override fun asCompilerRefs(element: PsiElement, names: NameEnumerator): List<CompilerRef>? =
         when (val originalElement = element.unwrapped) {
             is KtClass -> originalElement.asCompilerRef(names)?.let(::listOf)

@@ -100,7 +100,7 @@ public class RunAnythingPopupUI extends BigPopupUI {
   private RunAnythingContext mySelectedExecutingContext;
   private final List<RunAnythingContext> myAvailableExecutingContexts = new ArrayList<>();
   private RunAnythingChooseContextAction myChooseContextAction;
-  private final Alarm myListRenderingAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
+  private final Alarm myListRenderingAlarm = new Alarm();
   private final ExecutorService myExecutorService =
     SequentialTaskExecutor.createSequentialApplicationPoolExecutor("Run Anything list building");
 

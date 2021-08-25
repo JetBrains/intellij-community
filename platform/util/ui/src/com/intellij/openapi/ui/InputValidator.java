@@ -3,12 +3,14 @@ package com.intellij.openapi.ui;
 
 import com.intellij.openapi.util.NlsSafe;
 
+import javax.swing.*;
+
 /**
  * The validator for input dialogs.
  *
  * @see Messages#showInputDialog(String, String, javax.swing.Icon, String, InputValidator)
  * @see Messages#showInputDialog(java.awt.Component, String, String, javax.swing.Icon, String, InputValidator)
- * @see Messages#showInputDialog(com.intellij.openapi.project.Project, String, String, javax.swing.Icon, String, InputValidator)
+ * @see Messages#showInputDialog(com.intellij.openapi.project.Project, String, String, Icon, String, InputValidator)
  * @see Messages#showEditableChooseDialog(String, String, javax.swing.Icon, String[], String, InputValidator)
  */
 public interface InputValidator {

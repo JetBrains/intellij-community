@@ -8,7 +8,6 @@ import com.intellij.psi.util.PsiTreeUtil
 import org.jetbrains.kotlin.builtins.KotlinBuiltIns
 import org.jetbrains.kotlin.builtins.isKFunctionType
 import org.jetbrains.kotlin.config.LanguageFeature
-import org.jetbrains.kotlin.descriptors.ClassDescriptor
 import org.jetbrains.kotlin.diagnostics.Diagnostic
 import org.jetbrains.kotlin.diagnostics.Errors
 import org.jetbrains.kotlin.diagnostics.rendering.DefaultErrorMessages
@@ -46,7 +45,8 @@ class QuickFixFactoryForTypeMismatchError : KotlinIntentionActionsFactory() {
     override fun doCreateActions(diagnostic: Diagnostic): List<IntentionAction> {
         val actions = LinkedList<IntentionAction>()
 
-        val context = (diagnostic.psiFile as KtFile).analyzeWithContent()
+        val file = diagnostic.psiFile as KtFile
+        val context = file.analyzeWithContent()
 
         val diagnosticElement = diagnostic.psiElement
         if (diagnosticElement !is KtExpression) {
@@ -116,9 +116,9 @@ class QuickFixFactoryForTypeMismatchError : KotlinIntentionActionsFactory() {
             }
         }
 
-        val expectedClassDescriptor = expressionType.constructor.declarationDescriptor as? ClassDescriptor
-        if (expectedClassDescriptor != null && KotlinBuiltIns.isKClass(expectedClassDescriptor) && expectedType.isJClass()) {
-            actions.add(ConvertKClassToClassFix(diagnosticElement))
+        val convertKClassToClassFix = ConvertKClassToClassFix.create(file, expectedType, expressionType, diagnosticElement)
+        if (convertKClassToClassFix != null) {
+            actions.add(convertKClassToClassFix)
         }
 
         if (expectedType.isInterface()) {

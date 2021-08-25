@@ -53,7 +53,7 @@ public class TimedZipHandler extends ZipHandlerBase {
   @ApiStatus.Internal
   public static void closeOpenZipReferences() {
     synchronized (ourOpenFileLimitGuard) {
-      ourOpenFileLimitGuard.keySet().forEach(TimedZipHandler::dispose);
+      ourOpenFileLimitGuard.keySet().forEach(TimedZipHandler::clearCaches);
     }
   }
 
@@ -68,8 +68,8 @@ public class TimedZipHandler extends ZipHandlerBase {
   }
 
   @Override
-  public void dispose() {
-    super.dispose();
+  public void clearCaches() {
+    super.clearCaches();
     myHandle.invalidateZipReference();
   }
 

@@ -6,12 +6,10 @@ import com.intellij.execution.configurations.JavaParameters
 import com.intellij.execution.configurations.RunnerSettings
 import com.intellij.execution.configurations.SimpleJavaParameters
 import com.intellij.execution.process.ProcessHandler
-import com.intellij.execution.ui.SettingsEditorFragment
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemRunConfiguration
 import com.intellij.openapi.externalSystem.service.execution.configuration.ExternalSystemRunConfigurationExtension
 import com.intellij.openapi.options.SettingsEditor
 import com.intellij.openapi.options.SettingsEditorGroup
-import com.intellij.openapi.project.Project
 import org.jdom.Element
 import org.jetbrains.annotations.ApiStatus
 import com.intellij.execution.JavaRunConfigurationExtensionManager.Companion.instance as javaExtensionManager

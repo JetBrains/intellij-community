@@ -17,6 +17,7 @@ import com.intellij.ide.ui.*;
 import com.intellij.ide.ui.laf.darcula.DarculaInstaller;
 import com.intellij.ide.ui.laf.darcula.DarculaLaf;
 import com.intellij.ide.ui.laf.darcula.DarculaLookAndFeelInfo;
+import com.intellij.ide.ui.laf.intellij.IdeaPopupMenuUI;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
@@ -24,6 +25,7 @@ import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
+import com.intellij.openapi.components.ComponentCategory;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
@@ -70,7 +72,7 @@ import java.util.List;
 import java.util.*;
 import java.util.function.BooleanSupplier;
 
-@State(name = "LafManager", storages = @Storage("laf.xml"))
+@State(name = "LafManager", storages = @Storage("laf.xml"), category = ComponentCategory.UI)
 public final class LafManagerImpl extends LafManager implements PersistentStateComponent<Element>, Disposable {
   private static final Logger LOG = Logger.getInstance(LafManager.class);
 
@@ -896,7 +898,7 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
 
     FontUIResource buttonFont = getFont("Helvetica Neue", 13, Font.PLAIN);
     defaults.put("Button.font", buttonFont);
-    Font menuFont = getFont("Lucida Grande", 14, Font.PLAIN);
+    Font menuFont = getFont("Lucida Grande", 13, Font.PLAIN);
     defaults.put("Menu.font", menuFont);
     defaults.put("MenuItem.font", menuFont);
     defaults.put("MenuItem.acceleratorFont", menuFont);
@@ -1207,6 +1209,10 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
             DialogWrapper.cleanupWindowListeners(window);
           }
         });
+        if (IdeaPopupMenuUI.isUnderPopup(contents) && IdeaPopupMenuUI.isRoundBorder()) {
+          window.setBackground(Gray.TRANSPARENT);
+          window.setOpacity(1);
+        }
       }
       return popup;
     }

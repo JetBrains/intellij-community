@@ -11,6 +11,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.function.Consumer;
 
 /**
+ * For INTERNAL use only!
  * Extension point for create maven remote process.
  * And to interact with the process and handling its callbacks.
  * {@link MavenRemoteProcessSupport}

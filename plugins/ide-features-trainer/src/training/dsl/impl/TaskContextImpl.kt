@@ -317,10 +317,12 @@ internal class TaskContextImpl(private val lessonExecutor: LessonExecutor,
 
   override fun triggerByFoundListItemAndHighlight(options: LearningUiHighlightingManager.HighlightingOptions,
                                                   checkList: TaskRuntimeContext.(list: JList<*>) -> Int?) {
-    triggerByUiComponentAndHighlight l@{
+    triggerByUiComponentAndHighlight {
       val list = LearningUiUtil.findComponentOrNull(JList::class.java) l@{
-        val index = checkList(it)
-        index != null && it.visibleRowCount > index
+        val index = checkList(it) ?: return@l false
+        val itemRect = it.getCellBounds(index, index)
+        val listRect = it.visibleRect
+        itemRect.y < listRect.y + listRect.height && itemRect.y + itemRect.height > listRect.y  // intersection condition
       }
       if (list != null) {
         taskInvokeLater(ModalityState.any()) {

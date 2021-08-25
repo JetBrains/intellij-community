@@ -2,9 +2,7 @@
     "usages": [
         "Main.java",
         "JavaWrite.java",
-        "JavaRead.java"
-    ],
-    "shouldBeUsage" : [
+        "JavaRead.java",
         "KotlinWrite.kt",
         "KotlinRead.kt",
         "KotlinBySuper.kt",

@@ -2,6 +2,7 @@
 
 package org.jetbrains.kotlin.idea.gradle.scripting.importing
 
+import org.jetbrains.annotations.Nls
 import org.jetbrains.kotlin.idea.gradle.scripting.GradleKotlinScriptConfigurationInputs
 
 data class KotlinDslScriptModel(
@@ -14,8 +15,8 @@ data class KotlinDslScriptModel(
 ) {
     data class Message(
         val severity: Severity,
-        val text: String,
-        val details: String = "",
+        @Nls val text: String,
+        @Nls val details: String = "",
         val position: Position?
     )
 

@@ -368,11 +368,15 @@ public final class Presentation implements Cloneable {
     }
   }
 
-  public void copyFrom(Presentation presentation) {
-    copyFrom(presentation, null);
+  public void copyFrom(@NotNull Presentation presentation) {
+    copyFrom(presentation, null, false);
   }
 
-  public void copyFrom(Presentation presentation, @Nullable Component customComponent) {
+  public void copyFrom(@NotNull Presentation presentation, @Nullable Component customComponent) {
+    copyFrom(presentation, customComponent, true);
+  }
+
+  private void copyFrom(@NotNull Presentation presentation, @Nullable Component customComponent, boolean forceNullComponent) {
     if (presentation == this) return;
 
     setTextWithMnemonic(presentation.getTextWithPossibleMnemonic());
@@ -390,7 +394,7 @@ public final class Presentation implements Cloneable {
       allKeys.addAll(myUserMap.keySet());
       if (!allKeys.isEmpty()) {
         for (String key : allKeys) {
-          if (key.equals(CustomComponentAction.COMPONENT_KEY.toString()) && customComponent != null) {
+          if (key.equals(CustomComponentAction.COMPONENT_KEY.toString()) && (customComponent != null || forceNullComponent)) {
             putClientProperty(key, customComponent);
           }
           else {

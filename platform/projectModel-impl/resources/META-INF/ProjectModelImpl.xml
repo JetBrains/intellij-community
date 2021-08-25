@@ -27,6 +27,7 @@
                     serviceImplementation="com.intellij.workspaceModel.ide.impl.WorkspaceModelImpl" preload="await"/>
     <projectService serviceInterface="com.intellij.workspaceModel.storage.url.VirtualFileUrlManager"
                     serviceImplementation="com.intellij.workspaceModel.ide.impl.IdeVirtualFileUrlManagerImpl"/>
+    <backgroundPostStartupActivity implementation="com.intellij.workspaceModel.ide.impl.VirtualFileUrlsLazyInitializer" />
 
     <projectService serviceImplementation="com.intellij.workspaceModel.ide.WorkspaceModelTopics"/>
 

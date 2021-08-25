@@ -9,5 +9,9 @@
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module" module-name="intellij.platform.boot" scope="RUNTIME" />
     <orderEntry type="library" name="JUnit4" level="project" />
+    <orderEntry type="library" name="JUnit5Launcher" level="project" />
+    <orderEntry type="library" name="JUnit5" level="project" />
+    <orderEntry type="library" name="JUnit5Vintage" level="project" />
+    <orderEntry type="library" name="tcServiceMessages" level="project" />
   </component>
 </module>

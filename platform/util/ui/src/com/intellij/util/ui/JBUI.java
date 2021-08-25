@@ -688,6 +688,11 @@ public class JBUI {
 
     public static final class ToolWindow {
       @NotNull
+      public static Color background() {
+        return JBColor.namedColor("ToolWindow.background", JBColor.background());
+      }
+
+      @NotNull
       public static Color borderColor() {
         return JBColor.namedColor("ToolWindow.HeaderTab.borderColor", DefaultTabs.borderColor());
       }
@@ -727,6 +732,11 @@ public class JBUI {
       @NotNull
       public static Color underlinedTabInactiveForeground() {
         return JBColor.namedColor("ToolWindow.HeaderTab.underlinedTabInactiveForeground", underlinedTabForeground());
+      }
+
+      @NotNull
+      public static int headerTabPadding() {
+        return getInt("ToolWindow.HeaderTab.padding", JBUIScale.scale(6));
       }
 
       /**
@@ -780,6 +790,10 @@ public class JBUI {
       @NotNull
       public static Color headerActiveBackground() {
         return JBColor.namedColor("ToolWindow.Header.background", JBColor.namedColor("ToolWindow.header.active.background", 0xE2E6EC));
+      }
+
+      public static int headerPadding() {
+        return getInt("ToolWindow.Header.padding", JBUIScale.scale(6));
       }
 
       /**

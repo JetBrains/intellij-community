@@ -3,7 +3,6 @@ package training.ui
 
 import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.diagnostic.Logger
-import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.text.StringUtil
 import org.intellij.lang.annotations.Language
 import org.jdom.Content
@@ -11,7 +10,6 @@ import org.jdom.Element
 import org.jdom.Text
 import org.jdom.input.SAXBuilder
 import org.jdom.output.XMLOutputter
-import training.learn.CourseManager
 import training.util.KeymapUtil
 import training.util.openLinkInBrowser
 import java.util.regex.Pattern
@@ -20,25 +18,15 @@ import javax.swing.KeyStroke
 internal object MessageFactory {
   private val LOG = Logger.getInstance(MessageFactory::class.java)
 
-  fun setLinksHandlers(project: Project, messageParts: List<MessagePart>) {
+  fun setLinksHandlers(messageParts: List<MessagePart>) {
     for (message in messageParts) {
       if (message.type == MessagePart.MessageType.LINK && message.runnable == null) {
-        //add link handler
-        message.runnable = Runnable {
-          val link = message.link
-          if (link == null || link.isEmpty()) {
-            val lesson = CourseManager.instance.findLessonByName(message.text)
-            if (lesson != null) {
-              try {
-                CourseManager.instance.openLesson(project, lesson)
-              }
-              catch (e: Exception) {
-                LOG.warn(e)
-              }
-
-            }
-          }
-          else {
+        val link = message.link
+        if (link == null || link.isEmpty()) {
+          LOG.error("No link specified for ${message.text}")
+        }
+        else {
+          message.runnable = Runnable {
             try {
               openLinkInBrowser(link)
             }

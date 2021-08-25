@@ -1,9 +1,7 @@
 {
     "usages": [
         "Main.java",
-        "JavaUsage.java"
-    ],
-    "shouldBeUsage": [
+        "JavaUsage.java",
         "KotlinUsage.kt"
     ]
 }

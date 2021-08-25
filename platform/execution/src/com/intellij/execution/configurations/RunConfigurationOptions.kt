@@ -57,7 +57,7 @@ open class RunConfigurationOptions : BaseState(), FragmentedSettings {
   var projectPathOnTarget by string()
 
   @get:XCollection(propertyElementName = "selectedOptions")
-  override var selectedOptions by list<FragmentedSettings.Option>();
+  override var selectedOptions by list<FragmentedSettings.Option>()
 }
 
 open class LocatableRunConfigurationOptions : RunConfigurationOptions() {
@@ -69,4 +69,21 @@ open class LocatableRunConfigurationOptions : RunConfigurationOptions() {
 open class ModuleBasedConfigurationOptions : LocatableRunConfigurationOptions() {
   @get:OptionTag(tag = "module", valueAttribute = "name", nameAttribute = "")
   var module by string()
+
+  @get:XCollection(propertyElementName = "classpathModifications")
+  var classpathModifications by list<ClasspathModification>()
+
+  @Tag("entry")
+  class ClasspathModification() : BaseState() {
+    constructor(path: String, exclude: Boolean): this() {
+      this.path = path
+      this.exclude = exclude
+    }
+
+    @get:Attribute("path")
+    var path by string()
+
+    @get:Attribute("exclude")
+    var exclude by property(false)
+  }
 }

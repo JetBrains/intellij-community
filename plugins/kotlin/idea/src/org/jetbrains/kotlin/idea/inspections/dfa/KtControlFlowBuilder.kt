@@ -28,10 +28,12 @@ import com.intellij.psi.tree.TokenSet
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.containers.FList
+import org.jetbrains.kotlin.KtNodeTypes
 import org.jetbrains.kotlin.builtins.KotlinBuiltIns
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.inspections.dfa.KotlinAnchor.*
 import org.jetbrains.kotlin.idea.inspections.dfa.KotlinProblem.*
+import org.jetbrains.kotlin.idea.intentions.loopToCallChain.isFalseConstant
 import org.jetbrains.kotlin.idea.intentions.loopToCallChain.targetLoop
 import org.jetbrains.kotlin.idea.project.builtIns
 import org.jetbrains.kotlin.idea.refactoring.move.moveMethod.type
@@ -47,6 +49,9 @@ import org.jetbrains.kotlin.types.typeUtil.*
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicInteger
 
+/*
+com.jetbrains.cidr.lang.hmap.OCHeaderMaps#writeToChannel (to investigate)
+ */
 class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpression) {
     private val flow = ControlFlow(factory, context)
     private var broken: Boolean = false
@@ -55,13 +60,6 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
 
     fun buildFlow(): ControlFlow? {
         processExpression(context)
-        if (LOG.isDebugEnabled) {
-            val total = totalCount.incrementAndGet()
-            val success = if (!broken) successCount.incrementAndGet() else successCount.get()
-            if (total % 100 == 0) {
-                LOG.info("Analyzed: "+success+" of "+total + " ("+success*100/total + "%)")
-            }
-        }
         if (broken) return null
         addInstruction(PopInstruction()) // return value
         flow.finish()
@@ -104,7 +102,9 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
             is KtCallableReferenceExpression -> processCallableReference(expr)
             is KtTryExpression -> processTryExpression(expr)
             is KtDestructuringDeclaration -> processDestructuringDeclaration(expr)
-            // KtObjectLiteralExpression, KtNamedFunction, KtClass
+            is KtObjectLiteralExpression -> processObjectLiteral(expr)
+            is KtNamedFunction -> pushUnknown()
+            is KtClass -> pushUnknown()
             else -> {
                 // unsupported construct
                 if (LOG.isDebugEnabled) {
@@ -117,6 +117,17 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
             }
         }
         flow.finishElement(expr)
+    }
+
+    private fun processObjectLiteral(expr: KtObjectLiteralExpression) {
+        for (superTypeListEntry in expr.objectDeclaration.superTypeListEntries) {
+            if (superTypeListEntry is KtSuperTypeCallEntry) {
+                // super-constructor call: may be impure
+                addInstruction(FlushFieldsInstruction())
+            }
+        }
+        val dfType = expr.getKotlinType().toDfType(expr)
+        addInstruction(PushValueInstruction(dfType, KotlinExpressionAnchor(expr)))
     }
 
     private fun processDestructuringDeclaration(expr: KtDestructuringDeclaration) {
@@ -579,16 +590,22 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
     private fun processForExpression(expr: KtForExpression) {
         val parameter = expr.loopParameter
         if (parameter == null) {
-            // TODO: support destructuring declarations
             broken = true
             return
         }
+        val destructuringDeclaration = parameter.destructuringDeclaration
         val parameterVar = factory.varFactory.createVariableValue(KtVariableDescriptor(parameter))
         val parameterType = parameter.type()
         val pushLoopCondition = processForRange(expr, parameterVar, parameterType)
         val startOffset = ControlFlow.FixedOffset(flow.instructionCount)
         val endOffset = DeferredOffset()
-        addInstruction(FlushVariableInstruction(parameterVar))
+        if (destructuringDeclaration != null) {
+            for (entry in destructuringDeclaration.entries) {
+                addInstruction(FlushVariableInstruction(factory.varFactory.createVariableValue(KtVariableDescriptor(entry))))
+            }
+        } else {
+            addInstruction(FlushVariableInstruction(parameterVar))
+        }
         pushLoopCondition()
         addInstruction(ConditionalGotoInstruction(endOffset, DfTypes.FALSE))
         processExpression(expr.body)
@@ -691,6 +708,13 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
             return
         }
         val dfaVariable = factory.varFactory.createVariableValue(KtVariableDescriptor(variable))
+        if (variable.isLocal && !variable.isVar && variable.type()?.isBoolean() == true) {
+            // Boolean true/false constant: do not track; might be used as a feature knob or explanatory variable
+            if (initializer.node?.elementType == KtNodeTypes.BOOLEAN_CONSTANT) {
+                pushUnknown()
+                return
+            }
+        }
         processExpression(initializer)
         addImplicitConversion(initializer, variable.type())
         addInstruction(SimpleAssignmentInstruction(KotlinExpressionAnchor(variable), dfaVariable))
@@ -1178,8 +1202,6 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
     companion object {
         private val LOG = logger<KtControlFlowBuilder>()
         private val ASSIGNMENT_TOKENS = TokenSet.create(KtTokens.EQ, KtTokens.PLUSEQ, KtTokens.MINUSEQ, KtTokens.MULTEQ, KtTokens.DIVEQ, KtTokens.PERCEQ)
-        private val totalCount = AtomicInteger()
-        private val successCount = AtomicInteger()
         private val unsupported = ConcurrentHashMap.newKeySet<String>()
     }
 }

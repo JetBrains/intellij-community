@@ -79,6 +79,9 @@
       <action id="Table-scrollDownChangeSelection" class="com.intellij.ui.TableActions$PageDown" use-shortcut-of="EditorPageDown"/>
       <action id="Table-scrollDownExtendSelection" class="com.intellij.ui.TableActions$ShiftPageDown"
               use-shortcut-of="EditorPageDownWithSelection"/>
+      <action id="Table-startEditing" icon="AllIcons.Actions.Edit" class="com.intellij.ide.actions.table.StartEditingAction">
+        <keyboard-shortcut keymap="$default" first-keystroke="F2"/>
+      </action>
       <add-to-group group-id="Other.KeymapGroup"/>
     </group>
 
@@ -108,6 +111,9 @@
               use-shortcut-of="EditorPageDownWithSelection"/>
       <action id="Tree-selectNextSibling" class="com.intellij.ui.TreeActions$NextSibling"/>
       <action id="Tree-selectPreviousSibling" class="com.intellij.ui.TreeActions$PreviousSibling"/>
+      <action id="Tree-startEditing" icon="AllIcons.Actions.Edit" class="com.intellij.ide.actions.tree.StartEditingAction">
+        <keyboard-shortcut keymap="$default" first-keystroke="F2"/>
+      </action>
       <add-to-group group-id="Other.KeymapGroup"/>
     </group>
 
@@ -414,7 +420,6 @@
     <action id="PluginManagerFiltersConfigureResetTrustDebugAction" internal="true" class="com.intellij.ide.plugins.org.PluginManagerFiltersConfigureResetTrustDebugAction"/>
 
     <action id="CloseGotItTooltip" class="com.intellij.openapi.actionSystem.EmptyAction"/>
-    <action id="RestartIde" class="com.intellij.ide.actions.RestartIdeAction"/>
 
     <group id="MainMenu">
       <group id="FileMenu" popup="true">
@@ -457,6 +462,12 @@
         <action id="InvalidateCaches" class="com.intellij.ide.actions.InvalidateCachesAction">
           <synonym text="Restart"/>
         </action>
+        <action id="RestartIde" class="com.intellij.ide.actions.RestartIdeAction"/>
+        <group id="CacheRecovery" internal="true" popup="true">
+          <action id="CallSaul" class="com.intellij.ide.actions.cache.CallSaulAction"/>
+          <separator/>
+          <group id="RecoveryActions" class="com.intellij.ide.actions.cache.CacheRecoveryActionGroup"/>
+        </group>
         <separator/>
         <group id="ExportImportGroup" popup="true">
           <action id="ImportSettings" class="com.intellij.configurationStore.ImportSettingsAction"/>
@@ -1094,6 +1105,8 @@
       <action id="ShowPoweredProgress" internal="true" class="com.intellij.internal.ShowPoweredProgressAction"/>
       <action id="DisablePCE" internal="true" class="com.intellij.internal.DisablePCEAction"/>
       <action id="ResetGotItTooltips" internal="true" class="com.intellij.internal.ResetGotItTooltips"/>
+      <action id="ListPersistentStateComponents" internal="true"
+              class="com.intellij.internal.components.ListPersistentStateComponentsAction"/>
       <group id="Internal.Performance" popup="true">
         <action id="TurnOnOffCachedValueProfilerAction" internal="true"
                 class="com.intellij.internal.cachedValueProfiler.TurnOnOffCachedValueProfilerAction"/>
@@ -1169,6 +1182,7 @@
         <action id="WebBrowser" class="com.intellij.internal.jcef.JBCefBrowserDemo"/>
         <action id="DefaultBundleIndex" internal="true" class="com.intellij.ide.util.gotoByName.DefaultBundleIndexAction"/>
         <action id="JBGridLayoutTestAction" internal="true" class="com.intellij.internal.ui.JBGridLayoutTestAction"/>
+        <action id="UiDslDemoAction" internal="true" class="com.intellij.internal.ui.UiDslDemoAction"/>
       </group>
       <group id="TopAnomalies" internal="true" class="com.intellij.internal.anomalies.TopAnomaliesAction" popup="true"/>
       <action id="ImageDuplicates" internal="true" class="com.intellij.internal.ShowImageDuplicatesAction"/>

@@ -269,7 +269,7 @@ public final class JavaBackwardReferenceIndexReaderFactory implements CompilerRe
       }
     }
 
-    CompilerRef.CompilerClassHierarchyElementDef @NotNull [] getDirectInheritors(CompilerRef hierarchyElement)
+    @NotNull Collection<CompilerRef.CompilerClassHierarchyElementDef> getDirectInheritors(CompilerRef hierarchyElement)
       throws StorageException {
       Set<CompilerRef.CompilerClassHierarchyElementDef> result = new HashSet<>();
       myIndex.get(JavaCompilerIndices.BACK_HIERARCHY).getData(hierarchyElement).forEach((id, children) -> {
@@ -280,7 +280,17 @@ public final class JavaBackwardReferenceIndexReaderFactory implements CompilerRe
         }
         return true;
       });
-      return result.toArray(CompilerRef.CompilerClassHierarchyElementDef.EMPTY_ARRAY);
+      return result;
+    }
+
+    @Override
+    public @NotNull SearchId @NotNull[] getDirectInheritorsNames(CompilerRef hierarchyElement) throws StorageException {
+      try {
+        return CompilerHierarchySearchType.DIRECT_INHERITOR.convertToIds(getDirectInheritors(hierarchyElement), myIndex.getByteSeqEum());
+      }
+      catch (IOException e) {
+        throw new StorageException(e);
+      }
     }
 
     private enum DefCount {NONE, ONE, MANY}

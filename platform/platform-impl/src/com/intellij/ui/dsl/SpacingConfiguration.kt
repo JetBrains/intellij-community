@@ -1,21 +1,50 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.dsl
 
-import com.intellij.util.ui.JBUI
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Experimental
 interface SpacingConfiguration {
 
+  companion object {
+    val EMPTY = object : SpacingConfiguration {
+      override val horizontalSmallGap = 0
+      override val horizontalDefaultGap = 0
+      override val horizontalColumnsGap = 0
+      override val horizontalIndent = 0
+      override val horizontalToggleButtonIndent = 0
+      override val verticalComponentGap = 0
+      override val commentBottomGap = 0
+      override val groupTopGap = 0
+      override val verticalSmallGap = 0
+      override val buttonGroupHeaderBottomGap = 0
+    }
+  }
+
   /**
-   * Horizontal gap between unrelated settings in one row
+   * Small horizontal gap, used between label and related component for example
    */
-  val horizontalUnrelatedGap: Int
+  val horizontalSmallGap: Int
+
+  /**
+   * Default horizontal gap between components in one row
+   */
+  val horizontalDefaultGap: Int
+
+  /**
+   * Horizontal gap between two columns of components
+   */
+  val horizontalColumnsGap: Int
 
   /**
    * The horizontal left indent of one level
    */
   val horizontalIndent: Int
+
+  /**
+   * The horizontal left indent for toggle button comment
+   */
+  val horizontalToggleButtonIndent: Int
 
   /**
    * Top and bottom gaps for components like CheckBox, JTextField etc
@@ -25,18 +54,21 @@ interface SpacingConfiguration {
   /**
    * Vertical gap after comment
    */
-  val verticalCommentBottomGap: Int
+  val commentBottomGap: Int
 
-}
+  /**
+   * Vertical gap before group
+   */
+  val groupTopGap: Int
 
-// https://jetbrains.github.io/ui/controls/input_field/#spacing
-@ApiStatus.Experimental
-fun createIntelliJSpacingConfiguration(): SpacingConfiguration {
-  return object : SpacingConfiguration {
+  /**
+   * Vertical small gap between unrelated settings
+   */
+  val verticalSmallGap: Int
 
-    override val horizontalUnrelatedGap = JBUI.scale(16)
-    override val horizontalIndent = JBUI.scale(20)
-    override val verticalComponentGap = JBUI.scale(6)
-    override val verticalCommentBottomGap = JBUI.scale(6)
-  }
+  /**
+   * Vertical gap after button group header
+   */
+  val buttonGroupHeaderBottomGap: Int
+
 }

@@ -225,7 +225,7 @@ public class FragmentedSettingsBuilder<Settings extends FragmentedSettings> impl
     popup.setHandleAutoSelectionBeforeShow(true);
     popup.addListSelectionListener(e -> {
       JBPopup jbPopup = PopupUtil.getPopupContainerFor((Component)e.getSource());
-      AnActionHolder data = (AnActionHolder)PlatformDataKeys.SELECTED_ITEM.getData((DataProvider)e.getSource());
+      AnActionHolder data = (AnActionHolder)PlatformCoreDataKeys.SELECTED_ITEM.getData((DataProvider)e.getSource());
       jbPopup.setAdText(getHint(data == null ? null : data.getAction()), SwingConstants.LEFT);
     });
     return popup;

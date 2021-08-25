@@ -3,6 +3,7 @@ package com.intellij.workspaceModel.storage
 
 import com.intellij.workspaceModel.storage.entities.addAssertConsistencyEntity
 import com.intellij.workspaceModel.storage.impl.AbstractEntityStorage
+import com.intellij.workspaceModel.storage.impl.assertConsistency
 import org.junit.Test
 
 class AssertConsistencyTest {

@@ -21,7 +21,7 @@ import kotlin.math.abs
 
 interface AbstractIntLog : Closeable, Flushable {
   @FunctionalInterface
-  interface IntLogEntryProcessor {
+  fun interface IntLogEntryProcessor {
     fun process(data: Int, inputId: Int): Boolean
   }
 
@@ -32,9 +32,6 @@ interface AbstractIntLog : Closeable, Flushable {
 
   @Throws(StorageException::class)
   fun addData(data: Int, inputId: Int)
-
-  @Throws(StorageException::class)
-  fun removeData(data: Int, inputId: Int)
 
   fun clear()
 }
@@ -111,16 +108,6 @@ class IntLog @Throws(IOException::class) constructor(private val baseStorageFile
     }
   }
 
-  @Throws(StorageException::class)
-  override fun addData(data: Int, inputId: Int) {
-    appendData(data, inputId)
-  }
-
-  @Throws(StorageException::class)
-  override fun removeData(data: Int, inputId: Int) {
-    appendData(data, -inputId)
-  }
-
   override fun clear() {
     try {
       close()
@@ -140,7 +127,7 @@ class IntLog @Throws(IOException::class) constructor(private val baseStorageFile
                                                                        IntPairInArrayKeyDescriptor)
 
   @Throws(StorageException::class)
-  private fun appendData(data: Int, inputId: Int) {
+  override fun addData(data: Int, inputId: Int) {
     if (inputId == 0) return
     try {
       withLock(false) { myKeyHashToVirtualFileMapping.append(intArrayOf(data, inputId)) }
@@ -222,6 +209,7 @@ class IntLog @Throws(IOException::class) constructor(private val baseStorageFile
   private fun performCompaction() {
     try {
       val data: Int2ObjectMap<IntSet> = Int2ObjectOpenHashMap()
+      val forwardData = Int2IntOpenHashMap()
       val oldDataFile = getDataFile()
       val oldMapping = AppendableStorageBackedByResizableMappedFile(oldDataFile,
                                                                     0,
@@ -233,14 +221,23 @@ class IntLog @Throws(IOException::class) constructor(private val baseStorageFile
       try {
         oldMapping.processAll { _, key: IntArray ->
           val inputId = key[1]
-          val keyHash = key[0]
+          val dataKey = key[0]
           val absInputId = abs(inputId)
-          if (inputId > 0) {
-            data.computeIfAbsent(keyHash, Int2ObjectFunction<IntSet> { IntOpenHashSet() }).add(absInputId)
+          if (dataKey == 0) {
+            val currentKeyHash = forwardData[inputId]
+            val associatedInputIds = data[currentKeyHash]
+            associatedInputIds?.remove(absInputId)
           }
           else {
-            val associatedInputIds = data[keyHash]
-            associatedInputIds?.remove(absInputId)
+            if (inputId > 0) {
+              data.computeIfAbsent(dataKey, Int2ObjectFunction<IntSet> { IntOpenHashSet() }).add(absInputId)
+              forwardData[absInputId] = dataKey
+            }
+            else {
+              val associatedInputIds = data[dataKey]
+              associatedInputIds?.remove(absInputId)
+              forwardData.remove(absInputId)
+            }
           }
           true
         }

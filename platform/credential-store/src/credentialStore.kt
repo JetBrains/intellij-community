@@ -75,9 +75,6 @@ private fun parseString(data: String, @Suppress("SameParameterValue") delimiter:
 @JvmOverloads
 fun Credentials.serialize(storePassword: Boolean = true) = joinData(userName, if (storePassword) password else null)!!
 
-val ACCESS_TO_KEY_CHAIN_DENIED = Credentials(null, null as OneTimeString?)
-val CANNOT_UNLOCK_KEYCHAIN = Credentials(null, null as OneTimeString?)
-
 fun createSecureRandom(): SecureRandom {
   // do not use SecureRandom.getInstanceStrong()
   // https://tersesystems.com/blog/2015/12/17/the-right-way-to-use-securerandom/

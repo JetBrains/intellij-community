@@ -189,6 +189,7 @@ public final class CreateSwitchBranchesUtil {
       if (inserted instanceof PsiSwitchLabelStatementBase) {
         result = (PsiSwitchLabelStatementBase)inserted;
       }
+      correctedAnchor = inserted.getNextSibling();
     }
     return result;
   }

@@ -26,6 +26,7 @@ import kotlin.collections.ArraysKt;
 import kotlin.collections.CollectionsKt;
 import kotlin.jvm.functions.Function0;
 import kotlin.jvm.functions.Function1;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.kotlin.idea.KotlinBundle;
@@ -114,7 +115,7 @@ public class KotlinInplaceVariableIntroducer<D extends KtCallableDeclaration> ex
 
     public KotlinInplaceVariableIntroducer(
             PsiNamedElement elementToRename, Editor editor, Project project,
-            String title, KtExpression[] occurrences,
+            @Nls String title, KtExpression[] occurrences,
             @Nullable KtExpression expr, boolean replaceOccurrence,
             D declaration, boolean isVar, boolean doNotChangeVar,
             @Nullable KotlinType exprType, boolean noTypeInference

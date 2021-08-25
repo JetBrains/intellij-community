@@ -57,9 +57,9 @@ class JBGridLayoutTest {
 
     panel.removeAll()
     RowsGridBuilder(panel)
-      .resizableColumns(setOf(0))
       .row(resizable = true)
-      .cell(label, horizontalAlign = HorizontalAlign.FILL, verticalAlign = VerticalAlign.BOTTOM, visualPaddings = visualPaddings)
+      .cell(label, horizontalAlign = HorizontalAlign.FILL, verticalAlign = VerticalAlign.BOTTOM,
+            resizableColumn = true, visualPaddings = visualPaddings)
     doLayout(panel, 200, 100)
     assertEquals(-visualPaddings.left, label.x)
     assertEquals(100 - PREFERRED_HEIGHT + visualPaddings.bottom, label.y)
@@ -74,32 +74,28 @@ class JBGridLayoutTest {
     val gaps = Gaps(1, 2, 3, 4)
     val label = label()
     RowsGridBuilder(panel)
-      .resizableColumns(setOf(0))
-      .cell(label, gaps = gaps, horizontalAlign = HorizontalAlign.LEFT)
+      .cell(label, gaps = gaps, horizontalAlign = HorizontalAlign.LEFT, resizableColumn = true)
     doLayout(panel, 200, 100)
     assertEquals(label.size, PREFERRED_SIZE)
     assertEquals(gaps.left, label.x)
 
     panel.removeAll()
     RowsGridBuilder(panel)
-      .resizableColumns(setOf(0))
-      .cell(label, gaps = gaps, horizontalAlign = HorizontalAlign.CENTER)
+      .cell(label, gaps = gaps, horizontalAlign = HorizontalAlign.CENTER, resizableColumn = true)
     doLayout(panel, 200, 100)
     assertEquals(PREFERRED_SIZE, label.size)
     assertEquals(gaps.left + (200 - PREFERRED_WIDTH - gaps.width) / 2, label.x)
 
     panel.removeAll()
     RowsGridBuilder(panel)
-      .resizableColumns(setOf(0))
-      .cell(label, gaps = gaps, horizontalAlign = HorizontalAlign.RIGHT)
+      .cell(label, gaps = gaps, horizontalAlign = HorizontalAlign.RIGHT, resizableColumn = true)
     doLayout(panel, 200, 100)
     assertEquals(PREFERRED_SIZE, label.size)
     assertEquals(200 - PREFERRED_WIDTH - gaps.right, label.x)
 
     panel.removeAll()
     RowsGridBuilder(panel)
-      .resizableColumns(setOf(0))
-      .cell(label, gaps = gaps, horizontalAlign = HorizontalAlign.FILL)
+      .cell(label, gaps = gaps, horizontalAlign = HorizontalAlign.FILL, resizableColumn = true)
     doLayout(panel, 200, 100)
     assertEquals(Dimension(200 - gaps.width, PREFERRED_HEIGHT), label.size)
     assertEquals(gaps.left, label.x)
@@ -149,9 +145,8 @@ class JBGridLayoutTest {
     val gaps = Gaps(1, 2, 3, 4)
     val visualPaddings = Gaps(5, 6, 7, 8)
     RowsGridBuilder(panel)
-      .resizableColumns(setOf(0))
       .row(resizable = true)
-      .cell(label, horizontalAlign = HorizontalAlign.LEFT, verticalAlign = VerticalAlign.CENTER, gaps = gaps,
+      .cell(label, horizontalAlign = HorizontalAlign.LEFT, verticalAlign = VerticalAlign.CENTER, resizableColumn = true, gaps = gaps,
             visualPaddings = visualPaddings)
     doLayout(panel, 200, 100)
     assertEquals(PREFERRED_SIZE, label.preferredSize)
@@ -160,9 +155,8 @@ class JBGridLayoutTest {
 
     panel.removeAll()
     RowsGridBuilder(panel)
-      .resizableColumns(setOf(0))
       .row(resizable = true)
-      .cell(label, horizontalAlign = HorizontalAlign.RIGHT, verticalAlign = VerticalAlign.FILL, gaps = gaps,
+      .cell(label, horizontalAlign = HorizontalAlign.RIGHT, verticalAlign = VerticalAlign.FILL, resizableColumn = true, gaps = gaps,
             visualPaddings = visualPaddings)
     doLayout(panel, 200, 100)
     assertEquals(Dimension(PREFERRED_WIDTH, 100 - gaps.height + visualPaddings.height), label.size)
@@ -174,7 +168,6 @@ class JBGridLayoutTest {
   fun testLabeledGrid() {
     val panel = JPanel(JBGridLayout())
     val builder = RowsGridBuilder(panel)
-      .resizableColumns(setOf(1))
     val rowsCount = 10
     val labels = mutableListOf<Array<JLabel>>()
     for (i in 1..rowsCount) {
@@ -185,7 +178,7 @@ class JBGridLayoutTest {
       builder
         .row()
         .cell(row[0], horizontalAlign = HorizontalAlign.values().random())
-        .cell(row[1])
+        .cell(row[1], resizableColumn = true)
         .cell(row[2])
       labels.add(row)
     }
@@ -204,17 +197,18 @@ class JBGridLayoutTest {
   }
 
   @Test
-  fun testDistances() {
+  fun testRowColumnGaps() {
     val layout = JBGridLayout()
     val panel = JPanel(layout)
     val labels = mutableListOf<List<JLabel>>()
-    val builder = RowsGridBuilder(panel)
-      .columnsDistance(listOf(10, 20, 30, 40)) // 40 shouldn't be used by layout
     val columnsCount = 4
     val rowsCount = 5
-    var sumRowsDistance = 0
+    val columnGaps = (0 until columnsCount).map { ColumnGaps(it * 20, it * 20 + 10) }
+    val builder = RowsGridBuilder(panel)
+      .columnsGaps(columnGaps)
 
-    for (y in 1..rowsCount) {
+    for (y in 0 until rowsCount) {
+      builder.row(RowGaps(y * 15, y * 15 + 5))
       val row = mutableListOf<JLabel>()
       for (x in 1..columnsCount) {
         val label = label()
@@ -222,36 +216,29 @@ class JBGridLayoutTest {
         row.add(label)
       }
       labels.add(row)
-
-      val distance = y * 15
-      builder.row(distance)
-      if (y != rowsCount) {
-        sumRowsDistance += distance
-      }
     }
 
-    assertEquals(Dimension(columnsCount * PREFERRED_WIDTH + 60, rowsCount * PREFERRED_HEIGHT + sumRowsDistance),
-                 panel.preferredSize)
+    var preferredWidth = columnsCount * PREFERRED_WIDTH + columnGaps.sumOf { it.width }
+    var preferredHeight = rowsCount * PREFERRED_HEIGHT + layout.rootGrid.rowsGaps.sumOf { it.height }
+    assertEquals(Dimension(preferredWidth, preferredHeight), panel.preferredSize)
 
     // Hide whole column 1
     for (y in 0 until rowsCount) {
       labels[y][1].isVisible = false
-      var preferredWidth = columnsCount * PREFERRED_WIDTH + 60
       if (y == rowsCount - 1) {
-        preferredWidth -= PREFERRED_WIDTH + 20
+        preferredWidth -= PREFERRED_WIDTH + columnGaps[1].width
       }
-      assertEquals(Dimension(preferredWidth, rowsCount * PREFERRED_HEIGHT + sumRowsDistance), panel.preferredSize)
+      assertEquals(Dimension(preferredWidth, preferredHeight), panel.preferredSize)
     }
 
     // Hide whole row 2
     for (x in 0 until columnsCount) {
       labels[2][x].isVisible = false
-      var preferredHeight = rowsCount * PREFERRED_HEIGHT + sumRowsDistance
       if (x == columnsCount - 1) {
-        preferredHeight -= PREFERRED_HEIGHT + 45
+        preferredHeight -= PREFERRED_HEIGHT + layout.rootGrid.rowsGaps[2].height
       }
 
-      assertEquals(Dimension((columnsCount - 1) * PREFERRED_WIDTH + 40, preferredHeight), panel.preferredSize)
+      assertEquals(Dimension(preferredWidth, preferredHeight), panel.preferredSize)
     }
   }
 

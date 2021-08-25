@@ -446,5 +446,8 @@
     <extensionPoint name="inspectionPopupLevelChangePolicy" interface="com.intellij.openapi.editor.impl.InspectionPopupLevelChangePolicy" dynamic="true"/>
     <extensionPoint name="commandLineCustomHandler" interface="com.intellij.ide.CommandLineCustomHandler" dynamic="true"/>
 
+    <extensionPoint name="recoveryAction"
+                    interface="com.intellij.ide.actions.cache.RecoveryAction"
+                    dynamic="true"/>
   </extensionPoints>
 </idea-plugin>

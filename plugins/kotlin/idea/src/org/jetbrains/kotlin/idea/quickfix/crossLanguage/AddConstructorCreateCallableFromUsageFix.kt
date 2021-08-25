@@ -3,6 +3,7 @@ package org.jetbrains.kotlin.idea.quickfix.crossLanguage
 
 import com.intellij.lang.jvm.actions.CreateConstructorRequest
 import com.intellij.psi.JvmPsiConversionHelper
+import org.jetbrains.annotations.Nls
 import org.jetbrains.kotlin.idea.caches.resolve.getResolutionFacade
 import org.jetbrains.kotlin.idea.quickfix.createFromUsage.callableBuilder.ConstructorInfo
 import org.jetbrains.kotlin.idea.quickfix.createFromUsage.callableBuilder.ParameterInfo
@@ -19,7 +20,7 @@ class AddConstructorCreateCallableFromUsageFix(
     private val request: CreateConstructorRequest,
     modifierList: KtModifierList,
     providedText: String,
-    familyName: String,
+    @Nls familyName: String,
     targetKtClass: KtClass
 ) : AbstractCreateCallableFromUsageFixWithTextAndFamilyName<KtClass>(
     providedText = providedText,

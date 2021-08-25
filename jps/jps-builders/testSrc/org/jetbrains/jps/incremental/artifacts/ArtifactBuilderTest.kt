@@ -145,10 +145,14 @@ class ArtifactBuilderTest : ArtifactBuilderTestCase() {
   }
 
   fun testCopyLibrary() {
-    val library = addProjectLibrary("lib", createFile("lib/a.jar"))
+    val libDir = createDir("lib")
+    directoryContent {
+      zip("a.jar") { file("a.txt") }
+    }.generate(File(libDir))
+    val library = addProjectLibrary("lib", "$libDir/a.jar")
     val a = addArtifact(root().lib(library))
     buildAll()
-    assertOutput(a, directoryContent { file("a.jar") })
+    assertOutput(a, directoryContent { zip("a.jar") { file("a.txt") } })
   }
 
   fun testModuleOutput() {

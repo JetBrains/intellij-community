@@ -23,6 +23,9 @@ import com.intellij.util.ui.JBDimension;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class BranchLogSpeedSearchPopup extends FlatSpeedSearchPopup {
   public BranchLogSpeedSearchPopup(@NotNull ActionGroup actionGroup, @NotNull DataContext dataContext) {
     super(null, new DefaultActionGroup(actionGroup, createSpeedSearchActionGroup(actionGroup)), dataContext, null, false);
@@ -44,15 +47,15 @@ public class BranchLogSpeedSearchPopup extends FlatSpeedSearchPopup {
 
   @NotNull
   public static ActionGroup createSpeedSearchActionGroup(@NotNull ActionGroup actionGroup) {
-    DefaultActionGroup speedSearchActions = new DefaultActionGroup();
+    List<AnAction> speedSearchActions = new ArrayList<>();
     createSpeedSearchActions(actionGroup, speedSearchActions, true);
-    return speedSearchActions;
+    return new DefaultActionGroup(speedSearchActions);
   }
 
   private static void createSpeedSearchActions(@NotNull ActionGroup actionGroup,
-                                               @NotNull DefaultActionGroup speedSearchActions,
+                                               @NotNull List<AnAction> speedSearchActions,
                                                boolean isFirstLevel) {
-    if (!isFirstLevel) speedSearchActions.addSeparator(actionGroup.getTemplatePresentation().getText());
+    if (!isFirstLevel) speedSearchActions.add(Separator.create(actionGroup.getTemplatePresentation().getText()));
 
     for (AnAction child : actionGroup.getChildren(null)) {
       if (!isFirstLevel && !(child instanceof ActionGroup || child instanceof Separator || child instanceof SpeedsearchAction)) {

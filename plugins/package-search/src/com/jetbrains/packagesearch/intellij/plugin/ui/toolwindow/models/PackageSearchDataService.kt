@@ -9,6 +9,7 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiManager
 import com.intellij.serviceContainer.AlreadyDisposedException
+import com.intellij.util.ThreeState
 import com.jetbrains.packagesearch.api.v2.ApiPackagesResponse
 import com.jetbrains.packagesearch.api.v2.ApiRepository
 import com.jetbrains.packagesearch.api.v2.ApiStandardPackage
@@ -30,7 +31,7 @@ import com.jetbrains.packagesearch.intellij.plugin.util.AppUI
 import com.jetbrains.packagesearch.intellij.plugin.util.ReadActions
 import com.jetbrains.packagesearch.intellij.plugin.util.TraceInfo
 import com.jetbrains.packagesearch.intellij.plugin.util.combineTyped
-import com.jetbrains.packagesearch.intellij.plugin.util.getPackageSearchModulesChangesFlow
+import com.jetbrains.packagesearch.intellij.plugin.util.flatMapTransform
 import com.jetbrains.packagesearch.intellij.plugin.util.launchLoop
 import com.jetbrains.packagesearch.intellij.plugin.util.lifecycleScope
 import com.jetbrains.packagesearch.intellij.plugin.util.logDebug
@@ -38,7 +39,11 @@ import com.jetbrains.packagesearch.intellij.plugin.util.logError
 import com.jetbrains.packagesearch.intellij.plugin.util.logInfo
 import com.jetbrains.packagesearch.intellij.plugin.util.logTrace
 import com.jetbrains.packagesearch.intellij.plugin.util.logWarn
-import com.jetbrains.packagesearch.intellij.plugin.util.replayOnSignal
+import com.jetbrains.packagesearch.intellij.plugin.util.moduleChangesSignalFlow
+import com.jetbrains.packagesearch.intellij.plugin.util.moduleTransformers
+import com.jetbrains.packagesearch.intellij.plugin.util.nativeModulesChangesFlow
+import com.jetbrains.packagesearch.intellij.plugin.util.replayOnSignals
+import com.jetbrains.packagesearch.intellij.plugin.util.trustedProjectFlow
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -51,9 +56,14 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.consumeAsFlow
+import kotlinx.coroutines.flow.flatMapConcat
+import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.mapLatest
 import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.newCoroutineContext
@@ -105,12 +115,27 @@ internal class PackageSearchDataService(
 
     private val replayFromErrorChannel = Channel<Unit>()
 
+    val projectModulesStateFlow = project.trustedProjectFlow.flatMapConcat { trustedState ->
+        when (trustedState) {
+            ThreeState.YES -> project.nativeModulesChangesFlow
+            else -> flowOf(emptyList())
+        }
+    }
+        .replayOnSignals(replayFromErrorChannel.receiveAsFlow(), project.moduleChangesSignalFlow)
+        .map { modules -> project.moduleTransformers.flatMapTransform(project, modules) }
+        .catch {
+            logError("PackageSearchDataService#projectModulesStateFlow", it) { "Error while elaborating latest project modules" }
+            emit(emptyList())
+        }
+        .flowOn(Dispatchers.ReadActions)
+        .stateIn(this, SharingStarted.Eagerly, emptyList())
+
     override val dataModelFlow: StateFlow<RootDataModel> = combineTyped(
         searchQueryState,
         searchResultsState,
         targetModulesState,
         filterOptionsState,
-        project.getPackageSearchModulesChangesFlow(replayFromErrorChannel.consumeAsFlow()),
+        projectModulesStateFlow,
         knownRepositoriesRemoteInfo,
         selectedPackageModelState,
         searchResultsUiStateOverridesState
@@ -128,7 +153,7 @@ internal class PackageSearchDataService(
             selectedPackageModel = selectedPackage,
             searchResultsUiStateOverrides = searchResultsUiStateOverrides
         )
-    }.replayOnSignal(dataChangeChannel.consumeAsFlow())
+    }.replayOnSignals(dataChangeChannel.consumeAsFlow())
         .mapLatest { it.toRootDataModel() }
         .onEach { highlightEvents.send(Unit) }
         .catch {
@@ -153,8 +178,6 @@ internal class PackageSearchDataService(
 
     init {
         logDebug("PKGSDataService#Starting up the Package Search root model...")
-
-        checkNotificationsSetupIsCorrect()
 
         launchLoop(1.toDuration(HOURS)) {
             refreshKnownRepositories(TraceInfo(TraceInfo.TraceSource.INIT))
@@ -199,12 +222,6 @@ internal class PackageSearchDataService(
                 showErrorNotification(message = PackageSearchBundle.message("packagesearch.search.client.searching.failed.timeout"))
             }
             else -> showErrorNotification(message = PackageSearchBundle.message("packagesearch.search.client.searching.failed"))
-        }
-    }
-
-    private fun checkNotificationsSetupIsCorrect() {
-        checkNotNull(NotificationGroupManager.getInstance().getNotificationGroup(PACKAGE_SEARCH_NOTIFICATION_GROUP_ID)) {
-            "Notification group $PACKAGE_SEARCH_NOTIFICATION_GROUP_ID is not registered"
         }
     }
 
@@ -613,6 +630,10 @@ internal class PackageSearchDataService(
         @Nls subtitle: String? = null,
         @Nls message: String
     ) {
+        if (NotificationGroupManager.getInstance().getNotificationGroup(PACKAGE_SEARCH_NOTIFICATION_GROUP_ID) == null) {
+            logError { "Notification group $PACKAGE_SEARCH_NOTIFICATION_GROUP_ID is not properly registered" }
+        }
+
         @Suppress("DialogTitleCapitalization") // It's the Package Search plugin name
         NotificationGroupManager.getInstance().getNotificationGroup(PACKAGE_SEARCH_NOTIFICATION_GROUP_ID)
             .createNotification(

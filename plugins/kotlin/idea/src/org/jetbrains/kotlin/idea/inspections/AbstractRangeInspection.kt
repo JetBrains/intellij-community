@@ -48,7 +48,11 @@ abstract class AbstractRangeInspection : AbstractKotlinInspection() {
     companion object {
         private val rangeFunctions = listOf("..", "rangeTo", "until", "downTo")
 
-        private val rangeToFqNames = listOf("Char", "Byte", "Short", "Int", "Long",).map { FqName("kotlin.$it.rangeTo") }
+        private val rangeToFqNames = listOf(
+            "Char",
+            "Byte", "Short", "Int", "Long",
+            "UByte", "UShort", "UInt", "ULong"
+        ).map { FqName("kotlin.$it.rangeTo") }
 
         private val untilFqName = FqName("kotlin.ranges.until")
 

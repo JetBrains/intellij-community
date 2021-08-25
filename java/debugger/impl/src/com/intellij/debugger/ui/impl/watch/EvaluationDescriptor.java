@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.ui.impl.watch;
 
 import com.intellij.debugger.JavaDebuggerBundle;
@@ -96,7 +96,7 @@ public abstract class EvaluationDescriptor extends ValueDescriptorImpl {
       return value;
     }
     catch (IndexNotReadyException ex) {
-      throw new EvaluateException("Evaluation is not possible during indexing", ex);
+      throw new EvaluateException(JavaDebuggerBundle.message("evaluation.error.during.indexing"), ex);
     }
     catch (final EvaluateException ex) {
       throw new EvaluateException(ex.getLocalizedMessage(), ex);

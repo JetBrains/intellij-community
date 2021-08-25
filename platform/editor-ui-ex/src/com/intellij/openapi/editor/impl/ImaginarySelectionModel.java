@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.editor.impl;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.editor.SelectionModel;
@@ -11,6 +12,7 @@ import org.jetbrains.annotations.Nullable;
 
 public class ImaginarySelectionModel implements SelectionModel {
   private final ImaginaryEditor myEditor;
+  private static final Logger LOG = Logger.getInstance(ImaginarySelectionModel.class);
 
   public ImaginarySelectionModel(ImaginaryEditor editor) {
     myEditor = editor;
@@ -29,12 +31,12 @@ public class ImaginarySelectionModel implements SelectionModel {
 
   @Override
   public void addSelectionListener(@NotNull SelectionListener listener) {
-    throw myEditor.notImplemented();
+    LOG.info("Called ImaginarySelectionModel#addSelectionListener which is stubbed and has no implementation");
   }
 
   @Override
   public void removeSelectionListener(@NotNull SelectionListener listener) {
-    throw myEditor.notImplemented();
+    LOG.info("Called ImaginarySelectionModel#addSelectionListener which is stubbed and has no implementation");
   }
 
   @Override

@@ -36,7 +36,7 @@ import javax.swing.JTextPane
 
 abstract class GradleKotlinFrameworkSupportProvider(
     val frameworkTypeId: String,
-    val displayName: String,
+    @Nls val displayName: String,
     val frameworkIcon: Icon
 ) : GradleFrameworkSupportProvider() {
     override fun getFrameworkType(): FrameworkTypeEx = object : FrameworkTypeEx(frameworkTypeId) {
@@ -168,7 +168,7 @@ abstract class GradleKotlinFrameworkSupportProvider(
 
 open class GradleKotlinJavaFrameworkSupportProvider(
     frameworkTypeId: String = "KOTLIN",
-    displayName: String = "Kotlin/JVM"
+    @Nls displayName: String = KotlinIdeaGradleBundle.message("framework.support.provider.kotlin.jvm.display.name")
 ) : GradleKotlinFrameworkSupportProvider(frameworkTypeId, displayName, KotlinIcons.SMALL_LOGO) {
 
     override fun getPluginId() = KotlinGradleModuleConfigurator.KOTLIN
@@ -198,7 +198,7 @@ open class GradleKotlinJavaFrameworkSupportProvider(
 
 abstract class GradleKotlinJSFrameworkSupportProvider(
     frameworkTypeId: String,
-    displayName: String
+    @Nls displayName: String
 ) : GradleKotlinFrameworkSupportProvider(frameworkTypeId, displayName, KotlinIcons.JS) {
     abstract val jsSubTargetName: String
 
@@ -252,7 +252,7 @@ abstract class GradleKotlinJSFrameworkSupportProvider(
 
 open class GradleKotlinJSBrowserFrameworkSupportProvider(
     frameworkTypeId: String = "KOTLIN_JS_BROWSER",
-    displayName: String = "Kotlin/JS for browser"
+    @Nls displayName: String = KotlinIdeaGradleBundle.message("framework.support.provider.kotlin.js.for.browser.display.name")
 ) : GradleKotlinJSFrameworkSupportProvider(frameworkTypeId, displayName) {
     override val jsSubTargetName: String
         get() = "browser"
@@ -277,7 +277,7 @@ open class GradleKotlinJSBrowserFrameworkSupportProvider(
 
 open class GradleKotlinJSNodeFrameworkSupportProvider(
     frameworkTypeId: String = "KOTLIN_JS_NODE",
-    displayName: String = "Kotlin/JS for Node.js"
+    @Nls displayName: String = KotlinIdeaGradleBundle.message("framework.support.provider.kotlin.js.for.node.js.display.name")
 ) : GradleKotlinJSFrameworkSupportProvider(frameworkTypeId, displayName) {
     override val jsSubTargetName: String
         get() = "nodejs"

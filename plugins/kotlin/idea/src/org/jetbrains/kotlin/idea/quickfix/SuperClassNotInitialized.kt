@@ -8,6 +8,7 @@ import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
+import org.jetbrains.annotations.Nls
 import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.diagnostics.Diagnostic
 import org.jetbrains.kotlin.idea.KotlinBundle
@@ -143,7 +144,7 @@ object SuperClassNotInitialized : KotlinIntentionActionsFactory() {
         classDeclaration: KtClass,
         parametersToAdd: Collection<KtParameter>,
         private val argumentText: String,
-        private val text: String
+        @Nls private val text: String
     ) : KotlinQuickFixAction<KtSuperTypeEntry>(element) {
         private val classDeclarationPointer = classDeclaration.createSmartPointer()
         private val parametersToAddPointers = parametersToAdd.map { it.createSmartPointer() }
@@ -153,7 +154,7 @@ object SuperClassNotInitialized : KotlinIntentionActionsFactory() {
                 element: KtSuperTypeEntry,
                 classDeclaration: KtClass,
                 superConstructor: ConstructorDescriptor,
-                text: String
+                @Nls text: String
             ): AddParametersFix? {
                 val superParameters = superConstructor.valueParameters
                 assert(superParameters.isNotEmpty())

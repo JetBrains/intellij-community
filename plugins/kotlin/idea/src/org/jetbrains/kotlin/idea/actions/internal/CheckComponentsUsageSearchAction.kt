@@ -10,6 +10,7 @@ import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.Messages
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileVisitor
@@ -47,7 +48,8 @@ class CheckComponentsUsageSearchAction : AnAction() {
         val progressIndicator = ProgressManager.getInstance().progressIndicator
         for ((i, dataClass) in dataClasses.withIndex()) {
             progressIndicator?.text = KotlinBundle.message("checking.data.class.0.of.1", i + 1, dataClasses.size)
-            progressIndicator?.text2 = dataClass.fqName?.asString() ?: ""
+            @NlsSafe val fqName = dataClass.fqName?.asString() ?: ""
+            progressIndicator?.text2 = fqName
 
             val parameter = dataClass.primaryConstructor?.valueParameters?.firstOrNull()
             if (parameter != null) {

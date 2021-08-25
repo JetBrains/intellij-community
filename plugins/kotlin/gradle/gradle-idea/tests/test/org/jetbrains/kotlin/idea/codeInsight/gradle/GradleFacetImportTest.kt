@@ -834,13 +834,15 @@ class GradleFacetImportTest : KotlinGradleImportingTestCase() {
     }
 
     private fun checkStableModuleName(projectName: String, expectedName: String, platform: TargetPlatform, isProduction: Boolean) {
-        val module = getModule(projectName)
-        val moduleInfo = if (isProduction) module.productionSourceInfo() else module.testSourceInfo()
+        runReadAction {
+            val module = getModule(projectName)
+            val moduleInfo = if (isProduction) module.productionSourceInfo() else module.testSourceInfo()
 
-        val resolutionFacade = KotlinCacheService.getInstance(myProject).getResolutionFacadeByModuleInfo(moduleInfo!!, platform)!!
-        val moduleDescriptor = resolutionFacade.moduleDescriptor
+            val resolutionFacade = KotlinCacheService.getInstance(myProject).getResolutionFacadeByModuleInfo(moduleInfo!!, platform)!!
+            val moduleDescriptor = resolutionFacade.moduleDescriptor
 
-        assertEquals("<$expectedName>", moduleDescriptor.stableName?.asString())
+            assertEquals("<$expectedName>", moduleDescriptor.stableName?.asString())
+        }
     }
 
     private fun assertAllModulesConfigured() {

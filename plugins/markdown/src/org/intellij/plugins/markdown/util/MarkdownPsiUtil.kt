@@ -13,8 +13,10 @@ import com.intellij.util.NullableConsumer
 import org.intellij.plugins.markdown.lang.MarkdownElementTypes
 import org.intellij.plugins.markdown.lang.MarkdownLanguage
 import org.intellij.plugins.markdown.lang.MarkdownTokenTypeSets
-import org.intellij.plugins.markdown.lang.psi.impl.*
-import org.intellij.plugins.markdown.util.MarkdownPsiUtil.isTransparentInPartial
+import org.intellij.plugins.markdown.lang.psi.impl.MarkdownFile
+import org.intellij.plugins.markdown.lang.psi.impl.MarkdownHeaderImpl
+import org.intellij.plugins.markdown.lang.psi.impl.MarkdownListImpl
+import org.intellij.plugins.markdown.lang.psi.impl.MarkdownListItemImpl
 
 internal object MarkdownPsiUtil {
   /** Check if node is on a top-level -- meaning its parent is root of file   */

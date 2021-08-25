@@ -103,7 +103,8 @@ open class KotlinMPPGradleProjectResolver : AbstractProjectResolverExtension() {
                 suggestNativeDebug(resolverCtx.projectPath)
             }
             if (!resolverCtx.isResolveModulePerSourceSet && !PlatformVersion.isAndroidStudio() && !PlatformUtils.isMobileIde() &&
-                !PlatformUtils.isAppCode()) {
+                !PlatformUtils.isAppCode()
+            ) {
                 notifyLegacyIsResolveModulePerSourceSetSettingIfNeeded(resolverCtx.projectPath)
                 resolverCtx.report(MessageEvent.Kind.WARNING, ResolveModulesPerSourceSetInMppBuildIssue())
             }
@@ -786,6 +787,9 @@ open class KotlinMPPGradleProjectResolver : AbstractProjectResolverExtension() {
                 info.dependsOn = mppModel.resolveAllDependsOnSourceSets(sourceSet).map { dependsOnSourceSet ->
                     getGradleModuleQualifiedName(resolverCtx, gradleModule, dependsOnSourceSet.name)
                 }
+                info.additionalVisible = sourceSet.additionalVisibleSourceSets.map { additionalVisibleSourceSetName ->
+                    getGradleModuleQualifiedName(resolverCtx, gradleModule, additionalVisibleSourceSetName)
+                }.toSet()
                 //TODO(auskov): target flours are lost here
                 info.compilerArguments = createCompilerArguments(
                     emptyList(), sourceSet.actualPlatforms.singleOrNull() ?: KotlinPlatform.COMMON
@@ -830,6 +834,11 @@ open class KotlinMPPGradleProjectResolver : AbstractProjectResolverExtension() {
                 sourceSetInfo.dependsOn = compilation.declaredSourceSets.flatMap { it.allDependsOnSourceSets }.map {
                     getGradleModuleQualifiedName(resolverCtx, gradleModule, it)
                 }.distinct().toList()
+
+                sourceSetInfo.additionalVisible = sourceSetInfo.additionalVisible.map {
+                    getGradleModuleQualifiedName(resolverCtx, gradleModule, it)
+                }.toSet()
+
                 sourceSetInfo.compilerArguments =
                     createCompilerArguments(compilation.arguments.currentArguments.toList(), compilation.platform).also {
                         it.multiPlatform = true

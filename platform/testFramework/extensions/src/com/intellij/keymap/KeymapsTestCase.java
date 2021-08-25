@@ -21,7 +21,7 @@ public abstract class KeymapsTestCase extends KeymapsTestCaseBase {
                                   "EditorEnter", "NextTemplateVariable",
                                   "Git.Log.Branches.Change.Branch.Filter", "SplitChooser.Split"},
     { "F1",                       "ContextHelp", "org.jetbrains.r.actions.REditorHelpAction"},
-    { "F2",                       "GotoNextError", "GuiDesigner.EditComponent", "GuiDesigner.EditGroup", "Console.TableResult.EditValue", "XDebugger.SetValue", "Git.Reword.Commit", "Git.Rename.Local.Branch", "ShelvedChanges.Rename", "ChangesView.Rename"},
+    { "F2",                       "GotoNextError", "GuiDesigner.EditComponent", "GuiDesigner.EditGroup", "Console.TableResult.EditValue", "XDebugger.SetValue", "Git.Reword.Commit", "Git.Rename.Local.Branch", "ShelvedChanges.Rename", "ChangesView.Rename", "Table-startEditing", "Tree-startEditing"},
     { "alt ENTER",                "ShowIntentionActions", "Console.TableResult.EditValue"},
     { "F3",                       "FindNext", "PoToggleSelection"},
     { "F5",                       "Graph.RouteEdges", "CopyElement", "PoBrowserRefresh"},
@@ -79,7 +79,7 @@ public abstract class KeymapsTestCase extends KeymapsTestCaseBase {
     { "control PERIOD",           "EditorChooseLookupItemDot", "CollapseSelection"},
     { "shift DELETE",             "$Cut", "Maven.Uml.Exclude"},
     { "shift ENTER",              "CollapseExpandableComponent", "Console.TableResult.EditValueMaximized", "DatabaseView.PropertiesAction", "EditorStartNewLine", "ExpandExpandableComponent", "NotebookRunCellSelectBelowAction", "OpenInRightSplit", "RConsoleNextLineAction"},
-    { "shift F4",                 "Debugger.EditTypeSource", "EditSourceInNewWindow"},
+    { "shift F4",                 "XDebugger.JumpToTypeSource", "EditSourceInNewWindow"},
     { "shift F6",                 "RenameElement", "Git.Reword.Commit", "Git.Rename.Local.Branch", "ShelvedChanges.Rename", "ChangesView.Rename"},
     { "shift F7",                 "PreviousDiff", "SmartStepInto"},
     { "shift INSERT",             "$Paste", "Terminal.Paste"},
@@ -256,7 +256,7 @@ public abstract class KeymapsTestCase extends KeymapsTestCaseBase {
     { "shift alt L",              "ReformatCode", "context.load"},
     });
     put("Eclipse", new String[][] {
-    { "F2",                       "Console.TableResult.EditValue", "QuickJavaDoc", "XDebugger.SetValue"},
+    { "F2",                       "Console.TableResult.EditValue", "QuickJavaDoc", "XDebugger.SetValue", "Table-startEditing", "Tree-startEditing"},
     { "F3",                       "GotoDeclaration", "PoToggleSelection"},
     { "F5",                       "Graph.RouteEdges", "StepInto", "PoBrowserRefresh"},
     { "alt DOWN",                 "ShowContent", "MoveStatementDown", "ShowSearchHistory"},
@@ -308,7 +308,7 @@ public abstract class KeymapsTestCase extends KeymapsTestCaseBase {
     { "control alt DOWN",         "MethodDown", "NextOccurence", "Console.TableResult.NextPage"},
     { "control alt UP",           "MethodUp", "PreviousOccurence", "Console.TableResult.PreviousPage"},
     { "control alt shift P",      "Print", "ReformatWithPrettierAction"},
-    { "shift F4",                 "RecentFiles", "SwitcherIterateItems", "SwitcherRecentEditedChangedToggleCheckBox", "Debugger.EditTypeSource", "Vcs.ShowMessageHistory", "EditSourceInNewWindow"},
+    { "shift F4",                 "RecentFiles", "SwitcherIterateItems", "SwitcherRecentEditedChangedToggleCheckBox", "XDebugger.JumpToTypeSource", "Vcs.ShowMessageHistory", "EditSourceInNewWindow"},
     { "shift alt F9",             "ChooseDebugConfiguration", "ValidateXml", "ValidateJsp"},
     { "shift alt D",              "ToggleFloatingMode", "hg4idea.QFold"},
     { "shift control F7",         "HighlightUsagesInFile", "XDebugger.NewWatch"},
@@ -323,7 +323,7 @@ public abstract class KeymapsTestCase extends KeymapsTestCaseBase {
     });
     put("Eclipse (Mac OS X)", new String[][] {
     { "meta BACK_SPACE",          "EditorDeleteToWordStart", "$Delete"},
-    { "F2",                       "Console.TableResult.EditValue", "QuickJavaDoc", "XDebugger.SetValue", "Git.Reword.Commit", "Git.Rename.Local.Branch", "ShelvedChanges.Rename", "ChangesView.Rename"},
+    { "F2",                       "Console.TableResult.EditValue", "QuickJavaDoc", "XDebugger.SetValue", "Git.Reword.Commit", "Git.Rename.Local.Branch", "ShelvedChanges.Rename", "ChangesView.Rename", "Table-startEditing", "Tree-startEditing"},
     { "F3",                       "GotoDeclaration", "EditSource", "PoToggleSelection"},
     { "F5",                       "StepInto", "Graph.RouteEdges", "PoBrowserRefresh"},
     { "alt DOWN",                 "MoveStatementDown", "MethodOverloadSwitchDown", "ShowSearchHistory"},
@@ -351,7 +351,7 @@ public abstract class KeymapsTestCase extends KeymapsTestCaseBase {
     { "shift ctrl DOWN",          "EditorUnSelectWord", "ShowContent"},
     });
     put("Sublime Text", new String[][] {
-    { "F2",                       "ChangesView.Rename", "Console.TableResult.EditValue", "Git.Reword.Commit", "Git.Rename.Local.Branch", "GotoNextBookmark", "GuiDesigner.EditComponent", "GuiDesigner.EditGroup", "ShelvedChanges.Rename", "XDebugger.SetValue"},
+    { "F2",                       "ChangesView.Rename", "Console.TableResult.EditValue", "Git.Reword.Commit", "Git.Rename.Local.Branch", "GotoNextBookmark", "GuiDesigner.EditComponent", "GuiDesigner.EditGroup", "ShelvedChanges.Rename", "XDebugger.SetValue", "Table-startEditing", "Tree-startEditing"},
     { "alt MINUS",                "Back", "RInsertAssignmentAction"},
     { "ctrl ADD",                 "EditorIncreaseFontSize", "ExpandAll", "ExpandExpandableComponent"},
     { "ctrl B",                   "Compile", "org.intellij.plugins.markdown.ui.actions.styling.ToggleBoldAction"},
@@ -377,7 +377,7 @@ public abstract class KeymapsTestCase extends KeymapsTestCaseBase {
     { "ctrl L",                   "EditorSelectLine", "Terminal.ClearBuffer"},
     });
     put("Sublime Text (Mac OS X)", new String[][] {
-    { "F2",                       "ChangesView.Rename", "Console.TableResult.EditValue", "Git.Reword.Commit", "Git.Rename.Local.Branch", "GotoNextBookmark", "GuiDesigner.EditComponent", "GuiDesigner.EditGroup", "ShelvedChanges.Rename", "XDebugger.SetValue"},
+    { "F2",                       "ChangesView.Rename", "Console.TableResult.EditValue", "Git.Reword.Commit", "Git.Rename.Local.Branch", "GotoNextBookmark", "GuiDesigner.EditComponent", "GuiDesigner.EditGroup", "ShelvedChanges.Rename", "XDebugger.SetValue", "Table-startEditing", "Tree-startEditing"},
     { "meta ADD",                 "EditorIncreaseFontSize", "ExpandAll", "ExpandExpandableComponent"},
     { "meta B",                   "Compile", "org.intellij.plugins.markdown.ui.actions.styling.ToggleBoldAction"},
     { "meta BACK_SPACE",          "EditorDeleteToLineStart", "$Delete"},

@@ -408,9 +408,15 @@ public final class QuickFixFactoryImpl extends QuickFixFactory {
     return new RenameFileFix(newName);
   }
 
+  @Nullable
   @Override
-  public @NotNull LocalQuickFix createRenameFix() {
-    return new RenameFix();
+  public IntentionAction createRenameFix(@NotNull PsiElement element, @Nullable Object highlightInfo) {
+    if (highlightInfo == null) return null;
+    PsiFile file = element.getContainingFile();
+    if (file == null) return null;
+    ProblemDescriptor descriptor = ProblemDescriptorUtil.toProblemDescriptor(file, (HighlightInfo)highlightInfo);
+    if (descriptor == null) return null;
+    return new LocalQuickFixAsIntentionAdapter(new RenameFix(), descriptor);
   }
 
   @NotNull
@@ -1055,12 +1061,16 @@ public final class QuickFixFactoryImpl extends QuickFixFactory {
   }
 
   @Override
-  public @NotNull LocalQuickFixAndIntentionActionOnPsiElement createDeleteSwitchLabelFix(@NotNull PsiCaseLabelElement labelElement) {
+  public @NotNull IntentionAction createDeleteSwitchLabelFix(@NotNull PsiCaseLabelElement labelElement) {
     return new DeleteSwitchLabelFix(labelElement);
   }
 
+  @Nullable
   @Override
-  public @NotNull LocalQuickFix createDeleteDefaultFix() {
-    return new UnnecessaryDefaultInspection.DeleteDefaultFix();
+  public IntentionAction createDeleteDefaultFix(@NotNull PsiFile file, @Nullable Object highlightInfo) {
+    if (highlightInfo == null) return null;
+    ProblemDescriptor descriptor = ProblemDescriptorUtil.toProblemDescriptor(file, (HighlightInfo)highlightInfo);
+    if (descriptor == null) return null;
+    return new LocalQuickFixAsIntentionAdapter(new UnnecessaryDefaultInspection.DeleteDefaultFix(), descriptor);
   }
 }

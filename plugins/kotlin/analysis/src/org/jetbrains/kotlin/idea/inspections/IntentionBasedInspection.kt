@@ -7,6 +7,7 @@ import com.intellij.codeInsight.intention.HighPriorityAction
 import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.codeInsight.intention.LowPriorityAction
 import com.intellij.codeInspection.*
+import com.intellij.codeInspection.util.InspectionMessage
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.EditorFactory
@@ -69,6 +70,7 @@ abstract class IntentionBasedInspection<TElement : PsiElement> private construct
 
     open fun inspectionTarget(element: TElement): PsiElement? = null
 
+    @InspectionMessage
     open fun inspectionProblemText(element: TElement): String? = null
 
     private fun PsiElement.toRange(baseElement: PsiElement): TextRange {

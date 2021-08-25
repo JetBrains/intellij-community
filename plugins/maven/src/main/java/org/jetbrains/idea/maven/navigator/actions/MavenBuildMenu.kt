@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.navigator.actions
 
 import com.intellij.execution.Executor
@@ -6,6 +6,7 @@ import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.project.DumbAware
 import org.jetbrains.idea.maven.project.actions.RunBuildAction
 import org.jetbrains.idea.maven.statistics.MavenActionsUsagesCollector
+import org.jetbrains.idea.maven.statistics.MavenActionsUsagesCollector.Companion.trigger
 
 class MavenBuildMenu : DefaultActionGroup(), DumbAware {
   private val actionManager = ActionManager.getInstance()
@@ -61,7 +62,7 @@ class MavenBuildMenu : DefaultActionGroup(), DumbAware {
     else DelegatingAction(action, executor)
 
     private fun reportUsage(e: AnActionEvent, executor: Executor) {
-      MavenActionsUsagesCollector.trigger(e.project, MavenActionsUsagesCollector.ActionID.RunBuildAction, e, executor)
+      trigger(e.project, MavenActionsUsagesCollector.RUN_BUILD_ACTION, e.place, e.isFromContextMenu, executor)
     }
   }
 }

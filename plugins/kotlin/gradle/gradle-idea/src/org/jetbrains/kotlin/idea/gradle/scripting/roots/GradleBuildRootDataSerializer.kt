@@ -2,9 +2,9 @@
 
 package org.jetbrains.kotlin.idea.gradle.scripting.roots
 
+import com.intellij.openapi.util.IntellijInternalApi
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.newvfs.FileAttribute
-import org.jetbrains.kotlin.idea.KotlinPluginInternalApi
 import org.jetbrains.kotlin.idea.core.util.readNullable
 import org.jetbrains.kotlin.idea.core.util.readString
 import org.jetbrains.kotlin.idea.core.util.writeNullable
@@ -41,7 +41,7 @@ internal object GradleBuildRootDataSerializer {
     }
 }
 
-@KotlinPluginInternalApi
+@IntellijInternalApi
 fun writeKotlinDslScriptModels(output: DataOutput, data: GradleBuildRootData) {
     val strings = StringsPool.writer(output)
     strings.addStrings(data.projectRoots)
@@ -68,7 +68,7 @@ fun writeKotlinDslScriptModels(output: DataOutput, data: GradleBuildRootData) {
     }
 }
 
-@KotlinPluginInternalApi
+@IntellijInternalApi
 fun readKotlinDslScriptModels(input: DataInputStream, buildRoot: String): GradleBuildRootData {
     val strings = StringsPool.reader(input)
 

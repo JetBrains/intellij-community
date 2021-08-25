@@ -17,7 +17,7 @@ class AsyncCache<K : UserDataHolder,T>(
   private val eval: Function<K, T>
 ) {
 
-  private val key = Key.create<AtomicReference<Stored<T>>>("AsyncCache${System.identityHashCode(this)}")
+  private val key: Key<AtomicReference<Stored<T>>> = Key.create("AsyncCache${System.identityHashCode(this)}")
 
   private data class Stored<T>(val promise: AsyncPromise<T>, val modCount: Long)
 
@@ -69,7 +69,7 @@ class AsyncCache<K : UserDataHolder,T>(
 
   private fun createOrGetRef(dataHolder: UserDataHolder): AtomicReference<Stored<T>> {
     dataHolder.getUserData(key)?.let { return it }
-    synchronized(this) {
+    synchronized(key) {
       dataHolder.getUserData(key)?.let { return it }
       val atomicReference = AtomicReference<Stored<T>>()
       dataHolder.putUserData(key, atomicReference)

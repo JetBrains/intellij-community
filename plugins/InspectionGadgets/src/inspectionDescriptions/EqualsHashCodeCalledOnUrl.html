@@ -9,14 +9,12 @@ Reports <code>hashCode()</code> and <code>equals()</code> being called on <code>
 </p>
 <p>The problem can most likely be solved by using <code>java.net.URI</code> instead.</p>
 <p><b>Example:</b></p>
-<pre>
-  <code>
-    int f(URL url1, URL url2) {
-      if (url1.equals(url2)) return url1.hashCode();
-      else return url2.hashCode();
-    }
-  </code>
-</pre>
+<pre><code>
+  int f(URL url1, URL url2) {
+    if (url1.equals(url2)) return url1.hashCode();
+    else return url2.hashCode();
+  }
+</code></pre>
 <!-- tooltip end -->
 </body>
 </html>

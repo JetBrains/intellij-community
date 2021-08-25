@@ -8,7 +8,7 @@ import com.intellij.codeInsight.intention.impl.IntentionListStep
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys.PSI_FILE
-import com.intellij.openapi.actionSystem.PlatformDataKeys.SELECTED_ITEM
+import com.intellij.openapi.actionSystem.PlatformCoreDataKeys.SELECTED_ITEM
 import com.intellij.openapi.actionSystem.UpdateInBackground
 import com.intellij.openapi.actionSystem.impl.ActionButton
 import com.intellij.openapi.application.ApplicationManager.getApplication

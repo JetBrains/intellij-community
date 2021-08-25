@@ -418,7 +418,7 @@ public class UnusedDeclarationPresentation extends DefaultInspectionToolPresenta
   @Override
   public synchronized void updateContent() {
     getTool().checkForReachableRefs(getContext());
-    myContents.clear();
+    clearContents();
     final UnusedSymbolLocalInspectionBase localInspectionTool = getTool().getSharedLocalInspectionTool();
     getContext().getRefManager().iterate(new RefJavaVisitor() {
       @Override public void visitElement(@NotNull RefEntity refEntity) {
@@ -528,7 +528,7 @@ public class UnusedDeclarationPresentation extends DefaultInspectionToolPresenta
 
   @Override
   @Nullable
-  public QuickFix findQuickFixes(@NotNull final CommonProblemDescriptor descriptor,
+  public QuickFix<?> findQuickFixes(@NotNull final CommonProblemDescriptor descriptor,
                                  RefEntity entity,
                                  String hint) {
     if (entity instanceof RefElement) {

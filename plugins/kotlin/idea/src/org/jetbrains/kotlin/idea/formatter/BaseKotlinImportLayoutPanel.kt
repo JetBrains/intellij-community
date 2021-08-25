@@ -11,6 +11,7 @@ import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.table.JBTable
 import com.intellij.util.IconUtil
 import com.intellij.util.ui.JBUI
+import org.jetbrains.annotations.Nls
 import org.jetbrains.kotlin.idea.KotlinBundle
 import org.jetbrains.kotlin.idea.core.formatter.KotlinPackageEntry
 import org.jetbrains.kotlin.idea.core.formatter.KotlinPackageEntryTable
@@ -23,7 +24,7 @@ import javax.swing.JTable
 import javax.swing.ListSelectionModel
 import javax.swing.table.AbstractTableModel
 
-open class BaseKotlinImportLayoutPanel(title: String) : JPanel(BorderLayout()) {
+open class BaseKotlinImportLayoutPanel(@Nls title: String) : JPanel(BorderLayout()) {
     val packageTable = KotlinPackageEntryTable()
     val layoutTable = createTableForPackageEntries(packageTable)
 
@@ -121,17 +122,17 @@ open class BaseKotlinImportLayoutPanel(title: String) : JPanel(BorderLayout()) {
             ) {
                 val entry = packageTable.getEntryAt(row)
                 val attributes = KotlinHighlightingColors.KEYWORD.defaultAttributes
-                append("import", SimpleTextAttributes.fromTextAttributes(attributes))
+                append(KotlinBundle.message("import.text.import"), SimpleTextAttributes.fromTextAttributes(attributes))
                 append(" ", SimpleTextAttributes.REGULAR_ATTRIBUTES)
 
                 when (entry) {
                     KotlinPackageEntry.ALL_OTHER_IMPORTS_ENTRY -> append(
-                        "all other imports",
+                        KotlinBundle.message("import.text.all.other.imports"),
                         SimpleTextAttributes.REGULAR_ATTRIBUTES
                     )
 
                     KotlinPackageEntry.ALL_OTHER_ALIAS_IMPORTS_ENTRY -> append(
-                        "all alias imports",
+                        KotlinBundle.message("import.text.all.alias.imports"),
                         SimpleTextAttributes.REGULAR_ATTRIBUTES
                     )
 
@@ -168,8 +169,8 @@ class KotlinStarImportLayoutPanel : BaseKotlinImportLayoutPanel(KotlinBundle.mes
             .setAddAction { addPackage() }
             .setRemoveAction { removePackage() }
             .setButtonComparator(
-                "Add",
-                "Remove"
+                KotlinBundle.message("start.import.button.text.add"),
+                KotlinBundle.message("start.import.button.text.remove")
             ).setPreferredSize(Dimension(-1, 100))
             .createPanel()
 
@@ -205,10 +206,10 @@ class KotlinImportOrderLayoutPanel : BaseKotlinImportLayoutPanel(KotlinBundle.me
 
                 entry?.isSpecial == false
             }.setButtonComparator(
-                "Add Package",
-                "Remove",
-                "Up",
-                "Down"
+                KotlinBundle.message("import.order.button.text.add.package"),
+                KotlinBundle.message("import.order.button.text.remove"),
+                KotlinBundle.message("import.order.button.text.up"),
+                KotlinBundle.message("import.order.button.text.down")
             ).setPreferredSize(Dimension(-1, 100))
             .createPanel()
 

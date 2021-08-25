@@ -136,16 +136,17 @@ final class ActionUpdater {
       AnAction action = entry.getKey();
       Presentation orig = myPresentationFactory.getPresentation(action);
       Presentation copy = entry.getValue();
+      JComponent customComponent = null;
       if (action instanceof CustomComponentAction) {
-        // toolbar may have already created a custom component, do not erase it
-        JComponent copyC = copy.getClientProperty(CustomComponentAction.COMPONENT_KEY);
-        JComponent origC = orig.getClientProperty(CustomComponentAction.COMPONENT_KEY);
-        if (copyC == null && origC != null) {
-          copy.putClientProperty(CustomComponentAction.COMPONENT_KEY, origC);
-        }
+        // 1. toolbar may have already created a custom component, do not erase it
+        // 2. presentation factory may be just reset, do not reuse component from a copy
+        customComponent = orig.getClientProperty(CustomComponentAction.COMPONENT_KEY);
       }
-      orig.copyFrom(copy);
+      orig.copyFrom(copy, customComponent);
       reflectSubsequentChangesInOriginalPresentation(orig, copy);
+      if (customComponent != null && orig.isVisible()) {
+        ((CustomComponentAction)action).updateCustomComponent(customComponent, orig);
+      }
     }
   }
 
@@ -629,8 +630,8 @@ final class ActionUpdater {
     }
     boolean nestedWA = reason instanceof String && ((String)reason).startsWith("nested write-action");
     if (nestedWA) {
-      LOG.error(new IllegalStateException(
-        "An action must not request write-action during actions update. See CustomComponentAction.createCustomComponent javadoc."));
+      LOG.error(new AssertionError("An action must not request write-action during actions update. " +
+                                   "See CustomComponentAction.createCustomComponent javadoc, if caused by a custom component."));
     }
     if (!nestedWA && promise instanceof AsyncPromise) {
       ((AsyncPromise<?>)promise).setError(new Utils.ProcessCanceledWithReasonException(reason));

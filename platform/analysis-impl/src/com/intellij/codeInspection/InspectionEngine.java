@@ -40,18 +40,27 @@ public final class InspectionEngine {
                                                                           boolean isOnTheFly,
                                                                           @NotNull LocalInspectionToolSession session,
                                                                           @NotNull List<? extends PsiElement> elements) {
-    PsiElementVisitor visitor = tool.buildVisitor(holder, isOnTheFly, session);
-    //noinspection ConstantConditions
-    if (visitor == null) {
-      LOG.error("Tool " + tool + " (" + tool.getClass()+ ") must not return null from the buildVisitor() method");
-    }
-    else if (visitor instanceof PsiRecursiveVisitor && RECURSIVE_VISITOR_TOOL_CLASSES.add(tool.getClass())) {
-      LOG.error("The visitor returned from LocalInspectionTool.buildVisitor() must not be recursive: " + tool);
-    }
+    PsiElementVisitor visitor = createVisitor(tool, holder, isOnTheFly, session);
     // if inspection returned empty visitor then it should be skipped
     if (visitor != PsiElementVisitor.EMPTY_VISITOR) {
       tool.inspectionStarted(session, isOnTheFly);
       acceptElements(elements, visitor);
+    }
+    return visitor;
+  }
+
+  @NotNull
+  public static PsiElementVisitor createVisitor(@NotNull LocalInspectionTool tool,
+                                                @NotNull ProblemsHolder holder,
+                                                boolean isOnTheFly,
+                                                @NotNull LocalInspectionToolSession session) {
+    PsiElementVisitor visitor = tool.buildVisitor(holder, isOnTheFly, session);
+    //noinspection ConstantConditions
+    if (visitor == null) {
+      LOG.error("Tool " + tool + " (" + tool.getClass() + ") must not return null from the buildVisitor() method");
+    }
+    else if (visitor instanceof PsiRecursiveVisitor && RECURSIVE_VISITOR_TOOL_CLASSES.add(tool.getClass())) {
+      LOG.error("The visitor returned from LocalInspectionTool.buildVisitor() must not be recursive: " + tool);
     }
     return visitor;
   }

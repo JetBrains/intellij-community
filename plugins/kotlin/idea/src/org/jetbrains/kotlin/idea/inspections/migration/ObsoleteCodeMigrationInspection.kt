@@ -12,6 +12,7 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.project.Project
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager
 import com.intellij.psi.search.GlobalSearchScope
+import org.jetbrains.annotations.Nls
 import org.jetbrains.kotlin.config.LanguageVersion
 import org.jetbrains.kotlin.idea.KotlinBundle
 import org.jetbrains.kotlin.idea.configuration.MigrationInfo
@@ -122,6 +123,7 @@ internal abstract class ObsoleteImportsUsageReporter : ObsoleteCodeProblemReport
     protected open val importsToRemove: Set<String> = emptySet()
 
     protected abstract val wholeProjectFix: LocalQuickFix
+    @Nls
     protected abstract fun problemMessage(): String
 
     protected abstract fun wrapFix(fix: ObsoleteCodeFix): LocalQuickFix

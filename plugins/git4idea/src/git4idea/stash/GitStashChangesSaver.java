@@ -88,7 +88,7 @@ public class GitStashChangesSaver extends GitChangesSaver {
   @Override
   public void load() {
     final String oldProgressTitle = myProgressIndicator.getText();
-    GitStashUtils.unstash(myProject, myStashedRoots, (root) -> {
+    GitStashOperations.unstash(myProject, myStashedRoots, (root) -> {
       String message = GitBundle.message("stash.unstash.progress.indicator.title", root.getName());
       myProgressIndicator.setText(message);
       GitLineHandler handler = new GitLineHandler(myProject, root, GitCommand.STASH);

@@ -29,7 +29,7 @@ public class FileSymbolTreeElement extends PsiTreeElementBase<PsiFile> {
     var element = getElement();
     if (element == null) {
       LOG.error("Attempt to render invalid file presentation");
-      return "INVALID";
+      return null;
     }
     return element.getName();
   }

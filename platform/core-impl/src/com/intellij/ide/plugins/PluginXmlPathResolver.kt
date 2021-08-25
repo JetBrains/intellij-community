@@ -25,7 +25,7 @@ class PluginXmlPathResolver(private val pluginJarFiles: List<Path>) : PathResolv
       try {
         // do not use kotlin stdlib here
         val entry = zipFile.getEntry(if (relativePath.startsWith("/")) relativePath.substring(1) else relativePath) ?: return false
-        readModuleDescriptor(inputStream = zipFile.getInputStream(entry),
+        readModuleDescriptor(input = zipFile.getInputStream(entry),
                              readContext = readContext,
                              pathResolver = pathResolver,
                              dataLoader = dataLoader,
@@ -96,7 +96,7 @@ class PluginXmlPathResolver(private val pluginJarFiles: List<Path>) : PathResolv
     // it is allowed to reference any platform XML file using href="/META-INF/EnforcedPlainText.xml"
     if (path.startsWith("META-INF/")) {
       PluginXmlPathResolver::class.java.classLoader.getResourceAsStream(path)?.let {
-        readModuleDescriptor(inputStream = it,
+        readModuleDescriptor(input = it,
                              readContext = readContext,
                              pathResolver = this,
                              dataLoader = dataLoader,

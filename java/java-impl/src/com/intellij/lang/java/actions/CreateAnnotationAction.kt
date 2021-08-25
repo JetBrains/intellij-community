@@ -2,6 +2,7 @@
 package com.intellij.lang.java.actions
 
 import com.intellij.codeInsight.daemon.QuickFixBundle
+import com.intellij.codeInsight.intention.FileModifier
 import com.intellij.codeInsight.intention.AddAnnotationPsiFix
 import com.intellij.lang.jvm.actions.AnnotationAttributeValueRequest
 import com.intellij.lang.jvm.actions.AnnotationRequest
@@ -13,6 +14,7 @@ import com.intellij.openapi.util.text.StringUtilRt
 import com.intellij.psi.*
 import com.intellij.psi.codeStyle.CodeStyleManager
 import com.intellij.psi.codeStyle.JavaCodeStyleManager
+import com.intellij.psi.util.PsiTreeUtil
 
 
 internal class CreateAnnotationAction(target: PsiModifierListOwner, override val request: AnnotationRequest) :
@@ -26,6 +28,11 @@ internal class CreateAnnotationAction(target: PsiModifierListOwner, override val
   override fun invoke(project: Project, editor: Editor?, file: PsiFile?) {
     val modifierList = target.modifierList ?: return
     addAnnotationToModifierList(modifierList, request)
+  }
+
+  override fun getFileModifierForPreview(targetFile: PsiFile): FileModifier {
+    val copy = PsiTreeUtil.findSameElementInCopy(target, targetFile)
+    return CreateAnnotationAction(copy, request)
   }
 
   companion object {

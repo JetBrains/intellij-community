@@ -1,0 +1,9 @@
+boto.connection.AWSQueryConnection.make_request
+boto.elb
+boto.kms.layer1.KMSConnection.make_request
+boto.s3.S3RegionInfo.connect
+boto.s3.bucket.Bucket.get_location
+boto.s3.bucket.Bucket.get_tags
+boto.s3.bucket.Bucket.get_xml_tags
+boto.s3.connection.S3Connection.make_request
+boto.utils.LazyLoadMetadata.get

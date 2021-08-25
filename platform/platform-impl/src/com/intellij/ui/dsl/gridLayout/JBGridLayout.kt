@@ -23,16 +23,18 @@ class JBGridLayout : LayoutManager2 {
   }
 
   override fun addLayoutComponent(name: String?, comp: Component?) {
-    throw JBGridException("Method addLayoutComponent(name: String?, comp: Component?) is not supported")
+    throw UiDslException("Method addLayoutComponent(name: String?, comp: Component?) is not supported")
   }
 
   override fun removeLayoutComponent(comp: Component?) {
-    _rootGrid.unregister(checkComponent(comp))
+    if (!_rootGrid.unregister(checkComponent(comp))) {
+      throw UiDslException("Component has not been registered: $comp")
+    }
   }
 
   override fun preferredLayoutSize(parent: Container?): Dimension {
     if (parent == null) {
-      throw JBGridException("Parent is null")
+      throw UiDslException("Parent is null")
     }
 
     synchronized(parent.treeLock) {
@@ -55,7 +57,7 @@ class JBGridLayout : LayoutManager2 {
 
   override fun layoutContainer(parent: Container?) {
     if (parent == null) {
-      throw JBGridException("Parent is null")
+      throw UiDslException("Parent is null")
     }
 
     synchronized(parent.treeLock) {

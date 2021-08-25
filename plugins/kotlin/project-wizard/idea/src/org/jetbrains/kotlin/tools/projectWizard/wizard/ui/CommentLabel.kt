@@ -2,16 +2,15 @@
 
 package org.jetbrains.kotlin.tools.projectWizard.wizard.ui
 
+import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.ui.components.JBLabel
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import javax.swing.JComponent
-import javax.swing.JPanel
-import javax.swing.SpringLayout
 import javax.swing.SwingConstants
 
-class CommentLabel(text: String? = null) : JBLabel() {
+class CommentLabel(@NlsContexts.Label text: String? = null) : JBLabel() {
     init {
         if (text != null) {
             this.text = text
@@ -31,7 +30,7 @@ class CommentLabel(text: String? = null) : JBLabel() {
     }
 }
 
-fun commentLabel(text: String, init: JBLabel.() -> Unit = {}) =
+fun commentLabel(@NlsContexts.Label text: String, init: JBLabel.() -> Unit = {}) =
     CommentLabel(text).apply(init)
 
 fun componentWithCommentAtBottom(component: JComponent, label: String?, gap: Int = 4) = borderPanel {

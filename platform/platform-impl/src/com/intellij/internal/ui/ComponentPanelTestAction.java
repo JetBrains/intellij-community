@@ -935,12 +935,6 @@ public class ComponentPanelTestAction extends DumbAwareAction {
         public boolean hasSubstep(Item selectedValue) {
           return !selectedValue.myChildren.isEmpty();
         }
-
-        @Override
-        public void setSelectedItem(Object anObject) {
-          //sub-items are not contained here, so selector login has to be tweaked
-          super.setSelectedItem(anObject);
-        }
       }
 
       ImmutableList.Builder<Item> builder2 = ImmutableList.builder();

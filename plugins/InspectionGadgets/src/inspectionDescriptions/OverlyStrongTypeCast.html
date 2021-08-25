@@ -9,7 +9,7 @@ casting an object to <code>ArrayList</code> when casting it to
   intentionally using an overly strong cast to cause a <code>ClassCastException</code> to be generated.
 </p>
 <p>Example:</p>
-<pre>
+<pre><code>
   interface Super {
     void doSmth();
   }
@@ -19,7 +19,7 @@ casting an object to <code>ArrayList</code> when casting it to
     // Warning: ((Super)obj).doSmth() could be used
     ((Sub)obj).doSmth();
   }
-</pre>
+</code></pre>
 <!-- tooltip end -->
 <p>
   Use the checkbox below to ignore casts when there's a matching <code>instanceof</code> check in the code.

@@ -305,6 +305,11 @@ public abstract class KotlinHighlightVisitorTestGenerated extends AbstractKotlin
             runTest("testData/checker/SupertypeListChecks.kt");
         }
 
+        @TestMetadata("SuppressedHighlighting.kt")
+        public void testSuppressedHighlighting() throws Exception {
+            runTest("testData/checker/SuppressedHighlighting.kt");
+        }
+
         @TestMetadata("TraitSupertypeList.kt")
         public void testTraitSupertypeList() throws Exception {
             runTest("testData/checker/TraitSupertypeList.kt");

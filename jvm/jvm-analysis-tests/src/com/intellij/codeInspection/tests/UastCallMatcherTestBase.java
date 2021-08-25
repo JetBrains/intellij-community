@@ -1,6 +1,7 @@
 package com.intellij.codeInspection.tests;
 
 import com.intellij.codeInspection.UastCallMatcher;
+import com.intellij.openapi.application.PathManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.TestDataFile;
@@ -11,6 +12,7 @@ import org.jetbrains.uast.UCallExpression;
 import org.jetbrains.uast.UCallableReferenceExpression;
 import org.jetbrains.uast.UastCallKind;
 
+import java.io.File;
 import java.util.Set;
 
 import static com.intellij.codeInspection.UastCallMatcher.builder;
@@ -20,6 +22,11 @@ public abstract class UastCallMatcherTestBase extends JavaCodeInsightFixtureTest
   @Override
   protected void tuneFixture(JavaModuleFixtureBuilder moduleBuilder) {
     moduleBuilder.addJdk(IdeaTestUtil.getMockJdk18Path().getPath());
+  }
+
+  @Override
+  protected String getTestDataPath() {
+    return PathManager.getCommunityHomePath().replace(File.separatorChar, '/') + getBasePath();
   }
 
   protected static int matchCallExpression(UastCallMatcher matcher, Set<? extends UCallExpression> expressions) {

@@ -224,10 +224,7 @@
     },
 
     "Menu": {
-      "border": {
-        "os.default": "com.intellij.ide.ui.laf.darcula.ui.DarculaMenuItemBorder",
-        "os.mac": "0,5,2,5"
-      },
+      "border": "com.intellij.ide.ui.laf.darcula.ui.DarculaMenuItemBorder",
       "borderColor": "#515151",
       "maxGutterIconWidth": 18,
       "opaque": true,
@@ -243,12 +240,9 @@
 
     "MenuItem": {
       "acceleratorDelimiter": "-",
-      "acceleratorForeground": "#BBBBBB",
+      "acceleratorForeground": "#BCBCBC",
       "acceleratorSelectionForeground": "#BBBBBB",
-      "border": {
-        "os.default": "com.intellij.ide.ui.laf.darcula.ui.DarculaMenuItemBorder",
-        "os.mac": "0,5,2,5"
-      },
+      "border": "com.intellij.ide.ui.laf.darcula.ui.DarculaMenuItemBorder",
       "disabledForeground": "#777777",
       "maxGutterIconWidth": 18
     },
@@ -306,28 +300,20 @@
 
     "PopupMenu": {
       "border": "com.intellij.ide.ui.laf.darcula.ui.DarculaPopupMenuBorder",
-      "borderInsets": {
-        "os.mac": "4,0,4,0"
-      },
-      "borderWidth": {
-        "os.mac": 0
-      },
+      "borderInsets": "8,1,8,1",
+      "borderCornerRadiusX": 14,
+      "borderCornerRadiusY": 12,
+      "leftBorderWith": 10,
+      "rightBorderWith": 0,
       "translucentBackground": "#3c3f41",
-      "UI": {
-        "os.mac": "com.intellij.ide.ui.laf.intellij.MacPopupMenuUI"
-      }
+      "UI": "com.intellij.ide.ui.laf.intellij.IdeaPopupMenuUI"
     },
 
     "PopupMenuSeparator": {
-      "height": {
-        "os.mac": 12
-      },
-      "stripeWidth": {
-        "os.mac": 2
-      },
-      "stripeIndent": {
-        "os.mac": 5
-      },
+      "height": 9,
+      "stripeWidth": 1,
+      "stripeIndent": 4,
+      "withToEdge": 12,
       "UI": "com.intellij.ide.ui.laf.darcula.ui.DarculaMenuSeparatorUI"
     },
 

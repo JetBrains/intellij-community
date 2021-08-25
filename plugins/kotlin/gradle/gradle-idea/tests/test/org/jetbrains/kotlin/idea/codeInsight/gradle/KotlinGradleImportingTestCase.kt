@@ -28,6 +28,7 @@ import org.junit.Assume
 import org.junit.runners.Parameterized
 import java.io.File
 
+@Suppress("ACCIDENTAL_OVERRIDE")
 abstract class KotlinGradleImportingTestCase : GradleImportingTestCase() {
     public override fun getModule(name: String?): Module = super.getModule(name)
 

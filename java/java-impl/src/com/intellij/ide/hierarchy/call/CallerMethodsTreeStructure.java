@@ -72,12 +72,6 @@ public final class CallerMethodsTreeStructure extends HierarchyTreeStructure {
         if (PsiUtil.isInsideJavadocComment(reference.getElement())) {
           return true;
         }
-        // Method search sometimes finds references to the base method
-        // They shouldn't be shown because we are interested in exact results only
-        // (Do not remove constructor usages because reference to the default constructor really is a class reference)
-        if (!method.isConstructor() && !reference.isReferenceTo(method)) {
-          return true;
-        }
         for (CallReferenceProcessor processor : CallReferenceProcessor.EP_NAME.getExtensions()) {
           if (!processor.process(reference, data)) break;
         }

@@ -1,3 +1,4 @@
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.workspaceModel.ide.legacyBridge
 
 import com.intellij.ide.plugins.IdeaPluginDescriptor
@@ -9,7 +10,9 @@ import com.intellij.workspaceModel.storage.VersionedEntityStorage
 import com.intellij.workspaceModel.storage.WorkspaceEntityStorageDiffBuilder
 import com.intellij.workspaceModel.storage.bridgeEntities.ModuleId
 import com.intellij.workspaceModel.storage.url.VirtualFileUrl
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 interface ModuleBridge : ModuleEx {
   val moduleEntityId: ModuleId
 
@@ -28,8 +31,11 @@ interface ModuleBridge : ModuleEx {
 
   fun rename(newName: String, newModuleFileUrl: VirtualFileUrl?, notifyStorage: Boolean)
 
-  fun registerComponents(corePlugin: IdeaPluginDescriptor?, plugins: List<IdeaPluginDescriptorImpl>,
-                         precomputedExtensionModel: PrecomputedExtensionModel?, app: Application?, listenerCallbacks: List<Runnable>?)
+  fun registerComponents(corePlugin: IdeaPluginDescriptor?,
+                         modules: Sequence<IdeaPluginDescriptorImpl>,
+                         precomputedExtensionModel: PrecomputedExtensionModel?,
+                         app: Application?,
+                         listenerCallbacks: List<Runnable>?)
 
   fun callCreateComponents()
 }
