@@ -20,6 +20,7 @@ import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.module.impl.scopes.ModuleWithDependenciesScope;
 import com.intellij.openapi.project.DumbAwareToggleAction;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NlsActions;
@@ -149,6 +150,18 @@ public class ScopePanel extends JPanel {
       boolean moduleFound = false;
       boolean directoryFound = false;
       boolean namedScopeFound = false;
+      final Module[] modules = ModuleManager.getInstance(myProject).getModules();
+      if (modules.length > 0) {
+        // set some defaults
+        final Module module = modules[0];
+        myModulesComboBox.setSelectedModule(module);
+        final VirtualFile[] roots = ModuleRootManager.getInstance(module).getContentRoots();
+        if (roots.length > 0) {
+          final VirtualFile root = roots[0];
+          myDirectoryComboBox.setDirectory(root.isDirectory() ? root : root.getParent());
+        }
+      }
+
       final Module module = PlatformCoreDataKeys.MODULE.getData(context);
       if (module != null) {
         moduleFound = true;
