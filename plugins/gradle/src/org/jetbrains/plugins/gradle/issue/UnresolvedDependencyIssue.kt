@@ -19,12 +19,22 @@ import java.util.concurrent.CompletableFuture
 import java.util.concurrent.CompletableFuture.runAsync
 
 @ApiStatus.Internal
-abstract class UnresolvedDependencyIssue(dependencyName: String) : BuildIssue {
-  override val title: String = "Could not resolve $dependencyName"
+abstract class UnresolvedDependencyIssue(
+  dependencyName: String,
+  private val dependencyOwner: String? = null,
+) : BuildIssue {
+  override val title: String = "Could not resolve $dependencyName" + if (dependencyOwner != null) " for $dependencyOwner" else ""
+
   override fun getNavigatable(project: Project): Navigatable? = null
 
   fun buildDescription(failureMessage: String?, isOfflineMode: Boolean, offlineModeQuickFixText: String): String {
-    val issueDescription = StringBuilder(failureMessage?.trim())
+    val issueDescription = StringBuilder()
+    if(dependencyOwner != null) {
+      issueDescription.append(dependencyOwner)
+      issueDescription.append(": ")
+    }
+
+    issueDescription.append(failureMessage)
     val noRepositoriesDefined = failureMessage?.contains("no repositories are defined") ?: false
 
     issueDescription.append("\n\nPossible solution:\n")
@@ -44,10 +54,13 @@ abstract class UnresolvedDependencyIssue(dependencyName: String) : BuildIssue {
 }
 
 @ApiStatus.Experimental
-class UnresolvedDependencySyncIssue(dependencyName: String,
-                                    failureMessage: String?,
-                                    projectPath: String,
-                                    isOfflineMode: Boolean) : UnresolvedDependencyIssue(dependencyName) {
+data class UnresolvedDependencySyncIssue @JvmOverloads constructor(
+  val dependencyName: String,
+  val failureMessage: String?,
+  val projectPath: String,
+  val isOfflineMode: Boolean,
+  val dependencyOwner: String? = null,
+  ) : UnresolvedDependencyIssue(dependencyName, dependencyOwner) {
   override val quickFixes = if (isOfflineMode) listOf<BuildIssueQuickFix>(DisableOfflineAndReimport(projectPath)) else emptyList()
   override val description: String = buildDescription(failureMessage, isOfflineMode, "Disable offline mode and reload the project")
 
