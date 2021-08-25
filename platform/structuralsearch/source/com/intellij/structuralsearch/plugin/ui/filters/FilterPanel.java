@@ -177,6 +177,9 @@ public class FilterPanel implements FilterTable, ShortFilterTextProvider {
 
   @Override
   public String getShortFilterText(NamedScriptableDefinition variable) {
+    if (variable == null) {
+      return "";
+    }
     final StringBuilder builder = new StringBuilder();
     for (FilterAction filter : myFilters) {
       final String text = filter.getShortText(variable);
