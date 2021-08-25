@@ -18,7 +18,7 @@ import org.junit.runner.RunWith;
 @TestDataPath("$CONTENT_ROOT")
 @RunWith(JUnit3RunnerWithInners.class)
 @TestMetadata("testData/codeInsight/hints/ranges")
-public class KotlinRangeHintsProviderGenerated extends AbstractKotlinRangeHintsProvider {
+public class KotlinRangeHintsProviderTestGenerated extends AbstractKotlinRangeHintsProviderTest {
     private void runTest(String testDataFilePath) throws Exception {
         KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
     }

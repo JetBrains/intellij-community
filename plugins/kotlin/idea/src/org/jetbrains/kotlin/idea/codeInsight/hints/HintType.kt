@@ -138,7 +138,7 @@ enum class HintType(@Nls private val showDesc: String, defaultEnabled: Boolean) 
     ) {
         override fun isApplicable(elem: PsiElement): Boolean = elem is KtBinaryExpression && elem.isRangeExpression()
 
-        override fun provideHints(elem: PsiElement): List<InlayInfo> {
+        override fun provideHintDetails(elem: PsiElement): List<InlayInfoDetails> {
             val binaryExpression = elem.safeAs<KtBinaryExpression>() ?: return emptyList()
             val leftExp = binaryExpression.left ?: return emptyList()
             val rightExp = binaryExpression.right ?: return emptyList()
@@ -157,9 +157,11 @@ enum class HintType(@Nls private val showDesc: String, defaultEnabled: Boolean) 
                 }
                 else -> return emptyList()
             }
+            val leftInfo = InlayInfo(text = leftText, offset = leftExp.endOffset)
+            val rightInfo = InlayInfo(text = rightText, offset = rightExp.startOffset)
             return listOf(
-                InlayInfo(text = leftText, offset = leftExp.endOffset),
-                InlayInfo(text = rightText, offset = rightExp.startOffset)
+                InlayInfoDetails(leftInfo, listOf(TextInlayInfoDetail(leftText, smallText = false))),
+                InlayInfoDetails(rightInfo, listOf(TextInlayInfoDetail(rightText, smallText = false)))
             )
         }
     };
@@ -187,6 +189,6 @@ data class InlayInfoDetails(val inlayInfo: InlayInfo, val details: List<InlayInf
 
 sealed class InlayInfoDetail(val text: String)
 
-class TextInlayInfoDetail(text: String): InlayInfoDetail(text)
+class TextInlayInfoDetail(text: String, val smallText: Boolean = true): InlayInfoDetail(text)
 class TypeInlayInfoDetail(text: String, val fqName: String?): InlayInfoDetail(text)
 class PsiInlayInfoDetail(text: String, val element: PsiElement): InlayInfoDetail(text)

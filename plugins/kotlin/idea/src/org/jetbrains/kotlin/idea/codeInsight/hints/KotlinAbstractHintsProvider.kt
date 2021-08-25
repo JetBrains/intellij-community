@@ -84,12 +84,16 @@ abstract class KotlinAbstractHintsProvider<T : Any> : InlayHintsProvider<T> {
         }
 
         private fun mergeAdjacentTextInlayInfoDetails(details: List<InlayInfoDetail>): List<InlayInfoDetail> {
+            if (details.size <= 1) return details
+
             val result = mutableListOf<InlayInfoDetail>()
             val iterator = details.iterator()
             var builder: StringBuilder? = null
+            var smallText = false
             while (iterator.hasNext()) {
                 when (val next = iterator.next()) {
                     is TextInlayInfoDetail -> {
+                        smallText = smallText or next.smallText
                         builder = builder ?: StringBuilder()
                         builder.append(next.text)
                     }
@@ -103,7 +107,7 @@ abstract class KotlinAbstractHintsProvider<T : Any> : InlayHintsProvider<T> {
                 }
             }
             builder?.let {
-                result.add(TextInlayInfoDetail(it.toString()))
+                result.add(TextInlayInfoDetail(it.toString(), smallText = smallText))
                 builder = null
             }
             return result
@@ -114,7 +118,11 @@ abstract class KotlinAbstractHintsProvider<T : Any> : InlayHintsProvider<T> {
             factory: PresentationFactory,
             project: Project
         ): InlayPresentation {
-            val textPresentation = factory.smallText(details.text)
+            val textPresentation =
+                details.safeAs<TextInlayInfoDetail>()?.run {
+                    if (!smallText) factory.text(details.text) else null
+                } ?: factory.smallText(details.text)
+
             val navigationElementProvider: (() -> PsiElement?)? = when(details) {
                 is PsiInlayInfoDetail -> {{ details.element }}
                 is TypeInlayInfoDetail -> details.fqName?.run {
@@ -140,7 +148,7 @@ abstract class KotlinAbstractHintsProvider<T : Any> : InlayHintsProvider<T> {
                     file.analysisContext = it
                     false
                 } ?: true
-            }, GlobalSearchScope.projectScope(project));
+            }, GlobalSearchScope.projectScope(project))
 
             return file
         }
