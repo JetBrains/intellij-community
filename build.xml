@@ -23,6 +23,7 @@
     <propertyset id="intellij.build.properties">
       <propertyref name="build.number"/>
       <propertyref name="compile.parallel"/>
+      <propertyref name="compile.parallel.max.threads"/>
       <propertyref prefix="intellij.build."/>
     </propertyset>
   </target>
